@@ -152,9 +152,14 @@ templ Edit(data EditPageData) {
 						@draftPageColumn(data)
 					</aside>
 
-					// In Zen mode the center column widens a bit, from max-w-3xl (48rem) to 4xl (56rem).
-					// [Ja] Zen モードでは中央カラムを max-w-3xl (48rem) から 4xl (56rem) へ少し広げる。
-					<div class="max-w-3xl w-full mx-auto min-w-0 in-[.page-edit-zen]:max-w-4xl">
+					// In Zen mode the center column widens from max-w-3xl (48rem) to 4xl (56rem).
+					// The variant is gated to lg because Zen only reshapes the desktop layout; on
+					// mobile the column keeps max-w-3xl.
+					//
+					// [Ja] Zen モードでは中央カラムを max-w-3xl (48rem) から 4xl (56rem) へ広げる。
+					// バリアントを lg 限定にするのは、Zen がデスクトップのレイアウトだけを変えるため。
+					// モバイルでは中央カラムは max-w-3xl のままにする。
+					<div class="max-w-3xl w-full mx-auto min-w-0 in-[.page-edit-zen]:lg:max-w-4xl">
 						<div class="flex flex-col gap-4">
 							if data.IsSuggestionMode() {
 								<div class="px-4">
@@ -176,7 +181,7 @@ templ Edit(data EditPageData) {
 								</div>
 							}
 
-							<div class="px-4 lg:hidden flex justify-between gap-2 in-[.page-edit-zen]:hidden">
+							<div class="px-4 lg:hidden flex justify-between gap-2">
 								@components.DrawerOpenButton(components.DrawerOpenData{
 									DrawerID: draftPagesDrawerID,
 									Label:    templates.T(ctx, "page_edit_draft_pages_toggle_label"),
@@ -215,7 +220,18 @@ templ Edit(data EditPageData) {
 									//
 									// [Ja] タブで囲むのは編集対象のフィールドのみ。下のボタン行はタブパネルの外に置き、
 									// プレビュー表示中も表示されるようにする。
-									<div class="tabs" id="page-edit-tabs">
+									//
+									// min-w-0 lets the preview <pre> overflow-auto contain long code lines:
+									// without it this grid item grows to the <pre> min-content width and
+									// pushes the center column past its max width.
+									//
+									// [Ja] min-w-0 でプレビューの <pre> の overflow-auto が長いコード行を収める。
+									// 付けないとこの grid アイテムが <pre> の min-content 幅まで広がり、
+									// 中央カラムが最大幅を超える。
+									<div
+										class="tabs gap-4 min-w-0"
+										id="page-edit-tabs"
+									>
 										// The Zen mode toggle sits at the right end of the tab row. Basecoat's tabs
 										// styles match [role=tablist] by descendant selector, so wrapping the nav in
 										// a flex row does not break them.
@@ -272,13 +288,20 @@ templ Edit(data EditPageData) {
 												</button>
 											</nav>
 											// The toggle only flips a class client-side (and persists it to a cookie),
-											// so it is a plain button outside the tab list, not a tab.
+											// so it is a plain button outside the tab list, not a tab. It is hidden
+											// below lg because Zen only reshapes the desktop 3-column grid; mobile has
+											// no side columns to collapse, and hiding the drawer buttons and lists with
+											// no visible toggle would leave a user who enabled Zen on desktop unable to
+											// restore them on mobile.
 											//
 											// [Ja] トグルはクライアント側でクラスを反転してクッキーへ保存するだけ
-											// なので、タブではなくタブリスト外の通常のボタンとして置く。
+											// なので、タブではなくタブリスト外の通常のボタンとして置く。lg 未満で
+											// 非表示にするのは、Zen がデスクトップの 3 カラムグリッドしか変えないため。
+											// モバイルには畳むサイドカラムが無く、トグルが見えないままドロワーボタンや
+											// 一覧を隠すと、デスクトップで Zen を有効にしたユーザーがモバイルで戻せなくなる。
 											<button
 												type="button"
-												class="btn-sm-outline rounded-full w-fit"
+												class="hidden lg:inline-flex btn-sm-outline rounded-full w-fit"
 												data-zen-mode-toggle
 												aria-pressed={ fmt.Sprintf("%t", data.ZenMode) }
 											>
@@ -286,6 +309,7 @@ templ Edit(data EditPageData) {
 												{ templates.T(ctx, "page_edit_zen_mode_button") }
 											</button>
 										</div>
+
 										<div
 											role="tabpanel"
 											id="page-edit-panel-edit"
@@ -319,6 +343,7 @@ templ Edit(data EditPageData) {
 													}
 												}
 											</div>
+
 											<div class="grid gap-2">
 												<label for="page_body">
 													{ templates.T(ctx, "page_edit_body_label") }
@@ -342,6 +367,7 @@ templ Edit(data EditPageData) {
 												>{ data.Page.Body }</textarea>
 											</div>
 										</div>
+
 										<div
 											role="tabpanel"
 											id="page-edit-panel-preview"
@@ -374,14 +400,13 @@ templ Edit(data EditPageData) {
 									// キャンセルが 1 行に収まる唯一の幅 (これより狭いと保存時刻が折り返す)。未満ではボタンを上段に、
 									// 保存時刻とキャンセルを下段へ送って右揃えでまとめて並べ (保存時刻=キャンセルの隣)、キャンセルを
 									// 左上の主要ボタンから離してタッチ時の誤タップを防ぐ。
-									<div class="flex flex-col gap-2 min-[1152px]:flex-row min-[1152px]:items-center">
+									<div class="flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center">
 										<div class="flex gap-2">
 											if data.IsSuggestionMode() {
 												<button
 													class="btn-primary rounded-full w-fit"
 													type="submit"
 												>
-													@templates.Icon("paper-plane-tilt-regular")
 													{ templates.T(ctx, "page_edit_update_suggestion_button") }
 													@components.KeyboardHint(components.KeyboardHintData{IconName: "arrow-elbow-down-left-regular", ColorClass: "bg-primary-foreground/20 text-primary-foreground"})
 												</button>
@@ -390,7 +415,6 @@ templ Edit(data EditPageData) {
 													class="btn-primary rounded-full w-fit"
 													type="submit"
 												>
-													@templates.Icon("paper-plane-tilt-regular")
 													{ templates.T(ctx, "page_edit_publish_to_topic_button") }
 													@components.KeyboardHint(components.KeyboardHintData{IconName: "arrow-elbow-down-left-regular", ColorClass: "bg-primary-foreground/20 text-primary-foreground"})
 												</button>
@@ -414,7 +438,6 @@ templ Edit(data EditPageData) {
 														hx-swap="none"
 														hx-disable="this"
 													>
-														@templates.Icon("floppy-disk-regular")
 														{ templates.T(ctx, "page_edit_save_draft_button") }
 														@components.KeyboardHint(components.KeyboardHintData{Key: "S", ColorClass: "bg-secondary-foreground/8 text-secondary-foreground"})
 													</button>
@@ -457,7 +480,6 @@ templ Edit(data EditPageData) {
 													hx-swap="none"
 													hx-disable="this"
 												>
-													@templates.Icon("floppy-disk-regular")
 													{ templates.T(ctx, "page_edit_save_draft_button") }
 													@components.KeyboardHint(components.KeyboardHintData{Key: "S", ColorClass: "bg-secondary-foreground/8 text-secondary-foreground"})
 												</button>
@@ -476,7 +498,7 @@ templ Edit(data EditPageData) {
 								</form>
 							}
 
-							<div class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:hidden">
+							<div class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:lg:hidden">
 								// The headings sit outside #page-link-list / #page-backlink-list so the draft-autosave
 								// OOB swap re-renders only the lists, leaving each heading (and its style) untouched.
 								// not-has-[#id>*]:hidden hides a section while its list is empty, so heading visibility

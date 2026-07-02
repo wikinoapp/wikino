@@ -984,6 +984,17 @@ func TestEdit_PreviewTab(t *testing.T) {
 	if !strings.Contains(body, `id="page-edit-tabs"`) {
 		t.Error("tabs container not found in response")
 	}
+
+	// The tabs container carries min-w-0 so the preview's <pre> overflow-auto contains long
+	// code lines instead of the grid item widening past the center column. Matching the whole
+	// start tag ties min-w-0 to this container (min-w-0 also appears on other elements).
+	//
+	// [Ja] タブコンテナが min-w-0 を持ち、プレビューの <pre> の overflow-auto が長いコード行を
+	// 収める (grid アイテムが中央カラムを超えて広がらない) こと。開始タグ全体で照合し、min-w-0 が
+	// このコンテナに付いていることを担保する (min-w-0 は他の要素にも現れる)。
+	if !strings.Contains(body, `<div class="tabs gap-4 min-w-0" id="page-edit-tabs">`) {
+		t.Error("tabs container is missing min-w-0 (guards preview code block overflow)")
+	}
 	if !strings.Contains(body, `id="page-edit-tab-edit"`) {
 		t.Error("edit tab not found in response")
 	}
@@ -1213,7 +1224,7 @@ func TestEdit_ActionRowLayout(t *testing.T) {
 	//
 	// [Ja] 操作行は広い画面では 1 行、1152px のコンテナ幅未満では 2 段に折り返すこと (この幅未満では
 	// 中央カラムが狭く 1 行に収まらないため)。
-	if !strings.Contains(body, `<div class="flex flex-col gap-2 min-[1152px]:flex-row min-[1152px]:items-center">`) {
+	if !strings.Contains(body, `<div class="flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center">`) {
 		t.Error("action row responsive layout container not found in response")
 	}
 
@@ -1353,22 +1364,49 @@ func TestEdit_ZenMode(t *testing.T) {
 				}
 			}
 
-			// The Tailwind variant classes reacting to Zen mode are present on the layout elements
-			// (hide the side columns / link lists, collapse the grid, widen the center column).
+			// Zen mode only reshapes the desktop (lg+) layout, so every Zen variant is gated to lg:
+			// the side columns and link/backlink lists hide, the grid collapses, and the center
+			// column widens only at lg. On mobile there are no side columns to collapse.
 			//
-			// [Ja] Zen モードに反応する Tailwind バリアントクラスがレイアウト要素に付いていること
-			// (左右カラム・リンク一覧の非表示、グリッド解除、中央カラムの拡幅)。
-			if !strings.Contains(body, "in-[.page-edit-zen]:lg:hidden") {
+			// [Ja] Zen モードはデスクトップ (lg 以上) のレイアウトだけを変えるため、Zen バリアントは
+			// すべて lg 限定になる (左右カラム・リンク / バックリンク一覧の非表示、グリッド解除、
+			// 中央カラムの拡幅はいずれも lg でのみ効く)。モバイルには畳む対象のサイドカラムが無い。
+
+			// The side columns wrap their Zen hide with lg, asserted on the full class to pin it to
+			// the always-lg-hidden side columns rather than the link/backlink section, which now
+			// shares the same in-[.page-edit-zen]:lg:hidden variant.
+			//
+			// [Ja] 左右サイドカラムは Zen 非表示を lg でラップする。同じ in-[.page-edit-zen]:lg:hidden
+			// バリアントを持つようになったリンク / バックリンクセクションではなく、常に lg 非表示の
+			// サイドカラムに固定するため、class 属性全体で検証する。
+			if !strings.Contains(body, `class="hidden lg:block in-[.page-edit-zen]:lg:hidden"`) {
 				t.Error("zen mode side column hide class not found in response")
 			}
-			if !strings.Contains(body, "in-[.page-edit-zen]:hidden") {
-				t.Error("zen mode link list hide class not found in response")
+			// The link/backlink section wraps its Zen hide with lg so the lists stay visible on
+			// mobile even when the Zen cookie is set (asserted on the full class to pin it to the
+			// link section, not the always-lg-hidden side columns).
+			//
+			// [Ja] リンク / バックリンク一覧セクションは Zen 非表示を lg でラップし、Zen クッキーが
+			// 設定されていてもモバイルでは一覧を表示したままにする (常に lg 非表示のサイドカラムでは
+			// なくリンクセクションに固定するため、class 属性全体で検証する)。
+			if !strings.Contains(body, `class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:lg:hidden"`) {
+				t.Error("zen mode link list lg-only hide class not found in response")
 			}
 			if !strings.Contains(body, "in-[.page-edit-zen]:lg:block") {
 				t.Error("zen mode grid collapse class not found in response")
 			}
-			if !strings.Contains(body, "in-[.page-edit-zen]:max-w-4xl") {
+			if !strings.Contains(body, "in-[.page-edit-zen]:lg:max-w-4xl") {
 				t.Error("zen mode center column widen class not found in response")
+			}
+			// The Zen toggle is hidden below lg (mobile has no side columns to collapse, and a
+			// hidden toggle with Zen on would trap the mobile user), and restored to inline-flex at
+			// lg. Assert on the full class so it stays pinned to the toggle button.
+			//
+			// [Ja] Zen トグルは lg 未満で非表示にし (モバイルには畳むサイドカラムが無く、Zen ON の
+			// ままトグルが無いとモバイルのユーザーが戻せなくなる)、lg で inline-flex に戻す。
+			// トグルボタンに固定するため class 属性全体で検証する。
+			if !strings.Contains(body, `class="hidden lg:inline-flex btn-sm-outline rounded-full w-fit"`) {
+				t.Error("zen mode toggle lg-only display class not found in response")
 			}
 		})
 	}
