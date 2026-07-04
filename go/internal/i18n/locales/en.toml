@@ -491,7 +491,7 @@ other = "Wikino is a web service where you can create and share wikis."
 
 [welcome_screenshot_alt]
 description = "Alt text for the welcome page screenshot image"
-other = "Screenshot of Wikino"
+other = "Screenshot of Wikino's page edit screen, showing the editor, links to drafts, and draft revision history."
 
 [welcome_features_title]
 description = "Welcome page features section heading"

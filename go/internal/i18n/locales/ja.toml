@@ -491,7 +491,7 @@ other = "Wikino (ウィキノ) は、Wikiを作成して共有することがで
 
 [welcome_screenshot_alt]
 description = "トップページのスクリーンショット画像の alt テキスト"
-other = "Wikinoのスクリーンショット"
+other = "Wikinoのページ編集画面のスクリーンショット。エディタや下書きへのリンク、下書きの編集履歴などが表示されている。"
 
 [welcome_features_title]
 description = "トップページの「特徴」セクションの見出し"
