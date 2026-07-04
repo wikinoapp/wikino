@@ -33,14 +33,21 @@ RSpec.describe "config/initializers/sentry.rb" do # rubocop:disable RSpec/Descri
   end
 
   describe "release" do
-    it "WIKINO_ASSET_VERSION 未指定時は release を設定せず SDK の自動検出に委ねること" do
-      # `Wikino.config.asset_version.presence` が nil の場合、initializer は
-      # `config.release` を一切代入しないため、`Sentry.configuration.release` は
-      # SDK の自動検出に依存する。テスト環境では自動検出ソースが無いので nil/空となる。
-      # [Ja] asset_version が空のときに release を空文字で上書きしないという
-      # 実装判断 (採用しなかった方針も参照) を回帰防止する。
-      if Wikino.config.asset_version.present?
-        skip "WIKINO_ASSET_VERSION がセットされている環境ではこのケースを検証できない"
+    # The resolution rule (present git_rev is adopted, blank yields nil so the
+    # release is left unset) is unit-tested deterministically in
+    # spec/lib/sentry_config_spec.rb. This case only smoke-tests the initializer
+    # wiring: when git_rev is blank the initializer must not assign
+    # config.release, so SDK auto-detection stays in place. It still reads the
+    # boot-time configuration, so it skips when GIT_REV happens to be set.
+    #
+    # [Ja] 解決規則 (git_rev があれば採用、空なら nil で release を未設定に保つ) は
+    # spec/lib/sentry_config_spec.rb で確定的にユニットテストする。本ケースは
+    # initializer の配線の smoke test に留め、git_rev が空のとき config.release を
+    # 代入せず SDK の自動検出を残すことを確認する。boot 時の設定を読むため、GIT_REV が
+    # セットされた環境ではスキップする。
+    it "GIT_REV 未指定時は release を設定せず SDK の自動検出に委ねること" do
+      if Wikino.config.git_rev.present?
+        skip "GIT_REV がセットされている環境ではこのケースを検証できない"
       end
 
       expect(config.release).to be_blank

@@ -1,7 +1,11 @@
 import "basecoat-css/all";
 
+import { initializeAttachmentLoader } from "./attachment-loader";
+import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
+import { initializePlatform } from "./platform";
+import { initializeZenMode } from "./zen-mode";
 
 const SIDEBAR_STORAGE_KEY = "wikinoSidebarOpen";
 
@@ -30,5 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeEditors();
   initializeGlobalHotkey();
   initSidebarLocalStoragePersistence();
+  initializeDrawers();
+  initializeZenMode();
+  initializePlatform();
+  initializeAttachmentLoader();
   setTimeZoneCookie();
 });

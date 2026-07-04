@@ -80,6 +80,24 @@ func PageDraftPageRevisionPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNu
 	return Path(fmt.Sprintf("/s/%s/pages/%d/draft_page_revision", spaceIdentifier, pageNumber))
 }
 
+// PageDraftPageRevisionShowPath generates the path to one draft revision (the diff fragment).
+// [Ja] PageDraftPageRevisionShowPath は下書きリビジョン単件 (差分フラグメント) のパスを生成します。
+func PageDraftPageRevisionShowPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32, revisionID string) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/draft_page_revisions/%s", spaceIdentifier, pageNumber, revisionID))
+}
+
+// PageDraftPageRevisionRestorePath generates the path to restore a draft revision.
+// [Ja] PageDraftPageRevisionRestorePath は下書きリビジョン復元のパスを生成します。
+func PageDraftPageRevisionRestorePath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32, revisionID string) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/draft_page_revisions/%s/restore", spaceIdentifier, pageNumber, revisionID))
+}
+
+// PagePreviewPath generates the path to the page preview.
+// [Ja] PagePreviewPath はページプレビューのパスを生成します。
+func PagePreviewPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/preview", spaceIdentifier, pageNumber))
+}
+
 // SearchPath は検索のパスを生成します
 func SearchPath() Path {
 	return Path("/search")

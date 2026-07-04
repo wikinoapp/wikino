@@ -1,0 +1,134 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// DraftPageRevisionDiffData is the data passed to the DraftPageRevisionDiff component.
+// [Ja] DraftPageRevisionDiffData は DraftPageRevisionDiff コンポーネントに渡すデータです。
+type DraftPageRevisionDiffData struct {
+	Diff viewmodel.DraftPageRevisionDiff
+
+	// RestoreURL is the POST endpoint that restores the draft to this revision.
+	// [Ja] RestoreURL はこのリビジョンに下書きを復元する POST エンドポイント。
+	RestoreURL string
+
+	// CSRFToken is rendered into the inline restore form.
+	// [Ja] CSRFToken はインラインの復元フォームに埋め込む。
+	CSRFToken string
+
+	// IsCurrent reports whether the shown revision is the newest one. Restoring the draft to its
+	// current state only piles up a duplicate revision, so the restore button is hidden for it.
+	//
+	// [Ja] IsCurrent は表示中のリビジョンが最新かどうかを表す。現在の状態への復元は重複リビジョンを
+	// 積むだけのため、このとき復元ボタンを隠す。
+	IsCurrent bool
+}
+
+// revisionRestoreInitialID / revisionRestoreConfirmID identify the two states of the inline
+// restore confirmation inside the diff modal. Fixed ids are safe: the modal exists once per page
+// and the fragment is re-rendered fresh on every revision click, resetting the state.
+//
+// [Ja] revisionRestoreInitialID / revisionRestoreConfirmID は差分モーダル内のインライン復元確認の
+// 2 状態を識別する。モーダルはページに 1 つだけ存在し、フラグメントはリビジョンクリックのたびに
+// 描画し直されて状態がリセットされるため、固定 id で安全。
+const revisionRestoreInitialID = "page-edit-revision-restore-initial"
+
+const revisionRestoreConfirmID = "page-edit-revision-restore-confirm"
+
+// revisionRestoreShowConfirmScript swaps the restore button for the inline confirmation (and
+// revisionRestoreHideConfirmScript swaps it back). Both are compile-time constants built from
+// the id constants above, so passing them through templ.JSUnsafeFuncCall is safe.
+//
+// [Ja] revisionRestoreShowConfirmScript は復元ボタンをインライン確認に置き換える
+// (revisionRestoreHideConfirmScript はその逆)。どちらも上記の id 定数から組み立てた
+// コンパイル時定数のため、templ.JSUnsafeFuncCall に渡しても安全。
+const revisionRestoreShowConfirmScript = "document.getElementById('" + revisionRestoreInitialID + "').classList.add('hidden');" +
+	"document.getElementById('" + revisionRestoreConfirmID + "').classList.remove('hidden')"
+
+const revisionRestoreHideConfirmScript = "document.getElementById('" + revisionRestoreConfirmID + "').classList.add('hidden');" +
+	"document.getElementById('" + revisionRestoreInitialID + "').classList.remove('hidden')"
+
+// DraftPageRevisionDiff renders the diff fragment shown inside the revision diff modal on the
+// page editor: the revision's creation time, the title change (old → new, mirroring the
+// suggestion diff display) and the body diff blocks.
+//
+// [Ja] DraftPageRevisionDiff はページ編集画面のリビジョン差分モーダル内に表示する差分
+// フラグメントを描画します。リビジョンの作成日時、タイトルの変更 (新旧の矢印表示。編集提案の
+// 差分表示に揃える)、本文の差分ブロックを表示します。
+templ DraftPageRevisionDiff(data DraftPageRevisionDiffData) {
+	<div class="flex flex-col gap-4">
+		if data.Diff.HasTitleChange {
+			<div class="flex flex-col gap-1">
+				<h3 class="text-sm font-bold antialiased">
+					{ templates.T(ctx, "page_edit_revision_diff_title_change") }
+				</h3>
+				<div class="flex items-center gap-1">
+					if data.Diff.OldTitle != "" {
+						<span class="text-sm">
+							{ data.Diff.OldTitle }
+						</span>
+						@templates.Icon("arrow-right-regular", "size-3")
+					}
+					<span class="text-sm font-semibold">
+						{ data.Diff.NewTitle }
+					</span>
+				</div>
+			</div>
+		}
+
+		@DiffView(DiffViewData{Blocks: data.Diff.BodyBlocks})
+
+		// "Restore this version": clicking swaps the button area for an inline confirmation
+		// (no second modal). Confirming submits a regular POST so the editor reloads with the
+		// restored content. The newest revision already is the draft's current state, so
+		// restoring to it is a meaningless no-op; the restore area is hidden for it.
+		//
+		// [Ja] 「このバージョンに戻す」: クリックでボタン領域がインライン確認に置き換わる
+		// (2 重モーダルにしない)。確定は通常の POST 送信で、エディタが復元後の内容で再読み込み
+		// される。最新リビジョンは下書きの現在状態そのものなので、そこへの復元は無意味な no-op に
+		// なる。そのため最新リビジョンでは復元領域を隠す。
+		if !data.IsCurrent {
+			<div class="border-t border-border pt-4">
+				<div id={ revisionRestoreInitialID }>
+					<button
+						type="button"
+						class="btn-outline rounded-full w-fit"
+						onclick={ templ.JSUnsafeFuncCall(revisionRestoreShowConfirmScript) }
+					>
+						@templates.Icon("clock-counter-clockwise-regular")
+						{ templates.T(ctx, "page_edit_revision_diff_restore_button") }
+					</button>
+				</div>
+
+				<div id={ revisionRestoreConfirmID } class="hidden">
+					<div class="flex flex-col gap-2">
+						<p class="text-sm">
+							{ templates.T(ctx, "page_edit_revision_diff_restore_confirm_message") }
+						</p>
+
+						<div class="flex items-center gap-2">
+							<form method="POST" action={ templ.SafeURL(data.RestoreURL) }>
+								<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+								<button type="submit" class="btn-primary rounded-full w-fit">
+									@templates.Icon("clock-counter-clockwise-regular")
+									{ templates.T(ctx, "page_edit_revision_diff_restore_confirm_button") }
+								</button>
+							</form>
+
+							<button
+								type="button"
+								class="btn-outline rounded-full w-fit"
+								onclick={ templ.JSUnsafeFuncCall(revisionRestoreHideConfirmScript) }
+							>
+								{ templates.T(ctx, "page_edit_revision_diff_restore_cancel_button") }
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+}

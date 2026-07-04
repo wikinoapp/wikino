@@ -11,7 +11,7 @@ import (
 type ShowPageData struct {
 	ActiveSpaces []viewmodel.Space
 	JoinedTopics []viewmodel.CardLinkTopic
-	DraftPages   []viewmodel.DraftPageCard
+	DraftPages   []viewmodel.CardLinkDraftPage
 }
 
 // Show renders the home page content.
@@ -105,7 +105,7 @@ templ Show(data ShowPageData) {
 							} else {
 								<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
 									for _, draft := range data.DraftPages {
-										@draftPageCard(draft)
+										@components.CardLinkDraftPage(draft)
 									}
 								</div>
 							}
@@ -142,47 +142,6 @@ templ spaceCard(space viewmodel.Space) {
 					<div class="line-clamp-2 text-sm font-bold">
 						{ space.Name }
 					</div>
-				</div>
-			</a>
-		</div>
-	</div>
-}
-
-// draftPageCard は下書きページのカードを表示します
-templ draftPageCard(draft viewmodel.DraftPageCard) {
-	<div class="card min-h-[96px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
-		<div class="card-body h-full">
-			<a
-				class="h-full"
-				href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
-			>
-				<div class="flex flex-1 flex-col gap-1 px-3 py-2 h-full">
-					<div class="flex items-center gap-1 min-w-0">
-						<div class="flex items-center gap-1 min-w-0">
-							@components.SpaceIcon(components.SpaceIconData{
-								Space: draft.SpaceForIcon(),
-								Size:  components.SpaceIconSizeSm,
-							})
-
-							<span class="text-xs text-muted-foreground line-clamp-1 shrink min-w-0">
-								{ draft.SpaceName }
-							</span>
-						</div>
-
-						<span class="text-xs text-muted-foreground shrink-0">/</span>
-
-						<div class="flex items-center gap-0.5 min-w-0">
-							@templates.Icon(draft.TopicIconName, "flex-none size-4 fill-muted-foreground")
-
-							<span class="text-xs text-muted-foreground line-clamp-1 shrink min-w-0">
-								{ draft.TopicName }
-							</span>
-						</div>
-					</div>
-
-					<span class="line-clamp-3 text-sm font-bold">
-						{ draft.DisplayTitle(ctx) }
-					</span>
 				</div>
 			</a>
 		</div>

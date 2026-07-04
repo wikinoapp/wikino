@@ -1,7 +1,7 @@
 shared:
   app_url: <%= ENV["WIKINO_URL"] %>
-  asset_version: <%= ENV["WIKINO_ASSET_VERSION"] %>
   email_domain: <%= ENV["WIKINO_EMAIL_DOMAIN"] %>
+  git_rev: <%= ENV["GIT_REV"] %>
   host: "<%= (Rails.env.test? && !ENV['CI']) ? `hostname`.strip.downcase : ENV['WIKINO_DOMAIN'] %>"
   resend_api_key: <%= ENV["WIKINO_RESEND_API_KEY"] %>
   reserved_atnames:

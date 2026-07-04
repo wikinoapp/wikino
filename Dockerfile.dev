@@ -176,6 +176,28 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt update && \
     apt install -y --no-install-recommends gh
 
+# --- Playwright browser (Go E2E) ---
+# [Ja] Playwright ブラウザ (Go E2E)
+#
+# Pin to the @playwright/test version in go/e2e/pnpm-lock.yaml; the bundled
+# Chromium build is tied to it, so bump them together. Install into a shared
+# path (PLAYWRIGHT_BROWSERS_PATH) as root so install-deps can run apt, then
+# chown it to the developer user that runs the tests. ~/.cache/ms-playwright
+# is not a mounted volume, so baking the browser into the image avoids
+# re-downloading it on every container recreation.
+#
+# [Ja] go/e2e/pnpm-lock.yaml の @playwright/test に固定する。同梱の Chromium
+# ビルドはこれに紐づくため揃えて更新する。install-deps が apt を要するため root で
+# 共有パス (PLAYWRIGHT_BROWSERS_PATH) に入れ、テストを実行する developer ユーザーに
+# chown する。~/.cache/ms-playwright はマウントされたボリュームではないため、
+# ブラウザをイメージに焼き込むとコンテナ再作成のたびの再ダウンロードを避けられる。
+ARG PLAYWRIGHT_VERSION=1.58.2
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    npx --yes playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium && \
+    chown -R ${USER_ID}:${GROUP_ID} /ms-playwright
+
 # --- Create the developer user ---
 # [Ja] 開発者ユーザーを作成する
 RUN groupadd -g ${GROUP_ID} ${USERNAME} && \

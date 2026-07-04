@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-func TestDraftPageCard_DisplayTitle(t *testing.T) {
+func TestCardLinkDraftPage_DisplayTitle(t *testing.T) {
 	t.Parallel()
 
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
@@ -22,7 +22,7 @@ func TestDraftPageCard_DisplayTitle(t *testing.T) {
 				Space: &model.Space{Identifier: "space-a", Name: "スペースA"},
 			},
 		}
-		card := viewmodel.NewDraftPageCard(draft)
+		card := viewmodel.NewCardLinkDraftPage(draft)
 
 		if got := card.DisplayTitle(ctx); got != "下書きタイトル" {
 			t.Errorf("DisplayTitle() = %q, want %q", got, "下書きタイトル")
@@ -39,7 +39,7 @@ func TestDraftPageCard_DisplayTitle(t *testing.T) {
 				Space: &model.Space{Identifier: "space-a", Name: "スペースA"},
 			},
 		}
-		card := viewmodel.NewDraftPageCard(draft)
+		card := viewmodel.NewCardLinkDraftPage(draft)
 
 		if got := card.DisplayTitle(ctx); got != "公開ページタイトル" {
 			t.Errorf("DisplayTitle() = %q, want %q", got, "公開ページタイトル")
@@ -55,7 +55,7 @@ func TestDraftPageCard_DisplayTitle(t *testing.T) {
 				Space: &model.Space{Identifier: "space-a", Name: "スペースA"},
 			},
 		}
-		card := viewmodel.NewDraftPageCard(draft)
+		card := viewmodel.NewCardLinkDraftPage(draft)
 
 		if got := card.DisplayTitle(ctx); got != "公開ページタイトル" {
 			t.Errorf("DisplayTitle() = %q, want %q", got, "公開ページタイトル")
@@ -71,7 +71,7 @@ func TestDraftPageCard_DisplayTitle(t *testing.T) {
 				Space: &model.Space{Identifier: "space-a", Name: "スペースA"},
 			},
 		}
-		card := viewmodel.NewDraftPageCard(draft)
+		card := viewmodel.NewCardLinkDraftPage(draft)
 
 		if got := card.DisplayTitle(ctx); got != "無題" {
 			t.Errorf("DisplayTitle() = %q, want %q", got, "無題")
@@ -79,7 +79,7 @@ func TestDraftPageCard_DisplayTitle(t *testing.T) {
 	})
 }
 
-func TestNewDraftPageCard_FieldMapping(t *testing.T) {
+func TestNewCardLinkDraftPage_FieldMapping(t *testing.T) {
 	t.Parallel()
 
 	t.Run("公開トピックは globe-regular アイコンを設定する", func(t *testing.T) {
@@ -92,7 +92,7 @@ func TestNewDraftPageCard_FieldMapping(t *testing.T) {
 				Space:      &model.Space{Identifier: "space-a", Name: "スペースA"},
 			},
 		}
-		card := viewmodel.NewDraftPageCard(draft)
+		card := viewmodel.NewCardLinkDraftPage(draft)
 
 		if card.SpaceName != "スペースA" {
 			t.Errorf("SpaceName = %q, want %q", card.SpaceName, "スペースA")
@@ -121,7 +121,7 @@ func TestNewDraftPageCard_FieldMapping(t *testing.T) {
 				Space:      &model.Space{Identifier: "space-a", Name: "スペースA"},
 			},
 		}
-		card := viewmodel.NewDraftPageCard(draft)
+		card := viewmodel.NewCardLinkDraftPage(draft)
 
 		if card.TopicIconName != "lock-regular" {
 			t.Errorf("TopicIconName = %q, want %q", card.TopicIconName, "lock-regular")
@@ -129,7 +129,7 @@ func TestNewDraftPageCard_FieldMapping(t *testing.T) {
 	})
 }
 
-func TestNewDraftPageCards(t *testing.T) {
+func TestNewCardLinkDraftPages(t *testing.T) {
 	t.Parallel()
 
 	drafts := []*model.DraftPage{
@@ -145,9 +145,47 @@ func TestNewDraftPageCards(t *testing.T) {
 		},
 	}
 
-	cards := viewmodel.NewDraftPageCards(drafts)
+	cards := viewmodel.NewCardLinkDraftPages(drafts)
 	if len(cards) != 2 {
 		t.Fatalf("len(cards) = %d, want 2", len(cards))
+	}
+	if cards[0].TopicName != "T1" || cards[1].TopicName != "T2" {
+		t.Errorf("topic names mismatch: got %q, %q", cards[0].TopicName, cards[1].TopicName)
+	}
+}
+
+func TestNewCardLinkDraftPagesWithoutSpace(t *testing.T) {
+	t.Parallel()
+
+	drafts := []*model.DraftPage{
+		{
+			Title: strPtr("下書き1"),
+			Page:  &model.Page{Number: 1},
+			Topic: &model.Topic{Name: "T1", Space: &model.Space{Identifier: "s1", Name: "S1"}},
+		},
+		{
+			Title: strPtr("下書き2"),
+			Page:  &model.Page{Number: 2},
+			Topic: &model.Topic{Name: "T2", Space: &model.Space{Identifier: "s2", Name: "S2"}},
+		},
+	}
+
+	cards := viewmodel.NewCardLinkDraftPagesWithoutSpace(drafts)
+	if len(cards) != 2 {
+		t.Fatalf("len(cards) = %d, want 2", len(cards))
+	}
+
+	for i, card := range cards {
+		// SpaceName must be empty so the editor omits the space label.
+		// [Ja] スペース名は空 (編集画面ではスペースラベルを表示しない)
+		if card.SpaceName != "" {
+			t.Errorf("cards[%d].SpaceName = %q, want empty", i, card.SpaceName)
+		}
+		// SpaceIdentifier is kept for the page editor link.
+		// [Ja] リンク生成に必要な SpaceIdentifier は保持する
+		if card.SpaceIdentifier == "" {
+			t.Errorf("cards[%d].SpaceIdentifier should be kept, got empty", i)
+		}
 	}
 	if cards[0].TopicName != "T1" || cards[1].TopicName != "T2" {
 		t.Errorf("topic names mismatch: got %q, %q", cards[0].TopicName, cards[1].TopicName)

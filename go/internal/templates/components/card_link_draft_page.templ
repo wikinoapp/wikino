@@ -1,0 +1,59 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// CardLinkDraftPage renders a reusable draft page card shared by the home page's "draft pages"
+// section and the page editor's draft list column. The card links to the page editor and shows
+// the topic name plus the draft title. The space label (icon and name) is shown only when the
+// draft carries a space name: the home page lists drafts across spaces and passes it, while the
+// editor stays within a single space and omits it.
+//
+// [Ja] CardLinkDraftPage はホーム画面の「下書きのページ」セクションとページ編集画面の下書き一覧
+// カラムで共有する、再利用可能な下書きカードを表示する。カードはページ編集画面へリンクし、
+// トピック名と下書きタイトルを表示する。スペースラベル (アイコンと名前) は下書きがスペース名を
+// 保持しているときのみ表示する。ホーム画面はスペース横断の一覧のため渡し、編集画面は同一スペース
+// 内のため渡さない。
+templ CardLinkDraftPage(draft viewmodel.CardLinkDraftPage) {
+	<div class="card min-h-[96px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
+		<div class="card-body h-full">
+			<a
+				class="h-full"
+				href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
+			>
+				<div class="flex flex-1 flex-col gap-1 px-3 py-2 h-full">
+					<div class="flex items-center gap-1 min-w-0">
+						if draft.SpaceName != "" {
+							<div class="flex items-center gap-1 min-w-0">
+								@SpaceIcon(SpaceIconData{
+									Space: draft.SpaceForIcon(),
+									Size:  SpaceIconSizeSm,
+								})
+
+								<span class="text-xs text-muted-foreground line-clamp-1 shrink min-w-0">
+									{ draft.SpaceName }
+								</span>
+							</div>
+
+							<span class="text-xs text-muted-foreground shrink-0">/</span>
+						}
+
+						<div class="flex items-center gap-0.5 min-w-0">
+							@templates.Icon(draft.TopicIconName, "flex-none size-4 fill-muted-foreground")
+
+							<span class="text-xs text-muted-foreground line-clamp-1 shrink min-w-0">
+								{ draft.TopicName }
+							</span>
+						</div>
+					</div>
+
+					<span class="line-clamp-3 text-sm font-bold">
+						{ draft.DisplayTitle(ctx) }
+					</span>
+				</div>
+			</a>
+		</div>
+	</div>
+}

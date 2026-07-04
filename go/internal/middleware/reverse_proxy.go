@@ -104,8 +104,29 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
+	// Preview fragment (POST /s/:identifier/pages/:number/preview). The Go route is
+	// POST-only, so restrict the method; otherwise the request falls through to Rails,
+	// which has no such route and returns a RoutingError.
+	//
+	// [Ja] プレビュー用フラグメント (POST /s/:identifier/pages/:number/preview)。Go ルートは
+	// POST のみなのでメソッドを限定する。限定しないとリクエストが Rails に転送され、Rails には
+	// このルートが無いため RoutingError になる。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/preview$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`)},
+	// Draft revision diff fragment (GET) and restore (POST). These plural + ID routes back the
+	// edit-history modal: show returns the diff fragment, restore reverts the draft to that
+	// revision. The Go routes are GET-only / POST-only respectively, so restrict the methods to
+	// match (mirroring the preview pattern above); otherwise the request falls through to Rails,
+	// which has no such route and returns a RoutingError.
+	//
+	// [Ja] 下書きリビジョンの差分フラグメント (GET) と復元 (POST)。これら複数形 + ID のルートは
+	// 編集履歴モーダルを支える。show は差分フラグメントを返し、restore は下書きをそのリビジョンへ
+	// 戻す。Go ルートはそれぞれ GET のみ・POST のみなので、上のプレビューパターンに揃えてメソッドを
+	// 限定する。限定しないとリクエストが Rails に転送され、Rails にはこのルートが無いため
+	// RoutingError になる。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revisions/[^/]+$`), methods: []string{http.MethodGet}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revisions/[^/]+/restore$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{"PATCH"}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`)},

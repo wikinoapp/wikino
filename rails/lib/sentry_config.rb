@@ -35,4 +35,17 @@ module SentryConfig
       default
     end
   end
+
+  # Resolve the Sentry release tag from a raw value (typically returned by
+  # `Wikino.config.git_rev`, sourced from Dokku's GIT_REV). Returns the value
+  # when present, or nil when blank so the initializer can skip the assignment
+  # and leave Sentry's auto-detection in place rather than overriding it with an
+  # empty string.
+  #
+  # [Ja] リリースタグの生値 (通常は Dokku の GIT_REV 由来の `Wikino.config.git_rev`)
+  # を解決する。値があればそのまま返し、空なら nil を返すことで、initializer 側が
+  # 代入をスキップして Sentry の自動検出を空文字で上書きせず残せるようにする。
+  def self.resolve_release(raw)
+    raw.presence
+  end
 end

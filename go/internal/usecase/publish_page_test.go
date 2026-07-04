@@ -932,3 +932,104 @@ func TestPublishPageUsecase_Execute_WithDraftPageRevisions(t *testing.T) {
 		t.Error("PublishedAt should not be zero")
 	}
 }
+
+// TestPublishPageUsecase_Execute_SharesPreviewRenderPath verifies that the body HTML
+// persisted by the publish save path is identical to what GetPagePreviewUsecase renders
+// for the same input. This locks in that both paths share a single markup pipeline
+// (markup.RenderHTML), so the page detail screen and the preview cannot diverge.
+//
+// [Ja] TestPublishPageUsecase_Execute_SharesPreviewRenderPath は、公開保存経路が永続化する
+// 本文 HTML が、同じ入力に対して GetPagePreviewUsecase がレンダリングするものと一致することを
+// 検証する。両経路が単一の markup パイプライン (markup.RenderHTML) を共有し、ページ詳細画面と
+// プレビューが乖離しないことを担保する。
+func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	pageRevisionRepo := repository.NewPageRevisionRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
+	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
+	publishUC := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
+	previewUC := NewGetPagePreviewUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, attachmentRepo)
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-preview-eq").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-preview-eq@example.com").
+		WithAtname("publishprevieweq").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	// 添付ファイルと Wiki リンクの両方を含む本文で、レンダリング経路の差が出やすい入力にする。
+	attachmentID := testutil.NewAttachmentBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		WithFilename("eq.png").
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Eq Test").
+		Build()
+
+	body := fmt.Sprintf("See [[リンク先ページ]]\n\n![image](/attachments/%s)", attachmentID)
+	testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Eq Test").
+		WithBody(body).
+		Build()
+
+	publishOutput, err := publishUC.Execute(context.Background(), PublishPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("publish-preview-eq"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Eq Test",
+		Body:            body,
+	})
+	if err != nil {
+		t.Fatalf("publish Execute() error = %v", err)
+	}
+
+	// 公開後はリンク先ページが作成済みのため、プレビューも同じリンクへ解決する。
+	previewOutput, err := previewUC.Execute(context.Background(), GetPagePreviewInput{
+		SpaceIdentifier: model.SpaceIdentifier("publish-preview-eq"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Eq Test",
+		Body:            body,
+	})
+	if err != nil {
+		t.Fatalf("preview Execute() error = %v", err)
+	}
+
+	if previewOutput.BodyHTML != publishOutput.Page.BodyHTML {
+		t.Errorf("preview BodyHTML differs from published BodyHTML:\npreview:   %q\npublished: %q", previewOutput.BodyHTML, publishOutput.Page.BodyHTML)
+	}
+}

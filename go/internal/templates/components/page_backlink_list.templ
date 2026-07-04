@@ -7,26 +7,25 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// PageBacklinkList はページレベルのバックリンク一覧を表示します。バックリンクが空でページネーションもない場合は何も表示しません。
+// PageBacklinkList renders the page-level backlink list, and renders nothing when
+// there are no backlinks and no further pages.
+// The heading (h2) lives in the caller so its style can differ per screen.
+//
+// [Ja] ページレベルのバックリンク一覧を表示します。バックリンクが空でページネーションもない場合は何も表示しません。
+// 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
 templ PageBacklinkList(data viewmodel.BacklinkList) {
 	if len(data.Items) > 0 || data.Pagination.HasNext {
-		<div class="flex flex-col gap-4">
-			<h2 class="text-2xl/8 font-bold antialiased">
-				{ templates.T(ctx, "page_edit_backlinks_heading") }
-			</h2>
-
-			<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-				for _, item := range data.Items {
-					@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
+		<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+			for _, item := range data.Items {
+				@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
+			}
+			<div
+				id="page-backlink-list-pagination"
+				class="contents"
+			>
+				if data.Pagination.HasNext {
+					@pageBacklinkListLoadMore(data)
 				}
-				<div
-					id="page-backlink-list-pagination"
-					class="contents"
-				>
-					if data.Pagination.HasNext {
-						@pageBacklinkListLoadMore(data)
-					}
-				</div>
 			</div>
 		</div>
 	}

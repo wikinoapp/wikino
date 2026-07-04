@@ -24,6 +24,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
+	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision_restore"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
@@ -34,6 +35,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_link_list"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_move"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_preview"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
@@ -86,7 +88,7 @@ func main() {
 	if err := wikinosentry.Init(wikinosentry.Config{
 		DSN:              cfg.SentryDSN,
 		Environment:      cfg.SentryEnvironment,
-		Release:          cfg.AssetVersion,
+		Release:          cfg.GitRev,
 		TracesSampleRate: cfg.SentryTracesSampleRate,
 		Debug:            cfg.SentryDebug,
 	}); err != nil {
@@ -312,6 +314,7 @@ func main() {
 		spaceMemberRepo,
 		pageRepo,
 		draftPageRepo,
+		draftPageRevisionRepo,
 		topicRepo,
 		topicMemberRepo,
 		suggestionPageRepo,
@@ -328,7 +331,6 @@ func main() {
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
-		sidebarHelper,
 	)
 	pageLocationHandler := page_location.NewHandler(
 		getPageLocationsUC,
@@ -362,9 +364,36 @@ func main() {
 		deleteDraftPageUC,
 		getEditLinkDataUC,
 	)
+	getDraftPageRevisionDiffUC := usecase.NewGetDraftPageRevisionDiffUsecase(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		draftPageRepo,
+		draftPageRevisionRepo,
+	)
 	draftPageRevisionHandler := draft_page_revision.NewHandler(
 		flashMgr,
 		manualSaveDraftPageUC,
+		getDraftPageRevisionDiffUC,
+		getPageDetailUC,
+	)
+	restoreDraftPageRevisionUC := usecase.NewRestoreDraftPageRevisionUsecase(
+		db,
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		pageEditorRepo,
+		topicRepo,
+		topicMemberRepo,
+		draftPageRepo,
+		draftPageRevisionRepo,
+		attachmentRepo,
+	)
+	draftPageRevisionRestoreHandler := draft_page_revision_restore.NewHandler(
+		flashMgr,
+		restoreDraftPageRevisionUC,
 	)
 	pageBacklinkListHandler := page_backlink_list.NewHandler(
 		getBacklinkListUC,
@@ -374,6 +403,10 @@ func main() {
 	)
 	pageLinkListHandler := page_link_list.NewHandler(
 		getLinkListUC,
+	)
+	getPagePreviewUC := usecase.NewGetPagePreviewUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	pagePreviewHandler := page_preview.NewHandler(
+		getPagePreviewUC,
 	)
 	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	pageMoveHandler := page_move.NewHandler(
@@ -672,6 +705,7 @@ func main() {
 		// ページ編集・公開
 		r.Get("/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)
 		r.Patch("/s/{space_identifier}/pages/{page_number}", pageHandler.Update)
+		r.Post("/s/{space_identifier}/pages/{page_number}/preview", pagePreviewHandler.Create)
 
 		// 下書きページSSE・自動保存API
 		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page", draftPageHandler.Show)
@@ -680,6 +714,14 @@ func main() {
 
 		// 下書きリビジョン手動保存
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page_revision", draftPageRevisionHandler.Update)
+
+		// Draft page revision diff fragment (htmx).
+		// [Ja] 下書きリビジョン差分フラグメント (htmx)。
+		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}", draftPageRevisionHandler.Show)
+
+		// Draft page revision restore.
+		// [Ja] 下書きリビジョン復元。
+		r.Post("/s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}/restore", draftPageRevisionRestoreHandler.Create)
 
 		// リンク一覧（htmx）
 		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)

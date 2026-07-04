@@ -13,6 +13,14 @@ other = "Wikino is a wiki application for sharing and organizing information onl
 description = "Dismiss button label for the flash message"
 other = "Dismiss"
 
+[dialog_close]
+description = "Close button label for dialogs"
+other = "Close"
+
+[drawer_close]
+description = "Close button label for drawers"
+other = "Close"
+
 [label_error]
 description = "Generic error label"
 other = "Error"
@@ -483,7 +491,7 @@ other = "Wikino is a web service where you can create and share wikis."
 
 [welcome_screenshot_alt]
 description = "Alt text for the welcome page screenshot image"
-other = "Screenshot of Wikino"
+other = "Screenshot of Wikino's page edit screen, showing the editor, links to drafts, and draft revision history."
 
 [welcome_features_title]
 description = "Welcome page features section heading"
@@ -689,9 +697,89 @@ other = "Publish to topic"
 description = "Label for the cancel link"
 other = "Cancel"
 
+[page_edit_tabs_label]
+description = "Label for the edit/preview tab group on the page edit screen"
+other = "Edit and preview"
+
+[page_edit_tab_edit]
+description = "Label for the edit tab on the page edit screen"
+other = "Edit"
+
+[page_edit_tab_preview]
+description = "Label for the preview tab on the page edit screen"
+other = "Preview"
+
+[page_edit_zen_mode_button]
+description = "Label for the Zen mode toggle button on the page edit screen"
+other = "Zen mode"
+
+[page_edit_preview_loading]
+description = "Loading text shown while generating the preview on the page edit screen"
+other = "Generating preview..."
+
 [page_edit_current_page_is_draft]
 description = "Alert message when viewing a draft"
 other = "You are currently viewing a draft."
+
+[page_edit_draft_pages_heading]
+description = "Heading for the draft list column on the page edit screen"
+other = "Drafts"
+
+[page_edit_draft_pages_view_all_link]
+description = "Link text from the page edit screen draft list column to the draft pages index"
+other = "View all"
+
+[page_edit_draft_pages_toggle_label]
+description = "Label for the button that opens the draft list column on the page edit screen (narrow screens)"
+other = "Drafts"
+
+[page_edit_draft_pages_empty]
+description = "Empty state text shown in the page edit screen draft list column when there are no drafts"
+other = "No drafts yet."
+
+[page_edit_revisions_heading]
+description = "Heading for the edit history column on the page edit screen"
+other = "Draft edit history"
+
+[page_edit_revisions_toggle_label]
+description = "Label for the button that opens the edit history column on the page edit screen (narrow screens)"
+other = "Edit history"
+
+[page_edit_revisions_empty]
+description = "Empty state text shown in the page edit screen edit history column when there are no revisions"
+other = "Your draft edits will appear here after you save."
+
+[page_edit_revisions_current_badge]
+description = "Badge shown on the newest revision in the page edit screen edit history column"
+other = "Current"
+
+[page_edit_revision_diff_heading]
+description = "Heading of the revision diff modal on the page edit screen"
+other = "Changes"
+
+[page_edit_revision_diff_title_change]
+description = "Title change label in the revision diff modal"
+other = "Title change"
+
+[page_edit_revision_diff_loading]
+description = "Loading text shown while fetching the diff in the revision diff modal"
+other = "Loading diff..."
+
+[page_edit_revision_diff_restore_button]
+description = "Restore button in the revision diff modal"
+other = "Restore this version"
+
+[page_edit_revision_diff_restore_confirm_message]
+description = "Inline restore confirmation message in the revision diff modal"
+other = "Really restore this version?"
+
+[page_edit_revision_diff_restore_confirm_button]
+description = "Restore confirm button in the revision diff modal"
+other = "Restore"
+
+[page_edit_revision_diff_restore_cancel_button]
+description = "Restore cancel button in the revision diff modal"
+other = "Cancel"
 
 [page_edit_links_heading]
 description = "Heading for the link list on the page edit screen"
@@ -724,6 +812,10 @@ other = "Save Draft and Create Suggestion..."
 [page_edit_draft_saved_time]
 description = "Auto-saved time display"
 other = "Auto-saved: <span class=\"font-bold\">{{.Time}}</span>"
+
+[page_edit_draft_manual_saved_time]
+description = "Manually saved time display"
+other = "Saved: <span class=\"font-bold\">{{.Time}}</span>"
 
 [page_edit_suggestion_editing]
 description = "Message shown when editing a page for a suggestion"
@@ -767,6 +859,10 @@ other = "Page saved."
 [flash_draft_page_saved]
 description = "Draft page saved success message"
 other = "Draft saved."
+
+[flash_draft_page_revision_restored]
+description = "Draft page revision restored success message"
+other = "Restored the draft to the selected version."
 
 # Suggestion page update success
 [flash_suggestion_page_updated]
