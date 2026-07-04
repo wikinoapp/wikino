@@ -71,7 +71,7 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	req.Body = toReadCloser(form.Encode())
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	// Send the Zen mode cookie to verify the validation-error re-render also keeps Zen mode on.
-	// [Ja] バリデーションエラーの再描画でも Zen モードが維持されることを検証するため、Zen モードクッキーを送る。
+	// [Ja] バリデーションエラーの再描画でも Zenモードが維持されることを検証するため、Zenモードクッキーを送る。
 	req.AddCookie(&http.Cookie{Name: "wikino_zen_mode", Value: "1"})
 
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
@@ -113,7 +113,7 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	// class attribute because the bare "page-edit-zen" substring also matches the always-present
 	// Tailwind variant classes (in-[.page-edit-zen]:lg:hidden etc.).
 	//
-	// [Ja] 再描画されたエディタにクッキー由来の Zen モードクラスが付くこと。"page-edit-zen" の
+	// [Ja] 再描画されたエディタにクッキー由来の Zenモードクラスが付くこと。"page-edit-zen" の
 	// 部分一致では常に存在する Tailwind バリアントクラス (in-[.page-edit-zen]:lg:hidden など) にも
 	// マッチしてしまうため、class 属性全体で検証する。
 	if !strings.Contains(body, `class="max-w-6xl w-full mx-auto lg:px-4 page-edit-zen"`) {
