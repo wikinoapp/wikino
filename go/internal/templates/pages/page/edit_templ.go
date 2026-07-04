@@ -66,7 +66,7 @@ const revisionDiffLoadingID = "page-edit-revision-diff-loading"
 // template, and the toggle script (web/zen-mode.ts) flips the same class, so keep the three in
 // sync.
 //
-// [Ja] zenModeClass は Zen モードに入るときエディタコンテナ ([data-zen-mode-container]) に
+// [Ja] zenModeClass は Zenモードに入るときエディタコンテナ ([data-zen-mode-container]) に
 // 付け外しするクラス。子孫要素は本テンプレート内の Tailwind の in-[.page-edit-zen]: バリアントで
 // 反応し、切り替えスクリプト (web/zen-mode.ts) も同じクラスを反転するため、三者を同期させること。
 const zenModeClass = "page-edit-zen"
@@ -109,7 +109,7 @@ type EditPageData struct {
 	// ZenMode is the initial Zen mode state read from the cookie. Rendering the initial class on
 	// the server avoids a layout flash that would occur if the client toggled it after first paint.
 	//
-	// [Ja] ZenMode はクッキーから読み取った Zen モードの初期状態。サーバー側で初期クラスを描画する
+	// [Ja] ZenMode はクッキーから読み取った Zenモードの初期状態。サーバー側で初期クラスを描画する
 	// ことで、初回描画後にクライアントで切り替えた場合に起きるレイアウトのちらつきを防ぐ。
 	ZenMode bool
 }

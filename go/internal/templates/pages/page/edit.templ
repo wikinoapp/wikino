@@ -59,7 +59,7 @@ const revisionDiffLoadingID = "page-edit-revision-diff-loading"
 // template, and the toggle script (web/zen-mode.ts) flips the same class, so keep the three in
 // sync.
 //
-// [Ja] zenModeClass は Zen モードに入るときエディタコンテナ ([data-zen-mode-container]) に
+// [Ja] zenModeClass は Zenモードに入るときエディタコンテナ ([data-zen-mode-container]) に
 // 付け外しするクラス。子孫要素は本テンプレート内の Tailwind の in-[.page-edit-zen]: バリアントで
 // 反応し、切り替えスクリプト (web/zen-mode.ts) も同じクラスを反転するため、三者を同期させること。
 const zenModeClass = "page-edit-zen"
@@ -102,7 +102,7 @@ type EditPageData struct {
 	// ZenMode is the initial Zen mode state read from the cookie. Rendering the initial class on
 	// the server avoids a layout flash that would occur if the client toggled it after first paint.
 	//
-	// [Ja] ZenMode はクッキーから読み取った Zen モードの初期状態。サーバー側で初期クラスを描画する
+	// [Ja] ZenMode はクッキーから読み取った Zenモードの初期状態。サーバー側で初期クラスを描画する
 	// ことで、初回描画後にクライアントで切り替えた場合に起きるレイアウトのちらつきを防ぐ。
 	ZenMode bool
 }
@@ -139,13 +139,13 @@ templ Edit(data EditPageData) {
 			// The Zen mode class is rendered on the server from the cookie so the page opens in the
 			// saved mode without a layout flash. The toggle script flips the class client-side only.
 			//
-			// [Ja] Zen モードのクラスはクッキーを基にサーバー側で描画し、保存されたモードのまま
+			// [Ja] Zenモードのクラスはクッキーを基にサーバー側で描画し、保存されたモードのまま
 			// ちらつきなく開けるようにする。切り替えスクリプトはクライアント側でクラスを反転するだけ。
 			<div class={ "max-w-6xl w-full mx-auto lg:px-4", templ.KV(zenModeClass, data.ZenMode) } data-zen-mode-container>
 				// In Zen mode the 3-column grid collapses to a single block: with both side columns
 				// hidden, keeping the grid would leave two empty 14rem tracks around the center column.
 				//
-				// [Ja] Zen モードでは 3 カラムグリッドを単一ブロックに解除する。左右カラム非表示のまま
+				// [Ja] Zenモードでは 3 カラムグリッドを単一ブロックに解除する。左右カラム非表示のまま
 				// グリッドを残すと、中央カラムの両側に空の 14rem トラックが残ってしまうため。
 				<div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)_14rem] lg:gap-2 in-[.page-edit-zen]:lg:block">
 					<aside class="hidden lg:block in-[.page-edit-zen]:lg:hidden">
@@ -156,8 +156,8 @@ templ Edit(data EditPageData) {
 					// The variant is gated to lg because Zen only reshapes the desktop layout; on
 					// mobile the column keeps max-w-3xl.
 					//
-					// [Ja] Zen モードでは中央カラムを max-w-3xl (48rem) から 4xl (56rem) へ広げる。
-					// バリアントを lg 限定にするのは、Zen がデスクトップのレイアウトだけを変えるため。
+					// [Ja] Zenモードでは中央カラムを max-w-3xl (48rem) から 4xl (56rem) へ広げる。
+					// バリアントを lg 限定にするのは、Zenがデスクトップのレイアウトだけを変えるため。
 					// モバイルでは中央カラムは max-w-3xl のままにする。
 					<div class="max-w-3xl w-full mx-auto min-w-0 in-[.page-edit-zen]:lg:max-w-4xl">
 						<div class="flex flex-col gap-4">
@@ -236,7 +236,7 @@ templ Edit(data EditPageData) {
 										// styles match [role=tablist] by descendant selector, so wrapping the nav in
 										// a flex row does not break them.
 										//
-										// [Ja] Zen モードのトグルはタブ行の右端に置く。Basecoat の tabs スタイルは
+										// [Ja] Zenモードのトグルはタブ行の右端に置く。Basecoat の tabs スタイルは
 										// [role=tablist] を子孫セレクタで対象にするため、nav を flex 行で包んでも崩れない。
 										<div class="flex items-center justify-between gap-2">
 											<nav
@@ -296,9 +296,9 @@ templ Edit(data EditPageData) {
 											//
 											// [Ja] トグルはクライアント側でクラスを反転してクッキーへ保存するだけ
 											// なので、タブではなくタブリスト外の通常のボタンとして置く。lg 未満で
-											// 非表示にするのは、Zen がデスクトップの 3 カラムグリッドしか変えないため。
+											// 非表示にするのは、Zenがデスクトップの 3 カラムグリッドしか変えないため。
 											// モバイルには畳むサイドカラムが無く、トグルが見えないままドロワーボタンや
-											// 一覧を隠すと、デスクトップで Zen を有効にしたユーザーがモバイルで戻せなくなる。
+											// 一覧を隠すと、デスクトップで Zenを有効にしたユーザーがモバイルで戻せなくなる。
 											<button
 												type="button"
 												class="hidden lg:inline-flex btn-sm-outline rounded-full w-fit"

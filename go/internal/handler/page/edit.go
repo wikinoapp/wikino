@@ -22,13 +22,13 @@ import (
 // cookie's absence). It is written by web/zen-mode.ts, so it is not HttpOnly; keep the name in
 // sync with that script.
 //
-// [Ja] zenModeCookieName はエディタの Zen モード状態を保持するクッキー ("1" で ON。OFF は
+// [Ja] zenModeCookieName はエディタの Zenモード状態を保持するクッキー ("1" で ON。OFF は
 // クッキーなし)。web/zen-mode.ts が書き込むため HttpOnly ではない。名前は同スクリプトと
 // 同期させること。
 const zenModeCookieName = "wikino_zen_mode"
 
 // zenModeFromRequest reads the Zen mode state from the request cookie.
-// [Ja] zenModeFromRequest はリクエストのクッキーから Zen モード状態を読み取ります。
+// [Ja] zenModeFromRequest はリクエストのクッキーから Zenモード状態を読み取ります。
 func zenModeFromRequest(r *http.Request) bool {
 	cookie, err := r.Cookie(zenModeCookieName)
 	return err == nil && cookie.Value == "1"

@@ -1341,7 +1341,7 @@ func TestEdit_ZenMode(t *testing.T) {
 			if !strings.Contains(body, "data-zen-mode-toggle") {
 				t.Error("zen mode toggle button not found in response")
 			}
-			if !strings.Contains(body, "Zen モード") {
+			if !strings.Contains(body, "Zenモード") {
 				t.Error("zen mode button label not found in response")
 			}
 
@@ -1368,7 +1368,7 @@ func TestEdit_ZenMode(t *testing.T) {
 			// the side columns and link/backlink lists hide, the grid collapses, and the center
 			// column widens only at lg. On mobile there are no side columns to collapse.
 			//
-			// [Ja] Zen モードはデスクトップ (lg 以上) のレイアウトだけを変えるため、Zen バリアントは
+			// [Ja] Zenモードはデスクトップ (lg 以上) のレイアウトだけを変えるため、Zenバリアントは
 			// すべて lg 限定になる (左右カラム・リンク / バックリンク一覧の非表示、グリッド解除、
 			// 中央カラムの拡幅はいずれも lg でのみ効く)。モバイルには畳む対象のサイドカラムが無い。
 
@@ -1376,7 +1376,7 @@ func TestEdit_ZenMode(t *testing.T) {
 			// the always-lg-hidden side columns rather than the link/backlink section, which now
 			// shares the same in-[.page-edit-zen]:lg:hidden variant.
 			//
-			// [Ja] 左右サイドカラムは Zen 非表示を lg でラップする。同じ in-[.page-edit-zen]:lg:hidden
+			// [Ja] 左右サイドカラムは Zen非表示を lg でラップする。同じ in-[.page-edit-zen]:lg:hidden
 			// バリアントを持つようになったリンク / バックリンクセクションではなく、常に lg 非表示の
 			// サイドカラムに固定するため、class 属性全体で検証する。
 			if !strings.Contains(body, `class="hidden lg:block in-[.page-edit-zen]:lg:hidden"`) {
@@ -1386,7 +1386,7 @@ func TestEdit_ZenMode(t *testing.T) {
 			// mobile even when the Zen cookie is set (asserted on the full class to pin it to the
 			// link section, not the always-lg-hidden side columns).
 			//
-			// [Ja] リンク / バックリンク一覧セクションは Zen 非表示を lg でラップし、Zen クッキーが
+			// [Ja] リンク / バックリンク一覧セクションは Zen非表示を lg でラップし、Zenクッキーが
 			// 設定されていてもモバイルでは一覧を表示したままにする (常に lg 非表示のサイドカラムでは
 			// なくリンクセクションに固定するため、class 属性全体で検証する)。
 			if !strings.Contains(body, `class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:lg:hidden"`) {
@@ -1402,7 +1402,7 @@ func TestEdit_ZenMode(t *testing.T) {
 			// hidden toggle with Zen on would trap the mobile user), and restored to inline-flex at
 			// lg. Assert on the full class so it stays pinned to the toggle button.
 			//
-			// [Ja] Zen トグルは lg 未満で非表示にし (モバイルには畳むサイドカラムが無く、Zen ON の
+			// [Ja] Zenトグルは lg 未満で非表示にし (モバイルには畳むサイドカラムが無く、Zen ON の
 			// ままトグルが無いとモバイルのユーザーが戻せなくなる)、lg で inline-flex に戻す。
 			// トグルボタンに固定するため class 属性全体で検証する。
 			if !strings.Contains(body, `class="hidden lg:inline-flex btn-sm-outline rounded-full w-fit"`) {

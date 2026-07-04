@@ -5,7 +5,7 @@
 // reopens in the same mode. The server renders the initial class from the cookie, so this script
 // only handles toggling. Event delegation keeps the wiring working for content swapped in later.
 //
-// [Ja] ページエディタの Zen モード切り替え。[data-zen-mode-toggle] のクリックで
+// [Ja] ページエディタの Zenモード切り替え。[data-zen-mode-toggle] のクリックで
 // [data-zen-mode-container] 要素の "page-edit-zen" クラスを反転し (edit.templ 内の子孫要素が
 // Tailwind の in-[.page-edit-zen]: バリアントで反応し、左右カラムとリンク一覧の非表示・中央カラム
 // の拡幅を行う)、状態を wikino_zen_mode クッキーへ保存して次回も同じモードで開けるようにする。
@@ -49,7 +49,7 @@ function handleClick(event: MouseEvent): void {
 // technologies announce whether Zen mode is on.
 //
 // [Ja] syncToggleButtons は現在の状態をすべてのトグルボタンの aria-pressed に反映し、支援技術が
-// Zen モードの ON/OFF を読み上げられるようにする。
+// Zenモードの ON/OFF を読み上げられるようにする。
 function syncToggleButtons(enabled: boolean): void {
   document
     .querySelectorAll("[data-zen-mode-toggle]")
