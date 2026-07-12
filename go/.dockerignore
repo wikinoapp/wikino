@@ -12,8 +12,11 @@
 .idea
 .pnpm-store/
 .vscode
+AGENTS.ja.md
+AGENTS.md
 air.toml
 bin/
+CLAUDE.ja.md
 CLAUDE.md
 coverage/
 docs/
