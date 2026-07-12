@@ -112,14 +112,6 @@ RUN mise use --global go@1.26.4 && \
     mise use --global pnpm@10.25.0
 
 # --- dbmate ---
-# [Ja] dbmate
-#
-# DBMATE_VERSION / DBMATE_SHA256 are intentionally duplicated in
-# go/Dockerfile to keep each Dockerfile self-contained; bump them
-# together when upgrading dbmate.
-#
-# [Ja] DBMATE_VERSION / DBMATE_SHA256 は go/Dockerfile と意図的に二重定義しており
-# (各 Dockerfile を自己完結に保つため)、更新時は両ファイルを揃えて変更する。
 ARG DBMATE_VERSION=v2.33.0
 ARG DBMATE_SHA256=dfd4027141b6e4357158099bdfe6c02b286af70f8e49057937744cf80b38ea1c
 RUN curl -fsSL -o /tmp/dbmate "https://github.com/amacneil/dbmate/releases/download/${DBMATE_VERSION}/dbmate-linux-amd64" && \
@@ -128,7 +120,6 @@ RUN curl -fsSL -o /tmp/dbmate "https://github.com/amacneil/dbmate/releases/downl
     chmod +x /usr/local/bin/dbmate
 
 # --- hivemind ---
-# [Ja] hivemind
 ARG HIVEMIND_VERSION=v1.1.0
 ARG HIVEMIND_SHA256=809ca1c5fedbbfca8fdfb3a4b9bb9c41868b046f35f85a3e893ccf2583a3921a
 RUN curl -fsSL -o /tmp/hivemind.gz "https://github.com/DarthSim/hivemind/releases/download/${HIVEMIND_VERSION}/hivemind-${HIVEMIND_VERSION}-linux-amd64.gz" && \
@@ -138,14 +129,6 @@ RUN curl -fsSL -o /tmp/hivemind.gz "https://github.com/DarthSim/hivemind/release
     chmod +x /usr/local/bin/hivemind
 
 # --- golangci-lint ---
-# [Ja] golangci-lint
-#
-# Fetch the release tarball directly and verify its SHA256 instead of
-# piping the upstream install.sh from HEAD (the script itself is not
-# pinned).
-#
-# [Ja] 公式 install.sh は HEAD の浮動 URL から取得され、スクリプト自体が固定されないため、
-# リリース tarball を直接取得して SHA256 検証する。
 ARG GOLANGCI_LINT_VERSION=v2.11.4
 ARG GOLANGCI_LINT_SHA256=200c5b7503f67b59a6743ccf32133026c174e272b930ee79aa2aa6f37aca7ef1
 RUN GOLANGCI_LINT_DIR="golangci-lint-${GOLANGCI_LINT_VERSION#v}-linux-amd64" && \
@@ -157,14 +140,6 @@ RUN GOLANGCI_LINT_DIR="golangci-lint-${GOLANGCI_LINT_VERSION#v}-linux-amd64" && 
     rm -rf "/tmp/golangci-lint.tar.gz" "/tmp/${GOLANGCI_LINT_DIR}"
 
 # --- GitHub CLI ---
-# [Ja] GitHub CLI
-#
-# Apt repository key is placed under /etc/apt/keyrings and referenced
-# via [signed-by=...]. The whole RUN block executes as root, so sudo is
-# unnecessary.
-#
-# [Ja] apt リポジトリの鍵は /etc/apt/keyrings/ に置き、[signed-by=...] で参照する。
-# RUN ブロック全体は root で実行されるため sudo は不要。
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     install -d -m 0755 /etc/apt/keyrings && \
@@ -235,15 +210,12 @@ RUN touch ~/.zshrc
 RUN mise reshim
 
 # --- 1Password CLI ---
-# [Ja] 1Password CLI
 COPY --from=1password/op:2 /usr/local/bin/op /usr/local/bin/op
 
 # --- Claude Code ---
-# [Ja] Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # --- Go tools ---
-# [Ja] Go ツール
 ENV GOCACHE=/go/.cache/go-build
 ENV GOMODCACHE=/go/pkg/mod
 ENV GOPATH=/go
@@ -252,16 +224,13 @@ RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0 && \
     go install github.com/air-verse/air@latest
 
 # --- Ruby tools ---
-# [Ja] Ruby ツール
 RUN gem install bundler -v 2.5.16
 
 # --- Shell setup ---
-# [Ja] シェル設定
 SHELL ["/bin/zsh", "-c"]
 ENV SHELL=/bin/zsh
 
 # --- Git configuration ---
-# [Ja] Git 設定
 RUN git config --global user.email "me@shimba.co" && \
     git config --global user.name "Koji Shimba"
 
