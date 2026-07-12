@@ -6,6 +6,7 @@ test-results/
 /.claude/rules/korylus-*
 /.claude/scheduled_tasks.lock
 /.claude/skills/korylus-*
+/.codex
 /.env.op
 /.pnpm-store
 /CLAUDE.local.md

@@ -29,6 +29,7 @@ apt update
 apt dist-upgrade -yq
 
 PACKAGES=$(cat <<'PKGLIST' | sed 's/#.*//'
+  bubblewrap                # Required by Codex for Linux sandboxing [Ja] Codex の Linux sandbox に必要
   build-essential
   ca-certificates           # Required for HTTPS connections [Ja] HTTPS 接続に必要
   curl
@@ -214,6 +215,9 @@ COPY --from=1password/op:2 /usr/local/bin/op /usr/local/bin/op
 
 # --- Claude Code ---
 RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# --- Codex ---
+RUN curl -fsSL https://chatgpt.com/codex/install.sh | sh
 
 # --- Go tools ---
 ENV GOCACHE=/go/.cache/go-build
