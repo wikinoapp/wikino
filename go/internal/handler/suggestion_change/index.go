@@ -113,7 +113,6 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
 		Cfg:             h.cfg,
-		SidebarHelper:   h.sidebarHelper,
 		User:            user,
 		SpaceIdentifier: spaceIdentifier,
 		CurrentPageName: templates.PageNameSuggestionChanges,

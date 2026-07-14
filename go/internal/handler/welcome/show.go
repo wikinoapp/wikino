@@ -32,10 +32,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
-			CurrentPageName: templates.PageNameWelcome,
-		},
-		BottomNav: components.BottomNavData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNameWelcome,
 		},
 	}

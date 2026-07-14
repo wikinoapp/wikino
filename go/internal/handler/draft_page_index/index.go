@@ -33,22 +33,13 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "draft_page_index_title")
 
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameDraftPageIndex,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNameDraftPageIndex,
 			SignedIn:        true,
+			UserAtname:      user.Atname,
 		},
 	}
 

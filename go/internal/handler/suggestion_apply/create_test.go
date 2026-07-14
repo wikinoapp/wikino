@@ -18,7 +18,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -72,7 +71,6 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	cfg := &config.Config{}
 
 	return suggestionapplyhandler.NewHandler(
@@ -80,7 +78,6 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 		flashMgr,
 		applySuggestionUC,
 		getSuggestionDetailUC,
-		sidebarHelper,
 	)
 }
 

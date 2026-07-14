@@ -14,13 +14,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
+// DefaultLayoutData is the data passed to the default layout. GlobalNav carries the nav state
+// that both the rail and the bottom bar render (signed-in / atname / current-page / space).
+//
+// [Ja] DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です。GlobalNav はレールと
+// 下部バーが共用するナビ状態 (ログイン状態・atname・現在ページ・スペース) を保持します。
 type DefaultLayoutData struct {
-	Meta        viewmodel.PageMeta
-	HideFooter  bool
-	HideSidebar bool // trueの場合、サイドバーを完全に非表示にする
-	Sidebar     components.SidebarData
-	BottomNav   components.BottomNavData
+	Meta       viewmodel.PageMeta
+	HideFooter bool
+	GlobalNav  components.GlobalNavData
 }
 
 // Default はデフォルトのレイアウトです
@@ -52,7 +54,7 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.Locale(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/default.templ`, Line: 23, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/default.templ`, Line: 25, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -73,13 +75,26 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(templates.SearchPathFor(data.Meta.CurrentSpaceIdentifier)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/default.templ`, Line: 26, Col: 110}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/default.templ`, Line: 28, Col: 110}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"></head><body class=\"bg-background\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"></head><body class=\"bg-background\"><a href=\"#main\" class=\"sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-tooltip focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:shadow focus:outline focus:outline-2 focus:outline-ring\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "skip_to_main_content"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/layouts/default.templ`, Line: 43, Col: 46}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -87,13 +102,11 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if !data.HideSidebar {
-			templ_7745c5c3_Err = components.Sidebar(data.Sidebar).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
+		templ_7745c5c3_Err = components.GlobalNavRail(data.GlobalNav).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0\"><main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0\"><main id=\"main\" tabindex=\"-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -101,7 +114,7 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -111,15 +124,15 @@ func Default(data DefaultLayoutData, content templ.Component) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><div class=\"fixed bottom-2 left-1/2 z-sticky-bar flex w-full -translate-x-1/2 flex-col items-center px-2 pb-safe\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><div class=\"fixed bottom-2 left-1/2 z-sticky-bar flex w-full -translate-x-1/2 flex-col items-center px-2 pb-safe\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.BottomNav(data.BottomNav).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.GlobalNavBottomBar(data.GlobalNav).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

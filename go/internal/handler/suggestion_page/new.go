@@ -105,24 +105,13 @@ func (h *Handler) renderNewForm(
 		DraftPages: draftPagesVM,
 	})
 
-	// サイドバーコンテンツを取得
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameSuggestionPageNew,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			SpaceIdentifier:   spaceIdentVM,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNameSuggestionPageNew,
 			SignedIn:        true,
+			UserAtname:      user.Atname,
 			SpaceIdentifier: spaceIdentVM,
 		},
 	}

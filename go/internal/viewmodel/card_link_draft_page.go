@@ -92,3 +92,20 @@ func (d CardLinkDraftPage) SpaceForIcon() Space {
 		Identifier: d.SpaceIdentifier,
 	}
 }
+
+// draftPageTitle returns a draft page's display title, falling back to the published page's
+// title and then to an empty string when the draft has no title of its own. Shared by the draft
+// page view-models in this package (card and index list).
+//
+// [Ja] draftPageTitle は下書きページの表示タイトルを返す。下書き自身のタイトルが無ければ
+// 公開ページのタイトル、それも無ければ空文字列にフォールバックする。本パッケージの下書き
+// ページ用ビューモデル (カード・一覧) で共有する。
+func draftPageTitle(d *model.DraftPage) string {
+	if d.Title != nil && *d.Title != "" {
+		return *d.Title
+	}
+	if d.Page != nil && d.Page.Title != nil && *d.Page.Title != "" {
+		return *d.Page.Title
+	}
+	return ""
+}

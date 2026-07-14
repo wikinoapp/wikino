@@ -1,0 +1,33 @@
+package components
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// GlobalNavRail renders the desktop navigation rail as a floating pill fixed to
+// the left edge and centered vertically, shown only on md and up. It carries the
+// shared menu laid out vertically as a pill, mirroring GlobalNavBottomBar so the
+// rail and the bottom bar share one visual language.
+//
+// The wrapper is a <nav> landmark with a distinct aria-label, paired with
+// GlobalNavBottomBar's: the rail and the bottom bar are both rendered into the
+// same DOM (toggled by CSS breakpoints), so each carries its own label to let
+// assistive tech tell the two navigation regions apart. The pill overlays the
+// content, which stays centered independently of the rail (the layout reserves
+// no space for it).
+//
+// [Ja] GlobalNavRail は PC 向けのナビゲーションレールを左端・縦中央に固定した浮遊ピル
+// として描画し、md 以上でのみ表示する。共通メニューを縦並びのピルとして持ち、
+// GlobalNavBottomBar と対になるよう視覚言語を揃える。
+//
+// ラッパーは固有の aria-label を持つ <nav> ランドマークで、GlobalNavBottomBar と
+// 対になる。レールと下部バーは CSS のブレークポイントで切り替わるが両方とも同一 DOM に
+// 描画されるため、支援技術が 2 つのナビゲーション領域を区別できるよう、それぞれに固有の
+// ラベルを付ける。ピルはコンテンツの上にオーバーレイし、コンテンツはレールと無関係に
+// 中央のまま (レイアウトはレール用の領域を確保しない)。
+templ GlobalNavRail(data GlobalNavData) {
+	<nav
+		class="fixed left-2 top-1/2 z-sticky-bar hidden -translate-y-1/2 md:flex"
+		aria-label={ templates.T(ctx, "global_nav_rail_label") }
+	>
+		@GlobalNavMenu(data, "bg-card flex-col rounded-full border border-stone-400 px-1 py-4")
+	</nav>
+}

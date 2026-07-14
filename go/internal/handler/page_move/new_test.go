@@ -17,7 +17,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -41,7 +40,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_move.Handler {
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 
 	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
@@ -51,7 +49,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_move.Handler {
 		flashMgr,
 		getPageMoveDataUC,
 		nil,
-		sidebar.NewHelper(topicRepo, draftPageRepo),
 	)
 }
 

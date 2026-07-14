@@ -189,17 +189,19 @@ func TestEdit(t *testing.T) {
 		t.Error("method override PATCH not found in response")
 	}
 
-	// The default layout's content wrapper reserves bottom-nav height plus the bottom safe-area
-	// inset as bottom padding below md so the fixed nav doesn't cover the last content even when a
-	// PWA standalone display lifts the nav above the home indicator. Match the full opening tag so
-	// the assertion stays pinned to the wrapper.
+	// The default layout's content wrapper reserves no left space for the rail (a floating pill that
+	// overlays the content, so the content stays centered), and reserves bottom-nav height plus the
+	// bottom safe-area inset as bottom padding below md so the fixed nav doesn't cover the last
+	// content even when a PWA standalone display lifts the nav above the home indicator. Match the
+	// full opening tag so the assertion stays pinned to the wrapper.
 	//
-	// [Ja] default レイアウトのコンテンツラッパーが、md 未満で固定ナビに最下部コンテンツが隠れない
+	// [Ja] default レイアウトのコンテンツラッパーが、レール用の左余白を確保せず (レールは本文の上に
+	// オーバーレイする浮遊ピルのため本文は中央のまま)、md 未満で固定ナビに最下部コンテンツが隠れない
 	// よう下部ナビの高さ + 下端 safe-area 分の下部余白を確保していること (PWA スタンドアロン表示で
 	// ナビをホームインジケータの上へ押し上げても足りるようにする)。ラッパーに固定するため開始タグ
 	// 全体で照合する。
 	if !strings.Contains(body, `<div class="flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0">`) {
-		t.Error("content wrapper bottom-nav padding class not found in response")
+		t.Error("content wrapper padding class not found in response")
 	}
 
 	// The fixed bottom-nav wrapper carries pb-safe so a PWA standalone display lifts the nav pill
@@ -450,10 +452,11 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 		t.Error("draft list drawer open button not found")
 	}
 
-	// The page editor renders neither the global sidebar nor any button that opens it (the TopNav
-	// toggle and the mobile BottomNav menu button), since the sidebar is hidden here.
-	// [Ja] 編集画面ではグローバルサイドバーも、それを開くボタン (TopNav の開閉ボタンとモバイルの
-	// BottomNav メニューボタン) も描画しないこと (ここではサイドバーを非表示にするため)
+	// The removed sidebar leaves no trace: no off-canvas sidebar element, no TopNav toggle, and no
+	// sidebar-opening dispatch. The in-screen draft navigation is the left column, not a sidebar.
+	// [Ja] 廃止したサイドバーの痕跡が残っていないこと。off-canvas のサイドバー要素・TopNav の
+	// 開閉ボタン・サイドバーを開く dispatch のいずれも無い。画面内の下書きナビゲーションは
+	// サイドバーではなく左カラムが担う。
 	if strings.Contains(body, `id="sidebar"`) {
 		t.Error("global sidebar should not be rendered on the page editor")
 	}
@@ -461,7 +464,13 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 		t.Error("TopNav sidebar toggle button should not be rendered on the page editor")
 	}
 	if strings.Contains(body, "basecoat:sidebar") {
-		t.Error("no sidebar-opening button should be rendered on the page editor (TopNav or BottomNav)")
+		t.Error("no sidebar-opening button should be rendered on the page editor")
+	}
+
+	// The editor is wired to the global navigation like every other page (rail + bottom bar).
+	// [Ja] 編集画面も他のページと同様にグローバルナビ (レール + 下部バー) へ結線されていること
+	if !strings.Contains(body, `aria-label="グローバルナビゲーション"`) {
+		t.Error("global navigation rail should be rendered on the page editor")
 	}
 }
 

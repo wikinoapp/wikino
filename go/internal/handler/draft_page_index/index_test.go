@@ -12,7 +12,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -33,11 +32,9 @@ func TestIndex_Empty(t *testing.T) {
 		Domain: "localhost",
 	}
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -110,11 +107,9 @@ func TestIndex_WithDrafts(t *testing.T) {
 		Domain: "localhost",
 	}
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -200,11 +195,9 @@ func TestIndex_編集提案ボタンがトピックグループに表示され�
 		Domain: "localhost",
 	}
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)

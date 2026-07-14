@@ -31,22 +31,13 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "home_show_title")
 
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameHome,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNameHome,
 			SignedIn:        true,
+			UserAtname:      user.Atname,
 		},
 	}
 

@@ -405,8 +405,6 @@ linters:
               desc: "authはRateLimitに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/redirect
               desc: "authはRedirectに依存できません。"
-            - pkg: github.com/wikinoapp/wikino/go/internal/sidebar
-              desc: "authはSidebarに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/timezone
               desc: "authはTimezoneに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/turnstile

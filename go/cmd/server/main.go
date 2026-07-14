@@ -62,7 +62,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -308,7 +307,6 @@ func main() {
 		updatePasswordResetUC,
 	)
 	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getPageDetailUC := usecase.NewGetPageDetailUsecase(
 		spaceRepo,
 		spaceMemberRepo,
@@ -339,13 +337,11 @@ func main() {
 	draftPageIndexHandler := draft_page_index.NewHandler(
 		cfg,
 		getDraftPagesUC,
-		sidebarHelper,
 	)
 	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 	homeHandler := home.NewHandler(
 		cfg,
 		getHomeShowUC,
-		sidebarHelper,
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
@@ -414,20 +410,17 @@ func main() {
 		flashMgr,
 		getPageMoveDataUC,
 		movePageUC,
-		sidebarHelper,
 	)
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
 		getSpaceShowUC,
-		sidebarHelper,
 	)
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
 	topicHandler := topichandler.NewHandler(
 		cfg,
 		flashMgr,
 		getTopicDetailUC,
-		sidebarHelper,
 	)
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
@@ -447,13 +440,11 @@ func main() {
 		getSuggestionNewUC,
 		createSuggestionUC,
 		updateSuggestionUC,
-		sidebarHelper,
 	)
 	suggestionChangeHandler := suggestionchangehandler.NewHandler(
 		cfg,
 		getSuggestionDetailUC,
 		getSuggestionDiffUC,
-		sidebarHelper,
 	)
 	suggestionApplyValidator := validator.NewSuggestionApplyValidator(pageUpdateValidator)
 	applySuggestionUC := usecase.NewApplySuggestionUsecase(
@@ -467,7 +458,6 @@ func main() {
 		flashMgr,
 		applySuggestionUC,
 		getSuggestionDetailUC,
-		sidebarHelper,
 	)
 	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
 	suggestionCloseHandler := suggestionclosehandler.NewHandler(
@@ -480,7 +470,6 @@ func main() {
 		flashMgr,
 		getSuggestionDetailUC,
 		startSuggestionPageEditUC,
-		sidebarHelper,
 	)
 	suggestionPageUpdateValidator := validator.NewSuggestionPageUpdateValidator(draftPageRepo)
 	updateSuggestionPageUC := usecase.NewUpdateSuggestionPageUsecase(
@@ -505,7 +494,6 @@ func main() {
 		addSuggestionPageUC,
 		updateSuggestionPageUC,
 		removeSuggestionPageUC,
-		sidebarHelper,
 	)
 	suggestionCommentCreateValidator := validator.NewSuggestionCommentCreateValidator()
 	createSuggestionCommentUC := usecase.NewCreateSuggestionCommentUsecase(
@@ -527,7 +515,6 @@ func main() {
 		getSuggestionEditUC,
 		getSuggestionCommentUC,
 		updateSuggestionCommentUC,
-		sidebarHelper,
 	)
 	r := chi.NewRouter()
 

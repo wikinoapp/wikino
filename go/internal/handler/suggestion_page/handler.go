@@ -4,7 +4,6 @@ package suggestion_page
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -16,7 +15,6 @@ type Handler struct {
 	addSuggestionPageUsecase    *usecase.AddSuggestionPageUsecase
 	updateSuggestionPageUsecase *usecase.UpdateSuggestionPageUsecase
 	removeSuggestionPageUsecase *usecase.RemoveSuggestionPageUsecase
-	sidebarHelper               *sidebar.Helper
 }
 
 // NewHandler は新しい編集提案ページハンドラーを作成します
@@ -27,7 +25,6 @@ func NewHandler(
 	addSuggestionPageUsecase *usecase.AddSuggestionPageUsecase,
 	updateSuggestionPageUsecase *usecase.UpdateSuggestionPageUsecase,
 	removeSuggestionPageUsecase *usecase.RemoveSuggestionPageUsecase,
-	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
 		cfg:                         cfg,
@@ -36,6 +33,5 @@ func NewHandler(
 		addSuggestionPageUsecase:    addSuggestionPageUsecase,
 		updateSuggestionPageUsecase: updateSuggestionPageUsecase,
 		removeSuggestionPageUsecase: removeSuggestionPageUsecase,
-		sidebarHelper:               sidebarHelper,
 	}
 }

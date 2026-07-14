@@ -602,63 +602,6 @@ other = "Breadcrumb"
 description = "Label for the home link in the breadcrumb"
 other = "Home"
 
-# Sidebar
-[sidebar_toggle_label]
-description = "Aria label for the sidebar toggle button"
-other = "Toggle sidebar"
-
-[sidebar_nav_label]
-description = "Aria label for the sidebar navigation"
-other = "Sidebar"
-
-[sidebar_home]
-description = "Home link in the sidebar"
-other = "Home"
-
-[sidebar_search]
-description = "Search link in the sidebar"
-other = "Search"
-
-[sidebar_profile]
-description = "Profile link in the sidebar"
-other = "Profile"
-
-[sidebar_sign_in]
-description = "Sign in link in the sidebar"
-other = "Sign in"
-
-[sidebar_joined_topics_heading]
-description = "Heading for the joined topics list in the sidebar"
-other = "Joined Topics"
-
-[sidebar_joined_topics_empty]
-description = "Message when there are no joined topics in the sidebar"
-other = "No joined topics"
-
-[sidebar_joined_topics_create_page]
-description = "Tooltip for the create page link on a topic in the sidebar"
-other = "Create page"
-
-[sidebar_draft_pages_heading]
-description = "Heading for the draft pages list in the sidebar"
-other = "Drafts"
-
-[sidebar_draft_pages_empty]
-description = "Message when there are no draft pages in the sidebar"
-other = "No drafts"
-
-[sidebar_draft_pages_untitled]
-description = "Display text for untitled draft pages in the sidebar"
-other = "Untitled"
-
-[sidebar_draft_pages_edit_page]
-description = "Title for edit link on draft page in the sidebar"
-other = "Edit page"
-
-[sidebar_draft_pages_show_all]
-description = "Link to show all drafts when there are more than displayed in the sidebar"
-other = "Show all"
-
 # Footer
 [footer_terms]
 description = "Footer terms-of-service link label"
@@ -1070,22 +1013,35 @@ other = "Delete this draft?"
 description = "Flash message shown after a draft is deleted"
 other = "Draft deleted"
 
-# Bottom navigation
-[bottom_nav_menu]
-description = "Menu button in the bottom navigation"
-other = "Menu"
+# Global navigation
+[global_nav_rail_label]
+description = "Aria label for the global navigation rail (desktop)"
+other = "Global navigation"
 
-[bottom_nav_home]
-description = "Home button in the bottom navigation"
+[global_nav_bottom_label]
+description = "Aria label for the global navigation bottom bar (mobile)"
+other = "Global navigation (mobile)"
+
+[global_nav_home]
+description = "Aria label for the home link in the global navigation"
 other = "Home"
 
-[bottom_nav_search]
-description = "Search button in the bottom navigation"
+[global_nav_search]
+description = "Aria label for the search link in the global navigation"
 other = "Search"
 
-[bottom_nav_sign_in]
-description = "Sign in button in the bottom navigation"
+[global_nav_profile]
+description = "Aria label for the profile link in the global navigation"
+other = "Profile"
+
+[global_nav_sign_in]
+description = "Aria label for the sign in link in the global navigation"
 other = "Sign in"
+
+# Skip link
+[skip_to_main_content]
+description = "Text for the skip link that jumps to the main content (WCAG 2.4.1)"
+other = "Skip to main content"
 
 # Topic show
 [topic_show_title]
