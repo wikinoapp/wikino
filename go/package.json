@@ -9,7 +9,9 @@
     "build": "pnpm build:css && pnpm build:js",
     "watch:css": "tailwindcss -i web/style.css -o static/css/style.css --watch",
     "watch:js": "esbuild web/main.js --bundle --outfile=static/js/main.js --watch",
-    "watch": "concurrently \"pnpm:watch:css\" \"pnpm:watch:js\""
+    "watch": "concurrently \"pnpm:watch:css\" \"pnpm:watch:js\"",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -25,7 +27,10 @@
     "basecoat-css": "^0.3.11",
     "concurrently": "^10.0.3",
     "esbuild": "^0.28.1",
-    "tailwindcss": "^4.3.2"
+    "happy-dom": "^20.10.6",
+    "tailwindcss": "^4.3.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
