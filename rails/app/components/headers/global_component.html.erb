@@ -1,14 +1,7 @@
 <header class="flex items-center gap-2 px-2">
-  <div class="flex-1">
-    <button
-      type="button"
-      onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
-      class="btn-sm-icon-ghost rounded-full"
-      aria-label="<%= t('nouns.menu') %>"
-    >
-      <%= render BaseUI::IconComponent.new(name: "sidebar-simple-regular", size: "24px", class_name: "fill-base-content") %>
-    </button>
-  </div>
+  <%# Empty spacer paired with the trailing flex-1 so the breadcrumb stays centered. %>
+  <%# [Ja] 末尾の flex-1 と対になる空のスペーサー。パンくずを中央寄せに保つ。 %>
+  <div class="flex-1"></div>
 
   <div class="<%= max_width_class_name %> w-full px-4">
     <div class="w-fit">

@@ -36,20 +36,11 @@ window.Stimulus.register("markdown-editor", MarkdownEditorController);
 window.Stimulus.register("search-cursor", SearchCursorController);
 window.Stimulus.register("stuck", StuckController);
 
-// サイドバー開閉状態をlocalStorageに保存する
-// basecoat-cssがaria-hiddenを更新した後に読み取るため、requestAnimationFrameで遅延させる
-document.addEventListener("basecoat:sidebar", () => {
-  requestAnimationFrame(() => {
-    const sidebar = document.querySelector(".sidebar");
-    if (!sidebar) return;
-    const isOpen = sidebar.getAttribute("aria-hidden") === "false";
-    localStorage.setItem("wikinoSidebarOpen", String(isOpen));
-  });
-});
-
-// basecoat-cssのJSコンポーネントを動的に読み込む
+// Dynamically load basecoat-css JS components.
+//
+// [Ja] basecoat-css の JS コンポーネントを動的に読み込む。
 document.addEventListener("turbo:load", () => {
-  const basecoatScripts = ["dropdown-menu", "sidebar"];
+  const basecoatScripts = ["dropdown-menu"];
 
   for (const name of basecoatScripts) {
     const existingScript = document.querySelector(`script[src*="basecoat-css"][src*="${name}"]`);

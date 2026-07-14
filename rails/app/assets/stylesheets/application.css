@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "basecoat-css";
+@import "tailwindcss-safe-area";
 
 :root {
   /* 独自の変数 */
@@ -45,9 +46,6 @@
   --accent: oklch(0.9402 0.017 61.95);
   --border: var(--color-stone-300);
   --input: var(--color-stone-300);
-  --sidebar: var(--background);
-  --sidebar-accent: var(--accent);
-  --sidebar-width: 200px;
 
   text-autospace: normal;
 }
@@ -80,7 +78,6 @@
 
   --z-index-*: initial;
   --z-index-tooltip: 300;
-  --z-index-sidebar: 250;
   --z-index-overlay: 240;
   --z-index-sticky-bar: 200;
 
