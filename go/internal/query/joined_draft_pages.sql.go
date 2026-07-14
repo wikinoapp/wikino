@@ -56,11 +56,12 @@ type ListDraftPagesBySpaceMemberRow struct {
 
 // Fetch a space member's own draft pages within a single space, newest first (for the page editor's draft list column).
 // Joins draft_pages → pages → topics → spaces, scoped to the given space and space member.
-// Suggestion-edit drafts (those with suggestion_page_id set) are intentionally included, matching the home / sidebar list behavior.
+// Suggestion-edit drafts (those with suggestion_page_id set) are intentionally included,
+// matching the home page's draft list behavior.
 //
 // [Ja] 同一スペース内のスペースメンバー自身の下書きページ一覧を更新日時の降順で取得する (ページ編集画面の下書き一覧カラム用)。
 // draft_pages → pages → topics → spaces を JOIN し、指定スペース・スペースメンバーに限定する。
-// 提案編集用の下書き (suggestion_page_id 付き) も、ホーム / サイドバー一覧と同じく除外せず含める。
+// 提案編集用の下書き (suggestion_page_id 付き) も、ホーム画面の下書き一覧と同じく除外せず含める。
 func (q *Queries) ListDraftPagesBySpaceMember(ctx context.Context, arg ListDraftPagesBySpaceMemberParams) ([]ListDraftPagesBySpaceMemberRow, error) {
 	rows, err := q.db.QueryContext(ctx, listDraftPagesBySpaceMember, arg.SpaceMemberID, arg.SpaceID, arg.Limit)
 	if err != nil {
@@ -139,8 +140,13 @@ type ListDraftPagesByUserRow struct {
 	SpaceName           string      `json:"space_name"`
 }
 
-// ユーザーの下書きページ一覧を取得する（サイドバー / ホーム画面の下書きページ表示用）
-// draft_pages → pages → topics → spaces → space_members を JOIN し、アクティブなスペースメンバーのスペースに限定
+// Returns the user's draft pages for the home page.
+// Joins draft_pages → pages → topics → spaces → space_members and limits results to
+// spaces in which the user is an active member.
+//
+// [Ja] ホーム画面に表示する、ユーザーの下書きページ一覧を取得する。
+// draft_pages → pages → topics → spaces → space_members を JOIN し、ユーザーがアクティブな
+// スペースメンバーであるスペースに限定する。
 func (q *Queries) ListDraftPagesByUser(ctx context.Context, arg ListDraftPagesByUserParams) ([]ListDraftPagesByUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listDraftPagesByUser, arg.UserID, arg.Limit)
 	if err != nil {

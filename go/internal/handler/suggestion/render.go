@@ -10,7 +10,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -22,7 +21,6 @@ import (
 // RenderLayoutInput は編集提案関連ハンドラーで共有するレイアウトレンダリングの入力
 type RenderLayoutInput struct {
 	Cfg             *config.Config
-	SidebarHelper   *sidebar.Helper
 	User            *model.User
 	SpaceIdentifier model.SpaceIdentifier
 	CurrentPageName templates.PageName
@@ -30,8 +28,11 @@ type RenderLayoutInput struct {
 	Content         templ.Component
 }
 
-// RenderLayout は編集提案関連ページのレイアウト組み立てと最終レンダリングを行う。
-// sidebar / BottomNav の組み立て・サイドバーコンテンツの取得・layouts.Default の呼び出しを一元化する。
+// RenderLayout assembles the shared layout for suggestion-related pages and renders it. It
+// centralizes building the global-nav state and the layouts.Default call.
+//
+// [Ja] RenderLayout は編集提案関連ページのレイアウト組み立てと最終レンダリングを行う。
+// グローバルナビ状態の組み立てと layouts.Default の呼び出しを一元化する。
 func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayoutInput) error {
 	signedIn := input.User != nil
 	var userAtname string
@@ -39,28 +40,14 @@ func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayout
 		userAtname = input.User.Atname
 	}
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(input.SpaceIdentifier)
-
 	layoutData := layouts.DefaultLayoutData{
 		Meta: input.Meta,
-		Sidebar: components.SidebarData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: input.CurrentPageName,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
-			SpaceIdentifier: spaceIdentVM,
+			SpaceIdentifier: viewmodel.NewSpaceIdentifier(input.SpaceIdentifier),
 		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: input.CurrentPageName,
-			SignedIn:        signedIn,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	if input.User != nil {
-		sidebarContent := input.SidebarHelper.Content(ctx, input.User.ID)
-		layoutData.Sidebar.JoinedTopics = sidebarContent.JoinedTopics
-		layoutData.Sidebar.DraftPages = sidebarContent.DraftPages
-		layoutData.Sidebar.HasMoreDraftPages = sidebarContent.HasMoreDraftPages
 	}
 
 	if err := layouts.Default(layoutData, input.Content).Render(ctx, w); err != nil {
@@ -73,7 +60,6 @@ func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayout
 // RenderShowInput は RenderShow のための入力
 type RenderShowInput struct {
 	Cfg             *config.Config
-	SidebarHelper   *sidebar.Helper
 	User            *model.User
 	SpaceIdentifier model.SpaceIdentifier
 	Output          *usecase.GetSuggestionDetailOutput
@@ -134,7 +120,6 @@ func RenderShow(ctx context.Context, w http.ResponseWriter, input RenderShowInpu
 
 	return RenderLayout(ctx, w, RenderLayoutInput{
 		Cfg:             input.Cfg,
-		SidebarHelper:   input.SidebarHelper,
 		User:            input.User,
 		SpaceIdentifier: input.SpaceIdentifier,
 		CurrentPageName: templates.PageNameSuggestionShow,

@@ -4,7 +4,6 @@ package suggestion_page_edit
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -14,7 +13,6 @@ type Handler struct {
 	flashMgr                       *session.FlashManager
 	getSuggestionDetailUsecase     *usecase.GetSuggestionDetailUsecase
 	startSuggestionPageEditUsecase *usecase.StartSuggestionPageEditUsecase
-	sidebarHelper                  *sidebar.Helper
 }
 
 // NewHandler は新しい編集提案ページの編集開始ハンドラーを作成します
@@ -23,13 +21,11 @@ func NewHandler(
 	flashMgr *session.FlashManager,
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase,
 	startSuggestionPageEditUsecase *usecase.StartSuggestionPageEditUsecase,
-	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
 		cfg:                            cfg,
 		flashMgr:                       flashMgr,
 		getSuggestionDetailUsecase:     getSuggestionDetailUsecase,
 		startSuggestionPageEditUsecase: startSuggestionPageEditUsecase,
-		sidebarHelper:                  sidebarHelper,
 	}
 }

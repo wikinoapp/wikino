@@ -142,20 +142,20 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	content := pagepages.Edit(editData)
 
-	// The page editor hides the global sidebar: the left draft list column takes over in-screen
-	// draft navigation, so HideSidebar is set and no Sidebar data is built.
-	// [Ja] ページ編集画面はグローバルサイドバーを非表示にする。左カラムの下書き一覧が画面内の下書き
-	// ナビゲーションを担うため、HideSidebar を立て、Sidebar データは構築しない。
+	// The editor supplies the global-nav state via GlobalNav. PageNamePageEdit matches no nav item,
+	// so no item is highlighted (the draft list column, not the nav, handles in-screen navigation).
+	// [Ja] 編集画面はグローバルナビの状態を GlobalNav で供給する。PageNamePageEdit はどのナビ項目にも
+	// 一致しないため、いずれの項目もアクティブにならない (画面内のナビゲーションはナビではなく
+	// 下書き一覧カラムが担う)。
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		HideFooter:  true,
-		HideSidebar: true,
-		BottomNav: components.BottomNavData{
-			CurrentPageName:   templates.PageNamePageEdit,
-			SignedIn:          true,
-			SpaceIdentifier:   spaceIdentVM,
-			HideSidebarToggle: true,
+		HideFooter: true,
+		GlobalNav: components.GlobalNavData{
+			CurrentPageName: templates.PageNamePageEdit,
+			SignedIn:        true,
+			UserAtname:      user.Atname,
+			SpaceIdentifier: spaceIdentVM,
 		},
 	}
 

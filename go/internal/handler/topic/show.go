@@ -119,25 +119,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNameTopicShow,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
 			SpaceIdentifier: spaceIdentVM,
 		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameTopicShow,
-			SignedIn:        signedIn,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	// ログイン済みの場合はサイドバーコンテンツを取得
-	if user != nil {
-		sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-		layoutData.Sidebar.JoinedTopics = sidebarContent.JoinedTopics
-		layoutData.Sidebar.DraftPages = sidebarContent.DraftPages
-		layoutData.Sidebar.HasMoreDraftPages = sidebarContent.HasMoreDraftPages
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

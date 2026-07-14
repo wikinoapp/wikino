@@ -140,11 +140,11 @@ func (r *TopicRepository) FindByIDsAndSpace(ctx context.Context, ids []model.Top
 	return r.toModels(rows), nil
 }
 
-// ListJoinedByUser returns the topics the user is joined to (used by both the sidebar and
-// the home page). Ordering and tradeoffs are documented on the underlying SQL query
+// ListJoinedByUser returns the topics the user is joined to for the home page.
+// Ordering and tradeoffs are documented on the underlying SQL query
 // (db/queries/joined_topics.sql) — see ListJoinedTopicsByUser there.
 //
-// [Ja] ListJoinedByUser はユーザーが参加しているトピック一覧を取得する（サイドバー / ホーム画面の両方で使用）。
+// [Ja] ListJoinedByUser はホーム画面に表示する、ユーザーが参加しているトピック一覧を取得する。
 // 並び順と採用理由・トレードオフは db/queries/joined_topics.sql の ListJoinedTopicsByUser のコメントを参照。
 func (r *TopicRepository) ListJoinedByUser(ctx context.Context, userID model.UserID, limit int32) ([]*model.Topic, error) {
 	rows, err := r.q.ListJoinedTopicsByUser(ctx, query.ListJoinedTopicsByUserParams{

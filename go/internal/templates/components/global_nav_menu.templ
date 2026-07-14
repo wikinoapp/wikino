@@ -1,0 +1,115 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// GlobalNavData carries the presentation state required by the global navigation.
+//
+// [Ja] GlobalNavData はグローバルナビに必要な表示状態を保持する。
+type GlobalNavData struct {
+	CurrentPageName templates.PageName
+	SignedIn        bool
+	UserAtname      string
+	SpaceIdentifier viewmodel.SpaceIdentifier
+}
+
+// GlobalNavMenu renders the shared icon-only menu that both the rail and the
+// bottom bar embed. className is appended to the flex container so each wrapper
+// can set its layout direction and styling. PageName determines the active item.
+//
+// Signed-in users see home / search / profile; signed-out users see home /
+// sign in. Search and profile require authentication and are omitted when
+// signed out.
+//
+// [Ja] GlobalNavMenu はレールと下部バーの両方が埋め込む、アイコンのみの共通
+// メニューを描画する。className はフレックスコンテナに追記され、各ラッパーが
+// レイアウト方向と固有スタイルを設定できるようにする。アクティブ項目は PageName で
+// 判定する。
+//
+// ログイン時はホーム / 検索 / プロフィール、未ログイン時はホーム / サインインを
+// 表示する。検索・プロフィールはログイン必須のため未ログイン時は表示しない。
+templ GlobalNavMenu(data GlobalNavData, className string) {
+	<div class={ "flex items-center gap-2", className }>
+		if data.SignedIn {
+			@globalNavItem(globalNavItemData{
+				Path:        templates.HomePath(),
+				Label:       templates.T(ctx, "global_nav_home"),
+				DefaultIcon: "house-regular",
+				ActiveIcon:  "house-fill",
+				Active:      data.CurrentPageName == templates.PageNameHome,
+			})
+			@globalNavItem(globalNavItemData{
+				Path:        templates.SearchPathFor(data.SpaceIdentifier),
+				Label:       templates.T(ctx, "global_nav_search"),
+				DefaultIcon: "magnifying-glass-regular",
+				ActiveIcon:  "magnifying-glass-fill",
+				Active:      data.CurrentPageName == templates.PageNameSearch,
+			})
+			@globalNavItem(globalNavItemData{
+				Path:        templates.ProfilePath(data.UserAtname),
+				Label:       templates.T(ctx, "global_nav_profile"),
+				DefaultIcon: "user-circle-regular",
+				ActiveIcon:  "user-circle-fill",
+				Active:      data.CurrentPageName == templates.PageNameProfile,
+			})
+		} else {
+			@globalNavItem(globalNavItemData{
+				Path:        templates.Path("/"),
+				Label:       templates.T(ctx, "global_nav_home"),
+				DefaultIcon: "house-regular",
+				ActiveIcon:  "house-fill",
+				Active:      data.CurrentPageName == templates.PageNameWelcome,
+			})
+			@globalNavItem(globalNavItemData{
+				Path:        templates.SignInPath(),
+				Label:       templates.T(ctx, "global_nav_sign_in"),
+				DefaultIcon: "sign-in-regular",
+				ActiveIcon:  "sign-in-regular",
+				Active:      false,
+			})
+		}
+	</div>
+}
+
+// globalNavItemData is one navigation link's data.
+//
+// [Ja] globalNavItemData はナビゲーションリンク 1 件のデータ。
+type globalNavItemData struct {
+	Path        templates.Path
+	Label       string
+	DefaultIcon viewmodel.IconName
+	ActiveIcon  viewmodel.IconName
+	Active      bool
+}
+
+// globalNavItem renders one icon-only link. The link carries an aria-label so
+// screen readers can announce the icon-only link by its purpose; the active
+// item shows its filled icon, is emphasized with the foreground color, and
+// carries aria-current="page". The link is fully rounded so its hover highlight
+// reads as a circle around the square icon, matching the pill wrappers.
+//
+// [Ja] globalNavItem はアイコンのみのリンク 1 件を描画する。アイコンのみのリンクの
+// 目的をスクリーンリーダーが読み上げられるよう aria-label を付け、アクティブ項目は
+// 塗りつぶしアイコンを foreground 色で強調し、aria-current="page" を付ける。リンクは
+// 完全な円 (rounded-full) にして、正方形アイコンを囲む hover ハイライトが円形に見える
+// ようにし、ピルのラッパーと揃える。
+templ globalNavItem(data globalNavItemData) {
+	<a
+		href={ templ.SafeURL(string(data.Path)) }
+		aria-label={ data.Label }
+		if data.Active {
+			aria-current="page"
+		}
+		class={ "flex items-center justify-center rounded-full p-2 hover:bg-muted",
+			templ.KV("text-foreground", data.Active),
+			templ.KV("text-muted-foreground hover:text-foreground", !data.Active) }
+	>
+		if data.Active {
+			@templates.DecorativeIcon(data.ActiveIcon, "size-6")
+		} else {
+			@templates.DecorativeIcon(data.DefaultIcon, "size-6")
+		}
+	</a>
+}

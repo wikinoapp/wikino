@@ -8,13 +8,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
+// DefaultLayoutData is the data passed to the default layout. GlobalNav carries the nav state
+// that both the rail and the bottom bar render (signed-in / atname / current-page / space).
+//
+// [Ja] DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です。GlobalNav はレールと
+// 下部バーが共用するナビ状態 (ログイン状態・atname・現在ページ・スペース) を保持します。
 type DefaultLayoutData struct {
-	Meta        viewmodel.PageMeta
-	HideFooter  bool
-	HideSidebar bool // trueの場合、サイドバーを完全に非表示にする
-	Sidebar     components.SidebarData
-	BottomNav   components.BottomNavData
+	Meta       viewmodel.PageMeta
+	HideFooter bool
+	GlobalNav  components.GlobalNavData
 }
 
 // Default はデフォルトのレイアウトです
@@ -27,12 +29,30 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 		</head>
 
 		<body class="bg-background">
+			// Skip link as the first focusable element so keyboard / screen-reader users can jump past
+			// the always-visible navigation straight to the main content (WCAG 2.4.1). It stays visually
+			// hidden until focused, then surfaces at the top-left.
+			//
+			// [Ja] キーボード / スクリーンリーダー利用者が常時表示のナビゲーションを飛ばしてメイン
+			// コンテンツへ直接移動できるよう、最初のフォーカス可能要素としてスキップリンクを置く
+			// (WCAG 2.4.1)。フォーカス時のみ左上に可視化する。
+			<a
+				href="#main"
+				class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-tooltip focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:shadow focus:outline focus:outline-2 focus:outline-ring"
+			>
+				{ templates.T(ctx, "skip_to_main_content") }
+			</a>
+
 			@components.Flash(session.FlashFromContext(ctx))
 
-			if !data.HideSidebar {
-				@components.Sidebar(data.Sidebar)
-			}
+			@components.GlobalNavRail(data.GlobalNav)
 
+			// Reserve no space for the rail: it is a floating pill that overlays the content, so the
+			// main content stays centered independently of the rail on md and up.
+			//
+			// [Ja] レール用の領域は確保しない。レールは本文の上にオーバーレイする浮遊ピルのため、md
+			// 以上でもメインコンテンツはレールと無関係に中央のままにする。
+			//
 			// Reserve bottom padding for the fixed bottom nav below md, so the last content (e.g. the
 			// link cards on the editor) is not hidden behind it. The nav is always rendered but
 			// md:hidden and sits at bottom-2, so reserve its height plus that 0.5rem offset. The
@@ -48,7 +68,7 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 			// 加算する。safe-area の無い環境では 0 になるためデスクトップ・非スタンドアロン表示は
 			// 従来どおり。md 以上ではナビが隠れるため余白を外す。
 			<div class="flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0">
-				<main>
+				<main id="main" tabindex="-1">
 					@content
 				</main>
 
@@ -60,14 +80,16 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 			// Add pb-safe (padding-bottom: env(safe-area-inset-bottom)) so a PWA in standalone mode
 			// lifts the nav pill above the home indicator. This wrapper is a bottom-2 based column, so
 			// the extra bottom padding pushes the pill up by the safe-area amount. env resolves to 0
-			// without a safe area, so the position is unchanged elsewhere.
+			// without a safe area, so the position is unchanged elsewhere. The bottom bar hides itself
+			// on md and up, where the rail takes over.
 			//
 			// [Ja] pb-safe (padding-bottom: env(safe-area-inset-bottom)) を付け、PWA のスタンドアロン
 			// 表示でナビのピルをホームインジケータの上へ押し上げる。このラッパーは bottom-2 基点の縦
 			// フレックスのため、下パディングを足すとピルが safe-area 分だけ上がる。safe-area の無い
-			// 環境では env が 0 になるため位置は従来どおり。
+			// 環境では env が 0 になるため位置は従来どおり。下部バーは md 以上では自身を隠し、レールに
+			// 役割を譲る。
 			<div class="fixed bottom-2 left-1/2 z-sticky-bar flex w-full -translate-x-1/2 flex-col items-center px-2 pb-safe">
-				@components.BottomNav(data.BottomNav)
+				@components.GlobalNavBottomBar(data.GlobalNav)
 			</div>
 		</body>
 	</html>

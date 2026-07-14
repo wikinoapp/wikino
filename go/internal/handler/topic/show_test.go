@@ -19,7 +19,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -52,8 +51,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
 
@@ -61,7 +58,6 @@ func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 		cfg,
 		flashMgr,
 		getTopicDetailUC,
-		sidebarHelper,
 	)
 }
 

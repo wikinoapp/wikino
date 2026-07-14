@@ -17,7 +17,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -49,12 +48,10 @@ func setupHandler(t *testing.T, queries *query.Queries) *spacehandler.Handler {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
-	return spacehandler.NewHandler(cfg, getSpaceShowUC, sidebarHelper)
+	return spacehandler.NewHandler(cfg, getSpaceShowUC)
 }
 
 func TestShow_存在しないスペースで404が返る(t *testing.T) {

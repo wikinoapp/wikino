@@ -16,7 +16,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -49,10 +48,8 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
 	getSuggestionDiffUC := usecase.NewGetSuggestionDiffUsecase(pageRevisionRepo)
@@ -61,7 +58,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 		cfg,
 		getSuggestionDetailUC,
 		getSuggestionDiffUC,
-		sidebarHelper,
 	)
 }
 

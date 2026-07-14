@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strconv"
@@ -134,10 +135,31 @@ func Load() (*Config, error) {
 	// Rails版アプリのURL（オプショナル - リバースプロキシ機能で使用）
 	cfg.RailsAppURL = os.Getenv("WIKINO_RAILS_APP_URL")
 
-	// Cloudflare Turnstile（Bot対策 - ログイン・サインアップフォームで使用）
-	// WIKINO_TURNSTILE_ENABLED が "false" の場合はTurnstile検証を無効化する
-	// 未設定またはそれ以外の値の場合は有効（デフォルト: 有効）
+	// Cloudflare Turnstile (bot protection used on the sign-in / sign-up forms).
+	// WIKINO_TURNSTILE_ENABLED disables Turnstile verification only when set to
+	// "false"; unset or any other value keeps it enabled (default: enabled).
+	//
+	// In production the disable is ignored and Turnstile stays enabled even when
+	// "false" is given, so a misconfiguration can never silently turn off bot
+	// protection (fail-closed). Non-production environments honor "false".
+	//
+	// [Ja] Cloudflare Turnstile (Bot 対策 - ログイン・サインアップフォームで使用)。
+	// WIKINO_TURNSTILE_ENABLED は "false" のときだけ Turnstile 検証を無効化する。
+	// 未設定またはそれ以外の値の場合は有効 (デフォルト: 有効)。
+	//
+	// ただし本番環境では、"false" が指定されても無効化を無視して有効を維持する。
+	// 誤設定で Bot 対策が黙って無効になることを防ぐため (fail-closed)。非本番環境では
+	// 従来どおり "false" で無効化する。
 	cfg.TurnstileEnabled = os.Getenv("WIKINO_TURNSTILE_ENABLED") != "false"
+	if !cfg.TurnstileEnabled && cfg.IsProduction() {
+		// Ignore the disable in production and keep Turnstile enabled, recording
+		// that the "false" setting was overridden (developer-facing ops log).
+		//
+		// [Ja] 本番では無効化を無視して Turnstile を有効のままにし、"false" 設定を
+		// 上書きしたことを記録する (開発者向けの運用ログ)。
+		slog.Warn("本番環境では WIKINO_TURNSTILE_ENABLED=false を無視し、Turnstile を有効のまま維持します (fail-closed)")
+		cfg.TurnstileEnabled = true
+	}
 	cfg.TurnstileSiteKey = os.Getenv("WIKINO_TURNSTILE_SITE_KEY")
 	cfg.TurnstileSecretKey = os.Getenv("WIKINO_TURNSTILE_SECRET_KEY")
 

@@ -4,7 +4,6 @@ package space
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -13,7 +12,6 @@ import (
 type Handler struct {
 	cfg            *config.Config
 	getSpaceShowUC *usecase.GetSpaceShowUsecase
-	sidebarHelper  *sidebar.Helper
 }
 
 // NewHandler creates a space detail page handler.
@@ -21,11 +19,9 @@ type Handler struct {
 func NewHandler(
 	cfg *config.Config,
 	getSpaceShowUC *usecase.GetSpaceShowUsecase,
-	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
 		cfg:            cfg,
 		getSpaceShowUC: getSpaceShowUC,
-		sidebarHelper:  sidebarHelper,
 	}
 }

@@ -17,22 +17,14 @@ type BreadcrumbItem struct {
 type TopNavData struct {
 	Items         []BreadcrumbItem
 	MaxWidthClass string // パンくずリストのmax-widthクラス (例: "max-w-3xl")
-
-	// HideSidebarToggle hides the global sidebar toggle button. The page editor sets this because it
-	// renders no global sidebar (the draft list column takes over in-screen draft navigation).
-	// [Ja] HideSidebarToggle はグローバルサイドバーの開閉ボタンを非表示にする。ページ編集画面は
-	// グローバルサイドバーを描画しない (下書き一覧カラムが画面内の下書きナビゲーションを担う) ため設定する。
-	HideSidebarToggle bool
 }
 
 // TopNav はパンくずリストを含むトップナビゲーションを表示します
 templ TopNav(data TopNavData) {
 	<header class="flex items-center gap-2 px-2">
-		<div class="flex-1">
-			if !data.HideSidebarToggle {
-				@sidebarToggleButton()
-			}
-		</div>
+		// Empty spacer paired with the trailing flex-1 so the breadcrumb stays centered.
+		// [Ja] 末尾の flex-1 と対になる空のスペーサー。パンくずを中央寄せに保つ。
+		<div class="flex-1"></div>
 
 		if len(data.Items) > 0 {
 			if data.MaxWidthClass != "" {
@@ -51,18 +43,6 @@ templ TopNav(data TopNavData) {
 		<div class="flex-1">
 		</div>
 	</header>
-}
-
-// sidebarToggleButton はサイドバーの開閉を切り替えるボタンを表示します
-templ sidebarToggleButton() {
-	<button
-		type="button"
-		class="btn-sm-icon-ghost rounded-full"
-		aria-label={ templates.T(ctx, "sidebar_toggle_label") }
-		onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
-	>
-		@templates.Icon("sidebar-simple-regular")
-	</button>
 }
 
 // breadcrumbNav はパンくずリストを表示します

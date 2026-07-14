@@ -14,6 +14,18 @@ help: ## ヘルプを表示
 run: ## サーバーを起動
 	$(OP_RUN_DEV) go run cmd/server/main.go
 
+.PHONY: browse-login
+browse-login: ## dev サイトへブラウザでログイン (別ユーザーは make browse-login BROWSE_USER=2)
+	$(OP_RUN_DEV) bash scripts/browse.sh login $(BROWSE_USER)
+
+.PHONY: browse-shot
+browse-shot: ## ログイン済みセッションでページを開きスクショ (例: make browse-shot URL=/)
+	bash scripts/browse.sh shot "$(URL)"
+
+.PHONY: browse-close
+browse-close: ## ブラウザセッションを閉じ一時ファイルを削除
+	bash scripts/browse.sh close
+
 .PHONY: templ-generate
 templ-generate: ## templファイルからGoコードを生成し、import文を整理
 	@which templ > /dev/null || (echo "Installing templ from go.mod..." && go install github.com/a-h/templ/cmd/templ)
@@ -78,6 +90,14 @@ test-verbose: db-setup-test ## 詳細ログ付きで全テストを実行（デ�
 	@which tparse > /dev/null || (echo "Installing tparse from go.mod..." && go install github.com/mfridman/tparse)
 	@echo "ローカル環境: 詳細ログ付きで全テストを実行"
 	@bash -c 'set -o pipefail && $(OP_RUN_TEST) go test -json -race -count=1 ./... | tparse -all'
+
+.PHONY: test-js
+test-js: ## Run frontend unit tests (Vitest). [Ja] フロントエンドのユニットテストを実行 (Vitest)
+	pnpm test
+
+.PHONY: typecheck-js
+typecheck-js: ## Type-check frontend TypeScript (tsc --noEmit). [Ja] フロントエンドの TypeScript を型検査 (tsc --noEmit)
+	pnpm typecheck
 
 .PHONY: fmt
 fmt: ## コードをフォーマット

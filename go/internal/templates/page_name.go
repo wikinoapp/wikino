@@ -1,6 +1,10 @@
 package templates
 
-// PageName はサイドバーのアクティブ状態を判定するためのページ名を表す型です
+// PageName identifies the current page for presentation components such as the global
+// navigation's active-link state.
+//
+// [Ja] PageName はグローバルナビのアクティブリンク状態など、Presentation コンポーネントで
+// 現在のページを識別するための型。
 type PageName string
 
 const (
