@@ -14,6 +14,18 @@ help: ## ヘルプを表示
 run: ## サーバーを起動
 	$(OP_RUN_DEV) go run cmd/server/main.go
 
+.PHONY: browse-login
+browse-login: ## dev サイトへブラウザでログイン (別ユーザーは make browse-login BROWSE_USER=2)
+	$(OP_RUN_DEV) bash scripts/browse.sh login $(BROWSE_USER)
+
+.PHONY: browse-shot
+browse-shot: ## ログイン済みセッションでページを開きスクショ (例: make browse-shot URL=/)
+	bash scripts/browse.sh shot "$(URL)"
+
+.PHONY: browse-close
+browse-close: ## ブラウザセッションを閉じ一時ファイルを削除
+	bash scripts/browse.sh close
+
 .PHONY: templ-generate
 templ-generate: ## templファイルからGoコードを生成し、import文を整理
 	@which templ > /dev/null || (echo "Installing templ from go.mod..." && go install github.com/a-h/templ/cmd/templ)

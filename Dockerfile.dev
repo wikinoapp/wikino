@@ -34,6 +34,7 @@ PACKAGES=$(cat <<'PKGLIST' | sed 's/#.*//'
   ca-certificates           # Required for HTTPS connections [Ja] HTTPS 接続に必要
   curl
   file                      # Required by Shrine for image uploads (Rails) [Ja] Shrine による画像アップロードに必要 (Rails)
+  fonts-noto-cjk            # Japanese (CJK) font for headless chromium screenshots [Ja] headless chromium のスクショ用の日本語 (CJK) フォント
   fzf                       # Used by Claude Code [Ja] Claude Code で使用
   git
   gnupg                     # Required for the PostgreSQL GPG key and apt repository [Ja] PostgreSQL の GPG キーと apt リポジトリに必要
@@ -48,6 +49,7 @@ PACKAGES=$(cat <<'PKGLIST' | sed 's/#.*//'
   lsb-release               # Required to configure the PostgreSQL apt repository [Ja] PostgreSQL の apt リポジトリ設定に必要
   nano                      # Used by Claude Code [Ja] Claude Code で使用
   net-tools                 # Used by Claude Code for netstat (network debugging) [Ja] Claude Code で使用 netstat (ネットワークデバッグ用)
+  procps                    # Provides ps for playwright-cli kill-all [Ja] playwright-cli kill-all 用の ps を提供
   psmisc                    # Used by Claude Code for fuser (process identification) [Ja] Claude Code で使用 fuser (プロセス特定用)
   ripgrep                   # Used by Claude Code [Ja] Claude Code で使用
   sudo
@@ -101,6 +103,7 @@ RUN curl -fsSL https://mise.run | sh
 RUN mise install go@1.26.4 && \
     mise install ruby@3.4.4 && \
     mise install node@24.13.0 && \
+    mise install node@20.19.0 && \
     mise install node@20.16.0 && \
     mise install pnpm@10.25.0 && \
     mise install pnpm@10.12.3
@@ -218,6 +221,37 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # --- Codex ---
 RUN curl -fsSL https://chatgpt.com/codex/install.sh | sh
+
+# --- Playwright CLI (agent-oriented browser automation) ---
+# [Ja] Playwright CLI (エージェント向けブラウザ操作)
+#
+# Install the agent-oriented playwright-cli under every mise-managed Node
+# version selected within this monorepo, then generate its shims. Bake its
+# Chromium into a dedicated browsers path instead of the shared
+# /ms-playwright above: playwright-cli pins a newer playwright-core than the
+# @playwright/test E2E suite, so it needs a different Chromium build, and
+# Playwright's install-time GC prunes browsers whose owning playwright-core
+# link is unreadable. The E2E link points into root-only /root, so a shared
+# install as this user would delete the E2E Chromium. System deps came from
+# @playwright/test's --with-deps, so --with-deps is omitted here.
+#
+# [Ja] エージェント向けの playwright-cli を、この monorepo 内で選択される mise 管理の
+# 各 Node バージョン配下に install してから shim を作る。その Chromium は上の共有
+# /ms-playwright ではなく専用の browsers パスに焼き込む。playwright-cli は
+# @playwright/test (E2E) より新しい playwright-core を pin するため別の Chromium
+# ビルドを要し、また Playwright の install 時 GC は owning playwright-core リンクが
+# 読めないブラウザを prune する。E2E のリンクは root 専有の /root を指すため、
+# このユーザーで共有 install すると E2E 用 Chromium が消える。system 依存は
+# @playwright/test の --with-deps で導入済みのため、ここでは --with-deps は付けない。
+ARG PLAYWRIGHT_CLI_VERSION=0.1.17
+ENV WIKINO_PLAYWRIGHT_CLI_BROWSERS_PATH=/ms-playwright-cli
+RUN sudo install -d -o ${USER_ID} -g ${GROUP_ID} ${WIKINO_PLAYWRIGHT_CLI_BROWSERS_PATH} && \
+    mise exec node@20.16.0 -- npm install -g @playwright/cli@${PLAYWRIGHT_CLI_VERSION} && \
+    mise exec node@20.19.0 -- npm install -g @playwright/cli@${PLAYWRIGHT_CLI_VERSION} && \
+    mise exec node@24.13.0 -- npm install -g @playwright/cli@${PLAYWRIGHT_CLI_VERSION} && \
+    mise reshim && \
+    PLAYWRIGHT_BROWSERS_PATH=${WIKINO_PLAYWRIGHT_CLI_BROWSERS_PATH} \
+      mise exec node@24.13.0 -- playwright-cli install-browser chromium
 
 # --- Go tools ---
 ENV GOCACHE=/go/.cache/go-build
