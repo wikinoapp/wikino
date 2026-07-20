@@ -27,7 +27,7 @@
     "basecoat-css": "^0.3.11",
     "concurrently": "^10.0.3",
     "esbuild": "^0.28.1",
-    "happy-dom": "^20.10.6",
+    "happy-dom": "^20.11.0",
     "tailwindcss": "^4.3.2",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
