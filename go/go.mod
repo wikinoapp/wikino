@@ -17,7 +17,7 @@ require (
 	github.com/resend/resend-go/v2 v2.28.0
 	github.com/riverqueue/river v0.40.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.40.0
-	github.com/riverqueue/river/rivertype v0.40.0
+	github.com/riverqueue/river/rivertype v0.41.0
 	github.com/sergi/go-diff v1.4.0
 	github.com/sqlc-dev/sqlc v1.31.1
 	github.com/yuin/goldmark v1.8.2
