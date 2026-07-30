@@ -19,11 +19,11 @@ RSpec.describe Navbars::GlobalBottomComponent, type: :view do
     expect(menu["class"]).to include("bg-card", "w-fit", "rounded-full", "border", "border-stone-400", "px-4", "py-1")
   end
 
-  it "<nav> ランドマークにレールとは異なる固有の aria-label が付くこと" do
+  it "<nav> ランドマークに上部バーとは異なる固有の aria-label が付くこと" do
     result = render_inline(described_class.new(current_page_name: PageName::Home, current_user: user))
 
     expect(result.at_css("nav")["aria-label"]).to eq(I18n.t("messages.navbars.global_bottom_label"))
-    expect(result.at_css("nav")["aria-label"]).not_to eq(I18n.t("messages.navbars.global_rail_label"))
+    expect(result.at_css("nav")["aria-label"]).not_to eq(I18n.t("messages.navbars.global_top_label"))
   end
 
   it "共通メニューのリンクを含むこと" do

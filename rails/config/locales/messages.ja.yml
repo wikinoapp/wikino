@@ -110,7 +110,7 @@ ja:
               を入力してください
       updated: スペースを更新しました
     navbars:
-      global_rail_label: グローバルナビゲーション
+      global_top_label: グローバルナビゲーション
       global_bottom_label: グローバルナビゲーション (モバイル)
     sidebar:
       draft_pages_empty: 下書きはありません

@@ -62,5 +62,10 @@ module Pages
     private def current_page_name
       PageName::PageDetail
     end
+
+    sig { returns(BaseUI::ContainerComponent::ContentScreen) }
+    private def content_screen
+      BaseUI::ContainerComponent::ContentScreen::Medium
+    end
   end
 end
