@@ -95,10 +95,11 @@ func TestGlobalNavMenu_SignedInLinks(t *testing.T) {
 func TestGlobalNavMenu_SignedOutLinks(t *testing.T) {
 	t.Parallel()
 
-	data := components.GlobalNavData{
-		SignedIn:        false,
-		CurrentPageName: templates.PageNameWelcome,
-	}
+	// A signed-out visitor is browsing a public space, the situation the signed-out items exist for.
+	//
+	// [Ja] 未ログインの訪問者が公開スペースを閲覧している状況を置く。未ログイン時の項目はこのために
+	// 存在する。
+	data := components.GlobalNavData{}
 	html := renderGlobalNav(t, components.GlobalNavMenu(data, ""))
 
 	// Signed-out users get home (root) and sign-in only.
@@ -107,6 +108,15 @@ func TestGlobalNavMenu_SignedOutLinks(t *testing.T) {
 		if !strings.Contains(html, want) {
 			t.Errorf("GlobalNavMenu にリンク %q が含まれていない", want)
 		}
+	}
+
+	// Neither signed-out item is ever active: the top page the home link points at renders no
+	// navigation at all, so no screen showing these items is one of them.
+	//
+	// [Ja] 未ログイン時の項目はいずれもアクティブにならない。ホームリンクが指すトップページはナビ自体を
+	// 描画しないため、これらの項目が出る画面はどれも項目の指す画面ではない。
+	if strings.Contains(html, `aria-current="page"`) {
+		t.Error("未ログイン時にアクティブ項目があるべきではない")
 	}
 
 	// Search and profile require authentication, so they are omitted.
@@ -246,7 +256,7 @@ func TestGlobalNavMenu_AriaLabels(t *testing.T) {
 		},
 		{
 			name: "未ログイン時",
-			data: components.GlobalNavData{CurrentPageName: templates.PageNameWelcome},
+			data: components.GlobalNavData{},
 			links: []expectedLink{
 				{href: "/", label: "ホーム"},
 				{href: "/sign_in", label: "ログイン"},
@@ -358,30 +368,44 @@ func TestGlobalNavMenu_EnglishLocale(t *testing.T) {
 	}
 }
 
-func TestGlobalNavRail(t *testing.T) {
+func TestGlobalNavTopBar(t *testing.T) {
 	t.Parallel()
 
 	data := components.GlobalNavData{SignedIn: true, UserAtname: "alice", CurrentPageName: templates.PageNameHome}
-	html := renderGlobalNav(t, components.GlobalNavRail(data))
+	html := renderGlobalNav(t, components.GlobalNavTopBar(data))
 
-	// The rail is fixed to the left edge and centered vertically, shown only on
-	// md and up, and rendered as a bordered floating pill mirroring the bottom
-	// bar.
-	// [Ja] レールは左端・縦中央 (-translate-y-1/2) に固定し、md 以上でのみ表示し、
-	// 下部バーと対になる枠線付きの浮遊ピルとして描画する。
-	for _, want := range []string{"fixed", "hidden", "md:flex", "-translate-y-1/2", "rounded-full", "border", `href="/home"`} {
+	// The top bar sits in the header's normal flow, is shown only at and above md (the width
+	// GlobalNavBottomBar stops rendering at), and keeps its icons at full size next to a long
+	// breadcrumb. It carries no pill of its own, so nothing overlays the content. Match the full
+	// class attribute so the assertion stays pinned to the visibility pair with the bottom bar.
+	//
+	// [Ja] 上部バーはヘッダーの通常フローに入り、md (GlobalNavBottomBar が描画されなくなる幅) 以上で
+	// のみ表示し、長いパンくずの隣でもアイコンを潰さない。自身のピルは持たないため、本文にオーバー
+	// レイするものは無い。下部バーとの表示切り替えの対に固定するため class 属性全体で照合する。
+	for _, want := range []string{`class="shrink-0 hidden md:flex"`, `href="/home"`} {
 		if !strings.Contains(html, want) {
-			t.Errorf("GlobalNavRail に %q が含まれていない", want)
+			t.Errorf("GlobalNavTopBar に %q が含まれていない", want)
+		}
+	}
+	// Build the removed rail transform from fragments because Tailwind scans Go string literals;
+	// spelling the complete class here would emit the dead utility solely for this negative check.
+	//
+	// [Ja] Tailwind は Go の文字列リテラルも走査するため、削除済みレールの transform は断片から
+	// 組み立てる。完全なクラスをここに書くと、この否定確認だけのために不要な utility が生成される。
+	removedRailTransform := strings.Join([]string{"-translate-y", "1/2"}, "-")
+	for _, notWant := range []string{"fixed", removedRailTransform, "bg-card", "border"} {
+		if strings.Contains(html, notWant) {
+			t.Errorf("GlobalNavTopBar に浮遊ピルのクラス %q が残っている", notWant)
 		}
 	}
 
 	// The wrapper is a <nav> landmark carrying its own aria-label.
 	// [Ja] ラッパーは固有の aria-label を持つ <nav> ランドマーク。
 	if !strings.Contains(html, "<nav") {
-		t.Error("GlobalNavRail に <nav> ランドマークが無い")
+		t.Error("GlobalNavTopBar に <nav> ランドマークが無い")
 	}
 	if !strings.Contains(html, `aria-label="グローバルナビゲーション"`) {
-		t.Error("GlobalNavRail に aria-label が無い")
+		t.Error("GlobalNavTopBar に aria-label が無い")
 	}
 }
 
@@ -391,16 +415,20 @@ func TestGlobalNavBottomBar(t *testing.T) {
 	data := components.GlobalNavData{SignedIn: true, UserAtname: "alice", CurrentPageName: templates.PageNameHome}
 	html := renderGlobalNav(t, components.GlobalNavBottomBar(data))
 
-	// The bottom bar is shown only below md and rendered as a bordered pill.
-	// [Ja] 下部バーは md 未満でのみ表示し、枠線付きのピルとして描画する。
-	for _, want := range []string{"md:hidden", "rounded-full", "border", `href="/home"`} {
+	// The bottom bar is shown only below md (the width GlobalNavTopBar starts rendering at) and
+	// rendered as a bordered floating pill. Match the <nav>'s full class attribute so the assertion
+	// stays pinned to the visibility pair with the top bar.
+	//
+	// [Ja] 下部バーは md (GlobalNavTopBar が描画され始める幅) 未満でのみ表示し、枠線付きのピルとして
+	// 描画する。上部バーとの表示切り替えの対に固定するため <nav> の class 属性全体で照合する。
+	for _, want := range []string{`<nav class="md:hidden"`, "rounded-full", "border", `href="/home"`} {
 		if !strings.Contains(html, want) {
 			t.Errorf("GlobalNavBottomBar に %q が含まれていない", want)
 		}
 	}
 
-	// The wrapper is a <nav> landmark whose aria-label differs from the rail's.
-	// [Ja] ラッパーは <nav> ランドマークで、その aria-label はレールとは異なる。
+	// The wrapper is a <nav> landmark whose aria-label differs from the top bar's.
+	// [Ja] ラッパーは <nav> ランドマークで、その aria-label は上部バーとは異なる。
 	if !strings.Contains(html, "<nav") {
 		t.Error("GlobalNavBottomBar に <nav> ランドマークが無い")
 	}

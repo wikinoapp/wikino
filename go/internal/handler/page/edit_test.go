@@ -189,17 +189,16 @@ func TestEdit(t *testing.T) {
 		t.Error("method override PATCH not found in response")
 	}
 
-	// The default layout's content wrapper reserves no left space for the rail (a floating pill that
-	// overlays the content, so the content stays centered), and reserves bottom-nav height plus the
-	// bottom safe-area inset as bottom padding below md so the fixed nav doesn't cover the last
-	// content even when a PWA standalone display lifts the nav above the home indicator. Match the
-	// full opening tag so the assertion stays pinned to the wrapper.
+	// The default layout's content wrapper reserves bottom-nav height plus the bottom safe-area
+	// inset as bottom padding below md, so the fixed nav doesn't cover the last content even when a
+	// PWA standalone display lifts the nav above the home indicator. The padding is dropped at md to
+	// match the width where the bottom bar stops rendering. Match the full opening tag so the
+	// assertion stays pinned to the wrapper.
 	//
-	// [Ja] default レイアウトのコンテンツラッパーが、レール用の左余白を確保せず (レールは本文の上に
-	// オーバーレイする浮遊ピルのため本文は中央のまま)、md 未満で固定ナビに最下部コンテンツが隠れない
+	// [Ja] default レイアウトのコンテンツラッパーが、md 未満で固定ナビに最下部コンテンツが隠れない
 	// よう下部ナビの高さ + 下端 safe-area 分の下部余白を確保していること (PWA スタンドアロン表示で
-	// ナビをホームインジケータの上へ押し上げても足りるようにする)。ラッパーに固定するため開始タグ
-	// 全体で照合する。
+	// ナビをホームインジケータの上へ押し上げても足りるようにする)。下部バーが描画されなくなる幅と
+	// 揃えて md で余白を外す。ラッパーに固定するため開始タグ全体で照合する。
 	if !strings.Contains(body, `<div class="flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0">`) {
 		t.Error("content wrapper padding class not found in response")
 	}
@@ -265,6 +264,19 @@ func TestEdit(t *testing.T) {
 	// globe-regularのSVGパスデータに含まれる固有の文字列で検証
 	if !strings.Contains(body, "a87.61,87.61") {
 		t.Error("topic visibility icon (globe) not found in breadcrumb")
+	}
+
+	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
+	// link has to bypass it) and keeps this screen's wide max-w-6xl content width.
+	//
+	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の広い本文幅 max-w-6xl も維持する。
+	if !strings.Contains(body, `<div class="max-w-6xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-6xl content width")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
 	}
 }
 
@@ -452,25 +464,39 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 		t.Error("draft list drawer open button not found")
 	}
 
-	// The removed sidebar leaves no trace: no off-canvas sidebar element, no TopNav toggle, and no
-	// sidebar-opening dispatch. The in-screen draft navigation is the left column, not a sidebar.
-	// [Ja] 廃止したサイドバーの痕跡が残っていないこと。off-canvas のサイドバー要素・TopNav の
+	// The removed sidebar leaves no trace: no off-canvas sidebar element, no BreadcrumbHeader toggle,
+	// and no sidebar-opening dispatch. The in-screen draft navigation is the left column, not a
+	// sidebar.
+	// [Ja] 廃止したサイドバーの痕跡が残っていないこと。off-canvas のサイドバー要素・BreadcrumbHeader の
 	// 開閉ボタン・サイドバーを開く dispatch のいずれも無い。画面内の下書きナビゲーションは
 	// サイドバーではなく左カラムが担う。
 	if strings.Contains(body, `id="sidebar"`) {
 		t.Error("global sidebar should not be rendered on the page editor")
 	}
 	if strings.Contains(body, "サイドバーの開閉") {
-		t.Error("TopNav sidebar toggle button should not be rendered on the page editor")
+		t.Error("BreadcrumbHeader sidebar toggle button should not be rendered on the page editor")
 	}
 	if strings.Contains(body, "basecoat:sidebar") {
 		t.Error("no sidebar-opening button should be rendered on the page editor")
 	}
 
-	// The editor is wired to the global navigation like every other page (rail + bottom bar).
-	// [Ja] 編集画面も他のページと同様にグローバルナビ (レール + 下部バー) へ結線されていること
+	// The editor is wired to the global navigation like every other page (top bar + bottom bar).
+	// [Ja] 編集画面も他のページと同様にグローバルナビ (上部バー + 下部バー) へ結線されていること
 	if !strings.Contains(body, `aria-label="グローバルナビゲーション"`) {
-		t.Error("global navigation rail should be rendered on the page editor")
+		t.Error("global navigation top bar should be rendered on the page editor")
+	}
+
+	// The editor switches at md like every other screen: the top bar appears at md and the bottom bar
+	// stays below it. Match the full class attribute of each <nav> so the assertions stay pinned to
+	// the nav wrappers.
+	//
+	// [Ja] 編集画面も他の画面と同じく md で切り替わる。上部バーは md 以上で現れ、下部バーはそれ未満で
+	// 残る。各 <nav> の class 属性全体で照合し、ナビのラッパーに固定する。
+	if !strings.Contains(body, `<nav class="shrink-0 hidden md:flex"`) {
+		t.Error("global navigation top bar should switch at md on the page editor")
+	}
+	if !strings.Contains(body, `<nav class="md:hidden"`) {
+		t.Error("global navigation bottom bar should switch at md on the page editor")
 	}
 }
 

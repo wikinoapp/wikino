@@ -593,9 +593,9 @@ other = "オープンソース"
 description = "トップページのオープンソース項目の説明文"
 other = "WikinoのソースコードはGitHubで公開されています"
 
-# トップナビゲーション
-[top_nav_breadcrumb_label]
-description = "トップナビゲーションのパンくずリストのaria-label"
+# パンくずリスト
+[breadcrumb_label]
+description = "パンくずリストのaria-label"
 other = "パンくずリスト"
 
 [breadcrumb_home]
@@ -1014,8 +1014,8 @@ description = "下書き削除成功時のフラッシュメッセージ"
 other = "下書きを削除しました"
 
 # グローバルナビ
-[global_nav_rail_label]
-description = "グローバルナビゲーションレール (PC) のaria-label"
+[global_nav_top_label]
+description = "グローバルナビゲーション上部バー (PC) のaria-label"
 other = "グローバルナビゲーション"
 
 [global_nav_bottom_label]

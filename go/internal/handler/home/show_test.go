@@ -55,6 +55,28 @@ func TestShow_Empty(t *testing.T) {
 
 	body := rr.Body.String()
 
+	// Home has no breadcrumb, but the shared header still renders for the navigation bar: outside
+	// <main> (the #main skip link has to bypass it) and at this screen's max-w-3xl content width. The
+	// bar is the header's only content here, so the header switches with it and leaves no banner
+	// landmark with nothing in it below the breakpoint.
+	//
+	// [Ja] ホームにパンくずは無いが、ナビバーのために共有ヘッダーは描画される。<main> の外
+	// (#main へのスキップリンクが飛ばせる必要があるため)・この画面の本文幅 max-w-3xl で出る。
+	// ここではバーがヘッダーの唯一の中身になるため、ヘッダーはバーと一緒に切り替わり、ブレーク
+	// ポイント未満で中身の無い banner ランドマークが残らない。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared header should keep the max-w-3xl content width")
+	}
+	if !strings.Contains(body, `<header class="hidden md:block">`) {
+		t.Error("shared header should switch with the navigation bar it carries")
+	}
+	if strings.Contains(body, `aria-label="パンくずリスト"`) {
+		t.Error("home should not render a breadcrumb landmark")
+	}
+	if header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`); header == -1 || main == -1 || header > main {
+		t.Errorf("shared header (index %d) must precede <main> (index %d)", header, main)
+	}
+
 	if !strings.Contains(body, "ホーム") {
 		t.Error("heading not found in response")
 	}

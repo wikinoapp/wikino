@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -124,6 +125,21 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
 			SpaceIdentifier: spaceIdentVM,
+		},
+
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			MaxWidthClass: "max-w-3xl",
+			Items: []components.BreadcrumbItem{
+				{
+					Path:      templates.HomePath(),
+					IconName:  "house-regular",
+					AriaLabel: i18n.T(ctx, "breadcrumb_home"),
+				},
+				{
+					Label: spaceVM.Name,
+					Path:  templates.SpacePath(spaceIdentVM),
+				},
+			},
 		},
 	}
 

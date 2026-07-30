@@ -8,11 +8,10 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	suggestionpagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion_page"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -105,19 +104,14 @@ func (h *Handler) renderNewForm(
 		DraftPages: draftPagesVM,
 	})
 
-	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		GlobalNav: components.GlobalNavData{
-			CurrentPageName: templates.PageNameSuggestionPageNew,
-			SignedIn:        true,
-			UserAtname:      user.Atname,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	if err := layouts.Default(layoutData, content).Render(ctx, w); err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
+		User:             user,
+		SpaceIdentifier:  spaceIdentifier,
+		CurrentPageName:  templates.PageNameSuggestionPageNew,
+		Meta:             meta,
+		BreadcrumbHeader: suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, suggestionVM.Number),
+		Content:          content,
+	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

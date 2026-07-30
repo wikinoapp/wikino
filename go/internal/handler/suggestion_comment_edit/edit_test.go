@@ -245,4 +245,17 @@ func TestEdit_編集フォームが表示される(t *testing.T) {
 	if !strings.Contains(body, "編集対象のコメント") {
 		t.Error("response should contain comment body")
 	}
+
+	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
+	// link has to bypass it) and keeps this screen's max-w-3xl content width.
+	//
+	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+	}
 }

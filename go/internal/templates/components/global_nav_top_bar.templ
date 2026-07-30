@@ -1,0 +1,30 @@
+package components
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// GlobalNavTopBar renders the desktop navigation bar placed at the right end of the breadcrumb
+// header, shown only at and above md, where GlobalNavBottomBar hides itself. It carries the shared
+// menu laid out horizontally without a pill of its own: the bar shares the header's row, so it sits
+// in the normal flow and never overlays the content. shrink-0 keeps the icons at full size when a
+// long breadcrumb fills the rest of the row.
+//
+// The wrapper is a <nav> landmark with a distinct aria-label, paired with GlobalNavBottomBar's: the
+// top bar and the bottom bar are both rendered into the same DOM (toggled by CSS breakpoints), so
+// each carries its own label to let assistive tech tell the two navigation regions apart.
+//
+// [Ja] GlobalNavTopBar は PC 向けのナビゲーションバーをパンくずヘッダーの右端に描画し、
+// GlobalNavBottomBar が自身を隠す md 以上でのみ表示する。共通メニューを横並びで持ち、自身のピルは
+// 持たない。バーはヘッダーと同じ行を共有するため通常フローに入り、本文にオーバーレイしない。長い
+// パンくずが行を埋めてもアイコンが潰れないよう shrink-0 を付ける。
+//
+// ラッパーは固有の aria-label を持つ <nav> ランドマークで、GlobalNavBottomBar と対になる。上部バーと
+// 下部バーは CSS のブレークポイントで切り替わるが両方とも同一 DOM に描画されるため、支援技術が 2 つの
+// ナビゲーション領域を区別できるよう、それぞれに固有のラベルを付ける。
+templ GlobalNavTopBar(data GlobalNavData) {
+	<nav
+		class="shrink-0 hidden md:flex"
+		aria-label={ templates.T(ctx, "global_nav_top_label") }
+	>
+		@GlobalNavMenu(data, "")
+	</nav>
+}

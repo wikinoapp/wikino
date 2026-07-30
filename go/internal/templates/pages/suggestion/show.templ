@@ -31,112 +31,86 @@ type ShowData struct {
 // Show は編集提案詳細画面のコンテンツを表示します
 templ Show(data ShowData) {
 	<div class="py-4">
-		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					{
-						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier),
-					},
-					{
-						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
-						IconName: data.Topic.IconName,
-					},
-					{
-						Label: templates.T(ctx, "suggestion_show_breadcrumb"),
-						Path:  templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number),
-					},
-				},
-			})
-
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-6">
-					@components.SuggestionApplyError(data.ApplyError)
-					<div class="flex flex-col gap-4">
-						<div class="px-4">
-							@components.MainTitle(components.MainTitleData{
-								Title:   data.Suggestion.Title,
-								Content: components.SuggestionTitleContent(data.Suggestion.Status, data.Suggestion.Number),
-								Actions: showActions(data),
-							})
-						</div>
-
-						<div class="px-0 md:px-4">
-							@components.SubNav([]components.SubNavItem{
-								{
-									Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
-									Path:           string(templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number)),
-									IconName:       "chats-circle-regular",
-									ActiveIconName: "chats-circle-fill",
-									IsActive:       true,
-								},
-								{
-									Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
-									Path:           string(templates.SuggestionChangesPath(data.Space.Identifier, data.Suggestion.Number)),
-									IconName:       "files-regular",
-									ActiveIconName: "files-fill",
-									Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
-								},
-							})
-						</div>
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6">
+				@components.SuggestionApplyError(data.ApplyError)
+				<div class="flex flex-col gap-4">
+					<div class="px-4">
+						@components.MainTitle(components.MainTitleData{
+							Title:   data.Suggestion.Title,
+							Content: components.SuggestionTitleContent(data.Suggestion.Status, data.Suggestion.Number),
+							Actions: showActions(data),
+						})
 					</div>
 
-					@components.Post(components.PostData{
-						CreatorAtname: data.Suggestion.CreatorAtname,
-						Body:          data.Suggestion.Body,
-						CreatedAt:     data.Suggestion.CreatedAt,
-					})
-
-					<div class="flex flex-col gap-2">
-						<div class="px-4">
-							<h2 class="text-md font-bold antialiased">
-								{ templates.T(ctx, "suggestion_show_comments_heading") }
-							</h2>
-						</div>
-
-						<div class="flex flex-col gap-4">
-							if len(data.Comments) > 0 {
-								@showComments(data)
-							}
-
-							if data.IsSpaceMember {
-								@components.ContentCard() {
-									@showCommentForm(data)
-								}
-							}
-						</div>
+					<div class="px-0 md:px-4">
+						@components.SubNav([]components.SubNavItem{
+							{
+								Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
+								Path:           string(templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number)),
+								IconName:       "chats-circle-regular",
+								ActiveIconName: "chats-circle-fill",
+								IsActive:       true,
+							},
+							{
+								Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
+								Path:           string(templates.SuggestionChangesPath(data.Space.Identifier, data.Suggestion.Number)),
+								IconName:       "files-regular",
+								ActiveIconName: "files-fill",
+								Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
+							},
+						})
 					</div>
-
-					if data.CanApply || data.CanClose {
-						<div class="px-0 md:px-4">
-							<hr class="border-border border-dashed">
-						</div>
-
-						@components.ContentCard() {
-							<div class="flex flex-col gap-4">
-								<p class="text-sm text-muted-foreground">
-									{ templates.T(ctx, "suggestion_show_action_description") }
-								</p>
-
-								<div class="flex items-center gap-2">
-									if data.CanApply {
-										@showApplyForm(data)
-									}
-									if data.CanClose {
-										@showCloseForm(data)
-									}
-								</div>
-							</div>
-						}
-					}
 				</div>
+
+				@components.Post(components.PostData{
+					CreatorAtname: data.Suggestion.CreatorAtname,
+					Body:          data.Suggestion.Body,
+					CreatedAt:     data.Suggestion.CreatedAt,
+				})
+
+				<div class="flex flex-col gap-2">
+					<div class="px-4">
+						<h2 class="text-md font-bold antialiased">
+							{ templates.T(ctx, "suggestion_show_comments_heading") }
+						</h2>
+					</div>
+
+					<div class="flex flex-col gap-4">
+						if len(data.Comments) > 0 {
+							@showComments(data)
+						}
+
+						if data.IsSpaceMember {
+							@components.ContentCard() {
+								@showCommentForm(data)
+							}
+						}
+					</div>
+				</div>
+
+				if data.CanApply || data.CanClose {
+					<div class="px-0 md:px-4">
+						<hr class="border-border border-dashed">
+					</div>
+
+					@components.ContentCard() {
+						<div class="flex flex-col gap-4">
+							<p class="text-sm text-muted-foreground">
+								{ templates.T(ctx, "suggestion_show_action_description") }
+							</p>
+
+							<div class="flex items-center gap-2">
+								if data.CanApply {
+									@showApplyForm(data)
+								}
+								if data.CanClose {
+									@showCloseForm(data)
+								}
+							</div>
+						</div>
+					}
+				}
 			</div>
 		</div>
 	</div>

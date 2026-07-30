@@ -9,7 +9,6 @@ type PageName string
 
 const (
 	PageNameHome                   PageName = "home"
-	PageNameWelcome                PageName = "welcome"
 	PageNameSearch                 PageName = "search"
 	PageNameProfile                PageName = "profile"
 	PageNamePageEdit               PageName = "page_edit"

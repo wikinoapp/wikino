@@ -2,12 +2,14 @@ package suggestion
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/a-h/templ"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -18,21 +20,25 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// RenderLayoutInput は編集提案関連ハンドラーで共有するレイアウトレンダリングの入力
+// RenderLayoutInput is the input for the layout rendering shared by suggestion-related handlers.
+// BreadcrumbHeader carries the breadcrumb header, which the layout renders outside <main>.
+//
+// [Ja] RenderLayoutInput は編集提案関連ハンドラーで共有するレイアウトレンダリングの入力。
+// BreadcrumbHeader はパンくずヘッダーを保持し、レイアウトが <main> の外で描画する。
 type RenderLayoutInput struct {
-	Cfg             *config.Config
-	User            *model.User
-	SpaceIdentifier model.SpaceIdentifier
-	CurrentPageName templates.PageName
-	Meta            viewmodel.PageMeta
-	Content         templ.Component
+	User             *model.User
+	SpaceIdentifier  model.SpaceIdentifier
+	CurrentPageName  templates.PageName
+	Meta             viewmodel.PageMeta
+	BreadcrumbHeader components.BreadcrumbHeaderData
+	Content          templ.Component
 }
 
 // RenderLayout assembles the shared layout for suggestion-related pages and renders it. It
-// centralizes building the global-nav state and the layouts.Default call.
+// centralizes building the global-nav state, the breadcrumb header and the layouts.Default call.
 //
 // [Ja] RenderLayout は編集提案関連ページのレイアウト組み立てと最終レンダリングを行う。
-// グローバルナビ状態の組み立てと layouts.Default の呼び出しを一元化する。
+// グローバルナビ状態・パンくずヘッダーの組み立てと layouts.Default の呼び出しを一元化する。
 func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayoutInput) error {
 	signedIn := input.User != nil
 	var userAtname string
@@ -48,6 +54,7 @@ func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayout
 			UserAtname:      userAtname,
 			SpaceIdentifier: viewmodel.NewSpaceIdentifier(input.SpaceIdentifier),
 		},
+		BreadcrumbHeader: input.BreadcrumbHeader,
 	}
 
 	if err := layouts.Default(layoutData, input.Content).Render(ctx, w); err != nil {
@@ -55,6 +62,69 @@ func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayout
 		return err
 	}
 	return nil
+}
+
+// suggestionBreadcrumbHeaderMaxWidthClass is the content width shared by every suggestion-family
+// screen. The breadcrumb header takes the same width so it lines up with the body container.
+//
+// [Ja] suggestionBreadcrumbHeaderMaxWidthClass は編集提案系の全画面で共通の本文幅。パンくずヘッダーを本文
+// コンテナと揃えるため、ヘッダーにも同じ幅を渡す。
+const suggestionBreadcrumbHeaderMaxWidthClass = "max-w-3xl"
+
+// spaceBreadcrumbHeaderData builds the breadcrumb header up to the space (home › space).
+//
+// [Ja] spaceBreadcrumbHeaderData はスペースまでのパンくずヘッダー (ホーム › スペース) を組み立てる。
+func spaceBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space) components.BreadcrumbHeaderData {
+	return components.BreadcrumbHeaderData{
+		MaxWidthClass: suggestionBreadcrumbHeaderMaxWidthClass,
+		Items: []components.BreadcrumbItem{
+			{
+				Path:      templates.HomePath(),
+				IconName:  "house-regular",
+				AriaLabel: i18n.T(ctx, "breadcrumb_home"),
+			},
+			{
+				Label: space.Name,
+				Path:  templates.SpacePath(space.Identifier),
+			},
+		},
+	}
+}
+
+// topicBreadcrumbHeaderData builds the breadcrumb header up to the topic (home › space › topic).
+//
+// [Ja] topicBreadcrumbHeaderData はトピックまでのパンくずヘッダー (ホーム › スペース › トピック) を
+// 組み立てる。
+func topicBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic) components.BreadcrumbHeaderData {
+	data := spaceBreadcrumbHeaderData(ctx, space)
+	data.Items = append(data.Items, components.BreadcrumbItem{
+		Label:    topic.Name,
+		Path:     templates.TopicPath(space.Identifier, topic.Number),
+		IconName: topic.IconName,
+	})
+	return data
+}
+
+// DetailBreadcrumbHeaderData builds the breadcrumb header (home › space › topic › suggestion #N)
+// for the screens nested under a suggestion: its edit form, the change diff, the comment edit
+// form, the page add form and the page edit confirmation. The layout renders the header, so those
+// handlers supply it from here rather than repeating the same four crumbs.
+//
+// [Ja] DetailBreadcrumbHeaderData は編集提案の配下にある画面 (編集提案の編集 / 変更差分 / コメント編集 /
+// ページ追加 / ページ編集の確認) のパンくずヘッダー (ホーム › スペース › トピック › 編集提案 #N) を
+// 組み立てる。描画するのはレイアウトのため、各ハンドラーで同じ 4 項目を繰り返さずここから供給する。
+func DetailBreadcrumbHeaderData(
+	ctx context.Context,
+	space viewmodel.Space,
+	topic viewmodel.Topic,
+	suggestionNumber int32,
+) components.BreadcrumbHeaderData {
+	data := topicBreadcrumbHeaderData(ctx, space, topic)
+	data.Items = append(data.Items, components.BreadcrumbItem{
+		Label: fmt.Sprintf("%s #%d", i18n.T(ctx, "suggestion_show_breadcrumb"), suggestionNumber),
+		Path:  templates.SuggestionShowPath(space.Identifier, suggestionNumber),
+	})
+	return data
 }
 
 // RenderShowInput は RenderShow のための入力
@@ -118,12 +188,23 @@ func RenderShow(ctx context.Context, w http.ResponseWriter, input RenderShowInpu
 		ApplyError:                 input.ApplyError,
 	})
 
+	// The suggestion detail is the current page, so the trailing crumb links back to the suggestion
+	// list of the topic instead of to the suggestion itself.
+	//
+	// [Ja] 編集提案詳細は現在地のため、末尾のパンくずは編集提案自身ではなくトピックの編集提案一覧へ
+	// リンクする。
+	breadcrumbHeader := topicBreadcrumbHeaderData(ctx, spaceVM, topicVM)
+	breadcrumbHeader.Items = append(breadcrumbHeader.Items, components.BreadcrumbItem{
+		Label: i18n.T(ctx, "suggestion_show_breadcrumb"),
+		Path:  templates.SuggestionListPath(spaceVM.Identifier, topicVM.Number),
+	})
+
 	return RenderLayout(ctx, w, RenderLayoutInput{
-		Cfg:             input.Cfg,
-		User:            input.User,
-		SpaceIdentifier: input.SpaceIdentifier,
-		CurrentPageName: templates.PageNameSuggestionShow,
-		Meta:            meta,
-		Content:         content,
+		User:             input.User,
+		SpaceIdentifier:  input.SpaceIdentifier,
+		CurrentPageName:  templates.PageNameSuggestionShow,
+		Meta:             meta,
+		BreadcrumbHeader: breadcrumbHeader,
+		Content:          content,
 	})
 }

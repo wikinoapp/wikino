@@ -15,23 +15,28 @@ type GlobalNavData struct {
 	SpaceIdentifier viewmodel.SpaceIdentifier
 }
 
-// GlobalNavMenu renders the shared icon-only menu that both the rail and the
-// bottom bar embed. className is appended to the flex container so each wrapper
-// can set its layout direction and styling. PageName determines the active item.
+// GlobalNavMenu renders the shared icon-only menu that both the top bar and the
+// bottom bar embed. The menu lays its items out horizontally; className is
+// appended to that flex container so a wrapper can add its own styling (the
+// bottom bar uses it for the pill). CurrentPageName determines the active item.
 //
 // Signed-in users see home / search / profile; signed-out users see home /
 // sign in. Search and profile require authentication and are omitted when
-// signed out.
+// signed out. Neither signed-out item is ever active: the only screen the
+// signed-out home link points at is the top page, and that page takes itself
+// out of the global navigation.
 //
-// [Ja] GlobalNavMenu はレールと下部バーの両方が埋め込む、アイコンのみの共通
-// メニューを描画する。className はフレックスコンテナに追記され、各ラッパーが
-// レイアウト方向と固有スタイルを設定できるようにする。アクティブ項目は PageName で
-// 判定する。
+// [Ja] GlobalNavMenu は上部バーと下部バーの両方が埋め込む、アイコンのみの共通
+// メニューを描画する。メニューは項目を横並びに置き、className はそのフレックス
+// コンテナに追記されて、ラッパーが固有のスタイルを足せるようにする (下部バーは
+// ピルの装飾に使う)。アクティブ項目は CurrentPageName で判定する。
 //
 // ログイン時はホーム / 検索 / プロフィール、未ログイン時はホーム / サインインを
 // 表示する。検索・プロフィールはログイン必須のため未ログイン時は表示しない。
+// 未ログイン時の 2 項目はいずれもアクティブにならない。未ログイン時のホームリンクが
+// 指す画面はトップページだけであり、そのページはグローバルナビの対象外だからである。
 templ GlobalNavMenu(data GlobalNavData, className string) {
-	<div class={ "flex items-center gap-2", className }>
+	<div class={ "flex items-center gap-2", templ.KV(className, className != "") }>
 		if data.SignedIn {
 			@globalNavItem(globalNavItemData{
 				Path:        templates.HomePath(),
@@ -59,8 +64,8 @@ templ GlobalNavMenu(data GlobalNavData, className string) {
 				Path:        templates.Path("/"),
 				Label:       templates.T(ctx, "global_nav_home"),
 				DefaultIcon: "house-regular",
-				ActiveIcon:  "house-fill",
-				Active:      data.CurrentPageName == templates.PageNameWelcome,
+				ActiveIcon:  "house-regular",
+				Active:      false,
 			})
 			@globalNavItem(globalNavItemData{
 				Path:        templates.SignInPath(),
@@ -88,13 +93,13 @@ type globalNavItemData struct {
 // screen readers can announce the icon-only link by its purpose; the active
 // item shows its filled icon, is emphasized with the foreground color, and
 // carries aria-current="page". The link is fully rounded so its hover highlight
-// reads as a circle around the square icon, matching the pill wrappers.
+// reads as a circle around the square icon.
 //
 // [Ja] globalNavItem はアイコンのみのリンク 1 件を描画する。アイコンのみのリンクの
 // 目的をスクリーンリーダーが読み上げられるよう aria-label を付け、アクティブ項目は
 // 塗りつぶしアイコンを foreground 色で強調し、aria-current="page" を付ける。リンクは
 // 完全な円 (rounded-full) にして、正方形アイコンを囲む hover ハイライトが円形に見える
-// ようにし、ピルのラッパーと揃える。
+// ようにする。
 templ globalNavItem(data globalNavItemData) {
 	<a
 		href={ templ.SafeURL(string(data.Path)) }
