@@ -593,9 +593,9 @@ other = "Open Source"
 description = "Welcome page open-source group description"
 other = "Wikino's source code is publicly available on GitHub."
 
-# Top navigation
-[top_nav_breadcrumb_label]
-description = "Aria label for the top navigation breadcrumb"
+# Breadcrumb
+[breadcrumb_label]
+description = "Aria label for the breadcrumb"
 other = "Breadcrumb"
 
 [breadcrumb_home]
@@ -1014,8 +1014,8 @@ description = "Flash message shown after a draft is deleted"
 other = "Draft deleted"
 
 # Global navigation
-[global_nav_rail_label]
-description = "Aria label for the global navigation rail (desktop)"
+[global_nav_top_label]
+description = "Aria label for the global navigation top bar (desktop)"
 other = "Global navigation"
 
 [global_nav_bottom_label]

@@ -108,7 +108,7 @@ en:
               below.
       updated: Space updated.
     navbars:
-      global_rail_label: Global navigation
+      global_top_label: Global navigation
       global_bottom_label: Global navigation (mobile)
     sidebar:
       draft_pages_empty: No drafts

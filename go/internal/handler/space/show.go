@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -116,6 +117,25 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
 			SpaceIdentifier: spaceIdentVM,
+		},
+
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			MaxWidthClass: "max-w-3xl",
+			Items: []components.BreadcrumbItem{
+				{
+					Path:      templates.HomePath(),
+					IconName:  "house-regular",
+					AriaLabel: i18n.T(ctx, "breadcrumb_home"),
+				},
+				// The space is the current page, so show its name as a plain (unlinked) trailing
+				// crumb. This adds the "›" separator after the home icon for a clearer breadcrumb.
+				//
+				// [Ja] スペースは現在地のため、スペース名はリンク無しの末尾パンくずとして表示する。
+				// ホームアイコンの後に "›" 区切りが入り、パンくずとして分かりやすくなる。
+				{
+					Label: spaceVM.Name,
+				},
+			},
 		},
 	}
 

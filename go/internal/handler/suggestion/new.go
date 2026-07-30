@@ -11,8 +11,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	suggestionpages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -104,20 +102,14 @@ func (h *Handler) renderNewForm(
 		SelectedDraftIDs: selectedDraftIDs,
 	})
 
-	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		GlobalNav: components.GlobalNavData{
-			CurrentPageName: templates.PageNameSuggestionNew,
-			SignedIn:        true,
-			UserAtname:      user.Atname,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	err := layouts.Default(layoutData, content).Render(ctx, w)
-	if err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+	if err := RenderLayout(ctx, w, RenderLayoutInput{
+		User:             user,
+		SpaceIdentifier:  spaceIdentifier,
+		CurrentPageName:  templates.PageNameSuggestionNew,
+		Meta:             meta,
+		BreadcrumbHeader: topicBreadcrumbHeaderData(ctx, spaceVM, topicVM),
+		Content:          content,
+	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

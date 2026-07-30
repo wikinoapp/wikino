@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -40,6 +41,20 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 			CurrentPageName: templates.PageNameDraftPageIndex,
 			SignedIn:        true,
 			UserAtname:      user.Atname,
+		},
+
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			MaxWidthClass: "max-w-3xl",
+			Items: []components.BreadcrumbItem{
+				{
+					Path:      templates.HomePath(),
+					IconName:  "house-regular",
+					AriaLabel: i18n.T(ctx, "breadcrumb_home"),
+				},
+				{
+					Label: i18n.T(ctx, "draft_page_index_heading"),
+				},
+			},
 		},
 	}
 

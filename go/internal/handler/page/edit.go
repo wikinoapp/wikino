@@ -1,6 +1,7 @@
 package page
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -144,6 +146,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	// The editor supplies the global-nav state via GlobalNav. PageNamePageEdit matches no nav item,
 	// so no item is highlighted (the draft list column, not the nav, handles in-screen navigation).
+	//
 	// [Ja] 編集画面はグローバルナビの状態を GlobalNav で供給する。PageNamePageEdit はどのナビ項目にも
 	// 一致しないため、いずれの項目もアクティブにならない (画面内のナビゲーションはナビではなく
 	// 下書き一覧カラムが担う)。
@@ -157,6 +160,8 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			UserAtname:      user.Atname,
 			SpaceIdentifier: spaceIdentVM,
 		},
+
+		BreadcrumbHeader: editBreadcrumbHeaderData(ctx, spaceVM, topicVM),
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)
@@ -164,6 +169,35 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+}
+
+// editBreadcrumbHeaderData builds the breadcrumb header (home › space › topic) the layout renders
+// for the page editor. Update re-renders the same screen on a validation error, so both handlers
+// supply the header from here.
+//
+// [Ja] editBreadcrumbHeaderData は編集画面のパンくずヘッダー (ホーム › スペース › トピック) を組み立てます。
+// 描画するのはレイアウトです。バリデーションエラー時は Update が同じ画面を再描画するため、
+// 両ハンドラーともヘッダーをここから供給します。
+func editBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic) components.BreadcrumbHeaderData {
+	return components.BreadcrumbHeaderData{
+		MaxWidthClass: "max-w-6xl",
+		Items: []components.BreadcrumbItem{
+			{
+				Path:      templates.HomePath(),
+				IconName:  "house-regular",
+				AriaLabel: i18n.T(ctx, "breadcrumb_home"),
+			},
+			{
+				Label: space.Name,
+				Path:  templates.SpacePath(space.Identifier),
+			},
+			{
+				Label:    topic.Name,
+				Path:     templates.TopicPath(space.Identifier, topic.Number),
+				IconName: topic.IconName,
+			},
+		},
 	}
 }
 

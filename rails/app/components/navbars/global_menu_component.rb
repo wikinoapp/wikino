@@ -2,17 +2,18 @@
 # frozen_string_literal: true
 
 module Navbars
-  # Shared icon-only menu embedded by both the rail and the bottom bar. class_name
-  # is appended to the flex container so each wrapper can set its layout direction
-  # and pill styling. current_page_name determines the active item.
+  # Shared icon-only menu embedded by both the top bar and the bottom bar.
+  # class_name is appended to the flex container so a wrapper can add its own
+  # styling (the bottom bar uses it for the pill). current_page_name determines
+  # the active item.
   #
   # Signed-in users see home / search / profile; signed-out users see home /
   # sign in. Search and profile require authentication and are omitted when
   # signed out.
   #
-  # [Ja] レールと下部バーの両方が埋め込む、アイコンのみの共通メニュー。class_name は
-  # フレックスコンテナに追記され、各ラッパーがレイアウト方向とピルのスタイルを設定
-  # できるようにする。アクティブ項目は current_page_name で判定する。
+  # [Ja] 上部バーと下部バーの両方が埋め込む、アイコンのみの共通メニュー。class_name は
+  # フレックスコンテナに追記され、ラッパーが固有のスタイルを足せるようにする (下部バーは
+  # ピルの装飾に使う)。アクティブ項目は current_page_name で判定する。
   #
   # ログイン時はホーム / 検索 / プロフィール、未ログイン時はホーム / サインインを
   # 表示する。検索・プロフィールはログイン必須のため未ログイン時は表示しない。
@@ -71,13 +72,12 @@ module Navbars
     # Colors the icon via the link's text color (the SVG picks it up through
     # fill-current). The active item is emphasized with the foreground color and
     # carries aria-current="page"; the link is fully rounded so its hover
-    # highlight reads as a circle around the square icon, matching the pill
-    # wrappers.
+    # highlight reads as a circle around the square icon.
     #
     # [Ja] リンクの text 色でアイコンを着色する (SVG は fill-current で継承)。
     # アクティブ項目は foreground 色で強調し aria-current="page" を付ける。リンクは
     # 完全な円 (rounded-full) にして、正方形アイコンを囲む hover ハイライトが円形に
-    # 見えるようにし、ピルのラッパーと揃える。
+    # 見えるようにする。
     sig { params(active: T::Boolean).returns(String) }
     private def item_class_name(active)
       base = "flex items-center justify-center rounded-full p-2 hover:bg-muted"

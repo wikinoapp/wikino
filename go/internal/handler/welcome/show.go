@@ -5,8 +5,6 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
-	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	"github.com/wikinoapp/wikino/go/internal/templates/pages/welcome"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -30,11 +28,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	// テンプレートをレンダリング
 	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		GlobalNav: components.GlobalNavData{
-			CurrentPageName: templates.PageNameWelcome,
-		},
+		Meta:           meta,
+		HideNavigation: true,
 	}
 	pageData := welcome.ShowPageData{}
 

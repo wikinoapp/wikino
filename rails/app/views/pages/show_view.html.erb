@@ -1,6 +1,6 @@
 <%= render Layouts::Column1Component.new(current_page_name:, current_user:, current_space: space) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, current_space: space) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, current_space: space, content_screen:) do |header| %>
       <%= header.with_breadcrumb do %>
         <%= render Breadcrumbs::TopicComponent.new(signed_in: signed_in?, topic:) %>
       <% end %>
@@ -8,10 +8,7 @@
   <% end %>
 
   <%= layout.with_main do %>
-    <%= render BaseUI::ContainerComponent.new(
-      as: BaseUI::ContainerComponent::As::Main,
-      options: {class: "flex flex-col gap-6 px-4"}
-    ) do %>
+    <%= render Containers::MainComponent.new(content_screen:) do %>
       <article class="flex flex-col gap-6">
         <% if page.trashed? %>
           <div class="alert">

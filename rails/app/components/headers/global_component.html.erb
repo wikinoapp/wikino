@@ -1,14 +1,27 @@
-<header class="flex items-center gap-2 px-2">
-  <%# Empty spacer paired with the trailing flex-1 so the breadcrumb stays centered. %>
-  <%# [Ja] 末尾の flex-1 と対になる空のスペーサー。パンくずを中央寄せに保つ。 %>
-  <div class="flex-1"></div>
+<%#
+  The breadcrumb sits on the left and the global navigation bar on the right, inside a container as
+  wide as the screen's content. The breadcrumb wraps onto further lines rather than squeezing the
+  bar, so it takes min-w-0 while the bar takes shrink-0.
 
-  <div class="<%= max_width_class_name %> w-full px-4">
-    <div class="w-fit">
+  Screens without a breadcrumb still render the header for the navigation bar, leaving the left slot
+  empty. On those screens the bar is the header's only content, so the header switches at md with
+  the bar: below md both are hidden, leaving no banner landmark with nothing in it. The shown state
+  is block rather than flex because the header lays out its single container in normal flow.
+
+  [Ja] 本文と同じ幅のコンテナの中で、左にパンくず・右にグローバルナビバーを置く。パンくずはバーを
+  潰さずに折り返すため、パンくず側に min-w-0・バー側に shrink-0 を付ける。
+
+  パンくずのない画面もナビバーのためにヘッダーを描画し、左側を空のままにする。その画面ではバーが
+  ヘッダーの唯一の中身になるため、ヘッダーはバーと一緒に md で切り替わる。md 未満では両方が隠れ、
+  中身の無い banner ランドマークが残らない。表示状態が flex ではなく block なのは、ヘッダーが単一の
+  コンテナを通常フローで並べるためである。
+%>
+<%= tag.header(class: ("hidden md:block" unless breadcrumb?)) do %>
+  <div class="<%= max_width_class_name %> mx-auto flex w-full items-center justify-between gap-2 px-4">
+    <div class="min-w-0">
       <%= breadcrumb %>
     </div>
-  </div>
 
-  <div class="flex-1">
+    <%= render Navbars::GlobalTopComponent.new(current_page_name:, current_user:, current_space:) %>
   </div>
-</header>
+<% end %>

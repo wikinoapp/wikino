@@ -65,6 +65,11 @@ module Spaces
           PageName::SpaceSettingsAttachments
         end
 
+        sig { returns(BaseUI::ContainerComponent::ContentScreen) }
+        private def content_screen
+          BaseUI::ContainerComponent::ContentScreen::Small
+        end
+
         sig { returns(Integer) }
         private def total_pages
           (total_count.to_f / per_page).ceil

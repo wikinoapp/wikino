@@ -165,6 +165,7 @@ func (h *Handler) renderEditWithErrors(
 
 	// The editor supplies the global-nav state via GlobalNav. PageNamePageEdit matches no nav item,
 	// so no item is highlighted (the draft list column, not the nav, handles in-screen navigation).
+	//
 	// [Ja] 編集画面はグローバルナビの状態を GlobalNav で供給する。PageNamePageEdit はどのナビ項目にも
 	// 一致しないため、いずれの項目もアクティブにならない (画面内のナビゲーションはナビではなく
 	// 下書き一覧カラムが担う)。
@@ -182,6 +183,8 @@ func (h *Handler) renderEditWithErrors(
 
 		HideFooter: true,
 		GlobalNav:  navData,
+
+		BreadcrumbHeader: editBreadcrumbHeaderData(ctx, spaceVM, topicVM),
 	}
 
 	w.WriteHeader(http.StatusUnprocessableEntity)

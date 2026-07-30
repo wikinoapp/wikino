@@ -14,11 +14,16 @@ RSpec.describe Layouts::Column1Component, type: :view do
   end
 
   describe "グローバルナビの結線" do
-    it "レールと下部バーの両方の <nav> ランドマークが描画されること" do
+    it "下部バーの <nav> ランドマークが描画されること" do
       result = render_column1(current_user: user)
 
-      expect(result.css("nav[aria-label='#{I18n.t("messages.navbars.global_rail_label")}']")).not_to be_empty
       expect(result.css("nav[aria-label='#{I18n.t("messages.navbars.global_bottom_label")}']")).not_to be_empty
+    end
+
+    it "上部バーはレイアウトではなくヘッダーが描画すること" do
+      result = render_column1(current_user: user)
+
+      expect(result.css("nav[aria-label='#{I18n.t("messages.navbars.global_top_label")}']")).to be_empty
     end
 
     it "旧サイドバー (off-canvas ドロワー) が描画されないこと" do

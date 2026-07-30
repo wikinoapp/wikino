@@ -39,6 +39,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			SignedIn:        true,
 			UserAtname:      user.Atname,
 		},
+
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			MaxWidthClass: "max-w-3xl",
+		},
 	}
 
 	content := homepages.Show(homepages.ShowPageData{

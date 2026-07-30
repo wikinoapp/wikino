@@ -112,12 +112,12 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
-		Cfg:             h.cfg,
-		User:            user,
-		SpaceIdentifier: spaceIdentifier,
-		CurrentPageName: templates.PageNameSuggestionChanges,
-		Meta:            meta,
-		Content:         content,
+		User:             user,
+		SpaceIdentifier:  spaceIdentifier,
+		CurrentPageName:  templates.PageNameSuggestionChanges,
+		Meta:             meta,
+		BreadcrumbHeader: suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, suggestionVM.Number),
+		Content:          content,
 	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

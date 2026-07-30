@@ -116,25 +116,6 @@ func (d EditPageData) IsSuggestionMode() bool {
 templ Edit(data EditPageData) {
 	<div class="py-4">
 		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-6xl",
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					{
-						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier),
-					},
-					{
-						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
-						IconName: data.Topic.IconName,
-					},
-				},
-			})
 			// The Zen mode class is rendered on the server from the cookie so the page opens in the
 			// saved mode without a layout flash. The toggle script flips the class client-side only.
 			//
