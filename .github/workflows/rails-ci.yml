@@ -8,10 +8,12 @@ on:
     paths:
       - "rails/**"
       - ".github/workflows/rails-ci.yml"
+      - ".github/workflows/rails-rbi-push.yml"
   pull_request:
     paths:
       - "rails/**"
       - ".github/workflows/rails-ci.yml"
+      - ".github/workflows/rails-rbi-push.yml"
 
 jobs:
   zeitwerk:
@@ -57,14 +59,13 @@ jobs:
           # 空文字列は既定のチェックアウトにフォールバックするので、人間の PR
           # (fork からの PR を含む) は merge commit のままになる。
           ref: ${{ github.actor == 'dependabot[bot]' && github.head_ref || '' }}
-          # The persisted GITHUB_TOKEN credential takes precedence over the Git
-          # credential helper, so leaving it in place would make the push below
-          # authenticate as GITHUB_TOKEN instead of the fine-grained PAT and
-          # fail with only contents: read.
+          # The commands below execute PR-controlled code and dependencies.
+          # Persisting checkout credentials would expose even the read-only
+          # GITHUB_TOKEN to that code. A separate workflow performs the push.
           #
-          # [Ja] 永続化された GITHUB_TOKEN の資格情報は Git の credential helper
-          # より優先されるため、残したままだと後段の push が fine-grained PAT
-          # ではなく GITHUB_TOKEN で認証され、contents: read しかないので失敗する。
+          # [Ja] 後続のコマンドは PR が制御するコードと依存関係を実行する。
+          # checkout の資格情報を永続化すると、読み取り専用の GITHUB_TOKEN
+          # であってもそのコードへ露出する。push は別 workflow で実行する。
           persist-credentials: false
       - name: Install libvips
         run: |
@@ -77,45 +78,54 @@ jobs:
           bundler-cache: true
           working-directory: rails
       - run: bin/rails sorbet:update
-      - name: Push RBI files or fail
-        env:
-          # A branch name is chosen by whoever opens the pull request and may
-          # contain shell metacharacters. Passing it through the environment
-          # keeps it a value the shell reads at run time, so it cannot alter
-          # the script itself.
-          #
-          # [Ja] ブランチ名は PR を出した側が決めるものであり、シェルのメタ文字を
-          # 含みうる。環境変数で渡すことで、シェルが実行時に読む値として扱われ、
-          # スクリプト自体を書き換えられない。
-          HEAD_REF: ${{ github.head_ref }}
-          # Use a repository-scoped fine-grained PAT only in this step. A push
-          # authenticated with this token starts CI for the updated PR commit.
-          #
-          # [Ja] リポジトリ限定の fine-grained PAT はこのステップだけで使う。
-          # この token で push すると、更新後の PR commit に対して CI が起動する。
-          GH_TOKEN: ${{ secrets.WIKINO_RBI_PUSH_TOKEN }}
+      - name: Prepare RBI patch or fail
+        working-directory: ${{ github.workspace }}
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            if [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
-              if [ -z "$HEAD_REF" ]; then
-                echo "Error! github.head_ref が空のようです。pull_request 以外のイベントでは自動 push しません。"
-                exit 1
-              fi
-              if [ -z "$GH_TOKEN" ]; then
-                echo "Error! Dependabot secret の WIKINO_RBI_PUSH_TOKEN が設定されていないようです。"
-                exit 1
-              fi
-              git config user.email 49699333+dependabot[bot]@users.noreply.github.com
-              git config user.name dependabot[bot]
-              git add .
-              git commit -m "Update RBI files"
-              gh auth setup-git --hostname github.com --force
-              git push origin "HEAD:$HEAD_REF"
-            else
-              echo "Error! 未更新のRBIファイルがあるようです。bin/rails sorbet:update を実行して差分をコミットしてください。"
-              exit 1
-            fi
+          set -euo pipefail
+          : > "$RUNNER_TEMP/rbi.patch"
+
+          if [ -z "$(git status --porcelain)" ]; then
+            exit 0
           fi
+          if [ "$GITHUB_ACTOR" != "dependabot[bot]" ]; then
+            echo "Error! 未更新のRBIファイルがあるようです。bin/rails sorbet:update を実行して差分をコミットしてください。"
+            exit 1
+          fi
+
+          while IFS= read -r -d '' changed_path; do
+            case "$changed_path" in
+              rails/sorbet/rbi/*.rbi) ;;
+              *)
+                echo "Error! RBI の自動更新で許可されていないパスが変更されました: $changed_path"
+                exit 1
+                ;;
+            esac
+          done < <(
+            {
+              git diff --no-renames --name-only -z
+              git diff --cached --no-renames --name-only -z
+              git ls-files --others --exclude-standard -z
+            }
+          )
+
+          git add -- rails/sorbet/rbi
+          if [ -n "$(git diff --name-only)" ] ||
+            [ -n "$(git ls-files --others --exclude-standard)" ] ||
+            git diff --cached --quiet -- rails/sorbet/rbi; then
+            echo "Error! RBI patch に含められない差分が残っています。"
+            exit 1
+          fi
+
+          git diff --cached --binary --full-index --no-renames -- rails/sorbet/rbi > "$RUNNER_TEMP/rbi.patch"
+      - name: Upload RBI patch
+        if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependabot-rbi-patch
+          path: ${{ runner.temp }}/rbi.patch
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 1
       - run: bin/srb tc
 
   standard:

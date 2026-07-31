@@ -1,0 +1,220 @@
+name: Push Dependabot RBI
+
+on:
+  workflow_run:
+    workflows:
+      - Rails CI
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  push_rbi:
+    name: Push RBI
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate source PR
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+
+          pr_number="$(jq -r 'if type == "array" and length == 1 then .[0].number // "" else "" end' <<< "$PULL_REQUESTS")"
+          if [[ ! "$pr_number" =~ ^[0-9]+$ ]] || [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Error! 元 workflow の PR または head SHA を一意に特定できません。"
+            exit 1
+          fi
+
+          pr_json="$(gh api "/repos/$REPOSITORY/pulls/$pr_number")"
+          pr_state="$(jq -r '.state // ""' <<< "$pr_json")"
+          pr_head_sha="$(jq -r '.head.sha // ""' <<< "$pr_json")"
+          if [ "$pr_state" != "open" ]; then
+            echo "対象の Dependabot PR は既に閉じられているため、push を省略します。"
+            exit 0
+          fi
+          if [ "$pr_head_sha" != "$HEAD_SHA" ]; then
+            echo "PR の head SHA が更新済みのため、古い artifact の push を省略します。"
+            exit 0
+          fi
+          if ! jq -e --arg repository "$REPOSITORY" '
+            .user.login == "dependabot[bot]"
+            and .base.repo.full_name == $repository
+            and .head.repo.full_name == $repository
+          ' >/dev/null <<< "$pr_json"; then
+            echo "Error! Dependabot PR の検証に失敗しました。"
+            exit 1
+          fi
+
+          head_ref="$(jq -r '.head.ref // ""' <<< "$pr_json")"
+          case "$head_ref" in
+            dependabot/*) ;;
+            *)
+              echo "Error! Dependabot PR の head ref が許可された形式ではありません。"
+              exit 1
+              ;;
+          esac
+          if ! git check-ref-format --branch "$head_ref" >/dev/null; then
+            echo "Error! Dependabot PR の head ref が Git のブランチ名として不正です。"
+            exit 1
+          fi
+
+          echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Download RBI patch
+        if: steps.source.outputs.ready == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: dependabot-rbi-patch
+          path: ${{ runner.temp }}/dependabot-rbi-patch
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Inspect RBI patch
+        if: steps.source.outputs.ready == 'true'
+        id: artifact
+        env:
+          ARTIFACT_DIRECTORY: ${{ runner.temp }}/dependabot-rbi-patch
+        run: |
+          set -euo pipefail
+          echo "has_patch=false" >> "$GITHUB_OUTPUT"
+
+          mapfile -d '' artifact_entries < <(find "$ARTIFACT_DIRECTORY" -mindepth 1 -maxdepth 1 -print0)
+          patch_file="$ARTIFACT_DIRECTORY/rbi.patch"
+          if [ "${#artifact_entries[@]}" -ne 1 ] ||
+            [ "${artifact_entries[0]}" != "$patch_file" ] ||
+            [ ! -f "$patch_file" ] ||
+            [ -L "$patch_file" ] ||
+            [ "$(wc -c < "$patch_file")" -gt 20971520 ]; then
+            echo "Error! 展開した RBI patch artifact の検証に失敗しました。"
+            exit 1
+          fi
+          if [ ! -s "$patch_file" ]; then
+            echo "RBI の差分がないため、push は不要です。"
+            exit 0
+          fi
+          echo "has_patch=true" >> "$GITHUB_OUTPUT"
+
+      - name: Check out validated PR head
+        if: steps.artifact.outputs.has_patch == 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.source.outputs.head_sha }}
+          path: rbi-push-repository
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate and apply RBI patch
+        if: steps.artifact.outputs.has_patch == 'true'
+        id: apply
+        env:
+          EXPECTED_HEAD_SHA: ${{ steps.source.outputs.head_sha }}
+          PATCH_FILE: ${{ runner.temp }}/dependabot-rbi-patch/rbi.patch
+          REPOSITORY_DIRECTORY: ${{ github.workspace }}/rbi-push-repository
+        run: |
+          set -euo pipefail
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+          cd "$REPOSITORY_DIRECTORY"
+
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_HEAD_SHA" ] ||
+            [ -n "$(git status --porcelain)" ]; then
+            echo "Error! checkout した PR head の検証に失敗しました。"
+            exit 1
+          fi
+
+          changed_path_count=0
+          while IFS= read -r -d '' numstat_record; do
+            changed_path="${numstat_record#*$'\t'}"
+            changed_path="${changed_path#*$'\t'}"
+            if [[ "$changed_path" == *"/../"* ]] ||
+              [[ "$changed_path" == *"/./"* ]] ||
+              [[ "$changed_path" == *$'\n'* ]] ||
+              [[ "$changed_path" == *$'\r'* ]] ||
+              [[ "$changed_path" == *$'\t'* ]]; then
+              echo "Error! RBI patch のパス形式が不正です。"
+              exit 1
+            fi
+            case "$changed_path" in
+              rails/sorbet/rbi/*.rbi)
+                changed_path_count=$((changed_path_count + 1))
+                ;;
+              *)
+                echo "Error! RBI patch に許可されていないパスが含まれています: $changed_path"
+                exit 1
+                ;;
+            esac
+          done < <(git apply --numstat -z "$PATCH_FILE")
+
+          if [ "$changed_path_count" -eq 0 ]; then
+            echo "Error! RBI patch に変更がありません。"
+            exit 1
+          fi
+          git apply --check --index "$PATCH_FILE"
+          git apply --index "$PATCH_FILE"
+
+          if ! git diff --quiet ||
+            [ -n "$(git ls-files --others --exclude-standard)" ] ||
+            git diff --cached --quiet; then
+            echo "Error! RBI patch 適用後の差分を検証できません。"
+            exit 1
+          fi
+
+          while IFS= read -r -d '' staged_path; do
+            case "$staged_path" in
+              rails/sorbet/rbi/*.rbi) ;;
+              *)
+                echo "Error! RBI patch 適用後に許可されていないパスが変更されています: $staged_path"
+                exit 1
+                ;;
+            esac
+            staged_mode="$(git ls-files --stage -- "$staged_path" | awk 'NR == 1 { print $1 }')"
+            if [ -n "$staged_mode" ] && [ "$staged_mode" != "100644" ]; then
+              echo "Error! RBI ファイルの mode が通常ファイルではありません: $staged_path"
+              exit 1
+            fi
+          done < <(git diff --cached --name-only -z)
+
+          git diff --cached --check
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Push RBI commit
+        if: steps.apply.outputs.ready == 'true'
+        working-directory: rbi-push-repository
+        env:
+          # The PAT is exposed only to this step on a fresh privileged runner
+          # that has not executed PR-controlled code or dependencies.
+          #
+          # [Ja] PAT は、PR が制御するコードや依存関係を実行していない新しい
+          # 特権 runner 上の、このステップだけに渡す。
+          GH_TOKEN: ${{ secrets.WIKINO_RBI_PUSH_TOKEN }}
+          EXPECTED_HEAD_SHA: ${{ steps.source.outputs.head_sha }}
+          HEAD_REF: ${{ steps.source.outputs.head_ref }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then
+            echo "Error! Actions secret の WIKINO_RBI_PUSH_TOKEN が設定されていないようです。"
+            exit 1
+          fi
+
+          git config user.email 49699333+dependabot[bot]@users.noreply.github.com
+          git config user.name dependabot[bot]
+          git commit --no-verify -m "Update RBI files"
+          gh auth setup-git --hostname github.com --force
+          git push --no-verify \
+            --force-with-lease="refs/heads/$HEAD_REF:$EXPECTED_HEAD_SHA" \
+            origin "HEAD:refs/heads/$HEAD_REF"
