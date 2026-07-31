@@ -37,7 +37,7 @@ jobs:
   sorbet:
     name: Sorbet
     permissions:
-      contents: write
+      contents: read
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -57,6 +57,12 @@ jobs:
           # 空文字列は既定のチェックアウトにフォールバックするので、人間の PR
           # (fork からの PR を含む) は merge commit のままになる。
           ref: ${{ github.actor == 'dependabot[bot]' && github.head_ref || '' }}
+          # Do not persist GITHUB_TOKEN because RBI commits are pushed with a
+          # fine-grained PAT so the updated PR commit starts a new CI run.
+          #
+          # [Ja] RBI commit は更新後の PR commit で CI を再実行するため、
+          # fine-grained PAT で push する。GITHUB_TOKEN は永続化しない。
+          persist-credentials: false
       - name: Install libvips
         run: |
           sudo apt-get update
@@ -79,13 +85,24 @@ jobs:
           # 含みうる。環境変数で渡すことで、シェルが実行時に読む値として扱われ、
           # スクリプト自体を書き換えられない。
           HEAD_REF: ${{ github.head_ref }}
+          # Use a repository-scoped fine-grained PAT only in this step. A push
+          # authenticated with this token starts CI for the updated PR commit.
+          #
+          # [Ja] リポジトリ限定の fine-grained PAT はこのステップだけで使う。
+          # この token で push すると、更新後の PR commit に対して CI が起動する。
+          GH_TOKEN: ${{ secrets.WIKINO_RBI_PUSH_TOKEN }}
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             if [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
+              if [ -z "$GH_TOKEN" ]; then
+                echo "Error! WIKINO_RBI_PUSH_TOKEN is not configured as a Dependabot secret."
+                exit 1
+              fi
               git config user.email 49699333+dependabot[bot]@users.noreply.github.com
               git config user.name dependabot[bot]
               git add .
               git commit -m "Update RBI files"
+              gh auth setup-git --hostname github.com --force
               git push origin "HEAD:$HEAD_REF"
             else
               echo "Error! 未更新のRBIファイルがあるようです。bin/rails sorbet:update を実行して差分をコミットしてください。"
