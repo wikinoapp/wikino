@@ -11040,13 +11040,13 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # should be overridden by adapters to implement common features with
   # non-standard syntax like handling duplicates or returning values.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#845
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#850
   def build_insert_sql(insert); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#816
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#821
   def case_insensitive_comparison(attribute, value); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#812
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#817
   def case_sensitive_comparison(attribute, value); end
 
   # Override to check all foreign key constraints in a database.
@@ -11059,23 +11059,23 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#195
   def check_if_write_query(sql); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#860
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#865
   def check_version; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#785
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#790
   def clean!; end
 
   # Clear any caching the database adapter may be doing.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#741
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#744
   def clear_cache!(new_connection: T.unsafe(nil)); end
 
   # Check the connection back in to the connection pool
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#832
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#837
   def close; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#780
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#785
   def connect!; end
 
   # Checks whether the connection to the database was established. This doesn't
@@ -11111,18 +11111,18 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#364
   def database_exists?; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#856
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#861
   def database_version; end
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#836
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#841
   def default_index_type?(index); end
 
   # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#221
   def default_timezone; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#808
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#813
   def default_uniqueness_comparison(attribute, value); end
 
   # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#37
@@ -11145,13 +11145,13 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # undefined. This is called internally just before a forked process gets
   # rid of a connection that belonged to its parent.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#716
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#717
   def discard!; end
 
   # Disconnects from the database if already connected. Otherwise, this
   # method does nothing.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#702
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#701
   def disconnect!; end
 
   # This is meant to be implemented by the adapters that support custom enum types
@@ -11196,7 +11196,7 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#613
   def get_advisory_lock(lock_id); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#853
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#858
   def get_database_version; end
 
   # Returns the value of attribute owner.
@@ -11295,7 +11295,7 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # this client. If that is the case, generally you'll want to invalidate
   # the query cache using +ActiveRecord::Base.clear_query_cache+.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#800
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#805
   def raw_connection; end
 
   # Disconnects from the database if already connected, and establishes a new
@@ -11332,7 +11332,7 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   #
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#754
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#757
   def requires_reloading?; end
 
   # Reset the state of this connection, directing the DBMS to clear
@@ -11344,7 +11344,7 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # should call super immediately after resetting the connection (and while
   # still holding @lock).
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#728
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#729
   def reset!; end
 
   # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#37
@@ -11386,7 +11386,7 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # numbered migration that has been executed, or 0 if no schema
   # information is present / the database is empty.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#867
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#872
   def schema_version; end
 
   # Seconds since this connection was returned to the pool
@@ -11651,7 +11651,7 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
 
   # Removes the connection from the pool and disconnect it.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#735
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#738
   def throw_away!; end
 
   # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#37
@@ -11675,7 +11675,7 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # This is done under the hood by calling #active?. If the connection
   # is no longer active, then this method will reconnect to the database.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#761
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#764
   def verify!; end
 
   # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#209
@@ -11692,16 +11692,16 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # to both be thread-safe and not rely upon actual server communication.
   # This is useful for e.g. string escaping methods.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1091
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1096
   def any_raw_connection; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1192
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1197
   def arel_visitor; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1218
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1223
   def attempt_configure_connection; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1080
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1085
   def backoff(counter); end
 
   # Builds the result object.
@@ -11709,24 +11709,24 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # This is an internal hook to make possible connection adapters to build
   # custom result objects with connection-specific data.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1203
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1208
   def build_result(columns:, rows:, column_types: T.unsafe(nil)); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1196
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1201
   def build_statement_pool; end
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#826
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#831
   def can_perform_case_insensitive_comparison_for?(column); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1178
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1183
   def collector; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1167
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1172
   def column_for(table_name, column_name); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1173
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1178
   def column_for_attribute(attribute); end
 
   # Perform any necessary initialization upon the newly-established
@@ -11736,51 +11736,51 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # Implementations may assume this method will only be called while
   # holding @lock (or from #initialize).
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1214
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1219
   def configure_connection; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1225
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1230
   def default_prepared_statements; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1108
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1113
   def extended_type_map_key; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1153
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1158
   def instrumenter; end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1066
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1071
   def invalidate_transaction(exception); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1136
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1141
   def log(sql, name = T.unsafe(nil), binds = T.unsafe(nil), type_casted_binds = T.unsafe(nil), async: T.unsafe(nil), &block); end
 
   # @raise [NotImplementedError]
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1084
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1089
   def reconnect; end
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#948
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#953
   def reconnect_can_restore_state?; end
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1061
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1066
   def retryable_connection_error?(exception); end
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1073
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1078
   def retryable_query_error?(exception); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1157
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1162
   def translate_exception(exception, message:, sql:, binds:); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1124
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1129
   def translate_exception_class(native_error, sql, binds); end
 
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1114
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1119
   def type_map; end
 
   # Similar to any_raw_connection, but ensures it is validated and
@@ -11789,19 +11789,19 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # server... but some drivers fail if they know the connection has gone
   # away.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1100
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1105
   def valid_raw_connection; end
 
   # Mark the connection as verified. Call this inside a
   # `with_raw_connection` block only when the block is guaranteed to
   # exercise the raw connection.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1056
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1061
   def verified!; end
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1229
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#1234
   def warning_ignored?(warning); end
 
   # Lock the monitor, ensure we're properly connected and
@@ -11837,7 +11837,7 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
   # still-yielded connection in the outer block), but we currently
   # provide no special enforcement there.
   #
-  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#985
+  # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#990
   def with_raw_connection(allow_retry: T.unsafe(nil), materialize_transactions: T.unsafe(nil)); end
 
   class << self
@@ -11876,13 +11876,13 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
     # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#122
     def dbconsole(config, options = T.unsafe(nil)); end
 
-    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#879
+    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#884
     def extended_type_map(default_timezone:); end
 
     # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#93
     def find_cmd_and_exec(commands, *args); end
 
-    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#872
+    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#877
     def register_class_with_precision(mapping, key, klass, **kwargs); end
 
     # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#66
@@ -11902,19 +11902,19 @@ class ActiveRecord::ConnectionAdapters::AbstractAdapter
     # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#32
     def __class_attr___callbacks=(new_value); end
 
-    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#939
+    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#944
     def extract_limit(sql_type); end
 
-    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#935
+    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#940
     def extract_precision(sql_type); end
 
-    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#928
+    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#933
     def extract_scale(sql_type); end
 
-    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#888
+    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#893
     def initialize_type_map(m); end
 
-    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#921
+    # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#926
     def register_class_with_limit(mapping, key, klass); end
   end
 end
@@ -11928,13 +11928,13 @@ ActiveRecord::ConnectionAdapters::AbstractAdapter::COMMENT_REGEX = T.let(T.unsaf
 # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#84
 ActiveRecord::ConnectionAdapters::AbstractAdapter::DEFAULT_READ_QUERY = T.let(T.unsafe(nil), Array)
 
-# source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#945
+# source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#950
 ActiveRecord::ConnectionAdapters::AbstractAdapter::EXTENDED_TYPE_MAPS = T.let(T.unsafe(nil), Concurrent::Map)
 
 # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#40
 ActiveRecord::ConnectionAdapters::AbstractAdapter::SIMPLE_INT = T.let(T.unsafe(nil), Regexp)
 
-# source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#944
+# source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#949
 ActiveRecord::ConnectionAdapters::AbstractAdapter::TYPE_MAP = T.let(T.unsafe(nil), ActiveRecord::Type::TypeMap)
 
 # source://activerecord//lib/active_record/connection_adapters/abstract_adapter.rb#245
@@ -23695,7 +23695,7 @@ class ActiveRecord::FutureResult
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/future_result.rb#139
+  # source://activerecord//lib/active_record/future_result.rb#141
   def canceled?; end
 
   # source://activerecord//lib/active_record/future_result.rb#62
@@ -23714,10 +23714,10 @@ class ActiveRecord::FutureResult
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/future_result.rb#135
+  # source://activerecord//lib/active_record/future_result.rb#137
   def pending?; end
 
-  # source://activerecord//lib/active_record/future_result.rb#122
+  # source://activerecord//lib/active_record/future_result.rb#124
   def result; end
 
   # source://activerecord//lib/active_record/future_result.rb#85
@@ -23731,13 +23731,13 @@ class ActiveRecord::FutureResult
 
   private
 
-  # source://activerecord//lib/active_record/future_result.rb#169
+  # source://activerecord//lib/active_record/future_result.rb#171
   def exec_query(connection, *args, **kwargs); end
 
-  # source://activerecord//lib/active_record/future_result.rb#144
+  # source://activerecord//lib/active_record/future_result.rb#146
   def execute_or_wait; end
 
-  # source://activerecord//lib/active_record/future_result.rb#161
+  # source://activerecord//lib/active_record/future_result.rb#163
   def execute_query(connection, async: T.unsafe(nil)); end
 
   class << self
@@ -23795,11 +23795,11 @@ class ActiveRecord::FutureResult::EventBuffer
   def instrument(name, payload = T.unsafe(nil), &block); end
 end
 
-# source://activerecord//lib/active_record/future_result.rb#173
+# source://activerecord//lib/active_record/future_result.rb#175
 class ActiveRecord::FutureResult::SelectAll < ::ActiveRecord::FutureResult
   private
 
-  # source://activerecord//lib/active_record/future_result.rb#175
+  # source://activerecord//lib/active_record/future_result.rb#177
   def exec_query(*_arg0, **_arg1); end
 end
 
@@ -29436,14 +29436,14 @@ class ActiveRecord::PredicateBuilder::ArrayHandler
 
   # Returns the value of attribute predicate_builder.
   #
-  # source://activerecord//lib/active_record/relation/predicate_builder/array_handler.rb#39
+  # source://activerecord//lib/active_record/relation/predicate_builder/array_handler.rb#41
   def predicate_builder; end
 end
 
-# source://activerecord//lib/active_record/relation/predicate_builder/array_handler.rb#41
+# source://activerecord//lib/active_record/relation/predicate_builder/array_handler.rb#43
 module ActiveRecord::PredicateBuilder::ArrayHandler::NullPredicate
   class << self
-    # source://activerecord//lib/active_record/relation/predicate_builder/array_handler.rb#42
+    # source://activerecord//lib/active_record/relation/predicate_builder/array_handler.rb#44
     def or(other); end
   end
 end
@@ -33510,7 +33510,7 @@ class ActiveRecord::Relation
   #
   #   Post.where(person_id: 5).where(category: ['Something', 'Else']).delete_all
   #
-  # Both calls delete the affected posts all at once with a single DELETE statement.
+  # This call deletes the affected posts all at once with a single DELETE statement.
   # If you need to destroy dependent associations or call your <tt>before_*</tt> or
   # +after_destroy+ callbacks, use the #destroy_all method instead.
   #
@@ -38936,11 +38936,14 @@ class ActiveRecord::Type::Serialized
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/active_record/type/serialized.rb#61
+  # source://activerecord//lib/active_record/type/serialized.rb#66
   def default_value?(value); end
 
-  # source://activerecord//lib/active_record/type/serialized.rb#65
+  # source://activerecord//lib/active_record/type/serialized.rb#70
   def encoded(value); end
+
+  # source://activerecord//lib/active_record/type/serialized.rb#64
+  def instance_variables_to_inspect; end
 end
 
 # source://activerecord//lib/active_record/type.rb#66
@@ -42373,7 +42376,7 @@ module Arel::Predications
 
   private
 
-  # source://activerecord//lib/arel/predications.rb#239
+  # source://activerecord//lib/arel/predications.rb#237
   def grouping_all(method_id, others, *extras); end
 
   # source://activerecord//lib/arel/predications.rb#232
@@ -42381,20 +42384,20 @@ module Arel::Predications
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/arel/predications.rb#248
+  # source://activerecord//lib/arel/predications.rb#246
   def infinity?(value); end
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/arel/predications.rb#256
+  # source://activerecord//lib/arel/predications.rb#254
   def open_ended?(value); end
 
-  # source://activerecord//lib/arel/predications.rb#244
+  # source://activerecord//lib/arel/predications.rb#242
   def quoted_node(other); end
 
   # @return [Boolean]
   #
-  # source://activerecord//lib/arel/predications.rb#252
+  # source://activerecord//lib/arel/predications.rb#250
   def unboundable?(value); end
 end
 
