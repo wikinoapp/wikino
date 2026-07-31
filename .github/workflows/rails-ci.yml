@@ -44,6 +44,19 @@ jobs:
         working-directory: rails
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Check out the PR head branch only for Dependabot runs. The default
+          # checkout leaves HEAD detached at the PR merge commit, so pushing
+          # from there would land the merge commit on the PR branch. An empty
+          # string falls back to the default checkout, keeping human PRs
+          # (including ones from forks) on the merge commit.
+          #
+          # [Ja] Dependabot の実行時だけ PR の head ブランチをチェックアウトする。
+          # 既定のチェックアウトは PR の merge commit で detached HEAD になるため、
+          # そこから push すると merge commit ごと PR のブランチに載ってしまう。
+          # 空文字列は既定のチェックアウトにフォールバックするので、人間の PR
+          # (fork からの PR を含む) は merge commit のままになる。
+          ref: ${{ github.actor == 'dependabot[bot]' && github.head_ref || '' }}
       - name: Install libvips
         run: |
           sudo apt-get update
@@ -63,7 +76,7 @@ jobs:
               git config user.name dependabot[bot]
               git add .
               git commit -m "Update RBI files"
-              git push
+              git push origin HEAD:${{ github.head_ref }}
             else
               echo "Error! 未更新のRBIファイルがあるようです。bin/rails sorbet:update を実行して差分をコミットしてください。"
               exit 1
