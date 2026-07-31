@@ -57,11 +57,14 @@ jobs:
           # 空文字列は既定のチェックアウトにフォールバックするので、人間の PR
           # (fork からの PR を含む) は merge commit のままになる。
           ref: ${{ github.actor == 'dependabot[bot]' && github.head_ref || '' }}
-          # Do not persist GITHUB_TOKEN because RBI commits are pushed with a
-          # fine-grained PAT so the updated PR commit starts a new CI run.
+          # The persisted GITHUB_TOKEN credential takes precedence over the Git
+          # credential helper, so leaving it in place would make the push below
+          # authenticate as GITHUB_TOKEN instead of the fine-grained PAT and
+          # fail with only contents: read.
           #
-          # [Ja] RBI commit は更新後の PR commit で CI を再実行するため、
-          # fine-grained PAT で push する。GITHUB_TOKEN は永続化しない。
+          # [Ja] 永続化された GITHUB_TOKEN の資格情報は Git の credential helper
+          # より優先されるため、残したままだと後段の push が fine-grained PAT
+          # ではなく GITHUB_TOKEN で認証され、contents: read しかないので失敗する。
           persist-credentials: false
       - name: Install libvips
         run: |
@@ -94,8 +97,12 @@ jobs:
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             if [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
+              if [ -z "$HEAD_REF" ]; then
+                echo "Error! github.head_ref が空のようです。pull_request 以外のイベントでは自動 push しません。"
+                exit 1
+              fi
               if [ -z "$GH_TOKEN" ]; then
-                echo "Error! WIKINO_RBI_PUSH_TOKEN is not configured as a Dependabot secret."
+                echo "Error! Dependabot secret の WIKINO_RBI_PUSH_TOKEN が設定されていないようです。"
                 exit 1
               fi
               git config user.email 49699333+dependabot[bot]@users.noreply.github.com
