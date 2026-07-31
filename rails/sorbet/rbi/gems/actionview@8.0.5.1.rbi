@@ -10578,7 +10578,7 @@ class ActionView::Helpers::Tags::FileField < ::ActionView::Helpers::Tags::TextFi
 
   private
 
-  # source://actionview//lib/action_view/helpers/tags/file_field.rb#20
+  # source://actionview//lib/action_view/helpers/tags/file_field.rb#23
   def hidden_field_for_multiple_file(options); end
 end
 
@@ -14168,13 +14168,13 @@ class ActionView::Template
   # to ensure that references to the template object can be marshalled as well. This means forgoing
   # the marshalling of the compiler mutex and instantiating that again on unmarshalling.
   #
-  # source://actionview//lib/action_view/template.rb#387
+  # source://actionview//lib/action_view/template.rb#393
   def marshal_dump; end
 
-  # source://actionview//lib/action_view/template.rb#391
+  # source://actionview//lib/action_view/template.rb#397
   def marshal_load(array); end
 
-  # source://actionview//lib/action_view/template.rb#396
+  # source://actionview//lib/action_view/template.rb#402
   def method_name; end
 
   # Render a template. If the template was not compiled yet, it is done
@@ -14213,7 +14213,7 @@ class ActionView::Template
   #
   # @return [Boolean]
   #
-  # source://actionview//lib/action_view/template.rb#380
+  # source://actionview//lib/action_view/template.rb#386
   def strict_locals?; end
 
   # Returns whether the underlying handler supports streaming. If so,
@@ -14262,44 +14262,44 @@ class ActionView::Template
   # In general, this means that templates will be UTF-8 inside of Rails,
   # regardless of the original source encoding.
   #
-  # source://actionview//lib/action_view/template.rb#500
+  # source://actionview//lib/action_view/template.rb#506
   def compile(mod); end
 
   # Compile a template. This method ensures a template is compiled
   # just once and removes the source after it is compiled.
   #
-  # source://actionview//lib/action_view/template.rb#418
+  # source://actionview//lib/action_view/template.rb#424
   def compile!(view); end
 
   # This method compiles the source of the template. The compilation of templates
   # involves setting strict_locals! if applicable, encoding the template, and setting
   # frozen string literal.
   #
-  # source://actionview//lib/action_view/template.rb#443
+  # source://actionview//lib/action_view/template.rb#449
   def compiled_source; end
 
-  # source://actionview//lib/action_view/template.rb#405
+  # source://actionview//lib/action_view/template.rb#411
   def find_node_by_id(node, node_id); end
 
-  # source://actionview//lib/action_view/template.rb#549
+  # source://actionview//lib/action_view/template.rb#555
   def handle_render_error(view, e); end
 
-  # source://actionview//lib/action_view/template.rb#574
+  # source://actionview//lib/action_view/template.rb#580
   def identifier_method_name; end
 
-  # source://actionview//lib/action_view/template.rb#578
+  # source://actionview//lib/action_view/template.rb#584
   def instrument(action, &block); end
 
-  # source://actionview//lib/action_view/template.rb#586
+  # source://actionview//lib/action_view/template.rb#592
   def instrument_payload; end
 
-  # source://actionview//lib/action_view/template.rb#582
+  # source://actionview//lib/action_view/template.rb#588
   def instrument_render_template(&block); end
 
-  # source://actionview//lib/action_view/template.rb#561
+  # source://actionview//lib/action_view/template.rb#567
   def locals_code; end
 
-  # source://actionview//lib/action_view/template.rb#541
+  # source://actionview//lib/action_view/template.rb#547
   def offset; end
 
   class << self
@@ -14703,7 +14703,7 @@ ActionView::Template::LEADING_ENCODING_REGEXP = T.let(T.unsafe(nil), Regexp)
 # source://actionview//lib/action_view/template.rb#197
 ActionView::Template::NONE = T.let(T.unsafe(nil), Object)
 
-# source://actionview//lib/action_view/template.rb#558
+# source://actionview//lib/action_view/template.rb#564
 ActionView::Template::RUBY_RESERVED_KEYWORDS = T.let(T.unsafe(nil), Array)
 
 # = Action View RawFile Template

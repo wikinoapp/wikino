@@ -7072,7 +7072,7 @@ module ActiveSupport::Inflector
   # The capitalization of the first word can be turned off by setting the
   # +:capitalize+ option to false (default is true).
   #
-  # The trailing '_id' can be kept and capitalized by setting the
+  # The trailing '_id' can be kept by setting the
   # optional parameter +keep_id_suffix+ to true (default is false).
   #
   #   humanize('employee_salary')                  # => "Employee salary"
@@ -7097,7 +7097,7 @@ module ActiveSupport::Inflector
   #     inflect.uncountable 'rails'
   #   end
   #
-  # source://activesupport//lib/active_support/inflector/inflections.rb#265
+  # source://activesupport//lib/active_support/inflector/inflections.rb#266
   def inflections(locale = T.unsafe(nil)); end
 
   # Returns the suffix that should be added to a number to denote the position
@@ -7670,14 +7670,14 @@ module ActiveSupport::IsolatedExecutionState
     def scope; end
 
     # source://activesupport//lib/active_support/isolated_execution_state.rb#59
-    def share_with(other); end
+    def share_with(other, except: T.unsafe(nil)); end
 
     # source://activesupport//lib/active_support/isolated_execution_state.rb#31
     def unique_id; end
 
     private
 
-    # source://activesupport//lib/active_support/isolated_execution_state.rb#67
+    # source://activesupport//lib/active_support/isolated_execution_state.rb#69
     def state; end
   end
 end
@@ -12535,98 +12535,98 @@ class ActiveSupport::TestCase < ::Minitest::Test
   extend ::ActiveSupport::Testing::SetupAndTeardown::ClassMethods
   extend ::ActiveSupport::Testing::Declarative
 
-  # source://activesupport//lib/active_support/test_case.rb#145
+  # source://activesupport//lib/active_support/test_case.rb#151
   def __callbacks; end
 
-  # source://activesupport//lib/active_support/test_case.rb#145
+  # source://activesupport//lib/active_support/test_case.rb#151
   def _run_setup_callbacks(&block); end
 
-  # source://activesupport//lib/active_support/test_case.rb#145
+  # source://activesupport//lib/active_support/test_case.rb#151
   def _run_teardown_callbacks(&block); end
 
-  # source://activesupport//lib/active_support/test_case.rb#145
+  # source://activesupport//lib/active_support/test_case.rb#151
   def _setup_callbacks; end
 
-  # source://activesupport//lib/active_support/test_case.rb#145
+  # source://activesupport//lib/active_support/test_case.rb#151
   def _teardown_callbacks; end
 
-  # source://activesupport//lib/active_support/test_case.rb#241
+  # source://activesupport//lib/active_support/test_case.rb#247
   def assert_no_match(matcher, obj, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#164
+  # source://activesupport//lib/active_support/test_case.rb#170
   def assert_not_empty(obj, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#175
+  # source://activesupport//lib/active_support/test_case.rb#181
   def assert_not_equal(exp, act, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#186
+  # source://activesupport//lib/active_support/test_case.rb#192
   def assert_not_in_delta(exp, act, delta = T.unsafe(nil), msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#197
+  # source://activesupport//lib/active_support/test_case.rb#203
   def assert_not_in_epsilon(exp, act, epsilon = T.unsafe(nil), msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#208
+  # source://activesupport//lib/active_support/test_case.rb#214
   def assert_not_includes(collection, obj, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#219
+  # source://activesupport//lib/active_support/test_case.rb#225
   def assert_not_instance_of(cls, obj, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#230
+  # source://activesupport//lib/active_support/test_case.rb#236
   def assert_not_kind_of(cls, obj, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#252
+  # source://activesupport//lib/active_support/test_case.rb#258
   def assert_not_nil(obj, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#263
+  # source://activesupport//lib/active_support/test_case.rb#269
   def assert_not_operator(o1, op, o2 = T.unsafe(nil), msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#274
+  # source://activesupport//lib/active_support/test_case.rb#280
   def assert_not_predicate(o1, op, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#285
+  # source://activesupport//lib/active_support/test_case.rb#291
   def assert_not_respond_to(obj, meth, msg = T.unsafe(nil), include_all: T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#296
+  # source://activesupport//lib/active_support/test_case.rb#302
   def assert_not_same(exp, act, msg = T.unsafe(nil)); end
 
-  # source://activesupport//lib/active_support/test_case.rb#152
+  # source://activesupport//lib/active_support/test_case.rb#158
   def file_fixture_path; end
 
-  # source://activesupport//lib/active_support/test_case.rb#152
+  # source://activesupport//lib/active_support/test_case.rb#158
   def file_fixture_path?; end
 
-  # source://activesupport//lib/active_support/test_case.rb#300
+  # source://activesupport//lib/active_support/test_case.rb#306
   def inspect; end
 
-  # source://activesupport//lib/active_support/test_case.rb#142
+  # source://activesupport//lib/active_support/test_case.rb#148
   def method_name; end
 
   class << self
-    # source://activesupport//lib/active_support/test_case.rb#145
+    # source://activesupport//lib/active_support/test_case.rb#151
     def __callbacks; end
 
-    # source://activesupport//lib/active_support/test_case.rb#145
+    # source://activesupport//lib/active_support/test_case.rb#151
     def __callbacks=(value); end
 
-    # source://activesupport//lib/active_support/test_case.rb#145
+    # source://activesupport//lib/active_support/test_case.rb#151
     def _setup_callbacks; end
 
-    # source://activesupport//lib/active_support/test_case.rb#145
+    # source://activesupport//lib/active_support/test_case.rb#151
     def _setup_callbacks=(value); end
 
-    # source://activesupport//lib/active_support/test_case.rb#145
+    # source://activesupport//lib/active_support/test_case.rb#151
     def _teardown_callbacks; end
 
-    # source://activesupport//lib/active_support/test_case.rb#145
+    # source://activesupport//lib/active_support/test_case.rb#151
     def _teardown_callbacks=(value); end
 
-    # source://activesupport//lib/active_support/test_case.rb#152
+    # source://activesupport//lib/active_support/test_case.rb#158
     def file_fixture_path; end
 
-    # source://activesupport//lib/active_support/test_case.rb#152
+    # source://activesupport//lib/active_support/test_case.rb#158
     def file_fixture_path=(value); end
 
-    # source://activesupport//lib/active_support/test_case.rb#152
+    # source://activesupport//lib/active_support/test_case.rb#158
     def file_fixture_path?; end
 
     # Parallelizes the test suite.
@@ -12663,7 +12663,7 @@ class ActiveSupport::TestCase < ::Minitest::Test
     # number of tests to run is above the +threshold+ param. The default value is
     # 50, and it's configurable via +config.active_support.test_parallelization_threshold+.
     #
-    # source://activesupport//lib/active_support/test_case.rb#81
+    # source://activesupport//lib/active_support/test_case.rb#87
     def parallelize(workers: T.unsafe(nil), with: T.unsafe(nil), threshold: T.unsafe(nil)); end
 
     # Set up hook for parallel testing. This can be used if you have multiple
@@ -12680,7 +12680,7 @@ class ActiveSupport::TestCase < ::Minitest::Test
     #     end
     #   end
     #
-    # source://activesupport//lib/active_support/test_case.rb#101
+    # source://activesupport//lib/active_support/test_case.rb#107
     def parallelize_setup(&block); end
 
     # Clean up hook for parallel testing. This can be used to drop databases
@@ -12697,7 +12697,7 @@ class ActiveSupport::TestCase < ::Minitest::Test
     #     end
     #   end
     #
-    # source://activesupport//lib/active_support/test_case.rb#118
+    # source://activesupport//lib/active_support/test_case.rb#124
     def parallelize_teardown(&block); end
 
     # Returns the order in which test cases are run.
@@ -12725,16 +12725,16 @@ class ActiveSupport::TestCase < ::Minitest::Test
 
     private
 
-    # source://activesupport//lib/active_support/test_case.rb#145
+    # source://activesupport//lib/active_support/test_case.rb#151
     def __class_attr___callbacks; end
 
-    # source://activesupport//lib/active_support/test_case.rb#145
+    # source://activesupport//lib/active_support/test_case.rb#151
     def __class_attr___callbacks=(new_value); end
 
-    # source://activesupport//lib/active_support/test_case.rb#152
+    # source://activesupport//lib/active_support/test_case.rb#158
     def __class_attr_file_fixture_path; end
 
-    # source://activesupport//lib/active_support/test_case.rb#152
+    # source://activesupport//lib/active_support/test_case.rb#158
     def __class_attr_file_fixture_path=(new_value); end
   end
 end
@@ -12782,7 +12782,7 @@ module ActiveSupport::Testing::Assertions
   #     post :create, params: { status: { incident: true } }
   #   end
   #
-  # source://activesupport//lib/active_support/testing/assertions.rb#195
+  # source://activesupport//lib/active_support/testing/assertions.rb#196
   def assert_changes(expression, message = T.unsafe(nil), from: T.unsafe(nil), to: T.unsafe(nil), &block); end
 
   # Test numeric difference between the return value of an expression as a
@@ -12856,7 +12856,7 @@ module ActiveSupport::Testing::Assertions
   #     post :create, params: { status: { ok: false } }
   #   end
   #
-  # source://activesupport//lib/active_support/testing/assertions.rb#252
+  # source://activesupport//lib/active_support/testing/assertions.rb#253
   def assert_no_changes(expression, message = T.unsafe(nil), from: T.unsafe(nil), &block); end
 
   # Assertion that the numeric result of evaluating an expression is not
@@ -12884,7 +12884,7 @@ module ActiveSupport::Testing::Assertions
   #     post :create, params: { article: invalid_attributes }
   #   end
   #
-  # source://activesupport//lib/active_support/testing/assertions.rb#157
+  # source://activesupport//lib/active_support/testing/assertions.rb#158
   def assert_no_difference(expression, message = T.unsafe(nil), &block); end
 
   # Asserts that an expression is not truthy. Passes if +object+ is +nil+ or
@@ -12937,10 +12937,10 @@ module ActiveSupport::Testing::Assertions
 
   private
 
-  # source://activesupport//lib/active_support/testing/assertions.rb#286
+  # source://activesupport//lib/active_support/testing/assertions.rb#288
   def _assert_nothing_raised_or_warn(assertion, &block); end
 
-  # source://activesupport//lib/active_support/testing/assertions.rb#301
+  # source://activesupport//lib/active_support/testing/assertions.rb#303
   def _callable_to_source_string(callable); end
 end
 
@@ -13434,16 +13434,16 @@ class ActiveSupport::Testing::Parallelization::Worker
   # source://activesupport//lib/active_support/testing/parallelization/worker.rb#7
   def initialize(number, url); end
 
-  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#80
+  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#84
   def after_fork; end
 
   # source://activesupport//lib/active_support/testing/parallelization/worker.rb#42
   def perform_job(job); end
 
-  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#86
+  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#90
   def run_cleanup; end
 
-  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#56
+  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#60
   def safe_record(reporter, result); end
 
   # source://activesupport//lib/active_support/testing/parallelization/worker.rb#14
@@ -13454,10 +13454,10 @@ class ActiveSupport::Testing::Parallelization::Worker
 
   private
 
-  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#93
+  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#97
   def add_setup_exception(result); end
 
-  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#97
+  # source://activesupport//lib/active_support/testing/parallelization/worker.rb#101
   def set_process_title(status); end
 end
 
@@ -20399,7 +20399,7 @@ class String
   # optional parameter +capitalize+ to false.
   # By default, this parameter is true.
   #
-  # The trailing '_id' can be kept and capitalized by setting the
+  # The trailing '_id' can be kept by setting the
   # optional parameter +keep_id_suffix+ to true.
   # By default, this parameter is false.
   #

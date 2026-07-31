@@ -4349,22 +4349,65 @@ class ActionController::InvalidParameterKey < ::ArgumentError; end
 #       ...
 #     end
 #
-# source://actionpack//lib/action_controller/metal/live.rb#56
+# ## Streaming and Execution State
+#
+# When streaming, the action is executed in a separate thread. By default, this thread
+# shares execution state from the parent thread.
+#
+# You can configure which execution state keys should be excluded from being shared
+# using the `config.action_controller.live_streaming_excluded_keys` configuration:
+#
+#   # config/application.rb
+#   config.action_controller.live_streaming_excluded_keys = [:active_record_connected_to_stack]
+#
+# This is useful when using ActionController::Live inside a `connected_to` block. For example,
+# if the parent request is reading from a replica using `connected_to(role: :reading)`, you may
+# want the streaming thread to use its own connection context instead of inheriting the read-only
+# context:
+#
+#   # Without configuration, streaming thread inherits read-only connection
+#   ActiveRecord::Base.connected_to(role: :reading) do
+#     @posts = Post.all
+#     render stream: true # Streaming thread cannot write to database
+#   end
+#
+#   # With configuration, streaming thread gets fresh connection context
+#   # config.action_controller.live_streaming_excluded_keys = [:active_record_connected_to_stack]
+#   ActiveRecord::Base.connected_to(role: :reading) do
+#     @posts = Post.all
+#     render stream: true # Streaming thread can write to database if needed
+#   end
+#
+# Common keys you might want to exclude:
+# - `:active_record_connected_to_stack` - Database connection routing and roles
+# - `:active_record_prohibit_shard_swapping` - Shard swapping restrictions
+#
+# By default, no keys are excluded to maintain backward compatibility.
+#
+# source://actionpack//lib/action_controller/metal/live.rb#91
 module ActionController::Live
   extend ::ActiveSupport::Concern
+  include GeneratedInstanceMethods
 
+  mixes_in_class_methods GeneratedClassMethods
   mixes_in_class_methods ::ActionController::Live::ClassMethods
 
-  # source://actionpack//lib/action_controller/metal/live.rb#380
+  # source://actionpack//lib/action_controller/metal/live.rb#421
   def clean_up_thread_locals(*args); end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#371
+  # source://actionpack//lib/action_controller/metal/live.rb#94
+  def live_streaming_excluded_keys; end
+
+  # source://actionpack//lib/action_controller/metal/live.rb#94
+  def live_streaming_excluded_keys=(val); end
+
+  # source://actionpack//lib/action_controller/metal/live.rb#412
   def new_controller_thread; end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#270
+  # source://actionpack//lib/action_controller/metal/live.rb#311
   def process(name); end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#319
+  # source://actionpack//lib/action_controller/metal/live.rb#360
   def response_body=(body); end
 
   # Sends a stream to the browser, which is helpful when you're generating exports
@@ -4393,12 +4436,12 @@ module ActionController::Live
   #       end
   #     end
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#349
+  # source://actionpack//lib/action_controller/metal/live.rb#390
   def send_stream(filename:, disposition: T.unsafe(nil), type: T.unsafe(nil)); end
 
   private
 
-  # source://actionpack//lib/action_controller/metal/live.rb#388
+  # source://actionpack//lib/action_controller/metal/live.rb#429
   def log_error(exception); end
 
   # Ensure we clean up any thread locals we copied so that the thread can reused.
@@ -4421,18 +4464,32 @@ module ActionController::Live
   def original_new_controller_thread; end
 
   class << self
-    # source://actionpack//lib/action_controller/metal/live.rb#384
+    # source://actionpack//lib/action_controller/metal/live.rb#94
+    def live_streaming_excluded_keys; end
+
+    # source://actionpack//lib/action_controller/metal/live.rb#94
+    def live_streaming_excluded_keys=(val); end
+
+    # source://actionpack//lib/action_controller/metal/live.rb#425
     def live_thread_pool_executor; end
   end
+
+  module GeneratedClassMethods
+    def live_streaming_excluded_keys; end
+    def live_streaming_excluded_keys=(value); end
+    def live_streaming_excluded_keys?; end
+  end
+
+  module GeneratedInstanceMethods; end
 end
 
-# source://actionpack//lib/action_controller/metal/live.rb#151
+# source://actionpack//lib/action_controller/metal/live.rb#192
 class ActionController::Live::Buffer < ::ActionDispatch::Response::Buffer
   include ::MonitorMixin
 
   # @return [Buffer] a new instance of Buffer
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#166
+  # source://actionpack//lib/action_controller/metal/live.rb#207
   def initialize(response); end
 
   # Inform the producer/writing thread that the client has disconnected; the
@@ -4440,10 +4497,10 @@ class ActionController::Live::Buffer < ::ActionDispatch::Response::Buffer
   #
   # See also #close.
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#214
+  # source://actionpack//lib/action_controller/metal/live.rb#255
   def abort; end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#233
+  # source://actionpack//lib/action_controller/metal/live.rb#274
   def call_on_error; end
 
   # Write a 'close' event to the buffer; the producer/writing thread uses this to
@@ -4451,7 +4508,7 @@ class ActionController::Live::Buffer < ::ActionDispatch::Response::Buffer
   #
   # See also #abort.
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#202
+  # source://actionpack//lib/action_controller/metal/live.rb#243
   def close; end
 
   # Is the client still connected and waiting for content?
@@ -4461,7 +4518,7 @@ class ActionController::Live::Buffer < ::ActionDispatch::Response::Buffer
   #
   # @return [Boolean]
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#225
+  # source://actionpack//lib/action_controller/metal/live.rb#266
   def connected?; end
 
   # Ignore that the client has disconnected.
@@ -4470,7 +4527,7 @@ class ActionController::Live::Buffer < ::ActionDispatch::Response::Buffer
   # result in the written content being silently discarded. If this value is
   # `false` (the default), a ClientDisconnected exception will be raised.
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#164
+  # source://actionpack//lib/action_controller/metal/live.rb#205
   def ignore_disconnect; end
 
   # Ignore that the client has disconnected.
@@ -4479,60 +4536,60 @@ class ActionController::Live::Buffer < ::ActionDispatch::Response::Buffer
   # result in the written content being silently discarded. If this value is
   # `false` (the default), a ClientDisconnected exception will be raised.
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#164
+  # source://actionpack//lib/action_controller/metal/live.rb#205
   def ignore_disconnect=(_arg0); end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#229
+  # source://actionpack//lib/action_controller/metal/live.rb#270
   def on_error(&block); end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#174
+  # source://actionpack//lib/action_controller/metal/live.rb#215
   def write(string); end
 
   # Same as `write` but automatically include a newline at the end of the string.
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#194
+  # source://actionpack//lib/action_controller/metal/live.rb#235
   def writeln(string); end
 
   private
 
-  # source://actionpack//lib/action_controller/metal/live.rb#249
+  # source://actionpack//lib/action_controller/metal/live.rb#290
   def build_queue(queue_size); end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#238
+  # source://actionpack//lib/action_controller/metal/live.rb#279
   def each_chunk(&block); end
 
   class << self
     # Returns the value of attribute queue_size.
     #
-    # source://actionpack//lib/action_controller/metal/live.rb#155
+    # source://actionpack//lib/action_controller/metal/live.rb#196
     def queue_size; end
 
     # Sets the attribute queue_size
     #
     # @param value the value to set the attribute queue_size to.
     #
-    # source://actionpack//lib/action_controller/metal/live.rb#155
+    # source://actionpack//lib/action_controller/metal/live.rb#196
     def queue_size=(_arg0); end
   end
 end
 
-# source://actionpack//lib/action_controller/metal/live.rb#59
+# source://actionpack//lib/action_controller/metal/live.rb#100
 module ActionController::Live::ClassMethods
-  # source://actionpack//lib/action_controller/metal/live.rb#60
+  # source://actionpack//lib/action_controller/metal/live.rb#101
   def make_response!(request); end
 end
 
-# source://actionpack//lib/action_controller/metal/live.rb#148
+# source://actionpack//lib/action_controller/metal/live.rb#189
 class ActionController::Live::ClientDisconnected < ::RuntimeError; end
 
-# source://actionpack//lib/action_controller/metal/live.rb#254
+# source://actionpack//lib/action_controller/metal/live.rb#295
 class ActionController::Live::Response < ::ActionDispatch::Response
   private
 
-  # source://actionpack//lib/action_controller/metal/live.rb#256
+  # source://actionpack//lib/action_controller/metal/live.rb#297
   def before_committed; end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#263
+  # source://actionpack//lib/action_controller/metal/live.rb#304
   def build_buffer(response, body); end
 end
 
@@ -4575,26 +4632,26 @@ end
 # Note: SSEs are not currently supported by IE. However, they are supported by
 # Chrome, Firefox, Opera, and Safari.
 #
-# source://actionpack//lib/action_controller/metal/live.rb#112
+# source://actionpack//lib/action_controller/metal/live.rb#153
 class ActionController::Live::SSE
   # @return [SSE] a new instance of SSE
   #
-  # source://actionpack//lib/action_controller/metal/live.rb#115
+  # source://actionpack//lib/action_controller/metal/live.rb#156
   def initialize(stream, options = T.unsafe(nil)); end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#120
+  # source://actionpack//lib/action_controller/metal/live.rb#161
   def close; end
 
-  # source://actionpack//lib/action_controller/metal/live.rb#124
+  # source://actionpack//lib/action_controller/metal/live.rb#165
   def write(object, options = T.unsafe(nil)); end
 
   private
 
-  # source://actionpack//lib/action_controller/metal/live.rb#134
+  # source://actionpack//lib/action_controller/metal/live.rb#175
   def perform_write(json, options); end
 end
 
-# source://actionpack//lib/action_controller/metal/live.rb#113
+# source://actionpack//lib/action_controller/metal/live.rb#154
 ActionController::Live::SSE::PERMITTED_OPTIONS = T.let(T.unsafe(nil), Array)
 
 # source://actionpack//lib/action_controller/test_case.rb#184
@@ -12281,7 +12338,7 @@ module ActionDispatch::Integration::RequestHelpers
   def put(path, **args); end
 end
 
-# source://actionpack//lib/action_dispatch/testing/integration.rb#334
+# source://actionpack//lib/action_dispatch/testing/integration.rb#335
 module ActionDispatch::Integration::Runner
   include ::ActionDispatch::Assertions::RoutingAssertions
   include ::ActionDispatch::Assertions::ResponseAssertions
@@ -12291,57 +12348,57 @@ module ActionDispatch::Integration::Runner
   include ::ActionDispatch::Assertions
   extend ::ActionDispatch::Assertions::RoutingAssertions::ClassMethods
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#342
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#343
   def initialize(*args, &blk); end
 
   # Returns the value of attribute app.
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#339
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#340
   def app; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#412
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#413
   def assertions; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#416
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#417
   def assertions=(assertions); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def assigns(*_arg0, **_arg1, &_arg2); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#347
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#348
   def before_setup; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def cookies(*_arg0, **_arg1, &_arg2); end
 
   # Copy the instance variables from the current session instance into the test
   # instance.
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#422
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#423
   def copy_session_variables!; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#362
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#363
   def create_session(app); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#428
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#429
   def default_url_options; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#432
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#433
   def default_url_options=(options); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def delete(*_arg0, **_arg1, &_arg2); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def follow_redirect!(*_arg0, **_arg1, &_arg2); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def get(*_arg0, **_arg1, &_arg2); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def head(*_arg0, **_arg1, &_arg2); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#352
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#353
   def integration_session; end
 
   # Open a new session instance. If a block is given, the new session is yielded
@@ -12354,47 +12411,47 @@ module ActionDispatch::Integration::Runner
   # By default, a single session is automatically created for you, but you can use
   # this method to open multiple sessions that ought to be tested simultaneously.
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#404
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#405
   def open_session; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def patch(*_arg0, **_arg1, &_arg2); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def post(*_arg0, **_arg1, &_arg2); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#384
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#385
   def put(*_arg0, **_arg1, &_arg2); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#374
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#375
   def remove!; end
 
   # Reset the current session. This is useful for testing multiple sessions in a
   # single test case.
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#358
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#359
   def reset!; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#340
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#341
   def root_session; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#340
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#341
   def root_session=(_arg0); end
 
   private
 
   # Delegate unhandled messages to the current session instance.
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#442
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#443
   def method_missing(method, *_arg1, **_arg2, &_arg3); end
 
   # @return [Boolean]
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#437
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#438
   def respond_to_missing?(method, _); end
 end
 
-# source://actionpack//lib/action_dispatch/testing/integration.rb#337
+# source://actionpack//lib/action_dispatch/testing/integration.rb#338
 ActionDispatch::Integration::Runner::APP_SESSIONS = T.let(T.unsafe(nil), Hash)
 
 # An instance of this class represents a set of requests and responses performed
@@ -12476,7 +12533,7 @@ class ActionDispatch::Integration::Session
   #
   # @param value the value to set the attribute host to.
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#315
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#316
   def host!(_arg0); end
 
   # Sets the attribute host
@@ -12497,7 +12554,7 @@ class ActionDispatch::Integration::Session
   # Returns `true` if the session is mimicking a secure HTTPS request.
   #
   #     if session.https?
-  #       ...
+  #       # ...
   #     end
   #
   # @return [Boolean]
@@ -12521,7 +12578,7 @@ class ActionDispatch::Integration::Session
   # *   `env`: Additional env to pass, as a Hash. The headers will be merged into
   #     the Rack env hash.
   # *   `xhr`: Set to `true` if you want to make an Ajax request. Adds request
-  #     headers characteristic of XMLHttpRequest e.g. HTTP_X_REQUESTED_WITH. The
+  #     headers characteristic of `XMLHttpRequest`, e.g. `HTTP_X_REQUESTED_WITH`. The
   #     headers will be merged into the Rack env hash.
   # *   `as`: Used for encoding the request with different content type. Supports
   #     `:json` by default and will set the appropriate request headers. The
@@ -12536,12 +12593,13 @@ class ActionDispatch::Integration::Session
   # This method returns the response status, after performing the request.
   # Furthermore, if this method was called from an ActionDispatch::IntegrationTest
   # object, then that object's `@response` instance variable will point to a
-  # Response object which one can use to inspect the details of the response.
+  # ActionDispatch::TestResponse object which one can use to inspect the details of the response.
   #
   # Example:
+  #
   #     process :get, '/author', params: { since: 201501011400 }
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#225
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#226
   def process(method, path, params: T.unsafe(nil), headers: T.unsafe(nil), env: T.unsafe(nil), xhr: T.unsafe(nil), as: T.unsafe(nil)); end
 
   # source://actionpack//lib/action_dispatch/testing/integration.rb#97
@@ -12596,15 +12654,15 @@ class ActionDispatch::Integration::Session
 
   private
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#318
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#319
   def _mock_session; end
 
   # @yield [location]
   #
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#326
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#327
   def build_expanded_path(path); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#322
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#323
   def build_full_uri(path, env); end
 
   class << self
@@ -12825,7 +12883,7 @@ ActionDispatch::Integration::Session::DEFAULT_HOST = T.let(T.unsafe(nil), String
 # Consult the [Rails Testing Guide](https://guides.rubyonrails.org/testing.html)
 # for more.
 #
-# source://actionpack//lib/action_dispatch/testing/integration.rb#649
+# source://actionpack//lib/action_dispatch/testing/integration.rb#650
 class ActionDispatch::IntegrationTest < ::ActiveSupport::TestCase
   include ::ActionDispatch::TestProcess::FixtureFile
   include ::ActionDispatch::Assertions::RoutingAssertions
@@ -12846,7 +12904,7 @@ class ActionDispatch::IntegrationTest < ::ActiveSupport::TestCase
   extend ::ActionDispatch::Assertions::RoutingAssertions::WithIntegrationRouting::ClassMethods
 end
 
-# source://actionpack//lib/action_dispatch/testing/integration.rb#659
+# source://actionpack//lib/action_dispatch/testing/integration.rb#660
 module ActionDispatch::IntegrationTest::Behavior
   include ::ActionDispatch::Assertions::RoutingAssertions
   include ::ActionDispatch::Assertions::ResponseAssertions
@@ -12866,30 +12924,30 @@ module ActionDispatch::IntegrationTest::Behavior
   mixes_in_class_methods ::ActionDispatch::IntegrationTest::Behavior::ClassMethods
   mixes_in_class_methods ::ActionDispatch::Assertions::RoutingAssertions::WithIntegrationRouting::ClassMethods
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#692
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#693
   def app; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#696
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#697
   def document_root_element; end
 end
 
-# source://actionpack//lib/action_dispatch/testing/integration.rb#674
+# source://actionpack//lib/action_dispatch/testing/integration.rb#675
 module ActionDispatch::IntegrationTest::Behavior::ClassMethods
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#675
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#676
   def app; end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#683
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#684
   def app=(app); end
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#687
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#688
   def register_encoder(*args, **options); end
 end
 
-# source://actionpack//lib/action_dispatch/testing/integration.rb#652
+# source://actionpack//lib/action_dispatch/testing/integration.rb#653
 module ActionDispatch::IntegrationTest::UrlOptions
   extend ::ActiveSupport::Concern
 
-  # source://actionpack//lib/action_dispatch/testing/integration.rb#654
+  # source://actionpack//lib/action_dispatch/testing/integration.rb#655
   def url_options; end
 end
 
