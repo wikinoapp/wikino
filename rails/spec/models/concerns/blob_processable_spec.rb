@@ -180,86 +180,227 @@ RSpec.describe BlobProcessable do
     it "GIFファイルの場合、処理をスキップする（アニメーションを保持）" do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
-      input_path = "/tmp/test_image.gif"
 
-      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("animated.gif"))
+      Dir.mktmpdir do |dir|
+        input_path = File.join(dir, "test_image.gif")
 
-      allow(Vips::Image).to receive(:new_from_file)
-      blob.send(:process_image, input_path)
-      expect(Vips::Image).not_to have_received(:new_from_file)
+        allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("animated.gif"))
+
+        allow(Vips::Image).to receive(:new_from_file)
+        blob.send(:process_image, input_path)
+        expect(Vips::Image).not_to have_received(:new_from_file)
+      end
     end
 
     it "JPEGファイルの場合、EXIF情報を削除して保存する" do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
-      input_path = "/tmp/test_image.jpg"
 
-      # Vips::Imageは外部ライブラリのため、通常のdoubleを使用
-      vips_image = double("Vips::Image")
+      Dir.mktmpdir do |dir|
+        input_path = File.join(dir, "test_image.jpg")
 
-      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
-      allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
-      allow(vips_image).to receive(:autorot).and_return(vips_image)
-      allow(vips_image).to receive(:jpegsave)
+        # Vips::Image is an external library, so use a plain double.
+        #
+        # [Ja] Vips::Image は外部ライブラリのため、通常の double を使用する。
+        vips_image = double("Vips::Image")
 
-      blob.send(:process_image, input_path)
+        allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.jpg"))
+        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+        allow(vips_image).to receive(:autorot).and_return(vips_image)
+        allow(vips_image).to receive(:jpegsave)
 
-      expect(vips_image).to have_received(:autorot)
-      expect(vips_image).to have_received(:jpegsave).with(input_path, strip: true, Q: 90)
+        blob.send(:process_image, input_path)
+
+        expect(vips_image).to have_received(:autorot)
+        expect(vips_image).to have_received(:jpegsave).with(a_string_ending_with(".jpg"), strip: true, Q: 90)
+      end
     end
 
     it "PNGファイルの場合、メタデータを削除して保存する" do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
-      input_path = "/tmp/test_image.png"
-      # Vips::Imageは外部ライブラリのため、通常のdoubleを使用
-      vips_image = double("Vips::Image")
 
-      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.png"))
-      allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
-      allow(vips_image).to receive(:autorot).and_return(vips_image)
-      allow(vips_image).to receive(:pngsave)
+      Dir.mktmpdir do |dir|
+        input_path = File.join(dir, "test_image.png")
+        # Vips::Image is an external library, so use a plain double.
+        #
+        # [Ja] Vips::Image は外部ライブラリのため、通常の double を使用する。
+        vips_image = double("Vips::Image")
 
-      blob.send(:process_image, input_path)
+        allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.png"))
+        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+        allow(vips_image).to receive(:autorot).and_return(vips_image)
+        allow(vips_image).to receive(:pngsave)
 
-      expect(vips_image).to have_received(:autorot)
-      expect(vips_image).to have_received(:pngsave).with(input_path, strip: true, compression: 9)
+        blob.send(:process_image, input_path)
+
+        expect(vips_image).to have_received(:autorot)
+        expect(vips_image).to have_received(:pngsave).with(a_string_ending_with(".png"), strip: true, compression: 9)
+      end
     end
 
     it "WebPファイルの場合、メタデータを削除して保存する" do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
-      input_path = "/tmp/test_image.webp"
-      # Vips::Imageは外部ライブラリのため、通常のdoubleを使用
-      vips_image = double("Vips::Image")
 
-      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.webp"))
-      allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
-      allow(vips_image).to receive(:autorot).and_return(vips_image)
-      allow(vips_image).to receive(:webpsave)
+      Dir.mktmpdir do |dir|
+        input_path = File.join(dir, "test_image.webp")
+        # Vips::Image is an external library, so use a plain double.
+        #
+        # [Ja] Vips::Image は外部ライブラリのため、通常の double を使用する。
+        vips_image = double("Vips::Image")
 
-      blob.send(:process_image, input_path)
+        allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.webp"))
+        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+        allow(vips_image).to receive(:autorot).and_return(vips_image)
+        allow(vips_image).to receive(:webpsave)
 
-      expect(vips_image).to have_received(:autorot)
-      expect(vips_image).to have_received(:webpsave).with(input_path, strip: true, Q: 90)
+        blob.send(:process_image, input_path)
+
+        expect(vips_image).to have_received(:autorot)
+        expect(vips_image).to have_received(:webpsave).with(a_string_ending_with(".webp"), strip: true, Q: 90)
+      end
     end
 
     it "その他の形式の場合、そのまま保存する" do
       blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
       blob = blob_class.new
-      input_path = "/tmp/test_image.bmp"
-      # Vips::Imageは外部ライブラリのため、通常のdoubleを使用
-      vips_image = double("Vips::Image")
 
-      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.bmp"))
-      allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
-      allow(vips_image).to receive(:autorot).and_return(vips_image)
-      allow(vips_image).to receive(:write_to_file)
+      Dir.mktmpdir do |dir|
+        input_path = File.join(dir, "test_image.bmp")
+        # Vips::Image is an external library, so use a plain double.
+        #
+        # [Ja] Vips::Image は外部ライブラリのため、通常の double を使用する。
+        vips_image = double("Vips::Image")
 
-      blob.send(:process_image, input_path)
+        allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.bmp"))
+        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+        allow(vips_image).to receive(:autorot).and_return(vips_image)
+        allow(vips_image).to receive(:write_to_file)
 
-      expect(vips_image).to have_received(:autorot)
-      expect(vips_image).to have_received(:write_to_file).with(input_path)
+        blob.send(:process_image, input_path)
+
+        expect(vips_image).to have_received(:autorot)
+        expect(vips_image).to have_received(:write_to_file).with(a_string_ending_with(".bmp"))
+      end
+    end
+  end
+
+  # These examples run the real libvips code path. libvips keeps the input
+  # mapped while it evaluates lazily, so whether the save target collides with
+  # the file being read can only be verified against real files. The examples
+  # above replace Vips with doubles and never touch a file.
+  #
+  # [Ja] これらのケースは実際に libvips を通す。libvips は入力を遅延評価で
+  # マップしたまま保持するため、保存先が読み込み元と衝突しないことは実ファイル
+  # でしか検証できない。上のケース群は Vips を double に差し替えており
+  # ファイルに触れない。
+  describe "#process_image (実ファイル)" do
+    # Builds an image in the requested format from the PNG fixture.
+    #
+    # [Ja] PNG のフィクスチャから、指定した形式の実画像を組み立てる。
+    def build_image(dir, extension)
+      path = File.join(dir, "source.#{extension}")
+      Vips::Image.new_from_file(Rails.root.join("spec/fixtures/files/test-image.png").to_s).write_to_file(path)
+      path
+    end
+
+    def temp_file_paths
+      Dir.glob(File.join(Dir.tmpdir, "image_processing*"))
+    end
+
+    %w[jpg jpeg png webp].each do |extension|
+      it "#{extension}ファイルの場合、処理後も同じ寸法の画像として読み込めること" do
+        blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+        blob = blob_class.new
+
+        allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.#{extension}"))
+
+        Dir.mktmpdir do |dir|
+          input_path = build_image(dir, extension)
+
+          blob.send(:process_image, input_path)
+
+          processed = Vips::Image.new_from_file(input_path)
+          expect(processed.width).to eq(100)
+          expect(processed.height).to eq(100)
+        end
+      end
+    end
+
+    it "その他の形式の場合、拡張子から判定した形式のまま保存されること" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.tif"))
+
+      Dir.mktmpdir do |dir|
+        input_path = build_image(dir, "tif")
+
+        blob.send(:process_image, input_path)
+
+        processed = Vips::Image.new_from_file(input_path)
+        expect(processed.get("vips-loader")).to eq("tiffload")
+        expect(processed.width).to eq(100)
+      end
+    end
+
+    it "GIFファイルの場合、処理をスキップしてファイルを変更しないこと" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("animated.gif"))
+
+      Dir.mktmpdir do |dir|
+        input_path = build_image(dir, "gif")
+        original = File.binread(input_path)
+
+        blob.send(:process_image, input_path)
+
+        expect(File.binread(input_path)).to eq(original)
+      end
+    end
+
+    it "処理が成功した場合、一時ファイルを残さないこと" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.png"))
+
+      Dir.mktmpdir do |dir|
+        allow(Dir).to receive(:tmpdir).and_return(dir)
+        input_path = build_image(dir, "png")
+
+        blob.send(:process_image, input_path)
+
+        expect(temp_file_paths).to be_empty
+      end
+    end
+
+    it "保存に失敗した場合、一時ファイルを残さず読み込み元も変更しないこと" do
+      blob_class = Class.new(ActiveStorage::Blob) { include BlobProcessable }
+      blob = blob_class.new
+
+      allow(blob).to receive(:filename).and_return(ActiveStorage::Filename.new("test.png"))
+
+      Dir.mktmpdir do |dir|
+        allow(Dir).to receive(:tmpdir).and_return(dir)
+        input_path = build_image(dir, "png")
+        original = File.binread(input_path)
+
+        # Vips::Image is an external library, so use a plain double.
+        #
+        # [Ja] Vips::Image は外部ライブラリのため、通常の double を使用する。
+        vips_image = double("Vips::Image")
+        allow(Vips::Image).to receive(:new_from_file).with(input_path).and_return(vips_image)
+        allow(vips_image).to receive(:autorot).and_return(vips_image)
+        allow(vips_image).to receive(:pngsave).and_raise(Vips::Error.new("pngsave failed"))
+
+        expect { blob.send(:process_image, input_path) }.to raise_error(Vips::Error)
+
+        expect(temp_file_paths).to be_empty
+        expect(File.binread(input_path)).to eq(original)
+      end
     end
   end
 
