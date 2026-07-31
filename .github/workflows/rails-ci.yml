@@ -69,6 +69,16 @@ jobs:
           working-directory: rails
       - run: bin/rails sorbet:update
       - name: Push RBI files or fail
+        env:
+          # A branch name is chosen by whoever opens the pull request and may
+          # contain shell metacharacters. Passing it through the environment
+          # keeps it a value the shell reads at run time, so it cannot alter
+          # the script itself.
+          #
+          # [Ja] ブランチ名は PR を出した側が決めるものであり、シェルのメタ文字を
+          # 含みうる。環境変数で渡すことで、シェルが実行時に読む値として扱われ、
+          # スクリプト自体を書き換えられない。
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             if [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
@@ -76,7 +86,7 @@ jobs:
               git config user.name dependabot[bot]
               git add .
               git commit -m "Update RBI files"
-              git push origin HEAD:${{ github.head_ref }}
+              git push origin "HEAD:$HEAD_REF"
             else
               echo "Error! 未更新のRBIファイルがあるようです。bin/rails sorbet:update を実行して差分をコミットしてください。"
               exit 1
