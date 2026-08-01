@@ -87,7 +87,7 @@ jobs:
 
       - name: Download RBI patch
         if: steps.source.outputs.ready == 'true'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           name: dependabot-rbi-patch
           path: ${{ runner.temp }}/dependabot-rbi-patch
@@ -131,7 +131,7 @@ jobs:
 
       - name: Check out validated PR head
         if: steps.artifact.outputs.has_patch == 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           # Check out the SHA validated above rather than the branch, so the
           # patch is applied to the same tree the Sorbet job generated it from
