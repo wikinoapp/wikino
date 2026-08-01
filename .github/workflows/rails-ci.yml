@@ -15,6 +15,16 @@ on:
       - ".github/workflows/rails-ci.yml"
       - ".github/workflows/rails-rbi-push.yml"
 
+# Every job here installs and runs dependencies chosen by the pull request, so
+# none of them may hold a write token. The RBI push runs in a separate
+# privileged workflow.
+#
+# [Ja] 本 workflow の全 job は PR が選んだ依存関係をインストールして実行する
+# ため、いずれも write token を持たせない。RBI の push は別の特権 workflow で
+# 実行する。
+permissions:
+  contents: read
+
 jobs:
   zeitwerk:
     name: Zeitwerk
@@ -38,8 +48,6 @@ jobs:
 
   sorbet:
     name: Sorbet
-    permissions:
-      contents: read
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -47,18 +55,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # Check out the PR head branch only for Dependabot runs. The default
-          # checkout leaves HEAD detached at the PR merge commit, so pushing
-          # from there would land the merge commit on the PR branch. An empty
-          # string falls back to the default checkout, keeping human PRs
-          # (including ones from forks) on the merge commit.
+          # Check out the PR head commit only for Dependabot runs, naming the
+          # same SHA the privileged push workflow validates so the patch is
+          # generated on the tree it will be applied to. The default checkout
+          # resolves to the PR merge commit, which is not on the PR branch at
+          # all. An empty string falls back to the default checkout, keeping
+          # human PRs (including ones from forks) on the merge commit.
           #
-          # [Ja] Dependabot の実行時だけ PR の head ブランチをチェックアウトする。
-          # 既定のチェックアウトは PR の merge commit で detached HEAD になるため、
-          # そこから push すると merge commit ごと PR のブランチに載ってしまう。
-          # 空文字列は既定のチェックアウトにフォールバックするので、人間の PR
-          # (fork からの PR を含む) は merge commit のままになる。
-          ref: ${{ github.actor == 'dependabot[bot]' && github.head_ref || '' }}
+          # [Ja] Dependabot の実行時だけ PR の head commit をチェックアウトする。
+          # 特権 push workflow が検証するのと同じ SHA を指定し、patch を適用先と
+          # 同じ木の上で生成する。既定のチェックアウトは PR の merge commit に
+          # なり、これは PR のブランチには存在しない commit である。空文字列は
+          # 既定のチェックアウトにフォールバックするので、人間の PR (fork からの
+          # PR を含む) は merge commit のままになる。
+          ref: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.head.sha || '' }}
           # The commands below execute PR-controlled code and dependencies.
           # Persisting checkout credentials would expose even the read-only
           # GITHUB_TOKEN to that code. A separate workflow performs the push.
@@ -117,6 +127,17 @@ jobs:
           fi
 
           git diff --cached --binary --full-index --no-renames -- rails/sorbet/rbi > "$RUNNER_TEMP/rbi.patch"
+      # Upload the patch on every Dependabot pull_request run, including the
+      # runs where it is empty. That way a successful run always carries
+      # exactly one artifact under this name, and the push workflow can treat
+      # an empty patch as "nothing to do" instead of guessing why the artifact
+      # is missing. One day of retention covers the workflow_run that follows.
+      #
+      # [Ja] Dependabot の pull_request run では、patch が空の場合も含めて必ず
+      # アップロードする。こうすることで成功した run には常にこの名前の
+      # artifact がちょうど 1 つ存在し、push workflow は artifact が無い理由を
+      # 推測せず、空の patch を「やることなし」として扱える。保持期間 1 日は
+      # 後続の workflow_run に足りる。
       - name: Upload RBI patch
         if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
         uses: actions/upload-artifact@v7

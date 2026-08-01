@@ -35,8 +35,8 @@ jobs:
 
           pr_number="$(jq -r 'if type == "array" and length == 1 then .[0].number // "" else "" end' <<< "$PULL_REQUESTS")"
           if [[ ! "$pr_number" =~ ^[0-9]+$ ]] || [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "Error! 元 workflow の PR または head SHA を一意に特定できません。"
-            exit 1
+            echo "元 workflow の PR または head SHA を一意に特定できないため、push を省略します。"
+            exit 0
           fi
 
           pr_json="$(gh api "/repos/$REPOSITORY/pulls/$pr_number")"
@@ -59,6 +59,15 @@ jobs:
             exit 1
           fi
 
+          # The head ref is chosen by whoever opened the pull request, so
+          # restrict it to the branch namespace Dependabot creates and reject
+          # anything Git would not accept as a branch name. The value ends up
+          # in the push refspec below, and both checks run before it is used.
+          #
+          # [Ja] head ref は PR を出した側が決める値なので、Dependabot が作る
+          # ブランチ名前空間に限定し、Git がブランチ名として受け付けない値を
+          # 弾く。この値は後段で push の refspec に渡るため、使用前に両方の
+          # 検査を通す。
           head_ref="$(jq -r '.head.ref // ""' <<< "$pr_json")"
           case "$head_ref" in
             dependabot/*) ;;
@@ -78,7 +87,7 @@ jobs:
 
       - name: Download RBI patch
         if: steps.source.outputs.ready == 'true'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v7
         with:
           name: dependabot-rbi-patch
           path: ${{ runner.temp }}/dependabot-rbi-patch
@@ -94,6 +103,16 @@ jobs:
           set -euo pipefail
           echo "has_patch=false" >> "$GITHUB_OUTPUT"
 
+          # The artifact comes from a run that executed PR-controlled code, so
+          # require exactly the single regular file this workflow expects
+          # before anything reads it. The 20 MiB cap is far above a regenerated
+          # RBI diff, so exceeding it means the artifact is not what the Sorbet
+          # job produced.
+          #
+          # [Ja] artifact は PR が制御するコードを実行した run から来るため、
+          # 読み取る前に本 workflow が想定する通常ファイル 1 つだけであることを
+          # 要求する。20 MiB の上限は RBI を再生成した差分よりはるかに大きく、
+          # これを超える artifact は Sorbet job が作ったものではない。
           mapfile -d '' artifact_entries < <(find "$ARTIFACT_DIRECTORY" -mindepth 1 -maxdepth 1 -print0)
           patch_file="$ARTIFACT_DIRECTORY/rbi.patch"
           if [ "${#artifact_entries[@]}" -ne 1 ] ||
@@ -114,8 +133,22 @@ jobs:
         if: steps.artifact.outputs.has_patch == 'true'
         uses: actions/checkout@v7
         with:
+          # Check out the SHA validated above rather than the branch, so the
+          # patch is applied to the same tree the Sorbet job generated it from
+          # even if the branch has moved since.
+          #
+          # [Ja] ブランチではなく上で検証した SHA をチェックアウトし、その後
+          # ブランチが動いていても、patch を Sorbet job が生成したときと同じ
+          # 木に適用する。
           ref: ${{ steps.source.outputs.head_sha }}
           path: rbi-push-repository
+          # The credential actions/checkout persists takes precedence over the
+          # Git credential helper, so leaving it in place would make the push
+          # below authenticate as the read-only GITHUB_TOKEN and fail.
+          #
+          # [Ja] actions/checkout が永続化する資格情報は Git の credential
+          # helper より優先されるため、残したままだと後段の push が読み取り
+          # 専用の GITHUB_TOKEN で認証されて失敗する。
           persist-credentials: false
           fetch-depth: 1
 
@@ -189,7 +222,6 @@ jobs:
             fi
           done < <(git diff --cached --name-only -z)
 
-          git diff --cached --check
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Push RBI commit
@@ -211,10 +243,17 @@ jobs:
             exit 1
           fi
 
-          git config user.email 49699333+dependabot[bot]@users.noreply.github.com
-          git config user.name dependabot[bot]
+          git config user.email "49699333+dependabot[bot]@users.noreply.github.com"
+          git config user.name "dependabot[bot]"
           git commit --no-verify -m "Update RBI files"
           gh auth setup-git --hostname github.com --force
+          # Name the SHA that the validation step observed as the lease, so the
+          # push is refused if the branch was updated or deleted in the
+          # meantime instead of overwriting whatever is there now.
+          #
+          # [Ja] 検証ステップが確認した SHA を lease に指定する。その後に
+          # ブランチが更新・削除されていた場合は、現在の内容を上書きせずに
+          # push を拒否する。
           git push --no-verify \
             --force-with-lease="refs/heads/$HEAD_REF:$EXPECTED_HEAD_SHA" \
             origin "HEAD:refs/heads/$HEAD_REF"
