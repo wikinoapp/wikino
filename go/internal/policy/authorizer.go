@@ -20,6 +20,18 @@ type Authorizer interface {
 	CanCreatePage() bool
 	CanUpdatePage() bool
 
+	// Trash
+	// [Ja] ゴミ箱
+
+	// CanShowTrash decides based on the page:trash scope, not page:read.
+	// This keeps trashed content hidden from read-only members while allowing members
+	// authorized to open the trash to inspect it.
+	//
+	// [Ja] CanShowTrash は page:read ではなく page:trash スコープで判定する。
+	// これにより、読み取り専用メンバーからゴミ箱内の内容を隠しつつ、ゴミ箱を
+	// 開ける権限を持つメンバーは内容を確認できる。
+	CanShowTrash() bool
+
 	// Draft page (owner-check pattern)
 	// [Ja] 下書きページ (所有者チェックパターン)
 	CanShowDraftPage(isOwner bool) bool
