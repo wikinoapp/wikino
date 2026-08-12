@@ -64,6 +64,16 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
 	attachmentRepo := repository.NewAttachmentRepository(queries)
+
+	getPageShowUC := usecase.NewGetPageShowUsecase(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		attachmentRepo,
+	)
+
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 
@@ -86,6 +96,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 	return page.NewHandler(
 		cfg,
 		flashMgr,
+		getPageShowUC,
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
@@ -277,6 +288,83 @@ func TestEdit(t *testing.T) {
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
 		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+	}
+}
+
+// spaces.identifier is citext, so a request spelling it differently reaches the same space. Every
+// link on the screen is built from the stored identifier, so the requested spelling never leaks
+// into the markup and one screen's links all share a single form. The editor exercises the widest
+// set of link builders (breadcrumb, global nav search path, draft-save endpoints).
+//
+// [Ja] spaces.identifier は citext のため、表記の異なるリクエストでも同じスペースに解決される。
+// 画面内のリンクはすべて保存済みの識別子から組み立てるので、リクエストの表記がマークアップへ漏れず、
+// 1 画面のリンクの表記が 1 つに揃う。編集画面はリンク組み立ての種類が最も多い (パンくず・グローバル
+// ナビの検索パス・下書き保存のエンドポイント)。
+func TestEdit_BuildsLinksFromStoredIdentifier(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("stored-case-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Stored Case Page").
+		WithBody("body").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/STORED-CASE-SPACE/pages/1/edit", map[string]string{
+		"space_identifier": "STORED-CASE-SPACE",
+		"page_number":      "1",
+	})
+	req.Header.Set("Accept-Language", "ja")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	if strings.Contains(body, "/s/STORED-CASE-SPACE") {
+		t.Error("links must not carry the requested spelling of the space identifier")
+	}
+	for _, want := range []string{
+		`href="/s/stored-case-space"`,
+		`content="/search?q=space:stored-case-space"`,
+		`/s/stored-case-space/pages/1`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
 	}
 }
 
@@ -1027,8 +1115,17 @@ func TestEdit_PreviewTab(t *testing.T) {
 	// [Ja] タブコンテナが min-w-0 を持ち、プレビューの <pre> の overflow-auto が長いコード行を
 	// 収める (grid アイテムが中央カラムを超えて広がらない) こと。開始タグ全体で照合し、min-w-0 が
 	// このコンテナに付いていることを担保する (min-w-0 は他の要素にも現れる)。
-	if !strings.Contains(body, `<div class="tabs gap-4 min-w-0" id="page-edit-tabs">`) {
+	if !strings.Contains(body, `<div class="tabs grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-4 min-w-0" id="page-edit-tabs">`) {
 		t.Error("tabs container is missing min-w-0 (guards preview code block overflow)")
+	}
+
+	// Basecoat 1.0 styles the tab list only as a direct child of .tabs, so the list must not be
+	// wrapped in another element.
+	//
+	// [Ja] Basecoat 1.0 はタブリストを .tabs の直接の子としてのみスタイルするため、リストを
+	// 別の要素で包んではいけない。
+	if !strings.Contains(body, `id="page-edit-tabs"><nav`) {
+		t.Error("tab list is not a direct child of the tabs container")
 	}
 	if !strings.Contains(body, `id="page-edit-tab-edit"`) {
 		t.Error("edit tab not found in response")
@@ -1182,10 +1279,11 @@ func TestEdit_KeyboardHint(t *testing.T) {
 	}
 
 	// Each chip tints itself in its host button's foreground color (foreground-colored text over a
-	// low-opacity foreground background): publish tints btn-primary, save tints btn-secondary.
+	// low-opacity foreground background): publish tints the default primary .btn, save tints the
+	// secondary one.
 	//
 	// [Ja] 各チップはホストボタンの前景色で淡く染める (前景色の文字 + 低不透明度の前景色背景)。
-	// 公開は btn-primary を、保存は btn-secondary を染めること。
+	// 公開は既定の primary バリアントの .btn を、保存は secondary バリアントを染めること。
 	if !strings.Contains(body, "bg-primary-foreground/20 text-primary-foreground") {
 		t.Error("publish keyboard hint tinted color classes (bg-primary-foreground/20 text-primary-foreground) not found in response")
 	}
@@ -1440,8 +1538,11 @@ func TestEdit_ZenMode(t *testing.T) {
 			// [Ja] Zenトグルは lg 未満で非表示にし (モバイルには畳むサイドカラムが無く、Zen ON の
 			// ままトグルが無いとモバイルのユーザーが戻せなくなる)、lg で inline-flex に戻す。
 			// トグルボタンに固定するため class 属性全体で検証する。
-			if !strings.Contains(body, `class="hidden lg:inline-flex btn-sm-outline rounded-full w-fit"`) {
+			if !strings.Contains(body, `class="hidden lg:inline-flex btn rounded-full w-fit justify-self-end"`) {
 				t.Error("zen mode toggle lg-only display class not found in response")
+			}
+			if !strings.Contains(body, `data-variant="outline" data-size="sm" data-zen-mode-toggle`) {
+				t.Error("zen mode toggle Basecoat variant and size attributes not found in response")
 			}
 		})
 	}
@@ -1668,5 +1769,93 @@ func TestEdit_SuggestionMode(t *testing.T) {
 	// 通常の下書きアラートが表示されていないことを確認（編集提案メッセージが代わりに表示される）
 	if strings.Contains(body, "現在下書きを表示しています") {
 		t.Error("normal draft alert should not be shown in suggestion mode")
+	}
+}
+
+// The caret half of the split save-draft button is icon-only, so its accessible name comes from
+// the translated aria-label rather than from its content.
+//
+// [Ja] 下書き保存の分割ボタンのキャレット側はアイコンのみのため、アクセシブルネームは内容では
+// なく翻訳済みの aria-label が供給する。
+func TestEdit_下書き保存オプションのトリガーにアクセシブルネームがある(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		locale    string
+		wantLabel string
+	}{
+		{
+			name:      "日本語",
+			locale:    i18n.LangJa,
+			wantLabel: "下書き保存のオプション",
+		},
+		{
+			name:      "英語",
+			locale:    i18n.LangEn,
+			wantLabel: "Save draft options",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			queries := testutil.QueriesWithTx(tx)
+
+			identifier := "save-draft-optlabel-" + tt.locale
+			atname := "savedraftoptlabel" + tt.locale
+
+			userID := testutil.NewUserBuilder(t, tx).
+				WithEmail(identifier + "@example.com").
+				WithAtname(atname).
+				Build()
+			spaceID := testutil.NewSpaceBuilder(t, tx).
+				WithIdentifier(identifier).
+				Build()
+			spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithUserID(userID).
+				Build()
+			topicID := testutil.NewTopicBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithNumber(1).
+				Build()
+			testutil.NewTopicMemberBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithSpaceMemberID(spaceMemberID).
+				Build()
+			testutil.NewPageBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithNumber(1).
+				WithTitle("Save Draft Options Page").
+				WithBody("body").
+				Build()
+
+			handler := setupHandler(t, queries)
+
+			req := newRequestWithChiParams(t, http.MethodGet, "/s/"+identifier+"/pages/1/edit", map[string]string{
+				"space_identifier": identifier,
+				"page_number":      "1",
+			})
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+			ctx = i18n.SetLocale(ctx, tt.locale)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Edit(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+			}
+
+			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
+				t.Errorf("下書き保存オプションのトリガーに aria-label %q が含まれていない", tt.wantLabel)
+			}
+		})
 	}
 }

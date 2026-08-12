@@ -776,6 +776,23 @@ other = "<a href=\"{{.URL}}\" class=\"underline\">編集提案 #{{.Number}}</a> 
 description = "編集提案を更新ボタンのラベル"
 other = "編集提案を更新"
 
+# ページ表示画面
+[page_show_title]
+description = "ページ表示画面のタイトル ({page_title} | {space_name} 形式)"
+other = "{{.PageTitle}} | {{.SpaceName}}"
+
+[page_show_untitled]
+description = "タイトル未設定のページの表示名"
+other = "無題"
+
+[page_show_trashed_alert]
+description = "ゴミ箱に入っているページを表示したときのアラート"
+other = "このページはゴミ箱に入れられています。"
+
+[page_show_view_trash_link]
+description = "ゴミ箱アラートからゴミ箱画面へのリンクテキスト"
+other = "ゴミ箱を見る"
+
 # ページ公開バリデーション
 [validation_page_title_required]
 description = "ページタイトル必須エラー"

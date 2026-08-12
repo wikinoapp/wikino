@@ -776,6 +776,23 @@ other = "Editing a page for <a href=\"{{.URL}}\" class=\"underline\">suggestion 
 description = "Label for the update suggestion button"
 other = "Update Suggestion"
 
+# Page show screen
+[page_show_title]
+description = "Page show screen title ({page_title} | {space_name} format)"
+other = "{{.PageTitle}} | {{.SpaceName}}"
+
+[page_show_untitled]
+description = "Display name for a page with no title"
+other = "Untitled"
+
+[page_show_trashed_alert]
+description = "Alert shown when viewing a page that is in the trash"
+other = "This page is in the trash."
+
+[page_show_view_trash_link]
+description = "Link text from the trash alert to the trash screen"
+other = "View trash"
+
 # Page publish validation
 [validation_page_title_required]
 description = "Page title required error"
