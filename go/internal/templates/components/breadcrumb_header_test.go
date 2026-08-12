@@ -177,12 +177,13 @@ func TestBreadcrumbHeader_DropsBreadcrumbWithoutNavigableItems(t *testing.T) {
 	// The bar is the header's only content there, so the header switches with the bar just as it does
 	// on a screen with no items at all.
 	//
-	// [Ja] その状態ではバーがヘッダーの唯一の中身になるため、項目がまったく無い画面と同じくヘッダーは
-	// バーと一緒に切り替わる。
 	// The header owns its top spacing, so the spacing sits on the same element as the visibility
 	// class and goes away with the header below the breakpoint.
 	//
-	// [Ja] 上余白はヘッダー自身が持つため、表示切り替えクラスと同じ要素に付き、ブレークポイント未満では
+	// [Ja] その状態ではバーがヘッダーの唯一の中身になるため、項目がまったく無い画面と同じくヘッダーは
+	// バーと一緒に切り替わる。
+	//
+	// 上余白はヘッダー自身が持つため、表示切り替えクラスと同じ要素に付き、ブレークポイント未満では
 	// ヘッダーと一緒に消える。
 	if !strings.Contains(html, `<header class="pt-4 hidden md:block">`) {
 		t.Error("ヘッダーがナビバーと同じ幅で切り替わっていない")
