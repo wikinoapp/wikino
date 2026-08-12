@@ -1,8 +1,10 @@
 package viewmodel_test
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
@@ -92,6 +94,120 @@ func TestNewPageForEdit(t *testing.T) {
 
 			if got.Number != tt.wantNum {
 				t.Errorf("Number = %d, want %d", got.Number, tt.wantNum)
+			}
+		})
+	}
+}
+
+func TestNewPageForShow(t *testing.T) {
+	t.Parallel()
+
+	title := "Page title"
+	page := &model.Page{
+		Title:    &title,
+		BodyHTML: "<p>Page body</p>",
+		Number:   42,
+	}
+	got := viewmodel.NewPageForShow(page)
+	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
+
+	if got.DisplayTitle(ctx) != title {
+		t.Errorf("DisplayTitle() = %q, want %q", got.DisplayTitle(ctx), title)
+	}
+	if got.BodyHTML != page.BodyHTML {
+		t.Errorf("BodyHTML = %q, want %q", got.BodyHTML, page.BodyHTML)
+	}
+	if got.Number != int32(page.Number) {
+		t.Errorf("Number = %d, want %d", got.Number, page.Number)
+	}
+}
+
+func TestPageForShow_DisplayTitle(t *testing.T) {
+	t.Parallel()
+
+	title := "Page title"
+	emptyTitle := ""
+	tests := []struct {
+		name   string
+		title  *string
+		locale string
+		want   string
+	}{
+		{name: "タイトルあり (日本語)", title: &title, locale: i18n.LangJa, want: title},
+		{name: "タイトルあり (英語)", title: &title, locale: i18n.LangEn, want: title},
+		{name: "タイトルが nil (日本語)", title: nil, locale: i18n.LangJa, want: "無題"},
+		{name: "タイトルが nil (英語)", title: nil, locale: i18n.LangEn, want: "Untitled"},
+		{name: "タイトルが空 (日本語)", title: &emptyTitle, locale: i18n.LangJa, want: "無題"},
+		{name: "タイトルが空 (英語)", title: &emptyTitle, locale: i18n.LangEn, want: "Untitled"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			page := viewmodel.NewPageForShow(&model.Page{Title: tt.title})
+			ctx := i18n.SetLocale(t.Context(), tt.locale)
+
+			if got := page.DisplayTitle(ctx); got != tt.want {
+				t.Errorf("DisplayTitle() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPageForShow_MetaDescription(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		bodyHTML string
+		want     string
+	}{
+		{
+			name:     "本文からプレーンテキストを取り出す",
+			bodyHTML: "<p>ページの本文です。</p><p>2 つ目の段落。</p>",
+			want:     "ページの本文です。 2 つ目の段落。",
+		},
+		{
+			name:     "本文が空の場合は空文字列を返す",
+			bodyHTML: "",
+			want:     "",
+		},
+		{
+			name:     "テキストを持たない本文は空文字列を返す",
+			bodyHTML: `<p><img src="/attachments/1" alt="図"></p>`,
+			want:     "",
+		},
+		{
+			name:     "上限ちょうどの本文は切り詰めない",
+			bodyHTML: "<p>" + strings.Repeat("あ", 120) + "</p>",
+			want:     strings.Repeat("あ", 120),
+		},
+		{
+			name:     "上限を超える本文は切り詰めて省略記号を付ける",
+			bodyHTML: "<p>" + strings.Repeat("あ", 121) + "</p>",
+			want:     strings.Repeat("あ", 119) + "…",
+		},
+		{
+			// The 119th rune is the space markup.PlainText emits between the two blocks, so the cut
+			// lands on it and no space may remain in front of the ellipsis.
+			//
+			// [Ja] 119 文字目は markup.PlainText が 2 つのブロックの間に出す半角スペースであり、
+			// 切り取り位置がそこに重なる。省略記号の直前に空白が残ってはいけない。
+			name:     "ブロック境界で切れる本文は省略記号の直前に空白を残さない",
+			bodyHTML: "<p>" + strings.Repeat("あ", 118) + "</p><p>" + strings.Repeat("い", 5) + "</p>",
+			want:     strings.Repeat("あ", 118) + "…",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			page := viewmodel.NewPageForShow(&model.Page{BodyHTML: tt.bodyHTML})
+
+			if got := page.MetaDescription(); got != tt.want {
+				t.Errorf("MetaDescription() = %q, want %q", got, tt.want)
 			}
 		})
 	}

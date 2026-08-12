@@ -80,7 +80,7 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 			return
 		}
 
-		h.renderEditWithErrors(w, r, spaceIdentifier, output, title, body, ve)
+		h.renderEditWithErrors(w, r, output, title, body, ve)
 		return
 	}
 
@@ -99,11 +99,16 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
-// renderEditWithErrors はバリデーションエラー時に編集画面を再表示します
+// renderEditWithErrors re-renders the editor on a validation error. Space-aware links are built
+// from the persisted identifier in output, so it deliberately does not take one derived from URL
+// parameters.
+//
+// [Ja] renderEditWithErrors はバリデーションエラー時に編集画面を再表示します。
+// スペース識別子を含むリンクの組み立てには output に含まれる保存済みの値を使うため、
+// URL パラメータ由来の識別子は受け取りません。
 func (h *Handler) renderEditWithErrors(
 	w http.ResponseWriter,
 	r *http.Request,
-	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetPageDetailOutput,
 	title string,
 	body string,
@@ -111,12 +116,16 @@ func (h *Handler) renderEditWithErrors(
 ) {
 	ctx := r.Context()
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
-
 	// ViewModelを生成
 	pageVM := viewmodel.NewPageFromFormInput(title, body, output.Page.Number)
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
+
+	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
+	// the same form.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
 
 	// リンクデータを取得
 	linkData, err := h.getEditLinkDataUC.Execute(ctx, usecase.GetEditLinkDataInput{
@@ -134,7 +143,7 @@ func (h *Handler) renderEditWithErrors(
 		return
 	}
 
-	linkResult := buildEditLinkResult(linkData, spaceIdentifier, 1, output.Page)
+	linkResult := buildEditLinkResult(linkData, output.Space.Identifier, 1, output.Page)
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -184,7 +193,7 @@ func (h *Handler) renderEditWithErrors(
 		HideFooter: true,
 		GlobalNav:  navData,
 
-		BreadcrumbHeader: editBreadcrumbHeaderData(ctx, spaceVM, topicVM),
+		BreadcrumbHeader: pageBreadcrumbHeaderData(ctx, spaceVM, topicVM, editBreadcrumbMaxWidthClass, true),
 	}
 
 	w.WriteHeader(http.StatusUnprocessableEntity)

@@ -59,7 +59,8 @@ templ Show(data ShowData) {
 
 							<a
 								href={ templ.SafeURL(string(templates.SuggestionChangesPath(data.Space.Identifier, data.SuggestionNumber))) }
-								class="btn-secondary rounded-full w-fit"
+								class="btn rounded-full w-fit"
+								data-variant="secondary"
 							>
 								{ templates.T(ctx, "suggestion_page_edit_keep_draft_button") }
 							</a>

@@ -153,6 +153,106 @@ func TestDefault_RendersBreadcrumbHeaderOutsideMain(t *testing.T) {
 	}
 }
 
+func TestDefault_RendersBreadcrumbListStructuredData(t *testing.T) {
+	t.Parallel()
+
+	data := layouts.DefaultLayoutData{
+		Meta: viewmodel.PageMeta{Title: "テストタイトル"},
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			StructuredDataBaseURL: "https://example.com",
+			Items: []components.BreadcrumbItem{
+				{IconName: "house-regular", AriaLabel: "ホーム", Path: templates.Path("/home")},
+				{Label: "テストスペース", Path: templates.Path("/s/test")},
+				{Label: "現在のページ", IsCurrent: true},
+			},
+		},
+	}
+	html := renderDefault(t, data, templ.Raw(""))
+
+	for _, want := range []string{
+		"<script type=\"application/ld+json\">",
+		"\"@type\":\"BreadcrumbList\"",
+		"\"position\":1,\"name\":\"ホーム\",\"item\":\"https://example.com/home\"",
+		"\"position\":2,\"name\":\"テストスペース\",\"item\":\"https://example.com/s/test\"",
+		"\"position\":3,\"name\":\"現在のページ\"",
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("structured data does not contain %q", want)
+		}
+	}
+	if strings.Contains(html, "\"name\":\"現在のページ\",\"item\":") {
+		t.Error("current breadcrumb structured-data item must not link to itself")
+	}
+}
+
+// The structured data is opt-in: most screens using this layout leave StructuredDataBaseURL empty,
+// and they must not publish their breadcrumb labels and URLs as machine-readable data.
+//
+// [Ja] 構造化データはオプトイン。このレイアウトを使う画面の大半は StructuredDataBaseURL を空の
+// ままにしており、パンくずのラベルと URL を機械可読なデータとして出してはならない。
+func TestDefault_OmitsBreadcrumbListStructuredDataWithoutBaseURL(t *testing.T) {
+	t.Parallel()
+
+	data := layouts.DefaultLayoutData{
+		Meta: viewmodel.PageMeta{Title: "テストタイトル"},
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			Items: []components.BreadcrumbItem{
+				{IconName: "house-regular", AriaLabel: "ホーム", Path: templates.Path("/home")},
+				{Label: "非公開スペース", Path: templates.Path("/s/private")},
+				{Label: "現在のページ", IsCurrent: true},
+			},
+		},
+	}
+	html := renderDefault(t, data, templ.Raw(""))
+
+	for _, notWant := range []string{
+		"application/ld+json",
+		"BreadcrumbList",
+	} {
+		if strings.Contains(html, notWant) {
+			t.Errorf("structured data unexpectedly contains %q", notWant)
+		}
+	}
+
+	// The visual breadcrumb still renders; only the machine-readable copy is dropped.
+	//
+	// [Ja] 見た目のパンくずは描画され、落ちるのは機械可読な複製だけである。
+	if !strings.Contains(html, "非公開スペース") {
+		t.Error("breadcrumb item label not found")
+	}
+}
+
+// The structured data mirrors the visible breadcrumb, so a trail that renders no breadcrumb must
+// publish none either. A public screen whose only parent is authenticated-only reaches that state
+// for signed-out viewers.
+//
+// [Ja] 構造化データは見た目のパンくずを写したものなので、パンくずを描画しない経路では構造化データも
+// 出さない。親が認証必須しか無い公開画面は、未ログインの閲覧者に対してこの状態になる。
+func TestDefault_OmitsBreadcrumbListStructuredDataWithoutNavigableItems(t *testing.T) {
+	t.Parallel()
+
+	data := layouts.DefaultLayoutData{
+		Meta: viewmodel.PageMeta{Title: "テストタイトル"},
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			StructuredDataBaseURL: "https://example.com",
+			Items: []components.BreadcrumbItem{
+				{Label: "現在のスペース", IsCurrent: true},
+			},
+		},
+	}
+	html := renderDefault(t, data, templ.Raw(""))
+
+	for _, notWant := range []string{
+		"application/ld+json",
+		"BreadcrumbList",
+		"現在のスペース",
+	} {
+		if strings.Contains(html, notWant) {
+			t.Errorf("output unexpectedly contains %q", notWant)
+		}
+	}
+}
+
 func TestDefault_RendersSharedHeaderWithoutBreadcrumbItems(t *testing.T) {
 	t.Parallel()
 
@@ -177,11 +277,20 @@ func TestDefault_RendersSharedHeaderWithoutBreadcrumbItems(t *testing.T) {
 	}
 	html := renderDefault(t, data, templ.Raw(""))
 
-	if !strings.Contains(html, `<header class="hidden md:block">`) {
+	if !strings.Contains(html, `<header class="pt-4 hidden md:block">`) {
 		t.Error("layout should render the shared header switching with the navigation bar")
 	}
 	if strings.Contains(html, `aria-label="パンくずリスト"`) {
 		t.Error("layout should not render a breadcrumb landmark without breadcrumb items")
+	}
+
+	// The header owns its top spacing, so the layout must not wrap it in one: a wrapper would stay
+	// behind as an empty gap above the main content wherever the header hides itself.
+	//
+	// [Ja] 上余白はヘッダー自身が持つため、レイアウトはラッパーで包んではならない。ラッパーはヘッダーが
+	// 自身を隠す画面で、本文の上に空白だけとなって残ってしまう。
+	if strings.Contains(html, `<div class="pt-4">`) {
+		t.Error("layout should not wrap the shared header in its own spacing")
 	}
 
 	header, main := strings.Index(html, "<header"), strings.Index(html, `<main id="main"`)

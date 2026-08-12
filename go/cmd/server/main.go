@@ -318,6 +318,14 @@ func main() {
 		suggestionPageRepo,
 		suggestionRepo,
 	)
+	getPageShowUC := usecase.NewGetPageShowUsecase(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		attachmentRepo,
+	)
 	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
 	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)
 	getPageBacklinksUC := usecase.NewGetPageBacklinksUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
@@ -326,6 +334,7 @@ func main() {
 	pageHandler := page.NewHandler(
 		cfg,
 		flashMgr,
+		getPageShowUC,
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
@@ -631,6 +640,13 @@ func main() {
 
 		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)
+
+		// Page detail screen (public-topic pages are viewable even when signed out; a page in the
+		// trash is 404 unless the viewer holds the trash permission).
+		//
+		// [Ja] ページ表示画面 (公開トピックのページは未ログインでも閲覧可能。ゴミ箱に入った
+		// ページはゴミ箱権限を持つ閲覧者以外には 404)。
+		r.Get("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 
 		// 編集提案（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Index)

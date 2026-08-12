@@ -69,7 +69,13 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	spaceVM := viewmodel.NewSpace(detailOutput.Space)
+
+	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
+	// the same form.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
 
 	// オープンステータスでなければ変更差分画面にリダイレクト
 	if detailOutput.Suggestion.Status != model.SuggestionStatusOpen {
@@ -96,7 +102,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ViewModelに変換
-	spaceVM := viewmodel.NewSpace(detailOutput.Space)
 	topicVM := viewmodel.NewTopic(detailOutput.Topic)
 
 	// CSRFトークンを取得
@@ -121,10 +126,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
 		User:             user,
-		SpaceIdentifier:  spaceIdentifier,
+		SpaceIdentifier:  detailOutput.Space.Identifier,
 		CurrentPageName:  templates.PageNameSuggestionPageEditShow,
 		Meta:             meta,
-		BreadcrumbHeader: suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, int32(suggestionNumber)),
+		BreadcrumbHeader: suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, int32(suggestionNumber), detailOutput.Suggestion.Title, true),
 		Content:          content,
 	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

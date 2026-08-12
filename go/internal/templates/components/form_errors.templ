@@ -2,11 +2,13 @@ package components
 
 import "github.com/wikinoapp/wikino/go/internal/model"
 
-// FormErrors はフォームのグローバルエラーを表示します
+// FormErrors renders the global errors of a form.
+//
+// [Ja] FormErrors はフォームのグローバルエラーを表示します。
 templ FormErrors(formErrors *model.ValidationError) {
 	if formErrors != nil && len(formErrors.Global) > 0 {
 		for _, errorMsg := range formErrors.Global {
-			<div class="alert-destructive">
+			<div class="alert" data-variant="destructive">
 				<section>{ errorMsg }</section>
 			</div>
 		}

@@ -9,9 +9,9 @@ import (
 templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceIdentifier) {
 	<div
 		if page.Primary {
-			class="group card relative min-h-[96px] transition p-0 duration-200 ease-in-out hover:border-brand-600 border-l-2 border-l-brand-600"
+			class="group card relative overflow-visible min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600 border-l-2 border-l-brand-600"
 		} else {
-			class="group card relative min-h-[96px] transition p-0 duration-200 ease-in-out hover:border-brand-600"
+			class="group card relative overflow-visible min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600"
 		}
 	>
 		if page.Pinned {
@@ -24,70 +24,71 @@ templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceI
 					href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier, page.Number))) }
 					class="
 						rounded-full p-2 leading-none text-center transition duration-150 ease-in-out shadow-sm
-						opacity-0 group-hover:opacity-100
-						group-hover:bg-primary hover:bg-primary/90
+						opacity-0 group-hover:opacity-100 focus-visible:opacity-100
+						group-hover:bg-primary hover:bg-primary/90 focus-visible:bg-primary
 						group-hover:backdrop-blur-md hover:backdrop-blur-md
+						focus-visible:ring-[3px] focus-visible:ring-ring/50
 					"
+					aria-label={ templates.T(ctx, "page_edit_links_edit_page") }
 					title={ templates.T(ctx, "page_edit_links_edit_page") }
 				>
-					@templates.Icon("pencil-simple-line-regular", "size-4 fill-primary-foreground")
+					@templates.DecorativeIcon("pencil-simple-line-regular", "size-4 fill-primary-foreground")
 				</a>
 			</div>
 		}
 
-		<div class="card-body h-full">
-			<div class="flex h-full">
-				<a
-					href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier, viewmodel.PageNumber(page.Number)))) }
-					class="flex w-full h-full px-3 py-2"
-				>
-					<div class="flex justify-between w-full h-full gap-2">
-						<div class="flex flex-1 flex-col gap-1">
-							if page.Topic != nil {
-								<div class="flex items-center gap-0.5">
-									@templates.Icon(page.Topic.IconName, "flex-none size-3 fill-gray-500")
-									<span class="text-xs text-stone-500 line-clamp-1">
-										{ page.Topic.Name }
-									</span>
-								</div>
-							}
-
-							<div class="line-clamp-3 text-sm font-bold">
-								if page.Title != "" {
-									{ page.Title }
-								} else {
-									<span class="text-muted-foreground italic">
-										{ templates.T(ctx, "page_edit_links_untitled") }
-									</span>
-								}
-							</div>
-						</div>
-
-						if page.CardImageURL != "" {
-							<div class="shrink-0 self-center">
-								<img
-									src={ page.CardImageURL }
-									alt=""
-									class="rounded object-cover h-16 w-16 md:h-18 md:w-18"
-									loading="lazy"
-								/>
+		<div class="flex h-full">
+			<a
+				href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier, viewmodel.PageNumber(page.Number)))) }
+				class="flex w-full h-full px-3 py-2"
+			>
+				<div class="flex justify-between w-full h-full gap-2">
+					<div class="flex flex-1 flex-col gap-1">
+						if page.Topic != nil {
+							<div class="flex items-center gap-0.5">
+								@templates.Icon(page.Topic.IconName, "flex-none size-3 fill-gray-500")
+								<span class="text-xs text-stone-500 line-clamp-1">
+									{ page.Topic.Name }
+								</span>
 							</div>
 						}
-					</div>
-				</a>
 
-				if page.CanEdit {
-					<div class="touch:flex non-touch:hidden h-fit self-center pr-3">
-						<a
-							href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier, page.Number))) }
-							class="btn-sm-icon-primary rounded-full"
-							title={ templates.T(ctx, "page_edit_links_edit_page") }
-						>
-							@templates.Icon("pencil-simple-line-regular", "size-4")
-						</a>
+						<div class="line-clamp-3 text-sm font-bold">
+							if page.Title != "" {
+								{ page.Title }
+							} else {
+								<span class="text-muted-foreground italic">
+									{ templates.T(ctx, "page_edit_links_untitled") }
+								</span>
+							}
+						</div>
 					</div>
-				}
-			</div>
+
+					if page.CardImageURL != "" {
+						<div class="shrink-0 self-center">
+							<img
+								src={ page.CardImageURL }
+								alt=""
+								class="rounded object-cover h-16 w-16 md:h-18 md:w-18"
+								loading="lazy"
+							/>
+						</div>
+					}
+				</div>
+			</a>
+
+			if page.CanEdit {
+				<div class="touch:flex non-touch:hidden h-fit self-center pr-3">
+					<a
+						href={ templ.SafeURL(string(templates.PageEditPath(spaceIdentifier, page.Number))) }
+						class="btn rounded-full"
+						data-size="icon-sm"
+						aria-label={ templates.T(ctx, "page_edit_links_edit_page") }
+					>
+						@templates.DecorativeIcon("pencil-simple-line-regular", "size-4")
+					</a>
+				</div>
+			}
 		</div>
 	</div>
 }

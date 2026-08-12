@@ -56,12 +56,12 @@ templ New(data NewData) {
 					<form
 						method="POST"
 						action={ templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number))) }
-						class="form grid gap-6"
+						class="grid gap-6"
 					>
 						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 						<div class="grid gap-2">
-							<label for="title">
+							<label class="label" for="title">
 								{ templates.T(ctx, "suggestion_new_title_label") }
 							</label>
 
@@ -72,6 +72,7 @@ templ New(data NewData) {
 									aria-invalid="false"
 								}
 								autofocus
+								class="input"
 								id="title"
 								name="title"
 								required
@@ -107,10 +108,14 @@ templ New(data NewData) {
 							</textarea>
 						</div>
 
-						<div class="grid gap-2">
-							<label>
+						<div
+							class="grid gap-2"
+							role="group"
+							aria-labelledby="draft-page-ids-label"
+						>
+							<span id="draft-page-ids-label" class="label">
 								{ templates.T(ctx, "suggestion_new_draft_pages_label") }
-							</label>
+							</span>
 
 							if data.FormErrors != nil && data.FormErrors.HasFieldError("draft_page_ids") {
 								for _, errMsg := range data.FormErrors.GetFieldErrors("draft_page_ids") {
@@ -121,7 +126,7 @@ templ New(data NewData) {
 							if len(data.DraftPages) > 0 {
 								<div class="flex flex-col gap-2 border border-border rounded-lg p-4">
 									for _, dp := range data.DraftPages {
-										<label class="flex items-center gap-3 cursor-pointer">
+										<label class="label flex items-center gap-3 cursor-pointer">
 											<input
 												type="checkbox"
 												name="draft_page_ids"
@@ -158,7 +163,8 @@ templ New(data NewData) {
 							</button>
 
 							<a
-								class="btn-outline rounded-full w-fit"
+								class="btn rounded-full w-fit"
+								data-variant="outline"
 								href={ templ.SafeURL(string(templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number))) }
 							>
 								{ templates.T(ctx, "suggestion_new_cancel") }

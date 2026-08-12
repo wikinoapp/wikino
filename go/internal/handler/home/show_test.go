@@ -67,7 +67,7 @@ func TestShow_Empty(t *testing.T) {
 	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
 		t.Error("shared header should keep the max-w-3xl content width")
 	}
-	if !strings.Contains(body, `<header class="hidden md:block">`) {
+	if !strings.Contains(body, `<header class="pt-4 hidden md:block">`) {
 		t.Error("shared header should switch with the navigation bar it carries")
 	}
 	if strings.Contains(body, `aria-label="パンくずリスト"`) {

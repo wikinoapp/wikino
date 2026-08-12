@@ -16,18 +16,19 @@ type PageBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	spaceID       string
-	topicID       string
-	number        model.PageNumber
-	title         *string
-	body          string
-	bodyHTML      string
-	linkedPageIDs []string
-	modifiedAt    time.Time
-	publishedAt   *time.Time
-	pinnedAt      *time.Time
-	trashedAt     *time.Time
-	discardedAt   *time.Time
+	spaceID                   string
+	topicID                   string
+	number                    model.PageNumber
+	title                     *string
+	body                      string
+	bodyHTML                  string
+	linkedPageIDs             []string
+	modifiedAt                time.Time
+	publishedAt               *time.Time
+	pinnedAt                  *time.Time
+	trashedAt                 *time.Time
+	discardedAt               *time.Time
+	featuredImageAttachmentID *string
 }
 
 // NewPageBuilder は PageBuilder を生成します
@@ -134,6 +135,15 @@ func (b *PageBuilder) WithDiscarded() *PageBuilder {
 	return b
 }
 
+// WithFeaturedImageAttachmentID sets the cover image attachment id.
+//
+// [Ja] WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイル ID を設定します。
+func (b *PageBuilder) WithFeaturedImageAttachmentID(id model.AttachmentID) *PageBuilder {
+	s := string(id)
+	b.featuredImageAttachmentID = &s
+	return b
+}
+
 // Build はページを作成し、IDを返します
 func (b *PageBuilder) Build() model.PageID {
 	b.t.Helper()
@@ -149,11 +159,12 @@ func (b *PageBuilder) Build() model.PageID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, pinned_at, trashed_at, discarded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, pinned_at, trashed_at, discarded_at, featured_image_attachment_id, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		 RETURNING id`,
 		b.spaceID, b.topicID, int32(b.number), b.title, b.body, b.bodyHTML,
-		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.pinnedAt, b.trashedAt, b.discardedAt, now, now,
+		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.pinnedAt, b.trashedAt, b.discardedAt,
+		b.featuredImageAttachmentID, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページ作成に失敗: %v", err)

@@ -20,6 +20,7 @@ func (p *GuestPolicy) CanShowTopic(topic *model.Topic) bool {
 func (p *GuestPolicy) CanUpdateTopic() bool                                { return false }
 func (p *GuestPolicy) CanCreatePage() bool                                 { return false }
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
+func (p *GuestPolicy) CanShowTrash() bool                                  { return false }
 func (p *GuestPolicy) CanShowDraftPage(_ bool) bool                        { return false }
 func (p *GuestPolicy) CanUpdateDraftPage(_ bool) bool                      { return false }
 func (p *GuestPolicy) CanDeleteDraftPage() bool                            { return false }

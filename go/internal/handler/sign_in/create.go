@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/redirect"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signinpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
@@ -94,6 +95,7 @@ func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, ve *m
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "sign_in_title")
+	meta.OGURL = h.cfg.AppURL() + string(templates.SignInPath())
 
 	content := signinpages.New(signinpages.NewPageData{
 		CSRFToken:        csrfToken,

@@ -87,6 +87,12 @@ func TestNew_WithPendingUser(t *testing.T) {
 	if !strings.Contains(body, `name="recovery_code"`) {
 		t.Error("recovery_code input field not found in response")
 	}
+
+	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("response unexpectedly contains %q", notWant)
+		}
+	}
 }
 
 func TestNew_WithoutPendingUser(t *testing.T) {

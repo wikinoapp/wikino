@@ -1,6 +1,9 @@
 package components
 
 import (
+	"context"
+	"strings"
+
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
@@ -13,10 +16,40 @@ type BreadcrumbItem struct {
 	Path     templates.Path
 	IconName viewmodel.IconName
 
+	// IsCurrent marks the current page. The current item renders without a link and carries
+	// aria-current="page".
+	//
+	// [Ja] IsCurrent は現在のページを表す。現在項目はリンクにせず aria-current="page" を付ける。
+	IsCurrent bool
+
 	// AriaLabel labels an icon-only item whose Label is empty.
 	//
 	// [Ja] AriaLabel は Label が空のアイコンのみの項目をラベル付けする。
 	AriaLabel string
+}
+
+// HomeBreadcrumbItems returns the leading home crumb for a signed-in viewer, and nothing for a
+// signed-out one. /home sits behind authentication, so a screen reachable without signing in must
+// not offer it as the trail's root: the link would send a signed-out visitor to the sign-in screen,
+// and BreadcrumbList JSON-LD built from the same items would declare it as the page's canonical
+// parent. Screens that require authentication pass true unconditionally.
+//
+// [Ja] HomeBreadcrumbItems はログイン済みの閲覧者に先頭のホーム項目を返し、未ログインでは何も返さない。
+// /home は認証必須のため、未ログインでも到達できる画面が経路の起点として提示してはいけない。リンクは
+// 未ログインの訪問者をログイン画面へ送ってしまい、同じ項目列から作る BreadcrumbList JSON-LD はそれを
+// ページの正規の親として宣言してしまう。認証必須の画面は常に true を渡す。
+func HomeBreadcrumbItems(ctx context.Context, signedIn bool) []BreadcrumbItem {
+	if !signedIn {
+		return nil
+	}
+
+	return []BreadcrumbItem{
+		{
+			Path:      templates.HomePath(),
+			IconName:  "house-regular",
+			AriaLabel: templates.T(ctx, "breadcrumb_home"),
+		},
+	}
 }
 
 // defaultBreadcrumbHeaderMaxWidthClass is the width the header falls back to when a screen leaves
@@ -33,6 +66,20 @@ const defaultBreadcrumbHeaderMaxWidthClass = "max-w-3xl"
 // [Ja] BreadcrumbHeaderData はパンくずヘッダーに渡すデータ構造体です。
 type BreadcrumbHeaderData struct {
 	Items []BreadcrumbItem
+
+	// StructuredDataBaseURL enables BreadcrumbList JSON-LD and supplies the absolute URL prefix for
+	// linked items. Screens on a route reachable without signing in pass it; screens behind
+	// authentication leave it empty, so that a trail no crawler can follow is never published as
+	// machine-readable data. A public route passes it even though an individual response can be
+	// private (a page in a private topic, or one in the trash): that response only reaches a viewer
+	// already authorized to read it, and a crawler gets a 404 for the same URL.
+	//
+	// [Ja] StructuredDataBaseURL は BreadcrumbList JSON-LD を有効にし、リンク項目を絶対 URL にする
+	// 接頭辞を渡す。未ログインでも到達できるルートの画面が渡し、認証必須の画面は空のままにする。
+	// クローラーがたどれない経路を機械可読なデータとして出さないためである。公開ルートの画面は、個々の
+	// 応答が非公開になり得ても (非公開トピックのページ・ゴミ箱のページ) これを渡す。その応答が届くのは
+	// 読む権限をすでに持つ閲覧者だけで、クローラーは同じ URL で 404 を受けるためである。
+	StructuredDataBaseURL string
 
 	// MaxWidthClass is the max-width class of the header's container. Each screen passes the same
 	// value as its content container, so the breadcrumb's left edge and the navigation bar's right
@@ -60,6 +107,93 @@ func (d BreadcrumbHeaderData) ResolvedMaxWidthClass() string {
 	return d.MaxWidthClass
 }
 
+// hasNavigableItems reports whether the trail holds at least one item to navigate to. A trail made
+// up only of the current item (which renders without a link) gives no way back up the hierarchy, so
+// the breadcrumb is dropped rather than rendering a navigation landmark with nothing to follow. A
+// public screen whose parent is authenticated-only ends up in that state once the home crumb is
+// omitted for signed-out viewers.
+//
+// [Ja] hasNavigableItems は経路に移動先の項目が 1 つ以上あるかを返す。現在項目 (リンクにせず描画する)
+// だけの経路は上位へ戻る手段を持たないため、たどる先の無いナビゲーションランドマークを描画せず
+// パンくずごと落とす。親が認証必須の公開画面は、未ログインの閲覧者にホーム項目を出さなくなった結果
+// この状態になる。
+func (d BreadcrumbHeaderData) hasNavigableItems() bool {
+	for _, item := range d.Items {
+		if item.Path != "" && !item.IsCurrent {
+			return true
+		}
+	}
+
+	return false
+}
+
+type breadcrumbListStructuredData struct {
+	Context         string               `json:"@context"`
+	Type            string               `json:"@type"`
+	ItemListElement []breadcrumbListItem `json:"itemListElement"`
+}
+
+type breadcrumbListItem struct {
+	Type     string `json:"@type"`
+	Position int    `json:"position"`
+	Name     string `json:"name"`
+	Item     string `json:"item,omitempty"`
+}
+
+// breadcrumbListStructuredData derives machine-readable breadcrumbs from the same items rendered
+// in the UI, keeping their order, localized names and canonical links in sync.
+//
+// [Ja] breadcrumbListStructuredData は UI と同じ項目から機械可読なパンくずを作り、順序・ローカライズ
+// された名前・正規リンクがずれないようにする。
+func (d BreadcrumbHeaderData) breadcrumbListStructuredData() *breadcrumbListStructuredData {
+	if d.StructuredDataBaseURL == "" || !d.hasNavigableItems() {
+		return nil
+	}
+
+	items := make([]breadcrumbListItem, 0, len(d.Items))
+	for _, item := range d.Items {
+		name := item.Label
+		if name == "" {
+			name = item.AriaLabel
+		}
+		if name == "" {
+			continue
+		}
+
+		listItem := breadcrumbListItem{
+			Type:     "ListItem",
+			Position: len(items) + 1,
+			Name:     name,
+		}
+		if item.Path != "" && !item.IsCurrent {
+			listItem.Item = strings.TrimRight(d.StructuredDataBaseURL, "/") + string(item.Path)
+		}
+		items = append(items, listItem)
+	}
+
+	if len(items) == 0 {
+		return nil
+	}
+
+	return &breadcrumbListStructuredData{
+		Context:         "https://schema.org",
+		Type:            "BreadcrumbList",
+		ItemListElement: items,
+	}
+}
+
+// BreadcrumbListStructuredData renders BreadcrumbList JSON-LD when the header has opted in with an
+// absolute base URL. templ.JSONScript performs JSON encoding so labels cannot break out of the
+// script element.
+//
+// [Ja] BreadcrumbListStructuredData は絶対ベース URL を指定したヘッダーに BreadcrumbList JSON-LD を
+// 描画する。templ.JSONScript が JSON エンコードするため、ラベルが script 要素の外へ脱出することはない。
+templ BreadcrumbListStructuredData(data BreadcrumbHeaderData) {
+	if structuredData := data.breadcrumbListStructuredData(); structuredData != nil {
+		@templ.JSONScript("", structuredData).WithType("application/ld+json")
+	}
+}
+
 // BreadcrumbHeaderRenderData groups the independently supplied breadcrumb-header and
 // global-navigation data into the single value passed to BreadcrumbHeader.
 //
@@ -78,14 +212,14 @@ type BreadcrumbHeaderRenderData struct {
 }
 
 // ShouldRender reports whether the header has content to render. It is false only when the screen
-// has no breadcrumb items and takes itself out of the global navigation: both of the header's slots
-// would be empty, and rendering it would leave a banner landmark with nothing in it.
+// has no navigable breadcrumb item and takes itself out of the global navigation: both of the
+// header's slots would be empty, and rendering it would leave a banner landmark with nothing in it.
 //
-// [Ja] ShouldRender はヘッダーに描画する中身があるかを返す。false になるのは、画面がパンくず項目を
-// 持たず、かつグローバルナビの対象外である場合だけ。ヘッダーの両方の枠が空になり、描画すると中身の
-// 無い banner ランドマークが残ってしまう。
+// [Ja] ShouldRender はヘッダーに描画する中身があるかを返す。false になるのは、画面がたどれるパンくず
+// 項目を持たず、かつグローバルナビの対象外である場合だけ。ヘッダーの両方の枠が空になり、描画すると
+// 中身の無い banner ランドマークが残ってしまう。
 func (d BreadcrumbHeaderRenderData) ShouldRender() bool {
-	return len(d.Header.Items) > 0 || !d.HideGlobalNav
+	return d.Header.hasNavigableItems() || !d.HideGlobalNav
 }
 
 // BreadcrumbHeader renders the breadcrumb header: the breadcrumb on the left and the global
@@ -93,37 +227,44 @@ func (d BreadcrumbHeaderRenderData) ShouldRender() bool {
 // wraps onto further lines rather than squeezing the bar, so it takes min-w-0 while the bar takes
 // shrink-0.
 //
-// Screens that stay in the global navigation but have no breadcrumb items still render the header
-// for the bar, leaving the left slot empty instead of emitting a breadcrumb landmark with nothing in
-// it. On those screens the bar is the header's only content, so the header switches at md with the
-// bar: below md both are hidden, leaving no banner landmark with nothing in it. The shown state is
-// block rather than flex because the header lays out its single container in normal flow.
+// Screens that stay in the global navigation but have no navigable breadcrumb item still render the
+// header for the bar, leaving the left slot empty instead of emitting a breadcrumb landmark with
+// nothing to follow. On those screens the bar is the header's only content, so the header switches
+// at md with the bar: below md both are hidden, leaving no banner landmark with nothing in it. The
+// shown state is block rather than flex because the header lays out its single container in normal
+// flow.
+//
+// The header owns its top spacing rather than taking it from a wrapper in the layout, so that the
+// spacing goes away with the header on the screens where it hides itself below md. A wrapper would
+// keep an empty gap above the main content there.
 //
 // Nothing is emitted when ShouldRender reports false, so no caller can leave a banner landmark with
-// nothing in it. A caller that also has surrounding markup to drop asks ShouldRender itself.
+// nothing in it. A caller that drops its own markup alongside the header asks ShouldRender itself.
 //
 // [Ja] BreadcrumbHeader はパンくずヘッダーを描画する。本文と同じ幅のコンテナの中で、左にパンくず・右に
 // グローバルナビバーを置く。パンくずはバーを潰さずに折り返すため、パンくず側に min-w-0・バー側に
 // shrink-0 を付ける。
 //
-// グローバルナビの対象で、パンくず項目のない画面もバーのためにヘッダーを描画し、中身の無いパンくず
-// ランドマークを出す代わりに左側を空のままにする。その画面ではバーがヘッダーの唯一の中身になるため、
-// ヘッダーはバーと一緒に md で切り替わる。md 未満では両方が隠れ、中身の無い banner ランドマークが
-// 残らない。表示状態が flex ではなく block なのは、ヘッダーが単一のコンテナを通常フローで並べる
-// ためである。
+// グローバルナビの対象で、たどれるパンくず項目のない画面もバーのためにヘッダーを描画し、たどる先の無い
+// パンくずランドマークを出す代わりに左側を空のままにする。その画面ではバーがヘッダーの唯一の中身に
+// なるため、ヘッダーはバーと一緒に md で切り替わる。md 未満では両方が隠れ、中身の無い banner ランド
+// マークが残らない。表示状態が flex ではなく block なのは、ヘッダーが単一のコンテナを通常フローで
+// 並べるためである。
+//
+// 上余白はレイアウト側のラッパーから受け取らずヘッダー自身が持つ。md 未満で自身を隠す画面では、余白も
+// ヘッダーと一緒に消えるようにするためである。ラッパーだと本文の上に空白だけが残ってしまう。
 //
 // ShouldRender が false のときは何も出力しないため、どの呼び出し側も中身の無い banner ランドマークを
-// 残せない。一緒に落とす周囲のマークアップを持つ呼び出し側は、自身でも ShouldRender を見る。
+// 残せない。ヘッダーと一緒に自身のマークアップを落とす呼び出し側は、自身でも ShouldRender を見る。
 templ BreadcrumbHeader(data BreadcrumbHeaderRenderData) {
 	if data.ShouldRender() {
 		<header
-			if len(data.Header.Items) == 0 {
-				class="hidden md:block"
-			}
+			class={ "pt-4",
+				templ.KV("hidden md:block", !data.Header.hasNavigableItems()) }
 		>
 			<div class={ data.Header.ResolvedMaxWidthClass(), "mx-auto flex w-full items-center justify-between gap-2 px-4" }>
 				<div class="min-w-0">
-					if len(data.Header.Items) > 0 {
+					if data.Header.hasNavigableItems() {
 						@breadcrumbNav(data.Header.Items)
 					}
 				</div>
@@ -143,28 +284,40 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 	<nav aria-label={ templates.T(ctx, "breadcrumb_label") }>
 		<ol class="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words">
 			for i, item := range items {
+				// The separator is purely visual: where one crumb ends is already carried by the list
+				// structure. Hiding the whole item keeps the trail from being announced as a list with
+				// twice as many items, half of them without an accessible name.
+				//
+				// [Ja] 区切りは純粋に視覚的なもので、項目の切れ目はリストの構造がすでに表している。項目ごと
+				// 隠すことで、経路が倍の項目数を持つリストとして読み上げられ、その半分がアクセシブルネームの
+				// 無い項目になるのを防ぐ。
 				if i > 0 {
-					<li class="leading-none">
-						@templates.Icon("caret-right-regular", "size-3.5 fill-gray-500")
+					<li class="leading-none" aria-hidden="true">
+						@templates.DecorativeIcon("caret-right-regular", "size-3.5 fill-gray-500")
 					</li>
 				}
-				<li class="inline-flex items-center gap-1.5">
-					if item.Path != "" {
+				<li
+					class="inline-flex items-center gap-1.5"
+					if item.IsCurrent {
+						aria-current="page"
+					}
+				>
+					if item.Path != "" && !item.IsCurrent {
 						if item.Label == "" && item.IconName != "" {
 							<a class="hover:text-foreground transition-colors inline-flex items-center" href={ templ.SafeURL(item.Path) } aria-label={ item.AriaLabel }>
-								@templates.Icon(item.IconName, "size-4 fill-gray-600")
+								@templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600")
 							</a>
 						} else {
 							<a class="hover:text-foreground transition-colors inline-flex items-center gap-1" href={ templ.SafeURL(item.Path) }>
 								if item.IconName != "" {
-									@templates.Icon(item.IconName, "size-4 fill-gray-600")
+									@templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600")
 								}
 								{ item.Label }
 							</a>
 						}
 					} else {
 						if item.IconName != "" {
-							@templates.Icon(item.IconName, "size-4 fill-gray-600")
+							@templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600")
 						}
 						if item.Label != "" {
 							{ item.Label }

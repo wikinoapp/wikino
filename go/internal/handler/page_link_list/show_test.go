@@ -390,3 +390,77 @@ func TestShow_正常系_ページネーションパラメータが反映され�
 		t.Error("page=999 should not contain 'Link Target'")
 	}
 }
+
+// The repository computes the SQL offset as (page-1)*limit in int32 arithmetic, so a large enough
+// page wraps to a negative offset and PostgreSQL rejects the query. Such a page has to be a 404
+// rather than a 500.
+//
+// [Ja] Repository は SQL offset を int32 演算の (page-1)*limit で求めるため、十分に大きいページでは
+// 負の offset に回り込み PostgreSQL がクエリを拒否する。そのようなページは 500 ではなく 404 にする。
+func TestShow_OffsetBeyondInt32ReturnsNotFound(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("pll-offset@example.com").
+		WithAtname("plloffset").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("pll-offset").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	linkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Link Target").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Source Page").
+		WithLinkedPageIDs([]model.PageID{linkedPageID}).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	// LinkLimit is 15, so page 143165578 has the first offset past the int32 ceiling
+	// (143165577 * 15 = 2147483655).
+	//
+	// [Ja] LinkLimit は 15 なので、143165578 ページ目が int32 の上限を最初に超える offset になる
+	// (143165577 * 15 = 2147483655)。
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/pll-offset/pages/1/link_list?page=143165578", map[string]string{
+		"space_identifier": "pll-offset",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+	}
+	if strings.Contains(rr.Body.String(), "Link Target") {
+		t.Error("response should not contain 'Link Target'")
+	}
+}

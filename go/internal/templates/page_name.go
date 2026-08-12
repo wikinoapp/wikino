@@ -11,6 +11,7 @@ const (
 	PageNameHome                   PageName = "home"
 	PageNameSearch                 PageName = "search"
 	PageNameProfile                PageName = "profile"
+	PageNamePageShow               PageName = "page_show"
 	PageNamePageEdit               PageName = "page_edit"
 	PageNamePageMove               PageName = "page_move"
 	PageNameDraftPageIndex         PageName = "draft_page_index"

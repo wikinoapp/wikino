@@ -6,6 +6,9 @@ package components
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
 import (
+	"context"
+	"strings"
+
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -20,10 +23,40 @@ type BreadcrumbItem struct {
 	Path     templates.Path
 	IconName viewmodel.IconName
 
+	// IsCurrent marks the current page. The current item renders without a link and carries
+	// aria-current="page".
+	//
+	// [Ja] IsCurrent は現在のページを表す。現在項目はリンクにせず aria-current="page" を付ける。
+	IsCurrent bool
+
 	// AriaLabel labels an icon-only item whose Label is empty.
 	//
 	// [Ja] AriaLabel は Label が空のアイコンのみの項目をラベル付けする。
 	AriaLabel string
+}
+
+// HomeBreadcrumbItems returns the leading home crumb for a signed-in viewer, and nothing for a
+// signed-out one. /home sits behind authentication, so a screen reachable without signing in must
+// not offer it as the trail's root: the link would send a signed-out visitor to the sign-in screen,
+// and BreadcrumbList JSON-LD built from the same items would declare it as the page's canonical
+// parent. Screens that require authentication pass true unconditionally.
+//
+// [Ja] HomeBreadcrumbItems はログイン済みの閲覧者に先頭のホーム項目を返し、未ログインでは何も返さない。
+// /home は認証必須のため、未ログインでも到達できる画面が経路の起点として提示してはいけない。リンクは
+// 未ログインの訪問者をログイン画面へ送ってしまい、同じ項目列から作る BreadcrumbList JSON-LD はそれを
+// ページの正規の親として宣言してしまう。認証必須の画面は常に true を渡す。
+func HomeBreadcrumbItems(ctx context.Context, signedIn bool) []BreadcrumbItem {
+	if !signedIn {
+		return nil
+	}
+
+	return []BreadcrumbItem{
+		{
+			Path:      templates.HomePath(),
+			IconName:  "house-regular",
+			AriaLabel: templates.T(ctx, "breadcrumb_home"),
+		},
+	}
 }
 
 // defaultBreadcrumbHeaderMaxWidthClass is the width the header falls back to when a screen leaves
@@ -40,6 +73,20 @@ const defaultBreadcrumbHeaderMaxWidthClass = "max-w-3xl"
 // [Ja] BreadcrumbHeaderData はパンくずヘッダーに渡すデータ構造体です。
 type BreadcrumbHeaderData struct {
 	Items []BreadcrumbItem
+
+	// StructuredDataBaseURL enables BreadcrumbList JSON-LD and supplies the absolute URL prefix for
+	// linked items. Screens on a route reachable without signing in pass it; screens behind
+	// authentication leave it empty, so that a trail no crawler can follow is never published as
+	// machine-readable data. A public route passes it even though an individual response can be
+	// private (a page in a private topic, or one in the trash): that response only reaches a viewer
+	// already authorized to read it, and a crawler gets a 404 for the same URL.
+	//
+	// [Ja] StructuredDataBaseURL は BreadcrumbList JSON-LD を有効にし、リンク項目を絶対 URL にする
+	// 接頭辞を渡す。未ログインでも到達できるルートの画面が渡し、認証必須の画面は空のままにする。
+	// クローラーがたどれない経路を機械可読なデータとして出さないためである。公開ルートの画面は、個々の
+	// 応答が非公開になり得ても (非公開トピックのページ・ゴミ箱のページ) これを渡す。その応答が届くのは
+	// 読む権限をすでに持つ閲覧者だけで、クローラーは同じ URL で 404 を受けるためである。
+	StructuredDataBaseURL string
 
 	// MaxWidthClass is the max-width class of the header's container. Each screen passes the same
 	// value as its content container, so the breadcrumb's left edge and the navigation bar's right
@@ -67,61 +114,88 @@ func (d BreadcrumbHeaderData) ResolvedMaxWidthClass() string {
 	return d.MaxWidthClass
 }
 
-// BreadcrumbHeaderRenderData groups the independently supplied breadcrumb-header and
-// global-navigation data into the single value passed to BreadcrumbHeader.
+// hasNavigableItems reports whether the trail holds at least one item to navigate to. A trail made
+// up only of the current item (which renders without a link) gives no way back up the hierarchy, so
+// the breadcrumb is dropped rather than rendering a navigation landmark with nothing to follow. A
+// public screen whose parent is authenticated-only ends up in that state once the home crumb is
+// omitted for signed-out viewers.
 //
-// [Ja] BreadcrumbHeaderRenderData は、独立して供給されるパンくずヘッダーとグローバルナビのデータを、
-// BreadcrumbHeader に渡す 1 つの値へまとめる。
-type BreadcrumbHeaderRenderData struct {
-	Header    BreadcrumbHeaderData
-	GlobalNav GlobalNavData
+// [Ja] hasNavigableItems は経路に移動先の項目が 1 つ以上あるかを返す。現在項目 (リンクにせず描画する)
+// だけの経路は上位へ戻る手段を持たないため、たどる先の無いナビゲーションランドマークを描画せず
+// パンくずごと落とす。親が認証必須の公開画面は、未ログインの閲覧者にホーム項目を出さなくなった結果
+// この状態になる。
+func (d BreadcrumbHeaderData) hasNavigableItems() bool {
+	for _, item := range d.Items {
+		if item.Path != "" && !item.IsCurrent {
+			return true
+		}
+	}
 
-	// HideGlobalNav drops the navigation bar from the header, leaving the breadcrumb as the
-	// header's only content. Screens that take themselves out of the global navigation set it.
-	//
-	// [Ja] HideGlobalNav はヘッダーからナビバーを落とし、パンくずをヘッダーの唯一の中身にする。
-	// グローバルナビの対象外にする画面が指定する。
-	HideGlobalNav bool
+	return false
 }
 
-// ShouldRender reports whether the header has content to render. It is false only when the screen
-// has no breadcrumb items and takes itself out of the global navigation: both of the header's slots
-// would be empty, and rendering it would leave a banner landmark with nothing in it.
-//
-// [Ja] ShouldRender はヘッダーに描画する中身があるかを返す。false になるのは、画面がパンくず項目を
-// 持たず、かつグローバルナビの対象外である場合だけ。ヘッダーの両方の枠が空になり、描画すると中身の
-// 無い banner ランドマークが残ってしまう。
-func (d BreadcrumbHeaderRenderData) ShouldRender() bool {
-	return len(d.Header.Items) > 0 || !d.HideGlobalNav
+type breadcrumbListStructuredData struct {
+	Context         string               `json:"@context"`
+	Type            string               `json:"@type"`
+	ItemListElement []breadcrumbListItem `json:"itemListElement"`
 }
 
-// BreadcrumbHeader renders the breadcrumb header: the breadcrumb on the left and the global
-// navigation bar on the right, inside a container as wide as the screen's content. The breadcrumb
-// wraps onto further lines rather than squeezing the bar, so it takes min-w-0 while the bar takes
-// shrink-0.
+type breadcrumbListItem struct {
+	Type     string `json:"@type"`
+	Position int    `json:"position"`
+	Name     string `json:"name"`
+	Item     string `json:"item,omitempty"`
+}
+
+// breadcrumbListStructuredData derives machine-readable breadcrumbs from the same items rendered
+// in the UI, keeping their order, localized names and canonical links in sync.
 //
-// Screens that stay in the global navigation but have no breadcrumb items still render the header
-// for the bar, leaving the left slot empty instead of emitting a breadcrumb landmark with nothing in
-// it. On those screens the bar is the header's only content, so the header switches at md with the
-// bar: below md both are hidden, leaving no banner landmark with nothing in it. The shown state is
-// block rather than flex because the header lays out its single container in normal flow.
+// [Ja] breadcrumbListStructuredData は UI と同じ項目から機械可読なパンくずを作り、順序・ローカライズ
+// された名前・正規リンクがずれないようにする。
+func (d BreadcrumbHeaderData) breadcrumbListStructuredData() *breadcrumbListStructuredData {
+	if d.StructuredDataBaseURL == "" || !d.hasNavigableItems() {
+		return nil
+	}
+
+	items := make([]breadcrumbListItem, 0, len(d.Items))
+	for _, item := range d.Items {
+		name := item.Label
+		if name == "" {
+			name = item.AriaLabel
+		}
+		if name == "" {
+			continue
+		}
+
+		listItem := breadcrumbListItem{
+			Type:     "ListItem",
+			Position: len(items) + 1,
+			Name:     name,
+		}
+		if item.Path != "" && !item.IsCurrent {
+			listItem.Item = strings.TrimRight(d.StructuredDataBaseURL, "/") + string(item.Path)
+		}
+		items = append(items, listItem)
+	}
+
+	if len(items) == 0 {
+		return nil
+	}
+
+	return &breadcrumbListStructuredData{
+		Context:         "https://schema.org",
+		Type:            "BreadcrumbList",
+		ItemListElement: items,
+	}
+}
+
+// BreadcrumbListStructuredData renders BreadcrumbList JSON-LD when the header has opted in with an
+// absolute base URL. templ.JSONScript performs JSON encoding so labels cannot break out of the
+// script element.
 //
-// Nothing is emitted when ShouldRender reports false, so no caller can leave a banner landmark with
-// nothing in it. A caller that also has surrounding markup to drop asks ShouldRender itself.
-//
-// [Ja] BreadcrumbHeader はパンくずヘッダーを描画する。本文と同じ幅のコンテナの中で、左にパンくず・右に
-// グローバルナビバーを置く。パンくずはバーを潰さずに折り返すため、パンくず側に min-w-0・バー側に
-// shrink-0 を付ける。
-//
-// グローバルナビの対象で、パンくず項目のない画面もバーのためにヘッダーを描画し、中身の無いパンくず
-// ランドマークを出す代わりに左側を空のままにする。その画面ではバーがヘッダーの唯一の中身になるため、
-// ヘッダーはバーと一緒に md で切り替わる。md 未満では両方が隠れ、中身の無い banner ランドマークが
-// 残らない。表示状態が flex ではなく block なのは、ヘッダーが単一のコンテナを通常フローで並べる
-// ためである。
-//
-// ShouldRender が false のときは何も出力しないため、どの呼び出し側も中身の無い banner ランドマークを
-// 残せない。一緒に落とす周囲のマークアップを持つ呼び出し側は、自身でも ShouldRender を見る。
-func BreadcrumbHeader(data BreadcrumbHeaderRenderData) templ.Component {
+// [Ja] BreadcrumbListStructuredData は絶対ベース URL を指定したヘッダーに BreadcrumbList JSON-LD を
+// 描画する。templ.JSONScript が JSON エンコードするため、ラベルが script 要素の外へ脱出することはない。
+func BreadcrumbListStructuredData(data BreadcrumbHeaderData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -142,50 +216,152 @@ func BreadcrumbHeader(data BreadcrumbHeaderRenderData) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		if data.ShouldRender() {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header")
+		if structuredData := data.breadcrumbListStructuredData(); structuredData != nil {
+			templ_7745c5c3_Err = templ.JSONScript("", structuredData).WithType("application/ld+json").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if len(data.Header.Items) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " class=\"hidden md:block\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// BreadcrumbHeaderRenderData groups the independently supplied breadcrumb-header and
+// global-navigation data into the single value passed to BreadcrumbHeader.
+//
+// [Ja] BreadcrumbHeaderRenderData は、独立して供給されるパンくずヘッダーとグローバルナビのデータを、
+// BreadcrumbHeader に渡す 1 つの値へまとめる。
+type BreadcrumbHeaderRenderData struct {
+	Header    BreadcrumbHeaderData
+	GlobalNav GlobalNavData
+
+	// HideGlobalNav drops the navigation bar from the header, leaving the breadcrumb as the
+	// header's only content. Screens that take themselves out of the global navigation set it.
+	//
+	// [Ja] HideGlobalNav はヘッダーからナビバーを落とし、パンくずをヘッダーの唯一の中身にする。
+	// グローバルナビの対象外にする画面が指定する。
+	HideGlobalNav bool
+}
+
+// ShouldRender reports whether the header has content to render. It is false only when the screen
+// has no navigable breadcrumb item and takes itself out of the global navigation: both of the
+// header's slots would be empty, and rendering it would leave a banner landmark with nothing in it.
+//
+// [Ja] ShouldRender はヘッダーに描画する中身があるかを返す。false になるのは、画面がたどれるパンくず
+// 項目を持たず、かつグローバルナビの対象外である場合だけ。ヘッダーの両方の枠が空になり、描画すると
+// 中身の無い banner ランドマークが残ってしまう。
+func (d BreadcrumbHeaderRenderData) ShouldRender() bool {
+	return d.Header.hasNavigableItems() || !d.HideGlobalNav
+}
+
+// BreadcrumbHeader renders the breadcrumb header: the breadcrumb on the left and the global
+// navigation bar on the right, inside a container as wide as the screen's content. The breadcrumb
+// wraps onto further lines rather than squeezing the bar, so it takes min-w-0 while the bar takes
+// shrink-0.
+//
+// Screens that stay in the global navigation but have no navigable breadcrumb item still render the
+// header for the bar, leaving the left slot empty instead of emitting a breadcrumb landmark with
+// nothing to follow. On those screens the bar is the header's only content, so the header switches
+// at md with the bar: below md both are hidden, leaving no banner landmark with nothing in it. The
+// shown state is block rather than flex because the header lays out its single container in normal
+// flow.
+//
+// The header owns its top spacing rather than taking it from a wrapper in the layout, so that the
+// spacing goes away with the header on the screens where it hides itself below md. A wrapper would
+// keep an empty gap above the main content there.
+//
+// Nothing is emitted when ShouldRender reports false, so no caller can leave a banner landmark with
+// nothing in it. A caller that drops its own markup alongside the header asks ShouldRender itself.
+//
+// [Ja] BreadcrumbHeader はパンくずヘッダーを描画する。本文と同じ幅のコンテナの中で、左にパンくず・右に
+// グローバルナビバーを置く。パンくずはバーを潰さずに折り返すため、パンくず側に min-w-0・バー側に
+// shrink-0 を付ける。
+//
+// グローバルナビの対象で、たどれるパンくず項目のない画面もバーのためにヘッダーを描画し、たどる先の無い
+// パンくずランドマークを出す代わりに左側を空のままにする。その画面ではバーがヘッダーの唯一の中身に
+// なるため、ヘッダーはバーと一緒に md で切り替わる。md 未満では両方が隠れ、中身の無い banner ランド
+// マークが残らない。表示状態が flex ではなく block なのは、ヘッダーが単一のコンテナを通常フローで
+// 並べるためである。
+//
+// 上余白はレイアウト側のラッパーから受け取らずヘッダー自身が持つ。md 未満で自身を隠す画面では、余白も
+// ヘッダーと一緒に消えるようにするためである。ラッパーだと本文の上に空白だけが残ってしまう。
+//
+// ShouldRender が false のときは何も出力しないため、どの呼び出し側も中身の無い banner ランドマークを
+// 残せない。ヘッダーと一緒に自身のマークアップを落とす呼び出し側は、自身でも ShouldRender を見る。
+func BreadcrumbHeader(data BreadcrumbHeaderRenderData) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
 				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, ">")
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var2 == nil {
+			templ_7745c5c3_Var2 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		if data.ShouldRender() {
+			var templ_7745c5c3_Var3 = []any{"pt-4",
+				templ.KV("hidden md:block", !data.Header.hasNavigableItems())}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var3...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var2 = []any{data.Header.ResolvedMaxWidthClass(), "mx-auto flex w-full items-center justify-between gap-2 px-4"}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var2).String())
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var3).String())
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><div class=\"min-w-0\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if len(data.Header.Items) > 0 {
+			var templ_7745c5c3_Var5 = []any{data.Header.ResolvedMaxWidthClass(), "mx-auto flex w-full items-center justify-between gap-2 px-4"}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var5...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var5).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><div class=\"min-w-0\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if data.Header.hasNavigableItems() {
 				templ_7745c5c3_Err = breadcrumbNav(data.Header.Items).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -195,7 +371,7 @@ func BreadcrumbHeader(data BreadcrumbHeaderRenderData) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></header>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></header>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -223,35 +399,39 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<nav aria-label=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<nav aria-label=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "breadcrumb_label"))
+		var templ_7745c5c3_Var8 string
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "breadcrumb_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 143, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 284, Col: 55}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"><ol class=\"text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><ol class=\"text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for i, item := range items {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "       ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 			if i > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<li class=\"leading-none\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<li class=\"leading-none\" aria-hidden=\"true\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templates.Icon("caret-right-regular", "size-3.5 fill-gray-500").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = templates.DecorativeIcon("caret-right-regular", "size-3.5 fill-gray-500").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -260,117 +440,127 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " <li class=\"inline-flex items-center gap-1.5\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " <li class=\"inline-flex items-center gap-1.5\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if item.Path != "" {
+			if item.IsCurrent {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " aria-current=\"page\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, ">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if item.Path != "" && !item.IsCurrent {
 				if item.Label == "" && item.IconName != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<a class=\"hover:text-foreground transition-colors inline-flex items-center\" href=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<a class=\"hover:text-foreground transition-colors inline-flex items-center\" href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var6 templ.SafeURL
-					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.Path))
+					var templ_7745c5c3_Var9 templ.SafeURL
+					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.Path))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 154, Col: 114}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" aria-label=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var7 string
-					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.AriaLabel)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 154, Col: 144}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templates.Icon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</a>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<a class=\"hover:text-foreground transition-colors inline-flex items-center gap-1\" href=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var8 templ.SafeURL
-					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.Path))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 158, Col: 120}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					if item.IconName != "" {
-						templ_7745c5c3_Err = templates.Icon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-					}
-					var templ_7745c5c3_Var9 string
-					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 162, Col: 20}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 307, Col: 114}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</a>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" aria-label=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var10 string
+					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.AriaLabel)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 307, Col: 144}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</a>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<a class=\"hover:text-foreground transition-colors inline-flex items-center gap-1\" href=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var11 templ.SafeURL
+					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.Path))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 311, Col: 120}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					if item.IconName != "" {
+						templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					var templ_7745c5c3_Var12 string
+					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 315, Col: 20}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</a>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			} else {
 				if item.IconName != "" {
-					templ_7745c5c3_Err = templates.Icon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if item.Label != "" {
-					var templ_7745c5c3_Var10 string
-					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
+					var templ_7745c5c3_Var13 string
+					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 170, Col: 19}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 323, Col: 19}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</ol></nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</ol></nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

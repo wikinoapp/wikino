@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	passwordpages "github.com/wikinoapp/wikino/go/internal/templates/pages/password"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -19,6 +20,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "password_reset_title")
+	meta.OGURL = h.cfg.AppURL() + string(templates.PasswordResetPath())
 
 	// テンプレートをレンダリング
 	content := passwordpages.Reset(passwordpages.ResetPageData{

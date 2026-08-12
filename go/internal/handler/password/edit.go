@@ -55,6 +55,13 @@ func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, token s
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	// ページメタ情報を設定
+	//
+	// No canonical URL is declared here. This screen only exists for the token in the query, and
+	// /password/edit without one renders the invalid-token error, so there is no address the screen
+	// could point at as its canonical form.
+	//
+	// [Ja] ここでは正規 URL を宣言しない。本画面はクエリのトークンがあって初めて成立し、トークン
+	// 無しの /password/edit はトークン不正のエラーを描画するため、正規形として指せるアドレスが無い。
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "password_edit_title")
 

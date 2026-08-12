@@ -29,6 +29,10 @@ other = "エラー"
 description = "ホームへ戻るリンクのラベル"
 other = "ホームに戻る"
 
+[home_link_aria_label]
+description = "ホームへ遷移するロゴリンクの aria-label"
+other = "Wikino のホーム"
+
 [form_optional]
 description = "フォームの任意項目に表示するラベル"
 other = "任意"
@@ -733,7 +737,7 @@ description = "タイトルなしのリンク先ページの表示テキスト"
 other = "無題"
 
 [page_edit_links_edit_page]
-description = "リンク先ページの編集リンクのタイトル"
+description = "リンク先ページの編集リンクのアクセシブルネームとホバー時のツールチップ"
 other = "編集する"
 
 [page_edit_links_load_more]
@@ -747,6 +751,10 @@ other = "バックリンク"
 [page_edit_save_draft_button]
 description = "下書き保存ボタンのラベル"
 other = "下書き保存"
+
+[page_edit_save_draft_options_aria_label]
+description = "ページ編集画面の下書き保存ドロップダウントリガーボタンの aria-label"
+other = "下書き保存のオプション"
 
 [page_edit_save_draft_and_create_suggestion_button]
 description = "下書き保存して編集提案を作成するボタンのラベル"
@@ -767,6 +775,23 @@ other = "<a href=\"{{.URL}}\" class=\"underline\">編集提案 #{{.Number}}</a> 
 [page_edit_update_suggestion_button]
 description = "編集提案を更新ボタンのラベル"
 other = "編集提案を更新"
+
+# ページ表示画面
+[page_show_title]
+description = "ページ表示画面のタイトル ({page_title} | {space_name} 形式)"
+other = "{{.PageTitle}} | {{.SpaceName}}"
+
+[page_show_untitled]
+description = "タイトル未設定のページの表示名"
+other = "無題"
+
+[page_show_trashed_alert]
+description = "ゴミ箱に入っているページを表示したときのアラート"
+other = "このページはゴミ箱に入れられています。"
+
+[page_show_view_trash_link]
+description = "ゴミ箱アラートからゴミ箱画面へのリンクテキスト"
+other = "ゴミ箱を見る"
 
 # ページ公開バリデーション
 [validation_page_title_required]
@@ -1048,6 +1073,10 @@ other = "メインコンテンツへスキップ"
 description = "トピック詳細画面のタイトル（{topic_name} | {space_name}形式）"
 other = "{{.TopicName}} | {{.SpaceName}}"
 
+[topic_show_paginated_title]
+description = "ページネーションされたトピック詳細画面のタイトル ({topic_name} | {space_name} ({page_number} ページ目) 形式)"
+other = "{{.TopicName}} | {{.SpaceName}} ({{.PageNumber}} ページ目)"
+
 [topic_show_no_pages_message]
 description = "トピック詳細画面でページがない場合のメッセージ"
 other = "ページはありません"
@@ -1059,6 +1088,10 @@ other = "最初の1ページ目を作成しましょう"
 [topic_show_new_page]
 description = "トピック詳細画面の新規ページ作成ボタン"
 other = "新規ページ"
+
+[topic_show_options_aria_label]
+description = "トピック詳細画面のオプションメニューを開くボタンの aria-label"
+other = "トピックのオプション"
 
 [topic_show_settings]
 description = "トピック詳細画面のトピック設定リンク"
@@ -1076,6 +1109,10 @@ other = "編集提案"
 [space_show_title]
 description = "スペース詳細画面のタイトル ({space_name})"
 other = "{{.SpaceName}}"
+
+[space_show_paginated_title]
+description = "ページネーションされたスペース詳細画面のタイトル ({space_name} ({page_number} ページ目) 形式)"
+other = "{{.SpaceName}} ({{.PageNumber}} ページ目)"
 
 [space_show_no_topics_message]
 description = "スペース詳細画面でトピックがない場合のメッセージ"
@@ -1102,8 +1139,12 @@ description = "スペース詳細画面のトピックセクションの見出�
 other = "トピック"
 
 [card_link_topic_new_page]
-description = "トピックリンクカードに表示する新規ページ作成リンクのツールチップ"
+description = "トピックリンクカードに表示する新規ページ作成リンクのアクセシブルネームとホバー時のツールチップ"
 other = "新規ページ"
+
+[space_show_options_aria_label]
+description = "スペース詳細画面のオプションメニューを開くボタンの aria-label"
+other = "スペースのオプション"
 
 [space_show_options_rss_feed]
 description = "スペース詳細画面のオプションメニューの RSS フィードリンク"
@@ -1152,6 +1193,10 @@ other = "トップページに戻る"
 description = "編集提案一覧のページタイトル"
 other = "編集提案 | {{.TopicName}} | {{.SpaceName}}"
 
+[suggestion_index_closed_title]
+description = "クローズした編集提案一覧のページタイトル"
+other = "クローズした編集提案 | {{.TopicName}} | {{.SpaceName}}"
+
 [suggestion_index_heading]
 description = "編集提案一覧の見出し"
 other = "編集提案"
@@ -1161,7 +1206,7 @@ description = "編集提案一覧のサブタイトル（ヘルプページへ�
 other = "編集提案については <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">こちら</a> をご覧ください"
 
 [suggestion_index_breadcrumb]
-description = "編集提案一覧のパンくずリスト"
+description = "編集提案一覧を指すパンくず項目 (一覧画面では現在項目、配下の画面では一覧へのリンク)"
 other = "編集提案"
 
 [suggestion_index_open_tab]
@@ -1296,9 +1341,13 @@ other = "編集提案を更新しました"
 description = "編集提案詳細のページタイトル"
 other = "{{.SuggestionTitle}} - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
-[suggestion_show_breadcrumb]
-description = "編集提案詳細のパンくずリスト（編集提案一覧へのリンク）"
-other = "編集提案"
+[suggestion_change_index_title]
+description = "編集提案の変更差分画面のページタイトル"
+other = "変更内容: {{.SuggestionTitle}} - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_change_index_breadcrumb]
+description = "編集提案の変更差分画面の現在地パンくず"
+other = "変更内容"
 
 [suggestion_show_status_draft]
 description = "編集提案のステータス: 下書き"
@@ -1361,6 +1410,10 @@ other = "この提案の変更内容をトピックに反映するか、反映�
 [suggestion_comment_edit_action]
 description = "編集提案コメントのドロップダウンメニューの編集アクション"
 other = "編集する"
+
+[suggestion_comment_actions_aria_label]
+description = "編集提案コメントのドロップダウントリガーボタンの aria-label"
+other = "コメントの操作"
 
 [suggestion_comment_submit]
 description = "編集提案コメント送信ボタン"

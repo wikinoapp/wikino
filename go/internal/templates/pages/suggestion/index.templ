@@ -19,13 +19,15 @@ type IndexData struct {
 	CanCreateSuggestion bool
 }
 
-// suggestionsPath は編集提案一覧のパスを生成します
-func (d IndexData) suggestionsPath(tab string) string {
-	base := string(templates.SuggestionListPath(d.Space.Identifier, d.Topic.Number))
-	if tab == "" {
-		return base
-	}
-	return base + "?tab=" + tab
+// suggestionsPath returns the path to one of the status tabs of this suggestion list. It shares
+// templates.SuggestionListTabPath with the handler that builds the canonical URL, so a tab's link
+// and its canonical address stay the same string.
+//
+// [Ja] suggestionsPath はこの編集提案一覧のステータスタブのパスを返す。正規 URL を組み立てる
+// ハンドラーと templates.SuggestionListTabPath を共有するため、タブのリンクと正規アドレスが同じ
+// 文字列のままになる。
+func (d IndexData) suggestionsPath(showClosed bool) string {
+	return string(templates.SuggestionListTabPath(d.Space.Identifier, d.Topic.Number, showClosed))
 }
 
 // Index は編集提案一覧画面のコンテンツを表示します
@@ -52,7 +54,7 @@ templ Index(data IndexData) {
 							},
 							{
 								Label:          templates.T(ctx, "topic_show_tab_suggestions"),
-								Path:           data.suggestionsPath(""),
+								Path:           data.suggestionsPath(false),
 								IconName:       "git-pull-request-regular",
 								ActiveIconName: "git-pull-request-fill",
 								IsActive:       true,
@@ -92,7 +94,7 @@ templ indexTabs(data IndexData) {
 		<nav class="bg-card" role="tablist" aria-orientation="horizontal">
 			<a
 				role="tab"
-				href={ templ.SafeURL(data.suggestionsPath("")) }
+				href={ templ.SafeURL(data.suggestionsPath(false)) }
 				if !data.ShowClosed {
 					aria-selected="true"
 				} else {
@@ -105,7 +107,7 @@ templ indexTabs(data IndexData) {
 			</a>
 			<a
 				role="tab"
-				href={ templ.SafeURL(data.suggestionsPath("closed")) }
+				href={ templ.SafeURL(data.suggestionsPath(true)) }
 				if data.ShowClosed {
 					aria-selected="true"
 				} else {
@@ -154,7 +156,8 @@ templ suggestionNewButton(data IndexData) {
 	if data.CanCreateSuggestion {
 		<a
 			href={ templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier, data.Topic.Number))) }
-			class="btn-sm rounded-full"
+			class="btn rounded-full"
+			data-size="sm"
 		>
 			@templates.Icon("git-pull-request-regular", "size-4")
 			{ templates.T(ctx, "draft_page_index_create_suggestion_button") }

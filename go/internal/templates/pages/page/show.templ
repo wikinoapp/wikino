@@ -1,0 +1,75 @@
+package page
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowData is the data passed to the page detail screen.
+//
+// [Ja] ShowData はページ表示画面に渡すデータ構造体です。
+type ShowData struct {
+	Page  viewmodel.PageForShow
+	Space viewmodel.Space
+
+	// IsTrashed reports that the page sits in the trash. The usecase only ever renders this screen
+	// for a viewer allowed to see a trashed page, so the alert can be shown whenever it is true.
+	//
+	// [Ja] IsTrashed はページがゴミ箱に入っていることを表す。UseCase はゴミ箱のページを見てよい
+	// 閲覧者にしか本画面を描画させないため、true ならそのままアラートを出してよい。
+	IsTrashed bool
+}
+
+// Show renders the page detail screen content.
+//
+// [Ja] Show はページ表示画面のコンテンツを表示します。
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="max-w-3xl w-full mx-auto">
+			<article class="flex flex-col gap-6 px-4">
+				if data.IsTrashed {
+					@trashedAlert(data.Space.Identifier)
+				}
+
+				<h1 class="text-2xl font-bold antialiased break-words">
+					{ data.Page.DisplayTitle(ctx) }
+				</h1>
+
+				if data.Page.BodyHTML != "" {
+					// The body HTML is sanitized when the page is published, so expand it raw here.
+					//
+					// [Ja] 本文 HTML はページ公開時にサニタイズ済みのため、ここでは生のまま展開する。
+					<div class="wikino-markdown">
+						@templ.Raw(data.Page.BodyHTML)
+					</div>
+				}
+			</article>
+		</div>
+	</div>
+}
+
+// trashedAlert tells a viewer holding the trash permission that this page is in the trash, and
+// links to the trash screen so they can restore it.
+//
+// [Ja] trashedAlert はゴミ箱権限を持つ閲覧者に、このページがゴミ箱に入っていることを伝え、
+// 復元できるようゴミ箱画面へのリンクを出す。
+templ trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) {
+	<div class="alert">
+		@templates.DecorativeIcon("warning-circle-regular", "fill-info")
+		// The alert title is a status message, not a section of the page, and it precedes the page's
+		// h1. A heading element here would put a phantom entry ahead of the h1 in the outline, so use
+		// strong: the alert styles its title with :is(h2, ..., strong, [data-title]), which keeps the
+		// appearance identical.
+		//
+		// [Ja] アラートの見出しはページのセクションではなく状態メッセージで、しかもページの h1 より
+		// 前に出る。見出し要素にするとアウトライン上に h1 より前の幽霊項目ができるため strong を使う。
+		// アラートは :is(h2, ..., strong, [data-title]) で見出しを装飾するため見た目は変わらない。
+		<strong>
+			{ templates.T(ctx, "page_show_trashed_alert") }
+
+			<a href={ templ.SafeURL(string(templates.TrashPath(spaceIdentifier))) } class="underline">
+				{ templates.T(ctx, "page_show_view_trash_link") }
+			</a>
+		</strong>
+	</div>
+}

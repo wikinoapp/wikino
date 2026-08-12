@@ -47,7 +47,8 @@ templ Index(data IndexData) {
 
 									<a
 										href={ templ.SafeURL(string(templates.SuggestionNewPath(group.SpaceIdentifier, group.TopicNumber))) }
-										class="btn-sm rounded-full"
+										class="btn rounded-full"
+										data-size="sm"
 									>
 										@templates.Icon("git-pull-request-regular", "size-4")
 										{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
@@ -121,9 +122,11 @@ templ draftRowActions(csrfToken string, draft viewmodel.DraftPageForIndex) {
 			aria-controls={ dropdownID + "-menu" }
 			aria-expanded="false"
 			aria-label={ templates.T(ctx, "draft_page_index_actions_aria_label") }
-			class="btn-sm-icon-ghost rounded-full"
+			class="btn rounded-full"
+			data-variant="ghost"
+			data-size="icon-sm"
 		>
-			@templates.Icon("dots-three-regular")
+			@templates.DecorativeIcon("dots-three-regular")
 		</button>
 
 		<div

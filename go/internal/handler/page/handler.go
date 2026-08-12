@@ -11,6 +11,7 @@ import (
 type Handler struct {
 	cfg               *config.Config
 	flashMgr          *session.FlashManager
+	getPageShowUC     *usecase.GetPageShowUsecase
 	getPageDetailUC   *usecase.GetPageDetailUsecase
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase
 	publishPageUC     *usecase.PublishPageUsecase
@@ -20,6 +21,7 @@ type Handler struct {
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
+	getPageShowUC *usecase.GetPageShowUsecase,
 	getPageDetailUC *usecase.GetPageDetailUsecase,
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase,
 	publishPageUC *usecase.PublishPageUsecase,
@@ -27,6 +29,7 @@ func NewHandler(
 	return &Handler{
 		cfg:               cfg,
 		flashMgr:          flashMgr,
+		getPageShowUC:     getPageShowUC,
 		getPageDetailUC:   getPageDetailUC,
 		getEditLinkDataUC: getEditLinkDataUC,
 		publishPageUC:     publishPageUC,

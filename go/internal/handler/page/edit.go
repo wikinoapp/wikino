@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
-	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -97,16 +96,21 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	linkResult := buildEditLinkResult(linkData, spaceIdentifier, 1, output.Page)
+	linkResult := buildEditLinkResult(linkData, output.Space.Identifier, 1, output.Page)
 
 	// 編集画面用のページViewModelを生成
 	pageVM := viewmodel.NewPageForEdit(output.Page, output.DraftPage)
+	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
+
+	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
+	// the same form.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
-
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
@@ -114,9 +118,6 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		"SpaceName": output.Space.Name,
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM
-
-	// テンプレートをレンダリング
-	spaceVM := viewmodel.NewSpace(output.Space)
 
 	manualSaveURL := string(templates.PageDraftPageRevisionPath(spaceIdentVM, int32(output.Page.Number)))
 
@@ -161,7 +162,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			SpaceIdentifier: spaceIdentVM,
 		},
 
-		BreadcrumbHeader: editBreadcrumbHeaderData(ctx, spaceVM, topicVM),
+		BreadcrumbHeader: pageBreadcrumbHeaderData(ctx, spaceVM, topicVM, editBreadcrumbMaxWidthClass, true),
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)
@@ -172,32 +173,38 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// editBreadcrumbHeaderData builds the breadcrumb header (home › space › topic) the layout renders
-// for the page editor. Update re-renders the same screen on a validation error, so both handlers
-// supply the header from here.
+// editBreadcrumbMaxWidthClass lines the editor's breadcrumb up with its wider body.
 //
-// [Ja] editBreadcrumbHeaderData は編集画面のパンくずヘッダー (ホーム › スペース › トピック) を組み立てます。
-// 描画するのはレイアウトです。バリデーションエラー時は Update が同じ画面を再描画するため、
-// 両ハンドラーともヘッダーをここから供給します。
-func editBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic) components.BreadcrumbHeaderData {
-	return components.BreadcrumbHeaderData{
-		MaxWidthClass: "max-w-6xl",
-		Items: []components.BreadcrumbItem{
-			{
-				Path:      templates.HomePath(),
-				IconName:  "house-regular",
-				AriaLabel: i18n.T(ctx, "breadcrumb_home"),
-			},
-			{
-				Label: space.Name,
-				Path:  templates.SpacePath(space.Identifier),
-			},
-			{
-				Label:    topic.Name,
-				Path:     templates.TopicPath(space.Identifier, topic.Number),
-				IconName: topic.IconName,
-			},
+// [Ja] editBreadcrumbMaxWidthClass は編集画面の広い本文幅にパンくずを揃える。
+const editBreadcrumbMaxWidthClass = "max-w-6xl"
+
+// pageBreadcrumbHeaderData builds the breadcrumb header the layout renders for the page screens.
+// Edit, Update (which re-renders the editor on a validation error) and Show all supply the header
+// from here; maxWidthClass lines the breadcrumb up with each screen's body. The authenticated Edit
+// and Update pass signedIn unconditionally, while the public Show passes the viewer's actual state
+// so the trail starts at the public space rather than at an authenticated-only screen.
+//
+// [Ja] pageBreadcrumbHeaderData はページ系画面のパンくずヘッダーを組み立てます。描画するのは
+// レイアウトです。Edit・Update (バリデーションエラー時に編集画面を再描画する)・Show のいずれも
+// ヘッダーをここから供給します。maxWidthClass は各画面の本文幅にパンくずを揃えるために渡します。
+// 認証必須の Edit・Update は signedIn を常に真で渡し、公開の Show は閲覧者の実際の状態を渡すことで、
+// 経路が認証必須画面ではなく公開スペースから始まるようにします。
+func pageBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic, maxWidthClass string, signedIn bool) components.BreadcrumbHeaderData {
+	items := append(components.HomeBreadcrumbItems(ctx, signedIn),
+		components.BreadcrumbItem{
+			Label: space.Name,
+			Path:  templates.SpacePath(space.Identifier),
 		},
+		components.BreadcrumbItem{
+			Label:    topic.Name,
+			Path:     templates.TopicPath(space.Identifier, topic.Number),
+			IconName: topic.IconName,
+		},
+	)
+
+	return components.BreadcrumbHeaderData{
+		MaxWidthClass: maxWidthClass,
+		Items:         items,
 	}
 }
 

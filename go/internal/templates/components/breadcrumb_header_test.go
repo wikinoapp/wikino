@@ -67,6 +67,165 @@ func TestBreadcrumbHeader_RendersBreadcrumbWithoutSidebarToggle(t *testing.T) {
 	}
 }
 
+func TestBreadcrumbHeader_MarksCurrentItemWithoutLink(t *testing.T) {
+	t.Parallel()
+
+	data := components.BreadcrumbHeaderData{
+		Items: []components.BreadcrumbItem{
+			{Label: "テストスペース", Path: templates.Path("/s/test")},
+			{Label: "現在のページ", Path: templates.Path("/s/test/pages/1"), IsCurrent: true},
+		},
+	}
+	html := renderBreadcrumbHeader(t, components.BreadcrumbHeader(components.BreadcrumbHeaderRenderData{Header: data, GlobalNav: signedInNav}))
+
+	if !strings.Contains(html, "aria-current=\"page\"") {
+		t.Error("current breadcrumb item must carry aria-current")
+	}
+	if strings.Contains(html, "href=\"/s/test/pages/1\"") {
+		t.Error("current breadcrumb item must not render as a link")
+	}
+	if !strings.Contains(html, "現在のページ") {
+		t.Error("current breadcrumb label not found")
+	}
+}
+
+// The separator between two crumbs is a visual affordance with no accessible name, so it stays out
+// of the accessibility tree: otherwise a three-crumb trail is announced as a list of five items,
+// two of them nameless.
+//
+// [Ja] 2 つの項目の間の区切りはアクセシブルネームを持たない視覚的な装飾のため、アクセシビリティ
+// ツリーの外に置く。そうしないと 3 項目の経路が 5 項目のリストとして読み上げられ、うち 2 項目が
+// 名前を持たない項目になる。
+func TestBreadcrumbHeader_HidesSeparatorsFromAssistiveTechnology(t *testing.T) {
+	t.Parallel()
+
+	data := components.BreadcrumbHeaderData{
+		Items: []components.BreadcrumbItem{
+			{Label: "テストスペース", Path: templates.Path("/s/test")},
+			{Label: "テストトピック", Path: templates.Path("/s/test/topics/1")},
+			{Label: "現在のページ", IsCurrent: true},
+		},
+	}
+	html := renderBreadcrumbHeader(t, components.BreadcrumbHeader(components.BreadcrumbHeaderRenderData{Header: data, GlobalNav: signedInNav}))
+
+	if got, want := strings.Count(html, `<li class="leading-none" aria-hidden="true">`), 2; got != want {
+		t.Errorf("hidden separator count = %d, want %d", got, want)
+	}
+	if strings.Contains(html, `<li class="leading-none">`) {
+		t.Error("区切りがアクセシビリティツリーに残っている")
+	}
+}
+
+// Breadcrumb icons repeat the accessible name supplied by the parent link or visible label, so
+// every item icon is decorative. This covers the icon-only link, labeled link and current-item
+// branches together.
+//
+// [Ja] パンくずのアイコンは親リンクまたは可視ラベルが伝えるアクセシブルネームと重複するため、すべて
+// 装飾として扱う。アイコンのみのリンク・ラベル付きリンク・現在項目の 3 分岐をまとめて固定する。
+func TestBreadcrumbHeader_HidesItemIconsFromAssistiveTechnology(t *testing.T) {
+	t.Parallel()
+
+	data := components.BreadcrumbHeaderData{
+		Items: []components.BreadcrumbItem{
+			{Path: templates.HomePath(), IconName: "house-regular", AriaLabel: "ホーム"},
+			{Label: "テストスペース", Path: templates.Path("/s/test"), IconName: "folders-regular"},
+			{Label: "現在のページ", IconName: "note-regular", IsCurrent: true},
+		},
+	}
+	html := renderBreadcrumbHeader(t, components.BreadcrumbHeader(components.BreadcrumbHeaderRenderData{
+		Header:        data,
+		HideGlobalNav: true,
+	}))
+
+	const decorativeSVG = `<svg aria-hidden="true" focusable="false"`
+	if got, want := strings.Count(html, "<svg"), 5; got != want {
+		t.Fatalf("breadcrumb SVG count = %d, want %d", got, want)
+	}
+	if got, want := strings.Count(html, decorativeSVG), 5; got != want {
+		t.Errorf("decorative breadcrumb SVG count = %d, want %d", got, want)
+	}
+	if strings.Contains(html, `<svg class="size-4 fill-gray-600"`) {
+		t.Error("パンくず項目のアイコンがアクセシビリティツリーに残っている")
+	}
+}
+
+func TestBreadcrumbHeader_DropsBreadcrumbWithoutNavigableItems(t *testing.T) {
+	t.Parallel()
+
+	// A trail holding only the current item gives no way back up the hierarchy, so it must not become
+	// a navigation landmark with no links in it. A public screen whose parent is authenticated-only
+	// reaches this state for signed-out viewers, once the home crumb is omitted.
+	//
+	// [Ja] 現在項目だけの経路は上位へ戻る手段を持たないため、リンクの無いナビゲーションランドマークに
+	// なってはならない。親が認証必須の公開画面は、未ログインの閲覧者にホーム項目を出さなくなった結果
+	// この状態になる。
+	data := components.BreadcrumbHeaderData{
+		MaxWidthClass: "max-w-3xl",
+		Items: []components.BreadcrumbItem{
+			{Label: "現在のスペース", IsCurrent: true},
+		},
+	}
+	html := renderBreadcrumbHeader(t, components.BreadcrumbHeader(components.BreadcrumbHeaderRenderData{Header: data, GlobalNav: signedInNav}))
+
+	if strings.Contains(html, `aria-label="パンくずリスト"`) {
+		t.Error("たどれる項目が無い経路でパンくずランドマークを描画するべきではない")
+	}
+	if strings.Contains(html, "現在のスペース") {
+		t.Error("落としたパンくずの項目が残っている")
+	}
+
+	// The bar is the header's only content there, so the header switches with the bar just as it does
+	// on a screen with no items at all.
+	//
+	// The header owns its top spacing, so the spacing sits on the same element as the visibility
+	// class and goes away with the header below the breakpoint.
+	//
+	// [Ja] その状態ではバーがヘッダーの唯一の中身になるため、項目がまったく無い画面と同じくヘッダーは
+	// バーと一緒に切り替わる。
+	//
+	// 上余白はヘッダー自身が持つため、表示切り替えクラスと同じ要素に付き、ブレークポイント未満では
+	// ヘッダーと一緒に消える。
+	if !strings.Contains(html, `<header class="pt-4 hidden md:block">`) {
+		t.Error("ヘッダーがナビバーと同じ幅で切り替わっていない")
+	}
+	if !strings.Contains(html, `aria-label="グローバルナビゲーション"`) {
+		t.Error("ナビバーが描画されていない")
+	}
+}
+
+func TestHomeBreadcrumbItems(t *testing.T) {
+	t.Parallel()
+
+	// /home is behind authentication, so a screen reachable without signing in must not offer it as
+	// the trail's root. Centralizing the condition keeps every public screen from having to remember
+	// it.
+	//
+	// [Ja] /home は認証必須のため、未ログインでも到達できる画面が経路の起点として提示してはいけない。
+	// 条件を 1 箇所にまとめることで、公開画面ごとに覚えておく必要が無くなる。
+	ctx := i18n.SetLocale(context.Background(), "ja")
+
+	if got := components.HomeBreadcrumbItems(ctx, false); len(got) != 0 {
+		t.Errorf("未ログインではホーム項目を返すべきではない: %+v", got)
+	}
+
+	got := components.HomeBreadcrumbItems(ctx, true)
+	if len(got) != 1 {
+		t.Fatalf("len(HomeBreadcrumbItems()) = %d, want 1", len(got))
+	}
+	if got[0].Path != templates.HomePath() {
+		t.Errorf("Path = %q, want %q", got[0].Path, templates.HomePath())
+	}
+	// The crumb is icon-only, so its accessible name comes from the localized aria-label.
+	//
+	// [Ja] この項目はアイコンのみのため、アクセシブルネームはローカライズされた aria-label が供給する。
+	if got[0].AriaLabel != "ホーム" {
+		t.Errorf("AriaLabel = %q, want %q", got[0].AriaLabel, "ホーム")
+	}
+	if got[0].IconName == "" {
+		t.Error("ホーム項目にアイコンが設定されていない")
+	}
+}
+
 func TestBreadcrumbHeader_PlacesBreadcrumbLeftAndNavRight(t *testing.T) {
 	t.Parallel()
 
@@ -123,7 +282,12 @@ func TestBreadcrumbHeader_RendersNavWithoutBreadcrumbItems(t *testing.T) {
 	data := components.BreadcrumbHeaderData{MaxWidthClass: "max-w-5xl"}
 	html := renderBreadcrumbHeader(t, components.BreadcrumbHeader(components.BreadcrumbHeaderRenderData{Header: data, GlobalNav: signedInNav}))
 
-	if !strings.Contains(html, `<header class="hidden md:block">`) {
+	// The header owns its top spacing, so the spacing sits on the same element as the visibility
+	// class and goes away with the header below the breakpoint.
+	//
+	// [Ja] 上余白はヘッダー自身が持つため、表示切り替えクラスと同じ要素に付き、ブレークポイント未満では
+	// ヘッダーと一緒に消える。
+	if !strings.Contains(html, `<header class="pt-4 hidden md:block">`) {
 		t.Error("ヘッダーがナビバーと同じ幅で切り替わっていない")
 	}
 	if !strings.Contains(html, `aria-label="グローバルナビゲーション"`) {
@@ -186,11 +350,15 @@ func TestBreadcrumbHeaderRenderData_ShouldRender(t *testing.T) {
 	t.Parallel()
 
 	// The header is worth a banner landmark as long as one of its two slots has content. Only a
-	// screen with no breadcrumb items that is also out of the global navigation leaves both empty.
+	// screen with no navigable breadcrumb item that is also out of the global navigation leaves both
+	// empty: a trail holding just the current item does not fill the left slot, because the
+	// breadcrumb is dropped rather than rendered without links.
 	//
 	// [Ja] ヘッダーは 2 つの枠のどちらかに中身がある限り banner ランドマークに値する。両方が空になるのは、
-	// パンくず項目が無く、かつグローバルナビの対象外である画面だけ。
+	// たどれるパンくず項目が無く、かつグローバルナビの対象外である画面だけ。現在項目だけの経路は左側を
+	// 埋めない。リンクの無いパンくずを描画せず落とすためである。
 	items := []components.BreadcrumbItem{{Label: "テストスペース", Path: templates.Path("/s/test")}}
+	currentOnlyItems := []components.BreadcrumbItem{{Label: "現在のスペース", IsCurrent: true}}
 
 	tests := []struct {
 		name string
@@ -215,6 +383,11 @@ func TestBreadcrumbHeaderRenderData_ShouldRender(t *testing.T) {
 		{
 			name: "どちらも無い",
 			data: components.BreadcrumbHeaderRenderData{HideGlobalNav: true},
+			want: false,
+		},
+		{
+			name: "現在項目だけのパンくずしか無い",
+			data: components.BreadcrumbHeaderRenderData{Header: components.BreadcrumbHeaderData{Items: currentOnlyItems}, HideGlobalNav: true},
 			want: false,
 		},
 	}
@@ -302,7 +475,7 @@ func TestBreadcrumbHeader_KeepsHeaderVisibleWithBreadcrumbItems(t *testing.T) {
 	}
 	html := renderBreadcrumbHeader(t, components.BreadcrumbHeader(components.BreadcrumbHeaderRenderData{Header: data, GlobalNav: signedInNav}))
 
-	if !strings.Contains(html, "<header>") {
+	if !strings.Contains(html, `<header class="pt-4">`) {
 		t.Error("パンくずがあるヘッダーに表示切り替えクラスが付いている")
 	}
 }

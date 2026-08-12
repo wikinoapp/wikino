@@ -9,7 +9,7 @@ import (
 func TestNewMemberPolicy(t *testing.T) {
 	t.Parallel()
 
-	t.Run("スペースス��ープとトピックスコープの和集合を取る", func(t *testing.T) {
+	t.Run("スペーススコープとトピックスコープの和集合を取る", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewMemberPolicy(
@@ -139,13 +139,13 @@ func TestMemberPolicy_CanCreatePage(t *testing.T) {
 func TestMemberPolicy_CanUpdatePage(t *testing.T) {
 	t.Parallel()
 
-	t.Run("page:writeで編集��能", func(t *testing.T) {
+	t.Run("page:writeで編集可能", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewMemberPolicy([]model.Scope{model.ScopePageWrite}, nil)
 
 		if !p.CanUpdatePage() {
-			t.Error("page:write を持つメンバーはページを編集��能であるべき")
+			t.Error("page:write を持つメンバーはページを編集可能であるべき")
 		}
 	})
 
@@ -156,6 +156,70 @@ func TestMemberPolicy_CanUpdatePage(t *testing.T) {
 
 		if p.CanUpdatePage() {
 			t.Error("page:write を持たないメンバーはページを編集できないべき")
+		}
+	})
+}
+
+func TestMemberPolicy_CanShowTrash(t *testing.T) {
+	t.Parallel()
+
+	t.Run("page:trashで閲覧可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageTrash}, nil)
+
+		if !p.CanShowTrash() {
+			t.Error("page:trash を持つメンバーはゴミ箱を閲覧可能であるべき")
+		}
+	})
+
+	t.Run("space:adminで閲覧可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+
+		if !p.CanShowTrash() {
+			t.Error("space:admin は page:trash を含意展開するためゴミ箱を閲覧可能であるべき")
+		}
+	})
+
+	t.Run("page:writeだけでは閲覧不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageWrite}, nil)
+
+		if p.CanShowTrash() {
+			t.Error("page:write だけではゴミ箱を閲覧できないべき (page:trash が必要)")
+		}
+	})
+
+	t.Run("page:readだけでは閲覧不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageRead}, nil)
+
+		if p.CanShowTrash() {
+			t.Error("page:read だけではゴミ箱を閲覧できないべき (page:trash が必要)")
+		}
+	})
+
+	t.Run("page:restoreだけでは閲覧不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageRestore}, nil)
+
+		if p.CanShowTrash() {
+			t.Error("page:restore だけではゴミ箱を閲覧できないべき (page:trash が必要)")
+		}
+	})
+
+	t.Run("トピックスコープのpage:trashでも閲覧可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy(nil, []model.Scope{model.ScopePageTrash})
+
+		if !p.CanShowTrash() {
+			t.Error("トピックスコープで page:trash を持つメンバーもゴミ箱を閲覧可能であるべき")
 		}
 	})
 }
@@ -217,7 +281,7 @@ func TestMemberPolicy_CanUpdateDraftPage(t *testing.T) {
 		}
 	})
 
-	t.Run("非所��者はdraft_page:writeだけでは編集不可", func(t *testing.T) {
+	t.Run("非所有者はdraft_page:writeだけでは編集不可", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewMemberPolicy([]model.Scope{model.ScopeDraftPageWrite}, nil)
@@ -233,7 +297,7 @@ func TestMemberPolicy_CanUpdateDraftPage(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
 
 		if !p.CanUpdateDraftPage(false) {
-			t.Error("space:admin は非所有者でも編���可能であるべき")
+			t.Error("space:admin は非所有者でも編集可能であるべき")
 		}
 	})
 
@@ -363,7 +427,7 @@ func TestMemberPolicy_CanCloseSuggestion(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionClose}, nil)
 
 		if !p.CanCloseSuggestion(false) {
-			t.Error("suggestion:close を持つメンバーは他人の提案もクローズ可能であるべ��")
+			t.Error("suggestion:close を持つメンバーは他人の提案もクローズ可能であるべき")
 		}
 	})
 
@@ -377,7 +441,7 @@ func TestMemberPolicy_CanCloseSuggestion(t *testing.T) {
 		}
 	})
 
-	t.Run("suggestion:closeなしで他人の提案はクロー���不可", func(t *testing.T) {
+	t.Run("suggestion:closeなしで他人の提案はクローズ不可", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionWrite}, nil)
@@ -420,7 +484,7 @@ func TestMemberPolicy_CanUpdateSuggestion(t *testing.T) {
 		suggestion := &model.Suggestion{Status: model.SuggestionStatusApplied}
 
 		if p.CanUpdateSuggestion(suggestion) {
-			t.Error("反映済みの編集提案は編集できない���き")
+			t.Error("反映済みの編集提案は編集できないべき")
 		}
 	})
 
@@ -431,7 +495,7 @@ func TestMemberPolicy_CanUpdateSuggestion(t *testing.T) {
 		suggestion := &model.Suggestion{Status: model.SuggestionStatusOpen}
 
 		if p.CanUpdateSuggestion(suggestion) {
-			t.Error("suggestion:write を持たないメンバーは編集でき���いべき")
+			t.Error("suggestion:write を持たないメンバーは編集できないべき")
 		}
 	})
 }
@@ -483,7 +547,7 @@ func TestMemberPolicy_CanRemoveSuggestionPage(t *testing.T) {
 		suggestion := &model.Suggestion{Status: model.SuggestionStatusClosed}
 
 		if p.CanRemoveSuggestionPage(suggestion) {
-			t.Error("クローズ済みの提案からはページを削除できない���き")
+			t.Error("クローズ済みの提案からはページを削除できないべき")
 		}
 	})
 }
@@ -497,7 +561,7 @@ func TestMemberPolicy_CanEditSuggestionPage(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionWrite}, nil)
 
 		if !p.CanEditSuggestionPage() {
-			t.Error("suggestion:write を持��メンバーは編集提案ページを編集可能であるべき")
+			t.Error("suggestion:write を持つメンバーは編集提案ページを編集可能であるべき")
 		}
 	})
 
@@ -507,7 +571,7 @@ func TestMemberPolicy_CanEditSuggestionPage(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionRead}, nil)
 
 		if p.CanEditSuggestionPage() {
-			t.Error("suggestion:write ���持たないメンバーは編集提案ページを編集できないべき")
+			t.Error("suggestion:write を持たないメンバーは編集提案ページを編集できないべき")
 		}
 	})
 }
@@ -539,7 +603,7 @@ func TestMemberPolicy_CanCreateSuggestionComment(t *testing.T) {
 func TestMemberPolicy_CanUpdateSuggestionComment(t *testing.T) {
 	t.Parallel()
 
-	t.Run("suggestion_comment:writeでオープン提案のコメントを編集可��", func(t *testing.T) {
+	t.Run("suggestion_comment:writeでオープン提案のコメントを編集可能", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionCommentWrite}, nil)
@@ -561,7 +625,7 @@ func TestMemberPolicy_CanUpdateSuggestionComment(t *testing.T) {
 		}
 	})
 
-	t.Run("suggestion_comment:writeなしで編集不���", func(t *testing.T) {
+	t.Run("suggestion_comment:writeなしで編集不可", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionWrite}, nil)

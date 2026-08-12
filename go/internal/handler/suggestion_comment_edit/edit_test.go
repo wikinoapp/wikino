@@ -13,6 +13,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	suggestioncommentedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment_edit"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -232,6 +233,7 @@ func TestEdit_編集フォームが表示される(t *testing.T) {
 		"comment_number":    "1",
 	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "ceditok"})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -244,6 +246,9 @@ func TestEdit_編集フォームが表示される(t *testing.T) {
 	body := rr.Body.String()
 	if !strings.Contains(body, "編集対象のコメント") {
 		t.Error("response should contain comment body")
+	}
+	if !strings.Contains(body, `aria-label="コメント"`) {
+		t.Error("comment textarea should have an accessible name")
 	}
 
 	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip

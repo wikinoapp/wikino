@@ -37,7 +37,23 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{}
+var featureFlaggedPatterns = []featureFlaggedPattern{
+	// Page detail screen (GET /s/:space_identifier/pages/:page_number). PATCH on
+	// the same path is already in goHandledRegexPatterns, so the two are split by
+	// method: PATCH always goes to Go, GET is gated by the flag. The trailing "$"
+	// keeps sub-paths such as /edit and /preview out of this pattern; they have
+	// their own entries in goHandledRegexPatterns.
+	//
+	// [Ja] ページ表示画面 (GET /s/:space_identifier/pages/:page_number)。同じパスの
+	// PATCH は既に goHandledRegexPatterns にあるため、メソッドで棲み分ける
+	// (PATCH は常に Go、GET はフラグで制御)。末尾の "$" により /edit や /preview
+	// などのサブパスにはマッチさせず、それらは goHandledRegexPatterns 側で処理する。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`),
+		flag:    model.FeatureFlagPageShow,
+		methods: []string{http.MethodGet},
+	},
+}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {

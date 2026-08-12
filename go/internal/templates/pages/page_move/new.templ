@@ -40,15 +40,15 @@ templ New(data MovePageData) {
 				@components.ContentCard() {
 					<form
 						action={ templ.SafeURL(string(templates.PageMovePath(data.Space.Identifier, data.Page.Number))) }
-						class="form grid gap-6"
+						class="grid gap-6"
 						method="POST"
 					>
 						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 						<div class="grid gap-2">
-							<label>
+							<span class="label">
 								{ templates.T(ctx, "page_move_page_title_label") }
-							</label>
+							</span>
 
 							<p class="text-sm text-muted-foreground">
 								{ data.Page.Title }
@@ -56,9 +56,9 @@ templ New(data MovePageData) {
 						</div>
 
 						<div class="grid gap-2">
-							<label>
+							<span class="label">
 								{ templates.T(ctx, "page_move_current_topic_label") }
-							</label>
+							</span>
 
 							<p class="text-sm text-muted-foreground">
 								{ data.CurrentTopic.Name }
@@ -66,11 +66,10 @@ templ New(data MovePageData) {
 						</div>
 
 						<div class="grid gap-2">
-							<label for="dest_topic">
-								{ templates.T(ctx, "page_move_destination_topic_label") }
-							</label>
-
 							if len(data.AvailableTopics) > 0 {
+								<label class="label" for="dest_topic">
+									{ templates.T(ctx, "page_move_destination_topic_label") }
+								</label>
 								<select
 									id="dest_topic"
 									name="dest_topic"
@@ -96,6 +95,9 @@ templ New(data MovePageData) {
 									}
 								}
 							} else {
+								<span class="label">
+									{ templates.T(ctx, "page_move_destination_topic_label") }
+								</span>
 								<p class="text-sm text-muted-foreground">
 									{ templates.T(ctx, "page_move_no_available_topics") }
 								</p>
@@ -116,7 +118,8 @@ templ New(data MovePageData) {
 
 							<a
 								href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
-								class="btn-outline rounded-full w-fit"
+								class="btn rounded-full w-fit"
+								data-variant="outline"
 							>
 								{ templates.T(ctx, "page_move_cancel") }
 							</a>

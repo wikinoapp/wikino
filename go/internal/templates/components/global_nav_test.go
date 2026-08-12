@@ -53,15 +53,7 @@ func anchorSegment(html, href string) string {
 //
 // [Ja] svgSegment は html 内の最初の完全な SVG 要素を返す。
 func svgSegment(html string) string {
-	start := strings.Index(html, "<svg")
-	if start < 0 {
-		return ""
-	}
-	end := strings.Index(html[start:], "</svg>")
-	if end < 0 {
-		return ""
-	}
-	return html[start : start+end+len("</svg>")]
+	return elementSegment(html, "<svg", "</svg>")
 }
 
 func TestGlobalNavMenu_SignedInLinks(t *testing.T) {

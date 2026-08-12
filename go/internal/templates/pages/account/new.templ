@@ -9,7 +9,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// NewPageData はアカウント作成ページに渡すデータ構造体です
+// NewPageData is the data passed to the account creation page.
+//
+// [Ja] NewPageData はアカウント作成ページに渡すデータ構造体です。
 type NewPageData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
@@ -17,13 +19,15 @@ type NewPageData struct {
 	Atname     string
 }
 
-// New はアカウント作成ページのコンテンツを表示します
+// New renders the content of the account creation page.
+//
+// [Ja] New はアカウント作成ページのコンテンツを表示します。
 templ New(data NewPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
 		<div class="text-center">
-			<a href="/" class="inline-block">
+			<a href="/" aria-label={ templates.T(ctx, "home_link_aria_label") } class="inline-block">
 				<div class="bg-primary rounded-xl">
-					@templates.Icon("logo", "fill-primary-foreground w-[60px] h-[60px]")
+					@templates.DecorativeIcon("logo", "fill-primary-foreground w-[60px] h-[60px]")
 				</div>
 			</a>
 		</div>
@@ -36,7 +40,7 @@ templ New(data NewPageData) {
 
 		if data.FormErrors != nil && len(data.FormErrors.Global) > 0 {
 			for _, errorMsg := range data.FormErrors.Global {
-				<div class="alert-destructive">
+				<div class="alert" data-variant="destructive">
 					<section>{ errorMsg }</section>
 				</div>
 			}
@@ -45,19 +49,19 @@ templ New(data NewPageData) {
 		@components.ContentCard() {
 			<form
 				action="/accounts"
-				class="form grid gap-6"
+				class="grid gap-6"
 				hx-on:submit="disableSubmitButtons(this)"
 				method="POST"
 			>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="grid gap-2">
-						<label for="email">
+						<label class="label" for="email">
 							{ templates.T(ctx, "account_new_email_label") }
 						</label>
 
 						<input
-							class="bg-muted cursor-not-allowed"
+							class="input bg-muted cursor-not-allowed"
 							disabled
 							id="email"
 							name="email"
@@ -74,7 +78,7 @@ templ New(data NewPageData) {
 					</div>
 
 					<div class="grid gap-2">
-						<label for="atname">
+						<label class="label" for="atname">
 							{ templates.T(ctx, "account_new_atname_label") }
 						</label>
 
@@ -91,7 +95,7 @@ templ New(data NewPageData) {
 								}
 								autocomplete="username"
 								autofocus
-								class="flex-1"
+								class="input flex-1"
 								id="atname"
 								maxlength="20"
 								name="atname"
@@ -116,7 +120,7 @@ templ New(data NewPageData) {
 						}
 					</div>
 					<div class="grid gap-2">
-						<label for="password">
+						<label class="label" for="password">
 							{ templates.T(ctx, "account_new_password_label") }
 						</label>
 						<input
@@ -126,6 +130,7 @@ templ New(data NewPageData) {
 								aria-invalid="false"
 							}
 							autocomplete="new-password"
+							class="input"
 							id="password"
 							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
 							minlength={ strconv.Itoa(auth.MinPasswordLength) }
@@ -146,7 +151,7 @@ templ New(data NewPageData) {
 						}
 					</div>
 					<button
-						class="btn-primary rounded-full w-fit"
+						class="btn rounded-full w-fit"
 						tabindex="3"
 						type="submit"
 					>

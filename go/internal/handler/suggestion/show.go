@@ -51,10 +51,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := RenderShow(ctx, w, RenderShowInput{
-		Cfg:             h.cfg,
-		User:            user,
-		SpaceIdentifier: spaceIdentifier,
-		Output:          output,
+		Cfg:    h.cfg,
+		User:   user,
+		Output: output,
 	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

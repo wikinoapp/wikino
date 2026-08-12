@@ -101,7 +101,8 @@ templ showActions(data ShowData) {
 	if data.Topic.CanCreatePage {
 		<a
 			href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
-			class="btn btn-sm rounded-full"
+			class="btn rounded-full"
+			data-size="sm"
 		>
 			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
 			{ templates.T(ctx, "topic_show_new_page") }
@@ -116,9 +117,12 @@ templ showActions(data ShowData) {
 				aria-haspopup="menu"
 				aria-controls="topic-options-dropdown-menu"
 				aria-expanded="false"
-				class="btn-sm-icon-outline border-primary rounded-full"
+				aria-label={ templates.T(ctx, "topic_show_options_aria_label") }
+				class="btn border-primary rounded-full"
+				data-variant="outline"
+				data-size="icon-sm"
 			>
-				@templates.Icon("dots-three-regular")
+				@templates.DecorativeIcon("dots-three-regular")
 			</button>
 
 			<div id="topic-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
@@ -158,7 +162,8 @@ templ showEmptyState(data ShowData) {
 		if data.Topic.CanCreatePage {
 			<a
 				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
-				class="btn-sm rounded-full"
+				class="btn rounded-full"
+				data-size="sm"
 			>
 				@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
 				{ templates.T(ctx, "topic_show_new_page") }

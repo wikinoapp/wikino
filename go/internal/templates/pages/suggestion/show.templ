@@ -121,7 +121,8 @@ templ showActions(data ShowData) {
 	if data.CanUpdateSuggestion {
 		<a
 			href={ templ.SafeURL(string(templates.SuggestionEditPath(data.Space.Identifier, data.Suggestion.Number))) }
-			class="btn btn-sm rounded-full"
+			class="btn rounded-full"
+			data-size="sm"
 		>
 			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
 			{ templates.T(ctx, "suggestion_show_edit_button") }
@@ -138,6 +139,7 @@ templ showComments(data ShowData) {
 				Body:          c.Body,
 				CreatedAt:     c.CreatedAt,
 				Actions:       commentActions(ctx, data, c),
+				ActionsLabel:  templates.T(ctx, "suggestion_comment_actions_aria_label"),
 				DropdownID:    fmt.Sprintf("comment-%d", c.Number),
 			})
 		}
@@ -152,7 +154,7 @@ templ showApplyForm(data ShowData) {
 	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 		<button
-			class="btn-primary rounded-full w-fit"
+			class="btn rounded-full w-fit"
 			type="submit"
 		>
 			@templates.Icon("git-merge-regular")
@@ -169,7 +171,8 @@ templ showCloseForm(data ShowData) {
 	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 		<button
-			class="btn-secondary rounded-full w-fit"
+			class="btn rounded-full w-fit"
+			data-variant="secondary"
 			type="submit"
 		>
 			{ templates.T(ctx, "suggestion_close_button") }
@@ -194,13 +197,14 @@ func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCo
 templ showCommentForm(data ShowData) {
 	<form
 		action={ templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier, data.Suggestion.Number))) }
-		class="form grid gap-4"
+		class="grid gap-4"
 		method="POST"
 	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 		<div class="grid gap-2">
 			<textarea
+				aria-label={ templates.T(ctx, "suggestion_comment_body_label") }
 				class="textarea"
 				id="comment_body"
 				name="body"
@@ -210,7 +214,7 @@ templ showCommentForm(data ShowData) {
 		</div>
 
 		<button
-			class="btn-primary rounded-full w-fit"
+			class="btn rounded-full w-fit"
 			type="submit"
 		>
 			@templates.Icon("paper-plane-tilt-regular")

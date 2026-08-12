@@ -29,6 +29,10 @@ other = "Error"
 description = "Label for the back-to-home link"
 other = "Back to Home"
 
+[home_link_aria_label]
+description = "Aria label for the logo link that goes to the home page"
+other = "Wikino home"
+
 [form_optional]
 description = "Label for optional form fields"
 other = "Optional"
@@ -733,7 +737,7 @@ description = "Display text for an untitled linked page"
 other = "Untitled"
 
 [page_edit_links_edit_page]
-description = "Title for edit link on linked page card"
+description = "Accessible name and hover tooltip for the edit link on a linked page card"
 other = "Edit page"
 
 [page_edit_links_load_more]
@@ -747,6 +751,10 @@ other = "Backlinks"
 [page_edit_save_draft_button]
 description = "Label for the save draft button"
 other = "Save Draft"
+
+[page_edit_save_draft_options_aria_label]
+description = "Aria label for the save draft dropdown trigger button on the page edit screen"
+other = "Save draft options"
 
 [page_edit_save_draft_and_create_suggestion_button]
 description = "Label for the save draft and create suggestion button"
@@ -767,6 +775,23 @@ other = "Editing a page for <a href=\"{{.URL}}\" class=\"underline\">suggestion 
 [page_edit_update_suggestion_button]
 description = "Label for the update suggestion button"
 other = "Update Suggestion"
+
+# Page show screen
+[page_show_title]
+description = "Page show screen title ({page_title} | {space_name} format)"
+other = "{{.PageTitle}} | {{.SpaceName}}"
+
+[page_show_untitled]
+description = "Display name for a page with no title"
+other = "Untitled"
+
+[page_show_trashed_alert]
+description = "Alert shown when viewing a page that is in the trash"
+other = "This page is in the trash."
+
+[page_show_view_trash_link]
+description = "Link text from the trash alert to the trash screen"
+other = "View trash"
 
 # Page publish validation
 [validation_page_title_required]
@@ -1048,6 +1073,10 @@ other = "Skip to main content"
 description = "Topic show page title ({topic_name} | {space_name} format)"
 other = "{{.TopicName}} | {{.SpaceName}}"
 
+[topic_show_paginated_title]
+description = "Paginated topic show page title ({topic_name} | {space_name} (Page {page_number}) format)"
+other = "{{.TopicName}} | {{.SpaceName}} (Page {{.PageNumber}})"
+
 [topic_show_no_pages_message]
 description = "Message when there are no pages in the topic"
 other = "No pages"
@@ -1059,6 +1088,10 @@ other = "Create your first page."
 [topic_show_new_page]
 description = "New page button on the topic show page"
 other = "New page"
+
+[topic_show_options_aria_label]
+description = "Aria label for the options dropdown trigger button on the topic show page"
+other = "Topic options"
 
 [topic_show_settings]
 description = "Topic settings link on the topic show page"
@@ -1076,6 +1109,10 @@ other = "Suggestions"
 [space_show_title]
 description = "Space show page title ({space_name})"
 other = "{{.SpaceName}}"
+
+[space_show_paginated_title]
+description = "Paginated space show page title ({space_name} (Page {page_number}) format)"
+other = "{{.SpaceName}} (Page {{.PageNumber}})"
 
 [space_show_no_topics_message]
 description = "Message when there are no topics in the space"
@@ -1102,8 +1139,12 @@ description = "Heading of the topic section on the space show page"
 other = "Topics"
 
 [card_link_topic_new_page]
-description = "Tooltip of the new page link shown on a topic link card"
+description = "Accessible name and hover tooltip of the new page link shown on a topic link card"
 other = "New page"
+
+[space_show_options_aria_label]
+description = "Aria label for the options dropdown trigger button on the space show page"
+other = "Space options"
 
 [space_show_options_rss_feed]
 description = "RSS feed link in the options menu on the space show page"
@@ -1152,6 +1193,10 @@ other = "Back to top page"
 description = "Suggestion list page title"
 other = "Suggestions | {{.TopicName}} | {{.SpaceName}}"
 
+[suggestion_index_closed_title]
+description = "Closed suggestion list page title"
+other = "Closed Suggestions | {{.TopicName}} | {{.SpaceName}}"
+
 [suggestion_index_heading]
 description = "Suggestion list heading"
 other = "Suggestions"
@@ -1161,7 +1206,7 @@ description = "Suggestion list subtitle (includes help page link)"
 other = "See <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">here</a> for more information about suggestions."
 
 [suggestion_index_breadcrumb]
-description = "Suggestion list breadcrumb"
+description = "Breadcrumb item for the suggestion list (the current item on the list screen, a link to it on the screens below)"
 other = "Suggestions"
 
 [suggestion_index_open_tab]
@@ -1296,9 +1341,13 @@ other = "Suggestion has been updated"
 description = "Suggestion detail page title"
 other = "{{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
-[suggestion_show_breadcrumb]
-description = "Suggestion detail breadcrumb (link to suggestion list)"
-other = "Suggestions"
+[suggestion_change_index_title]
+description = "Suggestion changes page title"
+other = "Changes: {{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_change_index_breadcrumb]
+description = "Current breadcrumb label on the suggestion changes page"
+other = "Changes"
 
 [suggestion_show_status_draft]
 description = "Suggestion status: draft"
@@ -1361,6 +1410,10 @@ other = "You can apply the changes from this suggestion to the topic, or close i
 [suggestion_comment_edit_action]
 description = "Edit action in suggestion comment dropdown menu"
 other = "Edit"
+
+[suggestion_comment_actions_aria_label]
+description = "Aria label for the suggestion comment dropdown trigger button"
+other = "Comment actions"
 
 [suggestion_comment_submit]
 description = "Suggestion comment submit button"

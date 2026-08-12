@@ -190,3 +190,44 @@ func TestShow_日本語と英語で正しく表示される(t *testing.T) {
 		})
 	}
 }
+
+// The public top page is indexable, so it declares its own absolute address as canonical rather
+// than leaving the shared head to emit an empty one that resolves to whatever URL was requested.
+//
+// [Ja] 公開トップページはインデックス対象のため、自身の絶対アドレスを正規 URL として宣言する。共通
+// head に空の値を出させると、リクエストされた URL に解決されてしまう。
+func TestShow_CanonicalPointsAtTopPage(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		Env:             "test",
+		Port:            "8080",
+		Domain:          "localhost",
+		CookieDomain:    "",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+	handler := welcome.NewHandler(cfg, flashMgr)
+
+	req := httptest.NewRequest(http.MethodGet, "/?utm_source=example", nil)
+	req.Header.Set("Accept-Language", "ja")
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		`<link rel="canonical" href="https://localhost/">`,
+		`<meta property="og:url" content="https://localhost/">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+}
