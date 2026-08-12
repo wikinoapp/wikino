@@ -103,9 +103,12 @@ templ showActions(data ShowData) {
 			aria-haspopup="menu"
 			aria-controls="space-options-dropdown-menu"
 			aria-expanded="false"
-			class="btn-sm-icon-outline border-primary rounded-full"
+			aria-label={ templates.T(ctx, "space_show_options_aria_label") }
+			class="btn border-primary rounded-full"
+			data-variant="outline"
+			data-size="icon-sm"
 		>
-			@templates.Icon("dots-three-regular")
+			@templates.DecorativeIcon("dots-three-regular")
 		</button>
 		<div id="space-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
 			<div role="menu" id="space-options-dropdown-menu" aria-labelledby="space-options-dropdown-trigger">
@@ -158,7 +161,8 @@ templ showActions(data ShowData) {
 templ newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) {
 	<a
 		href={ templ.SafeURL(string(templates.NewTopicPath(spaceIdentifier))) }
-		class="btn btn-sm rounded-full"
+		class="btn rounded-full"
+		data-size="sm"
 	>
 		@templates.Icon("plus-regular", "size-[18px] fill-primary-foreground")
 		{ templates.T(ctx, "space_show_new_topic_button") }

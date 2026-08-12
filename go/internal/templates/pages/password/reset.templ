@@ -18,9 +18,9 @@ type ResetPageData struct {
 templ Reset(data ResetPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
 		<div class="text-center">
-			<a href="/" class="inline-block">
+			<a href="/" aria-label={ templates.T(ctx, "home_link_aria_label") } class="inline-block">
 				<div class="bg-primary rounded-xl">
-					@templates.Icon("logo", "fill-primary-foreground w-[60px] h-[60px]")
+					@templates.DecorativeIcon("logo", "fill-primary-foreground w-[60px] h-[60px]")
 				</div>
 			</a>
 		</div>
@@ -39,14 +39,14 @@ templ Reset(data ResetPageData) {
 		@components.ContentCard() {
 			<form
 				action="/password/reset"
-				class="form grid gap-6"
+				class="grid gap-6"
 				hx-on:submit="disableSubmitButtons(this)"
 				method="POST"
 			>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="grid gap-2">
-						<label for="email">
+						<label class="label" for="email">
 							{ templates.T(ctx, "password_reset_email_label") }
 						</label>
 
@@ -58,6 +58,7 @@ templ Reset(data ResetPageData) {
 							}
 							autocomplete="email"
 							autofocus
+							class="input"
 							id="email"
 							name="email"
 							required
@@ -78,7 +79,7 @@ templ Reset(data ResetPageData) {
 					@components.Turnstile(data.TurnstileSiteKey)
 
 					<button
-						class="btn-primary rounded-full w-fit"
+						class="btn rounded-full w-fit"
 						tabindex="2"
 						type="submit"
 					>

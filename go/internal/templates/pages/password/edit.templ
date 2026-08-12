@@ -20,9 +20,9 @@ type EditPageData struct {
 templ Edit(data EditPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
 		<div class="text-center">
-			<a href="/" class="inline-block">
+			<a href="/" aria-label={ templates.T(ctx, "home_link_aria_label") } class="inline-block">
 				<div class="bg-primary rounded-xl">
-					@templates.Icon("logo", "fill-primary-foreground w-[60px] h-[60px]")
+					@templates.DecorativeIcon("logo", "fill-primary-foreground w-[60px] h-[60px]")
 				</div>
 			</a>
 		</div>
@@ -41,7 +41,7 @@ templ Edit(data EditPageData) {
 		@components.ContentCard() {
 			<form
 				action="/password"
-				class="form grid gap-6"
+				class="grid gap-6"
 				hx-on:submit="disableSubmitButtons(this)"
 				method="POST"
 			>
@@ -50,7 +50,7 @@ templ Edit(data EditPageData) {
 					<input type="hidden" name="_method" value="PATCH"/>
 
 					<div class="grid gap-2">
-						<label for="password">
+						<label class="label" for="password">
 							{ templates.T(ctx, "password_edit_password_label") }
 						</label>
 
@@ -62,6 +62,7 @@ templ Edit(data EditPageData) {
 							}
 							autocomplete="new-password"
 							autofocus
+							class="input"
 							id="password"
 							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
 							minlength={ strconv.Itoa(auth.MinPasswordLength) }
@@ -85,7 +86,7 @@ templ Edit(data EditPageData) {
 					</div>
 
 					<div class="grid gap-2">
-						<label for="password_confirmation">
+						<label class="label" for="password_confirmation">
 							{ templates.T(ctx, "password_edit_password_confirmation_label") }
 						</label>
 
@@ -96,6 +97,7 @@ templ Edit(data EditPageData) {
 								aria-invalid="false"
 							}
 							autocomplete="new-password"
+							class="input"
 							id="password_confirmation"
 							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
 							minlength={ strconv.Itoa(auth.MinPasswordLength) }
@@ -115,7 +117,7 @@ templ Edit(data EditPageData) {
 					</div>
 
 					<button
-						class="btn-primary rounded-full w-fit"
+						class="btn rounded-full w-fit"
 						tabindex="3"
 						type="submit"
 					>

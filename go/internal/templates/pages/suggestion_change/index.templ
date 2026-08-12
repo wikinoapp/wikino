@@ -92,7 +92,8 @@ templ Index(data IndexData) {
 						<div class="px-4">
 							<a
 								href={ templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier, data.Suggestion.Number))) }
-								class="btn-secondary rounded-full"
+								class="btn rounded-full"
+								data-variant="secondary"
 							>
 								@templates.Icon("file-plus-regular", "size-4")
 								{ templates.T(ctx, "suggestion_change_add_page_button") }
@@ -144,7 +145,9 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 						<input type="hidden" name="csrf_token" value={ editData.CSRFToken }/>
 						<input type="hidden" name="suggestion_page_id" value={ pd.SuggestionPageID }/>
 						<button
-							class="btn-sm-link h-fit p-0"
+							class="btn h-fit p-0"
+							data-variant="link"
+							data-size="sm"
 							type="submit"
 						>
 							@templates.Icon("pencil-simple-line-regular", "size-3")
@@ -162,7 +165,9 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 						<input type="hidden" name="_method" value="DELETE"/>
 						<input type="hidden" name="csrf_token" value={ editData.CSRFToken }/>
 						<button
-							class="btn-sm-link h-fit p-0 text-error"
+							class="btn h-fit p-0 text-error"
+							data-variant="link"
+							data-size="sm"
 							type="submit"
 						>
 							@templates.Icon("trash-regular", "size-3")

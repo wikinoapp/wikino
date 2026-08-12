@@ -29,6 +29,10 @@ other = "Error"
 description = "Label for the back-to-home link"
 other = "Back to Home"
 
+[home_link_aria_label]
+description = "Aria label for the logo link that goes to the home page"
+other = "Wikino home"
+
 [form_optional]
 description = "Label for optional form fields"
 other = "Optional"
@@ -733,7 +737,7 @@ description = "Display text for an untitled linked page"
 other = "Untitled"
 
 [page_edit_links_edit_page]
-description = "Title for edit link on linked page card"
+description = "Accessible name and hover tooltip for the edit link on a linked page card"
 other = "Edit page"
 
 [page_edit_links_load_more]
@@ -747,6 +751,10 @@ other = "Backlinks"
 [page_edit_save_draft_button]
 description = "Label for the save draft button"
 other = "Save Draft"
+
+[page_edit_save_draft_options_aria_label]
+description = "Aria label for the save draft dropdown trigger button on the page edit screen"
+other = "Save draft options"
 
 [page_edit_save_draft_and_create_suggestion_button]
 description = "Label for the save draft and create suggestion button"
@@ -1060,6 +1068,10 @@ other = "Create your first page."
 description = "New page button on the topic show page"
 other = "New page"
 
+[topic_show_options_aria_label]
+description = "Aria label for the options dropdown trigger button on the topic show page"
+other = "Topic options"
+
 [topic_show_settings]
 description = "Topic settings link on the topic show page"
 other = "Topic settings"
@@ -1102,8 +1114,12 @@ description = "Heading of the topic section on the space show page"
 other = "Topics"
 
 [card_link_topic_new_page]
-description = "Tooltip of the new page link shown on a topic link card"
+description = "Accessible name and hover tooltip of the new page link shown on a topic link card"
 other = "New page"
+
+[space_show_options_aria_label]
+description = "Aria label for the options dropdown trigger button on the space show page"
+other = "Space options"
 
 [space_show_options_rss_feed]
 description = "RSS feed link in the options menu on the space show page"
@@ -1361,6 +1377,10 @@ other = "You can apply the changes from this suggestion to the topic, or close i
 [suggestion_comment_edit_action]
 description = "Edit action in suggestion comment dropdown menu"
 other = "Edit"
+
+[suggestion_comment_actions_aria_label]
+description = "Aria label for the suggestion comment dropdown trigger button"
+other = "Comment actions"
 
 [suggestion_comment_submit]
 description = "Suggestion comment submit button"
