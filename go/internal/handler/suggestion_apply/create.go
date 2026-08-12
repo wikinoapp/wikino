@@ -79,11 +79,10 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		if renderErr := suggestionhandler.RenderShow(ctx, w, suggestionhandler.RenderShowInput{
-			Cfg:             h.cfg,
-			User:            user,
-			SpaceIdentifier: spaceIdentifier,
-			Output:          output,
-			ApplyError:      viewmodel.NewSuggestionApplyError(ae),
+			Cfg:        h.cfg,
+			User:       user,
+			Output:     output,
+			ApplyError: viewmodel.NewSuggestionApplyError(ae),
 		}); renderErr != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return

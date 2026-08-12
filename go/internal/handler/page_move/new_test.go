@@ -166,6 +166,15 @@ func TestNew(t *testing.T) {
 		t.Error("form action not found in response")
 	}
 
+	for _, want := range []string{`<span class="label">ページ</span>`, `<span class="label">現在のトピック</span>`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("static page detail should be headed by a span, want %s", want)
+		}
+	}
+	if !strings.Contains(body, `<label class="label" for="dest_topic">`) {
+		t.Error("destination topic label should point at the select")
+	}
+
 	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
 	// link has to bypass it) and keeps this screen's narrower max-w-2xl content width.
 	//
@@ -293,5 +302,11 @@ func TestNew_NoAvailableTopics(t *testing.T) {
 	// 送信ボタンが無効化されていること
 	if !strings.Contains(body, "disabled") {
 		t.Error("submit button should be disabled when no topics available")
+	}
+	if !strings.Contains(body, `<span class="label">移動先トピック</span>`) {
+		t.Error("destination topic heading should be a span when there is no select to label")
+	}
+	if strings.Contains(body, `<label class="label"`) {
+		t.Error("a label should not be rendered when there is no destination topic control")
 	}
 }

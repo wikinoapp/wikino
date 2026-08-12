@@ -93,6 +93,12 @@ func TestNew_WithPendingUser(t *testing.T) {
 	if !strings.Contains(body, `/sign_in/two_factor/recovery/new`) {
 		t.Error("recovery code link not found in response")
 	}
+
+	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("response unexpectedly contains %q", notWant)
+		}
+	}
 }
 
 func TestNew_WithoutPendingUser(t *testing.T) {

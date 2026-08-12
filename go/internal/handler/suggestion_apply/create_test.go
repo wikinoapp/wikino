@@ -542,7 +542,7 @@ func TestCreate_タイトル衝突時に編集提案詳細ページを422で再�
 	if !strings.Contains(body, "衝突タイトル") {
 		t.Errorf("response should mention conflicting title, got body: %s", body)
 	}
-	if !strings.Contains(body, "alert-destructive") {
+	if !strings.Contains(body, `class="alert" data-variant="destructive"`) {
 		t.Errorf("response should include error alert markup")
 	}
 }

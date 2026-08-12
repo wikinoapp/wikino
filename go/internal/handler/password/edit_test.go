@@ -101,6 +101,19 @@ func TestEdit_Success(t *testing.T) {
 	if !strings.Contains(body, `value="PATCH"`) {
 		t.Error("method override not found in form")
 	}
+
+	// This screen only exists for the token in the query, so it declares no canonical address. An
+	// empty canonical would not mean "none": it resolves to the requested URL, which would make every
+	// token a canonical address of its own.
+	//
+	// [Ja] 本画面はクエリのトークンがあって初めて成立するため、正規アドレスを宣言しない。空の canonical
+	// は「無い」ことにはならず、リクエストされた URL に解決されるため、トークンごとに別の正規アドレスが
+	// できてしまう。
+	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("response unexpectedly contains %q", notWant)
+		}
+	}
 }
 
 func TestEdit_TokenNotFound(t *testing.T) {

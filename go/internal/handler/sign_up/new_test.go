@@ -1,6 +1,7 @@
 package sign_up_test
 
 import (
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,14 +16,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-func TestNew(t *testing.T) {
-	t.Parallel()
+func setupHandler(t *testing.T, tx *sql.Tx) *sign_up.Handler {
+	t.Helper()
 
-	// テスト用DBをセットアップ
-	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// 設定を作成
 	cfg := &config.Config{
 		Env:                "test",
 		Port:               "8080",
@@ -34,17 +32,23 @@ func TestNew(t *testing.T) {
 		TurnstileSecretKey: "",
 	}
 
-	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userSessionRepo := repository.NewUserSessionRepository(queries)
 
-	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 
-	handler := sign_up.NewHandler(
+	return sign_up.NewHandler(
 		cfg,
 		sessionMgr,
 	)
+}
+
+func TestNew(t *testing.T) {
+	t.Parallel()
+
+	// テスト用DBをセットアップ
+	_, tx := testutil.SetupTx(t)
+	handler := setupHandler(t, tx)
 
 	// HTTPリクエストを作成
 	req := httptest.NewRequest(http.MethodGet, "/sign_up", nil)
@@ -101,31 +105,7 @@ func TestNew_EnglishLocale(t *testing.T) {
 
 	// テスト用DBをセットアップ
 	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
-
-	// 設定を作成
-	cfg := &config.Config{
-		Env:                "test",
-		Port:               "8080",
-		Domain:             "localhost",
-		CookieDomain:       "",
-		SessionSecure:      false,
-		SessionHTTPOnly:    true,
-		TurnstileSiteKey:   "test-site-key",
-		TurnstileSecretKey: "",
-	}
-
-	// リポジトリを初期化
-	userRepo := repository.NewUserRepository(queries)
-	userSessionRepo := repository.NewUserSessionRepository(queries)
-
-	// セッションマネージャーを初期化
-	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
-
-	handler := sign_up.NewHandler(
-		cfg,
-		sessionMgr,
-	)
+	handler := setupHandler(t, tx)
 
 	// HTTPリクエストを作成（英語ロケール）
 	req := httptest.NewRequest(http.MethodGet, "/sign_up", nil)
@@ -153,5 +133,57 @@ func TestNew_EnglishLocale(t *testing.T) {
 	// 英語のボタンテキストが含まれているか確認
 	if !strings.Contains(body, "Send confirmation code") {
 		t.Error("English submit button text not found in response")
+	}
+}
+
+// The logo link back to the home page is icon-only, so its accessible name comes from the
+// translated aria-label rather than from its content.
+//
+// [Ja] ホームへ戻るロゴリンクはアイコンのみのため、アクセシブルネームは内容ではなく
+// 翻訳済みの aria-label が供給する。
+func TestNew_LogoLinkHasAccessibleName(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		locale    string
+		wantLabel string
+	}{
+		{
+			name:      "日本語",
+			locale:    i18n.LangJa,
+			wantLabel: "Wikino のホーム",
+		},
+		{
+			name:      "英語",
+			locale:    i18n.LangEn,
+			wantLabel: "Wikino home",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			handler := setupHandler(t, tx)
+
+			req := httptest.NewRequest(http.MethodGet, "/sign_up", nil)
+
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			ctx = i18n.SetLocale(ctx, tt.locale)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.New(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+			}
+
+			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
+				t.Errorf("ロゴリンクに aria-label %q が含まれていない", tt.wantLabel)
+			}
+		})
 	}
 }

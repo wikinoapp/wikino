@@ -59,15 +59,20 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderEditForm(w, r, user, spaceIdentifier, output, nil, output.Suggestion.Title, output.Suggestion.Body)
+	h.renderEditForm(w, r, user, output, nil, output.Suggestion.Title, output.Suggestion.Body)
 }
 
-// renderEditForm は編集提案編集フォームをレンダリングします
+// renderEditForm renders the suggestion edit form. Space-aware metadata and links are built from
+// the persisted identifier in output, so it deliberately does not take one derived from URL
+// parameters.
+//
+// [Ja] renderEditForm は編集提案編集フォームをレンダリングします。
+// スペース識別子を含むメタ情報やリンクの組み立てには output に含まれる保存済みの値を使うため、
+// URL パラメータ由来の識別子は受け取りません。
 func (h *Handler) renderEditForm(
 	w http.ResponseWriter,
 	r *http.Request,
 	user *model.User,
-	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetSuggestionEditOutput,
 	formErrors *model.ValidationError,
 	title string,
@@ -77,7 +82,18 @@ func (h *Handler) renderEditForm(
 
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	spaceVM := viewmodel.NewSpace(output.Space)
+	topicVM := viewmodel.NewTopic(output.Topic)
+	suggestionVM := viewmodel.NewSuggestionForDetail(viewmodel.NewSuggestionForDetailInput{
+		Suggestion: output.Suggestion,
+		UserMap:    output.UserMap,
+	})
+
+	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
+	// the same form.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_edit_title", map[string]any{
@@ -86,13 +102,6 @@ func (h *Handler) renderEditForm(
 		"SpaceName":        output.Space.Name,
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM
-
-	spaceVM := viewmodel.NewSpace(output.Space)
-	topicVM := viewmodel.NewTopic(output.Topic)
-	suggestionVM := viewmodel.NewSuggestionForDetail(viewmodel.NewSuggestionForDetailInput{
-		Suggestion: output.Suggestion,
-		UserMap:    output.UserMap,
-	})
 
 	content := suggestionpages.Edit(suggestionpages.EditData{
 		CSRFToken:  csrfToken,
@@ -106,10 +115,10 @@ func (h *Handler) renderEditForm(
 
 	if err := RenderLayout(ctx, w, RenderLayoutInput{
 		User:             user,
-		SpaceIdentifier:  spaceIdentifier,
+		SpaceIdentifier:  output.Space.Identifier,
 		CurrentPageName:  templates.PageNameSuggestionEdit,
 		Meta:             meta,
-		BreadcrumbHeader: DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, suggestionVM.Number),
+		BreadcrumbHeader: DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, suggestionVM.Number, suggestionVM.Title, true),
 		Content:          content,
 	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

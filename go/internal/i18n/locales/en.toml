@@ -1056,6 +1056,10 @@ other = "Skip to main content"
 description = "Topic show page title ({topic_name} | {space_name} format)"
 other = "{{.TopicName}} | {{.SpaceName}}"
 
+[topic_show_paginated_title]
+description = "Paginated topic show page title ({topic_name} | {space_name} (Page {page_number}) format)"
+other = "{{.TopicName}} | {{.SpaceName}} (Page {{.PageNumber}})"
+
 [topic_show_no_pages_message]
 description = "Message when there are no pages in the topic"
 other = "No pages"
@@ -1088,6 +1092,10 @@ other = "Suggestions"
 [space_show_title]
 description = "Space show page title ({space_name})"
 other = "{{.SpaceName}}"
+
+[space_show_paginated_title]
+description = "Paginated space show page title ({space_name} (Page {page_number}) format)"
+other = "{{.SpaceName}} (Page {{.PageNumber}})"
 
 [space_show_no_topics_message]
 description = "Message when there are no topics in the space"
@@ -1168,6 +1176,10 @@ other = "Back to top page"
 description = "Suggestion list page title"
 other = "Suggestions | {{.TopicName}} | {{.SpaceName}}"
 
+[suggestion_index_closed_title]
+description = "Closed suggestion list page title"
+other = "Closed Suggestions | {{.TopicName}} | {{.SpaceName}}"
+
 [suggestion_index_heading]
 description = "Suggestion list heading"
 other = "Suggestions"
@@ -1177,7 +1189,7 @@ description = "Suggestion list subtitle (includes help page link)"
 other = "See <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">here</a> for more information about suggestions."
 
 [suggestion_index_breadcrumb]
-description = "Suggestion list breadcrumb"
+description = "Breadcrumb item for the suggestion list (the current item on the list screen, a link to it on the screens below)"
 other = "Suggestions"
 
 [suggestion_index_open_tab]
@@ -1312,9 +1324,13 @@ other = "Suggestion has been updated"
 description = "Suggestion detail page title"
 other = "{{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
-[suggestion_show_breadcrumb]
-description = "Suggestion detail breadcrumb (link to suggestion list)"
-other = "Suggestions"
+[suggestion_change_index_title]
+description = "Suggestion changes page title"
+other = "Changes: {{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_change_index_breadcrumb]
+description = "Current breadcrumb label on the suggestion changes page"
+other = "Changes"
 
 [suggestion_show_status_draft]
 description = "Suggestion status: draft"

@@ -20,19 +20,20 @@ type DefaultLayoutData struct {
 	HideFooter bool
 
 	// HideNavigation takes the screen out of the global navigation: the top and bottom bars and the
-	// padding that keeps content clear of the fixed bottom bar are dropped. The breadcrumb header is
-	// also dropped when it has no items; when it has items, the header stays and only its top bar is
-	// dropped. The skip link follows the header rather than this flag: what it bypasses is the header
-	// that precedes the main content, so it goes away only when the header does. The signed-out top
-	// page sets it: its navigation items duplicate the calls to action it already shows, and it has no
-	// breadcrumb items either, so the header and the skip link both go away.
+	// padding that keeps content clear of the fixed bottom bar are dropped. The breadcrumb header
+	// stays only when it has a navigable breadcrumb item (an item with a Path and IsCurrent set to
+	// false). A trail made only of the current item does not count as breadcrumb content. The skip
+	// link follows the header rather than this flag: what it bypasses is the header that precedes the
+	// main content, so it goes away only when the header does. The signed-out top page sets it: its
+	// navigation items duplicate the calls to action it already shows, and it has no breadcrumb items
+	// either, so the header and the skip link both go away.
 	//
 	// [Ja] HideNavigation は画面をグローバルナビの対象外にする。上部・下部バーと、固定の下部バーに
-	// コンテンツが隠れないための余白を落とす。パンくずヘッダーは項目が無い場合も落とし、項目がある
-	// 場合はヘッダーを残して中の上部バーだけを落とす。スキップリンクは本フラグではなくヘッダーに追従
-	// する。飛ばす対象は本文の前に出るヘッダーであり、ヘッダーが落ちるときだけ一緒に落ちる。
-	// 未ログインのトップページが指定する。ナビ項目が同画面の CTA と重複し、パンくず項目も持たないため、
-	// ヘッダーとスキップリンクはどちらも出ない。
+	// コンテンツが隠れないための余白を落とす。パンくずヘッダーはたどれるパンくず項目 (Path があり
+	// IsCurrent でない項目) がある場合だけ残す。現在項目だけの経路はパンくずの中身として数えない。
+	// スキップリンクは本フラグではなくヘッダーに追従する。飛ばす対象は本文の前に出るヘッダーであり、
+	// ヘッダーが落ちるときだけ一緒に落ちる。未ログインのトップページが指定する。ナビ項目が同画面の
+	// CTA と重複し、パンくず項目も持たないため、ヘッダーとスキップリンクはどちらも出ない。
 	HideNavigation bool
 
 	GlobalNav        components.GlobalNavData
@@ -58,6 +59,7 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 	<html lang={ templates.Locale(ctx) }>
 		<head>
 			@components.Head(data.Meta)
+			@components.BreadcrumbListStructuredData(data.BreadcrumbHeader)
 			<meta name="wikino-search-path" content={ string(templates.SearchPathFor(data.Meta.CurrentSpaceIdentifier)) }/>
 		</head>
 
@@ -108,20 +110,18 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 					templ.KV("pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0", !data.HideNavigation) }
 			>
 				// Render the shared breadcrumb header outside <main> so the #main skip link bypasses it.
-				// The header carries the desktop navigation bar, so it renders on every screen that has
-				// either the bar or breadcrumb items — including the ones with breadcrumb items only.
-				// The layout asks ShouldRender as well, so the top-padding wrapper goes with the header
-				// instead of leaving that padding above the main content.
+				// The header carries the desktop navigation bar, so it renders when the screen has either
+				// the bar or a navigable breadcrumb item (an item with a Path and IsCurrent set to false).
+				// A trail made only of the current item does not count as breadcrumb content. The header
+				// decides that for itself and owns its top spacing, so the layout wraps it in nothing that
+				// could stay behind as an empty gap above the main content.
 				//
 				// [Ja] #main へのスキップリンクが共有パンくずヘッダーを飛ばせるよう、<main> の外で描画する。
-				// ヘッダーは PC 向けのナビバーを持つため、バーとパンくず項目のどちらかを持つ画面すべてで
-				// 描画する (パンくず項目だけを持つ画面も含む)。レイアウト側でも ShouldRender を見るのは、
-				// 上余白のラッパーをヘッダーと一緒に落とし、本文の上に余白だけが残らないようにするため。
-				if headerData.ShouldRender() {
-					<div class="pt-4">
-						@components.BreadcrumbHeader(headerData)
-					</div>
-				}
+				// ヘッダーは PC 向けのナビバーを持つため、バーか、たどれるパンくず項目 (Path があり
+				// IsCurrent でない項目) のどちらかを持つ画面で描画する。現在項目だけの経路はパンくずの
+				// 中身として数えない。その判断と上余白はヘッダー自身が持つため、レイアウトは本文の上に
+				// 空白だけとなって残り得るラッパーで包まない。
+				@components.BreadcrumbHeader(headerData)
 
 				<main id="main" tabindex="-1">
 					@content

@@ -100,7 +100,7 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		h.renderEditForm(w, r, user, spaceIdentifier, output, commentOutput.Comment, ve, body)
+		h.renderEditForm(w, r, user, output, commentOutput.Comment, ve, body)
 		return
 	}
 

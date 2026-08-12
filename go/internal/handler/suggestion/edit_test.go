@@ -131,4 +131,21 @@ func TestEdit_編集権限がある場合にフォームが表示される(t *te
 	if header == -1 || main == -1 || header > main {
 		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
 	}
+
+	// The edit form shares DetailBreadcrumbHeaderData with the public change diff, but it requires
+	// authentication and carries no canonical URL, so it must stay opted out of BreadcrumbList
+	// JSON-LD. Moving the opt-in into the shared helper would publish this screen's labels and URLs
+	// as machine-readable data.
+	//
+	// [Ja] 編集フォームは公開の変更差分と DetailBreadcrumbHeaderData を共有するが、認証必須で canonical
+	// も持たないため BreadcrumbList JSON-LD の対象外のままでなければならない。オプトインを共有ヘルパーへ
+	// 移すと、この画面のラベルと URL が機械可読なデータとして出てしまう。
+	for _, notWant := range []string{
+		"application/ld+json",
+		"BreadcrumbList",
+	} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("認証必須の画面が構造化データを出している: %q", notWant)
+		}
+	}
 }

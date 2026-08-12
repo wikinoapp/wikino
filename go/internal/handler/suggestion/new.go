@@ -56,15 +56,20 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	// クエリパラメータで事前選択する下書きIDを取得
 	selectedDraftIDs := r.URL.Query()["draft_page_ids"]
 
-	h.renderNewForm(w, r, user, spaceIdentifier, output, nil, "", "", selectedDraftIDs)
+	h.renderNewForm(w, r, user, output, nil, "", "", selectedDraftIDs)
 }
 
-// renderNewForm は編集提案作成フォームをレンダリングします
+// renderNewForm renders the suggestion creation form. Space-aware metadata and links are built from
+// the persisted identifier in output, so it deliberately does not take one derived from URL
+// parameters.
+//
+// [Ja] renderNewForm は編集提案作成フォームをレンダリングします。
+// スペース識別子を含むメタ情報やリンクの組み立てには output に含まれる保存済みの値を使うため、
+// URL パラメータ由来の識別子は受け取りません。
 func (h *Handler) renderNewForm(
 	w http.ResponseWriter,
 	r *http.Request,
 	user *model.User,
-	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetSuggestionNewOutput,
 	formErrors *model.ValidationError,
 	title string,
@@ -76,7 +81,16 @@ func (h *Handler) renderNewForm(
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	// ViewModelに変換
+	spaceVM := viewmodel.NewSpace(output.Space)
+	topicVM := viewmodel.NewTopic(output.Topic)
+	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
+
+	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
+	// the same form.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
@@ -85,11 +99,6 @@ func (h *Handler) renderNewForm(
 		"SpaceName": output.Space.Name,
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM
-
-	// ViewModelに変換
-	spaceVM := viewmodel.NewSpace(output.Space)
-	topicVM := viewmodel.NewTopic(output.Topic)
-	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
 
 	content := suggestionpages.New(suggestionpages.NewData{
 		CSRFToken:        csrfToken,
@@ -104,10 +113,10 @@ func (h *Handler) renderNewForm(
 
 	if err := RenderLayout(ctx, w, RenderLayoutInput{
 		User:             user,
-		SpaceIdentifier:  spaceIdentifier,
+		SpaceIdentifier:  output.Space.Identifier,
 		CurrentPageName:  templates.PageNameSuggestionNew,
 		Meta:             meta,
-		BreadcrumbHeader: topicBreadcrumbHeaderData(ctx, spaceVM, topicVM),
+		BreadcrumbHeader: topicBreadcrumbHeaderData(ctx, spaceVM, topicVM, true),
 		Content:          content,
 	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

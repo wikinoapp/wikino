@@ -1056,6 +1056,10 @@ other = "メインコンテンツへスキップ"
 description = "トピック詳細画面のタイトル（{topic_name} | {space_name}形式）"
 other = "{{.TopicName}} | {{.SpaceName}}"
 
+[topic_show_paginated_title]
+description = "ページネーションされたトピック詳細画面のタイトル ({topic_name} | {space_name} ({page_number} ページ目) 形式)"
+other = "{{.TopicName}} | {{.SpaceName}} ({{.PageNumber}} ページ目)"
+
 [topic_show_no_pages_message]
 description = "トピック詳細画面でページがない場合のメッセージ"
 other = "ページはありません"
@@ -1088,6 +1092,10 @@ other = "編集提案"
 [space_show_title]
 description = "スペース詳細画面のタイトル ({space_name})"
 other = "{{.SpaceName}}"
+
+[space_show_paginated_title]
+description = "ページネーションされたスペース詳細画面のタイトル ({space_name} ({page_number} ページ目) 形式)"
+other = "{{.SpaceName}} ({{.PageNumber}} ページ目)"
 
 [space_show_no_topics_message]
 description = "スペース詳細画面でトピックがない場合のメッセージ"
@@ -1168,6 +1176,10 @@ other = "トップページに戻る"
 description = "編集提案一覧のページタイトル"
 other = "編集提案 | {{.TopicName}} | {{.SpaceName}}"
 
+[suggestion_index_closed_title]
+description = "クローズした編集提案一覧のページタイトル"
+other = "クローズした編集提案 | {{.TopicName}} | {{.SpaceName}}"
+
 [suggestion_index_heading]
 description = "編集提案一覧の見出し"
 other = "編集提案"
@@ -1177,7 +1189,7 @@ description = "編集提案一覧のサブタイトル（ヘルプページへ�
 other = "編集提案については <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">こちら</a> をご覧ください"
 
 [suggestion_index_breadcrumb]
-description = "編集提案一覧のパンくずリスト"
+description = "編集提案一覧を指すパンくず項目 (一覧画面では現在項目、配下の画面では一覧へのリンク)"
 other = "編集提案"
 
 [suggestion_index_open_tab]
@@ -1312,9 +1324,13 @@ other = "編集提案を更新しました"
 description = "編集提案詳細のページタイトル"
 other = "{{.SuggestionTitle}} - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
-[suggestion_show_breadcrumb]
-description = "編集提案詳細のパンくずリスト（編集提案一覧へのリンク）"
-other = "編集提案"
+[suggestion_change_index_title]
+description = "編集提案の変更差分画面のページタイトル"
+other = "変更内容: {{.SuggestionTitle}} - 編集提案 #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_change_index_breadcrumb]
+description = "編集提案の変更差分画面の現在地パンくず"
+other = "変更内容"
 
 [suggestion_show_status_draft]
 description = "編集提案のステータス: 下書き"
