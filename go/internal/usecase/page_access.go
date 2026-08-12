@@ -27,8 +27,21 @@ type pageAccessRepos struct {
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
-// fetchPageAccessData はページ操作に必要な共通データを取得する
+// fetchPageAccessData fetches the data common to page operations for a signed-in user.
+//
+// [Ja] fetchPageAccessData はログイン済みユーザー向けに、ページ操作に必要な共通データを取得する。
 func fetchPageAccessData(ctx context.Context, repos pageAccessRepos, spaceIdentifier model.SpaceIdentifier, pageNumber int32, userID model.UserID) (*pageAccessData, error) {
+	return fetchPageAccessDataAllowingGuest(ctx, repos, spaceIdentifier, pageNumber, &userID)
+}
+
+// fetchPageAccessDataAllowingGuest fetches the same data for callers that also serve guests.
+// userID is nil when the user is not signed in, and spaceMember / topicMember are then nil too.
+// A nil space member is not an error here: callers decide what a guest may see.
+//
+// [Ja] fetchPageAccessDataAllowingGuest はゲストも受け付ける呼び出し元向けに同じデータを取得する。
+// userID は未ログイン時に nil になり、その場合 spaceMember / topicMember も nil になる。
+// スペースメンバーが nil でもここではエラーにしない (ゲストに何を見せるかは呼び出し元が判断する)。
+func fetchPageAccessDataAllowingGuest(ctx context.Context, repos pageAccessRepos, spaceIdentifier model.SpaceIdentifier, pageNumber int32, userID *model.UserID) (*pageAccessData, error) {
 	space, err := repos.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
 	if err != nil {
 		return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
@@ -40,9 +53,12 @@ func fetchPageAccessData(ctx context.Context, repos pageAccessRepos, spaceIdenti
 		}
 	}
 
-	spaceMember, err := repos.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, userID)
-	if err != nil {
-		return nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
+	var spaceMember *model.SpaceMember
+	if userID != nil {
+		spaceMember, err = repos.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, *userID)
+		if err != nil {
+			return nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
+		}
 	}
 
 	pg, err := repos.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))

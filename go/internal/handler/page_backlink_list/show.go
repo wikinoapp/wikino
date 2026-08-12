@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httppagination"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -43,12 +44,15 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ページネーションパラメータを取得
-	currentPage := int32(1)
-	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
-		if p, err := strconv.ParseInt(pageStr, 10, 32); err == nil && p > 0 {
-			currentPage = int32(p)
-		}
+	// Parse the pagination parameter. A page whose SQL offset cannot fit the query's int32
+	// parameter is rejected before invoking the usecase.
+	//
+	// [Ja] ページネーションパラメータを取得する。SQL offset がクエリの int32 パラメータに収まらない
+	// ページは UseCase 呼び出し前に拒否する。
+	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.BacklinkLimit)
+	if !ok {
+		handler.NotFound(w, r)
+		return
 	}
 
 	// UseCaseを実行
@@ -56,17 +60,23 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		SpaceIdentifier:  spaceIdentifier,
 		PageNumber:       int32(pageNumber),
 		LinkedPageNumber: int32(linkedPageNumber),
-		UserID:           user.ID,
+		UserID:           &user.ID,
 		CurrentPage:      currentPage,
 		Limit:            viewmodel.BacklinkLimit,
 	})
 	if err != nil {
+		if ae := model.AsAppError(err); ae != nil {
+			switch ae.Code {
+			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+				handler.NotFound(w, r)
+			default:
+				slog.ErrorContext(ctx, ae.LogString())
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+			return
+		}
 		slog.ErrorContext(ctx, "バックリンクの取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if output == nil {
-		handler.NotFound(w, r)
 		return
 	}
 

@@ -59,67 +59,139 @@ LIMIT 10;
 SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM pages WHERE space_id = $1;
 
 -- name: FindLinkedPagesPaginated :many
--- リンク先ページをオフセットページネーションで取得する（同スペース・未廃棄のページのみ）
-SELECT * FROM pages
-WHERE id = ANY($1::uuid[])
-  AND space_id = $2
-  AND discarded_at IS NULL
-ORDER BY modified_at DESC, id DESC
-LIMIT $3
-OFFSET $4;
+-- Returns the pages linked from a page with offset pagination, ordered by modified_at DESC,
+-- id DESC. Trashed pages and pages whose topic is discarded are excluded, so a page removed
+-- from the wiki never resurfaces through a stale wiki link. The topic join is scoped by
+-- t.space_id = @space_id as a defensive measure, so topic visibility is always evaluated
+-- within the requested space per the space_id query-scoping rule. Pages are narrowed down to
+-- visible_topic_ids, the topics the viewer may open, which the caller resolves with the same
+-- CanShowTopic rule the page screens use. all_topics_visible skips that narrowing for
+-- member-only screens that show every topic.
+--
+-- [Ja] ページからのリンク先ページをオフセットページネーションで取得する。並び順は
+-- modified_at DESC, id DESC。ゴミ箱に入ったページと廃棄済みトピックのページは除外し、
+-- Wiki から取り除かれたページが古い Wiki リンク経由で再び現れないようにする。トピック JOIN は
+-- 防御的に t.space_id = @space_id でもスコープし、space_id クエリスコープのルールに従って
+-- トピックの可視性を常に対象スペース内で評価する。ページは閲覧者が開けるトピック
+-- (visible_topic_ids) に絞る。この集合は呼び出し元がページ画面と同じ CanShowTopic の規則で
+-- 解決する。all_topics_visible が true のときは絞り込みを行わない (全トピックを見せる
+-- メンバー専用画面向け)。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.id = ANY(@page_ids::uuid[])
+  AND p.space_id = @space_id
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND (@all_topics_visible::boolean IS TRUE OR t.id = ANY(@visible_topic_ids::uuid[]))
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT @row_limit
+OFFSET @row_offset;
 
 -- name: CountLinkedPages :one
--- リンク先ページの総件数を取得する（同スペース・未廃棄のページのみ）
+-- Returns the total count of pages linked from a page. Filtering matches
+-- FindLinkedPagesPaginated so the count and the page slice stay consistent.
+--
+-- [Ja] ページからのリンク先ページの総件数を返す。フィルタ条件は FindLinkedPagesPaginated と
+-- 揃えており、件数とページ一覧の整合性を保つ。
 SELECT COUNT(*)
-FROM pages
-WHERE id = ANY($1::uuid[])
-  AND space_id = $2
-  AND discarded_at IS NULL;
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.id = ANY(@page_ids::uuid[])
+  AND p.space_id = @space_id
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND (@all_topics_visible::boolean IS TRUE OR t.id = ANY(@visible_topic_ids::uuid[]));
 
 -- name: FindBacklinkedPagesPaginated :many
--- バックリンクページをオフセットページネーションで取得する（同スペース・未廃棄のページのみ）
-SELECT * FROM pages
-WHERE $1::varchar = ANY(linked_page_ids)
-  AND space_id = $2
-  AND discarded_at IS NULL
-  AND NOT (id = ANY($5::uuid[]))
-ORDER BY modified_at DESC, id DESC
-LIMIT $3
-OFFSET $4;
+-- Returns the pages linking to a page with offset pagination, ordered by modified_at DESC,
+-- id DESC. Trash, discarded-topic and topic-visibility handling matches
+-- FindLinkedPagesPaginated. exclude_page_ids drops pages already listed elsewhere on the screen
+-- (the page itself and its link list entries).
+--
+-- [Ja] 指定ページへのバックリンクをオフセットページネーションで取得する。並び順は
+-- modified_at DESC, id DESC。ゴミ箱・廃棄済みトピック・トピック可視性の扱いは
+-- FindLinkedPagesPaginated と同じ。exclude_page_ids は画面上の他の箇所で既に一覧している
+-- ページ (ページ自身とそのリンク一覧) を除外する。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE @page_id::varchar = ANY(p.linked_page_ids)
+  AND p.space_id = @space_id
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND (@all_topics_visible::boolean IS TRUE OR t.id = ANY(@visible_topic_ids::uuid[]))
+  AND NOT (p.id = ANY(@exclude_page_ids::uuid[]))
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT @row_limit
+OFFSET @row_offset;
 
 -- name: CountBacklinkedPages :one
--- バックリンクページの総件数を取得する（同スペース・未廃棄のページのみ）
+-- Returns the total count of pages linking to a page. Filtering matches
+-- FindBacklinkedPagesPaginated so the count and the page slice stay consistent.
+--
+-- [Ja] 指定ページへのバックリンクの総件数を返す。フィルタ条件は FindBacklinkedPagesPaginated と
+-- 揃えており、件数とページ一覧の整合性を保つ。
 SELECT COUNT(*)
-FROM pages
-WHERE $1::varchar = ANY(linked_page_ids)
-  AND space_id = $2
-  AND discarded_at IS NULL
-  AND NOT (id = ANY($3::uuid[]));
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE @page_id::varchar = ANY(p.linked_page_ids)
+  AND p.space_id = @space_id
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND (@all_topics_visible::boolean IS TRUE OR t.id = ANY(@visible_topic_ids::uuid[]))
+  AND NOT (p.id = ANY(@exclude_page_ids::uuid[]));
 
 -- name: FindBacklinkedPagesForTargets :many
--- 複数ターゲットページのバックリンクを一括取得する（各ターゲットごとにlimit件数まで）
-SELECT p.*, t.target_id
-FROM unnest($1::uuid[]) AS t(target_id)
+-- Returns the backlinks of several target pages at once (up to row_limit per target), to keep
+-- the link list from issuing one query per listed page. Filtering matches
+-- FindBacklinkedPagesPaginated.
+--
+-- [Ja] 複数ターゲットページのバックリンクを一括取得する (各ターゲットごとに row_limit 件まで)。
+-- リンク一覧が列挙するページごとにクエリを発行しないようにするためのもの。フィルタ条件は
+-- FindBacklinkedPagesPaginated と同じ。
+SELECT p.*, targets.target_id
+FROM unnest(@target_ids::uuid[]) AS targets(target_id)
 CROSS JOIN LATERAL (
-  SELECT *
-  FROM pages
-  WHERE t.target_id::varchar = ANY(linked_page_ids)
-    AND space_id = $2
-    AND discarded_at IS NULL
-    AND NOT (id = ANY($4::uuid[]))
-  ORDER BY modified_at DESC, id DESC
-  LIMIT $3
+  SELECT pg.*
+  FROM pages pg
+  INNER JOIN topics t ON pg.topic_id = t.id AND t.space_id = @space_id
+  WHERE targets.target_id::varchar = ANY(pg.linked_page_ids)
+    AND pg.space_id = @space_id
+    AND pg.discarded_at IS NULL
+    AND pg.trashed_at IS NULL
+    AND t.discarded_at IS NULL
+    AND (@all_topics_visible::boolean IS TRUE OR t.id = ANY(@visible_topic_ids::uuid[]))
+    AND NOT (pg.id = ANY(@exclude_page_ids::uuid[]))
+  ORDER BY pg.modified_at DESC, pg.id DESC
+  LIMIT @row_limit
 ) p;
 
 -- name: CountBacklinkedPagesForTargets :many
--- 複数ターゲットページのバックリンク件数を一括取得する
-SELECT t.target_id, COUNT(p.id) AS count
-FROM unnest($1::uuid[]) AS t(target_id)
-LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
-  AND p.space_id = $2
-  AND p.discarded_at IS NULL
-  AND NOT (p.id = ANY($3::uuid[]))
-GROUP BY t.target_id;
+-- Returns the backlink count of several target pages at once. The visible pages are narrowed
+-- down in a subquery rather than in the join condition, so that the same filtering as
+-- FindBacklinkedPagesForTargets applies while the outer LEFT JOIN still yields a zero row for
+-- a target with no backlinks.
+--
+-- [Ja] 複数ターゲットページのバックリンク件数を一括取得する。可視ページの絞り込みを JOIN 条件
+-- ではなくサブクエリで行い、FindBacklinkedPagesForTargets と同じフィルタをかけつつ、外側の
+-- LEFT JOIN がバックリンクを持たないターゲットに対して 0 件の行を返せるようにしている。
+SELECT targets.target_id, COUNT(p.id) AS count
+FROM unnest(@target_ids::uuid[]) AS targets(target_id)
+LEFT JOIN (
+  SELECT pg.id, pg.linked_page_ids
+  FROM pages pg
+  INNER JOIN topics t ON pg.topic_id = t.id AND t.space_id = @space_id
+  WHERE pg.space_id = @space_id
+    AND pg.discarded_at IS NULL
+    AND pg.trashed_at IS NULL
+    AND t.discarded_at IS NULL
+    AND (@all_topics_visible::boolean IS TRUE OR t.id = ANY(@visible_topic_ids::uuid[]))
+    AND NOT (pg.id = ANY(@exclude_page_ids::uuid[]))
+) p ON targets.target_id::varchar = ANY(p.linked_page_ids)
+GROUP BY targets.target_id;
 
 -- name: MovePageToTopic :one
 -- ページのトピックを変更する（ページ移動）

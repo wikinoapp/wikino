@@ -384,3 +384,79 @@ func TestShow_正常系_ページネーションパラメータが反映され�
 		t.Error("page=999 should not contain 'Backlink Source'")
 	}
 }
+
+// The repository computes the SQL offset as (page-1)*limit in int32 arithmetic, so a large enough
+// page wraps to a negative offset and PostgreSQL rejects the query. Such a page has to be a 404
+// rather than a 500. The boundary depends on the limit this handler passes, so it can only be
+// pinned here and not in the shared helper's unit test.
+//
+// [Ja] Repository は SQL offset を int32 演算の (page-1)*limit で求めるため、十分に大きいページでは
+// 負の offset に回り込み PostgreSQL がクエリを拒否する。そのようなページは 500 ではなく 404 にする。
+// 境界は本 Handler が渡す上限に依存するため、共有ヘルパーの単体テストではなくここでしか固定できない。
+func TestShow_OffsetBeyondInt32ReturnsNotFound(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("pb-offset@example.com").
+		WithAtname("pboffset").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("pb-offset").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	targetPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Target Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Backlink Source").
+		WithLinkedPageIDs([]model.PageID{targetPageID}).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	// PageBacklinkLimit is 14, so page 153391691 has the first offset past the int32 ceiling
+	// (153391690 * 14 = 2147483660).
+	//
+	// [Ja] PageBacklinkLimit は 14 なので、153391691 ページ目が int32 の上限を最初に超える offset に
+	// なる (153391690 * 14 = 2147483660)。
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/pb-offset/pages/1/backlinks?page=153391691", map[string]string{
+		"space_identifier": "pb-offset",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+	}
+	if strings.Contains(rr.Body.String(), "Backlink Source") {
+		t.Error("response should not contain 'Backlink Source'")
+	}
+}

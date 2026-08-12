@@ -827,7 +827,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	allIDs := []model.PageID{pageID1, pageID2, pageID3, unpublishedID}
 
 	t.Run("1ページ目を取得できる（limit=2）", func(t *testing.T) {
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, 1, 2)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, AllTopicsVisible(), 1, 2)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -848,7 +848,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	})
 
 	t.Run("2ページ目を取得できる（limit=2）", func(t *testing.T) {
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, 2, 2)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, AllTopicsVisible(), 2, 2)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -861,7 +861,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	})
 
 	t.Run("非公開ページも件数に含まれる", func(t *testing.T) {
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, 1, 100)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, AllTopicsVisible(), 1, 100)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -874,12 +874,119 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	})
 
 	t.Run("空のIDリストは空の結果を返す", func(t *testing.T) {
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{}, spaceID, 1, 15)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{}, spaceID, AllTopicsVisible(), 1, 15)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
 		if len(result.Pages) != 0 {
 			t.Errorf("len(pages) = %d, want 0", len(result.Pages))
+		}
+	})
+
+	t.Run("ゴミ箱に入ったページは除外される", func(t *testing.T) {
+		trashedID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(20).
+			WithTitle("Trashed").
+			WithTrashed().
+			Build()
+
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{pageID1, trashedID}, spaceID, AllTopicsVisible(), 1, 15)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 1 {
+			t.Fatalf("len(pages) = %d, want 1", len(result.Pages))
+		}
+		if *result.Pages[0].Title != "Old Page" {
+			t.Errorf("pages[0].Title = %v, want 'Old Page'", *result.Pages[0].Title)
+		}
+		if result.TotalCount != 1 {
+			t.Errorf("TotalCount = %d, want 1", result.TotalCount)
+		}
+	})
+
+	t.Run("廃棄済みトピックのページは除外される", func(t *testing.T) {
+		discardedTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(90).
+			WithName("Discarded Topic").
+			WithDiscarded().
+			Build()
+
+		pageInDiscardedTopicID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(discardedTopicID).
+			WithNumber(21).
+			WithTitle("In Discarded Topic").
+			Build()
+
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{pageID1, pageInDiscardedTopicID}, spaceID, AllTopicsVisible(), 1, 15)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 1 {
+			t.Fatalf("len(pages) = %d, want 1", len(result.Pages))
+		}
+		if result.TotalCount != 1 {
+			t.Errorf("TotalCount = %d, want 1", result.TotalCount)
+		}
+	})
+
+	t.Run("閲覧可能トピックに含まれないページは除外される", func(t *testing.T) {
+		otherTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(91).
+			WithName("Other Topic").
+			WithVisibility(int32(model.TopicVisibilityPrivate)).
+			Build()
+
+		pageInOtherTopicID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(otherTopicID).
+			WithNumber(22).
+			WithTitle("In Other Topic").
+			Build()
+
+		ids := []model.PageID{pageID1, pageInOtherTopicID}
+
+		allResult, err := repo.FindLinkedPagesPaginated(context.Background(), ids, spaceID, AllTopicsVisible(), 1, 15)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(allResult.Pages) != 2 {
+			t.Errorf("AllTopicsVisible: len(pages) = %d, want 2", len(allResult.Pages))
+		}
+		if allResult.TotalCount != 2 {
+			t.Errorf("AllTopicsVisible: TotalCount = %d, want 2", allResult.TotalCount)
+		}
+
+		limitedResult, err := repo.FindLinkedPagesPaginated(context.Background(), ids, spaceID, VisibleTopics([]model.TopicID{topicID}), 1, 15)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(limitedResult.Pages) != 1 {
+			t.Fatalf("VisibleTopics: len(pages) = %d, want 1", len(limitedResult.Pages))
+		}
+		if *limitedResult.Pages[0].Title != "Old Page" {
+			t.Errorf("VisibleTopics: pages[0].Title = %v, want 'Old Page'", *limitedResult.Pages[0].Title)
+		}
+		if limitedResult.TotalCount != 1 {
+			t.Errorf("VisibleTopics: TotalCount = %d, want 1", limitedResult.TotalCount)
+		}
+	})
+
+	t.Run("閲覧可能トピックが空のときは何も返さない", func(t *testing.T) {
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, VisibleTopics(nil), 1, 15)
+		if err != nil {
+			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 0 {
+			t.Errorf("len(pages) = %d, want 0", len(result.Pages))
+		}
+		if result.TotalCount != 0 {
+			t.Errorf("TotalCount = %d, want 0", result.TotalCount)
 		}
 	})
 }
@@ -948,7 +1055,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 		Build()
 
 	t.Run("1ページ目を取得できる（limit=2）", func(t *testing.T) {
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, 1, 2, nil)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, AllTopicsVisible(), 1, 2, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -968,7 +1075,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 	})
 
 	t.Run("2ページ目を取得できる（limit=2）", func(t *testing.T) {
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, 2, 2, nil)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, AllTopicsVisible(), 2, 2, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -991,7 +1098,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 			WithTitle("Isolated").
 			Build()
 
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), isolatedPageID, spaceID, 1, 14, nil)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), isolatedPageID, spaceID, AllTopicsVisible(), 1, 14, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -1000,6 +1107,125 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 		}
 		if result.TotalCount != 0 {
 			t.Errorf("TotalCount = %d, want 0", result.TotalCount)
+		}
+	})
+
+	t.Run("ゴミ箱に入ったリンク元ページは除外される", func(t *testing.T) {
+		trashedTargetID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(20).
+			WithTitle("Trash Target").
+			Build()
+
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(21).
+			WithTitle("Trashed Linker").
+			WithLinkedPageIDs([]model.PageID{trashedTargetID}).
+			WithTrashed().
+			Build()
+
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), trashedTargetID, spaceID, AllTopicsVisible(), 1, 14, nil)
+		if err != nil {
+			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 0 {
+			t.Errorf("len(pages) = %d, want 0", len(result.Pages))
+		}
+		if result.TotalCount != 0 {
+			t.Errorf("TotalCount = %d, want 0", result.TotalCount)
+		}
+	})
+
+	t.Run("廃棄済みトピックのリンク元ページは除外される", func(t *testing.T) {
+		discardedTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(91).
+			WithName("Discarded Topic").
+			WithDiscarded().
+			Build()
+		targetID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(30).
+			WithTitle("Discarded Topic Target").
+			Build()
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(discardedTopicID).
+			WithNumber(31).
+			WithTitle("Discarded Topic Linker").
+			WithLinkedPageIDs([]model.PageID{targetID}).
+			Build()
+
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetID, spaceID, AllTopicsVisible(), 1, 14, nil)
+		if err != nil {
+			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
+		}
+		if len(result.Pages) != 0 {
+			t.Errorf("len(pages) = %d, want 0", len(result.Pages))
+		}
+		if result.TotalCount != 0 {
+			t.Errorf("TotalCount = %d, want 0", result.TotalCount)
+		}
+	})
+
+	t.Run("閲覧可能トピックに含まれないリンク元ページは除外される", func(t *testing.T) {
+		otherTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(90).
+			WithName("Other Topic").
+			WithVisibility(int32(model.TopicVisibilityPrivate)).
+			Build()
+
+		mixedTargetID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(22).
+			WithTitle("Mixed Target").
+			Build()
+
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(23).
+			WithTitle("Visible Linker").
+			WithLinkedPageIDs([]model.PageID{mixedTargetID}).
+			Build()
+
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(otherTopicID).
+			WithNumber(24).
+			WithTitle("Hidden Linker").
+			WithLinkedPageIDs([]model.PageID{mixedTargetID}).
+			Build()
+
+		allResult, err := repo.FindBacklinkedPagesPaginated(context.Background(), mixedTargetID, spaceID, AllTopicsVisible(), 1, 14, nil)
+		if err != nil {
+			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
+		}
+		if len(allResult.Pages) != 2 {
+			t.Errorf("AllTopicsVisible: len(pages) = %d, want 2", len(allResult.Pages))
+		}
+		if allResult.TotalCount != 2 {
+			t.Errorf("AllTopicsVisible: TotalCount = %d, want 2", allResult.TotalCount)
+		}
+
+		guestResult, err := repo.FindBacklinkedPagesPaginated(context.Background(), mixedTargetID, spaceID, VisibleTopics([]model.TopicID{topicID}), 1, 14, nil)
+		if err != nil {
+			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
+		}
+		if len(guestResult.Pages) != 1 {
+			t.Fatalf("VisibleTopics: len(pages) = %d, want 1", len(guestResult.Pages))
+		}
+		if *guestResult.Pages[0].Title != "Visible Linker" {
+			t.Errorf("VisibleTopics: pages[0].Title = %v, want 'Visible Linker'", *guestResult.Pages[0].Title)
+		}
+		if guestResult.TotalCount != 1 {
+			t.Errorf("VisibleTopics: TotalCount = %d, want 1", guestResult.TotalCount)
 		}
 	})
 }
@@ -1365,7 +1591,7 @@ func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 	targetPage2 := &model.Page{ID: targetPage2ID}
 
 	t.Run("複数ターゲットのバックリンクを一括取得できる", func(t *testing.T) {
-		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1, targetPage2}, spaceID, 100, nil)
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1, targetPage2}, spaceID, AllTopicsVisible(), 100, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinksForPages() error = %v", err)
 		}
@@ -1388,7 +1614,7 @@ func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 	})
 
 	t.Run("limitで取得件数を制限できる", func(t *testing.T) {
-		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1}, spaceID, 2, nil)
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage1}, spaceID, AllTopicsVisible(), 2, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinksForPages() error = %v", err)
 		}
@@ -1412,7 +1638,7 @@ func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 			Build()
 		isolatedPage := &model.Page{ID: isolatedPageID}
 
-		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{isolatedPage}, spaceID, 100, nil)
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{isolatedPage}, spaceID, AllTopicsVisible(), 100, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinksForPages() error = %v", err)
 		}
@@ -1426,12 +1652,113 @@ func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 	})
 
 	t.Run("空のターゲットリストはnilを返す", func(t *testing.T) {
-		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{}, spaceID, 100, nil)
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{}, spaceID, AllTopicsVisible(), 100, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinksForPages() error = %v", err)
 		}
 		if result != nil {
 			t.Errorf("result = %v, want nil", result)
+		}
+	})
+
+	t.Run("廃棄済みトピックのリンク元ページは一括取得の件数からも除外される", func(t *testing.T) {
+		discardedTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(91).
+			WithName("Discarded Topic").
+			WithDiscarded().
+			Build()
+		targetID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(70).
+			WithTitle("Discarded Topic Batch Target").
+			Build()
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(discardedTopicID).
+			WithNumber(71).
+			WithTitle("Discarded Topic Batch Linker").
+			WithLinkedPageIDs([]model.PageID{targetID}).
+			Build()
+		target := &model.Page{ID: targetID}
+
+		result, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{target}, spaceID, AllTopicsVisible(), 100, nil)
+		if err != nil {
+			t.Fatalf("FindBacklinksForPages() error = %v", err)
+		}
+		if len(result[targetID].Pages) != 0 {
+			t.Errorf("backlinks = %d, want 0", len(result[targetID].Pages))
+		}
+		if result[targetID].TotalCount != 0 {
+			t.Errorf("TotalCount = %d, want 0", result[targetID].TotalCount)
+		}
+	})
+
+	t.Run("ゴミ箱に入ったリンク元ページと閲覧可能トピックのフィルタが件数にも効く", func(t *testing.T) {
+		otherTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(90).
+			WithName("Other Topic").
+			WithVisibility(int32(model.TopicVisibilityPrivate)).
+			Build()
+
+		targetPage3ID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(60).
+			WithTitle("Target 3").
+			Build()
+		targetPage3 := &model.Page{ID: targetPage3ID}
+
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(61).
+			WithTitle("Linker3-Visible").
+			WithLinkedPageIDs([]model.PageID{targetPage3ID}).
+			Build()
+
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(62).
+			WithTitle("Linker3-Trashed").
+			WithLinkedPageIDs([]model.PageID{targetPage3ID}).
+			WithTrashed().
+			Build()
+
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(otherTopicID).
+			WithNumber(63).
+			WithTitle("Linker3-Hidden").
+			WithLinkedPageIDs([]model.PageID{targetPage3ID}).
+			Build()
+
+		allResult, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage3}, spaceID, AllTopicsVisible(), 100, nil)
+		if err != nil {
+			t.Fatalf("FindBacklinksForPages() error = %v", err)
+		}
+		if len(allResult[targetPage3ID].Pages) != 2 {
+			t.Errorf("AllTopicsVisible: backlinks = %d, want 2", len(allResult[targetPage3ID].Pages))
+		}
+		if allResult[targetPage3ID].TotalCount != 2 {
+			t.Errorf("AllTopicsVisible: TotalCount = %d, want 2", allResult[targetPage3ID].TotalCount)
+		}
+
+		limitedResult, err := repo.FindBacklinksForPages(context.Background(), []*model.Page{targetPage3}, spaceID, VisibleTopics([]model.TopicID{topicID}), 100, nil)
+		if err != nil {
+			t.Fatalf("FindBacklinksForPages() error = %v", err)
+		}
+		if len(limitedResult[targetPage3ID].Pages) != 1 {
+			t.Fatalf("VisibleTopics: backlinks = %d, want 1", len(limitedResult[targetPage3ID].Pages))
+		}
+		if *limitedResult[targetPage3ID].Pages[0].Title != "Linker3-Visible" {
+			t.Errorf("VisibleTopics: backlinks[0].Title = %v, want 'Linker3-Visible'", *limitedResult[targetPage3ID].Pages[0].Title)
+		}
+		if limitedResult[targetPage3ID].TotalCount != 1 {
+			t.Errorf("VisibleTopics: TotalCount = %d, want 1", limitedResult[targetPage3ID].TotalCount)
 		}
 	})
 }

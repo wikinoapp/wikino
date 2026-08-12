@@ -15,41 +15,66 @@ import (
 
 const countBacklinkedPages = `-- name: CountBacklinkedPages :one
 SELECT COUNT(*)
-FROM pages
-WHERE $1::varchar = ANY(linked_page_ids)
-  AND space_id = $2
-  AND discarded_at IS NULL
-  AND NOT (id = ANY($3::uuid[]))
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE $2::varchar = ANY(p.linked_page_ids)
+  AND p.space_id = $1
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND ($3::boolean IS TRUE OR t.id = ANY($4::uuid[]))
+  AND NOT (p.id = ANY($5::uuid[]))
 `
 
 type CountBacklinkedPagesParams struct {
-	Column1 string   `json:"column_1"`
-	SpaceID string   `json:"space_id"`
-	Column3 []string `json:"column_3"`
+	SpaceID          string   `json:"space_id"`
+	PageID           string   `json:"page_id"`
+	AllTopicsVisible bool     `json:"all_topics_visible"`
+	VisibleTopicIds  []string `json:"visible_topic_ids"`
+	ExcludePageIds   []string `json:"exclude_page_ids"`
 }
 
-// バックリンクページの総件数を取得する（同スペース・未廃棄のページのみ）
+// Returns the total count of pages linking to a page. Filtering matches
+// FindBacklinkedPagesPaginated so the count and the page slice stay consistent.
+//
+// [Ja] 指定ページへのバックリンクの総件数を返す。フィルタ条件は FindBacklinkedPagesPaginated と
+// 揃えており、件数とページ一覧の整合性を保つ。
 func (q *Queries) CountBacklinkedPages(ctx context.Context, arg CountBacklinkedPagesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countBacklinkedPages, arg.Column1, arg.SpaceID, pq.Array(arg.Column3))
+	row := q.db.QueryRowContext(ctx, countBacklinkedPages,
+		arg.SpaceID,
+		arg.PageID,
+		arg.AllTopicsVisible,
+		pq.Array(arg.VisibleTopicIds),
+		pq.Array(arg.ExcludePageIds),
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
 const countBacklinkedPagesForTargets = `-- name: CountBacklinkedPagesForTargets :many
-SELECT t.target_id, COUNT(p.id) AS count
-FROM unnest($1::uuid[]) AS t(target_id)
-LEFT JOIN pages p ON t.target_id::varchar = ANY(p.linked_page_ids)
-  AND p.space_id = $2
-  AND p.discarded_at IS NULL
-  AND NOT (p.id = ANY($3::uuid[]))
-GROUP BY t.target_id
+SELECT targets.target_id, COUNT(p.id) AS count
+FROM unnest($1::uuid[]) AS targets(target_id)
+LEFT JOIN (
+  SELECT pg.id, pg.linked_page_ids
+  FROM pages pg
+  INNER JOIN topics t ON pg.topic_id = t.id AND t.space_id = $2
+  WHERE pg.space_id = $2
+    AND pg.discarded_at IS NULL
+    AND pg.trashed_at IS NULL
+    AND t.discarded_at IS NULL
+    AND ($3::boolean IS TRUE OR t.id = ANY($4::uuid[]))
+    AND NOT (pg.id = ANY($5::uuid[]))
+) p ON targets.target_id::varchar = ANY(p.linked_page_ids)
+GROUP BY targets.target_id
 `
 
 type CountBacklinkedPagesForTargetsParams struct {
-	Column1 []string `json:"column_1"`
-	SpaceID string   `json:"space_id"`
-	Column3 []string `json:"column_3"`
+	TargetIds        []string `json:"target_ids"`
+	SpaceID          string   `json:"space_id"`
+	AllTopicsVisible bool     `json:"all_topics_visible"`
+	VisibleTopicIds  []string `json:"visible_topic_ids"`
+	ExcludePageIds   []string `json:"exclude_page_ids"`
 }
 
 type CountBacklinkedPagesForTargetsRow struct {
@@ -57,9 +82,22 @@ type CountBacklinkedPagesForTargetsRow struct {
 	Count    int64       `json:"count"`
 }
 
-// 複数ターゲットページのバックリンク件数を一括取得する
+// Returns the backlink count of several target pages at once. The visible pages are narrowed
+// down in a subquery rather than in the join condition, so that the same filtering as
+// FindBacklinkedPagesForTargets applies while the outer LEFT JOIN still yields a zero row for
+// a target with no backlinks.
+//
+// [Ja] 複数ターゲットページのバックリンク件数を一括取得する。可視ページの絞り込みを JOIN 条件
+// ではなくサブクエリで行い、FindBacklinkedPagesForTargets と同じフィルタをかけつつ、外側の
+// LEFT JOIN がバックリンクを持たないターゲットに対して 0 件の行を返せるようにしている。
 func (q *Queries) CountBacklinkedPagesForTargets(ctx context.Context, arg CountBacklinkedPagesForTargetsParams) ([]CountBacklinkedPagesForTargetsRow, error) {
-	rows, err := q.db.QueryContext(ctx, countBacklinkedPagesForTargets, pq.Array(arg.Column1), arg.SpaceID, pq.Array(arg.Column3))
+	rows, err := q.db.QueryContext(ctx, countBacklinkedPagesForTargets,
+		pq.Array(arg.TargetIds),
+		arg.SpaceID,
+		arg.AllTopicsVisible,
+		pq.Array(arg.VisibleTopicIds),
+		pq.Array(arg.ExcludePageIds),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -83,20 +121,35 @@ func (q *Queries) CountBacklinkedPagesForTargets(ctx context.Context, arg CountB
 
 const countLinkedPages = `-- name: CountLinkedPages :one
 SELECT COUNT(*)
-FROM pages
-WHERE id = ANY($1::uuid[])
-  AND space_id = $2
-  AND discarded_at IS NULL
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.id = ANY($2::uuid[])
+  AND p.space_id = $1
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND ($3::boolean IS TRUE OR t.id = ANY($4::uuid[]))
 `
 
 type CountLinkedPagesParams struct {
-	Column1 []string `json:"column_1"`
-	SpaceID string   `json:"space_id"`
+	SpaceID          string   `json:"space_id"`
+	PageIds          []string `json:"page_ids"`
+	AllTopicsVisible bool     `json:"all_topics_visible"`
+	VisibleTopicIds  []string `json:"visible_topic_ids"`
 }
 
-// リンク先ページの総件数を取得する（同スペース・未廃棄のページのみ）
+// Returns the total count of pages linked from a page. Filtering matches
+// FindLinkedPagesPaginated so the count and the page slice stay consistent.
+//
+// [Ja] ページからのリンク先ページの総件数を返す。フィルタ条件は FindLinkedPagesPaginated と
+// 揃えており、件数とページ一覧の整合性を保つ。
 func (q *Queries) CountLinkedPages(ctx context.Context, arg CountLinkedPagesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countLinkedPages, pq.Array(arg.Column1), arg.SpaceID)
+	row := q.db.QueryRowContext(ctx, countLinkedPages,
+		arg.SpaceID,
+		pq.Array(arg.PageIds),
+		arg.AllTopicsVisible,
+		pq.Array(arg.VisibleTopicIds),
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -283,25 +336,31 @@ func (q *Queries) FindBacklinkedPagesByPageID(ctx context.Context, arg FindBackl
 }
 
 const findBacklinkedPagesForTargets = `-- name: FindBacklinkedPagesForTargets :many
-SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id, t.target_id
-FROM unnest($1::uuid[]) AS t(target_id)
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id, targets.target_id
+FROM unnest($1::uuid[]) AS targets(target_id)
 CROSS JOIN LATERAL (
-  SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
-  FROM pages
-  WHERE t.target_id::varchar = ANY(linked_page_ids)
-    AND space_id = $2
-    AND discarded_at IS NULL
-    AND NOT (id = ANY($4::uuid[]))
-  ORDER BY modified_at DESC, id DESC
-  LIMIT $3
+  SELECT pg.id, pg.space_id, pg.topic_id, pg.number, pg.title, pg.body, pg.body_html, pg.linked_page_ids, pg.modified_at, pg.published_at, pg.trashed_at, pg.created_at, pg.updated_at, pg.pinned_at, pg.discarded_at, pg.featured_image_attachment_id
+  FROM pages pg
+  INNER JOIN topics t ON pg.topic_id = t.id AND t.space_id = $2
+  WHERE targets.target_id::varchar = ANY(pg.linked_page_ids)
+    AND pg.space_id = $2
+    AND pg.discarded_at IS NULL
+    AND pg.trashed_at IS NULL
+    AND t.discarded_at IS NULL
+    AND ($3::boolean IS TRUE OR t.id = ANY($4::uuid[]))
+    AND NOT (pg.id = ANY($5::uuid[]))
+  ORDER BY pg.modified_at DESC, pg.id DESC
+  LIMIT $6
 ) p
 `
 
 type FindBacklinkedPagesForTargetsParams struct {
-	Column1 []string `json:"column_1"`
-	SpaceID string   `json:"space_id"`
-	Limit   int32    `json:"limit"`
-	Column4 []string `json:"column_4"`
+	TargetIds        []string `json:"target_ids"`
+	SpaceID          string   `json:"space_id"`
+	AllTopicsVisible bool     `json:"all_topics_visible"`
+	VisibleTopicIds  []string `json:"visible_topic_ids"`
+	ExcludePageIds   []string `json:"exclude_page_ids"`
+	RowLimit         int32    `json:"row_limit"`
 }
 
 type FindBacklinkedPagesForTargetsRow struct {
@@ -324,13 +383,21 @@ type FindBacklinkedPagesForTargetsRow struct {
 	TargetID                  interface{}  `json:"target_id"`
 }
 
-// 複数ターゲットページのバックリンクを一括取得する（各ターゲットごとにlimit件数まで）
+// Returns the backlinks of several target pages at once (up to row_limit per target), to keep
+// the link list from issuing one query per listed page. Filtering matches
+// FindBacklinkedPagesPaginated.
+//
+// [Ja] 複数ターゲットページのバックリンクを一括取得する (各ターゲットごとに row_limit 件まで)。
+// リンク一覧が列挙するページごとにクエリを発行しないようにするためのもの。フィルタ条件は
+// FindBacklinkedPagesPaginated と同じ。
 func (q *Queries) FindBacklinkedPagesForTargets(ctx context.Context, arg FindBacklinkedPagesForTargetsParams) ([]FindBacklinkedPagesForTargetsRow, error) {
 	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesForTargets,
-		pq.Array(arg.Column1),
+		pq.Array(arg.TargetIds),
 		arg.SpaceID,
-		arg.Limit,
-		pq.Array(arg.Column4),
+		arg.AllTopicsVisible,
+		pq.Array(arg.VisibleTopicIds),
+		pq.Array(arg.ExcludePageIds),
+		arg.RowLimit,
 	)
 	if err != nil {
 		return nil, err
@@ -372,32 +439,48 @@ func (q *Queries) FindBacklinkedPagesForTargets(ctx context.Context, arg FindBac
 }
 
 const findBacklinkedPagesPaginated = `-- name: FindBacklinkedPagesPaginated :many
-SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
-WHERE $1::varchar = ANY(linked_page_ids)
-  AND space_id = $2
-  AND discarded_at IS NULL
-  AND NOT (id = ANY($5::uuid[]))
-ORDER BY modified_at DESC, id DESC
-LIMIT $3
-OFFSET $4
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE $2::varchar = ANY(p.linked_page_ids)
+  AND p.space_id = $1
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND ($3::boolean IS TRUE OR t.id = ANY($4::uuid[]))
+  AND NOT (p.id = ANY($5::uuid[]))
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT $7
+OFFSET $6
 `
 
 type FindBacklinkedPagesPaginatedParams struct {
-	Column1 string   `json:"column_1"`
-	SpaceID string   `json:"space_id"`
-	Limit   int32    `json:"limit"`
-	Offset  int32    `json:"offset"`
-	Column5 []string `json:"column_5"`
+	SpaceID          string   `json:"space_id"`
+	PageID           string   `json:"page_id"`
+	AllTopicsVisible bool     `json:"all_topics_visible"`
+	VisibleTopicIds  []string `json:"visible_topic_ids"`
+	ExcludePageIds   []string `json:"exclude_page_ids"`
+	RowOffset        int32    `json:"row_offset"`
+	RowLimit         int32    `json:"row_limit"`
 }
 
-// バックリンクページをオフセットページネーションで取得する（同スペース・未廃棄のページのみ）
+// Returns the pages linking to a page with offset pagination, ordered by modified_at DESC,
+// id DESC. Trash, discarded-topic and topic-visibility handling matches
+// FindLinkedPagesPaginated. exclude_page_ids drops pages already listed elsewhere on the screen
+// (the page itself and its link list entries).
+//
+// [Ja] 指定ページへのバックリンクをオフセットページネーションで取得する。並び順は
+// modified_at DESC, id DESC。ゴミ箱・廃棄済みトピック・トピック可視性の扱いは
+// FindLinkedPagesPaginated と同じ。exclude_page_ids は画面上の他の箇所で既に一覧している
+// ページ (ページ自身とそのリンク一覧) を除外する。
 func (q *Queries) FindBacklinkedPagesPaginated(ctx context.Context, arg FindBacklinkedPagesPaginatedParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesPaginated,
-		arg.Column1,
 		arg.SpaceID,
-		arg.Limit,
-		arg.Offset,
-		pq.Array(arg.Column5),
+		arg.PageID,
+		arg.AllTopicsVisible,
+		pq.Array(arg.VisibleTopicIds),
+		pq.Array(arg.ExcludePageIds),
+		arg.RowOffset,
+		arg.RowLimit,
 	)
 	if err != nil {
 		return nil, err
@@ -438,29 +521,53 @@ func (q *Queries) FindBacklinkedPagesPaginated(ctx context.Context, arg FindBack
 }
 
 const findLinkedPagesPaginated = `-- name: FindLinkedPagesPaginated :many
-SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
-WHERE id = ANY($1::uuid[])
-  AND space_id = $2
-  AND discarded_at IS NULL
-ORDER BY modified_at DESC, id DESC
-LIMIT $3
-OFFSET $4
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.id = ANY($2::uuid[])
+  AND p.space_id = $1
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND ($3::boolean IS TRUE OR t.id = ANY($4::uuid[]))
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT $6
+OFFSET $5
 `
 
 type FindLinkedPagesPaginatedParams struct {
-	Column1 []string `json:"column_1"`
-	SpaceID string   `json:"space_id"`
-	Limit   int32    `json:"limit"`
-	Offset  int32    `json:"offset"`
+	SpaceID          string   `json:"space_id"`
+	PageIds          []string `json:"page_ids"`
+	AllTopicsVisible bool     `json:"all_topics_visible"`
+	VisibleTopicIds  []string `json:"visible_topic_ids"`
+	RowOffset        int32    `json:"row_offset"`
+	RowLimit         int32    `json:"row_limit"`
 }
 
-// リンク先ページをオフセットページネーションで取得する（同スペース・未廃棄のページのみ）
+// Returns the pages linked from a page with offset pagination, ordered by modified_at DESC,
+// id DESC. Trashed pages and pages whose topic is discarded are excluded, so a page removed
+// from the wiki never resurfaces through a stale wiki link. The topic join is scoped by
+// t.space_id = @space_id as a defensive measure, so topic visibility is always evaluated
+// within the requested space per the space_id query-scoping rule. Pages are narrowed down to
+// visible_topic_ids, the topics the viewer may open, which the caller resolves with the same
+// CanShowTopic rule the page screens use. all_topics_visible skips that narrowing for
+// member-only screens that show every topic.
+//
+// [Ja] ページからのリンク先ページをオフセットページネーションで取得する。並び順は
+// modified_at DESC, id DESC。ゴミ箱に入ったページと廃棄済みトピックのページは除外し、
+// Wiki から取り除かれたページが古い Wiki リンク経由で再び現れないようにする。トピック JOIN は
+// 防御的に t.space_id = @space_id でもスコープし、space_id クエリスコープのルールに従って
+// トピックの可視性を常に対象スペース内で評価する。ページは閲覧者が開けるトピック
+// (visible_topic_ids) に絞る。この集合は呼び出し元がページ画面と同じ CanShowTopic の規則で
+// 解決する。all_topics_visible が true のときは絞り込みを行わない (全トピックを見せる
+// メンバー専用画面向け)。
 func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPagesPaginatedParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findLinkedPagesPaginated,
-		pq.Array(arg.Column1),
 		arg.SpaceID,
-		arg.Limit,
-		arg.Offset,
+		pq.Array(arg.PageIds),
+		arg.AllTopicsVisible,
+		pq.Array(arg.VisibleTopicIds),
+		arg.RowOffset,
+		arg.RowLimit,
 	)
 	if err != nil {
 		return nil, err

@@ -61,24 +61,40 @@ func (uc *GetEditLinkDataUsecase) Execute(ctx context.Context, input GetEditLink
 		linkedPageIDs = input.Page.LinkedPageIDs
 	}
 
+	// Only the topic narrowing is skipped here. The editor keeps listing pages from every topic,
+	// unlike the viewing screens that narrow the listing down to the topics the viewer may open.
+	// Aligning the editor with that rule is left to a follow-up task, since it would change what an
+	// editing member sees mid-migration.
+	//
+	// The trash and discarded-topic filters live in the queries themselves, so they apply to the
+	// editor as well, matching the Rails `available` scope behind the same listing.
+	//
+	// [Ja] ここで省略するのはトピックの絞り込みだけである。編集画面は閲覧画面と違い、全トピックの
+	// ページを一覧し続ける。閲覧画面と同じく開けるトピックに絞る対応は、移行の途中で編集中の
+	// メンバーの見え方を変えることになるため後続タスクに回している。
+	//
+	// ゴミ箱と廃棄済みトピックのフィルタはクエリ自体に含まれるため編集画面にも効き、同じ一覧を
+	// 担う Rails 版の `available` スコープと揃う。
+	visibility := repository.AllTopicsVisible()
+
 	var paginatedLinks *repository.PaginatedPages
 	var backlinkPaginatedMap map[model.PageID]*repository.PaginatedPages
 	if len(linkedPageIDs) > 0 {
 		var err error
-		paginatedLinks, err = uc.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, input.SpaceID, input.CurrentPage, input.LinkLimit)
+		paginatedLinks, err = uc.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, input.SpaceID, visibility, input.CurrentPage, input.LinkLimit)
 		if err != nil {
 			return nil, fmt.Errorf("リンク先ページの取得に失敗: %w", err)
 		}
 
 		excludePageIDs := buildExcludePageIDs(input.Page.ID, paginatedLinks.Pages)
 
-		backlinkPaginatedMap, err = uc.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, input.SpaceID, input.BacklinkLimit, excludePageIDs)
+		backlinkPaginatedMap, err = uc.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, input.SpaceID, visibility, input.BacklinkLimit, excludePageIDs)
 		if err != nil {
 			return nil, fmt.Errorf("バックリンクの取得に失敗: %w", err)
 		}
 	}
 
-	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, input.Page.ID, input.SpaceID, 1, input.PageBacklinkLimit, nil)
+	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, input.Page.ID, input.SpaceID, visibility, 1, input.PageBacklinkLimit, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ページレベルのバックリンクの取得に失敗: %w", err)
 	}

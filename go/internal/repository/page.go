@@ -132,11 +132,19 @@ func (r *PageRepository) FindRegularBySpacePaginated(ctx context.Context, spaceI
 	}, nil
 }
 
-// FindLinkedPagesPaginated はリンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
-func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID, page int32, limit int32) (*PaginatedPages, error) {
+// FindLinkedPagesPaginated returns the pages linked from a page with offset pagination.
+// Trashed pages and pages whose topic is discarded are excluded, and the result is limited to
+// the topics the viewer may open (see TopicVisibility).
+//
+// [Ja] FindLinkedPagesPaginated はページからのリンク先ページをオフセットページネーションで
+// 取得する。ゴミ箱に入ったページと廃棄済みトピックのページは除外し、閲覧者が開けるトピックの
+// ページに絞る (TopicVisibility を参照)。
+func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID, visibility TopicVisibility, page int32, limit int32) (*PaginatedPages, error) {
 	totalCount, err := r.q.CountLinkedPages(ctx, query.CountLinkedPagesParams{
-		Column1: model.PageIDsToStrings(pageIDs),
-		SpaceID: string(spaceID),
+		PageIds:          model.PageIDsToStrings(pageIDs),
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
 	})
 	if err != nil {
 		return nil, err
@@ -144,10 +152,12 @@ func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs [
 
 	offset := (page - 1) * limit
 	rows, err := r.q.FindLinkedPagesPaginated(ctx, query.FindLinkedPagesPaginatedParams{
-		Column1: model.PageIDsToStrings(pageIDs),
-		SpaceID: string(spaceID),
-		Limit:   limit,
-		Offset:  offset,
+		PageIds:          model.PageIDsToStrings(pageIDs),
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		RowLimit:         limit,
+		RowOffset:        offset,
 	})
 	if err != nil {
 		return nil, err
@@ -159,12 +169,18 @@ func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs [
 	}, nil
 }
 
-// FindBacklinkedPagesPaginated はバックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
-func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, page int32, limit int32, excludePageIDs []model.PageID) (*PaginatedPages, error) {
+// FindBacklinkedPagesPaginated returns the pages linking to a page with offset pagination.
+// Trash, discarded-topic and topic-visibility handling matches FindLinkedPagesPaginated.
+//
+// [Ja] FindBacklinkedPagesPaginated は指定ページへのバックリンクをオフセットページネーションで
+// 取得する。ゴミ箱・廃棄済みトピック・トピック可視性の扱いは FindLinkedPagesPaginated と同じ。
+func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, visibility TopicVisibility, page int32, limit int32, excludePageIDs []model.PageID) (*PaginatedPages, error) {
 	totalCount, err := r.q.CountBacklinkedPages(ctx, query.CountBacklinkedPagesParams{
-		Column1: string(pageID),
-		SpaceID: string(spaceID),
-		Column3: model.PageIDsToStrings(excludePageIDs),
+		PageID:           string(pageID),
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		ExcludePageIds:   model.PageIDsToStrings(excludePageIDs),
 	})
 	if err != nil {
 		return nil, err
@@ -172,11 +188,13 @@ func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageI
 
 	offset := (page - 1) * limit
 	rows, err := r.q.FindBacklinkedPagesPaginated(ctx, query.FindBacklinkedPagesPaginatedParams{
-		Column1: string(pageID),
-		SpaceID: string(spaceID),
-		Limit:   limit,
-		Offset:  offset,
-		Column5: model.PageIDsToStrings(excludePageIDs),
+		PageID:           string(pageID),
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		ExcludePageIds:   model.PageIDsToStrings(excludePageIDs),
+		RowLimit:         limit,
+		RowOffset:        offset,
 	})
 	if err != nil {
 		return nil, err
@@ -188,8 +206,12 @@ func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageI
 	}, nil
 }
 
-// FindBacklinksForPages は複数ページのバックリンクを一括取得する（N+1回避）
-func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages []*model.Page, spaceID model.SpaceID, limit int32, excludePageIDs []model.PageID) (map[model.PageID]*PaginatedPages, error) {
+// FindBacklinksForPages returns the backlinks of several pages in one round trip (avoiding N+1).
+// Filtering matches FindBacklinkedPagesPaginated.
+//
+// [Ja] FindBacklinksForPages は複数ページのバックリンクを一括取得する (N+1 回避)。
+// フィルタ条件は FindBacklinkedPagesPaginated と同じ。
+func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages []*model.Page, spaceID model.SpaceID, visibility TopicVisibility, limit int32, excludePageIDs []model.PageID) (map[model.PageID]*PaginatedPages, error) {
 	if len(targetPages) == 0 {
 		return nil, nil
 	}
@@ -203,10 +225,12 @@ func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages 
 
 	// バックリンクページを一括取得
 	rows, err := r.q.FindBacklinkedPagesForTargets(ctx, query.FindBacklinkedPagesForTargetsParams{
-		Column1: targetIDs,
-		SpaceID: string(spaceID),
-		Limit:   limit,
-		Column4: excludeIDs,
+		TargetIds:        targetIDs,
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		ExcludePageIds:   excludeIDs,
+		RowLimit:         limit,
 	})
 	if err != nil {
 		return nil, err
@@ -214,9 +238,11 @@ func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages 
 
 	// バックリンク件数を一括取得
 	countRows, err := r.q.CountBacklinkedPagesForTargets(ctx, query.CountBacklinkedPagesForTargetsParams{
-		Column1: targetIDs,
-		SpaceID: string(spaceID),
-		Column3: excludeIDs,
+		TargetIds:        targetIDs,
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		ExcludePageIds:   excludeIDs,
 	})
 	if err != nil {
 		return nil, err
