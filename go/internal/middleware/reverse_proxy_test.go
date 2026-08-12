@@ -512,6 +512,101 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 	}
 }
 
+func TestReverseProxyMiddleware_getFeatureFlagForRequest_PageShow(t *testing.T) {
+	// The production featureFlaggedPatterns slice is read directly here, so
+	// t.Parallel() is intentionally omitted to avoid running concurrently with
+	// tests that swap out this global variable.
+	//
+	// [Ja] 本番の featureFlaggedPatterns を読むテストのため t.Parallel() は使用しない
+	// (このグローバル変数を上書きする他テストと並行実行されないようにする)
+
+	cfg := &config.Config{
+		Domain: "wikino.app",
+	}
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	testCases := []struct {
+		name     string
+		method   string
+		path     string
+		expected model.FeatureFlagName
+	}{
+		{
+			name:     "ページ表示 (GET) は go_page_show を返す",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1",
+			expected: model.FeatureFlagPageShow,
+		},
+		{
+			// PATCH on the same path is always handled by Go via
+			// goHandledRegexPatterns, so it must not be gated by the flag.
+			//
+			// [Ja] 同じパスの PATCH は goHandledRegexPatterns により常に Go で
+			// 処理されるため、フラグ判定の対象にしない
+			name:     "ページ更新 (PATCH) はmethodsフィルタによりマッチしない",
+			method:   http.MethodPatch,
+			path:     "/s/my-space/pages/1",
+			expected: "",
+		},
+		{
+			// POST is Method Override's pre-conversion form of PATCH. containsMethod
+			// widens POST only to PATCH/PUT/DELETE patterns, so a GET-only pattern
+			// must not match it.
+			//
+			// [Ja] POST は Method Override 変換前の PATCH。containsMethod が POST を
+			// 広げるのは PATCH/PUT/DELETE のパターンのみなので、GET 限定の本パターンには
+			// マッチしない
+			name:     "ページ更新 (POST) はGET限定パターンにマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1",
+			expected: "",
+		},
+		{
+			// The trailing "$" prevents matching sub-paths under /pages/:number, so
+			// /edit, /preview etc. stay handled by goHandledRegexPatterns.
+			//
+			// [Ja] 末尾 $ により /pages/:number 配下のサブパスにはマッチせず、
+			// /edit や /preview 等は引き続き goHandledRegexPatterns が処理する
+			name:     "ページ編集画面はマッチしない (既存Goハンドラーが優先)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/edit",
+			expected: "",
+		},
+		{
+			name:     "バックリンク一覧はマッチしない (既存Goハンドラーが優先)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/backlinks",
+			expected: "",
+		},
+		{
+			name:     "ページ番号が数字でないパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/abc",
+			expected: "",
+		},
+		{
+			name:     "ページ番号の後にスラッシュが続くパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			result := m.getFeatureFlagForRequest(req)
+			if result != tc.expected {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
+			}
+		})
+	}
+}
+
 func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	// グローバル変数 featureFlaggedPatterns を変更するため t.Parallel() は使用しない
 
@@ -879,7 +974,13 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "ページ表示 (GET) はRails版に転送",
+			// Page detail is gated by go_page_show, so it must not be in the
+			// always-Go set: the flag decision runs only for requests that fall
+			// through this check.
+			//
+			// [Ja] ページ表示は go_page_show で制御するため、常時 Go 対象にはしない
+			// (フラグ判定はこの判定を通り抜けたリクエストに対してのみ走る)
+			name:     "ページ表示 (GET) は常時Go対象ではない (フィーチャーフラグで制御)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1",
 			expected: false,
