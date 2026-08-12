@@ -433,13 +433,21 @@ func TestLoad_TurnstileEnabled(t *testing.T) {
 		turnstileEnabledSet   bool
 		turnstileEnabledValue string
 		want                  bool
+		wantErr               bool
 	}{
 		{name: "非本番 + false は無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "false", want: false},
+		{name: "非本番 + FALSE は無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "FALSE", want: false},
+		{name: "非本番 + 0 は無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "0", want: false},
 		{name: "本番 + false は fail-closed で有効を維持", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "false", want: true},
+		{name: "本番 + FALSE も fail-closed で有効を維持", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "FALSE", want: true},
 		{name: "未設定は有効 (デフォルト)", env: "test", turnstileEnabledSet: false, want: true},
+		{name: "空文字列は有効 (デフォルト)", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "", want: true},
 		{name: "true は有効", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "true", want: true},
-		{name: "false 以外の値は有効", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "yes", want: true},
+		{name: "1 は有効", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "1", want: true},
 		{name: "本番 + 未設定は有効", env: "prod", turnstileEnabledSet: false, want: true},
+		{name: "解釈できない値は起動エラー", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "yes", wantErr: true},
+		{name: "打ち間違いも起動エラー", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "flase", wantErr: true},
+		{name: "本番でも解釈できない値は起動エラー", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "yes", wantErr: true},
 	}
 
 	for _, tt := range tests {
@@ -455,6 +463,14 @@ func TestLoad_TurnstileEnabled(t *testing.T) {
 			}
 
 			cfg, err := Load()
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("Load() should return error for WIKINO_TURNSTILE_ENABLED=%q", tt.turnstileEnabledValue)
+				}
+				return
+			}
+
 			if err != nil {
 				t.Fatalf("Load() failed: %v", err)
 			}
