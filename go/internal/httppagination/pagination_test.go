@@ -93,3 +93,21 @@ func TestParsePageParam_AcceptedOffsetsDoNotOverflow(t *testing.T) {
 		}
 	}
 }
+
+// TestParseNamedPageParam verifies that an independent listing can use its own query parameter
+// without changing the validation contract.
+//
+// [Ja] TestParseNamedPageParam は、独立した一覧が検証契約を変えずに固有のクエリパラメータを
+// 使えることを確認する。
+func TestParseNamedPageParam(t *testing.T) {
+	t.Parallel()
+
+	r := httptest.NewRequest("GET", "/?links_page=3&page=9", nil)
+	page, ok := httppagination.ParseNamedPageParam(r, "links_page", 15)
+	if !ok {
+		t.Fatal("ParseNamedPageParam() ok = false, want true")
+	}
+	if page != 3 {
+		t.Errorf("ParseNamedPageParam() page = %d, want 3", page)
+	}
+}
