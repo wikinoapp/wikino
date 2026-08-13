@@ -1,11 +1,6 @@
 package components
 
-import (
-	"fmt"
-
-	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/viewmodel"
-)
+import "github.com/wikinoapp/wikino/go/internal/viewmodel"
 
 // LinkList renders the link list, and renders nothing when there are no links.
 // The heading (h2) lives in the caller so its style can differ per screen.
@@ -13,51 +8,72 @@ import (
 // [Ja] リンク一覧を表示します。リンクが空の場合は何も表示しません。
 // 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
 templ LinkList(data viewmodel.LinkList) {
+	@linkList(data, false)
+}
+
+templ linkList(data viewmodel.LinkList, announceEnd bool) {
 	if len(data.Items) > 0 {
-		<div class="flex flex-col gap-2">
-			for _, item := range data.Items {
-				<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-					@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
-					@BacklinkList(item.BacklinkList)
-				</div>
-			}
-			<div
-				id="page-link-list-pagination"
-				class="contents"
-			>
-				if data.Pagination.HasNext {
-					@linkListLoadMore(data)
-				}
-			</div>
+		<div
+			id={ linkListFallbackAnchorID }
+			class="flex flex-col gap-2"
+		>
+			@linkListBody(data, announceEnd)
 		</div>
 	}
 }
 
-// LinkListResponse はリンク一覧の追加ページをHTMLフラグメントとして返します。
-// ページネーションコンテナを outerHTML で置換するレスポンスです。
+// LinkListResponse renders the next link-list page and advances the link list's share of the
+// editor's shared related-page state. The one-page editor replaces the whole listing; cumulative
+// and public screens append by replacing only the pagination container.
+//
+// [Ja] LinkListResponse はリンク一覧の次ページを描画し、編集画面で共有する関連ページ状態のうち
+// リンク一覧の分を進める。1 ページ単位の編集画面は一覧全体を差し替え、累積編集画面と公開画面は
+// ページネーションコンテナだけを差し替えて追記する。
 templ LinkListResponse(data viewmodel.LinkList) {
+	if isPaginatedEditPageLinkState(data.State) {
+		@linkList(data, true)
+	} else {
+		@linkListBody(data, true)
+	}
+	@linkPageStateOOB(data.State)
+}
+
+// linkListBody renders the cards and the pagination container the two entry points have in common.
+// announceEnd adds a focusable completion status only to an htmx response; an initial page that is
+// already complete does not need to announce a change.
+//
+// [Ja] linkListBody は 2 つの入口が共有するカードとページネーションコンテナを描画する。
+// announceEnd は htmx 応答にだけフォーカス可能な完了状態を追加する。初回表示時点で完了している一覧は
+// 変化を通知する必要がないためである。
+templ linkListBody(data viewmodel.LinkList, announceEnd bool) {
 	for _, item := range data.Items {
-		<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+		<div
+			id={ linkListItemFallbackAnchorID(item.CardLinkPage.Number) }
+			class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3"
+		>
 			@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
 			@BacklinkList(item.BacklinkList)
 		</div>
 	}
 	<div
-		id="page-link-list-pagination"
+		id={ linkListPaginationID }
 		class="contents"
 	>
 		if data.Pagination.HasNext {
 			@linkListLoadMore(data)
+		} else if data.LoadMoreCapped {
+			@relatedPageListLimit(linkListLimitURL(data), linkListLoadMoreFocusID)
+		} else if announceEnd {
+			@relatedPageListEnd(linkListLoadMoreFocusID)
 		}
 	</div>
 }
 
-// linkListLoadMore はリンク一覧の「もっと見る」ボタンを表示します
+// linkListLoadMore renders the progressively enhanced link for the next link-list page.
+//
+// [Ja] linkListLoadMore は次のリンク一覧ページを取得する拡張リンクを表示する。
 templ linkListLoadMore(data viewmodel.LinkList) {
 	<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-		@LoadMoreButton(
-			fmt.Sprintf("%s?page=%d", string(templates.PageLinkListPath(data.SpaceIdentifier, data.PageNumber)), data.Pagination.Current+1),
-			"#page-link-list-pagination",
-		)
+		@LoadMoreLink(linkListLoadMoreData(data))
 	</div>
 }

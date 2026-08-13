@@ -127,15 +127,25 @@ func (h *Handler) renderEditWithErrors(
 	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
 	spaceIdentVM := spaceVM.Identifier
 
+	// Re-rendering the editor after a validation error starts every listing at its first page: the
+	// submitted form carries no related-page pagination state.
+	//
+	// [Ja] バリデーションエラー後の編集画面の再描画では、各一覧を 1 ページ目から始める。送信された
+	// フォームは関連ページのページネーション状態を持たないためである。
+	linkState := viewmodel.PageLinkState{Context: viewmodel.PageLinkContextEdit}.Normalized()
+
 	// リンクデータを取得
 	linkData, err := h.getEditLinkDataUC.Execute(ctx, usecase.GetEditLinkDataInput{
-		Page:              output.Page,
-		DraftPage:         output.DraftPage,
-		SpaceID:           output.Space.ID,
-		CurrentPage:       1,
-		LinkLimit:         viewmodel.LinkLimit,
-		BacklinkLimit:     viewmodel.BacklinkLimit,
-		PageBacklinkLimit: viewmodel.PageBacklinkLimit,
+		Page:                   output.Page,
+		DraftPage:              output.DraftPage,
+		SpaceID:                output.Space.ID,
+		CurrentPage:            linkState.LinkPage,
+		LinkLimit:              viewmodel.LinkLimit,
+		BacklinkLimit:          viewmodel.BacklinkLimit,
+		PageBacklinkLimit:      viewmodel.PageBacklinkLimit,
+		LinkedPageNumber:       linkState.LinkedPageNumber,
+		LinkedPageBacklinkPage: linkState.LinkedBacklinkPage,
+		PageBacklinkPage:       linkState.PageBacklinkPage,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "リンクデータの取得に失敗", "error", err)
@@ -143,7 +153,12 @@ func (h *Handler) renderEditWithErrors(
 		return
 	}
 
-	linkResult := buildEditLinkResult(linkData, output.Space.Identifier, 1, output.Page)
+	linkResult := buildEditLinkResult(buildEditLinkResultInput{
+		LinkData:        linkData,
+		SpaceIdentifier: output.Space.Identifier,
+		Page:            output.Page,
+		State:           linkState,
+	})
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -156,14 +171,15 @@ func (h *Handler) renderEditWithErrors(
 	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken:     csrfToken,
-		FormErrors:    formErrors,
-		Page:          pageVM,
-		Space:         spaceVM,
-		Topic:         topicVM,
-		LinkList:      linkResult.LinkList,
-		BacklinkList:  linkResult.BacklinkList,
-		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentVM, int32(output.Page.Number))),
+		CSRFToken:        csrfToken,
+		FormErrors:       formErrors,
+		Page:             pageVM,
+		Space:            spaceVM,
+		Topic:            topicVM,
+		LinkList:         linkResult.LinkList,
+		BacklinkList:     linkResult.BacklinkList,
+		RelatedPageState: linkState,
+		ManualSaveURL:    string(templates.PageDraftPagePath(spaceIdentVM, int32(output.Page.Number))),
 		// The editor stays within a single space, so omit the space label on each draft card.
 		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
 		DraftPages: viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),

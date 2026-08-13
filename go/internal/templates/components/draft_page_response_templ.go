@@ -20,10 +20,14 @@ type DraftPageShowResponseData struct {
 	ModifiedAt   time.Time
 	LinkList     viewmodel.LinkList
 	BacklinkList viewmodel.BacklinkList
+	State        viewmodel.PageLinkState
 }
 
-// DraftPageShowResponse は下書き自動保存後のOOBスワップレスポンスを返します。
-// 保存時刻・リンク一覧・バックリンク一覧の3要素をOOBスワップで同時更新します。
+// DraftPageShowResponse returns the OOB swaps after a draft autosave. It updates the saved time,
+// both top-level listings and all three reconciled pagination state elements in one response.
+//
+// [Ja] DraftPageShowResponse は下書き自動保存後の OOB スワップレスポンスを返す。保存時刻、最上位の
+// 2 一覧、整合済みの 3 ページング状態要素を 1 応答で更新する。
 func DraftPageShowResponse(data DraftPageShowResponseData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -76,6 +80,10 @@ func DraftPageShowResponse(data DraftPageShowResponseData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = relatedPageStateOOB(data.State).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

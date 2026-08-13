@@ -2,10 +2,12 @@ package page_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -20,6 +22,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
@@ -950,6 +953,183 @@ func TestEdit_InvalidPageNumber(t *testing.T) {
 	}
 }
 
+// TestEdit_RelatedPagePagination pins the editor-specific full-page fallback: the link list follows
+// the member's draft, all three listing states reach their requested slices and malformed, stale,
+// or cross-slice state is rejected at the HTTP boundary.
+//
+// [Ja] TestEdit_RelatedPagePagination は編集画面固有のフルページフォールバックを固定する。リンク一覧は
+// メンバーの下書きを参照し、3 一覧すべてが指定スライスへ到達し、不正・失効・別スライスを指す状態は
+// HTTP 境界で拒否される。
+func TestEdit_RelatedPagePagination(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("edit-related-pagination@example.com").
+		WithAtname("editrelatedpagination").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("edit-related-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	baseTime := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	linkedCount := 11*int(viewmodel.LinkLimit) + 1
+	linkedPageIDs := make([]model.PageID, 0, linkedCount)
+	for i := range linkedCount {
+		linkedPageIDs = append(linkedPageIDs, testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(100+i)).
+			WithTitle(fmt.Sprintf("Draft Linked Page %02d", i)).
+			WithModifiedAt(baseTime.Add(time.Duration(i)*time.Hour)).
+			WithLinkedPageIDs([]model.PageID{}).
+			Build())
+	}
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Stored Editor Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft Editor Page").
+		WithLinkedPageIDs(linkedPageIDs).
+		Build()
+
+	selectedLinkedPageIndex := linkedCount - 1 - int(viewmodel.LinkLimit)
+	selectedLinkedPageID := linkedPageIDs[selectedLinkedPageIndex]
+	selectedLinkedPageNumber := model.PageNumber(100 + selectedLinkedPageIndex)
+	for i := range 2*int(viewmodel.BacklinkLimit) + 1 {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(1000 + i)).
+			WithTitle(fmt.Sprintf("Nested Backlink %02d", i)).
+			WithModifiedAt(baseTime.Add(time.Duration(100+i) * time.Hour)).
+			WithLinkedPageIDs([]model.PageID{selectedLinkedPageID}).
+			Build()
+	}
+	for i := range 2*int(viewmodel.PageBacklinkLimit) + 1 {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(2000 + i)).
+			WithTitle(fmt.Sprintf("Page Backlink %02d", i)).
+			WithModifiedAt(baseTime.Add(time.Duration(200+i) * time.Hour)).
+			WithLinkedPageIDs([]model.PageID{pageID}).
+			Build()
+	}
+
+	handler := setupHandler(t, queries)
+	tests := []struct {
+		name         string
+		rawQuery     string
+		wantStatus   int
+		wantContains []string
+	}{
+		{
+			name: "下書き由来の3一覧で2ページ目と次リンクを描画する",
+			rawQuery: fmt.Sprintf(
+				"links_page=2&linked_page_number=%d&linked_backlinks_page=2&backlinks_page=2",
+				selectedLinkedPageNumber,
+			),
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf("Draft Linked Page %02d", selectedLinkedPageIndex),
+				fmt.Sprintf("Nested Backlink %02d", viewmodel.BacklinkLimit),
+				fmt.Sprintf("Page Backlink %02d", viewmodel.PageBacklinkLimit),
+				`href="/s/edit-related-space/pages/1/edit?backlinks_page=2&amp;links_page=3#page-link-list-content"`,
+				fmt.Sprintf(`href="/s/edit-related-space/pages/1/edit?backlinks_page=2&amp;linked_backlinks_page=3&amp;linked_page_number=%[1]d&amp;links_page=2#page-link-list-item-%[1]d"`, selectedLinkedPageNumber),
+				fmt.Sprintf(`href="/s/edit-related-space/pages/1/edit?backlinks_page=3&amp;linked_backlinks_page=2&amp;linked_page_number=%d&amp;links_page=2#page-backlink-list-content"`, selectedLinkedPageNumber),
+			},
+		},
+		{
+			name:       "1ページ単位の編集画面で下書き固有の11ページ目と次リンクを描画する",
+			rawQuery:   "context=edit_paginated&links_page=11",
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf("Draft Linked Page %02d", linkedCount-1-10*int(viewmodel.LinkLimit)),
+				`name="context" value="edit_paginated"`,
+				`hx-get="/s/edit-related-space/pages/1/link_list?context=edit_paginated&amp;page=12"`,
+				`hx-target="#page-link-list-content"`,
+				`href="/s/edit-related-space/pages/1/edit?context=edit_paginated&amp;links_page=12#page-link-list-content"`,
+			},
+		},
+		{
+			name:       "数値でない対象カード番号は404",
+			rawQuery:   "linked_page_number=abc",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "総ページ数を超えた一覧ページは404",
+			rawQuery:   "links_page=999",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "累積取得上限を超えた一覧ページは404",
+			rawQuery:   fmt.Sprintf("links_page=%d", usecase.MaxCumulativeRelatedPagePages+1),
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "描画中の親ページにないリンク先カードは404",
+			rawQuery: fmt.Sprintf(
+				"links_page=2&linked_page_number=%d&linked_backlinks_page=2",
+				100+linkedCount-1,
+			),
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newRequestWithChiParams(t, http.MethodGet, "/s/edit-related-space/pages/1/edit", map[string]string{
+				"space_identifier": "edit-related-space",
+				"page_number":      "1",
+			})
+			req.URL.RawQuery = tt.rawQuery
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+			ctx = i18n.SetLocale(ctx, i18n.LangJa)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Edit(rr, req)
+
+			if rr.Code != tt.wantStatus {
+				t.Errorf("status code = %d, want %d", rr.Code, tt.wantStatus)
+			}
+			body := rr.Body.String()
+			for _, want := range tt.wantContains {
+				if !strings.Contains(body, want) {
+					t.Errorf("response does not contain %q", want)
+				}
+			}
+		})
+	}
+}
+
 func TestEdit_LinkListAutoReload(t *testing.T) {
 	t.Parallel()
 
@@ -1009,20 +1189,45 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 		t.Error("page-link-list container not found in response")
 	}
 
-	// htmxのhx-trigger属性が含まれていること
-	// この属性により、下書き保存後にリンク一覧がOOBスワップで自動再読み込みされる
+	// The dedicated refresh trigger survives the two list containers' OOB content swaps.
+	//
+	// [Ja] 専用の再取得トリガーは、2 つの一覧コンテナの OOB 内容スワップ後も残る。
+	if !strings.Contains(body, `id="page-draft-refresh-trigger"`) {
+		t.Error("dedicated draft refresh trigger not found")
+	}
+
+	// hx-trigger reloads the lists through their OOB response after a draft is saved.
+	//
+	// [Ja] hx-trigger は下書き保存後、OOB 応答を通じて一覧を再取得する。
 	if !strings.Contains(body, `hx-trigger="draft-autosaved from:window"`) {
 		t.Error("hx-trigger attribute not found - link list auto-reload will not work")
 	}
 
-	// hx-getでエンドポイントが指定されていること
+	// hx-get points at the draft fragment endpoint.
+	//
+	// [Ja] hx-get は下書きフラグメントエンドポイントを指す。
 	if !strings.Contains(body, "/s/linklist-reload-space/pages/1/draft_page") {
 		t.Error("draft_page endpoint URL not found in response")
 	}
 
-	// hx-swap="none"が指定されていること（OOBスワップのみで更新するため）
+	// hx-swap=none leaves the main target untouched and applies only the OOB swaps.
+	//
+	// [Ja] hx-swap=none によりメインターゲットは変更せず、OOB スワップだけを適用する。
 	if !strings.Contains(body, `hx-swap="none"`) {
 		t.Error("hx-swap=none not found - OOB swap will not work correctly")
+	}
+
+	// The shared related-page state ships with the initial render and outside both list containers,
+	// so the first "load more" already has somewhere to read the other listings from and the content
+	// swaps cannot take it down.
+	//
+	// [Ja] 共有の関連ページ状態は初回描画から、かつ 2 つの一覧コンテナの外に置かれる。最初の
+	// 「もっと見る」の時点で他の一覧を読む先があり、内容スワップで巻き添えに消えることもない。
+	if !strings.Contains(body, `id="page-related-page-state"`) {
+		t.Error("shared related-page state not found")
+	}
+	if !strings.Contains(body, `hx-include="#page-related-page-state"`) {
+		t.Error("the draft refresh does not read the shared related-page state")
 	}
 
 	// The link heading (h2) sits outside #page-link-list (out of the OOB swap target) and is always

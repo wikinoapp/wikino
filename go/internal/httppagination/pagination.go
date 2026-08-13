@@ -35,7 +35,45 @@ import (
 // 範囲内だが最終ページより後ろの値が指すものと同じだからである。後者は総ページ数を知る呼び出し元が
 // 404 にしている。
 func ParsePageParam(r *http.Request, limit int32) (int32, bool) {
-	pageStr := r.URL.Query().Get("page")
+	return ParseNamedPageParam(r, "page", limit)
+}
+
+// ParseOptionalNumberParam reads an optional positive int32 from the query string, such as the
+// number identifying which listing a paginated related-page state applies to. An absent parameter
+// yields zero, which callers read as "not selected".
+//
+// Unlike ParsePageParam, a present but unusable value is rejected rather than ignored: it names a
+// selection the caller cannot honor, and silently acting on a different one would hide the mistake.
+//
+// [Ja] ParseOptionalNumberParam はクエリ文字列から任意の正の int32 を読む。ページネーション状態を
+// どの一覧に適用するかを指す番号などが対象。パラメータが無い場合は 0 を返し、呼び出し元は
+// 「選択されていない」と解釈する。
+//
+// ParsePageParam と違い、値があって解釈できない場合は無視せず拒否する。呼び出し元が満たせない選択を
+// 指しており、黙って別のものを選ぶと誤りが隠れてしまうためである。
+func ParseOptionalNumberParam(r *http.Request, name string) (int32, bool) {
+	value := r.URL.Query().Get(name)
+	if value == "" {
+		return 0, true
+	}
+
+	number, err := strconv.ParseInt(value, 10, 32)
+	if err != nil || number <= 0 {
+		return 0, false
+	}
+
+	return int32(number), true
+}
+
+// ParseNamedPageParam applies the same validation as ParsePageParam to a named query parameter.
+// Full-page fallbacks use distinct parameters for the independent related-page listings, while
+// fragment endpoints keep using the conventional "page" parameter.
+//
+// [Ja] ParseNamedPageParam は、指定した名前のクエリパラメータに ParsePageParam と同じ検証を
+// 適用する。フルページのフォールバックでは独立した関連ページ一覧ごとに別のパラメータ名を使い、
+// フラグメントエンドポイントでは従来どおり "page" を使う。
+func ParseNamedPageParam(r *http.Request, name string, limit int32) (int32, bool) {
+	pageStr := r.URL.Query().Get(name)
 	if pageStr == "" {
 		return 1, true
 	}

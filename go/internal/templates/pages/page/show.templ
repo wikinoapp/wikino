@@ -2,6 +2,7 @@ package page
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
@@ -18,6 +19,21 @@ type ShowData struct {
 	// [Ja] IsTrashed はページがゴミ箱に入っていることを表す。UseCase はゴミ箱のページを見てよい
 	// 閲覧者にしか本画面を描画させないため、true ならそのままアラートを出してよい。
 	IsTrashed bool
+
+	// CanUpdatePage reports that the viewer may edit this page, and gates the edit button in the
+	// header.
+	//
+	// [Ja] CanUpdatePage は閲覧者がこのページを編集できるかを表し、ヘッダーの編集ボタンの出し分けに
+	// 使う。
+	CanUpdatePage bool
+
+	// LinkList and BacklinkList are the listings rendered under the body. Each holds the selected
+	// slice: htmx appends later slices, while a full-page fallback renders the slice named by the URL.
+	//
+	// [Ja] LinkList と BacklinkList は本文の下に描画する一覧。各一覧は選択された範囲を保持し、htmx は
+	// 後続の範囲を追記する。フルページフォールバックでは URL が指す範囲を描画する。
+	LinkList     viewmodel.LinkList
+	BacklinkList viewmodel.BacklinkList
 }
 
 // Show renders the page detail screen content.
@@ -26,26 +42,87 @@ type ShowData struct {
 templ Show(data ShowData) {
 	<div class="py-4">
 		<div class="max-w-3xl w-full mx-auto">
-			<article class="flex flex-col gap-6 px-4">
-				if data.IsTrashed {
-					@trashedAlert(data.Space.Identifier)
-				}
+			<div class="flex flex-col gap-6 px-4">
+				<article class="flex flex-col gap-6">
+					if data.IsTrashed {
+						@trashedAlert(data.Space.Identifier)
+					}
 
-				<h1 class="text-2xl font-bold antialiased break-words">
-					{ data.Page.DisplayTitle(ctx) }
-				</h1>
+					@components.MainTitle(components.MainTitleData{
+						Title:   data.Page.DisplayTitle(ctx),
+						Actions: showHeaderActions(data),
+					})
 
-				if data.Page.BodyHTML != "" {
-					// The body HTML is sanitized when the page is published, so expand it raw here.
-					//
-					// [Ja] 本文 HTML はページ公開時にサニタイズ済みのため、ここでは生のまま展開する。
-					<div class="wikino-markdown">
-						@templ.Raw(data.Page.BodyHTML)
-					</div>
-				}
-			</article>
+					if data.Page.BodyHTML != "" {
+						// The body HTML is sanitized when the page is published, so expand it raw here.
+						//
+						// [Ja] 本文 HTML はページ公開時にサニタイズ済みのため、ここでは生のまま展開する。
+						<div class="wikino-markdown">
+							@templ.Raw(data.Page.BodyHTML)
+						</div>
+					}
+				</article>
+
+				@showFooter(data)
+			</div>
 		</div>
 	</div>
+}
+
+// showHeaderActions renders the header's action area, and returns nil when the viewer has nothing
+// to act on so that MainTitle leaves the area out entirely.
+//
+// [Ja] showHeaderActions はヘッダーの操作領域を描画し、閲覧者に操作するものが無い場合は nil を返して
+// MainTitle 側で領域ごと省かせる。
+func showHeaderActions(data ShowData) templ.Component {
+	if !data.CanUpdatePage {
+		return nil
+	}
+	return showEditButton(data)
+}
+
+// showEditButton links to the editor of the page being shown.
+//
+// [Ja] showEditButton は表示中のページの編集画面へのリンクを出す。
+templ showEditButton(data ShowData) {
+	<a
+		class="btn btn-sm rounded-full"
+		href={ templ.SafeURL(string(templates.PageEditPath(data.Space.Identifier, data.Page.Number))) }
+	>
+		@templates.DecorativeIcon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
+		{ templates.T(ctx, "page_show_edit_button") }
+	</a>
+}
+
+// showFooter renders the link list and the backlink list under the body. Each section is dropped
+// when its listing is empty, so a page with no links shows no headings at all.
+//
+// [Ja] showFooter は本文の下にリンク一覧とバックリンク一覧を描画する。一覧が空のセクションは丸ごと
+// 落とすため、リンクを持たないページでは見出しも出ない。
+templ showFooter(data ShowData) {
+	if len(data.LinkList.Items) > 0 || len(data.BacklinkList.Items) > 0 {
+		<div class="flex flex-col gap-6">
+			if len(data.LinkList.Items) > 0 {
+				<div class="flex flex-col gap-4">
+					<h2 class="text-2xl/8 font-bold antialiased">
+						{ templates.T(ctx, "page_show_links_heading") }
+					</h2>
+
+					@components.LinkList(data.LinkList)
+				</div>
+			}
+
+			if len(data.BacklinkList.Items) > 0 {
+				<div class="flex flex-col gap-4">
+					<h2 class="text-2xl/8 font-bold antialiased">
+						{ templates.T(ctx, "page_show_backlinks_heading") }
+					</h2>
+
+					@components.PageBacklinkList(data.BacklinkList)
+				</div>
+			}
+		</div>
+	}
 }
 
 // trashedAlert tells a viewer holding the trash permission that this page is in the trash, and
