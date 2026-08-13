@@ -20,11 +20,22 @@ import (
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// 認証済みユーザーを取得
+	// The link list is the continuation of the listing on the public page detail screen, so a guest
+	// reaches it through its "load more" button. Which pages it may return is decided by the
+	// usecase from the topics the viewer can open.
+	//
+	// [Ja] リンク一覧は公開のページ表示画面に出る一覧の続きで、その「もっと見る」ボタンからゲストも
+	// 到達する。何を返してよいかは閲覧者が開けるトピックから UseCase が判断する。
 	user := middleware.UserFromContext(ctx)
-	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+	var userID *model.UserID
+	if user != nil {
+		userID = &user.ID
+	}
+
+	pageLinkContext := viewmodel.NormalizePageLinkContext(r.URL.Query().Get(viewmodel.PageLinkContextQueryParam))
+	linkListSource := usecase.LinkListSourceDraft
+	if pageLinkContext == viewmodel.PageLinkContextShow {
+		linkListSource = usecase.LinkListSourceSaved
 	}
 
 	// URLパラメータを取得
@@ -33,7 +44,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		handler.RelatedPageListNotFound(w, r)
 		return
 	}
 
@@ -44,7 +55,40 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// ページは UseCase 呼び出し前に拒否する。
 	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.LinkLimit)
 	if !ok {
-		handler.NotFound(w, r)
+		handler.RelatedPageListNotFound(w, r)
+		return
+	}
+
+	// The other listings' pages ride along so that the links this fragment renders keep pointing at
+	// the state the whole screen is in, instead of resetting them to their first page.
+	//
+	// [Ja] 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
+	// 指し続けるようにする。受け取らないと、他の一覧が 1 ページ目へ戻ってしまう。
+	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.BacklinkLimit)
+	if !ok {
+		handler.RelatedPageListNotFound(w, r)
+		return
+	}
+	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.PageBacklinkLimit)
+	if !ok {
+		handler.RelatedPageListNotFound(w, r)
+		return
+	}
+	linkedPageNumber, ok := httppagination.ParseOptionalNumberParam(r, viewmodel.LinkedPageNumberQueryParam)
+	if !ok {
+		handler.RelatedPageListNotFound(w, r)
+		return
+	}
+
+	linkState := viewmodel.PageLinkState{
+		Context:            pageLinkContext,
+		LinkPage:           currentPage,
+		LinkedPageNumber:   linkedPageNumber,
+		LinkedBacklinkPage: linkedBacklinkPage,
+		PageBacklinkPage:   pageBacklinkPage,
+	}.Normalized()
+	if !linkState.WithinCumulativeLimit(usecase.MaxCumulativeRelatedPagePages) {
+		handler.RelatedPageListNotFound(w, r)
 		return
 	}
 
@@ -52,16 +96,17 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	output, err := h.getLinkListUC.Execute(ctx, usecase.GetLinkListInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),
-		UserID:          &user.ID,
+		UserID:          userID,
 		CurrentPage:     currentPage,
 		LinkLimit:       viewmodel.LinkLimit,
 		BacklinkLimit:   viewmodel.BacklinkLimit,
+		Source:          linkListSource,
 	})
 	if err != nil {
 		if ae := model.AsAppError(err); ae != nil {
 			switch ae.Code {
 			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
-				handler.NotFound(w, r)
+				handler.RelatedPageListNotFound(w, r)
 			default:
 				slog.ErrorContext(ctx, ae.LogString())
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -73,39 +118,52 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 認可チェック
-	if !output.CanUpdatePage {
-		handler.NotFound(w, r)
+	pagination, loadMoreCapped := viewmodel.NewRelatedPagePagination(currentPage, output.LinkedTotalCount, viewmodel.LinkLimit, linkState, linkState.CumulativePageLimit(usecase.MaxCumulativeRelatedPagePages))
+	if int(currentPage) > pagination.Total {
+		handler.RelatedPageListNotFound(w, r)
 		return
 	}
 
 	// ViewModelを構築
-	backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(output.BacklinksPerPage))
+	backlinksPerPage := make(map[model.PageID]*viewmodel.PageSliceWithCount, len(output.BacklinksPerPage))
 	for pageID, backlinks := range output.BacklinksPerPage {
-		var linkedPageNumber int32
-		for _, p := range output.LinkedPages {
-			if p.ID == pageID {
-				linkedPageNumber = int32(p.Number)
-				break
-			}
+		backlinksPerPage[pageID] = &viewmodel.PageSliceWithCount{
+			Pages:      backlinks.Pages,
+			TotalCount: backlinks.TotalCount,
 		}
-		backlinkMap[pageID] = viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
-			Pages:            backlinks.Pages,
-			TopicMap:         output.TopicMap,
-			Pagination:       viewmodel.NewPagination(1, backlinks.TotalCount, int(viewmodel.BacklinkLimit)),
-			SpaceIdentifier:  spaceIdentifier,
-			PageNumber:       int32(output.Page.Number),
-			LinkedPageNumber: linkedPageNumber,
-		})
 	}
+
+	// Every card in this fragment is new to the screen, so its nested backlink list starts at its
+	// own first page.
+	//
+	// [Ja] 本フラグメントのカードはいずれも画面に新しく加わるため、ネストしたバックリンク一覧は
+	// それぞれ 1 ページ目から始まる。
+	backlinkMap := viewmodel.NewLinkedPageBacklinkLists(viewmodel.NewLinkedPageBacklinkListsInput{
+		LinkedPages:         output.LinkedPages,
+		BacklinksPerPage:    backlinksPerPage,
+		TopicMap:            output.TopicMap,
+		SpaceIdentifier:     output.Space.Identifier,
+		PageNumber:          int32(output.Page.Number),
+		LinkedPageFirstPage: currentPage,
+		CumulativePageLimit: linkState.CumulativePageLimit(usecase.MaxCumulativeRelatedPagePages),
+		State:               linkState,
+		CanEdit:             output.CanUpdatePage,
+	})
 
 	linkListVM := viewmodel.NewLinkList(viewmodel.NewLinkListInput{
 		Pages:           output.LinkedPages,
 		TopicMap:        output.TopicMap,
 		BacklinkMap:     backlinkMap,
-		Pagination:      viewmodel.NewPagination(int(currentPage), output.LinkedTotalCount, int(viewmodel.LinkLimit)),
-		SpaceIdentifier: spaceIdentifier,
+		Pagination:      pagination,
+		LoadMoreCapped:  loadMoreCapped,
+		SpaceIdentifier: output.Space.Identifier,
 		PageNumber:      int32(output.Page.Number),
+		State:           linkState,
+		// The per-card edit link follows the viewer's own permission, the same way the initial
+		// listing on the page detail screen does.
+		//
+		// [Ja] 各カードの編集リンクは、ページ表示画面の初回描画と同じく閲覧者自身の権限に従う。
+		CanEdit: output.CanUpdatePage,
 	})
 
 	// HTMLフラグメントとしてリンク一覧を送信

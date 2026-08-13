@@ -648,6 +648,15 @@ func main() {
 		// ページはゴミ箱権限を持つ閲覧者以外には 404)。
 		r.Get("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 
+		// Link list / backlink lists (htmx). They continue the listings the page detail screen
+		// renders, which is public, so they sit in the same group as that screen.
+		//
+		// [Ja] リンク一覧・バックリンク一覧 (htmx)。公開のページ表示画面が描画する一覧の続きを返す
+		// ため、同画面と同じグループに置く。
+		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
+		r.Get("/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
+		r.Get("/s/{space_identifier}/pages/{page_number}/backlinks", pageBacklinksHandler.Show)
+
 		// 編集提案（公開トピックは未ログインでも閲覧可能）
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Index)
 		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}", suggestionHandler.Show)
@@ -725,15 +734,6 @@ func main() {
 		// Draft page revision restore.
 		// [Ja] 下書きリビジョン復元。
 		r.Post("/s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}/restore", draftPageRevisionRestoreHandler.Create)
-
-		// リンク一覧（htmx）
-		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
-
-		// バックリンク一覧（htmx）
-		r.Get("/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
-
-		// ページレベルのバックリンク一覧（htmx）
-		r.Get("/s/{space_identifier}/pages/{page_number}/backlinks", pageBacklinksHandler.Show)
 
 		// ページ移動
 		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)

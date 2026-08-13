@@ -740,9 +740,33 @@ other = "Untitled"
 description = "Accessible name and hover tooltip for the edit link on a linked page card"
 other = "Edit page"
 
-[page_edit_links_load_more]
-description = "Load more button for link list"
+[page_links_load_more]
+description = "Shared load more link for related page lists"
 other = "More"
+
+[page_links_load_more_end]
+description = "Status shown after the final related-page listing page loads"
+other = "All items have been loaded."
+
+[page_links_load_more_links_aria_label]
+description = "Accessible name for the load more link of the link list"
+other = "Show more links"
+
+[page_links_load_more_linked_page_backlinks_aria_label]
+description = "Accessible name for the load more link of a linked page's backlink list"
+other = "Show more backlinks of {{.PageTitle}}"
+
+[page_links_load_more_page_backlinks_aria_label]
+description = "Accessible name for the load more link of the page's own backlink list"
+other = "Show more backlinks"
+
+[page_edit_links_load_more_limit]
+description = "Notice shown when the page edit screen reaches the related page list load limit"
+other = "This is as far as the editor loads this list."
+
+[page_edit_links_load_more_limit_link]
+description = "Link text that continues a capped related-page list one page at a time in the editor"
+other = "Continue one page at a time"
 
 [page_edit_backlinks_heading]
 description = "Heading for the backlink list on the page edit screen"
@@ -792,6 +816,18 @@ other = "This page is in the trash."
 [page_show_view_trash_link]
 description = "Link text from the trash alert to the trash screen"
 other = "View trash"
+
+[page_show_edit_button]
+description = "Link text from the page show screen to the page edit screen"
+other = "Edit"
+
+[page_show_links_heading]
+description = "Heading for the link list on the page show screen"
+other = "Links"
+
+[page_show_backlinks_heading]
+description = "Heading for the backlink list on the page show screen"
+other = "Backlinks"
 
 # Page publish validation
 [validation_page_title_required]

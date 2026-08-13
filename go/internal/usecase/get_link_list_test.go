@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -421,5 +423,113 @@ func TestGetLinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 				t.Error("SpaceMember should be nil for a viewer who is not a space member")
 			}
 		})
+	}
+}
+
+// TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset verifies that page 2 keeps using the
+// same saved or draft link set selected by the caller.
+//
+// [Ja] TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset は、呼び出し元が選んだ保存済みまたは
+// 下書きのリンク集合を 2 ページ目でも使い続けることを確認する。
+func TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	uc := NewGetLinkListUsecase(
+		repository.NewSpaceRepository(q),
+		repository.NewSpaceMemberRepository(q),
+		repository.NewPageRepository(q),
+		repository.NewTopicRepository(q),
+		repository.NewTopicMemberRepository(q),
+		repository.NewDraftPageRepository(q),
+	)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("gll-source@example.com").
+		WithAtname("gllsource").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("gll-source").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	baseTime := time.Now().Add(-24 * time.Hour)
+	newLinkedPages := func(startNumber model.PageNumber, title string) []model.PageID {
+		pageIDs := make([]model.PageID, 0, 20)
+		for index := int32(0); index < 20; index++ {
+			pageIDs = append(pageIDs, testutil.NewPageBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithNumber(startNumber+model.PageNumber(index)).
+				WithTitle(fmt.Sprintf("%s %d", title, index)).
+				WithModifiedAt(baseTime.Add(time.Duration(20-index)*time.Minute)).
+				Build())
+		}
+		return pageIDs
+	}
+	savedPageIDs := newLinkedPages(2, "Saved")
+	draftPageIDs := newLinkedPages(22, "Draft")
+	sourcePageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Source").
+		WithLinkedPageIDs(savedPageIDs).
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(sourcePageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithLinkedPageIDs(draftPageIDs).
+		Build()
+
+	memberID := userID
+	baseInput := GetLinkListInput{
+		SpaceIdentifier: "gll-source",
+		PageNumber:      1,
+		UserID:          &memberID,
+		CurrentPage:     2,
+		LinkLimit:       15,
+		BacklinkLimit:   1,
+	}
+
+	savedInput := baseInput
+	savedInput.Source = LinkListSourceSaved
+	savedOutput, err := uc.Execute(context.Background(), savedInput)
+	if err != nil {
+		t.Fatalf("saved Execute() error = %v", err)
+	}
+	if len(savedOutput.LinkedPages) != 5 {
+		t.Fatalf("len(saved page 2) = %d, want 5", len(savedOutput.LinkedPages))
+	}
+	for index, page := range savedOutput.LinkedPages {
+		if page.ID != savedPageIDs[15+index] {
+			t.Errorf("saved page 2 item %d = %v, want %v", index, page.ID, savedPageIDs[15+index])
+		}
+	}
+
+	draftInput := baseInput
+	draftInput.Source = LinkListSourceDraft
+	draftOutput, err := uc.Execute(context.Background(), draftInput)
+	if err != nil {
+		t.Fatalf("draft Execute() error = %v", err)
+	}
+	if len(draftOutput.LinkedPages) != 5 {
+		t.Fatalf("len(draft page 2) = %d, want 5", len(draftOutput.LinkedPages))
+	}
+	for index, page := range draftOutput.LinkedPages {
+		if page.ID != draftPageIDs[15+index] {
+			t.Errorf("draft page 2 item %d = %v, want %v", index, page.ID, draftPageIDs[15+index])
+		}
 	}
 }

@@ -5,11 +5,14 @@ import (
 )
 
 const (
-	// LinkLimit はリンク一覧の1ページあたりの表示件数です
+	// LinkLimit is the number of linked pages rendered per page.
+	// [Ja] LinkLimit はリンク一覧の 1 ページあたりの表示件数。
 	LinkLimit int32 = 15
-	// BacklinkLimit はバックリンクの1ページあたりの表示件数です
+	// BacklinkLimit is the number of nested backlinks rendered per page.
+	// [Ja] BacklinkLimit はネストしたバックリンクの 1 ページあたりの表示件数。
 	BacklinkLimit int32 = 13
-	// PageBacklinkLimit はページレベルのバックリンク一覧の1ページあたりの表示件数です
+	// PageBacklinkLimit is the number of page-level backlinks rendered per page.
+	// [Ja] PageBacklinkLimit はページ自身のバックリンク一覧の 1 ページあたりの表示件数。
 	PageBacklinkLimit int32 = 14
 )
 
@@ -25,6 +28,18 @@ type LinkList struct {
 	Pagination      Pagination
 	SpaceIdentifier SpaceIdentifier
 	PageNumber      int32
+
+	// LoadMoreCapped reports that a next page exists but the editor withholds it (see
+	// NewRelatedPagePagination), so the listing says where it stops instead of ending silently.
+	//
+	// [Ja] LoadMoreCapped は、次ページが存在するのに編集画面がそれを出していないことを表す
+	// (NewRelatedPagePagination を参照)。一覧は黙って終わるのではなく、どこで止まったかを伝える。
+	LoadMoreCapped bool
+
+	// State is the pagination state of every listing on the screen (see PageLinkState).
+	//
+	// [Ja] State は画面上の全一覧のページネーション状態 (PageLinkState を参照)。
+	State PageLinkState
 }
 
 // NewLinkListInput はNewLinkListの入力パラメータです
@@ -33,8 +48,18 @@ type NewLinkListInput struct {
 	TopicMap        map[model.TopicID]*model.Topic
 	BacklinkMap     map[model.PageID]BacklinkList
 	Pagination      Pagination
+	LoadMoreCapped  bool
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
+	State           PageLinkState
+
+	// CanEdit turns the per-card edit link on. The listing is shown on the public page detail
+	// screen as well, where a guest must not be offered an edit link, so the caller passes the
+	// viewer's own permission instead of it being hard-coded here.
+	//
+	// [Ja] CanEdit は各カードの編集リンクを出すかを表す。この一覧は公開のページ表示画面にも出るため、
+	// ゲストに編集リンクを見せないよう、ここで固定せず呼び出し元が閲覧者の権限を渡す。
+	CanEdit bool
 }
 
 // NewLinkList はリンク先ページの一覧からLinkListを生成します
@@ -43,7 +68,7 @@ func NewLinkList(input NewLinkListInput) LinkList {
 	for _, pg := range input.Pages {
 		card := NewCardLinkPage(pg, input.TopicMap)
 		card.Primary = true
-		card.CanEdit = true
+		card.CanEdit = input.CanEdit
 		item := LinkListItem{
 			CardLinkPage: card,
 		}
@@ -55,7 +80,9 @@ func NewLinkList(input NewLinkListInput) LinkList {
 	return LinkList{
 		Items:           items,
 		Pagination:      input.Pagination,
+		LoadMoreCapped:  input.LoadMoreCapped,
 		SpaceIdentifier: NewSpaceIdentifier(input.SpaceIdentifier),
 		PageNumber:      input.PageNumber,
+		State:           input.State,
 	}
 }

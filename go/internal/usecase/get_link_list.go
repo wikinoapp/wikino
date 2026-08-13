@@ -42,6 +42,25 @@ func NewGetLinkListUsecase(
 	}
 }
 
+// LinkListSource selects whether the listing follows an editable draft or the saved page. Its zero
+// value is LinkListSourceDraft, so a caller that omits the field gets the draft-first listing.
+//
+// [Ja] LinkListSource は一覧が編集中の下書きと保存済みページのどちらを使うかを選ぶ。ゼロ値は
+// LinkListSourceDraft のため、本フィールドを省いた呼び出し元は下書き優先の一覧になる。
+type LinkListSource uint8
+
+const (
+	// LinkListSourceDraft prefers the current member's draft when one exists.
+	//
+	// [Ja] LinkListSourceDraft は現在のメンバーの下書きがあれば優先する。
+	LinkListSourceDraft LinkListSource = iota
+
+	// LinkListSourceSaved always uses the published page's stored links.
+	//
+	// [Ja] LinkListSourceSaved は常に公開済みページの保存済みリンクを使う。
+	LinkListSourceSaved
+)
+
 // GetLinkListInput holds the input parameters for fetching the link list.
 // UserID is nil when the user is not signed in (a public topic's link list is viewable without
 // signing in).
@@ -55,6 +74,7 @@ type GetLinkListInput struct {
 	CurrentPage     int32
 	LinkLimit       int32
 	BacklinkLimit   int32
+	Source          LinkListSource
 }
 
 // GetLinkListOutput はリンク一覧取得の出力
@@ -65,7 +85,7 @@ type GetLinkListOutput struct {
 	TopicMember      *model.TopicMember
 	LinkedPages      []*model.Page
 	LinkedTotalCount int64
-	BacklinksPerPage map[model.PageID]*EditLinkBacklinks
+	BacklinksPerPage map[model.PageID]*LinkedPageBacklinks
 	TopicMap         map[model.TopicID]*model.Topic
 	CanUpdatePage    bool
 }
@@ -93,13 +113,13 @@ func (uc *GetLinkListUsecase) Execute(ctx context.Context, input GetLinkListInpu
 			UserMsg: i18n.T(ctx, "error_not_found_message"),
 		}
 	}
-	// The link list follows the member's own draft while it exists, so that links added in the
-	// editor show up before the draft is saved. Guests have no draft and always see the saved page.
+	// The editor follows the member's own draft while it exists, but the public page detail passes
+	// LinkListSourceSaved so every page of its listing stays in the same published data set.
 	//
-	// [Ja] リンク一覧は下書きがある間はそちらを優先し、エディタで足したリンクを保存前から
-	// 反映する。ゲストは下書きを持たないため常に保存済みのページを見る。
+	// [Ja] 編集画面は下書きがある間はそちらを優先する。一方、公開ページ表示画面は
+	// LinkListSourceSaved を渡し、一覧の全ページを同じ公開済みデータ集合に保つ。
 	linkedPageIDs := data.page.LinkedPageIDs
-	if data.spaceMember != nil {
+	if input.Source != LinkListSourceSaved && data.spaceMember != nil {
 		draftPage, err := uc.draftPageRepo.FindByPageAndMember(ctx, data.page.ID, data.spaceMember.ID, data.space.ID)
 		if err != nil {
 			return nil, fmt.Errorf("下書きの取得に失敗: %w", err)
@@ -121,43 +141,36 @@ func (uc *GetLinkListUsecase) Execute(ctx context.Context, input GetLinkListInpu
 		}, nil
 	}
 
-	visibility := access.visibility()
-
-	paginatedLinks, err := uc.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, data.space.ID, visibility, input.CurrentPage, input.LinkLimit)
+	// This endpoint continues the same listing the two screens render initially, so it resolves it
+	// the same way instead of repeating the queries here.
+	//
+	// [Ja] 本エンドポイントは 2 画面が初回に描画するのと同じ一覧の続きを返すため、クエリをここで繰り返す
+	// のではなく同じ手順で解決する。
+	listing, err := fetchLinkedPageListing(ctx, uc.pageRepo, linkedPageListingInput{
+		PageID:        data.page.ID,
+		LinkedPageIDs: linkedPageIDs,
+		SpaceID:       data.space.ID,
+		Visibility:    access.visibility(),
+		LinkPage:      input.CurrentPage,
+		LinkLimit:     input.LinkLimit,
+		BacklinkLimit: input.BacklinkLimit,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("リンク先ページの取得に失敗: %w", err)
+		return nil, err
 	}
 
-	excludePageIDs := buildExcludePageIDs(data.page.ID, paginatedLinks.Pages)
+	backlinksPerPage, backlinkGroups := newLinkedPageBacklinksMap(listing.backlinks)
 
-	backlinkPaginatedMap, err := uc.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, data.space.ID, visibility, input.BacklinkLimit, excludePageIDs)
-	if err != nil {
-		return nil, fmt.Errorf("バックリンクの取得に失敗: %w", err)
-	}
-
-	var allPageSlices [][]*model.Page
-	allPageSlices = append(allPageSlices, paginatedLinks.Pages)
-	for _, paginated := range backlinkPaginatedMap {
-		allPageSlices = append(allPageSlices, paginated.Pages)
-	}
-
+	allPageSlices := append([][]*model.Page{listing.paginatedLinks.Pages}, backlinkGroups...)
 	topicMap := access.topicMapForPages(allPageSlices...)
-
-	backlinksPerPage := make(map[model.PageID]*EditLinkBacklinks, len(backlinkPaginatedMap))
-	for pageID, paginated := range backlinkPaginatedMap {
-		backlinksPerPage[pageID] = &EditLinkBacklinks{
-			Pages:      paginated.Pages,
-			TotalCount: paginated.TotalCount,
-		}
-	}
 
 	return &GetLinkListOutput{
 		Space:            data.space,
 		SpaceMember:      data.spaceMember,
 		Page:             data.page,
 		TopicMember:      data.topicMember,
-		LinkedPages:      paginatedLinks.Pages,
-		LinkedTotalCount: paginatedLinks.TotalCount,
+		LinkedPages:      listing.paginatedLinks.Pages,
+		LinkedTotalCount: listing.paginatedLinks.TotalCount,
 		BacklinksPerPage: backlinksPerPage,
 		TopicMap:         topicMap,
 		CanUpdatePage:    canUpdatePage,

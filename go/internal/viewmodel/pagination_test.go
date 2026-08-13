@@ -104,3 +104,200 @@ func TestNewPagination(t *testing.T) {
 		})
 	}
 }
+
+func TestNewRelatedPagePagination_CumulativeLimit(t *testing.T) {
+	t.Parallel()
+
+	const cumulativePageLimit int32 = 10
+	totalCount := int64((cumulativePageLimit + 1) * viewmodel.LinkLimit)
+	editorState := viewmodel.PageLinkState{Context: viewmodel.PageLinkContextEdit}
+	publicState := viewmodel.PageLinkState{Context: viewmodel.PageLinkContextShow}
+	paginatedEditorState := viewmodel.PageLinkState{Context: viewmodel.PageLinkContextEditPaginated}
+
+	editorPagination, editorCapped := viewmodel.NewRelatedPagePagination(
+		cumulativePageLimit,
+		totalCount,
+		viewmodel.LinkLimit,
+		editorState,
+		cumulativePageLimit,
+	)
+	if editorPagination.HasNext {
+		t.Error("editor pagination must stop at the cumulative-fetch limit")
+	}
+	if !editorCapped {
+		t.Error("editor pagination must report that a next page is being withheld")
+	}
+	if editorPagination.Total != int(cumulativePageLimit+1) {
+		t.Errorf("editor pagination total = %d, want %d", editorPagination.Total, cumulativePageLimit+1)
+	}
+
+	publicPagination, publicCapped := viewmodel.NewRelatedPagePagination(
+		cumulativePageLimit,
+		totalCount,
+		viewmodel.LinkLimit,
+		publicState,
+		cumulativePageLimit,
+	)
+	if !publicPagination.HasNext {
+		t.Error("public pagination must remain available past the editor-only cumulative limit")
+	}
+	if publicCapped {
+		t.Error("public pagination must never report a withheld next page")
+	}
+
+	paginatedEditorPagination, paginatedEditorCapped := viewmodel.NewRelatedPagePagination(
+		cumulativePageLimit,
+		totalCount,
+		viewmodel.LinkLimit,
+		paginatedEditorState,
+		cumulativePageLimit,
+	)
+	if !paginatedEditorPagination.HasNext {
+		t.Error("one-page editor pagination must continue past the cumulative-fetch limit")
+	}
+	if paginatedEditorCapped {
+		t.Error("one-page editor pagination must not report a withheld next page")
+	}
+
+	// Reaching the limit with nothing left behind it is the ordinary end of a listing, not a
+	// truncation, so the listing must not claim there is more.
+	//
+	// [Ja] 上限に達しても後ろに何も残っていない場合は打ち切りではなく通常の終端のため、一覧が
+	// 続きがあるかのように示してはならない。
+	exactPagination, exactCapped := viewmodel.NewRelatedPagePagination(
+		cumulativePageLimit,
+		int64(cumulativePageLimit*viewmodel.LinkLimit),
+		viewmodel.LinkLimit,
+		editorState,
+		cumulativePageLimit,
+	)
+	if exactPagination.HasNext {
+		t.Error("a listing that ends exactly at the limit has no next page")
+	}
+	if exactCapped {
+		t.Error("a listing that ends exactly at the limit withholds nothing")
+	}
+}
+
+func TestPageLinkState_WithinCumulativeLimit(t *testing.T) {
+	t.Parallel()
+	const cumulativePageLimit int32 = 10
+
+	tests := []struct {
+		name  string
+		state viewmodel.PageLinkState
+		want  bool
+	}{
+		{
+			name: "editor at limit",
+			state: viewmodel.PageLinkState{
+				Context:            viewmodel.PageLinkContextEdit,
+				LinkPage:           cumulativePageLimit,
+				LinkedBacklinkPage: cumulativePageLimit,
+				PageBacklinkPage:   cumulativePageLimit,
+			},
+			want: true,
+		},
+		{
+			name: "editor past limit",
+			state: viewmodel.PageLinkState{
+				Context:  viewmodel.PageLinkContextEdit,
+				LinkPage: cumulativePageLimit + 1,
+			},
+			want: false,
+		},
+		{
+			name: "paginated editor past cumulative limit",
+			state: viewmodel.PageLinkState{
+				Context:  viewmodel.PageLinkContextEditPaginated,
+				LinkPage: cumulativePageLimit + 1,
+			},
+			want: true,
+		},
+		{
+			name: "public page past editor limit",
+			state: viewmodel.PageLinkState{
+				Context:  viewmodel.PageLinkContextShow,
+				LinkPage: cumulativePageLimit + 1,
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.state.WithinCumulativeLimit(cumulativePageLimit); got != tt.want {
+				t.Errorf("WithinCumulativeLimit() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPageLinkContext_PaginationModes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                    string
+		value                   string
+		want                    viewmodel.PageLinkContext
+		wantEdit                bool
+		wantPrecedingPages      bool
+		wantCumulativePageLimit int32
+	}{
+		{
+			name:                    "cumulative editor",
+			value:                   string(viewmodel.PageLinkContextEdit),
+			want:                    viewmodel.PageLinkContextEdit,
+			wantEdit:                true,
+			wantPrecedingPages:      true,
+			wantCumulativePageLimit: 10,
+		},
+		{
+			name:                    "one-page editor",
+			value:                   string(viewmodel.PageLinkContextEditPaginated),
+			want:                    viewmodel.PageLinkContextEditPaginated,
+			wantEdit:                true,
+			wantPrecedingPages:      false,
+			wantCumulativePageLimit: 0,
+		},
+		{
+			name:                    "public page",
+			value:                   string(viewmodel.PageLinkContextShow),
+			want:                    viewmodel.PageLinkContextShow,
+			wantEdit:                false,
+			wantPrecedingPages:      false,
+			wantCumulativePageLimit: 0,
+		},
+		{
+			name:                    "unknown values fail closed to cumulative editor",
+			value:                   "unknown",
+			want:                    viewmodel.PageLinkContextEdit,
+			wantEdit:                true,
+			wantPrecedingPages:      true,
+			wantCumulativePageLimit: 10,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			context := viewmodel.NormalizePageLinkContext(tt.value)
+			if context != tt.want {
+				t.Errorf("NormalizePageLinkContext() = %q, want %q", context, tt.want)
+			}
+			if got := context.IsEdit(); got != tt.wantEdit {
+				t.Errorf("IsEdit() = %v, want %v", got, tt.wantEdit)
+			}
+			if got := context.IncludesPrecedingPages(); got != tt.wantPrecedingPages {
+				t.Errorf("IncludesPrecedingPages() = %v, want %v", got, tt.wantPrecedingPages)
+			}
+			state := viewmodel.PageLinkState{Context: context}
+			if got := state.CumulativePageLimit(10); got != tt.wantCumulativePageLimit {
+				t.Errorf("CumulativePageLimit() = %d, want %d", got, tt.wantCumulativePageLimit)
+			}
+		})
+	}
+}

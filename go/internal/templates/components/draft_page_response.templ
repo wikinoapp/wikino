@@ -13,10 +13,14 @@ type DraftPageShowResponseData struct {
 	ModifiedAt   time.Time
 	LinkList     viewmodel.LinkList
 	BacklinkList viewmodel.BacklinkList
+	State        viewmodel.PageLinkState
 }
 
-// DraftPageShowResponse は下書き自動保存後のOOBスワップレスポンスを返します。
-// 保存時刻・リンク一覧・バックリンク一覧の3要素をOOBスワップで同時更新します。
+// DraftPageShowResponse returns the OOB swaps after a draft autosave. It updates the saved time,
+// both top-level listings and all three reconciled pagination state elements in one response.
+//
+// [Ja] DraftPageShowResponse は下書き自動保存後の OOB スワップレスポンスを返す。保存時刻、最上位の
+// 2 一覧、整合済みの 3 ページング状態要素を 1 応答で更新する。
 templ DraftPageShowResponse(data DraftPageShowResponseData) {
 	if data.HasDraft {
 		<div id="page-draft-saved-at" hx-swap-oob="outerHTML" class="text-xs text-right text-muted-foreground">
@@ -31,4 +35,6 @@ templ DraftPageShowResponse(data DraftPageShowResponseData) {
 	<div id="page-backlink-list" hx-swap-oob="innerHTML">
 		@PageBacklinkList(data.BacklinkList)
 	</div>
+
+	@relatedPageStateOOB(data.State)
 }

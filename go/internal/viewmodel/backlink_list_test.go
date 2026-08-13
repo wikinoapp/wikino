@@ -97,3 +97,26 @@ func TestNewBacklinkList_WithPagination(t *testing.T) {
 		t.Error("Pagination.HasPrevious = true, want false")
 	}
 }
+
+// TestNewBacklinkList_CanEdit pins that the per-card edit link follows the caller's flag, for the
+// same reason as TestNewLinkList_CanEdit.
+//
+// [Ja] TestNewBacklinkList_CanEdit は各カードの編集リンクが呼び出し元のフラグに従うことを固定する
+// (理由は TestNewLinkList_CanEdit と同じ)。
+func TestNewBacklinkList_CanEdit(t *testing.T) {
+	t.Parallel()
+
+	pages := []*model.Page{{Number: 1}}
+
+	for _, canEdit := range []bool{true, false} {
+		got := viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
+			Pages:           pages,
+			SpaceIdentifier: "test-space",
+			CanEdit:         canEdit,
+		})
+
+		if got.Items[0].CardLinkPage.CanEdit != canEdit {
+			t.Errorf("CanEdit = %t, want %t", got.Items[0].CardLinkPage.CanEdit, canEdit)
+		}
+	}
+}

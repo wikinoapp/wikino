@@ -1,32 +1,59 @@
 package components
 
-import (
-	"fmt"
+import "github.com/wikinoapp/wikino/go/internal/viewmodel"
 
-	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/viewmodel"
-)
-
-// BacklinkList はバックリンク一覧を表示します。カードをgridの直接の子要素として展開し、
-// ページネーション用のコンテナを末尾に配置します。
+// BacklinkList renders one linked page's backlinks. The display: contents wrapper gives the
+// one-page editor a stable whole-list swap target without changing the surrounding grid layout.
+//
+// [Ja] BacklinkList は 1 つのリンク先ページのバックリンクを表示する。display: contents のラッパーは
+// 周囲のグリッド配置を変えず、1 ページ単位の編集画面へ一覧全体の安定したスワップ対象を与える。
 templ BacklinkList(data viewmodel.BacklinkList) {
+	@backlinkList(data, false)
+}
+
+templ backlinkList(data viewmodel.BacklinkList, announceEnd bool) {
+	<div id={ backlinkListContentID(data.LinkedPageNumber) } class="contents">
+		@backlinkListBody(data, announceEnd)
+	</div>
+}
+
+// BacklinkListResponse renders the next nested backlink page and advances this card's share of the
+// editor's shared related-page state. BacklinkList remains the initial-render component so a page
+// never gets duplicate state element ids from its cards.
+//
+// [Ja] BacklinkListResponse はネストしたバックリンク一覧の次ページを描画し、編集画面で共有する
+// 関連ページ状態のうちこのカードの分を進める。初回描画には BacklinkList を使い続け、カードごとに
+// 状態要素の id が重複することを防ぐ。
+templ BacklinkListResponse(data viewmodel.BacklinkList) {
+	if isPaginatedEditPageLinkState(data.State) {
+		@backlinkList(data, true)
+	} else {
+		@backlinkListBody(data, true)
+	}
+	@nestedBacklinkPageStateOOB(data.State)
+}
+
+templ backlinkListBody(data viewmodel.BacklinkList, announceEnd bool) {
 	for _, item := range data.Items {
 		@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
 	}
 	<div
-		id={ fmt.Sprintf("page-backlink-list-%d", data.LinkedPageNumber) }
+		id={ backlinkListPaginationID(data.LinkedPageNumber) }
 		class="contents"
 	>
 		if data.Pagination.HasNext {
 			@backlinkListLoadMore(data)
+		} else if data.LoadMoreCapped {
+			@relatedPageListLimit(backlinkListLimitURL(data), backlinkListLoadMoreFocusID(data.LinkedPageNumber))
+		} else if announceEnd {
+			@relatedPageListEnd(backlinkListLoadMoreFocusID(data.LinkedPageNumber))
 		}
 	</div>
 }
 
-// backlinkListLoadMore はバックリンク一覧の「もっと見る」ボタンを表示します
+// backlinkListLoadMore renders the progressively enhanced link for the next backlink page.
+//
+// [Ja] backlinkListLoadMore は次のバックリンクページを取得する拡張リンクを表示する。
 templ backlinkListLoadMore(data viewmodel.BacklinkList) {
-	@LoadMoreButton(
-		fmt.Sprintf("%s?page=%d", string(templates.PageBacklinkListPath(data.SpaceIdentifier, data.PageNumber, data.LinkedPageNumber)), data.Pagination.Current+1),
-		fmt.Sprintf("#page-backlink-list-%d", data.LinkedPageNumber),
-	)
+	@LoadMoreLink(backlinkListLoadMoreData(data))
 }
