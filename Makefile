@@ -6,6 +6,30 @@ dev: ## 全サービスの開発サーバーを起動
 help: ## ヘルプを表示
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+# Set up both subprojects. The database phase is split because the two halves
+# have different owners: the primary database follows go/db/schema.sql and the
+# migrations dbmate manages, while Rails owns only its queue database. Each half
+# is initialized from the Makefile of the subproject that owns it, so each one
+# reads its own 1Password env file.
+#
+# db-prepare-dev is used rather than db-setup-dev so that re-running setup to
+# pick up new dependencies keeps the development data. Rebuilding the database
+# from scratch is a separate, explicit `make -C go db-setup-dev`.
+#
+# [Ja] 両サブプロジェクトをセットアップする。データベースのフェーズを分けているのは
+# 所有者が異なるため。primary は go/db/schema.sql と dbmate が管理するマイグレーション
+# に従い、Rails が持つのは queue だけである。それぞれを所有するサブプロジェクトの
+# Makefile から初期化することで、各自の 1Password 環境ファイルが読み込まれる。
+#
+# db-setup-dev ではなく db-prepare-dev を使うのは、依存関係を入れ直すために setup を
+# 実行し直しても開発データが残るようにするため。データベースを作り直すのは
+# `make -C go db-setup-dev` を明示的に実行したときだけとする。
+.PHONY: setup
+setup: ## Install the Rails dependencies and set up both databases. [Ja] Rails の依存関係をインストールし、両方のデータベースをセットアップ
+	$(MAKE) -C rails setup
+	$(MAKE) -C go db-prepare-dev
+	$(MAKE) -C rails db-setup
+
 .PHONY: fmt
 fmt: ## Format code (Oxfmt). [Ja] コードをフォーマット (Oxfmt)
 	pnpm fmt
