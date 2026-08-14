@@ -226,7 +226,7 @@ class WebSocket::Driver::Draft75 < ::WebSocket::Driver
   # source://websocket-driver//lib/websocket/driver/draft75.rb#21
   def close(reason = T.unsafe(nil), code = T.unsafe(nil)); end
 
-  # source://websocket-driver//lib/websocket/driver/draft75.rb#73
+  # source://websocket-driver//lib/websocket/driver/draft75.rb#74
   def frame(buffer, type = T.unsafe(nil), error_type = T.unsafe(nil)); end
 
   # source://websocket-driver//lib/websocket/driver/draft75.rb#28
@@ -237,10 +237,10 @@ class WebSocket::Driver::Draft75 < ::WebSocket::Driver
 
   private
 
-  # source://websocket-driver//lib/websocket/driver/draft75.rb#82
+  # source://websocket-driver//lib/websocket/driver/draft75.rb#83
   def handshake_response; end
 
-  # source://websocket-driver//lib/websocket/driver/draft75.rb#88
+  # source://websocket-driver//lib/websocket/driver/draft75.rb#89
   def parse_leading_byte(octet); end
 end
 
@@ -939,12 +939,12 @@ module WebSocket::HTTP::Headers
 
   # @return [Boolean]
   #
-  # source://websocket-driver//lib/websocket/http/headers.rb#47
+  # source://websocket-driver//lib/websocket/http/headers.rb#48
   def complete?; end
 
   # @return [Boolean]
   #
-  # source://websocket-driver//lib/websocket/http/headers.rb#51
+  # source://websocket-driver//lib/websocket/http/headers.rb#52
   def error?; end
 
   # Returns the value of attribute headers.
@@ -952,21 +952,21 @@ module WebSocket::HTTP::Headers
   # source://websocket-driver//lib/websocket/http/headers.rb#38
   def headers; end
 
-  # source://websocket-driver//lib/websocket/http/headers.rb#55
+  # source://websocket-driver//lib/websocket/http/headers.rb#56
   def parse(chunk); end
 
   private
 
-  # source://websocket-driver//lib/websocket/http/headers.rb#84
+  # source://websocket-driver//lib/websocket/http/headers.rb#87
   def complete; end
 
-  # source://websocket-driver//lib/websocket/http/headers.rb#88
+  # source://websocket-driver//lib/websocket/http/headers.rb#91
   def error; end
 
-  # source://websocket-driver//lib/websocket/http/headers.rb#92
+  # source://websocket-driver//lib/websocket/http/headers.rb#95
   def header_line(line); end
 
-  # source://websocket-driver//lib/websocket/http/headers.rb#106
+  # source://websocket-driver//lib/websocket/http/headers.rb#109
   def string_buffer; end
 end
 
@@ -1004,7 +1004,7 @@ WebSocket::HTTP::Headers::HEADER_LINE = T.let(T.unsafe(nil), Regexp)
 WebSocket::HTTP::Headers::LF = T.let(T.unsafe(nil), Integer)
 
 # source://websocket-driver//lib/websocket/http/headers.rb#5
-WebSocket::HTTP::Headers::MAX_LINE_LENGTH = T.let(T.unsafe(nil), Integer)
+WebSocket::HTTP::Headers::MAX_REQUEST_SIZE = T.let(T.unsafe(nil), Integer)
 
 # source://websocket-driver//lib/websocket/http/request.rb#4
 class WebSocket::HTTP::Request
@@ -1019,6 +1019,9 @@ class WebSocket::HTTP::Request
 
   # source://websocket-driver//lib/websocket/http/request.rb#29
   def complete; end
+
+  # source://websocket-driver//lib/websocket/http/request.rb#40
+  def set_server_vars; end
 
   # source://websocket-driver//lib/websocket/http/request.rb#15
   def start_line(line); end
