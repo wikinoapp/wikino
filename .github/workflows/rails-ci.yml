@@ -47,7 +47,20 @@ jobs:
       run:
         working-directory: rails
     steps:
+      # Check out the PR head branch itself rather than the merge commit, so the
+      # "Push RBI files or fail" step below can push the commit it creates.
+      # Without this, actions/checkout leaves the repository on a detached HEAD
+      # for pull_request events and git push aborts with exit 128. The
+      # expression is empty on push events, which falls back to the default ref.
+      #
+      # [Ja] 下の "Push RBI files or fail" ステップが作成したコミットを push できるよう、
+      # マージコミットではなく PR のヘッドブランチ自体をチェックアウトする。これがないと
+      # pull_request イベントでは actions/checkout が detached HEAD のままにするため、
+      # git push が exit 128 で失敗する。push イベントではこの式が空になり、既定の
+      # ref にフォールバックする。
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
       - name: Install libvips
         run: |
           sudo apt-get update
