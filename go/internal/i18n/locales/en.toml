@@ -821,6 +821,22 @@ other = "View trash"
 description = "Link text from the page show screen to the page edit screen"
 other = "Edit"
 
+[page_show_page_actions_aria_label]
+description = "Aria label for the page actions dropdown trigger button on the page show screen"
+other = "Page actions"
+
+[page_show_page_actions_move]
+description = "Dropdown menu item on the page show screen: move the page to another topic"
+other = "Move"
+
+[page_show_page_actions_trash]
+description = "Dropdown menu item on the page show screen: move the page to the trash"
+other = "Move to Trash"
+
+[page_show_page_actions_trash_confirm]
+description = "Confirmation dialog before moving a page to the trash"
+other = "Are you sure you want to move this page to trash?"
+
 [page_show_links_heading]
 description = "Heading for the link list on the page show screen"
 other = "Links"
@@ -867,6 +883,11 @@ other = "Draft saved."
 [flash_draft_page_revision_restored]
 description = "Draft page revision restored success message"
 other = "Restored the draft to the selected version."
+
+# Page moved to trash
+[flash_page_moved_to_trash]
+description = "Page moved to trash success message"
+other = "Page moved to trash."
 
 # Suggestion page update success
 [flash_suggestion_page_updated]
@@ -1223,6 +1244,11 @@ other = "Email has not been confirmed"
 [error_not_found_back_to_top]
 description = "404 error page link to top page"
 other = "Back to top page"
+
+# Forbidden error
+[error_forbidden]
+description = "Error message when the user is not allowed to perform the operation"
+other = "You do not have permission to perform this operation"
 
 # Suggestions
 [suggestion_index_title]

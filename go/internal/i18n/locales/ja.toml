@@ -821,6 +821,22 @@ other = "ゴミ箱を見る"
 description = "ページ表示画面のページ編集画面へのリンクテキスト"
 other = "編集する"
 
+[page_show_page_actions_aria_label]
+description = "ページ表示画面の操作ドロップダウンを開くボタンの aria-label"
+other = "ページのアクション"
+
+[page_show_page_actions_move]
+description = "ページ表示画面のドロップダウンメニュー: ページを別のトピックへ移動する"
+other = "移動する"
+
+[page_show_page_actions_trash]
+description = "ページ表示画面のドロップダウンメニュー: ページをゴミ箱に入れる"
+other = "ゴミ箱に入れる"
+
+[page_show_page_actions_trash_confirm]
+description = "ページをゴミ箱に入れる操作の確認ダイアログ"
+other = "ページをゴミ箱に入れますか？"
+
 [page_show_links_heading]
 description = "ページ表示画面のリンク一覧の見出し"
 other = "リンク"
@@ -867,6 +883,11 @@ other = "下書きを保存しました"
 [flash_draft_page_revision_restored]
 description = "下書きリビジョン復元成功メッセージ"
 other = "下書きを選択したバージョンに戻しました"
+
+# ページのゴミ箱への移動成功
+[flash_page_moved_to_trash]
+description = "ページのゴミ箱への移動成功メッセージ"
+other = "ページをゴミ箱に移動しました"
 
 # 編集提案ページ更新成功
 [flash_suggestion_page_updated]
@@ -1223,6 +1244,11 @@ other = "メール確認が完了していません"
 [error_not_found_back_to_top]
 description = "404エラーページのトップページリンク"
 other = "トップページに戻る"
+
+# 権限エラー
+[error_forbidden]
+description = "操作する権限がない場合のエラーメッセージ"
+other = "この操作を行う権限がありません"
 
 # 編集提案一覧
 [suggestion_index_title]

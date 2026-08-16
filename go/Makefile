@@ -115,7 +115,7 @@ lint-comments: ## Check [Ja]-marker misuse in code comments (koryluslint). [Ja] 
 	@go tool koryluslint comment
 
 .PHONY: lint
-lint: lint-golangci lint-comments ## リントを実行（golangci-lint + コメント併記チェック）
+lint: lint-golangci lint-comments sqlc-diff ## Run all linters (golangci-lint + bilingual comment check + sqlc sync check). [Ja] リントを実行 (golangci-lint + コメント併記チェック + sqlc 同期チェック)
 
 .PHONY: clean
 clean: ## ビルド成果物をクリーン
@@ -249,7 +249,19 @@ db-dump: ## データベーススキーマをdb/schema.sqlにダンプ
 
 .PHONY: sqlc-generate
 sqlc-generate: ## SQLクエリからGoコードを生成
-	sqlc generate
+	go tool sqlc generate
+
+# Compare the generated code with db/queries/ and db/schema.sql and fail when they
+# have drifted apart. `sqlc diff` only prints the differences, so this stays safe to
+# run from lint: regenerating the code remains the job of sqlc-generate.
+#
+# [Ja] 生成コードを db/queries/ と db/schema.sql と比較し、ずれていれば失敗する。
+# `sqlc diff` は差分を表示するだけなので lint から呼んでも安全であり、コードを
+# 生成し直すのは sqlc-generate の責務のままとする。
+.PHONY: sqlc-diff
+sqlc-diff: ## Check that the generated code is in sync with the queries and schema. [Ja] 生成コードがクエリ・スキーマと同期しているかをチェック
+	@echo "🔍 sqlc 生成コードの同期をチェック中..."
+	@go tool sqlc diff
 
 # E2Eテストコマンド
 

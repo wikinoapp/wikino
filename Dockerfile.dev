@@ -279,8 +279,7 @@ ENV GOCACHE=/go/.cache/go-build
 ENV GOMODCACHE=/go/pkg/mod
 ENV GOPATH=/go
 ENV PATH="${GOPATH}/bin:${PATH}"
-RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0 && \
-    go install github.com/air-verse/air@latest
+RUN go install github.com/air-verse/air@latest
 
 # --- Ruby tools ---
 RUN gem install bundler -v 2.5.16

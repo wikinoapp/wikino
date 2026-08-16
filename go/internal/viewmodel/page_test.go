@@ -108,7 +108,7 @@ func TestNewPageForShow(t *testing.T) {
 		BodyHTML: "<p>Page body</p>",
 		Number:   42,
 	}
-	got := viewmodel.NewPageForShow(page)
+	got := viewmodel.NewPageForShow(page, nil)
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
 
 	if got.DisplayTitle(ctx) != title {
@@ -145,7 +145,7 @@ func TestPageForShow_DisplayTitle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			page := viewmodel.NewPageForShow(&model.Page{Title: tt.title})
+			page := viewmodel.NewPageForShow(&model.Page{Title: tt.title}, nil)
 			ctx := i18n.SetLocale(t.Context(), tt.locale)
 
 			if got := page.DisplayTitle(ctx); got != tt.want {
@@ -204,10 +204,86 @@ func TestPageForShow_MetaDescription(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			page := viewmodel.NewPageForShow(&model.Page{BodyHTML: tt.bodyHTML})
+			page := viewmodel.NewPageForShow(&model.Page{BodyHTML: tt.bodyHTML}, nil)
 
 			if got := page.MetaDescription(); got != tt.want {
 				t.Errorf("MetaDescription() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestPageForShow_OGImageAttachmentID fixes which cover images the og:image tag may point at. The
+// empty cases are the ones that must leave the caller on the site-wide default OGP image.
+//
+// [Ja] TestPageForShow_OGImageAttachmentID は og:image タグが指してよいアイキャッチ画像を固定する。
+// 空文字列を返すケースは、呼び出し元がサイト共通の既定 OGP 画像を保たなければならないケースにあたる。
+func TestPageForShow_OGImageAttachmentID(t *testing.T) {
+	t.Parallel()
+
+	attachment := func(filename string) *model.Attachment {
+		return &model.Attachment{
+			ID:       model.AttachmentID("550e8400-e29b-41d4-a716-446655440000"),
+			Filename: filename,
+		}
+	}
+
+	tests := []struct {
+		name       string
+		attachment *model.Attachment
+		want       string
+	}{
+		{
+			name:       "アイキャッチ画像を持つページは添付ファイルの ID を返す",
+			attachment: attachment("cover.png"),
+			want:       "550e8400-e29b-41d4-a716-446655440000",
+		},
+		{
+			name:       "アイキャッチ画像を持たないページは空文字列を返す",
+			attachment: nil,
+			want:       "",
+		},
+		{
+			name:       "GIF のアイキャッチ画像は空文字列を返す",
+			attachment: attachment("animation.gif"),
+			want:       "",
+		},
+		{
+			// Rails compares the downcased filename, so an uppercase extension is a GIF as well.
+			//
+			// [Ja] Rails 版は小文字化したファイル名で比較するため、大文字の拡張子も GIF として扱う。
+			name:       "拡張子が大文字の GIF も空文字列を返す",
+			attachment: attachment("ANIMATION.GIF"),
+			want:       "",
+		},
+		{
+			// Only the extension makes it a GIF: a name that merely contains "gif" does not.
+			//
+			// [Ja] GIF と判定するのは拡張子だけで、名前に "gif" を含むだけのファイルは判定しない。
+			name:       "ファイル名に gif を含むだけの画像は ID を返す",
+			attachment: attachment("gift.png"),
+			want:       "550e8400-e29b-41d4-a716-446655440000",
+		},
+		{
+			// The filename is not populated on every fetch path, and an unknown format must not be
+			// treated as a GIF.
+			//
+			// [Ja] ファイル名はすべての取得経路で populate されるわけではなく、形式が分からない場合を
+			// GIF として扱ってはならない。
+			name:       "ファイル名が空の添付ファイルは ID を返す",
+			attachment: attachment(""),
+			want:       "550e8400-e29b-41d4-a716-446655440000",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			page := viewmodel.NewPageForShow(&model.Page{}, tt.attachment)
+
+			if got := page.OGImageAttachmentID(); got != tt.want {
+				t.Errorf("OGImageAttachmentID() = %q, want %q", got, tt.want)
 			}
 		})
 	}

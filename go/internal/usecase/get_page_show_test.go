@@ -441,6 +441,9 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		if output.CanUpdatePage {
 			t.Error("CanUpdatePage should be false for a guest")
 		}
+		if output.CanTrashPage {
+			t.Error("CanTrashPage should be false for a guest")
+		}
 		if output.FeaturedImageAttachment != nil {
 			t.Error("FeaturedImageAttachment should be nil for a page without a cover image")
 		}
@@ -491,6 +494,67 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 		if !output.CanUpdatePage {
 			t.Error("CanUpdatePage should be true for a member holding page:write")
+		}
+	})
+
+	// The header's action dropdown offers editing and trashing on two different scopes, so the two
+	// flags are pinned per scope. page:write must not open the trash item: an editor who may rewrite
+	// a page is not thereby allowed to take it out of the space's visible content.
+	//
+	// [Ja] ヘッダーの操作ドロップダウンは編集とゴミ箱を別々のスコープで出し分けるため、2 つのフラグ
+	// をスコープごとに固定する。page:write でゴミ箱項目が開いてはならない。ページを書き換えてよい
+	// 編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
+	t.Run("正常系: CanTrashPage は page:write ではなく page:trash で決まる", func(t *testing.T) {
+		tests := []struct {
+			name              string
+			userID            model.UserID
+			wantCanUpdatePage bool
+			wantCanTrashPage  bool
+		}{
+			{
+				name:              "space:admin を持つオーナーは両方できる",
+				userID:            ownerID,
+				wantCanUpdatePage: true,
+				wantCanTrashPage:  true,
+			},
+			{
+				name:              "page:trash だけを持つメンバーはゴミ箱へ入れるだけできる",
+				userID:            trashMemberID,
+				wantCanUpdatePage: false,
+				wantCanTrashPage:  true,
+			},
+			{
+				name:              "page:read だけを持つメンバーはどちらもできない",
+				userID:            readerID,
+				wantCanUpdatePage: false,
+				wantCanTrashPage:  false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				userID := tt.userID
+				output, err := uc.Execute(context.Background(), GetPageShowInput{
+					LinkPage:               1,
+					LinkedPageBacklinkPage: 1,
+					PageBacklinkPage:       1,
+					SpaceIdentifier:        "gps-space",
+					PageNumber:             1,
+					UserID:                 &userID,
+				})
+				if err != nil {
+					t.Fatalf("Execute() error = %v", err)
+				}
+				if output == nil {
+					t.Fatal("output should not be nil")
+				}
+				if output.CanUpdatePage != tt.wantCanUpdatePage {
+					t.Errorf("CanUpdatePage = %v, want %v", output.CanUpdatePage, tt.wantCanUpdatePage)
+				}
+				if output.CanTrashPage != tt.wantCanTrashPage {
+					t.Errorf("CanTrashPage = %v, want %v", output.CanTrashPage, tt.wantCanTrashPage)
+				}
+			})
 		}
 	})
 

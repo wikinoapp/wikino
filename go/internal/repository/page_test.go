@@ -1515,6 +1515,92 @@ func TestPageRepository_Update(t *testing.T) {
 	})
 }
 
+func TestPageRepository_TrashByID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-trash-space").
+		Build()
+
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-trash-other-space").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	t.Run("ページをゴミ箱に入れられる", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Trash Target").
+			Build()
+
+		trashedAt := time.Now().Truncate(time.Microsecond)
+		if err := repo.TrashByID(context.Background(), pageID, spaceID, trashedAt); err != nil {
+			t.Fatalf("TrashByID() error = %v", err)
+		}
+
+		page, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, 1)
+		if err != nil {
+			t.Fatalf("FindBySpaceAndNumber() error = %v", err)
+		}
+		if page == nil {
+			t.Fatal("FindBySpaceAndNumber() returned nil, want page")
+		}
+		if page.TrashedAt == nil {
+			t.Fatal("page.TrashedAt = nil, want the stamped time")
+		}
+		if !page.TrashedAt.Equal(trashedAt) {
+			t.Errorf("page.TrashedAt = %v, want %v", page.TrashedAt, trashedAt)
+		}
+		if !page.UpdatedAt.Equal(trashedAt) {
+			t.Errorf("page.UpdatedAt = %v, want %v", page.UpdatedAt, trashedAt)
+		}
+		// The trashed page keeps its title and body so that it can be restored.
+		//
+		// [Ja] ゴミ箱に入れたページは復元できるようタイトルと本文を保持する。
+		if page.Title == nil || *page.Title != "Trash Target" {
+			t.Errorf("page.Title = %v, want 'Trash Target'", page.Title)
+		}
+		if page.DiscardedAt != nil {
+			t.Errorf("page.DiscardedAt = %v, want nil (ゴミ箱は論理削除ではない)", page.DiscardedAt)
+		}
+	})
+
+	t.Run("別スペースを指定した場合は更新されない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Other Space Scope").
+			Build()
+
+		if err := repo.TrashByID(context.Background(), pageID, otherSpaceID, time.Now()); err != nil {
+			t.Fatalf("TrashByID() error = %v", err)
+		}
+
+		page, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, 2)
+		if err != nil {
+			t.Fatalf("FindBySpaceAndNumber() error = %v", err)
+		}
+		if page == nil {
+			t.Fatal("FindBySpaceAndNumber() returned nil, want page")
+		}
+		if page.TrashedAt != nil {
+			t.Errorf("page.TrashedAt = %v, want nil (別スペースの指定では更新されないべき)", page.TrashedAt)
+		}
+	})
+}
+
 func TestPageRepository_FindBacklinksForPages(t *testing.T) {
 	t.Parallel()
 

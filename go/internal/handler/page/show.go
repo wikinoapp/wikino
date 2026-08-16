@@ -99,7 +99,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pageVM := viewmodel.NewPageForShow(output.Page)
+	pageVM := viewmodel.NewPageForShow(output.Page, output.FeaturedImageAttachment)
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
@@ -133,6 +133,14 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// ことで、組み合わせの直積ぶんの URL を、内容を持つ 1 つのアドレスへ集約する。組み合わせごとに
 	// インデックス対象のアドレスを宣言しない。
 	meta.OGURL = h.cfg.AppURL() + string(templates.PagePath(spaceIdentVM, viewmodel.PageNumber(pageVM.Number)))
+	// A page with a cover image advertises it as the link preview. Pages without one keep the
+	// site-wide default OGP image set by DefaultPageMeta.
+	//
+	// [Ja] アイキャッチ画像を持つページはその画像をリンクプレビューとして出す。持たないページは
+	// DefaultPageMeta が設定したサイト共通の既定 OGP 画像を保つ。
+	if attachmentID := pageVM.OGImageAttachmentID(); attachmentID != "" {
+		meta.OGImage = h.cfg.AppURL() + string(templates.AttachmentOGImagePath(attachmentID))
+	}
 	// The page detail is the one long-form content screen, so it declares itself as an article
 	// instead of taking the site-wide website type.
 	//
@@ -174,11 +182,25 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		CanEdit: output.CanUpdatePage,
 	})
 
+	// The token is fetched only for a viewer holding page:trash. An already-trashed page passes it to
+	// ShowData but does not render the trash form or hidden input. Viewers without page:trash,
+	// including guests, receive an empty value, so their HTML carries no token.
+	//
+	// [Ja] page:trash を持つ閲覧者のときだけトークンを取得する。既にゴミ箱にあるページでは
+	// ShowData にトークンを渡すが、ゴミ箱フォームと hidden input は描画しない。ゲストを含む
+	// page:trash を持たない閲覧者には空文字を渡すため、その HTML にはトークンが載らない。
+	var csrfToken string
+	if output.CanTrashPage {
+		csrfToken = middleware.GetCSRFTokenFromContext(ctx)
+	}
+
 	content := pagepages.Show(pagepages.ShowData{
 		Page:          pageVM,
 		Space:         spaceVM,
 		IsTrashed:     output.IsTrashed,
 		CanUpdatePage: output.CanUpdatePage,
+		CanTrashPage:  output.CanTrashPage,
+		CSRFToken:     csrfToken,
 		LinkList:      linkData.LinkList,
 		BacklinkList:  linkData.BacklinkList,
 	})

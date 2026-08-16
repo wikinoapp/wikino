@@ -33,6 +33,25 @@
   --app-info: var(--color-blue-600);
   --app-info-foreground: var(--color-white);
   --app-bottom-nav-max-height: 54px;
+  /*
+    Minimum height of the compact sticky header (pages/page/show.templ). When actions are present,
+    the header reserves this compact height; sticky-header.ts separately measures any height lost
+    from a wrapped expanded title and adds it to the adjacent spacer. The document uses the compact
+    height as scroll padding so a focused element never scrolls in underneath the pinned bar.
+
+    Below md the actions wrap onto their own row, giving 20px (the clamped title) + 8px (the gap) +
+    36px (the buttons) + 16px (the vertical padding) + 1px (the bottom border) = 81px.
+
+    [Ja] コンパクトなスティッキーヘッダーの最小高 (pages/page/show.templ)。操作領域がある場合、
+    ヘッダーはこのコンパクト高を確保する。折り返された展開時タイトルから失われる高さは
+    sticky-header.ts が別途計測し、隣接する spacer に加える。文書はコンパクト高をスクロール余白にも
+    使い、フォーカスされた要素が固定バーの下へ潜り込まないようにする。
+
+    md 未満では操作領域が下の行に回るため、
+    20px (切り詰めたタイトル) + 8px (行間) + 36px (ボタン) + 16px (上下パディング) + 1px (下境界線)
+    = 81px になる。
+  */
+  --app-sticky-header-height: 81px;
 
   /* Basecoatの変数上書き */
   --background: var(--app-primary-foreground);
@@ -48,6 +67,38 @@
   --input: var(--color-stone-300);
 
   text-autospace: normal;
+}
+
+/*
+  At md and above, the sticky header's actions fit on the same row as the title:
+  36px (buttons) + 16px (vertical padding) + 1px (bottom border) = 53px.
+
+  The breakpoint is read from the theme rather than written out, because this height has to switch
+  at exactly the point where the header's own md: utilities rewrap its actions.
+
+  [Ja] md 以上ではスティッキーヘッダーの操作領域がタイトルと同じ行に収まるため、
+  36px (ボタン) + 16px (上下パディング) + 1px (下境界線) = 53px になる。
+
+  ブレークポイントは実値を書かずにテーマから読む。この高さは、ヘッダー自身の md: ユーティリティが
+  操作領域の折り返しを切り替えるのとまったく同じ位置で切り替わる必要があるためである。
+*/
+@media (width >= theme(--breakpoint-md)) {
+  :root {
+    --app-sticky-header-height: 53px;
+  }
+}
+
+/*
+  Keep the element that scrolls into view on focus clear of a sticky header, which would otherwise
+  cover it and leave a keyboard user unable to see where they are (WCAG 2.4.11). The padding applies
+  only on a screen that renders such a header, and matches the height the header reserves.
+
+  [Ja] フォーカス移動でスクロールしてきた要素がスティッキーヘッダーに覆われ、キーボード利用者が現在位置
+  を見失わないようにする (WCAG 2.4.11)。余白はヘッダーを描画する画面にだけ効かせ、ヘッダーが確保する
+  高さに揃える。
+*/
+:root:has([data-sticky-header]) {
+  scroll-padding-top: var(--app-sticky-header-height);
 }
 
 @theme {

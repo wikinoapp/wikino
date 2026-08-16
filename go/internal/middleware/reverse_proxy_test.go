@@ -607,6 +607,122 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest_PageShow(t *testing.T) 
 	}
 }
 
+func TestReverseProxyMiddleware_getFeatureFlagForRequest_PageTrash(t *testing.T) {
+	// The production featureFlaggedPatterns slice is read directly here, so
+	// t.Parallel() is intentionally omitted to avoid running concurrently with
+	// tests that swap out this global variable.
+	//
+	// [Ja] 本番の featureFlaggedPatterns を読むテストのため t.Parallel() は使用しない
+	// (このグローバル変数を上書きする他テストと並行実行されないようにする)
+
+	cfg := &config.Config{
+		Domain: "wikino.app",
+	}
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	testCases := []struct {
+		name     string
+		method   string
+		path     string
+		expected model.FeatureFlagName
+	}{
+		{
+			// The action shares the page detail screen's flag: the form that posts here is rendered
+			// by that screen, so both must be served by the same side.
+			//
+			// [Ja] 本操作はページ表示画面とフラグを共有する。ここへ POST するフォームは同画面が
+			// 描画するため、両者は常に同じ側で処理される必要がある。
+			name:     "ゴミ箱へ入れる (POST) は go_page_show を返す",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/trash",
+			expected: model.FeatureFlagPageShow,
+		},
+		{
+			// Rails has no GET route for this path, so a GET must fall through to Rails and raise a
+			// RoutingError there rather than be answered by the Go handler.
+			//
+			// [Ja] Rails 版にこのパスの GET ルートは無いため、GET は Go ハンドラーが応答せず
+			// Rails に転送されて RoutingError になるべき。
+			name:     "ゴミ箱へ入れる (GET) はPOST限定パターンにマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/trash",
+			expected: "",
+		},
+		{
+			// The trailing "$" keeps sub-paths out, so a future /trash/... route is not swept in by
+			// this pattern.
+			//
+			// [Ja] 末尾 $ によりサブパスは対象外にし、将来 /trash/... のルートが増えても本パターンが
+			// 巻き込まないようにする。
+			name:     "ゴミ箱配下のサブパスはマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/trash/restore",
+			expected: "",
+		},
+		{
+			// The space-level trash screen (/s/:identifier/trash) stays on Rails, so it must not be
+			// caught by the page-scoped pattern.
+			//
+			// [Ja] スペース単位のゴミ箱画面 (/s/:identifier/trash) は Rails 版のまま残るため、
+			// ページ単位の本パターンが拾ってはいけない。
+			name:     "スペースのゴミ箱画面はマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/trash",
+			expected: "",
+		},
+		{
+			name:     "ページ番号が数字でないパスはマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/abc/trash",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			result := m.getFeatureFlagForRequest(req)
+			if result != tc.expected {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestReverseProxyMiddleware_isGoHandledByRegex_PageTrashNotAlwaysGo(t *testing.T) {
+	// The production goHandledRegexPatterns slice is read directly here, so
+	// t.Parallel() is intentionally omitted to avoid running concurrently with
+	// tests that swap out this global variable.
+	//
+	// [Ja] 本番の goHandledRegexPatterns を読むテストのため t.Parallel() は使用しない
+	// (このグローバル変数を上書きする他テストと並行実行されないようにする)
+
+	cfg := &config.Config{
+		Domain: "wikino.app",
+	}
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
+	}
+
+	// The trash action must be reached through the feature flag only. If it also sat in the
+	// always-Go set, the flag-off users' Rails form would post to the Go handler and be rejected
+	// for lacking a Go CSRF token.
+	//
+	// [Ja] ゴミ箱へ入れる操作はフィーチャーフラグ経由でのみ Go に届くべき。常時 Go 対象にも入って
+	// いると、フラグ OFF のユーザーが Rails 版のフォームから POST したときに Go ハンドラーへ届き、
+	// Go 版の CSRF トークンが無いとして弾かれてしまう。
+	req := httptest.NewRequest(http.MethodPost, "/s/my-space/pages/1/trash", nil)
+	if m.isGoHandledByRegex(req) {
+		t.Error("isGoHandledByRegex(POST /s/my-space/pages/1/trash) = true, want false (フィーチャーフラグで制御)")
+	}
+}
+
 func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	// グローバル変数 featureFlaggedPatterns を変更するため t.Parallel() は使用しない
 

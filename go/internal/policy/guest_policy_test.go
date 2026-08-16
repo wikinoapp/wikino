@@ -46,6 +46,7 @@ func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 		{"CanCreatePage", p.CanCreatePage()},
 		{"CanUpdatePage", p.CanUpdatePage()},
 		{"CanShowTrash", p.CanShowTrash()},
+		{"CanTrashPage", p.CanTrashPage()},
 		{"CanShowDraftPage(owner)", p.CanShowDraftPage(true)},
 		{"CanShowDraftPage(non-owner)", p.CanShowDraftPage(false)},
 		{"CanUpdateDraftPage(owner)", p.CanUpdateDraftPage(true)},

@@ -199,6 +199,26 @@ func PageMovePath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) P
 	return Path(fmt.Sprintf("/s/%s/pages/%d/move", spaceIdentifier, pageNumber))
 }
 
+// PageTrashPath generates the path that moves a page into the trash. It is the POST destination of
+// the page actions form, not a screen: the space's trash screen is TrashPath.
+//
+// [Ja] PageTrashPath はページをゴミ箱へ入れるパスを生成します。画面ではなくページ操作フォームの
+// POST 先で、スペースのゴミ箱画面は TrashPath です。
+func PageTrashPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/trash", spaceIdentifier, pageNumber))
+}
+
+// AttachmentOGImagePath generates the path to the og:image delivery endpoint of an attachment. The
+// endpoint re-evaluates on every request whether the referencing pages are public, so the path
+// stays valid past the cache lifetime of the HTML that carries it.
+//
+// [Ja] AttachmentOGImagePath は添付ファイルの og:image 配信エンドポイントのパスを生成します。
+// エンドポイントはリクエストのたびに参照元ページが公開かを再評価するため、このパスを載せた HTML の
+// キャッシュ寿命を超えても無効化されません。
+func AttachmentOGImagePath(attachmentID string) Path {
+	return Path(fmt.Sprintf("/attachments/%s/og_image", attachmentID))
+}
+
 // SuggestionListPath は編集提案一覧のパスを生成します
 func SuggestionListPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions", spaceIdentifier, topicNumber))

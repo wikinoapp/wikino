@@ -108,6 +108,15 @@ type GetPageShowOutput struct {
 
 	CanUpdatePage bool
 
+	// CanTrashPage reports whether the viewer may move this page into the trash, and gates the trash
+	// item of the header's action dropdown. It rides on page:trash rather than page:write, so a
+	// member who may rewrite the page does not thereby get the item (see Authorizer.CanTrashPage).
+	//
+	// [Ja] CanTrashPage は閲覧者がこのページをゴミ箱へ入れられるかを表し、ヘッダーの操作ドロップ
+	// ダウンのゴミ箱項目の出し分けに使う。判定軸は page:write ではなく page:trash のため、ページを
+	// 書き換えてよいメンバーというだけでは項目は出ない (Authorizer.CanTrashPage を参照)。
+	CanTrashPage bool
+
 	// FeaturedImageAttachment is the page's cover image attachment, used to build the og:image meta
 	// tag. It is nil when the page has no cover image, or when the repository cannot resolve the
 	// attachment. Only ID / SpaceID / Filename are populated (see
@@ -198,6 +207,7 @@ func (uc *GetPageShowUsecase) Execute(ctx context.Context, input GetPageShowInpu
 		Topic:                   data.topic,
 		IsTrashed:               isTrashed,
 		CanUpdatePage:           authorizer.CanUpdatePage(),
+		CanTrashPage:            authorizer.CanTrashPage(),
 		FeaturedImageAttachment: featuredImageAttachment,
 		LinkedPages:             links.linkedPages,
 		LinkedTotalCount:        links.linkedTotalCount,
