@@ -377,6 +377,316 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 		}
 	})
 
+	t.Run("公開トピックのゴミ箱に入ったページから参照されている添付は nil を返す", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-7")
+		topicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Trashed").
+			WithTrashed().
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	t.Run("非公開トピックのゴミ箱に入ったページからの参照は visibility 判定に影響しない", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-8")
+		publicTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		privateTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(2).
+			WithName("private").
+			WithVisibility(int32(model.TopicVisibilityPrivate)).
+			Build()
+		publicPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(publicTopicID).
+			WithNumber(1).
+			WithTitle("Public").
+			Build()
+		trashedPrivatePageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(privateTopicID).
+			WithNumber(2).
+			WithTitle("Trashed private").
+			WithTrashed().
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), publicPageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+		if _, err := parRepo.CreateBatch(context.Background(), trashedPrivatePageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment == nil {
+			t.Fatal("FindPubliclyReferencedBlobByID() returned nil, want attachment")
+		}
+	})
+
+	// Pins `p.space_id = a.space_id` in the EXISTS branch: the topic stays in the attachment's
+	// space, so only the page condition can exclude this reference.
+	// [Ja] EXISTS 側の `p.space_id = a.space_id` を単独で固定する。トピックは attachment と
+	// 同じ space に置くため、この参照を除外できるのはページ側の条件だけになる。
+	t.Run("参照元ページが別 space にある参照だけでは添付を公開しない", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+
+		attachmentSpaceID, attachmentSpaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-9-attachment")
+		pageSpaceID, _ := testutil.SetupSpaceWithMember(t, tx, "attach-pub-9-page")
+		publicTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		publicPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(pageSpaceID).
+			WithTopicID(publicTopicID).
+			WithNumber(1).
+			WithTitle("Foreign public").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithSpaceMemberID(attachmentSpaceMemberID).
+			Build()
+		// CreateBatch rejects a reference whose page and attachment live in different spaces.
+		// [Ja] CreateBatch は page と attachment の space が異なる参照を作れないため直接 INSERT する。
+		if _, err := tx.ExecContext(
+			context.Background(),
+			`INSERT INTO page_attachment_references (attachment_id, page_id, created_at, updated_at)
+			 VALUES ($1, $2, NOW(), NOW())`,
+			string(attachmentID),
+			string(publicPageID),
+		); err != nil {
+			t.Fatalf("cross-space の参照作成に失敗: %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	// Pins `t.space_id = a.space_id` in the EXISTS branch: the page stays in the attachment's
+	// space, so only the topic condition can exclude this reference.
+	// [Ja] EXISTS 側の `t.space_id = a.space_id` を単独で固定する。ページは attachment と
+	// 同じ space に置くため、この参照を除外できるのはトピック側の条件だけになる。
+	t.Run("参照元ページのトピックが別 space にある参照だけでは添付を公開しない", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		attachmentSpaceID, attachmentSpaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-11-attachment")
+		topicSpaceID, _ := testutil.SetupSpaceWithMember(t, tx, "attach-pub-11-topic")
+		foreignTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(topicSpaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithTopicID(foreignTopicID).
+			WithNumber(1).
+			WithTitle("Page in a foreign topic").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithSpaceMemberID(attachmentSpaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), pageID, attachmentSpaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+		}
+	})
+
+	// Pins `p.space_id = a.space_id` in the NOT EXISTS branch: the private topic stays in the
+	// attachment's space, so only the page condition can keep it out of the visibility check.
+	// [Ja] NOT EXISTS 側の `p.space_id = a.space_id` を単独で固定する。非公開トピックは
+	// attachment と同じ space に置くため、visibility 判定から外せるのはページ側の条件だけになる。
+	t.Run("別 space のページからの非公開参照は visibility 判定に影響しない", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		attachmentSpaceID, attachmentSpaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-10-attachment")
+		pageSpaceID, _ := testutil.SetupSpaceWithMember(t, tx, "attach-pub-10-page")
+		publicTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		privateTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithNumber(2).
+			WithName("private").
+			WithVisibility(int32(model.TopicVisibilityPrivate)).
+			Build()
+		publicPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithTopicID(publicTopicID).
+			WithNumber(1).
+			WithTitle("Public").
+			Build()
+		privatePageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(pageSpaceID).
+			WithTopicID(privateTopicID).
+			WithNumber(1).
+			WithTitle("Foreign private").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithSpaceMemberID(attachmentSpaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), publicPageID, attachmentSpaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+		// CreateBatch rejects a reference whose page and attachment live in different spaces.
+		// [Ja] CreateBatch は page と attachment の space が異なる参照を作れないため直接 INSERT する。
+		if _, err := tx.ExecContext(
+			context.Background(),
+			`INSERT INTO page_attachment_references (attachment_id, page_id, created_at, updated_at)
+			 VALUES ($1, $2, NOW(), NOW())`,
+			string(attachmentID),
+			string(privatePageID),
+		); err != nil {
+			t.Fatalf("cross-space の参照作成に失敗: %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment == nil {
+			t.Fatal("FindPubliclyReferencedBlobByID() returned nil, want attachment")
+		}
+		if attachment.SpaceID != attachmentSpaceID {
+			t.Errorf("attachment.SpaceID = %v, want %v", attachment.SpaceID, attachmentSpaceID)
+		}
+	})
+
+	// Pins `t.space_id = a.space_id` in the NOT EXISTS branch: the private page stays in the
+	// attachment's space, so only the topic condition can keep it out of the visibility check.
+	// [Ja] NOT EXISTS 側の `t.space_id = a.space_id` を単独で固定する。非公開ページは
+	// attachment と同じ space に置くため、visibility 判定から外せるのはトピック側の条件だけになる。
+	t.Run("別 space のトピックに属する非公開参照は visibility 判定に影響しない", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		repo := NewAttachmentRepository(q)
+		parRepo := NewPageAttachmentReferenceRepository(q)
+
+		attachmentSpaceID, attachmentSpaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-pub-12-attachment")
+		topicSpaceID, _ := testutil.SetupSpaceWithMember(t, tx, "attach-pub-12-topic")
+		publicTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithNumber(1).
+			WithName("public").
+			WithVisibility(int32(model.TopicVisibilityPublic)).
+			Build()
+		foreignPrivateTopicID := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(topicSpaceID).
+			WithNumber(1).
+			WithName("private").
+			WithVisibility(int32(model.TopicVisibilityPrivate)).
+			Build()
+		publicPageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithTopicID(publicTopicID).
+			WithNumber(1).
+			WithTitle("Public").
+			Build()
+		privatePageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithTopicID(foreignPrivateTopicID).
+			WithNumber(2).
+			WithTitle("Page in a foreign private topic").
+			Build()
+		attachmentID := testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(attachmentSpaceID).
+			WithSpaceMemberID(attachmentSpaceMemberID).
+			Build()
+		if _, err := parRepo.CreateBatch(context.Background(), publicPageID, attachmentSpaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+		if _, err := parRepo.CreateBatch(context.Background(), privatePageID, attachmentSpaceID, []model.AttachmentID{attachmentID}); err != nil {
+			t.Fatalf("CreateBatch() error = %v", err)
+		}
+
+		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+		}
+		if attachment == nil {
+			t.Fatal("FindPubliclyReferencedBlobByID() returned nil, want attachment")
+		}
+		if attachment.SpaceID != attachmentSpaceID {
+			t.Errorf("attachment.SpaceID = %v, want %v", attachment.SpaceID, attachmentSpaceID)
+		}
+	})
+
 	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
