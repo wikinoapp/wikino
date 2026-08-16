@@ -36,13 +36,31 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      # `Check sqlc generate` and `Check goimports` run before `Check templ generate`
+      # because that step's `make templ-generate` invokes `goimports -w .` across the
+      # whole tree. Placed after it, both checks would still pass while the drift they
+      # are meant to report had already been silently repaired.
+      #
+      # Neither check rewrites the tree (`sqlc diff` and `goimports -l` only report),
+      # so neither needs a `git diff --exit-code` step of its own.
+      #
+      # [Ja] `Check sqlc generate` と `Check goimports` を `Check templ generate` より
+      # 前に置くのは、同ステップの `make templ-generate` がツリー全体に `goimports -w .`
+      # を実行するため。後ろに置くと、報告すべきドリフトが先に修復された状態で
+      # どちらのチェックも通ってしまう。
+      #
+      # どちらのチェックも作業ツリーを書き換えないため (`sqlc diff` と `goimports -l` は
+      # 報告するだけ)、`git diff --exit-code` のステップは要らない。
+      - name: Check sqlc generate
+        run: make sqlc-diff
+
+      - name: Check goimports
+        run: make goimports-check
+
       - name: Check templ generate
         run: |
           make templ-generate
           git diff --exit-code internal/templates/
-
-      - name: Check goimports
-        run: make goimports-check
 
       - name: Check go mod tidy
         run: |
