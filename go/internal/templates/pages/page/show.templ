@@ -21,11 +21,32 @@ type ShowData struct {
 	IsTrashed bool
 
 	// CanUpdatePage reports that the viewer may edit this page, and gates the edit button in the
-	// header.
+	// header as well as the move item of the action dropdown.
 	//
-	// [Ja] CanUpdatePage は閲覧者がこのページを編集できるかを表し、ヘッダーの編集ボタンの出し分けに
-	// 使う。
+	// [Ja] CanUpdatePage は閲覧者がこのページを編集できるかを表し、ヘッダーの編集ボタンと操作
+	// ドロップダウンの移動項目の出し分けに使う。
 	CanUpdatePage bool
+
+	// CanTrashPage reports that the viewer may move this page into the trash, and gates the trash
+	// item of the action dropdown. It rides on a different permission than CanUpdatePage, so the two
+	// items are shown independently instead of the whole dropdown following the edit permission
+	// (the Rails Dropdowns::PageActionsComponent offers the trash button to members who then get a
+	// 404 from the POST).
+	//
+	// [Ja] CanTrashPage は閲覧者がこのページをゴミ箱へ入れられるかを表し、操作ドロップダウンの
+	// ゴミ箱項目の出し分けに使う。CanUpdatePage とは別の権限に乗るため、ドロップダウン全体を編集
+	// 権限に従わせず 2 つの項目を独立に出し分ける (Rails 版 Dropdowns::PageActionsComponent は
+	// POST すると 404 になるメンバーにもゴミ箱ボタンを出している)。
+	CanTrashPage bool
+
+	// CSRFToken authenticates the trash form's POST. It is empty for a viewer without page:trash.
+	// The form and hidden input are rendered only when showsTrashAction is true, so an already-trashed
+	// page's HTML also carries no token even when this field has a value.
+	//
+	// [Ja] CSRFToken はゴミ箱フォームの POST を認証する。page:trash を持たない閲覧者では空になる。
+	// フォームと hidden input は showsTrashAction が true のときだけ描画するため、既にゴミ箱にある
+	// ページでも、このフィールドに値があっても HTML にはトークンが載らない。
+	CSRFToken string
 
 	// LinkList and BacklinkList are the listings rendered under the body. Each holds the selected
 	// slice: htmx appends later slices, while a full-page fallback renders the slice named by the URL.
@@ -69,16 +90,116 @@ templ Show(data ShowData) {
 	</div>
 }
 
+// showsTrashAction reports whether the action dropdown offers moving this page into the trash. A
+// page already in the trash leaves the item out: re-posting it would only push back the 30-day
+// purge, and the alert above the title already links to the trash.
+//
+// [Ja] showsTrashAction は操作ドロップダウンにゴミ箱へ入れる項目を出すかを表す。すでにゴミ箱に
+// 入っているページでは項目を落とす。再度 POST しても 30 日の完全削除が先送りされるだけで、
+// タイトルの上のアラートからすでにゴミ箱へ辿れるためである。
+func (d ShowData) showsTrashAction() bool {
+	return d.CanTrashPage && !d.IsTrashed
+}
+
+// showsPageActions reports whether the action dropdown holds any item. An empty dropdown is never
+// rendered, so a viewer holding neither permission sees no trigger button. It gates the header's
+// action area as a whole as well: the area holds the edit button beside the dropdown, but the edit
+// permission already puts the move item into the dropdown, so an empty dropdown means an empty area.
+//
+// [Ja] showsPageActions は操作ドロップダウンに項目が 1 つでもあるかを表す。空のドロップダウンは
+// 描画しないため、どちらの権限も持たない閲覧者にはトリガーボタンごと出ない。ヘッダーの操作領域
+// 全体の出し分けも兼ねる。領域にはドロップダウンの隣に編集ボタンが載るが、編集権限があれば
+// ドロップダウンにも移動項目が入るため、ドロップダウンが空なら領域も空になる。
+func (d ShowData) showsPageActions() bool {
+	return d.CanUpdatePage || d.showsTrashAction()
+}
+
 // showHeaderActions renders the header's action area, and returns nil when the viewer has nothing
 // to act on so that MainTitle leaves the area out entirely.
 //
 // [Ja] showHeaderActions はヘッダーの操作領域を描画し、閲覧者に操作するものが無い場合は nil を返して
 // MainTitle 側で領域ごと省かせる。
 func showHeaderActions(data ShowData) templ.Component {
-	if !data.CanUpdatePage {
+	if !data.showsPageActions() {
 		return nil
 	}
-	return showEditButton(data)
+	return showActions(data)
+}
+
+// showActions renders the edit button and the action dropdown next to the page title.
+//
+// [Ja] showActions はページタイトルの横に編集ボタンと操作ドロップダウンを描画する。
+templ showActions(data ShowData) {
+	if data.CanUpdatePage {
+		@showEditButton(data)
+	}
+	if data.showsPageActions() {
+		@showPageActions(data)
+	}
+}
+
+// showPageActions renders the dropdown holding the page operations that are not the primary action
+// (Rails' Dropdowns::PageActionsComponent).
+//
+// [Ja] showPageActions は主要な操作以外のページ操作をまとめたドロップダウンを描画する
+// (Rails 版 Dropdowns::PageActionsComponent 相当)。
+templ showPageActions(data ShowData) {
+	<div id="page-actions-dropdown" class="dropdown-menu">
+		<button
+			type="button"
+			id="page-actions-dropdown-trigger"
+			aria-haspopup="menu"
+			aria-controls="page-actions-dropdown-menu"
+			aria-expanded="false"
+			aria-label={ templates.T(ctx, "page_show_page_actions_aria_label") }
+			class="btn border-primary rounded-full"
+			data-variant="outline"
+			data-size="icon-sm"
+		>
+			@templates.DecorativeIcon("dots-three-regular")
+		</button>
+		<div id="page-actions-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
+			<div role="menu" id="page-actions-dropdown-menu" aria-labelledby="page-actions-dropdown-trigger">
+				if data.CanUpdatePage {
+					<div role="menuitem">
+						<a
+							class="flex gap-2 items-center w-full"
+							href={ templ.SafeURL(string(templates.PageMovePath(data.Space.Identifier, data.Page.Number))) }
+						>
+							@templates.DecorativeIcon("arrow-right-regular", "size-[18px]")
+							{ templates.T(ctx, "page_show_page_actions_move") }
+						</a>
+					</div>
+				}
+				if data.showsTrashAction() {
+					<div role="menuitem">
+						// The confirmation runs off the form's own submit event, so it also guards the
+						// keyboard path into the button. The dropdown needs JavaScript to open at all,
+						// so no path reaches this form with the confirmation skipped.
+						//
+						// [Ja] 確認はフォーム自身の submit イベントで走らせ、ボタンへのキーボード操作
+						// 経路も同じように守る。ドロップダウン自体が JavaScript で開くため、確認を
+						// 経ずにこのフォームへ到達する経路は無い。
+						<form
+							action={ templ.SafeURL(string(templates.PageTrashPath(data.Space.Identifier, data.Page.Number))) }
+							class="w-full"
+							data-confirm={ templates.T(ctx, "page_show_page_actions_trash_confirm") }
+							hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+							method="POST"
+						>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<button class="flex gap-2 items-center cursor-pointer w-full" type="submit">
+								@templates.DecorativeIcon("trash-regular", "size-[18px] fill-error")
+								<span class="text-error">
+									{ templates.T(ctx, "page_show_page_actions_trash") }
+								</span>
+							</button>
+						</form>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
 }
 
 // showEditButton links to the editor of the page being shown.

@@ -182,11 +182,25 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		CanEdit: output.CanUpdatePage,
 	})
 
+	// The token is fetched only for a viewer holding page:trash. An already-trashed page passes it to
+	// ShowData but does not render the trash form or hidden input. Viewers without page:trash,
+	// including guests, receive an empty value, so their HTML carries no token.
+	//
+	// [Ja] page:trash を持つ閲覧者のときだけトークンを取得する。既にゴミ箱にあるページでは
+	// ShowData にトークンを渡すが、ゴミ箱フォームと hidden input は描画しない。ゲストを含む
+	// page:trash を持たない閲覧者には空文字を渡すため、その HTML にはトークンが載らない。
+	var csrfToken string
+	if output.CanTrashPage {
+		csrfToken = middleware.GetCSRFTokenFromContext(ctx)
+	}
+
 	content := pagepages.Show(pagepages.ShowData{
 		Page:          pageVM,
 		Space:         spaceVM,
 		IsTrashed:     output.IsTrashed,
 		CanUpdatePage: output.CanUpdatePage,
+		CanTrashPage:  output.CanTrashPage,
+		CSRFToken:     csrfToken,
 		LinkList:      linkData.LinkList,
 		BacklinkList:  linkData.BacklinkList,
 	})

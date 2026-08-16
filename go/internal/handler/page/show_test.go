@@ -15,6 +15,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
+// showCSRFToken is the token the CSRF middleware would have put in the context. Every case renders
+// with it available, so that a case asserting the token is absent proves the handler left it out
+// rather than that the context happened not to carry one.
+//
+// [Ja] showCSRFToken は CSRF ミドルウェアがコンテキストに載せるトークンにあたる。全ケースで利用
+// できる状態にして描画するため、トークンが出ないことを検証するケースは「コンテキストにたまたま
+// 無かった」ではなく「Handler が載せなかった」ことを表す。
+const showCSRFToken = "page-show-csrf-token"
+
 // TestShow pins the visibility rules of the page detail screen at the HTTP boundary: a trashed page
 // is 404 for everyone but a member holding page:trash, who gets it with the trash alert. The
 // usecase covers the same rules per branch (get_page_show_test.go); this test fixes the status
@@ -244,6 +253,15 @@ func TestShow(t *testing.T) {
 				// [Ja] ゲストは編集できないため、ヘッダーの編集ボタンも各カードの編集リンクも出さない。
 				"/s/page-show-space/pages/1/edit",
 				"/s/page-show-space/pages/5/edit",
+				// Neither may a guest act on the page, so the action dropdown and the CSRF token
+				// its form would need stay out of the public HTML entirely.
+				//
+				// [Ja] ゲストはページを操作することもできないため、操作ドロップダウンも、その
+				// フォームが要する CSRF トークンも公開 HTML には載せない。
+				"page-actions-dropdown",
+				"/s/page-show-space/pages/1/trash",
+				"/s/page-show-space/pages/1/move",
+				showCSRFToken,
 				"\"name\":\"Public Page Title\",\"item\":",
 				`<meta property="og:url" content="">`,
 				`<link rel="canonical" href="">`,
@@ -358,6 +376,61 @@ func TestShow(t *testing.T) {
 			},
 		},
 		{
+			// A space:admin member holds both scopes, so the dropdown carries both items and the
+			// trash form gets the token it posts with.
+			//
+			// [Ja] space:admin のメンバーは両方のスコープを持つため、ドロップダウンには 2 つの項目が
+			// 載り、ゴミ箱フォームには POST に使うトークンが載る。
+			name:       "移動とゴミ箱の権限を持つメンバーには操作ドロップダウンの両方の項目が出る",
+			pageNumber: "1",
+			userID:     &editorUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`id="page-actions-dropdown"`,
+				"/s/page-show-space/pages/1/move",
+				"移動する",
+				"/s/page-show-space/pages/1/trash",
+				"ゴミ箱に入れる",
+				"ページをゴミ箱に入れますか？",
+				fmt.Sprintf(`name="csrf_token" value="%s"`, showCSRFToken),
+			},
+		},
+		{
+			// The two items ride on different scopes, so page:trash alone opens the trash item
+			// without opening the move item or the edit button.
+			//
+			// [Ja] 2 つの項目は別々のスコープに乗るため、page:trash だけのメンバーには移動項目も
+			// 編集ボタンも出ないままゴミ箱項目だけが開く。
+			name:       "page:trash だけを持つメンバーにはゴミ箱項目だけが出る",
+			pageNumber: "1",
+			userID:     &trashUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`id="page-actions-dropdown"`,
+				"/s/page-show-space/pages/1/trash",
+				fmt.Sprintf(`name="csrf_token" value="%s"`, showCSRFToken),
+			},
+			wantNotContains: []string{
+				"/s/page-show-space/pages/1/move",
+				"/s/page-show-space/pages/1/edit",
+			},
+		},
+		{
+			// Neither item is theirs, so the dropdown is dropped along with its trigger button
+			// instead of being rendered empty.
+			//
+			// [Ja] どちらの項目も出ないため、空のドロップダウンを描画するのではなくトリガー
+			// ボタンごと落とす。
+			name:       "page:read だけを持つメンバーには操作ドロップダウンが出ない",
+			pageNumber: "1",
+			userID:     &readerUserID,
+			wantStatus: http.StatusOK,
+			wantNotContains: []string{
+				"page-actions-dropdown",
+				showCSRFToken,
+			},
+		},
+		{
 			name:            "ゲストは非公開トピックのページを閲覧できない",
 			pageNumber:      "2",
 			wantStatus:      http.StatusNotFound,
@@ -389,6 +462,34 @@ func TestShow(t *testing.T) {
 				"/s/page-show-space/trash",
 				`href="/home"`,
 				"\"position\":1,\"name\":\"ホーム\",\"item\":\"https://localhost/home\"",
+			},
+			wantNotContains: []string{
+				// The page is already in the trash, so re-posting the action would only push back
+				// its purge. With no other item left for this member, the dropdown goes too.
+				//
+				// [Ja] ページはすでにゴミ箱にあり、再度 POST しても完全削除が先送りされるだけで
+				// ある。このメンバーには他の項目も残らないため、ドロップダウンごと消える。
+				"page-actions-dropdown",
+				"/s/page-show-space/pages/3/trash",
+			},
+		},
+		{
+			// The move item does not follow the trash state, so a member who may edit keeps it on a
+			// trashed page while the trash item is gone.
+			//
+			// [Ja] 移動項目はゴミ箱状態に従わないため、編集できるメンバーにはゴミ箱のページでも
+			// 残る。消えるのはゴミ箱項目だけである。
+			name:       "ゴミ箱のページでも編集できるメンバーには移動項目が残る",
+			pageNumber: "3",
+			userID:     &editorUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`id="page-actions-dropdown"`,
+				"/s/page-show-space/pages/3/move",
+			},
+			wantNotContains: []string{
+				"/s/page-show-space/pages/3/trash",
+				"ゴミ箱に入れる",
 			},
 		},
 		{
@@ -481,6 +582,7 @@ func TestShow(t *testing.T) {
 			req.URL.RawQuery = tt.rawQuery
 
 			ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+			ctx = middleware.SetCSRFTokenToContext(ctx, showCSRFToken)
 			if tt.userID != nil {
 				ctx = middleware.SetUserToContext(ctx, &model.User{ID: *tt.userID})
 			}

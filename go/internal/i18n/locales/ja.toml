@@ -821,6 +821,22 @@ other = "ゴミ箱を見る"
 description = "ページ表示画面のページ編集画面へのリンクテキスト"
 other = "編集する"
 
+[page_show_page_actions_aria_label]
+description = "ページ表示画面の操作ドロップダウンを開くボタンの aria-label"
+other = "ページのアクション"
+
+[page_show_page_actions_move]
+description = "ページ表示画面のドロップダウンメニュー: ページを別のトピックへ移動する"
+other = "移動する"
+
+[page_show_page_actions_trash]
+description = "ページ表示画面のドロップダウンメニュー: ページをゴミ箱に入れる"
+other = "ゴミ箱に入れる"
+
+[page_show_page_actions_trash_confirm]
+description = "ページをゴミ箱に入れる操作の確認ダイアログ"
+other = "ページをゴミ箱に入れますか？"
+
 [page_show_links_heading]
 description = "ページ表示画面のリンク一覧の見出し"
 other = "リンク"
