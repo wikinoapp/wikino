@@ -5,6 +5,7 @@ import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
 import { initializePlatform } from "./platform";
+import { initializeStickyHeader } from "./sticky-header";
 import { initializeZenMode } from "./zen-mode";
 
 window.disableSubmitButtons = function (form) {
@@ -26,5 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeZenMode();
   initializePlatform();
   initializeAttachmentLoader();
+  initializeStickyHeader();
   setTimeZoneCookie();
 });

@@ -244,6 +244,14 @@ func TestShow(t *testing.T) {
 				"Linked Page Title",
 				"バックリンク",
 				"Backlink Page Title",
+				// The header pins itself to the top for every viewer, so the sentinel, header, and
+				// spacer web/sticky-header.ts keys off are rendered for a guest as well.
+				//
+				// [Ja] ヘッダーはどの閲覧者に対しても上端に固定されるため、web/sticky-header.ts が
+				// 手がかりにする sentinel、header、spacer はゲストにも描画される。
+				"data-sticky-header-sentinel",
+				"data-sticky-header",
+				"data-sticky-header-spacer",
 			},
 			wantNotContains: []string{
 				"このページはゴミ箱に入れられています。",
@@ -262,6 +270,12 @@ func TestShow(t *testing.T) {
 				"/s/page-show-space/pages/1/trash",
 				"/s/page-show-space/pages/1/move",
 				showCSRFToken,
+				// The header needs the compact bar's minimum height only when it carries actions;
+				// the spacer independently retains any height lost from a wrapped title.
+				//
+				// [Ja] ヘッダーがコンパクトなバーの最小高を必要とするのは操作領域を持つときだけ。
+				// 折り返されたタイトルから失われる高さは spacer が独立して保持する。
+				"min-h-[var(--app-sticky-header-height)]",
 				"\"name\":\"Public Page Title\",\"item\":",
 				`<meta property="og:url" content="">`,
 				`<link rel="canonical" href="">`,
@@ -393,6 +407,12 @@ func TestShow(t *testing.T) {
 				"ゴミ箱に入れる",
 				"ページをゴミ箱に入れますか？",
 				fmt.Sprintf(`name="csrf_token" value="%s"`, showCSRFToken),
+				// A header carrying actions reserves the compact bar's minimum height. The adjacent
+				// spacer handles any additional height lost from an expanded title.
+				//
+				// [Ja] 操作領域を持つヘッダーはコンパクトなバーの最小高を確保する。展開時タイトルから
+				// 失われる追加の高さは隣接する spacer が処理する。
+				"min-h-[var(--app-sticky-header-height)]",
 			},
 		},
 		{
