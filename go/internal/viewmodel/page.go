@@ -68,22 +68,65 @@ type PageForShow struct {
 	title    string
 	BodyHTML string
 	Number   int32
+
+	// ogImageAttachmentID is the cover image attachment the og:image tag may point at. It is empty
+	// when the page has no cover image, or when that image must not be advertised as the preview
+	// (see NewPageForShow).
+	//
+	// [Ja] ogImageAttachmentID は og:image タグが指してよいアイキャッチ画像の添付ファイル。ページが
+	// アイキャッチ画像を持たない場合や、その画像をプレビューとして出してはいけない場合は空になる
+	// (NewPageForShow を参照)。
+	ogImageAttachmentID string
 }
 
-// NewPageForShow creates the ViewModel used by the page detail screen.
+// NewPageForShow creates the ViewModel used by the page detail screen. featuredImageAttachment is
+// the page's cover image, and is nil when the page has none.
 //
 // [Ja] NewPageForShow は model.Page からページ表示画面用の ViewModel を生成する。
-func NewPageForShow(pg *model.Page) PageForShow {
+// featuredImageAttachment はページのアイキャッチ画像で、持たない場合は nil。
+func NewPageForShow(pg *model.Page, featuredImageAttachment *model.Attachment) PageForShow {
 	var title string
 	if pg.Title != nil {
 		title = *pg.Title
 	}
 
 	return PageForShow{
-		title:    title,
-		BodyHTML: pg.BodyHTML,
-		Number:   int32(pg.Number),
+		title:               title,
+		BodyHTML:            pg.BodyHTML,
+		Number:              int32(pg.Number),
+		ogImageAttachmentID: ogImageAttachmentID(featuredImageAttachment),
 	}
+}
+
+// ogImageAttachmentID picks the cover image the og:image tag may point at, and returns an empty
+// string when there is none. A GIF cover image is left out: the og:image endpoint serves a still
+// 1200x630 jpg, so pointing at an animated image advertises a preview that has lost what the image
+// was. Rails does the same in PageRecord#og_image_url, which keeps the preview of a page identical
+// on both versions while the feature flag splits viewers between them.
+//
+// [Ja] ogImageAttachmentID は og:image タグが指してよいアイキャッチ画像を選び、無い場合は空文字列を
+// 返す。GIF のアイキャッチ画像は対象外とする。og:image エンドポイントは静止画の 1200x630 jpg を
+// 配信するため、アニメーション画像を指すと画像の持ち味を失ったプレビューを宣伝することになる。
+// Rails 版 `PageRecord#og_image_url` も同じ扱いで、フィーチャーフラグで閲覧者が両版に分かれている
+// 間もページのプレビューを同一に保てる。
+func ogImageAttachmentID(featuredImageAttachment *model.Attachment) string {
+	if featuredImageAttachment == nil {
+		return ""
+	}
+	if strings.HasSuffix(strings.ToLower(featuredImageAttachment.Filename), ".gif") {
+		return ""
+	}
+
+	return string(featuredImageAttachment.ID)
+}
+
+// OGImageAttachmentID returns the attachment id the og:image tag points at, or an empty string when
+// the page has none, so that the caller keeps the site-wide default OGP image.
+//
+// [Ja] OGImageAttachmentID は og:image タグが指す添付ファイルの ID を返し、対象が無い場合は空文字列を
+// 返す。呼び出し元はそのときサイト共通の既定 OGP 画像を保つ。
+func (p PageForShow) OGImageAttachmentID() string {
+	return p.ogImageAttachmentID
 }
 
 // DisplayTitle returns the page's display title, falling back to the localized untitled label.

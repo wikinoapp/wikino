@@ -66,7 +66,7 @@ func TestShow(t *testing.T) {
 		WithUserID(readerUserID).
 		WithScopes([]model.Scope{model.ScopePageRead}).
 		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
+	editorSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(editorUserID).
 		Build()
@@ -148,6 +148,38 @@ func TestShow(t *testing.T) {
 		WithNumber(4).
 		WithNilTitle().
 		WithBodyHTML("").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+
+	// The two cover images behind the og:image tag: a still image the tag points at, and a GIF the
+	// tag has to leave alone.
+	//
+	// [Ja] og:image タグの元になる 2 つのアイキャッチ画像。タグが指す静止画と、タグが対象外とする GIF。
+	coverAttachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(editorSpaceMemberID).
+		WithFilename("cover.png").
+		Build()
+	gifAttachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(editorSpaceMemberID).
+		WithFilename("animation.gif").
+		WithContentType("image/gif").
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(7).
+		WithTitle("Cover Image Page Title").
+		WithFeaturedImageAttachmentID(coverAttachmentID).
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(8).
+		WithTitle("GIF Cover Image Page Title").
+		WithFeaturedImageAttachmentID(gifAttachmentID).
 		WithLinkedPageIDs([]model.PageID{}).
 		Build()
 
@@ -271,6 +303,49 @@ func TestShow(t *testing.T) {
 				`<link rel="canonical" href="https://localhost/s/page-show-space/pages/1">`,
 			},
 			wantNotContains: []string{"/pages/001"},
+		},
+		{
+			// The link preview points at the persistent og:image URL of the cover image, which stays
+			// valid past the cache lifetime of this HTML (the endpoint re-checks visibility per
+			// request).
+			//
+			// [Ja] リンクプレビューはアイキャッチ画像の永続 og:image URL を指す。この URL はこの HTML の
+			// キャッシュ寿命を超えても有効なままである (エンドポイントがリクエストごとに公開判定を
+			// やり直すため)。
+			name:       "アイキャッチ画像を持つページは og:image に添付ファイルの永続 URL を出す",
+			pageNumber: "7",
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf(`<meta property="og:image" content="https://localhost/attachments/%s/og_image">`, coverAttachmentID),
+				fmt.Sprintf(`<meta name="twitter:image" content="https://localhost/attachments/%s/og_image">`, coverAttachmentID),
+			},
+			wantNotContains: []string{"/static/images/og-image.png"},
+		},
+		{
+			// The og:image endpoint serves a still jpg, so an animated cover would be advertised as a
+			// preview that has lost what the image was. Rails leaves it out as well.
+			//
+			// [Ja] og:image エンドポイントは静止画の jpg を配信するため、アニメーション画像を指すと画像の
+			// 持ち味を失ったプレビューを宣伝することになる。Rails 版も同じく対象外にしている。
+			name:       "GIF のアイキャッチ画像は既定の OGP 画像にフォールバックする",
+			pageNumber: "8",
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`<meta property="og:image" content="https://localhost/static/images/og-image.png">`,
+			},
+			wantNotContains: []string{fmt.Sprintf("/attachments/%s/og_image", gifAttachmentID)},
+		},
+		{
+			// A page without a cover image keeps the site-wide default OGP image.
+			//
+			// [Ja] アイキャッチ画像を持たないページはサイト共通の既定 OGP 画像を保つ。
+			name:       "アイキャッチ画像を持たないページは既定の OGP 画像を出す",
+			pageNumber: "1",
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`<meta property="og:image" content="https://localhost/static/images/og-image.png">`,
+			},
+			wantNotContains: []string{"/og_image"},
 		},
 		{
 			name:       "ページを編集できるメンバーには編集ボタンとカードの編集リンクが出る",

@@ -99,7 +99,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pageVM := viewmodel.NewPageForShow(output.Page)
+	pageVM := viewmodel.NewPageForShow(output.Page, output.FeaturedImageAttachment)
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
@@ -133,6 +133,14 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// ことで、組み合わせの直積ぶんの URL を、内容を持つ 1 つのアドレスへ集約する。組み合わせごとに
 	// インデックス対象のアドレスを宣言しない。
 	meta.OGURL = h.cfg.AppURL() + string(templates.PagePath(spaceIdentVM, viewmodel.PageNumber(pageVM.Number)))
+	// A page with a cover image advertises it as the link preview. Pages without one keep the
+	// site-wide default OGP image set by DefaultPageMeta.
+	//
+	// [Ja] アイキャッチ画像を持つページはその画像をリンクプレビューとして出す。持たないページは
+	// DefaultPageMeta が設定したサイト共通の既定 OGP 画像を保つ。
+	if attachmentID := pageVM.OGImageAttachmentID(); attachmentID != "" {
+		meta.OGImage = h.cfg.AppURL() + string(templates.AttachmentOGImagePath(attachmentID))
+	}
 	// The page detail is the one long-form content screen, so it declares itself as an article
 	// instead of taking the site-wide website type.
 	//

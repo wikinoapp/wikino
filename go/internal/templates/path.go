@@ -199,6 +199,17 @@ func PageMovePath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) P
 	return Path(fmt.Sprintf("/s/%s/pages/%d/move", spaceIdentifier, pageNumber))
 }
 
+// AttachmentOGImagePath generates the path to the og:image delivery endpoint of an attachment. The
+// endpoint re-evaluates on every request whether the referencing pages are public, so the path
+// stays valid past the cache lifetime of the HTML that carries it.
+//
+// [Ja] AttachmentOGImagePath は添付ファイルの og:image 配信エンドポイントのパスを生成します。
+// エンドポイントはリクエストのたびに参照元ページが公開かを再評価するため、このパスを載せた HTML の
+// キャッシュ寿命を超えても無効化されません。
+func AttachmentOGImagePath(attachmentID string) Path {
+	return Path(fmt.Sprintf("/attachments/%s/og_image", attachmentID))
+}
+
 // SuggestionListPath は編集提案一覧のパスを生成します
 func SuggestionListPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions", spaceIdentifier, topicNumber))
