@@ -224,6 +224,70 @@ func TestMemberPolicy_CanShowTrash(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanTrashPage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("page:trashでゴミ箱に入れられる", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageTrash}, nil)
+
+		if !p.CanTrashPage() {
+			t.Error("page:trash を持つメンバーはページをゴミ箱に入れられるべき")
+		}
+	})
+
+	t.Run("space:adminでゴミ箱に入れられる", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+
+		if !p.CanTrashPage() {
+			t.Error("space:admin は page:trash を含意展開するためページをゴミ箱に入れられるべき")
+		}
+	})
+
+	t.Run("page:writeだけでは入れられない", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageWrite}, nil)
+
+		if p.CanTrashPage() {
+			t.Error("page:write だけではページをゴミ箱に入れられないべき (page:trash が必要)")
+		}
+	})
+
+	t.Run("page:readだけでは入れられない", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageRead}, nil)
+
+		if p.CanTrashPage() {
+			t.Error("page:read だけではページをゴミ箱に入れられないべき (page:trash が必要)")
+		}
+	})
+
+	t.Run("page:restoreだけでは入れられない", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageRestore}, nil)
+
+		if p.CanTrashPage() {
+			t.Error("page:restore だけではページをゴミ箱に入れられないべき (page:trash が必要)")
+		}
+	})
+
+	t.Run("トピックスコープのpage:trashでも入れられる", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy(nil, []model.Scope{model.ScopePageTrash})
+
+		if !p.CanTrashPage() {
+			t.Error("トピックスコープで page:trash を持つメンバーもページをゴミ箱に入れられるべき")
+		}
+	})
+}
+
 func TestMemberPolicy_CanShowDraftPage(t *testing.T) {
 	t.Parallel()
 

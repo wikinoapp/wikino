@@ -51,6 +51,10 @@ func (p *MemberPolicy) CanShowTrash() bool {
 	return p.effectiveScopes[model.ScopePageTrash]
 }
 
+func (p *MemberPolicy) CanTrashPage() bool {
+	return p.effectiveScopes[model.ScopePageTrash]
+}
+
 func (p *MemberPolicy) CanShowDraftPage(isOwner bool) bool {
 	if !p.effectiveScopes[model.ScopeDraftPageRead] {
 		return false

@@ -868,6 +868,11 @@ other = "Draft saved."
 description = "Draft page revision restored success message"
 other = "Restored the draft to the selected version."
 
+# Page moved to trash
+[flash_page_moved_to_trash]
+description = "Page moved to trash success message"
+other = "Page moved to trash."
+
 # Suggestion page update success
 [flash_suggestion_page_updated]
 description = "Suggestion page updated success message"
@@ -1223,6 +1228,11 @@ other = "Email has not been confirmed"
 [error_not_found_back_to_top]
 description = "404 error page link to top page"
 other = "Back to top page"
+
+# Forbidden error
+[error_forbidden]
+description = "Error message when the user is not allowed to perform the operation"
+other = "You do not have permission to perform this operation"
 
 # Suggestions
 [suggestion_index_title]

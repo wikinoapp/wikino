@@ -36,6 +36,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_move"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_preview"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_trash"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
@@ -420,6 +421,11 @@ func main() {
 		getPageMoveDataUC,
 		movePageUC,
 	)
+	trashPageUC := usecase.NewTrashPageUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	pageTrashHandler := page_trash.NewHandler(
+		flashMgr,
+		trashPageUC,
+	)
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
@@ -738,6 +744,13 @@ func main() {
 		// ページ移動
 		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
 		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
+
+		// Moving a page into the trash. The trash screen itself stays on the Rails version, which
+		// restores the page from the same pages.trashed_at column.
+		//
+		// [Ja] ページをゴミ箱へ入れる操作。ゴミ箱画面そのものは Rails 版のまま残り、同じ
+		// pages.trashed_at カラムを見てページを復元する。
+		r.Post("/s/{space_identifier}/pages/{page_number}/trash", pageTrashHandler.Create)
 
 		// 編集提案作成・編集
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions/new", suggestionHandler.New)

@@ -53,6 +53,21 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		flag:    model.FeatureFlagPageShow,
 		methods: []string{http.MethodGet},
 	},
+	// Moving a page into the trash (POST /s/:space_identifier/pages/:page_number/trash). It is
+	// gated by the same flag as the page detail screen because the form that posts here lives on
+	// that screen: with the flag off, Rails renders the page and its form carries a Rails CSRF
+	// token, which the Go handler would reject. Routing this path by the same flag keeps the
+	// screen and its action on the same side.
+	//
+	// [Ja] ページをゴミ箱へ入れる操作 (POST /s/:space_identifier/pages/:page_number/trash)。
+	// ここへ POST するフォームはページ表示画面にあるため、同じフラグで振り分ける。フラグ OFF では
+	// Rails 版がページを描画し、そのフォームは Rails 版の CSRF トークンを持つため、Go 側で受けると
+	// 弾かれてしまう。同じフラグで振り分けることで、画面とその操作を常に同じ側に揃える。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`),
+		flag:    model.FeatureFlagPageShow,
+		methods: []string{http.MethodPost},
+	},
 }
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア

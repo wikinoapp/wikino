@@ -868,6 +868,11 @@ other = "下書きを保存しました"
 description = "下書きリビジョン復元成功メッセージ"
 other = "下書きを選択したバージョンに戻しました"
 
+# ページのゴミ箱への移動成功
+[flash_page_moved_to_trash]
+description = "ページのゴミ箱への移動成功メッセージ"
+other = "ページをゴミ箱に移動しました"
+
 # 編集提案ページ更新成功
 [flash_suggestion_page_updated]
 description = "編集提案ページ更新成功メッセージ"
@@ -1223,6 +1228,11 @@ other = "メール確認が完了していません"
 [error_not_found_back_to_top]
 description = "404エラーページのトップページリンク"
 other = "トップページに戻る"
+
+# 権限エラー
+[error_forbidden]
+description = "操作する権限がない場合のエラーメッセージ"
+other = "この操作を行う権限がありません"
 
 # 編集提案一覧
 [suggestion_index_title]

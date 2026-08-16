@@ -437,6 +437,22 @@ func (r *PageRepository) MoveTopic(ctx context.Context, input MoveTopicInput) (*
 	return r.toModel(row), nil
 }
 
+// TrashByID moves the page into the trash by stamping trashed_at with the given time.
+// The caller passes the time so that the UseCase decides it outside the persistence layer, the same
+// way DiscardByID takes discardedAt.
+//
+// [Ja] TrashByID は渡された時刻を trashed_at に打刻してページをゴミ箱へ入れる。
+// 時刻を引数で受け取るのは、DiscardByID が discardedAt を受け取るのと同じく、時刻の決定を
+// 永続化層の外 (UseCase) に置くためである。
+func (r *PageRepository) TrashByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, trashedAt time.Time) error {
+	return r.q.TrashPageByID(ctx, query.TrashPageByIDParams{
+		ID:        string(pageID),
+		SpaceID:   string(spaceID),
+		TrashedAt: sql.NullTime{Time: trashedAt, Valid: true},
+		UpdatedAt: trashedAt,
+	})
+}
+
 // DiscardByID は指定ページを論理削除する（タイトルをIDに変更し、discarded_at を設定する）
 func (r *PageRepository) DiscardByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, discardedAt time.Time) error {
 	return r.q.DiscardPageByID(ctx, query.DiscardPageByIDParams{
