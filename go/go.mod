@@ -19,7 +19,6 @@ require (
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.43.0
 	github.com/riverqueue/river/rivertype v0.43.0
 	github.com/sergi/go-diff v1.4.0
-	github.com/sqlc-dev/sqlc v1.31.1
 	github.com/yuin/goldmark v1.8.5
 	golang.org/x/crypto v0.54.0
 	golang.org/x/net v0.57.0
@@ -78,6 +77,7 @@ require (
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/sqlc-dev/doubleclick v1.0.0 // indirect
+	github.com/sqlc-dev/sqlc v1.31.1 // indirect
 	github.com/tetratelabs/wazero v1.11.0 // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
@@ -104,4 +104,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-tool github.com/korylus/tools/cmd/koryluslint
+tool (
+	github.com/korylus/tools/cmd/koryluslint
+	github.com/sqlc-dev/sqlc/cmd/sqlc
+)

@@ -249,7 +249,7 @@ db-dump: ## データベーススキーマをdb/schema.sqlにダンプ
 
 .PHONY: sqlc-generate
 sqlc-generate: ## SQLクエリからGoコードを生成
-	sqlc generate
+	go tool sqlc generate
 
 # E2Eテストコマンド
 
