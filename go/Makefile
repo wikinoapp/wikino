@@ -19,7 +19,7 @@ seed: ## Rebuild the development database contents with seed data (drops existin
 	$(OP_RUN_DEV) go run ./cmd/wikino seed
 
 .PHONY: browse-login
-browse-login: ## dev サイトへブラウザでログイン (別ユーザーは make browse-login BROWSE_USER=2)
+browse-login: ## dev サイトへブラウザでログイン (別ユーザーは make browse-login BROWSE_USER=collaborator)
 	$(OP_RUN_DEV) bash scripts/browse.sh login $(BROWSE_USER)
 
 .PHONY: browse-shot
