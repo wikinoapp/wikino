@@ -130,6 +130,29 @@ func (u *seededUsers) user(role seedRole) *model.User {
 	return u.byRole[role]
 }
 
+// requireName returns the display name the account of the role carries on the
+// screen, and an error naming the role when the seed created no account for it.
+//
+// A text that names an account which has not joined the space it is written in
+// asks for the name this way: no membership of that space carries it, and a
+// sentence left with a hole where a name belongs is not something to write into
+// a page.
+//
+// [Ja] requireName は、その役割のアカウントが画面上で名乗る表示名を返す。シードが
+// その役割のアカウントを作っていない場合は、その役割を名指しするエラーを返す。
+//
+// 自身が書き込まれるスペースに参加していないアカウントを名指しするテキストは、
+// 名前をこちらで求める。そのスペースのメンバーシップは名前を持っておらず、名前が
+// 入るべき場所が空いたままの文は、ページへ書き込んでよいものではないため。
+func (u *seededUsers) requireName(role seedRole) (string, error) {
+	user := u.user(role)
+	if user == nil {
+		return "", fmt.Errorf("役割 %s のアカウントが作成されていない", role)
+	}
+
+	return user.Name, nil
+}
+
 // generateUsers creates the accounts the roster names, which are the accounts
 // the browser verification signs in as.
 //

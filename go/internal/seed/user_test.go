@@ -129,6 +129,31 @@ func TestGenerateUsers(t *testing.T) {
 	}
 }
 
+func TestSeededUsersRequireName(t *testing.T) {
+	t.Parallel()
+
+	users := &seededUsers{byRole: map[seedRole]*model.User{
+		roleOwner: {Name: "テストオーナー"},
+	}}
+
+	name, err := users.requireName(roleOwner)
+	if err != nil {
+		t.Fatalf("作成済みの役割で予期しないエラー: %v", err)
+	}
+	if name != "テストオーナー" {
+		t.Errorf("表示名が %q であることを期待したが %q だった", "テストオーナー", name)
+	}
+
+	_, err = users.requireName(roleGuest)
+	wantErr := "役割 guest のアカウントが作成されていない"
+	if err == nil {
+		t.Fatal("作成されていない役割でエラーを期待したがnilだった")
+	}
+	if err.Error() != wantErr {
+		t.Errorf("エラーが %q であることを期待したが %q だった", wantErr, err)
+	}
+}
+
 // assertFeatureFlags checks that the user holds exactly the given flags.
 //
 // [Ja] assertFeatureFlags は、ユーザーが与えられたフラグだけを持つことを確認する。

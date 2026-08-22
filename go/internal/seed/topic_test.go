@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"io"
 	"testing"
 
@@ -27,6 +28,19 @@ func TestGenerateTopics(t *testing.T) {
 		t.Fatalf("トピック生成に失敗: %v", err)
 	}
 
+	// The descriptions of the private topics name the accounts that joined
+	// them, so the expectation is built from the same memberships instead of
+	// being written out. What is checked that way is that the description names
+	// the accounts of the topic; a sentence copied into the test would only
+	// check that the same string was written in two places.
+	//
+	// [Ja] 非公開トピックの説明文は、そこに参加しているアカウントを名指しするため、
+	// 期待値は書き下さずに同じメンバーシップから組み立てる。そうすることで確認できる
+	// のは、説明文がそのトピックのアカウントを名指ししていることになる。文をテストへ
+	// 書き写しても、同じ文字列を 2 箇所へ書いたことしか確認できない。
+	ownerName := spaces.wiki.member(roleOwner).name
+	collaboratorName := spaces.wiki.member(roleCollaborator).name
+
 	for _, tt := range []struct {
 		topic           *seededTopic
 		wantName        string
@@ -38,8 +52,8 @@ func TestGenerateTopics(t *testing.T) {
 		{topic: topics.handbook, wantName: "ハンドブック", wantDescription: "一覧をページ送りできるだけのページを置いたトピックです。", wantVisibility: model.TopicVisibilityPublic, wantNumber: 1, wantMembers: 2},
 		{topic: topics.notes, wantName: "ノート", wantDescription: "Markdown 記法・Wiki リンク・ページが取りうる状態を確認するためのトピックです。", wantVisibility: model.TopicVisibilityPublic, wantNumber: 2, wantMembers: 2},
 		{topic: topics.sandbox, wantName: "サンドボックス", wantDescription: "表示が崩れやすい極端なページを置いたトピックです。", wantVisibility: model.TopicVisibilityPublic, wantNumber: 3, wantMembers: 2},
-		{topic: topics.privateNotes, wantName: "非公開ノート", wantDescription: "両方のアカウントが参加している非公開トピックです。", wantVisibility: model.TopicVisibilityPrivate, wantNumber: 4, wantMembers: 2},
-		{topic: topics.secret, wantName: "シークレット", wantDescription: "シードユーザー 1 だけが参加している非公開トピックです。", wantVisibility: model.TopicVisibilityPrivate, wantNumber: 5, wantMembers: 1},
+		{topic: topics.privateNotes, wantName: "非公開ノート", wantDescription: fmt.Sprintf("%s と %s が参加している非公開トピックです。", ownerName, collaboratorName), wantVisibility: model.TopicVisibilityPrivate, wantNumber: 4, wantMembers: 2},
+		{topic: topics.secret, wantName: "シークレット", wantDescription: fmt.Sprintf("%s だけが参加している非公開トピックです。", ownerName), wantVisibility: model.TopicVisibilityPrivate, wantNumber: 5, wantMembers: 1},
 	} {
 		if tt.topic == nil {
 			t.Errorf("トピック %s が結果に含まれていない", tt.wantName)
@@ -181,6 +195,23 @@ func TestTopicVisibilityForSeededMembers(t *testing.T) {
 func buildSeedSpaces(t *testing.T, tx *sql.Tx, prefix string) *seededSpaces {
 	t.Helper()
 
+	_, spaces := buildSeedUsersAndSpaces(t, tx, prefix)
+
+	return spaces
+}
+
+// buildSeedUsersAndSpaces does the same and hands back the accounts as well,
+// for a generator that names an account which has not joined the space it
+// writes into. Such a generator is given the accounts rather than the space,
+// and a test of it needs both halves to line up.
+//
+// [Ja] buildSeedUsersAndSpaces は同じことを行い、アカウントも併せて返す。自身が
+// 書き込むスペースに参加していないアカウントを名指しする生成器のためのもの。その種の
+// 生成器はスペースではなくアカウントを受け取るため、それを確認するテストには両方が
+// 揃っている必要がある。
+func buildSeedUsersAndSpaces(t *testing.T, tx *sql.Tx, prefix string) (*seededUsers, *seededSpaces) {
+	t.Helper()
+
 	users := buildSeedUsers(t, tx, prefix)
 
 	build := func(suffix string, memberSpecs []spaceMemberSpec) *seededSpace {
@@ -198,6 +229,7 @@ func buildSeedSpaces(t *testing.T, tx *sql.Tx, prefix string) *seededSpaces {
 					WithUserID(users.user(memberSpec.role).ID).
 					WithScopes(memberSpec.scopes).
 					Build(),
+				name:   users.user(memberSpec.role).Name,
 				scopes: memberSpec.scopes,
 			}
 		}
@@ -205,7 +237,7 @@ func buildSeedSpaces(t *testing.T, tx *sql.Tx, prefix string) *seededSpaces {
 		return space
 	}
 
-	return &seededSpaces{
+	return users, &seededSpaces{
 		wiki: build("wiki", []spaceMemberSpec{
 			{role: roleOwner, scopes: adminSpaceScopes},
 			{role: roleCollaborator, scopes: nonAdminSpaceScopes},

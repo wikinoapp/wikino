@@ -55,49 +55,82 @@ type topicSpec struct {
 	assign func(topics *seededTopics, topic *seededTopic)
 }
 
-// wikiTopicSpecs are the topics of seed-wiki. Between them they cover what the
-// topic screens can be in: public and private, joined by both accounts and by
-// one, with and without a large number of pages.
+// wikiTopicSpecs returns the topics of seed-wiki. Between them they cover what
+// the topic screens can be in: public and private, joined by more than one
+// account and by one alone, with and without a large number of pages.
 //
-// [Ja] wikiTopicSpecs は seed-wiki のトピック。全体で、トピック画面が取りうる
-// 状態を網羅する。公開と非公開、両アカウントが参加しているものと片方だけのもの、
-// ページが大量にあるものと無いもの。
-var wikiTopicSpecs = []topicSpec{
-	{
-		name:        topicNameHandbook,
-		description: "一覧をページ送りできるだけのページを置いたトピックです。",
-		visibility:  model.TopicVisibilityPublic,
-		memberRoles: []seedRole{roleOwner, roleCollaborator},
-		assign:      func(topics *seededTopics, topic *seededTopic) { topics.handbook = topic },
-	},
-	{
-		name:        topicNameNotes,
-		description: "Markdown 記法・Wiki リンク・ページが取りうる状態を確認するためのトピックです。",
-		visibility:  model.TopicVisibilityPublic,
-		memberRoles: []seedRole{roleOwner, roleCollaborator},
-		assign:      func(topics *seededTopics, topic *seededTopic) { topics.notes = topic },
-	},
-	{
-		name:        topicNameSandbox,
-		description: "表示が崩れやすい極端なページを置いたトピックです。",
-		visibility:  model.TopicVisibilityPublic,
-		memberRoles: []seedRole{roleOwner, roleCollaborator},
-		assign:      func(topics *seededTopics, topic *seededTopic) { topics.sandbox = topic },
-	},
-	{
-		name:        topicNamePrivateNotes,
-		description: "両方のアカウントが参加している非公開トピックです。",
-		visibility:  model.TopicVisibilityPrivate,
-		memberRoles: []seedRole{roleOwner, roleCollaborator},
-		assign:      func(topics *seededTopics, topic *seededTopic) { topics.privateNotes = topic },
-	},
-	{
-		name:        topicNameSecret,
-		description: "シードユーザー 1 だけが参加している非公開トピックです。",
-		visibility:  model.TopicVisibilityPrivate,
-		memberRoles: []seedRole{roleOwner},
-		assign:      func(topics *seededTopics, topic *seededTopic) { topics.secret = topic },
-	},
+// The specs are built from the space rather than held as a package-level list
+// because the descriptions of the private topics name the accounts that joined
+// them, and what those accounts are called is written in the roster. Reading
+// the names off the memberships is what keeps the description of a topic and
+// the accounts inside it saying the same thing.
+//
+// A name goes into a description as it is, unlike one going into a page body.
+// A description reaches the screen as text, drawn through templ, which escapes
+// it; nothing reads it as Markdown, so there is no notation in a name for the
+// screen to act on. Encoding one the way markdownPlainText encodes a body would
+// put the numeric character references themselves on the screen.
+//
+// [Ja] wikiTopicSpecs は seed-wiki のトピックを返す。全体で、トピック画面が取りうる
+// 状態を網羅する。公開と非公開、複数のアカウントが参加しているものと 1 つだけが
+// 参加しているもの、ページが大量にあるものと無いもの。
+//
+// 仕様をパッケージ変数の一覧ではなくスペースから組み立てるのは、非公開トピックの
+// 説明文が、そこに参加しているアカウントを名指しするため。そのアカウントが何と
+// 呼ばれるのかは名簿に書かれている。名前をメンバーシップから読むことが、トピックの
+// 説明文と、その中にいるアカウントとが同じことを述べ続ける理由になる。
+//
+// 名前は説明文へそのまま入れる。ページ本文へ入れる場合とは違う。説明文は templ を
+// 通ってテキストとして画面へ出て、templ がエスケープする。Markdown として読む経路が
+// 無いため、名前に書かれた記法が画面で効くこともない。本文と同じく markdownPlainText
+// でエンコードすると、数値文字参照そのものが画面に出る。
+func wikiTopicSpecs(wiki *seededSpace) ([]topicSpec, error) {
+	owner, err := wiki.requireMember(roleOwner)
+	if err != nil {
+		return nil, err
+	}
+	collaborator, err := wiki.requireMember(roleCollaborator)
+	if err != nil {
+		return nil, err
+	}
+
+	return []topicSpec{
+		{
+			name:        topicNameHandbook,
+			description: "一覧をページ送りできるだけのページを置いたトピックです。",
+			visibility:  model.TopicVisibilityPublic,
+			memberRoles: []seedRole{roleOwner, roleCollaborator},
+			assign:      func(topics *seededTopics, topic *seededTopic) { topics.handbook = topic },
+		},
+		{
+			name:        topicNameNotes,
+			description: "Markdown 記法・Wiki リンク・ページが取りうる状態を確認するためのトピックです。",
+			visibility:  model.TopicVisibilityPublic,
+			memberRoles: []seedRole{roleOwner, roleCollaborator},
+			assign:      func(topics *seededTopics, topic *seededTopic) { topics.notes = topic },
+		},
+		{
+			name:        topicNameSandbox,
+			description: "表示が崩れやすい極端なページを置いたトピックです。",
+			visibility:  model.TopicVisibilityPublic,
+			memberRoles: []seedRole{roleOwner, roleCollaborator},
+			assign:      func(topics *seededTopics, topic *seededTopic) { topics.sandbox = topic },
+		},
+		{
+			name:        topicNamePrivateNotes,
+			description: fmt.Sprintf("%s と %s が参加している非公開トピックです。", owner.name, collaborator.name),
+			visibility:  model.TopicVisibilityPrivate,
+			memberRoles: []seedRole{roleOwner, roleCollaborator},
+			assign:      func(topics *seededTopics, topic *seededTopic) { topics.privateNotes = topic },
+		},
+		{
+			name:        topicNameSecret,
+			description: fmt.Sprintf("%s だけが参加している非公開トピックです。", owner.name),
+			visibility:  model.TopicVisibilityPrivate,
+			memberRoles: []seedRole{roleOwner},
+			assign:      func(topics *seededTopics, topic *seededTopic) { topics.secret = topic },
+		},
+	}, nil
 }
 
 // soloTopicSpecs are the topics of seed-solo. Only roleOwner has joined that
@@ -160,7 +193,12 @@ type seededTopics struct {
 //
 // [Ja] generateTopics は両スペースのトピックを作成し、アカウントを参加させる。
 func generateTopics(ctx context.Context, dbtx query.DBTX, out io.Writer, spaces *seededSpaces) (*seededTopics, error) {
-	bar := newProgress(out, "トピック", len(wikiTopicSpecs)+len(soloTopicSpecs))
+	wikiSpecs, err := wikiTopicSpecs(spaces.wiki)
+	if err != nil {
+		return nil, err
+	}
+
+	bar := newProgress(out, "トピック", len(wikiSpecs)+len(soloTopicSpecs))
 	defer bar.finish()
 
 	topics := &seededTopics{}
@@ -168,7 +206,7 @@ func generateTopics(ctx context.Context, dbtx query.DBTX, out io.Writer, spaces 
 		space *seededSpace
 		specs []topicSpec
 	}{
-		{space: spaces.wiki, specs: wikiTopicSpecs},
+		{space: spaces.wiki, specs: wikiSpecs},
 		{space: spaces.solo, specs: soloTopicSpecs},
 	} {
 		for i, spec := range group.specs {

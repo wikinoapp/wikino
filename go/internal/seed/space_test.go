@@ -60,16 +60,20 @@ func TestGenerateSpaces(t *testing.T) {
 
 	for _, tt := range []struct {
 		label   string
+		role    seedRole
 		spaceID model.SpaceID
 		member  *seededSpaceMember
 		want    []model.Scope
 	}{
-		{label: "seed-wikiのowner", spaceID: spaces.wiki.id, member: spaces.wiki.member(roleOwner), want: adminSpaceScopes},
-		{label: "seed-wikiのcollaborator", spaceID: spaces.wiki.id, member: spaces.wiki.member(roleCollaborator), want: nonAdminSpaceScopes},
-		{label: "seed-wikiのguest", spaceID: spaces.wiki.id, member: spaces.wiki.member(roleGuest), want: nonAdminSpaceScopes},
-		{label: "seed-soloのowner", spaceID: spaces.solo.id, member: spaces.solo.member(roleOwner), want: adminSpaceScopes},
+		{label: "seed-wikiのowner", role: roleOwner, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleOwner), want: adminSpaceScopes},
+		{label: "seed-wikiのcollaborator", role: roleCollaborator, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleCollaborator), want: nonAdminSpaceScopes},
+		{label: "seed-wikiのguest", role: roleGuest, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleGuest), want: nonAdminSpaceScopes},
+		{label: "seed-soloのowner", role: roleOwner, spaceID: spaces.solo.id, member: spaces.solo.member(roleOwner), want: adminSpaceScopes},
 	} {
 		assertSpaceMemberScopes(ctx, t, tx, tt.label, tt.spaceID, tt.member.id, tt.want)
+		if got, want := tt.member.name, users.user(tt.role).Name; got != want {
+			t.Errorf("%sの表示名が %q であることを期待したが %q だった", tt.label, want, got)
+		}
 	}
 }
 
@@ -342,9 +346,19 @@ func buildSeedUsers(t *testing.T, tx *sql.Tx, prefix string) *seededUsers {
 		}
 		atnames[atname] = role
 		email := atname + "@example.com"
-		id := testutil.NewUserBuilder(t, tx).WithEmail(email).WithAtname(atname).Build()
+		// The display name says the role in plain sight, because the text the
+		// generators write names the accounts it is about. A body or a
+		// description that reached for the wrong role would otherwise be checked
+		// against a name that says nothing about which account it belongs to.
+		//
+		// [Ja] 表示名には役割をそのまま出す。生成器が書くテキストは、それが述べて
+		// いるアカウントを名指しするため。そうしないと、取り違えた役割へ手を伸ばした
+		// 本文や説明文が、どのアカウントのものかを何も語らない名前と突き合わされる
+		// ことになる。
+		name := "テストユーザー " + string(role)
+		id := testutil.NewUserBuilder(t, tx).WithEmail(email).WithAtname(atname).WithName(name).Build()
 
-		users.byRole[role] = &model.User{ID: id, Email: email, Atname: atname}
+		users.byRole[role] = &model.User{ID: id, Email: email, Atname: atname, Name: name}
 	}
 
 	return users

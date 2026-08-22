@@ -91,11 +91,24 @@ var nonAdminSpaceScopes = []model.Scope{
 // with it because what a topic membership has to carry depends on what the
 // space membership already grants.
 //
+// The display name travels with it for the same kind of reason: the text a
+// generator writes into a space names the accounts of that space, and the
+// membership is the handle it already holds for them. Carrying the name here is
+// what lets that text follow the roster instead of repeating what the roster
+// said on the day the text was written.
+//
 // [Ja] seededSpaceMember は 1 アカウントのスペースへのメンバーシップ。スコープを
 // 一緒に持たせるのは、トピックメンバーシップが何を持つべきかが、スペース
 // メンバーシップが既に与えているものによって決まるため。
+//
+// 表示名を一緒に持たせるのも同じ種類の理由による。生成器がスペースへ書き込む
+// テキストが名指しするのはそのスペースのアカウントであり、メンバーシップは生成器が
+// そのために既に持っている手がかりである。名前をここに持たせていることが、その
+// テキストが、書かれた日に名簿が言っていたことを繰り返すのではなく、名簿へ追随
+// できる理由になる。
 type seededSpaceMember struct {
 	id     model.SpaceMemberID
+	name   string
 	scopes []model.Scope
 }
 
@@ -256,7 +269,7 @@ func generateSpaces(ctx context.Context, dbtx query.DBTX, out io.Writer, users *
 				return nil, fmt.Errorf("スペース %s に参加させる役割 %s のユーザーが作成されていない", spec.identifier, memberSpec.role)
 			}
 
-			member, err := addSpaceMember(ctx, dbtx, space.id, user.ID, memberSpec.scopes)
+			member, err := addSpaceMember(ctx, dbtx, space.id, user, memberSpec.scopes)
 			if err != nil {
 				return nil, fmt.Errorf("スペース %s への役割 %s の追加に失敗: %w", spec.identifier, memberSpec.role, err)
 			}
@@ -309,7 +322,7 @@ func addSpaceMember(
 	ctx context.Context,
 	dbtx query.DBTX,
 	spaceID model.SpaceID,
-	userID model.UserID,
+	user *model.User,
 	scopes []model.Scope,
 ) (*seededSpaceMember, error) {
 	now := time.Now()
@@ -320,13 +333,13 @@ func addSpaceMember(
 		`INSERT INTO space_members (space_id, user_id, scopes, joined_at, active, created_at, updated_at)
          VALUES ($1, $2, $3, $4, true, $5, $6)
          RETURNING id`,
-		string(spaceID), string(userID), pq.Array(scopeStrings(scopes)), now, now, now,
+		string(spaceID), string(user.ID), pq.Array(scopeStrings(scopes)), now, now, now,
 	).Scan(&id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &seededSpaceMember{id: model.SpaceMemberID(id), scopes: scopes}, nil
+	return &seededSpaceMember{id: model.SpaceMemberID(id), name: user.Name, scopes: scopes}, nil
 }
 
 // scopeStrings converts scopes for storage. The result is never nil: the

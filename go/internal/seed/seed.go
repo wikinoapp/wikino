@@ -356,7 +356,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			return generateSandboxPages(ctx, r.db, r.out, st.spaces, st.topics)
 		}},
 		{name: "個人スペースのページ", run: func(ctx context.Context, st *state) error {
-			return generateSoloPages(ctx, r.db, r.out, defaultAmounts, st.spaces, st.topics)
+			return generateSoloPages(ctx, r.db, r.out, defaultAmounts, st.users, st.spaces, st.topics)
 		}},
 		{name: "下書きページ", run: func(ctx context.Context, st *state) error {
 			return generateDraftPages(ctx, r.db, r.out, defaultAmounts, st.spaces, st.topics, st.draftStamps)

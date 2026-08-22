@@ -3,7 +3,14 @@ package seed
 import (
 	"context"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"unicode"
@@ -11,6 +18,16 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 )
+
+// sampleAccountName stands in for a display name where a test builds a text
+// that names an account and has no interest in what the account is called. The
+// names themselves come from the roster, so there is nothing for a test of the
+// text to compare a real one against.
+//
+// [Ja] sampleAccountName は、アカウントを名指しするテキストを組み立てるテストが、
+// そのアカウントの呼び名に関心を持たない場面で使う仮の表示名。名前は名簿から来る
+// ため、テキストを対象とするテストが本物の名前と突き合わせられるものは無い。
+const sampleAccountName = "テスト表示名"
 
 func TestEnsureDevEnv(t *testing.T) {
 	t.Parallel()
@@ -103,8 +120,8 @@ func TestSeedBodiesWriteOneLinePerParagraph(t *testing.T) {
 		"マルチバイトタイトルのページ":  multibyteTitlePageBody,
 		"横に長いテーブル":        wideTableBody(),
 		"長いコードブロック":       longCodeBlockBody(),
-		"個人ノートのページ":       soloNotesPageBody("個人ノート 01"),
-		"個人シークレットのページ":    soloSecretPageBody("個人シークレット 01"),
+		"個人ノートのページ":       soloNotesPageBody("個人ノート 01", sampleAccountName),
+		"個人シークレットのページ":    soloSecretPageBody("個人シークレット 01", sampleAccountName, sampleAccountName),
 		"公開済みページの下書き":     publishedPageDraftIntro(pageTitle),
 		"通常の編集提案":         ordinarySuggestionBody(pageTitle),
 		"提案ページが足す節":       suggestionAddedSection,
@@ -388,4 +405,179 @@ func isMarkdownListItem(line string) bool {
 	}
 
 	return markerEnd == len(line) || line[markerEnd] == ' ' || line[markerEnd] == '\t'
+}
+
+// TestSeedTextsCarryNoRosterDisplayName checks that no text the seed writes
+// spells out a display name the roster supplies. What the accounts are called
+// is configuration: a development environment that copied the example roster
+// and put its own names in it would otherwise open pages and topic listings
+// naming accounts that do not exist there, and nothing would say so.
+//
+// The names are taken from the example roster because that is the file a roster
+// is copied from, which makes those names the ones a text would have been
+// written against.
+//
+// The package's own source is read rather than the texts being listed one by
+// one. A text added later would have to be added to the list as well, and what
+// is checked here is a rule that applies to whatever gets written next.
+//
+// [Ja] TestSeedTextsCarryNoRosterDisplayName は、シードが書くテキストのいずれもが、
+// 名簿の与える表示名を書き下していないことを確認する。アカウントが何と呼ばれるかは
+// 設定であり、見本の名簿をコピーして自分の名前を入れた開発環境は、そうしないと、
+// そこには存在しないアカウントを名指しするページやトピック一覧を開くことになる。
+// しかもそのことは何からも告げられない。
+//
+// 名前を見本の名簿から取るのは、名簿がそこからコピーされるファイルであり、それに
+// よって、テキストが書かれる際に照らされる名前がそこの名前になるため。
+//
+// テキストを 1 つずつ並べるのではなくパッケージ自身のソースを読むのは、後から足した
+// テキストが一覧にも足される必要が出るため。ここで確認しているのは、次に何が書かれても
+// 適用される規則である。
+func TestSeedTextsCarryNoRosterDisplayName(t *testing.T) {
+	t.Parallel()
+
+	names := exampleRosterDisplayNames(t)
+
+	for _, text := range seedTexts(t) {
+		for role, name := range names {
+			if strings.Contains(text.text, name) {
+				t.Errorf("%s が名簿の表示名 %q (%s) を直に書いている", text.file, name, role)
+			}
+		}
+	}
+}
+
+// exampleRosterDisplayNames returns the display name of every account the
+// example roster names, keyed by the role that account is created for.
+//
+// [Ja] exampleRosterDisplayNames は、見本の名簿が挙げるアカウントの表示名を、その
+// アカウントが作成される役割をキーにして返す。
+func exampleRosterDisplayNames(t *testing.T) map[seedRole]string {
+	t.Helper()
+
+	file, err := loadRosterFile(filepath.Join("..", "..", rosterExamplePath))
+	if err != nil {
+		t.Fatalf("%s の読み込みに失敗: %v", rosterExamplePath, err)
+	}
+	users, err := file.validate()
+	if err != nil {
+		t.Fatalf("%s の検査に失敗: %v", rosterExamplePath, err)
+	}
+
+	names := make(map[seedRole]string, len(users))
+	for _, user := range users {
+		names[user.role] = user.name
+	}
+
+	return names
+}
+
+// seedText is one string the package holds, together with the file it is
+// written in.
+//
+// [Ja] seedText はパッケージが持つ文字列 1 つと、それが書かれているファイル。
+type seedText struct {
+	file string
+	text string
+}
+
+// seedTexts returns the strings the seed can write to a screen: every string
+// literal of the package's own source, and the bodies it embeds as files.
+//
+// Test files are skipped. A test names an account on purpose — that is how it
+// says which account a text was expected to name — and holding the tests to the
+// rule would leave no way to write such an expectation down.
+//
+// [Ja] seedTexts は、シードが画面へ書きうる文字列を返す。パッケージ自身のソースの
+// 文字列リテラルすべてと、ファイルとして埋め込んでいる本文である。
+//
+// テストファイルは対象から外す。テストがアカウントを名指しするのは意図的であり、
+// それが「そのテキストがどのアカウントを名指しするはずか」を述べる方法になっている。
+// テストにも同じ規則を課すと、その期待値を書き表す方法が無くなる。
+func seedTexts(t *testing.T) []seedText {
+	t.Helper()
+
+	// The test binary runs with the package directory as its working directory,
+	// so both the sources and the embedded bodies sit alongside it. The files
+	// are listed and parsed one by one rather than with parser.ParseDir, which
+	// is deprecated for ignoring build tags; here every .go file is wanted
+	// regardless of the tags it carries.
+	//
+	// [Ja] テストバイナリはパッケージのディレクトリを作業ディレクトリとして動くため、
+	// ソースも埋め込む本文も同じ場所にある。parser.ParseDir ではなくファイルを列挙して
+	// 1 つずつ解析するのは、同関数がビルドタグを無視するとして非推奨になっているため。
+	// ここではタグに関わらずすべての .go ファイルが対象でよい。
+	const (
+		dir       = "."
+		bodiesDir = "bodies"
+	)
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("%s の読み取りに失敗: %v", dir, err)
+	}
+
+	fset := token.NewFileSet()
+	texts := make([]seedText, 0, len(entries))
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+
+		file, err := parser.ParseFile(fset, filepath.Join(dir, name), nil, 0)
+		if err != nil {
+			t.Fatalf("%s の解析に失敗: %v", name, err)
+		}
+
+		ast.Inspect(file, func(node ast.Node) bool {
+			lit, ok := node.(*ast.BasicLit)
+			if !ok || lit.Kind != token.STRING {
+				return true
+			}
+
+			// The literal is unquoted so that an escape sequence is compared as
+			// the character it stands for, which is what a screen shows.
+			//
+			// [Ja] リテラルの引用符を外すのは、エスケープシーケンスを、それが表す
+			// 文字として比較するため。画面に出るのはそちらであるため。
+			value, err := strconv.Unquote(lit.Value)
+			if err != nil {
+				t.Errorf("%s の文字列リテラル %s を読み取れない: %v", name, lit.Value, err)
+
+				return true
+			}
+			texts = append(texts, seedText{file: name, text: value})
+
+			return true
+		})
+	}
+
+	// The bodies are walked rather than listed, because go:embed reaches into
+	// subdirectories as well. A body filed under one would otherwise leave the
+	// rule silently, which is the thing reading the sources was meant to avoid.
+	//
+	// [Ja] 本文は列挙ではなく走査で集める。go:embed はサブディレクトリの中まで
+	// 届くため。サブディレクトリへ置いた本文は、そうしないと規則から黙って外れる。
+	// ソースを読む形にしたのは、それを避けるためであった。
+	if err := filepath.WalkDir(bodiesDir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			return nil
+		}
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		texts = append(texts, seedText{file: path, text: string(content)})
+
+		return nil
+	}); err != nil {
+		t.Fatalf("%s の読み取りに失敗: %v", bodiesDir, err)
+	}
+
+	return texts
 }

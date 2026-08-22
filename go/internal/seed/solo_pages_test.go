@@ -14,13 +14,30 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
+// The display names carry what a body must not let through: a wiki link, an
+// emphasis marker, a heading marker, a newline, and characters HTML escapes.
+// Both tests of the bodies read them from here, so that a character added to
+// the set is seen by each of them.
+//
+// [Ja] 表示名には、本文が通してはならないものを載せる。Wiki リンク、強調記号、
+// 見出し記号、改行、HTML がエスケープする文字。本文を対象とする 2 つのテストは
+// どちらもここから読むため、集合へ文字を足せばその両方が見ることになる。
+const (
+	markupHeavyGuestName = "閲覧者 [[余分なページ]] *強調*"
+	markupHeavyOwnerName = "管理者\n# 見出し & <タグ>"
+)
+
 func TestGenerateSoloPages(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	ctx := context.Background()
 
-	spaces := buildSeedSpaces(t, tx, "seed-solo-pages")
+	users, spaces := buildSeedUsersAndSpaces(t, tx, "seed-solo-pages")
+	users.user(roleGuest).Name = markupHeavyGuestName
+	users.user(roleOwner).Name = markupHeavyOwnerName
+	spaces.solo.member(roleOwner).name = markupHeavyOwnerName
+
 	topics, err := generateTopics(ctx, tx, io.Discard, spaces)
 	if err != nil {
 		t.Fatalf("トピック生成に失敗: %v", err)
@@ -34,7 +51,7 @@ func TestGenerateSoloPages(t *testing.T) {
 	// ため。
 	amt := amounts{soloNotesPages: 3, soloSecretPages: 2}
 
-	if err := generateSoloPages(ctx, tx, io.Discard, amt, spaces, topics); err != nil {
+	if err := generateSoloPages(ctx, tx, io.Discard, amt, users, spaces, topics); err != nil {
 		t.Fatalf("個人スペースのページの生成に失敗: %v", err)
 	}
 
@@ -97,10 +114,12 @@ func TestGenerateSoloPages(t *testing.T) {
 			if !strings.Contains(row.body, title) {
 				t.Errorf("%s の本文に自身のタイトルが含まれていない", title)
 			}
+			assertLinkedPageIDs(t, row.linkedPageIDs, nil)
 		}
 	}
 
 	assertSoloPagesReachableFromOutside(ctx, t, tx, spaces.solo, topics)
+	assertSoloPageBodiesNameTheAccountThatWalksThem(ctx, t, tx, users, spaces.solo, topics)
 }
 
 func TestSoloPageBodiesCarryNoWikilinks(t *testing.T) {
@@ -114,11 +133,87 @@ func TestSoloPageBodiesCarryNoWikilinks(t *testing.T) {
 	// テストが確認する件数が本文を編集するたびにずれていく。ここで捕まえれば理由まで
 	// 示せる。件数が合わないだけでは示せない。
 	for name, body := range map[string]string{
-		topicNameSoloNotes:  soloNotesPageBody(topicNameSoloNotes + " 01"),
-		topicNameSoloSecret: soloSecretPageBody(topicNameSoloSecret + " 01"),
+		topicNameSoloNotes: soloNotesPageBody(
+			topicNameSoloNotes+" 01",
+			markupHeavyGuestName,
+		),
+		topicNameSoloSecret: soloSecretPageBody(
+			topicNameSoloSecret+" 01",
+			markupHeavyGuestName,
+			markupHeavyOwnerName,
+		),
 	} {
 		if got := len(markup.ScanWikilinks(body, name)); got != 0 {
 			t.Errorf("%s の本文にWikiリンクが %d 件含まれている", name, got)
+		}
+	}
+}
+
+// assertSoloPageBodiesNameTheAccountThatWalksThem checks that the account the
+// bodies point the reader at is the one whose path they describe. Both
+// roleCollaborator and roleGuest are outside seed-solo, but only roleGuest holds
+// the feature flags, so it alone reaches these screens as the Go version answers
+// them; roleCollaborator is sent to Rails, which is not what these pages were
+// written to show.
+//
+// The bodies are read back from the database rather than built here, because
+// what is under test is the account the generator reached for. The bodies
+// themselves are handed the names they carry, and building one here with the
+// name of roleGuest would say nothing more than that the name reached the text.
+//
+// [Ja] assertSoloPageBodiesNameTheAccountThatWalksThem は、本文が読む人へ案内する
+// アカウントが、本文の説明している経路を通るアカウントであることを確認する。
+// roleCollaborator と roleGuest はどちらも seed-solo の外にいるが、フィーチャー
+// フラグを持つのは roleGuest だけであり、これらの画面へ Go 版が応答する形で辿り着ける
+// のもそちらだけになる。roleCollaborator は Rails へ送られ、それはこれらのページが
+// 見せようとしているものではない。
+//
+// 本文をここで組み立てず、データベースから読み直すのは、検査対象が「生成器がどの
+// アカウントへ手を伸ばしたか」であるため。本文は自身が載せる名前を渡される側であり、
+// ここで roleGuest の名前を渡して組み立てても、その名前がテキストへ届いたこと以上の
+// ことは言えない。
+func assertSoloPageBodiesNameTheAccountThatWalksThem(
+	ctx context.Context,
+	t *testing.T,
+	tx *sql.Tx,
+	users *seededUsers,
+	solo *seededSpace,
+	topics *seededTopics,
+) {
+	t.Helper()
+
+	guestName := users.user(roleGuest).Name
+	collaboratorName := users.user(roleCollaborator).Name
+	ownerName := users.user(roleOwner).Name
+
+	for _, tt := range []struct {
+		topic *seededTopic
+		// wantMemberNamed is set for the body that says who may open the page.
+		// Only the private topic has an answer to that: a page of the public one
+		// is open to anybody, member or not.
+		//
+		// [Ja] wantMemberNamed は、誰がそのページを開けるのかを述べる本文に立てる。
+		// その答えを持つのは非公開トピックだけになる。公開トピックのページは、
+		// メンバーかどうかを問わず誰にでも開くため。
+		wantMemberNamed bool
+	}{
+		{topic: topics.soloNotes},
+		{topic: topics.soloSecret, wantMemberNamed: true},
+	} {
+		title := fmt.Sprintf("%s %02d", tt.topic.name, 1)
+		page := findPageByTitle(ctx, t, tx, solo.id, tt.topic.id, title)
+		bodyText := markup.PlainText(readPage(ctx, t, tx, solo.id, page.id).bodyHTML, 0)
+		guestText := strings.Join(strings.Fields(guestName), " ")
+		ownerText := strings.Join(strings.Fields(ownerName), " ")
+
+		if !strings.Contains(bodyText, guestText) {
+			t.Errorf("%s の本文が %s (%s) を案内することを期待したが名指ししていない", title, guestName, roleGuest)
+		}
+		if strings.Contains(bodyText, collaboratorName) {
+			t.Errorf("%s の本文が %s (%s) を名指ししている", title, collaboratorName, roleCollaborator)
+		}
+		if tt.wantMemberNamed && !strings.Contains(bodyText, ownerText) {
+			t.Errorf("%s の本文がページを開けるアカウント %s (%s) を名指ししていない", title, ownerName, roleOwner)
 		}
 	}
 }
@@ -188,5 +283,75 @@ func assertSoloPagesReachableFromOutside(
 				tt.topic.name, tt.wantOpen, got,
 			)
 		}
+	}
+}
+
+// TestMarkdownPlainText states what the encoding leaves alone and what it takes
+// out. The bodies are checked elsewhere for the two things that would break if
+// this stopped working — a wiki link the resolver would follow, and a rendered
+// text that no longer reads as the roster's name — while what is written down
+// here is the rule those checks rest on.
+//
+// [Ja] TestMarkdownPlainText は、エンコードが何を残し何を外すのかを述べる。これが
+// 働かなくなったときに壊れるもの、すなわち resolver が辿る Wiki リンクと、名簿の
+// 名前として読めなくなったレンダリング後のテキストは別の場所で確認しており、ここに
+// 書くのは、それらの確認が拠って立つ規則になる。
+func TestMarkdownPlainText(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name string
+		text string
+		want string
+	}{
+		{
+			// The names a roster actually holds pass through untouched, so a
+			// body reads as it was written for every name but an odd one.
+			//
+			// [Ja] 名簿が実際に持つ名前はそのまま通る。変わった名前でない限り、
+			// 本文は書かれたとおりに読める。
+			name: "句読点を含まない名前は1文字も変換しない",
+			text: "シードユーザー 1",
+			want: "シードユーザー 1",
+		},
+		{
+			name: "Wikiリンクの角括弧をエンコードする",
+			text: "[[ページ]]",
+			want: "&#91;&#91;ページ&#93;&#93;",
+		},
+		{
+			// The ampersand is encoded before anything else can use it, so a
+			// name that already looks like a reference is shown as itself
+			// rather than decoded a second time.
+			//
+			// [Ja] アンパサンドは他の何かに使われる前にエンコードされる。既に参照の
+			// 形をしている名前も、二度目のデコードを受けずにそのまま表示される。
+			name: "アンパサンド自身をエンコードして二重デコードを防ぐ",
+			text: "&#91;",
+			want: "&#38;&#35;91&#59;",
+		},
+		{
+			name: "改行をエンコードして本文のブロックを断ち切らせない",
+			text: "上\n下",
+			want: "上&#10;下",
+		},
+		{
+			// A tab is whitespace but not the space that separates words, so it
+			// is encoded while the space beside it stays.
+			//
+			// [Ja] タブは空白だが、語を区切る半角スペースではない。そのためタブは
+			// エンコードされ、隣の半角スペースは残る。
+			name: "半角スペースは残しタブはエンコードする",
+			text: "姓 名\t敬称",
+			want: "姓 名&#9;敬称",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := markdownPlainText(tt.text); got != tt.want {
+				t.Errorf("%q のエンコード結果が %q であることを期待したが %q だった", tt.text, tt.want, got)
+			}
+		})
 	}
 }
