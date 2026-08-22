@@ -17,6 +17,26 @@ const (
 // アットネームの形式（英数字とアンダースコアのみ）
 var atnameRegex = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 
+// IsValidAtname reports whether the atname satisfies the format and the length
+// every account's atname has to have. It is exported so that a caller creating
+// an account outside the sign-up form checks the same rule instead of a copy
+// of it.
+//
+// AccountCreateValidator applies the same two constraints separately, because
+// the form tells the two apart in what it says. A rule added here has to be
+// added there as well, or the form would accept an atname the roster refuses.
+//
+// [Ja] IsValidAtname は、アットネームがすべてのアカウントに課される形式と長さを
+// 満たすかを返す。サインアップフォームの外でアカウントを作る呼び出し元が、制約の
+// 写しではなく同じ規則を参照できるよう公開している。
+//
+// AccountCreateValidator は同じ 2 つの制約を個別に適用する。フォームは 2 つを
+// 別のメッセージで伝え分けるため。ここへ規則を足したときは、あちらへも足す必要が
+// ある。そうしないと、フォームが受理する atname を名簿が拒否することになる。
+func IsValidAtname(atname string) bool {
+	return len(atname) <= AtnameMaxLength && atnameRegex.MatchString(atname)
+}
+
 // AccountCreateValidator はアカウント作成のバリデーションを行う
 type AccountCreateValidator struct {
 	userRepo *repository.UserRepository

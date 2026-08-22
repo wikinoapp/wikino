@@ -3,7 +3,6 @@ package validator
 
 import (
 	"context"
-	"net/mail"
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -50,7 +49,7 @@ func (v *SignInCreateValidator) Validate(ctx context.Context, input SignInCreate
 
 	if input.Email == "" {
 		ve.AddField("email", i18n.T(ctx, "validation_required"))
-	} else if !isValidEmail(input.Email) {
+	} else if !IsValidEmail(input.Email) {
 		ve.AddField("email", i18n.T(ctx, "validation_email_invalid"))
 	}
 
@@ -97,10 +96,4 @@ func (v *SignInCreateValidator) Validate(ctx context.Context, input SignInCreate
 	}
 
 	return &SignInCreateValidateOutput{User: user, UserTwoFactorAuth: twoFactorAuth}, nil
-}
-
-// isValidEmail はメールアドレスの形式をチェックします
-func isValidEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
 }

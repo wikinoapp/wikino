@@ -92,7 +92,7 @@ jobs:
 
       - name: Start Go server
         working-directory: go
-        run: bin/server > /tmp/server.log 2>&1 &
+        run: bin/wikino serve > /tmp/server.log 2>&1 &
         env:
           CI: true
 

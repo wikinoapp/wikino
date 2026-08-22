@@ -5,23 +5,30 @@
 # two-factor step when the account has it enabled), reuses the logged-in
 # session for screenshots, and cleans up.
 #
-# It expects KORYLUS_BROWSING_* in the environment, so run it under the op-run
-# wrapper (see the browse-* targets in go/Makefile). Reading credentials through
-# op-run avoids evaluating the .env in a shell, which would corrupt any
-# credential containing a `$`. The dev server must run with Turnstile disabled
-# (WIKINO_TURNSTILE_ENABLED=false in the dev .env) or bot verification blocks
-# the sign-in submit. Accounts with two-factor auth enabled additionally need
-# the dev database to be reachable, since the TOTP code is generated from
-# user_two_factor_auths.
+# The sign-in credentials come from the roster the seed creates its accounts
+# from (go/seed-users.toml), read through `wikino devcreds`, so that the account
+# signed in as here is the account the seed actually created. The base URL is
+# still expected in KORYLUS_BROWSING_BASE_URL, so run this under the op-run
+# wrapper (see the browse-* targets in go/Makefile). Reading that URL through
+# op-run avoids evaluating the .env in a shell, which would corrupt the
+# basic-auth credentials it carries when they contain a `$`. The dev server must
+# run with Turnstile disabled (WIKINO_TURNSTILE_ENABLED=false in the dev .env)
+# or bot verification blocks the sign-in submit. Accounts with two-factor auth
+# enabled additionally need the dev database to be reachable, since the TOTP
+# code is generated from user_two_factor_auths.
 #
 # [Ja] browse.sh は playwright-cli を駆動して dev サイトのブラウザ確認を行う。
 # Basic 認証 config の生成・dev サインイン (アカウントが 2 要素認証を有効にしている
 # 場合はそのステップの通過も含む)・ログイン済みセッションでのスクショ・後片付けを
 # まとめる。
 #
-# KORYLUS_BROWSING_* が環境にある前提なので、op run ラッパー配下 (go/Makefile の
-# browse-* ターゲット) から実行する。creds を op run 経由で読むことで、.env を
-# シェル評価して `$` を含む creds を壊すのを避ける。dev サーバは Turnstile を
+# サインインに使う資格情報は、シードがアカウントを作成する元にしている名簿
+# (go/seed-users.toml) から `wikino devcreds` を通して読む。ここでサインインする
+# アカウントを、シードが実際に作成したアカウントそのものにするため。ベース URL は
+# 引き続き KORYLUS_BROWSING_BASE_URL を前提とするため、op run ラッパー配下
+# (go/Makefile の browse-* ターゲット) から実行する。この URL を op run 経由で読む
+# ことで、.env をシェル評価して、そこに含まれる Basic 認証 creds を壊すのを避ける
+# (creds が `$` を含む場合)。dev サーバは Turnstile を
 # 無効化 (dev の .env で WIKINO_TURNSTILE_ENABLED=false) して起動している必要が
 # あり、でないと Bot 検証でサインインの送信が弾かれる。2 要素認証を有効にした
 # アカウントを使う場合は、TOTP コードを user_two_factor_auths から生成するため
@@ -29,14 +36,39 @@
 set -euo pipefail
 
 SESSION=dev
-# The Go module root, derived from this script's location so the devtotp helper
-# resolves no matter which directory the script is invoked from.
+# The account signed in as when none is named. The owner administers both spaces
+# and holds every feature flag, so it is the account that reaches the most
+# screens.
+#
+# [Ja] 役割の指定が無いときにサインインするアカウント。owner は両スペースを管理し、
+# フィーチャーフラグを全件持つため、最も多くの画面へ到達できる。
+DEFAULT_ROLE=owner
+# The Go module root, derived from this script's location so the helpers this
+# script runs — wikino devcreds and devtotp — resolve no matter which directory
+# it is invoked from. It is also where the roster is looked for, which
+# wikino devcreds names relative to the module root.
 #
 # [Ja] Go モジュールのルート。本スクリプトの位置から求めることで、どのディレクトリ
-# から実行しても devtotp ヘルパーを解決できるようにする。
+# から実行してもヘルパー (wikino devcreds と devtotp) を解決できるようにする。
+# 名簿を探す基準もここになる。wikino devcreds が名簿のパスをモジュールルートからの
+# 相対で持っているため。
 GO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TMP_DIR=/workspace/tmp
+# Where the credential-bearing files and the screenshots are written. It is the
+# repository's gitignored tmp directory, and WIKINO_BROWSE_TMP_DIR points it
+# elsewhere for the subprocess tests. Giving the tests one seam is what keeps
+# the file names below the only definition of themselves: a test that copied
+# them would go on passing after a rename here while this script wrote the real
+# password file to the developer's tmp directory.
+#
+# [Ja] 資格情報を含むファイルとスクショの書き込み先。リポジトリの gitignore 済み
+# tmp ディレクトリであり、サブプロセステストは WIKINO_BROWSE_TMP_DIR で別の場所へ
+# 向ける。テストへ差し込み口を 1 つだけ渡すことが、以下のファイル名の定義をここ
+# だけにする方法になる。テスト側で名前を書き写すと、ここで改名したときにテストは
+# 通ったまま、本スクリプトが開発者の実 tmp ディレクトリへパスワードのファイルを
+# 書くことになるため。
+TMP_DIR="${WIKINO_BROWSE_TMP_DIR:-/workspace/tmp}"
 CONFIG_FILE="$TMP_DIR/browse-cli.config.json"
+PASSWORD_SCRIPT_FILE="$TMP_DIR/browse-cli.password.js"
 ORIGIN_FILE="$TMP_DIR/browse-cli.origin"
 SHOT_DIR="$TMP_DIR/browse"
 LEGACY_PROFILE_DIR="$TMP_DIR/browse-cli-profile"
@@ -74,6 +106,55 @@ pw_checked() {
     return 1
   fi
   printf '%s\n' "$output"
+}
+
+# pw_checked_secret is pw_checked for a command whose code carries a secret. It
+# never lets the response body reach the terminal.
+#
+# run-code echoes the code it ran back to the caller in a
+# "### Ran Playwright code" section, and for the sign-in that code is the
+# generated script, password and all. Nothing leaks today — the successful
+# response is discarded and playwright-cli answers a thrown error with the
+# Error section alone — but both of those are its choices to change. Relaying
+# only the Error section is what keeps the password off the terminal, the CI log
+# and the agent transcript when a response gains a section: a section this
+# function was not told to relay is not relayed.
+#
+# Output carrying no section header at all is not a response. It is
+# playwright-cli failing before it read anything, so it is relayed whole, which
+# is what leaves a missing binary or a dead session diagnosable.
+#
+# [Ja] pw_checked_secret は、コードが秘密を含むコマンド用の pw_checked。応答の本文を
+# 端末へ出さない。
+#
+# run-code は実行したコードを "### Ran Playwright code" セクションとして呼び出し側へ
+# 返すが、サインインではそのコードが、パスワードを含む生成スクリプトそのものになる。
+# 現状は漏れない (成功時の応答は捨てており、playwright-cli は throw されたエラーへ
+# Error セクションだけを返す) が、どちらも playwright-cli 側が変えられるものである。
+# Error セクションだけを流すことが、応答にセクションが増えたときにも、端末・CI ログ・
+# エージェントのトランスクリプトへパスワードを出さない方法になる。この関数が流すと
+# 指示されていないセクションは流れない。
+#
+# セクションの見出しを 1 つも持たない出力は応答ではない。playwright-cli が何かを読む
+# 前に失敗した場合であるため、そのまま流す。バイナリが無い場合やセッションが死んで
+# いる場合を、調査できる形で残すため。
+pw_checked_secret() {
+  local output
+  local status=0
+  output="$(pw "$@" 2>&1)" || status=$?
+  if [ "$status" -eq 0 ] && [[ "$output" != *"### Error"* ]]; then
+    return 0
+  fi
+
+  {
+    if [[ "$output" == *"### "* ]]; then
+      printf '%s\n' "$output" | awk '/^### /{ relay = ($0 == "### Error") } relay'
+    else
+      printf '%s\n' "$output"
+    fi
+  } >&2
+
+  return 1
 }
 
 # sign_in_status prints "<SIGNED_IN|NOT_SIGNED_IN> <url>" for the page the
@@ -139,24 +220,87 @@ build_config() {
   ' "$CONFIG_FILE" "$ORIGIN_FILE"
 }
 
+# build_password_script writes the password input and submit actions to a 0600
+# file. The password reaches Node over stdin and playwright-cli receives only
+# the file path, keeping the secret out of both processes' argv.
+#
+# [Ja] build_password_script は、パスワード入力と送信の操作を 0600 のファイルへ
+# 書く。パスワードは標準入力で Node へ渡し、playwright-cli にはファイルパスだけを
+# 渡すことで、どちらのプロセスの argv にも秘密を載せない。
+build_password_script() {
+  node -e '
+    const fs = require("fs");
+    const password = fs.readFileSync(0, "utf8");
+    const selector = "input[name=\"password\"]";
+    const source = `async page => {
+      const input = page.locator(${JSON.stringify(selector)});
+      await input.fill(${JSON.stringify(password)});
+      await input.press("Enter");
+    }`;
+    fs.rmSync(process.argv[1], { force: true });
+    fs.writeFileSync(process.argv[1], source, { mode: 0o600 });
+  ' "$PASSWORD_SCRIPT_FILE"
+}
+
+# role_for translates what was asked for into a role the roster holds. The
+# roster names accounts by role; before it existed this script took the index of
+# a KORYLUS_BROWSING_USER{N} pair, so the two indexes that ever existed are
+# accepted as the roles they stood for. The translation lives here rather than
+# on the Go side so that the roster never learns the numbering, and dropping the
+# compatibility is a change to this function alone.
+#
+# [Ja] role_for は、指定された値を名簿が持つ役割へ読み替える。名簿はアカウントを
+# 役割で名指しするが、名簿ができる前の本スクリプトは KORYLUS_BROWSING_USER{N} の組の
+# 番号を受け取っていたため、当時存在した 2 つの番号を、それが指していた役割として
+# 受け付ける。読み替えを Go 側ではなくここに置いているのは、名簿にこの番号を
+# 知らせないためで、互換をやめるときの変更もこの関数だけで済む。
+role_for() {
+  case "$1" in
+    1) printf 'owner\n' ;;
+    2) printf 'collaborator\n' ;;
+    *) printf '%s\n' "$1" ;;
+  esac
+}
+
 cmd_login() {
-  local n="${1:-1}"
-  local email_var="KORYLUS_BROWSING_USER${n}_EMAIL"
-  local pass_var="KORYLUS_BROWSING_USER${n}_PASSWORD"
-  local email="${!email_var:-}"
-  local pass="${!pass_var:-}"
-  if [ -z "$email" ] || [ -z "$pass" ]; then
-    echo "USER${n} credentials are not set (${email_var} / ${pass_var})" >&2
+  local role
+  role="$(role_for "${1:-$DEFAULT_ROLE}")"
+
+  # The credentials come from the roster the seed reads (go/seed-users.toml),
+  # by way of `wikino devcreds`, which prints the email and the password one per
+  # line. Asking the file the seed asked is what keeps the sign-in that follows
+  # a seed working: an account cannot be changed in one place and left as it was
+  # in the other.
+  #
+  # The password stays off argv throughout: it arrives on stdout, crosses into
+  # Node on stdin, and is written to a 0600 script. playwright-cli receives only
+  # that script's path, which is removed immediately after the input action, and
+  # the response that carries the script back is handled by pw_checked_secret.
+  #
+  # [Ja] 資格情報は、シードが読むのと同じ名簿 (go/seed-users.toml) から
+  # `wikino devcreds` を通して受け取る。devcreds はメールアドレスとパスワードを
+  # 1 行ずつ出力する。シードが尋ねたファイルに尋ねることが、シード直後のサインインが
+  # 通り続ける理由になる。片方だけを変えてもう片方が元のまま、ということが起こらない
+  # ため。パスワードは全経路で argv に載せず、標準出力から Node の標準入力を経て
+  # 0600 のスクリプトへ書く。playwright-cli にはそのパスだけを渡して入力直後に削除し、
+  # そのスクリプトを返してくる応答は pw_checked_secret が扱う。
+  local credentials
+  credentials="$(cd "$GO_DIR" && go run ./cmd/wikino devcreds "$role")"
+  local lines=()
+  mapfile -t lines <<<"$credentials"
+  local email="${lines[0]:-}"
+  local pass="${lines[1]:-}"
+  if [ "${#lines[@]}" -ne 2 ] || [ -z "$email" ] || [ -z "$pass" ]; then
+    echo "no credentials for role '$role': wikino devcreds must print exactly two non-empty lines" >&2
     exit 1
   fi
 
-  # Remove the credential-bearing config on any exit, so a mid-login failure
-  # (a set -e abort before the explicit rm below) never leaves credentials at
-  # rest.
+  # Remove credential-bearing files on any exit, so a mid-login failure never
+  # leaves the Basic-auth config or password script at rest.
   #
-  # [Ja] creds を含む config をどの終了経路でも削除し、ログイン途中の失敗
-  # (下の明示 rm へ到達する前の set -e abort) でも creds をディスクに残さない。
-  trap 'rm -f "$CONFIG_FILE"' EXIT
+  # [Ja] 資格情報を含むファイルをどの終了経路でも削除し、ログイン途中の失敗でも
+  # Basic 認証 config やパスワードスクリプトをディスクに残さない。
+  trap 'rm -f "$CONFIG_FILE" "$PASSWORD_SCRIPT_FILE"' EXIT
 
   build_config
   local origin
@@ -186,7 +330,12 @@ cmd_login() {
   # 無効化 (WIKINO_TURNSTILE_ENABLED=false) されている必要があり、でないと送信が
   # 弾かれる。
   pw_checked fill 'input[name="email"]' "$email" >/dev/null
-  pw_checked fill 'input[name="password"]' "$pass" --submit >/dev/null
+  printf '%s' "$pass" | build_password_script
+  if ! pw_checked_secret run-code --filename="$PASSWORD_SCRIPT_FILE"; then
+    echo "sign-in did not complete: filling the password failed" >&2
+    exit 1
+  fi
+  rm -f "$PASSWORD_SCRIPT_FILE"
 
   # The context now holds the credentials, so the on-disk config is no longer
   # needed; drop it to avoid leaving credentials at rest.
@@ -222,7 +371,7 @@ cmd_login() {
     echo "could not verify sign-in at the expected origin: $result" >&2
     exit 1
   fi
-  echo "logged in as USER${n}: ${result#SIGNED_IN }"
+  echo "logged in as $role: ${result#SIGNED_IN }"
 }
 
 cmd_shot() {
@@ -246,25 +395,36 @@ cmd_shot() {
 
 cmd_close() {
   pw close >/dev/null 2>&1 || true
-  rm -f "$CONFIG_FILE" "$ORIGIN_FILE"
+  rm -f "$CONFIG_FILE" "$PASSWORD_SCRIPT_FILE" "$ORIGIN_FILE"
   rm -rf "$LEGACY_PROFILE_DIR"
   echo "browser session closed and temp files removed"
 }
 
-case "${1:-}" in
-  login)
-    shift
-    cmd_login "${1:-1}"
-    ;;
-  shot)
-    shift
-    cmd_shot "${1:-/}"
-    ;;
-  close)
-    cmd_close
-    ;;
-  *)
-    echo "usage: browse.sh {login [user_number] | shot <path> | close}" >&2
-    exit 2
-    ;;
-esac
+main() {
+  case "${1:-}" in
+    login)
+      shift
+      cmd_login "${1:-}"
+      ;;
+    shot)
+      shift
+      cmd_shot "${1:-/}"
+      ;;
+    close)
+      cmd_close
+      ;;
+    *)
+      echo "usage: browse.sh {login [role] | shot <path> | close}" >&2
+      exit 2
+      ;;
+  esac
+}
+
+# Keep the function definitions sourceable for subprocess tests without
+# changing the behavior of direct invocations.
+#
+# [Ja] サブプロセステストで関数定義だけを source できるようにしつつ、直接実行時の
+# 動作は変えない。
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

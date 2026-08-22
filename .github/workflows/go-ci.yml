@@ -127,6 +127,22 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      # cmd/wikino's browse.sh test runs the script's real password-script
+      # generator, which is a `node -e` program, so this job needs Node as much
+      # as it needs Go. The runner image happens to carry one, but a job that
+      # depends on a tool without asking for it breaks on an image change for a
+      # reason that has nothing to do with the change under test.
+      #
+      # [Ja] cmd/wikino の browse.sh のテストは、スクリプト本体のパスワードスクリプト
+      # 生成器 (`node -e` のプログラム) をそのまま動かすため、本ジョブは Go と同じく
+      # Node を必要とする。ランナーのイメージがたまたま持ってはいるが、要求せずに
+      # ツールへ依存しているジョブは、イメージの変更で、対象の変更とは無関係な理由に
+      # よって落ちる。
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Get dependencies
         run: go mod download
 
@@ -157,7 +173,7 @@ jobs:
 
       - name: Check binary exists
         run: |
-          if [ ! -f bin/server ]; then
+          if [ ! -f bin/wikino ]; then
             echo "Build failed: binary not found"
             exit 1
           fi
