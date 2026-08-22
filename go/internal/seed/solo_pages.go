@@ -51,14 +51,6 @@ type soloPageSpec struct {
 // that a non-member may read, and one of the private topic that is not found for
 // them.
 //
-// [Ja] generateSoloPages は seed-solo の 2 つのトピックをページで埋める。
-//
-// このスペースは、参加していないアカウントから眺めるために存在する。ページが
-// 無いと、そこから確認できるのはどのトピックが一覧に出るかだけになる。公開
-// トピックは空の状態で開き、非メンバーが GuestPolicy を通って辿り着くページ詳細
-// 画面はそもそも開かれない。ここのページが、その両方の答えを画面に出す。非メンバー
-// が読める公開トピックのページと、非メンバーには見つからない非公開トピックのページ。
-//
 // Of the two accounts that have not joined the space, the bodies name
 // roleGuest, because it is the one that walks the path they describe. It holds
 // the feature flags, so the screens it opens here are answered by the Go
@@ -68,7 +60,15 @@ type soloPageSpec struct {
 // comes from the roster. A body that spelled the name out would go on saying it
 // in a development environment whose roster calls the account something else.
 //
-// [Ja] 本文が名指しするのは、このスペースに参加していない 2 つのアカウントのうち
+// [Ja] generateSoloPages は seed-solo の 2 つのトピックをページで埋める。
+//
+// このスペースは、参加していないアカウントから眺めるために存在する。ページが
+// 無いと、そこから確認できるのはどのトピックが一覧に出るかだけになる。公開
+// トピックは空の状態で開き、非メンバーが GuestPolicy を通って辿り着くページ詳細
+// 画面はそもそも開かれない。ここのページが、その両方の答えを画面に出す。非メンバー
+// が読める公開トピックのページと、非メンバーには見つからない非公開トピックのページ。
+//
+// 本文が名指しするのは、このスペースに参加していない 2 つのアカウントのうち
 // roleGuest である。本文が説明している経路を通るのがそちらであるため。roleGuest は
 // フィーチャーフラグを持ち、ここで開く画面には Go 版が応答する。roleCollaborator も
 // 同じく非メンバーだが、そちらには Rails が応答する。
