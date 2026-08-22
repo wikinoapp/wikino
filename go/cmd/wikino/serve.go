@@ -69,7 +69,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
-func main() {
+// runServe starts the HTTP server: it loads the config, wires up the
+// dependencies, registers the routes and background workers, and blocks on
+// ListenAndServe until shutdown. It is the body of the `serve` subcommand.
+//
+// [Ja] runServe は HTTP サーバーを起動する。設定の読み込み・依存の組み立て・
+// ルートとバックグラウンドワーカーの登録を行い、シャットダウンまで
+// ListenAndServe でブロックする。`serve` サブコマンドの本体。
+func runServe() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

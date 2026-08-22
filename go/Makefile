@@ -12,7 +12,11 @@ help: ## ヘルプを表示
 
 .PHONY: run
 run: ## サーバーを起動
-	$(OP_RUN_DEV) go run cmd/server/main.go
+	$(OP_RUN_DEV) go run ./cmd/wikino serve
+
+.PHONY: seed
+seed: ## Rebuild the development database contents with seed data (drops existing data). [Ja] 開発用データベースの中身をシードデータで作り直す (既存データは失われる)
+	$(OP_RUN_DEV) go run ./cmd/wikino seed
 
 .PHONY: browse-login
 browse-login: ## dev サイトへブラウザでログイン (別ユーザーは make browse-login BROWSE_USER=2)
@@ -51,7 +55,7 @@ goimports-check: ## goimportsでimport文をチェック（差分があればエ
 
 .PHONY: build
 build: templ-generate ## バイナリをビルド（templ-generateがgoimportsも実行）
-	go build -o bin/server cmd/server/main.go
+	go build -o bin/wikino ./cmd/wikino
 
 .PHONY: test
 test: db-setup-test ## テストを実行
