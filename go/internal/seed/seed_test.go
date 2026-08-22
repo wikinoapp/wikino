@@ -83,38 +83,32 @@ func containsASCIILetter(s string) bool {
 // breaks on the screen instead of the wrapping the browser does at the width the
 // body is read in, which is what these screens are opened to look at.
 //
-// The Markdown guide is not among the bodies checked here: it is a Markdown
-// file rather than a Go literal, and the shared Markdown linter asks those for
-// one sentence per line.
-//
 // [Ja] TestSeedBodiesWriteOneLinePerParagraph は、シードが書く本文のいずれもが段落を
 // 複数行に折り返していないことを確認する。Markdown のページ本文は段落内の改行を
 // <br> として描画し、編集提案の本文とコメントは white-space: pre-wrap によって改行を
 // 保つ。手で折り返した本文は、本文が読まれる幅でブラウザが行う折り返しではなく、その
 // 改行を画面に見せることになる。画面を開いて見たいのは前者のほうである。
-//
-// Markdown 記法紹介ページはここで確認する本文に含めない。Go のリテラルではなく Markdown
-// ファイルであり、共通の Markdown リンタが句点改行を求めるため。
 func TestSeedBodiesWriteOneLinePerParagraph(t *testing.T) {
 	t.Parallel()
 
 	pageTitle := topicNameHandbook + " 001"
 
 	bodies := map[string]string{
-		"ピン留めページ":        pinnedPageBody(pageTitle),
-		"ゴミ箱のページ":        trashedPageBody(pageTitle),
-		"リンクハブ":          linkHubBody(3),
-		"ハブ被リンク":         hubBacklinkBody("ハブ被リンク 01"),
-		"ネスト被リンク":        nestedBacklinkBody("ネスト被リンク 01", "リンク先 01"),
-		"長いタイトルのページ":     longTitlePageBody,
-		"マルチバイトタイトルのページ": multibyteTitlePageBody,
-		"横に長いテーブル":       wideTableBody(),
-		"長いコードブロック":      longCodeBlockBody(),
-		"個人ノートのページ":      soloNotesPageBody("個人ノート 01"),
-		"個人シークレットのページ":   soloSecretPageBody("個人シークレット 01"),
-		"公開済みページの下書き":    publishedPageDraftIntro(pageTitle),
-		"通常の編集提案":        ordinarySuggestionBody(pageTitle),
-		"提案ページが足す節":      suggestionAddedSection,
+		"ピン留めページ":         pinnedPageBody(pageTitle),
+		"ゴミ箱のページ":         trashedPageBody(pageTitle),
+		"リンクハブ":           linkHubBody(3),
+		"ハブ被リンク":          hubBacklinkBody("ハブ被リンク 01"),
+		"ネスト被リンク":         nestedBacklinkBody("ネスト被リンク 01", "リンク先 01"),
+		"長いタイトルのページ":      longTitlePageBody,
+		"マルチバイトタイトルのページ":  multibyteTitlePageBody,
+		"横に長いテーブル":        wideTableBody(),
+		"長いコードブロック":       longCodeBlockBody(),
+		"個人ノートのページ":       soloNotesPageBody("個人ノート 01"),
+		"個人シークレットのページ":    soloSecretPageBody("個人シークレット 01"),
+		"公開済みページの下書き":     publishedPageDraftIntro(pageTitle),
+		"通常の編集提案":         ordinarySuggestionBody(pageTitle),
+		"提案ページが足す節":       suggestionAddedSection,
+		"Markdown記法紹介ページ": markdownGuideBody,
 	}
 	for i, body := range bulkPageBodies {
 		bodies[fmt.Sprintf("ページネーション用ページ %d", i+1)] = fmt.Sprintf(body, pageTitle)
@@ -181,6 +175,24 @@ func TestWrappedParagraphLine(t *testing.T) {
 			name: "コードフェンス内の行は除外する",
 			body: "```text\nコードの最初の行\nコードの次の行\n```",
 		},
+		{
+			name: "コードフェンスの中の短いフェンスでは閉じない",
+			body: "````markdown\n```\nコードの最初の行\nコードの次の行\n```\n````",
+		},
+		{
+			name: "水平線は除外する",
+			body: "---\n***\n___",
+		},
+		{
+			name: "HTML の要素だけの行は除外する",
+			body: "<details>\n<summary>クリックして展開</summary>",
+		},
+		{
+			name:       "自動リンクは HTML の要素として扱わない",
+			body:       "<https://example.com> は自動リンクです。\n同じ段落の次の行です。",
+			wantLine:   "<https://example.com> は自動リンクです。",
+			wantNumber: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -210,14 +222,27 @@ func TestWrappedParagraphLine(t *testing.T) {
 // 中の行は段落ではなくブロックの中身であるため。
 func wrappedParagraphLine(body string) (string, int) {
 	lines := strings.Split(body, "\n")
-	inFence := false
+	fence := 0
 
 	for i, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "```") {
-			inFence = !inFence
+		if backticks := codeFenceBackticks(line); backticks > 0 {
+			// A fence closes only on at least as many backticks as opened it.
+			// A guide to Markdown shows a code block inside a code block, and
+			// the inner fence is content of the outer one.
+			//
+			// [Ja] フェンスが閉じるのは、開いたときと同じ数以上のバックティックに
+			// 限る。Markdown の記法を紹介する本文はコードブロックの中にコード
+			// ブロックを見せており、内側のフェンスは外側の中身であるため。
+			switch {
+			case fence == 0:
+				fence = backticks
+			case backticks >= fence:
+				fence = 0
+			}
+
 			continue
 		}
-		if inFence || !isProseLine(line) {
+		if fence > 0 || !isProseLine(line) {
 			continue
 		}
 		if i+1 < len(lines) && isProseLine(lines[i+1]) {
@@ -228,18 +253,42 @@ func wrappedParagraphLine(body string) (string, int) {
 	return "", 0
 }
 
+// codeFenceBackticks returns how many backticks open or close the fence on
+// line, or 0 when line is not a fence.
+//
+// [Ja] codeFenceBackticks は、line のフェンスを開く / 閉じるバックティックの数を
+// 返す。line がフェンスでなければ 0 を返す。
+func codeFenceBackticks(line string) int {
+	trimmed := strings.TrimSpace(line)
+
+	count := 0
+	for count < len(trimmed) && trimmed[count] == '`' {
+		count++
+	}
+	if count < 3 {
+		return 0
+	}
+
+	return count
+}
+
 // isProseLine reports whether line carries paragraph text. A blockquote marker
 // is stripped before the line is judged, so that a quoted paragraph is held to
-// the same one-line rule as an unquoted one.
+// the same one-line rule as an unquoted one. A thematic break and a line that
+// is nothing but an HTML element are block markup rather than prose: they take
+// a line of their own by their own syntax, and neither reaches the screen as
+// the <br> this rule exists to keep out.
 //
 // [Ja] isProseLine は、line が段落の本文かどうかを返す。判定の前に引用の記号を外すのは、
-// 引用された段落にも引用でない段落と同じ「1 段落 1 行」の規則を課すため。
+// 引用された段落にも引用でない段落と同じ「1 段落 1 行」の規則を課すため。水平線と、
+// HTML の要素だけからなる行は、地の文ではなくブロックの記法である。記法そのものが
+// 1 行を占め、この規則が防ごうとしている <br> にもならない。
 func isProseLine(line string) bool {
 	trimmed := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), ">"))
 	if trimmed == "" {
 		return false
 	}
-	if isMarkdownListItem(trimmed) {
+	if isMarkdownListItem(trimmed) || isThematicBreak(trimmed) || isHTMLElementLine(trimmed) {
 		return false
 	}
 
@@ -250,6 +299,65 @@ func isProseLine(line string) bool {
 	}
 
 	return true
+}
+
+// isThematicBreak reports whether line is a horizontal rule: three or more of
+// -, * or _, all the same character, with nothing else on the line but spaces.
+//
+// [Ja] isThematicBreak は、line が水平線かどうかを返す。水平線は - か * か _ の
+// いずれか同じ文字を 3 つ以上並べた行で、他に置けるのは空白だけである。
+func isThematicBreak(line string) bool {
+	marker := rune(line[0])
+	if marker != '-' && marker != '*' && marker != '_' {
+		return false
+	}
+
+	count := 0
+	for _, r := range line {
+		switch r {
+		case marker:
+			count++
+		case ' ', '\t':
+		default:
+			return false
+		}
+	}
+
+	return count >= 3
+}
+
+// isHTMLElementLine reports whether line opens, closes or holds a whole HTML
+// element and nothing else. The tag name is checked so that an autolink such
+// as <https://example.com>, which a paragraph can well be wrapped around, is
+// not taken for markup.
+//
+// [Ja] isHTMLElementLine は、line が HTML 要素の開始・終了、あるいは要素 1 つ分
+// そのものだけであるかを返す。タグ名まで見るのは、<https://example.com> のような
+// 自動リンクを記法と取り違えないため。そちらは段落として折り返されうる。
+func isHTMLElementLine(line string) bool {
+	if !strings.HasPrefix(line, "<") || !strings.HasSuffix(line, ">") {
+		return false
+	}
+	if strings.HasPrefix(line, "<!--") {
+		return true
+	}
+
+	name := strings.TrimPrefix(line[1:], "/")
+	end := strings.IndexFunc(name, func(r rune) bool {
+		return !isTagNameRune(r)
+	})
+	if end <= 0 {
+		return false
+	}
+
+	return name[end] == '>' || name[end] == ' ' || name[end] == '/'
+}
+
+// isTagNameRune reports whether r can appear in an HTML tag name.
+//
+// [Ja] isTagNameRune は、r が HTML のタグ名に現れうる文字かどうかを返す。
+func isTagNameRune(r rune) bool {
+	return r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-'
 }
 
 // isMarkdownListItem reports whether line starts with an unordered or ordered

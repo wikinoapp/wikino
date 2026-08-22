@@ -13,9 +13,9 @@
 // render a line break inside a paragraph as a <br>, while suggestion bodies and
 // comments preserve it through white-space: pre-wrap. A body wrapped by hand
 // therefore shows those breaks on the screen instead of the wrapping the
-// browser does at the width the body is read in. bodies/markdown-guide.md is the
-// exception: it is a Markdown file, and the shared Markdown linter asks those
-// for one sentence per line.
+// browser does at the width the body is read in. The rule covers the bodies
+// filed under bodies/ as well, which is why none of them is named .md: the
+// shared Markdown linter asks every .md file for one sentence per line.
 //
 // [Ja] seed パッケージは開発用データベースへ、ブラウザ確認に必要なデータを投入する。
 // アカウント・スペース・トピックと、ページネーションのように一定のデータが無いと
@@ -29,8 +29,9 @@
 // シードが書く地の文は 1 段落 1 行で書く。Markdown のページ本文は段落内の改行を
 // <br> として描画し、編集提案の本文とコメントは white-space: pre-wrap によって改行を
 // 保つ。手で折り返した本文は、本文が読まれる幅でブラウザが行う折り返しではなく、その
-// 改行を画面に見せることになる。bodies/markdown-guide.md は例外とする。Markdown
-// ファイルであり、共通の Markdown リンタが句点改行を求めるため。
+// 改行を画面に見せることになる。この規則は bodies/ 配下の本文にも及ぶ。そこにある
+// ファイルを 1 つも .md と名付けていないのはそのためで、共通の Markdown リンタが
+// .md を一律に句点改行へ揃えてしまうため。
 package seed
 
 import (

@@ -289,6 +289,19 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 		}
 	}
 
+	// The renderer enables hard wraps, so a line break inside a paragraph
+	// becomes a <br>. This page shows the notations, not line wrapping chosen by
+	// the author, and every other seeded page renders without one, so a <br>
+	// here would mean a paragraph was written across lines again.
+	//
+	// [Ja] レンダラーはハードラップを有効にしているため、段落内の改行は <br> になる。
+	// このページが見せるのは記法であって書き手が選んだ折り返しではなく、シードの他の
+	// ページはいずれも <br> なしで描画される。ここに <br> が出たなら、段落がまた複数行に
+	// またがって書かれたということになる。
+	if got := strings.Count(row.bodyHTML, "<br"); got != 0 {
+		t.Errorf("段落内の改行が %d 箇所 <br> として描画されている", got)
+	}
+
 	// The body links to a page in its own topic and to one in another, and the
 	// seed creates both. Without them the link list and backlink screens have
 	// nothing to show for this page.
@@ -347,11 +360,11 @@ func TestMarkdownGuideBody(t *testing.T) {
 		name string
 		want string
 	}{
-		{name: "強調の区切り文字", want: "*イタリック体* または _イタリック体_\n**太字** または __太字__\n***太字イタリック*** または ___太字イタリック___"},
+		{name: "強調の区切り文字", want: "*イタリック体* または _イタリック体_\n\n**太字** または __太字__\n\n***太字イタリック*** または ___太字イタリック___"},
 		{name: "順序なしリストの記号", want: "* 別の記号でも可能\n+ こちらも使用可能"},
 		{name: "水平線の記号", want: "```markdown\n---\n***\n___\n```"},
-		{name: "エスケープの改行", want: "\\# これは見出しになりません\n\\* これはリストになりません"},
-		{name: "折りたたみ内のリスト", want: "ここに折りたたまれる内容を記述\n- リスト項目も使えます\n- **Markdown**も使用可能"},
+		{name: "エスケープの改行", want: "\\# これは見出しになりません\n\n\\* これはリストになりません"},
+		{name: "折りたたみ内のリスト", want: "ここに折りたたまれる内容を記述\n\n- リスト項目も使えます\n- **Markdown**も使用可能"},
 	} {
 		if !strings.Contains(markdownGuideBody, tt.want) {
 			t.Errorf("本文に%sの原文が含まれていない: %q", tt.name, tt.want)

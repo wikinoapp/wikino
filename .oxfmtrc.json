@@ -16,7 +16,6 @@
   ],
   "ignorePatterns": [
     "**/node_modules/",
-    "go/internal/seed/bodies/markdown-guide.md",
     "go/internal/query/*.go",
     "go/internal/templates/*_templ.go",
     "go/static/",

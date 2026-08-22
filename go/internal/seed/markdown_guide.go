@@ -17,6 +17,13 @@ import (
 // interpreted one would turn into concatenation and escapes that nobody can
 // read as Markdown any more.
 //
+// The file is named .md.txt rather than .md although Markdown is what it
+// holds. It is the content of a page rather than a document about this
+// repository, while the shared Markdown linter scans every .md file and offers
+// no way to exclude one. Satisfying that lint would require rewriting the body
+// to one sentence per line, and the page renderer enables hard wraps, so each
+// of those line breaks would reach the screen as a <br>.
+//
 // [Ja] markdownGuideBody は、シードがレンダリングする Markdown 記法の紹介本文。
 // シードは添付ファイルを作らないため、添付画像を使う例は意図的に除外している。
 //
@@ -24,7 +31,13 @@ import (
 // raw string literal が使えないため。通常の文字列リテラルにすると連結と
 // エスケープになり、もはや Markdown として読めなくなる。
 //
-//go:embed bodies/markdown-guide.md
+// 中身は Markdown だがファイル名を .md ではなく .md.txt としている。このファイルは
+// リポジトリについて書かれたドキュメントではなくページの中身であり、一方で共通の
+// Markdown リンタは .md を一律に走査して除外の手段を持たない。Lint を通すために本文を
+// 句点改行へ書き換えると、ページのレンダラーはハードラップを有効にしているため、その
+// 改行は画面上の <br> になる。
+//
+//go:embed bodies/markdown-guide.md.txt
 var markdownGuideBody string
 
 // markdownGuideTitle is the title of the page the body above is written to.
