@@ -30,11 +30,18 @@ command() {
 check_environment
 `
 
-// TestBrowseCheckEnvironment covers each prerequisite independently. The command lookup seam keeps
-// a deliberately missing tool local to the subprocess instead of changing the test process PATH.
+// TestBrowseCheckEnvironment covers each prerequisite independently, through two seams that keep a
+// case from turning on what the machine running the tests happens to carry. The command lookup seam
+// makes one named tool missing inside the subprocess instead of changing the test process PATH. The
+// stub directory at the front of the subprocess PATH supplies the tools the check only looks up, so
+// the case that asserts a complete environment stays passable where the browser tooling is absent.
 //
-// [Ja] TestBrowseCheckEnvironment は各前提条件を個別に確認する。コマンド検索の差し込み口に
-// よって、意図的に欠けさせるツールをテストプロセスの PATH を変えず subprocess 内に閉じ込める。
+// [Ja] TestBrowseCheckEnvironment は各前提条件を個別に確認する。ケースの結果が、テストを走らせる
+// マシンがたまたま持っているもので決まらないよう、差し込み口を 2 つ置いている。コマンド検索の
+// 差し込み口は、名指しした 1 つのツールを、テストプロセスの PATH を変えずに subprocess の中だけで
+// 欠けさせる。subprocess の PATH の先頭に置くスタブのディレクトリは、検査が存在だけを見るツールを
+// 供給する。これにより、環境が揃っていることを確認するケースは、ブラウザ関連のツールが入って
+// いない環境でも通せる。
 func TestBrowseCheckEnvironment(t *testing.T) {
 	t.Parallel()
 
@@ -104,6 +111,7 @@ func TestBrowseCheckEnvironment(t *testing.T) {
 
 			command := browseCheckCommand(t, browseEnvironmentHarness)
 			command.Env = browseTestEnvironment(
+				"PATH="+browsePathWithStubbedCommands(t, "playwright-cli"),
 				"APP_ENV="+tt.appEnv,
 				"KORYLUS_BROWSING_BASE_URL="+tt.baseURL,
 				"WIKINO_TURNSTILE_ENABLED="+tt.turnstile,
@@ -579,6 +587,36 @@ func browseScriptPathForEnvironment() string {
 	}
 
 	return scriptPath
+}
+
+// browsePathWithStubbedCommands returns a PATH whose first entry holds an executable stub for each
+// named command. Only the lookup is stubbed, which is all check_environment does with these: the
+// tools it goes on to run (node for the URL check, curl for the reachability check) are left to the
+// real ones, so a stub never stands in for a tool that has to work.
+//
+// playwright-cli is stubbed because it belongs to the development container alone. Without a stub,
+// the case that asserts a complete environment would fail in every environment that runs the tests
+// without ever browsing, for a reason that has nothing to do with the script under test.
+//
+// [Ja] browsePathWithStubbedCommands は、先頭の要素に名指しした各コマンドの実行可能なスタブを持つ
+// PATH を返す。スタブにするのは検索だけで、check_environment がこれらに対して行うのもそれだけで
+// ある。その先で実行するツール (URL 検査の node、到達確認の curl) は本物のままにしてあるため、
+// 動く必要のあるツールをスタブが肩代わりすることはない。
+//
+// playwright-cli をスタブにするのは、これが開発コンテナだけのものだからである。スタブが無いと、
+// 環境が揃っていることを確認するケースは、ブラウズせずにテストだけを走らせるすべての環境で、
+// 対象のスクリプトとは無関係な理由により失敗してしまう。
+func browsePathWithStubbedCommands(t *testing.T, names ...string) string {
+	t.Helper()
+
+	stubDir := t.TempDir()
+	for _, name := range names {
+		if err := os.WriteFile(filepath.Join(stubDir, name), []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+			t.Fatalf("スタブコマンド %s を作成できなかった: %v", name, err)
+		}
+	}
+
+	return stubDir + string(os.PathListSeparator) + os.Getenv("PATH")
 }
 
 func browseURLWithCredentials(t *testing.T, rawURL string, username string, password string) string {
