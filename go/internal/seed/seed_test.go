@@ -130,6 +130,19 @@ func TestSeedBodiesWriteOneLinePerParagraph(t *testing.T) {
 	for i, body := range bulkPageBodies {
 		bodies[fmt.Sprintf("ページネーション用ページ %d", i+1)] = fmt.Sprintf(body, pageTitle)
 	}
+	// The demo bodies are files rather than literals, and they are written by
+	// hand and added to one at a time, which is the way a paragraph gets
+	// wrapped without anyone noticing.
+	//
+	// [Ja] デモページの本文はリテラルではなくファイルであり、手で書かれて 1 枚ずつ
+	// 足されていく。段落が誰にも気づかれずに折り返されるのはそういうときである。
+	demoPages, err := loadDemoPages()
+	if err != nil {
+		t.Fatalf("デモページ本文の読み込みに失敗: %v", err)
+	}
+	for _, page := range demoPages {
+		bodies["デモページ "+page.title] = page.body
+	}
 	for i, spec := range newPageDraftSpecs() {
 		bodies[fmt.Sprintf("未公開ページの下書き %d", i+1)] = draftRevisionBody(spec.intro, 2)
 	}

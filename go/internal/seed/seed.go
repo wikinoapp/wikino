@@ -364,6 +364,9 @@ func (r *Runner) Run(ctx context.Context) error {
 		{name: "編集提案", run: func(ctx context.Context, st *state) error {
 			return generateSuggestions(ctx, r.db, r.out, defaultAmounts, st.spaces, st.topics, st.draftStamps)
 		}},
+		{name: "デモスペースのページ", run: func(ctx context.Context, st *state) error {
+			return generateDemoPages(ctx, r.db, r.out, st.spaces, st.topics)
+		}},
 	}
 
 	st := &state{draftStamps: newDraftStamps(startedAt)}

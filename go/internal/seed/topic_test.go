@@ -95,6 +95,8 @@ func TestGenerateTopics(t *testing.T) {
 	)
 
 	assertSoloTopics(ctx, t, tx, spaces.solo, topics)
+	assertLongNameTopics(ctx, t, tx, spaces.longName)
+	assertDemoTopic(ctx, t, tx, spaces.demo, topics)
 }
 
 func TestCreateTopicRejectsRoleWithoutSpaceMembership(t *testing.T) {
@@ -186,12 +188,12 @@ func TestTopicVisibilityForSeededMembers(t *testing.T) {
 }
 
 // buildSeedSpaces assembles the spaces generateTopics needs without calling
-// generateSpaces, which fixes both space identifiers: two tests creating them
+// generateSpaces, which fixes the space identifiers: two tests creating them
 // at once would wait on each other at the unique index.
 //
 // [Ja] buildSeedSpaces は generateTopics が必要とするスペースを、generateSpaces を
-// 呼ばずに組み立てる。generateSpaces は 2 つのスペース識別子を固定するため、
-// それを同時に作る 2 つのテストは一意インデックスの上で待ち合わせてしまう。
+// 呼ばずに組み立てる。generateSpaces はスペース識別子を固定するため、それを同時に
+// 作る 2 つのテストは一意インデックスの上で待ち合わせてしまう。
 func buildSeedSpaces(t *testing.T, tx *sql.Tx, prefix string) *seededSpaces {
 	t.Helper()
 
@@ -243,7 +245,9 @@ func buildSeedUsersAndSpaces(t *testing.T, tx *sql.Tx, prefix string) (*seededUs
 			{role: roleCollaborator, scopes: nonAdminSpaceScopes},
 			{role: roleGuest, scopes: nonAdminSpaceScopes},
 		}),
-		solo: build("solo", []spaceMemberSpec{{role: roleOwner, scopes: adminSpaceScopes}}),
+		solo:     build("solo", []spaceMemberSpec{{role: roleOwner, scopes: adminSpaceScopes}}),
+		longName: build("long", []spaceMemberSpec{{role: roleOwner, scopes: adminSpaceScopes}}),
+		demo:     build("demo", []spaceMemberSpec{{role: roleOwner, scopes: adminSpaceScopes}}),
 	}
 }
 
@@ -462,5 +466,159 @@ func assertSoloTopics(
 		if canSee != (state.visibility == model.TopicVisibilityPublic) {
 			t.Errorf("非メンバーから見たトピック %s の閲覧可否が期待と異なる", name)
 		}
+	}
+}
+
+// assertLongNameTopics checks the topics of seed-long-name. They are read from
+// the database rather than from the result: no page generator writes into them,
+// so nothing assigns them there. What has to hold is that the rows exist under
+// the space carrying the names the screens will have to draw, and that they are
+// numbered from 1 like the topics of any other space.
+//
+// [Ja] assertLongNameTopics は seed-long-name のトピックを確認する。結果ではなく
+// データベースから読むのは、これらへページを書き込む生成器が無く、結果へ割り当てて
+// いないため。満たされるべきなのは、画面が描くことになる名前を持った行がそのスペース
+// の下に存在することと、他のスペースのトピックと同じく 1 から採番されていることである。
+func assertLongNameTopics(ctx context.Context, t *testing.T, tx *sql.Tx, longName *seededSpace) {
+	t.Helper()
+
+	rows, err := tx.QueryContext(
+		ctx,
+		`SELECT name, description, visibility, number FROM topics WHERE space_id = $1 ORDER BY number`,
+		string(longName.id),
+	)
+	if err != nil {
+		t.Fatalf("seed-long-nameのトピック取得に失敗: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	type topicState struct {
+		description string
+		visibility  model.TopicVisibility
+		number      int32
+	}
+	got := make(map[string]topicState)
+	for rows.Next() {
+		var (
+			name        string
+			description string
+			visibility  int32
+			number      int32
+		)
+		if err := rows.Scan(&name, &description, &visibility, &number); err != nil {
+			t.Fatalf("seed-long-nameのトピックの読み取りに失敗: %v", err)
+		}
+		got[name] = topicState{description: description, visibility: model.TopicVisibility(visibility), number: number}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("seed-long-nameのトピックの走査に失敗: %v", err)
+	}
+
+	want := map[string]topicState{
+		topicNameLongJapanese: {
+			description: "名前を最大文字数まで伸ばした公開トピックです。",
+			visibility:  model.TopicVisibilityPublic,
+			number:      1,
+		},
+		topicNameLongASCII: {
+			description: "名前を、折り返せない半角英字だけで最大文字数まで伸ばした公開トピックです。",
+			visibility:  model.TopicVisibilityPublic,
+			number:      2,
+		},
+	}
+	if len(got) != len(want) {
+		t.Errorf("seed-long-nameのトピックが %d 件であることを期待したが %d 件だった", len(want), len(got))
+	}
+	for name, wantState := range want {
+		state, exists := got[name]
+		if !exists {
+			t.Errorf("seed-long-nameにトピック %s が無い", name)
+
+			continue
+		}
+		if state.description != wantState.description {
+			t.Errorf("seed-long-nameのトピック %s の説明が %q であることを期待したが %q だった", name, wantState.description, state.description)
+		}
+		if state.visibility != wantState.visibility {
+			t.Errorf("seed-long-nameのトピック %s の公開範囲が %d であることを期待したが %d だった", name, wantState.visibility, state.visibility)
+		}
+		if state.number != wantState.number {
+			t.Errorf("seed-long-nameのトピック %s の番号が %d であることを期待したが %d だった", name, wantState.number, state.number)
+		}
+	}
+
+	// Only roleOwner joins these topics, which is what puts them in front of
+	// the account the browser verification signs in as. A topic created without
+	// a membership would still be listed for a space administrator, so the
+	// membership is what has to be checked rather than the listing.
+	//
+	// [Ja] これらのトピックに参加するのは roleOwner だけであり、それがブラウザ確認で
+	// サインインするアカウントの前にこれらを出す。メンバーシップ無しで作成された
+	// トピックもスペース管理者には一覧に出るため、確認すべきなのは一覧ではなく
+	// メンバーシップのほうになる。
+	var memberCount int
+	if err := tx.QueryRowContext(
+		ctx,
+		`SELECT COUNT(*) FROM topic_members WHERE space_id = $1`,
+		string(longName.id),
+	).Scan(&memberCount); err != nil {
+		t.Fatalf("seed-long-nameのトピックメンバー数の取得に失敗: %v", err)
+	}
+	if memberCount != len(want) {
+		t.Errorf("seed-long-nameのトピックメンバーが %d 件であることを期待したが %d 件だった", len(want), memberCount)
+	}
+}
+
+// assertDemoTopic checks the topic of the demo space. Every demo page is
+// written into it, so it is read back from the result as well as from the
+// database: a topic the generators cannot reach is a topic the demo pages have
+// nowhere to go.
+//
+// [Ja] assertDemoTopic はデモスペースのトピックを確認する。デモページはすべて
+// そこへ書き込まれるため、データベースだけでなく結果からも読み取る。生成器が
+// 辿れないトピックは、デモページの行き場が無いことを意味するため。
+func assertDemoTopic(ctx context.Context, t *testing.T, tx *sql.Tx, demo *seededSpace, topics *seededTopics) {
+	t.Helper()
+
+	topic := topics.demoMemo
+	if topic == nil {
+		t.Fatalf("トピック %s が結果に含まれていない", topicNameDemoMemo)
+	}
+	if topic.name != topicNameDemoMemo {
+		t.Errorf("トピック名が %q であることを期待したが %q だった", topicNameDemoMemo, topic.name)
+	}
+	if topic.spaceID != demo.id {
+		t.Errorf("トピック %s のスペースIDがデモスペースと一致しない", topicNameDemoMemo)
+	}
+
+	assertTopicRow(
+		ctx, t, tx, topic,
+		topicNameDemoMemo,
+		"日々の覚え書きです。行った場所や読んだもの、作ったものを書きためています。",
+		model.TopicVisibilityPrivate,
+		1,
+	)
+	assertTopicMemberCount(ctx, t, tx, topic, 1)
+	assertTopicMemberScopes(ctx, t, tx, "Memoのowner", topic, demo.member(roleOwner), nil, true)
+
+	// The demo space holds this topic and no other. Every wiki link in the demo
+	// bodies names a title without a topic, and such a link resolves only inside
+	// the topic it is written in, so a second topic here would be somewhere a
+	// demo page could land with its links no longer reaching.
+	//
+	// [Ja] デモスペースが持つトピックはこれだけである。デモ本文の Wiki リンクは
+	// いずれもトピックを伴わずタイトルだけを名指ししており、その種のリンクは書かれた
+	// トピックの中でしか解決しない。ここに 2 つ目のトピックがあると、デモページが
+	// リンクの届かない場所へ置かれうることになる。
+	var count int
+	if err := tx.QueryRowContext(
+		ctx,
+		`SELECT count(*) FROM topics WHERE space_id = $1`,
+		string(demo.id),
+	).Scan(&count); err != nil {
+		t.Fatalf("デモスペースのトピック数の取得に失敗: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("デモスペースのトピックが 1 件であることを期待したが %d 件だった", count)
 	}
 }

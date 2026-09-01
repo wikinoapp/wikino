@@ -6,7 +6,9 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/lib/pq"
 
@@ -31,6 +33,8 @@ func TestGenerateSpaces(t *testing.T) {
 
 	assertSpace(ctx, t, tx, spaces.wiki, wikiSpaceIdentifier, "シード Wiki")
 	assertSpace(ctx, t, tx, spaces.solo, soloSpaceIdentifier, "シード個人スペース")
+	assertSpace(ctx, t, tx, spaces.longName, longNameSpaceIdentifier, "折り返しの確認用に名前を最大文字数まで伸ばしたシードスペース")
+	assertSpace(ctx, t, tx, spaces.demo, demoSpaceIdentifier, "みゆきのスペース")
 
 	// seed-solo exists to be opened by an account that has not joined it, so
 	// neither of the two roles that open it that way may have a membership row
@@ -57,6 +61,18 @@ func TestGenerateSpaces(t *testing.T) {
 	}
 	assertSpaceMemberCount(ctx, t, tx, spaces.wiki.id, 3)
 	assertSpaceMemberCount(ctx, t, tx, spaces.solo.id, 1)
+	assertSpaceMemberCount(ctx, t, tx, spaces.longName.id, 1)
+
+	// The demo space is photographed for the help pages, so a second account
+	// joining it would put a name nobody outside the seed knows into the member
+	// list of a picture. Counting the rows is what says roleOwner is alone there;
+	// asking the result for the other roles would only report what the spec named.
+	//
+	// [Ja] デモスペースはヘルプページのために撮影されるため、2 つ目のアカウントが
+	// 参加すると、シードの外の誰も知らない名前が画像のメンバー一覧に載ってしまう。
+	// roleOwner だけであることを述べるのは行数のほうである。他の役割を結果へ
+	// 尋ねても、仕様が名指しした内容が返るだけになる。
+	assertSpaceMemberCount(ctx, t, tx, spaces.demo.id, 1)
 
 	for _, tt := range []struct {
 		label   string
@@ -69,6 +85,7 @@ func TestGenerateSpaces(t *testing.T) {
 		{label: "seed-wikiのcollaborator", role: roleCollaborator, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleCollaborator), want: nonAdminSpaceScopes},
 		{label: "seed-wikiのguest", role: roleGuest, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleGuest), want: nonAdminSpaceScopes},
 		{label: "seed-soloのowner", role: roleOwner, spaceID: spaces.solo.id, member: spaces.solo.member(roleOwner), want: adminSpaceScopes},
+		{label: "demoのowner", role: roleOwner, spaceID: spaces.demo.id, member: spaces.demo.member(roleOwner), want: adminSpaceScopes},
 	} {
 		assertSpaceMemberScopes(ctx, t, tx, tt.label, tt.spaceID, tt.member.id, tt.want)
 		if got, want := tt.member.name, users.user(tt.role).Name; got != want {
@@ -475,6 +492,89 @@ func assertScopesEqual(t *testing.T, label string, stored []string, want []model
 	for _, scope := range want {
 		if !got[string(scope)] {
 			t.Errorf("%sにスコープ %s が付与されていない", label, scope)
+		}
+	}
+}
+
+// The Rails side still owns the creation of spaces and topics, and both
+// Space::NAME_MAX_LENGTH and Topic::NAME_MAX_LENGTH are 30 there. seed-long-name
+// carries names of exactly that length, in its own name and in the names of its
+// topics, so that the wrapping it exists to expose is the wrapping of the
+// longest name the model will accept. A name one character short would still
+// look long while leaving that case unchecked.
+//
+// [Ja] スペースとトピックの作成を今も担当しているのは Rails 側で、そこでは
+// Space::NAME_MAX_LENGTH も Topic::NAME_MAX_LENGTH も 30 である。seed-long-name は
+// 自身の名前とトピックの名前の双方で、ちょうどその長さの名前を持つ。これにより、この
+// スペースが表に出すための折り返しが、モデルが受け付ける最長の名前の折り返しになる。
+// 1 文字短い名前でも長くは見えるが、そのケースは確認されないまま残る。
+const seedLongNameMaxLength = 30
+
+func TestSeedLongNameUsesTheFullNameLength(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		label string
+		name  string
+	}{
+		{label: "スペース名", name: longNameSpaceName},
+		{label: "トピック名 (日本語)", name: topicNameLongJapanese},
+		{label: "トピック名 (半角英字)", name: topicNameLongASCII},
+	} {
+		if got := utf8.RuneCountInString(tt.name); got != seedLongNameMaxLength {
+			t.Errorf("%sが %d 文字であることを期待したが %d 文字だった: %q", tt.label, seedLongNameMaxLength, got, tt.name)
+		}
+	}
+
+	// The ASCII topic name is here for having nowhere to break, which is the one
+	// case the Japanese name cannot cover. A space, hyphen or underscore that
+	// slipped into it would give the layout a place to wrap and quietly turn it
+	// into an ordinary long name.
+	//
+	// [Ja] 半角英字のトピック名は、折り返せる場所が無いという、日本語の名前では
+	// 賄えない唯一のケースのために置いている。空白・ハイフン・アンダースコアが紛れ
+	// 込むとレイアウトに折り返す場所を与えてしまい、ただ長いだけの名前に黙って
+	// 変わってしまう。
+	if strings.ContainsAny(topicNameLongASCII, " -_") {
+		t.Errorf("トピック名 %q に折り返せる区切り文字が含まれている", topicNameLongASCII)
+	}
+}
+
+// The demo space is the one place in the seed whose screens become pictures on
+// the help pages, where a reader has no way to tell scaffolding from the
+// product. Anything naming it that reaches those screens — the identifier in
+// every page URL, the space name in the header, the topic name in the listing —
+// therefore has to read as a wiki someone keeps rather than as seed data.
+//
+// The check is for the word rather than the prefix: seed- is how the other
+// spaces are marked, and it is the wording that would give this one away
+// wherever in a name it appeared.
+//
+// [Ja] デモスペースは、シードの中で唯一その画面がヘルプページの画像になる場所で
+// あり、読者には足場とプロダクトを見分ける手立てが無い。したがって、それらの画面へ
+// 届くもの、すなわちすべてのページ URL に入る識別子・ヘッダーに出るスペース名・
+// 一覧に出るトピック名のいずれも、シードのデータではなく誰かが持っている Wiki と
+// して読まれる必要がある。
+//
+// 接頭辞ではなく語そのものを見るのは、seed- が他のスペースの目印である一方、この
+// スペースの正体を明かしてしまうのは、名前のどこに現れたとしてもその語のほうで
+// あるため。
+func TestDemoSpaceNamesCarryNoSeedWording(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		label string
+		name  string
+	}{
+		{label: "スペース識別子", name: demoSpaceIdentifier},
+		{label: "スペース名", name: demoSpaceName},
+		{label: "トピック名", name: topicNameDemoMemo},
+	} {
+		if strings.Contains(strings.ToLower(tt.name), "seed") {
+			t.Errorf("デモスペースの%sに seed が含まれている: %q", tt.label, tt.name)
+		}
+		if strings.Contains(tt.name, "シード") {
+			t.Errorf("デモスペースの%sに シード が含まれている: %q", tt.label, tt.name)
 		}
 	}
 }
