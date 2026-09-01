@@ -36,14 +36,11 @@ type ShowData struct {
 
 	// CanTrashPage reports that the viewer may move this page into the trash, and gates the trash
 	// item of the action dropdown. It rides on a different permission than CanUpdatePage, so the two
-	// items are shown independently instead of the whole dropdown following the edit permission
-	// (the Rails Dropdowns::PageActionsComponent offers the trash button to members who then get a
-	// 404 from the POST).
+	// items are shown independently instead of the whole dropdown following the edit permission.
 	//
 	// [Ja] CanTrashPage は閲覧者がこのページをゴミ箱へ入れられるかを表し、操作ドロップダウンの
 	// ゴミ箱項目の出し分けに使う。CanUpdatePage とは別の権限に乗るため、ドロップダウン全体を編集
-	// 権限に従わせず 2 つの項目を独立に出し分ける (Rails 版 Dropdowns::PageActionsComponent は
-	// POST すると 404 になるメンバーにもゴミ箱ボタンを出している)。
+	// 権限に従わせず 2 つの項目を独立に出し分ける。
 	CanTrashPage bool
 
 	// CSRFToken authenticates the trash form's POST. It is empty for a viewer without page:trash.
@@ -167,11 +164,10 @@ func (d ShowData) showsPageActions() bool {
 // showHeader renders the page title and its action area in a header that pins itself to the top of
 // the viewport once it is scrolled past. While pinned (web/sticky-header.ts marks it with
 // data-stuck) the title shrinks to a single clamped line, which leaves the actions reachable
-// without scrolling back up. This is the Rails Pages::HeaderComponent and Pages::StickyHeaderComponent
-// pair, rendered as one header rather than two: keeping a single copy of the title and the actions
-// leaves the page with exactly one h1 and one dropdown, both of which stay in the accessibility tree
-// in either state (hiding one copy of the header would take the h1 out of the outline for a reader
-// who has scrolled).
+// without scrolling back up. The expanded and pinned states share one header rather than duplicating
+// it: keeping a single copy of the title and the actions leaves the page with exactly one h1 and one
+// dropdown, both of which stay in the accessibility tree in either state (hiding one copy of the
+// header would take the h1 out of the outline for a reader who has scrolled).
 //
 // The dimensionally stable sentinel before the header is the observer target. The spacer after the
 // header receives the height lost when a long title becomes compact, so the body keeps the same
@@ -180,9 +176,9 @@ func (d ShowData) showsPageActions() bool {
 //
 // [Ja] showHeader はページタイトルと操作領域を、スクロールで通り過ぎると画面上端に固定されるヘッダーに
 // 描画する。固定されている間 (web/sticky-header.ts が data-stuck を付ける) はタイトルが 1 行に切り詰め
-// られて縮み、上へ戻らなくても操作領域に手が届く。Rails 版 Pages::HeaderComponent と
-// Pages::StickyHeaderComponent の組に相当するが、2 つのヘッダーではなく 1 つとして描画する。タイトルと
-// 操作領域を 1 組だけ持てば、ページの h1 とドロップダウンはそれぞれ 1 つで済み、どちらの状態でも
+// られて縮み、上へ戻らなくても操作領域に手が届く。展開時と固定時のヘッダーを
+// 2 つに分けず、1 つとして描画する。タイトルと操作領域を 1 組だけ持てば、ページの h1 と
+// ドロップダウンはそれぞれ 1 つで済み、どちらの状態でも
 // アクセシビリティツリーに残る (ヘッダーを 2 つ持って片方を隠すと、スクロールした閲覧者のアウトライン
 // から h1 が消える)。
 //
@@ -241,7 +237,7 @@ func showHeader(data ShowData) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(data.Page.DisplayTitle(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 151, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 147, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -313,11 +309,9 @@ func showActions(data ShowData) templ.Component {
 	})
 }
 
-// showPageActions renders the dropdown holding the page operations that are not the primary action
-// (Rails' Dropdowns::PageActionsComponent).
+// showPageActions renders the dropdown holding the page operations that are not the primary action.
 //
-// [Ja] showPageActions は主要な操作以外のページ操作をまとめたドロップダウンを描画する
-// (Rails 版 Dropdowns::PageActionsComponent 相当)。
+// [Ja] showPageActions は主要な操作以外のページ操作をまとめたドロップダウンを描画する。
 func showPageActions(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -346,7 +340,7 @@ func showPageActions(data ShowData) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "page_show_page_actions_aria_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 189, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 183, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
@@ -372,7 +366,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var9 templ.SafeURL
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PageMovePath(data.Space.Identifier, data.Page.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 202, Col: 100}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 196, Col: 100}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -389,7 +383,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_page_actions_move"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 205, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 199, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -408,7 +402,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var11 templ.SafeURL
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PageTrashPath(data.Space.Identifier, data.Page.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 219, Col: 103}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 213, Col: 103}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -421,7 +415,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "page_show_page_actions_trash_confirm"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 221, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 215, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
 			if templ_7745c5c3_Err != nil {
@@ -434,7 +428,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 225, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 219, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 			if templ_7745c5c3_Err != nil {
@@ -455,7 +449,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_page_actions_trash"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 229, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 223, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -505,7 +499,7 @@ func showEditButton(data ShowData) templ.Component {
 		var templ_7745c5c3_Var16 templ.SafeURL
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PageEditPath(data.Space.Identifier, data.Page.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 246, Col: 95}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 240, Col: 95}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -522,7 +516,7 @@ func showEditButton(data ShowData) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_edit_button"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 249, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 243, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -575,7 +569,7 @@ func showFooter(data ShowData) templ.Component {
 				var templ_7745c5c3_Var19 string
 				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_links_heading"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 264, Col: 51}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 258, Col: 51}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 				if templ_7745c5c3_Err != nil {
@@ -602,7 +596,7 @@ func showFooter(data ShowData) templ.Component {
 				var templ_7745c5c3_Var20 string
 				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_backlinks_heading"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 274, Col: 55}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 268, Col: 55}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 				if templ_7745c5c3_Err != nil {
@@ -671,7 +665,7 @@ func trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_trashed_alert"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 301, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 295, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -684,7 +678,7 @@ func trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		var templ_7745c5c3_Var23 templ.SafeURL
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.TrashPath(spaceIdentifier))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 303, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 297, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -697,7 +691,7 @@ func trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_view_trash_link"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 304, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 298, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {

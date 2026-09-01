@@ -100,7 +100,7 @@ func (s *featureFlagSelection) UnmarshalTOML(data any) error {
 	case string:
 		if value != allFeatureFlagsKeyword {
 			return fmt.Errorf(
-				"feature_flags に書ける文字列は %q だけです。一部のフラグを与えるときは [\"go_page_show\"] のように配列で書いてください",
+				"feature_flags に書ける文字列は %q だけです。一部のフラグを与えるときは [\"go_example\"] のように配列で書いてください",
 				allFeatureFlagsKeyword,
 			)
 		}

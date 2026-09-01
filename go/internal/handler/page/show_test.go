@@ -2,11 +2,14 @@ package page_test
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -625,6 +628,126 @@ func TestShow(t *testing.T) {
 				if strings.Contains(body, notWant) {
 					t.Errorf("response unexpectedly contains %q", notWant)
 				}
+			}
+		})
+	}
+}
+
+// TestShow_Head pins HEAD to the same visibility decisions as GET while the HTTP server omits the
+// rendered document body.
+//
+// [Ja] TestShow_Head は HEAD が GET と同じ可視性判定を通り、HTTP サーバーが描画した文書の本文を
+// 返さないことを固定する。
+func TestShow_Head(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-show-head-space").
+		Build()
+	publicTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Public HEAD Topic").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+	privateTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Private HEAD Topic").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(1).
+		WithTitle("Public HEAD Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(privateTopicID).
+		WithNumber(2).
+		WithTitle("Private HEAD Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(3).
+		WithTitle("Trashed HEAD Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		WithTrashed().
+		Build()
+
+	h := setupHandler(t, queries)
+	router := chi.NewRouter()
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := i18n.SetLocale(r.Context(), i18n.LangJa)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	})
+	router.Head("/s/{space_identifier}/pages/{page_number}", h.Show)
+
+	server := httptest.NewServer(router)
+	t.Cleanup(server.Close)
+
+	tests := []struct {
+		name       string
+		pageNumber string
+		wantStatus int
+	}{
+		{
+			name:       "公開ページは 200",
+			pageNumber: "1",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "存在しないページは 404",
+			pageNumber: "999",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "ゲストが閲覧できない非公開ページは 404",
+			pageNumber: "2",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "ゴミ箱権限のないゲストにゴミ箱のページは 404",
+			pageNumber: "3",
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := "/s/page-show-head-space/pages/" + tt.pageNumber
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, server.URL+path, nil)
+			if err != nil {
+				t.Fatalf("request creation failed: %v", err)
+			}
+
+			resp, err := server.Client().Do(req)
+			if err != nil {
+				t.Fatalf("request failed: %v", err)
+			}
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatalf("response body read failed: %v", err)
+			}
+			if err := resp.Body.Close(); err != nil {
+				t.Fatalf("response body close failed: %v", err)
+			}
+
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("status code = %d, want %d", resp.StatusCode, tt.wantStatus)
+			}
+			if len(body) != 0 {
+				t.Errorf("response body = %q, want empty", body)
 			}
 		})
 	}

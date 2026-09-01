@@ -1,8 +1,8 @@
 // Resolves attachment placeholders in rendered page bodies. The markup filter
 // (internal/markup/attachment_filter.go) emits placeholders carrying a data-attachment-id whose
-// real URL is fetched on the client (same scheme as the Rails attachment_loader_controller):
+// real URL is fetched on the client:
 // <img>/<video> start with an empty src and a pending class, and <a> starts with href="#". This
-// module mirrors that controller for the Go frontend: it collects the placeholders, batch-requests
+// module collects the placeholders, batch-requests
 // short-lived signed URLs from POST /attachments/signed_urls, and fills in src/href. For media it
 // also swaps the pending class for the loaded one once the resource finishes loading, so the CSS
 // fade-in triggers; anchors only get their href filled.
@@ -14,10 +14,9 @@
 //
 // [Ja] 描画されたページ本文の添付ファイルプレースホルダーを解決する。マークアップフィルタ
 // (internal/markup/attachment_filter.go) は data-attachment-id を持つプレースホルダーを出力し、
-// 実 URL はクライアント側で取得する前提になっている (Rails の attachment_loader_controller と
-// 同じ方式)。<img>/<video> は空の src と保留中クラスを持ち、<a> は href="#" を持つ。本モジュールは
-// その方式を Go フロントエンドに移したもので、プレースホルダーを集め、POST /attachments/signed_urls
-// から短命の署名付き URL をバッチ取得して src/href を埋める。
+// 実 URL はクライアント側で取得する。<img>/<video> は空の src と保留中クラスを持ち、<a> は
+// href="#" を持つ。本モジュールはプレースホルダーを集め、POST /attachments/signed_urls から
+// 短命の署名付き URL をバッチ取得して src/href を埋める。
 // メディアではさらにリソースの読み込み完了時に保留中クラスを読み込み済みクラスへ差し替えて CSS の
 // フェードインを発火させる。アンカーは href を埋めるだけ。
 //

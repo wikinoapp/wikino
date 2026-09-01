@@ -657,9 +657,18 @@ func runServe() {
 		// Page detail screen (public-topic pages are viewable even when signed out; a page in the
 		// trash is 404 unless the viewer holds the trash permission).
 		//
+		// HEAD is registered on its own because chi resolves routes per method and never falls
+		// back from GET, and the Rails route that used to answer HEAD on this path is gone.
+		// Without it a page that exists would answer 405 to HEAD while GET returns 200.
+		//
 		// [Ja] ページ表示画面 (公開トピックのページは未ログインでも閲覧可能。ゴミ箱に入った
 		// ページはゴミ箱権限を持つ閲覧者以外には 404)。
+		//
+		// chi はメソッドごとにルートを引き GET からフォールバックしないため、HEAD を単独で登録
+		// する。このパスの HEAD を受けていた Rails のルートは削除済みで、登録しないと存在する
+		// ページでも GET は 200・HEAD は 405 と食い違う。
 		r.Get("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
+		r.Head("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 
 		// Link list / backlink lists (htmx). They continue the listings the page detail screen
 		// renders, which is public, so they sit in the same group as that screen.

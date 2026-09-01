@@ -5,7 +5,7 @@
 # ones whose mail you can read.
 #
 # feature_flags takes either the string "all", which grants every flag the
-# application defines, or a list of flag names such as ["go_page_show"].
+# application defines, or a list of flag names such as ["go_example"].
 # What each role is for is written where the generators name it, in
 # internal/seed/user.go.
 #
@@ -15,7 +15,7 @@
 # go/seed-users.toml へコピーし、アドレスを自分がメールを読めるものへ置き換える。
 #
 # feature_flags には、アプリケーションが定義するフラグを全件与える文字列 "all" か、
-# ["go_page_show"] のようなフラグ名の配列のどちらかを書く。それぞれの役割が何のため
+# ["go_example"] のようなフラグ名の配列のどちらかを書く。それぞれの役割が何のため
 # にあるのかは、生成器がそれを名指ししている internal/seed/user.go に書いてある。
 
 # password is shared by every account below. The seed refuses to run outside a

@@ -37,38 +37,7 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{
-	// Page detail screen (GET /s/:space_identifier/pages/:page_number). PATCH on
-	// the same path is already in goHandledRegexPatterns, so the two are split by
-	// method: PATCH always goes to Go, GET is gated by the flag. The trailing "$"
-	// keeps sub-paths such as /edit and /preview out of this pattern; they have
-	// their own entries in goHandledRegexPatterns.
-	//
-	// [Ja] ページ表示画面 (GET /s/:space_identifier/pages/:page_number)。同じパスの
-	// PATCH は既に goHandledRegexPatterns にあるため、メソッドで棲み分ける
-	// (PATCH は常に Go、GET はフラグで制御)。末尾の "$" により /edit や /preview
-	// などのサブパスにはマッチさせず、それらは goHandledRegexPatterns 側で処理する。
-	{
-		pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`),
-		flag:    model.FeatureFlagPageShow,
-		methods: []string{http.MethodGet},
-	},
-	// Moving a page into the trash (POST /s/:space_identifier/pages/:page_number/trash). It is
-	// gated by the same flag as the page detail screen because the form that posts here lives on
-	// that screen: with the flag off, Rails renders the page and its form carries a Rails CSRF
-	// token, which the Go handler would reject. Routing this path by the same flag keeps the
-	// screen and its action on the same side.
-	//
-	// [Ja] ページをゴミ箱へ入れる操作 (POST /s/:space_identifier/pages/:page_number/trash)。
-	// ここへ POST するフォームはページ表示画面にあるため、同じフラグで振り分ける。フラグ OFF では
-	// Rails 版がページを描画し、そのフォームは Rails 版の CSRF トークンを持つため、Go 側で受けると
-	// 弾かれてしまう。同じフラグで振り分けることで、画面とその操作を常に同じ側に揃える。
-	{
-		pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`),
-		flag:    model.FeatureFlagPageShow,
-		methods: []string{http.MethodPost},
-	},
-}
+var featureFlaggedPatterns = []featureFlaggedPattern{}
 
 // ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -158,12 +127,27 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// RoutingError になる。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revisions/[^/]+$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revisions/[^/]+/restore$`), methods: []string{http.MethodPost}},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{"PATCH"}},
+	// Page detail screen (GET or HEAD) and page update (PATCH; POST before Method Override) on
+	// /s/:identifier/pages/:number. The trailing "$" keeps sub-paths such as /edit and
+	// /preview out of this pattern; they have their own entries above.
+	//
+	// [Ja] ページ表示画面 (GET または HEAD) とページ更新 (PATCH。Method Override 変換前は POST)
+	// (/s/:identifier/pages/:number)。末尾の "$" により /edit や /preview などのサブパスには
+	// マッチさせず、それらは上記の各パターンで処理する。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`)},
+	// Moving a page into the trash (POST /s/:identifier/pages/:number/trash). The Go route is
+	// POST-only, so restrict the method to match (mirroring the preview pattern above); the
+	// space-wide trash screen (/s/:identifier/trash) is a different path and stays on Rails.
+	//
+	// [Ja] ページをゴミ箱へ入れる操作 (POST /s/:identifier/pages/:number/trash)。Go ルートは POST の
+	// みなので、上のプレビューパターンに揃えてメソッドを限定する。スペース単位のゴミ箱画面
+	// (/s/:identifier/trash) はパスが異なり、Rails 版のまま残る。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`), methods: []string{http.MethodPost}},
 	// /attachments/:id/og_image: 公開トピックのページから参照される添付ファイルを imgproxy 経由で配信する
 	// /attachments/:id (ダウンロードURL) は Rails が提供するため、og_image 末尾でパスを限定する
 	{pattern: regexp.MustCompile(`^/attachments/[^/]+/og_image$`), methods: []string{http.MethodGet}},

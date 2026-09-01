@@ -23,9 +23,9 @@ import (
 // [Ja] showBreadcrumbMaxWidthClass はページ表示画面の本文幅にパンくずを揃える。
 const showBreadcrumbMaxWidthClass = "max-w-3xl"
 
-// Show renders the page detail screen (GET /s/{space_identifier}/pages/{page_number}).
+// Show renders the page detail screen (GET or HEAD /s/{space_identifier}/pages/{page_number}).
 //
-// [Ja] Show はページ表示画面を表示します (GET /s/{space_identifier}/pages/{page_number})。
+// [Ja] Show はページ表示画面を表示します (GET または HEAD /s/{space_identifier}/pages/{page_number})。
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

@@ -427,7 +427,7 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 	featureFlaggedPatterns = []featureFlaggedPattern{
 		{
 			pattern: regexp.MustCompile(`^/@[^/]+/[^/]+/pages/[^/]+$`),
-			flag:    "go_page_show",
+			flag:    model.FeatureFlagExample,
 		},
 		{
 			pattern: regexp.MustCompile(`^/settings$`),
@@ -455,7 +455,7 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 			name:     "マッチするパス (ページ表示)",
 			method:   http.MethodGet,
 			path:     "/@username/space_atname/pages/abc123",
-			expected: "go_page_show",
+			expected: model.FeatureFlagExample,
 		},
 		{
 			name:     "マッチするパス (設定)",
@@ -509,217 +509,6 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
 			}
 		})
-	}
-}
-
-func TestReverseProxyMiddleware_getFeatureFlagForRequest_PageShow(t *testing.T) {
-	// The production featureFlaggedPatterns slice is read directly here, so
-	// t.Parallel() is intentionally omitted to avoid running concurrently with
-	// tests that swap out this global variable.
-	//
-	// [Ja] 本番の featureFlaggedPatterns を読むテストのため t.Parallel() は使用しない
-	// (このグローバル変数を上書きする他テストと並行実行されないようにする)
-
-	cfg := &config.Config{
-		Domain: "wikino.app",
-	}
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
-	}
-
-	testCases := []struct {
-		name     string
-		method   string
-		path     string
-		expected model.FeatureFlagName
-	}{
-		{
-			name:     "ページ表示 (GET) は go_page_show を返す",
-			method:   http.MethodGet,
-			path:     "/s/my-space/pages/1",
-			expected: model.FeatureFlagPageShow,
-		},
-		{
-			// PATCH on the same path is always handled by Go via
-			// goHandledRegexPatterns, so it must not be gated by the flag.
-			//
-			// [Ja] 同じパスの PATCH は goHandledRegexPatterns により常に Go で
-			// 処理されるため、フラグ判定の対象にしない
-			name:     "ページ更新 (PATCH) はmethodsフィルタによりマッチしない",
-			method:   http.MethodPatch,
-			path:     "/s/my-space/pages/1",
-			expected: "",
-		},
-		{
-			// POST is Method Override's pre-conversion form of PATCH. containsMethod
-			// widens POST only to PATCH/PUT/DELETE patterns, so a GET-only pattern
-			// must not match it.
-			//
-			// [Ja] POST は Method Override 変換前の PATCH。containsMethod が POST を
-			// 広げるのは PATCH/PUT/DELETE のパターンのみなので、GET 限定の本パターンには
-			// マッチしない
-			name:     "ページ更新 (POST) はGET限定パターンにマッチしない",
-			method:   http.MethodPost,
-			path:     "/s/my-space/pages/1",
-			expected: "",
-		},
-		{
-			// The trailing "$" prevents matching sub-paths under /pages/:number, so
-			// /edit, /preview etc. stay handled by goHandledRegexPatterns.
-			//
-			// [Ja] 末尾 $ により /pages/:number 配下のサブパスにはマッチせず、
-			// /edit や /preview 等は引き続き goHandledRegexPatterns が処理する
-			name:     "ページ編集画面はマッチしない (既存Goハンドラーが優先)",
-			method:   http.MethodGet,
-			path:     "/s/my-space/pages/1/edit",
-			expected: "",
-		},
-		{
-			name:     "バックリンク一覧はマッチしない (既存Goハンドラーが優先)",
-			method:   http.MethodGet,
-			path:     "/s/my-space/pages/1/backlinks",
-			expected: "",
-		},
-		{
-			name:     "ページ番号が数字でないパスはマッチしない",
-			method:   http.MethodGet,
-			path:     "/s/my-space/pages/abc",
-			expected: "",
-		},
-		{
-			name:     "ページ番号の後にスラッシュが続くパスはマッチしない",
-			method:   http.MethodGet,
-			path:     "/s/my-space/pages/1/",
-			expected: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-			result := m.getFeatureFlagForRequest(req)
-			if result != tc.expected {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
-			}
-		})
-	}
-}
-
-func TestReverseProxyMiddleware_getFeatureFlagForRequest_PageTrash(t *testing.T) {
-	// The production featureFlaggedPatterns slice is read directly here, so
-	// t.Parallel() is intentionally omitted to avoid running concurrently with
-	// tests that swap out this global variable.
-	//
-	// [Ja] 本番の featureFlaggedPatterns を読むテストのため t.Parallel() は使用しない
-	// (このグローバル変数を上書きする他テストと並行実行されないようにする)
-
-	cfg := &config.Config{
-		Domain: "wikino.app",
-	}
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
-	}
-
-	testCases := []struct {
-		name     string
-		method   string
-		path     string
-		expected model.FeatureFlagName
-	}{
-		{
-			// The action shares the page detail screen's flag: the form that posts here is rendered
-			// by that screen, so both must be served by the same side.
-			//
-			// [Ja] 本操作はページ表示画面とフラグを共有する。ここへ POST するフォームは同画面が
-			// 描画するため、両者は常に同じ側で処理される必要がある。
-			name:     "ゴミ箱へ入れる (POST) は go_page_show を返す",
-			method:   http.MethodPost,
-			path:     "/s/my-space/pages/1/trash",
-			expected: model.FeatureFlagPageShow,
-		},
-		{
-			// Rails has no GET route for this path, so a GET must fall through to Rails and raise a
-			// RoutingError there rather than be answered by the Go handler.
-			//
-			// [Ja] Rails 版にこのパスの GET ルートは無いため、GET は Go ハンドラーが応答せず
-			// Rails に転送されて RoutingError になるべき。
-			name:     "ゴミ箱へ入れる (GET) はPOST限定パターンにマッチしない",
-			method:   http.MethodGet,
-			path:     "/s/my-space/pages/1/trash",
-			expected: "",
-		},
-		{
-			// The trailing "$" keeps sub-paths out, so a future /trash/... route is not swept in by
-			// this pattern.
-			//
-			// [Ja] 末尾 $ によりサブパスは対象外にし、将来 /trash/... のルートが増えても本パターンが
-			// 巻き込まないようにする。
-			name:     "ゴミ箱配下のサブパスはマッチしない",
-			method:   http.MethodPost,
-			path:     "/s/my-space/pages/1/trash/restore",
-			expected: "",
-		},
-		{
-			// The space-level trash screen (/s/:identifier/trash) stays on Rails, so it must not be
-			// caught by the page-scoped pattern.
-			//
-			// [Ja] スペース単位のゴミ箱画面 (/s/:identifier/trash) は Rails 版のまま残るため、
-			// ページ単位の本パターンが拾ってはいけない。
-			name:     "スペースのゴミ箱画面はマッチしない",
-			method:   http.MethodGet,
-			path:     "/s/my-space/trash",
-			expected: "",
-		},
-		{
-			name:     "ページ番号が数字でないパスはマッチしない",
-			method:   http.MethodPost,
-			path:     "/s/my-space/pages/abc/trash",
-			expected: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-			result := m.getFeatureFlagForRequest(req)
-			if result != tc.expected {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q, want %q", tc.method, tc.path, result, tc.expected)
-			}
-		})
-	}
-}
-
-func TestReverseProxyMiddleware_isGoHandledByRegex_PageTrashNotAlwaysGo(t *testing.T) {
-	// The production goHandledRegexPatterns slice is read directly here, so
-	// t.Parallel() is intentionally omitted to avoid running concurrently with
-	// tests that swap out this global variable.
-	//
-	// [Ja] 本番の goHandledRegexPatterns を読むテストのため t.Parallel() は使用しない
-	// (このグローバル変数を上書きする他テストと並行実行されないようにする)
-
-	cfg := &config.Config{
-		Domain: "wikino.app",
-	}
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", cfg, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddleware failed: %v", err)
-	}
-
-	// The trash action must be reached through the feature flag only. If it also sat in the
-	// always-Go set, the flag-off users' Rails form would post to the Go handler and be rejected
-	// for lacking a Go CSRF token.
-	//
-	// [Ja] ゴミ箱へ入れる操作はフィーチャーフラグ経由でのみ Go に届くべき。常時 Go 対象にも入って
-	// いると、フラグ OFF のユーザーが Rails 版のフォームから POST したときに Go ハンドラーへ届き、
-	// Go 版の CSRF トークンが無いとして弾かれてしまう。
-	req := httptest.NewRequest(http.MethodPost, "/s/my-space/pages/1/trash", nil)
-	if m.isGoHandledByRegex(req) {
-		t.Error("isGoHandledByRegex(POST /s/my-space/pages/1/trash) = true, want false (フィーチャーフラグで制御)")
 	}
 }
 
@@ -1028,6 +817,18 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "ページ表示 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1",
+			expected: true,
+		},
+		{
+			name:     "ページ表示 (HEAD)",
+			method:   http.MethodHead,
+			path:     "/s/my-space/pages/1",
+			expected: true,
+		},
+		{
 			name:     "ページ更新 (PATCH)",
 			method:   http.MethodPatch,
 			path:     "/s/my-space/pages/1",
@@ -1070,6 +871,16 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			// The action is reached from the page detail screen, which Go now always serves, so the
+			// POST must be handled by Go as well.
+			//
+			// [Ja] 本操作は常に Go が描画するページ表示画面から呼ばれるため、POST も Go で処理する。
+			name:     "ゴミ箱へ入れる (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/trash",
+			expected: true,
+		},
+		{
 			name:     "og:image エンドポイント (GET)",
 			method:   http.MethodGet,
 			path:     "/attachments/01HXYZ123/og_image",
@@ -1090,15 +901,48 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: false,
 		},
 		{
-			// Page detail is gated by go_page_show, so it must not be in the
-			// always-Go set: the flag decision runs only for requests that fall
-			// through this check.
+			// Rails has no GET route for this path, so a GET must fall through to Rails and raise a
+			// RoutingError there rather than be answered by the Go handler.
 			//
-			// [Ja] ページ表示は go_page_show で制御するため、常時 Go 対象にはしない
-			// (フラグ判定はこの判定を通り抜けたリクエストに対してのみ走る)
-			name:     "ページ表示 (GET) は常時Go対象ではない (フィーチャーフラグで制御)",
+			// [Ja] Rails 版にこのパスの GET ルートは無いため、GET は Go ハンドラーが応答せず
+			// Rails に転送されて RoutingError になるべき。
+			name:     "ゴミ箱へ入れる (GET) はPOST限定パターンにマッチしない",
 			method:   http.MethodGet,
-			path:     "/s/my-space/pages/1",
+			path:     "/s/my-space/pages/1/trash",
+			expected: false,
+		},
+		{
+			// The trailing "$" keeps sub-paths out, so a future /trash/... route is not swept in by
+			// this pattern.
+			//
+			// [Ja] 末尾 $ によりサブパスは対象外にし、将来 /trash/... のルートが増えても本パターンが
+			// 巻き込まないようにする。
+			name:     "ゴミ箱配下のサブパスはマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/trash/restore",
+			expected: false,
+		},
+		{
+			// The space-level trash screen (/s/:identifier/trash) stays on Rails, so it must not be
+			// caught by the page-scoped pattern.
+			//
+			// [Ja] スペース単位のゴミ箱画面 (/s/:identifier/trash) は Rails 版のまま残るため、
+			// ページ単位の本パターンが拾ってはいけない。
+			name:     "スペースのゴミ箱画面はマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/trash",
+			expected: false,
+		},
+		{
+			name:     "ページ番号が数字でないパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/abc",
+			expected: false,
+		},
+		{
+			name:     "ページ番号の後にスラッシュが続くパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/",
 			expected: false,
 		},
 		{
@@ -1303,6 +1147,7 @@ func TestReverseProxyMiddleware_Middleware_DeviceTokenIssuance(t *testing.T) {
 		{name: "ホーム画面 (完全一致) には発行しない", method: http.MethodGet, path: "/home", wantDeviceCookie: false},
 		{name: "正規表現マッチの Go パスには発行しない", method: http.MethodGet, path: "/s/my-space/pages/1/edit", wantDeviceCookie: false},
 		{name: "常時 Go 化されたスペース詳細には発行しない", method: http.MethodGet, path: "/s/my-space", wantDeviceCookie: false},
+		{name: "常時 Go 化されたページ表示には発行しない", method: http.MethodGet, path: "/s/my-space/pages/1", wantDeviceCookie: false},
 
 		// Rails-proxied paths: device_token must be issued.
 		// [Ja] Rails 転送パス: device_token が発行される

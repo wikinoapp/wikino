@@ -204,15 +204,6 @@ export function loadSharedTestData(): SharedTestData {
   return JSON.parse(fs.readFileSync(sharedTestDataPath, "utf-8"));
 }
 
-export async function createTestFeatureFlag(userId: string, name: string): Promise<void> {
-  await query(
-    `INSERT INTO feature_flags (user_id, name, created_at)
-     VALUES ($1, $2, NOW())
-     ON CONFLICT (user_id, name) DO NOTHING`,
-    [userId, name],
-  );
-}
-
 /**
  * テストデータを一括削除する
  * E2Eテストで作成したレコードをテスト後にクリーンアップする
