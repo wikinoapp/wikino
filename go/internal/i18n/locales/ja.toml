@@ -6,7 +6,7 @@ description = "デフォルトのページタイトル"
 other = "Wikino"
 
 [default_description]
-description = "デフォルトのページ説明文（meta description）"
+description = "デフォルトのページ説明文 (meta description)"
 other = "Wikinoはオンラインで情報を共有・整理できるWikiアプリケーションです。"
 
 [flash_dismiss]
@@ -327,7 +327,7 @@ description = "アットネーム文字数超過エラー"
 other = "アットネームは20文字以内で入力してください"
 
 [validation_atname_invalid_format]
-description = "アットネーム形式エラー（許可されない文字を含む）"
+description = "アットネーム形式エラー (許可されない文字を含む)"
 other = "アットネームは英数字とアンダースコアのみ使用できます"
 
 [validation_atname_already_taken]
@@ -437,20 +437,20 @@ other = "{{.MinLength}}文字以上で入力してください"
 
 [password_edit_password_confirmation_label]
 description = "パスワード変更の確認用パスワード入力ラベル"
-other = "新しいパスワード（確認）"
+other = "新しいパスワード (確認)"
 
 [password_edit_submit_button]
 description = "パスワード変更の送信ボタンのラベル"
 other = "パスワードを変更"
 
-# パスワードバリデーション（追加）
 [password_edit_back_to_sign_in]
 description = "パスワード変更ページからサインインへの戻るリンク"
 other = "ログインに戻る"
 
+# パスワードバリデーション (追加)
 [validation_password_confirmation_required]
 description = "確認用パスワード必須エラー"
-other = "パスワード（確認）を入力してください"
+other = "パスワード (確認) を入力してください"
 
 [validation_password_confirmation_mismatch]
 description = "確認用パスワード不一致エラー"
@@ -501,11 +501,11 @@ description = "トップページの meta description"
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 [welcome_hero_title_html]
-description = "トップページのヒーローエリアの見出し（HTML を含む）"
+description = "トップページのヒーローエリアの見出し (HTML を含む)"
 other = "リンクで見つかる<br class=\"md:hidden\"/>Wikiのアプリ"
 
 [welcome_hero_description_html]
-description = "トップページのヒーローエリアの説明文（HTML を含む）"
+description = "トップページのヒーローエリアの説明文 (HTML を含む)"
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 
@@ -895,7 +895,7 @@ description = "ページタイトル予約語エラー"
 other = "このタイトルは使用できません"
 
 [validation_page_title_uniqueness_html]
-description = "ページタイトル重複エラー（HTML含む）"
+description = "ページタイトル重複エラー (HTML含む)"
 other = "は既に存在しています。<a class=\"underline\" href=\"%s\">既存のページを編集</a>"
 
 # ページ公開成功
@@ -1155,7 +1155,7 @@ other = "メインコンテンツへスキップ"
 
 # トピック詳細
 [topic_show_title]
-description = "トピック詳細画面のタイトル（{topic_name} | {space_name}形式）"
+description = "トピック詳細画面のタイトル ({topic_name} | {space_name}形式)"
 other = "{{.TopicName}} | {{.SpaceName}}"
 
 [topic_show_visibility_public]
@@ -1304,7 +1304,7 @@ description = "編集提案一覧の見出し"
 other = "編集提案"
 
 [suggestion_index_subtitle_html]
-description = "編集提案一覧のサブタイトル（ヘルプページへのリンクを含む）"
+description = "編集提案一覧のサブタイトル (ヘルプページへのリンクを含む)"
 other = "編集提案については <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">こちら</a> をご覧ください"
 
 [suggestion_index_breadcrumb]
@@ -1368,7 +1368,7 @@ description = "編集提案作成の見出し"
 other = "新規編集提案"
 
 [suggestion_new_breadcrumb]
-description = "編集提案作成画面のパンくずリスト（編集提案一覧へのリンク）"
+description = "編集提案作成画面のパンくずリスト (編集提案一覧へのリンク)"
 other = "編集提案"
 
 [suggestion_new_title_label]
@@ -1560,7 +1560,7 @@ description = "編集提案反映エラーメッセージ"
 other = "編集提案の反映に失敗しました"
 
 [suggestion_apply_page_error]
-description = "編集提案反映バリデーションエラーのページ名プレフィックス（{{.PageTitle}} は templ 側の自動エスケープ後に挿入される）"
+description = "編集提案反映バリデーションエラーのページ名プレフィックス ({{.PageTitle}} は templ 側の自動エスケープ後に挿入される)"
 other = "ページ「{{.PageTitle}}」: "
 
 [error_suggestion_conflict_during_apply]
