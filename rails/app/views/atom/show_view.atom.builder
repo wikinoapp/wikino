@@ -10,7 +10,7 @@ atom_feed(root_url: "#{Wikino.config.app_url}/s/#{space.identifier}", schema_dat
       url: false,
       id: entry_id(page:)
     }) do |entry|
-      entry.link(href: page_url(space.identifier, page.number), rel: "alternate", type: "text/html")
+      entry.link(href: "#{Wikino.config.app_url}/s/#{space.identifier}/pages/#{page.number}", rel: "alternate", type: "text/html")
 
       entry.title(page.title)
       entry.content(page.body, type: "text")

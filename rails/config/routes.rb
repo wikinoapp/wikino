@@ -11,7 +11,6 @@ Rails.application.routes.draw do
   # standard:disable Layout/ExtraSpacing, Rails/MatchRoute
   match "/_test/session",                                                  via: :post,   as: :test_session,                                 to: "test/sessions/create#call" if Rails.env.test?
   match "/_test/attachments/presign",                                      via: :post,   as: :test_attachment_presign,                      to: "test/attachments/presigns/create#call" if Rails.env.test?
-  match "/_test/attachments/signed_urls",                                  via: :post,   as: :test_attachment_signed_urls,                   to: "test/attachments/signed_urls/create#call" if Rails.env.test?
   match "/_test/attachments/upload",                                       via: :put,    as: :test_attachment_upload,                       to: "test/attachments/uploads/create#call" if Rails.env.test?
   match "/_test/sign_in",                                                  via: :get,    as: :test_sign_in,                                to: "test/sign_in/create#call" if Rails.env.test?
   match "/@:atname",                                                       via: :get,    as: :profile,                                      to: "profiles/show#call"
@@ -24,11 +23,6 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/attachments",                                via: :post,   as: :attachment_list,                              to: "attachments/create#call"
   match "/s/:space_identifier/attachments/presign",                        via: :post,   as: :attachment_presign,                           to: "attachments/presigns/create#call"
   match "/s/:space_identifier/bulk_restored_pages",                        via: :post,   as: :bulk_restored_page_list,                      to: "bulk_restored_pages/create#call"
-  match "/s/:space_identifier/pages/:page_number",                         via: :get,    as: :page,                                         to: "pages/show#call",                             page_number: /\d+/
-  match "/rails/s/:space_identifier/pages/:page_number/backlinks",         via: :post,   as: :page_backlink_list,                           to: "backlinks/index#call",                        page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number/links",                   via: :post,   as: :page_link_list,                               to: "links/index#call",                            page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number/move",                    via: :get,    as: :move_page,                                    to: "pages/show#call",                             page_number: /\d+/
-  match "/s/:space_identifier/pages/:page_number/trash",                   via: :post,   as: :trashed_page,                                 to: "trashed_pages/create#call",                   page_number: /\d+/
   match "/s/:space_identifier/settings",                                   via: :get,    as: :space_settings,                               to: "spaces/settings/show#call"
   match "/s/:space_identifier/settings/deletion",                          via: :post,   as: :space_settings_deletion,                      to: "spaces/settings/deletions/create#call"
   match "/s/:space_identifier/settings/deletion/new",                      via: :get,    as: :space_settings_new_deletion,                  to: "spaces/settings/deletions/new#call"

@@ -7,7 +7,6 @@ class PageName < T::Enum
     EmailConfirmationEdit = new
     Home = new
     Inbox = new
-    PageDetail = new
     PageEdit = new
     PasswordEdit = new
     PasswordReset = new

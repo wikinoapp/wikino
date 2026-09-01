@@ -4,7 +4,6 @@ ja:
     actions: アクション
     all_files: すべてのファイル
     attachments: 添付ファイル
-    backlinks: バックリンク
     best_practices: ベストプラクティス
     cancel: キャンセル
     change_email: メールアドレスの変更
@@ -24,7 +23,6 @@ ja:
     info: Info
     joined_spaces: 参加中のスペース
     light: ライト
-    links: リンク
     modified_at: 編集日時
     new_topic: 新規トピック
     next_page: 次のページ

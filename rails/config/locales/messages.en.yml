@@ -40,11 +40,8 @@ en:
     home:
       no_joined_spaces_html: No joined spaces.
     pages:
-      are_you_sure_trash: Are you sure you want to move this page to trash?
       current_page_is_draft: You are currently viewing a draft.
-      moved_to_trash: Page moved to trash.
       saved: Page saved.
-      trashed_page: This page is in the trash.
       untitled: Untitled
     search:
       no_results: No search results found

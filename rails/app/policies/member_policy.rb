@@ -24,15 +24,6 @@ class MemberPolicy
 
   # トピック
 
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_show_topic?(topic_record:)
-    if topic_record.visibility_public?
-      return true
-    end
-
-    effective_scopes.include?(Scope::TOPIC_READ)
-  end
-
   sig { returns(T::Boolean) }
   def can_update_topic?
     effective_scopes.include?(Scope::TOPIC_WRITE)
@@ -48,16 +39,6 @@ class MemberPolicy
   sig { returns(T::Boolean) }
   def can_create_page?
     effective_scopes.include?(Scope::PAGE_WRITE)
-  end
-
-  sig { returns(T::Boolean) }
-  def can_update_page?
-    effective_scopes.include?(Scope::PAGE_WRITE)
-  end
-
-  sig { returns(T::Boolean) }
-  def can_trash_page?
-    effective_scopes.include?(Scope::PAGE_TRASH)
   end
 
   # 下書きページ
