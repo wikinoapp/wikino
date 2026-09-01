@@ -4,6 +4,7 @@ import { initializeAttachmentLoader } from "./attachment-loader";
 import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
+import { initializeMarkdownTables } from "./markdown-table";
 import { initializePlatform } from "./platform";
 import { initializeStickyHeader } from "./sticky-header";
 import { initializeZenMode } from "./zen-mode";
@@ -27,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeZenMode();
   initializePlatform();
   initializeAttachmentLoader();
+  initializeMarkdownTables();
   initializeStickyHeader();
   setTimeZoneCookie();
 });

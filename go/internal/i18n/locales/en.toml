@@ -37,6 +37,10 @@ other = "Wikino home"
 description = "Label for optional form fields"
 other = "Optional"
 
+[markdown_table_scroll_label]
+description = "Aria label for the scrollable region wrapping a table in a page body"
+other = "Scrollable table"
+
 # Sign in
 [sign_in_title]
 description = "Sign-in page title"

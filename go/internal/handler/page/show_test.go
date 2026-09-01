@@ -255,6 +255,14 @@ func TestShow(t *testing.T) {
 				"data-sticky-header-sentinel",
 				"data-sticky-header",
 				"data-sticky-header-spacer",
+				// The body container carries the name web/markdown-table.ts gives the scrollable
+				// region it wraps a table in, so a guest reaching a page with a wide table gets the
+				// keyboard-reachable region as well.
+				//
+				// [Ja] 本文コンテナは、web/markdown-table.ts がテーブルを包むスクロール領域に付ける
+				// 名前を持つ。横に長いテーブルのあるページへ来たゲストにも、キーボードで到達できる
+				// 領域が用意される。
+				`data-markdown-table-label="スクロールできる表"`,
 			},
 			wantNotContains: []string{
 				"このページはゴミ箱に入れられています。",

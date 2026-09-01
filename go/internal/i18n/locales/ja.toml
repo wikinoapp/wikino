@@ -37,6 +37,10 @@ other = "Wikino のホーム"
 description = "フォームの任意項目に表示するラベル"
 other = "任意"
 
+[markdown_table_scroll_label]
+description = "ページ本文のテーブルを包む横スクロール領域の aria-label"
+other = "スクロールできる表"
+
 # サインイン
 [sign_in_title]
 description = "サインインページのタイトル"

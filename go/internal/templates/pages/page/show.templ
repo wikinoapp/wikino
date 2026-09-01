@@ -74,7 +74,7 @@ templ Show(data ShowData) {
 						// The body HTML is sanitized when the page is published, so expand it raw here.
 						//
 						// [Ja] 本文 HTML はページ公開時にサニタイズ済みのため、ここでは生のまま展開する。
-						<div class="wikino-markdown mt-6">
+						<div class="wikino-markdown mt-6" data-markdown-table-label={ templates.T(ctx, "markdown_table_scroll_label") }>
 							@templ.Raw(data.Page.BodyHTML)
 						</div>
 					}

@@ -306,8 +306,53 @@
       @apply block overflow-visible rounded-none bg-transparent p-0;
     }
 
+    /*
+      Let a table wider than the screen scroll inside its own box so the page itself does not scroll
+      sideways. A scroll container contributes no minimum width to its ancestors, which also keeps a
+      flex item ancestor (the layout's content column, the article of the page detail screen) from
+      being pushed wider than the viewport. Existing pages carry body HTML that was rendered and
+      stored when the page was published, so the fix belongs in the style rather than in the markup
+      pipeline, where it would reach only the pages saved after it.
+
+      display: block is what makes overflow take effect: overflow is ignored on a table box. Where
+      scripting is available markdown-table.ts moves the scrolling onto a focusable wrapper and the
+      table returns to table layout; this rule is what a page falls back to without it.
+
+      [Ja] 画面幅より広いテーブルをテーブル自身の中でスクロールさせ、ページ全体が横スクロール
+      しないようにする。スクロールコンテナは祖先に最小幅を伝えないため、フレックス項目の祖先
+      (レイアウトの本文カラムやページ表示画面の article) がビューポートより広く押し広げられる
+      こともない。既存ページはページ公開時に生成・保存された本文 HTML を持つため、修正は
+      マークアップパイプラインではなくスタイル側に置く。パイプラインに置くと、以後保存された
+      ページにしか届かない。
+
+      display: block を併せて指定するのは overflow を効かせるため。テーブルボックスに対する
+      overflow は無視される。スクリプトが使える環境では markdown-table.ts がスクロールを
+      フォーカス可能なラッパーへ移し、テーブルはテーブルレイアウトに戻る。本ルールはそれが
+      無い場合のフォールバックにあたる。
+    */
     & table {
-      @apply mb-4;
+      @apply mb-4 block overflow-x-auto;
+    }
+
+    /*
+      The wrapper markdown-table.ts puts around a table. It takes the scrolling over from the table,
+      which is what lets the wrapper hold the keyboard focus that scrolls it while the table keeps
+      its own role and layout.
+
+      [Ja] markdown-table.ts がテーブルに被せるラッパー。スクロールをテーブルから引き取ることで、
+      テーブル自身はロールとレイアウトを保ったまま、スクロール操作のためのキーボードフォーカスを
+      ラッパーが受け取れるようになる。
+    */
+    & .wikino-markdown-table-scroll {
+      @apply mb-4 overflow-x-auto;
+    }
+
+    & .wikino-markdown-table-scroll > table {
+      @apply mb-0 table overflow-visible;
+    }
+
+    & .wikino-markdown-table-scroll:focus-visible {
+      @apply outline-2 outline-offset-2 outline-brand-600;
     }
 
     & table td {

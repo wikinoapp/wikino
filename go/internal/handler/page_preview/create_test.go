@@ -112,6 +112,14 @@ func TestCreate(t *testing.T) {
 	if !strings.Contains(body, "wikino-markdown") {
 		t.Error("markdown wrapper not found in response")
 	}
+	// The preview is swapped in by htmx, and web/markdown-table.ts reads this attribute off the
+	// swapped container to name the scrollable region it wraps a table in.
+	//
+	// [Ja] プレビューは htmx が差し込み、web/markdown-table.ts はスワップされたコンテナから
+	// この属性を読んで、テーブルを包むスクロール領域に名前を付ける。
+	if !strings.Contains(body, `data-markdown-table-label="スクロールできる表"`) {
+		t.Error("markdown table label not found in response")
+	}
 }
 
 func TestCreate_NotLoggedIn(t *testing.T) {
