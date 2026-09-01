@@ -728,10 +728,6 @@ other = "Restore"
 description = "Restore cancel button in the revision diff modal"
 other = "Cancel"
 
-[page_edit_links_heading]
-description = "Heading for the link list on the page edit screen"
-other = "Links"
-
 [page_edit_links_untitled]
 description = "Display text for an untitled linked page"
 other = "Untitled"
@@ -739,6 +735,30 @@ other = "Untitled"
 [page_edit_links_edit_page]
 description = "Accessible name and hover tooltip for the edit link on a linked page card"
 other = "Edit page"
+
+[page_links_heading]
+description = "Heading for the link list, shared by the page show and page edit screens"
+other = "Links"
+
+[page_links_description]
+description = "Description shown beside the link list heading, shared by the page show and page edit screens"
+other = "Pages this page links to directly"
+
+[page_links_related_heading]
+description = "Heading for the related link list, shared by the page show and page edit screens"
+other = "Related links"
+
+[page_links_related_description]
+description = "Description shown beside the related link list heading, shared by the page show and page edit screens"
+other = "Pages reachable through the linked pages"
+
+[page_links_backlinks_heading]
+description = "Heading for the backlink list, shared by the page show and page edit screens"
+other = "Backlinks"
+
+[page_links_backlinks_description]
+description = "Description shown beside the backlink list heading, shared by the page show and page edit screens"
+other = "Pages that link to this page"
 
 [page_links_load_more]
 description = "Shared load more link for related page lists"
@@ -760,6 +780,10 @@ other = "Show more backlinks of {{.PageTitle}}"
 description = "Accessible name for the load more link of the page's own backlink list"
 other = "Show more backlinks"
 
+[page_links_related_via_label]
+description = "Label of the subheading naming the linked page a group of related links is reached through"
+other = "via"
+
 [page_edit_links_load_more_limit]
 description = "Notice shown when the page edit screen reaches the related page list load limit"
 other = "This is as far as the editor loads this list."
@@ -767,10 +791,6 @@ other = "This is as far as the editor loads this list."
 [page_edit_links_load_more_limit_link]
 description = "Link text that continues a capped related-page list one page at a time in the editor"
 other = "Continue one page at a time"
-
-[page_edit_backlinks_heading]
-description = "Heading for the backlink list on the page edit screen"
-other = "Backlinks"
 
 [page_edit_save_draft_button]
 description = "Label for the save draft button"
@@ -836,14 +856,6 @@ other = "Move to Trash"
 [page_show_page_actions_trash_confirm]
 description = "Confirmation dialog before moving a page to the trash"
 other = "Are you sure you want to move this page to trash?"
-
-[page_show_links_heading]
-description = "Heading for the link list on the page show screen"
-other = "Links"
-
-[page_show_backlinks_heading]
-description = "Heading for the backlink list on the page show screen"
-other = "Backlinks"
 
 # Page publish validation
 [validation_page_title_required]

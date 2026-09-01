@@ -827,7 +827,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	allIDs := []model.PageID{pageID1, pageID2, pageID3, unpublishedID}
 
 	t.Run("1ページ目を取得できる（limit=2）", func(t *testing.T) {
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, AllTopicsVisible(), 1, 2)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, AllTopicsVisible(), 0, 2)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -861,7 +861,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	})
 
 	t.Run("非公開ページも件数に含まれる", func(t *testing.T) {
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, AllTopicsVisible(), 1, 100)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, AllTopicsVisible(), 0, 100)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -874,7 +874,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	})
 
 	t.Run("空のIDリストは空の結果を返す", func(t *testing.T) {
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{}, spaceID, AllTopicsVisible(), 1, 15)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{}, spaceID, AllTopicsVisible(), 0, 15)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -892,7 +892,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 			WithTrashed().
 			Build()
 
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{pageID1, trashedID}, spaceID, AllTopicsVisible(), 1, 15)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{pageID1, trashedID}, spaceID, AllTopicsVisible(), 0, 15)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -922,7 +922,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 			WithTitle("In Discarded Topic").
 			Build()
 
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{pageID1, pageInDiscardedTopicID}, spaceID, AllTopicsVisible(), 1, 15)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), []model.PageID{pageID1, pageInDiscardedTopicID}, spaceID, AllTopicsVisible(), 0, 15)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -951,7 +951,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 
 		ids := []model.PageID{pageID1, pageInOtherTopicID}
 
-		allResult, err := repo.FindLinkedPagesPaginated(context.Background(), ids, spaceID, AllTopicsVisible(), 1, 15)
+		allResult, err := repo.FindLinkedPagesPaginated(context.Background(), ids, spaceID, AllTopicsVisible(), 0, 15)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -962,7 +962,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 			t.Errorf("AllTopicsVisible: TotalCount = %d, want 2", allResult.TotalCount)
 		}
 
-		limitedResult, err := repo.FindLinkedPagesPaginated(context.Background(), ids, spaceID, VisibleTopics([]model.TopicID{topicID}), 1, 15)
+		limitedResult, err := repo.FindLinkedPagesPaginated(context.Background(), ids, spaceID, VisibleTopics([]model.TopicID{topicID}), 0, 15)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -978,7 +978,7 @@ func TestPageRepository_FindLinkedPagesPaginated(t *testing.T) {
 	})
 
 	t.Run("閲覧可能トピックが空のときは何も返さない", func(t *testing.T) {
-		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, VisibleTopics(nil), 1, 15)
+		result, err := repo.FindLinkedPagesPaginated(context.Background(), allIDs, spaceID, VisibleTopics(nil), 0, 15)
 		if err != nil {
 			t.Fatalf("FindLinkedPagesPaginated() error = %v", err)
 		}
@@ -1055,7 +1055,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 		Build()
 
 	t.Run("1ページ目を取得できる（limit=2）", func(t *testing.T) {
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, AllTopicsVisible(), 1, 2, nil)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetPageID, spaceID, AllTopicsVisible(), 0, 2, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -1098,7 +1098,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 			WithTitle("Isolated").
 			Build()
 
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), isolatedPageID, spaceID, AllTopicsVisible(), 1, 14, nil)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), isolatedPageID, spaceID, AllTopicsVisible(), 0, 14, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -1127,7 +1127,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 			WithTrashed().
 			Build()
 
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), trashedTargetID, spaceID, AllTopicsVisible(), 1, 14, nil)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), trashedTargetID, spaceID, AllTopicsVisible(), 0, 14, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -1160,7 +1160,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 			WithLinkedPageIDs([]model.PageID{targetID}).
 			Build()
 
-		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetID, spaceID, AllTopicsVisible(), 1, 14, nil)
+		result, err := repo.FindBacklinkedPagesPaginated(context.Background(), targetID, spaceID, AllTopicsVisible(), 0, 14, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -1203,7 +1203,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 			WithLinkedPageIDs([]model.PageID{mixedTargetID}).
 			Build()
 
-		allResult, err := repo.FindBacklinkedPagesPaginated(context.Background(), mixedTargetID, spaceID, AllTopicsVisible(), 1, 14, nil)
+		allResult, err := repo.FindBacklinkedPagesPaginated(context.Background(), mixedTargetID, spaceID, AllTopicsVisible(), 0, 14, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}
@@ -1214,7 +1214,7 @@ func TestPageRepository_FindBacklinkedPagesPaginated(t *testing.T) {
 			t.Errorf("AllTopicsVisible: TotalCount = %d, want 2", allResult.TotalCount)
 		}
 
-		guestResult, err := repo.FindBacklinkedPagesPaginated(context.Background(), mixedTargetID, spaceID, VisibleTopics([]model.TopicID{topicID}), 1, 14, nil)
+		guestResult, err := repo.FindBacklinkedPagesPaginated(context.Background(), mixedTargetID, spaceID, VisibleTopics([]model.TopicID{topicID}), 0, 14, nil)
 		if err != nil {
 			t.Fatalf("FindBacklinkedPagesPaginated() error = %v", err)
 		}

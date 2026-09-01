@@ -244,33 +244,28 @@ templ showEditButton(data ShowData) {
 	</a>
 }
 
-// showFooter renders the link list and the backlink list under the body. Each section is dropped
-// when its listing is empty, so a page with no links shows no headings at all.
+// showFooter renders the three related-page sections under the body through the component the
+// editor shares, so the two screens lay the listings out the same way. The listings are a subject of
+// this screen rather than something under an editor, so the headings are given the larger size.
 //
-// [Ja] showFooter は本文の下にリンク一覧とバックリンク一覧を描画する。一覧が空のセクションは丸ごと
-// 落とすため、リンクを持たないページでは見出しも出ない。
+// The whole block is dropped when this page has neither links nor backlinks: the sections hide
+// themselves individually, but the wrapper is a flex item of the page's own column and would still
+// take a gap under the body if it were left in place empty.
+//
+// [Ja] showFooter は本文の下の 3 つの関連ページセクションを、編集画面と共有するコンポーネントで
+// 描画し、2 つの画面の並べ方を揃える。この画面では一覧が画面の主題であり、エディタの下に置かれる
+// ものではないため、見出しには大きいほうの大きさを与える。
+//
+// リンクもバックリンクも無いページではブロックごと落とす。セクション自身は個別に隠れるが、ラッパーは
+// ページ本体のカラムのフレックス項目であり、空のまま残すと本文の下に gap の分だけ余白が残るためである。
 templ showFooter(data ShowData) {
 	if len(data.LinkList.Items) > 0 || len(data.BacklinkList.Items) > 0 {
 		<div class="flex flex-col gap-6">
-			if len(data.LinkList.Items) > 0 {
-				<div class="flex flex-col gap-4">
-					<h2 class="text-2xl/8 font-bold antialiased">
-						{ templates.T(ctx, "page_show_links_heading") }
-					</h2>
-
-					@components.LinkList(data.LinkList)
-				</div>
-			}
-
-			if len(data.BacklinkList.Items) > 0 {
-				<div class="flex flex-col gap-4">
-					<h2 class="text-2xl/8 font-bold antialiased">
-						{ templates.T(ctx, "page_show_backlinks_heading") }
-					</h2>
-
-					@components.PageBacklinkList(data.BacklinkList)
-				</div>
-			}
+			@components.RelatedPageSections(components.RelatedPageSectionsData{
+				LinkList:     data.LinkList,
+				BacklinkList: data.BacklinkList,
+				HeadingClass: "text-2xl/8",
+			})
 		</div>
 	}
 }

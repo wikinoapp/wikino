@@ -86,7 +86,8 @@ func (uc *GetPageBacklinksUsecase) Execute(ctx context.Context, input GetPageBac
 		}
 	}
 
-	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, data.page.ID, data.space.ID, access.visibility(), input.CurrentPage, input.Limit, nil)
+	offset, limit := listingWindow(input.CurrentPage, input.Limit, false)
+	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, data.page.ID, data.space.ID, access.visibility(), offset, limit, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ページレベルのバックリンクの取得に失敗: %w", err)
 	}

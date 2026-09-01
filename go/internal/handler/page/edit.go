@@ -316,17 +316,17 @@ func buildEditLinkResult(input buildEditLinkResultInput) *editLinkResult {
 // 2 つ目の返り値は、クエリが返せないページを指すパラメータがあったときに false になる。呼び出し元は
 // UseCase を呼ぶ前にこれを 404 へ変換する。
 func parseRelatedPageState(r *http.Request, pageLinkContext viewmodel.PageLinkContext) (viewmodel.PageLinkState, bool) {
-	linkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkPageQueryParam, viewmodel.LinkLimit)
+	linkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		return viewmodel.PageLinkState{}, false
 	}
 
-	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.BacklinkLimit)
+	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		return viewmodel.PageLinkState{}, false
 	}
 
-	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.PageBacklinkLimit)
+	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		return viewmodel.PageLinkState{}, false
 	}
@@ -408,14 +408,18 @@ func relatedPageStateInRange(state viewmodel.PageLinkState, counts relatedPageCo
 }
 
 // relatedPageInRange reports whether the given page of a listing of totalCount items exists.
+// initialLimit is the first page's card count rather than a per-page one, because a following page
+// of a related-page listing holds one card more (see viewmodel.RelatedPageTotalPages).
 //
-// [Ja] relatedPageInRange は、総件数 totalCount の一覧に指定ページが存在するかを返す。
-func relatedPageInRange(page int32, totalCount int64, limit int32) bool {
+// [Ja] relatedPageInRange は、総件数 totalCount の一覧に指定ページが存在するかを返す。initialLimit は
+// 1 ページあたりの件数ではなく 1 ページ目のカード数である。関連ページ一覧の後続ページは 1 件多く持つ
+// ためである (viewmodel.RelatedPageTotalPages を参照)。
+func relatedPageInRange(page int32, totalCount int64, initialLimit int32) bool {
 	if page <= 1 {
 		return true
 	}
 
-	return int(page) <= viewmodel.NewPagination(1, totalCount, int(limit)).Total
+	return int(page) <= viewmodel.RelatedPageTotalPages(totalCount, initialLimit)
 }
 
 // linkedPageBacklinkCounts reduces the nested backlink output to the totals the range check needs.

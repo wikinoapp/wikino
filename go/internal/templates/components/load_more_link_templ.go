@@ -79,7 +79,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" class=\"block border border-border hover:border-brand-600 border-dashed hover:border-solid rounded-xl bg-background transition-colors duration-200 w-full cursor-pointer min-h-[96px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" class=\"flex items-center justify-center border border-border hover:border-brand-600 border-dashed hover:border-solid rounded-xl bg-background transition-colors duration-200 w-full cursor-pointer min-h-[96px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

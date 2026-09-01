@@ -452,7 +452,7 @@ func TestRelatedPageHandlers_NestedFallbackStaysReachableAfterTheLinkListAdvance
 	// [Ja] リンク一覧 1 ページ目の先頭カードに、ネスト 3 ページ分のバックリンクを与える。2 ページ目でも
 	// 一覧終端の状態ではなく「もっと見る」リンクが描画されるようにするためである。
 	selectedLinkedPageNumber := int32(100)
-	for i := range int(viewmodel.BacklinkLimit)*2 + 1 {
+	for i := range int(viewmodel.BacklinkLimit + viewmodel.RelatedPageFollowingLimit + 1) {
 		testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -836,7 +836,7 @@ func TestRelatedPageHandlers_NestedFallbackSurvivesTheSharedStateOnALaterLinkPag
 	//
 	// [Ja] そのカードにネスト 3 ページ分のバックリンクを与える。2 ページ目でも「もっと見る」リンクが
 	// 描画され、本テストがそのフォールバック URL を辿れるようにするためである。
-	nestedCount := int(viewmodel.BacklinkLimit)*2 + 1
+	nestedCount := int(viewmodel.BacklinkLimit + viewmodel.RelatedPageFollowingLimit + 1)
 	for i := range nestedCount {
 		testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).

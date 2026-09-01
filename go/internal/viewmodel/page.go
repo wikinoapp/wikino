@@ -202,7 +202,6 @@ type CardLinkPage struct {
 	Topic        *Topic
 	Pinned       bool
 	CardImageURL string
-	Primary      bool
 	CanEdit      bool
 }
 

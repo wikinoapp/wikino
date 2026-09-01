@@ -780,7 +780,7 @@ func TestShow_RelatedPagePagination(t *testing.T) {
 		Build()
 
 	baseTime := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
-	linkedCount := 2*int(viewmodel.LinkLimit) + 1
+	linkedCount := int(viewmodel.LinkLimit + viewmodel.RelatedPageFollowingLimit + 1)
 	linkedPageIDs := make([]model.PageID, 0, linkedCount)
 	for i := range linkedCount {
 		linkedPageIDs = append(linkedPageIDs, testutil.NewPageBuilder(t, tx).
@@ -809,7 +809,7 @@ func TestShow_RelatedPagePagination(t *testing.T) {
 	// そこが、そのカードを進められる唯一のページである。
 	selectedLinkedPageID := linkedPageIDs[int(viewmodel.LinkLimit)]
 	selectedLinkedPageNumber := model.PageNumber(100 + int(viewmodel.LinkLimit))
-	for i := range 2*int(viewmodel.BacklinkLimit) + 1 {
+	for i := range int(viewmodel.BacklinkLimit + viewmodel.RelatedPageFollowingLimit + 1) {
 		testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -819,7 +819,7 @@ func TestShow_RelatedPagePagination(t *testing.T) {
 			WithLinkedPageIDs([]model.PageID{selectedLinkedPageID}).
 			Build()
 	}
-	for i := range 2*int(viewmodel.PageBacklinkLimit) + 1 {
+	for i := range int(viewmodel.PageBacklinkLimit + viewmodel.RelatedPageFollowingLimit + 1) {
 		testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -884,5 +884,236 @@ func TestShow_RelatedPagePagination(t *testing.T) {
 		if strings.Contains(body, notWant) {
 			t.Errorf("response unexpectedly contains %q", notWant)
 		}
+	}
+
+	// Every anchor the fallback URLs above name is rendered, so a reader without JavaScript lands on
+	// the listing they were advancing rather than at the top of the screen. The three anchors are
+	// spread across the three sections, and the nested one moved into the related-links group.
+	//
+	// [Ja] 上のフォールバック URL が指すアンカーはいずれも描画されている。JavaScript が使えない
+	// 閲覧者も、画面の先頭ではなく自分が進めていた一覧に着地する。3 つのアンカーは 3 セクションに
+	// 散っており、ネスト一覧のものは関連リンクのグループへ移っている。
+	for _, anchor := range []string{
+		"page-link-list-content",
+		fmt.Sprintf("page-link-list-item-%d", selectedLinkedPageNumber),
+		"page-backlink-list-content",
+	} {
+		if !strings.Contains(body, fmt.Sprintf(`id="%s"`, anchor)) {
+			t.Errorf("full-page fallback anchor %q is not rendered", anchor)
+		}
+	}
+}
+
+// TestShow_RelatedLinkSections fixes the three-section arrangement of the listings under the body:
+// the linked pages, their backlinks grouped per linked page, and this page's own backlinks. It also
+// fixes that a linked page nothing links back to contributes no group.
+//
+// [Ja] TestShow_RelatedLinkSections は本文下の一覧の 3 セクション構成を固定する。リンク先ページ、
+// リンク先ページごとに束ねたそのバックリンク、そしてこのページ自身のバックリンクである。どこからも
+// リンクされていないリンク先ページがグループを生まないことも併せて固定する。
+func TestShow_RelatedLinkSections(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("show-sections-space").
+		WithName("Show Sections Space").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Public Topic").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	// One linked page is linked back to, the other is not, so the section holds exactly one group.
+	//
+	// [Ja] リンク先ページのうち片方にはバックリンクがあり、もう片方には無い。セクションにはちょうど
+	// 1 つのグループが残る。
+	linkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Linked Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	lonelyLinkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Lonely Linked Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Shown Page").
+		WithBodyHTML("<p>shown page body</p>").
+		WithLinkedPageIDs([]model.PageID{linkedPageID, lonelyLinkedPageID}).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Related Link Page").
+		WithLinkedPageIDs([]model.PageID{linkedPageID}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(5).
+		WithTitle("Backlink Page").
+		WithLinkedPageIDs([]model.PageID{pageID}).
+		Build()
+
+	h := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/show-sections-space/pages/1", map[string]string{
+		"space_identifier": "show-sections-space",
+		"page_number":      "1",
+	})
+	req = req.WithContext(i18n.SetLocale(req.Context(), i18n.LangJa))
+
+	rr := httptest.NewRecorder()
+	h.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		"関連リンク",
+		"このページが直接リンクしているページ",
+		"リンク先のページからさらに辿れるページ",
+		"このページにリンクしているページ",
+		`id="page-link-list-item-2"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+
+	// A linked page nothing links back to gets no group, and the backlink section still describes
+	// nothing but this page's own backlinks.
+	//
+	// [Ja] どこからもリンクされていないリンク先ページにはグループが付かない。バックリンクの
+	// セクションは、これまでどおりこのページ自身のバックリンクだけを表す。
+	if strings.Contains(body, `id="page-link-list-item-3"`) {
+		t.Error("a linked page without backlinks should not get a related-links group")
+	}
+
+	// The three sections appear in links, related links, and backlinks order. The backlinks of a
+	// linked page sit in the related-links section rather than beside one of the links' cards.
+	//
+	// [Ja] 3 セクションはリンク、関連リンク、バックリンクの順に並ぶ。リンク先ページのバックリンクは
+	// リンクセクションのカードの隣ではなく、関連リンクのセクションに置かれる。
+	linksIndex := strings.Index(body, `id="page-link-list-content"`)
+	relatedIndex := strings.Index(body, `id="page-related-link-list"`)
+	backlinksIndex := strings.Index(body, `id="page-backlink-list-content"`)
+	if linksIndex == -1 || relatedIndex == -1 || backlinksIndex == -1 {
+		t.Fatalf(
+			"section positions = links:%d related-links:%d backlinks:%d; all three sections should be rendered",
+			linksIndex,
+			relatedIndex,
+			backlinksIndex,
+		)
+	}
+	if linksIndex >= relatedIndex || relatedIndex >= backlinksIndex {
+		t.Errorf(
+			"section positions = links:%d related-links:%d backlinks:%d, want links < related-links < backlinks",
+			linksIndex,
+			relatedIndex,
+			backlinksIndex,
+		)
+	}
+	if got := strings.Index(body, "Related Link Page"); got < relatedIndex {
+		t.Errorf("the backlink of a linked page is rendered at %d, before the related-links section at %d", got, relatedIndex)
+	}
+
+	// All three sections carry a description beside their heading, so that the three names, which
+	// sit close to one another, are told apart by what each section lists.
+	//
+	// [Ja] 3 つのセクションはいずれも見出しの脇に説明を持つ。名前が互いに近い 3 つを、そのセクションが
+	// 何を並べているかで読み分けられるようにするためである。
+	for _, heading := range []string{"リンク", "関連リンク", "バックリンク"} {
+		marker := fmt.Sprintf(">%s</h2>", heading)
+		headingIndex := strings.Index(body, marker)
+		if headingIndex == -1 {
+			t.Errorf("heading %q is not rendered", heading)
+			continue
+		}
+		if !strings.HasPrefix(body[headingIndex+len(marker):], `<p class="text-sm text-muted-foreground">`) {
+			t.Errorf("heading %q is not followed by a description", heading)
+		}
+	}
+}
+
+// TestShow_EmptyRelatedLinkSection fixes that an empty related-links section keeps its out-of-band
+// target in the document while the section wrapper hides its heading and description.
+//
+// [Ja] TestShow_EmptyRelatedLinkSection は、空の関連リンクセクションが OOB の追記先を文書内に残し
+// つつ、セクションのラッパーで見出しと説明を隠すことを固定する。
+func TestShow_EmptyRelatedLinkSection(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("show-empty-related-space").
+		WithName("Show Empty Related Space").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Public Topic").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	linkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Linked Page Without Other Backlinks").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Shown Page With Empty Related Links").
+		WithLinkedPageIDs([]model.PageID{linkedPageID}).
+		Build()
+
+	h := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/show-empty-related-space/pages/1", map[string]string{
+		"space_identifier": "show-empty-related-space",
+		"page_number":      "1",
+	})
+	req = req.WithContext(i18n.SetLocale(req.Context(), i18n.LangJa))
+
+	rr := httptest.NewRecorder()
+	h.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if !strings.Contains(body, `id="page-related-link-list"`) {
+		t.Error("the empty related-links container should remain as an out-of-band target")
+	}
+	if !strings.Contains(body, `not-has-[#page-related-link-list>*]:hidden`) {
+		t.Error("the related-links section should hide itself while its container is empty")
+	}
+	if strings.Contains(body, `id="page-link-list-item-`) {
+		t.Error("an empty related-links section should not contain a group")
 	}
 }

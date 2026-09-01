@@ -4,16 +4,55 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
+// Card counts of the three related-page listings. Each listing is laid out in a grid that is one
+// column on a narrow screen and three columns from md up, and its "load more" tile follows the
+// cards as one more cell of that same grid. The tile ends a complete row while the loaded card
+// count leaves a remainder of two on division by three: the initial page satisfies it, and every
+// following page appends a multiple of three, so it survives each append. A single column puts
+// every cell at both ends, so the narrow layout holds for either count.
+//
+// The other counts are derived from RelatedPageInitialLimit, because the pagination that resolves
+// them (RelatedPageTotalPages here, listingWindow in the usecase package) computes a following page
+// as one card more than the initial one. Writing the following count as its own literal would let
+// the two say different things, and the offset bound the handlers check would then no longer be the
+// largest page a listing can return.
+//
+// [Ja] 3 つの関連ページ一覧のカード数。各一覧は狭い画面では 1 カラム、md 以上では 3 カラムの
+// グリッドに並び、「もっと見る」のタイルはカードに続く同じグリッドの 1 マスとして置かれる。読み込み
+// 済みカード数を 3 で割った余りが 2 である間、タイルは埋まった行の末尾に来る。初回ページがこれを
+// 満たし、各後続ページは 3 の倍数を追記するため、追記後も保たれる。1 カラムではどのマスも両端に
+// 来るため、どちらの件数でも狭い画面の並びは成り立つ。
+//
+// 他の件数はすべて RelatedPageInitialLimit から導出する。これらを解決するページネーション
+// (本パッケージの RelatedPageTotalPages と usecase パッケージの listingWindow) が、後続ページを
+// 初回より 1 件多いものとして計算するためである。後続の件数を別のリテラルで書くと両者が食い違い、
+// Handler が検査する offset の上限が、一覧の返しうる最大ページ件数でなくなってしまう。
 const (
-	// LinkLimit is the number of linked pages rendered per page.
-	// [Ja] LinkLimit はリンク一覧の 1 ページあたりの表示件数。
-	LinkLimit int32 = 15
-	// BacklinkLimit is the number of nested backlinks rendered per page.
-	// [Ja] BacklinkLimit はネストしたバックリンクの 1 ページあたりの表示件数。
-	BacklinkLimit int32 = 13
-	// PageBacklinkLimit is the number of page-level backlinks rendered per page.
-	// [Ja] PageBacklinkLimit はページ自身のバックリンク一覧の 1 ページあたりの表示件数。
-	PageBacklinkLimit int32 = 14
+	// RelatedPageInitialLimit is the number of cards the first page of every related-page listing
+	// holds.
+	//
+	// [Ja] RelatedPageInitialLimit は、各関連ページ一覧の 1 ページ目が持つカード数。
+	RelatedPageInitialLimit int32 = 14
+
+	// RelatedPageFollowingLimit is the number of cards appended by every following page.
+	//
+	// [Ja] RelatedPageFollowingLimit は各後続ページで追記するカード数。
+	RelatedPageFollowingLimit int32 = RelatedPageInitialLimit + 1
+
+	// LinkLimit is the number of linked pages rendered initially.
+	//
+	// [Ja] LinkLimit はリンク一覧の初回表示件数。
+	LinkLimit int32 = RelatedPageInitialLimit
+
+	// BacklinkLimit is the number of nested backlinks rendered initially.
+	//
+	// [Ja] BacklinkLimit はネストしたバックリンクの初回表示件数。
+	BacklinkLimit int32 = RelatedPageInitialLimit
+
+	// PageBacklinkLimit is the number of page-level backlinks rendered initially.
+	//
+	// [Ja] PageBacklinkLimit はページ自身のバックリンク一覧の初回表示件数。
+	PageBacklinkLimit int32 = RelatedPageInitialLimit
 )
 
 // LinkListItem はリンク一覧の個別リンク情報です
@@ -67,7 +106,6 @@ func NewLinkList(input NewLinkListInput) LinkList {
 	items := make([]LinkListItem, 0, len(input.Pages))
 	for _, pg := range input.Pages {
 		card := NewCardLinkPage(pg, input.TopicMap)
-		card.Primary = true
 		card.CanEdit = input.CanEdit
 		item := LinkListItem{
 			CardLinkPage: card,

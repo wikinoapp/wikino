@@ -115,7 +115,8 @@ func (uc *GetBacklinkListUsecase) Execute(ctx context.Context, input GetBacklink
 	}
 
 	excludePageIDs := []model.PageID{data.page.ID, linkedPage.ID}
-	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, data.space.ID, access.visibility(), input.CurrentPage, input.Limit, excludePageIDs)
+	offset, limit := listingWindow(input.CurrentPage, input.Limit, false)
+	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, data.space.ID, access.visibility(), offset, limit, excludePageIDs)
 	if err != nil {
 		return nil, fmt.Errorf("バックリンクの取得に失敗: %w", err)
 	}

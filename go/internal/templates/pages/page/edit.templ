@@ -508,34 +508,23 @@ templ Edit(data EditPageData) {
 								// 下書き自動保存の内容スワップがコンテナだけを対象にし、リスナーや状態を巻き添えに
 								// しないようにするためである。
 								@components.DraftPageRefreshTrigger(data.Space.Identifier, data.Page.Number, data.RelatedPageState)
-								// The headings sit outside #page-link-list / #page-backlink-list so the draft-autosave
-								// OOB swap re-renders only the lists, leaving each heading (and its style) untouched.
-								// not-has-[#id>*]:hidden hides a section while its list is empty, so heading visibility
-								// still tracks the list content after every swap.
+								// The sections come from the component the page detail screen shares, so both screens
+								// lay the listings out the same way. The headings it renders sit outside the containers
+								// the draft-autosave OOB swap targets, so a re-render replaces only the listings.
 								//
-								// [Ja] 見出しは #page-link-list / #page-backlink-list の外に置く。こうすると下書き自動保存の
-								// OOB スワップがリストだけを再描画し、各見出し (とそのスタイル) は書き換わらない。
-								// リストが空の間は not-has-[#id>*]:hidden でセクションごと隠すため、見出しの表示は
-								// スワップ後もリストの内容に追従する。
-								<div class="flex flex-col gap-4 not-has-[#page-link-list>*]:hidden">
-									<h2 class="font-bold antialiased">
-										{ templates.T(ctx, "page_edit_links_heading") }
-									</h2>
-
-									<div id="page-link-list">
-										@components.LinkList(data.LinkList)
-									</div>
-								</div>
-
-								<div class="flex flex-col gap-4 not-has-[#page-backlink-list>*]:hidden">
-									<h2 class="font-bold antialiased">
-										{ templates.T(ctx, "page_edit_backlinks_heading") }
-									</h2>
-
-									<div id="page-backlink-list">
-										@components.PageBacklinkList(data.BacklinkList)
-									</div>
-								</div>
+								// The editor leaves the heading size empty: here the listings sit under the editor
+								// rather than being the screen's subject.
+								//
+								// [Ja] セクションはページ表示画面と共有するコンポーネントから描画し、2 つの画面の並べ方を
+								// 揃える。コンポーネントが描く見出しは、下書き自動保存の OOB スワップが対象とするコンテナの
+								// 外にあるため、再描画は一覧だけを差し替える。
+								//
+								// 編集画面は見出しの大きさを空のままにする。ここでは一覧が画面の主題ではなく、エディタの
+								// 下に置かれるものだからである。
+								@components.RelatedPageSections(components.RelatedPageSectionsData{
+									LinkList:     data.LinkList,
+									BacklinkList: data.BacklinkList,
+								})
 							</div>
 						</div>
 					</div>

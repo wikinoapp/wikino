@@ -552,12 +552,12 @@ func TestShow_OffsetBeyondInt32ReturnsNotFound(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	// PageBacklinkLimit is 14, so page 153391691 has the first offset past the int32 ceiling
-	// (153391690 * 14 = 2147483660).
+	// RelatedPageFollowingLimit is 15, so page 143165578 has the first upper-bound offset past the int32 ceiling
+	// (143165577 * 15 = 2147483655).
 	//
-	// [Ja] PageBacklinkLimit は 14 なので、153391691 ページ目が int32 の上限を最初に超える offset に
-	// なる (153391690 * 14 = 2147483660)。
-	req := newRequestWithChiParams(t, http.MethodGet, "/s/pb-offset/pages/1/backlinks?page=153391691", map[string]string{
+	// [Ja] RelatedPageFollowingLimit は 15 なので、143165578 ページ目が int32 の上限を最初に超える offset に
+	// なる (143165577 * 15 = 2147483655)。
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/pb-offset/pages/1/backlinks?page=143165578", map[string]string{
 		"space_identifier": "pb-offset",
 		"page_number":      "1",
 	})

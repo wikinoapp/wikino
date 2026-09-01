@@ -133,13 +133,14 @@ func (r *PageRepository) FindRegularBySpacePaginated(ctx context.Context, spaceI
 }
 
 // FindLinkedPagesPaginated returns the pages linked from a page with offset pagination.
+// The caller supplies the resolved offset and limit.
 // Trashed pages and pages whose topic is discarded are excluded, and the result is limited to
 // the topics the viewer may open (see TopicVisibility).
 //
 // [Ja] FindLinkedPagesPaginated はページからのリンク先ページをオフセットページネーションで
-// 取得する。ゴミ箱に入ったページと廃棄済みトピックのページは除外し、閲覧者が開けるトピックの
-// ページに絞る (TopicVisibility を参照)。
-func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID, visibility TopicVisibility, page int32, limit int32) (*PaginatedPages, error) {
+// 取得する。呼び出し元が解決済みの offset と limit を渡す。ゴミ箱に入ったページと廃棄済み
+// トピックのページは除外し、閲覧者が開けるトピックのページに絞る (TopicVisibility を参照)。
+func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID, visibility TopicVisibility, offset int32, limit int32) (*PaginatedPages, error) {
 	totalCount, err := r.q.CountLinkedPages(ctx, query.CountLinkedPagesParams{
 		PageIds:          model.PageIDsToStrings(pageIDs),
 		SpaceID:          string(spaceID),
@@ -150,7 +151,6 @@ func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs [
 		return nil, err
 	}
 
-	offset := (page - 1) * limit
 	rows, err := r.q.FindLinkedPagesPaginated(ctx, query.FindLinkedPagesPaginatedParams{
 		PageIds:          model.PageIDsToStrings(pageIDs),
 		SpaceID:          string(spaceID),
@@ -170,11 +170,13 @@ func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs [
 }
 
 // FindBacklinkedPagesPaginated returns the pages linking to a page with offset pagination.
+// The caller supplies the resolved offset and limit.
 // Trash, discarded-topic and topic-visibility handling matches FindLinkedPagesPaginated.
 //
 // [Ja] FindBacklinkedPagesPaginated は指定ページへのバックリンクをオフセットページネーションで
-// 取得する。ゴミ箱・廃棄済みトピック・トピック可視性の扱いは FindLinkedPagesPaginated と同じ。
-func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, visibility TopicVisibility, page int32, limit int32, excludePageIDs []model.PageID) (*PaginatedPages, error) {
+// 取得する。呼び出し元が解決済みの offset と limit を渡す。ゴミ箱・廃棄済みトピック・
+// トピック可視性の扱いは FindLinkedPagesPaginated と同じ。
+func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, visibility TopicVisibility, offset int32, limit int32, excludePageIDs []model.PageID) (*PaginatedPages, error) {
 	totalCount, err := r.q.CountBacklinkedPages(ctx, query.CountBacklinkedPagesParams{
 		PageID:           string(pageID),
 		SpaceID:          string(spaceID),
@@ -186,7 +188,6 @@ func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageI
 		return nil, err
 	}
 
-	offset := (page - 1) * limit
 	rows, err := r.q.FindBacklinkedPagesPaginated(ctx, query.FindBacklinkedPagesPaginatedParams{
 		PageID:           string(pageID),
 		SpaceID:          string(spaceID),

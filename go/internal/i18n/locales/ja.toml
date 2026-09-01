@@ -728,10 +728,6 @@ other = "戻す"
 description = "リビジョン差分モーダルの復元キャンセルボタン"
 other = "キャンセル"
 
-[page_edit_links_heading]
-description = "ページ編集画面のリンク一覧の見出し"
-other = "リンク"
-
 [page_edit_links_untitled]
 description = "タイトルなしのリンク先ページの表示テキスト"
 other = "無題"
@@ -739,6 +735,30 @@ other = "無題"
 [page_edit_links_edit_page]
 description = "リンク先ページの編集リンクのアクセシブルネームとホバー時のツールチップ"
 other = "編集する"
+
+[page_links_heading]
+description = "リンク一覧の見出し (ページ表示画面と編集画面で共有)"
+other = "リンク"
+
+[page_links_description]
+description = "リンク一覧の見出しに添える説明 (ページ表示画面と編集画面で共有)"
+other = "このページが直接リンクしているページ"
+
+[page_links_related_heading]
+description = "関連リンク一覧の見出し (ページ表示画面と編集画面で共有)"
+other = "関連リンク"
+
+[page_links_related_description]
+description = "関連リンク一覧の見出しに添える説明 (ページ表示画面と編集画面で共有)"
+other = "リンク先のページからさらに辿れるページ"
+
+[page_links_backlinks_heading]
+description = "バックリンク一覧の見出し (ページ表示画面と編集画面で共有)"
+other = "バックリンク"
+
+[page_links_backlinks_description]
+description = "バックリンク一覧の見出しに添える説明 (ページ表示画面と編集画面で共有)"
+other = "このページにリンクしているページ"
 
 [page_links_load_more]
 description = "関連ページ一覧で共有する「もっと見る」リンク"
@@ -760,6 +780,10 @@ other = "{{.PageTitle}}のバックリンクをもっと見る"
 description = "ページ自身のバックリンク一覧の「もっと見る」リンクのアクセシブルネーム"
 other = "バックリンクをもっと見る"
 
+[page_links_related_via_label]
+description = "関連リンクをどのリンク先ページ経由で辿れるかを示す小見出しのラベル"
+other = "via"
+
 [page_edit_links_load_more_limit]
 description = "ページ編集画面で関連ページ一覧の読み込み上限に達したときの案内"
 other = "編集画面で読み込めるのはここまでです。"
@@ -767,10 +791,6 @@ other = "編集画面で読み込めるのはここまでです。"
 [page_edit_links_load_more_limit_link]
 description = "上限に達した関連ページ一覧を編集画面で1ページずつ継続するリンクテキスト"
 other = "1ページずつ続きを見る"
-
-[page_edit_backlinks_heading]
-description = "ページ編集画面のバックリンク一覧の見出し"
-other = "バックリンク"
 
 [page_edit_save_draft_button]
 description = "下書き保存ボタンのラベル"
@@ -836,14 +856,6 @@ other = "ゴミ箱に入れる"
 [page_show_page_actions_trash_confirm]
 description = "ページをゴミ箱に入れる操作の確認ダイアログ"
 other = "ページをゴミ箱に入れますか？"
-
-[page_show_links_heading]
-description = "ページ表示画面のリンク一覧の見出し"
-other = "リンク"
-
-[page_show_backlinks_heading]
-description = "ページ表示画面のバックリンク一覧の見出し"
-other = "バックリンク"
 
 # ページ公開バリデーション
 [validation_page_title_required]

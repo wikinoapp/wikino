@@ -229,53 +229,66 @@ func TestLinkHubBodyHasNoHeadings(t *testing.T) {
 func TestLinkHubAmountsLeavePartialLastListingPage(t *testing.T) {
 	t.Parallel()
 
-	// The three listings under a page body paginate independently and at three
-	// different sizes, so each needs a count of its own to reach a last page
-	// holding a remainder rather than a full one. The limits are read from the
-	// view model instead of being written out here, so that raising one of them
-	// fails this test and the counts get re-picked, rather than the seed
-	// quietly stopping to produce the partial page.
+	// The three listings under a page body paginate independently, so each needs a
+	// count of its own to reach a last page holding a remainder rather than a full
+	// one. Pages are not all the same size: the first holds the initial limit and
+	// every following one holds a card more, so the page a card lands on is read
+	// from the view model functions the listings themselves paginate with instead
+	// of being recomputed here. Doing so also makes a change to either count fail
+	// this test and get the amounts re-picked, rather than letting the seed quietly
+	// stop producing the partial page.
 	//
-	// [Ja] ページ本文の下の 3 つの一覧はそれぞれ独立に、しかも異なる件数で
-	// ページングするため、最終ページが 1 画面分ではなく端数になるには、それぞれに
-	// 件数が要る。件数上限をここに書き写さず ViewModel から読むのは、上限を引き
-	// 上げたときにこのテストが落ちて件数を選び直せるようにするため。書き写して
-	// おくと、シードが端数のページを作らなくなったことに気づけない。
+	// [Ja] ページ本文の下の 3 つの一覧はそれぞれ独立にページングするため、最終ページが
+	// 1 画面分ではなく端数になるには、それぞれに件数が要る。各ページの件数は一定では
+	// なく、1 ページ目は初回件数、後続ページはそれより 1 件多く持つ。そのため、カードが
+	// どのページに載るかはここで計算し直さず、一覧自身がページングに使う ViewModel の
+	// 関数から読む。こうすると、どちらの件数を変えてもこのテストが落ちて件数を選び直せる
+	// ようになり、シードが端数のページを作らなくなったことを見逃さずに済む。
 	for _, tt := range []struct {
 		name          string
 		count         int
-		limit         int
+		limit         int32
 		wantPages     int
 		wantRemainder int
 	}{
 		{
 			name:          "ページのリンク一覧",
 			count:         defaultAmounts.linkHubTargets,
-			limit:         int(viewmodel.LinkLimit),
+			limit:         viewmodel.LinkLimit,
 			wantPages:     4,
-			wantRemainder: 5,
+			wantRemainder: 6,
 		},
 		{
 			name:          "ページのバックリンク一覧",
 			count:         defaultAmounts.linkHubBacklinks,
-			limit:         int(viewmodel.PageBacklinkLimit),
+			limit:         viewmodel.PageBacklinkLimit,
 			wantPages:     4,
-			wantRemainder: 3,
+			wantRemainder: 1,
 		},
 		{
 			name:          "ネストしたバックリンク一覧",
 			count:         defaultAmounts.nestedBacklinks,
-			limit:         int(viewmodel.BacklinkLimit),
+			limit:         viewmodel.BacklinkLimit,
 			wantPages:     2,
-			wantRemainder: 7,
+			wantRemainder: 6,
 		},
 	} {
-		gotPages := (tt.count + tt.limit - 1) / tt.limit
+		gotPages := viewmodel.RelatedPageTotalPages(int64(tt.count), tt.limit)
 		if gotPages != tt.wantPages {
 			t.Errorf("%sが %d ページになることを期待したが %d ページだった", tt.name, tt.wantPages, gotPages)
 		}
 
-		gotRemainder := tt.count % tt.limit
+		// Count the cards the last page holds by asking which page each card lands
+		// on, so the remainder follows the same mapping the listings render with.
+		//
+		// [Ja] 最終ページの件数は、各カードがどのページに載るかを問い合わせて数える。
+		// こうすると端数が、一覧が描画に使うのと同じ対応付けに従う。
+		gotRemainder := 0
+		for index := range tt.count {
+			if int(viewmodel.RelatedPageNumberForIndex(index, tt.limit)) == gotPages {
+				gotRemainder++
+			}
+		}
 		if gotRemainder != tt.wantRemainder {
 			t.Errorf("%sの最終ページが %d 件になることを期待したが %d 件だった", tt.name, tt.wantRemainder, gotRemainder)
 		}
