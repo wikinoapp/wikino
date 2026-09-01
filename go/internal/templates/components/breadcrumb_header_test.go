@@ -89,6 +89,43 @@ func TestBreadcrumbHeader_MarksCurrentItemWithoutLink(t *testing.T) {
 	}
 }
 
+// A crumb long enough to be cut carries its full label in a title attribute, so a pointer can
+// bring back what the ellipsis took. A crumb drawn whole does not: there the tooltip would repeat
+// text already on screen, and it would fire on every crumb the pointer crosses.
+//
+// Both a linked and a current crumb are checked, since the two are rendered by separate branches.
+//
+// [Ja] 切り詰められる長さの項目は、省略記号が奪った分をポインタで呼び戻せるよう、title 属性に
+// ラベル全体を持つ。全体が描かれる項目は持たない。そこでのツールチップは画面に出ている文字列を
+// 繰り返すだけで、ポインタが通り過ぎる項目ごとに出てしまうため。
+//
+// リンク付きの項目と現在地の項目は別の分岐で描画されるため、両方を確認する。
+func TestBreadcrumbHeader_AddsTitleOnlyToLabelsThatMayBeTruncated(t *testing.T) {
+	t.Parallel()
+
+	// 30 characters is the longest name the model accepts, and 4 is well inside what max-w-48 draws.
+	//
+	// [Ja] 30 文字はモデルが受け付ける最長の名前で、4 文字は max-w-48 が描き切る範囲に十分収まる。
+	longLabel := strings.Repeat("長", 30)
+	shortLabel := "短い名前"
+
+	data := components.BreadcrumbHeaderData{
+		Items: []components.BreadcrumbItem{
+			{Label: longLabel, Path: templates.Path("/s/long")},
+			{Label: shortLabel, Path: templates.Path("/s/long/topics/1")},
+			{Label: longLabel, Path: templates.Path("/s/long/topics/2"), IsCurrent: true},
+		},
+	}
+	html := renderBreadcrumbHeader(t, components.BreadcrumbHeader(components.BreadcrumbHeaderRenderData{Header: data, GlobalNav: signedInNav}))
+
+	if strings.Count(html, `title="`+longLabel+`"`) != 2 {
+		t.Errorf("切り詰められる項目 (リンク付きと現在地) の両方に title を期待したが %q だった", html)
+	}
+	if strings.Contains(html, `title="`+shortLabel+`"`) {
+		t.Error("全体が描かれる項目に title が付いている")
+	}
+}
+
 // The separator between two crumbs is a visual affordance with no accessible name, so it stays out
 // of the accessibility tree: otherwise a three-crumb trail is announced as a list of five items,
 // two of them nameless.

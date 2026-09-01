@@ -8,6 +8,7 @@ package components
 import (
 	"context"
 	"strings"
+	"unicode"
 
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
@@ -380,6 +381,69 @@ func BreadcrumbHeader(data BreadcrumbHeaderRenderData) templ.Component {
 	})
 }
 
+// breadcrumbLabelClass caps how much of a label is drawn. A crumb whose label runs past the cap is
+// cut with an ellipsis rather than pushing the trail onto more lines than it needs: a space name
+// and a page title are both free-form text, and either can be long enough to fill a phone's width
+// on its own. The full text stays in the DOM, so a screen reader reads it whole and a pointer
+// brings it back through the title attribute.
+//
+// The trail still wraps when the capped crumbs do not fit on one line. Capping hard enough to
+// guarantee a single line would leave the shorter names cut for nothing.
+//
+// [Ja] breadcrumbLabelClass はラベルを描く幅の上限。上限を超える項目は、必要以上に行数を増やす
+// のではなく省略記号で切る。スペース名もページタイトルも自由入力のテキストで、どちらも単独で
+// 携帯電話の画面幅を埋める長さになりうるため。全文は DOM に残るので、スクリーンリーダーは全体を
+// 読み、ポインタは title 属性で全文を呼び戻せる。
+//
+// 上限を付けた項目が 1 行に収まらないときは、経路はこれまでどおり折り返す。必ず 1 行に収まる
+// ところまで上限を厳しくすると、短い名前まで意味なく切られてしまう。
+const breadcrumbLabelClass = "max-w-48 truncate"
+
+// breadcrumbLabelTitleThreshold is the width, in half-width units, above which a label is treated
+// as one breadcrumbLabelClass may cut. max-w-48 is 12rem, which at text-sm holds roughly 27 units.
+// The threshold sits below that so a label the estimate places near the edge still keeps its
+// tooltip: a tooltip on a label that turned out to fit costs a repetition, while a missing one
+// leaves cut text with no way back.
+//
+// [Ja] breadcrumbLabelTitleThreshold は、breadcrumbLabelClass が切り詰めうるラベルとして扱う
+// 半角単位の幅。max-w-48 は 12rem で、text-sm ではおよそ 27 単位が収まる。しきい値をそれより
+// 下に置くのは、見積もりが境界付近に置いたラベルにもツールチップを残すため。収まっていた
+// ラベルに付いたツールチップは繰り返しで済むが、付かなかった場合は切り詰めた文字列を
+// 取り戻す手段が無くなる。
+const breadcrumbLabelTitleThreshold = 24
+
+// breadcrumbLabelNeedsTitle reports whether a label is long enough that breadcrumbLabelClass may
+// cut it. The title attribute is attached only then: on a label drawn whole it repeats text
+// already on screen, and it fires on every crumb the pointer crosses.
+//
+// Whether the cut happens is a question about width, which the server cannot measure, so the
+// length stands in for it. A rune outside ASCII counts as two units, since the Japanese these
+// labels mostly carry is drawn about twice as wide as a Latin letter of the same size.
+//
+// [Ja] breadcrumbLabelNeedsTitle は、breadcrumbLabelClass が切り詰めうる長さのラベルかを返す。
+// title 属性を付けるのはそのときだけとする。全体が描かれるラベルでは画面に出ている文字列を
+// 繰り返すだけで、ポインタが通り過ぎる項目ごとにツールチップが出るため。
+//
+// 切り詰めが起きるかは幅の問題で、サーバ側では測れないため、長さで代用する。ASCII の外の
+// ルーンを 2 単位と数えるのは、これらのラベルが主に持つ日本語が、同じ大きさのラテン文字の
+// およそ 2 倍の幅で描かれるため。
+func breadcrumbLabelNeedsTitle(label string) bool {
+	units := 0
+	for _, r := range label {
+		if r > unicode.MaxASCII {
+			units += 2
+		} else {
+			units++
+		}
+
+		if units > breadcrumbLabelTitleThreshold {
+			return true
+		}
+	}
+
+	return false
+}
+
 // breadcrumbNav renders a breadcrumb list.
 //
 // [Ja] breadcrumbNav はパンくずリストを描画する。
@@ -411,13 +475,13 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "breadcrumb_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 284, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 348, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><ol class=\"text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><ol class=\"text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -440,7 +504,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " <li class=\"inline-flex items-center gap-1.5\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "          <li class=\"inline-flex min-w-0 items-center gap-1\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -463,7 +527,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					var templ_7745c5c3_Var9 templ.SafeURL
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.Path))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 307, Col: 114}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 380, Col: 114}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -476,7 +540,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.AriaLabel)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 307, Col: 144}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 380, Col: 144}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 					if templ_7745c5c3_Err != nil {
@@ -486,7 +550,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -495,72 +559,166 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<a class=\"hover:text-foreground transition-colors inline-flex items-center gap-1\" href=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<a class=\"hover:text-foreground transition-colors inline-flex min-w-0 items-center gap-1\" href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var11 templ.SafeURL
 					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.Path))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 311, Col: 120}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 386, Col: 39}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					if item.IconName != "" {
-						templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+					if breadcrumbLabelNeedsTitle(item.Label) {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, " title=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var12 string
+						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.Label)
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 388, Col: 27}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					var templ_7745c5c3_Var12 string
-					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 315, Col: 20}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, ">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</a>")
+					if item.IconName != "" {
+						templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					var templ_7745c5c3_Var13 = []any{breadcrumbLabelClass}
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<span class=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var14 string
+					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var13).String())
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 1, Col: 0}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var15 string
+					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 394, Col: 57}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</span></a>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			} else {
 				if item.IconName != "" {
-					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if item.Label != "" {
-					var templ_7745c5c3_Var13 string
-					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
+					var templ_7745c5c3_Var16 = []any{breadcrumbLabelClass}
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var16...)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 323, Col: 19}
+						return templ_7745c5c3_Err
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<span class=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var17 string
+					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var16).String())
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 1, Col: 0}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					if breadcrumbLabelNeedsTitle(item.Label) {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, " title=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var18 string
+						templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.Label)
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 405, Col: 27}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, ">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var19 string
+					templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/breadcrumb_header.templ`, Line: 407, Col: 20}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</ol></nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</ol></nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

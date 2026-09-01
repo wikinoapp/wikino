@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"strings"
+	"unicode"
 
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -277,12 +278,75 @@ templ BreadcrumbHeader(data BreadcrumbHeaderRenderData) {
 	}
 }
 
+// breadcrumbLabelClass caps how much of a label is drawn. A crumb whose label runs past the cap is
+// cut with an ellipsis rather than pushing the trail onto more lines than it needs: a space name
+// and a page title are both free-form text, and either can be long enough to fill a phone's width
+// on its own. The full text stays in the DOM, so a screen reader reads it whole and a pointer
+// brings it back through the title attribute.
+//
+// The trail still wraps when the capped crumbs do not fit on one line. Capping hard enough to
+// guarantee a single line would leave the shorter names cut for nothing.
+//
+// [Ja] breadcrumbLabelClass はラベルを描く幅の上限。上限を超える項目は、必要以上に行数を増やす
+// のではなく省略記号で切る。スペース名もページタイトルも自由入力のテキストで、どちらも単独で
+// 携帯電話の画面幅を埋める長さになりうるため。全文は DOM に残るので、スクリーンリーダーは全体を
+// 読み、ポインタは title 属性で全文を呼び戻せる。
+//
+// 上限を付けた項目が 1 行に収まらないときは、経路はこれまでどおり折り返す。必ず 1 行に収まる
+// ところまで上限を厳しくすると、短い名前まで意味なく切られてしまう。
+const breadcrumbLabelClass = "max-w-48 truncate"
+
+// breadcrumbLabelTitleThreshold is the width, in half-width units, above which a label is treated
+// as one breadcrumbLabelClass may cut. max-w-48 is 12rem, which at text-sm holds roughly 27 units.
+// The threshold sits below that so a label the estimate places near the edge still keeps its
+// tooltip: a tooltip on a label that turned out to fit costs a repetition, while a missing one
+// leaves cut text with no way back.
+//
+// [Ja] breadcrumbLabelTitleThreshold は、breadcrumbLabelClass が切り詰めうるラベルとして扱う
+// 半角単位の幅。max-w-48 は 12rem で、text-sm ではおよそ 27 単位が収まる。しきい値をそれより
+// 下に置くのは、見積もりが境界付近に置いたラベルにもツールチップを残すため。収まっていた
+// ラベルに付いたツールチップは繰り返しで済むが、付かなかった場合は切り詰めた文字列を
+// 取り戻す手段が無くなる。
+const breadcrumbLabelTitleThreshold = 24
+
+// breadcrumbLabelNeedsTitle reports whether a label is long enough that breadcrumbLabelClass may
+// cut it. The title attribute is attached only then: on a label drawn whole it repeats text
+// already on screen, and it fires on every crumb the pointer crosses.
+//
+// Whether the cut happens is a question about width, which the server cannot measure, so the
+// length stands in for it. A rune outside ASCII counts as two units, since the Japanese these
+// labels mostly carry is drawn about twice as wide as a Latin letter of the same size.
+//
+// [Ja] breadcrumbLabelNeedsTitle は、breadcrumbLabelClass が切り詰めうる長さのラベルかを返す。
+// title 属性を付けるのはそのときだけとする。全体が描かれるラベルでは画面に出ている文字列を
+// 繰り返すだけで、ポインタが通り過ぎる項目ごとにツールチップが出るため。
+//
+// 切り詰めが起きるかは幅の問題で、サーバ側では測れないため、長さで代用する。ASCII の外の
+// ルーンを 2 単位と数えるのは、これらのラベルが主に持つ日本語が、同じ大きさのラテン文字の
+// およそ 2 倍の幅で描かれるため。
+func breadcrumbLabelNeedsTitle(label string) bool {
+	units := 0
+	for _, r := range label {
+		if r > unicode.MaxASCII {
+			units += 2
+		} else {
+			units++
+		}
+
+		if units > breadcrumbLabelTitleThreshold {
+			return true
+		}
+	}
+
+	return false
+}
+
 // breadcrumbNav renders a breadcrumb list.
 //
 // [Ja] breadcrumbNav はパンくずリストを描画する。
 templ breadcrumbNav(items []BreadcrumbItem) {
 	<nav aria-label={ templates.T(ctx, "breadcrumb_label") }>
-		<ol class="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words">
+		<ol class="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm">
 			for i, item := range items {
 				// The separator is purely visual: where one crumb ends is already carried by the list
 				// structure. Hiding the whole item keeps the trail from being announced as a list with
@@ -296,8 +360,17 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 						@templates.DecorativeIcon("caret-right-regular", "size-3.5 fill-gray-500")
 					</li>
 				}
+				// The gap matches the one inside the linked crumb below. A crumb's icon and label are
+				// spaced by whichever element holds them: the link when the crumb is a link, this
+				// item itself when the crumb is the current page. Two values would shift the same
+				// crumb by their difference as the viewer walks into it and back out.
+				//
+				// [Ja] この gap は下のリンク項目の内側の gap と揃える。アイコンとラベルの間隔は、
+				// それらを収める要素が決める。リンクの項目ではリンクが、現在地の項目ではこの項目
+				// 自身が収めるためである。値が 2 つあると、同じ項目が現在地になったりリンクに
+				// 戻ったりするたび、その差だけずれて見える。
 				<li
-					class="inline-flex items-center gap-1.5"
+					class="inline-flex min-w-0 items-center gap-1"
 					if item.IsCurrent {
 						aria-current="page"
 					}
@@ -305,22 +378,33 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 					if item.Path != "" && !item.IsCurrent {
 						if item.Label == "" && item.IconName != "" {
 							<a class="hover:text-foreground transition-colors inline-flex items-center" href={ templ.SafeURL(item.Path) } aria-label={ item.AriaLabel }>
-								@templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600")
+								@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
 							</a>
 						} else {
-							<a class="hover:text-foreground transition-colors inline-flex items-center gap-1" href={ templ.SafeURL(item.Path) }>
-								if item.IconName != "" {
-									@templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600")
+							<a
+								class="hover:text-foreground transition-colors inline-flex min-w-0 items-center gap-1"
+								href={ templ.SafeURL(item.Path) }
+								if breadcrumbLabelNeedsTitle(item.Label) {
+									title={ item.Label }
 								}
-								{ item.Label }
+							>
+								if item.IconName != "" {
+									@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
+								}
+								<span class={ breadcrumbLabelClass }>{ item.Label }</span>
 							</a>
 						}
 					} else {
 						if item.IconName != "" {
-							@templates.DecorativeIcon(item.IconName, "size-4 fill-gray-600")
+							@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
 						}
 						if item.Label != "" {
-							{ item.Label }
+							<span
+								class={ breadcrumbLabelClass }
+								if breadcrumbLabelNeedsTitle(item.Label) {
+									title={ item.Label }
+								}
+							>{ item.Label }</span>
 						}
 					}
 				</li>
