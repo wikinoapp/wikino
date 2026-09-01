@@ -42,35 +42,35 @@ description = "ページ本文のテーブルを包む横スクロール領域�
 other = "スクロールできる表"
 
 # サインイン
-[sign_in_title]
+[sign_in_new_title]
 description = "サインインページのタイトル"
 other = "ログイン"
 
-[sign_in_heading]
+[sign_in_new_heading]
 description = "サインインページの見出し"
 other = "Wikinoにログイン"
 
-[sign_in_email_label]
+[sign_in_new_email_label]
 description = "サインインのメールアドレス入力ラベル"
 other = "メールアドレス"
 
-[sign_in_password_label]
+[sign_in_new_password_label]
 description = "サインインのパスワード入力ラベル"
 other = "パスワード"
 
-[sign_in_submit_button]
+[sign_in_new_submit_button]
 description = "サインインの送信ボタンのラベル"
 other = "ログインする"
 
-[sign_in_forgot_password]
+[sign_in_new_forgot_password]
 description = "サインインページのパスワード忘れリンクのラベル"
 other = "パスワードを忘れた？"
 
-[sign_in_no_account]
+[sign_in_new_no_account]
 description = "サインインページのアカウント未所持時の案内文"
 other = "アカウントをお持ちでない方は"
 
-[sign_in_sign_up]
+[sign_in_new_sign_up]
 description = "サインインページから新規登録への導線リンク"
 other = "新規登録"
 
@@ -88,58 +88,62 @@ description = "サインイン時のメールアドレスまたはパスワー�
 other = "メールアドレスまたはパスワードが正しくありません"
 
 # 二要素認証
-[sign_in_two_factor_title]
+[sign_in_two_factor_new_title]
 description = "二要素認証ページのタイトル"
 other = "二要素認証の確認"
 
-[sign_in_two_factor_heading]
+[sign_in_two_factor_new_heading]
 description = "二要素認証ページの見出し"
 other = "二要素認証"
 
-[sign_in_two_factor_enter_code]
+[sign_in_two_factor_new_enter_code]
 description = "二要素認証ページの認証コード入力案内文"
 other = "認証アプリに表示される認証コードを入力してください"
 
-[sign_in_two_factor_code_label]
+[sign_in_two_factor_new_code_label]
 description = "二要素認証の認証コード入力ラベル"
 other = "認証コード"
 
-[sign_in_two_factor_code_hint]
+[sign_in_two_factor_new_code_hint]
 description = "二要素認証の認証コード入力ヒント"
 other = "6桁のコードを入力してください"
 
-[sign_in_two_factor_submit_button]
+[sign_in_two_factor_new_submit_button]
 description = "二要素認証の送信ボタンのラベル"
 other = "確認"
 
-[sign_in_two_factor_recovery_description]
+[sign_in_two_factor_new_recovery_description]
 description = "二要素認証ページのリカバリーコード使用案内"
 other = "認証アプリが手元に無い場合は、リカバリーコードを使用してログインできます"
 
-[sign_in_two_factor_recovery_link]
+[sign_in_two_factor_new_recovery_link]
 description = "リカバリーコード使用への遷移リンクのラベル"
 other = "リカバリーコードを使用する"
 
 # 二要素認証リカバリー
-[sign_in_two_factor_recovery_title]
+[sign_in_two_factor_recovery_new_title]
 description = "リカバリーコード入力ページのタイトル"
 other = "二要素認証のリカバリー"
 
-[sign_in_two_factor_recovery_heading]
+[sign_in_two_factor_recovery_new_heading]
 description = "リカバリーコード入力ページの見出し"
 other = "リカバリーコード"
 
-[sign_in_two_factor_recovery_code_usage]
+[sign_in_two_factor_recovery_new_code_usage]
 description = "リカバリーコード入力ページの使用方法案内"
 other = "認証アプリにアクセスできない場合は、\n事前に保存したリカバリーコードを使用してログインできます"
 
-[sign_in_two_factor_recovery_code_label]
+[sign_in_two_factor_recovery_new_code_label]
 description = "リカバリーコード入力ラベル"
 other = "リカバリーコード"
 
-[sign_in_two_factor_recovery_code_hint]
+[sign_in_two_factor_recovery_new_code_hint]
 description = "リカバリーコード入力ヒント"
 other = "リカバリーコードは8文字の英数字です"
+
+[sign_in_two_factor_recovery_new_submit_button]
+description = "リカバリーコード入力ページの送信ボタンのラベル"
+other = "確認"
 
 # 二要素認証バリデーションエラー
 [validation_totp_code_invalid]
@@ -169,31 +173,31 @@ description = "サインアウト成功時のフラッシュメッセージ"
 other = "ログアウトしました"
 
 # サインアップ
-[sign_up_title]
+[sign_up_new_title]
 description = "サインアップページのタイトル"
 other = "新規登録"
 
-[sign_up_heading]
+[sign_up_new_heading]
 description = "サインアップページの見出し"
 other = "Wikinoに新規登録"
 
-[sign_up_email_instruction]
+[sign_up_new_email_instruction]
 description = "サインアップ時のメール入力フィールドの説明"
 other = "メールアドレスの確認のため、\n入力したメールアドレス宛てに確認コードをお送りします"
 
-[sign_up_email_label]
+[sign_up_new_email_label]
 description = "サインアップのメールアドレス入力ラベル"
 other = "メールアドレス"
 
-[sign_up_submit_button]
+[sign_up_new_submit_button]
 description = "サインアップの送信ボタンのラベル"
 other = "確認コードを送信"
 
-[sign_up_have_account]
+[sign_up_new_have_account]
 description = "サインアップページのアカウント所持済み案内文"
 other = "アカウントをお持ちの方は"
 
-[sign_up_sign_in]
+[sign_up_new_sign_in]
 description = "サインアップページからサインインへの導線リンク"
 other = "ログイン"
 
@@ -352,27 +356,27 @@ description = "アカウント作成成功時のフラッシュメッセージ"
 other = "アカウントを作成しました"
 
 # パスワードリセット申請
-[password_reset_title]
+[password_reset_new_title]
 description = "パスワードリセット申請ページのタイトル"
 other = "パスワードリセット"
 
-[password_reset_heading]
+[password_reset_new_heading]
 description = "パスワードリセット申請ページの見出し"
 other = "パスワードをリセット"
 
-[password_reset_description]
+[password_reset_new_description]
 description = "パスワードリセット申請ページの案内文"
 other = "登録したメールアドレスを入力してください。パスワードリセット用のリンクをお送りします。"
 
-[password_reset_email_label]
+[password_reset_new_email_label]
 description = "パスワードリセット申請のメールアドレス入力ラベル"
 other = "メールアドレス"
 
-[password_reset_submit]
+[password_reset_new_submit_button]
 description = "パスワードリセット申請の送信ボタンのラベル"
 other = "リセットリンクを送信"
 
-[password_reset_back_to_sign_in]
+[password_reset_new_back_to_sign_in]
 description = "パスワードリセット申請ページからサインインへの戻るリンク"
 other = "ログインに戻る"
 
@@ -400,6 +404,10 @@ other = "メールが届かない場合"
 [password_reset_email_not_received_help]
 description = "パスワードリセットメールが届かない場合のヘルプ文"
 other = "迷惑メールフォルダをご確認ください。数分経ってもメールが届かない場合は、入力したメールアドレスが正しいかご確認のうえ、再度お試しください"
+
+[password_reset_sent_back_to_sign_in]
+description = "パスワードリセット送信完了ページからサインインへの戻るリンク"
+other = "ログインに戻る"
 
 # パスワードリセットメール
 [password_reset_email_subject]
@@ -431,11 +439,15 @@ other = "{{.MinLength}}文字以上で入力してください"
 description = "パスワード変更の確認用パスワード入力ラベル"
 other = "新しいパスワード（確認）"
 
-[password_edit_submit]
+[password_edit_submit_button]
 description = "パスワード変更の送信ボタンのラベル"
 other = "パスワードを変更"
 
 # パスワードバリデーション（追加）
+[password_edit_back_to_sign_in]
+description = "パスワード変更ページからサインインへの戻るリンク"
+other = "ログインに戻る"
+
 [validation_password_confirmation_required]
 description = "確認用パスワード必須エラー"
 other = "パスワード（確認）を入力してください"

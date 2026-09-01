@@ -128,7 +128,7 @@ func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors 
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "password_reset_title")
+	meta.SetTitle(ctx, "password_reset_new_title")
 	meta.OGURL = h.cfg.AppURL() + string(templates.PasswordResetPath())
 
 	content := passwordpages.Reset(passwordpages.ResetPageData{

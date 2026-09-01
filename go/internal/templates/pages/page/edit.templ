@@ -186,11 +186,7 @@ templ Edit(data EditPageData) {
 								})
 							</div>
 
-							if data.FormErrors != nil && data.FormErrors.HasErrors() {
-								<div class="px-4">
-									@components.FormErrors(data.FormErrors)
-								</div>
-							}
+							@components.FormErrorSummary(data.FormErrors)
 
 							@components.ContentCard() {
 								<form
@@ -446,7 +442,7 @@ templ Edit(data EditPageData) {
 															aria-controls="save-draft-dropdown-menu"
 															aria-expanded="false"
 															aria-label={ templates.T(ctx, "page_edit_save_draft_options_aria_label") }
-															class="btn rounded-r-full rounded-l-none w-fit px-2 border-l border-brand-600/15"
+															class="btn rounded-r-full rounded-l-none w-fit px-2 border-l border-l-brand-600/15"
 															data-variant="secondary"
 														>
 															@templates.DecorativeIcon("caret-down-regular", "size-[14px]")

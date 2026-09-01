@@ -26,7 +26,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_in_two_factor_recovery_title")
+	meta.SetTitle(ctx, "sign_in_two_factor_recovery_new_title")
 
 	// テンプレートをレンダリング
 	pageData := twofactorpages.RecoveryNewPageData{

@@ -94,7 +94,7 @@ func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, ve *m
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_in_title")
+	meta.SetTitle(ctx, "sign_in_new_title")
 	meta.OGURL = h.cfg.AppURL() + string(templates.SignInPath())
 
 	content := signinpages.New(signinpages.NewPageData{

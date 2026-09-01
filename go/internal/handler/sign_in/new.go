@@ -22,7 +22,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_in_title")
+	meta.SetTitle(ctx, "sign_in_new_title")
 	// The back parameter only decides where to go after signing in, so it stays out of the canonical
 	// URL and every /sign_in?back=... collapses to the same address.
 	//

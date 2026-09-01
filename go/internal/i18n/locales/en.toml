@@ -42,35 +42,35 @@ description = "Aria label for the scrollable region wrapping a table in a page b
 other = "Scrollable table"
 
 # Sign in
-[sign_in_title]
+[sign_in_new_title]
 description = "Sign-in page title"
 other = "Sign in"
 
-[sign_in_heading]
+[sign_in_new_heading]
 description = "Sign-in page heading"
 other = "Sign in to Wikino"
 
-[sign_in_email_label]
+[sign_in_new_email_label]
 description = "Sign-in email input label"
 other = "Email address"
 
-[sign_in_password_label]
+[sign_in_new_password_label]
 description = "Sign-in password input label"
 other = "Password"
 
-[sign_in_submit_button]
+[sign_in_new_submit_button]
 description = "Sign-in submit button label"
 other = "Sign in"
 
-[sign_in_forgot_password]
+[sign_in_new_forgot_password]
 description = "Sign-in forgot password link label"
 other = "Forgot your password?"
 
-[sign_in_no_account]
+[sign_in_new_no_account]
 description = "Sign-in copy shown to users without an account"
 other = "Don't have an account?"
 
-[sign_in_sign_up]
+[sign_in_new_sign_up]
 description = "Link to the sign-up page from sign-in"
 other = "Sign up"
 
@@ -88,58 +88,62 @@ description = "Email or password mismatch error on sign-in"
 other = "Invalid email or password"
 
 # Two-factor authentication
-[sign_in_two_factor_title]
+[sign_in_two_factor_new_title]
 description = "Two-factor authentication page title"
 other = "Two-factor authentication"
 
-[sign_in_two_factor_heading]
+[sign_in_two_factor_new_heading]
 description = "Two-factor authentication page heading"
 other = "Two-factor authentication"
 
-[sign_in_two_factor_enter_code]
+[sign_in_two_factor_new_enter_code]
 description = "Two-factor authentication code entry instruction"
 other = "Enter the authentication code from your app"
 
-[sign_in_two_factor_code_label]
+[sign_in_two_factor_new_code_label]
 description = "Two-factor authentication code input label"
 other = "Authentication code"
 
-[sign_in_two_factor_code_hint]
+[sign_in_two_factor_new_code_hint]
 description = "Two-factor authentication code input hint"
 other = "Enter a 6-digit code"
 
-[sign_in_two_factor_submit_button]
+[sign_in_two_factor_new_submit_button]
 description = "Two-factor authentication submit button label"
 other = "Verify"
 
-[sign_in_two_factor_recovery_description]
+[sign_in_two_factor_new_recovery_description]
 description = "Description for using a recovery code on the two-factor page"
 other = "If you lose your authenticator app, you can sign in using a recovery code"
 
-[sign_in_two_factor_recovery_link]
+[sign_in_two_factor_new_recovery_link]
 description = "Link to the recovery-code flow"
 other = "Use a recovery code"
 
 # Two-factor authentication recovery
-[sign_in_two_factor_recovery_title]
+[sign_in_two_factor_recovery_new_title]
 description = "Recovery code entry page title"
 other = "Two-factor recovery"
 
-[sign_in_two_factor_recovery_heading]
+[sign_in_two_factor_recovery_new_heading]
 description = "Recovery code entry page heading"
 other = "Recovery code"
 
-[sign_in_two_factor_recovery_code_usage]
+[sign_in_two_factor_recovery_new_code_usage]
 description = "Recovery code usage explanation"
 other = "If you can't access your authenticator app, you can sign in using a recovery code you saved earlier"
 
-[sign_in_two_factor_recovery_code_label]
+[sign_in_two_factor_recovery_new_code_label]
 description = "Recovery code input label"
 other = "Recovery code"
 
-[sign_in_two_factor_recovery_code_hint]
+[sign_in_two_factor_recovery_new_code_hint]
 description = "Recovery code input hint"
 other = "Recovery codes are 8 alphanumeric characters"
+
+[sign_in_two_factor_recovery_new_submit_button]
+description = "Recovery code page submit button label"
+other = "Verify"
 
 # Two-factor authentication validation errors
 [validation_totp_code_invalid]
@@ -169,31 +173,31 @@ description = "Flash message after successful sign-out"
 other = "Signed out successfully."
 
 # Sign up
-[sign_up_title]
+[sign_up_new_title]
 description = "Sign-up page title"
 other = "Sign up"
 
-[sign_up_heading]
+[sign_up_new_heading]
 description = "Sign-up page heading"
 other = "Sign up for Wikino"
 
-[sign_up_email_instruction]
+[sign_up_new_email_instruction]
 description = "Description for email input field on sign up"
 other = "We'll send a confirmation code to the email address you enter to verify it"
 
-[sign_up_email_label]
+[sign_up_new_email_label]
 description = "Sign-up email input label"
 other = "Email address"
 
-[sign_up_submit_button]
+[sign_up_new_submit_button]
 description = "Sign-up submit button label"
 other = "Send confirmation code"
 
-[sign_up_have_account]
+[sign_up_new_have_account]
 description = "Sign-up copy shown to users who already have an account"
 other = "Already have an account?"
 
-[sign_up_sign_in]
+[sign_up_new_sign_in]
 description = "Link to the sign-in page from sign-up"
 other = "Sign in"
 
@@ -352,27 +356,27 @@ description = "Flash message after successful account creation"
 other = "Your account has been created"
 
 # Password reset request
-[password_reset_title]
+[password_reset_new_title]
 description = "Password reset request page title"
 other = "Password Reset"
 
-[password_reset_heading]
+[password_reset_new_heading]
 description = "Password reset request page heading"
 other = "Reset your password"
 
-[password_reset_description]
+[password_reset_new_description]
 description = "Password reset request page description"
 other = "Enter your registered email address and we'll send you a link to reset your password."
 
-[password_reset_email_label]
+[password_reset_new_email_label]
 description = "Password reset email input label"
 other = "Email address"
 
-[password_reset_submit]
+[password_reset_new_submit_button]
 description = "Password reset request submit button label"
 other = "Send reset link"
 
-[password_reset_back_to_sign_in]
+[password_reset_new_back_to_sign_in]
 description = "Back-to-sign-in link from the password reset request page"
 other = "Back to sign in"
 
@@ -400,6 +404,10 @@ other = "Didn't receive the email?"
 [password_reset_email_not_received_help]
 description = "Help text for users who did not receive the password reset email"
 other = "Check your spam folder. If you still don't see it after a few minutes, verify the email address and try again."
+
+[password_reset_sent_back_to_sign_in]
+description = "Back-to-sign-in link from the password reset sent page"
+other = "Back to sign in"
 
 # Password reset email
 [password_reset_email_subject]
@@ -431,9 +439,13 @@ other = "Must be at least {{.MinLength}} characters"
 description = "Password edit confirmation password input label"
 other = "Confirm new password"
 
-[password_edit_submit]
+[password_edit_submit_button]
 description = "Password edit submit button label"
 other = "Change password"
+
+[password_edit_back_to_sign_in]
+description = "Back-to-sign-in link from the password edit page"
+other = "Back to sign in"
 
 # Password validation (additional)
 [validation_password_confirmation_required]
