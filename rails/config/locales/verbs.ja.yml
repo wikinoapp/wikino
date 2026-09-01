@@ -7,9 +7,6 @@ ja:
     delete: 削除する
     download: ダウンロードする
     edit: 編集する
-    more: もっと見る
-    move: 移動する
-    move_to_trash: ゴミ箱に入れる
     restore: 復元する
     save: 保存する
     search: 検索する
@@ -18,7 +15,6 @@ ja:
     submit: 送信する
     update: 更新する
     view_help: ヘルプを見る
-    view_trash: ゴミ箱を見る
     enable_two_factor_auth: 二要素認証を有効にする
     disable_two_factor_auth: 二要素認証を無効にする
     regenerate_recovery_codes: リカバリーコードを再生成する

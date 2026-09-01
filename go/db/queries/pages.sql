@@ -301,15 +301,14 @@ WHERE p.space_id = @space_id
 -- name: TrashPageByID :exec
 -- Moves the page to the trash by stamping trashed_at. This is the UI-level trash, kept apart from
 -- the discarded_at logical deletion used by the batch jobs: a trashed page keeps its title and body
--- so that it can be restored from the trash screen. updated_at moves with it, mirroring the Rails
--- Pages::TrashService (page_record.touch(:trashed_at)). Re-running it on an already trashed page
--- just refreshes the timestamps.
+-- so that it can be restored from the trash screen. Moving a page into the trash is a page state
+-- change, so updated_at moves with it. Re-running it on an already trashed page just refreshes both
+-- timestamps.
 --
 -- [Ja] trashed_at を打刻してページをゴミ箱へ入れる。これは UI 上のゴミ箱で、バッチ処理が使う
 -- discarded_at の論理削除とは区別する。ゴミ箱に入ったページはタイトルと本文を保持したままで、
--- ゴミ箱画面から復元できる。updated_at も併せて更新し、Rails 版 Pages::TrashService
--- (page_record.touch(:trashed_at)) と挙動を揃える。既にゴミ箱に入ったページに対して実行した
--- 場合は時刻が更新されるだけになる。
+-- ゴミ箱画面から復元できる。ゴミ箱への移動はページの状態変更なので updated_at も併せて更新する。
+-- 既にゴミ箱に入ったページに対して実行した場合は両方の時刻が更新されるだけになる。
 UPDATE pages
 SET trashed_at = @trashed_at,
     updated_at = @updated_at

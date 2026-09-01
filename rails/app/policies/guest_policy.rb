@@ -8,11 +8,6 @@ class GuestPolicy
 
   # トピック
 
-  sig { params(topic_record: TopicRecord).returns(T::Boolean) }
-  def can_show_topic?(topic_record:)
-    topic_record.visibility_public?
-  end
-
   sig { returns(T::Boolean) }
   def can_update_topic?
     false
@@ -27,16 +22,6 @@ class GuestPolicy
 
   sig { returns(T::Boolean) }
   def can_create_page?
-    false
-  end
-
-  sig { returns(T::Boolean) }
-  def can_update_page?
-    false
-  end
-
-  sig { returns(T::Boolean) }
-  def can_trash_page?
     false
   end
 

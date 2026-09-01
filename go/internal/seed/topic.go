@@ -25,6 +25,9 @@ const (
 	topicNameSecret       = "シークレット"
 	topicNameSoloNotes    = "個人ノート"
 	topicNameSoloSecret   = "個人シークレット"
+	topicNameLongJapanese = "折り返しの確認用に名前を最大文字数まで伸ばした公開のトピック"
+	topicNameLongASCII    = "UnbreakableLongTopicNameSample"
+	topicNameDemoMemo     = "Memo"
 )
 
 // topicSpec describes one topic to create. The specs are held as an ordered
@@ -157,6 +160,77 @@ var soloTopicSpecs = []topicSpec{
 	},
 }
 
+// longNameTopicSpecs are the topics of seed-long-name. Both names are as long
+// as a topic name may be, and they differ in whether the text can be broken:
+// the first is Japanese, which wraps at any character, and the second is one
+// unbroken run of ASCII letters, which has nowhere to wrap. A layout that
+// survives the first can still be pushed out of shape by the second, so both
+// are here.
+//
+// Each name is 30 characters, the longest Topic::NAME_MAX_LENGTH allows on the
+// Rails side, which still owns topic creation.
+//
+// Neither is assigned: no page generator writes into these topics. What they
+// are here to show is how their own names are drawn, which the topic listing
+// and the topic screen show whether or not the topic holds pages.
+//
+// [Ja] longNameTopicSpecs は seed-long-name のトピック。どちらの名前もトピック名が
+// 取りうる最大の長さで、違いはテキストを分割できるかどうかにある。1 つ目は日本語で、
+// 任意の文字位置で折り返せる。2 つ目は途切れない半角英字の連なりで、折り返せる場所が
+// 無い。1 つ目に耐えるレイアウトでも 2 つ目では崩れうるため、両方を置いている。
+//
+// 名前はどちらも 30 文字で、トピックの作成を今も担当している Rails 側の
+// Topic::NAME_MAX_LENGTH が許す最大の長さ。
+//
+// どちらも assign しない。これらのトピックへページを書き込む生成器は無い。ここで
+// 示すのは自身の名前の描かれ方であり、それはトピックがページを持つかどうかに
+// 関わらずトピック一覧とトピック画面に出る。
+var longNameTopicSpecs = []topicSpec{
+	{
+		name:        topicNameLongJapanese,
+		description: "名前を最大文字数まで伸ばした公開トピックです。",
+		visibility:  model.TopicVisibilityPublic,
+		memberRoles: []seedRole{roleOwner},
+	},
+	{
+		name:        topicNameLongASCII,
+		description: "名前を、折り返せない半角英字だけで最大文字数まで伸ばした公開トピックです。",
+		visibility:  model.TopicVisibilityPublic,
+		memberRoles: []seedRole{roleOwner},
+	},
+}
+
+// demoTopicSpecs are the topics of the demo space. There is one of them, and
+// every demo page is written into it. The bodies link to one another by title
+// alone, and a wiki link that names no topic resolves only within the topic it
+// is written in, so pages divided by subject would leave every link that
+// crosses a subject pointing at a page that does not exist.
+//
+// It is private because the space is one person's own store of notes, which is
+// how such a topic is kept. Nothing is lost by that: the only account that
+// joins holds space:admin, which opens a private topic, and no screenshot is
+// taken of this space from outside it.
+//
+// [Ja] demoTopicSpecs はデモスペースのトピック。1 つだけで、デモページはすべて
+// そこへ書き込む。本文どうしはタイトルだけでリンクし合っており、トピック名を
+// 伴わない Wiki リンクは、それが書かれたトピックの中でしか解決しない。そのため
+// ジャンルでページを分けると、ジャンルを跨ぐリンクがすべて存在しないページを
+// 指すことになる。
+//
+// 非公開にしているのは、このスペースが個人が自分のために持つメモ置き場であり、
+// その種のトピックはそう持たれるため。それで失うものは無い。参加する唯一の
+// アカウントは space:admin を持つため非公開トピックも開けるうえ、このスペースを
+// 外から見たスクリーンショットを撮ることも無い。
+var demoTopicSpecs = []topicSpec{
+	{
+		name:        topicNameDemoMemo,
+		description: "日々の覚え書きです。行った場所や読んだもの、作ったものを書きためています。",
+		visibility:  model.TopicVisibilityPrivate,
+		memberRoles: []seedRole{roleOwner},
+		assign:      func(topics *seededTopics, topic *seededTopic) { topics.demoMemo = topic },
+	},
+}
+
 // seededTopic is one created topic. It carries its space id so that the
 // generators that follow can keep space_id in the queries they write without
 // having to reach back for the space.
@@ -170,14 +244,18 @@ type seededTopic struct {
 }
 
 // seededTopics holds the topics that later page generators write into. The
-// topics of both spaces are named here: what an account that has not joined
-// seed-solo sees is decided by the pages of its topics as much as by the
-// topics themselves.
+// topics of seed-wiki and seed-solo are named here: what an account that has
+// not joined seed-solo sees is decided by the pages of its topics as much as
+// by the topics themselves. The demo topic is named for the plainer reason
+// that every demo page goes into it. The topics of seed-long-name are absent,
+// since no page generator writes into them.
 //
 // [Ja] seededTopics は、後続のページ生成器がページを書き込むトピックを保持する。
-// 両方のスペースのトピックがここに並ぶ。seed-solo に参加していないアカウントに
-// 何が見えるかは、トピックそのものと同じくらいトピックのページによって
-// 決まるため。
+// seed-wiki と seed-solo のトピックがここに並ぶ。seed-solo に参加していない
+// アカウントに何が見えるかは、トピックそのものと同じくらいトピックのページによって
+// 決まるため。デモのトピックが並ぶ理由はもっと単純で、デモページがすべてそこへ
+// 入るからである。seed-long-name のトピックは、そこへ書き込む生成器が無いため
+// 並ばない。
 type seededTopics struct {
 	handbook     *seededTopic
 	notes        *seededTopic
@@ -186,19 +264,20 @@ type seededTopics struct {
 	secret       *seededTopic
 	soloNotes    *seededTopic
 	soloSecret   *seededTopic
+	demoMemo     *seededTopic
 }
 
-// generateTopics creates the topics of both spaces and joins the accounts to
+// generateTopics creates the topics of every space and joins the accounts to
 // them.
 //
-// [Ja] generateTopics は両スペースのトピックを作成し、アカウントを参加させる。
+// [Ja] generateTopics は各スペースのトピックを作成し、アカウントを参加させる。
 func generateTopics(ctx context.Context, dbtx query.DBTX, out io.Writer, spaces *seededSpaces) (*seededTopics, error) {
 	wikiSpecs, err := wikiTopicSpecs(spaces.wiki)
 	if err != nil {
 		return nil, err
 	}
 
-	bar := newProgress(out, "トピック", len(wikiSpecs)+len(soloTopicSpecs))
+	bar := newProgress(out, "トピック", len(wikiSpecs)+len(soloTopicSpecs)+len(longNameTopicSpecs)+len(demoTopicSpecs))
 	defer bar.finish()
 
 	topics := &seededTopics{}
@@ -208,6 +287,8 @@ func generateTopics(ctx context.Context, dbtx query.DBTX, out io.Writer, spaces 
 	}{
 		{space: spaces.wiki, specs: wikiSpecs},
 		{space: spaces.solo, specs: soloTopicSpecs},
+		{space: spaces.longName, specs: longNameTopicSpecs},
+		{space: spaces.demo, specs: demoTopicSpecs},
 	} {
 		for i, spec := range group.specs {
 			topic, err := createTopic(ctx, dbtx, group.space, spec, int32(i+1))

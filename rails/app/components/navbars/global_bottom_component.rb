@@ -19,11 +19,10 @@ module Navbars
   # ラッパーは <nav> ランドマークで、その aria-label は上部バーとは異なり、共存する 2 つの
   # ナビゲーション領域を区別する (GlobalTopComponent を参照)。
   class GlobalBottomComponent < ApplicationComponent
-    sig { params(current_page_name: PageName, current_user: T.nilable(User), current_space: T.nilable(Space)).void }
-    def initialize(current_page_name:, current_user:, current_space: nil)
+    sig { params(current_page_name: PageName, current_user: T.nilable(User)).void }
+    def initialize(current_page_name:, current_user:)
       @current_page_name = current_page_name
       @current_user = current_user
-      @current_space = current_space
     end
 
     sig { returns(PageName) }
@@ -33,9 +32,5 @@ module Navbars
     sig { returns(T.nilable(User)) }
     attr_reader :current_user
     private :current_user
-
-    sig { returns(T.nilable(Space)) }
-    attr_reader :current_space
-    private :current_space
   end
 end

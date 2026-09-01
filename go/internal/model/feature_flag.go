@@ -11,13 +11,6 @@ import "time"
 // (FeatureFlagExample は命名規則の例として残している未使用の定数)
 const (
 	FeatureFlagExample FeatureFlagName = "go_example"
-
-	// FeatureFlagPageShow gates the Go version of the page detail screen
-	// (GET /s/:space_identifier/pages/:page_number).
-	//
-	// [Ja] ページ表示画面 (GET /s/:space_identifier/pages/:page_number) の
-	// Go 版表示を制御する。
-	FeatureFlagPageShow FeatureFlagName = "go_page_show"
 )
 
 // AllFeatureFlagNames lists every flag defined above. Go cannot enumerate the
@@ -29,7 +22,6 @@ const (
 // 手作業で維持する。
 var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagExample,
-	FeatureFlagPageShow,
 }
 
 // FeatureFlag はフィーチャーフラグのドメインモデル

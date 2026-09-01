@@ -16,11 +16,19 @@ type DraftPageShowResponseData struct {
 	State        viewmodel.PageLinkState
 }
 
-// DraftPageShowResponse returns the OOB swaps after a draft autosave. It updates the saved time,
-// both top-level listings and all three reconciled pagination state elements in one response.
+// DraftPageShowResponse returns the OOB swaps after a draft autosave. It updates the saved time, the
+// three related-page sections and all three reconciled pagination state elements in one response.
 //
-// [Ja] DraftPageShowResponse は下書き自動保存後の OOB スワップレスポンスを返す。保存時刻、最上位の
-// 2 一覧、整合済みの 3 ページング状態要素を 1 応答で更新する。
+// The link list feeds two of those sections, so its share of the response is split in two: the cards
+// go into the links section's container, and the groups built from the same page go into the
+// related-links container, which RelatedLinkList renders as the section's own element.
+//
+// [Ja] DraftPageShowResponse は下書き自動保存後の OOB スワップレスポンスを返す。保存時刻、3 つの
+// 関連ページセクション、整合済みの 3 ページング状態要素を 1 応答で更新する。
+//
+// リンク一覧は 2 つのセクションを養うため、応答におけるその分は 2 つに分かれる。カードはリンク
+// セクションのコンテナへ、同じページから組み立てたグループは関連リンクのコンテナへ入る。後者は
+// RelatedLinkList がセクション自身の要素として描画するものである。
 templ DraftPageShowResponse(data DraftPageShowResponseData) {
 	if data.HasDraft {
 		<div id="page-draft-saved-at" hx-swap-oob="outerHTML" class="text-xs text-right text-muted-foreground">
@@ -28,11 +36,15 @@ templ DraftPageShowResponse(data DraftPageShowResponseData) {
 		</div>
 	}
 
-	<div id="page-link-list" hx-swap-oob="innerHTML">
+	<div id={ linkListContainerID } hx-swap-oob="innerHTML">
 		@LinkList(data.LinkList)
 	</div>
 
-	<div id="page-backlink-list" hx-swap-oob="innerHTML">
+	<div id={ relatedLinkListID } hx-swap-oob="innerHTML">
+		@relatedLinkGroups(data.LinkList)
+	</div>
+
+	<div id={ pageBacklinkListContainerID } hx-swap-oob="innerHTML">
 		@PageBacklinkList(data.BacklinkList)
 	</div>
 

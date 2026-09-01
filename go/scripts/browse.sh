@@ -262,6 +262,197 @@ role_for() {
   esac
 }
 
+# CURL_CONFIG_FILE carries the Basic-auth credentials for the reachability check. curl takes them
+# from a 0600 config file rather than from -u, so that they never appear in the process arguments
+# the way the password script keeps them off argv for playwright-cli.
+#
+# [Ja] CURL_CONFIG_FILE は到達確認で使う Basic 認証の資格情報を持つ。curl には -u ではなく 0600 の
+# 設定ファイルから読ませ、パスワードスクリプトが playwright-cli に対してそうしているのと同じく、
+# プロセスの引数に資格情報が現れないようにする。
+CURL_CONFIG_FILE="$TMP_DIR/browse-cli.curlrc"
+
+# check_environment validates what browser verification needs, without printing any credential
+# value. Keeping the check in browse.sh makes diagnostics and login go through the same op-run
+# wrapper and the same requirements: a diagnostic assembled by hand can drop one of them and report
+# a healthy environment as broken.
+#
+# The last step asks the dev URL for a page and looks at who answered. The reverse proxy hands
+# every path the Go version does not claim to the Rails version, so an unreachable Go app does not
+# fail loudly — it answers with whatever Rails makes of the same path, which for a Go-only screen
+# is a 404. Checking for the CSRF cookie the Go version always sets is what tells the two apart.
+#
+# [Ja] check_environment は、ブラウザ確認に必要なものを、資格情報の値を出さずに検証する。検査を
+# browse.sh に置くことで、診断とログインが同じ op run ラッパーと同じ要件を通る。手で組み立てた
+# 診断は要件を 1 つ落とすことがあり、健全な環境を壊れていると報告してしまう。
+#
+# 最後の手順では dev URL からページを取得し、誰が応答したのかを見る。リバースプロキシは Go 版が
+# 引き受けないパスをすべて Rails 版へ渡すため、Go 版へ到達できない状態は大きな音を立てて失敗せず、
+# 同じパスを Rails 版が解釈した結果 (Go 版にしかない画面なら 404) が返ってくる。Go 版が必ず設定する
+# CSRF クッキーの有無が、この 2 つを見分ける手がかりになる。
+check_environment() {
+  local failed=0
+
+  if [ "${APP_ENV:-}" != "dev" ]; then
+    echo "APP_ENV must be dev (run through the Makefile browse target)" >&2
+    failed=1
+  fi
+
+  if [ -z "${KORYLUS_BROWSING_BASE_URL:-}" ]; then
+    echo "KORYLUS_BROWSING_BASE_URL is not set" >&2
+    failed=1
+  fi
+
+  if [ "${WIKINO_TURNSTILE_ENABLED:-}" != "false" ]; then
+    echo "WIKINO_TURNSTILE_ENABLED must be false for dev browser login" >&2
+    failed=1
+  fi
+
+  local command_name
+  for command_name in node curl playwright-cli; do
+    if ! command -v "$command_name" >/dev/null 2>&1; then
+      echo "$command_name is not available" >&2
+      failed=1
+    fi
+  done
+
+  if [ -n "${KORYLUS_BROWSING_BASE_URL:-}" ] && command -v node >/dev/null 2>&1; then
+    if ! node -e '
+      const raw = process.env.KORYLUS_BROWSING_BASE_URL || "";
+      let url;
+      try {
+        url = new URL(raw);
+      } catch {
+        console.error("KORYLUS_BROWSING_BASE_URL must be a valid URL");
+        process.exit(1);
+      }
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        console.error("KORYLUS_BROWSING_BASE_URL must use http or https");
+        process.exit(1);
+      }
+      if (!url.username || !url.password) {
+        console.error("KORYLUS_BROWSING_BASE_URL must include Basic-auth credentials");
+        process.exit(1);
+      }
+    '; then
+      failed=1
+    fi
+  fi
+
+  if [ "$failed" -ne 0 ]; then
+    return 1
+  fi
+}
+
+
+# check_credentials reports whether the roster holds the role being asked for. It is part of the
+# diagnosis rather than of check_environment, because the login path reads the same credentials
+# straight afterwards and reports the same failure itself: running it here as well would ask the
+# roster twice on every login.
+#
+# [Ja] check_credentials は、尋ねている役割を名簿が持っているかを報告する。check_environment では
+# なく診断の側に置いているのは、ログインの経路がこの直後に同じ資格情報を読み、同じ失敗を自ら
+# 報告するためである。ここでも実行すると、ログインのたびに名簿へ 2 度尋ねることになる。
+check_credentials() {
+  local role
+  role="$(role_for "${1:-$DEFAULT_ROLE}")"
+
+  if ! (cd "$GO_DIR" && go run ./cmd/wikino devcreds "$role" >/dev/null 2>&1); then
+    echo "no credentials for role '$role': check the roster wikino devcreds reads" >&2
+
+    return 1
+  fi
+}
+
+# check_reachable fetches the sign-in screen through the dev URL and reports which application
+# answered. The credentials reach curl through a 0600 config file, and the file is removed as soon
+# as the request is done.
+#
+# [Ja] check_reachable は dev URL からサインイン画面を取得し、どのアプリケーションが応答したかを
+# 報告する。資格情報は 0600 の設定ファイル経由で curl へ渡し、リクエストが終わり次第そのファイルを
+# 削除する。
+check_reachable() (
+  # Keep the cleanup trap scoped to this check. It runs for normal returns, command failures, and
+  # signals without replacing the login command's separate credential-file trap.
+  #
+  # [Ja] 後片付けの trap はこの検査の subshell 内だけに置く。ログインコマンド側にある別の
+  # 資格情報ファイル用 trap を置き換えず、正常 return・コマンド失敗・signal のすべてで実行する。
+  trap 'rm -f "$CURL_CONFIG_FILE"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
+  mkdir -p "$TMP_DIR"
+  node -e '
+    const fs = require("fs");
+    const u = new URL(process.env.KORYLUS_BROWSING_BASE_URL);
+    const user = decodeURIComponent(u.username);
+    const pass = decodeURIComponent(u.password);
+    if (/[\u0000-\u001f\u007f-\u009f]/u.test(user) || /[\u0000-\u001f\u007f-\u009f]/u.test(pass)) {
+      console.error("KORYLUS_BROWSING_BASE_URL credentials must not include control characters");
+      process.exit(1);
+    }
+    const escapeCurlConfigString = (value) => value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+    fs.rmSync(process.argv[1], { force: true });
+    fs.writeFileSync(
+      process.argv[1],
+      `user = "${escapeCurlConfigString(`${user}:${pass}`)}"\n`,
+      { mode: 0o600 },
+    );
+    u.username = u.password = "";
+    fs.writeFileSync(process.argv[2], u.origin);
+  ' "$CURL_CONFIG_FILE" "$ORIGIN_FILE"
+
+  local origin
+  origin="$(cat "$ORIGIN_FILE")"
+  local response
+  local curl_status=0
+  response="$(curl -s -o /dev/null -K "$CURL_CONFIG_FILE" -w '%{http_code} %{header_json}' "$origin/sign_in")" || curl_status=$?
+  rm -f "$CURL_CONFIG_FILE"
+
+  if [ "$curl_status" -ne 0 ]; then
+    echo "dev URL did not respond" >&2
+
+    return 1
+  fi
+
+  local status="${response%% *}"
+  case "$status" in
+    200) ;;
+    401)
+      echo "dev URL rejected the Basic-auth credentials in KORYLUS_BROWSING_BASE_URL" >&2
+
+      return 1
+      ;;
+    *)
+      echo "dev URL answered $status for /sign_in" >&2
+
+      return 1
+      ;;
+  esac
+
+  # The Go version sets its CSRF cookie on every response, so its absence means the request reached
+  # the Rails version instead — the sign-in screen is served by Go.
+  #
+  # [Ja] Go 版はすべての応答に CSRF クッキーを設定するため、それが無いということは、リクエストが
+  # Rails 版へ届いたことを意味する。サインイン画面を提供するのは Go 版である。
+  if ! printf '%s' "$response" | grep -q "wikino_csrf_token"; then
+    echo "dev URL answered without the Go version's CSRF cookie: the request is not reaching the Go app" >&2
+
+    return 1
+  fi
+)
+
+# cmd_check reports whether the environment browser verification needs is in place, so that a
+# failure is read where it is caused instead of being chased through a hand-written diagnostic.
+#
+# [Ja] cmd_check は、ブラウザ確認に必要な環境が整っているかを報告する。失敗を、手書きの診断で
+# 追いかけるのではなく、原因のある場所で読めるようにするため。
+cmd_check() {
+  check_environment
+  check_credentials "${1:-}"
+  check_reachable
+  echo "browser environment ready for $(role_for "${1:-$DEFAULT_ROLE}")"
+}
+
 cmd_login() {
   local role
   role="$(role_for "${1:-$DEFAULT_ROLE}")"
@@ -395,13 +586,17 @@ cmd_shot() {
 
 cmd_close() {
   pw close >/dev/null 2>&1 || true
-  rm -f "$CONFIG_FILE" "$PASSWORD_SCRIPT_FILE" "$ORIGIN_FILE"
+  rm -f "$CONFIG_FILE" "$PASSWORD_SCRIPT_FILE" "$CURL_CONFIG_FILE" "$ORIGIN_FILE"
   rm -rf "$LEGACY_PROFILE_DIR"
   echo "browser session closed and temp files removed"
 }
 
 main() {
   case "${1:-}" in
+    check)
+      shift
+      cmd_check "${1:-}"
+      ;;
     login)
       shift
       cmd_login "${1:-}"
@@ -414,7 +609,7 @@ main() {
       cmd_close
       ;;
     *)
-      echo "usage: browse.sh {login [role] | shot <path> | close}" >&2
+      echo "usage: browse.sh {check [role] | login [role] | shot <path> | close}" >&2
       exit 2
       ;;
   esac

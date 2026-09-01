@@ -101,14 +101,11 @@ func NewPageForShow(pg *model.Page, featuredImageAttachment *model.Attachment) P
 // ogImageAttachmentID picks the cover image the og:image tag may point at, and returns an empty
 // string when there is none. A GIF cover image is left out: the og:image endpoint serves a still
 // 1200x630 jpg, so pointing at an animated image advertises a preview that has lost what the image
-// was. Rails does the same in PageRecord#og_image_url, which keeps the preview of a page identical
-// on both versions while the feature flag splits viewers between them.
+// was.
 //
 // [Ja] ogImageAttachmentID は og:image タグが指してよいアイキャッチ画像を選び、無い場合は空文字列を
 // 返す。GIF のアイキャッチ画像は対象外とする。og:image エンドポイントは静止画の 1200x630 jpg を
 // 配信するため、アニメーション画像を指すと画像の持ち味を失ったプレビューを宣伝することになる。
-// Rails 版 `PageRecord#og_image_url` も同じ扱いで、フィーチャーフラグで閲覧者が両版に分かれている
-// 間もページのプレビューを同一に保てる。
 func ogImageAttachmentID(featuredImageAttachment *model.Attachment) string {
 	if featuredImageAttachment == nil {
 		return ""
@@ -205,7 +202,6 @@ type CardLinkPage struct {
 	Topic        *Topic
 	Pinned       bool
 	CardImageURL string
-	Primary      bool
 	CanEdit      bool
 }
 

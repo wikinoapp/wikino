@@ -86,17 +86,17 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkPageQueryParam, viewmodel.LinkLimit)
+	currentPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.NotFound(w, r)
 		return
 	}
-	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.BacklinkLimit)
+	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.NotFound(w, r)
 		return
 	}
-	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.PageBacklinkLimit)
+	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.NotFound(w, r)
 		return
@@ -267,7 +267,7 @@ func reconcileRelatedPageState(state viewmodel.PageLinkState, data *usecase.GetE
 		// [Ja] 下書きの変更でカードが別のリンク一覧ページへ移ることがあるため、親ページは引き継がず、
 		// 現在の位置から求め直す。一覧自身と同じ規則を使うことで、状態と描画したカードが同じページを
 		// 指し続ける。
-		state.LinkedPageParentPage = linkedPageFirstPage(state) + int32(index)/viewmodel.LinkLimit
+		state.LinkedPageParentPage = viewmodel.RelatedPageForSliceIndex(linkedPageFirstPage(state), index, viewmodel.LinkLimit)
 		return state
 	}
 
@@ -305,12 +305,19 @@ func reconcileTopLevelRelatedPageState(state viewmodel.PageLinkState, data *usec
 	return state
 }
 
-func relatedPageAtOrBeforeLast(page int32, totalCount int64, perPage int32) int32 {
-	if page <= 1 || totalCount <= 0 || perPage <= 0 {
+// relatedPageAtOrBeforeLast pulls a listing page back to the last page that exists. initialLimit is
+// the first page's card count rather than a per-page one, because a following page of a
+// related-page listing holds one card more (see viewmodel.RelatedPageTotalPages).
+//
+// [Ja] relatedPageAtOrBeforeLast は一覧のページ番号を、存在する最終ページまで引き戻す。initialLimit
+// は 1 ページあたりの件数ではなく 1 ページ目のカード数である。関連ページ一覧の後続ページは 1 件多く
+// 持つためである (viewmodel.RelatedPageTotalPages を参照)。
+func relatedPageAtOrBeforeLast(page int32, totalCount int64, initialLimit int32) int32 {
+	if page <= 1 || totalCount <= 0 || initialLimit <= 0 {
 		return 1
 	}
 
-	lastPage := (totalCount + int64(perPage) - 1) / int64(perPage)
+	lastPage := int64(viewmodel.RelatedPageTotalPages(totalCount, initialLimit))
 	if int64(page) > lastPage {
 		if lastPage > math.MaxInt32 {
 			return page

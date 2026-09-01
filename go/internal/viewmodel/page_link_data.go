@@ -1,6 +1,8 @@
 package viewmodel
 
 import (
+	"math"
+
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
@@ -359,7 +361,7 @@ func NewLinkedPageBacklinkLists(input NewLinkedPageBacklinkListsInput) map[model
 		metaByPageID[linkedPage.ID] = linkedPageMeta{
 			number:     int32(linkedPage.Number),
 			title:      title,
-			parentPage: firstPage + int32(index)/LinkLimit,
+			parentPage: RelatedPageForSliceIndex(firstPage, index, LinkLimit),
 		}
 	}
 
@@ -447,8 +449,69 @@ func BuildPageLinkData(input BuildPageLinkDataInput) PageLinkData {
 	}
 }
 
+// RelatedPageTotalPages returns the number of pages for a listing whose first page contains
+// initialLimit items and whose following pages contain initialLimit+1 items.
+//
+// [Ja] RelatedPageTotalPages は、初回ページに initialLimit 件、後続ページに initialLimit+1 件を
+// 表示する一覧の総ページ数を返す。
+func RelatedPageTotalPages(totalCount int64, initialLimit int32) int {
+	if totalCount <= int64(initialLimit) || initialLimit <= 0 {
+		return 1
+	}
+
+	followingLimit := int64(initialLimit) + 1
+	remaining := totalCount - int64(initialLimit)
+	total := 2 + (remaining-1)/followingLimit
+	if total > math.MaxInt {
+		return math.MaxInt
+	}
+
+	// #nosec G115 -- total is bounded to math.MaxInt immediately above.
+	return int(total)
+}
+
+// RelatedPageNumberForIndex returns the one-based page containing a zero-based item index under
+// the same first-page and following-page limits as RelatedPageTotalPages.
+//
+// [Ja] RelatedPageNumberForIndex は、RelatedPageTotalPages と同じ初回・後続ページ件数のもとで、
+// 0 始まりの要素位置を含む 1 始まりのページ番号を返す。
+func RelatedPageNumberForIndex(index int, initialLimit int32) int32 {
+	if index < int(initialLimit) || initialLimit <= 0 {
+		return 1
+	}
+
+	page := 2 + (int64(index)-int64(initialLimit))/(int64(initialLimit)+1)
+	if page > math.MaxInt32 {
+		return math.MaxInt32
+	}
+
+	// #nosec G115 -- page is positive and bounded to math.MaxInt32 immediately above.
+	return int32(page)
+}
+
+// RelatedPageForSliceIndex maps an item in either a first-page/cumulative slice or a later
+// single-page slice back to its parent page. firstPage is the listing page the slice starts at,
+// which is one for a cumulative slice.
+//
+// The screens that rebuild a listing's shared pagination state after a draft change call it too, so
+// that the page the state names and the page the cards were rendered from stay the same value.
+//
+// [Ja] RelatedPageForSliceIndex は、初回・累積範囲または後続の単一ページ範囲にある要素を、その親
+// ページ番号へ対応付ける。firstPage は範囲の先頭にあたる一覧のページ番号で、累積範囲では 1 になる。
+//
+// 下書きの変更後に一覧の共有ページネーション状態を組み立て直す画面もこれを呼ぶ。状態が指すページと、
+// カードを描画した元のページを同じ値に保つためである。
+func RelatedPageForSliceIndex(firstPage int32, index int, initialLimit int32) int32 {
+	if firstPage > 1 {
+		return firstPage
+	}
+
+	return RelatedPageNumberForIndex(index, initialLimit)
+}
+
 // NewRelatedPagePagination builds pagination for a related-page listing and removes the editor's
-// next-page affordance at the cumulative-fetch boundary. The actual total remains intact for range
+// next-page affordance at the cumulative-fetch boundary. The first page contains initialLimit
+// items and every following page contains initialLimit+1. The actual total remains intact for range
 // checks, and public-page pagination remains unbounded.
 //
 // The second return value reports that a next page exists but is being withheld, which is what the
@@ -456,14 +519,21 @@ func BuildPageLinkData(input BuildPageLinkDataInput) PageLinkData {
 // so reaching the last item within the limit still ends the listing silently.
 //
 // [Ja] NewRelatedPagePagination は関連ページ一覧のページネーションを構築し、編集画面では累積取得
-// 上限で次ページへの導線を止める。範囲チェックに使う実際の総ページ数は維持し、公開ページの
+// 上限で次ページへの導線を止める。初回ページは initialLimit 件、後続ページは initialLimit+1 件に
+// する。範囲チェックに使う実際の総ページ数は維持し、公開ページの
 // ページネーションには上限を設けない。
 //
 // 2 つ目の返り値は、次ページが存在するのに出していないことを表し、一覧はこれを見て打ち切りの案内を
 // 描画する。一覧に本当に次ページが無い場合は false のままで、上限内で最後まで到達したときは従来どおり
 // 案内なしで終わる。
-func NewRelatedPagePagination(current int32, totalCount int64, perPage int32, state PageLinkState, cumulativePageLimit int32) (Pagination, bool) {
-	pagination := NewPagination(int(current), totalCount, int(perPage))
+func NewRelatedPagePagination(current int32, totalCount int64, initialLimit int32, state PageLinkState, cumulativePageLimit int32) (Pagination, bool) {
+	total := RelatedPageTotalPages(totalCount, initialLimit)
+	pagination := Pagination{
+		Current:     int(current),
+		Total:       total,
+		HasNext:     int(current) < total,
+		HasPrevious: current > 1,
+	}
 
 	capped := state.Context.IncludesPrecedingPages() &&
 		cumulativePageLimit > 0 &&

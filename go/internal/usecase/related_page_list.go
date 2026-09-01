@@ -56,10 +56,10 @@ type relatedPageListInput struct {
 	PageBacklinkLimit      int32
 
 	// IncludePrecedingPages makes each listing return every page from the first through the
-	// requested one in a single slice, instead of the requested page alone. See listingSlice.
+	// requested one in a single slice, instead of the requested page alone. See listingWindow.
 	//
 	// [Ja] IncludePrecedingPages は各一覧が、要求ページだけではなく 1 ページ目から要求ページまでを
-	// 1 つのスライスで返すようにする (listingSlice を参照)。
+	// 1 つのスライスで返すようにする (listingWindow を参照)。
 	IncludePrecedingPages bool
 }
 
@@ -119,8 +119,8 @@ func fetchRelatedPageLists(ctx context.Context, pageRepo *repository.PageReposit
 				continue
 			}
 
-			nestedPage, nestedLimit := listingSlice(input.LinkedPageBacklinkPage, input.BacklinkLimit, input.IncludePrecedingPages)
-			paginated, err := pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, input.SpaceID, input.Visibility, nestedPage, nestedLimit, listing.excludePageIDs)
+			nestedOffset, nestedLimit := listingWindow(input.LinkedPageBacklinkPage, input.BacklinkLimit, input.IncludePrecedingPages)
+			paginated, err := pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, input.SpaceID, input.Visibility, nestedOffset, nestedLimit, listing.excludePageIDs)
 			if err != nil {
 				return nil, fmt.Errorf("バックリンクの取得に失敗: %w", err)
 			}
@@ -129,8 +129,8 @@ func fetchRelatedPageLists(ctx context.Context, pageRepo *repository.PageReposit
 		}
 	}
 
-	pageBacklinkPage, pageBacklinkLimit := listingSlice(input.PageBacklinkPage, input.PageBacklinkLimit, input.IncludePrecedingPages)
-	paginatedBacklinks, err := pageRepo.FindBacklinkedPagesPaginated(ctx, input.PageID, input.SpaceID, input.Visibility, pageBacklinkPage, pageBacklinkLimit, nil)
+	pageBacklinkOffset, pageBacklinkLimit := listingWindow(input.PageBacklinkPage, input.PageBacklinkLimit, input.IncludePrecedingPages)
+	paginatedBacklinks, err := pageRepo.FindBacklinkedPagesPaginated(ctx, input.PageID, input.SpaceID, input.Visibility, pageBacklinkOffset, pageBacklinkLimit, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ページレベルのバックリンクの取得に失敗: %w", err)
 	}
@@ -204,9 +204,9 @@ func fetchLinkedPageListing(ctx context.Context, pageRepo *repository.PageReposi
 		return nil, nil
 	}
 
-	linkPage, linkLimit := listingSlice(input.LinkPage, input.LinkLimit, input.IncludePrecedingPages)
+	linkOffset, linkLimit := listingWindow(input.LinkPage, input.LinkLimit, input.IncludePrecedingPages)
 
-	paginatedLinks, err := pageRepo.FindLinkedPagesPaginated(ctx, input.LinkedPageIDs, input.SpaceID, input.Visibility, linkPage, linkLimit)
+	paginatedLinks, err := pageRepo.FindLinkedPagesPaginated(ctx, input.LinkedPageIDs, input.SpaceID, input.Visibility, linkOffset, linkLimit)
 	if err != nil {
 		return nil, fmt.Errorf("リンク先ページの取得に失敗: %w", err)
 	}
@@ -245,7 +245,10 @@ func newLinkedPageBacklinksMap(paginatedMap map[model.PageID]*repository.Paginat
 	return backlinksPerPage, pageGroups
 }
 
-// listingSlice resolves the page and limit one listing is fetched with.
+// listingWindow resolves the offset and limit one related-page listing is fetched with. The first
+// page contains initialLimit items, and each following page contains one more. With the current
+// three-column grids, that changes the loaded card count from 14 to 29 to 44, so the load-more tile
+// remains the final cell of a complete row after every append.
 //
 // A caller that replaces a whole listing container asks for every page from the first through the
 // requested one, because the reader may have appended later pages through htmx and re-rendering the
@@ -254,28 +257,46 @@ func newLinkedPageBacklinksMap(paginatedMap map[model.PageID]*repository.Paginat
 //
 // fetchRelatedPageLists rejects cumulative page numbers above MaxCumulativeRelatedPagePages before
 // reaching this calculation. The math.MaxInt32 saturation remains as a local arithmetic safeguard
-// so this helper cannot wrap a limit negative if reused incorrectly.
+// so this helper cannot wrap a limit or offset negative if reused incorrectly.
 //
-// [Ja] listingSlice は 1 つの一覧を取得するページと件数上限を解決する。
+// [Ja] listingWindow は 1 つの関連ページ一覧を取得する offset と件数上限を解決する。初回ページは
+// initialLimit 件、後続ページはそれより 1 件多くする。現在の 3 カラムグリッドでは累積カード数が
+// 14、29、44 と増えるため、追記後も「もっと見る」タイルが完成した最終行の末尾に留まる。
 //
 // 一覧のコンテナごと差し替える呼び出し元は、1 ページ目から要求ページまでをまとめて要求する。閲覧者が
 // htmx で後続ページを追記している可能性があり、要求ページだけでコンテナを描画し直すと残りが消えて
 // しまうためである。一覧を最初から描画する呼び出し元は要求ページだけを取る。
 //
 // fetchRelatedPageLists は、この計算より前に MaxCumulativeRelatedPagePages を超える累積ページ番号を
-// 拒否する。math.MaxInt32 の頭打ちは、このヘルパーが誤って再利用されても件数上限が負値へ回り込まない
-// ための局所的な算術防御として残す。
-func listingSlice(page, limit int32, includePrecedingPages bool) (int32, int32) {
-	if !includePrecedingPages {
-		return page, limit
+// 拒否する。math.MaxInt32 の頭打ちは、このヘルパーが誤って再利用されても件数上限や offset が負値へ
+// 回り込まないための局所的な算術防御として残す。
+func listingWindow(page, initialLimit int32, includePrecedingPages bool) (int32, int32) {
+	if initialLimit <= 0 {
+		return 0, 0
+	}
+	if page <= 1 {
+		return 0, initialLimit
 	}
 
-	span := int64(page) * int64(limit)
+	followingLimit := int64(initialLimit) + 1
+	if followingLimit > math.MaxInt32 {
+		followingLimit = math.MaxInt32
+	}
+
+	span := int64(initialLimit) + int64(page-1)*followingLimit
 	if span > math.MaxInt32 {
 		span = math.MaxInt32
 	}
 
-	return 1, int32(span)
+	if includePrecedingPages {
+		return 0, int32(span)
+	}
+	offset := int64(initialLimit) + int64(page-2)*followingLimit
+	if offset > math.MaxInt32 {
+		offset = math.MaxInt32
+	}
+
+	return int32(offset), int32(followingLimit)
 }
 
 // cumulativeRelatedPagePagesInRange checks all three independently paginated listings before a

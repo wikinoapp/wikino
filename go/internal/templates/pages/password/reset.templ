@@ -16,8 +16,8 @@ type ResetPageData struct {
 
 // Reset はパスワードリセット申請フォームを表示します
 templ Reset(data ResetPageData) {
-	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
-		<div class="text-center">
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="text-center px-4">
 			<a href="/" aria-label={ templates.T(ctx, "home_link_aria_label") } class="inline-block">
 				<div class="bg-primary rounded-xl">
 					@templates.DecorativeIcon("logo", "fill-primary-foreground w-[60px] h-[60px]")
@@ -25,16 +25,16 @@ templ Reset(data ResetPageData) {
 			</a>
 		</div>
 
-		<div class="flex flex-col gap-2">
+		<div class="flex flex-col gap-2 px-4">
 			<h1 class="text-center text-3xl text-primary font-bold antialiased">
-				{ templates.T(ctx, "password_reset_heading") }
+				{ templates.T(ctx, "password_reset_new_heading") }
 			</h1>
 			<p class="text-center text-sm text-muted-foreground">
-				{ templates.T(ctx, "password_reset_description") }
+				{ templates.T(ctx, "password_reset_new_description") }
 			</p>
 		</div>
 
-		@components.FormErrors(data.FormErrors)
+		@components.FormErrorSummary(data.FormErrors)
 
 		@components.ContentCard() {
 			<form
@@ -43,56 +43,56 @@ templ Reset(data ResetPageData) {
 				hx-on:submit="disableSubmitButtons(this)"
 				method="POST"
 			>
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-					<div class="grid gap-2">
-						<label class="label" for="email">
-							{ templates.T(ctx, "password_reset_email_label") }
-						</label>
+				<div class="grid gap-2">
+					<label class="label" for="email">
+						{ templates.T(ctx, "password_reset_new_email_label") }
+					</label>
 
-						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
-								aria-invalid="true"
-							} else {
-								aria-invalid="false"
-							}
-							autocomplete="email"
-							autofocus
-							class="input"
-							id="email"
-							name="email"
-							required
-							tabindex="1"
-							type="email"
-							value={ data.Email }
-						/>
-
+					<input
 						if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
-								<p class="text-sm text-error">
-									{ errorMsg }
-								</p>
-							}
+							aria-invalid="true"
+						} else {
+							aria-invalid="false"
 						}
-					</div>
+						autocomplete="email"
+						autofocus
+						class="input"
+						id="email"
+						name="email"
+						required
+						tabindex="1"
+						type="email"
+						value={ data.Email }
+					/>
 
-					@components.Turnstile(data.TurnstileSiteKey)
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+						for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
+							<p class="text-sm text-error">
+								{ errorMsg }
+							</p>
+						}
+					}
+				</div>
 
-					<button
-						class="btn rounded-full w-fit"
-						tabindex="2"
-						type="submit"
-					>
-						@templates.Icon("paper-plane-tilt-regular")
-						{ templates.T(ctx, "password_reset_submit") }
-					</button>
-				</form>
+				@components.Turnstile(data.TurnstileSiteKey)
+
+				<button
+					class="btn rounded-full w-fit"
+					tabindex="2"
+					type="submit"
+				>
+					@templates.Icon("paper-plane-tilt-regular")
+					{ templates.T(ctx, "password_reset_new_submit_button") }
+				</button>
+			</form>
 		}
 
-		<div class="text-center">
-			<a href="/sign_in" class="link-foreground inline-flex items-center gap-2">
-				@templates.Icon("arrow-left-regular", "w-[18px] h-[18px]")
-				{ templates.T(ctx, "password_reset_back_to_sign_in") }
+		<div class="text-center px-4">
+			<a href="/sign_in" class="link-foreground inline-flex items-center gap-1">
+				@templates.Icon("arrow-left-regular", "w-4 h-4")
+				{ templates.T(ctx, "password_reset_new_back_to_sign_in") }
 			</a>
 		</div>
 	</div>

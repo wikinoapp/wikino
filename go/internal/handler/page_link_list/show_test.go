@@ -556,10 +556,10 @@ func TestShow_OffsetBeyondInt32ReturnsNotFound(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	// LinkLimit is 15, so page 143165578 has the first offset past the int32 ceiling
+	// RelatedPageFollowingLimit is 15, so page 143165578 has the first upper-bound offset past the int32 ceiling
 	// (143165577 * 15 = 2147483655).
 	//
-	// [Ja] LinkLimit は 15 なので、143165578 ページ目が int32 の上限を最初に超える offset になる
+	// [Ja] RelatedPageFollowingLimit は 15 なので、143165578 ページ目が int32 の上限を最初に超える offset になる
 	// (143165577 * 15 = 2147483655)。
 	req := newRequestWithChiParams(t, http.MethodGet, "/s/pll-offset/pages/1/link_list?page=143165578", map[string]string{
 		"space_identifier": "pll-offset",

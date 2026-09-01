@@ -16,8 +16,8 @@ type NewPageData struct {
 
 // New はログインページのコンテンツを表示します
 templ New(data NewPageData) {
-	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
-		<div class="text-center">
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="text-center px-4">
 			<a href="/" aria-label={ templates.T(ctx, "home_link_aria_label") } class="inline-block">
 				<div class="bg-primary rounded-xl">
 					@templates.DecorativeIcon("logo", "fill-primary-foreground w-[60px] h-[60px]")
@@ -25,13 +25,13 @@ templ New(data NewPageData) {
 			</a>
 		</div>
 
-		<div class="flex flex-col gap-2">
+		<div class="flex flex-col gap-2 px-4">
 			<h1 class="text-center text-3xl text-primary font-bold antialiased">
-				{ templates.T(ctx, "sign_in_heading") }
+				{ templates.T(ctx, "sign_in_new_heading") }
 			</h1>
 		</div>
 
-		@components.FormErrors(data.FormErrors)
+		@components.FormErrorSummary(data.FormErrors)
 
 		@components.ContentCard() {
 			<form
@@ -40,92 +40,92 @@ templ New(data NewPageData) {
 				hx-on:submit="disableSubmitButtons(this)"
 				method="POST"
 			>
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-					<input type="hidden" name="back" value={ data.BackURL }/>
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="back" value={ data.BackURL }/>
 
-					<div class="grid gap-2">
-						<label class="label" for="email">
-							{ templates.T(ctx, "sign_in_email_label") }
+				<div class="grid gap-2">
+					<label class="label" for="email">
+						{ templates.T(ctx, "sign_in_new_email_label") }
+					</label>
+
+					<input
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+							aria-invalid="true"
+						} else {
+							aria-invalid="false"
+						}
+						autocomplete="email"
+						autofocus
+						class="input"
+						id="email"
+						name="email"
+						required
+						tabindex="1"
+						type="email"
+					/>
+
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
+						for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
+							<p class="text-sm text-error">
+								{ errorMsg }
+							</p>
+						}
+					}
+				</div>
+
+				<div class="grid gap-2">
+					<div class="flex items-center gap-2">
+						<label class="label" for="password">
+							{ templates.T(ctx, "sign_in_new_password_label") }
 						</label>
 
-						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
-								aria-invalid="true"
-							} else {
-								aria-invalid="false"
-							}
-							autocomplete="email"
-							autofocus
-							class="input"
-							id="email"
-							name="email"
-							required
-							tabindex="1"
-							type="email"
-						/>
-
-						if data.FormErrors != nil && data.FormErrors.HasFieldError("email") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("email") {
-								<p class="text-sm text-error">
-									{ errorMsg }
-								</p>
-							}
-						}
+						<a href="/password/reset" class="ml-auto text-sm link-foreground" tabindex="4">
+							{ templates.T(ctx, "sign_in_new_forgot_password") }
+						</a>
 					</div>
 
-					<div class="grid gap-2">
-						<div class="flex items-center gap-2">
-							<label class="label" for="password">
-								{ templates.T(ctx, "sign_in_password_label") }
-							</label>
-
-							<a href="/password/reset" class="ml-auto text-sm link-foreground" tabindex="4">
-								{ templates.T(ctx, "sign_in_forgot_password") }
-							</a>
-						</div>
-
-						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
-								aria-invalid="true"
-							} else {
-								aria-invalid="false"
-							}
-							autocomplete="current-password"
-							class="input"
-							id="password"
-							name="password"
-							required
-							tabindex="2"
-							type="password"
-						/>
-
+					<input
 						if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
-								<p class="text-sm text-error">
-									{ errorMsg }
-								</p>
-							}
+							aria-invalid="true"
+						} else {
+							aria-invalid="false"
 						}
-					</div>
+						autocomplete="current-password"
+						class="input"
+						id="password"
+						name="password"
+						required
+						tabindex="2"
+						type="password"
+					/>
 
-					@components.Turnstile(data.TurnstileSiteKey)
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+						for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
+							<p class="text-sm text-error">
+								{ errorMsg }
+							</p>
+						}
+					}
+				</div>
 
-					<button
-						class="btn rounded-full w-fit"
-						tabindex="3"
-						type="submit"
-					>
-						@templates.Icon("arrow-right-regular")
-						{ templates.T(ctx, "sign_in_submit_button") }
-					</button>
-				</form>
+				@components.Turnstile(data.TurnstileSiteKey)
+
+				<button
+					class="btn rounded-full w-fit"
+					tabindex="3"
+					type="submit"
+				>
+					@templates.Icon("arrow-right-regular")
+					{ templates.T(ctx, "sign_in_new_submit_button") }
+				</button>
+			</form>
 		}
 
-		<div class="text-center text-muted-foreground">
-			{ templates.T(ctx, "sign_in_no_account") }
+		<div class="text-center text-muted-foreground px-4">
+			{ templates.T(ctx, "sign_in_new_no_account") }
 			{ " " }
 			<a class="link-primary-foreground" href="/sign_up">
-				{ templates.T(ctx, "sign_in_sign_up") }
+				{ templates.T(ctx, "sign_in_new_sign_up") }
 			</a>
 		</div>
 	</div>

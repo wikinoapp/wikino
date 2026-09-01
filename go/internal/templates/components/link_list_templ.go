@@ -11,10 +11,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// LinkList renders the link list, and renders nothing when there are no links.
+// LinkList renders the "Links" section: one card per linked page, and nothing else. The backlinks of
+// those pages are grouped separately by RelatedLinkList, so that this section reads as the plain
+// list of pages this page links to. Nothing is rendered when there are no links.
 // The heading (h2) lives in the caller so its style can differ per screen.
 //
-// [Ja] リンク一覧を表示します。リンクが空の場合は何も表示しません。
+// [Ja] LinkList は「リンク」セクションを描画する。リンク先ページのカードだけを並べ、それ以外は
+// 出さない。リンク先ページのバックリンクは RelatedLinkList が別のセクションにまとめるため、この
+// セクションはこのページがリンクしているページの一覧としてそのまま読める。リンクが空の場合は何も
+// 表示しません。
 // 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
 func LinkList(data viewmodel.LinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -74,13 +79,13 @@ func linkList(data viewmodel.LinkList, announceEnd bool) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(linkListFallbackAnchorID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 17, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 22, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"flex flex-col gap-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"grid grid-cols-1 gap-2 md:grid-cols-3\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -98,12 +103,20 @@ func linkList(data viewmodel.LinkList, announceEnd bool) templ.Component {
 }
 
 // LinkListResponse renders the next link-list page and advances the link list's share of the
-// editor's shared related-page state. The one-page editor replaces the whole listing; cumulative
-// and public screens append by replacing only the pagination container.
+// editor's shared related-page state. The one-page editor replaces the whole listing; the cumulative
+// screens append by replacing only the pagination container.
+//
+// One link-list page feeds two sections, so the reply also carries the matching "Related links"
+// groups out of band. Only one of the two can be the swap target, and the cards are the section the
+// "load more" link itself sits in.
 //
 // [Ja] LinkListResponse はリンク一覧の次ページを描画し、編集画面で共有する関連ページ状態のうち
-// リンク一覧の分を進める。1 ページ単位の編集画面は一覧全体を差し替え、累積編集画面と公開画面は
-// ページネーションコンテナだけを差し替えて追記する。
+// リンク一覧の分を進める。1 ページ単位の編集画面は一覧全体を差し替え、累積表示の画面はページ
+// ネーションコンテナだけを差し替えて追記する。
+//
+// リンク一覧の 1 ページは 2 つのセクションを養うため、応答は対応する「関連リンク」のグループも
+// OOB で運ぶ。スワップ対象にできるのは 2 つのうち片方だけで、「もっと見る」リンク自体が載っている
+// のはカードの側だからである。
 func LinkListResponse(data viewmodel.LinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -136,6 +149,10 @@ func LinkListResponse(data viewmodel.LinkList) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
+		templ_7745c5c3_Err = relatedLinkGroupsOOB(data).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = linkPageStateOOB(data.State).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -144,13 +161,15 @@ func LinkListResponse(data viewmodel.LinkList) templ.Component {
 	})
 }
 
-// linkListBody renders the cards and the pagination container the two entry points have in common.
+// linkListBody renders the cards and the pagination container the initial render and the fragment
+// reply have in common, so that the container's swap target cannot drift between the two.
 // announceEnd adds a focusable completion status only to an htmx response; an initial page that is
 // already complete does not need to announce a change.
 //
-// [Ja] linkListBody は 2 つの入口が共有するカードとページネーションコンテナを描画する。
-// announceEnd は htmx 応答にだけフォーカス可能な完了状態を追加する。初回表示時点で完了している一覧は
-// 変化を通知する必要がないためである。
+// [Ja] linkListBody は初回描画とフラグメント応答が共有するカードとページネーションコンテナを描画
+// する。コンテナのスワップ対象が両者でずれないようにするためである。announceEnd は htmx 応答にだけ
+// フォーカス可能な完了状態を追加する。初回表示時点で完了している一覧は変化を通知する必要がない
+// ためである。
 func linkListBody(data viewmodel.LinkList, announceEnd bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -173,55 +192,30 @@ func linkListBody(data viewmodel.LinkList, announceEnd bool) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		for _, item := range data.Items {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(linkListItemFallbackAnchorID(item.CardLinkPage.Number))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 51, Col: 62}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"grid grid-cols-1 items-stretch gap-2 md:grid-cols-3\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
 			templ_7745c5c3_Err = CardLinkPage(item.CardLinkPage, data.SpaceIdentifier).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = BacklinkList(item.BacklinkList).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(linkListPaginationID)
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(linkListPaginationID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 59, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 69, Col: 27}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" class=\"contents\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"contents\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if data.Pagination.HasNext {
-			templ_7745c5c3_Err = linkListLoadMore(data).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = LoadMoreLink(linkListLoadMoreData(data)).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -236,47 +230,7 @@ func linkListBody(data viewmodel.LinkList, announceEnd bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-// linkListLoadMore renders the progressively enhanced link for the next link-list page.
-//
-// [Ja] linkListLoadMore は次のリンク一覧ページを取得する拡張リンクを表示する。
-func linkListLoadMore(data viewmodel.LinkList) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"grid grid-cols-1 gap-2 md:grid-cols-3\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = LoadMoreLink(linkListLoadMoreData(data)).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

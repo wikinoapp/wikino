@@ -14,8 +14,8 @@ type NewPageData struct {
 
 // New は2FAコード入力ページのコンテンツを表示します
 templ New(data NewPageData) {
-	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
-		<div class="text-center">
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="text-center px-4">
 			<a href="/" aria-label={ templates.T(ctx, "home_link_aria_label") } class="inline-block">
 				<div class="bg-primary rounded-xl">
 					@templates.DecorativeIcon("logo", "fill-primary-foreground w-[60px] h-[60px]")
@@ -23,81 +23,83 @@ templ New(data NewPageData) {
 			</a>
 		</div>
 
-		<div class="flex flex-col gap-2">
+		<div class="flex flex-col gap-2 px-4">
 			<h1 class="text-center text-3xl text-primary font-bold antialiased">
-				{ templates.T(ctx, "sign_in_two_factor_heading") }
+				{ templates.T(ctx, "sign_in_two_factor_new_heading") }
 			</h1>
 
 			<p class="text-center text-sm text-muted-foreground whitespace-pre-line">
-				{ templates.T(ctx, "sign_in_two_factor_enter_code") }
+				{ templates.T(ctx, "sign_in_two_factor_new_enter_code") }
 			</p>
 		</div>
 
-		@components.FormErrors(data.FormErrors)
+		@components.FormErrorSummary(data.FormErrors)
 
 		@components.ContentCard() {
 			<form
 				action="/sign_in/two_factor"
 				class="grid gap-6"
+				hx-on:submit="disableSubmitButtons(this)"
 				method="POST"
 			>
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-					<div class="grid gap-2">
-						<label class="label" for="totp_code">
-							{ templates.T(ctx, "sign_in_two_factor_code_label") }
-						</label>
+				<div class="grid gap-2">
+					<label class="label" for="totp_code">
+						{ templates.T(ctx, "sign_in_two_factor_new_code_label") }
+					</label>
 
-						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("totp_code") {
-								aria-invalid="true"
-							} else {
-								aria-invalid="false"
-							}
-							autocomplete="one-time-code"
-							autofocus
-							class="input"
-							id="totp_code"
-							maxlength="6"
-							name="totp_code"
-							placeholder="000000"
-							required
-							tabindex="1"
-							type="text"
-						/>
-
-						<p class="text-sm text-muted-foreground">
-							{ templates.T(ctx, "sign_in_two_factor_code_hint") }
-						</p>
-
+					<input
 						if data.FormErrors != nil && data.FormErrors.HasFieldError("totp_code") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("totp_code") {
-								<p class="text-sm text-destructive">{ errorMsg }</p>
-							}
+							aria-invalid="true"
+						} else {
+							aria-invalid="false"
 						}
-					</div>
+						autocomplete="one-time-code"
+						autofocus
+						class="input"
+						id="totp_code"
+						maxlength="6"
+						name="totp_code"
+						placeholder="000000"
+						required
+						tabindex="1"
+						type="text"
+					/>
 
-					<button
-						class="btn rounded-full w-fit"
-						tabindex="2"
-						type="submit"
-					>
-						{ templates.T(ctx, "sign_in_two_factor_submit_button") }
-					</button>
-				</form>
+					<p class="text-sm text-muted-foreground">
+						{ templates.T(ctx, "sign_in_two_factor_new_code_hint") }
+					</p>
+
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("totp_code") {
+						for _, errorMsg := range data.FormErrors.GetFieldErrors("totp_code") {
+							<p class="text-sm text-error">{ errorMsg }</p>
+						}
+					}
+				</div>
+
+				<button
+					class="btn rounded-full w-fit"
+					tabindex="2"
+					type="submit"
+				>
+					@templates.Icon("arrow-right-regular")
+					{ templates.T(ctx, "sign_in_two_factor_new_submit_button") }
+				</button>
+			</form>
 		}
 
-		<div class="flex flex-col gap-2 text-sm">
+		<div class="flex flex-col gap-2 text-sm px-4">
 			<p class="text-muted-foreground">
-				{ templates.T(ctx, "sign_in_two_factor_recovery_description") }
+				{ templates.T(ctx, "sign_in_two_factor_new_recovery_description") }
 			</p>
 
 			<a href="/sign_in/two_factor/recovery/new" class="link-foreground">
-				{ templates.T(ctx, "sign_in_two_factor_recovery_link") }
+				{ templates.T(ctx, "sign_in_two_factor_new_recovery_link") }
 			</a>
 		</div>
 
-		<div class="text-center">
+		<div class="text-center px-4">
 			<a href="/" class="link-foreground inline-flex items-center gap-1">
 				@templates.Icon("arrow-left-regular", "w-4 h-4")
 				{ templates.T(ctx, "back_to_home") }

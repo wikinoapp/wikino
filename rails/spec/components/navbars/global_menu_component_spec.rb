@@ -6,10 +6,6 @@ RSpec.describe Navbars::GlobalMenuComponent, type: :view do
     UserRepository.new.to_model(user_record: FactoryBot.create(:user_record, atname: "alice"))
   end
 
-  let(:space) do
-    SpaceRepository.new.to_model(space_record: FactoryBot.create(:space_record, identifier: "my-space"))
-  end
-
   describe "ログイン時" do
     it "ホーム・検索・プロフィールのリンクが表示され、サインインリンクは表示されないこと" do
       render_inline(described_class.new(current_page_name: PageName::Home, current_user: user))
@@ -103,20 +99,6 @@ RSpec.describe Navbars::GlobalMenuComponent, type: :view do
       expect(active_link.at_css("svg")["class"]).to include("fill-current")
       expect(active_link["class"]).to include("text-foreground")
       expect(inactive_link["class"]).to include("text-muted-foreground")
-    end
-  end
-
-  describe "検索パス" do
-    it "スペース内では検索リンクがそのスペースに絞り込まれること" do
-      render_inline(described_class.new(current_page_name: PageName::Home, current_user: user, current_space: space))
-
-      expect(page).to have_css("a[href*='space%3Amy-space']")
-    end
-
-    it "スペース外では素の検索パスになること" do
-      render_inline(described_class.new(current_page_name: PageName::Home, current_user: user))
-
-      expect(page).to have_link(href: "/search")
     end
   end
 

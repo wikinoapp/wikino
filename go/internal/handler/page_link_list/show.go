@@ -53,7 +53,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	//
 	// [Ja] ページネーションパラメータを取得する。SQL offset がクエリの int32 パラメータに収まらない
 	// ページは UseCase 呼び出し前に拒否する。
-	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.LinkLimit)
+	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
 		return
@@ -64,12 +64,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	//
 	// [Ja] 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
 	// 指し続けるようにする。受け取らないと、他の一覧が 1 ページ目へ戻ってしまう。
-	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.BacklinkLimit)
+	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
 		return
 	}
-	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.PageBacklinkLimit)
+	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
 		return

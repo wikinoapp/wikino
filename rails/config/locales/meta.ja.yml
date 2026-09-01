@@ -18,8 +18,6 @@ ja:
           show: "設定 | %{topic_name} | %{space_name}"
       trash:
         show: "ゴミ箱 | %{space_name}"
-      pages:
-        show: "%{page_title} | %{space_name}"
       password_resets:
         new: パスワードを忘れた？
       passwords:

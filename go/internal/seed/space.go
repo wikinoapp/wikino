@@ -12,15 +12,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// Two spaces are created so that both answers to "have I joined this space?"
-// can be seen from one session. seed-wiki holds everything worth browsing and
+// seed-wiki and seed-solo are created so that both answers to "have I joined
+// this space?" can be seen from one session. seed-wiki holds everything worth browsing and
 // every account has joined it. seed-solo holds only roleOwner, so signing in as
 // roleCollaborator or roleGuest shows what a space looks like from the outside
 // — as roleGuest with every feature flag on, which is what puts the Go version
 // of those screens in front of a non-member.
 //
-// [Ja] スペースを 2 つ作るのは、「自分はこのスペースに参加しているか」の両方の
-// 答えを 1 つのセッションから確認できるようにするため。seed-wiki は閲覧対象を
+// [Ja] seed-wiki と seed-solo を作るのは、「自分はこのスペースに参加しているか」の
+// 両方の答えを 1 つのセッションから確認できるようにするため。seed-wiki は閲覧対象を
 // 集めたスペースで、すべてのアカウントが参加している。seed-solo に参加しているのは
 // roleOwner だけであるため、roleCollaborator か roleGuest でサインインするとスペースを
 // 外側から見た状態を確認できる。roleGuest はフィーチャーフラグを全件持つため、
@@ -30,6 +30,70 @@ const (
 	wikiSpaceName       = "シード Wiki"
 	soloSpaceIdentifier = "seed-solo"
 	soloSpaceName       = "シード個人スペース"
+)
+
+// seed-long-name carries a name as long as a space name may be. A space name is
+// drawn where there is little room for it — the sidebar, and the header above
+// every screen inside the space — so keeping one name that cannot be shortened
+// is how those places are checked for whether they wrap it or let it overflow.
+// Every other space in the seed is named briefly, which leaves this one as the
+// only place the question is asked.
+//
+// The name is 30 characters, the longest Space::NAME_MAX_LENGTH allows on the
+// Rails side, which still owns space creation.
+//
+// Only roleOwner joins it. What the space is here to show is how a name is
+// drawn, not how membership changes what is seen; seed-wiki and seed-solo
+// already cover that.
+//
+// [Ja] seed-long-name は、スペース名が取りうる最大の長さの名前を持つ。スペース名は
+// 幅の余裕が無い場所へ描かれる。サイドバーや、スペース内の各画面の上に出る
+// ヘッダーである。短くできない名前を 1 つ置いておくことが、それらの場所が名前を
+// 折り返すのか、はみ出させるのかを確認する方法になる。シードの他のスペースはどれも
+// 短い名前を持つため、この問いを投げかける場所はここだけになる。
+//
+// 名前は 30 文字で、スペースの作成を今も担当している Rails 側の
+// Space::NAME_MAX_LENGTH が許す最大の長さ。
+//
+// 参加するのは roleOwner だけ。このスペースが示すのは名前の描かれ方であって、
+// メンバーシップによる見え方の違いではない。それは seed-wiki と seed-solo が既に
+// 担っている。
+const (
+	longNameSpaceIdentifier = "seed-long-name"
+	longNameSpaceName       = "折り返しの確認用に名前を最大文字数まで伸ばしたシードスペース"
+)
+
+// demo is the space the screenshots on the help pages are taken in. Every other
+// space in the seed is named for what a developer checks there, and a name of
+// that kind reaching a help page would be read as part of the product rather
+// than as scaffolding for a picture. This one is named as one person's own
+// space, which is what a space is created as today.
+//
+// The identifier is where that matters most: it is the space's part of every
+// page URL, so it is photographed together with the screen. It is the one
+// space identifier in the seed without the seed- prefix for that reason.
+//
+// Only roleOwner joins it, the account the browser verification signs in as.
+// What this space shows is a wiki that has been written in, not what
+// membership changes about the view; seed-wiki and seed-solo already cover
+// that.
+//
+// [Ja] demo は、ヘルプページに載せるスクリーンショットを撮るためのスペース。
+// シードの他のスペースはいずれも、開発者がそこで何を確認するかを名前にしている。
+// その種の名前がヘルプページへ届くと、絵のための足場ではなくプロダクトの一部と
+// して読まれてしまう。このスペースには、今のところスペースがそう作られるもので
+// ある「個人が自分のために作ったスペース」としての名前を与える。
+//
+// とりわけ効くのは識別子で、これはすべてのページ URL に入るスペース側の部分で
+// あるため、画面と一緒に写り込む。シードのスペース識別子の中でこれだけが
+// seed- 接頭辞を持たないのはそのためである。
+//
+// 参加するのは roleOwner だけで、これはブラウザ確認でサインインするアカウント。
+// このスペースが見せるのは、実際に書かれた Wiki であって、メンバーシップによる
+// 見え方の違いではない。それは seed-wiki と seed-solo が既に担っている。
+const (
+	demoSpaceIdentifier = "demo"
+	demoSpaceName       = "みゆきのスペース"
 )
 
 // adminSpaceScopes is what production grants the member who creates a space:
@@ -237,21 +301,55 @@ var spaceSpecs = []spaceSpec{
 		},
 		assign: func(spaces *seededSpaces, space *seededSpace) { spaces.solo = space },
 	},
+	{
+		identifier: longNameSpaceIdentifier,
+		name:       longNameSpaceName,
+		members: []spaceMemberSpec{
+			{role: roleOwner, scopes: adminSpaceScopes},
+		},
+		assign: func(spaces *seededSpaces, space *seededSpace) { spaces.longName = space },
+	},
+	{
+		identifier: demoSpaceIdentifier,
+		name:       demoSpaceName,
+		members: []spaceMemberSpec{
+			{role: roleOwner, scopes: adminSpaceScopes},
+		},
+		assign: func(spaces *seededSpaces, space *seededSpace) { spaces.demo = space },
+	},
 }
 
-// seededSpaces holds both spaces the seed created.
+// seededSpaces holds the spaces the seed created.
 //
-// [Ja] seededSpaces はシードが作成した 2 つのスペースを保持する。
+// [Ja] seededSpaces はシードが作成したスペースを保持する。
 type seededSpaces struct {
 	wiki *seededSpace
 	solo *seededSpace
+	// longName is the space that carries the longest names the model allows,
+	// both in its own name and in the names of its topics.
+	//
+	// [Ja] longName は、モデルが許す最長の名前を、自身の名前とトピックの名前の
+	// 双方で持つスペース。
+	longName *seededSpace
+	// demo is the space the help pages are photographed in. It stands apart from
+	// the three above because those are arranged to cover the states a screen can
+	// be in, while this one is arranged to read as a wiki somebody keeps. Putting
+	// either kind of page into the other space would cost both of them what they
+	// are for.
+	//
+	// [Ja] demo は、ヘルプページのスクリーンショットを撮るスペース。上の 3 つと
+	// 別に置いているのは、あちらが画面の取りうる状態を網羅するために並べられて
+	// いるのに対し、こちらは誰かが持っている Wiki として読まれるために並べられて
+	// いるため。どちらのページをもう一方のスペースへ入れても、双方が何のために
+	// あるのかを損なう。
+	demo *seededSpace
 }
 
-// generateSpaces creates the two spaces and the memberships that decide what
-// each account may do in them.
+// generateSpaces creates the spaces and the memberships that decide what each
+// account may do in them.
 //
-// [Ja] generateSpaces は 2 つのスペースと、各アカウントがそこで何をできるかを
-// 決めるメンバーシップを作成する。
+// [Ja] generateSpaces はスペースと、各アカウントがそこで何をできるかを決める
+// メンバーシップを作成する。
 func generateSpaces(ctx context.Context, dbtx query.DBTX, out io.Writer, users *seededUsers) (*seededSpaces, error) {
 	bar := newProgress(out, "スペース", len(spaceSpecs))
 	defer bar.finish()

@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 func TestGetLinkListUsecase_Execute(t *testing.T) {
@@ -531,5 +532,54 @@ func TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset(t *testing.T) {
 		if page.ID != draftPageIDs[15+index] {
 			t.Errorf("draft page 2 item %d = %v, want %v", index, page.ID, draftPageIDs[15+index])
 		}
+	}
+}
+
+// TestListingWindow_KeepsCumulativeGridRemainder ties the window this package resolves to the card
+// counts the view model declares. listingWindow derives a following page as one card more than the
+// initial one; the constants say the same thing, and a change to either side without the other has
+// to fail here rather than only shifting the rendered grid.
+//
+// [Ja] TestListingWindow_KeepsCumulativeGridRemainder は、本パッケージが解決する取得範囲を ViewModel
+// が宣言するカード数に結び付ける。listingWindow は後続ページを初回より 1 件多いものとして求めており、
+// 定数も同じことを言っている。片方だけを変えたときに、描画されるグリッドがずれるだけで済ませず、
+// ここで落ちるようにする。
+func TestListingWindow_KeepsCumulativeGridRemainder(t *testing.T) {
+	t.Parallel()
+
+	initialLimit := viewmodel.LinkLimit
+	followingLimit := viewmodel.RelatedPageFollowingLimit
+
+	tests := []struct {
+		page               int32
+		wantOffset         int32
+		wantLimit          int32
+		wantCumulativeSize int32
+	}{
+		{page: 1, wantOffset: 0, wantLimit: initialLimit, wantCumulativeSize: initialLimit},
+		{page: 2, wantOffset: initialLimit, wantLimit: followingLimit, wantCumulativeSize: initialLimit + followingLimit},
+		{page: 3, wantOffset: initialLimit + followingLimit, wantLimit: followingLimit, wantCumulativeSize: initialLimit + 2*followingLimit},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("page_%d", tt.page), func(t *testing.T) {
+			t.Parallel()
+
+			offset, limit := listingWindow(tt.page, initialLimit, false)
+			if offset != tt.wantOffset || limit != tt.wantLimit {
+				t.Errorf("listingWindow(%d, %d, false) = (%d, %d), want (%d, %d)", tt.page, initialLimit, offset, limit, tt.wantOffset, tt.wantLimit)
+			}
+
+			cumulativeOffset, cumulativeSize := listingWindow(tt.page, initialLimit, true)
+			if cumulativeOffset != 0 || cumulativeSize != tt.wantCumulativeSize {
+				t.Errorf("listingWindow(%d, %d, true) = (%d, %d), want (0, %d)", tt.page, initialLimit, cumulativeOffset, cumulativeSize, tt.wantCumulativeSize)
+			}
+			if offset+limit != cumulativeSize {
+				t.Errorf("page %d leaves a gap or overlap: offset %d + limit %d != cumulative size %d", tt.page, offset, limit, cumulativeSize)
+			}
+			if cumulativeSize%3 != 2 {
+				t.Errorf("page %d cumulative size = %d, want remainder 2 in a three-column grid", tt.page, cumulativeSize)
+			}
+		})
 	}
 }

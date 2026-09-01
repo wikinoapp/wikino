@@ -20,7 +20,11 @@ seed: ## Rebuild the development database contents with seed data (drops existin
 
 .PHONY: browse-login
 browse-login: ## dev サイトへブラウザでログイン (別ユーザーは make browse-login BROWSE_USER=collaborator)
-	$(OP_RUN_DEV) bash scripts/browse.sh login $(BROWSE_USER)
+	@$(OP_RUN_DEV) bash scripts/browse.sh login $(BROWSE_USER) || { echo "ログインに失敗しました。make browse-check で環境を確認してください" >&2; exit 1; }
+
+.PHONY: browse-check
+browse-check: ## Validate the dev browser environment (another account with BROWSE_USER=<role>). [Ja] dev サイトのブラウザ確認に必要な環境を検証 (別アカウントは BROWSE_USER=<役割>)
+	$(OP_RUN_DEV) bash scripts/browse.sh check $(BROWSE_USER)
 
 .PHONY: browse-shot
 browse-shot: ## ログイン済みセッションでページを開きスクショ (例: make browse-shot URL=/)

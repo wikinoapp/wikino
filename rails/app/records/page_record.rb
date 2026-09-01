@@ -4,8 +4,6 @@
 class PageRecord < ApplicationRecord
   include Discard::Model
 
-  include RecordConcerns::Pageable
-
   self.table_name = "pages"
 
   acts_as_sequenced column: :number, scope: :space_id
@@ -43,8 +41,7 @@ class PageRecord < ApplicationRecord
   scope :not_trashed, -> { where(trashed_at: nil) }
   scope :topics_kept, -> { joins(:topic_record).merge(TopicRecord.kept) }
   scope :topics_visibility_public, -> { joins(:topic_record).merge(TopicRecord.visibility_public) }
-  scope :visible, -> { kept.topics_kept }
-  scope :available, -> { visible.not_trashed }
+  scope :available, -> { kept.topics_kept.not_trashed }
   scope :active, -> { available.published }
   scope :restorable, -> { where(trashed_at: Page::DELETE_LIMIT_DAYS.days.ago..) }
   scope :filter_by_title, ->(q:) {
@@ -113,23 +110,6 @@ class PageRecord < ApplicationRecord
   sig { returns(T::Boolean) }
   def trashed?
     trashed_at.present?
-  end
-
-  sig do
-    params(
-      user_record: T.nilable(UserRecord)
-    ).returns(
-      T.any(
-        PageRecord::PrivateAssociationRelationWhereChain,
-        PageRecord::PrivateAssociationRelation
-      )
-    )
-  end
-  def backlinked_page_records(user_record:)
-    pages = space_record.not_nil!.page_records.available.where("'#{id}' = ANY (linked_page_ids)")
-    topic_records = user_record.nil? ? TopicRecord.visibility_public : user_record.viewable_topics
-
-    pages.joins(:topic_record).merge(topic_records)
   end
 
   # 全スペース内のページを検索（参加スペース + 公開トピック）
@@ -358,22 +338,5 @@ class PageRecord < ApplicationRecord
     else
       attachment.thumbnail_url(size: AttachmentThumbnailSize::Card, expires_in:)
     end
-  end
-
-  # OGP画像URLを取得
-  #
-  # 「再検証付き永続 URL」 (`/attachments/:id/og_image`) を返す。HTML キャッシュ寿命を超えても
-  # URL 文字列が無効化されないため、SNS クローラのリッチプレビューが壊れない。
-  # アクセスごとに Go 側ハンドラーが `all_referencing_pages_public?` を再評価するため、
-  # 非公開トピックや参照ゼロ件のケースでは 404 が返り、画像が漏洩することはない。
-  sig { returns(T.nilable(String)) }
-  def og_image_url
-    attachment = featured_image_attachment_record
-    return nil unless attachment
-
-    # GIFの場合はnilを返す（デフォルトOGP画像を使用）
-    return nil if featured_image_is_gif?
-
-    "#{Wikino.config.app_url}/attachments/#{attachment.id}/og_image"
   end
 end

@@ -14,9 +14,9 @@ import (
 // one that is not a positive integer, yields page 1, so that a malformed query still renders the
 // first page.
 //
-// The second return value reports whether the SQL offset for that page fits the int32 parameter the
-// paginated queries take. The repository computes the offset as (page-1)*limit in int32 arithmetic,
-// so a larger page silently wraps to a negative offset and PostgreSQL rejects the query. Callers
+// The second return value reports whether the upper-bound SQL offset (page-1)*limit fits the int32
+// parameter the paginated queries take. Uniform listings pass their page size; listings with
+// variable page sizes pass their largest page size, so their resolved offset cannot exceed this bound. Callers
 // reject false at the HTTP boundary before invoking the usecase.
 //
 // A positive value too large for the offset is rejected rather than clamped, whatever its
@@ -26,9 +26,9 @@ import (
 // [Ja] ParsePageParam はクエリ文字列からオフセットページネーションのパラメータを読む。値が無い場合と
 // 正の整数として読めない場合は 1 ページ目とし、壊れたクエリでも 1 ページ目を描画できるようにする。
 //
-// 2 つ目の返り値は、そのページの SQL offset がページネーションクエリの int32 パラメータに収まるかを
-// 表す。Repository は offset を int32 演算の (page-1)*limit で求めるため、これより大きいページでは
-// 黙って負値に回り込み PostgreSQL がクエリを拒否する。呼び出し元は UseCase を呼ぶ前に HTTP 境界で
+// 2 つ目の返り値は、上限として計算した SQL offset (page-1)*limit がページネーション
+// クエリの int32 パラメータに収まるかを表す。固定件数の一覧はその件数、ページごとに件数が変わる一覧は
+// 最大件数を渡すため、実際の offset はこの上限を超えない。呼び出し元は UseCase を呼ぶ前に HTTP 境界で
 // false を拒否する。
 //
 // offset に収まらない正の値は、桁数に関わらず丸めずに拒否する。それが指すのは存在しないページであり、

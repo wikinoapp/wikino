@@ -48,9 +48,6 @@ func TestLinkList_LoadMoreURL(t *testing.T) {
 	if !strings.Contains(html, `id="page-link-list-content"`) {
 		t.Error("full-page fallback anchor for the link list is missing")
 	}
-	if !strings.Contains(html, `id="page-link-list-item-2"`) {
-		t.Error("full-page fallback anchor for the nested backlink list is missing")
-	}
 
 	// htmx uses the fragment URL, while normal navigation uses the full-page URL.
 	//

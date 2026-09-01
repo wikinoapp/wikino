@@ -989,7 +989,7 @@ func TestEdit_RelatedPagePagination(t *testing.T) {
 		Build()
 
 	baseTime := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
-	linkedCount := 11*int(viewmodel.LinkLimit) + 1
+	linkedCount := int(viewmodel.LinkLimit + 10*viewmodel.RelatedPageFollowingLimit + 1)
 	linkedPageIDs := make([]model.PageID, 0, linkedCount)
 	for i := range linkedCount {
 		linkedPageIDs = append(linkedPageIDs, testutil.NewPageBuilder(t, tx).
@@ -1021,7 +1021,7 @@ func TestEdit_RelatedPagePagination(t *testing.T) {
 	selectedLinkedPageIndex := linkedCount - 1 - int(viewmodel.LinkLimit)
 	selectedLinkedPageID := linkedPageIDs[selectedLinkedPageIndex]
 	selectedLinkedPageNumber := model.PageNumber(100 + selectedLinkedPageIndex)
-	for i := range 2*int(viewmodel.BacklinkLimit) + 1 {
+	for i := range int(viewmodel.BacklinkLimit + viewmodel.RelatedPageFollowingLimit + 1) {
 		testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -1031,7 +1031,7 @@ func TestEdit_RelatedPagePagination(t *testing.T) {
 			WithLinkedPageIDs([]model.PageID{selectedLinkedPageID}).
 			Build()
 	}
-	for i := range 2*int(viewmodel.PageBacklinkLimit) + 1 {
+	for i := range int(viewmodel.PageBacklinkLimit + viewmodel.RelatedPageFollowingLimit + 1) {
 		testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -1070,7 +1070,7 @@ func TestEdit_RelatedPagePagination(t *testing.T) {
 			rawQuery:   "context=edit_paginated&links_page=11",
 			wantStatus: http.StatusOK,
 			wantContains: []string{
-				fmt.Sprintf("Draft Linked Page %02d", linkedCount-1-10*int(viewmodel.LinkLimit)),
+				fmt.Sprintf("Draft Linked Page %02d", linkedCount-1-int(viewmodel.LinkLimit+9*viewmodel.RelatedPageFollowingLimit)),
 				`name="context" value="edit_paginated"`,
 				`hx-get="/s/edit-related-space/pages/1/link_list?context=edit_paginated&amp;page=12"`,
 				`hx-target="#page-link-list-content"`,
@@ -2062,5 +2062,172 @@ func TestEdit_下書き保存オプションのトリガーにアクセシブル
 				t.Errorf("下書き保存オプションのトリガーに aria-label %q が含まれていない", tt.wantLabel)
 			}
 		})
+	}
+}
+
+// TestEdit_RelatedPageSections fixes that the editor lays its listings out in the same three
+// sections as the page detail screen: the linked pages, their backlinks grouped per linked page, and
+// this page's own backlinks. The section wrappers keep the not-has hooks that hide a section while
+// its container is empty, because the draft-autosave swap refills those containers without
+// re-rendering the headings.
+//
+// [Ja] TestEdit_RelatedPageSections は、編集画面の一覧がページ表示画面と同じ 3 セクションに並ぶことを
+// 固定する。リンク先ページ、リンク先ページごとに束ねたそのバックリンク、そしてこのページ自身の
+// バックリンクである。セクションのラッパーは、コンテナが空の間セクションを隠す not-has のフックを
+// 保つ。下書き自動保存のスワップは見出しを描き直さずにコンテナだけを詰め直すためである。
+func TestEdit_RelatedPageSections(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("edit-sections@example.com").
+		WithAtname("editsections").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("edit-sections-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	// One linked page is linked back to, the other is not, so the section holds exactly one group.
+	//
+	// [Ja] リンク先ページのうち片方にはバックリンクがあり、もう片方には無い。セクションにはちょうど
+	// 1 つのグループが残る。
+	linkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Linked Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	lonelyLinkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Lonely Linked Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Edited Page").
+		WithBody("body").
+		WithLinkedPageIDs([]model.PageID{linkedPageID, lonelyLinkedPageID}).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Related Link Page").
+		WithLinkedPageIDs([]model.PageID{linkedPageID}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(5).
+		WithTitle("Backlink Page").
+		WithLinkedPageIDs([]model.PageID{pageID}).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/edit-sections-space/pages/1/edit", map[string]string{
+		"space_identifier": "edit-sections-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		"関連リンク",
+		"このページが直接リンクしているページ",
+		"リンク先のページからさらに辿れるページ",
+		"このページにリンクしているページ",
+		`id="page-link-list-item-2"`,
+		`not-has-[#page-related-link-list>*]:hidden`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+
+	// A linked page nothing links back to gets no group.
+	//
+	// [Ja] どこからもリンクされていないリンク先ページにはグループが付かない。
+	if strings.Contains(body, `id="page-link-list-item-3"`) {
+		t.Error("a linked page without backlinks should not get a related-links group")
+	}
+
+	// The three sections appear in links, related links, and backlinks order. The backlinks of a
+	// linked page sit in the related-links section rather than beside one of the links' cards.
+	//
+	// [Ja] 3 セクションはリンク、関連リンク、バックリンクの順に並ぶ。リンク先ページのバックリンクは
+	// リンクセクションのカードの隣ではなく、関連リンクのセクションに置かれる。
+	linksIndex := strings.Index(body, `id="page-link-list-content"`)
+	relatedIndex := strings.Index(body, `id="page-related-link-list"`)
+	backlinksIndex := strings.Index(body, `id="page-backlink-list-content"`)
+	if linksIndex == -1 || relatedIndex == -1 || backlinksIndex == -1 {
+		t.Fatalf(
+			"section positions = links:%d related-links:%d backlinks:%d; all three sections should be rendered",
+			linksIndex,
+			relatedIndex,
+			backlinksIndex,
+		)
+	}
+	if linksIndex >= relatedIndex || relatedIndex >= backlinksIndex {
+		t.Errorf(
+			"section positions = links:%d related-links:%d backlinks:%d, want links < related-links < backlinks",
+			linksIndex,
+			relatedIndex,
+			backlinksIndex,
+		)
+	}
+	if got := strings.Index(body, "Related Link Page"); got < relatedIndex {
+		t.Errorf("the backlink of a linked page is rendered at %d, before the related-links section at %d", got, relatedIndex)
+	}
+
+	// Every section carries a description beside its heading, as on the page detail screen. The
+	// editor keeps its own smaller heading size, so the shared component renders the h2 with the
+	// base classes alone here.
+	//
+	// [Ja] どのセクションも見出しの脇に説明を持ち、ページ表示画面と同じである。見出しの大きさは編集
+	// 画面のものを保つため、共有コンポーネントはここでは基本のクラスだけで h2 を描画する。
+	for _, heading := range []string{"リンク", "関連リンク", "バックリンク"} {
+		marker := fmt.Sprintf(`<h2 class="font-bold antialiased">%s</h2>`, heading)
+		headingIndex := strings.Index(body, marker)
+		if headingIndex == -1 {
+			t.Errorf("heading %q is not rendered", heading)
+			continue
+		}
+		if !strings.HasPrefix(body[headingIndex+len(marker):], `<p class="text-sm text-muted-foreground">`) {
+			t.Errorf("heading %q is not followed by a description", heading)
+		}
 	}
 }

@@ -19,7 +19,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "password_reset_title")
+	meta.SetTitle(ctx, "password_reset_new_title")
 	meta.OGURL = h.cfg.AppURL() + string(templates.PasswordResetPath())
 
 	// テンプレートをレンダリング

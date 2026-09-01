@@ -31,11 +31,7 @@ templ New(data MovePageData) {
 					})
 				</div>
 
-				if data.FormErrors != nil && data.FormErrors.HasErrors() {
-					<div class="px-4">
-						@components.FormErrors(data.FormErrors)
-					</div>
-				}
+				@components.FormErrorSummary(data.FormErrors)
 
 				@components.ContentCard() {
 					<form

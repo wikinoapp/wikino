@@ -7,6 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // NewPageData is the data passed to the account creation page.
@@ -23,8 +24,8 @@ type NewPageData struct {
 //
 // [Ja] New はアカウント作成ページのコンテンツを表示します。
 templ New(data NewPageData) {
-	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
-		<div class="text-center">
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="text-center px-4">
 			<a href="/" aria-label={ templates.T(ctx, "home_link_aria_label") } class="inline-block">
 				<div class="bg-primary rounded-xl">
 					@templates.DecorativeIcon("logo", "fill-primary-foreground w-[60px] h-[60px]")
@@ -32,19 +33,13 @@ templ New(data NewPageData) {
 			</a>
 		</div>
 
-		<div class="flex flex-col gap-2">
+		<div class="flex flex-col gap-2 px-4">
 			<h1 class="text-center text-3xl text-primary font-bold antialiased">
 				{ templates.T(ctx, "account_new_heading") }
 			</h1>
 		</div>
 
-		if data.FormErrors != nil && len(data.FormErrors.Global) > 0 {
-			for _, errorMsg := range data.FormErrors.Global {
-				<div class="alert" data-variant="destructive">
-					<section>{ errorMsg }</section>
-				</div>
-			}
-		}
+		@components.FormErrorSummary(data.FormErrors)
 
 		@components.ContentCard() {
 			<form
@@ -53,115 +48,115 @@ templ New(data NewPageData) {
 				hx-on:submit="disableSubmitButtons(this)"
 				method="POST"
 			>
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-					<div class="grid gap-2">
-						<label class="label" for="email">
-							{ templates.T(ctx, "account_new_email_label") }
-						</label>
+				<div class="grid gap-2">
+					<label class="label" for="email">
+						{ templates.T(ctx, "account_new_email_label") }
+					</label>
 
-						<input
-							class="input bg-muted cursor-not-allowed"
-							disabled
-							id="email"
-							name="email"
-							readonly
-							tabindex="-1"
-							type="email"
-							value={ data.Email }
-						/>
+					<input
+						class="input bg-muted cursor-not-allowed"
+						disabled
+						id="email"
+						name="email"
+						readonly
+						tabindex="-1"
+						type="email"
+						value={ data.Email }
+					/>
 
-						<p class="flex items-center gap-1 text-sm text-muted-foreground">
-							@templates.Icon("check-circle-regular", "fill-success w-[16px] h-[16px]")
-							{ templates.T(ctx, "account_new_email_verified") }
-						</p>
-					</div>
+					<p class="flex items-center gap-1 text-sm text-muted-foreground">
+						@templates.Icon("check-circle-regular", "fill-success w-[16px] h-[16px]")
+						{ templates.T(ctx, "account_new_email_verified") }
+					</p>
+				</div>
 
-					<div class="grid gap-2">
-						<label class="label" for="atname">
-							{ templates.T(ctx, "account_new_atname_label") }
-						</label>
+				<div class="grid gap-2">
+					<label class="label" for="atname">
+						{ templates.T(ctx, "account_new_atname_label") }
+					</label>
 
-						<div class="flex items-center gap-2">
-							<div class="text-muted-foreground text-sm whitespace-nowrap">
-								wikino.app/@
-							</div>
-
-							<input
-								if data.FormErrors != nil && data.FormErrors.HasFieldError("atname") {
-									aria-invalid="true"
-								} else {
-									aria-invalid="false"
-								}
-								autocomplete="username"
-								autofocus
-								class="input flex-1"
-								id="atname"
-								maxlength="20"
-								name="atname"
-								pattern="[A-Za-z0-9_]+"
-								required
-								tabindex="1"
-								type="text"
-								value={ data.Atname }
-							/>
+					<div class="flex items-center gap-2">
+						<div class="text-muted-foreground text-sm whitespace-nowrap">
+							wikino.app/@
 						</div>
 
-						<p class="text-sm text-muted-foreground">
-							{ templates.T(ctx, "account_new_atname_hint") }
-						</p>
-
-						if data.FormErrors != nil && data.FormErrors.HasFieldError("atname") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("atname") {
-								<p class="text-sm text-error">
-									{ errorMsg }
-								</p>
-							}
-						}
-					</div>
-					<div class="grid gap-2">
-						<label class="label" for="password">
-							{ templates.T(ctx, "account_new_password_label") }
-						</label>
 						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+							if data.FormErrors != nil && data.FormErrors.HasFieldError("atname") {
 								aria-invalid="true"
 							} else {
 								aria-invalid="false"
 							}
-							autocomplete="new-password"
-							class="input"
-							id="password"
-							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
-							minlength={ strconv.Itoa(auth.MinPasswordLength) }
-							name="password"
+							autocomplete="username"
+							autofocus
+							class="input flex-1"
+							id="atname"
+							maxlength={ strconv.Itoa(validator.AtnameMaxLength) }
+							name="atname"
+							pattern="[A-Za-z0-9_]+"
 							required
-							tabindex="2"
-							type="password"
+							tabindex="1"
+							type="text"
+							value={ data.Atname }
 						/>
-						<p class="text-sm text-muted-foreground">
-							{ templates.T(ctx, "account_new_password_hint", map[string]any{"MinLength": auth.MinPasswordLength}) }
-						</p>
-						if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
-								<p class="text-sm text-error">
-									{ errorMsg }
-								</p>
-							}
-						}
 					</div>
-					<button
-						class="btn rounded-full w-fit"
-						tabindex="3"
-						type="submit"
-					>
-						@templates.Icon("arrow-right-regular")
-						{ templates.T(ctx, "account_new_submit_button") }
-					</button>
-				</form>
+
+					<p class="text-sm text-muted-foreground">
+						{ templates.T(ctx, "account_new_atname_hint") }
+					</p>
+
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("atname") {
+						for _, errorMsg := range data.FormErrors.GetFieldErrors("atname") {
+							<p class="text-sm text-error">
+								{ errorMsg }
+							</p>
+						}
+					}
+				</div>
+				<div class="grid gap-2">
+					<label class="label" for="password">
+						{ templates.T(ctx, "account_new_password_label") }
+					</label>
+					<input
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+							aria-invalid="true"
+						} else {
+							aria-invalid="false"
+						}
+						autocomplete="new-password"
+						class="input"
+						id="password"
+						maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
+						minlength={ strconv.Itoa(auth.MinPasswordLength) }
+						name="password"
+						required
+						tabindex="2"
+						type="password"
+					/>
+					<p class="text-sm text-muted-foreground">
+						{ templates.T(ctx, "account_new_password_hint", map[string]any{"MinLength": auth.MinPasswordLength}) }
+					</p>
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+						for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
+							<p class="text-sm text-error">
+								{ errorMsg }
+							</p>
+						}
+					}
+				</div>
+				<button
+					class="btn rounded-full w-fit"
+					tabindex="3"
+					type="submit"
+				>
+					@templates.Icon("arrow-right-regular")
+					{ templates.T(ctx, "account_new_submit_button") }
+				</button>
+			</form>
 		}
 
-		<div class="text-center">
+		<div class="text-center px-4">
 			<a href="/sign_up" class="link-foreground inline-flex items-center gap-1">
 				@templates.Icon("arrow-left-regular", "w-4 h-4")
 				{ templates.T(ctx, "account_new_back_to_sign_up") }

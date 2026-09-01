@@ -1,7 +1,6 @@
 <div
   data-controller="global-hotkey"
   data-global-hotkey-search-path-target="searchPath"
-  <%= "data-global-hotkey-current-space-identifier-value=\"#{current_space.identifier}\"".html_safe if current_space %>
 >
   <%#
     Skip link as the first focusable element so keyboard / screen-reader users can jump past the
@@ -47,6 +46,6 @@
   <div class="fixed bottom-2 left-1/2 z-sticky-bar flex w-full translate-x-[-50%] flex-col items-center gap-4 px-2 pb-safe">
     <%= render BaseUI::Toasts::FlashComponent.new(flash:) %>
 
-    <%= render Navbars::GlobalBottomComponent.new(current_page_name:, current_user:, current_space:) %>
+    <%= render Navbars::GlobalBottomComponent.new(current_page_name:, current_user:) %>
   </div>
 </div>

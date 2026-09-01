@@ -37,14 +37,12 @@ module Navbars
       params(
         current_page_name: PageName,
         current_user: T.nilable(User),
-        current_space: T.nilable(Space),
         class_name: String
       ).void
     end
-    def initialize(current_page_name:, current_user:, current_space: nil, class_name: "")
+    def initialize(current_page_name:, current_user:, class_name: "")
       @current_page_name = current_page_name
       @current_user = current_user
-      @current_space = current_space
       @class_name = class_name
     end
 
@@ -55,10 +53,6 @@ module Navbars
     sig { returns(T.nilable(User)) }
     attr_reader :current_user
     private :current_user
-
-    sig { returns(T.nilable(Space)) }
-    attr_reader :current_space
-    private :current_space
 
     sig { returns(String) }
     attr_reader :class_name
@@ -97,7 +91,7 @@ module Navbars
             active: current_page_name == PageName::Home
           ),
           Item.new(
-            path: search_path_with_space_filter,
+            path: search_path,
             label_key: "nouns.search",
             default_icon: "magnifying-glass-regular",
             active_icon: "magnifying-glass-fill",
@@ -134,15 +128,6 @@ module Navbars
     sig { returns(T::Boolean) }
     private def signed_in?
       !current_user.nil?
-    end
-
-    sig { returns(String) }
-    private def search_path_with_space_filter
-      if current_space.present?
-        search_path(q: "space:#{current_space.not_nil!.identifier}")
-      else
-        search_path
-      end
     end
   end
 end

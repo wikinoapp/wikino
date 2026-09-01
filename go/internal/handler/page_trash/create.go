@@ -64,12 +64,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The page itself is gone from the screen the request came from, so send the user back to the
-	// topic it belonged to (the same destination as the Rails TrashedPages::CreateController).
+	// topic it belonged to.
 	// The path is built from the stored identifier rather than the request URL, so that a request
 	// with different casing still lands on the canonical address.
 	//
-	// [Ja] リクエスト元の画面からはページ自体が消えるため、属していたトピックへ戻す
-	// (Rails 版 TrashedPages::CreateController と同じ遷移先)。パスはリクエスト URL ではなく
+	// [Ja] リクエスト元の画面からはページ自体が消えるため、属していたトピックへ戻す。
+	// パスはリクエスト URL ではなく
 	// 保存済みの識別子から組み立て、大文字小文字が異なるリクエストでも正規のアドレスへ着地させる。
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_page_moved_to_trash"))
 	topicPath := templates.TopicPath(viewmodel.NewSpaceIdentifier(output.Space.Identifier), output.Topic.Number)

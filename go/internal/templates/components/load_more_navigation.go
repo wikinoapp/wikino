@@ -30,9 +30,12 @@ import (
 const fragmentPageQueryParam = "page"
 
 const (
+	linkListContainerID            = "page-link-list"
 	linkListPaginationID           = "page-link-list-pagination"
 	linkListFallbackAnchorID       = "page-link-list-content"
 	linkListLoadMoreFocusID        = "page-link-list-load-more"
+	relatedLinkListID              = "page-related-link-list"
+	pageBacklinkListContainerID    = "page-backlink-list"
 	pageBacklinkPaginationID       = "page-backlink-list-pagination"
 	pageBacklinkFallbackAnchorID   = "page-backlink-list-content"
 	pageBacklinkLoadMoreFocusID    = "page-backlink-list-load-more"

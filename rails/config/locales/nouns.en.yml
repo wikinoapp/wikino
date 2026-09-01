@@ -4,7 +4,6 @@ en:
     actions: Actions
     all_files: All files
     attachments: Attachments
-    backlinks: Backlinks
     best_practices: Best Practices
     cancel: Cancel
     change_email: Change email
@@ -24,7 +23,6 @@ en:
     info: Info
     joined_spaces: Joined spaces
     light: Light
-    links: Links
     modified_at: Modified at
     new_topic: New topic
     next_page: Next

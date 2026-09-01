@@ -3,7 +3,6 @@ import { expect, test, type Page } from "@playwright/test";
 import { signIn } from "../helpers/auth";
 import {
   cleanupTestData,
-  createTestFeatureFlag,
   createTestPage,
   createTestSpace,
   createTestSpaceMember,
@@ -27,14 +26,10 @@ const LONG_TITLE = "長".repeat(200);
 const LONG_BODY = "本文 ".repeat(600).trim();
 
 // A viewer this spec signs in as, together with the page they open. Each case owns its user and
-// space so that afterAll can delete everything the spec created, the go_page_show flag included.
-// Enabling that flag on the shared E2E user would leave the page detail screen routed to the Go
-// version for every spec that runs afterwards, making results depend on the execution order.
+// space so that afterAll can delete everything the spec created.
 //
 // [Ja] この spec がサインインする閲覧者と、その閲覧者が開くページ。ケースごとにユーザーとスペースを
-// 持たせ、afterAll で spec が作ったものを go_page_show フラグごと消せるようにする。共有 E2E ユーザーに
-// このフラグを立てたままにすると、後に走るすべての spec でページ表示画面が Go 版へ振り分けられ、
-// 結果が実行順に依存してしまう。
+// 持たせ、afterAll で spec が作ったものを消せるようにする。
 interface StickyViewer {
   user: TestUser;
   pagePath: string;
@@ -55,7 +50,6 @@ async function createStickyViewer(scopes: string[]): Promise<StickyViewer> {
   const topic = await createTestTopic(space.id);
   await createTestTopicMember(space.id, topic.id, spaceMemberId);
   const page = await createTestPage(space.id, topic.id, { title: LONG_TITLE, body: LONG_BODY });
-  await createTestFeatureFlag(user.id, "go_page_show");
 
   return { user, pagePath: `/s/${space.identifier}/pages/${page.number}` };
 }
