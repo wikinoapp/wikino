@@ -1146,6 +1146,14 @@ other = "メインコンテンツへスキップ"
 description = "トピック詳細画面のタイトル（{topic_name} | {space_name}形式）"
 other = "{{.TopicName}} | {{.SpaceName}}"
 
+[topic_show_visibility_public]
+description = "トピック詳細画面のタイトル下で説明文と同じ行に出す公開トピックのラベル"
+other = "公開"
+
+[topic_show_visibility_private]
+description = "トピック詳細画面のタイトル下で説明文と同じ行に出す非公開トピックのラベル"
+other = "非公開"
+
 [topic_show_paginated_title]
 description = "ページネーションされたトピック詳細画面のタイトル ({topic_name} | {space_name} ({page_number} ページ目) 形式)"
 other = "{{.TopicName}} | {{.SpaceName}} ({{.PageNumber}} ページ目)"

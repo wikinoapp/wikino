@@ -143,11 +143,16 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			Path:  templates.SpacePath(spaceIdentVM),
 		},
 		// The topic is the current page, so it ends the breadcrumb as a plain (unlinked) crumb
-		// carrying aria-current.
+		// carrying aria-current. The icon repeats the visibility the heading states in words, as
+		// decoration: the crumb is read for where the viewer is, and the heading is where the state
+		// is named.
 		//
 		// [Ja] トピックは現在地のため、aria-current を持つリンク無しの項目としてパンくずを締める。
+		// アイコンは見出しが言葉で示す公開範囲を装飾として繰り返す。パンくずは閲覧者の現在地を
+		// 読むためのもので、状態を名指すのは見出しのほうである。
 		components.BreadcrumbItem{
 			Label:     topicVM.Name,
+			IconName:  topicVM.IconName,
 			IsCurrent: true,
 		},
 	)

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	xhtml "golang.org/x/net/html"
 
 	"time"
 
@@ -752,12 +753,13 @@ func TestShow_PageBeyondTotalReturnsNotFound(t *testing.T) {
 }
 
 // The topic is the last item of its breadcrumb, so it ends the trail as a plain crumb marked as
-// the current page. The same visible items are published as BreadcrumbList structured data:
-// signed-out viewers start at the public space, while signed-in viewers also get /home.
+// the current page, carrying the visibility icon as decoration beside its name. The same visible
+// items are published as BreadcrumbList structured data: signed-out viewers start at the public
+// space, while signed-in viewers also get /home.
 //
 // [Ja] トピックはパンくずの末尾項目のため、現在ページとして印を付けたリンク無しの項目で経路を
-// 締める。同じ表示項目を BreadcrumbList 構造化データにも出し、未ログインの閲覧者は公開スペースから、
-// ログイン済みの閲覧者は /home から始める。
+// 締め、名前の横に公開範囲のアイコンを装飾として持つ。同じ表示項目を BreadcrumbList 構造化データ
+// にも出し、未ログインの閲覧者は公開スペースから、ログイン済みの閲覧者は /home から始める。
 func TestShow_BreadcrumbMarksCurrentTopicWithStructuredData(t *testing.T) {
 	t.Parallel()
 
@@ -843,6 +845,215 @@ func TestShow_BreadcrumbMarksCurrentTopicWithStructuredData(t *testing.T) {
 			if strings.Contains(body, "\"name\":\"公開トピック\",\"item\":") {
 				t.Error("current breadcrumb structured-data item must not link to itself")
 			}
+			if !currentCrumbHasDecorativeIcon(t, body) {
+				t.Error("現在地のパンくず項目に装飾アイコンが出ていない")
+			}
 		})
+	}
+}
+
+// visibilityBadgeID is the id showSubtitle gives the visibility badge, which is what lets the
+// assertions below name that one element.
+//
+// [Ja] visibilityBadgeID は showSubtitle が公開範囲のバッジへ与える id で、以下の検査がその要素
+// だけを名指しできるようにしているもの。
+const visibilityBadgeID = "topic-visibility-badge"
+
+// visibilityLabelText parses the response and returns the complete text of the badge that names the
+// topic visibility. Matching the badge element before reading its text prevents "Public" from
+// passing merely because it is a suffix of "Private" in another locale.
+//
+// The badge is found by its id. Its classes describe how it looks, and the response holds other
+// outlined elements, so a match on those would follow a styling change or start reading a different
+// element as the screen grows.
+//
+// [Ja] visibilityLabelText は応答を解析し、トピックの公開範囲を示すバッジのテキスト全体を返す。
+// テキストを読む前にバッジ要素を特定することで、あるロケールで「公開」が「非公開」の接尾辞で
+// あるだけなのに検査を通ることを防ぐ。
+//
+// バッジは id で特定する。クラスは見た目を表すものであり、応答には他の outline の要素もあるため、
+// クラスでの一致はスタイルの変更に追従してしまうか、画面が育つにつれ別の要素を読み始める。
+func visibilityLabelText(t *testing.T, body string) string {
+	t.Helper()
+
+	tokenizer := xhtml.NewTokenizer(strings.NewReader(body))
+	labelDepth := 0
+	var labelText strings.Builder
+	for {
+		switch tokenizer.Next() {
+		case xhtml.ErrorToken:
+			t.Fatalf("公開範囲のバッジ (id=%s) が応答に見つからない", visibilityBadgeID)
+		case xhtml.StartTagToken:
+			token := tokenizer.Token()
+			if labelDepth > 0 {
+				labelDepth++
+				continue
+			}
+
+			if hasAttribute(token, "id", visibilityBadgeID) {
+				labelDepth = 1
+			}
+		case xhtml.TextToken:
+			if labelDepth > 0 {
+				labelText.WriteString(tokenizer.Token().Data)
+			}
+		case xhtml.EndTagToken:
+			if labelDepth == 0 {
+				continue
+			}
+			labelDepth--
+			if labelDepth == 0 {
+				return strings.TrimSpace(labelText.String())
+			}
+		}
+	}
+}
+
+// currentCrumbHasDecorativeIcon reports whether the crumb marked as the current page carries an
+// icon that is hidden from assistive technology. The topic screen repeats its visibility there as
+// decoration, so the icon has to stay out of the reading order while remaining on screen.
+//
+// [Ja] currentCrumbHasDecorativeIcon は、現在ページとして印を付けたパンくず項目が、支援技術から
+// 隠したアイコンを持つかを返す。トピック画面は公開範囲をそこへ装飾として繰り返すため、アイコンは
+// 画面に残しつつ読み上げの順序からは外れている必要がある。
+func currentCrumbHasDecorativeIcon(t *testing.T, body string) bool {
+	t.Helper()
+
+	tokenizer := xhtml.NewTokenizer(strings.NewReader(body))
+	crumbDepth := 0
+	for {
+		switch tokenizer.Next() {
+		case xhtml.ErrorToken:
+			t.Fatal(`aria-current="page" のパンくず項目が応答に見つからない`)
+		case xhtml.StartTagToken:
+			token := tokenizer.Token()
+			if crumbDepth == 0 {
+				if token.Data == "li" && hasAttribute(token, "aria-current", "page") {
+					crumbDepth = 1
+				}
+
+				continue
+			}
+
+			crumbDepth++
+			if token.Data == "svg" && hasAttribute(token, "aria-hidden", "true") {
+				return true
+			}
+		case xhtml.EndTagToken:
+			if crumbDepth == 0 {
+				continue
+			}
+			crumbDepth--
+			if crumbDepth == 0 {
+				return false
+			}
+		}
+	}
+}
+
+func hasAttribute(token xhtml.Token, key string, value string) bool {
+	for _, attribute := range token.Attr {
+		if attribute.Key == key && attribute.Val == value {
+			return true
+		}
+	}
+
+	return false
+}
+
+// The visibility label is the only place the topic screen says whether the topic is public, and it
+// is the label rather than the icon that carries the state for a screen reader. It shares the line
+// below the title with the description. Checking the word
+// keeps that from being replaced by an icon on its own.
+//
+// The listing cards elsewhere in the response would satisfy a bare search for the icon, so the
+// assertion looks for the word next to it.
+//
+// [Ja] 公開範囲のラベルは、トピック画面が公開か非公開かを述べる唯一の場所であり、スクリーン
+// リーダーへ状態を運ぶのはアイコンではなくラベルのほうである。ラベルはタイトルの下の行を
+// 説明文と共有する。言葉を確認することで、それが
+// アイコンだけに置き換わるのを防ぐ。
+//
+// 応答の他の場所にある一覧カードは、アイコンだけを探す検査を通してしまうため、その横に並ぶ
+// 言葉を確認する。
+func TestShow_公開トピックの説明文の行に公開ラベルが出る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-vis-pub").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開ラベル確認").
+		WithVisibility(0). // public
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-vis-pub/topics/1", map[string]string{
+		"space_identifier": "ts-vis-pub",
+		"topic_number":     "1",
+	})
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if got := visibilityLabelText(t, body); got != "公開" {
+		t.Errorf("公開トピックのラベルが「公開」になっていない: got %q", got)
+	}
+}
+
+func TestShow_非公開トピックの説明文の行に非公開ラベルが出る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ownerID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-vis-owner@example.com").
+		WithAtname("tsvisowner").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-vis-priv").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(ownerID).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("非公開ラベル確認").
+		WithVisibility(1). // private
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-vis-priv/topics/1", map[string]string{
+		"space_identifier": "ts-vis-priv",
+		"topic_number":     "1",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: "tsvisowner"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if got := visibilityLabelText(t, body); got != "非公開" {
+		t.Errorf("非公開トピックのラベルが「非公開」になっていない: got %q", got)
 	}
 }

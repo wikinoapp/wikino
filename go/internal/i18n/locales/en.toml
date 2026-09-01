@@ -1146,6 +1146,14 @@ other = "Skip to main content"
 description = "Topic show page title ({topic_name} | {space_name} format)"
 other = "{{.TopicName}} | {{.SpaceName}}"
 
+[topic_show_visibility_public]
+description = "Label for a public topic, shown below the title on the same line as the description on the topic show page"
+other = "Public"
+
+[topic_show_visibility_private]
+description = "Label for a private topic, shown below the title on the same line as the description on the topic show page"
+other = "Private"
+
 [topic_show_paginated_title]
 description = "Paginated topic show page title ({topic_name} | {space_name} (Page {page_number}) format)"
 other = "{{.TopicName}} | {{.SpaceName}} (Page {{.PageNumber}})"
