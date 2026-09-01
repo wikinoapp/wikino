@@ -1277,6 +1277,10 @@ other = "お探しのページは見つかりませんでした"
 description = "メール確認が未完了の場合のエラーメッセージ"
 other = "メール確認が完了していません"
 
+[error_two_factor_not_enabled]
+description = "二要素認証が有効になっていない場合のエラーメッセージ"
+other = "二要素認証が有効になっていません"
+
 [error_not_found_back_to_top]
 description = "404エラーページのトップページリンク"
 other = "トップページに戻る"

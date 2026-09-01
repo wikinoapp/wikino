@@ -1277,6 +1277,10 @@ other = "The page you are looking for could not be found"
 description = "Error message when email is not confirmed"
 other = "Email has not been confirmed"
 
+[error_two_factor_not_enabled]
+description = "Error message when two-factor authentication is not enabled"
+other = "Two-factor authentication is not enabled"
+
 [error_not_found_back_to_top]
 description = "404 error page link to top page"
 other = "Back to top page"
