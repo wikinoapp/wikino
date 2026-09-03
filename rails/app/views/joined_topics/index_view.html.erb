@@ -2,7 +2,7 @@
   <div class="flex flex-col">
     <% @topics.each do |topic| %>
       <div class="group relative flex items-center rounded-md transition duration-150 ease-in-out hover:bg-sidebar-accent">
-        <%= link_to new_page_path(topic.space.identifier, topic.number), {
+        <%= link_to "/s/#{topic.space.identifier}/topics/#{topic.number}/pages/new", {
           class: "absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-md p-2 leading-none text-center transition duration-150 ease-in-out hover:bg-stone-300/40 non-touch:opacity-0 non-touch:group-hover:opacity-100",
           title: t("verbs.create_page"),
           data: { turbo_frame: "_top" }
