@@ -268,6 +268,7 @@ func runServe() {
 	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createTwoFactorSessionUC,
 	)
 	signInTwoFactorRecoveryValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
@@ -275,6 +276,7 @@ func runServe() {
 	signInTwoFactorRecoveryHandler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 	signUpHandler := sign_up.NewHandler(

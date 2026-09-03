@@ -10,6 +10,7 @@ import (
 type RecoveryNewPageData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
+	BackURL    string
 }
 
 // RecoveryNew はリカバリーコード入力ページのコンテンツを表示します
@@ -43,6 +44,7 @@ templ RecoveryNew(data RecoveryNewPageData) {
 				method="POST"
 			>
 				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="back" value={ data.BackURL }/>
 
 				<div class="grid gap-2">
 					<label class="label" for="recovery_code">

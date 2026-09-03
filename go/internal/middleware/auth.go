@@ -5,6 +5,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"net/url"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/session"
@@ -30,8 +31,11 @@ func NewAuth(sessionMgr *session.Manager) *Auth {
 	}
 }
 
-// RequireAuth は認証が必要なルートを保護するミドルウェア
-// 未認証の場合はログインページにリダイレクトする
+// RequireAuth protects routes that require authentication. An unauthenticated request is sent to
+// the sign-in page.
+//
+// [Ja] RequireAuth は認証が必要なルートを保護するミドルウェア。
+// 未認証の場合はサインインページにリダイレクトする。
 func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -44,7 +48,7 @@ func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 		}
 
 		if user == nil {
-			http.Redirect(w, r, "/sign_in", http.StatusFound)
+			redirectToSignIn(w, r)
 			return
 		}
 
@@ -52,6 +56,24 @@ func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, userContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// redirectToSignIn sends an unauthenticated visitor to the sign-in page. A GET or HEAD request
+// carries its path and query in the back parameter so that signing in lands the visitor on the
+// page they asked for. Other methods have side effects that signing in cannot replay with a GET,
+// so they are sent to the sign-in page without it.
+//
+// [Ja] redirectToSignIn は未認証の訪問者をサインインページへ送る。
+// GET と HEAD はパスとクエリを back パラメータに載せ、サインイン後に目的のページへ着けるようにする。
+// それ以外のメソッドは副作用を持ち、サインイン後に GET で再現しても意味が無いため、
+// back を付けずにサインインページへ送る。
+func redirectToSignIn(w http.ResponseWriter, r *http.Request) {
+	signInURL := "/sign_in"
+	if r.Method == http.MethodGet || r.Method == http.MethodHead {
+		signInURL += "?back=" + url.QueryEscape(r.URL.RequestURI())
+	}
+
+	http.Redirect(w, r, signInURL, http.StatusFound)
 }
 
 // RequireNoAuth は未認証が必要なルートを保護するミドルウェア
