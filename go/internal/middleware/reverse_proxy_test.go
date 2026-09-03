@@ -775,6 +775,12 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "ページ新規作成の入口 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1/pages/new",
+			expected: true,
+		},
+		{
 			name:     "ページ編集画面",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/edit",
@@ -985,6 +991,34 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "og:image の末尾に余分なセグメントがあるとマッチしない",
 			method:   http.MethodGet,
 			path:     "/attachments/01HXYZ123/og_image/extra",
+			expected: false,
+		},
+		{
+			// The Go route handles GET alone, so any other method must not reach the Go router.
+			// It falls through to Rails and uses its normal unmatched-route handling.
+			//
+			// [Ja] Go ルートはこのパスの GET だけを処理するため、他のメソッドは Go のルーターへ
+			// 届かせない。Rails 側へフォールスルーさせ、通常の未一致ルート処理に応答を委ねる。
+			name:     "ページ新規作成の入口 (POST) はGETのみフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/topics/1/pages/new",
+			expected: false,
+		},
+		{
+			// The trailing "$" keeps sub-paths out, so a future /pages/new/... route is not swept
+			// in by this pattern.
+			//
+			// [Ja] 末尾 $ によりサブパスは対象外にし、将来 /pages/new/... のルートが増えても
+			// 本パターンが巻き込まないようにする。
+			name:     "ページ新規作成の入口配下のサブパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1/pages/new/extra",
+			expected: false,
+		},
+		{
+			name:     "トピック番号が数字でないページ新規作成の入口はマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/abc/pages/new",
 			expected: false,
 		},
 		{

@@ -207,6 +207,7 @@ func runServe() {
 	publishPageUC := usecase.NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 	pageMoveCreateValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo, suggestionPageRepo)
 	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo, pageMoveCreateValidator)
+	createPageUC := usecase.NewCreatePageUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo, pageEditorRepo, draftPageRepo, attachmentRepo)
 
 	// セッションマネージャーを初期化
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
@@ -267,6 +268,7 @@ func runServe() {
 	signInTwoFactorHandler := sign_in_two_factor.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createTwoFactorSessionUC,
 	)
 	signInTwoFactorRecoveryValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
@@ -274,6 +276,7 @@ func runServe() {
 	signInTwoFactorRecoveryHandler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 	signUpHandler := sign_up.NewHandler(
@@ -346,6 +349,7 @@ func runServe() {
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
+		createPageUC,
 	)
 	pageLocationHandler := page_location.NewHandler(
 		getPageLocationsUC,
@@ -735,6 +739,13 @@ func runServe() {
 
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)
+
+		// Page creation entry point. It creates a page and redirects to its edit screen, so it
+		// renders no screen of its own.
+		//
+		// [Ja] ページ新規作成の入口。ページを作成して編集画面へリダイレクトするため、自身の画面は
+		// 描画しない。
+		r.Get("/s/{space_identifier}/topics/{topic_number}/pages/new", pageHandler.New)
 
 		// ページ編集・公開
 		r.Get("/s/{space_identifier}/pages/{page_number}/edit", pageHandler.Edit)

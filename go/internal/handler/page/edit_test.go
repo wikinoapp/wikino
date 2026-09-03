@@ -2,6 +2,7 @@ package page_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -27,6 +28,19 @@ import (
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
+	t.Helper()
+
+	return setupHandlerWithDB(t, nil, queries)
+}
+
+// setupHandlerWithDB builds the handler with the *sql.DB the UseCases that manage their own
+// transaction need. Tests driven from a transaction-scoped Queries pass nil, because they never
+// reach those UseCases.
+//
+// [Ja] setupHandlerWithDB は、自前でトランザクションを管理する UseCase が必要とする *sql.DB を
+// 渡してハンドラーを生成する。トランザクションに紐づく Queries で駆動するテストはそれらの
+// UseCase に到達しないため nil を渡す。
+func setupHandlerWithDB(t *testing.T, db *sql.DB, queries *query.Queries) *page.Handler {
 	t.Helper()
 
 	cfg := &config.Config{
@@ -81,7 +95,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 
 	publishPageUC := usecase.NewPublishPageUsecase(
-		nil,
+		db,
 		spaceRepo,
 		spaceMemberRepo,
 		pageRepo,
@@ -96,6 +110,18 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		pageUpdateValidator,
 	)
 
+	createPageUC := usecase.NewCreatePageUsecase(
+		db,
+		spaceRepo,
+		spaceMemberRepo,
+		topicRepo,
+		topicMemberRepo,
+		pageRepo,
+		pageEditorRepo,
+		draftPageRepo,
+		attachmentRepo,
+	)
+
 	return page.NewHandler(
 		cfg,
 		flashMgr,
@@ -103,6 +129,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
+		createPageUC,
 	)
 }
 

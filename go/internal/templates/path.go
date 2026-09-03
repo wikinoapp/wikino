@@ -153,6 +153,39 @@ func SignInPath() Path {
 	return Path("/sign_in")
 }
 
+// SignInTwoFactorNewPath generates the path to the two-factor code form. A non-empty backURL is
+// carried in the query so that the sign-in destination survives the two-factor detour.
+//
+// [Ja] SignInTwoFactorNewPath は二要素認証コード入力のパスを生成します。backURL が空でなければ
+// クエリに載せ、二要素認証を経由してもサインイン後の戻り先が失われないようにします。
+func SignInTwoFactorNewPath(backURL string) Path {
+	return pathWithBack(Path("/sign_in/two_factor/new"), backURL)
+}
+
+// SignInTwoFactorRecoveryNewPath generates the path to the recovery code form, carrying backURL
+// the same way as SignInTwoFactorNewPath.
+//
+// [Ja] SignInTwoFactorRecoveryNewPath はリカバリーコード入力のパスを生成します。backURL の扱いは
+// SignInTwoFactorNewPath と同じです。
+func SignInTwoFactorRecoveryNewPath(backURL string) Path {
+	return pathWithBack(Path("/sign_in/two_factor/recovery/new"), backURL)
+}
+
+// pathWithBack appends backURL to path as the back query parameter, and returns path unchanged
+// when backURL is empty. Whether backURL is a safe redirect destination is decided by the handler
+// that finally redirects to it (redirect.GetSafeRedirectURL), not here.
+//
+// [Ja] pathWithBack は backURL を back クエリパラメータとして path に付けて返し、backURL が空の
+// ときは path をそのまま返します。backURL がリダイレクト先として安全かどうかは、最終的に
+// リダイレクトするハンドラー (redirect.GetSafeRedirectURL) が判断し、ここでは判断しません。
+func pathWithBack(path Path, backURL string) Path {
+	if backURL == "" {
+		return path
+	}
+
+	return Path(string(path) + "?back=" + url.QueryEscape(backURL))
+}
+
 // TopPath generates the path to the public top page.
 //
 // [Ja] TopPath は公開トップページのパスを生成する。

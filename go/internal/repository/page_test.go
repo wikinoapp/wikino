@@ -1902,3 +1902,62 @@ func TestPageRepository_CreateLinkedPage(t *testing.T) {
 		}
 	})
 }
+
+func TestPageRepository_CreateBlankPage(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-create-blank-space").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	t.Run("タイトルの無い空ページを作成できる", func(t *testing.T) {
+		page, err := repo.CreateBlankPage(context.Background(), CreateBlankPageInput{
+			SpaceID: spaceID,
+			TopicID: topicID,
+			Number:  100,
+		})
+		if err != nil {
+			t.Fatalf("CreateBlankPage() error = %v", err)
+		}
+		if page == nil {
+			t.Fatal("CreateBlankPage() returned nil, want page")
+		}
+		if page.SpaceID != spaceID {
+			t.Errorf("page.SpaceID = %v, want %v", page.SpaceID, spaceID)
+		}
+		if page.TopicID != topicID {
+			t.Errorf("page.TopicID = %v, want %v", page.TopicID, topicID)
+		}
+		if page.Number != 100 {
+			t.Errorf("page.Number = %v, want 100", page.Number)
+		}
+		if page.Title != nil {
+			t.Errorf("page.Title = %v, want nil", page.Title)
+		}
+		if page.Body != "" {
+			t.Errorf("page.Body = %v, want empty string", page.Body)
+		}
+		if page.BodyHTML != "" {
+			t.Errorf("page.BodyHTML = %v, want empty string", page.BodyHTML)
+		}
+		if len(page.LinkedPageIDs) != 0 {
+			t.Errorf("page.LinkedPageIDs = %v, want empty", page.LinkedPageIDs)
+		}
+		if page.PublishedAt != nil {
+			t.Errorf("page.PublishedAt = %v, want nil", page.PublishedAt)
+		}
+		if page.ModifiedAt.IsZero() {
+			t.Error("page.ModifiedAt should not be zero")
+		}
+	})
+}

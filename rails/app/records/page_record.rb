@@ -51,28 +51,6 @@ class PageRecord < ApplicationRecord
     where(conditions, parameters)
   }
 
-  sig { params(topic_record: TopicRecord).returns(PageRecord) }
-  def self.create_as_blanked!(topic_record:)
-    # 空のbody_htmlを生成
-    topic = TopicRepository.new.to_model(topic_record:)
-    space = SpaceRepository.new.to_model(space_record: topic_record.space_record.not_nil!)
-
-    body_html = Markup.new(
-      current_topic: topic,
-      current_space: space,
-      current_space_member: nil
-    ).render_html(text: "")
-
-    topic_record.page_records.create!(
-      space_record: topic_record.space_record,
-      title: nil,
-      body: "",
-      body_html:,
-      linked_page_ids: [],
-      modified_at: Time.current
-    )
-  end
-
   sig { void }
   def self.destroy_all_with_related_records!
     find_each do |page_record|
@@ -195,15 +173,6 @@ class PageRecord < ApplicationRecord
 
     # 結果を取得
     where(id: combined_ids).active.order(modified_at: :desc)
-  end
-
-  sig { params(editor_record: SpaceMemberRecord).void }
-  def add_editor!(editor_record:)
-    page_editor_records.where(space_record:, space_member_record: editor_record).first_or_create!(
-      last_page_modified_at: modified_at
-    )
-
-    nil
   end
 
   sig do

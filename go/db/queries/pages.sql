@@ -324,8 +324,19 @@ SET title = id::varchar,
 WHERE id = @id
   AND space_id = @space_id;
 
--- name: CreateLinkedPage :one
--- Wikiリンクから参照されるページを作成する
+-- name: CreateUnpublishedPage :one
+-- Creates a page that has not been published yet. Both the wiki link resolution and the page
+-- creation entry point insert the same columns, so they share this query. The title is nullable
+-- because the wiki link resolution knows the title up front while the creation entry point does
+-- not: its page stays untitled until the user publishes it.
+-- published_at stays NULL so the page remains unpublished and is omitted from published-page
+-- listings until the user explicitly publishes it.
+--
+-- [Ja] 未公開のページを作成する。Wiki リンクの解決とページ新規作成の入口は同じ列を INSERT する
+-- ため、このクエリを共有する。title を nullable にしているのは、Wiki リンクの解決では
+-- タイトルが先に決まるのに対し、新規作成の入口では未定であり、ユーザーが公開するまで
+-- タイトルの無いページのままになるため。ユーザーが明示的に公開するまで未公開状態を保ち、
+-- 公開済みページの一覧から除外するため、published_at は NULL のままにする。
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, '', '', '{}', $5, NULL, $5, $5)
+VALUES (@space_id, @topic_id, @number, sqlc.narg('title'), '', '', '{}', @modified_at, NULL, @modified_at, @modified_at)
 RETURNING *;

@@ -10,6 +10,7 @@ import (
 type NewPageData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
+	BackURL    string
 }
 
 // New は2FAコード入力ページのコンテンツを表示します
@@ -43,6 +44,7 @@ templ New(data NewPageData) {
 				method="POST"
 			>
 				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="back" value={ data.BackURL }/>
 
 				<div class="grid gap-2">
 					<label class="label" for="totp_code">
@@ -94,7 +96,7 @@ templ New(data NewPageData) {
 				{ templates.T(ctx, "sign_in_two_factor_new_recovery_description") }
 			</p>
 
-			<a href="/sign_in/two_factor/recovery/new" class="link-foreground">
+			<a href={ templ.SafeURL(string(templates.SignInTwoFactorRecoveryNewPath(data.BackURL))) } class="link-foreground">
 				{ templates.T(ctx, "sign_in_two_factor_new_recovery_link") }
 			</a>
 		</div>

@@ -15,6 +15,7 @@ type Handler struct {
 	getPageDetailUC   *usecase.GetPageDetailUsecase
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase
 	publishPageUC     *usecase.PublishPageUsecase
+	createPageUC      *usecase.CreatePageUsecase
 }
 
 // NewHandler は新しいページハンドラーを作成します
@@ -25,6 +26,7 @@ func NewHandler(
 	getPageDetailUC *usecase.GetPageDetailUsecase,
 	getEditLinkDataUC *usecase.GetEditLinkDataUsecase,
 	publishPageUC *usecase.PublishPageUsecase,
+	createPageUC *usecase.CreatePageUsecase,
 ) *Handler {
 	return &Handler{
 		cfg:               cfg,
@@ -33,5 +35,6 @@ func NewHandler(
 		getPageDetailUC:   getPageDetailUC,
 		getEditLinkDataUC: getEditLinkDataUC,
 		publishPageUC:     publishPageUC,
+		createPageUC:      createPageUC,
 	}
 }
