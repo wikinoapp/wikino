@@ -500,11 +500,38 @@ type CreateLinkedPageInput struct {
 // CreateLinkedPage はWikiリンクから参照されるページを作成する
 func (r *PageRepository) CreateLinkedPage(ctx context.Context, input CreateLinkedPageInput) (*model.Page, error) {
 	now := time.Now()
-	row, err := r.q.CreateLinkedPage(ctx, query.CreateLinkedPageParams{
+	row, err := r.q.CreateUnpublishedPage(ctx, query.CreateUnpublishedPageParams{
 		SpaceID:    string(input.SpaceID),
 		TopicID:    string(input.TopicID),
 		Number:     int32(input.Number),
 		Title:      input.Title,
+		ModifiedAt: now,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// CreateBlankPageInput contains the values needed to create an unpublished blank page.
+//
+// [Ja] CreateBlankPageInput は、未公開の空ページの作成に必要な値を保持します。
+type CreateBlankPageInput struct {
+	SpaceID model.SpaceID
+	TopicID model.TopicID
+	Number  model.PageNumber
+}
+
+// CreateBlankPage creates an empty, untitled page for the page creation entry point.
+//
+// [Ja] CreateBlankPage はページ新規作成の入口向けに、タイトルの無い空ページを作成する。
+func (r *PageRepository) CreateBlankPage(ctx context.Context, input CreateBlankPageInput) (*model.Page, error) {
+	now := time.Now()
+	row, err := r.q.CreateUnpublishedPage(ctx, query.CreateUnpublishedPageParams{
+		SpaceID:    string(input.SpaceID),
+		TopicID:    string(input.TopicID),
+		Number:     int32(input.Number),
+		Title:      nil,
 		ModifiedAt: now,
 	})
 	if err != nil {

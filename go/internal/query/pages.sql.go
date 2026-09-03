@@ -209,13 +209,13 @@ func (q *Queries) CountRegularPagesByTopic(ctx context.Context, arg CountRegular
 	return count, err
 }
 
-const createLinkedPage = `-- name: CreateLinkedPage :one
+const createUnpublishedPage = `-- name: CreateUnpublishedPage :one
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, '', '', '{}', $5, NULL, $5, $5)
 RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
 `
 
-type CreateLinkedPageParams struct {
+type CreateUnpublishedPageParams struct {
 	SpaceID    string      `json:"space_id"`
 	TopicID    string      `json:"topic_id"`
 	Number     int32       `json:"number"`
@@ -223,9 +223,20 @@ type CreateLinkedPageParams struct {
 	ModifiedAt time.Time   `json:"modified_at"`
 }
 
-// Wikiリンクから参照されるページを作成する
-func (q *Queries) CreateLinkedPage(ctx context.Context, arg CreateLinkedPageParams) (Page, error) {
-	row := q.db.QueryRowContext(ctx, createLinkedPage,
+// Creates a page that has not been published yet. Both the wiki link resolution and the page
+// creation entry point insert the same columns, so they share this query. The title is nullable
+// because the wiki link resolution knows the title up front while the creation entry point does
+// not: its page stays untitled until the user publishes it.
+// published_at stays NULL so the page remains unpublished and is omitted from published-page
+// listings until the user explicitly publishes it.
+//
+// [Ja] 未公開のページを作成する。Wiki リンクの解決とページ新規作成の入口は同じ列を INSERT する
+// ため、このクエリを共有する。title を nullable にしているのは、Wiki リンクの解決では
+// タイトルが先に決まるのに対し、新規作成の入口では未定であり、ユーザーが公開するまで
+// タイトルの無いページのままになるため。ユーザーが明示的に公開するまで未公開状態を保ち、
+// 公開済みページの一覧から除外するため、published_at は NULL のままにする。
+func (q *Queries) CreateUnpublishedPage(ctx context.Context, arg CreateUnpublishedPageParams) (Page, error) {
+	row := q.db.QueryRowContext(ctx, createUnpublishedPage,
 		arg.SpaceID,
 		arg.TopicID,
 		arg.Number,

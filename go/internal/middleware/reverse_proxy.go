@@ -102,6 +102,14 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
+	// Page creation entry point (GET /s/:identifier/topics/:number/pages/new). It creates a page
+	// and redirects to its edit screen. The Go route is GET-only, so restrict the method and let
+	// the other methods keep reaching the Rails version.
+	//
+	// [Ja] ページ新規作成の入口 (GET /s/:identifier/topics/:number/pages/new)。ページを作成して
+	// 編集画面へリダイレクトする。Go ルートは GET のみなのでメソッドを限定し、他のメソッドは
+	// 従来どおり Rails 版へ届くようにする。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/pages/new$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
 	// Preview fragment (POST /s/:identifier/pages/:number/preview). The Go route is

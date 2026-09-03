@@ -614,7 +614,7 @@ func setupEditHandler(t *testing.T, queries *query.Queries) *pagehandler.Handler
 	)
 	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
 
-	return pagehandler.NewHandler(cfg, flashMgr, nil, getPageDetailUC, getEditLinkDataUC, nil)
+	return pagehandler.NewHandler(cfg, flashMgr, nil, getPageDetailUC, getEditLinkDataUC, nil, nil)
 }
 
 // callRelatedPageHandler runs one related-page fragment handler as the signed-in member and returns
