@@ -30,7 +30,7 @@
     "happy-dom": "^20.11.15",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
