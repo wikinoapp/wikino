@@ -21,6 +21,7 @@ func setupTestEnv(t *testing.T) func() {
 		"WIKINO_SESSION_HTTPONLY":          os.Getenv("WIKINO_SESSION_HTTPONLY"),
 		"WIKINO_DISABLE_RATE_LIMIT":        os.Getenv("WIKINO_DISABLE_RATE_LIMIT"),
 		"WIKINO_RAILS_APP_URL":             os.Getenv("WIKINO_RAILS_APP_URL"),
+		"WIKINO_TURNSTILE_ENABLED":         os.Getenv("WIKINO_TURNSTILE_ENABLED"),
 		"WIKINO_TURNSTILE_SITE_KEY":        os.Getenv("WIKINO_TURNSTILE_SITE_KEY"),
 		"WIKINO_TURNSTILE_SECRET_KEY":      os.Getenv("WIKINO_TURNSTILE_SECRET_KEY"),
 		"WIKINO_MAINTENANCE_MODE":          os.Getenv("WIKINO_MAINTENANCE_MODE"),
@@ -46,6 +47,11 @@ func setupTestEnv(t *testing.T) func() {
 	_ = os.Unsetenv("WIKINO_SENTRY_ENVIRONMENT")
 	_ = os.Unsetenv("WIKINO_SENTRY_TRACES_SAMPLE_RATE")
 	_ = os.Unsetenv("WIKINO_SENTRY_DEBUG")
+
+	// Reset Turnstile toggle so the real .env value never leaks into tests.
+	//
+	// [Ja] Turnstile の有効/無効フラグは実 .env の値がテストに混入しないよう未設定にする。
+	_ = os.Unsetenv("WIKINO_TURNSTILE_ENABLED")
 
 	// クリーンアップ関数を返す
 	return func() {
@@ -410,6 +416,67 @@ func TestLoad_TurnstileConfig(t *testing.T) {
 			}
 			if cfg.TurnstileSecretKey != tt.wantSecretKey {
 				t.Errorf("TurnstileSecretKey = %q, want %q", cfg.TurnstileSecretKey, tt.wantSecretKey)
+			}
+		})
+	}
+}
+
+// TestLoad_TurnstileEnabled verifies WIKINO_TURNSTILE_ENABLED parsing and the
+// production fail-closed guard, which ignores disablement in production.
+//
+// [Ja] TestLoad_TurnstileEnabled は WIKINO_TURNSTILE_ENABLED の読み込みと、
+// 本番では無効化を無視する fail-closed ガードを検証する。
+func TestLoad_TurnstileEnabled(t *testing.T) {
+	tests := []struct {
+		name                  string
+		env                   string
+		turnstileEnabledSet   bool
+		turnstileEnabledValue string
+		want                  bool
+		wantErr               bool
+	}{
+		{name: "非本番 + false は無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "false", want: false},
+		{name: "非本番 + FALSE は無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "FALSE", want: false},
+		{name: "非本番 + 0 は無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "0", want: false},
+		{name: "本番 + false は fail-closed で有効を維持", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "false", want: true},
+		{name: "本番 + FALSE も fail-closed で有効を維持", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "FALSE", want: true},
+		{name: "未設定は有効 (デフォルト)", env: "test", turnstileEnabledSet: false, want: true},
+		{name: "空文字列は有効 (デフォルト)", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "", want: true},
+		{name: "true は有効", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "true", want: true},
+		{name: "1 は有効", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "1", want: true},
+		{name: "本番 + 未設定は有効", env: "prod", turnstileEnabledSet: false, want: true},
+		{name: "解釈できない値は起動エラー", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "yes", wantErr: true},
+		{name: "打ち間違いも起動エラー", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "flase", wantErr: true},
+		{name: "本番でも解釈できない値は起動エラー", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "yes", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := setupTestEnv(t)
+			defer cleanup()
+
+			_ = os.Setenv("APP_ENV", tt.env)
+			if tt.turnstileEnabledSet {
+				_ = os.Setenv("WIKINO_TURNSTILE_ENABLED", tt.turnstileEnabledValue)
+			} else {
+				_ = os.Unsetenv("WIKINO_TURNSTILE_ENABLED")
+			}
+
+			cfg, err := Load()
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("Load() should return error for WIKINO_TURNSTILE_ENABLED=%q", tt.turnstileEnabledValue)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("Load() failed: %v", err)
+			}
+
+			if cfg.TurnstileEnabled != tt.want {
+				t.Errorf("TurnstileEnabled = %v, want %v", cfg.TurnstileEnabled, tt.want)
 			}
 		})
 	}

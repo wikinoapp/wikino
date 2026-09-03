@@ -6,7 +6,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	"github.com/wikinoapp/wikino/go/internal/templates/pages/welcome"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -26,18 +25,13 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// ページメタデータを作成
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "welcome_title")
+	meta.OGURL = h.cfg.AppURL() + string(templates.TopPath())
 	meta.Description = i18n.T(ctx, "welcome_description")
 
 	// テンプレートをレンダリング
 	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		Sidebar: components.SidebarData{
-			CurrentPageName: templates.PageNameWelcome,
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameWelcome,
-		},
+		Meta:           meta,
+		HideNavigation: true,
 	}
 	pageData := welcome.ShowPageData{}
 

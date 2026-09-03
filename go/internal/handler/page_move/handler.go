@@ -4,7 +4,6 @@ package page_move
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -14,7 +13,6 @@ type Handler struct {
 	flashMgr          *session.FlashManager
 	getPageMoveDataUC *usecase.GetPageMoveDataUsecase
 	movePageUC        *usecase.MovePageUsecase
-	sidebarHelper     *sidebar.Helper
 }
 
 // NewHandler は新しいページ移動ハンドラーを作成します
@@ -23,13 +21,11 @@ func NewHandler(
 	flashMgr *session.FlashManager,
 	getPageMoveDataUC *usecase.GetPageMoveDataUsecase,
 	movePageUC *usecase.MovePageUsecase,
-	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
 		cfg:               cfg,
 		flashMgr:          flashMgr,
 		getPageMoveDataUC: getPageMoveDataUC,
 		movePageUC:        movePageUC,
-		sidebarHelper:     sidebarHelper,
 	}
 }

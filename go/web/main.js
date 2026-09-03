@@ -4,19 +4,10 @@ import { initializeAttachmentLoader } from "./attachment-loader";
 import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
+import { initializeMarkdownTables } from "./markdown-table";
 import { initializePlatform } from "./platform";
+import { initializeStickyHeader } from "./sticky-header";
 import { initializeZenMode } from "./zen-mode";
-
-const SIDEBAR_STORAGE_KEY = "wikinoSidebarOpen";
-
-function initSidebarLocalStoragePersistence() {
-  document.addEventListener("basecoat:sidebar", () => {
-    const sidebar = document.querySelector(".sidebar");
-    if (!sidebar) return;
-    const isOpen = sidebar.getAttribute("aria-hidden") === "false";
-    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isOpen));
-  });
-}
 
 window.disableSubmitButtons = function (form) {
   form.querySelectorAll("button[type=submit]").forEach((b) => (b.disabled = true));
@@ -33,10 +24,11 @@ function setTimeZoneCookie() {
 document.addEventListener("DOMContentLoaded", () => {
   initializeEditors();
   initializeGlobalHotkey();
-  initSidebarLocalStoragePersistence();
   initializeDrawers();
   initializeZenMode();
   initializePlatform();
   initializeAttachmentLoader();
+  initializeMarkdownTables();
+  initializeStickyHeader();
   setTimeZoneCookie();
 });

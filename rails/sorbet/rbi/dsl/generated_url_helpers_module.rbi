@@ -40,25 +40,10 @@ module GeneratedUrlHelpersModule
   def mission_control_jobs_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def move_page_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def new_page_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def new_space_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_topic_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def page_backlink_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def page_link_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_url(*args); end
@@ -173,9 +158,6 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def trash_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def trashed_page_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def turbo_recede_historical_location_url(*args); end

@@ -74,11 +74,6 @@ class SpaceRecord < ApplicationRecord
     SpaceRecord.where.not(id:).exists?(identifier:)
   end
 
-  sig { params(number: T.nilable(T.any(Integer, String))).returns(PageRecord) }
-  def page_record_by_number!(number)
-    page_records.visible.find_by!(number: number&.to_i)
-  end
-
   sig { params(number: T.nilable(T.any(Integer, String))).returns(TopicRecord) }
   def topic_record_by_number!(number)
     topic_records.kept.find_by!(number: number&.to_i)

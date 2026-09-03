@@ -4,7 +4,6 @@ package suggestion_comment_edit
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -15,7 +14,6 @@ type Handler struct {
 	getSuggestionEditUsecase       *usecase.GetSuggestionEditUsecase
 	getSuggestionCommentUsecase    *usecase.GetSuggestionCommentUsecase
 	updateSuggestionCommentUsecase *usecase.UpdateSuggestionCommentUsecase
-	sidebarHelper                  *sidebar.Helper
 }
 
 // NewHandler は新しい編集提案コメント編集ハンドラーを作成します
@@ -25,7 +23,6 @@ func NewHandler(
 	getSuggestionEditUsecase *usecase.GetSuggestionEditUsecase,
 	getSuggestionCommentUsecase *usecase.GetSuggestionCommentUsecase,
 	updateSuggestionCommentUsecase *usecase.UpdateSuggestionCommentUsecase,
-	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
 		cfg:                            cfg,
@@ -33,6 +30,5 @@ func NewHandler(
 		getSuggestionEditUsecase:       getSuggestionEditUsecase,
 		getSuggestionCommentUsecase:    getSuggestionCommentUsecase,
 		updateSuggestionCommentUsecase: updateSuggestionCommentUsecase,
-		sidebarHelper:                  sidebarHelper,
 	}
 }

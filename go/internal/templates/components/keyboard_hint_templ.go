@@ -34,12 +34,13 @@ type KeyboardHintData struct {
 	// ColorClass overrides the chip's background and text so the chip tints itself in the host
 	// button's foreground color: the chip text uses the button's foreground color and the chip
 	// background uses a low-opacity version of it, making the chip a subtle block in the same hue as
-	// the label (e.g. a btn-primary host passes "bg-primary-foreground/20 text-primary-foreground").
+	// the label (e.g. a .btn host on the default primary variant passes
+	// "bg-primary-foreground/20 text-primary-foreground").
 	// The classes must be literals at the call site so Tailwind's source scanner emits them.
 	//
 	// [Ja] ColorClass はチップの背景色と文字色を上書きし、ホストとなるボタンの前景色でチップを淡く
 	// 染める。チップの文字はボタンの前景色を使い、チップの背景はその前景色を低い不透明度にしたものを
-	// 使うことで、チップをラベルと同系色の控えめなブロックとして見せる (例: btn-primary のボタンは
+	// 使うことで、チップをラベルと同系色の控えめなブロックとして見せる (例: 既定の primary バリアントの .btn は
 	// "bg-primary-foreground/20 text-primary-foreground" を渡す)。Tailwind のソーススキャナが
 	// 出力できるよう、クラスは呼び出し側でリテラルとして渡すこと。
 	ColorClass string
@@ -161,7 +162,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(modifier)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 85, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 86, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -201,7 +202,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(modifier)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 89, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 90, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -210,7 +211,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(data.Key)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 89, Col: 104}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 90, Col: 104}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {

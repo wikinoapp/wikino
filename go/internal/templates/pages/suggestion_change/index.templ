@@ -34,97 +34,72 @@ type pageDiffEditData struct {
 // Index は編集提案の変更差分画面のコンテンツを表示します
 templ Index(data IndexData) {
 	<div class="py-4">
-		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					{
-						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier),
-					},
-					{
-						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
-						IconName: data.Topic.IconName,
-					},
-					{
-						Label: fmt.Sprintf("%s #%d", templates.T(ctx, "suggestion_show_breadcrumb"), data.Suggestion.Number),
-						Path:  templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number),
-					},
-				},
-			})
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6">
+				<div class="flex flex-col gap-4">
+					<div class="px-4">
+						@components.MainTitle(components.MainTitleData{
+							Title:   data.Suggestion.Title,
+							Content: components.SuggestionTitleContent(data.Suggestion.Status, data.Suggestion.Number),
+						})
+					</div>
 
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-6">
-					<div class="flex flex-col gap-4">
+					<div class="px-0 md:px-4">
+						@components.SubNav([]components.SubNavItem{
+							{
+								Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
+								Path:           string(templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number)),
+								IconName:       "chats-circle-regular",
+								ActiveIconName: "chats-circle-fill",
+							},
+							{
+								Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
+								Path:           string(templates.SuggestionChangesPath(data.Space.Identifier, data.Suggestion.Number)),
+								IconName:       "files-regular",
+								ActiveIconName: "files-fill",
+								IsActive:       true,
+								Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
+							},
+						})
+					</div>
+				</div>
+
+				<div class="flex flex-col gap-4">
+					if len(data.PageDiffs) == 0 {
 						<div class="px-4">
-							@components.MainTitle(components.MainTitleData{
-								Title:   data.Suggestion.Title,
-								Content: components.SuggestionTitleContent(data.Suggestion.Status, data.Suggestion.Number),
-							})
+							<p class="text-sm text-muted-foreground">
+								{ templates.T(ctx, "diff_no_changes") }
+							</p>
 						</div>
-
-						<div class="px-0 md:px-4">
-							@components.SubNav([]components.SubNavItem{
-								{
-									Label:          templates.T(ctx, "suggestion_show_conversation_tab"),
-									Path:           string(templates.SuggestionShowPath(data.Space.Identifier, data.Suggestion.Number)),
-									IconName:       "chats-circle-regular",
-									ActiveIconName: "chats-circle-fill",
-								},
-								{
-									Label:          templates.T(ctx, "suggestion_show_changed_pages_tab"),
-									Path:           string(templates.SuggestionChangesPath(data.Space.Identifier, data.Suggestion.Number)),
-									IconName:       "files-regular",
-									ActiveIconName: "files-fill",
-									IsActive:       true,
-									Badge:          fmt.Sprintf("%d", len(data.SuggestionPages)),
-								},
-							})
-						</div>
-					</div>
-
-					<div class="flex flex-col gap-4">
-						if len(data.PageDiffs) == 0 {
-							<div class="px-4">
-								<p class="text-sm text-muted-foreground">
-									{ templates.T(ctx, "diff_no_changes") }
-								</p>
-							</div>
-						} else {
-							<div class="flex flex-col gap-4">
-								for _, pd := range data.PageDiffs {
-									@components.ContentCard() {
-										@suggestionPageDiff(pageDiffEditData{
-											CSRFToken:        data.CSRFToken,
-											SpaceIdentifier:  data.Space.Identifier,
-											SuggestionNumber: data.Suggestion.Number,
-											CanEdit:          data.CanEditSuggestionPages,
-											CanRemove:        data.CanRemoveSuggestionPage,
-											PageCount:        len(data.PageDiffs),
-										}, pd)
-									}
+					} else {
+						<div class="flex flex-col gap-4">
+							for _, pd := range data.PageDiffs {
+								@components.ContentCard() {
+									@suggestionPageDiff(pageDiffEditData{
+										CSRFToken:        data.CSRFToken,
+										SpaceIdentifier:  data.Space.Identifier,
+										SuggestionNumber: data.Suggestion.Number,
+										CanEdit:          data.CanEditSuggestionPages,
+										CanRemove:        data.CanRemoveSuggestionPage,
+										PageCount:        len(data.PageDiffs),
+									}, pd)
 								}
-							</div>
-						}
+							}
+						</div>
+					}
 
-						if data.CanAddSuggestionPage {
-							<div class="px-4">
-								<a
-									href={ templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier, data.Suggestion.Number))) }
-									class="btn-secondary rounded-full"
-								>
-									@templates.Icon("file-plus-regular", "size-4")
-									{ templates.T(ctx, "suggestion_change_add_page_button") }
-								</a>
-							</div>
-						}
-					</div>
+					if data.CanAddSuggestionPage {
+						<div class="px-4">
+							<a
+								href={ templ.SafeURL(string(templates.SuggestionPageNewPath(data.Space.Identifier, data.Suggestion.Number))) }
+								class="btn rounded-full"
+								data-variant="secondary"
+							>
+								@templates.Icon("file-plus-regular", "size-4")
+								{ templates.T(ctx, "suggestion_change_add_page_button") }
+							</a>
+						</div>
+					}
 				</div>
 			</div>
 		</div>
@@ -170,7 +145,9 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 						<input type="hidden" name="csrf_token" value={ editData.CSRFToken }/>
 						<input type="hidden" name="suggestion_page_id" value={ pd.SuggestionPageID }/>
 						<button
-							class="btn-sm-link h-fit p-0"
+							class="btn h-fit p-0"
+							data-variant="link"
+							data-size="sm"
 							type="submit"
 						>
 							@templates.Icon("pencil-simple-line-regular", "size-3")
@@ -188,7 +165,9 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 						<input type="hidden" name="_method" value="DELETE"/>
 						<input type="hidden" name="csrf_token" value={ editData.CSRFToken }/>
 						<button
-							class="btn-sm-link h-fit p-0 text-error"
+							class="btn h-fit p-0 text-error"
+							data-variant="link"
+							data-size="sm"
 							type="submit"
 						>
 							@templates.Icon("trash-regular", "size-3")

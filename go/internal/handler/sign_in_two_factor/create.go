@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/clientip"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/redirect"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	twofactorpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
@@ -17,18 +19,24 @@ import (
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	// The form is parsed before the pending user check so that an expired pending user cookie still
+	// sends the visitor back to sign-in with the page they asked for.
+	//
+	// [Ja] pending user cookie が期限切れのときも訪問者が求めたページを付けてサインインへ戻せる
+	// よう、pending user の確認より前にフォームをパースする。
+	if err := r.ParseForm(); err != nil {
+		slog.ErrorContext(ctx, "フォームのパースに失敗", "error", err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	backURL := r.FormValue("back")
+
 	// ペンディングユーザーIDを確認
 	pendingUserID := h.sessionMgr.GetPendingUserID(r)
 	if pendingUserID == "" {
 		// ペンディングユーザーIDがない場合はログインページにリダイレクト
-		http.Redirect(w, r, "/sign_in", http.StatusFound)
-		return
-	}
-
-	// フォームをパース
-	if err := r.ParseForm(); err != nil {
-		slog.ErrorContext(ctx, "フォームのパースに失敗", "error", err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		redirect.ToSignIn(w, r, backURL)
 		return
 	}
 
@@ -45,7 +53,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// バリデーションエラー → フォーム再描画
 		if ve := model.AsValidationError(err); ve != nil {
-			h.renderTwoFactorForm(w, r, ve, csrfToken)
+			h.renderTwoFactorForm(w, r, ve, csrfToken, backURL)
 			return
 		}
 		// アプリケーションエラー
@@ -53,7 +61,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			if ae.Code == model.AppErrCodeTwoFactorNotEnabled {
 				slog.WarnContext(ctx, "2FAが有効でないユーザー", "user_id", pendingUserID)
 				h.sessionMgr.DeletePendingUserCookie(w)
-				http.Redirect(w, r, "/sign_in", http.StatusFound)
+				redirect.ToSignIn(w, r, backURL)
 				return
 			}
 			slog.ErrorContext(ctx, ae.LogString())
@@ -70,22 +78,29 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// セッションCookieを設定
 	h.sessionMgr.SetSessionCookie(w, output.Token)
 
-	// ホームにリダイレクト
-	http.Redirect(w, r, "/", http.StatusFound)
+	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_sign_in_success"))
+
+	// Send the visitor to the back parameter when it is a safe destination, and to the home page
+	// otherwise.
+	//
+	// [Ja] back パラメータが安全な遷移先ならそこへ送り、そうでなければホームへ送る。
+	http.Redirect(w, r, redirect.GetSafeRedirectURL(backURL), http.StatusFound)
 }
 
 // renderTwoFactorForm は2FAフォームをエラー付きでレンダリングします
-func (h *Handler) renderTwoFactorForm(w http.ResponseWriter, r *http.Request, formErrors *model.ValidationError, csrfToken string) {
+func (h *Handler) renderTwoFactorForm(w http.ResponseWriter, r *http.Request, formErrors *model.ValidationError, csrfToken string, backURL string) {
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_in_two_factor_title")
+	meta.SetTitle(ctx, "sign_in_two_factor_new_title")
 
 	pageData := twofactorpages.NewPageData{
 		CSRFToken:  csrfToken,
 		FormErrors: formErrors,
+		BackURL:    backURL,
 	}
 	content := twofactorpages.New(pageData)
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

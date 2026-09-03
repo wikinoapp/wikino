@@ -8,9 +8,9 @@ import (
 	"github.com/a-h/templ"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -19,19 +19,25 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// RenderLayoutInput は編集提案関連ハンドラーで共有するレイアウトレンダリングの入力
+// RenderLayoutInput is the input for the layout rendering shared by suggestion-related handlers.
+// BreadcrumbHeader carries the breadcrumb header, which the layout renders outside <main>.
+//
+// [Ja] RenderLayoutInput は編集提案関連ハンドラーで共有するレイアウトレンダリングの入力。
+// BreadcrumbHeader はパンくずヘッダーを保持し、レイアウトが <main> の外で描画する。
 type RenderLayoutInput struct {
-	Cfg             *config.Config
-	SidebarHelper   *sidebar.Helper
-	User            *model.User
-	SpaceIdentifier model.SpaceIdentifier
-	CurrentPageName templates.PageName
-	Meta            viewmodel.PageMeta
-	Content         templ.Component
+	User             *model.User
+	SpaceIdentifier  model.SpaceIdentifier
+	CurrentPageName  templates.PageName
+	Meta             viewmodel.PageMeta
+	BreadcrumbHeader components.BreadcrumbHeaderData
+	Content          templ.Component
 }
 
-// RenderLayout は編集提案関連ページのレイアウト組み立てと最終レンダリングを行う。
-// sidebar / BottomNav の組み立て・サイドバーコンテンツの取得・layouts.Default の呼び出しを一元化する。
+// RenderLayout assembles the shared layout for suggestion-related pages and renders it. It
+// centralizes building the global-nav state, the breadcrumb header and the layouts.Default call.
+//
+// [Ja] RenderLayout は編集提案関連ページのレイアウト組み立てと最終レンダリングを行う。
+// グローバルナビ状態・パンくずヘッダーの組み立てと layouts.Default の呼び出しを一元化する。
 func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayoutInput) error {
 	signedIn := input.User != nil
 	var userAtname string
@@ -39,28 +45,15 @@ func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayout
 		userAtname = input.User.Atname
 	}
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(input.SpaceIdentifier)
-
 	layoutData := layouts.DefaultLayoutData{
 		Meta: input.Meta,
-		Sidebar: components.SidebarData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: input.CurrentPageName,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
-			SpaceIdentifier: spaceIdentVM,
+			SpaceIdentifier: viewmodel.NewSpaceIdentifier(input.SpaceIdentifier),
 		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: input.CurrentPageName,
-			SignedIn:        signedIn,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	if input.User != nil {
-		sidebarContent := input.SidebarHelper.Content(ctx, input.User.ID)
-		layoutData.Sidebar.JoinedTopics = sidebarContent.JoinedTopics
-		layoutData.Sidebar.DraftPages = sidebarContent.DraftPages
-		layoutData.Sidebar.HasMoreDraftPages = sidebarContent.HasMoreDraftPages
+		BreadcrumbHeader: input.BreadcrumbHeader,
 	}
 
 	if err := layouts.Default(layoutData, input.Content).Render(ctx, w); err != nil {
@@ -70,13 +63,107 @@ func RenderLayout(ctx context.Context, w http.ResponseWriter, input RenderLayout
 	return nil
 }
 
-// RenderShowInput は RenderShow のための入力
+// suggestionBreadcrumbHeaderMaxWidthClass is the content width shared by every suggestion-family
+// screen. The breadcrumb header takes the same width so it lines up with the body container.
+//
+// [Ja] suggestionBreadcrumbHeaderMaxWidthClass は編集提案系の全画面で共通の本文幅。パンくずヘッダーを本文
+// コンテナと揃えるため、ヘッダーにも同じ幅を渡す。
+const suggestionBreadcrumbHeaderMaxWidthClass = "max-w-3xl"
+
+// spaceBreadcrumbHeaderData builds the breadcrumb header up to the space (home › space). The
+// suggestion list and detail are reachable without signing in, so signedIn carries the viewer's
+// actual state and the authenticated screens pass true.
+//
+// [Ja] spaceBreadcrumbHeaderData はスペースまでのパンくずヘッダー (ホーム › スペース) を組み立てる。
+// 編集提案の一覧と詳細は未ログインでも到達できるため、signedIn には閲覧者の実際の状態を渡し、認証必須の
+// 画面は true を渡す。
+func spaceBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, signedIn bool) components.BreadcrumbHeaderData {
+	return components.BreadcrumbHeaderData{
+		MaxWidthClass: suggestionBreadcrumbHeaderMaxWidthClass,
+		Items: append(components.HomeBreadcrumbItems(ctx, signedIn), components.BreadcrumbItem{
+			Label: space.Name,
+			Path:  templates.SpacePath(space.Identifier),
+		}),
+	}
+}
+
+// topicBreadcrumbHeaderData builds the breadcrumb header up to the topic (home › space › topic).
+//
+// [Ja] topicBreadcrumbHeaderData はトピックまでのパンくずヘッダー (ホーム › スペース › トピック) を
+// 組み立てる。
+func topicBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic, signedIn bool) components.BreadcrumbHeaderData {
+	data := spaceBreadcrumbHeaderData(ctx, space, signedIn)
+	data.Items = append(data.Items, components.BreadcrumbItem{
+		Label:    topic.Name,
+		Path:     templates.TopicPath(space.Identifier, topic.Number),
+		IconName: topic.IconName,
+	})
+	return data
+}
+
+// suggestionListBreadcrumbHeaderData builds the breadcrumb header up to the topic's suggestion list
+// (home › space › topic › suggestions). The suggestion detail and every screen nested under a
+// suggestion continue from here, so a suggestion always sits under the list it belongs to and the
+// two trails never disagree about where it lives.
+//
+// [Ja] suggestionListBreadcrumbHeaderData はトピックの編集提案一覧までのパンくずヘッダー
+// (ホーム › スペース › トピック › 編集提案一覧) を組み立てる。編集提案詳細と、編集提案の配下にある
+// 各画面はここから続けるため、編集提案は常に所属する一覧の下に置かれ、2 つの経路が編集提案の位置に
+// ついて食い違うことがない。
+func suggestionListBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic, signedIn bool) components.BreadcrumbHeaderData {
+	data := topicBreadcrumbHeaderData(ctx, space, topic, signedIn)
+	data.Items = append(data.Items, components.BreadcrumbItem{
+		Label: i18n.T(ctx, "suggestion_index_breadcrumb"),
+		Path:  templates.SuggestionListPath(space.Identifier, topic.Number),
+	})
+	return data
+}
+
+// DetailBreadcrumbHeaderData builds the breadcrumb header
+// (home › space › topic › suggestions › suggestion title) for the screens nested under a
+// suggestion: its edit form, the change diff, the comment edit form, the page add form and the page
+// edit confirmation. The layout renders the header, so those handlers supply it from here rather
+// than repeating the same crumbs. The change diff is reachable without signing in, so signedIn
+// carries the viewer's actual state there and the authenticated screens pass true.
+//
+// suggestionTitle names the suggestion the same way the detail screen names itself, so one URL
+// carries one name across screens and in the BreadcrumbList JSON-LD generated from these items.
+//
+// [Ja] DetailBreadcrumbHeaderData は編集提案の配下にある画面 (編集提案の編集 / 変更差分 / コメント編集 /
+// ページ追加 / ページ編集の確認) のパンくずヘッダー
+// (ホーム › スペース › トピック › 編集提案一覧 › 編集提案のタイトル) を組み立てる。描画するのは
+// レイアウトのため、各ハンドラーで同じ項目を繰り返さずここから供給する。変更差分は未ログインでも
+// 到達できるため、そこでは signedIn に閲覧者の実際の状態を渡し、認証必須の画面は true を渡す。
+//
+// suggestionTitle は詳細画面が自身を表すのと同じ名前を使う。これにより 1 つの URL が画面をまたいで
+// 1 つの名前を持ち、同じ項目列から生成する BreadcrumbList JSON-LD でも一致する。
+func DetailBreadcrumbHeaderData(
+	ctx context.Context,
+	space viewmodel.Space,
+	topic viewmodel.Topic,
+	suggestionNumber int32,
+	suggestionTitle string,
+	signedIn bool,
+) components.BreadcrumbHeaderData {
+	data := suggestionListBreadcrumbHeaderData(ctx, space, topic, signedIn)
+	data.Items = append(data.Items, components.BreadcrumbItem{
+		Label: suggestionTitle,
+		Path:  templates.SuggestionShowPath(space.Identifier, suggestionNumber),
+	})
+	return data
+}
+
+// RenderShowInput contains the inputs needed to render a suggestion detail page. Space-aware
+// metadata and links are built from persisted values in Output, so this input deliberately does
+// not accept an identifier derived from URL parameters.
+//
+// [Ja] RenderShowInput は RenderShow のための入力。
+// スペース識別子やページ内リンクの組み立てには Output に含まれる保存済みの値を使うため、
+// URL パラメータ由来の識別子は受け取らない。
 type RenderShowInput struct {
-	Cfg             *config.Config
-	SidebarHelper   *sidebar.Helper
-	User            *model.User
-	SpaceIdentifier model.SpaceIdentifier
-	Output          *usecase.GetSuggestionDetailOutput
+	Cfg    *config.Config
+	User   *model.User
+	Output *usecase.GetSuggestionDetailOutput
 	// ApplyError は反映処理のバリデーション結果を表示する場合にセットする。nil の場合はエラー表示を行わない
 	ApplyError *viewmodel.SuggestionApplyError
 }
@@ -98,6 +185,13 @@ func RenderShow(ctx context.Context, w http.ResponseWriter, input RenderShowInpu
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
+	// Build links from the stored identifier, not from the URL, so that the canonical URL collapses
+	// to one address per screen.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、正規 URL を 1 画面 1 アドレスに
+	// 集約する。
+	spaceIdentVM := spaceVM.Identifier
+
 	meta := viewmodel.DefaultPageMeta(ctx, input.Cfg)
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_show_title", map[string]any{
 		"SuggestionTitle":  output.Suggestion.Title,
@@ -105,7 +199,8 @@ func RenderShow(ctx context.Context, w http.ResponseWriter, input RenderShowInpu
 		"TopicName":        output.Topic.Name,
 		"SpaceName":        output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = viewmodel.NewSpaceIdentifier(input.SpaceIdentifier)
+	meta.OGURL = input.Cfg.AppURL() + string(templates.SuggestionShowPath(spaceIdentVM, suggestionVM.Number))
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
@@ -132,13 +227,35 @@ func RenderShow(ctx context.Context, w http.ResponseWriter, input RenderShowInpu
 		ApplyError:                 input.ApplyError,
 	})
 
+	// The suggestion detail is the current page, so the trail runs through the suggestion list and
+	// ends with the suggestion title as a non-linked current item. The screens nested under this one
+	// continue from the same list crumb through DetailBreadcrumbHeaderData, where the title becomes a
+	// link instead.
+	//
+	// [Ja] 編集提案詳細は現在地のため、経路は編集提案一覧を通り、提案タイトルの非リンクな現在項目で
+	// 締める。本画面の配下にある画面は DetailBreadcrumbHeaderData で同じ一覧の項目から続き、そこでは
+	// タイトルがリンクになる。
+	breadcrumbHeader := suggestionListBreadcrumbHeaderData(ctx, spaceVM, topicVM, input.User != nil)
+	breadcrumbHeader.Items = append(breadcrumbHeader.Items, components.BreadcrumbItem{
+		Label:     suggestionVM.Title,
+		IsCurrent: true,
+	})
+
+	// The suggestion detail is public and declares a self-referencing canonical URL, so it opts into
+	// BreadcrumbList JSON-LD built from the same items. Signed-out viewers start at the public space;
+	// signed-in viewers also get /home.
+	//
+	// [Ja] 編集提案詳細は公開画面で自己参照 canonical を宣言するため、同じ項目列から作る
+	// BreadcrumbList JSON-LD を有効にする。未ログインの閲覧者は公開スペースから始め、ログイン済みの
+	// 閲覧者には /home も含める。
+	breadcrumbHeader.StructuredDataBaseURL = input.Cfg.AppURL()
+
 	return RenderLayout(ctx, w, RenderLayoutInput{
-		Cfg:             input.Cfg,
-		SidebarHelper:   input.SidebarHelper,
-		User:            input.User,
-		SpaceIdentifier: input.SpaceIdentifier,
-		CurrentPageName: templates.PageNameSuggestionShow,
-		Meta:            meta,
-		Content:         content,
+		User:             input.User,
+		SpaceIdentifier:  output.Space.Identifier,
+		CurrentPageName:  templates.PageNameSuggestionShow,
+		Meta:             meta,
+		BreadcrumbHeader: breadcrumbHeader,
+		Content:          content,
 	})
 }

@@ -4,57 +4,6 @@
 require "rails_helper"
 
 RSpec.describe MemberPolicy do
-  describe "#can_show_topic?" do
-    it "公開トピックはスコープなしでも閲覧可能であること" do
-      space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record,
-        space_record:,
-        visibility: TopicVisibility::Public.serialize)
-
-      policy = MemberPolicy.new(space_scopes: [], topic_scopes: [])
-      expect(policy.can_show_topic?(topic_record:)).to be(true)
-    end
-
-    it "非公開トピックはtopic:readで閲覧可能であること" do
-      space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record,
-        space_record:,
-        visibility: TopicVisibility::Private.serialize)
-
-      policy = MemberPolicy.new(
-        space_scopes: [],
-        topic_scopes: [Scope::TOPIC_READ]
-      )
-      expect(policy.can_show_topic?(topic_record:)).to be(true)
-    end
-
-    it "非公開トピックはtopic:readなしで閲覧不可であること" do
-      space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record,
-        space_record:,
-        visibility: TopicVisibility::Private.serialize)
-
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::PAGE_WRITE],
-        topic_scopes: []
-      )
-      expect(policy.can_show_topic?(topic_record:)).to be(false)
-    end
-
-    it "space:adminは非公開トピックを閲覧可能であること" do
-      space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record,
-        space_record:,
-        visibility: TopicVisibility::Private.serialize)
-
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::SPACE_ADMIN],
-        topic_scopes: []
-      )
-      expect(policy.can_show_topic?(topic_record:)).to be(true)
-    end
-  end
-
   describe "#can_update_topic?" do
     it "topic:writeでトピックを更新可能であること" do
       policy = MemberPolicy.new(
@@ -122,50 +71,6 @@ RSpec.describe MemberPolicy do
         topic_scopes: []
       )
       expect(policy.can_create_page?).to be(false)
-    end
-  end
-
-  describe "#can_update_page?" do
-    it "page:writeでページを更新可能であること" do
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::PAGE_WRITE],
-        topic_scopes: []
-      )
-      expect(policy.can_update_page?).to be(true)
-    end
-
-    it "page:writeなしでページを更新不可であること" do
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::PAGE_READ],
-        topic_scopes: []
-      )
-      expect(policy.can_update_page?).to be(false)
-    end
-  end
-
-  describe "#can_trash_page?" do
-    it "page:trashでページをゴミ箱に移動可能であること" do
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::PAGE_TRASH],
-        topic_scopes: []
-      )
-      expect(policy.can_trash_page?).to be(true)
-    end
-
-    it "page:trashなしでページをゴミ箱に移動不可であること" do
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::PAGE_WRITE],
-        topic_scopes: []
-      )
-      expect(policy.can_trash_page?).to be(false)
-    end
-
-    it "space:adminでページをゴミ箱に移動可能であること" do
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::SPACE_ADMIN],
-        topic_scopes: []
-      )
-      expect(policy.can_trash_page?).to be(true)
     end
   end
 

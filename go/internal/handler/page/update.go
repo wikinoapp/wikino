@@ -80,7 +80,7 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 			return
 		}
 
-		h.renderEditWithErrors(w, r, spaceIdentifier, output, title, body, ve)
+		h.renderEditWithErrors(w, r, output, title, body, ve)
 		return
 	}
 
@@ -99,11 +99,16 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
-// renderEditWithErrors はバリデーションエラー時に編集画面を再表示します
+// renderEditWithErrors re-renders the editor on a validation error. Space-aware links are built
+// from the persisted identifier in output, so it deliberately does not take one derived from URL
+// parameters.
+//
+// [Ja] renderEditWithErrors はバリデーションエラー時に編集画面を再表示します。
+// スペース識別子を含むリンクの組み立てには output に含まれる保存済みの値を使うため、
+// URL パラメータ由来の識別子は受け取りません。
 func (h *Handler) renderEditWithErrors(
 	w http.ResponseWriter,
 	r *http.Request,
-	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetPageDetailOutput,
 	title string,
 	body string,
@@ -111,22 +116,36 @@ func (h *Handler) renderEditWithErrors(
 ) {
 	ctx := r.Context()
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
-
 	// ViewModelを生成
 	pageVM := viewmodel.NewPageFromFormInput(title, body, output.Page.Number)
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
+	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
+	// the same form.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
+
+	// Re-rendering the editor after a validation error starts every listing at its first page: the
+	// submitted form carries no related-page pagination state.
+	//
+	// [Ja] バリデーションエラー後の編集画面の再描画では、各一覧を 1 ページ目から始める。送信された
+	// フォームは関連ページのページネーション状態を持たないためである。
+	linkState := viewmodel.PageLinkState{Context: viewmodel.PageLinkContextEdit}.Normalized()
+
 	// リンクデータを取得
 	linkData, err := h.getEditLinkDataUC.Execute(ctx, usecase.GetEditLinkDataInput{
-		Page:              output.Page,
-		DraftPage:         output.DraftPage,
-		SpaceID:           output.Space.ID,
-		CurrentPage:       1,
-		LinkLimit:         viewmodel.LinkLimit,
-		BacklinkLimit:     viewmodel.BacklinkLimit,
-		PageBacklinkLimit: viewmodel.PageBacklinkLimit,
+		Page:                   output.Page,
+		DraftPage:              output.DraftPage,
+		SpaceID:                output.Space.ID,
+		CurrentPage:            linkState.LinkPage,
+		LinkLimit:              viewmodel.LinkLimit,
+		BacklinkLimit:          viewmodel.BacklinkLimit,
+		PageBacklinkLimit:      viewmodel.PageBacklinkLimit,
+		LinkedPageNumber:       linkState.LinkedPageNumber,
+		LinkedPageBacklinkPage: linkState.LinkedBacklinkPage,
+		PageBacklinkPage:       linkState.PageBacklinkPage,
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "リンクデータの取得に失敗", "error", err)
@@ -134,7 +153,12 @@ func (h *Handler) renderEditWithErrors(
 		return
 	}
 
-	linkResult := buildEditLinkResult(linkData, spaceIdentifier, 1, output.Page)
+	linkResult := buildEditLinkResult(buildEditLinkResultInput{
+		LinkData:        linkData,
+		SpaceIdentifier: output.Space.Identifier,
+		Page:            output.Page,
+		State:           linkState,
+	})
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
@@ -147,14 +171,15 @@ func (h *Handler) renderEditWithErrors(
 	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	content := pagepages.Edit(pagepages.EditPageData{
-		CSRFToken:     csrfToken,
-		FormErrors:    formErrors,
-		Page:          pageVM,
-		Space:         spaceVM,
-		Topic:         topicVM,
-		LinkList:      linkResult.LinkList,
-		BacklinkList:  linkResult.BacklinkList,
-		ManualSaveURL: string(templates.PageDraftPagePath(spaceIdentVM, int32(output.Page.Number))),
+		CSRFToken:        csrfToken,
+		FormErrors:       formErrors,
+		Page:             pageVM,
+		Space:            spaceVM,
+		Topic:            topicVM,
+		LinkList:         linkResult.LinkList,
+		BacklinkList:     linkResult.BacklinkList,
+		RelatedPageState: linkState,
+		ManualSaveURL:    string(templates.PageDraftPagePath(spaceIdentVM, int32(output.Page.Number))),
 		// The editor stays within a single space, so omit the space label on each draft card.
 		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
 		DraftPages: viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
@@ -163,21 +188,28 @@ func (h *Handler) renderEditWithErrors(
 
 	currentUser := middleware.UserFromContext(ctx)
 
-	// The page editor hides the global sidebar: the left draft list column takes over in-screen
-	// draft navigation, so HideSidebar is set and no Sidebar data is built.
-	// [Ja] ページ編集画面はグローバルサイドバーを非表示にする。左カラムの下書き一覧が画面内の下書き
-	// ナビゲーションを担うため、HideSidebar を立て、Sidebar データは構築しない。
+	// The editor supplies the global-nav state via GlobalNav. PageNamePageEdit matches no nav item,
+	// so no item is highlighted (the draft list column, not the nav, handles in-screen navigation).
+	//
+	// [Ja] 編集画面はグローバルナビの状態を GlobalNav で供給する。PageNamePageEdit はどのナビ項目にも
+	// 一致しないため、いずれの項目もアクティブにならない (画面内のナビゲーションはナビではなく
+	// 下書き一覧カラムが担う)。
+	navData := components.GlobalNavData{
+		CurrentPageName: templates.PageNamePageEdit,
+		SignedIn:        currentUser != nil,
+		SpaceIdentifier: spaceIdentVM,
+	}
+	if currentUser != nil {
+		navData.UserAtname = currentUser.Atname
+	}
+
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		HideFooter:  true,
-		HideSidebar: true,
-		BottomNav: components.BottomNavData{
-			CurrentPageName:   templates.PageNamePageEdit,
-			SignedIn:          currentUser != nil,
-			SpaceIdentifier:   spaceIdentVM,
-			HideSidebarToggle: true,
-		},
+		HideFooter: true,
+		GlobalNav:  navData,
+
+		BreadcrumbHeader: pageBreadcrumbHeaderData(ctx, spaceVM, topicVM, editBreadcrumbMaxWidthClass, true),
 	}
 
 	w.WriteHeader(http.StatusUnprocessableEntity)

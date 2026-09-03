@@ -4,7 +4,6 @@ ja:
     actions: アクション
     all_files: すべてのファイル
     attachments: 添付ファイル
-    backlinks: バックリンク
     best_practices: ベストプラクティス
     cancel: キャンセル
     change_email: メールアドレスの変更
@@ -12,7 +11,6 @@ ja:
     current_email: 現在のメールアドレス
     dark: ダーク
     documents: ドキュメント
-    draft_pages: 下書きのページ
     edit_profile: プロフィール編集
     error: エラー
     export: エクスポート
@@ -24,10 +22,7 @@ ja:
     inbox: 受信トレイ
     info: Info
     joined_spaces: 参加中のスペース
-    joined_topics: 参加中のトピック
     light: ライト
-    links: リンク
-    menu: メニュー
     modified_at: 編集日時
     new_topic: 新規トピック
     next_page: 次のページ

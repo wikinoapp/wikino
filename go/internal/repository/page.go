@@ -132,22 +132,32 @@ func (r *PageRepository) FindRegularBySpacePaginated(ctx context.Context, spaceI
 	}, nil
 }
 
-// FindLinkedPagesPaginated はリンク先ページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
-func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID, page int32, limit int32) (*PaginatedPages, error) {
+// FindLinkedPagesPaginated returns the pages linked from a page with offset pagination.
+// The caller supplies the resolved offset and limit.
+// Trashed pages and pages whose topic is discarded are excluded, and the result is limited to
+// the topics the viewer may open (see TopicVisibility).
+//
+// [Ja] FindLinkedPagesPaginated はページからのリンク先ページをオフセットページネーションで
+// 取得する。呼び出し元が解決済みの offset と limit を渡す。ゴミ箱に入ったページと廃棄済み
+// トピックのページは除外し、閲覧者が開けるトピックのページに絞る (TopicVisibility を参照)。
+func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID, visibility TopicVisibility, offset int32, limit int32) (*PaginatedPages, error) {
 	totalCount, err := r.q.CountLinkedPages(ctx, query.CountLinkedPagesParams{
-		Column1: model.PageIDsToStrings(pageIDs),
-		SpaceID: string(spaceID),
+		PageIds:          model.PageIDsToStrings(pageIDs),
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	offset := (page - 1) * limit
 	rows, err := r.q.FindLinkedPagesPaginated(ctx, query.FindLinkedPagesPaginatedParams{
-		Column1: model.PageIDsToStrings(pageIDs),
-		SpaceID: string(spaceID),
-		Limit:   limit,
-		Offset:  offset,
+		PageIds:          model.PageIDsToStrings(pageIDs),
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		RowLimit:         limit,
+		RowOffset:        offset,
 	})
 	if err != nil {
 		return nil, err
@@ -159,24 +169,33 @@ func (r *PageRepository) FindLinkedPagesPaginated(ctx context.Context, pageIDs [
 	}, nil
 }
 
-// FindBacklinkedPagesPaginated はバックリンクページをオフセットページネーションで取得する（同スペース・公開済み・未廃棄のページのみ）
-func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, page int32, limit int32, excludePageIDs []model.PageID) (*PaginatedPages, error) {
+// FindBacklinkedPagesPaginated returns the pages linking to a page with offset pagination.
+// The caller supplies the resolved offset and limit.
+// Trash, discarded-topic and topic-visibility handling matches FindLinkedPagesPaginated.
+//
+// [Ja] FindBacklinkedPagesPaginated は指定ページへのバックリンクをオフセットページネーションで
+// 取得する。呼び出し元が解決済みの offset と limit を渡す。ゴミ箱・廃棄済みトピック・
+// トピック可視性の扱いは FindLinkedPagesPaginated と同じ。
+func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, visibility TopicVisibility, offset int32, limit int32, excludePageIDs []model.PageID) (*PaginatedPages, error) {
 	totalCount, err := r.q.CountBacklinkedPages(ctx, query.CountBacklinkedPagesParams{
-		Column1: string(pageID),
-		SpaceID: string(spaceID),
-		Column3: model.PageIDsToStrings(excludePageIDs),
+		PageID:           string(pageID),
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		ExcludePageIds:   model.PageIDsToStrings(excludePageIDs),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	offset := (page - 1) * limit
 	rows, err := r.q.FindBacklinkedPagesPaginated(ctx, query.FindBacklinkedPagesPaginatedParams{
-		Column1: string(pageID),
-		SpaceID: string(spaceID),
-		Limit:   limit,
-		Offset:  offset,
-		Column5: model.PageIDsToStrings(excludePageIDs),
+		PageID:           string(pageID),
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		ExcludePageIds:   model.PageIDsToStrings(excludePageIDs),
+		RowLimit:         limit,
+		RowOffset:        offset,
 	})
 	if err != nil {
 		return nil, err
@@ -188,8 +207,12 @@ func (r *PageRepository) FindBacklinkedPagesPaginated(ctx context.Context, pageI
 	}, nil
 }
 
-// FindBacklinksForPages は複数ページのバックリンクを一括取得する（N+1回避）
-func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages []*model.Page, spaceID model.SpaceID, limit int32, excludePageIDs []model.PageID) (map[model.PageID]*PaginatedPages, error) {
+// FindBacklinksForPages returns the backlinks of several pages in one round trip (avoiding N+1).
+// Filtering matches FindBacklinkedPagesPaginated.
+//
+// [Ja] FindBacklinksForPages は複数ページのバックリンクを一括取得する (N+1 回避)。
+// フィルタ条件は FindBacklinkedPagesPaginated と同じ。
+func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages []*model.Page, spaceID model.SpaceID, visibility TopicVisibility, limit int32, excludePageIDs []model.PageID) (map[model.PageID]*PaginatedPages, error) {
 	if len(targetPages) == 0 {
 		return nil, nil
 	}
@@ -203,10 +226,12 @@ func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages 
 
 	// バックリンクページを一括取得
 	rows, err := r.q.FindBacklinkedPagesForTargets(ctx, query.FindBacklinkedPagesForTargetsParams{
-		Column1: targetIDs,
-		SpaceID: string(spaceID),
-		Limit:   limit,
-		Column4: excludeIDs,
+		TargetIds:        targetIDs,
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		ExcludePageIds:   excludeIDs,
+		RowLimit:         limit,
 	})
 	if err != nil {
 		return nil, err
@@ -214,9 +239,11 @@ func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages 
 
 	// バックリンク件数を一括取得
 	countRows, err := r.q.CountBacklinkedPagesForTargets(ctx, query.CountBacklinkedPagesForTargetsParams{
-		Column1: targetIDs,
-		SpaceID: string(spaceID),
-		Column3: excludeIDs,
+		TargetIds:        targetIDs,
+		SpaceID:          string(spaceID),
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		ExcludePageIds:   excludeIDs,
 	})
 	if err != nil {
 		return nil, err
@@ -411,6 +438,22 @@ func (r *PageRepository) MoveTopic(ctx context.Context, input MoveTopicInput) (*
 	return r.toModel(row), nil
 }
 
+// TrashByID moves the page into the trash by stamping trashed_at with the given time.
+// The caller passes the time so that the UseCase decides it outside the persistence layer, the same
+// way DiscardByID takes discardedAt.
+//
+// [Ja] TrashByID は渡された時刻を trashed_at に打刻してページをゴミ箱へ入れる。
+// 時刻を引数で受け取るのは、DiscardByID が discardedAt を受け取るのと同じく、時刻の決定を
+// 永続化層の外 (UseCase) に置くためである。
+func (r *PageRepository) TrashByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, trashedAt time.Time) error {
+	return r.q.TrashPageByID(ctx, query.TrashPageByIDParams{
+		ID:        string(pageID),
+		SpaceID:   string(spaceID),
+		TrashedAt: sql.NullTime{Time: trashedAt, Valid: true},
+		UpdatedAt: trashedAt,
+	})
+}
+
 // DiscardByID は指定ページを論理削除する（タイトルをIDに変更し、discarded_at を設定する）
 func (r *PageRepository) DiscardByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, discardedAt time.Time) error {
 	return r.q.DiscardPageByID(ctx, query.DiscardPageByIDParams{
@@ -457,11 +500,38 @@ type CreateLinkedPageInput struct {
 // CreateLinkedPage はWikiリンクから参照されるページを作成する
 func (r *PageRepository) CreateLinkedPage(ctx context.Context, input CreateLinkedPageInput) (*model.Page, error) {
 	now := time.Now()
-	row, err := r.q.CreateLinkedPage(ctx, query.CreateLinkedPageParams{
+	row, err := r.q.CreateUnpublishedPage(ctx, query.CreateUnpublishedPageParams{
 		SpaceID:    string(input.SpaceID),
 		TopicID:    string(input.TopicID),
 		Number:     int32(input.Number),
 		Title:      input.Title,
+		ModifiedAt: now,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// CreateBlankPageInput contains the values needed to create an unpublished blank page.
+//
+// [Ja] CreateBlankPageInput は、未公開の空ページの作成に必要な値を保持します。
+type CreateBlankPageInput struct {
+	SpaceID model.SpaceID
+	TopicID model.TopicID
+	Number  model.PageNumber
+}
+
+// CreateBlankPage creates an empty, untitled page for the page creation entry point.
+//
+// [Ja] CreateBlankPage はページ新規作成の入口向けに、タイトルの無い空ページを作成する。
+func (r *PageRepository) CreateBlankPage(ctx context.Context, input CreateBlankPageInput) (*model.Page, error) {
+	now := time.Now()
+	row, err := r.q.CreateUnpublishedPage(ctx, query.CreateUnpublishedPageParams{
+		SpaceID:    string(input.SpaceID),
+		TopicID:    string(input.TopicID),
+		Number:     int32(input.Number),
+		Title:      nil,
 		ModifiedAt: now,
 	})
 	if err != nil {

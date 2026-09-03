@@ -7,10 +7,14 @@ on:
       - develop
     paths:
       - "rails/**"
+      # The RSpec job builds its test database from the Go-owned schema.
+      # [Ja] RSpec ジョブは Go 側が管理するスキーマからテスト用データベースを構築する
+      - "go/db/schema.sql"
       - ".github/workflows/rails-ci.yml"
   pull_request:
     paths:
       - "rails/**"
+      - "go/db/schema.sql"
       - ".github/workflows/rails-ci.yml"
 
 jobs:
@@ -43,7 +47,20 @@ jobs:
       run:
         working-directory: rails
     steps:
+      # Check out the PR head branch itself rather than the merge commit, so the
+      # "Push RBI files or fail" step below can push the commit it creates.
+      # Without this, actions/checkout leaves the repository on a detached HEAD
+      # for pull_request events and git push aborts with exit 128. The
+      # expression is empty on push events, which falls back to the default ref.
+      #
+      # [Ja] 下の "Push RBI files or fail" ステップが作成したコミットを push できるよう、
+      # マージコミットではなく PR のヘッドブランチ自体をチェックアウトする。これがないと
+      # pull_request イベントでは actions/checkout が detached HEAD のままにするため、
+      # git push が exit 128 で失敗する。push イベントではこの式が空になり、既定の
+      # ref にフォールバックする。
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
       - name: Install libvips
         run: |
           sudo apt-get update
@@ -112,7 +129,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 20.16.0
           package-manager-cache: false
@@ -160,7 +177,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libvips libvips-dev
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 20.16.0
           package-manager-cache: false
@@ -176,9 +193,14 @@ jobs:
           ruby-version: 3.4.4
           bundler-cache: true
           working-directory: rails
+      # The primary database schema is owned by the Go side, so the test database
+      # is built from go/db/schema.sql rather than from Rails' db/structure.sql.
+      #
+      # [Ja] primary のスキーマは Go 側が管理するため、テスト用データベースは Rails の
+      # db/structure.sql ではなく go/db/schema.sql から構築する。
       - name: Setup Database
         run: |
-          bin/rails db:schema:load
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f ../go/db/schema.sql
       - name: Precompile assets
         # E2Eテストのために実行する
         run: |

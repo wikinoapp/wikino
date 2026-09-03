@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
@@ -114,8 +115,8 @@ func TestRequireAuth_未認証の場合(t *testing.T) {
 		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusFound)
 	}
 	location := rr.Header().Get("Location")
-	if location != "/sign_in" {
-		t.Errorf("リダイレクト先が不正: got %s, want /sign_in", location)
+	if location != "/sign_in?back=%2Fprotected" {
+		t.Errorf("リダイレクト先が不正: got %s, want /sign_in?back=%%2Fprotected", location)
 	}
 }
 
@@ -150,8 +151,73 @@ func TestRequireAuth_無効なトークンの場合(t *testing.T) {
 		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusFound)
 	}
 	location := rr.Header().Get("Location")
-	if location != "/sign_in" {
-		t.Errorf("リダイレクト先が不正: got %s, want /sign_in", location)
+	if location != "/sign_in?back=%2Fprotected" {
+		t.Errorf("リダイレクト先が不正: got %s, want /sign_in?back=%%2Fprotected", location)
+	}
+}
+
+// Verifies when the redirect to sign-in carries the original destination. Only GET and HEAD carry
+// back; methods with side effects do not.
+//
+// [Ja] サインインへのリダイレクトに元の宛先を引き継ぐ条件を検証する。
+// GET / HEAD だけが back を持ち、副作用のあるメソッドは持たない。
+func TestRequireAuth_未認証時のbackパラメータ(t *testing.T) {
+	t.Parallel()
+
+	auth, _, _ := setupAuthTest(t)
+
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	pageNewTarget := "/s/example/topics/1/pages/new?title=%E3%83%A1%E3%83%A2&body=a+b"
+
+	tests := []struct {
+		name         string
+		method       string
+		target       string
+		wantLocation string
+	}{
+		{
+			name:         "GETはパスとクエリをbackに載せる",
+			method:       http.MethodGet,
+			target:       pageNewTarget,
+			wantLocation: "/sign_in?back=" + url.QueryEscape(pageNewTarget),
+		},
+		{
+			name:         "HEADもbackを載せる",
+			method:       http.MethodHead,
+			target:       "/protected",
+			wantLocation: "/sign_in?back=%2Fprotected",
+		},
+		{
+			name:         "POSTはbackを付けない",
+			method:       http.MethodPost,
+			target:       "/protected",
+			wantLocation: "/sign_in",
+		},
+		{
+			name:         "DELETEはbackを付けない",
+			method:       http.MethodDelete,
+			target:       "/protected",
+			wantLocation: "/sign_in",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.target, nil)
+			rr := httptest.NewRecorder()
+
+			auth.RequireAuth(nextHandler).ServeHTTP(rr, req)
+
+			if rr.Code != http.StatusFound {
+				t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusFound)
+			}
+			if location := rr.Header().Get("Location"); location != tt.wantLocation {
+				t.Errorf("リダイレクト先が不正: got %s, want %s", location, tt.wantLocation)
+			}
+		})
 	}
 }
 

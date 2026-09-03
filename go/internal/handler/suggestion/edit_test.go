@@ -118,4 +118,34 @@ func TestEdit_編集権限がある場合にフォームが表示される(t *te
 	if !strings.Contains(body, "テスト本文") {
 		t.Error("response should contain suggestion body")
 	}
+
+	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
+	// link has to bypass it) and keeps this screen's max-w-3xl content width.
+	//
+	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+	}
+
+	// The edit form shares DetailBreadcrumbHeaderData with the public change diff, but it requires
+	// authentication and carries no canonical URL, so it must stay opted out of BreadcrumbList
+	// JSON-LD. Moving the opt-in into the shared helper would publish this screen's labels and URLs
+	// as machine-readable data.
+	//
+	// [Ja] 編集フォームは公開の変更差分と DetailBreadcrumbHeaderData を共有するが、認証必須で canonical
+	// も持たないため BreadcrumbList JSON-LD の対象外のままでなければならない。オプトインを共有ヘルパーへ
+	// 移すと、この画面のラベルと URL が機械可読なデータとして出てしまう。
+	for _, notWant := range []string{
+		"application/ld+json",
+		"BreadcrumbList",
+	} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("認証必須の画面が構造化データを出している: %q", notWant)
+		}
+	}
 }

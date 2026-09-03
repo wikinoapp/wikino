@@ -17,109 +17,94 @@ type IndexData struct {
 // Index は下書き一覧画面のコンテンツを表示します
 templ Index(data IndexData) {
 	<div class="py-4">
-		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					{
-						Label: templates.T(ctx, "draft_page_index_heading"),
-					},
-				},
-			})
-
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-4">
-					<div class="px-4">
-						@components.MainTitle(components.MainTitleData{
-							Title: templates.T(ctx, "draft_page_index_heading"),
-						})
-					</div>
-
-					if len(data.Groups) == 0 {
-						<div class="px-4">
-							<p class="text-sm text-muted-foreground">
-								{ templates.T(ctx, "draft_page_index_empty") }
-							</p>
-						</div>
-					} else {
-						<div class="flex flex-col gap-6">
-							for _, group := range data.Groups {
-								<div class="flex flex-col gap-2">
-									<div class="flex items-center justify-between gap-4 px-4">
-										<h2 class="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-											@templates.Icon(group.TopicIconName, "size-4")
-											<span>
-												<a href={ templ.SafeURL(string(templates.SpacePath(group.SpaceIdentifier))) } class="hover:text-foreground">{ group.SpaceName }</a>
-												{ " / " }
-												<a href={ templ.SafeURL(string(templates.TopicPath(group.SpaceIdentifier, group.TopicNumber))) } class="hover:text-foreground">{ group.TopicName }</a>
-											</span>
-										</h2>
-
-										<a
-											href={ templ.SafeURL(string(templates.SuggestionNewPath(group.SpaceIdentifier, group.TopicNumber))) }
-											class="btn-sm rounded-full"
-										>
-											@templates.Icon("git-pull-request-regular", "size-4")
-											{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
-										</a>
-									</div>
-
-									@components.ContentCard() {
-										<div class="overflow-x-auto">
-											<table class="table">
-												<thead>
-													<tr>
-														<th class="w-full">
-															{ templates.T(ctx, "draft_page_index_column_title") }
-														</th>
-
-														<th>
-															{ templates.T(ctx, "draft_page_index_column_modified_at") }
-														</th>
-
-														<th>
-															<span class="sr-only">
-																{ templates.T(ctx, "draft_page_index_actions_aria_label") }
-															</span>
-														</th>
-													</tr>
-												</thead>
-
-												<tbody>
-													for _, draft := range group.DraftPages {
-														<tr>
-															<td>
-																<a
-																	href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
-																	class="link-foreground"
-																>
-																	{ draft.DisplayTitle(ctx) }
-																</a>
-															</td>
-
-															<td class="text-muted-foreground whitespace-nowrap">
-																{ templates.FormatDateTime(ctx, draft.ModifiedAt) }
-															</td>
-
-															<td class="whitespace-nowrap">
-																@draftRowActions(data.CSRFToken, draft)
-															</td>
-														</tr>
-													}
-												</tbody>
-											</table>
-										</div>
-									}
-								</div>
-							}
-						</div>
-					}
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "draft_page_index_heading"),
+					})
 				</div>
+
+				if len(data.Groups) == 0 {
+					<div class="px-4">
+						<p class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "draft_page_index_empty") }
+						</p>
+					</div>
+				} else {
+					<div class="flex flex-col gap-6">
+						for _, group := range data.Groups {
+							<div class="flex flex-col gap-2">
+								<div class="flex items-center justify-between gap-4 px-4">
+									<h2 class="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+										@templates.Icon(group.TopicIconName, "size-4")
+										<span>
+											<a href={ templ.SafeURL(string(templates.SpacePath(group.SpaceIdentifier))) } class="hover:text-foreground">{ group.SpaceName }</a>
+											{ " / " }
+											<a href={ templ.SafeURL(string(templates.TopicPath(group.SpaceIdentifier, group.TopicNumber))) } class="hover:text-foreground">{ group.TopicName }</a>
+										</span>
+									</h2>
+
+									<a
+										href={ templ.SafeURL(string(templates.SuggestionNewPath(group.SpaceIdentifier, group.TopicNumber))) }
+										class="btn rounded-full"
+										data-size="sm"
+									>
+										@templates.Icon("git-pull-request-regular", "size-4")
+										{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
+									</a>
+								</div>
+
+								@components.ContentCard() {
+									<div class="overflow-x-auto">
+										<table class="table">
+											<thead>
+												<tr>
+													<th class="w-full">
+														{ templates.T(ctx, "draft_page_index_column_title") }
+													</th>
+
+													<th>
+														{ templates.T(ctx, "draft_page_index_column_modified_at") }
+													</th>
+
+													<th>
+														<span class="sr-only">
+															{ templates.T(ctx, "draft_page_index_actions_aria_label") }
+														</span>
+													</th>
+												</tr>
+											</thead>
+
+											<tbody>
+												for _, draft := range group.DraftPages {
+													<tr>
+														<td>
+															<a
+																href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
+																class="link-foreground"
+															>
+																{ draft.DisplayTitle(ctx) }
+															</a>
+														</td>
+
+														<td class="text-muted-foreground whitespace-nowrap">
+															{ templates.FormatDateTime(ctx, draft.ModifiedAt) }
+														</td>
+
+														<td class="whitespace-nowrap">
+															@draftRowActions(data.CSRFToken, draft)
+														</td>
+													</tr>
+												}
+											</tbody>
+										</table>
+									</div>
+								}
+							</div>
+						}
+					</div>
+				}
 			</div>
 		</div>
 	</div>
@@ -137,9 +122,11 @@ templ draftRowActions(csrfToken string, draft viewmodel.DraftPageForIndex) {
 			aria-controls={ dropdownID + "-menu" }
 			aria-expanded="false"
 			aria-label={ templates.T(ctx, "draft_page_index_actions_aria_label") }
-			class="btn-sm-icon-ghost rounded-full"
+			class="btn rounded-full"
+			data-variant="ghost"
+			data-size="icon-sm"
 		>
-			@templates.Icon("dots-three-regular")
+			@templates.DecorativeIcon("dots-three-regular")
 		</button>
 
 		<div

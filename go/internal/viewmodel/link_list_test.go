@@ -171,3 +171,27 @@ func TestNewLinkList_WithPagination(t *testing.T) {
 		t.Errorf("PageNumber = %d, want 42", got.PageNumber)
 	}
 }
+
+// TestNewLinkList_CanEdit pins that the per-card edit link follows the caller's flag. The link list
+// is rendered on the public page detail screen as well, where a viewer without edit rights must not
+// be offered one.
+//
+// [Ja] TestNewLinkList_CanEdit は各カードの編集リンクが呼び出し元のフラグに従うことを固定する。
+// リンク一覧は公開のページ表示画面にも出るため、編集権限の無い閲覧者に編集リンクを出してはならない。
+func TestNewLinkList_CanEdit(t *testing.T) {
+	t.Parallel()
+
+	pages := []*model.Page{{Number: 1}}
+
+	for _, canEdit := range []bool{true, false} {
+		got := viewmodel.NewLinkList(viewmodel.NewLinkListInput{
+			Pages:           pages,
+			SpaceIdentifier: "test-space",
+			CanEdit:         canEdit,
+		})
+
+		if got.Items[0].CardLinkPage.CanEdit != canEdit {
+			t.Errorf("CanEdit = %t, want %t", got.Items[0].CardLinkPage.CanEdit, canEdit)
+		}
+	}
+}

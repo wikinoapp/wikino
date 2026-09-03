@@ -92,9 +92,12 @@ func TestDraftPageShowResponse_下書きなしの場合に保存時刻が含ま�
 		t.Error("下書きなしの場合、保存時刻要素が含まれるべきではない")
 	}
 
-	// OOBスワップ用のリンク一覧・バックリンク一覧は含まれる
+	// OOBスワップ用の 3 つの関連ページセクションは含まれる
 	if !strings.Contains(html, `id="page-link-list"`) {
 		t.Error("リンク一覧のOOBスワップ要素が含まれていない")
+	}
+	if !strings.Contains(html, `id="page-related-link-list"`) {
+		t.Error("関連リンク一覧のOOBスワップ要素が含まれていない")
 	}
 	if !strings.Contains(html, `id="page-backlink-list"`) {
 		t.Error("バックリンク一覧のOOBスワップ要素が含まれていない")
@@ -128,9 +131,12 @@ func TestDraftPageShowResponse_OOBスワップ属性(t *testing.T) {
 		t.Error("保存時刻のOOBスワップ属性 outerHTML が含まれていない")
 	}
 
-	// リンク一覧・バックリンク一覧はinnerHTMLで置換
+	// 3 つの関連ページセクションは innerHTML で置換
 	if !strings.Contains(html, `id="page-link-list" hx-swap-oob="innerHTML"`) {
 		t.Error("リンク一覧のOOBスワップ属性 innerHTML が含まれていない")
+	}
+	if !strings.Contains(html, `id="page-related-link-list" hx-swap-oob="innerHTML"`) {
+		t.Error("関連リンク一覧のOOBスワップ属性 innerHTML が含まれていない")
 	}
 	if !strings.Contains(html, `id="page-backlink-list" hx-swap-oob="innerHTML"`) {
 		t.Error("バックリンク一覧のOOBスワップ属性 innerHTML が含まれていない")

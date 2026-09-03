@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/redirect"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signinpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
@@ -59,7 +60,18 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// 二要素認証が必要な場合
 	if output.TwoFactorRequired {
 		h.sessionMgr.SetPendingUserCookie(w, output.UserID)
-		http.Redirect(w, r, "/sign_in/two_factor/new", http.StatusFound)
+
+		// The back parameter is handed to the two-factor screens only when it is a safe destination,
+		// so that a value that would be discarded anyway never appears in the URL.
+		//
+		// [Ja] back パラメータは安全な遷移先のときだけ二要素認証の画面へ引き継ぐ。
+		// どのみち捨てられる値が URL に載らないようにするためである。
+		twoFactorBackURL := ""
+		if redirect.ValidateBackURL(backURL) {
+			twoFactorBackURL = backURL
+		}
+
+		http.Redirect(w, r, string(templates.SignInTwoFactorNewPath(twoFactorBackURL)), http.StatusFound)
 		return
 	}
 
@@ -93,7 +105,8 @@ func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, ve *m
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_in_title")
+	meta.SetTitle(ctx, "sign_in_new_title")
+	meta.OGURL = h.cfg.AppURL() + string(templates.SignInPath())
 
 	content := signinpages.New(signinpages.NewPageData{
 		CSRFToken:        csrfToken,

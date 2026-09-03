@@ -3,6 +3,7 @@ en:
     _common:
       learn_more: Learn more
       no_backlinks: No Backlinks
+      skip_to_main_content: Skip to main content
       unexpected_error: Sorry, something went wrong. Please try again.
     no_attachments_found: No attachments found
     uploaded_at: "Uploaded at %{time}"
@@ -39,11 +40,8 @@ en:
     home:
       no_joined_spaces_html: No joined spaces.
     pages:
-      are_you_sure_trash: Are you sure you want to move this page to trash?
       current_page_is_draft: You are currently viewing a draft.
-      moved_to_trash: Page moved to trash.
       saved: Page saved.
-      trashed_page: This page is in the trash.
       untitled: Untitled
     search:
       no_results: No search results found
@@ -106,6 +104,9 @@ en:
               (<span class="font-bold">%{space_name}</span>)
               below.
       updated: Space updated.
+    navbars:
+      global_top_label: Global navigation
+      global_bottom_label: Global navigation (mobile)
     sidebar:
       draft_pages_empty: No drafts
       draft_pages_show_all: Show all

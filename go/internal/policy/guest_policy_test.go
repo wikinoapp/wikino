@@ -20,19 +20,19 @@ func TestGuestPolicy_CanShowTopic(t *testing.T) {
 		}
 	})
 
-	t.Run("非公開トピックは���覧不可", func(t *testing.T) {
+	t.Run("非公開トピックは閲覧不可", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewGuestPolicy()
 		topic := &model.Topic{Visibility: model.TopicVisibilityPrivate}
 
 		if p.CanShowTopic(topic) {
-			t.Error("���ストは非公開トピックを閲覧できないべき")
+			t.Error("ゲストは非公開トピックを閲覧できないべき")
 		}
 	})
 }
 
-func TestGuestPolicy_AllWriteMethodsReturnFalse(t *testing.T) {
+func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 	t.Parallel()
 
 	p := NewGuestPolicy()
@@ -45,6 +45,8 @@ func TestGuestPolicy_AllWriteMethodsReturnFalse(t *testing.T) {
 	}{
 		{"CanCreatePage", p.CanCreatePage()},
 		{"CanUpdatePage", p.CanUpdatePage()},
+		{"CanShowTrash", p.CanShowTrash()},
+		{"CanTrashPage", p.CanTrashPage()},
 		{"CanShowDraftPage(owner)", p.CanShowDraftPage(true)},
 		{"CanShowDraftPage(non-owner)", p.CanShowDraftPage(false)},
 		{"CanUpdateDraftPage(owner)", p.CanUpdateDraftPage(true)},

@@ -13,11 +13,11 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	spacehandler "github.com/wikinoapp/wikino/go/internal/handler/space"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -49,12 +49,10 @@ func setupHandler(t *testing.T, queries *query.Queries) *spacehandler.Handler {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
-	return spacehandler.NewHandler(cfg, getSpaceShowUC, sidebarHelper)
+	return spacehandler.NewHandler(cfg, getSpaceShowUC)
 }
 
 func TestShow_存在しないスペースで404が返る(t *testing.T) {
@@ -154,6 +152,19 @@ func TestShow_メンバーがピン留めと通常ページを閲覧できる(t 
 	}
 	if !strings.Contains(body, "/s/ss-pages/pages/2/edit") {
 		t.Error("response should contain the edit link for the pinned page")
+	}
+
+	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
+	// link has to bypass it) and keeps this screen's max-w-3xl content width.
+	//
+	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
 	}
 }
 
@@ -490,5 +501,349 @@ func TestShow_ページネーションの次ページリンクが表示される
 	body := rr.Body.String()
 	if !strings.Contains(body, "/s/ss-paginate?page=2") {
 		t.Error("response should contain the link to the next page")
+	}
+}
+
+// The space options dropdown trigger is icon-only, so its accessible name comes from the
+// translated aria-label rather than from its content.
+//
+// [Ja] スペースオプションのドロップダウントリガーはアイコンのみのため、アクセシブルネームは
+// 内容ではなく翻訳済みの aria-label が供給する。
+func TestShow_スペースオプションのトリガーにアクセシブルネームがある(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		locale    string
+		wantLabel string
+	}{
+		{
+			name:      "日本語",
+			locale:    i18n.LangJa,
+			wantLabel: "スペースのオプション",
+		},
+		{
+			name:      "英語",
+			locale:    i18n.LangEn,
+			wantLabel: "Space options",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			queries := testutil.QueriesWithTx(tx)
+
+			identifier := "ss-optlabel-" + tt.locale
+			atname := "ssoptlabel" + tt.locale
+
+			ownerID := testutil.NewUserBuilder(t, tx).
+				WithEmail(identifier + "@example.com").
+				WithAtname(atname).
+				Build()
+			spaceID := testutil.NewSpaceBuilder(t, tx).
+				WithIdentifier(identifier).
+				Build()
+			testutil.NewSpaceMemberBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithUserID(ownerID).
+				Build()
+
+			handler := setupHandler(t, queries)
+
+			req := newShowRequest(t, "/s/"+identifier, map[string]string{
+				"space_identifier": identifier,
+			})
+			ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: atname})
+			ctx = i18n.SetLocale(ctx, tt.locale)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+			}
+
+			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
+				t.Errorf("スペースオプションのトリガーに aria-label %q が含まれていない", tt.wantLabel)
+			}
+		})
+	}
+}
+
+// The stored identifier is what the canonical URL must point at. spaces.identifier is citext, so a
+// request whose casing differs reaches the same screen and would otherwise declare a second
+// canonical address for the same content.
+//
+// [Ja] 正規 URL が指すべきは保存済みの識別子である。spaces.identifier は citext のため大文字小文字が
+// 違うリクエストでも同じ画面に到達し、そのままでは同じ内容に対して 2 つ目の正規アドレスを宣言して
+// しまう。
+func TestShow_CanonicalUsesStoredIdentifier(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-canonical").
+		WithName("Canonical Space").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/SS-CANONICAL", map[string]string{
+		"space_identifier": "SS-CANONICAL",
+	})
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		"<title>Canonical Space</title>",
+		"<meta property=\"og:title\" content=\"Canonical Space\">",
+		`<link rel="canonical" href="https://localhost/s/ss-canonical">`,
+		`<meta property="og:url" content="https://localhost/s/ss-canonical">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+	if strings.Contains(body, "SS-CANONICAL") {
+		t.Error("リクエストした表記がレスポンスに残っている")
+	}
+}
+
+// Each page of the series carries different pages, so it declares itself rather than the first page
+// as its canonical address.
+//
+// [Ja] 系列の各ページは載っているページが異なるため、1 ページ目ではなく自分自身を正規アドレスとして
+// 宣言する。
+func TestShow_PaginatedCanonicalPreservesPageParameter(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ownerID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ss-canonical-page-owner@example.com").
+		WithAtname("sscanonicalpageowner").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-canonical-page").
+		WithName("Paginated Space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(ownerID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0).
+		Build()
+
+	// Create 101 regular pages so the 100-per-page limit yields a second page.
+	// [Ja] 1 ページ 100 件の上限を超える 101 件の通常ページを作成し、2 ページ目を発生させる。
+	for i := int32(1); i <= 101; i++ {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(i)).
+			WithTitle(fmt.Sprintf("ページ%d", i)).
+			WithLinkedPageIDs([]model.PageID{}).
+			Build()
+	}
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ss-canonical-page?page=2", map[string]string{
+		"space_identifier": "ss-canonical-page",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: "sscanonicalpageowner"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	for _, want := range []string{
+		"<title>Paginated Space (2 ページ目)</title>",
+		"<meta property=\"og:title\" content=\"Paginated Space (2 ページ目)\">",
+	} {
+		if !strings.Contains(rr.Body.String(), want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+
+	if want := `<link rel="canonical" href="https://localhost/s/ss-canonical-page?page=2">`; !strings.Contains(rr.Body.String(), want) {
+		t.Errorf("response does not contain %q", want)
+	}
+}
+
+func TestShow_PageBeyondTotalReturnsNotFound(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-page-out-of-range").
+		WithName("Out of Range Space").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	// The last value is past int32: a positive page number too large for the offset names a page
+	// that does not exist just as a smaller out-of-range one does, so it gets the same 404 instead of
+	// falling back to the first page.
+	//
+	// [Ja] 最後の値は int32 を超える。offset に収まらない正のページ番号が指すのは、範囲内の範囲外値と
+	// 同じく存在しないページのため、1 ページ目へフォールバックせず同じ 404 になる。
+	for _, page := range []string{"2", "2147483647", "99999999999"} {
+		t.Run("page="+page, func(t *testing.T) {
+			req := newShowRequest(t, "/s/ss-page-out-of-range?page="+page, map[string]string{
+				"space_identifier": "ss-page-out-of-range",
+			})
+
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusNotFound {
+				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+			}
+
+			body := rr.Body.String()
+			if strings.Contains(body, "Out of Range Space") {
+				t.Error("response should not contain the space name")
+			}
+			if strings.Contains(body, "/s/ss-page-out-of-range?page="+page) {
+				t.Error("response should not contain a self-referencing canonical URL")
+			}
+		})
+	}
+}
+
+// The space is the last item of its breadcrumb, so a signed-in viewer gets it marked as the current
+// page under the /home parent used by the authenticated app. A signed-out viewer gets no /home
+// crumb (matching Rails), which leaves the space itself as the only item: that trail has nothing to
+// navigate to, so the breadcrumb is dropped rather than rendering a navigation landmark with no
+// links. The signed-out variant publishes no BreadcrumbList structured data. The signed-in variant
+// publishes the same home › space trail as its visible breadcrumb.
+//
+// [Ja] スペースはパンくずの末尾項目のため、ログイン済みの閲覧者には認証後アプリの親である /home の下で
+// 現在ページとして伝える。未ログインの閲覧者には Rails 版と同じく /home 項目を出さないため、残るのは
+// スペース自身だけになる。その経路にはたどれる項目が無いので、リンクの無いナビゲーションランドマークを
+// 描画せずパンくずごと落とす。未ログイン時は BreadcrumbList 構造化データを出さない。ログイン時は
+// 見た目のパンくずと同じホーム › スペースの経路を構造化データとして出す。
+func TestShow_BreadcrumbMarksCurrentSpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	viewerID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ss-breadcrumb-viewer@example.com").
+		WithAtname("ssbreadcrumbviewer").
+		Build()
+	testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-breadcrumb").
+		WithName("Breadcrumb Space").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	tests := []struct {
+		name           string
+		user           *model.User
+		wantBreadcrumb bool
+	}{
+		{name: "signed-out viewer gets no breadcrumb at all", wantBreadcrumb: false},
+		{name: "signed-in viewer gets the current space under home", user: &model.User{ID: viewerID, Atname: "ssbreadcrumbviewer"}, wantBreadcrumb: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newShowRequest(t, "/s/ss-breadcrumb", map[string]string{
+				"space_identifier": "ss-breadcrumb",
+			})
+			if tt.user != nil {
+				req = req.WithContext(middleware.SetUserToContext(req.Context(), tt.user))
+			}
+
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+			}
+
+			body := rr.Body.String()
+
+			// Match the breadcrumb landmark by its own label: the global navigation bar is a <nav>
+			// with an aria-label too.
+			//
+			// [Ja] パンくずのランドマークは専用のラベルで特定する。グローバルナビバーも aria-label 付きの
+			// <nav> であるため。
+			start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+			if !tt.wantBreadcrumb {
+				if start != -1 {
+					t.Error("a trail holding only the current item should not render a breadcrumb")
+				}
+				if strings.Contains(body, `aria-current="page"`) {
+					t.Error("no breadcrumb means no current item")
+				}
+
+				// The structured data mirrors the visible breadcrumb, so a trail that renders none
+				// publishes none. This is the state a crawler sees.
+				//
+				// [Ja] 構造化データは見た目のパンくずを写したものなので、パンくずを描画しない経路では
+				// 出さない。クローラーが見るのはこの状態である。
+				if strings.Contains(body, "application/ld+json") {
+					t.Error("a trail holding only the current item should not publish structured data")
+				}
+				return
+			}
+
+			if start == -1 {
+				t.Fatal("response should contain the breadcrumb navigation")
+			}
+			end := strings.Index(body[start:], "</nav>")
+			if end == -1 {
+				t.Fatal("breadcrumb navigation should have a closing tag")
+			}
+			breadcrumb := body[start : start+end]
+			if !strings.Contains(breadcrumb, `href="/home"`) {
+				t.Error("signed-in breadcrumb should link back to /home")
+			}
+			if !strings.Contains(breadcrumb, `aria-current="page"`) {
+				t.Error("current breadcrumb item must carry aria-current")
+			}
+
+			// The visible trail has something to navigate to here, so the machine-readable copy is
+			// published from the same items: home as a link, the space as the non-linked current item.
+			//
+			// [Ja] ここでは見た目の経路にたどれる項目があるため、同じ項目列から機械可読な複製を出す。
+			// ホームはリンク、スペースは非リンクの現在項目になる。
+			for _, want := range []string{
+				`"@type":"BreadcrumbList"`,
+				`"position":1,"name":"ホーム","item":"https://localhost/home"`,
+				`"position":2,"name":"Breadcrumb Space"}`,
+			} {
+				if !strings.Contains(body, want) {
+					t.Errorf("response does not contain %q", want)
+				}
+			}
+		})
 	}
 }

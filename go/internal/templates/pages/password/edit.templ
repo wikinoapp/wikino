@@ -18,16 +18,16 @@ type EditPageData struct {
 
 // Edit は新しいパスワード入力フォームを表示します
 templ Edit(data EditPageData) {
-	<div class="max-w-lg w-full flex flex-col gap-6 px-4">
-		<div class="text-center">
-			<a href="/" class="inline-block">
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="text-center px-4">
+			<a href="/" aria-label={ templates.T(ctx, "home_link_aria_label") } class="inline-block">
 				<div class="bg-primary rounded-xl">
-					@templates.Icon("logo", "fill-primary-foreground w-[60px] h-[60px]")
+					@templates.DecorativeIcon("logo", "fill-primary-foreground w-[60px] h-[60px]")
 				</div>
 			</a>
 		</div>
 
-		<div class="flex flex-col gap-2">
+		<div class="flex flex-col gap-2 px-4">
 			<h1 class="text-center text-3xl text-primary font-bold antialiased">
 				{ templates.T(ctx, "password_edit_heading") }
 			</h1>
@@ -36,93 +36,102 @@ templ Edit(data EditPageData) {
 			</p>
 		</div>
 
-		@components.FormErrors(data.FormErrors)
+		@components.FormErrorSummary(data.FormErrors)
 
 		@components.ContentCard() {
 			<form
 				action="/password"
-				class="form grid gap-6"
+				class="grid gap-6"
 				hx-on:submit="disableSubmitButtons(this)"
 				method="POST"
 			>
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-					<input type="hidden" name="token" value={ data.Token }/>
-					<input type="hidden" name="_method" value="PATCH"/>
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="token" value={ data.Token }/>
+				<input type="hidden" name="_method" value="PATCH"/>
 
-					<div class="grid gap-2">
-						<label for="password">
-							{ templates.T(ctx, "password_edit_password_label") }
-						</label>
+				<div class="grid gap-2">
+					<label class="label" for="password">
+						{ templates.T(ctx, "password_edit_password_label") }
+					</label>
 
-						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
-								aria-invalid="true"
-							} else {
-								aria-invalid="false"
-							}
-							autocomplete="new-password"
-							autofocus
-							id="password"
-							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
-							minlength={ strconv.Itoa(auth.MinPasswordLength) }
-							name="password"
-							required
-							tabindex="1"
-							type="password"
-						/>
-
-						<p class="text-sm text-muted-foreground">
-							{ templates.T(ctx, "password_edit_password_requirements", map[string]any{"MinLength": auth.MinPasswordLength}) }
-						</p>
-
+					<input
 						if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
-								<p class="text-sm text-error">
-									{ errorMsg }
-								</p>
-							}
+							aria-invalid="true"
+						} else {
+							aria-invalid="false"
 						}
-					</div>
+						autocomplete="new-password"
+						autofocus
+						class="input"
+						id="password"
+						maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
+						minlength={ strconv.Itoa(auth.MinPasswordLength) }
+						name="password"
+						required
+						tabindex="1"
+						type="password"
+					/>
 
-					<div class="grid gap-2">
-						<label for="password_confirmation">
-							{ templates.T(ctx, "password_edit_password_confirmation_label") }
-						</label>
+					<p class="text-sm text-muted-foreground">
+						{ templates.T(ctx, "password_edit_password_requirements", map[string]any{"MinLength": auth.MinPasswordLength}) }
+					</p>
 
-						<input
-							if data.FormErrors != nil && data.FormErrors.HasFieldError("password_confirmation") {
-								aria-invalid="true"
-							} else {
-								aria-invalid="false"
-							}
-							autocomplete="new-password"
-							id="password_confirmation"
-							maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
-							minlength={ strconv.Itoa(auth.MinPasswordLength) }
-							name="password_confirmation"
-							required
-							tabindex="2"
-							type="password"
-						/>
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("password") {
+						for _, errorMsg := range data.FormErrors.GetFieldErrors("password") {
+							<p class="text-sm text-error">
+								{ errorMsg }
+							</p>
+						}
+					}
+				</div>
 
+				<div class="grid gap-2">
+					<label class="label" for="password_confirmation">
+						{ templates.T(ctx, "password_edit_password_confirmation_label") }
+					</label>
+
+					<input
 						if data.FormErrors != nil && data.FormErrors.HasFieldError("password_confirmation") {
-							for _, errorMsg := range data.FormErrors.GetFieldErrors("password_confirmation") {
-								<p class="text-sm text-error">
-									{ errorMsg }
-								</p>
-							}
+							aria-invalid="true"
+						} else {
+							aria-invalid="false"
 						}
-					</div>
+						autocomplete="new-password"
+						class="input"
+						id="password_confirmation"
+						maxlength={ strconv.Itoa(auth.MaxPasswordLength) }
+						minlength={ strconv.Itoa(auth.MinPasswordLength) }
+						name="password_confirmation"
+						required
+						tabindex="2"
+						type="password"
+					/>
 
-					<button
-						class="btn-primary rounded-full w-fit"
-						tabindex="3"
-						type="submit"
-					>
-						@templates.Icon("paper-plane-tilt-regular")
-						{ templates.T(ctx, "password_edit_submit") }
-					</button>
-				</form>
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("password_confirmation") {
+						for _, errorMsg := range data.FormErrors.GetFieldErrors("password_confirmation") {
+							<p class="text-sm text-error">
+								{ errorMsg }
+							</p>
+						}
+					}
+				</div>
+
+				<button
+					class="btn rounded-full w-fit"
+					tabindex="3"
+					type="submit"
+				>
+					@templates.Icon("arrow-right-regular")
+					{ templates.T(ctx, "password_edit_submit_button") }
+				</button>
+			</form>
 		}
+
+		<div class="text-center px-4">
+			<a href="/sign_in" class="link-foreground inline-flex items-center gap-1">
+				@templates.DecorativeIcon("arrow-left-regular", "w-4 h-4")
+				{ templates.T(ctx, "password_edit_back_to_sign_in") }
+			</a>
+		</div>
 	</div>
 }

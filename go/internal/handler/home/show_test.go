@@ -12,7 +12,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -38,10 +37,9 @@ func TestShow_Empty(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
-	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
+	handler := home.NewHandler(cfg, getHomeShowUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/home", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -56,6 +54,28 @@ func TestShow_Empty(t *testing.T) {
 	}
 
 	body := rr.Body.String()
+
+	// Home has no breadcrumb, but the shared header still renders for the navigation bar: outside
+	// <main> (the #main skip link has to bypass it) and at this screen's max-w-3xl content width. The
+	// bar is the header's only content here, so the header switches with it and leaves no banner
+	// landmark with nothing in it below the breakpoint.
+	//
+	// [Ja] ホームにパンくずは無いが、ナビバーのために共有ヘッダーは描画される。<main> の外
+	// (#main へのスキップリンクが飛ばせる必要があるため)・この画面の本文幅 max-w-3xl で出る。
+	// ここではバーがヘッダーの唯一の中身になるため、ヘッダーはバーと一緒に切り替わり、ブレーク
+	// ポイント未満で中身の無い banner ランドマークが残らない。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared header should keep the max-w-3xl content width")
+	}
+	if !strings.Contains(body, `<header class="pt-4 hidden md:block">`) {
+		t.Error("shared header should switch with the navigation bar it carries")
+	}
+	if strings.Contains(body, `aria-label="パンくずリスト"`) {
+		t.Error("home should not render a breadcrumb landmark")
+	}
+	if header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`); header == -1 || main == -1 || header > main {
+		t.Errorf("shared header (index %d) must precede <main> (index %d)", header, main)
+	}
 
 	if !strings.Contains(body, "ホーム") {
 		t.Error("heading not found in response")
@@ -75,15 +95,12 @@ func TestShow_Empty(t *testing.T) {
 	}
 
 	// When the user has no spaces, no topics, and no drafts, the home content collapses
-	// into a single welcome empty state. The per-section headings (`home_joined_spaces_heading`)
-	// must not render. Use `home_joined_spaces_heading` (= "参加中のスペース") which is unique to
-	// the home content section; the topics heading text is shared with the sidebar so it would
-	// give false positives here.
+	// into a single welcome empty state, so the per-section heading `home_joined_spaces_heading`
+	// (= "参加中のスペース") must not render.
 	//
 	// [Ja] スペース / トピック / 下書きがすべて 0 件のとき、ホーム本体は 1 つのウェルカム空状態に
-	// 統合され、各セクション見出し (`home_joined_spaces_heading`) は描画されない。検証には
-	// ホーム本体専用キーである `home_joined_spaces_heading` (= "参加中のスペース") を使用する。
-	// トピック見出しはサイドバーと同一テキストのため、ここでの検証では使えない。
+	// 統合されるため、セクション見出し `home_joined_spaces_heading` (= "参加中のスペース") は
+	// 描画されない。
 	if strings.Contains(body, "参加中のスペース") {
 		t.Error("joined spaces section heading should not be rendered when everything is empty")
 	}
@@ -125,10 +142,9 @@ func TestShow_WithSpaces(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
-	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
+	handler := home.NewHandler(cfg, getHomeShowUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/home", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -237,10 +253,9 @@ func TestShow_WithJoinedTopics(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
-	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
+	handler := home.NewHandler(cfg, getHomeShowUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/home", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -320,10 +335,9 @@ func TestShow_WithDraftPages(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
-	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
+	handler := home.NewHandler(cfg, getHomeShowUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/home", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -339,11 +353,12 @@ func TestShow_WithDraftPages(t *testing.T) {
 
 	body := rr.Body.String()
 
-	// The home content section + the always-rendered sidebar both use the same heading text,
-	// so when drafts exist the heading appears at least twice (home content + sidebar).
-	// [Ja] ホーム本体とサイドバーで同じ見出しが描画されるため、下書きがあるときは見出しが 2 回以上現れる
-	if strings.Count(body, "下書きのページ") < 2 {
-		t.Errorf("draft pages heading expected to appear in both sidebar and home content (>=2), got %d", strings.Count(body, "下書きのページ"))
+	// The home content's draft section renders its heading when drafts exist. It is the only place
+	// the draft list appears now that the sidebar is gone.
+	// [Ja] 下書きがあるとき、ホーム本体の下書きセクションが見出しを描画する。サイドバー廃止後は
+	// 下書き一覧が現れる唯一の場所。
+	if !strings.Contains(body, "下書きのページ") {
+		t.Error("draft pages heading not found in home content")
 	}
 	if !strings.Contains(body, "下書きタイトル") {
 		t.Error("draft page title not found in response")
@@ -410,10 +425,9 @@ func TestShow_DraftPagesEmpty(t *testing.T) {
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getHomeShowUC := usecase.NewGetHomeShowUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, draftPageRepo)
 
-	handler := home.NewHandler(cfg, getHomeShowUC, sidebarHelper)
+	handler := home.NewHandler(cfg, getHomeShowUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/home", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -437,11 +451,8 @@ func TestShow_DraftPagesEmpty(t *testing.T) {
 		t.Error("no draft pages empty state not found in response")
 	}
 
-	// When there are 0 drafts, the "View all" link to /drafts must not be rendered
-	// (neither in the home content section nor in the sidebar — the sidebar's link
-	// only appears when draft count exceeds its limit).
-	// [Ja] 下書き 0 件のときは /drafts への「全て見る」リンクは描画されない
-	// (ホーム本体・サイドバーともに件数 0 件では出現しない)。
+	// When there are 0 drafts, the home content's "View all" link to /drafts must not be rendered.
+	// [Ja] 下書き 0 件のときは、ホーム本体の /drafts への「全て見る」リンクは描画されない。
 	if strings.Contains(body, `href="/drafts"`) {
 		t.Error(`unexpected "View all" link to /drafts found when draft count is 0`)
 	}

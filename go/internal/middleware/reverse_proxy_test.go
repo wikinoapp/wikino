@@ -427,7 +427,7 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 	featureFlaggedPatterns = []featureFlaggedPattern{
 		{
 			pattern: regexp.MustCompile(`^/@[^/]+/[^/]+/pages/[^/]+$`),
-			flag:    "go_page_show",
+			flag:    model.FeatureFlagExample,
 		},
 		{
 			pattern: regexp.MustCompile(`^/settings$`),
@@ -455,7 +455,7 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 			name:     "マッチするパス (ページ表示)",
 			method:   http.MethodGet,
 			path:     "/@username/space_atname/pages/abc123",
-			expected: "go_page_show",
+			expected: model.FeatureFlagExample,
 		},
 		{
 			name:     "マッチするパス (設定)",
@@ -775,6 +775,12 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "ページ新規作成の入口 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1/pages/new",
+			expected: true,
+		},
+		{
 			name:     "ページ編集画面",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/edit",
@@ -814,6 +820,18 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "下書きリビジョン復元 (POST)",
 			method:   http.MethodPost,
 			path:     "/s/my-space/pages/1/draft_page_revisions/01HXYZ123/restore",
+			expected: true,
+		},
+		{
+			name:     "ページ表示 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1",
+			expected: true,
+		},
+		{
+			name:     "ページ表示 (HEAD)",
+			method:   http.MethodHead,
+			path:     "/s/my-space/pages/1",
 			expected: true,
 		},
 		{
@@ -859,6 +877,16 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			// The action is reached from the page detail screen, which Go now always serves, so the
+			// POST must be handled by Go as well.
+			//
+			// [Ja] 本操作は常に Go が描画するページ表示画面から呼ばれるため、POST も Go で処理する。
+			name:     "ゴミ箱へ入れる (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/trash",
+			expected: true,
+		},
+		{
 			name:     "og:image エンドポイント (GET)",
 			method:   http.MethodGet,
 			path:     "/attachments/01HXYZ123/og_image",
@@ -879,9 +907,48 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "ページ表示 (GET) はRails版に転送",
+			// Rails has no GET route for this path, so a GET must fall through to Rails and raise a
+			// RoutingError there rather than be answered by the Go handler.
+			//
+			// [Ja] Rails 版にこのパスの GET ルートは無いため、GET は Go ハンドラーが応答せず
+			// Rails に転送されて RoutingError になるべき。
+			name:     "ゴミ箱へ入れる (GET) はPOST限定パターンにマッチしない",
 			method:   http.MethodGet,
-			path:     "/s/my-space/pages/1",
+			path:     "/s/my-space/pages/1/trash",
+			expected: false,
+		},
+		{
+			// The trailing "$" keeps sub-paths out, so a future /trash/... route is not swept in by
+			// this pattern.
+			//
+			// [Ja] 末尾 $ によりサブパスは対象外にし、将来 /trash/... のルートが増えても本パターンが
+			// 巻き込まないようにする。
+			name:     "ゴミ箱配下のサブパスはマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/trash/restore",
+			expected: false,
+		},
+		{
+			// The space-level trash screen (/s/:identifier/trash) stays on Rails, so it must not be
+			// caught by the page-scoped pattern.
+			//
+			// [Ja] スペース単位のゴミ箱画面 (/s/:identifier/trash) は Rails 版のまま残るため、
+			// ページ単位の本パターンが拾ってはいけない。
+			name:     "スペースのゴミ箱画面はマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/trash",
+			expected: false,
+		},
+		{
+			name:     "ページ番号が数字でないパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/abc",
+			expected: false,
+		},
+		{
+			name:     "ページ番号の後にスラッシュが続くパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/",
 			expected: false,
 		},
 		{
@@ -924,6 +991,34 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "og:image の末尾に余分なセグメントがあるとマッチしない",
 			method:   http.MethodGet,
 			path:     "/attachments/01HXYZ123/og_image/extra",
+			expected: false,
+		},
+		{
+			// The Go route handles GET alone, so any other method must not reach the Go router.
+			// It falls through to Rails and uses its normal unmatched-route handling.
+			//
+			// [Ja] Go ルートはこのパスの GET だけを処理するため、他のメソッドは Go のルーターへ
+			// 届かせない。Rails 側へフォールスルーさせ、通常の未一致ルート処理に応答を委ねる。
+			name:     "ページ新規作成の入口 (POST) はGETのみフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/topics/1/pages/new",
+			expected: false,
+		},
+		{
+			// The trailing "$" keeps sub-paths out, so a future /pages/new/... route is not swept
+			// in by this pattern.
+			//
+			// [Ja] 末尾 $ によりサブパスは対象外にし、将来 /pages/new/... のルートが増えても
+			// 本パターンが巻き込まないようにする。
+			name:     "ページ新規作成の入口配下のサブパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1/pages/new/extra",
+			expected: false,
+		},
+		{
+			name:     "トピック番号が数字でないページ新規作成の入口はマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/abc/pages/new",
 			expected: false,
 		},
 		{
@@ -1086,6 +1181,7 @@ func TestReverseProxyMiddleware_Middleware_DeviceTokenIssuance(t *testing.T) {
 		{name: "ホーム画面 (完全一致) には発行しない", method: http.MethodGet, path: "/home", wantDeviceCookie: false},
 		{name: "正規表現マッチの Go パスには発行しない", method: http.MethodGet, path: "/s/my-space/pages/1/edit", wantDeviceCookie: false},
 		{name: "常時 Go 化されたスペース詳細には発行しない", method: http.MethodGet, path: "/s/my-space", wantDeviceCookie: false},
+		{name: "常時 Go 化されたページ表示には発行しない", method: http.MethodGet, path: "/s/my-space/pages/1", wantDeviceCookie: false},
 
 		// Rails-proxied paths: device_token must be issued.
 		// [Ja] Rails 転送パス: device_token が発行される

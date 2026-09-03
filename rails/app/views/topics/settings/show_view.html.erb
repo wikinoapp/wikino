@@ -1,6 +1,6 @@
 <%= render Layouts::Column1Component.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, content_screen:) do |header| %>
       <%= header.with_breadcrumb do %>
         <%= render Breadcrumbs::TopicComponent.new(signed_in: current_user.present?, topic:) %>
       <% end %>
@@ -8,9 +8,7 @@
   <% end %>
 
   <%= layout.with_main do %>
-    <%= render Containers::MainComponent.new(
-      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
-    ) do %>
+    <%= render Containers::MainComponent.new(content_screen:) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.settings")) %>
 
       <%= render BaseUI::CardComponent.new do |card| %>

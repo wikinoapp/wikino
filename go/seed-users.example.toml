@@ -1,0 +1,73 @@
+# The roster of development accounts `wikino seed` creates. The roster in use
+# holds personal email addresses, so it is kept out of version control and this
+# file is committed in its place. To set the seed up, copy this file to
+# go/seed-users.toml, which .gitignore excludes, and replace the addresses with
+# ones whose mail you can read.
+#
+# feature_flags takes either the string "all", which grants every flag the
+# application defines, or a list of flag names such as ["go_example"].
+# What each role is for is written where the generators name it, in
+# internal/seed/user.go.
+#
+# [Ja] `wikino seed` が作成する開発用アカウントの名簿。実際に使う名簿は個人の
+# メールアドレスを持つためバージョン管理には入れず、代わりに本ファイルをコミットして
+# いる。シードを使えるようにするには、本ファイルを .gitignore が除外している
+# go/seed-users.toml へコピーし、アドレスを自分がメールを読めるものへ置き換える。
+#
+# feature_flags には、アプリケーションが定義するフラグを全件与える文字列 "all" か、
+# ["go_example"] のようなフラグ名の配列のどちらかを書く。それぞれの役割が何のため
+# にあるのかは、生成器がそれを名指ししている internal/seed/user.go に書いてある。
+
+# password is shared by every account below. The seed refuses to run outside a
+# development environment and the dev site itself sits behind basic auth, so a
+# password per account would buy nothing.
+#
+# [Ja] password は以下のすべてのアカウントで共通。シードは開発環境以外での実行を
+# 拒否し、dev サイト自体も Basic 認証の内側にあるため、アカウントごとに別の
+# パスワードを持たせても得るものが無い。
+password = "password"
+
+# The administrator of both spaces. It opens every screen that sits behind a
+# feature flag, and signs in with a password alone.
+#
+# [Ja] 両スペースの管理者。フィーチャーフラグの内側にあるすべての画面を開き、
+# サインインはパスワードだけで完了する。
+[[users]]
+role = "owner"
+atname = "seeduser1"
+name = "シードユーザー 1"
+email = "seeduser1@example.com"
+feature_flags = "all"
+two_factor = false
+
+# The collaborator who writes alongside the owner. It holds no feature flag and
+# signs in through the two-factor step, which is what makes a screen comparable
+# before and after a flag, and the two-factor path walkable.
+#
+# [Ja] 管理者の横で書く共同編集者。フィーチャーフラグを 1 つも持たず、サインインは
+# 2 要素認証ステップを通る。これによって、フラグ有無による画面の比較と、2 要素認証の
+# 経路の通過ができるようになる。
+[[users]]
+role = "collaborator"
+atname = "seeduser2"
+name = "シードユーザー 2"
+email = "seeduser2@example.com"
+feature_flags = []
+two_factor = true
+
+# The account that looks at a space from the outside. It holds every feature
+# flag like the owner and has joined seed-wiki on the same footing as the
+# collaborator, but it is not a member of seed-solo: the screens of that space
+# are reached as a non-member, with the Go version turned on.
+#
+# [Ja] スペースを外側から見るためのアカウント。管理者と同じくフィーチャーフラグを
+# 全件持ち、seed-wiki には共同編集者と同じ立場で参加しているが、seed-solo の
+# メンバーではない。あのスペースの画面には非メンバーとして、しかも Go 版が有効な
+# 状態で辿り着く。
+[[users]]
+role = "guest"
+atname = "seeduser3"
+name = "シードユーザー 3"
+email = "seeduser3@example.com"
+feature_flags = "all"
+two_factor = false

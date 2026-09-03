@@ -4,7 +4,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// MemberPolicy はスペース���ンバー用の権限判定を行う。
+// MemberPolicy performs authorization checks for space members.
+// It expands the union of space and topic scopes according to the implication rules
+// and stores the result as the set of effective scopes.
+//
+// [Ja] MemberPolicy はスペースメンバー用の権限判定を行う。
 // スペーススコープとトピックスコープの和集合を含意展開し、有効スコープの集合として保持する。
 type MemberPolicy struct {
 	effectiveScopes map[model.Scope]bool
@@ -41,6 +45,14 @@ func (p *MemberPolicy) CanCreatePage() bool {
 
 func (p *MemberPolicy) CanUpdatePage() bool {
 	return p.effectiveScopes[model.ScopePageWrite]
+}
+
+func (p *MemberPolicy) CanShowTrash() bool {
+	return p.effectiveScopes[model.ScopePageTrash]
+}
+
+func (p *MemberPolicy) CanTrashPage() bool {
+	return p.effectiveScopes[model.ScopePageTrash]
 }
 
 func (p *MemberPolicy) CanShowDraftPage(isOwner bool) bool {

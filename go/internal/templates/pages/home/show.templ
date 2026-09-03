@@ -18,100 +18,94 @@ type ShowPageData struct {
 // [Ja] Show はホーム画面のコンテンツを表示します。
 templ Show(data ShowPageData) {
 	<div class="py-4">
-		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
-			})
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "home_heading"),
+					})
+				</div>
 
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-6">
+				if len(data.ActiveSpaces) == 0 && len(data.JoinedTopics) == 0 && len(data.DraftPages) == 0 {
 					<div class="px-4">
-						@components.MainTitle(components.MainTitleData{
-							Title: templates.T(ctx, "home_heading"),
+						@components.EmptyState(components.EmptyStateData{
+							IconName:    "hand-waving-regular",
+							Message:     templates.T(ctx, "home_welcome_message"),
+							Description: templates.T(ctx, "home_welcome_description_html"),
+							Action:      newSpaceButton(),
 						})
 					</div>
-
-					if len(data.ActiveSpaces) == 0 && len(data.JoinedTopics) == 0 && len(data.DraftPages) == 0 {
-						<div class="px-4">
-							@components.EmptyState(components.EmptyStateData{
-								IconName:    "hand-waving-regular",
-								Message:     templates.T(ctx, "home_welcome_message"),
-								Description: templates.T(ctx, "home_welcome_description_html"),
-								Action:      newSpaceButton(),
-							})
-						</div>
-					} else {
-						<div class="flex flex-col gap-4 px-4">
-							<div class="flex items-center justify-between gap-4">
-								<h2 class="font-bold antialiased">
-									{ templates.T(ctx, "home_joined_spaces_heading") }
-								</h2>
-
-								@newSpaceButton()
-							</div>
-
-							if len(data.ActiveSpaces) == 0 {
-								@components.EmptyState(components.EmptyStateData{
-									Message: templates.T(ctx, "home_no_joined_spaces_html"),
-								})
-							} else {
-								<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
-									for _, space := range data.ActiveSpaces {
-										@spaceCard(space)
-									}
-								</div>
-							}
-						</div>
-
-						<div class="flex flex-col gap-4 px-4">
+				} else {
+					<div class="flex flex-col gap-4 px-4">
+						<div class="flex items-center justify-between gap-4">
 							<h2 class="font-bold antialiased">
-								{ templates.T(ctx, "home_joined_topics_heading") }
+								{ templates.T(ctx, "home_joined_spaces_heading") }
 							</h2>
 
-							if len(data.JoinedTopics) == 0 {
-								@components.EmptyState(components.EmptyStateData{
-									Message: templates.T(ctx, "home_no_joined_topics_html"),
-								})
-							} else {
-								<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
-									for _, topic := range data.JoinedTopics {
-										@components.CardLinkTopic(topic)
-									}
-								</div>
-							}
+							@newSpaceButton()
 						</div>
 
-						<div class="flex flex-col gap-4 px-4">
-							<div class="flex items-center justify-between gap-4">
-								<h2 class="font-bold antialiased">
-									{ templates.T(ctx, "home_draft_pages_heading") }
-								</h2>
-
-								if len(data.DraftPages) > 0 {
-									<a
-										class="group inline-flex items-center gap-1 text-sm link-bare-muted-foreground"
-										href={ templ.SafeURL(string(templates.DraftsPath())) }
-									>
-										{ templates.T(ctx, "home_draft_pages_view_all_link") }
-										@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
-									</a>
+						if len(data.ActiveSpaces) == 0 {
+							@components.EmptyState(components.EmptyStateData{
+								Message: templates.T(ctx, "home_no_joined_spaces_html"),
+							})
+						} else {
+							<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+								for _, space := range data.ActiveSpaces {
+									@spaceCard(space)
 								}
 							</div>
+						}
+					</div>
 
-							if len(data.DraftPages) == 0 {
-								@components.EmptyState(components.EmptyStateData{
-									Message: templates.T(ctx, "home_no_draft_pages_html"),
-								})
-							} else {
-								<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
-									for _, draft := range data.DraftPages {
-										@components.CardLinkDraftPage(draft)
-									}
-								</div>
+					<div class="flex flex-col gap-4 px-4">
+						<h2 class="font-bold antialiased">
+							{ templates.T(ctx, "home_joined_topics_heading") }
+						</h2>
+
+						if len(data.JoinedTopics) == 0 {
+							@components.EmptyState(components.EmptyStateData{
+								Message: templates.T(ctx, "home_no_joined_topics_html"),
+							})
+						} else {
+							<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+								for _, topic := range data.JoinedTopics {
+									@components.CardLinkTopic(topic)
+								}
+							</div>
+						}
+					</div>
+
+					<div class="flex flex-col gap-4 px-4">
+						<div class="flex items-center justify-between gap-4">
+							<h2 class="font-bold antialiased">
+								{ templates.T(ctx, "home_draft_pages_heading") }
+							</h2>
+
+							if len(data.DraftPages) > 0 {
+								<a
+									class="group inline-flex items-center gap-1 text-sm link-bare-muted-foreground"
+									href={ templ.SafeURL(string(templates.DraftsPath())) }
+								>
+									{ templates.T(ctx, "home_draft_pages_view_all_link") }
+									@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
+								</a>
 							}
 						</div>
-					}
-				</div>
+
+						if len(data.DraftPages) == 0 {
+							@components.EmptyState(components.EmptyStateData{
+								Message: templates.T(ctx, "home_no_draft_pages_html"),
+							})
+						} else {
+							<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+								for _, draft := range data.DraftPages {
+									@components.CardLinkDraftPage(draft)
+								}
+							</div>
+						}
+					</div>
+				}
 			</div>
 		</div>
 	</div>
@@ -119,7 +113,7 @@ templ Show(data ShowPageData) {
 
 // newSpaceButton は「新規スペース」ボタンを表示します
 templ newSpaceButton() {
-	<a href={ templ.SafeURL(string(templates.NewSpacePath())) } class="btn-sm rounded-full">
+	<a href={ templ.SafeURL(string(templates.NewSpacePath())) } class="btn rounded-full" data-size="sm">
 		@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
 		{ templates.T(ctx, "home_new_space_button") }
 	</a>
@@ -127,8 +121,8 @@ templ newSpaceButton() {
 
 // spaceCard は参加中スペースのカードを表示します
 templ spaceCard(space viewmodel.Space) {
-	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
-		<div class="card-body h-full">
+	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600">
+		<div class="h-full">
 			<a
 				class="h-full"
 				href={ templ.SafeURL(string(templates.SpacePath(space.Identifier))) }

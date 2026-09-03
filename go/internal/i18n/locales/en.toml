@@ -29,40 +29,48 @@ other = "Error"
 description = "Label for the back-to-home link"
 other = "Back to Home"
 
+[home_link_aria_label]
+description = "Aria label for the logo link that goes to the home page"
+other = "Wikino home"
+
 [form_optional]
 description = "Label for optional form fields"
 other = "Optional"
 
+[markdown_table_scroll_label]
+description = "Aria label for the scrollable region wrapping a table in a page body"
+other = "Scrollable table"
+
 # Sign in
-[sign_in_title]
+[sign_in_new_title]
 description = "Sign-in page title"
 other = "Sign in"
 
-[sign_in_heading]
+[sign_in_new_heading]
 description = "Sign-in page heading"
 other = "Sign in to Wikino"
 
-[sign_in_email_label]
+[sign_in_new_email_label]
 description = "Sign-in email input label"
 other = "Email address"
 
-[sign_in_password_label]
+[sign_in_new_password_label]
 description = "Sign-in password input label"
 other = "Password"
 
-[sign_in_submit_button]
+[sign_in_new_submit_button]
 description = "Sign-in submit button label"
 other = "Sign in"
 
-[sign_in_forgot_password]
+[sign_in_new_forgot_password]
 description = "Sign-in forgot password link label"
 other = "Forgot your password?"
 
-[sign_in_no_account]
+[sign_in_new_no_account]
 description = "Sign-in copy shown to users without an account"
 other = "Don't have an account?"
 
-[sign_in_sign_up]
+[sign_in_new_sign_up]
 description = "Link to the sign-up page from sign-in"
 other = "Sign up"
 
@@ -80,58 +88,62 @@ description = "Email or password mismatch error on sign-in"
 other = "Invalid email or password"
 
 # Two-factor authentication
-[sign_in_two_factor_title]
+[sign_in_two_factor_new_title]
 description = "Two-factor authentication page title"
 other = "Two-factor authentication"
 
-[sign_in_two_factor_heading]
+[sign_in_two_factor_new_heading]
 description = "Two-factor authentication page heading"
 other = "Two-factor authentication"
 
-[sign_in_two_factor_enter_code]
+[sign_in_two_factor_new_enter_code]
 description = "Two-factor authentication code entry instruction"
 other = "Enter the authentication code from your app"
 
-[sign_in_two_factor_code_label]
+[sign_in_two_factor_new_code_label]
 description = "Two-factor authentication code input label"
 other = "Authentication code"
 
-[sign_in_two_factor_code_hint]
+[sign_in_two_factor_new_code_hint]
 description = "Two-factor authentication code input hint"
 other = "Enter a 6-digit code"
 
-[sign_in_two_factor_submit_button]
+[sign_in_two_factor_new_submit_button]
 description = "Two-factor authentication submit button label"
 other = "Verify"
 
-[sign_in_two_factor_recovery_description]
+[sign_in_two_factor_new_recovery_description]
 description = "Description for using a recovery code on the two-factor page"
 other = "If you lose your authenticator app, you can sign in using a recovery code"
 
-[sign_in_two_factor_recovery_link]
+[sign_in_two_factor_new_recovery_link]
 description = "Link to the recovery-code flow"
 other = "Use a recovery code"
 
 # Two-factor authentication recovery
-[sign_in_two_factor_recovery_title]
+[sign_in_two_factor_recovery_new_title]
 description = "Recovery code entry page title"
 other = "Two-factor recovery"
 
-[sign_in_two_factor_recovery_heading]
+[sign_in_two_factor_recovery_new_heading]
 description = "Recovery code entry page heading"
 other = "Recovery code"
 
-[sign_in_two_factor_recovery_code_usage]
+[sign_in_two_factor_recovery_new_code_usage]
 description = "Recovery code usage explanation"
 other = "If you can't access your authenticator app, you can sign in using a recovery code you saved earlier"
 
-[sign_in_two_factor_recovery_code_label]
+[sign_in_two_factor_recovery_new_code_label]
 description = "Recovery code input label"
 other = "Recovery code"
 
-[sign_in_two_factor_recovery_code_hint]
+[sign_in_two_factor_recovery_new_code_hint]
 description = "Recovery code input hint"
 other = "Recovery codes are 8 alphanumeric characters"
+
+[sign_in_two_factor_recovery_new_submit_button]
+description = "Recovery code page submit button label"
+other = "Verify"
 
 # Two-factor authentication validation errors
 [validation_totp_code_invalid]
@@ -161,31 +173,31 @@ description = "Flash message after successful sign-out"
 other = "Signed out successfully."
 
 # Sign up
-[sign_up_title]
+[sign_up_new_title]
 description = "Sign-up page title"
 other = "Sign up"
 
-[sign_up_heading]
+[sign_up_new_heading]
 description = "Sign-up page heading"
 other = "Sign up for Wikino"
 
-[sign_up_email_instruction]
+[sign_up_new_email_instruction]
 description = "Description for email input field on sign up"
 other = "We'll send a confirmation code to the email address you enter to verify it"
 
-[sign_up_email_label]
+[sign_up_new_email_label]
 description = "Sign-up email input label"
 other = "Email address"
 
-[sign_up_submit_button]
+[sign_up_new_submit_button]
 description = "Sign-up submit button label"
 other = "Send confirmation code"
 
-[sign_up_have_account]
+[sign_up_new_have_account]
 description = "Sign-up copy shown to users who already have an account"
 other = "Already have an account?"
 
-[sign_up_sign_in]
+[sign_up_new_sign_in]
 description = "Link to the sign-in page from sign-up"
 other = "Sign in"
 
@@ -344,27 +356,27 @@ description = "Flash message after successful account creation"
 other = "Your account has been created"
 
 # Password reset request
-[password_reset_title]
+[password_reset_new_title]
 description = "Password reset request page title"
 other = "Password Reset"
 
-[password_reset_heading]
+[password_reset_new_heading]
 description = "Password reset request page heading"
 other = "Reset your password"
 
-[password_reset_description]
+[password_reset_new_description]
 description = "Password reset request page description"
 other = "Enter your registered email address and we'll send you a link to reset your password."
 
-[password_reset_email_label]
+[password_reset_new_email_label]
 description = "Password reset email input label"
 other = "Email address"
 
-[password_reset_submit]
+[password_reset_new_submit_button]
 description = "Password reset request submit button label"
 other = "Send reset link"
 
-[password_reset_back_to_sign_in]
+[password_reset_new_back_to_sign_in]
 description = "Back-to-sign-in link from the password reset request page"
 other = "Back to sign in"
 
@@ -392,6 +404,10 @@ other = "Didn't receive the email?"
 [password_reset_email_not_received_help]
 description = "Help text for users who did not receive the password reset email"
 other = "Check your spam folder. If you still don't see it after a few minutes, verify the email address and try again."
+
+[password_reset_sent_back_to_sign_in]
+description = "Back-to-sign-in link from the password reset sent page"
+other = "Back to sign in"
 
 # Password reset email
 [password_reset_email_subject]
@@ -423,9 +439,13 @@ other = "Must be at least {{.MinLength}} characters"
 description = "Password edit confirmation password input label"
 other = "Confirm new password"
 
-[password_edit_submit]
+[password_edit_submit_button]
 description = "Password edit submit button label"
 other = "Change password"
+
+[password_edit_back_to_sign_in]
+description = "Back-to-sign-in link from the password edit page"
+other = "Back to sign in"
 
 # Password validation (additional)
 [validation_password_confirmation_required]
@@ -593,71 +613,14 @@ other = "Open Source"
 description = "Welcome page open-source group description"
 other = "Wikino's source code is publicly available on GitHub."
 
-# Top navigation
-[top_nav_breadcrumb_label]
-description = "Aria label for the top navigation breadcrumb"
+# Breadcrumb
+[breadcrumb_label]
+description = "Aria label for the breadcrumb"
 other = "Breadcrumb"
 
 [breadcrumb_home]
 description = "Label for the home link in the breadcrumb"
 other = "Home"
-
-# Sidebar
-[sidebar_toggle_label]
-description = "Aria label for the sidebar toggle button"
-other = "Toggle sidebar"
-
-[sidebar_nav_label]
-description = "Aria label for the sidebar navigation"
-other = "Sidebar"
-
-[sidebar_home]
-description = "Home link in the sidebar"
-other = "Home"
-
-[sidebar_search]
-description = "Search link in the sidebar"
-other = "Search"
-
-[sidebar_profile]
-description = "Profile link in the sidebar"
-other = "Profile"
-
-[sidebar_sign_in]
-description = "Sign in link in the sidebar"
-other = "Sign in"
-
-[sidebar_joined_topics_heading]
-description = "Heading for the joined topics list in the sidebar"
-other = "Joined Topics"
-
-[sidebar_joined_topics_empty]
-description = "Message when there are no joined topics in the sidebar"
-other = "No joined topics"
-
-[sidebar_joined_topics_create_page]
-description = "Tooltip for the create page link on a topic in the sidebar"
-other = "Create page"
-
-[sidebar_draft_pages_heading]
-description = "Heading for the draft pages list in the sidebar"
-other = "Drafts"
-
-[sidebar_draft_pages_empty]
-description = "Message when there are no draft pages in the sidebar"
-other = "No drafts"
-
-[sidebar_draft_pages_untitled]
-description = "Display text for untitled draft pages in the sidebar"
-other = "Untitled"
-
-[sidebar_draft_pages_edit_page]
-description = "Title for edit link on draft page in the sidebar"
-other = "Edit page"
-
-[sidebar_draft_pages_show_all]
-description = "Link to show all drafts when there are more than displayed in the sidebar"
-other = "Show all"
 
 # Footer
 [footer_terms]
@@ -781,29 +744,77 @@ other = "Restore"
 description = "Restore cancel button in the revision diff modal"
 other = "Cancel"
 
-[page_edit_links_heading]
-description = "Heading for the link list on the page edit screen"
-other = "Links"
-
 [page_edit_links_untitled]
 description = "Display text for an untitled linked page"
 other = "Untitled"
 
 [page_edit_links_edit_page]
-description = "Title for edit link on linked page card"
+description = "Accessible name and hover tooltip for the edit link on a linked page card"
 other = "Edit page"
 
-[page_edit_links_load_more]
-description = "Load more button for link list"
+[page_links_heading]
+description = "Heading for the link list, shared by the page show and page edit screens"
+other = "Links"
+
+[page_links_description]
+description = "Description shown beside the link list heading, shared by the page show and page edit screens"
+other = "Pages this page links to directly"
+
+[page_links_related_heading]
+description = "Heading for the related link list, shared by the page show and page edit screens"
+other = "Related links"
+
+[page_links_related_description]
+description = "Description shown beside the related link list heading, shared by the page show and page edit screens"
+other = "Pages reachable through the linked pages"
+
+[page_links_backlinks_heading]
+description = "Heading for the backlink list, shared by the page show and page edit screens"
+other = "Backlinks"
+
+[page_links_backlinks_description]
+description = "Description shown beside the backlink list heading, shared by the page show and page edit screens"
+other = "Pages that link to this page"
+
+[page_links_load_more]
+description = "Shared load more link for related page lists"
 other = "More"
 
-[page_edit_backlinks_heading]
-description = "Heading for the backlink list on the page edit screen"
-other = "Backlinks"
+[page_links_load_more_end]
+description = "Status shown after the final related-page listing page loads"
+other = "All items have been loaded."
+
+[page_links_load_more_links_aria_label]
+description = "Accessible name for the load more link of the link list"
+other = "Show more links"
+
+[page_links_load_more_linked_page_backlinks_aria_label]
+description = "Accessible name for the load more link of a linked page's backlink list"
+other = "Show more backlinks of {{.PageTitle}}"
+
+[page_links_load_more_page_backlinks_aria_label]
+description = "Accessible name for the load more link of the page's own backlink list"
+other = "Show more backlinks"
+
+[page_links_related_via_label]
+description = "Label of the subheading naming the linked page a group of related links is reached through"
+other = "via"
+
+[page_edit_links_load_more_limit]
+description = "Notice shown when the page edit screen reaches the related page list load limit"
+other = "This is as far as the editor loads this list."
+
+[page_edit_links_load_more_limit_link]
+description = "Link text that continues a capped related-page list one page at a time in the editor"
+other = "Continue one page at a time"
 
 [page_edit_save_draft_button]
 description = "Label for the save draft button"
 other = "Save Draft"
+
+[page_edit_save_draft_options_aria_label]
+description = "Aria label for the save draft dropdown trigger button on the page edit screen"
+other = "Save draft options"
 
 [page_edit_save_draft_and_create_suggestion_button]
 description = "Label for the save draft and create suggestion button"
@@ -824,6 +835,43 @@ other = "Editing a page for <a href=\"{{.URL}}\" class=\"underline\">suggestion 
 [page_edit_update_suggestion_button]
 description = "Label for the update suggestion button"
 other = "Update Suggestion"
+
+# Page show screen
+[page_show_title]
+description = "Page show screen title ({page_title} | {space_name} format)"
+other = "{{.PageTitle}} | {{.SpaceName}}"
+
+[page_show_untitled]
+description = "Display name for a page with no title"
+other = "Untitled"
+
+[page_show_trashed_alert]
+description = "Alert shown when viewing a page that is in the trash"
+other = "This page is in the trash."
+
+[page_show_view_trash_link]
+description = "Link text from the trash alert to the trash screen"
+other = "View trash"
+
+[page_show_edit_button]
+description = "Link text from the page show screen to the page edit screen"
+other = "Edit"
+
+[page_show_page_actions_aria_label]
+description = "Aria label for the page actions dropdown trigger button on the page show screen"
+other = "Page actions"
+
+[page_show_page_actions_move]
+description = "Dropdown menu item on the page show screen: move the page to another topic"
+other = "Move"
+
+[page_show_page_actions_trash]
+description = "Dropdown menu item on the page show screen: move the page to the trash"
+other = "Move to Trash"
+
+[page_show_page_actions_trash_confirm]
+description = "Confirmation dialog before moving a page to the trash"
+other = "Are you sure you want to move this page to trash?"
 
 # Page publish validation
 [validation_page_title_required]
@@ -863,6 +911,11 @@ other = "Draft saved."
 [flash_draft_page_revision_restored]
 description = "Draft page revision restored success message"
 other = "Restored the draft to the selected version."
+
+# Page moved to trash
+[flash_page_moved_to_trash]
+description = "Page moved to trash success message"
+other = "Page moved to trash."
 
 # Suggestion page update success
 [flash_suggestion_page_updated]
@@ -1070,27 +1123,52 @@ other = "Delete this draft?"
 description = "Flash message shown after a draft is deleted"
 other = "Draft deleted"
 
-# Bottom navigation
-[bottom_nav_menu]
-description = "Menu button in the bottom navigation"
-other = "Menu"
+# Global navigation
+[global_nav_top_label]
+description = "Aria label for the global navigation top bar (desktop)"
+other = "Global navigation"
 
-[bottom_nav_home]
-description = "Home button in the bottom navigation"
+[global_nav_bottom_label]
+description = "Aria label for the global navigation bottom bar (mobile)"
+other = "Global navigation (mobile)"
+
+[global_nav_home]
+description = "Aria label for the home link in the global navigation"
 other = "Home"
 
-[bottom_nav_search]
-description = "Search button in the bottom navigation"
+[global_nav_search]
+description = "Aria label for the search link in the global navigation"
 other = "Search"
 
-[bottom_nav_sign_in]
-description = "Sign in button in the bottom navigation"
+[global_nav_profile]
+description = "Aria label for the profile link in the global navigation"
+other = "Profile"
+
+[global_nav_sign_in]
+description = "Aria label for the sign in link in the global navigation"
 other = "Sign in"
+
+# Skip link
+[skip_to_main_content]
+description = "Text for the skip link that jumps to the main content (WCAG 2.4.1)"
+other = "Skip to main content"
 
 # Topic show
 [topic_show_title]
 description = "Topic show page title ({topic_name} | {space_name} format)"
 other = "{{.TopicName}} | {{.SpaceName}}"
+
+[topic_show_visibility_public]
+description = "Label for a public topic, shown below the title on the same line as the description on the topic show page"
+other = "Public"
+
+[topic_show_visibility_private]
+description = "Label for a private topic, shown below the title on the same line as the description on the topic show page"
+other = "Private"
+
+[topic_show_paginated_title]
+description = "Paginated topic show page title ({topic_name} | {space_name} (Page {page_number}) format)"
+other = "{{.TopicName}} | {{.SpaceName}} (Page {{.PageNumber}})"
 
 [topic_show_no_pages_message]
 description = "Message when there are no pages in the topic"
@@ -1103,6 +1181,10 @@ other = "Create your first page."
 [topic_show_new_page]
 description = "New page button on the topic show page"
 other = "New page"
+
+[topic_show_options_aria_label]
+description = "Aria label for the options dropdown trigger button on the topic show page"
+other = "Topic options"
 
 [topic_show_settings]
 description = "Topic settings link on the topic show page"
@@ -1120,6 +1202,10 @@ other = "Suggestions"
 [space_show_title]
 description = "Space show page title ({space_name})"
 other = "{{.SpaceName}}"
+
+[space_show_paginated_title]
+description = "Paginated space show page title ({space_name} (Page {page_number}) format)"
+other = "{{.SpaceName}} (Page {{.PageNumber}})"
 
 [space_show_no_topics_message]
 description = "Message when there are no topics in the space"
@@ -1146,8 +1232,12 @@ description = "Heading of the topic section on the space show page"
 other = "Topics"
 
 [card_link_topic_new_page]
-description = "Tooltip of the new page link shown on a topic link card"
+description = "Accessible name and hover tooltip of the new page link shown on a topic link card"
 other = "New page"
+
+[space_show_options_aria_label]
+description = "Aria label for the options dropdown trigger button on the space show page"
+other = "Space options"
 
 [space_show_options_rss_feed]
 description = "RSS feed link in the options menu on the space show page"
@@ -1187,14 +1277,27 @@ other = "The page you are looking for could not be found"
 description = "Error message when email is not confirmed"
 other = "Email has not been confirmed"
 
+[error_two_factor_not_enabled]
+description = "Error message when two-factor authentication is not enabled"
+other = "Two-factor authentication is not enabled"
+
 [error_not_found_back_to_top]
 description = "404 error page link to top page"
 other = "Back to top page"
+
+# Forbidden error
+[error_forbidden]
+description = "Error message when the user is not allowed to perform the operation"
+other = "You do not have permission to perform this operation"
 
 # Suggestions
 [suggestion_index_title]
 description = "Suggestion list page title"
 other = "Suggestions | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_index_closed_title]
+description = "Closed suggestion list page title"
+other = "Closed Suggestions | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_index_heading]
 description = "Suggestion list heading"
@@ -1205,7 +1308,7 @@ description = "Suggestion list subtitle (includes help page link)"
 other = "See <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">here</a> for more information about suggestions."
 
 [suggestion_index_breadcrumb]
-description = "Suggestion list breadcrumb"
+description = "Breadcrumb item for the suggestion list (the current item on the list screen, a link to it on the screens below)"
 other = "Suggestions"
 
 [suggestion_index_open_tab]
@@ -1340,9 +1443,13 @@ other = "Suggestion has been updated"
 description = "Suggestion detail page title"
 other = "{{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
-[suggestion_show_breadcrumb]
-description = "Suggestion detail breadcrumb (link to suggestion list)"
-other = "Suggestions"
+[suggestion_change_index_title]
+description = "Suggestion changes page title"
+other = "Changes: {{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
+
+[suggestion_change_index_breadcrumb]
+description = "Current breadcrumb label on the suggestion changes page"
+other = "Changes"
 
 [suggestion_show_status_draft]
 description = "Suggestion status: draft"
@@ -1405,6 +1512,10 @@ other = "You can apply the changes from this suggestion to the topic, or close i
 [suggestion_comment_edit_action]
 description = "Edit action in suggestion comment dropdown menu"
 other = "Edit"
+
+[suggestion_comment_actions_aria_label]
+description = "Aria label for the suggestion comment dropdown trigger button"
+other = "Comment actions"
 
 [suggestion_comment_submit]
 description = "Suggestion comment submit button"

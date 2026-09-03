@@ -18,8 +18,6 @@ en:
           show: "Settings | %{topic_name} | %{space_name}"
       trash:
         show: "Trash | %{space_name}"
-      pages:
-        show: "%{page_title} | %{space_name}"
       password_resets:
         new: Forgot your password?
       passwords:

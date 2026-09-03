@@ -40,25 +40,10 @@ module GeneratedPathHelpersModule
   def mission_control_jobs_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def move_page_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def new_page_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def new_space_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def new_topic_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def page_backlink_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def page_link_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def preview_view_component_path(*args); end
@@ -173,9 +158,6 @@ module GeneratedPathHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def trash_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def trashed_page_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def turbo_recede_historical_location_path(*args); end

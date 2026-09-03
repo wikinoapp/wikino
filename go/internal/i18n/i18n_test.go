@@ -33,13 +33,13 @@ func TestT_BasicTranslation(t *testing.T) {
 		{
 			name:      "日本語でログインタイトルを取得",
 			locale:    i18n.LangJa,
-			messageID: "sign_in_title",
+			messageID: "sign_in_new_title",
 			want:      "ログイン",
 		},
 		{
 			name:      "英語でログインタイトルを取得",
 			locale:    i18n.LangEn,
-			messageID: "sign_in_title",
+			messageID: "sign_in_new_title",
 			want:      "Sign in",
 		},
 		{
@@ -96,7 +96,7 @@ func TestT_WithTemplateData(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
 	// テンプレートデータを渡してもパニックしない
-	got := i18n.T(ctx, "sign_in_title", map[string]any{"Name": "テスト"})
+	got := i18n.T(ctx, "sign_in_new_title", map[string]any{"Name": "テスト"})
 	if got != "ログイン" {
 		t.Errorf("T() = %v, want %v", got, "ログイン")
 	}
@@ -109,11 +109,11 @@ func TestT_NilContext(t *testing.T) {
 	ctx := context.Background()
 
 	// エラーにならずにメッセージIDを返すか、翻訳を返すことを確認
-	got := i18n.T(ctx, "sign_in_title")
+	got := i18n.T(ctx, "sign_in_new_title")
 
 	// デフォルト言語（日本語）で翻訳されるか、メッセージIDが返される
-	if got != "ログイン" && got != "sign_in_title" {
-		t.Errorf("T() = %v, want 'ログイン' or 'sign_in_title'", got)
+	if got != "ログイン" && got != "sign_in_new_title" {
+		t.Errorf("T() = %v, want 'ログイン' or 'sign_in_new_title'", got)
 	}
 }
 
@@ -283,7 +283,7 @@ func TestMiddleware(t *testing.T) {
 
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				capturedLocale = i18n.GetLocale(r.Context())
-				capturedTranslation = i18n.T(r.Context(), "sign_in_title")
+				capturedTranslation = i18n.T(r.Context(), "sign_in_new_title")
 				w.WriteHeader(http.StatusOK)
 			})
 
@@ -380,14 +380,14 @@ func TestT_TwoFactorAuthTranslations(t *testing.T) {
 		{
 			name:      "二要素認証タイトル",
 			locale:    i18n.LangJa,
-			messageID: "sign_in_two_factor_title",
+			messageID: "sign_in_two_factor_new_title",
 			wantJa:    "二要素認証の確認",
 			wantEn:    "Two-factor authentication",
 		},
 		{
 			name:      "リカバリーコードラベル",
 			locale:    i18n.LangJa,
-			messageID: "sign_in_two_factor_recovery_code_label",
+			messageID: "sign_in_two_factor_recovery_new_code_label",
 			wantJa:    "リカバリーコード",
 			wantEn:    "Recovery code",
 		},

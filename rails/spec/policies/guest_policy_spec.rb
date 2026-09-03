@@ -4,28 +4,6 @@
 require "rails_helper"
 
 RSpec.describe GuestPolicy do
-  describe "#can_show_topic?" do
-    it "公開トピックは閲覧可能であること" do
-      space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record,
-        space_record:,
-        visibility: TopicVisibility::Public.serialize)
-
-      policy = GuestPolicy.new
-      expect(policy.can_show_topic?(topic_record:)).to be(true)
-    end
-
-    it "非公開トピックは閲覧できないこと" do
-      space_record = FactoryBot.create(:space_record)
-      topic_record = FactoryBot.create(:topic_record,
-        space_record:,
-        visibility: TopicVisibility::Private.serialize)
-
-      policy = GuestPolicy.new
-      expect(policy.can_show_topic?(topic_record:)).to be(false)
-    end
-  end
-
   describe "#can_update_topic?" do
     it "トピックを更新できないこと" do
       policy = GuestPolicy.new
@@ -44,20 +22,6 @@ RSpec.describe GuestPolicy do
     it "ページを作成できないこと" do
       policy = GuestPolicy.new
       expect(policy.can_create_page?).to be(false)
-    end
-  end
-
-  describe "#can_update_page?" do
-    it "ページを更新できないこと" do
-      policy = GuestPolicy.new
-      expect(policy.can_update_page?).to be(false)
-    end
-  end
-
-  describe "#can_trash_page?" do
-    it "ページをゴミ箱に移動できないこと" do
-      policy = GuestPolicy.new
-      expect(policy.can_trash_page?).to be(false)
     end
   end
 

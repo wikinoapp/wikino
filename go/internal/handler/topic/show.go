@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httppagination"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -34,12 +35,17 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ページネーションパラメータを取得
-	var currentPage int32 = 1
-	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
-		if p, err := strconv.ParseInt(pageStr, 10, 32); err == nil && p > 0 {
-			currentPage = int32(p)
-		}
+	// Parse the pagination parameter. A page whose SQL offset cannot fit the query's int32
+	// parameter is rejected before invoking the usecase; the total-page check below handles every
+	// smaller out-of-range value.
+	//
+	// [Ja] ページネーションパラメータを取得する。SQL offset がクエリの int32 パラメータに収まらない
+	// ページは UseCase 呼び出し前に拒否する。これより小さい範囲外値は後段の総ページ数チェックで
+	// 処理する。
+	currentPage, ok := httppagination.ParsePageParam(r, topicShowPageLimit)
+	if !ok {
+		handler.NotFound(w, r)
+		return
 	}
 
 	// ログインユーザーを取得
@@ -66,6 +72,11 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		handler.NotFound(w, r)
 		return
 	}
+	pagination := viewmodel.NewPagination(int(currentPage), output.TotalCount, topicShowPageLimit)
+	if pagination.Current > pagination.Total {
+		handler.NotFound(w, r)
+		return
+	}
 
 	// 権限判定（UseCase が Authorizer 経由で判定した結果を使用）
 	canUpdate := output.CanUpdateTopic
@@ -89,16 +100,26 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	topicVM := viewmodel.NewTopicForShow(output.Topic, canUpdate, canCreatePage)
 	spaceVM := viewmodel.NewSpace(output.Space)
-	pagination := viewmodel.NewPagination(int(currentPage), output.TotalCount, topicShowPageLimit)
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	// Build links from the stored identifier, not from the URL, so that the canonical URL collapses
+	// to one address per screen.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、正規 URL を 1 画面 1 アドレスに
+	// 集約する。
+	spaceIdentVM := spaceVM.Identifier
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitleWithoutSuffix(ctx, "topic_show_title", map[string]any{
-		"TopicName": output.Topic.Name,
-		"SpaceName": output.Space.Name,
+	titleKey := "topic_show_title"
+	if currentPage > 1 {
+		titleKey = "topic_show_paginated_title"
+	}
+	meta.SetTitleWithoutSuffix(ctx, titleKey, map[string]any{
+		"TopicName":  output.Topic.Name,
+		"SpaceName":  output.Space.Name,
+		"PageNumber": currentPage,
 	})
+	meta.OGURL = h.cfg.AppURL() + string(templates.PaginatedPath(templates.TopicPath(spaceIdentVM, topicVM.Number), currentPage))
 	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	// テンプレートをレンダリング
@@ -116,28 +137,50 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		userAtname = user.Atname
 	}
 
+	breadcrumbItems := append(components.HomeBreadcrumbItems(ctx, signedIn),
+		components.BreadcrumbItem{
+			Label: spaceVM.Name,
+			Path:  templates.SpacePath(spaceIdentVM),
+		},
+		// The topic is the current page, so it ends the breadcrumb as a plain (unlinked) crumb
+		// carrying aria-current. The icon repeats the visibility the heading states in words, as
+		// decoration: the crumb is read for where the viewer is, and the heading is where the state
+		// is named.
+		//
+		// [Ja] トピックは現在地のため、aria-current を持つリンク無しの項目としてパンくずを締める。
+		// アイコンは見出しが言葉で示す公開範囲を装飾として繰り返す。パンくずは閲覧者の現在地を
+		// 読むためのもので、状態を名指すのは見出しのほうである。
+		components.BreadcrumbItem{
+			Label:     topicVM.Name,
+			IconName:  topicVM.IconName,
+			IsCurrent: true,
+		},
+	)
+
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNameTopicShow,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
 			SpaceIdentifier: spaceIdentVM,
 		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameTopicShow,
-			SignedIn:        signedIn,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
 
-	// ログイン済みの場合はサイドバーコンテンツを取得
-	if user != nil {
-		sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-		layoutData.Sidebar.JoinedTopics = sidebarContent.JoinedTopics
-		layoutData.Sidebar.DraftPages = sidebarContent.DraftPages
-		layoutData.Sidebar.HasMoreDraftPages = sidebarContent.HasMoreDraftPages
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			MaxWidthClass: "max-w-3xl",
+
+			// The topic detail is public and indexable, so it opts into BreadcrumbList JSON-LD built
+			// from the same items. Signed-out viewers start at the public space; signed-in viewers
+			// also get /home.
+			//
+			// [Ja] トピック詳細は公開・インデックス対象のため、同じ項目列から作る BreadcrumbList
+			// JSON-LD を有効にする。未ログインの閲覧者は公開スペースから始め、ログイン済みの閲覧者には
+			// /home も含める。
+			StructuredDataBaseURL: h.cfg.AppURL(),
+
+			Items: breadcrumbItems,
+		},
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

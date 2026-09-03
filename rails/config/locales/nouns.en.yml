@@ -4,7 +4,6 @@ en:
     actions: Actions
     all_files: All files
     attachments: Attachments
-    backlinks: Backlinks
     best_practices: Best Practices
     cancel: Cancel
     change_email: Change email
@@ -12,7 +11,6 @@ en:
     current_email: Current email
     dark: Dark
     documents: Documents
-    draft_pages: Drafts
     edit_profile: Edit profile
     error: Error
     export: Export
@@ -24,10 +22,7 @@ en:
     inbox: Inbox
     info: Info
     joined_spaces: Joined spaces
-    joined_topics: Joined topics
     light: Light
-    links: Links
-    menu: Menu
     modified_at: Modified at
     new_topic: New topic
     next_page: Next

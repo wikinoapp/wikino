@@ -12,7 +12,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -33,11 +32,9 @@ func TestIndex_Empty(t *testing.T) {
 		Domain: "localhost",
 	}
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -59,6 +56,19 @@ func TestIndex_Empty(t *testing.T) {
 
 	if !strings.Contains(body, "下書きはありません") {
 		t.Error("empty message not found in response")
+	}
+
+	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
+	// link has to bypass it) and keeps this screen's max-w-3xl content width.
+	//
+	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
 	}
 }
 
@@ -110,11 +120,9 @@ func TestIndex_WithDrafts(t *testing.T) {
 		Domain: "localhost",
 	}
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -200,11 +208,9 @@ func TestIndex_編集提案ボタンがトピックグループに表示され�
 		Domain: "localhost",
 	}
 	draftPageRepo := repository.NewDraftPageRepository(queries)
-	topicRepo := repository.NewTopicRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	getDraftPagesUC := usecase.NewGetDraftPagesUsecase(draftPageRepo)
 
-	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC, sidebarHelper)
+	handler := draft_page_index.NewHandler(cfg, getDraftPagesUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
 	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)

@@ -89,6 +89,17 @@ type EditPageData struct {
 	SuggestionShowURL       string
 	CreateSuggestionSaveURL string
 
+	// RelatedPageState is the pagination state of all three related-page listings, which the screen
+	// keeps in one shared element for every htmx request to include. It belongs to the screen rather
+	// than to either listing, so it is passed on its own instead of being read back out of LinkList
+	// or BacklinkList (LinkList is left at its zero value when the page links nowhere).
+	//
+	// [Ja] RelatedPageState は 3 つの関連ページ一覧のページネーション状態。各 htmx リクエストが含める
+	// 共有要素として画面が 1 つ保持する。どちらかの一覧ではなく画面に属する値のため、LinkList や
+	// BacklinkList から読み出さず単独で渡す (ページがどこにもリンクしていない場合、LinkList はゼロ値の
+	// ままになる)。
+	RelatedPageState viewmodel.PageLinkState
+
 	// DraftPages is the space member's own draft list shown in the left column (and mobile drawer).
 	// [Ja] DraftPages は左カラム (および狭幅時のドロワー) に表示するスペースメンバー自身の下書き一覧。
 	DraftPages []viewmodel.CardLinkDraftPage
@@ -116,26 +127,6 @@ func (d EditPageData) IsSuggestionMode() bool {
 templ Edit(data EditPageData) {
 	<div class="py-4">
 		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass:     "max-w-6xl",
-				HideSidebarToggle: true,
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					{
-						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier),
-					},
-					{
-						Label:    data.Topic.Name,
-						Path:     templates.TopicPath(data.Space.Identifier, data.Topic.Number),
-						IconName: data.Topic.IconName,
-					},
-				},
-			})
 			// The Zen mode class is rendered on the server from the cookie so the page opens in the
 			// saved mode without a layout flash. The toggle script flips the class client-side only.
 			//
@@ -195,11 +186,7 @@ templ Edit(data EditPageData) {
 								})
 							</div>
 
-							if data.FormErrors != nil && data.FormErrors.HasErrors() {
-								<div class="px-4">
-									@components.FormErrors(data.FormErrors)
-								</div>
-							}
+							@components.FormErrorSummary(data.FormErrors)
 
 							@components.ContentCard() {
 								<form
@@ -208,7 +195,7 @@ templ Edit(data EditPageData) {
 									} else {
 										action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
 									}
-									class="form grid gap-6"
+									class="grid gap-6"
 									hx-on:submit="disableSubmitButtons(this)"
 									method="POST"
 								>
@@ -218,110 +205,113 @@ templ Edit(data EditPageData) {
 									// Tabs wrap only the editable fields. The button row below stays outside the tab panels
 									// so it remains visible while previewing.
 									//
-									// min-w-0 lets the preview <pre> overflow-auto contain long code lines:
-									// without it this grid item grows to the <pre> min-content width and
-									// pushes the center column past its max width.
+									// The grid puts the tab list and the Zen mode toggle side by side on the first row and
+									// lets the tab panels span both columns below. Basecoat matches the tab list as a direct
+									// child of .tabs, so the two cannot share a wrapper element.
+									//
+									// min-w-0 here, minmax(0,1fr) on the first column and min-w-0 on each panel let the
+									// preview <pre> overflow-auto contain long code lines: without them the grid item grows
+									// to the <pre> min-content width and pushes the center column past its max width.
 									//
 									// [Ja] タブで囲むのは編集対象のフィールドのみ。下のボタン行はタブパネルの外に置き、
 									// プレビュー表示中も表示されるようにする。
 									//
-									// min-w-0 でプレビューの <pre> の overflow-auto が長いコード行を収める。
-									// 付けないとこの grid アイテムが <pre> の min-content 幅まで広がり、
-									// 中央カラムが最大幅を超える。
+									// グリッドは 1 行目にタブリストと Zenモードのトグルを横並びに置き、下のタブパネルを
+									// 2 カラムにまたがらせる。Basecoat はタブリストを .tabs の直接の子として対象にするため、
+									// 両者を 1 つのラッパー要素にまとめられない。
+									//
+									// ここの min-w-0 と 1 列目の minmax(0,1fr)、各パネルの min-w-0 により、プレビューの
+									// <pre> の overflow-auto が長いコード行を収める。付けないと grid アイテムが <pre> の
+									// min-content 幅まで広がり、中央カラムが最大幅を超える。
 									<div
-										class="tabs gap-4 min-w-0"
+										class="tabs grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-4 min-w-0"
 										id="page-edit-tabs"
 									>
-										// The Zen mode toggle sits at the right end of the tab row. Basecoat's tabs
-										// styles match [role=tablist] by descendant selector, so wrapping the nav in
-										// a flex row does not break them.
-										//
-										// [Ja] Zenモードのトグルはタブ行の右端に置く。Basecoat の tabs スタイルは
-										// [role=tablist] を子孫セレクタで対象にするため、nav を flex 行で包んでも崩れない。
-										<div class="flex items-center justify-between gap-2">
-											<nav
-												aria-label={ templates.T(ctx, "page_edit_tabs_label") }
-												aria-orientation="horizontal"
-												class="rounded-full"
-												role="tablist"
-											>
-												<button
-													type="button"
-													class="cursor-pointer rounded-full"
-													role="tab"
-													id="page-edit-tab-edit"
-													aria-controls="page-edit-panel-edit"
-													aria-selected="true"
-													tabindex="0"
-												>
-													{ templates.T(ctx, "page_edit_tab_edit") }
-												</button>
-
-												// Selecting the preview tab POSTs the current edit form and renders the result
-												// into the preview panel. The button lives inside the edit form, so htmx 4
-												// collects the whole form via FormData — including the hidden _method=PATCH.
-												// htmx 4 has no hx-params to drop a field, so we blank out _method with hx-vals.
-												// The method-override middleware ignores an empty _method, so the request stays a
-												// POST; otherwise it is rewritten to PATCH and chi (POST-only preview route) 405s.
-												//
-												// [Ja] プレビュータブを選ぶと編集フォームを POST し、結果をプレビューパネルに描画する。
-												// このボタンは編集フォームの内側にあり、htmx 4 はフォーム全体を FormData で収集するため
-												// hidden の _method=PATCH も送られる。htmx 4 にはフィールドを除外する hx-params が無いので、
-												// hx-vals で _method を空文字列に上書きする。method override ミドルウェアは空の _method を
-												// 無視するためリクエストは POST のままになる。上書きしないと POST が PATCH に書き換えられ、
-												// chi にはプレビュー用 POST ルートしか無いため 405 になる。
-												<button
-													type="button"
-													class="cursor-pointer rounded-full"
-													role="tab"
-													id="page-edit-tab-preview"
-													aria-controls="page-edit-panel-preview"
-													aria-selected="false"
-													tabindex="-1"
-													hx-post={ string(templates.PagePreviewPath(data.Space.Identifier, data.Page.Number)) }
-													hx-vals={ `{"_method": ""}` }
-													hx-target="#page-edit-preview-content"
-													hx-swap="innerHTML"
-													hx-indicator="#page-edit-preview-loading"
-												>
-													{ templates.T(ctx, "page_edit_tab_preview") }
-												</button>
-											</nav>
-											// The toggle only flips a class client-side (and persists it to a cookie),
-											// so it is a plain button outside the tab list, not a tab. It is hidden
-											// below lg because Zen only reshapes the desktop 3-column grid; mobile has
-											// no side columns to collapse, and hiding the drawer buttons and lists with
-											// no visible toggle would leave a user who enabled Zen on desktop unable to
-											// restore them on mobile.
-											//
-											// [Ja] トグルはクライアント側でクラスを反転してクッキーへ保存するだけ
-											// なので、タブではなくタブリスト外の通常のボタンとして置く。lg 未満で
-											// 非表示にするのは、Zenがデスクトップの 3 カラムグリッドしか変えないため。
-											// モバイルには畳むサイドカラムが無く、トグルが見えないままドロワーボタンや
-											// 一覧を隠すと、デスクトップで Zenを有効にしたユーザーがモバイルで戻せなくなる。
+										<nav
+											aria-label={ templates.T(ctx, "page_edit_tabs_label") }
+											aria-orientation="horizontal"
+											class="rounded-full"
+											role="tablist"
+										>
 											<button
 												type="button"
-												class="hidden lg:inline-flex btn-sm-outline rounded-full w-fit"
-												data-zen-mode-toggle
-												aria-pressed={ fmt.Sprintf("%t", data.ZenMode) }
+												class="cursor-pointer rounded-full"
+												role="tab"
+												id="page-edit-tab-edit"
+												aria-controls="page-edit-panel-edit"
+												aria-selected="true"
+												tabindex="0"
 											>
-												@templates.Icon("corners-out-regular", "size-4")
-												{ templates.T(ctx, "page_edit_zen_mode_button") }
+												{ templates.T(ctx, "page_edit_tab_edit") }
 											</button>
-										</div>
+
+											// Selecting the preview tab POSTs the current edit form and renders the result
+											// into the preview panel. The button lives inside the edit form, so htmx 4
+											// collects the whole form via FormData — including the hidden _method=PATCH.
+											// htmx 4 has no hx-params to drop a field, so we blank out _method with hx-vals.
+											// The method-override middleware ignores an empty _method, so the request stays a
+											// POST; otherwise it is rewritten to PATCH and chi (POST-only preview route) 405s.
+											//
+											// [Ja] プレビュータブを選ぶと編集フォームを POST し、結果をプレビューパネルに描画する。
+											// このボタンは編集フォームの内側にあり、htmx 4 はフォーム全体を FormData で収集するため
+											// hidden の _method=PATCH も送られる。htmx 4 にはフィールドを除外する hx-params が無いので、
+											// hx-vals で _method を空文字列に上書きする。method override ミドルウェアは空の _method を
+											// 無視するためリクエストは POST のままになる。上書きしないと POST が PATCH に書き換えられ、
+											// chi にはプレビュー用 POST ルートしか無いため 405 になる。
+											<button
+												type="button"
+												class="cursor-pointer rounded-full"
+												role="tab"
+												id="page-edit-tab-preview"
+												aria-controls="page-edit-panel-preview"
+												aria-selected="false"
+												tabindex="-1"
+												hx-post={ string(templates.PagePreviewPath(data.Space.Identifier, data.Page.Number)) }
+												hx-vals={ `{"_method": ""}` }
+												hx-target="#page-edit-preview-content"
+												hx-swap="innerHTML"
+												hx-indicator="#page-edit-preview-loading"
+											>
+												{ templates.T(ctx, "page_edit_tab_preview") }
+											</button>
+										</nav>
+										// The toggle only flips a class client-side (and persists it to a cookie),
+										// so it is a plain button outside the tab list, not a tab. It is hidden
+										// below lg because Zen only reshapes the desktop 3-column grid; mobile has
+										// no side columns to collapse, and hiding the drawer buttons and lists with
+										// no visible toggle would leave a user who enabled Zen on desktop unable to
+										// restore them on mobile.
+										//
+										// [Ja] トグルはクライアント側でクラスを反転してクッキーへ保存するだけ
+										// なので、タブではなくタブリスト外の通常のボタンとして置く。lg 未満で
+										// 非表示にするのは、Zenがデスクトップの 3 カラムグリッドしか変えないため。
+										// モバイルには畳むサイドカラムが無く、トグルが見えないままドロワーボタンや
+										// 一覧を隠すと、デスクトップで Zenを有効にしたユーザーがモバイルで戻せなくなる。
+										<button
+											type="button"
+											class="hidden lg:inline-flex btn rounded-full w-fit justify-self-end"
+											data-variant="outline"
+											data-size="sm"
+											data-zen-mode-toggle
+											aria-pressed={ fmt.Sprintf("%t", data.ZenMode) }
+										>
+											@templates.Icon("corners-out-regular", "size-4")
+											{ templates.T(ctx, "page_edit_zen_mode_button") }
+										</button>
 
 										<div
 											role="tabpanel"
 											id="page-edit-panel-edit"
 											aria-labelledby="page-edit-tab-edit"
 											tabindex="-1"
-											class="grid gap-6"
+											class="grid gap-6 col-span-2 min-w-0"
 										>
 											<div class="grid gap-2">
-												<label for="page_title">
+												<label class="label" for="page_title">
 													{ templates.T(ctx, "page_edit_title_label") }
 												</label>
 												<input
+													class="input"
 													id="page_title"
 													name="title"
 													type="text"
@@ -345,11 +335,12 @@ templ Edit(data EditPageData) {
 											</div>
 
 											<div class="grid gap-2">
-												<label for="page_body">
+												<label class="label" id="page-body-label">
 													{ templates.T(ctx, "page_edit_body_label") }
 												</label>
 												<div
 													data-markdown-editor
+													data-markdown-editor-label="#page-body-label"
 													data-markdown-editor-textarea="#page_body"
 													data-markdown-editor-title="#page_title"
 													data-markdown-editor-body={ data.Page.Body }
@@ -373,6 +364,7 @@ templ Edit(data EditPageData) {
 											id="page-edit-panel-preview"
 											aria-labelledby="page-edit-tab-preview"
 											tabindex="-1"
+											class="col-span-2 min-w-0"
 											hidden
 										>
 											// htmx adds .htmx-request to the hx-indicator target (this element) while the
@@ -404,7 +396,7 @@ templ Edit(data EditPageData) {
 										<div class="flex gap-2">
 											if data.IsSuggestionMode() {
 												<button
-													class="btn-primary rounded-full w-fit"
+													class="btn rounded-full w-fit"
 													type="submit"
 												>
 													{ templates.T(ctx, "page_edit_update_suggestion_button") }
@@ -412,7 +404,7 @@ templ Edit(data EditPageData) {
 												</button>
 											} else {
 												<button
-													class="btn-primary rounded-full w-fit"
+													class="btn rounded-full w-fit"
 													type="submit"
 												>
 													{ templates.T(ctx, "page_edit_publish_to_topic_button") }
@@ -431,7 +423,8 @@ templ Edit(data EditPageData) {
 													// 編集履歴カラム 2 箇所を OOB スワップで更新する。
 													<button
 														id={ saveDraftButtonID }
-														class="btn-secondary rounded-l-full w-fit border-r-0"
+														class="btn rounded-l-full w-fit border-r-0"
+														data-variant="secondary"
 														type="button"
 														hx-patch={ data.ManualSaveURL }
 														hx-include="#page_title, #page_body, #page-edit-csrf-token"
@@ -448,9 +441,11 @@ templ Edit(data EditPageData) {
 															aria-haspopup="menu"
 															aria-controls="save-draft-dropdown-menu"
 															aria-expanded="false"
-															class="btn-secondary rounded-r-full rounded-l-none w-fit px-2 border-l border-brand-600/15"
+															aria-label={ templates.T(ctx, "page_edit_save_draft_options_aria_label") }
+															class="btn rounded-r-full rounded-l-none w-fit px-2 border-l border-l-brand-600/15"
+															data-variant="secondary"
 														>
-															@templates.Icon("caret-down-regular", "size-[14px]")
+															@templates.DecorativeIcon("caret-down-regular", "size-[14px]")
 														</button>
 														<div id="save-draft-dropdown-popover" data-popover aria-hidden="true" class="min-w-64" data-align="end">
 															<div role="menu" id="save-draft-dropdown-menu" aria-labelledby="save-draft-dropdown-trigger">
@@ -473,7 +468,8 @@ templ Edit(data EditPageData) {
 												// [Ja] 編集提案モードでも同じく htmx の PATCH で画面遷移せずに保存する。
 												<button
 													id={ saveDraftButtonID }
-													class="btn-secondary rounded-full w-fit"
+													class="btn rounded-full w-fit"
+													data-variant="secondary"
 													type="button"
 													hx-patch={ data.ManualSaveURL }
 													hx-include="#page_title, #page_body, #page-edit-csrf-token"
@@ -488,7 +484,8 @@ templ Edit(data EditPageData) {
 										<div class="flex items-center justify-end gap-2 min-[1152px]:flex-1 min-[1152px]:justify-between">
 											<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap"></div>
 											<a
-												class="btn-outline rounded-full w-fit"
+												class="btn rounded-full w-fit"
+												data-variant="outline"
 												href={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
 											>
 												{ templates.T(ctx, "page_edit_cancel") }
@@ -499,41 +496,31 @@ templ Edit(data EditPageData) {
 							}
 
 							<div class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:lg:hidden">
-								// The headings sit outside #page-link-list / #page-backlink-list so the draft-autosave
-								// OOB swap re-renders only the lists, leaving each heading (and its style) untouched.
-								// not-has-[#id>*]:hidden hides a section while its list is empty, so heading visibility
-								// still tracks the list content after every swap.
+								// The draft refresh listener and the shared related-page state sit outside both list
+								// containers, so that the draft-autosave content swaps keep those containers to
+								// themselves and cannot take the listener or the state down with them.
 								//
-								// [Ja] 見出しは #page-link-list / #page-backlink-list の外に置く。こうすると下書き自動保存の
-								// OOB スワップがリストだけを再描画し、各見出し (とそのスタイル) は書き換わらない。
-								// リストが空の間は not-has-[#id>*]:hidden でセクションごと隠すため、見出しの表示は
-								// スワップ後もリストの内容に追従する。
-								<div class="flex flex-col gap-4 not-has-[#page-link-list>*]:hidden">
-									<h2 class="font-bold antialiased">
-										{ templates.T(ctx, "page_edit_links_heading") }
-									</h2>
-
-									<div
-										id="page-link-list"
-										hx-get={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
-										hx-trigger="draft-autosaved from:window"
-										hx-swap="none"
-									>
-										@components.LinkList(data.LinkList)
-									</div>
-								</div>
-
-								<div class="flex flex-col gap-4 not-has-[#page-backlink-list>*]:hidden">
-									<h2 class="font-bold antialiased">
-										{ templates.T(ctx, "page_edit_backlinks_heading") }
-									</h2>
-
-									<div
-										id="page-backlink-list"
-									>
-										@components.PageBacklinkList(data.BacklinkList)
-									</div>
-								</div>
+								// [Ja] 下書き再取得リスナーと共有の関連ページ状態は、2 つの一覧コンテナの外に置く。
+								// 下書き自動保存の内容スワップがコンテナだけを対象にし、リスナーや状態を巻き添えに
+								// しないようにするためである。
+								@components.DraftPageRefreshTrigger(data.Space.Identifier, data.Page.Number, data.RelatedPageState)
+								// The sections come from the component the page detail screen shares, so both screens
+								// lay the listings out the same way. The headings it renders sit outside the containers
+								// the draft-autosave OOB swap targets, so a re-render replaces only the listings.
+								//
+								// The editor leaves the heading size empty: here the listings sit under the editor
+								// rather than being the screen's subject.
+								//
+								// [Ja] セクションはページ表示画面と共有するコンポーネントから描画し、2 つの画面の並べ方を
+								// 揃える。コンポーネントが描く見出しは、下書き自動保存の OOB スワップが対象とするコンテナの
+								// 外にあるため、再描画は一覧だけを差し替える。
+								//
+								// 編集画面は見出しの大きさを空のままにする。ここでは一覧が画面の主題ではなく、エディタの
+								// 下に置かれるものだからである。
+								@components.RelatedPageSections(components.RelatedPageSectionsData{
+									LinkList:     data.LinkList,
+									BacklinkList: data.BacklinkList,
+								})
 							</div>
 						</div>
 					</div>
