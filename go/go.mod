@@ -5,8 +5,8 @@ go 1.26.4
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/a-h/templ v0.3.1020
-	github.com/getsentry/sentry-go v0.48.0
-	github.com/getsentry/sentry-go/slog v0.47.0
+	github.com/getsentry/sentry-go v0.49.0
+	github.com/getsentry/sentry-go/slog v0.49.0
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/lib/pq v1.12.3
