@@ -1668,3 +1668,80 @@ other = "[Wikino] エクスポートデータを作成できませんでした"
 [validation_export_in_progress]
 description = "実行中のエクスポートがあるため新しいエクスポートを開始できないエラー"
 other = "エクスポートを実行中です。完了してからお試しください"
+
+# エクスポート画面
+[export_new_title]
+description = "エクスポート開始画面のページタイトル"
+other = "エクスポート | {{.SpaceName}}"
+
+[export_show_title]
+description = "エクスポート状態表示画面のページタイトル"
+other = "エクスポート | {{.SpaceName}}"
+
+[export_new_heading]
+description = "エクスポート画面の見出し"
+other = "エクスポート"
+
+[export_show_heading]
+description = "エクスポート画面の見出し"
+other = "エクスポート"
+
+[export_new_description_html]
+description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
+
+[export_show_description_html]
+description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
+
+[export_new_breadcrumb_settings]
+description = "エクスポート画面のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[export_show_breadcrumb_settings]
+description = "エクスポート画面のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[export_new_start]
+description = "エクスポート開始画面の開始ボタン"
+other = "エクスポートを開始する"
+
+[export_new_cancel]
+description = "エクスポート開始画面のキャンセルリンク"
+other = "キャンセル"
+
+[export_new_in_progress]
+description = "エクスポート開始画面で、実行中のエクスポートがあるため開始できないことの説明"
+other = "エクスポートを実行中です"
+
+[export_new_in_progress_link]
+description = "エクスポート開始画面から実行中のエクスポートの画面へ移動するリンク"
+other = "実行中のエクスポートを見る"
+
+[flash_export_started]
+description = "エクスポートを開始したときのフラッシュメッセージ"
+other = "エクスポートを開始しました"
+
+[export_show_processing_html]
+description = "エクスポート状態表示画面の処理中の説明"
+other = "エクスポートを開始しました<br>完了したらメールでお知らせします"
+
+[export_show_succeeded]
+description = "エクスポート状態表示画面の完了の説明"
+other = "エクスポートが完了しました"
+
+[export_show_download]
+description = "エクスポート状態表示画面のダウンロードボタン"
+other = "ダウンロードする"
+
+[export_show_expired]
+description = "エクスポート状態表示画面で、ダウンロードの有効期限が切れたことの説明"
+other = "ダウンロードの有効期限が切れました。もう一度エクスポートしてください"
+
+[export_show_failed_html]
+description = "エクスポート状態表示画面の失敗の説明"
+other = "エクスポートを完了できませんでした<br>もう一度お試しください"
+
+[export_show_retry]
+description = "エクスポート状態表示画面から再実行するリンク"
+other = "もう一度エクスポートする"

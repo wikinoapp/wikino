@@ -65,6 +65,33 @@ func SpaceSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/settings", spaceIdentifier))
 }
 
+// SpaceSettingsExportsPath generates the path of the exports of a space, which an export is
+// started by posting to.
+//
+// [Ja] SpaceSettingsExportsPath はスペースのエクスポートのパスを生成します。エクスポートは、この
+// パスへの POST で開始します。
+func SpaceSettingsExportsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/settings/exports", spaceIdentifier))
+}
+
+// NewSpaceSettingsExportPath generates the path to the screen an export is started from.
+// [Ja] NewSpaceSettingsExportPath はエクスポートを開始する画面のパスを生成します。
+func NewSpaceSettingsExportPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/settings/exports/new", spaceIdentifier))
+}
+
+// SpaceSettingsExportPath generates the path to the screen one export is followed on.
+// [Ja] SpaceSettingsExportPath はエクスポート 1 件の経過を追う画面のパスを生成します。
+func SpaceSettingsExportPath(spaceIdentifier viewmodel.SpaceIdentifier, exportID string) Path {
+	return Path(fmt.Sprintf("/s/%s/settings/exports/%s", spaceIdentifier, url.PathEscape(exportID)))
+}
+
+// SpaceSettingsExportDownloadPath generates the path the archive of an export is downloaded from.
+// [Ja] SpaceSettingsExportDownloadPath はエクスポートのアーカイブをダウンロードするパスを生成します。
+func SpaceSettingsExportDownloadPath(spaceIdentifier viewmodel.SpaceIdentifier, exportID string) Path {
+	return SpaceSettingsExportPath(spaceIdentifier, exportID) + "/download"
+}
+
 // HomePath はホームのパスを生成します
 func HomePath() Path {
 	return Path("/home")

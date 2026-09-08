@@ -145,3 +145,26 @@ func (e *Export) InProgress(now time.Time) bool {
 		return false
 	}
 }
+
+// Downloadable reports whether the archive of the export can still be handed out. The screen shows
+// the download only while this holds, and the download itself checks it again, so a link that was
+// rendered before the archive expired does not outlive it.
+//
+// An export that succeeded on the Rails version carries no ObjectKey, and its archive is therefore
+// not one this application can hand out. Those exports expire within ExportDownloadExpiration of
+// the migration that moved the state onto the row, so what the condition costs is a download that
+// would have worked for the rest of that day.
+//
+// [Ja] Downloadable はエクスポートのアーカイブをまだ渡せるかどうかを返す。画面はこれが成り立つ間
+// だけダウンロードを表示し、ダウンロード自身も同じ判定をやり直すため、期限切れより前に描画された
+// リンクがアーカイブより長生きすることはない。
+//
+// Rails 版で成功したエクスポートは ObjectKey を持たず、そのアーカイブは本アプリケーションが渡せる
+// ものではない。それらのエクスポートは状態を行へ移したマイグレーションから ExportDownloadExpiration
+// のうちに期限切れになるため、この条件が失わせるのは、その日のうちなら成功したはずのダウンロード
+// だけである。
+func (e *Export) Downloadable(now time.Time) bool {
+	return e.Status == ExportStatusSucceeded &&
+		e.ObjectKey != nil &&
+		now.Sub(e.StatusChangedAt) < ExportDownloadExpiration
+}

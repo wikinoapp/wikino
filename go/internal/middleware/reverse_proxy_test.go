@@ -1022,6 +1022,53 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: false,
 		},
 		{
+			name:     "エクスポート開始画面 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/exports/new",
+			expected: true,
+		},
+		{
+			name:     "エクスポート開始 (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/settings/exports",
+			expected: true,
+		},
+		{
+			name:     "エクスポート状態表示 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/exports/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6",
+			expected: true,
+		},
+		{
+			name:     "エクスポートのダウンロード (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/exports/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6/download",
+			expected: true,
+		},
+		{
+			name:     "エクスポート一覧もGoルーターで拒否する",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/exports",
+			expected: true,
+		},
+		{
+			// The rest of the space settings stays on the Rails version, so the patterns must not
+			// sweep the settings path itself in.
+			//
+			// [Ja] スペース設定の残りは Rails 版のままなので、パターンが設定のパス自体を巻き込んでは
+			// ならない。
+			name:     "スペース設定はマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings",
+			expected: false,
+		},
+		{
+			name:     "不正なエクスポートIDもGoルーターで拒否する",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/exports/not-a-uuid",
+			expected: true,
+		},
+		{
 			name:     "マッチしないパス",
 			method:   http.MethodGet,
 			path:     "/settings",
@@ -1226,6 +1273,56 @@ func TestRender502ErrorHTML(t *testing.T) {
 	for _, expected := range expectedStrings {
 		if !containsString(html, expected) {
 			t.Errorf("HTML should contain %q", expected)
+		}
+	}
+}
+
+func TestReverseProxyMiddleware_ExportNamespace(t *testing.T) {
+	t.Parallel()
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer railsServer.Close()
+	m, err := NewReverseProxyMiddleware(railsServer.URL, &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Unknown export routes must reach the Go router's rejection, never the Rails writer.
+	//
+	// [Ja] 未対応のエクスポートURLはGoルーターの拒否へ進み、Railsの書き込み処理には到達させない。
+	h := m.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		http.NotFound(w, r)
+	}))
+	for _, tc := range []struct {
+		path  string
+		rails bool
+	}{
+		{path: "/s/demo/settings/exports.json"},
+		{path: "/s/demo/settings/exports.html"},
+		{path: "/s/demo/settings/exports/"},
+		{path: "/s/demo/settings/exports/new.json"},
+		{path: "/s/demo/settings/exports/not-a-uuid"},
+		{path: "/s/demo/settings/exports/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6.json"},
+		{path: "/s/demo/settings/exports/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6/download.json"},
+		{path: "/s//demo//settings//exports.json"},
+		{path: "/s/demo/settings", rails: true},
+		{path: "/s/demo/settings/deletion", rails: true},
+		{path: "/s/demo/settings/exports-other", rails: true},
+	} {
+		for _, method := range []string{http.MethodGet, http.MethodHead, http.MethodPost} {
+			t.Run(method+" "+tc.path, func(t *testing.T) {
+				rr := httptest.NewRecorder()
+				h.ServeHTTP(rr, httptest.NewRequest(method, tc.path, nil))
+				if tc.rails {
+					if rr.Header().Get("X-Rails-Handled") != "true" {
+						t.Error("他のスペース設定がRailsへ転送されていません")
+					}
+				} else if rr.Code != http.StatusNotFound || rr.Header().Get("X-Go-Handled") != "true" || rr.Header().Get("X-Rails-Handled") != "" {
+					t.Errorf("status = %d, headers = %v", rr.Code, rr.Header())
+				}
+			})
 		}
 	}
 }

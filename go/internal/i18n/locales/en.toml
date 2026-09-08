@@ -1668,3 +1668,80 @@ other = "[Wikino] Your export could not be produced"
 [validation_export_in_progress]
 description = "Error shown when an export is already running and another cannot be started"
 other = "An export is already running. Please try again once it has finished"
+
+# Space export screens
+[export_new_title]
+description = "Page title of the screen an export is started from"
+other = "Export | {{.SpaceName}}"
+
+[export_show_title]
+description = "Page title of the screen an export is followed on"
+other = "Export | {{.SpaceName}}"
+
+[export_new_heading]
+description = "Heading of the export screens"
+other = "Export"
+
+[export_show_heading]
+description = "Heading of the export screens"
+other = "Export"
+
+[export_new_description_html]
+description = "Subtitle of the export screens, with a link to the help page"
+other = "Export pages posted in the space. <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">Learn more about exporting</a>"
+
+[export_show_description_html]
+description = "Subtitle of the export screens, with a link to the help page"
+other = "Export pages posted in the space. <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">Learn more about exporting</a>"
+
+[export_new_breadcrumb_settings]
+description = "Breadcrumb item of the export screens linking to the space settings"
+other = "Settings"
+
+[export_show_breadcrumb_settings]
+description = "Breadcrumb item of the export screens linking to the space settings"
+other = "Settings"
+
+[export_new_start]
+description = "Button that starts an export"
+other = "Start export"
+
+[export_new_cancel]
+description = "Link that leaves the screen an export is started from"
+other = "Cancel"
+
+[export_new_in_progress]
+description = "Explanation shown instead of the start button while an export is already running"
+other = "An export is already running"
+
+[export_new_in_progress_link]
+description = "Link from the start screen to the export that is already running"
+other = "View the running export"
+
+[flash_export_started]
+description = "Flash message shown when an export has been started"
+other = "Export has started"
+
+[export_show_processing_html]
+description = "Explanation shown while an export is still running"
+other = "Export has started<br>You will be notified by email when it is complete"
+
+[export_show_succeeded]
+description = "Explanation shown when an export has finished"
+other = "Export completed"
+
+[export_show_download]
+description = "Button that downloads the archive of a finished export"
+other = "Download"
+
+[export_show_expired]
+description = "Explanation shown when the download of a finished export is no longer available"
+other = "The download has expired. Please export again"
+
+[export_show_failed_html]
+description = "Explanation shown when an export could not be produced"
+other = "The export could not be completed<br>Please try again"
+
+[export_show_retry]
+description = "Link that starts another export from the screen of a failed one"
+other = "Export again"

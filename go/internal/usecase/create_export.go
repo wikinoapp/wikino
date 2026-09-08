@@ -75,16 +75,9 @@ type CreateExportOutput struct {
 //
 // [Ja] Execute はエクスポートを記録し、それを生成するジョブを投入する。
 func (uc *CreateExportUsecase) Execute(ctx context.Context, input CreateExportInput) (*CreateExportOutput, error) {
-	space, spaceMember, err := uc.fetchMembership(ctx, input)
+	space, spaceMember, err := fetchExportAccess(ctx, uc.spaceRepo, uc.spaceMemberRepo, input.SpaceIdentifier, input.UserID)
 	if err != nil {
 		return nil, err
-	}
-
-	if !newAuthorizer(spaceMember, nil).CanExportSpace() {
-		return nil, &model.AppError{
-			Code:    model.AppErrCodeForbidden,
-			UserMsg: i18n.T(ctx, "error_forbidden"),
-		}
 	}
 
 	export, err := uc.createExport(ctx, space.ID, spaceMember.ID)
@@ -110,39 +103,6 @@ func (uc *CreateExportUsecase) Execute(ctx context.Context, input CreateExportIn
 	}
 
 	return &CreateExportOutput{Space: space, Export: export}, nil
-}
-
-// fetchMembership resolves the space and the membership of the user starting the export. A space
-// the user is not an active member of is answered as not found, so that membership of a space is
-// not something an outsider can probe for.
-//
-// [Ja] fetchMembership はスペースと、エクスポートを開始するユーザーのメンバーシップを解決する。
-// ユーザーがアクティブなメンバーでないスペースは「見つからない」として答える。あるスペースに誰が
-// 参加しているかを、外部から試して確かめられないようにするためである。
-func (uc *CreateExportUsecase) fetchMembership(ctx context.Context, input CreateExportInput) (*model.Space, *model.SpaceMember, error) {
-	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
-	if err != nil {
-		return nil, nil, fmt.Errorf("スペースの取得に失敗: %w", err)
-	}
-	if space == nil {
-		return nil, nil, &model.AppError{
-			Code:    model.AppErrCodeResourceNotFound,
-			UserMsg: i18n.T(ctx, "error_not_found_message"),
-		}
-	}
-
-	spaceMember, err := uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, input.UserID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
-	}
-	if spaceMember == nil {
-		return nil, nil, &model.AppError{
-			Code:    model.AppErrCodeResourceNotFound,
-			UserMsg: i18n.T(ctx, "error_not_found_message"),
-		}
-	}
-
-	return space, spaceMember, nil
 }
 
 // createExport records the export, first retiring a predecessor that has stopped.

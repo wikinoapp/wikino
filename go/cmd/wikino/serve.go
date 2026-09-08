@@ -26,6 +26,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision_restore"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
+	exporthandler "github.com/wikinoapp/wikino/go/internal/handler/export"
+	"github.com/wikinoapp/wikino/go/internal/handler/export_download"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
@@ -573,6 +575,18 @@ func runServe() {
 		getSuggestionCommentUC,
 		updateSuggestionCommentUC,
 	)
+	getExportNewUC := usecase.NewGetExportNewUsecase(spaceRepo, spaceMemberRepo, exportRepo)
+	getExportShowUC := usecase.NewGetExportShowUsecase(spaceRepo, spaceMemberRepo, exportRepo)
+	createExportUC := usecase.NewCreateExportUsecase(db, spaceRepo, spaceMemberRepo, exportRepo, jobDispatcher)
+	exportHandler := exporthandler.NewHandler(
+		cfg,
+		flashMgr,
+		getExportNewUC,
+		getExportShowUC,
+		createExportUC,
+	)
+	getExportDownloadUC := usecase.NewGetExportDownloadUsecase(spaceRepo, spaceMemberRepo, exportRepo, objectStorage)
+	exportDownloadHandler := export_download.NewHandler(getExportDownloadUC)
 	r := chi.NewRouter()
 
 	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
@@ -839,6 +853,47 @@ func runServe() {
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
+
+		// Space export: the screen it is started from, the start itself, the screen it is followed
+		// on, and the download of the archive. The rest of the space settings stays on the Rails
+		// version, which is where the breadcrumb of these screens leads back to.
+		//
+		// The namespace is a sub-router so that a request none of these routes take is answered
+		// with the 404 page instead of chi's bodiless 405. The reverse proxy hands the whole
+		// namespace over regardless of method, so that a start cannot reach the Rails writer that
+		// has no guard against a second export, and the Rails version answered every other URL
+		// under it with a 404 of its own.
+		//
+		// HEAD is registered beside each GET because chi resolves routes per method and never
+		// falls back from GET, while the Rails router reads a HEAD that matches nothing as a GET.
+		// Without it a screen that answers 200 to GET would answer 405 to HEAD.
+		//
+		// [Ja] スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
+		// ダウンロード。スペース設定の残りは Rails 版のままで、これらの画面のパンくずはそこへ戻る。
+		//
+		// この名前空間をサブルーターにするのは、どのルートも受けないリクエストに、chi 既定の
+		// 本文なし 405 ではなく 404 ページを返すため。リバースプロキシは、2 つ目のエクスポートを
+		// 防ぐ仕組みを持たない Rails の書き込み処理へ開始が届かないよう、メソッドによらず名前空間
+		// 全体を渡してくる。Rails 版はその配下の他の URL には自身の 404 を返していた。
+		//
+		// GET のそれぞれに HEAD を併記するのは、chi がメソッドごとにルートを引き GET へ
+		// フォールバックしない一方、Rails のルーターは一致しない HEAD を GET として読むため。
+		// 併記しないと、GET に 200 を返す画面が HEAD には 405 を返す。
+		r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
+			r.MethodNotAllowed(handler.NotFound)
+
+			r.Post("/", exportHandler.Create)
+			r.Get("/new", exportHandler.New)
+			r.Head("/new", exportHandler.New)
+
+			// Restrict IDs to UUIDs so malformed IDs never reach a database lookup.
+			// [Ja] 不正なIDをDB取得へ渡さないよう、IDをUUID形式に限定する。
+			exportPath := "/{export_id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}"
+			r.Get(exportPath, exportHandler.Show)
+			r.Head(exportPath, exportHandler.Show)
+			r.Get(exportPath+"/download", exportDownloadHandler.Show)
+			r.Head(exportPath+"/download", exportDownloadHandler.Show)
+		})
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)

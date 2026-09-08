@@ -25,4 +25,6 @@ const (
 	PageNameSuggestionPageNew      PageName = "suggestion_page_new"
 	PageNameSuggestionPageEditShow PageName = "suggestion_page_edit_show"
 	PageNameSuggestionCommentEdit  PageName = "suggestion_comment_edit"
+	PageNameExportNew              PageName = "export_new"
+	PageNameExportShow             PageName = "export_show"
 )

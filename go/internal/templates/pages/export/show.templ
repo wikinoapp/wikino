@@ -1,0 +1,122 @@
+package export
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowData is what the screen an export is followed on is rendered with.
+//
+// [Ja] ShowData はエクスポートの経過を追う画面をレンダリングする元になるデータ。
+type ShowData struct {
+	Space  viewmodel.Space
+	Export viewmodel.Export
+}
+
+// Show renders the screen an export is followed on.
+//
+// [Ja] Show はエクスポートの経過を追う画面を表示します。
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:    templates.T(ctx, "export_show_heading"),
+						Subtitle: descriptionSubtitle("export_show_description_html"),
+					})
+				</div>
+				@components.ContentCard() {
+					switch data.Export.State {
+						case viewmodel.ExportStateProcessing:
+							@showProcessing()
+						case viewmodel.ExportStateSucceeded:
+							@showSucceeded(data)
+						default:
+							@showFailed(data)
+					}
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// showProcessing tells the reader that the export is still being produced. The completion is
+// announced by mail as well, so the screen says so rather than asking the reader to wait on it.
+//
+// [Ja] showProcessing はエクスポートがまだ生成中であることを伝えます。完了はメールでも知らせる
+// ため、画面で待つよう促すのではなく、そのことを伝えます。
+templ showProcessing() {
+	<div class="flex flex-col place-items-center gap-2">
+		@templates.DecorativeIcon("package-regular", "size-10 fill-warning motion-safe:animate-bounce")
+		<p class="text-center">
+			@templ.Raw(templates.T(ctx, "export_show_processing_html"))
+		</p>
+	</div>
+}
+
+// showSucceeded offers the archive, and says so instead when it can no longer be handed out. The
+// download link is signed for a limited time, so an export that finished long enough ago has
+// nothing left to offer and the way out is another export.
+//
+// [Ja] showSucceeded はアーカイブを渡し、もう渡せなくなっていればそのことを伝えます。ダウンロード
+// のリンクは期限付きで署名されるため、完了から十分に時間が経ったエクスポートには渡せるものが残って
+// おらず、出口はもう一度エクスポートすることになります。
+templ showSucceeded(data ShowData) {
+	<div class="flex flex-col place-items-center gap-6">
+		<div class="flex flex-col place-items-center gap-2">
+			@templates.DecorativeIcon("check-circle-regular", "size-10 fill-success")
+			<p class="text-center">
+				{ templates.T(ctx, "export_show_succeeded") }
+			</p>
+		</div>
+		if data.Export.Downloadable {
+			<a
+				href={ templ.SafeURL(string(templates.SpaceSettingsExportDownloadPath(data.Space.Identifier, data.Export.ID))) }
+				class="btn rounded-full w-fit"
+				rel="noopener noreferrer"
+				target="_blank"
+			>
+				@templates.DecorativeIcon("download-simple-regular", "size-[18px] fill-primary-foreground")
+				{ templates.T(ctx, "export_show_download") }
+			</a>
+		} else {
+			<p class="text-center text-sm text-muted-foreground">
+				{ templates.T(ctx, "export_show_expired") }
+			</p>
+			@retryLink(data)
+		}
+	</div>
+}
+
+// showFailed says that the export did not finish and offers another one. It covers the export that
+// recorded a failure and the one that was left behind by a worker that stopped: neither is coming
+// back, and in both cases what the reader can do is start again.
+//
+// [Ja] showFailed はエクスポートが完了しなかったことを伝え、もう一度実行する導線を出します。失敗を
+// 記録したエクスポートと、停止したワーカーに取り残されたエクスポートの双方を受け持ちます。どちらも
+// 戻ってくることはなく、読み手にできるのはやり直すことだからです。
+templ showFailed(data ShowData) {
+	<div class="flex flex-col place-items-center gap-6">
+		<div class="flex flex-col place-items-center gap-2">
+			@templates.DecorativeIcon("warning-circle-regular", "size-10 fill-error")
+			<p class="text-center">
+				@templ.Raw(templates.T(ctx, "export_show_failed_html"))
+			</p>
+		</div>
+		@retryLink(data)
+	</div>
+}
+
+// retryLink is the way back to the screen an export is started from.
+//
+// [Ja] retryLink はエクスポートを開始する画面へ戻る導線です。
+templ retryLink(data ShowData) {
+	<a
+		href={ templ.SafeURL(string(templates.NewSpaceSettingsExportPath(data.Space.Identifier))) }
+		class="btn rounded-full w-fit"
+	>
+		{ templates.T(ctx, "export_show_retry") }
+	</a>
+}

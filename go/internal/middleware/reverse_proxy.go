@@ -156,6 +156,13 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// みなので、上のプレビューパターンに揃えてメソッドを限定する。スペース単位のゴミ箱画面
 	// (/s/:identifier/trash) はパスが異なり、Rails 版のまま残る。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`), methods: []string{http.MethodPost}},
+	// Keep the entire export namespace on Go, including Rails format suffixes and repeated slashes.
+	// Unsupported paths and methods are rejected by the Go router instead of reaching the legacy
+	// writer, which does not enforce the in-progress export guard.
+	//
+	// [Ja] Railsのformat拡張子や連続するスラッシュも含め、エクスポート配下はGoで処理する。
+	// 未対応のパスやメソッドはGoルーターが拒否し、多重実行防止を持たない旧処理へ転送しない。
+	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+exports([/.]|$)`)},
 	// /attachments/:id/og_image: 公開トピックのページから参照される添付ファイルを imgproxy 経由で配信する
 	// /attachments/:id (ダウンロードURL) は Rails が提供するため、og_image 末尾でパスを限定する
 	{pattern: regexp.MustCompile(`^/attachments/[^/]+/og_image$`), methods: []string{http.MethodGet}},
