@@ -16,6 +16,15 @@ on:
 env:
   GO_VERSION: "1.26.4"
   NODE_VERSION: "24.13.0"
+  # dbmate is installed from its release binary, the same way the Dockerfiles do
+  # it. Never use `releases/latest` (a floating pointer) - pin both the version
+  # and the digest, and bump them together with go/Dockerfile and Dockerfile.dev.
+  #
+  # [Ja] dbmate はリリースバイナリからインストールする (Dockerfile 群と同じ方法)。
+  # 浮動参照である `releases/latest` は使わず、バージョンとハッシュを必ず固定し、
+  # 更新時は go/Dockerfile・Dockerfile.dev と揃えて変更する。
+  DBMATE_VERSION: "v2.33.0"
+  DBMATE_SHA256: "dfd4027141b6e4357158099bdfe6c02b286af70f8e49057937744cf80b38ea1c"
 
 jobs:
   lint:
@@ -153,6 +162,76 @@ jobs:
         run: make test
         env:
           CI: true
+
+  # Every database in this repository is built by loading go/db/schema.sql, so
+  # the SQL of the migration files is executed nowhere else in CI: a migration
+  # whose result was never dumped back into that file would run for the first
+  # time in production. This job applies the migrations to a database built from
+  # the committed schema and fails when the dump that follows differs from it.
+  #
+  # [Ja] このリポジトリのデータベースはいずれも go/db/schema.sql をロードして作る
+  # ため、マイグレーションファイルの SQL は CI の他のどこでも実行されない。結果を
+  # そのファイルへダンプし戻していないマイグレーションは、本番で初めて実行される
+  # ことになる。本ジョブは Git 管理下のスキーマから作ったデータベースへ
+  # マイグレーションを適用し、続くダンプがそれと食い違えば失敗する。
+  schema:
+    name: Schema
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgres://postgres@localhost:5432/wikino_test?sslmode=disable
+
+    services:
+      postgresql:
+        image: postgres:18.1
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: wikino_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # pg_dump refuses to dump a server newer than itself, and the runner image
+      # carries an older client than the service container above runs. Install
+      # the client of the server's major version and put it first on PATH, so
+      # the dump this job compares is produced by the same pg_dump major version
+      # as the committed file.
+      #
+      # [Ja] pg_dump は自分より新しいサーバーのダンプを拒否するが、ランナーの
+      # イメージが持つクライアントは上のサービスコンテナのサーバーより古い。
+      # サーバーのメジャーバージョンに合わせたクライアントを入れて PATH の先頭に
+      # 置き、本ジョブが比較するダンプが Git 管理下のファイルと同じ pg_dump の
+      # メジャーバージョンで作られるようにする。
+      - name: Set up PostgreSQL client
+        run: |
+          sudo install -d -m 0755 /etc/apt/keyrings
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo gpg --dearmor --yes -o /etc/apt/keyrings/postgresql.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+
+      - name: Set up dbmate
+        run: |
+          curl -fsSL -o /tmp/dbmate \
+            "https://github.com/amacneil/dbmate/releases/download/${DBMATE_VERSION}/dbmate-linux-amd64"
+          echo "${DBMATE_SHA256}  /tmp/dbmate" | sha256sum -c -
+          sudo install -m 0755 /tmp/dbmate /usr/local/bin/dbmate
+
+      - name: Check migration drift
+        run: make db-check-drift
 
   build:
     name: Build

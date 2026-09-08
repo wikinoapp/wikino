@@ -38,13 +38,15 @@ RUN ln -sf /usr/local/lib/node_modules/corepack/dist/corepack.js /usr/local/bin/
 
 # Install dbmate with SHA256 verification. Never use `releases/latest` (a floating
 # pointer) - pin both the version and the digest. DBMATE_VERSION / DBMATE_SHA256
-# are intentionally duplicated in Dockerfile.dev to keep each Dockerfile
-# self-contained; bump them together when upgrading dbmate.
+# are intentionally duplicated in Dockerfile.dev and in the schema drift job of
+# .github/workflows/go-ci.yml to keep each file self-contained; bump them
+# together when upgrading dbmate.
 #
 # [Ja] dbmate を SHA256 検証付きでインストールする。浮動参照である
 # `releases/latest` は使わず、バージョンとハッシュを必ず固定する。
-# DBMATE_VERSION / DBMATE_SHA256 は Dockerfile.dev と意図的に二重定義しており
-# (各 Dockerfile を自己完結に保つため)、更新時は両ファイルを揃えて変更する。
+# DBMATE_VERSION / DBMATE_SHA256 は Dockerfile.dev および
+# .github/workflows/go-ci.yml のスキーマドリフトのジョブと意図的に二重定義しており
+# (各ファイルを自己完結に保つため)、更新時はすべてのファイルを揃えて変更する。
 ARG DBMATE_VERSION=v2.33.0
 ARG DBMATE_SHA256=dfd4027141b6e4357158099bdfe6c02b286af70f8e49057937744cf80b38ea1c
 RUN curl -fsSL -o /tmp/dbmate "https://github.com/amacneil/dbmate/releases/download/${DBMATE_VERSION}/dbmate-linux-amd64" && \
