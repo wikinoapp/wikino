@@ -58,39 +58,26 @@ type PageLocation struct {
 	PageTitle string
 }
 
-// ScanWikilinks はMarkdown本文からWikiリンクをパースし、
-// トピック名とページタイトルのペアのリストを返す。
-// [[ページ名]] 形式の場合はcurrentTopicNameを使用する。
-// [[トピック名/ページ名]] 形式の場合はそのまま使用する。
+// ScanWikilinks returns the keys of the wiki links of a Markdown body in the order they appear,
+// resolving the [[page title]] form against currentTopicName and splitting the
+// [[topic name/page title]] form. It reads the same links as ScanWikilinkMatches, so a [[...]]
+// written as code, inside an existing link, or escaped names no page: the save paths create the
+// pages the keys name, and what the screen never shows as a link must not create one either.
+//
+// [Ja] ScanWikilinks は Markdown 本文の Wiki リンクのキーを現れる順に返す。[[ページ名]] 形式は
+// currentTopicName で補い、[[トピック名/ページ名]] 形式は分割する。ScanWikilinkMatches と同じ
+// リンクを読むため、コードとして書かれた [[...]]、既存のリンクの中の [[...]]、エスケープされた
+// [[...]] はページを指さない。保存経路はキーが指すページを作成するので、画面がリンクとして
+// 見せないものからページを作らないためである。
 func ScanWikilinks(body string, currentTopicName string) []WikilinkKey {
-	matches := wikilinkRegex.FindAllStringSubmatch(body, -1)
+	matches := ScanWikilinkMatches(body, currentTopicName)
 	if len(matches) == 0 {
 		return nil
 	}
 
-	var keys []WikilinkKey
+	keys := make([]WikilinkKey, 0, len(matches))
 	for _, match := range matches {
-		raw := strings.TrimSpace(match[1])
-		if raw == "" {
-			continue
-		}
-
-		parts := strings.SplitN(raw, "/", 2)
-		if len(parts) == 2 {
-			// [[トピック名/ページ名]] 形式
-			keys = append(keys, WikilinkKey{
-				Raw:       raw,
-				TopicName: parts[0],
-				PageTitle: parts[1],
-			})
-		} else {
-			// [[ページ名]] 形式 — 現在のトピック名を使用
-			keys = append(keys, WikilinkKey{
-				Raw:       raw,
-				TopicName: currentTopicName,
-				PageTitle: parts[0],
-			})
-		}
+		keys = append(keys, match.Key)
 	}
 
 	return keys

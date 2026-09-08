@@ -1398,3 +1398,66 @@ func TestScanWikilinkMatches_ElementScopeEndTags(t *testing.T) {
 		})
 	}
 }
+
+func TestScanWikilinks_SkipsCode(t *testing.T) {
+	t.Parallel()
+
+	// A [[...]] written as code is not a link on the screen, so the save paths must not create
+	// the page it names. Links outside code keep resolving as before.
+	//
+	// [Ja] コードとして書かれた [[...]] は画面上でリンクにならないため、保存経路がその名前の
+	// ページを作ってはならない。コードの外のリンクは従来どおり解決される。
+	tests := []struct {
+		name string
+		body string
+		want []string
+	}{
+		{
+			name: "フェンスコードブロック内のリンクは返さない",
+			body: "[[ページ1]]\n\n```\n[[コード1]]\n```\n\n[[ページ2]]",
+			want: []string{"ページ1", "ページ2"},
+		},
+		{
+			name: "インデントコードブロック内のリンクは返さない",
+			body: "[[ページ1]]\n\n    [[コード1]]\n\n[[ページ2]]",
+			want: []string{"ページ1", "ページ2"},
+		},
+		{
+			name: "インラインコード内のリンクは返さない",
+			body: "[[ページ1]] `[[コード1]]` [[トピックB/ページ2]]",
+			want: []string{"ページ1", "トピックB/ページ2"},
+		},
+		{
+			name: "raw HTML の code 要素内のリンクは返さない",
+			body: "[[ページ1]] <code>[[コード1]]</code> [[ページ2]]",
+			want: []string{"ページ1", "ページ2"},
+		},
+		{
+			name: "raw HTML の pre 要素内のリンクは返さない",
+			body: "[[ページ1]]\n\n<pre>\n[[コード1]]\n</pre>\n\n[[ページ2]]",
+			want: []string{"ページ1", "ページ2"},
+		},
+		{
+			name: "コードだけの本文からは何も返さない",
+			body: "```\n[[コード1]]\n```",
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			keys := ScanWikilinks(tt.body, "トピックA")
+
+			if len(keys) != len(tt.want) {
+				t.Fatalf("len(keys) = %d, want %d: %+v", len(keys), len(tt.want), keys)
+			}
+			for i, raw := range tt.want {
+				if keys[i].Raw != raw {
+					t.Errorf("keys[%d].Raw = %q, want %q", i, keys[i].Raw, raw)
+				}
+			}
+		})
+	}
+}
