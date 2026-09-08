@@ -317,7 +317,7 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 		}
 
 		// 添付ファイル参照の同期
-		if err := syncAttachmentReferences(ctx, sp.BodyHTML, sp.PageID, spaceID, attachmentRepo, pageAttachmentRefRepo); err != nil {
+		if err := syncAttachmentReferences(ctx, sp.Body, sp.PageID, spaceID, attachmentRepo, pageAttachmentRefRepo); err != nil {
 			return nil, fmt.Errorf("添付ファイル参照の同期に失敗しました: %w", err)
 		}
 

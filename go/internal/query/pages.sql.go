@@ -1024,6 +1024,65 @@ func (q *Queries) GetNextPageNumber(ctx context.Context, spaceID string) (int32,
 	return next_number, err
 }
 
+const listActivePagesBySpace = `-- name: ListActivePagesBySpace :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+ORDER BY t.number, p.number
+`
+
+// Returns every active page of the space (published, not discarded, not trashed, and whose
+// topic is not discarded), ordered by topic and then by page number. The export writes the
+// archive in this order, so the same space gives the same archive on every attempt, which is
+// what lets a retry start over from the beginning.
+//
+// [Ja] スペース内のアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) をすべて、
+// トピック順・ページ番号順で返す。エクスポートはこの順序でアーカイブを書き出すため、同じ
+// スペースからは毎回同じアーカイブができる。リトライが先頭からやり直せるのはこのためである。
+func (q *Queries) ListActivePagesBySpace(ctx context.Context, spaceID string) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, listActivePagesBySpace, spaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			&i.BodyHtml,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const movePageToTopic = `-- name: MovePageToTopic :one
 UPDATE pages
 SET topic_id = $2, updated_at = NOW()

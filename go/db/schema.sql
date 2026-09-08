@@ -1,6 +1,4 @@
 
--- Dumped from database version 18.1 (Debian 18.1-1.pgdg13+2)
--- Dumped by pg_dump version 18.3 (Debian 18.3-1.pgdg13+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -226,21 +224,6 @@ CREATE TABLE public.email_confirmations (
 
 
 --
--- Name: export_statuses; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.export_statuses (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid NOT NULL,
-    export_id uuid NOT NULL,
-    kind integer NOT NULL,
-    changed_at timestamp(6) without time zone NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: exports; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -249,7 +232,11 @@ CREATE TABLE public.exports (
     space_id uuid NOT NULL,
     queued_by_id uuid NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    status integer DEFAULT 0 NOT NULL,
+    status_changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    heartbeat_at timestamp with time zone,
+    object_key character varying
 );
 
 
@@ -774,14 +761,6 @@ ALTER TABLE ONLY public.draft_pages
 
 ALTER TABLE ONLY public.email_confirmations
     ADD CONSTRAINT email_confirmations_pkey PRIMARY KEY (id);
-
-
---
--- Name: export_statuses export_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_statuses
-    ADD CONSTRAINT export_statuses_pkey PRIMARY KEY (id);
 
 
 --
@@ -1332,20 +1311,6 @@ CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmatio
 
 
 --
--- Name: index_export_statuses_on_export_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_export_statuses_on_export_id ON public.export_statuses USING btree (export_id);
-
-
---
--- Name: index_export_statuses_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_export_statuses_on_space_id ON public.export_statuses USING btree (space_id);
-
-
---
 -- Name: index_exports_on_queued_by_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1849,7 +1814,7 @@ ALTER TABLE ONLY public.page_revisions
 --
 
 ALTER TABLE ONLY public.exports
-    ADD CONSTRAINT fk_rails_703ee3dae6 FOREIGN KEY (queued_by_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT fk_rails_703ee3dae6 FOREIGN KEY (queued_by_id) REFERENCES public.space_members(id) ON DELETE CASCADE;
 
 
 --
@@ -1881,7 +1846,7 @@ ALTER TABLE ONLY public.pages
 --
 
 ALTER TABLE ONLY public.exports
-    ADD CONSTRAINT fk_rails_7fa4a1a0c0 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT fk_rails_7fa4a1a0c0 FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -1957,14 +1922,6 @@ ALTER TABLE ONLY public.space_members
 
 
 --
--- Name: export_statuses fk_rails_a8d9f2050b; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_statuses
-    ADD CONSTRAINT fk_rails_a8d9f2050b FOREIGN KEY (export_id) REFERENCES public.exports(id);
-
-
---
 -- Name: draft_pages fk_rails_a989662ed2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1994,14 +1951,6 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 ALTER TABLE ONLY public.user_passwords
     ADD CONSTRAINT fk_rails_c7888e4144 FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: export_statuses fk_rails_cab71249f9; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_statuses
-    ADD CONSTRAINT fk_rails_cab71249f9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
 
 
 --
@@ -2211,4 +2160,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260607080412'),
     ('20260607082306'),
     ('20260704172330'),
-    ('20260704174144');
+    ('20260704174144'),
+    ('20260904051921'),
+    ('20260908075645'),
+    ('20260908090236');

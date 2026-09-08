@@ -48,13 +48,6 @@ RSpec.describe GuestPolicy do
     end
   end
 
-  describe "#can_export_space?" do
-    it "スペースをエクスポートできないこと" do
-      policy = GuestPolicy.new
-      expect(policy.can_export_space?).to be(false)
-    end
-  end
-
   describe "#can_create_topic?" do
     it "トピックを作成できないこと" do
       policy = GuestPolicy.new

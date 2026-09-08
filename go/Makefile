@@ -132,20 +132,24 @@ clean: ## ビルド成果物をクリーン
 
 # データベースマイグレーションコマンド
 
-# Strip the random \restrict / \unrestrict lines that pg_dump >= 17.6 emits into
-# db/schema.sql, which dbmate writes on both up and dump. Shared by db-migrate
-# and db-dump so the workaround lives in one place.
+# Remove the lines of the dump that describe the environment it was taken in:
+# the random \restrict / \unrestrict pair pg_dump >= 17.6 emits, and the header
+# naming the server and pg_dump builds. Keeping them would make db/schema.sql
+# differ between the development container and CI, where db-check-drift compares
+# a dump it takes itself against the committed file.
 # https://github.com/amacneil/dbmate/issues/678
 #
-# [Ja] dbmate が up / dump の双方で db/schema.sql へ書き込む、pg_dump 17.6 以降が
-# 出力するランダムな \restrict / \unrestrict 行を削除する。db-migrate と db-dump で
-# 共有し、回避策を 1 箇所にまとめる。
-STRIP_SCHEMA_RESTRICT = sed -i '/^\\restrict /d;/^\\unrestrict /d' db/schema.sql
+# [Ja] ダンプのうち、それを取得した環境を記述している行を削除する。pg_dump 17.6
+# 以降が出力するランダムな \restrict / \unrestrict の対と、サーバーおよび pg_dump の
+# ビルドを記した見出しが対象。これらを残すと db/schema.sql が開発コンテナと CI で
+# 食い違い、自分でダンプを取って Git 管理下のファイルと比較する db-check-drift が
+# 成立しなくなる。
+NORMALIZE_SCHEMA_DUMP = sed -i '/^\\restrict /d;/^\\unrestrict /d;/^-- Dumped /d' db/schema.sql
 
 .PHONY: db-migrate
 db-migrate: ## データベースマイグレーションを実行
 	$(OP_RUN_DEV) dbmate up
-	@$(STRIP_SCHEMA_RESTRICT)
+	@$(NORMALIZE_SCHEMA_DUMP)
 
 # Initialize the development database without discarding data. `dbmate create`
 # succeeds only when the database did not exist, so the schema is loaded exactly
@@ -253,7 +257,47 @@ db-new: ## 新しいマイグレーションファイルを作成（使用法: m
 .PHONY: db-dump
 db-dump: ## データベーススキーマをdb/schema.sqlにダンプ
 	$(OP_RUN_DEV) dbmate dump
-	@$(STRIP_SCHEMA_RESTRICT)
+	@$(NORMALIZE_SCHEMA_DUMP)
+
+# Rebuild the test database from db/schema.sql, apply the migrations that file
+# does not record as applied yet, and fail when the resulting dump differs from
+# it. Nothing else runs the migration SQL: every database is built by loading
+# db/schema.sql, so a migration that was never dumped back would otherwise reach
+# production as the first execution of its SQL. Dumping an unchanged database
+# also reports a db/schema.sql that was edited by hand into something pg_dump
+# would not produce.
+#
+# The dump overwrites db/schema.sql, so the file is put back before returning:
+# a check is expected to report drift, not to resolve it. Run db-migrate to
+# regenerate the file for real.
+#
+# [Ja] テスト用データベースを db/schema.sql から作り直し、そのファイルが適用済みと
+# して記録していないマイグレーションを適用して、結果のダンプが元と食い違えば失敗
+# する。マイグレーションの SQL を実行する場所は他に無く、どのデータベースも
+# db/schema.sql をロードして作るため、ダンプし戻していないマイグレーションは本番で
+# 初めて実行されることになる。変化しなかったデータベースをダンプすることは、
+# pg_dump が出力しない形へ手で編集された db/schema.sql の報告も兼ねる。
+#
+# ダンプは db/schema.sql を上書きするため、終了前にファイルを元へ戻す。検査に期待
+# するのはドリフトの報告であって解消ではない。実際に更新するときは db-migrate を
+# 実行する。
+.PHONY: db-check-drift
+db-check-drift: db-setup-test ## Check that db/schema.sql is in sync with the migrations. [Ja] db/schema.sql がマイグレーションと同期しているかをチェック
+	@echo "🔍 マイグレーションと db/schema.sql の同期をチェック中..."
+	@committed=$$(mktemp); \
+	cp db/schema.sql "$$committed"; \
+	status=0; \
+	$(OP_RUN_TEST) dbmate up > /dev/null || status=$$?; \
+	if [ "$$status" -eq 0 ]; then \
+		$(NORMALIZE_SCHEMA_DUMP); \
+		diff -u --label "db/schema.sql" --label "db/schema.sql (dumped)" "$$committed" db/schema.sql || status=1; \
+	fi; \
+	cp "$$committed" db/schema.sql; \
+	rm -f "$$committed"; \
+	if [ "$$status" -ne 0 ]; then \
+		echo "db/schema.sql がマイグレーションとずれています。make db-migrate を実行して差分をコミットしてください" >&2; \
+	fi; \
+	exit "$$status"
 
 .PHONY: sqlc-generate
 sqlc-generate: ## SQLクエリからGoコードを生成

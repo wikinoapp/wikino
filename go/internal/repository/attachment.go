@@ -141,3 +141,56 @@ func (r *AttachmentRepository) toModel(row query.FindAttachmentByIDAndSpaceRow) 
 		Filename: row.Filename,
 	}
 }
+
+// PageAttachment is an attachment together with the page that references it. The export needs
+// the pairing, because the copy of an attachment goes into the directory of the topic the
+// referencing page belongs to, and one attachment can be referenced from several topics.
+//
+// [Ja] PageAttachment は添付ファイルと、それを参照しているページの組。エクスポートにはこの組が
+// 要る。添付ファイルの複製は参照元のページが属するトピックのディレクトリへ置かれ、1 つの添付
+// ファイルが複数のトピックから参照されうるためである。
+type PageAttachment struct {
+	PageID     model.PageID
+	Attachment *model.Attachment
+}
+
+// ListByPageIDsAndSpace returns the attachments the given pages reference, paired with the
+// referencing page. Filename and BlobKey are populated; the export names the copy from the
+// former and fetches the object with the latter.
+//
+// [Ja] ListByPageIDsAndSpace は指定したページが参照している添付ファイルを、参照元のページとの組
+// で返す。populate されるのは Filename と BlobKey で、エクスポートは前者から複製の名前を決め、
+// 後者でオブジェクトを取得する。
+func (r *AttachmentRepository) ListByPageIDsAndSpace(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID) ([]*PageAttachment, error) {
+	var idStrings []string
+	for _, id := range pageIDs {
+		if uuidRegex.MatchString(string(id)) {
+			idStrings = append(idStrings, string(id))
+		}
+	}
+	if len(idStrings) == 0 {
+		return nil, nil
+	}
+
+	rows, err := r.q.ListAttachmentsByPageIDsAndSpace(ctx, query.ListAttachmentsByPageIDsAndSpaceParams{
+		PageIds: idStrings,
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	pageAttachments := make([]*PageAttachment, len(rows))
+	for i, row := range rows {
+		pageAttachments[i] = &PageAttachment{
+			PageID: model.PageID(row.PageID),
+			Attachment: &model.Attachment{
+				ID:       model.AttachmentID(row.ID),
+				SpaceID:  model.SpaceID(row.SpaceID),
+				Filename: row.Filename,
+				BlobKey:  row.BlobKey,
+			},
+		}
+	}
+	return pageAttachments, nil
+}

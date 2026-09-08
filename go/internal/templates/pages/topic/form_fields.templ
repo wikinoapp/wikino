@@ -1,0 +1,161 @@
+package topic
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// FormFieldsData is what the fields a topic is described by are rendered with. Name, Description
+// and Visibility carry the submitted values back into the form, so a rejected submission keeps
+// what was typed.
+//
+// [Ja] FormFieldsData はトピックを説明する項目をレンダリングする元になるデータ。Name・
+// Description・Visibility は送信された値をフォームへ戻すためのもので、拒否された送信でも入力した
+// 内容が残るようにする。
+type FormFieldsData struct {
+	FormErrors  *model.ValidationError
+	Name        string
+	Description string
+	Visibility  string
+}
+
+// formFields renders the fields the topic creation form and the general settings form share. Both
+// describe the same topic, so they ask for the same three things in the same way and a change to
+// one of them reaches both screens.
+//
+// [Ja] formFields はトピック作成フォームと一般設定フォームが共有する項目を表示します。どちらも
+// 同じトピックを説明するものなので、同じ 3 つを同じ形で尋ね、片方への変更が両方の画面に届く
+// ようにします。
+templ formFields(data FormFieldsData) {
+	<div class="grid gap-2">
+		<label class="label" for="name">
+			{ templates.T(ctx, "topic_form_name_label") }
+		</label>
+		<input
+			autofocus
+			class="input"
+			id="name"
+			name="name"
+			required
+			type="text"
+			value={ data.Name }
+			if data.FormErrors != nil && data.FormErrors.HasFieldError("name") {
+				aria-invalid="true"
+				aria-describedby={ fieldErrorID("name") }
+			}
+		/>
+		@fieldErrors(data.FormErrors, "name")
+	</div>
+	<div class="grid gap-2">
+		@components.OptionalLabel(components.OptionalLabelData{
+			For:   "description",
+			Label: templates.T(ctx, "topic_form_description_label"),
+		})
+		<input
+			class="input"
+			id="description"
+			name="description"
+			type="text"
+			value={ data.Description }
+			if data.FormErrors != nil && data.FormErrors.HasFieldError("description") {
+				aria-invalid="true"
+				aria-describedby={ fieldErrorID("description") }
+			}
+		/>
+		@fieldErrors(data.FormErrors, "description")
+	</div>
+	<fieldset class="grid gap-3">
+		<legend class="label">
+			{ templates.T(ctx, "topic_form_visibility_label") }
+		</legend>
+		@fieldErrors(data.FormErrors, "visibility")
+		<div class="flex flex-col gap-2">
+			<label class="label flex items-center gap-2 cursor-pointer" for="visibility_public">
+				<input
+					class="input"
+					id="visibility_public"
+					name="visibility"
+					type="radio"
+					value={ model.TopicVisibilityPublic.String() }
+					if data.Visibility == model.TopicVisibilityPublic.String() {
+						checked
+					}
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("visibility") {
+						aria-invalid="true"
+						aria-describedby={ fieldErrorID("visibility") }
+					}
+				/>
+				<span class="flex items-center gap-1">
+					@templates.DecorativeIcon("globe-regular", "size-4")
+					{ templates.T(ctx, "topic_form_visibility_public") }
+				</span>
+			</label>
+			<p class="text-muted-foreground pl-[25px] text-sm">
+				{ templates.T(ctx, "topic_form_visibility_public_hint") }
+			</p>
+		</div>
+		<div class="flex flex-col gap-2">
+			<label class="label flex items-center gap-2 cursor-pointer" for="visibility_private">
+				<input
+					class="input"
+					id="visibility_private"
+					name="visibility"
+					type="radio"
+					value={ model.TopicVisibilityPrivate.String() }
+					if data.Visibility == model.TopicVisibilityPrivate.String() {
+						checked
+					}
+					if data.FormErrors != nil && data.FormErrors.HasFieldError("visibility") {
+						aria-invalid="true"
+						aria-describedby={ fieldErrorID("visibility") }
+					}
+				/>
+				<span class="flex items-center gap-1">
+					@templates.DecorativeIcon("lock-regular", "size-4")
+					{ templates.T(ctx, "topic_form_visibility_private") }
+				</span>
+			</label>
+			<div class="text-muted-foreground pl-[25px] text-sm">
+				<p>
+					{ templates.T(ctx, "topic_form_visibility_private_hint") }
+				</p>
+				<p class="font-bold">
+					@templ.Raw(templates.T(ctx, "topic_form_visibility_private_note_html"))
+				</p>
+			</div>
+		</div>
+	</fieldset>
+}
+
+// fieldErrors renders the errors of one form field. They sit in one element so that the field can
+// point at all of them with a single aria-describedby.
+//
+// Only the inputs point at this element. A group of inputs does not have its fieldset point at it
+// as well, which would make a screen reader announce the same errors on entering the group and
+// again on every option in it.
+//
+// [Ja] fieldErrors はフォームの 1 つの項目のエラーを表示します。項目が 1 つの aria-describedby で
+// すべてのエラーを指せるよう、エラーは 1 つの要素にまとめます。
+//
+// この要素を指すのは入力欄だけです。入力欄のグループでは、それを囲む fieldset からは指しません。
+// 指すと、スクリーンリーダーがグループに入るときと、その中の選択肢ごとの両方で同じエラーを
+// 読み上げることになります。
+templ fieldErrors(formErrors *model.ValidationError, field string) {
+	if formErrors != nil && formErrors.HasFieldError(field) {
+		<div id={ fieldErrorID(field) }>
+			for _, errorMsg := range formErrors.GetFieldErrors(field) {
+				<p class="text-sm text-error">
+					{ errorMsg }
+				</p>
+			}
+		</div>
+	}
+}
+
+// fieldErrorID names the element that holds the errors of one form field.
+//
+// [Ja] fieldErrorID はフォームの 1 つの項目のエラーを収める要素の id を返します。
+func fieldErrorID(field string) string {
+	return field + "-error"
+}

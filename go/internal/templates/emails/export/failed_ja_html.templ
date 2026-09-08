@@ -1,0 +1,15 @@
+package export
+
+// FailedJaHTML is the Japanese HTML template for an export that could not be produced.
+//
+// [Ja] FailedJaHTML は生成できなかったエクスポートの日本語HTMLテンプレート
+templ FailedJaHTML(data Data) {
+	エクスポートデータを作成できませんでした。<br/>
+	<br/>
+	スペースの内容は変わっていません。下のページからやり直せます。<br/>
+	<br/>
+	<a href={ templ.SafeURL(data.URL) }>エクスポート</a><br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

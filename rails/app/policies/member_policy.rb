@@ -68,11 +68,6 @@ class MemberPolicy
     effective_scopes.include?(Scope::SPACE_WRITE)
   end
 
-  sig { returns(T::Boolean) }
-  def can_export_space?
-    effective_scopes.include?(Scope::SPACE_WRITE)
-  end
-
   # トピック作成
 
   sig { returns(T::Boolean) }

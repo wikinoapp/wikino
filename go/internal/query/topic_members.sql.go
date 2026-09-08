@@ -13,6 +13,46 @@ import (
 	"github.com/lib/pq"
 )
 
+const createTopicMember = `-- name: CreateTopicMember :one
+INSERT INTO topic_members (space_id, topic_id, space_member_id, joined_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $4, $4)
+RETURNING id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes
+`
+
+type CreateTopicMemberParams struct {
+	SpaceID       string    `json:"space_id"`
+	TopicID       string    `json:"topic_id"`
+	SpaceMemberID string    `json:"space_member_id"`
+	Now           time.Time `json:"now"`
+}
+
+// Adds a space member to a topic. The scopes are left empty, so the member's permissions on the
+// topic come from the scopes they hold on the space.
+//
+// [Ja] スペースメンバーをトピックに参加させる。スコープは空のままにし、そのトピックでの権限は
+// メンバーがスペースに対して持つスコープから決まるようにする。
+func (q *Queries) CreateTopicMember(ctx context.Context, arg CreateTopicMemberParams) (TopicMember, error) {
+	row := q.db.QueryRowContext(ctx, createTopicMember,
+		arg.SpaceID,
+		arg.TopicID,
+		arg.SpaceMemberID,
+		arg.Now,
+	)
+	var i TopicMember
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.TopicID,
+		&i.SpaceMemberID,
+		&i.JoinedAt,
+		&i.LastPageModifiedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		pq.Array(&i.Scopes),
+	)
+	return i, err
+}
+
 const findTopicMemberBySpaceMemberAndTopic = `-- name: FindTopicMemberBySpaceMemberAndTopic :one
 SELECT id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
 `

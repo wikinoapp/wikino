@@ -97,3 +97,41 @@ func (d *Dispatcher) EnqueueCleanupRateLimits(ctx context.Context, retentionHour
 	_, err := d.client.Insert(ctx, args, &opts)
 	return err
 }
+
+// GenerateExportFilesArgs are the arguments of the job that writes a space export.
+//
+// MaxAttempts is lower than the other jobs': one attempt reads every page of a space and fetches
+// every attachment, so a retry is expensive. Three attempts still ride out a transient failure of
+// the object storage, and the fourth would mostly repeat work that is not going to succeed.
+//
+// [Ja] GenerateExportFilesArgs はスペースのエクスポートを書き出すジョブの引数。
+//
+// MaxAttempts は他のジョブより小さくする。1 回の試行がスペースの全ページを読み、すべての添付
+// ファイルを取得するため、リトライのコストが高いためである。3 回あればオブジェクトストレージの
+// 一時的な失敗は乗り切れる。4 回目は、成功する見込みの無い仕事をほぼ繰り返すことになる。
+type GenerateExportFilesArgs struct {
+	ExportID string `json:"export_id"`
+	SpaceID  string `json:"space_id"`
+}
+
+// Kind returns the kind of the job.
+//
+// [Ja] Kind はジョブの種類を返す。
+func (GenerateExportFilesArgs) Kind() string { return "generate_export_files" }
+
+// InsertOpts returns the Insert options of the job.
+//
+// [Ja] InsertOpts はジョブの Insert オプションを返す。
+func (GenerateExportFilesArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 3}
+}
+
+// EnqueueGenerateExportFiles adds the job that generates the files of an export to the queue.
+//
+// [Ja] EnqueueGenerateExportFiles はエクスポートファイル生成ジョブをキューに追加する。
+func (d *Dispatcher) EnqueueGenerateExportFiles(ctx context.Context, exportID, spaceID string) error {
+	args := GenerateExportFilesArgs{ExportID: exportID, SpaceID: spaceID}
+	opts := args.InsertOpts()
+	_, err := d.client.Insert(ctx, args, &opts)
+	return err
+}

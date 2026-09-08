@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/wikinoapp/wikino/go/internal/markup"
@@ -237,12 +238,14 @@ func TestSandboxPageTitlesStayWithinWhatTheAppAccepts(t *testing.T) {
 		if got := utf8.RuneCountInString(spec.title); got > pageTitleLengthLimit {
 			t.Errorf("%q が %d 文字以内であることを期待したが %d 文字だった", spec.title, pageTitleLengthLimit, got)
 		}
-		if strings.ContainsAny(spec.title, `/\:*?"<>|`) {
+		if strings.ContainsAny(spec.title, `/\:`) {
 			t.Errorf("%q にタイトルとして使えない文字が含まれている", spec.title)
 		}
-		if strings.HasPrefix(spec.title, " ") || strings.HasSuffix(spec.title, " ") ||
-			strings.HasPrefix(spec.title, ".") || strings.HasSuffix(spec.title, ".") {
-			t.Errorf("%q の先頭または末尾にスペースまたはドットがある", spec.title)
+		if strings.ContainsFunc(spec.title, unicode.IsControl) {
+			t.Errorf("%q に制御文字が含まれている", spec.title)
+		}
+		if strings.HasPrefix(spec.title, " ") || strings.HasSuffix(spec.title, " ") {
+			t.Errorf("%q の先頭または末尾にスペースがある", spec.title)
 		}
 	}
 }

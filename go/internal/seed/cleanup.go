@@ -22,7 +22,6 @@ var cleanupTables = []string{
 	"draft_page_revisions",
 	"draft_pages",
 	"email_confirmations",
-	"export_statuses",
 	"exports",
 	"feature_flags",
 	"page_attachment_references",

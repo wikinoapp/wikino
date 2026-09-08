@@ -884,15 +884,15 @@ other = "タイトルは200文字以内で入力してください"
 
 [validation_page_title_invalid_chars]
 description = "ページタイトル禁止文字エラー"
-other = "タイトルに使用できない文字が含まれています"
+other = "タイトルに / \\ : は使用できません"
+
+[validation_page_title_control_chars]
+description = "ページタイトル制御文字エラー"
+other = "タイトルに制御文字は使用できません"
 
 [validation_page_title_invalid_format]
 description = "ページタイトル不正フォーマットエラー"
-other = "タイトルの先頭・末尾にスペースやドットは使用できません"
-
-[validation_page_title_reserved]
-description = "ページタイトル予約語エラー"
-other = "このタイトルは使用できません"
+other = "タイトルの先頭・末尾にスペースは使用できません"
 
 [validation_page_title_uniqueness_html]
 description = "ページタイトル重複エラー (HTML含む)"
@@ -1197,6 +1197,120 @@ other = "ページ"
 [topic_show_tab_suggestions]
 description = "トピック詳細画面の「編集提案」タブラベル"
 other = "編集提案"
+
+# トピック作成
+[topic_new_title]
+description = "トピック作成画面のページタイトル"
+other = "新規トピック | {{.SpaceName}}"
+
+[topic_new_heading]
+description = "トピック作成画面の見出し"
+other = "新規トピック"
+
+[topic_new_hint_html]
+description = "トピック作成画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "トピックについては <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">トピックについてのヘルプ</a> をご覧ください<br>どんなトピックを作ると良いかわからないときは <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
+
+[topic_form_name_label]
+description = "トピックのフォームの名前ラベル (作成画面と一般設定画面で共有)"
+other = "名前"
+
+[topic_form_description_label]
+description = "トピックのフォームの説明ラベル (作成画面と一般設定画面で共有)"
+other = "説明"
+
+[topic_form_visibility_label]
+description = "トピックのフォームの公開設定ラベル (作成画面と一般設定画面で共有)"
+other = "公開設定"
+
+[topic_form_visibility_public]
+description = "トピックのフォームの公開トピックの選択肢 (作成画面と一般設定画面で共有)"
+other = "公開"
+
+[topic_form_visibility_private]
+description = "トピックのフォームの非公開トピックの選択肢 (作成画面と一般設定画面で共有)"
+other = "非公開"
+
+[topic_form_visibility_public_hint]
+description = "トピックのフォームの公開トピックの補足 (作成画面と一般設定画面で共有)"
+other = "公開トピックに投稿されたページはインターネット上に公開されます"
+
+[topic_form_visibility_private_hint]
+description = "トピックのフォームの非公開トピックの補足 (作成画面と一般設定画面で共有)"
+other = "非公開トピックに投稿されたページはこのスペースのメンバーのみに公開されます"
+
+[topic_form_visibility_private_note_html]
+description = "トピックのフォームの非公開トピックの注意書き (作成画面と一般設定画面で共有。ヘルプページへのリンクを含む)"
+other = "非公開トピックは現在無料で利用できますが、今後有料プランが導入されたとき有料プランのみの機能となります。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/38\" target=\"_blank\">非公開トピックについてのヘルプ</a>"
+
+[topic_new_submit_button]
+description = "トピック作成画面の送信ボタン"
+other = "作成する"
+
+[topic_new_cancel]
+description = "トピック作成画面のキャンセルリンク"
+other = "キャンセル"
+
+[validation_topic_name_required]
+description = "トピック名必須エラー"
+other = "名前を入力してください"
+
+[validation_topic_name_too_long]
+description = "トピック名文字数超過エラー"
+other = "名前は30文字以内で入力してください"
+
+[validation_topic_name_invalid_chars]
+description = "トピック名禁止文字エラー"
+other = "名前に / \\ : は使用できません"
+
+[validation_topic_name_control_chars]
+description = "トピック名制御文字エラー"
+other = "名前に制御文字は使用できません"
+
+[validation_topic_name_invalid_format]
+description = "トピック名不正フォーマットエラー"
+other = "名前の先頭・末尾にスペースは使用できません"
+
+[validation_topic_name_uniqueness]
+description = "トピック名重複エラー"
+other = "この名前は既に使用されています"
+
+[validation_topic_description_too_long]
+description = "トピックの説明の文字数超過エラー"
+other = "説明は150文字以内で入力してください"
+
+[validation_topic_visibility_required]
+description = "トピックの公開設定未選択エラー"
+other = "公開設定を選択してください"
+
+[flash_topic_created]
+description = "トピック作成成功時のフラッシュメッセージ"
+other = "トピックを作成しました"
+
+[flash_topic_updated]
+description = "トピック更新成功時のフラッシュメッセージ"
+other = "トピックを更新しました"
+
+# トピックの一般設定
+[topic_settings_general_title]
+description = "トピックの一般設定画面のページタイトル"
+other = "基本情報 | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_settings_general_heading]
+description = "トピックの一般設定画面の見出し"
+other = "基本情報"
+
+[topic_settings_general_breadcrumb_settings]
+description = "トピックの一般設定画面のパンくずに出すトピック設定のラベル"
+other = "設定"
+
+[topic_settings_general_submit_button]
+description = "トピックの一般設定画面の送信ボタン"
+other = "保存する"
+
+[topic_settings_general_cancel]
+description = "トピックの一般設定画面のキャンセルリンク"
+other = "キャンセル"
 
 # スペース詳細
 [space_show_title]
@@ -1655,3 +1769,93 @@ other = "選択された下書きページが見つかりません"
 [validation_suggestion_page_already_exists]
 description = "編集提案に同じページが既に含まれているエラー"
 other = "このページは既に編集提案に含まれています"
+
+# スペースのエクスポート
+[export_succeeded_email_subject]
+description = "エクスポート完了メールの件名"
+other = "[Wikino] エクスポートデータの用意ができました"
+
+[export_failed_email_subject]
+description = "エクスポート失敗メールの件名"
+other = "[Wikino] エクスポートデータを作成できませんでした"
+
+[validation_export_in_progress]
+description = "実行中のエクスポートがあるため新しいエクスポートを開始できないエラー"
+other = "エクスポートを実行中です。完了してからお試しください"
+
+# エクスポート画面
+[export_new_title]
+description = "エクスポート開始画面のページタイトル"
+other = "エクスポート | {{.SpaceName}}"
+
+[export_show_title]
+description = "エクスポート状態表示画面のページタイトル"
+other = "エクスポート | {{.SpaceName}}"
+
+[export_new_heading]
+description = "エクスポート画面の見出し"
+other = "エクスポート"
+
+[export_show_heading]
+description = "エクスポート画面の見出し"
+other = "エクスポート"
+
+[export_new_description_html]
+description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
+
+[export_show_description_html]
+description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
+
+[export_new_breadcrumb_settings]
+description = "エクスポート画面のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[export_show_breadcrumb_settings]
+description = "エクスポート画面のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[export_new_start]
+description = "エクスポート開始画面の開始ボタン"
+other = "エクスポートを開始する"
+
+[export_new_cancel]
+description = "エクスポート開始画面のキャンセルリンク"
+other = "キャンセル"
+
+[export_new_in_progress]
+description = "エクスポート開始画面で、実行中のエクスポートがあるため開始できないことの説明"
+other = "エクスポートを実行中です"
+
+[export_new_in_progress_link]
+description = "エクスポート開始画面から実行中のエクスポートの画面へ移動するリンク"
+other = "実行中のエクスポートを見る"
+
+[flash_export_started]
+description = "エクスポートを開始したときのフラッシュメッセージ"
+other = "エクスポートを開始しました"
+
+[export_show_processing_html]
+description = "エクスポート状態表示画面の処理中の説明"
+other = "エクスポートを開始しました<br>完了したらメールでお知らせします"
+
+[export_show_succeeded]
+description = "エクスポート状態表示画面の完了の説明"
+other = "エクスポートが完了しました"
+
+[export_show_download]
+description = "エクスポート状態表示画面のダウンロードボタン"
+other = "ダウンロードする"
+
+[export_show_expired]
+description = "エクスポート状態表示画面で、ダウンロードの有効期限が切れたことの説明"
+other = "ダウンロードの有効期限が切れました。もう一度エクスポートしてください"
+
+[export_show_failed_html]
+description = "エクスポート状態表示画面の失敗の説明"
+other = "エクスポートを完了できませんでした<br>もう一度お試しください"
+
+[export_show_retry]
+description = "エクスポート状態表示画面から再実行するリンク"
+other = "もう一度エクスポートする"

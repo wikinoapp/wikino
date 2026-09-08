@@ -277,17 +277,15 @@ type publishData struct {
 
 // calculatePublishData computes the attachment-reference diff and the featured image.
 // The body HTML itself is rendered inside the save transaction through markup.RenderHTML
-// (the same path as preview / page detail), so here Markdown is rendered only once to
-// extract the attachment IDs needed for the reference diff.
+// (the same path as preview / page detail). Reference extraction separately parses and renders
+// the Markdown source here to determine which attachment references survive sanitization.
 //
 // [Ja] calculatePublishData は添付ファイル参照の差分計算とアイキャッチ画像抽出を行う。
 // bodyHTML 本体のレンダリングは保存トランザクション内の markup.RenderHTML
-// (プレビュー・ページ詳細と同じ経路) に一本化したため、ここでは参照差分に必要な添付 ID 抽出を
-// 目的に Markdown を 1 度だけレンダリングする。
+// (プレビュー・ページ詳細と同じ経路) に一本化している。参照抽出では別途ここでMarkdownの
+// ソースを解析・描画し、サニタイズ後に残る添付参照を判定する。
 func (uc *PublishPageUsecase) calculatePublishData(ctx context.Context, body string, pageID model.PageID, spaceID model.SpaceID) (*publishData, error) {
-	rawHTML := markup.RenderMarkdown(body)
-
-	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, rawHTML, pageID, spaceID, uc.attachmentRepo, uc.pageAttachmentRefRepo)
+	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, body, pageID, spaceID, uc.attachmentRepo, uc.pageAttachmentRefRepo)
 	if err != nil {
 		return nil, fmt.Errorf("添付ファイル参照の差分計算に失敗しました: %w", err)
 	}

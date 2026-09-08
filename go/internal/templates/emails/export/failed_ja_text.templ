@@ -1,0 +1,15 @@
+package export
+
+// FailedJaText is the Japanese text template for an export that could not be produced.
+//
+// [Ja] FailedJaText は生成できなかったエクスポートの日本語テキストテンプレート
+templ FailedJaText(data Data) {
+	エクスポートデータを作成できませんでした。
+
+スペースの内容は変わっていません。下のページからやり直せます。
+
+{ data.URL }
+
+Wikino
+{ data.AppURL }
+}

@@ -56,6 +56,11 @@ type FeatureFlagID string
 // FeatureFlagName はフィーチャーフラグ名の型
 type FeatureFlagName string
 
+// ExportID is the ID type of a space export.
+//
+// [Ja] ExportID はスペースのエクスポートのID型
+type ExportID string
+
 // SpaceIdentifier はスペース識別子の型
 type SpaceIdentifier string
 
@@ -118,6 +123,11 @@ func (id FeatureFlagID) String() string { return string(id) }
 
 // String はFeatureFlagNameを文字列に変換する
 func (n FeatureFlagName) String() string { return string(n) }
+
+// String converts an ExportID to a string.
+//
+// [Ja] String は ExportID を文字列に変換する
+func (id ExportID) String() string { return string(id) }
 
 // String はSpaceIdentifierを文字列に変換する
 func (s SpaceIdentifier) String() string { return string(s) }

@@ -157,6 +157,100 @@ func (r *TopicRepository) ListJoinedByUser(ctx context.Context, userID model.Use
 	return r.toTopicsFromJoinedRows(rows), nil
 }
 
+// NextTopicNumber returns the number the next topic of the space takes.
+//
+// [Ja] NextTopicNumber はスペース内で次に作られるトピックが取る番号を返す。
+func (r *TopicRepository) NextTopicNumber(ctx context.Context, spaceID model.SpaceID) (int32, error) {
+	n, err := r.q.GetNextTopicNumber(ctx, string(spaceID))
+	if err != nil {
+		return 0, err
+	}
+	return int32(n), nil
+}
+
+// ExistsBySpaceAndName reports whether the space already holds a topic of that name. Discarded
+// topics count as well, matching the unique index the database enforces on (space_id, name).
+//
+// [Ja] ExistsBySpaceAndName は同じ名前のトピックがそのスペースに既にあるかを返す。削除済みの
+// トピックも数える。データベースが (space_id, name) に張っている一意インデックスに合わせるため。
+func (r *TopicRepository) ExistsBySpaceAndName(ctx context.Context, spaceID model.SpaceID, name string) (bool, error) {
+	return r.q.ExistsTopicBySpaceAndName(ctx, query.ExistsTopicBySpaceAndNameParams{
+		SpaceID: string(spaceID),
+		Name:    name,
+	})
+}
+
+// ExistsBySpaceAndNameExcludingID reports whether a topic other than excludedID already holds that
+// name in the space. Discarded topics count as well, for the same reason as ExistsBySpaceAndName.
+//
+// [Ja] ExistsBySpaceAndNameExcludingID は excludedID 以外のトピックが同じ名前をそのスペースで
+// 既に持っているかを返す。ExistsBySpaceAndName と同じ理由で削除済みのトピックも数える。
+func (r *TopicRepository) ExistsBySpaceAndNameExcludingID(ctx context.Context, spaceID model.SpaceID, name string, excludedID model.TopicID) (bool, error) {
+	return r.q.ExistsTopicBySpaceAndNameExcludingID(ctx, query.ExistsTopicBySpaceAndNameExcludingIDParams{
+		SpaceID:    string(spaceID),
+		Name:       name,
+		ExcludedID: string(excludedID),
+	})
+}
+
+// CreateTopicInput holds the values a topic is created with.
+//
+// [Ja] CreateTopicInput はトピックの作成に必要な値を保持する。
+type CreateTopicInput struct {
+	SpaceID     model.SpaceID
+	Number      int32
+	Name        string
+	Description string
+	Visibility  model.TopicVisibility
+}
+
+// Create creates a topic.
+//
+// [Ja] Create はトピックを作成する。
+func (r *TopicRepository) Create(ctx context.Context, input CreateTopicInput) (*model.Topic, error) {
+	row, err := r.q.CreateTopic(ctx, query.CreateTopicParams{
+		SpaceID:     string(input.SpaceID),
+		Number:      input.Number,
+		Name:        input.Name,
+		Description: input.Description,
+		Visibility:  int32(input.Visibility),
+		Now:         time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// UpdateTopicInput holds the values a topic is updated with.
+//
+// [Ja] UpdateTopicInput はトピックの更新に必要な値を保持する。
+type UpdateTopicInput struct {
+	ID          model.TopicID
+	SpaceID     model.SpaceID
+	Name        string
+	Description string
+	Visibility  model.TopicVisibility
+}
+
+// Update updates the general settings of a topic.
+//
+// [Ja] Update はトピックの一般設定を更新する。
+func (r *TopicRepository) Update(ctx context.Context, input UpdateTopicInput) (*model.Topic, error) {
+	row, err := r.q.UpdateTopic(ctx, query.UpdateTopicParams{
+		ID:          string(input.ID),
+		SpaceID:     string(input.SpaceID),
+		Name:        input.Name,
+		Description: input.Description,
+		Visibility:  int32(input.Visibility),
+		Now:         time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModel は query.Topic を model.Topic に変換する
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	var discardedAt *time.Time

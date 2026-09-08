@@ -28,14 +28,6 @@ ja:
       confirmation_mail_sent: 確認用のメールを送信しました
       email_updated: メールアドレスを変更しました
       enter_code: メールに記載されている確認用コードを入力してください
-    exports:
-      description_html: スペース内に投稿されたページをエクスポートします。%{export_help_link}
-      start: エクスポートを開始する
-      started: エクスポートを開始しました
-      started_html: |-
-        エクスポートを開始しました<br>
-        完了したらメールでお知らせします
-      succeeded_html: エクスポートが完了しました
     home:
       no_joined_spaces_html: 参加中のスペースは<br class="block sm:hidden">ありません
     pages:
@@ -129,12 +121,7 @@ ja:
       ago_modified: "%{time}前に編集"
       ago_published: "%{time}前に公開"
     topics:
-      created: トピックを作成しました
       deleted: トピックを削除しました
-      new_hint_html: |-
-        トピックについては %{topic_help_link} をご覧ください<br>
-        どんなトピックを作ると良いかわからないときは
-        %{topic_best_practice_help_link} が参考になるかもしれません
       settings:
         deletions:
           new:
@@ -147,7 +134,6 @@ ja:
               トピックを削除する場合は、トピック名
               (<span class="font-bold">%{topic_name}</span>)
               を入力してください
-      updated: トピックを更新しました
     two_factor_auth:
       already_enabled: 二要素認証はすでに有効になっています
       code_hint: 6桁のコードまたは8文字のリカバリーコードを入力してください

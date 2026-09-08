@@ -9,17 +9,17 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// calculateAttachmentRefDiff はbodyHTMLから添付ファイルIDを抽出し、
+// calculateAttachmentRefDiff はMarkdown本文から添付ファイルIDを抽出し、
 // 既存の参照との差分を計算して追加・削除すべきIDを返す
 func calculateAttachmentRefDiff(
 	ctx context.Context,
-	bodyHTML string,
+	body string,
 	pageID model.PageID,
 	spaceID model.SpaceID,
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
 ) (toAdd []model.AttachmentID, toRemove []model.AttachmentID, err error) {
-	newIDStrings := markup.ExtractAttachmentIDs(bodyHTML)
+	newIDStrings := markup.ExtractAttachmentIDs(body)
 
 	existingRefs, err := pageAttachmentRefRepo.ListByPageID(ctx, pageID, spaceID)
 	if err != nil {
@@ -81,17 +81,17 @@ func applyAttachmentRefChanges(
 	return nil
 }
 
-// syncAttachmentReferences はbodyHTMLから添付ファイルIDを抽出し、
+// syncAttachmentReferences はMarkdown本文から添付ファイルIDを抽出し、
 // 既存の参照との差分を計算して追加・削除を行う
 func syncAttachmentReferences(
 	ctx context.Context,
-	bodyHTML string,
+	body string,
 	pageID model.PageID,
 	spaceID model.SpaceID,
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
 ) error {
-	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, bodyHTML, pageID, spaceID, attachmentRepo, pageAttachmentRefRepo)
+	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, body, pageID, spaceID, attachmentRepo, pageAttachmentRefRepo)
 	if err != nil {
 		return err
 	}

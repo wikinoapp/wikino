@@ -661,3 +661,18 @@ func (r *PageRepository) toModels(rows []query.Page) []*model.Page {
 	}
 	return pages
 }
+
+// ListActiveBySpace returns every active page of the space (published, not discarded, not
+// trashed, and whose topic is not discarded), ordered by topic and then by page number. The
+// export walks a whole space, so it takes the pages in one read rather than page by page.
+//
+// [Ja] ListActiveBySpace はスペース内のアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック
+// 未廃棄) をすべて、トピック順・ページ番号順で返す。エクスポートはスペース全体を対象にするため、
+// ページを 1 ページずつではなく 1 回の読み取りで取得する。
+func (r *PageRepository) ListActiveBySpace(ctx context.Context, spaceID model.SpaceID) ([]*model.Page, error) {
+	rows, err := r.q.ListActivePagesBySpace(ctx, string(spaceID))
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}

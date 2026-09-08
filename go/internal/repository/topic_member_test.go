@@ -9,6 +9,60 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
+func TestTopicMemberRepository_Create(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicMemberRepository(testutil.QueriesWithTx(tx))
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("topic-member-create@example.com").
+		WithAtname("topicmembercreate").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-member-create").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithName("Created Topic Member").
+		Build()
+
+	beforeCreate := time.Now()
+	member, err := repo.Create(context.Background(), CreateTopicMemberInput{
+		SpaceID:       spaceID,
+		TopicID:       topicID,
+		SpaceMemberID: spaceMemberID,
+	})
+	afterCreate := time.Now()
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	if member.ID == "" {
+		t.Error("member.ID is empty")
+	}
+	if member.SpaceID != spaceID {
+		t.Errorf("member.SpaceID = %v, want %v", member.SpaceID, spaceID)
+	}
+	if member.TopicID != topicID {
+		t.Errorf("member.TopicID = %v, want %v", member.TopicID, topicID)
+	}
+	if member.SpaceMemberID != spaceMemberID {
+		t.Errorf("member.SpaceMemberID = %v, want %v", member.SpaceMemberID, spaceMemberID)
+	}
+	if len(member.Scopes) != 0 {
+		t.Errorf("member.Scopes = %v, want empty", member.Scopes)
+	}
+	if member.JoinedAt.Before(beforeCreate) || member.JoinedAt.After(afterCreate) {
+		t.Errorf("member.JoinedAt = %v, want between %v and %v", member.JoinedAt, beforeCreate, afterCreate)
+	}
+	if member.LastPageModifiedAt != nil {
+		t.Errorf("member.LastPageModifiedAt = %v, want nil", member.LastPageModifiedAt)
+	}
+}
+
 func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 	t.Parallel()
 

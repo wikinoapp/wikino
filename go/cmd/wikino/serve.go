@@ -26,6 +26,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision_restore"
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
+	exporthandler "github.com/wikinoapp/wikino/go/internal/handler/export"
+	"github.com/wikinoapp/wikino/go/internal/handler/export_download"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
@@ -53,6 +55,7 @@ import (
 	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
+	topicsettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings_general"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -63,6 +66,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/storage"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -139,26 +143,6 @@ func runServe() {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	rateLimiter := ratelimit.NewLimiter(rateLimitRepo)
 
-	// River クライアントを初期化（バックグラウンドジョブ用）
-	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter)
-	if err != nil {
-		slog.Error("River クライアントの初期化に失敗しました", "error", err)
-		os.Exit(1)
-	}
-	defer func() {
-		stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer stopCancel()
-		if err := riverClient.Stop(stopCtx); err != nil {
-			slog.Error("River クライアントの停止に失敗しました", "error", err)
-		}
-	}()
-
-	// River クライアントを起動
-	if err := riverClient.Start(ctx); err != nil {
-		slog.Error("River クライアントの起動に失敗しました", "error", err)
-		os.Exit(1)
-	}
-
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
@@ -181,6 +165,56 @@ func runServe() {
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
+	exportRepo := repository.NewExportRepository(queries)
+
+	// The bucket holding the attachments and the archives an export writes. A deployment without
+	// it configured leaves the storage nil, which turns off the features that need it rather than
+	// stopping the server.
+	//
+	// [Ja] オブジェクトストレージを初期化する (添付ファイルとエクスポートの ZIP を置くバケット)。
+	// 設定が無いデプロイでは nil のままにし、それを必要とする機能だけを無効化する。
+	var objectStorage storage.ObjectStorage
+	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
+		BucketName:      cfg.R2BucketName,
+		Endpoint:        cfg.R2Endpoint,
+		AccessKeyID:     cfg.R2AccessKeyID,
+		SecretAccessKey: cfg.R2SecretAccessKey,
+		Region:          cfg.R2Region,
+	})
+	if err != nil {
+		slog.Warn("オブジェクトストレージを初期化できませんでした。スペースのエクスポート機能は利用できません", "error", err)
+	} else {
+		objectStorage = s3Storage
+	}
+
+	// River クライアントを初期化（バックグラウンドジョブ用）
+	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter, worker.ExportDeps{
+		ExportRepo:      exportRepo,
+		SpaceRepo:       spaceRepo,
+		SpaceMemberRepo: spaceMemberRepo,
+		UserRepo:        userRepo,
+		TopicRepo:       topicRepo,
+		PageRepo:        pageRepo,
+		AttachmentRepo:  attachmentRepo,
+		ObjectStorage:   objectStorage,
+	})
+	if err != nil {
+		slog.Error("River クライアントの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer stopCancel()
+		if err := riverClient.Stop(stopCtx); err != nil {
+			slog.Error("River クライアントの停止に失敗しました", "error", err)
+		}
+	}()
+
+	// River クライアントを起動
+	if err := riverClient.Start(ctx); err != nil {
+		slog.Error("River クライアントの起動に失敗しました", "error", err)
+		os.Exit(1)
+	}
 
 	// Dispatcher を初期化（ジョブキューへの投入を抽象化）
 	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client())
@@ -443,10 +477,24 @@ func runServe() {
 		getSpaceShowUC,
 	)
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	getTopicNewUC := usecase.NewGetTopicNewUsecase(spaceRepo, spaceMemberRepo)
+	topicCreateValidator := validator.NewTopicCreateValidator(topicRepo)
+	createTopicUC := usecase.NewCreateTopicUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, topicCreateValidator)
 	topicHandler := topichandler.NewHandler(
 		cfg,
 		flashMgr,
 		getTopicDetailUC,
+		getTopicNewUC,
+		createTopicUC,
+	)
+	getTopicSettingsGeneralUC := usecase.NewGetTopicSettingsGeneralUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
+	topicUpdateValidator := validator.NewTopicUpdateValidator(topicRepo)
+	updateTopicUC := usecase.NewUpdateTopicUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, topicUpdateValidator)
+	topicSettingsGeneralHandler := topicsettingsgeneralhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getTopicSettingsGeneralUC,
+		updateTopicUC,
 	)
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
@@ -542,6 +590,18 @@ func runServe() {
 		getSuggestionCommentUC,
 		updateSuggestionCommentUC,
 	)
+	getExportNewUC := usecase.NewGetExportNewUsecase(spaceRepo, spaceMemberRepo, exportRepo)
+	getExportShowUC := usecase.NewGetExportShowUsecase(spaceRepo, spaceMemberRepo, exportRepo)
+	createExportUC := usecase.NewCreateExportUsecase(db, spaceRepo, spaceMemberRepo, exportRepo, jobDispatcher)
+	exportHandler := exporthandler.NewHandler(
+		cfg,
+		flashMgr,
+		getExportNewUC,
+		getExportShowUC,
+		createExportUC,
+	)
+	getExportDownloadUC := usecase.NewGetExportDownloadUsecase(spaceRepo, spaceMemberRepo, exportRepo, objectStorage)
+	exportDownloadHandler := export_download.NewHandler(getExportDownloadUC)
 	r := chi.NewRouter()
 
 	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
@@ -740,6 +800,38 @@ func runServe() {
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)
 
+		// Topic creation: the form and the create itself.
+		//
+		// HEAD is registered on its own because chi resolves routes per method and never falls
+		// back from GET. Without it the form would answer 200 to GET and 405 to HEAD once the
+		// Rails route that still answers HEAD on this path is gone.
+		//
+		// [Ja] トピックの作成。フォームと作成処理。
+		//
+		// chi はメソッドごとにルートを引き GET からフォールバックしないため、HEAD を単独で登録
+		// する。登録しないと、このパスの HEAD を今も受けている Rails のルートが無くなった時点で、
+		// フォームは GET に 200・HEAD に 405 を返すようになる。
+		r.Get("/s/{space_identifier}/topics/new", topicHandler.New)
+		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
+		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
+
+		// General settings of a topic: the screen and the save. The rest of the topic settings
+		// stays on the Rails version, which is where the breadcrumb of this screen leads back to.
+		//
+		// HEAD is registered beside the GET because chi resolves routes per method and never falls
+		// back from GET, while the Rails router reads a HEAD that matches nothing as a GET. Without
+		// it the screen would answer 200 to GET and 405 to HEAD.
+		//
+		// [Ja] トピックの一般設定。画面と保存処理。トピック設定の残りは Rails 版のままで、この画面
+		// のパンくずはそこへ戻る。
+		//
+		// GET に HEAD を併記するのは、chi がメソッドごとにルートを引き GET へフォールバックしない
+		// 一方、Rails のルーターは一致しない HEAD を GET として読むため。併記しないと、GET に 200 を
+		// 返す画面が HEAD には 405 を返す。
+		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
+		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
+		r.Patch("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Update)
+
 		// Page creation entry point. It creates a page and redirects to its edit screen, so it
 		// renders no screen of its own.
 		//
@@ -808,6 +900,47 @@ func runServe() {
 
 		// ページロケーション検索API（Wikiリンク補完用）
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
+
+		// Space export: the screen it is started from, the start itself, the screen it is followed
+		// on, and the download of the archive. The rest of the space settings stays on the Rails
+		// version, which is where the breadcrumb of these screens leads back to.
+		//
+		// The namespace is a sub-router so that a request none of these routes take is answered
+		// with the 404 page instead of chi's bodiless 405. The reverse proxy hands the whole
+		// namespace over regardless of method, so that a start cannot reach the Rails writer that
+		// has no guard against a second export, and the Rails version answered every other URL
+		// under it with a 404 of its own.
+		//
+		// HEAD is registered beside each GET because chi resolves routes per method and never
+		// falls back from GET, while the Rails router reads a HEAD that matches nothing as a GET.
+		// Without it a screen that answers 200 to GET would answer 405 to HEAD.
+		//
+		// [Ja] スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
+		// ダウンロード。スペース設定の残りは Rails 版のままで、これらの画面のパンくずはそこへ戻る。
+		//
+		// この名前空間をサブルーターにするのは、どのルートも受けないリクエストに、chi 既定の
+		// 本文なし 405 ではなく 404 ページを返すため。リバースプロキシは、2 つ目のエクスポートを
+		// 防ぐ仕組みを持たない Rails の書き込み処理へ開始が届かないよう、メソッドによらず名前空間
+		// 全体を渡してくる。Rails 版はその配下の他の URL には自身の 404 を返していた。
+		//
+		// GET のそれぞれに HEAD を併記するのは、chi がメソッドごとにルートを引き GET へ
+		// フォールバックしない一方、Rails のルーターは一致しない HEAD を GET として読むため。
+		// 併記しないと、GET に 200 を返す画面が HEAD には 405 を返す。
+		r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
+			r.MethodNotAllowed(handler.NotFound)
+
+			r.Post("/", exportHandler.Create)
+			r.Get("/new", exportHandler.New)
+			r.Head("/new", exportHandler.New)
+
+			// Restrict IDs to UUIDs so malformed IDs never reach a database lookup.
+			// [Ja] 不正なIDをDB取得へ渡さないよう、IDをUUID形式に限定する。
+			exportPath := "/{export_id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}"
+			r.Get(exportPath, exportHandler.Show)
+			r.Head(exportPath, exportHandler.Show)
+			r.Get(exportPath+"/download", exportDownloadHandler.Show)
+			r.Head(exportPath+"/download", exportDownloadHandler.Show)
+		})
 	})
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)

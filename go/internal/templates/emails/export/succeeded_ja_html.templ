@@ -1,0 +1,17 @@
+package export
+
+import "fmt"
+
+// SucceededJaHTML is the Japanese HTML template for a finished export.
+//
+// [Ja] SucceededJaHTML は完了したエクスポートの日本語HTMLテンプレート
+templ SucceededJaHTML(data Data) {
+	エクスポートデータの用意ができました。<br/>
+	<br/>
+	<a href={ templ.SafeURL(data.URL) }>ダウンロード</a><br/>
+	<br/>
+	{ fmt.Sprintf("ダウンロードURLの有効期間はメール送付後から%d時間です。", data.ExpirationHours) }<br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

@@ -43,9 +43,6 @@ module GeneratedUrlHelpersModule
   def new_space_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def new_topic_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def preview_view_component_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -115,22 +112,10 @@ module GeneratedUrlHelpersModule
   def space_settings_deletion_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def space_settings_download_export_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def space_settings_export_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def space_settings_export_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def space_settings_general_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_settings_new_deletion_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def space_settings_new_exports_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def space_settings_url(*args); end
@@ -139,13 +124,7 @@ module GeneratedUrlHelpersModule
   def terms_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def topic_list_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def topic_settings_deletion_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def topic_settings_general_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_settings_new_deletion_url(*args); end

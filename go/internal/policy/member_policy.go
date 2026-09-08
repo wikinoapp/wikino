@@ -121,3 +121,7 @@ func (p *MemberPolicy) CanUpdateSuggestionComment(suggestion *model.Suggestion) 
 func (p *MemberPolicy) CanCreateTopic() bool {
 	return p.effectiveScopes[model.ScopeTopicWrite]
 }
+
+func (p *MemberPolicy) CanExportSpace() bool {
+	return p.effectiveScopes[model.ScopeSpaceWrite]
+}

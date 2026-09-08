@@ -11,10 +11,6 @@ module Spaces
         Topics::DestroyService.new.call(topic_record_id: topic_record.id)
       end
 
-      space_record.export_records.find_each do |export_record|
-        Exports::DestroyService.new.call(export_record_id: export_record.id)
-      end
-
       # 添付ファイルを削除
       space_record.attachment_records.find_each do |attachment_record|
         Attachments::DeleteService.new.call(attachment_record_id: attachment_record.id)

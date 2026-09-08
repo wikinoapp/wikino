@@ -16,7 +16,7 @@
           <div class="flex flex-col gap-3">
             <%= render BaseUI::LinkComponent.new(
               variant: BaseUI::LinkComponent::Variant::Underline,
-              options: {href: topic_settings_general_path(space.identifier, topic.number)}
+              options: {href: "/s/#{space.identifier}/topics/#{topic.number}/settings/general"}
             ) do %>
               <%= t("nouns.general") %>
             <% end %>

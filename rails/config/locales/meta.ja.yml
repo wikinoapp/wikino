@@ -8,13 +8,10 @@ ja:
       email_confirmations:
         edit: 確認用コード入力
       topics:
-        new: "新規トピック | %{space_name}"
         show: "%{topic_name} | %{space_name}"
         settings:
           deletions:
             new: "トピックの削除 | %{topic_name} | %{space_name}"
-          general:
-            show: "基本情報 | %{topic_name} | %{space_name}"
           show: "設定 | %{topic_name} | %{space_name}"
       trash:
         show: "ゴミ箱 | %{space_name}"
@@ -52,9 +49,6 @@ ja:
         settings:
           deletions:
             new: "スペースの削除 | %{space_name}"
-          exports:
-            new: "エクスポート | %{space_name}"
-            show: "エクスポート | %{space_name}"
           general:
             show: "基本情報 | %{space_name}"
           attachments:

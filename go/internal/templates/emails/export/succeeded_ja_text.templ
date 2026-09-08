@@ -1,0 +1,17 @@
+package export
+
+import "fmt"
+
+// SucceededJaText is the Japanese text template for a finished export.
+//
+// [Ja] SucceededJaText は完了したエクスポートの日本語テキストテンプレート
+templ SucceededJaText(data Data) {
+	エクスポートデータの用意ができました。
+
+{ data.URL }
+
+{ fmt.Sprintf("ダウンロードURLの有効期間はメール送付後から%d時間です。", data.ExpirationHours) }
+
+Wikino
+{ data.AppURL }
+}
