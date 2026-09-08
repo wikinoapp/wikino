@@ -55,7 +55,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - uses: pnpm/action-setup@v6.0.10
+      - uses: pnpm/action-setup@v6.1.0
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
