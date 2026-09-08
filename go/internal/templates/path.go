@@ -107,10 +107,20 @@ func TopicSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber in
 	return Path(fmt.Sprintf("/s/%s/topics/%d/settings", spaceIdentifier, topicNumber))
 }
 
-// NewTopicPath generates the path to the new topic form (currently proxied to the Rails version).
-// [Ja] 新規トピック作成フォームのパスを生成します (現状は Rails 版にプロキシされる)。
+// NewTopicPath generates the path to the topic creation form.
+//
+// [Ja] NewTopicPath は新規トピック作成フォームのパスを生成します。
 func NewTopicPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/new", spaceIdentifier))
+}
+
+// TopicListPath generates the path of the topics of a space, which a topic is created by posting
+// to.
+//
+// [Ja] TopicListPath はスペースのトピックのパスを生成します。トピックはこのパスへの POST で
+// 作成します。
+func TopicListPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/topics", spaceIdentifier))
 }
 
 // NewPagePath はページ新規作成のパスを生成します

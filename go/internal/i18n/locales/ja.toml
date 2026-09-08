@@ -1198,6 +1198,95 @@ other = "ページ"
 description = "トピック詳細画面の「編集提案」タブラベル"
 other = "編集提案"
 
+# トピック作成
+[topic_new_title]
+description = "トピック作成画面のページタイトル"
+other = "新規トピック | {{.SpaceName}}"
+
+[topic_new_heading]
+description = "トピック作成画面の見出し"
+other = "新規トピック"
+
+[topic_new_hint_html]
+description = "トピック作成画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "トピックについては <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">トピックについてのヘルプ</a> をご覧ください<br>どんなトピックを作ると良いかわからないときは <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
+
+[topic_new_name_label]
+description = "トピック作成画面の名前ラベル"
+other = "名前"
+
+[topic_new_description_label]
+description = "トピック作成画面の説明ラベル"
+other = "説明"
+
+[topic_new_visibility_label]
+description = "トピック作成画面の公開設定ラベル"
+other = "公開設定"
+
+[topic_new_visibility_public]
+description = "トピック作成画面の公開トピックの選択肢"
+other = "公開"
+
+[topic_new_visibility_private]
+description = "トピック作成画面の非公開トピックの選択肢"
+other = "非公開"
+
+[topic_new_visibility_public_hint]
+description = "トピック作成画面の公開トピックの補足"
+other = "公開トピックに投稿されたページはインターネット上に公開されます"
+
+[topic_new_visibility_private_hint]
+description = "トピック作成画面の非公開トピックの補足"
+other = "非公開トピックに投稿されたページはこのスペースのメンバーのみに公開されます"
+
+[topic_new_visibility_private_note_html]
+description = "トピック作成画面の非公開トピックの注意書き (ヘルプページへのリンクを含む)"
+other = "非公開トピックは現在無料で利用できますが、今後有料プランが導入されたとき有料プランのみの機能となります。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/38\" target=\"_blank\">非公開トピックについてのヘルプ</a>"
+
+[topic_new_submit_button]
+description = "トピック作成画面の送信ボタン"
+other = "作成する"
+
+[topic_new_cancel]
+description = "トピック作成画面のキャンセルリンク"
+other = "キャンセル"
+
+[validation_topic_name_required]
+description = "トピック名必須エラー"
+other = "名前を入力してください"
+
+[validation_topic_name_too_long]
+description = "トピック名文字数超過エラー"
+other = "名前は30文字以内で入力してください"
+
+[validation_topic_name_invalid_chars]
+description = "トピック名禁止文字エラー"
+other = "名前に / \\ : * ? \" < > | は使用できません"
+
+[validation_topic_name_invalid_format]
+description = "トピック名不正フォーマットエラー"
+other = "名前の先頭・末尾にスペースやピリオドは使用できません"
+
+[validation_topic_name_reserved]
+description = "トピック名予約語エラー"
+other = "この名前は使用できません"
+
+[validation_topic_name_uniqueness]
+description = "トピック名重複エラー"
+other = "この名前は既に使用されています"
+
+[validation_topic_description_too_long]
+description = "トピックの説明の文字数超過エラー"
+other = "説明は150文字以内で入力してください"
+
+[validation_topic_visibility_required]
+description = "トピックの公開設定未選択エラー"
+other = "公開設定を選択してください"
+
+[flash_topic_created]
+description = "トピック作成成功時のフラッシュメッセージ"
+other = "トピックを作成しました"
+
 # スペース詳細
 [space_show_title]
 description = "スペース詳細画面のタイトル ({space_name})"

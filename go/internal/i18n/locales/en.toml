@@ -1198,6 +1198,95 @@ other = "Pages"
 description = "Suggestions tab label on the topic show page"
 other = "Suggestions"
 
+# Topic new
+[topic_new_title]
+description = "Topic creation page title"
+other = "New topic | {{.SpaceName}}"
+
+[topic_new_heading]
+description = "Heading on the topic creation page"
+other = "New topic"
+
+[topic_new_hint_html]
+description = "Subtitle on the topic creation page (contains links to the help pages)"
+other = "For more information about topics, please see <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">Topic help</a>.<br>If you are unsure what kind of topic to create, <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">Best Practices</a> may be helpful."
+
+[topic_new_name_label]
+description = "Name label on the topic creation page"
+other = "Name"
+
+[topic_new_description_label]
+description = "Description label on the topic creation page"
+other = "Description"
+
+[topic_new_visibility_label]
+description = "Visibility label on the topic creation page"
+other = "Visibility"
+
+[topic_new_visibility_public]
+description = "Public topic option on the topic creation page"
+other = "Public"
+
+[topic_new_visibility_private]
+description = "Private topic option on the topic creation page"
+other = "Private"
+
+[topic_new_visibility_public_hint]
+description = "Hint for the public topic option on the topic creation page"
+other = "Pages posted in public topics are visible on the internet."
+
+[topic_new_visibility_private_hint]
+description = "Hint for the private topic option on the topic creation page"
+other = "Pages posted in private topics are visible only in this space."
+
+[topic_new_visibility_private_note_html]
+description = "Note for the private topic option on the topic creation page (contains a link to the help page)"
+other = "Private topics are currently available for free, but if a paid plan is introduced in the future, it will be a paid plan only feature. <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/38\" target=\"_blank\">Private topic help</a>"
+
+[topic_new_submit_button]
+description = "Submit button on the topic creation page"
+other = "Create"
+
+[topic_new_cancel]
+description = "Cancel link on the topic creation page"
+other = "Cancel"
+
+[validation_topic_name_required]
+description = "Topic name required error"
+other = "Please enter a name"
+
+[validation_topic_name_too_long]
+description = "Topic name too long error"
+other = "Name must be 30 characters or less"
+
+[validation_topic_name_invalid_chars]
+description = "Topic name invalid characters error"
+other = "Name cannot contain / \\ : * ? \" < > |"
+
+[validation_topic_name_invalid_format]
+description = "Topic name invalid format error"
+other = "Name cannot start or end with a space or a dot"
+
+[validation_topic_name_reserved]
+description = "Topic name reserved error"
+other = "This name cannot be used"
+
+[validation_topic_name_uniqueness]
+description = "Topic name uniqueness error"
+other = "This name has already been taken"
+
+[validation_topic_description_too_long]
+description = "Topic description too long error"
+other = "Description must be 150 characters or less"
+
+[validation_topic_visibility_required]
+description = "Topic visibility not selected error"
+other = "Please select a visibility"
+
+[flash_topic_created]
+description = "Flash message shown when a topic has been created"
+other = "Topic created."
+
 # Space show
 [space_show_title]
 description = "Space show page title ({space_name})"

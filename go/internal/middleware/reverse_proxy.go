@@ -100,6 +100,15 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// /s/:id/topics/... などのサブパスにはマッチさせず、それらは
 	// 下記の各パターンで処理する。
 	{pattern: regexp.MustCompile(`^/s/[^/]+$`), methods: []string{http.MethodGet}},
+	// Topic creation: the form (GET and HEAD /s/:identifier/topics/new) and the create itself
+	// (POST /s/:identifier/topics). Each is restricted to the methods its Go route answers, so the
+	// other methods keep reaching the Rails version.
+	//
+	// [Ja] トピックの作成。フォーム (GET・HEAD /s/:identifier/topics/new) と作成処理 (POST
+	// /s/:identifier/topics)。それぞれ Go ルートが応答するメソッドに限定し、他のメソッドは
+	// 従来どおり Rails 版へ届くようにする。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
 	// Page creation entry point (GET /s/:identifier/topics/:number/pages/new). It creates a page

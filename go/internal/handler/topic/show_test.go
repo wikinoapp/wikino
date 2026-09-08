@@ -23,6 +23,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // newShowRequest はchiのURLパラメータ付きGETリクエストを作成するヘルパーです
@@ -55,11 +56,27 @@ func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 	pageRepo := repository.NewPageRepository(queries)
 
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	getTopicNewUC := usecase.NewGetTopicNewUsecase(spaceRepo, spaceMemberRepo)
+	// The create usecase opens its own transaction, so it takes the shared pool rather than the
+	// transaction the screens are read through. The screens under test here never reach it.
+	//
+	// [Ja] 作成のユースケースは自身でトランザクションを開くため、画面の読み取りに使うトランザクション
+	// ではなく共有プールを受け取る。ここでテストする画面がそこへ到達することはない。
+	createTopicUC := usecase.NewCreateTopicUsecase(
+		testutil.GetTestDB(),
+		spaceRepo,
+		spaceMemberRepo,
+		topicRepo,
+		topicMemberRepo,
+		validator.NewTopicCreateValidator(topicRepo),
+	)
 
 	return topichandler.NewHandler(
 		cfg,
 		flashMgr,
 		getTopicDetailUC,
+		getTopicNewUC,
+		createTopicUC,
 	)
 }
 

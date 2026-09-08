@@ -775,6 +775,24 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "トピック作成フォーム (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/new",
+			expected: true,
+		},
+		{
+			name:     "トピック作成フォーム (HEAD)",
+			method:   http.MethodHead,
+			path:     "/s/my-space/topics/new",
+			expected: true,
+		},
+		{
+			name:     "トピック作成 (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/topics",
+			expected: true,
+		},
+		{
 			name:     "ページ新規作成の入口 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/topics/1/pages/new",
@@ -1019,6 +1037,23 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "トピック番号が数字でないページ新規作成の入口はマッチしない",
 			method:   http.MethodGet,
 			path:     "/s/my-space/topics/abc/pages/new",
+			expected: false,
+		},
+		{
+			// The Go route answers POST alone on the topic list, so a GET of it falls through to
+			// Rails, which is where the screens listing the topics of a space still live.
+			//
+			// [Ja] Go ルートはトピック一覧の POST だけに応答するため、その GET は Rails へ
+			// フォールスルーする。スペースのトピックを並べる画面は今も Rails 側にある。
+			name:     "トピック一覧 (GET) はPOSTのみフィルタによりマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics",
+			expected: false,
+		},
+		{
+			name:     "トピック作成フォーム配下のサブパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/new/extra",
 			expected: false,
 		},
 		{

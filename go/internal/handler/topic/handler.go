@@ -12,6 +12,8 @@ type Handler struct {
 	cfg                   *config.Config
 	flashMgr              *session.FlashManager
 	getTopicDetailUsecase *usecase.GetTopicDetailUsecase
+	getTopicNewUsecase    *usecase.GetTopicNewUsecase
+	createTopicUsecase    *usecase.CreateTopicUsecase
 }
 
 // NewHandler は新しいトピックハンドラーを作成します
@@ -19,10 +21,14 @@ func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
 	getTopicDetailUsecase *usecase.GetTopicDetailUsecase,
+	getTopicNewUsecase *usecase.GetTopicNewUsecase,
+	createTopicUsecase *usecase.CreateTopicUsecase,
 ) *Handler {
 	return &Handler{
 		cfg:                   cfg,
 		flashMgr:              flashMgr,
 		getTopicDetailUsecase: getTopicDetailUsecase,
+		getTopicNewUsecase:    getTopicNewUsecase,
+		createTopicUsecase:    createTopicUsecase,
 	}
 }

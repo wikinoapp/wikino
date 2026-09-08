@@ -157,6 +157,58 @@ func (r *TopicRepository) ListJoinedByUser(ctx context.Context, userID model.Use
 	return r.toTopicsFromJoinedRows(rows), nil
 }
 
+// NextTopicNumber returns the number the next topic of the space takes.
+//
+// [Ja] NextTopicNumber はスペース内で次に作られるトピックが取る番号を返す。
+func (r *TopicRepository) NextTopicNumber(ctx context.Context, spaceID model.SpaceID) (int32, error) {
+	n, err := r.q.GetNextTopicNumber(ctx, string(spaceID))
+	if err != nil {
+		return 0, err
+	}
+	return int32(n), nil
+}
+
+// ExistsBySpaceAndName reports whether the space already holds a topic of that name. Discarded
+// topics count as well, matching the unique index the database enforces on (space_id, name).
+//
+// [Ja] ExistsBySpaceAndName は同じ名前のトピックがそのスペースに既にあるかを返す。削除済みの
+// トピックも数える。データベースが (space_id, name) に張っている一意インデックスに合わせるため。
+func (r *TopicRepository) ExistsBySpaceAndName(ctx context.Context, spaceID model.SpaceID, name string) (bool, error) {
+	return r.q.ExistsTopicBySpaceAndName(ctx, query.ExistsTopicBySpaceAndNameParams{
+		SpaceID: string(spaceID),
+		Name:    name,
+	})
+}
+
+// CreateTopicInput holds the values a topic is created with.
+//
+// [Ja] CreateTopicInput はトピックの作成に必要な値を保持する。
+type CreateTopicInput struct {
+	SpaceID     model.SpaceID
+	Number      int32
+	Name        string
+	Description string
+	Visibility  model.TopicVisibility
+}
+
+// Create creates a topic.
+//
+// [Ja] Create はトピックを作成する。
+func (r *TopicRepository) Create(ctx context.Context, input CreateTopicInput) (*model.Topic, error) {
+	row, err := r.q.CreateTopic(ctx, query.CreateTopicParams{
+		SpaceID:     string(input.SpaceID),
+		Number:      input.Number,
+		Name:        input.Name,
+		Description: input.Description,
+		Visibility:  int32(input.Visibility),
+		Now:         time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModel は query.Topic を model.Topic に変換する
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	var discardedAt *time.Time

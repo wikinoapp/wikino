@@ -9,6 +9,137 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
+func TestTopicRepository_NextTopicNumber(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	targetSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-next-number-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-next-number-other").
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(2).
+		WithName("Active").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(5).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(99).
+		WithName("Other Space").
+		Build()
+
+	number, err := repo.NextTopicNumber(context.Background(), targetSpaceID)
+	if err != nil {
+		t.Fatalf("NextTopicNumber() error = %v", err)
+	}
+	if number != 6 {
+		t.Errorf("NextTopicNumber() = %d, want 6", number)
+	}
+}
+
+func TestTopicRepository_ExistsBySpaceAndName(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	targetSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-name-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-name-other").
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(1).
+		WithName("Active").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(2).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Other Space Only").
+		Build()
+
+	tests := []struct {
+		name string
+		want bool
+	}{
+		{name: "Active", want: true},
+		{name: "Discarded", want: true},
+		{name: "Other Space Only", want: false},
+		{name: "Missing", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exists, err := repo.ExistsBySpaceAndName(context.Background(), targetSpaceID, tt.name)
+			if err != nil {
+				t.Fatalf("ExistsBySpaceAndName() error = %v", err)
+			}
+			if exists != tt.want {
+				t.Errorf("ExistsBySpaceAndName() = %t, want %t", exists, tt.want)
+			}
+		})
+	}
+}
+
+func TestTopicRepository_Create(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-create-repository").
+		Build()
+
+	topic, err := repo.Create(context.Background(), CreateTopicInput{
+		SpaceID:     spaceID,
+		Number:      7,
+		Name:        "Created Topic",
+		Description: "Created description",
+		Visibility:  model.TopicVisibilityPrivate,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	if topic.ID == "" {
+		t.Error("topic.ID is empty")
+	}
+	if topic.Space == nil || topic.Space.ID != spaceID {
+		t.Errorf("topic.Space = %v, want space ID %v", topic.Space, spaceID)
+	}
+	if topic.Number != 7 {
+		t.Errorf("topic.Number = %d, want 7", topic.Number)
+	}
+	if topic.Name != "Created Topic" {
+		t.Errorf("topic.Name = %q, want %q", topic.Name, "Created Topic")
+	}
+	if topic.Description != "Created description" {
+		t.Errorf("topic.Description = %q, want %q", topic.Description, "Created description")
+	}
+	if topic.Visibility != model.TopicVisibilityPrivate {
+		t.Errorf("topic.Visibility = %v, want %v", topic.Visibility, model.TopicVisibilityPrivate)
+	}
+	if topic.DiscardedAt != nil {
+		t.Errorf("topic.DiscardedAt = %v, want nil", topic.DiscardedAt)
+	}
+}
+
 func TestTopicRepository_FindBySpaceAndNumber(t *testing.T) {
 	t.Parallel()
 

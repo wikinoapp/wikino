@@ -476,10 +476,15 @@ func runServe() {
 		getSpaceShowUC,
 	)
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	getTopicNewUC := usecase.NewGetTopicNewUsecase(spaceRepo, spaceMemberRepo)
+	topicCreateValidator := validator.NewTopicCreateValidator(topicRepo)
+	createTopicUC := usecase.NewCreateTopicUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, topicCreateValidator)
 	topicHandler := topichandler.NewHandler(
 		cfg,
 		flashMgr,
 		getTopicDetailUC,
+		getTopicNewUC,
+		createTopicUC,
 	)
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
@@ -784,6 +789,21 @@ func runServe() {
 
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)
+
+		// Topic creation: the form and the create itself.
+		//
+		// HEAD is registered on its own because chi resolves routes per method and never falls
+		// back from GET. Without it the form would answer 200 to GET and 405 to HEAD once the
+		// Rails route that still answers HEAD on this path is gone.
+		//
+		// [Ja] トピックの作成。フォームと作成処理。
+		//
+		// chi はメソッドごとにルートを引き GET からフォールバックしないため、HEAD を単独で登録
+		// する。登録しないと、このパスの HEAD を今も受けている Rails のルートが無くなった時点で、
+		// フォームは GET に 200・HEAD に 405 を返すようになる。
+		r.Get("/s/{space_identifier}/topics/new", topicHandler.New)
+		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
+		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
 
 		// Page creation entry point. It creates a page and redirects to its edit screen, so it
 		// renders no screen of its own.

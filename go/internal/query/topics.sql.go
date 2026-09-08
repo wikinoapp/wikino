@@ -7,9 +7,77 @@ package query
 
 import (
 	"context"
+	"time"
 
 	"github.com/lib/pq"
 )
+
+const createTopic = `-- name: CreateTopic :one
+INSERT INTO topics (space_id, number, name, description, visibility, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $6)
+RETURNING id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at
+`
+
+type CreateTopicParams struct {
+	SpaceID     string    `json:"space_id"`
+	Number      int32     `json:"number"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Visibility  int32     `json:"visibility"`
+	Now         time.Time `json:"now"`
+}
+
+// Creates a topic.
+//
+// [Ja] トピックを作成する。
+func (q *Queries) CreateTopic(ctx context.Context, arg CreateTopicParams) (Topic, error) {
+	row := q.db.QueryRowContext(ctx, createTopic,
+		arg.SpaceID,
+		arg.Number,
+		arg.Name,
+		arg.Description,
+		arg.Visibility,
+		arg.Now,
+	)
+	var i Topic
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.Number,
+		&i.Name,
+		&i.Description,
+		&i.Visibility,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const existsTopicBySpaceAndName = `-- name: ExistsTopicBySpaceAndName :one
+SELECT EXISTS (
+    SELECT 1 FROM topics WHERE space_id = $1 AND name = $2
+) AS topic_exists
+`
+
+type ExistsTopicBySpaceAndNameParams struct {
+	SpaceID string `json:"space_id"`
+	Name    string `json:"name"`
+}
+
+// Reports whether the space already holds a topic of that name, discarded topics included. The
+// unique index on (space_id, name) covers discarded rows as well, so a name a discarded topic
+// still carries cannot be given to a new one.
+//
+// [Ja] 同じ名前のトピックがそのスペースに既にあるかを返す (削除済みのトピックも含む)。
+// (space_id, name) の一意インデックスは削除済みの行も対象にするため、削除済みのトピックが
+// 持ったままの名前は新しいトピックには付けられない。
+func (q *Queries) ExistsTopicBySpaceAndName(ctx context.Context, arg ExistsTopicBySpaceAndNameParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsTopicBySpaceAndName, arg.SpaceID, arg.Name)
+	var topic_exists bool
+	err := row.Scan(&topic_exists)
+	return topic_exists, err
+}
 
 const findFirstJoinedTopicBySpaceMember = `-- name: FindFirstJoinedTopicBySpaceMember :one
 SELECT t.id, t.space_id, t.number, t.name, t.description, t.visibility, t.discarded_at, t.created_at, t.updated_at FROM topics t
@@ -186,6 +254,20 @@ func (q *Queries) FindTopicsBySpaceAndNames(ctx context.Context, arg FindTopicsB
 		return nil, err
 	}
 	return items, nil
+}
+
+const getNextTopicNumber = `-- name: GetNextTopicNumber :one
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM topics WHERE space_id = $1
+`
+
+// Returns the next topic number in the space.
+//
+// [Ja] スペース内の次のトピック番号を返す。
+func (q *Queries) GetNextTopicNumber(ctx context.Context, spaceID string) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getNextTopicNumber, spaceID)
+	var next_number int32
+	err := row.Scan(&next_number)
+	return next_number, err
 }
 
 const listActiveTopicsBySpace = `-- name: ListActiveTopicsBySpace :many
