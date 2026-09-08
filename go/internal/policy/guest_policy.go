@@ -35,3 +35,4 @@ func (p *GuestPolicy) CanEditSuggestionPage() bool                         { ret
 func (p *GuestPolicy) CanCreateSuggestionComment() bool                    { return false }
 func (p *GuestPolicy) CanUpdateSuggestionComment(_ *model.Suggestion) bool { return false }
 func (p *GuestPolicy) CanCreateTopic() bool                                { return false }
+func (p *GuestPolicy) CanExportSpace() bool                                { return false }

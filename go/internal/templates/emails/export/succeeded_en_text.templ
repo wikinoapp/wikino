@@ -1,0 +1,17 @@
+package export
+
+import "fmt"
+
+// SucceededEnText is the English text template for a finished export.
+//
+// [Ja] SucceededEnText は完了したエクスポートの英語テキストテンプレート
+templ SucceededEnText(data Data) {
+	Your export data is ready.
+
+{ data.URL }
+
+{ fmt.Sprintf("The download URL is valid for %d hours after this email is sent.", data.ExpirationHours) }
+
+Wikino
+{ data.AppURL }
+}

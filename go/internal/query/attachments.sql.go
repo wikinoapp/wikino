@@ -172,3 +172,69 @@ func (q *Queries) FindPubliclyReferencedAttachmentBlobByID(ctx context.Context, 
 	)
 	return i, err
 }
+
+const listAttachmentsByPageIDsAndSpace = `-- name: ListAttachmentsByPageIDsAndSpace :many
+SELECT par.page_id, a.id, a.space_id, asb.filename, asb.key AS blob_key
+FROM page_attachment_references par
+INNER JOIN pages p ON par.page_id = p.id
+INNER JOIN attachments a ON par.attachment_id = a.id AND a.space_id = p.space_id
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE par.page_id = ANY($1::uuid[]) AND p.space_id = $2
+ORDER BY par.page_id, a.id
+`
+
+type ListAttachmentsByPageIDsAndSpaceParams struct {
+	PageIds []string `json:"page_ids"`
+	SpaceID string   `json:"space_id"`
+}
+
+type ListAttachmentsByPageIDsAndSpaceRow struct {
+	PageID   string `json:"page_id"`
+	ID       string `json:"id"`
+	SpaceID  string `json:"space_id"`
+	Filename string `json:"filename"`
+	BlobKey  string `json:"blob_key"`
+}
+
+// Returns the attachments the given pages reference, together with the page that references
+// each one and the storage key of its object. The export needs both: the page decides which
+// topic directory carries the copy, and the key is what the object is fetched with.
+//
+// One attachment can come back more than once, since several pages of a space may reference
+// it. The order is fixed so that the archive names the copies the same way on every attempt.
+//
+// [Ja] 指定したページが参照している添付ファイルを、参照元のページとオブジェクトのストレージ
+// キーとあわせて返す。エクスポートはその両方を使う。どのトピックのディレクトリに複製を置くかは
+// 参照元のページが決め、キーはオブジェクトの取得に使う。
+//
+// 1 つの添付ファイルが複数回返ることがある。スペース内の複数のページが同じ添付ファイルを参照
+// しうるためである。並び順を固定しているのは、複製の名前が毎回同じになるようにするためである。
+func (q *Queries) ListAttachmentsByPageIDsAndSpace(ctx context.Context, arg ListAttachmentsByPageIDsAndSpaceParams) ([]ListAttachmentsByPageIDsAndSpaceRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAttachmentsByPageIDsAndSpace, pq.Array(arg.PageIds), arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAttachmentsByPageIDsAndSpaceRow{}
+	for rows.Next() {
+		var i ListAttachmentsByPageIDsAndSpaceRow
+		if err := rows.Scan(
+			&i.PageID,
+			&i.ID,
+			&i.SpaceID,
+			&i.Filename,
+			&i.BlobKey,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

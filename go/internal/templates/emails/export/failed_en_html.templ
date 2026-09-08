@@ -1,0 +1,15 @@
+package export
+
+// FailedEnHTML is the English HTML template for an export that could not be produced.
+//
+// [Ja] FailedEnHTML は生成できなかったエクスポートの英語HTMLテンプレート
+templ FailedEnHTML(data Data) {
+	Your export could not be produced.<br/>
+	<br/>
+	Nothing has changed in your space. You can start the export again from the page below.<br/>
+	<br/>
+	<a href={ templ.SafeURL(data.URL) }>Export</a><br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

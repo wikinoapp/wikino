@@ -112,6 +112,7 @@ var windowsReservedDeviceNames = map[string]bool{
 
 // Name returns the name the archive gives a page or a topic, built from title with ext appended.
 // ext carries its leading dot, as filepath.Ext returns it, and is empty for a directory.
+// It is sanitized too, with room reserved for the basename even if the extension is very long.
 //
 // The result is a single path component: it holds no path separator and is never "." or "..",
 // whatever the title is, so an entry named with it stays inside the directory it is extracted
@@ -119,11 +120,13 @@ var windowsReservedDeviceNames = map[string]bool{
 //
 // [Ja] Name はアーカイブがページ・トピックに与える名前を返す。title を変換し、末尾に ext を
 // 付ける。ext は filepath.Ext と同じく先頭のドットを含み、ディレクトリの場合は空文字列を渡す。
+// 拡張子も変換し、非常に長い場合でもベース名の場所を確保する。
 //
 // 返す名前はパスの 1 要素になる。タイトルが何であってもパス区切りを含まず "." ".." にもならない
 // ため、この名前を付けたエントリは展開先のディレクトリの中に留まる。同じディレクトリの中で
 // 衝突する名前は Deduper が区別する。
 func Name(title, ext string) string {
+	ext = safeExtension(ext, 0)
 	return sanitize(title, len(ext)) + ext
 }
 
@@ -267,4 +270,18 @@ func truncateBytes(name string, limit int) string {
 	}
 
 	return name[:cut]
+}
+
+// safeExtension sanitizes an extension and reserves room for a fallback basename and a counter.
+// Untrusted attachment extensions may contain the same unsafe characters as titles.
+//
+// [Ja] safeExtension は拡張子を安全化し、代替名と連番の場所を残す。
+// 入力由来の添付拡張子にはタイトルと同じ危険な文字が含まれうる。
+func safeExtension(ext string, suffixBytes int) string {
+	ext = trimEnds(replaceRunes(ext))
+	ext = trimEnds(truncateBytes(ext, maxNameBytes-len(substituteName)-suffixBytes-1))
+	if ext == "" {
+		return ""
+	}
+	return "." + ext
 }

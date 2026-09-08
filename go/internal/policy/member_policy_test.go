@@ -741,3 +741,37 @@ func TestMemberPolicy_Authorizer(t *testing.T) {
 
 	var _ Authorizer = NewMemberPolicy(nil, nil)
 }
+
+func TestMemberPolicy_CanExportSpace(t *testing.T) {
+	t.Parallel()
+
+	t.Run("space:writeでエクスポート可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceWrite}, nil)
+
+		if !p.CanExportSpace() {
+			t.Error("space:write を持つメンバーはスペースをエクスポート可能であるべき")
+		}
+	})
+
+	t.Run("space:adminでエクスポート可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+
+		if !p.CanExportSpace() {
+			t.Error("space:admin は space:write を含意展開するためスペースをエクスポート可能であるべき")
+		}
+	})
+
+	t.Run("読み取り権限だけではエクスポート不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceRead, model.ScopePageRead}, nil)
+
+		if p.CanExportSpace() {
+			t.Error("space:write を持たないメンバーはスペースをエクスポートできないべき")
+		}
+	})
+}

@@ -68,3 +68,33 @@ func (r *SpaceRepository) toModel(row query.Space) *model.Space {
 		DiscardedAt: discardedAt,
 	}
 }
+
+// FindByID returns the space with the given ID, or (nil, nil) when no live space has it. The
+// export worker starts from an export row, which names its space by ID.
+//
+// [Ja] FindByID は指定 ID のスペースを返す。その ID を持つ生きたスペースが無い場合は (nil, nil)
+// を返す。エクスポートのワーカーはエクスポートの行から処理を始めるが、その行はスペースを ID で
+// 指している。
+func (r *SpaceRepository) FindByID(ctx context.Context, id model.SpaceID) (*model.Space, error) {
+	row, err := r.q.GetSpaceByID(ctx, string(id))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// LockByID locks an active space until the caller's transaction ends.
+// It returns false when the space no longer exists.
+//
+// [Ja] LockByID は呼び出し元のトランザクションが終わるまで有効なスペースをロックする。
+// スペースが存在しない場合は false を返す。
+func (r *SpaceRepository) LockByID(ctx context.Context, id model.SpaceID) (bool, error) {
+	_, err := r.q.LockSpaceByID(ctx, string(id))
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	return err == nil, err
+}

@@ -594,6 +594,25 @@ func TestExportRepository_MarkFailed(t *testing.T) {
 		}
 	})
 
+	t.Run("開始を記録できなかった試行のためqueuedからも失敗へ進む", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			WithStatus(model.ExportStatusQueued).
+			Build()
+
+		export, err := repo.MarkFailed(ctx, exportID, f.spaceID)
+		if err != nil {
+			t.Fatalf("MarkFailed() error = %v", err)
+		}
+		if export == nil {
+			t.Fatal("MarkFailed() returned nil")
+		}
+		if export.Status != model.ExportStatusFailed {
+			t.Errorf("export.Status = %v, want %v", export.Status, model.ExportStatusFailed)
+		}
+	})
+
 	t.Run("成功したエクスポートは失敗へ進めない", func(t *testing.T) {
 		exportID := testutil.NewExportBuilder(t, tx).
 			WithSpaceID(f.spaceID).
@@ -830,6 +849,201 @@ func TestExportRepository_Delete(t *testing.T) {
 		}
 		if statusCount != 1 {
 			t.Errorf("export_statusesの件数 = %d, want 1", statusCount)
+		}
+	})
+}
+
+func TestExportRepository_MarkFailedIfStale(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewExportRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	f := setupExportFixture(t, tx, "stale")
+	staleBefore := time.Now().Add(-5 * time.Minute)
+
+	t.Run("heartbeatが古いstartedを失敗へ進める", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			WithStatus(model.ExportStatusStarted).
+			WithHeartbeatAt(staleBefore.Add(-time.Minute)).
+			Build()
+
+		export, err := repo.MarkFailedIfStale(ctx, exportID, f.spaceID, staleBefore)
+		if err != nil {
+			t.Fatalf("MarkFailedIfStale() error = %v", err)
+		}
+		if export == nil {
+			t.Fatal("MarkFailedIfStale() returned nil")
+		}
+		if export.Status != model.ExportStatusFailed {
+			t.Errorf("export.Status = %v, want %v", export.Status, model.ExportStatusFailed)
+		}
+	})
+
+	t.Run("heartbeatが新しいstartedには手を触れない", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			WithStatus(model.ExportStatusStarted).
+			WithHeartbeatAt(time.Now()).
+			Build()
+
+		export, err := repo.MarkFailedIfStale(ctx, exportID, f.spaceID, staleBefore)
+		if err != nil {
+			t.Fatalf("MarkFailedIfStale() error = %v", err)
+		}
+		if export != nil {
+			t.Errorf("MarkFailedIfStale() = %v, want nil", export)
+		}
+
+		stored, err := repo.FindByIDAndSpace(ctx, exportID, f.spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDAndSpace() error = %v", err)
+		}
+		if stored.Status != model.ExportStatusStarted {
+			t.Errorf("stored.Status = %v, want %v", stored.Status, model.ExportStatusStarted)
+		}
+	})
+
+	t.Run("heartbeatを持たないstartedは止まったものとして扱う", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			WithStatus(model.ExportStatusStarted).
+			Build()
+
+		export, err := repo.MarkFailedIfStale(ctx, exportID, f.spaceID, staleBefore)
+		if err != nil {
+			t.Fatalf("MarkFailedIfStale() error = %v", err)
+		}
+		if export == nil {
+			t.Fatal("MarkFailedIfStale() returned nil")
+		}
+		if export.Status != model.ExportStatusFailed {
+			t.Errorf("export.Status = %v, want %v", export.Status, model.ExportStatusFailed)
+		}
+	})
+
+	t.Run("queuedのエクスポートは失敗へ進めない", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			Build()
+
+		export, err := repo.MarkFailedIfStale(ctx, exportID, f.spaceID, staleBefore)
+		if err != nil {
+			t.Fatalf("MarkFailedIfStale() error = %v", err)
+		}
+		if export != nil {
+			t.Errorf("MarkFailedIfStale() = %v, want nil", export)
+		}
+	})
+}
+
+func TestExportRepository_MarkFailedIfUnclaimed(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewExportRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	f := setupExportFixture(t, tx, "unclaimed")
+	other := setupExportFixture(t, tx, "unclaimed-other")
+	unclaimedBefore := time.Now().Add(-model.ExportQueuedStaleAfter)
+
+	t.Run("拾われないまま閾値を過ぎたqueuedを失敗へ進める", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			WithStatusChangedAt(unclaimedBefore.Add(-time.Minute)).
+			Build()
+
+		export, err := repo.MarkFailedIfUnclaimed(ctx, exportID, f.spaceID, unclaimedBefore)
+		if err != nil {
+			t.Fatalf("MarkFailedIfUnclaimed() error = %v", err)
+		}
+		if export == nil {
+			t.Fatal("MarkFailedIfUnclaimed() returned nil")
+		}
+		if export.Status != model.ExportStatusFailed {
+			t.Errorf("export.Status = %v, want %v", export.Status, model.ExportStatusFailed)
+		}
+	})
+
+	t.Run("まだワーカーを待っているqueuedには手を触れない", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			WithStatusChangedAt(time.Now()).
+			Build()
+
+		export, err := repo.MarkFailedIfUnclaimed(ctx, exportID, f.spaceID, unclaimedBefore)
+		if err != nil {
+			t.Fatalf("MarkFailedIfUnclaimed() error = %v", err)
+		}
+		if export != nil {
+			t.Errorf("MarkFailedIfUnclaimed() = %v, want nil", export)
+		}
+
+		stored, err := repo.FindByIDAndSpace(ctx, exportID, f.spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDAndSpace() error = %v", err)
+		}
+		if stored.Status != model.ExportStatusQueued {
+			t.Errorf("stored.Status = %v, want %v", stored.Status, model.ExportStatusQueued)
+		}
+	})
+
+	t.Run("ジョブがワーカーへ届いたstartedには手を触れない", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			WithStatus(model.ExportStatusStarted).
+			WithStatusChangedAt(unclaimedBefore.Add(-time.Minute)).
+			WithHeartbeatAt(time.Now()).
+			Build()
+
+		export, err := repo.MarkFailedIfUnclaimed(ctx, exportID, f.spaceID, unclaimedBefore)
+		if err != nil {
+			t.Fatalf("MarkFailedIfUnclaimed() error = %v", err)
+		}
+		if export != nil {
+			t.Errorf("MarkFailedIfUnclaimed() = %v, want nil", export)
+		}
+
+		stored, err := repo.FindByIDAndSpace(ctx, exportID, f.spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDAndSpace() error = %v", err)
+		}
+		if stored.Status != model.ExportStatusStarted {
+			t.Errorf("stored.Status = %v, want %v", stored.Status, model.ExportStatusStarted)
+		}
+	})
+
+	t.Run("別スペースの指定では失敗にしない", func(t *testing.T) {
+		exportID := testutil.NewExportBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithQueuedByID(f.spaceMemberID).
+			WithStatusChangedAt(unclaimedBefore.Add(-time.Minute)).
+			Build()
+
+		export, err := repo.MarkFailedIfUnclaimed(ctx, exportID, other.spaceID, unclaimedBefore)
+		if err != nil {
+			t.Fatalf("MarkFailedIfUnclaimed() error = %v", err)
+		}
+		if export != nil {
+			t.Errorf("MarkFailedIfUnclaimed() = %v, want nil", export)
+		}
+
+		stored, err := repo.FindByIDAndSpace(ctx, exportID, f.spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDAndSpace() error = %v", err)
+		}
+		if stored.Status != model.ExportStatusQueued {
+			t.Errorf("stored.Status = %v, want %v", stored.Status, model.ExportStatusQueued)
 		}
 	})
 }

@@ -1655,3 +1655,16 @@ other = "選択された下書きページが見つかりません"
 [validation_suggestion_page_already_exists]
 description = "編集提案に同じページが既に含まれているエラー"
 other = "このページは既に編集提案に含まれています"
+
+# スペースのエクスポート
+[export_succeeded_email_subject]
+description = "エクスポート完了メールの件名"
+other = "[Wikino] エクスポートデータの用意ができました"
+
+[export_failed_email_subject]
+description = "エクスポート失敗メールの件名"
+other = "[Wikino] エクスポートデータを作成できませんでした"
+
+[validation_export_in_progress]
+description = "実行中のエクスポートがあるため新しいエクスポートを開始できないエラー"
+other = "エクスポートを実行中です。完了してからお試しください"

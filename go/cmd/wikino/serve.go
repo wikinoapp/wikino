@@ -63,6 +63,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/storage"
 	"github.com/wikinoapp/wikino/go/internal/turnstile"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -139,26 +140,6 @@ func runServe() {
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	rateLimiter := ratelimit.NewLimiter(rateLimitRepo)
 
-	// River クライアントを初期化（バックグラウンドジョブ用）
-	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter)
-	if err != nil {
-		slog.Error("River クライアントの初期化に失敗しました", "error", err)
-		os.Exit(1)
-	}
-	defer func() {
-		stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer stopCancel()
-		if err := riverClient.Stop(stopCtx); err != nil {
-			slog.Error("River クライアントの停止に失敗しました", "error", err)
-		}
-	}()
-
-	// River クライアントを起動
-	if err := riverClient.Start(ctx); err != nil {
-		slog.Error("River クライアントの起動に失敗しました", "error", err)
-		os.Exit(1)
-	}
-
 	// リポジトリを初期化
 	userRepo := repository.NewUserRepository(queries)
 	userPasswordRepo := repository.NewUserPasswordRepository(queries)
@@ -181,6 +162,56 @@ func runServe() {
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
+	exportRepo := repository.NewExportRepository(queries)
+
+	// The bucket holding the attachments and the archives an export writes. A deployment without
+	// it configured leaves the storage nil, which turns off the features that need it rather than
+	// stopping the server.
+	//
+	// [Ja] オブジェクトストレージを初期化する (添付ファイルとエクスポートの ZIP を置くバケット)。
+	// 設定が無いデプロイでは nil のままにし、それを必要とする機能だけを無効化する。
+	var objectStorage storage.ObjectStorage
+	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
+		BucketName:      cfg.R2BucketName,
+		Endpoint:        cfg.R2Endpoint,
+		AccessKeyID:     cfg.R2AccessKeyID,
+		SecretAccessKey: cfg.R2SecretAccessKey,
+		Region:          cfg.R2Region,
+	})
+	if err != nil {
+		slog.Warn("オブジェクトストレージを初期化できませんでした。スペースのエクスポート機能は利用できません", "error", err)
+	} else {
+		objectStorage = s3Storage
+	}
+
+	// River クライアントを初期化（バックグラウンドジョブ用）
+	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter, worker.ExportDeps{
+		ExportRepo:      exportRepo,
+		SpaceRepo:       spaceRepo,
+		SpaceMemberRepo: spaceMemberRepo,
+		UserRepo:        userRepo,
+		TopicRepo:       topicRepo,
+		PageRepo:        pageRepo,
+		AttachmentRepo:  attachmentRepo,
+		ObjectStorage:   objectStorage,
+	})
+	if err != nil {
+		slog.Error("River クライアントの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer stopCancel()
+		if err := riverClient.Stop(stopCtx); err != nil {
+			slog.Error("River クライアントの停止に失敗しました", "error", err)
+		}
+	}()
+
+	// River クライアントを起動
+	if err := riverClient.Start(ctx); err != nil {
+		slog.Error("River クライアントの起動に失敗しました", "error", err)
+		os.Exit(1)
+	}
 
 	// Dispatcher を初期化（ジョブキューへの投入を抽象化）
 	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client())

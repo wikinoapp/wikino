@@ -65,3 +65,83 @@ type Export struct {
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
+
+// The timing of an export is decided by these five values together, which is why they sit in one
+// place rather than beside the code that reads each of them.
+//
+// ExportAttemptTimeout bounds one attempt. River requires its RescueStuckJobsAfter to be longer
+// than the timeout it gives a job, so the worker client sets both from here.
+//
+// ExportHeartbeatStaleAfter is when a started export stops counting as running. It is well above
+// ExportHeartbeatInterval, so that a worker that is merely slow to reach its next beat is not
+// taken for a stopped one, and well below ExportAttemptTimeout, so that a stopped export can be
+// replaced without waiting out an attempt that will never finish.
+//
+// ExportQueuedStaleAfter is when a queued export stops counting as running. It answers the case a
+// heartbeat cannot: an export whose job never reached a worker has nothing to beat with, and
+// without a bound of its own it would keep its space from ever exporting again. It sits above
+// ExportHeartbeatStaleAfter because waiting for a worker is a longer wait than waiting for a beat
+// from one that is already running.
+//
+// ExportDownloadExpiration is how long the link in the completion email keeps working. The
+// wording of that email is built from this value, so the two cannot drift apart.
+//
+// [Ja] エクスポートの時間に関する 5 つの値は互いに関係して決まるため、それぞれを読むコードの
+// そばではなく 1 か所に置く。
+//
+// ExportAttemptTimeout は 1 回の試行の上限。River はジョブに与えるタイムアウトより
+// RescueStuckJobsAfter を長くすることを要求するため、ワーカークライアントは両方をここから決める。
+//
+// ExportHeartbeatStaleAfter は、started のエクスポートが実行中と見なされなくなる時間。
+// ExportHeartbeatInterval より十分大きいため、次の heartbeat が遅れているだけのワーカーを
+// 止まったものと見なさない。ExportAttemptTimeout より十分小さいため、止まったエクスポートを
+// 置き換えるのに、終わることのない試行の上限を待たずに済む。
+//
+// ExportQueuedStaleAfter は、queued のエクスポートが実行中と見なされなくなる時間。heartbeat では
+// 答えられない場合のためにある。ワーカーへ届かなかったジョブのエクスポートは打つべき heartbeat を
+// 持たず、それ自身の上限が無ければ、そのスペースが二度とエクスポートできなくなる。
+// ExportHeartbeatStaleAfter より大きいのは、ワーカーを待つ時間が、既に動いているワーカーからの
+// 鼓動を待つ時間より長いためである。
+//
+// ExportDownloadExpiration は完了メールのリンクが使える期間。メールの文面はこの値から組み立てる
+// ので、両者がずれることはない。
+const (
+	ExportHeartbeatInterval   = 30 * time.Second
+	ExportHeartbeatStaleAfter = 5 * time.Minute
+	ExportQueuedStaleAfter    = 30 * time.Minute
+	ExportAttemptTimeout      = 30 * time.Minute
+	ExportDownloadExpiration  = 24 * time.Hour
+)
+
+// InProgress reports whether the export is still on its way to a result, which is what both the
+// refusal to start another export and the export screen go by.
+//
+// Both statuses that are on their way count only while something says so recently. A started
+// export goes by its heartbeat, and a queued one by how long it has been waiting for a worker:
+// an export that was left behind by a process that was killed keeps its status forever, and
+// treating it as running would block the space from ever exporting again.
+//
+// A queued export declared stopped this way is not one whose job is still coming. A job that
+// reaches a worker moves the export to started well inside ExportQueuedStaleAfter, and one that
+// arrives after the export was failed finds a terminal status and does nothing.
+//
+// [Ja] InProgress は、エクスポートが結果へ向かう途中かどうかを返す。新しいエクスポートの開始を
+// 拒否するかどうかも、エクスポート画面の表示も、この判定に従う。
+//
+// 途中の状態はどちらも、最近そう言えるものがある間だけ数える。started は heartbeat で、queued は
+// ワーカーを待っている時間で判断する。プロセスごと停止させられて取り残されたエクスポートはその
+// 状態のまま残り続けるため、実行中として扱うとそのスペースが二度とエクスポートできなくなる。
+//
+// こうして止まったと判断される queued は、ジョブがこれから届くものではない。ワーカーへ届いた
+// ジョブは ExportQueuedStaleAfter より十分早くエクスポートを started へ進めるし、失敗にされた
+// 後に届いたジョブは終端の状態を見つけて何もしない。
+func (e *Export) InProgress(now time.Time) bool {
+	switch e.Status {
+	case ExportStatusQueued:
+		return now.Sub(e.StatusChangedAt) < ExportQueuedStaleAfter
+	case ExportStatusStarted:
+		return e.HeartbeatAt != nil && now.Sub(*e.HeartbeatAt) < ExportHeartbeatStaleAfter
+	default:
+		return false
+	}
+}

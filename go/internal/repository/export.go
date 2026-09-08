@@ -158,18 +158,85 @@ func (r *ExportRepository) MarkSucceeded(ctx context.Context, id model.ExportID,
 	})
 }
 
-// MarkFailed moves the export into ExportStatusFailed. Only a started export is moved;
-// (nil, nil) is returned otherwise.
+// MarkFailed moves the export into ExportStatusFailed. Only an export that has not reached a
+// result yet is moved; (nil, nil) is returned otherwise.
 //
-// [Ja] MarkFailed はエクスポートを ExportStatusFailed へ進める。進めるのは started のエクスポート
-// だけで、それ以外では (nil, nil) を返す。
+// A queued export is accepted alongside a started one because an attempt can give up before it
+// records that it started: the write that would have moved it is the one that failed. Leaving it
+// queued would keep the space from exporting again without telling anyone why.
+//
+// [Ja] MarkFailed はエクスポートを ExportStatusFailed へ進める。進めるのはまだ結果に至っていない
+// エクスポートだけで、それ以外では (nil, nil) を返す。
+//
+// started と並んで queued も受け付けるのは、開始を記録する前に試行が諦めることがあるためである。
+// エクスポートを進めるはずだった書き込み自体が失敗した場合がこれにあたる。queued のまま残すと、
+// 理由を誰にも伝えないままそのスペースがエクスポートできなくなる。
 func (r *ExportRepository) MarkFailed(ctx context.Context, id model.ExportID, spaceID model.SpaceID) (*model.Export, error) {
 	return r.updateStatus(ctx, updateExportStatusInput{
-		ID:               id,
-		SpaceID:          spaceID,
-		Status:           model.ExportStatusFailed,
-		ExpectedStatuses: []model.ExportStatus{model.ExportStatusStarted},
-		Now:              time.Now(),
+		ID:      id,
+		SpaceID: spaceID,
+		Status:  model.ExportStatusFailed,
+		ExpectedStatuses: []model.ExportStatus{
+			model.ExportStatusQueued,
+			model.ExportStatusStarted,
+		},
+		Now: time.Now(),
+	})
+}
+
+// MarkFailedIfStale moves the export into ExportStatusFailed, but only while it still looks
+// stopped: its status is started and its heartbeat is older than staleBefore. An export that
+// reported itself alive between the read and this call is left as it is, and (nil, nil) is
+// returned, so that a worker still writing its archive is not failed underneath itself.
+//
+// A caller that reads (nil, nil) has learned that the export is running after all, and refuses
+// to start a new one rather than letting two workers write for the same space.
+//
+// [Ja] MarkFailedIfStale はエクスポートを ExportStatusFailed へ進める。ただし、状態が started
+// で heartbeat が staleBefore より古い、つまり止まって見える間に限る。読み取りからこの呼び出し
+// までの間に生存を報告したエクスポートには手を触れず (nil, nil) を返す。アーカイブを書いている
+// 最中のワーカーを、その足元で失敗させないためである。
+//
+// (nil, nil) を受け取った呼び出し元は、そのエクスポートが結局動いていたことを知る。新しい
+// エクスポートを開始せずに拒否し、1 つのスペースに対して 2 つのワーカーが書き込む状態を作らない。
+func (r *ExportRepository) MarkFailedIfStale(ctx context.Context, id model.ExportID, spaceID model.SpaceID, staleBefore time.Time) (*model.Export, error) {
+	return r.updateStatus(ctx, updateExportStatusInput{
+		ID:                   id,
+		SpaceID:              spaceID,
+		Status:               model.ExportStatusFailed,
+		ExpectedStatuses:     []model.ExportStatus{model.ExportStatusStarted},
+		StaleHeartbeatBefore: &staleBefore,
+		Now:                  time.Now(),
+	})
+}
+
+// MarkFailedIfUnclaimed moves the export into ExportStatusFailed, but only while it is still
+// waiting for a worker that never came: its status is queued and it entered that status before
+// unclaimedBefore. An export whose job reached a worker between the read and this call is left as
+// it is, and (nil, nil) is returned, so that a worker which has just started is not failed
+// underneath itself.
+//
+// This is the counterpart of MarkFailedIfStale for the status that has no heartbeat to go by. A
+// queued export never beats, so how long it has held that status is the only thing that separates
+// one still on its way from one whose job no longer exists.
+//
+// [Ja] MarkFailedIfUnclaimed はエクスポートを ExportStatusFailed へ進める。ただし、来ることの
+// なかったワーカーを待ち続けている間、つまり状態が queued で、その状態になったのが
+// unclaimedBefore より前である間に限る。読み取りからこの呼び出しまでの間にジョブがワーカーへ
+// 届いたエクスポートには手を触れず (nil, nil) を返す。開始したばかりのワーカーを、その足元で
+// 失敗させないためである。
+//
+// heartbeat を参照できない状態のための、MarkFailedIfStale の対になるメソッドである。queued の
+// エクスポートは鼓動を打たないため、まだ道半ばのものと、ジョブがもう存在しないものを分けられる
+// のは、その状態でいる時間だけである。
+func (r *ExportRepository) MarkFailedIfUnclaimed(ctx context.Context, id model.ExportID, spaceID model.SpaceID, unclaimedBefore time.Time) (*model.Export, error) {
+	return r.updateStatus(ctx, updateExportStatusInput{
+		ID:                       id,
+		SpaceID:                  spaceID,
+		Status:                   model.ExportStatusFailed,
+		ExpectedStatuses:         []model.ExportStatus{model.ExportStatusQueued},
+		StaleStatusChangedBefore: &unclaimedBefore,
+		Now:                      time.Now(),
 	})
 }
 
@@ -198,13 +265,18 @@ func (r *ExportRepository) UpdateHeartbeat(ctx context.Context, id model.ExportI
 	return true, nil
 }
 
-// Delete removes the export together with the Rails-era status history that references it.
+// Delete removes the export, its Rails-era status history and legacy file associations.
+// Unshared legacy blob metadata is removed with the associations.
 // The ZIP object it points at is deleted by the caller, which is the only one that can reach
 // the object storage.
 //
-// [Ja] Delete はエクスポートを、それを参照する Rails 時代の状態履歴ごと削除する。参照している
+// [Ja] Delete はエクスポートを、Rails 時代の状態履歴と旧ファイル関連ごと削除する。
+// 共有されていない旧 blob のメタデータも関連とともに削除する。参照している
 // ZIP オブジェクトの削除は、オブジェクトストレージへ到達できる唯一の側である呼び出し側が行う。
 func (r *ExportRepository) Delete(ctx context.Context, id model.ExportID, spaceID model.SpaceID) error {
+	if err := r.q.DeleteLegacyExportFiles(ctx, query.DeleteLegacyExportFilesParams{ExportID: string(id), SpaceID: string(spaceID)}); err != nil {
+		return err
+	}
 	if err := r.q.DeleteExportStatusesByExport(ctx, query.DeleteExportStatusesByExportParams{
 		ExportID: string(id),
 		SpaceID:  string(spaceID),
@@ -227,7 +299,26 @@ type updateExportStatusInput struct {
 	ExpectedStatuses []model.ExportStatus
 	HeartbeatAt      *time.Time
 	ObjectKey        *string
-	Now              time.Time
+
+	// StaleHeartbeatBefore refuses the transition when the export has reported itself alive
+	// at or after this time. It is set only by the caller that fails an export it read as
+	// stopped, so that a worker which came back in the meantime is left alone.
+	//
+	// [Ja] StaleHeartbeatBefore は、エクスポートがこの時刻以降に生存を報告している場合に遷移を
+	// 拒否する。停止していると読み取ったエクスポートを失敗させる呼び出し元だけが設定し、その間に
+	// 復帰したワーカーには手を触れないようにする。
+	StaleHeartbeatBefore *time.Time
+
+	// StaleStatusChangedBefore refuses the transition when the export has moved into its current
+	// status at or after this time. It is set only by the caller that fails a queued export it
+	// read as never claimed, so that a job which reached a worker in the meantime is left alone.
+	//
+	// [Ja] StaleStatusChangedBefore は、エクスポートがこの時刻以降に現在の状態へ移っていた場合に
+	// 遷移を拒否する。ワーカーに拾われないままだと読み取った queued のエクスポートを失敗させる
+	// 呼び出し元だけが設定し、その間にワーカーへ届いたジョブには手を触れないようにする。
+	StaleStatusChangedBefore *time.Time
+
+	Now time.Time
 }
 
 func (r *ExportRepository) updateStatus(ctx context.Context, input updateExportStatusInput) (*model.Export, error) {
@@ -246,14 +337,26 @@ func (r *ExportRepository) updateStatus(ctx context.Context, input updateExportS
 		objectKey = sql.NullString{String: *input.ObjectKey, Valid: true}
 	}
 
+	var staleHeartbeatBefore sql.NullTime
+	if input.StaleHeartbeatBefore != nil {
+		staleHeartbeatBefore = sql.NullTime{Time: *input.StaleHeartbeatBefore, Valid: true}
+	}
+
+	var staleStatusChangedBefore sql.NullTime
+	if input.StaleStatusChangedBefore != nil {
+		staleStatusChangedBefore = sql.NullTime{Time: *input.StaleStatusChangedBefore, Valid: true}
+	}
+
 	row, err := r.q.UpdateExportStatus(ctx, query.UpdateExportStatusParams{
-		Status:           int32(input.Status),
-		Now:              input.Now,
-		HeartbeatAt:      heartbeatAt,
-		ObjectKey:        objectKey,
-		ID:               string(input.ID),
-		SpaceID:          string(input.SpaceID),
-		ExpectedStatuses: expectedStatuses,
+		Status:                   int32(input.Status),
+		Now:                      input.Now,
+		HeartbeatAt:              heartbeatAt,
+		ObjectKey:                objectKey,
+		ID:                       string(input.ID),
+		SpaceID:                  string(input.SpaceID),
+		ExpectedStatuses:         expectedStatuses,
+		StaleHeartbeatBefore:     staleHeartbeatBefore,
+		StaleStatusChangedBefore: staleStatusChangedBefore,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -294,4 +397,27 @@ func (r *ExportRepository) toModels(rows []query.Export) []*model.Export {
 		exports[i] = r.toModel(row)
 	}
 	return exports
+}
+
+// LegacyExportFile identifies an old Rails archive and whether another record still uses it.
+//
+// [Ja] LegacyExportFile は旧 Rails アーカイブと、別のレコードが使用中かどうかを表す。
+type LegacyExportFile struct {
+	Key    string
+	Shared bool
+}
+
+// ListLegacyFiles finds the Rails archives to remove before deleting an export.
+//
+// [Ja] ListLegacyFiles はエクスポートを削除する前に回収する Rails アーカイブを取得する。
+func (r *ExportRepository) ListLegacyFiles(ctx context.Context, id model.ExportID, spaceID model.SpaceID) ([]LegacyExportFile, error) {
+	rows, err := r.q.ListLegacyExportFiles(ctx, query.ListLegacyExportFilesParams{ExportID: string(id), SpaceID: string(spaceID)})
+	if err != nil {
+		return nil, err
+	}
+	files := make([]LegacyExportFile, len(rows))
+	for i, row := range rows {
+		files[i] = LegacyExportFile{Key: row.Key, Shared: row.Shared}
+	}
+	return files, nil
 }

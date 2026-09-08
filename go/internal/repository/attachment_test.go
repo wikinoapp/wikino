@@ -776,3 +776,73 @@ func TestAttachmentRepository_FindByIDsAndSpace(t *testing.T) {
 		}
 	})
 }
+
+func TestAttachmentRepository_ListByPageIDsAndSpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewAttachmentRepository(q)
+	refRepo := NewPageAttachmentReferenceRepository(q)
+	ctx := context.Background()
+
+	spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-list-by-pages")
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("メモ").Build()
+
+	referencedPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("参照あり").Build()
+	otherPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(2).WithTitle("参照なし").Build()
+
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		WithFilename("図.png").
+		WithContentType("image/png").
+		Build()
+
+	if _, err := refRepo.CreateBatch(ctx, referencedPageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+		t.Fatalf("CreateBatch() error = %v", err)
+	}
+
+	t.Run("参照元のページと添付ファイルの組を返す", func(t *testing.T) {
+		pageAttachments, err := repo.ListByPageIDsAndSpace(ctx, []model.PageID{referencedPageID, otherPageID}, spaceID)
+		if err != nil {
+			t.Fatalf("ListByPageIDsAndSpace() error = %v", err)
+		}
+		if len(pageAttachments) != 1 {
+			t.Fatalf("ListByPageIDsAndSpace() の件数 = %d, want 1", len(pageAttachments))
+		}
+		if pageAttachments[0].PageID != referencedPageID {
+			t.Errorf("PageID = %q, want %q", pageAttachments[0].PageID, referencedPageID)
+		}
+		if pageAttachments[0].Attachment.Filename != "図.png" {
+			t.Errorf("Filename = %q, want %q", pageAttachments[0].Attachment.Filename, "図.png")
+		}
+		if pageAttachments[0].Attachment.BlobKey == "" {
+			t.Error("BlobKey が空です")
+		}
+	})
+
+	t.Run("ページIDが空ならクエリを投げない", func(t *testing.T) {
+		pageAttachments, err := repo.ListByPageIDsAndSpace(ctx, nil, spaceID)
+		if err != nil {
+			t.Fatalf("ListByPageIDsAndSpace() error = %v", err)
+		}
+		if pageAttachments != nil {
+			t.Errorf("ListByPageIDsAndSpace() = %v, want nil", pageAttachments)
+		}
+	})
+
+	t.Run("異なるスペースIDの添付ファイルは取得されない", func(t *testing.T) {
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("attach-list-by-pages-other").
+			Build()
+
+		pageAttachments, err := repo.ListByPageIDsAndSpace(ctx, []model.PageID{referencedPageID}, otherSpaceID)
+		if err != nil {
+			t.Fatalf("ListByPageIDsAndSpace() error = %v", err)
+		}
+		if len(pageAttachments) != 0 {
+			t.Errorf("ListByPageIDsAndSpace() の件数 = %d, want 0", len(pageAttachments))
+		}
+	})
+}

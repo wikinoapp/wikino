@@ -1,0 +1,17 @@
+package export
+
+import "fmt"
+
+// SucceededEnHTML is the English HTML template for a finished export.
+//
+// [Ja] SucceededEnHTML は完了したエクスポートの英語HTMLテンプレート
+templ SucceededEnHTML(data Data) {
+	Your export data is ready.<br/>
+	<br/>
+	<a href={ templ.SafeURL(data.URL) }>Download</a><br/>
+	<br/>
+	{ fmt.Sprintf("The download URL is valid for %d hours after this email is sent.", data.ExpirationHours) }<br/>
+	<br/>
+	Wikino<br/>
+	<a href={ templ.SafeURL(data.AppURL) }>{ data.AppURL }</a>
+}

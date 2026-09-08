@@ -73,4 +73,13 @@ type Authorizer interface {
 	// Space
 	// [Ja] スペース
 	CanCreateTopic() bool
+
+	// CanExportSpace decides based on the space:write scope, matching what the Rails version
+	// requires. An export carries every page of the space in one archive, so it is opened to the
+	// members trusted to change the space rather than to everyone who may read it.
+	//
+	// [Ja] CanExportSpace は space:write スコープで判定し、Rails 版が要求するものと揃える。
+	// エクスポートはスペースの全ページを 1 つのアーカイブに収めるため、読める全員ではなく
+	// スペースを変更してよいと認められたメンバーに開く。
+	CanExportSpace() bool
 }

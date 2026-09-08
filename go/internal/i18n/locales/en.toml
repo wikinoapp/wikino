@@ -1655,3 +1655,16 @@ other = "The selected draft page was not found"
 [validation_suggestion_page_already_exists]
 description = "Page already included in the suggestion"
 other = "This page is already included in the suggestion"
+
+# Space export
+[export_succeeded_email_subject]
+description = "Subject line for the finished export email"
+other = "[Wikino] Your export data is ready"
+
+[export_failed_email_subject]
+description = "Subject line for the failed export email"
+other = "[Wikino] Your export could not be produced"
+
+[validation_export_in_progress]
+description = "Error shown when an export is already running and another cannot be started"
+other = "An export is already running. Please try again once it has finished"

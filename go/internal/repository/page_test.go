@@ -1961,3 +1961,79 @@ func TestPageRepository_CreateBlankPage(t *testing.T) {
 		}
 	})
 }
+
+func TestPageRepository_ListActiveBySpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	spaceID, _ := testutil.SetupSpaceWithMember(t, tx, "list-active-pages")
+
+	secondTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("あとのトピック").
+		Build()
+	firstTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("さきのトピック").
+		Build()
+
+	// The export writes what this returns into an archive the whole space is handed in, so a
+	// page the member has taken out of the space must not come back through it.
+	//
+	// [Ja] エクスポートはこの結果をスペース全体が渡るアーカイブへ書き出す。メンバーがスペースから
+	// 取り除いたページが、そこから戻ってきてはならない。
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("廃棄済みトピック").
+		WithDiscarded().
+		Build()
+
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(secondTopicID).WithNumber(1).WithTitle("あと1").Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(firstTopicID).WithNumber(3).WithTitle("さき3").Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(firstTopicID).WithNumber(2).WithTitle("さき2").Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(firstTopicID).WithNumber(4).WithTitle("未公開").WithUnpublished().Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(firstTopicID).WithNumber(5).WithTitle("廃棄済み").WithDiscarded().Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(firstTopicID).WithNumber(6).WithTitle("ゴミ箱").WithTrashed().Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(discardedTopicID).WithNumber(7).WithTitle("廃棄済みトピックのページ").Build()
+
+	// The archive is handed to one space, so a page of another space must not reach it through
+	// this query.
+	//
+	// [Ja] アーカイブは 1 つのスペースへ渡されるため、別スペースのページがこのクエリを通って
+	// そこへ届いてはならない。
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("list-active-pages-other").
+		Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("別スペースのトピック").
+		Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).WithNumber(1).WithTitle("別スペースのページ").Build()
+
+	pages, err := repo.ListActiveBySpace(ctx, spaceID)
+	if err != nil {
+		t.Fatalf("ListActiveBySpace() error = %v", err)
+	}
+
+	gotTitles := make([]string, len(pages))
+	for i, page := range pages {
+		gotTitles[i] = *page.Title
+	}
+	wantTitles := []string{"さき2", "さき3", "あと1"}
+
+	if len(gotTitles) != len(wantTitles) {
+		t.Fatalf("ListActiveBySpace() = %v, want %v", gotTitles, wantTitles)
+	}
+	for i, want := range wantTitles {
+		if gotTitles[i] != want {
+			t.Errorf("pages[%d].Title = %q, want %q", i, gotTitles[i], want)
+		}
+	}
+}

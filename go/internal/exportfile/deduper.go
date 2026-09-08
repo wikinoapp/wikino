@@ -45,7 +45,8 @@ func (d *Deduper) Unique(title, ext string) string {
 
 	for counter := 2; d.taken[dedupeKey(name)]; counter++ {
 		suffix := "-" + strconv.Itoa(counter)
-		name = sanitize(title, len(suffix)+len(ext)) + suffix + ext
+		safeExt := safeExtension(ext, len(suffix))
+		name = sanitize(title, len(suffix)+len(safeExt)) + suffix + safeExt
 	}
 
 	d.taken[dedupeKey(name)] = true

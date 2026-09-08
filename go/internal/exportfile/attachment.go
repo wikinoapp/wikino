@@ -8,12 +8,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// attachmentDirName is the directory a topic keeps the attachments of its pages in, next to the
+// AttachmentDirName is the directory a topic keeps the attachments of its pages in, next to the
 // Markdown files that reference them.
 //
-// [Ja] attachmentDirName は、トピックがページの添付ファイルを置くディレクトリ。参照する
+// [Ja] AttachmentDirName は、トピックがページの添付ファイルを置くディレクトリ。参照する
 // Markdown ファイルと同じ階層に置かれる。
-const attachmentDirName = "attachments"
+const AttachmentDirName = "attachments"
 
 // RewriteAttachmentLinks returns body with every reference to an attachment of names pointing at
 // the copy the archive carries beside the page. names maps an attachment to the file name it has
@@ -53,7 +53,7 @@ func RewriteAttachmentLinks(body string, names map[model.AttachmentID]string) st
 		}
 
 		rewritten.WriteString(body[written:match.Start])
-		rewritten.WriteString(attachmentDirName + "/" + escapeAttachmentName(name, match.InHTMLAttribute))
+		rewritten.WriteString(AttachmentDirName + "/" + escapeAttachmentName(name, match.InHTMLAttribute))
 
 		written = match.Stop
 	}

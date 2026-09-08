@@ -340,3 +340,21 @@ WHERE id = @id
 INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
 VALUES (@space_id, @topic_id, @number, sqlc.narg('title'), '', '', '{}', @modified_at, NULL, @modified_at, @modified_at)
 RETURNING *;
+
+-- name: ListActivePagesBySpace :many
+-- Returns every active page of the space (published, not discarded, not trashed, and whose
+-- topic is not discarded), ordered by topic and then by page number. The export writes the
+-- archive in this order, so the same space gives the same archive on every attempt, which is
+-- what lets a retry start over from the beginning.
+--
+-- [Ja] スペース内のアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) をすべて、
+-- トピック順・ページ番号順で返す。エクスポートはこの順序でアーカイブを書き出すため、同じ
+-- スペースからは毎回同じアーカイブができる。リトライが先頭からやり直せるのはこのためである。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+ORDER BY t.number, p.number;
