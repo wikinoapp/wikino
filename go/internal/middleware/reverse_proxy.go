@@ -111,6 +111,13 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
+	// General settings of a topic: the screen (GET and HEAD) and the save (PATCH; POST before
+	// Method Override). The rest of the topic settings, including the settings screen the
+	// breadcrumb leads back to, keeps reaching the Rails version.
+	//
+	// [Ja] トピックの一般設定。画面 (GET・HEAD) と保存処理 (PATCH。Method Override 変換前は POST)。
+	// パンくずが戻る設定画面を含め、トピック設定の残りは従来どおり Rails 版へ届く。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/general$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
 	// Page creation entry point (GET /s/:identifier/topics/:number/pages/new). It creates a page
 	// and redirects to its edit screen. The Go route is GET-only, so restrict the method and let
 	// the other methods keep reaching the Rails version.

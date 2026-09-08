@@ -76,3 +76,22 @@ SELECT EXISTS (
 INSERT INTO topics (space_id, number, name, description, visibility, created_at, updated_at)
 VALUES (@space_id, @number, @name, @description, @visibility, @now, @now)
 RETURNING *;
+
+-- name: ExistsTopicBySpaceAndNameExcludingID :one
+-- Reports whether another topic of the space already holds that name, discarded topics included.
+-- The topic given by @excluded_id is left out, so that a topic keeping its own name is not refused.
+--
+-- [Ja] そのスペースの別のトピックが同じ名前を既に持っているかを返す (削除済みのトピックも含む)。
+-- @excluded_id のトピックは除外し、自身の名前をそのままにしたトピックが拒否されないようにする。
+SELECT EXISTS (
+    SELECT 1 FROM topics WHERE space_id = @space_id AND name = @name AND id <> @excluded_id
+) AS topic_exists;
+
+-- name: UpdateTopic :one
+-- Updates the general settings of a topic.
+--
+-- [Ja] トピックの一般設定を更新する。
+UPDATE topics
+SET name = @name, description = @description, visibility = @visibility, updated_at = @now
+WHERE id = @id AND space_id = @space_id
+RETURNING *;

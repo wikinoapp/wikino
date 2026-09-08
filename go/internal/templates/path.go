@@ -107,6 +107,15 @@ func TopicSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber in
 	return Path(fmt.Sprintf("/s/%s/topics/%d/settings", spaceIdentifier, topicNumber))
 }
 
+// TopicSettingsGeneralPath generates the path to the general settings of a topic, which the
+// settings are saved by submitting to.
+//
+// [Ja] TopicSettingsGeneralPath はトピックの一般設定のパスを生成します。設定はこのパスへの送信で
+// 保存します。
+func TopicSettingsGeneralPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return TopicSettingsPath(spaceIdentifier, topicNumber) + "/general"
+}
+
 // NewTopicPath generates the path to the topic creation form.
 //
 // [Ja] NewTopicPath は新規トピック作成フォームのパスを生成します。

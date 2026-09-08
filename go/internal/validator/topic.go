@@ -58,16 +58,7 @@ type TopicCreateValidatorInput struct {
 func (v *TopicCreateValidator) Validate(ctx context.Context, input TopicCreateValidatorInput) (model.TopicVisibility, error) {
 	ve := model.NewValidationError()
 
-	validateTopicName(ctx, ve, input.Name)
-
-	if utf8.RuneCountInString(input.Description) > topicDescriptionMaxLength {
-		ve.AddField("description", i18n.T(ctx, "validation_topic_description_too_long"))
-	}
-
-	visibility, ok := model.ParseTopicVisibility(input.Visibility)
-	if !ok {
-		ve.AddField("visibility", i18n.T(ctx, "validation_topic_visibility_required"))
-	}
+	visibility := validateTopicFields(ctx, ve, input.Name, input.Description, input.Visibility)
 
 	if ve.HasErrors() {
 		return visibility, ve
@@ -84,6 +75,74 @@ func (v *TopicCreateValidator) Validate(ctx context.Context, input TopicCreateVa
 	}
 
 	return visibility, nil
+}
+
+// TopicUpdateValidator はトピックの一般設定の更新のバリデーションを行う
+type TopicUpdateValidator struct {
+	topicRepo *repository.TopicRepository
+}
+
+// NewTopicUpdateValidator は TopicUpdateValidator を生成する
+func NewTopicUpdateValidator(topicRepo *repository.TopicRepository) *TopicUpdateValidator {
+	return &TopicUpdateValidator{topicRepo: topicRepo}
+}
+
+// TopicUpdateValidatorInput はバリデーションの入力パラメータ
+type TopicUpdateValidatorInput struct {
+	Name        string
+	Description string
+	Visibility  string
+	TopicID     model.TopicID
+	SpaceID     model.SpaceID
+}
+
+// Validate はバリデーションを行い、フォームが送信した公開範囲を変換して返す。
+func (v *TopicUpdateValidator) Validate(ctx context.Context, input TopicUpdateValidatorInput) (model.TopicVisibility, error) {
+	ve := model.NewValidationError()
+
+	visibility := validateTopicFields(ctx, ve, input.Name, input.Description, input.Visibility)
+
+	if ve.HasErrors() {
+		return visibility, ve
+	}
+
+	// The topic being updated is left out of the uniqueness check, so that a topic keeping the name
+	// it already carries is not refused.
+	//
+	// [Ja] 更新するトピック自身は一意性チェックから除く。既に持っている名前をそのままにした
+	// トピックが拒否されないようにするためである。
+	exists, err := v.topicRepo.ExistsBySpaceAndNameExcludingID(ctx, input.SpaceID, input.Name, input.TopicID)
+	if err != nil {
+		return visibility, fmt.Errorf("トピック名の一意性チェックに失敗: %w", err)
+	}
+	if exists {
+		ve.AddField("name", i18n.T(ctx, "validation_topic_name_uniqueness"))
+		return visibility, ve
+	}
+
+	return visibility, nil
+}
+
+// validateTopicFields checks the fields the creation form and the general settings form share, and
+// returns the visibility the form submitted. The uniqueness of the name is left to the caller:
+// which topics count as holding a name already differs between creating a topic and updating one.
+//
+// [Ja] validateTopicFields は作成フォームと一般設定フォームが共有する項目を検証し、フォームが
+// 送信した公開範囲を返す。名前の一意性は呼び出し元に任せる。どのトピックが既にその名前を持って
+// いると数えるかが、作成と更新とで異なるためである。
+func validateTopicFields(ctx context.Context, ve *model.ValidationError, name, description, visibility string) model.TopicVisibility {
+	validateTopicName(ctx, ve, name)
+
+	if utf8.RuneCountInString(description) > topicDescriptionMaxLength {
+		ve.AddField("description", i18n.T(ctx, "validation_topic_description_too_long"))
+	}
+
+	parsed, ok := model.ParseTopicVisibility(visibility)
+	if !ok {
+		ve.AddField("visibility", i18n.T(ctx, "validation_topic_visibility_required"))
+	}
+
+	return parsed
 }
 
 // validateTopicName checks the format of a topic name and adds what it finds to ve.

@@ -1211,36 +1211,36 @@ other = "New topic"
 description = "Subtitle on the topic creation page (contains links to the help pages)"
 other = "For more information about topics, please see <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">Topic help</a>.<br>If you are unsure what kind of topic to create, <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">Best Practices</a> may be helpful."
 
-[topic_new_name_label]
-description = "Name label on the topic creation page"
+[topic_form_name_label]
+description = "Name label on the topic form (shared by the creation and general settings pages)"
 other = "Name"
 
-[topic_new_description_label]
-description = "Description label on the topic creation page"
+[topic_form_description_label]
+description = "Description label on the topic form (shared by the creation and general settings pages)"
 other = "Description"
 
-[topic_new_visibility_label]
-description = "Visibility label on the topic creation page"
+[topic_form_visibility_label]
+description = "Visibility label on the topic form (shared by the creation and general settings pages)"
 other = "Visibility"
 
-[topic_new_visibility_public]
-description = "Public topic option on the topic creation page"
+[topic_form_visibility_public]
+description = "Public topic option on the topic form (shared by the creation and general settings pages)"
 other = "Public"
 
-[topic_new_visibility_private]
-description = "Private topic option on the topic creation page"
+[topic_form_visibility_private]
+description = "Private topic option on the topic form (shared by the creation and general settings pages)"
 other = "Private"
 
-[topic_new_visibility_public_hint]
-description = "Hint for the public topic option on the topic creation page"
+[topic_form_visibility_public_hint]
+description = "Hint for the public topic option on the topic form (shared by the creation and general settings pages)"
 other = "Pages posted in public topics are visible on the internet."
 
-[topic_new_visibility_private_hint]
-description = "Hint for the private topic option on the topic creation page"
+[topic_form_visibility_private_hint]
+description = "Hint for the private topic option on the topic form (shared by the creation and general settings pages)"
 other = "Pages posted in private topics are visible only in this space."
 
-[topic_new_visibility_private_note_html]
-description = "Note for the private topic option on the topic creation page (contains a link to the help page)"
+[topic_form_visibility_private_note_html]
+description = "Note for the private topic option on the topic form (shared by the creation and general settings pages; contains a link to the help page)"
 other = "Private topics are currently available for free, but if a paid plan is introduced in the future, it will be a paid plan only feature. <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/38\" target=\"_blank\">Private topic help</a>"
 
 [topic_new_submit_button]
@@ -1286,6 +1286,31 @@ other = "Please select a visibility"
 [flash_topic_created]
 description = "Flash message shown when a topic has been created"
 other = "Topic created."
+
+[flash_topic_updated]
+description = "Flash message shown when a topic has been updated"
+other = "Topic updated."
+
+# Topic general settings
+[topic_settings_general_title]
+description = "Topic general settings page title"
+other = "General | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_settings_general_heading]
+description = "Heading on the topic general settings page"
+other = "General"
+
+[topic_settings_general_breadcrumb_settings]
+description = "Topic settings label shown in the breadcrumb of the topic general settings page"
+other = "Settings"
+
+[topic_settings_general_submit_button]
+description = "Submit button on the topic general settings page"
+other = "Save"
+
+[topic_settings_general_cancel]
+description = "Cancel link on the topic general settings page"
+other = "Cancel"
 
 # Space show
 [space_show_title]

@@ -55,6 +55,7 @@ import (
 	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
+	topicsettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings_general"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -486,6 +487,15 @@ func runServe() {
 		getTopicNewUC,
 		createTopicUC,
 	)
+	getTopicSettingsGeneralUC := usecase.NewGetTopicSettingsGeneralUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
+	topicUpdateValidator := validator.NewTopicUpdateValidator(topicRepo)
+	updateTopicUC := usecase.NewUpdateTopicUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, topicUpdateValidator)
+	topicSettingsGeneralHandler := topicsettingsgeneralhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getTopicSettingsGeneralUC,
+		updateTopicUC,
+	)
 	getSuggestionListUC := usecase.NewGetSuggestionListUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
 	getSuggestionDetailUC := usecase.NewGetSuggestionDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo)
 	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, suggestionRepo, userRepo)
@@ -804,6 +814,23 @@ func runServe() {
 		r.Get("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
+
+		// General settings of a topic: the screen and the save. The rest of the topic settings
+		// stays on the Rails version, which is where the breadcrumb of this screen leads back to.
+		//
+		// HEAD is registered beside the GET because chi resolves routes per method and never falls
+		// back from GET, while the Rails router reads a HEAD that matches nothing as a GET. Without
+		// it the screen would answer 200 to GET and 405 to HEAD.
+		//
+		// [Ja] トピックの一般設定。画面と保存処理。トピック設定の残りは Rails 版のままで、この画面
+		// のパンくずはそこへ戻る。
+		//
+		// GET に HEAD を併記するのは、chi がメソッドごとにルートを引き GET へフォールバックしない
+		// 一方、Rails のルーターは一致しない HEAD を GET として読むため。併記しないと、GET に 200 を
+		// 返す画面が HEAD には 405 を返す。
+		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
+		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
+		r.Patch("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Update)
 
 		// Page creation entry point. It creates a page and redirects to its edit screen, so it
 		// renders no screen of its own.

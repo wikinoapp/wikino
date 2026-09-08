@@ -189,3 +189,128 @@ func TestTopicCreateValidator_Uniqueness(t *testing.T) {
 		})
 	}
 }
+
+// TestTopicUpdateValidator_FormatValidation covers the format checks the general settings share
+// with the creation form. The checks themselves are covered by
+// TestTopicCreateValidator_FormatValidation, so this only confirms that the update reaches them.
+//
+// [Ja] TestTopicUpdateValidator_FormatValidation は一般設定が作成フォームと共有する形式チェックを
+// 扱う。チェック自体は TestTopicCreateValidator_FormatValidation で扱っているため、ここでは更新も
+// そこへ到達することだけを確かめる。
+func TestTopicUpdateValidator_FormatValidation(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+
+	tests := []struct {
+		name        string
+		topicName   string
+		description string
+		visibility  string
+		field       string
+	}{
+		{name: "名前が空の場合はエラー", topicName: "", visibility: "public", field: "name"},
+		{name: "名前にスラッシュを含む場合はエラー", topicName: "foo/bar", visibility: "public", field: "name"},
+		{name: "説明が150文字を超える場合はエラー", topicName: "テスト", description: strings.Repeat("あ", 151), visibility: "public", field: "description"},
+		{name: "公開設定が未知の値の場合はエラー", topicName: "テスト", visibility: "internal", field: "visibility"},
+	}
+
+	// 形式バリデーションのみテストするためnilのtopicRepoを使用
+	v := validator.NewTopicUpdateValidator(nil)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := v.Validate(ctx, validator.TopicUpdateValidatorInput{
+				Name:        tt.topicName,
+				Description: tt.description,
+				Visibility:  tt.visibility,
+				TopicID:     "test-topic-id",
+				SpaceID:     "test-space-id",
+			})
+
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatal("expected ValidationError but got nil")
+			}
+			if !ve.HasFieldError(tt.field) {
+				t.Errorf("expected %s field error but got none", tt.field)
+			}
+		})
+	}
+}
+
+// TestTopicUpdateValidator_Uniqueness covers the name the space already carries. The topic being
+// updated keeps its own name, while a name another topic holds is refused, discarded topics
+// included.
+//
+// [Ja] TestTopicUpdateValidator_Uniqueness はスペースが既に持っている名前を扱う。更新するトピックは
+// 自身の名前をそのままにでき、別のトピックが持つ名前は削除済みのものも含めて拒否される。
+func TestTopicUpdateValidator_Uniqueness(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-update-uniqueness").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("日報").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("週報").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("議事録").
+		WithDiscarded().
+		Build()
+
+	v := validator.NewTopicUpdateValidator(repository.NewTopicRepository(queries))
+
+	tests := []struct {
+		name      string
+		topicName string
+		wantError bool
+	}{
+		{name: "自身の名前をそのままにする場合は通る", topicName: "日報", wantError: false},
+		{name: "別のトピックが持つ名前はエラー", topicName: "週報", wantError: true},
+		{name: "削除済みトピックが名前を持っている場合もエラー", topicName: "議事録", wantError: true},
+		{name: "使われていない名前は通る", topicName: "月報", wantError: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := v.Validate(ctx, validator.TopicUpdateValidatorInput{
+				Name:       tt.topicName,
+				Visibility: "public",
+				TopicID:    topicID,
+				SpaceID:    spaceID,
+			})
+
+			if !tt.wantError {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				return
+			}
+
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatal("expected ValidationError but got nil")
+			}
+			if !ve.HasFieldError("name") {
+				t.Error("expected name field error but got none")
+			}
+		})
+	}
+}

@@ -793,6 +793,42 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "トピックの一般設定 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1/settings/general",
+			expected: true,
+		},
+		{
+			name:     "トピックの一般設定 (HEAD)",
+			method:   http.MethodHead,
+			path:     "/s/my-space/topics/1/settings/general",
+			expected: true,
+		},
+		{
+			name:     "トピックの一般設定の保存 (PATCH)",
+			method:   http.MethodPatch,
+			path:     "/s/my-space/topics/1/settings/general",
+			expected: true,
+		},
+		{
+			name:     "トピックの一般設定の保存 (Method Override 前の POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/topics/1/settings/general",
+			expected: true,
+		},
+		{
+			name:     "トピック設定のトップは Go 版で処理しない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1/settings",
+			expected: false,
+		},
+		{
+			name:     "トピック削除フォームは Go 版で処理しない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1/settings/deletion/new",
+			expected: false,
+		},
+		{
 			name:     "ページ新規作成の入口 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/topics/1/pages/new",

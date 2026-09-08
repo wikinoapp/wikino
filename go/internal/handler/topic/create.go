@@ -77,11 +77,13 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 
 	w.WriteHeader(http.StatusUnprocessableEntity)
 	h.renderNewForm(w, r, user, topicpages.NewData{
-		CSRFToken:   middleware.GetCSRFTokenFromContext(ctx),
-		FormErrors:  ve,
-		Space:       viewmodel.NewSpace(output.Space),
-		Name:        input.Name,
-		Description: input.Description,
-		Visibility:  input.Visibility,
+		CSRFToken: middleware.GetCSRFTokenFromContext(ctx),
+		Space:     viewmodel.NewSpace(output.Space),
+		Fields: topicpages.FormFieldsData{
+			FormErrors:  ve,
+			Name:        input.Name,
+			Description: input.Description,
+			Visibility:  input.Visibility,
+		},
 	})
 }

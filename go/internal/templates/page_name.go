@@ -18,6 +18,7 @@ const (
 	PageNameSpaceShow              PageName = "space_show"
 	PageNameTopicShow              PageName = "topic_show"
 	PageNameTopicNew               PageName = "topic_new"
+	PageNameTopicSettingsGeneral   PageName = "topic_settings_general"
 	PageNameSuggestionIndex        PageName = "suggestion_index"
 	PageNameSuggestionShow         PageName = "suggestion_show"
 	PageNameSuggestionNew          PageName = "suggestion_new"

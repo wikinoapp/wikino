@@ -1211,36 +1211,36 @@ other = "新規トピック"
 description = "トピック作成画面のサブタイトル (ヘルプページへのリンクを含む)"
 other = "トピックについては <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">トピックについてのヘルプ</a> をご覧ください<br>どんなトピックを作ると良いかわからないときは <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
 
-[topic_new_name_label]
-description = "トピック作成画面の名前ラベル"
+[topic_form_name_label]
+description = "トピックのフォームの名前ラベル (作成画面と一般設定画面で共有)"
 other = "名前"
 
-[topic_new_description_label]
-description = "トピック作成画面の説明ラベル"
+[topic_form_description_label]
+description = "トピックのフォームの説明ラベル (作成画面と一般設定画面で共有)"
 other = "説明"
 
-[topic_new_visibility_label]
-description = "トピック作成画面の公開設定ラベル"
+[topic_form_visibility_label]
+description = "トピックのフォームの公開設定ラベル (作成画面と一般設定画面で共有)"
 other = "公開設定"
 
-[topic_new_visibility_public]
-description = "トピック作成画面の公開トピックの選択肢"
+[topic_form_visibility_public]
+description = "トピックのフォームの公開トピックの選択肢 (作成画面と一般設定画面で共有)"
 other = "公開"
 
-[topic_new_visibility_private]
-description = "トピック作成画面の非公開トピックの選択肢"
+[topic_form_visibility_private]
+description = "トピックのフォームの非公開トピックの選択肢 (作成画面と一般設定画面で共有)"
 other = "非公開"
 
-[topic_new_visibility_public_hint]
-description = "トピック作成画面の公開トピックの補足"
+[topic_form_visibility_public_hint]
+description = "トピックのフォームの公開トピックの補足 (作成画面と一般設定画面で共有)"
 other = "公開トピックに投稿されたページはインターネット上に公開されます"
 
-[topic_new_visibility_private_hint]
-description = "トピック作成画面の非公開トピックの補足"
+[topic_form_visibility_private_hint]
+description = "トピックのフォームの非公開トピックの補足 (作成画面と一般設定画面で共有)"
 other = "非公開トピックに投稿されたページはこのスペースのメンバーのみに公開されます"
 
-[topic_new_visibility_private_note_html]
-description = "トピック作成画面の非公開トピックの注意書き (ヘルプページへのリンクを含む)"
+[topic_form_visibility_private_note_html]
+description = "トピックのフォームの非公開トピックの注意書き (作成画面と一般設定画面で共有。ヘルプページへのリンクを含む)"
 other = "非公開トピックは現在無料で利用できますが、今後有料プランが導入されたとき有料プランのみの機能となります。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/38\" target=\"_blank\">非公開トピックについてのヘルプ</a>"
 
 [topic_new_submit_button]
@@ -1286,6 +1286,31 @@ other = "公開設定を選択してください"
 [flash_topic_created]
 description = "トピック作成成功時のフラッシュメッセージ"
 other = "トピックを作成しました"
+
+[flash_topic_updated]
+description = "トピック更新成功時のフラッシュメッセージ"
+other = "トピックを更新しました"
+
+# トピックの一般設定
+[topic_settings_general_title]
+description = "トピックの一般設定画面のページタイトル"
+other = "基本情報 | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_settings_general_heading]
+description = "トピックの一般設定画面の見出し"
+other = "基本情報"
+
+[topic_settings_general_breadcrumb_settings]
+description = "トピックの一般設定画面のパンくずに出すトピック設定のラベル"
+other = "設定"
+
+[topic_settings_general_submit_button]
+description = "トピックの一般設定画面の送信ボタン"
+other = "保存する"
+
+[topic_settings_general_cancel]
+description = "トピックの一般設定画面のキャンセルリンク"
+other = "キャンセル"
 
 # スペース詳細
 [space_show_title]

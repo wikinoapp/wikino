@@ -79,6 +79,30 @@ func (q *Queries) ExistsTopicBySpaceAndName(ctx context.Context, arg ExistsTopic
 	return topic_exists, err
 }
 
+const existsTopicBySpaceAndNameExcludingID = `-- name: ExistsTopicBySpaceAndNameExcludingID :one
+SELECT EXISTS (
+    SELECT 1 FROM topics WHERE space_id = $1 AND name = $2 AND id <> $3
+) AS topic_exists
+`
+
+type ExistsTopicBySpaceAndNameExcludingIDParams struct {
+	SpaceID    string `json:"space_id"`
+	Name       string `json:"name"`
+	ExcludedID string `json:"excluded_id"`
+}
+
+// Reports whether another topic of the space already holds that name, discarded topics included.
+// The topic given by @excluded_id is left out, so that a topic keeping its own name is not refused.
+//
+// [Ja] そのスペースの別のトピックが同じ名前を既に持っているかを返す (削除済みのトピックも含む)。
+// @excluded_id のトピックは除外し、自身の名前をそのままにしたトピックが拒否されないようにする。
+func (q *Queries) ExistsTopicBySpaceAndNameExcludingID(ctx context.Context, arg ExistsTopicBySpaceAndNameExcludingIDParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsTopicBySpaceAndNameExcludingID, arg.SpaceID, arg.Name, arg.ExcludedID)
+	var topic_exists bool
+	err := row.Scan(&topic_exists)
+	return topic_exists, err
+}
+
 const findFirstJoinedTopicBySpaceMember = `-- name: FindFirstJoinedTopicBySpaceMember :one
 SELECT t.id, t.space_id, t.number, t.name, t.description, t.visibility, t.discarded_at, t.created_at, t.updated_at FROM topics t
 INNER JOIN topic_members tm ON t.id = tm.topic_id
@@ -398,4 +422,47 @@ func (q *Queries) ListTopicsJoinedBySpaceMember(ctx context.Context, arg ListTop
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateTopic = `-- name: UpdateTopic :one
+UPDATE topics
+SET name = $1, description = $2, visibility = $3, updated_at = $4
+WHERE id = $5 AND space_id = $6
+RETURNING id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at
+`
+
+type UpdateTopicParams struct {
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Visibility  int32     `json:"visibility"`
+	Now         time.Time `json:"now"`
+	ID          string    `json:"id"`
+	SpaceID     string    `json:"space_id"`
+}
+
+// Updates the general settings of a topic.
+//
+// [Ja] トピックの一般設定を更新する。
+func (q *Queries) UpdateTopic(ctx context.Context, arg UpdateTopicParams) (Topic, error) {
+	row := q.db.QueryRowContext(ctx, updateTopic,
+		arg.Name,
+		arg.Description,
+		arg.Visibility,
+		arg.Now,
+		arg.ID,
+		arg.SpaceID,
+	)
+	var i Topic
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.Number,
+		&i.Name,
+		&i.Description,
+		&i.Visibility,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
