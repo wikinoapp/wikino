@@ -1261,15 +1261,15 @@ other = "Name must be 30 characters or less"
 
 [validation_topic_name_invalid_chars]
 description = "Topic name invalid characters error"
-other = "Name cannot contain / \\ : * ? \" < > |"
+other = "Name cannot contain / \\ :"
+
+[validation_topic_name_control_chars]
+description = "Topic name control characters error"
+other = "Name cannot contain control characters"
 
 [validation_topic_name_invalid_format]
 description = "Topic name invalid format error"
-other = "Name cannot start or end with a space or a dot"
-
-[validation_topic_name_reserved]
-description = "Topic name reserved error"
-other = "This name cannot be used"
+other = "Name cannot start or end with a space"
 
 [validation_topic_name_uniqueness]
 description = "Topic name uniqueness error"

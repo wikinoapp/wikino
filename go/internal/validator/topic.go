@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -16,25 +17,12 @@ const (
 	topicDescriptionMaxLength = 150
 )
 
-// topicNameForbiddenChars holds the characters a topic name may not carry: the ones a file name
-// cannot hold on one of the operating systems the export is opened on.
+// topicNameForbiddenChars holds the characters a topic name may not carry. They are the separators
+// a page title may not carry either, and for the same reason: see pageTitleForbiddenChars.
 //
-// [Ja] topicNameForbiddenChars はトピック名が持てない文字。エクスポートを開く OS のいずれかで
-// ファイル名に含められない文字である。
-const topicNameForbiddenChars = `/\:*?"<>|`
-
-// topicNameReservedNames holds the device names Windows keeps reserved. A file of one of these
-// names cannot be created there, whatever the extension is.
-//
-// [Ja] topicNameReservedNames は Windows が予約しているデバイス名。これらの名前のファイルは、
-// 拡張子が何であれ Windows では作成できない。
-var topicNameReservedNames = map[string]bool{
-	"CON": true, "PRN": true, "AUX": true, "NUL": true,
-	"COM1": true, "COM2": true, "COM3": true, "COM4": true, "COM5": true,
-	"COM6": true, "COM7": true, "COM8": true, "COM9": true,
-	"LPT1": true, "LPT2": true, "LPT3": true, "LPT4": true, "LPT5": true,
-	"LPT6": true, "LPT7": true, "LPT8": true, "LPT9": true,
-}
+// [Ja] topicNameForbiddenChars はトピック名が持てない文字。ページタイトルが持てない区切り文字と
+// 同じもので、理由も同じである (pageTitleForbiddenChars を参照)。
+const topicNameForbiddenChars = pageTitleForbiddenChars
 
 // TopicCreateValidator はトピック作成のバリデーションを行う
 type TopicCreateValidator struct {
@@ -162,12 +150,21 @@ func validateTopicName(ctx context.Context, ve *model.ValidationError, name stri
 		ve.AddField("name", i18n.T(ctx, "validation_topic_name_invalid_chars"))
 	}
 
-	if strings.HasPrefix(name, " ") || strings.HasPrefix(name, ".") ||
-		strings.HasSuffix(name, " ") || strings.HasSuffix(name, ".") {
-		ve.AddField("name", i18n.T(ctx, "validation_topic_name_invalid_format"))
+	// A control character is refused as well, for the same reason a page title refuses one: it is
+	// drawn differently wherever the name is shown, and it is not part of a name anyone can read.
+	//
+	// [Ja] 制御文字も拒否する。理由はページタイトルと同じで、名前を表示する場所ごとに描画のされ方が
+	// 異なり、読み手が読める名前の一部にもならないためである。
+	if strings.ContainsFunc(name, unicode.IsControl) {
+		ve.AddField("name", i18n.T(ctx, "validation_topic_name_control_chars"))
 	}
 
-	if topicNameReservedNames[strings.ToUpper(name)] {
-		ve.AddField("name", i18n.T(ctx, "validation_topic_name_reserved"))
+	// The leading and trailing space is refused for the sake of the name itself rather than of a
+	// file name: two names that differ only there look the same wherever they are listed.
+	//
+	// [Ja] 先頭・末尾の空白を拒否するのはファイル名の都合ではなく名前自身の都合である。そこだけが
+	// 違う 2 つの名前は、一覧に並んだときに同じものに見える。
+	if strings.HasPrefix(name, " ") || strings.HasSuffix(name, " ") {
+		ve.AddField("name", i18n.T(ctx, "validation_topic_name_invalid_format"))
 	}
 }

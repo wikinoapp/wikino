@@ -1261,15 +1261,15 @@ other = "名前は30文字以内で入力してください"
 
 [validation_topic_name_invalid_chars]
 description = "トピック名禁止文字エラー"
-other = "名前に / \\ : * ? \" < > | は使用できません"
+other = "名前に / \\ : は使用できません"
+
+[validation_topic_name_control_chars]
+description = "トピック名制御文字エラー"
+other = "名前に制御文字は使用できません"
 
 [validation_topic_name_invalid_format]
 description = "トピック名不正フォーマットエラー"
-other = "名前の先頭・末尾にスペースやピリオドは使用できません"
-
-[validation_topic_name_reserved]
-description = "トピック名予約語エラー"
-other = "この名前は使用できません"
+other = "名前の先頭・末尾にスペースは使用できません"
 
 [validation_topic_name_uniqueness]
 description = "トピック名重複エラー"

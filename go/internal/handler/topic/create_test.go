@@ -205,7 +205,7 @@ func TestCreate_入力が不正なら422でフォームを再描画する(t *tes
 
 	body := rr.Body.String()
 	for _, want := range []string{
-		"名前に / \\ : * ? &#34; &lt; &gt; | は使用できません",
+		"名前に / \\ : は使用できません",
 		`aria-invalid="true"`,
 		`aria-describedby="name-error"`,
 		`id="name-error"`,
