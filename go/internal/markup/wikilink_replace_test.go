@@ -9,9 +9,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// wikilinkTestLocations resolves ページ1 and ページ2 of topic トピックA to pages 1 and 2.
+// wikilinkTestLocations resolves the two page titles the tests link to, in the topic those tests
+// name as the current one, to the page numbers 1 and 2.
 //
-// [Ja] wikilinkTestLocations はトピックA のページ1・ページ2 をページ番号 1・2 に解決する。
+// [Ja] wikilinkTestLocations は、テストがリンクする 2 つのページタイトルを、テストが現在の
+// トピックとして渡すトピックのページ番号 1・2 に解決する。
 func wikilinkTestLocations() []PageLocation {
 	var locations []PageLocation
 	for i, title := range []string{"ページ1", "ページ2"} {

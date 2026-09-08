@@ -884,15 +884,15 @@ other = "Title must be 200 characters or less"
 
 [validation_page_title_invalid_chars]
 description = "Page title invalid characters error"
-other = "Title contains invalid characters"
+other = "Title cannot contain / \\ :"
+
+[validation_page_title_control_chars]
+description = "Page title control characters error"
+other = "Title cannot contain control characters"
 
 [validation_page_title_invalid_format]
 description = "Page title invalid format error"
-other = "Title cannot start or end with a space or dot"
-
-[validation_page_title_reserved]
-description = "Page title reserved name error"
-other = "This title is not allowed"
+other = "Title cannot start or end with a space"
 
 [validation_page_title_uniqueness_html]
 description = "Page title uniqueness error (HTML included)"

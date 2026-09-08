@@ -3,8 +3,8 @@ package validator
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -15,17 +15,26 @@ import (
 
 const pageTitleMaxLength = 200
 
-// ファイル名として使用できない文字
-var invalidCharsRegex = regexp.MustCompile(`[/\\:*?"<>|]`)
-
-// Windowsの予約デバイス名
-var windowsReservedNames = map[string]bool{
-	"CON": true, "PRN": true, "AUX": true, "NUL": true,
-	"COM1": true, "COM2": true, "COM3": true, "COM4": true,
-	"COM5": true, "COM6": true, "COM7": true, "COM8": true, "COM9": true,
-	"LPT1": true, "LPT2": true, "LPT3": true, "LPT4": true,
-	"LPT5": true, "LPT6": true, "LPT7": true, "LPT8": true, "LPT9": true,
-}
+// pageTitleForbiddenChars holds the characters a page title may not carry. Each of them separates
+// one name from another: "/" divides the topic name from the page title in a wiki link and is the
+// path separator of Unix and of an Obsidian vault, "\" is the path separator of Windows, and ":"
+// opens a drive letter or an alternate data stream there.
+//
+// A title is not a file name, so the characters that only a file system objects to, such as "*"
+// and "|", are converted when a page is exported (see internal/exportfile) rather than refused
+// here. The separators are the exception: the planned two-way sync reads a title back from a file
+// name, and a title holding one of them could not be read back from the name it was written to.
+//
+// [Ja] pageTitleForbiddenChars はページタイトルが持てない文字。いずれも名前どうしを分ける。
+// "/" は Wiki リンクでトピック名とページタイトルを分け、Unix と Obsidian の vault のパス区切り
+// でもある。"\" は Windows のパス区切り、":" は Windows でドライブレターと代替データストリームを
+// 開く。
+//
+// タイトルはファイル名ではないため、"*" や "|" のようにファイルシステムだけが受け付けない文字は
+// ここで拒否せず、ページのエクスポート時に変換する (internal/exportfile を参照)。区切り文字だけは
+// 例外である。予定している双方向同期はファイル名からタイトルを読み戻すため、これらを含む
+// タイトルは書き出した名前から読み戻せない。
+const pageTitleForbiddenChars = `/\:`
 
 // PageUpdateValidator はページ更新のバリデーションを行う
 type PageUpdateValidator struct {
@@ -65,20 +74,26 @@ func (v *PageUpdateValidator) Validate(ctx context.Context, input PageUpdateVali
 	}
 
 	// 禁止文字チェック
-	if invalidCharsRegex.MatchString(input.Title) {
+	if strings.ContainsAny(input.Title, pageTitleForbiddenChars) {
 		ve.AddField("title", i18n.T(ctx, "validation_page_title_invalid_chars"))
 	}
 
-	// 先頭・末尾のスペースとドットのチェック
-	if strings.HasPrefix(input.Title, " ") || strings.HasSuffix(input.Title, " ") ||
-		strings.HasPrefix(input.Title, ".") || strings.HasSuffix(input.Title, ".") {
-		ve.AddField("title", i18n.T(ctx, "validation_page_title_invalid_format"))
+	// A control character is refused as well. It is drawn differently wherever the title is shown,
+	// and it is not part of a title anyone can read.
+	//
+	// [Ja] 制御文字も拒否する。タイトルを表示する場所ごとに描画のされ方が異なり、読み手が読める
+	// タイトルの一部にもならないためである。
+	if strings.ContainsFunc(input.Title, unicode.IsControl) {
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_control_chars"))
 	}
 
-	// Windows予約語チェック
-	upperTitle := strings.ToUpper(input.Title)
-	if windowsReservedNames[upperTitle] {
-		ve.AddField("title", i18n.T(ctx, "validation_page_title_reserved"))
+	// The leading and trailing space is refused for the sake of the title itself rather than of a
+	// file name: two titles that differ only there look the same wherever they are listed.
+	//
+	// [Ja] 先頭・末尾の空白を拒否するのはファイル名の都合ではなくタイトル自身の都合である。
+	// そこだけが違う 2 つのタイトルは、一覧に並んだときに同じものに見える。
+	if strings.HasPrefix(input.Title, " ") || strings.HasSuffix(input.Title, " ") {
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_invalid_format"))
 	}
 
 	if ve.HasErrors() {

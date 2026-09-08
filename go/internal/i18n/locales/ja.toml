@@ -884,15 +884,15 @@ other = "タイトルは200文字以内で入力してください"
 
 [validation_page_title_invalid_chars]
 description = "ページタイトル禁止文字エラー"
-other = "タイトルに使用できない文字が含まれています"
+other = "タイトルに / \\ : は使用できません"
+
+[validation_page_title_control_chars]
+description = "ページタイトル制御文字エラー"
+other = "タイトルに制御文字は使用できません"
 
 [validation_page_title_invalid_format]
 description = "ページタイトル不正フォーマットエラー"
-other = "タイトルの先頭・末尾にスペースやドットは使用できません"
-
-[validation_page_title_reserved]
-description = "ページタイトル予約語エラー"
-other = "このタイトルは使用できません"
+other = "タイトルの先頭・末尾にスペースは使用できません"
 
 [validation_page_title_uniqueness_html]
 description = "ページタイトル重複エラー (HTML含む)"

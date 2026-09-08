@@ -33,9 +33,8 @@ func TestSuggestionApplyValidator_FormatValidation(t *testing.T) {
 		{name: "禁止文字バックスラッシュ", title: "foo\\bar"},
 		{name: "禁止文字コロン", title: "foo:bar"},
 		{name: "先頭スペース", title: " foo"},
-		{name: "末尾ドット", title: "foo."},
-		{name: "Windows予約語 CON", title: "CON"},
-		{name: "Windows予約語 NUL", title: "NUL"},
+		{name: "末尾スペース", title: "foo "},
+		{name: "制御文字", title: "foo\tbar"},
 	}
 
 	for _, tt := range tests {
