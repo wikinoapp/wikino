@@ -3,10 +3,16 @@
 // Obsidian reads as syntax inside a wiki link, so every entry name of the archive is built here
 // rather than taken from the input as it is.
 //
+// The package also rewrites the links of a page body onto those names, so that a link of the
+// extracted directory resolves to the file that sits beside it.
+//
 // [Ja] exportfile パッケージは、ページタイトルとトピック名をエクスポートのアーカイブが
 // ディレクトリ名・ファイル名として使う形へ変換する。タイトルにはファイルシステムが受け付けない
 // 文字や、Obsidian が Wiki リンクの中で構文として読む文字が入るため、アーカイブのエントリ名は
 // 入力をそのまま使わず必ずここで組み立てる。
+//
+// あわせて、ページ本文のリンクをそれらの名前へ書き換える。展開したディレクトリの中で、
+// リンクが隣にあるファイルへ解決されるようにするためである。
 package exportfile
 
 import (

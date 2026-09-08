@@ -1,9 +1,11 @@
 package markup
 
 import (
+	"bytes"
 	"log/slog"
 	"strings"
 
+	"github.com/yuin/goldmark/ast"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
@@ -52,4 +54,36 @@ func getAttr(n *html.Node, key string) string {
 		}
 	}
 	return ""
+}
+
+// renderSanitized renders document and sanitizes the result, which is the HTML display hands to
+// the reader. source is what document was parsed from, or a copy of it a caller has extended; the
+// renderer reads every node's segments out of it.
+//
+// [Ja] renderSanitized は document をレンダリングして結果をサニタイズする。これは表示側が
+// 読み手へ渡す HTML である。source は document の解析元、または呼び出し元がそれを拡張したもので、
+// レンダラーは各ノードのセグメントをここから読む。
+func renderSanitized(source []byte, document ast.Node) (string, error) {
+	var rendered bytes.Buffer
+	if err := md.Renderer().Render(&rendered, source, document); err != nil {
+		return "", err
+	}
+
+	return policy.Sanitize(rendered.String()), nil
+}
+
+// renderedTree renders document and returns the HTML tree display builds from it, using the same
+// renderer, sanitizer and fragment parser. A caller reading a body the way the screen shows it
+// therefore sees the elements, the text and the drops the reader sees.
+//
+// [Ja] renderedTree は document をレンダリングし、表示側が組み立てるのと同じ HTML ツリーを返す。
+// レンダラー・サニタイザー・フラグメントパーサーは表示側と同じものを使う。画面の見え方どおりに
+// 本文を読む側は、これにより読み手と同じ要素・テキスト・欠落を見ることになる。
+func renderedTree(source []byte, document ast.Node) (*html.Node, error) {
+	bodyHTML, err := renderSanitized(source, document)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseHTMLFragmentWithContainer(bodyHTML)
 }

@@ -26,9 +26,17 @@ func (m *mockPageLocationResolver) ResolveByKeys(_ context.Context, _ []Wikilink
 type mockBatchAttachmentFinder struct {
 	attachments []*model.Attachment
 	err         error
+
+	// requestedIDs records what the batch asked for, so a test can check which attachments the
+	// bodies were read to reference.
+	//
+	// [Ja] requestedIDs はバッチが要求したものを記録する。本文がどの添付ファイルを参照している
+	// と読まれたかをテストで確かめられるようにするため
+	requestedIDs []model.AttachmentID
 }
 
-func (m *mockBatchAttachmentFinder) FindByIDsAndSpace(_ context.Context, _ []model.AttachmentID, _ model.SpaceID) ([]*model.Attachment, error) {
+func (m *mockBatchAttachmentFinder) FindByIDsAndSpace(_ context.Context, ids []model.AttachmentID, _ model.SpaceID) ([]*model.Attachment, error) {
+	m.requestedIDs = append(m.requestedIDs, ids...)
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -370,13 +378,13 @@ func TestDeduplicateWikilinkKeys_Empty(t *testing.T) {
 func TestCollectAllAttachmentIDs(t *testing.T) {
 	t.Parallel()
 
-	htmls := []string{
-		`<img src="/attachments/att-1"><img src="/attachments/att-2">`,
-		`<img src="/attachments/att-2"><img src="/attachments/att-3">`,
-		`<img src="/attachments/att-1">`,
+	perBody := [][]string{
+		{"att-1", "att-2"},
+		{"att-2", "att-3"},
+		{"att-1"},
 	}
 
-	got := collectAllAttachmentIDs(htmls)
+	got := collectAllAttachmentIDs(perBody)
 	if len(got) != 3 {
 		t.Fatalf("expected 3 unique IDs, got %d: %v", len(got), got)
 	}
@@ -393,7 +401,7 @@ func TestCollectAllAttachmentIDs(t *testing.T) {
 func TestCollectAllAttachmentIDs_Empty(t *testing.T) {
 	t.Parallel()
 
-	got := collectAllAttachmentIDs([]string{"<p>テキスト</p>", "<p>テキスト2</p>"})
+	got := collectAllAttachmentIDs([][]string{nil, nil})
 	if len(got) != 0 {
 		t.Errorf("expected 0, got %d", len(got))
 	}
@@ -522,5 +530,58 @@ func TestRenderHTMLBatch_SharedAttachmentAcrossInputs(t *testing.T) {
 		if !strings.Contains(html, `data-attachment-id="att-shared"`) {
 			t.Errorf("result[%d] should contain shared attachment, got: %s", i, html)
 		}
+	}
+}
+
+func TestRenderHTML_ReferenceDefinitionInsideHiddenContent(t *testing.T) {
+	t.Parallel()
+
+	for _, element := range []string{"object", "textarea"} {
+		t.Run(element, func(t *testing.T) {
+			t.Parallel()
+
+			body := "[visible][r]\n\nx <" + element + ">\n\n[r]: /attachments/att-1\n\n</" + element + ">"
+			finder := &mockBatchAttachmentFinder{
+				attachments: []*model.Attachment{{ID: "att-1", SpaceID: "space-1", Filename: "file.pdf"}},
+			}
+			got, err := RenderHTML(context.Background(), body, "T", "space-1", "space", &mockPageLocationResolver{}, finder)
+			if err != nil {
+				t.Fatalf("RenderHTML() error = %v", err)
+			}
+			if !strings.Contains(got, `data-attachment-id="att-1"`) || !strings.Contains(got, ">visible</a>") {
+				t.Errorf("live attachment link was not converted: %s", got)
+			}
+		})
+	}
+}
+
+func TestRenderHTMLBatch_AttachmentIDsComeFromTheRenderedBodies(t *testing.T) {
+	t.Parallel()
+
+	inputs := []BatchRenderInput{
+		{Body: `<img src="/attachments/att-1">`, CurrentTopicName: "T"},
+		{Body: "><!--\n\n" + `<img src="/attachments/att-2">`, CurrentTopicName: "T"},
+		{Body: "`" + `<img src="/attachments/att-3">` + "`", CurrentTopicName: "T"},
+	}
+	finder := &mockBatchAttachmentFinder{
+		attachments: []*model.Attachment{
+			{ID: "att-1", SpaceID: "space-1", Filename: "one.png"},
+			{ID: "att-2", SpaceID: "space-1", Filename: "two.png"},
+			{ID: "att-3", SpaceID: "space-1", Filename: "three.png"},
+		},
+	}
+
+	got, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "space", &mockPageLocationResolver{}, finder)
+	if err != nil {
+		t.Fatalf("RenderHTMLBatch() error = %v", err)
+	}
+	if !strings.Contains(got[0], `data-attachment-id="att-1"`) {
+		t.Errorf("live attachment was not converted: %s", got[0])
+	}
+	// Neither the discarded body nor the code example displays an attachment to look up.
+	//
+	// [Ja] どちらの本文も読み手に添付ファイルを指すものが出ないため、一括検索へ渡さない。
+	if len(finder.requestedIDs) != 1 || finder.requestedIDs[0] != "att-1" {
+		t.Errorf("requested IDs = %v, want only att-1", finder.requestedIDs)
 	}
 }

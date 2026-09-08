@@ -70,10 +70,21 @@ func RenderHTMLBatch(
 		return nil, nil
 	}
 
-	// 1. 全テキストをMarkdown→HTMLに変換
+	// 1. 全テキストをMarkdown→HTMLに変換し、あわせて添付ファイルIDを収集する。
+	// The parse and the rendered HTML are shared with the attachment scan, so each body is read
+	// once. The IDs are collected here rather than after the wiki-link conversion, because the
+	// conversion rewrites the HTML that the scan reads.
+	//
+	// [Ja] 解析結果とレンダリング結果を添付ファイルの走査と共有するため、本文の読み取りは1回で済む。
+	// IDをWikiリンク変換の後ではなくここで集めるのは、変換が走査の読むHTMLを書き換えるためである。
 	htmls := make([]string, len(inputs))
+	attachmentIDs := make([][]string, len(inputs))
 	for i, input := range inputs {
-		htmls[i] = RenderMarkdown(input.Body)
+		source, document, bodyHTML := renderBody(input.Body)
+		htmls[i] = bodyHTML
+		if document != nil && holdsAttachmentPath(input.Body) {
+			attachmentIDs[i] = attachmentIDsOf(scanAttachmentRefMatches(source, document, bodyHTML, true))
+		}
 	}
 
 	// 2. 全テキストからWikiリンクキーを収集し一括解決
@@ -94,8 +105,8 @@ func RenderHTMLBatch(
 		}
 	}
 
-	// 3. 全HTMLから添付ファイルIDを収集し一括検索
-	allAttachmentIDStrings := collectAllAttachmentIDs(htmls)
+	// 3. 収集済みの添付ファイルIDを一括検索
+	allAttachmentIDStrings := collectAllAttachmentIDs(attachmentIDs)
 	if len(allAttachmentIDStrings) > 0 {
 		ids := make([]model.AttachmentID, len(allAttachmentIDStrings))
 		for i, id := range allAttachmentIDStrings {
@@ -137,12 +148,12 @@ func deduplicateWikilinkKeys(keys []WikilinkKey) []WikilinkKey {
 	return unique
 }
 
-// collectAllAttachmentIDs は複数のHTML文字列から添付ファイルIDを重複なしで収集する
-func collectAllAttachmentIDs(htmls []string) []string {
+// collectAllAttachmentIDs は本文ごとの添付ファイルIDを重複なしで1つにまとめる
+func collectAllAttachmentIDs(perBody [][]string) []string {
 	seen := make(map[string]bool)
 	var ids []string
-	for _, h := range htmls {
-		for _, id := range ExtractAttachmentIDs(h) {
+	for _, bodyIDs := range perBody {
+		for _, id := range bodyIDs {
 			if !seen[id] {
 				seen[id] = true
 				ids = append(ids, id)
