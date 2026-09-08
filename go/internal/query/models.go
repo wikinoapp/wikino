@@ -145,11 +145,15 @@ type EmailConfirmation struct {
 }
 
 type Export struct {
-	ID         string    `json:"id"`
-	SpaceID    string    `json:"space_id"`
-	QueuedByID string    `json:"queued_by_id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID              string         `json:"id"`
+	SpaceID         string         `json:"space_id"`
+	QueuedByID      string         `json:"queued_by_id"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	Status          int32          `json:"status"`
+	StatusChangedAt time.Time      `json:"status_changed_at"`
+	HeartbeatAt     sql.NullTime   `json:"heartbeat_at"`
+	ObjectKey       sql.NullString `json:"object_key"`
 }
 
 type ExportStatus struct {

@@ -1,6 +1,6 @@
 
 -- Dumped from database version 18.1 (Debian 18.1-1.pgdg13+2)
--- Dumped by pg_dump version 18.3 (Debian 18.3-1.pgdg13+1)
+-- Dumped by pg_dump version 18.6 (Debian 18.6-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -249,7 +249,11 @@ CREATE TABLE public.exports (
     space_id uuid NOT NULL,
     queued_by_id uuid NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    status integer DEFAULT 0 NOT NULL,
+    status_changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    heartbeat_at timestamp with time zone,
+    object_key character varying
 );
 
 
@@ -2211,4 +2215,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260607080412'),
     ('20260607082306'),
     ('20260704172330'),
-    ('20260704174144');
+    ('20260704174144'),
+    ('20260904051921');
