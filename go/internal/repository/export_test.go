@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
@@ -1046,4 +1048,127 @@ func TestExportRepository_MarkFailedIfUnclaimed(t *testing.T) {
 			t.Errorf("stored.Status = %v, want %v", stored.Status, model.ExportStatusQueued)
 		}
 	})
+}
+
+// Verifies that every export FK used by parent deletion keeps its ON DELETE CASCADE action.
+// The behavior test below follows the Rails deletion order, which removes exports through
+// queued_by_id before deleting the space and therefore cannot exercise the two space_id FKs.
+//
+// [Ja] 親の削除に使うエクスポートの全 FK が ON DELETE CASCADE を保つことを検証する。
+// 下の振る舞いテストは Rails の削除順に従い、スペースを削除する前に queued_by_id 経由で
+// exports を削除するため、2 本の space_id FK を実行できない。
+func TestExportRepository_ForeignKeysUseCascadeDelete(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	ctx := context.Background()
+
+	constraintNames := []string{
+		"fk_rails_703ee3dae6",
+		"fk_rails_7fa4a1a0c0",
+		"fk_rails_a8d9f2050b",
+		"fk_rails_cab71249f9",
+	}
+	rows, err := db.QueryContext(ctx, `
+		SELECT constraint_name, delete_rule
+		FROM information_schema.referential_constraints
+		WHERE constraint_schema = current_schema()
+		  AND constraint_name = ANY($1)
+	`, pq.Array(constraintNames))
+	if err != nil {
+		t.Fatalf("外部キーの削除規則の取得に失敗: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	found := make(map[string]bool, len(constraintNames))
+	for rows.Next() {
+		var constraintName, deleteRule string
+		if err := rows.Scan(&constraintName, &deleteRule); err != nil {
+			t.Fatalf("外部キーの削除規則の読み取りに失敗: %v", err)
+		}
+		found[constraintName] = true
+		if deleteRule != "CASCADE" {
+			t.Errorf("%s の delete_rule = %q, want CASCADE", constraintName, deleteRule)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("外部キーの削除規則の走査に失敗: %v", err)
+	}
+
+	for _, constraintName := range constraintNames {
+		if !found[constraintName] {
+			t.Errorf("外部キー %s が見つかりません", constraintName)
+		}
+	}
+}
+
+// Verifies the ON DELETE CASCADE contract that the Rails-side space deletion
+// relies on: exports and their statuses are Go-owned rows the Rails version no
+// longer knows about, so deleting a space and its members must remove them
+// without an explicit DELETE on exports.
+//
+// [Ja] Rails 側のスペース削除が頼る ON DELETE CASCADE の契約を検証する。exports と
+// その状態は Rails 版がもう知らない Go 側の行になったため、スペースとそのメンバーを
+// 削除したとき、exports への明示的な DELETE なしで一緒に消える必要がある。
+func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	ctx := context.Background()
+
+	f := setupExportFixture(t, tx, "cascade")
+
+	exportID := testutil.NewExportBuilder(t, tx).
+		WithSpaceID(f.spaceID).
+		WithQueuedByID(f.spaceMemberID).
+		WithStatus(model.ExportStatusSucceeded).
+		WithObjectKey("exports/cascade.zip").
+		Build()
+
+	// The Rails version left export_statuses rows behind for the exports it created.
+	//
+	// [Ja] Rails 版が作ったエクスポートには export_statuses の行が残っている。
+	now := time.Now()
+	if _, err := tx.ExecContext(
+		ctx,
+		`INSERT INTO export_statuses (space_id, export_id, kind, changed_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $4, $4)`,
+		string(f.spaceID), string(exportID), int32(model.ExportStatusSucceeded), now,
+	); err != nil {
+		t.Fatalf("export_statusesの作成に失敗: %v", err)
+	}
+
+	// Delete in the order the Rails version does: the members first, then the space.
+	//
+	// [Ja] Rails 版と同じ順序で削除する。先にメンバー、次にスペース。
+	if _, err := tx.ExecContext(
+		ctx, `DELETE FROM space_members WHERE space_id = $1`, string(f.spaceID),
+	); err != nil {
+		t.Fatalf("space_membersの削除に失敗: %v", err)
+	}
+	if _, err := tx.ExecContext(
+		ctx, `DELETE FROM spaces WHERE id = $1`, string(f.spaceID),
+	); err != nil {
+		t.Fatalf("spacesの削除に失敗: %v", err)
+	}
+
+	var exportCount int
+	if err := tx.QueryRowContext(
+		ctx, `SELECT COUNT(*) FROM exports WHERE id = $1`, string(exportID),
+	).Scan(&exportCount); err != nil {
+		t.Fatalf("exportsの件数取得に失敗: %v", err)
+	}
+	if exportCount != 0 {
+		t.Errorf("exportsの件数 = %d, want 0", exportCount)
+	}
+
+	var statusCount int
+	if err := tx.QueryRowContext(
+		ctx, `SELECT COUNT(*) FROM export_statuses WHERE export_id = $1`, string(exportID),
+	).Scan(&statusCount); err != nil {
+		t.Fatalf("export_statusesの件数取得に失敗: %v", err)
+	}
+	if statusCount != 0 {
+		t.Errorf("export_statusesの件数 = %d, want 0", statusCount)
+	}
 }

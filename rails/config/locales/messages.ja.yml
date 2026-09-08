@@ -28,14 +28,6 @@ ja:
       confirmation_mail_sent: 確認用のメールを送信しました
       email_updated: メールアドレスを変更しました
       enter_code: メールに記載されている確認用コードを入力してください
-    exports:
-      description_html: スペース内に投稿されたページをエクスポートします。%{export_help_link}
-      start: エクスポートを開始する
-      started: エクスポートを開始しました
-      started_html: |-
-        エクスポートを開始しました<br>
-        完了したらメールでお知らせします
-      succeeded_html: エクスポートが完了しました
     home:
       no_joined_spaces_html: 参加中のスペースは<br class="block sm:hidden">ありません
     pages:

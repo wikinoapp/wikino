@@ -20,10 +20,6 @@ class SpaceRecord < ApplicationRecord
     dependent: :restrict_with_exception,
     foreign_key: :space_id,
     inverse_of: :space_record
-  has_many :export_records,
-    dependent: :restrict_with_exception,
-    foreign_key: :space_id,
-    inverse_of: :space_record
   has_many :topic_member_records,
     dependent: :restrict_with_exception,
     foreign_key: :space_id,

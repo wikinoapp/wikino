@@ -52,9 +52,6 @@ ja:
         settings:
           deletions:
             new: "スペースの削除 | %{space_name}"
-          exports:
-            new: "エクスポート | %{space_name}"
-            show: "エクスポート | %{space_name}"
           general:
             show: "基本情報 | %{space_name}"
           attachments:

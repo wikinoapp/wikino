@@ -1853,7 +1853,7 @@ ALTER TABLE ONLY public.page_revisions
 --
 
 ALTER TABLE ONLY public.exports
-    ADD CONSTRAINT fk_rails_703ee3dae6 FOREIGN KEY (queued_by_id) REFERENCES public.space_members(id);
+    ADD CONSTRAINT fk_rails_703ee3dae6 FOREIGN KEY (queued_by_id) REFERENCES public.space_members(id) ON DELETE CASCADE;
 
 
 --
@@ -1885,7 +1885,7 @@ ALTER TABLE ONLY public.pages
 --
 
 ALTER TABLE ONLY public.exports
-    ADD CONSTRAINT fk_rails_7fa4a1a0c0 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT fk_rails_7fa4a1a0c0 FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -1965,7 +1965,7 @@ ALTER TABLE ONLY public.space_members
 --
 
 ALTER TABLE ONLY public.export_statuses
-    ADD CONSTRAINT fk_rails_a8d9f2050b FOREIGN KEY (export_id) REFERENCES public.exports(id);
+    ADD CONSTRAINT fk_rails_a8d9f2050b FOREIGN KEY (export_id) REFERENCES public.exports(id) ON DELETE CASCADE;
 
 
 --
@@ -2005,7 +2005,7 @@ ALTER TABLE ONLY public.user_passwords
 --
 
 ALTER TABLE ONLY public.export_statuses
-    ADD CONSTRAINT fk_rails_cab71249f9 FOREIGN KEY (space_id) REFERENCES public.spaces(id);
+    ADD CONSTRAINT fk_rails_cab71249f9 FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -2216,4 +2216,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260607082306'),
     ('20260704172330'),
     ('20260704174144'),
-    ('20260904051921');
+    ('20260904051921'),
+    ('20260908075645');

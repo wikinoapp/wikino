@@ -44,11 +44,6 @@ class GuestPolicy
     false
   end
 
-  sig { returns(T::Boolean) }
-  def can_export_space?
-    false
-  end
-
   # トピック作成
 
   sig { returns(T::Boolean) }

@@ -168,32 +168,6 @@ RSpec.describe MemberPolicy do
     end
   end
 
-  describe "#can_export_space?" do
-    it "space:writeでスペースをエクスポート可能であること" do
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::SPACE_WRITE],
-        topic_scopes: []
-      )
-      expect(policy.can_export_space?).to be(true)
-    end
-
-    it "space:writeなしでスペースをエクスポート不可であること" do
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::SPACE_READ],
-        topic_scopes: []
-      )
-      expect(policy.can_export_space?).to be(false)
-    end
-
-    it "space:adminでスペースをエクスポート可能であること" do
-      policy = MemberPolicy.new(
-        space_scopes: [Scope::SPACE_ADMIN],
-        topic_scopes: []
-      )
-      expect(policy.can_export_space?).to be(true)
-    end
-  end
-
   describe "#can_create_topic?" do
     it "topic:writeでトピックを作成可能であること" do
       policy = MemberPolicy.new(

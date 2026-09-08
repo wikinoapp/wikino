@@ -438,20 +438,6 @@ class SpaceRecord
     def draft_page_records=(value); end
 
     sig { returns(T::Array[T.untyped]) }
-    def export_record_ids; end
-
-    sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }
-    def export_record_ids=(ids); end
-
-    # This method is created by ActiveRecord on the `SpaceRecord` class because it declared `has_many :export_records`.
-    # 🔗 [Rails guide for `has_many` association](https://guides.rubyonrails.org/association_basics.html#the-has-many-association)
-    sig { returns(::ExportRecord::PrivateCollectionProxy) }
-    def export_records; end
-
-    sig { params(value: T::Enumerable[::ExportRecord]).void }
-    def export_records=(value); end
-
-    sig { returns(T::Array[T.untyped]) }
     def page_editor_record_ids; end
 
     sig { params(ids: T::Array[T.untyped]).returns(T::Array[T.untyped]) }

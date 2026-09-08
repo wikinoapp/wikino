@@ -35,7 +35,6 @@ gem "rqrcode"
 # [Ja] `BlobProcessable` が `Vips::Image` を直接呼ぶため、`image_processing` からの
 # 推移依存に頼らず明示的に宣言している。
 gem "ruby-vips"
-gem "rubyzip"
 gem "sanitize"
 gem "sentry-rails"
 gem "sentry-ruby"

@@ -23,7 +23,7 @@
 
             <%= render BaseUI::LinkComponent.new(
               variant: BaseUI::LinkComponent::Variant::Underline,
-              options: {href: space_settings_new_exports_path(space.identifier)}
+              options: {href: "/s/#{space.identifier}/settings/exports/new"}
             ) do %>
               <%= t("nouns.export") %>
             <% end %>
