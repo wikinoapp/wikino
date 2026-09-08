@@ -763,28 +763,13 @@ func TestExportRepository_Delete(t *testing.T) {
 	f := setupExportFixture(t, tx, "delete")
 	other := setupExportFixture(t, tx, "delete-other")
 
-	t.Run("エクスポートを状態履歴ごと削除する", func(t *testing.T) {
+	t.Run("エクスポートを削除する", func(t *testing.T) {
 		exportID := testutil.NewExportBuilder(t, tx).
 			WithSpaceID(f.spaceID).
 			WithQueuedByID(f.spaceMemberID).
 			WithStatus(model.ExportStatusSucceeded).
 			WithObjectKey("exports/deleted.zip").
 			Build()
-
-		// The Rails version records the state as export_statuses rows that reference the export.
-		// Deleting an export it created has to remove them too.
-		//
-		// [Ja] Rails 版は状態を、エクスポートを参照する export_statuses の行として記録している。Rails
-		// が作ったエクスポートを削除するには、その行も一緒に消す必要がある。
-		now := time.Now()
-		if _, err := tx.ExecContext(
-			ctx,
-			`INSERT INTO export_statuses (space_id, export_id, kind, changed_at, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $4, $4)`,
-			string(f.spaceID), string(exportID), int32(model.ExportStatusSucceeded), now,
-		); err != nil {
-			t.Fatalf("export_statusesの作成に失敗: %v", err)
-		}
 
 		if err := repo.Delete(ctx, exportID, f.spaceID); err != nil {
 			t.Fatalf("Delete() error = %v", err)
@@ -797,18 +782,6 @@ func TestExportRepository_Delete(t *testing.T) {
 		if export != nil {
 			t.Errorf("FindByIDAndSpace() = %v, want nil", export)
 		}
-
-		var statusCount int
-		if err := tx.QueryRowContext(
-			ctx,
-			`SELECT COUNT(*) FROM export_statuses WHERE export_id = $1`,
-			string(exportID),
-		).Scan(&statusCount); err != nil {
-			t.Fatalf("export_statusesの件数取得に失敗: %v", err)
-		}
-		if statusCount != 0 {
-			t.Errorf("export_statusesの件数 = %d, want 0", statusCount)
-		}
 	})
 
 	t.Run("別スペースの指定では削除しない", func(t *testing.T) {
@@ -818,16 +791,6 @@ func TestExportRepository_Delete(t *testing.T) {
 			WithStatus(model.ExportStatusSucceeded).
 			WithObjectKey("exports/kept.zip").
 			Build()
-
-		now := time.Now()
-		if _, err := tx.ExecContext(
-			ctx,
-			`INSERT INTO export_statuses (space_id, export_id, kind, changed_at, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $4, $4)`,
-			string(f.spaceID), string(exportID), int32(model.ExportStatusSucceeded), now,
-		); err != nil {
-			t.Fatalf("export_statusesの作成に失敗: %v", err)
-		}
 
 		if err := repo.Delete(ctx, exportID, other.spaceID); err != nil {
 			t.Fatalf("Delete() error = %v", err)
@@ -839,18 +802,6 @@ func TestExportRepository_Delete(t *testing.T) {
 		}
 		if export == nil {
 			t.Fatal("FindByIDAndSpace() returned nil, want the export to be kept")
-		}
-
-		var statusCount int
-		if err := tx.QueryRowContext(
-			ctx,
-			`SELECT COUNT(*) FROM export_statuses WHERE export_id = $1`,
-			string(exportID),
-		).Scan(&statusCount); err != nil {
-			t.Fatalf("export_statusesの件数取得に失敗: %v", err)
-		}
-		if statusCount != 1 {
-			t.Errorf("export_statusesの件数 = %d, want 1", statusCount)
 		}
 	})
 }
@@ -1052,11 +1003,11 @@ func TestExportRepository_MarkFailedIfUnclaimed(t *testing.T) {
 
 // Verifies that every export FK used by parent deletion keeps its ON DELETE CASCADE action.
 // The behavior test below follows the Rails deletion order, which removes exports through
-// queued_by_id before deleting the space and therefore cannot exercise the two space_id FKs.
+// queued_by_id before deleting the space and therefore cannot exercise the space_id FK.
 //
 // [Ja] 親の削除に使うエクスポートの全 FK が ON DELETE CASCADE を保つことを検証する。
 // 下の振る舞いテストは Rails の削除順に従い、スペースを削除する前に queued_by_id 経由で
-// exports を削除するため、2 本の space_id FK を実行できない。
+// exports を削除するため、space_id の FK を実行できない。
 func TestExportRepository_ForeignKeysUseCascadeDelete(t *testing.T) {
 	t.Parallel()
 
@@ -1066,8 +1017,6 @@ func TestExportRepository_ForeignKeysUseCascadeDelete(t *testing.T) {
 	constraintNames := []string{
 		"fk_rails_703ee3dae6",
 		"fk_rails_7fa4a1a0c0",
-		"fk_rails_a8d9f2050b",
-		"fk_rails_cab71249f9",
 	}
 	rows, err := db.QueryContext(ctx, `
 		SELECT constraint_name, delete_rule
@@ -1103,13 +1052,13 @@ func TestExportRepository_ForeignKeysUseCascadeDelete(t *testing.T) {
 }
 
 // Verifies the ON DELETE CASCADE contract that the Rails-side space deletion
-// relies on: exports and their statuses are Go-owned rows the Rails version no
-// longer knows about, so deleting a space and its members must remove them
-// without an explicit DELETE on exports.
+// relies on: exports are Go-owned rows the Rails version does not know about,
+// so deleting a space and its members must remove them without an explicit
+// DELETE on exports.
 //
-// [Ja] Rails 側のスペース削除が頼る ON DELETE CASCADE の契約を検証する。exports と
-// その状態は Rails 版がもう知らない Go 側の行になったため、スペースとそのメンバーを
-// 削除したとき、exports への明示的な DELETE なしで一緒に消える必要がある。
+// [Ja] Rails 側のスペース削除が頼る ON DELETE CASCADE の契約を検証する。exports は
+// Rails 版が知らない Go 側の行であるため、スペースとそのメンバーを削除したとき、
+// exports への明示的な DELETE なしで一緒に消える必要がある。
 func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 	t.Parallel()
 
@@ -1124,19 +1073,6 @@ func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 		WithStatus(model.ExportStatusSucceeded).
 		WithObjectKey("exports/cascade.zip").
 		Build()
-
-	// The Rails version left export_statuses rows behind for the exports it created.
-	//
-	// [Ja] Rails 版が作ったエクスポートには export_statuses の行が残っている。
-	now := time.Now()
-	if _, err := tx.ExecContext(
-		ctx,
-		`INSERT INTO export_statuses (space_id, export_id, kind, changed_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $4, $4)`,
-		string(f.spaceID), string(exportID), int32(model.ExportStatusSucceeded), now,
-	); err != nil {
-		t.Fatalf("export_statusesの作成に失敗: %v", err)
-	}
 
 	// Delete in the order the Rails version does: the members first, then the space.
 	//
@@ -1160,15 +1096,5 @@ func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 	}
 	if exportCount != 0 {
 		t.Errorf("exportsの件数 = %d, want 0", exportCount)
-	}
-
-	var statusCount int
-	if err := tx.QueryRowContext(
-		ctx, `SELECT COUNT(*) FROM export_statuses WHERE export_id = $1`, string(exportID),
-	).Scan(&statusCount); err != nil {
-		t.Fatalf("export_statusesの件数取得に失敗: %v", err)
-	}
-	if statusCount != 0 {
-		t.Errorf("export_statusesの件数 = %d, want 0", statusCount)
 	}
 }

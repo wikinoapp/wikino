@@ -226,21 +226,6 @@ CREATE TABLE public.email_confirmations (
 
 
 --
--- Name: export_statuses; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.export_statuses (
-    id uuid DEFAULT public.generate_ulid() NOT NULL,
-    space_id uuid NOT NULL,
-    export_id uuid NOT NULL,
-    kind integer NOT NULL,
-    changed_at timestamp(6) without time zone NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: exports; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -778,14 +763,6 @@ ALTER TABLE ONLY public.draft_pages
 
 ALTER TABLE ONLY public.email_confirmations
     ADD CONSTRAINT email_confirmations_pkey PRIMARY KEY (id);
-
-
---
--- Name: export_statuses export_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_statuses
-    ADD CONSTRAINT export_statuses_pkey PRIMARY KEY (id);
 
 
 --
@@ -1333,20 +1310,6 @@ CREATE UNIQUE INDEX index_email_confirmations_on_code ON public.email_confirmati
 --
 
 CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmations USING btree (started_at);
-
-
---
--- Name: index_export_statuses_on_export_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_export_statuses_on_export_id ON public.export_statuses USING btree (export_id);
-
-
---
--- Name: index_export_statuses_on_space_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_export_statuses_on_space_id ON public.export_statuses USING btree (space_id);
 
 
 --
@@ -1961,14 +1924,6 @@ ALTER TABLE ONLY public.space_members
 
 
 --
--- Name: export_statuses fk_rails_a8d9f2050b; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_statuses
-    ADD CONSTRAINT fk_rails_a8d9f2050b FOREIGN KEY (export_id) REFERENCES public.exports(id) ON DELETE CASCADE;
-
-
---
 -- Name: draft_pages fk_rails_a989662ed2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1998,14 +1953,6 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 ALTER TABLE ONLY public.user_passwords
     ADD CONSTRAINT fk_rails_c7888e4144 FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: export_statuses fk_rails_cab71249f9; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.export_statuses
-    ADD CONSTRAINT fk_rails_cab71249f9 FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 
 --
@@ -2217,4 +2164,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260704172330'),
     ('20260704174144'),
     ('20260904051921'),
-    ('20260908075645');
+    ('20260908075645'),
+    ('20260908090236');

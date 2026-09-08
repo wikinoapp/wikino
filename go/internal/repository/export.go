@@ -265,22 +265,16 @@ func (r *ExportRepository) UpdateHeartbeat(ctx context.Context, id model.ExportI
 	return true, nil
 }
 
-// Delete removes the export, its Rails-era status history and legacy file associations.
+// Delete removes the export and its legacy file associations.
 // Unshared legacy blob metadata is removed with the associations.
 // The ZIP object it points at is deleted by the caller, which is the only one that can reach
 // the object storage.
 //
-// [Ja] Delete はエクスポートを、Rails 時代の状態履歴と旧ファイル関連ごと削除する。
+// [Ja] Delete はエクスポートを、旧ファイル関連ごと削除する。
 // 共有されていない旧 blob のメタデータも関連とともに削除する。参照している
 // ZIP オブジェクトの削除は、オブジェクトストレージへ到達できる唯一の側である呼び出し側が行う。
 func (r *ExportRepository) Delete(ctx context.Context, id model.ExportID, spaceID model.SpaceID) error {
 	if err := r.q.DeleteLegacyExportFiles(ctx, query.DeleteLegacyExportFilesParams{ExportID: string(id), SpaceID: string(spaceID)}); err != nil {
-		return err
-	}
-	if err := r.q.DeleteExportStatusesByExport(ctx, query.DeleteExportStatusesByExportParams{
-		ExportID: string(id),
-		SpaceID:  string(spaceID),
-	}); err != nil {
 		return err
 	}
 	return r.q.DeleteExport(ctx, query.DeleteExportParams{

@@ -115,16 +115,6 @@ SET heartbeat_at = @now::timestamptz, updated_at = @now
 WHERE id = @id AND space_id = @space_id AND status = @status
 RETURNING id;
 
--- name: DeleteExportStatusesByExport :exec
--- Deletes the Rails-era status history of the export. The rows reference exports without
--- ON DELETE CASCADE, so they have to go before the export itself. The statement disappears
--- with the export_statuses table once the Rails export code is removed.
---
--- [Ja] Rails 時代のエクスポートの状態履歴を削除する。これらの行は ON DELETE CASCADE 無しで
--- exports を参照しているため、エクスポート本体より先に消す必要がある。この文は Rails 版の
--- エクスポートのコードを削除するときに export_statuses テーブルごと無くなる。
-DELETE FROM export_statuses WHERE export_id = @export_id AND space_id = @space_id;
-
 -- name: DeleteExport :exec
 -- Deletes the export record. The ZIP object it points at is deleted by the caller.
 --

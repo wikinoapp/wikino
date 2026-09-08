@@ -156,16 +156,6 @@ type Export struct {
 	ObjectKey       sql.NullString `json:"object_key"`
 }
 
-type ExportStatus struct {
-	ID        string    `json:"id"`
-	SpaceID   string    `json:"space_id"`
-	ExportID  string    `json:"export_id"`
-	Kind      int32     `json:"kind"`
-	ChangedAt time.Time `json:"changed_at"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
 type FeatureFlag struct {
 	ID          string         `json:"id"`
 	UserID      *string        `json:"user_id"`

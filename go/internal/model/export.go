@@ -4,12 +4,9 @@ import (
 	"time"
 )
 
-// ExportStatus is where an export stands. The values match the kind column of the Rails-era
-// export_statuses rows, which is why the state could move onto the exports row without
-// translating them.
+// ExportStatus is where an export stands.
 //
-// [Ja] ExportStatus はエクスポートがどの状態にあるかを表す。値は Rails 時代の export_statuses の
-// kind 列と一致しており、そのおかげで状態を exports の行へ読み替え無しで移せた。
+// [Ja] ExportStatus はエクスポートがどの状態にあるかを表す。
 type ExportStatus int32
 
 const (

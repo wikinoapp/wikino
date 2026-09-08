@@ -70,27 +70,6 @@ func (q *Queries) DeleteExport(ctx context.Context, arg DeleteExportParams) erro
 	return err
 }
 
-const deleteExportStatusesByExport = `-- name: DeleteExportStatusesByExport :exec
-DELETE FROM export_statuses WHERE export_id = $1 AND space_id = $2
-`
-
-type DeleteExportStatusesByExportParams struct {
-	ExportID string `json:"export_id"`
-	SpaceID  string `json:"space_id"`
-}
-
-// Deletes the Rails-era status history of the export. The rows reference exports without
-// ON DELETE CASCADE, so they have to go before the export itself. The statement disappears
-// with the export_statuses table once the Rails export code is removed.
-//
-// [Ja] Rails 時代のエクスポートの状態履歴を削除する。これらの行は ON DELETE CASCADE 無しで
-// exports を参照しているため、エクスポート本体より先に消す必要がある。この文は Rails 版の
-// エクスポートのコードを削除するときに export_statuses テーブルごと無くなる。
-func (q *Queries) DeleteExportStatusesByExport(ctx context.Context, arg DeleteExportStatusesByExportParams) error {
-	_, err := q.db.ExecContext(ctx, deleteExportStatusesByExport, arg.ExportID, arg.SpaceID)
-	return err
-}
-
 const deleteLegacyExportFiles = `-- name: DeleteLegacyExportFiles :exec
 WITH removed AS (
     DELETE FROM active_storage_attachments a USING exports e
