@@ -83,7 +83,7 @@ func TestRewriteLinks_AfterRejectedRawTextEndTags(t *testing.T) {
 				if !strings.Contains(rendered, `<img src="/attachments/01B">`) {
 					t.Fatalf("rendered image is missing: %s", rendered)
 				}
-				converted := markup.ReplaceWikilinks(rendered, "T", "space", []markup.PageLocation{
+				converted := markup.ReplaceWikilinks(body, "T", "space", []markup.PageLocation{
 					{Key: markup.WikilinkKey{Raw: "A"}, TopicName: "T", PageNumber: 1, PageTitle: "A"},
 				})
 				if !strings.Contains(converted, `href="/s/space/pages/1"`) {
@@ -139,7 +139,7 @@ func TestRewriteWikilinks_TableAndMarkdownContainers(t *testing.T) {
 					Key: markup.WikilinkKey{Raw: title}, TopicName: "T", PageNumber: i + 1, PageTitle: title,
 				})
 			}
-			rendered := markup.ReplaceWikilinks(markup.RenderMarkdown(tt.body), "T", "space", locations)
+			rendered := markup.ReplaceWikilinks(tt.body, "T", "space", locations)
 			for i, title := range []string{"A", "B"} {
 				if got := strings.Contains(rendered, fmt.Sprintf(`href="/s/space/pages/%d"`, i+1)); got != slices.Contains(tt.want, title) {
 					t.Fatalf("unexpected rendered visibility for %s: %s", title, rendered)
@@ -171,7 +171,7 @@ func TestRewriteWikilinks_RendererDepthLimit(t *testing.T) {
 
 	body := strings.Repeat("<code>", 600) + strings.Repeat("</code>", 600) + "[[A]]"
 	rendered := markup.RenderMarkdown(body)
-	converted := markup.ReplaceWikilinks(rendered, "T", "space", []markup.PageLocation{
+	converted := markup.ReplaceWikilinks(body, "T", "space", []markup.PageLocation{
 		{Key: markup.WikilinkKey{Raw: "A"}, TopicName: "T", PageNumber: 1, PageTitle: "A"},
 	})
 	if converted != rendered {
@@ -236,7 +236,7 @@ func assertWikilinkParity(t *testing.T, body string, want []string) {
 		})
 	}
 
-	rendered := markup.ReplaceWikilinks(markup.RenderMarkdown(body), "T", "space", locations)
+	rendered := markup.ReplaceWikilinks(body, "T", "space", locations)
 	for i, title := range titles {
 		got := strings.Contains(rendered, fmt.Sprintf(`href="/s/space/pages/%d"`, i+1))
 		if got != slices.Contains(want, title) {

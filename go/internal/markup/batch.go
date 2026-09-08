@@ -3,6 +3,8 @@ package markup
 import (
 	"context"
 
+	"github.com/yuin/goldmark/ast"
+
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
@@ -78,20 +80,35 @@ func RenderHTMLBatch(
 	// [Ja] 解析結果とレンダリング結果を添付ファイルの走査と共有するため、本文の読み取りは1回で済む。
 	// IDをWikiリンク変換の後ではなくここで集めるのは、変換が走査の読むHTMLを書き換えるためである。
 	htmls := make([]string, len(inputs))
+	sources := make([][]byte, len(inputs))
+	documents := make([]ast.Node, len(inputs))
+	matches := make([][]WikilinkMatch, len(inputs))
 	attachmentIDs := make([][]string, len(inputs))
 	for i, input := range inputs {
 		source, document, bodyHTML := renderBody(input.Body)
 		htmls[i] = bodyHTML
-		if document != nil && holdsAttachmentPath(input.Body) {
+		sources[i] = source
+		documents[i] = document
+		if document == nil {
+			continue
+		}
+		if holdsAttachmentPath(input.Body) {
 			attachmentIDs[i] = attachmentIDsOf(scanAttachmentRefMatches(source, document, bodyHTML, true))
 		}
+
+		// The matches are read from the normalized source, whose offsets are what the parse and
+		// the replacement below refer to.
+		//
+		// [Ja] 一致は正規化後のソースから読む。解析結果と下の置換が指す位置はそちらのものである。
+		matches[i] = ScanWikilinkMatches(string(source), input.CurrentTopicName)
 	}
 
 	// 2. 全テキストからWikiリンクキーを収集し一括解決
 	var allKeys []WikilinkKey
-	for _, input := range inputs {
-		keys := ScanWikilinks(input.Body, input.CurrentTopicName)
-		allKeys = append(allKeys, keys...)
+	for _, bodyMatches := range matches {
+		for _, match := range bodyMatches {
+			allKeys = append(allKeys, match.Key)
+		}
 	}
 
 	if len(allKeys) > 0 {
@@ -100,8 +117,8 @@ func RenderHTMLBatch(
 		if err != nil {
 			return nil, err
 		}
-		for i, input := range inputs {
-			htmls[i] = ReplaceWikilinks(htmls[i], input.CurrentTopicName, spaceIdentifier, pageLocations)
+		for i := range inputs {
+			htmls[i] = replaceWikilinkMatches(sources[i], documents[i], htmls[i], matches[i], spaceIdentifier, pageLocations)
 		}
 	}
 

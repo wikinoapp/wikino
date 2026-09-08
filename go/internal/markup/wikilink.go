@@ -2,7 +2,6 @@ package markup
 
 import (
 	"fmt"
-	"log/slog"
 	"net/url"
 	"regexp"
 	"strings"
@@ -83,124 +82,25 @@ func ScanWikilinks(body string, currentTopicName string) []WikilinkKey {
 	return keys
 }
 
-// ReplaceWikilinks はbodyHTML内のWikiリンクをHTML <a>タグに変換する。
-// <a>, <code>, <pre>, <script>, <style>タグ内のWikiリンクは変換しない。
-// ページが存在する場合は <a href="/s/{spaceIdentifier}/pages/{pageNumber}">ページタイトル</a> に変換し、
-// 存在しない場合はプレーンテキストのまま残す。
-func ReplaceWikilinks(bodyHTML string, currentTopicName string, spaceIdentifier model.SpaceIdentifier, pageLocations []PageLocation) string {
-	if !strings.Contains(bodyHTML, "[[") {
+// ReplaceWikilinks renders body the way RenderMarkdown does and turns the wiki links of body that
+// pageLocations resolve into links to their pages. Which [[...]] is a wiki link is decided by
+// ScanWikilinkMatches on the source, never by looking for the notation in the rendered HTML again,
+// so display and export read one set of links. A link that resolves to no page stays as written.
+//
+// [Ja] ReplaceWikilinks は RenderMarkdown と同じように body をレンダリングし、pageLocations が
+// 解決する本文の Wiki リンクをそのページへのリンクにする。どの [[...]] が Wiki リンクかは
+// ScanWikilinkMatches がソース上で決め、レンダリング済み HTML から記法を探し直すことはしない。
+// これにより表示とエクスポートは 1 つのリンク集合を読む。ページに解決できないリンクは書かれた
+// まま残す。
+func ReplaceWikilinks(body string, currentTopicName string, spaceIdentifier model.SpaceIdentifier, pageLocations []PageLocation) string {
+	source, document, bodyHTML := renderBody(body)
+	if document == nil {
 		return bodyHTML
 	}
 
-	container, err := parseHTMLFragmentWithContainer(bodyHTML)
-	if err != nil {
-		slog.Warn("Wikiリンク変換時のHTMLパースに失敗", "error", err)
-		return bodyHTML
-	}
+	matches := ScanWikilinkMatches(string(source), currentTopicName)
 
-	modified := processWikilinkNodes(container, currentTopicName, spaceIdentifier, pageLocations, false)
-
-	if !modified {
-		return bodyHTML
-	}
-
-	return renderContainerChildren(container)
-}
-
-// processWikilinkNodes はDOMツリーを再帰的に走査し、
-// テキストノード内のWikiリンクを<a>要素に変換する。変更があればtrueを返す。
-func processWikilinkNodes(n *html.Node, currentTopicName string, spaceIdentifier model.SpaceIdentifier, pageLocations []PageLocation, inSkip bool) bool {
-	if n.Type == html.ElementNode && skipElements[n.Data] {
-		inSkip = true
-	}
-
-	if n.Type == html.TextNode && !inSkip && strings.Contains(n.Data, "[[") {
-		return replaceWikilinksInTextNode(n, currentTopicName, spaceIdentifier, pageLocations)
-	}
-
-	modified := false
-	for c := n.FirstChild; c != nil; {
-		next := c.NextSibling
-		if processWikilinkNodes(c, currentTopicName, spaceIdentifier, pageLocations, inSkip) {
-			modified = true
-		}
-		c = next
-	}
-
-	return modified
-}
-
-// replaceWikilinksInTextNode はテキストノード内のWikiリンクを検出して<a>要素に置換する。
-// テキストを分割し、Wikiリンク部分を<a>ノードに、それ以外をテキストノードに変換する。
-func replaceWikilinksInTextNode(textNode *html.Node, currentTopicName string, spaceIdentifier model.SpaceIdentifier, pageLocations []PageLocation) bool {
-	text := textNode.Data
-	matches := wikilinkRegex.FindAllStringSubmatchIndex(text, -1)
-	if len(matches) == 0 {
-		return false
-	}
-
-	// 置換対象があるかチェック
-	hasReplacement := false
-	for _, loc := range matches {
-		raw := strings.TrimSpace(text[loc[2]:loc[3]])
-		if raw == "" {
-			continue
-		}
-		key := parseWikilinkRaw(raw, currentTopicName)
-		if findPageLocation(key, pageLocations) != nil {
-			hasReplacement = true
-			break
-		}
-	}
-
-	if !hasReplacement {
-		return false
-	}
-
-	parent := textNode.Parent
-	lastEnd := 0
-
-	for _, loc := range matches {
-		raw := strings.TrimSpace(text[loc[2]:loc[3]])
-		if raw == "" {
-			continue
-		}
-
-		key := parseWikilinkRaw(raw, currentTopicName)
-		pl := findPageLocation(key, pageLocations)
-		if pl == nil {
-			continue
-		}
-
-		// マッチ前のテキストを挿入
-		if loc[0] > lastEnd {
-			before := &html.Node{
-				Type: html.TextNode,
-				Data: text[lastEnd:loc[0]],
-			}
-			parent.InsertBefore(before, textNode)
-		}
-
-		// <a>要素を挿入
-		aNode := buildWikilinkNode(spaceIdentifier, pl)
-		parent.InsertBefore(aNode, textNode)
-
-		lastEnd = loc[1]
-	}
-
-	// 残りのテキスト
-	if lastEnd < len(text) {
-		after := &html.Node{
-			Type: html.TextNode,
-			Data: text[lastEnd:],
-		}
-		parent.InsertBefore(after, textNode)
-	}
-
-	// 元のテキストノードを削除
-	parent.RemoveChild(textNode)
-
-	return true
+	return replaceWikilinkMatches(source, document, bodyHTML, matches, spaceIdentifier, pageLocations)
 }
 
 // parseWikilinkRaw はWikiリンクの原文からWikilinkKeyを構築する
@@ -419,15 +319,15 @@ type WikilinkMatch struct {
 // their content are therefore left out.
 //
 // Each of those ranges is scanned on its own, since a wiki link has to open and close inside one of
-// them to be one on the screen: rendering hands ReplaceWikilinks the text of a body already split
-// at every piece of syntax between them.
+// them to be one on the screen: the syntax between them splits the text of a body into runs the
+// reader sees as separate.
 //
 // The brackets are read from the source as they are written. An escaped opening bracket in
 // Markdown text or a character reference standing in for a bracket does not form wiki-link
 // syntax. The text of an HTML block and of Markdown code does not interpret Markdown escapes.
 //
-// This applies to the Markdown source the boundary the screen shows, for callers that rewrite the
-// body itself.
+// This is the one definition of a wiki link. ReplaceWikilinks turns the matches into links on the
+// screen, and callers that rewrite the body itself replace them in the source.
 //
 // [Ja] ScanWikilinkMatches は Markdown 本文の Wiki リンクを現れる順に返す。呼び出し元が置き換え
 // られるよう、各リンクは本文中の位置を持つ。レンダリングが通常テキストとして扱うソース範囲だけを
@@ -439,8 +339,8 @@ type WikilinkMatch struct {
 // 代わりに置かれた文字参照は Wiki リンクの構文にならない。HTML ブロックと Markdown のコードの
 // テキストでは Markdown のエスケープを解釈しない。
 //
-// これは画面が見せている境界を、本文自体を書き換える呼び出し元のために Markdown のソースへ
-// 適用するものである。
+// これが Wiki リンクの唯一の定義である。ReplaceWikilinks はこの一致を画面上のリンクにし、本文
+// 自体を書き換える呼び出し元はソース上でこれを置き換える。
 func ScanWikilinkMatches(body string, currentTopicName string) []WikilinkMatch {
 	if !strings.Contains(body, wikilinkOpening) {
 		return nil
