@@ -66,9 +66,20 @@ type Config struct {
 	ImgproxyKey  string
 	ImgproxySalt string
 
-	// 添付ファイルの保存先S3互換ストレージ
-	// R2BucketName は imgproxy に渡す元画像 URL "s3://{bucket}/{key}" の構築に使う
-	R2BucketName string
+	// S3-compatible object storage (Cloudflare R2) holding the attachments and the archives the
+	// export writes. R2BucketName also builds the "s3://{bucket}/{key}" source URL handed to
+	// imgproxy; the endpoint, the credentials and the region are what internal/storage needs to
+	// reach the bucket itself.
+	//
+	// [Ja] 添付ファイルと、エクスポートが書き出すアーカイブを保持する S3 互換オブジェクトストレージ
+	// (Cloudflare R2)。R2BucketName は imgproxy に渡す元画像 URL "s3://{bucket}/{key}" の構築にも
+	// 使う。エンドポイント・資格情報・リージョンは、internal/storage がバケット自体へ到達するために
+	// 必要な設定である。
+	R2BucketName      string
+	R2Endpoint        string
+	R2AccessKeyID     string
+	R2SecretAccessKey string
+	R2Region          string
 
 	// Sentry (error tracking)
 	// [Ja] Sentry (エラー追跡)
@@ -198,8 +209,18 @@ func Load() (*Config, error) {
 	cfg.ImgproxyKey = os.Getenv("WIKINO_IMGPROXY_KEY")
 	cfg.ImgproxySalt = os.Getenv("WIKINO_IMGPROXY_SALT")
 
-	// S3互換ストレージのバケット名（imgproxy のソース URL 構築に使用）
+	// S3-compatible object storage (optional). Every value is taken as it is, and a missing one is
+	// reported by the package that needs it when that package is built. Keeping them optional here
+	// lets a deployment that uses neither imgproxy nor the export boot without any of them.
+	//
+	// [Ja] S3 互換オブジェクトストレージ (オプショナル)。値はそのまま読み、足りないものは必要と
+	// するパッケージが構築時に報告する。ここで必須にしないことで、imgproxy もエクスポートも使わない
+	// デプロイがどれも設定せずに起動できる状態を保つ。
 	cfg.R2BucketName = os.Getenv("WIKINO_R2_BUCKET_NAME")
+	cfg.R2Endpoint = os.Getenv("WIKINO_R2_ENDPOINT")
+	cfg.R2AccessKeyID = os.Getenv("WIKINO_R2_ACCESS_KEY_ID")
+	cfg.R2SecretAccessKey = os.Getenv("WIKINO_R2_SECRET_ACCESS_KEY")
+	cfg.R2Region = os.Getenv("WIKINO_R2_REGION")
 
 	// Sentry (optional — error tracking service).
 	// An empty DSN disables Sentry entirely.

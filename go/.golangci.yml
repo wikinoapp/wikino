@@ -338,6 +338,42 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/model
               desc: "DispatcherはModelに依存できません。"
 
+        # Storage layer: adapter for the S3-compatible object storage.
+        # Depends only on external libraries, like dispatcher and auth. It stores objects by key
+        # and never sees a domain model, so model is denied along with the upper layers.
+        #
+        # [Ja] Storage層のルール: S3 互換オブジェクトストレージへのアダプタ
+        # dispatcher や auth と同じく外部ライブラリのみに依存する。キーを指定してオブジェクトを
+        # 読み書きするだけでドメインモデルを扱わないため、上位層と併せて model も禁止する。
+        storage-layer:
+          files:
+            - "**/internal/storage/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "StorageはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/validator
+              desc: "StorageはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/worker
+              desc: "StorageはWorkerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "StorageはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "StorageはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
+              desc: "StorageはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "StorageはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/policy
+              desc: "StorageはPolicyに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "StorageはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "StorageはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/model
+              desc: "StorageはModelに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/config
+              desc: "Storageは設定を自前のConfigで受け取ります。internal/configに依存できません。"
+
         # RateLimit層のルール: インフラストラクチャユーティリティ
         # Queryに直接依存せず、Repositoryを経由する
         ratelimit-layer:
