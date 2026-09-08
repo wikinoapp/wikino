@@ -29,10 +29,8 @@ class PageName < T::Enum
     SpaceSettingsGeneral = new
     TopicDetail = new
     TopicEdit = new
-    TopicNew = new
     TopicSettings = new
     TopicSettingsDeletion = new
-    TopicSettingsGeneral = new
     Trash = new
     Welcome = new
   end

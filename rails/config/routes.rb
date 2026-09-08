@@ -30,14 +30,10 @@ Rails.application.routes.draw do
   match "/s/:space_identifier/settings/general",                           via: :patch,                                                     to: "spaces/settings/general/update#call"
   match "/s/:space_identifier/settings/attachments",                       via: :get,    as: :space_settings_attachments,                   to: "spaces/settings/attachments/index#call"
   match "/s/:space_identifier/settings/attachments/:attachment_id",        via: :delete, as: :space_settings_attachment,                    to: "spaces/settings/attachments/destroy#call"
-  match "/s/:space_identifier/topics",                                     via: :post,   as: :topic_list,                                   to: "topics/create#call"
   match "/s/:space_identifier/topics/:topic_number",                       via: :get,    as: :topic,                                        to: "topics/show#call",                            topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/settings",              via: :get,    as: :topic_settings,                               to: "topics/settings/show#call",                   topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/settings/deletion",     via: :post,   as: :topic_settings_deletion,                      to: "topics/settings/deletions/create#call",       topic_number: /\d+/
   match "/s/:space_identifier/topics/:topic_number/settings/deletion/new", via: :get,    as: :topic_settings_new_deletion,                  to: "topics/settings/deletions/new#call",          topic_number: /\d+/
-  match "/s/:space_identifier/topics/:topic_number/settings/general",      via: :get,    as: :topic_settings_general,                       to: "topics/settings/general/show#call",           topic_number: /\d+/
-  match "/s/:space_identifier/topics/:topic_number/settings/general",      via: :patch,                                                     to: "topics/settings/general/update#call",         topic_number: /\d+/
-  match "/s/:space_identifier/topics/new",                                 via: :get,    as: :new_topic,                                    to: "topics/new#call"
   match "/s/:space_identifier/trash",                                      via: :get,    as: :trash,                                        to: "trash/show#call"
   match "/search",                                                         via: :get,    as: :search,                                       to: "search/show#call"
   match "/settings",                                                       via: :get,    as: :settings,                                     to: "settings/show#call"

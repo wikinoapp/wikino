@@ -43,9 +43,6 @@ module GeneratedPathHelpersModule
   def new_space_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def new_topic_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def preview_view_component_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -127,16 +124,10 @@ module GeneratedPathHelpersModule
   def terms_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def topic_list_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def topic_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_settings_deletion_path(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def topic_settings_general_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def topic_settings_new_deletion_path(*args); end
