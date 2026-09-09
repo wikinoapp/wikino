@@ -36,10 +36,19 @@ func NewTopicForSelect(topic *model.Topic) TopicForSelect {
 
 // TopicForShow はトピック詳細画面用のトピック情報です
 type TopicForShow struct {
-	Name          string
-	Number        int32
-	Description   string
-	IconName      IconName
+	Name        string
+	Number      int32
+	Description string
+	IconName    IconName
+	// IsPublic carries the visibility as the screen states it in words below the title, on the same
+	// line as the description. The icon alone leaves the state to be inferred from a padlock, which
+	// not every reader will read the same way, so the label is chosen from this rather than from
+	// IconName.
+	//
+	// [Ja] IsPublic は、画面がタイトルの下で説明文と同じ行に言葉で示す公開範囲を運ぶ。
+	// アイコンだけでは状態を錠前から推し量ることになり、読み手によって受け取り方が変わるため、
+	// ラベルは IconName ではなくこの値から選ぶ。
+	IsPublic      bool
 	CanUpdate     bool
 	CanCreatePage bool
 }
@@ -51,6 +60,7 @@ func NewTopicForShow(topic *model.Topic, canUpdate bool, canCreatePage bool) Top
 		Number:        topic.Number,
 		Description:   topic.Description,
 		IconName:      topicVisibilityIconName(topic.Visibility),
+		IsPublic:      topic.Visibility == model.TopicVisibilityPublic,
 		CanUpdate:     canUpdate,
 		CanCreatePage: canCreatePage,
 	}

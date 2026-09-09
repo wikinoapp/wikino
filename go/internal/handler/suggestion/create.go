@@ -91,7 +91,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		h.renderNewForm(w, r, user, spaceIdentifier, output, ve, title, body, draftPageIDStrs)
+		h.renderNewForm(w, r, user, output, ve, title, body, draftPageIDStrs)
 		return
 	}
 

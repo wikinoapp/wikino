@@ -88,7 +88,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		h.renderNewForm(w, r, user, spaceIdentifier, output, ve)
+		h.renderNewForm(w, r, user, output, ve)
 		return
 	}
 

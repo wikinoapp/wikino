@@ -9,6 +9,137 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
+func TestTopicRepository_NextTopicNumber(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	targetSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-next-number-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-next-number-other").
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(2).
+		WithName("Active").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(5).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(99).
+		WithName("Other Space").
+		Build()
+
+	number, err := repo.NextTopicNumber(context.Background(), targetSpaceID)
+	if err != nil {
+		t.Fatalf("NextTopicNumber() error = %v", err)
+	}
+	if number != 6 {
+		t.Errorf("NextTopicNumber() = %d, want 6", number)
+	}
+}
+
+func TestTopicRepository_ExistsBySpaceAndName(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	targetSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-name-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-name-other").
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(1).
+		WithName("Active").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(2).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Other Space Only").
+		Build()
+
+	tests := []struct {
+		name string
+		want bool
+	}{
+		{name: "Active", want: true},
+		{name: "Discarded", want: true},
+		{name: "Other Space Only", want: false},
+		{name: "Missing", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exists, err := repo.ExistsBySpaceAndName(context.Background(), targetSpaceID, tt.name)
+			if err != nil {
+				t.Fatalf("ExistsBySpaceAndName() error = %v", err)
+			}
+			if exists != tt.want {
+				t.Errorf("ExistsBySpaceAndName() = %t, want %t", exists, tt.want)
+			}
+		})
+	}
+}
+
+func TestTopicRepository_Create(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-create-repository").
+		Build()
+
+	topic, err := repo.Create(context.Background(), CreateTopicInput{
+		SpaceID:     spaceID,
+		Number:      7,
+		Name:        "Created Topic",
+		Description: "Created description",
+		Visibility:  model.TopicVisibilityPrivate,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	if topic.ID == "" {
+		t.Error("topic.ID is empty")
+	}
+	if topic.Space == nil || topic.Space.ID != spaceID {
+		t.Errorf("topic.Space = %v, want space ID %v", topic.Space, spaceID)
+	}
+	if topic.Number != 7 {
+		t.Errorf("topic.Number = %d, want 7", topic.Number)
+	}
+	if topic.Name != "Created Topic" {
+		t.Errorf("topic.Name = %q, want %q", topic.Name, "Created Topic")
+	}
+	if topic.Description != "Created description" {
+		t.Errorf("topic.Description = %q, want %q", topic.Description, "Created description")
+	}
+	if topic.Visibility != model.TopicVisibilityPrivate {
+		t.Errorf("topic.Visibility = %v, want %v", topic.Visibility, model.TopicVisibilityPrivate)
+	}
+	if topic.DiscardedAt != nil {
+		t.Errorf("topic.DiscardedAt = %v, want nil", topic.DiscardedAt)
+	}
+}
+
 func TestTopicRepository_FindBySpaceAndNumber(t *testing.T) {
 	t.Parallel()
 
@@ -828,4 +959,135 @@ func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
 			t.Errorf("topic.ID = %v, want %v (joined topic, even though the unjoined topic has a smaller id)", topic.ID, largerID)
 		}
 	})
+}
+
+// TestTopicRepository_ExistsBySpaceAndNameExcludingID covers the uniqueness check the general
+// settings run. The topic being updated is left out, while every other topic of the space counts,
+// discarded ones included.
+//
+// [Ja] TestTopicRepository_ExistsBySpaceAndNameExcludingID は一般設定が行う一意性チェックを扱う。
+// 更新するトピック自身は除かれ、それ以外のトピックは削除済みも含めて数えられる。
+func TestTopicRepository_ExistsBySpaceAndNameExcludingID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	targetSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-excluding-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-excluding-other").
+		Build()
+
+	selfID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(1).
+		WithName("Self").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(2).
+		WithName("Sibling").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(3).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Other Space Only").
+		Build()
+
+	tests := []struct {
+		name      string
+		topicName string
+		want      bool
+	}{
+		{name: "更新するトピック自身の名前は数えない", topicName: "Self", want: false},
+		{name: "同じスペースの別のトピックの名前は数える", topicName: "Sibling", want: true},
+		{name: "削除済みトピックの名前も数える", topicName: "Discarded", want: true},
+		{name: "別のスペースのトピックの名前は数えない", topicName: "Other Space Only", want: false},
+		{name: "使われていない名前は数えない", topicName: "Unused", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exists, err := repo.ExistsBySpaceAndNameExcludingID(context.Background(), targetSpaceID, tt.topicName, selfID)
+			if err != nil {
+				t.Fatalf("ExistsBySpaceAndNameExcludingID() error = %v", err)
+			}
+			if exists != tt.want {
+				t.Errorf("ExistsBySpaceAndNameExcludingID(%q) = %v, want %v", tt.topicName, exists, tt.want)
+			}
+		})
+	}
+}
+
+// TestTopicRepository_Update covers the update the general settings save, including that it does
+// not reach a topic of another space that happens to be passed the same id.
+//
+// [Ja] TestTopicRepository_Update は一般設定が保存する更新を扱う。同じ id を渡されても別の
+// スペースのトピックには届かないことも含める。
+func TestTopicRepository_Update(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-update-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-update-other").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Before").
+		WithDescription("before").
+		Build()
+
+	topic, err := repo.Update(context.Background(), UpdateTopicInput{
+		ID:          topicID,
+		SpaceID:     spaceID,
+		Name:        "After",
+		Description: "after",
+		Visibility:  model.TopicVisibilityPrivate,
+	})
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	if topic.Name != "After" {
+		t.Errorf("Name = %q, want %q", topic.Name, "After")
+	}
+	if topic.Description != "after" {
+		t.Errorf("Description = %q, want %q", topic.Description, "after")
+	}
+	if topic.Visibility != model.TopicVisibilityPrivate {
+		t.Errorf("Visibility = %v, want %v", topic.Visibility, model.TopicVisibilityPrivate)
+	}
+	if topic.Number != 1 {
+		t.Errorf("Number = %d, want 1", topic.Number)
+	}
+
+	if _, err := repo.Update(context.Background(), UpdateTopicInput{
+		ID:          topicID,
+		SpaceID:     otherSpaceID,
+		Name:        "Wrong Space",
+		Description: "",
+		Visibility:  model.TopicVisibilityPublic,
+	}); err == nil {
+		t.Error("Update() with another space id returned no error, want no row updated")
+	}
+
+	stored, err := repo.FindBySpaceAndID(context.Background(), spaceID, topicID)
+	if err != nil {
+		t.Fatalf("FindBySpaceAndID() error = %v", err)
+	}
+	if stored.Name != "After" {
+		t.Errorf("Name = %q, want %q", stored.Name, "After")
+	}
 }

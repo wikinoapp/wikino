@@ -16,7 +16,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -41,7 +40,6 @@ func setupHandlerWithUsecase(t *testing.T, queries *query.Queries, movePageUC *u
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 
 	getPageMoveDataUC := usecase.NewGetPageMoveDataUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
@@ -51,7 +49,6 @@ func setupHandlerWithUsecase(t *testing.T, queries *query.Queries, movePageUC *u
 		flashMgr,
 		getPageMoveDataUC,
 		movePageUC,
-		sidebar.NewHelper(topicRepo, draftPageRepo),
 	)
 }
 

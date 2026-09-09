@@ -7,10 +7,14 @@ on:
       - develop
     paths:
       - "rails/**"
+      # The RSpec job builds its test database from the Go-owned schema.
+      # [Ja] RSpec ジョブは Go 側が管理するスキーマからテスト用データベースを構築する
+      - "go/db/schema.sql"
       - ".github/workflows/rails-ci.yml"
   pull_request:
     paths:
       - "rails/**"
+      - "go/db/schema.sql"
       - ".github/workflows/rails-ci.yml"
 
 jobs:
@@ -33,43 +37,6 @@ jobs:
           bundler-cache: true
           working-directory: rails
       - run: bin/rails zeitwerk:check
-
-  sorbet:
-    name: Sorbet
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rails
-    steps:
-      - uses: actions/checkout@v7
-      - name: Install libvips
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libvips libvips-dev
-      - name: Setup Ruby and install gems
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.4.4
-          bundler-cache: true
-          working-directory: rails
-      - run: bin/rails sorbet:update
-      - name: Push RBI files or fail
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            if [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
-              git config user.email 49699333+dependabot[bot]@users.noreply.github.com
-              git config user.name dependabot[bot]
-              git add .
-              git commit -m "Update RBI files"
-              git push
-            else
-              echo "Error! 未更新のRBIファイルがあるようです。bin/rails sorbet:update を実行して差分をコミットしてください。"
-              exit 1
-            fi
-          fi
-      - run: bin/srb tc
 
   standard:
     name: Standard
@@ -112,7 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 20.16.0
           package-manager-cache: false
@@ -160,7 +127,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libvips libvips-dev
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 20.16.0
           package-manager-cache: false
@@ -176,9 +143,14 @@ jobs:
           ruby-version: 3.4.4
           bundler-cache: true
           working-directory: rails
+      # The primary database schema is owned by the Go side, so the test database
+      # is built from go/db/schema.sql rather than from Rails' db/structure.sql.
+      #
+      # [Ja] primary のスキーマは Go 側が管理するため、テスト用データベースは Rails の
+      # db/structure.sql ではなく go/db/schema.sql から構築する。
       - name: Setup Database
         run: |
-          bin/rails db:schema:load
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f ../go/db/schema.sql
       - name: Precompile assets
         # E2Eテストのために実行する
         run: |

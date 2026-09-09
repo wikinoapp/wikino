@@ -41,7 +41,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "==> E2Eテスト用サーバーを起動 (port=${E2E_PORT})"
-APP_ENV=test_e2e op run --env-file=".env" -- go run cmd/server/main.go &
+APP_ENV=test_e2e op run --env-file=".env" -- go run ./cmd/wikino serve &
 E2E_SERVER_PID=$!
 
 echo "==> ヘルスチェックで起動を待機..."

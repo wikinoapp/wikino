@@ -395,3 +395,86 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 		t.Errorf("backパラメータがフォームに保持されていません\nwant: %s", wantInBody)
 	}
 }
+
+// TestCreate_TwoFactorRequiredCarriesBackParameter verifies that back is carried over even when
+// two-factor authentication comes in between. Without it, only the users who enabled two-factor
+// authentication would lose their original destination after signing in.
+//
+// [Ja] TestCreate_TwoFactorRequiredCarriesBackParameter は、二要素認証を挟むときも back を
+// 引き継ぐことを検証する。引き継がないと、二要素認証を有効にしているユーザーだけが
+// サインイン後に元の宛先を失う。
+func TestCreate_TwoFactorRequiredCarriesBackParameter(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		email        string
+		atname       string
+		backURL      string
+		wantLocation string
+	}{
+		{
+			name:         "有効なbackパラメータを引き継ぐ",
+			email:        "2fa-back-valid@example.com",
+			atname:       "twofabackvalid",
+			backURL:      "/s/example/topics/1/pages/new?title=%E3%83%A1%E3%83%A2",
+			wantLocation: "/sign_in/two_factor/new?back=" + url.QueryEscape("/s/example/topics/1/pages/new?title=%E3%83%A1%E3%83%A2"),
+		},
+		{
+			name:         "backパラメータなし",
+			email:        "2fa-back-none@example.com",
+			atname:       "twofabacknone",
+			backURL:      "",
+			wantLocation: "/sign_in/two_factor/new",
+		},
+		{
+			name:         "危険なbackパラメータは引き継がない",
+			email:        "2fa-back-evil@example.com",
+			atname:       "twofabackevil",
+			backURL:      "//evil.com",
+			wantLocation: "/sign_in/two_factor/new",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, tx := testutil.SetupTx(t)
+
+			password := "testpassword123"
+			passwordDigest, err := auth.HashPassword(password)
+			if err != nil {
+				t.Fatalf("パスワードのハッシュ化に失敗: %v", err)
+			}
+
+			testutil.NewUserBuilder(t, tx).
+				WithEmail(tt.email).
+				WithAtname(tt.atname).
+				BuildWithPasswordAndTwoFactorAuth(passwordDigest, "JBSWY3DPEHPK3PXP", true)
+
+			handler := setupHandler(t, tx, true)
+
+			form := url.Values{}
+			form.Set("email", tt.email)
+			form.Set("password", password)
+			form.Set("csrf_token", "test-csrf-token")
+			form.Set("cf-turnstile-response", "test-token")
+			form.Set("back", tt.backURL)
+
+			req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Create(rr, req)
+
+			if rr.Code != http.StatusFound {
+				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+			}
+			if location := rr.Header().Get("Location"); location != tt.wantLocation {
+				t.Errorf("wrong redirect location: got %v want %v", location, tt.wantLocation)
+			}
+		})
+	}
+}

@@ -108,6 +108,31 @@ func (r *TopicMemberRepository) UpdateLastPageModifiedAt(ctx context.Context, sp
 	})
 }
 
+// CreateTopicMemberInput holds the values a topic member is created with.
+//
+// [Ja] CreateTopicMemberInput はトピックメンバーの作成に必要な値を保持する。
+type CreateTopicMemberInput struct {
+	SpaceID       model.SpaceID
+	TopicID       model.TopicID
+	SpaceMemberID model.SpaceMemberID
+}
+
+// Create adds a space member to a topic.
+//
+// [Ja] Create はスペースメンバーをトピックに参加させる。
+func (r *TopicMemberRepository) Create(ctx context.Context, input CreateTopicMemberInput) (*model.TopicMember, error) {
+	row, err := r.q.CreateTopicMember(ctx, query.CreateTopicMemberParams{
+		SpaceID:       string(input.SpaceID),
+		TopicID:       string(input.TopicID),
+		SpaceMemberID: string(input.SpaceMemberID),
+		Now:           time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModel は query.TopicMember を model.TopicMember に変換する
 func (r *TopicMemberRepository) toModel(row query.TopicMember) *model.TopicMember {
 	var lastPageModifiedAt *time.Time

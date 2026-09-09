@@ -1,0 +1,59 @@
+package components
+
+import (
+	"context"
+
+	"github.com/a-h/templ"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// LoadMoreLink renders a progressively enhanced link for loading the next page. FocusID remains on
+// the successor link or end state so htmx can restore keyboard focus after the outerHTML swap.
+//
+// [Ja] LoadMoreLink は次ページを読み込むプログレッシブエンハンスメント対応リンクを表示する。
+// FocusID は後続リンクまたは終端状態へ引き継ぎ、outerHTML スワップ後に htmx がキーボードフォーカスを
+// 復元できるようにする。
+templ LoadMoreLink(data LoadMoreLinkData) {
+	<a
+		id={ data.FocusID }
+		href={ templ.SafeURL(data.FallbackURL) }
+		aria-label={ loadMoreAriaLabel(ctx, data) }
+		class="flex items-center justify-center border border-border hover:border-brand-600 border-dashed hover:border-solid rounded-xl bg-background transition-colors duration-200 w-full cursor-pointer min-h-[96px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+		hx-get={ data.FragmentURL }
+		hx-target={ data.Target }
+		hx-swap="outerHTML"
+		if data.Include != "" {
+			hx-include={ data.Include }
+		}
+		if data.Sync != "" {
+			hx-sync={ data.Sync }
+		}
+	>
+		<div class="flex items-center justify-center gap-1 px-4 py-3">
+			@templates.DecorativeIcon("caret-down-regular", "size-4 fill-muted-foreground")
+
+			<span class="text-sm">
+				{ templates.T(ctx, "page_links_load_more") }
+			</span>
+		</div>
+	</a>
+}
+
+// loadMoreAriaLabel names the listing the link advances. The visible text stays "More" on every
+// link, so without this the several links on one screen would be indistinguishable in a screen
+// reader's link list.
+//
+// [Ja] loadMoreAriaLabel はリンクが進める一覧を言い表す。表示文言はどのリンクも「もっと見る」の
+// ままのため、これが無いと 1 画面に並ぶ複数のリンクをスクリーンリーダーのリンク一覧で区別できない。
+func loadMoreAriaLabel(ctx context.Context, data LoadMoreLinkData) string {
+	if data.AriaLabelKey != backlinkListLoadMoreAriaLabelKey {
+		return templates.T(ctx, data.AriaLabelKey)
+	}
+
+	pageTitle := data.LinkedPageTitle
+	if pageTitle == "" {
+		pageTitle = templates.T(ctx, "page_edit_links_untitled")
+	}
+
+	return templates.T(ctx, data.AriaLabelKey, map[string]any{"PageTitle": pageTitle})
+}

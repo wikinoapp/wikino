@@ -17,8 +17,8 @@ import (
 // 保持しているときのみ表示する。ホーム画面はスペース横断の一覧のため渡し、編集画面は同一スペース
 // 内のため渡さない。
 templ CardLinkDraftPage(draft viewmodel.CardLinkDraftPage) {
-	<div class="card min-h-[96px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
-		<div class="card-body h-full">
+	<div class="card min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600">
+		<div class="h-full">
 			<a
 				class="h-full"
 				href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }

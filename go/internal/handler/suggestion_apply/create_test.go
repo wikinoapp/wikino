@@ -18,7 +18,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -72,7 +71,6 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, suggestionCommentRepo, pageRepo, userRepo,
 	)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	cfg := &config.Config{}
 
 	return suggestionapplyhandler.NewHandler(
@@ -80,7 +78,6 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 		flashMgr,
 		applySuggestionUC,
 		getSuggestionDetailUC,
-		sidebarHelper,
 	)
 }
 
@@ -545,7 +542,7 @@ func TestCreate_タイトル衝突時に編集提案詳細ページを422で再�
 	if !strings.Contains(body, "衝突タイトル") {
 		t.Errorf("response should mention conflicting title, got body: %s", body)
 	}
-	if !strings.Contains(body, "alert-destructive") {
+	if !strings.Contains(body, `class="alert" data-variant="destructive"`) {
 		t.Errorf("response should include error alert markup")
 	}
 }

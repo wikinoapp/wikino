@@ -8,13 +8,49 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です
+// DefaultLayoutData is the data passed to the default layout. GlobalNav carries the nav state
+// that both the top bar and the bottom bar render (signed-in / atname / current-page / space).
+// BreadcrumbHeader carries the breadcrumb header, which the layout renders outside <main>.
+//
+// [Ja] DefaultLayoutData はデフォルトレイアウトに渡すデータ構造体です。GlobalNav は上部バーと
+// 下部バーが共用するナビ状態 (ログイン状態・atname・現在ページ・スペース) を保持します。
+// BreadcrumbHeader はパンくずヘッダーを保持し、レイアウトが <main> の外で描画します。
 type DefaultLayoutData struct {
-	Meta        viewmodel.PageMeta
-	HideFooter  bool
-	HideSidebar bool // trueの場合、サイドバーを完全に非表示にする
-	Sidebar     components.SidebarData
-	BottomNav   components.BottomNavData
+	Meta       viewmodel.PageMeta
+	HideFooter bool
+
+	// HideNavigation takes the screen out of the global navigation: the top and bottom bars and the
+	// padding that keeps content clear of the fixed bottom bar are dropped. The breadcrumb header
+	// stays only when it has a navigable breadcrumb item (an item with a Path and IsCurrent set to
+	// false). A trail made only of the current item does not count as breadcrumb content. The skip
+	// link follows the header rather than this flag: what it bypasses is the header that precedes the
+	// main content, so it goes away only when the header does. The signed-out top page sets it: its
+	// navigation items duplicate the calls to action it already shows, and it has no breadcrumb items
+	// either, so the header and the skip link both go away.
+	//
+	// [Ja] HideNavigation は画面をグローバルナビの対象外にする。上部・下部バーと、固定の下部バーに
+	// コンテンツが隠れないための余白を落とす。パンくずヘッダーはたどれるパンくず項目 (Path があり
+	// IsCurrent でない項目) がある場合だけ残す。現在項目だけの経路はパンくずの中身として数えない。
+	// スキップリンクは本フラグではなくヘッダーに追従する。飛ばす対象は本文の前に出るヘッダーであり、
+	// ヘッダーが落ちるときだけ一緒に落ちる。未ログインのトップページが指定する。ナビ項目が同画面の
+	// CTA と重複し、パンくず項目も持たないため、ヘッダーとスキップリンクはどちらも出ない。
+	HideNavigation bool
+
+	GlobalNav        components.GlobalNavData
+	BreadcrumbHeader components.BreadcrumbHeaderData
+}
+
+// breadcrumbHeaderRenderData bundles the layout's header and navigation data into the value
+// BreadcrumbHeader takes, carrying over whether this screen shows the navigation bar.
+//
+// [Ja] breadcrumbHeaderRenderData はレイアウトのヘッダーとナビのデータを BreadcrumbHeader が受け取る
+// 値へまとめ、この画面がナビバーを出すかどうかを引き継ぐ。
+func (d DefaultLayoutData) breadcrumbHeaderRenderData() components.BreadcrumbHeaderRenderData {
+	return components.BreadcrumbHeaderRenderData{
+		Header:        d.BreadcrumbHeader,
+		GlobalNav:     d.GlobalNav,
+		HideGlobalNav: d.HideNavigation,
+	}
 }
 
 // Default はデフォルトのレイアウトです
@@ -23,32 +59,71 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 	<html lang={ templates.Locale(ctx) }>
 		<head>
 			@components.Head(data.Meta)
+			@components.BreadcrumbListStructuredData(data.BreadcrumbHeader)
 			<meta name="wikino-search-path" content={ string(templates.SearchPathFor(data.Meta.CurrentSpaceIdentifier)) }/>
 		</head>
 
 		<body class="bg-background">
-			@components.Flash(session.FlashFromContext(ctx))
-
-			if !data.HideSidebar {
-				@components.Sidebar(data.Sidebar)
+			{{ headerData := data.breadcrumbHeaderRenderData() }}
+			// Skip link as the first focusable element so keyboard / screen-reader users can jump past
+			// the header and the navigation it carries straight to the main content (WCAG 2.4.1). It
+			// stays visually hidden until focused, then surfaces at the top-left. Its condition is the
+			// header's, not HideNavigation's: a screen that drops the bars but keeps a breadcrumb still
+			// has a block before the main content to bypass, while a screen with no header at all opens
+			// with the main content and has nothing to bypass.
+			//
+			// [Ja] キーボード / スクリーンリーダー利用者がヘッダーとその中のナビゲーションを飛ばして
+			// メインコンテンツへ直接移動できるよう、最初のフォーカス可能要素としてスキップリンクを置く
+			// (WCAG 2.4.1)。フォーカス時のみ左上に可視化する。条件は HideNavigation ではなくヘッダーの
+			// 描画要否に合わせる。バーを落としつつパンくずを残す画面には本文の前に飛ばすべきブロックが
+			// 残り、ヘッダー自体が出ない画面はメインコンテンツから始まって飛ばす対象が無いためである。
+			if headerData.ShouldRender() {
+				<a
+					href="#main"
+					class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-tooltip focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:shadow focus:outline focus:outline-2 focus:outline-ring"
+				>
+					{ templates.T(ctx, "skip_to_main_content") }
+				</a>
 			}
 
+			@components.Flash(session.FlashFromContext(ctx))
+
 			// Reserve bottom padding for the fixed bottom nav below md, so the last content (e.g. the
-			// link cards on the editor) is not hidden behind it. The nav is always rendered but
-			// md:hidden and sits at bottom-2, so reserve its height plus that 0.5rem offset. The
-			// env(safe-area-inset-bottom) term keeps the reservation correct once the nav is pushed
-			// above the home indicator in a PWA standalone display; it resolves to 0 where there is
-			// no safe area, so desktop and non-standalone views are unchanged. Above md the nav is
-			// hidden, so drop the padding.
+			// link cards on the editor) is not hidden behind it. On a screen that renders the bar the
+			// bar is always there but hides itself at md and sits at bottom-2, so reserve its height
+			// plus that 0.5rem offset. The env(safe-area-inset-bottom) term keeps the reservation
+			// correct once the nav is pushed above the home indicator in a PWA standalone display; it
+			// resolves to 0 where there is no safe area, so desktop and non-standalone views are
+			// unchanged. At and above md the nav is hidden, so drop the padding at the same width the
+			// bar stops rendering. A screen that renders no bar has nothing for the content to hide
+			// behind, so the padding goes away entirely.
 			//
 			// [Ja] md 未満で固定の下部ナビに最下部コンテンツ (編集画面のリンクカードなど) が隠れない
-			// よう、下部余白を確保する。ナビは常時描画され md:hidden で bottom-2 の位置にあるため、
-			// その高さ + 0.5rem のオフセット分を確保する。PWA のスタンドアロン表示でナビをホーム
-			// インジケータの上へ押し上げたときも余白が不足しないよう env(safe-area-inset-bottom) を
-			// 加算する。safe-area の無い環境では 0 になるためデスクトップ・非スタンドアロン表示は
-			// 従来どおり。md 以上ではナビが隠れるため余白を外す。
-			<div class="flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0">
-				<main>
+			// よう、下部余白を確保する。バーを出す画面ではバーが常時あり、md 以上で自身を隠しつつ
+			// bottom-2 の位置にあるため、その高さ + 0.5rem のオフセット分を確保する。PWA のスタンド
+			// アロン表示でナビをホームインジケータの上へ押し上げたときも余白が不足しないよう
+			// env(safe-area-inset-bottom) を加算する。safe-area の無い環境では 0 になるためデスク
+			// トップ・非スタンドアロン表示は従来どおり。md 以上ではナビが隠れるため、バーが描画され
+			// なくなる幅と揃えて余白を外す。バーを出さない画面では隠れる相手が無いため、余白ごと外す。
+			<div
+				class={ "flex-1 flex flex-col min-h-screen",
+					templ.KV("pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0", !data.HideNavigation) }
+			>
+				// Render the shared breadcrumb header outside <main> so the #main skip link bypasses it.
+				// The header carries the desktop navigation bar, so it renders when the screen has either
+				// the bar or a navigable breadcrumb item (an item with a Path and IsCurrent set to false).
+				// A trail made only of the current item does not count as breadcrumb content. The header
+				// decides that for itself and owns its top spacing, so the layout wraps it in nothing that
+				// could stay behind as an empty gap above the main content.
+				//
+				// [Ja] #main へのスキップリンクが共有パンくずヘッダーを飛ばせるよう、<main> の外で描画する。
+				// ヘッダーは PC 向けのナビバーを持つため、バーか、たどれるパンくず項目 (Path があり
+				// IsCurrent でない項目) のどちらかを持つ画面で描画する。現在項目だけの経路はパンくずの
+				// 中身として数えない。その判断と上余白はヘッダー自身が持つため、レイアウトは本文の上に
+				// 空白だけとなって残り得るラッパーで包まない。
+				@components.BreadcrumbHeader(headerData)
+
+				<main id="main" tabindex="-1">
 					@content
 				</main>
 
@@ -60,15 +135,19 @@ templ Default(data DefaultLayoutData, content templ.Component) {
 			// Add pb-safe (padding-bottom: env(safe-area-inset-bottom)) so a PWA in standalone mode
 			// lifts the nav pill above the home indicator. This wrapper is a bottom-2 based column, so
 			// the extra bottom padding pushes the pill up by the safe-area amount. env resolves to 0
-			// without a safe area, so the position is unchanged elsewhere.
+			// without a safe area, so the position is unchanged elsewhere. The bottom bar hides itself
+			// at and above md, where the top bar takes over.
 			//
 			// [Ja] pb-safe (padding-bottom: env(safe-area-inset-bottom)) を付け、PWA のスタンドアロン
 			// 表示でナビのピルをホームインジケータの上へ押し上げる。このラッパーは bottom-2 基点の縦
 			// フレックスのため、下パディングを足すとピルが safe-area 分だけ上がる。safe-area の無い
-			// 環境では env が 0 になるため位置は従来どおり。
-			<div class="fixed bottom-2 left-1/2 z-sticky-bar flex w-full -translate-x-1/2 flex-col items-center px-2 pb-safe">
-				@components.BottomNav(data.BottomNav)
-			</div>
+			// 環境では env が 0 になるため位置は従来どおり。下部バーは md 以上では自身を隠し、上部バーに
+			// 役割を譲る。
+			if !data.HideNavigation {
+				<div class="fixed bottom-2 left-1/2 z-sticky-bar flex w-full -translate-x-1/2 flex-col items-center px-2 pb-safe">
+					@components.GlobalNavBottomBar(data.GlobalNav)
+				</div>
+			}
 		</body>
 	</html>
 }

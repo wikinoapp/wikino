@@ -8,18 +8,13 @@ en:
       email_confirmations:
         edit: Verification
       topics:
-        new: "New topic | %{space_name}"
         show: "%{topic_name} | %{space_name}"
         settings:
           deletions:
             new: "Delete topic | %{topic_name} | %{space_name}"
-          general:
-            show: "General | %{topic_name} | %{space_name}"
           show: "Settings | %{topic_name} | %{space_name}"
       trash:
         show: "Trash | %{space_name}"
-      pages:
-        show: "%{page_title} | %{space_name}"
       password_resets:
         new: Forgot your password?
       passwords:
@@ -54,9 +49,6 @@ en:
         settings:
           deletions:
             new: "Delete space | %{space_name}"
-          exports:
-            new: "Export | %{space_name}"
-            show: "Export | %{space_name}"
           general:
             show: "General | %{space_name}"
           attachments:

@@ -18,7 +18,6 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -57,7 +56,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionh
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 	flashMgr := session.NewFlashManager("localhost", false, false)
 
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
@@ -80,7 +78,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionh
 		getSuggestionNewUC,
 		createSuggestionUC,
 		updateSuggestionUC,
-		sidebarHelper,
 	)
 }
 
@@ -205,6 +202,144 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 	}
 	if strings.Contains(body, "/s/si-pub-space/topics/1/suggestions/new") {
 		t.Error("新規編集提案ボタンが未ログインユーザーに表示されてはならない")
+	}
+
+	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
+	// link has to bypass it) and keeps this screen's max-w-3xl content width.
+	//
+	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+	}
+
+	// /home is behind authentication, so this public screen must not offer it as the trail's root:
+	// the link would send a signed-out visitor to the sign-in screen.
+	//
+	// [Ja] /home は認証必須のため、この公開画面が経路の起点として提示してはいけない。リンクは未ログインの
+	// 訪問者をログイン画面へ送ってしまう。
+	if strings.Contains(body, `href="/home"`) {
+		t.Error("未ログインの公開画面のパンくずが認証必須の /home を指している")
+	}
+
+	// An indexable public screen declares an absolute self-referencing canonical URL built from the
+	// stored identifier. An empty href would resolve to whatever URL was requested instead.
+	//
+	// [Ja] インデックス対象の公開画面は、保存済みの識別子から組み立てた自己参照の絶対 URL を正規 URL
+	// として宣言する。空の href だとリクエストされた URL に解決されてしまう。
+	for _, want := range []string{
+		`<link rel="canonical" href="https://localhost/s/si-pub-space/topics/1/suggestions">`,
+		`<meta property="og:url" content="https://localhost/s/si-pub-space/topics/1/suggestions">`,
+		`<title>編集提案 | 公開トピック | Public Space</title>`,
+		`<meta property="og:title" content="編集提案 | 公開トピック | Public Space">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+
+	// The list is the current page, so the visible trail runs through the topic and ends with the
+	// list itself as a non-linked current item. Scope the assertions to the breadcrumb because the
+	// same labels also appear in the heading and metadata.
+	//
+	// [Ja] 一覧は現在地のため、見た目の経路はトピックを通り、一覧自身の非リンクな現在項目で締める。
+	// 同じラベルは見出しとメタ情報にも出るため、パンくず内に絞って検証する。
+	breadcrumbStart := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if breadcrumbStart == -1 {
+		t.Fatal("response should contain the breadcrumb navigation")
+	}
+	breadcrumbEnd := strings.Index(body[breadcrumbStart:], "</nav>")
+	if breadcrumbEnd == -1 {
+		t.Fatal("breadcrumb navigation should have a closing tag")
+	}
+	breadcrumb := body[breadcrumbStart : breadcrumbStart+breadcrumbEnd]
+	for _, want := range []string{
+		`href="/s/si-pub-space"`,
+		`href="/s/si-pub-space/topics/1"`,
+		`aria-current="page"`,
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/si-pub-space/topics/1/suggestions"`) {
+		t.Error("current suggestion list breadcrumb item must not be a link")
+	}
+
+	// Being indexable, the list publishes the same trail as BreadcrumbList JSON-LD. The screens under
+	// a suggestion declare this URL at the same position, so one URL keeps one place in the
+	// hierarchy.
+	//
+	// [Ja] インデックス対象のため、一覧は同じ経路を BreadcrumbList JSON-LD としても公開する。編集提案
+	// 配下の画面はこの URL を同じ位置に宣言するため、1 つの URL が階層上で 1 つの位置を持つ。
+	for _, want := range []string{
+		`<script type="application/ld+json">`,
+		`"@type":"BreadcrumbList"`,
+		`"position":1,"name":"Public Space","item":"https://localhost/s/si-pub-space"`,
+		`"position":2,"name":"公開トピック","item":"https://localhost/s/si-pub-space/topics/1"`,
+		`"position":3,"name":"編集提案"}`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+	if strings.Contains(body, `https://localhost/home`) {
+		t.Error("未ログインの公開画面の構造化データが認証必須の /home を指している")
+	}
+}
+
+// Each status tab lists a different set of suggestions, so the closed tab declares itself rather
+// than the open tab as its canonical address and identifies its state in the page title.
+//
+// [Ja] ステータスタブごとに載っている編集提案が異なるため、クローズタブはオープンタブではなく自分
+// 自身を正規アドレスとして宣言し、ページタイトルでも状態を識別できるようにする。
+func TestIndex_ClosedTabMetadataIdentifiesTabState(t *testing.T) {
+	t.Parallel()
+
+	db, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("si-tab-canonical").
+		WithName("Tab Canonical Space").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開トピック").
+		WithVisibility(0). // public
+		Build()
+
+	handler := setupHandler(t, db, queries)
+
+	req := newSuggestionRequest(t, http.MethodGet, "/s/si-tab-canonical/topics/1/suggestions?tab=closed", map[string]string{
+		"space_identifier": "si-tab-canonical",
+		"topic_number":     "1",
+	}, nil)
+
+	rr := httptest.NewRecorder()
+	handler.Index(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		`<link rel="canonical" href="https://localhost/s/si-tab-canonical/topics/1/suggestions?tab=closed">`,
+		`<title>クローズした編集提案 | 公開トピック | Tab Canonical Space</title>`,
+		`<meta property="og:title" content="クローズした編集提案 | 公開トピック | Tab Canonical Space">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+	if strings.Contains(body, `<title>編集提案 | 公開トピック | Tab Canonical Space</title>`) {
+		t.Error("closed tab must not reuse the open tab title")
 	}
 }
 

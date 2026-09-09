@@ -11,6 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signuppages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_up"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
@@ -138,7 +139,8 @@ func (h *Handler) renderSignUpForm(w http.ResponseWriter, r *http.Request, ve *m
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_up_title")
+	meta.SetTitle(ctx, "sign_up_new_title")
+	meta.OGURL = h.cfg.AppURL() + string(templates.SignUpPath())
 
 	content := signuppages.New(signuppages.NewPageData{
 		CSRFToken:        csrfToken,

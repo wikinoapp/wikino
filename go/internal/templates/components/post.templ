@@ -19,6 +19,18 @@ type PostData struct {
 	Body          string
 	CreatedAt     time.Time
 	Actions       []PostAction
+	// ActionsLabel is the accessible name given to the action dropdown trigger.
+	// It must be set whenever Actions is set, because the trigger has no visible
+	// text and its icon is hidden from assistive technology. When it is empty the
+	// aria-label attribute is omitted rather than emitted empty, so that a missing
+	// label is visible in the rendered HTML instead of looking like a set one.
+	//
+	// [Ja] ActionsLabel はアクションドロップダウンのトリガーに与えるアクセシブルネームです。
+	// トリガーは可視テキストを持たず、アイコンも支援技術から隠しているため、
+	// Actions が設定されている場合は必ず指定してください。
+	// 空の場合は aria-label 属性ごと出力しません。空文字で出力すると設定済みに見えてしまい、
+	// レンダリング結果から指定漏れを判別できなくなるためです。
+	ActionsLabel string
 	// dropdownID はドロップダウンメニューのHTML ID生成に使用する一意な識別子です。
 	// Actionsが設定されている場合は必ず指定してください。
 	DropdownID string
@@ -68,9 +80,14 @@ templ postDropdown(data PostData) {
 			aria-haspopup="menu"
 			aria-controls={ fmt.Sprintf("post-%s-dropdown-menu", data.DropdownID) }
 			aria-expanded="false"
-			class="btn-sm-icon-ghost rounded-full"
+			if data.ActionsLabel != "" {
+				aria-label={ data.ActionsLabel }
+			}
+			class="btn rounded-full"
+			data-variant="ghost"
+			data-size="icon-sm"
 		>
-			@templates.Icon("dots-three-regular")
+			@templates.DecorativeIcon("dots-three-regular")
 		</button>
 
 		<div

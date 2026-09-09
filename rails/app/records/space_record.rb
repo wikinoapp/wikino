@@ -20,10 +20,6 @@ class SpaceRecord < ApplicationRecord
     dependent: :restrict_with_exception,
     foreign_key: :space_id,
     inverse_of: :space_record
-  has_many :export_records,
-    dependent: :restrict_with_exception,
-    foreign_key: :space_id,
-    inverse_of: :space_record
   has_many :topic_member_records,
     dependent: :restrict_with_exception,
     foreign_key: :space_id,
@@ -72,11 +68,6 @@ class SpaceRecord < ApplicationRecord
   sig { params(identifier: String).returns(T::Boolean) }
   def identifier_uniqueness?(identifier)
     SpaceRecord.where.not(id:).exists?(identifier:)
-  end
-
-  sig { params(number: T.nilable(T.any(Integer, String))).returns(PageRecord) }
-  def page_record_by_number!(number)
-    page_records.visible.find_by!(number: number&.to_i)
   end
 
   sig { params(number: T.nilable(T.any(Integer, String))).returns(TopicRecord) }

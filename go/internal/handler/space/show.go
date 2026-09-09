@@ -3,11 +3,11 @@ package space
 import (
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httppagination"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -29,13 +29,17 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	spaceIdentifier := model.SpaceIdentifier(chi.URLParam(r, "space_identifier"))
 
-	// Parse the pagination parameter (default 1; invalid values fall back to 1).
-	// [Ja] ページネーションパラメータを取得 (デフォルト 1、不正値は 1 に丸める)。
-	var currentPage int32 = 1
-	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
-		if p, err := strconv.ParseInt(pageStr, 10, 32); err == nil && p > 0 {
-			currentPage = int32(p)
-		}
+	// Parse the pagination parameter. A page whose SQL offset cannot fit the query's int32
+	// parameter is rejected before invoking the usecase; the total-page check below handles every
+	// smaller out-of-range value.
+	//
+	// [Ja] ページネーションパラメータを取得する。SQL offset がクエリの int32 パラメータに収まらない
+	// ページは UseCase 呼び出し前に拒否する。これより小さい範囲外値は後段の総ページ数チェックで
+	// 処理する。
+	currentPage, ok := httppagination.ParsePageParam(r, spaceShowPageLimit)
+	if !ok {
+		handler.NotFound(w, r)
+		return
 	}
 
 	// The space detail is viewable without logging in (public-topic pages only).
@@ -61,6 +65,11 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		handler.NotFound(w, r)
 		return
 	}
+	pagination := viewmodel.NewPagination(int(currentPage), output.TotalCount, spaceShowPageLimit)
+	if pagination.Current > pagination.Total {
+		handler.NotFound(w, r)
+		return
+	}
 
 	// Pages span multiple topics here, so each card shows its topic label (via TopicMap) and an
 	// edit affordance gated on the per-topic page-edit permission resolved by the usecase.
@@ -82,13 +91,24 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spaceVM := viewmodel.NewSpace(output.Space)
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
-	pagination := viewmodel.NewPagination(int(currentPage), output.TotalCount, spaceShowPageLimit)
+
+	// Build links from the stored identifier, not from the URL, so that the canonical URL collapses
+	// to one address per screen.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、正規 URL を 1 画面 1 アドレスに
+	// 集約する。
+	spaceIdentVM := spaceVM.Identifier
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitleWithoutSuffix(ctx, "space_show_title", map[string]any{
-		"SpaceName": output.Space.Name,
+	titleKey := "space_show_title"
+	if currentPage > 1 {
+		titleKey = "space_show_paginated_title"
+	}
+	meta.SetTitleWithoutSuffix(ctx, titleKey, map[string]any{
+		"SpaceName":  output.Space.Name,
+		"PageNumber": currentPage,
 	})
+	meta.OGURL = h.cfg.AppURL() + string(templates.PaginatedPath(templates.SpacePath(spaceIdentVM), currentPage))
 	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	showData := spacepages.ShowData{
@@ -108,29 +128,42 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		userAtname = user.Atname
 	}
 
+	// The space is the current page, so show its name as a plain (unlinked) trailing crumb carrying
+	// aria-current. A signed-out viewer gets no home crumb, which leaves the trail with nothing to
+	// navigate to; the header component drops the breadcrumb entirely in that case.
+	//
+	// [Ja] スペースは現在地のため、スペース名を aria-current を持つリンク無しの末尾パンくずとして
+	// 表示する。未ログインの閲覧者にはホーム項目が付かず、経路にたどれる項目が無くなる。その場合は
+	// ヘッダーコンポーネントがパンくずごと落とす。
+	breadcrumbItems := append(components.HomeBreadcrumbItems(ctx, signedIn), components.BreadcrumbItem{
+		Label:     spaceVM.Name,
+		IsCurrent: true,
+	})
+
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNameSpaceShow,
 			SignedIn:        signedIn,
 			UserAtname:      userAtname,
 			SpaceIdentifier: spaceIdentVM,
 		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameSpaceShow,
-			SignedIn:        signedIn,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
 
-	// Load sidebar content only for logged-in users.
-	// [Ja] ログイン済みの場合のみサイドバーコンテンツを取得する。
-	if user != nil {
-		sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-		layoutData.Sidebar.JoinedTopics = sidebarContent.JoinedTopics
-		layoutData.Sidebar.DraftPages = sidebarContent.DraftPages
-		layoutData.Sidebar.HasMoreDraftPages = sidebarContent.HasMoreDraftPages
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			MaxWidthClass: "max-w-3xl",
+
+			// The space detail is public and indexable, so it opts into BreadcrumbList JSON-LD built
+			// from the same items. A signed-out viewer is left with the current item alone, which is
+			// nothing to navigate to, so no structured data is published for a crawler either.
+			//
+			// [Ja] スペース詳細は公開・インデックス対象のため、同じ項目列から作る BreadcrumbList
+			// JSON-LD を有効にする。未ログインの閲覧者には現在項目しか残らず、たどれる項目が無いため、
+			// クローラーに対して構造化データは出ない。
+			StructuredDataBaseURL: h.cfg.AppURL(),
+
+			Items: breadcrumbItems,
+		},
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)

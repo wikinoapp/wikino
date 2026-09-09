@@ -20,6 +20,28 @@ type Authorizer interface {
 	CanCreatePage() bool
 	CanUpdatePage() bool
 
+	// Trash
+	// [Ja] ゴミ箱
+
+	// CanShowTrash decides based on the page:trash scope, not page:read.
+	// This keeps trashed content hidden from read-only members while allowing members
+	// authorized to open the trash to inspect it.
+	//
+	// [Ja] CanShowTrash は page:read ではなく page:trash スコープで判定する。
+	// これにより、読み取り専用メンバーからゴミ箱内の内容を隠しつつ、ゴミ箱を
+	// 開ける権限を持つメンバーは内容を確認できる。
+	CanShowTrash() bool
+
+	// CanTrashPage decides based on the page:trash scope, so that moving a page into the trash and
+	// looking into the trash afterwards stay on the same permission axis. page:write is deliberately
+	// not enough: an editor who may rewrite a page is not thereby allowed to take it out of the
+	// space's visible content.
+	//
+	// [Ja] CanTrashPage は page:trash スコープで判定し、ページをゴミ箱へ入れる操作とその後ゴミ箱を
+	// 覗く操作を同じ権限軸に揃える。page:write では意図的に足りないものとする。ページを書き換えて
+	// よい編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
+	CanTrashPage() bool
+
 	// Draft page (owner-check pattern)
 	// [Ja] 下書きページ (所有者チェックパターン)
 	CanShowDraftPage(isOwner bool) bool
@@ -51,4 +73,13 @@ type Authorizer interface {
 	// Space
 	// [Ja] スペース
 	CanCreateTopic() bool
+
+	// CanExportSpace decides based on the space:write scope, matching what the Rails version
+	// requires. An export carries every page of the space in one archive, so it is opened to the
+	// members trusted to change the space rather than to everyone who may read it.
+	//
+	// [Ja] CanExportSpace は space:write スコープで判定し、Rails 版が要求するものと揃える。
+	// エクスポートはスペースの全ページを 1 つのアーカイブに収めるため、読める全員ではなく
+	// スペースを変更してよいと認められたメンバーに開く。
+	CanExportSpace() bool
 }

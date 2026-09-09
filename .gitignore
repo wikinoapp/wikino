@@ -1,12 +1,15 @@
 .DS_Store
 test-results/
 
+/.agents/skills/korylus-*
 /.claude/*.local.json
 /.claude/rules/korylus-*
 /.claude/scheduled_tasks.lock
 /.claude/skills/korylus-*
+/.codex
 /.env.op
 /.pnpm-store
+/AGENTS.override.md
 /CLAUDE.local.md
 /compose-up.sh
 /docker-compose.override.yml

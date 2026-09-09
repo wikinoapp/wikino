@@ -1,2 +1,2 @@
-web: bin/server
+web: bin/wikino serve
 release: dbmate --no-dump-schema up

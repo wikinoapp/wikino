@@ -19,125 +19,19 @@ func TestPageUpdateValidator_FormatValidation(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
 	tests := []struct {
-		name      string
-		title     string
-		wantError bool
+		name  string
+		title string
 	}{
-		{
-			name:      "タイトルが空の場合はエラー",
-			title:     "",
-			wantError: true,
-		},
-		{
-			name:      "タイトルが200文字以内の場合は正常",
-			title:     strings.Repeat("あ", 200),
-			wantError: false,
-		},
-		{
-			name:      "タイトルが200文字を超える場合はエラー",
-			title:     strings.Repeat("あ", 201),
-			wantError: true,
-		},
-		{
-			name:      "タイトルにスラッシュを含む場合はエラー",
-			title:     "foo/bar",
-			wantError: true,
-		},
-		{
-			name:      "タイトルにバックスラッシュを含む場合はエラー",
-			title:     "foo\\bar",
-			wantError: true,
-		},
-		{
-			name:      "タイトルにコロンを含む場合はエラー",
-			title:     "foo:bar",
-			wantError: true,
-		},
-		{
-			name:      "タイトルにアスタリスクを含む場合はエラー",
-			title:     "foo*bar",
-			wantError: true,
-		},
-		{
-			name:      "タイトルにクエスチョンマークを含む場合はエラー",
-			title:     "foo?bar",
-			wantError: true,
-		},
-		{
-			name:      "タイトルにダブルクオートを含む場合はエラー",
-			title:     `foo"bar`,
-			wantError: true,
-		},
-		{
-			name:      "タイトルに山括弧を含む場合はエラー",
-			title:     "foo<bar>",
-			wantError: true,
-		},
-		{
-			name:      "タイトルにパイプを含む場合はエラー",
-			title:     "foo|bar",
-			wantError: true,
-		},
-		{
-			name:      "タイトルが先頭スペースの場合はエラー",
-			title:     " foo",
-			wantError: true,
-		},
-		{
-			name:      "タイトルが末尾スペースの場合はエラー",
-			title:     "foo ",
-			wantError: true,
-		},
-		{
-			name:      "タイトルが先頭ドットの場合はエラー",
-			title:     ".foo",
-			wantError: true,
-		},
-		{
-			name:      "タイトルが末尾ドットの場合はエラー",
-			title:     "foo.",
-			wantError: true,
-		},
-		{
-			name:      "Windows予約語 CON はエラー",
-			title:     "CON",
-			wantError: true,
-		},
-		{
-			name:      "Windows予約語 con (小文字) はエラー",
-			title:     "con",
-			wantError: true,
-		},
-		{
-			name:      "Windows予約語 NUL はエラー",
-			title:     "NUL",
-			wantError: true,
-		},
-		{
-			name:      "Windows予約語 COM1 はエラー",
-			title:     "COM1",
-			wantError: true,
-		},
-		{
-			name:      "Windows予約語 LPT1 はエラー",
-			title:     "LPT1",
-			wantError: true,
-		},
-		{
-			name:      "通常のタイトルは正常",
-			title:     "テストページ",
-			wantError: false,
-		},
-		{
-			name:      "中間にスペースがある場合は正常",
-			title:     "foo bar",
-			wantError: false,
-		},
-		{
-			name:      "中間にドットがある場合は正常",
-			title:     "foo.bar",
-			wantError: false,
-		},
+		{name: "タイトルが空の場合はエラー", title: ""},
+		{name: "タイトルが200文字を超える場合はエラー", title: strings.Repeat("あ", 201)},
+		{name: "タイトルにスラッシュを含む場合はエラー", title: "foo/bar"},
+		{name: "タイトルにバックスラッシュを含む場合はエラー", title: "foo\\bar"},
+		{name: "タイトルにコロンを含む場合はエラー", title: "foo:bar"},
+		{name: "タイトルにタブを含む場合はエラー", title: "foo\tbar"},
+		{name: "タイトルにヌル文字を含む場合はエラー", title: "foo\x00bar"},
+		{name: "タイトルに改行を含む場合はエラー", title: "foo\nbar"},
+		{name: "タイトルが先頭スペースの場合はエラー", title: " foo"},
+		{name: "タイトルが末尾スペースの場合はエラー", title: "foo "},
 	}
 
 	// 形式バリデーションのみテストするためnilのpageRepoを使用
@@ -145,12 +39,6 @@ func TestPageUpdateValidator_FormatValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if !tt.wantError {
-				// 形式バリデーション成功時はDB検証に進むため、nil pageRepoではテストできない
-				// 正常系はTestPageUpdateValidator_Uniquenessでテストする
-				t.Skip("format validation passes, requires DB for uniqueness check")
-			}
-
 			_, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
 				Title:           tt.title,
 				PageID:          "test-page-id",
@@ -165,6 +53,74 @@ func TestPageUpdateValidator_FormatValidation(t *testing.T) {
 			}
 			if !ve.HasFieldError("title") {
 				t.Error("expected title field error but got none")
+			}
+		})
+	}
+}
+
+// TestPageUpdateValidator_AllowedTitleCharacters covers the titles the validator lets through. They
+// reach the uniqueness check, which reads the database, so the test runs against a real one.
+//
+// [Ja] TestPageUpdateValidator_AllowedTitleCharacters はバリデーターが通すタイトルを扱う。
+// これらは DB を読む一意性チェックまで進むため、本テストは実際の DB に対して実行する。
+func TestPageUpdateValidator_AllowedTitleCharacters(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("title-chars").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+
+	pageRepo := repository.NewPageRepository(queries)
+	v := validator.NewPageUpdateValidator(pageRepo)
+
+	tests := []struct {
+		name  string
+		title string
+	}{
+		{name: "アスタリスクを含むタイトル", title: "foo*bar"},
+		{name: "クエスチョンマークを含むタイトル", title: "foo?bar"},
+		{name: "ダブルクオートを含むタイトル", title: `foo"bar`},
+		{name: "山括弧を含むタイトル", title: "foo<bar>"},
+		{name: "パイプを含む記事のタイトル", title: "Annict | 見たアニメを記録して、共有しよう - annict.com"},
+		{name: "Obsidianが記法として読む文字を含むタイトル", title: "foo #bar ^baz [qux]"},
+		{name: "先頭ドットのタイトル", title: ".foo"},
+		{name: "末尾ドットのタイトル", title: "foo."},
+		{name: "Windows予約デバイス名 CON", title: "CON"},
+		{name: "Windows予約デバイス名 con (小文字)", title: "con"},
+		{name: "Windows予約デバイス名 NUL", title: "NUL"},
+		{name: "Windows予約デバイス名 COM1", title: "COM1"},
+		{name: "Windows予約デバイス名 LPT1", title: "LPT1"},
+		{name: "通常のタイトル", title: "テストページ"},
+		{name: "中間にスペースがあるタイトル", title: "foo bar"},
+		{name: "中間にドットがあるタイトル", title: "foo.bar"},
+		{name: "200文字ちょうどのタイトル", title: strings.Repeat("あ", 200)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			conflictingPageID, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
+				Title:           tt.title,
+				PageID:          model.PageID("any-page-id"),
+				TopicID:         topicID,
+				SpaceID:         spaceID,
+				SpaceIdentifier: "title-chars",
+			})
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if conflictingPageID != nil {
+				t.Errorf("conflictingPageID = %v, want nil", *conflictingPageID)
 			}
 		})
 	}

@@ -537,13 +537,6 @@ func TestRenderHTML_InlineImageWithSurroundingText(t *testing.T) {
 func TestRenderHTML_HTMLImgWithCaption(t *testing.T) {
 	t.Parallel()
 
-	resolver := &mockPageLocationResolver{}
-	finder := &mockBatchAttachmentFinder{
-		attachments: []*model.Attachment{
-			{ID: "att-1", SpaceID: "space-1", Filename: "600x400.png"},
-		},
-	}
-
 	tests := []struct {
 		name string
 		body string
@@ -561,6 +554,13 @@ func TestRenderHTML_HTMLImgWithCaption(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
+			resolver := &mockPageLocationResolver{}
+			finder := &mockBatchAttachmentFinder{
+				attachments: []*model.Attachment{
+					{ID: "att-1", SpaceID: "space-1", Filename: "600x400.png"},
+				},
+			}
 
 			got, err := RenderHTML(context.Background(), tt.body, "topic1", "space-1", "my-space", resolver, finder)
 			if err != nil {

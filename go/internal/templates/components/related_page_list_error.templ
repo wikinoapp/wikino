@@ -1,0 +1,25 @@
+package components
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// RelatedPageListNotFound renders a local error that can safely replace a related-page pagination
+// target in htmx 4, which swaps 404 responses as well as successful responses.
+//
+// [Ja] RelatedPageListNotFound は関連ページのページネーション領域を安全に置換できる局所エラーを
+// 描画する。htmx 4 は成功応答だけでなく 404 応答もスワップするため、このフラグメントを使う。
+templ RelatedPageListNotFound() {
+	// col-span-full spans the whole row of the listing grids this replaces. Two of the three
+	// pagination targets sit in a three-column grid, where the alert would otherwise be squeezed
+	// into a single card-sized cell; in the flex-column listing the class has no effect.
+	//
+	// [Ja] col-span-full は置換先の一覧グリッドの行全体に広げる。3 つのページネーション領域のうち
+	// 2 つは 3 カラムグリッドの中にあり、そのままではアラートがカード 1 枚ぶんの幅に押し込まれる。
+	// flex カラムの一覧では本クラスは効かない。
+	<div class="alert col-span-full" role="alert">
+		@templates.DecorativeIcon("warning-circle-regular", "fill-info")
+
+		<span>
+			{ templates.T(ctx, "error_not_found_message") }
+		</span>
+	</div>
+}

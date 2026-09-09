@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strconv"
@@ -65,9 +66,20 @@ type Config struct {
 	ImgproxyKey  string
 	ImgproxySalt string
 
-	// 添付ファイルの保存先S3互換ストレージ
-	// R2BucketName は imgproxy に渡す元画像 URL "s3://{bucket}/{key}" の構築に使う
-	R2BucketName string
+	// S3-compatible object storage (Cloudflare R2) holding the attachments and the archives the
+	// export writes. R2BucketName also builds the "s3://{bucket}/{key}" source URL handed to
+	// imgproxy; the endpoint, the credentials and the region are what internal/storage needs to
+	// reach the bucket itself.
+	//
+	// [Ja] 添付ファイルと、エクスポートが書き出すアーカイブを保持する S3 互換オブジェクトストレージ
+	// (Cloudflare R2)。R2BucketName は imgproxy に渡す元画像 URL "s3://{bucket}/{key}" の構築にも
+	// 使う。エンドポイント・資格情報・リージョンは、internal/storage がバケット自体へ到達するために
+	// 必要な設定である。
+	R2BucketName      string
+	R2Endpoint        string
+	R2AccessKeyID     string
+	R2SecretAccessKey string
+	R2Region          string
 
 	// Sentry (error tracking)
 	// [Ja] Sentry (エラー追跡)
@@ -134,10 +146,42 @@ func Load() (*Config, error) {
 	// Rails版アプリのURL（オプショナル - リバースプロキシ機能で使用）
 	cfg.RailsAppURL = os.Getenv("WIKINO_RAILS_APP_URL")
 
-	// Cloudflare Turnstile（Bot対策 - ログイン・サインアップフォームで使用）
-	// WIKINO_TURNSTILE_ENABLED が "false" の場合はTurnstile検証を無効化する
-	// 未設定またはそれ以外の値の場合は有効（デフォルト: 有効）
-	cfg.TurnstileEnabled = os.Getenv("WIKINO_TURNSTILE_ENABLED") != "false"
+	// Cloudflare Turnstile (bot protection used on the sign-in / sign-up forms).
+	// WIKINO_TURNSTILE_ENABLED is parsed with strconv.ParseBool, so "false", "0"
+	// and "FALSE" all disable Turnstile verification. Unset (or empty) keeps it
+	// enabled (default: enabled), and a value that cannot be parsed as a boolean
+	// stops startup with an error instead of silently defaulting to enabled.
+	//
+	// In production the disable is ignored and Turnstile stays enabled, so a
+	// misconfiguration can never silently turn off bot protection (fail-closed).
+	// Non-production environments honor the disable.
+	//
+	// [Ja] Cloudflare Turnstile (Bot 対策 - ログイン・サインアップフォームで使用)。
+	// WIKINO_TURNSTILE_ENABLED は strconv.ParseBool で解釈するため、"false" / "0" /
+	// "FALSE" はいずれも Turnstile 検証を無効化する。未設定 (または空文字列) の場合は
+	// 有効 (デフォルト: 有効)。真偽値として解釈できない値は、黙って有効側に倒さず
+	// エラーで起動を止める。
+	//
+	// ただし本番環境では、無効化が指定されても無視して有効を維持する。
+	// 誤設定で Bot 対策が黙って無効になることを防ぐため (fail-closed)。非本番環境では
+	// 従来どおり無効化を反映する。
+	cfg.TurnstileEnabled = true
+	if turnstileEnabledStr := os.Getenv("WIKINO_TURNSTILE_ENABLED"); turnstileEnabledStr != "" {
+		turnstileEnabled, err := strconv.ParseBool(turnstileEnabledStr)
+		if err != nil {
+			return nil, fmt.Errorf("環境変数 WIKINO_TURNSTILE_ENABLED を真偽値として解釈できません: %q", turnstileEnabledStr)
+		}
+		cfg.TurnstileEnabled = turnstileEnabled
+	}
+	if !cfg.TurnstileEnabled && cfg.IsProduction() {
+		// Ignore the disable in production and keep Turnstile enabled, recording
+		// that the setting was overridden (developer-facing ops log).
+		//
+		// [Ja] 本番では無効化を無視して Turnstile を有効のままにし、設定を上書きした
+		// ことを記録する (開発者向けの運用ログ)。
+		slog.Warn("本番環境では WIKINO_TURNSTILE_ENABLED による無効化を無視し、Turnstile を有効のまま維持します (fail-closed)")
+		cfg.TurnstileEnabled = true
+	}
 	cfg.TurnstileSiteKey = os.Getenv("WIKINO_TURNSTILE_SITE_KEY")
 	cfg.TurnstileSecretKey = os.Getenv("WIKINO_TURNSTILE_SECRET_KEY")
 
@@ -165,8 +209,18 @@ func Load() (*Config, error) {
 	cfg.ImgproxyKey = os.Getenv("WIKINO_IMGPROXY_KEY")
 	cfg.ImgproxySalt = os.Getenv("WIKINO_IMGPROXY_SALT")
 
-	// S3互換ストレージのバケット名（imgproxy のソース URL 構築に使用）
+	// S3-compatible object storage (optional). Every value is taken as it is, and a missing one is
+	// reported by the package that needs it when that package is built. Keeping them optional here
+	// lets a deployment that uses neither imgproxy nor the export boot without any of them.
+	//
+	// [Ja] S3 互換オブジェクトストレージ (オプショナル)。値はそのまま読み、足りないものは必要と
+	// するパッケージが構築時に報告する。ここで必須にしないことで、imgproxy もエクスポートも使わない
+	// デプロイがどれも設定せずに起動できる状態を保つ。
 	cfg.R2BucketName = os.Getenv("WIKINO_R2_BUCKET_NAME")
+	cfg.R2Endpoint = os.Getenv("WIKINO_R2_ENDPOINT")
+	cfg.R2AccessKeyID = os.Getenv("WIKINO_R2_ACCESS_KEY_ID")
+	cfg.R2SecretAccessKey = os.Getenv("WIKINO_R2_SECRET_ACCESS_KEY")
+	cfg.R2Region = os.Getenv("WIKINO_R2_REGION")
 
 	// Sentry (optional — error tracking service).
 	// An empty DSN disables Sentry entirely.

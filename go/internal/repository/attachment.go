@@ -64,17 +64,38 @@ func (r *AttachmentRepository) FindByIDsAndSpace(ctx context.Context, ids []mode
 	return attachments, nil
 }
 
-// FindPubliclyReferencedBlobByID は公開 og:image 配信用: 「生きている公開トピックのページから
-// のみ参照されている」場合に限り blob 情報を返す。
+// FindPubliclyReferencedBlobByID returns the blob info for public og:image delivery only when
+// the attachment is referenced exclusively by live pages in public topics.
+//
+// Folding the Rails AttachmentRecord#all_referencing_pages_public? check into a single SQL
+// statement removes the structural risk of a caller forgetting the visibility check. The
+// reference set excludes discarded pages and topics (`discarded_at IS NOT NULL`) as well as
+// pages moved to the trash (`trashed_at IS NOT NULL`); a trashed page must not keep its
+// og:image alive in social link previews. Membership is deliberately not checked, even for
+// members who may open the trash, because the response is cached (see the page-show migration
+// plan).
+//
+// The returned Attachment populates BlobKey / ContentType but leaves Filename empty (this
+// method does not fetch it), which is fine because og:image delivery does not use Filename.
+// References are internally constrained to the attachment's space. No caller-provided space
+// scope is needed because the endpoint assumes anyone who knows the URL (guests included) may
+// view the image once this check succeeds.
+//
+// [Ja] FindPubliclyReferencedBlobByID は公開 og:image 配信用: 「生きている公開トピックの
+// ページからのみ参照されている」場合に限り blob 情報を返す。
 //
 // Rails 版 AttachmentRecord#all_referencing_pages_public? と等価な判定を 1 SQL に統合する
 // ことで、呼び出し側で visibility 検証を忘れる構造的事故を排除している。判定スコープからは
-// 論理削除済みのページ・トピック (`discarded_at IS NOT NULL`) を除外する。
+// 論理削除済みのページ・トピック (`discarded_at IS NOT NULL`) に加えて、ゴミ箱に入った
+// ページ (`trashed_at IS NOT NULL`) も除外する。ゴミ箱に入ったページの og:image を SNS の
+// リンクプレビューに残さないため。レスポンスはキャッシュされる前提のため、ゴミ箱を開ける
+// メンバーであってもメンバー判定は行わない (ページ表示画面の移行計画を参照)。
 //
 // 戻り値の Attachment は BlobKey / ContentType を populate するが、Filename は空のまま
 // (このメソッドでは取得していない)。og:image 配信用途では Filename を使わないため問題ない。
-// space スコープは取らず、URL 文字列を知っている誰でも (ゲスト含む) 閲覧可能であることを
-// 前提にする。
+// 参照集合は attachment と同じ space に内部で限定する。呼び出し元から space スコープを
+// 受け取る必要はなく、この判定を通過した画像は URL 文字列を知っている誰でも (ゲスト含む)
+// 閲覧可能であることを前提にする。
 func (r *AttachmentRepository) FindPubliclyReferencedBlobByID(ctx context.Context, id model.AttachmentID) (*model.Attachment, error) {
 	if !uuidRegex.MatchString(string(id)) {
 		return nil, nil
@@ -119,4 +140,57 @@ func (r *AttachmentRepository) toModel(row query.FindAttachmentByIDAndSpaceRow) 
 		SpaceID:  model.SpaceID(row.SpaceID),
 		Filename: row.Filename,
 	}
+}
+
+// PageAttachment is an attachment together with the page that references it. The export needs
+// the pairing, because the copy of an attachment goes into the directory of the topic the
+// referencing page belongs to, and one attachment can be referenced from several topics.
+//
+// [Ja] PageAttachment は添付ファイルと、それを参照しているページの組。エクスポートにはこの組が
+// 要る。添付ファイルの複製は参照元のページが属するトピックのディレクトリへ置かれ、1 つの添付
+// ファイルが複数のトピックから参照されうるためである。
+type PageAttachment struct {
+	PageID     model.PageID
+	Attachment *model.Attachment
+}
+
+// ListByPageIDsAndSpace returns the attachments the given pages reference, paired with the
+// referencing page. Filename and BlobKey are populated; the export names the copy from the
+// former and fetches the object with the latter.
+//
+// [Ja] ListByPageIDsAndSpace は指定したページが参照している添付ファイルを、参照元のページとの組
+// で返す。populate されるのは Filename と BlobKey で、エクスポートは前者から複製の名前を決め、
+// 後者でオブジェクトを取得する。
+func (r *AttachmentRepository) ListByPageIDsAndSpace(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID) ([]*PageAttachment, error) {
+	var idStrings []string
+	for _, id := range pageIDs {
+		if uuidRegex.MatchString(string(id)) {
+			idStrings = append(idStrings, string(id))
+		}
+	}
+	if len(idStrings) == 0 {
+		return nil, nil
+	}
+
+	rows, err := r.q.ListAttachmentsByPageIDsAndSpace(ctx, query.ListAttachmentsByPageIDsAndSpaceParams{
+		PageIds: idStrings,
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	pageAttachments := make([]*PageAttachment, len(rows))
+	for i, row := range rows {
+		pageAttachments[i] = &PageAttachment{
+			PageID: model.PageID(row.PageID),
+			Attachment: &model.Attachment{
+				ID:       model.AttachmentID(row.ID),
+				SpaceID:  model.SpaceID(row.SpaceID),
+				Filename: row.Filename,
+				BlobKey:  row.BlobKey,
+			},
+		}
+	}
+	return pageAttachments, nil
 }

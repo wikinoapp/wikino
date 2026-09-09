@@ -35,6 +35,7 @@ const AUTOSAVE_DEBOUNCE_MS = 500;
 interface EditorConfig {
   container: HTMLElement;
   textarea: HTMLTextAreaElement;
+  label: HTMLLabelElement | null;
   body: string;
   autofocus: boolean;
   draftSaveUrl: string;
@@ -66,6 +67,12 @@ function createEditor(config: EditorConfig): EditorView {
       crosshairCursor(),
       highlightSelectionMatches(),
       EditorView.lineWrapping,
+      // Guard on the id, not just on the label: aria-labelledby has to reference an id, so a label
+      // matched by some other selector would leave an empty reference on the editor.
+      //
+      // [Ja] ラベルの有無ではなく id の有無で判定する。aria-labelledby は id を参照する属性なので、
+      // id 以外のセレクタで拾ったラベルだとエディタに空の参照が残ってしまう。
+      ...(config.label?.id ? [EditorView.contentAttributes.of({ "aria-labelledby": config.label.id })] : []),
       keymap.of([
         { key: "Enter", run: insertNewlineAndContinueList },
         { key: "Tab", run: handleTab },
@@ -146,6 +153,18 @@ export function initializeEditors(): void {
     const titleInput = document.querySelector<HTMLInputElement>(titleSelector);
     if (!titleInput) return;
 
+    // The label only supplies the editor's accessible name, so a missing or mistargeted selector
+    // degrades to an unnamed editor instead of taking the editor (and everything main.js
+    // initializes after it) down. An empty selector string makes querySelector throw, so guard on
+    // the string rather than on the lookup result.
+    //
+    // [Ja] ラベルはエディタのアクセシブルネームを供給するだけなので、セレクタが無い / 解決できない
+    // ときは名前の無いエディタに退化させ、エディタ (と main.js がこの後に初期化するもの) までは
+    // 巻き込まない。空文字列のセレクタでは querySelector が例外を投げるため、検索結果ではなく
+    // 文字列側でガードする。
+    const labelSelector = container.dataset.markdownEditorLabel || "";
+    const label = labelSelector ? document.querySelector<HTMLLabelElement>(labelSelector) : null;
+
     const body = container.dataset.markdownEditorBody || "";
     const autofocus = container.dataset.markdownEditorAutofocus === "true";
     const draftSaveUrl = container.dataset.markdownEditorDraftSaveUrl || "";
@@ -156,6 +175,7 @@ export function initializeEditors(): void {
     const view = createEditor({
       container,
       textarea,
+      label,
       body,
       autofocus,
       draftSaveUrl,
@@ -163,6 +183,17 @@ export function initializeEditors(): void {
       topicNumber,
       titleInput,
       spaceIdentifier,
+    });
+
+    // The visible label has no form control to point at: the editing surface is CodeMirror's
+    // contenteditable, which `for` cannot target. Forward the click so the label still moves focus
+    // to the field it names, like the native inputs on this form do.
+    //
+    // [Ja] 可視ラベルには関連付けられるフォーム部品が無い。入力面が `for` では指せない
+    // CodeMirror の contenteditable であるため。ラベルが名前を与えている入力欄へフォーカスが移る
+    // ようクリックを転送し、このフォームのネイティブ入力欄と同じ挙動にする。
+    label?.addEventListener("click", () => {
+      view.focus();
     });
 
     // Mod-s on the title input also triggers a manual save. The CodeMirror keymap only covers

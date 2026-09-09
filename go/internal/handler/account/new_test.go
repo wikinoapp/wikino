@@ -101,6 +101,12 @@ func TestNew(t *testing.T) {
 	if !strings.Contains(body, `href="/sign_up"`) {
 		t.Error("back to sign up link not found in response")
 	}
+
+	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("response unexpectedly contains %q", notWant)
+		}
+	}
 }
 
 func TestNew_NoEmailConfirmationID(t *testing.T) {

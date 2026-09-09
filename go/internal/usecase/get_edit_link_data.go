@@ -25,28 +25,47 @@ func NewGetEditLinkDataUsecase(
 	}
 }
 
-// GetEditLinkDataInput は編集画面のリンクデータ取得の入力パラメータ
+// GetEditLinkDataInput holds the related-page pagination input for the editor.
+//
+// CurrentPage / LinkedPageBacklinkPage / PageBacklinkPage are one-based and must already be
+// resolved by the caller (the handlers use viewmodel.PageLinkState.Normalized), so that the slice
+// fetched here and the page number the listing renders come from the same value. LinkedPageNumber
+// is zero when no card's nested backlink list is being advanced.
+//
+// [Ja] GetEditLinkDataInput は編集画面の関連ページページネーション入力を保持する。
+//
+// CurrentPage / LinkedPageBacklinkPage / PageBacklinkPage は 1 始まりで、呼び出し元が解決済みの値を
+// 渡す (Handler は viewmodel.PageLinkState.Normalized を使う)。ここで取得する範囲と一覧が描画する
+// ページ番号を同じ値から導くためである。LinkedPageNumber は、どのカードのネストしたバックリンク
+// 一覧も進めていないときにゼロになる。
 type GetEditLinkDataInput struct {
-	Page              *model.Page
-	DraftPage         *model.DraftPage
-	SpaceID           model.SpaceID
-	CurrentPage       int32
-	LinkLimit         int32
-	BacklinkLimit     int32
-	PageBacklinkLimit int32
-}
+	Page                   *model.Page
+	DraftPage              *model.DraftPage
+	SpaceID                model.SpaceID
+	CurrentPage            int32
+	LinkLimit              int32
+	BacklinkLimit          int32
+	PageBacklinkLimit      int32
+	LinkedPageNumber       int32
+	LinkedPageBacklinkPage int32
+	PageBacklinkPage       int32
 
-// EditLinkBacklinks はバックリンクのページスライスと総件数のペア
-type EditLinkBacklinks struct {
-	Pages      []*model.Page
-	TotalCount int64
+	// IncludePrecedingPages makes each listing return every page from the first through the
+	// requested one. The draft refresh sets it because it replaces the listing containers wholesale,
+	// so it has to re-render what the reader appended through htmx as well as the requested page.
+	// A screen that renders the listings from scratch leaves it at false.
+	//
+	// [Ja] IncludePrecedingPages は各一覧が 1 ページ目から要求ページまでを返すようにする。下書き
+	// 再取得は一覧のコンテナごと差し替えるため、要求ページに加えて閲覧者が htmx で追記した範囲も
+	// 描画し直す必要があり、これを立てる。一覧を最初から描画する画面では false のままにする。
+	IncludePrecedingPages bool
 }
 
 // GetEditLinkDataOutput は編集画面のリンクデータ取得の出力
 type GetEditLinkDataOutput struct {
 	LinkedPages       []*model.Page
 	LinkedTotalCount  int64
-	BacklinksPerPage  map[model.PageID]*EditLinkBacklinks
+	BacklinksPerPage  map[model.PageID]*LinkedPageBacklinks
 	PageBacklinks     []*model.Page
 	PageBacklinkCount int64
 	LinkTopics        []*model.Topic
@@ -61,90 +80,53 @@ func (uc *GetEditLinkDataUsecase) Execute(ctx context.Context, input GetEditLink
 		linkedPageIDs = input.Page.LinkedPageIDs
 	}
 
-	var paginatedLinks *repository.PaginatedPages
-	var backlinkPaginatedMap map[model.PageID]*repository.PaginatedPages
-	if len(linkedPageIDs) > 0 {
-		var err error
-		paginatedLinks, err = uc.pageRepo.FindLinkedPagesPaginated(ctx, linkedPageIDs, input.SpaceID, input.CurrentPage, input.LinkLimit)
-		if err != nil {
-			return nil, fmt.Errorf("リンク先ページの取得に失敗: %w", err)
-		}
+	// Only the topic narrowing is skipped here. The editor keeps listing pages from every topic,
+	// unlike the viewing screens that narrow the listing down to the topics the viewer may open.
+	// Aligning the editor with that rule is left to a follow-up task, since it would change what an
+	// editing member sees mid-migration.
+	//
+	// The trash and discarded-topic filters live in the queries themselves, so they apply to the
+	// editor as well, matching the Rails `available` scope behind the same listing.
+	//
+	// [Ja] ここで省略するのはトピックの絞り込みだけである。編集画面は閲覧画面と違い、全トピックの
+	// ページを一覧し続ける。閲覧画面と同じく開けるトピックに絞る対応は、移行の途中で編集中の
+	// メンバーの見え方を変えることになるため後続タスクに回している。
+	//
+	// ゴミ箱と廃棄済みトピックのフィルタはクエリ自体に含まれるため編集画面にも効き、同じ一覧を
+	// 担う Rails 版の `available` スコープと揃う。
+	visibility := repository.AllTopicsVisible()
 
-		excludePageIDs := buildExcludePageIDs(input.Page.ID, paginatedLinks.Pages)
-
-		backlinkPaginatedMap, err = uc.pageRepo.FindBacklinksForPages(ctx, paginatedLinks.Pages, input.SpaceID, input.BacklinkLimit, excludePageIDs)
-		if err != nil {
-			return nil, fmt.Errorf("バックリンクの取得に失敗: %w", err)
-		}
-	}
-
-	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, input.Page.ID, input.SpaceID, 1, input.PageBacklinkLimit, nil)
+	lists, err := fetchRelatedPageLists(ctx, uc.pageRepo, relatedPageListInput{
+		PageID:                 input.Page.ID,
+		LinkedPageIDs:          linkedPageIDs,
+		SpaceID:                input.SpaceID,
+		Visibility:             visibility,
+		LinkPage:               input.CurrentPage,
+		LinkLimit:              input.LinkLimit,
+		LinkedPageNumber:       input.LinkedPageNumber,
+		LinkedPageBacklinkPage: input.LinkedPageBacklinkPage,
+		BacklinkLimit:          input.BacklinkLimit,
+		PageBacklinkPage:       input.PageBacklinkPage,
+		PageBacklinkLimit:      input.PageBacklinkLimit,
+		IncludePrecedingPages:  input.IncludePrecedingPages,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("ページレベルのバックリンクの取得に失敗: %w", err)
+		return nil, err
 	}
 
 	// すべてのページのTopicIDを収集してトピックを一括取得
-	var allPageSlices [][]*model.Page
-	if paginatedLinks != nil {
-		allPageSlices = append(allPageSlices, paginatedLinks.Pages)
-	}
-	for _, paginated := range backlinkPaginatedMap {
-		allPageSlices = append(allPageSlices, paginated.Pages)
-	}
-	allPageSlices = append(allPageSlices, paginatedBacklinks.Pages)
-
-	topicIDs := collectTopicIDsFromPages(allPageSlices...)
+	topicIDs := collectTopicIDsFromPages(lists.pageGroups...)
 	topics, err := uc.topicRepo.FindByIDsAndSpace(ctx, topicIDs, input.SpaceID)
 	if err != nil {
 		return nil, fmt.Errorf("トピックの一括取得に失敗: %w", err)
 	}
 
-	var linkedPages []*model.Page
-	var linkedTotalCount int64
-	if paginatedLinks != nil {
-		linkedPages = paginatedLinks.Pages
-		linkedTotalCount = paginatedLinks.TotalCount
-	}
-
-	backlinksPerPage := make(map[model.PageID]*EditLinkBacklinks, len(backlinkPaginatedMap))
-	for pageID, paginated := range backlinkPaginatedMap {
-		backlinksPerPage[pageID] = &EditLinkBacklinks{
-			Pages:      paginated.Pages,
-			TotalCount: paginated.TotalCount,
-		}
-	}
-
 	return &GetEditLinkDataOutput{
-		LinkedPages:       linkedPages,
-		LinkedTotalCount:  linkedTotalCount,
-		BacklinksPerPage:  backlinksPerPage,
-		PageBacklinks:     paginatedBacklinks.Pages,
-		PageBacklinkCount: paginatedBacklinks.TotalCount,
+		LinkedPages:       lists.linkedPages,
+		LinkedTotalCount:  lists.linkedTotalCount,
+		BacklinksPerPage:  lists.backlinksPerPage,
+		PageBacklinks:     lists.pageBacklinks,
+		PageBacklinkCount: lists.pageBacklinkCount,
 		LinkTopics:        topics,
 	}, nil
-}
-
-// buildExcludePageIDs は編集中のページ自身とリンク先ページからバックリンク除外用のPageIDスライスを構築する
-func buildExcludePageIDs(currentPageID model.PageID, linkedPages []*model.Page) []model.PageID {
-	ids := make([]model.PageID, 0, 1+len(linkedPages))
-	ids = append(ids, currentPageID)
-	for _, p := range linkedPages {
-		ids = append(ids, p.ID)
-	}
-	return ids
-}
-
-// collectTopicIDsFromPages は複数のページスライスからユニークなTopicIDを収集する
-func collectTopicIDsFromPages(pageSlices ...[]*model.Page) []model.TopicID {
-	topicIDSet := make(map[model.TopicID]struct{})
-	for _, pages := range pageSlices {
-		for _, p := range pages {
-			topicIDSet[p.TopicID] = struct{}{}
-		}
-	}
-	topicIDs := make([]model.TopicID, 0, len(topicIDSet))
-	for id := range topicIDSet {
-		topicIDs = append(topicIDs, id)
-	}
-	return topicIDs
 }

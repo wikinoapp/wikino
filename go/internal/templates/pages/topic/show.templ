@@ -25,80 +25,63 @@ func (d ShowData) paginationPath(page int) string {
 // Show はトピック詳細画面のコンテンツを表示します
 templ Show(data ShowData) {
 	<div class="py-4">
-		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					{
-						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier),
-					},
-				},
-			})
-
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-6">
-					<div class="flex flex-col gap-4">
-						<div class="px-4">
-							@showHeader(data)
-						</div>
-
-						<div class="px-4">
-							@components.SubNav([]components.SubNavItem{
-								{
-									Label:          templates.T(ctx, "topic_show_tab_pages"),
-									Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
-									IconName:       "file-regular",
-									ActiveIconName: "file-fill",
-									IsActive:       true,
-								},
-								{
-									Label:          templates.T(ctx, "topic_show_tab_suggestions"),
-									Path:           string(templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number)),
-									IconName:       "git-pull-request-regular",
-									ActiveIconName: "git-pull-request-fill",
-								},
-							})
-						</div>
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6">
+				<div class="flex flex-col gap-4">
+					<div class="px-4">
+						@showHeader(data)
 					</div>
 
-					if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
-						<div class="flex flex-col gap-6 px-4">
-							if len(data.PinnedPages) > 0 {
+					<div class="px-4">
+						@components.SubNav([]components.SubNavItem{
+							{
+								Label:          templates.T(ctx, "topic_show_tab_pages"),
+								Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
+								IconName:       "file-regular",
+								ActiveIconName: "file-fill",
+								IsActive:       true,
+							},
+							{
+								Label:          templates.T(ctx, "topic_show_tab_suggestions"),
+								Path:           string(templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number)),
+								IconName:       "git-pull-request-regular",
+								ActiveIconName: "git-pull-request-fill",
+							},
+						})
+					</div>
+				</div>
+
+				if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
+					<div class="flex flex-col gap-6 px-4">
+						if len(data.PinnedPages) > 0 {
+							<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+								for _, page := range data.PinnedPages {
+									@components.CardLinkPage(page, data.Space.Identifier)
+								}
+							</div>
+						}
+
+						if len(data.Pages) > 0 {
+							<div class="flex flex-col gap-6">
 								<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-									for _, page := range data.PinnedPages {
+									for _, page := range data.Pages {
 										@components.CardLinkPage(page, data.Space.Identifier)
 									}
 								</div>
-							}
 
-							if len(data.Pages) > 0 {
-								<div class="flex flex-col gap-6">
-									<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-										for _, page := range data.Pages {
-											@components.CardLinkPage(page, data.Space.Identifier)
-										}
-									</div>
-
-									@components.PaginationNav(
-										data.Pagination,
-										data.paginationPath(data.Pagination.Current-1),
-										data.paginationPath(data.Pagination.Current+1),
-									)
-								</div>
-							}
-						</div>
-					} else {
-						<div class="px-4">
-							@showEmptyState(data)
-						</div>
-					}
-				</div>
+								@components.PaginationNav(
+									data.Pagination,
+									data.paginationPath(data.Pagination.Current-1),
+									data.paginationPath(data.Pagination.Current+1),
+								)
+							</div>
+						}
+					</div>
+				} else {
+					<div class="px-4">
+						@showEmptyState(data)
+					</div>
+				}
 			</div>
 		</div>
 	</div>
@@ -108,9 +91,69 @@ templ Show(data ShowData) {
 templ showHeader(data ShowData) {
 	@components.MainTitle(components.MainTitleData{
 		Title:    data.Topic.Name,
-		Subtitle: components.SubtitleText(data.Topic.Description),
+		Subtitle: showSubtitle(data.Topic),
 		Actions:  showActions(data),
 	})
+}
+
+// showSubtitle puts the visibility and the description on the line below the title. The visibility
+// is stated here rather than beside the title because a title long enough to wrap would leave a
+// badge next to it floating against the middle of several lines; below the title it sits in the
+// same place whatever the title's length.
+//
+// The badge is laid out in the text flow rather than as a flex item, so a description too long for
+// one line wraps under the badge and continues from the left edge, instead of being pushed onto a
+// line of its own.
+//
+// This is the only place this screen says whether the topic is public: the listing cards elsewhere
+// carry the icon, but the topic's own screen carried nothing until here. The icon is decorative and
+// the word beside it is what names the state. A padlock on its own is read differently by different
+// readers, and it reaches no one using a screen reader, so the icon is left aria-hidden and the
+// label does the work for both.
+//
+// The badge is nudged down a pixel. It is an inline flex container, so the baseline it hands to the
+// line comes from its first flex item — the icon's bottom edge — rather than from its own text,
+// which leaves the badge sitting a pixel above the description beside it. Its height already
+// matches the description's line box (20px both), so the gap is not one of size. Measured against
+// the first character of the description, -1px is what brings the two centres together; middle and
+// last-baseline both overshoot by the same pixel in the other direction.
+//
+// [Ja] showSubtitle は公開範囲と説明文をタイトルの下の行に置く。公開範囲をタイトルの横ではなく
+// ここで述べるのは、折り返すほど長いタイトルの横に置いたバッジが、複数行の中央あたりに浮いて
+// しまうため。タイトルの下であれば、タイトルの長さに関わらず同じ位置に出る。
+//
+// バッジは flex アイテムではなくテキストの流れの中に並べる。そうすると、1 行に収まらない説明文は
+// バッジの下へ回り込んで左端から続き、説明文だけが独立した行へ押し出されることがない。
+//
+// この画面が公開か非公開かを述べる唯一の場所である。他所の一覧カードはアイコンを持つが、トピック
+// 自身の画面はここまで何も持っていなかった。アイコンは装飾で、状態を名指すのは横に並ぶ言葉のほう
+// である。錠前だけでは読み手によって受け取り方が変わり、スクリーンリーダーの利用者には届かない
+// ため、アイコンは aria-hidden のままにしてラベルが両方の役割を果たす。
+//
+// バッジは 1px 下げている。バッジは inline の flex コンテナであり、行へ渡すベースラインは
+// 自身のテキストではなく最初の flex アイテム (アイコンの下端) から来るため、隣の説明文より 1px 上に
+// 浮く。高さは説明文の行ボックスと既に一致している (どちらも 20px) ので、大きさの問題ではない。
+// 説明文の 1 文字目に対して実測すると、両者の中心が重なるのは -1px のときで、middle と
+// last-baseline はいずれも逆方向へ同じ 1px だけ行き過ぎる。
+templ showSubtitle(topic viewmodel.TopicForShow) {
+	// The id names the badge for the tests that read the visibility label. Matching it on its
+	// classes instead would tie them to a styling choice, and to the badge staying the only
+	// outlined one on the screen.
+	//
+	// [Ja] id は、公開範囲のラベルを読むテストのためにバッジを名指しする。クラスで特定すると、
+	// テストがスタイルの選択と、このバッジが画面で唯一の outline のバッジであり続けることに
+	// 縛られてしまう。
+	<span id="topic-visibility-badge" class="badge mr-1 gap-1 font-normal [vertical-align:-1px]" data-variant="outline">
+		@templates.DecorativeIcon(topic.IconName, "size-3.5 fill-current")
+		if topic.IsPublic {
+			{ templates.T(ctx, "topic_show_visibility_public") }
+		} else {
+			{ templates.T(ctx, "topic_show_visibility_private") }
+		}
+	</span>
+	if topic.Description != "" {
+		{ topic.Description }
+	}
 }
 
 // showActions はトピック詳細画面のアクションボタンを表示します
@@ -118,7 +161,8 @@ templ showActions(data ShowData) {
 	if data.Topic.CanCreatePage {
 		<a
 			href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
-			class="btn btn-sm rounded-full"
+			class="btn rounded-full"
+			data-size="sm"
 		>
 			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
 			{ templates.T(ctx, "topic_show_new_page") }
@@ -133,9 +177,12 @@ templ showActions(data ShowData) {
 				aria-haspopup="menu"
 				aria-controls="topic-options-dropdown-menu"
 				aria-expanded="false"
-				class="btn-sm-icon-outline border-primary rounded-full"
+				aria-label={ templates.T(ctx, "topic_show_options_aria_label") }
+				class="btn border-primary rounded-full"
+				data-variant="outline"
+				data-size="icon-sm"
 			>
-				@templates.Icon("dots-three-regular")
+				@templates.DecorativeIcon("dots-three-regular")
 			</button>
 
 			<div id="topic-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
@@ -175,7 +222,8 @@ templ showEmptyState(data ShowData) {
 		if data.Topic.CanCreatePage {
 			<a
 				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
-				class="btn-sm rounded-full"
+				class="btn rounded-full"
+				data-size="sm"
 			>
 				@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
 				{ templates.T(ctx, "topic_show_new_page") }

@@ -97,7 +97,9 @@ type DrawerOpenData struct {
 templ DrawerOpenButton(data DrawerOpenData) {
 	<button
 		type="button"
-		class="btn-sm-outline"
+		class="btn"
+		data-variant="outline"
+		data-size="sm"
 		data-drawer-open={ data.DrawerID }
 		aria-controls={ data.DrawerID }
 		aria-expanded="false"

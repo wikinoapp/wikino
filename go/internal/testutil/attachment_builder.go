@@ -118,6 +118,7 @@ type AttachmentBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
 
+	blobKey       string
 	spaceID       string
 	spaceMemberID string
 	filename      string
@@ -146,6 +147,17 @@ func (b *AttachmentBuilderDB) WithSpaceID(spaceID model.SpaceID) *AttachmentBuil
 // WithSpaceMemberID はスペースメンバーIDを設定します
 func (b *AttachmentBuilderDB) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *AttachmentBuilderDB {
 	b.spaceMemberID = string(spaceMemberID)
+	return b
+}
+
+// WithBlobKey sets the storage key of the object. A test that puts the object into a fake storage
+// needs to know the key it will be fetched with, which the builder otherwise makes up.
+//
+// [Ja] WithBlobKey はオブジェクトのストレージキーを設定します。フェイクのストレージへオブジェクト
+// を置くテストは、それが取得されるキーを知っている必要がありますが、指定しない場合その値は
+// ビルダーが作ります
+func (b *AttachmentBuilderDB) WithBlobKey(blobKey string) *AttachmentBuilderDB {
+	b.blobKey = blobKey
 	return b
 }
 
@@ -181,7 +193,7 @@ func (b *AttachmentBuilderDB) Build() model.AttachmentID {
 		`INSERT INTO active_storage_blobs (key, filename, content_type, service_name, byte_size, created_at)
 		 VALUES ($1, $2, $3, $4, $5, $6)
 		 RETURNING id`,
-		"test-key-"+now.Format("20060102150405.000000000"), b.filename, b.contentType, "local", b.byteSize, now,
+		b.resolvedBlobKey(now), b.filename, b.contentType, "local", b.byteSize, now,
 	).Scan(&blobID)
 	if err != nil {
 		b.t.Fatalf("active_storage_blob作成に失敗: %v", err)
@@ -214,4 +226,16 @@ func (b *AttachmentBuilderDB) Build() model.AttachmentID {
 	}
 
 	return model.AttachmentID(attachmentID)
+}
+
+// resolvedBlobKey returns the storage key to give the blob: the one the caller asked for, or a
+// unique one built from the time it was created.
+//
+// [Ja] resolvedBlobKey は blob に与えるストレージキーを返します。呼び出し側が指定したキーか、
+// 指定が無ければ作成時刻から組み立てたユニークなキーです
+func (b *AttachmentBuilderDB) resolvedBlobKey(now time.Time) string {
+	if b.blobKey != "" {
+		return b.blobKey
+	}
+	return "test-key-" + now.Format("20060102150405.000000000")
 }

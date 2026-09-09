@@ -2,10 +2,13 @@ package page_test
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -20,10 +23,24 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // setupHandler はテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
+	t.Helper()
+
+	return setupHandlerWithDB(t, nil, queries)
+}
+
+// setupHandlerWithDB builds the handler with the *sql.DB the UseCases that manage their own
+// transaction need. Tests driven from a transaction-scoped Queries pass nil, because they never
+// reach those UseCases.
+//
+// [Ja] setupHandlerWithDB は、自前でトランザクションを管理する UseCase が必要とする *sql.DB を
+// 渡してハンドラーを生成する。トランザクションに紐づく Queries で駆動するテストはそれらの
+// UseCase に到達しないため nil を渡す。
+func setupHandlerWithDB(t *testing.T, db *sql.DB, queries *query.Queries) *page.Handler {
 	t.Helper()
 
 	cfg := &config.Config{
@@ -64,11 +81,21 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
 	attachmentRepo := repository.NewAttachmentRepository(queries)
+
+	getPageShowUC := usecase.NewGetPageShowUsecase(
+		spaceRepo,
+		spaceMemberRepo,
+		pageRepo,
+		topicRepo,
+		topicMemberRepo,
+		attachmentRepo,
+	)
+
 	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(queries)
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 
 	publishPageUC := usecase.NewPublishPageUsecase(
-		nil,
+		db,
 		spaceRepo,
 		spaceMemberRepo,
 		pageRepo,
@@ -83,12 +110,26 @@ func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 		pageUpdateValidator,
 	)
 
+	createPageUC := usecase.NewCreatePageUsecase(
+		db,
+		spaceRepo,
+		spaceMemberRepo,
+		topicRepo,
+		topicMemberRepo,
+		pageRepo,
+		pageEditorRepo,
+		draftPageRepo,
+		attachmentRepo,
+	)
+
 	return page.NewHandler(
 		cfg,
 		flashMgr,
+		getPageShowUC,
 		getPageDetailUC,
 		getEditLinkDataUC,
 		publishPageUC,
+		createPageUC,
 	)
 }
 
@@ -190,16 +231,17 @@ func TestEdit(t *testing.T) {
 	}
 
 	// The default layout's content wrapper reserves bottom-nav height plus the bottom safe-area
-	// inset as bottom padding below md so the fixed nav doesn't cover the last content even when a
-	// PWA standalone display lifts the nav above the home indicator. Match the full opening tag so
-	// the assertion stays pinned to the wrapper.
+	// inset as bottom padding below md, so the fixed nav doesn't cover the last content even when a
+	// PWA standalone display lifts the nav above the home indicator. The padding is dropped at md to
+	// match the width where the bottom bar stops rendering. Match the full opening tag so the
+	// assertion stays pinned to the wrapper.
 	//
 	// [Ja] default レイアウトのコンテンツラッパーが、md 未満で固定ナビに最下部コンテンツが隠れない
 	// よう下部ナビの高さ + 下端 safe-area 分の下部余白を確保していること (PWA スタンドアロン表示で
-	// ナビをホームインジケータの上へ押し上げても足りるようにする)。ラッパーに固定するため開始タグ
-	// 全体で照合する。
+	// ナビをホームインジケータの上へ押し上げても足りるようにする)。下部バーが描画されなくなる幅と
+	// 揃えて md で余白を外す。ラッパーに固定するため開始タグ全体で照合する。
 	if !strings.Contains(body, `<div class="flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0">`) {
-		t.Error("content wrapper bottom-nav padding class not found in response")
+		t.Error("content wrapper padding class not found in response")
 	}
 
 	// The fixed bottom-nav wrapper carries pb-safe so a PWA standalone display lifts the nav pill
@@ -263,6 +305,96 @@ func TestEdit(t *testing.T) {
 	// globe-regularのSVGパスデータに含まれる固有の文字列で検証
 	if !strings.Contains(body, "a87.61,87.61") {
 		t.Error("topic visibility icon (globe) not found in breadcrumb")
+	}
+
+	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
+	// link has to bypass it) and keeps this screen's wide max-w-6xl content width.
+	//
+	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の広い本文幅 max-w-6xl も維持する。
+	if !strings.Contains(body, `<div class="max-w-6xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-6xl content width")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+	}
+}
+
+// spaces.identifier is citext, so a request spelling it differently reaches the same space. Every
+// link on the screen is built from the stored identifier, so the requested spelling never leaks
+// into the markup and one screen's links all share a single form. The editor exercises the widest
+// set of link builders (breadcrumb, global nav search path, draft-save endpoints).
+//
+// [Ja] spaces.identifier は citext のため、表記の異なるリクエストでも同じスペースに解決される。
+// 画面内のリンクはすべて保存済みの識別子から組み立てるので、リクエストの表記がマークアップへ漏れず、
+// 1 画面のリンクの表記が 1 つに揃う。編集画面はリンク組み立ての種類が最も多い (パンくず・グローバル
+// ナビの検索パス・下書き保存のエンドポイント)。
+func TestEdit_BuildsLinksFromStoredIdentifier(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("stored-case-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Stored Case Page").
+		WithBody("body").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/STORED-CASE-SPACE/pages/1/edit", map[string]string{
+		"space_identifier": "STORED-CASE-SPACE",
+		"page_number":      "1",
+	})
+	req.Header.Set("Accept-Language", "ja")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	if strings.Contains(body, "/s/STORED-CASE-SPACE") {
+		t.Error("links must not carry the requested spelling of the space identifier")
+	}
+	for _, want := range []string{
+		`href="/s/stored-case-space"`,
+		`content="/search?q=space:stored-case-space"`,
+		`/s/stored-case-space/pages/1`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
 	}
 }
 
@@ -450,18 +582,39 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 		t.Error("draft list drawer open button not found")
 	}
 
-	// The page editor renders neither the global sidebar nor any button that opens it (the TopNav
-	// toggle and the mobile BottomNav menu button), since the sidebar is hidden here.
-	// [Ja] 編集画面ではグローバルサイドバーも、それを開くボタン (TopNav の開閉ボタンとモバイルの
-	// BottomNav メニューボタン) も描画しないこと (ここではサイドバーを非表示にするため)
+	// The removed sidebar leaves no trace: no off-canvas sidebar element, no BreadcrumbHeader toggle,
+	// and no sidebar-opening dispatch. The in-screen draft navigation is the left column, not a
+	// sidebar.
+	// [Ja] 廃止したサイドバーの痕跡が残っていないこと。off-canvas のサイドバー要素・BreadcrumbHeader の
+	// 開閉ボタン・サイドバーを開く dispatch のいずれも無い。画面内の下書きナビゲーションは
+	// サイドバーではなく左カラムが担う。
 	if strings.Contains(body, `id="sidebar"`) {
 		t.Error("global sidebar should not be rendered on the page editor")
 	}
 	if strings.Contains(body, "サイドバーの開閉") {
-		t.Error("TopNav sidebar toggle button should not be rendered on the page editor")
+		t.Error("BreadcrumbHeader sidebar toggle button should not be rendered on the page editor")
 	}
 	if strings.Contains(body, "basecoat:sidebar") {
-		t.Error("no sidebar-opening button should be rendered on the page editor (TopNav or BottomNav)")
+		t.Error("no sidebar-opening button should be rendered on the page editor")
+	}
+
+	// The editor is wired to the global navigation like every other page (top bar + bottom bar).
+	// [Ja] 編集画面も他のページと同様にグローバルナビ (上部バー + 下部バー) へ結線されていること
+	if !strings.Contains(body, `aria-label="グローバルナビゲーション"`) {
+		t.Error("global navigation top bar should be rendered on the page editor")
+	}
+
+	// The editor switches at md like every other screen: the top bar appears at md and the bottom bar
+	// stays below it. Match the full class attribute of each <nav> so the assertions stay pinned to
+	// the nav wrappers.
+	//
+	// [Ja] 編集画面も他の画面と同じく md で切り替わる。上部バーは md 以上で現れ、下部バーはそれ未満で
+	// 残る。各 <nav> の class 属性全体で照合し、ナビのラッパーに固定する。
+	if !strings.Contains(body, `<nav class="shrink-0 hidden md:flex"`) {
+		t.Error("global navigation top bar should switch at md on the page editor")
+	}
+	if !strings.Contains(body, `<nav class="md:hidden"`) {
+		t.Error("global navigation bottom bar should switch at md on the page editor")
 	}
 }
 
@@ -827,6 +980,183 @@ func TestEdit_InvalidPageNumber(t *testing.T) {
 	}
 }
 
+// TestEdit_RelatedPagePagination pins the editor-specific full-page fallback: the link list follows
+// the member's draft, all three listing states reach their requested slices and malformed, stale,
+// or cross-slice state is rejected at the HTTP boundary.
+//
+// [Ja] TestEdit_RelatedPagePagination は編集画面固有のフルページフォールバックを固定する。リンク一覧は
+// メンバーの下書きを参照し、3 一覧すべてが指定スライスへ到達し、不正・失効・別スライスを指す状態は
+// HTTP 境界で拒否される。
+func TestEdit_RelatedPagePagination(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("edit-related-pagination@example.com").
+		WithAtname("editrelatedpagination").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("edit-related-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	baseTime := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	linkedCount := int(viewmodel.LinkLimit + 10*viewmodel.RelatedPageFollowingLimit + 1)
+	linkedPageIDs := make([]model.PageID, 0, linkedCount)
+	for i := range linkedCount {
+		linkedPageIDs = append(linkedPageIDs, testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(100+i)).
+			WithTitle(fmt.Sprintf("Draft Linked Page %02d", i)).
+			WithModifiedAt(baseTime.Add(time.Duration(i)*time.Hour)).
+			WithLinkedPageIDs([]model.PageID{}).
+			Build())
+	}
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Stored Editor Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft Editor Page").
+		WithLinkedPageIDs(linkedPageIDs).
+		Build()
+
+	selectedLinkedPageIndex := linkedCount - 1 - int(viewmodel.LinkLimit)
+	selectedLinkedPageID := linkedPageIDs[selectedLinkedPageIndex]
+	selectedLinkedPageNumber := model.PageNumber(100 + selectedLinkedPageIndex)
+	for i := range int(viewmodel.BacklinkLimit + viewmodel.RelatedPageFollowingLimit + 1) {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(1000 + i)).
+			WithTitle(fmt.Sprintf("Nested Backlink %02d", i)).
+			WithModifiedAt(baseTime.Add(time.Duration(100+i) * time.Hour)).
+			WithLinkedPageIDs([]model.PageID{selectedLinkedPageID}).
+			Build()
+	}
+	for i := range int(viewmodel.PageBacklinkLimit + viewmodel.RelatedPageFollowingLimit + 1) {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(2000 + i)).
+			WithTitle(fmt.Sprintf("Page Backlink %02d", i)).
+			WithModifiedAt(baseTime.Add(time.Duration(200+i) * time.Hour)).
+			WithLinkedPageIDs([]model.PageID{pageID}).
+			Build()
+	}
+
+	handler := setupHandler(t, queries)
+	tests := []struct {
+		name         string
+		rawQuery     string
+		wantStatus   int
+		wantContains []string
+	}{
+		{
+			name: "下書き由来の3一覧で2ページ目と次リンクを描画する",
+			rawQuery: fmt.Sprintf(
+				"links_page=2&linked_page_number=%d&linked_backlinks_page=2&backlinks_page=2",
+				selectedLinkedPageNumber,
+			),
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf("Draft Linked Page %02d", selectedLinkedPageIndex),
+				fmt.Sprintf("Nested Backlink %02d", viewmodel.BacklinkLimit),
+				fmt.Sprintf("Page Backlink %02d", viewmodel.PageBacklinkLimit),
+				`href="/s/edit-related-space/pages/1/edit?backlinks_page=2&amp;links_page=3#page-link-list-content"`,
+				fmt.Sprintf(`href="/s/edit-related-space/pages/1/edit?backlinks_page=2&amp;linked_backlinks_page=3&amp;linked_page_number=%[1]d&amp;links_page=2#page-link-list-item-%[1]d"`, selectedLinkedPageNumber),
+				fmt.Sprintf(`href="/s/edit-related-space/pages/1/edit?backlinks_page=3&amp;linked_backlinks_page=2&amp;linked_page_number=%d&amp;links_page=2#page-backlink-list-content"`, selectedLinkedPageNumber),
+			},
+		},
+		{
+			name:       "1ページ単位の編集画面で下書き固有の11ページ目と次リンクを描画する",
+			rawQuery:   "context=edit_paginated&links_page=11",
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf("Draft Linked Page %02d", linkedCount-1-int(viewmodel.LinkLimit+9*viewmodel.RelatedPageFollowingLimit)),
+				`name="context" value="edit_paginated"`,
+				`hx-get="/s/edit-related-space/pages/1/link_list?context=edit_paginated&amp;page=12"`,
+				`hx-target="#page-link-list-content"`,
+				`href="/s/edit-related-space/pages/1/edit?context=edit_paginated&amp;links_page=12#page-link-list-content"`,
+			},
+		},
+		{
+			name:       "数値でない対象カード番号は404",
+			rawQuery:   "linked_page_number=abc",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "総ページ数を超えた一覧ページは404",
+			rawQuery:   "links_page=999",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "累積取得上限を超えた一覧ページは404",
+			rawQuery:   fmt.Sprintf("links_page=%d", usecase.MaxCumulativeRelatedPagePages+1),
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name: "描画中の親ページにないリンク先カードは404",
+			rawQuery: fmt.Sprintf(
+				"links_page=2&linked_page_number=%d&linked_backlinks_page=2",
+				100+linkedCount-1,
+			),
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newRequestWithChiParams(t, http.MethodGet, "/s/edit-related-space/pages/1/edit", map[string]string{
+				"space_identifier": "edit-related-space",
+				"page_number":      "1",
+			})
+			req.URL.RawQuery = tt.rawQuery
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+			ctx = i18n.SetLocale(ctx, i18n.LangJa)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Edit(rr, req)
+
+			if rr.Code != tt.wantStatus {
+				t.Errorf("status code = %d, want %d", rr.Code, tt.wantStatus)
+			}
+			body := rr.Body.String()
+			for _, want := range tt.wantContains {
+				if !strings.Contains(body, want) {
+					t.Errorf("response does not contain %q", want)
+				}
+			}
+		})
+	}
+}
+
 func TestEdit_LinkListAutoReload(t *testing.T) {
 	t.Parallel()
 
@@ -886,20 +1216,45 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 		t.Error("page-link-list container not found in response")
 	}
 
-	// htmxのhx-trigger属性が含まれていること
-	// この属性により、下書き保存後にリンク一覧がOOBスワップで自動再読み込みされる
+	// The dedicated refresh trigger survives the two list containers' OOB content swaps.
+	//
+	// [Ja] 専用の再取得トリガーは、2 つの一覧コンテナの OOB 内容スワップ後も残る。
+	if !strings.Contains(body, `id="page-draft-refresh-trigger"`) {
+		t.Error("dedicated draft refresh trigger not found")
+	}
+
+	// hx-trigger reloads the lists through their OOB response after a draft is saved.
+	//
+	// [Ja] hx-trigger は下書き保存後、OOB 応答を通じて一覧を再取得する。
 	if !strings.Contains(body, `hx-trigger="draft-autosaved from:window"`) {
 		t.Error("hx-trigger attribute not found - link list auto-reload will not work")
 	}
 
-	// hx-getでエンドポイントが指定されていること
+	// hx-get points at the draft fragment endpoint.
+	//
+	// [Ja] hx-get は下書きフラグメントエンドポイントを指す。
 	if !strings.Contains(body, "/s/linklist-reload-space/pages/1/draft_page") {
 		t.Error("draft_page endpoint URL not found in response")
 	}
 
-	// hx-swap="none"が指定されていること（OOBスワップのみで更新するため）
+	// hx-swap=none leaves the main target untouched and applies only the OOB swaps.
+	//
+	// [Ja] hx-swap=none によりメインターゲットは変更せず、OOB スワップだけを適用する。
 	if !strings.Contains(body, `hx-swap="none"`) {
 		t.Error("hx-swap=none not found - OOB swap will not work correctly")
+	}
+
+	// The shared related-page state ships with the initial render and outside both list containers,
+	// so the first "load more" already has somewhere to read the other listings from and the content
+	// swaps cannot take it down.
+	//
+	// [Ja] 共有の関連ページ状態は初回描画から、かつ 2 つの一覧コンテナの外に置かれる。最初の
+	// 「もっと見る」の時点で他の一覧を読む先があり、内容スワップで巻き添えに消えることもない。
+	if !strings.Contains(body, `id="page-related-page-state"`) {
+		t.Error("shared related-page state not found")
+	}
+	if !strings.Contains(body, `hx-include="#page-related-page-state"`) {
+		t.Error("the draft refresh does not read the shared related-page state")
 	}
 
 	// The link heading (h2) sits outside #page-link-list (out of the OOB swap target) and is always
@@ -992,8 +1347,17 @@ func TestEdit_PreviewTab(t *testing.T) {
 	// [Ja] タブコンテナが min-w-0 を持ち、プレビューの <pre> の overflow-auto が長いコード行を
 	// 収める (grid アイテムが中央カラムを超えて広がらない) こと。開始タグ全体で照合し、min-w-0 が
 	// このコンテナに付いていることを担保する (min-w-0 は他の要素にも現れる)。
-	if !strings.Contains(body, `<div class="tabs gap-4 min-w-0" id="page-edit-tabs">`) {
+	if !strings.Contains(body, `<div class="tabs grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-4 min-w-0" id="page-edit-tabs">`) {
 		t.Error("tabs container is missing min-w-0 (guards preview code block overflow)")
+	}
+
+	// Basecoat 1.0 styles the tab list only as a direct child of .tabs, so the list must not be
+	// wrapped in another element.
+	//
+	// [Ja] Basecoat 1.0 はタブリストを .tabs の直接の子としてのみスタイルするため、リストを
+	// 別の要素で包んではいけない。
+	if !strings.Contains(body, `id="page-edit-tabs"><nav`) {
+		t.Error("tab list is not a direct child of the tabs container")
 	}
 	if !strings.Contains(body, `id="page-edit-tab-edit"`) {
 		t.Error("edit tab not found in response")
@@ -1147,10 +1511,11 @@ func TestEdit_KeyboardHint(t *testing.T) {
 	}
 
 	// Each chip tints itself in its host button's foreground color (foreground-colored text over a
-	// low-opacity foreground background): publish tints btn-primary, save tints btn-secondary.
+	// low-opacity foreground background): publish tints the default primary .btn, save tints the
+	// secondary one.
 	//
 	// [Ja] 各チップはホストボタンの前景色で淡く染める (前景色の文字 + 低不透明度の前景色背景)。
-	// 公開は btn-primary を、保存は btn-secondary を染めること。
+	// 公開は既定の primary バリアントの .btn を、保存は secondary バリアントを染めること。
 	if !strings.Contains(body, "bg-primary-foreground/20 text-primary-foreground") {
 		t.Error("publish keyboard hint tinted color classes (bg-primary-foreground/20 text-primary-foreground) not found in response")
 	}
@@ -1405,8 +1770,11 @@ func TestEdit_ZenMode(t *testing.T) {
 			// [Ja] Zenトグルは lg 未満で非表示にし (モバイルには畳むサイドカラムが無く、Zen ON の
 			// ままトグルが無いとモバイルのユーザーが戻せなくなる)、lg で inline-flex に戻す。
 			// トグルボタンに固定するため class 属性全体で検証する。
-			if !strings.Contains(body, `class="hidden lg:inline-flex btn-sm-outline rounded-full w-fit"`) {
+			if !strings.Contains(body, `class="hidden lg:inline-flex btn rounded-full w-fit justify-self-end"`) {
 				t.Error("zen mode toggle lg-only display class not found in response")
+			}
+			if !strings.Contains(body, `data-variant="outline" data-size="sm" data-zen-mode-toggle`) {
+				t.Error("zen mode toggle Basecoat variant and size attributes not found in response")
 			}
 		})
 	}
@@ -1633,5 +2001,260 @@ func TestEdit_SuggestionMode(t *testing.T) {
 	// 通常の下書きアラートが表示されていないことを確認（編集提案メッセージが代わりに表示される）
 	if strings.Contains(body, "現在下書きを表示しています") {
 		t.Error("normal draft alert should not be shown in suggestion mode")
+	}
+}
+
+// The caret half of the split save-draft button is icon-only, so its accessible name comes from
+// the translated aria-label rather than from its content.
+//
+// [Ja] 下書き保存の分割ボタンのキャレット側はアイコンのみのため、アクセシブルネームは内容では
+// なく翻訳済みの aria-label が供給する。
+func TestEdit_下書き保存オプションのトリガーにアクセシブルネームがある(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		locale    string
+		wantLabel string
+	}{
+		{
+			name:      "日本語",
+			locale:    i18n.LangJa,
+			wantLabel: "下書き保存のオプション",
+		},
+		{
+			name:      "英語",
+			locale:    i18n.LangEn,
+			wantLabel: "Save draft options",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			queries := testutil.QueriesWithTx(tx)
+
+			identifier := "save-draft-optlabel-" + tt.locale
+			atname := "savedraftoptlabel" + tt.locale
+
+			userID := testutil.NewUserBuilder(t, tx).
+				WithEmail(identifier + "@example.com").
+				WithAtname(atname).
+				Build()
+			spaceID := testutil.NewSpaceBuilder(t, tx).
+				WithIdentifier(identifier).
+				Build()
+			spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithUserID(userID).
+				Build()
+			topicID := testutil.NewTopicBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithNumber(1).
+				Build()
+			testutil.NewTopicMemberBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithSpaceMemberID(spaceMemberID).
+				Build()
+			testutil.NewPageBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithNumber(1).
+				WithTitle("Save Draft Options Page").
+				WithBody("body").
+				Build()
+
+			handler := setupHandler(t, queries)
+
+			req := newRequestWithChiParams(t, http.MethodGet, "/s/"+identifier+"/pages/1/edit", map[string]string{
+				"space_identifier": identifier,
+				"page_number":      "1",
+			})
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+			ctx = i18n.SetLocale(ctx, tt.locale)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Edit(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+			}
+
+			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
+				t.Errorf("下書き保存オプションのトリガーに aria-label %q が含まれていない", tt.wantLabel)
+			}
+		})
+	}
+}
+
+// TestEdit_RelatedPageSections fixes that the editor lays its listings out in the same three
+// sections as the page detail screen: the linked pages, their backlinks grouped per linked page, and
+// this page's own backlinks. The section wrappers keep the not-has hooks that hide a section while
+// its container is empty, because the draft-autosave swap refills those containers without
+// re-rendering the headings.
+//
+// [Ja] TestEdit_RelatedPageSections は、編集画面の一覧がページ表示画面と同じ 3 セクションに並ぶことを
+// 固定する。リンク先ページ、リンク先ページごとに束ねたそのバックリンク、そしてこのページ自身の
+// バックリンクである。セクションのラッパーは、コンテナが空の間セクションを隠す not-has のフックを
+// 保つ。下書き自動保存のスワップは見出しを描き直さずにコンテナだけを詰め直すためである。
+func TestEdit_RelatedPageSections(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("edit-sections@example.com").
+		WithAtname("editsections").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("edit-sections-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+
+	// One linked page is linked back to, the other is not, so the section holds exactly one group.
+	//
+	// [Ja] リンク先ページのうち片方にはバックリンクがあり、もう片方には無い。セクションにはちょうど
+	// 1 つのグループが残る。
+	linkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Linked Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	lonelyLinkedPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Lonely Linked Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Edited Page").
+		WithBody("body").
+		WithLinkedPageIDs([]model.PageID{linkedPageID, lonelyLinkedPageID}).
+		Build()
+
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Related Link Page").
+		WithLinkedPageIDs([]model.PageID{linkedPageID}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(5).
+		WithTitle("Backlink Page").
+		WithLinkedPageIDs([]model.PageID{pageID}).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/edit-sections-space/pages/1/edit", map[string]string{
+		"space_identifier": "edit-sections-space",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		"関連リンク",
+		"このページが直接リンクしているページ",
+		"リンク先のページからさらに辿れるページ",
+		"このページにリンクしているページ",
+		`id="page-link-list-item-2"`,
+		`not-has-[#page-related-link-list>*]:hidden`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+
+	// A linked page nothing links back to gets no group.
+	//
+	// [Ja] どこからもリンクされていないリンク先ページにはグループが付かない。
+	if strings.Contains(body, `id="page-link-list-item-3"`) {
+		t.Error("a linked page without backlinks should not get a related-links group")
+	}
+
+	// The three sections appear in links, related links, and backlinks order. The backlinks of a
+	// linked page sit in the related-links section rather than beside one of the links' cards.
+	//
+	// [Ja] 3 セクションはリンク、関連リンク、バックリンクの順に並ぶ。リンク先ページのバックリンクは
+	// リンクセクションのカードの隣ではなく、関連リンクのセクションに置かれる。
+	linksIndex := strings.Index(body, `id="page-link-list-content"`)
+	relatedIndex := strings.Index(body, `id="page-related-link-list"`)
+	backlinksIndex := strings.Index(body, `id="page-backlink-list-content"`)
+	if linksIndex == -1 || relatedIndex == -1 || backlinksIndex == -1 {
+		t.Fatalf(
+			"section positions = links:%d related-links:%d backlinks:%d; all three sections should be rendered",
+			linksIndex,
+			relatedIndex,
+			backlinksIndex,
+		)
+	}
+	if linksIndex >= relatedIndex || relatedIndex >= backlinksIndex {
+		t.Errorf(
+			"section positions = links:%d related-links:%d backlinks:%d, want links < related-links < backlinks",
+			linksIndex,
+			relatedIndex,
+			backlinksIndex,
+		)
+	}
+	if got := strings.Index(body, "Related Link Page"); got < relatedIndex {
+		t.Errorf("the backlink of a linked page is rendered at %d, before the related-links section at %d", got, relatedIndex)
+	}
+
+	// Every section carries a description beside its heading, as on the page detail screen. The
+	// editor keeps its own smaller heading size, so the shared component renders the h2 with the
+	// base classes alone here.
+	//
+	// [Ja] どのセクションも見出しの脇に説明を持ち、ページ表示画面と同じである。見出しの大きさは編集
+	// 画面のものを保つため、共有コンポーネントはここでは基本のクラスだけで h2 を描画する。
+	for _, heading := range []string{"リンク", "関連リンク", "バックリンク"} {
+		marker := fmt.Sprintf(`<h2 class="font-bold antialiased">%s</h2>`, heading)
+		headingIndex := strings.Index(body, marker)
+		if headingIndex == -1 {
+			t.Errorf("heading %q is not rendered", heading)
+			continue
+		}
+		if !strings.HasPrefix(body[headingIndex+len(marker):], `<p class="text-sm text-muted-foreground">`) {
+			t.Errorf("heading %q is not followed by a description", heading)
+		}
 	}
 }

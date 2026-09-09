@@ -27,12 +27,13 @@ type KeyboardHintData struct {
 	// ColorClass overrides the chip's background and text so the chip tints itself in the host
 	// button's foreground color: the chip text uses the button's foreground color and the chip
 	// background uses a low-opacity version of it, making the chip a subtle block in the same hue as
-	// the label (e.g. a btn-primary host passes "bg-primary-foreground/20 text-primary-foreground").
+	// the label (e.g. a .btn host on the default primary variant passes
+	// "bg-primary-foreground/20 text-primary-foreground").
 	// The classes must be literals at the call site so Tailwind's source scanner emits them.
 	//
 	// [Ja] ColorClass はチップの背景色と文字色を上書きし、ホストとなるボタンの前景色でチップを淡く
 	// 染める。チップの文字はボタンの前景色を使い、チップの背景はその前景色を低い不透明度にしたものを
-	// 使うことで、チップをラベルと同系色の控えめなブロックとして見せる (例: btn-primary のボタンは
+	// 使うことで、チップをラベルと同系色の控えめなブロックとして見せる (例: 既定の primary バリアントの .btn は
 	// "bg-primary-foreground/20 text-primary-foreground" を渡す)。Tailwind のソーススキャナが
 	// 出力できるよう、クラスは呼び出し側でリテラルとして渡すこと。
 	ColorClass string

@@ -2,6 +2,7 @@ package attachment_og_image_test
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -51,6 +52,70 @@ func newOgImageHandler(t *testing.T, attachmentRepo *repository.AttachmentReposi
 	return attachment_og_image.NewHandler(builder, uc)
 }
 
+// referencedAttachmentParams is the input for newReferencedAttachment. Only the fields that the
+// og:image cases actually vary are named here, so a case reads as "which topic visibility, and
+// is the page trashed".
+//
+// [Ja] referencedAttachmentParams は newReferencedAttachment の入力。og:image のケースが実際に
+// 変える項目だけを名前付きで並べ、「トピックの visibility は何か」「ページはゴミ箱に入っているか」
+// だけを読めば済むようにする。
+type referencedAttachmentParams struct {
+	// prefix seeds the user / space identifiers, so it must be unique per case.
+	// [Ja] prefix はユーザー・スペースの識別子の種になるため、ケースごとに一意にする。
+	prefix     string
+	visibility model.TopicVisibility
+	trashed    bool
+	// filename and contentType fall back to the AttachmentBuilder defaults when empty.
+	// [Ja] filename と contentType は空のとき AttachmentBuilder の既定値になる。
+	filename    string
+	contentType string
+}
+
+// newReferencedAttachment creates a space, a topic, a page, and an attachment referenced by
+// that page, then returns the attachment id.
+//
+// [Ja] newReferencedAttachment はスペース・トピック・ページと、そのページから参照される
+// 添付ファイルを作成し、添付ファイルの ID を返す。
+func newReferencedAttachment(t *testing.T, tx *sql.Tx, params referencedAttachmentParams) model.AttachmentID {
+	t.Helper()
+
+	spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, params.prefix)
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("topic").
+		WithVisibility(int32(params.visibility)).
+		Build()
+
+	pageBuilder := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Page")
+	if params.trashed {
+		pageBuilder = pageBuilder.WithTrashed()
+	}
+	pageID := pageBuilder.Build()
+
+	attachmentBuilder := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID)
+	if params.filename != "" {
+		attachmentBuilder = attachmentBuilder.WithFilename(params.filename)
+	}
+	if params.contentType != "" {
+		attachmentBuilder = attachmentBuilder.WithContentType(params.contentType)
+	}
+	attachmentID := attachmentBuilder.Build()
+
+	parRepo := repository.NewPageAttachmentReferenceRepository(testutil.QueriesWithTx(tx))
+	if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
+		t.Fatalf("CreateBatch() error = %v", err)
+	}
+
+	return attachmentID
+}
+
 func TestShow(t *testing.T) {
 	t.Parallel()
 
@@ -59,40 +124,13 @@ func TestShow(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		attachmentRepo := repository.NewAttachmentRepository(q)
-		parRepo := repository.NewPageAttachmentReferenceRepository(q)
 
-		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("ogimg-show-1@example.com").
-			WithAtname("ogimgshow1").
-			Build()
-		spaceID := testutil.NewSpaceBuilder(t, tx).
-			WithIdentifier("ogimg-show-1").
-			Build()
-		spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithUserID(userID).
-			Build()
-		topicID := testutil.NewTopicBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithNumber(1).
-			WithName("public").
-			WithVisibility(int32(model.TopicVisibilityPublic)).
-			Build()
-		pageID := testutil.NewPageBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithNumber(1).
-			WithTitle("Page").
-			Build()
-		attachmentID := testutil.NewAttachmentBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithSpaceMemberID(spaceMemberID).
-			WithFilename("og.png").
-			WithContentType("image/png").
-			Build()
-		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
-		}
+		attachmentID := newReferencedAttachment(t, tx, referencedAttachmentParams{
+			prefix:      "ogimg-show-1",
+			visibility:  model.TopicVisibilityPublic,
+			filename:    "og.png",
+			contentType: "image/png",
+		})
 
 		h := newOgImageHandler(t, attachmentRepo, true)
 		req, rr := newRequestWithAttachmentID(t, string(attachmentID))
@@ -124,38 +162,36 @@ func TestShow(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		attachmentRepo := repository.NewAttachmentRepository(q)
-		parRepo := repository.NewPageAttachmentReferenceRepository(q)
 
-		userID := testutil.NewUserBuilder(t, tx).
-			WithEmail("ogimg-show-2@example.com").
-			WithAtname("ogimgshow2").
-			Build()
-		spaceID := testutil.NewSpaceBuilder(t, tx).
-			WithIdentifier("ogimg-show-2").
-			Build()
-		spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithUserID(userID).
-			Build()
-		topicID := testutil.NewTopicBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithNumber(1).
-			WithName("private").
-			WithVisibility(int32(model.TopicVisibilityPrivate)).
-			Build()
-		pageID := testutil.NewPageBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithTopicID(topicID).
-			WithNumber(1).
-			WithTitle("Page").
-			Build()
-		attachmentID := testutil.NewAttachmentBuilder(t, tx).
-			WithSpaceID(spaceID).
-			WithSpaceMemberID(spaceMemberID).
-			Build()
-		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+		attachmentID := newReferencedAttachment(t, tx, referencedAttachmentParams{
+			prefix:     "ogimg-show-2",
+			visibility: model.TopicVisibilityPrivate,
+		})
+
+		h := newOgImageHandler(t, attachmentRepo, true)
+		req, rr := newRequestWithAttachmentID(t, string(attachmentID))
+		h.Show(rr, req)
+
+		if rr.Code != http.StatusNotFound {
+			t.Errorf("status code = %d, want %d", rr.Code, http.StatusNotFound)
 		}
+		if rr.Header().Get("Location") != "" {
+			t.Errorf("Location header should be empty, got %q", rr.Header().Get("Location"))
+		}
+		assertNoStoreCacheControl(t, rr)
+	})
+
+	t.Run("異常系: 公開トピックのゴミ箱に入ったページのみから参照されている添付は 404 を返す", func(t *testing.T) {
+		t.Parallel()
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		attachmentRepo := repository.NewAttachmentRepository(q)
+
+		attachmentID := newReferencedAttachment(t, tx, referencedAttachmentParams{
+			prefix:     "ogimg-show-3",
+			visibility: model.TopicVisibilityPublic,
+			trashed:    true,
+		})
 
 		h := newOgImageHandler(t, attachmentRepo, true)
 		req, rr := newRequestWithAttachmentID(t, string(attachmentID))

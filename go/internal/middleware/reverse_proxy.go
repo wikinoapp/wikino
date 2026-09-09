@@ -100,8 +100,32 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// /s/:id/topics/... などのサブパスにはマッチさせず、それらは
 	// 下記の各パターンで処理する。
 	{pattern: regexp.MustCompile(`^/s/[^/]+$`), methods: []string{http.MethodGet}},
+	// Topic creation: the form (GET and HEAD /s/:identifier/topics/new) and the create itself
+	// (POST /s/:identifier/topics). Each is restricted to the methods its Go route answers, so the
+	// other methods keep reaching the Rails version.
+	//
+	// [Ja] トピックの作成。フォーム (GET・HEAD /s/:identifier/topics/new) と作成処理 (POST
+	// /s/:identifier/topics)。それぞれ Go ルートが応答するメソッドに限定し、他のメソッドは
+	// 従来どおり Rails 版へ届くようにする。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
+	// General settings of a topic: the screen (GET and HEAD) and the save (PATCH; POST before
+	// Method Override). The rest of the topic settings, including the settings screen the
+	// breadcrumb leads back to, keeps reaching the Rails version.
+	//
+	// [Ja] トピックの一般設定。画面 (GET・HEAD) と保存処理 (PATCH。Method Override 変換前は POST)。
+	// パンくずが戻る設定画面を含め、トピック設定の残りは従来どおり Rails 版へ届く。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/general$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
+	// Page creation entry point (GET /s/:identifier/topics/:number/pages/new). It creates a page
+	// and redirects to its edit screen. The Go route is GET-only, so restrict the method and let
+	// the other methods keep reaching the Rails version.
+	//
+	// [Ja] ページ新規作成の入口 (GET /s/:identifier/topics/:number/pages/new)。ページを作成して
+	// 編集画面へリダイレクトする。Go ルートは GET のみなのでメソッドを限定し、他のメソッドは
+	// 従来どおり Rails 版へ届くようにする。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/pages/new$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
 	// Preview fragment (POST /s/:identifier/pages/:number/preview). The Go route is
@@ -127,12 +151,34 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// RoutingError になる。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revisions/[^/]+$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revisions/[^/]+/restore$`), methods: []string{http.MethodPost}},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{"PATCH"}},
+	// Page detail screen (GET or HEAD) and page update (PATCH; POST before Method Override) on
+	// /s/:identifier/pages/:number. The trailing "$" keeps sub-paths such as /edit and
+	// /preview out of this pattern; they have their own entries above.
+	//
+	// [Ja] ページ表示画面 (GET または HEAD) とページ更新 (PATCH。Method Override 変換前は POST)
+	// (/s/:identifier/pages/:number)。末尾の "$" により /edit や /preview などのサブパスには
+	// マッチさせず、それらは上記の各パターンで処理する。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`)},
+	// Moving a page into the trash (POST /s/:identifier/pages/:number/trash). The Go route is
+	// POST-only, so restrict the method to match (mirroring the preview pattern above); the
+	// space-wide trash screen (/s/:identifier/trash) is a different path and stays on Rails.
+	//
+	// [Ja] ページをゴミ箱へ入れる操作 (POST /s/:identifier/pages/:number/trash)。Go ルートは POST の
+	// みなので、上のプレビューパターンに揃えてメソッドを限定する。スペース単位のゴミ箱画面
+	// (/s/:identifier/trash) はパスが異なり、Rails 版のまま残る。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`), methods: []string{http.MethodPost}},
+	// Keep the entire export namespace on Go, including Rails format suffixes and repeated slashes.
+	// Unsupported paths and methods are rejected by the Go router instead of reaching the legacy
+	// writer, which does not enforce the in-progress export guard.
+	//
+	// [Ja] Railsのformat拡張子や連続するスラッシュも含め、エクスポート配下はGoで処理する。
+	// 未対応のパスやメソッドはGoルーターが拒否し、多重実行防止を持たない旧処理へ転送しない。
+	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+exports([/.]|$)`)},
 	// /attachments/:id/og_image: 公開トピックのページから参照される添付ファイルを imgproxy 経由で配信する
 	// /attachments/:id (ダウンロードURL) は Rails が提供するため、og_image 末尾でパスを限定する
 	{pattern: regexp.MustCompile(`^/attachments/[^/]+/og_image$`), methods: []string{http.MethodGet}},

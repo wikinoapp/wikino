@@ -109,6 +109,19 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 		t.Error("topic name not found in breadcrumb")
 	}
 
+	// The validation-error re-render supplies the same breadcrumb header as the editor itself, so
+	// it renders outside <main> with the editor's max-w-6xl content width.
+	//
+	// [Ja] バリデーションエラーの再描画でも編集画面と同じパンくずヘッダーを供給するため、
+	// <main> の外に編集画面の本文幅 max-w-6xl で描画される。
+	if !strings.Contains(body, `<div class="max-w-6xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-6xl content width after validation error re-render")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+	}
+
 	// The re-rendered editor keeps the Zen mode class read from the cookie. Assert on the full
 	// class attribute because the bare "page-edit-zen" substring also matches the always-present
 	// Tailwind variant classes (in-[.page-edit-zen]:lg:hidden etc.).
@@ -118,6 +131,18 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	// マッチしてしまうため、class 属性全体で検証する。
 	if !strings.Contains(body, `class="max-w-6xl w-full mx-auto lg:px-4 page-edit-zen"`) {
 		t.Error("zen mode class not found on the editor container after validation error re-render")
+	}
+
+	// The validation-error re-render keeps the global navigation, so the top bar and the bottom bar
+	// still swap at md after a failed submission.
+	//
+	// [Ja] バリデーションエラーの再描画でもグローバルナビを維持し、送信失敗後も上部バーと下部バーが
+	// md で入れ替わること。
+	if !strings.Contains(body, `<nav class="shrink-0 hidden md:flex"`) {
+		t.Error("global navigation top bar should switch at md after validation error re-render")
+	}
+	if !strings.Contains(body, `<nav class="md:hidden"`) {
+		t.Error("global navigation bottom bar should switch at md after validation error re-render")
 	}
 }
 

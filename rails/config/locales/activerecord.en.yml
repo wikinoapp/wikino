@@ -3,7 +3,3 @@ en:
     attributes:
       page:
         mutation_error: ""
-      topic:
-        visibility:
-          private: Private
-          public: Public

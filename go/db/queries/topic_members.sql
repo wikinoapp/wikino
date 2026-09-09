@@ -25,3 +25,13 @@ WHERE sm.user_id = $1 AND tm.space_id = ANY($2::uuid[]) AND tm.topic_id = ANY($3
 -- name: UpdateTopicMemberLastPageModifiedAt :exec
 -- トピックメンバーのlast_page_modified_atを更新する（ページ公開時に使用）
 UPDATE topic_members SET last_page_modified_at = $1, updated_at = $2 WHERE topic_id = $3 AND space_member_id = $4 AND space_id = $5;
+
+-- name: CreateTopicMember :one
+-- Adds a space member to a topic. The scopes are left empty, so the member's permissions on the
+-- topic come from the scopes they hold on the space.
+--
+-- [Ja] スペースメンバーをトピックに参加させる。スコープは空のままにし、そのトピックでの権限は
+-- メンバーがスペースに対して持つスコープから決まるようにする。
+INSERT INTO topic_members (space_id, topic_id, space_member_id, joined_at, created_at, updated_at)
+VALUES (@space_id, @topic_id, @space_member_id, @now, @now, @now)
+RETURNING *;

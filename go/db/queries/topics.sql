@@ -50,3 +50,48 @@ INNER JOIN topic_members tm ON t.id = tm.topic_id
 WHERE tm.space_member_id = $1 AND t.space_id = $2 AND t.discarded_at IS NULL
 ORDER BY t.id ASC
 LIMIT 1;
+
+-- name: GetNextTopicNumber :one
+-- Returns the next topic number in the space.
+--
+-- [Ja] スペース内の次のトピック番号を返す。
+SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM topics WHERE space_id = @space_id;
+
+-- name: ExistsTopicBySpaceAndName :one
+-- Reports whether the space already holds a topic of that name, discarded topics included. The
+-- unique index on (space_id, name) covers discarded rows as well, so a name a discarded topic
+-- still carries cannot be given to a new one.
+--
+-- [Ja] 同じ名前のトピックがそのスペースに既にあるかを返す (削除済みのトピックも含む)。
+-- (space_id, name) の一意インデックスは削除済みの行も対象にするため、削除済みのトピックが
+-- 持ったままの名前は新しいトピックには付けられない。
+SELECT EXISTS (
+    SELECT 1 FROM topics WHERE space_id = @space_id AND name = @name
+) AS topic_exists;
+
+-- name: CreateTopic :one
+-- Creates a topic.
+--
+-- [Ja] トピックを作成する。
+INSERT INTO topics (space_id, number, name, description, visibility, created_at, updated_at)
+VALUES (@space_id, @number, @name, @description, @visibility, @now, @now)
+RETURNING *;
+
+-- name: ExistsTopicBySpaceAndNameExcludingID :one
+-- Reports whether another topic of the space already holds that name, discarded topics included.
+-- The topic given by @excluded_id is left out, so that a topic keeping its own name is not refused.
+--
+-- [Ja] そのスペースの別のトピックが同じ名前を既に持っているかを返す (削除済みのトピックも含む)。
+-- @excluded_id のトピックは除外し、自身の名前をそのままにしたトピックが拒否されないようにする。
+SELECT EXISTS (
+    SELECT 1 FROM topics WHERE space_id = @space_id AND name = @name AND id <> @excluded_id
+) AS topic_exists;
+
+-- name: UpdateTopic :one
+-- Updates the general settings of a topic.
+--
+-- [Ja] トピックの一般設定を更新する。
+UPDATE topics
+SET name = @name, description = @description, visibility = @visibility, updated_at = @now
+WHERE id = @id AND space_id = @space_id
+RETURNING *;

@@ -9,25 +9,17 @@ import (
 )
 
 // homeJoinedTopicsLimit is the upper bound on the number of joined topics surfaced on the
-// home page. Kept aligned with viewmodel.SidebarJoinedTopicsLimit (= 10) so home and the
-// sidebar show the same "topics the user has been active in" set; the value is duplicated
-// here rather than imported because Application layer cannot depend on Presentation layer.
+// home page, limiting the section to the topics the user has most recently been active in.
 //
 // [Ja] homeJoinedTopicsLimit はホーム画面に表示する参加中トピック数の上限。
-// viewmodel.SidebarJoinedTopicsLimit (= 10) と揃えてあり、ホームとサイドバーで
-// 「ユーザーが直近で動いたトピック」の同じセットを表示できるようにしている。
-// Application 層は Presentation 層に依存できないため、import せずに値を二重定義している。
+// ユーザーが直近で動いたトピックにセクションを絞る。
 const homeJoinedTopicsLimit = 10
 
 // homeDraftPagesLimit is the upper bound on the number of draft pages surfaced on the home
-// page. Kept aligned with viewmodel.SidebarDraftPagesLimit (= 5) so home and the sidebar
-// show the same set of recent drafts; duplicated here rather than imported because the
-// Application layer cannot depend on the Presentation layer.
+// page, limiting the section to the user's most recent drafts.
 //
 // [Ja] homeDraftPagesLimit はホーム画面に表示する下書きページ数の上限。
-// viewmodel.SidebarDraftPagesLimit (= 5) と揃えてあり、ホームとサイドバーで同じ
-// 「直近の下書き」を表示できるようにしている。Application 層は Presentation 層に依存できないため、
-// import せずに値を二重定義している。
+// ユーザーの直近の下書きにセクションを絞る。
 const homeDraftPagesLimit = 5
 
 // GetHomeShowUsecase はホーム画面表示用ユースケース

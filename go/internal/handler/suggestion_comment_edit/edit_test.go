@@ -13,12 +13,12 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	suggestioncommentedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment_edit"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -61,7 +61,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 	suggestionRepo := repository.NewSuggestionRepository(queries)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
 
 	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
@@ -73,7 +72,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionCommentRepo, commentUpdateValidator,
 	)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	return suggestioncommentedithandler.NewHandler(
 		cfg,
@@ -81,7 +79,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 		getSuggestionEditUC,
 		getSuggestionCommentUC,
 		updateSuggestionCommentUC,
-		sidebarHelper,
 	)
 }
 
@@ -236,6 +233,7 @@ func TestEdit_編集フォームが表示される(t *testing.T) {
 		"comment_number":    "1",
 	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "ceditok"})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -248,5 +246,21 @@ func TestEdit_編集フォームが表示される(t *testing.T) {
 	body := rr.Body.String()
 	if !strings.Contains(body, "編集対象のコメント") {
 		t.Error("response should contain comment body")
+	}
+	if !strings.Contains(body, `aria-label="コメント"`) {
+		t.Error("comment textarea should have an accessible name")
+	}
+
+	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
+	// link has to bypass it) and keeps this screen's max-w-3xl content width.
+	//
+	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
 	}
 }

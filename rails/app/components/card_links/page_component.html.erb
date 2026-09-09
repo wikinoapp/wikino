@@ -1,4 +1,4 @@
-<%= link_to page_path(space.identifier, page.number), build_options do %>
+<%= link_to "/s/#{space.identifier}/pages/#{page.number}", build_options do %>
   <%= render BaseUI::CardComponent.new(class_name: build_card_class) do |card| %>
     <%= card.with_body do %>
       <% if page.pinned? %>

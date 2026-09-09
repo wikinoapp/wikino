@@ -8,11 +8,11 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	suggestionpages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -68,14 +68,24 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	// Build links from the stored identifier, not from the URL, so that the canonical URL collapses
+	// to one address per screen.
+	//
+	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、正規 URL を 1 画面 1 アドレスに
+	// 集約する。
+	spaceIdentVM := spaceVM.Identifier
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitleWithoutSuffix(ctx, "suggestion_index_title", map[string]any{
+	titleKey := "suggestion_index_title"
+	if showClosed {
+		titleKey = "suggestion_index_closed_title"
+	}
+	meta.SetTitleWithoutSuffix(ctx, titleKey, map[string]any{
 		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
+	meta.OGURL = h.cfg.AppURL() + string(templates.SuggestionListTabPath(spaceIdentVM, topicVM.Number, showClosed))
 	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	// テンプレートをレンダリング
@@ -89,39 +99,36 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		CanCreateSuggestion: output.CanCreateSuggestion,
 	})
 
-	signedIn := user != nil
-	var userAtname string
-	if user != nil {
-		userAtname = user.Atname
-	}
+	// The suggestion list is the current page, so the trail runs through the topic and ends with the
+	// list itself as a non-linked current item. The screens under a suggestion pass through the same
+	// list crumb in suggestionListBreadcrumbHeaderData, so one URL keeps one place in the hierarchy.
+	//
+	// The list is public and declares a self-referencing canonical URL, so it opts into
+	// BreadcrumbList JSON-LD built from the same items. Both status tabs share the trail: they list
+	// different suggestions but sit in the same place.
+	//
+	// [Ja] 編集提案一覧は現在地のため、経路はトピックを通り、一覧自身の非リンクな現在項目で締める。
+	// 編集提案配下の画面も suggestionListBreadcrumbHeaderData で同じ一覧の項目を通るため、1 つの
+	// URL が階層上で 1 つの位置を持つ。
+	//
+	// 一覧は公開画面で自己参照 canonical を宣言するため、同じ項目列から作る BreadcrumbList JSON-LD を
+	// 有効にする。ステータスタブは載っている編集提案が異なるだけで階層上の位置は同じなので、経路を
+	// 共有する。
+	breadcrumbHeader := topicBreadcrumbHeaderData(ctx, spaceVM, topicVM, user != nil)
+	breadcrumbHeader.Items = append(breadcrumbHeader.Items, components.BreadcrumbItem{
+		Label:     i18n.T(ctx, "suggestion_index_breadcrumb"),
+		IsCurrent: true,
+	})
+	breadcrumbHeader.StructuredDataBaseURL = h.cfg.AppURL()
 
-	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		Sidebar: components.SidebarData{
-			CurrentPageName: templates.PageNameSuggestionIndex,
-			SignedIn:        signedIn,
-			UserAtname:      userAtname,
-			SpaceIdentifier: spaceIdentVM,
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameSuggestionIndex,
-			SignedIn:        signedIn,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	// ログイン済みの場合はサイドバーコンテンツを取得
-	if user != nil {
-		sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-		layoutData.Sidebar.JoinedTopics = sidebarContent.JoinedTopics
-		layoutData.Sidebar.DraftPages = sidebarContent.DraftPages
-		layoutData.Sidebar.HasMoreDraftPages = sidebarContent.HasMoreDraftPages
-	}
-
-	err = layouts.Default(layoutData, content).Render(ctx, w)
-	if err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+	if err := RenderLayout(ctx, w, RenderLayoutInput{
+		User:             user,
+		SpaceIdentifier:  output.Space.Identifier,
+		CurrentPageName:  templates.PageNameSuggestionIndex,
+		Meta:             meta,
+		BreadcrumbHeader: breadcrumbHeader,
+		Content:          content,
+	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

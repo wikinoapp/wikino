@@ -92,13 +92,26 @@ func loadLocationFromContext(ctx context.Context) *time.Location {
 	return loc
 }
 
-// ========================================
-// アイコン関数
-// ========================================
-
-// Icon はアイコン名からSVGを返す（templ.Component対応）
-// 可変長引数でクラス名を指定可能: Icon("name", "class1 class2")
+// Icon returns an SVG component for the given icon name. The optional class
+// argument is added to the SVG element.
+//
+// [Ja] Icon は指定したアイコン名の SVG コンポーネントを返す。省略可能な class 引数は
+// SVG 要素に追加する。
 func Icon(name viewmodel.IconName, class ...string) templ.Component {
+	return templ.Raw(iconSVG(name, class...))
+}
+
+// DecorativeIcon returns an SVG component hidden from assistive technology
+// and removed from the focus order.
+//
+// [Ja] DecorativeIcon は支援技術から隠し、フォーカス順序から除外した SVG
+// コンポーネントを返す。
+func DecorativeIcon(name viewmodel.IconName, class ...string) templ.Component {
+	svg := iconSVG(name, class...)
+	return templ.Raw(`<svg aria-hidden="true" focusable="false" ` + svg[5:])
+}
+
+func iconSVG(name viewmodel.IconName, class ...string) string {
 	svg, ok := phosphorIcons[name]
 	if !ok {
 		svg, ok = customIcons[name]
@@ -107,12 +120,9 @@ func Icon(name viewmodel.IconName, class ...string) templ.Component {
 		svg = phosphorIcons["info-regular"]
 	}
 
-	// クラス名が指定されている場合は、SVGタグに追加
 	if len(class) > 0 && class[0] != "" {
-		// <svg の直後にclass属性を挿入
 		svg = `<svg class="` + class[0] + `" ` + svg[5:]
 	}
 
-	// templ.Rawを使用してSVGを返す
-	return templ.Raw(svg)
+	return svg
 }

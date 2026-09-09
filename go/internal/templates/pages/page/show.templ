@@ -1,0 +1,297 @@
+package page
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowData is the data passed to the page detail screen.
+//
+// [Ja] ShowData はページ表示画面に渡すデータ構造体です。
+type ShowData struct {
+	Page  viewmodel.PageForShow
+	Space viewmodel.Space
+
+	// IsTrashed reports that the page sits in the trash. The usecase only ever renders this screen
+	// for a viewer allowed to see a trashed page, so the alert can be shown whenever it is true.
+	//
+	// [Ja] IsTrashed はページがゴミ箱に入っていることを表す。UseCase はゴミ箱のページを見てよい
+	// 閲覧者にしか本画面を描画させないため、true ならそのままアラートを出してよい。
+	IsTrashed bool
+
+	// CanUpdatePage reports that the viewer may edit this page, and gates the edit button in the
+	// header as well as the move item of the action dropdown.
+	//
+	// [Ja] CanUpdatePage は閲覧者がこのページを編集できるかを表し、ヘッダーの編集ボタンと操作
+	// ドロップダウンの移動項目の出し分けに使う。
+	CanUpdatePage bool
+
+	// CanTrashPage reports that the viewer may move this page into the trash, and gates the trash
+	// item of the action dropdown. It rides on a different permission than CanUpdatePage, so the two
+	// items are shown independently instead of the whole dropdown following the edit permission.
+	//
+	// [Ja] CanTrashPage は閲覧者がこのページをゴミ箱へ入れられるかを表し、操作ドロップダウンの
+	// ゴミ箱項目の出し分けに使う。CanUpdatePage とは別の権限に乗るため、ドロップダウン全体を編集
+	// 権限に従わせず 2 つの項目を独立に出し分ける。
+	CanTrashPage bool
+
+	// CSRFToken authenticates the trash form's POST. It is empty for a viewer without page:trash.
+	// The form and hidden input are rendered only when showsTrashAction is true, so an already-trashed
+	// page's HTML also carries no token even when this field has a value.
+	//
+	// [Ja] CSRFToken はゴミ箱フォームの POST を認証する。page:trash を持たない閲覧者では空になる。
+	// フォームと hidden input は showsTrashAction が true のときだけ描画するため、既にゴミ箱にある
+	// ページでも、このフィールドに値があっても HTML にはトークンが載らない。
+	CSRFToken string
+
+	// LinkList and BacklinkList are the listings rendered under the body. Each holds the selected
+	// slice: htmx appends later slices, while a full-page fallback renders the slice named by the URL.
+	//
+	// [Ja] LinkList と BacklinkList は本文の下に描画する一覧。各一覧は選択された範囲を保持し、htmx は
+	// 後続の範囲を追記する。フルページフォールバックでは URL が指す範囲を描画する。
+	LinkList     viewmodel.LinkList
+	BacklinkList viewmodel.BacklinkList
+}
+
+// Show renders the page detail screen content.
+//
+// [Ja] Show はページ表示画面のコンテンツを表示します。
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6 px-4">
+				<article class="flex flex-col">
+					if data.IsTrashed {
+						<div class="mb-6">
+							@trashedAlert(data.Space.Identifier)
+						</div>
+					}
+
+					@showHeader(data)
+
+					if data.Page.BodyHTML != "" {
+						// The body HTML is sanitized when the page is published, so expand it raw here.
+						//
+						// [Ja] 本文 HTML はページ公開時にサニタイズ済みのため、ここでは生のまま展開する。
+						<div class="wikino-markdown mt-6" data-markdown-table-label={ templates.T(ctx, "markdown_table_scroll_label") }>
+							@templ.Raw(data.Page.BodyHTML)
+						</div>
+					}
+				</article>
+
+				@showFooter(data)
+			</div>
+		</div>
+	</div>
+}
+
+// showsTrashAction reports whether the action dropdown offers moving this page into the trash. A
+// page already in the trash leaves the item out: re-posting it would only push back the 30-day
+// purge, and the alert above the title already links to the trash.
+//
+// [Ja] showsTrashAction は操作ドロップダウンにゴミ箱へ入れる項目を出すかを表す。すでにゴミ箱に
+// 入っているページでは項目を落とす。再度 POST しても 30 日の完全削除が先送りされるだけで、
+// タイトルの上のアラートからすでにゴミ箱へ辿れるためである。
+func (d ShowData) showsTrashAction() bool {
+	return d.CanTrashPage && !d.IsTrashed
+}
+
+// showsPageActions reports whether the action dropdown holds any item. An empty dropdown is never
+// rendered, so a viewer holding neither permission sees no trigger button. It gates the header's
+// action area as a whole as well: the area holds the edit button beside the dropdown, but the edit
+// permission already puts the move item into the dropdown, so an empty dropdown means an empty area.
+//
+// [Ja] showsPageActions は操作ドロップダウンに項目が 1 つでもあるかを表す。空のドロップダウンは
+// 描画しないため、どちらの権限も持たない閲覧者にはトリガーボタンごと出ない。ヘッダーの操作領域
+// 全体の出し分けも兼ねる。領域にはドロップダウンの隣に編集ボタンが載るが、編集権限があれば
+// ドロップダウンにも移動項目が入るため、ドロップダウンが空なら領域も空になる。
+func (d ShowData) showsPageActions() bool {
+	return d.CanUpdatePage || d.showsTrashAction()
+}
+
+// showHeader renders the page title and its action area in a header that pins itself to the top of
+// the viewport once it is scrolled past. While pinned (web/sticky-header.ts marks it with
+// data-stuck) the title shrinks to a single clamped line, which leaves the actions reachable
+// without scrolling back up. The expanded and pinned states share one header rather than duplicating
+// it: keeping a single copy of the title and the actions leaves the page with exactly one h1 and one
+// dropdown, both of which stay in the accessibility tree in either state (hiding one copy of the
+// header would take the h1 out of the outline for a reader who has scrolled).
+//
+// The dimensionally stable sentinel before the header is the observer target. The spacer after the
+// header receives the height lost when a long title becomes compact, so the body keeps the same
+// document position. The always-present transparent bottom border also keeps the compact header
+// itself from changing height when its color appears.
+//
+// [Ja] showHeader はページタイトルと操作領域を、スクロールで通り過ぎると画面上端に固定されるヘッダーに
+// 描画する。固定されている間 (web/sticky-header.ts が data-stuck を付ける) はタイトルが 1 行に切り詰め
+// られて縮み、上へ戻らなくても操作領域に手が届く。展開時と固定時のヘッダーを
+// 2 つに分けず、1 つとして描画する。タイトルと操作領域を 1 組だけ持てば、ページの h1 と
+// ドロップダウンはそれぞれ 1 つで済み、どちらの状態でも
+// アクセシビリティツリーに残る (ヘッダーを 2 つ持って片方を隠すと、スクロールした閲覧者のアウトライン
+// から h1 が消える)。
+//
+// ヘッダー前方の寸法が変わらない sentinel を監視対象にする。ヘッダー後方の spacer には、長いタイトルが
+// コンパクトになったときに失われる高さを設定し、本文のドキュメント上の位置を保つ。常に存在する透明な
+// 下境界線も、色が付いたときにコンパクトヘッダー自体の高さが変わることを防ぐ。
+templ showHeader(data ShowData) {
+	<div class="h-px -mb-px" aria-hidden="true" data-sticky-header-sentinel></div>
+	<div
+		class={ "group sticky top-0 z-sticky-bar bg-background",
+			"border-b border-transparent data-stuck:border-border",
+			templ.KV("min-h-[var(--app-sticky-header-height)]", data.showsPageActions()) }
+		data-sticky-header
+	>
+		<div class="flex flex-wrap md:flex-nowrap items-center justify-between gap-2 group-data-stuck:py-2">
+			<h1 class="text-3xl text-primary font-bold antialiased group-data-stuck:text-sm group-data-stuck:line-clamp-1">
+				{ data.Page.DisplayTitle(ctx) }
+			</h1>
+
+			if data.showsPageActions() {
+				<div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
+					@showActions(data)
+				</div>
+			}
+		</div>
+	</div>
+	<div aria-hidden="true" data-sticky-header-spacer></div>
+}
+
+// showActions renders the edit button and the action dropdown next to the page title.
+//
+// [Ja] showActions はページタイトルの横に編集ボタンと操作ドロップダウンを描画する。
+templ showActions(data ShowData) {
+	if data.CanUpdatePage {
+		@showEditButton(data)
+	}
+	if data.showsPageActions() {
+		@showPageActions(data)
+	}
+}
+
+// showPageActions renders the dropdown holding the page operations that are not the primary action.
+//
+// [Ja] showPageActions は主要な操作以外のページ操作をまとめたドロップダウンを描画する。
+templ showPageActions(data ShowData) {
+	<div id="page-actions-dropdown" class="dropdown-menu">
+		<button
+			type="button"
+			id="page-actions-dropdown-trigger"
+			aria-haspopup="menu"
+			aria-controls="page-actions-dropdown-menu"
+			aria-expanded="false"
+			aria-label={ templates.T(ctx, "page_show_page_actions_aria_label") }
+			class="btn border-primary rounded-full"
+			data-variant="outline"
+			data-size="icon-sm"
+		>
+			@templates.DecorativeIcon("dots-three-regular")
+		</button>
+		<div id="page-actions-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
+			<div role="menu" id="page-actions-dropdown-menu" aria-labelledby="page-actions-dropdown-trigger">
+				if data.CanUpdatePage {
+					<div role="menuitem">
+						<a
+							class="flex gap-2 items-center w-full"
+							href={ templ.SafeURL(string(templates.PageMovePath(data.Space.Identifier, data.Page.Number))) }
+						>
+							@templates.DecorativeIcon("arrow-right-regular", "size-[18px]")
+							{ templates.T(ctx, "page_show_page_actions_move") }
+						</a>
+					</div>
+				}
+				if data.showsTrashAction() {
+					<div role="menuitem">
+						// The confirmation runs off the form's own submit event, so it also guards the
+						// keyboard path into the button. The dropdown needs JavaScript to open at all,
+						// so no path reaches this form with the confirmation skipped.
+						//
+						// [Ja] 確認はフォーム自身の submit イベントで走らせ、ボタンへのキーボード操作
+						// 経路も同じように守る。ドロップダウン自体が JavaScript で開くため、確認を
+						// 経ずにこのフォームへ到達する経路は無い。
+						<form
+							action={ templ.SafeURL(string(templates.PageTrashPath(data.Space.Identifier, data.Page.Number))) }
+							class="w-full"
+							data-confirm={ templates.T(ctx, "page_show_page_actions_trash_confirm") }
+							hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+							method="POST"
+						>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<button class="flex gap-2 items-center cursor-pointer w-full" type="submit">
+								@templates.DecorativeIcon("trash-regular", "size-[18px] fill-error")
+								<span class="text-error">
+									{ templates.T(ctx, "page_show_page_actions_trash") }
+								</span>
+							</button>
+						</form>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// showEditButton links to the editor of the page being shown.
+//
+// [Ja] showEditButton は表示中のページの編集画面へのリンクを出す。
+templ showEditButton(data ShowData) {
+	<a
+		class="btn btn-sm rounded-full"
+		href={ templ.SafeURL(string(templates.PageEditPath(data.Space.Identifier, data.Page.Number))) }
+	>
+		@templates.DecorativeIcon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
+		{ templates.T(ctx, "page_show_edit_button") }
+	</a>
+}
+
+// showFooter renders the three related-page sections under the body through the component the
+// editor shares, so the two screens lay the listings out the same way. The listings are a subject of
+// this screen rather than something under an editor, so the headings are given the larger size.
+//
+// The whole block is dropped when this page has neither links nor backlinks: the sections hide
+// themselves individually, but the wrapper is a flex item of the page's own column and would still
+// take a gap under the body if it were left in place empty.
+//
+// [Ja] showFooter は本文の下の 3 つの関連ページセクションを、編集画面と共有するコンポーネントで
+// 描画し、2 つの画面の並べ方を揃える。この画面では一覧が画面の主題であり、エディタの下に置かれる
+// ものではないため、見出しには大きいほうの大きさを与える。
+//
+// リンクもバックリンクも無いページではブロックごと落とす。セクション自身は個別に隠れるが、ラッパーは
+// ページ本体のカラムのフレックス項目であり、空のまま残すと本文の下に gap の分だけ余白が残るためである。
+templ showFooter(data ShowData) {
+	if len(data.LinkList.Items) > 0 || len(data.BacklinkList.Items) > 0 {
+		<div class="flex flex-col gap-6">
+			@components.RelatedPageSections(components.RelatedPageSectionsData{
+				LinkList:     data.LinkList,
+				BacklinkList: data.BacklinkList,
+				HeadingClass: "text-2xl/8",
+			})
+		</div>
+	}
+}
+
+// trashedAlert tells a viewer holding the trash permission that this page is in the trash, and
+// links to the trash screen so they can restore it.
+//
+// [Ja] trashedAlert はゴミ箱権限を持つ閲覧者に、このページがゴミ箱に入っていることを伝え、
+// 復元できるようゴミ箱画面へのリンクを出す。
+templ trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) {
+	<div class="alert">
+		@templates.DecorativeIcon("warning-circle-regular", "fill-info")
+		// The alert title is a status message, not a section of the page, and it precedes the page's
+		// h1. A heading element here would put a phantom entry ahead of the h1 in the outline, so use
+		// strong: the alert styles its title with :is(h2, ..., strong, [data-title]), which keeps the
+		// appearance identical.
+		//
+		// [Ja] アラートの見出しはページのセクションではなく状態メッセージで、しかもページの h1 より
+		// 前に出る。見出し要素にするとアウトライン上に h1 より前の幽霊項目ができるため strong を使う。
+		// アラートは :is(h2, ..., strong, [data-title]) で見出しを装飾するため見た目は変わらない。
+		<strong>
+			{ templates.T(ctx, "page_show_trashed_alert") }
+
+			<a href={ templ.SafeURL(string(templates.TrashPath(spaceIdentifier))) } class="underline">
+				{ templates.T(ctx, "page_show_view_trash_link") }
+			</a>
+		</strong>
+	</div>
+}

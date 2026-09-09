@@ -1,0 +1,122 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// RelatedPageSectionsData holds the listings the three related-page sections render, plus the
+// heading size the screen gives them.
+//
+// [Ja] RelatedPageSectionsData は 3 つの関連ページセクションが描画する一覧と、画面が見出しに与える
+// 大きさを保持する。
+type RelatedPageSectionsData struct {
+	LinkList     viewmodel.LinkList
+	BacklinkList viewmodel.BacklinkList
+
+	// HeadingClass sizes the h2 of every section. The page detail screen makes the listings a
+	// subject of the screen and passes a larger size; the editor leaves it empty, keeping the
+	// headings at body size because there the listings sit under the editor.
+	//
+	// [Ja] HeadingClass は各セクションの h2 の大きさを決める。ページ表示画面は一覧を画面の主題として
+	// 大きめの大きさを渡し、編集画面は空のままにして本文と同じ大きさに保つ。編集画面では一覧が
+	// エディタの下に置かれるものだからである。
+	HeadingClass string
+}
+
+// RelatedPageSections renders the three related-page sections shown under the body: the pages this
+// page links to, the backlinks of those pages grouped per linked page, and the backlinks of this
+// page itself. The page detail screen and the editor share it so the two lay the listings out the
+// same way.
+//
+// Every section is hidden by a CSS condition rather than by an if, because the listings arrive in
+// their containers out of band as well: a later link-list page appends its groups, and the editor's
+// draft autosave refills all three. Section visibility therefore has to follow what a container
+// holds now, not what it held when the screen was rendered. The headings sit outside the containers
+// so a swap replaces only the listings.
+//
+// [Ja] RelatedPageSections は本文の下に出る 3 つの関連ページセクションを描画する。このページが
+// リンクしているページ、そのリンク先ページのバックリンクをリンク先ごとに束ねたもの、そしてこの
+// ページ自身のバックリンクである。ページ表示画面と編集画面が共有し、両者の並べ方を揃える。
+//
+// 各セクションは if ではなく CSS の条件で隠す。一覧は OOB でもコンテナへ届くためである。後続の
+// リンク一覧ページはグループを追記し、編集画面の下書き自動保存は 3 つとも詰め直す。したがって
+// セクションの表示は、画面を描画した時点の中身ではなくコンテナが今何を持っているかに追従させる
+// 必要がある。見出しはコンテナの外に置き、スワップが一覧だけを差し替えるようにする。
+templ RelatedPageSections(data RelatedPageSectionsData) {
+	<div class="flex flex-col gap-4 not-has-[#page-link-list>*]:hidden">
+		@relatedPageSectionHeading(relatedPageSectionHeadingData{
+			HeadingClass:   data.HeadingClass,
+			HeadingKey:     "page_links_heading",
+			DescriptionKey: "page_links_description",
+		})
+		<div id={ linkListContainerID }>
+			@LinkList(data.LinkList)
+		</div>
+	</div>
+	// The related-links container is the section element RelatedLinkList renders itself rather than
+	// a wrapper placed here, because a later link-list page appends its groups into that same
+	// element out of band.
+	//
+	// [Ja] 関連リンクのコンテナは、ここに置いたラッパーではなく RelatedLinkList 自身が描画する
+	// セクション要素とする。後続のリンク一覧ページが OOB でその同じ要素へグループを追記するため
+	// である。
+	<div class="flex flex-col gap-4 not-has-[#page-related-link-list>*]:hidden">
+		@relatedPageSectionHeading(relatedPageSectionHeadingData{
+			HeadingClass:   data.HeadingClass,
+			HeadingKey:     "page_links_related_heading",
+			DescriptionKey: "page_links_related_description",
+		})
+		@RelatedLinkList(data.LinkList)
+	</div>
+	<div class="flex flex-col gap-4 not-has-[#page-backlink-list>*]:hidden">
+		@relatedPageSectionHeading(relatedPageSectionHeadingData{
+			HeadingClass:   data.HeadingClass,
+			HeadingKey:     "page_links_backlinks_heading",
+			DescriptionKey: "page_links_backlinks_description",
+		})
+		<div id={ pageBacklinkListContainerID }>
+			@PageBacklinkList(data.BacklinkList)
+		</div>
+	</div>
+}
+
+// relatedPageSectionHeadingData holds the text keys and screen-specific size of one section heading.
+// [Ja] relatedPageSectionHeadingData はセクション見出し 1 件の文言キーと画面固有の大きさを保持する。
+type relatedPageSectionHeadingData struct {
+	HeadingClass   string
+	HeadingKey     string
+	DescriptionKey string
+}
+
+// relatedPageSectionHeading renders a section heading with the short description of what the section
+// lists beside it. All three sections carry one: the names are close enough that a reader tells
+// "links" from "related links" from "backlinks" by the description rather than by the heading.
+//
+// [Ja] relatedPageSectionHeading はセクションの見出しと、そのセクションが何を並べているかの短い説明を
+// 横に並べて描画する。3 つとも説明を持つ。名前が互いに近く、「リンク」「関連リンク」「バックリンク」は
+// 見出しよりも説明で読み分けられるためである。
+templ relatedPageSectionHeading(data relatedPageSectionHeadingData) {
+	// The description sits under the heading until the cards themselves go three across, and beside
+	// it from there. A short heading like "リンク" leaves room for the description next to it even on
+	// a phone, so letting the row wrap on its own would put one section's description beside its
+	// heading and the next section's below, keyed on nothing but how long the two strings are.
+	//
+	// [Ja] 説明はカードが 3 列に並ぶまでは見出しの下に置き、そこからは横に並べる。「リンク」のような
+	// 短い見出しはスマートフォンでも説明を横に置く余地が残るため、折り返しに任せるとセクションごとに
+	// 説明が横に出たり下に出たりし、その分かれ目が 2 つの文字列の長さでしかなくなる。
+	<div class="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-x-3">
+		// The size is added through a key/value pair so that a screen leaving it empty gets the
+		// base classes alone: templ joins the class list as given, and an empty entry would leave
+		// a trailing space in the attribute.
+		//
+		// [Ja] 大きさはキーと値の組で足し、空を渡した画面には基本のクラスだけが残るようにする。
+		// templ はクラス一覧を渡されたまま連結するため、空の要素があると属性に余分な空白が残る。
+		<h2 class={ "font-bold antialiased", templ.KV(data.HeadingClass, data.HeadingClass != "") }>
+			{ templates.T(ctx, data.HeadingKey) }
+		</h2>
+		<p class="text-sm text-muted-foreground">
+			{ templates.T(ctx, data.DescriptionKey) }
+		</p>
+	</div>
+}

@@ -84,17 +84,7 @@ func (b *UserBuilder) BuildWithPassword(passwordDigest string) model.UserID {
 	b.t.Helper()
 
 	userID := b.Build()
-
-	now := time.Now()
-	_, err := b.tx.ExecContext(
-		context.Background(),
-		`INSERT INTO user_passwords (user_id, password_digest, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4)`,
-		string(userID), passwordDigest, now, now,
-	)
-	if err != nil {
-		b.t.Fatalf("ユーザーパスワード作成に失敗: %v", err)
-	}
+	b.insertPassword(userID, passwordDigest)
 
 	return userID
 }
@@ -110,6 +100,49 @@ func (b *UserBuilder) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enab
 	b.t.Helper()
 
 	userID := b.Build()
+	b.insertTwoFactorAuth(userID, secret, enabled, recoveryCodes)
+
+	return userID
+}
+
+// BuildWithPasswordAndTwoFactorAuth creates a user that can sign in with a password and is then
+// asked for a two-factor code, and returns the user ID.
+//
+// [Ja] BuildWithPasswordAndTwoFactorAuth はパスワードでサインインでき、その後に二要素認証コードを
+// 求められるユーザーを作成し、ユーザー ID を返します。
+func (b *UserBuilder) BuildWithPasswordAndTwoFactorAuth(passwordDigest string, secret string, enabled bool) model.UserID {
+	b.t.Helper()
+
+	userID := b.Build()
+	b.insertPassword(userID, passwordDigest)
+	b.insertTwoFactorAuth(userID, secret, enabled, []string{})
+
+	return userID
+}
+
+// insertPassword creates the password of an existing user.
+//
+// [Ja] insertPassword は既存のユーザーのパスワードを作成します。
+func (b *UserBuilder) insertPassword(userID model.UserID, passwordDigest string) {
+	b.t.Helper()
+
+	now := time.Now()
+	_, err := b.tx.ExecContext(
+		context.Background(),
+		`INSERT INTO user_passwords (user_id, password_digest, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4)`,
+		string(userID), passwordDigest, now, now,
+	)
+	if err != nil {
+		b.t.Fatalf("ユーザーパスワード作成に失敗: %v", err)
+	}
+}
+
+// insertTwoFactorAuth creates the two-factor authentication settings of an existing user.
+//
+// [Ja] insertTwoFactorAuth は既存のユーザーの二要素認証設定を作成します。
+func (b *UserBuilder) insertTwoFactorAuth(userID model.UserID, secret string, enabled bool, recoveryCodes []string) {
+	b.t.Helper()
 
 	now := time.Now()
 	var enabledAt sql.NullTime
@@ -129,8 +162,6 @@ func (b *UserBuilder) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enab
 	if err != nil {
 		b.t.Fatalf("二要素認証設定作成に失敗: %v", err)
 	}
-
-	return userID
 }
 
 // formatPostgresArray はGoのスライスをPostgreSQLの配列形式に変換します

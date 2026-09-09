@@ -5,14 +5,14 @@ tmp_dir = "tmp"
 [build]
 args_bin = []
 bin = "./tmp/main"
-cmd = "make templ-generate && APP_ENV=dev op run --env-file=.env -- go build -o ./tmp/main ./cmd/server"
+cmd = "make templ-generate && APP_ENV=dev op run --env-file=.env -- go build -o ./tmp/main ./cmd/wikino"
 delay = 1000
 exclude_dir = ["assets", "tmp", "vendor", "testdata", "web"]
 exclude_file = []
 exclude_regex = ["_test.go", "_templ\\.go$"]
 exclude_unchanged = false
 follow_symlink = false
-full_bin = "APP_ENV=dev op run --env-file=.env -- ./tmp/main"
+full_bin = "APP_ENV=dev op run --env-file=.env -- ./tmp/main serve"
 include_dir = []
 include_ext = ["go", "html", "sql", "templ", "toml"]
 include_file = []

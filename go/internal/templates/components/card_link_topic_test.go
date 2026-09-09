@@ -119,10 +119,35 @@ func TestCardLinkTopic_CanCreatePage(t *testing.T) {
 				t.Errorf("新規ページリンクの表示 = %v, want %v", gotNewPageLink, tt.wantNewPageLink)
 			}
 
-			gotTooltip := strings.Contains(html, "新規ページ")
-			if gotTooltip != tt.wantNewPageLink {
-				t.Errorf("新規ページツールチップの表示 = %v, want %v", gotTooltip, tt.wantNewPageLink)
+			gotAccessibleName := strings.Contains(html, `aria-label="新規ページ"`)
+			if gotAccessibleName != tt.wantNewPageLink {
+				t.Errorf("新規ページリンクのアクセシブルネームの有無 = %v, want %v", gotAccessibleName, tt.wantNewPageLink)
 			}
 		})
 	}
+}
+
+func TestCardLinkTopic_NewPageLinkAccessibleName(t *testing.T) {
+	t.Parallel()
+
+	topic := viewmodel.CardLinkTopic{
+		Name:            "トピック名",
+		Number:          3,
+		SpaceIdentifier: viewmodel.SpaceIdentifier("my-space"),
+		SpaceName:       "マイスペース",
+		TopicIconName:   "globe-regular",
+		CanCreatePage:   true,
+	}
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+
+	var buf bytes.Buffer
+	if err := components.CardLinkTopic(topic).Render(ctx, &buf); err != nil {
+		t.Fatalf("レンダリングに失敗: %v", err)
+	}
+
+	html := buf.String()
+
+	assertCardLinkIconLinkLabels(t, html, "新規ページ")
+	assertCardLinkFocusVisible(t, html)
 }

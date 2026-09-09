@@ -27,8 +27,8 @@ templ subtitleText(text string) {
 templ MainTitle(data MainTitleData) {
 	<div class="flex flex-col gap-4">
 		<div class="flex flex-wrap md:flex-nowrap items-center justify-between gap-2">
-			<div class="flex flex-col gap-2">
-				<h1 class="flex items-center gap-2 text-3xl text-primary font-bold antialiased">
+			<div class="flex min-w-0 flex-col gap-2">
+				<h1 class="text-3xl text-primary font-bold antialiased wrap-anywhere">
 					{ data.Title }
 				</h1>
 

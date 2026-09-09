@@ -39,12 +39,14 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 
@@ -92,12 +94,14 @@ func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 
@@ -132,9 +136,8 @@ func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 			rr := httptest.NewRecorder()
 			handler.Create(rr, req)
 
-			// 200 OK（フォーム再表示）が返されるか確認
-			if rr.Code != http.StatusOK {
-				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+			if rr.Code != http.StatusUnprocessableEntity {
+				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 			}
 
 			// リカバリーコード入力フィールドが含まれているか確認
@@ -166,12 +169,14 @@ func TestCreate_EmptyRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 
@@ -194,9 +199,8 @@ func TestCreate_EmptyRecoveryCode(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	// 200 OK（フォーム再表示）が返されるか確認
-	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// リカバリーコード入力フィールドが含まれているか確認
@@ -234,12 +238,14 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 
@@ -262,9 +268,8 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	// 200 OK（フォーム再表示）が返されるか確認
-	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// リカバリーコード入力フィールドが含まれているか確認
@@ -303,12 +308,14 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 
@@ -355,6 +362,22 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 	}
 	if !sessionCookieFound {
 		t.Error("session cookie not found")
+	}
+
+	// Verify the sign-in success flash, so that a visitor sent on to a deep page still sees that
+	// they signed in.
+	//
+	// [Ja] 深いページへ送られた訪問者にもサインインできたと伝わるよう、サインイン成功の
+	// フラッシュを検証する。
+	var flashCookieFound bool
+	for _, c := range cookies {
+		if c.Name == session.FlashCookieName {
+			flashCookieFound = true
+			break
+		}
+	}
+	if !flashCookieFound {
+		t.Error("flash cookie not found")
 	}
 
 	// ペンディングユーザーIDのCookieが削除されているか確認
@@ -417,17 +440,22 @@ func TestCreate_TwoFactorNotEnabled(t *testing.T) {
 	}
 
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 
+	backURL := "/s/example/pages/1/edit"
+
 	form := url.Values{}
 	form.Add("recovery_code", "code1234")
+	form.Add("back", backURL)
 	req := httptest.NewRequest(http.MethodPost, "/sign_in/two_factor/recovery", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept-Language", "ja")
@@ -448,8 +476,238 @@ func TestCreate_TwoFactorNotEnabled(t *testing.T) {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
 	}
 
-	location := rr.Header().Get("Location")
-	if location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
+	// The back parameter is carried even when the visitor is sent back for having no two-factor
+	// authentication enabled.
+	//
+	// [Ja] 二要素認証が無効で引き返すときも back を引き継ぐことを確認する。
+	wantLocation := "/sign_in?back=" + url.QueryEscape(backURL)
+	if location := rr.Header().Get("Location"); location != wantLocation {
+		t.Errorf("wrong redirect location: got %v want %v", location, wantLocation)
+	}
+}
+
+// TestCreate_BackParameter verifies where a visitor lands after authenticating with a recovery
+// code. A safe back in the form returns them to their original destination, and anything else falls
+// back to the home page.
+//
+// [Ja] TestCreate_BackParameter は、リカバリーコードで認証した後のリダイレクト先を検証する。
+// フォームの back が安全なら元の宛先へ戻し、そうでなければホームへ落とす。
+func TestCreate_BackParameter(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		email        string
+		atname       string
+		recoveryCode string
+		backURL      string
+		wantLocation string
+	}{
+		{
+			name:         "有効なbackパラメータのURLへ戻る",
+			email:        "recovery-back-ok@example.com",
+			atname:       "recovery_back_ok_user",
+			recoveryCode: "backok12",
+			backURL:      "/s/example/pages/1/edit",
+			wantLocation: "/s/example/pages/1/edit",
+		},
+		{
+			name:         "危険なbackパラメータはホームへ落とす",
+			email:        "recovery-back-ng@example.com",
+			atname:       "recovery_back_ng_user",
+			recoveryCode: "backng12",
+			backURL:      "https://evil.com",
+			wantLocation: "/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := testutil.GetTestDB()
+
+			userID := testutil.NewUserBuilderDB(t, db).
+				WithEmail(tt.email).
+				WithAtname(tt.atname).
+				BuildWithTwoFactorAuthAndRecoveryCodes("JBSWY3DPEHPK3PXP", true, []string{tt.recoveryCode})
+
+			q := query.New(db)
+			userRepo := repository.NewUserRepository(q)
+			userSessionRepo := repository.NewUserSessionRepository(q)
+			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
+
+			cfg := &config.Config{
+				Env:             "test",
+				Port:            "8080",
+				Domain:          "localhost",
+				CookieDomain:    "",
+				SessionSecure:   false,
+				SessionHTTPOnly: true,
+			}
+
+			sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+			flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+			createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+			createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
+
+			handler := sign_in_two_factor_recovery.NewHandler(
+				cfg,
+				sessionMgr,
+				flashMgr,
+				createRecoveryCodeSessionUC,
+			)
+
+			form := url.Values{}
+			form.Add("recovery_code", tt.recoveryCode)
+			form.Add("back", tt.backURL)
+			req := httptest.NewRequest(http.MethodPost, "/sign_in/two_factor/recovery", strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			req.Header.Set("Accept-Language", "ja")
+			req.AddCookie(&http.Cookie{
+				Name:  session.PendingUserCookieName,
+				Value: userID.String(),
+			})
+
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Create(rr, req)
+
+			if rr.Code != http.StatusFound {
+				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+			}
+			if location := rr.Header().Get("Location"); location != tt.wantLocation {
+				t.Errorf("wrong redirect location: got %v want %v", location, tt.wantLocation)
+			}
+		})
+	}
+}
+
+// TestCreate_ValidationErrorPreservesBackParameter verifies that back survives the re-render that
+// follows a wrong recovery code.
+//
+// [Ja] TestCreate_ValidationErrorPreservesBackParameter は、リカバリーコードを間違えてフォームが
+// 再描画されるときも back を保持することを検証する。
+func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+
+	q := query.New(db)
+	userRepo := repository.NewUserRepository(q)
+	userSessionRepo := repository.NewUserSessionRepository(q)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
+
+	cfg := &config.Config{
+		Env:             "test",
+		Port:            "8080",
+		Domain:          "localhost",
+		CookieDomain:    "",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
+
+	handler := sign_in_two_factor_recovery.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		createRecoveryCodeSessionUC,
+	)
+
+	form := url.Values{}
+	// A code shorter than eight digits fails the format check.
+	//
+	// [Ja] 8 桁未満のコードは形式チェックに引っかかる。
+	form.Add("recovery_code", "short")
+	form.Add("back", "/s/example/pages/1/edit")
+	req := httptest.NewRequest(http.MethodPost, "/sign_in/two_factor/recovery", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept-Language", "ja")
+	req.AddCookie(&http.Cookie{
+		Name:  session.PendingUserCookieName,
+		Value: "test-user-id",
+	})
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+
+	wantInBody := `name="back" value="/s/example/pages/1/edit"`
+	if !strings.Contains(rr.Body.String(), wantInBody) {
+		t.Errorf("backパラメータがフォームに保持されていません\nwant: %s", wantInBody)
+	}
+}
+
+// TestCreate_WithoutPendingUserCarriesBackParameter verifies that the destination in the form
+// survives an expired pending user cookie, so that signing in again still reaches the page the
+// visitor asked for.
+//
+// [Ja] TestCreate_WithoutPendingUserCarriesBackParameter は、pending user cookie が期限切れでも
+// フォームの遷移先が失われないことを検証する。サインインし直したときも訪問者が求めたページへ
+// 着けるようにするため。
+func TestCreate_WithoutPendingUserCarriesBackParameter(t *testing.T) {
+	t.Parallel()
+
+	db, tx := testutil.SetupTx(t)
+
+	q := testutil.QueriesWithTx(tx)
+	userRepo := repository.NewUserRepository(q)
+	userSessionRepo := repository.NewUserSessionRepository(q)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
+
+	cfg := &config.Config{
+		Env:             "test",
+		Port:            "8080",
+		Domain:          "localhost",
+		CookieDomain:    "",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
+
+	handler := sign_in_two_factor_recovery.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		createRecoveryCodeSessionUC,
+	)
+
+	backURL := "/s/example/pages/1/edit"
+
+	form := url.Values{}
+	form.Add("recovery_code", "abc12345")
+	form.Add("back", backURL)
+	req := httptest.NewRequest(http.MethodPost, "/sign_in/two_factor/recovery", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept-Language", "ja")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Create(rr, req)
+
+	if rr.Code != http.StatusFound {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+	}
+
+	wantLocation := "/sign_in?back=" + url.QueryEscape(backURL)
+	if location := rr.Header().Get("Location"); location != wantLocation {
+		t.Errorf("wrong redirect location: got %v want %v", location, wantLocation)
 	}
 }

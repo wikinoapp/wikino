@@ -4,7 +4,6 @@ package topic
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
@@ -13,7 +12,8 @@ type Handler struct {
 	cfg                   *config.Config
 	flashMgr              *session.FlashManager
 	getTopicDetailUsecase *usecase.GetTopicDetailUsecase
-	sidebarHelper         *sidebar.Helper
+	getTopicNewUsecase    *usecase.GetTopicNewUsecase
+	createTopicUsecase    *usecase.CreateTopicUsecase
 }
 
 // NewHandler は新しいトピックハンドラーを作成します
@@ -21,12 +21,14 @@ func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
 	getTopicDetailUsecase *usecase.GetTopicDetailUsecase,
-	sidebarHelper *sidebar.Helper,
+	getTopicNewUsecase *usecase.GetTopicNewUsecase,
+	createTopicUsecase *usecase.CreateTopicUsecase,
 ) *Handler {
 	return &Handler{
 		cfg:                   cfg,
 		flashMgr:              flashMgr,
 		getTopicDetailUsecase: getTopicDetailUsecase,
-		sidebarHelper:         sidebarHelper,
+		getTopicNewUsecase:    getTopicNewUsecase,
+		createTopicUsecase:    createTopicUsecase,
 	}
 }

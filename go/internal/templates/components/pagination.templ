@@ -18,14 +18,15 @@ templ PaginationNav(pagination viewmodel.Pagination, previousPath string, nextPa
 				<li>
 					if pagination.HasPrevious {
 						<a
-							class="btn-ghost"
+							class="btn"
+							data-variant="ghost"
 							href={ templ.SafeURL(previousPath) }
 						>
 							@templates.Icon("caret-left-regular")
 							{ templates.T(ctx, "pagination_previous") }
 						</a>
 					} else {
-						<button class="btn-ghost" disabled>
+						<button class="btn" data-variant="ghost" disabled>
 							@templates.Icon("caret-left-regular")
 							{ templates.T(ctx, "pagination_previous") }
 						</button>
@@ -34,14 +35,15 @@ templ PaginationNav(pagination viewmodel.Pagination, previousPath string, nextPa
 				<li>
 					if pagination.HasNext {
 						<a
-							class="btn-ghost"
+							class="btn"
+							data-variant="ghost"
 							href={ templ.SafeURL(nextPath) }
 						>
 							{ templates.T(ctx, "pagination_next") }
 							@templates.Icon("caret-right-regular")
 						</a>
 					} else {
-						<button class="btn-ghost" disabled>
+						<button class="btn" data-variant="ghost" disabled>
 							{ templates.T(ctx, "pagination_next") }
 							@templates.Icon("caret-right-regular")
 						</button>

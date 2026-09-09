@@ -11,6 +11,7 @@ import (
 type Handler struct {
 	cfg                         *config.Config
 	sessionMgr                  *session.Manager
+	flashMgr                    *session.FlashManager
 	createRecoveryCodeSessionUC *usecase.CreateRecoveryCodeSessionUsecase
 }
 
@@ -18,11 +19,13 @@ type Handler struct {
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,
+	flashMgr *session.FlashManager,
 	createRecoveryCodeSessionUC *usecase.CreateRecoveryCodeSessionUsecase,
 ) *Handler {
 	return &Handler{
 		cfg:                         cfg,
 		sessionMgr:                  sessionMgr,
+		flashMgr:                    flashMgr,
 		createRecoveryCodeSessionUC: createRecoveryCodeSessionUC,
 	}
 }

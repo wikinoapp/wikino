@@ -32,7 +32,7 @@ func (v *EmailConfirmationCreateValidator) Validate(ctx context.Context, input E
 
 	if input.Email == "" {
 		ve.AddField("email", i18n.T(ctx, "validation_required"))
-	} else if !isValidEmail(input.Email) {
+	} else if !IsValidEmail(input.Email) {
 		ve.AddField("email", i18n.T(ctx, "validation_email_invalid"))
 	}
 

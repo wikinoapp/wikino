@@ -11,6 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	passwordpages "github.com/wikinoapp/wikino/go/internal/templates/pages/password"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
@@ -127,7 +128,8 @@ func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors 
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "password_reset_title")
+	meta.SetTitle(ctx, "password_reset_new_title")
+	meta.OGURL = h.cfg.AppURL() + string(templates.PasswordResetPath())
 
 	content := passwordpages.Reset(passwordpages.ResetPageData{
 		CSRFToken:        csrfToken,
@@ -150,6 +152,11 @@ func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors 
 func (h *Handler) renderSentPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	// No canonical URL is declared here. This page is only ever the response to POST /password/reset
+	// and has no address of its own to point at.
+	//
+	// [Ja] ここでは正規 URL を宣言しない。本ページは POST /password/reset の応答としてのみ描画され、
+	// 指せる固有のアドレスを持たない。
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "password_reset_sent_title")
 

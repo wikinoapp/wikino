@@ -128,8 +128,8 @@ func (uc *AutoSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAcc
 		uc.draftPageRepo.WithTx(tx),
 		uc.pageRepo.WithTx(tx),
 		uc.pageEditorRepo.WithTx(tx),
-		uc.topicRepo,
-		uc.attachmentRepo,
+		uc.topicRepo.WithTx(tx),
+		uc.attachmentRepo.WithTx(tx),
 	)
 	if err != nil {
 		return nil, err

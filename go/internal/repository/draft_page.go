@@ -211,7 +211,9 @@ func (r *DraftPageRepository) UpdateTopicByPageID(ctx context.Context, pageID mo
 	})
 }
 
-// ListByUser はユーザーの下書きページ一覧を取得する（サイドバー / ホーム画面の下書きページ表示用）
+// ListByUser returns the user's draft pages for the home page.
+//
+// [Ja] ListByUser はホーム画面に表示する、ユーザーの下書きページ一覧を取得する。
 func (r *DraftPageRepository) ListByUser(ctx context.Context, userID model.UserID, limit int32) ([]*model.DraftPage, error) {
 	rows, err := r.q.ListDraftPagesByUser(ctx, query.ListDraftPagesByUserParams{
 		UserID: string(userID),

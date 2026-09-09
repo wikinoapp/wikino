@@ -2,19 +2,21 @@ package components
 
 import "github.com/wikinoapp/wikino/go/internal/templates"
 
-// OptionalLabelData は任意項目のラベルに渡すデータ構造体です
+// OptionalLabelData contains the data for a label that marks an optional field.
+//
+// [Ja] OptionalLabelData は任意項目であることを示すラベルのデータです。
 type OptionalLabelData struct {
 	For   string
 	Label string
 }
 
-// OptionalLabel は任意項目であることを示すラベルを表示します
+// OptionalLabel renders a label that marks a field as optional. For must name the control this
+// label describes; an empty value renders a label with no control.
+//
+// [Ja] OptionalLabel は任意項目であることを示すラベルを表示します。For にはこのラベルが説明する
+// コントロールの id を必ず渡してください。空にすると関連先を持たないラベルになります。
 templ OptionalLabel(data OptionalLabelData) {
-	<label
-		if data.For != "" {
-			for={ data.For }
-		}
-	>
+	<label class="label" for={ data.For }>
 		<span class="flex items-center gap-1">
 			{ data.Label }
 			<span class="text-xs text-muted-foreground">

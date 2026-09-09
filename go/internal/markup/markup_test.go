@@ -4,6 +4,9 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/util"
 )
 
 // normalizeHTML はHTML文字列の空白を正規化する（テスト比較用）
@@ -239,20 +242,48 @@ func TestRenderMarkdown_ImgAttributes(t *testing.T) {
 	}
 }
 
-func TestRenderMarkdown_StandaloneImgZWNJ(t *testing.T) {
+func TestRenderMarkdown_StandaloneImgLine(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name  string
-		input string
+		name     string
+		input    string
+		contains []string
 	}{
 		{
-			name:  "LF",
-			input: "<img src=\"https://example.com/image.png\">\n*caption*",
+			name:     "キャプションが続く行はMarkdownとして解析される (LF)",
+			input:    "<img src=\"https://example.com/image.png\">\n*caption*",
+			contains: []string{"<img", "<em>caption</em>"},
 		},
 		{
-			name:  "CRLF",
-			input: "<img src=\"https://example.com/image.png\">\r\n*caption*",
+			name:     "キャプションが続く行はMarkdownとして解析される (CRLF)",
+			input:    "<img src=\"https://example.com/image.png\">\r\n*caption*",
+			contains: []string{"<img", "<em>caption</em>"},
+		},
+		{
+			name:     "後続行のMarkdownリンクも解析される",
+			input:    "<img src=\"https://example.com/image.png\">\n*caption*\n[link](https://example.com/)",
+			contains: []string{"<img", "<em>caption</em>", `<a href="https://example.com/"`},
+		},
+		{
+			name:     "後続行のインラインコードも解析される",
+			input:    "<img src=\"https://example.com/image.png\">\n*caption*\n`code`",
+			contains: []string{"<img", "<code>code</code>"},
+		},
+		{
+			name:     "img タグだけの行は段落に入る",
+			input:    `<img src="https://example.com/image.png">`,
+			contains: []string{"<p><img"},
+		},
+		{
+			name:     "属性値に > を含む img タグも段落に入る",
+			input:    `<img src="https://example.com/image.png" alt="a>b">`,
+			contains: []string{"<p><img"},
+		},
+		{
+			name:     "他の要素はHTMLブロックのまま扱われる",
+			input:    "<div>\n*caption*\n</div>",
+			contains: []string{"<div>\n*caption*\n</div>"},
 		},
 	}
 
@@ -262,14 +293,10 @@ func TestRenderMarkdown_StandaloneImgZWNJ(t *testing.T) {
 
 			got := RenderMarkdown(tt.input)
 
-			if strings.Contains(got, zwnj) {
-				t.Errorf("should not contain ZWNJ, got: %s", got)
-			}
-			if !strings.Contains(got, "<img") {
-				t.Errorf("should contain <img>, got: %s", got)
-			}
-			if !strings.Contains(got, "<em>") {
-				t.Errorf("should contain <em>, got: %s", got)
+			for _, want := range tt.contains {
+				if !strings.Contains(got, want) {
+					t.Errorf("RenderMarkdown(%q)\ngot:  %s\nwant to contain: %s", tt.input, got, want)
+				}
 			}
 		})
 	}
@@ -337,4 +364,36 @@ func TestRenderMarkdown_ComplexDocument(t *testing.T) {
 			t.Errorf("RenderMarkdown should contain %q, got: %s", check, got)
 		}
 	}
+}
+
+func TestWithInlineImgBlocks_WrapsTheRegisteredHTMLBlockParser(t *testing.T) {
+	t.Parallel()
+
+	config := parser.NewConfig()
+	parser.WithBlockParsers(parser.DefaultBlockParsers()...).SetParserOption(config)
+	withInlineImgBlocks{}.SetParserOption(config)
+
+	registered := 0
+	for _, value := range config.BlockParsers {
+		if _, ok := value.Value.(*inlineImgBlockParser); ok {
+			registered++
+		}
+	}
+	if registered != 1 {
+		t.Errorf("wrapped parsers = %d, want 1", registered)
+	}
+}
+
+func TestWithInlineImgBlocks_PanicsWithoutAnHTMLBlockParser(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if recover() == nil {
+			t.Error("SetParserOption did not panic")
+		}
+	}()
+
+	withInlineImgBlocks{}.SetParserOption(&parser.Config{
+		BlockParsers: util.PrioritizedSlice{util.Prioritized(parser.NewParagraphParser(), 1000)},
+	})
 }

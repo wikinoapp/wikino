@@ -48,6 +48,11 @@ module Settings
         private def current_page_name
           PageName::SettingsTwoFactorAuthRecoveryCodes
         end
+
+        sig { returns(BaseUI::ContainerComponent::ContentScreen) }
+        private def content_screen
+          BaseUI::ContainerComponent::ContentScreen::Small
+        end
       end
     end
   end

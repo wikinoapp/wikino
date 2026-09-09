@@ -94,7 +94,8 @@ templ DraftPageRevisionDiff(data DraftPageRevisionDiffData) {
 				<div id={ revisionRestoreInitialID }>
 					<button
 						type="button"
-						class="btn-outline rounded-full w-fit"
+						class="btn rounded-full w-fit"
+						data-variant="outline"
 						onclick={ templ.JSUnsafeFuncCall(revisionRestoreShowConfirmScript) }
 					>
 						@templates.Icon("clock-counter-clockwise-regular")
@@ -112,7 +113,7 @@ templ DraftPageRevisionDiff(data DraftPageRevisionDiffData) {
 							<form method="POST" action={ templ.SafeURL(data.RestoreURL) }>
 								<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
-								<button type="submit" class="btn-primary rounded-full w-fit">
+								<button type="submit" class="btn rounded-full w-fit">
 									@templates.Icon("clock-counter-clockwise-regular")
 									{ templates.T(ctx, "page_edit_revision_diff_restore_confirm_button") }
 								</button>
@@ -120,7 +121,8 @@ templ DraftPageRevisionDiff(data DraftPageRevisionDiffData) {
 
 							<button
 								type="button"
-								class="btn-outline rounded-full w-fit"
+								class="btn rounded-full w-fit"
+								data-variant="outline"
 								onclick={ templ.JSUnsafeFuncCall(revisionRestoreHideConfirmScript) }
 							>
 								{ templates.T(ctx, "page_edit_revision_diff_restore_cancel_button") }

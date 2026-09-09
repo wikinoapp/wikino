@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -106,25 +107,34 @@ func (h *Handler) renderMoveForm(
 		AvailableTopics: topicsForSelect,
 	})
 
-	// サイドバーコンテンツを取得
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNamePageMove,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			SpaceIdentifier:   spaceIdentVM,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNamePageMove,
 			SignedIn:        true,
+			UserAtname:      user.Atname,
 			SpaceIdentifier: spaceIdentVM,
+		},
+
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			MaxWidthClass: "max-w-2xl",
+			Items: []components.BreadcrumbItem{
+				{
+					Path:      templates.HomePath(),
+					IconName:  "house-regular",
+					AriaLabel: i18n.T(ctx, "breadcrumb_home"),
+				},
+				{
+					Label: spaceVM.Name,
+					Path:  templates.SpacePath(spaceIdentVM),
+				},
+				{
+					Label:    currentTopicVM.Name,
+					Path:     templates.TopicPath(spaceIdentVM, currentTopicVM.Number),
+					IconName: currentTopicVM.IconName,
+				},
+			},
 		},
 	}
 

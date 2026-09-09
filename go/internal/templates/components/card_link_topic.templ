@@ -16,61 +16,62 @@ import (
 // デバイスではホバー時、タッチデバイスでは常時表示) を出す。CardLinkPage の CanEdit
 // パターンを踏襲している。
 templ CardLinkTopic(topic viewmodel.CardLinkTopic) {
-	<div class="group card relative min-h-[54px] transition p-0 duration-200 ease-in-out hover:border-brand-600">
+	<div class="group card relative min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600">
 		if topic.CanCreatePage {
 			<div class="touch:hidden non-touch:flex items-center absolute right-2 inset-y-0 z-10">
 				<a
 					href={ templ.SafeURL(string(templates.NewPagePath(topic.SpaceIdentifier, topic.Number))) }
 					class="
 						rounded-full p-2 leading-none text-center transition duration-150 ease-in-out shadow-sm
-						opacity-0 group-hover:opacity-100
-						group-hover:bg-primary hover:bg-primary/90
+						opacity-0 group-hover:opacity-100 focus-visible:opacity-100
+						group-hover:bg-primary hover:bg-primary/90 focus-visible:bg-primary
 						group-hover:backdrop-blur-md hover:backdrop-blur-md
+						focus-visible:ring-[3px] focus-visible:ring-ring/50
 					"
+					aria-label={ templates.T(ctx, "card_link_topic_new_page") }
 					title={ templates.T(ctx, "card_link_topic_new_page") }
 				>
-					@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
+					@templates.DecorativeIcon("plus-regular", "size-4 fill-primary-foreground")
 				</a>
 			</div>
 		}
 
-		<div class="card-body h-full">
-			<div class="flex h-full">
-				<a
-					class="flex-1 min-w-0 h-full px-3 py-2"
-					href={ templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))) }
-				>
-					<div class="flex gap-2 h-full">
-						<div class="flex items-center h-full">
-							@templates.Icon(topic.TopicIconName, "flex-none size-4 md:size-6 fill-muted-foreground")
-						</div>
+		<div class="flex h-full">
+			<a
+				class="flex-1 min-w-0 h-full px-3 py-2"
+				href={ templ.SafeURL(string(templates.TopicPath(topic.SpaceIdentifier, topic.Number))) }
+			>
+				<div class="flex gap-2 h-full">
+					<div class="flex items-center h-full">
+						@templates.Icon(topic.TopicIconName, "flex-none size-4 md:size-6 fill-muted-foreground")
+					</div>
 
-						<div class="flex flex-col gap-0.5 min-w-0">
-							if topic.SpaceName != "" {
-								<span class="line-clamp-1 text-xs text-muted-foreground min-w-0">
-									{ topic.SpaceName }
-								</span>
-							}
-
-							<span class="line-clamp-1 text-sm font-bold">
-								{ topic.Name }
+					<div class="flex flex-col gap-0.5 min-w-0">
+						if topic.SpaceName != "" {
+							<span class="line-clamp-1 text-xs text-muted-foreground min-w-0">
+								{ topic.SpaceName }
 							</span>
-						</div>
-					</div>
-				</a>
+						}
 
-				if topic.CanCreatePage {
-					<div class="touch:flex non-touch:hidden h-fit self-center pr-3">
-						<a
-							href={ templ.SafeURL(string(templates.NewPagePath(topic.SpaceIdentifier, topic.Number))) }
-							class="btn-sm-icon-primary rounded-full"
-							title={ templates.T(ctx, "card_link_topic_new_page") }
-						>
-							@templates.Icon("plus-regular", "size-4")
-						</a>
+						<span class="line-clamp-1 text-sm font-bold">
+							{ topic.Name }
+						</span>
 					</div>
-				}
-			</div>
+				</div>
+			</a>
+
+			if topic.CanCreatePage {
+				<div class="touch:flex non-touch:hidden h-fit self-center pr-3">
+					<a
+						href={ templ.SafeURL(string(templates.NewPagePath(topic.SpaceIdentifier, topic.Number))) }
+						class="btn rounded-full"
+						data-size="icon-sm"
+						aria-label={ templates.T(ctx, "card_link_topic_new_page") }
+					>
+						@templates.DecorativeIcon("plus-regular", "size-4")
+					</a>
+				</div>
+			}
 		</div>
 	</div>
 }

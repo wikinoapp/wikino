@@ -12,7 +12,7 @@
               <%= render BaseUI::IconComponent.new(name: "pencil-simple-line", size: "16px", class_name: "fill-muted-foreground") %>
             <% end %>
 
-            <%= link_to page_path(draft_page.space.identifier, draft_page.page.number), {
+            <%= link_to "/s/#{draft_page.space.identifier}/pages/#{draft_page.page.number}", {
               class: "flex w-full items-center gap-2 rounded-md p-2 text-foreground",
               title: display_title(draft_page),
               data: { turbo_frame: "_top" }

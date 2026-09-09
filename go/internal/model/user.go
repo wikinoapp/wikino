@@ -27,3 +27,14 @@ type User struct {
 	JoinedAt    time.Time
 	DiscardedAt *time.Time
 }
+
+// Code returns the language tag of the locale, which is what i18n and the mail templates select a
+// translation by.
+//
+// [Ja] Code はロケールの言語タグを返す。i18n とメールテンプレートは、この値で翻訳を選ぶ。
+func (l Locale) Code() string {
+	if l == LocaleEn {
+		return "en"
+	}
+	return "ja"
+}
