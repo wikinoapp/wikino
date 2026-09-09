@@ -30,13 +30,13 @@ func TestTopicMemberRepository_Create(t *testing.T) {
 		WithName("Created Topic Member").
 		Build()
 
-	beforeCreate := time.Now()
+	beforeCreate := time.Now().Truncate(time.Microsecond)
 	member, err := repo.Create(context.Background(), CreateTopicMemberInput{
 		SpaceID:       spaceID,
 		TopicID:       topicID,
 		SpaceMemberID: spaceMemberID,
 	})
-	afterCreate := time.Now()
+	afterCreate := time.Now().Truncate(time.Microsecond)
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
