@@ -18,9 +18,11 @@ updates:
     # メジャー更新は破壊的変更を含むことがあり個別 PR でレビューしたいため、
     # 以下のすべてのグループで update-types を patch / minor のみに絞っている
     groups:
-      river:
+      aws-sdk-go-v2:
         patterns:
-          - "github.com/riverqueue/*"
+          - "github.com/aws/aws-sdk-go-v2"
+          - "github.com/aws/aws-sdk-go-v2/*"
+          - "github.com/aws/smithy-go"
         update-types:
           - "patch"
           - "minor"
@@ -33,6 +35,12 @@ updates:
       jackc-pgx:
         patterns:
           - "github.com/jackc/*"
+        update-types:
+          - "patch"
+          - "minor"
+      river:
+        patterns:
+          - "github.com/riverqueue/*"
         update-types:
           - "patch"
           - "minor"
