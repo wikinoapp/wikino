@@ -1,4 +1,4 @@
-.PHONY: test test-file setup console server lint lint-fix fmt zeitwerk sorbet sorbet-update db-migrate db-rollback db-setup db-setup-test help
+.PHONY: test test-file setup console server lint lint-fix fmt zeitwerk db-migrate db-rollback db-setup db-setup-test help
 
 # Selects which 1Password item .env.local resolves (wikino_env_$APP_ENV). It does
 # not set RAILS_ENV, so overriding it leaves the application in development while
@@ -58,15 +58,9 @@ lint-fix: ## Rubyコードのリントを実行して自動修正
 
 fmt: lint-fix ## lint-fixのエイリアス
 
-## 型チェック
+## オートロードチェック
 zeitwerk: ## Zeitwerk（オートロード）チェック
 	$(OP_RUN) bin/rails zeitwerk:check
-
-sorbet: ## Sorbet型チェック
-	bin/srb tc
-
-sorbet-update: ## Sorbet型定義を更新
-	$(OP_RUN) bin/rails sorbet:update
 
 ## データベース
 # Rails owns only the queue database, so both targets name it explicitly. The
