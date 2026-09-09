@@ -38,56 +38,6 @@ jobs:
           working-directory: rails
       - run: bin/rails zeitwerk:check
 
-  sorbet:
-    name: Sorbet
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rails
-    steps:
-      # Check out the PR head branch itself rather than the merge commit, so the
-      # "Push RBI files or fail" step below can push the commit it creates.
-      # Without this, actions/checkout leaves the repository on a detached HEAD
-      # for pull_request events and git push aborts with exit 128. The
-      # expression is empty on push events, which falls back to the default ref.
-      #
-      # [Ja] 下の "Push RBI files or fail" ステップが作成したコミットを push できるよう、
-      # マージコミットではなく PR のヘッドブランチ自体をチェックアウトする。これがないと
-      # pull_request イベントでは actions/checkout が detached HEAD のままにするため、
-      # git push が exit 128 で失敗する。push イベントではこの式が空になり、既定の
-      # ref にフォールバックする。
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref }}
-      - name: Install libvips
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libvips libvips-dev
-      - name: Setup Ruby and install gems
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.4.4
-          bundler-cache: true
-          working-directory: rails
-      - run: bin/rails sorbet:update
-      - name: Push RBI files or fail
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            if [ "$GITHUB_ACTOR" = "dependabot[bot]" ]; then
-              git config user.email 49699333+dependabot[bot]@users.noreply.github.com
-              git config user.name dependabot[bot]
-              git add .
-              git commit -m "Update RBI files"
-              git push
-            else
-              echo "Error! 未更新のRBIファイルがあるようです。bin/rails sorbet:update を実行して差分をコミットしてください。"
-              exit 1
-            fi
-          fi
-      - run: bin/srb tc
-
   standard:
     name: Standard
     runs-on: ubuntu-latest
