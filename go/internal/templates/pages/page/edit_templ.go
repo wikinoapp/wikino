@@ -620,7 +620,7 @@ func Edit(data EditPageData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><div id=\"page-edit-preview-content\" class=\"min-w-0\"></div></div></div><div class=\"flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center\"><div class=\"flex gap-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div><div id=\"page-edit-preview-content\" class=\"min-w-0\"></div></div></div><div class=\"flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center\"><div class=\"flex flex-wrap gap-x-2 gap-y-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -632,7 +632,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var28 string
 				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_update_suggestion_button"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 402, Col: 69}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 421, Col: 69}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 				if templ_7745c5c3_Err != nil {
@@ -654,7 +654,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var29 string
 				templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_publish_to_topic_button"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 410, Col: 68}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 429, Col: 68}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 				if templ_7745c5c3_Err != nil {
@@ -677,7 +677,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var30 string
 				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.ResolveAttributeValue(saveDraftButtonID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 425, Col: 36}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 444, Col: 36}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var30)
 				if templ_7745c5c3_Err != nil {
@@ -690,7 +690,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var31 string
 				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ManualSaveURL)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 429, Col: 43}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 448, Col: 43}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var31)
 				if templ_7745c5c3_Err != nil {
@@ -703,7 +703,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var32 string
 				templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_save_draft_button"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 434, Col: 63}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 453, Col: 63}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 				if templ_7745c5c3_Err != nil {
@@ -720,7 +720,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var33 string
 				templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "page_edit_save_draft_options_aria_label"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 444, Col: 87}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 463, Col: 87}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var33)
 				if templ_7745c5c3_Err != nil {
@@ -741,7 +741,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var34 string
 				templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(templ.SafeURL(data.CreateSuggestionSaveURL)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 455, Col: 82}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 474, Col: 82}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var34)
 				if templ_7745c5c3_Err != nil {
@@ -758,7 +758,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var35 string
 				templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_save_draft_and_create_suggestion_button"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 459, Col: 89}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 478, Col: 89}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 				if templ_7745c5c3_Err != nil {
@@ -776,7 +776,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var36 string
 				templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.ResolveAttributeValue(saveDraftButtonID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 470, Col: 35}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 489, Col: 35}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var36)
 				if templ_7745c5c3_Err != nil {
@@ -789,7 +789,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var37 string
 				templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ManualSaveURL)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 474, Col: 42}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 493, Col: 42}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var37)
 				if templ_7745c5c3_Err != nil {
@@ -802,7 +802,7 @@ func Edit(data EditPageData) templ.Component {
 				var templ_7745c5c3_Var38 string
 				templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_save_draft_button"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 479, Col: 62}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 498, Col: 62}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 				if templ_7745c5c3_Err != nil {
@@ -824,7 +824,7 @@ func Edit(data EditPageData) templ.Component {
 			var templ_7745c5c3_Var39 templ.SafeURL
 			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 489, Col: 123}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 508, Col: 123}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 			if templ_7745c5c3_Err != nil {
@@ -837,7 +837,7 @@ func Edit(data EditPageData) templ.Component {
 			var templ_7745c5c3_Var40 string
 			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_cancel"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 491, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 510, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 			if templ_7745c5c3_Err != nil {
@@ -875,7 +875,7 @@ func Edit(data EditPageData) templ.Component {
 		var templ_7745c5c3_Var41 string
 		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.ResolveAttributeValue(pageRevisionListID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 529, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 548, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var41)
 		if templ_7745c5c3_Err != nil {
@@ -961,7 +961,7 @@ func draftPageColumn(data EditPageData) templ.Component {
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_draft_pages_heading"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 569, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 588, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
@@ -974,7 +974,7 @@ func draftPageColumn(data EditPageData) templ.Component {
 		var templ_7745c5c3_Var44 templ.SafeURL
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.DraftsPath())))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 573, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 592, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
@@ -987,7 +987,7 @@ func draftPageColumn(data EditPageData) templ.Component {
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_draft_pages_view_all_link"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 575, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 594, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 		if templ_7745c5c3_Err != nil {
@@ -1009,7 +1009,7 @@ func draftPageColumn(data EditPageData) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_draft_pages_empty"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 581, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 600, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
@@ -1096,7 +1096,7 @@ func drawerDraftRevisionList(data EditPageData) templ.Component {
 		var templ_7745c5c3_Var48 string
 		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.ResolveAttributeValue(pageRevisionListDrawerID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 619, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 638, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var48)
 		if templ_7745c5c3_Err != nil {
@@ -1154,7 +1154,7 @@ func draftRevisionColumn(data draftRevisionColumnData) templ.Component {
 		var templ_7745c5c3_Var50 string
 		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revisions_heading"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 635, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 654, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 		if templ_7745c5c3_Err != nil {
@@ -1172,7 +1172,7 @@ func draftRevisionColumn(data draftRevisionColumnData) templ.Component {
 			var templ_7745c5c3_Var51 string
 			templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revisions_empty"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 640, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 659, Col: 51}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 			if templ_7745c5c3_Err != nil {
@@ -1214,7 +1214,7 @@ func draftRevisionColumn(data draftRevisionColumnData) templ.Component {
 				var templ_7745c5c3_Var52 string
 				templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(templates.PageDraftPageRevisionShowPath(data.SpaceIdentifier, data.PageNumber, revision.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 668, Col: 115}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 687, Col: 115}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var52)
 				if templ_7745c5c3_Err != nil {
@@ -1227,7 +1227,7 @@ func draftRevisionColumn(data draftRevisionColumnData) templ.Component {
 				var templ_7745c5c3_Var53 string
 				templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.ResolveAttributeValue("#" + revisionDiffContentID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 669, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 688, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var53)
 				if templ_7745c5c3_Err != nil {
@@ -1240,7 +1240,7 @@ func draftRevisionColumn(data draftRevisionColumnData) templ.Component {
 				var templ_7745c5c3_Var54 string
 				templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.ResolveAttributeValue("#" + revisionDiffLoadingID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 671, Col: 49}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 690, Col: 49}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var54)
 				if templ_7745c5c3_Err != nil {
@@ -1262,7 +1262,7 @@ func draftRevisionColumn(data draftRevisionColumnData) templ.Component {
 				var templ_7745c5c3_Var56 string
 				templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("v%d", revision.Version))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 676, Col: 47}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 695, Col: 47}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 				if templ_7745c5c3_Err != nil {
@@ -1280,7 +1280,7 @@ func draftRevisionColumn(data draftRevisionColumnData) templ.Component {
 					var templ_7745c5c3_Var57 string
 					templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revisions_current_badge"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 681, Col: 65}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 700, Col: 65}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var57))
 					if templ_7745c5c3_Err != nil {
@@ -1351,7 +1351,7 @@ func revisionDiffDialogContent() templ.Component {
 		var templ_7745c5c3_Var59 string
 		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.ResolveAttributeValue(revisionDiffLoadingID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 713, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 732, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var59)
 		if templ_7745c5c3_Err != nil {
@@ -1364,7 +1364,7 @@ func revisionDiffDialogContent() templ.Component {
 		var templ_7745c5c3_Var60 string
 		templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revision_diff_loading"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 715, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 734, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
 		if templ_7745c5c3_Err != nil {
@@ -1377,7 +1377,7 @@ func revisionDiffDialogContent() templ.Component {
 		var templ_7745c5c3_Var61 string
 		templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.ResolveAttributeValue(revisionDiffContentID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 720, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 739, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var61)
 		if templ_7745c5c3_Err != nil {

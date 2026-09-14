@@ -1593,6 +1593,19 @@ func TestEdit_ActionRowLayout(t *testing.T) {
 		t.Error("action row responsive layout container not found in response")
 	}
 
+	// The button labels and keyboard hints together are wider than the card's content box on a
+	// narrow non-touch viewport, so the button row must wrap. Match the whole class attribute and
+	// its enclosing tier to keep the assertion specific to this row and fail if flex-wrap is removed.
+	//
+	// [Ja] 狭い非タッチ環境では、ボタンのラベルとキーボードヒントを合わせた幅がカードの
+	// 内容幅を超えるため、ボタン行は折り返せる必要がある。class 属性全体を外側の段と併せて
+	// 照合し、この行から flex-wrap が外れた場合に検出できるようにする。
+	wantWrappingButtonRow := `<div class="flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center">` +
+		`<div class="flex flex-wrap gap-x-2 gap-y-1">`
+	if !strings.Contains(body, wantWrappingButtonRow) {
+		t.Errorf("response does not contain the wrapping action row %q", wantWrappingButtonRow)
+	}
+
 	// The saved-at indicator and cancel sit in one container, un-reversed (saved-at then cancel).
 	// On the two-tier layout they group at the right (justify-end); on one line they spread
 	// (min-[1152px]:justify-between). The time never wraps.

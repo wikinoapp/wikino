@@ -393,7 +393,26 @@ templ Edit(data EditPageData) {
 									// 保存時刻とキャンセルを下段へ送って右揃えでまとめて並べ (保存時刻=キャンセルの隣)、キャンセルを
 									// 左上の主要ボタンから離してタッチ時の誤タップを防ぐ。
 									<div class="flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center">
-										<div class="flex gap-2">
+										// The buttons wrap instead of running past the card. .btn keeps each label on one line,
+										// so without flex-wrap this row overflows the card's content box (343px at a 375px
+										// viewport) and takes the cancel link below it out of reach — the card no longer clips
+										// its contents, and clipping only ever hid the overflow anyway. What pushes the row
+										// over is the keyboard hints, which are hidden on touch, so the widths that need the
+										// wrap are the non-touch narrow ones: a narrow window, or a wide screen zoomed to 400%.
+										// Wrapping is keyed on the available width rather than a breakpoint because the labels
+										// are translated and the width they need differs per locale. gap-y-1 matches the gap
+										// between this row and the tier below it, keeping one vertical rhythm once the buttons
+										// stack.
+										//
+										// [Ja] ボタンはカードの外へはみ出さず折り返す。.btn は各ラベルを 1 行に保つため、
+										// flex-wrap が無いとこの行はカードの内容幅 (ビューポート 375px で 343px) を超え、その下の
+										// キャンセルリンクを手の届かない位置へ連れ出す。カードはもう中身を切り抜かないうえ、
+										// 切り抜きははみ出しを隠していただけである。行を超えさせているのはキーボードショートカット
+										// 表記であり、これはタッチ端末では隠れるため、折り返しが要る幅は非タッチの狭い幅
+										// (狭いウィンドウ、または広い画面の 400% 拡大) になる。折り返しをブレークポイントではなく
+										// 利用できる幅に委ねているのは、ラベルが翻訳されて必要な幅がロケールごとに異なるため。
+										// gap-y-1 は下段との間隔に揃えてあり、ボタンが積まれたときも縦のリズムを 1 つに保つ。
+										<div class="flex flex-wrap gap-x-2 gap-y-1">
 											if data.IsSuggestionMode() {
 												<button
 													class="btn rounded-full w-fit"
