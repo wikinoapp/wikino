@@ -154,6 +154,63 @@ func TestNew_ヘルプリンク名が各言語で行き先を説明する(t *tes
 	}
 }
 
+// The subtitle under the heading carries its own text color, so the help links inside it take that
+// color through link-inherit-foreground rather than painting themselves. The note inside the form
+// sits in a differently colored block and keeps link-foreground, so it is asserted here as well to
+// keep the two apart. The class names live in the locale strings rather than in the template, so
+// both locales are checked: reverting one of them alone would otherwise go unnoticed.
+//
+// [Ja] 見出し下のサブタイトルは自身の文字色を持つため、その中のヘルプリンクは自分で色を塗らず
+// link-inherit-foreground でその色を受け取る。フォーム内の注意書きは別の色の枠にあり
+// link-foreground のままなので、両者が混ざらないようここで併せて確認する。クラス名は
+// テンプレートではなくロケール文字列側にあるため、両ロケールを確認する。片方だけ元に戻されても
+// 気づけなくなるからである。
+func TestNew_サブタイトルのヘルプリンクが本文色を継承する(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	userID := topicSpace(t, tx, "topic-new-link-color", nil)
+
+	tests := []struct {
+		name   string
+		locale string
+	}{
+		{
+			name:   "日本語",
+			locale: i18n.LangJa,
+		},
+		{
+			name:   "英語",
+			locale: i18n.LangEn,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-link-color/topics/new", "topic-new-link-color", userID, nil)
+			req = req.WithContext(i18n.SetLocale(req.Context(), tt.locale))
+			rr := httptest.NewRecorder()
+			setupHandler(t, queries).New(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+			}
+
+			body := rr.Body.String()
+			for _, want := range []string{
+				`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino/pages/11"`,
+				`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino/pages/52"`,
+				`<a class="link-foreground" href="https://wikino.app/s/wikino/pages/38"`,
+			} {
+				if !strings.Contains(body, want) {
+					t.Errorf("response does not contain %q", want)
+				}
+			}
+		})
+	}
+}
+
 // topicSpace seeds a space with one member and returns what the tests address them by.
 //
 // [Ja] topicSpace はメンバーが 1 人いるスペースを用意し、テストがそれらを指すための値を返す。

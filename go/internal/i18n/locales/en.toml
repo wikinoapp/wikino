@@ -1221,7 +1221,7 @@ other = "New topic"
 
 [topic_new_hint_html]
 description = "Subtitle on the topic creation page (contains links to the help pages)"
-other = "For more information about topics, please see <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">Topic help</a>.<br>If you are unsure what kind of topic to create, <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">Best Practices</a> may be helpful."
+other = "For more information about topics, please see <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">Topic help</a>.<br>If you are unsure what kind of topic to create, <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">Best Practices</a> may be helpful."
 
 [topic_form_name_label]
 description = "Name label on the topic form (shared by the creation and general settings pages)"
@@ -1435,7 +1435,7 @@ other = "Suggestions"
 
 [suggestion_index_subtitle_html]
 description = "Suggestion list subtitle (includes help page link)"
-other = "See <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">here</a> for more information about suggestions."
+other = "See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">Suggestion help</a> for more information about suggestions."
 
 [suggestion_index_breadcrumb]
 description = "Breadcrumb item for the suggestion list (the current item on the list screen, a link to it on the screens below)"
@@ -1818,11 +1818,11 @@ other = "Export"
 
 [export_new_description_html]
 description = "Subtitle of the export screens, with a link to the help page"
-other = "Export pages posted in the space. <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">Learn more about exporting</a>"
+other = "Export pages posted in the space. <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">Learn more about exporting</a>"
 
 [export_show_description_html]
 description = "Subtitle of the export screens, with a link to the help page"
-other = "Export pages posted in the space. <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">Learn more about exporting</a>"
+other = "Export pages posted in the space. <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">Learn more about exporting</a>"
 
 [export_new_breadcrumb_settings]
 description = "Breadcrumb item of the export screens linking to the space settings"

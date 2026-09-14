@@ -13,6 +13,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -146,6 +147,60 @@ func TestIndex_存在しないトピックで404が返る(t *testing.T) {
 	}
 }
 
+func TestIndex_ヘルプリンク名が各言語で行き先を説明する(t *testing.T) {
+	t.Parallel()
+
+	db, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("si-help-link").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0).
+		Build()
+
+	handler := setupHandler(t, db, queries)
+
+	tests := []struct {
+		name   string
+		locale string
+		want   string
+	}{
+		{
+			name:   "日本語",
+			locale: i18n.LangJa,
+			want:   ">編集提案についてのヘルプ</a>",
+		},
+		{
+			name:   "英語",
+			locale: i18n.LangEn,
+			want:   ">Suggestion help</a>",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newSuggestionRequest(t, http.MethodGet, "/s/si-help-link/topics/1/suggestions", map[string]string{
+				"space_identifier": "si-help-link",
+				"topic_number":     "1",
+			}, nil)
+			req = req.WithContext(i18n.SetLocale(req.Context(), tt.locale))
+
+			rr := httptest.NewRecorder()
+			handler.Index(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+			}
+			if body := rr.Body.String(); !strings.Contains(body, tt.want) {
+				t.Errorf("response does not contain %q", tt.want)
+			}
+		})
+	}
+}
 func TestIndex_公開トピックの編集提案一覧を未ログインで閲覧できる(t *testing.T) {
 	t.Parallel()
 

@@ -24,6 +24,12 @@
   --app-link-foreground: var(--app-primary);
   --app-link-primary-foreground: oklch(0.5346 0.0836 210.24);
   --app-link-muted-foreground: var(--app-muted-foreground);
+  /* Links that take the color of the text around them, for help links placed inside a paragraph
+     that already has its own color (the subtitle under a heading, for example).
+
+     [Ja] 周囲の文章の色をそのまま受け取るリンク。見出し下のサブタイトルのように、それ自体が
+     色を持つ文章の中へ置くヘルプリンク向け。 */
+  --app-link-inherit-foreground: currentcolor;
   --app-success: var(--color-green-600);
   --app-success-foreground: var(--color-white);
   --app-error: var(--color-red-600);
@@ -117,6 +123,7 @@
   --color-link-foreground: var(--app-link-foreground);
   --color-link-primary-foreground: var(--app-link-primary-foreground);
   --color-link-muted-foreground: var(--app-link-muted-foreground);
+  --color-link-inherit-foreground: var(--app-link-inherit-foreground);
 
   --color-error-foreground: var(--app-error-foreground);
   --color-error: var(--app-error);
@@ -239,8 +246,18 @@
       @apply my-6 border-stone-300;
     }
 
+    /* Give body images the same edge as a card. Without it, an image whose own background is close
+       to the app background has no visible extent. The ring is what shows all four sides; the
+       shadow only softens it, since it falls downwards and leaves the top edge bare. No rounding,
+       unlike the card: border-radius clips a replaced element, so it would cut away the corners of
+       the image itself.
+
+       [Ja] 本文の画像にカードと同じ境界を与える。これが無いと、画像自身の背景色が app の背景色に
+       近いときに範囲が分からない。四辺を示すのはリングで、影は下へ落ちて上辺に何も残さないため
+       柔らかさを足す役割にとどめる。カードと違い角丸は付けない。border-radius は置換要素の中身を
+       クリップするため、画像そのものの隅が削られてしまう。 */
     & img {
-      @apply mx-auto block;
+      @apply mx-auto block shadow-xs ring-1 ring-foreground/10;
     }
 
     /* 画像を含むリンクをインラインブロックにして画像の幅に合わせる */

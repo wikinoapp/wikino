@@ -1221,7 +1221,7 @@ other = "新規トピック"
 
 [topic_new_hint_html]
 description = "トピック作成画面のサブタイトル (ヘルプページへのリンクを含む)"
-other = "トピックについては <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">トピックについてのヘルプ</a> をご覧ください<br>どんなトピックを作ると良いかわからないときは <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
+other = "トピックについては <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">トピックについてのヘルプ</a> をご覧ください<br>どんなトピックを作ると良いかわからないときは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
 
 [topic_form_name_label]
 description = "トピックのフォームの名前ラベル (作成画面と一般設定画面で共有)"
@@ -1435,7 +1435,7 @@ other = "編集提案"
 
 [suggestion_index_subtitle_html]
 description = "編集提案一覧のサブタイトル (ヘルプページへのリンクを含む)"
-other = "編集提案については <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">こちら</a> をご覧ください"
+other = "編集提案については <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">編集提案についてのヘルプ</a> をご覧ください"
 
 [suggestion_index_breadcrumb]
 description = "編集提案一覧を指すパンくず項目 (一覧画面では現在項目、配下の画面では一覧へのリンク)"
@@ -1818,11 +1818,11 @@ other = "エクスポート"
 
 [export_new_description_html]
 description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
-other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
+other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
 
 [export_show_description_html]
 description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
-other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
+other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
 
 [export_new_breadcrumb_settings]
 description = "エクスポート画面のパンくずのスペース設定へのリンク"
