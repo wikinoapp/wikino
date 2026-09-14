@@ -1,5 +1,7 @@
-// Package suggestion_apply は編集提案反映関連のHTTPハンドラーを提供します
-package suggestion_apply
+// Package suggestion_application provides the HTTP handlers for applying a suggestion.
+//
+// [Ja] Package suggestion_application は編集提案を反映する操作の HTTP ハンドラーを提供します。
+package suggestion_application
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"

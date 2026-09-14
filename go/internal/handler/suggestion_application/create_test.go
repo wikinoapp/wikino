@@ -1,4 +1,4 @@
-package suggestion_apply_test
+package suggestion_application_test
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
-	suggestionapplyhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_apply"
+	suggestionapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_application"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -39,7 +39,7 @@ func newPostRequest(t *testing.T, path string, params map[string]string, form ur
 }
 
 // setupHandler はテスト用の編集提案反映ハンドラーを作成するヘルパーです
-func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionapplyhandler.Handler {
+func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionapplicationhandler.Handler {
 	t.Helper()
 
 	flashMgr := session.NewFlashManager("localhost", false, false)
@@ -73,7 +73,7 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 	)
 	cfg := &config.Config{}
 
-	return suggestionapplyhandler.NewHandler(
+	return suggestionapplicationhandler.NewHandler(
 		cfg,
 		flashMgr,
 		applySuggestionUC,

@@ -1,4 +1,4 @@
-package suggestion_apply
+package suggestion_closure
 
 import (
 	"log/slog"
@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
-	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -17,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create は編集提案を反映します (POST /s/{space_identifier}/suggestions/{suggestion_number}/apply)
+// Create は編集提案をクローズします (POST /s/{space_identifier}/suggestions/{suggestion_number}/close)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -40,62 +39,32 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	suggestionNumber := model.SuggestionNumber(suggestionNumberInt)
 
 	// UseCaseを実行
-	_, err = h.applySuggestionUsecase.Execute(ctx, usecase.ApplySuggestionInput{
+	_, err = h.closeSuggestionUsecase.Execute(ctx, usecase.CloseSuggestionInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: suggestionNumber,
 		UserID:           user.ID,
 	})
 	if err != nil {
-		h.handleCreateError(w, r, err, user, spaceIdentifier, suggestionNumber)
+		h.handleCreateError(w, r, err, spaceIdentifier, suggestionNumber)
 		return
 	}
 
 	// フラッシュメッセージを設定してリダイレクト
 	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
-	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_apply_success"))
+	h.flashMgr.SetSuccess(w, i18n.T(ctx, "suggestion_close_success"))
 	http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
 }
 
-func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
+func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, spaceIdentifier model.SpaceIdentifier, suggestionNumber model.SuggestionNumber) {
 	ctx := r.Context()
 	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
-
-	if ae := model.AsSuggestionApplyError(err); ae != nil {
-		// バリデーションエラー → 編集提案詳細ページを 422 で再描画
-		output, getErr := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
-			SpaceIdentifier:  spaceIdentifier,
-			SuggestionNumber: suggestionNumber,
-			UserID:           &user.ID,
-		})
-		if getErr != nil {
-			slog.ErrorContext(ctx, "編集提案詳細の再表示データ取得に失敗", "error", getErr)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		if output == nil {
-			handler.NotFound(w, r)
-			return
-		}
-
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		if renderErr := suggestionhandler.RenderShow(ctx, w, suggestionhandler.RenderShowInput{
-			Cfg:        h.cfg,
-			User:       user,
-			Output:     output,
-			ApplyError: viewmodel.NewSuggestionApplyError(ae),
-		}); renderErr != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		return
-	}
 
 	if ae := model.AsAppError(err); ae != nil {
 		switch ae.Code {
 		case model.AppErrCodeResourceNotFound:
 			handler.NotFound(w, r)
 		case model.AppErrCodeForbidden:
-			handler.NotFound(w, r)
+			http.Error(w, "Forbidden", http.StatusForbidden)
 		case model.AppErrCodeConflict:
 			h.flashMgr.SetError(w, ae.UserMsg)
 			http.Redirect(w, r, suggestionPath, http.StatusSeeOther)
@@ -106,6 +75,6 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 		return
 	}
 
-	slog.ErrorContext(ctx, "編集提案の反映に失敗", "error", err)
+	slog.ErrorContext(ctx, "編集提案のクローズに失敗", "error", err)
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }

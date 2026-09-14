@@ -1,4 +1,4 @@
-package suggestion_close_test
+package suggestion_application_test
 
 import (
 	"os"
