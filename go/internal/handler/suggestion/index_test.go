@@ -201,6 +201,97 @@ func TestIndex_ヘルプリンク名が各言語で行き先を説明する(t *t
 		})
 	}
 }
+
+// Keep suggestions in a native list so assistive technology receives the collection's structure.
+// The links also need to wrap unbroken titles so every item remains inside the card.
+//
+// The list item's class attribute is matched whole rather than by substring, so that losing the
+// separator, the padding or the hover background is caught even if another class ending in the
+// same word is added later. That match also marks where the list begins, and the checks for a
+// table and a horizontal scroller run on the list alone: an unrelated component elsewhere on the
+// page may gain either one without saying anything about how this list is built.
+//
+// [Ja] 支援技術へ一覧の構造を伝えるため、編集提案はネイティブなリストのまま保つ。
+// 区切れない長いタイトルもすべてカード内に収まるよう、リンクには折り返しが必要である。
+//
+// リスト項目の class 属性は部分文字列ではなく値を丸ごと照合する。これにより、後から同じ語で
+// 終わる別のクラスが増えても区切り線・余白・ホバー時の背景が落ちたことを捕まえられる。
+// この照合は一覧の開始位置も兼ねており、表と横スクロールの検査は一覧の範囲だけを見る。
+// ページの別の場所にある無関係なコンポーネントがどちらかを持つようになっても、この一覧の
+// 組み方については何も語らないためである。
+func TestIndex_編集提案一覧がテーブルではなくリストで組まれている(t *testing.T) {
+	t.Parallel()
+
+	db, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("si-list@example.com").
+		WithAtname("silist").
+		WithName("提案者").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("si-list-space").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(0). // public
+		Build()
+	testutil.NewSuggestionBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).
+		WithTitle("リストの提案").
+		WithStatus(model.SuggestionStatusOpen).
+		Build()
+
+	handler := setupHandler(t, db, queries)
+
+	req := newSuggestionRequest(t, http.MethodGet, "/s/si-list-space/topics/1/suggestions", map[string]string{
+		"space_identifier": "si-list-space",
+		"topic_number":     "1",
+	}, nil)
+	req = req.WithContext(i18n.SetLocale(req.Context(), i18n.LangJa))
+
+	rr := httptest.NewRecorder()
+	handler.Index(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	const listStart = `<ul><li class="border-b p-2 last:border-b-0 transition-colors hover:bg-muted/50">`
+
+	start := strings.Index(body, listStart)
+	if start < 0 {
+		t.Fatal("編集提案が区切り線・余白・ホバー時の背景を持つ ul の直接の子として組まれていない")
+	}
+
+	list := body[start:]
+	if end := strings.Index(list, "</ul>"); end >= 0 {
+		list = list[:end]
+	}
+
+	if strings.Contains(list, "<table") {
+		t.Error("編集提案一覧が表形式で組まれており、見出しと対応しないセルを支援技術へ渡してしまう")
+	}
+
+	if strings.Contains(list, "overflow-x-auto") {
+		t.Error("編集提案一覧に横スクロールの要素があり、狭い幅でリンクが枠の外へ出る")
+	}
+
+	if !strings.Contains(list, `<a href="/s/si-list-space/suggestions/1" class="flex flex-col gap-1 [overflow-wrap:anywhere]"`) {
+		t.Error("区切れない長いタイトルをカード内で折り返せない")
+	}
+}
+
 func TestIndex_公開トピックの編集提案一覧を未ログインで閲覧できる(t *testing.T) {
 	t.Parallel()
 
