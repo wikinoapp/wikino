@@ -18,6 +18,31 @@ run: ## サーバーを起動
 seed: ## Rebuild the development database contents with seed data (drops existing data). [Ja] 開発用データベースの中身をシードデータで作り直す (既存データは失われる)
 	$(OP_RUN_DEV) go run ./cmd/wikino seed
 
+# The account is named by its atname, the identifier the application itself
+# shows, so that a code can be minted for any account in the development
+# database rather than only for the ones the seed creates. The default is the
+# seeded account whose sign-in goes through the two-factor step: the other
+# seeded accounts sign in with a password alone and hold no TOTP secret.
+#
+# env is what puts the variable in front of the command: OP_RUN_DEV ends in the
+# `--` that separates `op run` from the command it runs, and an assignment there
+# would be read as the command itself.
+#
+# [Ja] アカウントは atname で指定する。これはアプリケーション自身が表示する識別子で
+# あり、シードが作るアカウントに限らず開発用データベースにあるどのアカウントでも
+# コードを生成できるようにするため。既定はサインインが 2 要素認証ステップを通る
+# シードのアカウント。ほかのシードのアカウントはパスワードだけでサインインし、
+# TOTP secret を持たない。
+#
+# 変数をコマンドの前に置くのに env を使うのは、OP_RUN_DEV が `op run` とその実行対象
+# コマンドを区切る `--` で終わっており、そこに代入を書くとコマンド自体として
+# 読まれるため。
+DEVTOTP_USER ?= seeduser2
+
+.PHONY: devtotp
+devtotp: ## Print the current TOTP code of a development account (another account with DEVTOTP_USER=<atname>). [Ja] 開発用アカウントの現在の TOTP コードを出力 (別アカウントは DEVTOTP_USER=<atname>)
+	@$(OP_RUN_DEV) env WIKINO_DEVTOTP_ATNAME=$(DEVTOTP_USER) go run ./cmd/devtotp
+
 .PHONY: browse-login
 browse-login: ## dev サイトへブラウザでログイン (別ユーザーは make browse-login BROWSE_USER=collaborator)
 	@$(OP_RUN_DEV) bash scripts/browse.sh login $(BROWSE_USER) || { echo "ログインに失敗しました。make browse-check で環境を確認してください" >&2; exit 1; }
