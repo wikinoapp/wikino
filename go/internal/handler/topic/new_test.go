@@ -211,6 +211,39 @@ func TestNew_サブタイトルのヘルプリンクが本文色を継承する(
 	}
 }
 
+// The visibility label is separated from the first option only by the margin-bottom basecoat's
+// .fieldset puts on the legend: a legend is not a flex item, so the gap on the group never reaches
+// it. data-variant="label", which basecoat resets that margin with, therefore has to stay off the
+// legend. Either half going missing brings the flush label back, so both are asserted.
+//
+// [Ja] 公開設定のラベルと最初の選択肢の間隔は、basecoat の .fieldset が legend に付ける
+// margin-bottom だけが作っている。legend はフレックスの子にならないため、グループに指定した gap は
+// legend まで届かない。したがって basecoat がその margin を 0 に戻す data-variant="label" は legend
+// に付けないままにする必要がある。どちらが欠けても密着した見た目に戻るため、両方を確認する。
+func TestNew_公開設定のラベルと選択肢の間に余白が入る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	userID := topicSpace(t, tx, "topic-new-fieldset", nil)
+
+	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-fieldset/topics/new", "topic-new-fieldset", userID, nil)
+	rr := httptest.NewRecorder()
+	setupHandler(t, queries).New(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if tag := topicFormFieldsetTag(t, body); !strings.Contains(tag, `class="fieldset gap-3"`) {
+		t.Errorf("fieldset tag does not carry the fieldset class: %s", tag)
+	}
+	if !strings.Contains(body, `<legend class="label">`) {
+		t.Error("response does not contain a legend left without data-variant")
+	}
+}
+
 // topicSpace seeds a space with one member and returns what the tests address them by.
 //
 // [Ja] topicSpace はメンバーが 1 人いるスペースを用意し、テストがそれらを指すための値を返す。

@@ -265,6 +265,40 @@ func TestShow_未ログインならログイン画面へリダイレクトする
 	}
 }
 
+// The creation screen and this one render the same shared form fields, so the spacing between the
+// visibility label and its first option is asserted on both. Covering only one of them would let a
+// later split of the shared fields leave this screen behind unnoticed.
+//
+// [Ja] 作成画面とこの画面は同じ共有フォーム項目を描画するため、公開設定のラベルと最初の選択肢の
+// 間隔は両方で確認する。片方だけを確認していると、後から共有の項目が分かれたときにこの画面が
+// 取り残されても気づけない。
+func TestShow_公開設定のラベルと選択肢の間に余白が入る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-gap"
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, nil)
+
+	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		`<fieldset class="fieldset gap-3">`,
+		`<legend class="label">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+}
+
 // The trail ends with the screen itself, so the last item must be a plain label carrying
 // aria-current rather than a link back to the settings screen. Scope the assertions to the
 // breadcrumb because the same label also appears in the heading and the page title.
