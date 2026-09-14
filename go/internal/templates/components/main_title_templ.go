@@ -61,7 +61,28 @@ func subtitleText(text string) templ.Component {
 	})
 }
 
-// MainTitle はページのメインタイトルと区切り線を表示します
+// MainTitle renders a page's main title together with the actions that belong to it.
+//
+// The action area is pinned to the top of the heading row rather than centred on it, so that it
+// stays in the same place however tall the column beside it grows — a title that wraps onto
+// several lines, a subtitle below the title, or extra content under both. Centred, the actions
+// drift downwards as that column grows, and the reader has to look for them again on every screen.
+//
+// The area is given the height of the title's first line (36px, the line box of text-3xl) so that
+// the 32px buttons it holds stay centred against the title itself instead of sitting flush with
+// the top of that line box. Below md the actions wrap onto a line of their own, where there is
+// nothing to line them up with, so the height only applies from md up.
+//
+// [Ja] MainTitle はページのメインタイトルと、それに紐づく操作領域を描画する。
+//
+// 操作領域は見出し行の中央ではなく上端に置く。隣の列がどれだけ高くなっても — タイトルが複数行に
+// 折り返しても、その下にサブタイトルや追加のコンテンツが付いても — 操作領域が同じ位置に出るように
+// するためである。中央に置くと、その列が伸びるほど操作領域が下がり、画面ごとにボタンを探し直す
+// ことになる。
+//
+// 操作領域にはタイトルの 1 行目の高さ (text-3xl の行ボックスと同じ 36px) を与え、中に入る 32px の
+// ボタンが行ボックスの上端に張り付かず、タイトルに対して中央に来るようにする。md 未満では操作領域
+// が独立した行に回り、揃える相手が無いため、この高さは md 以上でのみ効かせる。
 func MainTitle(data MainTitleData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -83,14 +104,14 @@ func MainTitle(data MainTitleData) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4\"><div class=\"flex flex-wrap md:flex-nowrap items-center justify-between gap-2\"><div class=\"flex min-w-0 flex-col gap-2\"><h1 class=\"text-3xl text-primary font-bold antialiased wrap-anywhere\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4\"><div class=\"flex flex-wrap md:flex-nowrap items-start justify-between gap-2\"><div class=\"flex min-w-0 flex-col gap-2\"><h1 class=\"text-3xl text-primary font-bold antialiased wrap-anywhere\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(data.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/main_title.templ`, Line: 32, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/main_title.templ`, Line: 53, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -125,7 +146,7 @@ func MainTitle(data MainTitleData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if data.Actions != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"flex w-full flex-none items-center justify-end gap-2 md:w-auto\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"flex w-full flex-none items-center justify-end gap-2 md:w-auto md:min-h-9\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

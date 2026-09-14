@@ -427,6 +427,24 @@ func TestShow(t *testing.T) {
 			},
 		},
 		{
+			// The action area is pinned to the top of the heading row so that it stays in the same
+			// place however many lines the title wraps to, and returns to the center once the
+			// header is stuck and the title has shrunk below the action area's height.
+			//
+			// [Ja] 操作領域は、タイトルが何行に折り返しても同じ位置に出るよう見出し行の上端に置き、
+			// ヘッダーが固定されてタイトルが操作領域より低くなったときだけ中央に戻す。
+			name:       "見出し行は操作領域を上端に置き、固定時だけ中央に戻す",
+			pageNumber: "1",
+			userID:     &editorUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`class="flex flex-wrap md:flex-nowrap items-start group-data-stuck:items-center justify-between gap-2 group-data-stuck:py-2"`,
+			},
+			wantNotContains: []string{
+				`class="flex flex-wrap md:flex-nowrap items-center justify-between gap-2 group-data-stuck:py-2"`,
+			},
+		},
+		{
 			// The two items ride on different scopes, so page:trash alone opens the trash item
 			// without opening the move item or the edit button.
 			//

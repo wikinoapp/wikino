@@ -123,6 +123,11 @@ func (d ShowData) showsPageActions() bool {
 // document position. The always-present transparent bottom border also keeps the compact header
 // itself from changing height when its color appears.
 //
+// Expanded, the action area sits at the top of the heading row so that it stays in the same place
+// however many lines the title wraps to. Pinned, it returns to the center: the title has shrunk to
+// a single text-sm line that is shorter than the 36px action area, and aligning it to the top would
+// make the title alone cling to the top of the compact bar.
+//
 // [Ja] showHeader はページタイトルと操作領域を、スクロールで通り過ぎると画面上端に固定されるヘッダーに
 // 描画する。固定されている間 (web/sticky-header.ts が data-stuck を付ける) はタイトルが 1 行に切り詰め
 // られて縮み、上へ戻らなくても操作領域に手が届く。展開時と固定時のヘッダーを
@@ -134,6 +139,10 @@ func (d ShowData) showsPageActions() bool {
 // ヘッダー前方の寸法が変わらない sentinel を監視対象にする。ヘッダー後方の spacer には、長いタイトルが
 // コンパクトになったときに失われる高さを設定し、本文のドキュメント上の位置を保つ。常に存在する透明な
 // 下境界線も、色が付いたときにコンパクトヘッダー自体の高さが変わることを防ぐ。
+//
+// 展開時は、タイトルが何行に折り返しても操作領域が同じ位置に出るよう、操作領域を見出し行の上端に
+// 置く。固定時は中央に戻す。そのときタイトルは text-sm の 1 行に縮んで 36px の操作領域より低くなり、
+// 上端に揃えるとコンパクトなバーの中でタイトルだけが上に張り付くためである。
 templ showHeader(data ShowData) {
 	<div class="h-px -mb-px" aria-hidden="true" data-sticky-header-sentinel></div>
 	<div
@@ -142,7 +151,7 @@ templ showHeader(data ShowData) {
 			templ.KV("min-h-[var(--app-sticky-header-height)]", data.showsPageActions()) }
 		data-sticky-header
 	>
-		<div class="flex flex-wrap md:flex-nowrap items-center justify-between gap-2 group-data-stuck:py-2">
+		<div class="flex flex-wrap md:flex-nowrap items-start group-data-stuck:items-center justify-between gap-2 group-data-stuck:py-2">
 			<h1 class="text-3xl text-primary font-bold antialiased group-data-stuck:text-sm group-data-stuck:line-clamp-1">
 				{ data.Page.DisplayTitle(ctx) }
 			</h1>
