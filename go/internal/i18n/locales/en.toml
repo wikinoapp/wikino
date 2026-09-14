@@ -1099,6 +1099,10 @@ other = "Draft Pages"
 description = "Message when there are no drafts"
 other = "No drafts."
 
+[draft_page_index_table_caption]
+description = "Draft page index table caption (visually hidden)"
+other = "Drafts in {{.TopicName}} ({{.SpaceName}})"
+
 [draft_page_index_column_title]
 description = "Draft page index table title column header"
 other = "Title"

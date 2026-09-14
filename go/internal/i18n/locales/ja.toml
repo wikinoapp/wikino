@@ -1099,6 +1099,10 @@ other = "下書きのページ"
 description = "下書きがない場合のメッセージ"
 other = "下書きはありません"
 
+[draft_page_index_table_caption]
+description = "下書き一覧テーブルのキャプション (視覚的には非表示)"
+other = "{{.TopicName}} ({{.SpaceName}}) の下書き一覧"
+
 [draft_page_index_column_title]
 description = "下書き一覧テーブルのタイトル列ヘッダー"
 other = "タイトル"

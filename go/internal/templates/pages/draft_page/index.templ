@@ -56,50 +56,75 @@ templ Index(data IndexData) {
 								</div>
 
 								@components.ContentCard() {
-									<div class="overflow-x-auto">
-										<table class="table">
-											<thead>
+									// The table is not wrapped in a horizontal scroller. overflow-x on an ancestor
+									// makes overflow-y compute to auto as well, and that box then clips the row
+									// action menu opened near its bottom edge. Letting the title cell wrap keeps
+									// every column inside the card at any width, so no scroller is needed here.
+									//
+									// [Ja] テーブルは横スクロールのラッパーで包まない。祖先の overflow-x は
+									// overflow-y も auto に計算させ、その要素が下端に近い行で開いた操作メニューを
+									// 切り取ってしまう。タイトルのセルを折り返させればどの幅でも全列がカードの
+									// 内側に収まるため、ここに横スクロールは要らない。
+									<table class="table">
+										// The group heading above the card names the topic, so a visible caption would
+										// repeat it. The caption is still needed for a screen reader that jumps straight
+										// to a table, which announces the caption alone and never the heading around it.
+										//
+										// [Ja] カードの上の見出しがトピック名を示しているため、見えるキャプションは
+										// その繰り返しになる。それでもキャプションが要るのは、表へ直接飛ぶスクリーン
+										// リーダーがキャプションだけを読み上げ、周りの見出しには触れないため。
+										<caption class="sr-only">
+											{ templates.T(ctx, "draft_page_index_table_caption", map[string]any{"SpaceName": group.SpaceName, "TopicName": group.TopicName}) }
+										</caption>
+
+										<thead>
+											<tr>
+												<th scope="col" class="w-full">
+													{ templates.T(ctx, "draft_page_index_column_title") }
+												</th>
+
+												<th scope="col">
+													{ templates.T(ctx, "draft_page_index_column_modified_at") }
+												</th>
+
+												<th scope="col">
+													<span class="sr-only">
+														{ templates.T(ctx, "draft_page_index_actions_aria_label") }
+													</span>
+												</th>
+											</tr>
+										</thead>
+
+										<tbody>
+											for _, draft := range group.DraftPages {
 												<tr>
-													<th class="w-full">
-														{ templates.T(ctx, "draft_page_index_column_title") }
-													</th>
+													// The title is the only cell allowed to wrap, which is what lets the table fit
+													// a narrow viewport. overflow-wrap:anywhere also lowers the column's min-content
+													// width, so a single long word cannot widen the table past the card either.
+													//
+													// [Ja] 折り返しを許すのはタイトルのセルだけで、これがテーブルを狭いビューポートに
+													// 収めている。overflow-wrap:anywhere は列の min-content 幅も下げるため、長い 1 語が
+													// テーブルをカードより広げることもない。
+													<td class="whitespace-normal [overflow-wrap:anywhere]">
+														<a
+															href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
+															class="link-foreground"
+														>
+															{ draft.DisplayTitle(ctx) }
+														</a>
+													</td>
 
-													<th>
-														{ templates.T(ctx, "draft_page_index_column_modified_at") }
-													</th>
+													<td class="text-muted-foreground whitespace-nowrap">
+														{ templates.FormatDateTime(ctx, draft.ModifiedAt) }
+													</td>
 
-													<th>
-														<span class="sr-only">
-															{ templates.T(ctx, "draft_page_index_actions_aria_label") }
-														</span>
-													</th>
+													<td class="whitespace-nowrap">
+														@draftRowActions(data.CSRFToken, draft)
+													</td>
 												</tr>
-											</thead>
-
-											<tbody>
-												for _, draft := range group.DraftPages {
-													<tr>
-														<td>
-															<a
-																href={ templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))) }
-																class="link-foreground"
-															>
-																{ draft.DisplayTitle(ctx) }
-															</a>
-														</td>
-
-														<td class="text-muted-foreground whitespace-nowrap">
-															{ templates.FormatDateTime(ctx, draft.ModifiedAt) }
-														</td>
-
-														<td class="whitespace-nowrap">
-															@draftRowActions(data.CSRFToken, draft)
-														</td>
-													</tr>
-												}
-											</tbody>
-										</table>
-									</div>
+											}
+										</tbody>
+									</table>
 								}
 							</div>
 						}
