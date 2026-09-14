@@ -177,13 +177,22 @@ func TestDefaultAmountsLeavePartialLastListingPage(t *testing.T) {
 	// time: the Markdown guide and the link hub. Later generators add published
 	// pages of their own too, so what has to hold is that the total stays
 	// between 301 and 400, which is what keeps the listing at 4 pages with a
-	// remainder on the last.
+	// remainder on the last. The total now sits on 399, so a generator that adds
+	// a published page to this space has to take one away somewhere else.
+	//
+	// The unpublished page a wiki link of the export pages creates is not
+	// counted. A listing leaves out an unpublished page, so it moves neither the
+	// number of listing pages nor the remainder on the last one.
 	//
 	// [Ja] スペース全体の一覧は、埋め草の生成器が作るページだけでなく、スペースの
 	// 公開済みページをすべて数える。1 ページずつ書かれるものが 2 つあり、Markdown
 	// 記法紹介ページとリンク集中ページがそれにあたる。後続の生成器も公開済みページを
 	// 追加するため、成り立たせるべきは合計が 301〜400 に収まること。それが一覧を
-	// 4 ページに保ち、最終ページを端数にする。
+	// 4 ページに保ち、最終ページを端数にする。合計は現在 399 件であり、このスペースへ
+	// 公開済みページを足す生成器は、どこかで 1 件減らす必要がある。
+	//
+	// エクスポート確認用ページの Wiki リンクが作る未公開のページは数に入れない。
+	// 未公開のページは一覧に出ないため、一覧のページ数も最終ページの端数も動かさない。
 	const singlePages = 2
 
 	// The state variations are left out of the count. Pinned pages are listed
@@ -247,9 +256,9 @@ func TestDefaultAmountsLeavePartialLastListingPage(t *testing.T) {
 			name: "スペースのページ一覧",
 			count: defaultAmounts.handbookPages + defaultAmounts.privateNotesPages + defaultAmounts.secretPages +
 				defaultAmounts.linkHubBacklinks + defaultAmounts.nestedBacklinks + singlePages +
-				len(sandboxPageSpecs()),
+				len(sandboxPageSpecs()) + len(exportPageSpecs()),
 			wantPages:     4,
-			wantRemainder: 91,
+			wantRemainder: 99,
 		},
 	} {
 		gotPages := (tt.count + listingPageLimit - 1) / listingPageLimit

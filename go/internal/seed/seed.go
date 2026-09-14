@@ -367,6 +367,19 @@ func (r *Runner) Run(ctx context.Context) error {
 		{name: "デモスペースのページ", run: func(ctx context.Context, st *state) error {
 			return generateDemoPages(ctx, r.db, r.out, st.spaces, st.topics)
 		}},
+		// The export pages sit last for the same reason their topics sit last
+		// among the topic specs: a page number is handed out in the order the
+		// generators run, and the browser verification points at a screen by the
+		// number in its URL, so a generator inserted above them would move every
+		// screen recorded so far.
+		//
+		// [Ja] エクスポート確認用ページを末尾に置く理由は、そのトピックがトピックの
+		// 仕様の末尾に置かれているのと同じである。ページ番号は生成器の実行順に配られ、
+		// ブラウザ確認は URL の番号で画面を指すため、これより上に生成器を挟むと、
+		// そこまでに記録した画面がすべてずれる。
+		{name: "エクスポート確認用ページ", run: func(ctx context.Context, st *state) error {
+			return generateExportPages(ctx, r.db, r.out, st.spaces, st.topics)
+		}},
 	}
 
 	st := &state{draftStamps: newDraftStamps(startedAt)}

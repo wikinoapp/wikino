@@ -127,6 +127,9 @@ func TestSeedBodiesWriteOneLinePerParagraph(t *testing.T) {
 		"提案ページが足す節":       suggestionAddedSection,
 		"Markdown記法紹介ページ": markdownGuideBody,
 	}
+	for _, spec := range exportPageSpecs() {
+		bodies["エクスポート確認用ページ "+spec.title] = spec.body
+	}
 	for i, body := range bulkPageBodies {
 		bodies[fmt.Sprintf("ページネーション用ページ %d", i+1)] = fmt.Sprintf(body, pageTitle)
 	}

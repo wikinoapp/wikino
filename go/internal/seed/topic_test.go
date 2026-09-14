@@ -54,6 +54,8 @@ func TestGenerateTopics(t *testing.T) {
 		{topic: topics.sandbox, wantName: "サンドボックス", wantDescription: "表示が崩れやすい極端なページを置いたトピックです。", wantVisibility: model.TopicVisibilityPublic, wantNumber: 3, wantMembers: 2},
 		{topic: topics.privateNotes, wantName: "非公開ノート", wantDescription: fmt.Sprintf("%s と %s が参加している非公開トピックです。", ownerName, collaboratorName), wantVisibility: model.TopicVisibilityPrivate, wantNumber: 4, wantMembers: 2},
 		{topic: topics.secret, wantName: "シークレット", wantDescription: fmt.Sprintf("%s だけが参加している非公開トピックです。", ownerName), wantVisibility: model.TopicVisibilityPrivate, wantNumber: 5, wantMembers: 1},
+		{topic: topics.export, wantName: "エクスポート", wantDescription: "エクスポートした ZIP で、ページタイトルがどうファイル名になるかを確認するためのトピックです。記号の置き換え・Windows の予約名・大文字小文字だけが違う名前の衝突・Wiki リンクの書き換えを見ます。", wantVisibility: model.TopicVisibilityPublic, wantNumber: 6, wantMembers: 2},
+		{topic: topics.exportSymbol, wantName: "エクスポート*記号", wantDescription: "名前の半角記号が ZIP の中でディレクトリ名「エクスポート＊記号」に変わることを、名前自体で確認するためのトピックです。frontmatter を持つ本文の扱いを見るページを置きます。", wantVisibility: model.TopicVisibilityPublic, wantNumber: 7, wantMembers: 2},
 	} {
 		if tt.topic == nil {
 			t.Errorf("トピック %s が結果に含まれていない", tt.wantName)
@@ -93,6 +95,48 @@ func TestGenerateTopics(t *testing.T) {
 		ctx, t, tx, "「非公開ノート」のcollaborator",
 		topics.privateNotes, spaces.wiki.member(roleCollaborator), []model.Scope{model.ScopeTopicRead}, true,
 	)
+
+	// The two export topics are joined by the same two accounts as the public
+	// topics above. Naming both roles here rather than leaning on the member
+	// count is what shows that the accounts are the owner and the collaborator:
+	// a count of two is also what joining the guest to either of them would
+	// give.
+	//
+	// [Ja] エクスポートの 2 つのトピックには、上の公開トピックと同じ 2 つのアカウントが
+	// 参加している。メンバー数に頼らずここで両方の役割を名指しすることが、その
+	// アカウントが owner と collaborator であることを示す。2 件という数は、どちらかへ
+	// guest を参加させても同じになる。
+	assertTopicMemberScopes(ctx, t, tx, "「エクスポート」のowner", topics.export, spaces.wiki.member(roleOwner), nil, true)
+	assertTopicMemberScopes(ctx, t, tx, "「エクスポート」のcollaborator", topics.export, spaces.wiki.member(roleCollaborator), nil, true)
+	assertTopicMemberScopes(ctx, t, tx, "「エクスポート*記号」のowner", topics.exportSymbol, spaces.wiki.member(roleOwner), nil, true)
+	assertTopicMemberScopes(ctx, t, tx, "「エクスポート*記号」のcollaborator", topics.exportSymbol, spaces.wiki.member(roleCollaborator), nil, true)
+
+	// The name of topics.exportSymbol has to reach the database with its
+	// halfwidth "*" intact. That character is the whole point of the topic: the
+	// export turns it into "＊" when it names the directory, and a name stored
+	// with the fullwidth form already in it would make the archive look correct
+	// without the conversion ever having run. The table-driven row above reads
+	// the name off the row too, but there it sits among the other fields of
+	// every topic, where nothing says that the halfwidth "*" surviving is
+	// itself what is being checked. That is why the check stands on its own.
+	//
+	// [Ja] 「エクスポート*記号」の名前は、半角の "*" を保ったままデータベースへ届く
+	// 必要がある。この文字こそがこのトピックの目的であり、エクスポートはディレクトリ名を
+	// 付けるときにこれを "＊" へ変える。あらかじめ全角で保存された名前では、変換が
+	// 一度も動かないままアーカイブが正しく見えてしまう。上のテーブル駆動の行も名前を
+	// 行から読んではいるが、そこでは全トピックの他のフィールドと並んでおり、半角の "*"
+	// が残ること自体が確認の対象だとは読めない。独立した確認として置くのはそのためである。
+	var storedSymbolName string
+	if err := tx.QueryRowContext(
+		ctx,
+		`SELECT name FROM topics WHERE space_id = $1 AND id = $2`,
+		string(topics.exportSymbol.spaceID), string(topics.exportSymbol.id),
+	).Scan(&storedSymbolName); err != nil {
+		t.Fatalf("トピック %s の名前の取得に失敗: %v", topicNameExportSymbol, err)
+	}
+	if storedSymbolName != "エクスポート*記号" {
+		t.Errorf("記号を含むトピック名が %q のまま保存されることを期待したが %q だった", "エクスポート*記号", storedSymbolName)
+	}
 
 	assertSoloTopics(ctx, t, tx, spaces.solo, topics)
 	assertLongNameTopics(ctx, t, tx, spaces.longName)
