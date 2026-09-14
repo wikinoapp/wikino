@@ -47,8 +47,113 @@ func TestEnsureNotProduction(t *testing.T) {
 	}
 }
 
+func TestSelectorFromEnv(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		env     map[string]string
+		want    userSelector
+		wantErr bool
+	}{
+		{
+			name: "アットネームで指定する",
+			env:  map[string]string{atnameEnvKey: "devtotpuser"},
+			want: userSelector{atname: "devtotpuser"},
+		},
+		{
+			name: "メールアドレスで指定する",
+			env:  map[string]string{emailEnvKey: "devtotp@example.com"},
+			want: userSelector{email: "devtotp@example.com"},
+		},
+		{
+			name:    "両方を指定することはできない",
+			env:     map[string]string{atnameEnvKey: "devtotpuser", emailEnvKey: "devtotp@example.com"},
+			wantErr: true,
+		},
+		{
+			name:    "どちらも指定しないことはできない",
+			env:     map[string]string{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := selectorFromEnv(func(key string) string { return tt.env[key] })
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("エラーが返ることを期待したがnilだった")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("予期しないエラー: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("セレクタ = %+v, 期待値 %+v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUserSelectorString(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		target userSelector
+		want   string
+	}{
+		{name: "アットネームには@が付く", target: userSelector{atname: "devtotpuser"}, want: "@devtotpuser"},
+		{name: "メールアドレスはそのまま", target: userSelector{email: "devtotp@example.com"}, want: "devtotp@example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.target.String(); got != tt.want {
+				t.Errorf("String() = %q, 期待値 %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCodeForUser(t *testing.T) {
 	t.Parallel()
+
+	t.Run("正常系: アットネームで指定すると検証側が受け付けるコードを生成する", func(t *testing.T) {
+		t.Parallel()
+		db, tx := testutil.SetupTx(t)
+
+		key, err := totp.Generate(totp.GenerateOpts{
+			Issuer:      "Wikino",
+			AccountName: "devtotp-by-atname@example.com",
+		})
+		if err != nil {
+			t.Fatalf("シークレット生成に失敗: %v", err)
+		}
+
+		testutil.NewUserBuilder(t, tx).
+			WithEmail("devtotp-by-atname@example.com").
+			WithAtname("devtotpbyatname").
+			BuildWithTwoFactorAuth(key.Secret(), true)
+
+		queries := query.New(db).WithTx(tx)
+
+		code, err := codeForUser(context.Background(), queries, userSelector{atname: "devtotpbyatname"}, time.Now())
+		if err != nil {
+			t.Fatalf("予期しないエラー: %v", err)
+		}
+
+		if !totp.Validate(code, key.Secret()) {
+			t.Errorf("生成したコード %q が検証を通らなかった", code)
+		}
+	})
 
 	t.Run("正常系: 検証側が受け付けるコードを生成する", func(t *testing.T) {
 		t.Parallel()
@@ -69,7 +174,7 @@ func TestCodeForUser(t *testing.T) {
 
 		queries := query.New(db).WithTx(tx)
 
-		code, err := codeForUser(context.Background(), queries, "devtotp-enabled@example.com", time.Now())
+		code, err := codeForUser(context.Background(), queries, userSelector{email: "devtotp-enabled@example.com"}, time.Now())
 		if err != nil {
 			t.Fatalf("予期しないエラー: %v", err)
 		}
@@ -85,7 +190,18 @@ func TestCodeForUser(t *testing.T) {
 
 		queries := query.New(db).WithTx(tx)
 
-		if _, err := codeForUser(context.Background(), queries, "devtotp-missing@example.com", time.Now()); err == nil {
+		if _, err := codeForUser(context.Background(), queries, userSelector{email: "devtotp-missing@example.com"}, time.Now()); err == nil {
+			t.Error("エラーが返ることを期待したがnilだった")
+		}
+	})
+
+	t.Run("異常系: アットネームのユーザーが存在しない", func(t *testing.T) {
+		t.Parallel()
+		db, tx := testutil.SetupTx(t)
+
+		queries := query.New(db).WithTx(tx)
+
+		if _, err := codeForUser(context.Background(), queries, userSelector{atname: "devtotpmissing"}, time.Now()); err == nil {
 			t.Error("エラーが返ることを期待したがnilだった")
 		}
 	})
@@ -109,7 +225,7 @@ func TestCodeForUser(t *testing.T) {
 
 		queries := query.New(db).WithTx(tx)
 
-		if _, err := codeForUser(context.Background(), queries, "devtotp-disabled@example.com", time.Now()); err == nil {
+		if _, err := codeForUser(context.Background(), queries, userSelector{email: "devtotp-disabled@example.com"}, time.Now()); err == nil {
 			t.Error("エラーが返ることを期待したがnilだった")
 		}
 	})

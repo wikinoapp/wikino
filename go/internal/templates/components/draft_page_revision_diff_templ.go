@@ -148,7 +148,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = DiffView(DiffViewData{Blocks: data.Diff.BodyBlocks}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = DiffView(DiffViewData{PageTitle: data.Diff.NewTitle, Blocks: data.Diff.BodyBlocks}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

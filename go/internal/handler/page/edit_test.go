@@ -1593,6 +1593,19 @@ func TestEdit_ActionRowLayout(t *testing.T) {
 		t.Error("action row responsive layout container not found in response")
 	}
 
+	// The button labels and keyboard hints together are wider than the card's content box on a
+	// narrow non-touch viewport, so the button row must wrap. Match the whole class attribute and
+	// its enclosing tier to keep the assertion specific to this row and fail if flex-wrap is removed.
+	//
+	// [Ja] 狭い非タッチ環境では、ボタンのラベルとキーボードヒントを合わせた幅がカードの
+	// 内容幅を超えるため、ボタン行は折り返せる必要がある。class 属性全体を外側の段と併せて
+	// 照合し、この行から flex-wrap が外れた場合に検出できるようにする。
+	wantWrappingButtonRow := `<div class="flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center">` +
+		`<div class="flex flex-wrap gap-x-2 gap-y-1">`
+	if !strings.Contains(body, wantWrappingButtonRow) {
+		t.Errorf("response does not contain the wrapping action row %q", wantWrappingButtonRow)
+	}
+
 	// The saved-at indicator and cancel sit in one container, un-reversed (saved-at then cancel).
 	// On the two-tier layout they group at the right (justify-end); on one line they spread
 	// (min-[1152px]:justify-between). The time never wraps.
@@ -2257,4 +2270,95 @@ func TestEdit_RelatedPageSections(t *testing.T) {
 			t.Errorf("heading %q is not followed by a description", heading)
 		}
 	}
+}
+
+// The trail ends with the editor itself, so the last item must be a plain label carrying
+// aria-current rather than a link back to the topic. The label names the screen rather than the
+// page being edited, since the editor has no heading of its own. Scope the assertions to the
+// breadcrumb because the page title also appears in the editor's fields.
+//
+// [Ja] 経路は編集画面自身で終わるため、末尾の項目はトピックへのリンクではなく aria-current を持つ
+// ラベルになる。ラベルは編集対象のページではなく画面自身を表す。編集画面は自身の見出しを
+// 持たないためである。ページタイトルは編集画面の入力欄にも出るため、パンくず内に絞って検証する。
+func TestEdit_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("edit-crumb").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Edit Crumb Page").
+		Build()
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/edit-crumb/pages/1/edit", map[string]string{
+		"space_identifier": "edit-crumb",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, queries).Edit(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := pageEditBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/s/edit-crumb"`,
+		`href="/s/edit-crumb/topics/1"`,
+		`aria-current="page"`,
+		"ページを編集",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/edit-crumb/pages/1/edit"`) {
+		t.Error("current page edit breadcrumb item must not be a link")
+	}
+}
+
+// pageEditBreadcrumb returns the markup of the breadcrumb navigation alone, so that an assertion
+// about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] pageEditBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路についての
+// 検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func pageEditBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
 }

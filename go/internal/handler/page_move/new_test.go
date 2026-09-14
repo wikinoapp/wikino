@@ -310,3 +310,92 @@ func TestNew_NoAvailableTopics(t *testing.T) {
 		t.Error("a label should not be rendered when there is no destination topic control")
 	}
 }
+
+// The trail ends with the screen itself, so the last item must be a plain label carrying
+// aria-current rather than a link back to the topic. Scope the assertions to the breadcrumb because
+// the same label also appears in the heading and the page title.
+//
+// [Ja] 経路はこの画面自身で終わるため、末尾の項目はトピックへのリンクではなく aria-current を持つ
+// ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
+func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("move-crumb").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Topic 1").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Move Crumb Page").
+		Build()
+
+	req := newRequestWithChiParams(t, http.MethodGet, "/s/move-crumb/pages/1/move", map[string]string{
+		"space_identifier": "move-crumb",
+		"page_number":      "1",
+	})
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID, Atname: "testuser"})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, queries).New(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := pageMoveBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/s/move-crumb"`,
+		`href="/s/move-crumb/topics/1"`,
+		`aria-current="page"`,
+		"ページの移動",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/move-crumb/pages/1/move"`) {
+		t.Error("current page move breadcrumb item must not be a link")
+	}
+}
+
+// pageMoveBreadcrumb returns the markup of the breadcrumb navigation alone, so that an assertion
+// about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] pageMoveBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路についての
+// 検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func pageMoveBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
+}

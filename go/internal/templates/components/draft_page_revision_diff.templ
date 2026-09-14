@@ -78,7 +78,7 @@ templ DraftPageRevisionDiff(data DraftPageRevisionDiffData) {
 			</div>
 		}
 
-		@DiffView(DiffViewData{Blocks: data.Diff.BodyBlocks})
+		@DiffView(DiffViewData{PageTitle: data.Diff.NewTitle, Blocks: data.Diff.BodyBlocks})
 
 		// "Restore this version": clicking swaps the button area for an inline confirmation
 		// (no second modal). Confirming submits a regular POST so the editor reloads with the

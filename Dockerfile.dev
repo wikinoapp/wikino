@@ -51,6 +51,7 @@ PACKAGES=$(cat <<'PKGLIST' | sed 's/#.*//'
   net-tools                 # Used by Claude Code for netstat (network debugging) [Ja] Claude Code で使用 netstat (ネットワークデバッグ用)
   procps                    # Provides ps for playwright-cli kill-all [Ja] playwright-cli kill-all 用の ps を提供
   psmisc                    # Used by Claude Code for fuser (process identification) [Ja] Claude Code で使用 fuser (プロセス特定用)
+  python3                   # Used by Claude Code for ad-hoc scripting [Ja] Claude Code のアドホックなスクリプト実行で使用
   ripgrep                   # Used by Claude Code [Ja] Claude Code で使用
   sudo
   tree                      # Used by Claude Code [Ja] Claude Code で使用

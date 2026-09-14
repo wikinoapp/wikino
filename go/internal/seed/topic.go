@@ -28,6 +28,8 @@ const (
 	topicNameLongJapanese = "折り返しの確認用に名前を最大文字数まで伸ばした公開のトピック"
 	topicNameLongASCII    = "UnbreakableLongTopicNameSample"
 	topicNameDemoMemo     = "Memo"
+	topicNameExport       = "エクスポート"
+	topicNameExportSymbol = "エクスポート*記号"
 )
 
 // topicSpec describes one topic to create. The specs are held as an ordered
@@ -132,6 +134,38 @@ func wikiTopicSpecs(wiki *seededSpace) ([]topicSpec, error) {
 			visibility:  model.TopicVisibilityPrivate,
 			memberRoles: []seedRole{roleOwner},
 			assign:      func(topics *seededTopics, topic *seededTopic) { topics.secret = topic },
+		},
+		// The two export topics sit last on purpose. A topic number is counted
+		// off from the position in this list, and the browser verification
+		// points at a screen by the number in its URL, so a spec inserted above
+		// them would move every screen recorded so far.
+		//
+		// [Ja] エクスポートの 2 つを末尾に置いているのは意図的である。トピック番号は
+		// この一覧での位置から採番され、ブラウザ確認は URL の番号で画面を指すため、
+		// これらより上に仕様を挟むと、そこまでに記録した画面がすべてずれる。
+		{
+			name:        topicNameExport,
+			description: "エクスポートした ZIP で、ページタイトルがどうファイル名になるかを確認するためのトピックです。記号の置き換え・Windows の予約名・大文字小文字だけが違う名前の衝突・Wiki リンクの書き換えを見ます。",
+			visibility:  model.TopicVisibilityPublic,
+			memberRoles: []seedRole{roleOwner, roleCollaborator},
+			assign:      func(topics *seededTopics, topic *seededTopic) { topics.export = topic },
+		},
+		{
+			name: topicNameExportSymbol,
+			// The name of this topic is itself what is verified: the halfwidth
+			// "*" in it is what becomes "＊" in the directory name the archive
+			// gives the topic. The description says so because the name stands
+			// out where it is listed beside the others, and nothing else on the
+			// screen explains why it is spelled that way.
+			//
+			// [Ja] このトピックは名前自体が確認の対象になる。名前が持つ半角の "*" が、
+			// アーカイブがトピックへ与えるディレクトリ名で "＊" に変わる部分である。
+			// それを説明文に書くのは、この名前が一覧で他と並んだときに目立つ一方、
+			// なぜそう綴られているのかを画面の他のどこも説明しないためである。
+			description: "名前の半角記号が ZIP の中でディレクトリ名「エクスポート＊記号」に変わることを、名前自体で確認するためのトピックです。frontmatter を持つ本文の扱いを見るページを置きます。",
+			visibility:  model.TopicVisibilityPublic,
+			memberRoles: []seedRole{roleOwner, roleCollaborator},
+			assign:      func(topics *seededTopics, topic *seededTopic) { topics.exportSymbol = topic },
 		},
 	}, nil
 }
@@ -247,15 +281,17 @@ type seededTopic struct {
 // topics of seed-wiki and seed-solo are named here: what an account that has
 // not joined seed-solo sees is decided by the pages of its topics as much as
 // by the topics themselves. The demo topic is named for the plainer reason
-// that every demo page goes into it. The topics of seed-long-name are absent,
-// since no page generator writes into them.
+// that every demo page goes into it, and so are the two export topics, which
+// the pages that show what the export converts are written into. The topics of
+// seed-long-name are absent, since no page generator writes into them.
 //
 // [Ja] seededTopics は、後続のページ生成器がページを書き込むトピックを保持する。
 // seed-wiki と seed-solo のトピックがここに並ぶ。seed-solo に参加していない
 // アカウントに何が見えるかは、トピックそのものと同じくらいトピックのページによって
 // 決まるため。デモのトピックが並ぶ理由はもっと単純で、デモページがすべてそこへ
-// 入るからである。seed-long-name のトピックは、そこへ書き込む生成器が無いため
-// 並ばない。
+// 入るからである。エクスポートの 2 つも同じで、エクスポートが何を変換するのかを
+// 示すページがそこへ書き込まれる。seed-long-name のトピックは、そこへ書き込む
+// 生成器が無いため並ばない。
 type seededTopics struct {
 	handbook     *seededTopic
 	notes        *seededTopic
@@ -265,6 +301,8 @@ type seededTopics struct {
 	soloNotes    *seededTopic
 	soloSecret   *seededTopic
 	demoMemo     *seededTopic
+	export       *seededTopic
+	exportSymbol *seededTopic
 }
 
 // generateTopics creates the topics of every space and joins the accounts to

@@ -59,16 +59,15 @@ type TrashPageInput struct {
 	UserID          model.UserID
 }
 
-// TrashPageOutput is the output of moving a page into the trash. It carries the space and the topic
-// the page belonged to, so that the handler can build the redirect target from the stored
-// identifier and number instead of re-reading the request URL.
+// TrashPageOutput is the output of moving a page into the trash. It carries the space the page
+// belonged to, so that the handler can build the redirect target from the stored identifier
+// instead of re-reading the request URL.
 //
-// [Ja] TrashPageOutput はページをゴミ箱へ入れた結果。ページが属していたスペースとトピックを返し、
-// ハンドラーがリクエスト URL を読み直すのではなく保存済みの識別子と番号から遷移先を組み立てられる
+// [Ja] TrashPageOutput はページをゴミ箱へ入れた結果。ページが属していたスペースを返し、
+// ハンドラーがリクエスト URL を読み直すのではなく保存済みの識別子から遷移先を組み立てられる
 // ようにする。
 type TrashPageOutput struct {
 	Space *model.Space
-	Topic *model.Topic
 }
 
 // Execute moves the page into the trash.
@@ -115,7 +114,6 @@ func (uc *TrashPageUsecase) Execute(ctx context.Context, input TrashPageInput) (
 
 	return &TrashPageOutput{
 		Space: data.space,
-		Topic: data.topic,
 	}, nil
 }
 

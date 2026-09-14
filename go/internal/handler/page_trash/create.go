@@ -63,15 +63,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The page itself is gone from the screen the request came from, so send the user back to the
-	// topic it belonged to.
+	// A trashed page stays readable, so the user lands back on the page they just acted on. The
+	// notice shown there carries the link to the trash itself.
 	// The path is built from the stored identifier rather than the request URL, so that a request
 	// with different casing still lands on the canonical address.
 	//
-	// [Ja] リクエスト元の画面からはページ自体が消えるため、属していたトピックへ戻す。
+	// [Ja] ゴミ箱に入れてもページは読めるため、操作した対象をそのまま見せる。そこに出るアラートが
+	// ゴミ箱そのものへの導線を兼ねる。
 	// パスはリクエスト URL ではなく
 	// 保存済みの識別子から組み立て、大文字小文字が異なるリクエストでも正規のアドレスへ着地させる。
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_page_moved_to_trash"))
-	topicPath := templates.TopicPath(viewmodel.NewSpaceIdentifier(output.Space.Identifier), output.Topic.Number)
-	http.Redirect(w, r, string(topicPath), http.StatusSeeOther)
+	pagePath := templates.PagePath(viewmodel.NewSpaceIdentifier(output.Space.Identifier), viewmodel.PageNumber(pageNumber))
+	http.Redirect(w, r, string(pagePath), http.StatusSeeOther)
 }

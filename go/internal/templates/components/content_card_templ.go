@@ -10,7 +10,21 @@ import (
 	templruntime "github.com/a-h/templ/runtime"
 )
 
-// ContentCard はコンテンツ表示用のカードUIです
+// ContentCard is the card that holds the main content of a screen.
+//
+// overflow-visible drops the clipping that basecoat's .card applies. Without it a dropdown or
+// popover opened inside the card is cut off at the card's edge, however high its z-index is,
+// because clipping by an ancestor works independently of stacking order. Nothing is lost by
+// removing it: the children always sit inside the section's px-4 and the card's own py-4, so no
+// content reaches the rounded corners the clipping was there to trim.
+//
+// [Ja] ContentCard は画面の主要コンテンツを収めるカード。
+//
+// overflow-visible は basecoat の .card が持つ切り抜きを外す。これが無いと、カードの内側で
+// 開いたドロップダウンやポップオーバーが z-index をどれだけ上げてもカードの境界で切り取られる。
+// 祖先による切り抜きは重なり順とは無関係に効くためである。外して失うものは無い。子は必ず
+// section の px-4 の内側に入り、カード自身も py-4 を持つため、切り抜きが担っていた角に届く
+// 中身がそもそも存在しない。
 func ContentCard() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -32,7 +46,7 @@ func ContentCard() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"card py-4 rounded-none md:rounded-xl mx-0 md:mx-4\"><section class=\"px-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"card py-4 rounded-none md:rounded-xl mx-0 md:mx-4 overflow-visible\"><section class=\"px-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -122,33 +122,41 @@ templ indexTabs(data IndexData) {
 	</div>
 }
 
-// indexList は編集提案のリストを表示します
+// indexList renders the list of suggestions.
+//
+// Suggestions form an unordered collection with no tabular relationships, so a native list gives
+// assistive technology the structure the content has. overflow-wrap:anywhere keeps unbroken titles
+// inside the card. Padding and borders on each list item separate entries without enlarging the
+// link's hit area. The hover background sits on the list item so its padding and content react as
+// one visual row, preserving a clear pointer cue without enlarging the link's hit area.
+//
+// [Ja] indexList は編集提案のリストを表示する。
+//
+// 編集提案は表形式の関係を持たない順序のない並びなので、ネイティブなリストを使って中身が持つ
+// 構造を支援技術へ伝える。overflow-wrap:anywhere は区切れないタイトルをカード内に収める。
+// 各リスト項目に余白と境界線を置くことで、リンクの当たり判定を広げずに項目を区切る。
+// ホバー時の背景をリスト項目に置くことで、余白と内容が 1 つの視覚的な行として反応する。
+// リンクの当たり判定を広げず、ポインタを使う利用者に明確な手がかりを残す。
 templ indexList(data IndexData) {
-	<div class="overflow-x-auto">
-		<table class="table">
-			<tbody>
-				for _, s := range data.Suggestions {
-					<tr>
-						<td>
-							<a
-								href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier, s.Number))) }
-								class="flex flex-col gap-1"
-							>
-								<div class="font-medium">
-									{ s.Title }
-								</div>
-								<div class="text-sm text-muted-foreground">
-									{ fmt.Sprintf("#%d", s.Number) }
-									{ templates.T(ctx, "suggestion_index_opened_by") }
-									{ s.CreatorName }
-								</div>
-							</a>
-						</td>
-					</tr>
-				}
-			</tbody>
-		</table>
-	</div>
+	<ul>
+		for _, s := range data.Suggestions {
+			<li class="border-b p-2 last:border-b-0 transition-colors hover:bg-muted/50">
+				<a
+					href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier, s.Number))) }
+					class="flex flex-col gap-1 [overflow-wrap:anywhere]"
+				>
+					<div class="font-medium">
+						{ s.Title }
+					</div>
+					<div class="text-sm text-muted-foreground">
+						{ fmt.Sprintf("#%d", s.Number) }
+						{ templates.T(ctx, "suggestion_index_opened_by") }
+						{ s.CreatorName }
+					</div>
+				</a>
+			</li>
+		}
+	</ul>
 }
 
 // suggestionNewButton は編集提案作成ボタンを表示します

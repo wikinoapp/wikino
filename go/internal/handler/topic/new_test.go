@@ -154,6 +154,96 @@ func TestNew_ヘルプリンク名が各言語で行き先を説明する(t *tes
 	}
 }
 
+// The subtitle under the heading carries its own text color, so the help links inside it take that
+// color through link-inherit-foreground rather than painting themselves. The note inside the form
+// sits in a differently colored block and keeps link-foreground, so it is asserted here as well to
+// keep the two apart. The class names live in the locale strings rather than in the template, so
+// both locales are checked: reverting one of them alone would otherwise go unnoticed.
+//
+// [Ja] 見出し下のサブタイトルは自身の文字色を持つため、その中のヘルプリンクは自分で色を塗らず
+// link-inherit-foreground でその色を受け取る。フォーム内の注意書きは別の色の枠にあり
+// link-foreground のままなので、両者が混ざらないようここで併せて確認する。クラス名は
+// テンプレートではなくロケール文字列側にあるため、両ロケールを確認する。片方だけ元に戻されても
+// 気づけなくなるからである。
+func TestNew_サブタイトルのヘルプリンクが本文色を継承する(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	userID := topicSpace(t, tx, "topic-new-link-color", nil)
+
+	tests := []struct {
+		name   string
+		locale string
+	}{
+		{
+			name:   "日本語",
+			locale: i18n.LangJa,
+		},
+		{
+			name:   "英語",
+			locale: i18n.LangEn,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-link-color/topics/new", "topic-new-link-color", userID, nil)
+			req = req.WithContext(i18n.SetLocale(req.Context(), tt.locale))
+			rr := httptest.NewRecorder()
+			setupHandler(t, queries).New(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+			}
+
+			body := rr.Body.String()
+			for _, want := range []string{
+				`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino/pages/11"`,
+				`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino/pages/52"`,
+				`<a class="link-foreground" href="https://wikino.app/s/wikino/pages/38"`,
+			} {
+				if !strings.Contains(body, want) {
+					t.Errorf("response does not contain %q", want)
+				}
+			}
+		})
+	}
+}
+
+// The visibility label is separated from the first option only by the margin-bottom basecoat's
+// .fieldset puts on the legend: a legend is not a flex item, so the gap on the group never reaches
+// it. data-variant="label", which basecoat resets that margin with, therefore has to stay off the
+// legend. Either half going missing brings the flush label back, so both are asserted.
+//
+// [Ja] 公開設定のラベルと最初の選択肢の間隔は、basecoat の .fieldset が legend に付ける
+// margin-bottom だけが作っている。legend はフレックスの子にならないため、グループに指定した gap は
+// legend まで届かない。したがって basecoat がその margin を 0 に戻す data-variant="label" は legend
+// に付けないままにする必要がある。どちらが欠けても密着した見た目に戻るため、両方を確認する。
+func TestNew_公開設定のラベルと選択肢の間に余白が入る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	userID := topicSpace(t, tx, "topic-new-fieldset", nil)
+
+	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-fieldset/topics/new", "topic-new-fieldset", userID, nil)
+	rr := httptest.NewRecorder()
+	setupHandler(t, queries).New(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if tag := topicFormFieldsetTag(t, body); !strings.Contains(tag, `class="fieldset gap-3"`) {
+		t.Errorf("fieldset tag does not carry the fieldset class: %s", tag)
+	}
+	if !strings.Contains(body, `<legend class="label">`) {
+		t.Error("response does not contain a legend left without data-variant")
+	}
+}
+
 // topicSpace seeds a space with one member and returns what the tests address them by.
 //
 // [Ja] topicSpace はメンバーが 1 人いるスペースを用意し、テストがそれらを指すための値を返す。
@@ -283,4 +373,61 @@ func TestNew_未ログインならログイン画面へリダイレクトする(
 	if location := rr.Header().Get("Location"); location != "/sign_in" {
 		t.Errorf("Location = %q, want %q", location, "/sign_in")
 	}
+}
+
+// The trail ends with the screen itself, so the last item must be a plain label carrying
+// aria-current rather than a link back to the space. Scope the assertions to the breadcrumb because
+// the same label also appears in the heading and the page title.
+//
+// [Ja] 経路はこの画面自身で終わるため、末尾の項目はスペースへのリンクではなく aria-current を持つ
+// ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
+func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	userID := topicSpace(t, tx, "topic-new-crumb", nil)
+
+	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-crumb/topics/new", "topic-new-crumb", userID, nil)
+	rr := httptest.NewRecorder()
+	setupHandler(t, queries).New(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := topicFormBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/home"`,
+		`href="/s/topic-new-crumb"`,
+		`aria-current="page"`,
+		"新規トピック",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/topic-new-crumb/topics/new"`) {
+		t.Error("current topic creation breadcrumb item must not be a link")
+	}
+}
+
+// topicFormBreadcrumb returns the markup of the breadcrumb navigation alone, so that an assertion
+// about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] topicFormBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路についての
+// 検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func topicFormBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
 }

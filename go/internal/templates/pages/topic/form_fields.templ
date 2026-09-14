@@ -65,7 +65,20 @@ templ formFields(data FormFieldsData) {
 		/>
 		@fieldErrors(data.FormErrors, "description")
 	</div>
-	<fieldset class="grid gap-3">
+	// The visibility options are grouped with basecoat's .fieldset rather than a grid. A legend is
+	// not a grid or flex item, so a gap never reaches it and the label sat flush against the first
+	// option; .fieldset gives the legend a margin-bottom instead. Its own gap is 24px, so gap-3
+	// keeps the 12px between the options. The legend is left without data-variant="label", which
+	// basecoat uses to reset that margin-bottom to 0, and the option wrappers are left without
+	// .field, which would turn each option into a bordered card.
+	//
+	// [Ja] 公開設定の選択肢はグリッドではなく basecoat の .fieldset でまとめます。legend は
+	// グリッドやフレックスの子にならないため gap が届かず、ラベルが最初の選択肢と密着していま
+	// した。.fieldset は代わりに legend へ margin-bottom を与えます。.fieldset 自身の gap は 24px
+	// なので、選択肢どうしの 12px を保つために gap-3 を指定します。legend には
+	// data-variant="label" を付けません。basecoat がこの属性で margin-bottom を 0 に戻すためです。
+	// 選択肢を囲む div にも .field を付けません。付けると選択肢が枠線付きのカードになるためです。
+	<fieldset class="fieldset gap-3">
 		<legend class="label">
 			{ templates.T(ctx, "topic_form_visibility_label") }
 		</legend>

@@ -209,7 +209,7 @@ func (h *Handler) renderEditWithErrors(
 		HideFooter: true,
 		GlobalNav:  navData,
 
-		BreadcrumbHeader: pageBreadcrumbHeaderData(ctx, spaceVM, topicVM, editBreadcrumbMaxWidthClass, true),
+		BreadcrumbHeader: editBreadcrumbHeaderData(ctx, spaceVM, topicVM),
 	}
 
 	w.WriteHeader(http.StatusUnprocessableEntity)

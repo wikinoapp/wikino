@@ -8,9 +8,11 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	suggestionpages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -111,12 +113,25 @@ func (h *Handler) renderNewForm(
 		SelectedDraftIDs: selectedDraftIDs,
 	})
 
+	// The screen is the current page, so the trail ends with a non-linked item carrying aria-current.
+	// The label repeats the heading, but it is read from a key of its own so that a breadcrumb needing
+	// a shorter word than the heading can take one later.
+	//
+	// [Ja] この画面が現在地のため、経路は aria-current を持つリンク無しの項目で締める。ラベルは
+	// 見出しと同じ文字列だが、パンくずが見出しより短い語を必要としたときに後から変えられるよう、
+	// 独立したキーから引く。
+	breadcrumbHeader := topicBreadcrumbHeaderData(ctx, spaceVM, topicVM, true)
+	breadcrumbHeader.Items = append(breadcrumbHeader.Items, components.BreadcrumbItem{
+		Label:     i18n.T(ctx, "suggestion_new_breadcrumb"),
+		IsCurrent: true,
+	})
+
 	if err := RenderLayout(ctx, w, RenderLayoutInput{
 		User:             user,
 		SpaceIdentifier:  output.Space.Identifier,
 		CurrentPageName:  templates.PageNameSuggestionNew,
 		Meta:             meta,
-		BreadcrumbHeader: topicBreadcrumbHeaderData(ctx, spaceVM, topicVM, true),
+		BreadcrumbHeader: breadcrumbHeader,
 		Content:          content,
 	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

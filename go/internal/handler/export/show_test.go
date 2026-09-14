@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
@@ -225,5 +226,62 @@ func TestShow_NotFoundForExportOfAnotherSpace(t *testing.T) {
 
 	if rr.Code != http.StatusNotFound {
 		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+	}
+}
+
+// The detail screen's trail differs from the start screen's in shape and not only in wording: it
+// continues through the start screen and ends with the export it follows, named by the time that
+// export was queued at. The queued time is asserted rather than a fixed word because that is what
+// tells the two export screens apart on the trail, and the link to the start screen because it is
+// the way back up that the body only offers once the export is over.
+//
+// [Ja] 詳細画面の経路は、文言だけでなく形が開始画面と違う。開始画面を通って続き、追っている
+// エクスポートで終わる。その名前はエクスポートが投入された時刻である。固定の語ではなく投入時刻を
+// 検証するのは、それが経路上で 2 つのエクスポート画面を区別するものだからである。開始画面への
+// リンクを検証するのは、本文がその導線をエクスポートの終了後にしか出さないためである。
+func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-crumb", nil)
+	createdAt := time.Date(2026, 3, 25, 5, 14, 0, 0, time.UTC)
+	exportID := testutil.NewExportBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithQueuedByID(spaceMemberID).
+		WithStatus(model.ExportStatusStarted).
+		WithHeartbeatAt(time.Now()).
+		WithCreatedAt(createdAt).
+		Build()
+
+	req := newRequest(t, http.MethodGet,
+		"/s/exp-show-crumb/settings/exports/"+exportID.String(),
+		map[string]string{"space_identifier": "exp-show-crumb", "export_id": exportID.String()},
+		userID,
+	)
+	rr := httptest.NewRecorder()
+	setupHandler(t, queries).Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := exportBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/s/exp-show-crumb/settings"`,
+		`href="/s/exp-show-crumb/settings/exports/new"`,
+		`aria-current="page"`,
+		templates.FormatDateTime(req.Context(), createdAt),
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/exp-show-crumb/settings/exports/`+exportID.String()+`"`) {
+		t.Error("current export detail breadcrumb item must not be a link")
+	}
+	if strings.Contains(breadcrumb, "export_show_breadcrumb") {
+		t.Error("export detail breadcrumb item fell back to the message key")
 	}
 }

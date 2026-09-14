@@ -636,6 +636,10 @@ other = "プライバシーポリシー"
 description = "ページ編集画面のタイトル"
 other = "ページを編集 | {{.SpaceName}}"
 
+[page_edit_breadcrumb]
+description = "ページ編集画面自身を指すパンくず項目 (現在項目)"
+other = "ページを編集"
+
 [page_edit_title_label]
 description = "ページタイトル入力フィールドのラベル"
 other = "タイトル"
@@ -782,7 +786,7 @@ other = "もっと見る"
 
 [page_links_load_more_end]
 description = "関連ページ一覧の最終ページを読み込んだ後の状態"
-other = "すべて読み込みました。"
+other = "すべて読み込みました"
 
 [page_links_load_more_links_aria_label]
 description = "リンク一覧の「もっと見る」リンクのアクセシブルネーム"
@@ -802,7 +806,7 @@ other = "via"
 
 [page_edit_links_load_more_limit]
 description = "ページ編集画面で関連ページ一覧の読み込み上限に達したときの案内"
-other = "編集画面で読み込めるのはここまでです。"
+other = "編集画面で読み込めるのはここまでです"
 
 [page_edit_links_load_more_limit_link]
 description = "上限に達した関連ページ一覧を編集画面で1ページずつ継続するリンクテキスト"
@@ -971,6 +975,10 @@ other = "ページの移動 | {{.SpaceName}}"
 description = "ページ移動画面の見出し"
 other = "ページの移動"
 
+[page_move_breadcrumb]
+description = "ページ移動画面自身を指すパンくず項目 (現在項目)"
+other = "ページの移動"
+
 [page_move_subtitle]
 description = "ページ移動画面の説明文"
 other = "ページを別のトピックに移動します"
@@ -1091,6 +1099,10 @@ other = "下書きのページ"
 description = "下書きがない場合のメッセージ"
 other = "下書きはありません"
 
+[draft_page_index_table_caption]
+description = "下書き一覧テーブルのキャプション (視覚的には非表示)"
+other = "{{.TopicName}} ({{.SpaceName}}) の下書き一覧"
+
 [draft_page_index_column_title]
 description = "下書き一覧テーブルのタイトル列ヘッダー"
 other = "タイトル"
@@ -1207,9 +1219,13 @@ other = "新規トピック | {{.SpaceName}}"
 description = "トピック作成画面の見出し"
 other = "新規トピック"
 
+[topic_new_breadcrumb]
+description = "トピック作成画面自身を指すパンくず項目 (現在項目)"
+other = "新規トピック"
+
 [topic_new_hint_html]
 description = "トピック作成画面のサブタイトル (ヘルプページへのリンクを含む)"
-other = "トピックについては <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">トピックについてのヘルプ</a> をご覧ください<br>どんなトピックを作ると良いかわからないときは <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
+other = "トピックについては <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">トピックについてのヘルプ</a> をご覧ください<br>どんなトピックを作ると良いかわからないときは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
 
 [topic_form_name_label]
 description = "トピックのフォームの名前ラベル (作成画面と一般設定画面で共有)"
@@ -1303,6 +1319,10 @@ other = "基本情報"
 [topic_settings_general_breadcrumb_settings]
 description = "トピックの一般設定画面のパンくずに出すトピック設定のラベル"
 other = "設定"
+
+[topic_settings_general_breadcrumb]
+description = "トピックの一般設定画面自身を指すパンくず項目 (現在項目)"
+other = "基本情報"
 
 [topic_settings_general_submit_button]
 description = "トピックの一般設定画面の送信ボタン"
@@ -1419,7 +1439,7 @@ other = "編集提案"
 
 [suggestion_index_subtitle_html]
 description = "編集提案一覧のサブタイトル (ヘルプページへのリンクを含む)"
-other = "編集提案については <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">こちら</a> をご覧ください"
+other = "編集提案については <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">編集提案についてのヘルプ</a> をご覧ください"
 
 [suggestion_index_breadcrumb]
 description = "編集提案一覧を指すパンくず項目 (一覧画面では現在項目、配下の画面では一覧へのリンク)"
@@ -1482,8 +1502,8 @@ description = "編集提案作成の見出し"
 other = "新規編集提案"
 
 [suggestion_new_breadcrumb]
-description = "編集提案作成画面のパンくずリスト (編集提案一覧へのリンク)"
-other = "編集提案"
+description = "編集提案作成画面自身を指すパンくず項目 (現在項目)"
+other = "新規編集提案"
 
 [suggestion_new_title_label]
 description = "編集提案タイトルのラベル"
@@ -1700,6 +1720,10 @@ other = "編集提案のクローズに失敗しました"
 description = "差分がない場合のメッセージ"
 other = "本文に変更はありません"
 
+[diff_block_caption]
+description = "差分ブロックのテーブルのキャプション (視覚的には隠す)"
+other = "{{.PageTitle}} の本文の差分 ({{.Total}} か所中 {{.Position}} 番目)"
+
 [suggestion_diff_title_change]
 description = "編集提案のタイトル変更ラベル"
 other = "タイトルの変更"
@@ -1802,19 +1826,27 @@ other = "エクスポート"
 
 [export_new_description_html]
 description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
-other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
+other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
 
 [export_show_description_html]
 description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
-other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
+other = "スペース内に投稿されたページをエクスポートします。<a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">エクスポートについて詳しく見る</a>"
 
 [export_new_breadcrumb_settings]
 description = "エクスポート画面のパンくずのスペース設定へのリンク"
 other = "設定"
 
+[export_new_breadcrumb]
+description = "エクスポート開始画面自身を指すパンくず項目 (現在項目)"
+other = "エクスポート"
+
 [export_show_breadcrumb_settings]
 description = "エクスポート画面のパンくずのスペース設定へのリンク"
 other = "設定"
+
+[export_show_breadcrumb_exports]
+description = "エクスポート詳細画面のパンくずのエクスポート開始画面へのリンク"
+other = "エクスポート"
 
 [export_new_start]
 description = "エクスポート開始画面の開始ボタン"

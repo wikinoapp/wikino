@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -247,4 +248,87 @@ func TestNew_下書きページがない場合でもフォームが表示され�
 	if rr.Code != http.StatusOK {
 		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
+}
+
+// The trail ends with the screen itself, so the last item must be a plain label carrying
+// aria-current rather than a link back to the topic. Scope the assertions to the breadcrumb because
+// the same label also appears in the heading and the page title.
+//
+// [Ja] 経路はこの画面自身で終わるため、末尾の項目はトピックへのリンクではなく aria-current を持つ
+// ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
+func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	db, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("new-crumb@example.com").
+		WithAtname("newcrumb").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("new-crumb-sp").
+		WithName("New Crumb Space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("New Crumb Topic").
+		WithVisibility(0).
+		Build()
+
+	req := newSuggestionRequest(t, http.MethodGet, "/s/new-crumb-sp/topics/1/suggestions/new", map[string]string{
+		"space_identifier": "new-crumb-sp",
+		"topic_number":     "1",
+	}, nil)
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "newcrumb"})
+	ctx = middleware.SetCSRFTokenToContext(ctx, "test-csrf-token")
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, db, queries).New(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := suggestionFormBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/s/new-crumb-sp"`,
+		`href="/s/new-crumb-sp/topics/1"`,
+		`aria-current="page"`,
+		"新規編集提案",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/new-crumb-sp/topics/1/suggestions/new"`) {
+		t.Error("current suggestion creation breadcrumb item must not be a link")
+	}
+}
+
+// suggestionFormBreadcrumb returns the markup of the breadcrumb navigation alone, so that an
+// assertion about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] suggestionFormBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路に
+// ついての検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func suggestionFormBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
 }

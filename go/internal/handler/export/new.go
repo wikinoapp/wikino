@@ -57,24 +57,47 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		InProgressExport: inProgressVM,
 	})
 
-	h.render(w, r, user, spaceVM, templates.PageNameExportNew, "export_new_title", "export_new_breadcrumb_settings", content)
+	// The trail ends here: this screen is where an export is started from, so its own name is the
+	// current item.
+	//
+	// [Ja] 経路はここで終わる。この画面がエクスポートを開始する場所であり、自身の名前が現在地の
+	// 項目になる。
+	trailingBreadcrumbs := []components.BreadcrumbItem{
+		{
+			Label:     i18n.T(ctx, "export_new_breadcrumb"),
+			IsCurrent: true,
+		},
+	}
+
+	h.render(w, r, user, spaceVM, templates.PageNameExportNew, "export_new_title", "export_new_breadcrumb_settings", trailingBreadcrumbs, content)
 }
 
 // render draws one of the export screens into the layout they share. Both sit under the settings
-// of a space and differ only in their page name, their wording and their content, so the header,
-// the breadcrumb trail and the navigation are decided once here.
+// of a space and differ only in their page name, their wording, the tail of their breadcrumb and
+// their content, so the header, the trail up to the space settings and the navigation are decided
+// once here.
 //
 // The wording each screen owns is named by the caller rather than derived from pageName, so that a
 // key the screens carry stays greppable and renaming a page name cannot silently turn a label into
 // the key itself, which is what i18n.T returns for a message it cannot find.
 //
+// The trail below the space settings is supplied by the caller as whole items rather than as one
+// more wording key: the two screens differ in the shape of their tail, not only in its wording. The
+// start screen ends at itself, while the detail screen continues through the start screen to the
+// export it follows, whose name is that export's own and cannot come from a message.
+//
 // [Ja] render はエクスポートの画面を、それらが共有するレイアウトへ描画する。どちらもスペースの設定
-// の下にあり、違うのはページ名・文言・中身だけなので、ヘッダーとパンくずとナビはここで一度だけ
-// 決める。
+// の下にあり、違うのはページ名・文言・パンくずの末尾・中身だけなので、ヘッダーとスペース設定までの
+// 経路とナビはここで一度だけ決める。
 //
 // 各画面が持つ文言は pageName から導かず呼び出し元が名指しする。画面が持つキーを grep で追えるよう
 // にし、ページ名の変更でラベルがキー自体に化けないようにするためである。i18n.T は見つからない
 // メッセージにキーをそのまま返す。
+//
+// スペース設定より下の経路は、文言キーをもう 1 つ受け取るのではなく項目そのものを呼び出し元から
+// 受け取る。2 つの画面は末尾の文言だけでなく形が違うためである。開始画面は自身で終わり、詳細画面は
+// 開始画面を通って、追っているエクスポートまで続く。その名前はエクスポート自身のもので、メッセージ
+// から引くことはできない。
 func (h *Handler) render(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -83,6 +106,7 @@ func (h *Handler) render(
 	pageName templates.PageName,
 	titleKey string,
 	breadcrumbSettingsKey string,
+	trailingBreadcrumbs []components.BreadcrumbItem,
 	content templ.Component,
 ) {
 	ctx := r.Context()
@@ -103,7 +127,7 @@ func (h *Handler) render(
 
 		BreadcrumbHeader: components.BreadcrumbHeaderData{
 			MaxWidthClass: "max-w-2xl",
-			Items: []components.BreadcrumbItem{
+			Items: append([]components.BreadcrumbItem{
 				{
 					Path:      templates.HomePath(),
 					IconName:  "house-regular",
@@ -117,7 +141,7 @@ func (h *Handler) render(
 					Label: i18n.T(ctx, breadcrumbSettingsKey),
 					Path:  templates.SpaceSettingsPath(space.Identifier),
 				},
-			},
+			}, trailingBreadcrumbs...),
 		},
 	}
 

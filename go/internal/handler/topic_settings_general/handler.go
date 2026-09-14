@@ -77,11 +77,12 @@ func requestTarget(w http.ResponseWriter, r *http.Request) (model.SpaceIdentifie
 }
 
 // render draws the general settings screen into the layout it shares with the rest of the topic
-// screens. The breadcrumb leads back to the settings of the topic, which stays on the Rails
-// version.
+// screens. The breadcrumb leads back through the settings of the topic, which stays on the Rails
+// version, and ends with this screen itself as a non-linked current item.
 //
 // [Ja] render は一般設定画面を、トピックの他の画面と共有するレイアウトへ描画します。パンくずは
-// トピックの設定へ戻り、その画面は Rails 版のまま残ります。
+// トピックの設定 (その画面は Rails 版のまま残ります) を通り、この画面自身の非リンクな現在項目で
+// 締めます。
 func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.User, data topicpages.SettingsGeneralData) {
 	ctx := r.Context()
 
@@ -117,6 +118,17 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.Use
 				components.BreadcrumbItem{
 					Label: i18n.T(ctx, "topic_settings_general_breadcrumb_settings"),
 					Path:  templates.TopicSettingsPath(data.Space.Identifier, data.Topic.Number),
+				},
+				// The screen is the current page, so the trail ends with a non-linked item carrying
+				// aria-current. The label repeats the heading, but it is read from a key of its own so
+				// that a breadcrumb needing a shorter word than the heading can take one later.
+				//
+				// [Ja] この画面が現在地のため、経路は aria-current を持つリンク無しの項目で締める。
+				// ラベルは見出しと同じ文字列だが、パンくずが見出しより短い語を必要としたときに後から
+				// 変えられるよう、独立したキーから引く。
+				components.BreadcrumbItem{
+					Label:     i18n.T(ctx, "topic_settings_general_breadcrumb"),
+					IsCurrent: true,
 				},
 			),
 		},

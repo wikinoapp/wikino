@@ -232,3 +232,246 @@ func TestIndex_編集提案ボタンがトピックグループに表示され�
 		t.Error("suggestion new path not found in response")
 	}
 }
+
+// Regression test for the row action menu being clipped by a horizontally scrolling ancestor.
+// overflow-x on a box makes its overflow-y compute to auto as well, so a scroller around the
+// table cut the menu off at its bottom edge on the rows near it. The table instead fits any
+// width by letting the title cell wrap, which leaves no clipping ancestor at all.
+//
+// The class attribute of the title cell is matched whole rather than by substring, so that
+// dropping the wrapping is caught even if another class ending in the same word is added later.
+//
+// [Ja] 行の操作メニューが横スクロールの祖先に切り取られることの回帰テスト。overflow-x を
+// 持つ要素は overflow-y も auto に計算されるため、テーブルを包む横スクロールが下端に近い行の
+// メニューを切り落としていた。テーブルはタイトルのセルを折り返すことでどの幅にも収まり、
+// 切り抜きを持つ祖先が 1 つも無くなる。
+//
+// タイトルのセルの class 属性は部分文字列ではなく値を丸ごと照合する。これにより、後から同じ
+// 語で終わる別のクラスが増えても折り返しが落ちたことを捕まえられる。
+func TestIndex_操作メニューを切り取る横スクロールがない(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("dpi-no-scroller@example.com").
+		WithAtname("dpinoscroller").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("dpi-no-scroller").
+		WithName("横スクロールスペース").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("横スクロールトピック").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("対象ページ").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("下書き").
+		WithBody("本文").
+		Build()
+
+	cfg := &config.Config{
+		Env:    "test",
+		Domain: "localhost",
+	}
+	handler := draft_page_index.NewHandler(cfg, usecase.NewGetDraftPagesUsecase(repository.NewDraftPageRepository(queries)))
+
+	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
+	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID, Atname: "dpinoscroller"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Index(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	if strings.Contains(body, "overflow-x-auto") {
+		t.Error("下書き一覧に横スクロールの要素があり、行の操作メニューが切り取られる")
+	}
+
+	if !strings.Contains(body, `<td class="whitespace-normal [overflow-wrap:anywhere]">`) {
+		t.Error("タイトルのセルが折り返さないため、テーブルが横スクロールを必要とする")
+	}
+}
+
+// The screen already drew its own name as the trail's last item, but without aria-current a screen
+// reader had no way to tell which crumb the viewer was on. Scope the assertion to the breadcrumb
+// because the same label also appears in the heading and the page title.
+//
+// [Ja] この画面はすでに自身の名前を経路の末尾に描いていたが、aria-current が無いと閲覧者がどの項目に
+// いるかをスクリーンリーダーへ伝えられない。同じラベルは見出しとページタイトルにも出るため、
+// パンくず内に絞って検証する。
+func TestIndex_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("dpi-crumb@example.com").
+		WithAtname("dpicrumb").
+		Build()
+
+	cfg := &config.Config{
+		Env:    "test",
+		Domain: "localhost",
+	}
+	handler := draft_page_index.NewHandler(cfg, usecase.NewGetDraftPagesUsecase(repository.NewDraftPageRepository(queries)))
+
+	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
+	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID, Atname: "dpicrumb"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Index(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := draftPageIndexBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/home"`,
+		`aria-current="page"`,
+		"下書きのページ",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/drafts"`) {
+		t.Error("current draft list breadcrumb item must not be a link")
+	}
+}
+
+// draftPageIndexBreadcrumb returns the markup of the breadcrumb navigation alone, so that an
+// assertion about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] draftPageIndexBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路に
+// ついての検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func draftPageIndexBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
+}
+
+// Regression test for the table's header relationships and its caption. A <th> without scope
+// leaves the direction of the heading to the browser's guess, and a table without a caption tells
+// a screen reader that jumped straight to it nothing about which topic's drafts it holds.
+//
+// The caption is visually hidden because the group heading above the card already names the topic
+// on screen.
+//
+// [Ja] テーブルの見出しの関係とキャプションの回帰テスト。scope の無い <th> は見出しの向きを
+// ブラウザの推測に委ねることになり、キャプションの無いテーブルは、そこへ直接飛んだスクリーン
+// リーダーへ、どのトピックの下書きなのかを伝えられない。
+//
+// キャプションを視覚的に隠すのは、カードの上のグループ見出しが画面上ではすでにトピック名を
+// 示しているため。
+func TestIndex_テーブルに見出しの関係とキャプションがある(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("dpi-caption@example.com").
+		WithAtname("dpicaption").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("dpi-caption").
+		WithName("キャプションスペース").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("キャプショントピック").
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("対象ページ").
+		Build()
+	testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("下書き").
+		WithBody("本文").
+		Build()
+
+	cfg := &config.Config{
+		Env:    "test",
+		Domain: "localhost",
+	}
+	handler := draft_page_index.NewHandler(cfg, usecase.NewGetDraftPagesUsecase(repository.NewDraftPageRepository(queries)))
+
+	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
+	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID, Atname: "dpicaption"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Index(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+
+	if !strings.Contains(body, `<caption class="sr-only">キャプショントピック (キャプションスペース) の下書き一覧</caption>`) {
+		t.Error("テーブルに、どのトピックの下書きかを伝える視覚的に隠したキャプションがない")
+	}
+
+	if got, want := strings.Count(body, `<th scope="col"`), 3; got != want {
+		t.Errorf("scope=\"col\" を持つ見出しセルの数 = %d, want %d", got, want)
+	}
+}

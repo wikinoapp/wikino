@@ -265,6 +265,99 @@ func TestShow_未ログインならログイン画面へリダイレクトする
 	}
 }
 
+// The creation screen and this one render the same shared form fields, so the spacing between the
+// visibility label and its first option is asserted on both. Covering only one of them would let a
+// later split of the shared fields leave this screen behind unnoticed.
+//
+// [Ja] 作成画面とこの画面は同じ共有フォーム項目を描画するため、公開設定のラベルと最初の選択肢の
+// 間隔は両方で確認する。片方だけを確認していると、後から共有の項目が分かれたときにこの画面が
+// 取り残されても気づけない。
+func TestShow_公開設定のラベルと選択肢の間に余白が入る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-gap"
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, nil)
+
+	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		`<fieldset class="fieldset gap-3">`,
+		`<legend class="label">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("response does not contain %q", want)
+		}
+	}
+}
+
+// The trail ends with the screen itself, so the last item must be a plain label carrying
+// aria-current rather than a link back to the settings screen. Scope the assertions to the
+// breadcrumb because the same label also appears in the heading and the page title.
+//
+// [Ja] 経路はこの画面自身で終わるため、末尾の項目は設定画面へのリンクではなく aria-current を持つ
+// ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
+func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-crumb"
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, nil)
+
+	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := settingsGeneralBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/s/` + identifier + `"`,
+		`href="/s/` + identifier + `/topics/1"`,
+		`href="/s/` + identifier + `/topics/1/settings"`,
+		`aria-current="page"`,
+		"基本情報",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/`+identifier+`/topics/1/settings/general"`) {
+		t.Error("current general settings breadcrumb item must not be a link")
+	}
+}
+
+// settingsGeneralBreadcrumb returns the markup of the breadcrumb navigation alone, so that an
+// assertion about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] settingsGeneralBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路に
+// ついての検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func settingsGeneralBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
+}
+
 // settingsGeneralInputTag returns the opening tag of the input carrying the given id.
 //
 // [Ja] settingsGeneralInputTag は指定した id を持つ input の開始タグを返す。
