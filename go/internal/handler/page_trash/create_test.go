@@ -134,24 +134,24 @@ func TestCreate(t *testing.T) {
 		return page
 	}
 
-	t.Run("正常系: page:trash を持つメンバーはトピック画面へリダイレクトされる", func(t *testing.T) {
+	t.Run("正常系: page:trash を持つメンバーはページ自身へリダイレクトされる", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		h.Create(rr, newRequest(t, "pt-space", 1, trashMemberID))
 
 		if rr.Code != http.StatusSeeOther {
 			t.Errorf("status code = %v, want %v", rr.Code, http.StatusSeeOther)
 		}
-		// The page is gone from the screen the request came from, so the user lands on its topic.
+		// A trashed page stays readable, so the user lands back on the page they just acted on.
 		//
-		// [Ja] リクエスト元の画面からページは消えるため、属していたトピックへ着地する。
-		if location := rr.Header().Get("Location"); location != "/s/pt-space/topics/7" {
-			t.Errorf("Location = %v, want /s/pt-space/topics/7", location)
+		// [Ja] ゴミ箱に入れてもページは読めるため、操作した対象へそのまま着地する。
+		if location := rr.Header().Get("Location"); location != "/s/pt-space/pages/1" {
+			t.Errorf("Location = %v, want /s/pt-space/pages/1", location)
 		}
-		// The page disappears from the topic the user lands on, so the flash is the only
-		// confirmation that the operation went through.
+		// The flash is what acknowledges the operation itself; the notice on the landing page only
+		// states that the page is in the trash.
 		//
-		// [Ja] 着地先のトピックからページは消えるため、操作が通ったことを利用者に伝えるのは
-		// フラッシュメッセージだけになる。
+		// [Ja] 操作が通ったことを伝えるのはフラッシュメッセージで、着地先のアラートはページが
+		// ゴミ箱にあるという状態を示すだけである。
 		hasFlashCookie := false
 		for _, c := range rr.Result().Cookies() {
 			if c.Name == session.FlashCookieName && c.Value != "" {

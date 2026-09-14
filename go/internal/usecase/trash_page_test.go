@@ -134,14 +134,11 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		if output == nil {
 			t.Fatal("Execute() returned nil output")
 		}
-		// The redirect target is built from these, so both must come back resolved.
+		// The redirect target is built from this, so it must come back resolved.
 		//
-		// [Ja] 遷移先をここから組み立てるため、両方とも解決済みで返る必要がある。
+		// [Ja] 遷移先をここから組み立てるため、解決済みで返る必要がある。
 		if output.Space == nil || output.Space.Identifier != "tp-space" {
 			t.Errorf("output.Space = %v, want the space tp-space", output.Space)
-		}
-		if output.Topic == nil || output.Topic.Number != 1 {
-			t.Errorf("output.Topic = %v, want the public topic (number 1)", output.Topic)
 		}
 
 		page := findPage(t, 1)
