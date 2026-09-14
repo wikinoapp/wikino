@@ -265,6 +265,65 @@ func TestShow_未ログインならログイン画面へリダイレクトする
 	}
 }
 
+// The trail ends with the screen itself, so the last item must be a plain label carrying
+// aria-current rather than a link back to the settings screen. Scope the assertions to the
+// breadcrumb because the same label also appears in the heading and the page title.
+//
+// [Ja] 経路はこの画面自身で終わるため、末尾の項目は設定画面へのリンクではなく aria-current を持つ
+// ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
+func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-crumb"
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, nil)
+
+	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := settingsGeneralBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/s/` + identifier + `"`,
+		`href="/s/` + identifier + `/topics/1"`,
+		`href="/s/` + identifier + `/topics/1/settings"`,
+		`aria-current="page"`,
+		"基本情報",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/`+identifier+`/topics/1/settings/general"`) {
+		t.Error("current general settings breadcrumb item must not be a link")
+	}
+}
+
+// settingsGeneralBreadcrumb returns the markup of the breadcrumb navigation alone, so that an
+// assertion about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] settingsGeneralBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路に
+// ついての検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func settingsGeneralBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
+}
+
 // settingsGeneralInputTag returns the opening tag of the input carrying the given id.
 //
 // [Ja] settingsGeneralInputTag は指定した id を持つ input の開始タグを返す。

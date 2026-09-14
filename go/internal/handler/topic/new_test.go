@@ -284,3 +284,60 @@ func TestNew_未ログインならログイン画面へリダイレクトする(
 		t.Errorf("Location = %q, want %q", location, "/sign_in")
 	}
 }
+
+// The trail ends with the screen itself, so the last item must be a plain label carrying
+// aria-current rather than a link back to the space. Scope the assertions to the breadcrumb because
+// the same label also appears in the heading and the page title.
+//
+// [Ja] 経路はこの画面自身で終わるため、末尾の項目はスペースへのリンクではなく aria-current を持つ
+// ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
+func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	userID := topicSpace(t, tx, "topic-new-crumb", nil)
+
+	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-crumb/topics/new", "topic-new-crumb", userID, nil)
+	rr := httptest.NewRecorder()
+	setupHandler(t, queries).New(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := topicFormBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/home"`,
+		`href="/s/topic-new-crumb"`,
+		`aria-current="page"`,
+		"新規トピック",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/topic-new-crumb/topics/new"`) {
+		t.Error("current topic creation breadcrumb item must not be a link")
+	}
+}
+
+// topicFormBreadcrumb returns the markup of the breadcrumb navigation alone, so that an assertion
+// about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] topicFormBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路についての
+// 検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func topicFormBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
+}

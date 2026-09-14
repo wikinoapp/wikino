@@ -10,6 +10,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/httppagination"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -193,7 +194,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 			SpaceIdentifier: spaceIdentVM,
 		},
 
-		BreadcrumbHeader: pageBreadcrumbHeaderData(ctx, spaceVM, topicVM, editBreadcrumbMaxWidthClass, true),
+		BreadcrumbHeader: editBreadcrumbHeaderData(ctx, spaceVM, topicVM),
 	}
 
 	err = layouts.Default(layoutData, content).Render(ctx, w)
@@ -209,17 +210,40 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 // [Ja] editBreadcrumbMaxWidthClass は編集画面の広い本文幅にパンくずを揃える。
 const editBreadcrumbMaxWidthClass = "max-w-6xl"
 
-// pageBreadcrumbHeaderData builds the breadcrumb header the layout renders for the page screens.
-// Edit, Update (which re-renders the editor on a validation error) and Show all supply the header
-// from here; maxWidthClass lines the breadcrumb up with each screen's body. The authenticated Edit
-// and Update pass signedIn unconditionally, while the public Show passes the viewer's actual state
-// so the trail starts at the public space rather than at an authenticated-only screen.
+// editBreadcrumbHeaderData builds the breadcrumb header of the editor, which Edit and Update (which
+// re-renders the editor on a validation error) both show. The editor is the current page, so the
+// trail ends with a non-linked item carrying aria-current. The label names the screen rather than
+// the page being edited: the editor has no heading of its own, and a draft the viewer has not
+// titled yet would leave the crumb empty. Both screens require authentication, so the trail starts
+// at home unconditionally.
 //
-// [Ja] pageBreadcrumbHeaderData はページ系画面のパンくずヘッダーを組み立てます。描画するのは
-// レイアウトです。Edit・Update (バリデーションエラー時に編集画面を再描画する)・Show のいずれも
-// ヘッダーをここから供給します。maxWidthClass は各画面の本文幅にパンくずを揃えるために渡します。
-// 認証必須の Edit・Update は signedIn を常に真で渡し、公開の Show は閲覧者の実際の状態を渡すことで、
-// 経路が認証必須画面ではなく公開スペースから始まるようにします。
+// [Ja] editBreadcrumbHeaderData は編集画面のパンくずヘッダーを組み立てる。Edit と Update
+// (バリデーションエラー時に編集画面を再描画する) の両方が表示する。編集画面が現在地のため、経路は
+// aria-current を持つリンク無しの項目で締める。ラベルは編集対象のページではなく画面自身を表す。
+// 編集画面は自身の見出しを持たず、閲覧者がまだタイトルを付けていない下書きでは項目が空になって
+// しまうためである。どちらの画面も認証必須のため、経路は常にホームから始める。
+func editBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic) components.BreadcrumbHeaderData {
+	data := pageBreadcrumbHeaderData(ctx, space, topic, editBreadcrumbMaxWidthClass, true)
+	data.Items = append(data.Items, components.BreadcrumbItem{
+		Label:     i18n.T(ctx, "page_edit_breadcrumb"),
+		IsCurrent: true,
+	})
+	return data
+}
+
+// pageBreadcrumbHeaderData builds the breadcrumb up to the page's topic, which the page screens
+// share. Show supplies its header from here directly, while Edit and Update (which re-renders the
+// editor on a validation error) go through editBreadcrumbHeaderData, which appends the editor's
+// current item. maxWidthClass lines the breadcrumb up with each screen's body. The authenticated
+// editor passes signedIn unconditionally, while the public Show passes the viewer's actual state so
+// the trail starts at the public space rather than at an authenticated-only screen.
+//
+// [Ja] pageBreadcrumbHeaderData はページのトピックまでのパンくずを組み立てます。ページ系画面で
+// 共有します。Show はヘッダーをここから直接供給し、Edit と Update (バリデーションエラー時に編集
+// 画面を再描画する) は、現在地の項目を足す editBreadcrumbHeaderData を経由します。maxWidthClass は
+// 各画面の本文幅にパンくずを揃えるために渡します。認証必須の編集画面は signedIn を常に真で渡し、
+// 公開の Show は閲覧者の実際の状態を渡すことで、経路が認証必須画面ではなく公開スペースから
+// 始まるようにします。
 func pageBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic, maxWidthClass string, signedIn bool) components.BreadcrumbHeaderData {
 	items := append(components.HomeBreadcrumbItems(ctx, signedIn),
 		components.BreadcrumbItem{

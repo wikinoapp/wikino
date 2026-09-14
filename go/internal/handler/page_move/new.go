@@ -134,6 +134,17 @@ func (h *Handler) renderMoveForm(
 					Path:     templates.TopicPath(spaceIdentVM, currentTopicVM.Number),
 					IconName: currentTopicVM.IconName,
 				},
+				// The screen is the current page, so the trail ends with a non-linked item carrying
+				// aria-current. The label repeats the heading, but it is read from a key of its own so
+				// that a breadcrumb needing a shorter word than the heading can take one later.
+				//
+				// [Ja] この画面が現在地のため、経路は aria-current を持つリンク無しの項目で締める。
+				// ラベルは見出しと同じ文字列だが、パンくずが見出しより短い語を必要としたときに後から
+				// 変えられるよう、独立したキーから引く。
+				{
+					Label:     i18n.T(ctx, "page_move_breadcrumb"),
+					IsCurrent: true,
+				},
 			},
 		},
 	}

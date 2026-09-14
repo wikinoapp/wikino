@@ -636,6 +636,10 @@ other = "プライバシーポリシー"
 description = "ページ編集画面のタイトル"
 other = "ページを編集 | {{.SpaceName}}"
 
+[page_edit_breadcrumb]
+description = "ページ編集画面自身を指すパンくず項目 (現在項目)"
+other = "ページを編集"
+
 [page_edit_title_label]
 description = "ページタイトル入力フィールドのラベル"
 other = "タイトル"
@@ -971,6 +975,10 @@ other = "ページの移動 | {{.SpaceName}}"
 description = "ページ移動画面の見出し"
 other = "ページの移動"
 
+[page_move_breadcrumb]
+description = "ページ移動画面自身を指すパンくず項目 (現在項目)"
+other = "ページの移動"
+
 [page_move_subtitle]
 description = "ページ移動画面の説明文"
 other = "ページを別のトピックに移動します"
@@ -1207,6 +1215,10 @@ other = "新規トピック | {{.SpaceName}}"
 description = "トピック作成画面の見出し"
 other = "新規トピック"
 
+[topic_new_breadcrumb]
+description = "トピック作成画面自身を指すパンくず項目 (現在項目)"
+other = "新規トピック"
+
 [topic_new_hint_html]
 description = "トピック作成画面のサブタイトル (ヘルプページへのリンクを含む)"
 other = "トピックについては <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">トピックについてのヘルプ</a> をご覧ください<br>どんなトピックを作ると良いかわからないときは <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
@@ -1303,6 +1315,10 @@ other = "基本情報"
 [topic_settings_general_breadcrumb_settings]
 description = "トピックの一般設定画面のパンくずに出すトピック設定のラベル"
 other = "設定"
+
+[topic_settings_general_breadcrumb]
+description = "トピックの一般設定画面自身を指すパンくず項目 (現在項目)"
+other = "基本情報"
 
 [topic_settings_general_submit_button]
 description = "トピックの一般設定画面の送信ボタン"
@@ -1482,8 +1498,8 @@ description = "編集提案作成の見出し"
 other = "新規編集提案"
 
 [suggestion_new_breadcrumb]
-description = "編集提案作成画面のパンくずリスト (編集提案一覧へのリンク)"
-other = "編集提案"
+description = "編集提案作成画面自身を指すパンくず項目 (現在項目)"
+other = "新規編集提案"
 
 [suggestion_new_title_label]
 description = "編集提案タイトルのラベル"
@@ -1812,9 +1828,17 @@ other = "スペース内に投稿されたページをエクスポートしま�
 description = "エクスポート画面のパンくずのスペース設定へのリンク"
 other = "設定"
 
+[export_new_breadcrumb]
+description = "エクスポート開始画面自身を指すパンくず項目 (現在項目)"
+other = "エクスポート"
+
 [export_show_breadcrumb_settings]
 description = "エクスポート画面のパンくずのスペース設定へのリンク"
 other = "設定"
+
+[export_show_breadcrumb_exports]
+description = "エクスポート詳細画面のパンくずのエクスポート開始画面へのリンク"
+other = "エクスポート"
 
 [export_new_start]
 description = "エクスポート開始画面の開始ボタン"

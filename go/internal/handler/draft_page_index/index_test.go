@@ -232,3 +232,74 @@ func TestIndex_編集提案ボタンがトピックグループに表示され�
 		t.Error("suggestion new path not found in response")
 	}
 }
+
+// The screen already drew its own name as the trail's last item, but without aria-current a screen
+// reader had no way to tell which crumb the viewer was on. Scope the assertion to the breadcrumb
+// because the same label also appears in the heading and the page title.
+//
+// [Ja] この画面はすでに自身の名前を経路の末尾に描いていたが、aria-current が無いと閲覧者がどの項目に
+// いるかをスクリーンリーダーへ伝えられない。同じラベルは見出しとページタイトルにも出るため、
+// パンくず内に絞って検証する。
+func TestIndex_パンくずが現在地の項目で終わる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("dpi-crumb@example.com").
+		WithAtname("dpicrumb").
+		Build()
+
+	cfg := &config.Config{
+		Env:    "test",
+		Domain: "localhost",
+	}
+	handler := draft_page_index.NewHandler(cfg, usecase.NewGetDraftPagesUsecase(repository.NewDraftPageRepository(queries)))
+
+	req := httptest.NewRequest(http.MethodGet, "/drafts", nil)
+	ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID, Atname: "dpicrumb"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Index(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	breadcrumb := draftPageIndexBreadcrumb(t, rr.Body.String())
+	for _, want := range []string{
+		`href="/home"`,
+		`aria-current="page"`,
+		"下書きのページ",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/drafts"`) {
+		t.Error("current draft list breadcrumb item must not be a link")
+	}
+}
+
+// draftPageIndexBreadcrumb returns the markup of the breadcrumb navigation alone, so that an
+// assertion about the trail is not satisfied by the same text appearing elsewhere on the screen.
+//
+// [Ja] draftPageIndexBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路に
+// ついての検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
+func draftPageIndexBreadcrumb(t *testing.T, body string) string {
+	t.Helper()
+
+	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
+	if start == -1 {
+		t.Fatal("response does not contain the breadcrumb navigation")
+	}
+	endOffset := strings.Index(body[start:], "</nav>")
+	if endOffset == -1 {
+		t.Fatal("breadcrumb navigation does not have a closing tag")
+	}
+
+	return body[start : start+endOffset]
+}

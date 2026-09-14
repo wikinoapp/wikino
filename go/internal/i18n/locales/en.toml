@@ -636,6 +636,10 @@ other = "Privacy Policy"
 description = "Page edit screen title"
 other = "Edit Page | {{.SpaceName}}"
 
+[page_edit_breadcrumb]
+description = "Breadcrumb item for the page edit screen itself (the current item)"
+other = "Edit Page"
+
 [page_edit_title_label]
 description = "Label for the page title input field"
 other = "Title"
@@ -971,6 +975,10 @@ other = "Move Page | {{.SpaceName}}"
 description = "Page move screen heading"
 other = "Move Page"
 
+[page_move_breadcrumb]
+description = "Breadcrumb item for the page move screen itself (the current item)"
+other = "Move Page"
+
 [page_move_subtitle]
 description = "Page move screen subtitle"
 other = "Move this page to a different topic."
@@ -1207,6 +1215,10 @@ other = "New topic | {{.SpaceName}}"
 description = "Heading on the topic creation page"
 other = "New topic"
 
+[topic_new_breadcrumb]
+description = "Breadcrumb item for the topic creation page itself (the current item)"
+other = "New topic"
+
 [topic_new_hint_html]
 description = "Subtitle on the topic creation page (contains links to the help pages)"
 other = "For more information about topics, please see <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">Topic help</a>.<br>If you are unsure what kind of topic to create, <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">Best Practices</a> may be helpful."
@@ -1303,6 +1315,10 @@ other = "General"
 [topic_settings_general_breadcrumb_settings]
 description = "Topic settings label shown in the breadcrumb of the topic general settings page"
 other = "Settings"
+
+[topic_settings_general_breadcrumb]
+description = "Breadcrumb item for the topic general settings page itself (the current item)"
+other = "General"
 
 [topic_settings_general_submit_button]
 description = "Submit button on the topic general settings page"
@@ -1482,8 +1498,8 @@ description = "Suggestion creation heading"
 other = "New Suggestion"
 
 [suggestion_new_breadcrumb]
-description = "Suggestion creation breadcrumb (link to suggestion list)"
-other = "Suggestions"
+description = "Breadcrumb item for the suggestion creation screen itself (the current item)"
+other = "New Suggestion"
 
 [suggestion_new_title_label]
 description = "Suggestion title label"
@@ -1812,9 +1828,17 @@ other = "Export pages posted in the space. <a class=\"link-foreground\" href=\"h
 description = "Breadcrumb item of the export screens linking to the space settings"
 other = "Settings"
 
+[export_new_breadcrumb]
+description = "Breadcrumb item for the export start screen itself (the current item)"
+other = "Export"
+
 [export_show_breadcrumb_settings]
 description = "Breadcrumb item of the export screens linking to the space settings"
 other = "Settings"
+
+[export_show_breadcrumb_exports]
+description = "Breadcrumb item of the export detail screen linking to the export start screen"
+other = "Export"
 
 [export_new_start]
 description = "Button that starts an export"

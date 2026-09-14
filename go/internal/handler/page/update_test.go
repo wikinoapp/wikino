@@ -104,9 +104,19 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 		t.Error("body value not preserved in response")
 	}
 
-	// パンくずリストが表示されていること
-	if !strings.Contains(body, "General") {
-		t.Error("topic name not found in breadcrumb")
+	breadcrumb := pageEditBreadcrumb(t, body)
+	for _, want := range []string{
+		`href="/s/update-space"`,
+		`href="/s/update-space/topics/1"`,
+		`aria-current="page"`,
+		"ページを編集",
+	} {
+		if !strings.Contains(breadcrumb, want) {
+			t.Errorf("breadcrumb does not contain %q", want)
+		}
+	}
+	if strings.Contains(breadcrumb, `href="/s/update-space/pages/1/edit"`) {
+		t.Error("current page edit breadcrumb item must not be a link after validation error")
 	}
 
 	// The validation-error re-render supplies the same breadcrumb header as the editor itself, so
