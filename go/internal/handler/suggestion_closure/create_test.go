@@ -1,4 +1,4 @@
-package suggestion_close_test
+package suggestion_closure_test
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	suggestionclosehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_close"
+	suggestionclosurehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_closure"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -37,7 +37,7 @@ func newPostRequest(t *testing.T, path string, params map[string]string, form ur
 }
 
 // setupHandler はテスト用の編集提案クローズハンドラーを作成するヘルパーです
-func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionclosehandler.Handler {
+func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionclosurehandler.Handler {
 	t.Helper()
 
 	flashMgr := session.NewFlashManager("localhost", false, false)
@@ -50,7 +50,7 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionc
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
 
-	return suggestionclosehandler.NewHandler(
+	return suggestionclosurehandler.NewHandler(
 		flashMgr,
 		closeSuggestionUC,
 	)

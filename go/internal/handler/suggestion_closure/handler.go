@@ -1,5 +1,7 @@
-// Package suggestion_close は編集提案クローズ関連のHTTPハンドラーを提供します
-package suggestion_close
+// Package suggestion_closure provides the HTTP handlers for closing a suggestion.
+//
+// [Ja] Package suggestion_closure は編集提案をクローズする操作の HTTP ハンドラーを提供します。
+package suggestion_closure
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/session"

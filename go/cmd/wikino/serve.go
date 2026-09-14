@@ -47,9 +47,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	spacehandler "github.com/wikinoapp/wikino/go/internal/handler/space"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
-	suggestionapplyhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_apply"
+	suggestionapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_application"
 	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
-	suggestionclosehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_close"
+	suggestionclosurehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_closure"
 	suggestioncommenthandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment"
 	suggestioncommentedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment_edit"
 	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
@@ -527,14 +527,14 @@ func runServe() {
 		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
 		suggestionApplyValidator,
 	)
-	suggestionApplyHandler := suggestionapplyhandler.NewHandler(
+	suggestionApplicationHandler := suggestionapplicationhandler.NewHandler(
 		cfg,
 		flashMgr,
 		applySuggestionUC,
 		getSuggestionDetailUC,
 	)
 	closeSuggestionUC := usecase.NewCloseSuggestionUsecase(db, spaceRepo, spaceMemberRepo, topicMemberRepo, suggestionRepo, draftPageRepo)
-	suggestionCloseHandler := suggestionclosehandler.NewHandler(
+	suggestionClosureHandler := suggestionclosurehandler.NewHandler(
 		flashMgr,
 		closeSuggestionUC,
 	)
@@ -878,10 +878,10 @@ func runServe() {
 		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}", suggestionHandler.Update)
 
 		// 編集提案反映
-		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/apply", suggestionApplyHandler.Create)
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/apply", suggestionApplicationHandler.Create)
 
 		// 編集提案クローズ
-		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/close", suggestionCloseHandler.Create)
+		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/close", suggestionClosureHandler.Create)
 
 		// 編集提案コメント
 		r.Post("/s/{space_identifier}/suggestions/{suggestion_number}/comments", suggestionCommentHandler.Create)
