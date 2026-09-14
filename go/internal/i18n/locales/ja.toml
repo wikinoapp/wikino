@@ -786,7 +786,7 @@ other = "もっと見る"
 
 [page_links_load_more_end]
 description = "関連ページ一覧の最終ページを読み込んだ後の状態"
-other = "すべて読み込みました。"
+other = "すべて読み込みました"
 
 [page_links_load_more_links_aria_label]
 description = "リンク一覧の「もっと見る」リンクのアクセシブルネーム"
@@ -806,7 +806,7 @@ other = "via"
 
 [page_edit_links_load_more_limit]
 description = "ページ編集画面で関連ページ一覧の読み込み上限に達したときの案内"
-other = "編集画面で読み込めるのはここまでです。"
+other = "編集画面で読み込めるのはここまでです"
 
 [page_edit_links_load_more_limit_link]
 description = "上限に達した関連ページ一覧を編集画面で1ページずつ継続するリンクテキスト"

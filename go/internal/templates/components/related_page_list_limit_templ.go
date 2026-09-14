@@ -110,8 +110,16 @@ func relatedPageListLimit(pageURL string, focusID string) templ.Component {
 // relatedPageListEnd replaces the final "load more" link with a visible, focusable completion
 // status. Reusing the link's id lets htmx preserve focus without client-side scripting.
 //
+// The notice only appears once the reader has walked a listing to its end, so it marks a finished
+// pass rather than labelling a resting state, which is what the confetti earns. The icon is
+// decorative, leaving what role="status" announces unchanged, and carries no fill class so that its
+// currentColor follows the paragraph's muted text colour.
+//
 // [Ja] relatedPageListEnd は最後の「もっと見る」リンクを、表示されフォーカス可能な完了状態へ置き換える。
 // リンクの id を引き継ぎ、クライアント側スクリプトを追加せず htmx がフォーカスを維持できるようにする。
+// この案内は読み手が一覧を最後まで辿ったときにだけ現れ、常時の状態ラベルではなく辿り切った瞬間を示す。
+// confetti が見合うのはそのためである。アイコンは装飾のため role="status" が読み上げる内容は変わらず、
+// fill のクラスを付けないことで currentColor が段落の抑えた文字色に追従する。
 func relatedPageListEnd(focusID string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -140,20 +148,24 @@ func relatedPageListEnd(focusID string) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(focusID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 41, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 49, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" tabindex=\"-1\" role=\"status\" class=\"col-span-full text-sm text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" tabindex=\"-1\" role=\"status\" class=\"col-span-full flex items-center gap-1 text-sm text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templates.DecorativeIcon("confetti-regular", "size-4 shrink-0").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_links_load_more_end"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 46, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 56, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
