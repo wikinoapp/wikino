@@ -450,7 +450,8 @@ func suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageDi
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.DiffView(components.DiffViewData{
-			Blocks: pd.BodyBlocks,
+			PageTitle: pd.PageTitle,
+			Blocks:    pd.BodyBlocks,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

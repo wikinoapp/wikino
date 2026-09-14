@@ -179,7 +179,8 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 		</div>
 
 		@components.DiffView(components.DiffViewData{
-			Blocks: pd.BodyBlocks,
+			PageTitle: pd.PageTitle,
+			Blocks:    pd.BodyBlocks,
 		})
 	</div>
 }

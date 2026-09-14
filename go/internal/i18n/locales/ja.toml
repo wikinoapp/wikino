@@ -1720,6 +1720,10 @@ other = "編集提案のクローズに失敗しました"
 description = "差分がない場合のメッセージ"
 other = "本文に変更はありません"
 
+[diff_block_caption]
+description = "差分ブロックのテーブルのキャプション (視覚的には隠す)"
+other = "{{.PageTitle}} の本文の差分 ({{.Total}} か所中 {{.Position}} 番目)"
+
 [suggestion_diff_title_change]
 description = "編集提案のタイトル変更ラベル"
 other = "タイトルの変更"

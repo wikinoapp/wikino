@@ -1720,6 +1720,10 @@ other = "Failed to close suggestion"
 description = "Message when there are no changes"
 other = "No changes in body"
 
+[diff_block_caption]
+description = "Caption of one diff block table (visually hidden)"
+other = "Body diff of {{.PageTitle}} ({{.Position}} of {{.Total}})"
+
 [suggestion_diff_title_change]
 description = "Suggestion title change label"
 other = "Title change"
