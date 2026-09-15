@@ -21,7 +21,7 @@ import (
 
 const topicShowPageLimit = 100
 
-// Show はトピック詳細画面を表示します (GET /s/{space_identifier}/topics/{topic_number})
+// Showはトピック詳細画面を表示します (GET /s/{space_identifier}/topics/{topic_number})
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -35,12 +35,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the pagination parameter. A page whose SQL offset cannot fit the query's int32
-	// parameter is rejected before invoking the usecase; the total-page check below handles every
-	// smaller out-of-range value.
-	//
-	// [Ja] ページネーションパラメータを取得する。SQL offset がクエリの int32 パラメータに収まらない
-	// ページは UseCase 呼び出し前に拒否する。これより小さい範囲外値は後段の総ページ数チェックで
+	// ページネーションパラメータを取得する。SQL offsetがクエリのint32パラメータに収まらない
+	// ページはUseCase呼び出し前に拒否する。これより小さい範囲外値は後段の総ページ数チェックで
 	// 処理する。
 	currentPage, ok := httppagination.ParsePageParam(r, topicShowPageLimit)
 	if !ok {
@@ -78,7 +74,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 権限判定（UseCase が Authorizer 経由で判定した結果を使用）
+	// 権限判定 (UseCaseがAuthorizer経由で判定した結果を使用)
 	canUpdate := output.CanUpdateTopic
 	canCreatePage := output.CanCreatePage
 
@@ -101,10 +97,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	topicVM := viewmodel.NewTopicForShow(output.Topic, canUpdate, canCreatePage)
 	spaceVM := viewmodel.NewSpace(output.Space)
 
-	// Build links from the stored identifier, not from the URL, so that the canonical URL collapses
-	// to one address per screen.
-	//
-	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、正規 URL を 1 画面 1 アドレスに
+	// URLではなく保存済みの識別子からリンクを組み立て、正規URLを1画面1アドレスに
 	// 集約する。
 	spaceIdentVM := spaceVM.Identifier
 
@@ -142,12 +135,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 			Label: spaceVM.Name,
 			Path:  templates.SpacePath(spaceIdentVM),
 		},
-		// The topic is the current page, so it ends the breadcrumb as a plain (unlinked) crumb
-		// carrying aria-current. The icon repeats the visibility the heading states in words, as
-		// decoration: the crumb is read for where the viewer is, and the heading is where the state
-		// is named.
-		//
-		// [Ja] トピックは現在地のため、aria-current を持つリンク無しの項目としてパンくずを締める。
+		// トピックは現在地のため、aria-currentを持つリンク無しの項目としてパンくずを締める。
 		// アイコンは見出しが言葉で示す公開範囲を装飾として繰り返す。パンくずは閲覧者の現在地を
 		// 読むためのもので、状態を名指すのは見出しのほうである。
 		components.BreadcrumbItem{
@@ -170,13 +158,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		BreadcrumbHeader: components.BreadcrumbHeaderData{
 			MaxWidthClass: "max-w-3xl",
 
-			// The topic detail is public and indexable, so it opts into BreadcrumbList JSON-LD built
-			// from the same items. Signed-out viewers start at the public space; signed-in viewers
-			// also get /home.
-			//
-			// [Ja] トピック詳細は公開・インデックス対象のため、同じ項目列から作る BreadcrumbList
-			// JSON-LD を有効にする。未ログインの閲覧者は公開スペースから始め、ログイン済みの閲覧者には
-			// /home も含める。
+			// トピック詳細は公開・インデックス対象のため、同じ項目列から作るBreadcrumbList
+			// JSON-LDを有効にする。未ログインの閲覧者は公開スペースから始め、ログイン済みの閲覧者には
+			// /homeも含める。
 			StructuredDataBaseURL: h.cfg.AppURL(),
 
 			Items: breadcrumbItems,

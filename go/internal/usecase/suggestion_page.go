@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// fetchLatestPageRevisions は各下書きページに対応するページの最新リビジョンを取得する
+// fetchLatestPageRevisionsは各下書きページに対応するページの最新リビジョンを取得する
 func fetchLatestPageRevisions(ctx context.Context, draftPages []*model.DraftPage, spaceID model.SpaceID, pageRevisionRepo *repository.PageRevisionRepository) (map[model.PageID]*model.PageRevision, error) {
 	pageRevisions := make(map[model.PageID]*model.PageRevision, len(draftPages))
 
@@ -17,7 +17,7 @@ func fetchLatestPageRevisions(ctx context.Context, draftPages []*model.DraftPage
 		if err != nil {
 			return nil, fmt.Errorf("ページリビジョンの取得に失敗しました: %w", err)
 		}
-		// リビジョンが存在しない場合はスキップ（新規ページの場合）
+		// リビジョンが存在しない場合はスキップ (新規ページの場合)
 		if latestRevision != nil {
 			pageRevisions[draftPage.PageID] = latestRevision
 		}
@@ -26,7 +26,7 @@ func fetchLatestPageRevisions(ctx context.Context, draftPages []*model.DraftPage
 	return pageRevisions, nil
 }
 
-// createSuggestionPageInput は編集提案ページ作成の入力パラメータ
+// createSuggestionPageInputは編集提案ページ作成の入力パラメータ
 type createSuggestionPageInput struct {
 	SpaceID        model.SpaceID
 	SuggestionID   model.SuggestionID
@@ -35,7 +35,7 @@ type createSuggestionPageInput struct {
 	PageRevisionID *model.PageRevisionID
 }
 
-// createSuggestionPageFromDraftPage は下書きページからSuggestionPage・SuggestionPageRevisionを作成し、DraftPageのsuggestion_page_idを設定する。
+// createSuggestionPageFromDraftPageは下書きページからSuggestionPage・SuggestionPageRevisionを作成し、DraftPageのsuggestion_page_idを設定する。
 // トランザクション内で呼び出すこと。
 func createSuggestionPageFromDraftPage(
 	ctx context.Context,

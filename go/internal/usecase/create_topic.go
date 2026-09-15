@@ -11,9 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateTopicUsecase creates a topic and joins its creator to it.
-//
-// [Ja] CreateTopicUsecase はトピックを作成し、作成者をそのトピックに参加させる。
+// CreateTopicUsecaseはトピックを作成し、作成者をそのトピックに参加させる。
 type CreateTopicUsecase struct {
 	db              *sql.DB
 	spaceRepo       *repository.SpaceRepository
@@ -23,7 +21,7 @@ type CreateTopicUsecase struct {
 	createValidator *validator.TopicCreateValidator
 }
 
-// NewCreateTopicUsecase は CreateTopicUsecase を生成する
+// NewCreateTopicUsecaseはCreateTopicUsecaseを生成する
 func NewCreateTopicUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -42,8 +40,8 @@ func NewCreateTopicUsecase(
 	}
 }
 
-// CreateTopicInput はトピック作成の入力パラメータ。
-// Visibility はフォームが送信した文字列で、変換はバリデーターが行う。
+// CreateTopicInputはトピック作成の入力パラメータ。
+// Visibilityはフォームが送信した文字列で、変換はバリデーターが行う。
 type CreateTopicInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	UserID          model.UserID
@@ -52,13 +50,13 @@ type CreateTopicInput struct {
 	Visibility      string
 }
 
-// CreateTopicOutput は作成されたトピックとそれが属するスペースを保持する
+// CreateTopicOutputは作成されたトピックとそれが属するスペースを保持する
 type CreateTopicOutput struct {
 	Space *model.Space
 	Topic *model.Topic
 }
 
-// Execute はトピックを作成する
+// Executeはトピックを作成する
 func (uc *CreateTopicUsecase) Execute(ctx context.Context, input CreateTopicInput) (*CreateTopicOutput, error) {
 	// 1. データ取得と認可チェック
 	space, spaceMember, err := fetchTopicCreateAccess(ctx, uc.spaceRepo, uc.spaceMemberRepo, input.SpaceIdentifier, input.UserID)
@@ -81,11 +79,7 @@ func (uc *CreateTopicUsecase) Execute(ctx context.Context, input CreateTopicInpu
 	return uc.createTopic(ctx, space, spaceMember, input, visibility)
 }
 
-// createTopic creates the topic and joins its creator to it in one transaction, so that a topic
-// nobody has joined is never left behind: its creator is the only member it starts with, and the
-// screens that list the topics a member takes part in would not show it.
-//
-// [Ja] createTopic はトピックの作成と作成者の参加を 1 つのトランザクションで行う。誰も参加して
+// createTopicはトピックの作成と作成者の参加を1つのトランザクションで行う。誰も参加して
 // いないトピックが残らないようにするためである。作成直後のメンバーは作成者だけであり、メンバーが
 // 参加しているトピックを並べる画面にはそのトピックが出てこなくなる。
 func (uc *CreateTopicUsecase) createTopic(
@@ -101,13 +95,9 @@ func (uc *CreateTopicUsecase) createTopic(
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// The space is locked before the next number is read. topics(space_id, number) is unique, so
-	// two topics created at the same time would otherwise take the number the other one is about
-	// to insert, and the later insert would fail.
-	//
-	// [Ja] 次の番号を読む前にスペースをロックする。topics(space_id, number) は一意であり、ロック
-	// しなければ同時に作られた 2 つのトピックが互いに相手の入れようとしている番号を取り、後から
-	// INSERT した側が失敗する。
+	// 次の番号を読む前にスペースをロックする。topics(space_id, number) は一意であり、ロック
+	// しなければ同時に作られた2つのトピックが互いに相手の入れようとしている番号を取り、後から
+	// INSERTした側が失敗する。
 	locked, err := uc.spaceRepo.WithTx(tx).LockByID(ctx, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("スペースのロックに失敗: %w", err)

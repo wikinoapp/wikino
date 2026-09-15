@@ -10,11 +10,8 @@ export function pasteHandler(view: EditorView, event: ClipboardEvent): boolean {
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    // noUncheckedIndexedAccess widens indexed access to DataTransferItem |
-    // undefined even within bounds, so guard before use.
-    //
-    // [Ja] noUncheckedIndexedAccess は範囲内でもインデックスアクセスを
-    // DataTransferItem | undefined に広げるため、使用前にガードする。
+    // noUncheckedIndexedAccessは範囲内でもインデックスアクセスを
+    // DataTransferItem | undefinedに広げるため、使用前にガードする。
     if (!item) continue;
 
     if (item.kind === "file" && ALL_ALLOWED_TYPES.includes(item.type)) {

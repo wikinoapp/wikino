@@ -13,17 +13,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData is what the screen an export is followed on is rendered with.
-//
-// [Ja] ShowData はエクスポートの経過を追う画面をレンダリングする元になるデータ。
+// ShowDataはエクスポートの経過を追う画面をレンダリングする元になるデータ。
 type ShowData struct {
 	Space  viewmodel.Space
 	Export viewmodel.Export
 }
 
-// Show renders the screen an export is followed on.
-//
-// [Ja] Show はエクスポートの経過を追う画面を表示します。
+// Showはエクスポートの経過を追う画面を表示します。
 func Show(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -103,10 +99,7 @@ func Show(data ShowData) templ.Component {
 	})
 }
 
-// showProcessing tells the reader that the export is still being produced. The completion is
-// announced by mail as well, so the screen says so rather than asking the reader to wait on it.
-//
-// [Ja] showProcessing はエクスポートがまだ生成中であることを伝えます。完了はメールでも知らせる
+// showProcessingはエクスポートがまだ生成中であることを伝えます。完了はメールでも知らせる
 // ため、画面で待つよう促すのではなく、そのことを伝えます。
 func showProcessing() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -153,11 +146,7 @@ func showProcessing() templ.Component {
 	})
 }
 
-// showSucceeded offers the archive, and says so instead when it can no longer be handed out. The
-// download link is signed for a limited time, so an export that finished long enough ago has
-// nothing left to offer and the way out is another export.
-//
-// [Ja] showSucceeded はアーカイブを渡し、もう渡せなくなっていればそのことを伝えます。ダウンロード
+// showSucceededはアーカイブを渡し、もう渡せなくなっていればそのことを伝えます。ダウンロード
 // のリンクは期限付きで署名されるため、完了から十分に時間が経ったエクスポートには渡せるものが残って
 // おらず、出口はもう一度エクスポートすることになります。
 func showSucceeded(data ShowData) templ.Component {
@@ -196,7 +185,7 @@ func showSucceeded(data ShowData) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "export_show_succeeded"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 71, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 60, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -214,7 +203,7 @@ func showSucceeded(data ShowData) templ.Component {
 			var templ_7745c5c3_Var6 templ.SafeURL
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SpaceSettingsExportDownloadPath(data.Space.Identifier, data.Export.ID))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 76, Col: 114}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 65, Col: 114}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -231,7 +220,7 @@ func showSucceeded(data ShowData) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "export_show_download"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 82, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 71, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -249,7 +238,7 @@ func showSucceeded(data ShowData) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "export_show_expired"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 86, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 75, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -272,11 +261,7 @@ func showSucceeded(data ShowData) templ.Component {
 	})
 }
 
-// showFailed says that the export did not finish and offers another one. It covers the export that
-// recorded a failure and the one that was left behind by a worker that stopped: neither is coming
-// back, and in both cases what the reader can do is start again.
-//
-// [Ja] showFailed はエクスポートが完了しなかったことを伝え、もう一度実行する導線を出します。失敗を
+// showFailedはエクスポートが完了しなかったことを伝え、もう一度実行する導線を出します。失敗を
 // 記録したエクスポートと、停止したワーカーに取り残されたエクスポートの双方を受け持ちます。どちらも
 // 戻ってくることはなく、読み手にできるのはやり直すことだからです。
 func showFailed(data ShowData) templ.Component {
@@ -332,9 +317,7 @@ func showFailed(data ShowData) templ.Component {
 	})
 }
 
-// retryLink is the way back to the screen an export is started from.
-//
-// [Ja] retryLink はエクスポートを開始する画面へ戻る導線です。
+// retryLinkはエクスポートを開始する画面へ戻る導線です。
 func retryLink(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -363,7 +346,7 @@ func retryLink(data ShowData) templ.Component {
 		var templ_7745c5c3_Var11 templ.SafeURL
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewSpaceSettingsExportPath(data.Space.Identifier))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 117, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 100, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -376,7 +359,7 @@ func retryLink(data ShowData) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "export_show_retry"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 120, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/show.templ`, Line: 103, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {

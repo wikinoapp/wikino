@@ -16,9 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show follows one export (GET /s/{space_identifier}/settings/exports/{export_id}).
-//
-// [Ja] Show はエクスポート 1 件の経過を表示します (GET /s/{space_identifier}/settings/exports/{export_id})。
+// Showはエクスポート1件の経過を表示します (GET /s/{space_identifier}/settings/exports/{export_id})。
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -48,13 +46,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		Export: viewmodel.NewExport(output.Export, time.Now()),
 	})
 
-	// The trail continues through the screen an export is started from, so that the two export
-	// screens do not end with the same item and the way back to the start screen is on the trail as
-	// well as in the body (where it only appears once an export is over). The current item names the
-	// export this screen follows, which is the time it was queued at: an export has no title, and
-	// the space can hold more than one.
-	//
-	// [Ja] 経路はエクスポートを開始する画面を通して続ける。エクスポートの 2 画面が同じ項目で終わら
+	// 経路はエクスポートを開始する画面を通して続ける。エクスポートの2画面が同じ項目で終わら
 	// ないようにし、開始画面へ戻る導線を本文 (エクスポートが終わってから出る) だけでなく経路にも
 	// 置くためである。現在地の項目はこの画面が追っているエクスポートを表し、それは投入された時刻に
 	// なる。エクスポートはタイトルを持たず、スペースは複数のエクスポートを持ちうるためである。

@@ -71,13 +71,13 @@ func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 			t.Parallel()
 
 			if tt.result {
-				t.Errorf("ゲストの %s は false であるべき", tt.name)
+				t.Errorf("ゲストの%sはfalseであるべき", tt.name)
 			}
 		})
 	}
 }
 
-// TestGuestPolicy_Authorizer は GuestPolicy が Authorizer インターフェースを満たすことを検証する
+// TestGuestPolicy_AuthorizerはGuestPolicyがAuthorizerインターフェースを満たすことを検証する
 func TestGuestPolicy_Authorizer(t *testing.T) {
 	t.Parallel()
 

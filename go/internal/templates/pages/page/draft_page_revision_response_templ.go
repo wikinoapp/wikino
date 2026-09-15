@@ -14,30 +14,20 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DraftPageRevisionUpdateResponseData is the data for the manual save OOB response fragment.
-// [Ja] DraftPageRevisionUpdateResponseData は手動保存の OOB レスポンスフラグメント用データです。
+// DraftPageRevisionUpdateResponseDataは手動保存のOOBレスポンスフラグメント用データです。
 type DraftPageRevisionUpdateResponseData struct {
 	SavedAt         time.Time
 	SpaceIdentifier viewmodel.SpaceIdentifier
 	PageNumber      int32
 
-	// DraftRevisions is the refreshed edit history (newest first) rendered into both the static
-	// right column and the drawer.
-	//
-	// [Ja] DraftRevisions は静的な右カラムとドロワーの両方に描画する、更新後の編集履歴 (新しい順)。
+	// DraftRevisionsは静的な右カラムとドロワーの両方に描画する、更新後の編集履歴 (新しい順)。
 	DraftRevisions []viewmodel.DraftPageRevision
 }
 
-// DraftPageRevisionUpdateResponse renders the OOB swap fragments returned after a manual save
-// from the page editor: the saved-at indicator and the edit history column. The column is
-// rendered twice in the page (static right column and drawer), so the response swaps both
-// targets by their distinct ids. The save button uses hx-swap="none", so this fragment consists
-// of OOB elements only.
-//
-// [Ja] DraftPageRevisionUpdateResponse はページ編集画面からの手動保存後に返す OOB スワップ
-// フラグメントを描画する。内容は保存時刻表示と編集履歴カラム。カラムはページ内に 2 箇所
-// (静的な右カラムとドロワー) 描画されるため、それぞれの id でターゲットを両方スワップする。
-// 保存ボタンは hx-swap="none" のため、このフラグメントは OOB 要素のみで構成される。
+// DraftPageRevisionUpdateResponseはページ編集画面からの手動保存後に返すOOBスワップ
+// フラグメントを描画する。内容は保存時刻表示と編集履歴カラム。カラムはページ内に2箇所
+// (静的な右カラムとドロワー) 描画されるため、それぞれのidでターゲットを両方スワップする。
+// 保存ボタンはhx-swap="none" のため、このフラグメントはOOB要素のみで構成される。
 func DraftPageRevisionUpdateResponse(data DraftPageRevisionUpdateResponseData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -74,7 +64,7 @@ func DraftPageRevisionUpdateResponse(data DraftPageRevisionUpdateResponseData) t
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(pageRevisionListID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/draft_page_revision_response.templ`, Line: 38, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/draft_page_revision_response.templ`, Line: 28, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -99,7 +89,7 @@ func DraftPageRevisionUpdateResponse(data DraftPageRevisionUpdateResponseData) t
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(pageRevisionListDrawerID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/draft_page_revision_response.templ`, Line: 45, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/draft_page_revision_response.templ`, Line: 35, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {

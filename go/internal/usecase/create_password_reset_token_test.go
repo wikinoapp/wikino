@@ -44,34 +44,34 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 
 	output, err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	if output.TokenID == "" {
-		t.Error("TokenID が空です")
+		t.Error("TokenIDが空です")
 	}
 
 	// エンキューが呼ばれたことを確認
 	if !mock.called {
-		t.Error("Insert が呼ばれていません")
+		t.Error("Insertが呼ばれていません")
 	}
 
-	// SendPasswordResetArgs の検証
+	// SendPasswordResetArgsの検証
 	resetArgs, ok := mock.args.(dispatcher.SendPasswordResetArgs)
 	if !ok {
-		t.Fatalf("args の型が SendPasswordResetArgs ではありません: %T", mock.args)
+		t.Fatalf("argsの型がSendPasswordResetArgsではありません: %T", mock.args)
 	}
 	if resetArgs.Email != "reset-test@example.com" {
-		t.Errorf("Email = %s, want reset-test@example.com", resetArgs.Email)
+		t.Errorf("Email = %s、期待値 = reset-test@example.com", resetArgs.Email)
 	}
 	if resetArgs.Locale != "ja" {
-		t.Errorf("Locale = %s, want ja", resetArgs.Locale)
+		t.Errorf("Locale = %s、期待値 = ja", resetArgs.Locale)
 	}
 	if resetArgs.AppURL == "" {
-		t.Error("AppURL が空です")
+		t.Error("AppURLが空です")
 	}
 	if resetArgs.ResetURL == "" {
-		t.Error("ResetURL が空です")
+		t.Error("ResetURLが空です")
 	}
 }
 
@@ -112,17 +112,17 @@ func TestCreatePasswordResetTokenUsecase_Execute_DeletesExistingUnusedTokens(t *
 
 	output, err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	if output.TokenID == "" {
-		t.Error("TokenID が空です")
+		t.Error("TokenIDが空です")
 	}
 
 	// 既存のトークンが削除されていることを確認
 	existingToken, err := passwordResetTokenRepo.FindByTokenDigest(ctx, existingTokenDigest)
 	if err != nil {
-		t.Fatalf("FindByTokenDigest() error = %v", err)
+		t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 	}
 	if existingToken != nil {
 		t.Error("既存の未使用トークンが削除されていません")
@@ -159,20 +159,20 @@ func TestCreatePasswordResetTokenUsecase_Execute_EnglishLocale(t *testing.T) {
 
 	output, err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	if output.TokenID == "" {
-		t.Error("TokenID が空です")
+		t.Error("TokenIDが空です")
 	}
 
-	// SendPasswordResetArgs の検証（英語）
+	// SendPasswordResetArgsの検証 (英語)
 	resetArgs, ok := mock.args.(dispatcher.SendPasswordResetArgs)
 	if !ok {
-		t.Fatalf("args の型が SendPasswordResetArgs ではありません: %T", mock.args)
+		t.Fatalf("argsの型がSendPasswordResetArgsではありません: %T", mock.args)
 	}
 	if resetArgs.Locale != "en" {
-		t.Errorf("Locale = %s, want en", resetArgs.Locale)
+		t.Errorf("Locale = %s、期待値 = en", resetArgs.Locale)
 	}
 }
 
@@ -206,18 +206,18 @@ func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T)
 
 	_, err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	// エンキューされたResetURLからトークンを取得
 	resetArgs := mock.args.(dispatcher.SendPasswordResetArgs)
 
-	// ResetURLからトークンを抽出（"https://wikino.app/password/edit?token=xxx" の形式）
+	// ResetURLからトークンを抽出 ("https://wikino.app/password/edit?token=xxx" の形式)
 	resetURL := resetArgs.ResetURL
 	// URLからtokenパラメータを取得
 	tokenStart := len("https://wikino.app/password/edit?token=")
 	if len(resetURL) <= tokenStart {
-		t.Fatalf("ResetURL が不正な形式です: %s", resetURL)
+		t.Fatalf("ResetURLが不正な形式です: %s", resetURL)
 	}
 	plainToken := resetURL[tokenStart:]
 
@@ -227,7 +227,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T)
 	// ハッシュ化されたトークンでDBから検索
 	token, err := passwordResetTokenRepo.FindByTokenDigest(ctx, tokenDigest)
 	if err != nil {
-		t.Fatalf("FindByTokenDigest() error = %v", err)
+		t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 	}
 	if token == nil {
 		t.Fatal("トークンがDBに保存されていません")
@@ -235,11 +235,11 @@ func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T)
 
 	// DBに保存されているのはハッシュ化されたトークンであることを確認
 	if token.TokenDigest != tokenDigest {
-		t.Errorf("TokenDigest = %s, want %s", token.TokenDigest, tokenDigest)
+		t.Errorf("TokenDigest = %s、期待値 = %s", token.TokenDigest, tokenDigest)
 	}
 
-	// 平文トークンがDBに保存されていないことを確認（ハッシュ化されているはず）
+	// 平文トークンがDBに保存されていないことを確認 (ハッシュ化されているはず)
 	if token.TokenDigest == plainToken {
-		t.Error("平文トークンがDBに保存されています（ハッシュ化されていません）")
+		t.Error("平文トークンがDBに保存されています (ハッシュ化されていません)")
 	}
 }

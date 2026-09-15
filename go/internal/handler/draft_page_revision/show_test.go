@@ -17,8 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// newGetRequestWithChiParams builds a GET request carrying chi URL parameters.
-// [Ja] newGetRequestWithChiParams は chi の URL パラメータ付き GET リクエストを作成するヘルパー。
+// newGetRequestWithChiParamsはchiのURLパラメータ付きGETリクエストを作成するヘルパー。
 func newGetRequestWithChiParams(t *testing.T, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -32,8 +31,7 @@ func newGetRequestWithChiParams(t *testing.T, path string, params map[string]str
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// showFixture is the fixture set shared by the Show handler tests.
-// [Ja] showFixture は Show ハンドラーのテストで共有するフィクスチャ一式。
+// showFixtureはShowハンドラーのテストで共有するフィクスチャ一式。
 type showFixture struct {
 	userID        model.UserID
 	spaceID       model.SpaceID
@@ -44,11 +42,8 @@ type showFixture struct {
 	revision2     *model.DraftPageRevision
 }
 
-// setupShowFixture creates a space, member, topic, page, draft and two revisions (v1 then v2).
-// prefix keeps identifiers unique across parallel tests sharing the test DB.
-//
-// [Ja] setupShowFixture はスペース・メンバー・トピック・ページ・下書きとリビジョン 2 件
-// (v1 → v2) を作成する。prefix はテスト DB を共有する並行テスト間で識別子を一意に保つ。
+// setupShowFixtureはスペース・メンバー・トピック・ページ・下書きとリビジョン2件
+// (v1 → v2) を作成する。prefixはテストDBを共有する並行テスト間で識別子を一意に保つ。
 func setupShowFixture(t *testing.T, tx *sql.Tx, queries *query.Queries, prefix string) showFixture {
 	t.Helper()
 
@@ -68,7 +63,7 @@ func setupShowFixture(t *testing.T, tx *sql.Tx, queries *query.Queries, prefix s
 		WithSpaceID(spaceID).
 		WithNumber(1).
 		WithName("General").
-		WithVisibility(0). // public. [Ja] 公開
+		WithVisibility(0). // 公開
 		Build()
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -99,7 +94,7 @@ func setupShowFixture(t *testing.T, tx *sql.Tx, queries *query.Queries, prefix s
 		BodyHTML:      "<p>line one</p>",
 	})
 	if err != nil {
-		t.Fatalf("Create() revision1 error = %v", err)
+		t.Fatalf("Create() (revision1) のエラー = %v", err)
 	}
 	revision2, err := revisionRepo.Create(context.Background(), repository.CreateDraftPageRevisionInput{
 		DraftPageID:   draftPageID,
@@ -110,7 +105,7 @@ func setupShowFixture(t *testing.T, tx *sql.Tx, queries *query.Queries, prefix s
 		BodyHTML:      "<p>line one</p><p>line two</p>",
 	})
 	if err != nil {
-		t.Fatalf("Create() revision2 error = %v", err)
+		t.Fatalf("Create() (revision2) のエラー = %v", err)
 	}
 
 	return showFixture{
@@ -124,8 +119,7 @@ func setupShowFixture(t *testing.T, tx *sql.Tx, queries *query.Queries, prefix s
 	}
 }
 
-// newShowRequest builds the Show request for the given fixture and revision ID.
-// [Ja] newShowRequest はフィクスチャとリビジョン ID に対する Show リクエストを作成する。
+// newShowRequestはフィクスチャとリビジョンIDに対するShowリクエストを作成する。
 func newShowRequest(t *testing.T, spaceIdentifier string, revisionID string, userID model.UserID) *http.Request {
 	t.Helper()
 
@@ -156,7 +150,7 @@ func TestShow_NotLoggedIn(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusUnauthorized {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnauthorized)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnauthorized)
 	}
 }
 
@@ -185,7 +179,7 @@ func TestShow_InvalidPageNumber(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -204,26 +198,22 @@ func TestShow_Success(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v (body: %s)", rr.Code, http.StatusOK, rr.Body.String())
+		t.Fatalf("ステータスコード = %v、期待値 = %v (本文: %s)", rr.Code, http.StatusOK, rr.Body.String())
 	}
 
 	body := rr.Body.String()
-	// The fragment must show the title change (old -> new) and only the added body line as a diff.
-	// [Ja] フラグメントにはタイトル変更 (新旧) と、追加された本文行のみが差分として表示されること。
+	// フラグメントにはタイトル変更 (新旧) と、追加された本文行のみが差分として表示されること。
 	for _, want := range []string{"Old Title", "New Title", "line two"} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response doesn't contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 
-	// revision2 is the newest revision, so it is the current one: restoring to the current state
-	// is a no-op and the inline restore form is hidden.
-	//
-	// [Ja] revision2 は最新リビジョン (= 現在) のため、現在の状態への復元は no-op であり、インライン
+	// revision2は最新リビジョン (= 現在) のため、現在の状態への復元はno-opであり、インライン
 	// 復元フォームは表示されない。
 	restoreAction := `action="/s/dpr-show-success-space/pages/1/draft_page_revisions/` + string(fixture.revision2.ID) + `/restore"`
 	if strings.Contains(body, restoreAction) {
-		t.Errorf("response should not contain restore form action %q (current revision)", restoreAction)
+		t.Errorf("レスポンスに復元フォームの送信先%q (現在のリビジョン) が含まれている", restoreAction)
 	}
 }
 
@@ -242,27 +232,23 @@ func TestShow_OldestRevisionShowsFullAddition(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v (body: %s)", rr.Code, http.StatusOK, rr.Body.String())
+		t.Fatalf("ステータスコード = %v、期待値 = %v (本文: %s)", rr.Code, http.StatusOK, rr.Body.String())
 	}
 
 	body := rr.Body.String()
-	// The oldest revision is compared against empty content: its whole body shows as an addition.
-	// [Ja] 最古のリビジョンは空の内容と比較され、本文全体が追加として表示されること。
+	// 最古のリビジョンは空の内容と比較され、本文全体が追加として表示されること。
 	if !strings.Contains(body, "line one") {
-		t.Errorf("response doesn't contain %q", "line one")
+		t.Errorf("レスポンスに%qが含まれていない", "line one")
 	}
 	if strings.Contains(body, "line two") {
-		t.Errorf("response should not contain %q (added later in v2)", "line two")
+		t.Errorf("レスポンスに%q (v2で追加) が含まれている", "line two")
 	}
 
-	// revision1 is not the newest revision, so the inline restore form posting to its restore URL
-	// is shown (only the current revision hides it).
-	//
-	// [Ja] revision1 は最新リビジョンではないため、その復元 URL へ POST するインライン復元フォームが
+	// revision1は最新リビジョンではないため、その復元URLへPOSTするインライン復元フォームが
 	// 表示されること (隠れるのは現在のリビジョンのみ)。
 	restoreAction := `action="/s/dpr-show-oldest-space/pages/1/draft_page_revisions/` + string(fixture.revision1.ID) + `/restore"`
 	if !strings.Contains(body, restoreAction) {
-		t.Errorf("response doesn't contain restore form action %q", restoreAction)
+		t.Errorf("レスポンスに復元フォームの送信先%qが含まれていない", restoreAction)
 	}
 }
 
@@ -281,7 +267,7 @@ func TestShow_RevisionNotFound(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -304,7 +290,7 @@ func TestShow_NotSpaceMember(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -316,8 +302,7 @@ func TestShow_OtherMembersRevision(t *testing.T) {
 
 	fixture := setupShowFixture(t, tx, queries, "dpr-show-othermember")
 
-	// Another member of the same space with their own draft and revision for the same page.
-	// [Ja] 同じスペースの別メンバーが、同じページに自分の下書きとリビジョンを持つ。
+	// 同じスペースの別メンバーが、同じページに自分の下書きとリビジョンを持つ。
 	otherUserID := testutil.NewUserBuilder(t, tx).
 		WithEmail("dpr-show-other@example.com").
 		WithAtname("dprshowother").
@@ -346,19 +331,18 @@ func TestShow_OtherMembersRevision(t *testing.T) {
 		BodyHTML:      "<p>other member body</p>",
 	})
 	if err != nil {
-		t.Fatalf("Create() otherRev error = %v", err)
+		t.Fatalf("Create() (otherRev) のエラー = %v", err)
 	}
 
 	handler := setupHandler(t, queries)
 
-	// The fixture owner requests the other member's revision: it must stay hidden (404).
-	// [Ja] フィクスチャのオーナーが別メンバーのリビジョンを要求した場合、隠されること (404)。
+	// フィクスチャのオーナーが別メンバーのリビジョンを要求した場合、隠されること (404)。
 	req := newShowRequest(t, "dpr-show-othermember-space", string(otherRev.ID), fixture.userID)
 
 	rr := httptest.NewRecorder()
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }

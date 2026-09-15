@@ -9,18 +9,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetExportShowUsecase gathers what the screen that follows an export shows.
-//
-// [Ja] GetExportShowUsecase はエクスポートの経過を追う画面が表示するものを集める。
+// GetExportShowUsecaseはエクスポートの経過を追う画面が表示するものを集める。
 type GetExportShowUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
 	exportRepo      *repository.ExportRepository
 }
 
-// NewGetExportShowUsecase creates a GetExportShowUsecase.
-//
-// [Ja] NewGetExportShowUsecase は GetExportShowUsecase を生成する。
+// NewGetExportShowUsecaseはGetExportShowUsecaseを生成する。
 func NewGetExportShowUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -33,26 +29,20 @@ func NewGetExportShowUsecase(
 	}
 }
 
-// GetExportShowInput holds what it takes to render the screen.
-//
-// [Ja] GetExportShowInput は画面を描画するための入力パラメータ。
+// GetExportShowInputは画面を描画するための入力パラメータ。
 type GetExportShowInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	ExportID        model.ExportID
 	UserID          model.UserID
 }
 
-// GetExportShowOutput carries the space and the export the screen is about.
-//
-// [Ja] GetExportShowOutput は画面が対象とするスペースとエクスポートを返す。
+// GetExportShowOutputは画面が対象とするスペースとエクスポートを返す。
 type GetExportShowOutput struct {
 	Space  *model.Space
 	Export *model.Export
 }
 
-// Execute resolves the export, scoped to the space it belongs to.
-//
-// [Ja] Execute はエクスポートを、それが属するスペースにスコープして解決する。
+// Executeはエクスポートを、それが属するスペースにスコープして解決する。
 func (uc *GetExportShowUsecase) Execute(ctx context.Context, input GetExportShowInput) (*GetExportShowOutput, error) {
 	space, _, err := fetchExportAccess(ctx, uc.spaceRepo, uc.spaceMemberRepo, input.SpaceIdentifier, input.UserID)
 	if err != nil {

@@ -18,7 +18,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Update は下書きページを手動保存します (PATCH /s/{space_identifier}/pages/{page_number}/draft_page_revision)
+// Updateは下書きページを手動保存します (PATCH /s/{space_identifier}/pages/{page_number}/draft_page_revision)
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -49,7 +49,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		titlePtr = &title
 	}
 
-	// UseCase を実行
+	// UseCaseを実行
 	saveOutput, err := h.manualSaveDraftPageUC.Execute(ctx, usecase.ManualSaveDraftPageInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),
@@ -85,11 +85,8 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For htmx requests (the editor's save-draft button) respond without navigation: return an
-	// OOB swap fragment that refreshes the saved-at indicator and both edit history columns.
-	//
-	// [Ja] htmx リクエスト (編集画面の「下書き保存」ボタン) には画面遷移なしで応答する。保存時刻
-	// 表示と編集履歴カラム 2 箇所を更新する OOB スワップフラグメントを返す。
+	// htmxリクエスト (編集画面の「下書き保存」ボタン) には画面遷移なしで応答する。保存時刻
+	// 表示と編集履歴カラム2箇所を更新するOOBスワップフラグメントを返す。
 	if r.Header.Get("HX-Request") == "true" {
 		h.renderUpdateFragment(w, r, spaceIdentifier, int32(pageNumber), user.ID, saveOutput)
 		return
@@ -99,8 +96,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/drafts", http.StatusSeeOther)
 }
 
-// renderUpdateFragment renders the OOB swap fragment returned after a manual save.
-// [Ja] renderUpdateFragment は手動保存後の OOB スワップフラグメントをレンダリングします。
+// renderUpdateFragmentは手動保存後のOOBスワップフラグメントをレンダリングします。
 func (h *Handler) renderUpdateFragment(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -111,10 +107,7 @@ func (h *Handler) renderUpdateFragment(
 ) {
 	ctx := r.Context()
 
-	// Re-read the revision list and total count so the response reflects the just-saved state
-	// (including the skip case where no new revision was created).
-	//
-	// [Ja] 保存直後の状態 (新規リビジョンが作成されないスキップ時を含む) を反映するため、
+	// 保存直後の状態 (新規リビジョンが作成されないスキップ時を含む) を反映するため、
 	// リビジョン一覧と総件数を取得し直す。
 	detail, err := h.getPageDetailUC.Execute(ctx, usecase.GetPageDetailInput{
 		SpaceIdentifier:       spaceIdentifier,
@@ -128,8 +121,7 @@ func (h *Handler) renderUpdateFragment(
 		return
 	}
 	if detail == nil {
-		// The save above just succeeded, so the page cannot have disappeared except in races.
-		// [Ja] 直前の保存が成功しているため、競合以外でページが消えていることはない。
+		// 直前の保存が成功しているため、競合以外でページが消えていることはない。
 		handler.NotFound(w, r)
 		return
 	}

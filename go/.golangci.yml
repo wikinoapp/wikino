@@ -1,10 +1,10 @@
-# golangci-lint v2 の設定ファイル
+# golangci-lint v2の設定ファイル
 # https://golangci-lint.run/usage/configuration/
 
 version: "2"
 
 run:
-  # タイムアウト（デフォルト: 1m）
+  # タイムアウト (デフォルト: 1m)
   timeout: 5m
   # テストファイルを含める
   tests: true
@@ -22,15 +22,15 @@ linters:
     - ineffassign # 無駄な代入
     - unused # 未使用コード
 
-  # リンター除外ルール（v2形式）
+  # リンター除外ルール (v2形式)
   exclusions:
     rules:
-      # テストファイルでは gosec と depguard を無効化
+      # テストファイルではgosecとdepguardを無効化
       - path: '(.+)_test\.go'
         linters:
           - gosec
           - depguard
-      # templ 自動生成ファイルは一部のリンターから除外（depguard は有効化）
+      # templ自動生成ファイルは一部のリンターから除外 (depguardは有効化)
       - path: '(.+)_templ\.go'
         linters:
           - govet
@@ -46,24 +46,24 @@ linters:
       - static/.*
       - node_modules/.*
 
-  # リンター固有の設定（v2形式）
+  # リンター固有の設定 (v2形式)
   settings:
-    # gosec の設定
+    # gosecの設定
     gosec:
       # 除外する脆弱性ルール
-      # G120: r.FormValue / r.ParseForm のボディサイズ未制限の指摘。
-      #   internal/middleware/body_limit.go の BodyLimit ミドルウェアで全リクエストに一律の
+      # G120: r.FormValue / r.ParseFormのボディサイズ未制限の指摘。
+      #   internal/middleware/body_limit.goのBodyLimitミドルウェアで全リクエストに一律の
       #   ボディサイズ上限 (DefaultMaxBodyBytes) を適用しているため、実質的な保護は達成している。
-      #   gosec G120 は関数単位のヒューリスティックで検出するため、ミドルウェアでラップしても
-      #   ハンドラー内の r.FormValue / r.ParseForm は検出対象として残る。25+ 箇所に個別 nolint を
+      #   gosec G120は関数単位のヒューリスティックで検出するため、ミドルウェアでラップしても
+      #   ハンドラー内のr.FormValue / r.ParseFormは検出対象として残る。25+ 箇所に個別nolintを
       #   散在させるより、ここで一括除外する方が管理コストが低く、保護している構造を明示できる。
       excludes:
         - G120
-      # セキュリティの重要度（low, medium, high）
+      # セキュリティの重要度 (low, medium, high)
       severity: medium
       confidence: medium
 
-    # depguard の設定
+    # depguardの設定
     depguard:
       rules:
         # Templates層のルール: ViewModelを通じてデータを表示
@@ -145,8 +145,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
               desc: "MiddlewareはViewModelに依存できません。"
 
-        # Application層のルール（UseCase）
-        # Presentation層に依存しない（メール送信はemail パッケージが担当し、UseCase は interface 経由で呼び出す）
+        # Application層のルール (UseCase)
+        # Presentation層に依存しない (メール送信はemailパッケージが担当し、UseCaseはinterface経由で呼び出す)
         application-layer:
           files:
             - "**/internal/usecase/**"
@@ -165,7 +165,7 @@ linters:
               desc: "Application層はPresentation層のヘルパーに依存できません。トークン生成はauthパッケージを使用してください。"
 
         # Email層のルール: テンプレートレンダリング + メール送信
-        # templates, i18n, Sender に依存可能。上位層や他のPresentation層パッケージに依存しない
+        # templates, i18n, Senderに依存可能。上位層や他のPresentation層パッケージに依存しない
         email-layer:
           files:
             - "**/internal/email/**"
@@ -234,7 +234,7 @@ linters:
               desc: "PolicyはPresentation層に依存できません。"
 
         # Markup層のルール: マークアップ処理ユーティリティ
-        # データアクセス層と上位層に依存しない（インターフェースで抽象化）
+        # データアクセス層と上位層に依存しない (インターフェースで抽象化)
         markup-layer:
           files:
             - "**/internal/markup/**"
@@ -255,7 +255,7 @@ linters:
               desc: "MarkupはPresentation層に依存できません。"
 
         # Exportfile層のルール: エクスポートのファイル名変換とリンク書き換え
-        # markup と model にのみ依存し、上位層とデータアクセス層に依存しない
+        # markupとmodelにのみ依存し、上位層とデータアクセス層に依存しない
         exportfile-layer:
           files:
             - "**/internal/exportfile/**"
@@ -319,7 +319,7 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "QueryはPresentation層に依存できません。"
 
-        # Worker層のルール: バックグラウンドジョブ処理（Presentation層）
+        # Worker層のルール: バックグラウンドジョブ処理 (Presentation層)
         # 他のPresentation層パッケージに依存しない
         worker-layer:
           files:
@@ -336,7 +336,7 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "WorkerはTemplatesに依存できません。メールレンダリングはUseCaseを経由してください。"
 
-        # Dispatcher層のルール: ジョブキューへの投入を抽象化（Domain/Infrastructure層）
+        # Dispatcher層のルール: ジョブキューへの投入を抽象化 (Domain/Infrastructure層)
         # 上位層や同レイヤーの他パッケージに依存しない
         dispatcher-layer:
           files:
@@ -365,13 +365,9 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/model
               desc: "DispatcherはModelに依存できません。"
 
-        # Storage layer: adapter for the S3-compatible object storage.
-        # Depends only on external libraries, like dispatcher and auth. It stores objects by key
-        # and never sees a domain model, so model is denied along with the upper layers.
-        #
-        # [Ja] Storage層のルール: S3 互換オブジェクトストレージへのアダプタ
-        # dispatcher や auth と同じく外部ライブラリのみに依存する。キーを指定してオブジェクトを
-        # 読み書きするだけでドメインモデルを扱わないため、上位層と併せて model も禁止する。
+        # Storage層のルール: S3互換オブジェクトストレージへのアダプタ
+        # dispatcherやauthと同じく外部ライブラリのみに依存する。キーを指定してオブジェクトを
+        # 読み書きするだけでドメインモデルを扱わないため、上位層と併せてmodelも禁止する。
         storage-layer:
           files:
             - "**/internal/storage/**"
@@ -420,7 +416,7 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "RateLimitはPresentation層に依存できません。"
 
-        # auth層のルール: 横断的な技術ユーティリティ（Domain/Infrastructure層）
+        # auth層のルール: 横断的な技術ユーティリティ (Domain/Infrastructure層)
         # 標準ライブラリ・外部ライブラリのみに依存し、プロジェクト内部パッケージには依存しない
         auth-layer:
           files:
@@ -473,12 +469,15 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/turnstile
               desc: "authはTurnstileに依存できません。"
 
-    # staticcheck の設定
+    # staticcheckの設定
     staticcheck:
-      # 有効化するチェック（デフォルトですべて有効）
-      checks: ["all", "-ST1003"] # ST1003: パッケージ名のアンダースコア警告を除外（ディレクトリ構造に由来）
+      # 有効化するチェック (デフォルトですべて有効)
+      # ST1003: パッケージ名のアンダースコア警告を除外 (ディレクトリ構造に由来)
+      # ST1020 / ST1021 / ST1022: docコメントが「シンボル名 + 半角スペース」で始まることを求めるため、
+      #   英数字と日本語の間にスペースを入れない日本語のdocコメント (`// FooBarは...`) と両立しない
+      checks: ["all", "-ST1003", "-ST1020", "-ST1021", "-ST1022"]
 
-# フォーマッター固有の設定（v2形式）
+# フォーマッター固有の設定 (v2形式)
 formatters:
   # 有効化するフォーマッター
   enable:
@@ -492,16 +491,16 @@ formatters:
       - vendor/.*
       - static/.*
       - node_modules/.*
-      - '(.+)_templ\.go' # templ 自動生成ファイル
+      - '(.+)_templ\.go' # templ自動生成ファイル
 
   settings:
-    # goimports の設定
+    # goimportsの設定
     goimports:
       # ローカルパッケージのプレフィックス
       local-prefixes:
         - github.com/wikinoapp/wikino/go
 
-# 出力設定（v2形式）
+# 出力設定 (v2形式)
 output:
   formats:
     text:

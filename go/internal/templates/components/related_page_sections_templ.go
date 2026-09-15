@@ -12,42 +12,24 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// RelatedPageSectionsData holds the listings the three related-page sections render, plus the
-// heading size the screen gives them.
-//
-// [Ja] RelatedPageSectionsData は 3 つの関連ページセクションが描画する一覧と、画面が見出しに与える
+// RelatedPageSectionsDataは3つの関連ページセクションが描画する一覧と、画面が見出しに与える
 // 大きさを保持する。
 type RelatedPageSectionsData struct {
 	LinkList     viewmodel.LinkList
 	BacklinkList viewmodel.BacklinkList
 
-	// HeadingClass sizes the h2 of every section. The page detail screen makes the listings a
-	// subject of the screen and passes a larger size; the editor leaves it empty, keeping the
-	// headings at body size because there the listings sit under the editor.
-	//
-	// [Ja] HeadingClass は各セクションの h2 の大きさを決める。ページ表示画面は一覧を画面の主題として
+	// HeadingClassは各セクションのh2の大きさを決める。ページ表示画面は一覧を画面の主題として
 	// 大きめの大きさを渡し、編集画面は空のままにして本文と同じ大きさに保つ。編集画面では一覧が
 	// エディタの下に置かれるものだからである。
 	HeadingClass string
 }
 
-// RelatedPageSections renders the three related-page sections shown under the body: the pages this
-// page links to, the backlinks of those pages grouped per linked page, and the backlinks of this
-// page itself. The page detail screen and the editor share it so the two lay the listings out the
-// same way.
-//
-// Every section is hidden by a CSS condition rather than by an if, because the listings arrive in
-// their containers out of band as well: a later link-list page appends its groups, and the editor's
-// draft autosave refills all three. Section visibility therefore has to follow what a container
-// holds now, not what it held when the screen was rendered. The headings sit outside the containers
-// so a swap replaces only the listings.
-//
-// [Ja] RelatedPageSections は本文の下に出る 3 つの関連ページセクションを描画する。このページが
+// RelatedPageSectionsは本文の下に出る3つの関連ページセクションを描画する。このページが
 // リンクしているページ、そのリンク先ページのバックリンクをリンク先ごとに束ねたもの、そしてこの
 // ページ自身のバックリンクである。ページ表示画面と編集画面が共有し、両者の並べ方を揃える。
 //
-// 各セクションは if ではなく CSS の条件で隠す。一覧は OOB でもコンテナへ届くためである。後続の
-// リンク一覧ページはグループを追記し、編集画面の下書き自動保存は 3 つとも詰め直す。したがって
+// 各セクションはifではなくCSSの条件で隠す。一覧はOOBでもコンテナへ届くためである。後続の
+// リンク一覧ページはグループを追記し、編集画面の下書き自動保存は3つとも詰め直す。したがって
 // セクションの表示は、画面を描画した時点の中身ではなくコンテナが今何を持っているかに追従させる
 // 必要がある。見出しはコンテナの外に置き、スワップが一覧だけを差し替えるようにする。
 func RelatedPageSections(data RelatedPageSectionsData) templ.Component {
@@ -90,7 +72,7 @@ func RelatedPageSections(data RelatedPageSectionsData) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(linkListContainerID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_sections.templ`, Line: 53, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_sections.templ`, Line: 35, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -139,7 +121,7 @@ func RelatedPageSections(data RelatedPageSectionsData) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(pageBacklinkListContainerID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_sections.templ`, Line: 78, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_sections.templ`, Line: 56, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -161,20 +143,15 @@ func RelatedPageSections(data RelatedPageSectionsData) templ.Component {
 	})
 }
 
-// relatedPageSectionHeadingData holds the text keys and screen-specific size of one section heading.
-// [Ja] relatedPageSectionHeadingData はセクション見出し 1 件の文言キーと画面固有の大きさを保持する。
+// relatedPageSectionHeadingDataはセクション見出し1件の文言キーと画面固有の大きさを保持する。
 type relatedPageSectionHeadingData struct {
 	HeadingClass   string
 	HeadingKey     string
 	DescriptionKey string
 }
 
-// relatedPageSectionHeading renders a section heading with the short description of what the section
-// lists beside it. All three sections carry one: the names are close enough that a reader tells
-// "links" from "related links" from "backlinks" by the description rather than by the heading.
-//
-// [Ja] relatedPageSectionHeading はセクションの見出しと、そのセクションが何を並べているかの短い説明を
-// 横に並べて描画する。3 つとも説明を持つ。名前が互いに近く、「リンク」「関連リンク」「バックリンク」は
+// relatedPageSectionHeadingはセクションの見出しと、そのセクションが何を並べているかの短い説明を
+// 横に並べて描画する。3つとも説明を持つ。名前が互いに近く、「リンク」「関連リンク」「バックリンク」は
 // 見出しよりも説明で読み分けられるためである。
 func relatedPageSectionHeading(data relatedPageSectionHeadingData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -226,7 +203,7 @@ func relatedPageSectionHeading(data relatedPageSectionHeadingData) templ.Compone
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, data.HeadingKey))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_sections.templ`, Line: 116, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_sections.templ`, Line: 80, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -239,7 +216,7 @@ func relatedPageSectionHeading(data relatedPageSectionHeadingData) templ.Compone
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, data.DescriptionKey))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_sections.templ`, Line: 119, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_sections.templ`, Line: 83, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {

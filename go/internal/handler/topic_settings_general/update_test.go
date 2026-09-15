@@ -29,26 +29,26 @@ func TestUpdate_保存され一般設定へリダイレクトする(t *testing.T
 	setupSettingsGeneralHandler(t, queries).Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusSeeOther)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusSeeOther)
 	}
 	want := settingsGeneralPath(identifier, "1")
 	if location := rr.Header().Get("Location"); location != want {
-		t.Errorf("Location = %q, want %q", location, want)
+		t.Errorf("Location = %q、期待値 = %q", location, want)
 	}
 
 	topicRepo := repository.NewTopicRepository(queries)
 	stored, err := topicRepo.FindBySpaceAndID(context.Background(), spaceID, topicID)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if stored.Name != "週報" {
-		t.Errorf("Name = %q, want %q", stored.Name, "週報")
+		t.Errorf("Name = %q、期待値 = %q", stored.Name, "週報")
 	}
 	if stored.Description != "毎週の記録" {
-		t.Errorf("Description = %q, want %q", stored.Description, "毎週の記録")
+		t.Errorf("Description = %q、期待値 = %q", stored.Description, "毎週の記録")
 	}
 	if stored.Visibility != model.TopicVisibilityPublic {
-		t.Errorf("Visibility = %v, want %v", stored.Visibility, model.TopicVisibilityPublic)
+		t.Errorf("Visibility = %v、期待値 = %v", stored.Visibility, model.TopicVisibilityPublic)
 	}
 }
 
@@ -69,7 +69,7 @@ func TestUpdate_入力が不正なら422でフォームを再描画する(t *tes
 	setupSettingsGeneralHandler(t, queries).Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusUnprocessableEntity)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
@@ -82,17 +82,17 @@ func TestUpdate_入力が不正なら422でフォームを再描画する(t *tes
 		`value="説明"`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 
 	topicRepo := repository.NewTopicRepository(queries)
 	stored, err := topicRepo.FindBySpaceAndID(context.Background(), spaceID, topicID)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if stored.Name != "日報" {
-		t.Errorf("Name = %q, want %q", stored.Name, "日報")
+		t.Errorf("Name = %q、期待値 = %q", stored.Name, "日報")
 	}
 }
 
@@ -112,16 +112,16 @@ func TestUpdate_トピック更新権限がないメンバーには404が返る(
 	setupSettingsGeneralHandler(t, queries).Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 
 	topicRepo := repository.NewTopicRepository(queries)
 	stored, err := topicRepo.FindBySpaceAndID(context.Background(), spaceID, topicID)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if stored.Name != "日報" {
-		t.Errorf("Name = %q, want %q", stored.Name, "日報")
+		t.Errorf("Name = %q、期待値 = %q", stored.Name, "日報")
 	}
 }
 
@@ -141,9 +141,9 @@ func TestUpdate_未ログインならログイン画面へリダイレクトす�
 	setupSettingsGeneralHandler(t, queries).Update(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
 	}
 	if location := rr.Header().Get("Location"); location != "/sign_in" {
-		t.Errorf("Location = %q, want %q", location, "/sign_in")
+		t.Errorf("Location = %q、期待値 = %q", location, "/sign_in")
 	}
 }

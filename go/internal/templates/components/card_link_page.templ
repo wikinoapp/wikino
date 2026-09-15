@@ -5,7 +5,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードを表示します
+// CardLinkPageはリンク一覧・バックリンク一覧で使用するページカードを表示します
 templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceIdentifier) {
 	<div class="group card relative overflow-visible min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600">
 		if page.Pinned {

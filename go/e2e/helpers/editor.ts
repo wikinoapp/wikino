@@ -2,7 +2,7 @@ import { type Page, type Locator } from "@playwright/test";
 
 /**
  * CodeMirrorエディタの操作ヘルパー
- * Rails版の shared_helpers.rb と同等の機能を提供する
+ * Rails版のshared_helpers.rbと同等の機能を提供する
  */
 
 const EDITOR_SELECTOR = ".cm-content";
@@ -14,21 +14,12 @@ function getEditor(page: Page): Locator {
 }
 
 /**
- * Wait until the markdown editor is fully initialized.
+ * マークダウンエディタの初期化完了を待つ。
  *
- * Waiting for ".cm-content" only proves the CodeMirror view exists. The
- * upload-driving listeners (file-drop / paste) are attached slightly later,
- * and the container's `_editorView` is assigned last — after every handler is
- * wired up. A synthetic drag-and-drop event dispatched during that window is
- * silently dropped (the "file-drop" CustomEvent has no listener yet), so wait
- * for `_editorView` before dispatching one.
- *
- * [Ja] マークダウンエディタの初期化完了を待つ。
- *
- * ".cm-content" を待つだけでは CodeMirror ビューの存在しか保証できない。
+ * ".cm-content" を待つだけではCodeMirrorビューの存在しか保証できない。
  * アップロードを駆動するリスナー (file-drop / paste) は少し後に登録され、
  * コンテナの `_editorView` は最後 — 全ハンドラ登録後 — に代入される。その窓の間に
- * ディスパッチした合成ドラッグ&ドロップは黙って失われる ("file-drop" CustomEvent を
+ * ディスパッチした合成ドラッグ&ドロップは黙って失われる ("file-drop" CustomEventを
  * 聞くリスナーがまだ無い) ため、ディスパッチ前に `_editorView` を待つ。
  */
 export async function waitForEditorReady(page: Page): Promise<void> {
@@ -45,7 +36,7 @@ export async function fillInEditor(page: Page, text: string): Promise<void> {
   await editor.pressSequentially(text);
 }
 
-/** エディタのコンテンツを直接設定する（CodeMirror APIを使用） */
+/** エディタのコンテンツを直接設定する (CodeMirror APIを使用) */
 export async function setEditorContent(page: Page, text: string): Promise<void> {
   await page.evaluate(
     ({ content, selector }: { content: string; selector: string }) => {
@@ -64,7 +55,7 @@ export async function setEditorContent(page: Page, text: string): Promise<void> 
   );
 }
 
-/** エディタのコンテンツを取得する（hidden textareaから） */
+/** エディタのコンテンツを取得する (hidden textareaから) */
 export async function getEditorContent(page: Page): Promise<string> {
   return page.evaluate((selector: string) => {
     const textarea = document.querySelector(selector) as HTMLTextAreaElement;
@@ -138,7 +129,7 @@ export async function getCursorPosition(page: Page): Promise<CursorPosition> {
   }, CONTAINER_SELECTOR);
 }
 
-/** カーソル位置を設定する（line: 1-indexed, column: 0-indexed） */
+/** カーソル位置を設定する (line: 1-indexed, column: 0-indexed) */
 export async function setCursorPosition(page: Page, line: number, column: number): Promise<void> {
   await page.evaluate(
     ({ line, column, selector }: { line: number; column: number; selector: string }) => {
@@ -162,7 +153,7 @@ export async function setCursorPosition(page: Page, line: number, column: number
   );
 }
 
-/** 特定の行を改行文字を含めて選択する（line: 1-indexed） */
+/** 特定の行を改行文字を含めて選択する (line: 1-indexed) */
 export async function selectLineWithNewline(page: Page, lineNumber: number): Promise<void> {
   await page.evaluate(
     ({ ln, selector }: { ln: number; selector: string }) => {
@@ -187,7 +178,7 @@ export async function selectLineWithNewline(page: Page, lineNumber: number): Pro
   );
 }
 
-/** 複数行を改行文字を含めて選択する（startLine, endLine: 1-indexed） */
+/** 複数行を改行文字を含めて選択する (startLine, endLine: 1-indexed) */
 export async function selectMultipleLinesWithNewline(page: Page, startLine: number, endLine: number): Promise<void> {
   await page.evaluate(
     ({ start, end, selector }: { start: number; end: number; selector: string }) => {

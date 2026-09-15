@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// DraftPageBuilder は下書きページテストデータのビルダー
+// DraftPageBuilderは下書きページテストデータのビルダー
 type DraftPageBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -29,7 +29,7 @@ type DraftPageBuilder struct {
 	modifiedAt                time.Time
 }
 
-// NewDraftPageBuilder は DraftPageBuilder を生成します
+// NewDraftPageBuilderはDraftPageBuilderを生成します
 func NewDraftPageBuilder(t *testing.T, tx *sql.Tx) *DraftPageBuilder {
 	t.Helper()
 	now := time.Now()
@@ -45,81 +45,81 @@ func NewDraftPageBuilder(t *testing.T, tx *sql.Tx) *DraftPageBuilder {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *DraftPageBuilder) WithSpaceID(spaceID model.SpaceID) *DraftPageBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithPageID はページIDを設定します
+// WithPageIDはページIDを設定します
 func (b *DraftPageBuilder) WithPageID(pageID model.PageID) *DraftPageBuilder {
 	b.pageID = string(pageID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *DraftPageBuilder) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *DraftPageBuilder {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *DraftPageBuilder) WithTopicID(topicID model.TopicID) *DraftPageBuilder {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *DraftPageBuilder) WithTitle(title string) *DraftPageBuilder {
 	b.title = &title
 	return b
 }
 
-// WithNilTitle はタイトルをnilに設定します
+// WithNilTitleはタイトルをnilに設定します
 func (b *DraftPageBuilder) WithNilTitle() *DraftPageBuilder {
 	b.title = nil
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *DraftPageBuilder) WithBody(body string) *DraftPageBuilder {
 	b.body = body
 	return b
 }
 
-// WithBodyHTML はHTML本文を設定します
+// WithBodyHTMLはHTML本文を設定します
 func (b *DraftPageBuilder) WithBodyHTML(bodyHTML string) *DraftPageBuilder {
 	b.bodyHTML = bodyHTML
 	return b
 }
 
-// WithModifiedAt は更新日時を設定します
+// WithModifiedAtは更新日時を設定します
 func (b *DraftPageBuilder) WithModifiedAt(modifiedAt time.Time) *DraftPageBuilder {
 	b.modifiedAt = modifiedAt
 	return b
 }
 
-// WithLinkedPageIDs はリンク先ページIDリストを設定します
+// WithLinkedPageIDsはリンク先ページIDリストを設定します
 func (b *DraftPageBuilder) WithLinkedPageIDs(ids []model.PageID) *DraftPageBuilder {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)
 	return b
 }
 
-// WithSuggestionPageID は編集提案ページIDを設定します
+// WithSuggestionPageIDは編集提案ページIDを設定します
 func (b *DraftPageBuilder) WithSuggestionPageID(suggestionPageID model.SuggestionPageID) *DraftPageBuilder {
 	s := string(suggestionPageID)
 	b.suggestionPageID = &s
 	return b
 }
 
-// WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイルIDを設定します
+// WithFeaturedImageAttachmentIDはアイキャッチ画像の添付ファイルIDを設定します
 func (b *DraftPageBuilder) WithFeaturedImageAttachmentID(id model.AttachmentID) *DraftPageBuilder {
 	s := string(id)
 	b.featuredImageAttachmentID = &s
 	return b
 }
 
-// Build は下書きページを作成し、IDを返します
+// Buildは下書きページを作成し、IDを返します
 func (b *DraftPageBuilder) Build() model.DraftPageID {
 	b.t.Helper()
 
@@ -153,7 +153,7 @@ func (b *DraftPageBuilder) Build() model.DraftPageID {
 	return model.DraftPageID(id)
 }
 
-// DraftPageBuilderDB はDBを直接使用する下書きページテストデータのビルダー
+// DraftPageBuilderDBはDBを直接使用する下書きページテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type DraftPageBuilderDB struct {
 	t  *testing.T
@@ -172,7 +172,7 @@ type DraftPageBuilderDB struct {
 	modifiedAt                time.Time
 }
 
-// NewDraftPageBuilderDB は DraftPageBuilderDB を生成します
+// NewDraftPageBuilderDBはDraftPageBuilderDBを生成します
 func NewDraftPageBuilderDB(t *testing.T, db *sql.DB) *DraftPageBuilderDB {
 	t.Helper()
 	now := time.Now()
@@ -188,69 +188,69 @@ func NewDraftPageBuilderDB(t *testing.T, db *sql.DB) *DraftPageBuilderDB {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *DraftPageBuilderDB) WithSpaceID(spaceID model.SpaceID) *DraftPageBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithPageID はページIDを設定します
+// WithPageIDはページIDを設定します
 func (b *DraftPageBuilderDB) WithPageID(pageID model.PageID) *DraftPageBuilderDB {
 	b.pageID = string(pageID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *DraftPageBuilderDB) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *DraftPageBuilderDB {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *DraftPageBuilderDB) WithTopicID(topicID model.TopicID) *DraftPageBuilderDB {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *DraftPageBuilderDB) WithTitle(title string) *DraftPageBuilderDB {
 	b.title = &title
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *DraftPageBuilderDB) WithBody(body string) *DraftPageBuilderDB {
 	b.body = body
 	return b
 }
 
-// WithBodyHTML はHTML本文を設定します
+// WithBodyHTMLはHTML本文を設定します
 func (b *DraftPageBuilderDB) WithBodyHTML(bodyHTML string) *DraftPageBuilderDB {
 	b.bodyHTML = bodyHTML
 	return b
 }
 
-// WithSuggestionPageID は編集提案ページIDを設定します
+// WithSuggestionPageIDは編集提案ページIDを設定します
 func (b *DraftPageBuilderDB) WithSuggestionPageID(suggestionPageID model.SuggestionPageID) *DraftPageBuilderDB {
 	s := string(suggestionPageID)
 	b.suggestionPageID = &s
 	return b
 }
 
-// WithLinkedPageIDs はリンク先ページIDリストを設定します
+// WithLinkedPageIDsはリンク先ページIDリストを設定します
 func (b *DraftPageBuilderDB) WithLinkedPageIDs(ids []model.PageID) *DraftPageBuilderDB {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)
 	return b
 }
 
-// WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイルIDを設定します
+// WithFeaturedImageAttachmentIDはアイキャッチ画像の添付ファイルIDを設定します
 func (b *DraftPageBuilderDB) WithFeaturedImageAttachmentID(id model.AttachmentID) *DraftPageBuilderDB {
 	s := string(id)
 	b.featuredImageAttachmentID = &s
 	return b
 }
 
-// Build は下書きページを作成し、IDを返します
+// Buildは下書きページを作成し、IDを返します
 func (b *DraftPageBuilderDB) Build() model.DraftPageID {
 	b.t.Helper()
 

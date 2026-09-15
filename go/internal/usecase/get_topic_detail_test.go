@@ -61,10 +61,10 @@ func TestGetTopicDetailUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for non-existent space")
+			t.Error("存在しないスペースなのに出力がnilではない")
 		}
 	})
 
@@ -76,10 +76,10 @@ func TestGetTopicDetailUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for non-existent topic")
+			t.Error("存在しないトピックなのに出力がnilではない")
 		}
 	})
 
@@ -91,22 +91,22 @@ func TestGetTopicDetailUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Space.Name != "GTD Space" {
-			t.Errorf("Space.Name = %q, want %q", output.Space.Name, "GTD Space")
+			t.Errorf("Space.Name = %q、期待値 = %q", output.Space.Name, "GTD Space")
 		}
 		if output.Topic.Name != "テストトピック" {
-			t.Errorf("Topic.Name = %q, want %q", output.Topic.Name, "テストトピック")
+			t.Errorf("Topic.Name = %q、期待値 = %q", output.Topic.Name, "テストトピック")
 		}
 		if output.SpaceMember != nil {
-			t.Error("SpaceMember should be nil for unauthenticated user")
+			t.Error("未ログインのユーザーなのにSpaceMemberがnilではない")
 		}
 		if len(output.Pages) != 1 {
-			t.Errorf("len(Pages) = %d, want 1", len(output.Pages))
+			t.Errorf("len(Pages) = %d、期待値 = 1", len(output.Pages))
 		}
 	})
 
@@ -120,16 +120,16 @@ func TestGetTopicDetailUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SpaceMember == nil {
-			t.Fatal("SpaceMember should not be nil for authenticated user")
+			t.Fatal("ログイン中のユーザーなのにSpaceMemberがnil")
 		}
 		if output.TopicMember == nil {
-			t.Fatal("TopicMember should not be nil for topic member")
+			t.Fatal("トピックメンバーなのにTopicMemberがnil")
 		}
 	})
 }
@@ -184,10 +184,10 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for unauthenticated user on private topic")
+			t.Error("非公開トピックで未ログインのユーザーなのに出力がnilではない")
 		}
 	})
 
@@ -201,10 +201,10 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for space owner")
+			t.Fatal("スペースオーナーなのに出力がnil")
 		}
 	})
 
@@ -218,13 +218,13 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for space member on private topic")
+			t.Fatal("非公開トピックでスペースメンバーなのに出力がnil")
 		}
 		if output.Topic.Name != "非公開トピック" {
-			t.Errorf("Topic.Name = %q, want %q", output.Topic.Name, "非公開トピック")
+			t.Errorf("Topic.Name = %q、期待値 = %q", output.Topic.Name, "非公開トピック")
 		}
 	})
 
@@ -238,10 +238,10 @@ func TestGetTopicDetailUsecase_Execute_非公開トピック(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for non-space-member on private topic")
+			t.Error("非公開トピックでスペースメンバーでないのに出力がnilではない")
 		}
 	})
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// NewData は編集提案作成画面に渡すデータ構造体です
+// NewDataは編集提案作成画面に渡すデータ構造体です
 type NewData struct {
 	CSRFToken        string
 	FormErrors       *model.ValidationError
@@ -26,7 +26,7 @@ type NewData struct {
 	SelectedDraftIDs []string
 }
 
-// New は編集提案作成画面のコンテンツを表示します
+// Newは編集提案作成画面のコンテンツを表示します
 func New(data NewData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -410,7 +410,7 @@ func New(data NewData) templ.Component {
 	})
 }
 
-// isSelected はIDが選択済みリストに含まれているかを判定します
+// isSelectedはIDが選択済みリストに含まれているかを判定します
 func isSelected(selectedIDs []string, id string) bool {
 	for _, sid := range selectedIDs {
 		if sid == id {

@@ -23,10 +23,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// setupHandler builds an export handler over the given transaction. The start of an export is left
-// out: it manages its own transaction, and none of the screens tested here reach it.
-//
-// [Ja] setupHandler は与えられたトランザクションの上にエクスポートのハンドラーを組み立てる。
+// setupHandlerは与えられたトランザクションの上にエクスポートのハンドラーを組み立てる。
 // エクスポートの開始は含めない。開始は自身でトランザクションを管理し、ここでテストするどの画面も
 // そこへ到達しないためである。
 func setupHandler(t *testing.T, queries *query.Queries) *exporthandler.Handler {
@@ -54,10 +51,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *exporthandler.Handler {
 	)
 }
 
-// newRequest builds a request carrying the chi URL parameters, the signed-in user and the locale
-// the screens are rendered in.
-//
-// [Ja] newRequest は chi の URL パラメータ・ログイン中のユーザー・画面を描画するロケールを載せた
+// newRequestはchiのURLパラメータ・ログイン中のユーザー・画面を描画するロケールを載せた
 // リクエストを組み立てる。
 func newRequest(t *testing.T, method, path string, params map[string]string, userID model.UserID) *http.Request {
 	t.Helper()
@@ -77,9 +71,7 @@ func newRequest(t *testing.T, method, path string, params map[string]string, use
 	return req.WithContext(ctx)
 }
 
-// exportSpace seeds a space with one member and returns what the tests address them by.
-//
-// [Ja] exportSpace はメンバーが 1 人いるスペースを用意し、テストがそれらを指すための値を返す。
+// exportSpaceはメンバーが1人いるスペースを用意し、テストがそれらを指すための値を返す。
 func exportSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) (model.UserID, model.SpaceID, model.SpaceMemberID) {
 	t.Helper()
 
@@ -116,7 +108,7 @@ func TestNew_ShowsStartButton(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -150,7 +142,7 @@ func TestNew_HidesStartButtonWhileExporting(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -178,7 +170,7 @@ func TestNew_NotFoundWithoutExportPermission(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -202,15 +194,11 @@ func TestNew_NotFoundForNonMember(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
-// The trail ends with the screen itself, so the last item must be a plain label carrying
-// aria-current rather than a link back to the space settings. Scope the assertions to the
-// breadcrumb because the same label also appears in the heading and the page title.
-//
-// [Ja] 経路はこの画面自身で終わるため、末尾の項目はスペース設定へのリンクではなく aria-current を
+// 経路はこの画面自身で終わるため、末尾の項目はスペース設定へのリンクではなくaria-currentを
 // 持つラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
 func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 	t.Parallel()
@@ -226,7 +214,7 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	breadcrumb := exportBreadcrumb(t, rr.Body.String())
@@ -237,29 +225,26 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 		"エクスポート",
 	} {
 		if !strings.Contains(breadcrumb, want) {
-			t.Errorf("breadcrumb does not contain %q", want)
+			t.Errorf("パンくずに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(breadcrumb, `href="/s/exp-new-crumb/settings/exports/new"`) {
-		t.Error("current export start breadcrumb item must not be a link")
+		t.Error("現在のエクスポート開始のパンくずの項目がリンクになっている")
 	}
 }
 
-// exportBreadcrumb returns the markup of the breadcrumb navigation alone, so that an assertion
-// about the trail is not satisfied by the same text appearing elsewhere on the screen.
-//
-// [Ja] exportBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路についての
+// exportBreadcrumbはパンくずのナビゲーション部分だけのマークアップを返す。経路についての
 // 検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
 func exportBreadcrumb(t *testing.T, body string) string {
 	t.Helper()
 
 	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
 	if start == -1 {
-		t.Fatal("response does not contain the breadcrumb navigation")
+		t.Fatal("レスポンスにパンくずのナビゲーションが含まれていない")
 	}
 	endOffset := strings.Index(body[start:], "</nav>")
 	if endOffset == -1 {
-		t.Fatal("breadcrumb navigation does not have a closing tag")
+		t.Fatal("パンくずのナビゲーションに閉じタグが無い")
 	}
 
 	return body[start : start+endOffset]

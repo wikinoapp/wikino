@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// ApplySuggestionUsecase は編集提案反映ユースケース
+// ApplySuggestionUsecaseは編集提案反映ユースケース
 type ApplySuggestionUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
@@ -29,7 +29,7 @@ type ApplySuggestionUsecase struct {
 	applyValidator        *validator.SuggestionApplyValidator
 }
 
-// NewApplySuggestionUsecase は ApplySuggestionUsecase を生成する
+// NewApplySuggestionUsecaseはApplySuggestionUsecaseを生成する
 func NewApplySuggestionUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -62,19 +62,19 @@ func NewApplySuggestionUsecase(
 	}
 }
 
-// ApplySuggestionInput は編集提案反映の入力パラメータ
+// ApplySuggestionInputは編集提案反映の入力パラメータ
 type ApplySuggestionInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
 	UserID           model.UserID
 }
 
-// ApplySuggestionOutput は編集提案反映の出力パラメータ
+// ApplySuggestionOutputは編集提案反映の出力パラメータ
 type ApplySuggestionOutput struct {
 	Suggestion *model.Suggestion
 }
 
-// Execute は編集提案をトピックに反映する
+// Executeは編集提案をトピックに反映する
 func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySuggestionInput) (*ApplySuggestionOutput, error) {
 	// 1. データ取得
 	data, err := uc.fetchData(ctx, input)
@@ -95,7 +95,7 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 		return nil, err
 	}
 
-	// 4. バリデーション（トランザクション外）
+	// 4. バリデーション (トランザクション外)
 	validateOutput, err := uc.applyValidator.Validate(ctx, validator.SuggestionApplyValidatorInput{
 		SpaceID:         data.space.ID,
 		SpaceIdentifier: data.space.Identifier,
@@ -105,11 +105,11 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 		return nil, err
 	}
 
-	// 5. 永続化（トランザクション）
+	// 5. 永続化 (トランザクション)
 	return uc.applySuggestion(ctx, data, validateOutput.ConflictingPageIDs)
 }
 
-// buildApplyValidatorEntries は SuggestionPage と Page のペアから Validator 入力を構築する
+// buildApplyValidatorEntriesはSuggestionPageとPageのペアからValidator入力を構築する
 func buildApplyValidatorEntries(suggestionPages []*model.SuggestionPage, pages []*model.Page) []validator.SuggestionApplyValidatorEntry {
 	topicIDByPageID := make(map[model.PageID]model.TopicID, len(pages))
 	for _, p := range pages {
@@ -127,7 +127,7 @@ func buildApplyValidatorEntries(suggestionPages []*model.SuggestionPage, pages [
 	return entries
 }
 
-// applySuggestionData はデータ取得結果をまとめた構造体
+// applySuggestionDataはデータ取得結果をまとめた構造体
 type applySuggestionData struct {
 	space           *model.Space
 	spaceMember     *model.SpaceMember
@@ -217,7 +217,7 @@ func (uc *ApplySuggestionUsecase) authorize(ctx context.Context, data *applySugg
 	return nil
 }
 
-// checkIdempotency は既に反映済みの場合に成功出力を返す（べき等性）
+// checkIdempotencyは既に反映済みの場合に成功出力を返す (べき等性)
 func (uc *ApplySuggestionUsecase) checkIdempotency(suggestion *model.Suggestion) *ApplySuggestionOutput {
 	if suggestion.Status == model.SuggestionStatusApplied {
 		return &ApplySuggestionOutput{Suggestion: suggestion}
@@ -257,7 +257,7 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 
 	// 競合する未公開ページを論理削除
 	// トランザクション開始後にページの状態が変わっている可能性があるため、
-	// 論理削除直前に再取得し「未公開かつ本文が空」条件を再確認する（TOCTOU 対策）。
+	// 論理削除直前に再取得し「未公開かつ本文が空」条件を再確認する (TOCTOU対策)。
 	if len(conflictingPageIDs) > 0 {
 		conflictPages, err := pageRepo.FindByIDs(ctx, conflictingPageIDs, spaceID)
 		if err != nil {
@@ -321,7 +321,7 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 			return nil, fmt.Errorf("添付ファイル参照の同期に失敗しました: %w", err)
 		}
 
-		// PageRevisionを作成（スナップショット）
+		// PageRevisionを作成 (スナップショット)
 		var title string
 		if sp.Title != nil {
 			title = *sp.Title

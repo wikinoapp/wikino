@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// TopicMemberBuilderDB はDBを直接使用するトピックメンバーテストデータのビルダー
+// TopicMemberBuilderDBはDBを直接使用するトピックメンバーテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type TopicMemberBuilderDB struct {
 	t  *testing.T
@@ -24,7 +24,7 @@ type TopicMemberBuilderDB struct {
 	joinedAt      time.Time
 }
 
-// NewTopicMemberBuilderDB は TopicMemberBuilderDB を生成します
+// NewTopicMemberBuilderDBはTopicMemberBuilderDBを生成します
 func NewTopicMemberBuilderDB(t *testing.T, db *sql.DB) *TopicMemberBuilderDB {
 	t.Helper()
 	return &TopicMemberBuilderDB{
@@ -35,25 +35,25 @@ func NewTopicMemberBuilderDB(t *testing.T, db *sql.DB) *TopicMemberBuilderDB {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *TopicMemberBuilderDB) WithSpaceID(spaceID model.SpaceID) *TopicMemberBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *TopicMemberBuilderDB) WithTopicID(topicID model.TopicID) *TopicMemberBuilderDB {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *TopicMemberBuilderDB) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *TopicMemberBuilderDB {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// WithScopes はスコープを設定します
+// WithScopesはスコープを設定します
 func (b *TopicMemberBuilderDB) WithScopes(scopes []model.Scope) *TopicMemberBuilderDB {
 	ss := make([]string, len(scopes))
 	for i, s := range scopes {
@@ -63,7 +63,7 @@ func (b *TopicMemberBuilderDB) WithScopes(scopes []model.Scope) *TopicMemberBuil
 	return b
 }
 
-// Build はトピックメンバーを作成し、IDを返します
+// Buildはトピックメンバーを作成し、IDを返します
 func (b *TopicMemberBuilderDB) Build() model.TopicMemberID {
 	b.t.Helper()
 
@@ -93,7 +93,7 @@ func (b *TopicMemberBuilderDB) Build() model.TopicMemberID {
 	return model.TopicMemberID(id)
 }
 
-// TopicMemberBuilder はトピックメンバーテストデータのビルダー
+// TopicMemberBuilderはトピックメンバーテストデータのビルダー
 type TopicMemberBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -106,7 +106,7 @@ type TopicMemberBuilder struct {
 	lastPageModifiedAt *time.Time
 }
 
-// NewTopicMemberBuilder は TopicMemberBuilder を生成します
+// NewTopicMemberBuilderはTopicMemberBuilderを生成します
 func NewTopicMemberBuilder(t *testing.T, tx *sql.Tx) *TopicMemberBuilder {
 	t.Helper()
 	return &TopicMemberBuilder{
@@ -117,31 +117,31 @@ func NewTopicMemberBuilder(t *testing.T, tx *sql.Tx) *TopicMemberBuilder {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *TopicMemberBuilder) WithSpaceID(spaceID model.SpaceID) *TopicMemberBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *TopicMemberBuilder) WithTopicID(topicID model.TopicID) *TopicMemberBuilder {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *TopicMemberBuilder) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *TopicMemberBuilder {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// WithLastPageModifiedAt はlast_page_modified_atを設定します
+// WithLastPageModifiedAtはlast_page_modified_atを設定します
 func (b *TopicMemberBuilder) WithLastPageModifiedAt(t time.Time) *TopicMemberBuilder {
 	b.lastPageModifiedAt = &t
 	return b
 }
 
-// WithScopes はスコープを設定します
+// WithScopesはスコープを設定します
 func (b *TopicMemberBuilder) WithScopes(scopes []model.Scope) *TopicMemberBuilder {
 	ss := make([]string, len(scopes))
 	for i, s := range scopes {
@@ -151,7 +151,7 @@ func (b *TopicMemberBuilder) WithScopes(scopes []model.Scope) *TopicMemberBuilde
 	return b
 }
 
-// Build はトピックメンバーを作成し、IDを返します
+// Buildはトピックメンバーを作成し、IDを返します
 func (b *TopicMemberBuilder) Build() model.TopicMemberID {
 	b.t.Helper()
 

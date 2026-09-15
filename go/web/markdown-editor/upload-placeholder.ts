@@ -80,7 +80,7 @@ export function replacePlaceholderWithUrl(
   if (actualText !== expectedText) {
     const searchIndex = currentText.indexOf(expectedText);
     if (searchIndex === -1) {
-      console.warn("Upload placeholder not found:", fileName);
+      console.warn("アップロードのプレースホルダーが見つかりません:", fileName);
       placeholders.delete(placeholderId);
       return false;
     }

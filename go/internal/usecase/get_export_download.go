@@ -12,17 +12,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
-// GetExportDownloadUsecase hands out the archive of a finished export.
-//
-// The archive is fetched from the object storage directly by the browser rather than streamed
-// through the application, so what this produces is a URL that carries its own authorization and
-// stops working on its own.
-//
-// [Ja] GetExportDownloadUsecase は完了したエクスポートのアーカイブを渡す。
+// GetExportDownloadUsecaseは完了したエクスポートのアーカイブを渡す。
 //
 // アーカイブはアプリケーションを経由してストリーミングするのではなく、ブラウザがオブジェクト
 // ストレージから直接取得する。そのためここが生成するのは、それ自体が認可を持ち、時間が経てば
-// ひとりでに使えなくなる URL である。
+// ひとりでに使えなくなるURLである。
 type GetExportDownloadUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -30,9 +24,7 @@ type GetExportDownloadUsecase struct {
 	objectStorage   storage.ObjectStorage
 }
 
-// NewGetExportDownloadUsecase creates a GetExportDownloadUsecase.
-//
-// [Ja] NewGetExportDownloadUsecase は GetExportDownloadUsecase を生成する。
+// NewGetExportDownloadUsecaseはGetExportDownloadUsecaseを生成する。
 func NewGetExportDownloadUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -47,30 +39,19 @@ func NewGetExportDownloadUsecase(
 	}
 }
 
-// GetExportDownloadInput holds what it takes to hand out an archive.
-//
-// [Ja] GetExportDownloadInput はアーカイブを渡すための入力パラメータ。
+// GetExportDownloadInputはアーカイブを渡すための入力パラメータ。
 type GetExportDownloadInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	ExportID        model.ExportID
 	UserID          model.UserID
 }
 
-// GetExportDownloadOutput carries the URL the browser is sent to.
-//
-// [Ja] GetExportDownloadOutput はブラウザを送る先の URL を返す。
+// GetExportDownloadOutputはブラウザを送る先のURLを返す。
 type GetExportDownloadOutput struct {
 	URL string
 }
 
-// Execute resolves the export and signs a URL for its archive.
-//
-// An export whose archive can no longer be handed out is answered as not found rather than with a
-// reason of its own. The screen shows the download only while it works, so reaching this with an
-// expired export means following a link that outlived the archive it pointed at, and the archive
-// itself is what is missing.
-//
-// [Ja] Execute はエクスポートを解決し、そのアーカイブへの URL に署名する。
+// Executeはエクスポートを解決し、そのアーカイブへのURLに署名する。
 //
 // アーカイブをもう渡せないエクスポートは、固有の理由ではなく「見つからない」として答える。画面は
 // ダウンロードが使える間だけそれを表示するため、期限切れのエクスポートでここに到達するのは、

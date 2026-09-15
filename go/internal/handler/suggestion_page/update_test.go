@@ -102,10 +102,10 @@ func TestUpdate_未ログインでサインインにリダイレクトされる(
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -179,7 +179,7 @@ func TestUpdate_スペースメンバーでないユーザーは404が返る(t *
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -260,11 +260,11 @@ func TestUpdate_正常に編集提案ページが更新される(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	expectedLoc := "/s/sp-update-sp/suggestions/1/changes"
 	if loc := rr.Header().Get("Location"); loc != expectedLoc {
-		t.Errorf("wrong redirect location: got %q want %q", loc, expectedLoc)
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, expectedLoc)
 	}
 
 	// SuggestionPageが更新されたことを確認
@@ -274,7 +274,7 @@ func TestUpdate_正常に編集提案ページが更新される(t *testing.T) {
 		t.Fatalf("SuggestionPageの取得に失敗: %v", err)
 	}
 	if updatedSP.Body != "更新された本文" {
-		t.Errorf("SuggestionPage.Body = %q, want %q", updatedSP.Body, "更新された本文")
+		t.Errorf("SuggestionPage.Body = %q、期待値 = %q", updatedSP.Body, "更新された本文")
 	}
 
 	// SuggestionPageRevisionが作成されたことを確認
@@ -297,10 +297,10 @@ func TestUpdate_正常に編集提案ページが更新される(t *testing.T) {
 		t.Fatal("DraftPageが見つかりません")
 	}
 	if dp.SuggestionPageID == nil {
-		t.Error("DraftPage.SuggestionPageID should not be nil")
+		t.Error("DraftPage.SuggestionPageIDがnil")
 	}
 	if dp.SuggestionPageID != nil && *dp.SuggestionPageID != suggestionPageID {
-		t.Errorf("DraftPage.SuggestionPageID = %q, want %q", *dp.SuggestionPageID, suggestionPageID)
+		t.Errorf("DraftPage.SuggestionPageID = %q、期待値 = %q", *dp.SuggestionPageID, suggestionPageID)
 	}
 }
 
@@ -369,9 +369,9 @@ func TestUpdate_反映済みの編集提案は更新できない(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Update(rr, req)
 
-	// 認可エラー（Forbidden）→ 404で返される
+	// 認可エラー (Forbidden) → 404で返される
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -440,8 +440,8 @@ func TestUpdate_クローズ済みの編集提案は更新できない(t *testin
 	rr := httptest.NewRecorder()
 	handler.Update(rr, req)
 
-	// 認可エラー（Forbidden）→ 404で返される
+	// 認可エラー (Forbidden) → 404で返される
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }

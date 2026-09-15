@@ -8,13 +8,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// MarkEmailAsConfirmedUsecase はメール確認を完了状態に更新するユースケース
+// MarkEmailAsConfirmedUsecaseはメール確認を完了状態に更新するユースケース
 type MarkEmailAsConfirmedUsecase struct {
 	emailConfirmationRepo *repository.EmailConfirmationRepository
 	updateValidator       *validator.EmailConfirmationUpdateValidator
 }
 
-// NewMarkEmailAsConfirmedUsecase は MarkEmailAsConfirmedUsecase を生成する
+// NewMarkEmailAsConfirmedUsecaseはMarkEmailAsConfirmedUsecaseを生成する
 func NewMarkEmailAsConfirmedUsecase(
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
 	updateValidator *validator.EmailConfirmationUpdateValidator,
@@ -25,13 +25,13 @@ func NewMarkEmailAsConfirmedUsecase(
 	}
 }
 
-// MarkEmailAsConfirmedInput はメール確認完了の入力パラメータ
+// MarkEmailAsConfirmedInputはメール確認完了の入力パラメータ
 type MarkEmailAsConfirmedInput struct {
 	EmailConfirmationID string
 	Code                string
 }
 
-// Execute はメール確認コードを検証し、確認を完了状態に更新する
+// Executeはメール確認コードを検証し、確認を完了状態に更新する
 func (uc *MarkEmailAsConfirmedUsecase) Execute(ctx context.Context, input MarkEmailAsConfirmedInput) error {
 	// 1. バリデーション
 	_, err := uc.updateValidator.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{

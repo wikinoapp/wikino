@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create は編集提案にページを追加します (POST /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages)
+// Createは編集提案にページを追加します (POST /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -53,7 +53,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		draftPageIDs[i] = model.DraftPageID(id)
 	}
 
-	// UseCase を実行
+	// UseCaseを実行
 	_, err = h.addSuggestionPageUsecase.Execute(ctx, usecase.AddSuggestionPageInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: suggestionNumber,

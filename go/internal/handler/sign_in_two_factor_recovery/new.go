@@ -10,16 +10,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New はリカバリーコード入力フォームを表示します (GET /sign_in/two_factor/recovery/new)
+// Newはリカバリーコード入力フォームを表示します (GET /sign_in/two_factor/recovery/new)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Read the destination handed over by the two-factor screen. It is read before the pending user
-	// check so that an expired pending user cookie still sends the visitor back to sign-in with the
-	// page they asked for.
-	//
-	// [Ja] 二要素認証画面から引き継がれた遷移先を読む。pending user cookie が期限切れのときも
-	// 訪問者が求めたページを付けてサインインへ戻せるよう、pending user の確認より前に読む。
+	// 二要素認証画面から引き継がれた遷移先を読む。pending user cookieが期限切れのときも
+	// 訪問者が求めたページを付けてサインインへ戻せるよう、pending userの確認より前に読む。
 	backURL := r.URL.Query().Get("back")
 
 	// ペンディングユーザーIDを確認

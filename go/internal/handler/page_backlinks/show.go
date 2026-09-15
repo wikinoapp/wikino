@@ -16,16 +16,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はページレベルのバックリンク一覧をHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/backlinks)
+// Showはページレベルのバックリンク一覧をHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/backlinks)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// The backlink list is the continuation of the listing on the public page detail screen, so a
-	// guest reaches it through its "load more" button. Which pages it may return is decided by the
-	// usecase from the topics the viewer can open.
-	//
-	// [Ja] バックリンク一覧は公開のページ表示画面に出る一覧の続きで、その「もっと見る」ボタンから
-	// ゲストも到達する。何を返してよいかは閲覧者が開けるトピックから UseCase が判断する。
+	// バックリンク一覧は公開のページ表示画面に出る一覧の続きで、その「もっと見る」ボタンから
+	// ゲストも到達する。何を返してよいかは閲覧者が開けるトピックからUseCaseが判断する。
 	user := middleware.UserFromContext(ctx)
 	var userID *model.UserID
 	if user != nil {
@@ -44,22 +40,16 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the pagination parameter. A page whose SQL offset cannot fit the query's int32
-	// parameter is rejected before invoking the usecase.
-	//
-	// [Ja] ページネーションパラメータを取得する。SQL offset がクエリの int32 パラメータに収まらない
-	// ページは UseCase 呼び出し前に拒否する。
+	// ページネーションパラメータを取得する。SQL offsetがクエリのint32パラメータに収まらない
+	// ページはUseCase呼び出し前に拒否する。
 	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
 		return
 	}
 
-	// The other listings' pages ride along so that the links this fragment renders keep pointing at
-	// the state the whole screen is in, instead of resetting them to their first page.
-	//
-	// [Ja] 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
-	// 指し続けるようにする。受け取らないと、他の一覧が 1 ページ目へ戻ってしまう。
+	// 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
+	// 指し続けるようにする。受け取らないと、他の一覧が1ページ目へ戻ってしまう。
 	linkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
@@ -75,12 +65,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		handler.RelatedPageListNotFound(w, r)
 		return
 	}
-	// The selected card's own link-list page rides along with the two halves that name it, because
-	// the full-page fallback this response renders has to point at the page holding that card. An
-	// absent value stays zero so the state falls back to the link list's own page.
-	//
-	// [Ja] 選択カードのリンク一覧ページは、そのカードを指す 2 つの値と一緒に受け取る。本応答が描画する
-	// フルページフォールバックが、カードを含むページを指す必要があるためである。値が無い場合は 0 のままに
+	// 選択カードのリンク一覧ページは、そのカードを指す2つの値と一緒に受け取る。本応答が描画する
+	// フルページフォールバックが、カードを含むページを指す必要があるためである。値が無い場合は0のままに
 	// して、状態がリンク一覧自身のページへフォールバックできるようにする。
 	linkedPageParentPage, ok := httppagination.ParseOptionalNumberParam(r, viewmodel.LinkedPageParentPageQueryParam)
 	if !ok {
@@ -139,10 +125,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		SpaceIdentifier: output.Space.Identifier,
 		PageNumber:      int32(output.Page.Number),
 		State:           linkState,
-		// The per-card edit link follows the viewer's own permission, the same way the initial
-		// listing on the page detail screen does.
-		//
-		// [Ja] 各カードの編集リンクは、ページ表示画面の初回描画と同じく閲覧者自身の権限に従う。
+		// 各カードの編集リンクは、ページ表示画面の初回描画と同じく閲覧者自身の権限に従う。
 		CanEdit: output.CanUpdatePage,
 	})
 

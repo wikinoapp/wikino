@@ -1,4 +1,4 @@
-// Package account はアカウント関連のハンドラーを提供します
+// Package accountはアカウント関連のハンドラーを提供します
 package account
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はアカウントハンドラー
+// Handlerはアカウントハンドラー
 type Handler struct {
 	cfg                 *config.Config
 	sessionMgr          *session.Manager
@@ -17,7 +17,7 @@ type Handler struct {
 	createUserSessionUC *usecase.CreateUserSessionUsecase
 }
 
-// NewHandler は新しいアカウントハンドラーを作成します
+// NewHandlerは新しいアカウントハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,

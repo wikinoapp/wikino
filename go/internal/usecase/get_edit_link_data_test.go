@@ -56,19 +56,19 @@ func TestGetEditLinkDataUsecase_Execute(t *testing.T) {
 			PageBacklinkPage:       1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.LinkedPages) != 0 {
-			t.Errorf("len(LinkedPages) = %d, want 0", len(output.LinkedPages))
+			t.Errorf("len(LinkedPages) = %d、期待値 = 0", len(output.LinkedPages))
 		}
 		if output.LinkedTotalCount != 0 {
-			t.Errorf("LinkedTotalCount = %d, want 0", output.LinkedTotalCount)
+			t.Errorf("LinkedTotalCount = %d、期待値 = 0", output.LinkedTotalCount)
 		}
 		if len(output.BacklinksPerPage) != 0 {
-			t.Errorf("len(BacklinksPerPage) = %d, want 0", len(output.BacklinksPerPage))
+			t.Errorf("len(BacklinksPerPage) = %d、期待値 = 0", len(output.BacklinksPerPage))
 		}
 	})
 
@@ -106,19 +106,19 @@ func TestGetEditLinkDataUsecase_Execute(t *testing.T) {
 			PageBacklinkPage:       1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.LinkedPages) != 1 {
-			t.Errorf("len(LinkedPages) = %d, want 1", len(output.LinkedPages))
+			t.Errorf("len(LinkedPages) = %d、期待値 = 1", len(output.LinkedPages))
 		}
 		if output.LinkedTotalCount != 1 {
-			t.Errorf("LinkedTotalCount = %d, want 1", output.LinkedTotalCount)
+			t.Errorf("LinkedTotalCount = %d、期待値 = 1", output.LinkedTotalCount)
 		}
 		if len(output.LinkTopics) == 0 {
-			t.Error("LinkTopics should not be empty")
+			t.Error("LinkTopicsが空")
 		}
 	})
 
@@ -160,21 +160,18 @@ func TestGetEditLinkDataUsecase_Execute(t *testing.T) {
 			PageBacklinkPage:       1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.LinkedPages) != 1 {
-			t.Errorf("len(LinkedPages) = %d, want 1", len(output.LinkedPages))
+			t.Errorf("len(LinkedPages) = %d、期待値 = 1", len(output.LinkedPages))
 		}
 	})
 
-	// The editor's full-page fallback advances all three related-page listings using the same
-	// pagination contract as the page detail screen.
-	//
-	// [Ja] 編集画面のフルページフォールバックが、ページ表示画面と同じページネーション契約で
-	// 3 種類すべての関連ページ一覧を進めることを確認する。
+	// 編集画面のフルページフォールバックが、ページ表示画面と同じページネーション契約で
+	// 3種類すべての関連ページ一覧を進めることを確認する。
 	t.Run("フルページフォールバックで各一覧の2ページ目を取得できる", func(t *testing.T) {
 		baseTime := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
 		linkedNewerID := testutil.NewPageBuilder(t, tx).
@@ -268,26 +265,24 @@ func TestGetEditLinkDataUsecase_Execute(t *testing.T) {
 			PageBacklinkPage:       2,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		if output.LinkedTotalCount != 2 || len(output.LinkedPages) != 1 || output.LinkedPages[0].ID != linkedOlderID {
-			t.Errorf("linked page 2 = (%d, %v), want (2, [%s])", output.LinkedTotalCount, output.LinkedPages, linkedOlderID)
+			t.Errorf("リンク先の2ページ目 = (%d, %v)、期待値 = (2, [%s])", output.LinkedTotalCount, output.LinkedPages, linkedOlderID)
 		}
 		selected := output.BacklinksPerPage[linkedOlderID]
 		if selected == nil {
-			t.Fatal("BacklinksPerPage should contain the selected linked page")
+			t.Fatal("BacklinksPerPageに選択中のリンク先ページが含まれていない")
 		}
 		if selected.TotalCount != 2 || len(selected.Pages) != 1 || selected.Pages[0].ID != nestedOlderID {
-			t.Errorf("nested backlink page 2 = (%d, %v), want (2, [%s])", selected.TotalCount, selected.Pages, nestedOlderID)
+			t.Errorf("入れ子のバックリンクの2ページ目 = (%d, %v)、期待値 = (2, [%s])", selected.TotalCount, selected.Pages, nestedOlderID)
 		}
 		if output.PageBacklinkCount != 2 || len(output.PageBacklinks) != 1 || output.PageBacklinks[0].ID != pageBacklinkOlderID {
-			t.Errorf("page backlink page 2 = (%d, %v), want (2, [%s])", output.PageBacklinkCount, output.PageBacklinks, pageBacklinkOlderID)
+			t.Errorf("ページのバックリンクの2ページ目 = (%d, %v)、期待値 = (2, [%s])", output.PageBacklinkCount, output.PageBacklinks, pageBacklinkOlderID)
 		}
 
-		// Replacing one selected card's nested slice must leave another card on its first slice.
-		//
-		// [Ja] 選択したカードのネスト一覧だけを差し替え、別カードは 1 ページ目に残す。
+		// 選択したカードのネスト一覧だけを差し替え、別カードは1ページ目に残す。
 		multiCardOutput, err := uc.Execute(context.Background(), GetEditLinkDataInput{
 			Page: &model.Page{
 				ID:            pageID,
@@ -304,26 +299,23 @@ func TestGetEditLinkDataUsecase_Execute(t *testing.T) {
 			PageBacklinkPage:       1,
 		})
 		if err != nil {
-			t.Fatalf("multi-card Execute() error = %v", err)
+			t.Fatalf("複数カードでのExecute()のエラー = %v", err)
 		}
 
 		selected = multiCardOutput.BacklinksPerPage[linkedOlderID]
 		if selected == nil || len(selected.Pages) != 1 || selected.Pages[0].ID != nestedOlderID {
-			t.Errorf("selected card's nested page = %#v, want [%s]", selected, nestedOlderID)
+			t.Errorf("選択中のカードの入れ子のページ = %#v、期待値 = [%s]", selected, nestedOlderID)
 		}
 		other := multiCardOutput.BacklinksPerPage[linkedNewerID]
 		if other == nil {
-			t.Fatal("BacklinksPerPage should contain the unselected linked page")
+			t.Fatal("BacklinksPerPageに選択していないリンク先ページが含まれていない")
 		}
 		if other.TotalCount != 2 || len(other.Pages) != 1 || other.Pages[0].ID != otherNestedNewerID {
-			t.Errorf("unselected card's nested page = (%d, %v), want first page [%s]", other.TotalCount, other.Pages, otherNestedNewerID)
+			t.Errorf("選択していないカードの入れ子のページ = (%d, %v)、期待値 = 1ページ目[%s]", other.TotalCount, other.Pages, otherNestedNewerID)
 		}
 	})
 
-	// The draft refresh replaces the listing containers, so it asks for everything the reader has
-	// loaded rather than the requested page alone.
-	//
-	// [Ja] 下書き再取得は一覧のコンテナごと差し替えるため、要求ページだけではなく閲覧者が読み込み
+	// 下書き再取得は一覧のコンテナごと差し替えるため、要求ページだけではなく閲覧者が読み込み
 	// 済みの範囲すべてを要求する。
 	t.Run("IncludePrecedingPagesで各一覧の1ページ目から要求ページまでをまとめて取得できる", func(t *testing.T) {
 		baseTime := time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC)
@@ -404,40 +396,37 @@ func TestGetEditLinkDataUsecase_Execute(t *testing.T) {
 
 		output, err := uc.Execute(context.Background(), input)
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		wantLinked := []model.PageID{linkedNewerID, linkedOlderID}
 		if !samePageIDs(output.LinkedPages, wantLinked) {
-			t.Errorf("linked pages = %v, want both pages %v", pageIDsOf(output.LinkedPages), wantLinked)
+			t.Errorf("リンク先のページ = %v、期待値 = 両方のページ%v", pageIDsOf(output.LinkedPages), wantLinked)
 		}
 		selected := output.BacklinksPerPage[linkedOlderID]
 		if selected == nil {
-			t.Fatal("BacklinksPerPage should contain the selected linked page")
+			t.Fatal("BacklinksPerPageに選択中のリンク先ページが含まれていない")
 		}
 		if !samePageIDs(selected.Pages, []model.PageID{nestedNewerID, nestedOlderID}) {
-			t.Errorf("nested backlinks = %v, want both pages", pageIDsOf(selected.Pages))
+			t.Errorf("入れ子のバックリンク = %v、期待値 = 両方のページ", pageIDsOf(selected.Pages))
 		}
 		if !samePageIDs(output.PageBacklinks, []model.PageID{pageBacklinkNewerID, pageBacklinkOlderID}) {
-			t.Errorf("page backlinks = %v, want both pages", pageIDsOf(output.PageBacklinks))
+			t.Errorf("ページのバックリンク = %v、期待値 = 両方のページ", pageIDsOf(output.PageBacklinks))
 		}
 
-		// A page number left over from a listing that has since shrunk returns everything that is
-		// left instead of an empty slice, so the editor never blanks the listing after a save.
-		//
-		// [Ja] 一覧が縮んだあとに残った古いページ番号でも、空ではなく残っているものをすべて返す。
+		// 一覧が縮んだあとに残った古いページ番号でも、空ではなく残っているものをすべて返す。
 		// 保存後に編集画面の一覧が空になることがないようにするためである。
 		input.CurrentPage = 5
 		input.PageBacklinkPage = 5
 		staleOutput, err := uc.Execute(context.Background(), input)
 		if err != nil {
-			t.Fatalf("stale-state Execute() error = %v", err)
+			t.Fatalf("古い状態でのExecute()のエラー = %v", err)
 		}
 		if !samePageIDs(staleOutput.LinkedPages, wantLinked) {
-			t.Errorf("linked pages for an out-of-range page = %v, want both pages", pageIDsOf(staleOutput.LinkedPages))
+			t.Errorf("範囲外のページでのリンク先のページ = %v、期待値 = 両方のページ", pageIDsOf(staleOutput.LinkedPages))
 		}
 		if !samePageIDs(staleOutput.PageBacklinks, []model.PageID{pageBacklinkNewerID, pageBacklinkOlderID}) {
-			t.Errorf("page backlinks for an out-of-range page = %v, want both pages", pageIDsOf(staleOutput.PageBacklinks))
+			t.Errorf("範囲外のページでのページのバックリンク = %v、期待値 = 両方のページ", pageIDsOf(staleOutput.PageBacklinks))
 		}
 	})
 }
@@ -451,7 +440,7 @@ func TestCumulativeRelatedPagePagesInRange(t *testing.T) {
 		PageBacklinkPage:       MaxCumulativeRelatedPagePages,
 	}
 	if !cumulativeRelatedPagePagesInRange(atLimit) {
-		t.Fatal("all related-page listings at the cumulative limit should be accepted")
+		t.Fatal("累積の上限ちょうどの関連ページの一覧が受け付けられていない")
 	}
 
 	tests := []struct {
@@ -459,19 +448,19 @@ func TestCumulativeRelatedPagePagesInRange(t *testing.T) {
 		mutate func(*relatedPageListInput)
 	}{
 		{
-			name: "link list",
+			name: "リンクの一覧",
 			mutate: func(input *relatedPageListInput) {
 				input.LinkPage++
 			},
 		},
 		{
-			name: "nested backlink list",
+			name: "入れ子のバックリンクの一覧",
 			mutate: func(input *relatedPageListInput) {
 				input.LinkedPageBacklinkPage++
 			},
 		},
 		{
-			name: "page backlink list",
+			name: "ページのバックリンクの一覧",
 			mutate: func(input *relatedPageListInput) {
 				input.PageBacklinkPage++
 			},
@@ -485,15 +474,13 @@ func TestCumulativeRelatedPagePagesInRange(t *testing.T) {
 			input := atLimit
 			tt.mutate(&input)
 			if cumulativeRelatedPagePagesInRange(input) {
-				t.Error("a related-page listing past the cumulative limit should be rejected")
+				t.Error("累積の上限を超えた関連ページの一覧が拒否されていない")
 			}
 		})
 	}
 }
 
-// samePageIDs reports whether the given pages are exactly the wanted IDs, in order.
-//
-// [Ja] samePageIDs は、渡されたページが期待する ID と順序どおり一致するかを返す。
+// samePageIDsは、渡されたページが期待するIDと順序どおり一致するかを返す。
 func samePageIDs(pages []*model.Page, want []model.PageID) bool {
 	if len(pages) != len(want) {
 		return false
@@ -506,9 +493,7 @@ func samePageIDs(pages []*model.Page, want []model.PageID) bool {
 	return true
 }
 
-// pageIDsOf reduces pages to their IDs for failure messages.
-//
-// [Ja] pageIDsOf は失敗メッセージ用にページを ID だけへ落とす。
+// pageIDsOfは失敗メッセージ用にページをIDだけへ落とす。
 func pageIDsOf(pages []*model.Page) []model.PageID {
 	ids := make([]model.PageID, 0, len(pages))
 	for _, pg := range pages {

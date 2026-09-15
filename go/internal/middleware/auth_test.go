@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// setupAuthTest はテスト用のAuthミドルウェアをセットアップする
+// setupAuthTestはテスト用のAuthミドルウェアをセットアップする
 func setupAuthTest(t *testing.T) (*Auth, *testutil.SessionBuilder, string) {
 	t.Helper()
 
@@ -84,7 +84,7 @@ func TestRequireAuth_認証済みの場合(t *testing.T) {
 		t.Error("次のハンドラーが呼び出されなかった")
 	}
 	if rr.Code != http.StatusOK {
-		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -100,7 +100,7 @@ func TestRequireAuth_未認証の場合(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// リクエストを作成（クッキーなし）
+	// リクエストを作成 (クッキーなし)
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
 	rr := httptest.NewRecorder()
 
@@ -112,11 +112,11 @@ func TestRequireAuth_未認証の場合(t *testing.T) {
 		t.Error("次のハンドラーが呼び出されるべきではない")
 	}
 	if rr.Code != http.StatusFound {
-		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
 	}
 	location := rr.Header().Get("Location")
 	if location != "/sign_in?back=%2Fprotected" {
-		t.Errorf("リダイレクト先が不正: got %s, want /sign_in?back=%%2Fprotected", location)
+		t.Errorf("リダイレクト先 = %s、期待値 = /sign_in?back=%%2Fprotected", location)
 	}
 }
 
@@ -132,7 +132,7 @@ func TestRequireAuth_無効なトークンの場合(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// リクエストを作成（無効なトークン）
+	// リクエストを作成 (無効なトークン)
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
 	req.AddCookie(&http.Cookie{
 		Name:  session.CookieName,
@@ -148,19 +148,16 @@ func TestRequireAuth_無効なトークンの場合(t *testing.T) {
 		t.Error("次のハンドラーが呼び出されるべきではない")
 	}
 	if rr.Code != http.StatusFound {
-		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
 	}
 	location := rr.Header().Get("Location")
 	if location != "/sign_in?back=%2Fprotected" {
-		t.Errorf("リダイレクト先が不正: got %s, want /sign_in?back=%%2Fprotected", location)
+		t.Errorf("リダイレクト先 = %s、期待値 = /sign_in?back=%%2Fprotected", location)
 	}
 }
 
-// Verifies when the redirect to sign-in carries the original destination. Only GET and HEAD carry
-// back; methods with side effects do not.
-//
-// [Ja] サインインへのリダイレクトに元の宛先を引き継ぐ条件を検証する。
-// GET / HEAD だけが back を持ち、副作用のあるメソッドは持たない。
+// サインインへのリダイレクトに元の宛先を引き継ぐ条件を検証する。
+// GET / HEADだけがbackを持ち、副作用のあるメソッドは持たない。
 func TestRequireAuth_未認証時のbackパラメータ(t *testing.T) {
 	t.Parallel()
 
@@ -212,10 +209,10 @@ func TestRequireAuth_未認証時のbackパラメータ(t *testing.T) {
 			auth.RequireAuth(nextHandler).ServeHTTP(rr, req)
 
 			if rr.Code != http.StatusFound {
-				t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusFound)
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
 			}
 			if location := rr.Header().Get("Location"); location != tt.wantLocation {
-				t.Errorf("リダイレクト先が不正: got %s, want %s", location, tt.wantLocation)
+				t.Errorf("リダイレクト先 = %s、期待値 = %s", location, tt.wantLocation)
 			}
 		})
 	}
@@ -249,11 +246,11 @@ func TestRequireNoAuth_認証済みの場合(t *testing.T) {
 		t.Error("次のハンドラーが呼び出されるべきではない")
 	}
 	if rr.Code != http.StatusFound {
-		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
 	}
 	location := rr.Header().Get("Location")
 	if location != "/" {
-		t.Errorf("リダイレクト先が不正: got %s, want /", location)
+		t.Errorf("リダイレクト先 = %s、期待値 = /", location)
 	}
 }
 
@@ -269,7 +266,7 @@ func TestRequireNoAuth_未認証の場合(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// リクエストを作成（クッキーなし）
+	// リクエストを作成 (クッキーなし)
 	req := httptest.NewRequest(http.MethodGet, "/sign_in", nil)
 	rr := httptest.NewRecorder()
 
@@ -281,7 +278,7 @@ func TestRequireNoAuth_未認証の場合(t *testing.T) {
 		t.Error("次のハンドラーが呼び出されなかった")
 	}
 	if rr.Code != http.StatusOK {
-		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -318,7 +315,7 @@ func TestSetUser_認証済みの場合(t *testing.T) {
 		t.Error("コンテキストにユーザーが設定されていない")
 	}
 	if rr.Code != http.StatusOK {
-		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -336,7 +333,7 @@ func TestSetUser_未認証の場合(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// リクエストを作成（クッキーなし）
+	// リクエストを作成 (クッキーなし)
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rr := httptest.NewRecorder()
 
@@ -351,7 +348,7 @@ func TestSetUser_未認証の場合(t *testing.T) {
 		t.Error("未認証なのにコンテキストにユーザーが設定されている")
 	}
 	if rr.Code != http.StatusOK {
-		t.Errorf("ステータスコードが不正: got %d, want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 

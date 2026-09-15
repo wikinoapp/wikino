@@ -9,17 +9,17 @@ import (
 	errpages "github.com/wikinoapp/wikino/go/internal/templates/pages/errors"
 )
 
-// MaintenanceMiddleware はメンテナンスモード時にアクセスを制限するミドルウェア
+// MaintenanceMiddlewareはメンテナンスモード時にアクセスを制限するミドルウェア
 type MaintenanceMiddleware struct {
 	cfg *config.Config
 }
 
-// NewMaintenanceMiddleware は新しいMaintenanceMiddlewareを作成します
+// NewMaintenanceMiddlewareは新しいMaintenanceMiddlewareを作成します
 func NewMaintenanceMiddleware(cfg *config.Config) *MaintenanceMiddleware {
 	return &MaintenanceMiddleware{cfg: cfg}
 }
 
-// Middleware はHTTPミドルウェアを返します。
+// MiddlewareはHTTPミドルウェアを返します。
 // メンテナンスモードが有効で、管理者IP以外からのアクセスの場合は503を返します。
 // ヘルスチェックエンドポイントはメンテナンスモード中でも通常処理します。
 func (m *MaintenanceMiddleware) Middleware(next http.Handler) http.Handler {
@@ -48,7 +48,7 @@ func (m *MaintenanceMiddleware) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// isAdminIP はリクエスト元IPが管理者IPかどうかをチェックします
+// isAdminIPはリクエスト元IPが管理者IPかどうかをチェックします
 func (m *MaintenanceMiddleware) isAdminIP(r *http.Request) bool {
 	ip := clientip.GetClientIP(r)
 	for _, adminIP := range m.cfg.AdminIPs {

@@ -27,16 +27,16 @@ func TestDeduper_UnsafeAttachmentExtensions(t *testing.T) {
 			for range 12 {
 				got := d.Unique(title, ext)
 				if len(seen) == 0 && tt.want != "" && got != tt.want {
-					t.Errorf("name=%q, want %q", got, tt.want)
+					t.Errorf("name = %q、期待値 = %q", got, tt.want)
 				}
 				if len(got) > 255 || !utf8.ValidString(got) {
-					t.Errorf("invalid length or UTF-8: %q (%d bytes)", got, len(got))
+					t.Errorf("長さまたはUTF-8が不正: %q (%dバイト)", got, len(got))
 				}
 				if strings.ContainsAny(got, "/\\:*?<>|\u202e") || strings.HasSuffix(got, " ") || strings.HasSuffix(got, ".") {
-					t.Errorf("unsafe name: %q", got)
+					t.Errorf("安全でない名前: %q", got)
 				}
 				if seen[got] {
-					t.Errorf("duplicate name: %q", got)
+					t.Errorf("名前が重複している: %q", got)
 				}
 				seen[got] = true
 			}

@@ -1,4 +1,4 @@
 package viewmodel
 
-// IconName はアイコン名を表す型です
+// IconNameはアイコン名を表す型です
 type IconName string

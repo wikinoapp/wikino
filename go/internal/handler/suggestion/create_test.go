@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// newPostRequest はchiのURLパラメータ付きPOSTリクエストを作成するヘルパーです
+// newPostRequestはchiのURLパラメータ付きPOSTリクエストを作成するヘルパーです
 func newPostRequest(t *testing.T, path string, params map[string]string, form url.Values) *http.Request {
 	t.Helper()
 
@@ -50,10 +50,10 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -84,7 +84,7 @@ func TestCreate_存在しないスペースで404が返る(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -130,7 +130,7 @@ func TestCreate_タイトル未入力でバリデーションエラーが返る(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 }
 
@@ -176,7 +176,7 @@ func TestCreate_下書きページ未選択でバリデーションエラーが�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 }
 
@@ -204,7 +204,7 @@ func TestCreate_新規ページで編集提案が作成されリダイレクト�
 		WithName("New Page Topic").
 		Build()
 
-	// 新規ページ（リビジョンなし）
+	// 新規ページ (リビジョンなし)
 	pageID := testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -243,12 +243,12 @@ func TestCreate_新規ページで編集提案が作成されリダイレクト�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 
 	loc := rr.Header().Get("Location")
 	if !strings.HasPrefix(loc, "/s/create-newpg-sp/suggestions/") {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -316,11 +316,11 @@ func TestCreate_正常に編集提案が作成されリダイレクトされる(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 
 	loc := rr.Header().Get("Location")
 	if !strings.HasPrefix(loc, "/s/create-ok-sp/suggestions/") {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }

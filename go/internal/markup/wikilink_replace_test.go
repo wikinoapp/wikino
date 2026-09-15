@@ -9,11 +9,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// wikilinkTestLocations resolves the two page titles the tests link to, in the topic those tests
-// name as the current one, to the page numbers 1 and 2.
-//
-// [Ja] wikilinkTestLocations は、テストがリンクする 2 つのページタイトルを、テストが現在の
-// トピックとして渡すトピックのページ番号 1・2 に解決する。
+// wikilinkTestLocationsは、テストがリンクする2つのページタイトルを、テストが現在の
+// トピックとして渡すトピックのページ番号1・2に解決する。
 func wikilinkTestLocations() []PageLocation {
 	var locations []PageLocation
 	for i, title := range []string{"ページ1", "ページ2"} {
@@ -29,12 +26,8 @@ func wikilinkTestLocations() []PageLocation {
 	return locations
 }
 
-// assertDisplayMatchesScan checks that the screen links exactly the wiki links ScanWikilinkMatches
-// reports for body, and returns the rendered HTML. want holds the page titles that reach the reader
-// as links, in order.
-//
-// [Ja] assertDisplayMatchesScan は、画面が ScanWikilinkMatches の報告する Wiki リンクとちょうど
-// 同じものをリンクにすることを確かめ、レンダリング結果の HTML を返す。want は読み手にリンクとして
+// assertDisplayMatchesScanは、画面がScanWikilinkMatchesの報告するWikiリンクとちょうど
+// 同じものをリンクにすることを確かめ、レンダリング結果のHTMLを返す。wantは読み手にリンクとして
 // 届くページタイトルの並び。
 func assertDisplayMatchesScan(t *testing.T, body string, want []string) string {
 	t.Helper()
@@ -44,7 +37,7 @@ func assertDisplayMatchesScan(t *testing.T, body string, want []string) string {
 	for _, location := range locations {
 		got := strings.Contains(rendered, fmt.Sprintf(`href="/s/my-space/pages/%d"`, location.PageNumber))
 		if got != slices.Contains(want, location.PageTitle) {
-			t.Errorf("rendered link for %s = %v, want %v: %s", location.PageTitle, got, !got, rendered)
+			t.Errorf("%sの描画されたリンク = %v、期待値 = %v: %s", location.PageTitle, got, !got, rendered)
 		}
 	}
 
@@ -55,7 +48,7 @@ func assertDisplayMatchesScan(t *testing.T, body string, want []string) string {
 		}
 	}
 	if !slices.Equal(scanned, want) {
-		t.Errorf("scanned resolvable titles = %v, want %v", scanned, want)
+		t.Errorf("スキャンした解決可能なタイトル = %v、期待値 = %v", scanned, want)
 	}
 
 	return rendered
@@ -67,7 +60,7 @@ func TestReplaceWikilinks_ExistingPage(t *testing.T) {
 	got := ReplaceWikilinks("テキスト [[ページ1]] テキスト", "トピックA", "my-space", wikilinkTestLocations())
 	want := "<p>テキスト <a href=\"/s/my-space/pages/1\">ページ1</a> テキスト</p>\n"
 	if got != want {
-		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+		t.Errorf("実測値:\n%s\n期待値:\n%s", got, want)
 	}
 }
 
@@ -77,7 +70,7 @@ func TestReplaceWikilinks_NonExistingPageStaysAsWritten(t *testing.T) {
 	body := "テキスト [[存在しないページ]] テキスト"
 	got := ReplaceWikilinks(body, "トピックA", "my-space", wikilinkTestLocations())
 	if want := RenderMarkdown(body); got != want {
-		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+		t.Errorf("実測値:\n%s\n期待値:\n%s", got, want)
 	}
 }
 
@@ -94,7 +87,7 @@ func TestReplaceWikilinks_TopicAndPageName(t *testing.T) {
 	got := ReplaceWikilinks("[[トピックB/ページ2]]", "トピックA", "my-space", locations)
 	want := "<p><a href=\"/s/my-space/pages/7\">ページ2</a></p>\n"
 	if got != want {
-		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+		t.Errorf("実測値:\n%s\n期待値:\n%s", got, want)
 	}
 }
 
@@ -104,7 +97,7 @@ func TestReplaceWikilinks_MixedResolvedAndUnresolved(t *testing.T) {
 	got := ReplaceWikilinks("> [[ページ1]] と [[存在しない]] と [[ページ2]]", "トピックA", "my-space", wikilinkTestLocations())
 	want := "<blockquote>\n<p><a href=\"/s/my-space/pages/1\">ページ1</a> と [[存在しない]] と <a href=\"/s/my-space/pages/2\">ページ2</a></p>\n</blockquote>\n"
 	if got != want {
-		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+		t.Errorf("実測値:\n%s\n期待値:\n%s", got, want)
 	}
 }
 
@@ -114,7 +107,7 @@ func TestReplaceWikilinks_NoWikilinks(t *testing.T) {
 	body := "Wikiリンクなしの **テキスト**"
 	got := ReplaceWikilinks(body, "トピックA", "my-space", nil)
 	if want := RenderMarkdown(body); got != want {
-		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+		t.Errorf("実測値:\n%s\n期待値:\n%s", got, want)
 	}
 }
 
@@ -122,7 +115,7 @@ func TestReplaceWikilinks_EmptyInput(t *testing.T) {
 	t.Parallel()
 
 	if got := ReplaceWikilinks("", "トピックA", "my-space", nil); got != "" {
-		t.Errorf("got: %q, want empty string", got)
+		t.Errorf("実測値 = %q、期待値 = 空文字列", got)
 	}
 }
 
@@ -137,7 +130,7 @@ func TestReplaceWikilinks_LinkTextAndSpaceIdentifierAreEscaped(t *testing.T) {
 		want            string
 	}{
 		{
-			name: "ページタイトルの HTML 特殊文字", body: "[[ページ1]]", title: "ページ<script>", spaceIdentifier: "my-space",
+			name: "ページタイトルのHTML特殊文字", body: "[[ページ1]]", title: "ページ<script>", spaceIdentifier: "my-space",
 			want: "<p><a href=\"/s/my-space/pages/1\">ページ&lt;script&gt;</a></p>\n",
 		},
 		{
@@ -174,7 +167,7 @@ func TestReplaceWikilinks_LinkTextAndSpaceIdentifierAreEscaped(t *testing.T) {
 				PageTitle:  tt.title,
 			}}
 			if got := ReplaceWikilinks(tt.body, "トピックA", tt.spaceIdentifier, locations); got != tt.want {
-				t.Errorf("got:\n%s\nwant:\n%s", got, tt.want)
+				t.Errorf("実測値:\n%s\n期待値:\n%s", got, tt.want)
 			}
 		})
 	}
@@ -191,7 +184,7 @@ func TestReplaceWikilinks_EscapedAndReferencedBracketsAreNotLinks(t *testing.T) 
 		{name: "バックスラッシュでエスケープした角括弧", body: `\[\[ページ1]]`},
 		{name: "文字参照で書いた角括弧", body: "&#91;&#91;ページ1]]"},
 		{name: "エスケープされたバックスラッシュの後ろは記法", body: `\\[[ページ1]]`, want: []string{"ページ1"}},
-		{name: "HTML ブロックの中ではバックスラッシュは文字", body: "<div>\n\\[[ページ1]]\n</div>", want: []string{"ページ1"}},
+		{name: "HTMLブロックの中ではバックスラッシュは文字", body: "<div>\n\\[[ページ1]]\n</div>", want: []string{"ページ1"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -199,7 +192,7 @@ func TestReplaceWikilinks_EscapedAndReferencedBracketsAreNotLinks(t *testing.T) 
 
 			rendered := assertDisplayMatchesScan(t, tt.body, tt.want)
 			if len(tt.want) == 0 && !strings.Contains(rendered, "[[ページ1]]") {
-				t.Errorf("the notation should stay visible as text: %s", rendered)
+				t.Errorf("記法がテキストとして表示されたままになっていない: %s", rendered)
 			}
 		})
 	}
@@ -211,7 +204,7 @@ func TestReplaceWikilinks_DroppedEndTagDoesNotJoinText(t *testing.T) {
 	got := assertDisplayMatchesScan(t, "[</h1>[[ページ1]]", []string{"ページ1"})
 	want := "<p>[<a href=\"/s/my-space/pages/1\">ページ1</a></p>\n"
 	if got != want {
-		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+		t.Errorf("実測値:\n%s\n期待値:\n%s", got, want)
 	}
 }
 
@@ -250,7 +243,7 @@ func TestReplaceWikilinks_LinkAcrossEmphasisDelimiter(t *testing.T) {
 	got := ReplaceWikilinks("*a [[b* c]] d*", "トピックA", "my-space", locations)
 	want := "<p><em>a <a href=\"/s/my-space/pages/3\">b* c</a></em> d*</p>\n"
 	if got != want {
-		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+		t.Errorf("実測値:\n%s\n期待値:\n%s", got, want)
 	}
 }
 
@@ -264,18 +257,18 @@ func TestReplaceWikilinks_SkippedAndDroppedElements(t *testing.T) {
 	}{
 		{name: "コードスパン", body: "`[[ページ1]]` と [[ページ2]]", want: []string{"ページ2"}},
 		{name: "コードブロック", body: "```\n[[ページ1]]\n```\n\n[[ページ2]]", want: []string{"ページ2"}},
-		{name: "raw HTML の code", body: "<code>[[ページ1]]</code> [[ページ2]]", want: []string{"ページ2"}},
-		{name: "raw HTML の pre", body: "<pre>[[ページ1]]</pre>\n\n[[ページ2]]", want: []string{"ページ2"}},
-		{name: "raw HTML の a", body: `<a href="/x">[[ページ1]]</a> [[ページ2]]`, want: []string{"ページ2"}},
-		{name: "raw HTML の script", body: "<script>[[ページ1]]</script>\n\n[[ページ2]]", want: []string{"ページ2"}},
-		{name: "raw HTML の style", body: "<style>[[ページ1]]</style>\n\n[[ページ2]]", want: []string{"ページ2"}},
-		{name: "サニタイズが中身ごと落とす iframe", body: "<iframe>[[ページ1]]</iframe>[[ページ2]]", want: []string{"ページ2"}},
-		{name: "サニタイズが中身ごと落とす object", body: "x <object>[[ページ1]]</object> [[ページ2]]", want: []string{"ページ2"}},
-		{name: "Markdown リンクのラベルの中", body: "[x [[ページ1]]](/x) [[ページ2]]", want: []string{"ページ2"}},
+		{name: "raw HTMLのcode", body: "<code>[[ページ1]]</code> [[ページ2]]", want: []string{"ページ2"}},
+		{name: "raw HTMLのpre", body: "<pre>[[ページ1]]</pre>\n\n[[ページ2]]", want: []string{"ページ2"}},
+		{name: "raw HTMLのa", body: `<a href="/x">[[ページ1]]</a> [[ページ2]]`, want: []string{"ページ2"}},
+		{name: "raw HTMLのscript", body: "<script>[[ページ1]]</script>\n\n[[ページ2]]", want: []string{"ページ2"}},
+		{name: "raw HTMLのstyle", body: "<style>[[ページ1]]</style>\n\n[[ページ2]]", want: []string{"ページ2"}},
+		{name: "サニタイズが中身ごと落とすiframe", body: "<iframe>[[ページ1]]</iframe>[[ページ2]]", want: []string{"ページ2"}},
+		{name: "サニタイズが中身ごと落とすobject", body: "x <object>[[ページ1]]</object> [[ページ2]]", want: []string{"ページ2"}},
+		{name: "Markdownリンクのラベルの中", body: "[x [[ページ1]]](/x) [[ページ2]]", want: []string{"ページ2"}},
 		{name: "サニタイズが要素を落とすリンクのラベルは見える", body: "[[[ページ1]]](javascript:alert(1)) [[ページ2]]", want: []string{"ページ1", "ページ2"}},
-		{name: "raw text 要素の後ろではコードスパンがテキストになる", body: "<xmp>`[[ページ1]]` [[ページ2]]", want: []string{"ページ1", "ページ2"}},
-		{name: "raw text 要素の後ろではコードブロックがテキストになる", body: "<xmp>\n\n```\n[[ページ1]]\n```\n\n[[ページ2]]", want: []string{"ページ1", "ページ2"}},
-		{name: "raw text 要素の後ろではフェンスの言語がテキストになる", body: "<xmp>\n\n```[[ページ1]]\nx\n```\n\n[[ページ2]]", want: []string{"ページ1", "ページ2"}},
+		{name: "raw text要素の後ろではコードスパンがテキストになる", body: "<xmp>`[[ページ1]]` [[ページ2]]", want: []string{"ページ1", "ページ2"}},
+		{name: "raw text要素の後ろではコードブロックがテキストになる", body: "<xmp>\n\n```\n[[ページ1]]\n```\n\n[[ページ2]]", want: []string{"ページ1", "ページ2"}},
+		{name: "raw text要素の後ろではフェンスの言語がテキストになる", body: "<xmp>\n\n```[[ページ1]]\nx\n```\n\n[[ページ2]]", want: []string{"ページ1", "ページ2"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -283,7 +276,7 @@ func TestReplaceWikilinks_SkippedAndDroppedElements(t *testing.T) {
 
 			rendered := assertDisplayMatchesScan(t, tt.body, tt.want)
 			if strings.Contains(rendered, "Wikino") {
-				t.Errorf("a marker leaked into the rendered HTML: %s", rendered)
+				t.Errorf("描画されたHTMLにマーカーが漏れている: %s", rendered)
 			}
 		})
 	}
@@ -298,12 +291,12 @@ func TestReplaceWikilinks_BlockContexts(t *testing.T) {
 		want string
 	}{
 		{
-			name: "HTML ブロックの行",
+			name: "HTMLブロックの行",
 			body: "<div>\n[[ページ1]]\n</div>",
 			want: "<div>\n<a href=\"/s/my-space/pages/1\">ページ1</a>\n</div>",
 		},
 		{
-			name: "raw text 要素の中はテキストとして届く",
+			name: "raw text要素の中はテキストとして届く",
 			body: "<textarea>\n[[ページ1]]\n</textarea>",
 			want: "\n<a href=\"/s/my-space/pages/1\">ページ1</a>\n",
 		},
@@ -333,7 +326,7 @@ func TestReplaceWikilinks_BlockContexts(t *testing.T) {
 			want: "<p><a href=\"/s/my-space/pages/1\">ページ1</a><a href=\"/s/my-space/pages/2\">ページ2</a></p>\n",
 		},
 		{
-			name: "CRLF の本文",
+			name: "CRLFの本文",
 			body: "[[ページ1]]\r\n\r\n[[ページ2]]",
 			want: "<p><a href=\"/s/my-space/pages/1\">ページ1</a></p>\n<p><a href=\"/s/my-space/pages/2\">ページ2</a></p>\n",
 		},
@@ -343,7 +336,7 @@ func TestReplaceWikilinks_BlockContexts(t *testing.T) {
 			t.Parallel()
 
 			if got := ReplaceWikilinks(tt.body, "トピックA", "my-space", wikilinkTestLocations()); got != tt.want {
-				t.Errorf("got:\n%s\nwant:\n%s", got, tt.want)
+				t.Errorf("実測値:\n%s\n期待値:\n%s", got, tt.want)
 			}
 		})
 	}

@@ -9,32 +9,32 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// PasswordUpdateValidator はパスワード更新のバリデーションを行う
+// PasswordUpdateValidatorはパスワード更新のバリデーションを行う
 type PasswordUpdateValidator struct {
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository
 }
 
-// NewPasswordUpdateValidator は PasswordUpdateValidator を生成する
+// NewPasswordUpdateValidatorはPasswordUpdateValidatorを生成する
 func NewPasswordUpdateValidator(passwordResetTokenRepo *repository.PasswordResetTokenRepository) *PasswordUpdateValidator {
 	return &PasswordUpdateValidator{
 		passwordResetTokenRepo: passwordResetTokenRepo,
 	}
 }
 
-// PasswordUpdateValidatorInput はバリデーションの入力パラメータ
+// PasswordUpdateValidatorInputはバリデーションの入力パラメータ
 type PasswordUpdateValidatorInput struct {
 	Token                string
 	Password             string
 	PasswordConfirmation string
 }
 
-// PasswordUpdateValidateOutput はバリデーション成功時の出力
+// PasswordUpdateValidateOutputはバリデーション成功時の出力
 type PasswordUpdateValidateOutput struct {
 	TokenID string
 	UserID  model.UserID
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *PasswordUpdateValidator) Validate(ctx context.Context, input PasswordUpdateValidatorInput) (*PasswordUpdateValidateOutput, error) {
 	ve := model.NewValidationError()
 
@@ -66,7 +66,7 @@ func (v *PasswordUpdateValidator) Validate(ctx context.Context, input PasswordUp
 		return nil, ve
 	}
 
-	// トークン検証（状態バリデーション）
+	// トークン検証 (状態バリデーション)
 	token, err := v.validateToken(ctx, input.Token)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (v *PasswordUpdateValidator) Validate(ctx context.Context, input PasswordUp
 	}, nil
 }
 
-// validateToken はトークンの検証を行う
+// validateTokenはトークンの検証を行う
 func (v *PasswordUpdateValidator) validateToken(ctx context.Context, token string) (*model.PasswordResetToken, error) {
 	tokenDigest := password_reset.HashToken(token)
 	tokenModel, err := v.passwordResetTokenRepo.FindByTokenDigest(ctx, tokenDigest)

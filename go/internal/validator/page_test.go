@@ -49,20 +49,17 @@ func TestPageUpdateValidator_FormatValidation(t *testing.T) {
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError but got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if !ve.HasFieldError("title") {
-				t.Error("expected title field error but got none")
+				t.Error("titleのフィールドエラーが無い")
 			}
 		})
 	}
 }
 
-// TestPageUpdateValidator_AllowedTitleCharacters covers the titles the validator lets through. They
-// reach the uniqueness check, which reads the database, so the test runs against a real one.
-//
-// [Ja] TestPageUpdateValidator_AllowedTitleCharacters はバリデーターが通すタイトルを扱う。
-// これらは DB を読む一意性チェックまで進むため、本テストは実際の DB に対して実行する。
+// TestPageUpdateValidator_AllowedTitleCharactersはバリデーターが通すタイトルを扱う。
+// これらはDBを読む一意性チェックまで進むため、本テストは実際のDBに対して実行する。
 func TestPageUpdateValidator_AllowedTitleCharacters(t *testing.T) {
 	t.Parallel()
 
@@ -95,11 +92,11 @@ func TestPageUpdateValidator_AllowedTitleCharacters(t *testing.T) {
 		{name: "Obsidianが記法として読む文字を含むタイトル", title: "foo #bar ^baz [qux]"},
 		{name: "先頭ドットのタイトル", title: ".foo"},
 		{name: "末尾ドットのタイトル", title: "foo."},
-		{name: "Windows予約デバイス名 CON", title: "CON"},
-		{name: "Windows予約デバイス名 con (小文字)", title: "con"},
-		{name: "Windows予約デバイス名 NUL", title: "NUL"},
-		{name: "Windows予約デバイス名 COM1", title: "COM1"},
-		{name: "Windows予約デバイス名 LPT1", title: "LPT1"},
+		{name: "Windows予約デバイス名CON", title: "CON"},
+		{name: "Windows予約デバイス名con (小文字)", title: "con"},
+		{name: "Windows予約デバイス名NUL", title: "NUL"},
+		{name: "Windows予約デバイス名COM1", title: "COM1"},
+		{name: "Windows予約デバイス名LPT1", title: "LPT1"},
 		{name: "通常のタイトル", title: "テストページ"},
 		{name: "中間にスペースがあるタイトル", title: "foo bar"},
 		{name: "中間にドットがあるタイトル", title: "foo.bar"},
@@ -117,10 +114,10 @@ func TestPageUpdateValidator_AllowedTitleCharacters(t *testing.T) {
 			})
 
 			if err != nil {
-				t.Errorf("unexpected error: %v", err)
+				t.Errorf("予期しないエラー: %v", err)
 			}
 			if conflictingPageID != nil {
-				t.Errorf("conflictingPageID = %v, want nil", *conflictingPageID)
+				t.Errorf("conflictingPageID = %v、期待値 = nil", *conflictingPageID)
 			}
 		})
 	}
@@ -152,7 +149,7 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 		WithTitle("Existing Page").
 		Build()
 
-	// 別のページを作成（このページのタイトルを変更するテスト）
+	// 別のページを作成 (このページのタイトルを変更するテスト)
 	anotherPageID := testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -174,10 +171,10 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("title") {
-			t.Error("expected title field error but got none")
+			t.Error("titleのフィールドエラーが無い")
 		}
 	})
 
@@ -191,7 +188,7 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("予期しないエラー: %v", err)
 		}
 	})
 
@@ -205,7 +202,7 @@ func TestPageUpdateValidator_Uniqueness(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("予期しないエラー: %v", err)
 		}
 	})
 }
@@ -260,13 +257,13 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("予期しないエラー: %v", err)
 		}
 		if conflictingPageID == nil {
-			t.Fatal("conflictingPageID should not be nil")
+			t.Fatal("conflictingPageIDがnil")
 		}
 		if *conflictingPageID != unpublishedPageID {
-			t.Errorf("conflictingPageID = %v, want %v", *conflictingPageID, unpublishedPageID)
+			t.Errorf("conflictingPageID = %v、期待値 = %v", *conflictingPageID, unpublishedPageID)
 		}
 	})
 
@@ -290,13 +287,13 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("title") {
-			t.Error("expected title field error")
+			t.Error("titleのフィールドエラーが無い")
 		}
 		if conflictingPageID != nil {
-			t.Error("conflictingPageID should be nil for non-empty body")
+			t.Error("本文が空でないのにconflictingPageIDがnilではない")
 		}
 	})
 
@@ -318,13 +315,13 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("title") {
-			t.Error("expected title field error")
+			t.Error("titleのフィールドエラーが無い")
 		}
 		if conflictingPageID != nil {
-			t.Error("conflictingPageID should be nil for published page")
+			t.Error("公開済みページなのにconflictingPageIDがnilではない")
 		}
 	})
 }

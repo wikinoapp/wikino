@@ -16,11 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create restores the draft to the selected revision's content and redirects back to the page
-// editor with a flash message
-// (POST /s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}/restore).
-//
-// [Ja] Create は下書きを選択されたリビジョンの内容に復元し、フラッシュメッセージ付きで
+// Createは下書きを選択されたリビジョンの内容に復元し、フラッシュメッセージ付きで
 // ページ編集画面へリダイレクトします
 // (POST /s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}/restore)。
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -65,8 +61,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect back to the page editor so the editor reloads with the restored content.
-	// [Ja] 復元後の内容でエディタが再読み込みされるよう、ページ編集画面へリダイレクトする。
+	// 復元後の内容でエディタが再読み込みされるよう、ページ編集画面へリダイレクトする。
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_draft_page_revision_restored"))
 	editPath := string(templates.PageEditPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(pageNumber)))
 	http.Redirect(w, r, editPath, http.StatusSeeOther)

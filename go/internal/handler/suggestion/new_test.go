@@ -28,10 +28,10 @@ func TestNew_未ログインでサインインにリダイレクトされる(t *
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -59,7 +59,7 @@ func TestNew_存在しないスペースで404が返る(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -87,7 +87,7 @@ func TestNew_不正なトピック番号で404が返る(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -124,7 +124,7 @@ func TestNew_スペースメンバーでない場合404が返る(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -183,28 +183,25 @@ func TestNew_スペースメンバーで正常にフォームが表示される(
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "下書きタイトル") {
-		t.Error("response should contain draft page title")
+		t.Error("レスポンスに下書きのタイトルが含まれていない")
 	}
 	if !strings.Contains(body, "csrf_token") {
-		t.Error("response should contain CSRF token")
+		t.Error("レスポンスにCSRFトークンが含まれていない")
 	}
 
-	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
-	// link has to bypass it) and keeps this screen's max-w-3xl content width.
-	//
-	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
-	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅max-w-3xlも維持する。
 	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+		t.Error("共通のパンくずヘッダーがmax-w-3xlのコンテンツ幅を保っていない")
 	}
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
-		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 }
 
@@ -246,15 +243,11 @@ func TestNew_下書きページがない場合でもフォームが表示され�
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
-// The trail ends with the screen itself, so the last item must be a plain label carrying
-// aria-current rather than a link back to the topic. Scope the assertions to the breadcrumb because
-// the same label also appears in the heading and the page title.
-//
-// [Ja] 経路はこの画面自身で終わるため、末尾の項目はトピックへのリンクではなく aria-current を持つ
+// 経路はこの画面自身で終わるため、末尾の項目はトピックへのリンクではなくaria-currentを持つ
 // ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
 func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 	t.Parallel()
@@ -294,7 +287,7 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 	setupHandler(t, db, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	breadcrumb := suggestionFormBreadcrumb(t, rr.Body.String())
@@ -305,29 +298,26 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 		"新規編集提案",
 	} {
 		if !strings.Contains(breadcrumb, want) {
-			t.Errorf("breadcrumb does not contain %q", want)
+			t.Errorf("パンくずに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(breadcrumb, `href="/s/new-crumb-sp/topics/1/suggestions/new"`) {
-		t.Error("current suggestion creation breadcrumb item must not be a link")
+		t.Error("現在の編集提案作成のパンくずの項目がリンクになっている")
 	}
 }
 
-// suggestionFormBreadcrumb returns the markup of the breadcrumb navigation alone, so that an
-// assertion about the trail is not satisfied by the same text appearing elsewhere on the screen.
-//
-// [Ja] suggestionFormBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路に
+// suggestionFormBreadcrumbはパンくずのナビゲーション部分だけのマークアップを返す。経路に
 // ついての検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
 func suggestionFormBreadcrumb(t *testing.T, body string) string {
 	t.Helper()
 
 	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
 	if start == -1 {
-		t.Fatal("response does not contain the breadcrumb navigation")
+		t.Fatal("レスポンスにパンくずのナビゲーションが含まれていない")
 	}
 	endOffset := strings.Index(body[start:], "</nav>")
 	if endOffset == -1 {
-		t.Fatal("breadcrumb navigation does not have a closing tag")
+		t.Fatal("パンくずのナビゲーションに閉じタグが無い")
 	}
 
 	return body[start : start+endOffset]

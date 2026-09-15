@@ -22,10 +22,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// setupHandler builds the download handler over the given transaction, with an in-memory object
-// storage so that the redirect can be checked without reaching the network.
-//
-// [Ja] setupHandler は与えられたトランザクションの上にダウンロードのハンドラーを組み立てる。
+// setupHandlerは与えられたトランザクションの上にダウンロードのハンドラーを組み立てる。
 // オブジェクトストレージはメモリ上のものを使い、ネットワークへ出ずにリダイレクトを検証できるように
 // する。
 func setupHandler(t *testing.T, queries *query.Queries) *export_download.Handler {
@@ -39,9 +36,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *export_download.Handler
 	))
 }
 
-// newRequest builds a request carrying the chi URL parameters and the signed-in user.
-//
-// [Ja] newRequest は chi の URL パラメータとログイン中のユーザーを載せたリクエストを組み立てる。
+// newRequestはchiのURLパラメータとログイン中のユーザーを載せたリクエストを組み立てる。
 func newRequest(t *testing.T, spaceIdentifier string, exportID model.ExportID, userID model.UserID) *http.Request {
 	t.Helper()
 
@@ -59,9 +54,7 @@ func newRequest(t *testing.T, spaceIdentifier string, exportID model.ExportID, u
 	return req.WithContext(ctx)
 }
 
-// exportSpace seeds a space with one member and returns what the tests address them by.
-//
-// [Ja] exportSpace はメンバーが 1 人いるスペースを用意し、テストがそれらを指すための値を返す。
+// exportSpaceはメンバーが1人いるスペースを用意し、テストがそれらを指すための値を返す。
 func exportSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) (model.UserID, model.SpaceID, model.SpaceMemberID) {
 	t.Helper()
 
@@ -101,20 +94,16 @@ func TestShow_RedirectsToPresignedURL(t *testing.T) {
 	setupHandler(t, queries).Show(rr, newRequest(t, "exp-dl-ok", exportID, userID))
 
 	if rr.Code != http.StatusSeeOther {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusSeeOther)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusSeeOther)
 	}
 
 	location := rr.Header().Get("Location")
 	if !strings.Contains(location, "exports/exp-dl-ok/archive.zip") {
-		t.Errorf("Location = %q, ZIP のオブジェクトを指していない", location)
+		t.Errorf("Location = %q, ZIPのオブジェクトを指していない", location)
 	}
 }
 
-// TestShow_NotFoundAfterExpiration keeps a link that outlived its archive from being answered. The
-// screen stops offering the download at the same point, so this is reached by a link kept elsewhere
-// (the completion mail, a bookmark).
-//
-// [Ja] TestShow_NotFoundAfterExpiration は、アーカイブより長生きしたリンクに応答しないことを守る。
+// TestShow_NotFoundAfterExpirationは、アーカイブより長生きしたリンクに応答しないことを守る。
 // 画面も同じ時点でダウンロードの提示をやめるため、ここに到達するのは別の場所に残ったリンク
 // (完了メール・ブックマーク) からである。
 func TestShow_NotFoundAfterExpiration(t *testing.T) {
@@ -136,7 +125,7 @@ func TestShow_NotFoundAfterExpiration(t *testing.T) {
 	setupHandler(t, queries).Show(rr, newRequest(t, "exp-dl-expired", exportID, userID))
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -158,7 +147,7 @@ func TestShow_NotFoundWhileStillRunning(t *testing.T) {
 	setupHandler(t, queries).Show(rr, newRequest(t, "exp-dl-running", exportID, userID))
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -181,15 +170,11 @@ func TestShow_NotFoundWithoutExportPermission(t *testing.T) {
 	setupHandler(t, queries).Show(rr, newRequest(t, "exp-dl-forbidden", exportID, userID))
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
-// TestShow_NotFoundForExportOfAnotherSpace guards the space scoping of the lookup: knowing the ID
-// of an export must not be enough to have its archive signed through a space the viewer happens to
-// be able to export.
-//
-// [Ja] TestShow_NotFoundForExportOfAnotherSpace は取得のスペーススコープを守る。エクスポートの ID
+// TestShow_NotFoundForExportOfAnotherSpaceは取得のスペーススコープを守る。エクスポートのID
 // を知っていることが、たまたまエクスポートできる別のスペース経由でそのアーカイブに署名させる理由に
 // なってはならない。
 func TestShow_NotFoundForExportOfAnotherSpace(t *testing.T) {
@@ -212,6 +197,6 @@ func TestShow_NotFoundForExportOfAnotherSpace(t *testing.T) {
 	setupHandler(t, queries).Show(rr, newRequest(t, "exp-dl-mine", otherExportID, userID))
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }

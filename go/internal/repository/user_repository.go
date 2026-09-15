@@ -1,4 +1,4 @@
-// Package repository はデータアクセス層を提供します
+// Package repositoryはデータアクセス層を提供します
 package repository
 
 import (
@@ -11,22 +11,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// UserRepository はユーザーリポジトリ
+// UserRepositoryはユーザーリポジトリ
 type UserRepository struct {
 	q *query.Queries
 }
 
-// NewUserRepository は UserRepository を生成する
+// NewUserRepositoryはUserRepositoryを生成する
 func NewUserRepository(q *query.Queries) *UserRepository {
 	return &UserRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *UserRepository) WithTx(tx *sql.Tx) *UserRepository {
 	return &UserRepository{q: r.q.WithTx(tx)}
 }
 
-// FindByID はIDでユーザーを取得する
+// FindByIDはIDでユーザーを取得する
 func (r *UserRepository) FindByID(ctx context.Context, id model.UserID) (*model.User, error) {
 	row, err := r.q.GetUserByID(ctx, string(id))
 	if err != nil {
@@ -38,7 +38,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id model.UserID) (*model.
 	return r.toModel(row), nil
 }
 
-// FindByEmail はメールアドレスでユーザーを取得する（削除されていないユーザーのみ）
+// FindByEmailはメールアドレスでユーザーを取得する (削除されていないユーザーのみ)
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
 	row, err := r.q.GetUserByEmail(ctx, email)
 	if err != nil {
@@ -50,7 +50,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*model.
 	return r.toModel(row), nil
 }
 
-// FindByAtname はアットネームでユーザーを取得する（削除されていないユーザーのみ）
+// FindByAtnameはアットネームでユーザーを取得する (削除されていないユーザーのみ)
 func (r *UserRepository) FindByAtname(ctx context.Context, atname string) (*model.User, error) {
 	row, err := r.q.GetUserByAtname(ctx, atname)
 	if err != nil {
@@ -62,7 +62,7 @@ func (r *UserRepository) FindByAtname(ctx context.Context, atname string) (*mode
 	return r.toModel(row), nil
 }
 
-// FindByIDs はIDリストでユーザーを一括取得する
+// FindByIDsはIDリストでユーザーを一括取得する
 func (r *UserRepository) FindByIDs(ctx context.Context, ids []model.UserID) ([]*model.User, error) {
 	if len(ids) == 0 {
 		return []*model.User{}, nil
@@ -78,7 +78,7 @@ func (r *UserRepository) FindByIDs(ctx context.Context, ids []model.UserID) ([]*
 	return users, nil
 }
 
-// CreateUserInput はユーザー作成の入力パラメータ
+// CreateUserInputはユーザー作成の入力パラメータ
 type CreateUserInput struct {
 	Email       string
 	Atname      string
@@ -89,7 +89,7 @@ type CreateUserInput struct {
 	JoinedAt    time.Time
 }
 
-// Create は新しいユーザーを作成する
+// Createは新しいユーザーを作成する
 func (r *UserRepository) Create(ctx context.Context, input CreateUserInput) (*model.User, error) {
 	now := time.Now()
 	row, err := r.q.CreateUser(ctx, query.CreateUserParams{
@@ -109,7 +109,7 @@ func (r *UserRepository) Create(ctx context.Context, input CreateUserInput) (*mo
 	return r.toModel(row), nil
 }
 
-// toModel は query.User を model.User に変換する
+// toModelはquery.Userをmodel.Userに変換する
 func (r *UserRepository) toModel(row query.User) *model.User {
 	var discardedAt *time.Time
 	if row.DiscardedAt.Valid {

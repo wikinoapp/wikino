@@ -9,10 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show shows the general settings of a topic
-// (GET /s/{space_identifier}/topics/{topic_number}/settings/general).
-//
-// [Ja] Show はトピックの一般設定を表示します
+// Showはトピックの一般設定を表示します
 // (GET /s/{space_identifier}/topics/{topic_number}/settings/general)。
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

@@ -26,7 +26,7 @@ func TestGenerateSecureToken(t *testing.T) {
 
 		// 24バイト -> Base64エンコードで32文字
 		if len(token) != 32 {
-			t.Errorf("トークンの長さが不正: got %d, want 32", len(token))
+			t.Errorf("トークンの長さ = %d、期待値 = 32", len(token))
 		}
 	})
 
@@ -105,7 +105,7 @@ func TestManager_GetCurrentUser(t *testing.T) {
 		}
 
 		if user.ID != userID {
-			t.Errorf("ユーザーIDが一致しない: got %s, want %s", user.ID, userID)
+			t.Errorf("ユーザーID = %s、期待値 = %s", user.ID, userID)
 		}
 	})
 
@@ -161,22 +161,22 @@ func TestManager_SetSessionCookie(t *testing.T) {
 
 		cookies := rr.Result().Cookies()
 		if len(cookies) != 1 {
-			t.Fatalf("Cookieの数が不正: got %d, want 1", len(cookies))
+			t.Fatalf("Cookieの数 = %d、期待値 = 1", len(cookies))
 		}
 
 		cookie := cookies[0]
 
 		if cookie.Name != session.CookieName {
-			t.Errorf("Cookie名が不正: got %s, want %s", cookie.Name, session.CookieName)
+			t.Errorf("Cookie名 = %s、期待値 = %s", cookie.Name, session.CookieName)
 		}
 
 		if cookie.Value != token {
-			t.Errorf("Cookie値が不正: got %s, want %s", cookie.Value, token)
+			t.Errorf("Cookie値 = %s、期待値 = %s", cookie.Value, token)
 		}
 
-		// Go の http パッケージは Domain の先頭のドットを自動的に削除する
+		// GoのhttpパッケージはDomainの先頭のドットを自動的に削除する
 		if cookie.Domain != "example.com" {
-			t.Errorf("Domainが不正: got %s, want example.com", cookie.Domain)
+			t.Errorf("Domain = %s、期待値 = example.com", cookie.Domain)
 		}
 
 		if !cookie.Secure {
@@ -188,13 +188,13 @@ func TestManager_SetSessionCookie(t *testing.T) {
 		}
 
 		if cookie.SameSite != http.SameSiteLaxMode {
-			t.Errorf("SameSiteが不正: got %v, want %v", cookie.SameSite, http.SameSiteLaxMode)
+			t.Errorf("SameSite = %v、期待値 = %v", cookie.SameSite, http.SameSiteLaxMode)
 		}
 
-		// 10年分のMaxAge（秒）を確認
+		// 10年分のMaxAge (秒) を確認
 		expectedMaxAge := 10 * 365 * 24 * 60 * 60
 		if cookie.MaxAge != expectedMaxAge {
-			t.Errorf("MaxAgeが不正: got %d, want %d", cookie.MaxAge, expectedMaxAge)
+			t.Errorf("MaxAge = %d、期待値 = %d", cookie.MaxAge, expectedMaxAge)
 		}
 	})
 }
@@ -219,21 +219,21 @@ func TestManager_DeleteSessionCookie(t *testing.T) {
 
 		cookies := rr.Result().Cookies()
 		if len(cookies) != 1 {
-			t.Fatalf("Cookieの数が不正: got %d, want 1", len(cookies))
+			t.Fatalf("Cookieの数 = %d、期待値 = 1", len(cookies))
 		}
 
 		cookie := cookies[0]
 
 		if cookie.Name != session.CookieName {
-			t.Errorf("Cookie名が不正: got %s, want %s", cookie.Name, session.CookieName)
+			t.Errorf("Cookie名 = %s、期待値 = %s", cookie.Name, session.CookieName)
 		}
 
 		if cookie.Value != "" {
-			t.Errorf("Cookie値が空でない: got %s", cookie.Value)
+			t.Errorf("Cookie値 = %s、期待値 = 空", cookie.Value)
 		}
 
 		if cookie.MaxAge != -1 {
-			t.Errorf("MaxAgeが不正: got %d, want -1", cookie.MaxAge)
+			t.Errorf("MaxAge = %d、期待値 = -1", cookie.MaxAge)
 		}
 	})
 }

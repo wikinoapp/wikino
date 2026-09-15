@@ -1,5 +1,5 @@
 -- name: IncrementRateLimit :one
--- Rate Limit カウンターをインクリメントする（UPSERT）
+-- Rate Limitカウンターをインクリメントする (UPSERT)
 -- 同一のkey + window_startが存在する場合はcountをインクリメント、なければ新規作成
 INSERT INTO rate_limits (key, window_start, count, created_at, updated_at)
 VALUES ($1, $2, 1, NOW(), NOW())

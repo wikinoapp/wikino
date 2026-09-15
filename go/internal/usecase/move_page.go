@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// MovePageUsecase はページ移動ユースケース
+// MovePageUsecaseはページ移動ユースケース
 type MovePageUsecase struct {
 	db              *sql.DB
 	spaceRepo       *repository.SpaceRepository
@@ -22,7 +22,7 @@ type MovePageUsecase struct {
 	createValidator *validator.PageMoveCreateValidator
 }
 
-// NewMovePageUsecase は MovePageUsecase を生成する
+// NewMovePageUsecaseはMovePageUsecaseを生成する
 func NewMovePageUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -45,7 +45,7 @@ func NewMovePageUsecase(
 	}
 }
 
-// MovePageInput はページ移動の入力パラメータ
+// MovePageInputはページ移動の入力パラメータ
 type MovePageInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
@@ -53,12 +53,12 @@ type MovePageInput struct {
 	DestTopicNumber string
 }
 
-// MovePageOutput はページ移動の出力パラメータ
+// MovePageOutputはページ移動の出力パラメータ
 type MovePageOutput struct {
 	Page *model.Page
 }
 
-// Execute はページを別のトピックに移動する
+// Executeはページを別のトピックに移動する
 func (uc *MovePageUsecase) Execute(ctx context.Context, input MovePageInput) (*MovePageOutput, error) {
 	// 1. データ取得
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)

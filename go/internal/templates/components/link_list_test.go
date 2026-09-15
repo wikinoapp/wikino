@@ -46,30 +46,25 @@ func TestLinkList_LoadMoreURL(t *testing.T) {
 	html := buf.String()
 
 	if !strings.Contains(html, `id="page-link-list-content"`) {
-		t.Error("full-page fallback anchor for the link list is missing")
+		t.Error("リンク一覧のページ全体のフォールバックのアンカーが無い")
 	}
 
-	// htmx uses the fragment URL, while normal navigation uses the full-page URL.
-	//
-	// [Ja] htmx はフラグメント URL を使い、通常の遷移はフルページ URL を使う。
+	// htmxはフラグメントURLを使い、通常の遷移はフルページURLを使う。
 	if !strings.Contains(html, `hx-get="/s/my-space/pages/1/link_list?backlinks_page=3&amp;context=show&amp;linked_backlinks_page=2&amp;linked_page_number=9&amp;linked_page_parent_page=1&amp;page=2"`) {
-		t.Error("htmx load-more link does not contain /link_list")
+		t.Error("htmxのさらに読み込むリンクに/link_listが含まれていない")
 	}
-	// Advancing the parent link list resets its nested child, while the independent page-level
-	// backlink list stays where it is.
-	//
-	// [Ja] 親のリンク一覧を進めると従属するネスト一覧はリセットし、独立したページ自身の
+	// 親のリンク一覧を進めると従属するネスト一覧はリセットし、独立したページ自身の
 	// バックリンク一覧は現在位置のままにする。
 	if !strings.Contains(html, `href="/s/my-space/pages/1?backlinks_page=3&amp;links_page=2#page-link-list-content"`) {
-		t.Error("full-page fallback URL is incorrect")
+		t.Error("ページ全体のフォールバックURLが正しくない")
 	}
 	if !strings.Contains(html, `aria-label="リンクをもっと見る"`) {
-		t.Error("the load-more link should name the listing it advances")
+		t.Error("さらに読み込むリンクに進める一覧の名前が無い")
 	}
 
-	// /draft_page が使われていないこと
+	// /draft_pageが使われていないこと
 	if strings.Contains(html, "/draft_page") {
-		t.Error("「もっと見る」ボタンのURLに /draft_page が含まれてはいけない")
+		t.Error("「もっと見る」ボタンのURLに /draft_pageが含まれてはいけない")
 	}
 }
 
@@ -94,7 +89,7 @@ func TestLinkList_Empty(t *testing.T) {
 	html := buf.String()
 
 	if strings.TrimSpace(html) != "" {
-		t.Errorf("リンクが空のとき、HTMLは空であるべき: got %q", html)
+		t.Errorf("リンクが空なのにHTMLが空ではない: %q", html)
 	}
 }
 
@@ -126,7 +121,7 @@ func TestLinkList_NoPagination(t *testing.T) {
 
 	html := buf.String()
 
-	// 「もっと見る」ボタンが表示されないこと（HasNext=false）
+	// 「もっと見る」ボタンが表示されないこと (HasNext=false)
 	if strings.Contains(html, "/link_list?page=") {
 		t.Error("ページネーションが不要なとき「もっと見る」ボタンが表示されてはいけない")
 	}

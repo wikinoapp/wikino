@@ -92,44 +92,44 @@ func TestUpdateSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SuggestionPage == nil {
-			t.Fatal("SuggestionPage should not be nil")
+			t.Fatal("SuggestionPageがnil")
 		}
 
 		// SuggestionPageのコンテンツが更新されていることを確認
 		updatedSP, err := suggestionPageRepo.FindByID(context.Background(), suggestionPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if updatedSP.Body != "更新された本文" {
-			t.Errorf("SuggestionPage.Body = %q, want %q", updatedSP.Body, "更新された本文")
+			t.Errorf("SuggestionPage.Body = %q、期待値 = %q", updatedSP.Body, "更新された本文")
 		}
 		if updatedSP.BodyHTML != "<p>更新された本文</p>" {
-			t.Errorf("SuggestionPage.BodyHTML = %q, want %q", updatedSP.BodyHTML, "<p>更新された本文</p>")
+			t.Errorf("SuggestionPage.BodyHTML = %q、期待値 = %q", updatedSP.BodyHTML, "<p>更新された本文</p>")
 		}
 		if updatedSP.Title == nil || *updatedSP.Title != "更新されたタイトル" {
-			t.Errorf("SuggestionPage.Title = %v, want %q", updatedSP.Title, "更新されたタイトル")
+			t.Errorf("SuggestionPage.Title = %v、期待値 = %q", updatedSP.Title, "更新されたタイトル")
 		}
 
 		// SuggestionPageRevisionが作成されていることを確認
 		revisions, err := suggestionPageRevisionRepo.ListBySuggestionPageID(context.Background(), suggestionPageID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionPageID() error = %v", err)
+			t.Fatalf("ListBySuggestionPageID()のエラー = %v", err)
 		}
 		if len(revisions) == 0 {
 			t.Fatal("SuggestionPageRevisionが作成されていません")
 		}
 		latestRevision := revisions[len(revisions)-1]
 		if latestRevision.Body != "更新された本文" {
-			t.Errorf("Revision.Body = %q, want %q", latestRevision.Body, "更新された本文")
+			t.Errorf("Revision.Body = %q、期待値 = %q", latestRevision.Body, "更新された本文")
 		}
 		if latestRevision.EditorSpaceMemberID != spaceMemberID {
-			t.Errorf("Revision.EditorSpaceMemberID = %v, want %v", latestRevision.EditorSpaceMemberID, spaceMemberID)
+			t.Errorf("Revision.EditorSpaceMemberID = %v、期待値 = %v", latestRevision.EditorSpaceMemberID, spaceMemberID)
 		}
 	})
 
@@ -148,15 +148,15 @@ func TestUpdateSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error, got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -214,15 +214,15 @@ func TestUpdateSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           nonMemberID,
 		})
 		if err == nil {
-			t.Fatal("expected error, got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -275,15 +275,15 @@ func TestUpdateSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error, got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -346,18 +346,18 @@ func TestUpdateSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 
 		updatedSP, err := suggestionPageRepo.FindByID(context.Background(), suggestionPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if updatedSP.Body != "本文のみ更新" {
-			t.Errorf("SuggestionPage.Body = %q, want %q", updatedSP.Body, "本文のみ更新")
+			t.Errorf("SuggestionPage.Body = %q、期待値 = %q", updatedSP.Body, "本文のみ更新")
 		}
 	})
 }

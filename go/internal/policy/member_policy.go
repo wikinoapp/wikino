@@ -4,17 +4,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// MemberPolicy performs authorization checks for space members.
-// It expands the union of space and topic scopes according to the implication rules
-// and stores the result as the set of effective scopes.
-//
-// [Ja] MemberPolicy はスペースメンバー用の権限判定を行う。
+// MemberPolicyはスペースメンバー用の権限判定を行う。
 // スペーススコープとトピックスコープの和集合を含意展開し、有効スコープの集合として保持する。
 type MemberPolicy struct {
 	effectiveScopes map[model.Scope]bool
 }
 
-// NewMemberPolicy はスペーススコープとトピックスコープから MemberPolicy を生成する。
+// NewMemberPolicyはスペーススコープとトピックスコープからMemberPolicyを生成する。
 // 両スコープの和集合を取り、含意ルールで展開する。
 func NewMemberPolicy(spaceScopes, topicScopes []model.Scope) *MemberPolicy {
 	merged := make([]model.Scope, 0, len(spaceScopes)+len(topicScopes))

@@ -12,16 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// Titles of the suggestions written to show a state the rest do not reach.
-// They are named rather than numbered because each one is there for a state of
-// its own, and because the listing shows a suggestion under its own title.
-//
-// None of them names the topic it sits in. The listing that shows them belongs
-// to a topic, so naming it would repeat what the screen already says, and a
-// title that names one would be left pointing at a name that no longer exists
-// once the topic is renamed.
-//
-// [Ja] 他の編集提案では届かない状態を見せるために書いた編集提案のタイトル。番号では
+// 他の編集提案では届かない状態を見せるために書いた編集提案のタイトル。番号では
 // なく名前を付けているのは、それぞれが固有の状態のために存在することと、一覧が
 // 編集提案自身のタイトルで表示することによる。
 //
@@ -34,34 +25,18 @@ const (
 	editStartedSuggestionTitle = "ページの書き出しを言い換える"
 )
 
-// ordinarySuggestionTitleFormat names a suggestion after the page it proposes
-// to change. The listing shows the title and nothing of the pages behind it, so
-// naming them apart is what lets one row be told from the next.
-//
-// [Ja] ordinarySuggestionTitleFormat は、編集提案を、それが変更を提案するページに
+// ordinarySuggestionTitleFormatは、編集提案を、それが変更を提案するページに
 // ちなんで命名する。一覧はタイトルだけを見せ、その先のページについては何も見せない
 // ため、行と行を見分けられるのは名前が違うことによる。
 const ordinarySuggestionTitleFormat = "%s を修正する"
 
-// renamedPageTitleSuffix is appended to the title of the one page a suggestion
-// proposes to rename. The changed pages screen shows a title change apart from
-// the body diff, and that part of the screen is only reached by a suggestion
-// that carries one.
-//
-// [Ja] renamedPageTitleSuffix は、編集提案がタイトルの変更を提案する唯一のページの
+// renamedPageTitleSuffixは、編集提案がタイトルの変更を提案する唯一のページの
 // タイトルに付け足される。変更差分画面はタイトルの変更を本文の差分とは別に表示し、
 // その部分はタイトルの変更を含む編集提案からしか到達できない。
 const renamedPageTitleSuffix = " (改題)"
 
-// showcaseSuggestionSpec describes one suggestion written to show a state the
-// ordinary ones do not: several changed pages at once, a discussion longer than
-// the suggestion itself, or an edit that is still under way.
-//
-// They are a fixed list rather than a count in the amounts because each one is
-// there for a state of its own, the way the drafts on unpublished pages are.
-//
-// [Ja] showcaseSuggestionSpec は、通常の編集提案では見せられない状態を見せるために
-// 書いた編集提案 1 件の内容。一度に複数のページを変更するもの、編集提案本体より長い
+// showcaseSuggestionSpecは、通常の編集提案では見せられない状態を見せるために
+// 書いた編集提案1件の内容。一度に複数のページを変更するもの、編集提案本体より長い
 // 議論が付いたもの、そして編集がまだ進行中のもの。
 //
 // 件数の設定ではなく固定の一覧にしているのは、それぞれが固有の状態のために存在する
@@ -69,41 +44,24 @@ const renamedPageTitleSuffix = " (改題)"
 type showcaseSuggestionSpec struct {
 	title string
 	body  string
-	// changedPages is how many of the topic's pages the suggestion proposes to
-	// change. The changed pages screen holds one diff per page, so more than
-	// one is what shows how those diffs sit next to each other.
-	//
-	// [Ja] changedPages は、その編集提案がトピックのページを何件変更しようとして
-	// いるか。変更差分画面は 1 ページにつき 1 つの差分を持つため、複数あることで
+	// changedPagesは、その編集提案がトピックのページを何件変更しようとして
+	// いるか。変更差分画面は1ページにつき1つの差分を持つため、複数あることで
 	// 差分同士がどう並ぶのかが見える。
 	changedPages int
-	// renamesLastPage asks for the last of the changed pages to be given a new
-	// title, which is the only way the title part of a diff is reached.
-	//
-	// [Ja] renamesLastPage は、変更対象の最後のページに新しいタイトルを付けることを
+	// renamesLastPageは、変更対象の最後のページに新しいタイトルを付けることを
 	// 求める。差分のタイトル部分に到達する唯一の手段であるため。
 	renamesLastPage bool
-	// manyComments asks for the discussion to run as long as the amounts ask
-	// for, instead of leaving the suggestion without one.
-	//
-	// [Ja] manyComments は、議論を件数の設定が求める長さまで伸ばすことを求める。
+	// manyCommentsは、議論を件数の設定が求める長さまで伸ばすことを求める。
 	// 議論が付かないままにするのではなく。
 	manyComments bool
-	// editStarted asks for a draft linked to the suggestion page, which is what
-	// starting to edit a suggested page leaves behind. The page detail screen
-	// reports the suggestion when the member who started it opens the page, and
-	// no other suggestion puts the screen in that state.
-	//
-	// [Ja] editStarted は、編集提案ページに紐づく下書きを求める。これは提案された
+	// editStartedは、編集提案ページに紐づく下書きを求める。これは提案された
 	// ページの編集を始めたときに残るものにあたる。ページ詳細画面は、編集を始めた
 	// メンバーがそのページを開いたときに編集提案を知らせる。他のどの編集提案も画面を
 	// その状態にしないため。
 	editStarted bool
 }
 
-// showcaseSuggestionSpecs are the suggestions that show a state of their own.
-//
-// [Ja] showcaseSuggestionSpecs は、それぞれ固有の状態を見せる編集提案。
+// showcaseSuggestionSpecsは、それぞれ固有の状態を見せる編集提案。
 func showcaseSuggestionSpecs() []showcaseSuggestionSpec {
 	return []showcaseSuggestionSpec{
 		{
@@ -127,26 +85,11 @@ func showcaseSuggestionSpecs() []showcaseSuggestionSpec {
 	}
 }
 
-// generateSuggestions creates the suggestions that the topic's suggestion
-// listing, the discussion under a suggestion and the changed pages screen are
-// read from.
-//
-// A suggestion is an edit proposed rather than published: it holds the pages it
-// would change, the discussion about it, and the mark of how it ended once it
-// is settled. All of them are created in one topic, because the listing that
-// shows suggestions belongs to a topic and spreading them would leave every one
-// of those listings short.
-//
-// topics.handbook is that topic. Its pages are the ones written to be counted
-// by a listing, and an applied suggestion rewrites the page it names: the
-// topics that hold pages written to be read would lose what they were written
-// for.
-//
-// [Ja] generateSuggestions は、トピックの編集提案一覧・編集提案の議論・変更差分画面が
+// generateSuggestionsは、トピックの編集提案一覧・編集提案の議論・変更差分画面が
 // 読む編集提案を作成する。
 //
 // 編集提案は、公開ではなく提案として行われる編集であり、変更対象のページ・それに
-// ついての議論・決着後にはどう終わったかの印を持つ。すべてを 1 つのトピックに作るのは、
+// ついての議論・決着後にはどう終わったかの印を持つ。すべてを1つのトピックに作るのは、
 // 編集提案の一覧がトピックに属しており、分散させるとどの一覧も短いままになるため。
 //
 // そのトピックは「ハンドブック」になる。あそこのページは一覧に数えられるために書かれた
@@ -166,7 +109,7 @@ func generateSuggestions(
 	ordinaryOpen := amt.openSuggestions - len(specs)
 	if ordinaryOpen < 0 {
 		return fmt.Errorf(
-			"オープンな編集提案 %d 件は、状態を見せるために固定で作る %d 件を下回っている",
+			"オープンな編集提案 %d件は、状態を見せるために固定で作る %d件を下回っている",
 			amt.openSuggestions, len(specs),
 		)
 	}
@@ -184,14 +127,9 @@ func generateSuggestions(
 		return err
 	}
 
-	// take hands out the next pages to be proposed against. Each suggestion
-	// gets pages of its own: two suggestions changing the same page is a state
-	// the application allows, but it would also put the same page under two
-	// diffs and make them hard to tell apart while browsing.
-	//
-	// [Ja] take は、次に変更対象とするページを渡す。各編集提案はそれぞれ別のページを
-	// 受け取る。同じページを 2 つの編集提案が変更する状態はアプリケーションが許すもの
-	// ではあるが、同じページが 2 つの差分に並ぶことになり、閲覧しながら見分けるのが
+	// takeは、次に変更対象とするページを渡す。各編集提案はそれぞれ別のページを
+	// 受け取る。同じページを2つの編集提案が変更する状態はアプリケーションが許すもの
+	// ではあるが、同じページが2つの差分に並ぶことになり、閲覧しながら見分けるのが
 	// 難しくなる。
 	take := func(count int) []suggestionTarget {
 		taken := targets[:count]
@@ -207,19 +145,11 @@ func generateSuggestions(
 
 	writer := newSuggestionWriter(dbtx, spaces.wiki, owner, stamps)
 
-	// position counts the suggestions as they are created, and decides which
-	// account each one is attributed to.
-	//
-	// [Ja] position は作成順に編集提案を数え、それぞれをどのアカウントのものとして
+	// positionは作成順に編集提案を数え、それぞれをどのアカウントのものとして
 	// 記録するかを決める。
 	position := 0
 
-	// The ordinary suggestions come first, and the ones written to show a state
-	// of their own last. The listing orders suggestions by when they were
-	// created, newest first, so the last ones created are the ones met at the
-	// top of it.
-	//
-	// [Ja] 通常の編集提案を先に、固有の状態を見せるために書いたものを最後に作成する。
+	// 通常の編集提案を先に、固有の状態を見せるために書いたものを最後に作成する。
 	// 一覧は作成時刻の新しい順に並べるため、最後に作成したものが一覧の先頭で
 	// 出会うものになる。
 	for _, group := range []struct {
@@ -285,85 +215,43 @@ func generateSuggestions(
 	return nil
 }
 
-// suggestionCreator picks the account a suggestion of the given position is
-// attributed to, handing the suggestions round the roles.
-//
-// What a member may do with a suggestion depends on whether they opened it:
-// the creator may close their own, while applying it takes the administrator.
-// Suggestions from one account alone would leave one side of that line without
-// anything to look at.
-//
-// [Ja] suggestionCreator は、その位置の編集提案を誰のものとして記録するかを選ぶ。
+// suggestionCreatorは、その位置の編集提案を誰のものとして記録するかを選ぶ。
 // 編集提案は役割へ順に回される。
 //
 // メンバーが編集提案に対して何をできるかは、それを自分が開いたかどうかで変わる。
-// 作成者は自分のものをクローズでき、反映するには管理者である必要がある。1 つの
+// 作成者は自分のものをクローズでき、反映するには管理者である必要がある。1つの
 // アカウントだけが編集提案を持つと、この線のどちらか側に見るものが無くなる。
 func suggestionCreator(space *seededSpace, position int) (*seededSpaceMember, error) {
 	return space.memberInTurn(contentAuthorRoles, position)
 }
 
-// suggestionCommentAuthor picks the account that writes the comment at the
-// given position in a thread, handing the remarks round the roles.
-//
-// A thread written by one account alone reads as a member talking to
-// themselves. The discussion is looked at to see how remarks by different
-// accounts sit against each other, so who each one comes from is what there is
-// to see.
-//
-// This is kept apart from suggestionCreator, which hands its work round for a
-// reason of its own: what a member may do with a suggestion depends on whether
-// they opened it. Sharing one function would leave whichever call site is read
-// second explained by the other one's reason.
-//
-// [Ja] suggestionCommentAuthor は、スレッドの指定位置のコメントを書くアカウントを
+// suggestionCommentAuthorは、スレッドの指定位置のコメントを書くアカウントを
 // 選ぶ。発言は役割へ順に回される。
 //
-// 1 つのアカウントだけが書いたスレッドは、メンバーの独り言として読まれる。議論は
+// 1つのアカウントだけが書いたスレッドは、メンバーの独り言として読まれる。議論は
 // 別々のアカウントの発言が互いにどう並ぶかを見るために眺められるため、各発言が
 // 誰のものかが見るべきものになる。
 //
-// suggestionCreator と分けているのは、あちらが別の理由で順に回しているため。
+// suggestionCreatorと分けているのは、あちらが別の理由で順に回しているため。
 // メンバーが編集提案に対して何をできるかは、それを自分が開いたかどうかで変わる。
-// 1 つの関数を共有すると、後から読んだほうの呼び出し側が、もう一方の理由で説明されて
+// 1つの関数を共有すると、後から読んだほうの呼び出し側が、もう一方の理由で説明されて
 // しまう。
 func suggestionCommentAuthor(space *seededSpace, position int) (*seededSpaceMember, error) {
 	return space.memberInTurn(contentAuthorRoles, position)
 }
 
-// suggestionTarget is a published page a suggestion proposes to change,
-// together with the body that page holds now.
-//
-// The body travels with the page because the proposed body is built from it.
-// The diff is taken between the two, so a body written without looking at what
-// is on the page would show up as one deletion and one addition with no
-// unchanged line between them.
-//
-// [Ja] suggestionTarget は、編集提案が変更を提案する公開済みのページと、その
+// suggestionTargetは、編集提案が変更を提案する公開済みのページと、その
 // ページが現在保持している本文。
 //
 // 本文をページと一緒に持つのは、提案する本文がそこから組み立てられるため。差分は
 // 両者の間で取られるため、ページにあるものを見ずに書いた本文は、間に変更のない行を
-// 挟まない 1 つの削除と 1 つの追加として表示されてしまう。
+// 挟まない1つの削除と1つの追加として表示されてしまう。
 type suggestionTarget struct {
 	page *seededPage
 	body string
 }
 
-// collectSuggestionTargets picks the published pages the suggestions are
-// written against.
-//
-// The pages are taken from what earlier generators published rather than
-// created here, for the same reason the drafts take theirs: the space-wide page
-// listing is sized to leave a partial last page, and pages added for the sake
-// of suggestions would move it off that size for a reason that has nothing to
-// do with what a suggestion is.
-//
-// Pages a draft is already written against are left out. Such a page is being
-// edited by its own member, and proposing a change to it as well would leave
-// the editor asking which of the two to keep before either can be looked at.
-//
-// [Ja] collectSuggestionTargets は、編集提案が対象とする公開済みのページを選ぶ。
+// collectSuggestionTargetsは、編集提案が対象とする公開済みのページを選ぶ。
 //
 // ページはここで作成せず、先行する生成器が公開したものから取る。下書きが対象を
 // そうしているのと同じ理由による。スペース全体のページ一覧は最終ページが端数になる
@@ -403,7 +291,7 @@ func collectSuggestionTargets(
 		string(topic.spaceID), string(topic.id), count,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("トピック %s の公開済みページの取得に失敗: %w", topic.name, err)
+		return nil, fmt.Errorf("トピック %sの公開済みページの取得に失敗: %w", topic.name, err)
 	}
 	defer func() {
 		_ = rows.Close()
@@ -418,7 +306,7 @@ func collectSuggestionTargets(
 			body   string
 		)
 		if err := rows.Scan(&id, &number, &title, &body); err != nil {
-			return nil, fmt.Errorf("トピック %s の公開済みページの読み取りに失敗: %w", topic.name, err)
+			return nil, fmt.Errorf("トピック %sの公開済みページの読み取りに失敗: %w", topic.name, err)
 		}
 
 		targets = append(targets, suggestionTarget{
@@ -427,12 +315,12 @@ func collectSuggestionTargets(
 		})
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("トピック %s の公開済みページの読み取りに失敗: %w", topic.name, err)
+		return nil, fmt.Errorf("トピック %sの公開済みページの読み取りに失敗: %w", topic.name, err)
 	}
 
 	if len(targets) < count {
 		return nil, fmt.Errorf(
-			"トピック %s の編集提案の対象にできるページが %d 件しかなく、必要な %d 件に足りない",
+			"トピック %sの編集提案の対象にできるページが %d件しかなく、必要な %d件に足りない",
 			topic.name, len(targets), count,
 		)
 	}
@@ -440,22 +328,14 @@ func collectSuggestionTargets(
 	return targets, nil
 }
 
-// suggestionWriter creates suggestions in one space. It holds a pageWriter of
-// its own because a proposed body is rendered through the same path a page body
-// is, and because applying a suggestion writes onto the pages themselves.
-//
-// [Ja] suggestionWriter は 1 つのスペースに編集提案を作成する。自前の pageWriter を
+// suggestionWriterは1つのスペースに編集提案を作成する。自前のpageWriterを
 // 持つのは、提案された本文がページの本文と同じ経路でレンダリングされることと、
 // 編集提案の反映がページ自体へ書き込むことによる。
 type suggestionWriter struct {
 	space *seededSpace
-	// owner is the member that applies a suggestion and that a started edit
-	// leaves a draft for. Both take the administrator, so the role is resolved
-	// once when the writer is built rather than looked up at each write.
-	//
-	// [Ja] owner は、編集提案を反映するメンバーであり、編集を始めたときの下書きが
+	// ownerは、編集提案を反映するメンバーであり、編集を始めたときの下書きが
 	// 残る先でもある。どちらも管理者であることを要するため、書き込みのたびに引かず、
-	// writer を組み立てるときに 1 度だけ解決する。
+	// writerを組み立てるときに1度だけ解決する。
 	owner                      *seededSpaceMember
 	pages                      *pageWriter
 	suggestionRepo             *repository.SuggestionRepository
@@ -464,21 +344,14 @@ type suggestionWriter struct {
 	suggestionCommentRepo      *repository.SuggestionCommentRepository
 	draftPageRepo              *repository.DraftPageRepository
 	topicMemberRepo            *repository.TopicMemberRepository
-	// draftStamps stamps the draft a started edit leaves behind. It is the
-	// counter the whole run shares, so that draft stands behind the drafts the
-	// draft phase wrote instead of ahead of them.
-	//
-	// [Ja] draftStamps は、編集を始めたときに残る下書きを打刻する。実行全体で共有
+	// draftStampsは、編集を始めたときに残る下書きを打刻する。実行全体で共有
 	// されるカウンターであり、この下書きが下書きフェーズの書いた下書きより前ではなく
 	// 後ろに並ぶようにするためのもの。
 	draftStamps *draftStamps
 }
 
-// newSuggestionWriter returns a writer that creates suggestions in space,
-// applying them and starting edits as owner.
-//
-// [Ja] newSuggestionWriter は space に編集提案を作成する writer を返す。反映と
-// 編集の開始は owner として行う。
+// newSuggestionWriterはspaceに編集提案を作成するwriterを返す。反映と
+// 編集の開始はownerとして行う。
 func newSuggestionWriter(
 	dbtx query.DBTX,
 	space *seededSpace,
@@ -501,36 +374,23 @@ func newSuggestionWriter(
 	}
 }
 
-// createSuggestionInput describes one suggestion to create.
-//
-// [Ja] createSuggestionInput は作成する編集提案 1 件の内容。
+// createSuggestionInputは作成する編集提案1件の内容。
 type createSuggestionInput struct {
 	topic   *seededTopic
 	creator *seededSpaceMember
 	title   string
 	body    string
 	targets []suggestionTarget
-	// status is where the suggestion has come to rest. Every one of them is
-	// opened first and moved on from there, so this is the end of a history
-	// rather than a column to be written.
-	//
-	// [Ja] status は編集提案が落ち着いた先。どの編集提案もまずオープンとして作られ、
+	// statusは編集提案が落ち着いた先。どの編集提案もまずオープンとして作られ、
 	// そこから移っていくため、これは書き込む列ではなく履歴の終着点にあたる。
 	status          model.SuggestionStatus
 	renamesLastPage bool
-	// comments is how long the discussion under the suggestion runs.
-	//
-	// [Ja] comments は、その編集提案の下に続く議論の長さ。
+	// commentsは、その編集提案の下に続く議論の長さ。
 	comments    int
 	editStarted bool
 }
 
-// suggestedPage is one page a suggestion proposes to change, after the proposed
-// body has been rendered. What was rendered is kept because applying the
-// suggestion writes the same title, body and links onto the page itself, and
-// because the draft an edit in progress leaves behind holds a copy of them.
-//
-// [Ja] suggestedPage は、編集提案が変更を提案するページ 1 件を、提案された本文の
+// suggestedPageは、編集提案が変更を提案するページ1件を、提案された本文の
 // レンダリング後の形で表す。レンダリング結果を保持するのは、編集提案の反映が同じ
 // タイトル・本文・リンクをページ自体へ書き込むことと、進行中の編集が残す下書きが
 // それらの写しを持つことによる。
@@ -543,15 +403,7 @@ type suggestedPage struct {
 	linkedPageIDs []model.PageID
 }
 
-// createSuggestion creates one suggestion together with the pages it proposes
-// to change, the discussion under it and the mark of how it ended.
-//
-// The suggestion is opened first and moved on from there, because that is the
-// only way production reaches the other statuses: a suggestion is created open,
-// and applying or closing it is a later act on a suggestion that already
-// exists.
-//
-// [Ja] createSuggestion は編集提案 1 件と、それが変更を提案するページ、その下に続く
+// createSuggestionは編集提案1件と、それが変更を提案するページ、その下に続く
 // 議論、そしてどう終わったかの印を作成する。
 //
 // まずオープンとして作り、そこから移していくのは、本番が他のステータスに至る経路が
@@ -577,7 +429,7 @@ func (w *suggestionWriter) createSuggestion(ctx context.Context, input createSug
 		Status:               model.SuggestionStatusOpen,
 	})
 	if err != nil {
-		return fmt.Errorf("編集提案 %s の作成に失敗: %w", input.title, err)
+		return fmt.Errorf("編集提案 %sの作成に失敗: %w", input.title, err)
 	}
 
 	pages, err := w.createSuggestionPages(ctx, suggestion, input)
@@ -598,16 +450,7 @@ func (w *suggestionWriter) createSuggestion(ctx context.Context, input createSug
 	return w.settle(ctx, suggestion, input, pages)
 }
 
-// createSuggestionPages creates the pages the suggestion proposes to change,
-// each with the revision the proposal was written against and the revision the
-// proposal itself is.
-//
-// The base revision is what the changed pages screen takes the diff against.
-// Without it the screen has nothing to compare the proposal to and shows the
-// whole body as added, so a page with no revision to point at is refused rather
-// than proposed against.
-//
-// [Ja] createSuggestionPages は、編集提案が変更を提案するページを作成する。各ページは、
+// createSuggestionPagesは、編集提案が変更を提案するページを作成する。各ページは、
 // 提案が書かれた時点のリビジョンと、提案そのものであるリビジョンを持つ。
 //
 // 基準リビジョンは、変更差分画面が差分を取る相手になる。これが無いと画面は提案を
@@ -639,10 +482,10 @@ func (w *suggestionWriter) createSuggestionPages(
 
 		baseRevision, err := w.pages.pageRevisionRepo.FindLatestByPageID(ctx, target.page.id, w.space.id)
 		if err != nil {
-			return nil, fmt.Errorf("ページ %s の最新リビジョンの取得に失敗: %w", target.page.title, err)
+			return nil, fmt.Errorf("ページ %sの最新リビジョンの取得に失敗: %w", target.page.title, err)
 		}
 		if baseRevision == nil {
-			return nil, fmt.Errorf("ページ %s に差分の基準となるリビジョンが無い", target.page.title)
+			return nil, fmt.Errorf("ページ %sに差分の基準となるリビジョンが無い", target.page.title)
 		}
 
 		suggestionPage, err := w.suggestionPageRepo.Create(ctx, repository.CreateSuggestionPageInput{
@@ -656,7 +499,7 @@ func (w *suggestionWriter) createSuggestionPages(
 			LinkedPageIDs:  linkedPageIDs,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("編集提案 %s の提案ページの作成に失敗: %w", input.title, err)
+			return nil, fmt.Errorf("編集提案 %sの提案ページの作成に失敗: %w", input.title, err)
 		}
 
 		if _, err := w.suggestionPageRevisionRepo.Create(ctx, repository.CreateSuggestionPageRevisionInput{
@@ -667,7 +510,7 @@ func (w *suggestionWriter) createSuggestionPages(
 			Body:                body,
 			BodyHTML:            bodyHTML,
 		}); err != nil {
-			return nil, fmt.Errorf("編集提案 %s の提案ページのリビジョンの作成に失敗: %w", input.title, err)
+			return nil, fmt.Errorf("編集提案 %sの提案ページのリビジョンの作成に失敗: %w", input.title, err)
 		}
 
 		pages = append(pages, suggestedPage{
@@ -683,10 +526,7 @@ func (w *suggestionWriter) createSuggestionPages(
 	return pages, nil
 }
 
-// createComments writes the discussion under a suggestion, with the two
-// accounts taking turns.
-//
-// [Ja] createComments は編集提案の下に続く議論を書く。2 つのアカウントが交互に
+// createCommentsは編集提案の下に続く議論を書く。2つのアカウントが交互に
 // 発言する。
 func (w *suggestionWriter) createComments(
 	ctx context.Context,
@@ -696,7 +536,7 @@ func (w *suggestionWriter) createComments(
 	for position := 1; position <= input.comments; position++ {
 		number, err := w.suggestionCommentRepo.GetNextNumber(ctx, suggestion.ID)
 		if err != nil {
-			return fmt.Errorf("編集提案 %s の次のコメント番号の取得に失敗: %w", input.title, err)
+			return fmt.Errorf("編集提案 %sの次のコメント番号の取得に失敗: %w", input.title, err)
 		}
 
 		author, err := suggestionCommentAuthor(w.space, position)
@@ -711,37 +551,24 @@ func (w *suggestionWriter) createComments(
 			Number:               number,
 			Body:                 suggestionCommentBody(position),
 		}); err != nil {
-			return fmt.Errorf("編集提案 %s のコメントの作成に失敗: %w", input.title, err)
+			return fmt.Errorf("編集提案 %sのコメントの作成に失敗: %w", input.title, err)
 		}
 	}
 
 	return nil
 }
 
-// startEdit leaves behind the draft that starting to edit a suggested page
-// produces: a copy of what the suggestion proposes, linked to the suggestion
-// page it came from.
-//
-// The editor writes such a draft when a member opens a suggested page for
-// editing, and it is what the page detail screen reads to report that the page
-// is being changed under a suggestion. The draft is left to roleOwner, because
-// a draft belongs to the member who opened it and only one account can be
-// looking at that screen.
-//
-// It takes the run's next stamp rather than the current time, which places it
-// after every draft written before it. See draftStamps.
-//
-// [Ja] startEdit は、提案されたページの編集を始めたときに生まれる下書きを残す。
+// startEditは、提案されたページの編集を始めたときに生まれる下書きを残す。
 // 内容は編集提案が提案しているものの写しで、元になった編集提案ページに紐づく。
 //
 // この下書きは、メンバーが提案されたページを編集のために開いたときに編集画面が
 // 書くものであり、ページ詳細画面が「このページは編集提案の下で変更されようとして
-// いる」と知らせるために読むものでもある。下書きを roleOwner のものにしているのは、
+// いる」と知らせるために読むものでもある。下書きをroleOwnerのものにしているのは、
 // 下書きが開いたメンバーのものであり、その画面を見ているのは一方のアカウントに
 // 限られるため。
 //
 // 打刻に現在時刻ではなく実行の次の打刻を使っているため、この下書きはそれ以前に
-// 書かれたすべての下書きの後ろに並ぶ。draftStamps を参照。
+// 書かれたすべての下書きの後ろに並ぶ。draftStampsを参照。
 func (w *suggestionWriter) startEdit(ctx context.Context, input createSuggestionInput, page suggestedPage) error {
 	if _, err := w.draftPageRepo.Create(ctx, repository.CreateDraftPageInput{
 		SpaceID:          w.space.id,
@@ -755,17 +582,14 @@ func (w *suggestionWriter) startEdit(ctx context.Context, input createSuggestion
 		LinkedPageIDs:    page.linkedPageIDs,
 		ModifiedAt:       w.draftStamps.next(),
 	}); err != nil {
-		return fmt.Errorf("編集提案 %s の編集中の下書きの作成に失敗: %w", input.title, err)
+		return fmt.Errorf("編集提案 %sの編集中の下書きの作成に失敗: %w", input.title, err)
 	}
 
 	return nil
 }
 
-// settle moves the suggestion to where it came to rest. An open suggestion is
-// already there, so only the two settled statuses have anything left to do.
-//
-// [Ja] settle は編集提案を、それが落ち着いた先へ移す。オープンな編集提案は既に
-// そこにいるため、残る作業があるのは決着済みの 2 つのステータスだけになる。
+// settleは編集提案を、それが落ち着いた先へ移す。オープンな編集提案は既に
+// そこにいるため、残る作業があるのは決着済みの2つのステータスだけになる。
 func (w *suggestionWriter) settle(
 	ctx context.Context,
 	suggestion *model.Suggestion,
@@ -789,28 +613,21 @@ func (w *suggestionWriter) settle(
 	case model.SuggestionStatusOpen:
 		return nil
 	default:
-		return fmt.Errorf("編集提案 %s に未知のステータス %d が指定された", input.title, input.status)
+		return fmt.Errorf("編集提案 %sに未知のステータス %dが指定された", input.title, input.status)
 	}
 
 	if _, err := w.suggestionRepo.UpdateStatus(ctx, update); err != nil {
-		return fmt.Errorf("編集提案 %s のステータスの更新に失敗: %w", input.title, err)
+		return fmt.Errorf("編集提案 %sのステータスの更新に失敗: %w", input.title, err)
 	}
 
 	return nil
 }
 
-// applyToPages writes what the suggestion proposes onto the pages themselves,
-// which is what applying it does. The page then holds the proposal, keeps a
-// revision of it, and counts the member who applied it among its editors.
-//
-// That member is roleOwner. Applying takes a scope only the administrator
-// holds, so no other account could have been the one to do it.
-//
-// [Ja] applyToPages は、編集提案が提案している内容をページ自体へ書き込む。これが
+// applyToPagesは、編集提案が提案している内容をページ自体へ書き込む。これが
 // 反映の中身にあたる。ページは提案された内容を保持し、そのリビジョンを残し、反映した
 // メンバーを編集者に数えるようになる。
 //
-// そのメンバーは roleOwner になる。反映には管理者だけが持つスコープが要るため、他の
+// そのメンバーはroleOwnerになる。反映には管理者だけが持つスコープが要るため、他の
 // アカウントがそれを行ったということはありえないため。
 func (w *suggestionWriter) applyToPages(ctx context.Context, topic *seededTopic, pages []suggestedPage) error {
 	now := time.Now()
@@ -829,7 +646,7 @@ func (w *suggestionWriter) applyToPages(ctx context.Context, topic *seededTopic,
 			ModifiedAt:    now,
 			PublishedAt:   &now,
 		}); err != nil {
-			return fmt.Errorf("ページ %s への編集提案の反映に失敗: %w", title, err)
+			return fmt.Errorf("ページ %sへの編集提案の反映に失敗: %w", title, err)
 		}
 
 		if _, err := w.pages.pageRevisionRepo.Create(ctx, repository.CreatePageRevisionInput{
@@ -840,7 +657,7 @@ func (w *suggestionWriter) applyToPages(ctx context.Context, topic *seededTopic,
 			Body:          page.body,
 			BodyHTML:      page.bodyHTML,
 		}); err != nil {
-			return fmt.Errorf("ページ %s のリビジョンの作成に失敗: %w", title, err)
+			return fmt.Errorf("ページ %sのリビジョンの作成に失敗: %w", title, err)
 		}
 
 		pageEditor, err := w.pages.pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
@@ -850,7 +667,7 @@ func (w *suggestionWriter) applyToPages(ctx context.Context, topic *seededTopic,
 			LastPageModifiedAt: now,
 		})
 		if err != nil {
-			return fmt.Errorf("ページ %s の編集者の登録に失敗: %w", title, err)
+			return fmt.Errorf("ページ %sの編集者の登録に失敗: %w", title, err)
 		}
 
 		if _, err := w.pages.pageEditorRepo.UpdateLastPageModifiedAt(ctx, repository.UpdateLastPageModifiedAtInput{
@@ -858,50 +675,30 @@ func (w *suggestionWriter) applyToPages(ctx context.Context, topic *seededTopic,
 			SpaceID:            w.space.id,
 			LastPageModifiedAt: now,
 		}); err != nil {
-			return fmt.Errorf("ページ %s の編集者の更新に失敗: %w", title, err)
+			return fmt.Errorf("ページ %sの編集者の更新に失敗: %w", title, err)
 		}
 
 		if err := w.topicMemberRepo.UpdateLastPageModifiedAt(
 			ctx, w.space.id, topic.id, w.owner.id, now,
 		); err != nil {
-			return fmt.Errorf("トピック %s のメンバーの更新に失敗: %w", topic.name, err)
+			return fmt.Errorf("トピック %sのメンバーの更新に失敗: %w", topic.name, err)
 		}
 	}
 
 	return nil
 }
 
-// suggestionPageBody builds the body a suggestion proposes for a page: what the
-// page holds now, with one line rewritten and a section added at the end.
+// suggestionPageBodyは、編集提案がページに対して提案する本文を組み立てる。
+// ページが現在保持している本文の1行を書き換え、末尾に節を足したもの。
 //
-// Keeping the rest of the body untouched is what gives the diff its unchanged
-// context lines, and what makes the two changes readable as changes. A body
-// written from scratch would be shown as the whole page being replaced, which
-// says nothing about what was proposed.
-//
-// The rewritten line is the last one of the first paragraph that is neither
-// blank nor a heading. A heading would move the change into the outline of the
-// page, where a diff is read differently from a change made inside a paragraph.
-// Appending to the last line of the paragraph rather than its first puts the
-// sentence at the end of the paragraph. The seed writes a paragraph on one
-// line, so that is usually the only line it has, and a body that does run over
-// several lines still takes the sentence where a sentence ends.
-//
-// The sentence follows what the line already held with nothing between them,
-// because these bodies are written in Japanese, where one sentence follows the
-// next without a space.
-//
-// [Ja] suggestionPageBody は、編集提案がページに対して提案する本文を組み立てる。
-// ページが現在保持している本文の 1 行を書き換え、末尾に節を足したもの。
-//
-// 残りの本文をそのままにするのは、差分に変更のない文脈行を与え、2 箇所の変更を
+// 残りの本文をそのままにするのは、差分に変更のない文脈行を与え、2箇所の変更を
 // 変更として読めるようにするため。一から書いた本文はページ全体の置き換えとして
 // 表示され、何が提案されたのかを何も語らない。
 //
 // 書き換える行は、空行でも見出しでもない最初の段落の、最後の行になる。見出しを
 // 書き換えると変更がページの見出し構成へ移り、そこでの差分は段落の中の変更とは違う
 // 読まれ方をする。段落の最初の行ではなく最後の行に足すのは、文を段落の末尾に置く
-// ため。シードは段落を 1 行で書くため通常はその 1 行しか無いが、複数行にまたがる
+// ため。シードは段落を1行で書くため通常はその1行しか無いが、複数行にまたがる
 // 本文であっても文の切れ目に足せる。
 //
 // 文は、その行が元から持っていた内容との間に何も挟まずに続ける。これらの本文は
@@ -927,13 +724,8 @@ func suggestionPageBody(base string) string {
 	return strings.Join(lines, "\n") + "\n" + suggestionAddedSection
 }
 
-// suggestionRewrittenSentence is appended to the one line the proposal
-// rewrites, and suggestionAddedSection is what it adds at the end. Between them
-// the diff holds both of the shapes a change takes: a line that was there and
-// now reads differently, and lines that were not there at all.
-//
-// [Ja] suggestionRewrittenSentence は、提案が書き換える唯一の行に付け足される文。
-// suggestionAddedSection は末尾に足される節。この 2 つにより、差分は変更が取る 2 つの
+// suggestionRewrittenSentenceは、提案が書き換える唯一の行に付け足される文。
+// suggestionAddedSectionは末尾に足される節。この2つにより、差分は変更が取る2つの
 // 形をどちらも持つ。元からあって今は違う内容になった行と、元から無かった行である。
 const (
 	suggestionRewrittenSentence = "この文は、レビュー中の編集がこの行に足したものです。"
@@ -945,15 +737,7 @@ const (
 `
 )
 
-// ordinarySuggestionBody says what a suggestion proposes. The suggestion body
-// is shown as plain text rather than rendered, so it carries no markup: what is
-// written here is what is read on the screen.
-//
-// The page title takes a space after it and none before. The titles the seed
-// writes open with Japanese and close with a number, and a space belongs
-// between a number and Japanese rather than between two Japanese characters.
-//
-// [Ja] ordinarySuggestionBody は、その編集提案が何を提案しているのかを述べる。編集提案の
+// ordinarySuggestionBodyは、その編集提案が何を提案しているのかを述べる。編集提案の
 // 本文はレンダリングされずプレーンテキストとして表示されるため、記法は書かない。
 // ここに書いたものがそのまま画面で読まれる。
 //
@@ -964,21 +748,10 @@ func ordinarySuggestionBody(pageTitle string) string {
 	return fmt.Sprintf(`この編集提案は%s に小さな編集を提案します。1 行を書き換え、末尾に節を 1 つ足すものです。変更差分タブが差分を持ち、ページ自体は、反映されるまで最後に公開された内容を保ちます。`, pageTitle)
 }
 
-// suggestionCommentBodies are what the discussion under a suggestion is made
-// of. They read as a conversation rather than as repeated filler, because a
-// thread is looked at to see how remarks by two accounts sit against each
-// other. The remarks answer one another in turn and the last one settles the
-// thread, so they are written in the order they are posted in.
-//
-// There are as many of them as the longest discussion the amounts ask for.
-// A shorter list would be cycled through, which would put the opening remark
-// back under the one that settled the thread and undo the arc they are written
-// as.
-//
-// [Ja] suggestionCommentBodies は、編集提案の下に続く議論の中身。同じ埋め草の
-// 繰り返しではなく会話として読めるようにしている。スレッドは、2 つのアカウントの
+// suggestionCommentBodiesは、編集提案の下に続く議論の中身。同じ埋め草の
+// 繰り返しではなく会話として読めるようにしている。スレッドは、2つのアカウントの
 // 発言が互いにどう並ぶかを見るために眺められるため。発言は順に互いへ答えており、
-// 最後の 1 件がスレッドを収めるため、投稿される順に書いている。
+// 最後の1件がスレッドを収めるため、投稿される順に書いている。
 //
 // 件数は、件数の設定が求める最も長い議論に合わせている。これより短いと本文が循環し、
 // スレッドを収めた発言の下に冒頭の発言が戻ってきて、発言が描いてきた流れが崩れる。
@@ -991,12 +764,7 @@ var suggestionCommentBodies = []string{
 	`コメント %d。私からは以上です。上の言い回しさえ決まれば、あとは反映してよい程度の小さな変更です。`,
 }
 
-// suggestionCommentBody writes the comment at the given position in the thread.
-// The position is written into the body because the comments are all posted in
-// the same moment, and the relative time each one is shown under cannot tell
-// them apart.
-//
-// [Ja] suggestionCommentBody は、スレッドの指定位置のコメントを書く。位置を本文へ
+// suggestionCommentBodyは、スレッドの指定位置のコメントを書く。位置を本文へ
 // 書き込むのは、コメントがいずれも同じ瞬間に投稿され、各コメントの下に表示される
 // 相対時刻ではそれらを見分けられないため。
 func suggestionCommentBody(position int) string {

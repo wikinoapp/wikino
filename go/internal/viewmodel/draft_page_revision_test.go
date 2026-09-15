@@ -13,8 +13,7 @@ func TestNewDraftPageRevisions(t *testing.T) {
 
 	base := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
 
-	// newRevision builds a minimal revision model for view-model conversion tests.
-	// [Ja] newRevision はビューモデル変換テスト用の最小限のリビジョンモデルを生成する。
+	// newRevisionはビューモデル変換テスト用の最小限のリビジョンモデルを生成する。
 	newRevision := func(createdAt time.Time) *model.DraftPageRevision {
 		return &model.DraftPageRevision{
 			ID:        model.DraftPageRevisionID("00000000-0000-0000-0000-000000000000"),
@@ -25,8 +24,7 @@ func TestNewDraftPageRevisions(t *testing.T) {
 	t.Run("新しい順のスライスからバージョン番号を算出する", func(t *testing.T) {
 		t.Parallel()
 
-		// Newest first: index 0 is the latest revision (v3).
-		// [Ja] 新しい順: インデックス 0 が最新リビジョン (v3)。
+		// 新しい順: インデックス0が最新リビジョン (v3)。
 		revisions := []*model.DraftPageRevision{
 			newRevision(base.Add(3 * time.Second)),
 			newRevision(base.Add(2 * time.Second)),
@@ -36,38 +34,35 @@ func TestNewDraftPageRevisions(t *testing.T) {
 		result := viewmodel.NewDraftPageRevisions(revisions, 3)
 
 		if len(result) != 3 {
-			t.Fatalf("len(result) = %d, want 3", len(result))
+			t.Fatalf("len(result) = %d、期待値 = 3", len(result))
 		}
 		wantVersions := []int64{3, 2, 1}
 		for i, want := range wantVersions {
 			if result[i].Version != want {
-				t.Errorf("result[%d].Version = %d, want %d", i, result[i].Version, want)
+				t.Errorf("result[%d].Version = %d、期待値 = %d", i, result[i].Version, want)
 			}
 		}
 		if !result[0].IsCurrent {
-			t.Error("result[0].IsCurrent should be true (newest revision)")
+			t.Error("result[0].IsCurrentがfalse (最新のリビジョン)")
 		}
 		for i := 1; i < len(result); i++ {
 			if result[i].IsCurrent {
-				t.Errorf("result[%d].IsCurrent should be false", i)
+				t.Errorf("result[%d].IsCurrentがtrue", i)
 			}
 		}
 		if !result[0].CreatedAt.Equal(base.Add(3 * time.Second)) {
-			t.Errorf("result[0].CreatedAt = %v, want %v", result[0].CreatedAt, base.Add(3*time.Second))
+			t.Errorf("result[0].CreatedAt = %v、期待値 = %v", result[0].CreatedAt, base.Add(3*time.Second))
 		}
 		if result[0].ID != "00000000-0000-0000-0000-000000000000" {
-			t.Errorf("result[0].ID = %q, want %q", result[0].ID, "00000000-0000-0000-0000-000000000000")
+			t.Errorf("result[0].ID = %q、期待値 = %q", result[0].ID, "00000000-0000-0000-0000-000000000000")
 		}
 	})
 
 	t.Run("総件数が一覧の件数より多い場合もバージョン番号が安定する", func(t *testing.T) {
 		t.Parallel()
 
-		// Total count 25 with a list capped at 2 entries: versions are v25 and v24
-		// (older revisions outside the cap keep v1..v23).
-		//
-		// [Ja] 総件数 25 件で一覧が 2 件にキャップされた場合: バージョンは v25 と v24 になる
-		// (上限から溢れた古いリビジョンが v1〜v23 を保持する)。
+		// 総件数25件で一覧が2件にキャップされた場合: バージョンはv25とv24になる
+		// (上限から溢れた古いリビジョンがv1〜v23を保持する)。
 		revisions := []*model.DraftPageRevision{
 			newRevision(base.Add(25 * time.Second)),
 			newRevision(base.Add(24 * time.Second)),
@@ -76,13 +71,13 @@ func TestNewDraftPageRevisions(t *testing.T) {
 		result := viewmodel.NewDraftPageRevisions(revisions, 25)
 
 		if len(result) != 2 {
-			t.Fatalf("len(result) = %d, want 2", len(result))
+			t.Fatalf("len(result) = %d、期待値 = 2", len(result))
 		}
 		if result[0].Version != 25 {
-			t.Errorf("result[0].Version = %d, want 25", result[0].Version)
+			t.Errorf("result[0].Version = %d、期待値 = 25", result[0].Version)
 		}
 		if result[1].Version != 24 {
-			t.Errorf("result[1].Version = %d, want 24", result[1].Version)
+			t.Errorf("result[1].Version = %d、期待値 = 24", result[1].Version)
 		}
 	})
 
@@ -92,10 +87,10 @@ func TestNewDraftPageRevisions(t *testing.T) {
 		result := viewmodel.NewDraftPageRevisions(nil, 0)
 
 		if result == nil {
-			t.Fatal("result should be non-nil empty slice")
+			t.Fatal("resultがnil (期待値 = nilではない空のスライス)")
 		}
 		if len(result) != 0 {
-			t.Errorf("len(result) = %d, want 0", len(result))
+			t.Errorf("len(result) = %d、期待値 = 0", len(result))
 		}
 	})
 }
@@ -122,35 +117,34 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 		diff := viewmodel.NewDraftPageRevisionDiff(revision, previous)
 
 		if !diff.HasTitleChange {
-			t.Error("HasTitleChange should be true")
+			t.Error("HasTitleChangeがfalse")
 		}
 		if diff.OldTitle != "Old Title" || diff.NewTitle != "New Title" {
-			t.Errorf("OldTitle/NewTitle = %q/%q, want %q/%q", diff.OldTitle, diff.NewTitle, "Old Title", "New Title")
+			t.Errorf("OldTitle/NewTitle = %q/%q、期待値 = %q/%q", diff.OldTitle, diff.NewTitle, "Old Title", "New Title")
 		}
 		if !diff.CreatedAt.Equal(createdAt) {
-			t.Errorf("CreatedAt = %v, want %v", diff.CreatedAt, createdAt)
+			t.Errorf("CreatedAt = %v、期待値 = %v", diff.CreatedAt, createdAt)
 		}
 		if len(diff.BodyBlocks) == 0 {
-			t.Fatal("BodyBlocks should not be empty")
+			t.Fatal("BodyBlocksが空")
 		}
-		// Only the added line should appear as an insert.
-		// [Ja] 追加された行のみが挿入行として現れること。
+		// 追加された行のみが挿入行として現れること。
 		var inserts int
 		for _, block := range diff.BodyBlocks {
 			for _, line := range block.Lines {
 				if line.Type == viewmodel.DiffLineInsert {
 					inserts++
 					if line.Content != "line two" {
-						t.Errorf("insert line = %q, want %q", line.Content, "line two")
+						t.Errorf("追加行 = %q、期待値 = %q", line.Content, "line two")
 					}
 				}
 				if line.Type == viewmodel.DiffLineDelete {
-					t.Errorf("unexpected delete line: %q", line.Content)
+					t.Errorf("予期しない削除行: %q", line.Content)
 				}
 			}
 		}
 		if inserts != 1 {
-			t.Errorf("inserts = %d, want 1", inserts)
+			t.Errorf("inserts = %d、期待値 = 1", inserts)
 		}
 	})
 
@@ -166,10 +160,10 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 		diff := viewmodel.NewDraftPageRevisionDiff(revision, nil)
 
 		if !diff.HasTitleChange {
-			t.Error("HasTitleChange should be true (empty -> non-empty)")
+			t.Error("HasTitleChangeがfalse (空から空以外への変更)")
 		}
 		if diff.OldTitle != "" {
-			t.Errorf("OldTitle = %q, want empty", diff.OldTitle)
+			t.Errorf("OldTitle = %q、期待値 = 空", diff.OldTitle)
 		}
 		var inserts, others int
 		for _, block := range diff.BodyBlocks {
@@ -182,7 +176,7 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 			}
 		}
 		if inserts != 2 || others != 0 {
-			t.Errorf("inserts/others = %d/%d, want 2/0", inserts, others)
+			t.Errorf("追加行/その他 = %d/%d、期待値 = 2/0", inserts, others)
 		}
 	})
 
@@ -203,10 +197,10 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 		diff := viewmodel.NewDraftPageRevisionDiff(revision, previous)
 
 		if diff.HasTitleChange {
-			t.Error("HasTitleChange should be false")
+			t.Error("HasTitleChangeがtrue")
 		}
 		if len(diff.BodyBlocks) != 0 {
-			t.Errorf("BodyBlocks = %v, want empty", diff.BodyBlocks)
+			t.Errorf("BodyBlocks = %v、期待値 = 空", diff.BodyBlocks)
 		}
 	})
 }

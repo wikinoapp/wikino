@@ -1,4 +1,4 @@
-// Package email_confirmation はメール確認ハンドラーを提供します
+// Package email_confirmationはメール確認ハンドラーを提供します
 package email_confirmation
 
 import (
@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はメール確認ハンドラー
+// Handlerはメール確認ハンドラー
 type Handler struct {
 	cfg                       *config.Config
 	sessionMgr                *session.Manager
@@ -20,7 +20,7 @@ type Handler struct {
 	limiter                   *ratelimit.Limiter
 }
 
-// NewHandler は新しいメール確認ハンドラーを作成します
+// NewHandlerは新しいメール確認ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,

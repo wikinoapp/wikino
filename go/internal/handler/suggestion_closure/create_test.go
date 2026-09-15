@@ -21,7 +21,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// newPostRequest はchiのURLパラメータ付きPOSTリクエストを作成するヘルパーです
+// newPostRequestはchiのURLパラメータ付きPOSTリクエストを作成するヘルパーです
 func newPostRequest(t *testing.T, path string, params map[string]string, form url.Values) *http.Request {
 	t.Helper()
 
@@ -36,7 +36,7 @@ func newPostRequest(t *testing.T, path string, params map[string]string, form ur
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用の編集提案クローズハンドラーを作成するヘルパーです
+// setupHandlerはテスト用の編集提案クローズハンドラーを作成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionclosurehandler.Handler {
 	t.Helper()
 
@@ -76,10 +76,10 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -112,7 +112,7 @@ func TestCreate_存在しない編集提案で404が返る(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -168,7 +168,7 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
 
@@ -210,7 +210,7 @@ func TestCreate_suggestion_closeスコープなしの非作成者は403が返る
 		WithTopicID(topicID).
 		WithSpaceMemberID(memberSmID).
 		Build()
-	// 提案はオーナーが作成（一般メンバーは作成者ではない）
+	// 提案はオーナーが作成 (一般メンバーは作成者ではない)
 	testutil.NewSuggestionBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -235,7 +235,7 @@ func TestCreate_suggestion_closeスコープなしの非作成者は403が返る
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
 
@@ -299,11 +299,11 @@ func TestCreate_作成者はクローズできる(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/close-creator-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -362,11 +362,11 @@ func TestCreate_スペースオーナーがクローズできる(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/close-ok-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -438,11 +438,11 @@ func TestCreate_トピック管理者がクローズできる(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/close-admin-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -495,11 +495,11 @@ func TestCreate_反映済みの編集提案はクローズできずエラーが�
 
 	// 反映済みの場合はリダイレクトでエラーメッセージが表示される
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/close-applied-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -551,10 +551,10 @@ func TestCreate_クローズ済みの編集提案はべき等に成功する(t *
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/close-idem-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }

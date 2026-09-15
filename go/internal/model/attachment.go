@@ -1,12 +1,12 @@
 package model
 
-// Attachment は添付ファイルのドメインモデル
+// Attachmentは添付ファイルのドメインモデル
 //
-// 取得経路によって populate されるフィールドが異なる:
+// 取得経路によってpopulateされるフィールドが異なる:
 //   - FindByIDAndSpace / FindByIDsAndSpace: ID, SpaceID, Filename
-//   - FindPubliclyReferencedBlobByID (公開 og:image 配信用): ID, SpaceID, BlobKey, ContentType
+//   - FindPubliclyReferencedBlobByID (公開og:image配信用): ID, SpaceID, BlobKey, ContentType
 //
-// 取得経路と populate 範囲は AttachmentRepository の各メソッドの doc を参照する。
+// 取得経路とpopulate範囲はAttachmentRepositoryの各メソッドのdocを参照する。
 type Attachment struct {
 	ID          AttachmentID
 	SpaceID     SpaceID

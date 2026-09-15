@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Delete は下書きページを削除します (DELETE /s/{space_identifier}/pages/{page_number}/draft_page)
+// Deleteは下書きページを削除します (DELETE /s/{space_identifier}/pages/{page_number}/draft_page)
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -60,7 +60,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// フラッシュメッセージを設定して /drafts へリダイレクト
+	// フラッシュメッセージを設定して /draftsへリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_draft_page_deleted"))
 	http.Redirect(w, r, string(templates.DraftsPath()), http.StatusSeeOther)
 }

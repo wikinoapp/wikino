@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create は編集提案をクローズします (POST /s/{space_identifier}/suggestions/{suggestion_number}/close)
+// Createは編集提案をクローズします (POST /s/{space_identifier}/suggestions/{suggestion_number}/close)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

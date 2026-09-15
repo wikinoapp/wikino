@@ -27,9 +27,7 @@ type CreateTopicParams struct {
 	Now         time.Time `json:"now"`
 }
 
-// Creates a topic.
-//
-// [Ja] トピックを作成する。
+// トピックを作成する。
 func (q *Queries) CreateTopic(ctx context.Context, arg CreateTopicParams) (Topic, error) {
 	row := q.db.QueryRowContext(ctx, createTopic,
 		arg.SpaceID,
@@ -65,11 +63,7 @@ type ExistsTopicBySpaceAndNameParams struct {
 	Name    string `json:"name"`
 }
 
-// Reports whether the space already holds a topic of that name, discarded topics included. The
-// unique index on (space_id, name) covers discarded rows as well, so a name a discarded topic
-// still carries cannot be given to a new one.
-//
-// [Ja] 同じ名前のトピックがそのスペースに既にあるかを返す (削除済みのトピックも含む)。
+// 同じ名前のトピックがそのスペースに既にあるかを返す (削除済みのトピックも含む)。
 // (space_id, name) の一意インデックスは削除済みの行も対象にするため、削除済みのトピックが
 // 持ったままの名前は新しいトピックには付けられない。
 func (q *Queries) ExistsTopicBySpaceAndName(ctx context.Context, arg ExistsTopicBySpaceAndNameParams) (bool, error) {
@@ -91,11 +85,8 @@ type ExistsTopicBySpaceAndNameExcludingIDParams struct {
 	ExcludedID string `json:"excluded_id"`
 }
 
-// Reports whether another topic of the space already holds that name, discarded topics included.
-// The topic given by @excluded_id is left out, so that a topic keeping its own name is not refused.
-//
-// [Ja] そのスペースの別のトピックが同じ名前を既に持っているかを返す (削除済みのトピックも含む)。
-// @excluded_id のトピックは除外し、自身の名前をそのままにしたトピックが拒否されないようにする。
+// そのスペースの別のトピックが同じ名前を既に持っているかを返す (削除済みのトピックも含む)。
+// @excluded_idのトピックは除外し、自身の名前をそのままにしたトピックが拒否されないようにする。
 func (q *Queries) ExistsTopicBySpaceAndNameExcludingID(ctx context.Context, arg ExistsTopicBySpaceAndNameExcludingIDParams) (bool, error) {
 	row := q.db.QueryRowContext(ctx, existsTopicBySpaceAndNameExcludingID, arg.SpaceID, arg.Name, arg.ExcludedID)
 	var topic_exists bool
@@ -116,11 +107,7 @@ type FindFirstJoinedTopicBySpaceMemberParams struct {
 	SpaceID       string `json:"space_id"`
 }
 
-// Returns the topic with the smallest id among those the space member has joined
-// (not-discarded topics only), scoped to the given space. Used by the empty-state
-// "create a new page" link on the space detail page.
-//
-// [Ja] スペースメンバーが参加しているトピックのうち id が最小のもの (削除されていない
+// スペースメンバーが参加しているトピックのうちidが最小のもの (削除されていない
 // トピックのみ) を、指定スペースにスコープして返す。スペース詳細画面の空状態で表示する
 // 「新しいページを作る」導線で使用する。
 func (q *Queries) FindFirstJoinedTopicBySpaceMember(ctx context.Context, arg FindFirstJoinedTopicBySpaceMemberParams) (Topic, error) {
@@ -149,7 +136,7 @@ type FindTopicBySpaceAndIDParams struct {
 	ID      string `json:"id"`
 }
 
-// スペースIDとIDでトピックを取得する（削除されていないトピックのみ）
+// スペースIDとIDでトピックを取得する (削除されていないトピックのみ)
 func (q *Queries) FindTopicBySpaceAndID(ctx context.Context, arg FindTopicBySpaceAndIDParams) (Topic, error) {
 	row := q.db.QueryRowContext(ctx, findTopicBySpaceAndID, arg.SpaceID, arg.ID)
 	var i Topic
@@ -176,7 +163,7 @@ type FindTopicBySpaceAndNumberParams struct {
 	Number  int32  `json:"number"`
 }
 
-// スペースIDとナンバーでトピックを取得する（削除されていないトピックのみ）
+// スペースIDとナンバーでトピックを取得する (削除されていないトピックのみ)
 func (q *Queries) FindTopicBySpaceAndNumber(ctx context.Context, arg FindTopicBySpaceAndNumberParams) (Topic, error) {
 	row := q.db.QueryRowContext(ctx, findTopicBySpaceAndNumber, arg.SpaceID, arg.Number)
 	var i Topic
@@ -203,7 +190,7 @@ type FindTopicsByIDsAndSpaceParams struct {
 	Column2 []string `json:"column_2"`
 }
 
-// スペースIDとIDリストでトピックを一括取得する（削除されていないトピックのみ）
+// スペースIDとIDリストでトピックを一括取得する (削除されていないトピックのみ)
 func (q *Queries) FindTopicsByIDsAndSpace(ctx context.Context, arg FindTopicsByIDsAndSpaceParams) ([]Topic, error) {
 	rows, err := q.db.QueryContext(ctx, findTopicsByIDsAndSpace, arg.SpaceID, pq.Array(arg.Column2))
 	if err != nil {
@@ -246,7 +233,7 @@ type FindTopicsBySpaceAndNamesParams struct {
 	Column2 []string `json:"column_2"`
 }
 
-// スペースID と名前リストでトピックを取得する（削除されていないトピックのみ、Wikiリンク解析時のトピック一括検索用）
+// スペースIDと名前リストでトピックを取得する (削除されていないトピックのみ、Wikiリンク解析時のトピック一括検索用)
 func (q *Queries) FindTopicsBySpaceAndNames(ctx context.Context, arg FindTopicsBySpaceAndNamesParams) ([]Topic, error) {
 	rows, err := q.db.QueryContext(ctx, findTopicsBySpaceAndNames, arg.SpaceID, pq.Array(arg.Column2))
 	if err != nil {
@@ -284,9 +271,7 @@ const getNextTopicNumber = `-- name: GetNextTopicNumber :one
 SELECT COALESCE(MAX(number), 0) + 1 AS next_number FROM topics WHERE space_id = $1
 `
 
-// Returns the next topic number in the space.
-//
-// [Ja] スペース内の次のトピック番号を返す。
+// スペース内の次のトピック番号を返す。
 func (q *Queries) GetNextTopicNumber(ctx context.Context, spaceID string) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getNextTopicNumber, spaceID)
 	var next_number int32
@@ -298,7 +283,7 @@ const listActiveTopicsBySpace = `-- name: ListActiveTopicsBySpace :many
 SELECT id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at FROM topics WHERE space_id = $1 AND discarded_at IS NULL ORDER BY number
 `
 
-// スペースID でアクティブなトピック一覧を取得する（削除されていないトピックのみ）
+// スペースIDでアクティブなトピック一覧を取得する (削除されていないトピックのみ)
 func (q *Queries) ListActiveTopicsBySpace(ctx context.Context, spaceID string) ([]Topic, error) {
 	rows, err := q.db.QueryContext(ctx, listActiveTopicsBySpace, spaceID)
 	if err != nil {
@@ -338,11 +323,7 @@ WHERE space_id = $1 AND visibility = 0 AND discarded_at IS NULL
 ORDER BY number
 `
 
-// Returns the active public topics in the given space (not-discarded, visibility = public),
-// ordered by number. Used by the topic section shown to non-members (guests) on the space
-// detail page, where only public topics are visible.
-//
-// [Ja] 指定スペース内のアクティブな公開トピック (未廃棄・visibility = public) を number 順で返す。
+// 指定スペース内のアクティブな公開トピック (未廃棄・visibility = public) をnumber順で返す。
 // スペース詳細画面で非メンバー (ゲスト) に表示するトピックセクションで使用し、ここでは公開
 // トピックのみが見える。
 func (q *Queries) ListPublicTopicsBySpace(ctx context.Context, spaceID string) ([]Topic, error) {
@@ -390,7 +371,7 @@ type ListTopicsJoinedBySpaceMemberParams struct {
 	SpaceID       string `json:"space_id"`
 }
 
-// スペースメンバーが参加しているトピック一覧を取得する（編集画面のトピックセレクター用）
+// スペースメンバーが参加しているトピック一覧を取得する (編集画面のトピックセレクター用)
 func (q *Queries) ListTopicsJoinedBySpaceMember(ctx context.Context, arg ListTopicsJoinedBySpaceMemberParams) ([]Topic, error) {
 	rows, err := q.db.QueryContext(ctx, listTopicsJoinedBySpaceMember, arg.SpaceMemberID, arg.SpaceID)
 	if err != nil {
@@ -440,9 +421,7 @@ type UpdateTopicParams struct {
 	SpaceID     string    `json:"space_id"`
 }
 
-// Updates the general settings of a topic.
-//
-// [Ja] トピックの一般設定を更新する。
+// トピックの一般設定を更新する。
 func (q *Queries) UpdateTopic(ctx context.Context, arg UpdateTopicParams) (Topic, error) {
 	row := q.db.QueryRowContext(ctx, updateTopic,
 		arg.Name,

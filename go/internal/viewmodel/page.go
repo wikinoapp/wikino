@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// Page はテンプレートで表示するページ情報です
+// Pageはテンプレートで表示するページ情報です
 type Page struct {
 	Title        string
 	Body         string
@@ -18,7 +18,7 @@ type Page struct {
 	ShowingDraft bool
 }
 
-// NewPageForEdit は編集画面用のPageを生成します。
+// NewPageForEditは編集画面用のPageを生成します。
 // 下書きが存在する場合は下書きの内容を、存在しない場合は公開版の内容を使用します。
 func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 	if draftPage != nil {
@@ -45,7 +45,7 @@ func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 	}
 }
 
-// NewPageFromFormInput はバリデーションエラー時にフォームの入力値を保持したPageを生成します
+// NewPageFromFormInputはバリデーションエラー時にフォームの入力値を保持したPageを生成します
 func NewPageFromFormInput(title string, body string, number model.PageNumber) Page {
 	return Page{
 		Title:  title,
@@ -54,36 +54,26 @@ func NewPageFromFormInput(title string, body string, number model.PageNumber) Pa
 	}
 }
 
-// AutofocusTitle はタイトル入力欄にオートフォーカスすべきかを返します
+// AutofocusTitleはタイトル入力欄にオートフォーカスすべきかを返します
 func (p Page) AutofocusTitle() bool {
 	return p.Title == ""
 }
 
-// PageForShow is the page data rendered on the page detail screen. BodyHTML is the rendered and
-// sanitized body produced when the page was published, so the template expands it as raw HTML.
-//
-// [Ja] PageForShow はページ表示画面に描画するページ情報。BodyHTML はページ公開時に
-// レンダリング・サニタイズ済みの本文のため、テンプレートでは生の HTML として展開する。
+// PageForShowはページ表示画面に描画するページ情報。BodyHTMLはページ公開時に
+// レンダリング・サニタイズ済みの本文のため、テンプレートでは生のHTMLとして展開する。
 type PageForShow struct {
 	title    string
 	BodyHTML string
 	Number   int32
 
-	// ogImageAttachmentID is the cover image attachment the og:image tag may point at. It is empty
-	// when the page has no cover image, or when that image must not be advertised as the preview
-	// (see NewPageForShow).
-	//
-	// [Ja] ogImageAttachmentID は og:image タグが指してよいアイキャッチ画像の添付ファイル。ページが
+	// ogImageAttachmentIDはog:imageタグが指してよいアイキャッチ画像の添付ファイル。ページが
 	// アイキャッチ画像を持たない場合や、その画像をプレビューとして出してはいけない場合は空になる
-	// (NewPageForShow を参照)。
+	// (NewPageForShowを参照)。
 	ogImageAttachmentID string
 }
 
-// NewPageForShow creates the ViewModel used by the page detail screen. featuredImageAttachment is
-// the page's cover image, and is nil when the page has none.
-//
-// [Ja] NewPageForShow は model.Page からページ表示画面用の ViewModel を生成する。
-// featuredImageAttachment はページのアイキャッチ画像で、持たない場合は nil。
+// NewPageForShowはmodel.Pageからページ表示画面用のViewModelを生成する。
+// featuredImageAttachmentはページのアイキャッチ画像で、持たない場合はnil。
 func NewPageForShow(pg *model.Page, featuredImageAttachment *model.Attachment) PageForShow {
 	var title string
 	if pg.Title != nil {
@@ -98,13 +88,8 @@ func NewPageForShow(pg *model.Page, featuredImageAttachment *model.Attachment) P
 	}
 }
 
-// ogImageAttachmentID picks the cover image the og:image tag may point at, and returns an empty
-// string when there is none. A GIF cover image is left out: the og:image endpoint serves a still
-// 1200x630 jpg, so pointing at an animated image advertises a preview that has lost what the image
-// was.
-//
-// [Ja] ogImageAttachmentID は og:image タグが指してよいアイキャッチ画像を選び、無い場合は空文字列を
-// 返す。GIF のアイキャッチ画像は対象外とする。og:image エンドポイントは静止画の 1200x630 jpg を
+// ogImageAttachmentIDはog:imageタグが指してよいアイキャッチ画像を選び、無い場合は空文字列を
+// 返す。GIFのアイキャッチ画像は対象外とする。og:imageエンドポイントは静止画の1200x630 jpgを
 // 配信するため、アニメーション画像を指すと画像の持ち味を失ったプレビューを宣伝することになる。
 func ogImageAttachmentID(featuredImageAttachment *model.Attachment) string {
 	if featuredImageAttachment == nil {
@@ -117,18 +102,13 @@ func ogImageAttachmentID(featuredImageAttachment *model.Attachment) string {
 	return string(featuredImageAttachment.ID)
 }
 
-// OGImageAttachmentID returns the attachment id the og:image tag points at, or an empty string when
-// the page has none, so that the caller keeps the site-wide default OGP image.
-//
-// [Ja] OGImageAttachmentID は og:image タグが指す添付ファイルの ID を返し、対象が無い場合は空文字列を
-// 返す。呼び出し元はそのときサイト共通の既定 OGP 画像を保つ。
+// OGImageAttachmentIDはog:imageタグが指す添付ファイルのIDを返し、対象が無い場合は空文字列を
+// 返す。呼び出し元はそのときサイト共通の既定OGP画像を保つ。
 func (p PageForShow) OGImageAttachmentID() string {
 	return p.ogImageAttachmentID
 }
 
-// DisplayTitle returns the page's display title, falling back to the localized untitled label.
-//
-// [Ja] DisplayTitle はページの表示用タイトルを返し、未設定の場合はローカライズされた「無題」へ
+// DisplayTitleはページの表示用タイトルを返し、未設定の場合はローカライズされた「無題」へ
 // フォールバックする。
 func (p PageForShow) DisplayTitle(ctx context.Context) string {
 	if p.title != "" {
@@ -137,27 +117,16 @@ func (p PageForShow) DisplayTitle(ctx context.Context) string {
 	return i18n.T(ctx, "page_show_untitled")
 }
 
-// metaDescriptionMaxLength caps the generated meta description at 120 characters. Search engines
-// truncate longer snippets, and the body language is unknown per page, so this stays within the
-// shorter (Japanese) end of the recommended range rather than the ~150 characters English allows.
-//
-// [Ja] metaDescriptionMaxLength は生成する meta description の上限を 120 文字にする。検索エンジンは
+// metaDescriptionMaxLengthは生成するmeta descriptionの上限を120文字にする。検索エンジンは
 // これより長いスニペットを切り詰める。本文の言語はページごとに分からないため、英語で許容される
-// 150 文字程度ではなく、推奨範囲のうち短い側 (日本語) に合わせている。
+// 150文字程度ではなく、推奨範囲のうち短い側 (日本語) に合わせている。
 const metaDescriptionMaxLength = 120
 
-// MetaDescription builds a plain-text summary of the body for the meta description tag. It returns
-// an empty string when the body has no text (an unpublished page, or one holding only images), so
-// that the caller keeps the site-wide default rather than declaring an empty description.
-//
-// [Ja] MetaDescription は meta description タグ用に本文のプレーンテキスト要約を組み立てる。本文に
+// MetaDescriptionはmeta descriptionタグ用に本文のプレーンテキスト要約を組み立てる。本文に
 // テキストが無い場合 (未公開のページや画像だけのページ) は空文字列を返し、呼び出し元が空の
-// description を出さずサイト共通の既定値を保てるようにする。
+// descriptionを出さずサイト共通の既定値を保てるようにする。
 func (p PageForShow) MetaDescription() string {
-	// Ask for one rune past the limit: that is enough to tell a body that fits from one that has to
-	// be truncated, without extracting the whole body of a long page on every request.
-	//
-	// [Ja] 上限より 1 文字多く要求する。収まる本文と切り詰めが要る本文はこれで区別でき、長いページの
+	// 上限より1文字多く要求する。収まる本文と切り詰めが要る本文はこれで区別でき、長いページの
 	// 本文全体をリクエストのたびに取り出さずに済む。
 	text := markup.PlainText(p.BodyHTML, metaDescriptionMaxLength+1)
 	if text == "" {
@@ -169,21 +138,18 @@ func (p PageForShow) MetaDescription() string {
 		return text
 	}
 
-	// Drop a trailing space before appending the ellipsis. The cut can land right on the single
-	// space markup.PlainText emits between two blocks, which would otherwise read as "text …".
-	//
-	// [Ja] 省略記号を付ける前に末尾の空白を落とす。切り取り位置が markup.PlainText の出すブロック
+	// 省略記号を付ける前に末尾の空白を落とす。切り取り位置がmarkup.PlainTextの出すブロック
 	// 境界の半角スペースと重なることがあり、そのままだと "テキスト …" のように見えてしまう。
 	return strings.TrimRight(string(runes[:metaDescriptionMaxLength-1]), " ") + "…"
 }
 
-// PageForMove はページ移動画面用のページ情報です
+// PageForMoveはページ移動画面用のページ情報です
 type PageForMove struct {
 	Title  string
 	Number int32
 }
 
-// NewPageForMove はmodel.Pageからページ移動画面用のViewModelを生成します
+// NewPageForMoveはmodel.Pageからページ移動画面用のViewModelを生成します
 func NewPageForMove(pg *model.Page) PageForMove {
 	var title string
 	if pg.Title != nil {
@@ -195,7 +161,7 @@ func NewPageForMove(pg *model.Page) PageForMove {
 	}
 }
 
-// CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードの表示データです
+// CardLinkPageはリンク一覧・バックリンク一覧で使用するページカードの表示データです
 type CardLinkPage struct {
 	Title        string
 	Number       int32
@@ -205,7 +171,7 @@ type CardLinkPage struct {
 	CanEdit      bool
 }
 
-// NewCardLinkPage はmodel.Pageとトピック情報からカード用のビューモデルを生成します
+// NewCardLinkPageはmodel.Pageとトピック情報からカード用のビューモデルを生成します
 func NewCardLinkPage(pg *model.Page, topicMap map[model.TopicID]*model.Topic) CardLinkPage {
 	var title string
 	if pg.Title != nil {

@@ -6,13 +6,9 @@ interface MarkdownEditorContainer extends HTMLElement {
   _editorView?: { destroy(): void };
 }
 
-// Mirror the body editor of pages/page/edit.templ: the visible label the editor is named from
-// (no `for`, since CodeMirror's contenteditable cannot be a label's control), the container
-// carrying the data-* config, and the hidden textarea that holds the value.
-//
-// [Ja] pages/page/edit.templ の本文エディタを写す。エディタの命名元になる可視ラベル (CodeMirror の
-// contenteditable は label の関連先になれないため `for` は持たない)、data-* 設定を持つコンテナ、
-// 値を保持する非表示の textarea。
+// pages/page/edit.templの本文エディタを写す。エディタの命名元になる可視ラベル (CodeMirrorの
+// contenteditableはlabelの関連先になれないため `for` は持たない)、data-* 設定を持つコンテナ、
+// 値を保持する非表示のtextarea。
 function editorMarkup(): string {
   return `
     <label id="page-body-label">Body</label>
@@ -40,7 +36,7 @@ describe("initializeEditors", () => {
     document.body.innerHTML = "";
   });
 
-  it("names the CodeMirror textbox with the visible body label", () => {
+  it("表示されている本文ラベルをCodeMirrorのテキストボックスの名前に使う", () => {
     initializeEditors();
 
     const textbox = document.querySelector<HTMLElement>('.cm-content[role="textbox"]');
@@ -48,7 +44,7 @@ describe("initializeEditors", () => {
     expect(textbox?.getAttribute("aria-labelledby")).toBe("page-body-label");
   });
 
-  it("focuses the CodeMirror textbox when the visible body label is clicked", () => {
+  it("表示されている本文ラベルをクリックするとCodeMirrorのテキストボックスにフォーカスする", () => {
     initializeEditors();
 
     const label = document.getElementById("page-body-label") as HTMLLabelElement;
@@ -59,7 +55,7 @@ describe("initializeEditors", () => {
     expect(document.activeElement).toBe(textbox);
   });
 
-  it("still initializes the editor when the label selector is absent", () => {
+  it("ラベルのセレクタが無くてもエディタを初期化する", () => {
     const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
     container?.removeAttribute("data-markdown-editor-label");
 
@@ -71,7 +67,7 @@ describe("initializeEditors", () => {
     expect(textbox?.hasAttribute("aria-labelledby")).toBe(false);
   });
 
-  it("still initializes the editor when the label selector matches nothing", () => {
+  it("ラベルのセレクタに一致する要素が無くてもエディタを初期化する", () => {
     const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
     container?.setAttribute("data-markdown-editor-label", "#renamed-body-label");
 
@@ -83,7 +79,7 @@ describe("initializeEditors", () => {
     expect(textbox?.hasAttribute("aria-labelledby")).toBe(false);
   });
 
-  it("leaves out aria-labelledby when the matched label has no id", () => {
+  it("一致したラベルにidが無ければaria-labelledbyを付けない", () => {
     const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
     const label = document.getElementById("page-body-label") as HTMLLabelElement;
     label.removeAttribute("id");

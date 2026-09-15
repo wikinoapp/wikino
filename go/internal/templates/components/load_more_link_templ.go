@@ -13,11 +13,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// LoadMoreLink renders a progressively enhanced link for loading the next page. FocusID remains on
-// the successor link or end state so htmx can restore keyboard focus after the outerHTML swap.
-//
-// [Ja] LoadMoreLink は次ページを読み込むプログレッシブエンハンスメント対応リンクを表示する。
-// FocusID は後続リンクまたは終端状態へ引き継ぎ、outerHTML スワップ後に htmx がキーボードフォーカスを
+// LoadMoreLinkは次ページを読み込むプログレッシブエンハンスメント対応リンクを表示する。
+// FocusIDは後続リンクまたは終端状態へ引き継ぎ、outerHTMLスワップ後にhtmxがキーボードフォーカスを
 // 復元できるようにする。
 func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -47,7 +44,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.FocusID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 18, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 15, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -60,7 +57,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 		var templ_7745c5c3_Var3 templ.SafeURL
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(data.FallbackURL))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 19, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 16, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -73,7 +70,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(loadMoreAriaLabel(ctx, data))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 20, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 17, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
@@ -86,7 +83,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.FragmentURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 22, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 19, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -99,7 +96,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Target)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 23, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 20, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -117,7 +114,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Include)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 26, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 23, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 			if templ_7745c5c3_Err != nil {
@@ -136,7 +133,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Sync)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 29, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 26, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 			if templ_7745c5c3_Err != nil {
@@ -162,7 +159,7 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_links_load_more"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 36, Col: 46}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/load_more_link.templ`, Line: 33, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -176,12 +173,8 @@ func LoadMoreLink(data LoadMoreLinkData) templ.Component {
 	})
 }
 
-// loadMoreAriaLabel names the listing the link advances. The visible text stays "More" on every
-// link, so without this the several links on one screen would be indistinguishable in a screen
-// reader's link list.
-//
-// [Ja] loadMoreAriaLabel はリンクが進める一覧を言い表す。表示文言はどのリンクも「もっと見る」の
-// ままのため、これが無いと 1 画面に並ぶ複数のリンクをスクリーンリーダーのリンク一覧で区別できない。
+// loadMoreAriaLabelはリンクが進める一覧を言い表す。表示文言はどのリンクも「もっと見る」の
+// ままのため、これが無いと1画面に並ぶ複数のリンクをスクリーンリーダーのリンク一覧で区別できない。
 func loadMoreAriaLabel(ctx context.Context, data LoadMoreLinkData) string {
 	if data.AriaLabelKey != backlinkListLoadMoreAriaLabelKey {
 		return templates.T(ctx, data.AriaLabelKey)

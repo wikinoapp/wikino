@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// DraftPage はページの下書きのドメインモデル
+// DraftPageはページの下書きのドメインモデル
 type DraftPage struct {
 	ID                        DraftPageID
 	SpaceID                   SpaceID

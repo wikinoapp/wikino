@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateRecoveryCodeSessionUsecase はリカバリーコード認証によるセッション作成ユースケース
+// CreateRecoveryCodeSessionUsecaseはリカバリーコード認証によるセッション作成ユースケース
 type CreateRecoveryCodeSessionUsecase struct {
 	db                    *sql.DB
 	recoveryValidator     *validator.SignInTwoFactorRecoveryCreateValidator
@@ -20,7 +20,7 @@ type CreateRecoveryCodeSessionUsecase struct {
 	userSessionRepo       *repository.UserSessionRepository
 }
 
-// NewCreateRecoveryCodeSessionUsecase は CreateRecoveryCodeSessionUsecase を生成する
+// NewCreateRecoveryCodeSessionUsecaseはCreateRecoveryCodeSessionUsecaseを生成する
 func NewCreateRecoveryCodeSessionUsecase(
 	db *sql.DB,
 	recoveryValidator *validator.SignInTwoFactorRecoveryCreateValidator,
@@ -35,7 +35,7 @@ func NewCreateRecoveryCodeSessionUsecase(
 	}
 }
 
-// CreateRecoveryCodeSessionInput はリカバリーコードセッション作成の入力パラメータ
+// CreateRecoveryCodeSessionInputはリカバリーコードセッション作成の入力パラメータ
 type CreateRecoveryCodeSessionInput struct {
 	UserID       model.UserID
 	RecoveryCode string
@@ -43,20 +43,20 @@ type CreateRecoveryCodeSessionInput struct {
 	UserAgent    string
 }
 
-// CreateRecoveryCodeSessionOutput はリカバリーコードセッション作成の出力パラメータ
+// CreateRecoveryCodeSessionOutputはリカバリーコードセッション作成の出力パラメータ
 type CreateRecoveryCodeSessionOutput struct {
 	Token string
 }
 
-// Execute はリカバリーコードを検証・消費してセッションを作成する
+// Executeはリカバリーコードを検証・消費してセッションを作成する
 func (uc *CreateRecoveryCodeSessionUsecase) Execute(ctx context.Context, input CreateRecoveryCodeSessionInput) (*CreateRecoveryCodeSessionOutput, error) {
-	// 1. バリデーション（形式チェック + リカバリーコード検証）
+	// 1. バリデーション (形式チェック + リカバリーコード検証)
 	twoFactorAuth, err := uc.validate(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. トランザクション（リカバリーコード消費 + セッション作成）
+	// 2. トランザクション (リカバリーコード消費 + セッション作成)
 	return uc.persist(ctx, input, twoFactorAuth.RecoveryCodes)
 }
 

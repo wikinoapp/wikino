@@ -2,11 +2,7 @@ package components
 
 import "github.com/wikinoapp/wikino/go/internal/viewmodel"
 
-// PageBacklinkList renders the page-level backlink list, and renders nothing when
-// there are no backlinks and no further pages.
-// The heading (h2) lives in the caller so its style can differ per screen.
-//
-// [Ja] ページレベルのバックリンク一覧を表示します。バックリンクが空でページネーションもない場合は何も表示しません。
+// ページレベルのバックリンク一覧を表示します。バックリンクが空でページネーションもない場合は何も表示しません。
 // 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
 templ PageBacklinkList(data viewmodel.BacklinkList) {
 	@pageBacklinkList(data, false)
@@ -23,11 +19,8 @@ templ pageBacklinkList(data viewmodel.BacklinkList, announceEnd bool) {
 	}
 }
 
-// PageBacklinkListResponse renders the next page-level backlink page and advances that listing's
-// share of the editor's shared related-page state. The one-page editor replaces the whole listing.
-//
-// [Ja] PageBacklinkListResponse はページ自身のバックリンク一覧の次ページを描画し、編集画面で共有する
-// 関連ページ状態のうちこの一覧の分を進める。1 ページ単位の編集画面では一覧全体を差し替える。
+// PageBacklinkListResponseはページ自身のバックリンク一覧の次ページを描画し、編集画面で共有する
+// 関連ページ状態のうちこの一覧の分を進める。1ページ単位の編集画面では一覧全体を差し替える。
 templ PageBacklinkListResponse(data viewmodel.BacklinkList) {
 	if isPaginatedEditPageLinkState(data.State) {
 		@pageBacklinkList(data, true)
@@ -37,11 +30,7 @@ templ PageBacklinkListResponse(data viewmodel.BacklinkList) {
 	@pageBacklinkPageStateOOB(data.State)
 }
 
-// pageBacklinkListBody renders the cards and the pagination container the two entry points have in
-// common, so that the container's swap target cannot drift between the initial render and the
-// fragment reply.
-//
-// [Ja] pageBacklinkListBody は 2 つの入口が共有するカードとページネーションコンテナを描画する。
+// pageBacklinkListBodyは2つの入口が共有するカードとページネーションコンテナを描画する。
 // コンテナのスワップ対象が初回描画とフラグメント応答でずれないようにするためである。
 templ pageBacklinkListBody(data viewmodel.BacklinkList, announceEnd bool) {
 	for _, item := range data.Items {
@@ -61,10 +50,7 @@ templ pageBacklinkListBody(data viewmodel.BacklinkList, announceEnd bool) {
 	</div>
 }
 
-// pageBacklinkListLoadMore renders the progressively enhanced link for the next page-level
-// backlink page.
-//
-// [Ja] pageBacklinkListLoadMore は次のページレベルのバックリンクページを取得する拡張リンクを
+// pageBacklinkListLoadMoreは次のページレベルのバックリンクページを取得する拡張リンクを
 // 表示する。
 templ pageBacklinkListLoadMore(data viewmodel.BacklinkList) {
 	@LoadMoreLink(pageBacklinkListLoadMoreData(data))

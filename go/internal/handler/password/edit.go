@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Edit はパスワード編集フォームを表示します (GET /password/edit)
+// Editはパスワード編集フォームを表示します (GET /password/edit)
 func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -48,7 +48,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	h.renderEditForm(w, r, token, nil)
 }
 
-// renderEditForm は編集フォームをレンダリングします
+// renderEditFormは編集フォームをレンダリングします
 func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, token string, formErrors *model.ValidationError) {
 	ctx := r.Context()
 
@@ -56,12 +56,8 @@ func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, token s
 
 	// ページメタ情報を設定
 	//
-	// No canonical URL is declared here. This screen only exists for the token in the query, and
-	// /password/edit without one renders the invalid-token error, so there is no address the screen
-	// could point at as its canonical form.
-	//
-	// [Ja] ここでは正規 URL を宣言しない。本画面はクエリのトークンがあって初めて成立し、トークン
-	// 無しの /password/edit はトークン不正のエラーを描画するため、正規形として指せるアドレスが無い。
+	// ここでは正規URLを宣言しない。本画面はクエリのトークンがあって初めて成立し、トークン
+	// 無しの /password/editはトークン不正のエラーを描画するため、正規形として指せるアドレスが無い。
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "password_edit_title")
 
@@ -78,7 +74,7 @@ func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, token s
 	}
 }
 
-// renderInvalidTokenError は無効なトークンエラーを表示します
+// renderInvalidTokenErrorは無効なトークンエラーを表示します
 func (h *Handler) renderInvalidTokenError(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -88,7 +84,7 @@ func (h *Handler) renderInvalidTokenError(w http.ResponseWriter, r *http.Request
 	h.renderEditForm(w, r, "", formErrors)
 }
 
-// renderTokenUsedError は使用済みトークンエラーを表示します
+// renderTokenUsedErrorは使用済みトークンエラーを表示します
 func (h *Handler) renderTokenUsedError(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -98,7 +94,7 @@ func (h *Handler) renderTokenUsedError(w http.ResponseWriter, r *http.Request) {
 	h.renderEditForm(w, r, "", formErrors)
 }
 
-// renderTokenExpiredError は期限切れトークンエラーを表示します
+// renderTokenExpiredErrorは期限切れトークンエラーを表示します
 func (h *Handler) renderTokenExpiredError(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

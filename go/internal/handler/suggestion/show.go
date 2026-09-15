@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Show は編集提案詳細画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number})
+// Showは編集提案詳細画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number})
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

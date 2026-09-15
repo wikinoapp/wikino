@@ -59,22 +59,22 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 			UserID:          userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Space == nil {
-			t.Fatal("Space should not be nil")
+			t.Fatal("Spaceがnil")
 		}
 		if output.SpaceMember == nil {
-			t.Fatal("SpaceMember should not be nil")
+			t.Fatal("SpaceMemberがnil")
 		}
 		if output.Topic == nil {
-			t.Fatal("Topic should not be nil")
+			t.Fatal("Topicがnil")
 		}
 		if len(output.DraftPages) != 1 {
-			t.Errorf("DraftPages count = %d, want 1", len(output.DraftPages))
+			t.Errorf("DraftPagesの件数 = %d、期待値 = 1", len(output.DraftPages))
 		}
 	})
 
@@ -90,10 +90,10 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 			UserID:          userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for nonexistent space")
+			t.Error("存在しないスペースなのに出力がnilではない")
 		}
 	})
 
@@ -117,10 +117,10 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 			UserID:          userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for non-member")
+			t.Error("非メンバーなのに出力がnilではない")
 		}
 	})
 
@@ -148,10 +148,10 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 			UserID:          userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for space member on private topic")
+			t.Fatal("非公開トピックでスペースメンバーなのに出力がnil")
 		}
 	})
 
@@ -179,13 +179,13 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 			UserID:          userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for space owner")
+			t.Fatal("スペースオーナーなのに出力がnil")
 		}
 		if output.Space == nil {
-			t.Error("Space should not be nil")
+			t.Error("Spaceがnil")
 		}
 	})
 
@@ -207,7 +207,7 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 			WithVisibility(0).
 			Build()
 
-		// 通常の下書きページ（取得されるべき）
+		// 通常の下書きページ (取得されるべき)
 		pageID1 := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -222,7 +222,7 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 			WithTitle("Normal Draft").
 			Build()
 
-		// 編集提案にリンク済みの下書きページ（除外されるべき）
+		// 編集提案にリンク済みの下書きページ (除外されるべき)
 		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -262,13 +262,13 @@ func TestGetSuggestionNewUsecase_Execute(t *testing.T) {
 			UserID:          userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.DraftPages) != 1 {
-			t.Errorf("DraftPages count = %d, want 1 (linked draft should be excluded)", len(output.DraftPages))
+			t.Errorf("DraftPagesの件数 = %d、期待値 = 1 (紐付いた下書きは除外される)", len(output.DraftPages))
 		}
 	})
 }

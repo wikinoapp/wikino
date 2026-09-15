@@ -1,4 +1,4 @@
-// Package validator はバリデーションを提供します
+// Package validatorはバリデーションを提供します
 package validator
 
 import (
@@ -10,14 +10,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// SignInCreateValidator はサインインのバリデーションを行う
+// SignInCreateValidatorはサインインのバリデーションを行う
 type SignInCreateValidator struct {
 	userRepo              *repository.UserRepository
 	userPasswordRepo      *repository.UserPasswordRepository
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository
 }
 
-// NewSignInCreateValidator は SignInCreateValidator を生成する
+// NewSignInCreateValidatorはSignInCreateValidatorを生成する
 func NewSignInCreateValidator(
 	userRepo *repository.UserRepository,
 	userPasswordRepo *repository.UserPasswordRepository,
@@ -30,19 +30,19 @@ func NewSignInCreateValidator(
 	}
 }
 
-// SignInCreateValidatorInput はバリデーションの入力パラメータ
+// SignInCreateValidatorInputはバリデーションの入力パラメータ
 type SignInCreateValidatorInput struct {
 	Email    string
 	Password string
 }
 
-// SignInCreateValidateOutput はバリデーション成功時の出力
+// SignInCreateValidateOutputはバリデーション成功時の出力
 type SignInCreateValidateOutput struct {
 	User              *model.User
 	UserTwoFactorAuth *model.UserTwoFactorAuth
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *SignInCreateValidator) Validate(ctx context.Context, input SignInCreateValidatorInput) (*SignInCreateValidateOutput, error) {
 	// 1. 形式バリデーション
 	ve := model.NewValidationError()
@@ -61,7 +61,7 @@ func (v *SignInCreateValidator) Validate(ctx context.Context, input SignInCreate
 		return nil, ve
 	}
 
-	// 2. 状態バリデーション（DB検証）
+	// 2. 状態バリデーション (DB検証)
 	user, err := v.userRepo.FindByEmail(ctx, input.Email)
 	if err != nil {
 		return nil, err

@@ -14,22 +14,19 @@ import {
 
 const VIEWPORTS = [
   {
-    label: "md 未満",
+    label: "md未満",
     width: 375,
     height: 700,
     expectsHeaderBeyondViewport: true,
   },
-  { label: "md 以上", width: 900, height: 700, expectsHeaderBeyondViewport: false },
+  { label: "md以上", width: 900, height: 700, expectsHeaderBeyondViewport: false },
 ] as const;
 type StickyViewport = (typeof VIEWPORTS)[number];
 const LONG_TITLE = "長".repeat(200);
 const LONG_BODY = "本文 ".repeat(600).trim();
 
-// A viewer this spec signs in as, together with the page they open. Each case owns its user and
-// space so that afterAll can delete everything the spec created.
-//
-// [Ja] この spec がサインインする閲覧者と、その閲覧者が開くページ。ケースごとにユーザーとスペースを
-// 持たせ、afterAll で spec が作ったものを消せるようにする。
+// このspecがサインインする閲覧者と、その閲覧者が開くページ。ケースごとにユーザーとスペースを
+// 持たせ、afterAllでspecが作ったものを消せるようにする。
 interface StickyViewer {
   user: TestUser;
   pagePath: string;
@@ -38,10 +35,7 @@ interface StickyViewer {
 let adminViewer: StickyViewer | undefined;
 let readerViewer: StickyViewer | undefined;
 
-// The scopes decide whether the header carries an action area, which is the one difference between
-// the two cases: everything else about the page, down to the 200-character title, is identical.
-//
-// [Ja] scopes はヘッダーが操作領域を持つかどうかを決める。2 つのケースの違いはそこだけで、200 文字の
+// scopesはヘッダーが操作領域を持つかどうかを決める。2つのケースの違いはそこだけで、200文字の
 // タイトルを含めページの条件は同じにする。
 async function createStickyViewer(scopes: string[]): Promise<StickyViewer> {
   const user = await createTestUser();
@@ -56,7 +50,7 @@ async function createStickyViewer(scopes: string[]): Promise<StickyViewer> {
 
 function requireViewer(viewer: StickyViewer | undefined, label: string): StickyViewer {
   if (!viewer) {
-    throw new Error(`${label} viewer was not created`);
+    throw new Error(`閲覧者 (${label}) が作成されていません`);
   }
   return viewer;
 }
@@ -98,7 +92,7 @@ async function measureStickyLayout(page: Page): Promise<StickyLayout> {
     const header = document.querySelector<HTMLElement>("[data-sticky-header]");
     const spacer = document.querySelector<HTMLElement>("[data-sticky-header-spacer]");
     if (!body || !header || !spacer) {
-      throw new Error("sticky header layout is incomplete");
+      throw new Error("スティッキーヘッダーのレイアウトに必要な要素が揃っていません");
     }
 
     const bodyRect = body.getBoundingClientRect();
@@ -123,13 +117,9 @@ async function expectStableStickyLayout(page: Page, path: string, viewport: Stic
   await expect(header).toHaveCount(1);
   await expect(spacer).toHaveCount(1);
 
-  // Two frames let the initial IntersectionObserver notification run. At the narrow width, a
-  // 200-character title extends beyond the viewport, but its sentinel is still below the root's
-  // top edge and must not be mistaken for a pinned header. The wide width covers the md layout too.
-  //
-  // [Ja] 2 frame 待って初回の IntersectionObserver 通知を走らせる。狭い幅では 200 文字のタイトルが
-  // ビューポート下端を越えるが、sentinel は root 上端より下にあり、固定済みと誤判定してはならない。
-  // 広い幅では md レイアウトも検証する。
+  // 2 frame待って初回のIntersectionObserver通知を走らせる。狭い幅では200文字のタイトルが
+  // ビューポート下端を越えるが、sentinelはroot上端より下にあり、固定済みと誤判定してはならない。
+  // 広い幅ではmdレイアウトも検証する。
   await waitForRendering(page);
   await expect(header).not.toHaveAttribute("data-stuck", "");
   const expanded = await measureStickyLayout(page);
@@ -163,7 +153,7 @@ async function expectStableStickyLayout(page: Page, path: string, viewport: Stic
 
 test.describe("ページ表示のスティッキーヘッダー", () => {
   for (const viewport of VIEWPORTS) {
-    test(`操作ありの長いタイトルでも上端通過時だけ固定し本文位置を保つこと（${viewport.label}）`, async ({ page }) => {
+    test(`操作ありの長いタイトルでも上端通過時だけ固定し本文位置を保つこと (${viewport.label})`, async ({ page }) => {
       const viewer = requireViewer(adminViewer, "admin");
 
       await page.context().clearCookies();
@@ -175,7 +165,7 @@ test.describe("ページ表示のスティッキーヘッダー", () => {
   }
 
   for (const viewport of VIEWPORTS) {
-    test(`操作なしの長いタイトルでも上端通過時だけ固定し本文位置を保つこと（${viewport.label}）`, async ({ page }) => {
+    test(`操作なしの長いタイトルでも上端通過時だけ固定し本文位置を保つこと (${viewport.label})`, async ({ page }) => {
       const viewer = requireViewer(readerViewer, "reader");
 
       await page.context().clearCookies();

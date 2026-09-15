@@ -1,6 +1,4 @@
-// Package topic_settings_general provides the HTTP handlers of the general settings of a topic.
-//
-// [Ja] topic_settings_general パッケージはトピックの一般設定の HTTP ハンドラーを提供します。
+// Package topic_settings_generalはトピックの一般設定のHTTPハンドラーを提供します。
 package topic_settings_general
 
 import (
@@ -24,10 +22,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Handler serves the screen the general settings of a topic are edited on, and the save it
-// submits to.
-//
-// [Ja] Handler はトピックの一般設定を編集する画面と、その送信先の保存処理を提供します。
+// Handlerはトピックの一般設定を編集する画面と、その送信先の保存処理を提供します。
 type Handler struct {
 	cfg                       *config.Config
 	flashMgr                  *session.FlashManager
@@ -35,7 +30,7 @@ type Handler struct {
 	updateTopicUC             *usecase.UpdateTopicUsecase
 }
 
-// NewHandler はトピックの一般設定のハンドラーを生成します
+// NewHandlerはトピックの一般設定のハンドラーを生成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
@@ -50,11 +45,7 @@ func NewHandler(
 	}
 }
 
-// requestTarget reads what the URL names the screen by, and reports whether it could be read. A
-// topic number that is not a number belongs to no topic, so it is answered as not found rather
-// than looked up.
-//
-// [Ja] requestTarget は URL が画面を指すために運ぶ値を読み、読めたかどうかを返します。数値でない
+// requestTargetはURLが画面を指すために運ぶ値を読み、読めたかどうかを返します。数値でない
 // トピック番号はどのトピックも指さないため、取得を試みずに「見つからない」として答えます。
 func requestTarget(w http.ResponseWriter, r *http.Request) (model.SpaceIdentifier, int32, *model.User, bool) {
 	ctx := r.Context()
@@ -76,12 +67,8 @@ func requestTarget(w http.ResponseWriter, r *http.Request) (model.SpaceIdentifie
 	return spaceIdentifier, int32(topicNumber), user, true
 }
 
-// render draws the general settings screen into the layout it shares with the rest of the topic
-// screens. The breadcrumb leads back through the settings of the topic, which stays on the Rails
-// version, and ends with this screen itself as a non-linked current item.
-//
-// [Ja] render は一般設定画面を、トピックの他の画面と共有するレイアウトへ描画します。パンくずは
-// トピックの設定 (その画面は Rails 版のまま残ります) を通り、この画面自身の非リンクな現在項目で
+// renderは一般設定画面を、トピックの他の画面と共有するレイアウトへ描画します。パンくずは
+// トピックの設定 (その画面はRails版のまま残ります) を通り、この画面自身の非リンクな現在項目で
 // 締めます。
 func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.User, data topicpages.SettingsGeneralData) {
 	ctx := r.Context()
@@ -119,11 +106,7 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.Use
 					Label: i18n.T(ctx, "topic_settings_general_breadcrumb_settings"),
 					Path:  templates.TopicSettingsPath(data.Space.Identifier, data.Topic.Number),
 				},
-				// The screen is the current page, so the trail ends with a non-linked item carrying
-				// aria-current. The label repeats the heading, but it is read from a key of its own so
-				// that a breadcrumb needing a shorter word than the heading can take one later.
-				//
-				// [Ja] この画面が現在地のため、経路は aria-current を持つリンク無しの項目で締める。
+				// この画面が現在地のため、経路はaria-currentを持つリンク無しの項目で締める。
 				// ラベルは見出しと同じ文字列だが、パンくずが見出しより短い語を必要としたときに後から
 				// 変えられるよう、独立したキーから引く。
 				components.BreadcrumbItem{
@@ -140,11 +123,7 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.Use
 	}
 }
 
-// handleError turns an error from a topic usecase into the response it deserves. A topic the
-// viewer may not change is answered as not found, so that who may change what in a space is not
-// something an outsider can probe for.
-//
-// [Ja] handleError はトピックのユースケースから返ったエラーを、それに応じたレスポンスへ変えます。
+// handleErrorはトピックのユースケースから返ったエラーを、それに応じたレスポンスへ変えます。
 // 閲覧者が変更できないトピックは「見つからない」として答え、そのスペースで誰が何を変更できるかを
 // 外部から試して確かめられないようにします。
 func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error, logMsg string) {

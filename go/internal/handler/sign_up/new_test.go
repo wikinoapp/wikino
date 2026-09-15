@@ -63,7 +63,7 @@ func TestNew(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// レスポンスボディを検証
@@ -71,32 +71,32 @@ func TestNew(t *testing.T) {
 
 	// サインアップフォームが含まれているか確認
 	if !strings.Contains(body, `action="/email_confirmation"`) {
-		t.Error("sign up form action not found in response")
+		t.Error("レスポンスにサインアップフォームの送信先が見つからない")
 	}
 
 	// CSRFトークンが含まれているか確認
 	if !strings.Contains(body, "test-csrf-token") {
-		t.Error("CSRF token not found in response")
+		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
 	// メールアドレス入力フィールドが含まれているか確認
 	if !strings.Contains(body, `name="email"`) {
-		t.Error("email input field not found in response")
+		t.Error("レスポンスにメールアドレスの入力フィールドが見つからない")
 	}
 
 	// eventのhiddenフィールドが含まれているか確認
 	if !strings.Contains(body, `name="event" value="signup"`) {
-		t.Error("event hidden field not found in response")
+		t.Error("レスポンスにeventのhiddenフィールドが見つからない")
 	}
 
 	// Turnstileウィジェットが含まれているか確認
 	if !strings.Contains(body, "test-site-key") {
-		t.Error("Turnstile site key not found in response")
+		t.Error("レスポンスにTurnstileのサイトキーが見つからない")
 	}
 
 	// ログインリンクが含まれているか確認
 	if !strings.Contains(body, `href="/sign_in"`) {
-		t.Error("sign in link not found in response")
+		t.Error("レスポンスにサインインのリンクが見つからない")
 	}
 }
 
@@ -107,7 +107,7 @@ func TestNew_EnglishLocale(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	handler := setupHandler(t, tx)
 
-	// HTTPリクエストを作成（英語ロケール）
+	// HTTPリクエストを作成 (英語ロケール)
 	req := httptest.NewRequest(http.MethodGet, "/sign_up", nil)
 	req.Header.Set("Accept-Language", "en")
 
@@ -121,26 +121,23 @@ func TestNew_EnglishLocale(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// 英語の見出しが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "Sign up for Wikino") {
-		t.Error("English heading not found in response")
+		t.Error("レスポンスに英語の見出しが見つからない")
 	}
 
 	// 英語のボタンテキストが含まれているか確認
 	if !strings.Contains(body, "Send confirmation code") {
-		t.Error("English submit button text not found in response")
+		t.Error("レスポンスに英語の送信ボタンの文言が見つからない")
 	}
 }
 
-// The logo link back to the home page is icon-only, so its accessible name comes from the
-// translated aria-label rather than from its content.
-//
-// [Ja] ホームへ戻るロゴリンクはアイコンのみのため、アクセシブルネームは内容ではなく
-// 翻訳済みの aria-label が供給する。
+// ホームへ戻るロゴリンクはアイコンのみのため、アクセシブルネームは内容ではなく
+// 翻訳済みのaria-labelが供給する。
 func TestNew_LogoLinkHasAccessibleName(t *testing.T) {
 	t.Parallel()
 
@@ -152,7 +149,7 @@ func TestNew_LogoLinkHasAccessibleName(t *testing.T) {
 		{
 			name:      "日本語",
 			locale:    i18n.LangJa,
-			wantLabel: "Wikino のホーム",
+			wantLabel: "Wikinoのホーム",
 		},
 		{
 			name:      "英語",
@@ -178,11 +175,11 @@ func TestNew_LogoLinkHasAccessibleName(t *testing.T) {
 			handler.New(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
-				t.Errorf("ロゴリンクに aria-label %q が含まれていない", tt.wantLabel)
+				t.Errorf("ロゴリンクにaria-label %qが含まれていない", tt.wantLabel)
 			}
 		})
 	}

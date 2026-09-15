@@ -34,20 +34,20 @@ func TestAttachmentRepository_ExistsByIDAndSpace(t *testing.T) {
 	t.Run("存在する添付ファイルはtrueを返す", func(t *testing.T) {
 		exists, err := repo.ExistsByIDAndSpace(context.Background(), attachmentID, spaceID)
 		if err != nil {
-			t.Fatalf("ExistsByIDAndSpace() error = %v", err)
+			t.Fatalf("ExistsByIDAndSpace()のエラー = %v", err)
 		}
 		if !exists {
-			t.Error("ExistsByIDAndSpace() = false, want true")
+			t.Error("ExistsByIDAndSpace() = false、期待値 = true")
 		}
 	})
 
 	t.Run("存在しないIDはfalseを返す", func(t *testing.T) {
 		exists, err := repo.ExistsByIDAndSpace(context.Background(), model.AttachmentID("00000000-0000-0000-0000-000000000000"), spaceID)
 		if err != nil {
-			t.Fatalf("ExistsByIDAndSpace() error = %v", err)
+			t.Fatalf("ExistsByIDAndSpace()のエラー = %v", err)
 		}
 		if exists {
-			t.Error("ExistsByIDAndSpace() = true, want false")
+			t.Error("ExistsByIDAndSpace() = true、期待値 = false")
 		}
 	})
 
@@ -58,10 +58,10 @@ func TestAttachmentRepository_ExistsByIDAndSpace(t *testing.T) {
 
 		exists, err := repo.ExistsByIDAndSpace(context.Background(), attachmentID, otherSpaceID)
 		if err != nil {
-			t.Fatalf("ExistsByIDAndSpace() error = %v", err)
+			t.Fatalf("ExistsByIDAndSpace()のエラー = %v", err)
 		}
 		if exists {
-			t.Error("ExistsByIDAndSpace() = true, want false")
+			t.Error("ExistsByIDAndSpace() = true、期待値 = false")
 		}
 	})
 }
@@ -92,29 +92,29 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 	t.Run("存在する添付ファイルを取得できる", func(t *testing.T) {
 		attachment, err := repo.FindByIDAndSpace(context.Background(), attachmentID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if attachment == nil {
-			t.Fatal("FindByIDAndSpace() returned nil, want attachment")
+			t.Fatal("FindByIDAndSpace()がnilを返した、期待値 = 添付ファイル")
 		}
 		if attachment.ID != attachmentID {
-			t.Errorf("attachment.ID = %v, want %v", attachment.ID, attachmentID)
+			t.Errorf("attachment.ID = %v、期待値 = %v", attachment.ID, attachmentID)
 		}
 		if attachment.SpaceID != spaceID {
-			t.Errorf("attachment.SpaceID = %v, want %v", attachment.SpaceID, spaceID)
+			t.Errorf("attachment.SpaceID = %v、期待値 = %v", attachment.SpaceID, spaceID)
 		}
 		if attachment.Filename != "photo.jpg" {
-			t.Errorf("attachment.Filename = %v, want %v", attachment.Filename, "photo.jpg")
+			t.Errorf("attachment.Filename = %v、期待値 = %v", attachment.Filename, "photo.jpg")
 		}
 	})
 
 	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
 		attachment, err := repo.FindByIDAndSpace(context.Background(), model.AttachmentID("00000000-0000-0000-0000-000000000000"), spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindByIDAndSpace() = %v, want nil", attachment)
+			t.Errorf("FindByIDAndSpace() = %v、期待値 = nil", attachment)
 		}
 	})
 
@@ -125,10 +125,10 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 
 		attachment, err := repo.FindByIDAndSpace(context.Background(), attachmentID, otherSpaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindByIDAndSpace() = %v, want nil", attachment)
+			t.Errorf("FindByIDAndSpace() = %v、期待値 = nil", attachment)
 		}
 	})
 }
@@ -136,7 +136,7 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 	t.Parallel()
 
-	t.Run("公開トピックのページから参照されている添付は blob 情報を取得できる", func(t *testing.T) {
+	t.Run("公開トピックのページから参照されている添付はblob情報を取得できる", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -163,31 +163,31 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithContentType("image/png").
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment == nil {
-			t.Fatal("FindPubliclyReferencedBlobByID() returned nil, want attachment")
+			t.Fatal("FindPubliclyReferencedBlobByID()がnilを返した、期待値 = 添付ファイル")
 		}
 		if attachment.ID != attachmentID {
-			t.Errorf("attachment.ID = %v, want %v", attachment.ID, attachmentID)
+			t.Errorf("attachment.ID = %v、期待値 = %v", attachment.ID, attachmentID)
 		}
 		if attachment.SpaceID != spaceID {
-			t.Errorf("attachment.SpaceID = %v, want %v", attachment.SpaceID, spaceID)
+			t.Errorf("attachment.SpaceID = %v、期待値 = %v", attachment.SpaceID, spaceID)
 		}
 		if attachment.BlobKey == "" {
-			t.Error("attachment.BlobKey should not be empty")
+			t.Error("attachment.BlobKeyが空")
 		}
 		if attachment.ContentType != "image/png" {
-			t.Errorf("attachment.ContentType = %v, want image/png", attachment.ContentType)
+			t.Errorf("attachment.ContentType = %v、期待値 = image/png", attachment.ContentType)
 		}
 	})
 
-	t.Run("非公開トピックのページから参照されている添付は nil を返す", func(t *testing.T) {
+	t.Run("非公開トピックのページから参照されている添付はnilを返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -212,19 +212,19 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
-	t.Run("公開と非公開のページから混在参照されている添付は nil を返す", func(t *testing.T) {
+	t.Run("公開と非公開のページから混在参照されている添付はnilを返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -261,22 +261,22 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), publicPageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 		if _, err := parRepo.CreateBatch(context.Background(), privatePageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
-	t.Run("どのページからも参照されていない添付は nil を返す", func(t *testing.T) {
+	t.Run("どのページからも参照されていない添付はnilを返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -290,14 +290,14 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
-	t.Run("論理削除されたページからの参照は無視される (有効な公開参照がない場合 nil)", func(t *testing.T) {
+	t.Run("論理削除されたページからの参照は無視される (有効な公開参照がない場合nil)", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -322,7 +322,7 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 		// ページを論理削除する
 		if _, err := tx.ExecContext(context.Background(),
@@ -332,14 +332,14 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
-	t.Run("論理削除されたトピックからの参照は無視される (有効な公開参照がない場合 nil)", func(t *testing.T) {
+	t.Run("論理削除されたトピックからの参照は無視される (有効な公開参照がない場合nil)", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -365,19 +365,19 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
-	t.Run("公開トピックのゴミ箱に入ったページから参照されている添付は nil を返す", func(t *testing.T) {
+	t.Run("公開トピックのゴミ箱に入ったページから参照されている添付はnilを返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -403,19 +403,19 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
-	t.Run("非公開トピックのゴミ箱に入ったページからの参照は visibility 判定に影響しない", func(t *testing.T) {
+	t.Run("非公開トピックのゴミ箱に入ったページからの参照はvisibility判定に影響しない", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -453,26 +453,24 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), publicPageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 		if _, err := parRepo.CreateBatch(context.Background(), trashedPrivatePageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment == nil {
-			t.Fatal("FindPubliclyReferencedBlobByID() returned nil, want attachment")
+			t.Fatal("FindPubliclyReferencedBlobByID()がnilを返した、期待値 = 添付ファイル")
 		}
 	})
 
-	// Pins `p.space_id = a.space_id` in the EXISTS branch: the topic stays in the attachment's
-	// space, so only the page condition can exclude this reference.
-	// [Ja] EXISTS 側の `p.space_id = a.space_id` を単独で固定する。トピックは attachment と
-	// 同じ space に置くため、この参照を除外できるのはページ側の条件だけになる。
-	t.Run("参照元ページが別 space にある参照だけでは添付を公開しない", func(t *testing.T) {
+	// EXISTS側の `p.space_id = a.space_id` を単独で固定する。トピックはattachmentと
+	// 同じspaceに置くため、この参照を除外できるのはページ側の条件だけになる。
+	t.Run("参照元ページが別spaceにある参照だけでは添付を公開しない", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -496,8 +494,7 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceID(attachmentSpaceID).
 			WithSpaceMemberID(attachmentSpaceMemberID).
 			Build()
-		// CreateBatch rejects a reference whose page and attachment live in different spaces.
-		// [Ja] CreateBatch は page と attachment の space が異なる参照を作れないため直接 INSERT する。
+		// CreateBatchはpageとattachmentのspaceが異なる参照を作れないため直接INSERTする。
 		if _, err := tx.ExecContext(
 			context.Background(),
 			`INSERT INTO page_attachment_references (attachment_id, page_id, created_at, updated_at)
@@ -505,23 +502,21 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			string(attachmentID),
 			string(publicPageID),
 		); err != nil {
-			t.Fatalf("cross-space の参照作成に失敗: %v", err)
+			t.Fatalf("cross-spaceの参照作成に失敗: %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
-	// Pins `t.space_id = a.space_id` in the EXISTS branch: the page stays in the attachment's
-	// space, so only the topic condition can exclude this reference.
-	// [Ja] EXISTS 側の `t.space_id = a.space_id` を単独で固定する。ページは attachment と
-	// 同じ space に置くため、この参照を除外できるのはトピック側の条件だけになる。
-	t.Run("参照元ページのトピックが別 space にある参照だけでは添付を公開しない", func(t *testing.T) {
+	// EXISTS側の `t.space_id = a.space_id` を単独で固定する。ページはattachmentと
+	// 同じspaceに置くため、この参照を除外できるのはトピック側の条件だけになる。
+	t.Run("参照元ページのトピックが別spaceにある参照だけでは添付を公開しない", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -547,23 +542,21 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(attachmentSpaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), pageID, attachmentSpaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
-	// Pins `p.space_id = a.space_id` in the NOT EXISTS branch: the private topic stays in the
-	// attachment's space, so only the page condition can keep it out of the visibility check.
-	// [Ja] NOT EXISTS 側の `p.space_id = a.space_id` を単独で固定する。非公開トピックは
-	// attachment と同じ space に置くため、visibility 判定から外せるのはページ側の条件だけになる。
-	t.Run("別 space のページからの非公開参照は visibility 判定に影響しない", func(t *testing.T) {
+	// NOT EXISTS側の `p.space_id = a.space_id` を単独で固定する。非公開トピックは
+	// attachmentと同じspaceに置くため、visibility判定から外せるのはページ側の条件だけになる。
+	t.Run("別spaceのページからの非公開参照はvisibility判定に影響しない", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -601,10 +594,9 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(attachmentSpaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), publicPageID, attachmentSpaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
-		// CreateBatch rejects a reference whose page and attachment live in different spaces.
-		// [Ja] CreateBatch は page と attachment の space が異なる参照を作れないため直接 INSERT する。
+		// CreateBatchはpageとattachmentのspaceが異なる参照を作れないため直接INSERTする。
 		if _, err := tx.ExecContext(
 			context.Background(),
 			`INSERT INTO page_attachment_references (attachment_id, page_id, created_at, updated_at)
@@ -612,26 +604,24 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			string(attachmentID),
 			string(privatePageID),
 		); err != nil {
-			t.Fatalf("cross-space の参照作成に失敗: %v", err)
+			t.Fatalf("cross-spaceの参照作成に失敗: %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment == nil {
-			t.Fatal("FindPubliclyReferencedBlobByID() returned nil, want attachment")
+			t.Fatal("FindPubliclyReferencedBlobByID()がnilを返した、期待値 = 添付ファイル")
 		}
 		if attachment.SpaceID != attachmentSpaceID {
-			t.Errorf("attachment.SpaceID = %v, want %v", attachment.SpaceID, attachmentSpaceID)
+			t.Errorf("attachment.SpaceID = %v、期待値 = %v", attachment.SpaceID, attachmentSpaceID)
 		}
 	})
 
-	// Pins `t.space_id = a.space_id` in the NOT EXISTS branch: the private page stays in the
-	// attachment's space, so only the topic condition can keep it out of the visibility check.
-	// [Ja] NOT EXISTS 側の `t.space_id = a.space_id` を単独で固定する。非公開ページは
-	// attachment と同じ space に置くため、visibility 判定から外せるのはトピック側の条件だけになる。
-	t.Run("別 space のトピックに属する非公開参照は visibility 判定に影響しない", func(t *testing.T) {
+	// NOT EXISTS側の `t.space_id = a.space_id` を単独で固定する。非公開ページは
+	// attachmentと同じspaceに置くため、visibility判定から外せるのはトピック側の条件だけになる。
+	t.Run("別spaceのトピックに属する非公開参照はvisibility判定に影響しない", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -669,21 +659,21 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 			WithSpaceMemberID(attachmentSpaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), publicPageID, attachmentSpaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 		if _, err := parRepo.CreateBatch(context.Background(), privatePageID, attachmentSpaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), attachmentID)
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment == nil {
-			t.Fatal("FindPubliclyReferencedBlobByID() returned nil, want attachment")
+			t.Fatal("FindPubliclyReferencedBlobByID()がnilを返した、期待値 = 添付ファイル")
 		}
 		if attachment.SpaceID != attachmentSpaceID {
-			t.Errorf("attachment.SpaceID = %v, want %v", attachment.SpaceID, attachmentSpaceID)
+			t.Errorf("attachment.SpaceID = %v、期待値 = %v", attachment.SpaceID, attachmentSpaceID)
 		}
 	})
 
@@ -695,10 +685,10 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), model.AttachmentID("00000000-0000-0000-0000-000000000000"))
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 
@@ -710,10 +700,10 @@ func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 
 		attachment, err := repo.FindPubliclyReferencedBlobByID(context.Background(), model.AttachmentID("not-a-uuid"))
 		if err != nil {
-			t.Fatalf("FindPubliclyReferencedBlobByID() error = %v", err)
+			t.Fatalf("FindPubliclyReferencedBlobByID()のエラー = %v", err)
 		}
 		if attachment != nil {
-			t.Errorf("FindPubliclyReferencedBlobByID() = %v, want nil", attachment)
+			t.Errorf("FindPubliclyReferencedBlobByID() = %v、期待値 = nil", attachment)
 		}
 	})
 }
@@ -745,20 +735,20 @@ func TestAttachmentRepository_FindByIDsAndSpace(t *testing.T) {
 	t.Run("IDリストに含まれる添付ファイルを一括取得できる", func(t *testing.T) {
 		attachments, err := repo.FindByIDsAndSpace(context.Background(), []model.AttachmentID{attachmentID1, attachmentID2}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDsAndSpace() error = %v", err)
+			t.Fatalf("FindByIDsAndSpace()のエラー = %v", err)
 		}
 		if len(attachments) != 2 {
-			t.Fatalf("len(attachments) = %v, want 2", len(attachments))
+			t.Fatalf("len(attachments) = %v、期待値 = 2", len(attachments))
 		}
 	})
 
 	t.Run("空のIDリストは空のスライスを返す", func(t *testing.T) {
 		attachments, err := repo.FindByIDsAndSpace(context.Background(), []model.AttachmentID{}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDsAndSpace() error = %v", err)
+			t.Fatalf("FindByIDsAndSpace()のエラー = %v", err)
 		}
 		if len(attachments) != 0 {
-			t.Errorf("len(attachments) = %v, want 0", len(attachments))
+			t.Errorf("len(attachments) = %v、期待値 = 0", len(attachments))
 		}
 	})
 
@@ -769,10 +759,10 @@ func TestAttachmentRepository_FindByIDsAndSpace(t *testing.T) {
 
 		attachments, err := repo.FindByIDsAndSpace(context.Background(), []model.AttachmentID{attachmentID1, attachmentID2}, otherSpaceID)
 		if err != nil {
-			t.Fatalf("FindByIDsAndSpace() error = %v", err)
+			t.Fatalf("FindByIDsAndSpace()のエラー = %v", err)
 		}
 		if len(attachments) != 0 {
-			t.Errorf("len(attachments) = %v, want 0", len(attachments))
+			t.Errorf("len(attachments) = %v、期待値 = 0", len(attachments))
 		}
 	})
 }
@@ -800,35 +790,35 @@ func TestAttachmentRepository_ListByPageIDsAndSpace(t *testing.T) {
 		Build()
 
 	if _, err := refRepo.CreateBatch(ctx, referencedPageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-		t.Fatalf("CreateBatch() error = %v", err)
+		t.Fatalf("CreateBatch()のエラー = %v", err)
 	}
 
 	t.Run("参照元のページと添付ファイルの組を返す", func(t *testing.T) {
 		pageAttachments, err := repo.ListByPageIDsAndSpace(ctx, []model.PageID{referencedPageID, otherPageID}, spaceID)
 		if err != nil {
-			t.Fatalf("ListByPageIDsAndSpace() error = %v", err)
+			t.Fatalf("ListByPageIDsAndSpace()のエラー = %v", err)
 		}
 		if len(pageAttachments) != 1 {
-			t.Fatalf("ListByPageIDsAndSpace() の件数 = %d, want 1", len(pageAttachments))
+			t.Fatalf("ListByPageIDsAndSpace()の件数 = %d、期待値 = 1", len(pageAttachments))
 		}
 		if pageAttachments[0].PageID != referencedPageID {
-			t.Errorf("PageID = %q, want %q", pageAttachments[0].PageID, referencedPageID)
+			t.Errorf("PageID = %q、期待値 = %q", pageAttachments[0].PageID, referencedPageID)
 		}
 		if pageAttachments[0].Attachment.Filename != "図.png" {
-			t.Errorf("Filename = %q, want %q", pageAttachments[0].Attachment.Filename, "図.png")
+			t.Errorf("Filename = %q、期待値 = %q", pageAttachments[0].Attachment.Filename, "図.png")
 		}
 		if pageAttachments[0].Attachment.BlobKey == "" {
-			t.Error("BlobKey が空です")
+			t.Error("BlobKeyが空です")
 		}
 	})
 
 	t.Run("ページIDが空ならクエリを投げない", func(t *testing.T) {
 		pageAttachments, err := repo.ListByPageIDsAndSpace(ctx, nil, spaceID)
 		if err != nil {
-			t.Fatalf("ListByPageIDsAndSpace() error = %v", err)
+			t.Fatalf("ListByPageIDsAndSpace()のエラー = %v", err)
 		}
 		if pageAttachments != nil {
-			t.Errorf("ListByPageIDsAndSpace() = %v, want nil", pageAttachments)
+			t.Errorf("ListByPageIDsAndSpace() = %v、期待値 = nil", pageAttachments)
 		}
 	})
 
@@ -839,10 +829,10 @@ func TestAttachmentRepository_ListByPageIDsAndSpace(t *testing.T) {
 
 		pageAttachments, err := repo.ListByPageIDsAndSpace(ctx, []model.PageID{referencedPageID}, otherSpaceID)
 		if err != nil {
-			t.Fatalf("ListByPageIDsAndSpace() error = %v", err)
+			t.Fatalf("ListByPageIDsAndSpace()のエラー = %v", err)
 		}
 		if len(pageAttachments) != 0 {
-			t.Errorf("ListByPageIDsAndSpace() の件数 = %d, want 0", len(pageAttachments))
+			t.Errorf("ListByPageIDsAndSpace()の件数 = %d、期待値 = 0", len(pageAttachments))
 		}
 	})
 }

@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// SuggestionRepository は編集提案リポジトリ
+// SuggestionRepositoryは編集提案リポジトリ
 type SuggestionRepository struct {
 	q *query.Queries
 }
 
-// NewSuggestionRepository は SuggestionRepository を生成する
+// NewSuggestionRepositoryはSuggestionRepositoryを生成する
 func NewSuggestionRepository(q *query.Queries) *SuggestionRepository {
 	return &SuggestionRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *SuggestionRepository) WithTx(tx *sql.Tx) *SuggestionRepository {
 	return &SuggestionRepository{q: r.q.WithTx(tx)}
 }
 
-// CreateSuggestionInput は編集提案作成の入力パラメータ
+// CreateSuggestionInputは編集提案作成の入力パラメータ
 type CreateSuggestionInput struct {
 	SpaceID              model.SpaceID
 	TopicID              model.TopicID
@@ -36,7 +36,7 @@ type CreateSuggestionInput struct {
 	Status               model.SuggestionStatus
 }
 
-// Create は編集提案を作成する
+// Createは編集提案を作成する
 func (r *SuggestionRepository) Create(ctx context.Context, input CreateSuggestionInput) (*model.Suggestion, error) {
 	now := time.Now()
 	row, err := r.q.CreateSuggestion(ctx, query.CreateSuggestionParams{
@@ -56,7 +56,7 @@ func (r *SuggestionRepository) Create(ctx context.Context, input CreateSuggestio
 	return r.toModel(row), nil
 }
 
-// FindByID はIDで編集提案を取得する（スペースIDでスコープ）
+// FindByIDはIDで編集提案を取得する (スペースIDでスコープ)
 func (r *SuggestionRepository) FindByID(ctx context.Context, id model.SuggestionID, spaceID model.SpaceID) (*model.Suggestion, error) {
 	row, err := r.q.FindSuggestionByID(ctx, query.FindSuggestionByIDParams{
 		ID:      string(id),
@@ -71,7 +71,7 @@ func (r *SuggestionRepository) FindByID(ctx context.Context, id model.Suggestion
 	return r.toModel(row), nil
 }
 
-// FindByTopicAndNumber はトピックIDと番号で編集提案を取得する（スペースIDでスコープ）
+// FindByTopicAndNumberはトピックIDと番号で編集提案を取得する (スペースIDでスコープ)
 func (r *SuggestionRepository) FindByTopicAndNumber(ctx context.Context, topicID model.TopicID, number model.SuggestionNumber, spaceID model.SpaceID) (*model.Suggestion, error) {
 	row, err := r.q.FindSuggestionByTopicAndNumber(ctx, query.FindSuggestionByTopicAndNumberParams{
 		TopicID: string(topicID),
@@ -87,7 +87,7 @@ func (r *SuggestionRepository) FindByTopicAndNumber(ctx context.Context, topicID
 	return r.toModel(row), nil
 }
 
-// FindBySpaceAndNumber はスペースIDと番号で編集提案を取得する
+// FindBySpaceAndNumberはスペースIDと番号で編集提案を取得する
 func (r *SuggestionRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model.SpaceID, number model.SuggestionNumber) (*model.Suggestion, error) {
 	row, err := r.q.FindSuggestionBySpaceAndNumber(ctx, query.FindSuggestionBySpaceAndNumberParams{
 		SpaceID: string(spaceID),
@@ -102,7 +102,7 @@ func (r *SuggestionRepository) FindBySpaceAndNumber(ctx context.Context, spaceID
 	return r.toModel(row), nil
 }
 
-// ListByTopicAndStatuses はトピックIDとステータスリストで編集提案一覧を取得する
+// ListByTopicAndStatusesはトピックIDとステータスリストで編集提案一覧を取得する
 func (r *SuggestionRepository) ListByTopicAndStatuses(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID, statuses []model.SuggestionStatus) ([]*model.Suggestion, error) {
 	statusInts := make([]int32, len(statuses))
 	for i, s := range statuses {
@@ -119,7 +119,7 @@ func (r *SuggestionRepository) ListByTopicAndStatuses(ctx context.Context, topic
 	return r.toModels(rows), nil
 }
 
-// UpdateStatusInput は編集提案ステータス更新の入力パラメータ
+// UpdateStatusInputは編集提案ステータス更新の入力パラメータ
 type UpdateStatusInput struct {
 	ID        model.SuggestionID
 	SpaceID   model.SpaceID
@@ -127,7 +127,7 @@ type UpdateStatusInput struct {
 	AppliedAt *time.Time
 }
 
-// UpdateStatus は編集提案のステータスを更新する
+// UpdateStatusは編集提案のステータスを更新する
 func (r *SuggestionRepository) UpdateStatus(ctx context.Context, input UpdateStatusInput) (*model.Suggestion, error) {
 	var appliedAt sql.NullTime
 	if input.AppliedAt != nil {
@@ -150,7 +150,7 @@ func (r *SuggestionRepository) UpdateStatus(ctx context.Context, input UpdateSta
 	return r.toModel(row), nil
 }
 
-// UpdateSuggestionInput は編集提案更新の入力パラメータ
+// UpdateSuggestionInputは編集提案更新の入力パラメータ
 type UpdateSuggestionInput struct {
 	ID      model.SuggestionID
 	SpaceID model.SpaceID
@@ -158,7 +158,7 @@ type UpdateSuggestionInput struct {
 	Body    string
 }
 
-// Update は編集提案のタイトルと本文を更新する
+// Updateは編集提案のタイトルと本文を更新する
 func (r *SuggestionRepository) Update(ctx context.Context, input UpdateSuggestionInput) (*model.Suggestion, error) {
 	row, err := r.q.UpdateSuggestion(ctx, query.UpdateSuggestionParams{
 		ID:        string(input.ID),
@@ -176,7 +176,7 @@ func (r *SuggestionRepository) Update(ctx context.Context, input UpdateSuggestio
 	return r.toModel(row), nil
 }
 
-// CountByTopicAndStatuses はトピックIDとステータスリストで編集提案の件数を取得する
+// CountByTopicAndStatusesはトピックIDとステータスリストで編集提案の件数を取得する
 func (r *SuggestionRepository) CountByTopicAndStatuses(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID, statuses []model.SuggestionStatus) (int64, error) {
 	statusInts := make([]int32, len(statuses))
 	for i, s := range statuses {
@@ -189,7 +189,7 @@ func (r *SuggestionRepository) CountByTopicAndStatuses(ctx context.Context, topi
 	})
 }
 
-// GetNextNumber はスペース内の次の編集提案番号を取得する
+// GetNextNumberはスペース内の次の編集提案番号を取得する
 func (r *SuggestionRepository) GetNextNumber(ctx context.Context, spaceID model.SpaceID) (model.SuggestionNumber, error) {
 	n, err := r.q.GetNextSuggestionNumber(ctx, string(spaceID))
 	if err != nil {
@@ -198,7 +198,7 @@ func (r *SuggestionRepository) GetNextNumber(ctx context.Context, spaceID model.
 	return model.SuggestionNumber(n), nil
 }
 
-// toModel は query.Suggestion を model.Suggestion に変換する
+// toModelはquery.Suggestionをmodel.Suggestionに変換する
 func (r *SuggestionRepository) toModel(row query.Suggestion) *model.Suggestion {
 	var appliedAt *time.Time
 	if row.AppliedAt.Valid {
@@ -220,7 +220,7 @@ func (r *SuggestionRepository) toModel(row query.Suggestion) *model.Suggestion {
 	}
 }
 
-// toModels は query.Suggestion のスライスを model.Suggestion のスライスに変換する
+// toModelsはquery.Suggestionのスライスをmodel.Suggestionのスライスに変換する
 func (r *SuggestionRepository) toModels(rows []query.Suggestion) []*model.Suggestion {
 	suggestions := make([]*model.Suggestion, len(rows))
 	for i, row := range rows {

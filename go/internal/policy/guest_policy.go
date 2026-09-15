@@ -4,11 +4,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// GuestPolicy は非ログイン・非スペースメンバー用の権限判定を行う。
+// GuestPolicyは非ログイン・非スペースメンバー用の権限判定を行う。
 // 公開トピック・ページの閲覧のみ許可し、それ以外はすべて拒否する。
 type GuestPolicy struct{}
 
-// NewGuestPolicy は GuestPolicy を生成する
+// NewGuestPolicyはGuestPolicyを生成する
 func NewGuestPolicy() *GuestPolicy {
 	return &GuestPolicy{}
 }

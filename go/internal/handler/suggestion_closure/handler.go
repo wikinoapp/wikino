@@ -1,6 +1,4 @@
-// Package suggestion_closure provides the HTTP handlers for closing a suggestion.
-//
-// [Ja] Package suggestion_closure は編集提案をクローズする操作の HTTP ハンドラーを提供します。
+// Package suggestion_closureは編集提案をクローズする操作のHTTPハンドラーを提供します。
 package suggestion_closure
 
 import (
@@ -8,13 +6,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は編集提案クローズハンドラー
+// Handlerは編集提案クローズハンドラー
 type Handler struct {
 	flashMgr               *session.FlashManager
 	closeSuggestionUsecase *usecase.CloseSuggestionUsecase
 }
 
-// NewHandler は新しい編集提案クローズハンドラーを作成します
+// NewHandlerは新しい編集提案クローズハンドラーを作成します
 func NewHandler(
 	flashMgr *session.FlashManager,
 	closeSuggestionUsecase *usecase.CloseSuggestionUsecase,

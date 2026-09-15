@@ -6,16 +6,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// NewData is what the screen an export is started from is rendered with.
+// NewDataはエクスポートを開始する画面をレンダリングする元になるデータ。
 //
-// InProgressExport is the export the space is already running, and is nil when it is not running
-// one. The start button gives way to a link to it, because starting a second export while the
-// first is going is refused.
-//
-// [Ja] NewData はエクスポートを開始する画面をレンダリングする元になるデータ。
-//
-// InProgressExport はそのスペースが既に実行しているエクスポートで、実行していなければ nil になる。
-// 1 つ目が続いている間に 2 つ目を開始しても拒否されるため、開始ボタンはそのエクスポートへの
+// InProgressExportはそのスペースが既に実行しているエクスポートで、実行していなければnilになる。
+// 1つ目が続いている間に2つ目を開始しても拒否されるため、開始ボタンはそのエクスポートへの
 // リンクに置き換わる。
 type NewData struct {
 	CSRFToken        string
@@ -23,9 +17,7 @@ type NewData struct {
 	InProgressExport *viewmodel.Export
 }
 
-// New renders the screen an export is started from.
-//
-// [Ja] New はエクスポートを開始する画面を表示します。
+// Newはエクスポートを開始する画面を表示します。
 templ New(data NewData) {
 	<div class="py-4">
 		<div class="max-w-2xl w-full mx-auto">
@@ -77,10 +69,7 @@ templ New(data NewData) {
 	</div>
 }
 
-// descriptionSubtitle renders the subtitle both export screens share, which carries a link to the
-// help page.
-//
-// [Ja] descriptionSubtitle は 2 つのエクスポート画面が共有するサブタイトルを表示します。
+// descriptionSubtitleは2つのエクスポート画面が共有するサブタイトルを表示します。
 // ヘルプページへのリンクを含みます。
 templ descriptionSubtitle(key string) {
 	@templ.Raw(templates.T(ctx, key))

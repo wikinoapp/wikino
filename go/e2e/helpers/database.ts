@@ -5,7 +5,7 @@ import * as path from "path";
 function getDatabaseURL(): string {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    throw new Error("環境変数 DATABASE_URL が設定されていません");
+    throw new Error("環境変数DATABASE_URLが設定されていません");
   }
   return url;
 }
@@ -44,7 +44,7 @@ async function queryWithRetry(text: string, params?: unknown[], maxRetries: numb
       }
     }
   }
-  throw new Error("queryWithRetry: unreachable");
+  throw new Error("queryWithRetryで到達しないはずの処理に到達しました");
 }
 
 export interface TestUser {
@@ -82,7 +82,7 @@ export async function createTestUser(
   const atname = overrides.atname || `e2e_${suffix.slice(0, 16)}`;
   const password = overrides.password || "passw0rd";
 
-  // bcrypt hash of "passw0rd" (cost=4 for speed)
+  // "passw0rd" のbcryptハッシュ (高速化のためcost=4)
   const passwordDigest = "$2a$04$LjuVYgRWxYQS4BdhyX95wuwlnFxgJfm6sj.t2tXHTkYDE0Ir1rPrC";
 
   const userResult = await query(
@@ -218,7 +218,7 @@ export async function cleanupTestData(userIds: string[]): Promise<void> {
   const spaceIds = spaceMemberResult.rows.map((row: { space_id: string }) => row.space_id);
 
   if (spaceIds.length > 0) {
-    // スペースに紐づくデータを削除（依存関係の順序に注意）
+    // スペースに紐づくデータを削除 (依存関係の順序に注意)
     await query(`DELETE FROM draft_pages WHERE space_id = ANY($1)`, [spaceIds]);
     await query(
       `DELETE FROM page_attachment_references WHERE page_id IN (SELECT id FROM pages WHERE space_id = ANY($1))`,

@@ -6,17 +6,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData is what the screen an export is followed on is rendered with.
-//
-// [Ja] ShowData はエクスポートの経過を追う画面をレンダリングする元になるデータ。
+// ShowDataはエクスポートの経過を追う画面をレンダリングする元になるデータ。
 type ShowData struct {
 	Space  viewmodel.Space
 	Export viewmodel.Export
 }
 
-// Show renders the screen an export is followed on.
-//
-// [Ja] Show はエクスポートの経過を追う画面を表示します。
+// Showはエクスポートの経過を追う画面を表示します。
 templ Show(data ShowData) {
 	<div class="py-4">
 		<div class="max-w-2xl w-full mx-auto">
@@ -42,10 +38,7 @@ templ Show(data ShowData) {
 	</div>
 }
 
-// showProcessing tells the reader that the export is still being produced. The completion is
-// announced by mail as well, so the screen says so rather than asking the reader to wait on it.
-//
-// [Ja] showProcessing はエクスポートがまだ生成中であることを伝えます。完了はメールでも知らせる
+// showProcessingはエクスポートがまだ生成中であることを伝えます。完了はメールでも知らせる
 // ため、画面で待つよう促すのではなく、そのことを伝えます。
 templ showProcessing() {
 	<div class="flex flex-col place-items-center gap-2">
@@ -56,11 +49,7 @@ templ showProcessing() {
 	</div>
 }
 
-// showSucceeded offers the archive, and says so instead when it can no longer be handed out. The
-// download link is signed for a limited time, so an export that finished long enough ago has
-// nothing left to offer and the way out is another export.
-//
-// [Ja] showSucceeded はアーカイブを渡し、もう渡せなくなっていればそのことを伝えます。ダウンロード
+// showSucceededはアーカイブを渡し、もう渡せなくなっていればそのことを伝えます。ダウンロード
 // のリンクは期限付きで署名されるため、完了から十分に時間が経ったエクスポートには渡せるものが残って
 // おらず、出口はもう一度エクスポートすることになります。
 templ showSucceeded(data ShowData) {
@@ -90,11 +79,7 @@ templ showSucceeded(data ShowData) {
 	</div>
 }
 
-// showFailed says that the export did not finish and offers another one. It covers the export that
-// recorded a failure and the one that was left behind by a worker that stopped: neither is coming
-// back, and in both cases what the reader can do is start again.
-//
-// [Ja] showFailed はエクスポートが完了しなかったことを伝え、もう一度実行する導線を出します。失敗を
+// showFailedはエクスポートが完了しなかったことを伝え、もう一度実行する導線を出します。失敗を
 // 記録したエクスポートと、停止したワーカーに取り残されたエクスポートの双方を受け持ちます。どちらも
 // 戻ってくることはなく、読み手にできるのはやり直すことだからです。
 templ showFailed(data ShowData) {
@@ -109,9 +94,7 @@ templ showFailed(data ShowData) {
 	</div>
 }
 
-// retryLink is the way back to the screen an export is started from.
-//
-// [Ja] retryLink はエクスポートを開始する画面へ戻る導線です。
+// retryLinkはエクスポートを開始する画面へ戻る導線です。
 templ retryLink(data ShowData) {
 	<a
 		href={ templ.SafeURL(string(templates.NewSpaceSettingsExportPath(data.Space.Identifier))) }

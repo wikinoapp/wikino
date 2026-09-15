@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Page はページのドメインモデル
+// Pageはページのドメインモデル
 type Page struct {
 	ID                        PageID
 	SpaceID                   SpaceID

@@ -23,30 +23,22 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		repository.NewTopicMemberRepository(q),
 	)
 
-	// Member holding page:trash space-wide (the permission the operation is gated on).
-	//
-	// [Ja] スペース単位で page:trash を持つメンバー (本操作の判定軸となる権限)。
+	// スペース単位でpage:trashを持つメンバー (本操作の判定軸となる権限)。
 	trashMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-trash@example.com").
 		WithAtname("tptrash").
 		Build()
-	// Member holding page:write but not page:trash (an editor must not be able to trash).
-	//
-	// [Ja] page:write は持つが page:trash を持たないメンバー (編集者がゴミ箱に入れられないこと)。
+	// page:writeは持つがpage:trashを持たないメンバー (編集者がゴミ箱に入れられないこと)。
 	writerMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-writer@example.com").
 		WithAtname("tpwriter").
 		Build()
-	// Member whose page:trash comes only from a topic membership.
-	//
-	// [Ja] page:trash をトピックメンバーからだけ得るメンバー。
+	// page:trashをトピックメンバーからだけ得るメンバー。
 	topicScopedMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-topic-scoped@example.com").
 		WithAtname("tptopicscoped").
 		Build()
-	// Signed-in user who has not joined the space.
-	//
-	// [Ja] スペースに参加していないログイン済みユーザー。
+	// スペースに参加していないログイン済みユーザー。
 	nonMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-nonmember@example.com").
 		WithAtname("tpnonmember").
@@ -108,10 +100,10 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 
 		page, err := pageRepo.FindBySpaceAndNumber(context.Background(), spaceID, number)
 		if err != nil {
-			t.Fatalf("FindBySpaceAndNumber() error = %v", err)
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
 		}
 		if page == nil {
-			t.Fatal("FindBySpaceAndNumber() returned nil, want page")
+			t.Fatal("FindBySpaceAndNumber()がnilを返した、期待値 = ページ")
 		}
 		return page
 	}
@@ -122,43 +114,38 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 	newPage(t, privateTopicID, 4, "Private Page")
 	newPage(t, privateTopicID, 5, "Topic Scoped Page")
 
-	t.Run("正常系: page:trash を持つメンバーはページをゴミ箱に入れられる", func(t *testing.T) {
+	t.Run("正常系: page:trashを持つメンバーはページをゴミ箱に入れられる", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      1,
 			UserID:          trashMemberID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v, want nil", err)
+			t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 		}
 		if output == nil {
-			t.Fatal("Execute() returned nil output")
+			t.Fatal("Execute()がnilの出力を返した")
 		}
-		// The redirect target is built from this, so it must come back resolved.
-		//
-		// [Ja] 遷移先をここから組み立てるため、解決済みで返る必要がある。
+		// 遷移先をここから組み立てるため、解決済みで返る必要がある。
 		if output.Space == nil || output.Space.Identifier != "tp-space" {
-			t.Errorf("output.Space = %v, want the space tp-space", output.Space)
+			t.Errorf("output.Space = %v、期待値 = スペースtp-space", output.Space)
 		}
 
 		page := findPage(t, 1)
 		if page.TrashedAt == nil {
-			t.Error("page.TrashedAt = nil, want a stamped time")
+			t.Error("page.TrashedAt = nil、期待値 = 打刻された時刻")
 		}
-		// The trash is not the logical deletion, so the page keeps its title and stays discardable
-		// only by the batch jobs.
-		//
-		// [Ja] ゴミ箱は論理削除ではないため、ページはタイトルを保持し、discarded_at はバッチ処理の
+		// ゴミ箱は論理削除ではないため、ページはタイトルを保持し、discarded_atはバッチ処理の
 		// 担当のまま残る。
 		if page.Title == nil || *page.Title != "Trashable Page" {
-			t.Errorf("page.Title = %v, want 'Trashable Page'", page.Title)
+			t.Errorf("page.Title = %v、期待値 = 'Trashable Page'", page.Title)
 		}
 		if page.DiscardedAt != nil {
-			t.Errorf("page.DiscardedAt = %v, want nil", page.DiscardedAt)
+			t.Errorf("page.DiscardedAt = %v、期待値 = nil", page.DiscardedAt)
 		}
 	})
 
-	t.Run("異常系: page:write だけのメンバーはゴミ箱に入れられない", func(t *testing.T) {
+	t.Run("異常系: page:writeだけのメンバーはゴミ箱に入れられない", func(t *testing.T) {
 		_, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      2,
@@ -167,13 +154,13 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 		if page := findPage(t, 2); page.TrashedAt != nil {
-			t.Errorf("page.TrashedAt = %v, want nil (権限が無いので更新されないべき)", page.TrashedAt)
+			t.Errorf("page.TrashedAt = %v、期待値 = nil (権限が無いので更新されない)", page.TrashedAt)
 		}
 	})
 
@@ -186,21 +173,18 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 		if page := findPage(t, 3); page.TrashedAt != nil {
-			t.Errorf("page.TrashedAt = %v, want nil (非メンバーでは更新されないべき)", page.TrashedAt)
+			t.Errorf("page.TrashedAt = %v、期待値 = nil (非メンバーでは更新されない)", page.TrashedAt)
 		}
 	})
 
 	t.Run("異常系: 開けない非公開トピックのページはゴミ箱に入れられない", func(t *testing.T) {
-		// The space-wide page:trash is not enough on its own: without topic:read the page must stay
-		// indistinguishable from one that does not exist.
-		//
-		// [Ja] スペース単位の page:trash だけでは足りない。topic:read が無ければ、そのページは
+		// スペース単位のpage:trashだけでは足りない。topic:readが無ければ、そのページは
 		// 存在しないページと区別が付かないままであるべき。
 		_, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
@@ -210,27 +194,27 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 		if page := findPage(t, 4); page.TrashedAt != nil {
-			t.Errorf("page.TrashedAt = %v, want nil (開けないトピックのページは更新されないべき)", page.TrashedAt)
+			t.Errorf("page.TrashedAt = %v、期待値 = nil (開けないトピックのページは更新されない)", page.TrashedAt)
 		}
 	})
 
-	t.Run("正常系: トピックスコープの page:trash でもゴミ箱に入れられる", func(t *testing.T) {
+	t.Run("正常系: トピックスコープのpage:trashでもゴミ箱に入れられる", func(t *testing.T) {
 		_, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      5,
 			UserID:          topicScopedMemberID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v, want nil", err)
+			t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 		}
 		if page := findPage(t, 5); page.TrashedAt == nil {
-			t.Error("page.TrashedAt = nil, want a stamped time")
+			t.Error("page.TrashedAt = nil、期待値 = 打刻された時刻")
 		}
 	})
 
@@ -243,10 +227,10 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -259,10 +243,10 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 }

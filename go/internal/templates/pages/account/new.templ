@@ -10,9 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// NewPageData is the data passed to the account creation page.
-//
-// [Ja] NewPageData はアカウント作成ページに渡すデータ構造体です。
+// NewPageDataはアカウント作成ページに渡すデータ構造体です。
 type NewPageData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
@@ -20,9 +18,7 @@ type NewPageData struct {
 	Atname     string
 }
 
-// New renders the content of the account creation page.
-//
-// [Ja] New はアカウント作成ページのコンテンツを表示します。
+// Newはアカウント作成ページのコンテンツを表示します。
 templ New(data NewPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6">
 		<div class="text-center px-4">

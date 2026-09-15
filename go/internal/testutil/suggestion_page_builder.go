@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SuggestionPageBuilder は編集提案ページテストデータのビルダー
+// SuggestionPageBuilderは編集提案ページテストデータのビルダー
 type SuggestionPageBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -27,7 +27,7 @@ type SuggestionPageBuilder struct {
 	featuredImageAttachmentID *string
 }
 
-// NewSuggestionPageBuilder は SuggestionPageBuilder を生成します
+// NewSuggestionPageBuilderはSuggestionPageBuilderを生成します
 func NewSuggestionPageBuilder(t *testing.T, tx *sql.Tx) *SuggestionPageBuilder {
 	t.Helper()
 	title := "テスト提案ページ"
@@ -41,69 +41,69 @@ func NewSuggestionPageBuilder(t *testing.T, tx *sql.Tx) *SuggestionPageBuilder {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SuggestionPageBuilder) WithSpaceID(spaceID model.SpaceID) *SuggestionPageBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSuggestionID は編集提案IDを設定します
+// WithSuggestionIDは編集提案IDを設定します
 func (b *SuggestionPageBuilder) WithSuggestionID(suggestionID model.SuggestionID) *SuggestionPageBuilder {
 	b.suggestionID = string(suggestionID)
 	return b
 }
 
-// WithPageID はページIDを設定します
+// WithPageIDはページIDを設定します
 func (b *SuggestionPageBuilder) WithPageID(pageID model.PageID) *SuggestionPageBuilder {
 	b.pageID = string(pageID)
 	return b
 }
 
-// WithPageRevisionID はページリビジョンIDを設定します
+// WithPageRevisionIDはページリビジョンIDを設定します
 func (b *SuggestionPageBuilder) WithPageRevisionID(pageRevisionID model.PageRevisionID) *SuggestionPageBuilder {
 	s := string(pageRevisionID)
 	b.pageRevisionID = &s
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *SuggestionPageBuilder) WithTitle(title string) *SuggestionPageBuilder {
 	b.title = &title
 	return b
 }
 
-// WithNilTitle はタイトルをnilに設定します
+// WithNilTitleはタイトルをnilに設定します
 func (b *SuggestionPageBuilder) WithNilTitle() *SuggestionPageBuilder {
 	b.title = nil
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *SuggestionPageBuilder) WithBody(body string) *SuggestionPageBuilder {
 	b.body = body
 	return b
 }
 
-// WithBodyHTML はHTML本文を設定します
+// WithBodyHTMLはHTML本文を設定します
 func (b *SuggestionPageBuilder) WithBodyHTML(bodyHTML string) *SuggestionPageBuilder {
 	b.bodyHTML = bodyHTML
 	return b
 }
 
-// WithLinkedPageIDs はリンクページIDを設定します
+// WithLinkedPageIDsはリンクページIDを設定します
 func (b *SuggestionPageBuilder) WithLinkedPageIDs(ids []model.PageID) *SuggestionPageBuilder {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)
 	return b
 }
 
-// WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイルIDを設定します
+// WithFeaturedImageAttachmentIDはアイキャッチ画像の添付ファイルIDを設定します
 func (b *SuggestionPageBuilder) WithFeaturedImageAttachmentID(id model.AttachmentID) *SuggestionPageBuilder {
 	s := string(id)
 	b.featuredImageAttachmentID = &s
 	return b
 }
 
-// Build は編集提案ページを作成し、IDを返します
+// Buildは編集提案ページを作成し、IDを返します
 func (b *SuggestionPageBuilder) Build() model.SuggestionPageID {
 	b.t.Helper()
 
@@ -133,7 +133,7 @@ func (b *SuggestionPageBuilder) Build() model.SuggestionPageID {
 	return model.SuggestionPageID(id)
 }
 
-// SuggestionPageBuilderDB はDBを直接使用する編集提案ページテストデータのビルダー
+// SuggestionPageBuilderDBはDBを直接使用する編集提案ページテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type SuggestionPageBuilderDB struct {
 	t  *testing.T
@@ -150,7 +150,7 @@ type SuggestionPageBuilderDB struct {
 	featuredImageAttachmentID *string
 }
 
-// NewSuggestionPageBuilderDB は SuggestionPageBuilderDB を生成します
+// NewSuggestionPageBuilderDBはSuggestionPageBuilderDBを生成します
 func NewSuggestionPageBuilderDB(t *testing.T, db *sql.DB) *SuggestionPageBuilderDB {
 	t.Helper()
 	title := "テスト提案ページ"
@@ -164,63 +164,63 @@ func NewSuggestionPageBuilderDB(t *testing.T, db *sql.DB) *SuggestionPageBuilder
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SuggestionPageBuilderDB) WithSpaceID(spaceID model.SpaceID) *SuggestionPageBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSuggestionID は編集提案IDを設定します
+// WithSuggestionIDは編集提案IDを設定します
 func (b *SuggestionPageBuilderDB) WithSuggestionID(suggestionID model.SuggestionID) *SuggestionPageBuilderDB {
 	b.suggestionID = string(suggestionID)
 	return b
 }
 
-// WithPageID はページIDを設定します
+// WithPageIDはページIDを設定します
 func (b *SuggestionPageBuilderDB) WithPageID(pageID model.PageID) *SuggestionPageBuilderDB {
 	b.pageID = string(pageID)
 	return b
 }
 
-// WithPageRevisionID はページリビジョンIDを設定します
+// WithPageRevisionIDはページリビジョンIDを設定します
 func (b *SuggestionPageBuilderDB) WithPageRevisionID(pageRevisionID model.PageRevisionID) *SuggestionPageBuilderDB {
 	s := string(pageRevisionID)
 	b.pageRevisionID = &s
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *SuggestionPageBuilderDB) WithTitle(title string) *SuggestionPageBuilderDB {
 	b.title = &title
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *SuggestionPageBuilderDB) WithBody(body string) *SuggestionPageBuilderDB {
 	b.body = body
 	return b
 }
 
-// WithBodyHTML はHTML本文を設定します
+// WithBodyHTMLはHTML本文を設定します
 func (b *SuggestionPageBuilderDB) WithBodyHTML(bodyHTML string) *SuggestionPageBuilderDB {
 	b.bodyHTML = bodyHTML
 	return b
 }
 
-// WithLinkedPageIDs はリンクページIDを設定します
+// WithLinkedPageIDsはリンクページIDを設定します
 func (b *SuggestionPageBuilderDB) WithLinkedPageIDs(ids []model.PageID) *SuggestionPageBuilderDB {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)
 	return b
 }
 
-// WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイルIDを設定します
+// WithFeaturedImageAttachmentIDはアイキャッチ画像の添付ファイルIDを設定します
 func (b *SuggestionPageBuilderDB) WithFeaturedImageAttachmentID(id model.AttachmentID) *SuggestionPageBuilderDB {
 	s := string(id)
 	b.featuredImageAttachmentID = &s
 	return b
 }
 
-// Build は編集提案ページを作成し、IDを返します
+// Buildは編集提案ページを作成し、IDを返します
 func (b *SuggestionPageBuilderDB) Build() model.SuggestionPageID {
 	b.t.Helper()
 

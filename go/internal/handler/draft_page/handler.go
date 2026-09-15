@@ -1,4 +1,4 @@
-// Package draft_page は下書きページ関連のHTTPハンドラーを提供します
+// Package draft_pageは下書きページ関連のHTTPハンドラーを提供します
 package draft_page
 
 import (
@@ -6,7 +6,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は下書きページハンドラー
+// Handlerは下書きページハンドラー
 type Handler struct {
 	flashMgr            *session.FlashManager
 	getPageDetailUC     *usecase.GetPageDetailUsecase
@@ -15,7 +15,7 @@ type Handler struct {
 	getEditLinkDataUC   *usecase.GetEditLinkDataUsecase
 }
 
-// NewHandler は新しい下書きページハンドラーを作成します
+// NewHandlerは新しい下書きページハンドラーを作成します
 func NewHandler(
 	flashMgr *session.FlashManager,
 	getPageDetailUC *usecase.GetPageDetailUsecase,

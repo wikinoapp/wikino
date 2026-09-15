@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SuggestionPageRevisionBuilder は編集提案ページリビジョンテストデータのビルダー
+// SuggestionPageRevisionBuilderは編集提案ページリビジョンテストデータのビルダー
 type SuggestionPageRevisionBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -22,7 +22,7 @@ type SuggestionPageRevisionBuilder struct {
 	bodyHTML            string
 }
 
-// NewSuggestionPageRevisionBuilder は SuggestionPageRevisionBuilder を生成します
+// NewSuggestionPageRevisionBuilderはSuggestionPageRevisionBuilderを生成します
 func NewSuggestionPageRevisionBuilder(t *testing.T, tx *sql.Tx) *SuggestionPageRevisionBuilder {
 	t.Helper()
 	title := "テストリビジョン"
@@ -35,49 +35,49 @@ func NewSuggestionPageRevisionBuilder(t *testing.T, tx *sql.Tx) *SuggestionPageR
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SuggestionPageRevisionBuilder) WithSpaceID(spaceID model.SpaceID) *SuggestionPageRevisionBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSuggestionPageID は編集提案ページIDを設定します
+// WithSuggestionPageIDは編集提案ページIDを設定します
 func (b *SuggestionPageRevisionBuilder) WithSuggestionPageID(suggestionPageID model.SuggestionPageID) *SuggestionPageRevisionBuilder {
 	b.suggestionPageID = string(suggestionPageID)
 	return b
 }
 
-// WithEditorSpaceMemberID は編集者のスペースメンバーIDを設定します
+// WithEditorSpaceMemberIDは編集者のスペースメンバーIDを設定します
 func (b *SuggestionPageRevisionBuilder) WithEditorSpaceMemberID(editorSpaceMemberID model.SpaceMemberID) *SuggestionPageRevisionBuilder {
 	b.editorSpaceMemberID = string(editorSpaceMemberID)
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *SuggestionPageRevisionBuilder) WithTitle(title string) *SuggestionPageRevisionBuilder {
 	b.title = &title
 	return b
 }
 
-// WithNilTitle はタイトルをnilに設定します
+// WithNilTitleはタイトルをnilに設定します
 func (b *SuggestionPageRevisionBuilder) WithNilTitle() *SuggestionPageRevisionBuilder {
 	b.title = nil
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *SuggestionPageRevisionBuilder) WithBody(body string) *SuggestionPageRevisionBuilder {
 	b.body = body
 	return b
 }
 
-// WithBodyHTML はHTML本文を設定します
+// WithBodyHTMLはHTML本文を設定します
 func (b *SuggestionPageRevisionBuilder) WithBodyHTML(bodyHTML string) *SuggestionPageRevisionBuilder {
 	b.bodyHTML = bodyHTML
 	return b
 }
 
-// Build は編集提案ページリビジョンを作成し、IDを返します
+// Buildは編集提案ページリビジョンを作成し、IDを返します
 func (b *SuggestionPageRevisionBuilder) Build() model.SuggestionPageRevisionID {
 	b.t.Helper()
 

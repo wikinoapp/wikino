@@ -16,8 +16,8 @@ import (
 func TestUpdate_Success(t *testing.T) {
 	// PublishPageUsecaseは内部でトランザクションを管理するため、
 	// テスト用トランザクションと競合する。
-	// Usecaseの動作は usecase/publish_page_test.go でテストされている。
-	t.Skip("Usecase uses separate transaction, tested in usecase package")
+	// Usecaseの動作はusecase/publish_page_test.goでテストされている。
+	t.Skip("UseCaseが別のトランザクションを使うため、usecaseパッケージでテストする")
 }
 
 func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
@@ -70,8 +70,7 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	})
 	req.Body = toReadCloser(form.Encode())
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	// Send the Zen mode cookie to verify the validation-error re-render also keeps Zen mode on.
-	// [Ja] バリデーションエラーの再描画でも Zenモードが維持されることを検証するため、Zenモードクッキーを送る。
+	// バリデーションエラーの再描画でもZenモードが維持されることを検証するため、Zenモードクッキーを送る。
 	req.AddCookie(&http.Cookie{Name: "wikino_zen_mode", Value: "1"})
 
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
@@ -84,24 +83,24 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 
 	// バリデーションエラーで422が返ること
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 
 	// タイトル必須エラーメッセージが表示されること
 	if !strings.Contains(body, "タイトルを入力してください") {
-		t.Error("title required error message not found in response")
+		t.Error("レスポンスにタイトル必須のエラーメッセージが見つからない")
 	}
 
 	// 編集フォームが再表示されること
 	if !strings.Contains(body, `name="title"`) {
-		t.Error("title input not found in response")
+		t.Error("レスポンスにタイトルの入力欄が見つからない")
 	}
 
 	// 本文の入力値が保持されていること
 	if !strings.Contains(body, "Updated body") {
-		t.Error("body value not preserved in response")
+		t.Error("レスポンスで本文の値が保持されていない")
 	}
 
 	breadcrumb := pageEditBreadcrumb(t, body)
@@ -112,47 +111,37 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 		"ページを編集",
 	} {
 		if !strings.Contains(breadcrumb, want) {
-			t.Errorf("breadcrumb does not contain %q", want)
+			t.Errorf("パンくずに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(breadcrumb, `href="/s/update-space/pages/1/edit"`) {
-		t.Error("current page edit breadcrumb item must not be a link after validation error")
+		t.Error("バリデーションエラーの後に現在のページ編集のパンくずの項目がリンクになっている")
 	}
 
-	// The validation-error re-render supplies the same breadcrumb header as the editor itself, so
-	// it renders outside <main> with the editor's max-w-6xl content width.
-	//
-	// [Ja] バリデーションエラーの再描画でも編集画面と同じパンくずヘッダーを供給するため、
-	// <main> の外に編集画面の本文幅 max-w-6xl で描画される。
+	// バリデーションエラーの再描画でも編集画面と同じパンくずヘッダーを供給するため、
+	// <main> の外に編集画面の本文幅max-w-6xlで描画される。
 	if !strings.Contains(body, `<div class="max-w-6xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared breadcrumb header should keep the max-w-6xl content width after validation error re-render")
+		t.Error("バリデーションエラーの再描画後に共通のパンくずヘッダーがmax-w-6xlのコンテンツ幅を保っていない")
 	}
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
-		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 
-	// The re-rendered editor keeps the Zen mode class read from the cookie. Assert on the full
-	// class attribute because the bare "page-edit-zen" substring also matches the always-present
-	// Tailwind variant classes (in-[.page-edit-zen]:lg:hidden etc.).
-	//
-	// [Ja] 再描画されたエディタにクッキー由来の Zenモードクラスが付くこと。"page-edit-zen" の
-	// 部分一致では常に存在する Tailwind バリアントクラス (in-[.page-edit-zen]:lg:hidden など) にも
-	// マッチしてしまうため、class 属性全体で検証する。
+	// 再描画されたエディタにクッキー由来のZenモードクラスが付くこと。"page-edit-zen" の
+	// 部分一致では常に存在するTailwindバリアントクラス (in-[.page-edit-zen]:lg:hiddenなど) にも
+	// マッチしてしまうため、class属性全体で検証する。
 	if !strings.Contains(body, `class="max-w-6xl w-full mx-auto lg:px-4 page-edit-zen"`) {
-		t.Error("zen mode class not found on the editor container after validation error re-render")
+		t.Error("バリデーションエラーの再描画後にエディタのコンテナにZenモードのクラスが見つからない")
 	}
 
-	// The validation-error re-render keeps the global navigation, so the top bar and the bottom bar
-	// still swap at md after a failed submission.
-	//
-	// [Ja] バリデーションエラーの再描画でもグローバルナビを維持し、送信失敗後も上部バーと下部バーが
-	// md で入れ替わること。
+	// バリデーションエラーの再描画でもグローバルナビを維持し、送信失敗後も上部バーと下部バーが
+	// mdで入れ替わること。
 	if !strings.Contains(body, `<nav class="shrink-0 hidden md:flex"`) {
-		t.Error("global navigation top bar should switch at md after validation error re-render")
+		t.Error("バリデーションエラーの再描画後にグローバルナビゲーションの上部バーがmdで切り替わっていない")
 	}
 	if !strings.Contains(body, `<nav class="md:hidden"`) {
-		t.Error("global navigation bottom bar should switch at md after validation error re-render")
+		t.Error("バリデーションエラーの再描画後にグローバルナビゲーションの下部バーがmdで切り替わっていない")
 	}
 }
 
@@ -212,14 +201,14 @@ func TestUpdate_ValidationError_InvalidChars(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 
 	// タイトル禁止文字エラーが表示されること
 	if !strings.Contains(body, `aria-invalid="true"`) {
-		t.Error("aria-invalid attribute not found in response")
+		t.Error("レスポンスにaria-invalid属性が見つからない")
 	}
 }
 
@@ -287,14 +276,14 @@ func TestUpdate_ValidationError_DuplicateTitle(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 
-	// 重複エラーメッセージ（HTMLリンク付き）が表示されること
+	// 重複エラーメッセージ (HTMLリンク付き) が表示されること
 	if !strings.Contains(body, "/s/dup-space/pages/1/edit") {
-		t.Error("edit link for existing page not found in response")
+		t.Error("レスポンスに既存ページの編集リンクが見つからない")
 	}
 }
 
@@ -323,11 +312,11 @@ func TestUpdate_NotLoggedIn(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	location := rr.Header().Get("Location")
 	if location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /sign_in", location)
 	}
 }
 
@@ -362,7 +351,7 @@ func TestUpdate_SpaceNotFound(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -404,11 +393,11 @@ func TestUpdate_PageNotFound(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
-// toReadCloser は文字列をio.ReadCloserに変換するヘルパーです
+// toReadCloserは文字列をio.ReadCloserに変換するヘルパーです
 func toReadCloser(s string) *readCloser {
 	return &readCloser{Reader: strings.NewReader(s)}
 }

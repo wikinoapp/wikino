@@ -12,13 +12,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
-// failingReader hands out remaining bytes of filler and then fails with err, which is how a test
-// drives a body that breaks partway through. Setting cancel makes it cancel that context just
-// before the error, reproducing an upload whose own context is canceled mid-flight.
-//
-// [Ja] failingReader は remaining バイトの埋め草を返してから err で失敗する。途中で壊れる body を
-// テストが再現する手段である。cancel を設定すると、エラーを返す直前にその context をキャンセル
-// する。アップロード自身の context が途中でキャンセルされる状況はこれで再現する。
+// failingReaderはremainingバイトの埋め草を返してからerrで失敗する。途中で壊れるbodyを
+// テストが再現する手段である。cancelを設定すると、エラーを返す直前にそのcontextをキャンセル
+// する。アップロード自身のcontextが途中でキャンセルされる状況はこれで再現する。
 type failingReader struct {
 	remaining int
 	cancel    context.CancelFunc
@@ -57,7 +53,7 @@ func TestFakeObjectStorage(t *testing.T) {
 			Body:        strings.NewReader("archive"),
 			ContentType: "application/zip",
 		}); err != nil {
-			t.Fatalf("Upload() error = %v", err)
+			t.Fatalf("Upload()のエラー = %v", err)
 		}
 
 		body, contentType, ok := fake.Object(key)
@@ -65,15 +61,15 @@ func TestFakeObjectStorage(t *testing.T) {
 			t.Fatalf("オブジェクトが保持されていない (key: %s)", key)
 		}
 		if string(body) != "archive" {
-			t.Errorf("保持された本体 = %q, want %q", body, "archive")
+			t.Errorf("保持された本体 = %q、期待値 = %q", body, "archive")
 		}
 		if contentType != "application/zip" {
-			t.Errorf("Content-Type = %q, want %q", contentType, "application/zip")
+			t.Errorf("Content-Type = %q、期待値 = %q", contentType, "application/zip")
 		}
 
 		reader, err := fake.Get(ctx, key)
 		if err != nil {
-			t.Fatalf("Get() error = %v", err)
+			t.Fatalf("Get()のエラー = %v", err)
 		}
 		defer func() { _ = reader.Close() }()
 
@@ -82,11 +78,11 @@ func TestFakeObjectStorage(t *testing.T) {
 			t.Fatalf("取得したオブジェクトの読み取りに失敗: %v", err)
 		}
 		if string(got) != "archive" {
-			t.Errorf("Get() = %q, want %q", got, "archive")
+			t.Errorf("Get() = %q、期待値 = %q", got, "archive")
 		}
 	})
 
-	t.Run("正常系: Put で用意したオブジェクトを取得できる", func(t *testing.T) {
+	t.Run("正常系: Putで用意したオブジェクトを取得できる", func(t *testing.T) {
 		t.Parallel()
 
 		fake := storage.NewFakeObjectStorage()
@@ -97,14 +93,14 @@ func TestFakeObjectStorage(t *testing.T) {
 			t.Fatal("オブジェクトが保持されていない")
 		}
 		if !bytes.Equal(body, []byte("png")) {
-			t.Errorf("保持された本体 = %q, want %q", body, "png")
+			t.Errorf("保持された本体 = %q、期待値 = %q", body, "png")
 		}
 		if contentType != "image/png" {
-			t.Errorf("Content-Type = %q, want %q", contentType, "image/png")
+			t.Errorf("Content-Type = %q、期待値 = %q", contentType, "image/png")
 		}
 	})
 
-	t.Run("正常系: Keys はソートされたキーを返す", func(t *testing.T) {
+	t.Run("正常系: Keysはソートされたキーを返す", func(t *testing.T) {
 		t.Parallel()
 
 		fake := storage.NewFakeObjectStorage()
@@ -115,26 +111,26 @@ func TestFakeObjectStorage(t *testing.T) {
 		got := fake.Keys()
 		want := []string{"a.md", "b.md", "c.md"}
 		if len(got) != len(want) {
-			t.Fatalf("Keys() = %v, want %v", got, want)
+			t.Fatalf("Keys() = %v、期待値 = %v", got, want)
 		}
 		for i := range want {
 			if got[i] != want[i] {
-				t.Fatalf("Keys() = %v, want %v", got, want)
+				t.Fatalf("Keys() = %v、期待値 = %v", got, want)
 			}
 		}
 	})
 
-	t.Run("異常系: 存在しないキーの取得は ErrObjectNotFound になる", func(t *testing.T) {
+	t.Run("異常系: 存在しないキーの取得はErrObjectNotFoundになる", func(t *testing.T) {
 		t.Parallel()
 
 		fake := storage.NewFakeObjectStorage()
 
 		if _, err := fake.Get(ctx, "exports/gone.zip"); !errors.Is(err, storage.ErrObjectNotFound) {
-			t.Errorf("Get() error = %v, want ErrObjectNotFound", err)
+			t.Errorf("Get()のエラー = %v、期待値 = ErrObjectNotFound", err)
 		}
 	})
 
-	t.Run("異常系: reader の途中エラーでは不完全なオブジェクトを保存しない", func(t *testing.T) {
+	t.Run("異常系: readerの途中エラーでは不完全なオブジェクトを保存しない", func(t *testing.T) {
 		t.Parallel()
 
 		wantErr := errors.New("読み取りに失敗しました")
@@ -146,7 +142,7 @@ func TestFakeObjectStorage(t *testing.T) {
 			Body: &failingReader{remaining: 8, err: wantErr},
 		})
 		if !errors.Is(err, wantErr) {
-			t.Errorf("Upload() error = %v, want %v", err, wantErr)
+			t.Errorf("Upload()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 		if _, _, ok := fake.Object(key); ok {
 			t.Errorf("不完全なオブジェクトが保存されている (key: %s)", key)
@@ -160,28 +156,28 @@ func TestFakeObjectStorage(t *testing.T) {
 		fake.Put("exports/old.zip", []byte("old"), "application/zip")
 
 		if err := fake.Delete(ctx, "exports/old.zip"); err != nil {
-			t.Fatalf("Delete() error = %v", err)
+			t.Fatalf("Delete()のエラー = %v", err)
 		}
 		if _, _, ok := fake.Object("exports/old.zip"); ok {
 			t.Error("オブジェクトが残っている")
 		}
 		if err := fake.Delete(ctx, "exports/old.zip"); err != nil {
-			t.Errorf("Delete() error = %v, want nil", err)
+			t.Errorf("Delete()のエラー = %v、期待値 = nil", err)
 		}
 	})
 
-	t.Run("正常系: presigned URL はキーと有効期間を含む", func(t *testing.T) {
+	t.Run("正常系: presigned URLはキーと有効期間を含む", func(t *testing.T) {
 		t.Parallel()
 
 		fake := storage.NewFakeObjectStorage()
 
 		presigned, err := fake.PresignedGetURL(ctx, "exports/wikino.zip", 24*time.Hour)
 		if err != nil {
-			t.Fatalf("PresignedGetURL() error = %v", err)
+			t.Fatalf("PresignedGetURL()のエラー = %v", err)
 		}
 		want := "https://storage.example.com/exports/wikino.zip?expires_in=86400"
 		if presigned != want {
-			t.Errorf("PresignedGetURL() = %q, want %q", presigned, want)
+			t.Errorf("PresignedGetURL() = %q、期待値 = %q", presigned, want)
 		}
 	})
 
@@ -196,16 +192,16 @@ func TestFakeObjectStorage(t *testing.T) {
 		fake.PresignErr = wantErr
 
 		if _, err := fake.Get(ctx, "exports/wikino.zip"); !errors.Is(err, wantErr) {
-			t.Errorf("Get() error = %v, want %v", err, wantErr)
+			t.Errorf("Get()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 		if err := fake.Upload(ctx, storage.UploadInput{Key: "exports/wikino.zip"}); !errors.Is(err, wantErr) {
-			t.Errorf("Upload() error = %v, want %v", err, wantErr)
+			t.Errorf("Upload()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 		if err := fake.Delete(ctx, "exports/wikino.zip"); !errors.Is(err, wantErr) {
-			t.Errorf("Delete() error = %v, want %v", err, wantErr)
+			t.Errorf("Delete()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 		if _, err := fake.PresignedGetURL(ctx, "exports/wikino.zip", time.Hour); !errors.Is(err, wantErr) {
-			t.Errorf("PresignedGetURL() error = %v, want %v", err, wantErr)
+			t.Errorf("PresignedGetURL()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 	})
 }

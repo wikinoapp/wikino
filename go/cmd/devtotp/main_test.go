@@ -94,7 +94,7 @@ func TestSelectorFromEnv(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 			if got != tt.want {
-				t.Errorf("セレクタ = %+v, 期待値 %+v", got, tt.want)
+				t.Errorf("セレクタ = %+v, 期待値%+v", got, tt.want)
 			}
 		})
 	}
@@ -117,7 +117,7 @@ func TestUserSelectorString(t *testing.T) {
 			t.Parallel()
 
 			if got := tt.target.String(); got != tt.want {
-				t.Errorf("String() = %q, 期待値 %q", got, tt.want)
+				t.Errorf("String() = %q, 期待値%q", got, tt.want)
 			}
 		})
 	}
@@ -151,7 +151,7 @@ func TestCodeForUser(t *testing.T) {
 		}
 
 		if !totp.Validate(code, key.Secret()) {
-			t.Errorf("生成したコード %q が検証を通らなかった", code)
+			t.Errorf("生成したコード%qが検証を通らなかった", code)
 		}
 	})
 
@@ -180,7 +180,7 @@ func TestCodeForUser(t *testing.T) {
 		}
 
 		if !totp.Validate(code, key.Secret()) {
-			t.Errorf("生成したコード %q が検証を通らなかった", code)
+			t.Errorf("生成したコード%qが検証を通らなかった", code)
 		}
 	})
 

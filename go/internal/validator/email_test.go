@@ -28,7 +28,7 @@ func TestIsValidEmail(t *testing.T) {
 			t.Parallel()
 
 			if got := validator.IsValidEmail(tt.email); got != tt.want {
-				t.Errorf("IsValidEmail(%q) = %v であることを期待したが %v だった", tt.email, tt.want, got)
+				t.Errorf("IsValidEmail(%q) = %vであることを期待したが%vだった", tt.email, tt.want, got)
 			}
 		})
 	}
@@ -49,11 +49,7 @@ func TestCanonicalEmail(t *testing.T) {
 			wantAddress:   "user@example.com",
 			wantCanonical: true,
 		},
-		// The three cases below are what separates this function from
-		// IsValidEmail: parsing accepts them all and hands back the same
-		// address, while what was written differs from it.
-		//
-		// [Ja] 以下の 3 件が本関数と IsValidEmail を分けるもの。解釈はいずれも受理
+		// 以下の3件が本関数とIsValidEmailを分けるもの。解釈はいずれも受理
 		// して同じアドレスを返すが、書かれた文字列はそれと食い違う。
 		{
 			name:          "前後に空白がある",
@@ -93,10 +89,10 @@ func TestCanonicalEmail(t *testing.T) {
 
 			address, canonical := validator.CanonicalEmail(tt.email)
 			if address != tt.wantAddress {
-				t.Errorf("CanonicalEmail(%q) のアドレスが %q であることを期待したが %q だった", tt.email, tt.wantAddress, address)
+				t.Errorf("CanonicalEmail(%q) のアドレスが%qであることを期待したが%qだった", tt.email, tt.wantAddress, address)
 			}
 			if canonical != tt.wantCanonical {
-				t.Errorf("CanonicalEmail(%q) の判定が %v であることを期待したが %v だった", tt.email, tt.wantCanonical, canonical)
+				t.Errorf("CanonicalEmail(%q) の判定が%vであることを期待したが%vだった", tt.email, tt.wantCanonical, canonical)
 			}
 		})
 	}

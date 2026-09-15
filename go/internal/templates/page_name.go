@@ -1,9 +1,6 @@
 package templates
 
-// PageName identifies the current page for presentation components such as the global
-// navigation's active-link state.
-//
-// [Ja] PageName はグローバルナビのアクティブリンク状態など、Presentation コンポーネントで
+// PageNameはグローバルナビのアクティブリンク状態など、Presentationコンポーネントで
 // 現在のページを識別するための型。
 type PageName string
 

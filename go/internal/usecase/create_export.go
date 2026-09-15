@@ -13,18 +13,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// CreateExportUsecase starts an export of a space: it records the export and enqueues the job
-// that writes the archive.
-//
-// A space runs at most one export at a time. Starting a second one while the first is still
-// going would have two workers write for the same space, and the newer archive would replace the
-// older one before anyone could download it.
-//
-// [Ja] CreateExportUsecase はスペースのエクスポートを開始する。エクスポートを記録し、アーカイブを
+// CreateExportUsecaseはスペースのエクスポートを開始する。エクスポートを記録し、アーカイブを
 // 書き出すジョブを投入する。
 //
-// 1 つのスペースで同時に走るエクスポートは 1 つまでとする。1 つ目が続いている間に 2 つ目を始めると
-// 同じスペースに対して 2 つのワーカーが書き込むことになり、新しいアーカイブが古いものを、誰も
+// 1つのスペースで同時に走るエクスポートは1つまでとする。1つ目が続いている間に2つ目を始めると
+// 同じスペースに対して2つのワーカーが書き込むことになり、新しいアーカイブが古いものを、誰も
 // ダウンロードしないうちに置き換えてしまう。
 type CreateExportUsecase struct {
 	db              *sql.DB
@@ -34,9 +27,7 @@ type CreateExportUsecase struct {
 	dispatcher      *dispatcher.Dispatcher
 }
 
-// NewCreateExportUsecase creates a CreateExportUsecase.
-//
-// [Ja] NewCreateExportUsecase は CreateExportUsecase を生成する。
+// NewCreateExportUsecaseはCreateExportUsecaseを生成する。
 func NewCreateExportUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -53,27 +44,20 @@ func NewCreateExportUsecase(
 	}
 }
 
-// CreateExportInput holds what it takes to start an export.
-//
-// [Ja] CreateExportInput はエクスポートを開始するための入力パラメータ。
+// CreateExportInputはエクスポートを開始するための入力パラメータ。
 type CreateExportInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	UserID          model.UserID
 }
 
-// CreateExportOutput carries the space and the export that was started, so that the handler can
-// build the URL of the export screen without reading the request again.
-//
-// [Ja] CreateExportOutput は開始したエクスポートとそのスペースを返し、ハンドラーがリクエストを
-// 読み直さずにエクスポート画面の URL を組み立てられるようにする。
+// CreateExportOutputは開始したエクスポートとそのスペースを返し、ハンドラーがリクエストを
+// 読み直さずにエクスポート画面のURLを組み立てられるようにする。
 type CreateExportOutput struct {
 	Space  *model.Space
 	Export *model.Export
 }
 
-// Execute records the export and enqueues the job that generates it.
-//
-// [Ja] Execute はエクスポートを記録し、それを生成するジョブを投入する。
+// Executeはエクスポートを記録し、それを生成するジョブを投入する。
 func (uc *CreateExportUsecase) Execute(ctx context.Context, input CreateExportInput) (*CreateExportOutput, error) {
 	space, spaceMember, err := fetchExportAccess(ctx, uc.spaceRepo, uc.spaceMemberRepo, input.SpaceIdentifier, input.UserID)
 	if err != nil {
@@ -86,10 +70,7 @@ func (uc *CreateExportUsecase) Execute(ctx context.Context, input CreateExportIn
 	}
 
 	if err := uc.dispatcher.EnqueueGenerateExportFiles(ctx, export.ID.String(), string(space.ID)); err != nil {
-		// Nothing will ever pick the export up, and a queued export blocks every later one for
-		// this space, so the record is taken back rather than left to sit there.
-		//
-		// [Ja] このエクスポートを拾うものはもう無く、queued のエクスポートはこのスペースの以降の
+		// このエクスポートを拾うものはもう無く、queuedのエクスポートはこのスペースの以降の
 		// エクスポートをすべて阻む。そのため、記録を残さず取り消す。
 		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), exportOutcomeTimeout)
 		defer cancel()
@@ -105,16 +86,10 @@ func (uc *CreateExportUsecase) Execute(ctx context.Context, input CreateExportIn
 	return &CreateExportOutput{Space: space, Export: export}, nil
 }
 
-// createExport records the export, first retiring a predecessor that has stopped.
-//
-// The predecessor is failed under the same condition it was read as stopped by, which
-// retirePredecessor decides from its status. An export that turns out to be running after all
-// keeps the space, and the new export is refused instead.
-//
-// [Ja] createExport はエクスポートを記録する。その前に、止まっている先行のエクスポートを終わらせる。
+// createExportはエクスポートを記録する。その前に、止まっている先行のエクスポートを終わらせる。
 //
 // 先行のエクスポートを失敗させる条件は、それを止まっていると読み取ったときの条件と同じにする。
-// どの条件を使うかは retirePredecessor が状態から決める。結局動いていたと分かったエクスポートが
+// どの条件を使うかはretirePredecessorが状態から決める。結局動いていたと分かったエクスポートが
 // スペースを保ち、代わりに新しいエクスポートのほうを拒否する。
 func (uc *CreateExportUsecase) createExport(ctx context.Context, spaceID model.SpaceID, queuedByID model.SpaceMemberID) (*model.Export, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
@@ -123,9 +98,7 @@ func (uc *CreateExportUsecase) createExport(ctx context.Context, spaceID model.S
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// The space lock must precede the latest-export read, including for a first export.
-	//
-	// [Ja] 初回のエクスポートでも、最新行を読む前にスペースをロックする。
+	// 初回のエクスポートでも、最新行を読む前にスペースをロックする。
 	locked, err := uc.spaceRepo.WithTx(tx).LockByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("スペースのロックに失敗: %w", err)
@@ -161,17 +134,10 @@ func (uc *CreateExportUsecase) createExport(ctx context.Context, spaceID model.S
 	return export, nil
 }
 
-// retirePredecessor fails the export that came before, which the caller has just read as stopped.
+// retirePredecessorは、呼び出し元が止まっていると読み取った先行のエクスポートを失敗させる。
 //
-// Each of the two statuses that can be stopped is retired under the condition it was read as
-// stopped by: a started export by its heartbeat, a queued one by how long it has been waiting for
-// a worker. An export that moved on in between is running after all, so it keeps the space and
-// the new export is refused instead.
-//
-// [Ja] retirePredecessor は、呼び出し元が止まっていると読み取った先行のエクスポートを失敗させる。
-//
-// 止まりうる 2 つの状態は、それぞれ止まっていると読み取ったときの条件で終わらせる。started は
-// heartbeat で、queued はワーカーを待っている時間で判断する。その間に先へ進んだエクスポートは
+// 止まりうる2つの状態は、それぞれ止まっていると読み取ったときの条件で終わらせる。startedは
+// heartbeatで、queuedはワーカーを待っている時間で判断する。その間に先へ進んだエクスポートは
 // 結局動いているので、そのエクスポートがスペースを保ち、代わりに新しいエクスポートのほうを
 // 拒否する。
 func (uc *CreateExportUsecase) retirePredecessor(ctx context.Context, exportRepo *repository.ExportRepository, latest *model.Export) error {
@@ -201,11 +167,8 @@ func (uc *CreateExportUsecase) retirePredecessor(ctx context.Context, exportRepo
 	return nil
 }
 
-// inProgressError is what a caller gets when the space is already exporting. The screen hides the
-// start button while that is the case, so reaching this means two requests raced.
-//
-// [Ja] inProgressError は、スペースが既にエクスポート中のときに呼び出し元へ返すエラー。その間は
-// 画面が開始ボタンを隠すため、ここに到達するのは 2 つのリクエストが競合したときである。
+// inProgressErrorは、スペースが既にエクスポート中のときに呼び出し元へ返すエラー。その間は
+// 画面が開始ボタンを隠すため、ここに到達するのは2つのリクエストが競合したときである。
 func (uc *CreateExportUsecase) inProgressError(ctx context.Context, latest *model.Export) error {
 	return &model.AppError{
 		Code:     model.AppErrCodeConflict,

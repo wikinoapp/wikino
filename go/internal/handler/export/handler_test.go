@@ -21,12 +21,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// exportRouter mirrors the export namespace as cmd/wikino/serve.go registers it, so that the way
-// the routes answer a method can be checked. The requests are served through a router rather than
-// by calling the handlers directly, because what is under test is the resolution of a method to a
-// route, which only the router does.
-//
-// [Ja] exportRouter は cmd/wikino/serve.go が登録するとおりにエクスポートの名前空間を組み立てる。
+// exportRouterはcmd/wikino/serve.goが登録するとおりにエクスポートの名前空間を組み立てる。
 // ルートがメソッドにどう答えるかを確かめるためである。ハンドラーを直接呼ばずルーター越しに
 // リクエストを流すのは、メソッドからルートへの解決というルーターだけが行うことが対象だからである。
 func exportRouter(t *testing.T, queries *query.Queries, userID model.UserID) *chi.Mux {
@@ -66,15 +61,10 @@ func exportRouter(t *testing.T, queries *query.Queries, userID model.UserID) *ch
 	return r
 }
 
-// TestExportRoutes_HeadAnswersLikeGet pins HEAD to the same answer GET gives. The reverse proxy
-// hands the export namespace to Go for every method, and the Rails router these screens came from
-// reads a HEAD that matches nothing as a GET, so a screen that answers 200 to GET has to answer
-// 200 to HEAD as well.
-//
-// [Ja] TestExportRoutes_HeadAnswersLikeGet は、HEAD が GET と同じ答えを返すことを固定する。
-// リバースプロキシはエクスポートの名前空間を全メソッドで Go へ渡し、これらの画面の移行元である
-// Rails のルーターは一致しない HEAD を GET として読むため、GET に 200 を返す画面は HEAD にも
-// 200 を返す必要がある。
+// TestExportRoutes_HeadAnswersLikeGetは、HEADがGETと同じ答えを返すことを固定する。
+// リバースプロキシはエクスポートの名前空間を全メソッドでGoへ渡し、これらの画面の移行元である
+// Railsのルーターは一致しないHEADをGETとして読むため、GETに200を返す画面はHEADにも
+// 200を返す必要がある。
 func TestExportRoutes_HeadAnswersLikeGet(t *testing.T) {
 	t.Parallel()
 
@@ -93,9 +83,7 @@ func TestExportRoutes_HeadAnswersLikeGet(t *testing.T) {
 	server := httptest.NewServer(exportRouter(t, queries, userID))
 	t.Cleanup(server.Close)
 
-	// The download answers with a redirect to the object storage, which the client must not follow.
-	//
-	// [Ja] ダウンロードはオブジェクトストレージへのリダイレクトで答えるため、クライアントに
+	// ダウンロードはオブジェクトストレージへのリダイレクトで答えるため、クライアントに
 	// たどらせない。
 	client := server.Client()
 	client.CheckRedirect = func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }
@@ -115,40 +103,35 @@ func TestExportRoutes_HeadAnswersLikeGet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, server.URL+tt.path, nil)
 			if err != nil {
-				t.Fatalf("request creation failed: %v", err)
+				t.Fatalf("リクエストの作成に失敗: %v", err)
 			}
 
 			resp, err := client.Do(req)
 			if err != nil {
-				t.Fatalf("request failed: %v", err)
+				t.Fatalf("リクエストに失敗: %v", err)
 			}
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				t.Fatalf("response body read failed: %v", err)
+				t.Fatalf("レスポンス本文の読み込みに失敗: %v", err)
 			}
 			if err := resp.Body.Close(); err != nil {
-				t.Fatalf("response body close failed: %v", err)
+				t.Fatalf("レスポンス本文のクローズに失敗: %v", err)
 			}
 
 			if resp.StatusCode != tt.wantStatus {
-				t.Errorf("status code = %d, want %d", resp.StatusCode, tt.wantStatus)
+				t.Errorf("ステータスコード = %d、期待値 = %d", resp.StatusCode, tt.wantStatus)
 			}
 			if len(body) != 0 {
-				t.Errorf("response body = %q, want empty", body)
+				t.Errorf("レスポンス本文 = %q、期待値 = 空", body)
 			}
 		})
 	}
 }
 
-// TestExportRoutes_RejectsUnsupportedRequestsWithNotFound covers what the namespace answers to the
-// requests it does not serve. The reverse proxy sends every method under the namespace here so that
-// a start cannot reach the Rails writer that has no guard against a second export, which leaves the
-// router to reject the rest the way the Rails version did: with a 404 page, not chi's bodiless 405.
-//
-// [Ja] TestExportRoutes_RejectsUnsupportedRequestsWithNotFound は、名前空間が受け持たない
-// リクエストに何を返すかを対象とする。リバースプロキシは、2 つ目のエクスポートを防ぐ仕組みを
-// 持たない Rails の書き込み処理へ開始が届かないよう、配下の全メソッドをここへ送る。残りを
-// Rails 版と同じように拒否するのはルーターの役目で、chi の本文なし 405 ではなく 404 ページを返す。
+// TestExportRoutes_RejectsUnsupportedRequestsWithNotFoundは、名前空間が受け持たない
+// リクエストに何を返すかを対象とする。リバースプロキシは、2つ目のエクスポートを防ぐ仕組みを
+// 持たないRailsの書き込み処理へ開始が届かないよう、配下の全メソッドをここへ送る。残りを
+// Rails版と同じように拒否するのはルーターの役目で、chiの本文なし405ではなく404ページを返す。
 func TestExportRoutes_RejectsUnsupportedRequestsWithNotFound(t *testing.T) {
 	t.Parallel()
 
@@ -177,23 +160,23 @@ func TestExportRoutes_RejectsUnsupportedRequestsWithNotFound(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequestWithContext(t.Context(), tt.method, server.URL+tt.path, nil)
 			if err != nil {
-				t.Fatalf("request creation failed: %v", err)
+				t.Fatalf("リクエストの作成に失敗: %v", err)
 			}
 
 			resp, err := server.Client().Do(req)
 			if err != nil {
-				t.Fatalf("request failed: %v", err)
+				t.Fatalf("リクエストに失敗: %v", err)
 			}
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				t.Fatalf("response body read failed: %v", err)
+				t.Fatalf("レスポンス本文の読み込みに失敗: %v", err)
 			}
 			if err := resp.Body.Close(); err != nil {
-				t.Fatalf("response body close failed: %v", err)
+				t.Fatalf("レスポンス本文のクローズに失敗: %v", err)
 			}
 
 			if resp.StatusCode != http.StatusNotFound {
-				t.Errorf("status code = %d, want %d", resp.StatusCode, http.StatusNotFound)
+				t.Errorf("ステータスコード = %d、期待値 = %d", resp.StatusCode, http.StatusNotFound)
 			}
 			if len(body) == 0 {
 				t.Error("404ページの本文が返っていない")
@@ -202,11 +185,7 @@ func TestExportRoutes_RejectsUnsupportedRequestsWithNotFound(t *testing.T) {
 	}
 }
 
-// TestExportRoutes_StartResolvesOnTheBarePath keeps the start reachable at the path the form posts
-// to. The namespace is a sub-router, so the start is registered on "/" inside it, and only the
-// router can tell whether that still answers the path without a trailing slash.
-//
-// [Ja] TestExportRoutes_StartResolvesOnTheBarePath は、フォームの送信先のパスで開始に届くことを
+// TestExportRoutes_StartResolvesOnTheBarePathは、フォームの送信先のパスで開始に届くことを
 // 守る。名前空間はサブルーターなので開始はその中の "/" に登録されており、末尾スラッシュ無しの
 // パスに今も答えるかを知れるのはルーターだけである。
 func TestExportRoutes_StartResolvesOnTheBarePath(t *testing.T) {
@@ -223,7 +202,7 @@ func TestExportRoutes_StartResolvesOnTheBarePath(t *testing.T) {
 		"/s/exp-route-start/settings/exports/",
 	} {
 		if !router.Match(chi.NewRouteContext(), http.MethodPost, path) {
-			t.Errorf("POST %s がエクスポート開始のルートに解決されていない", path)
+			t.Errorf("POST %sがエクスポート開始のルートに解決されていない", path)
 		}
 	}
 }

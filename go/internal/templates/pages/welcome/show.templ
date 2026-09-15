@@ -5,10 +5,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowPageData はトップページに渡すデータ構造体です
+// ShowPageDataはトップページに渡すデータ構造体です
 type ShowPageData struct{}
 
-// Show はトップページのコンテンツを表示します
+// Showはトップページのコンテンツを表示します
 templ Show(data ShowPageData) {
 	<div class="flex flex-col gap-16 py-8 md:py-16">
 		// ヒーローセクション
@@ -211,7 +211,7 @@ templ Show(data ShowPageData) {
 	</div>
 }
 
-// featureItem は機能紹介の1項目を表示するコンポーネントです
+// featureItemは機能紹介の1項目を表示するコンポーネントです
 templ featureItem(title string, description string, iconName viewmodel.IconName, imagePath string, note string, helpTitle string, helpURL string) {
 	<div class="flex flex-wrap-reverse gap-6 sm:flex-nowrap">
 		<div class="flex basis-full flex-col gap-4 sm:basis-1/2">

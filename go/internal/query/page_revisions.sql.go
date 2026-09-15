@@ -63,7 +63,7 @@ type FindLatestPageRevisionByPageParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// ページの最新リビジョンを取得する（スペースIDでスコープ）
+// ページの最新リビジョンを取得する (スペースIDでスコープ)
 func (q *Queries) FindLatestPageRevisionByPage(ctx context.Context, arg FindLatestPageRevisionByPageParams) (PageRevision, error) {
 	row := q.db.QueryRowContext(ctx, findLatestPageRevisionByPage, arg.PageID, arg.SpaceID)
 	var i PageRevision
@@ -90,7 +90,7 @@ type FindPageRevisionByIDParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// ページリビジョンをIDで取得する（スペースIDでスコープ）
+// ページリビジョンをIDで取得する (スペースIDでスコープ)
 func (q *Queries) FindPageRevisionByID(ctx context.Context, arg FindPageRevisionByIDParams) (PageRevision, error) {
 	row := q.db.QueryRowContext(ctx, findPageRevisionByID, arg.ID, arg.SpaceID)
 	var i PageRevision

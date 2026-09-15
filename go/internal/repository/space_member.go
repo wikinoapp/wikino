@@ -9,22 +9,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// SpaceMemberRepository はスペースメンバーリポジトリ
+// SpaceMemberRepositoryはスペースメンバーリポジトリ
 type SpaceMemberRepository struct {
 	q *query.Queries
 }
 
-// NewSpaceMemberRepository は SpaceMemberRepository を生成する
+// NewSpaceMemberRepositoryはSpaceMemberRepositoryを生成する
 func NewSpaceMemberRepository(q *query.Queries) *SpaceMemberRepository {
 	return &SpaceMemberRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *SpaceMemberRepository) WithTx(tx *sql.Tx) *SpaceMemberRepository {
 	return &SpaceMemberRepository{q: r.q.WithTx(tx)}
 }
 
-// FindActiveBySpaceAndUser はスペースIDとユーザーIDでアクティブなスペースメンバーを取得する
+// FindActiveBySpaceAndUserはスペースIDとユーザーIDでアクティブなスペースメンバーを取得する
 func (r *SpaceMemberRepository) FindActiveBySpaceAndUser(ctx context.Context, spaceID model.SpaceID, userID model.UserID) (*model.SpaceMember, error) {
 	row, err := r.q.FindActiveSpaceMemberBySpaceAndUser(ctx, query.FindActiveSpaceMemberBySpaceAndUserParams{
 		SpaceID: string(spaceID),
@@ -39,7 +39,7 @@ func (r *SpaceMemberRepository) FindActiveBySpaceAndUser(ctx context.Context, sp
 	return r.toModel(row), nil
 }
 
-// FindByIDs はIDリストでスペースメンバーを一括取得する（スペースIDでスコープ）
+// FindByIDsはIDリストでスペースメンバーを一括取得する (スペースIDでスコープ)
 func (r *SpaceMemberRepository) FindByIDs(ctx context.Context, ids []model.SpaceMemberID, spaceID model.SpaceID) ([]*model.SpaceMember, error) {
 	if len(ids) == 0 {
 		return []*model.SpaceMember{}, nil
@@ -59,13 +59,9 @@ func (r *SpaceMemberRepository) FindByIDs(ctx context.Context, ids []model.Space
 	return members, nil
 }
 
-// ListActiveByUserAndSpaceIDs fetches the active space memberships of the given user across the
-// given space ids in a single query. It replaces per-space lookups (N+1) with one query where
-// permissions for topics spanning many spaces must be resolved at once, such as on the home page.
-//
-// [Ja] ListActiveByUserAndSpaceIDs は、ユーザーが指定したスペース群で持つアクティブな
-// スペースメンバーを 1 クエリで一括取得する。ホーム画面のように複数スペースにまたがる
-// トピックの権限をまとめて判定する場面で、スペースごとの単発クエリ (N+1) を 1 回のクエリに
+// ListActiveByUserAndSpaceIDsは、ユーザーが指定したスペース群で持つアクティブな
+// スペースメンバーを1クエリで一括取得する。ホーム画面のように複数スペースにまたがる
+// トピックの権限をまとめて判定する場面で、スペースごとの単発クエリ (N+1) を1回のクエリに
 // 置き換えるために使う。
 func (r *SpaceMemberRepository) ListActiveByUserAndSpaceIDs(ctx context.Context, userID model.UserID, spaceIDs []model.SpaceID) ([]*model.SpaceMember, error) {
 	if len(spaceIDs) == 0 {
@@ -86,7 +82,7 @@ func (r *SpaceMemberRepository) ListActiveByUserAndSpaceIDs(ctx context.Context,
 	return members, nil
 }
 
-// toModel は query.SpaceMember を model.SpaceMember に変換する
+// toModelはquery.SpaceMemberをmodel.SpaceMemberに変換する
 func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMember {
 	return &model.SpaceMember{
 		ID:       model.SpaceMemberID(row.ID),

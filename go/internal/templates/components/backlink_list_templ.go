@@ -11,11 +11,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// BacklinkList renders one linked page's backlinks. The display: contents wrapper gives the
-// one-page editor a stable whole-list swap target without changing the surrounding grid layout.
-//
-// [Ja] BacklinkList は 1 つのリンク先ページのバックリンクを表示する。display: contents のラッパーは
-// 周囲のグリッド配置を変えず、1 ページ単位の編集画面へ一覧全体の安定したスワップ対象を与える。
+// BacklinkListは1つのリンク先ページのバックリンクを表示する。display: contentsのラッパーは
+// 周囲のグリッド配置を変えず、1ページ単位の編集画面へ一覧全体の安定したスワップ対象を与える。
 func BacklinkList(data viewmodel.BacklinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -73,7 +70,7 @@ func backlinkList(data viewmodel.BacklinkList, announceEnd bool) templ.Component
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(backlinkListContentID(data.LinkedPageNumber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/backlink_list.templ`, Line: 15, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/backlink_list.templ`, Line: 12, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -95,13 +92,9 @@ func backlinkList(data viewmodel.BacklinkList, announceEnd bool) templ.Component
 	})
 }
 
-// BacklinkListResponse renders the next nested backlink page and advances this card's share of the
-// editor's shared related-page state. BacklinkList remains the initial-render component so a page
-// never gets duplicate state element ids from its cards.
-//
-// [Ja] BacklinkListResponse はネストしたバックリンク一覧の次ページを描画し、編集画面で共有する
-// 関連ページ状態のうちこのカードの分を進める。初回描画には BacklinkList を使い続け、カードごとに
-// 状態要素の id が重複することを防ぐ。
+// BacklinkListResponseはネストしたバックリンク一覧の次ページを描画し、編集画面で共有する
+// 関連ページ状態のうちこのカードの分を進める。初回描画にはBacklinkListを使い続け、カードごとに
+// 状態要素のidが重複することを防ぐ。
 func BacklinkListResponse(data viewmodel.BacklinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -176,7 +169,7 @@ func backlinkListBody(data viewmodel.BacklinkList, announceEnd bool) templ.Compo
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(backlinkListPaginationID(data.LinkedPageNumber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/backlink_list.templ`, Line: 41, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/backlink_list.templ`, Line: 34, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -210,9 +203,7 @@ func backlinkListBody(data viewmodel.BacklinkList, announceEnd bool) templ.Compo
 	})
 }
 
-// backlinkListLoadMore renders the progressively enhanced link for the next backlink page.
-//
-// [Ja] backlinkListLoadMore は次のバックリンクページを取得する拡張リンクを表示する。
+// backlinkListLoadMoreは次のバックリンクページを取得する拡張リンクを表示する。
 func backlinkListLoadMore(data viewmodel.BacklinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

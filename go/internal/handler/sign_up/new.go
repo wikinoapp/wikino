@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New はサインアップフォームを表示します (GET /sign_up)
+// Newはサインアップフォームを表示します (GET /sign_up)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

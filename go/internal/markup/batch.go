@@ -8,25 +8,25 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// PageLocationResolver はWikiリンクキーからページ位置情報を一括解決するインターフェース。
+// PageLocationResolverはWikiリンクキーからページ位置情報を一括解決するインターフェース。
 // バッチレンダリング時にN+1クエリを防止するため、複数のキーを一括で解決する。
 type PageLocationResolver interface {
 	ResolveByKeys(ctx context.Context, keys []WikilinkKey, spaceID model.SpaceID) ([]PageLocation, error)
 }
 
-// BatchAttachmentFinder は添付ファイルの一括検索インターフェース。
+// BatchAttachmentFinderは添付ファイルの一括検索インターフェース。
 // バッチレンダリング時にN+1クエリを防止するため、複数のIDを一括で検索する。
 type BatchAttachmentFinder interface {
 	FindByIDsAndSpace(ctx context.Context, ids []model.AttachmentID, spaceID model.SpaceID) ([]*model.Attachment, error)
 }
 
-// BatchRenderInput はバッチレンダリングの入力
+// BatchRenderInputはバッチレンダリングの入力
 type BatchRenderInput struct {
 	Body             string
 	CurrentTopicName string
 }
 
-// RenderHTML は単一テキストのHTMLをレンダリングする。
+// RenderHTMLは単一テキストのHTMLをレンダリングする。
 // Markdownレンダリング → HTMLサニタイズ → Wikiリンク変換 → 添付ファイルフィルター →
 // スタンドアロン画像ラッピングの一連の処理を統合して実行する。
 func RenderHTML(
@@ -58,7 +58,7 @@ func RenderHTML(
 	return results[0], nil
 }
 
-// RenderHTMLBatch は複数テキストのHTMLを一括レンダリングする。
+// RenderHTMLBatchは複数テキストのHTMLを一括レンダリングする。
 // Wikiリンクの解決と添付ファイルの検索をバッチ化してN+1クエリを防止する。
 func RenderHTMLBatch(
 	ctx context.Context,
@@ -73,11 +73,7 @@ func RenderHTMLBatch(
 	}
 
 	// 1. 全テキストをMarkdown→HTMLに変換し、あわせて添付ファイルIDを収集する。
-	// The parse and the rendered HTML are shared with the attachment scan, so each body is read
-	// once. The IDs are collected here rather than after the wiki-link conversion, because the
-	// conversion rewrites the HTML that the scan reads.
-	//
-	// [Ja] 解析結果とレンダリング結果を添付ファイルの走査と共有するため、本文の読み取りは1回で済む。
+	// 解析結果とレンダリング結果を添付ファイルの走査と共有するため、本文の読み取りは1回で済む。
 	// IDをWikiリンク変換の後ではなくここで集めるのは、変換が走査の読むHTMLを書き換えるためである。
 	htmls := make([]string, len(inputs))
 	sources := make([][]byte, len(inputs))
@@ -96,10 +92,7 @@ func RenderHTMLBatch(
 			attachmentIDs[i] = attachmentIDsOf(scanAttachmentRefMatches(source, document, bodyHTML, true))
 		}
 
-		// The matches are read from the normalized source, whose offsets are what the parse and
-		// the replacement below refer to.
-		//
-		// [Ja] 一致は正規化後のソースから読む。解析結果と下の置換が指す位置はそちらのものである。
+		// 一致は正規化後のソースから読む。解析結果と下の置換が指す位置はそちらのものである。
 		matches[i] = ScanWikilinkMatches(string(source), input.CurrentTopicName)
 	}
 
@@ -151,7 +144,7 @@ func RenderHTMLBatch(
 	return htmls, nil
 }
 
-// deduplicateWikilinkKeys はWikiリンクキーの重複を除去する
+// deduplicateWikilinkKeysはWikiリンクキーの重複を除去する
 func deduplicateWikilinkKeys(keys []WikilinkKey) []WikilinkKey {
 	seen := make(map[string]bool, len(keys))
 	unique := make([]WikilinkKey, 0, len(keys))
@@ -165,7 +158,7 @@ func deduplicateWikilinkKeys(keys []WikilinkKey) []WikilinkKey {
 	return unique
 }
 
-// collectAllAttachmentIDs は本文ごとの添付ファイルIDを重複なしで1つにまとめる
+// collectAllAttachmentIDsは本文ごとの添付ファイルIDを重複なしで1つにまとめる
 func collectAllAttachmentIDs(perBody [][]string) []string {
 	seen := make(map[string]bool)
 	var ids []string
@@ -180,7 +173,7 @@ func collectAllAttachmentIDs(perBody [][]string) []string {
 	return ids
 }
 
-// mapAttachmentFinder はマップベースのAttachmentFinder実装。
+// mapAttachmentFinderはマップベースのAttachmentFinder実装。
 // バッチ検索結果をマップに保持し、個別の検索をO(1)で処理する。
 type mapAttachmentFinder struct {
 	attachments map[model.AttachmentID]*model.Attachment

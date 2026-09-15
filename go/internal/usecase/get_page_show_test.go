@@ -24,40 +24,28 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		repository.NewAttachmentRepository(q),
 	)
 
-	// Space owner (holds the space:admin scope by default, so it can edit pages).
-	//
-	// [Ja] スペースオーナー (デフォルトで space:admin スコープを持つため、ページを編集できる)。
+	// スペースオーナー (デフォルトでspace:adminスコープを持つため、ページを編集できる)。
 	ownerID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-owner@example.com").
 		WithAtname("gpsowner").
 		Build()
-	// Member holding page:trash but not page:write (verifies the trash alert path without edit rights).
-	//
-	// [Ja] page:write を持たず page:trash を持つメンバー (編集権限なしでゴミ箱表示経路を検証する)。
+	// page:writeを持たずpage:trashを持つメンバー (編集権限なしでゴミ箱表示経路を検証する)。
 	trashMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-trash@example.com").
 		WithAtname("gpstrash").
 		Build()
-	// Read-only member (verifies that page:read alone reveals neither a trashed page nor a page in
-	// a private topic).
-	//
-	// [Ja] 読み取り専用メンバー (page:read だけではゴミ箱のページも非公開トピックのページも見えない
+	// 読み取り専用メンバー (page:readだけではゴミ箱のページも非公開トピックのページも見えない
 	// ことを検証する)。
 	readerID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-reader@example.com").
 		WithAtname("gpsreader").
 		Build()
-	// Member whose private-topic and trash permissions come only from topic memberships.
-	//
-	// [Ja] 非公開トピックとゴミ箱の権限をトピックメンバーからだけ得るメンバー。
+	// 非公開トピックとゴミ箱の権限をトピックメンバーからだけ得るメンバー。
 	topicScopedMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-topic-scoped@example.com").
 		WithAtname("gpstopicscoped").
 		Build()
-	// Logged-in user who has not joined the space (verifies that a signed-in non-member is treated
-	// like a guest: public pages are readable but not editable, and the trash stays hidden).
-	//
-	// [Ja] スペースに参加していないログイン済みユーザー (ログイン済み非メンバーがゲストと同じ扱いに
+	// スペースに参加していないログイン済みユーザー (ログイン済み非メンバーがゲストと同じ扱いに
 	// なること = 公開ページは読めるが編集できず、ゴミ箱は見えないことを検証する)。
 	nonMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-nonmember@example.com").
@@ -184,13 +172,9 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithLinkedPageIDs([]model.PageID{}).
 		WithUnpublished().
 		Build()
-	// A cover image pointing at another space's attachment is inconsistent data that normal
-	// operation never creates. It is built on purpose so that the repository returns (nil, nil)
-	// here, pinning both the nil fallback and the space_id scope of FindByIDAndSpace.
-	//
-	// [Ja] 別スペースの添付ファイルを指すアイキャッチ画像は、通常の運用では作られない不整合データ。
-	// Repository が (nil, nil) を返す経路を通すために意図的に作り、nil フォールバックと
-	// FindByIDAndSpace の space_id スコープの両方を固定する。
+	// 別スペースの添付ファイルを指すアイキャッチ画像は、通常の運用では作られない不整合データ。
+	// Repositoryが (nil, nil) を返す経路を通すために意図的に作り、nilフォールバックと
+	// FindByIDAndSpaceのspace_idスコープの両方を固定する。
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
@@ -200,12 +184,8 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithFeaturedImageAttachmentID(otherSpaceAttachmentID).
 		Build()
 
-	// Page 10 links to a public-topic page and a private-topic page, and is linked to from one page
-	// of each kind. It exercises the link list and the backlink list of one page against both
-	// visibilities at once.
-	//
-	// [Ja] ページ 10 は公開トピックのページと非公開トピックのページの双方へリンクし、双方から
-	// リンクされている。1 ページのリンク一覧とバックリンク一覧を、両方の公開設定に対して同時に
+	// ページ10は公開トピックのページと非公開トピックのページの双方へリンクし、双方から
+	// リンクされている。1ページのリンク一覧とバックリンク一覧を、両方の公開設定に対して同時に
 	// 検証できるようにするためである。
 	publicLinkedPageID := testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -243,10 +223,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithLinkedPageIDs([]model.PageID{linkSourcePageID}).
 		Build()
 
-	// Two pages linking to page 8 give its nested backlink list something to page through, which is
-	// the listing the full-page fallback advances one card at a time.
-	//
-	// [Ja] ページ 8 へリンクする 2 ページを置き、そのネストしたバックリンク一覧をページ送りできるように
+	// ページ8へリンクする2ページを置き、そのネストしたバックリンク一覧をページ送りできるように
 	// する。フルページフォールバックがカード単位で進めるのはこの一覧である。
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -265,10 +242,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithLinkedPageIDs([]model.PageID{publicLinkedPageID}).
 		Build()
 
-	// linkListInput builds the input of the page carrying both listings, with the limits the
-	// handler passes.
-	//
-	// [Ja] linkListInput は 2 つの一覧を持つページの入力を、Handler が渡すのと同じ件数上限で組み立てる。
+	// linkListInputは2つの一覧を持つページの入力を、Handlerが渡すのと同じ件数上限で組み立てる。
 	linkListInput := func(userID *model.UserID) GetPageShowInput {
 		return GetPageShowInput{
 			LinkPage:               1,
@@ -286,27 +260,24 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 	t.Run("正常系: ゲストのリンク一覧・バックリンク一覧は公開トピックのページだけになる", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), linkListInput(nil))
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if got := pageNumbersOf(output.LinkedPages); len(got) != 1 || got[0] != 8 {
-			t.Errorf("LinkedPages = %v, want [8]", got)
+			t.Errorf("LinkedPages = %v、期待値 = [8]", got)
 		}
 		if output.LinkedTotalCount != 1 {
-			t.Errorf("LinkedTotalCount = %d, want 1", output.LinkedTotalCount)
+			t.Errorf("LinkedTotalCount = %d、期待値 = 1", output.LinkedTotalCount)
 		}
 		if got := pageNumbersOf(output.PageBacklinks); len(got) != 1 || got[0] != 11 {
-			t.Errorf("PageBacklinks = %v, want [11]", got)
+			t.Errorf("PageBacklinks = %v、期待値 = [11]", got)
 		}
 		if output.PageBacklinkCount != 1 {
-			t.Errorf("PageBacklinkCount = %d, want 1", output.PageBacklinkCount)
+			t.Errorf("PageBacklinkCount = %d、期待値 = 1", output.PageBacklinkCount)
 		}
-		// The topics are resolved for the cards' labels, so the private topic must not leak here
-		// either.
-		//
-		// [Ja] トピックはカードのラベル用に解決するため、ここでも非公開トピックが漏れてはならない。
+		// トピックはカードのラベル用に解決するため、ここでも非公開トピックが漏れてはならない。
 		for _, topic := range output.LinkTopics {
 			if topic.ID == privateTopicID {
-				t.Error("LinkTopics should not contain the private topic for a guest")
+				t.Error("ゲストなのにLinkTopicsに非公開トピックが含まれている")
 			}
 		}
 	})
@@ -315,25 +286,21 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		userID := ownerID
 		output, err := uc.Execute(context.Background(), linkListInput(&userID))
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if got := len(output.LinkedPages); got != 2 {
-			t.Errorf("len(LinkedPages) = %d, want 2", got)
+			t.Errorf("len(LinkedPages) = %d、期待値 = 2", got)
 		}
 		if got := len(output.PageBacklinks); got != 2 {
-			t.Errorf("len(PageBacklinks) = %d, want 2", got)
+			t.Errorf("len(PageBacklinks) = %d、期待値 = 2", got)
 		}
-		// The linked pages carry their own backlinks, which the link list renders next to each card.
-		//
-		// [Ja] リンク先ページは自身のバックリンクを伴い、リンク一覧が各カードの隣に描画する。
+		// リンク先ページは自身のバックリンクを伴い、リンク一覧が各カードの隣に描画する。
 		if output.BacklinksPerPage == nil {
-			t.Error("BacklinksPerPage should not be nil when the page has links")
+			t.Error("ページにリンクがあるのにBacklinksPerPageがnil")
 		}
 	})
 
-	// The full-page fallback advances the two independent top-level listings without htmx.
-	//
-	// [Ja] フルページフォールバックが htmx なしでも、独立した 2 つの最上位一覧を進めることを確認する。
+	// フルページフォールバックがhtmxなしでも、独立した2つの最上位一覧を進めることを確認する。
 	t.Run("正常系: フルページフォールバックで2ページ目を取得できる", func(t *testing.T) {
 		userID := ownerID
 		firstInput := linkListInput(&userID)
@@ -342,7 +309,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 
 		firstOutput, err := uc.Execute(context.Background(), firstInput)
 		if err != nil {
-			t.Fatalf("first Execute() error = %v", err)
+			t.Fatalf("1回目のExecute()のエラー = %v", err)
 		}
 
 		secondInput := firstInput
@@ -350,35 +317,32 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		secondInput.PageBacklinkPage = 2
 		secondOutput, err := uc.Execute(context.Background(), secondInput)
 		if err != nil {
-			t.Fatalf("second Execute() error = %v", err)
+			t.Fatalf("2回目のExecute()のエラー = %v", err)
 		}
 
 		if len(firstOutput.LinkedPages) != 1 || len(secondOutput.LinkedPages) != 1 {
-			t.Fatalf("linked page lengths = (%d, %d), want (1, 1)", len(firstOutput.LinkedPages), len(secondOutput.LinkedPages))
+			t.Fatalf("リンク先のページの長さ = (%d, %d)、期待値 = (1, 1)", len(firstOutput.LinkedPages), len(secondOutput.LinkedPages))
 		}
 		if firstOutput.LinkedPages[0].ID == secondOutput.LinkedPages[0].ID {
-			t.Error("the second full-page link slice should differ from the first")
+			t.Error("フルページフォールバックで取得したリンク一覧の2ページ目が1ページ目と同じ")
 		}
 		if firstOutput.LinkedTotalCount != 2 || secondOutput.LinkedTotalCount != 2 {
-			t.Errorf("linked totals = (%d, %d), want (2, 2)", firstOutput.LinkedTotalCount, secondOutput.LinkedTotalCount)
+			t.Errorf("リンク先の総数 = (%d, %d)、期待値 = (2, 2)", firstOutput.LinkedTotalCount, secondOutput.LinkedTotalCount)
 		}
 
 		if len(firstOutput.PageBacklinks) != 1 || len(secondOutput.PageBacklinks) != 1 {
-			t.Fatalf("backlink page lengths = (%d, %d), want (1, 1)", len(firstOutput.PageBacklinks), len(secondOutput.PageBacklinks))
+			t.Fatalf("バックリンクのページの長さ = (%d, %d)、期待値 = (1, 1)", len(firstOutput.PageBacklinks), len(secondOutput.PageBacklinks))
 		}
 		if firstOutput.PageBacklinks[0].ID == secondOutput.PageBacklinks[0].ID {
-			t.Error("the second full-page backlink slice should differ from the first")
+			t.Error("フルページフォールバックで取得したバックリンク一覧の2ページ目が1ページ目と同じ")
 		}
 		if firstOutput.PageBacklinkCount != 2 || secondOutput.PageBacklinkCount != 2 {
-			t.Errorf("backlink totals = (%d, %d), want (2, 2)", firstOutput.PageBacklinkCount, secondOutput.PageBacklinkCount)
+			t.Errorf("バックリンクの総数 = (%d, %d)、期待値 = (2, 2)", firstOutput.PageBacklinkCount, secondOutput.PageBacklinkCount)
 		}
 	})
 
-	// The nested backlink list of one listed card is the third listing the fallback can advance, and
-	// the only one that has to pick out a single card without disturbing the others.
-	//
-	// [Ja] リンク先カードのネストしたバックリンク一覧は、フォールバックが進められる 3 つ目の一覧であり、
-	// 他に影響を与えずに 1 枚のカードだけを選び出す必要がある唯一の一覧である。
+	// リンク先カードのネストしたバックリンク一覧は、フォールバックが進められる3つ目の一覧であり、
+	// 他に影響を与えずに1枚のカードだけを選び出す必要がある唯一の一覧である。
 	t.Run("正常系: フルページフォールバックでリンク先ページのバックリンク2ページ目を取得できる", func(t *testing.T) {
 		userID := ownerID
 		input := linkListInput(&userID)
@@ -388,26 +352,24 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 
 		output, err := uc.Execute(context.Background(), input)
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		selected := output.BacklinksPerPage[publicLinkedPageID]
 		if selected == nil {
-			t.Fatal("BacklinksPerPage should contain the selected linked page")
+			t.Fatal("BacklinksPerPageに選択中のリンク先ページが含まれていない")
 		}
 		if got := pageNumbersOf(selected.Pages); len(got) != 1 || got[0] != 14 {
-			t.Errorf("selected card's backlinks = %v, want [14]", got)
+			t.Errorf("選択中のカードのバックリンク = %v、期待値 = [14]", got)
 		}
 		if selected.TotalCount != 2 {
-			t.Errorf("selected card's backlink total = %d, want 2", selected.TotalCount)
+			t.Errorf("選択中のカードのバックリンクの総数 = %d、期待値 = 2", selected.TotalCount)
 		}
 
-		// Advancing one card must not move another card's listing off its first page.
-		//
-		// [Ja] 1 枚のカードを進めても、他のカードの一覧を 1 ページ目から動かしてはならない。
+		// 1枚のカードを進めても、他のカードの一覧を1ページ目から動かしてはならない。
 		if other := output.BacklinksPerPage[privateLinkedPageID]; other != nil && len(other.Pages) > 0 {
 			if got := pageNumbersOf(other.Pages); got[0] == 14 {
-				t.Error("the unselected card should keep its own first page")
+				t.Error("選択していないカードが自身の1ページ目を保っていない")
 			}
 		}
 	})
@@ -421,40 +383,37 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			PageNumber:             1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SpaceMember != nil {
-			t.Error("SpaceMember should be nil for a guest")
+			t.Error("ゲストなのにSpaceMemberがnilではない")
 		}
 		if output.Page == nil || output.Page.Number != 1 {
-			t.Errorf("Page.Number = %v, want 1", output.Page)
+			t.Errorf("Page.Number = %v、期待値 = 1", output.Page)
 		}
 		if output.Topic == nil || output.Topic.ID != publicTopicID {
-			t.Errorf("Topic = %v, want the public topic", output.Topic)
+			t.Errorf("Topic = %v、期待値 = 公開トピック", output.Topic)
 		}
 		if output.IsTrashed {
-			t.Error("IsTrashed should be false for a page that is not in the trash")
+			t.Error("ゴミ箱に無いページなのにIsTrashedがtrue")
 		}
 		if output.CanUpdatePage {
-			t.Error("CanUpdatePage should be false for a guest")
+			t.Error("ゲストなのにCanUpdatePageがtrue")
 		}
 		if output.CanTrashPage {
-			t.Error("CanTrashPage should be false for a guest")
+			t.Error("ゲストなのにCanTrashPageがtrue")
 		}
 		if output.FeaturedImageAttachment != nil {
-			t.Error("FeaturedImageAttachment should be nil for a page without a cover image")
+			t.Error("アイキャッチ画像の無いページなのにFeaturedImageAttachmentがnilではない")
 		}
 	})
 
-	// This screen does not filter on published_at: an unpublished page is returned instead of 404.
-	// Other page queries do filter on it, so pin the difference here.
-	//
-	// [Ja] 本画面は published_at でフィルタせず、未公開ページも 404 ではなく取得する。
-	// 他のページ取得クエリは published_at を条件に持つため、その差分をここで固定する。
-	t.Run("正常系: 未公開ページも 404 にならない", func(t *testing.T) {
+	// 本画面はpublished_atでフィルタせず、未公開ページも404ではなく取得する。
+	// 他のページ取得クエリはpublished_atを条件に持つため、その差分をここで固定する。
+	t.Run("正常系: 未公開ページも404にならない", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
 			LinkedPageBacklinkPage: 1,
@@ -463,17 +422,17 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			PageNumber:             6,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Page == nil || output.Page.Number != 6 {
-			t.Errorf("Page = %v, want the unpublished page", output.Page)
+			t.Errorf("Page = %v、期待値 = 未公開のページ", output.Page)
 		}
 		if output.Page.PublishedAt != nil {
-			t.Error("PublishedAt should be nil for an unpublished page")
+			t.Error("未公開のページなのにPublishedAtがnilではない")
 		}
 	})
 
-	t.Run("正常系: ページを編集できるメンバーは CanUpdatePage が true になる", func(t *testing.T) {
+	t.Run("正常系: ページを編集できるメンバーはCanUpdatePageがtrueになる", func(t *testing.T) {
 		userID := ownerID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -484,27 +443,23 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			UserID:                 &userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SpaceMember == nil {
-			t.Fatal("SpaceMember should not be nil for a space member")
+			t.Fatal("スペースメンバーなのにSpaceMemberがnil")
 		}
 		if !output.CanUpdatePage {
-			t.Error("CanUpdatePage should be true for a member holding page:write")
+			t.Error("page:writeを持つメンバーなのにCanUpdatePageがfalse")
 		}
 	})
 
-	// The header's action dropdown offers editing and trashing on two different scopes, so the two
-	// flags are pinned per scope. page:write must not open the trash item: an editor who may rewrite
-	// a page is not thereby allowed to take it out of the space's visible content.
-	//
-	// [Ja] ヘッダーの操作ドロップダウンは編集とゴミ箱を別々のスコープで出し分けるため、2 つのフラグ
-	// をスコープごとに固定する。page:write でゴミ箱項目が開いてはならない。ページを書き換えてよい
+	// ヘッダーの操作ドロップダウンは編集とゴミ箱を別々のスコープで出し分けるため、2つのフラグ
+	// をスコープごとに固定する。page:writeでゴミ箱項目が開いてはならない。ページを書き換えてよい
 	// 編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
-	t.Run("正常系: CanTrashPage は page:write ではなく page:trash で決まる", func(t *testing.T) {
+	t.Run("正常系: CanTrashPageはpage:writeではなくpage:trashで決まる", func(t *testing.T) {
 		tests := []struct {
 			name              string
 			userID            model.UserID
@@ -512,19 +467,19 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			wantCanTrashPage  bool
 		}{
 			{
-				name:              "space:admin を持つオーナーは両方できる",
+				name:              "space:adminを持つオーナーは両方できる",
 				userID:            ownerID,
 				wantCanUpdatePage: true,
 				wantCanTrashPage:  true,
 			},
 			{
-				name:              "page:trash だけを持つメンバーはゴミ箱へ入れるだけできる",
+				name:              "page:trashだけを持つメンバーはゴミ箱へ入れるだけできる",
 				userID:            trashMemberID,
 				wantCanUpdatePage: false,
 				wantCanTrashPage:  true,
 			},
 			{
-				name:              "page:read だけを持つメンバーはどちらもできない",
+				name:              "page:readだけを持つメンバーはどちらもできない",
 				userID:            readerID,
 				wantCanUpdatePage: false,
 				wantCanTrashPage:  false,
@@ -543,16 +498,16 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 					UserID:                 &userID,
 				})
 				if err != nil {
-					t.Fatalf("Execute() error = %v", err)
+					t.Fatalf("Execute()のエラー = %v", err)
 				}
 				if output == nil {
-					t.Fatal("output should not be nil")
+					t.Fatal("出力がnil")
 				}
 				if output.CanUpdatePage != tt.wantCanUpdatePage {
-					t.Errorf("CanUpdatePage = %v, want %v", output.CanUpdatePage, tt.wantCanUpdatePage)
+					t.Errorf("CanUpdatePage = %v、期待値 = %v", output.CanUpdatePage, tt.wantCanUpdatePage)
 				}
 				if output.CanTrashPage != tt.wantCanTrashPage {
-					t.Errorf("CanTrashPage = %v, want %v", output.CanTrashPage, tt.wantCanTrashPage)
+					t.Errorf("CanTrashPage = %v、期待値 = %v", output.CanTrashPage, tt.wantCanTrashPage)
 				}
 			})
 		}
@@ -569,16 +524,16 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			UserID:                 &userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SpaceMember != nil {
-			t.Error("SpaceMember should be nil for a signed-in non-member")
+			t.Error("ログイン中の非メンバーなのにSpaceMemberがnilではない")
 		}
 		if output.CanUpdatePage {
-			t.Error("CanUpdatePage should be false for a signed-in non-member")
+			t.Error("ログイン中の非メンバーなのにCanUpdatePageがtrue")
 		}
 	})
 
@@ -593,17 +548,17 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			UserID:                 &userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Topic == nil || output.Topic.ID != privateTopicID {
-			t.Errorf("Topic = %v, want the private topic", output.Topic)
+			t.Errorf("Topic = %v、期待値 = 非公開トピック", output.Topic)
 		}
 	})
 
-	t.Run("正常系: トピックの topic:read を持つメンバーは非公開ページを閲覧できる", func(t *testing.T) {
+	t.Run("正常系: トピックのtopic:readを持つメンバーは非公開ページを閲覧できる", func(t *testing.T) {
 		userID := topicScopedMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -614,13 +569,13 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			UserID:                 &userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Topic == nil || output.Topic.ID != privateTopicID {
-			t.Errorf("Topic = %v, want the private topic", output.Topic)
+			t.Errorf("Topic = %v、期待値 = 非公開トピック", output.Topic)
 		}
 	})
 
@@ -633,26 +588,24 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			PageNumber:             5,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.FeaturedImageAttachment == nil {
-			t.Fatal("FeaturedImageAttachment should not be nil for a page with a cover image")
+			t.Fatal("アイキャッチ画像のあるページなのにFeaturedImageAttachmentがnil")
 		}
 		if output.FeaturedImageAttachment.ID != attachmentID {
-			t.Errorf("FeaturedImageAttachment.ID = %v, want %v", output.FeaturedImageAttachment.ID, attachmentID)
+			t.Errorf("FeaturedImageAttachment.ID = %v、期待値 = %v", output.FeaturedImageAttachment.ID, attachmentID)
 		}
-		// The filename is what the og:image output needs to detect GIFs (see the Rails version).
-		//
-		// [Ja] ファイル名は og:image 出力側で GIF を判定するために必要になる (Rails 版と同じ判定)。
+		// ファイル名はog:image出力側でGIFを判定するために必要になる (Rails版と同じ判定)。
 		if output.FeaturedImageAttachment.Filename != "cover.png" {
-			t.Errorf("FeaturedImageAttachment.Filename = %q, want %q", output.FeaturedImageAttachment.Filename, "cover.png")
+			t.Errorf("FeaturedImageAttachment.Filename = %q、期待値 = %q", output.FeaturedImageAttachment.Filename, "cover.png")
 		}
 	})
 
-	t.Run("正常系: 別スペースのアイキャッチ画像は未解決として nil を返す", func(t *testing.T) {
+	t.Run("正常系: 別スペースのアイキャッチ画像は未解決としてnilを返す", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
 			LinkedPageBacklinkPage: 1,
@@ -661,17 +614,17 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			PageNumber:             7,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.FeaturedImageAttachment != nil {
-			t.Errorf("FeaturedImageAttachment = %v, want nil for an attachment in another space", output.FeaturedImageAttachment)
+			t.Errorf("別スペースの添付ファイルでのFeaturedImageAttachment = %v、期待値 = nil", output.FeaturedImageAttachment)
 		}
 	})
 
-	t.Run("正常系: page:trash を持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
+	t.Run("正常系: page:trashを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
 		userID := trashMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -682,20 +635,20 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			UserID:                 &userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if !output.IsTrashed {
-			t.Error("IsTrashed should be true for a page in the trash")
+			t.Error("ゴミ箱にあるページなのにIsTrashedがfalse")
 		}
 		if output.CanUpdatePage {
-			t.Error("CanUpdatePage should be false for a member without page:write")
+			t.Error("page:writeを持たないメンバーなのにCanUpdatePageがtrue")
 		}
 	})
 
-	t.Run("正常系: トピックの page:trash を持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
+	t.Run("正常系: トピックのpage:trashを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
 		userID := topicScopedMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -706,16 +659,16 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			UserID:                 &userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if !output.IsTrashed {
-			t.Error("IsTrashed should be true for a page in the trash")
+			t.Error("ゴミ箱にあるページなのにIsTrashedがfalse")
 		}
 		if output.CanUpdatePage {
-			t.Error("CanUpdatePage should be false for a member without page:write")
+			t.Error("page:writeを持たないメンバーなのにCanUpdatePageがtrue")
 		}
 	})
 
@@ -743,12 +696,9 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	// page:read alone must not reveal the trashed page: the check is on page:trash, and page:write
-	// implies page:read, so pinning both keeps the requirement from silently breaking.
-	//
-	// [Ja] page:read だけではゴミ箱のページを見せない。判定軸は page:trash であり、page:write は
-	// 含意で page:read を得るため、両方を固定して要件が静かに壊れないようにする。
-	t.Run("異常系: page:read だけのメンバーはゴミ箱のページを閲覧できない", func(t *testing.T) {
+	// page:readだけではゴミ箱のページを見せない。判定軸はpage:trashであり、page:writeは
+	// 含意でpage:readを得るため、両方を固定して要件が静かに壊れないようにする。
+	t.Run("異常系: page:readだけのメンバーはゴミ箱のページを閲覧できない", func(t *testing.T) {
 		userID := readerID
 		_, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -772,14 +722,10 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	// Being a space member is not enough for a private topic: the check is on topic:read, which
-	// space:admin and topic-level grants both expand to. Pinning the false side keeps a member from
-	// silently gaining access to every private topic.
-	//
-	// [Ja] 非公開トピックはスペースメンバーであるだけでは見せない。判定軸は topic:read であり、
-	// space:admin とトピック単位の付与のどちらからも得られる。false 側を固定して、メンバーが
+	// 非公開トピックはスペースメンバーであるだけでは見せない。判定軸はtopic:readであり、
+	// space:adminとトピック単位の付与のどちらからも得られる。false側を固定して、メンバーが
 	// すべての非公開トピックに静かにアクセスできるようになる退行を防ぐ。
-	t.Run("異常系: topic:read を持たないメンバーは非公開トピックのページを閲覧できない", func(t *testing.T) {
+	t.Run("異常系: topic:readを持たないメンバーは非公開トピックのページを閲覧できない", func(t *testing.T) {
 		userID := readerID
 		_, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -805,7 +751,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	t.Run("異常系: 存在しないスペースは AppErrCodeResourceNotFound を返す", func(t *testing.T) {
+	t.Run("異常系: 存在しないスペースはAppErrCodeResourceNotFoundを返す", func(t *testing.T) {
 		_, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
 			LinkedPageBacklinkPage: 1,
@@ -816,7 +762,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	t.Run("異常系: 存在しないページ番号は AppErrCodeResourceNotFound を返す", func(t *testing.T) {
+	t.Run("異常系: 存在しないページ番号はAppErrCodeResourceNotFoundを返す", func(t *testing.T) {
 		_, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
 			LinkedPageBacklinkPage: 1,
@@ -828,10 +774,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 	})
 }
 
-// pageNumbersOf lists the numbers of the given pages, so that an assertion can name the expected
-// pages by their number instead of by their generated ID.
-//
-// [Ja] pageNumbersOf は渡したページの番号を並べる。生成された ID ではなく番号で期待するページを
+// pageNumbersOfは渡したページの番号を並べる。生成されたIDではなく番号で期待するページを
 // 書けるようにするためである。
 func pageNumbersOf(pages []*model.Page) []model.PageNumber {
 	numbers := make([]model.PageNumber, 0, len(pages))

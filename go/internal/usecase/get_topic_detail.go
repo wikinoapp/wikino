@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetTopicDetailUsecase はトピック詳細画面のデータ取得ユースケース
+// GetTopicDetailUsecaseはトピック詳細画面のデータ取得ユースケース
 type GetTopicDetailUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -17,7 +17,7 @@ type GetTopicDetailUsecase struct {
 	pageRepo        *repository.PageRepository
 }
 
-// NewGetTopicDetailUsecase は GetTopicDetailUsecase を生成する
+// NewGetTopicDetailUsecaseはGetTopicDetailUsecaseを生成する
 func NewGetTopicDetailUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -34,7 +34,7 @@ func NewGetTopicDetailUsecase(
 	}
 }
 
-// GetTopicDetailInput はトピック詳細取得の入力パラメータ
+// GetTopicDetailInputはトピック詳細取得の入力パラメータ
 type GetTopicDetailInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	TopicNumber     int32
@@ -43,7 +43,7 @@ type GetTopicDetailInput struct {
 	PageLimit       int32
 }
 
-// GetTopicDetailOutput はトピック詳細取得の出力
+// GetTopicDetailOutputはトピック詳細取得の出力
 type GetTopicDetailOutput struct {
 	Space          *model.Space
 	SpaceMember    *model.SpaceMember
@@ -56,7 +56,7 @@ type GetTopicDetailOutput struct {
 	CanCreatePage  bool
 }
 
-// Execute はトピック詳細画面に必要なデータを取得する
+// Executeはトピック詳細画面に必要なデータを取得する
 func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDetailInput) (*GetTopicDetailOutput, error) {
 	// スペースを取得
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
@@ -67,7 +67,7 @@ func (uc *GetTopicDetailUsecase) Execute(ctx context.Context, input GetTopicDeta
 		return nil, nil
 	}
 
-	// ログインユーザーのスペースメンバーを取得（未ログインならnil）
+	// ログインユーザーのスペースメンバーを取得 (未ログインならnil)
 	var spaceMember *model.SpaceMember
 	if input.UserID != nil {
 		spaceMember, err = uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, *input.UserID)

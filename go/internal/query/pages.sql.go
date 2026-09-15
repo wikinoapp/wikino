@@ -34,10 +34,7 @@ type CountBacklinkedPagesParams struct {
 	ExcludePageIds   []string `json:"exclude_page_ids"`
 }
 
-// Returns the total count of pages linking to a page. Filtering matches
-// FindBacklinkedPagesPaginated so the count and the page slice stay consistent.
-//
-// [Ja] 指定ページへのバックリンクの総件数を返す。フィルタ条件は FindBacklinkedPagesPaginated と
+// 指定ページへのバックリンクの総件数を返す。フィルタ条件はFindBacklinkedPagesPaginatedと
 // 揃えており、件数とページ一覧の整合性を保つ。
 func (q *Queries) CountBacklinkedPages(ctx context.Context, arg CountBacklinkedPagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countBacklinkedPages,
@@ -82,14 +79,9 @@ type CountBacklinkedPagesForTargetsRow struct {
 	Count    int64       `json:"count"`
 }
 
-// Returns the backlink count of several target pages at once. The visible pages are narrowed
-// down in a subquery rather than in the join condition, so that the same filtering as
-// FindBacklinkedPagesForTargets applies while the outer LEFT JOIN still yields a zero row for
-// a target with no backlinks.
-//
-// [Ja] 複数ターゲットページのバックリンク件数を一括取得する。可視ページの絞り込みを JOIN 条件
-// ではなくサブクエリで行い、FindBacklinkedPagesForTargets と同じフィルタをかけつつ、外側の
-// LEFT JOIN がバックリンクを持たないターゲットに対して 0 件の行を返せるようにしている。
+// 複数ターゲットページのバックリンク件数を一括取得する。可視ページの絞り込みをJOIN条件
+// ではなくサブクエリで行い、FindBacklinkedPagesForTargetsと同じフィルタをかけつつ、外側の
+// LEFT JOINがバックリンクを持たないターゲットに対して0件の行を返せるようにしている。
 func (q *Queries) CountBacklinkedPagesForTargets(ctx context.Context, arg CountBacklinkedPagesForTargetsParams) ([]CountBacklinkedPagesForTargetsRow, error) {
 	rows, err := q.db.QueryContext(ctx, countBacklinkedPagesForTargets,
 		pq.Array(arg.TargetIds),
@@ -138,10 +130,7 @@ type CountLinkedPagesParams struct {
 	VisibleTopicIds  []string `json:"visible_topic_ids"`
 }
 
-// Returns the total count of pages linked from a page. Filtering matches
-// FindLinkedPagesPaginated so the count and the page slice stay consistent.
-//
-// [Ja] ページからのリンク先ページの総件数を返す。フィルタ条件は FindLinkedPagesPaginated と
+// ページからのリンク先ページの総件数を返す。フィルタ条件はFindLinkedPagesPaginatedと
 // 揃えており、件数とページ一覧の整合性を保つ。
 func (q *Queries) CountLinkedPages(ctx context.Context, arg CountLinkedPagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countLinkedPages,
@@ -173,11 +162,8 @@ type CountRegularPagesBySpaceParams struct {
 	PublicOnly bool   `json:"public_only"`
 }
 
-// Returns the total count of non-pinned active pages across a space. Filtering matches
-// FindRegularPagesBySpacePaginated so the count and the page slice stay consistent.
-//
-// [Ja] スペース内の通常ページ (ピン留めなし) の総件数を返す。フィルタ条件は
-// FindRegularPagesBySpacePaginated と揃えており、件数とページ一覧の整合性を保つ。
+// スペース内の通常ページ (ピン留めなし) の総件数を返す。フィルタ条件は
+// FindRegularPagesBySpacePaginatedと揃えており、件数とページ一覧の整合性を保つ。
 func (q *Queries) CountRegularPagesBySpace(ctx context.Context, arg CountRegularPagesBySpaceParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countRegularPagesBySpace, arg.SpaceID, arg.PublicOnly)
 	var count int64
@@ -201,7 +187,7 @@ type CountRegularPagesByTopicParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// トピック内の通常ページの総件数を取得する（ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ）
+// トピック内の通常ページの総件数を取得する (ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ)
 func (q *Queries) CountRegularPagesByTopic(ctx context.Context, arg CountRegularPagesByTopicParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countRegularPagesByTopic, arg.TopicID, arg.SpaceID)
 	var count int64
@@ -223,18 +209,11 @@ type CreateUnpublishedPageParams struct {
 	ModifiedAt time.Time   `json:"modified_at"`
 }
 
-// Creates a page that has not been published yet. Both the wiki link resolution and the page
-// creation entry point insert the same columns, so they share this query. The title is nullable
-// because the wiki link resolution knows the title up front while the creation entry point does
-// not: its page stays untitled until the user publishes it.
-// published_at stays NULL so the page remains unpublished and is omitted from published-page
-// listings until the user explicitly publishes it.
-//
-// [Ja] 未公開のページを作成する。Wiki リンクの解決とページ新規作成の入口は同じ列を INSERT する
-// ため、このクエリを共有する。title を nullable にしているのは、Wiki リンクの解決では
+// 未公開のページを作成する。Wikiリンクの解決とページ新規作成の入口は同じ列をINSERTする
+// ため、このクエリを共有する。titleをnullableにしているのは、Wikiリンクの解決では
 // タイトルが先に決まるのに対し、新規作成の入口では未定であり、ユーザーが公開するまで
 // タイトルの無いページのままになるため。ユーザーが明示的に公開するまで未公開状態を保ち、
-// 公開済みページの一覧から除外するため、published_at は NULL のままにする。
+// 公開済みページの一覧から除外するため、published_atはNULLのままにする。
 func (q *Queries) CreateUnpublishedPage(ctx context.Context, arg CreateUnpublishedPageParams) (Page, error) {
 	row := q.db.QueryRowContext(ctx, createUnpublishedPage,
 		arg.SpaceID,
@@ -281,7 +260,7 @@ type DiscardPageByIDParams struct {
 	SpaceID     string       `json:"space_id"`
 }
 
-// 指定ページを論理削除する（タイトルをIDに変更し、discarded_at を設定する）
+// 指定ページを論理削除する (タイトルをIDに変更し、discarded_atを設定する)
 func (q *Queries) DiscardPageByID(ctx context.Context, arg DiscardPageByIDParams) error {
 	_, err := q.db.ExecContext(ctx, discardPageByID,
 		arg.DiscardedAt,
@@ -305,7 +284,7 @@ type FindBacklinkedPagesByPageIDParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// linked_page_idsカラムに指定ページIDが含まれるページを取得する（同スペース・未廃棄のページのみ。バックリンク一覧表示用）
+// linked_page_idsカラムに指定ページIDが含まれるページを取得する (同スペース・未廃棄のページのみ。バックリンク一覧表示用)
 func (q *Queries) FindBacklinkedPagesByPageID(ctx context.Context, arg FindBacklinkedPagesByPageIDParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesByPageID, arg.Column1, arg.SpaceID)
 	if err != nil {
@@ -394,13 +373,9 @@ type FindBacklinkedPagesForTargetsRow struct {
 	TargetID                  interface{}  `json:"target_id"`
 }
 
-// Returns the backlinks of several target pages at once (up to row_limit per target), to keep
-// the link list from issuing one query per listed page. Filtering matches
-// FindBacklinkedPagesPaginated.
-//
-// [Ja] 複数ターゲットページのバックリンクを一括取得する (各ターゲットごとに row_limit 件まで)。
+// 複数ターゲットページのバックリンクを一括取得する (各ターゲットごとにrow_limit件まで)。
 // リンク一覧が列挙するページごとにクエリを発行しないようにするためのもの。フィルタ条件は
-// FindBacklinkedPagesPaginated と同じ。
+// FindBacklinkedPagesPaginatedと同じ。
 func (q *Queries) FindBacklinkedPagesForTargets(ctx context.Context, arg FindBacklinkedPagesForTargetsParams) ([]FindBacklinkedPagesForTargetsRow, error) {
 	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesForTargets,
 		pq.Array(arg.TargetIds),
@@ -474,14 +449,9 @@ type FindBacklinkedPagesPaginatedParams struct {
 	RowLimit         int32    `json:"row_limit"`
 }
 
-// Returns the pages linking to a page with offset pagination, ordered by modified_at DESC,
-// id DESC. Trash, discarded-topic and topic-visibility handling matches
-// FindLinkedPagesPaginated. exclude_page_ids drops pages already listed elsewhere on the screen
-// (the page itself and its link list entries).
-//
-// [Ja] 指定ページへのバックリンクをオフセットページネーションで取得する。並び順は
+// 指定ページへのバックリンクをオフセットページネーションで取得する。並び順は
 // modified_at DESC, id DESC。ゴミ箱・廃棄済みトピック・トピック可視性の扱いは
-// FindLinkedPagesPaginated と同じ。exclude_page_ids は画面上の他の箇所で既に一覧している
+// FindLinkedPagesPaginatedと同じ。exclude_page_idsは画面上の他の箇所で既に一覧している
 // ページ (ページ自身とそのリンク一覧) を除外する。
 func (q *Queries) FindBacklinkedPagesPaginated(ctx context.Context, arg FindBacklinkedPagesPaginatedParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findBacklinkedPagesPaginated,
@@ -554,22 +524,13 @@ type FindLinkedPagesPaginatedParams struct {
 	RowLimit         int32    `json:"row_limit"`
 }
 
-// Returns the pages linked from a page with offset pagination, ordered by modified_at DESC,
-// id DESC. Trashed pages and pages whose topic is discarded are excluded, so a page removed
-// from the wiki never resurfaces through a stale wiki link. The topic join is scoped by
-// t.space_id = @space_id as a defensive measure, so topic visibility is always evaluated
-// within the requested space per the space_id query-scoping rule. Pages are narrowed down to
-// visible_topic_ids, the topics the viewer may open, which the caller resolves with the same
-// CanShowTopic rule the page screens use. all_topics_visible skips that narrowing for
-// member-only screens that show every topic.
-//
-// [Ja] ページからのリンク先ページをオフセットページネーションで取得する。並び順は
+// ページからのリンク先ページをオフセットページネーションで取得する。並び順は
 // modified_at DESC, id DESC。ゴミ箱に入ったページと廃棄済みトピックのページは除外し、
-// Wiki から取り除かれたページが古い Wiki リンク経由で再び現れないようにする。トピック JOIN は
-// 防御的に t.space_id = @space_id でもスコープし、space_id クエリスコープのルールに従って
+// Wikiから取り除かれたページが古いWikiリンク経由で再び現れないようにする。トピックJOINは
+// 防御的にt.space_id = @space_idでもスコープし、space_idクエリスコープのルールに従って
 // トピックの可視性を常に対象スペース内で評価する。ページは閲覧者が開けるトピック
-// (visible_topic_ids) に絞る。この集合は呼び出し元がページ画面と同じ CanShowTopic の規則で
-// 解決する。all_topics_visible が true のときは絞り込みを行わない (全トピックを見せる
+// (visible_topic_ids) に絞る。この集合は呼び出し元がページ画面と同じCanShowTopicの規則で
+// 解決する。all_topics_visibleがtrueのときは絞り込みを行わない (全トピックを見せる
 // メンバー専用画面向け)。
 func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPagesPaginatedParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findLinkedPagesPaginated,
@@ -627,7 +588,7 @@ type FindPageBySpaceAndNumberParams struct {
 	Number  int32  `json:"number"`
 }
 
-// スペースIDとページ番号でページを取得する（廃棄されていないページのみ）
+// スペースIDとページ番号でページを取得する (廃棄されていないページのみ)
 func (q *Queries) FindPageBySpaceAndNumber(ctx context.Context, arg FindPageBySpaceAndNumberParams) (Page, error) {
 	row := q.db.QueryRowContext(ctx, findPageBySpaceAndNumber, arg.SpaceID, arg.Number)
 	var i Page
@@ -665,7 +626,7 @@ type FindPageByTopicAndTitleParams struct {
 	SpaceID string      `json:"space_id"`
 }
 
-// 指定トピック内で指定タイトルのページを取得する（廃棄済みを含む。Wikiリンクのページ存在確認・タイトル一意性チェック用）
+// 指定トピック内で指定タイトルのページを取得する (廃棄済みを含む。Wikiリンクのページ存在確認・タイトル一意性チェック用)
 func (q *Queries) FindPageByTopicAndTitle(ctx context.Context, arg FindPageByTopicAndTitleParams) (Page, error) {
 	row := q.db.QueryRowContext(ctx, findPageByTopicAndTitle, arg.TopicID, arg.Title, arg.SpaceID)
 	var i Page
@@ -703,7 +664,7 @@ type FindPagesByIDsParams struct {
 	SpaceID string   `json:"space_id"`
 }
 
-// IDリストに含まれるページを取得する（同スペース・未廃棄のページのみ。リンク一覧表示用）
+// IDリストに含まれるページを取得する (同スペース・未廃棄のページのみ。リンク一覧表示用)
 func (q *Queries) FindPagesByIDs(ctx context.Context, arg FindPagesByIDsParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findPagesByIDs, pq.Array(arg.Column1), arg.SpaceID)
 	if err != nil {
@@ -762,19 +723,11 @@ type FindPinnedPagesBySpaceParams struct {
 	PublicOnly bool   `json:"public_only"`
 }
 
-// Returns pinned active pages across a space (published, not discarded, not trashed, and
-// whose topic is not discarded), ordered by pinned_at DESC, id DESC. The topic join also
-// enforces the "topic not discarded" part of the active scope, which a space-wide listing
-// needs because pages span multiple topics. The join is additionally scoped by
-// t.space_id = @space_id as a defensive measure, so topic visibility is always evaluated
-// within the requested space per the space_id query-scoping rule. When public_only is true,
-// only pages in public topics (visibility = 0) are returned, for non-member viewers.
-//
-// [Ja] スペース内のピン留めされたアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック
-// 未廃棄) を pinned_at DESC, id DESC で返す。トピック JOIN はアクティブ判定の「トピック未廃棄」
-// 条件も担う。スペース横断の一覧ではページが複数トピックにまたがるためこの JOIN が必要。
-// JOIN は防御的に t.space_id = @space_id でもスコープし、space_id クエリスコープのルールに従って
-// トピックの可視性を常に対象スペース内で評価する。public_only が true のときは公開トピック
+// スペース内のピン留めされたアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック
+// 未廃棄) をpinned_at DESC, id DESCで返す。トピックJOINはアクティブ判定の「トピック未廃棄」
+// 条件も担う。スペース横断の一覧ではページが複数トピックにまたがるためこのJOINが必要。
+// JOINは防御的にt.space_id = @space_idでもスコープし、space_idクエリスコープのルールに従って
+// トピックの可視性を常に対象スペース内で評価する。public_onlyがtrueのときは公開トピック
 // (visibility = 0) のページのみに絞る (非メンバー閲覧者向け)。
 func (q *Queries) FindPinnedPagesBySpace(ctx context.Context, arg FindPinnedPagesBySpaceParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findPinnedPagesBySpace, arg.SpaceID, arg.PublicOnly)
@@ -832,7 +785,7 @@ type FindPinnedPagesByTopicParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// トピック内のピン留めページを取得する（公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート）
+// トピック内のピン留めページを取得する (公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート)
 func (q *Queries) FindPinnedPagesByTopic(ctx context.Context, arg FindPinnedPagesByTopicParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findPinnedPagesByTopic, arg.TopicID, arg.SpaceID)
 	if err != nil {
@@ -895,12 +848,9 @@ type FindRegularPagesBySpacePaginatedParams struct {
 	RowLimit   int32  `json:"row_limit"`
 }
 
-// Returns non-pinned active pages across a space with offset pagination, ordered by
-// modified_at DESC, id DESC. Active and public_only handling matches FindPinnedPagesBySpace.
-//
-// [Ja] スペース内の通常ページ (ピン留めなし) をオフセットページネーションで取得する。
-// 並び順は modified_at DESC, id DESC。アクティブ判定と public_only の扱いは
-// FindPinnedPagesBySpace と同じ。
+// スペース内の通常ページ (ピン留めなし) をオフセットページネーションで取得する。
+// 並び順はmodified_at DESC, id DESC。アクティブ判定とpublic_onlyの扱いは
+// FindPinnedPagesBySpaceと同じ。
 func (q *Queries) FindRegularPagesBySpacePaginated(ctx context.Context, arg FindRegularPagesBySpacePaginatedParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findRegularPagesBySpacePaginated,
 		arg.SpaceID,
@@ -966,7 +916,7 @@ type FindRegularPagesByTopicPaginatedParams struct {
 	Offset  int32  `json:"offset"`
 }
 
-// トピック内の通常ページをオフセットページネーションで取得する（ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ）
+// トピック内の通常ページをオフセットページネーションで取得する (ピン留めなし・公開済み・未廃棄・未ゴミ箱のページのみ)
 func (q *Queries) FindRegularPagesByTopicPaginated(ctx context.Context, arg FindRegularPagesByTopicPaginatedParams) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, findRegularPagesByTopicPaginated,
 		arg.TopicID,
@@ -1035,12 +985,7 @@ WHERE p.space_id = $1
 ORDER BY t.number, p.number
 `
 
-// Returns every active page of the space (published, not discarded, not trashed, and whose
-// topic is not discarded), ordered by topic and then by page number. The export writes the
-// archive in this order, so the same space gives the same archive on every attempt, which is
-// what lets a retry start over from the beginning.
-//
-// [Ja] スペース内のアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) をすべて、
+// スペース内のアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) をすべて、
 // トピック順・ページ番号順で返す。エクスポートはこの順序でアーカイブを書き出すため、同じ
 // スペースからは毎回同じアーカイブができる。リトライが先頭からやり直せるのはこのためである。
 func (q *Queries) ListActivePagesBySpace(ctx context.Context, spaceID string) ([]Page, error) {
@@ -1096,7 +1041,7 @@ type MovePageToTopicParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// ページのトピックを変更する（ページ移動）
+// ページのトピックを変更する (ページ移動)
 func (q *Queries) MovePageToTopic(ctx context.Context, arg MovePageToTopicParams) (Page, error) {
 	row := q.db.QueryRowContext(ctx, movePageToTopic, arg.ID, arg.TopicID, arg.SpaceID)
 	var i Page
@@ -1145,7 +1090,7 @@ type SearchPageLocationsRow struct {
 	TopicName string      `json:"topic_name"`
 }
 
-// ページロケーションを検索する（Wikiリンク補完用。公開済み・未廃棄・未ゴミ箱のページのみ）
+// ページロケーションを検索する (Wikiリンク補完用。公開済み・未廃棄・未ゴミ箱のページのみ)
 func (q *Queries) SearchPageLocations(ctx context.Context, arg SearchPageLocationsParams) ([]SearchPageLocationsRow, error) {
 	rows, err := q.db.QueryContext(ctx, searchPageLocations, arg.SpaceID, pq.Array(arg.Column2))
 	if err != nil {
@@ -1184,15 +1129,9 @@ type TrashPageByIDParams struct {
 	SpaceID   string       `json:"space_id"`
 }
 
-// Moves the page to the trash by stamping trashed_at. This is the UI-level trash, kept apart from
-// the discarded_at logical deletion used by the batch jobs: a trashed page keeps its title and body
-// so that it can be restored from the trash screen. Moving a page into the trash is a page state
-// change, so updated_at moves with it. Re-running it on an already trashed page just refreshes both
-// timestamps.
-//
-// [Ja] trashed_at を打刻してページをゴミ箱へ入れる。これは UI 上のゴミ箱で、バッチ処理が使う
-// discarded_at の論理削除とは区別する。ゴミ箱に入ったページはタイトルと本文を保持したままで、
-// ゴミ箱画面から復元できる。ゴミ箱への移動はページの状態変更なので updated_at も併せて更新する。
+// trashed_atを打刻してページをゴミ箱へ入れる。これはUI上のゴミ箱で、バッチ処理が使う
+// discarded_atの論理削除とは区別する。ゴミ箱に入ったページはタイトルと本文を保持したままで、
+// ゴミ箱画面から復元できる。ゴミ箱への移動はページの状態変更なのでupdated_atも併せて更新する。
 // 既にゴミ箱に入ったページに対して実行した場合は両方の時刻が更新されるだけになる。
 func (q *Queries) TrashPageByID(ctx context.Context, arg TrashPageByIDParams) error {
 	_, err := q.db.ExecContext(ctx, trashPageByID,

@@ -7,19 +7,17 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// assertAppErrCode asserts that err is a *model.AppError carrying the given code.
-//
-// [Ja] assertAppErrCode は err が *model.AppError かつ指定した Code を持つかを検証する。
+// assertAppErrCodeはerrが *model.AppErrorかつ指定したCodeを持つかを検証する。
 func assertAppErrCode(t *testing.T, err error, code model.AppErrorCode) {
 	t.Helper()
 	if err == nil {
-		t.Fatal("expected *model.AppError, got nil")
+		t.Fatal("*model.AppErrorを期待したが、nilだった")
 	}
 	var ae *model.AppError
 	if !errors.As(err, &ae) {
-		t.Fatalf("expected *model.AppError, got %T: %v", err, err)
+		t.Fatalf("*model.AppErrorを期待したが、%Tだった: %v", err, err)
 	}
 	if ae.Code != code {
-		t.Errorf("AppError.Code = %d, want %d", ae.Code, code)
+		t.Errorf("AppError.Code = %d、期待値 = %d", ae.Code, code)
 	}
 }

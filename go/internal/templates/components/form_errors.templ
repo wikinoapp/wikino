@@ -2,9 +2,7 @@ package components
 
 import "github.com/wikinoapp/wikino/go/internal/model"
 
-// FormErrors renders the global errors of a form.
-//
-// [Ja] FormErrors はフォームのグローバルエラーを表示します。
+// FormErrorsはフォームのグローバルエラーを表示します。
 templ FormErrors(formErrors *model.ValidationError) {
 	if formErrors != nil && len(formErrors.Global) > 0 {
 		for _, errorMsg := range formErrors.Global {
@@ -15,9 +13,7 @@ templ FormErrors(formErrors *model.ValidationError) {
 	}
 }
 
-// FormErrorSummary renders global form errors in an inset container.
-//
-// [Ja] FormErrorSummary はグローバルフォームエラーを余白付きの領域に表示します。
+// FormErrorSummaryはグローバルフォームエラーを余白付きの領域に表示します。
 templ FormErrorSummary(formErrors *model.ValidationError) {
 	if formErrors != nil && len(formErrors.Global) > 0 {
 		<div class="px-4">

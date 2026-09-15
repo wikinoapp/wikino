@@ -4,14 +4,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// Topic はテンプレートで表示するトピック情報です
+// Topicはテンプレートで表示するトピック情報です
 type Topic struct {
 	Name     string
 	Number   int32
 	IconName IconName
 }
 
-// NewTopic はモデルからTopicを生成します
+// NewTopicはモデルからTopicを生成します
 func NewTopic(topic *model.Topic) Topic {
 	return Topic{
 		Name:     topic.Name,
@@ -20,13 +20,13 @@ func NewTopic(topic *model.Topic) Topic {
 	}
 }
 
-// TopicForSelect はセレクトボックス用のトピック情報です
+// TopicForSelectはセレクトボックス用のトピック情報です
 type TopicForSelect struct {
 	Name   string
 	Number int32
 }
 
-// NewTopicForSelect はモデルからTopicForSelectを生成します
+// NewTopicForSelectはモデルからTopicForSelectを生成します
 func NewTopicForSelect(topic *model.Topic) TopicForSelect {
 	return TopicForSelect{
 		Name:   topic.Name,
@@ -34,26 +34,21 @@ func NewTopicForSelect(topic *model.Topic) TopicForSelect {
 	}
 }
 
-// TopicForShow はトピック詳細画面用のトピック情報です
+// TopicForShowはトピック詳細画面用のトピック情報です
 type TopicForShow struct {
 	Name        string
 	Number      int32
 	Description string
 	IconName    IconName
-	// IsPublic carries the visibility as the screen states it in words below the title, on the same
-	// line as the description. The icon alone leaves the state to be inferred from a padlock, which
-	// not every reader will read the same way, so the label is chosen from this rather than from
-	// IconName.
-	//
-	// [Ja] IsPublic は、画面がタイトルの下で説明文と同じ行に言葉で示す公開範囲を運ぶ。
+	// IsPublicは、画面がタイトルの下で説明文と同じ行に言葉で示す公開範囲を運ぶ。
 	// アイコンだけでは状態を錠前から推し量ることになり、読み手によって受け取り方が変わるため、
-	// ラベルは IconName ではなくこの値から選ぶ。
+	// ラベルはIconNameではなくこの値から選ぶ。
 	IsPublic      bool
 	CanUpdate     bool
 	CanCreatePage bool
 }
 
-// NewTopicForShow はモデルからTopicForShowを生成します
+// NewTopicForShowはモデルからTopicForShowを生成します
 func NewTopicForShow(topic *model.Topic, canUpdate bool, canCreatePage bool) TopicForShow {
 	return TopicForShow{
 		Name:          topic.Name,
@@ -66,7 +61,7 @@ func NewTopicForShow(topic *model.Topic, canUpdate bool, canCreatePage bool) Top
 	}
 }
 
-// topicVisibilityIconName はトピックの公開範囲に対応するアイコン名を返します
+// topicVisibilityIconNameはトピックの公開範囲に対応するアイコン名を返します
 func topicVisibilityIconName(v model.TopicVisibility) IconName {
 	if v == model.TopicVisibilityPublic {
 		return "globe-regular"
@@ -74,14 +69,7 @@ func topicVisibilityIconName(v model.TopicVisibility) IconName {
 	return "lock-regular"
 }
 
-// CardLinkTopic represents a reusable topic link card shared by the home page's "joined topics"
-// section and the space page's topic section. It carries the topic name and number, the owning
-// space's identifier (always set so path helpers can build links across multiple spaces) and
-// name (rendered as a label only when non-empty), the topic visibility icon (public/private)
-// shown as the card's leading icon, and whether the current user may create a page under the
-// topic (used to toggle the new-page link).
-//
-// [Ja] CardLinkTopic はホーム画面の「参加中のトピック」セクションとスペース画面のトピック
+// CardLinkTopicはホーム画面の「参加中のトピック」セクションとスペース画面のトピック
 // セクションで共有する、再利用可能なトピックリンクカード。トピック名・番号に加え、スペース
 // 識別子 (複数スペースをまたぐリンクを組み立てられるよう常にセットする) と名前 (空でないときだけ
 // ラベルとして表示する)、カード左側のリーディングアイコンとして表示するトピックの公開範囲アイコン
@@ -96,8 +84,7 @@ type CardLinkTopic struct {
 	CanCreatePage   bool
 }
 
-// NewCardLinkTopic builds a CardLinkTopic from the model and the create permission.
-// [Ja] NewCardLinkTopic はモデルと作成権限から CardLinkTopic を生成する。
+// NewCardLinkTopicはモデルと作成権限からCardLinkTopicを生成する。
 func NewCardLinkTopic(topic *model.Topic, canCreatePage bool) CardLinkTopic {
 	return CardLinkTopic{
 		Name:            topic.Name,
@@ -109,10 +96,7 @@ func NewCardLinkTopic(topic *model.Topic, canCreatePage bool) CardLinkTopic {
 	}
 }
 
-// NewCardLinkTopics builds the cards from the topics and the per-topic create permission map.
-// Topics missing from the map are treated as not creatable.
-//
-// [Ja] NewCardLinkTopics はトピックのスライスと、トピックごとの作成権限マップからカードの
+// NewCardLinkTopicsはトピックのスライスと、トピックごとの作成権限マップからカードの
 // スライスを生成する。マップに無いトピックは作成権限なし扱いになる。
 func NewCardLinkTopics(topics []*model.Topic, canCreatePageByTopic map[model.TopicID]bool) []CardLinkTopic {
 	result := make([]CardLinkTopic, len(topics))
@@ -122,16 +106,10 @@ func NewCardLinkTopics(topics []*model.Topic, canCreatePageByTopic map[model.Top
 	return result
 }
 
-// NewCardLinkTopicsForSpace builds the cards for the space detail's topic section. All topics belong
-// to the single space identified by spaceIdentifier, which is passed in explicitly because these
-// topics carry only SpaceID (their Space is not loaded). SpaceName is left empty so the card hides
-// the in-card space label, since the space header already shows the name. Topics missing from the
-// map are treated as not creatable.
-//
-// [Ja] NewCardLinkTopicsForSpace はスペース詳細のトピックセクション用にカードを生成する。
-// 対象トピックはすべて spaceIdentifier で識別される単一スペースに属する。これらのトピックは
-// SpaceID しか持たない (Space は読み込まれていない) ため、スペース識別子は明示的に渡す。
-// スペース名はヘッダーで既に表示しているため、SpaceName を空にしてカード内のスペース名表示を抑止する。
+// NewCardLinkTopicsForSpaceはスペース詳細のトピックセクション用にカードを生成する。
+// 対象トピックはすべてspaceIdentifierで識別される単一スペースに属する。これらのトピックは
+// SpaceIDしか持たない (Spaceは読み込まれていない) ため、スペース識別子は明示的に渡す。
+// スペース名はヘッダーで既に表示しているため、SpaceNameを空にしてカード内のスペース名表示を抑止する。
 // マップに無いトピックは作成権限なし扱いになる。
 func NewCardLinkTopicsForSpace(topics []*model.Topic, canCreatePageByTopic map[model.TopicID]bool, spaceIdentifier SpaceIdentifier) []CardLinkTopic {
 	result := make([]CardLinkTopic, len(topics))

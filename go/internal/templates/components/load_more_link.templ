@@ -7,11 +7,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// LoadMoreLink renders a progressively enhanced link for loading the next page. FocusID remains on
-// the successor link or end state so htmx can restore keyboard focus after the outerHTML swap.
-//
-// [Ja] LoadMoreLink は次ページを読み込むプログレッシブエンハンスメント対応リンクを表示する。
-// FocusID は後続リンクまたは終端状態へ引き継ぎ、outerHTML スワップ後に htmx がキーボードフォーカスを
+// LoadMoreLinkは次ページを読み込むプログレッシブエンハンスメント対応リンクを表示する。
+// FocusIDは後続リンクまたは終端状態へ引き継ぎ、outerHTMLスワップ後にhtmxがキーボードフォーカスを
 // 復元できるようにする。
 templ LoadMoreLink(data LoadMoreLinkData) {
 	<a
@@ -39,12 +36,8 @@ templ LoadMoreLink(data LoadMoreLinkData) {
 	</a>
 }
 
-// loadMoreAriaLabel names the listing the link advances. The visible text stays "More" on every
-// link, so without this the several links on one screen would be indistinguishable in a screen
-// reader's link list.
-//
-// [Ja] loadMoreAriaLabel はリンクが進める一覧を言い表す。表示文言はどのリンクも「もっと見る」の
-// ままのため、これが無いと 1 画面に並ぶ複数のリンクをスクリーンリーダーのリンク一覧で区別できない。
+// loadMoreAriaLabelはリンクが進める一覧を言い表す。表示文言はどのリンクも「もっと見る」の
+// ままのため、これが無いと1画面に並ぶ複数のリンクをスクリーンリーダーのリンク一覧で区別できない。
 func loadMoreAriaLabel(ctx context.Context, data LoadMoreLinkData) string {
 	if data.AriaLabelKey != backlinkListLoadMoreAriaLabelKey {
 		return templates.T(ctx, data.AriaLabelKey)

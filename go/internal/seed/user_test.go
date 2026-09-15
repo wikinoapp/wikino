@@ -18,20 +18,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// testRosterPassword is the plaintext testRoster hashes. The roster itself
-// carries only the digest, so a test that needs the password to verify against
-// holds it here.
-//
-// [Ja] testRosterPassword は testRoster がハッシュ化する平文。名簿が持つのは
+// testRosterPasswordはtestRosterがハッシュ化する平文。名簿が持つのは
 // ダイジェストだけであるため、検証にパスワードを必要とするテストはここで保持する。
 const testRosterPassword = "seed-password"
 
-// testRoster is the roster the generator tests work from. It names the same
-// roles the seed does, so that what a generator reaches for by role is present
-// here too, with values of its own so that a test does not depend on what the
-// development roster happens to hold.
-//
-// [Ja] testRoster は生成器のテストが使う名簿。シードと同じ役割を挙げているため、
+// testRosterは生成器のテストが使う名簿。シードと同じ役割を挙げているため、
 // 生成器が役割で求めるものはここにも揃っている。値はテスト独自のものにしており、
 // 開発用の名簿がたまたま持っている内容にテストが依存しないようにしている。
 func testRoster(t *testing.T) *userRoster {
@@ -87,36 +78,32 @@ func TestGenerateUsers(t *testing.T) {
 	for _, want := range roster.users {
 		user := users.user(want.role)
 		if user == nil {
-			t.Fatalf("役割 %s のアカウントが作成されていない", want.role)
+			t.Fatalf("役割%sのアカウントが作成されていない", want.role)
 		}
 
 		if user.Email != want.email {
-			t.Errorf("役割 %s のメールアドレスが %q であることを期待したが %q だった", want.role, want.email, user.Email)
+			t.Errorf("役割%sのメールアドレスが%qであることを期待したが%qだった", want.role, want.email, user.Email)
 		}
 		if user.Atname != want.atname {
-			t.Errorf("役割 %s のアットネームが %q であることを期待したが %q だった", want.role, want.atname, user.Atname)
+			t.Errorf("役割%sのアットネームが%qであることを期待したが%qだった", want.role, want.atname, user.Atname)
 		}
 		if user.Name != want.name {
-			t.Errorf("役割 %s の名前が %q であることを期待したが %q だった", want.role, want.name, user.Name)
+			t.Errorf("役割%sの名前が%qであることを期待したが%qだった", want.role, want.name, user.Name)
 		}
 		wantDescription := "ブラウザ確認用のシードユーザーです。"
 		if user.Description != wantDescription {
-			t.Errorf("役割 %s の説明が %q であることを期待したが %q だった", want.role, wantDescription, user.Description)
+			t.Errorf("役割%sの説明が%qであることを期待したが%qだった", want.role, wantDescription, user.Description)
 		}
 
-		// The generated digest must verify against the password from the roster.
-		// A sign-in client using those same credentials can therefore authenticate
-		// immediately after the seed finishes.
-		//
-		// [Ja] 生成したダイジェストは名簿のパスワードそのもので検証できる必要がある。
+		// 生成したダイジェストは名簿のパスワードそのもので検証できる必要がある。
 		// これにより、同じ資格情報を使うサインインクライアントはシード完了直後に認証
 		// できる。
 		var digest string
 		if err := tx.QueryRowContext(ctx, `SELECT password_digest FROM user_passwords WHERE user_id = $1`, string(user.ID)).Scan(&digest); err != nil {
-			t.Fatalf("役割 %s のパスワード取得に失敗: %v", want.role, err)
+			t.Fatalf("役割%sのパスワード取得に失敗: %v", want.role, err)
 		}
 		if !auth.VerifyPassword(digest, testRosterPassword) {
-			t.Errorf("役割 %s のパスワードダイジェストが名簿のパスワードと一致しない", want.role)
+			t.Errorf("役割%sのパスワードダイジェストが名簿のパスワードと一致しない", want.role)
 		}
 
 		assertFeatureFlags(ctx, t, tx, user.ID, want.featureFlags)
@@ -141,22 +128,20 @@ func TestSeededUsersRequireName(t *testing.T) {
 		t.Fatalf("作成済みの役割で予期しないエラー: %v", err)
 	}
 	if name != "テストオーナー" {
-		t.Errorf("表示名が %q であることを期待したが %q だった", "テストオーナー", name)
+		t.Errorf("表示名が%qであることを期待したが%qだった", "テストオーナー", name)
 	}
 
 	_, err = users.requireName(roleGuest)
-	wantErr := "役割 guest のアカウントが作成されていない"
+	wantErr := "役割 guestのアカウントが作成されていない"
 	if err == nil {
 		t.Fatal("作成されていない役割でエラーを期待したがnilだった")
 	}
 	if err.Error() != wantErr {
-		t.Errorf("エラーが %q であることを期待したが %q だった", wantErr, err)
+		t.Errorf("エラーが%qであることを期待したが%qだった", wantErr, err)
 	}
 }
 
-// assertFeatureFlags checks that the user holds exactly the given flags.
-//
-// [Ja] assertFeatureFlags は、ユーザーが与えられたフラグだけを持つことを確認する。
+// assertFeatureFlagsは、ユーザーが与えられたフラグだけを持つことを確認する。
 func assertFeatureFlags(ctx context.Context, t *testing.T, tx *sql.Tx, userID model.UserID, want []model.FeatureFlagName) {
 	t.Helper()
 
@@ -179,20 +164,17 @@ func assertFeatureFlags(ctx context.Context, t *testing.T, tx *sql.Tx, userID mo
 	}
 
 	if len(got) != len(want) {
-		t.Errorf("フィーチャーフラグが %d 件であることを期待したが %d 件だった", len(want), len(got))
+		t.Errorf("フィーチャーフラグが%d件であることを期待したが%d件だった", len(want), len(got))
 	}
 	for _, name := range want {
 		if !got[string(name)] {
-			t.Errorf("フィーチャーフラグ %s が付与されていない", name)
+			t.Errorf("フィーチャーフラグ%sが付与されていない", name)
 		}
 	}
 }
 
-// assertTwoFactorAuthEnabled checks that the user can clear the two-factor
-// step, both with a generated code and with a recovery code.
-//
-// [Ja] assertTwoFactorAuthEnabled は、生成コードとリカバリーコードのどちらでも
-// ユーザーが 2 要素認証ステップを通過できることを確認する。
+// assertTwoFactorAuthEnabledは、生成コードとリカバリーコードのどちらでも
+// ユーザーが2要素認証ステップを通過できることを確認する。
 func assertTwoFactorAuthEnabled(ctx context.Context, t *testing.T, tx *sql.Tx, userID model.UserID) {
 	t.Helper()
 
@@ -214,7 +196,7 @@ func assertTwoFactorAuthEnabled(ctx context.Context, t *testing.T, tx *sql.Tx, u
 		t.Error("二要素認証が有効であることを期待したが無効だった")
 	}
 	if len(recoveryCodes) != recoveryCodeCount {
-		t.Errorf("リカバリーコードが %d 件であることを期待したが %d 件だった", recoveryCodeCount, len(recoveryCodes))
+		t.Errorf("リカバリーコードが%d件であることを期待したが%d件だった", recoveryCodeCount, len(recoveryCodes))
 	}
 	if len(recoveryCodes) > 0 {
 		twoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(query.New(tx))
@@ -227,10 +209,7 @@ func assertTwoFactorAuthEnabled(ctx context.Context, t *testing.T, tx *sql.Tx, u
 		}
 	}
 
-	// A secret that cmd/devtotp cannot turn into a code would leave the
-	// account unable to sign in at all.
-	//
-	// [Ja] cmd/devtotp がコードに変換できない secret だと、そのアカウントは
+	// cmd/devtotpがコードに変換できないsecretだと、そのアカウントは
 	// そもそもサインインできなくなる。
 	code, err := totp.GenerateCode(secret, time.Now())
 	if err != nil {
@@ -241,11 +220,7 @@ func assertTwoFactorAuthEnabled(ctx context.Context, t *testing.T, tx *sql.Tx, u
 	}
 }
 
-// assertTwoFactorAuthAbsent checks that the user has no two-factor auth
-// settings at all. An account whose sign-in is meant to complete with a
-// password alone stops showing that path the moment it grows a row here.
-//
-// [Ja] assertTwoFactorAuthAbsent は、ユーザーが 2 要素認証の設定をまったく
+// assertTwoFactorAuthAbsentは、ユーザーが2要素認証の設定をまったく
 // 持たないことを確認する。パスワードだけでサインインが完了するはずのアカウントは、
 // ここに行ができた時点でその経路を見せなくなる。
 func assertTwoFactorAuthAbsent(ctx context.Context, t *testing.T, tx *sql.Tx, userID model.UserID) {
@@ -260,6 +235,6 @@ func assertTwoFactorAuthAbsent(ctx context.Context, t *testing.T, tx *sql.Tx, us
 		t.Fatalf("二要素認証設定の件数取得に失敗: %v", err)
 	}
 	if count != 0 {
-		t.Errorf("二要素認証が無いことを期待したが %d 件の設定があった", count)
+		t.Errorf("二要素認証が無いことを期待したが%d件の設定があった", count)
 	}
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// AddSuggestionPageUsecase は編集提案ページ追加ユースケース
+// AddSuggestionPageUsecaseは編集提案ページ追加ユースケース
 type AddSuggestionPageUsecase struct {
 	db                         *sql.DB
 	spaceRepo                  *repository.SpaceRepository
@@ -25,7 +25,7 @@ type AddSuggestionPageUsecase struct {
 	createValidator            *validator.SuggestionPageCreateValidator
 }
 
-// NewAddSuggestionPageUsecase は AddSuggestionPageUsecase を生成する
+// NewAddSuggestionPageUsecaseはAddSuggestionPageUsecaseを生成する
 func NewAddSuggestionPageUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -52,7 +52,7 @@ func NewAddSuggestionPageUsecase(
 	}
 }
 
-// AddSuggestionPageInput は編集提案ページ追加の入力パラメータ
+// AddSuggestionPageInputは編集提案ページ追加の入力パラメータ
 type AddSuggestionPageInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
@@ -60,12 +60,12 @@ type AddSuggestionPageInput struct {
 	DraftPageIDs     []model.DraftPageID
 }
 
-// AddSuggestionPageOutput は編集提案ページ追加の出力パラメータ
+// AddSuggestionPageOutputは編集提案ページ追加の出力パラメータ
 type AddSuggestionPageOutput struct {
 	Suggestion *model.Suggestion
 }
 
-// Execute は編集提案にページを追加する
+// Executeは編集提案にページを追加する
 func (uc *AddSuggestionPageUsecase) Execute(ctx context.Context, input AddSuggestionPageInput) (*AddSuggestionPageOutput, error) {
 	// 1. データ取得
 	space, spaceMember, suggestion, err := uc.fetchData(ctx, input)
@@ -90,13 +90,13 @@ func (uc *AddSuggestionPageUsecase) Execute(ctx context.Context, input AddSugges
 		return nil, err
 	}
 
-	// 4. ビジネスロジック（トランザクション前）
+	// 4. ビジネスロジック (トランザクション前)
 	pageRevisions, err := fetchLatestPageRevisions(ctx, draftPages, space.ID, uc.pageRevisionRepo)
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. 永続化（トランザクション）
+	// 5. 永続化 (トランザクション)
 	return uc.addSuggestionPages(ctx, space.ID, spaceMember.ID, suggestion, draftPages, pageRevisions)
 }
 

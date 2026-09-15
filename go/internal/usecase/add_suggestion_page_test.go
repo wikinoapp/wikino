@@ -49,7 +49,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			WithName("General").
 			Build()
 
-		// 既存のページ（編集提案に含まれている）
+		// 既存のページ (編集提案に含まれている)
 		existingPageID := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -70,7 +70,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
-			t.Fatalf("suggestion creation failed: %v", err)
+			t.Fatalf("編集提案の作成に失敗: %v", err)
 		}
 
 		// 既存のSuggestionPageを作成
@@ -85,7 +85,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			BodyHTML:       "<p>既存本文</p>",
 		})
 		if err != nil {
-			t.Fatalf("suggestion page creation failed: %v", err)
+			t.Fatalf("編集提案ページの作成に失敗: %v", err)
 		}
 
 		// 追加するページ
@@ -114,19 +114,19 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			DraftPageIDs:     []model.DraftPageID{draftPageID},
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil || output.Suggestion == nil {
-			t.Fatal("output or Suggestion should not be nil")
+			t.Fatal("出力またはSuggestionがnil")
 		}
 
 		// SuggestionPageが2つになったことを確認
 		pages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), suggestion.ID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionID() error = %v", err)
+			t.Fatalf("ListBySuggestionID()のエラー = %v", err)
 		}
 		if len(pages) != 2 {
-			t.Errorf("SuggestionPages count = %d, want 2", len(pages))
+			t.Errorf("SuggestionPagesの件数 = %d、期待値 = 2", len(pages))
 		}
 
 		// 追加されたSuggestionPageの内容を確認
@@ -138,35 +138,35 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			}
 		}
 		if addedPage == nil {
-			t.Fatal("added SuggestionPage not found")
+			t.Fatal("追加したSuggestionPageが見つからない")
 		}
 		if addedPage.Body != "追加本文" {
-			t.Errorf("SuggestionPage.Body = %q, want %q", addedPage.Body, "追加本文")
+			t.Errorf("SuggestionPage.Body = %q、期待値 = %q", addedPage.Body, "追加本文")
 		}
 
 		// SuggestionPageRevisionが作成されたことを確認
 		revisions, err := suggestionPageRevisionRepo.ListBySuggestionPageID(context.Background(), addedPage.ID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionPageID() error = %v", err)
+			t.Fatalf("ListBySuggestionPageID()のエラー = %v", err)
 		}
 		if len(revisions) != 1 {
-			t.Errorf("revisions count = %d, want 1", len(revisions))
+			t.Errorf("リビジョンの件数 = %d、期待値 = 1", len(revisions))
 		}
 
 		// DraftPageのsuggestion_page_idが設定されたことを確認
 		updatedDraft, err := draftPageRepo.FindByID(context.Background(), draftPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if updatedDraft.SuggestionPageID == nil {
-			t.Fatal("DraftPage.SuggestionPageID should not be nil")
+			t.Fatal("DraftPage.SuggestionPageIDがnil")
 		}
 		if *updatedDraft.SuggestionPageID != addedPage.ID {
-			t.Errorf("DraftPage.SuggestionPageID = %v, want %v", *updatedDraft.SuggestionPageID, addedPage.ID)
+			t.Errorf("DraftPage.SuggestionPageID = %v、期待値 = %v", *updatedDraft.SuggestionPageID, addedPage.ID)
 		}
 	})
 
-	t.Run("正常系: 新規ページ（リビジョンなし）の下書きを編集提案に追加できる", func(t *testing.T) {
+	t.Run("正常系: 新規ページ (リビジョンなし) の下書きを編集提案に追加できる", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -197,17 +197,17 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
-			t.Fatalf("suggestion creation failed: %v", err)
+			t.Fatalf("編集提案の作成に失敗: %v", err)
 		}
 
-		// 新規ページ（リビジョンなし）を作成
+		// 新規ページ (リビジョンなし) を作成
 		newPageID := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithNumber(1).
 			WithTitle("新規ページ").
 			Build()
-		// リビジョンは作成しない（新規ページ）
+		// リビジョンは作成しない (新規ページ)
 
 		draftPageID := testutil.NewDraftPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -226,27 +226,27 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			DraftPageIDs:     []model.DraftPageID{draftPageID},
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil || output.Suggestion == nil {
-			t.Fatal("output or Suggestion should not be nil")
+			t.Fatal("出力またはSuggestionがnil")
 		}
 
 		// SuggestionPageが作成されたことを確認
 		pages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), suggestion.ID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionID() error = %v", err)
+			t.Fatalf("ListBySuggestionID()のエラー = %v", err)
 		}
 		if len(pages) != 1 {
-			t.Fatalf("SuggestionPages count = %d, want 1", len(pages))
+			t.Fatalf("SuggestionPagesの件数 = %d、期待値 = 1", len(pages))
 		}
 
 		addedPage := pages[0]
 		if addedPage.PageRevisionID != nil {
-			t.Errorf("SuggestionPage.PageRevisionID = %v, want nil", addedPage.PageRevisionID)
+			t.Errorf("SuggestionPage.PageRevisionID = %v、期待値 = nil", addedPage.PageRevisionID)
 		}
 		if addedPage.Body != "新規ページ本文" {
-			t.Errorf("SuggestionPage.Body = %q, want %q", addedPage.Body, "新規ページ本文")
+			t.Errorf("SuggestionPage.Body = %q、期待値 = %q", addedPage.Body, "新規ページ本文")
 		}
 	})
 
@@ -262,10 +262,10 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError, got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("Code = %d, want %d", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("Code = %d、期待値 = %d", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -293,10 +293,10 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError, got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("Code = %d, want %d", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("Code = %d、期待値 = %d", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -330,7 +330,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
-			t.Fatalf("suggestion creation failed: %v", err)
+			t.Fatalf("編集提案の作成に失敗: %v", err)
 		}
 
 		nonMemberID := testutil.NewUserBuilderDB(t, db).
@@ -347,10 +347,10 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError, got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("Code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("Code = %d、期待値 = %d", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -384,7 +384,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
-			t.Fatalf("suggestion creation failed: %v", err)
+			t.Fatalf("編集提案の作成に失敗: %v", err)
 		}
 
 		_, err = uc.Execute(context.Background(), AddSuggestionPageInput{
@@ -396,10 +396,10 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("draft_page_ids") {
-			t.Error("expected draft_page_ids field error")
+			t.Error("draft_page_idsのフィールドエラーが無い")
 		}
 	})
 
@@ -441,7 +441,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			Status:               model.SuggestionStatusOpen,
 		})
 		if err != nil {
-			t.Fatalf("suggestion creation failed: %v", err)
+			t.Fatalf("編集提案の作成に失敗: %v", err)
 		}
 
 		// 既存のSuggestionPage
@@ -456,7 +456,7 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			BodyHTML:       "<p>本文</p>",
 		})
 		if err != nil {
-			t.Fatalf("suggestion page creation failed: %v", err)
+			t.Fatalf("編集提案ページの作成に失敗: %v", err)
 		}
 
 		// 同じページの下書き
@@ -479,10 +479,10 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("draft_page_ids") {
-			t.Error("expected draft_page_ids field error")
+			t.Error("draft_page_idsのフィールドエラーが無い")
 		}
 	})
 }

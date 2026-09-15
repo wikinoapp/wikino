@@ -34,7 +34,7 @@ func TestShow_Processing(t *testing.T) {
 	))
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -69,7 +69,7 @@ func TestShow_Succeeded(t *testing.T) {
 	))
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -81,12 +81,8 @@ func TestShow_Succeeded(t *testing.T) {
 	}
 }
 
-// TestShow_SucceededAfterDownloadExpired covers the export that finished long enough ago that its
-// archive can no longer be handed out. The screen has to offer another export instead of a download
-// that would answer 404.
-//
-// [Ja] TestShow_SucceededAfterDownloadExpired は、アーカイブをもう渡せなくなるほど前に完了した
-// エクスポートを対象とする。画面は 404 になるダウンロードではなく、もう一度のエクスポートを
+// TestShow_SucceededAfterDownloadExpiredは、アーカイブをもう渡せなくなるほど前に完了した
+// エクスポートを対象とする。画面は404になるダウンロードではなく、もう一度のエクスポートを
 // 提示する必要がある。
 func TestShow_SucceededAfterDownloadExpired(t *testing.T) {
 	t.Parallel()
@@ -111,7 +107,7 @@ func TestShow_SucceededAfterDownloadExpired(t *testing.T) {
 	))
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -144,7 +140,7 @@ func TestShow_Failed(t *testing.T) {
 	))
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -156,12 +152,8 @@ func TestShow_Failed(t *testing.T) {
 	}
 }
 
-// TestShow_StaleStartedShownAsFailed covers the export a stopped worker left behind. Its status
-// stays started forever, so the screen goes by the heartbeat as the usecase does and shows it as a
-// failure with a way to try again.
-//
-// [Ja] TestShow_StaleStartedShownAsFailed は、停止したワーカーが取り残したエクスポートを対象と
-// する。その状態は started のまま残り続けるため、画面は UseCase と同じく heartbeat で判断し、
+// TestShow_StaleStartedShownAsFailedは、停止したワーカーが取り残したエクスポートを対象と
+// する。その状態はstartedのまま残り続けるため、画面はUseCaseと同じくheartbeatで判断し、
 // やり直しの導線を添えた失敗として表示する。
 func TestShow_StaleStartedShownAsFailed(t *testing.T) {
 	t.Parallel()
@@ -185,7 +177,7 @@ func TestShow_StaleStartedShownAsFailed(t *testing.T) {
 	))
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -197,10 +189,7 @@ func TestShow_StaleStartedShownAsFailed(t *testing.T) {
 	}
 }
 
-// TestShow_NotFoundForExportOfAnotherSpace guards the space scoping of the lookup: knowing the ID
-// of an export must not be enough to read it from a space the viewer happens to be able to export.
-//
-// [Ja] TestShow_NotFoundForExportOfAnotherSpace は取得のスペーススコープを守る。エクスポートの ID
+// TestShow_NotFoundForExportOfAnotherSpaceは取得のスペーススコープを守る。エクスポートのID
 // を知っていることが、たまたまエクスポートできる別のスペース経由でそれを読む理由になってはならない。
 func TestShow_NotFoundForExportOfAnotherSpace(t *testing.T) {
 	t.Parallel()
@@ -225,19 +214,13 @@ func TestShow_NotFoundForExportOfAnotherSpace(t *testing.T) {
 	))
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
-// The detail screen's trail differs from the start screen's in shape and not only in wording: it
-// continues through the start screen and ends with the export it follows, named by the time that
-// export was queued at. The queued time is asserted rather than a fixed word because that is what
-// tells the two export screens apart on the trail, and the link to the start screen because it is
-// the way back up that the body only offers once the export is over.
-//
-// [Ja] 詳細画面の経路は、文言だけでなく形が開始画面と違う。開始画面を通って続き、追っている
+// 詳細画面の経路は、文言だけでなく形が開始画面と違う。開始画面を通って続き、追っている
 // エクスポートで終わる。その名前はエクスポートが投入された時刻である。固定の語ではなく投入時刻を
-// 検証するのは、それが経路上で 2 つのエクスポート画面を区別するものだからである。開始画面への
+// 検証するのは、それが経路上で2つのエクスポート画面を区別するものだからである。開始画面への
 // リンクを検証するのは、本文がその導線をエクスポートの終了後にしか出さないためである。
 func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
 	t.Parallel()
@@ -264,7 +247,7 @@ func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
 	setupHandler(t, queries).Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	breadcrumb := exportBreadcrumb(t, rr.Body.String())
@@ -275,13 +258,13 @@ func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
 		templates.FormatDateTime(req.Context(), createdAt),
 	} {
 		if !strings.Contains(breadcrumb, want) {
-			t.Errorf("breadcrumb does not contain %q", want)
+			t.Errorf("パンくずに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(breadcrumb, `href="/s/exp-show-crumb/settings/exports/`+exportID.String()+`"`) {
-		t.Error("current export detail breadcrumb item must not be a link")
+		t.Error("現在のエクスポート詳細のパンくずの項目がリンクになっている")
 	}
 	if strings.Contains(breadcrumb, "export_show_breadcrumb") {
-		t.Error("export detail breadcrumb item fell back to the message key")
+		t.Error("エクスポート詳細のパンくずの項目がメッセージキーにフォールバックしている")
 	}
 }

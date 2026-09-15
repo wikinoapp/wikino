@@ -80,11 +80,11 @@ func TestDeduperUnique(t *testing.T) {
 			for i, title := range tt.titles {
 				got := deduper.Unique(title, tt.ext)
 				if got != tt.want[i] {
-					t.Errorf("Unique(%q) = %q, want %q", title, got, tt.want[i])
+					t.Errorf("Unique(%q) = %q、期待値 = %q", title, got, tt.want[i])
 				}
 
 				if len(got) > maxNameBytes {
-					t.Errorf("Unique(%q) は %d バイトで、上限の %d バイトを超えている", title, len(got), maxNameBytes)
+					t.Errorf("Unique(%q) は%dバイトで、上限の%dバイトを超えている", title, len(got), maxNameBytes)
 				}
 			}
 		})
@@ -94,13 +94,9 @@ func TestDeduperUnique(t *testing.T) {
 func TestDeduperUniqueTwoDigitCounter(t *testing.T) {
 	t.Parallel()
 
-	// The byte budget of a name leaves room for the counter, so a counter that grows to two digits
-	// shortens the base name by one more byte. An ASCII title makes the difference visible: the
-	// base is cut to 250 characters while the counter has one digit, and to 249 once it has two.
-	//
-	// [Ja] 名前のバイト数の上限は連番の分を空けておくため、連番が 2 桁になるとベース名が 1 バイト
-	// 短くなる。ASCII のタイトルはこの差が現れる。連番が 1 桁の間はベース名が 250 文字に切り
-	// 詰められ、2 桁になると 249 文字になる。
+	// 名前のバイト数の上限は連番の分を空けておくため、連番が2桁になるとベース名が1バイト
+	// 短くなる。ASCIIのタイトルはこの差が現れる。連番が1桁の間はベース名が250文字に切り
+	// 詰められ、2桁になると249文字になる。
 	deduper := NewDeduper()
 	title := strings.Repeat("a", 300)
 
@@ -114,11 +110,11 @@ func TestDeduperUniqueTwoDigitCounter(t *testing.T) {
 	for i, w := range want {
 		got := deduper.Unique(title, ".md")
 		if got != w {
-			t.Errorf("Unique() の %d 件目 = %q, want %q", i+1, got, w)
+			t.Errorf("Unique()の%d件目 = %q、期待値 = %q", i+1, got, w)
 		}
 
 		if len(got) > maxNameBytes {
-			t.Errorf("Unique() の %d 件目は %d バイトで、上限の %d バイトを超えている", i+1, len(got), maxNameBytes)
+			t.Errorf("Unique() の%d件目は%dバイトで、上限の%dバイトを超えている", i+1, len(got), maxNameBytes)
 		}
 	}
 }

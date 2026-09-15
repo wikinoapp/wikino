@@ -7,9 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetTopicSettingsGeneralUsecase gathers what the general settings screen of a topic shows.
-//
-// [Ja] GetTopicSettingsGeneralUsecase はトピックの一般設定画面が表示するものを集める。
+// GetTopicSettingsGeneralUsecaseはトピックの一般設定画面が表示するものを集める。
 type GetTopicSettingsGeneralUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -17,7 +15,7 @@ type GetTopicSettingsGeneralUsecase struct {
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
-// NewGetTopicSettingsGeneralUsecase は GetTopicSettingsGeneralUsecase を生成する
+// NewGetTopicSettingsGeneralUsecaseはGetTopicSettingsGeneralUsecaseを生成する
 func NewGetTopicSettingsGeneralUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -32,20 +30,20 @@ func NewGetTopicSettingsGeneralUsecase(
 	}
 }
 
-// GetTopicSettingsGeneralInput は一般設定画面の表示に必要な入力パラメータ
+// GetTopicSettingsGeneralInputは一般設定画面の表示に必要な入力パラメータ
 type GetTopicSettingsGeneralInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	TopicNumber     int32
 	UserID          model.UserID
 }
 
-// GetTopicSettingsGeneralOutput は一般設定画面の表示に必要なデータを保持する
+// GetTopicSettingsGeneralOutputは一般設定画面の表示に必要なデータを保持する
 type GetTopicSettingsGeneralOutput struct {
 	Space *model.Space
 	Topic *model.Topic
 }
 
-// Execute は一般設定を編集するトピックを解決する
+// Executeは一般設定を編集するトピックを解決する
 func (uc *GetTopicSettingsGeneralUsecase) Execute(ctx context.Context, input GetTopicSettingsGeneralInput) (*GetTopicSettingsGeneralOutput, error) {
 	access, err := fetchTopicUpdateAccess(
 		ctx,

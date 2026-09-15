@@ -16,8 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData is the data passed to the space detail page.
-// [Ja] ShowData はスペース詳細画面に渡すデータ構造体です。
+// ShowDataはスペース詳細画面に渡すデータ構造体です。
 type ShowData struct {
 	Space       viewmodel.Space
 	PinnedPages []viewmodel.CardLinkPage
@@ -25,17 +24,10 @@ type ShowData struct {
 	Pagination  viewmodel.Pagination
 	JoinedSpace bool
 
-	// SectionTopics are the topics shown in the topic section: the member's joined topics, or (for
-	// non-members and guests) the space's public topics. They are rendered with the shared
-	// CardLinkTopic component (the same card used on the home page), with the space name hidden since
-	// the space header already shows it. Each card links to its detail and, where CanCreatePage is
-	// true, offers a per-topic "new page" action. This is the page-creation entry point, replacing
-	// the space-level empty-state "new page" button that implicitly fixed the topic.
-	//
-	// [Ja] SectionTopics はトピックセクションに表示するトピック。メンバーは参加中トピック、
-	// 非メンバー・ゲストはスペースの公開トピック。ホーム画面と同じ共有コンポーネント CardLinkTopic で
+	// SectionTopicsはトピックセクションに表示するトピック。メンバーは参加中トピック、
+	// 非メンバー・ゲストはスペースの公開トピック。ホーム画面と同じ共有コンポーネントCardLinkTopicで
 	// 描画し、スペース名はヘッダーで既に表示しているためカード内では非表示にする。各カードは詳細へ
-	// リンクし、CanCreatePage が true のときトピックごとの「新規ページ」アクションを出す。これが
+	// リンクし、CanCreatePageがtrueのときトピックごとの「新規ページ」アクションを出す。これが
 	// ページ作成の導線であり、作成先トピックを暗黙に固定していたスペースレベルの空状態「新規ページ」
 	// ボタンを置き換える。
 	SectionTopics []viewmodel.CardLinkTopic
@@ -43,16 +35,12 @@ type ShowData struct {
 	CanCreateTopic bool
 }
 
-// paginationPath builds the offset pagination path for the space detail page.
-// [Ja] paginationPath はスペース詳細画面のオフセットページネーション用パスを生成します。
+// paginationPathはスペース詳細画面のオフセットページネーション用パスを生成します。
 func (d ShowData) paginationPath(page int) string {
 	return fmt.Sprintf("/s/%s?page=%d", d.Space.Identifier, page)
 }
 
-// noTopicsEmptyStateData builds the empty state shown to a member who has not joined any topic.
-// The "new topic" guidance and link appear only when the member can create topics.
-//
-// [Ja] noTopicsEmptyStateData は参加トピックが無いメンバーに表示する空状態を組み立てる。
+// noTopicsEmptyStateDataは参加トピックが無いメンバーに表示する空状態を組み立てる。
 // 「新規トピック」の補足とリンクはトピック作成権限があるときだけ表示する。
 func noTopicsEmptyStateData(ctx context.Context, data ShowData) components.EmptyStateData {
 	d := components.EmptyStateData{
@@ -65,11 +53,7 @@ func noTopicsEmptyStateData(ctx context.Context, data ShowData) components.Empty
 	return d
 }
 
-// noPagesEmptyStateData builds the empty state shown when the space has no pages to list.
-// It shows only the "no pages" message; the page-creation entry point lives in the topic section,
-// so the empty state no longer carries a "new page" button.
-//
-// [Ja] noPagesEmptyStateData は一覧するページが無いときに表示する空状態を組み立てる。
+// noPagesEmptyStateDataは一覧するページが無いときに表示する空状態を組み立てる。
 // 「ページはありません」のメッセージのみを表示する。ページ作成の導線はトピックセクションに集約したため、
 // 空状態には「新規ページ」ボタンを持たせない。
 func noPagesEmptyStateData(ctx context.Context) components.EmptyStateData {
@@ -78,8 +62,7 @@ func noPagesEmptyStateData(ctx context.Context) components.EmptyStateData {
 	}
 }
 
-// Show renders the space detail page content.
-// [Ja] Show はスペース詳細画面のコンテンツを表示します。
+// Showはスペース詳細画面のコンテンツを表示します。
 func Show(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -132,11 +115,8 @@ func Show(data ShowData) templ.Component {
 	})
 }
 
-// showActions renders the space options dropdown shown in the page header.
-// The RSS feed link is always shown; the topic / trash / settings links appear only to space members.
-//
-// [Ja] showActions はページヘッダーに表示するスペースオプションのドロップダウンを表示します。
-// RSS フィードリンクは常に表示し、トピック / ゴミ箱 / 設定リンクはスペースメンバーにのみ表示します。
+// showActionsはページヘッダーに表示するスペースオプションのドロップダウンを表示します。
+// RSSフィードリンクは常に表示し、トピック / ゴミ箱 / 設定リンクはスペースメンバーにのみ表示します。
 func showActions(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -165,7 +145,7 @@ func showActions(data ShowData) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "space_show_options_aria_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 106, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 86, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -186,7 +166,7 @@ func showActions(data ShowData) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.AtomPath(data.Space.Identifier))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 118, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 98, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -203,7 +183,7 @@ func showActions(data ShowData) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_options_rss_feed"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 122, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 102, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -221,7 +201,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var6 templ.SafeURL
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewTopicPath(data.Space.Identifier))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 129, Col: 82}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 109, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -238,7 +218,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_options_new_topic"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 132, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 112, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -251,7 +231,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var8 templ.SafeURL
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.TrashPath(data.Space.Identifier))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 138, Col: 79}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 118, Col: 79}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -268,7 +248,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_options_trash"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 141, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 121, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -281,7 +261,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var10 templ.SafeURL
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SpaceSettingsPath(data.Space.Identifier))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 147, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 127, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -298,7 +278,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_options_settings"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 150, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 130, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -317,8 +297,7 @@ func showActions(data ShowData) templ.Component {
 	})
 }
 
-// newTopicButton renders the link to the new topic form.
-// [Ja] newTopicButton は新規トピック作成フォームへのリンクを表示します。
+// newTopicButtonは新規トピック作成フォームへのリンクを表示します。
 func newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -347,7 +326,7 @@ func newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		var templ_7745c5c3_Var13 templ.SafeURL
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewTopicPath(spaceIdentifier))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 163, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 142, Col: 71}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -364,7 +343,7 @@ func newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_new_topic_button"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 168, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 147, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -378,13 +357,7 @@ func newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 	})
 }
 
-// topicSection renders the topic list for the space detail as a grid of CardLinkTopic cards (the
-// same component the home page uses for joined topics). Each card links to its detail page, and
-// topics the user may write to expose a per-topic "new page" action. This is the page-creation
-// entry point. When there are no topics, the "no topics" empty state is shown in place of the grid,
-// so the heading always renders.
-//
-// [Ja] topicSection はスペース詳細のトピック一覧を CardLinkTopic カードのグリッドとして表示します
+// topicSectionはスペース詳細のトピック一覧をCardLinkTopicカードのグリッドとして表示します
 // (ホーム画面が参加中トピックに使うのと同じコンポーネント)。各カードは詳細ページへリンクし、
 // ユーザーが書き込めるトピックにはトピックごとの「新規ページ」アクションを出します。これがページ作成の
 // 導線です。トピックが無いときはグリッドの代わりに「トピックがありません」の空状態を表示するため、
@@ -417,7 +390,7 @@ func topicSection(data ShowData) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_topics_heading"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 186, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 159, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -456,12 +429,8 @@ func topicSection(data ShowData) templ.Component {
 	})
 }
 
-// pagesSection renders the page list for the space detail: pinned pages first, then the paginated
-// regular pages. When there are no pages at all, the "no pages" empty state is shown in place of the
-// lists, so the heading always renders.
-//
-// [Ja] pagesSection はスペース詳細のページ一覧を表示します。先頭にピン留めページ、続いてページ送り
-// 対象の通常ページを並べます。ページが 1 件も無いときは一覧の代わりに「ページがありません」の空状態を
+// pagesSectionはスペース詳細のページ一覧を表示します。先頭にピン留めページ、続いてページ送り
+// 対象の通常ページを並べます。ページが1件も無いときは一覧の代わりに「ページがありません」の空状態を
 // 表示するため、見出しは常に描画されます。
 func pagesSection(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -491,7 +460,7 @@ func pagesSection(data ShowData) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "space_show_pages_heading"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 210, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/show.templ`, Line: 179, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {

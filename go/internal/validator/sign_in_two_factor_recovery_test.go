@@ -26,12 +26,12 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_FormatValidation(t *tes
 			wantError:    false,
 		},
 		{
-			name:         "正常なリカバリーコード（全て数字）",
+			name:         "正常なリカバリーコード (全て数字)",
 			recoveryCode: "12345678",
 			wantError:    false,
 		},
 		{
-			name:         "正常なリカバリーコード（全て小文字）",
+			name:         "正常なリカバリーコード (全て小文字)",
 			recoveryCode: "abcdefgh",
 			wantError:    false,
 		},
@@ -42,13 +42,13 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_FormatValidation(t *tes
 			errorField:   "recovery_code",
 		},
 		{
-			name:         "7文字（短すぎる）",
+			name:         "7文字 (短すぎる)",
 			recoveryCode: "code123",
 			wantError:    true,
 			errorField:   "recovery_code",
 		},
 		{
-			name:         "9文字（長すぎる）",
+			name:         "9文字 (長すぎる)",
 			recoveryCode: "code12345",
 			wantError:    true,
 			errorField:   "recovery_code",
@@ -111,11 +111,11 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_FormatValidation(t *tes
 			if tc.wantError {
 				ve := model.AsValidationError(err)
 				if ve == nil {
-					t.Errorf("expected validation error but got %v", err)
+					t.Errorf("エラー = %v、期待値 = バリデーションエラー", err)
 					return
 				}
 				if !ve.HasFieldError(tc.errorField) {
-					t.Errorf("expected error for field %s but not found", tc.errorField)
+					t.Errorf("フィールド%sのエラーが見つからない", tc.errorField)
 				}
 			}
 		})
@@ -149,10 +149,10 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 		})
 
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("予期しないエラー: %v", err)
 		}
 		if twoFactorAuth == nil {
-			t.Error("expected TwoFactorAuth to be set")
+			t.Error("TwoFactorAuthが設定されていない")
 		}
 	})
 
@@ -181,9 +181,9 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Errorf("expected ValidationError, got %v", err)
+			t.Errorf("ValidationErrorを期待したが、%vだった", err)
 		} else if !ve.HasErrors() {
-			t.Error("expected form errors")
+			t.Error("フォームのエラーが無い")
 		}
 	})
 
@@ -212,9 +212,9 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Errorf("expected AppError, got %v", err)
+			t.Errorf("AppErrorを期待したが、%vだった", err)
 		} else if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
-			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
+			t.Errorf("AppErrCodeTwoFactorNotEnabledを期待したが、%dだった", ae.Code)
 		}
 	})
 
@@ -241,9 +241,9 @@ func TestSignInTwoFactorRecoveryCreateValidator_Validate_StateValidation(t *test
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Errorf("expected AppError, got %v", err)
+			t.Errorf("AppErrorを期待したが、%vだった", err)
 		} else if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
-			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
+			t.Errorf("AppErrCodeTwoFactorNotEnabledを期待したが、%dだった", ae.Code)
 		}
 	})
 }

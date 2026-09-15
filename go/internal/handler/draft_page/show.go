@@ -17,14 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show returns the draft's save time and the two related-page listings as an HTML fragment of
-// out-of-band swaps, which the editor requests after every draft autosave
-// (GET /s/{space_identifier}/pages/{page_number}/draft_page).
-//
-// The related-page state of the screen travels in the query string, so the swapped-in listings
-// render the same slices the reader is looking at and their links keep pointing at that state.
-//
-// [Ja] Show は下書きの保存時刻と 2 つの関連ページ一覧を、OOB スワップの HTML フラグメントとして返す
+// Showは下書きの保存時刻と2つの関連ページ一覧を、OOBスワップのHTMLフラグメントとして返す
 // (GET /s/{space_identifier}/pages/{page_number}/draft_page)。編集画面が下書きの自動保存ごとに
 // 要求する。
 //
@@ -72,12 +65,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// This endpoint re-renders all three related-page listings at once, so every page number arrives
-	// under its own listing's name rather than under the conventional "page" of the single-listing
-	// fragment endpoints. That is also what lets the editor send them straight from the shared state
-	// element, whose inputs carry these same names.
-	//
-	// [Ja] 本エンドポイントは 3 つの関連ページ一覧をまとめて描画し直すため、各ページ番号は 1 つの一覧
+	// 本エンドポイントは3つの関連ページ一覧をまとめて描画し直すため、各ページ番号は1つの一覧
 	// だけを返すフラグメントエンドポイントの慣例的な "page" ではなく、それぞれの一覧の名前で受け取る。
 	// これにより、同じ名前を入力に持つ共有状態の要素から編集画面がそのまま送れるようにもなる。
 	pageLinkContext := viewmodel.NormalizePageLinkContext(r.URL.Query().Get(viewmodel.PageLinkContextQueryParam))
@@ -125,12 +113,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The cumulative editor rebuilds its loaded prefix, while the paginated editor replaces exactly
-	// one requested page. Both paths reconcile stale state after the draft changes. A paginated request
-	// whose page disappeared must run once more at the clamped page because its first fixed-size slice
-	// is empty; the cumulative response already contains every surviving page and needs no refetch.
-	//
-	// [Ja] 累積編集画面は読み込み済みの先頭範囲を再構築し、ページ単位の編集画面は要求された 1 ページ
+	// 累積編集画面は読み込み済みの先頭範囲を再構築し、ページ単位の編集画面は要求された1ページ
 	// だけを差し替える。どちらも下書き変更後に古い状態を整合させる。ページ単位の要求ページが消えた場合、
 	// 最初の固定長スライスは空なので、丸めたページでもう一度取得する。累積応答は残存ページをすべて含むため
 	// 再取得不要である。
@@ -195,10 +178,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// The draft fragment is only reachable by a member editing the page, so the listed cards keep
-	// their edit links.
-	//
-	// [Ja] 下書きフラグメントはページを編集中のメンバーしか到達しないため、一覧のカードは編集リンクを
+	// 下書きフラグメントはページを編集中のメンバーしか到達しないため、一覧のカードは編集リンクを
 	// 出したままにする。
 	editLinkData := viewmodel.BuildPageLinkData(viewmodel.BuildPageLinkDataInput{
 		LinkedPages:         linkData.LinkedPages,
@@ -231,11 +211,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// reconcileRelatedPageState moves every editor listing page into the range that still exists after
-// a draft change. A nested state survives only while its parent card remains in the fetched link
-// range; otherwise both halves reset together.
-//
-// [Ja] reconcileRelatedPageState は、下書き変更後も存在する範囲へ編集画面の各一覧ページを戻す。
+// reconcileRelatedPageStateは、下書き変更後も存在する範囲へ編集画面の各一覧ページを戻す。
 // ネスト状態は親カードが取得済みリンク範囲に残る間だけ維持し、消えた場合は両方をまとめてリセットする。
 func reconcileRelatedPageState(state viewmodel.PageLinkState, data *usecase.GetEditLinkDataOutput) viewmodel.PageLinkState {
 	state = reconcileTopLevelRelatedPageState(state, data)
@@ -260,11 +236,7 @@ func reconcileRelatedPageState(state viewmodel.PageLinkState, data *usecase.GetE
 		}
 
 		state.LinkedBacklinkPage = relatedPageAtOrBeforeLast(state.LinkedBacklinkPage, backlinks.TotalCount, viewmodel.BacklinkLimit)
-		// A draft change can move the card into a different link-list page, so the parent page is
-		// recomputed from where the card sits now rather than carried over. The same rule as the
-		// listing itself uses keeps the state and the rendered cards naming the same page.
-		//
-		// [Ja] 下書きの変更でカードが別のリンク一覧ページへ移ることがあるため、親ページは引き継がず、
+		// 下書きの変更でカードが別のリンク一覧ページへ移ることがあるため、親ページは引き継がず、
 		// 現在の位置から求め直す。一覧自身と同じ規則を使うことで、状態と描画したカードが同じページを
 		// 指し続ける。
 		state.LinkedPageParentPage = viewmodel.RelatedPageForSliceIndex(linkedPageFirstPage(state), index, viewmodel.LinkLimit)
@@ -277,12 +249,8 @@ func reconcileRelatedPageState(state viewmodel.PageLinkState, data *usecase.GetE
 	return state
 }
 
-// linkedPageFirstPage returns the one-based link-list page of the first card the response renders.
-// A cumulative refresh rebuilds the listing from its first page, while a one-page response starts at
-// the page it was asked for.
-//
-// [Ja] linkedPageFirstPage は、応答が描画する先頭カードのリンク一覧ページ (1 始まり) を返す。累積
-// 再取得は 1 ページ目から一覧を組み立て直し、1 ページ分の応答は要求されたページから始まる。
+// linkedPageFirstPageは、応答が描画する先頭カードのリンク一覧ページ (1始まり) を返す。累積
+// 再取得は1ページ目から一覧を組み立て直し、1ページ分の応答は要求されたページから始まる。
 func linkedPageFirstPage(state viewmodel.PageLinkState) int32 {
 	if state.Context.IncludesPrecedingPages() {
 		return 1
@@ -291,11 +259,7 @@ func linkedPageFirstPage(state viewmodel.PageLinkState) int32 {
 	return state.LinkPage
 }
 
-// reconcileTopLevelRelatedPageState clamps the two screen-wide listings without touching the
-// selected nested card. The paginated editor uses it before refetching a moved final link page, so
-// nested state is evaluated against the surviving parent cards rather than an obsolete empty slice.
-//
-// [Ja] reconcileTopLevelRelatedPageState は、選択中のネストカードに触れず画面全体の 2 一覧を丸める。
+// reconcileTopLevelRelatedPageStateは、選択中のネストカードに触れず画面全体の2一覧を丸める。
 // ページ単位編集画面は移動したリンク最終ページを再取得する前にこれを使い、古い空スライスではなく
 // 残存する親カードに対してネスト状態を判定する。
 func reconcileTopLevelRelatedPageState(state viewmodel.PageLinkState, data *usecase.GetEditLinkDataOutput) viewmodel.PageLinkState {
@@ -305,13 +269,9 @@ func reconcileTopLevelRelatedPageState(state viewmodel.PageLinkState, data *usec
 	return state
 }
 
-// relatedPageAtOrBeforeLast pulls a listing page back to the last page that exists. initialLimit is
-// the first page's card count rather than a per-page one, because a following page of a
-// related-page listing holds one card more (see viewmodel.RelatedPageTotalPages).
-//
-// [Ja] relatedPageAtOrBeforeLast は一覧のページ番号を、存在する最終ページまで引き戻す。initialLimit
-// は 1 ページあたりの件数ではなく 1 ページ目のカード数である。関連ページ一覧の後続ページは 1 件多く
-// 持つためである (viewmodel.RelatedPageTotalPages を参照)。
+// relatedPageAtOrBeforeLastは一覧のページ番号を、存在する最終ページまで引き戻す。initialLimit
+// は1ページあたりの件数ではなく1ページ目のカード数である。関連ページ一覧の後続ページは1件多く
+// 持つためである (viewmodel.RelatedPageTotalPagesを参照)。
 func relatedPageAtOrBeforeLast(page int32, totalCount int64, initialLimit int32) int32 {
 	if page <= 1 || totalCount <= 0 || initialLimit <= 0 {
 		return 1
@@ -323,9 +283,8 @@ func relatedPageAtOrBeforeLast(page int32, totalCount int64, initialLimit int32)
 			return page
 		}
 
-		// lastPage is positive and below both page and math.MaxInt32 in this branch.
-		// [Ja] この分岐の lastPage は正で、page と math.MaxInt32 の双方より小さい。
-		// #nosec G115 -- bounds are proven immediately above.
+		// この分岐のlastPageは正で、pageとmath.MaxInt32の双方より小さい。
+		// #nosec G115 -- 範囲は直前で確認済み。
 		return int32(lastPage)
 	}
 

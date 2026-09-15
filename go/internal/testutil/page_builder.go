@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// PageBuilder はページテストデータのビルダー
+// PageBuilderはページテストデータのビルダー
 type PageBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -31,7 +31,7 @@ type PageBuilder struct {
 	featuredImageAttachmentID *string
 }
 
-// NewPageBuilder は PageBuilder を生成します
+// NewPageBuilderはPageBuilderを生成します
 func NewPageBuilder(t *testing.T, tx *sql.Tx) *PageBuilder {
 	t.Helper()
 	now := time.Now()
@@ -49,102 +49,100 @@ func NewPageBuilder(t *testing.T, tx *sql.Tx) *PageBuilder {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *PageBuilder) WithSpaceID(spaceID model.SpaceID) *PageBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *PageBuilder) WithTopicID(topicID model.TopicID) *PageBuilder {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithNumber はページ番号を設定します
+// WithNumberはページ番号を設定します
 func (b *PageBuilder) WithNumber(number model.PageNumber) *PageBuilder {
 	b.number = number
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *PageBuilder) WithTitle(title string) *PageBuilder {
 	b.title = &title
 	return b
 }
 
-// WithNilTitle はタイトルをnilに設定します
+// WithNilTitleはタイトルをnilに設定します
 func (b *PageBuilder) WithNilTitle() *PageBuilder {
 	b.title = nil
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *PageBuilder) WithBody(body string) *PageBuilder {
 	b.body = body
 	return b
 }
 
-// WithBodyHTML はHTML本文を設定します
+// WithBodyHTMLはHTML本文を設定します
 func (b *PageBuilder) WithBodyHTML(bodyHTML string) *PageBuilder {
 	b.bodyHTML = bodyHTML
 	return b
 }
 
-// WithLinkedPageIDs はリンク先ページIDリストを設定します
+// WithLinkedPageIDsはリンク先ページIDリストを設定します
 func (b *PageBuilder) WithLinkedPageIDs(ids []model.PageID) *PageBuilder {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)
 	return b
 }
 
-// WithModifiedAt は更新日時を設定します
+// WithModifiedAtは更新日時を設定します
 func (b *PageBuilder) WithModifiedAt(modifiedAt time.Time) *PageBuilder {
 	b.modifiedAt = modifiedAt
 	return b
 }
 
-// WithPublishedAt は公開日時を設定します
+// WithPublishedAtは公開日時を設定します
 func (b *PageBuilder) WithPublishedAt(publishedAt time.Time) *PageBuilder {
 	b.publishedAt = &publishedAt
 	return b
 }
 
-// WithUnpublished は非公開状態に設定します
+// WithUnpublishedは非公開状態に設定します
 func (b *PageBuilder) WithUnpublished() *PageBuilder {
 	b.publishedAt = nil
 	return b
 }
 
-// WithPinnedAt はピン留め日時を設定します
+// WithPinnedAtはピン留め日時を設定します
 func (b *PageBuilder) WithPinnedAt(pinnedAt time.Time) *PageBuilder {
 	b.pinnedAt = &pinnedAt
 	return b
 }
 
-// WithTrashed はゴミ箱状態に設定します
+// WithTrashedはゴミ箱状態に設定します
 func (b *PageBuilder) WithTrashed() *PageBuilder {
 	now := time.Now()
 	b.trashedAt = &now
 	return b
 }
 
-// WithDiscarded は廃棄済み状態に設定します
+// WithDiscardedは廃棄済み状態に設定します
 func (b *PageBuilder) WithDiscarded() *PageBuilder {
 	now := time.Now()
 	b.discardedAt = &now
 	return b
 }
 
-// WithFeaturedImageAttachmentID sets the cover image attachment id.
-//
-// [Ja] WithFeaturedImageAttachmentID はアイキャッチ画像の添付ファイル ID を設定します。
+// WithFeaturedImageAttachmentIDはアイキャッチ画像の添付ファイルIDを設定します。
 func (b *PageBuilder) WithFeaturedImageAttachmentID(id model.AttachmentID) *PageBuilder {
 	s := string(id)
 	b.featuredImageAttachmentID = &s
 	return b
 }
 
-// Build はページを作成し、IDを返します
+// Buildはページを作成し、IDを返します
 func (b *PageBuilder) Build() model.PageID {
 	b.t.Helper()
 
@@ -173,7 +171,7 @@ func (b *PageBuilder) Build() model.PageID {
 	return model.PageID(id)
 }
 
-// PageBuilderDB はDBを直接使用するページテストデータのビルダー
+// PageBuilderDBはDBを直接使用するページテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type PageBuilderDB struct {
 	t  *testing.T
@@ -191,7 +189,7 @@ type PageBuilderDB struct {
 	discardedAt   *time.Time
 }
 
-// NewPageBuilderDB は PageBuilderDB を生成します
+// NewPageBuilderDBはPageBuilderDBを生成します
 func NewPageBuilderDB(t *testing.T, db *sql.DB) *PageBuilderDB {
 	t.Helper()
 	now := time.Now()
@@ -209,56 +207,56 @@ func NewPageBuilderDB(t *testing.T, db *sql.DB) *PageBuilderDB {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *PageBuilderDB) WithSpaceID(spaceID model.SpaceID) *PageBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *PageBuilderDB) WithTopicID(topicID model.TopicID) *PageBuilderDB {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithNumber はページ番号を設定します
+// WithNumberはページ番号を設定します
 func (b *PageBuilderDB) WithNumber(number model.PageNumber) *PageBuilderDB {
 	b.number = number
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *PageBuilderDB) WithTitle(title string) *PageBuilderDB {
 	b.title = &title
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *PageBuilderDB) WithBody(body string) *PageBuilderDB {
 	b.body = body
 	return b
 }
 
-// WithPublishedAt は公開日時を設定します
+// WithPublishedAtは公開日時を設定します
 func (b *PageBuilderDB) WithPublishedAt(publishedAt time.Time) *PageBuilderDB {
 	b.publishedAt = &publishedAt
 	return b
 }
 
-// WithUnpublished は非公開状態に設定します
+// WithUnpublishedは非公開状態に設定します
 func (b *PageBuilderDB) WithUnpublished() *PageBuilderDB {
 	b.publishedAt = nil
 	return b
 }
 
-// WithDiscarded は廃棄済み状態に設定します
+// WithDiscardedは廃棄済み状態に設定します
 func (b *PageBuilderDB) WithDiscarded() *PageBuilderDB {
 	now := time.Now()
 	b.discardedAt = &now
 	return b
 }
 
-// Build はページを作成し、IDを返します
+// Buildはページを作成し、IDを返します
 func (b *PageBuilderDB) Build() model.PageID {
 	b.t.Helper()
 

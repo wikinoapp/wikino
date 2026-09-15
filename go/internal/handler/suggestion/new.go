@@ -18,7 +18,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New は編集提案作成フォームを表示します (GET /s/{space_identifier}/topics/{topic_number}/suggestions/new)
+// Newは編集提案作成フォームを表示します (GET /s/{space_identifier}/topics/{topic_number}/suggestions/new)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -61,13 +61,9 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	h.renderNewForm(w, r, user, output, nil, "", "", selectedDraftIDs)
 }
 
-// renderNewForm renders the suggestion creation form. Space-aware metadata and links are built from
-// the persisted identifier in output, so it deliberately does not take one derived from URL
-// parameters.
-//
-// [Ja] renderNewForm は編集提案作成フォームをレンダリングします。
-// スペース識別子を含むメタ情報やリンクの組み立てには output に含まれる保存済みの値を使うため、
-// URL パラメータ由来の識別子は受け取りません。
+// renderNewFormは編集提案作成フォームをレンダリングします。
+// スペース識別子を含むメタ情報やリンクの組み立てにはoutputに含まれる保存済みの値を使うため、
+// URLパラメータ由来の識別子は受け取りません。
 func (h *Handler) renderNewForm(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -88,10 +84,7 @@ func (h *Handler) renderNewForm(
 	topicVM := viewmodel.NewTopic(output.Topic)
 	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
 
-	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
-	// the same form.
-	//
-	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
 	spaceIdentVM := spaceVM.Identifier
 
 	// ページメタ情報を設定
@@ -113,11 +106,7 @@ func (h *Handler) renderNewForm(
 		SelectedDraftIDs: selectedDraftIDs,
 	})
 
-	// The screen is the current page, so the trail ends with a non-linked item carrying aria-current.
-	// The label repeats the heading, but it is read from a key of its own so that a breadcrumb needing
-	// a shorter word than the heading can take one later.
-	//
-	// [Ja] この画面が現在地のため、経路は aria-current を持つリンク無しの項目で締める。ラベルは
+	// この画面が現在地のため、経路はaria-currentを持つリンク無しの項目で締める。ラベルは
 	// 見出しと同じ文字列だが、パンくずが見出しより短い語を必要としたときに後から変えられるよう、
 	// 独立したキーから引く。
 	breadcrumbHeader := topicBreadcrumbHeaderData(ctx, spaceVM, topicVM, true)

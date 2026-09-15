@@ -1,4 +1,4 @@
-// Package templates はHTMLテンプレート機能を提供します
+// Package templatesはHTMLテンプレート機能を提供します
 package templates
 
 import (
@@ -16,17 +16,17 @@ import (
 // templ用ヘルパー関数
 // ========================================
 
-// T は翻訳を取得する（templ用）
+// Tは翻訳を取得する (templ用)
 func T(ctx context.Context, messageID string, data ...map[string]any) string {
 	return i18n.T(ctx, messageID, data...)
 }
 
-// Locale は現在のロケールを取得する
+// Localeは現在のロケールを取得する
 func Locale(ctx context.Context) string {
 	return i18n.GetLocale(ctx)
 }
 
-// Deref はポインタを参照外しする（ジェネリック対応）
+// Derefはポインタを参照外しする (ジェネリック対応)
 func Deref[T any](v *T) T {
 	if v != nil {
 		return *v
@@ -39,24 +39,24 @@ func Deref[T any](v *T) T {
 // 日時フォーマット関数
 // ========================================
 
-// FormatDateTime は日時を "2026/03/25 14:14" 形式でフォーマットする
+// FormatDateTimeは日時を "2026/03/25 14:14" 形式でフォーマットする
 func FormatDateTime(ctx context.Context, t time.Time) string {
 	loc := loadLocationFromContext(ctx)
 	return t.In(loc).Format("2006/01/02 15:04")
 }
 
-// FormatTime は時刻を "14:14" 形式でフォーマットする
+// FormatTimeは時刻を "14:14" 形式でフォーマットする
 func FormatTime(ctx context.Context, t time.Time) string {
 	loc := loadLocationFromContext(ctx)
 	return t.In(loc).Format("15:04")
 }
 
-// RelativeTime は相対時間文字列を返す
+// RelativeTimeは相対時間文字列を返す
 // 1分未満: "たった今"
 // 1〜59分: "N分前"
 // 1〜23時間: "N時間前"
 // 1〜3日: "N日前"
-// 3日超: 絶対時間にフォールバック（"2026/03/25 14:14"）
+// 3日超: 絶対時間にフォールバック ("2026/03/25 14:14")
 func RelativeTime(ctx context.Context, t time.Time) string {
 	d := time.Since(t)
 
@@ -77,12 +77,12 @@ func RelativeTime(ctx context.Context, t time.Time) string {
 	}
 }
 
-// IsRelativeTime は指定された時刻が相対時間として表示されるかどうかを返す
+// IsRelativeTimeは指定された時刻が相対時間として表示されるかどうかを返す
 func IsRelativeTime(t time.Time) bool {
 	return time.Since(t) < 72*time.Hour
 }
 
-// loadLocationFromContext はコンテキストからタイムゾーンを取得し *time.Location を返す
+// loadLocationFromContextはコンテキストからタイムゾーンを取得し *time.Locationを返す
 func loadLocationFromContext(ctx context.Context) *time.Location {
 	tz := timezone.FromContext(ctx)
 	loc, err := time.LoadLocation(tz)
@@ -92,19 +92,13 @@ func loadLocationFromContext(ctx context.Context) *time.Location {
 	return loc
 }
 
-// Icon returns an SVG component for the given icon name. The optional class
-// argument is added to the SVG element.
-//
-// [Ja] Icon は指定したアイコン名の SVG コンポーネントを返す。省略可能な class 引数は
-// SVG 要素に追加する。
+// Iconは指定したアイコン名のSVGコンポーネントを返す。省略可能なclass引数は
+// SVG要素に追加する。
 func Icon(name viewmodel.IconName, class ...string) templ.Component {
 	return templ.Raw(iconSVG(name, class...))
 }
 
-// DecorativeIcon returns an SVG component hidden from assistive technology
-// and removed from the focus order.
-//
-// [Ja] DecorativeIcon は支援技術から隠し、フォーカス順序から除外した SVG
+// DecorativeIconは支援技術から隠し、フォーカス順序から除外したSVG
 // コンポーネントを返す。
 func DecorativeIcon(name viewmodel.IconName, class ...string) templ.Component {
 	svg := iconSVG(name, class...)

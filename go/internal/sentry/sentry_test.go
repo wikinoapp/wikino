@@ -13,8 +13,7 @@ import (
 func TestInit_EmptyDSN(t *testing.T) {
 	t.Parallel()
 
-	// Empty DSN: Init should skip and return nil.
-	// [Ja] DSN が空の場合は初期化をスキップし nil を返す。
+	// DSNが空の場合は初期化をスキップしnilを返す。
 	cfg := Config{
 		DSN:              "",
 		Environment:      "test",
@@ -24,15 +23,14 @@ func TestInit_EmptyDSN(t *testing.T) {
 	}
 
 	if err := Init(cfg); err != nil {
-		t.Errorf("Init() with empty DSN should return nil, got %v", err)
+		t.Errorf("DSNが空のInit() = %v、期待値 = nil", err)
 	}
 }
 
 func TestInit_InvalidDSN(t *testing.T) {
 	t.Parallel()
 
-	// Invalid DSN: Init should return an error.
-	// [Ja] 無効な DSN の場合はエラーを返す。
+	// 無効なDSNの場合はエラーを返す。
 	cfg := Config{
 		DSN:              "invalid-dsn",
 		Environment:      "test",
@@ -42,15 +40,14 @@ func TestInit_InvalidDSN(t *testing.T) {
 	}
 
 	if err := Init(cfg); err == nil {
-		t.Error("Init() with invalid DSN should return error")
+		t.Error("不正なDSNのInit()がエラーを返さなかった")
 	}
 }
 
 func TestCaptureError_NilContext(t *testing.T) {
 	t.Parallel()
 
-	// CaptureError must not panic when ctx carries no Hub.
-	// [Ja] コンテキストに Hub が無くてもパニックしないこと。
+	// コンテキストにHubが無くてもパニックしないこと。
 	ctx := context.Background()
 	err := errors.New("test error")
 
@@ -60,8 +57,7 @@ func TestCaptureError_NilContext(t *testing.T) {
 func TestCaptureMessage_NilContext(t *testing.T) {
 	t.Parallel()
 
-	// CaptureMessage must not panic when ctx carries no Hub.
-	// [Ja] コンテキストに Hub が無くてもパニックしないこと。
+	// コンテキストにHubが無くてもパニックしないこと。
 	ctx := context.Background()
 
 	CaptureMessage(ctx, "test message")
@@ -146,12 +142,12 @@ func TestBeforeSend_FiltersRequestHeaders(t *testing.T) {
 
 			result := beforeSend(event, nil)
 			if result == nil {
-				t.Fatal("beforeSend は通常イベントを破棄してはならない")
+				t.Fatal("beforeSendは通常イベントを破棄してはならない")
 			}
 
 			for key, expectedValue := range tt.expected {
 				if result.Request.Headers[key] != expectedValue {
-					t.Errorf("ヘッダー %s: got %q, want %q", key, result.Request.Headers[key], expectedValue)
+					t.Errorf("ヘッダー%s = %q、期待値 = %q", key, result.Request.Headers[key], expectedValue)
 				}
 			}
 		})
@@ -197,18 +193,14 @@ func TestBeforeSend_FiltersRequestData(t *testing.T) {
 			expected: "username=user&email=test@example.com",
 		},
 		{
-			// "tokenize" matches "token" only as a substring, not as a whole token,
-			// so token-boundary matching leaves it unmasked.
-			//
-			// [Ja] tokenize は 1 トークンで "token" に完全一致せず、トークン境界マッチ
+			// tokenizeは1トークンで "token" に完全一致せず、トークン境界マッチ
 			// では対象外。
 			name:     "tokenizeのように単語の一部に含むだけはマスクしない",
 			data:     "tokenize=true&secretive=note",
 			expected: "tokenize=true&secretive=note",
 		},
 		{
-			// snake_case splitting yields the "password" / "secret" tokens, so the value is masked.
-			// [Ja] snake_case 分割で password / secret トークンが含まれるためマスクされること。
+			// snake_case分割でpassword / secretトークンが含まれるためマスクされること。
 			name:     "snake_caseの内側にセンシティブトークンを含む場合はマスク",
 			data:     "old_password=old&account_secret=hidden",
 			expected: "account_secret=%5BFILTERED%5D&old_password=%5BFILTERED%5D",
@@ -232,11 +224,11 @@ func TestBeforeSend_FiltersRequestData(t *testing.T) {
 
 			result := beforeSend(event, nil)
 			if result == nil {
-				t.Fatal("beforeSend は通常イベントを破棄してはならない")
+				t.Fatal("beforeSendは通常イベントを破棄してはならない")
 			}
 
 			if result.Request.Data != tt.expected {
-				t.Errorf("Data: got %q, want %q", result.Request.Data, tt.expected)
+				t.Errorf("Data = %q、期待値 = %q", result.Request.Data, tt.expected)
 			}
 		})
 	}
@@ -276,18 +268,14 @@ func TestBeforeSend_FiltersQueryString(t *testing.T) {
 			expected: "page=1&limit=10&sort=created_at",
 		},
 		{
-			// "monkey" / "okeydokey" match "key" only as a substring, not as a whole
-			// token, so token-boundary matching keeps them.
-			//
-			// [Ja] monkey / okeydokey は 1 トークンで "key" に完全一致せず、保持される。
+			// monkey / okeydokeyは1トークンで "key" に完全一致せず、保持される。
 			name:     "keyを単語の一部に含むだけのパラメータはマスクしない",
 			query:    "monkey=banana&okeydokey=hi",
 			expected: "monkey=banana&okeydokey=hi",
 		},
 		{
-			// snake_case / kebab-case splitting yields the "key" / "token" tokens, so it is masked.
-			// [Ja] snake_case / kebab-case で分割した結果に key / token トークンが含まれるためマスクされること。
-			name:     "kebabや snake_case の内側にセンシティブトークンを含む場合はマスク",
+			// snake_case / kebab-caseで分割した結果にkey / tokenトークンが含まれるためマスクされること。
+			name:     "kebabやsnake_caseの内側にセンシティブトークンを含む場合はマスク",
 			query:    "api-key=k&csrf_token=t",
 			expected: "api-key=%5BFILTERED%5D&csrf_token=%5BFILTERED%5D",
 		},
@@ -310,11 +298,11 @@ func TestBeforeSend_FiltersQueryString(t *testing.T) {
 
 			result := beforeSend(event, nil)
 			if result == nil {
-				t.Fatal("beforeSend は通常イベントを破棄してはならない")
+				t.Fatal("beforeSendは通常イベントを破棄してはならない")
 			}
 
 			if result.Request.QueryString != tt.expected {
-				t.Errorf("QueryString: got %q, want %q", result.Request.QueryString, tt.expected)
+				t.Errorf("QueryString = %q、期待値 = %q", result.Request.QueryString, tt.expected)
 			}
 		})
 	}
@@ -329,10 +317,7 @@ func TestBeforeSend_FiltersTags(t *testing.T) {
 		expected map[string]string
 	}{
 		{
-			// sentryslog stamps slog attributes onto event.Tags, so the
-			// "email" attribute on email-send failure logs lands here.
-			//
-			// [Ja] sentryslog は slog 属性を event.Tags に乗せるため、メール
+			// sentryslogはslog属性をevent.Tagsに乗せるため、メール
 			// 送信失敗ログの "email" 属性はここに届く。
 			name: "emailタグをマスク",
 			tags: map[string]string{
@@ -356,8 +341,7 @@ func TestBeforeSend_FiltersTags(t *testing.T) {
 			},
 		},
 		{
-			// snake_case splitting yields the "email" / "token" tokens, so the value is masked.
-			// [Ja] snake_case 分割で email / token トークンが含まれるためマスクされること。
+			// snake_case分割でemail / tokenトークンが含まれるためマスクされること。
 			name: "snake_caseの内側にセンシティブトークンを含む場合はマスク",
 			tags: map[string]string{
 				"user_email": "user@example.com",
@@ -380,11 +364,7 @@ func TestBeforeSend_FiltersTags(t *testing.T) {
 			},
 		},
 		{
-			// "emailing" / "tokenize" match "email" / "token" only as a
-			// substring, not as a whole token, so token-boundary matching
-			// leaves them unmasked.
-			//
-			// [Ja] emailing / tokenize は 1 トークンで email / token に完全一致
+			// emailing / tokenizeは1トークンでemail / tokenに完全一致
 			// せず、トークン境界マッチでは対象外。
 			name: "単語の一部に含むだけのキーはマスクしない",
 			tags: map[string]string{
@@ -397,10 +377,7 @@ func TestBeforeSend_FiltersTags(t *testing.T) {
 			},
 		},
 		{
-			// Operationally useful tags such as wikino_source / kind must pass
-			// through untouched.
-			//
-			// [Ja] wikino_source / kind のような運用上有用なタグはそのまま
+			// wikino_source / kindのような運用上有用なタグはそのまま
 			// 通すこと。
 			name: "センシティブでないタグは変更しない",
 			tags: map[string]string{
@@ -426,12 +403,12 @@ func TestBeforeSend_FiltersTags(t *testing.T) {
 
 			result := beforeSend(event, nil)
 			if result == nil {
-				t.Fatal("beforeSend は通常イベントを破棄してはならない")
+				t.Fatal("beforeSendは通常イベントを破棄してはならない")
 			}
 
 			for key, expectedValue := range tt.expected {
 				if result.Tags[key] != expectedValue {
-					t.Errorf("タグ %s: got %q, want %q", key, result.Tags[key], expectedValue)
+					t.Errorf("タグ%s = %q、期待値 = %q", key, result.Tags[key], expectedValue)
 				}
 			}
 		})
@@ -441,15 +418,14 @@ func TestBeforeSend_FiltersTags(t *testing.T) {
 func TestBeforeSend_HandlesNilTags(t *testing.T) {
 	t.Parallel()
 
-	// Events without tags (e.g. plain CaptureException) must not panic.
-	// [Ja] タグの無いイベント (素の CaptureException 等) でも panic しないこと。
+	// タグの無いイベント (素のCaptureException等) でもpanicしないこと。
 	event := &sentry.Event{
 		Tags: nil,
 	}
 
 	result := beforeSend(event, nil)
 	if result == nil {
-		t.Fatal("beforeSend は通常イベントを破棄してはならない")
+		t.Fatal("beforeSendは通常イベントを破棄してはならない")
 	}
 
 	if result.Tags != nil {
@@ -466,7 +442,7 @@ func TestBeforeSend_HandlesNilRequest(t *testing.T) {
 
 	result := beforeSend(event, nil)
 	if result == nil {
-		t.Fatal("beforeSend は通常イベントを破棄してはならない")
+		t.Fatal("beforeSendは通常イベントを破棄してはならない")
 	}
 
 	if result.Request != nil {
@@ -485,11 +461,11 @@ func TestBeforeSend_HandlesInvalidData(t *testing.T) {
 
 	result := beforeSend(event, nil)
 	if result == nil {
-		t.Fatal("beforeSend は通常イベントを破棄してはならない")
+		t.Fatal("beforeSendは通常イベントを破棄してはならない")
 	}
 
 	if result.Request.Data != "[FILTERED]" {
-		t.Errorf("無効なデータは[FILTERED]であるべき: got %q", result.Request.Data)
+		t.Errorf("無効なデータ = %q、期待値 = [FILTERED]", result.Request.Data)
 	}
 }
 
@@ -504,11 +480,11 @@ func TestBeforeSend_HandlesInvalidQueryString(t *testing.T) {
 
 	result := beforeSend(event, nil)
 	if result == nil {
-		t.Fatal("beforeSend は通常イベントを破棄してはならない")
+		t.Fatal("beforeSendは通常イベントを破棄してはならない")
 	}
 
 	if result.Request.QueryString != "[FILTERED]" {
-		t.Errorf("無効なクエリは[FILTERED]であるべき: got %q", result.Request.QueryString)
+		t.Errorf("無効なクエリ = %q、期待値 = [FILTERED]", result.Request.QueryString)
 	}
 }
 
@@ -547,7 +523,7 @@ func TestBeforeSend_DropsIgnorableErrors(t *testing.T) {
 			hint := &sentry.EventHint{OriginalException: tt.err}
 
 			if result := beforeSend(event, hint); result != nil {
-				t.Errorf("無視対象のエラーはイベントを nil にすべき: got %+v", result)
+				t.Errorf("無視対象のエラーのイベント = %+v、期待値 = nil", result)
 			}
 		})
 	}
@@ -556,12 +532,8 @@ func TestBeforeSend_DropsIgnorableErrors(t *testing.T) {
 func TestBeforeSend_DropsReverseProxySourceEvents(t *testing.T) {
 	t.Parallel()
 
-	// Reverse-proxy 502 events carry SourceAttrKey=ReverseProxySource so
-	// beforeSend can drop them: Rails-side failures belong to the Rails
-	// Sentry project, not the Go one.
-	//
-	// [Ja] リバースプロキシ経由の 502 イベントは SourceAttrKey=ReverseProxySource
-	// を持つため、beforeSend で破棄する (Rails 側の障害は Rails の Sentry
+	// リバースプロキシ経由の502イベントはSourceAttrKey=ReverseProxySource
+	// を持つため、beforeSendで破棄する (Rails側の障害はRailsのSentry
 	// プロジェクトで扱うべきため)。
 	event := &sentry.Event{
 		Tags:    map[string]string{SourceAttrKey: ReverseProxySource},
@@ -569,40 +541,36 @@ func TestBeforeSend_DropsReverseProxySourceEvents(t *testing.T) {
 	}
 
 	if result := beforeSend(event, nil); result != nil {
-		t.Errorf("source=%s のイベントは drop すべき: got %+v", ReverseProxySource, result)
+		t.Errorf("source=%sのイベントがdropされていない: %+v", ReverseProxySource, result)
 	}
 }
 
 func TestBeforeSend_KeepsOtherSourceEvents(t *testing.T) {
 	t.Parallel()
 
-	// Only the exact ReverseProxySource value triggers a drop; other values on
-	// SourceAttrKey must still reach Sentry.
-	//
-	// [Ja] SourceAttrKey に乗っていても、値が ReverseProxySource 以外のときは
-	// drop せずそのまま Sentry に届くこと。
+	// SourceAttrKeyに乗っていても、値がReverseProxySource以外のときは
+	// dropせずそのままSentryに届くこと。
 	event := &sentry.Event{
 		Tags:    map[string]string{SourceAttrKey: "some_other_source"},
 		Request: &sentry.Request{},
 	}
 
 	if result := beforeSend(event, nil); result == nil {
-		t.Errorf("source=%q のイベントは drop しないこと", "some_other_source")
+		t.Errorf("source=%qのイベントはdropしないこと", "some_other_source")
 	}
 }
 
 func TestBeforeSend_KeepsEventsWithoutSourceTag(t *testing.T) {
 	t.Parallel()
 
-	// Events without any SourceAttrKey tag (the common case) must pass through.
-	// [Ja] SourceAttrKey が無い通常のイベントはそのまま通すこと。
+	// SourceAttrKeyが無い通常のイベントはそのまま通すこと。
 	event := &sentry.Event{
 		Tags:    map[string]string{"other_tag": "value"},
 		Request: &sentry.Request{},
 	}
 
 	if result := beforeSend(event, nil); result == nil {
-		t.Error("SourceAttrKey の無いイベントは drop しないこと")
+		t.Error("SourceAttrKeyの無いイベントはdropしないこと")
 	}
 }
 
@@ -640,7 +608,7 @@ func TestShouldDropError(t *testing.T) {
 			t.Parallel()
 
 			if got := shouldDropError(tt.err); got != tt.want {
-				t.Errorf("shouldDropError(%v) = %v, want %v", tt.err, got, tt.want)
+				t.Errorf("shouldDropError(%v) = %v、期待値 = %v", tt.err, got, tt.want)
 			}
 		})
 	}
@@ -670,19 +638,17 @@ func TestMatchesSensitiveTokenKey(t *testing.T) {
 		key  string
 		want bool
 	}{
-		// Exact match. [Ja] 完全一致。
+		// 完全一致。
 		{name: "完全一致のtokenはマッチ", key: "token", want: true},
 		{name: "完全一致のpasswordはマッチ", key: "password", want: true},
 
-		// Token-boundary matches via _ / - / . separators.
-		// [Ja] _ / - / . 区切りでトークン境界マッチ。
+		// _ / - / . 区切りでトークン境界マッチ。
 		{name: "snake_caseのapi_keyはマッチ", key: "api_key", want: true},
 		{name: "kebab-caseのcsrf-tokenはマッチ", key: "csrf-token", want: true},
 		{name: "ドット区切りのclient.secretはマッチ", key: "client.secret", want: true},
 		{name: "大文字小文字を区別しない", key: "API_KEY", want: true},
 
-		// Substring noise: should NOT match.
-		// [Ja] 部分文字列として含むだけのケースはマッチさせない。
+		// 部分文字列として含むだけのケースはマッチさせない。
 		{name: "keyを単語の一部に含むだけのmonkeyはマッチしない", key: "monkey", want: false},
 		{name: "keyを単語の一部に含むだけのokeydokeyはマッチしない", key: "okeydokey", want: false},
 		{name: "tokenを単語の一部に含むだけのtokenizeはマッチしない", key: "tokenize", want: false},
@@ -696,7 +662,7 @@ func TestMatchesSensitiveTokenKey(t *testing.T) {
 			t.Parallel()
 
 			if got := matchesSensitiveTokenKey(tt.key, sensitive); got != tt.want {
-				t.Errorf("matchesSensitiveTokenKey(%q) = %v, want %v", tt.key, got, tt.want)
+				t.Errorf("matchesSensitiveTokenKey(%q) = %v、期待値 = %v", tt.key, got, tt.want)
 			}
 		})
 	}

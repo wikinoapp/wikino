@@ -36,7 +36,7 @@ async function buildCompletions(spaceIdentifier: string, before: { from: number;
     return [];
   }
 
-  // [[foo/bar の [[foo/ を取り除き bar を取得する
+  // [[foo/barの [[foo/ を取り除きbarを取得する
   const keyword = before.text.replace(/^\[\[/, "").replace(/.*\//, "");
 
   const pageLocations = await fetchPageLocations(spaceIdentifier, keyword);

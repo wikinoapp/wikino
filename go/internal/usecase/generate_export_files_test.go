@@ -20,9 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// fakeExportSender records the mails an export would have sent.
-//
-// [Ja] fakeExportSender は、エクスポートが送ろうとしたメールを記録する。
+// fakeExportSenderは、エクスポートが送ろうとしたメールを記録する。
 type fakeExportSender struct {
 	succeededURLs []string
 	failedURLs    []string
@@ -38,10 +36,7 @@ func (f *fakeExportSender) SendFailed(_ context.Context, _, exportURL, _, _ stri
 	return nil
 }
 
-// generateExportFixture is the space an export is generated from, together with what the test
-// needs to look at the result.
-//
-// [Ja] generateExportFixture はエクスポートの生成元になるスペースと、テストが結果を見るために
+// generateExportFixtureはエクスポートの生成元になるスペースと、テストが結果を見るために
 // 必要になるもの
 type generateExportFixture struct {
 	db            *sql.DB
@@ -53,11 +48,8 @@ type generateExportFixture struct {
 	usecase       *GenerateExportFilesUsecase
 }
 
-// setupGenerateExportFixture creates a space with one member and wires the UseCase against a fake
-// storage and a fake mail sender.
-//
-// [Ja] setupGenerateExportFixture は、メンバーが 1 人いるスペースを作り、フェイクのストレージと
-// フェイクのメール送信を使う UseCase を組み立てる。
+// setupGenerateExportFixtureは、メンバーが1人いるスペースを作り、フェイクのストレージと
+// フェイクのメール送信を使うUseCaseを組み立てる。
 func setupGenerateExportFixture(t *testing.T, suffix string) generateExportFixture {
 	t.Helper()
 
@@ -106,9 +98,7 @@ func setupGenerateExportFixture(t *testing.T, suffix string) generateExportFixtu
 	}
 }
 
-// queuedExport records an export waiting for its job, which is the state Execute starts from.
-//
-// [Ja] queuedExport はジョブの実行を待っているエクスポートを記録する。Execute はこの状態から
+// queuedExportはジョブの実行を待っているエクスポートを記録する。Executeはこの状態から
 // 処理を始める。
 func (f generateExportFixture) queuedExport(t *testing.T) model.ExportID {
 	t.Helper()
@@ -118,15 +108,13 @@ func (f generateExportFixture) queuedExport(t *testing.T) model.ExportID {
 		Build()
 }
 
-// archiveEntries reads the archive an export uploaded and returns each entry by name.
-//
-// [Ja] archiveEntries はエクスポートがアップロードしたアーカイブを読み、各エントリを名前ごとに返す。
+// archiveEntriesはエクスポートがアップロードしたアーカイブを読み、各エントリを名前ごとに返す。
 func archiveEntries(t *testing.T, objectStorage *storage.FakeObjectStorage, objectKey string) map[string]string {
 	t.Helper()
 
 	body, _, ok := objectStorage.Object(objectKey)
 	if !ok {
-		t.Fatalf("オブジェクト %q がアップロードされていません (keys: %v)", objectKey, objectStorage.Keys())
+		t.Fatalf("オブジェクト%qがアップロードされていません (keys: %v)", objectKey, objectStorage.Keys())
 	}
 
 	reader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
@@ -138,12 +126,12 @@ func archiveEntries(t *testing.T, objectStorage *storage.FakeObjectStorage, obje
 	for _, file := range reader.File {
 		opened, err := file.Open()
 		if err != nil {
-			t.Fatalf("エントリ %q を開けませんでした: %v", file.Name, err)
+			t.Fatalf("エントリ%qを開けませんでした: %v", file.Name, err)
 		}
 		content, err := io.ReadAll(opened)
 		_ = opened.Close()
 		if err != nil {
-			t.Fatalf("エントリ %q を読めませんでした: %v", file.Name, err)
+			t.Fatalf("エントリ%qを読めませんでした: %v", file.Name, err)
 		}
 		entries[file.Name] = string(content)
 	}
@@ -151,11 +139,8 @@ func archiveEntries(t *testing.T, objectStorage *storage.FakeObjectStorage, obje
 	return entries
 }
 
-// tempFileCount counts the working files an export leaves in the temporary directory. Every one of
-// them is removed before Execute returns, so the count is the same before and after.
-//
-// [Ja] tempFileCount は、エクスポートが一時ディレクトリへ残した作業用のファイルを数える。それらは
-// すべて Execute が戻る前に削除されるため、実行の前後で数は変わらない。
+// tempFileCountは、エクスポートが一時ディレクトリへ残した作業用のファイルを数える。それらは
+// すべてExecuteが戻る前に削除されるため、実行の前後で数は変わらない。
 func tempFileCount(t *testing.T) int {
 	t.Helper()
 
@@ -171,10 +156,7 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 
 	ctx := context.Background()
 
-	// The subtests run one after another so that the count of leftover working files is not
-	// disturbed by another export writing its own at the same time.
-	//
-	// [Ja] サブテストは順に実行する。残っている作業用ファイルの数を、別のエクスポートが同時に
+	// サブテストは順に実行する。残っている作業用ファイルの数を、別のエクスポートが同時に
 	// 自分のファイルを書くことで乱されないようにするためである。
 
 	t.Run("トピックごとにページと添付ファイルを書き出す", func(t *testing.T) {
@@ -218,7 +200,7 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 		before := tempFileCount(t)
 
 		if err := f.usecase.Execute(ctx, GenerateExportFilesInput{ExportID: exportID, SpaceID: f.spaceID, FinalAttempt: true}); err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		if after := tempFileCount(t); after != before {
@@ -227,13 +209,13 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 
 		export, err := f.exportRepo.FindByIDAndSpace(ctx, exportID, f.spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if export.Status != model.ExportStatusSucceeded {
-			t.Fatalf("export.Status = %v, want %v", export.Status, model.ExportStatusSucceeded)
+			t.Fatalf("export.Status = %v、期待値 = %v", export.Status, model.ExportStatusSucceeded)
 		}
 		if export.ObjectKey == nil {
-			t.Fatal("export.ObjectKey = nil, want a key")
+			t.Fatal("export.ObjectKey = nil、期待値 = キー")
 		}
 
 		entries := archiveEntries(t, f.objectStorage, *export.ObjectKey)
@@ -241,13 +223,13 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 		pagePath := "設計： メモ/API ｜ 設計.md"
 		body, ok := entries[pagePath]
 		if !ok {
-			t.Fatalf("エントリ %q がありません (entries: %v)", pagePath, entryNames(entries))
+			t.Fatalf("エントリ%qがありません (entries: %v)", pagePath, entryNames(entries))
 		}
 		if !strings.HasPrefix(body, "---\nwikino_title: \"API | 設計\"\n---\n\n") {
-			t.Errorf("frontmatter が期待と異なります: %q", body)
+			t.Errorf("frontmatterが期待と異なります: %q", body)
 		}
 		if !strings.Contains(body, "[[設計： メモ/用語.md]]") {
-			t.Errorf("Wiki リンクが書き換えられていません: %q", body)
+			t.Errorf("Wikiリンクが書き換えられていません: %q", body)
 		}
 		if !strings.Contains(body, "![図](attachments/%E5%9B%B3%201.png)") {
 			t.Errorf("添付ファイルのリンクが書き換えられていません: %q", body)
@@ -258,11 +240,11 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 		}
 
 		if len(f.sender.succeededURLs) != 1 {
-			t.Fatalf("完了メールの送信数 = %d, want 1", len(f.sender.succeededURLs))
+			t.Fatalf("完了メールの送信数 = %d、期待値 = 1", len(f.sender.succeededURLs))
 		}
 		wantURL := "https://wikino.example.com/s/generate-export-archive/settings/exports/" + exportID.String() + "/download"
 		if f.sender.succeededURLs[0] != wantURL {
-			t.Errorf("ダウンロードURL = %q, want %q", f.sender.succeededURLs[0], wantURL)
+			t.Errorf("ダウンロードURL = %q、期待値 = %q", f.sender.succeededURLs[0], wantURL)
 		}
 	})
 
@@ -293,12 +275,12 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 		exportID := f.queuedExport(t)
 
 		if err := f.usecase.Execute(ctx, GenerateExportFilesInput{ExportID: exportID, SpaceID: f.spaceID, FinalAttempt: true}); err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		old, err := f.exportRepo.FindByIDAndSpace(ctx, oldID, f.spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if old != nil {
 			t.Errorf("古いエクスポートが残っています: %v", old)
@@ -339,7 +321,7 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 
 		err := f.usecase.Execute(ctx, GenerateExportFilesInput{ExportID: exportID, SpaceID: f.spaceID, FinalAttempt: true})
 		if err == nil {
-			t.Fatal("Execute() error = nil, want error")
+			t.Fatal("Execute()のエラー = nil、期待値 = エラー")
 		}
 
 		if after := tempFileCount(t); after != before {
@@ -348,13 +330,13 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 
 		export, err := f.exportRepo.FindByIDAndSpace(ctx, exportID, f.spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if export.Status != model.ExportStatusFailed {
-			t.Errorf("export.Status = %v, want %v", export.Status, model.ExportStatusFailed)
+			t.Errorf("export.Status = %v、期待値 = %v", export.Status, model.ExportStatusFailed)
 		}
 		if len(f.sender.failedURLs) != 1 {
-			t.Errorf("失敗メールの送信数 = %d, want 1", len(f.sender.failedURLs))
+			t.Errorf("失敗メールの送信数 = %d、期待値 = 1", len(f.sender.failedURLs))
 		}
 	})
 
@@ -387,18 +369,18 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 		exportID := f.queuedExport(t)
 
 		if err := f.usecase.Execute(ctx, GenerateExportFilesInput{ExportID: exportID, SpaceID: f.spaceID}); err == nil {
-			t.Fatal("Execute() error = nil, want error")
+			t.Fatal("Execute()のエラー = nil、期待値 = エラー")
 		}
 
 		export, err := f.exportRepo.FindByIDAndSpace(ctx, exportID, f.spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if export.Status != model.ExportStatusStarted {
-			t.Errorf("export.Status = %v, want %v", export.Status, model.ExportStatusStarted)
+			t.Errorf("export.Status = %v、期待値 = %v", export.Status, model.ExportStatusStarted)
 		}
 		if len(f.sender.failedURLs) != 0 {
-			t.Errorf("失敗メールの送信数 = %d, want 0", len(f.sender.failedURLs))
+			t.Errorf("失敗メールの送信数 = %d、期待値 = 0", len(f.sender.failedURLs))
 		}
 	})
 
@@ -413,24 +395,20 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 			Build()
 
 		if err := f.usecase.Execute(ctx, GenerateExportFilesInput{ExportID: exportID, SpaceID: f.spaceID, FinalAttempt: true}); err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		if keys := f.objectStorage.Keys(); len(keys) != 0 {
-			t.Errorf("アップロードされたオブジェクト = %v, want none", keys)
+			t.Errorf("アップロードされたオブジェクト = %v、期待値 = 無し", keys)
 		}
 		if len(f.sender.succeededURLs) != 0 {
-			t.Errorf("完了メールの送信数 = %d, want 0", len(f.sender.succeededURLs))
+			t.Errorf("完了メールの送信数 = %d、期待値 = 0", len(f.sender.succeededURLs))
 		}
 	})
 
-	// An attempt that cannot even record that it started leaves the export queued, and a queued
-	// export holds its space. The last attempt therefore has to leave a result behind, which the
-	// detached context is what makes possible.
-	//
-	// [Ja] 開始を記録することさえできなかった試行は、エクスポートを queued のまま残す。queued の
+	// 開始を記録することさえできなかった試行は、エクスポートをqueuedのまま残す。queuedの
 	// エクスポートはスペースを保つため、最後の試行は結果を残す必要がある。それを可能にしているのが
-	// 切り離した context である。
+	// 切り離したcontextである。
 	t.Run("最終試行が開始記録に失敗しても失敗として記録する", func(t *testing.T) {
 		f := setupGenerateExportFixture(t, "start-failure")
 		exportID := f.queuedExport(t)
@@ -439,18 +417,18 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 		cancel()
 
 		if err := f.usecase.Execute(canceled, GenerateExportFilesInput{ExportID: exportID, SpaceID: f.spaceID, FinalAttempt: true}); err == nil {
-			t.Fatal("Execute() error = nil, want error")
+			t.Fatal("Execute()のエラー = nil、期待値 = エラー")
 		}
 
 		export, err := f.exportRepo.FindByIDAndSpace(ctx, exportID, f.spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if export.Status != model.ExportStatusFailed {
-			t.Errorf("export.Status = %v, want %v", export.Status, model.ExportStatusFailed)
+			t.Errorf("export.Status = %v、期待値 = %v", export.Status, model.ExportStatusFailed)
 		}
 		if len(f.sender.failedURLs) != 1 {
-			t.Errorf("失敗メールの送信数 = %d, want 1", len(f.sender.failedURLs))
+			t.Errorf("失敗メールの送信数 = %d、期待値 = 1", len(f.sender.failedURLs))
 		}
 	})
 
@@ -462,26 +440,23 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 		cancel()
 
 		if err := f.usecase.Execute(canceled, GenerateExportFilesInput{ExportID: exportID, SpaceID: f.spaceID}); err == nil {
-			t.Fatal("Execute() error = nil, want error")
+			t.Fatal("Execute()のエラー = nil、期待値 = エラー")
 		}
 
 		export, err := f.exportRepo.FindByIDAndSpace(ctx, exportID, f.spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDAndSpace() error = %v", err)
+			t.Fatalf("FindByIDAndSpace()のエラー = %v", err)
 		}
 		if export.Status != model.ExportStatusQueued {
-			t.Errorf("export.Status = %v, want %v", export.Status, model.ExportStatusQueued)
+			t.Errorf("export.Status = %v、期待値 = %v", export.Status, model.ExportStatusQueued)
 		}
 		if len(f.sender.failedURLs) != 0 {
-			t.Errorf("失敗メールの送信数 = %d, want 0", len(f.sender.failedURLs))
+			t.Errorf("失敗メールの送信数 = %d、期待値 = 0", len(f.sender.failedURLs))
 		}
 	})
 }
 
-// entryNames returns the names of the archive entries, for a failure message that says what the
-// archive actually held.
-//
-// [Ja] entryNames はアーカイブのエントリ名を返す。アーカイブが実際に何を持っていたのかを伝える
+// entryNamesはアーカイブのエントリ名を返す。アーカイブが実際に何を持っていたのかを伝える
 // 失敗メッセージのために使う。
 func entryNames(entries map[string]string) []string {
 	names := make([]string, 0, len(entries))

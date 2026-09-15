@@ -60,7 +60,7 @@ func TestPublishPageUsecase_ReferenceDefinitionInsideHiddenContent(t *testing.T)
 				}
 				oldRefs, err := refRepo.CreateBatch(ctx, pageID, spaceID, oldIDs)
 				if err != nil {
-					t.Fatalf("CreateBatch() error = %v", err)
+					t.Fatalf("CreateBatch()のエラー = %v", err)
 				}
 				body := fmt.Sprintf("[visible][r]\n\nx <%s>\n\n[r]: /attachments/%s\n\n</%s>", element, attachmentID, element)
 				testutil.NewDraftPageBuilderDB(t, db).WithSpaceID(spaceID).WithPageID(pageID).
@@ -71,20 +71,20 @@ func TestPublishPageUsecase_ReferenceDefinitionInsideHiddenContent(t *testing.T)
 					Title: "References", Body: body,
 				})
 				if err != nil {
-					t.Fatalf("Execute() error = %v", err)
+					t.Fatalf("Execute()のエラー = %v", err)
 				}
 				refs, err := refRepo.ListByPageID(ctx, pageID, spaceID)
 				if err != nil {
-					t.Fatalf("ListByPageID() error = %v", err)
+					t.Fatalf("ListByPageID()のエラー = %v", err)
 				}
 				if len(refs) != 1 || refs[0].AttachmentID != attachmentID {
-					t.Fatalf("references = %+v, want only %s", refs, attachmentID)
+					t.Fatalf("references = %+v、期待値 = %sのみ", refs, attachmentID)
 				}
 				if existing && refs[0].ID != oldRefs[1].ID {
-					t.Errorf("existing reference was replaced: got %s, want %s", refs[0].ID, oldRefs[1].ID)
+					t.Errorf("既存の参照が置き換えられた: %s、期待値 = %s", refs[0].ID, oldRefs[1].ID)
 				}
 				if !strings.Contains(output.Page.BodyHTML, fmt.Sprintf(`data-attachment-id="%s"`, attachmentID)) {
-					t.Errorf("published HTML has no live attachment: %s", output.Page.BodyHTML)
+					t.Errorf("公開後のHTMLに有効な添付ファイルが無い: %s", output.Page.BodyHTML)
 				}
 			})
 		}

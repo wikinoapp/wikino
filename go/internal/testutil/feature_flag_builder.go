@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// FeatureFlagBuilder はフィーチャーフラグテストデータのビルダー
+// FeatureFlagBuilderはフィーチャーフラグテストデータのビルダー
 type FeatureFlagBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -18,7 +18,7 @@ type FeatureFlagBuilder struct {
 	name        string
 }
 
-// NewFeatureFlagBuilder は FeatureFlagBuilder を生成します
+// NewFeatureFlagBuilderはFeatureFlagBuilderを生成します
 func NewFeatureFlagBuilder(t *testing.T, tx *sql.Tx) *FeatureFlagBuilder {
 	t.Helper()
 	return &FeatureFlagBuilder{
@@ -28,25 +28,25 @@ func NewFeatureFlagBuilder(t *testing.T, tx *sql.Tx) *FeatureFlagBuilder {
 	}
 }
 
-// WithDeviceToken はデバイストークンを設定します
+// WithDeviceTokenはデバイストークンを設定します
 func (b *FeatureFlagBuilder) WithDeviceToken(deviceToken string) *FeatureFlagBuilder {
 	b.deviceToken = &deviceToken
 	return b
 }
 
-// WithUserID はユーザーIDを設定します
+// WithUserIDはユーザーIDを設定します
 func (b *FeatureFlagBuilder) WithUserID(userID model.UserID) *FeatureFlagBuilder {
 	b.userID = &userID
 	return b
 }
 
-// WithName はフラグ名を設定します
+// WithNameはフラグ名を設定します
 func (b *FeatureFlagBuilder) WithName(name string) *FeatureFlagBuilder {
 	b.name = name
 	return b
 }
 
-// Build はフィーチャーフラグを作成し、IDを返します
+// Buildはフィーチャーフラグを作成し、IDを返します
 func (b *FeatureFlagBuilder) Build() model.FeatureFlagID {
 	b.t.Helper()
 

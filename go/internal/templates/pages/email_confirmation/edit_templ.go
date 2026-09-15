@@ -13,13 +13,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// EditPageData は確認コード入力ページに渡すデータ構造体です
+// EditPageDataは確認コード入力ページに渡すデータ構造体です
 type EditPageData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
 }
 
-// Edit は確認コード入力ページのコンテンツを表示します
+// Editは確認コード入力ページのコンテンツを表示します
 func Edit(data EditPageData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

@@ -27,33 +27,33 @@ func TestNew(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	if !strings.Contains(body, `action="/sign_in"`) {
-		t.Error("login form action not found in response")
+		t.Error("レスポンスにログインフォームの送信先が見つからない")
 	}
 
 	if !strings.Contains(body, "test-csrf-token") {
-		t.Error("CSRF token not found in response")
+		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
 	if !strings.Contains(body, `name="email"`) {
-		t.Error("email input field not found in response")
+		t.Error("レスポンスにメールアドレスの入力フィールドが見つからない")
 	}
 
 	if !strings.Contains(body, `name="password"`) {
-		t.Error("password input field not found in response")
+		t.Error("レスポンスにパスワードの入力フィールドが見つからない")
 	}
 
 	if !strings.Contains(body, "test-site-key") {
-		t.Error("Turnstile site key not found in response")
+		t.Error("レスポンスにTurnstileのサイトキーが見つからない")
 	}
 
 	if !strings.Contains(body, `name="back"`) {
-		t.Error("back hidden field not found in response")
+		t.Error("レスポンスにbackのhiddenフィールドが見つからない")
 	}
 }
 
@@ -103,22 +103,19 @@ func TestNew_WithBackParameter(t *testing.T) {
 			handler.New(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
 			if !strings.Contains(body, tt.wantInBody) {
-				t.Errorf("backパラメータがhiddenフィールドに含まれていません\nwant: %s", tt.wantInBody)
+				t.Errorf("backパラメータがhiddenフィールドに含まれていません\n期待値: %s", tt.wantInBody)
 			}
 		})
 	}
 }
 
-// The logo link back to the home page is icon-only, so its accessible name comes from the
-// translated aria-label rather than from its content.
-//
-// [Ja] ホームへ戻るロゴリンクはアイコンのみのため、アクセシブルネームは内容ではなく
-// 翻訳済みの aria-label が供給する。
+// ホームへ戻るロゴリンクはアイコンのみのため、アクセシブルネームは内容ではなく
+// 翻訳済みのaria-labelが供給する。
 func TestNew_LogoLinkHasAccessibleName(t *testing.T) {
 	t.Parallel()
 
@@ -130,7 +127,7 @@ func TestNew_LogoLinkHasAccessibleName(t *testing.T) {
 		{
 			name:      "日本語",
 			locale:    i18n.LangJa,
-			wantLabel: "Wikino のホーム",
+			wantLabel: "Wikinoのホーム",
 		},
 		{
 			name:      "英語",
@@ -156,21 +153,18 @@ func TestNew_LogoLinkHasAccessibleName(t *testing.T) {
 			handler.New(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
-				t.Errorf("ロゴリンクに aria-label %q が含まれていない", tt.wantLabel)
+				t.Errorf("ロゴリンクにaria-label %qが含まれていない", tt.wantLabel)
 			}
 		})
 	}
 }
 
-// The back parameter only decides where to go after signing in, so it must not split /sign_in into
-// one canonical address per destination. Every variant declares the bare /sign_in.
-//
-// [Ja] back パラメータはログイン後の遷移先を決めるだけなので、/sign_in を遷移先ごとの正規アドレスに
-// 分割してはならない。どのバリエーションもクエリ無しの /sign_in を宣言する。
+// backパラメータはログイン後の遷移先を決めるだけなので、/sign_inを遷移先ごとの正規アドレスに
+// 分割してはならない。どのバリエーションもクエリ無しの /sign_inを宣言する。
 func TestNew_CanonicalOmitsBackParameter(t *testing.T) {
 	t.Parallel()
 
@@ -191,7 +185,7 @@ func TestNew_CanonicalOmitsBackParameter(t *testing.T) {
 			handler.New(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
@@ -200,11 +194,11 @@ func TestNew_CanonicalOmitsBackParameter(t *testing.T) {
 				`<meta property="og:url" content="https://localhost/sign_in">`,
 			} {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 			if strings.Contains(body, `canonical" href="https://localhost/sign_in?`) {
-				t.Error("canonical URL must not carry the back parameter")
+				t.Error("canonical URLにbackパラメータが付いている")
 			}
 		})
 	}

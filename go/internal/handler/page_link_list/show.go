@@ -16,16 +16,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はリンク一覧の追加ページをHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/link_list)
+// Showはリンク一覧の追加ページをHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/link_list)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// The link list is the continuation of the listing on the public page detail screen, so a guest
-	// reaches it through its "load more" button. Which pages it may return is decided by the
-	// usecase from the topics the viewer can open.
-	//
-	// [Ja] リンク一覧は公開のページ表示画面に出る一覧の続きで、その「もっと見る」ボタンからゲストも
-	// 到達する。何を返してよいかは閲覧者が開けるトピックから UseCase が判断する。
+	// リンク一覧は公開のページ表示画面に出る一覧の続きで、その「もっと見る」ボタンからゲストも
+	// 到達する。何を返してよいかは閲覧者が開けるトピックからUseCaseが判断する。
 	user := middleware.UserFromContext(ctx)
 	var userID *model.UserID
 	if user != nil {
@@ -48,22 +44,16 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the pagination parameter. A page whose SQL offset cannot fit the query's int32
-	// parameter is rejected before invoking the usecase.
-	//
-	// [Ja] ページネーションパラメータを取得する。SQL offset がクエリの int32 パラメータに収まらない
-	// ページは UseCase 呼び出し前に拒否する。
+	// ページネーションパラメータを取得する。SQL offsetがクエリのint32パラメータに収まらない
+	// ページはUseCase呼び出し前に拒否する。
 	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
 		return
 	}
 
-	// The other listings' pages ride along so that the links this fragment renders keep pointing at
-	// the state the whole screen is in, instead of resetting them to their first page.
-	//
-	// [Ja] 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
-	// 指し続けるようにする。受け取らないと、他の一覧が 1 ページ目へ戻ってしまう。
+	// 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
+	// 指し続けるようにする。受け取らないと、他の一覧が1ページ目へ戻ってしまう。
 	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
@@ -133,11 +123,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Every card in this fragment is new to the screen, so its nested backlink list starts at its
-	// own first page.
-	//
-	// [Ja] 本フラグメントのカードはいずれも画面に新しく加わるため、ネストしたバックリンク一覧は
-	// それぞれ 1 ページ目から始まる。
+	// 本フラグメントのカードはいずれも画面に新しく加わるため、ネストしたバックリンク一覧は
+	// それぞれ1ページ目から始まる。
 	backlinkMap := viewmodel.NewLinkedPageBacklinkLists(viewmodel.NewLinkedPageBacklinkListsInput{
 		LinkedPages:         output.LinkedPages,
 		BacklinksPerPage:    backlinksPerPage,
@@ -159,10 +146,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		SpaceIdentifier: output.Space.Identifier,
 		PageNumber:      int32(output.Page.Number),
 		State:           linkState,
-		// The per-card edit link follows the viewer's own permission, the same way the initial
-		// listing on the page detail screen does.
-		//
-		// [Ja] 各カードの編集リンクは、ページ表示画面の初回描画と同じく閲覧者自身の権限に従う。
+		// 各カードの編集リンクは、ページ表示画面の初回描画と同じく閲覧者自身の権限に従う。
 		CanEdit: output.CanUpdatePage,
 	})
 

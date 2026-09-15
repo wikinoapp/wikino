@@ -8,13 +8,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// IndexData は下書き一覧画面に渡すデータ構造体です
+// IndexDataは下書き一覧画面に渡すデータ構造体です
 type IndexData struct {
 	CSRFToken string
 	Groups    []viewmodel.DraftPageGroupForIndex
 }
 
-// Index は下書き一覧画面のコンテンツを表示します
+// Indexは下書き一覧画面のコンテンツを表示します
 templ Index(data IndexData) {
 	<div class="py-4">
 		<div class="max-w-3xl w-full mx-auto">
@@ -56,21 +56,12 @@ templ Index(data IndexData) {
 								</div>
 
 								@components.ContentCard() {
-									// The table is not wrapped in a horizontal scroller. overflow-x on an ancestor
-									// makes overflow-y compute to auto as well, and that box then clips the row
-									// action menu opened near its bottom edge. Letting the title cell wrap keeps
-									// every column inside the card at any width, so no scroller is needed here.
-									//
-									// [Ja] テーブルは横スクロールのラッパーで包まない。祖先の overflow-x は
-									// overflow-y も auto に計算させ、その要素が下端に近い行で開いた操作メニューを
+									// テーブルは横スクロールのラッパーで包まない。祖先のoverflow-xは
+									// overflow-yもautoに計算させ、その要素が下端に近い行で開いた操作メニューを
 									// 切り取ってしまう。タイトルのセルを折り返させればどの幅でも全列がカードの
 									// 内側に収まるため、ここに横スクロールは要らない。
 									<table class="table">
-										// The group heading above the card names the topic, so a visible caption would
-										// repeat it. The caption is still needed for a screen reader that jumps straight
-										// to a table, which announces the caption alone and never the heading around it.
-										//
-										// [Ja] カードの上の見出しがトピック名を示しているため、見えるキャプションは
+										// カードの上の見出しがトピック名を示しているため、見えるキャプションは
 										// その繰り返しになる。それでもキャプションが要るのは、表へ直接飛ぶスクリーン
 										// リーダーがキャプションだけを読み上げ、周りの見出しには触れないため。
 										<caption class="sr-only">
@@ -98,12 +89,8 @@ templ Index(data IndexData) {
 										<tbody>
 											for _, draft := range group.DraftPages {
 												<tr>
-													// The title is the only cell allowed to wrap, which is what lets the table fit
-													// a narrow viewport. overflow-wrap:anywhere also lowers the column's min-content
-													// width, so a single long word cannot widen the table past the card either.
-													//
-													// [Ja] 折り返しを許すのはタイトルのセルだけで、これがテーブルを狭いビューポートに
-													// 収めている。overflow-wrap:anywhere は列の min-content 幅も下げるため、長い 1 語が
+													// 折り返しを許すのはタイトルのセルだけで、これがテーブルを狭いビューポートに
+													// 収めている。overflow-wrap:anywhereは列のmin-content幅も下げるため、長い1語が
 													// テーブルをカードより広げることもない。
 													<td class="whitespace-normal [overflow-wrap:anywhere]">
 														<a
@@ -135,7 +122,7 @@ templ Index(data IndexData) {
 	</div>
 }
 
-// draftRowActions は下書き一覧の各行のアクションメニューを表示します。
+// draftRowActionsは下書き一覧の各行のアクションメニューを表示します。
 // 三点リーダーアイコンのドロップダウンを開き、削除フォームを含むメニュー項目を提供します。
 templ draftRowActions(csrfToken string, draft viewmodel.DraftPageForIndex) {
 	{{ dropdownID := fmt.Sprintf("draft-actions-%s-%d", string(draft.SpaceIdentifier), draft.PageNumber) }}

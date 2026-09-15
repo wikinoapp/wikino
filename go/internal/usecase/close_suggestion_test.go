@@ -76,22 +76,22 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Suggestion.Status != model.SuggestionStatusClosed {
-			t.Errorf("suggestion status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusClosed)
+			t.Errorf("編集提案のステータス = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusClosed)
 		}
 
 		// 下書きのsuggestion_page_idがクリアされていることを確認
 		dp, err := draftPageRepo.FindByID(context.Background(), draftPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if dp != nil && dp.SuggestionPageID != nil {
-			t.Error("DraftPage.SuggestionPageID should be nil after close")
+			t.Error("クローズ後もDraftPage.SuggestionPageIDがnilになっていない")
 		}
 	})
 
@@ -126,17 +126,17 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Suggestion.Status != model.SuggestionStatusClosed {
-			t.Errorf("suggestion status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusClosed)
+			t.Errorf("編集提案のステータス = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusClosed)
 		}
 	})
 
-	t.Run("異常系: 存在しないスペースで AppErrCodeResourceNotFound が返る", func(t *testing.T) {
+	t.Run("異常系: 存在しないスペースでAppErrCodeResourceNotFoundが返る", func(t *testing.T) {
 		t.Parallel()
 
 		userID := testutil.NewUserBuilderDB(t, db).
@@ -151,14 +151,14 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
-	t.Run("異常系: スペースメンバーでないユーザーは AppErrCodeForbidden が返る", func(t *testing.T) {
+	t.Run("異常系: スペースメンバーでないユーザーはAppErrCodeForbiddenが返る", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -194,14 +194,14 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
-	t.Run("異常系: suggestion:closeスコープなしの非作成者は AppErrCodeForbidden が返る", func(t *testing.T) {
+	t.Run("異常系: suggestion:closeスコープなしの非作成者はAppErrCodeForbiddenが返る", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -229,7 +229,7 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 			WithName("General").
 			Build()
 		// トピックメンバーを作成しない → トピックのゲストとして権限なし
-		// 提案はオーナーが作成（一般メンバーは作成者ではない）
+		// 提案はオーナーが作成 (一般メンバーは作成者ではない)
 		testutil.NewSuggestionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -244,14 +244,14 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
-	t.Run("異常系: 反映済みの編集提案は AppErrCodeConflict が返る", func(t *testing.T) {
+	t.Run("異常系: 反映済みの編集提案はAppErrCodeConflictが返る", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -283,10 +283,10 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeConflict {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeConflict)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeConflict)
 		}
 	})
 }

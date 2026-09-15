@@ -6,16 +6,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowPageData is the data passed to the home page.
-// [Ja] ShowPageData はホーム画面に渡すデータ構造体です。
+// ShowPageDataはホーム画面に渡すデータ構造体です。
 type ShowPageData struct {
 	ActiveSpaces []viewmodel.Space
 	JoinedTopics []viewmodel.CardLinkTopic
 	DraftPages   []viewmodel.CardLinkDraftPage
 }
 
-// Show renders the home page content.
-// [Ja] Show はホーム画面のコンテンツを表示します。
+// Showはホーム画面のコンテンツを表示します。
 templ Show(data ShowPageData) {
 	<div class="py-4">
 		<div class="max-w-3xl w-full mx-auto">
@@ -111,7 +109,7 @@ templ Show(data ShowPageData) {
 	</div>
 }
 
-// newSpaceButton は「新規スペース」ボタンを表示します
+// newSpaceButtonは「新規スペース」ボタンを表示します
 templ newSpaceButton() {
 	<a href={ templ.SafeURL(string(templates.NewSpacePath())) } class="btn rounded-full" data-size="sm">
 		@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
@@ -119,7 +117,7 @@ templ newSpaceButton() {
 	</a>
 }
 
-// spaceCard は参加中スペースのカードを表示します
+// spaceCardは参加中スペースのカードを表示します
 templ spaceCard(space viewmodel.Space) {
 	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600">
 		<div class="h-full">

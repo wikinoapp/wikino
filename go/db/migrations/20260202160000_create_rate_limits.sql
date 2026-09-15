@@ -11,7 +11,7 @@ CREATE TABLE rate_limits (
     UNIQUE(key, window_start)
 );
 
--- keyとwindow_startの複合インデックス（クエリの高速化）
+-- keyとwindow_startの複合インデックス (クエリの高速化)
 CREATE INDEX idx_rate_limits_key_window_start ON rate_limits(key, window_start);
 
 -- 古いレコード削除用のインデックス

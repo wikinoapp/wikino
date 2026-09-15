@@ -11,23 +11,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// linesPerBlock is how many lines renderDiffView puts in each block. Every one of the three line
-// types is there, because each of them writes its own class attribute in the template.
-//
-// [Ja] linesPerBlock は renderDiffView が 1 ブロックに入れる行数である。テンプレートでは 3 つの行
-// 種別がそれぞれ別のクラス属性を書いているため、どの種別も 1 行ずつ入れている。
+// linesPerBlockはrenderDiffViewが1ブロックに入れる行数である。テンプレートでは3つの行
+// 種別がそれぞれ別のクラス属性を書いているため、どの種別も1行ずつ入れている。
 const linesPerBlock = 3
 
-// diffPageTitle is the page name the rendered diffs belong to.
-//
-// [Ja] diffPageTitle は描画する差分が属するページの名前である。
+// diffPageTitleは描画する差分が属するページの名前である。
 const diffPageTitle = "差分のページ"
 
-// renderDiffView renders a diff of pageTitle with the requested number of blocks using the ja
-// locale and returns the HTML.
-//
-// [Ja] renderDiffView は pageTitle のページの差分を blocks 個のブロックで ja ロケールで描画し、
-// HTML を返す。
+// renderDiffViewはpageTitleのページの差分をblocks個のブロックでjaロケールで描画し、
+// HTMLを返す。
 func renderDiffView(t *testing.T, pageTitle string, blocks int) string {
 	t.Helper()
 
@@ -51,19 +43,11 @@ func renderDiffView(t *testing.T, pageTitle string, blocks int) string {
 	return buf.String()
 }
 
-// TestDiffView_KeepsEveryBlockReachableWithoutAScroller covers the box around each block: it
-// clips at the rounded corners but never scrolls, so it does not need a focus stop of its own.
-//
-// The class attribute is matched whole rather than by substring, so that overflow-x-auto coming
-// back is caught even if it is added alongside the classes checked here. tabindex is looked for
-// across the whole output: a focus stop that scrolls nothing would be dead weight on every block
-// of every diff.
-//
-// [Ja] TestDiffView_KeepsEveryBlockReachableWithoutAScroller は、各ブロックを包む箱が、角丸で
+// TestDiffView_KeepsEveryBlockReachableWithoutAScrollerは、各ブロックを包む箱が、角丸で
 // 切り抜きつつスクロールはしないこと (したがって自前のフォーカス位置を必要としないこと) を確認する。
 //
-// class 属性は部分文字列ではなく値を丸ごと照合する。これにより、ここで確認するクラスに足す形で
-// overflow-x-auto が戻ってきても捕まえられる。tabindex は出力全体から探す。動かないフォーカス位置は、
+// class属性は部分文字列ではなく値を丸ごと照合する。これにより、ここで確認するクラスに足す形で
+// overflow-x-autoが戻ってきても捕まえられる。tabindexは出力全体から探す。動かないフォーカス位置は、
 // どの差分のどのブロックにも付いて回る無駄になるためである。
 func TestDiffView_KeepsEveryBlockReachableWithoutAScroller(t *testing.T) {
 	t.Parallel()
@@ -85,14 +69,9 @@ func TestDiffView_KeepsEveryBlockReachableWithoutAScroller(t *testing.T) {
 	}
 }
 
-// TestDiffView_TellsEachBlockApartByItsCaption covers the caption of the block tables. The diff
-// carries no header cells, so the caption is the only thing naming the table, and it has to tell
-// the blocks of one diff apart as well as name the page they belong to, because one suggestion
-// can put the diffs of several pages on the same screen.
-//
-// [Ja] TestDiffView_TellsEachBlockApartByItsCaption は、ブロックのテーブルのキャプションを確認する。
-// 差分は見出しセルを持たないため、表を名指しするのはキャプションだけであり、1 つの差分の中で
-// ブロックを区別できることに加えて、属するページを名指しできる必要がある。1 つの編集提案が複数
+// TestDiffView_TellsEachBlockApartByItsCaptionは、ブロックのテーブルのキャプションを確認する。
+// 差分は見出しセルを持たないため、表を名指しするのはキャプションだけであり、1つの差分の中で
+// ブロックを区別できることに加えて、属するページを名指しできる必要がある。1つの編集提案が複数
 // ページの差分を同じ画面に並べるためである。
 func TestDiffView_TellsEachBlockApartByItsCaption(t *testing.T) {
 	t.Parallel()
@@ -114,11 +93,7 @@ func TestDiffView_TellsEachBlockApartByItsCaption(t *testing.T) {
 	}
 }
 
-// TestDiffView_NamesAnUntitledPageInItsCaption covers the caption of a page that has no title yet:
-// a page keeps none until it is published, and the revision diff of the editor shows exactly such
-// a draft. Without the fallback the caption would open with a bare separator.
-//
-// [Ja] TestDiffView_NamesAnUntitledPageInItsCaption は、まだタイトルが無いページのキャプションを
+// TestDiffView_NamesAnUntitledPageInItsCaptionは、まだタイトルが無いページのキャプションを
 // 確認する。ページは公開されるまでタイトルを持たないことがあり、エディタのリビジョン差分は
 // まさにそうした下書きを表示する。フォールバックが無いと、キャプションが区切り記号から始まる。
 func TestDiffView_NamesAnUntitledPageInItsCaption(t *testing.T) {

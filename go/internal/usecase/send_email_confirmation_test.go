@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 )
 
-// mockEmailConfirmationSender はテスト用のモック EmailConfirmationSender
+// mockEmailConfirmationSenderはテスト用のモックEmailConfirmationSender
 type mockEmailConfirmationSender struct {
 	called bool
 	to     string
@@ -43,23 +43,23 @@ func TestSendEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 
 	err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	if !sender.called {
 		t.Fatal("Send() が呼ばれていません")
 	}
 	if sender.to != "test@example.com" {
-		t.Errorf("to = %s, want test@example.com", sender.to)
+		t.Errorf("to = %s、期待値 = test@example.com", sender.to)
 	}
 	if sender.code != "ABC123" {
-		t.Errorf("code = %s, want ABC123", sender.code)
+		t.Errorf("code = %s、期待値 = ABC123", sender.code)
 	}
 	if sender.appURL != "https://example.dev" {
-		t.Errorf("appURL = %s, want https://example.dev", sender.appURL)
+		t.Errorf("appURL = %s、期待値 = https://example.dev", sender.appURL)
 	}
 	if sender.locale != "ja" {
-		t.Errorf("locale = %s, want ja", sender.locale)
+		t.Errorf("locale = %s、期待値 = ja", sender.locale)
 	}
 }
 
@@ -79,14 +79,14 @@ func TestSendEmailConfirmationUsecase_Execute_English(t *testing.T) {
 
 	err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	if !sender.called {
 		t.Fatal("Send() が呼ばれていません")
 	}
 	if sender.locale != "en" {
-		t.Errorf("locale = %s, want en", sender.locale)
+		t.Errorf("locale = %s、期待値 = en", sender.locale)
 	}
 }
 
@@ -106,10 +106,10 @@ func TestSendEmailConfirmationUsecase_Execute_EmptyEmail(t *testing.T) {
 
 	err := uc.Execute(ctx, input)
 	if err == nil {
-		t.Fatal("Execute() error = nil, want error")
+		t.Fatal("Execute()のエラー = nil、期待値 = エラー")
 	}
 	if sender.called {
-		t.Error("Send() が呼ばれるべきではありません")
+		t.Error("Send()が呼ばれた")
 	}
 }
 
@@ -130,7 +130,7 @@ func TestSendEmailConfirmationUsecase_Execute_SendError(t *testing.T) {
 
 	err := uc.Execute(ctx, input)
 	if err == nil {
-		t.Fatal("Execute() error = nil, want error")
+		t.Fatal("Execute()のエラー = nil、期待値 = エラー")
 	}
 	if !sender.called {
 		t.Error("Send() が呼ばれていません")

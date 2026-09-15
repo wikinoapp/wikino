@@ -9,14 +9,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetPagePreviewUsecase is a read usecase that generates the preview for the page edit screen.
-// It converts the in-progress (including unsaved) title and body into HTML through the same
-// Markdown rendering path as the page detail screen. It performs no persistence such as saving
-// drafts or auto-creating linked pages.
-//
-// [Ja] GetPagePreviewUsecase はページ編集画面のプレビューを生成する読み取りユースケース。
-// 編集中の (未保存を含む) タイトルと本文を、ページ詳細画面と同じ Markdown レンダリング経路で
-// HTML に変換する。下書きの保存やリンク先ページの自動作成などの永続化は一切行わない。
+// GetPagePreviewUsecaseはページ編集画面のプレビューを生成する読み取りユースケース。
+// 編集中の (未保存を含む) タイトルと本文を、ページ詳細画面と同じMarkdownレンダリング経路で
+// HTMLに変換する。下書きの保存やリンク先ページの自動作成などの永続化は一切行わない。
 type GetPagePreviewUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -26,7 +21,7 @@ type GetPagePreviewUsecase struct {
 	attachmentRepo  *repository.AttachmentRepository
 }
 
-// NewGetPagePreviewUsecase は GetPagePreviewUsecase を生成する
+// NewGetPagePreviewUsecaseはGetPagePreviewUsecaseを生成する
 func NewGetPagePreviewUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -45,30 +40,27 @@ func NewGetPagePreviewUsecase(
 	}
 }
 
-// GetPagePreviewInput はプレビュー生成の入力パラメータ
+// GetPagePreviewInputはプレビュー生成の入力パラメータ
 type GetPagePreviewInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
 	UserID          model.UserID
 
-	// Title and Body are the current form values (including unsaved content).
-	// [Ja] Title と Body はフォームの現在値 (未保存を含む)。
+	// TitleとBodyはフォームの現在値 (未保存を含む)。
 	Title string
 	Body  string
 }
 
-// GetPagePreviewOutput はプレビュー生成の出力
+// GetPagePreviewOutputはプレビュー生成の出力
 type GetPagePreviewOutput struct {
-	// Title is the title shown in the preview (plain text).
-	// [Ja] Title はプレビューに表示するタイトル (プレーンテキスト)。
+	// Titleはプレビューに表示するタイトル (プレーンテキスト)。
 	Title string
 
-	// BodyHTML is the rendered and sanitized body HTML.
-	// [Ja] BodyHTML はレンダリング・サニタイズ済みの本文 HTML。
+	// BodyHTMLはレンダリング・サニタイズ済みの本文HTML。
 	BodyHTML string
 }
 
-// Execute はプレビュー用の HTML を生成する。
+// Executeはプレビュー用のHTMLを生成する。
 // 認可はページ編集画面と同じ (CanUpdatePage) で、非メンバーは拒否する。
 func (uc *GetPagePreviewUsecase) Execute(ctx context.Context, input GetPagePreviewInput) (*GetPagePreviewOutput, error) {
 	// 1. データ取得
@@ -82,11 +74,8 @@ func (uc *GetPagePreviewUsecase) Execute(ctx context.Context, input GetPagePrevi
 		return nil, err
 	}
 
-	// 3. Render the body to HTML through the same path as the page detail screen.
-	// Wiki links resolve to existing pages only; link targets are never created or persisted.
-	//
-	// [Ja] ページ詳細画面と同じレンダリング経路で本文を HTML 化する。
-	// Wiki リンクは既存ページの解決のみ行い、リンク先の作成・保存などの永続化は一切行わない。
+	// ページ詳細画面と同じレンダリング経路で本文をHTML化する。
+	// Wikiリンクは既存ページの解決のみ行い、リンク先の作成・保存などの永続化は一切行わない。
 	resolver := &previewPageLocationResolver{topicRepo: uc.topicRepo, pageRepo: uc.pageRepo}
 	bodyHTML, err := markup.RenderHTML(ctx, input.Body, data.topic.Name, data.space.ID, data.space.Identifier, resolver, uc.attachmentRepo)
 	if err != nil {
@@ -109,17 +98,14 @@ func (uc *GetPagePreviewUsecase) pageAccessRepos() pageAccessRepos {
 	}
 }
 
-// previewPageLocationResolver is a markup.PageLocationResolver that resolves wiki link keys to existing pages only.
-// Unlike resolveAndCreateLinkedPages, it never auto-creates missing pages because preview performs no persistence.
-//
-// [Ja] previewPageLocationResolver は Wiki リンクキーを既存ページにのみ解決する markup.PageLocationResolver。
-// resolveAndCreateLinkedPages と異なり、存在しないページの自動作成は行わない (プレビューは永続化しないため)。
+// previewPageLocationResolverはWikiリンクキーを既存ページにのみ解決するmarkup.PageLocationResolver。
+// resolveAndCreateLinkedPagesと異なり、存在しないページの自動作成は行わない (プレビューは永続化しないため)。
 type previewPageLocationResolver struct {
 	topicRepo *repository.TopicRepository
 	pageRepo  *repository.PageRepository
 }
 
-// ResolveByKeys は Wiki リンクキーを既存ページの位置情報に解決する。存在しないページはスキップする。
+// ResolveByKeysはWikiリンクキーを既存ページの位置情報に解決する。存在しないページはスキップする。
 func (r *previewPageLocationResolver) ResolveByKeys(ctx context.Context, keys []markup.WikilinkKey, spaceID model.SpaceID) ([]markup.PageLocation, error) {
 	if len(keys) == 0 {
 		return nil, nil
@@ -153,8 +139,7 @@ func (r *previewPageLocationResolver) ResolveByKeys(ctx context.Context, keys []
 			return nil, err
 		}
 		if page == nil {
-			// Resolve existing pages only; do not create missing link targets in preview.
-			// [Ja] プレビューでは既存ページのみ解決し、存在しないリンク先は作成しない。
+			// プレビューでは既存ページのみ解決し、存在しないリンク先は作成しない。
 			continue
 		}
 

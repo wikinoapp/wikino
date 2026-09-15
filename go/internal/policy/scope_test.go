@@ -15,12 +15,12 @@ func TestExpandScopes(t *testing.T) {
 
 		result := expandScopes(nil)
 		if len(result) != 0 {
-			t.Errorf("len(result) = %d, want 0", len(result))
+			t.Errorf("len(result) = %d、期待値 = 0", len(result))
 		}
 
 		result = expandScopes([]model.Scope{})
 		if len(result) != 0 {
-			t.Errorf("len(result) = %d, want 0", len(result))
+			t.Errorf("len(result) = %d、期待値 = 0", len(result))
 		}
 	})
 
@@ -90,7 +90,7 @@ func TestExpandScopes(t *testing.T) {
 		assertHasScope(t, result, model.ScopeDraftPageWrite)
 		assertHasScope(t, result, model.ScopeDraftPageRead)
 		if slices.Contains(result, model.ScopeDraftPageDelete) {
-			t.Error("draft_page:write should not imply draft_page:delete")
+			t.Error("draft_page:writeがdraft_page:deleteを含んでいる")
 		}
 	})
 
@@ -153,7 +153,7 @@ func TestAllResourceScopes(t *testing.T) {
 		t.Parallel()
 
 		if slices.Contains(scopes, model.ScopeSpaceAdmin) {
-			t.Error("allResourceScopes() should not contain space:admin")
+			t.Error("allResourceScopes()にspace:adminが含まれている")
 		}
 	})
 
@@ -177,7 +177,7 @@ func TestAllResourceScopes(t *testing.T) {
 		}
 
 		if len(scopes) != len(expected) {
-			t.Errorf("len(allResourceScopes()) = %d, want %d", len(scopes), len(expected))
+			t.Errorf("len(allResourceScopes()) = %d、期待値 = %d", len(scopes), len(expected))
 		}
 	})
 }
@@ -190,26 +190,26 @@ func TestImplications(t *testing.T) {
 
 		for upper, lowers := range implications {
 			if len(lowers) != 1 {
-				t.Errorf("implications[%s] has %d entries, want 1", upper, len(lowers))
+				t.Errorf("implications[%s]の件数 = %d、期待値 = 1", upper, len(lowers))
 			}
 		}
 	})
 }
 
-// assertHasScope は結果にスコープが含まれていることを検証する
+// assertHasScopeは結果にスコープが含まれていることを検証する
 func assertHasScope(t *testing.T, result []model.Scope, expected model.Scope) {
 	t.Helper()
 	if !slices.Contains(result, expected) {
-		t.Errorf("result does not contain %s, got %v", expected, result)
+		t.Errorf("結果に%sが含まれていない: %v", expected, result)
 	}
 }
 
-// assertScopes は結果が期待するスコープ集合と一致することを検証する（順序不問）
+// assertScopesは結果が期待するスコープ集合と一致することを検証する (順序不問)
 func assertScopes(t *testing.T, result, expected []model.Scope) {
 	t.Helper()
 
 	if len(result) != len(expected) {
-		t.Errorf("len(result) = %d, want %d; result = %v", len(result), len(expected), result)
+		t.Errorf("len(result) = %d、期待値 = %d: result = %v", len(result), len(expected), result)
 		return
 	}
 	for _, s := range expected {
@@ -217,14 +217,14 @@ func assertScopes(t *testing.T, result, expected []model.Scope) {
 	}
 }
 
-// assertNoDuplicates は結果に重複がないことを検証する
+// assertNoDuplicatesは結果に重複がないことを検証する
 func assertNoDuplicates(t *testing.T, scopes []model.Scope) {
 	t.Helper()
 
 	seen := make(map[model.Scope]bool, len(scopes))
 	for _, s := range scopes {
 		if seen[s] {
-			t.Errorf("duplicate scope found: %s", s)
+			t.Errorf("スコープが重複している: %s", s)
 		}
 		seen[s] = true
 	}

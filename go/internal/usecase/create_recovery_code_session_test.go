@@ -41,41 +41,41 @@ func TestCreateRecoveryCodeSessionUsecase_Execute(t *testing.T) {
 			UserAgent:    "TestAgent",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("Execute() returned nil, want output")
+			t.Fatal("Execute()がnilを返した、期待値 = 出力")
 		}
 		if output.Token == "" {
-			t.Error("Execute() returned empty token")
+			t.Error("Execute()が空のトークンを返した")
 		}
 
 		// セッションがDBに保存されていることを確認
 		session, err := userSessionRepo.FindByToken(ctx, output.Token)
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("session not found in DB")
+			t.Fatal("DBにセッションが見つからない")
 		}
 		if session.UserID != userID {
-			t.Errorf("session.UserID = %v, want %v", session.UserID, userID)
+			t.Errorf("session.UserID = %v、期待値 = %v", session.UserID, userID)
 		}
 
 		// リカバリーコードが消費されていることを確認
 		twoFactorAuth, err := userTwoFactorAuthRepo.FindEnabledByUserID(ctx, userID)
 		if err != nil {
-			t.Fatalf("FindEnabledByUserID() error = %v", err)
+			t.Fatalf("FindEnabledByUserID()のエラー = %v", err)
 		}
 		if twoFactorAuth == nil {
-			t.Fatal("FindEnabledByUserID() returned nil")
+			t.Fatal("FindEnabledByUserID()がnilを返した")
 		}
 		if len(twoFactorAuth.RecoveryCodes) != 2 {
-			t.Errorf("RecoveryCodes length = %d, want 2", len(twoFactorAuth.RecoveryCodes))
+			t.Errorf("RecoveryCodesの長さ = %d、期待値 = 2", len(twoFactorAuth.RecoveryCodes))
 		}
 		for _, code := range twoFactorAuth.RecoveryCodes {
 			if code == "code1111" {
-				t.Error("RecoveryCodes still contains 'code1111' after consumption")
+				t.Error("消費後もRecoveryCodesに'code1111'が含まれている")
 			}
 		}
 	})
@@ -108,19 +108,19 @@ func TestCreateRecoveryCodeSessionUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatalf("expected ValidationError, got %v", err)
+			t.Fatalf("ValidationErrorを期待したが、%vだった", err)
 		}
 		if !ve.HasErrors() {
-			t.Error("expected validation errors")
+			t.Error("バリデーションエラーが無い")
 		}
 
 		// リカバリーコードが消費されていないことを確認
 		twoFactorAuth, err := userTwoFactorAuthRepo.FindEnabledByUserID(ctx, userID)
 		if err != nil {
-			t.Fatalf("FindEnabledByUserID() error = %v", err)
+			t.Fatalf("FindEnabledByUserID()のエラー = %v", err)
 		}
 		if len(twoFactorAuth.RecoveryCodes) != 2 {
-			t.Errorf("RecoveryCodes should not be consumed, length = %d, want 2", len(twoFactorAuth.RecoveryCodes))
+			t.Errorf("RecoveryCodesが消費されている。長さ = %d、期待値 = 2", len(twoFactorAuth.RecoveryCodes))
 		}
 	})
 
@@ -145,10 +145,10 @@ func TestCreateRecoveryCodeSessionUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatalf("expected ValidationError, got %v", err)
+			t.Fatalf("ValidationErrorを期待したが、%vだった", err)
 		}
 		if !ve.HasFieldError("recovery_code") {
-			t.Error("expected field error for recovery_code")
+			t.Error("recovery_codeのフィールドエラーが無い")
 		}
 	})
 
@@ -178,10 +178,10 @@ func TestCreateRecoveryCodeSessionUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %v", err)
+			t.Fatalf("AppErrorを期待したが、%vだった", err)
 		}
 		if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
-			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
+			t.Errorf("AppErrCodeTwoFactorNotEnabledを期待したが、%dだった", ae.Code)
 		}
 	})
 }

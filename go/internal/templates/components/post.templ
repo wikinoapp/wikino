@@ -7,36 +7,30 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// PostAction はPostコンポーネントのドロップダウンメニューに表示するアクションです
+// PostActionはPostコンポーネントのドロップダウンメニューに表示するアクションです
 type PostAction struct {
 	Label string
 	URL   string
 }
 
-// PostData は投稿（編集提案の本文やコメント）の表示データです
+// PostDataは投稿 (編集提案の本文やコメント) の表示データです
 type PostData struct {
 	CreatorAtname string
 	Body          string
 	CreatedAt     time.Time
 	Actions       []PostAction
-	// ActionsLabel is the accessible name given to the action dropdown trigger.
-	// It must be set whenever Actions is set, because the trigger has no visible
-	// text and its icon is hidden from assistive technology. When it is empty the
-	// aria-label attribute is omitted rather than emitted empty, so that a missing
-	// label is visible in the rendered HTML instead of looking like a set one.
-	//
-	// [Ja] ActionsLabel はアクションドロップダウンのトリガーに与えるアクセシブルネームです。
+	// ActionsLabelはアクションドロップダウンのトリガーに与えるアクセシブルネームです。
 	// トリガーは可視テキストを持たず、アイコンも支援技術から隠しているため、
-	// Actions が設定されている場合は必ず指定してください。
-	// 空の場合は aria-label 属性ごと出力しません。空文字で出力すると設定済みに見えてしまい、
+	// Actionsが設定されている場合は必ず指定してください。
+	// 空の場合はaria-label属性ごと出力しません。空文字で出力すると設定済みに見えてしまい、
 	// レンダリング結果から指定漏れを判別できなくなるためです。
 	ActionsLabel string
-	// dropdownID はドロップダウンメニューのHTML ID生成に使用する一意な識別子です。
+	// dropdownIDはドロップダウンメニューのHTML ID生成に使用する一意な識別子です。
 	// Actionsが設定されている場合は必ず指定してください。
 	DropdownID string
 }
 
-// Post は投稿UIを表示するコンポーネントです。
+// Postは投稿UIを表示するコンポーネントです。
 // 編集提案の本文とコメントで共通のUIを提供します。
 templ Post(data PostData) {
 	<div class="card gap-4 pt-0 pb-4 rounded-none md:rounded-xl mx-0 md:mx-4">
@@ -71,7 +65,7 @@ templ Post(data PostData) {
 	</div>
 }
 
-// postDropdown はPostコンポーネントのアクションドロップダウンメニューを表示します
+// postDropdownはPostコンポーネントのアクションドロップダウンメニューを表示します
 templ postDropdown(data PostData) {
 	<div id={ fmt.Sprintf("post-%s-dropdown", data.DropdownID) } class="dropdown-menu">
 		<button

@@ -9,9 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// newGetTopicSettingsGeneralUsecase builds the UseCase against the fixture transaction.
-//
-// [Ja] newGetTopicSettingsGeneralUsecase はフィクスチャのトランザクションを使う UseCase を
+// newGetTopicSettingsGeneralUsecaseはフィクスチャのトランザクションを使うUseCaseを
 // 組み立てる。
 func newGetTopicSettingsGeneralUsecase(f topicSettingsGeneralFixture) *GetTopicSettingsGeneralUsecase {
 	return NewGetTopicSettingsGeneralUsecase(
@@ -35,21 +33,18 @@ func TestGetTopicSettingsGeneralUsecase_Execute(t *testing.T) {
 		UserID:          f.userID,
 	})
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if output.Space.ID != f.spaceID {
-		t.Errorf("Space.ID = %v, want %v", output.Space.ID, f.spaceID)
+		t.Errorf("Space.ID = %v、期待値 = %v", output.Space.ID, f.spaceID)
 	}
 	if output.Topic.ID != f.topicID {
-		t.Errorf("Topic.ID = %v, want %v", output.Topic.ID, f.topicID)
+		t.Errorf("Topic.ID = %v、期待値 = %v", output.Topic.ID, f.topicID)
 	}
 }
 
-// TestGetTopicSettingsGeneralUsecase_ExecuteRefused covers viewers who may not update a topic and
-// topic numbers that name no topic.
-//
-// [Ja] TestGetTopicSettingsGeneralUsecase_ExecuteRefused は、トピックを更新できない閲覧者と、
+// TestGetTopicSettingsGeneralUsecase_ExecuteRefusedは、トピックを更新できない閲覧者と、
 // どのトピックも指さないトピック番号を扱う。
 func TestGetTopicSettingsGeneralUsecase_ExecuteRefused(t *testing.T) {
 	t.Parallel()
@@ -92,15 +87,15 @@ func TestGetTopicSettingsGeneralUsecase_ExecuteRefused(t *testing.T) {
 				UserID:          f.userID,
 			})
 			if err == nil {
-				t.Fatal("expected error but got nil")
+				t.Fatal("エラーを期待したが、nilだった")
 			}
 
 			ae := model.AsAppError(err)
 			if ae == nil {
-				t.Fatalf("expected AppError but got %v", err)
+				t.Fatalf("AppErrorを期待したが、%vだった", err)
 			}
 			if ae.Code != tt.wantCode {
-				t.Errorf("Code = %v, want %v", ae.Code, tt.wantCode)
+				t.Errorf("Code = %v、期待値 = %v", ae.Code, tt.wantCode)
 			}
 		})
 	}

@@ -21,7 +21,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// setupHandlerWithUsecase はユースケース付きのテスト用ハンドラーを生成するヘルパーです
+// setupHandlerWithUsecaseはユースケース付きのテスト用ハンドラーを生成するヘルパーです
 func setupHandlerWithUsecase(t *testing.T, queries *query.Queries, movePageUC *usecase.MovePageUsecase) *page_move.Handler {
 	t.Helper()
 
@@ -60,7 +60,7 @@ func TestCreate_Success(t *testing.T) {
 
 	spaceIdentifier := "pm-create-ok"
 
-	// テストデータを作成（DB直接書き込み: usecaseが独自トランザクションを管理するため）
+	// テストデータを作成 (DB直接書き込み: usecaseが独自トランザクションを管理するため)
 	userID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("pm-create-ok@example.com").
 		WithAtname("pm-create-ok").
@@ -126,13 +126,13 @@ func TestCreate_Success(t *testing.T) {
 
 	// 303リダイレクトされること
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 
 	// リダイレクト先がページパスであること
 	expectedLocation := fmt.Sprintf("/s/%s/pages/1", spaceIdentifier)
 	if location := rr.Header().Get("Location"); location != expectedLocation {
-		t.Errorf("wrong redirect location: got %v want %v", location, expectedLocation)
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, expectedLocation)
 	}
 }
 
@@ -184,7 +184,7 @@ func TestCreate_ValidationError(t *testing.T) {
 	movePageUC := usecase.NewMovePageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo, pageMoveValidator)
 	handler := setupHandlerWithUsecase(t, q, movePageUC)
 
-	// 移動先トピックを選択しない（空文字）
+	// 移動先トピックを選択しない (空文字)
 	form := url.Values{}
 	form.Set("dest_topic", "")
 
@@ -206,13 +206,13 @@ func TestCreate_ValidationError(t *testing.T) {
 
 	// 422 Unprocessable Entityが返ること
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
-	// フォームが再表示されること（ページタイトルが含まれる）
+	// フォームが再表示されること (ページタイトルが含まれる)
 	body := rr.Body.String()
 	if !strings.Contains(body, "Test Page") {
-		t.Error("page title not found in re-rendered form")
+		t.Error("再描画したフォームにページタイトルが見つからない")
 	}
 }
 
@@ -243,10 +243,10 @@ func TestCreate_NotLoggedIn(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	if location := rr.Header().Get("Location"); location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /sign_in", location)
 	}
 }

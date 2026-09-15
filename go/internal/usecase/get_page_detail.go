@@ -8,19 +8,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// editDraftPagesLimit is the upper bound on the number of draft pages shown in the page editor's
-// draft list column.
-//
-// [Ja] editDraftPagesLimit はページ編集画面の下書き一覧カラムに表示する下書きページ数の上限。
+// editDraftPagesLimitはページ編集画面の下書き一覧カラムに表示する下書きページ数の上限。
 const editDraftPagesLimit = 20
 
-// editDraftRevisionsLimit is the upper bound on the number of revisions shown in the page editor's
-// edit history column.
-//
-// [Ja] editDraftRevisionsLimit はページ編集画面の編集履歴カラムに表示するリビジョン数の上限。
+// editDraftRevisionsLimitはページ編集画面の編集履歴カラムに表示するリビジョン数の上限。
 const editDraftRevisionsLimit = 20
 
-// GetPageDetailUsecase はページ詳細画面のデータ取得ユースケース
+// GetPageDetailUsecaseはページ詳細画面のデータ取得ユースケース
 type GetPageDetailUsecase struct {
 	spaceRepo             *repository.SpaceRepository
 	spaceMemberRepo       *repository.SpaceMemberRepository
@@ -33,7 +27,7 @@ type GetPageDetailUsecase struct {
 	suggestionRepo        *repository.SuggestionRepository
 }
 
-// NewGetPageDetailUsecase は GetPageDetailUsecase を生成する
+// NewGetPageDetailUsecaseはGetPageDetailUsecaseを生成する
 func NewGetPageDetailUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -58,29 +52,22 @@ func NewGetPageDetailUsecase(
 	}
 }
 
-// GetPageDetailInput はページ詳細取得の入力パラメータ
+// GetPageDetailInputはページ詳細取得の入力パラメータ
 type GetPageDetailInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
 	UserID          model.UserID
 
-	// IncludeDraftPages requests the space member's draft list (for the editor's draft list column).
-	// The autosave fragment endpoint leaves it false to skip the extra query it does not need.
-	//
-	// [Ja] IncludeDraftPages はスペースメンバーの下書き一覧 (編集画面の下書き一覧カラム用) の取得を要求する。
-	// オートセーブ用フラグメントエンドポイントは不要なクエリを避けるため false のままにする。
+	// IncludeDraftPagesはスペースメンバーの下書き一覧 (編集画面の下書き一覧カラム用) の取得を要求する。
+	// オートセーブ用フラグメントエンドポイントは不要なクエリを避けるためfalseのままにする。
 	IncludeDraftPages bool
 
-	// IncludeDraftRevisions requests the draft's edit history (revision list and total count, for the
-	// editor's edit history column). Callers that do not render the column leave it false to skip
-	// the extra queries.
-	//
-	// [Ja] IncludeDraftRevisions は下書きの編集履歴 (編集画面の編集履歴カラム用のリビジョン一覧と総件数)
-	// の取得を要求する。カラムを描画しない呼び出し元は不要なクエリを避けるため false のままにする。
+	// IncludeDraftRevisionsは下書きの編集履歴 (編集画面の編集履歴カラム用のリビジョン一覧と総件数)
+	// の取得を要求する。カラムを描画しない呼び出し元は不要なクエリを避けるためfalseのままにする。
 	IncludeDraftRevisions bool
 }
 
-// GetPageDetailOutput はページ詳細取得の出力
+// GetPageDetailOutputはページ詳細取得の出力
 type GetPageDetailOutput struct {
 	Space         *model.Space
 	SpaceMember   *model.SpaceMember
@@ -91,31 +78,21 @@ type GetPageDetailOutput struct {
 	Suggestion    *model.Suggestion
 	CanUpdatePage bool
 
-	// DraftPages is the space member's draft list for the editor's draft list column.
-	// It is nil unless GetPageDetailInput.IncludeDraftPages is set.
-	//
-	// [Ja] DraftPages は編集画面の下書き一覧カラム用のスペースメンバーの下書き一覧。
-	// GetPageDetailInput.IncludeDraftPages が指定されない限り nil。
+	// DraftPagesは編集画面の下書き一覧カラム用のスペースメンバーの下書き一覧。
+	// GetPageDetailInput.IncludeDraftPagesが指定されない限りnil。
 	DraftPages []*model.DraftPage
 
-	// DraftPageRevisions is the draft's revision list for the editor's edit history column, newest
-	// first and capped at editDraftRevisionsLimit. It is nil unless
-	// GetPageDetailInput.IncludeDraftRevisions is set and a draft exists.
-	//
-	// [Ja] DraftPageRevisions は編集画面の編集履歴カラム用の下書きのリビジョン一覧 (新しい順、
-	// 最大 editDraftRevisionsLimit 件)。GetPageDetailInput.IncludeDraftRevisions が指定され、
-	// かつ下書きが存在する場合以外は nil。
+	// DraftPageRevisionsは編集画面の編集履歴カラム用の下書きのリビジョン一覧 (新しい順、
+	// 最大editDraftRevisionsLimit件)。GetPageDetailInput.IncludeDraftRevisionsが指定され、
+	// かつ下書きが存在する場合以外はnil。
 	DraftPageRevisions []*model.DraftPageRevision
 
-	// DraftPageRevisionTotalCount is the total number of revisions of the draft (not capped by the
-	// list limit). Version numbers in the edit history column are derived from this count.
-	//
-	// [Ja] DraftPageRevisionTotalCount は下書きのリビジョン総件数 (一覧の上限ではキャップしない)。
+	// DraftPageRevisionTotalCountは下書きのリビジョン総件数 (一覧の上限ではキャップしない)。
 	// 編集履歴カラムのバージョン番号はこの件数から算出する。
 	DraftPageRevisionTotalCount int64
 }
 
-// Execute はページ詳細画面に必要なデータを取得する
+// Executeはページ詳細画面に必要なデータを取得する
 func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetailInput) (*GetPageDetailOutput, error) {
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
 	if err != nil {
@@ -178,8 +155,7 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 	authorizer := newAuthorizer(spaceMember, topicMember)
 	canUpdatePage := authorizer.CanUpdatePage()
 
-	// Fetch the space member's own draft list within this space for the editor's draft list column (only when requested).
-	// [Ja] 編集画面の下書き一覧カラム用に、同一スペース内の自分の下書き一覧を取得する (要求された場合のみ)。
+	// 編集画面の下書き一覧カラム用に、同一スペース内の自分の下書き一覧を取得する (要求された場合のみ)。
 	var draftPages []*model.DraftPage
 	if input.IncludeDraftPages {
 		draftPages, err = uc.draftPageRepo.ListBySpaceMember(ctx, spaceMember.ID, space.ID, editDraftPagesLimit)
@@ -188,10 +164,7 @@ func (uc *GetPageDetailUsecase) Execute(ctx context.Context, input GetPageDetail
 		}
 	}
 
-	// Fetch the draft's edit history for the editor's edit history column (only when requested).
-	// Without a draft there are no revisions, so the column data stays empty.
-	//
-	// [Ja] 編集画面の編集履歴カラム用に、下書きの編集履歴を取得する (要求された場合のみ)。
+	// 編集画面の編集履歴カラム用に、下書きの編集履歴を取得する (要求された場合のみ)。
 	// 下書きが無ければリビジョンも存在しないため、カラム用データは空のままにする。
 	var draftPageRevisions []*model.DraftPageRevision
 	var draftPageRevisionTotalCount int64

@@ -1,15 +1,9 @@
 -- migrate:up
 
--- Recreate the FKs with ON DELETE CASCADE so that deleting parents from the
--- Rails side (which no longer knows about these tables) cannot fail with a
--- foreign key violation. Deleting a space still runs on Rails, while exports
--- and their statuses became Go-owned rows once the Rails export code was
--- removed. Every FK column here is already indexed, so no index is added.
---
--- [Ja] Rails 側 (これらのテーブルを知らなくなった) が親を削除しても外部キー違反で
--- 失敗しないよう、FK を ON DELETE CASCADE 付きで作り直す。スペースの削除は
--- 引き続き Rails 側で動く一方、exports とその状態は Rails 側のエクスポートの
--- コードを削除した時点で Go が持つ行になった。ここに挙げた FK のカラムはいずれも
+-- Rails側 (これらのテーブルを知らなくなった) が親を削除しても外部キー違反で
+-- 失敗しないよう、FKをON DELETE CASCADE付きで作り直す。スペースの削除は
+-- 引き続きRails側で動く一方、exportsとその状態はRails側のエクスポートの
+-- コードを削除した時点でGoが持つ行になった。ここに挙げたFKのカラムはいずれも
 -- インデックス済みのため、インデックスは追加しない。
 ALTER TABLE exports
     DROP CONSTRAINT fk_rails_7fa4a1a0c0,

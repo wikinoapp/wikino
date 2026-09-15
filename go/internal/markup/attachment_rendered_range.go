@@ -11,16 +11,7 @@ import (
 	gmtext "github.com/yuin/goldmark/text"
 )
 
-// visibleAttachmentRefs distinguishes use sites sharing an attachment ID by appending unique
-// suffixes to their destinations in a temporary rendering. The ordinary rendering already
-// settles IDs with just one candidate, so only repeated IDs need this additional pass.
-// Parsing is shared, and every changed AST field is restored before returning.
-//
-// The boolean result is false when no additional pass is needed or rendering fails. The caller
-// then keeps the candidates selected by the original rendering and source ranges, preserving
-// attachment ownership records when visibility cannot be established.
-//
-// [Ja] visibleAttachmentRefsは同じ添付IDを持つ参照元を、一時描画のリンク先へ固有の接尾辞を
+// visibleAttachmentRefsは同じ添付IDを持つ参照元を、一時描画のリンク先へ固有の接尾辞を
 // 付けて区別する。候補が1つのIDは通常の描画で判定済みなので、追加描画は重複IDがある場合だけ行う。
 // 解析結果を共有し、変更したASTのフィールドはすべて戻してから返す。
 //
@@ -63,10 +54,7 @@ func visibleAttachmentRefs(source []byte, document ast.Node, refs []attachmentRe
 		}
 	}()
 
-	// Insert into the segment containing the destination's final byte. Keeping the original
-	// bytes and padding preserves multiline raw HTML and Markdown container prefixes.
-	//
-	// [Ja] リンク先の最後のバイトを含むセグメントへ挿入する。元のバイトとパディングを保持し、
+	// リンク先の最後のバイトを含むセグメントへ挿入する。元のバイトとパディングを保持し、
 	// 複数行のraw HTMLとMarkdownコンテナーの接頭辞の解釈を変えない。
 	markSegment := func(segment gmtext.Segment) gmtext.Segment {
 		first := sort.Search(len(htmlRefs), func(i int) bool { return htmlRefs[i].match.Stop > segment.Start })
@@ -126,7 +114,7 @@ func visibleAttachmentRefs(source []byte, document ast.Node, refs []attachmentRe
 	})
 	markedHTML, err := renderSanitized(augmented, document)
 	if err != nil {
-		slog.Warn("Failed to render attachment reference markers", "error", err)
+		slog.Warn("添付ファイル参照のマーカーのレンダリングに失敗しました", "error", err)
 		return nil, false
 	}
 	live, known := liveAttachmentIDs(markedHTML, true)

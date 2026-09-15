@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create はログイン処理を行います (POST /sign_in)
+// Createはログイン処理を行います (POST /sign_in)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -45,7 +45,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// UseCase を実行
+	// UseCaseを実行
 	output, err := h.signInUC.Execute(ctx, usecase.CreateSignInInput{
 		Email:     email,
 		Password:  password,
@@ -61,11 +61,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	if output.TwoFactorRequired {
 		h.sessionMgr.SetPendingUserCookie(w, output.UserID)
 
-		// The back parameter is handed to the two-factor screens only when it is a safe destination,
-		// so that a value that would be discarded anyway never appears in the URL.
-		//
-		// [Ja] back パラメータは安全な遷移先のときだけ二要素認証の画面へ引き継ぐ。
-		// どのみち捨てられる値が URL に載らないようにするためである。
+		// backパラメータは安全な遷移先のときだけ二要素認証の画面へ引き継ぐ。
+		// どのみち捨てられる値がURLに載らないようにするためである。
 		twoFactorBackURL := ""
 		if redirect.ValidateBackURL(backURL) {
 			twoFactorBackURL = backURL
@@ -81,7 +78,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// フラッシュメッセージを設定
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_sign_in_success"))
 
-	// リダイレクト先を決定（backパラメータが有効な場合はそのURLへ、それ以外はホームへ）
+	// リダイレクト先を決定 (backパラメータが有効な場合はそのURLへ、それ以外はホームへ)
 	redirectURL := redirect.GetSafeRedirectURL(backURL)
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
@@ -98,7 +95,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
-// renderSignInForm はログインフォームをエラー付きでレンダリングします
+// renderSignInFormはログインフォームをエラー付きでレンダリングします
 func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, ve *model.ValidationError, email string, backURL string) {
 	ctx := r.Context()
 
@@ -115,7 +112,7 @@ func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, ve *m
 		BackURL:          backURL,
 	})
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	// バリデーションエラー時は422 Unprocessable Entityを返す
 	w.WriteHeader(http.StatusUnprocessableEntity)
 
 	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)

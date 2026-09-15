@@ -1,4 +1,4 @@
-// Package sign_in_two_factor は2要素認証のハンドラーを提供します
+// Package sign_in_two_factorは2要素認証のハンドラーを提供します
 package sign_in_two_factor
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は2要素認証ハンドラー
+// Handlerは2要素認証ハンドラー
 type Handler struct {
 	cfg                      *config.Config
 	sessionMgr               *session.Manager
@@ -15,7 +15,7 @@ type Handler struct {
 	createTwoFactorSessionUC *usecase.CreateTwoFactorSessionUsecase
 }
 
-// NewHandler は新しい2要素認証ハンドラーを作成します
+// NewHandlerは新しい2要素認証ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,

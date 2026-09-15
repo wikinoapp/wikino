@@ -11,11 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// PageBacklinkList renders the page-level backlink list, and renders nothing when
-// there are no backlinks and no further pages.
-// The heading (h2) lives in the caller so its style can differ per screen.
-//
-// [Ja] ページレベルのバックリンク一覧を表示します。バックリンクが空でページネーションもない場合は何も表示しません。
+// ページレベルのバックリンク一覧を表示します。バックリンクが空でページネーションもない場合は何も表示しません。
 // 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
 func PageBacklinkList(data viewmodel.BacklinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -75,7 +71,7 @@ func pageBacklinkList(data viewmodel.BacklinkList, announceEnd bool) templ.Compo
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(pageBacklinkFallbackAnchorID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/page_backlink_list.templ`, Line: 18, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/page_backlink_list.templ`, Line: 14, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
@@ -98,11 +94,8 @@ func pageBacklinkList(data viewmodel.BacklinkList, announceEnd bool) templ.Compo
 	})
 }
 
-// PageBacklinkListResponse renders the next page-level backlink page and advances that listing's
-// share of the editor's shared related-page state. The one-page editor replaces the whole listing.
-//
-// [Ja] PageBacklinkListResponse はページ自身のバックリンク一覧の次ページを描画し、編集画面で共有する
-// 関連ページ状態のうちこの一覧の分を進める。1 ページ単位の編集画面では一覧全体を差し替える。
+// PageBacklinkListResponseはページ自身のバックリンク一覧の次ページを描画し、編集画面で共有する
+// 関連ページ状態のうちこの一覧の分を進める。1ページ単位の編集画面では一覧全体を差し替える。
 func PageBacklinkListResponse(data viewmodel.BacklinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -143,11 +136,7 @@ func PageBacklinkListResponse(data viewmodel.BacklinkList) templ.Component {
 	})
 }
 
-// pageBacklinkListBody renders the cards and the pagination container the two entry points have in
-// common, so that the container's swap target cannot drift between the initial render and the
-// fragment reply.
-//
-// [Ja] pageBacklinkListBody は 2 つの入口が共有するカードとページネーションコンテナを描画する。
+// pageBacklinkListBodyは2つの入口が共有するカードとページネーションコンテナを描画する。
 // コンテナのスワップ対象が初回描画とフラグメント応答でずれないようにするためである。
 func pageBacklinkListBody(data viewmodel.BacklinkList, announceEnd bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -183,7 +172,7 @@ func pageBacklinkListBody(data viewmodel.BacklinkList, announceEnd bool) templ.C
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(pageBacklinkPaginationID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/page_backlink_list.templ`, Line: 51, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/page_backlink_list.templ`, Line: 40, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -217,10 +206,7 @@ func pageBacklinkListBody(data viewmodel.BacklinkList, announceEnd bool) templ.C
 	})
 }
 
-// pageBacklinkListLoadMore renders the progressively enhanced link for the next page-level
-// backlink page.
-//
-// [Ja] pageBacklinkListLoadMore は次のページレベルのバックリンクページを取得する拡張リンクを
+// pageBacklinkListLoadMoreは次のページレベルのバックリンクページを取得する拡張リンクを
 // 表示する。
 func pageBacklinkListLoadMore(data viewmodel.BacklinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {

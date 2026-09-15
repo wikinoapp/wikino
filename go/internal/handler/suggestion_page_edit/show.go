@@ -17,7 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show は編集提案ページ編集の確認画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id})
+// Showは編集提案ページ編集の確認画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id})
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -39,7 +39,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 	suggestionNumber := model.SuggestionNumber(suggestionNumberInt)
 
-	// URLパラメータを取得（suggestion_page_id）
+	// URLパラメータを取得 (suggestion_page_id)
 	suggestionPageIDStr := chi.URLParam(r, "suggestion_page_id")
 	if suggestionPageIDStr == "" {
 		handler.NotFound(w, r)
@@ -71,10 +71,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	spaceVM := viewmodel.NewSpace(detailOutput.Space)
 
-	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
-	// the same form.
-	//
-	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
 	spaceIdentVM := spaceVM.Identifier
 
 	// オープンステータスでなければ変更差分画面にリダイレクト

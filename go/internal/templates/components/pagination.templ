@@ -5,8 +5,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// PaginationNav はオフセットベースのページネーションナビゲーションを表示するコンポーネントです。
-// previousPath と nextPath にはページ番号を含む完全なパスを渡します。
+// PaginationNavはオフセットベースのページネーションナビゲーションを表示するコンポーネントです。
+// previousPathとnextPathにはページ番号を含む完全なパスを渡します。
 templ PaginationNav(pagination viewmodel.Pagination, previousPath string, nextPath string) {
 	if pagination.HasPrevious || pagination.HasNext {
 		<nav

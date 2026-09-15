@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData は編集提案詳細画面に渡すデータ構造体です
+// ShowDataは編集提案詳細画面に渡すデータ構造体です
 type ShowData struct {
 	CSRFToken                  string
 	Space                      viewmodel.Space
@@ -23,12 +23,12 @@ type ShowData struct {
 	CanClose                   bool
 	CanUpdateSuggestion        bool
 	CanUpdateSuggestionComment bool
-	// ApplyError は反映処理のバリデーション失敗時にセットされる。
-	// ページタイトルはテンプレート側で通常補間し自動エスケープ、メッセージは @templ.Raw で展開する。
+	// ApplyErrorは反映処理のバリデーション失敗時にセットされる。
+	// ページタイトルはテンプレート側で通常補間し自動エスケープ、メッセージは @templ.Rawで展開する。
 	ApplyError *viewmodel.SuggestionApplyError
 }
 
-// Show は編集提案詳細画面のコンテンツを表示します
+// Showは編集提案詳細画面のコンテンツを表示します
 templ Show(data ShowData) {
 	<div class="py-4">
 		<div class="max-w-3xl w-full mx-auto">
@@ -116,7 +116,7 @@ templ Show(data ShowData) {
 	</div>
 }
 
-// showActions は編集提案詳細画面のアクションボタンを表示します
+// showActionsは編集提案詳細画面のアクションボタンを表示します
 templ showActions(data ShowData) {
 	if data.CanUpdateSuggestion {
 		<a
@@ -130,7 +130,7 @@ templ showActions(data ShowData) {
 	}
 }
 
-// showComments はコメント一覧を表示します
+// showCommentsはコメント一覧を表示します
 templ showComments(data ShowData) {
 	<div class="flex flex-col gap-4">
 		for _, c := range data.Comments {
@@ -146,7 +146,7 @@ templ showComments(data ShowData) {
 	</div>
 }
 
-// showApplyForm は反映ボタンを表示します
+// showApplyFormは反映ボタンを表示します
 templ showApplyForm(data ShowData) {
 	<form
 		action={ templ.SafeURL(string(templates.SuggestionApplyPath(data.Space.Identifier, data.Suggestion.Number))) }
@@ -163,7 +163,7 @@ templ showApplyForm(data ShowData) {
 	</form>
 }
 
-// showCloseForm はクローズボタンを表示します
+// showCloseFormはクローズボタンを表示します
 templ showCloseForm(data ShowData) {
 	<form
 		action={ templ.SafeURL(string(templates.SuggestionClosePath(data.Space.Identifier, data.Suggestion.Number))) }
@@ -180,7 +180,7 @@ templ showCloseForm(data ShowData) {
 	</form>
 }
 
-// commentActions はコメントのドロップダウンメニューに表示するアクション一覧を返します
+// commentActionsはコメントのドロップダウンメニューに表示するアクション一覧を返します
 func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCommentForList) []components.PostAction {
 	if !data.CanUpdateSuggestionComment {
 		return nil
@@ -193,7 +193,7 @@ func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCo
 	}
 }
 
-// showCommentForm はコメント入力フォームを表示します
+// showCommentFormはコメント入力フォームを表示します
 templ showCommentForm(data ShowData) {
 	<form
 		action={ templ.SafeURL(string(templates.SuggestionCommentsPath(data.Space.Identifier, data.Suggestion.Number))) }

@@ -1,26 +1,13 @@
 -- name: ListJoinedTopicsByUser :many
--- Returns the topics the user is joined to for the home page.
--- Joins topic_members → topics → spaces and limits results to spaces in which the user is
--- an active member.
--- Ordering uses topic_members.last_page_modified_at DESC NULLS LAST, then topic number
--- DESC. The intent is "sort by the viewer's own activity": the home page surfaces topics
--- the user has most recently engaged with via a publish action.
--- Tradeoffs to accept:
---   - topic_members.last_page_modified_at is updated only on the topic_member of the user
---     who performed the publish (see publish_page.go / apply_suggestion.go), so passive
---     viewing and other members' edits do not move a topic up.
---   - Topics the user has joined but has never published in have NULL and fall to the
---     bottom (NULLS LAST). Within the NULL bucket the higher topic number wins.
---
--- [Ja] ホーム画面に表示する、ユーザーが参加しているトピック一覧を取得する。
--- topic_members → topics → spaces を JOIN し、アクティブなスペースメンバーのスペースに限定。
--- 並び順は topic_members.last_page_modified_at の降順 (NULLS LAST)、同点はトピック番号の降順。
+-- ホーム画面に表示する、ユーザーが参加しているトピック一覧を取得する。
+-- topic_members → topics → spacesをJOINし、アクティブなスペースメンバーのスペースに限定。
+-- 並び順はtopic_members.last_page_modified_atの降順 (NULLS LAST)、同点はトピック番号の降順。
 -- 「自分の作業視点」で並べたいため、自分が直近にページ公開操作を行ったトピックを上に出す。
 -- ただし以下のトレードオフは許容する:
---   - topic_members.last_page_modified_at は公開操作を行った本人の topic_member しか更新
---     されない (publish_page.go / apply_suggestion.go 参照)。閲覧や他メンバーの編集では
+--   - topic_members.last_page_modified_atは公開操作を行った本人のtopic_memberしか更新
+--     されない (publish_page.go / apply_suggestion.go参照)。閲覧や他メンバーの編集では
 --     順序が動かない。
---   - まだ自分が公開操作をしていないトピックは NULL となり末尾 (NULLS LAST) に並ぶ。NULL
+--   - まだ自分が公開操作をしていないトピックはNULLとなり末尾 (NULLS LAST) に並ぶ。NULL
 --     同士はトピック番号の大きい方が上に来る。
 SELECT
   t.id AS topic_id,

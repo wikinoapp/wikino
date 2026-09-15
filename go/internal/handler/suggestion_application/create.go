@@ -17,7 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create は編集提案を反映します (POST /s/{space_identifier}/suggestions/{suggestion_number}/apply)
+// Createは編集提案を反映します (POST /s/{space_identifier}/suggestions/{suggestion_number}/apply)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -61,7 +61,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 	suggestionPath := string(templates.SuggestionShowPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(suggestionNumber)))
 
 	if ae := model.AsSuggestionApplyError(err); ae != nil {
-		// バリデーションエラー → 編集提案詳細ページを 422 で再描画
+		// バリデーションエラー → 編集提案詳細ページを422で再描画
 		output, getErr := h.getSuggestionDetailUsecase.Execute(ctx, usecase.GetSuggestionDetailInput{
 			SpaceIdentifier:  spaceIdentifier,
 			SuggestionNumber: suggestionNumber,

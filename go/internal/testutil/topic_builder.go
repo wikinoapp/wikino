@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// TopicBuilder はトピックテストデータのビルダー
+// TopicBuilderはトピックテストデータのビルダー
 type TopicBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -22,7 +22,7 @@ type TopicBuilder struct {
 	discardedAt *time.Time
 }
 
-// NewTopicBuilder は TopicBuilder を生成します
+// NewTopicBuilderはTopicBuilderを生成します
 func NewTopicBuilder(t *testing.T, tx *sql.Tx) *TopicBuilder {
 	t.Helper()
 	return &TopicBuilder{
@@ -35,44 +35,44 @@ func NewTopicBuilder(t *testing.T, tx *sql.Tx) *TopicBuilder {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *TopicBuilder) WithSpaceID(spaceID model.SpaceID) *TopicBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithNumber はナンバーを設定します
+// WithNumberはナンバーを設定します
 func (b *TopicBuilder) WithNumber(number int32) *TopicBuilder {
 	b.number = number
 	return b
 }
 
-// WithName は名前を設定します
+// WithNameは名前を設定します
 func (b *TopicBuilder) WithName(name string) *TopicBuilder {
 	b.name = name
 	return b
 }
 
-// WithDescription は説明を設定します
+// WithDescriptionは説明を設定します
 func (b *TopicBuilder) WithDescription(description string) *TopicBuilder {
 	b.description = description
 	return b
 }
 
-// WithVisibility は公開範囲を設定します
+// WithVisibilityは公開範囲を設定します
 func (b *TopicBuilder) WithVisibility(visibility int32) *TopicBuilder {
 	b.visibility = visibility
 	return b
 }
 
-// WithDiscarded は廃棄済み状態に設定します
+// WithDiscardedは廃棄済み状態に設定します
 func (b *TopicBuilder) WithDiscarded() *TopicBuilder {
 	now := time.Now()
 	b.discardedAt = &now
 	return b
 }
 
-// Build はトピックを作成し、IDを返します
+// Buildはトピックを作成し、IDを返します
 func (b *TopicBuilder) Build() model.TopicID {
 	b.t.Helper()
 
@@ -96,7 +96,7 @@ func (b *TopicBuilder) Build() model.TopicID {
 	return model.TopicID(id)
 }
 
-// TopicBuilderDB はDBを直接使用するトピックテストデータのビルダー
+// TopicBuilderDBはDBを直接使用するトピックテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type TopicBuilderDB struct {
 	t  *testing.T
@@ -109,7 +109,7 @@ type TopicBuilderDB struct {
 	visibility  int32
 }
 
-// NewTopicBuilderDB は TopicBuilderDB を生成します
+// NewTopicBuilderDBはTopicBuilderDBを生成します
 func NewTopicBuilderDB(t *testing.T, db *sql.DB) *TopicBuilderDB {
 	t.Helper()
 	return &TopicBuilderDB{
@@ -122,31 +122,31 @@ func NewTopicBuilderDB(t *testing.T, db *sql.DB) *TopicBuilderDB {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *TopicBuilderDB) WithSpaceID(spaceID model.SpaceID) *TopicBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithNumber はナンバーを設定します
+// WithNumberはナンバーを設定します
 func (b *TopicBuilderDB) WithNumber(number int32) *TopicBuilderDB {
 	b.number = number
 	return b
 }
 
-// WithName は名前を設定します
+// WithNameは名前を設定します
 func (b *TopicBuilderDB) WithName(name string) *TopicBuilderDB {
 	b.name = name
 	return b
 }
 
-// WithVisibility は公開設定を設定します
+// WithVisibilityは公開設定を設定します
 func (b *TopicBuilderDB) WithVisibility(visibility int32) *TopicBuilderDB {
 	b.visibility = visibility
 	return b
 }
 
-// Build はトピックを作成し、IDを返します
+// Buildはトピックを作成し、IDを返します
 func (b *TopicBuilderDB) Build() model.TopicID {
 	b.t.Helper()
 

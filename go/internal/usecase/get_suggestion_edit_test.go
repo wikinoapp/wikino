@@ -64,25 +64,25 @@ func TestGetSuggestionEditUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Suggestion == nil {
-			t.Fatal("Suggestion should not be nil")
+			t.Fatal("Suggestionがnil")
 		}
 		if output.Suggestion.Title != "編集テスト提案" {
-			t.Errorf("Suggestion.Title = %q, want %q", output.Suggestion.Title, "編集テスト提案")
+			t.Errorf("Suggestion.Title = %q、期待値 = %q", output.Suggestion.Title, "編集テスト提案")
 		}
 		if output.Space == nil {
-			t.Fatal("Space should not be nil")
+			t.Fatal("Spaceがnil")
 		}
 		if output.Topic == nil {
-			t.Fatal("Topic should not be nil")
+			t.Fatal("Topicがnil")
 		}
 		if output.Topic.Name != "編集トピック" {
-			t.Errorf("Topic.Name = %q, want %q", output.Topic.Name, "編集トピック")
+			t.Errorf("Topic.Name = %q、期待値 = %q", output.Topic.Name, "編集トピック")
 		}
 	})
 
@@ -93,15 +93,15 @@ func TestGetSuggestionEditUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		user, ok := output.UserMap[spaceMemberID]
 		if !ok {
-			t.Fatal("UserMap should contain the creator's user info")
+			t.Fatal("UserMapに作成者のユーザー情報が含まれていない")
 		}
 		if user.Name != "編集太郎" {
-			t.Errorf("user.Name = %q, want %q", user.Name, "編集太郎")
+			t.Errorf("user.Name = %q、期待値 = %q", user.Name, "編集太郎")
 		}
 	})
 
@@ -112,13 +112,13 @@ func TestGetSuggestionEditUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if !output.CanUpdateSuggestion {
-			t.Error("CanUpdateSuggestion should be true for space owner")
+			t.Error("スペースオーナーなのにCanUpdateSuggestionがfalse")
 		}
 		if !output.CanUpdateSuggestionComment {
-			t.Error("CanUpdateSuggestionComment should be true for space owner")
+			t.Error("スペースオーナーなのにCanUpdateSuggestionCommentがfalse")
 		}
 	})
 
@@ -129,10 +129,10 @@ func TestGetSuggestionEditUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for nonexistent space")
+			t.Error("存在しないスペースなのに出力がnilではない")
 		}
 	})
 
@@ -143,10 +143,10 @@ func TestGetSuggestionEditUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for nonexistent suggestion number")
+			t.Error("存在しない編集提案番号なのに出力がnilではない")
 		}
 	})
 
@@ -162,10 +162,10 @@ func TestGetSuggestionEditUsecase_Execute(t *testing.T) {
 			UserID:           nonMemberUserID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for non-member user")
+			t.Error("非メンバーのユーザーなのに出力がnilではない")
 		}
 	})
 }
@@ -244,10 +244,10 @@ func TestGetSuggestionEditUsecase_Execute_非公開トピック(t *testing.T) {
 			UserID:           ownerUserID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for space owner")
+			t.Fatal("スペースオーナーなのに出力がnil")
 		}
 	})
 
@@ -258,10 +258,10 @@ func TestGetSuggestionEditUsecase_Execute_非公開トピック(t *testing.T) {
 			UserID:           memberUserID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for topic member")
+			t.Fatal("トピックメンバーなのに出力がnil")
 		}
 	})
 
@@ -272,10 +272,10 @@ func TestGetSuggestionEditUsecase_Execute_非公開トピック(t *testing.T) {
 			UserID:           nonMemberUserID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for space member on private topic")
+			t.Fatal("非公開トピックでスペースメンバーなのに出力がnil")
 		}
 	})
 }

@@ -15,15 +15,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create はリカバリーコード検証処理を行います (POST /sign_in/two_factor/recovery)
+// Createはリカバリーコード検証処理を行います (POST /sign_in/two_factor/recovery)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// The form is parsed before the pending user check so that an expired pending user cookie still
-	// sends the visitor back to sign-in with the page they asked for.
-	//
-	// [Ja] pending user cookie が期限切れのときも訪問者が求めたページを付けてサインインへ戻せる
-	// よう、pending user の確認より前にフォームをパースする。
+	// pending user cookieが期限切れのときも訪問者が求めたページを付けてサインインへ戻せる
+	// よう、pending userの確認より前にフォームをパースする。
 	if err := r.ParseForm(); err != nil {
 		slog.ErrorContext(ctx, "フォームのパースに失敗", "error", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -43,7 +40,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	recoveryCode := r.FormValue("recovery_code")
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	// UseCaseを実行（バリデーション + リカバリーコード消費 + セッション作成）
+	// UseCaseを実行 (バリデーション + リカバリーコード消費 + セッション作成)
 	output, err := h.createRecoveryCodeSessionUC.Execute(ctx, usecase.CreateRecoveryCodeSessionInput{
 		UserID:       pendingUserID,
 		RecoveryCode: recoveryCode,
@@ -80,14 +77,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_sign_in_success"))
 
-	// Send the visitor to the back parameter when it is a safe destination, and to the home page
-	// otherwise.
-	//
-	// [Ja] back パラメータが安全な遷移先ならそこへ送り、そうでなければホームへ送る。
+	// backパラメータが安全な遷移先ならそこへ送り、そうでなければホームへ送る。
 	http.Redirect(w, r, redirect.GetSafeRedirectURL(backURL), http.StatusFound)
 }
 
-// renderRecoveryForm はリカバリーコードフォームをエラー付きでレンダリングします
+// renderRecoveryFormはリカバリーコードフォームをエラー付きでレンダリングします
 func (h *Handler) renderRecoveryForm(w http.ResponseWriter, r *http.Request, formErrors *model.ValidationError, csrfToken string, backURL string) {
 	ctx := r.Context()
 

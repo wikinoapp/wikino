@@ -46,37 +46,34 @@ func TestExportSender_SendSucceeded(t *testing.T) {
 			ctx := i18n.SetLocale(context.Background(), tt.locale)
 			downloadURL := "https://example.dev/s/wikino/settings/exports/abc/download"
 			if err := sender.SendSucceeded(ctx, "test@example.com", downloadURL, "https://example.dev", tt.locale); err != nil {
-				t.Fatalf("SendSucceeded() error = %v", err)
+				t.Fatalf("SendSucceeded()のエラー = %v", err)
 			}
 
 			if len(noop.SentEmails) != 1 {
-				t.Fatalf("SentEmails length = %d, want 1", len(noop.SentEmails))
+				t.Fatalf("SentEmailsの件数 = %d、期待値 = 1", len(noop.SentEmails))
 			}
 
 			sent := noop.SentEmails[0]
 			if sent.To != "test@example.com" {
-				t.Errorf("To = %s, want test@example.com", sent.To)
+				t.Errorf("To = %s、期待値 = test@example.com", sent.To)
 			}
 			if sent.Subject != tt.wantSubject {
-				t.Errorf("Subject = %q, want %q", sent.Subject, tt.wantSubject)
+				t.Errorf("Subject = %q、期待値 = %q", sent.Subject, tt.wantSubject)
 			}
 
 			body := renderComponent(t, ctx, sent.TextBody)
 			if !strings.Contains(body, tt.wantInBody) {
-				t.Errorf("本文に %q が含まれていません: %q", tt.wantInBody, body)
+				t.Errorf("本文に%qが含まれていません: %q", tt.wantInBody, body)
 			}
 			if !strings.Contains(body, downloadURL) {
 				t.Errorf("本文にダウンロードURLが含まれていません: %q", body)
 			}
 
-			// The wording is built from the same constant the download link expires by, so the two
-			// cannot say different things.
-			//
-			// [Ja] 文面はダウンロードのリンクが期限切れになるのと同じ定数から組み立てるため、
+			// 文面はダウンロードのリンクが期限切れになるのと同じ定数から組み立てるため、
 			// 両者が別のことを言うことはない。
 			hours := int(model.ExportDownloadExpiration.Hours())
 			if !strings.Contains(body, strconv.Itoa(hours)) {
-				t.Errorf("本文に有効期間 %d が含まれていません: %q", hours, body)
+				t.Errorf("本文に有効期間%dが含まれていません: %q", hours, body)
 			}
 		})
 	}
@@ -115,21 +112,21 @@ func TestExportSender_SendFailed(t *testing.T) {
 			ctx := i18n.SetLocale(context.Background(), tt.locale)
 			exportURL := "https://example.dev/s/wikino/settings/exports/abc"
 			if err := sender.SendFailed(ctx, "test@example.com", exportURL, "https://example.dev", tt.locale); err != nil {
-				t.Fatalf("SendFailed() error = %v", err)
+				t.Fatalf("SendFailed()のエラー = %v", err)
 			}
 
 			if len(noop.SentEmails) != 1 {
-				t.Fatalf("SentEmails length = %d, want 1", len(noop.SentEmails))
+				t.Fatalf("SentEmailsの件数 = %d、期待値 = 1", len(noop.SentEmails))
 			}
 
 			sent := noop.SentEmails[0]
 			if sent.Subject != tt.wantSubject {
-				t.Errorf("Subject = %q, want %q", sent.Subject, tt.wantSubject)
+				t.Errorf("Subject = %q、期待値 = %q", sent.Subject, tt.wantSubject)
 			}
 
 			body := renderComponent(t, ctx, sent.TextBody)
 			if !strings.Contains(body, tt.wantInBody) {
-				t.Errorf("本文に %q が含まれていません: %q", tt.wantInBody, body)
+				t.Errorf("本文に%qが含まれていません: %q", tt.wantInBody, body)
 			}
 			if !strings.Contains(body, exportURL) {
 				t.Errorf("本文にエクスポート画面のURLが含まれていません: %q", body)
@@ -138,15 +135,13 @@ func TestExportSender_SendFailed(t *testing.T) {
 	}
 }
 
-// renderComponent renders a mail body so that the test can look at the text a reader would get.
-//
-// [Ja] renderComponent はメール本文をレンダリングし、読み手が受け取る文面をテストが見られる
+// renderComponentはメール本文をレンダリングし、読み手が受け取る文面をテストが見られる
 // ようにする。
 func renderComponent(t *testing.T, ctx context.Context, component templ.Component) string {
 	t.Helper()
 
 	if component == nil {
-		t.Fatal("テンプレートが nil です")
+		t.Fatal("テンプレートがnilです")
 	}
 
 	var buf bytes.Buffer

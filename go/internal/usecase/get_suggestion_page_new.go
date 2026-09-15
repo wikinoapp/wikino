@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetSuggestionPageNewUsecase は編集提案ページ追加画面のデータ取得ユースケース
+// GetSuggestionPageNewUsecaseは編集提案ページ追加画面のデータ取得ユースケース
 type GetSuggestionPageNewUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -19,7 +19,7 @@ type GetSuggestionPageNewUsecase struct {
 	draftPageRepo   *repository.DraftPageRepository
 }
 
-// NewGetSuggestionPageNewUsecase は GetSuggestionPageNewUsecase を生成する
+// NewGetSuggestionPageNewUsecaseはGetSuggestionPageNewUsecaseを生成する
 func NewGetSuggestionPageNewUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -38,14 +38,14 @@ func NewGetSuggestionPageNewUsecase(
 	}
 }
 
-// GetSuggestionPageNewInput は編集提案ページ追加画面のデータ取得の入力パラメータ
+// GetSuggestionPageNewInputは編集提案ページ追加画面のデータ取得の入力パラメータ
 type GetSuggestionPageNewInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
 	UserID           model.UserID
 }
 
-// GetSuggestionPageNewOutput は編集提案ページ追加画面のデータ取得の出力パラメータ
+// GetSuggestionPageNewOutputは編集提案ページ追加画面のデータ取得の出力パラメータ
 type GetSuggestionPageNewOutput struct {
 	Space      *model.Space
 	Topic      *model.Topic
@@ -53,7 +53,7 @@ type GetSuggestionPageNewOutput struct {
 	DraftPages []*model.DraftPage
 }
 
-// Execute は編集提案ページ追加画面用のデータを取得する
+// Executeは編集提案ページ追加画面用のデータを取得する
 func (uc *GetSuggestionPageNewUsecase) Execute(ctx context.Context, input GetSuggestionPageNewInput) (*GetSuggestionPageNewOutput, error) {
 	// スペースを取得
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
@@ -120,7 +120,7 @@ func (uc *GetSuggestionPageNewUsecase) Execute(ctx context.Context, input GetSug
 		}
 	}
 
-	// トピック内の自分の下書きページ一覧を取得（編集提案にリンクされていないもの）
+	// トピック内の自分の下書きページ一覧を取得 (編集提案にリンクされていないもの)
 	draftPages, err := uc.draftPageRepo.ListByMemberAndTopic(ctx, spaceMember.ID, suggestion.TopicID, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("下書きページの取得に失敗: %w", err)

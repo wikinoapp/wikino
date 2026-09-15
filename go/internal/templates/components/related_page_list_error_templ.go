@@ -11,11 +11,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// RelatedPageListNotFound renders a local error that can safely replace a related-page pagination
-// target in htmx 4, which swaps 404 responses as well as successful responses.
-//
-// [Ja] RelatedPageListNotFound は関連ページのページネーション領域を安全に置換できる局所エラーを
-// 描画する。htmx 4 は成功応答だけでなく 404 応答もスワップするため、このフラグメントを使う。
+// RelatedPageListNotFoundは関連ページのページネーション領域を安全に置換できる局所エラーを
+// 描画する。htmx 4は成功応答だけでなく404応答もスワップするため、このフラグメントを使う。
 func RelatedPageListNotFound() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -52,7 +49,7 @@ func RelatedPageListNotFound() templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "error_not_found_message"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_error.templ`, Line: 22, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_error.templ`, Line: 15, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {

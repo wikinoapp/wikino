@@ -19,7 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Update はページを公開します (PATCH /s/{space_identifier}/pages/{page_number})
+// Updateはページを公開します (PATCH /s/{space_identifier}/pages/{page_number})
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -44,7 +44,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	body := r.FormValue("body")
 
-	// UseCase を実行
+	// UseCaseを実行
 	publishOutput, err := h.publishPageUC.Execute(ctx, usecase.PublishPageInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),
@@ -99,13 +99,9 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
-// renderEditWithErrors re-renders the editor on a validation error. Space-aware links are built
-// from the persisted identifier in output, so it deliberately does not take one derived from URL
-// parameters.
-//
-// [Ja] renderEditWithErrors はバリデーションエラー時に編集画面を再表示します。
-// スペース識別子を含むリンクの組み立てには output に含まれる保存済みの値を使うため、
-// URL パラメータ由来の識別子は受け取りません。
+// renderEditWithErrorsはバリデーションエラー時に編集画面を再表示します。
+// スペース識別子を含むリンクの組み立てにはoutputに含まれる保存済みの値を使うため、
+// URLパラメータ由来の識別子は受け取りません。
 func (h *Handler) renderEditWithErrors(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -121,16 +117,10 @@ func (h *Handler) renderEditWithErrors(
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
-	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
-	// the same form.
-	//
-	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
 	spaceIdentVM := spaceVM.Identifier
 
-	// Re-rendering the editor after a validation error starts every listing at its first page: the
-	// submitted form carries no related-page pagination state.
-	//
-	// [Ja] バリデーションエラー後の編集画面の再描画では、各一覧を 1 ページ目から始める。送信された
+	// バリデーションエラー後の編集画面の再描画では、各一覧を1ページ目から始める。送信された
 	// フォームは関連ページのページネーション状態を持たないためである。
 	linkState := viewmodel.PageLinkState{Context: viewmodel.PageLinkContextEdit}.Normalized()
 
@@ -180,18 +170,14 @@ func (h *Handler) renderEditWithErrors(
 		BacklinkList:     linkResult.BacklinkList,
 		RelatedPageState: linkState,
 		ManualSaveURL:    string(templates.PageDraftPagePath(spaceIdentVM, int32(output.Page.Number))),
-		// The editor stays within a single space, so omit the space label on each draft card.
-		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
+		// 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
 		DraftPages: viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
 		ZenMode:    zenModeFromRequest(r),
 	})
 
 	currentUser := middleware.UserFromContext(ctx)
 
-	// The editor supplies the global-nav state via GlobalNav. PageNamePageEdit matches no nav item,
-	// so no item is highlighted (the draft list column, not the nav, handles in-screen navigation).
-	//
-	// [Ja] 編集画面はグローバルナビの状態を GlobalNav で供給する。PageNamePageEdit はどのナビ項目にも
+	// 編集画面はグローバルナビの状態をGlobalNavで供給する。PageNamePageEditはどのナビ項目にも
 	// 一致しないため、いずれの項目もアクティブにならない (画面内のナビゲーションはナビではなく
 	// 下書き一覧カラムが担う)。
 	navData := components.GlobalNavData{

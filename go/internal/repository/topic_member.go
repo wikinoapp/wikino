@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// TopicMemberRepository はトピックメンバーリポジトリ
+// TopicMemberRepositoryはトピックメンバーリポジトリ
 type TopicMemberRepository struct {
 	q *query.Queries
 }
 
-// NewTopicMemberRepository は TopicMemberRepository を生成する
+// NewTopicMemberRepositoryはTopicMemberRepositoryを生成する
 func NewTopicMemberRepository(q *query.Queries) *TopicMemberRepository {
 	return &TopicMemberRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *TopicMemberRepository) WithTx(tx *sql.Tx) *TopicMemberRepository {
 	return &TopicMemberRepository{q: r.q.WithTx(tx)}
 }
 
-// FindBySpaceMemberAndTopic はスペースメンバーIDとトピックIDでトピックメンバーを取得する
+// FindBySpaceMemberAndTopicはスペースメンバーIDとトピックIDでトピックメンバーを取得する
 func (r *TopicMemberRepository) FindBySpaceMemberAndTopic(ctx context.Context, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, topicID model.TopicID) (*model.TopicMember, error) {
 	row, err := r.q.FindTopicMemberBySpaceMemberAndTopic(ctx, query.FindTopicMemberBySpaceMemberAndTopicParams{
 		SpaceMemberID: string(spaceMemberID),
@@ -41,13 +41,9 @@ func (r *TopicMemberRepository) FindBySpaceMemberAndTopic(ctx context.Context, s
 	return r.toModel(row), nil
 }
 
-// ListBySpaceMemberAndTopics fetches the topic memberships of the given space member for the
-// given topic ids in a single query. It replaces per-topic lookups (N+1) with one query where
-// permissions for many topics must be resolved at once, such as on the space detail page.
-//
-// [Ja] ListBySpaceMemberAndTopics は、スペースメンバーが参加しているトピックメンバーを
+// ListBySpaceMemberAndTopicsは、スペースメンバーが参加しているトピックメンバーを
 // トピックIDリストで一括取得する。スペース詳細のように複数トピックの権限をまとめて
-// 判定する場面で、トピックごとの単発クエリ (N+1) を 1 回のクエリに置き換えるために使う。
+// 判定する場面で、トピックごとの単発クエリ (N+1) を1回のクエリに置き換えるために使う。
 func (r *TopicMemberRepository) ListBySpaceMemberAndTopics(ctx context.Context, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, topicIDs []model.TopicID) ([]*model.TopicMember, error) {
 	if len(topicIDs) == 0 {
 		return nil, nil
@@ -68,14 +64,9 @@ func (r *TopicMemberRepository) ListBySpaceMemberAndTopics(ctx context.Context, 
 	return topicMembers, nil
 }
 
-// ListByUserAndTopics fetches the topic memberships the given user holds across the given topics in
-// a single query, joining space_members to resolve the user. It replaces per-topic lookups (N+1)
-// with one query where create permissions for topics spanning many spaces must be resolved at once,
-// such as on the home page.
-//
-// [Ja] ListByUserAndTopics は、ユーザーが指定したトピック群で持つトピックメンバーを 1 クエリで
-// 一括取得する (space_members と JOIN してユーザーを解決する)。ホーム画面のように複数スペースに
-// またがるトピックの作成権限をまとめて判定する場面で、トピックごとの単発クエリ (N+1) を 1 回の
+// ListByUserAndTopicsは、ユーザーが指定したトピック群で持つトピックメンバーを1クエリで
+// 一括取得する (space_membersとJOINしてユーザーを解決する)。ホーム画面のように複数スペースに
+// またがるトピックの作成権限をまとめて判定する場面で、トピックごとの単発クエリ (N+1) を1回の
 // クエリに置き換えるために使う。
 func (r *TopicMemberRepository) ListByUserAndTopics(ctx context.Context, userID model.UserID, spaceIDs []model.SpaceID, topicIDs []model.TopicID) ([]*model.TopicMember, error) {
 	if len(spaceIDs) == 0 || len(topicIDs) == 0 {
@@ -97,7 +88,7 @@ func (r *TopicMemberRepository) ListByUserAndTopics(ctx context.Context, userID 
 	return topicMembers, nil
 }
 
-// UpdateLastPageModifiedAt はトピックメンバーのlast_page_modified_atを更新する
+// UpdateLastPageModifiedAtはトピックメンバーのlast_page_modified_atを更新する
 func (r *TopicMemberRepository) UpdateLastPageModifiedAt(ctx context.Context, spaceID model.SpaceID, topicID model.TopicID, spaceMemberID model.SpaceMemberID, modifiedAt time.Time) error {
 	return r.q.UpdateTopicMemberLastPageModifiedAt(ctx, query.UpdateTopicMemberLastPageModifiedAtParams{
 		LastPageModifiedAt: sql.NullTime{Time: modifiedAt, Valid: true},
@@ -108,18 +99,14 @@ func (r *TopicMemberRepository) UpdateLastPageModifiedAt(ctx context.Context, sp
 	})
 }
 
-// CreateTopicMemberInput holds the values a topic member is created with.
-//
-// [Ja] CreateTopicMemberInput はトピックメンバーの作成に必要な値を保持する。
+// CreateTopicMemberInputはトピックメンバーの作成に必要な値を保持する。
 type CreateTopicMemberInput struct {
 	SpaceID       model.SpaceID
 	TopicID       model.TopicID
 	SpaceMemberID model.SpaceMemberID
 }
 
-// Create adds a space member to a topic.
-//
-// [Ja] Create はスペースメンバーをトピックに参加させる。
+// Createはスペースメンバーをトピックに参加させる。
 func (r *TopicMemberRepository) Create(ctx context.Context, input CreateTopicMemberInput) (*model.TopicMember, error) {
 	row, err := r.q.CreateTopicMember(ctx, query.CreateTopicMemberParams{
 		SpaceID:       string(input.SpaceID),
@@ -133,7 +120,7 @@ func (r *TopicMemberRepository) Create(ctx context.Context, input CreateTopicMem
 	return r.toModel(row), nil
 }
 
-// toModel は query.TopicMember を model.TopicMember に変換する
+// toModelはquery.TopicMemberをmodel.TopicMemberに変換する
 func (r *TopicMemberRepository) toModel(row query.TopicMember) *model.TopicMember {
 	var lastPageModifiedAt *time.Time
 	if row.LastPageModifiedAt.Valid {

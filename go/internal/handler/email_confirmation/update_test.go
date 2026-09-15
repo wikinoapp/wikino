@@ -27,7 +27,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// mockJobInserterForUpdate はテスト用のモック inserter
+// mockJobInserterForUpdateはテスト用のモックinserter
 type mockJobInserterForUpdate struct{}
 
 func (m *mockJobInserterForUpdate) Insert(_ context.Context, _ river.JobArgs, _ *river.InsertOpts) (*rivertype.JobInsertResult, error) {
@@ -110,21 +110,21 @@ func TestUpdate_Success(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/accounts/new" {
-		t.Errorf("wrong redirect location: got %v want /accounts/new", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /accounts/new", location)
 	}
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 	confirmation, err := emailConfirmationRepo.FindByID(ctx, emailConfirmationID)
 	if err != nil {
-		t.Fatalf("failed to find email confirmation: %v", err)
+		t.Fatalf("メールアドレス確認の取得に失敗: %v", err)
 	}
 	if !confirmation.IsSucceeded() {
-		t.Error("email confirmation should be succeeded")
+		t.Error("メールアドレス確認が成功状態になっていない")
 	}
 }
 
@@ -151,12 +151,12 @@ func TestUpdate_NoSession(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/sign_up" {
-		t.Errorf("wrong redirect location: got %v want /sign_up", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /sign_up", location)
 	}
 }
 
@@ -193,12 +193,12 @@ func TestUpdate_EmptyCode(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "入力してください") {
-		t.Error("validation error message not found in response")
+		t.Error("レスポンスにバリデーションエラーのメッセージが見つからない")
 	}
 }
 
@@ -235,12 +235,12 @@ func TestUpdate_InvalidCodeLength(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "6文字") {
-		t.Error("invalid code length error message not found in response")
+		t.Error("レスポンスにコードの長さが不正なエラーメッセージが見つからない")
 	}
 }
 
@@ -277,12 +277,12 @@ func TestUpdate_CodeMismatch(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "正しくありません") {
-		t.Error("code mismatch error message not found in response")
+		t.Error("レスポンスにコード不一致のエラーメッセージが見つからない")
 	}
 }
 
@@ -320,12 +320,12 @@ func TestUpdate_Expired(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "有効期限") {
-		t.Error("expired error message not found in response")
+		t.Error("レスポンスに有効期限切れのエラーメッセージが見つからない")
 	}
 }
 
@@ -362,12 +362,12 @@ func TestUpdate_CaseInsensitiveCode(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/accounts/new" {
-		t.Errorf("wrong redirect location: got %v want /accounts/new", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /accounts/new", location)
 	}
 }
 
@@ -405,11 +405,11 @@ func TestUpdate_AlreadySucceeded(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/accounts/new" {
-		t.Errorf("wrong redirect location: got %v want /accounts/new", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /accounts/new", location)
 	}
 }

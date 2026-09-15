@@ -12,17 +12,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Show sends the viewer to the archive of an export
-// (GET /s/{space_identifier}/settings/exports/{export_id}/download).
-//
-// The response is a redirect to a URL signed for the object storage rather than the bytes
-// themselves, so a large archive is fetched straight from the bucket instead of being streamed
-// through this server.
-//
-// [Ja] Show は閲覧者をエクスポートのアーカイブへ送ります
+// Showは閲覧者をエクスポートのアーカイブへ送ります
 // (GET /s/{space_identifier}/settings/exports/{export_id}/download)。
 //
-// 返すのはバイト列そのものではなく、オブジェクトストレージ向けに署名した URL へのリダイレクトである。
+// 返すのはバイト列そのものではなく、オブジェクトストレージ向けに署名したURLへのリダイレクトである。
 // 大きなアーカイブが本サーバーを経由してストリーミングされるのではなく、バケットから直接取得される
 // ようにするためである。
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {

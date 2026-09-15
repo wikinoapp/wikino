@@ -1,37 +1,18 @@
-// Package seed populates a development database with the data browser
-// verification needs. It creates accounts, spaces, topics, the pages that
-// screens such as pagination cannot be checked without, the drafts those pages
-// are edited through, and the suggestions by which an edit is proposed rather
-// than published.
-//
-// Rows are written through the existing repositories wherever production
-// already has a Create, and through INSERT statements kept inside this package
-// wherever it does not. Seeding is not a reason to grow the Infrastructure
-// layer with code that only the seed calls.
-//
-// Seeded prose bodies are written one line per paragraph. Markdown page bodies
-// render a line break inside a paragraph as a <br>, while suggestion bodies and
-// comments preserve it through white-space: pre-wrap. A body wrapped by hand
-// therefore shows those breaks on the screen instead of the wrapping the
-// browser does at the width the body is read in. The rule covers the bodies
-// filed under bodies/ as well, which is why none of them is named .md: the
-// shared Markdown linter asks every .md file for one sentence per line.
-//
-// [Ja] seed パッケージは開発用データベースへ、ブラウザ確認に必要なデータを投入する。
+// Package seedは開発用データベースへ、ブラウザ確認に必要なデータを投入する。
 // アカウント・スペース・トピックと、ページネーションのように一定のデータが無いと
 // 確認できない画面のためのページ、それらのページを編集するための下書き、そして
 // 公開ではなく提案として編集を行う編集提案を作成する。
 //
-// 行の書き込みには、本番用の Create が既にある対象では既存の Repository を使い、
-// 無い対象では本パッケージ内に閉じた INSERT を使う。シードのために、シードだけが
-// 呼ぶコードを Infrastructure 層へ増やすことはしない。
+// 行の書き込みには、本番用のCreateが既にある対象では既存のRepositoryを使い、
+// 無い対象では本パッケージ内に閉じたINSERTを使う。シードのために、シードだけが
+// 呼ぶコードをInfrastructure層へ増やすことはしない。
 //
-// シードが書く地の文は 1 段落 1 行で書く。Markdown のページ本文は段落内の改行を
-// <br> として描画し、編集提案の本文とコメントは white-space: pre-wrap によって改行を
+// シードが書く地の文は1段落1行で書く。Markdownのページ本文は段落内の改行を
+// <br> として描画し、編集提案の本文とコメントはwhite-space: pre-wrapによって改行を
 // 保つ。手で折り返した本文は、本文が読まれる幅でブラウザが行う折り返しではなく、その
-// 改行を画面に見せることになる。この規則は bodies/ 配下の本文にも及ぶ。そこにある
-// ファイルを 1 つも .md と名付けていないのはそのためで、共通の Markdown リンタが
-// .md を一律に句点改行へ揃えてしまうため。
+// 改行を画面に見せることになる。この規則はbodies/ 配下の本文にも及ぶ。そこにある
+// ファイルを1つも .mdと名付けていないのはそのためで、共通のMarkdownリンタが
+// .mdを一律に句点改行へ揃えてしまうため。
 package seed
 
 import (
@@ -45,177 +26,98 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 )
 
-// Runner performs one seeding run against db.
-//
-// [Ja] Runner は db に対するシード実行 1 回分を受け持つ。
+// Runnerはdbに対するシード実行1回分を受け持つ。
 type Runner struct {
 	db  *sql.DB
 	cfg *config.Config
 	out io.Writer
 }
 
-// NewRunner returns a Runner that writes its progress to out.
-//
-// [Ja] NewRunner は進捗を out に書く Runner を返す。
+// NewRunnerは進捗をoutに書くRunnerを返す。
 func NewRunner(db *sql.DB, cfg *config.Config, out io.Writer) *Runner {
 	return &Runner{db: db, cfg: cfg, out: out}
 }
 
-// amounts is how much of each kind of data a run creates. The counts are held
-// in one struct rather than written where they are used so that what the seed
-// produces can be read in one place, and so that tests can ask for a few rows
-// where a run asks for hundreds.
-//
-// [Ja] amounts は、実行 1 回分が各種データを何件作るか。件数を使う場所へ書かず
-// 1 つの構造体にまとめているのは、シードが何を作るのかを 1 箇所で読めるように
+// amountsは、実行1回分が各種データを何件作るか。件数を使う場所へ書かず
+// 1つの構造体にまとめているのは、シードが何を作るのかを1箇所で読めるように
 // するためと、実行が数百件を求める場所でテストが数件を求められるようにするため。
 type amounts struct {
-	// handbookPages fills topics.handbook. 250 pages is 3 pages of the
-	// topic's listing at 100 per page, the last of them holding 50: the first,
-	// a middle and a partial last page can all be seen.
-	//
-	// [Ja] handbookPages は「ハンドブック」トピックを埋める。250 ページは、1 ページ
-	// 100 件のトピック一覧で 3 ページ分にあたり、最終ページが 50 件の端数になる。
+	// handbookPagesは「ハンドブック」トピックを埋める。250ページは、1ページ
+	// 100件のトピック一覧で3ページ分にあたり、最終ページが50件の端数になる。
 	// 最初・途中・端数の最終ページのいずれも確認できる。
 	handbookPages int
-	// privateNotesPages and secretPages give the private topics pages of their
-	// own, so that a private topic can be checked for what it holds and not
-	// only for whether it is listed. Most of them go to topics.privateNotes, the
-	// topic both accounts have joined, because those are the pages both
-	// accounts can open.
-	//
-	// Together with handbookPages they also fill the space-wide listing. The
-	// exact total is not settled here — later generators publish pages of
-	// their own — so what these counts hold to is a total between 301 and 400,
-	// which at 100 per page is 4 pages with a remainder on the last.
-	//
-	// [Ja] privateNotesPages と secretPages は、非公開トピックにもページを与える。
+	// privateNotesPagesとsecretPagesは、非公開トピックにもページを与える。
 	// 非公開トピックについて、一覧に出るかどうかだけでなく、中に何があるかも
 	// 確認できるようにするため。多くを「非公開ノート」に置くのは、両アカウントが
 	// 参加しているトピックであり、そこのページが両方から開けるものになるため。
 	//
-	// handbookPages と合わせて、スペース全体の一覧も埋める。正確な合計はここでは
+	// handbookPagesと合わせて、スペース全体の一覧も埋める。正確な合計はここでは
 	// 決まらない (後続の生成器も自前の公開済みページを追加するため) ため、これらの
-	// 件数が守るのは合計が 301〜400 に収まること。1 ページ 100 件ならこれは 4 ページ
+	// 件数が守るのは合計が301〜400に収まること。1ページ100件ならこれは4ページ
 	// 分にあたり、最終ページが端数になる。
 	privateNotesPages int
 	secretPages       int
-	// linkHubTargets, linkHubBacklinks and nestedBacklinks size the three
-	// listings that appear under a page body. Each one paginates on its own and
-	// at its own size, so each needs a count of its own to leave a partial last
-	// page: 50 links at 15 per page is 4 pages with 5 on the last, 45 backlinks
-	// at 14 is 4 pages with 3, and 20 nested backlinks at 13 is 2 pages with 7.
-	//
-	// [Ja] linkHubTargets・linkHubBacklinks・nestedBacklinks は、ページ本文の下に
-	// 並ぶ 3 つの一覧の大きさを決める。3 つはそれぞれ独立に、しかも異なる件数で
+	// linkHubTargets・linkHubBacklinks・nestedBacklinksは、ページ本文の下に
+	// 並ぶ3つの一覧の大きさを決める。3つはそれぞれ独立に、しかも異なる件数で
 	// ページングするため、端数の最終ページを作るにはそれぞれに件数が要る。リンクは
-	// 1 ページ 15 件で 50 件なら 4 ページ (端数 5)、バックリンクは 1 ページ 14 件で
-	// 45 件なら 4 ページ (端数 3)、ネストしたバックリンクは 1 ページ 13 件で 20 件
-	// なら 2 ページ (端数 7) になる。
+	// 1ページ15件で50件なら4ページ (端数5)、バックリンクは1ページ14件で
+	// 45件なら4ページ (端数3)、ネストしたバックリンクは1ページ13件で20件
+	// なら2ページ (端数7) になる。
 	linkHubTargets   int
 	linkHubBacklinks int
 	nestedBacklinks  int
-	// pinnedPages and trashedPages are the two states a page is put into after
-	// it has been published. Neither one appears in the regular page listings —
-	// pinned pages are shown above them, trashed pages not at all — so these
-	// counts are small and stay out of the counts chosen above: a handful is
-	// enough for the pinned section to have an order worth reading and for the
-	// trash to hold a list rather than a single row.
-	//
-	// [Ja] pinnedPages と trashedPages は、公開後のページが置かれる 2 つの状態。
+	// pinnedPagesとtrashedPagesは、公開後のページが置かれる2つの状態。
 	// どちらも通常のページ一覧には出ない (ピン留めはその上に表示され、ゴミ箱は
 	// まったく出ない) ため、件数は小さく、上で選んだ件数にも影響しない。ピン留めの
-	// 区画に読み取れる順序があり、ゴミ箱が 1 行ではなく一覧になるには、数件あれば
+	// 区画に読み取れる順序があり、ゴミ箱が1行ではなく一覧になるには、数件あれば
 	// 足りる。
 	pinnedPages  int
 	trashedPages int
-	// soloNotesPages and soloSecretPages fill the two topics of seed-solo, the
-	// space only roleOwner has joined. Neither count is chosen to page a
-	// listing: this space is opened to see what is readable from outside it, and
-	// a handful of pages is enough for the public topic to be entered and for
-	// the private one to be a listing rather than a single row.
-	//
-	// The public topic is given the larger of the two because it is the one that
-	// gets browsed from every account. The private topic is only ever opened by
-	// roleOwner; from an account outside the space it is a URL that has to be
-	// not found.
-	//
-	// [Ja] soloNotesPages と soloSecretPages は、roleOwner だけが参加しているスペース
-	// seed-solo の 2 つのトピックを埋める。どちらの件数も一覧をページ送りさせる
+	// soloNotesPagesとsoloSecretPagesは、roleOwnerだけが参加しているスペース
+	// seed-soloの2つのトピックを埋める。どちらの件数も一覧をページ送りさせる
 	// ために選んだものではない。このスペースは、外から何が読めるのかを見るために
-	// 開くものであり、公開トピックに入っていけること、非公開トピックが 1 行では
+	// 開くものであり、公開トピックに入っていけること、非公開トピックが1行では
 	// なく一覧になることには数件で足りる。
 	//
 	// 公開トピックのほうを多くしているのは、すべてのアカウントから閲覧される
-	// トピックであるため。非公開トピックを開くのは roleOwner だけで、スペースの外の
-	// アカウントから見たそれは、見つからない必要のある URL でしかない。
+	// トピックであるため。非公開トピックを開くのはroleOwnerだけで、スペースの外の
+	// アカウントから見たそれは、見つからない必要のあるURLでしかない。
 	soloNotesPages  int
 	soloSecretPages int
-	// ownerDraftPages and collaboratorDraftPages are how many drafts each account
-	// keeps. A draft belongs to the member who wrote it, so the listings that
-	// show them are filled per account rather than once for the space.
-	//
-	// Both counts clear the five drafts the home screen shows, so that screen
-	// holds a full row and drops the rest. roleOwner's also clears the twenty the
-	// editor's draft column shows, which leaves that column with a draft it does
-	// not fit; roleCollaborator is left below it, so the column can be seen both
-	// full and not.
-	//
-	// [Ja] ownerDraftPages と collaboratorDraftPages は、各アカウントが持つ下書きの
+	// ownerDraftPagesとcollaboratorDraftPagesは、各アカウントが持つ下書きの
 	// 件数。下書きは書いたメンバーのものであるため、それを見せる一覧はスペースに
-	// 1 つではなくアカウントごとに埋まる。
+	// 1つではなくアカウントごとに埋まる。
 	//
-	// どちらの件数もホーム画面が見せる 5 件を超えており、あの画面は 1 行分が
-	// 埋まって残りが落ちる。roleOwner の件数はさらに、編集画面の下書きカラムが
-	// 見せる 20 件も超えるため、あのカラムには収まらない下書きが生まれる。
-	// roleCollaborator はその手前に留めており、カラムが埋まり切る状態と切らない
+	// どちらの件数もホーム画面が見せる5件を超えており、あの画面は1行分が
+	// 埋まって残りが落ちる。roleOwnerの件数はさらに、編集画面の下書きカラムが
+	// 見せる20件も超えるため、あのカラムには収まらない下書きが生まれる。
+	// roleCollaboratorはその手前に留めており、カラムが埋まり切る状態と切らない
 	// 状態の両方を確認できる。
 	ownerDraftPages        int
 	collaboratorDraftPages int
-	// draftRevisions is how many times the one draft written to have a history
-	// has been saved. It clears the twenty revisions the editor's edit history
-	// shows, so the oldest entry on that column is not the first save, which is
-	// what tells a list cut short by the limit apart from a complete one.
-	//
-	// [Ja] draftRevisions は、履歴を持たせる目的で書いた 1 件の下書きが保存された
-	// 回数。編集画面の編集履歴が見せる 20 件を超えるため、あのカラムの末尾が最初の
+	// draftRevisionsは、履歴を持たせる目的で書いた1件の下書きが保存された
+	// 回数。編集画面の編集履歴が見せる20件を超えるため、あのカラムの末尾が最初の
 	// 保存にならない。これにより、上限で切られた一覧と全件が並ぶ一覧を見分けられる。
 	draftRevisions int
-	// openSuggestions, appliedSuggestions and closedSuggestions are how many
-	// suggestions each of the two tabs of a topic's suggestion listing holds.
-	// The listing does not paginate, so the open tab is filled until it runs
-	// past the height of a screen rather than to a page's worth of rows. The
-	// closed tab is given fewer, and both of the statuses that land in it.
-	//
-	// openSuggestions counts the suggestions written to show a state of their
-	// own along with the rest, because the listing does not tell them apart.
-	//
-	// [Ja] openSuggestions・appliedSuggestions・closedSuggestions は、トピックの
-	// 編集提案一覧の 2 つのタブがそれぞれ何件を持つか。この一覧はページングしない
-	// ため、オープンのタブは 1 ページ分の行数ではなく画面の高さを超える件数まで
-	// 埋める。クローズのタブは件数を少なくし、そこに入る 2 つのステータスを両方とも
+	// openSuggestions・appliedSuggestions・closedSuggestionsは、トピックの
+	// 編集提案一覧の2つのタブがそれぞれ何件を持つか。この一覧はページングしない
+	// ため、オープンのタブは1ページ分の行数ではなく画面の高さを超える件数まで
+	// 埋める。クローズのタブは件数を少なくし、そこに入る2つのステータスを両方とも
 	// 持たせる。
 	//
-	// openSuggestions は、固有の状態を見せるために書いた編集提案も併せて数える。
+	// openSuggestionsは、固有の状態を見せるために書いた編集提案も併せて数える。
 	// 一覧がそれらを区別しないため。
 	openSuggestions    int
 	appliedSuggestions int
 	closedSuggestions  int
-	// suggestionComments is how long the discussion under the one suggestion
-	// written to carry a thread runs. The comments are all shown at once, so
-	// the count is what makes the thread longer than the suggestion above it
-	// instead of a remark or two below it.
-	//
-	// [Ja] suggestionComments は、スレッドを持たせる目的で書いた 1 件の編集提案の
+	// suggestionCommentsは、スレッドを持たせる目的で書いた1件の編集提案の
 	// 下に続く議論の長さ。コメントは一度にすべて表示されるため、この件数によって
-	// 議論が、下に 1、2 件の発言が付いた状態ではなく、上にある編集提案より長い
+	// 議論が、下に1、2件の発言が付いた状態ではなく、上にある編集提案より長い
 	// ものになる。
 	suggestionComments int
 }
 
-// defaultAmounts is what a run creates. Tests pass their own amounts.
-//
-// [Ja] defaultAmounts は実行 1 回分が作る件数。テストは自前の件数を渡す。
+// defaultAmountsは実行1回分が作る件数。テストは自前の件数を渡す。
 var defaultAmounts = amounts{
 	handbookPages:          250,
 	privateNotesPages:      60,
@@ -236,49 +138,32 @@ var defaultAmounts = amounts{
 	suggestionComments:     6,
 }
 
-// state carries what each generator produced to the generators that follow it,
-// along with what the run laid out before the first one.
-//
-// [Ja] state は各生成器が作ったものを、後続の生成器へ引き渡す。実行が最初の生成器の
+// stateは各生成器が作ったものを、後続の生成器へ引き渡す。実行が最初の生成器の
 // 前に用意したものも合わせて運ぶ。
 type state struct {
 	users  *seededUsers
 	spaces *seededSpaces
 	topics *seededTopics
-	// draftStamps is shared by every generator that writes drafts, so that the
-	// drafts of a run are ordered by the order the run created them rather than
-	// by the phase each one belongs to.
-	//
-	// [Ja] draftStamps は下書きを書くすべての生成器で共有する。実行 1 回分の下書きの
+	// draftStampsは下書きを書くすべての生成器で共有する。実行1回分の下書きの
 	// 並びが、それぞれが属するフェーズではなく、実行が作成した順で決まるようにするため。
 	draftStamps *draftStamps
 }
 
-// generator is one named step of a run. Holding the steps as a list keeps the
-// order in one place and lets the phase numbers be counted off at run time,
-// instead of being written into comments that drift from what actually runs.
-//
-// [Ja] generator は実行 1 回分の名前付きステップ。ステップを一覧として持つことで
-// 順序が 1 箇所にまとまり、フェーズ番号を実行時に採番できる。番号をコメントへ
+// generatorは実行1回分の名前付きステップ。ステップを一覧として持つことで
+// 順序が1箇所にまとまり、フェーズ番号を実行時に採番できる。番号をコメントへ
 // 書き込むと、実際に走る内容とずれていくため。
 type generator struct {
 	name string
 	run  func(ctx context.Context, st *state) error
 }
 
-// Run empties the database and generates the seed data.
-//
-// [Ja] Run はデータベースを空にしてシードデータを生成する。
+// Runはデータベースを空にしてシードデータを生成する。
 func (r *Runner) Run(ctx context.Context) error {
 	if err := EnsureDevEnv(r.cfg.Env); err != nil {
 		return err
 	}
 
-	// Read the roster before touching the database: a roster that cannot be
-	// read is a configuration mistake, and it should surface before anything
-	// has been deleted.
-	//
-	// [Ja] データベースへ触れる前に名簿を読む。名簿を読めないのは設定の誤りであり、
+	// データベースへ触れる前に名簿を読む。名簿を読めないのは設定の誤りであり、
 	// 何かを削除する前に表面化させたいため。
 	roster, err := loadUserRoster(rosterPath)
 	if err != nil {
@@ -289,13 +174,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		return fmt.Errorf("データベースへのpingに失敗: %w", err)
 	}
 
-	// Report which database is about to be emptied, and which roster the
-	// accounts come from. The command destroys every row it manages, so the
-	// developer gets to see the target before the deletion rather than after
-	// it. The roster is named beside it because which accounts a run creates
-	// depends on a file that is not in version control.
-	//
-	// [Ja] これから空にするデータベースと、アカウントの供給元となる名簿を報告する。
+	// これから空にするデータベースと、アカウントの供給元となる名簿を報告する。
 	// 本コマンドは管理対象の行をすべて破棄するため、削除後ではなく削除前に対象を
 	// 目視できるようにする。名簿を並べて出すのは、実行がどのアカウントを作るのかが、
 	// バージョン管理に入っていないファイルに依存しているため。
@@ -367,15 +246,9 @@ func (r *Runner) Run(ctx context.Context) error {
 		{name: "デモスペースのページ", run: func(ctx context.Context, st *state) error {
 			return generateDemoPages(ctx, r.db, r.out, st.spaces, st.topics)
 		}},
-		// The export pages sit last for the same reason their topics sit last
-		// among the topic specs: a page number is handed out in the order the
-		// generators run, and the browser verification points at a screen by the
-		// number in its URL, so a generator inserted above them would move every
-		// screen recorded so far.
-		//
-		// [Ja] エクスポート確認用ページを末尾に置く理由は、そのトピックがトピックの
+		// エクスポート確認用ページを末尾に置く理由は、そのトピックがトピックの
 		// 仕様の末尾に置かれているのと同じである。ページ番号は生成器の実行順に配られ、
-		// ブラウザ確認は URL の番号で画面を指すため、これより上に生成器を挟むと、
+		// ブラウザ確認はURLの番号で画面を指すため、これより上に生成器を挟むと、
 		// そこまでに記録した画面がすべてずれる。
 		{name: "エクスポート確認用ページ", run: func(ctx context.Context, st *state) error {
 			return generateExportPages(ctx, r.db, r.out, st.spaces, st.topics)
@@ -390,17 +263,8 @@ func (r *Runner) Run(ctx context.Context) error {
 		}
 	}
 
-	// The accounts are named only when a generator actually produced them.
-	// state's fields are nil until the step that fills them has run. Generators
-	// are kept in dependency order and may be extended, so the completion log must
-	// not assume that any particular step took place.
-	//
-	// Each account is logged under the role a generator names it by, so that the
-	// address to sign in with can be read off the line that says which role it
-	// belongs to.
-	//
-	// [Ja] アカウントは、生成器が実際に作った場合にだけ出力する。state の
-	// フィールドは、それを埋めるステップが走るまで nil である。生成器は依存順に
+	// アカウントは、生成器が実際に作った場合にだけ出力する。stateの
+	// フィールドは、それを埋めるステップが走るまでnilである。生成器は依存順に
 	// 並べられ、今後追加されるため、完了ログが特定のステップの実行を前提に
 	// してはならない。
 	//
@@ -419,29 +283,16 @@ func (r *Runner) Run(ctx context.Context) error {
 	return nil
 }
 
-// EnsureDevEnv rejects any environment other than development.
-//
-// The seed deletes every row it manages and creates accounts whose password
-// the roster chooses, and the credentials helper prints that password to
-// whoever asks. Against anything but a development database, both have to be
-// impossible rather than merely discouraged.
-//
-// It takes the environment name rather than a *config.Config so that a command
-// can apply the same check to the raw APP_ENV, before config.Load substitutes
-// its development default for an unset value. Every guard calls this one
-// function, so the wording of the refusal cannot drift apart, and the refusal
-// names what it covers rather than the seed alone.
-//
-// [Ja] EnsureDevEnv は開発環境以外での実行を拒否する。
+// EnsureDevEnvは開発環境以外での実行を拒否する。
 //
 // シードは管理対象の行をすべて削除し、名簿が決めたパスワードでサインインできる
 // アカウントを作る。資格情報のヘルパーは、そのパスワードを尋ねた相手へ出力する。
 // 開発用以外のデータベースに対しては、どちらも推奨しないのではなく実行できない
 // ようにする必要がある。
 //
-// *config.Config ではなく環境名を受け取るのは、config.Load が未設定時の既定値を
-// 補う前の生の APP_ENV に対して、コマンド側が同じ検査を適用できるようにするため。
-// すべてのガードがこの 1 つの関数を呼ぶため、拒否の文言がずれることがなく、文言も
+// *config.Configではなく環境名を受け取るのは、config.Loadが未設定時の既定値を
+// 補う前の生のAPP_ENVに対して、コマンド側が同じ検査を適用できるようにするため。
+// すべてのガードがこの1つの関数を呼ぶため、拒否の文言がずれることがなく、文言も
 // シードだけでなく対象全体を名指しする形にしている。
 func EnsureDevEnv(env string) error {
 	if env != "dev" {
@@ -451,9 +302,7 @@ func EnsureDevEnv(env string) error {
 	return nil
 }
 
-// currentDatabase returns the name of the database the connection is bound to.
-//
-// [Ja] currentDatabase は接続先データベースの名前を返す。
+// currentDatabaseは接続先データベースの名前を返す。
 func currentDatabase(ctx context.Context, db *sql.DB) (string, error) {
 	var name string
 	if err := db.QueryRowContext(ctx, "SELECT current_database()").Scan(&name); err != nil {

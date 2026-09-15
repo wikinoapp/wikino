@@ -6,9 +6,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// SettingsGeneralData is what the general settings screen of a topic is rendered with.
-//
-// [Ja] SettingsGeneralData はトピックの一般設定画面をレンダリングする元になるデータ。
+// SettingsGeneralDataはトピックの一般設定画面をレンダリングする元になるデータ。
 type SettingsGeneralData struct {
 	CSRFToken string
 	Space     viewmodel.Space
@@ -16,7 +14,7 @@ type SettingsGeneralData struct {
 	Fields    FormFieldsData
 }
 
-// SettingsGeneral はトピックの一般設定画面のコンテンツを表示します
+// SettingsGeneralはトピックの一般設定画面のコンテンツを表示します
 templ SettingsGeneral(data SettingsGeneralData) {
 	<div class="py-4">
 		<div class="max-w-2xl w-full mx-auto">

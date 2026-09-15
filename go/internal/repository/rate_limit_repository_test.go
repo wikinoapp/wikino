@@ -29,7 +29,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 			t.Fatalf("Incrementでエラー: %v", err)
 		}
 		if result.Count != 1 {
-			t.Errorf("Countが1であるべき: got %d", result.Count)
+			t.Errorf("Count = %d、期待値 = 1", result.Count)
 		}
 	})
 
@@ -51,7 +51,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 			t.Fatalf("1回目のIncrementでエラー: %v", err)
 		}
 		if result.Count != 1 {
-			t.Errorf("1回目のCountが1であるべき: got %d", result.Count)
+			t.Errorf("1回目のCount = %d、期待値 = 1", result.Count)
 		}
 
 		// 2回目
@@ -60,7 +60,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 			t.Fatalf("2回目のIncrementでエラー: %v", err)
 		}
 		if result.Count != 2 {
-			t.Errorf("2回目のCountが2であるべき: got %d", result.Count)
+			t.Errorf("2回目のCount = %d、期待値 = 2", result.Count)
 		}
 
 		// 3回目
@@ -69,7 +69,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 			t.Fatalf("3回目のIncrementでエラー: %v", err)
 		}
 		if result.Count != 3 {
-			t.Errorf("3回目のCountが3であるべき: got %d", result.Count)
+			t.Errorf("3回目のCount = %d、期待値 = 3", result.Count)
 		}
 	})
 
@@ -104,7 +104,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 			t.Fatalf("key2のインクリメントでエラー: %v", err)
 		}
 		if result.Count != 1 {
-			t.Errorf("key2のCountが1であるべき: got %d", result.Count)
+			t.Errorf("key2のCount = %d、期待値 = 1", result.Count)
 		}
 	})
 
@@ -141,7 +141,7 @@ func TestRateLimitRepository_Increment(t *testing.T) {
 			t.Fatalf("ウィンドウ2のインクリメントでエラー: %v", err)
 		}
 		if result.Count != 1 {
-			t.Errorf("ウィンドウ2のCountが1であるべき: got %d", result.Count)
+			t.Errorf("ウィンドウ2のCount = %d、期待値 = 1", result.Count)
 		}
 	})
 }
@@ -166,7 +166,7 @@ func TestRateLimitRepository_DeleteOldRecords(t *testing.T) {
 			t.Fatalf("Incrementでエラー: %v", err)
 		}
 
-		// 削除を実行（現在のレコードは削除されない）
+		// 削除を実行 (現在のレコードは削除されない)
 		cutoff := time.Now().UTC().Add(-2 * time.Hour)
 		err = repo.DeleteOldRecords(context.Background(), cutoff)
 		if err != nil {
@@ -198,7 +198,7 @@ func TestRateLimitRepository_WithTx(t *testing.T) {
 			t.Fatalf("WithTxでのIncrementでエラー: %v", err)
 		}
 		if result.Count != 1 {
-			t.Errorf("Countが1であるべき: got %d", result.Count)
+			t.Errorf("Count = %d、期待値 = 1", result.Count)
 		}
 	})
 }

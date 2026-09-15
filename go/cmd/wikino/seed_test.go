@@ -28,7 +28,7 @@ func TestSeedDatabaseRejectsNonDevEnvBeforeLoadingConfig(t *testing.T) {
 				t.Fatal("開発環境以外ではエラーを期待したがnilだった")
 			}
 			if err.Error() != want {
-				t.Errorf("エラーが %q であることを期待したが %q だった", want, err)
+				t.Errorf("エラーが%qであることを期待したが%qだった", want, err)
 			}
 		})
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// UserBuilder はユーザーテストデータのビルダー
+// UserBuilderはユーザーテストデータのビルダー
 type UserBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -24,7 +24,7 @@ type UserBuilder struct {
 	joinedAt    time.Time
 }
 
-// NewUserBuilder は UserBuilder を生成します
+// NewUserBuilderはUserBuilderを生成します
 func NewUserBuilder(t *testing.T, tx *sql.Tx) *UserBuilder {
 	t.Helper()
 	now := time.Now()
@@ -41,25 +41,25 @@ func NewUserBuilder(t *testing.T, tx *sql.Tx) *UserBuilder {
 	}
 }
 
-// WithEmail はメールアドレスを設定します
+// WithEmailはメールアドレスを設定します
 func (b *UserBuilder) WithEmail(email string) *UserBuilder {
 	b.email = email
 	return b
 }
 
-// WithAtname はアットネームを設定します
+// WithAtnameはアットネームを設定します
 func (b *UserBuilder) WithAtname(atname string) *UserBuilder {
 	b.atname = atname
 	return b
 }
 
-// WithName は名前を設定します
+// WithNameは名前を設定します
 func (b *UserBuilder) WithName(name string) *UserBuilder {
 	b.name = name
 	return b
 }
 
-// Build はユーザーを作成し、IDを返します
+// Buildはユーザーを作成し、IDを返します
 func (b *UserBuilder) Build() model.UserID {
 	b.t.Helper()
 
@@ -79,7 +79,7 @@ func (b *UserBuilder) Build() model.UserID {
 	return model.UserID(id)
 }
 
-// BuildWithPassword はユーザーとパスワードを作成し、ユーザーIDを返します
+// BuildWithPasswordはユーザーとパスワードを作成し、ユーザーIDを返します
 func (b *UserBuilder) BuildWithPassword(passwordDigest string) model.UserID {
 	b.t.Helper()
 
@@ -89,13 +89,13 @@ func (b *UserBuilder) BuildWithPassword(passwordDigest string) model.UserID {
 	return userID
 }
 
-// BuildWithTwoFactorAuth はユーザーと二要素認証設定を作成し、ユーザーIDを返します
+// BuildWithTwoFactorAuthはユーザーと二要素認証設定を作成し、ユーザーIDを返します
 func (b *UserBuilder) BuildWithTwoFactorAuth(secret string, enabled bool) model.UserID {
 	b.t.Helper()
 	return b.BuildWithTwoFactorAuthAndRecoveryCodes(secret, enabled, []string{})
 }
 
-// BuildWithTwoFactorAuthAndRecoveryCodes はユーザーと二要素認証設定（リカバリーコード付き）を作成し、ユーザーIDを返します
+// BuildWithTwoFactorAuthAndRecoveryCodesはユーザーと二要素認証設定 (リカバリーコード付き) を作成し、ユーザーIDを返します
 func (b *UserBuilder) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enabled bool, recoveryCodes []string) model.UserID {
 	b.t.Helper()
 
@@ -105,11 +105,8 @@ func (b *UserBuilder) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enab
 	return userID
 }
 
-// BuildWithPasswordAndTwoFactorAuth creates a user that can sign in with a password and is then
-// asked for a two-factor code, and returns the user ID.
-//
-// [Ja] BuildWithPasswordAndTwoFactorAuth はパスワードでサインインでき、その後に二要素認証コードを
-// 求められるユーザーを作成し、ユーザー ID を返します。
+// BuildWithPasswordAndTwoFactorAuthはパスワードでサインインでき、その後に二要素認証コードを
+// 求められるユーザーを作成し、ユーザーIDを返します。
 func (b *UserBuilder) BuildWithPasswordAndTwoFactorAuth(passwordDigest string, secret string, enabled bool) model.UserID {
 	b.t.Helper()
 
@@ -120,9 +117,7 @@ func (b *UserBuilder) BuildWithPasswordAndTwoFactorAuth(passwordDigest string, s
 	return userID
 }
 
-// insertPassword creates the password of an existing user.
-//
-// [Ja] insertPassword は既存のユーザーのパスワードを作成します。
+// insertPasswordは既存のユーザーのパスワードを作成します。
 func (b *UserBuilder) insertPassword(userID model.UserID, passwordDigest string) {
 	b.t.Helper()
 
@@ -138,9 +133,7 @@ func (b *UserBuilder) insertPassword(userID model.UserID, passwordDigest string)
 	}
 }
 
-// insertTwoFactorAuth creates the two-factor authentication settings of an existing user.
-//
-// [Ja] insertTwoFactorAuth は既存のユーザーの二要素認証設定を作成します。
+// insertTwoFactorAuthは既存のユーザーの二要素認証設定を作成します。
 func (b *UserBuilder) insertTwoFactorAuth(userID model.UserID, secret string, enabled bool, recoveryCodes []string) {
 	b.t.Helper()
 
@@ -164,7 +157,7 @@ func (b *UserBuilder) insertTwoFactorAuth(userID model.UserID, secret string, en
 	}
 }
 
-// formatPostgresArray はGoのスライスをPostgreSQLの配列形式に変換します
+// formatPostgresArrayはGoのスライスをPostgreSQLの配列形式に変換します
 func formatPostgresArray(arr []string) string {
 	if len(arr) == 0 {
 		return "{}"
@@ -180,12 +173,12 @@ func formatPostgresArray(arr []string) string {
 	return result
 }
 
-// QueriesWithTx はトランザクションを使用したQueriesを返します
+// QueriesWithTxはトランザクションを使用したQueriesを返します
 func QueriesWithTx(tx *sql.Tx) *query.Queries {
 	return query.New(tx)
 }
 
-// UserBuilderDB はDBを直接使用するユーザーテストデータのビルダー
+// UserBuilderDBはDBを直接使用するユーザーテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type UserBuilderDB struct {
 	t  *testing.T
@@ -200,7 +193,7 @@ type UserBuilderDB struct {
 	joinedAt    time.Time
 }
 
-// NewUserBuilderDB は UserBuilderDB を生成します
+// NewUserBuilderDBはUserBuilderDBを生成します
 func NewUserBuilderDB(t *testing.T, db *sql.DB) *UserBuilderDB {
 	t.Helper()
 	now := time.Now()
@@ -217,25 +210,25 @@ func NewUserBuilderDB(t *testing.T, db *sql.DB) *UserBuilderDB {
 	}
 }
 
-// WithEmail はメールアドレスを設定します
+// WithEmailはメールアドレスを設定します
 func (b *UserBuilderDB) WithEmail(email string) *UserBuilderDB {
 	b.email = email
 	return b
 }
 
-// WithAtname はアットネームを設定します
+// WithAtnameはアットネームを設定します
 func (b *UserBuilderDB) WithAtname(atname string) *UserBuilderDB {
 	b.atname = atname
 	return b
 }
 
-// WithName は名前を設定します
+// WithNameは名前を設定します
 func (b *UserBuilderDB) WithName(name string) *UserBuilderDB {
 	b.name = name
 	return b
 }
 
-// Build はユーザーを作成し、IDを返します
+// Buildはユーザーを作成し、IDを返します
 func (b *UserBuilderDB) Build() model.UserID {
 	b.t.Helper()
 
@@ -255,7 +248,7 @@ func (b *UserBuilderDB) Build() model.UserID {
 	return model.UserID(id)
 }
 
-// BuildWithTwoFactorAuthAndRecoveryCodes はユーザーと二要素認証設定（リカバリーコード付き）を作成し、ユーザーIDを返します
+// BuildWithTwoFactorAuthAndRecoveryCodesはユーザーと二要素認証設定 (リカバリーコード付き) を作成し、ユーザーIDを返します
 func (b *UserBuilderDB) BuildWithTwoFactorAuthAndRecoveryCodes(secret string, enabled bool, recoveryCodes []string) model.UserID {
 	b.t.Helper()
 

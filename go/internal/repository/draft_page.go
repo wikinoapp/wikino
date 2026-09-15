@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// DraftPageRepository は下書きページリポジトリ
+// DraftPageRepositoryは下書きページリポジトリ
 type DraftPageRepository struct {
 	q *query.Queries
 }
 
-// NewDraftPageRepository は DraftPageRepository を生成する
+// NewDraftPageRepositoryはDraftPageRepositoryを生成する
 func NewDraftPageRepository(q *query.Queries) *DraftPageRepository {
 	return &DraftPageRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *DraftPageRepository) WithTx(tx *sql.Tx) *DraftPageRepository {
 	return &DraftPageRepository{q: r.q.WithTx(tx)}
 }
 
-// FindByID はIDで下書きを取得する（スペースIDでスコープ）
+// FindByIDはIDで下書きを取得する (スペースIDでスコープ)
 func (r *DraftPageRepository) FindByID(ctx context.Context, id model.DraftPageID, spaceID model.SpaceID) (*model.DraftPage, error) {
 	row, err := r.q.FindDraftPageByID(ctx, query.FindDraftPageByIDParams{
 		ID:      string(id),
@@ -40,7 +40,7 @@ func (r *DraftPageRepository) FindByID(ctx context.Context, id model.DraftPageID
 	return r.toModel(row), nil
 }
 
-// FindByPageAndMember はページIDとスペースメンバーIDで下書きを取得する
+// FindByPageAndMemberはページIDとスペースメンバーIDで下書きを取得する
 func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID model.PageID, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID) (*model.DraftPage, error) {
 	row, err := r.q.FindDraftPageByPageAndMember(ctx, query.FindDraftPageByPageAndMemberParams{
 		PageID:        string(pageID),
@@ -56,7 +56,7 @@ func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID mo
 	return r.toModel(row), nil
 }
 
-// CreateDraftPageInput は下書き作成の入力パラメータ
+// CreateDraftPageInputは下書き作成の入力パラメータ
 type CreateDraftPageInput struct {
 	SpaceID                   model.SpaceID
 	PageID                    model.PageID
@@ -71,7 +71,7 @@ type CreateDraftPageInput struct {
 	ModifiedAt                time.Time
 }
 
-// Create は下書きを作成する
+// Createは下書きを作成する
 func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageInput) (*model.DraftPage, error) {
 	now := time.Now()
 
@@ -108,7 +108,7 @@ func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageI
 	return r.toModel(row), nil
 }
 
-// UpdateDraftPageInput は下書き更新の入力パラメータ
+// UpdateDraftPageInputは下書き更新の入力パラメータ
 type UpdateDraftPageInput struct {
 	ID                        model.DraftPageID
 	SpaceID                   model.SpaceID
@@ -121,7 +121,7 @@ type UpdateDraftPageInput struct {
 	ModifiedAt                time.Time
 }
 
-// Update は下書きを更新する
+// Updateは下書きを更新する
 func (r *DraftPageRepository) Update(ctx context.Context, input UpdateDraftPageInput) (*model.DraftPage, error) {
 	var featuredImageAttachmentID *string
 	if input.FeaturedImageAttachmentID != nil {
@@ -147,7 +147,7 @@ func (r *DraftPageRepository) Update(ctx context.Context, input UpdateDraftPageI
 	return r.toModel(row), nil
 }
 
-// Delete は下書きを削除する
+// Deleteは下書きを削除する
 func (r *DraftPageRepository) Delete(ctx context.Context, id model.DraftPageID, spaceID model.SpaceID) error {
 	return r.q.DeleteDraftPage(ctx, query.DeleteDraftPageParams{
 		ID:      string(id),
@@ -155,7 +155,7 @@ func (r *DraftPageRepository) Delete(ctx context.Context, id model.DraftPageID, 
 	})
 }
 
-// FindBySuggestionPageID は編集提案ページIDで下書きを取得する
+// FindBySuggestionPageIDは編集提案ページIDで下書きを取得する
 func (r *DraftPageRepository) FindBySuggestionPageID(ctx context.Context, suggestionPageID model.SuggestionPageID, spaceID model.SpaceID) (*model.DraftPage, error) {
 	spID := string(suggestionPageID)
 
@@ -172,7 +172,7 @@ func (r *DraftPageRepository) FindBySuggestionPageID(ctx context.Context, sugges
 	return r.toModel(row), nil
 }
 
-// UpdateSuggestionPageID は下書きの編集提案ページIDを更新する
+// UpdateSuggestionPageIDは下書きの編集提案ページIDを更新する
 func (r *DraftPageRepository) UpdateSuggestionPageID(ctx context.Context, id model.DraftPageID, spaceID model.SpaceID, suggestionPageID *model.SuggestionPageID) (*model.DraftPage, error) {
 	var spID *string
 	if suggestionPageID != nil {
@@ -192,7 +192,7 @@ func (r *DraftPageRepository) UpdateSuggestionPageID(ctx context.Context, id mod
 	return r.toModel(row), nil
 }
 
-// ClearSuggestionPageIDsBySuggestionID は編集提案に紐づく下書きのsuggestion_page_idをクリアする
+// ClearSuggestionPageIDsBySuggestionIDは編集提案に紐づく下書きのsuggestion_page_idをクリアする
 func (r *DraftPageRepository) ClearSuggestionPageIDsBySuggestionID(ctx context.Context, suggestionID model.SuggestionID, spaceID model.SpaceID) error {
 	return r.q.ClearSuggestionPageIDsBySuggestionID(ctx, query.ClearSuggestionPageIDsBySuggestionIDParams{
 		SuggestionID: string(suggestionID),
@@ -201,7 +201,7 @@ func (r *DraftPageRepository) ClearSuggestionPageIDsBySuggestionID(ctx context.C
 	})
 }
 
-// UpdateTopicByPageID はページIDに紐づく下書きのトピックIDを更新する
+// UpdateTopicByPageIDはページIDに紐づく下書きのトピックIDを更新する
 func (r *DraftPageRepository) UpdateTopicByPageID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, topicID model.TopicID) error {
 	return r.q.UpdateDraftPageTopicByPageID(ctx, query.UpdateDraftPageTopicByPageIDParams{
 		PageID:    string(pageID),
@@ -211,9 +211,7 @@ func (r *DraftPageRepository) UpdateTopicByPageID(ctx context.Context, pageID mo
 	})
 }
 
-// ListByUser returns the user's draft pages for the home page.
-//
-// [Ja] ListByUser はホーム画面に表示する、ユーザーの下書きページ一覧を取得する。
+// ListByUserはホーム画面に表示する、ユーザーの下書きページ一覧を取得する。
 func (r *DraftPageRepository) ListByUser(ctx context.Context, userID model.UserID, limit int32) ([]*model.DraftPage, error) {
 	rows, err := r.q.ListDraftPagesByUser(ctx, query.ListDraftPagesByUserParams{
 		UserID: string(userID),
@@ -225,10 +223,7 @@ func (r *DraftPageRepository) ListByUser(ctx context.Context, userID model.UserI
 	return r.toDraftPagesFromJoinedRows(rows), nil
 }
 
-// ListBySpaceMember fetches a space member's own draft pages within a single space, newest first
-// (for the page editor's draft list column). Suggestion-edit drafts are included.
-//
-// [Ja] ListBySpaceMember は同一スペース内のスペースメンバー自身の下書きページ一覧を更新日時の降順で
+// ListBySpaceMemberは同一スペース内のスペースメンバー自身の下書きページ一覧を更新日時の降順で
 // 取得する (ページ編集画面の下書き一覧カラム用)。提案編集用の下書きも含める。
 func (r *DraftPageRepository) ListBySpaceMember(ctx context.Context, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID, limit int32) ([]*model.DraftPage, error) {
 	rows, err := r.q.ListDraftPagesBySpaceMember(ctx, query.ListDraftPagesBySpaceMemberParams{
@@ -242,7 +237,7 @@ func (r *DraftPageRepository) ListBySpaceMember(ctx context.Context, spaceMember
 	return r.toDraftPagesFromSpaceMemberRows(rows), nil
 }
 
-// ListByUserForIndex はユーザーの下書きページ一覧を取得する（下書き一覧画面用）
+// ListByUserForIndexはユーザーの下書きページ一覧を取得する (下書き一覧画面用)
 func (r *DraftPageRepository) ListByUserForIndex(ctx context.Context, userID model.UserID) ([]*model.DraftPage, error) {
 	rows, err := r.q.ListDraftPagesByUserForIndex(ctx, string(userID))
 	if err != nil {
@@ -251,7 +246,7 @@ func (r *DraftPageRepository) ListByUserForIndex(ctx context.Context, userID mod
 	return r.toDraftPagesFromIndexRows(rows), nil
 }
 
-// toDraftPagesFromIndexRows は query.ListDraftPagesByUserForIndexRow のスライスを model.DraftPage のスライスに変換する
+// toDraftPagesFromIndexRowsはquery.ListDraftPagesByUserForIndexRowのスライスをmodel.DraftPageのスライスに変換する
 func (r *DraftPageRepository) toDraftPagesFromIndexRows(rows []query.ListDraftPagesByUserForIndexRow) []*model.DraftPage {
 	drafts := make([]*model.DraftPage, len(rows))
 	for i, row := range rows {
@@ -302,7 +297,7 @@ func (r *DraftPageRepository) toDraftPagesFromIndexRows(rows []query.ListDraftPa
 	return drafts
 }
 
-// toDraftPagesFromJoinedRows は query.ListDraftPagesByUserRow のスライスを model.DraftPage のスライスに変換する
+// toDraftPagesFromJoinedRowsはquery.ListDraftPagesByUserRowのスライスをmodel.DraftPageのスライスに変換する
 func (r *DraftPageRepository) toDraftPagesFromJoinedRows(rows []query.ListDraftPagesByUserRow) []*model.DraftPage {
 	drafts := make([]*model.DraftPage, len(rows))
 	for i, row := range rows {
@@ -350,7 +345,7 @@ func (r *DraftPageRepository) toDraftPagesFromJoinedRows(rows []query.ListDraftP
 	return drafts
 }
 
-// toDraftPagesFromSpaceMemberRows は query.ListDraftPagesBySpaceMemberRow のスライスを model.DraftPage のスライスに変換する
+// toDraftPagesFromSpaceMemberRowsはquery.ListDraftPagesBySpaceMemberRowのスライスをmodel.DraftPageのスライスに変換する
 func (r *DraftPageRepository) toDraftPagesFromSpaceMemberRows(rows []query.ListDraftPagesBySpaceMemberRow) []*model.DraftPage {
 	drafts := make([]*model.DraftPage, len(rows))
 	for i, row := range rows {
@@ -398,7 +393,7 @@ func (r *DraftPageRepository) toDraftPagesFromSpaceMemberRows(rows []query.ListD
 	return drafts
 }
 
-// ListByMemberAndTopic はスペースメンバーとトピックに紐づく下書きページ一覧を取得する（編集提案作成画面用）
+// ListByMemberAndTopicはスペースメンバーとトピックに紐づく下書きページ一覧を取得する (編集提案作成画面用)
 func (r *DraftPageRepository) ListByMemberAndTopic(ctx context.Context, spaceMemberID model.SpaceMemberID, topicID model.TopicID, spaceID model.SpaceID) ([]*model.DraftPage, error) {
 	rows, err := r.q.ListDraftPagesByMemberAndTopic(ctx, query.ListDraftPagesByMemberAndTopicParams{
 		SpaceMemberID: string(spaceMemberID),
@@ -411,7 +406,7 @@ func (r *DraftPageRepository) ListByMemberAndTopic(ctx context.Context, spaceMem
 	return r.toDraftPagesFromMemberTopicRows(rows), nil
 }
 
-// toDraftPagesFromMemberTopicRows は query.ListDraftPagesByMemberAndTopicRow のスライスを model.DraftPage のスライスに変換する
+// toDraftPagesFromMemberTopicRowsはquery.ListDraftPagesByMemberAndTopicRowのスライスをmodel.DraftPageのスライスに変換する
 func (r *DraftPageRepository) toDraftPagesFromMemberTopicRows(rows []query.ListDraftPagesByMemberAndTopicRow) []*model.DraftPage {
 	drafts := make([]*model.DraftPage, len(rows))
 	for i, row := range rows {
@@ -460,7 +455,7 @@ func (r *DraftPageRepository) toDraftPagesFromMemberTopicRows(rows []query.ListD
 	return drafts
 }
 
-// toModel は query.DraftPage を model.DraftPage に変換する
+// toModelはquery.DraftPageをmodel.DraftPageに変換する
 func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
 	var title *string
 	if row.Title != nil {

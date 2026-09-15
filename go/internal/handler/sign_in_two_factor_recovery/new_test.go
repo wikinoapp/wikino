@@ -70,7 +70,7 @@ func TestNew_WithPendingUser(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// レスポンスボディを検証
@@ -78,22 +78,22 @@ func TestNew_WithPendingUser(t *testing.T) {
 
 	// リカバリーコードフォームが含まれているか確認
 	if !strings.Contains(body, `action="/sign_in/two_factor/recovery"`) {
-		t.Error("recovery form action not found in response")
+		t.Error("レスポンスにリカバリーフォームの送信先が見つからない")
 	}
 
 	// CSRFトークンが含まれているか確認
 	if !strings.Contains(body, "test-csrf-token") {
-		t.Error("CSRF token not found in response")
+		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
 	// リカバリーコード入力フィールドが含まれているか確認
 	if !strings.Contains(body, `name="recovery_code"`) {
-		t.Error("recovery_code input field not found in response")
+		t.Error("レスポンスにrecovery_codeの入力フィールドが見つからない")
 	}
 
 	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
 		if strings.Contains(body, notWant) {
-			t.Errorf("response unexpectedly contains %q", notWant)
+			t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
 		}
 	}
 }
@@ -145,19 +145,16 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 
 	// ログインページにリダイレクトされるか確認
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /sign_in", location)
 	}
 }
 
-// TestNew_BackParameter verifies that the back handed over by the two-factor screen is carried by
-// the hidden field, so that authenticating with a recovery code reaches the same destination.
-//
-// [Ja] TestNew_BackParameter は、二要素認証画面から渡された back を隠しフィールドで引き継ぐことを
+// TestNew_BackParameterは、二要素認証画面から渡されたbackを隠しフィールドで引き継ぐことを
 // 検証する。リカバリーコードで認証したときも同じ宛先へ戻せるようにするため。
 func TestNew_BackParameter(t *testing.T) {
 	t.Parallel()
@@ -225,21 +222,17 @@ func TestNew_BackParameter(t *testing.T) {
 			handler.New(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 			if !strings.Contains(rr.Body.String(), tt.wantInBody) {
-				t.Errorf("response doesn't contain %q", tt.wantInBody)
+				t.Errorf("レスポンスに%qが含まれていない", tt.wantInBody)
 			}
 		})
 	}
 }
 
-// TestNew_WithoutPendingUserCarriesBackParameter verifies that the destination survives an expired
-// pending user cookie. The cookie only lives for ten minutes, so a visitor who takes a while to
-// find their recovery code would otherwise lose the page they asked for.
-//
-// [Ja] TestNew_WithoutPendingUserCarriesBackParameter は、pending user cookie が期限切れでも
-// 遷移先が失われないことを検証する。cookie の寿命は 10 分しかないため、リカバリーコードを探すのに
+// TestNew_WithoutPendingUserCarriesBackParameterは、pending user cookieが期限切れでも
+// 遷移先が失われないことを検証する。cookieの寿命は10分しかないため、リカバリーコードを探すのに
 // 手間取った訪問者が求めたページを失わないようにする。
 func TestNew_WithoutPendingUserCarriesBackParameter(t *testing.T) {
 	t.Parallel()
@@ -284,11 +277,11 @@ func TestNew_WithoutPendingUserCarriesBackParameter(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	wantLocation := "/sign_in?back=" + url.QueryEscape(backURL)
 	if location := rr.Header().Get("Location"); location != wantLocation {
-		t.Errorf("wrong redirect location: got %v want %v", location, wantLocation)
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, wantLocation)
 	}
 }

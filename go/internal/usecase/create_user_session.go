@@ -1,4 +1,4 @@
-// Package usecase はアプリケーションのユースケース（ビジネスロジック）を提供します
+// Package usecaseはアプリケーションのユースケース (ビジネスロジック) を提供します
 package usecase
 
 import (
@@ -11,12 +11,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// CreateUserSessionUsecase はユーザーセッション作成ユースケース
+// CreateUserSessionUsecaseはユーザーセッション作成ユースケース
 type CreateUserSessionUsecase struct {
 	userSessionRepo *repository.UserSessionRepository
 }
 
-// NewCreateUserSessionUsecase は CreateUserSessionUsecase を生成する
+// NewCreateUserSessionUsecaseはCreateUserSessionUsecaseを生成する
 func NewCreateUserSessionUsecase(
 	userSessionRepo *repository.UserSessionRepository,
 ) *CreateUserSessionUsecase {
@@ -25,19 +25,19 @@ func NewCreateUserSessionUsecase(
 	}
 }
 
-// CreateUserSessionInput はセッション作成の入力パラメータ
+// CreateUserSessionInputはセッション作成の入力パラメータ
 type CreateUserSessionInput struct {
 	UserID    model.UserID
 	IPAddress string
 	UserAgent string
 }
 
-// CreateUserSessionOutput はセッション作成の出力パラメータ
+// CreateUserSessionOutputはセッション作成の出力パラメータ
 type CreateUserSessionOutput struct {
 	Token string
 }
 
-// Execute はユーザーセッションを作成する
+// Executeはユーザーセッションを作成する
 func (uc *CreateUserSessionUsecase) Execute(ctx context.Context, input CreateUserSessionInput) (*CreateUserSessionOutput, error) {
 	token, err := auth.GenerateSecureToken()
 	if err != nil {

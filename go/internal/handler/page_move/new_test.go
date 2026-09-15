@@ -21,7 +21,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// setupHandler はテスト用のハンドラーを生成するヘルパーです
+// setupHandlerはテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page_move.Handler {
 	t.Helper()
 
@@ -52,7 +52,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_move.Handler {
 	)
 }
 
-// newRequestWithChiParams はchiのURLパラメータ付きリクエストを作成するヘルパーです
+// newRequestWithChiParamsはchiのURLパラメータ付きリクエストを作成するヘルパーです
 func newRequestWithChiParams(t *testing.T, method, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -66,7 +66,7 @@ func newRequestWithChiParams(t *testing.T, method, path string, params map[strin
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// addChiParams は既存のリクエストにchiのURLパラメータを追加するヘルパーです
+// addChiParamsは既存のリクエストにchiのURLパラメータを追加するヘルパーです
 func addChiParams(t *testing.T, req *http.Request, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -136,56 +136,53 @@ func TestNew(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// ページタイトルが表示されていること
 	if !strings.Contains(body, "Test Page Title") {
-		t.Error("page title not found in response")
+		t.Error("レスポンスにページタイトルが見つからない")
 	}
 
 	// 現在のトピック名が表示されていること
 	if !strings.Contains(body, "Topic 1") {
-		t.Error("current topic name not found in response")
+		t.Error("レスポンスに現在のトピック名が見つからない")
 	}
 
-	// 移動先トピック（Topic 2）がセレクトボックスに含まれていること
+	// 移動先トピック (Topic 2) がセレクトボックスに含まれていること
 	if !strings.Contains(body, "Topic 2") {
-		t.Error("destination topic not found in response")
+		t.Error("レスポンスに移動先のトピックが見つからない")
 	}
 
 	// CSRFトークンが含まれていること
 	if !strings.Contains(body, "test-csrf-token") {
-		t.Error("CSRF token not found in response")
+		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
 	// フォームアクションが含まれていること
 	if !strings.Contains(body, "/s/my-space/pages/1/move") {
-		t.Error("form action not found in response")
+		t.Error("レスポンスにフォームの送信先が見つからない")
 	}
 
 	for _, want := range []string{`<span class="label">ページ</span>`, `<span class="label">現在のトピック</span>`} {
 		if !strings.Contains(body, want) {
-			t.Errorf("static page detail should be headed by a span, want %s", want)
+			t.Errorf("静的なページ詳細の見出しがspanになっていない、期待値 = %s", want)
 		}
 	}
 	if !strings.Contains(body, `<label class="label" for="dest_topic">`) {
-		t.Error("destination topic label should point at the select")
+		t.Error("移動先トピックのラベルがselectを指していない")
 	}
 
-	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
-	// link has to bypass it) and keeps this screen's narrower max-w-2xl content width.
-	//
-	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
-	// リンクが飛ばせる必要があるため)。この画面の狭い本文幅 max-w-2xl も維持する。
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の狭い本文幅max-w-2xlも維持する。
 	if !strings.Contains(body, `<div class="max-w-2xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared breadcrumb header should keep the max-w-2xl content width")
+		t.Error("共通のパンくずヘッダーがmax-w-2xlのコンテンツ幅を保っていない")
 	}
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
-		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 }
 
@@ -210,11 +207,11 @@ func TestNew_NotLoggedIn(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	if location := rr.Header().Get("Location"); location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /sign_in", location)
 	}
 }
 
@@ -242,7 +239,7 @@ func TestNew_SpaceNotFound(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -252,7 +249,7 @@ func TestNew_NoAvailableTopics(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// テストデータを作成（トピックが1つだけ）
+	// テストデータを作成 (トピックが1つだけ)
 	userID := testutil.NewUserBuilder(t, tx).Build()
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("my-space").
@@ -294,28 +291,24 @@ func TestNew_NoAvailableTopics(t *testing.T) {
 	handler.New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// 送信ボタンが無効化されていること
 	if !strings.Contains(body, "disabled") {
-		t.Error("submit button should be disabled when no topics available")
+		t.Error("トピックが無いのに送信ボタンが無効になっていない")
 	}
 	if !strings.Contains(body, `<span class="label">移動先トピック</span>`) {
-		t.Error("destination topic heading should be a span when there is no select to label")
+		t.Error("ラベルを付けるselectが無いのに移動先トピックの見出しがspanになっていない")
 	}
 	if strings.Contains(body, `<label class="label"`) {
-		t.Error("a label should not be rendered when there is no destination topic control")
+		t.Error("移動先トピックの入力が無いのにラベルが描画されている")
 	}
 }
 
-// The trail ends with the screen itself, so the last item must be a plain label carrying
-// aria-current rather than a link back to the topic. Scope the assertions to the breadcrumb because
-// the same label also appears in the heading and the page title.
-//
-// [Ja] 経路はこの画面自身で終わるため、末尾の項目はトピックへのリンクではなく aria-current を持つ
+// 経路はこの画面自身で終わるため、末尾の項目はトピックへのリンクではなくaria-currentを持つ
 // ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
 func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 	t.Parallel()
@@ -361,7 +354,7 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	breadcrumb := pageMoveBreadcrumb(t, rr.Body.String())
@@ -372,29 +365,26 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 		"ページの移動",
 	} {
 		if !strings.Contains(breadcrumb, want) {
-			t.Errorf("breadcrumb does not contain %q", want)
+			t.Errorf("パンくずに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(breadcrumb, `href="/s/move-crumb/pages/1/move"`) {
-		t.Error("current page move breadcrumb item must not be a link")
+		t.Error("現在のページ移動のパンくずの項目がリンクになっている")
 	}
 }
 
-// pageMoveBreadcrumb returns the markup of the breadcrumb navigation alone, so that an assertion
-// about the trail is not satisfied by the same text appearing elsewhere on the screen.
-//
-// [Ja] pageMoveBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路についての
+// pageMoveBreadcrumbはパンくずのナビゲーション部分だけのマークアップを返す。経路についての
 // 検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
 func pageMoveBreadcrumb(t *testing.T, body string) string {
 	t.Helper()
 
 	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
 	if start == -1 {
-		t.Fatal("response does not contain the breadcrumb navigation")
+		t.Fatal("レスポンスにパンくずのナビゲーションが含まれていない")
 	}
 	endOffset := strings.Index(body[start:], "</nav>")
 	if endOffset == -1 {
-		t.Fatal("breadcrumb navigation does not have a closing tag")
+		t.Fatal("パンくずのナビゲーションに閉じタグが無い")
 	}
 
 	return body[start : start+endOffset]

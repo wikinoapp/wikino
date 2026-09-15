@@ -15,7 +15,7 @@ func TestNewDraftPageGroupsForIndex_Empty(t *testing.T) {
 
 	groups := viewmodel.NewDraftPageGroupsForIndex(nil)
 	if groups != nil {
-		t.Errorf("expected nil, got %v", groups)
+		t.Errorf("実測値 = %v、期待値 = nil", groups)
 	}
 }
 
@@ -65,27 +65,27 @@ func TestNewDraftPageGroupsForIndex_Grouping(t *testing.T) {
 	groups := viewmodel.NewDraftPageGroupsForIndex(drafts)
 
 	if len(groups) != 2 {
-		t.Fatalf("expected 2 groups, got %d", len(groups))
+		t.Fatalf("グループの件数 = %d、期待値 = 2", len(groups))
 	}
 
 	if groups[0].SpaceName != "スペースA" {
-		t.Errorf("expected space name スペースA, got %s", groups[0].SpaceName)
+		t.Errorf("スペース名 = %s、期待値 = スペースA", groups[0].SpaceName)
 	}
 	if groups[0].TopicName != "トピックA" {
-		t.Errorf("expected topic name トピックA, got %s", groups[0].TopicName)
+		t.Errorf("トピック名 = %s、期待値 = トピックA", groups[0].TopicName)
 	}
 	if len(groups[0].DraftPages) != 2 {
-		t.Errorf("expected 2 draft pages in group 1, got %d", len(groups[0].DraftPages))
+		t.Errorf("グループ1の下書きの件数 = %d、期待値 = 2", len(groups[0].DraftPages))
 	}
 
 	if groups[1].TopicName != "トピックB" {
-		t.Errorf("expected topic name トピックB, got %s", groups[1].TopicName)
+		t.Errorf("トピック名 = %s、期待値 = トピックB", groups[1].TopicName)
 	}
 	if len(groups[1].DraftPages) != 1 {
-		t.Errorf("expected 1 draft page in group 2, got %d", len(groups[1].DraftPages))
+		t.Errorf("グループ2の下書きの件数 = %d、期待値 = 1", len(groups[1].DraftPages))
 	}
 	if groups[1].TopicIconName != "lock-regular" {
-		t.Errorf("expected lock-regular icon for private topic, got %s", groups[1].TopicIconName)
+		t.Errorf("非公開トピックのアイコン = %s、期待値 = lock-regular", groups[1].TopicIconName)
 	}
 }
 
@@ -134,21 +134,21 @@ func TestDraftPageForIndex_DisplayTitle(t *testing.T) {
 
 	groups := viewmodel.NewDraftPageGroupsForIndex(drafts)
 	if len(groups) != 1 {
-		t.Fatalf("expected 1 group, got %d", len(groups))
+		t.Fatalf("グループの件数 = %d、期待値 = 1", len(groups))
 	}
 
 	pages := groups[0].DraftPages
 
 	if got := pages[0].DisplayTitle(ctx); got != "カスタムタイトル" {
-		t.Errorf("expected カスタムタイトル, got %s", got)
+		t.Errorf("実測値 = %s、期待値 = カスタムタイトル", got)
 	}
 
 	if got := pages[1].DisplayTitle(ctx); got != "公開タイトル" {
-		t.Errorf("expected 公開タイトル, got %s", got)
+		t.Errorf("実測値 = %s、期待値 = 公開タイトル", got)
 	}
 
 	if got := pages[2].DisplayTitle(ctx); got != "無題" {
-		t.Errorf("expected 無題, got %s", got)
+		t.Errorf("実測値 = %s、期待値 = 無題", got)
 	}
 }
 

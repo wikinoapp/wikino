@@ -19,7 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New はページ移動フォームを表示します (GET /s/{space_identifier}/pages/{page_number}/move)
+// Newはページ移動フォームを表示します (GET /s/{space_identifier}/pages/{page_number}/move)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -40,7 +40,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// UseCaseでデータを取得（認可チェック含む）
+	// UseCaseでデータを取得 (認可チェック含む)
 	output, err := h.getPageMoveDataUC.Execute(ctx, usecase.GetPageMoveDataInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),
@@ -65,7 +65,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	h.renderMoveForm(w, r, user, spaceIdentifier, output, nil)
 }
 
-// renderMoveForm はページ移動フォームをレンダリングします
+// renderMoveFormはページ移動フォームをレンダリングします
 func (h *Handler) renderMoveForm(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -134,11 +134,7 @@ func (h *Handler) renderMoveForm(
 					Path:     templates.TopicPath(spaceIdentVM, currentTopicVM.Number),
 					IconName: currentTopicVM.IconName,
 				},
-				// The screen is the current page, so the trail ends with a non-linked item carrying
-				// aria-current. The label repeats the heading, but it is read from a key of its own so
-				// that a breadcrumb needing a shorter word than the heading can take one later.
-				//
-				// [Ja] この画面が現在地のため、経路は aria-current を持つリンク無しの項目で締める。
+				// この画面が現在地のため、経路はaria-currentを持つリンク無しの項目で締める。
 				// ラベルは見出しと同じ文字列だが、パンくずが見出しより短い語を必要としたときに後から
 				// 変えられるよう、独立したキーから引く。
 				{

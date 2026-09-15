@@ -28,13 +28,13 @@ func TestName(t *testing.T) {
 			want:  "設計メモ",
 		},
 		{
-			name:  "OS がファイル名に使えない文字を全角へ置き換える",
+			name:  "OSがファイル名に使えない文字を全角へ置き換える",
 			title: `a/b\c:d*e?f"g<h>i|j`,
 			ext:   ".md",
 			want:  "a／b＼c：d＊e？f”g＜h＞i｜j.md",
 		},
 		{
-			name:  "Obsidian が Wiki リンクの中で構文として読む文字を全角へ置き換える",
+			name:  "ObsidianがWikiリンクの中で構文として読む文字を全角へ置き換える",
 			title: "API #1 ^ref [draft]",
 			ext:   ".md",
 			want:  "API ＃1 ＾ref ［draft］.md",
@@ -52,7 +52,7 @@ func TestName(t *testing.T) {
 			want:  "達成率 100%.md",
 		},
 		{
-			name:  "3 つ以上連続するパーセント記号もすべて置き換える",
+			name:  "3つ以上連続するパーセント記号もすべて置き換える",
 			title: "%%%記号%",
 			ext:   ".md",
 			want:  "％％％記号%.md",
@@ -76,13 +76,13 @@ func TestName(t *testing.T) {
 			want:  "ab.md",
 		},
 		{
-			name:  "絵文字を連結する ZWJ は残す",
+			name:  "絵文字を連結するZWJは残す",
 			title: "👨\u200d👩",
 			ext:   ".md",
 			want:  "👨\u200d👩.md",
 		},
 		{
-			name:  "不正な UTF-8 のバイト列は置換文字になる",
+			name:  "不正なUTF-8のバイト列は置換文字になる",
 			title: string([]byte{0xff, 0xfe}) + "a",
 			ext:   ".md",
 			want:  "\ufffd\ufffda.md",
@@ -112,7 +112,7 @@ func TestName(t *testing.T) {
 			want:  "untitled.md",
 		},
 		{
-			name:  "ドット 2 つのタイトルは代替名になる",
+			name:  "ドット2つのタイトルは代替名になる",
 			title: "..",
 			ext:   "",
 			want:  "untitled",
@@ -124,7 +124,7 @@ func TestName(t *testing.T) {
 			want:  "untitled.md",
 		},
 		{
-			name:  "Windows の予約デバイス名に接尾辞を付ける",
+			name:  "Windowsの予約デバイス名に接尾辞を付ける",
 			title: "CON",
 			ext:   ".md",
 			want:  "CON_.md",
@@ -148,37 +148,37 @@ func TestName(t *testing.T) {
 			want:  "CON _.txt.md",
 		},
 		{
-			name:  "上付き数字の予約デバイス名 COM¹ に接尾辞を付ける",
+			name:  "上付き数字の予約デバイス名COM¹ に接尾辞を付ける",
 			title: "COM¹",
 			ext:   ".md",
 			want:  "COM¹_.md",
 		},
 		{
-			name:  "上付き数字の予約デバイス名 com² は大文字小文字を無視する",
+			name:  "上付き数字の予約デバイス名com² は大文字小文字を無視する",
 			title: "com²",
 			ext:   ".md",
 			want:  "com²_.md",
 		},
 		{
-			name:  "上付き数字の予約デバイス名 COM³ は最初のドットの前に接尾辞を付ける",
+			name:  "上付き数字の予約デバイス名COM³ は最初のドットの前に接尾辞を付ける",
 			title: "COM³.txt",
 			ext:   ".md",
 			want:  "COM³_.txt.md",
 		},
 		{
-			name:  "拡張子が空でも上付き数字の予約デバイス名 LPT¹ に接尾辞を付ける",
+			name:  "拡張子が空でも上付き数字の予約デバイス名LPT¹ に接尾辞を付ける",
 			title: "LPT¹",
 			ext:   "",
 			want:  "LPT¹_",
 		},
 		{
-			name:  "上付き数字の予約デバイス名 lpt² は大文字小文字を無視する",
+			name:  "上付き数字の予約デバイス名lpt² は大文字小文字を無視する",
 			title: "lpt²",
 			ext:   ".md",
 			want:  "lpt²_.md",
 		},
 		{
-			name:  "上付き数字の予約デバイス名 LPT³ は最初のドットの前に接尾辞を付ける",
+			name:  "上付き数字の予約デバイス名LPT³ は最初のドットの前に接尾辞を付ける",
 			title: "LPT³.txt",
 			ext:   ".md",
 			want:  "LPT³_.txt.md",
@@ -233,19 +233,19 @@ func TestName(t *testing.T) {
 
 			got := Name(tt.title, tt.ext)
 			if got != tt.want {
-				t.Errorf("Name() = %q, want %q", got, tt.want)
+				t.Errorf("Name() = %q、期待値 = %q", got, tt.want)
 			}
 
 			if len(got) > maxNameBytes {
-				t.Errorf("Name() は %d バイトで、上限の %d バイトを超えている", len(got), maxNameBytes)
+				t.Errorf("Name() は%dバイトで、上限の%dバイトを超えている", len(got), maxNameBytes)
 			}
 
 			if strings.ContainsAny(got, `/\`) {
-				t.Errorf("Name() = %q にパス区切りが含まれている", got)
+				t.Errorf("Name() = %qにパス区切りが含まれている", got)
 			}
 
 			if !utf8.ValidString(got) {
-				t.Errorf("Name() = %q は有効な UTF-8 ではない", got)
+				t.Errorf("Name() = %qは有効なUTF-8ではない", got)
 			}
 		})
 	}

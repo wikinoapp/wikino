@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Update は編集提案コメントを更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number}/comments/{comment_number})
+// Updateは編集提案コメントを更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number}/comments/{comment_number})
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -53,7 +53,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	body := r.FormValue("body")
 
-	// UseCase を実行
+	// UseCaseを実行
 	_, err = h.updateSuggestionCommentUsecase.Execute(ctx, usecase.UpdateSuggestionCommentInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: model.SuggestionNumber(suggestionNumber),

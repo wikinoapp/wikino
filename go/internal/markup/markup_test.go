@@ -9,7 +9,7 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-// normalizeHTML はHTML文字列の空白を正規化する（テスト比較用）
+// normalizeHTMLはHTML文字列の空白を正規化する (テスト比較用)
 func normalizeHTML(html string) string {
 	re := regexp.MustCompile(`\s+`)
 	return strings.TrimSpace(re.ReplaceAllString(html, " "))
@@ -20,7 +20,7 @@ func TestRenderMarkdown_EmptyString(t *testing.T) {
 
 	got := RenderMarkdown("")
 	if got != "" {
-		t.Errorf("RenderMarkdown(\"\") = %q, want \"\"", got)
+		t.Errorf("RenderMarkdown(\"\") = %q、期待値 = \"\"", got)
 	}
 }
 
@@ -96,7 +96,7 @@ func TestRenderMarkdown_BasicMarkdown(t *testing.T) {
 			got := normalizeHTML(RenderMarkdown(tt.input))
 			want := normalizeHTML(tt.expected)
 			if got != want {
-				t.Errorf("RenderMarkdown(%q)\ngot:  %s\nwant: %s", tt.input, got, want)
+				t.Errorf("RenderMarkdown(%q)\n実測値: %s\n期待値: %s", tt.input, got, want)
 			}
 		})
 	}
@@ -111,7 +111,7 @@ func TestRenderMarkdown_GFMExtensions(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "タスクリスト（未完了）",
+			name:     "タスクリスト (未完了)",
 			input:    "- [ ] 未完了\n- [x] 完了",
 			expected: `<ul> <li><input disabled="" type="checkbox"> 未完了</li> <li><input checked="" disabled="" type="checkbox"> 完了</li> </ul>`,
 		},
@@ -139,7 +139,7 @@ func TestRenderMarkdown_GFMExtensions(t *testing.T) {
 			got := normalizeHTML(RenderMarkdown(tt.input))
 			want := normalizeHTML(tt.expected)
 			if got != want {
-				t.Errorf("RenderMarkdown(%q)\ngot:  %s\nwant: %s", tt.input, got, want)
+				t.Errorf("RenderMarkdown(%q)\n実測値: %s\n期待値: %s", tt.input, got, want)
 			}
 		})
 	}
@@ -152,7 +152,7 @@ func TestRenderMarkdown_HardWraps(t *testing.T) {
 	got := RenderMarkdown(input)
 
 	if !strings.Contains(got, "<br") {
-		t.Errorf("RenderMarkdown(%q) should contain <br>, got: %s", input, got)
+		t.Errorf("RenderMarkdown(%q)の結果に<br>が含まれていない: %s", input, got)
 	}
 }
 
@@ -182,7 +182,7 @@ func TestRenderMarkdown_UnsafeHTML(t *testing.T) {
 
 			got := RenderMarkdown(tt.input)
 			if !strings.Contains(got, tt.contains) {
-				t.Errorf("RenderMarkdown(%q)\ngot:  %s\nwant to contain: %s", tt.input, got, tt.contains)
+				t.Errorf("RenderMarkdown(%q)\n実測値: %s\n含まれるべき文字列: %s", tt.input, got, tt.contains)
 			}
 		})
 	}
@@ -219,7 +219,7 @@ func TestRenderMarkdown_Sanitization(t *testing.T) {
 
 			got := RenderMarkdown(tt.input)
 			if strings.Contains(got, tt.notContains) {
-				t.Errorf("RenderMarkdown(%q) should not contain %q, got: %s", tt.input, tt.notContains, got)
+				t.Errorf("RenderMarkdown(%q)の結果に%qが含まれている: %s", tt.input, tt.notContains, got)
 			}
 		})
 	}
@@ -237,7 +237,7 @@ func TestRenderMarkdown_ImgAttributes(t *testing.T) {
 	}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
-			t.Errorf("RenderMarkdown(%q) should contain %q, got: %s", input, check, got)
+			t.Errorf("RenderMarkdown(%q)の結果に%qが含まれていない: %s", input, check, got)
 		}
 	}
 }
@@ -271,12 +271,12 @@ func TestRenderMarkdown_StandaloneImgLine(t *testing.T) {
 			contains: []string{"<img", "<code>code</code>"},
 		},
 		{
-			name:     "img タグだけの行は段落に入る",
+			name:     "imgタグだけの行は段落に入る",
 			input:    `<img src="https://example.com/image.png">`,
 			contains: []string{"<p><img"},
 		},
 		{
-			name:     "属性値に > を含む img タグも段落に入る",
+			name:     "属性値に > を含むimgタグも段落に入る",
 			input:    `<img src="https://example.com/image.png" alt="a>b">`,
 			contains: []string{"<p><img"},
 		},
@@ -295,7 +295,7 @@ func TestRenderMarkdown_StandaloneImgLine(t *testing.T) {
 
 			for _, want := range tt.contains {
 				if !strings.Contains(got, want) {
-					t.Errorf("RenderMarkdown(%q)\ngot:  %s\nwant to contain: %s", tt.input, got, want)
+					t.Errorf("RenderMarkdown(%q)\n実測値: %s\n含まれるべき文字列: %s", tt.input, got, want)
 				}
 			}
 		})
@@ -308,19 +308,19 @@ func TestRenderMarkdown_TaskListCheckboxAttributes(t *testing.T) {
 	input := "- [ ] タスク"
 	got := RenderMarkdown(input)
 
-	// input要素が保持されていること（bluemondayで除去されないこと）
+	// input要素が保持されていること (bluemondayで除去されないこと)
 	if !strings.Contains(got, "<input") {
-		t.Errorf("RenderMarkdown(%q) should contain <input>, got: %s", input, got)
+		t.Errorf("RenderMarkdown(%q)の結果に<input>が含まれていない: %s", input, got)
 	}
 
 	// disabled属性が保持されていること
 	if !strings.Contains(got, "disabled") {
-		t.Errorf("RenderMarkdown(%q) should contain disabled attribute, got: %s", input, got)
+		t.Errorf("RenderMarkdown(%q)の結果にdisabled属性が含まれていない: %s", input, got)
 	}
 
 	// type="checkbox"が保持されていること
 	if !strings.Contains(got, `type="checkbox"`) {
-		t.Errorf("RenderMarkdown(%q) should contain type=\"checkbox\", got: %s", input, got)
+		t.Errorf("RenderMarkdown(%q)の結果にtype=\"checkbox\"が含まれていない: %s", input, got)
 	}
 }
 
@@ -361,7 +361,7 @@ func TestRenderMarkdown_ComplexDocument(t *testing.T) {
 
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
-			t.Errorf("RenderMarkdown should contain %q, got: %s", check, got)
+			t.Errorf("RenderMarkdownの結果に%qが含まれていない: %s", check, got)
 		}
 	}
 }
@@ -380,7 +380,7 @@ func TestWithInlineImgBlocks_WrapsTheRegisteredHTMLBlockParser(t *testing.T) {
 		}
 	}
 	if registered != 1 {
-		t.Errorf("wrapped parsers = %d, want 1", registered)
+		t.Errorf("ラップしたパーサーの数 = %d、期待値 = 1", registered)
 	}
 }
 
@@ -389,7 +389,7 @@ func TestWithInlineImgBlocks_PanicsWithoutAnHTMLBlockParser(t *testing.T) {
 
 	defer func() {
 		if recover() == nil {
-			t.Error("SetParserOption did not panic")
+			t.Error("SetParserOptionがpanicしなかった")
 		}
 	}()
 

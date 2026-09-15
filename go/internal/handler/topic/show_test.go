@@ -26,7 +26,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// newShowRequest はchiのURLパラメータ付きGETリクエストを作成するヘルパーです
+// newShowRequestはchiのURLパラメータ付きGETリクエストを作成するヘルパーです
 func newShowRequest(t *testing.T, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -40,7 +40,7 @@ func newShowRequest(t *testing.T, path string, params map[string]string) *http.R
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用のトピックハンドラーを作成するヘルパーです
+// setupHandlerはテスト用のトピックハンドラーを作成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 	t.Helper()
 
@@ -57,10 +57,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
 	getTopicNewUC := usecase.NewGetTopicNewUsecase(spaceRepo, spaceMemberRepo)
-	// The create usecase opens its own transaction, so it takes the shared pool rather than the
-	// transaction the screens are read through. The screens under test here never reach it.
-	//
-	// [Ja] 作成のユースケースは自身でトランザクションを開くため、画面の読み取りに使うトランザクション
+	// 作成のユースケースは自身でトランザクションを開くため、画面の読み取りに使うトランザクション
 	// ではなく共有プールを受け取る。ここでテストする画面がそこへ到達することはない。
 	createTopicUC := usecase.NewCreateTopicUsecase(
 		testutil.GetTestDB(),
@@ -97,7 +94,7 @@ func TestShow_存在しないスペースで404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -118,7 +115,7 @@ func TestShow_不正なトピック番号で404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -143,7 +140,7 @@ func TestShow_存在しないトピックで404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -175,12 +172,12 @@ func TestShow_公開トピックを未ログインで閲覧できる(t *testing.
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "公開トピック") {
-		t.Error("response should contain topic name")
+		t.Error("レスポンスにトピック名が含まれていない")
 	}
 }
 
@@ -211,7 +208,7 @@ func TestShow_非公開トピックを未ログインで閲覧すると404が返
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -252,12 +249,12 @@ func TestShow_非公開トピックをスペースオーナーが閲覧できる
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "オーナー閲覧可能") {
-		t.Error("response should contain topic name")
+		t.Error("レスポンスにトピック名が含まれていない")
 	}
 }
 
@@ -303,12 +300,12 @@ func TestShow_非公開トピックをトピックメンバーが閲覧できる
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "メンバー閲覧可能") {
-		t.Error("response should contain topic name")
+		t.Error("レスポンスにトピック名が含まれていない")
 	}
 }
 
@@ -356,7 +353,7 @@ func TestShow_非公開トピックをスペースメンバーが閲覧できる
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -403,43 +400,36 @@ func TestShow_正常系_ページ一覧が表示される(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "テストトピック") {
-		t.Error("response should contain topic name")
+		t.Error("レスポンスにトピック名が含まれていない")
 	}
 	if !strings.Contains(body, "最初のページ") {
-		t.Error("response should contain regular page title")
+		t.Error("レスポンスに通常ページのタイトルが含まれていない")
 	}
 	if !strings.Contains(body, "ピン留めページ") {
-		t.Error("response should contain pinned page title")
+		t.Error("レスポンスにピン留めしたページのタイトルが含まれていない")
 	}
 
-	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
-	// link has to bypass it) and keeps this screen's max-w-3xl content width. Its trailing crumb
-	// links back to the space.
-	//
-	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
-	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。末尾のパンくずは
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅max-w-3xlも維持する。末尾のパンくずは
 	// スペースへ戻るリンク。
 	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+		t.Error("共通のパンくずヘッダーがmax-w-3xlのコンテンツ幅を保っていない")
 	}
 	if !strings.Contains(body, `href="/s/ts-pages"`) {
-		t.Error("breadcrumb should link back to the space")
+		t.Error("パンくずがスペースへのリンクになっていない")
 	}
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
-		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 }
 
-// Regression test verifying that the suggestion tab is shown in every viewable
-// scenario on the topic detail screen.
-//
-// [Ja] トピック詳細画面で、閲覧可能なすべてのシナリオで編集提案タブが
+// トピック詳細画面で、閲覧可能なすべてのシナリオで編集提案タブが
 // 表示されることを検証する回帰テスト。
 func TestShow_編集提案タブが常に表示される(t *testing.T) {
 	t.Parallel()
@@ -523,23 +513,20 @@ func TestShow_編集提案タブが常に表示される(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
 			expected := fmt.Sprintf("/s/%s/topics/1/suggestions", tt.spaceIdentifier)
 			if !strings.Contains(body, expected) {
-				t.Errorf("response should contain suggestions tab link %q", expected)
+				t.Errorf("レスポンスに編集提案のタブのリンク%qが含まれていない", expected)
 			}
 		})
 	}
 }
 
-// The topic options dropdown trigger is icon-only, so its accessible name comes from the
-// translated aria-label rather than from its content.
-//
-// [Ja] トピックオプションのドロップダウントリガーはアイコンのみのため、アクセシブルネームは
-// 内容ではなく翻訳済みの aria-label が供給する。
+// トピックオプションのドロップダウントリガーはアイコンのみのため、アクセシブルネームは
+// 内容ではなく翻訳済みのaria-labelが供給する。
 func TestShow_トピックオプションのトリガーにアクセシブルネームがある(t *testing.T) {
 	t.Parallel()
 
@@ -601,24 +588,19 @@ func TestShow_トピックオプションのトリガーにアクセシブルネ
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
-				t.Errorf("トピックオプションのトリガーに aria-label %q が含まれていない", tt.wantLabel)
+				t.Errorf("トピックオプションのトリガーにaria-label %qが含まれていない", tt.wantLabel)
 			}
 		})
 	}
 }
 
-// The stored identifier is what the canonical URL must point at. spaces.identifier is citext, so a
-// request whose casing differs reaches the same screen and would otherwise declare a second
-// canonical address for the same content. The topic number comes from the stored topic for the same
-// reason, so that /topics/007 does not become an address of its own either.
-//
-// [Ja] 正規 URL が指すべきは保存済みの識別子である。spaces.identifier は citext のため大文字小文字が
-// 違うリクエストでも同じ画面に到達し、そのままでは同じ内容に対して 2 つ目の正規アドレスを宣言して
-// しまう。トピック番号を保存済みのトピックから取るのも同じ理由で、/topics/007 が独自のアドレスに
+// 正規URLが指すべきは保存済みの識別子である。spaces.identifierはcitextのため大文字小文字が
+// 違うリクエストでも同じ画面に到達し、そのままでは同じ内容に対して2つ目の正規アドレスを宣言して
+// しまう。トピック番号を保存済みのトピックから取るのも同じ理由で、/topics/007が独自のアドレスに
 // ならないようにするためである。
 func TestShow_CanonicalUsesStoredIdentifierAndTopicNumber(t *testing.T) {
 	t.Parallel()
@@ -648,7 +630,7 @@ func TestShow_CanonicalUsesStoredIdentifierAndTopicNumber(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -659,7 +641,7 @@ func TestShow_CanonicalUsesStoredIdentifierAndTopicNumber(t *testing.T) {
 		`<meta property="og:url" content="https://localhost/s/ts-canonical/topics/1">`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(body, "TS-CANONICAL") {
@@ -706,13 +688,10 @@ func TestShow_PaginatedTitleIncludesPageNumber(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
-	// Each page of the series carries different pages, so it declares itself rather than the first
-	// page as its canonical address.
-	//
-	// [Ja] 系列の各ページは載っているページが異なるため、1 ページ目ではなく自分自身を正規アドレスとして
+	// 系列の各ページは載っているページが異なるため、1ページ目ではなく自分自身を正規アドレスとして
 	// 宣言する。
 	for _, want := range []string{
 		"<title>Paginated Topic | Paginated Space (Page 2)</title>",
@@ -721,7 +700,7 @@ func TestShow_PaginatedTitleIncludesPageNumber(t *testing.T) {
 		`<meta property="og:url" content="https://localhost/s/ts-paginated-title/topics/1?page=2">`,
 	} {
 		if !strings.Contains(rr.Body.String(), want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 }
@@ -755,28 +734,23 @@ func TestShow_PageBeyondTotalReturnsNotFound(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusNotFound {
-				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 			}
 
 			body := rr.Body.String()
 			if strings.Contains(body, "Out of Range Topic") {
-				t.Error("response should not contain the topic name")
+				t.Error("レスポンスにトピック名が含まれている")
 			}
 			if strings.Contains(body, "/s/ts-page-out-of-range/topics/1?page="+page) {
-				t.Error("response should not contain a self-referencing canonical URL")
+				t.Error("レスポンスに自身を指すcanonical URLが含まれている")
 			}
 		})
 	}
 }
 
-// The topic is the last item of its breadcrumb, so it ends the trail as a plain crumb marked as
-// the current page, carrying the visibility icon as decoration beside its name. The same visible
-// items are published as BreadcrumbList structured data: signed-out viewers start at the public
-// space, while signed-in viewers also get /home.
-//
-// [Ja] トピックはパンくずの末尾項目のため、現在ページとして印を付けたリンク無しの項目で経路を
-// 締め、名前の横に公開範囲のアイコンを装飾として持つ。同じ表示項目を BreadcrumbList 構造化データ
-// にも出し、未ログインの閲覧者は公開スペースから、ログイン済みの閲覧者は /home から始める。
+// トピックはパンくずの末尾項目のため、現在ページとして印を付けたリンク無しの項目で経路を
+// 締め、名前の横に公開範囲のアイコンを装飾として持つ。同じ表示項目をBreadcrumbList構造化データ
+// にも出し、未ログインの閲覧者は公開スペースから、ログイン済みの閲覧者は /homeから始める。
 func TestShow_BreadcrumbMarksCurrentTopicWithStructuredData(t *testing.T) {
 	t.Parallel()
 
@@ -807,7 +781,7 @@ func TestShow_BreadcrumbMarksCurrentTopicWithStructuredData(t *testing.T) {
 		wantNotContains []string
 	}{
 		{
-			name: "signed-out viewer starts at public space",
+			name: "未ログインの閲覧者は公開スペースから始まる",
 			wantContains: []string{
 				`aria-current="page"`,
 				"<script type=\"application/ld+json\">",
@@ -818,7 +792,7 @@ func TestShow_BreadcrumbMarksCurrentTopicWithStructuredData(t *testing.T) {
 			wantNotContains: []string{`href="/home"`, `https://localhost/home`},
 		},
 		{
-			name: "signed-in viewer starts at authenticated home",
+			name: "ログイン済みの閲覧者は認証済みのホームから始まる",
 			user: &model.User{ID: viewerID, Atname: "tsbreadcrumbviewer"},
 			wantContains: []string{
 				`aria-current="page"`,
@@ -845,22 +819,22 @@ func TestShow_BreadcrumbMarksCurrentTopicWithStructuredData(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
 			for _, want := range tt.wantContains {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 			for _, notWant := range tt.wantNotContains {
 				if strings.Contains(body, notWant) {
-					t.Errorf("response unexpectedly contains %q", notWant)
+					t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
 				}
 			}
 			if strings.Contains(body, "\"name\":\"公開トピック\",\"item\":") {
-				t.Error("current breadcrumb structured-data item must not link to itself")
+				t.Error("現在のパンくずの構造化データの項目が自身へリンクしている")
 			}
 			if !currentCrumbHasDecorativeIcon(t, body) {
 				t.Error("現在地のパンくず項目に装飾アイコンが出ていない")
@@ -869,26 +843,15 @@ func TestShow_BreadcrumbMarksCurrentTopicWithStructuredData(t *testing.T) {
 	}
 }
 
-// visibilityBadgeID is the id showSubtitle gives the visibility badge, which is what lets the
-// assertions below name that one element.
-//
-// [Ja] visibilityBadgeID は showSubtitle が公開範囲のバッジへ与える id で、以下の検査がその要素
+// visibilityBadgeIDはshowSubtitleが公開範囲のバッジへ与えるidで、以下の検査がその要素
 // だけを名指しできるようにしているもの。
 const visibilityBadgeID = "topic-visibility-badge"
 
-// visibilityLabelText parses the response and returns the complete text of the badge that names the
-// topic visibility. Matching the badge element before reading its text prevents "Public" from
-// passing merely because it is a suffix of "Private" in another locale.
-//
-// The badge is found by its id. Its classes describe how it looks, and the response holds other
-// outlined elements, so a match on those would follow a styling change or start reading a different
-// element as the screen grows.
-//
-// [Ja] visibilityLabelText は応答を解析し、トピックの公開範囲を示すバッジのテキスト全体を返す。
+// visibilityLabelTextは応答を解析し、トピックの公開範囲を示すバッジのテキスト全体を返す。
 // テキストを読む前にバッジ要素を特定することで、あるロケールで「公開」が「非公開」の接尾辞で
 // あるだけなのに検査を通ることを防ぐ。
 //
-// バッジは id で特定する。クラスは見た目を表すものであり、応答には他の outline の要素もあるため、
+// バッジはidで特定する。クラスは見た目を表すものであり、応答には他のoutlineの要素もあるため、
 // クラスでの一致はスタイルの変更に追従してしまうか、画面が育つにつれ別の要素を読み始める。
 func visibilityLabelText(t *testing.T, body string) string {
 	t.Helper()
@@ -926,11 +889,7 @@ func visibilityLabelText(t *testing.T, body string) string {
 	}
 }
 
-// currentCrumbHasDecorativeIcon reports whether the crumb marked as the current page carries an
-// icon that is hidden from assistive technology. The topic screen repeats its visibility there as
-// decoration, so the icon has to stay out of the reading order while remaining on screen.
-//
-// [Ja] currentCrumbHasDecorativeIcon は、現在ページとして印を付けたパンくず項目が、支援技術から
+// currentCrumbHasDecorativeIconは、現在ページとして印を付けたパンくず項目が、支援技術から
 // 隠したアイコンを持つかを返す。トピック画面は公開範囲をそこへ装飾として繰り返すため、アイコンは
 // 画面に残しつつ読み上げの順序からは外れている必要がある。
 func currentCrumbHasDecorativeIcon(t *testing.T, body string) bool {
@@ -978,15 +937,7 @@ func hasAttribute(token xhtml.Token, key string, value string) bool {
 	return false
 }
 
-// The visibility label is the only place the topic screen says whether the topic is public, and it
-// is the label rather than the icon that carries the state for a screen reader. It shares the line
-// below the title with the description. Checking the word
-// keeps that from being replaced by an icon on its own.
-//
-// The listing cards elsewhere in the response would satisfy a bare search for the icon, so the
-// assertion looks for the word next to it.
-//
-// [Ja] 公開範囲のラベルは、トピック画面が公開か非公開かを述べる唯一の場所であり、スクリーン
+// 公開範囲のラベルは、トピック画面が公開か非公開かを述べる唯一の場所であり、スクリーン
 // リーダーへ状態を運ぶのはアイコンではなくラベルのほうである。ラベルはタイトルの下の行を
 // 説明文と共有する。言葉を確認することで、それが
 // アイコンだけに置き換わるのを防ぐ。
@@ -1020,12 +971,12 @@ func TestShow_公開トピックの説明文の行に公開ラベルが出る(t 
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if got := visibilityLabelText(t, body); got != "公開" {
-		t.Errorf("公開トピックのラベルが「公開」になっていない: got %q", got)
+		t.Errorf("公開トピックのラベル = %q、期待値 = 「公開」", got)
 	}
 }
 
@@ -1066,11 +1017,11 @@ func TestShow_非公開トピックの説明文の行に非公開ラベルが出
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if got := visibilityLabelText(t, body); got != "非公開" {
-		t.Errorf("非公開トピックのラベルが「非公開」になっていない: got %q", got)
+		t.Errorf("非公開トピックのラベル = %q、期待値 = 「非公開」", got)
 	}
 }

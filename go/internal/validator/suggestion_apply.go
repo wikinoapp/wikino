@@ -7,41 +7,41 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SuggestionApplyValidator は編集提案反映時のバリデーションを行う。
-// 内部で PageUpdateValidator を各 SuggestionPage に対してループ呼び出しし、
-// 全違反を *model.SuggestionApplyError.PageErrors に集約する。
+// SuggestionApplyValidatorは編集提案反映時のバリデーションを行う。
+// 内部でPageUpdateValidatorを各SuggestionPageに対してループ呼び出しし、
+// 全違反を *model.SuggestionApplyError.PageErrorsに集約する。
 type SuggestionApplyValidator struct {
 	pageUpdateValidator *PageUpdateValidator
 }
 
-// NewSuggestionApplyValidator は SuggestionApplyValidator を生成する
+// NewSuggestionApplyValidatorはSuggestionApplyValidatorを生成する
 func NewSuggestionApplyValidator(pageUpdateValidator *PageUpdateValidator) *SuggestionApplyValidator {
 	return &SuggestionApplyValidator{pageUpdateValidator: pageUpdateValidator}
 }
 
-// SuggestionApplyValidatorInput はバリデーションの入力パラメータ
+// SuggestionApplyValidatorInputはバリデーションの入力パラメータ
 type SuggestionApplyValidatorInput struct {
 	SpaceID         model.SpaceID
 	SpaceIdentifier model.SpaceIdentifier
 	Entries         []SuggestionApplyValidatorEntry
 }
 
-// SuggestionApplyValidatorEntry は反映対象のページ1件分の入力
+// SuggestionApplyValidatorEntryは反映対象のページ1件分の入力
 type SuggestionApplyValidatorEntry struct {
 	PageID  model.PageID
 	TopicID model.TopicID
-	// Title は SuggestionPage.Title。NULL の場合はチェック対象外
+	// TitleはSuggestionPage.Title。NULLの場合はチェック対象外
 	Title *string
 }
 
-// SuggestionApplyValidateOutput はバリデーション成功時の出力
+// SuggestionApplyValidateOutputはバリデーション成功時の出力
 type SuggestionApplyValidateOutput struct {
-	// ConflictingPageIDs は反映前に論理削除すべき競合ページのID一覧
+	// ConflictingPageIDsは反映前に論理削除すべき競合ページのID一覧
 	ConflictingPageIDs []model.PageID
 }
 
-// Validate は各エントリに対して PageUpdateValidator を呼び出し、
-// 成功時は論理削除対象のIDを返し、違反がある場合は *model.SuggestionApplyError を返す。
+// Validateは各エントリに対してPageUpdateValidatorを呼び出し、
+// 成功時は論理削除対象のIDを返し、違反がある場合は *model.SuggestionApplyErrorを返す。
 func (v *SuggestionApplyValidator) Validate(
 	ctx context.Context,
 	input SuggestionApplyValidatorInput,
@@ -84,8 +84,8 @@ func (v *SuggestionApplyValidator) Validate(
 	}, nil
 }
 
-// collectPageErrors は PageUpdateValidator が返した ValidationError のフィールドエラーを、
-// 構造化された PageErrors に変換して applyErr に追加する。
+// collectPageErrorsはPageUpdateValidatorが返したValidationErrorのフィールドエラーを、
+// 構造化されたPageErrorsに変換してapplyErrに追加する。
 func (v *SuggestionApplyValidator) collectPageErrors(applyErr *model.SuggestionApplyError, inner *model.ValidationError, pageTitle string) {
 	for _, msgs := range inner.Fields {
 		for _, msg := range msgs {

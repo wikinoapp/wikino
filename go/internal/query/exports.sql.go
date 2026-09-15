@@ -26,10 +26,7 @@ type CreateExportParams struct {
 	Now        time.Time `json:"now"`
 }
 
-// Creates an export in the given status. The repository passes queued, and the worker
-// advances it from there.
-//
-// [Ja] 渡された状態でエクスポートを作成する。リポジトリは queued を渡し、そこから先は
+// 渡された状態でエクスポートを作成する。リポジトリはqueuedを渡し、そこから先は
 // ワーカーが進める。
 func (q *Queries) CreateExport(ctx context.Context, arg CreateExportParams) (Export, error) {
 	row := q.db.QueryRowContext(ctx, createExport,
@@ -62,9 +59,7 @@ type DeleteExportParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// Deletes the export record. The ZIP object it points at is deleted by the caller.
-//
-// [Ja] エクスポートのレコードを削除する。参照している ZIP オブジェクトの削除は呼び出し側が行う。
+// エクスポートのレコードを削除する。参照しているZIPオブジェクトの削除は呼び出し側が行う。
 func (q *Queries) DeleteExport(ctx context.Context, arg DeleteExportParams) error {
 	_, err := q.db.ExecContext(ctx, deleteExport, arg.ID, arg.SpaceID)
 	return err
@@ -90,10 +85,7 @@ type DeleteLegacyExportFilesParams struct {
 	SpaceID  string `json:"space_id"`
 }
 
-// Removes only this export's attachments and blobs with no remaining references.
-// The single statement keeps metadata recoverable if deletion fails.
-//
-// [Ja] このエクスポートの関連と、参照が残らない blob だけを削除する。
+// このエクスポートの関連と、参照が残らないblobだけを削除する。
 // 単一の文にまとめ、削除失敗時にメタデータから再試行できるようにする。
 func (q *Queries) DeleteLegacyExportFiles(ctx context.Context, arg DeleteLegacyExportFilesParams) error {
 	_, err := q.db.ExecContext(ctx, deleteLegacyExportFiles, arg.ExportID, arg.SpaceID)
@@ -109,9 +101,7 @@ type FindExportByIDAndSpaceParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// Returns the export with the given ID, scoped to the space.
-//
-// [Ja] 指定 ID のエクスポートを、スペースにスコープして返す。
+// 指定IDのエクスポートを、スペースにスコープして返す。
 func (q *Queries) FindExportByIDAndSpace(ctx context.Context, arg FindExportByIDAndSpaceParams) (Export, error) {
 	row := q.db.QueryRowContext(ctx, findExportByIDAndSpace, arg.ID, arg.SpaceID)
 	var i Export
@@ -136,10 +126,7 @@ ORDER BY created_at DESC, id DESC
 LIMIT 1
 `
 
-// Returns the most recent export of the space. The export screen shows this one, and the
-// start of a new export is refused while it is still running.
-//
-// [Ja] スペースの最新のエクスポートを返す。エクスポート画面はこれを表示し、これが実行中の
+// スペースの最新のエクスポートを返す。エクスポート画面はこれを表示し、これが実行中の
 // 間は新しいエクスポートの開始を拒否する。
 func (q *Queries) FindLatestExportBySpace(ctx context.Context, spaceID string) (Export, error) {
 	row := q.db.QueryRowContext(ctx, findLatestExportBySpace, spaceID)
@@ -180,9 +167,7 @@ type ListLegacyExportFilesRow struct {
 	Shared bool   `json:"shared"`
 }
 
-// Finds Rails ZIPs before deleting their export. Shared blobs remain in storage.
-//
-// [Ja] エクスポートを削除する前に Rails の ZIP を取得する。共有 blob はストレージに残す。
+// エクスポートを削除する前にRailsのZIPを取得する。共有blobはストレージに残す。
 func (q *Queries) ListLegacyExportFiles(ctx context.Context, arg ListLegacyExportFilesParams) ([]ListLegacyExportFilesRow, error) {
 	rows, err := q.db.QueryContext(ctx, listLegacyExportFiles, arg.ExportID, arg.SpaceID)
 	if err != nil {
@@ -221,14 +206,9 @@ type ListOlderExportsBySpaceParams struct {
 	SpaceID   string `json:"space_id"`
 }
 
-// Returns the exports older than the given one, oldest first. Used after a successful
-// export to delete the ones it replaces, together with their objects. The same ordering
-// as FindLatestExportBySpace keeps a later replacement out even if an older worker comes
-// back and finishes after it was considered stale.
-//
-// [Ja] 指定したエクスポートより古い、同じスペースのエクスポートを古い順に返す。
+// 指定したエクスポートより古い、同じスペースのエクスポートを古い順に返す。
 // エクスポートの成功後に、それが置き換えるエクスポートをオブジェクトごと削除するために使う。
-// FindLatestExportBySpace と同じ順序を使うことで、停止したと見なされた古いワーカーが後から完了
+// FindLatestExportBySpaceと同じ順序を使うことで、停止したと見なされた古いワーカーが後から完了
 // しても、その後に作られたエクスポートを削除対象に含めない。
 func (q *Queries) ListOlderExportsBySpace(ctx context.Context, arg ListOlderExportsBySpaceParams) ([]Export, error) {
 	rows, err := q.db.QueryContext(ctx, listOlderExportsBySpace, arg.CurrentID, arg.SpaceID)
@@ -277,13 +257,8 @@ type UpdateExportHeartbeatParams struct {
 	Status  int32     `json:"status"`
 }
 
-// Records that the worker is still running. The status condition keeps a worker that has
-// already been replaced from making a finished export look alive again. The ID comes back
-// so that such a worker learns it was replaced and can stop, instead of finding out only
-// when its final transition is refused. No row is returned when the condition does not hold.
-//
-// [Ja] ワーカーがまだ動いていることを記録する。状態の条件は、既に置き換えられたワーカーが、
-// 完了したエクスポートを生きているように見せてしまうのを防ぐ。ID を返すのは、置き換えられた
+// ワーカーがまだ動いていることを記録する。状態の条件は、既に置き換えられたワーカーが、
+// 完了したエクスポートを生きているように見せてしまうのを防ぐ。IDを返すのは、置き換えられた
 // ワーカーが最後の遷移を拒否されるまで気付かず走り続けるのではなく、その場で置き換えを知って
 // 処理を打ち切れるようにするためである。条件を満たさない場合は行を返さない。
 func (q *Queries) UpdateExportHeartbeat(ctx context.Context, arg UpdateExportHeartbeatParams) (string, error) {
@@ -333,39 +308,21 @@ type UpdateExportStatusParams struct {
 	StaleStatusChangedBefore sql.NullTime   `json:"stale_status_changed_before"`
 }
 
-// Advances the export to the given status, but only from one of the expected statuses.
-// A worker that was declared stopped and then came back to life must not overwrite the
-// state of the export that replaced it, so the transition is conditional rather than a
-// plain write. Returns no row when the current status is not one of the expected ones.
-//
-// heartbeat_at and object_key keep their current value when the parameter is NULL, so
-// that a transition which has nothing to say about them does not clear them.
-//
-// stale_heartbeat_before adds a second condition, for the caller that fails an export it has
-// decided is stopped: the transition is refused when the worker has reported itself alive since
-// that export was read. Without it, a worker that came back between the read and the write would
-// be failed while it is still writing its archive.
-//
-// stale_status_changed_before is the same idea for an export that has no heartbeat to go by,
-// which is what a queued one waiting for a worker is. The transition is refused when the export
-// has moved on since it was read, so a job that reached a worker in the meantime is not failed
-// underneath the worker that just started it.
-//
-// [Ja] 期待する状態のいずれかにある場合に限り、エクスポートを指定の状態へ進める。停止したと
+// 期待する状態のいずれかにある場合に限り、エクスポートを指定の状態へ進める。停止したと
 // 判断された後で生き返ったワーカーが、自分を置き換えたエクスポートの状態を上書きしないよう、
 // 遷移は単なる書き込みではなく条件付きにする。現在の状態が期待する状態のいずれでもない場合は
 // 行を返さない。
 //
-// heartbeat_at と object_key はパラメータが NULL のとき現在の値を保つ。これらについて言うことの
+// heartbeat_atとobject_keyはパラメータがNULLのとき現在の値を保つ。これらについて言うことの
 // 無い遷移が、値を消してしまわないようにするためである。
 //
-// stale_heartbeat_before は、停止したと判断したエクスポートを失敗させる呼び出し元のために条件を
-// もう 1 つ足す。そのエクスポートを読んだ後にワーカーが生存を報告していた場合、遷移は拒否される。
+// stale_heartbeat_beforeは、停止したと判断したエクスポートを失敗させる呼び出し元のために条件を
+// もう1つ足す。そのエクスポートを読んだ後にワーカーが生存を報告していた場合、遷移は拒否される。
 // この条件が無いと、読み取りと書き込みの間に復帰したワーカーが、アーカイブを書いている最中に
 // 失敗させられてしまう。
 //
-// stale_status_changed_before は、参照できる heartbeat を持たないエクスポート、つまりワーカーを
-// 待っている queued のための同じ仕組み。読み取った後にエクスポートが先へ進んでいた場合、遷移は
+// stale_status_changed_beforeは、参照できるheartbeatを持たないエクスポート、つまりワーカーを
+// 待っているqueuedのための同じ仕組み。読み取った後にエクスポートが先へ進んでいた場合、遷移は
 // 拒否される。その間にジョブがワーカーへ届いていたら、開始したばかりのワーカーの足元で
 // 失敗させないためである。
 func (q *Queries) UpdateExportStatus(ctx context.Context, arg UpdateExportStatusParams) (Export, error) {
