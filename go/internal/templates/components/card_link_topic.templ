@@ -5,15 +5,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// CardLinkTopic renders a reusable topic link card shared by the home page's "joined topics"
-// section and the space page's topic section. The card links to the topic detail and, when
-// topic.CanCreatePage is true, surfaces a "new page" icon link (shown on hover for non-touch
-// devices and always shown on touch devices), mirroring CardLinkPage's CanEdit pattern.
-//
-// [Ja] CardLinkTopic はホーム画面の「参加中のトピック」セクションとスペース画面のトピック
+// CardLinkTopicはホーム画面の「参加中のトピック」セクションとスペース画面のトピック
 // セクションで共有する、再利用可能なトピックリンクカードを表示する。カードはトピック詳細へ
-// リンクし、topic.CanCreatePage が true のときは「新規ページ」アイコンリンク (非タッチ
-// デバイスではホバー時、タッチデバイスでは常時表示) を出す。CardLinkPage の CanEdit
+// リンクし、topic.CanCreatePageがtrueのときは「新規ページ」アイコンリンク (非タッチ
+// デバイスではホバー時、タッチデバイスでは常時表示) を出す。CardLinkPageのCanEdit
 // パターンを踏襲している。
 templ CardLinkTopic(topic viewmodel.CardLinkTopic) {
 	<div class="group card relative min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600">

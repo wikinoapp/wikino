@@ -26,10 +26,7 @@ func TestCreatePage(t *testing.T) {
 		t.Fatalf("トピック生成に失敗: %v", err)
 	}
 
-	// The three link forms a body can carry: a page in the current topic, a
-	// page in another topic, and a topic that does not exist.
-	//
-	// [Ja] 本文が持ちうる 3 種類のリンク形式。現在のトピックのページ、別トピックの
+	// 本文が持ちうる3種類のリンク形式。現在のトピックのページ、別トピックの
 	// ページ、存在しないトピック。
 	body := "# 見出し\n\n[[Link Target]] / [[" + topicNameHandbook + "/Cross Topic]] / [[Nowhere/Missing]]\n"
 
@@ -45,7 +42,7 @@ func TestCreatePage(t *testing.T) {
 
 	row := readPage(ctx, t, tx, spaces.wiki.id, page.id)
 	if row.title != "Created Page" {
-		t.Errorf("タイトルが %q であることを期待したが %q だった", "Created Page", row.title)
+		t.Errorf("タイトルが%qであることを期待したが%qだった", "Created Page", row.title)
 	}
 	if row.body != body {
 		t.Errorf("本文が渡したMarkdownと一致しない: %q", row.body)
@@ -57,20 +54,14 @@ func TestCreatePage(t *testing.T) {
 		t.Error("ページが公開済みであることを期待したが未公開だった")
 	}
 
-	// The body is stored as the HTML the page detail screen serves, so the
-	// Markdown must have been through the renderer and not merely copied.
-	//
-	// [Ja] 本文はページ詳細画面が配信する HTML として保存されるため、Markdown が
+	// 本文はページ詳細画面が配信するHTMLとして保存されるため、Markdownが
 	// そのまま複写されたのではなく、レンダラーを通っている必要がある。
 	if !strings.Contains(row.bodyHTML, "<h1") {
 		t.Errorf("body_htmlに見出しのHTMLが含まれていない: %q", row.bodyHTML)
 	}
 
-	// A resolved wiki link becomes an href built from the space identifier and
-	// the linked page's number. An unresolved one stays as it was written.
-	//
-	// [Ja] 解決された Wiki リンクは、スペース識別子とリンク先のページ番号から
-	// 組み立てた href になる。解決されなかったものは書いたままの姿で残る。
+	// 解決されたWikiリンクは、スペース識別子とリンク先のページ番号から
+	// 組み立てたhrefになる。解決されなかったものは書いたままの姿で残る。
 	target := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.notes.id, "Link Target")
 	crossTopic := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.handbook.id, "Cross Topic")
 
@@ -78,38 +69,26 @@ func TestCreatePage(t *testing.T) {
 	assertContains(t, row.bodyHTML, hrefOf(spaces.wiki, crossTopic.number))
 	assertContains(t, row.bodyHTML, "[[Nowhere/Missing]]")
 
-	// The pages a wiki link points at are created unpublished, the same as
-	// when a link is followed from the screen.
-	//
-	// [Ja] Wiki リンクの指す先のページは未公開で作成される。画面からリンクを
+	// Wikiリンクの指す先のページは未公開で作成される。画面からリンクを
 	// 辿ったときと同じ。
 	if target.published || crossTopic.published {
 		t.Error("リンク先ページが未公開であることを期待したが公開済みだった")
 	}
 
-	// Backlinks are read from linked_page_ids, so the column has to name every
-	// page that resolved, and only those.
-	//
-	// [Ja] バックリンクは linked_page_ids から引かれるため、この列は解決された
+	// バックリンクはlinked_page_idsから引かれるため、この列は解決された
 	// ページをすべて、かつそれだけを名指しする必要がある。
 	assertLinkedPageIDs(t, row.linkedPageIDs, []model.PageID{target.id, crossTopic.id})
 
-	// The page is numbered after the pages its body links to. Taking the
-	// number first would hand this page a number the linked pages then take.
-	//
-	// [Ja] ページには、その本文がリンクする先のページより後の番号が付く。先に
+	// ページには、その本文がリンクする先のページより後の番号が付く。先に
 	// 番号を取ると、リンク先があとからその番号を取ってしまうため。
 	if page.number <= target.number || page.number <= crossTopic.number {
-		t.Errorf("ページ番号 %d がリンク先の番号 (%d, %d) より後であることを期待した",
+		t.Errorf("ページ番号%dがリンク先の番号 (%d, %d) より後であることを期待した",
 			page.number, target.number, crossTopic.number)
 	}
 
 	assertPageRevision(ctx, t, tx, spaces.wiki, spaces.wiki.member(roleOwner), page.id, row)
 
-	// Every page the seed touched gets an editor entry, which is what puts the
-	// page on its author's home screen.
-	//
-	// [Ja] シードが触れたすべてのページに編集者エントリが付く。これがページを
+	// シードが触れたすべてのページに編集者エントリが付く。これがページを
 	// 書き手のホーム画面へ載せるもの。
 	for _, id := range []model.PageID{page.id, target.id, crossTopic.id} {
 		assertPageEditor(ctx, t, tx, spaces.wiki, spaces.wiki.member(roleOwner), id)
@@ -128,11 +107,8 @@ func TestCreatePageRejectsTopicFromAnotherSpace(t *testing.T) {
 		t.Fatalf("トピック生成に失敗: %v", err)
 	}
 
-	// pages accepts any (space_id, topic_id) pair the database is given, so the
-	// mismatch has to be caught before the INSERT rather than by a constraint.
-	//
-	// [Ja] pages は渡された (space_id, topic_id) の組をそのまま受け入れるため、
-	// 食い違いは制約ではなく INSERT の手前で捕まえる必要がある。
+	// pagesは渡された (space_id, topic_id) の組をそのまま受け入れるため、
+	// 食い違いは制約ではなくINSERTの手前で捕まえる必要がある。
 	page, err := newPageWriter(tx, spaces.solo).createPage(ctx, createPageInput{
 		topic:  topics.notes,
 		author: spaces.solo.member(roleOwner),
@@ -143,7 +119,7 @@ func TestCreatePageRejectsTopicFromAnotherSpace(t *testing.T) {
 		t.Fatalf("別のスペースのトピックを渡したページ作成が失敗することを期待したが成功した: %v", page)
 	}
 	if !strings.Contains(err.Error(), topics.notes.name) {
-		t.Errorf("エラーが食い違ったトピック名を示すことを期待したが %q だった", err)
+		t.Errorf("エラーが食い違ったトピック名を示すことを期待したが%qだった", err)
 	}
 }
 
@@ -180,14 +156,9 @@ func TestCreatePageDoesNotAddEditorToExistingLinkTarget(t *testing.T) {
 		t.Fatalf("リンク元ページの作成に失敗: %v", err)
 	}
 
-	// Resolving a link to an existing page does not count as editing that page.
-	// Only the member who actually created the target should remain its editor,
-	// so the check is on both members: roleOwner still there, roleCollaborator
-	// never added.
-	//
-	// [Ja] 既存ページへのリンク解決は、そのページの編集とは見なさない。リンク先の
+	// 既存ページへのリンク解決は、そのページの編集とは見なさない。リンク先の
 	// 編集者には、実際にそのページを作成したメンバーだけが残る必要があるため、
-	// 両方のメンバーを確認する。roleOwner が残っていること、roleCollaborator が
+	// 両方のメンバーを確認する。roleOwnerが残っていること、roleCollaboratorが
 	// 増えていないこと。
 	assertPageEditor(ctx, t, tx, spaces.wiki, spaces.wiki.member(roleOwner), target.id)
 
@@ -201,7 +172,7 @@ func TestCreatePageDoesNotAddEditorToExistingLinkTarget(t *testing.T) {
 		t.Fatalf("既存リンク先ページの編集者の取得に失敗: %v", err)
 	}
 	if count != 0 {
-		t.Errorf("既存リンク先ページにリンク元の書き手が追加されていないことを期待したが %d 件だった", count)
+		t.Errorf("既存リンク先ページにリンク元の書き手が追加されていないことを期待したが%d件だった", count)
 	}
 }
 
@@ -227,9 +198,7 @@ func TestCreatePageWithoutLinksStoresEmptyLinkedPageIDs(t *testing.T) {
 		t.Fatalf("リンク無しページの作成に失敗: %v", err)
 	}
 
-	// Scanning cardinality into an int also proves the stored array is not NULL.
-	//
-	// [Ja] cardinality を int へ読み取れることでも、保存された配列が NULL ではない
+	// cardinalityをintへ読み取れることでも、保存された配列がNULLではない
 	// ことを確認する。
 	var linkedPageCount int
 	err = tx.QueryRowContext(
@@ -241,7 +210,7 @@ func TestCreatePageWithoutLinksStoresEmptyLinkedPageIDs(t *testing.T) {
 		t.Fatalf("リンク無しページのlinked_page_idsの取得に失敗: %v", err)
 	}
 	if linkedPageCount != 0 {
-		t.Errorf("linked_page_idsが空であることを期待したが %d 件だった", linkedPageCount)
+		t.Errorf("linked_page_idsが空であることを期待したが%d件だった", linkedPageCount)
 	}
 }
 
@@ -268,10 +237,7 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 
 	row := readPage(ctx, t, tx, spaces.wiki.id, guide.id)
 
-	// The page exists to be looked at, so what matters is that the notations
-	// it lists reach the browser as the elements they are meant to become.
-	//
-	// [Ja] このページは目視のために存在するため、重要なのは、並べた記法が
+	// このページは目視のために存在するため、重要なのは、並べた記法が
 	// 意図した要素としてブラウザまで届くこと。
 	for _, tt := range []struct {
 		notation string
@@ -285,28 +251,19 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 		{notation: "水平線", want: "<hr"},
 	} {
 		if !strings.Contains(row.bodyHTML, tt.want) {
-			t.Errorf("%sが %s としてレンダリングされていない", tt.notation, tt.want)
+			t.Errorf("%sが%sとしてレンダリングされていない", tt.notation, tt.want)
 		}
 	}
 
-	// The renderer enables hard wraps, so a line break inside a paragraph
-	// becomes a <br>. This page shows the notations, not line wrapping chosen by
-	// the author, and every other seeded page renders without one, so a <br>
-	// here would mean a paragraph was written across lines again.
-	//
-	// [Ja] レンダラーはハードラップを有効にしているため、段落内の改行は <br> になる。
+	// レンダラーはハードラップを有効にしているため、段落内の改行は <br> になる。
 	// このページが見せるのは記法であって書き手が選んだ折り返しではなく、シードの他の
 	// ページはいずれも <br> なしで描画される。ここに <br> が出たなら、段落がまた複数行に
 	// またがって書かれたということになる。
 	if got := strings.Count(row.bodyHTML, "<br"); got != 0 {
-		t.Errorf("段落内の改行が %d 箇所 <br> として描画されている", got)
+		t.Errorf("段落内の改行が%d箇所 <br> として描画されている", got)
 	}
 
-	// The body links to a page in its own topic and to one in another, and the
-	// seed creates both. Without them the link list and backlink screens have
-	// nothing to show for this page.
-	//
-	// [Ja] 本文は同じトピックのページと別トピックのページへリンクしており、シードは
+	// 本文は同じトピックのページと別トピックのページへリンクしており、シードは
 	// その両方を作成する。これが無いと、このページについてリンク一覧・バックリンク
 	// 一覧の画面に出せるものが無くなる。
 	sameTopic := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.notes.id, "Wiki リンクの例")
@@ -316,29 +273,17 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 	assertContains(t, row.bodyHTML, hrefOf(spaces.wiki, sameTopic.number))
 	assertContains(t, row.bodyHTML, hrefOf(spaces.wiki, otherTopic.number))
 
-	// The guide deliberately links into a topic that does not exist, so that
-	// the unresolved form can be seen on the screen as well. The count is what
-	// is checked: wiki links are never replaced inside <pre>, so the one in the
-	// code fence survives whatever happens, and only counting both shows that
-	// the one in the prose stayed as it was written too.
-	//
-	// [Ja] このページは存在しないトピックへのリンクを意図的に含んでおり、未解決の
-	// 見た目も画面で確認できるようにしている。件数で確認するのは、Wiki リンクが
-	// <pre> の中では置換されず、コードフェンス内の 1 件は何があっても残るため。
-	// 本文中の 1 件も書いたままであることは、両方を数えて初めて確認できる。
+	// このページは存在しないトピックへのリンクを意図的に含んでおり、未解決の
+	// 見た目も画面で確認できるようにしている。件数で確認するのは、Wikiリンクが
+	// <pre> の中では置換されず、コードフェンス内の1件は何があっても残るため。
+	// 本文中の1件も書いたままであることは、両方を数えて初めて確認できる。
 	if got := strings.Count(row.bodyHTML, "[[存在しないトピック/"); got != 2 {
-		t.Errorf("未解決のWikiリンクが 2 箇所残ることを期待したが %d 箇所だった", got)
+		t.Errorf("未解決のWikiリンクが2箇所残ることを期待したが%d箇所だった", got)
 	}
 
-	// The in-page link section demonstrates an anchor, and heading ids are
-	// numbered by position because the guide's headings carry no ASCII letters
-	// for the id to be built from. Checking that the anchor names an id the
-	// page actually has keeps the demonstration from silently turning into a
-	// dead link when a heading is added above it.
-	//
-	// [Ja] ページ内リンクの節はアンカーを例示している。このページの見出しには
-	// ID の元になる英字が無く、ID は出現順から採番される。アンカーがページに実在する
-	// ID を指していることを確認しておくと、上に見出しが増えたときに、例示が黙って
+	// ページ内リンクの節はアンカーを例示している。このページの見出しには
+	// IDの元になる英字が無く、IDは出現順から採番される。アンカーがページに実在する
+	// IDを指していることを確認しておくと、上に見出しが増えたときに、例示が黙って
 	// 死んだリンクへ変わるのを防げる。
 	assertContains(t, row.bodyHTML, `<a href="#heading"`)
 	assertContains(t, row.bodyHTML, `<h2 id="heading">`)
@@ -351,10 +296,7 @@ func TestMarkdownGuideBody(t *testing.T) {
 		t.Fatal("埋め込まれたMarkdown記法紹介ページの本文が空")
 	}
 
-	// The guide is a runtime asset that teaches literal Markdown syntax. Keep
-	// formatters from normalizing distinct spellings into the same notation.
-	//
-	// [Ja] このガイドは Markdown 構文そのものを教える実行時アセット。フォーマッタが
+	// このガイドはMarkdown構文そのものを教える実行時アセット。フォーマッタが
 	// 異なる書き方を同じ記法へ正規化しないよう、文字どおりの構文を守る。
 	for _, tt := range []struct {
 		name string
@@ -371,11 +313,7 @@ func TestMarkdownGuideBody(t *testing.T) {
 		}
 	}
 
-	// The image section of the source document was dropped: the seed creates
-	// no attachments, so an image reference would render as a broken image on
-	// the one page whose purpose is to show notations rendering correctly.
-	//
-	// [Ja] 元ドキュメントの画像の節は落としている。シードは添付ファイルを作らない
+	// 元ドキュメントの画像の節は落としている。シードは添付ファイルを作らない
 	// ため、画像の参照は壊れた画像として表示されてしまう。記法が正しく表示される
 	// ことを示すためのページで、それは起こしたくない。
 	if strings.Contains(markdownGuideBody, "/attachments/") {
@@ -383,9 +321,7 @@ func TestMarkdownGuideBody(t *testing.T) {
 	}
 }
 
-// pageRow is what the seed wrote to the pages table.
-//
-// [Ja] pageRow は、シードが pages テーブルへ書いた内容。
+// pageRowは、シードがpagesテーブルへ書いた内容。
 type pageRow struct {
 	title         string
 	body          string
@@ -395,9 +331,7 @@ type pageRow struct {
 	linkedPageIDs []model.PageID
 }
 
-// readPage reads back the stored page.
-//
-// [Ja] readPage は保存されたページを読み戻す。
+// readPageは保存されたページを読み戻す。
 func readPage(ctx context.Context, t *testing.T, tx *sql.Tx, spaceID model.SpaceID, pageID model.PageID) pageRow {
 	t.Helper()
 
@@ -424,18 +358,14 @@ func readPage(ctx context.Context, t *testing.T, tx *sql.Tx, spaceID model.Space
 	return row
 }
 
-// foundPage is a page located by its title.
-//
-// [Ja] foundPage はタイトルで見つけたページ。
+// foundPageはタイトルで見つけたページ。
 type foundPage struct {
 	id        model.PageID
 	number    model.PageNumber
 	published bool
 }
 
-// findPageByTitle locates a page by the title a wiki link named it with.
-//
-// [Ja] findPageByTitle は、Wiki リンクが名指ししたタイトルでページを見つける。
+// findPageByTitleは、Wikiリンクが名指ししたタイトルでページを見つける。
 func findPageByTitle(
 	ctx context.Context,
 	t *testing.T,
@@ -458,7 +388,7 @@ func findPageByTitle(
 		string(spaceID), string(topicID), title,
 	).Scan(&id, &number, &found.published)
 	if err != nil {
-		t.Fatalf("ページ %s の取得に失敗: %v", title, err)
+		t.Fatalf("ページ%sの取得に失敗: %v", title, err)
 	}
 
 	found.id = model.PageID(id)
@@ -467,30 +397,22 @@ func findPageByTitle(
 	return found
 }
 
-// hrefOf builds the link a resolved wiki link is expected to become.
-//
-// [Ja] hrefOf は、解決された Wiki リンクがなるはずのリンクを組み立てる。
+// hrefOfは、解決されたWikiリンクがなるはずのリンクを組み立てる。
 func hrefOf(space *seededSpace, number model.PageNumber) string {
 	return `<a href="/s/` + string(space.identifier) + `/pages/` + strconv.Itoa(int(number)) + `">`
 }
 
-// assertContains reports a missing substring together with the HTML it was
-// looked for in, which is otherwise hard to reconstruct from a failure.
-//
-// [Ja] assertContains は、見つからなかった部分文字列を、それを探した HTML と
-// 併せて報告する。失敗した内容から HTML を復元するのは難しいため。
+// assertContainsは、見つからなかった部分文字列を、それを探したHTMLと
+// 併せて報告する。失敗した内容からHTMLを復元するのは難しいため。
 func assertContains(t *testing.T, html string, want string) {
 	t.Helper()
 
 	if !strings.Contains(html, want) {
-		t.Errorf("body_htmlに %q が含まれていない: %q", want, html)
+		t.Errorf("body_htmlに%qが含まれていない: %q", want, html)
 	}
 }
 
-// assertLinkedPageIDs checks the stored link targets against the intended set,
-// ignoring order.
-//
-// [Ja] assertLinkedPageIDs は、保存されたリンク先を意図した集合と、順序を無視して
+// assertLinkedPageIDsは、保存されたリンク先を意図した集合と、順序を無視して
 // 比較する。
 func assertLinkedPageIDs(t *testing.T, stored []model.PageID, want []model.PageID) {
 	t.Helper()
@@ -500,20 +422,17 @@ func assertLinkedPageIDs(t *testing.T, stored []model.PageID, want []model.PageI
 		got[id] = true
 	}
 	if len(got) != len(want) {
-		t.Errorf("linked_page_idsが %d 件であることを期待したが %d 件だった (%v)", len(want), len(got), stored)
+		t.Errorf("linked_page_idsが%d件であることを期待したが%d件だった (%v)", len(want), len(got), stored)
 	}
 	for _, id := range want {
 		if !got[id] {
-			t.Errorf("linked_page_idsにページ %s が含まれていない", id)
+			t.Errorf("linked_page_idsにページ%sが含まれていない", id)
 		}
 	}
 }
 
-// assertPageRevision checks that publishing left a revision holding the same
-// snapshot as the page, attributed to the given author.
-//
-// [Ja] assertPageRevision は、公開がページと同じスナップショットを持つリビジョンを
-// 残し、渡した author に紐づいていることを確認する。
+// assertPageRevisionは、公開がページと同じスナップショットを持つリビジョンを
+// 残し、渡したauthorに紐づいていることを確認する。
 func assertPageRevision(
 	ctx context.Context,
 	t *testing.T,
@@ -543,7 +462,7 @@ func assertPageRevision(
 	}
 
 	if count != 1 {
-		t.Errorf("ページリビジョンが 1 件であることを期待したが %d 件だった", count)
+		t.Errorf("ページリビジョンが1件であることを期待したが%d件だった", count)
 	}
 	if title != page.title || body != page.body || bodyHTML != page.bodyHTML {
 		t.Error("ページリビジョンの内容がページと一致しない")
@@ -553,9 +472,7 @@ func assertPageRevision(
 	}
 }
 
-// assertPageEditor checks that the page is attributed to the given member.
-//
-// [Ja] assertPageEditor は、ページが渡した member に紐づいていることを確認する。
+// assertPageEditorは、ページが渡したmemberに紐づいていることを確認する。
 func assertPageEditor(
 	ctx context.Context,
 	t *testing.T,
@@ -576,6 +493,6 @@ func assertPageEditor(
 		t.Fatalf("ページ編集者の取得に失敗: %v", err)
 	}
 	if count != 1 {
-		t.Errorf("ページ %s の編集者が 1 件であることを期待したが %d 件だった", pageID, count)
+		t.Errorf("ページ%sの編集者が1件であることを期待したが%d件だった", pageID, count)
 	}
 }

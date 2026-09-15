@@ -1,4 +1,4 @@
-// Package topic はトピック関連のHTTPハンドラーを提供します
+// Package topicはトピック関連のHTTPハンドラーを提供します
 package topic
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はトピックハンドラー
+// Handlerはトピックハンドラー
 type Handler struct {
 	cfg                   *config.Config
 	flashMgr              *session.FlashManager
@@ -16,7 +16,7 @@ type Handler struct {
 	createTopicUsecase    *usecase.CreateTopicUsecase
 }
 
-// NewHandler は新しいトピックハンドラーを作成します
+// NewHandlerは新しいトピックハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,

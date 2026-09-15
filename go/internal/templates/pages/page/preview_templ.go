@@ -11,19 +11,17 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// PreviewData はページ編集画面のプレビューパネルに渡すデータです
+// PreviewDataはページ編集画面のプレビューパネルに渡すデータです
 type PreviewData struct {
-	// Title is the preview target title (plain text, auto-escaped by the template).
-	// [Ja] Title はプレビュー対象のタイトル (プレーンテキスト、テンプレート側で自動エスケープ)。
+	// Titleはプレビュー対象のタイトル (プレーンテキスト、テンプレート側で自動エスケープ)。
 	Title string
 
-	// BodyHTML is the rendered and sanitized body HTML.
-	// [Ja] BodyHTML はレンダリング・サニタイズ済みの本文 HTML。
+	// BodyHTMLはレンダリング・サニタイズ済みの本文HTML。
 	BodyHTML string
 }
 
-// Preview はプレビューパネルに差し込む HTML フラグメントを返します。
-// 本文はサーバー側でサニタイズ済みのため @templ.Raw で展開します。
+// Previewはプレビューパネルに差し込むHTMLフラグメントを返します。
+// 本文はサーバー側でサニタイズ済みのため @templ.Rawで展開します。
 func Preview(data PreviewData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -57,7 +55,7 @@ func Preview(data PreviewData) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(data.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/preview.templ`, Line: 21, Col: 70}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/preview.templ`, Line: 19, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -75,7 +73,7 @@ func Preview(data PreviewData) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "markdown_table_scroll_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/preview.templ`, Line: 23, Col: 106}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/preview.templ`, Line: 21, Col: 106}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {

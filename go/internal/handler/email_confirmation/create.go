@@ -28,7 +28,7 @@ const (
 	rateLimitEmailWindow = time.Hour
 )
 
-// Create はメール確認コードを送信します (POST /email_confirmation)
+// Createはメール確認コードを送信します (POST /email_confirmation)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -64,7 +64,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		Window: rateLimitIPWindow,
 	}); err != nil {
 		if errors.Is(err, ratelimit.ErrRateLimitExceeded) {
-			slog.WarnContext(ctx, "Rate Limit超過（IP）", "ip", clientIP)
+			slog.WarnContext(ctx, "Rate Limit超過 (IP)", "ip", clientIP)
 			ve := model.NewValidationError()
 			ve.AddGlobal(i18n.T(ctx, "validation_rate_limit_exceeded"))
 			h.renderSignUpForm(w, r, ve, email)
@@ -83,7 +83,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			Window: rateLimitEmailWindow,
 		}); err != nil {
 			if errors.Is(err, ratelimit.ErrRateLimitExceeded) {
-				slog.WarnContext(ctx, "Rate Limit超過（メールアドレス）", "email", email)
+				slog.WarnContext(ctx, "Rate Limit超過 (メールアドレス)", "email", email)
 				ve := model.NewValidationError()
 				ve.AddGlobal(i18n.T(ctx, "validation_rate_limit_exceeded"))
 				h.renderSignUpForm(w, r, ve, email)
@@ -98,7 +98,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// イベントタイプを変換
 	eventType := parseEmailConfirmationEvent(event)
 
-	// UseCase を実行
+	// UseCaseを実行
 	locale := i18n.GetLocale(ctx)
 	output, err := h.createEmailConfirmationUC.Execute(ctx, usecase.CreateEmailConfirmationInput{
 		Email:  email,
@@ -110,7 +110,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// セッションに email_confirmation_id を保存
+	// セッションにemail_confirmation_idを保存
 	h.sessionMgr.SetEmailConfirmationCookie(w, output.EmailConfirmationID)
 
 	// フラッシュメッセージを設定
@@ -132,7 +132,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
-// renderSignUpForm はサインアップフォームをエラー付きでレンダリングします
+// renderSignUpFormはサインアップフォームをエラー付きでレンダリングします
 func (h *Handler) renderSignUpForm(w http.ResponseWriter, r *http.Request, ve *model.ValidationError, email string) {
 	ctx := r.Context()
 
@@ -149,7 +149,7 @@ func (h *Handler) renderSignUpForm(w http.ResponseWriter, r *http.Request, ve *m
 		Email:            email,
 	})
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	// バリデーションエラー時は422 Unprocessable Entityを返す
 	w.WriteHeader(http.StatusUnprocessableEntity)
 
 	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
@@ -159,7 +159,7 @@ func (h *Handler) renderSignUpForm(w http.ResponseWriter, r *http.Request, ve *m
 	}
 }
 
-// parseEmailConfirmationEvent は文字列からイベントタイプを変換します
+// parseEmailConfirmationEventは文字列からイベントタイプを変換します
 func parseEmailConfirmationEvent(event string) model.EmailConfirmationEvent {
 	switch event {
 	case "signup":

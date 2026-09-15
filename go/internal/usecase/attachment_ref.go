@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// calculateAttachmentRefDiff はMarkdown本文から添付ファイルIDを抽出し、
+// calculateAttachmentRefDiffはMarkdown本文から添付ファイルIDを抽出し、
 // 既存の参照との差分を計算して追加・削除すべきIDを返す
 func calculateAttachmentRefDiff(
 	ctx context.Context,
@@ -57,7 +57,7 @@ func calculateAttachmentRefDiff(
 	return toAdd, toRemove, nil
 }
 
-// applyAttachmentRefChanges は事前に計算された添付ファイル参照の追加・削除を実行する
+// applyAttachmentRefChangesは事前に計算された添付ファイル参照の追加・削除を実行する
 func applyAttachmentRefChanges(
 	ctx context.Context,
 	pageID model.PageID,
@@ -81,7 +81,7 @@ func applyAttachmentRefChanges(
 	return nil
 }
 
-// syncAttachmentReferences はMarkdown本文から添付ファイルIDを抽出し、
+// syncAttachmentReferencesはMarkdown本文から添付ファイルIDを抽出し、
 // 既存の参照との差分を計算して追加・削除を行う
 func syncAttachmentReferences(
 	ctx context.Context,
@@ -99,7 +99,7 @@ func syncAttachmentReferences(
 	return applyAttachmentRefChanges(ctx, pageID, spaceID, toAdd, toRemove, pageAttachmentRefRepo)
 }
 
-// extractFeaturedImageAttachmentID はbodyの1行目から画像IDを抽出し、
+// extractFeaturedImageAttachmentIDはbodyの1行目から画像IDを抽出し、
 // 添付ファイルの存在を確認した上でAttachmentIDを返す
 func extractFeaturedImageAttachmentID(
 	ctx context.Context,

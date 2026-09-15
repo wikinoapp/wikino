@@ -26,7 +26,7 @@ func createUnconfirmedEmailConfirmation(t *testing.T, emailConfirmationRepo *rep
 		StartedAt: now,
 	})
 	if err != nil {
-		t.Fatalf("failed to create email confirmation: %v", err)
+		t.Fatalf("メールアドレス確認の作成に失敗: %v", err)
 	}
 
 	return emailConfirmation.ID
@@ -50,7 +50,7 @@ func TestNew(t *testing.T) {
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	req = req.WithContext(ctx)
 
-	// email_confirmation_id を Cookie に設定
+	// email_confirmation_idをCookieに設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: ecID,
@@ -61,7 +61,7 @@ func TestNew(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// レスポンスボディを検証
@@ -69,42 +69,42 @@ func TestNew(t *testing.T) {
 
 	// フォームアクションが含まれているか確認
 	if !strings.Contains(body, `action="/accounts"`) {
-		t.Error("account creation form action not found in response")
+		t.Error("レスポンスにアカウント作成フォームの送信先が見つからない")
 	}
 
 	// CSRFトークンが含まれているか確認
 	if !strings.Contains(body, "test-csrf-token") {
-		t.Error("CSRF token not found in response")
+		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
 	// メールアドレスが表示されているか確認
 	if !strings.Contains(body, testEmail) {
-		t.Error("email address not found in response")
+		t.Error("レスポンスにメールアドレスが見つからない")
 	}
 
 	// アットネーム入力フィールドが含まれているか確認
 	if !strings.Contains(body, `name="atname"`) {
-		t.Error("atname input field not found in response")
+		t.Error("レスポンスにatnameの入力フィールドが見つからない")
 	}
 
 	// パスワード入力フィールドが含まれているか確認
 	if !strings.Contains(body, `name="password"`) {
-		t.Error("password input field not found in response")
+		t.Error("レスポンスにパスワードの入力フィールドが見つからない")
 	}
 
 	// 日本語の見出しが含まれているか確認
 	if !strings.Contains(body, "アカウントを作成") {
-		t.Error("Japanese heading not found in response")
+		t.Error("レスポンスに日本語の見出しが見つからない")
 	}
 
 	// 新規登録に戻るリンクが含まれているか確認
 	if !strings.Contains(body, `href="/sign_up"`) {
-		t.Error("back to sign up link not found in response")
+		t.Error("レスポンスにサインアップへ戻るリンクが見つからない")
 	}
 
 	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
 		if strings.Contains(body, notWant) {
-			t.Errorf("response unexpectedly contains %q", notWant)
+			t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
 		}
 	}
 }
@@ -114,7 +114,7 @@ func TestNew_NoEmailConfirmationID(t *testing.T) {
 
 	handler, _, _ := setupHandler(t)
 
-	// HTTPリクエストを作成（email_confirmation_id のCookieなし）
+	// HTTPリクエストを作成 (email_confirmation_idのCookieなし)
 	req := httptest.NewRequest(http.MethodGet, "/accounts/new", nil)
 	req.Header.Set("Accept-Language", "ja")
 
@@ -127,13 +127,13 @@ func TestNew_NoEmailConfirmationID(t *testing.T) {
 
 	// リダイレクトのステータスコードを検証
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	// リダイレクト先を検証
 	location := rr.Header().Get("Location")
 	if location != "/sign_up" {
-		t.Errorf("wrong redirect location: got %v want %v", location, "/sign_up")
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, "/sign_up")
 	}
 }
 
@@ -142,7 +142,7 @@ func TestNew_EmailConfirmationNotFound(t *testing.T) {
 
 	handler, _, _ := setupHandler(t)
 
-	// HTTPリクエストを作成（存在しない email_confirmation_id）
+	// HTTPリクエストを作成 (存在しないemail_confirmation_id)
 	req := httptest.NewRequest(http.MethodGet, "/accounts/new", nil)
 	req.Header.Set("Accept-Language", "ja")
 
@@ -150,7 +150,7 @@ func TestNew_EmailConfirmationNotFound(t *testing.T) {
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	req = req.WithContext(ctx)
 
-	// 存在しないIDをCookieに設定（有効なUUID形式だが存在しない）
+	// 存在しないIDをCookieに設定 (有効なUUID形式だが存在しない)
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: "00000000-0000-0000-0000-000000000000",
@@ -161,13 +161,13 @@ func TestNew_EmailConfirmationNotFound(t *testing.T) {
 
 	// リダイレクトのステータスコードを検証
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	// リダイレクト先を検証
 	location := rr.Header().Get("Location")
 	if location != "/sign_up" {
-		t.Errorf("wrong redirect location: got %v want %v", location, "/sign_up")
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, "/sign_up")
 	}
 }
 
@@ -189,7 +189,7 @@ func TestNew_EmailNotVerified(t *testing.T) {
 	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
 	req = req.WithContext(ctx)
 
-	// email_confirmation_id を Cookie に設定
+	// email_confirmation_idをCookieに設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: ecID,
@@ -200,13 +200,13 @@ func TestNew_EmailNotVerified(t *testing.T) {
 
 	// リダイレクトのステータスコードを検証
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
-	// リダイレクト先を検証（確認コード入力ページへ）
+	// リダイレクト先を検証 (確認コード入力ページへ)
 	location := rr.Header().Get("Location")
 	if location != "/email_confirmation/edit" {
-		t.Errorf("wrong redirect location: got %v want %v", location, "/email_confirmation/edit")
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, "/email_confirmation/edit")
 	}
 }
 
@@ -220,7 +220,7 @@ func TestNew_EnglishLocale(t *testing.T) {
 
 	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
-	// HTTPリクエストを作成（英語ロケール）
+	// HTTPリクエストを作成 (英語ロケール)
 	req := httptest.NewRequest(http.MethodGet, "/accounts/new", nil)
 	req.Header.Set("Accept-Language", "en")
 
@@ -229,7 +229,7 @@ func TestNew_EnglishLocale(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangEn)
 	req = req.WithContext(ctx)
 
-	// email_confirmation_id を Cookie に設定
+	// email_confirmation_idをCookieに設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: ecID,
@@ -240,27 +240,27 @@ func TestNew_EnglishLocale(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// 英語の見出しが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "Create your account") {
-		t.Error("English heading not found in response")
+		t.Error("レスポンスに英語の見出しが見つからない")
 	}
 
 	// 英語のボタンテキストが含まれているか確認
 	if !strings.Contains(body, "Create account") {
-		t.Error("English submit button text not found in response")
+		t.Error("レスポンスに英語の送信ボタンの文言が見つからない")
 	}
 
 	// 英語のパスワードヒントが含まれているか確認
 	if !strings.Contains(body, "Must be at least 8 characters") {
-		t.Error("English password hint not found in response")
+		t.Error("レスポンスに英語のパスワードのヒントが見つからない")
 	}
 
 	// 英語の戻るリンクが含まれているか確認
 	if !strings.Contains(body, "Back to sign up") {
-		t.Error("English back link not found in response")
+		t.Error("レスポンスに英語の戻るリンクが見つからない")
 	}
 }

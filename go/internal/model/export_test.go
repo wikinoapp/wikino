@@ -36,7 +36,7 @@ func TestExport_InProgress(t *testing.T) {
 
 			export := &Export{Status: tt.status, StatusChangedAt: tt.statusChangedAt, HeartbeatAt: tt.heartbeatAt}
 			if got := export.InProgress(now); got != tt.want {
-				t.Errorf("InProgress() = %v, want %v", got, tt.want)
+				t.Errorf("InProgress() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}

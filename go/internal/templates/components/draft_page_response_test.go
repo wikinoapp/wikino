@@ -16,7 +16,7 @@ import (
 func TestDraftPageShowResponse_タイムゾーン変換(t *testing.T) {
 	t.Parallel()
 
-	// UTC 05:30 を基準とする
+	// UTC 05:30を基準とする
 	modifiedAt := time.Date(2025, 1, 15, 5, 30, 0, 0, time.UTC)
 
 	tests := []struct {
@@ -64,7 +64,7 @@ func TestDraftPageShowResponse_タイムゾーン変換(t *testing.T) {
 
 			html := buf.String()
 			if !strings.Contains(html, tt.expectedTime) {
-				t.Errorf("出力に期待する時刻 %q が含まれていない\n出力: %s", tt.expectedTime, html)
+				t.Errorf("出力に期待する時刻%qが含まれていない\n出力: %s", tt.expectedTime, html)
 			}
 		})
 	}
@@ -92,7 +92,7 @@ func TestDraftPageShowResponse_下書きなしの場合に保存時刻が含ま�
 		t.Error("下書きなしの場合、保存時刻要素が含まれるべきではない")
 	}
 
-	// OOBスワップ用の 3 つの関連ページセクションは含まれる
+	// OOBスワップ用の3つの関連ページセクションは含まれる
 	if !strings.Contains(html, `id="page-link-list"`) {
 		t.Error("リンク一覧のOOBスワップ要素が含まれていない")
 	}
@@ -128,18 +128,18 @@ func TestDraftPageShowResponse_OOBスワップ属性(t *testing.T) {
 
 	// 保存時刻はouterHTMLで置換
 	if !strings.Contains(html, `hx-swap-oob="outerHTML"`) {
-		t.Error("保存時刻のOOBスワップ属性 outerHTML が含まれていない")
+		t.Error("保存時刻のOOBスワップ属性outerHTMLが含まれていない")
 	}
 
-	// 3 つの関連ページセクションは innerHTML で置換
+	// 3つの関連ページセクションはinnerHTMLで置換
 	if !strings.Contains(html, `id="page-link-list" hx-swap-oob="innerHTML"`) {
-		t.Error("リンク一覧のOOBスワップ属性 innerHTML が含まれていない")
+		t.Error("リンク一覧のOOBスワップ属性innerHTMLが含まれていない")
 	}
 	if !strings.Contains(html, `id="page-related-link-list" hx-swap-oob="innerHTML"`) {
-		t.Error("関連リンク一覧のOOBスワップ属性 innerHTML が含まれていない")
+		t.Error("関連リンク一覧のOOBスワップ属性innerHTMLが含まれていない")
 	}
 	if !strings.Contains(html, `id="page-backlink-list" hx-swap-oob="innerHTML"`) {
-		t.Error("バックリンク一覧のOOBスワップ属性 innerHTML が含まれていない")
+		t.Error("バックリンク一覧のOOBスワップ属性innerHTMLが含まれていない")
 	}
 }
 
@@ -149,10 +149,7 @@ func TestDraftPageShowResponse_見出しを含まずリストだけを再描画�
 	ctx := context.Background()
 	ctx = i18n.SetLocale(ctx, "ja")
 
-	// The heading (h2) was moved out of the OOB swap target on the edit.templ side, so this
-	// response (the re-render target) renders only the lists and never the heading.
-	//
-	// [Ja] 見出し (h2) は edit.templ 側の OOB スワップ対象外に置いたため、
+	// 見出し (h2) はedit.templ側のOOBスワップ対象外に置いたため、
 	// 本レスポンス (再描画対象) には見出しを含めず、リストだけを描画する。
 	data := components.DraftPageShowResponseData{
 		LinkList: viewmodel.LinkList{
@@ -177,9 +174,7 @@ func TestDraftPageShowResponse_見出しを含まずリストだけを再描画�
 	}
 	html := buf.String()
 
-	// The list contents must be rendered.
-	//
-	// [Ja] リストの内容は描画されること。
+	// リストの内容は描画されること。
 	if !strings.Contains(html, "ページA") {
 		t.Error("リンク一覧のカードが描画されていない")
 	}
@@ -187,11 +182,9 @@ func TestDraftPageShowResponse_見出しを含まずリストだけを再描画�
 		t.Error("バックリンク一覧のカードが描画されていない")
 	}
 
-	// The heading (h2) must not be included in the re-render target.
-	//
-	// [Ja] 見出し (h2) は再描画対象に含めないこと。
+	// 見出し (h2) は再描画対象に含めないこと。
 	if strings.Contains(html, "<h2") {
-		t.Errorf("再描画レスポンスに見出し (h2) が含まれてはいけない: got %q", html)
+		t.Errorf("再描画レスポンスに見出し (h2) が含まれている: %q", html)
 	}
 	if strings.Contains(html, "バックリンク") {
 		t.Error("再描画レスポンスにバックリンクの見出しが含まれてはいけない")

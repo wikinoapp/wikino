@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// SuggestionPage は編集提案ページのドメインモデル
+// SuggestionPageは編集提案ページのドメインモデル
 type SuggestionPage struct {
 	ID                        SuggestionPageID
 	SpaceID                   SpaceID

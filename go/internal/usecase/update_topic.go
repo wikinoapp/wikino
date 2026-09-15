@@ -9,9 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// UpdateTopicUsecase saves the general settings of a topic.
-//
-// [Ja] UpdateTopicUsecase はトピックの一般設定を保存する。
+// UpdateTopicUsecaseはトピックの一般設定を保存する。
 type UpdateTopicUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -20,7 +18,7 @@ type UpdateTopicUsecase struct {
 	updateValidator *validator.TopicUpdateValidator
 }
 
-// NewUpdateTopicUsecase は UpdateTopicUsecase を生成する
+// NewUpdateTopicUsecaseはUpdateTopicUsecaseを生成する
 func NewUpdateTopicUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -37,8 +35,8 @@ func NewUpdateTopicUsecase(
 	}
 }
 
-// UpdateTopicInput はトピック更新の入力パラメータ。
-// Visibility はフォームが送信した文字列で、変換はバリデーターが行う。
+// UpdateTopicInputはトピック更新の入力パラメータ。
+// Visibilityはフォームが送信した文字列で、変換はバリデーターが行う。
 type UpdateTopicInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	TopicNumber     int32
@@ -48,13 +46,13 @@ type UpdateTopicInput struct {
 	Visibility      string
 }
 
-// UpdateTopicOutput は更新されたトピックとそれが属するスペースを保持する
+// UpdateTopicOutputは更新されたトピックとそれが属するスペースを保持する
 type UpdateTopicOutput struct {
 	Space *model.Space
 	Topic *model.Topic
 }
 
-// Execute はトピックの一般設定を更新する
+// Executeはトピックの一般設定を更新する
 func (uc *UpdateTopicUsecase) Execute(ctx context.Context, input UpdateTopicInput) (*UpdateTopicOutput, error) {
 	// 1. データ取得と認可チェック
 	access, err := fetchTopicUpdateAccess(
@@ -85,9 +83,7 @@ func (uc *UpdateTopicUsecase) Execute(ctx context.Context, input UpdateTopicInpu
 
 	// 3. 永続化
 	//
-	// The update is a single statement, so it is issued without a transaction of its own.
-	//
-	// [Ja] 更新は 1 文で済むため、専用のトランザクションを開かずに実行する。
+	// 更新は1文で済むため、専用のトランザクションを開かずに実行する。
 	topic, err := uc.topicRepo.Update(ctx, repository.UpdateTopicInput{
 		ID:          access.Topic.ID,
 		SpaceID:     access.Space.ID,

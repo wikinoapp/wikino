@@ -33,7 +33,7 @@ func TestCleanupTablesCoverTheSchema(t *testing.T) {
 	} {
 		for _, table := range group.tables {
 			if previousGroup, exists := classified[table]; exists {
-				t.Errorf("テーブル %s が %s と %s に重複している", table, previousGroup, group.name)
+				t.Errorf("テーブル%sが%sと%sに重複している", table, previousGroup, group.name)
 
 				continue
 			}
@@ -49,13 +49,10 @@ func TestCleanupTablesCoverTheSchema(t *testing.T) {
 		}
 		actual[table] = true
 
-		// A table that is on neither list would silently survive the cleanup
-		// and leave stale rows behind every seed run.
-		//
-		// [Ja] どちらの一覧にも無いテーブルはクリーンアップを黙って生き延び、
+		// どちらの一覧にも無いテーブルはクリーンアップを黙って生き延び、
 		// シードのたびに古い行を残してしまう。
 		if _, exists := classified[table]; !exists {
-			t.Errorf("テーブル %s がcleanupTablesにもpreservedTablesにも含まれていない", table)
+			t.Errorf("テーブル%sがcleanupTablesにもpreservedTablesにも含まれていない", table)
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -64,7 +61,7 @@ func TestCleanupTablesCoverTheSchema(t *testing.T) {
 
 	for table := range classified {
 		if !actual[table] {
-			t.Errorf("一覧のテーブル %s がスキーマに存在しない", table)
+			t.Errorf("一覧のテーブル%sがスキーマに存在しない", table)
 		}
 	}
 }
@@ -77,17 +74,14 @@ func TestCleanupSQL(t *testing.T) {
 	if !strings.HasPrefix(got, "TRUNCATE TABLE ") {
 		t.Errorf("TRUNCATE文であることを期待したが次の内容だった: %q", got)
 	}
-	// CASCADE resolves the foreign keys between the listed tables without
-	// requiring the superuser privilege that disabling constraints would.
-	//
-	// [Ja] CASCADE は、制約の無効化が要求するスーパーユーザー権限なしに、一覧の
+	// CASCADEは、制約の無効化が要求するスーパーユーザー権限なしに、一覧の
 	// テーブル間の外部キーを解決する。
 	if !strings.HasSuffix(got, " CASCADE") {
 		t.Errorf("CASCADEで終わることを期待したが次の内容だった: %q", got)
 	}
 	for _, table := range cleanupTables {
 		if !strings.Contains(got, `"`+table+`"`) {
-			t.Errorf("テーブル %s が引用符付きで含まれることを期待したが次の内容だった: %q", table, got)
+			t.Errorf("テーブル%sが引用符付きで含まれることを期待したが次の内容だった: %q", table, got)
 		}
 	}
 }

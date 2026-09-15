@@ -13,14 +13,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// NewPageData は2FAコード入力ページに渡すデータ構造体です
+// NewPageDataは2FAコード入力ページに渡すデータ構造体です
 type NewPageData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
 	BackURL    string
 }
 
-// New は2FAコード入力ページのコンテンツを表示します
+// Newは2FAコード入力ページのコンテンツを表示します
 func New(data NewPageData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

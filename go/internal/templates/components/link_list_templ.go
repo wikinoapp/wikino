@@ -11,13 +11,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// LinkList renders the "Links" section: one card per linked page, and nothing else. The backlinks of
-// those pages are grouped separately by RelatedLinkList, so that this section reads as the plain
-// list of pages this page links to. Nothing is rendered when there are no links.
-// The heading (h2) lives in the caller so its style can differ per screen.
-//
-// [Ja] LinkList は「リンク」セクションを描画する。リンク先ページのカードだけを並べ、それ以外は
-// 出さない。リンク先ページのバックリンクは RelatedLinkList が別のセクションにまとめるため、この
+// LinkListは「リンク」セクションを描画する。リンク先ページのカードだけを並べ、それ以外は
+// 出さない。リンク先ページのバックリンクはRelatedLinkListが別のセクションにまとめるため、この
 // セクションはこのページがリンクしているページの一覧としてそのまま読める。リンクが空の場合は何も
 // 表示しません。
 // 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
@@ -79,7 +74,7 @@ func linkList(data viewmodel.LinkList, announceEnd bool) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(linkListFallbackAnchorID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 22, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 17, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
@@ -102,20 +97,12 @@ func linkList(data viewmodel.LinkList, announceEnd bool) templ.Component {
 	})
 }
 
-// LinkListResponse renders the next link-list page and advances the link list's share of the
-// editor's shared related-page state. The one-page editor replaces the whole listing; the cumulative
-// screens append by replacing only the pagination container.
-//
-// One link-list page feeds two sections, so the reply also carries the matching "Related links"
-// groups out of band. Only one of the two can be the swap target, and the cards are the section the
-// "load more" link itself sits in.
-//
-// [Ja] LinkListResponse はリンク一覧の次ページを描画し、編集画面で共有する関連ページ状態のうち
-// リンク一覧の分を進める。1 ページ単位の編集画面は一覧全体を差し替え、累積表示の画面はページ
+// LinkListResponseはリンク一覧の次ページを描画し、編集画面で共有する関連ページ状態のうち
+// リンク一覧の分を進める。1ページ単位の編集画面は一覧全体を差し替え、累積表示の画面はページ
 // ネーションコンテナだけを差し替えて追記する。
 //
-// リンク一覧の 1 ページは 2 つのセクションを養うため、応答は対応する「関連リンク」のグループも
-// OOB で運ぶ。スワップ対象にできるのは 2 つのうち片方だけで、「もっと見る」リンク自体が載っている
+// リンク一覧の1ページは2つのセクションを養うため、応答は対応する「関連リンク」のグループも
+// OOBで運ぶ。スワップ対象にできるのは2つのうち片方だけで、「もっと見る」リンク自体が載っている
 // のはカードの側だからである。
 func LinkListResponse(data viewmodel.LinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -161,13 +148,8 @@ func LinkListResponse(data viewmodel.LinkList) templ.Component {
 	})
 }
 
-// linkListBody renders the cards and the pagination container the initial render and the fragment
-// reply have in common, so that the container's swap target cannot drift between the two.
-// announceEnd adds a focusable completion status only to an htmx response; an initial page that is
-// already complete does not need to announce a change.
-//
-// [Ja] linkListBody は初回描画とフラグメント応答が共有するカードとページネーションコンテナを描画
-// する。コンテナのスワップ対象が両者でずれないようにするためである。announceEnd は htmx 応答にだけ
+// linkListBodyは初回描画とフラグメント応答が共有するカードとページネーションコンテナを描画
+// する。コンテナのスワップ対象が両者でずれないようにするためである。announceEndはhtmx応答にだけ
 // フォーカス可能な完了状態を追加する。初回表示時点で完了している一覧は変化を通知する必要がない
 // ためである。
 func linkListBody(data viewmodel.LinkList, announceEnd bool) templ.Component {
@@ -204,7 +186,7 @@ func linkListBody(data viewmodel.LinkList, announceEnd bool) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(linkListPaginationID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 69, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/link_list.templ`, Line: 51, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {

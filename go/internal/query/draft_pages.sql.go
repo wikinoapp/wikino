@@ -28,7 +28,7 @@ type ClearSuggestionPageIDsBySuggestionIDParams struct {
 	SpaceID      string    `json:"space_id"`
 }
 
-// 編集提案に紐づく下書きのsuggestion_page_idをクリアする（編集提案クローズ・反映時に使用）
+// 編集提案に紐づく下書きのsuggestion_page_idをクリアする (編集提案クローズ・反映時に使用)
 func (q *Queries) ClearSuggestionPageIDsBySuggestionID(ctx context.Context, arg ClearSuggestionPageIDsBySuggestionIDParams) error {
 	_, err := q.db.ExecContext(ctx, clearSuggestionPageIDsBySuggestionID, arg.SuggestionID, arg.UpdatedAt, arg.SpaceID)
 	return err
@@ -117,7 +117,7 @@ type FindDraftPageByIDParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// IDで下書きを取得する（スペースIDでスコープ）
+// IDで下書きを取得する (スペースIDでスコープ)
 func (q *Queries) FindDraftPageByID(ctx context.Context, arg FindDraftPageByIDParams) (DraftPage, error) {
 	row := q.db.QueryRowContext(ctx, findDraftPageByID, arg.ID, arg.SpaceID)
 	var i DraftPage
@@ -182,7 +182,7 @@ type FindDraftPageBySuggestionPageIDParams struct {
 	SpaceID          string  `json:"space_id"`
 }
 
-// 編集提案ページIDで下書きを取得する（スペースIDでスコープ）
+// 編集提案ページIDで下書きを取得する (スペースIDでスコープ)
 func (q *Queries) FindDraftPageBySuggestionPageID(ctx context.Context, arg FindDraftPageBySuggestionPageIDParams) (DraftPage, error) {
 	row := q.db.QueryRowContext(ctx, findDraftPageBySuggestionPageID, arg.SuggestionPageID, arg.SpaceID)
 	var i DraftPage
@@ -245,7 +245,7 @@ type ListDraftPagesByMemberAndTopicRow struct {
 	PageNumber                int32       `json:"page_number"`
 }
 
-// スペースメンバーIDとトピックIDで下書きページ一覧を取得する（編集提案作成画面用）
+// スペースメンバーIDとトピックIDで下書きページ一覧を取得する (編集提案作成画面用)
 func (q *Queries) ListDraftPagesByMemberAndTopic(ctx context.Context, arg ListDraftPagesByMemberAndTopicParams) ([]ListDraftPagesByMemberAndTopicRow, error) {
 	rows, err := q.db.QueryContext(ctx, listDraftPagesByMemberAndTopic, arg.SpaceMemberID, arg.TopicID, arg.SpaceID)
 	if err != nil {
@@ -404,7 +404,7 @@ type UpdateDraftPageTopicByPageIDParams struct {
 	SpaceID   string    `json:"space_id"`
 }
 
-// ページIDに紐づく下書きのトピックIDを更新する（ページ移動時に使用）
+// ページIDに紐づく下書きのトピックIDを更新する (ページ移動時に使用)
 func (q *Queries) UpdateDraftPageTopicByPageID(ctx context.Context, arg UpdateDraftPageTopicByPageIDParams) error {
 	_, err := q.db.ExecContext(ctx, updateDraftPageTopicByPageID,
 		arg.PageID,

@@ -12,7 +12,7 @@ func TestNewOgImageBuilder_Errors(t *testing.T) {
 
 	helper, err := NewHelper("https://imgproxy.example.dev", "deadbeef", "cafef00d")
 	if err != nil {
-		t.Fatalf("NewHelper でエラー: %v", err)
+		t.Fatalf("NewHelperでエラー: %v", err)
 	}
 
 	tests := []struct {
@@ -22,19 +22,19 @@ func TestNewOgImageBuilder_Errors(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "正常系: helper と bucket の両方を指定",
+			name:    "正常系: helperとbucketの両方を指定",
 			helper:  helper,
 			bucket:  "my-bucket",
 			wantErr: false,
 		},
 		{
-			name:    "異常系: helper が nil",
+			name:    "異常系: helperがnil",
 			helper:  nil,
 			bucket:  "my-bucket",
 			wantErr: true,
 		},
 		{
-			name:    "異常系: bucket が空",
+			name:    "異常系: bucketが空",
 			helper:  helper,
 			bucket:  "",
 			wantErr: true,
@@ -48,7 +48,7 @@ func TestNewOgImageBuilder_Errors(t *testing.T) {
 			b, err := NewOgImageBuilder(tt.helper, tt.bucket)
 			if tt.wantErr {
 				if err == nil {
-					t.Fatalf("エラーを期待したが nil")
+					t.Fatalf("エラーを期待したがnil")
 				}
 				return
 			}
@@ -56,7 +56,7 @@ func TestNewOgImageBuilder_Errors(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 			if b == nil {
-				t.Fatal("OgImageBuilder が nil")
+				t.Fatal("OgImageBuilderがnil")
 			}
 		})
 	}
@@ -67,24 +67,24 @@ func TestOgImageBuilder_BuildOgImageURL(t *testing.T) {
 
 	helper, err := NewHelper("https://imgproxy.example.dev", "deadbeef", "cafef00d")
 	if err != nil {
-		t.Fatalf("NewHelper でエラー: %v", err)
+		t.Fatalf("NewHelperでエラー: %v", err)
 	}
 	builder, err := NewOgImageBuilder(helper, "my-bucket")
 	if err != nil {
-		t.Fatalf("NewOgImageBuilder でエラー: %v", err)
+		t.Fatalf("NewOgImageBuilderでエラー: %v", err)
 	}
 
 	now := time.Date(2026, 4, 30, 12, 0, 0, 0, time.UTC)
 
-	t.Run("正常系: 1200x630 / format jpg / 1 時間 expires が組み込まれる", func(t *testing.T) {
+	t.Run("正常系: 1200x630 / format jpg / 1時間expiresが組み込まれる", func(t *testing.T) {
 		t.Parallel()
 
 		got, err := builder.BuildOgImageURL("path/to/blob.png", now)
 		if err != nil {
-			t.Fatalf("BuildOgImageURL でエラー: %v", err)
+			t.Fatalf("BuildOgImageURLでエラー: %v", err)
 		}
 
-		// og:image のポリシーが Builder 内部に集約されていることを URL 構造で検証する
+		// og:imageのポリシーがBuilder内部に集約されていることをURL構造で検証する
 		wantSubs := []string{
 			"https://imgproxy.example.dev/",
 			"resize:fit:1200:630",
@@ -94,37 +94,37 @@ func TestOgImageBuilder_BuildOgImageURL(t *testing.T) {
 		}
 		for _, sub := range wantSubs {
 			if !strings.Contains(got, sub) {
-				t.Errorf("URL に %q が含まれていない: got=%q", sub, got)
+				t.Errorf("URLに%qが含まれていない: %q", sub, got)
 			}
 		}
 	})
 
-	t.Run("異常系: blobKey が空", func(t *testing.T) {
+	t.Run("異常系: blobKeyが空", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := builder.BuildOgImageURL("", now)
 		if err == nil {
-			t.Fatal("blobKey が空のときはエラーを期待したが nil")
+			t.Fatal("blobKeyが空のときはエラーを期待したがnil")
 		}
 	})
 
-	t.Run("正常系: now が変わると expires も変わる (TTL が固定であることの検証)", func(t *testing.T) {
+	t.Run("正常系: nowが変わるとexpiresも変わる (TTLが固定であることの検証)", func(t *testing.T) {
 		t.Parallel()
 
 		later := now.Add(2 * time.Hour)
 		first, err := builder.BuildOgImageURL("k", now)
 		if err != nil {
-			t.Fatalf("BuildOgImageURL でエラー: %v", err)
+			t.Fatalf("BuildOgImageURLでエラー: %v", err)
 		}
 		second, err := builder.BuildOgImageURL("k", later)
 		if err != nil {
-			t.Fatalf("BuildOgImageURL でエラー: %v", err)
+			t.Fatalf("BuildOgImageURLでエラー: %v", err)
 		}
 		if !strings.Contains(first, "expires:"+strconv.FormatInt(now.Add(time.Hour).Unix(), 10)) {
-			t.Errorf("first の expires が想定と異なる: got=%q", first)
+			t.Errorf("1つ目のexpiresが想定と異なる: %q", first)
 		}
 		if !strings.Contains(second, "expires:"+strconv.FormatInt(later.Add(time.Hour).Unix(), 10)) {
-			t.Errorf("second の expires が想定と異なる: got=%q", second)
+			t.Errorf("2つ目のexpiresが想定と異なる: %q", second)
 		}
 	})
 }

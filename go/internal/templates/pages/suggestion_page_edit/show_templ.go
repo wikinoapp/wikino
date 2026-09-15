@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData は編集提案ページ編集の確認画面に渡すデータ構造体です
+// ShowDataは編集提案ページ編集の確認画面に渡すデータ構造体です
 type ShowData struct {
 	CSRFToken           string
 	Space               viewmodel.Space
@@ -23,7 +23,7 @@ type ShowData struct {
 	SuggestionPageTitle string
 }
 
-// Show は編集提案ページ編集の確認画面のコンテンツを表示します
+// Showは編集提案ページ編集の確認画面のコンテンツを表示します
 func Show(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

@@ -13,14 +13,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// RecoveryNewPageData はリカバリーコード入力ページに渡すデータ構造体です
+// RecoveryNewPageDataはリカバリーコード入力ページに渡すデータ構造体です
 type RecoveryNewPageData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
 	BackURL    string
 }
 
-// RecoveryNew はリカバリーコード入力ページのコンテンツを表示します
+// RecoveryNewはリカバリーコード入力ページのコンテンツを表示します
 func RecoveryNew(data RecoveryNewPageData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

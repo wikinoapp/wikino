@@ -1,4 +1,4 @@
-// Package suggestion_comment_edit は編集提案コメント編集関連のHTTPハンドラーを提供します
+// Package suggestion_comment_editは編集提案コメント編集関連のHTTPハンドラーを提供します
 package suggestion_comment_edit
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は編集提案コメント編集ハンドラー
+// Handlerは編集提案コメント編集ハンドラー
 type Handler struct {
 	cfg                            *config.Config
 	flashMgr                       *session.FlashManager
@@ -16,7 +16,7 @@ type Handler struct {
 	updateSuggestionCommentUsecase *usecase.UpdateSuggestionCommentUsecase
 }
 
-// NewHandler は新しい編集提案コメント編集ハンドラーを作成します
+// NewHandlerは新しい編集提案コメント編集ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,

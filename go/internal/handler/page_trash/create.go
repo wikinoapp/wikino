@@ -16,9 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create moves a page into the trash (POST /s/{space_identifier}/pages/{page_number}/trash).
-//
-// [Ja] Create はページをゴミ箱へ入れます (POST /s/{space_identifier}/pages/{page_number}/trash)。
+// Createはページをゴミ箱へ入れます (POST /s/{space_identifier}/pages/{page_number}/trash)。
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -42,10 +40,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		UserID:          user.ID,
 	})
 	if err != nil {
-		// "not allowed to trash" and "does not exist" both become a 404, so the response never
-		// reveals a page the viewer may not open.
-		//
-		// [Ja] 「ゴミ箱に入れる権限が無い」と「存在しない」はどちらも 404 にし、開けないページの
+		// 「ゴミ箱に入れる権限が無い」と「存在しない」はどちらも404にし、開けないページの
 		// 存在をレスポンスから読み取れないようにする。
 		if ae := model.AsAppError(err); ae != nil {
 			switch ae.Code {
@@ -63,14 +58,9 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A trashed page stays readable, so the user lands back on the page they just acted on. The
-	// notice shown there carries the link to the trash itself.
-	// The path is built from the stored identifier rather than the request URL, so that a request
-	// with different casing still lands on the canonical address.
-	//
-	// [Ja] ゴミ箱に入れてもページは読めるため、操作した対象をそのまま見せる。そこに出るアラートが
+	// ゴミ箱に入れてもページは読めるため、操作した対象をそのまま見せる。そこに出るアラートが
 	// ゴミ箱そのものへの導線を兼ねる。
-	// パスはリクエスト URL ではなく
+	// パスはリクエストURLではなく
 	// 保存済みの識別子から組み立て、大文字小文字が異なるリクエストでも正規のアドレスへ着地させる。
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_page_moved_to_trash"))
 	pagePath := templates.PagePath(viewmodel.NewSpaceIdentifier(output.Space.Identifier), viewmodel.PageNumber(pageNumber))

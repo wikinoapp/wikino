@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// pageAccessData はページ操作に必要な共通データ
+// pageAccessDataはページ操作に必要な共通データ
 type pageAccessData struct {
 	space       *model.Space
 	spaceMember *model.SpaceMember
@@ -18,7 +18,7 @@ type pageAccessData struct {
 	topicMember *model.TopicMember
 }
 
-// pageAccessRepos はページアクセスデータ取得に必要なリポジトリ群
+// pageAccessReposはページアクセスデータ取得に必要なリポジトリ群
 type pageAccessRepos struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -27,20 +27,14 @@ type pageAccessRepos struct {
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
-// fetchPageAccessData fetches the data common to page operations for a signed-in user.
-//
-// [Ja] fetchPageAccessData はログイン済みユーザー向けに、ページ操作に必要な共通データを取得する。
+// fetchPageAccessDataはログイン済みユーザー向けに、ページ操作に必要な共通データを取得する。
 func fetchPageAccessData(ctx context.Context, repos pageAccessRepos, spaceIdentifier model.SpaceIdentifier, pageNumber int32, userID model.UserID) (*pageAccessData, error) {
 	return fetchPageAccessDataAllowingGuest(ctx, repos, spaceIdentifier, pageNumber, &userID)
 }
 
-// fetchPageAccessDataAllowingGuest fetches the same data for callers that also serve guests.
-// userID is nil when the user is not signed in, and spaceMember / topicMember are then nil too.
-// A nil space member is not an error here: callers decide what a guest may see.
-//
-// [Ja] fetchPageAccessDataAllowingGuest はゲストも受け付ける呼び出し元向けに同じデータを取得する。
-// userID は未ログイン時に nil になり、その場合 spaceMember / topicMember も nil になる。
-// スペースメンバーが nil でもここではエラーにしない (ゲストに何を見せるかは呼び出し元が判断する)。
+// fetchPageAccessDataAllowingGuestはゲストも受け付ける呼び出し元向けに同じデータを取得する。
+// userIDは未ログイン時にnilになり、その場合spaceMember / topicMemberもnilになる。
+// スペースメンバーがnilでもここではエラーにしない (ゲストに何を見せるかは呼び出し元が判断する)。
 func fetchPageAccessDataAllowingGuest(ctx context.Context, repos pageAccessRepos, spaceIdentifier model.SpaceIdentifier, pageNumber int32, userID *model.UserID) (*pageAccessData, error) {
 	space, err := repos.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
 	if err != nil {
@@ -100,7 +94,7 @@ func fetchPageAccessDataAllowingGuest(ctx context.Context, repos pageAccessRepos
 	}, nil
 }
 
-// authorizePageUpdate はページ更新の認可チェックを行う
+// authorizePageUpdateはページ更新の認可チェックを行う
 func authorizePageUpdate(ctx context.Context, data *pageAccessData) error {
 	if data.spaceMember == nil {
 		return &model.AppError{

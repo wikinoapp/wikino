@@ -14,41 +14,25 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// resolvedWikilink is one wiki link of a body together with the page it resolves to.
-//
-// [Ja] resolvedWikilink は本文の Wiki リンク 1 件と、それが解決するページ。
+// resolvedWikilinkは本文のWikiリンク1件と、それが解決するページ。
 type resolvedWikilink struct {
 	match    WikilinkMatch
 	location *PageLocation
 }
 
-// wikilinkReplacer carries the resolved links of one body through a second rendering. Each link is
-// cut out of the parse and a marker, a plain string under a random prefix, is written where it
-// began. The marker travels through the renderer, the sanitizer and the fragment parser exactly as
-// text does, so where it comes out is where the reader sees the link. The document handed to it is
-// changed in place and is not rendered again afterwards.
-//
-// [Ja] wikilinkReplacer は本文の解決済みリンクを 2 回目のレンダリングへ運ぶ。各リンクは解析
+// wikilinkReplacerは本文の解決済みリンクを2回目のレンダリングへ運ぶ。各リンクは解析
 // 結果から切り取られ、その開始位置にマーカー (ランダムな接頭辞を持つ通常の文字列) が書かれる。
 // マーカーはテキストと同じようにレンダラー・サニタイザー・フラグメントパーサーを通るため、
-// マーカーが出てくる場所が読み手にリンクが見える場所である。渡された document はその場で
+// マーカーが出てくる場所が読み手にリンクが見える場所である。渡されたdocumentはその場で
 // 書き換えられ、以降は再びレンダリングされない。
 type wikilinkReplacer struct {
 	prefix string
 	links  []resolvedWikilink
 }
 
-// replaceWikilinkMatches renders document again with the matches that pageLocations resolve turned
-// into links, and returns bodyHTML unchanged when none of them resolves. source is what document was
-// parsed from and what the offsets of matches refer to.
-//
-// A body whose markers do not all come back as ordinary text is returned without links: the scan
-// and this rendering disagree about it, and showing a marker or losing text is worse than showing
-// the notation.
-//
-// [Ja] replaceWikilinkMatches は pageLocations が解決する一致をリンクにして document をもう一度
-// レンダリングする。どれも解決しなければ bodyHTML をそのまま返す。source は document の解析元で、
-// matches の位置が指すものである。
+// replaceWikilinkMatchesはpageLocationsが解決する一致をリンクにしてdocumentをもう一度
+// レンダリングする。どれも解決しなければbodyHTMLをそのまま返す。sourceはdocumentの解析元で、
+// matchesの位置が指すものである。
 //
 // マーカーのすべてが通常のテキストとして戻ってこない本文は、リンクなしで返す。走査とこの
 // レンダリングの判断が食い違っているためで、マーカーを見せたりテキストを失ったりするよりは
@@ -90,19 +74,13 @@ func replaceWikilinkMatches(
 	return renderContainerChildren(container)
 }
 
-// marker returns the marker standing for the link at index.
-//
-// [Ja] marker は index のリンクを表すマーカーを返す。
+// markerはindexのリンクを表すマーカーを返す。
 func (r *wikilinkReplacer) marker(index int) string {
 	return r.prefix + strconv.Itoa(index) + "Z"
 }
 
-// linksOverlapping returns the index range of the links that overlap [start, stop). The links are
-// in source order and never overlap one another, since ScanWikilinkMatches reads them from
-// disjoint spans in that order.
-//
-// [Ja] linksOverlapping は [start, stop) と重なるリンクのインデックス範囲を返す。リンクは
-// ソース順に並び互いに重ならない。ScanWikilinkMatches が互いに素な区間からその順に読むためである。
+// linksOverlappingは [start, stop) と重なるリンクのインデックス範囲を返す。リンクは
+// ソース順に並び互いに重ならない。ScanWikilinkMatchesが互いに素な区間からその順に読むためである。
 func (r *wikilinkReplacer) linksOverlapping(start int, stop int) (int, int) {
 	first := sort.Search(len(r.links), func(i int) bool { return r.links[i].match.Stop > start })
 	last := first
@@ -113,30 +91,19 @@ func (r *wikilinkReplacer) linksOverlapping(start int, stop int) (int, int) {
 	return first, last
 }
 
-// mark cuts every resolved link out of document and writes its marker where the link began. It
-// returns the source the renderer has to read, which grows by the lines of raw HTML blocks that
-// were rewritten.
+// markは解決済みのリンクをすべてdocumentから切り取り、リンクの開始位置にマーカーを書く。
+// レンダラーが読むべきソースを返す。書き換えたraw HTMLブロックの行の分だけ長くなる。
 //
-// A link sits in the text nodes of inline content, in the lines of an HTML block or, when a raw-text
-// element opened earlier turns the code into readable text, in the lines of a code block and the
-// info string of a fence. ScanWikilinkMatches reads only the source rendering shows as text, so
-// link syntax, raw HTML tags and the rest hold no link.
-//
-// [Ja] mark は解決済みのリンクをすべて document から切り取り、リンクの開始位置にマーカーを書く。
-// レンダラーが読むべきソースを返す。書き換えた raw HTML ブロックの行の分だけ長くなる。
-//
-// リンクはインライン内容のテキストノード、HTML ブロックの行、そして手前で開かれた raw text
+// リンクはインライン内容のテキストノード、HTMLブロックの行、そして手前で開かれたraw text
 // 要素がコードを読めるテキストに変えている場合はコードブロックの行とフェンスの情報文字列にある。
-// ScanWikilinkMatches はレンダリングがテキストとして見せるソースだけを読むため、リンク記法や
-// raw HTML のタグなどにリンクは無い。
+// ScanWikilinkMatchesはレンダリングがテキストとして見せるソースだけを読むため、リンク記法や
+// raw HTMLのタグなどにリンクは無い。
 func (r *wikilinkReplacer) mark(source []byte, document ast.Node) []byte {
 	var texts []*ast.Text
 	var lineBlocks []ast.Node
 	var fences []*ast.FencedCodeBlock
 
-	// The walker below never fails, so the error ast.Walk returns can only be nil.
-	//
-	// [Ja] 下のウォーカーは失敗しないため、ast.Walk が返すエラーは nil にしかならない。
+	// 下のウォーカーは失敗しないため、ast.Walkが返すエラーはnilにしかならない。
 	_ = ast.Walk(document, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
@@ -175,26 +142,15 @@ func (r *wikilinkReplacer) mark(source []byte, document ast.Node) []byte {
 	return augmented
 }
 
-// markText removes the bytes of the overlapping links from node and inserts a marker where each
-// link that starts inside node begins. The text before a link becomes a node of its own, and node
-// itself keeps what follows the last link, along with the line break it may carry.
-//
-// A link may start in an earlier node and end here, because emphasis splits text at its
-// delimiters while the link runs across them. Such a link has its marker already.
-//
-// The marker is a text node reading from augmented rather than a string node, because the
-// renderer of a code span reads its children as text nodes only, and a code span reaches this
-// point when a raw-text element opened earlier turns it into readable text.
-//
-// [Ja] markText は重なるリンクのバイトを node から取り除き、node の中で始まる各リンクの開始位置に
-// マーカーを差し込む。リンクの手前のテキストは独立したノードになり、node 自身は最後のリンクの
+// markTextは重なるリンクのバイトをnodeから取り除き、nodeの中で始まる各リンクの開始位置に
+// マーカーを差し込む。リンクの手前のテキストは独立したノードになり、node自身は最後のリンクの
 // 後ろを、持っているかもしれない改行とともに保持する。
 //
 // リンクが手前のノードで始まりここで終わることがある。強調は区切り文字でテキストを分ける一方、
 // リンクはそれをまたいで続くためである。そうしたリンクのマーカーは既に書かれている。
 //
-// マーカーを文字列ノードではなく augmented を読むテキストノードにするのは、コードスパンの
-// レンダラーが子をテキストノードとしてしか読まないためである。手前で開かれた raw text 要素が
+// マーカーを文字列ノードではなくaugmentedを読むテキストノードにするのは、コードスパンの
+// レンダラーが子をテキストノードとしてしか読まないためである。手前で開かれたraw text要素が
 // コードスパンを読めるテキストに変えたとき、コードスパンはここへ到達する。
 func (r *wikilinkReplacer) markText(augmented []byte, node *ast.Text) []byte {
 	segment := node.Segment
@@ -227,11 +183,7 @@ func (r *wikilinkReplacer) markText(augmented []byte, node *ast.Text) []byte {
 	return augmented
 }
 
-// markFenceInfo rewrites the info string of a fence that holds a link. The block is replaced by a
-// fresh node carrying the same lines, because a fenced code block remembers the language it read
-// on the first rendering and would write it again.
-//
-// [Ja] markFenceInfo はリンクを含むフェンスの情報文字列を書き換える。ブロックは同じ行を持つ
+// markFenceInfoはリンクを含むフェンスの情報文字列を書き換える。ブロックは同じ行を持つ
 // 新しいノードに差し替える。フェンス付きコードブロックは最初のレンダリングで読んだ言語を
 // 覚えており、それをもう一度書いてしまうためである。
 func (r *wikilinkReplacer) markFenceInfo(augmented []byte, source []byte, node *ast.FencedCodeBlock) []byte {
@@ -248,10 +200,7 @@ func (r *wikilinkReplacer) markFenceInfo(augmented []byte, source []byte, node *
 	return augmented
 }
 
-// markLines rewrites the lines of a block that hold a link, since the renderer copies those lines
-// from the source as they are.
-//
-// [Ja] markLines はリンクを含むブロックの行を書き換える。レンダラーはそれらの行をソースから
+// markLinesはリンクを含むブロックの行を書き換える。レンダラーはそれらの行をソースから
 // そのまま複製するためである。
 func (r *wikilinkReplacer) markLines(augmented []byte, source []byte, lines *gmtext.Segments) []byte {
 	for i := 0; i < lines.Len(); i++ {
@@ -263,10 +212,7 @@ func (r *wikilinkReplacer) markLines(augmented []byte, source []byte, lines *gmt
 	return augmented
 }
 
-// markLine returns a segment naming the line with its links replaced by markers, appending the
-// rewritten line to augmented. A line without a link comes back as it is.
-//
-// [Ja] markLine はリンクをマーカーに置き換えた行を augmented の末尾に書き、その行を指す
+// markLineはリンクをマーカーに置き換えた行をaugmentedの末尾に書き、その行を指す
 // セグメントを返す。リンクの無い行はそのまま返す。
 func (r *wikilinkReplacer) markLine(augmented []byte, source []byte, segment gmtext.Segment) ([]byte, gmtext.Segment) {
 	first, last := r.linksOverlapping(segment.Start, segment.Stop)
@@ -289,12 +235,8 @@ func (r *wikilinkReplacer) markLine(augmented []byte, source []byte, segment gmt
 	return augmented, gmtext.NewSegmentPadding(start, len(augmented), segment.Padding)
 }
 
-// replace turns the markers found in the ordinary text nodes under node into link elements and
-// returns how many it turned. A marker under an element of skipElements is left alone, since the
-// scan never reports a link there and finding one means the two disagree.
-//
-// [Ja] replace は node 配下の通常のテキストノードにあるマーカーをリンク要素に変え、変えた数を
-// 返す。skipElements の要素の下にあるマーカーには触れない。走査はそこにリンクを報告しないため、
+// replaceはnode配下の通常のテキストノードにあるマーカーをリンク要素に変え、変えた数を
+// 返す。skipElementsの要素の下にあるマーカーには触れない。走査はそこにリンクを報告しないため、
 // 見つかれば両者の判断が食い違っている。
 func (r *wikilinkReplacer) replace(node *html.Node, inSkip bool, spaceIdentifier model.SpaceIdentifier) int {
 	inSkip = inSkip || (node.Type == html.ElementNode && skipElements[node.Data])
@@ -316,10 +258,7 @@ func (r *wikilinkReplacer) replace(node *html.Node, inSkip bool, spaceIdentifier
 	return replaced
 }
 
-// replaceInText splits textNode around each marker it holds and puts the link element of that
-// marker in its place.
-//
-// [Ja] replaceInText は textNode をそれが持つ各マーカーの前後で分割し、マーカーの位置にそれが
+// replaceInTextはtextNodeをそれが持つ各マーカーの前後で分割し、マーカーの位置にそれが
 // 表すリンク要素を置く。
 func (r *wikilinkReplacer) replaceInText(textNode *html.Node, spaceIdentifier model.SpaceIdentifier) int {
 	text := textNode.Data

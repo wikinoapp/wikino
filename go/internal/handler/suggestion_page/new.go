@@ -17,7 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New は編集提案ページ追加フォームを表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/new)
+// Newは編集提案ページ追加フォームを表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/new)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -64,13 +64,9 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	h.renderNewForm(w, r, user, output, nil)
 }
 
-// renderNewForm renders the suggestion page add form. Space-aware metadata and links are built from
-// the persisted identifier in output, so it deliberately does not take one derived from URL
-// parameters.
-//
-// [Ja] renderNewForm は編集提案ページ追加フォームをレンダリングします。
-// スペース識別子を含むメタ情報やリンクの組み立てには output に含まれる保存済みの値を使うため、
-// URL パラメータ由来の識別子は受け取りません。
+// renderNewFormは編集提案ページ追加フォームをレンダリングします。
+// スペース識別子を含むメタ情報やリンクの組み立てにはoutputに含まれる保存済みの値を使うため、
+// URLパラメータ由来の識別子は受け取りません。
 func (h *Handler) renderNewForm(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -91,10 +87,7 @@ func (h *Handler) renderNewForm(
 	})
 	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
 
-	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
-	// the same form.
-	//
-	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
 	spaceIdentVM := spaceVM.Identifier
 
 	// ページメタ情報を設定

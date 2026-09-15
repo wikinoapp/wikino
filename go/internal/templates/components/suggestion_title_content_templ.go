@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SuggestionTitleContent は編集提案のステータスバッジと番号を表示します
+// SuggestionTitleContentは編集提案のステータスバッジと番号を表示します
 func SuggestionTitleContent(status model.SuggestionStatus, number int32) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

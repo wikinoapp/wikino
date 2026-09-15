@@ -1,4 +1,4 @@
-// Package suggestion_page は編集提案ページ関連のHTTPハンドラーを提供します
+// Package suggestion_pageは編集提案ページ関連のHTTPハンドラーを提供します
 package suggestion_page
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は編集提案ページハンドラー
+// Handlerは編集提案ページハンドラー
 type Handler struct {
 	cfg                         *config.Config
 	flashMgr                    *session.FlashManager
@@ -17,7 +17,7 @@ type Handler struct {
 	removeSuggestionPageUsecase *usecase.RemoveSuggestionPageUsecase
 }
 
-// NewHandler は新しい編集提案ページハンドラーを作成します
+// NewHandlerは新しい編集提案ページハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,

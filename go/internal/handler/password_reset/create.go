@@ -18,7 +18,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create はパスワードリセット申請を処理します (POST /password/reset)
+// Createはパスワードリセット申請を処理します (POST /password/reset)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -48,7 +48,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Rate Limiting: IPアドレス単位の制限（5回/時間）
+	// Rate Limiting: IPアドレス単位の制限 (5回/時間)
 	if h.limiter != nil {
 		ip := clientip.GetClientIP(r)
 		ipKey := fmt.Sprintf("password_reset:ip:%s", ip)
@@ -60,7 +60,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			slog.ErrorContext(ctx, "Rate Limitingチェックが失敗しました", "error", err)
 		} else if !checkResult.Allowed {
-			slog.WarnContext(ctx, "パスワードリセット申請がRate Limitingにより制限されました（IPアドレス単位）",
+			slog.WarnContext(ctx, "パスワードリセット申請がRate Limitingにより制限されました (IPアドレス単位)",
 				"ip_address", ip,
 			)
 			formErrors := model.NewValidationError()
@@ -70,7 +70,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Rate Limiting: メールアドレス単位の制限（3回/時間）
+	// Rate Limiting: メールアドレス単位の制限 (3回/時間)
 	if h.limiter != nil {
 		emailKey := fmt.Sprintf("password_reset:email:%s", email)
 		checkResult, err := h.limiter.Check(ctx, ratelimit.CheckInput{
@@ -81,7 +81,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			slog.ErrorContext(ctx, "Rate Limitingチェックが失敗しました", "error", err)
 		} else if !checkResult.Allowed {
-			slog.WarnContext(ctx, "パスワードリセット申請がRate Limitingにより制限されました（メールアドレス単位）",
+			slog.WarnContext(ctx, "パスワードリセット申請がRate Limitingにより制限されました (メールアドレス単位)",
 				"email", email,
 				"ip_address", clientip.GetClientIP(r),
 			)
@@ -95,7 +95,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// ロケールを取得
 	locale := i18n.GetLocale(ctx)
 
-	// パスワードリセットトークンを生成（ユーザーが存在しない場合は内部で無視される）
+	// パスワードリセットトークンを生成 (ユーザーが存在しない場合は内部で無視される)
 	output, err := h.createTokenUsecase.Execute(ctx, usecase.CreatePasswordResetTokenInput{
 		Email:  email,
 		Locale: locale,
@@ -113,17 +113,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			"ip_address", clientip.GetClientIP(r),
 		)
 	} else {
-		slog.InfoContext(ctx, "パスワードリセット申請（ユーザーが存在しない）",
+		slog.InfoContext(ctx, "パスワードリセット申請 (ユーザーが存在しない)",
 			"email", email,
 			"ip_address", clientip.GetClientIP(r),
 		)
 	}
 
-	// 常に成功ページを表示（ユーザーの存在を明かさない）
+	// 常に成功ページを表示 (ユーザーの存在を明かさない)
 	h.renderSentPage(w, r)
 }
 
-// renderForm はパスワードリセット申請フォームをエラー付きでレンダリングします
+// renderFormはパスワードリセット申請フォームをエラー付きでレンダリングします
 func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors *model.ValidationError, csrfToken string, email string) {
 	ctx := r.Context()
 
@@ -138,7 +138,7 @@ func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors 
 		Email:            email,
 	})
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	// バリデーションエラー時は422 Unprocessable Entityを返す
 	w.WriteHeader(http.StatusUnprocessableEntity)
 
 	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)
@@ -148,14 +148,11 @@ func (h *Handler) renderForm(w http.ResponseWriter, r *http.Request, formErrors 
 	}
 }
 
-// renderSentPage はパスワードリセットメール送信完了ページをレンダリングします
+// renderSentPageはパスワードリセットメール送信完了ページをレンダリングします
 func (h *Handler) renderSentPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// No canonical URL is declared here. This page is only ever the response to POST /password/reset
-	// and has no address of its own to point at.
-	//
-	// [Ja] ここでは正規 URL を宣言しない。本ページは POST /password/reset の応答としてのみ描画され、
+	// ここでは正規URLを宣言しない。本ページはPOST /password/resetの応答としてのみ描画され、
 	// 指せる固有のアドレスを持たない。
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "password_reset_sent_title")

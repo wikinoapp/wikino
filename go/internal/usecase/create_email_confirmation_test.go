@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// mockJobInserter はテスト用のモック inserter
+// mockJobInserterはテスト用のモックinserter
 type mockJobInserter struct {
 	called bool
 	args   river.JobArgs
@@ -55,52 +55,52 @@ func TestCreateEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 
 	output, err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	if output.EmailConfirmationID == "" {
-		t.Error("EmailConfirmationID が空です")
+		t.Error("EmailConfirmationIDが空です")
 	}
 
 	// DBに保存されたことを確認
 	confirmation, err := emailConfirmationRepo.FindByID(ctx, output.EmailConfirmationID)
 	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+		t.Fatalf("FindByID()のエラー = %v", err)
 	}
 	if confirmation == nil {
 		t.Fatal("メール確認情報がDBに保存されていません")
 	}
 	if confirmation.Email != "test@example.com" {
-		t.Errorf("Email = %s, want test@example.com", confirmation.Email)
+		t.Errorf("Email = %s、期待値 = test@example.com", confirmation.Email)
 	}
 	if confirmation.Event != model.EmailConfirmationEventSignUp {
-		t.Errorf("Event = %d, want %d", confirmation.Event, model.EmailConfirmationEventSignUp)
+		t.Errorf("Event = %d、期待値 = %d", confirmation.Event, model.EmailConfirmationEventSignUp)
 	}
 	if len(confirmation.Code) != 6 {
-		t.Errorf("Code length = %d, want 6", len(confirmation.Code))
+		t.Errorf("コードの長さ = %d、期待値 = 6", len(confirmation.Code))
 	}
 
 	// エンキューが呼ばれたことを確認
 	if !mock.called {
-		t.Error("Insert が呼ばれていません")
+		t.Error("Insertが呼ばれていません")
 	}
 
-	// SendEmailConfirmationArgs の検証
+	// SendEmailConfirmationArgsの検証
 	emailArgs, ok := mock.args.(dispatcher.SendEmailConfirmationArgs)
 	if !ok {
-		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", mock.args)
+		t.Fatalf("argsの型がSendEmailConfirmationArgsではありません: %T", mock.args)
 	}
 	if emailArgs.Email != "test@example.com" {
-		t.Errorf("Email = %s, want test@example.com", emailArgs.Email)
+		t.Errorf("Email = %s、期待値 = test@example.com", emailArgs.Email)
 	}
 	if emailArgs.Code != confirmation.Code {
-		t.Errorf("Code = %s, want %s", emailArgs.Code, confirmation.Code)
+		t.Errorf("Code = %s、期待値 = %s", emailArgs.Code, confirmation.Code)
 	}
 	if emailArgs.Locale != "ja" {
-		t.Errorf("Locale = %s, want ja", emailArgs.Locale)
+		t.Errorf("Locale = %s、期待値 = ja", emailArgs.Locale)
 	}
 	if emailArgs.AppURL == "" {
-		t.Error("AppURL が空です")
+		t.Error("AppURLが空です")
 	}
 }
 
@@ -131,43 +131,43 @@ func TestCreateEmailConfirmationUsecase_Execute_English(t *testing.T) {
 
 	output, err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	if output.EmailConfirmationID == "" {
-		t.Error("EmailConfirmationID が空です")
+		t.Error("EmailConfirmationIDが空です")
 	}
 
 	// DBに保存されたことを確認
 	confirmation, err := emailConfirmationRepo.FindByID(ctx, output.EmailConfirmationID)
 	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+		t.Fatalf("FindByID()のエラー = %v", err)
 	}
 	if confirmation == nil {
 		t.Fatal("メール確認情報がDBに保存されていません")
 	}
 	if confirmation.Email != "english@example.com" {
-		t.Errorf("Email = %s, want english@example.com", confirmation.Email)
+		t.Errorf("Email = %s、期待値 = english@example.com", confirmation.Email)
 	}
 
 	// エンキューが呼ばれたことを確認
 	if !mock.called {
-		t.Error("Insert が呼ばれていません")
+		t.Error("Insertが呼ばれていません")
 	}
 
-	// SendEmailConfirmationArgs の検証（英語）
+	// SendEmailConfirmationArgsの検証 (英語)
 	emailArgs, ok := mock.args.(dispatcher.SendEmailConfirmationArgs)
 	if !ok {
-		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", mock.args)
+		t.Fatalf("argsの型がSendEmailConfirmationArgsではありません: %T", mock.args)
 	}
 	if emailArgs.Email != "english@example.com" {
-		t.Errorf("Email = %s, want english@example.com", emailArgs.Email)
+		t.Errorf("Email = %s、期待値 = english@example.com", emailArgs.Email)
 	}
 	if emailArgs.Code != confirmation.Code {
-		t.Errorf("Code = %s, want %s", emailArgs.Code, confirmation.Code)
+		t.Errorf("Code = %s、期待値 = %s", emailArgs.Code, confirmation.Code)
 	}
 	if emailArgs.Locale != "en" {
-		t.Errorf("Locale = %s, want en", emailArgs.Locale)
+		t.Errorf("Locale = %s、期待値 = en", emailArgs.Locale)
 	}
 }
 
@@ -198,21 +198,21 @@ func TestCreateEmailConfirmationUsecase_Execute_PasswordReset(t *testing.T) {
 
 	output, err := uc.Execute(ctx, input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	// DBに保存されたイベント種別を確認
 	confirmation, err := emailConfirmationRepo.FindByID(ctx, output.EmailConfirmationID)
 	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+		t.Fatalf("FindByID()のエラー = %v", err)
 	}
 	if confirmation.Event != model.EmailConfirmationEventPasswordReset {
-		t.Errorf("Event = %d, want %d", confirmation.Event, model.EmailConfirmationEventPasswordReset)
+		t.Errorf("Event = %d、期待値 = %d", confirmation.Event, model.EmailConfirmationEventPasswordReset)
 	}
 
 	// エンキューが呼ばれたことを確認
 	if !mock.called {
-		t.Error("Insert が呼ばれていません")
+		t.Error("Insertが呼ばれていません")
 	}
 }
 
@@ -224,11 +224,11 @@ func TestGenerateConfirmationCode(t *testing.T) {
 
 		code, err := generateConfirmationCode()
 		if err != nil {
-			t.Fatalf("generateConfirmationCode() error = %v", err)
+			t.Fatalf("generateConfirmationCode()のエラー = %v", err)
 		}
 
 		if len(code) != 6 {
-			t.Errorf("コード長 = %d, want 6", len(code))
+			t.Errorf("コード長 = %d、期待値 = 6", len(code))
 		}
 
 		// すべての文字が有効な文字セットに含まれていることを確認
@@ -247,19 +247,19 @@ func TestGenerateConfirmationCode(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			code, err := generateConfirmationCode()
 			if err != nil {
-				t.Fatalf("generateConfirmationCode() error = %v", err)
+				t.Fatalf("generateConfirmationCode()のエラー = %v", err)
 			}
 			codes[code] = true
 		}
 
 		// 100回生成して、少なくとも90種類以上の異なるコードが生成されることを確認
 		if len(codes) < 90 {
-			t.Errorf("ユニークなコード数 = %d, want >= 90", len(codes))
+			t.Errorf("ユニークなコード数 = %d、期待値 = 90以上", len(codes))
 		}
 	})
 }
 
-// contains は文字列に指定した部分文字列が含まれているかを返す
+// containsは文字列に指定した部分文字列が含まれているかを返す
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || findSubstring(s, substr))
 }

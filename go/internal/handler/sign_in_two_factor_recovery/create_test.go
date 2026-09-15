@@ -65,12 +65,12 @@ func TestCreate_WithoutPendingUser(t *testing.T) {
 
 	// ログインページにリダイレクトされるか確認
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /sign_in", location)
 	}
 }
 
@@ -137,13 +137,13 @@ func TestCreate_InvalidRecoveryCodeFormat(t *testing.T) {
 			handler.Create(rr, req)
 
 			if rr.Code != http.StatusUnprocessableEntity {
-				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 			}
 
 			// リカバリーコード入力フィールドが含まれているか確認
 			body := rr.Body.String()
 			if !strings.Contains(body, `name="recovery_code"`) {
-				t.Error("recovery_code input field not found in response")
+				t.Error("レスポンスにrecovery_codeの入力フィールドが見つからない")
 			}
 		})
 	}
@@ -200,13 +200,13 @@ func TestCreate_EmptyRecoveryCode(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// リカバリーコード入力フィールドが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, `name="recovery_code"`) {
-		t.Error("recovery_code input field not found in response")
+		t.Error("レスポンスにrecovery_codeの入力フィールドが見つからない")
 	}
 }
 
@@ -215,7 +215,7 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 
 	db, tx := testutil.SetupTx(t)
 
-	// ユーザーと2FA設定を作成（リカバリーコード付き）
+	// ユーザーと2FA設定を作成 (リカバリーコード付き)
 	secret := "JBSWY3DPEHPK3PXP"
 	recoveryCodes := []string{"code1234", "code5678", "abcd1234"}
 	userID := testutil.NewUserBuilder(t, tx).
@@ -269,13 +269,13 @@ func TestCreate_InvalidRecoveryCode(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// リカバリーコード入力フィールドが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, `name="recovery_code"`) {
-		t.Error("recovery_code input field not found in response")
+		t.Error("レスポンスにrecovery_codeの入力フィールドが見つからない")
 	}
 }
 
@@ -284,7 +284,7 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 
 	db := testutil.GetTestDB()
 
-	// ユーザーと2FA設定を作成（リカバリーコード付き）
+	// ユーザーと2FA設定を作成 (リカバリーコード付き)
 	secret := "JBSWY3DPEHPK3PXP"
 	validCode := "code1234"
 	recoveryCodes := []string{validCode, "code5678", "abcd1234"}
@@ -340,12 +340,12 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 
 	// ホームページにリダイレクトされるか確認
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/" {
-		t.Errorf("wrong redirect location: got %v want /", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /", location)
 	}
 
 	// セッションCookieが設定されているか確認
@@ -355,19 +355,16 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 		if c.Name == session.CookieName {
 			sessionCookieFound = true
 			if c.Value == "" {
-				t.Error("session cookie value is empty")
+				t.Error("セッションCookieの値が空")
 			}
 			break
 		}
 	}
 	if !sessionCookieFound {
-		t.Error("session cookie not found")
+		t.Error("セッションCookieが見つからない")
 	}
 
-	// Verify the sign-in success flash, so that a visitor sent on to a deep page still sees that
-	// they signed in.
-	//
-	// [Ja] 深いページへ送られた訪問者にもサインインできたと伝わるよう、サインイン成功の
+	// 深いページへ送られた訪問者にもサインインできたと伝わるよう、サインイン成功の
 	// フラッシュを検証する。
 	var flashCookieFound bool
 	for _, c := range cookies {
@@ -377,14 +374,14 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 		}
 	}
 	if !flashCookieFound {
-		t.Error("flash cookie not found")
+		t.Error("フラッシュのCookieが見つからない")
 	}
 
 	// ペンディングユーザーIDのCookieが削除されているか確認
 	for _, c := range cookies {
 		if c.Name == session.PendingUserCookieName {
 			if c.MaxAge >= 0 && c.Value != "" {
-				t.Error("pending user cookie should be deleted")
+				t.Error("保留中ユーザーのCookieが削除されていない")
 			}
 			break
 		}
@@ -402,13 +399,13 @@ func TestCreate_ValidRecoveryCode(t *testing.T) {
 	// 使用したコードがリストから削除されているか確認
 	for _, code := range twoFactorAuth.RecoveryCodes {
 		if code == validCode {
-			t.Errorf("使用済みのリカバリーコード %s がまだリストに存在します", validCode)
+			t.Errorf("使用済みのリカバリーコード%sがまだリストに存在します", validCode)
 		}
 	}
 
 	// 残りのコードは保持されているか確認
 	if len(twoFactorAuth.RecoveryCodes) != 2 {
-		t.Errorf("リカバリーコードの数が不正: got %d want 2", len(twoFactorAuth.RecoveryCodes))
+		t.Errorf("リカバリーコードの数 = %d、期待値 = 2", len(twoFactorAuth.RecoveryCodes))
 	}
 }
 
@@ -473,25 +470,18 @@ func TestCreate_TwoFactorNotEnabled(t *testing.T) {
 
 	// ログインページにリダイレクトされるか確認
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
-	// The back parameter is carried even when the visitor is sent back for having no two-factor
-	// authentication enabled.
-	//
-	// [Ja] 二要素認証が無効で引き返すときも back を引き継ぐことを確認する。
+	// 二要素認証が無効で引き返すときもbackを引き継ぐことを確認する。
 	wantLocation := "/sign_in?back=" + url.QueryEscape(backURL)
 	if location := rr.Header().Get("Location"); location != wantLocation {
-		t.Errorf("wrong redirect location: got %v want %v", location, wantLocation)
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, wantLocation)
 	}
 }
 
-// TestCreate_BackParameter verifies where a visitor lands after authenticating with a recovery
-// code. A safe back in the form returns them to their original destination, and anything else falls
-// back to the home page.
-//
-// [Ja] TestCreate_BackParameter は、リカバリーコードで認証した後のリダイレクト先を検証する。
-// フォームの back が安全なら元の宛先へ戻し、そうでなければホームへ落とす。
+// TestCreate_BackParameterは、リカバリーコードで認証した後のリダイレクト先を検証する。
+// フォームのbackが安全なら元の宛先へ戻し、そうでなければホームへ落とす。
 func TestCreate_BackParameter(t *testing.T) {
 	t.Parallel()
 
@@ -574,20 +564,17 @@ func TestCreate_BackParameter(t *testing.T) {
 			handler.Create(rr, req)
 
 			if rr.Code != http.StatusFound {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 			}
 			if location := rr.Header().Get("Location"); location != tt.wantLocation {
-				t.Errorf("wrong redirect location: got %v want %v", location, tt.wantLocation)
+				t.Errorf("リダイレクト先 = %v、期待値 = %v", location, tt.wantLocation)
 			}
 		})
 	}
 }
 
-// TestCreate_ValidationErrorPreservesBackParameter verifies that back survives the re-render that
-// follows a wrong recovery code.
-//
-// [Ja] TestCreate_ValidationErrorPreservesBackParameter は、リカバリーコードを間違えてフォームが
-// 再描画されるときも back を保持することを検証する。
+// TestCreate_ValidationErrorPreservesBackParameterは、リカバリーコードを間違えてフォームが
+// 再描画されるときもbackを保持することを検証する。
 func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	t.Parallel()
 
@@ -620,9 +607,7 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	)
 
 	form := url.Values{}
-	// A code shorter than eight digits fails the format check.
-	//
-	// [Ja] 8 桁未満のコードは形式チェックに引っかかる。
+	// 8桁未満のコードは形式チェックに引っかかる。
 	form.Add("recovery_code", "short")
 	form.Add("back", "/s/example/pages/1/edit")
 	req := httptest.NewRequest(http.MethodPost, "/sign_in/two_factor/recovery", strings.NewReader(form.Encode()))
@@ -640,20 +625,16 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	wantInBody := `name="back" value="/s/example/pages/1/edit"`
 	if !strings.Contains(rr.Body.String(), wantInBody) {
-		t.Errorf("backパラメータがフォームに保持されていません\nwant: %s", wantInBody)
+		t.Errorf("backパラメータがフォームに保持されていません\n期待値: %s", wantInBody)
 	}
 }
 
-// TestCreate_WithoutPendingUserCarriesBackParameter verifies that the destination in the form
-// survives an expired pending user cookie, so that signing in again still reaches the page the
-// visitor asked for.
-//
-// [Ja] TestCreate_WithoutPendingUserCarriesBackParameter は、pending user cookie が期限切れでも
+// TestCreate_WithoutPendingUserCarriesBackParameterは、pending user cookieが期限切れでも
 // フォームの遷移先が失われないことを検証する。サインインし直したときも訪問者が求めたページへ
 // 着けるようにするため。
 func TestCreate_WithoutPendingUserCarriesBackParameter(t *testing.T) {
@@ -703,11 +684,11 @@ func TestCreate_WithoutPendingUserCarriesBackParameter(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	wantLocation := "/sign_in?back=" + url.QueryEscape(backURL)
 	if location := rr.Header().Get("Location"); location != wantLocation {
-		t.Errorf("wrong redirect location: got %v want %v", location, wantLocation)
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, wantLocation)
 	}
 }

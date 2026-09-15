@@ -24,7 +24,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// newSuggestionRequest はchiのURLパラメータ付きHTTPリクエストを作成するヘルパーです
+// newSuggestionRequestはchiのURLパラメータ付きHTTPリクエストを作成するヘルパーです
 func newSuggestionRequest(t *testing.T, method string, path string, params map[string]string, body io.Reader) *http.Request {
 	t.Helper()
 
@@ -38,7 +38,7 @@ func newSuggestionRequest(t *testing.T, method string, path string, params map[s
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用の編集提案ハンドラーを作成するヘルパーです
+// setupHandlerはテスト用の編集提案ハンドラーを作成するヘルパーです
 func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionhandler.Handler {
 	t.Helper()
 
@@ -98,7 +98,7 @@ func TestIndex_存在しないスペースで404が返る(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -118,7 +118,7 @@ func TestIndex_不正なトピック番号で404が返る(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -143,7 +143,7 @@ func TestIndex_存在しないトピックで404が返る(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -193,28 +193,19 @@ func TestIndex_ヘルプリンク名が各言語で行き先を説明する(t *t
 			handler.Index(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 			}
 			if body := rr.Body.String(); !strings.Contains(body, tt.want) {
-				t.Errorf("response does not contain %q", tt.want)
+				t.Errorf("レスポンスに%qが含まれていない", tt.want)
 			}
 		})
 	}
 }
 
-// Keep suggestions in a native list so assistive technology receives the collection's structure.
-// The links also need to wrap unbroken titles so every item remains inside the card.
-//
-// The list item's class attribute is matched whole rather than by substring, so that losing the
-// separator, the padding or the hover background is caught even if another class ending in the
-// same word is added later. That match also marks where the list begins, and the checks for a
-// table and a horizontal scroller run on the list alone: an unrelated component elsewhere on the
-// page may gain either one without saying anything about how this list is built.
-//
-// [Ja] 支援技術へ一覧の構造を伝えるため、編集提案はネイティブなリストのまま保つ。
+// 支援技術へ一覧の構造を伝えるため、編集提案はネイティブなリストのまま保つ。
 // 区切れない長いタイトルもすべてカード内に収まるよう、リンクには折り返しが必要である。
 //
-// リスト項目の class 属性は部分文字列ではなく値を丸ごと照合する。これにより、後から同じ語で
+// リスト項目のclass属性は部分文字列ではなく値を丸ごと照合する。これにより、後から同じ語で
 // 終わる別のクラスが増えても区切り線・余白・ホバー時の背景が落ちたことを捕まえられる。
 // この照合は一覧の開始位置も兼ねており、表と横スクロールの検査は一覧の範囲だけを見る。
 // ページの別の場所にある無関係なコンポーネントがどちらかを持つようになっても、この一覧の
@@ -262,7 +253,7 @@ func TestIndex_編集提案一覧がテーブルではなくリストで組ま�
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -271,7 +262,7 @@ func TestIndex_編集提案一覧がテーブルではなくリストで組ま�
 
 	start := strings.Index(body, listStart)
 	if start < 0 {
-		t.Fatal("編集提案が区切り線・余白・ホバー時の背景を持つ ul の直接の子として組まれていない")
+		t.Fatal("編集提案が区切り線・余白・ホバー時の背景を持つulの直接の子として組まれていない")
 	}
 
 	list := body[start:]
@@ -336,47 +327,38 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "テスト提案") {
-		t.Error("response should contain suggestion title")
+		t.Error("レスポンスに編集提案のタイトルが含まれていない")
 	}
 	if !strings.Contains(body, "提案者") {
-		t.Error("response should contain creator name")
+		t.Error("レスポンスに作成者の名前が含まれていない")
 	}
 	if strings.Contains(body, "/s/si-pub-space/topics/1/suggestions/new") {
 		t.Error("新規編集提案ボタンが未ログインユーザーに表示されてはならない")
 	}
 
-	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
-	// link has to bypass it) and keeps this screen's max-w-3xl content width.
-	//
-	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
-	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅max-w-3xlも維持する。
 	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+		t.Error("共通のパンくずヘッダーがmax-w-3xlのコンテンツ幅を保っていない")
 	}
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
-		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 
-	// /home is behind authentication, so this public screen must not offer it as the trail's root:
-	// the link would send a signed-out visitor to the sign-in screen.
-	//
-	// [Ja] /home は認証必須のため、この公開画面が経路の起点として提示してはいけない。リンクは未ログインの
+	// /homeは認証必須のため、この公開画面が経路の起点として提示してはいけない。リンクは未ログインの
 	// 訪問者をログイン画面へ送ってしまう。
 	if strings.Contains(body, `href="/home"`) {
-		t.Error("未ログインの公開画面のパンくずが認証必須の /home を指している")
+		t.Error("未ログインの公開画面のパンくずが認証必須の /homeを指している")
 	}
 
-	// An indexable public screen declares an absolute self-referencing canonical URL built from the
-	// stored identifier. An empty href would resolve to whatever URL was requested instead.
-	//
-	// [Ja] インデックス対象の公開画面は、保存済みの識別子から組み立てた自己参照の絶対 URL を正規 URL
-	// として宣言する。空の href だとリクエストされた URL に解決されてしまう。
+	// インデックス対象の公開画面は、保存済みの識別子から組み立てた自己参照の絶対URLを正規URL
+	// として宣言する。空のhrefだとリクエストされたURLに解決されてしまう。
 	for _, want := range []string{
 		`<link rel="canonical" href="https://localhost/s/si-pub-space/topics/1/suggestions">`,
 		`<meta property="og:url" content="https://localhost/s/si-pub-space/topics/1/suggestions">`,
@@ -384,23 +366,19 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 		`<meta property="og:title" content="編集提案 | 公開トピック | Public Space">`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 
-	// The list is the current page, so the visible trail runs through the topic and ends with the
-	// list itself as a non-linked current item. Scope the assertions to the breadcrumb because the
-	// same labels also appear in the heading and metadata.
-	//
-	// [Ja] 一覧は現在地のため、見た目の経路はトピックを通り、一覧自身の非リンクな現在項目で締める。
+	// 一覧は現在地のため、見た目の経路はトピックを通り、一覧自身の非リンクな現在項目で締める。
 	// 同じラベルは見出しとメタ情報にも出るため、パンくず内に絞って検証する。
 	breadcrumbStart := strings.Index(body, `<nav aria-label="パンくずリスト"`)
 	if breadcrumbStart == -1 {
-		t.Fatal("response should contain the breadcrumb navigation")
+		t.Fatal("レスポンスにパンくずのナビゲーションが含まれていない")
 	}
 	breadcrumbEnd := strings.Index(body[breadcrumbStart:], "</nav>")
 	if breadcrumbEnd == -1 {
-		t.Fatal("breadcrumb navigation should have a closing tag")
+		t.Fatal("パンくずのナビゲーションに閉じタグが無い")
 	}
 	breadcrumb := body[breadcrumbStart : breadcrumbStart+breadcrumbEnd]
 	for _, want := range []string{
@@ -409,19 +387,15 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 		`aria-current="page"`,
 	} {
 		if !strings.Contains(breadcrumb, want) {
-			t.Errorf("breadcrumb does not contain %q", want)
+			t.Errorf("パンくずに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(breadcrumb, `href="/s/si-pub-space/topics/1/suggestions"`) {
-		t.Error("current suggestion list breadcrumb item must not be a link")
+		t.Error("現在の編集提案一覧のパンくずの項目がリンクになっている")
 	}
 
-	// Being indexable, the list publishes the same trail as BreadcrumbList JSON-LD. The screens under
-	// a suggestion declare this URL at the same position, so one URL keeps one place in the
-	// hierarchy.
-	//
-	// [Ja] インデックス対象のため、一覧は同じ経路を BreadcrumbList JSON-LD としても公開する。編集提案
-	// 配下の画面はこの URL を同じ位置に宣言するため、1 つの URL が階層上で 1 つの位置を持つ。
+	// インデックス対象のため、一覧は同じ経路をBreadcrumbList JSON-LDとしても公開する。編集提案
+	// 配下の画面はこのURLを同じ位置に宣言するため、1つのURLが階層上で1つの位置を持つ。
 	for _, want := range []string{
 		`<script type="application/ld+json">`,
 		`"@type":"BreadcrumbList"`,
@@ -430,18 +404,15 @@ func TestIndex_公開トピックの編集提案一覧を未ログインで閲�
 		`"position":3,"name":"編集提案"}`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(body, `https://localhost/home`) {
-		t.Error("未ログインの公開画面の構造化データが認証必須の /home を指している")
+		t.Error("未ログインの公開画面の構造化データが認証必須の /homeを指している")
 	}
 }
 
-// Each status tab lists a different set of suggestions, so the closed tab declares itself rather
-// than the open tab as its canonical address and identifies its state in the page title.
-//
-// [Ja] ステータスタブごとに載っている編集提案が異なるため、クローズタブはオープンタブではなく自分
+// ステータスタブごとに載っている編集提案が異なるため、クローズタブはオープンタブではなく自分
 // 自身を正規アドレスとして宣言し、ページタイトルでも状態を識別できるようにする。
 func TestIndex_ClosedTabMetadataIdentifiesTabState(t *testing.T) {
 	t.Parallel()
@@ -471,7 +442,7 @@ func TestIndex_ClosedTabMetadataIdentifiesTabState(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -481,11 +452,11 @@ func TestIndex_ClosedTabMetadataIdentifiesTabState(t *testing.T) {
 		`<meta property="og:title" content="クローズした編集提案 | 公開トピック | Tab Canonical Space">`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(body, `<title>編集提案 | 公開トピック | Tab Canonical Space</title>`) {
-		t.Error("closed tab must not reuse the open tab title")
+		t.Error("クローズタブがオープンタブのタイトルを使い回している")
 	}
 }
 
@@ -515,7 +486,7 @@ func TestIndex_非公開トピックを未ログインで閲覧すると404が�
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -569,15 +540,15 @@ func TestIndex_クローズタブで反映済みとクローズの提案が表�
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "クローズ提案") {
-		t.Error("response should contain closed suggestion title")
+		t.Error("レスポンスにクローズした編集提案のタイトルが含まれていない")
 	}
 	if strings.Contains(body, "オープン提案") {
-		t.Error("response should not contain open suggestion title on closed tab")
+		t.Error("クローズタブのレスポンスにオープンな編集提案のタイトルが含まれている")
 	}
 }
 
@@ -618,7 +589,7 @@ func TestIndex_非公開トピックをスペースオーナーが閲覧でき�
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -633,7 +604,7 @@ func TestIndex_他スペースのログインユーザーには新規編集提�
 	db, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// スペース B（対象スペース、公開トピック）
+	// スペースB (対象スペース、公開トピック)
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("si-outsider-space").
 		WithName("Target Space").
@@ -645,7 +616,7 @@ func TestIndex_他スペースのログインユーザーには新規編集提�
 		WithVisibility(0). // public
 		Build()
 
-	// スペース A 所属のユーザー（スペース B には所属しない）
+	// スペースA所属のユーザー (スペースBには所属しない)
 	outsiderID := testutil.NewUserBuilder(t, tx).
 		WithEmail("si-outsider@example.com").
 		WithAtname("sioutsider").
@@ -671,7 +642,7 @@ func TestIndex_他スペースのログインユーザーには新規編集提�
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()

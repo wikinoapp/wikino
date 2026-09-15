@@ -70,25 +70,25 @@ func TestManualSaveDraftPageUsecase_Execute(t *testing.T) {
 		Body:            "下書き本文",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if output == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if output.DraftPageRevision == nil {
-		t.Fatal("DraftPageRevision should not be nil")
+		t.Fatal("DraftPageRevisionがnil")
 	}
 	if output.DraftPageRevision.Title != "下書きタイトル" {
-		t.Errorf("Title = %q, want %q", output.DraftPageRevision.Title, "下書きタイトル")
+		t.Errorf("Title = %q、期待値 = %q", output.DraftPageRevision.Title, "下書きタイトル")
 	}
 	if output.DraftPageRevision.Body != "下書き本文" {
-		t.Errorf("Body = %q, want %q", output.DraftPageRevision.Body, "下書き本文")
+		t.Errorf("Body = %q、期待値 = %q", output.DraftPageRevision.Body, "下書き本文")
 	}
 	if output.DraftPageRevision.SpaceMemberID != spaceMemberID {
-		t.Errorf("SpaceMemberID = %v, want %v", output.DraftPageRevision.SpaceMemberID, spaceMemberID)
+		t.Errorf("SpaceMemberID = %v、期待値 = %v", output.DraftPageRevision.SpaceMemberID, spaceMemberID)
 	}
 	if output.DraftPageRevision.CreatedAt.IsZero() {
-		t.Error("CreatedAt should not be zero")
+		t.Error("CreatedAtがゼロ値")
 	}
 }
 
@@ -98,7 +98,7 @@ func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 	db := testutil.GetTestDB()
 	uc := newManualSaveUC(db)
 
-	// テストデータを作成（DraftPageは作成しない）
+	// テストデータを作成 (DraftPageは作成しない)
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
 		WithIdentifier("manual-save-nodraft").
 		Build()
@@ -135,27 +135,23 @@ func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 		Body:            "新規下書き本文",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if output == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if output.DraftPageRevision == nil {
-		t.Fatal("DraftPageRevision should not be nil")
+		t.Fatal("DraftPageRevisionがnil")
 	}
 	if output.DraftPageRevision.Title != "新規下書き" {
-		t.Errorf("Title = %q, want %q", output.DraftPageRevision.Title, "新規下書き")
+		t.Errorf("Title = %q、期待値 = %q", output.DraftPageRevision.Title, "新規下書き")
 	}
 	if output.DraftPageRevision.Body != "新規下書き本文" {
-		t.Errorf("Body = %q, want %q", output.DraftPageRevision.Body, "新規下書き本文")
+		t.Errorf("Body = %q、期待値 = %q", output.DraftPageRevision.Body, "新規下書き本文")
 	}
 }
 
-// TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevision verifies that a save whose
-// title/body are identical to the latest revision skips revision creation (the save itself
-// still succeeds), and that a subsequent save with changed content creates a revision again.
-//
-// [Ja] TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevision は、タイトル・本文が
+// TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevisionは、タイトル・本文が
 // 最新リビジョンと同一の保存ではリビジョン作成がスキップされること (保存自体は成功すること)、
 // その後内容を変えた保存では再びリビジョンが作成されることを検証する。
 func TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevision(t *testing.T) {
@@ -201,54 +197,51 @@ func TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevision(t *testing.T) 
 	}
 	revisionRepo := repository.NewDraftPageRevisionRepository(query.New(db))
 
-	// First save: a revision is created.
-	// [Ja] 1 回目の保存: リビジョンが作成される。
+	// 1回目の保存: リビジョンが作成される。
 	first, err := uc.Execute(context.Background(), input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if first.DraftPageRevision == nil {
-		t.Fatal("first save should create a revision")
+		t.Fatal("初回の保存でリビジョンが作成されていない")
 	}
 
-	// Second save (identical content): revision creation is skipped while the save itself succeeds.
-	// [Ja] 2 回目の保存 (同一内容): リビジョン作成はスキップされ、保存自体は成功する。
+	// 2回目の保存 (同一内容): リビジョン作成はスキップされ、保存自体は成功する。
 	second, err := uc.Execute(context.Background(), input)
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if second.DraftPageRevision != nil {
-		t.Error("second save with identical content should skip revision creation")
+		t.Error("同じ内容の2回目の保存でリビジョンの作成が省かれていない")
 	}
 	if second.DraftPage == nil {
-		t.Fatal("DraftPage should not be nil")
+		t.Fatal("DraftPageがnil")
 	}
 
 	count, err := revisionRepo.CountByDraftPageID(context.Background(), second.DraftPage.ID, second.DraftPage.SpaceID)
 	if err != nil {
-		t.Fatalf("CountByDraftPageID() error = %v, want nil", err)
+		t.Fatalf("CountByDraftPageID()のエラー = %v、期待値 = nil", err)
 	}
 	if count != 1 {
-		t.Errorf("revision count = %d, want 1", count)
+		t.Errorf("リビジョンの件数 = %d、期待値 = 1", count)
 	}
 
-	// Third save (changed content): a new revision is created.
-	// [Ja] 3 回目の保存 (内容変更): 新しいリビジョンが作成される。
+	// 3回目の保存 (内容変更): 新しいリビジョンが作成される。
 	changedInput := input
 	changedInput.Body = "変更後の本文"
 	third, err := uc.Execute(context.Background(), changedInput)
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if third.DraftPageRevision == nil {
-		t.Fatal("save with changed content should create a revision")
+		t.Fatal("内容を変えて保存したのにリビジョンが作成されていない")
 	}
 
 	count, err = revisionRepo.CountByDraftPageID(context.Background(), third.DraftPage.ID, third.DraftPage.SpaceID)
 	if err != nil {
-		t.Fatalf("CountByDraftPageID() error = %v, want nil", err)
+		t.Fatalf("CountByDraftPageID()のエラー = %v、期待値 = nil", err)
 	}
 	if count != 2 {
-		t.Errorf("revision count = %d, want 2", count)
+		t.Errorf("リビジョンの件数 = %d、期待値 = 2", count)
 	}
 }

@@ -59,19 +59,19 @@ func TestGetPagePreviewUsecase_Execute_RendersMarkdown(t *testing.T) {
 		Body:            "# Heading\n\nsome **bold** text",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 	if output == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if output.Title != "My Draft Title" {
-		t.Errorf("Title = %q, want %q", output.Title, "My Draft Title")
+		t.Errorf("Title = %q、期待値 = %q", output.Title, "My Draft Title")
 	}
 	if !strings.Contains(output.BodyHTML, "<h1") {
-		t.Errorf("BodyHTML should contain rendered heading, got %q", output.BodyHTML)
+		t.Errorf("BodyHTMLに描画された見出しが含まれていない: %q", output.BodyHTML)
 	}
 	if !strings.Contains(output.BodyHTML, "<strong>bold</strong>") {
-		t.Errorf("BodyHTML should contain rendered bold text, got %q", output.BodyHTML)
+		t.Errorf("BodyHTMLに描画された太字が含まれていない: %q", output.BodyHTML)
 	}
 }
 
@@ -109,16 +109,14 @@ func TestGetPagePreviewUsecase_Execute_ResolvesExistingWikilink(t *testing.T) {
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
 		Build()
-	// The page being edited.
-	// [Ja] 編集対象のページ
+	// 編集対象のページ
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithNumber(1).
 		WithTitle("Editing Page").
 		Build()
-	// An existing target page for the wiki link.
-	// [Ja] Wiki リンクのリンク先となる既存ページ
+	// Wikiリンクのリンク先となる既存ページ
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -133,11 +131,11 @@ func TestGetPagePreviewUsecase_Execute_ResolvesExistingWikilink(t *testing.T) {
 		Body:            "see [[General/Existing Target]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
-	// 既存ページへの Wiki リンクは <a> タグに変換され、ページ番号 2 の URL を含む。
+	// 既存ページへのWikiリンクは <a> タグに変換され、ページ番号2のURLを含む。
 	if !strings.Contains(output.BodyHTML, "/s/pp-wiki-space/pages/2") {
-		t.Errorf("BodyHTML should contain link to existing page, got %q", output.BodyHTML)
+		t.Errorf("BodyHTMLに既存ページへのリンクが含まれていない: %q", output.BodyHTML)
 	}
 }
 
@@ -184,7 +182,7 @@ func TestGetPagePreviewUsecase_Execute_NoPersistence(t *testing.T) {
 		WithTitle("Editing Page").
 		Build()
 
-	// 存在しないページへの Wiki リンクを含む本文でプレビューを生成する。
+	// 存在しないページへのWikiリンクを含む本文でプレビューを生成する。
 	output, err := uc.Execute(context.Background(), GetPagePreviewInput{
 		SpaceIdentifier: "pp-nopersist-space",
 		PageNumber:      1,
@@ -192,30 +190,30 @@ func TestGetPagePreviewUsecase_Execute_NoPersistence(t *testing.T) {
 		Body:            "link to [[General/Brand New Page]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
-	// 未解決の Wiki リンクは <a> タグに変換されず、プレーンテキストのまま残る。
+	// 未解決のWikiリンクは <a> タグに変換されず、プレーンテキストのまま残る。
 	if strings.Contains(output.BodyHTML, "<a") {
-		t.Errorf("unresolved wiki link should not become a link, got %q", output.BodyHTML)
+		t.Errorf("未解決のWikiリンクがリンクになっている: %q", output.BodyHTML)
 	}
 
 	// リンク先ページが自動作成されていないこと。
 	created, err := pageRepo.FindByTopicAndTitle(context.Background(), topicID, "Brand New Page", spaceID)
 	if err != nil {
-		t.Fatalf("FindByTopicAndTitle() error = %v", err)
+		t.Fatalf("FindByTopicAndTitle()のエラー = %v", err)
 	}
 	if created != nil {
-		t.Error("preview must not create the linked page")
+		t.Error("プレビューでリンク先ページが作成された")
 	}
 
 	// 下書きが作成されていないこと。
 	draft, err := draftPageRepo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
 	if err != nil {
-		t.Fatalf("FindByPageAndMember() error = %v", err)
+		t.Fatalf("FindByPageAndMember()のエラー = %v", err)
 	}
 	if draft != nil {
-		t.Error("preview must not create a draft page")
+		t.Error("プレビューで下書きが作成された")
 	}
 }
 
@@ -271,14 +269,14 @@ func TestGetPagePreviewUsecase_Execute_NonMemberForbidden(t *testing.T) {
 		Body:            "secret content",
 	})
 	if output != nil {
-		t.Error("output should be nil for a non-member")
+		t.Error("非メンバーなのに出力がnilではない")
 	}
 	ae := model.AsAppError(err)
 	if ae == nil {
-		t.Fatalf("expected *model.AppError, got %v", err)
+		t.Fatalf("*model.AppErrorを期待したが、%vだった", err)
 	}
 	if ae.Code != model.AppErrCodeForbidden {
-		t.Errorf("error code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+		t.Errorf("エラーコード = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 	}
 }
 
@@ -313,13 +311,13 @@ func TestGetPagePreviewUsecase_Execute_PageNotFound(t *testing.T) {
 		Body:            "content",
 	})
 	if output != nil {
-		t.Error("output should be nil when the page does not exist")
+		t.Error("ページが存在しないのに出力がnilではない")
 	}
 	ae := model.AsAppError(err)
 	if ae == nil {
-		t.Fatalf("expected *model.AppError, got %v", err)
+		t.Fatalf("*model.AppErrorを期待したが、%vだった", err)
 	}
 	if ae.Code != model.AppErrCodeResourceNotFound {
-		t.Errorf("error code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+		t.Errorf("エラーコード = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 	}
 }

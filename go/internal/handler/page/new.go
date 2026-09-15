@@ -15,13 +15,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New creates a page and sends the visitor to its edit screen
-// (GET /s/{space_identifier}/topics/{topic_number}/pages/new). The optional title and body query
-// parameters are stored as a draft, so an external entry point such as a bookmarklet opens the
-// editor with those values already filled in.
-//
-// [Ja] New はページを作成し、その編集画面へ遷移させます
-// (GET /s/{space_identifier}/topics/{topic_number}/pages/new)。任意の title / body クエリ
+// Newはページを作成し、その編集画面へ遷移させます
+// (GET /s/{space_identifier}/topics/{topic_number}/pages/new)。任意のtitle / bodyクエリ
 // パラメータは下書きとして保存するため、ブックマークレットのような外部の入口からも、値が入った
 // 状態でエディタが開きます。
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
@@ -42,13 +37,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The title and body parameter names end up embedded in bookmarklets distributed outside the
-	// app, which makes them a public contract: keep them as they are. Their values are passed on
-	// untouched, because trimming or normalizing them here would silently change what the visitor
-	// finds in the editor; an over-long title is reported by the existing validation when the page
-	// is published.
-	//
-	// [Ja] title / body というパラメータ名はアプリの外に配布されるブックマークレットに埋め込まれる
+	// title / bodyというパラメータ名はアプリの外に配布されるブックマークレットに埋め込まれる
 	// ため公開の契約であり、変えない。値は手を加えずに渡す。ここで切り詰めや正規化を行うと、
 	// 閲覧者がエディタで目にする内容を暗黙に変えてしまうためで、長すぎるタイトルは公開時の既存の
 	// バリデーションが指摘する。
@@ -77,10 +66,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Each visit creates a different page, so the transfer is a temporary one (302), as in the
-	// Rails version.
-	//
-	// [Ja] 訪問のたびに別のページが作られるため、転送は一時的なもの (302) とする。Rails 版と同じ。
+	// 訪問のたびに別のページが作られるため、転送は一時的なもの (302) とする。Rails版と同じ。
 	editPath := templates.PageEditPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(output.Page.Number))
 	http.Redirect(w, r, string(editPath), http.StatusFound)
 }

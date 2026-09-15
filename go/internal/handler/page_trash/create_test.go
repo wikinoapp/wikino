@@ -46,11 +46,8 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_trash.Handler {
 	return page_trash.NewHandler(flashMgr, trashPageUC)
 }
 
-// newRequest builds a POST request that moves a page to the trash as the specified user. An empty
-// userID creates an unauthenticated request.
-//
-// [Ja] newRequest は指定ユーザーとしてページをゴミ箱へ移動する POST リクエストを組み立てる。
-// userID が空文字の場合は未ログインのリクエストになる。
+// newRequestは指定ユーザーとしてページをゴミ箱へ移動するPOSTリクエストを組み立てる。
+// userIDが空文字の場合は未ログインのリクエストになる。
 func newRequest(t *testing.T, spaceIdentifier string, pageNumber int32, userID model.UserID) *http.Request {
 	t.Helper()
 
@@ -126,31 +123,26 @@ func TestCreate(t *testing.T) {
 
 		page, err := pageRepo.FindBySpaceAndNumber(context.Background(), spaceID, number)
 		if err != nil {
-			t.Fatalf("FindBySpaceAndNumber() error = %v", err)
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
 		}
 		if page == nil {
-			t.Fatal("FindBySpaceAndNumber() returned nil, want page")
+			t.Fatal("FindBySpaceAndNumber()がnilを返した、期待値 = ページ")
 		}
 		return page
 	}
 
-	t.Run("正常系: page:trash を持つメンバーはページ自身へリダイレクトされる", func(t *testing.T) {
+	t.Run("正常系: page:trashを持つメンバーはページ自身へリダイレクトされる", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		h.Create(rr, newRequest(t, "pt-space", 1, trashMemberID))
 
 		if rr.Code != http.StatusSeeOther {
-			t.Errorf("status code = %v, want %v", rr.Code, http.StatusSeeOther)
+			t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 		}
-		// A trashed page stays readable, so the user lands back on the page they just acted on.
-		//
-		// [Ja] ゴミ箱に入れてもページは読めるため、操作した対象へそのまま着地する。
+		// ゴミ箱に入れてもページは読めるため、操作した対象へそのまま着地する。
 		if location := rr.Header().Get("Location"); location != "/s/pt-space/pages/1" {
-			t.Errorf("Location = %v, want /s/pt-space/pages/1", location)
+			t.Errorf("Location = %v、期待値 = /s/pt-space/pages/1", location)
 		}
-		// The flash is what acknowledges the operation itself; the notice on the landing page only
-		// states that the page is in the trash.
-		//
-		// [Ja] 操作が通ったことを伝えるのはフラッシュメッセージで、着地先のアラートはページが
+		// 操作が通ったことを伝えるのはフラッシュメッセージで、着地先のアラートはページが
 		// ゴミ箱にあるという状態を示すだけである。
 		hasFlashCookie := false
 		for _, c := range rr.Result().Cookies() {
@@ -160,22 +152,22 @@ func TestCreate(t *testing.T) {
 			}
 		}
 		if !hasFlashCookie {
-			t.Errorf("成功時はフラッシュ Cookie (%s) がセットされるべき", session.FlashCookieName)
+			t.Errorf("成功時はフラッシュCookie (%s) がセットされるべき", session.FlashCookieName)
 		}
 		if page := findPage(t, 1); page.TrashedAt == nil {
-			t.Error("page.TrashedAt = nil, want a stamped time")
+			t.Error("page.TrashedAt = nil、期待値 = 打刻された時刻")
 		}
 	})
 
-	t.Run("異常系: page:trash を持たないメンバーは404になる", func(t *testing.T) {
+	t.Run("異常系: page:trashを持たないメンバーは404になる", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		h.Create(rr, newRequest(t, "pt-space", 2, writerMemberID))
 
 		if rr.Code != http.StatusNotFound {
-			t.Errorf("status code = %v, want %v", rr.Code, http.StatusNotFound)
+			t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 		}
 		if page := findPage(t, 2); page.TrashedAt != nil {
-			t.Errorf("page.TrashedAt = %v, want nil (権限が無いので更新されないべき)", page.TrashedAt)
+			t.Errorf("page.TrashedAt = %v、期待値 = nil (権限が無いので更新されないべき)", page.TrashedAt)
 		}
 	})
 
@@ -184,7 +176,7 @@ func TestCreate(t *testing.T) {
 		h.Create(rr, newRequest(t, "pt-space", 999, trashMemberID))
 
 		if rr.Code != http.StatusNotFound {
-			t.Errorf("status code = %v, want %v", rr.Code, http.StatusNotFound)
+			t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 		}
 	})
 
@@ -193,13 +185,13 @@ func TestCreate(t *testing.T) {
 		h.Create(rr, newRequest(t, "pt-space", 3, ""))
 
 		if rr.Code != http.StatusFound {
-			t.Errorf("status code = %v, want %v", rr.Code, http.StatusFound)
+			t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 		}
 		if location := rr.Header().Get("Location"); location != "/sign_in" {
-			t.Errorf("Location = %v, want /sign_in", location)
+			t.Errorf("Location = %v、期待値 = /sign_in", location)
 		}
 		if page := findPage(t, 3); page.TrashedAt != nil {
-			t.Errorf("page.TrashedAt = %v, want nil (未ログインでは更新されないべき)", page.TrashedAt)
+			t.Errorf("page.TrashedAt = %v、期待値 = nil (未ログインでは更新されないべき)", page.TrashedAt)
 		}
 	})
 
@@ -216,7 +208,7 @@ func TestCreate(t *testing.T) {
 		h.Create(rr, req.WithContext(ctx))
 
 		if rr.Code != http.StatusNotFound {
-			t.Errorf("status code = %v, want %v", rr.Code, http.StatusNotFound)
+			t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 		}
 	})
 }

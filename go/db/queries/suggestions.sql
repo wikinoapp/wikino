@@ -5,17 +5,17 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: FindSuggestionByID :one
--- IDで編集提案を取得する（スペースIDでスコープ）
+-- IDで編集提案を取得する (スペースIDでスコープ)
 SELECT * FROM suggestions WHERE id = $1 AND space_id = $2;
 
 -- name: ListSuggestionsByTopicAndStatuses :many
--- トピックIDとステータスリストで編集提案一覧を取得する（作成日時の降順）
+-- トピックIDとステータスリストで編集提案一覧を取得する (作成日時の降順)
 SELECT * FROM suggestions
 WHERE topic_id = $1 AND space_id = $2 AND status = ANY($3::integer[])
 ORDER BY created_at DESC;
 
 -- name: UpdateSuggestionStatus :one
--- 編集提案のステータスを更新する（スペースIDでスコープ）
+-- 編集提案のステータスを更新する (スペースIDでスコープ)
 UPDATE suggestions
 SET status = $2, applied_at = $3, updated_at = $4
 WHERE id = $1 AND space_id = $5
@@ -28,7 +28,7 @@ FROM suggestions
 WHERE topic_id = $1 AND space_id = $2 AND status = ANY($3::integer[]);
 
 -- name: FindSuggestionByTopicAndNumber :one
--- トピックIDと番号で編集提案を取得する（スペースIDでスコープ）
+-- トピックIDと番号で編集提案を取得する (スペースIDでスコープ)
 SELECT * FROM suggestions WHERE topic_id = $1 AND number = $2 AND space_id = $3;
 
 -- name: FindSuggestionBySpaceAndNumber :one
@@ -36,7 +36,7 @@ SELECT * FROM suggestions WHERE topic_id = $1 AND number = $2 AND space_id = $3;
 SELECT * FROM suggestions WHERE space_id = $1 AND number = $2;
 
 -- name: UpdateSuggestion :one
--- 編集提案のタイトルと本文を更新する（スペースIDでスコープ）
+-- 編集提案のタイトルと本文を更新する (スペースIDでスコープ)
 UPDATE suggestions
 SET title = $2, body = $3, updated_at = $4
 WHERE id = $1 AND space_id = $5

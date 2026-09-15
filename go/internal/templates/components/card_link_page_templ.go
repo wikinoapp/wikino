@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// CardLinkPage はリンク一覧・バックリンク一覧で使用するページカードを表示します
+// CardLinkPageはリンク一覧・バックリンク一覧で使用するページカードを表示します
 func CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

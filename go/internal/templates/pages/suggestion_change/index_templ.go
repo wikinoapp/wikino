@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// IndexData は編集提案の変更差分画面に渡すデータ構造体です
+// IndexDataは編集提案の変更差分画面に渡すデータ構造体です
 type IndexData struct {
 	CSRFToken               string
 	Space                   viewmodel.Space
@@ -28,7 +28,7 @@ type IndexData struct {
 	CanRemoveSuggestionPage bool
 }
 
-// pageDiffEditData は差分表示内の編集・削除ボタンに必要なデータです
+// pageDiffEditDataは差分表示内の編集・削除ボタンに必要なデータです
 type pageDiffEditData struct {
 	CSRFToken        string
 	SpaceIdentifier  viewmodel.SpaceIdentifier
@@ -38,7 +38,7 @@ type pageDiffEditData struct {
 	PageCount        int
 }
 
-// Index は編集提案の変更差分画面のコンテンツを表示します
+// Indexは編集提案の変更差分画面のコンテンツを表示します
 func Index(data IndexData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -201,7 +201,7 @@ func Index(data IndexData) templ.Component {
 	})
 }
 
-// suggestionPageDiff は1つの編集提案ページの差分を表示します
+// suggestionPageDiffは1つの編集提案ページの差分を表示します
 func suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageDiff) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

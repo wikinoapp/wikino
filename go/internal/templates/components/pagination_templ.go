@@ -12,8 +12,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// PaginationNav はオフセットベースのページネーションナビゲーションを表示するコンポーネントです。
-// previousPath と nextPath にはページ番号を含む完全なパスを渡します。
+// PaginationNavはオフセットベースのページネーションナビゲーションを表示するコンポーネントです。
+// previousPathとnextPathにはページ番号を含む完全なパスを渡します。
 func PaginationNav(pagination viewmodel.Pagination, previousPath string, nextPath string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

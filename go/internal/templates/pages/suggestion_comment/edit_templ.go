@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// EditData は編集提案コメント編集画面に渡すデータ構造体です
+// EditDataは編集提案コメント編集画面に渡すデータ構造体です
 type EditData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
@@ -25,7 +25,7 @@ type EditData struct {
 	Body       string
 }
 
-// Edit は編集提案コメント編集画面のコンテンツを表示します
+// Editは編集提案コメント編集画面のコンテンツを表示します
 func Edit(data EditData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

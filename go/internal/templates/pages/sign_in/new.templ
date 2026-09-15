@@ -6,7 +6,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// NewPageData はログインページに渡すデータ構造体です
+// NewPageDataはログインページに渡すデータ構造体です
 type NewPageData struct {
 	CSRFToken        string
 	TurnstileSiteKey string
@@ -14,7 +14,7 @@ type NewPageData struct {
 	BackURL          string
 }
 
-// New はログインページのコンテンツを表示します
+// Newはログインページのコンテンツを表示します
 templ New(data NewPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6">
 		<div class="text-center px-4">

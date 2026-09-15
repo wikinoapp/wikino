@@ -11,19 +11,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// OptionalLabelData contains the data for a label that marks an optional field.
-//
-// [Ja] OptionalLabelData は任意項目であることを示すラベルのデータです。
+// OptionalLabelDataは任意項目であることを示すラベルのデータです。
 type OptionalLabelData struct {
 	For   string
 	Label string
 }
 
-// OptionalLabel renders a label that marks a field as optional. For must name the control this
-// label describes; an empty value renders a label with no control.
-//
-// [Ja] OptionalLabel は任意項目であることを示すラベルを表示します。For にはこのラベルが説明する
-// コントロールの id を必ず渡してください。空にすると関連先を持たないラベルになります。
+// OptionalLabelは任意項目であることを示すラベルを表示します。Forにはこのラベルが説明する
+// コントロールのidを必ず渡してください。空にすると関連先を持たないラベルになります。
 func OptionalLabel(data OptionalLabelData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -52,7 +47,7 @@ func OptionalLabel(data OptionalLabelData) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.For)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/optional_label.templ`, Line: 19, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/optional_label.templ`, Line: 14, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -65,7 +60,7 @@ func OptionalLabel(data OptionalLabelData) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(data.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/optional_label.templ`, Line: 21, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/optional_label.templ`, Line: 16, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -78,7 +73,7 @@ func OptionalLabel(data OptionalLabelData) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "form_optional"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/optional_label.templ`, Line: 23, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/optional_label.templ`, Line: 18, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

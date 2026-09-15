@@ -12,10 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// A [[...]] written as code is not a link on the screen, so publishing must not create the page
-// it names. The link outside the code keeps creating its page.
-//
-// [Ja] コードとして書かれた [[...]] は画面上でリンクにならないため、公開時にその名前のページを
+// コードとして書かれた [[...]] は画面上でリンクにならないため、公開時にその名前のページを
 // 作ってはならない。コードの外のリンクは従来どおりページを作る。
 func TestPublishPageUsecase_Execute_CodeWikilinkCreatesNoPage(t *testing.T) {
 	t.Parallel()
@@ -58,30 +55,30 @@ func TestPublishPageUsecase_Execute_CodeWikilinkCreatesNoPage(t *testing.T) {
 		Title: "Code Wikilink", Body: body,
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	for _, title := range []string{"ブロックのリンク先", "インラインのリンク先", "HTMLのリンク先"} {
 		page, err := pageRepo.FindByTopicAndTitle(ctx, topicID, title, spaceID)
 		if err != nil {
-			t.Fatalf("FindByTopicAndTitle(%q) error = %v", title, err)
+			t.Fatalf("FindByTopicAndTitle(%q)のエラー = %v", title, err)
 		}
 		if page != nil {
-			t.Errorf("page %q was created from a wiki link written as code", title)
+			t.Errorf("コードとして書かれたWikiリンクからページ%qが作成された", title)
 		}
 	}
 
 	linked, err := pageRepo.FindByTopicAndTitle(ctx, topicID, "テキストのリンク先", spaceID)
 	if err != nil {
-		t.Fatalf("FindByTopicAndTitle() error = %v", err)
+		t.Fatalf("FindByTopicAndTitle()のエラー = %v", err)
 	}
 	if linked == nil {
-		t.Fatal("page テキストのリンク先 was not created from the wiki link outside code")
+		t.Fatal("コード外のWikiリンクからページ「テキストのリンク先」が作成されていない")
 	}
 	if len(output.Page.LinkedPageIDs) != 1 || output.Page.LinkedPageIDs[0] != linked.ID {
-		t.Errorf("LinkedPageIDs = %v, want only %v", output.Page.LinkedPageIDs, linked.ID)
+		t.Errorf("LinkedPageIDs = %v、期待値 = %vのみ", output.Page.LinkedPageIDs, linked.ID)
 	}
 	if !strings.Contains(output.Page.BodyHTML, "テキストのリンク先</a>") {
-		t.Errorf("published HTML has no link to the created page: %s", output.Page.BodyHTML)
+		t.Errorf("公開後のHTMLに作成したページへのリンクが無い: %s", output.Page.BodyHTML)
 	}
 }

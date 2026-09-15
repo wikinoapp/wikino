@@ -6,16 +6,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// NewData is what the topic creation screen is rendered with.
-//
-// [Ja] NewData はトピック作成画面をレンダリングする元になるデータ。
+// NewDataはトピック作成画面をレンダリングする元になるデータ。
 type NewData struct {
 	CSRFToken string
 	Space     viewmodel.Space
 	Fields    FormFieldsData
 }
 
-// New はトピック作成画面のコンテンツを表示します
+// Newはトピック作成画面のコンテンツを表示します
 templ New(data NewData) {
 	<div class="py-4">
 		<div class="max-w-2xl w-full mx-auto">
@@ -60,10 +58,7 @@ templ New(data NewData) {
 	</div>
 }
 
-// hintSubtitle renders the subtitle of the topic creation screen, which carries links to the help
-// pages.
-//
-// [Ja] hintSubtitle はトピック作成画面のサブタイトルを表示します。ヘルプページへのリンクを
+// hintSubtitleはトピック作成画面のサブタイトルを表示します。ヘルプページへのリンクを
 // 含みます。
 templ hintSubtitle() {
 	@templ.Raw(templates.T(ctx, "topic_new_hint_html"))

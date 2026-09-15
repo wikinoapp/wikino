@@ -78,13 +78,13 @@ func TestSuggestionPageUpdateValidator_DraftPageが存在しリンクされて�
 	})
 
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if dp == nil {
-		t.Fatal("DraftPage should not be nil")
+		t.Fatal("DraftPageがnil")
 	}
 	if dp.Body != "提案の本文" {
-		t.Errorf("DraftPage.Body = %q, want %q", dp.Body, "提案の本文")
+		t.Errorf("DraftPage.Body = %q、期待値 = %q", dp.Body, "提案の本文")
 	}
 }
 
@@ -129,13 +129,13 @@ func TestSuggestionPageUpdateValidator_DraftPageが存在しない場合はエ�
 	})
 
 	if err == nil {
-		t.Fatal("expected error, got nil")
+		t.Fatal("エラーを期待したが、nilだった")
 	}
 	if !errors.Is(err, validator.ErrDraftPageNotFound) {
-		t.Errorf("expected ErrDraftPageNotFound, got %v", err)
+		t.Errorf("エラー = %v、期待値 = ErrDraftPageNotFound", err)
 	}
 	if dp != nil {
-		t.Error("DraftPage should be nil on error")
+		t.Error("エラー時なのにDraftPageがnilではない")
 	}
 }
 
@@ -186,7 +186,7 @@ func TestSuggestionPageUpdateValidator_DraftPageが別のSuggestionPageにリン
 		WithPageRevisionID(pageRevisionID).
 		Build()
 
-	// DraftPageは otherSuggestionPageID にリンクされている
+	// DraftPageはotherSuggestionPageIDにリンクされている
 	testutil.NewDraftPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
@@ -207,13 +207,13 @@ func TestSuggestionPageUpdateValidator_DraftPageが別のSuggestionPageにリン
 	})
 
 	if err == nil {
-		t.Fatal("expected error, got nil")
+		t.Fatal("エラーを期待したが、nilだった")
 	}
 	if !errors.Is(err, validator.ErrDraftPageNotLinked) {
-		t.Errorf("expected ErrDraftPageNotLinked, got %v", err)
+		t.Errorf("エラー = %v、期待値 = ErrDraftPageNotLinked", err)
 	}
 	if dp != nil {
-		t.Error("DraftPage should be nil on error")
+		t.Error("エラー時なのにDraftPageがnilではない")
 	}
 }
 
@@ -273,13 +273,13 @@ func TestSuggestionPageCreateValidator_正常系_有効な下書きページで�
 	})
 
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if len(draftPages) != 1 {
-		t.Fatalf("draftPages count = %d, want 1", len(draftPages))
+		t.Fatalf("draftPagesの件数 = %d、期待値 = 1", len(draftPages))
 	}
 	if draftPages[0].Body != "本文" {
-		t.Errorf("DraftPage.Body = %q, want %q", draftPages[0].Body, "本文")
+		t.Errorf("DraftPage.Body = %q、期待値 = %q", draftPages[0].Body, "本文")
 	}
 }
 
@@ -304,10 +304,10 @@ func TestSuggestionPageCreateValidator_異常系_下書きページ未選択(t *
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("draft_page_ids") {
-		t.Error("expected draft_page_ids field error")
+		t.Error("draft_page_idsのフィールドエラーが無い")
 	}
 }
 
@@ -355,10 +355,10 @@ func TestSuggestionPageCreateValidator_異常系_下書きページが存在し�
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("draft_page_ids") {
-		t.Error("expected draft_page_ids field error")
+		t.Error("draft_page_idsのフィールドエラーが無い")
 	}
 }
 
@@ -428,10 +428,10 @@ func TestSuggestionPageCreateValidator_異常系_別メンバーの下書きペ�
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("draft_page_ids") {
-		t.Error("expected draft_page_ids field error")
+		t.Error("draft_page_idsのフィールドエラーが無い")
 	}
 }
 
@@ -506,9 +506,9 @@ func TestSuggestionPageCreateValidator_異常系_既に編集提案に含まれ�
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("draft_page_ids") {
-		t.Error("expected draft_page_ids field error")
+		t.Error("draft_page_idsのフィールドエラーが無い")
 	}
 }

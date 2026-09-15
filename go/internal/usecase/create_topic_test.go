@@ -14,9 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// createTopicFixture is the space and the member a topic-creation test acts as.
-//
-// [Ja] createTopicFixture はトピック作成のテストが振る舞う元になるスペースとメンバー
+// createTopicFixtureはトピック作成のテストが振る舞う元になるスペースとメンバー
 type createTopicFixture struct {
 	db         *sql.DB
 	identifier model.SpaceIdentifier
@@ -25,11 +23,8 @@ type createTopicFixture struct {
 	userID     model.UserID
 }
 
-// setupCreateTopicFixture creates a space with one member holding the given scopes. The suffix
-// keeps the unique columns apart between tests, which run in parallel against the same database.
-//
-// [Ja] setupCreateTopicFixture は、渡したスコープを持つメンバーが 1 人いるスペースを作成する。
-// テストは同じデータベースに対して並行に走るため、一意性のある列を suffix で区別する。
+// setupCreateTopicFixtureは、渡したスコープを持つメンバーが1人いるスペースを作成する。
+// テストは同じデータベースに対して並行に走るため、一意性のある列をsuffixで区別する。
 func setupCreateTopicFixture(t *testing.T, suffix string, scopes []model.Scope) createTopicFixture {
 	t.Helper()
 
@@ -60,9 +55,7 @@ func setupCreateTopicFixture(t *testing.T, suffix string, scopes []model.Scope) 
 	}
 }
 
-// newCreateTopicUsecase builds the UseCase against the shared pool.
-//
-// [Ja] newCreateTopicUsecase は共有プールを使う UseCase を組み立てる。
+// newCreateTopicUsecaseは共有プールを使うUseCaseを組み立てる。
 func newCreateTopicUsecase(f createTopicFixture) *CreateTopicUsecase {
 	queries := query.New(f.db)
 	topicRepo := repository.NewTopicRepository(queries)
@@ -91,30 +84,30 @@ func TestCreateTopicUsecase_Execute(t *testing.T) {
 		Visibility:      "private",
 	})
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if output.Topic.Name != "日報" {
-		t.Errorf("Name = %q, want %q", output.Topic.Name, "日報")
+		t.Errorf("Name = %q、期待値 = %q", output.Topic.Name, "日報")
 	}
 	if output.Topic.Description != "毎日の記録" {
-		t.Errorf("Description = %q, want %q", output.Topic.Description, "毎日の記録")
+		t.Errorf("Description = %q、期待値 = %q", output.Topic.Description, "毎日の記録")
 	}
 	if output.Topic.Visibility != model.TopicVisibilityPrivate {
-		t.Errorf("Visibility = %v, want %v", output.Topic.Visibility, model.TopicVisibilityPrivate)
+		t.Errorf("Visibility = %v、期待値 = %v", output.Topic.Visibility, model.TopicVisibilityPrivate)
 	}
 	if output.Topic.Number != 1 {
-		t.Errorf("Number = %d, want 1", output.Topic.Number)
+		t.Errorf("Number = %d、期待値 = 1", output.Topic.Number)
 	}
 
 	// 作成者がトピックに参加していることを確認する
 	topicMemberRepo := repository.NewTopicMemberRepository(query.New(f.db))
 	topicMember, err := topicMemberRepo.FindBySpaceMemberAndTopic(ctx, f.spaceID, f.memberID, output.Topic.ID)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if topicMember == nil {
-		t.Fatal("expected the creator to be a member of the topic but was not")
+		t.Fatal("作成者がトピックのメンバーになっていない")
 	}
 
 	// 2つ目のトピックには次の番号が振られる
@@ -125,20 +118,17 @@ func TestCreateTopicUsecase_Execute(t *testing.T) {
 		Visibility:      "public",
 	})
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if second.Topic.Number != 2 {
-		t.Errorf("Number = %d, want 2", second.Topic.Number)
+		t.Errorf("Number = %d、期待値 = 2", second.Topic.Number)
 	}
 	if second.Topic.Visibility != model.TopicVisibilityPublic {
-		t.Errorf("Visibility = %v, want %v", second.Topic.Visibility, model.TopicVisibilityPublic)
+		t.Errorf("Visibility = %v、期待値 = %v", second.Topic.Visibility, model.TopicVisibilityPublic)
 	}
 }
 
-// TestCreateTopicUsecase_ExecuteRefused covers the submissions that create nothing: an input the
-// validator refuses, a member without the scope to create a topic, and a space that does not exist.
-//
-// [Ja] TestCreateTopicUsecase_ExecuteRefused は何も作成されない送信を扱う。バリデーターが拒否する
+// TestCreateTopicUsecase_ExecuteRefusedは何も作成されない送信を扱う。バリデーターが拒否する
 // 入力・トピックを作成するスコープを持たないメンバー・存在しないスペースである。
 func TestCreateTopicUsecase_ExecuteRefused(t *testing.T) {
 	t.Parallel()
@@ -198,42 +188,38 @@ func TestCreateTopicUsecase_ExecuteRefused(t *testing.T) {
 				Visibility:      tt.visibility,
 			})
 			if err == nil {
-				t.Fatal("expected error but got nil")
+				t.Fatal("エラーを期待したが、nilだった")
 			}
 
 			if tt.wantValidation {
 				if ve := model.AsValidationError(err); ve == nil {
-					t.Fatalf("expected ValidationError but got %v", err)
+					t.Fatalf("ValidationErrorを期待したが、%vだった", err)
 				}
 			} else {
 				ae := model.AsAppError(err)
 				if ae == nil {
-					t.Fatalf("expected AppError but got %v", err)
+					t.Fatalf("AppErrorを期待したが、%vだった", err)
 				}
 				if ae.Code != tt.wantAppErrCode {
-					t.Errorf("Code = %v, want %v", ae.Code, tt.wantAppErrCode)
+					t.Errorf("Code = %v、期待値 = %v", ae.Code, tt.wantAppErrCode)
 				}
 			}
 
 			topicRepo := repository.NewTopicRepository(query.New(f.db))
 			topics, err := topicRepo.ListActiveBySpace(ctx, f.spaceID)
 			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+				t.Fatalf("予期しないエラー: %v", err)
 			}
 			if len(topics) != 0 {
-				t.Errorf("len(topics) = %d, want 0", len(topics))
+				t.Errorf("len(topics) = %d、期待値 = 0", len(topics))
 			}
 		})
 	}
 }
 
-// TestCreateTopicUsecase_ExecuteConcurrently covers two topics created in the same space at the
-// same time. The numbers come from MAX(number) + 1, so without the space lock both would read the
-// same number and the later insert would violate topics(space_id, number).
-//
-// [Ja] TestCreateTopicUsecase_ExecuteConcurrently は同じスペースへ同時に作られる 2 つのトピックを
-// 扱う。番号は MAX(number) + 1 で決まるため、スペースのロックが無ければ両者が同じ番号を読み、
-// 後から INSERT した側が topics(space_id, number) に違反する。
+// TestCreateTopicUsecase_ExecuteConcurrentlyは同じスペースへ同時に作られる2つのトピックを
+// 扱う。番号はMAX(number) + 1で決まるため、スペースのロックが無ければ両者が同じ番号を読み、
+// 後からINSERTした側がtopics(space_id, number) に違反する。
 func TestCreateTopicUsecase_ExecuteConcurrently(t *testing.T) {
 	t.Parallel()
 
@@ -266,20 +252,20 @@ func TestCreateTopicUsecase_ExecuteConcurrently(t *testing.T) {
 	numbers := make(map[int32]bool, len(names))
 	for i := range names {
 		if errs[i] != nil {
-			t.Fatalf("unexpected error for %q: %v", names[i], errs[i])
+			t.Fatalf("%qで予期しないエラー: %v", names[i], errs[i])
 		}
 		numbers[outputs[i].Topic.Number] = true
 	}
 	if len(numbers) != len(names) {
-		t.Errorf("topic numbers = %v, want %d distinct numbers", numbers, len(names))
+		t.Errorf("トピック番号 = %v、期待値 = 重複の無い%d個の番号", numbers, len(names))
 	}
 
 	topicRepo := repository.NewTopicRepository(query.New(f.db))
 	topics, err := topicRepo.ListActiveBySpace(ctx, f.spaceID)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if len(topics) != len(names) {
-		t.Errorf("len(topics) = %d, want %d", len(topics), len(names))
+		t.Errorf("len(topics) = %d、期待値 = %d", len(topics), len(names))
 	}
 }

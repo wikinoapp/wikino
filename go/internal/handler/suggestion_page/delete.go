@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Delete は編集提案ページを削除します (DELETE /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id})
+// Deleteは編集提案ページを削除します (DELETE /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id})
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

@@ -14,19 +14,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// RelatedLinkList renders the "Related links" section: the backlinks of the pages this page links
-// to, bundled per linked page in the link list's own order.
-//
-// The container is rendered even while it holds no group, because a later link-list page swaps its
-// groups into it out of band (relatedLinkGroupsOOB) and an out-of-band swap needs a target that
-// already exists. The caller hides the section while the container is empty.
-// The heading (h2) lives in the caller so its style can differ per screen.
-//
-// [Ja] RelatedLinkList は「関連リンク」セクションを描画する。このページがリンクしているページの
+// RelatedLinkListは「関連リンク」セクションを描画する。このページがリンクしているページの
 // バックリンクを、リンク一覧の並び順のままリンク先ページごとに束ねる。
 //
-// グループが 1 つも無いときもコンテナは描画する。後続のリンク一覧ページが OOB でここへグループを
-// スワップするため (relatedLinkGroupsOOB)、OOB スワップには既に存在する対象が要るからである。
+// グループが1つも無いときもコンテナは描画する。後続のリンク一覧ページがOOBでここへグループを
+// スワップするため (relatedLinkGroupsOOB)、OOBスワップには既に存在する対象が要るからである。
 // コンテナが空の間セクションを隠すのは呼び出し側の役目とする。
 // 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
 func RelatedLinkList(data viewmodel.LinkList) templ.Component {
@@ -57,7 +49,7 @@ func RelatedLinkList(data viewmodel.LinkList) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(relatedLinkListID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 26, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 18, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -79,26 +71,15 @@ func RelatedLinkList(data viewmodel.LinkList) templ.Component {
 	})
 }
 
-// relatedLinkGroupsOOB carries the groups of one further link-list page into the section out of
-// band, because the reply that renders them swaps the links section instead. The wrapper carries the
-// section container's id, so htmx strips it and applies only the groups inside.
-//
-// How they land follows what that reply does to the links section. The cumulative screens add one
-// more page to the cards already on screen, so the groups are appended, and a reply whose linked
-// pages have no backlinks contributes nothing and sends no swap at all. The one-page editor renders
-// a single link-list page at a time, so the groups of the page being left have to go with it: its
-// swap replaces the section and is sent even when the new page contributes no group, which is what
-// empties the section.
-//
-// [Ja] relatedLinkGroupsOOB は、さらに 1 ページ分のリンク一覧のグループを OOB でセクションへ運ぶ。
+// relatedLinkGroupsOOBは、さらに1ページ分のリンク一覧のグループをOOBでセクションへ運ぶ。
 // グループを描画する応答がスワップするのはリンクセクションの側だからである。ラッパーにはセクションの
-// コンテナと同じ id を付けるため、htmx はラッパーを取り除いて中のグループだけを反映する。
+// コンテナと同じidを付けるため、htmxはラッパーを取り除いて中のグループだけを反映する。
 //
 // 反映のしかたは、その応答がリンクセクションに対して行うことに従う。累積表示の画面は画面上のカードに
-// もう 1 ページ分を加えるためグループも追記し、リンク先ページにバックリンクが無い応答は何も加えない
-// のでスワップ自体を送らない。1 ページ単位の編集画面はリンク一覧を 1 ページずつ描画するため、離れる
+// もう1ページ分を加えるためグループも追記し、リンク先ページにバックリンクが無い応答は何も加えない
+// のでスワップ自体を送らない。1ページ単位の編集画面はリンク一覧を1ページずつ描画するため、離れる
 // ページのグループも一緒に落とす必要がある。そのスワップはセクションを差し替えるもので、新しい
-// ページがグループを 1 つも生まなくても送る。それがセクションを空にする手段そのものだからである。
+// ページがグループを1つも生まなくても送る。それがセクションを空にする手段そのものだからである。
 func relatedLinkGroupsOOB(data viewmodel.LinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -128,7 +109,7 @@ func relatedLinkGroupsOOB(data viewmodel.LinkList) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(relatedLinkListID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 53, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 34, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 			if templ_7745c5c3_Err != nil {
@@ -154,7 +135,7 @@ func relatedLinkGroupsOOB(data viewmodel.LinkList) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(relatedLinkListID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 57, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 38, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
@@ -177,11 +158,8 @@ func relatedLinkGroupsOOB(data viewmodel.LinkList) templ.Component {
 	})
 }
 
-// relatedLinkGroups drops the linked pages that nothing links back to, so the section holds only
-// groups that carry at least one card.
-//
-// [Ja] relatedLinkGroups は、どこからもリンクされていないリンク先ページを落とす。セクションには
-// カードを 1 枚以上持つグループだけが残る。
+// relatedLinkGroupsは、どこからもリンクされていないリンク先ページを落とす。セクションには
+// カードを1枚以上持つグループだけが残る。
 func relatedLinkGroups(data viewmodel.LinkList) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -218,22 +196,14 @@ func relatedLinkGroups(data viewmodel.LinkList) templ.Component {
 	})
 }
 
-// relatedLinkGroupData holds one linked page and the space needed to build its URL.
-// [Ja] relatedLinkGroupData はリンク先ページ 1 件と、その URL の組み立てに必要なスペースを保持する。
+// relatedLinkGroupDataはリンク先ページ1件と、そのURLの組み立てに必要なスペースを保持する。
 type relatedLinkGroupData struct {
 	Item            viewmodel.LinkListItem
 	SpaceIdentifier viewmodel.SpaceIdentifier
 }
 
-// relatedLinkGroup renders one linked page's backlinks under a "via <linked page>" subheading. The
-// group carries the anchor a JavaScript-less "load more" of this nested listing falls back to.
-//
-// The linked page's name in the subheading links to that page. The cards under it are the pages
-// that reach it, so without the link the page the whole group hangs off would be the one thing in
-// the group a reader cannot open from here.
-//
-// [Ja] relatedLinkGroup は 1 つのリンク先ページのバックリンクを「via リンク先ページ名」の小見出しの
-// もとに描画する。このネストした一覧の「もっと見る」を JavaScript 無しで辿ったときの着地点となる
+// relatedLinkGroupは1つのリンク先ページのバックリンクを「viaリンク先ページ名」の小見出しの
+// もとに描画する。このネストした一覧の「もっと見る」をJavaScript無しで辿ったときの着地点となる
 // アンカーをグループが持つ。
 //
 // 小見出しのリンク先ページ名はそのページへのリンクにする。下に並ぶカードはそのページへ辿り着く
@@ -267,7 +237,7 @@ func relatedLinkGroup(data relatedLinkGroupData) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(linkListItemFallbackAnchorID(data.Item.CardLinkPage.Number))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 101, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 71, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
@@ -280,7 +250,7 @@ func relatedLinkGroup(data relatedLinkGroupData) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_links_related_via_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 104, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 74, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -293,7 +263,7 @@ func relatedLinkGroup(data relatedLinkGroupData) templ.Component {
 		var templ_7745c5c3_Var10 templ.SafeURL
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier, viewmodel.PageNumber(data.Item.CardLinkPage.Number)))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 108, Col: 127}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 78, Col: 127}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -306,7 +276,7 @@ func relatedLinkGroup(data relatedLinkGroupData) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(relatedLinkGroupTitle(ctx, data.Item))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 110, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_link_list.templ`, Line: 80, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -328,12 +298,8 @@ func relatedLinkGroup(data relatedLinkGroupData) templ.Component {
 	})
 }
 
-// hasRelatedLinkGroup reports whether this link-list page contributes any group at all. A page whose
-// linked pages have no backlinks appends nothing, so the cumulative screens send no empty
-// out-of-band swap.
-//
-// [Ja] hasRelatedLinkGroup は、このリンク一覧のページがグループを 1 つでも生むかを返す。リンク先
-// ページのどれにもバックリンクが無いページは何も追記しないため、累積表示の画面は空の OOB スワップを
+// hasRelatedLinkGroupは、このリンク一覧のページがグループを1つでも生むかを返す。リンク先
+// ページのどれにもバックリンクが無いページは何も追記しないため、累積表示の画面は空のOOBスワップを
 // 送らずに済む。
 func hasRelatedLinkGroup(data viewmodel.LinkList) bool {
 	for _, item := range data.Items {
@@ -345,10 +311,7 @@ func hasRelatedLinkGroup(data viewmodel.LinkList) bool {
 	return false
 }
 
-// relatedLinkGroupTitle names the linked page a group hangs off, falling back to the placeholder the
-// cards use so an untitled page is named the same way everywhere.
-//
-// [Ja] relatedLinkGroupTitle はグループがぶら下がるリンク先ページを言い表す。タイトルが無い場合は
+// relatedLinkGroupTitleはグループがぶら下がるリンク先ページを言い表す。タイトルが無い場合は
 // カードと同じ代替表記へ落とし、無題のページの呼び方を画面内で揃える。
 func relatedLinkGroupTitle(ctx context.Context, item viewmodel.LinkListItem) string {
 	if item.CardLinkPage.Title != "" {

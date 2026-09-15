@@ -18,7 +18,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New はトピック作成フォームを表示します (GET /s/{space_identifier}/topics/new)
+// Newはトピック作成フォームを表示します (GET /s/{space_identifier}/topics/new)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -45,12 +45,8 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// renderNewForm draws the topic creation form. The space it builds the links and the metadata of
-// the screen from comes with the data, so they are built from the stored identifier rather than
-// from the one the URL carried.
-//
-// [Ja] renderNewForm はトピック作成フォームを描画します。画面のリンクとメタ情報の組み立てに使う
-// スペースはデータに含まれており、URL が運んだ識別子ではなく保存済みの識別子から組み立てます。
+// renderNewFormはトピック作成フォームを描画します。画面のリンクとメタ情報の組み立てに使う
+// スペースはデータに含まれており、URLが運んだ識別子ではなく保存済みの識別子から組み立てます。
 func (h *Handler) renderNewForm(w http.ResponseWriter, r *http.Request, user *model.User, data topicpages.NewData) {
 	ctx := r.Context()
 
@@ -75,11 +71,7 @@ func (h *Handler) renderNewForm(w http.ResponseWriter, r *http.Request, user *mo
 					Label: data.Space.Name,
 					Path:  templates.SpacePath(data.Space.Identifier),
 				},
-				// The screen is the current page, so the trail ends with a non-linked item carrying
-				// aria-current. The label repeats the heading, but it is read from a key of its own so
-				// that a breadcrumb needing a shorter word than the heading can take one later.
-				//
-				// [Ja] この画面が現在地のため、経路は aria-current を持つリンク無しの項目で締める。
+				// この画面が現在地のため、経路はaria-currentを持つリンク無しの項目で締める。
 				// ラベルは見出しと同じ文字列だが、パンくずが見出しより短い語を必要としたときに後から
 				// 変えられるよう、独立したキーから引く。
 				components.BreadcrumbItem{
@@ -96,11 +88,7 @@ func (h *Handler) renderNewForm(w http.ResponseWriter, r *http.Request, user *mo
 	}
 }
 
-// handleTopicError turns an error from a topic usecase into the response it deserves. A space the
-// viewer may not create a topic in is answered as not found, so that who takes part in a space is
-// not something an outsider can probe for.
-//
-// [Ja] handleTopicError はトピックのユースケースから返ったエラーを、それに応じたレスポンスへ
+// handleTopicErrorはトピックのユースケースから返ったエラーを、それに応じたレスポンスへ
 // 変える。閲覧者がトピックを作成できないスペースは「見つからない」として答え、そのスペースに誰が
 // 参加しているかを外部から試して確かめられないようにする。
 func (h *Handler) handleTopicError(w http.ResponseWriter, r *http.Request, err error, logMsg string) {

@@ -9,14 +9,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// EditPageData は新パスワード入力ページに渡すデータ構造体です
+// EditPageDataは新パスワード入力ページに渡すデータ構造体です
 type EditPageData struct {
 	CSRFToken  string
 	Token      string
 	FormErrors *model.ValidationError
 }
 
-// Edit は新しいパスワード入力フォームを表示します
+// Editは新しいパスワード入力フォームを表示します
 templ Edit(data EditPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6">
 		<div class="text-center px-4">

@@ -31,10 +31,10 @@ func TestDialog(t *testing.T) {
 	html := buf.String()
 
 	if !strings.Contains(html, `<dialog id="test-dialog" class="dialog"`) {
-		t.Error("dialog 要素と id が含まれていない")
+		t.Error("dialog要素とidが含まれていない")
 	}
 	if !strings.Contains(html, `aria-labelledby="test-dialog-title"`) {
-		t.Error("aria-labelledby が含まれていない")
+		t.Error("aria-labelledbyが含まれていない")
 	}
 	if !strings.Contains(html, "テストダイアログ") {
 		t.Error("タイトルが含まれていない")
@@ -42,21 +42,17 @@ func TestDialog(t *testing.T) {
 	if !strings.Contains(html, "ダイアログの中身") {
 		t.Error("コンテンツが含まれていない")
 	}
-	// The panel must use the CSS-variable-based z-index (z-dialog), not a bare z-50,
-	// and accept the optional width class.
-	//
-	// [Ja] パネルには素の z-50 ではなくCSS変数ベースの z-index (z-dialog) を使い、
+	// パネルには素のz-50ではなくCSS変数ベースのz-index (z-dialog) を使い、
 	// 任意の幅クラスを受け付けること。
 	if !strings.Contains(html, "z-dialog") {
-		t.Error("z-dialog クラスが含まれていない")
+		t.Error("z-dialogクラスが含まれていない")
 	}
 	if !strings.Contains(html, "sm:max-w-2xl") {
-		t.Error("MaxWidthClass が含まれていない")
+		t.Error("MaxWidthClassが含まれていない")
 	}
-	// Close affordances: the close button label and the backdrop click handler.
-	// [Ja] 閉じる手段: 閉じるボタンのラベルとバックドロップクリックのハンドラー。
+	// 閉じる手段: 閉じるボタンのラベルとバックドロップクリックのハンドラー。
 	if !strings.Contains(html, `aria-label="閉じる"`) {
-		t.Error("閉じるボタンの aria-label が含まれていない")
+		t.Error("閉じるボタンのaria-labelが含まれていない")
 	}
 	if !strings.Contains(html, "if (event.target === this) this.close()") {
 		t.Error("バックドロップクリックで閉じるハンドラーが含まれていない")

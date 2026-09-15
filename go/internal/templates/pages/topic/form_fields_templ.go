@@ -13,12 +13,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// FormFieldsData is what the fields a topic is described by are rendered with. Name, Description
-// and Visibility carry the submitted values back into the form, so a rejected submission keeps
-// what was typed.
-//
-// [Ja] FormFieldsData はトピックを説明する項目をレンダリングする元になるデータ。Name・
-// Description・Visibility は送信された値をフォームへ戻すためのもので、拒否された送信でも入力した
+// FormFieldsDataはトピックを説明する項目をレンダリングする元になるデータ。Name・
+// Description・Visibilityは送信された値をフォームへ戻すためのもので、拒否された送信でも入力した
 // 内容が残るようにする。
 type FormFieldsData struct {
 	FormErrors  *model.ValidationError
@@ -27,12 +23,8 @@ type FormFieldsData struct {
 	Visibility  string
 }
 
-// formFields renders the fields the topic creation form and the general settings form share. Both
-// describe the same topic, so they ask for the same three things in the same way and a change to
-// one of them reaches both screens.
-//
-// [Ja] formFields はトピック作成フォームと一般設定フォームが共有する項目を表示します。どちらも
-// 同じトピックを説明するものなので、同じ 3 つを同じ形で尋ね、片方への変更が両方の画面に届く
+// formFieldsはトピック作成フォームと一般設定フォームが共有する項目を表示します。どちらも
+// 同じトピックを説明するものなので、同じ3つを同じ形で尋ね、片方への変更が両方の画面に届く
 // ようにします。
 func formFields(data FormFieldsData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -62,7 +54,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_form_name_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 33, Col: 46}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 25, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -75,7 +67,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 42, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 34, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -93,7 +85,7 @@ func formFields(data FormFieldsData) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(fieldErrorID("name"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 45, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 37, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 			if templ_7745c5c3_Err != nil {
@@ -130,7 +122,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 60, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 52, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -148,7 +140,7 @@ func formFields(data FormFieldsData) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(fieldErrorID("description"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 63, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 55, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 			if templ_7745c5c3_Err != nil {
@@ -174,7 +166,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_form_visibility_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 83, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 68, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -195,7 +187,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(model.TopicVisibilityPublic.String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 93, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 78, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
@@ -219,7 +211,7 @@ func formFields(data FormFieldsData) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(fieldErrorID("visibility"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 99, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 84, Col: 51}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 			if templ_7745c5c3_Err != nil {
@@ -241,7 +233,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_form_visibility_public"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 104, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 89, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -254,7 +246,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_form_visibility_public_hint"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 108, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 93, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -267,7 +259,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(model.TopicVisibilityPrivate.String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 118, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 103, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
 		if templ_7745c5c3_Err != nil {
@@ -291,7 +283,7 @@ func formFields(data FormFieldsData) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(fieldErrorID("visibility"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 124, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 109, Col: 51}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 			if templ_7745c5c3_Err != nil {
@@ -313,7 +305,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_form_visibility_private"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 129, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 114, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -326,7 +318,7 @@ func formFields(data FormFieldsData) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_form_visibility_private_hint"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 134, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 119, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -348,17 +340,10 @@ func formFields(data FormFieldsData) templ.Component {
 	})
 }
 
-// fieldErrors renders the errors of one form field. They sit in one element so that the field can
-// point at all of them with a single aria-describedby.
+// fieldErrorsはフォームの1つの項目のエラーを表示します。項目が1つのaria-describedbyで
+// すべてのエラーを指せるよう、エラーは1つの要素にまとめます。
 //
-// Only the inputs point at this element. A group of inputs does not have its fieldset point at it
-// as well, which would make a screen reader announce the same errors on entering the group and
-// again on every option in it.
-//
-// [Ja] fieldErrors はフォームの 1 つの項目のエラーを表示します。項目が 1 つの aria-describedby で
-// すべてのエラーを指せるよう、エラーは 1 つの要素にまとめます。
-//
-// この要素を指すのは入力欄だけです。入力欄のグループでは、それを囲む fieldset からは指しません。
+// この要素を指すのは入力欄だけです。入力欄のグループでは、それを囲むfieldsetからは指しません。
 // 指すと、スクリーンリーダーがグループに入るときと、その中の選択肢ごとの両方で同じエラーを
 // 読み上げることになります。
 func fieldErrors(formErrors *model.ValidationError, field string) templ.Component {
@@ -390,7 +375,7 @@ func fieldErrors(formErrors *model.ValidationError, field string) templ.Componen
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(fieldErrorID(field))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 159, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 137, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 			if templ_7745c5c3_Err != nil {
@@ -408,7 +393,7 @@ func fieldErrors(formErrors *model.ValidationError, field string) templ.Componen
 				var templ_7745c5c3_Var18 string
 				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(errorMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 162, Col: 15}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/form_fields.templ`, Line: 140, Col: 15}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
@@ -428,9 +413,7 @@ func fieldErrors(formErrors *model.ValidationError, field string) templ.Componen
 	})
 }
 
-// fieldErrorID names the element that holds the errors of one form field.
-//
-// [Ja] fieldErrorID はフォームの 1 つの項目のエラーを収める要素の id を返します。
+// fieldErrorIDはフォームの1つの項目のエラーを収める要素のidを返します。
 func fieldErrorID(field string) string {
 	return field + "-error"
 }

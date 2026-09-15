@@ -21,23 +21,18 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// zenModeCookieName is the cookie holding the editor's Zen mode state ("1" = on; off is the
-// cookie's absence). It is written by web/zen-mode.ts, so it is not HttpOnly; keep the name in
-// sync with that script.
-//
-// [Ja] zenModeCookieName はエディタの Zenモード状態を保持するクッキー ("1" で ON。OFF は
-// クッキーなし)。web/zen-mode.ts が書き込むため HttpOnly ではない。名前は同スクリプトと
+// zenModeCookieNameはエディタのZenモード状態を保持するクッキー ("1" でON。OFFは
+// クッキーなし)。web/zen-mode.tsが書き込むためHttpOnlyではない。名前は同スクリプトと
 // 同期させること。
 const zenModeCookieName = "wikino_zen_mode"
 
-// zenModeFromRequest reads the Zen mode state from the request cookie.
-// [Ja] zenModeFromRequest はリクエストのクッキーから Zenモード状態を読み取ります。
+// zenModeFromRequestはリクエストのクッキーからZenモード状態を読み取ります。
 func zenModeFromRequest(r *http.Request) bool {
 	cookie, err := r.Cookie(zenModeCookieName)
 	return err == nil && cookie.Value == "1"
 }
 
-// Edit はページ編集フォームを表示します (GET /s/{space_identifier}/pages/{page_number}/edit)
+// Editはページ編集フォームを表示します (GET /s/{space_identifier}/pages/{page_number}/edit)
 func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -134,10 +129,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
-	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
-	// the same form.
-	//
-	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
 	spaceIdentVM := spaceVM.Identifier
 
 	// CSRFトークンを取得
@@ -162,8 +154,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		RelatedPageState:        linkState,
 		ManualSaveURL:           manualSaveURL,
 		CreateSuggestionSaveURL: manualSaveURL + "?redirect_to=suggestion_new",
-		// The editor stays within a single space, so omit the space label on each draft card.
-		// [Ja] 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
+		// 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
 		DraftPages:     viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
 		DraftRevisions: viewmodel.NewDraftPageRevisions(output.DraftPageRevisions, output.DraftPageRevisionTotalCount),
 		ZenMode:        zenModeFromRequest(r),
@@ -177,10 +168,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	content := pagepages.Edit(editData)
 
-	// The editor supplies the global-nav state via GlobalNav. PageNamePageEdit matches no nav item,
-	// so no item is highlighted (the draft list column, not the nav, handles in-screen navigation).
-	//
-	// [Ja] 編集画面はグローバルナビの状態を GlobalNav で供給する。PageNamePageEdit はどのナビ項目にも
+	// 編集画面はグローバルナビの状態をGlobalNavで供給する。PageNamePageEditはどのナビ項目にも
 	// 一致しないため、いずれの項目もアクティブにならない (画面内のナビゲーションはナビではなく
 	// 下書き一覧カラムが担う)。
 	layoutData := layouts.DefaultLayoutData{
@@ -205,21 +193,12 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// editBreadcrumbMaxWidthClass lines the editor's breadcrumb up with its wider body.
-//
-// [Ja] editBreadcrumbMaxWidthClass は編集画面の広い本文幅にパンくずを揃える。
+// editBreadcrumbMaxWidthClassは編集画面の広い本文幅にパンくずを揃える。
 const editBreadcrumbMaxWidthClass = "max-w-6xl"
 
-// editBreadcrumbHeaderData builds the breadcrumb header of the editor, which Edit and Update (which
-// re-renders the editor on a validation error) both show. The editor is the current page, so the
-// trail ends with a non-linked item carrying aria-current. The label names the screen rather than
-// the page being edited: the editor has no heading of its own, and a draft the viewer has not
-// titled yet would leave the crumb empty. Both screens require authentication, so the trail starts
-// at home unconditionally.
-//
-// [Ja] editBreadcrumbHeaderData は編集画面のパンくずヘッダーを組み立てる。Edit と Update
+// editBreadcrumbHeaderDataは編集画面のパンくずヘッダーを組み立てる。EditとUpdate
 // (バリデーションエラー時に編集画面を再描画する) の両方が表示する。編集画面が現在地のため、経路は
-// aria-current を持つリンク無しの項目で締める。ラベルは編集対象のページではなく画面自身を表す。
+// aria-currentを持つリンク無しの項目で締める。ラベルは編集対象のページではなく画面自身を表す。
 // 編集画面は自身の見出しを持たず、閲覧者がまだタイトルを付けていない下書きでは項目が空になって
 // しまうためである。どちらの画面も認証必須のため、経路は常にホームから始める。
 func editBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic) components.BreadcrumbHeaderData {
@@ -231,18 +210,11 @@ func editBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic 
 	return data
 }
 
-// pageBreadcrumbHeaderData builds the breadcrumb up to the page's topic, which the page screens
-// share. Show supplies its header from here directly, while Edit and Update (which re-renders the
-// editor on a validation error) go through editBreadcrumbHeaderData, which appends the editor's
-// current item. maxWidthClass lines the breadcrumb up with each screen's body. The authenticated
-// editor passes signedIn unconditionally, while the public Show passes the viewer's actual state so
-// the trail starts at the public space rather than at an authenticated-only screen.
-//
-// [Ja] pageBreadcrumbHeaderData はページのトピックまでのパンくずを組み立てます。ページ系画面で
-// 共有します。Show はヘッダーをここから直接供給し、Edit と Update (バリデーションエラー時に編集
-// 画面を再描画する) は、現在地の項目を足す editBreadcrumbHeaderData を経由します。maxWidthClass は
-// 各画面の本文幅にパンくずを揃えるために渡します。認証必須の編集画面は signedIn を常に真で渡し、
-// 公開の Show は閲覧者の実際の状態を渡すことで、経路が認証必須画面ではなく公開スペースから
+// pageBreadcrumbHeaderDataはページのトピックまでのパンくずを組み立てます。ページ系画面で
+// 共有します。Showはヘッダーをここから直接供給し、EditとUpdate (バリデーションエラー時に編集
+// 画面を再描画する) は、現在地の項目を足すeditBreadcrumbHeaderDataを経由します。maxWidthClassは
+// 各画面の本文幅にパンくずを揃えるために渡します。認証必須の編集画面はsignedInを常に真で渡し、
+// 公開のShowは閲覧者の実際の状態を渡すことで、経路が認証必須画面ではなく公開スペースから
 // 始まるようにします。
 func pageBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic viewmodel.Topic, maxWidthClass string, signedIn bool) components.BreadcrumbHeaderData {
 	items := append(components.HomeBreadcrumbItems(ctx, signedIn),
@@ -263,17 +235,14 @@ func pageBreadcrumbHeaderData(ctx context.Context, space viewmodel.Space, topic 
 	}
 }
 
-// editLinkResult はリンク一覧・バックリンク一覧のViewModel
+// editLinkResultはリンク一覧・バックリンク一覧のViewModel
 type editLinkResult struct {
 	LinkList     viewmodel.LinkList
 	BacklinkList viewmodel.BacklinkList
 }
 
-// buildEditLinkResultInput holds the input of buildEditLinkResult. The four page numbers travel in
-// PageLinkState rather than as positional arguments, so a call site cannot mix them up.
-//
-// [Ja] buildEditLinkResultInput は buildEditLinkResult の入力。4 つのページ番号は位置引数ではなく
-// PageLinkState で渡すため、呼び出し側で取り違えられない。
+// buildEditLinkResultInputはbuildEditLinkResultの入力。4つのページ番号は位置引数ではなく
+// PageLinkStateで渡すため、呼び出し側で取り違えられない。
 type buildEditLinkResultInput struct {
 	LinkData        *usecase.GetEditLinkDataOutput
 	SpaceIdentifier model.SpaceIdentifier
@@ -281,9 +250,7 @@ type buildEditLinkResultInput struct {
 	State           viewmodel.PageLinkState
 }
 
-// buildEditLinkResult converts the usecase's related-page output into view models.
-//
-// [Ja] buildEditLinkResult は UseCase の関連ページ出力を ViewModel へ変換する。
+// buildEditLinkResultはUseCaseの関連ページ出力をViewModelへ変換する。
 func buildEditLinkResult(input buildEditLinkResultInput) *editLinkResult {
 	linkData := input.LinkData
 
@@ -296,10 +263,7 @@ func buildEditLinkResult(input buildEditLinkResultInput) *editLinkResult {
 		}
 	}
 
-	// The editor is only reachable with edit rights on the page, so the listed cards keep their
-	// edit links.
-	//
-	// [Ja] 編集画面はページの編集権限がなければ到達しないため、一覧のカードは編集リンクを出したままに
+	// 編集画面はページの編集権限がなければ到達しないため、一覧のカードは編集リンクを出したままに
 	// する。
 	editLinkData := viewmodel.BuildPageLinkData(viewmodel.BuildPageLinkDataInput{
 		LinkedPages:         linkData.LinkedPages,
@@ -322,23 +286,14 @@ func buildEditLinkResult(input buildEditLinkResultInput) *editLinkResult {
 	}
 }
 
-// parseRelatedPageState reads the full-page pagination fallback of the three related-page listings.
-// These query parameters are the native href behind the htmx-enhanced "load more" links, so a
-// viewer without JavaScript reaches the same slices through them.
+// parseRelatedPageStateは3種類の関連ページ一覧について、フルページのページネーション
+// フォールバックを読む。これらのクエリパラメータはhtmxで拡張した「もっと見る」リンクのネイティブな
+// hrefであり、JavaScriptが使えない閲覧者も同じ範囲へ到達できる。
 //
-// The state comes back normalized, so the usecase and the listings work from the same page numbers.
+// 返す状態は正規化済みのため、UseCaseと一覧は同じページ番号で動く。
 //
-// The second return value is false when a parameter names a page the queries cannot serve, which
-// the caller turns into a 404 before invoking the usecase.
-//
-// [Ja] parseRelatedPageState は 3 種類の関連ページ一覧について、フルページのページネーション
-// フォールバックを読む。これらのクエリパラメータは htmx で拡張した「もっと見る」リンクのネイティブな
-// href であり、JavaScript が使えない閲覧者も同じ範囲へ到達できる。
-//
-// 返す状態は正規化済みのため、UseCase と一覧は同じページ番号で動く。
-//
-// 2 つ目の返り値は、クエリが返せないページを指すパラメータがあったときに false になる。呼び出し元は
-// UseCase を呼ぶ前にこれを 404 へ変換する。
+// 2つ目の返り値は、クエリが返せないページを指すパラメータがあったときにfalseになる。呼び出し元は
+// UseCaseを呼ぶ前にこれを404へ変換する。
 func parseRelatedPageState(r *http.Request, pageLinkContext viewmodel.PageLinkContext) (viewmodel.PageLinkState, bool) {
 	linkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
@@ -371,22 +326,15 @@ func parseRelatedPageState(r *http.Request, pageLinkContext viewmodel.PageLinkCo
 		return viewmodel.PageLinkState{}, false
 	}
 
-	// A full-page request renders exactly one link-list page, so the selected card lives on the page
-	// this request names. relatedPageStateInRange rejects the request when it does not, which makes
-	// this the only page the card can be on by the time the state is used.
-	//
-	// [Ja] フルページリクエストはリンク一覧を 1 ページだけ描画するため、選択カードはこのリクエストが
-	// 指すページに存在する。存在しない場合は relatedPageStateInRange が拒否するので、状態を使う時点で
+	// フルページリクエストはリンク一覧を1ページだけ描画するため、選択カードはこのリクエストが
+	// 指すページに存在する。存在しない場合はrelatedPageStateInRangeが拒否するので、状態を使う時点で
 	// カードが載りうるページはこれだけになる。
 	state.LinkedPageParentPage = state.LinkPage
 
 	return state, true
 }
 
-// relatedPageCounts holds the totals the range check needs, taken from whichever usecase produced
-// the listings.
-//
-// [Ja] relatedPageCounts は範囲チェックに必要な総件数を保持する。一覧を返した UseCase の出力から
+// relatedPageCountsは範囲チェックに必要な総件数を保持する。一覧を返したUseCaseの出力から
 // 取る。
 type relatedPageCounts struct {
 	LinkedTotalCount      int64
@@ -395,14 +343,9 @@ type relatedPageCounts struct {
 	BacklinkCountByPageID map[model.PageID]int64
 }
 
-// relatedPageStateInRange reports whether every requested page of the related-page listings exists.
-// A page past the last one names a slice that is not there, which the page screens answer with a
-// 404 the same way the topic and space screens answer an out-of-range ?page. Without this a stale
-// "load more" URL would render the screen with its listing silently missing.
-//
-// [Ja] relatedPageStateInRange は関連ページ一覧の要求ページがすべて存在するかを返す。最終ページより
-// 後ろのページは存在しない範囲を指すため、トピック詳細・スペース詳細の範囲外 ?page と同じくページ系
-// 画面も 404 で答える。これが無いと、古い「もっと見る」URL が一覧の消えた画面を描画してしまう。
+// relatedPageStateInRangeは関連ページ一覧の要求ページがすべて存在するかを返す。最終ページより
+// 後ろのページは存在しない範囲を指すため、トピック詳細・スペース詳細の範囲外 ?pageと同じくページ系
+// 画面も404で答える。これが無いと、古い「もっと見る」URLが一覧の消えた画面を描画してしまう。
 func relatedPageStateInRange(state viewmodel.PageLinkState, counts relatedPageCounts) bool {
 	if !relatedPageInRange(state.LinkPage, counts.LinkedTotalCount, viewmodel.LinkLimit) {
 		return false
@@ -416,10 +359,7 @@ func relatedPageStateInRange(state viewmodel.PageLinkState, counts relatedPageCo
 		return true
 	}
 
-	// The selected card must be on the link-list page being rendered; otherwise its nested page
-	// number names a listing this response does not contain.
-	//
-	// [Ja] 選択したカードは描画中のリンク一覧ページに載っている必要がある。載っていなければ、その
+	// 選択したカードは描画中のリンク一覧ページに載っている必要がある。載っていなければ、その
 	// ネストしたページ番号は本レスポンスに含まれない一覧を指している。
 	for _, linkedPage := range counts.LinkedPages {
 		if int32(linkedPage.Number) != state.LinkedPageNumber {
@@ -431,13 +371,9 @@ func relatedPageStateInRange(state viewmodel.PageLinkState, counts relatedPageCo
 	return false
 }
 
-// relatedPageInRange reports whether the given page of a listing of totalCount items exists.
-// initialLimit is the first page's card count rather than a per-page one, because a following page
-// of a related-page listing holds one card more (see viewmodel.RelatedPageTotalPages).
-//
-// [Ja] relatedPageInRange は、総件数 totalCount の一覧に指定ページが存在するかを返す。initialLimit は
-// 1 ページあたりの件数ではなく 1 ページ目のカード数である。関連ページ一覧の後続ページは 1 件多く持つ
-// ためである (viewmodel.RelatedPageTotalPages を参照)。
+// relatedPageInRangeは、総件数totalCountの一覧に指定ページが存在するかを返す。initialLimitは
+// 1ページあたりの件数ではなく1ページ目のカード数である。関連ページ一覧の後続ページは1件多く持つ
+// ためである (viewmodel.RelatedPageTotalPagesを参照)。
 func relatedPageInRange(page int32, totalCount int64, initialLimit int32) bool {
 	if page <= 1 {
 		return true
@@ -446,9 +382,7 @@ func relatedPageInRange(page int32, totalCount int64, initialLimit int32) bool {
 	return int(page) <= viewmodel.RelatedPageTotalPages(totalCount, initialLimit)
 }
 
-// linkedPageBacklinkCounts reduces the nested backlink output to the totals the range check needs.
-//
-// [Ja] linkedPageBacklinkCounts は、ネストしたバックリンクの出力を範囲チェックに必要な総件数へ
+// linkedPageBacklinkCountsは、ネストしたバックリンクの出力を範囲チェックに必要な総件数へ
 // まとめる。
 func linkedPageBacklinkCounts(backlinksPerPage map[model.PageID]*usecase.LinkedPageBacklinks) map[model.PageID]int64 {
 	counts := make(map[model.PageID]int64, len(backlinksPerPage))

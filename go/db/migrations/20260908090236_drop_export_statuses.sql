@@ -1,11 +1,7 @@
 -- migrate:up
 
--- Drop the Rails-era status history of exports. The Go version keeps the state on the
--- exports row itself, and the Rails export code that wrote these rows is gone, so the
--- table has no writer and no reader left.
---
--- [Ja] Rails 時代のエクスポートの状態履歴を削除する。Go 版は状態を exports の行自体に
--- 持ち、これらの行を書いていた Rails 版のエクスポートのコードも無くなったため、この
+-- Rails時代のエクスポートの状態履歴を削除する。Go版は状態をexportsの行自体に
+-- 持ち、これらの行を書いていたRails版のエクスポートのコードも無くなったため、この
 -- テーブルには書き手も読み手も残っていない。
 DROP TABLE export_statuses;
 

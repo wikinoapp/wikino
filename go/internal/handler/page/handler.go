@@ -1,4 +1,4 @@
-// Package page はページ関連のHTTPハンドラーを提供します
+// Package pageはページ関連のHTTPハンドラーを提供します
 package page
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はページハンドラー
+// Handlerはページハンドラー
 type Handler struct {
 	cfg               *config.Config
 	flashMgr          *session.FlashManager
@@ -18,7 +18,7 @@ type Handler struct {
 	createPageUC      *usecase.CreatePageUsecase
 }
 
-// NewHandler は新しいページハンドラーを作成します
+// NewHandlerは新しいページハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,

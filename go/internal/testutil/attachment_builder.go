@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// AttachmentBuilder は添付ファイルテストデータのビルダー
+// AttachmentBuilderは添付ファイルテストデータのビルダー
 type AttachmentBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -21,7 +21,7 @@ type AttachmentBuilder struct {
 	byteSize      int64
 }
 
-// NewAttachmentBuilder は AttachmentBuilder を生成します
+// NewAttachmentBuilderはAttachmentBuilderを生成します
 func NewAttachmentBuilder(t *testing.T, tx *sql.Tx) *AttachmentBuilder {
 	t.Helper()
 	return &AttachmentBuilder{
@@ -33,31 +33,31 @@ func NewAttachmentBuilder(t *testing.T, tx *sql.Tx) *AttachmentBuilder {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *AttachmentBuilder) WithSpaceID(spaceID model.SpaceID) *AttachmentBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *AttachmentBuilder) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *AttachmentBuilder {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// WithFilename はファイル名を設定します
+// WithFilenameはファイル名を設定します
 func (b *AttachmentBuilder) WithFilename(filename string) *AttachmentBuilder {
 	b.filename = filename
 	return b
 }
 
-// WithContentType はコンテンツタイプを設定します
+// WithContentTypeはコンテンツタイプを設定します
 func (b *AttachmentBuilder) WithContentType(contentType string) *AttachmentBuilder {
 	b.contentType = contentType
 	return b
 }
 
-// Build は添付ファイルを作成し、IDを返します
+// Buildは添付ファイルを作成し、IDを返します
 func (b *AttachmentBuilder) Build() model.AttachmentID {
 	b.t.Helper()
 
@@ -112,7 +112,7 @@ func (b *AttachmentBuilder) Build() model.AttachmentID {
 	return model.AttachmentID(attachmentID)
 }
 
-// AttachmentBuilderDB はDBを直接使用する添付ファイルテストデータのビルダー
+// AttachmentBuilderDBはDBを直接使用する添付ファイルテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type AttachmentBuilderDB struct {
 	t  *testing.T
@@ -126,7 +126,7 @@ type AttachmentBuilderDB struct {
 	byteSize      int64
 }
 
-// NewAttachmentBuilderDB は AttachmentBuilderDB を生成します
+// NewAttachmentBuilderDBはAttachmentBuilderDBを生成します
 func NewAttachmentBuilderDB(t *testing.T, db *sql.DB) *AttachmentBuilderDB {
 	t.Helper()
 	return &AttachmentBuilderDB{
@@ -138,22 +138,19 @@ func NewAttachmentBuilderDB(t *testing.T, db *sql.DB) *AttachmentBuilderDB {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *AttachmentBuilderDB) WithSpaceID(spaceID model.SpaceID) *AttachmentBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *AttachmentBuilderDB) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *AttachmentBuilderDB {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// WithBlobKey sets the storage key of the object. A test that puts the object into a fake storage
-// needs to know the key it will be fetched with, which the builder otherwise makes up.
-//
-// [Ja] WithBlobKey はオブジェクトのストレージキーを設定します。フェイクのストレージへオブジェクト
+// WithBlobKeyはオブジェクトのストレージキーを設定します。フェイクのストレージへオブジェクト
 // を置くテストは、それが取得されるキーを知っている必要がありますが、指定しない場合その値は
 // ビルダーが作ります
 func (b *AttachmentBuilderDB) WithBlobKey(blobKey string) *AttachmentBuilderDB {
@@ -161,19 +158,19 @@ func (b *AttachmentBuilderDB) WithBlobKey(blobKey string) *AttachmentBuilderDB {
 	return b
 }
 
-// WithFilename はファイル名を設定します
+// WithFilenameはファイル名を設定します
 func (b *AttachmentBuilderDB) WithFilename(filename string) *AttachmentBuilderDB {
 	b.filename = filename
 	return b
 }
 
-// WithContentType はコンテンツタイプを設定します
+// WithContentTypeはコンテンツタイプを設定します
 func (b *AttachmentBuilderDB) WithContentType(contentType string) *AttachmentBuilderDB {
 	b.contentType = contentType
 	return b
 }
 
-// Build は添付ファイルを作成し、IDを返します
+// Buildは添付ファイルを作成し、IDを返します
 func (b *AttachmentBuilderDB) Build() model.AttachmentID {
 	b.t.Helper()
 
@@ -228,10 +225,7 @@ func (b *AttachmentBuilderDB) Build() model.AttachmentID {
 	return model.AttachmentID(attachmentID)
 }
 
-// resolvedBlobKey returns the storage key to give the blob: the one the caller asked for, or a
-// unique one built from the time it was created.
-//
-// [Ja] resolvedBlobKey は blob に与えるストレージキーを返します。呼び出し側が指定したキーか、
+// resolvedBlobKeyはblobに与えるストレージキーを返します。呼び出し側が指定したキーか、
 // 指定が無ければ作成時刻から組み立てたユニークなキーです
 func (b *AttachmentBuilderDB) resolvedBlobKey(now time.Time) string {
 	if b.blobKey != "" {

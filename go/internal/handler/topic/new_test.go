@@ -17,12 +17,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// newTopicFormRequest builds a request for the topic creation screens, carrying the chi URL
-// parameter, the CSRF token, the signed-in user and the locale the screen is rendered in. A zero
-// userID leaves the user off, which is how a test reaches the signed-out path.
-//
-// [Ja] newTopicFormRequest はトピック作成の画面向けに、chi の URL パラメータ・CSRF トークン・
-// ログイン中のユーザー・画面を描画するロケールを載せたリクエストを組み立てる。userID が空のときは
+// newTopicFormRequestはトピック作成の画面向けに、chiのURLパラメータ・CSRFトークン・
+// ログイン中のユーザー・画面を描画するロケールを載せたリクエストを組み立てる。userIDが空のときは
 // ユーザーを載せず、テストが未ログインの経路へ到達できるようにする。
 func newTopicFormRequest(t *testing.T, method, path, spaceIdentifier string, userID model.UserID, form map[string]string) *http.Request {
 	t.Helper()
@@ -57,32 +53,29 @@ func topicFormInputTag(t *testing.T, body, id string) string {
 
 	idIndex := strings.Index(body, `id="`+id+`"`)
 	if idIndex < 0 {
-		t.Fatalf("response does not contain input id %q", id)
+		t.Fatalf("レスポンスにid%qの入力欄が含まれていない", id)
 	}
 	start := strings.LastIndex(body[:idIndex], "<input")
 	endOffset := strings.Index(body[idIndex:], ">")
 	if start < 0 || endOffset < 0 {
-		t.Fatalf("response does not contain a complete input tag for id %q", id)
+		t.Fatalf("レスポンスにid%qの完全なinputタグが含まれていない", id)
 	}
 
 	return body[start : idIndex+endOffset+1]
 }
 
-// topicFormFieldsetTag returns the opening tag of the only fieldset the topic creation form has,
-// which groups the visibility options.
-//
-// [Ja] topicFormFieldsetTag はトピック作成フォームが持つ唯一の fieldset の開始タグを返す。この
-// fieldset は公開設定の選択肢をまとめている。
+// topicFormFieldsetTagはトピック作成フォームが持つ唯一のfieldsetの開始タグを返す。この
+// fieldsetは公開設定の選択肢をまとめている。
 func topicFormFieldsetTag(t *testing.T, body string) string {
 	t.Helper()
 
 	start := strings.Index(body, "<fieldset")
 	if start < 0 {
-		t.Fatal("response does not contain a fieldset")
+		t.Fatal("レスポンスにfieldsetが含まれていない")
 	}
 	endOffset := strings.Index(body[start:], ">")
 	if endOffset < 0 {
-		t.Fatal("response does not contain a complete fieldset tag")
+		t.Fatal("レスポンスに完全なfieldsetタグが含まれていない")
 	}
 
 	return body[start : start+endOffset+1]
@@ -100,12 +93,12 @@ func TestNew_公開設定は初期状態で未選択になる(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 	body := rr.Body.String()
 	for _, id := range []string{"visibility_public", "visibility_private"} {
 		if tag := topicFormInputTag(t, body, id); strings.Contains(tag, "checked") {
-			t.Errorf("input %q tag contains checked: %s", id, tag)
+			t.Errorf("入力%qのタグにcheckedが含まれている: %s", id, tag)
 		}
 	}
 }
@@ -142,27 +135,21 @@ func TestNew_ヘルプリンク名が各言語で行き先を説明する(t *tes
 			setupHandler(t, queries).New(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 			}
 			body := rr.Body.String()
 			for _, want := range tt.want {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 		})
 	}
 }
 
-// The subtitle under the heading carries its own text color, so the help links inside it take that
-// color through link-inherit-foreground rather than painting themselves. The note inside the form
-// sits in a differently colored block and keeps link-foreground, so it is asserted here as well to
-// keep the two apart. The class names live in the locale strings rather than in the template, so
-// both locales are checked: reverting one of them alone would otherwise go unnoticed.
-//
-// [Ja] 見出し下のサブタイトルは自身の文字色を持つため、その中のヘルプリンクは自分で色を塗らず
-// link-inherit-foreground でその色を受け取る。フォーム内の注意書きは別の色の枠にあり
-// link-foreground のままなので、両者が混ざらないようここで併せて確認する。クラス名は
+// 見出し下のサブタイトルは自身の文字色を持つため、その中のヘルプリンクは自分で色を塗らず
+// link-inherit-foregroundでその色を受け取る。フォーム内の注意書きは別の色の枠にあり
+// link-foregroundのままなので、両者が混ざらないようここで併せて確認する。クラス名は
 // テンプレートではなくロケール文字列側にあるため、両ロケールを確認する。片方だけ元に戻されても
 // 気づけなくなるからである。
 func TestNew_サブタイトルのヘルプリンクが本文色を継承する(t *testing.T) {
@@ -194,7 +181,7 @@ func TestNew_サブタイトルのヘルプリンクが本文色を継承する(
 			setupHandler(t, queries).New(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
@@ -204,21 +191,16 @@ func TestNew_サブタイトルのヘルプリンクが本文色を継承する(
 				`<a class="link-foreground" href="https://wikino.app/s/wikino/pages/38"`,
 			} {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 		})
 	}
 }
 
-// The visibility label is separated from the first option only by the margin-bottom basecoat's
-// .fieldset puts on the legend: a legend is not a flex item, so the gap on the group never reaches
-// it. data-variant="label", which basecoat resets that margin with, therefore has to stay off the
-// legend. Either half going missing brings the flush label back, so both are asserted.
-//
-// [Ja] 公開設定のラベルと最初の選択肢の間隔は、basecoat の .fieldset が legend に付ける
-// margin-bottom だけが作っている。legend はフレックスの子にならないため、グループに指定した gap は
-// legend まで届かない。したがって basecoat がその margin を 0 に戻す data-variant="label" は legend
+// 公開設定のラベルと最初の選択肢の間隔は、basecoatの .fieldsetがlegendに付ける
+// margin-bottomだけが作っている。legendはフレックスの子にならないため、グループに指定したgapは
+// legendまで届かない。したがってbasecoatがそのmarginを0に戻すdata-variant="label" はlegend
 // に付けないままにする必要がある。どちらが欠けても密着した見た目に戻るため、両方を確認する。
 func TestNew_公開設定のラベルと選択肢の間に余白が入る(t *testing.T) {
 	t.Parallel()
@@ -232,21 +214,19 @@ func TestNew_公開設定のラベルと選択肢の間に余白が入る(t *tes
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if tag := topicFormFieldsetTag(t, body); !strings.Contains(tag, `class="fieldset gap-3"`) {
-		t.Errorf("fieldset tag does not carry the fieldset class: %s", tag)
+		t.Errorf("fieldsetタグにfieldsetクラスが付いていない: %s", tag)
 	}
 	if !strings.Contains(body, `<legend class="label">`) {
-		t.Error("response does not contain a legend left without data-variant")
+		t.Error("レスポンスにdata-variantを持たないlegendが含まれていない")
 	}
 }
 
-// topicSpace seeds a space with one member and returns what the tests address them by.
-//
-// [Ja] topicSpace はメンバーが 1 人いるスペースを用意し、テストがそれらを指すための値を返す。
+// topicSpaceはメンバーが1人いるスペースを用意し、テストがそれらを指すための値を返す。
 func topicSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) model.UserID {
 	t.Helper()
 
@@ -281,7 +261,7 @@ func TestNew_フォームが表示される(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -295,7 +275,7 @@ func TestNew_フォームが表示される(t *testing.T) {
 		"新規トピック",
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 }
@@ -313,7 +293,7 @@ func TestNew_HEADでも200が返る(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -330,7 +310,7 @@ func TestNew_トピック作成権限がないメンバーには404が返る(t *
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -351,7 +331,7 @@ func TestNew_スペースのメンバーでなければ404が返る(t *testing.T
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -368,18 +348,14 @@ func TestNew_未ログインならログイン画面へリダイレクトする(
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
 	}
 	if location := rr.Header().Get("Location"); location != "/sign_in" {
-		t.Errorf("Location = %q, want %q", location, "/sign_in")
+		t.Errorf("Location = %q、期待値 = %q", location, "/sign_in")
 	}
 }
 
-// The trail ends with the screen itself, so the last item must be a plain label carrying
-// aria-current rather than a link back to the space. Scope the assertions to the breadcrumb because
-// the same label also appears in the heading and the page title.
-//
-// [Ja] 経路はこの画面自身で終わるため、末尾の項目はスペースへのリンクではなく aria-current を持つ
+// 経路はこの画面自身で終わるため、末尾の項目はスペースへのリンクではなくaria-currentを持つ
 // ラベルになる。同じラベルは見出しとページタイトルにも出るため、パンくず内に絞って検証する。
 func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 	t.Parallel()
@@ -393,7 +369,7 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 	setupHandler(t, queries).New(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	breadcrumb := topicFormBreadcrumb(t, rr.Body.String())
@@ -404,29 +380,26 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 		"新規トピック",
 	} {
 		if !strings.Contains(breadcrumb, want) {
-			t.Errorf("breadcrumb does not contain %q", want)
+			t.Errorf("パンくずに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(breadcrumb, `href="/s/topic-new-crumb/topics/new"`) {
-		t.Error("current topic creation breadcrumb item must not be a link")
+		t.Error("現在のトピック作成のパンくずの項目がリンクになっている")
 	}
 }
 
-// topicFormBreadcrumb returns the markup of the breadcrumb navigation alone, so that an assertion
-// about the trail is not satisfied by the same text appearing elsewhere on the screen.
-//
-// [Ja] topicFormBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路についての
+// topicFormBreadcrumbはパンくずのナビゲーション部分だけのマークアップを返す。経路についての
 // 検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
 func topicFormBreadcrumb(t *testing.T, body string) string {
 	t.Helper()
 
 	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
 	if start == -1 {
-		t.Fatal("response does not contain the breadcrumb navigation")
+		t.Fatal("レスポンスにパンくずのナビゲーションが含まれていない")
 	}
 	endOffset := strings.Index(body[start:], "</nav>")
 	if endOffset == -1 {
-		t.Fatal("breadcrumb navigation does not have a closing tag")
+		t.Fatal("パンくずのナビゲーションに閉じタグが無い")
 	}
 
 	return body[start : start+endOffset]

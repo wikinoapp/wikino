@@ -12,61 +12,34 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// KeyboardHintData carries the inputs for the keyboard shortcut hint shown next to a button label.
-//
-// [Ja] KeyboardHintData はボタンラベルの隣に表示するキーボードショートカット表記の入力を保持する。
+// KeyboardHintDataはボタンラベルの隣に表示するキーボードショートカット表記の入力を保持する。
 type KeyboardHintData struct {
-	// Key is the non-modifier key rendered as text right after the modifier (e.g. "S"). Leave it
-	// empty and set IconName instead when the key reads more clearly as an icon (e.g. the return key).
-	//
-	// [Ja] Key は修飾キーの直後に詰めてテキストで表示する非修飾キー (例: "S")。Enter キーのように
-	// アイコンで示したほうが分かりやすいキーは、Key を空にして代わりに IconName を指定する。
+	// Keyは修飾キーの直後に詰めてテキストで表示する非修飾キー (例: "S")。Enterキーのように
+	// アイコンで示したほうが分かりやすいキーは、Keyを空にして代わりにIconNameを指定する。
 	Key string
 
-	// IconName, when set, renders the non-modifier key as an icon instead of Key text (e.g. the
-	// return-arrow icon for Enter, which reads more clearly than the small ↵ glyph). It is mutually
-	// exclusive with Key.
-	//
-	// [Ja] IconName を指定すると、非修飾キーを Key のテキストではなくアイコンで描画する (例: Enter は
-	// 小さな ↵ グリフより分かりやすい折り返し矢印アイコンで示す)。Key とは排他。
+	// IconNameを指定すると、非修飾キーをKeyのテキストではなくアイコンで描画する (例: Enterは
+	// 小さな ↵ グリフより分かりやすい折り返し矢印アイコンで示す)。Keyとは排他。
 	IconName viewmodel.IconName
 
-	// ColorClass overrides the chip's background and text so the chip tints itself in the host
-	// button's foreground color: the chip text uses the button's foreground color and the chip
-	// background uses a low-opacity version of it, making the chip a subtle block in the same hue as
-	// the label (e.g. a .btn host on the default primary variant passes
-	// "bg-primary-foreground/20 text-primary-foreground").
-	// The classes must be literals at the call site so Tailwind's source scanner emits them.
-	//
-	// [Ja] ColorClass はチップの背景色と文字色を上書きし、ホストとなるボタンの前景色でチップを淡く
+	// ColorClassはチップの背景色と文字色を上書きし、ホストとなるボタンの前景色でチップを淡く
 	// 染める。チップの文字はボタンの前景色を使い、チップの背景はその前景色を低い不透明度にしたものを
-	// 使うことで、チップをラベルと同系色の控えめなブロックとして見せる (例: 既定の primary バリアントの .btn は
-	// "bg-primary-foreground/20 text-primary-foreground" を渡す)。Tailwind のソーススキャナが
+	// 使うことで、チップをラベルと同系色の控えめなブロックとして見せる (例: 既定のprimaryバリアントの .btnは
+	// "bg-primary-foreground/20 text-primary-foreground" を渡す)。Tailwindのソーススキャナが
 	// 出力できるよう、クラスは呼び出し側でリテラルとして渡すこと。
 	ColorClass string
 }
 
-// KeyboardHint renders a button's keyboard shortcut as a basecoat .kbd chip tinted in the host
-// button's foreground color (see ColorClass) so it reads as a subtle block. The Mac modifier glues
-// to the key with no separator (e.g. "⌘S", or ⌘ + the return-arrow icon) to keep the chip narrow,
-// because the hint shares the editor's fixed-width center column with the action buttons and the
-// saved-at indicator; the non-Mac modifier is "Ctrl+", so it reads with a "+" before the key (e.g.
-// "Ctrl+S"). Both the ⌘ (Mac) and the Ctrl+ (other) variants are rendered, and CSS shows only the
-// one matching html[data-os], which the client sets once on load (web/platform.ts). The chip is
-// hidden on touch devices via non-touch: because the shortcut needs a physical keyboard and mobile
-// width is the tightest. It is aria-hidden so screen readers announce only the button label, not
-// the raw modifier and key glyphs.
-//
-// [Ja] KeyboardHint はボタンのキーボードショートカットを basecoat の .kbd チップとして描画する。
-// チップの配色はホストのボタンの前景色で淡く染め (ColorClass を参照)、控えめなブロックとして見せる。
-// Mac の修飾キーは区切りを入れずキーに詰めて描画し (例: "⌘S"、または ⌘ + 折り返し矢印アイコン)、
+// KeyboardHintはボタンのキーボードショートカットをbasecoatの .kbdチップとして描画する。
+// チップの配色はホストのボタンの前景色で淡く染め (ColorClassを参照)、控えめなブロックとして見せる。
+// Macの修飾キーは区切りを入れずキーに詰めて描画し (例: "⌘S"、または ⌘ + 折り返し矢印アイコン)、
 // チップを細く保つ。この表記は編集画面の固定幅の中央カラムを操作ボタンや保存時刻表示と共有しており、
-// 横幅に余裕がないためである。非 Mac の修飾キーは "Ctrl+" で、キーの前に "+" が入る (例: "Ctrl+S")。
-// ⌘ (Mac) 版と Ctrl+ (それ以外) 版の両方を描画し、クライアントが読み込み時に
-// 1 度付与する html[data-os] (web/platform.ts) に一致する側だけを CSS で表示する。ショートカットには
-// 物理キーボードが必要で、横幅が最も苦しいのもモバイルのため、チップは non-touch: でタッチ端末では
+// 横幅に余裕がないためである。非Macの修飾キーは "Ctrl+" で、キーの前に "+" が入る (例: "Ctrl+S")。
+// ⌘ (Mac) 版とCtrl+ (それ以外) 版の両方を描画し、クライアントが読み込み時に
+// 1度付与するhtml[data-os] (web/platform.ts) に一致する側だけをCSSで表示する。ショートカットには
+// 物理キーボードが必要で、横幅が最も苦しいのもモバイルのため、チップはnon-touch: でタッチ端末では
 // 隠す。スクリーンリーダーには生の修飾キー・キーのグリフではなくボタンラベルだけを読ませるため
-// aria-hidden を付ける。
+// aria-hiddenを付ける。
 func KeyboardHint(data KeyboardHintData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -100,20 +73,12 @@ func KeyboardHint(data KeyboardHintData) templ.Component {
 	})
 }
 
-// keyboardHintChip renders one OS variant of the hint. osVariantClass is the platform-attribute
-// variant that flips the chip from hidden to inline-flex for the matching html[data-os]; modifier
-// is the modifier glyph ("⌘" or "Ctrl+"). gap-0 glues the modifier to the icon; the icon inherits
-// the chip's text color through the SVG's fill=currentColor, so it matches the modifier under the
-// tinted ColorClass. The modifier is a separate node from the icon so templ renders the icon
-// (text glued directly before @-calls is treated as literal text), and templ trims the whitespace
-// between the two nodes, keeping them glued.
-//
-// [Ja] keyboardHintChip は表記の OS 別の 1 つを描画する。osVariantClass は一致する html[data-os] の
-// ときチップを hidden から inline-flex へ切り替えるプラットフォーム属性バリアント、modifier は修飾キー
-// のグリフ ("⌘" または "Ctrl+")。gap-0 で修飾キーとアイコンを詰める。アイコンは SVG の
-// fill=currentColor によりチップの文字色を継承するため、淡く染めた ColorClass のもとで修飾キーと同じ色に
-// なる。修飾キーをアイコンとは別ノードにしているのは、templ にアイコンを描画させるためである (@ 呼び出し
-// の直前に詰めたテキストはリテラル文字列として扱われる)。2 つのノード間の空白は templ が除去するため、
+// keyboardHintChipは表記のOS別の1つを描画する。osVariantClassは一致するhtml[data-os] の
+// ときチップをhiddenからinline-flexへ切り替えるプラットフォーム属性バリアント、modifierは修飾キー
+// のグリフ ("⌘" または "Ctrl+")。gap-0で修飾キーとアイコンを詰める。アイコンはSVGの
+// fill=currentColorによりチップの文字色を継承するため、淡く染めたColorClassのもとで修飾キーと同じ色に
+// なる。修飾キーをアイコンとは別ノードにしているのは、templにアイコンを描画させるためである (@ 呼び出し
+// の直前に詰めたテキストはリテラル文字列として扱われる)。2つのノード間の空白はtemplが除去するため、
 // 詰めた状態を保てる。
 func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -162,7 +127,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(modifier)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 86, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 51, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -202,7 +167,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(modifier)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 90, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 55, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -211,7 +176,7 @@ func keyboardHintChip(data KeyboardHintData, osVariantClass string, modifier str
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(data.Key)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 90, Col: 104}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/keyboard_hint.templ`, Line: 55, Col: 104}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {

@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Update は下書きページを自動保存します (PATCH /s/{space_identifier}/pages/{page_number}/draft_page)
+// Updateは下書きページを自動保存します (PATCH /s/{space_identifier}/pages/{page_number}/draft_page)
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -38,13 +38,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("pages_edit_form[title]")
 	body := r.FormValue("pages_edit_form[body]")
 
-	// タイトルのポインタ変換（空文字列の場合もポインタとして渡す）
+	// タイトルのポインタ変換 (空文字列の場合もポインタとして渡す)
 	var titlePtr *string
 	if title != "" {
 		titlePtr = &title
 	}
 
-	// UseCase を実行
+	// UseCaseを実行
 	_, err = h.autoSaveDraftPageUC.Execute(ctx, usecase.AutoSaveDraftPageInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),

@@ -2,7 +2,7 @@ package components
 
 import "github.com/wikinoapp/wikino/go/internal/viewmodel"
 
-// Head はHTMLのheadセクションの共通メタタグを出力します
+// HeadはHTMLのheadセクションの共通メタタグを出力します
 templ Head(meta viewmodel.PageMeta) {
 	<meta charset="UTF-8"/>
 
@@ -21,12 +21,8 @@ templ Head(meta viewmodel.PageMeta) {
 	<meta property="og:site_name" content="Wikino"/>
 	<meta property="og:title" content={ meta.Title }/>
 	<meta property="og:type" content={ meta.OGType }/>
-	// Only a screen that knows its canonical address declares one. An empty value would not mean
-	// "no canonical": both an empty href and an empty content resolve to the requested URL, so every
-	// query variant of a screen would declare itself as its own canonical address.
-	//
-	// [Ja] 正規アドレスが分かっている画面だけがそれを宣言する。空の値は「canonical が無い」ことには
-	// ならず、空の href も空の content もリクエストされた URL に解決されるため、画面のクエリ違いが
+	// 正規アドレスが分かっている画面だけがそれを宣言する。空の値は「canonicalが無い」ことには
+	// ならず、空のhrefも空のcontentもリクエストされたURLに解決されるため、画面のクエリ違いが
 	// それぞれ自分自身を正規アドレスとして宣言してしまう。
 	if meta.OGURL != "" {
 		<meta property="og:url" content={ meta.OGURL }/>

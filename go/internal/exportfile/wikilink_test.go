@@ -17,15 +17,15 @@ func TestRewriteWikilinks_ParsedLabelSyntax(t *testing.T) {
 		name  string
 		label string
 	}{
-		{name: "HTML 属性の閉じ角括弧", label: `<span title="]">label</span> [[A]]`},
-		{name: "HTML 属性の開き角括弧", label: `<span title="[">label</span> [[A]]`},
-		{name: "HTML コメントの閉じ角括弧", label: `<!-- ] -->label [[A]]`},
-		{name: "HTML コメントの開き角括弧", label: `<!-- [ -->label [[A]]`},
+		{name: "HTML属性の閉じ角括弧", label: `<span title="]">label</span> [[A]]`},
+		{name: "HTML属性の開き角括弧", label: `<span title="[">label</span> [[A]]`},
+		{name: "HTMLコメントの閉じ角括弧", label: `<!-- ] -->label [[A]]`},
+		{name: "HTMLコメントの開き角括弧", label: `<!-- [ -->label [[A]]`},
 		{name: "子画像のリンク先の閉じ角括弧", label: `![image](https://example.com/image]x.png) [[A]]`},
 		{name: "子画像のリンク先の開き角括弧", label: `![image](https://example.com/image[x.png) [[A]]`},
 		{name: "子画像のタイトルの閉じ角括弧", label: `![image](https://example.com/image.png "]") [[A]]`},
 		{name: "子画像のタイトルの開き角括弧", label: `![image](https://example.com/image.png "[") [[A]]`},
-		{name: "子画像の中の HTML", label: `![<span title="]">image</span>](https://example.com/image.png) [[A]]`},
+		{name: "子画像の中のHTML", label: `![<span title="]">image</span>](https://example.com/image.png) [[A]]`},
 	}
 
 	for _, tt := range tests {
@@ -36,7 +36,7 @@ func TestRewriteWikilinks_ParsedLabelSyntax(t *testing.T) {
 			got := RewriteWikilinks(link+" [[B]]", "T", paths)
 			want := link + " [[T/B.md]]"
 			if got != want {
-				t.Errorf("RewriteWikilinks() = %q, want %q", got, want)
+				t.Errorf("RewriteWikilinks() = %q、期待値 = %q", got, want)
 			}
 		})
 	}
@@ -113,25 +113,25 @@ func TestRewriteWikilinks(t *testing.T) {
 			want:             "段落。\n\n    [[設計/API]]\n\n[[設計/API.md]]",
 		},
 		{
-			name:             "raw HTML の code 要素の中のリンクは書き換えない",
+			name:             "raw HTMLのcode要素の中のリンクは書き換えない",
 			body:             "<code>[[設計/API]]</code> と [[設計/API]]",
 			currentTopicName: "設計",
 			want:             "<code>[[設計/API]]</code> と [[設計/API.md]]",
 		},
 		{
-			name:             "raw HTML の pre 要素の中のリンクは書き換えない",
+			name:             "raw HTMLのpre要素の中のリンクは書き換えない",
 			body:             "<pre>\n[[設計/API]]\n</pre>\n\n[[設計/API]]",
 			currentTopicName: "設計",
 			want:             "<pre>\n[[設計/API]]\n</pre>\n\n[[設計/API.md]]",
 		},
 		{
-			name:             "自己終了記法の code 要素の後ろにあるリンクは書き換えない",
+			name:             "自己終了記法のcode要素の後ろにあるリンクは書き換えない",
 			body:             "<code/>[[設計/API]]</code> と [[設計/API]]",
 			currentTopicName: "設計",
 			want:             "<code/>[[設計/API]]</code> と [[設計/API.md]]",
 		},
 		{
-			name:             "自己終了記法の pre 要素の後ろにあるリンクは書き換えない",
+			name:             "自己終了記法のpre要素の後ろにあるリンクは書き換えない",
 			body:             "<pre/>[[設計/API]]</pre>\n\n[[設計/API]]",
 			currentTopicName: "設計",
 			want:             "<pre/>[[設計/API]]</pre>\n\n[[設計/API.md]]",
@@ -149,43 +149,43 @@ func TestRewriteWikilinks(t *testing.T) {
 			want:             "<object>[[設計/API]]</iframe>[[設計/API.md]]",
 		},
 		{
-			name:             "破棄要素の中の script 要素の終了タグより後ろは書き換えない",
+			name:             "破棄要素の中のscript要素の終了タグより後ろは書き換えない",
 			body:             "<object>[[設計/API]]</script>[[設計/API]]",
 			currentTopicName: "設計",
 			want:             "<object>[[設計/API]]</script>[[設計/API]]",
 		},
 		{
-			name:             "入れ子の a 要素の終了タグより後ろは書き換える",
+			name:             "入れ子のa要素の終了タグより後ろは書き換える",
 			body:             `<a href="https://example.com/">[[設計/API]]<a href="https://example.com/">[[設計/API]]</a>[[設計/API]]`,
 			currentTopicName: "設計",
 			want:             `<a href="https://example.com/">[[設計/API]]<a href="https://example.com/">[[設計/API]]</a>[[設計/API.md]]`,
 		},
 		{
-			name:             "raw HTML の構文は保ち通常要素の本文にあるリンクは書き換える",
+			name:             "raw HTMLの構文は保ち通常要素の本文にあるリンクは書き換える",
 			body:             `<div data-page="[[設計/API]]">[[設計/API]]</div>` + "\n\n<!-- [[設計/API]] -->\n\n[[設計/API]]",
 			currentTopicName: "設計",
 			want:             `<div data-page="[[設計/API]]">[[設計/API.md]]</div>` + "\n\n<!-- [[設計/API]] -->\n\n[[設計/API.md]]",
 		},
 		{
-			name:             "Markdown リンクのリンク先にあるリンクは書き換えない",
+			name:             "Markdownリンクのリンク先にあるリンクは書き換えない",
 			body:             "[外部](https://example.com/[[設計/API]]) と [[設計/API]]",
 			currentTopicName: "設計",
 			want:             "[外部](https://example.com/[[設計/API]]) と [[設計/API.md]]",
 		},
 		{
-			name:             "山括弧付き Markdown リンク先の丸括弧より後ろは書き換えない",
+			name:             "山括弧付きMarkdownリンク先の丸括弧より後ろは書き換えない",
 			body:             "[外部](<https://example.com/a)/[[設計/API]]>) と [[設計/API]]",
 			currentTopicName: "設計",
 			want:             "[外部](<https://example.com/a)/[[設計/API]]>) と [[設計/API.md]]",
 		},
 		{
-			name:             "山括弧付き Markdown リンク先の開き丸括弧より後ろは書き換えない",
+			name:             "山括弧付きMarkdownリンク先の開き丸括弧より後ろは書き換えない",
 			body:             "[外部](<https://example.com/a([[設計/API]]>) と [[設計/API]]",
 			currentTopicName: "設計",
 			want:             "[外部](<https://example.com/a([[設計/API]]>) と [[設計/API.md]]",
 		},
 		{
-			name:             "Markdown リンクのラベルにあるリンクは書き換えない",
+			name:             "Markdownリンクのラベルにあるリンクは書き換えない",
 			body:             "[参照 [[設計/API]]](https://example.com/) と [[設計/API]]",
 			currentTopicName: "設計",
 			want:             "[参照 [[設計/API]]](https://example.com/) と [[設計/API.md]]",
@@ -209,37 +209,37 @@ func TestRewriteWikilinks(t *testing.T) {
 			want:             "[a][[設計/API.md]]\n\n[a]: /url",
 		},
 		{
-			name:             "raw HTML の a 要素の中のリンクは書き換えない",
+			name:             "raw HTMLのa要素の中のリンクは書き換えない",
 			body:             `<a href="https://example.com/">[[設計/API]]</a> と [[設計/API]]`,
 			currentTopicName: "設計",
 			want:             `<a href="https://example.com/">[[設計/API]]</a> と [[設計/API.md]]`,
 		},
 		{
-			name:             "サニタイズで除去される a 要素の異なる終了タグ後は書き換える",
+			name:             "サニタイズで除去されるa要素の異なる終了タグ後は書き換える",
 			body:             "<a>[[設計/API]]</code>[[設計/API]]",
 			currentTopicName: "設計",
 			want:             "<a>[[設計/API.md]]</code>[[設計/API.md]]",
 		},
 		{
-			name:             "raw HTML の script 要素の中のリンクは書き換えない",
+			name:             "raw HTMLのscript要素の中のリンクは書き換えない",
 			body:             `<script>const page = "[[設計/API]]"</script>` + "\n\n[[設計/API]]",
 			currentTopicName: "設計",
 			want:             `<script>const page = "[[設計/API]]"</script>` + "\n\n[[設計/API.md]]",
 		},
 		{
-			name:             "raw HTML の style 要素の中のリンクは書き換えない",
+			name:             "raw HTMLのstyle要素の中のリンクは書き換えない",
 			body:             `<style>/* [[設計/API]] */</style>` + "\n\n[[設計/API]]",
 			currentTopicName: "設計",
 			want:             `<style>/* [[設計/API]] */</style>` + "\n\n[[設計/API.md]]",
 		},
 		{
-			name:             "コードブロックに raw text の要素を見せていても後続の code 要素の中のリンクは書き換えない",
+			name:             "コードブロックにraw textの要素を見せていても後続のcode要素の中のリンクは書き換えない",
 			body:             "```html\n<style>\n```\n\n<code>[[設計/API]]</code> と [[設計/API]]",
 			currentTopicName: "設計",
 			want:             "```html\n<style>\n```\n\n<code>[[設計/API]]</code> と [[設計/API.md]]",
 		},
 		{
-			name:             "1 行に複数のリンクがあってもすべて書き換える",
+			name:             "1行に複数のリンクがあってもすべて書き換える",
 			body:             "[[API]]、[[運用/デプロイ手順]]、[[API]]",
 			currentTopicName: "設計",
 			want:             "[[設計/API.md]]、[[運用/デプロイ手順.md]]、[[設計/API.md]]",
@@ -263,9 +263,9 @@ func TestRewriteWikilinks(t *testing.T) {
 			want:             "[[]] と [[設計/API.md]]",
 		},
 		{
-			// img タグだけの行は HTML ブロックを開かないため、続く行も画面と同じく Markdown として
+			// imgタグだけの行はHTMLブロックを開かないため、続く行も画面と同じくMarkdownとして
 			// 読まれる。コードスパンと既存リンクのラベルはそこでも保護される
-			name: "img タグの行に続くコードと既存リンクのラベルは書き換えない",
+			name: "imgタグの行に続くコードと既存リンクのラベルは書き換えない",
 			body: `<img src="https://example.com/i.png">` + "\n*キャプション*\n" +
 				"`[[API]]` と [参照 [[API]]](https://example.com/) と [[API]]",
 			currentTopicName: "設計",
@@ -273,7 +273,7 @@ func TestRewriteWikilinks(t *testing.T) {
 				"`[[API]]` と [参照 [[API]]](https://example.com/) と [[設計/API.md]]",
 		},
 		{
-			// サニタイズが受け付けないリンク先の a 要素は落ち、ラベルは通常テキストとして画面に出る
+			// サニタイズが受け付けないリンク先のa要素は落ち、ラベルは通常テキストとして画面に出る
 			name:             "サニタイズが落とすリンクのラベルは書き換える",
 			body:             "[ラベル [[API]]](tel:+81-3-0000-0000)",
 			currentTopicName: "設計",
@@ -293,7 +293,7 @@ func TestRewriteWikilinks(t *testing.T) {
 			want:             `\[\[API]] と &#91;&#91;API]] と [[設計/API.md]]`,
 		},
 		{
-			name:             "Wiki リンクを含まない本文はそのまま返す",
+			name:             "Wikiリンクを含まない本文はそのまま返す",
 			body:             "リンクの無い本文。",
 			currentTopicName: "設計",
 			want:             "リンクの無い本文。",
@@ -311,37 +311,37 @@ func TestRewriteWikilinks(t *testing.T) {
 			want:             "[[設計/`x`API]]",
 		},
 		{
-			name:             "閉じていない a 要素をリンクが閉じた後のリンクを書き換える",
+			name:             "閉じていないa要素をリンクが閉じた後のリンクを書き換える",
 			body:             `<a href="/u">x <https://example.com> [[API]] と [リンク](/v) [[運用/デプロイ手順]]`,
 			currentTopicName: "設計",
 			want:             `<a href="/u">x <https://example.com> [[設計/API.md]] と [リンク](/v) [[運用/デプロイ手順.md]]`,
 		},
 		{
-			name:             "閉じていない a 要素の中のリンクは書き換えない",
+			name:             "閉じていないa要素の中のリンクは書き換えない",
 			body:             `<a href="/u">x ![図](/v) [[API]]`,
 			currentTopicName: "設計",
 			want:             `<a href="/u">x ![図](/v) [[API]]`,
 		},
 		{
-			name:             "引用の中の閉じていない pre 要素の外のリンクを書き換える",
+			name:             "引用の中の閉じていないpre要素の外のリンクを書き換える",
 			body:             "> x <pre>y\n\n> z [[API]]",
 			currentTopicName: "設計",
 			want:             "> x <pre>y\n\n> z [[設計/API.md]]",
 		},
 		{
-			name:             "表のセルの中の閉じていない code 要素の外のリンクを書き換える",
+			name:             "表のセルの中の閉じていないcode要素の外のリンクを書き換える",
 			body:             "| a |\n| --- |\n| <code>y |\n\nz [[API]]",
 			currentTopicName: "設計",
 			want:             "| a |\n| --- |\n| <code>y |\n\nz [[設計/API.md]]",
 		},
 		{
-			name:             "段落の中の閉じていない pre 要素の後ろのリンクは書き換えない",
+			name:             "段落の中の閉じていないpre要素の後ろのリンクは書き換えない",
 			body:             "x <pre>y\n\nz [[API]]",
 			currentTopicName: "設計",
 			want:             "x <pre>y\n\nz [[API]]",
 		},
 		{
-			name:             "HTML として読まれなかったタグの中のリンクを書き換える",
+			name:             "HTMLとして読まれなかったタグの中のリンクを書き換える",
 			body:             "before <!-- [[API]] </script> after",
 			currentTopicName: "設計",
 			want:             "before <!-- [[設計/API.md]] </script> after",
@@ -354,7 +354,7 @@ func TestRewriteWikilinks(t *testing.T) {
 
 			got := RewriteWikilinks(tt.body, tt.currentTopicName, paths)
 			if got != tt.want {
-				t.Errorf("RewriteWikilinks(%q, %q, paths) = %q, want %q", tt.body, tt.currentTopicName, got, tt.want)
+				t.Errorf("RewriteWikilinks(%q, %q, paths) = %q、期待値 = %q", tt.body, tt.currentTopicName, got, tt.want)
 			}
 		})
 	}
@@ -367,7 +367,7 @@ func TestRewriteWikilinksWithoutPaths(t *testing.T) {
 
 	got := RewriteWikilinks(body, "設計", nil)
 	if got != body {
-		t.Errorf("RewriteWikilinks(%q, %q, nil) = %q, want %q", body, "設計", got, body)
+		t.Errorf("RewriteWikilinks(%q, %q, nil) = %q、期待値 = %q", body, "設計", got, body)
 	}
 }
 
@@ -385,7 +385,7 @@ func TestRewriteWikilinks_MultilineDestinations(t *testing.T) {
 	}{
 		{name: "引用内の閉じ丸括弧", link: "> [x](\n> <https://example.com/a)/[[A]]>)"},
 		{name: "引用内の開き丸括弧", link: "> [x](\n> <https://example.com/a([[A]]>)"},
-		{name: "CRLF の引用", link: "> [x](\r\n> <https://example.com/a)/[[A]]>)"},
+		{name: "CRLFの引用", link: "> [x](\r\n> <https://example.com/a)/[[A]]>)"},
 		{name: "入れ子の引用", link: "> > [x](\n> > <https://example.com/a([[A]]>)"},
 		{name: "引用内のリスト", link: "> - [x](\n>   <https://example.com/a)/[[A]]>)"},
 		{name: "リストの継続行", link: "- [x](\n  <https://example.com/a([[A]]>)"},
@@ -399,7 +399,7 @@ func TestRewriteWikilinks_MultilineDestinations(t *testing.T) {
 			got := RewriteWikilinks(tt.link+" [[B]]", "T", paths)
 			want := tt.link + " [[T/B.md]]"
 			if got != want {
-				t.Errorf("RewriteWikilinks() = %q, want %q", got, want)
+				t.Errorf("RewriteWikilinks() = %q、期待値 = %q", got, want)
 			}
 		})
 	}
@@ -418,14 +418,14 @@ func TestRewriteWikilinks_DestinationEscapes(t *testing.T) {
 		destination string
 		keepsLink   bool
 	}{
-		{name: "通常の許可 URL", destination: "https://example.com/[[A]]", keepsLink: true},
-		{name: "エスケープした許可 URL", destination: `https\://example.com/[[A]]`, keepsLink: true},
-		{name: "数値文字参照の許可 URL", destination: "https&#58;//example.com/[[A]]", keepsLink: true},
-		{name: "名前付き文字参照の許可 URL", destination: "https&colon;//example.com/[[A]]", keepsLink: true},
-		{name: "通常の拒否 URL", destination: "tel:+81-3-0000-0000/[[A]]"},
-		{name: "エスケープした拒否 URL", destination: `tel\:+81-3-0000-0000/[[A]]`},
-		{name: "数値文字参照の拒否 URL", destination: "tel&#58;+81-3-0000-0000/[[A]]"},
-		{name: "名前付き文字参照の拒否 URL", destination: "tel&colon;+81-3-0000-0000/[[A]]"},
+		{name: "通常の許可URL", destination: "https://example.com/[[A]]", keepsLink: true},
+		{name: "エスケープした許可URL", destination: `https\://example.com/[[A]]`, keepsLink: true},
+		{name: "数値文字参照の許可URL", destination: "https&#58;//example.com/[[A]]", keepsLink: true},
+		{name: "名前付き文字参照の許可URL", destination: "https&colon;//example.com/[[A]]", keepsLink: true},
+		{name: "通常の拒否URL", destination: "tel:+81-3-0000-0000/[[A]]"},
+		{name: "エスケープした拒否URL", destination: `tel\:+81-3-0000-0000/[[A]]`},
+		{name: "数値文字参照の拒否URL", destination: "tel&#58;+81-3-0000-0000/[[A]]"},
+		{name: "名前付き文字参照の拒否URL", destination: "tel&colon;+81-3-0000-0000/[[A]]"},
 	}
 
 	for _, tt := range tests {
@@ -447,7 +447,7 @@ func TestRewriteWikilinks_DestinationEscapes(t *testing.T) {
 					want = "[" + label + "][ref] [[T/B.md]]\n\n[ref]: " + tt.destination
 				}
 				if got := RewriteWikilinks(body, "T", paths); got != want {
-					t.Errorf("RewriteWikilinks() = %q, want %q", got, want)
+					t.Errorf("RewriteWikilinks() = %q、期待値 = %q", got, want)
 				}
 			})
 		}
@@ -469,21 +469,21 @@ func TestRewriteWikilinks_EscapedOpening(t *testing.T) {
 	}{
 		{name: "開始括弧のエスケープ", body: "\\[[A]] と [[B]]", want: "\\[[A]] と [[T/B.md]]"},
 		{name: "バックスラッシュのエスケープ", body: "\\\\[[A]] と [[B]]", want: "\\\\[[T/A.md]] と [[T/B.md]]"},
-		{name: "3 本のバックスラッシュ", body: "\\\\\\[[A]] と [[B]]", want: "\\\\\\[[A]] と [[T/B.md]]"},
+		{name: "3本のバックスラッシュ", body: "\\\\\\[[A]] と [[B]]", want: "\\\\\\[[A]] と [[T/B.md]]"},
 		{name: "両方の開始括弧のエスケープ", body: "\\[\\[A]] と [[B]]", want: "\\[\\[A]] と [[T/B.md]]"},
 		{name: "文字参照の開始括弧", body: "&#91;&#91;A]] &lbrack;&lbrack;A]] [[B]]", want: "&#91;&#91;A]] &lbrack;&lbrack;A]] [[T/B.md]]"},
-		{name: "HTML ブロック内のバックスラッシュ", body: "<div>\n\\[[A]]\n</div>\n\n[[B]]", want: "<div>\n\\[[T/A.md]]\n</div>\n\n[[T/B.md]]"},
-		{name: "HTML ブロック内の 3 本のバックスラッシュ", body: "<div>\n\\\\\\[[A]]\n</div>\n\n[[B]]", want: "<div>\n\\\\\\[[T/A.md]]\n</div>\n\n[[T/B.md]]"},
-		{name: "引用の HTML ブロック", body: "> <div>\n> \\[[A]]\n> </div>\n\n[[B]]", want: "> <div>\n> \\[[T/A.md]]\n> </div>\n\n[[T/B.md]]"},
-		{name: "HTML ブロックの後の Markdown", body: "<div>\\[[A]]</div>\n\n\\[[A]] [[B]]", want: "<div>\\[[T/A.md]]</div>\n\n\\[[A]] [[T/B.md]]"},
-		{name: "インライン HTML 内の Markdown", body: "本文 <span>\\[[A]]</span> [[B]]", want: "本文 <span>\\[[A]]</span> [[T/B.md]]"},
+		{name: "HTMLブロック内のバックスラッシュ", body: "<div>\n\\[[A]]\n</div>\n\n[[B]]", want: "<div>\n\\[[T/A.md]]\n</div>\n\n[[T/B.md]]"},
+		{name: "HTMLブロック内の3本のバックスラッシュ", body: "<div>\n\\\\\\[[A]]\n</div>\n\n[[B]]", want: "<div>\n\\\\\\[[T/A.md]]\n</div>\n\n[[T/B.md]]"},
+		{name: "引用のHTMLブロック", body: "> <div>\n> \\[[A]]\n> </div>\n\n[[B]]", want: "> <div>\n> \\[[T/A.md]]\n> </div>\n\n[[T/B.md]]"},
+		{name: "HTMLブロックの後のMarkdown", body: "<div>\\[[A]]</div>\n\n\\[[A]] [[B]]", want: "<div>\\[[T/A.md]]</div>\n\n\\[[A]] [[T/B.md]]"},
+		{name: "インラインHTML内のMarkdown", body: "本文 <span>\\[[A]]</span> [[B]]", want: "本文 <span>\\[[A]]</span> [[T/B.md]]"},
 		{name: "拒否されたリンクのラベル", body: "[x \\[[A]]](tel:+81-3-0000-0000) [[B]]", want: "[x \\[[A]]](tel:+81-3-0000-0000) [[T/B.md]]"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if got := RewriteWikilinks(tt.body, "T", paths); got != tt.want {
-				t.Errorf("RewriteWikilinks() = %q, want %q", got, tt.want)
+				t.Errorf("RewriteWikilinks() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}
@@ -504,71 +504,71 @@ func TestRewriteWikilinks_RenderedElementBoundaries(t *testing.T) {
 		titles []string
 	}{
 		{
-			name: "independent code after a quote",
+			name: "引用の後ろの独立したcode",
 			body: "> <pre>\n> [[A]]\n\n<code>[[B]]",
 			want: "> <pre>\n> [[A]]\n\n<code>[[B]]",
 		},
 		{
-			name: "independent script after a quote",
+			name: "引用の後ろの独立したscript",
 			body: "> <pre>\n> [[A]]\n\n<script>[[B]]",
 			want: "> <pre>\n> [[A]]\n\n<script>[[B]]",
 		},
 		{
-			name:   "late end tag cannot extend a quote boundary",
+			name:   "遅れて来た終了タグは引用の境界を広げない",
 			body:   "> <pre>\n> [[A]]\n\n[[B]]\n\n</pre>\n\n[[C]]",
 			want:   "> <pre>\n> [[A]]\n\n[[T/B.md]]\n\n</pre>\n\n[[T/C.md]]",
 			titles: []string{"B", "C"},
 		},
 		{
-			name:   "independent table cells",
+			name:   "独立した表のセル",
 			body:   "| x | y |\n| - | - |\n| <code>[[A]] | <code>[[B]] |\n\n[[C]]",
 			want:   "| x | y |\n| - | - |\n| <code>[[A]] | <code>[[B]] |\n\n[[T/C.md]]",
 			titles: []string{"C"},
 		},
 		{
-			name:   "expired same-name elements before a late end tag",
+			name:   "遅れて来た終了タグより前で期限が切れた同名の要素",
 			body:   "| x | y |\n| - | - |\n| <code>[[A]] | <code>[[B]] |\n\n</code> [[C]]",
 			want:   "| x | y |\n| - | - |\n| <code>[[A]] | <code>[[B]] |\n\n</code> [[T/C.md]]",
 			titles: []string{"C"},
 		},
 		{
-			name:   "nested quote ends before the outer quote",
+			name:   "入れ子の引用が外側の引用より先に終わる",
 			body:   "> > <pre>\n> > [[A]]\n>\n> [[B]]\n\n[[C]]",
 			want:   "> > <pre>\n> > [[A]]\n>\n> [[T/B.md]]\n\n[[T/C.md]]",
 			titles: []string{"B", "C"},
 		},
 		{
-			name:   "later pre in the outer quote gets its own boundary",
+			name:   "外側の引用内で後から開くpreは独自の境界を持つ",
 			body:   "> > <pre>\n> > [[A]]\n>\n> <pre>\n> [[B]]\n\n[[C]]",
 			want:   "> > <pre>\n> > [[A]]\n>\n> <pre>\n> [[B]]\n\n[[T/C.md]]",
 			titles: []string{"C"},
 		},
 		{
-			name:   "code after an incomplete tag",
+			name:   "不完全なタグの後ろのcode",
 			body:   "<img\n<code>[[A]]</code> [[B]]",
 			want:   "<img\n<code>[[A]]</code> [[T/B.md]]",
 			titles: []string{"B"},
 		},
 		{
-			name:   "code after an unclosed attribute quote",
+			name:   "閉じていない属性の引用符の後ろのcode",
 			body:   "<img title=\"\n<code>[[A]]</code> [[B]]",
 			want:   "<img title=\"\n<code>[[A]]</code> [[T/B.md]]",
 			titles: []string{"B"},
 		},
 		{
-			name:   "multiple incomplete tags",
+			name:   "複数の不完全なタグ",
 			body:   "<img\n<code>[[A]]</code> <img\n<code>[[B]]</code> [[C]]",
 			want:   "<img\n<code>[[A]]</code> <img\n<code>[[B]]</code> [[T/C.md]]",
 			titles: []string{"C"},
 		},
 		{
-			name:   "image label HTML cannot protect following text",
+			name:   "画像のラベルのHTMLは後続のテキストを保護できない",
 			body:   "![<code>[[A]]](/attachments/01A) [[B]]",
 			want:   "![<code>[[A]]](/attachments/01A) [[T/B.md]]",
 			titles: []string{"B"},
 		},
 		{
-			name:   "image label link cannot close an outer anchor",
+			name:   "画像のラベルのリンクは外側のアンカーを閉じられない",
 			body:   "<a href=\"/x\">![alt [link](/attachments/01A)](/attachments/01B) [[A]]</a> [[B]]",
 			want:   "<a href=\"/x\">![alt [link](/attachments/01A)](/attachments/01B) [[A]]</a> [[T/B.md]]",
 			titles: []string{"B"},
@@ -581,18 +581,18 @@ func TestRewriteWikilinks_RenderedElementBoundaries(t *testing.T) {
 
 			matches := markup.ScanWikilinkMatches(tt.body, "T")
 			if len(matches) != len(tt.titles) {
-				t.Fatalf("ScanWikilinkMatches() = %v, want titles %v", matches, tt.titles)
+				t.Fatalf("ScanWikilinkMatches() = %v、期待値 = タイトル%v", matches, tt.titles)
 			}
 			for i, match := range matches {
 				if match.Key.TopicName != "T" || match.Key.PageTitle != tt.titles[i] {
-					t.Errorf("match[%d].Key = %v, want T/%s", i, match.Key, tt.titles[i])
+					t.Errorf("match[%d].Key = %v、期待値 = T/%s", i, match.Key, tt.titles[i])
 				}
 				if got := tt.body[match.Start:match.Stop]; got != "[["+tt.titles[i]+"]]" {
-					t.Errorf("match[%d] source = %q, want [[%s]]", i, got, tt.titles[i])
+					t.Errorf("match[%d]のsource = %q、期待値 = [[%s]]", i, got, tt.titles[i])
 				}
 			}
 			if got := RewriteWikilinks(tt.body, "T", paths); got != tt.want {
-				t.Errorf("RewriteWikilinks() = %q, want %q", got, tt.want)
+				t.Errorf("RewriteWikilinks() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}
@@ -611,7 +611,7 @@ func TestRewriteWikilinks_ElementScopeEndTags(t *testing.T) {
 		want string
 	}{
 		{
-			name: "囲む要素の終了タグが中の pre を終わらせる",
+			name: "囲む要素の終了タグが中のpreを終わらせる",
 			body: "<div><pre></div>[[A]]",
 			want: "<div><pre></div>[[T/A.md]]",
 		},
@@ -621,7 +621,7 @@ func TestRewriteWikilinks_ElementScopeEndTags(t *testing.T) {
 			want: "<h1></li><pre></h1>[[T/A.md]]",
 		},
 		{
-			name: "formatting element は開き直される",
+			name: "formatting elementは開き直される",
 			body: "<div><code></div>[[A]]",
 			want: "<div><code></div>[[A]]",
 		},
@@ -631,7 +631,7 @@ func TestRewriteWikilinks_ElementScopeEndTags(t *testing.T) {
 			want: "<div></div><code><table></code>[[A]]",
 		},
 		{
-			name: "規則を持たない終了タグは special 要素で止まる",
+			name: "規則を持たない終了タグはspecial要素で止まる",
 			body: "<span><pre></span>[[A]]",
 			want: "<span><pre></span>[[A]]",
 		},
@@ -646,7 +646,7 @@ func TestRewriteWikilinks_ElementScopeEndTags(t *testing.T) {
 			want: "<table><td><code>[[A]]</code></td></table>[[T/B.md]]",
 		},
 		{
-			name: "raw text の中の Markdown リンクは a を閉じない",
+			name: "raw textの中のMarkdownリンクはaを閉じない",
 			body: `<a href="/x"><textarea>[l](/x)[[A]]`,
 			want: `<a href="/x"><textarea>[l](/x)[[A]]`,
 		},
@@ -657,7 +657,7 @@ func TestRewriteWikilinks_ElementScopeEndTags(t *testing.T) {
 			t.Parallel()
 
 			if got := RewriteWikilinks(tt.body, "T", paths); got != tt.want {
-				t.Errorf("RewriteWikilinks() = %q, want %q", got, tt.want)
+				t.Errorf("RewriteWikilinks() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}

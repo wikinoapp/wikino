@@ -26,7 +26,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// mockTurnstileVerifier はテスト用のTurnstile検証モック
+// mockTurnstileVerifierはテスト用のTurnstile検証モック
 type mockTurnstileVerifier struct {
 	valid bool
 	err   error
@@ -36,7 +36,7 @@ func (m *mockTurnstileVerifier) Verify(_ context.Context, _ string) (bool, error
 	return m.valid, m.err
 }
 
-// mockJobInserter はテスト用のモック inserter
+// mockJobInserterはテスト用のモックinserter
 type mockJobInserter struct {
 	called bool
 	args   river.JobArgs
@@ -124,12 +124,12 @@ func TestCreate_Success(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/email_confirmation/edit" {
-		t.Errorf("wrong redirect location: got %v want /email_confirmation/edit", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /email_confirmation/edit", location)
 	}
 
 	cookies := rr.Result().Cookies()
@@ -141,18 +141,18 @@ func TestCreate_Success(t *testing.T) {
 		}
 	}
 	if emailConfirmationCookie == nil {
-		t.Error("email_confirmation_id cookie not set")
+		t.Error("email_confirmation_idのCookieがセットされていない")
 	}
 
 	if !setup.mockInserter.called {
-		t.Error("Insert was not called")
+		t.Error("Insertが呼ばれていない")
 	}
 	emailArgs, ok := setup.mockInserter.args.(dispatcher.SendEmailConfirmationArgs)
 	if !ok {
-		t.Fatalf("args の型が SendEmailConfirmationArgs ではありません: %T", setup.mockInserter.args)
+		t.Fatalf("argsの型がSendEmailConfirmationArgsではありません: %T", setup.mockInserter.args)
 	}
 	if emailArgs.Email != "newuser@example.com" {
-		t.Errorf("enqueued email = %s, want newuser@example.com", emailArgs.Email)
+		t.Errorf("キューに入ったメールアドレス = %s、期待値 = newuser@example.com", emailArgs.Email)
 	}
 }
 
@@ -181,18 +181,18 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	cookies := rr.Result().Cookies()
 	for _, c := range cookies {
 		if c.Name == session.EmailConfirmationCookieName {
-			t.Error("email_confirmation_id cookie should not be set for Turnstile failure")
+			t.Error("Turnstileの失敗時にemail_confirmation_idのCookieがセットされている")
 		}
 	}
 
 	if setup.mockInserter.called {
-		t.Error("Insert should not be called")
+		t.Error("Insertが呼ばれている")
 	}
 }
 
@@ -221,12 +221,12 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, `action="/email_confirmation"`) {
-		t.Error("sign up form not found in response")
+		t.Error("レスポンスにサインアップのフォームが見つからない")
 	}
 }
 
@@ -255,7 +255,7 @@ func TestCreate_EmptyEmail(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 }
 
@@ -289,16 +289,16 @@ func TestCreate_EmailAlreadyRegistered(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "既に登録されています") {
-		t.Error("email already registered error message not found in response")
+		t.Error("レスポンスにメールアドレス登録済みのエラーメッセージが見つからない")
 	}
 
 	if setup.mockInserter.called {
-		t.Error("Insert should not be called for existing email")
+		t.Error("既存のメールアドレスでInsertが呼ばれている")
 	}
 }
 
@@ -332,11 +332,11 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	if !setup.mockInserter.called {
-		t.Error("Insert was not called")
+		t.Error("Insertが呼ばれていない")
 	}
 }
 
@@ -348,7 +348,7 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 
 	setup := newTestHandlerForCreate(t, queries, true)
 
-	// 同じIPから5回リクエスト（制限内）
+	// 同じIPから5回リクエスト (制限内)
 	for i := 0; i < 5; i++ {
 		form := url.Values{}
 		form.Set("email", "user"+string(rune('a'+i))+"@example.com")
@@ -368,7 +368,7 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 		setup.handler.Create(rr, req)
 
 		if rr.Code != http.StatusFound {
-			t.Errorf("request %d: wrong status code: got %v want %v", i+1, rr.Code, http.StatusFound)
+			t.Errorf("リクエスト%d: ステータスコード = %v、期待値 = %v", i+1, rr.Code, http.StatusFound)
 		}
 	}
 
@@ -391,25 +391,18 @@ func TestCreate_RateLimitExceeded_IP(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("6th request: wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("6回目のリクエスト: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "リクエストが多すぎます") {
-		t.Error("rate limit exceeded message not found in response")
+		t.Error("レスポンスにレート制限超過のメッセージが見つからない")
 	}
 }
 
-// TestCreate_RateLimit_PrioritizesCFConnectingIP locks in that the IP rate-limit
-// key is derived from internal/clientip (CF-Connecting-IP first). Requests that
-// share the same CF-Connecting-IP fall into one bucket even when X-Forwarded-For
-// differs, so the limit triggers on the 6th request; if the handler keyed on
-// X-Forwarded-For instead, each request would land in a separate bucket and never
-// be limited.
-//
-// [Ja] IP レート制限キーが internal/clientip (CF-Connecting-IP 優先) から導出される
-// ことを固定する。X-Forwarded-For が異なっても CF-Connecting-IP が同じなら同一バケットに
-// 入り、6 回目で制限が発火する。もしハンドラーが X-Forwarded-For をキーにしていたら、
+// IPレート制限キーがinternal/clientip (CF-Connecting-IP優先) から導出される
+// ことを固定する。X-Forwarded-Forが異なってもCF-Connecting-IPが同じなら同一バケットに
+// 入り、6回目で制限が発火する。もしハンドラーがX-Forwarded-Forをキーにしていたら、
 // 各リクエストは別バケットになり制限されない。
 func TestCreate_RateLimit_PrioritizesCFConnectingIP(t *testing.T) {
 	t.Parallel()
@@ -421,12 +414,9 @@ func TestCreate_RateLimit_PrioritizesCFConnectingIP(t *testing.T) {
 
 	const cfConnectingIP = "203.0.113.10"
 
-	// Stay within the limits: 5 requests (IP cap is 5/hour), each with a distinct
-	// email to avoid the per-email cap (3/hour) and a varying X-Forwarded-For so
-	// only the shared CF-Connecting-IP can be the rate-limit key.
-	// [Ja] 制限内に収める: IP 上限 (5/時間) ぶんの 5 回。メール上限 (3/時間) を避けるため
-	// 各リクエストは別メールにし、X-Forwarded-For を毎回変えることで、共通の
-	// CF-Connecting-IP だけがレート制限キーになり得る状況を作る。
+	// 制限内に収める: IP上限 (5/時間) ぶんの5回。メール上限 (3/時間) を避けるため
+	// 各リクエストは別メールにし、X-Forwarded-Forを毎回変えることで、共通の
+	// CF-Connecting-IPだけがレート制限キーになり得る状況を作る。
 	for i := 0; i < 5; i++ {
 		form := url.Values{}
 		form.Set("email", fmt.Sprintf("cfip%d@example.com", i))
@@ -447,13 +437,11 @@ func TestCreate_RateLimit_PrioritizesCFConnectingIP(t *testing.T) {
 		setup.handler.Create(rr, req)
 
 		if rr.Code != http.StatusFound {
-			t.Errorf("request %d: wrong status code: got %v want %v", i+1, rr.Code, http.StatusFound)
+			t.Errorf("リクエスト%d: ステータスコード = %v、期待値 = %v", i+1, rr.Code, http.StatusFound)
 		}
 	}
 
-	// The 6th request shares the CF-Connecting-IP (with yet another X-Forwarded-For),
-	// so it is rejected by the IP rate limit.
-	// [Ja] 6 回目は CF-Connecting-IP が同じ (X-Forwarded-For はさらに別) なので IP 制限で拒否される。
+	// 6回目はCF-Connecting-IPが同じ (X-Forwarded-Forはさらに別) なのでIP制限で拒否される。
 	form := url.Values{}
 	form.Set("email", "cfip5@example.com")
 	form.Set("event", "signup")
@@ -473,12 +461,12 @@ func TestCreate_RateLimit_PrioritizesCFConnectingIP(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("6th request: wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("6回目のリクエスト: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "リクエストが多すぎます") {
-		t.Error("rate limit exceeded message not found in response")
+		t.Error("レスポンスにレート制限超過のメッセージが見つからない")
 	}
 }
 
@@ -490,7 +478,7 @@ func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 
 	setup := newTestHandlerForCreate(t, queries, true)
 
-	// 同じメールアドレスで3回リクエスト（制限内、異なるIPから）
+	// 同じメールアドレスで3回リクエスト (制限内、異なるIPから)
 	for i := 0; i < 3; i++ {
 		form := url.Values{}
 		form.Set("email", "sameuser@example.com")
@@ -510,7 +498,7 @@ func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 		setup.handler.Create(rr, req)
 
 		if rr.Code != http.StatusFound {
-			t.Errorf("request %d: wrong status code: got %v want %v", i+1, rr.Code, http.StatusFound)
+			t.Errorf("リクエスト%d: ステータスコード = %v、期待値 = %v", i+1, rr.Code, http.StatusFound)
 		}
 	}
 
@@ -533,11 +521,11 @@ func TestCreate_RateLimitExceeded_Email(t *testing.T) {
 	setup.handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("4th request: wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("4回目のリクエスト: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "リクエストが多すぎます") {
-		t.Error("rate limit exceeded message not found in response")
+		t.Error("レスポンスにレート制限超過のメッセージが見つからない")
 	}
 }

@@ -10,20 +10,20 @@ import (
 
 const suggestionCommentBodyMaxLength = 10000
 
-// SuggestionCommentCreateValidator は編集提案コメント作成のバリデーションを行う
+// SuggestionCommentCreateValidatorは編集提案コメント作成のバリデーションを行う
 type SuggestionCommentCreateValidator struct{}
 
-// NewSuggestionCommentCreateValidator は SuggestionCommentCreateValidator を生成する
+// NewSuggestionCommentCreateValidatorはSuggestionCommentCreateValidatorを生成する
 func NewSuggestionCommentCreateValidator() *SuggestionCommentCreateValidator {
 	return &SuggestionCommentCreateValidator{}
 }
 
-// SuggestionCommentCreateValidatorInput はバリデーションの入力パラメータ
+// SuggestionCommentCreateValidatorInputはバリデーションの入力パラメータ
 type SuggestionCommentCreateValidatorInput struct {
 	Body string
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *SuggestionCommentCreateValidator) Validate(ctx context.Context, input SuggestionCommentCreateValidatorInput) error {
 	ve := model.NewValidationError()
 
@@ -42,20 +42,20 @@ func (v *SuggestionCommentCreateValidator) Validate(ctx context.Context, input S
 	return nil
 }
 
-// SuggestionCommentUpdateValidator は編集提案コメント更新のバリデーションを行う
+// SuggestionCommentUpdateValidatorは編集提案コメント更新のバリデーションを行う
 type SuggestionCommentUpdateValidator struct{}
 
-// NewSuggestionCommentUpdateValidator は SuggestionCommentUpdateValidator を生成する
+// NewSuggestionCommentUpdateValidatorはSuggestionCommentUpdateValidatorを生成する
 func NewSuggestionCommentUpdateValidator() *SuggestionCommentUpdateValidator {
 	return &SuggestionCommentUpdateValidator{}
 }
 
-// SuggestionCommentUpdateValidatorInput はバリデーションの入力パラメータ
+// SuggestionCommentUpdateValidatorInputはバリデーションの入力パラメータ
 type SuggestionCommentUpdateValidatorInput struct {
 	Body string
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *SuggestionCommentUpdateValidator) Validate(ctx context.Context, input SuggestionCommentUpdateValidatorInput) error {
 	ve := model.NewValidationError()
 

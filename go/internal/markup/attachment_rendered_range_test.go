@@ -23,20 +23,20 @@ func TestScanAttachmentRefMatches_PreservesParsedDocument(t *testing.T) {
 			first := scanAttachmentRefMatches(source, document, before, true)
 			second := scanAttachmentRefMatches(source, document, before, true)
 			if !reflect.DeepEqual(first, second) {
-				t.Errorf("repeat scan changed matches: %v / %v", first, second)
+				t.Errorf("再スキャンで一致が変わった: %v / %v", first, second)
 			}
 			after, err := renderSanitized(source, document)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if after != before {
-				t.Errorf("document changed: before=%q after=%q", before, after)
+				t.Errorf("ドキュメントが変わった: 変更前 = %q、変更後 = %q", before, after)
 			}
 			if string(source) != body {
-				t.Errorf("source changed: %q", source)
+				t.Errorf("ソースが変わった: %q", source)
 			}
 			if strings.Contains(after, "Wikino") {
-				t.Errorf("marker leaked into output: %s", after)
+				t.Errorf("出力にマーカーが漏れている: %s", after)
 			}
 		})
 	}

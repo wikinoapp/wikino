@@ -18,7 +18,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// newShowRequest はchiのURLパラメータ付きGETリクエストを作成するヘルパーです
+// newShowRequestはchiのURLパラメータ付きGETリクエストを作成するヘルパーです
 func newShowRequest(t *testing.T, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -49,7 +49,7 @@ func TestShow_未ログイン時に401が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusUnauthorized {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnauthorized)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnauthorized)
 	}
 }
 
@@ -77,7 +77,7 @@ func TestShow_存在しないスペースで404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -116,7 +116,7 @@ func TestShow_スペースメンバーでない場合に404が返る(t *testing.
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -144,7 +144,7 @@ func TestShow_不正なページ番号で404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -196,14 +196,14 @@ func TestShow_正常系_リンクなしでOOBスワップレスポンスが返�
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// OOBスワップ用の要素が含まれること
 	if !strings.Contains(body, `hx-swap-oob="innerHTML"`) {
-		t.Error("response should contain OOB swap attributes")
+		t.Error("レスポンスにOOBスワップの属性が含まれていない")
 	}
 }
 
@@ -263,12 +263,12 @@ func TestShow_正常系_リンクありでレスポンスにリンク先が含�
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "Linked Page") {
-		t.Error("response should contain linked page title 'Linked Page'")
+		t.Error("レスポンスにリンク先ページのタイトル'Linked Page'が含まれていない")
 	}
 }
 
@@ -344,26 +344,21 @@ func TestShow_正常系_下書きのリンクが優先される(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	if !strings.Contains(body, "Draft Link") {
-		t.Error("response should contain draft linked page title 'Draft Link'")
+		t.Error("レスポンスに下書きのリンク先ページのタイトル'Draft Link'が含まれていない")
 	}
 
 	if strings.Contains(body, "Original Link") {
-		t.Error("response should not contain original linked page title 'Original Link'")
+		t.Error("レスポンスに元のリンク先ページのタイトル'Original Link'が含まれている")
 	}
 }
 
-// TestShow_OutOfRangePageStillReturnsTheRemainingLinks pins what the draft refresh answers when the
-// screen's page number outlives the listing it came from: every remaining link, not an empty
-// container. The response replaces the container instead of appending to it, so returning nothing
-// would blank the editor's link list until the next full page load.
-//
-// [Ja] TestShow_OutOfRangePageStillReturnsTheRemainingLinks は、画面のページ番号が一覧より長生き
+// TestShow_OutOfRangePageStillReturnsTheRemainingLinksは、画面のページ番号が一覧より長生き
 // したときに下書き再取得が何を返すかを固定する。返すのは空のコンテナではなく残っているリンク全部で
 // ある。本応答はコンテナへ追記せず差し替えるため、何も返さないと次のフルページ読み込みまで編集画面の
 // リンク一覧が空のままになってしまう。
@@ -432,21 +427,18 @@ func TestShow_OutOfRangePageStillReturnsTheRemainingLinks(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "Link Page 1") {
-		t.Error("links_page=1 should contain 'Link Page 1'")
+		t.Error("links_page=1に'Link Page 1'が含まれていない")
 	}
 	if !strings.Contains(body, "Link Page 2") {
-		t.Error("links_page=1 should contain 'Link Page 2'")
+		t.Error("links_page=1に'Link Page 2'が含まれていない")
 	}
 
-	// A page number the listing no longer has still returns every remaining link while it stays
-	// within the cumulative-fetch limit.
-	//
-	// [Ja] 一覧がもう持たないページ番号でも、累積取得上限内なら残っているリンクをすべて返す。
+	// 一覧がもう持たないページ番号でも、累積取得上限内なら残っているリンクをすべて返す。
 	limitQuery := fmt.Sprintf("%s=%d", viewmodel.LinkPageQueryParam, usecase.MaxCumulativeRelatedPagePages)
 	req2 := newShowRequest(t, "/s/show-page/pages/1/draft_page?"+limitQuery, map[string]string{
 		"space_identifier": "show-page",
@@ -460,21 +452,18 @@ func TestShow_OutOfRangePageStillReturnsTheRemainingLinks(t *testing.T) {
 	handler.Show(rr2, req2)
 
 	if rr2.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr2.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr2.Code, http.StatusOK)
 	}
 
 	body2 := rr2.Body.String()
 	if !strings.Contains(body2, "Link Page 1") {
-		t.Errorf("links_page=%d should still contain 'Link Page 1'", usecase.MaxCumulativeRelatedPagePages)
+		t.Errorf("links_page=%dに'Link Page 1'が含まれなくなっている", usecase.MaxCumulativeRelatedPagePages)
 	}
 	if !strings.Contains(body2, "Link Page 2") {
-		t.Errorf("links_page=%d should still contain 'Link Page 2'", usecase.MaxCumulativeRelatedPagePages)
+		t.Errorf("links_page=%dに'Link Page 2'が含まれなくなっている", usecase.MaxCumulativeRelatedPagePages)
 	}
 
-	// The next page of every related-page listing is rejected before a cumulative query can exceed
-	// the server-side budget.
-	//
-	// [Ja] 各関連ページ一覧の次ページは、累積クエリがサーバー側の予算を超える前に拒否する。
+	// 各関連ページ一覧の次ページは、累積クエリがサーバー側の予算を超える前に拒否する。
 	for _, param := range []string{viewmodel.LinkPageQueryParam, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.PageBacklinkPageQueryParam} {
 		t.Run(param, func(t *testing.T) {
 			overLimitQuery := fmt.Sprintf("%s=%d", param, usecase.MaxCumulativeRelatedPagePages+1)
@@ -488,18 +477,14 @@ func TestShow_OutOfRangePageStillReturnsTheRemainingLinks(t *testing.T) {
 			rr3 := httptest.NewRecorder()
 			handler.Show(rr3, req3)
 			if rr3.Code != http.StatusNotFound {
-				t.Errorf("%s past cumulative limit status = %d, want %d", param, rr3.Code, http.StatusNotFound)
+				t.Errorf("%sの累積上限を超えたときのステータス = %d、期待値 = %d", param, rr3.Code, http.StatusNotFound)
 			}
 		})
 	}
 }
 
-// TestShow_ReturnsEveryPageThroughTheRequestedOne pins that the draft refresh re-renders the whole
-// range the reader has loaded. htmx appends each "load more" page to the container, so a response
-// carrying the requested page alone would drop everything before it.
-//
-// [Ja] TestShow_ReturnsEveryPageThroughTheRequestedOne は、下書き再取得が閲覧者の読み込み済みの
-// 範囲すべてを描画し直すことを固定する。htmx は「もっと見る」の各ページをコンテナへ追記するため、
+// TestShow_ReturnsEveryPageThroughTheRequestedOneは、下書き再取得が閲覧者の読み込み済みの
+// 範囲すべてを描画し直すことを固定する。htmxは「もっと見る」の各ページをコンテナへ追記するため、
 // 要求ページだけを返す応答ではそれ以前の範囲が消えてしまう。
 func TestShow_ReturnsEveryPageThroughTheRequestedOne(t *testing.T) {
 	t.Parallel()
@@ -529,9 +514,7 @@ func TestShow_ReturnsEveryPageThroughTheRequestedOne(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		Build()
 
-	// The listing is one card past its first page, so page 2 holds the last card alone.
-	//
-	// [Ja] 一覧は 1 ページ目より 1 枚多いため、2 ページ目には最後のカードだけが載る。
+	// 一覧は1ページ目より1枚多いため、2ページ目には最後のカードだけが載る。
 	baseTime := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
 	linkedCount := int(viewmodel.LinkLimit) + 1
 	linkedPageIDs := make([]model.PageID, 0, linkedCount)
@@ -567,7 +550,7 @@ func TestShow_ReturnsEveryPageThroughTheRequestedOne(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -577,15 +560,13 @@ func TestShow_ReturnsEveryPageThroughTheRequestedOne(t *testing.T) {
 
 	for _, want := range []string{firstOfPage1, lastOfPage1, onlyOfPage2} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 
-	// The listing has nothing left, so the response must not offer another page.
-	//
-	// [Ja] 一覧に残りは無いため、応答はこれ以上のページを提示してはならない。
+	// 一覧に残りは無いため、応答はこれ以上のページを提示してはならない。
 	if strings.Contains(body, "/s/show-cumulative/pages/1/link_list?") {
-		t.Error("response should not render a load-more link once the last page is shown")
+		t.Error("最後のページを表示したのにレスポンスに「さらに読み込む」リンクが描画されている")
 	}
 }
 
@@ -645,12 +626,12 @@ func TestShow_正常系_下書きにリンクを追加するとレスポンス�
 	handler.Show(rr1, req1)
 
 	if rr1.Code != http.StatusOK {
-		t.Fatalf("first request: wrong status code: got %v want %v", rr1.Code, http.StatusOK)
+		t.Fatalf("1回目のリクエスト: ステータスコード = %v、期待値 = %v", rr1.Code, http.StatusOK)
 	}
 
 	body1 := rr1.Body.String()
 	if strings.Contains(body1, "Linked Target") {
-		t.Error("first request: should not contain 'Linked Target' before draft is saved")
+		t.Error("1回目のリクエスト: 下書きの保存前に'Linked Target'が含まれている")
 	}
 
 	// 2. 下書きが保存された状態をシミュレート
@@ -675,12 +656,12 @@ func TestShow_正常系_下書きにリンクを追加するとレスポンス�
 	handler.Show(rr2, req2)
 
 	if rr2.Code != http.StatusOK {
-		t.Fatalf("second request: wrong status code: got %v want %v", rr2.Code, http.StatusOK)
+		t.Fatalf("2回目のリクエスト: ステータスコード = %v、期待値 = %v", rr2.Code, http.StatusOK)
 	}
 
 	body2 := rr2.Body.String()
 	if !strings.Contains(body2, "Linked Target") {
-		t.Error("second request: should contain 'Linked Target' after draft with wikilink is saved")
+		t.Error("2回目のリクエスト: Wikiリンクを含む下書きの保存後に'Linked Target'が含まれていない")
 	}
 }
 
@@ -742,17 +723,17 @@ func TestShow_正常系_下書きが存在する場合に保存時刻フラグ�
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// 保存時刻のOOBスワップ要素が含まれること
 	if !strings.Contains(body, `id="page-draft-saved-at"`) {
-		t.Error("response should contain saved time element with 'page-draft-saved-at' id")
+		t.Error("レスポンスにidが'page-draft-saved-at'の保存日時の要素が含まれていない")
 	}
 	if !strings.Contains(body, `hx-swap-oob="outerHTML"`) {
-		t.Error("response should contain outerHTML OOB swap for saved time")
+		t.Error("レスポンスに保存日時のouterHTMLのOOBスワップが含まれていない")
 	}
 }
 
@@ -804,33 +785,27 @@ func TestShow_正常系_下書きが存在しない場合に保存時刻フラ�
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// リンク一覧のOOBスワップ要素は含まれる
 	if !strings.Contains(body, `id="page-link-list"`) {
-		t.Error("response should contain link list OOB element")
+		t.Error("レスポンスにリンク一覧のOOBの要素が含まれていない")
 	}
 
-	// 保存時刻のOOBスワップ要素（outerHTML）は含まれないこと
+	// 保存時刻のOOBスワップ要素 (outerHTML) は含まれないこと
 	if strings.Contains(body, `id="page-draft-saved-at"`) {
-		t.Error("response should not contain saved time OOB swap when no draft exists")
+		t.Error("下書きが無いのにレスポンスに保存日時のOOBスワップが含まれている")
 	}
 }
 
-// TestShow_CombinedStateFromSeveralListingsKeepsEveryRange pins the far end of the editor's shared
-// state: a request that carries listings advanced by separate "load more" clicks gets every one of
-// those ranges back. Each fragment response advances only its own share of the shared state
-// (TestRelatedPageListResponses_AdvanceOnlyTheirOwnState), so by the time the draft refresh fires,
-// the state names one page per listing and this response has to honour all of them at once.
-//
-// [Ja] TestShow_CombinedStateFromSeveralListingsKeepsEveryRange は、編集画面で共有する状態の終端を
+// TestShow_CombinedStateFromSeveralListingsKeepsEveryRangeは、編集画面で共有する状態の終端を
 // 固定する。別々の「もっと見る」で進めた一覧を含むリクエストには、そのすべての範囲が返る。各
 // フラグメント応答は共有状態のうち自分の分だけを進めるため
 // (TestRelatedPageListResponses_AdvanceOnlyTheirOwnState)、下書き再取得が発火する時点で状態は一覧
-// ごとに 1 つのページを指しており、本応答はそれらを同時に満たす必要がある。
+// ごとに1つのページを指しており、本応答はそれらを同時に満たす必要がある。
 func TestShow_CombinedStateFromSeveralListingsKeepsEveryRange(t *testing.T) {
 	t.Parallel()
 
@@ -859,9 +834,7 @@ func TestShow_CombinedStateFromSeveralListingsKeepsEveryRange(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		Build()
 
-	// Both listings run one card past their first page, so each has a second page to advance to.
-	//
-	// [Ja] どちらの一覧も 1 ページ目より 1 枚多くし、それぞれに進める 2 ページ目を作る。
+	// どちらの一覧も1ページ目より1枚多くし、それぞれに進める2ページ目を作る。
 	baseTime := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
 	linkedCount := int(viewmodel.LinkLimit) + 1
 	linkedPageIDs := make([]model.PageID, 0, linkedCount)
@@ -909,7 +882,7 @@ func TestShow_CombinedStateFromSeveralListingsKeepsEveryRange(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -921,7 +894,7 @@ func TestShow_CombinedStateFromSeveralListingsKeepsEveryRange(t *testing.T) {
 	}
 	for _, want := range wantContains {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 }

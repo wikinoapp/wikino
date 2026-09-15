@@ -9,11 +9,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// addPasswordStrengthError は auth.ValidatePasswordStrength の結果を
+// addPasswordStrengthErrorはauth.ValidatePasswordStrengthの結果を
 // `password` フィールドのバリデーションエラーとして翻訳済みメッセージで追加する。
 //
-// auth は i18n に依存しない設計のため、sentinel error → 翻訳キーの解決はここで行う。
-// 文字数制限のメッセージは auth パッケージの定数 (Min/MaxPasswordLength) をプレースホルダー
+// authはi18nに依存しない設計のため、sentinel error → 翻訳キーの解決はここで行う。
+// 文字数制限のメッセージはauthパッケージの定数 (Min/MaxPasswordLength) をプレースホルダー
 // として埋め込み、定数変更時に翻訳本文との不整合が起きないようにしている。
 func addPasswordStrengthError(ctx context.Context, ve *model.ValidationError, password string) {
 	err := auth.ValidatePasswordStrength(password)

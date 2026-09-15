@@ -1,21 +1,21 @@
-// Package model はドメインモデルを定義します
+// Package modelはドメインモデルを定義します
 package model
 
 import (
 	"time"
 )
 
-// Locale はユーザーの言語設定を表す
+// Localeはユーザーの言語設定を表す
 type Locale int32
 
 const (
-	// LocaleJa は日本語
+	// LocaleJaは日本語
 	LocaleJa Locale = 0
-	// LocaleEn は英語
+	// LocaleEnは英語
 	LocaleEn Locale = 1
 )
 
-// User はユーザーのドメインモデル
+// Userはユーザーのドメインモデル
 type User struct {
 	ID          UserID
 	Email       string
@@ -28,10 +28,7 @@ type User struct {
 	DiscardedAt *time.Time
 }
 
-// Code returns the language tag of the locale, which is what i18n and the mail templates select a
-// translation by.
-//
-// [Ja] Code はロケールの言語タグを返す。i18n とメールテンプレートは、この値で翻訳を選ぶ。
+// Codeはロケールの言語タグを返す。i18nとメールテンプレートは、この値で翻訳を選ぶ。
 func (l Locale) Code() string {
 	if l == LocaleEn {
 		return "en"

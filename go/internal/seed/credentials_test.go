@@ -31,27 +31,18 @@ func TestFindCredentials(t *testing.T) {
 			}
 
 			if credentials.Email != tt.wantEmail {
-				t.Errorf("メールアドレスが %q であることを期待したが %q だった", tt.wantEmail, credentials.Email)
+				t.Errorf("メールアドレスが%qであることを期待したが%qだった", tt.wantEmail, credentials.Email)
 			}
-			// The password is shared by every account, so what this checks is
-			// that the plaintext of the roster comes back rather than the
-			// digest a run writes.
-			//
-			// [Ja] パスワードは全アカウント共通であるため、ここで確認しているのは、
+			// パスワードは全アカウント共通であるため、ここで確認しているのは、
 			// 実行が書き込むダイジェストではなく名簿の平文が返ることになる。
 			if credentials.Password != "seed-password" {
-				t.Errorf("パスワードが名簿に書いた値であることを期待したが %q だった", credentials.Password)
+				t.Errorf("パスワードが名簿に書いた値であることを期待したが%qだった", credentials.Password)
 			}
 		})
 	}
 }
 
-// TestFindCredentialsRejectsUnknownRole covers the one way a lookup fails
-// without the roster being at fault: a role nobody holds. Every role the
-// generators name is held by a roster that passes the checks, so a lookup that
-// finds nothing was asked for a name that does not exist.
-//
-// [Ja] TestFindCredentialsRejectsUnknownRole は、名簿に問題が無いまま引きが失敗する
+// TestFindCredentialsRejectsUnknownRoleは、名簿に問題が無いまま引きが失敗する
 // 唯一の場合を扱う。誰も持っていない役割を尋ねた場合である。生成器が名指しする役割は
 // 検査を通った名簿がすべて持っているため、何も見つからない引きは、存在しない名前を
 // 尋ねられたことを意味する。
@@ -63,22 +54,14 @@ func TestFindCredentialsRejectsUnknownRole(t *testing.T) {
 		t.Fatal("知らない役割のエラーを期待したがnilだった")
 	}
 
-	// The message lists the roles, because a misspelling is told apart from a
-	// role that was never added only by seeing what does exist.
-	//
-	// [Ja] メッセージが役割を並べるのは、書き間違いと、そもそも足されていない役割の
+	// メッセージが役割を並べるのは、書き間違いと、そもそも足されていない役割の
 	// 区別が、実際に存在するものを見て初めて付くため。
 	if !strings.Contains(err.Error(), string(roleOwner)) {
-		t.Errorf("エラーが指定できる役割を並べることを期待したが %q だった", err)
+		t.Errorf("エラーが指定できる役割を並べることを期待したが%qだった", err)
 	}
 }
 
-// TestFindCredentialsRejectsInvalidRoster checks that the whole roster is
-// looked over, not only the entry asked for. The browser verification signs in
-// as an account the seed created, and a roster the seed would refuse holds no
-// such account.
-//
-// [Ja] TestFindCredentialsRejectsInvalidRoster は、尋ねられた 1 件だけでなく名簿
+// TestFindCredentialsRejectsInvalidRosterは、尋ねられた1件だけでなく名簿
 // 全体が検査されることを確認する。ブラウザ確認がサインインするのはシードが作成した
 // アカウントであり、シードが拒否する名簿には、そのアカウントが存在しない。
 func TestFindCredentialsRejectsInvalidRoster(t *testing.T) {
@@ -92,7 +75,7 @@ func TestFindCredentialsRejectsInvalidRoster(t *testing.T) {
 		{
 			name: "尋ねた役割とは別の役割が重複しているとき",
 			body: strings.Replace(validRoster, `role = "guest"`, `role = "collaborator"`, 1),
-			want: "役割 collaborator の [[users]] が 2 件以上あります",
+			want: "役割 collaboratorの [[users]] が2件以上あります",
 		},
 		{
 			name: "知らないキーがあるとき",
@@ -110,7 +93,7 @@ func TestFindCredentialsRejectsInvalidRoster(t *testing.T) {
 				t.Fatal("エラーを期待したがnilだった")
 			}
 			if !strings.Contains(err.Error(), tt.want) {
-				t.Errorf("エラーが %q を含むことを期待したが %q だった", tt.want, err)
+				t.Errorf("エラーが%qを含むことを期待したが%qだった", tt.want, err)
 			}
 		})
 	}
@@ -126,13 +109,9 @@ func TestFindCredentialsRejectsMissingFile(t *testing.T) {
 		t.Fatal("名簿が無いときのエラーを期待したがnilだった")
 	}
 
-	// A developer who has not set the roster up meets this error through the
-	// browser verification as much as through the seed, so it has to point at
-	// the same file to copy.
-	//
-	// [Ja] 名簿を用意していない開発者は、シードからと同じくブラウザ確認からもこの
+	// 名簿を用意していない開発者は、シードからと同じくブラウザ確認からもこの
 	// エラーに出会うため、コピー元として同じファイルを案内する必要がある。
 	if !strings.Contains(err.Error(), rosterExamplePath) {
-		t.Errorf("エラーが %q を案内することを期待したが %q だった", rosterExamplePath, err)
+		t.Errorf("エラーが%qを案内することを期待したが%qだった", rosterExamplePath, err)
 	}
 }

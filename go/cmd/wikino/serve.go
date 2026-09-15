@@ -73,13 +73,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/worker"
 )
 
-// runServe starts the HTTP server: it loads the config, wires up the
-// dependencies, registers the routes and background workers, and blocks on
-// ListenAndServe until shutdown. It is the body of the `serve` subcommand.
-//
-// [Ja] runServe は HTTP サーバーを起動する。設定の読み込み・依存の組み立て・
+// runServeはHTTPサーバーを起動する。設定の読み込み・依存の組み立て・
 // ルートとバックグラウンドワーカーの登録を行い、シャットダウンまで
-// ListenAndServe でブロックする。`serve` サブコマンドの本体。
+// ListenAndServeでブロックする。`serve` サブコマンドの本体。
 func runServe() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -91,11 +87,8 @@ func runServe() {
 		os.Exit(1)
 	}
 
-	// Initialize Sentry. Empty DSN (e.g. local development) disables Sentry and
-	// the deferred Flush becomes a no-op.
-	//
-	// [Ja] Sentry を初期化する。DSN が空 (ローカル開発など) の場合は Sentry が無効化され、
-	// defer された Flush も no-op になる。
+	// Sentryを初期化する。DSNが空 (ローカル開発など) の場合はSentryが無効化され、
+	// deferされたFlushもno-opになる。
 	if err := wikinosentry.Init(wikinosentry.Config{
 		DSN:              cfg.SentryDSN,
 		Environment:      cfg.SentryEnvironment,
@@ -108,16 +101,10 @@ func runServe() {
 	}
 	defer wikinosentry.Flush(2 * time.Second)
 
-	// Route slog through Sentry: Error-level records become Sentry events while
-	// every level still reaches stderr through the underlying text handler.
-	// SetDefault must happen before any code path that can call slog.Error
-	// (DB connection, river client, etc.) so the Sentry handler covers
-	// startup failures too.
-	//
-	// [Ja] slog のデフォルトロガーを Sentry 連携付きハンドラーに差し替える。
-	// Error レベル以上は Sentry イベント化され、全レベルは引き続き標準エラー
-	// 出力にも届く。slog.Error を呼ぶ可能性のある処理 (DB 接続、river 起動など)
-	// より前に呼ぶことで、起動時のエラーも Sentry に届くようにする。
+	// slogのデフォルトロガーをSentry連携付きハンドラーに差し替える。
+	// Errorレベル以上はSentryイベント化され、全レベルは引き続き標準エラー
+	// 出力にも届く。slog.Errorを呼ぶ可能性のある処理 (DB接続、river起動など)
+	// より前に呼ぶことで、起動時のエラーもSentryに届くようにする。
 	slog.SetDefault(slog.New(wikinosentry.NewSlogHandler(
 		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}),
 	)))
@@ -167,12 +154,8 @@ func runServe() {
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 	exportRepo := repository.NewExportRepository(queries)
 
-	// The bucket holding the attachments and the archives an export writes. A deployment without
-	// it configured leaves the storage nil, which turns off the features that need it rather than
-	// stopping the server.
-	//
-	// [Ja] オブジェクトストレージを初期化する (添付ファイルとエクスポートの ZIP を置くバケット)。
-	// 設定が無いデプロイでは nil のままにし、それを必要とする機能だけを無効化する。
+	// オブジェクトストレージを初期化する (添付ファイルとエクスポートのZIPを置くバケット)。
+	// 設定が無いデプロイではnilのままにし、それを必要とする機能だけを無効化する。
 	var objectStorage storage.ObjectStorage
 	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
 		BucketName:      cfg.R2BucketName,
@@ -187,7 +170,7 @@ func runServe() {
 		objectStorage = s3Storage
 	}
 
-	// River クライアントを初期化（バックグラウンドジョブ用）
+	// Riverクライアントを初期化 (バックグラウンドジョブ用)
 	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter, worker.ExportDeps{
 		ExportRepo:      exportRepo,
 		SpaceRepo:       spaceRepo,
@@ -199,24 +182,24 @@ func runServe() {
 		ObjectStorage:   objectStorage,
 	})
 	if err != nil {
-		slog.Error("River クライアントの初期化に失敗しました", "error", err)
+		slog.Error("Riverクライアントの初期化に失敗しました", "error", err)
 		os.Exit(1)
 	}
 	defer func() {
 		stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer stopCancel()
 		if err := riverClient.Stop(stopCtx); err != nil {
-			slog.Error("River クライアントの停止に失敗しました", "error", err)
+			slog.Error("Riverクライアントの停止に失敗しました", "error", err)
 		}
 	}()
 
-	// River クライアントを起動
+	// Riverクライアントを起動
 	if err := riverClient.Start(ctx); err != nil {
-		slog.Error("River クライアントの起動に失敗しました", "error", err)
+		slog.Error("Riverクライアントの起動に失敗しました", "error", err)
 		os.Exit(1)
 	}
 
-	// Dispatcher を初期化（ジョブキューへの投入を抽象化）
+	// Dispatcherを初期化 (ジョブキューへの投入を抽象化)
 	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client())
 
 	// ユースケースを初期化
@@ -254,25 +237,25 @@ func runServe() {
 	authMiddleware := middleware.NewAuth(sessionMgr)
 	csrfMiddleware := middleware.NewCSRF(cfg)
 
-	// imgproxy ヘルパー / OgImageBuilder を初期化（環境変数が揃っている場合のみ有効）
-	// 環境変数が未設定でもサーバー起動は継続するが、その場合 /attachments/:id/og_image に到達した
-	// リクエストは 500 を受け取る。本番環境への適用ミスを早期に検知できるよう、起動時に WARN ログで
+	// imgproxyヘルパー / OgImageBuilderを初期化 (環境変数が揃っている場合のみ有効)
+	// 環境変数が未設定でもサーバー起動は継続するが、その場合 /attachments/:id/og_imageに到達した
+	// リクエストは500を受け取る。本番環境への適用ミスを早期に検知できるよう、起動時にWARNログで
 	// 状態を可視化する。
 	var ogImageBuilder *image.OgImageBuilder
 	switch {
 	case cfg.ImgproxyURL == "":
-		slog.Warn("WIKINO_IMGPROXY_URL が未設定のため og:image エンドポイントは無効。リクエストには 500 を返します")
+		slog.Warn("WIKINO_IMGPROXY_URLが未設定のためog:imageエンドポイントは無効。リクエストには500を返します")
 	case cfg.R2BucketName == "":
-		slog.Warn("WIKINO_R2_BUCKET_NAME が未設定のため og:image エンドポイントは無効。リクエストには 500 を返します")
+		slog.Warn("WIKINO_R2_BUCKET_NAMEが未設定のためog:imageエンドポイントは無効。リクエストには500を返します")
 	default:
 		imgproxyHelper, err := image.NewHelper(cfg.ImgproxyURL, cfg.ImgproxyKey, cfg.ImgproxySalt)
 		if err != nil {
-			slog.Error("imgproxy ヘルパーの初期化に失敗しました", "error", err)
+			slog.Error("imgproxyヘルパーの初期化に失敗しました", "error", err)
 			os.Exit(1)
 		}
 		ogImageBuilder, err = image.NewOgImageBuilder(imgproxyHelper, cfg.R2BucketName)
 		if err != nil {
-			slog.Error("OgImageBuilder の初期化に失敗しました", "error", err)
+			slog.Error("OgImageBuilderの初期化に失敗しました", "error", err)
 			os.Exit(1)
 		}
 	}
@@ -607,7 +590,7 @@ func runServe() {
 	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
 	r.NotFound(handler.NotFound)
 
-	// リバースプロキシミドルウェアを初期化（Rails版へのプロキシ）
+	// リバースプロキシミドルウェアを初期化 (Rails版へのプロキシ)
 	// 注: RailsAppURLが設定されている場合のみ有効化
 	// リバースプロキシはMethod OverrideやCSRFミドルウェアより前に配置する。
 	// これらのミドルウェアはr.ParseForm()やr.FormValue()でリクエストボディを
@@ -630,120 +613,85 @@ func runServe() {
 	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
 	r.Use(middleware.BodyLimit)
 
-	// Method Overrideミドルウェア（HTMLフォームからDELETE/PATCH/PUTを使用可能にする）
+	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
 	r.Use(middleware.MethodOverride)
 
 	// 共通ミドルウェア
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.RequestID)
-	// Client IP is resolved on demand via internal/clientip (CF-Connecting-IP first),
-	// so chi's IP middleware is intentionally not registered. chi's RealIP is also
-	// deprecated for IP spoofing (GHSA-3fxj-6jh8-hvhx) and must not be reintroduced.
-	//
-	// [Ja] クライアント IP は internal/clientip (CF-Connecting-IP 優先) で都度解決するため、
-	// chi の IP ミドルウェアは意図的に登録しない。chi の RealIP は IP spoofing
-	// (GHSA-3fxj-6jh8-hvhx) のため deprecated でもあり、再導入しないこと。
+	// クライアントIPはinternal/clientip (CF-Connecting-IP優先) で都度解決するため、
+	// chiのIPミドルウェアは意図的に登録しない。chiのRealIPはIP spoofing
+	// (GHSA-3fxj-6jh8-hvhx) のためdeprecatedでもあり、再導入しないこと。
 
-	// Recoverer must be registered before sentryhttp (= outer in the chain) so
-	// that the re-panic from sentryhttp (Repanic: true) is caught here and a
-	// 500 response is written. The Sentry SDK's own README also instructs to
-	// place the recovery middleware on the outside of sentryhttp.
-	//
-	// [Ja] Recoverer は sentryhttp より前 (= 外側) に登録する。sentryhttp が
-	// Repanic: true で再 panic したものをここで握り潰して 500 を返す。
-	// Sentry SDK 公式 README も「recovery middleware は sentryhttp より外側に
+	// Recovererはsentryhttpより前 (= 外側) に登録する。sentryhttpが
+	// Repanic: trueで再panicしたものをここで握り潰して500を返す。
+	// Sentry SDK公式READMEも「recovery middlewareはsentryhttpより外側に
 	// 置く」と指示している。
 	r.Use(chimiddleware.Recoverer)
 
-	// sentryhttp captures panics, sets per-request Hub on the context, and
-	// starts a Sentry performance transaction for each request. Repanic: true
-	// re-throws after capture so that Recoverer (outer) returns 500 to the
-	// client and the Go runtime's normal panic semantics are preserved.
-	//
-	// [Ja] sentryhttp はリクエスト単位の Hub を context に積み、panic を捕捉
-	// して Sentry に送信し、パフォーマンストランザクションを開始する。
-	// Repanic: true により捕捉後に再 panic することで、外側の Recoverer が
-	// 500 を返し、Go runtime の通常の panic セマンティクスも維持できる。
+	// sentryhttpはリクエスト単位のHubをcontextに積み、panicを捕捉
+	// してSentryに送信し、パフォーマンストランザクションを開始する。
+	// Repanic: trueにより捕捉後に再panicすることで、外側のRecovererが
+	// 500を返し、Go runtimeの通常のpanicセマンティクスも維持できる。
 	sentryHTTP := sentryhttp.New(sentryhttp.Options{Repanic: true})
 	r.Use(sentryHTTP.Handle)
 
-	// SentryTransaction rewrites the transaction name with chi's route pattern.
-	// It must be registered after sentryhttp (= inside the wrapper) so that the
-	// LIFO defer order guarantees the rewrite happens before sentryhttp's
-	// transaction.Finish() and before recoverWithSentry captures a panic event.
-	//
-	// [Ja] SentryTransaction はトランザクション名を chi のルートパターンに
-	// 上書きするミドルウェア。sentryhttp の後 (= 内側) に登録することで、LIFO の
-	// defer 順序により sentryhttp の transaction.Finish() や recoverWithSentry
-	// の panic 捕捉より先に名前の上書きが走ることを保証する。
+	// SentryTransactionはトランザクション名をchiのルートパターンに
+	// 上書きするミドルウェア。sentryhttpの後 (= 内側) に登録することで、LIFOの
+	// defer順序によりsentryhttpのtransaction.Finish() やrecoverWithSentry
+	// のpanic捕捉より先に名前の上書きが走ることを保証する。
 	r.Use(middleware.SentryTransaction)
 
 	r.Use(i18n.Middleware)
 	r.Use(csrfMiddleware.Middleware)
 	r.Use(flashMgr.Middleware)
 
-	// 静的ファイルの配信 (Tailwind CLI + esbuild のビルド結果)
+	// 静的ファイルの配信 (Tailwind CLI + esbuildのビルド結果)
 	fileServer := http.FileServer(http.Dir("./static"))
 	r.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
-	// ヘルスチェック（認証不要）
+	// ヘルスチェック (認証不要)
 	r.Get("/health", healthHandler.Show)
 
-	// Web App Manifest（認証不要）
+	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
 
-	// og:image 配信エンドポイント（認証不要、公開トピックの og:image を imgproxy 経由で配信する）
+	// og:image配信エンドポイント (認証不要、公開トピックのog:imageをimgproxy経由で配信する)
 	r.Get("/attachments/{attachment_id}/og_image", attachmentOgImageHandler.Show)
 
-	// トップページ（ログイン状態に応じてハンドラー内でリダイレクト）
+	// トップページ (ログイン状態に応じてハンドラー内でリダイレクト)
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.SetUser)
-		// SentryUserContext must run after the auth middleware so the user is
-		// already on the context. It attaches the user to this request's Sentry
-		// Hub scope; anonymous traffic no-ops, so SetUser (which permits both
-		// authenticated and anonymous requests) is the right placement.
-		//
-		// [Ja] SentryUserContext は認証ミドルウェアの後に置く (context にユーザー
-		// が乗ってから読むため)。本ミドルウェアは本リクエストの Sentry Hub
-		// スコープにユーザーを紐付け、未認証時は no-op になるため、認証必須でない
-		// SetUser の後に置いても問題ない。
+		// SentryUserContextは認証ミドルウェアの後に置く (contextにユーザー
+		// が乗ってから読むため)。本ミドルウェアは本リクエストのSentry Hub
+		// スコープにユーザーを紐付け、未認証時はno-opになるため、認証必須でない
+		// SetUserの後に置いても問題ない。
 		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
 
-		// Space detail page (public-topic pages are viewable even by non-members).
-		// [Ja] スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
+		// スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
 		r.Get("/s/{space_identifier}", spaceHandler.Show)
 
-		// トピック詳細画面（公開トピックは未ログインでも閲覧可能）
+		// トピック詳細画面 (公開トピックは未ログインでも閲覧可能)
 		r.Get("/s/{space_identifier}/topics/{topic_number}", topicHandler.Show)
 
-		// Page detail screen (public-topic pages are viewable even when signed out; a page in the
-		// trash is 404 unless the viewer holds the trash permission).
+		// ページ表示画面 (公開トピックのページは未ログインでも閲覧可能。ゴミ箱に入った
+		// ページはゴミ箱権限を持つ閲覧者以外には404)。
 		//
-		// HEAD is registered on its own because chi resolves routes per method and never falls
-		// back from GET, and the Rails route that used to answer HEAD on this path is gone.
-		// Without it a page that exists would answer 405 to HEAD while GET returns 200.
-		//
-		// [Ja] ページ表示画面 (公開トピックのページは未ログインでも閲覧可能。ゴミ箱に入った
-		// ページはゴミ箱権限を持つ閲覧者以外には 404)。
-		//
-		// chi はメソッドごとにルートを引き GET からフォールバックしないため、HEAD を単独で登録
-		// する。このパスの HEAD を受けていた Rails のルートは削除済みで、登録しないと存在する
-		// ページでも GET は 200・HEAD は 405 と食い違う。
+		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録
+		// する。このパスのHEADを受けていたRailsのルートは削除済みで、登録しないと存在する
+		// ページでもGETは200・HEADは405と食い違う。
 		r.Get("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 		r.Head("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 
-		// Link list / backlink lists (htmx). They continue the listings the page detail screen
-		// renders, which is public, so they sit in the same group as that screen.
-		//
-		// [Ja] リンク一覧・バックリンク一覧 (htmx)。公開のページ表示画面が描画する一覧の続きを返す
+		// リンク一覧・バックリンク一覧 (htmx)。公開のページ表示画面が描画する一覧の続きを返す
 		// ため、同画面と同じグループに置く。
 		r.Get("/s/{space_identifier}/pages/{page_number}/link_list", pageLinkListHandler.Show)
 		r.Get("/s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list", pageBacklinkListHandler.Show)
 		r.Get("/s/{space_identifier}/pages/{page_number}/backlinks", pageBacklinksHandler.Show)
 
-		// 編集提案（公開トピックは未ログインでも閲覧可能）
+		// 編集提案 (公開トピックは未ログインでも閲覧可能)
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions", suggestionHandler.Index)
 		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}", suggestionHandler.Show)
 		r.Get("/s/{space_identifier}/suggestions/{suggestion_number}/changes", suggestionChangeHandler.Index)
@@ -752,15 +700,9 @@ func runServe() {
 	// 未認証ユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireNoAuth)
-		// SentryUserContext is included here for consistency with the other
-		// groups. RequireNoAuth blocks authenticated requests with a redirect, so
-		// in practice the user is always nil and the middleware no-ops -- but
-		// keeping every group's chain uniform avoids surprises if a future route
-		// reuses this group with a different auth policy.
-		//
-		// [Ja] 他グループとチェーン構成を揃えるためここにも置く。RequireNoAuth は
+		// 他グループとチェーン構成を揃えるためここにも置く。RequireNoAuthは
 		// 認証済みリクエストをリダイレクトで弾くため、実際にはユーザーは常に
-		// nil で本ミドルウェアは no-op だが、将来このグループを別ポリシーで再利用
+		// nilで本ミドルウェアはno-opだが、将来このグループを別ポリシーで再利用
 		// しても破綻しないよう全グループでチェーンを統一する。
 		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
@@ -785,11 +727,8 @@ func runServe() {
 	// 認証済みユーザー専用ルート
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireAuth)
-		// SentryUserContext runs after RequireAuth so every request hitting an
-		// authenticated route carries the user on the Sentry Hub scope.
-		//
-		// [Ja] RequireAuth の後に置くことで、認証必須ルートに届くリクエストは
-		// すべて Sentry Hub スコープにユーザー情報が乗った状態になる。
+		// RequireAuthの後に置くことで、認証必須ルートに届くリクエストは
+		// すべてSentry Hubスコープにユーザー情報が乗った状態になる。
 		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Delete("/user_session", userSessionHandler.Delete)
@@ -800,42 +739,26 @@ func runServe() {
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)
 
-		// Topic creation: the form and the create itself.
+		// トピックの作成。フォームと作成処理。
 		//
-		// HEAD is registered on its own because chi resolves routes per method and never falls
-		// back from GET. Without it the form would answer 200 to GET and 405 to HEAD once the
-		// Rails route that still answers HEAD on this path is gone.
-		//
-		// [Ja] トピックの作成。フォームと作成処理。
-		//
-		// chi はメソッドごとにルートを引き GET からフォールバックしないため、HEAD を単独で登録
-		// する。登録しないと、このパスの HEAD を今も受けている Rails のルートが無くなった時点で、
-		// フォームは GET に 200・HEAD に 405 を返すようになる。
+		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録
+		// する。登録しないと、このパスのHEADを今も受けているRailsのルートが無くなった時点で、
+		// フォームはGETに200・HEADに405を返すようになる。
 		r.Get("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
 
-		// General settings of a topic: the screen and the save. The rest of the topic settings
-		// stays on the Rails version, which is where the breadcrumb of this screen leads back to.
-		//
-		// HEAD is registered beside the GET because chi resolves routes per method and never falls
-		// back from GET, while the Rails router reads a HEAD that matches nothing as a GET. Without
-		// it the screen would answer 200 to GET and 405 to HEAD.
-		//
-		// [Ja] トピックの一般設定。画面と保存処理。トピック設定の残りは Rails 版のままで、この画面
+		// トピックの一般設定。画面と保存処理。トピック設定の残りはRails版のままで、この画面
 		// のパンくずはそこへ戻る。
 		//
-		// GET に HEAD を併記するのは、chi がメソッドごとにルートを引き GET へフォールバックしない
-		// 一方、Rails のルーターは一致しない HEAD を GET として読むため。併記しないと、GET に 200 を
-		// 返す画面が HEAD には 405 を返す。
+		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
+		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。併記しないと、GETに200を
+		// 返す画面がHEADには405を返す。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
 		r.Patch("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Update)
 
-		// Page creation entry point. It creates a page and redirects to its edit screen, so it
-		// renders no screen of its own.
-		//
-		// [Ja] ページ新規作成の入口。ページを作成して編集画面へリダイレクトするため、自身の画面は
+		// ページ新規作成の入口。ページを作成して編集画面へリダイレクトするため、自身の画面は
 		// 描画しない。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/pages/new", pageHandler.New)
 
@@ -852,23 +775,18 @@ func runServe() {
 		// 下書きリビジョン手動保存
 		r.Patch("/s/{space_identifier}/pages/{page_number}/draft_page_revision", draftPageRevisionHandler.Update)
 
-		// Draft page revision diff fragment (htmx).
-		// [Ja] 下書きリビジョン差分フラグメント (htmx)。
+		// 下書きリビジョン差分フラグメント (htmx)。
 		r.Get("/s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}", draftPageRevisionHandler.Show)
 
-		// Draft page revision restore.
-		// [Ja] 下書きリビジョン復元。
+		// 下書きリビジョン復元。
 		r.Post("/s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}/restore", draftPageRevisionRestoreHandler.Create)
 
 		// ページ移動
 		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
 		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
 
-		// Moving a page into the trash. The trash screen itself stays on the Rails version, which
-		// restores the page from the same pages.trashed_at column.
-		//
-		// [Ja] ページをゴミ箱へ入れる操作。ゴミ箱画面そのものは Rails 版のまま残り、同じ
-		// pages.trashed_at カラムを見てページを復元する。
+		// ページをゴミ箱へ入れる操作。ゴミ箱画面そのものはRails版のまま残り、同じ
+		// pages.trashed_atカラムを見てページを復元する。
 		r.Post("/s/{space_identifier}/pages/{page_number}/trash", pageTrashHandler.Create)
 
 		// 編集提案作成・編集
@@ -898,34 +816,20 @@ func runServe() {
 		r.Patch("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id}", suggestionPageHandler.Update)
 		r.Delete("/s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id}", suggestionPageHandler.Delete)
 
-		// ページロケーション検索API（Wikiリンク補完用）
+		// ページロケーション検索API (Wikiリンク補完用)
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 
-		// Space export: the screen it is started from, the start itself, the screen it is followed
-		// on, and the download of the archive. The rest of the space settings stays on the Rails
-		// version, which is where the breadcrumb of these screens leads back to.
+		// スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
+		// ダウンロード。スペース設定の残りはRails版のままで、これらの画面のパンくずはそこへ戻る。
 		//
-		// The namespace is a sub-router so that a request none of these routes take is answered
-		// with the 404 page instead of chi's bodiless 405. The reverse proxy hands the whole
-		// namespace over regardless of method, so that a start cannot reach the Rails writer that
-		// has no guard against a second export, and the Rails version answered every other URL
-		// under it with a 404 of its own.
+		// この名前空間をサブルーターにするのは、どのルートも受けないリクエストに、chi既定の
+		// 本文なし405ではなく404ページを返すため。リバースプロキシは、2つ目のエクスポートを
+		// 防ぐ仕組みを持たないRailsの書き込み処理へ開始が届かないよう、メソッドによらず名前空間
+		// 全体を渡してくる。Rails版はその配下の他のURLには自身の404を返していた。
 		//
-		// HEAD is registered beside each GET because chi resolves routes per method and never
-		// falls back from GET, while the Rails router reads a HEAD that matches nothing as a GET.
-		// Without it a screen that answers 200 to GET would answer 405 to HEAD.
-		//
-		// [Ja] スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
-		// ダウンロード。スペース設定の残りは Rails 版のままで、これらの画面のパンくずはそこへ戻る。
-		//
-		// この名前空間をサブルーターにするのは、どのルートも受けないリクエストに、chi 既定の
-		// 本文なし 405 ではなく 404 ページを返すため。リバースプロキシは、2 つ目のエクスポートを
-		// 防ぐ仕組みを持たない Rails の書き込み処理へ開始が届かないよう、メソッドによらず名前空間
-		// 全体を渡してくる。Rails 版はその配下の他の URL には自身の 404 を返していた。
-		//
-		// GET のそれぞれに HEAD を併記するのは、chi がメソッドごとにルートを引き GET へ
-		// フォールバックしない一方、Rails のルーターは一致しない HEAD を GET として読むため。
-		// 併記しないと、GET に 200 を返す画面が HEAD には 405 を返す。
+		// GETのそれぞれにHEADを併記するのは、chiがメソッドごとにルートを引きGETへ
+		// フォールバックしない一方、Railsのルーターは一致しないHEADをGETとして読むため。
+		// 併記しないと、GETに200を返す画面がHEADには405を返す。
 		r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
 			r.MethodNotAllowed(handler.NotFound)
 
@@ -933,8 +837,7 @@ func runServe() {
 			r.Get("/new", exportHandler.New)
 			r.Head("/new", exportHandler.New)
 
-			// Restrict IDs to UUIDs so malformed IDs never reach a database lookup.
-			// [Ja] 不正なIDをDB取得へ渡さないよう、IDをUUID形式に限定する。
+			// 不正なIDをDB取得へ渡さないよう、IDをUUID形式に限定する。
 			exportPath := "/{export_id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}"
 			r.Get(exportPath, exportHandler.Show)
 			r.Head(exportPath, exportHandler.Show)

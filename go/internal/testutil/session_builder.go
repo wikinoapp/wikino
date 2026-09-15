@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SessionBuilder はセッションテストデータのビルダー
+// SessionBuilderはセッションテストデータのビルダー
 type SessionBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -21,7 +21,7 @@ type SessionBuilder struct {
 	signedInAt time.Time
 }
 
-// NewSessionBuilder は SessionBuilder を生成します
+// NewSessionBuilderはSessionBuilderを生成します
 func NewSessionBuilder(t *testing.T, tx *sql.Tx) *SessionBuilder {
 	t.Helper()
 	now := time.Now()
@@ -35,31 +35,31 @@ func NewSessionBuilder(t *testing.T, tx *sql.Tx) *SessionBuilder {
 	}
 }
 
-// WithUserID はユーザーIDを設定します
+// WithUserIDはユーザーIDを設定します
 func (b *SessionBuilder) WithUserID(userID model.UserID) *SessionBuilder {
 	b.userID = userID
 	return b
 }
 
-// WithToken はトークンを設定します
+// WithTokenはトークンを設定します
 func (b *SessionBuilder) WithToken(token string) *SessionBuilder {
 	b.token = token
 	return b
 }
 
-// WithIPAddress はIPアドレスを設定します
+// WithIPAddressはIPアドレスを設定します
 func (b *SessionBuilder) WithIPAddress(ipAddress string) *SessionBuilder {
 	b.ipAddress = ipAddress
 	return b
 }
 
-// WithUserAgent はUser-Agentを設定します
+// WithUserAgentはUser-Agentを設定します
 func (b *SessionBuilder) WithUserAgent(userAgent string) *SessionBuilder {
 	b.userAgent = userAgent
 	return b
 }
 
-// Build はセッションを作成し、IDを返します
+// Buildはセッションを作成し、IDを返します
 func (b *SessionBuilder) Build() string {
 	b.t.Helper()
 
@@ -83,7 +83,7 @@ func (b *SessionBuilder) Build() string {
 	return id
 }
 
-// BuildAndGetToken はセッションを作成し、トークンを返します
+// BuildAndGetTokenはセッションを作成し、トークンを返します
 func (b *SessionBuilder) BuildAndGetToken() string {
 	b.t.Helper()
 	b.Build()

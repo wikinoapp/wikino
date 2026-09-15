@@ -34,7 +34,7 @@ func TestTimeZone_ログインユーザーのタイムゾーンを優先(t *test
 	TimeZone(nextHandler).ServeHTTP(rr, req)
 
 	if tzFromCtx != "Asia/Tokyo" {
-		t.Errorf("タイムゾーンが不正: got %q, want %q", tzFromCtx, "Asia/Tokyo")
+		t.Errorf("タイムゾーン = %q、期待値 = %q", tzFromCtx, "Asia/Tokyo")
 	}
 }
 
@@ -57,7 +57,7 @@ func TestTimeZone_クッキーからタイムゾーンを取得(t *testing.T) {
 	TimeZone(nextHandler).ServeHTTP(rr, req)
 
 	if tzFromCtx != "America/New_York" {
-		t.Errorf("タイムゾーンが不正: got %q, want %q", tzFromCtx, "America/New_York")
+		t.Errorf("タイムゾーン = %q、期待値 = %q", tzFromCtx, "America/New_York")
 	}
 }
 
@@ -80,7 +80,7 @@ func TestTimeZone_不正なクッキー値の場合はUTCにフォールバッ�
 	TimeZone(nextHandler).ServeHTTP(rr, req)
 
 	if tzFromCtx != "UTC" {
-		t.Errorf("タイムゾーンが不正: got %q, want %q", tzFromCtx, "UTC")
+		t.Errorf("タイムゾーン = %q、期待値 = %q", tzFromCtx, "UTC")
 	}
 }
 
@@ -99,7 +99,7 @@ func TestTimeZone_ユーザーもクッキーもない場合はUTC(t *testing.T)
 	TimeZone(nextHandler).ServeHTTP(rr, req)
 
 	if tzFromCtx != "UTC" {
-		t.Errorf("タイムゾーンが不正: got %q, want %q", tzFromCtx, "UTC")
+		t.Errorf("タイムゾーン = %q、期待値 = %q", tzFromCtx, "UTC")
 	}
 }
 
@@ -126,7 +126,7 @@ func TestTimeZone_ユーザーのTimeZoneが空の場合はクッキーを使用
 	TimeZone(nextHandler).ServeHTTP(rr, req)
 
 	if tzFromCtx != "Europe/London" {
-		t.Errorf("タイムゾーンが不正: got %q, want %q", tzFromCtx, "Europe/London")
+		t.Errorf("タイムゾーン = %q、期待値 = %q", tzFromCtx, "Europe/London")
 	}
 }
 
@@ -137,6 +137,6 @@ func TestFromContext_設定されていない場合はUTC(t *testing.T) {
 	tz := timezone.FromContext(ctx)
 
 	if tz != "UTC" {
-		t.Errorf("タイムゾーンが不正: got %q, want %q", tz, "UTC")
+		t.Errorf("タイムゾーン = %q、期待値 = %q", tz, "UTC")
 	}
 }

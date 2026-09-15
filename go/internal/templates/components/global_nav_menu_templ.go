@@ -12,9 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// GlobalNavData carries the presentation state required by the global navigation.
-//
-// [Ja] GlobalNavData はグローバルナビに必要な表示状態を保持する。
+// GlobalNavDataはグローバルナビに必要な表示状態を保持する。
 type GlobalNavData struct {
 	CurrentPageName templates.PageName
 	SignedIn        bool
@@ -22,25 +20,14 @@ type GlobalNavData struct {
 	SpaceIdentifier viewmodel.SpaceIdentifier
 }
 
-// GlobalNavMenu renders the shared icon-only menu that both the top bar and the
-// bottom bar embed. The menu lays its items out horizontally; className is
-// appended to that flex container so a wrapper can add its own styling (the
-// bottom bar uses it for the pill). CurrentPageName determines the active item.
-//
-// Signed-in users see home / search / profile; signed-out users see home /
-// sign in. Search and profile require authentication and are omitted when
-// signed out. Neither signed-out item is ever active: the only screen the
-// signed-out home link points at is the top page, and that page takes itself
-// out of the global navigation.
-//
-// [Ja] GlobalNavMenu は上部バーと下部バーの両方が埋め込む、アイコンのみの共通
-// メニューを描画する。メニューは項目を横並びに置き、className はそのフレックス
+// GlobalNavMenuは上部バーと下部バーの両方が埋め込む、アイコンのみの共通
+// メニューを描画する。メニューは項目を横並びに置き、classNameはそのフレックス
 // コンテナに追記されて、ラッパーが固有のスタイルを足せるようにする (下部バーは
-// ピルの装飾に使う)。アクティブ項目は CurrentPageName で判定する。
+// ピルの装飾に使う)。アクティブ項目はCurrentPageNameで判定する。
 //
 // ログイン時はホーム / 検索 / プロフィール、未ログイン時はホーム / サインインを
 // 表示する。検索・プロフィールはログイン必須のため未ログイン時は表示しない。
-// 未ログイン時の 2 項目はいずれもアクティブにならない。未ログイン時のホームリンクが
+// 未ログイン時の2項目はいずれもアクティブにならない。未ログイン時のホームリンクが
 // 指す画面はトップページだけであり、そのページはグローバルナビの対象外だからである。
 func GlobalNavMenu(data GlobalNavData, className string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -158,9 +145,7 @@ func GlobalNavMenu(data GlobalNavData, className string) templ.Component {
 	})
 }
 
-// globalNavItemData is one navigation link's data.
-//
-// [Ja] globalNavItemData はナビゲーションリンク 1 件のデータ。
+// globalNavItemDataはナビゲーションリンク1件のデータ。
 type globalNavItemData struct {
 	Path        templates.Path
 	Label       string
@@ -169,16 +154,10 @@ type globalNavItemData struct {
 	Active      bool
 }
 
-// globalNavItem renders one icon-only link. The link carries an aria-label so
-// screen readers can announce the icon-only link by its purpose; the active
-// item shows its filled icon, is emphasized with the foreground color, and
-// carries aria-current="page". The link is fully rounded so its hover highlight
-// reads as a circle around the square icon.
-//
-// [Ja] globalNavItem はアイコンのみのリンク 1 件を描画する。アイコンのみのリンクの
-// 目的をスクリーンリーダーが読み上げられるよう aria-label を付け、アクティブ項目は
-// 塗りつぶしアイコンを foreground 色で強調し、aria-current="page" を付ける。リンクは
-// 完全な円 (rounded-full) にして、正方形アイコンを囲む hover ハイライトが円形に見える
+// globalNavItemはアイコンのみのリンク1件を描画する。アイコンのみのリンクの
+// 目的をスクリーンリーダーが読み上げられるようaria-labelを付け、アクティブ項目は
+// 塗りつぶしアイコンをforeground色で強調し、aria-current="page" を付ける。リンクは
+// 完全な円 (rounded-full) にして、正方形アイコンを囲むhoverハイライトが円形に見える
 // ようにする。
 func globalNavItem(data globalNavItemData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -215,7 +194,7 @@ func globalNavItem(data globalNavItemData) templ.Component {
 		var templ_7745c5c3_Var6 templ.SafeURL
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(data.Path)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/global_nav_menu.templ`, Line: 105, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/global_nav_menu.templ`, Line: 84, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -228,7 +207,7 @@ func globalNavItem(data globalNavItemData) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/global_nav_menu.templ`, Line: 106, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/global_nav_menu.templ`, Line: 85, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {

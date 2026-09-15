@@ -88,19 +88,19 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 			SuggestionNumber: 1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Suggestion == nil {
-			t.Fatal("Suggestion should not be nil")
+			t.Fatal("Suggestionがnil")
 		}
 		if output.Suggestion.Title != "テスト提案" {
-			t.Errorf("Suggestion.Title = %q, want %q", output.Suggestion.Title, "テスト提案")
+			t.Errorf("Suggestion.Title = %q、期待値 = %q", output.Suggestion.Title, "テスト提案")
 		}
 		if output.Suggestion.Status != model.SuggestionStatusOpen {
-			t.Errorf("Suggestion.Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusOpen)
+			t.Errorf("Suggestion.Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusOpen)
 		}
 	})
 
@@ -110,13 +110,13 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 			SuggestionNumber: 1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.SuggestionPages) != 1 {
-			t.Fatalf("len(SuggestionPages) = %d, want 1", len(output.SuggestionPages))
+			t.Fatalf("len(SuggestionPages) = %d、期待値 = 1", len(output.SuggestionPages))
 		}
 		if output.SuggestionPages[0].Title == nil || *output.SuggestionPages[0].Title != "変更後タイトル" {
-			t.Errorf("SuggestionPages[0].Title = %v, want %q", output.SuggestionPages[0].Title, "変更後タイトル")
+			t.Errorf("SuggestionPages[0].Title = %v、期待値 = %q", output.SuggestionPages[0].Title, "変更後タイトル")
 		}
 	})
 
@@ -126,13 +126,13 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 			SuggestionNumber: 1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.Pages) != 1 {
-			t.Fatalf("len(Pages) = %d, want 1", len(output.Pages))
+			t.Fatalf("len(Pages) = %d、期待値 = 1", len(output.Pages))
 		}
 		if output.Pages[0].ID != pageID {
-			t.Errorf("Pages[0].ID = %q, want %q", output.Pages[0].ID, pageID)
+			t.Errorf("Pages[0].ID = %q、期待値 = %q", output.Pages[0].ID, pageID)
 		}
 	})
 
@@ -142,13 +142,13 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 			SuggestionNumber: 1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.Comments) != 1 {
-			t.Fatalf("len(Comments) = %d, want 1", len(output.Comments))
+			t.Fatalf("len(Comments) = %d、期待値 = 1", len(output.Comments))
 		}
 		if output.Comments[0].Body != "テストコメント1" {
-			t.Errorf("Comments[0].Body = %q, want %q", output.Comments[0].Body, "テストコメント1")
+			t.Errorf("Comments[0].Body = %q、期待値 = %q", output.Comments[0].Body, "テストコメント1")
 		}
 	})
 
@@ -158,15 +158,15 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 			SuggestionNumber: 1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		user, ok := output.UserMap[spaceMemberID]
 		if !ok {
-			t.Fatal("UserMap should contain the creator's user info")
+			t.Fatal("UserMapに作成者のユーザー情報が含まれていない")
 		}
 		if user.Name != "詳細太郎" {
-			t.Errorf("user.Name = %q, want %q", user.Name, "詳細太郎")
+			t.Errorf("user.Name = %q、期待値 = %q", user.Name, "詳細太郎")
 		}
 	})
 
@@ -185,19 +185,19 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 			UserID:           &uid,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SpaceMember == nil {
-			t.Fatal("SpaceMember should not be nil for logged-in user")
+			t.Fatal("ログイン中のユーザーなのにSpaceMemberがnil")
 		}
 		if output.SpaceMember.ID != spaceMemberID {
-			t.Errorf("SpaceMember.ID = %q, want %q", output.SpaceMember.ID, spaceMemberID)
+			t.Errorf("SpaceMember.ID = %q、期待値 = %q", output.SpaceMember.ID, spaceMemberID)
 		}
 		if output.TopicMember == nil {
-			t.Fatal("TopicMember should not be nil for topic member")
+			t.Fatal("トピックメンバーなのにTopicMemberがnil")
 		}
 	})
 
@@ -207,10 +207,10 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 			SuggestionNumber: 1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for nonexistent space")
+			t.Error("存在しないスペースなのに出力がnilではない")
 		}
 	})
 
@@ -220,10 +220,10 @@ func TestGetSuggestionDetailUsecase_Execute(t *testing.T) {
 			SuggestionNumber: 999,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for nonexistent suggestion number")
+			t.Error("存在しない編集提案番号なのに出力がnilではない")
 		}
 	})
 }
@@ -310,10 +310,10 @@ func TestGetSuggestionDetailUsecase_Execute_非公開トピック(t *testing.T) 
 			SuggestionNumber: 1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for unauthenticated user on private topic")
+			t.Error("非公開トピックで未ログインのユーザーなのに出力がnilではない")
 		}
 	})
 
@@ -325,13 +325,13 @@ func TestGetSuggestionDetailUsecase_Execute_非公開トピック(t *testing.T) 
 			UserID:           &uid,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for space owner")
+			t.Fatal("スペースオーナーなのに出力がnil")
 		}
 		if output.Suggestion.Title != "非公開トピックの提案" {
-			t.Errorf("Suggestion.Title = %q, want %q", output.Suggestion.Title, "非公開トピックの提案")
+			t.Errorf("Suggestion.Title = %q、期待値 = %q", output.Suggestion.Title, "非公開トピックの提案")
 		}
 	})
 
@@ -343,13 +343,13 @@ func TestGetSuggestionDetailUsecase_Execute_非公開トピック(t *testing.T) 
 			UserID:           &uid,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for topic member")
+			t.Fatal("トピックメンバーなのに出力がnil")
 		}
 		if output.Suggestion.Title != "非公開トピックの提案" {
-			t.Errorf("Suggestion.Title = %q, want %q", output.Suggestion.Title, "非公開トピックの提案")
+			t.Errorf("Suggestion.Title = %q、期待値 = %q", output.Suggestion.Title, "非公開トピックの提案")
 		}
 	})
 
@@ -361,13 +361,13 @@ func TestGetSuggestionDetailUsecase_Execute_非公開トピック(t *testing.T) 
 			UserID:           &uid,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil for space member on private topic")
+			t.Fatal("非公開トピックでスペースメンバーなのに出力がnil")
 		}
 		if output.Suggestion.Title != "非公開トピックの提案" {
-			t.Errorf("Suggestion.Title = %q, want %q", output.Suggestion.Title, "非公開トピックの提案")
+			t.Errorf("Suggestion.Title = %q、期待値 = %q", output.Suggestion.Title, "非公開トピックの提案")
 		}
 	})
 }

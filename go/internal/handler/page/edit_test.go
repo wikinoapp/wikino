@@ -26,20 +26,16 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// setupHandler はテスト用のハンドラーを生成するヘルパーです
+// setupHandlerはテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page.Handler {
 	t.Helper()
 
 	return setupHandlerWithDB(t, nil, queries)
 }
 
-// setupHandlerWithDB builds the handler with the *sql.DB the UseCases that manage their own
-// transaction need. Tests driven from a transaction-scoped Queries pass nil, because they never
-// reach those UseCases.
-//
-// [Ja] setupHandlerWithDB は、自前でトランザクションを管理する UseCase が必要とする *sql.DB を
-// 渡してハンドラーを生成する。トランザクションに紐づく Queries で駆動するテストはそれらの
-// UseCase に到達しないため nil を渡す。
+// setupHandlerWithDBは、自前でトランザクションを管理するUseCaseが必要とする *sql.DBを
+// 渡してハンドラーを生成する。トランザクションに紐づくQueriesで駆動するテストはそれらの
+// UseCaseに到達しないためnilを渡す。
 func setupHandlerWithDB(t *testing.T, db *sql.DB, queries *query.Queries) *page.Handler {
 	t.Helper()
 
@@ -133,7 +129,7 @@ func setupHandlerWithDB(t *testing.T, db *sql.DB, queries *query.Queries) *page.
 	)
 }
 
-// newRequestWithChiParams はchiのURLパラメータ付きリクエストを作成するヘルパーです
+// newRequestWithChiParamsはchiのURLパラメータ付きリクエストを作成するヘルパーです
 func newRequestWithChiParams(t *testing.T, method, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -200,135 +196,115 @@ func TestEdit(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// フォームアクションが含まれているか確認
 	if !strings.Contains(body, `/s/my-space/pages/1`) {
-		t.Error("form action not found in response")
+		t.Error("レスポンスにフォームの送信先が見つからない")
 	}
 
 	// CSRFトークンが含まれているか確認
 	if !strings.Contains(body, "test-csrf-token") {
-		t.Error("CSRF token not found in response")
+		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
 	// タイトルが表示されているか確認
 	if !strings.Contains(body, "Test Page Title") {
-		t.Error("page title not found in response")
+		t.Error("レスポンスにページタイトルが見つからない")
 	}
 
 	// 本文が表示されているか確認
 	if !strings.Contains(body, "Test page body content") {
-		t.Error("page body not found in response")
+		t.Error("レスポンスにページ本文が見つからない")
 	}
 
 	// _methodがPATCHであることを確認
 	if !strings.Contains(body, `value="PATCH"`) {
-		t.Error("method override PATCH not found in response")
+		t.Error("レスポンスにPATCHのメソッドオーバーライドが見つからない")
 	}
 
-	// The default layout's content wrapper reserves bottom-nav height plus the bottom safe-area
-	// inset as bottom padding below md, so the fixed nav doesn't cover the last content even when a
-	// PWA standalone display lifts the nav above the home indicator. The padding is dropped at md to
-	// match the width where the bottom bar stops rendering. Match the full opening tag so the
-	// assertion stays pinned to the wrapper.
-	//
-	// [Ja] default レイアウトのコンテンツラッパーが、md 未満で固定ナビに最下部コンテンツが隠れない
-	// よう下部ナビの高さ + 下端 safe-area 分の下部余白を確保していること (PWA スタンドアロン表示で
+	// defaultレイアウトのコンテンツラッパーが、md未満で固定ナビに最下部コンテンツが隠れない
+	// よう下部ナビの高さ + 下端safe-area分の下部余白を確保していること (PWAスタンドアロン表示で
 	// ナビをホームインジケータの上へ押し上げても足りるようにする)。下部バーが描画されなくなる幅と
-	// 揃えて md で余白を外す。ラッパーに固定するため開始タグ全体で照合する。
+	// 揃えてmdで余白を外す。ラッパーに固定するため開始タグ全体で照合する。
 	if !strings.Contains(body, `<div class="flex-1 flex flex-col min-h-screen pb-[calc(var(--app-bottom-nav-max-height)+0.5rem+env(safe-area-inset-bottom))] md:pb-0">`) {
-		t.Error("content wrapper padding class not found in response")
+		t.Error("レスポンスにコンテンツのラッパーの余白クラスが見つからない")
 	}
 
-	// The fixed bottom-nav wrapper carries pb-safe so a PWA standalone display lifts the nav pill
-	// above the home indicator. Match the full opening tag so the assertion stays pinned to the
-	// wrapper.
-	//
-	// [Ja] 下部ナビの固定ラッパーが pb-safe を持ち、PWA スタンドアロン表示でナビのピルをホーム
+	// 下部ナビの固定ラッパーがpb-safeを持ち、PWAスタンドアロン表示でナビのピルをホーム
 	// インジケータの上へ押し上げること。ラッパーに固定するため開始タグ全体で照合する。
 	if !strings.Contains(body, `<div class="fixed bottom-2 left-1/2 z-sticky-bar flex w-full -translate-x-1/2 flex-col items-center px-2 pb-safe">`) {
-		t.Error("bottom nav fixed wrapper pb-safe class not found in response")
+		t.Error("レスポンスに下部ナビゲーションの固定ラッパーのpb-safeクラスが見つからない")
 	}
 
 	// 日本語のラベルが含まれているか確認
 	if !strings.Contains(body, "タイトル") {
-		t.Error("Japanese title label not found in response")
+		t.Error("レスポンスに日本語のタイトルのラベルが見つからない")
 	}
 
 	// 公開ボタンが含まれているか確認
 	if !strings.Contains(body, "トピックに公開") {
-		t.Error("Japanese publish button not found in response")
+		t.Error("レスポンスに日本語の公開ボタンが見つからない")
 	}
 
 	// キャンセルリンクが含まれているか確認
 	if !strings.Contains(body, "/s/my-space/pages/1") {
-		t.Error("cancel link not found in response")
+		t.Error("レスポンスにキャンセルのリンクが見つからない")
 	}
 
 	// パンくずリストにトピック名が含まれているか確認
 	if !strings.Contains(body, "General") {
-		t.Error("topic name not found in breadcrumb")
+		t.Error("パンくずにトピック名が見つからない")
 	}
 
 	// パンくずリストにスペースへのリンクが含まれているか確認
 	if !strings.Contains(body, "/s/my-space") {
-		t.Error("space link not found in breadcrumb")
+		t.Error("パンくずにスペースのリンクが見つからない")
 	}
 
 	// 下書きがない場合、下書きアラートが表示されないことを確認
 	if strings.Contains(body, "現在下書きを表示しています") {
-		t.Error("draft alert should not be shown when no draft exists")
+		t.Error("下書きが無いのに下書きのアラートが表示されている")
 	}
 
-	// The draft list column shows the empty state when the member has no drafts.
-	// [Ja] メンバーに下書きが 1 件もないとき、下書き一覧カラムに空状態テキストが表示されること
+	// メンバーに下書きが1件もないとき、下書き一覧カラムに空状態テキストが表示されること
 	if !strings.Contains(body, "下書きはありません") {
-		t.Error("draft list empty state text not found when no draft exists")
+		t.Error("下書きが無いときの下書き一覧の空状態テキストが見つからない")
 	}
 
-	// The edit history column shows the empty state when there is no draft (hence no revisions).
-	// [Ja] 下書きが無い (= リビジョンも無い) とき、編集履歴カラムに空状態テキストが表示されること
+	// 下書きが無い (= リビジョンも無い) とき、編集履歴カラムに空状態テキストが表示されること
 	if !strings.Contains(body, "下書きを保存すると、ここに編集履歴が表示されます") {
-		t.Error("edit history empty state text not found when no draft exists")
+		t.Error("下書きが無いときの編集履歴の空状態テキストが見つからない")
 	}
 
 	// パンくずリストにトピックへのリンクが含まれているか確認
 	if !strings.Contains(body, "/s/my-space/topics/1") {
-		t.Error("topic link not found in breadcrumb")
+		t.Error("パンくずにトピックのリンクが見つからない")
 	}
 
-	// トピックのアイコン（公開トピックのためglobe-regular）が表示されているか確認
+	// トピックのアイコン (公開トピックのためglobe-regular) が表示されているか確認
 	// globe-regularのSVGパスデータに含まれる固有の文字列で検証
 	if !strings.Contains(body, "a87.61,87.61") {
-		t.Error("topic visibility icon (globe) not found in breadcrumb")
+		t.Error("パンくずにトピックの公開範囲アイコン (globe) が見つからない")
 	}
 
-	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
-	// link has to bypass it) and keeps this screen's wide max-w-6xl content width.
-	//
-	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
-	// リンクが飛ばせる必要があるため)。この画面の広い本文幅 max-w-6xl も維持する。
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の広い本文幅max-w-6xlも維持する。
 	if !strings.Contains(body, `<div class="max-w-6xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared breadcrumb header should keep the max-w-6xl content width")
+		t.Error("共通のパンくずヘッダーがmax-w-6xlのコンテンツ幅を保っていない")
 	}
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
-		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 }
 
-// spaces.identifier is citext, so a request spelling it differently reaches the same space. Every
-// link on the screen is built from the stored identifier, so the requested spelling never leaks
-// into the markup and one screen's links all share a single form. The editor exercises the widest
-// set of link builders (breadcrumb, global nav search path, draft-save endpoints).
-//
-// [Ja] spaces.identifier は citext のため、表記の異なるリクエストでも同じスペースに解決される。
+// spaces.identifierはcitextのため、表記の異なるリクエストでも同じスペースに解決される。
 // 画面内のリンクはすべて保存済みの識別子から組み立てるので、リクエストの表記がマークアップへ漏れず、
-// 1 画面のリンクの表記が 1 つに揃う。編集画面はリンク組み立ての種類が最も多い (パンくず・グローバル
+// 1画面のリンクの表記が1つに揃う。編集画面はリンク組み立ての種類が最も多い (パンくず・グローバル
 // ナビの検索パス・下書き保存のエンドポイント)。
 func TestEdit_BuildsLinksFromStoredIdentifier(t *testing.T) {
 	t.Parallel()
@@ -379,13 +355,13 @@ func TestEdit_BuildsLinksFromStoredIdentifier(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	if strings.Contains(body, "/s/STORED-CASE-SPACE") {
-		t.Error("links must not carry the requested spelling of the space identifier")
+		t.Error("リンクがリクエストされたスペース識別子の表記のままになっている")
 	}
 	for _, want := range []string{
 		`href="/s/stored-case-space"`,
@@ -393,7 +369,7 @@ func TestEdit_BuildsLinksFromStoredIdentifier(t *testing.T) {
 		`/s/stored-case-space/pages/1`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 }
@@ -455,30 +431,30 @@ func TestEdit_WithDraftPage(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// DraftPageの内容が表示されていることを確認
 	if !strings.Contains(body, "Draft Title") {
-		t.Error("draft title not found in response")
+		t.Error("レスポンスに下書きのタイトルが見つからない")
 	}
 	if !strings.Contains(body, "Draft body content") {
-		t.Error("draft body not found in response")
+		t.Error("レスポンスに下書きの本文が見つからない")
 	}
 
 	// 元のページの内容が表示されていないことを確認
 	if strings.Contains(body, "Original Title") {
-		t.Error("original title should not be shown when draft exists")
+		t.Error("下書きがあるのに元のタイトルが表示されている")
 	}
 	if strings.Contains(body, "Original body") {
-		t.Error("original body should not be shown when draft exists")
+		t.Error("下書きがあるのに元の本文が表示されている")
 	}
 
 	// 下書きアラートが表示されていることを確認
 	if !strings.Contains(body, "現在下書きを表示しています") {
-		t.Error("draft alert message not found in response")
+		t.Error("レスポンスに下書きのアラートメッセージが見つからない")
 	}
 }
 
@@ -510,8 +486,7 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		Build()
 
-	// The page being edited (page 1).
-	// [Ja] 編集対象のページ (page 1)
+	// 編集対象のページ (page 1)
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -520,8 +495,7 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 		WithBody("body").
 		Build()
 
-	// Another draft within the same space (listed in the left column).
-	// [Ja] 同一スペース内の別の下書き (左カラムに一覧表示される)
+	// 同一スペース内の別の下書き (左カラムに一覧表示される)
 	otherPageID := testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -553,68 +527,57 @@ func TestEdit_DraftListColumnAndNoGlobalSidebar(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
-	// The other draft appears in the left column and links to its editor.
-	// [Ja] 左カラムに別の下書きが表示され、その編集画面へのリンクを持つこと
+	// 左カラムに別の下書きが表示され、その編集画面へのリンクを持つこと
 	if !strings.Contains(body, "Sidebar Column Draft") {
-		t.Error("draft list column does not contain the other draft")
+		t.Error("下書き一覧のカラムにもう一方の下書きが含まれていない")
 	}
 	if !strings.Contains(body, "/s/draftcol-space/pages/2/edit") {
-		t.Error("draft card link to the other page's editor not found")
+		t.Error("もう一方のページのエディタへの下書きカードのリンクが見つからない")
 	}
 
-	// The draft list "view all" link is shown in the heading.
-	// [Ja] 下書き一覧の「すべて表示」リンクが見出しに表示されること
+	// 下書き一覧の「すべて表示」リンクが見出しに表示されること
 	if !strings.Contains(body, "すべて表示") {
-		t.Error("draft list view-all link not found")
+		t.Error("下書き一覧のすべて表示リンクが見つからない")
 	}
 
-	// The narrow-screen drawer (panel and open button) is wired up.
-	// [Ja] 狭幅時のドロワー (本体と開閉ボタン) が結線されていること
+	// 狭幅時のドロワー (本体と開閉ボタン) が結線されていること
 	if !strings.Contains(body, `id="page-edit-draft-pages-drawer"`) {
-		t.Error("draft list drawer not found")
+		t.Error("下書き一覧のドロワーが見つからない")
 	}
 	if !strings.Contains(body, `data-drawer-open="page-edit-draft-pages-drawer"`) {
-		t.Error("draft list drawer open button not found")
+		t.Error("下書き一覧のドロワーを開くボタンが見つからない")
 	}
 
-	// The removed sidebar leaves no trace: no off-canvas sidebar element, no BreadcrumbHeader toggle,
-	// and no sidebar-opening dispatch. The in-screen draft navigation is the left column, not a
-	// sidebar.
-	// [Ja] 廃止したサイドバーの痕跡が残っていないこと。off-canvas のサイドバー要素・BreadcrumbHeader の
-	// 開閉ボタン・サイドバーを開く dispatch のいずれも無い。画面内の下書きナビゲーションは
+	// 廃止したサイドバーの痕跡が残っていないこと。off-canvasのサイドバー要素・BreadcrumbHeaderの
+	// 開閉ボタン・サイドバーを開くdispatchのいずれも無い。画面内の下書きナビゲーションは
 	// サイドバーではなく左カラムが担う。
 	if strings.Contains(body, `id="sidebar"`) {
-		t.Error("global sidebar should not be rendered on the page editor")
+		t.Error("ページエディタにグローバルサイドバーが描画されている")
 	}
 	if strings.Contains(body, "サイドバーの開閉") {
-		t.Error("BreadcrumbHeader sidebar toggle button should not be rendered on the page editor")
+		t.Error("ページエディタにBreadcrumbHeaderのサイドバー切り替えボタンが描画されている")
 	}
 	if strings.Contains(body, "basecoat:sidebar") {
-		t.Error("no sidebar-opening button should be rendered on the page editor")
+		t.Error("ページエディタにサイドバーを開くボタンが描画されている")
 	}
 
-	// The editor is wired to the global navigation like every other page (top bar + bottom bar).
-	// [Ja] 編集画面も他のページと同様にグローバルナビ (上部バー + 下部バー) へ結線されていること
+	// 編集画面も他のページと同様にグローバルナビ (上部バー + 下部バー) へ結線されていること
 	if !strings.Contains(body, `aria-label="グローバルナビゲーション"`) {
-		t.Error("global navigation top bar should be rendered on the page editor")
+		t.Error("ページエディタにグローバルナビゲーションの上部バーが描画されていない")
 	}
 
-	// The editor switches at md like every other screen: the top bar appears at md and the bottom bar
-	// stays below it. Match the full class attribute of each <nav> so the assertions stay pinned to
-	// the nav wrappers.
-	//
-	// [Ja] 編集画面も他の画面と同じく md で切り替わる。上部バーは md 以上で現れ、下部バーはそれ未満で
-	// 残る。各 <nav> の class 属性全体で照合し、ナビのラッパーに固定する。
+	// 編集画面も他の画面と同じくmdで切り替わる。上部バーはmd以上で現れ、下部バーはそれ未満で
+	// 残る。各 <nav> のclass属性全体で照合し、ナビのラッパーに固定する。
 	if !strings.Contains(body, `<nav class="shrink-0 hidden md:flex"`) {
-		t.Error("global navigation top bar should switch at md on the page editor")
+		t.Error("ページエディタでグローバルナビゲーションの上部バーがmdで切り替わっていない")
 	}
 	if !strings.Contains(body, `<nav class="md:hidden"`) {
-		t.Error("global navigation bottom bar should switch at md on the page editor")
+		t.Error("ページエディタでグローバルナビゲーションの下部バーがmdで切り替わっていない")
 	}
 }
 
@@ -661,8 +624,7 @@ func TestEdit_RevisionColumn(t *testing.T) {
 		WithBody("draft body").
 		Build()
 
-	// Two saved revisions: the column should list v1 and v2.
-	// [Ja] 保存済みリビジョン 2 件: カラムに v1 と v2 が表示されること
+	// 保存済みリビジョン2件: カラムにv1とv2が表示されること
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
 	for _, title := range []string{"Rev One", "Rev Two"} {
 		_, err := draftPageRevisionRepo.Create(context.Background(), repository.CreateDraftPageRevisionInput{
@@ -674,7 +636,7 @@ func TestEdit_RevisionColumn(t *testing.T) {
 			BodyHTML:      "<p>body of " + title + "</p>",
 		})
 		if err != nil {
-			t.Fatalf("Create() revision error = %v", err)
+			t.Fatalf("Create() (revision) のエラー = %v", err)
 		}
 	}
 
@@ -693,66 +655,57 @@ func TestEdit_RevisionColumn(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
-	// The edit history column heading is shown.
-	// [Ja] 編集履歴カラムの見出しが表示されること
+	// 編集履歴カラムの見出しが表示されること
 	if !strings.Contains(body, "編集履歴") {
-		t.Error("edit history heading not found")
+		t.Error("編集履歴の見出しが見つからない")
 	}
 
-	// Version numbers derived from the total count appear (oldest = v1).
-	// [Ja] 総件数から算出したバージョン番号が表示されること (最古 = v1)
+	// 総件数から算出したバージョン番号が表示されること (最古 = v1)
 	if !strings.Contains(body, "v2") {
-		t.Error("version v2 not found in the edit history column")
+		t.Error("編集履歴のカラムにバージョンv2が見つからない")
 	}
 	if !strings.Contains(body, "v1") {
-		t.Error("version v1 not found in the edit history column")
+		t.Error("編集履歴のカラムにバージョンv1が見つからない")
 	}
 
-	// The newest revision gets the "current" badge.
-	// [Ja] 最新リビジョンに「現在」バッジが付くこと
+	// 最新リビジョンに「現在」バッジが付くこと
 	if !strings.Contains(body, "現在") {
-		t.Error("current badge not found in the edit history column")
+		t.Error("編集履歴のカラムに現在のバッジが見つからない")
 	}
 
-	// The narrow-screen drawer (panel and open button) is wired up.
-	// [Ja] 狭幅時のドロワー (本体と開閉ボタン) が結線されていること
+	// 狭幅時のドロワー (本体と開閉ボタン) が結線されていること
 	if !strings.Contains(body, `id="page-edit-draft-revisions-drawer"`) {
-		t.Error("edit history drawer not found")
+		t.Error("編集履歴のドロワーが見つからない")
 	}
 	if !strings.Contains(body, `data-drawer-open="page-edit-draft-revisions-drawer"`) {
-		t.Error("edit history drawer open button not found")
+		t.Error("編集履歴のドロワーを開くボタンが見つからない")
 	}
 
-	// The OOB swap targets of the manual save response wrap both column instances with
-	// distinct ids.
-	//
-	// [Ja] 手動保存レスポンスの OOB スワップターゲットが、カラム 2 箇所を別々の id で
+	// 手動保存レスポンスのOOBスワップターゲットが、カラム2箇所を別々のidで
 	// 包んでいること
 	if !strings.Contains(body, `id="page-revision-list"`) {
-		t.Error("static revision list OOB target not found")
+		t.Error("静的なリビジョン一覧のOOBの対象が見つからない")
 	}
 	if !strings.Contains(body, `id="page-revision-list-drawer"`) {
-		t.Error("drawer revision list OOB target not found")
+		t.Error("ドロワーのリビジョン一覧のOOBの対象が見つからない")
 	}
 
-	// The save-draft button sends an htmx PATCH so saving does not navigate away.
-	// [Ja] 「下書き保存」ボタンが htmx の PATCH で送信され、保存で画面遷移しないこと
+	// 「下書き保存」ボタンがhtmxのPATCHで送信され、保存で画面遷移しないこと
 	if !strings.Contains(body, `id="page-edit-save-draft-button"`) {
-		t.Error("save draft button not found")
+		t.Error("下書き保存ボタンが見つからない")
 	}
 	if !strings.Contains(body, `hx-patch="/s/revcol-space/pages/1/draft_page_revision"`) {
-		t.Error("save draft button hx-patch attribute not found")
+		t.Error("下書き保存ボタンのhx-patch属性が見つからない")
 	}
 
-	// The empty state must not be shown when revisions exist.
-	// [Ja] リビジョンが存在するときは空状態テキストが表示されないこと
+	// リビジョンが存在するときは空状態テキストが表示されないこと
 	if strings.Contains(body, "下書きを保存すると、ここに編集履歴が表示されます") {
-		t.Error("edit history empty state should not be shown when revisions exist")
+		t.Error("リビジョンがあるのに編集履歴の空状態が表示されている")
 	}
 }
 
@@ -803,17 +756,17 @@ func TestEdit_AutofocusTitle(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// タイトルが空のとき、タイトル入力欄にautofocusが設定されていることを確認
 	if !strings.Contains(body, `id="page_title"`) {
-		t.Error("page title input not found")
+		t.Error("ページタイトルの入力欄が見つからない")
 	}
 	if !strings.Contains(body, "autofocus") {
-		t.Error("autofocus attribute not found in page_title input")
+		t.Error("page_titleの入力欄にautofocus属性が見つからない")
 	}
 }
 
@@ -837,11 +790,11 @@ func TestEdit_NotLoggedIn(t *testing.T) {
 
 	// ログインページへリダイレクトされることを確認
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	location := rr.Header().Get("Location")
 	if location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /sign_in", location)
 	}
 }
 
@@ -870,7 +823,7 @@ func TestEdit_SpaceNotFound(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -911,7 +864,7 @@ func TestEdit_NotSpaceMember(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -947,7 +900,7 @@ func TestEdit_PageNotFound(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -976,17 +929,13 @@ func TestEdit_InvalidPageNumber(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
-// TestEdit_RelatedPagePagination pins the editor-specific full-page fallback: the link list follows
-// the member's draft, all three listing states reach their requested slices and malformed, stale,
-// or cross-slice state is rejected at the HTTP boundary.
-//
-// [Ja] TestEdit_RelatedPagePagination は編集画面固有のフルページフォールバックを固定する。リンク一覧は
-// メンバーの下書きを参照し、3 一覧すべてが指定スライスへ到達し、不正・失効・別スライスを指す状態は
-// HTTP 境界で拒否される。
+// TestEdit_RelatedPagePaginationは編集画面固有のフルページフォールバックを固定する。リンク一覧は
+// メンバーの下書きを参照し、3一覧すべてが指定スライスへ到達し、不正・失効・別スライスを指す状態は
+// HTTP境界で拒否される。
 func TestEdit_RelatedPagePagination(t *testing.T) {
 	t.Parallel()
 
@@ -1145,12 +1094,12 @@ func TestEdit_RelatedPagePagination(t *testing.T) {
 			handler.Edit(rr, req)
 
 			if rr.Code != tt.wantStatus {
-				t.Errorf("status code = %d, want %d", rr.Code, tt.wantStatus)
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, tt.wantStatus)
 			}
 			body := rr.Body.String()
 			for _, want := range tt.wantContains {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 		})
@@ -1206,77 +1155,58 @@ func TestEdit_LinkListAutoReload(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// リンク一覧セクションのコンテナが存在すること
 	if !strings.Contains(body, `id="page-link-list"`) {
-		t.Error("page-link-list container not found in response")
+		t.Error("レスポンスにpage-link-listのコンテナが見つからない")
 	}
 
-	// The dedicated refresh trigger survives the two list containers' OOB content swaps.
-	//
-	// [Ja] 専用の再取得トリガーは、2 つの一覧コンテナの OOB 内容スワップ後も残る。
+	// 専用の再取得トリガーは、2つの一覧コンテナのOOB内容スワップ後も残る。
 	if !strings.Contains(body, `id="page-draft-refresh-trigger"`) {
-		t.Error("dedicated draft refresh trigger not found")
+		t.Error("下書きの再読み込み専用のトリガーが見つからない")
 	}
 
-	// hx-trigger reloads the lists through their OOB response after a draft is saved.
-	//
-	// [Ja] hx-trigger は下書き保存後、OOB 応答を通じて一覧を再取得する。
+	// hx-triggerは下書き保存後、OOB応答を通じて一覧を再取得する。
 	if !strings.Contains(body, `hx-trigger="draft-autosaved from:window"`) {
-		t.Error("hx-trigger attribute not found - link list auto-reload will not work")
+		t.Error("hx-trigger属性が見つからない (リンク一覧の自動再読み込みが動かない)")
 	}
 
-	// hx-get points at the draft fragment endpoint.
-	//
-	// [Ja] hx-get は下書きフラグメントエンドポイントを指す。
+	// hx-getは下書きフラグメントエンドポイントを指す。
 	if !strings.Contains(body, "/s/linklist-reload-space/pages/1/draft_page") {
-		t.Error("draft_page endpoint URL not found in response")
+		t.Error("レスポンスにdraft_pageのエンドポイントのURLが見つからない")
 	}
 
-	// hx-swap=none leaves the main target untouched and applies only the OOB swaps.
-	//
-	// [Ja] hx-swap=none によりメインターゲットは変更せず、OOB スワップだけを適用する。
+	// hx-swap=noneによりメインターゲットは変更せず、OOBスワップだけを適用する。
 	if !strings.Contains(body, `hx-swap="none"`) {
-		t.Error("hx-swap=none not found - OOB swap will not work correctly")
+		t.Error("hx-swap=noneが見つからない (OOBスワップが正しく動かない)")
 	}
 
-	// The shared related-page state ships with the initial render and outside both list containers,
-	// so the first "load more" already has somewhere to read the other listings from and the content
-	// swaps cannot take it down.
-	//
-	// [Ja] 共有の関連ページ状態は初回描画から、かつ 2 つの一覧コンテナの外に置かれる。最初の
+	// 共有の関連ページ状態は初回描画から、かつ2つの一覧コンテナの外に置かれる。最初の
 	// 「もっと見る」の時点で他の一覧を読む先があり、内容スワップで巻き添えに消えることもない。
 	if !strings.Contains(body, `id="page-related-page-state"`) {
-		t.Error("shared related-page state not found")
+		t.Error("共有の関連ページの状態が見つからない")
 	}
 	if !strings.Contains(body, `hx-include="#page-related-page-state"`) {
-		t.Error("the draft refresh does not read the shared related-page state")
+		t.Error("下書きの再読み込みが共有の関連ページの状態を読んでいない")
 	}
 
-	// The link heading (h2) sits outside #page-link-list (out of the OOB swap target) and is always
-	// rendered: it stays in the DOM even when there are no links (this case) and the not-has CSS
-	// hides the section instead.
-	//
-	// [Ja] 見出し (h2) は #page-link-list の外 (OOB スワップ対象外) にあり、常にレンダリングされる。
-	// リンクが無いこのケースでも DOM 上には存在し、CSS の not-has でセクションごと非表示になる。
+	// 見出し (h2) は #page-link-listの外 (OOBスワップ対象外) にあり、常にレンダリングされる。
+	// リンクが無いこのケースでもDOM上には存在し、CSSのnot-hasでセクションごと非表示になる。
 	if !strings.Contains(body, `<h2 class="font-bold antialiased">`) {
-		t.Error("リンク見出しの h2 が見つからない (呼び出し側でのレンダリングが壊れている可能性)")
+		t.Error("リンク見出しのh2が見つからない (呼び出し側でのレンダリングが壊れている可能性)")
 	}
 
-	// The section hides itself via the not-has variant while its list is empty. With this CSS hook,
-	// heading visibility tracks the content without re-rendering the heading.
-	//
-	// [Ja] セクションは not-has バリアントでリストが空のとき非表示になる。
-	// この CSS フックにより、見出しを再描画せずに表示・非表示が内容に追従する。
+	// セクションはnot-hasバリアントでリストが空のとき非表示になる。
+	// このCSSフックにより、見出しを再描画せずに表示・非表示が内容に追従する。
 	if !strings.Contains(body, `not-has-[#page-link-list>*]:hidden`) {
-		t.Error("リンクセクションの表示制御クラス not-has-[#page-link-list>*]:hidden が見つからない")
+		t.Error("リンクセクションの表示制御クラスnot-has-[#page-link-list>*]:hiddenが見つからない")
 	}
 	if !strings.Contains(body, `not-has-[#page-backlink-list>*]:hidden`) {
-		t.Error("バックリンクセクションの表示制御クラス not-has-[#page-backlink-list>*]:hidden が見つからない")
+		t.Error("バックリンクセクションの表示制御クラスnot-has-[#page-backlink-list>*]:hiddenが見つからない")
 	}
 }
 
@@ -1329,91 +1259,71 @@ func TestEdit_PreviewTab(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
-	// The tabs container and both tabs are rendered.
-	// [Ja] タブのコンテナと編集/プレビューの両タブが描画されること
+	// タブのコンテナと編集/プレビューの両タブが描画されること
 	if !strings.Contains(body, `id="page-edit-tabs"`) {
-		t.Error("tabs container not found in response")
+		t.Error("レスポンスにタブのコンテナが見つからない")
 	}
 
-	// The tabs container carries min-w-0 so the preview's <pre> overflow-auto contains long
-	// code lines instead of the grid item widening past the center column. Matching the whole
-	// start tag ties min-w-0 to this container (min-w-0 also appears on other elements).
-	//
-	// [Ja] タブコンテナが min-w-0 を持ち、プレビューの <pre> の overflow-auto が長いコード行を
-	// 収める (grid アイテムが中央カラムを超えて広がらない) こと。開始タグ全体で照合し、min-w-0 が
-	// このコンテナに付いていることを担保する (min-w-0 は他の要素にも現れる)。
+	// タブコンテナがmin-w-0を持ち、プレビューの <pre> のoverflow-autoが長いコード行を
+	// 収める (gridアイテムが中央カラムを超えて広がらない) こと。開始タグ全体で照合し、min-w-0が
+	// このコンテナに付いていることを担保する (min-w-0は他の要素にも現れる)。
 	if !strings.Contains(body, `<div class="tabs grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-4 min-w-0" id="page-edit-tabs">`) {
-		t.Error("tabs container is missing min-w-0 (guards preview code block overflow)")
+		t.Error("タブのコンテナにmin-w-0が無い (プレビューのコードブロックのはみ出しを防ぐため)")
 	}
 
-	// Basecoat 1.0 styles the tab list only as a direct child of .tabs, so the list must not be
-	// wrapped in another element.
-	//
-	// [Ja] Basecoat 1.0 はタブリストを .tabs の直接の子としてのみスタイルするため、リストを
+	// Basecoat 1.0はタブリストを .tabsの直接の子としてのみスタイルするため、リストを
 	// 別の要素で包んではいけない。
 	if !strings.Contains(body, `id="page-edit-tabs"><nav`) {
-		t.Error("tab list is not a direct child of the tabs container")
+		t.Error("タブの一覧がタブのコンテナの直接の子になっていない")
 	}
 	if !strings.Contains(body, `id="page-edit-tab-edit"`) {
-		t.Error("edit tab not found in response")
+		t.Error("レスポンスに編集タブが見つからない")
 	}
 	if !strings.Contains(body, `id="page-edit-tab-preview"`) {
-		t.Error("preview tab not found in response")
+		t.Error("レスポンスにプレビュータブが見つからない")
 	}
 
-	// The preview tab POSTs the current form values to the preview endpoint via htmx.
-	// [Ja] プレビュータブが htmx でフォームの現在値をプレビューエンドポイントに POST すること
+	// プレビュータブがhtmxでフォームの現在値をプレビューエンドポイントにPOSTすること
 	if !strings.Contains(body, `hx-post="/s/preview-tab-space/pages/1/preview"`) {
-		t.Error("preview tab hx-post to the preview endpoint not found in response")
+		t.Error("レスポンスにプレビューのエンドポイントへのプレビュータブのhx-postが見つからない")
 	}
 
-	// htmx 4 collects the whole edit form (including the hidden _method=PATCH) when the preview
-	// tab fires, so the button blanks _method via hx-vals. The override middleware ignores an
-	// empty _method, so the preview request stays a POST instead of being rewritten to PATCH.
-	// The rendered double quotes are HTML-escaped to &#34; (the browser decodes them back).
-	//
-	// [Ja] プレビュータブ発火時、htmx 4 は編集フォーム全体 (hidden の _method=PATCH を含む) を
-	// 収集するため、ボタンは hx-vals で _method を空にする。override ミドルウェアは空の _method を
-	// 無視するので、プレビュー要求は PATCH に書き換えられず POST のままになる。レンダリングされる
-	// 二重引用符は &#34; に HTML エスケープされる (ブラウザがデコードして元に戻す)。
+	// プレビュータブ発火時、htmx 4は編集フォーム全体 (hiddenの _method=PATCHを含む) を
+	// 収集するため、ボタンはhx-valsで _methodを空にする。overrideミドルウェアは空の _methodを
+	// 無視するので、プレビュー要求はPATCHに書き換えられずPOSTのままになる。レンダリングされる
+	// 二重引用符は &#34; にHTMLエスケープされる (ブラウザがデコードして元に戻す)。
 	if !strings.Contains(body, `hx-vals="{&#34;_method&#34;: &#34;&#34;}"`) {
-		t.Error("preview tab hx-vals blanking _method not found in response")
+		t.Error("レスポンスに_methodを空にするプレビュータブのhx-valsが見つからない")
 	}
-	// The CSRF token input stays in the form, so the auto-collected preview POST carries it and
-	// passes the CSRF middleware.
-	// [Ja] CSRF トークン入力はフォーム内に残るため、自動収集されるプレビュー POST に含まれ、
-	// CSRF ミドルウェアを通過する。
+	// CSRFトークン入力はフォーム内に残るため、自動収集されるプレビューPOSTに含まれ、
+	// CSRFミドルウェアを通過する。
 	if !strings.Contains(body, `id="page-edit-csrf-token"`) {
-		t.Error("csrf token input not found in response")
+		t.Error("レスポンスにCSRFトークンの入力欄が見つからない")
 	}
 
-	// The result is swapped into the preview panel, with a loading indicator.
-	// [Ja] 結果はプレビューパネルにスワップされ、ローディング表示が用意されていること
+	// 結果はプレビューパネルにスワップされ、ローディング表示が用意されていること
 	if !strings.Contains(body, `hx-target="#page-edit-preview-content"`) {
-		t.Error("preview tab hx-target not found in response")
+		t.Error("レスポンスにプレビュータブのhx-targetが見つからない")
 	}
 	if !strings.Contains(body, `id="page-edit-preview-content"`) {
-		t.Error("preview content panel not found in response")
+		t.Error("レスポンスにプレビューのコンテンツパネルが見つからない")
 	}
 	if !strings.Contains(body, `id="page-edit-preview-loading"`) {
-		t.Error("preview loading indicator not found in response")
+		t.Error("レスポンスにプレビューの読み込みインジケーターが見つからない")
 	}
 
-	// The tab labels are localized. Match each label adjacent to its closing </button> tag
-	// so the preview assertion is not satisfied by the loading text ("プレビューを生成中...").
-	//
-	// [Ja] タブのラベルが翻訳されていること。プレビューのアサーションがローディングテキスト
+	// タブのラベルが翻訳されていること。プレビューのアサーションがローディングテキスト
 	// ("プレビューを生成中...") で成立しないよう、各ラベルを閉じ </button> タグ隣接で検証する。
 	if !strings.Contains(body, "編集</button>") {
-		t.Error("edit tab label not found in response")
+		t.Error("レスポンスに編集タブのラベルが見つからない")
 	}
 	if !strings.Contains(body, "プレビュー</button>") {
-		t.Error("preview tab label not found in response")
+		t.Error("レスポンスにプレビュータブのラベルが見つからない")
 	}
 }
 
@@ -1466,67 +1376,53 @@ func TestEdit_KeyboardHint(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
-	// Both the ⌘ (Mac) and Ctrl+ (other) variants are rendered so CSS can switch by html[data-os].
-	// The Mac modifier glues to the key with no separator to keep each chip narrow, while the non-Mac
-	// modifier is "Ctrl+" so it reads with a "+" before the key. The publish button hints Mod-Enter,
-	// rendered as the return-arrow icon after the modifier; the save button hints Mod-s as text.
-	//
-	// [Ja] ⌘ (Mac) と Ctrl+ (それ以外) の両版が描画され、CSS が html[data-os] で切り替えられること。
-	// Mac の修飾キーは区切り無しでキーに詰めてチップを細く保ち、非 Mac の修飾キーは "Ctrl+" で
-	// キーの前に "+" が入る。公開ボタンは Mod-Enter を修飾キーの直後の折り返し矢印アイコンで、
-	// 保存ボタンは Mod-s をテキストで表記すること。
+	// ⌘ (Mac) とCtrl+ (それ以外) の両版が描画され、CSSがhtml[data-os] で切り替えられること。
+	// Macの修飾キーは区切り無しでキーに詰めてチップを細く保ち、非Macの修飾キーは "Ctrl+" で
+	// キーの前に "+" が入る。公開ボタンはMod-Enterを修飾キーの直後の折り返し矢印アイコンで、
+	// 保存ボタンはMod-sをテキストで表記すること。
 	if !strings.Contains(body, `>⌘<svg class="size-3.5"`) {
-		t.Error("publish button Mac shortcut hint (⌘ + return-arrow icon) not found in response")
+		t.Error("レスポンスに公開ボタンのMac向けショートカットヒント (⌘ + リターン矢印アイコン) が見つからない")
 	}
 	if !strings.Contains(body, `>Ctrl+<svg class="size-3.5"`) {
-		t.Error("publish button non-Mac shortcut hint (Ctrl+ and return-arrow icon) not found in response")
+		t.Error("レスポンスに公開ボタンのMac以外向けショートカットヒント (Ctrl+とリターン矢印アイコン) が見つからない")
 	}
-	// The return-arrow key is rendered with the arrow-elbow-down-left icon (its path's leading
-	// move/vertical-line command), not the small ↵ glyph.
-	//
-	// [Ja] 折り返しキーは小さな ↵ グリフではなく arrow-elbow-down-left アイコン (パス先頭の
-	// move/vertical-line コマンド) で描画すること。
+	// 折り返しキーは小さな ↵ グリフではなくarrow-elbow-down-leftアイコン (パス先頭の
+	// move/vertical-lineコマンド) で描画すること。
 	if !strings.Contains(body, "M200,32V176") {
-		t.Error("publish button shortcut hint does not use the arrow-elbow-down-left icon")
+		t.Error("公開ボタンのショートカットヒントがarrow-elbow-down-leftアイコンを使っていない")
 	}
 	if !strings.Contains(body, ">⌘S</kbd>") {
-		t.Error("save button Mac shortcut hint (⌘S) not found in response")
+		t.Error("レスポンスに保存ボタンのMac向けショートカットヒント (⌘S) が見つからない")
 	}
 	if !strings.Contains(body, ">Ctrl+S</kbd>") {
-		t.Error("save button non-Mac shortcut hint (Ctrl+S) not found in response")
+		t.Error("レスポンスに保存ボタンのMac以外向けショートカットヒント (Ctrl+S) が見つからない")
 	}
 
-	// The hint chips toggle by OS only on non-touch devices via the platform-attribute variants.
-	// [Ja] 表記チップはタッチ以外の端末で、プラットフォーム属性バリアントにより OS で出し分けること。
+	// 表記チップはタッチ以外の端末で、プラットフォーム属性バリアントによりOSで出し分けること。
 	if !strings.Contains(body, "non-touch:in-[[data-os=mac]]:inline-flex") {
-		t.Error("Mac keyboard hint display-control class not found in response")
+		t.Error("レスポンスにMac向けキーボードヒントの表示制御クラスが見つからない")
 	}
 	if !strings.Contains(body, "non-touch:in-[[data-os=other]]:inline-flex") {
-		t.Error("non-Mac keyboard hint display-control class not found in response")
+		t.Error("レスポンスにMac以外向けキーボードヒントの表示制御クラスが見つからない")
 	}
 
-	// Each chip tints itself in its host button's foreground color (foreground-colored text over a
-	// low-opacity foreground background): publish tints the default primary .btn, save tints the
-	// secondary one.
-	//
-	// [Ja] 各チップはホストボタンの前景色で淡く染める (前景色の文字 + 低不透明度の前景色背景)。
-	// 公開は既定の primary バリアントの .btn を、保存は secondary バリアントを染めること。
+	// 各チップはホストボタンの前景色で淡く染める (前景色の文字 + 低不透明度の前景色背景)。
+	// 公開は既定のprimaryバリアントの .btnを、保存はsecondaryバリアントを染めること。
 	if !strings.Contains(body, "bg-primary-foreground/20 text-primary-foreground") {
-		t.Error("publish keyboard hint tinted color classes (bg-primary-foreground/20 text-primary-foreground) not found in response")
+		t.Error("レスポンスに公開のキーボードヒントの色付きクラス (bg-primary-foreground/20 text-primary-foreground) が見つからない")
 	}
 	if !strings.Contains(body, "bg-secondary-foreground/8 text-secondary-foreground") {
-		t.Error("save keyboard hint tinted color classes (bg-secondary-foreground/8 text-secondary-foreground) not found in response")
+		t.Error("レスポンスに保存のキーボードヒントの色付きクラス (bg-secondary-foreground/8 text-secondary-foreground) が見つからない")
 	}
 
-	// The chips are decorative, so screen readers read only the button label.
-	// [Ja] チップは装飾的なため、スクリーンリーダーはボタンラベルのみを読み上げること。
+	// チップは装飾的なため、スクリーンリーダーはボタンラベルのみを読み上げること。
 	if !strings.Contains(body, `<kbd class="kbd hidden non-touch:in-[[data-os=mac]]:inline-flex bg-secondary-foreground/8 text-secondary-foreground" aria-hidden="true">`) {
-		t.Error("keyboard hint kbd chip with aria-hidden not found in response")
+		t.Error("レスポンスにaria-hidden付きのキーボードヒントのkbdチップが見つからない")
 	}
 }
 
@@ -1579,48 +1475,37 @@ func TestEdit_ActionRowLayout(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
-	// The action row is one line on wide screens and collapses to two tiers below the 1152px
-	// container width, where the fixed center column is too narrow for everything on one line.
-	//
-	// [Ja] 操作行は広い画面では 1 行、1152px のコンテナ幅未満では 2 段に折り返すこと (この幅未満では
-	// 中央カラムが狭く 1 行に収まらないため)。
+	// 操作行は広い画面では1行、1152pxのコンテナ幅未満では2段に折り返すこと (この幅未満では
+	// 中央カラムが狭く1行に収まらないため)。
 	if !strings.Contains(body, `<div class="flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center">`) {
-		t.Error("action row responsive layout container not found in response")
+		t.Error("レスポンスに操作行のレスポンシブレイアウトのコンテナが見つからない")
 	}
 
-	// The button labels and keyboard hints together are wider than the card's content box on a
-	// narrow non-touch viewport, so the button row must wrap. Match the whole class attribute and
-	// its enclosing tier to keep the assertion specific to this row and fail if flex-wrap is removed.
-	//
-	// [Ja] 狭い非タッチ環境では、ボタンのラベルとキーボードヒントを合わせた幅がカードの
-	// 内容幅を超えるため、ボタン行は折り返せる必要がある。class 属性全体を外側の段と併せて
-	// 照合し、この行から flex-wrap が外れた場合に検出できるようにする。
+	// 狭い非タッチ環境では、ボタンのラベルとキーボードヒントを合わせた幅がカードの
+	// 内容幅を超えるため、ボタン行は折り返せる必要がある。class属性全体を外側の段と併せて
+	// 照合し、この行からflex-wrapが外れた場合に検出できるようにする。
 	wantWrappingButtonRow := `<div class="flex flex-col gap-1 min-[1152px]:flex-row min-[1152px]:items-center">` +
 		`<div class="flex flex-wrap gap-x-2 gap-y-1">`
 	if !strings.Contains(body, wantWrappingButtonRow) {
-		t.Errorf("response does not contain the wrapping action row %q", wantWrappingButtonRow)
+		t.Errorf("レスポンスに折り返す操作行%qが含まれていない", wantWrappingButtonRow)
 	}
 
-	// The saved-at indicator and cancel sit in one container, un-reversed (saved-at then cancel).
-	// On the two-tier layout they group at the right (justify-end); on one line they spread
-	// (min-[1152px]:justify-between). The time never wraps.
-	//
-	// [Ja] 保存時刻表示とキャンセルは 1 つのコンテナに反転させず (保存時刻→キャンセル順) 並べる。
-	// 2 段時は右揃えでまとめ (justify-end)、1 行時は左右へ振り分ける (min-[1152px]:justify-between)。
+	// 保存時刻表示とキャンセルは1つのコンテナに反転させず (保存時刻→キャンセル順) 並べる。
+	// 2段時は右揃えでまとめ (justify-end)、1行時は左右へ振り分ける (min-[1152px]:justify-between)。
 	// 時刻は折り返さないこと。
 	if !strings.Contains(body, `<div class="flex items-center justify-end gap-2 min-[1152px]:flex-1 min-[1152px]:justify-between">`) {
-		t.Error("saved-at + cancel container (un-reversed, right-aligned on two tiers, responsive) not found in response")
+		t.Error("レスポンスに保存日時とキャンセルのコンテナ (反転なし、2段で右寄せ、レスポンシブ) が見つからない")
 	}
 	if !strings.Contains(body, `<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap">`) {
-		t.Error("saved-at indicator with whitespace-nowrap not found in response")
+		t.Error("レスポンスにwhitespace-nowrap付きの保存日時の表示が見つからない")
 	}
 	if strings.Contains(body, "flex-row-reverse") {
-		t.Error("action row should not reverse saved-at and cancel order (flex-row-reverse found)")
+		t.Error("操作行で保存日時とキャンセルの順序が反転している (flex-row-reverseがある)")
 	}
 }
 
@@ -1660,18 +1545,15 @@ func TestEdit_ZenMode(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	// The "page-edit-zen" substring alone matches the always-present Tailwind variant classes
-	// (in-[.page-edit-zen]:lg:hidden etc.), so assert on the full class attribute of the container.
-	//
-	// [Ja] "page-edit-zen" の部分一致では常に存在する Tailwind バリアントクラス
-	// (in-[.page-edit-zen]:lg:hidden など) にもマッチしてしまうため、コンテナの class 属性全体で
+	// "page-edit-zen" の部分一致では常に存在するTailwindバリアントクラス
+	// (in-[.page-edit-zen]:lg:hiddenなど) にもマッチしてしまうため、コンテナのclass属性全体で
 	// 検証する。
 	const containerClassOff = `class="max-w-6xl w-full mx-auto lg:px-4"`
 	const containerClassOn = `class="max-w-6xl w-full mx-auto lg:px-4 page-edit-zen"`
 
 	tests := []struct {
 		name        string
-		cookieValue string // empty = no cookie. [Ja] 空はクッキーなし
+		cookieValue string // 空はクッキーなし
 		wantZen     bool
 	}{
 		{
@@ -1709,85 +1591,68 @@ func TestEdit_ZenMode(t *testing.T) {
 			handler.Edit(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
 
-			// The toggle button is rendered with its label and the server-rendered pressed state.
-			// [Ja] トグルボタンがラベルとサーバー描画の押下状態付きで描画されること
+			// トグルボタンがラベルとサーバー描画の押下状態付きで描画されること
 			if !strings.Contains(body, "data-zen-mode-toggle") {
-				t.Error("zen mode toggle button not found in response")
+				t.Error("レスポンスにZenモードの切り替えボタンが見つからない")
 			}
 			if !strings.Contains(body, "Zenモード") {
-				t.Error("zen mode button label not found in response")
+				t.Error("レスポンスにZenモードのボタンのラベルが見つからない")
 			}
 
 			if tt.wantZen {
 				if !strings.Contains(body, containerClassOn) {
-					t.Error("zen mode class not found on the editor container")
+					t.Error("エディタのコンテナにZenモードのクラスが見つからない")
 				}
 				if !strings.Contains(body, `aria-pressed="true"`) {
-					t.Error(`aria-pressed="true" not found on the zen mode toggle`)
+					t.Error(`Zenモードの切り替えにaria-pressed="true"が見つからない`)
 				}
 			} else {
 				if !strings.Contains(body, containerClassOff) {
-					t.Error("editor container without the zen mode class not found")
+					t.Error("Zenモードのクラスが無いエディタのコンテナが見つからない")
 				}
 				if strings.Contains(body, containerClassOn) {
-					t.Error("zen mode class should not be set on the editor container")
+					t.Error("エディタのコンテナにZenモードのクラスが付いている")
 				}
 				if !strings.Contains(body, `aria-pressed="false"`) {
-					t.Error(`aria-pressed="false" not found on the zen mode toggle`)
+					t.Error(`Zenモードの切り替えにaria-pressed="false"が見つからない`)
 				}
 			}
 
-			// Zen mode only reshapes the desktop (lg+) layout, so every Zen variant is gated to lg:
-			// the side columns and link/backlink lists hide, the grid collapses, and the center
-			// column widens only at lg. On mobile there are no side columns to collapse.
-			//
-			// [Ja] Zenモードはデスクトップ (lg 以上) のレイアウトだけを変えるため、Zenバリアントは
-			// すべて lg 限定になる (左右カラム・リンク / バックリンク一覧の非表示、グリッド解除、
-			// 中央カラムの拡幅はいずれも lg でのみ効く)。モバイルには畳む対象のサイドカラムが無い。
+			// Zenモードはデスクトップ (lg以上) のレイアウトだけを変えるため、Zenバリアントは
+			// すべてlg限定になる (左右カラム・リンク / バックリンク一覧の非表示、グリッド解除、
+			// 中央カラムの拡幅はいずれもlgでのみ効く)。モバイルには畳む対象のサイドカラムが無い。
 
-			// The side columns wrap their Zen hide with lg, asserted on the full class to pin it to
-			// the always-lg-hidden side columns rather than the link/backlink section, which now
-			// shares the same in-[.page-edit-zen]:lg:hidden variant.
-			//
-			// [Ja] 左右サイドカラムは Zen非表示を lg でラップする。同じ in-[.page-edit-zen]:lg:hidden
-			// バリアントを持つようになったリンク / バックリンクセクションではなく、常に lg 非表示の
-			// サイドカラムに固定するため、class 属性全体で検証する。
+			// 左右サイドカラムはZen非表示をlgでラップする。同じin-[.page-edit-zen]:lg:hidden
+			// バリアントを持つようになったリンク / バックリンクセクションではなく、常にlg非表示の
+			// サイドカラムに固定するため、class属性全体で検証する。
 			if !strings.Contains(body, `class="hidden lg:block in-[.page-edit-zen]:lg:hidden"`) {
-				t.Error("zen mode side column hide class not found in response")
+				t.Error("レスポンスにZenモードのサイドカラムを隠すクラスが見つからない")
 			}
-			// The link/backlink section wraps its Zen hide with lg so the lists stay visible on
-			// mobile even when the Zen cookie is set (asserted on the full class to pin it to the
-			// link section, not the always-lg-hidden side columns).
-			//
-			// [Ja] リンク / バックリンク一覧セクションは Zen非表示を lg でラップし、Zenクッキーが
-			// 設定されていてもモバイルでは一覧を表示したままにする (常に lg 非表示のサイドカラムでは
-			// なくリンクセクションに固定するため、class 属性全体で検証する)。
+			// リンク / バックリンク一覧セクションはZen非表示をlgでラップし、Zenクッキーが
+			// 設定されていてもモバイルでは一覧を表示したままにする (常にlg非表示のサイドカラムでは
+			// なくリンクセクションに固定するため、class属性全体で検証する)。
 			if !strings.Contains(body, `class="flex flex-col gap-4 px-4 in-[.page-edit-zen]:lg:hidden"`) {
-				t.Error("zen mode link list lg-only hide class not found in response")
+				t.Error("レスポンスにZenモードのリンク一覧のlg限定の非表示クラスが見つからない")
 			}
 			if !strings.Contains(body, "in-[.page-edit-zen]:lg:block") {
-				t.Error("zen mode grid collapse class not found in response")
+				t.Error("レスポンスにZenモードのグリッドを畳むクラスが見つからない")
 			}
 			if !strings.Contains(body, "in-[.page-edit-zen]:lg:max-w-4xl") {
-				t.Error("zen mode center column widen class not found in response")
+				t.Error("レスポンスにZenモードの中央カラムを広げるクラスが見つからない")
 			}
-			// The Zen toggle is hidden below lg (mobile has no side columns to collapse, and a
-			// hidden toggle with Zen on would trap the mobile user), and restored to inline-flex at
-			// lg. Assert on the full class so it stays pinned to the toggle button.
-			//
-			// [Ja] Zenトグルは lg 未満で非表示にし (モバイルには畳むサイドカラムが無く、Zen ON の
-			// ままトグルが無いとモバイルのユーザーが戻せなくなる)、lg で inline-flex に戻す。
-			// トグルボタンに固定するため class 属性全体で検証する。
+			// Zenトグルはlg未満で非表示にし (モバイルには畳むサイドカラムが無く、Zen ONの
+			// ままトグルが無いとモバイルのユーザーが戻せなくなる)、lgでinline-flexに戻す。
+			// トグルボタンに固定するためclass属性全体で検証する。
 			if !strings.Contains(body, `class="hidden lg:inline-flex btn rounded-full w-fit justify-self-end"`) {
-				t.Error("zen mode toggle lg-only display class not found in response")
+				t.Error("レスポンスにZenモードの切り替えのlg限定の表示クラスが見つからない")
 			}
 			if !strings.Contains(body, `data-variant="outline" data-size="sm" data-zen-mode-toggle`) {
-				t.Error("zen mode toggle Basecoat variant and size attributes not found in response")
+				t.Error("レスポンスにZenモードの切り替えのBasecoatのvariant属性とsize属性が見つからない")
 			}
 		})
 	}
@@ -1841,20 +1706,20 @@ func TestEdit_EnglishLocale(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// 英語のラベルが含まれているか確認
 	if !strings.Contains(body, "Title") {
-		t.Error("English title label not found in response")
+		t.Error("レスポンスに英語のタイトルのラベルが見つからない")
 	}
 	if !strings.Contains(body, "Publish") {
-		t.Error("English publish button not found in response")
+		t.Error("レスポンスに英語の公開ボタンが見つからない")
 	}
 	if !strings.Contains(body, "Cancel") {
-		t.Error("English cancel link not found in response")
+		t.Error("レスポンスに英語のキャンセルリンクが見つからない")
 	}
 }
 
@@ -1902,7 +1767,7 @@ func TestEdit_SuggestionMode(t *testing.T) {
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
-	// ページリビジョンを作成（SuggestionPageのベース用）
+	// ページリビジョンを作成 (SuggestionPageのベース用)
 	pageRevisionID := testutil.NewPageRevisionBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithSpaceMemberID(spaceMemberID).
@@ -1947,81 +1812,74 @@ func TestEdit_SuggestionMode(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// 編集提案モードのメッセージが表示されていることを確認
 	if !strings.Contains(body, "編集提案 #") {
-		t.Error("suggestion editing message not found in response")
+		t.Error("レスポンスに編集提案の編集中のメッセージが見つからない")
 	}
 	if !strings.Contains(body, "のページを編集中です") {
-		t.Error("suggestion editing suffix not found in response")
+		t.Error("レスポンスに編集提案の編集中の接尾辞が見つからない")
 	}
 
 	// 編集提案へのリンクが含まれていることを確認
 	if !strings.Contains(body, `/s/suggestion-edit-space/suggestions/`) {
-		t.Error("suggestion show link not found in response")
+		t.Error("レスポンスに編集提案の詳細リンクが見つからない")
 	}
 
 	// 「編集提案を更新」ボタンが表示されていることを確認
 	if !strings.Contains(body, "編集提案を更新") {
-		t.Error("update suggestion button not found in response")
+		t.Error("レスポンスに編集提案の更新ボタンが見つからない")
 	}
 
 	// 「トピックに公開」ボタンが表示されていないことを確認
 	if strings.Contains(body, "トピックに公開") {
-		t.Error("publish to topic button should not be shown in suggestion mode")
+		t.Error("編集提案モードでトピックへの公開ボタンが表示されている")
 	}
 
 	// フォームのアクションが編集提案ページのURLであることを確認
 	if !strings.Contains(body, "/suggestions/") {
-		t.Error("suggestion page URL not found in form action")
+		t.Error("フォームの送信先に編集提案ページのURLが見つからない")
 	}
 	if !strings.Contains(body, "/suggestion_pages/") {
-		t.Error("suggestion_pages path not found in form action")
+		t.Error("フォームの送信先にsuggestion_pagesのパスが見つからない")
 	}
 
-	// _method=PATCH が含まれていることを確認（PATCHメソッドで送信）
+	// _method=PATCHが含まれていることを確認 (PATCHメソッドで送信)
 	if !strings.Contains(body, `value="PATCH"`) {
-		t.Error("_method=PATCH should be present in suggestion mode")
+		t.Error("編集提案モードで_method=PATCHが無い")
 	}
 
-	// The edit history column is rendered in suggestion mode too (suggestion edits are also backed
-	// by draft pages and their revisions).
-	//
-	// [Ja] 編集提案モードでも編集履歴カラムが描画されること (編集提案の編集も実体は下書きページと
+	// 編集提案モードでも編集履歴カラムが描画されること (編集提案の編集も実体は下書きページと
 	// そのリビジョンであるため)
 	if !strings.Contains(body, "編集履歴") {
-		t.Error("edit history heading not found in suggestion mode")
+		t.Error("編集提案モードで編集履歴の見出しが見つからない")
 	}
 	if !strings.Contains(body, `id="page-edit-draft-revisions-drawer"`) {
-		t.Error("edit history drawer not found in suggestion mode")
+		t.Error("編集提案モードで編集履歴のドロワーが見つからない")
 	}
 
 	// 下書き保存ボタンが表示されていることを確認
 	if !strings.Contains(body, "下書き保存") {
-		t.Error("save draft button should be shown in suggestion mode")
+		t.Error("編集提案モードで下書き保存ボタンが表示されていない")
 	}
 
-	// The suggestion-mode save button also sends an htmx PATCH without navigation.
-	// [Ja] 編集提案モードの「下書き保存」ボタンも htmx の PATCH で画面遷移なしに送信されること
+	// 編集提案モードの「下書き保存」ボタンもhtmxのPATCHで画面遷移なしに送信されること
 	if !strings.Contains(body, `hx-patch="/s/suggestion-edit-space/pages/1/draft_page_revision"`) {
-		t.Error("save draft button hx-patch attribute not found in suggestion mode")
+		t.Error("編集提案モードで下書き保存ボタンのhx-patch属性が見つからない")
 	}
 
-	// 通常の下書きアラートが表示されていないことを確認（編集提案メッセージが代わりに表示される）
+	// 通常の下書きアラートが表示されていないことを確認 (編集提案メッセージが代わりに表示される)
 	if strings.Contains(body, "現在下書きを表示しています") {
-		t.Error("normal draft alert should not be shown in suggestion mode")
+		t.Error("編集提案モードで通常の下書きアラートが表示されている")
 	}
 }
 
-// The caret half of the split save-draft button is icon-only, so its accessible name comes from
-// the translated aria-label rather than from its content.
-//
-// [Ja] 下書き保存の分割ボタンのキャレット側はアイコンのみのため、アクセシブルネームは内容では
-// なく翻訳済みの aria-label が供給する。
+// 下書き保存の分割ボタンのキャレット側はアイコンのみのため、アクセシブルネームは内容では
+// なく翻訳済みのaria-labelが供給する。
 func TestEdit_下書き保存オプションのトリガーにアクセシブルネームがある(t *testing.T) {
 	t.Parallel()
 
@@ -2095,25 +1953,19 @@ func TestEdit_下書き保存オプションのトリガーにアクセシブル
 			handler.Edit(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
-				t.Errorf("下書き保存オプションのトリガーに aria-label %q が含まれていない", tt.wantLabel)
+				t.Errorf("下書き保存オプションのトリガーにaria-label %qが含まれていない", tt.wantLabel)
 			}
 		})
 	}
 }
 
-// TestEdit_RelatedPageSections fixes that the editor lays its listings out in the same three
-// sections as the page detail screen: the linked pages, their backlinks grouped per linked page, and
-// this page's own backlinks. The section wrappers keep the not-has hooks that hide a section while
-// its container is empty, because the draft-autosave swap refills those containers without
-// re-rendering the headings.
-//
-// [Ja] TestEdit_RelatedPageSections は、編集画面の一覧がページ表示画面と同じ 3 セクションに並ぶことを
+// TestEdit_RelatedPageSectionsは、編集画面の一覧がページ表示画面と同じ3セクションに並ぶことを
 // 固定する。リンク先ページ、リンク先ページごとに束ねたそのバックリンク、そしてこのページ自身の
-// バックリンクである。セクションのラッパーは、コンテナが空の間セクションを隠す not-has のフックを
+// バックリンクである。セクションのラッパーは、コンテナが空の間セクションを隠すnot-hasのフックを
 // 保つ。下書き自動保存のスワップは見出しを描き直さずにコンテナだけを詰め直すためである。
 func TestEdit_RelatedPageSections(t *testing.T) {
 	t.Parallel()
@@ -2143,10 +1995,8 @@ func TestEdit_RelatedPageSections(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		Build()
 
-	// One linked page is linked back to, the other is not, so the section holds exactly one group.
-	//
-	// [Ja] リンク先ページのうち片方にはバックリンクがあり、もう片方には無い。セクションにはちょうど
-	// 1 つのグループが残る。
+	// リンク先ページのうち片方にはバックリンクがあり、もう片方には無い。セクションにはちょうど
+	// 1つのグループが残る。
 	linkedPageID := testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -2201,7 +2051,7 @@ func TestEdit_RelatedPageSections(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -2214,28 +2064,23 @@ func TestEdit_RelatedPageSections(t *testing.T) {
 		`not-has-[#page-related-link-list>*]:hidden`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 
-	// A linked page nothing links back to gets no group.
-	//
-	// [Ja] どこからもリンクされていないリンク先ページにはグループが付かない。
+	// どこからもリンクされていないリンク先ページにはグループが付かない。
 	if strings.Contains(body, `id="page-link-list-item-3"`) {
-		t.Error("a linked page without backlinks should not get a related-links group")
+		t.Error("バックリンクの無いリンク先ページに関連リンクのグループが付いている")
 	}
 
-	// The three sections appear in links, related links, and backlinks order. The backlinks of a
-	// linked page sit in the related-links section rather than beside one of the links' cards.
-	//
-	// [Ja] 3 セクションはリンク、関連リンク、バックリンクの順に並ぶ。リンク先ページのバックリンクは
+	// 3セクションはリンク、関連リンク、バックリンクの順に並ぶ。リンク先ページのバックリンクは
 	// リンクセクションのカードの隣ではなく、関連リンクのセクションに置かれる。
 	linksIndex := strings.Index(body, `id="page-link-list-content"`)
 	relatedIndex := strings.Index(body, `id="page-related-link-list"`)
 	backlinksIndex := strings.Index(body, `id="page-backlink-list-content"`)
 	if linksIndex == -1 || relatedIndex == -1 || backlinksIndex == -1 {
 		t.Fatalf(
-			"section positions = links:%d related-links:%d backlinks:%d; all three sections should be rendered",
+			"セクションの位置 = links:%d related-links:%d backlinks:%d、3つのセクションすべてが描画されていない",
 			linksIndex,
 			relatedIndex,
 			backlinksIndex,
@@ -2243,41 +2088,32 @@ func TestEdit_RelatedPageSections(t *testing.T) {
 	}
 	if linksIndex >= relatedIndex || relatedIndex >= backlinksIndex {
 		t.Errorf(
-			"section positions = links:%d related-links:%d backlinks:%d, want links < related-links < backlinks",
+			"セクションの位置 = links:%d related-links:%d backlinks:%d、期待値 = links < related-links < backlinks",
 			linksIndex,
 			relatedIndex,
 			backlinksIndex,
 		)
 	}
 	if got := strings.Index(body, "Related Link Page"); got < relatedIndex {
-		t.Errorf("the backlink of a linked page is rendered at %d, before the related-links section at %d", got, relatedIndex)
+		t.Errorf("リンク先ページのバックリンクが位置%dに描画され、位置%dの関連リンクセクションより前にある", got, relatedIndex)
 	}
 
-	// Every section carries a description beside its heading, as on the page detail screen. The
-	// editor keeps its own smaller heading size, so the shared component renders the h2 with the
-	// base classes alone here.
-	//
-	// [Ja] どのセクションも見出しの脇に説明を持ち、ページ表示画面と同じである。見出しの大きさは編集
-	// 画面のものを保つため、共有コンポーネントはここでは基本のクラスだけで h2 を描画する。
+	// どのセクションも見出しの脇に説明を持ち、ページ表示画面と同じである。見出しの大きさは編集
+	// 画面のものを保つため、共有コンポーネントはここでは基本のクラスだけでh2を描画する。
 	for _, heading := range []string{"リンク", "関連リンク", "バックリンク"} {
 		marker := fmt.Sprintf(`<h2 class="font-bold antialiased">%s</h2>`, heading)
 		headingIndex := strings.Index(body, marker)
 		if headingIndex == -1 {
-			t.Errorf("heading %q is not rendered", heading)
+			t.Errorf("見出し%qが描画されていない", heading)
 			continue
 		}
 		if !strings.HasPrefix(body[headingIndex+len(marker):], `<p class="text-sm text-muted-foreground">`) {
-			t.Errorf("heading %q is not followed by a description", heading)
+			t.Errorf("見出し%qの後ろに説明文が無い", heading)
 		}
 	}
 }
 
-// The trail ends with the editor itself, so the last item must be a plain label carrying
-// aria-current rather than a link back to the topic. The label names the screen rather than the
-// page being edited, since the editor has no heading of its own. Scope the assertions to the
-// breadcrumb because the page title also appears in the editor's fields.
-//
-// [Ja] 経路は編集画面自身で終わるため、末尾の項目はトピックへのリンクではなく aria-current を持つ
+// 経路は編集画面自身で終わるため、末尾の項目はトピックへのリンクではなくaria-currentを持つ
 // ラベルになる。ラベルは編集対象のページではなく画面自身を表す。編集画面は自身の見出しを
 // 持たないためである。ページタイトルは編集画面の入力欄にも出るため、パンくず内に絞って検証する。
 func TestEdit_パンくずが現在地の項目で終わる(t *testing.T) {
@@ -2324,7 +2160,7 @@ func TestEdit_パンくずが現在地の項目で終わる(t *testing.T) {
 	setupHandler(t, queries).Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 
 	breadcrumb := pageEditBreadcrumb(t, rr.Body.String())
@@ -2335,29 +2171,26 @@ func TestEdit_パンくずが現在地の項目で終わる(t *testing.T) {
 		"ページを編集",
 	} {
 		if !strings.Contains(breadcrumb, want) {
-			t.Errorf("breadcrumb does not contain %q", want)
+			t.Errorf("パンくずに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(breadcrumb, `href="/s/edit-crumb/pages/1/edit"`) {
-		t.Error("current page edit breadcrumb item must not be a link")
+		t.Error("現在のページ編集のパンくずの項目がリンクになっている")
 	}
 }
 
-// pageEditBreadcrumb returns the markup of the breadcrumb navigation alone, so that an assertion
-// about the trail is not satisfied by the same text appearing elsewhere on the screen.
-//
-// [Ja] pageEditBreadcrumb はパンくずのナビゲーション部分だけのマークアップを返す。経路についての
+// pageEditBreadcrumbはパンくずのナビゲーション部分だけのマークアップを返す。経路についての
 // 検証が、画面の他の場所に出た同じ文字列で満たされてしまうのを防ぐ。
 func pageEditBreadcrumb(t *testing.T, body string) string {
 	t.Helper()
 
 	start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
 	if start == -1 {
-		t.Fatal("response does not contain the breadcrumb navigation")
+		t.Fatal("レスポンスにパンくずのナビゲーションが含まれていない")
 	}
 	endOffset := strings.Index(body[start:], "</nav>")
 	if endOffset == -1 {
-		t.Fatal("breadcrumb navigation does not have a closing tag")
+		t.Fatal("パンくずのナビゲーションに閉じタグが無い")
 	}
 
 	return body[start : start+endOffset]

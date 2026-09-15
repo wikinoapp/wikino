@@ -35,10 +35,7 @@ func TestPost_ActionMenuAccessibility(t *testing.T) {
 
 	html := buf.String()
 
-	// Scope the assertions to the trigger element. Matching against the whole output would keep
-	// passing if Post gained another decorative icon while the trigger itself regressed.
-	//
-	// [Ja] アサートはトリガー要素の範囲に限定する。出力全体を対象にすると、Post に別の装飾
+	// アサートはトリガー要素の範囲に限定する。出力全体を対象にすると、Postに別の装飾
 	// アイコンが増えたときにトリガー自体が退行しても通過してしまう。
 	trigger := elementSegment(html, `id="post-comment-1-dropdown-trigger"`, "</button>")
 	if trigger == "" {
@@ -46,22 +43,18 @@ func TestPost_ActionMenuAccessibility(t *testing.T) {
 	}
 
 	if !strings.Contains(trigger, `aria-label="コメントの操作"`) {
-		t.Error("ドロップダウントリガーに ActionsLabel が aria-label として出力されていない")
+		t.Error("ドロップダウントリガーにActionsLabelがaria-labelとして出力されていない")
 	}
 	if !strings.Contains(trigger, `<svg aria-hidden="true" focusable="false"`) {
-		t.Error("ドロップダウントリガーの SVG が支援技術とフォーカス順序から除外されていない")
+		t.Error("ドロップダウントリガーのSVGが支援技術とフォーカス順序から除外されていない")
 	}
 	if !strings.Contains(html, `aria-labelledby="post-comment-1-dropdown-trigger"`) {
-		t.Error("メニューが名前付きトリガーを aria-labelledby で参照していない")
+		t.Error("メニューが名前付きトリガーをaria-labelledbyで参照していない")
 	}
 }
 
-// A caller that sets Actions without ActionsLabel gets no aria-label attribute at all. Emitting
-// an empty one would look like a label was set while the trigger, and the menu pointing at it
-// with aria-labelledby, stay unnamed.
-//
-// [Ja] Actions だけを設定して ActionsLabel を渡さなかった場合、aria-label 属性自体を出力しない。
-// 空文字で出力すると、トリガー (と aria-labelledby でそれを参照するメニュー) が無名のままなのに
+// Actionsだけを設定してActionsLabelを渡さなかった場合、aria-label属性自体を出力しない。
+// 空文字で出力すると、トリガー (とaria-labelledbyでそれを参照するメニュー) が無名のままなのに
 // ラベルを設定済みに見えてしまう。
 func TestPost_ActionMenuOmitsEmptyLabel(t *testing.T) {
 	t.Parallel()
@@ -91,14 +84,11 @@ func TestPost_ActionMenuOmitsEmptyLabel(t *testing.T) {
 	}
 
 	if strings.Contains(trigger, "aria-label=") {
-		t.Error("ActionsLabel が空なのにドロップダウントリガーへ aria-label が出力されている")
+		t.Error("ActionsLabelが空なのにドロップダウントリガーへaria-labelが出力されている")
 	}
 }
 
-// elementSegment returns the substring running from the first occurrence of start through the
-// first end that follows it. It returns "" when either marker is missing.
-//
-// [Ja] elementSegment は start が最初に現れる位置から、その後ろで最初に現れる end までの
+// elementSegmentはstartが最初に現れる位置から、その後ろで最初に現れるendまでの
 // 部分文字列を返す。どちらかのマーカーが無い場合は "" を返す。
 func elementSegment(html, start, end string) string {
 	i := strings.Index(html, start)

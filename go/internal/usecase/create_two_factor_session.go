@@ -8,13 +8,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateTwoFactorSessionUsecase は2FA TOTP認証によるセッション作成ユースケース
+// CreateTwoFactorSessionUsecaseは2FA TOTP認証によるセッション作成ユースケース
 type CreateTwoFactorSessionUsecase struct {
 	twoFactorValidator *validator.SignInTwoFactorCreateValidator
 	createSessionUC    *CreateUserSessionUsecase
 }
 
-// NewCreateTwoFactorSessionUsecase は CreateTwoFactorSessionUsecase を生成する
+// NewCreateTwoFactorSessionUsecaseはCreateTwoFactorSessionUsecaseを生成する
 func NewCreateTwoFactorSessionUsecase(
 	twoFactorValidator *validator.SignInTwoFactorCreateValidator,
 	createSessionUC *CreateUserSessionUsecase,
@@ -25,7 +25,7 @@ func NewCreateTwoFactorSessionUsecase(
 	}
 }
 
-// CreateTwoFactorSessionInput は2FAセッション作成の入力パラメータ
+// CreateTwoFactorSessionInputは2FAセッション作成の入力パラメータ
 type CreateTwoFactorSessionInput struct {
 	UserID    model.UserID
 	TOTPCode  string
@@ -33,14 +33,14 @@ type CreateTwoFactorSessionInput struct {
 	UserAgent string
 }
 
-// CreateTwoFactorSessionOutput は2FAセッション作成の出力パラメータ
+// CreateTwoFactorSessionOutputは2FAセッション作成の出力パラメータ
 type CreateTwoFactorSessionOutput struct {
 	Token string
 }
 
-// Execute は2FA TOTPコードを検証してセッションを作成する
+// Executeは2FA TOTPコードを検証してセッションを作成する
 func (uc *CreateTwoFactorSessionUsecase) Execute(ctx context.Context, input CreateTwoFactorSessionInput) (*CreateTwoFactorSessionOutput, error) {
-	// 1. バリデーション（形式チェック + TOTP検証）
+	// 1. バリデーション (形式チェック + TOTP検証)
 	if err := uc.validate(ctx, input); err != nil {
 		return nil, err
 	}

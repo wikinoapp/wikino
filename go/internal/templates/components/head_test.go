@@ -11,9 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// renderHead renders the shared head with a ja locale and returns the HTML.
-//
-// [Ja] renderHead は共通 head を ja ロケールで描画し、HTML を返す。
+// renderHeadは共通headをjaロケールで描画し、HTMLを返す。
 func renderHead(t *testing.T, meta viewmodel.PageMeta) string {
 	t.Helper()
 
@@ -26,11 +24,8 @@ func renderHead(t *testing.T, meta viewmodel.PageMeta) string {
 	return buf.String()
 }
 
-// A screen that knows its canonical address declares it in both places that carry it, so the
-// canonical link and og:url never drift apart.
-//
-// [Ja] 正規アドレスが分かっている画面は、それを持つ 2 箇所の双方で宣言する。canonical リンクと
-// og:url がずれることがないようにするためである。
+// 正規アドレスが分かっている画面は、それを持つ2箇所の双方で宣言する。canonicalリンクと
+// og:urlがずれることがないようにするためである。
 func TestHead_DeclaresCanonicalURLWhenSet(t *testing.T) {
 	t.Parallel()
 
@@ -41,18 +36,13 @@ func TestHead_DeclaresCanonicalURLWhenSet(t *testing.T) {
 		`<meta property="og:url" content="https://localhost/s/example/pages/1">`,
 	} {
 		if !strings.Contains(html, want) {
-			t.Errorf("head does not contain %q", want)
+			t.Errorf("headに%qが含まれていない", want)
 		}
 	}
 }
 
-// An empty value is not the same as declaring no canonical address: an empty href and an empty
-// content both resolve to the requested URL, so every query variant of a screen would declare
-// itself as its own canonical address. A screen that has no canonical address emits neither
-// element.
-//
-// [Ja] 空の値は「正規アドレスを宣言しない」ことと同じではない。空の href も空の content も
-// リクエストされた URL に解決されるため、画面のクエリ違いがそれぞれ自分自身を正規アドレスとして
+// 空の値は「正規アドレスを宣言しない」ことと同じではない。空のhrefも空のcontentも
+// リクエストされたURLに解決されるため、画面のクエリ違いがそれぞれ自分自身を正規アドレスとして
 // 宣言してしまう。正規アドレスを持たない画面はどちらの要素も出さない。
 func TestHead_OmitsCanonicalURLWhenUnset(t *testing.T) {
 	t.Parallel()
@@ -64,7 +54,7 @@ func TestHead_OmitsCanonicalURLWhenUnset(t *testing.T) {
 		`property="og:url"`,
 	} {
 		if strings.Contains(html, notWant) {
-			t.Errorf("head unexpectedly contains %q", notWant)
+			t.Errorf("headに%qが含まれている", notWant)
 		}
 	}
 }

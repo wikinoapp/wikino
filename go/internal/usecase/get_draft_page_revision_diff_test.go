@@ -41,7 +41,7 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithNumber(1).
 		WithName("テストトピック").
-		WithVisibility(0). // public. [Ja] 公開
+		WithVisibility(0). // 公開
 		Build()
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -62,10 +62,7 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		Build()
 
-	// Two revisions, oldest first: v1 then v2. repo.Create stamps time.Now(), and the
-	// (created_at, id) total order keeps them stable even within the same microsecond.
-	//
-	// [Ja] リビジョン 2 件を古い順に作成: v1 → v2。repo.Create は time.Now() を打つが、
+	// リビジョン2件を古い順に作成: v1 → v2。repo.Createはtime.Now() を打つが、
 	// (created_at, id) の全順序により同一マイクロ秒でも順序は安定する。
 	rev1, err := draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
 		DraftPageID:   draftPageID,
@@ -76,7 +73,7 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		BodyHTML:      "<p>line one</p>",
 	})
 	if err != nil {
-		t.Fatalf("Create() rev1 error = %v", err)
+		t.Fatalf("Create() (rev1) のエラー = %v", err)
 	}
 	rev2, err := draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
 		DraftPageID:   draftPageID,
@@ -87,7 +84,7 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		BodyHTML:      "<p>line one</p><p>line two</p>",
 	})
 	if err != nil {
-		t.Fatalf("Create() rev2 error = %v", err)
+		t.Fatalf("Create() (rev2) のエラー = %v", err)
 	}
 
 	t.Run("対象リビジョンと直前リビジョンを返す", func(t *testing.T) {
@@ -98,18 +95,17 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 			UserID:          ownerID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Revision == nil || output.Revision.ID != rev2.ID {
-			t.Fatalf("Revision = %+v, want ID %s", output.Revision, rev2.ID)
+			t.Fatalf("Revision = %+v、期待値 = ID %s", output.Revision, rev2.ID)
 		}
 		if output.PreviousRevision == nil || output.PreviousRevision.ID != rev1.ID {
-			t.Fatalf("PreviousRevision = %+v, want ID %s", output.PreviousRevision, rev1.ID)
+			t.Fatalf("PreviousRevision = %+v、期待値 = ID %s", output.PreviousRevision, rev1.ID)
 		}
-		// rev2 is the newest revision, so it is the current one.
-		// [Ja] rev2 は最新リビジョンなので現在のものとして扱われる。
+		// rev2は最新リビジョンなので現在のものとして扱われる。
 		if !output.IsCurrent {
-			t.Error("IsCurrent = false, want true (最新リビジョン)")
+			t.Error("IsCurrent = false、期待値 = true (最新リビジョン)")
 		}
 	})
 
@@ -121,18 +117,17 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 			UserID:          ownerID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Revision == nil || output.Revision.ID != rev1.ID {
-			t.Fatalf("Revision = %+v, want ID %s", output.Revision, rev1.ID)
+			t.Fatalf("Revision = %+v、期待値 = ID %s", output.Revision, rev1.ID)
 		}
 		if output.PreviousRevision != nil {
-			t.Errorf("PreviousRevision = %+v, want nil", output.PreviousRevision)
+			t.Errorf("PreviousRevision = %+v、期待値 = nil", output.PreviousRevision)
 		}
-		// rev1 is older than rev2, so it is not the current revision.
-		// [Ja] rev1 は rev2 より古いため現在のリビジョンではない。
+		// rev1はrev2より古いため現在のリビジョンではない。
 		if output.IsCurrent {
-			t.Error("IsCurrent = true, want false (最新でないリビジョン)")
+			t.Error("IsCurrent = true、期待値 = false (最新でないリビジョン)")
 		}
 	})
 
@@ -145,10 +140,10 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %v", err)
+			t.Fatalf("AppErrorを期待したが、%vだった", err)
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -166,18 +161,15 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %v", err)
+			t.Fatalf("AppErrorを期待したが、%vだった", err)
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
 	t.Run("他メンバーの下書きのリビジョンにはResourceNotFoundを返す", func(t *testing.T) {
-		// Another member of the same space with their own draft and revision for the same
-		// page: the owner must not be able to view it.
-		//
-		// [Ja] 同じスペースの別メンバーが同じページに自分の下書きとリビジョンを持つ場合、
+		// 同じスペースの別メンバーが同じページに自分の下書きとリビジョンを持つ場合、
 		// オーナーからは閲覧できないこと。
 		otherUserID := testutil.NewUserBuilder(t, tx).
 			WithEmail("gdprd-other@example.com").
@@ -207,7 +199,7 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 			BodyHTML:      "<p>other member body</p>",
 		})
 		if err != nil {
-			t.Fatalf("Create() otherRev error = %v", err)
+			t.Fatalf("Create() (otherRev) のエラー = %v", err)
 		}
 
 		_, err = uc.Execute(ctx, GetDraftPageRevisionDiffInput{
@@ -218,10 +210,10 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %v", err)
+			t.Fatalf("AppErrorを期待したが、%vだった", err)
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 }

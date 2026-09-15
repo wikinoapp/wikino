@@ -17,7 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData は編集提案詳細画面に渡すデータ構造体です
+// ShowDataは編集提案詳細画面に渡すデータ構造体です
 type ShowData struct {
 	CSRFToken                  string
 	Space                      viewmodel.Space
@@ -30,12 +30,12 @@ type ShowData struct {
 	CanClose                   bool
 	CanUpdateSuggestion        bool
 	CanUpdateSuggestionComment bool
-	// ApplyError は反映処理のバリデーション失敗時にセットされる。
-	// ページタイトルはテンプレート側で通常補間し自動エスケープ、メッセージは @templ.Raw で展開する。
+	// ApplyErrorは反映処理のバリデーション失敗時にセットされる。
+	// ページタイトルはテンプレート側で通常補間し自動エスケープ、メッセージは @templ.Rawで展開する。
 	ApplyError *viewmodel.SuggestionApplyError
 }
 
-// Show は編集提案詳細画面のコンテンツを表示します
+// Showは編集提案詳細画面のコンテンツを表示します
 func Show(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -228,7 +228,7 @@ func Show(data ShowData) templ.Component {
 	})
 }
 
-// showActions は編集提案詳細画面のアクションボタンを表示します
+// showActionsは編集提案詳細画面のアクションボタンを表示します
 func showActions(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -290,7 +290,7 @@ func showActions(data ShowData) templ.Component {
 	})
 }
 
-// showComments はコメント一覧を表示します
+// showCommentsはコメント一覧を表示します
 func showComments(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -337,7 +337,7 @@ func showComments(data ShowData) templ.Component {
 	})
 }
 
-// showApplyForm は反映ボタンを表示します
+// showApplyFormは反映ボタンを表示します
 func showApplyForm(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -410,7 +410,7 @@ func showApplyForm(data ShowData) templ.Component {
 	})
 }
 
-// showCloseForm はクローズボタンを表示します
+// showCloseFormはクローズボタンを表示します
 func showCloseForm(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -479,7 +479,7 @@ func showCloseForm(data ShowData) templ.Component {
 	})
 }
 
-// commentActions はコメントのドロップダウンメニューに表示するアクション一覧を返します
+// commentActionsはコメントのドロップダウンメニューに表示するアクション一覧を返します
 func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCommentForList) []components.PostAction {
 	if !data.CanUpdateSuggestionComment {
 		return nil
@@ -492,7 +492,7 @@ func commentActions(ctx context.Context, data ShowData, c viewmodel.SuggestionCo
 	}
 }
 
-// showCommentForm はコメント入力フォームを表示します
+// showCommentFormはコメント入力フォームを表示します
 func showCommentForm(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

@@ -32,16 +32,16 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			UserID: userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.ActiveSpaces) != 0 {
-			t.Errorf("len(ActiveSpaces) = %d, want 0", len(output.ActiveSpaces))
+			t.Errorf("len(ActiveSpaces) = %d、期待値 = 0", len(output.ActiveSpaces))
 		}
 		if len(output.JoinedTopics) != 0 {
-			t.Errorf("len(JoinedTopics) = %d, want 0", len(output.JoinedTopics))
+			t.Errorf("len(JoinedTopics) = %d、期待値 = 0", len(output.JoinedTopics))
 		}
 	})
 
@@ -73,13 +73,13 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			UserID: userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.ActiveSpaces) != 2 {
-			t.Fatalf("len(ActiveSpaces) = %d, want 2", len(output.ActiveSpaces))
+			t.Fatalf("len(ActiveSpaces) = %d、期待値 = 2", len(output.ActiveSpaces))
 		}
 
 		gotIDs := map[string]bool{
@@ -87,7 +87,7 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			string(output.ActiveSpaces[1].ID): true,
 		}
 		if !gotIDs[string(firstSpaceID)] || !gotIDs[string(secondSpaceID)] {
-			t.Errorf("ActiveSpaces IDs = %v, want %v and %v", gotIDs, firstSpaceID, secondSpaceID)
+			t.Errorf("ActiveSpacesのID = %v、期待値 = %vと%v", gotIDs, firstSpaceID, secondSpaceID)
 		}
 	})
 
@@ -132,13 +132,13 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			UserID: userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.JoinedTopics) != 2 {
-			t.Fatalf("len(JoinedTopics) = %d, want 2", len(output.JoinedTopics))
+			t.Fatalf("len(JoinedTopics) = %d、期待値 = 2", len(output.JoinedTopics))
 		}
 
 		gotByName := map[string]*model.Topic{}
@@ -147,13 +147,13 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 		}
 		a, ok := gotByName["Topic A"]
 		if !ok {
-			t.Fatal("Topic A not found in JoinedTopics")
+			t.Fatal("JoinedTopicsにトピックAが見つからない")
 		}
 		if a.Space.ID != spaceID {
-			t.Errorf("Topic A Space.ID = %v, want %v", a.Space.ID, spaceID)
+			t.Errorf("トピックAのSpace.ID = %v、期待値 = %v", a.Space.ID, spaceID)
 		}
 		if _, ok := gotByName["Topic B"]; !ok {
-			t.Fatal("Topic B not found in JoinedTopics")
+			t.Fatal("JoinedTopicsにトピックBが見つからない")
 		}
 	})
 
@@ -167,10 +167,10 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			UserID: userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.DraftPages) != 0 {
-			t.Errorf("len(DraftPages) = %d, want 0", len(output.DraftPages))
+			t.Errorf("len(DraftPages) = %d、期待値 = 0", len(output.DraftPages))
 		}
 	})
 
@@ -193,8 +193,7 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithName("General").
 			Build()
 
-		// Create 7 drafts (> homeDraftPagesLimit which is 5).
-		// [Ja] 7 件作成 (上限 5 を超える)
+		// 7件作成 (上限5を超える)
 		for i := int32(1); i <= 7; i++ {
 			pageID := testutil.NewPageBuilder(t, tx).
 				WithSpaceID(spaceID).
@@ -214,10 +213,10 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			UserID: userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.DraftPages) != 5 {
-			t.Errorf("len(DraftPages) = %d, want 5 (capped at homeDraftPagesLimit)", len(output.DraftPages))
+			t.Errorf("len(DraftPages) = %d、期待値 = 5 (homeDraftPagesLimitで上限)", len(output.DraftPages))
 		}
 	})
 
@@ -227,9 +226,7 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithAtname("ghscancreate").
 			Build()
 
-		// Space 1: the user is a space admin, so they can create pages in its topic even without a
-		// topic-level page:write scope.
-		// [Ja] スペース 1: ユーザーはスペース管理者なので、トピックレベルの page:write が無くても
+		// スペース1: ユーザーはスペース管理者なので、トピックレベルのpage:writeが無くても
 		// そのトピックにページを作成できる。
 		adminSpaceID := testutil.NewSpaceBuilder(t, tx).
 			WithIdentifier("ghs-cancreate-admin").
@@ -249,9 +246,7 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithSpaceMemberID(adminSpaceMemberID).
 			Build()
 
-		// Space 2: the user is a member without any space-level scope. Page-create permission is then
-		// decided per topic by the topic membership's scopes.
-		// [Ja] スペース 2: ユーザーはスペースレベルのスコープを持たないメンバー。ページ作成権限は
+		// スペース2: ユーザーはスペースレベルのスコープを持たないメンバー。ページ作成権限は
 		// トピックメンバーのスコープによってトピックごとに決まる。
 		memberSpaceID := testutil.NewSpaceBuilder(t, tx).
 			WithIdentifier("ghs-cancreate-member").
@@ -262,8 +257,7 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithScopes([]model.Scope{}).
 			Build()
 
-		// Topic with a topic-level page:write scope → can create.
-		// [Ja] トピックレベルの page:write スコープを持つトピック → 作成可能。
+		// トピックレベルのpage:writeスコープを持つトピック → 作成可能。
 		writableTopicID := testutil.NewTopicBuilder(t, tx).
 			WithSpaceID(memberSpaceID).
 			WithNumber(1).
@@ -276,8 +270,7 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithScopes([]model.Scope{model.ScopePageWrite}).
 			Build()
 
-		// Topic without any scope → cannot create.
-		// [Ja] スコープを持たないトピック → 作成不可。
+		// スコープを持たないトピック → 作成不可。
 		readonlyTopicID := testutil.NewTopicBuilder(t, tx).
 			WithSpaceID(memberSpaceID).
 			WithNumber(2).
@@ -294,10 +287,10 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			UserID: userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 
 		want := map[model.TopicID]bool{
@@ -307,7 +300,7 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 		}
 		for topicID, wantCanCreate := range want {
 			if got := output.CanCreatePageByTopic[topicID]; got != wantCanCreate {
-				t.Errorf("CanCreatePageByTopic[%v] = %v, want %v", topicID, got, wantCanCreate)
+				t.Errorf("CanCreatePageByTopic[%v] = %v、期待値 = %v", topicID, got, wantCanCreate)
 			}
 		}
 	})

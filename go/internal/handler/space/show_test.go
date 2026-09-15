@@ -22,7 +22,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// newShowRequest はchiのURLパラメータ付きGETリクエストを作成するヘルパーです
+// newShowRequestはchiのURLパラメータ付きGETリクエストを作成するヘルパーです
 func newShowRequest(t *testing.T, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -36,7 +36,7 @@ func newShowRequest(t *testing.T, path string, params map[string]string) *http.R
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用のスペース詳細ハンドラーを作成するヘルパーです
+// setupHandlerはテスト用のスペース詳細ハンドラーを作成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *spacehandler.Handler {
 	t.Helper()
 
@@ -71,7 +71,7 @@ func TestShow_存在しないスペースで404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -127,44 +127,39 @@ func TestShow_メンバーがピン留めと通常ページを閲覧できる(t 
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "Pages Space") {
-		t.Error("response should contain the space name")
+		t.Error("レスポンスにスペース名が含まれていない")
 	}
 	if !strings.Contains(body, "通常ページ") {
-		t.Error("response should contain the regular page title")
+		t.Error("レスポンスに通常ページのタイトルが含まれていない")
 	}
 	if !strings.Contains(body, "ピン留めページ") {
-		t.Error("response should contain the pinned page title")
+		t.Error("レスポンスにピン留めしたページのタイトルが含まれていない")
 	}
-	// Cards show the topic label (pages span topics on the space detail).
-	// [Ja] カードはトピックラベルを表示する (スペース詳細はページが複数トピックに跨る)。
+	// カードはトピックラベルを表示する (スペース詳細はページが複数トピックに跨る)。
 	if !strings.Contains(body, "テストトピックラベル") {
-		t.Error("response should contain the topic label on the cards")
+		t.Error("レスポンスのカードにトピックのラベルが含まれていない")
 	}
-	// A space:admin member can edit, so the per-card edit links are rendered.
-	// [Ja] space:admin メンバーは編集できるため、カードごとの編集リンクが描画される。
+	// space:adminメンバーは編集できるため、カードごとの編集リンクが描画される。
 	if !strings.Contains(body, "/s/ss-pages/pages/1/edit") {
-		t.Error("response should contain the edit link for the regular page")
+		t.Error("レスポンスに通常ページの編集リンクが含まれていない")
 	}
 	if !strings.Contains(body, "/s/ss-pages/pages/2/edit") {
-		t.Error("response should contain the edit link for the pinned page")
+		t.Error("レスポンスにピン留めしたページの編集リンクが含まれていない")
 	}
 
-	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
-	// link has to bypass it) and keeps this screen's max-w-3xl content width.
-	//
-	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
-	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅max-w-3xlも維持する。
 	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+		t.Error("共通のパンくずヘッダーがmax-w-3xlのコンテンツ幅を保っていない")
 	}
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
-		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 }
 
@@ -215,38 +210,34 @@ func TestShow_ゲストは公開トピックのページのみ閲覧できる(t 
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "公開ページ") {
-		t.Error("response should contain the public-topic page title")
+		t.Error("レスポンスに公開トピックのページタイトルが含まれていない")
 	}
 	if strings.Contains(body, "非公開ページ") {
-		t.Error("response should not contain the private-topic page title for a guest")
+		t.Error("ゲストのレスポンスに非公開トピックのページタイトルが含まれている")
 	}
-	// The topic label is shown to guests too.
-	// [Ja] トピックラベルはゲストにも表示される。
+	// トピックラベルはゲストにも表示される。
 	if !strings.Contains(body, "公開トピック") {
-		t.Error("response should contain the topic label for the public-topic card")
+		t.Error("レスポンスに公開トピックのカードのトピックラベルが含まれていない")
 	}
-	// A guest cannot edit, so no per-card edit link is rendered.
-	// [Ja] ゲストは編集できないため、カードの編集リンクは描画されない。
+	// ゲストは編集できないため、カードの編集リンクは描画されない。
 	if strings.Contains(body, "/s/ss-guest/pages/1/edit") {
-		t.Error("response should not contain an edit link for a guest")
+		t.Error("ゲストのレスポンスに編集リンクが含まれている")
 	}
-	// The topic section lists only public topics for a guest; the private topic must not appear.
-	// [Ja] トピックセクションはゲストには公開トピックのみを並べ、非公開トピックは現れてはならない。
+	// トピックセクションはゲストには公開トピックのみを並べ、非公開トピックは現れてはならない。
 	if !strings.Contains(body, "/s/ss-guest/topics/1\"") {
-		t.Error("response should contain the public topic detail link in the topic section")
+		t.Error("レスポンスのトピックセクションに公開トピックの詳細リンクが含まれていない")
 	}
 	if strings.Contains(body, "/s/ss-guest/topics/2") {
-		t.Error("response should not contain the private topic detail link for a guest")
+		t.Error("ゲストのレスポンスに非公開トピックの詳細リンクが含まれている")
 	}
-	// A guest cannot create pages, so no per-topic new page action is rendered.
-	// [Ja] ゲストはページを作成できないため、トピックごとの新規ページ作成アクションは描画されない。
+	// ゲストはページを作成できないため、トピックごとの新規ページ作成アクションは描画されない。
 	if strings.Contains(body, "/s/ss-guest/topics/1/pages/new") {
-		t.Error("response should not contain a new page link for a guest")
+		t.Error("ゲストのレスポンスに新規ページのリンクが含まれている")
 	}
 }
 
@@ -263,7 +254,7 @@ func TestShow_参加トピックが無いメンバーにトピック作成導線
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("ss-notopic").
 		Build()
-	// space:admin scope (default) grants topic creation. [Ja] デフォルトの space:admin スコープでトピック作成が許可される。
+	// デフォルトのspace:adminスコープでトピック作成が許可される。
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
@@ -281,18 +272,18 @@ func TestShow_参加トピックが無いメンバーにトピック作成導線
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "トピックはありません") {
-		t.Error("response should contain the no-topics empty state message")
+		t.Error("レスポンスにトピックが無いときの空状態のメッセージが含まれていない")
 	}
 	if !strings.Contains(body, "新規トピック") {
-		t.Error("response should contain the new topic button")
+		t.Error("レスポンスに新規トピックのボタンが含まれていない")
 	}
 	if !strings.Contains(body, "/s/ss-notopic/topics/new") {
-		t.Error("response should contain the new topic form link")
+		t.Error("レスポンスに新規トピックのフォームへのリンクが含まれていない")
 	}
 }
 
@@ -336,30 +327,27 @@ func TestShow_メンバーにトピックセクションと作成導線が表示
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "ページはありません") {
-		t.Error("response should contain the no-pages empty state message")
+		t.Error("レスポンスにページが無いときの空状態のメッセージが含まれていない")
 	}
-	// The joined topic appears in the topic section, linking to its detail page.
-	// [Ja] 参加トピックがトピックセクションに表示され、詳細ページへリンクする。
+	// 参加トピックがトピックセクションに表示され、詳細ページへリンクする。
 	if !strings.Contains(body, "参加トピック") {
-		t.Error("response should contain the joined topic name in the topic section")
+		t.Error("レスポンスのトピックセクションに参加中のトピック名が含まれていない")
 	}
 	if !strings.Contains(body, "/s/ss-nopage/topics/5\"") {
-		t.Error("response should contain the topic detail link in the topic section")
+		t.Error("レスポンスのトピックセクションにトピック詳細のリンクが含まれていない")
 	}
-	// The member may write, so the per-topic new page action appears in the section.
-	// [Ja] メンバーは書き込めるため、トピックごとの新規ページ作成アクションがセクションに表示される。
+	// メンバーは書き込めるため、トピックごとの新規ページ作成アクションがセクションに表示される。
 	if !strings.Contains(body, "/s/ss-nopage/topics/5/pages/new") {
-		t.Error("response should contain the per-topic new page link in the topic section")
+		t.Error("レスポンスのトピックセクションにトピックごとの新規ページリンクが含まれていない")
 	}
-	// The space-level empty-state "new page" button is gone; its guidance text must not appear.
-	// [Ja] スペースレベルの空状態「新規ページ」ボタンは消え、その説明文が表示されてはならない。
+	// スペースレベルの空状態「新規ページ」ボタンは消え、その説明文が表示されてはならない。
 	if strings.Contains(body, "最初の1ページ目を作成しましょう") {
-		t.Error("response should not contain the removed empty-state new page guidance")
+		t.Error("レスポンスに削除済みの空状態の新規ページ案内が含まれている")
 	}
 }
 
@@ -393,12 +381,11 @@ func TestShow_メンバーにスペースオプションメニューが全て表
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
-	// The options dropdown shows the RSS feed plus the member-only topic / trash / settings links.
-	// [Ja] オプションメニューには RSS フィードと、メンバー限定のトピック / ゴミ箱 / 設定リンクが表示される。
+	// オプションメニューにはRSSフィードと、メンバー限定のトピック / ゴミ箱 / 設定リンクが表示される。
 	for _, want := range []string{
 		"/s/ss-options/atom",
 		"/s/ss-options/topics/new",
@@ -406,7 +393,7 @@ func TestShow_メンバーにスペースオプションメニューが全て表
 		"/s/ss-options/settings",
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response should contain the options menu link %q", want)
+			t.Errorf("レスポンスにオプションメニューのリンク%qが含まれていない", want)
 		}
 	}
 }
@@ -431,20 +418,19 @@ func TestShow_ゲストにはオプションメニューのRSSのみ表示され
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
-	// A guest sees only the RSS feed link; the member-only links must not appear.
-	// [Ja] ゲストには RSS フィードリンクのみが見え、メンバー限定リンクは表示されない。
+	// ゲストにはRSSフィードリンクのみが見え、メンバー限定リンクは表示されない。
 	if !strings.Contains(body, "/s/ss-guest-options/atom") {
-		t.Error("response should contain the RSS feed link for a guest")
+		t.Error("ゲストのレスポンスにRSSフィードのリンクが含まれていない")
 	}
 	if strings.Contains(body, "/s/ss-guest-options/trash") {
-		t.Error("response should not contain the trash link for a guest")
+		t.Error("ゲストのレスポンスにゴミ箱のリンクが含まれている")
 	}
 	if strings.Contains(body, "/s/ss-guest-options/settings") {
-		t.Error("response should not contain the settings link for a guest")
+		t.Error("ゲストのレスポンスに設定のリンクが含まれている")
 	}
 }
 
@@ -471,8 +457,7 @@ func TestShow_ページネーションの次ページリンクが表示される
 		WithVisibility(0).
 		Build()
 
-	// Create 101 regular pages so the 100-per-page limit yields a second page.
-	// [Ja] 1 ページ 100 件の上限を超える 101 件の通常ページを作成し、2 ページ目を発生させる。
+	// 1ページ100件の上限を超える101件の通常ページを作成し、2ページ目を発生させる。
 	for i := int32(1); i <= 101; i++ {
 		testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
@@ -495,20 +480,17 @@ func TestShow_ページネーションの次ページリンクが表示される
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "/s/ss-paginate?page=2") {
-		t.Error("response should contain the link to the next page")
+		t.Error("レスポンスに次のページへのリンクが含まれていない")
 	}
 }
 
-// The space options dropdown trigger is icon-only, so its accessible name comes from the
-// translated aria-label rather than from its content.
-//
-// [Ja] スペースオプションのドロップダウントリガーはアイコンのみのため、アクセシブルネームは
-// 内容ではなく翻訳済みの aria-label が供給する。
+// スペースオプションのドロップダウントリガーはアイコンのみのため、アクセシブルネームは
+// 内容ではなく翻訳済みのaria-labelが供給する。
 func TestShow_スペースオプションのトリガーにアクセシブルネームがある(t *testing.T) {
 	t.Parallel()
 
@@ -564,22 +546,18 @@ func TestShow_スペースオプションのトリガーにアクセシブルネ
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
-				t.Errorf("スペースオプションのトリガーに aria-label %q が含まれていない", tt.wantLabel)
+				t.Errorf("スペースオプションのトリガーにaria-label %qが含まれていない", tt.wantLabel)
 			}
 		})
 	}
 }
 
-// The stored identifier is what the canonical URL must point at. spaces.identifier is citext, so a
-// request whose casing differs reaches the same screen and would otherwise declare a second
-// canonical address for the same content.
-//
-// [Ja] 正規 URL が指すべきは保存済みの識別子である。spaces.identifier は citext のため大文字小文字が
-// 違うリクエストでも同じ画面に到達し、そのままでは同じ内容に対して 2 つ目の正規アドレスを宣言して
+// 正規URLが指すべきは保存済みの識別子である。spaces.identifierはcitextのため大文字小文字が
+// 違うリクエストでも同じ画面に到達し、そのままでは同じ内容に対して2つ目の正規アドレスを宣言して
 // しまう。
 func TestShow_CanonicalUsesStoredIdentifier(t *testing.T) {
 	t.Parallel()
@@ -602,7 +580,7 @@ func TestShow_CanonicalUsesStoredIdentifier(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
@@ -613,7 +591,7 @@ func TestShow_CanonicalUsesStoredIdentifier(t *testing.T) {
 		`<meta property="og:url" content="https://localhost/s/ss-canonical">`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 	if strings.Contains(body, "SS-CANONICAL") {
@@ -621,10 +599,7 @@ func TestShow_CanonicalUsesStoredIdentifier(t *testing.T) {
 	}
 }
 
-// Each page of the series carries different pages, so it declares itself rather than the first page
-// as its canonical address.
-//
-// [Ja] 系列の各ページは載っているページが異なるため、1 ページ目ではなく自分自身を正規アドレスとして
+// 系列の各ページは載っているページが異なるため、1ページ目ではなく自分自身を正規アドレスとして
 // 宣言する。
 func TestShow_PaginatedCanonicalPreservesPageParameter(t *testing.T) {
 	t.Parallel()
@@ -650,8 +625,7 @@ func TestShow_PaginatedCanonicalPreservesPageParameter(t *testing.T) {
 		WithVisibility(0).
 		Build()
 
-	// Create 101 regular pages so the 100-per-page limit yields a second page.
-	// [Ja] 1 ページ 100 件の上限を超える 101 件の通常ページを作成し、2 ページ目を発生させる。
+	// 1ページ100件の上限を超える101件の通常ページを作成し、2ページ目を発生させる。
 	for i := int32(1); i <= 101; i++ {
 		testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
@@ -674,7 +648,7 @@ func TestShow_PaginatedCanonicalPreservesPageParameter(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	for _, want := range []string{
@@ -682,12 +656,12 @@ func TestShow_PaginatedCanonicalPreservesPageParameter(t *testing.T) {
 		"<meta property=\"og:title\" content=\"Paginated Space (2 ページ目)\">",
 	} {
 		if !strings.Contains(rr.Body.String(), want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 
 	if want := `<link rel="canonical" href="https://localhost/s/ss-canonical-page?page=2">`; !strings.Contains(rr.Body.String(), want) {
-		t.Errorf("response does not contain %q", want)
+		t.Errorf("レスポンスに%qが含まれていない", want)
 	}
 }
 
@@ -704,12 +678,8 @@ func TestShow_PageBeyondTotalReturnsNotFound(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	// The last value is past int32: a positive page number too large for the offset names a page
-	// that does not exist just as a smaller out-of-range one does, so it gets the same 404 instead of
-	// falling back to the first page.
-	//
-	// [Ja] 最後の値は int32 を超える。offset に収まらない正のページ番号が指すのは、範囲内の範囲外値と
-	// 同じく存在しないページのため、1 ページ目へフォールバックせず同じ 404 になる。
+	// 最後の値はint32を超える。offsetに収まらない正のページ番号が指すのは、範囲内の範囲外値と
+	// 同じく存在しないページのため、1ページ目へフォールバックせず同じ404になる。
 	for _, page := range []string{"2", "2147483647", "99999999999"} {
 		t.Run("page="+page, func(t *testing.T) {
 			req := newShowRequest(t, "/s/ss-page-out-of-range?page="+page, map[string]string{
@@ -720,31 +690,24 @@ func TestShow_PageBeyondTotalReturnsNotFound(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusNotFound {
-				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 			}
 
 			body := rr.Body.String()
 			if strings.Contains(body, "Out of Range Space") {
-				t.Error("response should not contain the space name")
+				t.Error("レスポンスにスペース名が含まれている")
 			}
 			if strings.Contains(body, "/s/ss-page-out-of-range?page="+page) {
-				t.Error("response should not contain a self-referencing canonical URL")
+				t.Error("レスポンスに自身を指すcanonical URLが含まれている")
 			}
 		})
 	}
 }
 
-// The space is the last item of its breadcrumb, so a signed-in viewer gets it marked as the current
-// page under the /home parent used by the authenticated app. A signed-out viewer gets no /home
-// crumb (matching Rails), which leaves the space itself as the only item: that trail has nothing to
-// navigate to, so the breadcrumb is dropped rather than rendering a navigation landmark with no
-// links. The signed-out variant publishes no BreadcrumbList structured data. The signed-in variant
-// publishes the same home › space trail as its visible breadcrumb.
-//
-// [Ja] スペースはパンくずの末尾項目のため、ログイン済みの閲覧者には認証後アプリの親である /home の下で
-// 現在ページとして伝える。未ログインの閲覧者には Rails 版と同じく /home 項目を出さないため、残るのは
+// スペースはパンくずの末尾項目のため、ログイン済みの閲覧者には認証後アプリの親である /homeの下で
+// 現在ページとして伝える。未ログインの閲覧者にはRails版と同じく /home項目を出さないため、残るのは
 // スペース自身だけになる。その経路にはたどれる項目が無いので、リンクの無いナビゲーションランドマークを
-// 描画せずパンくずごと落とす。未ログイン時は BreadcrumbList 構造化データを出さない。ログイン時は
+// 描画せずパンくずごと落とす。未ログイン時はBreadcrumbList構造化データを出さない。ログイン時は
 // 見た目のパンくずと同じホーム › スペースの経路を構造化データとして出す。
 func TestShow_BreadcrumbMarksCurrentSpace(t *testing.T) {
 	t.Parallel()
@@ -768,8 +731,8 @@ func TestShow_BreadcrumbMarksCurrentSpace(t *testing.T) {
 		user           *model.User
 		wantBreadcrumb bool
 	}{
-		{name: "signed-out viewer gets no breadcrumb at all", wantBreadcrumb: false},
-		{name: "signed-in viewer gets the current space under home", user: &model.User{ID: viewerID, Atname: "ssbreadcrumbviewer"}, wantBreadcrumb: true},
+		{name: "未ログインの閲覧者にはパンくずが出ない", wantBreadcrumb: false},
+		{name: "ログイン済みの閲覧者にはホームの下に現在のスペースが出る", user: &model.User{ID: viewerID, Atname: "ssbreadcrumbviewer"}, wantBreadcrumb: true},
 	}
 
 	for _, tt := range tests {
@@ -785,55 +748,46 @@ func TestShow_BreadcrumbMarksCurrentSpace(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
 
-			// Match the breadcrumb landmark by its own label: the global navigation bar is a <nav>
-			// with an aria-label too.
-			//
-			// [Ja] パンくずのランドマークは専用のラベルで特定する。グローバルナビバーも aria-label 付きの
+			// パンくずのランドマークは専用のラベルで特定する。グローバルナビバーもaria-label付きの
 			// <nav> であるため。
 			start := strings.Index(body, `<nav aria-label="パンくずリスト"`)
 			if !tt.wantBreadcrumb {
 				if start != -1 {
-					t.Error("a trail holding only the current item should not render a breadcrumb")
+					t.Error("現在の項目だけのパンくずが描画されている")
 				}
 				if strings.Contains(body, `aria-current="page"`) {
-					t.Error("no breadcrumb means no current item")
+					t.Error("パンくずが無いのに現在の項目がある")
 				}
 
-				// The structured data mirrors the visible breadcrumb, so a trail that renders none
-				// publishes none. This is the state a crawler sees.
-				//
-				// [Ja] 構造化データは見た目のパンくずを写したものなので、パンくずを描画しない経路では
+				// 構造化データは見た目のパンくずを写したものなので、パンくずを描画しない経路では
 				// 出さない。クローラーが見るのはこの状態である。
 				if strings.Contains(body, "application/ld+json") {
-					t.Error("a trail holding only the current item should not publish structured data")
+					t.Error("現在の項目だけのパンくずが構造化データを出している")
 				}
 				return
 			}
 
 			if start == -1 {
-				t.Fatal("response should contain the breadcrumb navigation")
+				t.Fatal("レスポンスにパンくずのナビゲーションが含まれていない")
 			}
 			end := strings.Index(body[start:], "</nav>")
 			if end == -1 {
-				t.Fatal("breadcrumb navigation should have a closing tag")
+				t.Fatal("パンくずのナビゲーションに閉じタグが無い")
 			}
 			breadcrumb := body[start : start+end]
 			if !strings.Contains(breadcrumb, `href="/home"`) {
-				t.Error("signed-in breadcrumb should link back to /home")
+				t.Error("ログイン済みのパンくずが /homeへのリンクになっていない")
 			}
 			if !strings.Contains(breadcrumb, `aria-current="page"`) {
-				t.Error("current breadcrumb item must carry aria-current")
+				t.Error("現在のパンくずの項目にaria-currentが付いていない")
 			}
 
-			// The visible trail has something to navigate to here, so the machine-readable copy is
-			// published from the same items: home as a link, the space as the non-linked current item.
-			//
-			// [Ja] ここでは見た目の経路にたどれる項目があるため、同じ項目列から機械可読な複製を出す。
+			// ここでは見た目の経路にたどれる項目があるため、同じ項目列から機械可読な複製を出す。
 			// ホームはリンク、スペースは非リンクの現在項目になる。
 			for _, want := range []string{
 				`"@type":"BreadcrumbList"`,
@@ -841,7 +795,7 @@ func TestShow_BreadcrumbMarksCurrentSpace(t *testing.T) {
 				`"position":2,"name":"Breadcrumb Space"}`,
 			} {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 		})

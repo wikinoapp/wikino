@@ -13,10 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Update saves the general settings of a topic
-// (PATCH /s/{space_identifier}/topics/{topic_number}/settings/general).
-//
-// [Ja] Update はトピックの一般設定を保存します
+// Updateはトピックの一般設定を保存します
 // (PATCH /s/{space_identifier}/topics/{topic_number}/settings/general)。
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -52,11 +49,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, string(templates.TopicSettingsGeneralPath(spaceIdentVM, output.Topic.Number)), http.StatusSeeOther)
 }
 
-// handleUpdateError redraws the form with what was submitted when the input is refused, and
-// otherwise answers the way the topic settings answer. The topic is read again for the links and
-// the metadata of the screen, since the refused submission changed nothing.
-//
-// [Ja] handleUpdateError は入力が拒否されたときに送信された内容を戻したフォームを再描画し、
+// handleUpdateErrorは入力が拒否されたときに送信された内容を戻したフォームを再描画し、
 // それ以外はトピック設定の画面と同じ形で応答します。拒否された送信は何も変えていないため、画面の
 // リンクとメタ情報にはトピックを読み直したものを使います。
 func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, input usecase.UpdateTopicInput) {

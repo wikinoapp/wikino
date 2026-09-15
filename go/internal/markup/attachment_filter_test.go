@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// mockAttachmentFinder はテスト用のAttachmentFinderモック
+// mockAttachmentFinderはテスト用のAttachmentFinderモック
 type mockAttachmentFinder struct {
 	attachments map[string]*model.Attachment
 	err         error
@@ -42,7 +42,7 @@ func TestFilterAttachments_InlineImage(t *testing.T) {
 	input := `<p><img src="/attachments/att-img-1"></p>`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	checks := []string{
@@ -56,12 +56,12 @@ func TestFilterAttachments_InlineImage(t *testing.T) {
 	}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
-			t.Errorf("result should contain %q\ngot: %s", check, got)
+			t.Errorf("結果に%qが含まれていない\n実測値: %s", check, got)
 		}
 	}
 
 	if strings.Contains(got, `/attachments/att-img-1`) {
-		t.Errorf("result should not contain original attachment URL\ngot: %s", got)
+		t.Errorf("結果に元の添付ファイルのURLが含まれている\n実測値: %s", got)
 	}
 }
 
@@ -77,7 +77,7 @@ func TestFilterAttachments_InlineImageWithWidthAndAlt(t *testing.T) {
 	input := `<img src="/attachments/att-img-2" width="300" alt="カスタムAlt">`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	checks := []string{
@@ -87,7 +87,7 @@ func TestFilterAttachments_InlineImageWithWidthAndAlt(t *testing.T) {
 	}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
-			t.Errorf("result should contain %q\ngot: %s", check, got)
+			t.Errorf("結果に%qが含まれていない\n実測値: %s", check, got)
 		}
 	}
 }
@@ -121,11 +121,11 @@ func TestFilterAttachments_InlineImageFormats(t *testing.T) {
 			input := `<img src="/attachments/att-` + f.ext + `">`
 			got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+				t.Fatalf("予期しないエラー: %v", err)
 			}
 
 			if !strings.Contains(got, `data-attachment-type="image"`) {
-				t.Errorf("%s should be rendered as inline image\ngot: %s", f.ext, got)
+				t.Errorf("%sがインライン画像として描画されていない\n実測値: %s", f.ext, got)
 			}
 		})
 	}
@@ -143,7 +143,7 @@ func TestFilterAttachments_DownloadLink(t *testing.T) {
 	input := `<img src="/attachments/att-pdf-1">`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	checks := []string{
@@ -154,12 +154,12 @@ func TestFilterAttachments_DownloadLink(t *testing.T) {
 	}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
-			t.Errorf("result should contain %q\ngot: %s", check, got)
+			t.Errorf("結果に%qが含まれていない\n実測値: %s", check, got)
 		}
 	}
 
 	if strings.Contains(got, `data-attachment-type="image"`) {
-		t.Errorf("PDF should not be rendered as inline image\ngot: %s", got)
+		t.Errorf("PDFがインライン画像として描画されている\n実測値: %s", got)
 	}
 }
 
@@ -175,7 +175,7 @@ func TestFilterAttachments_InlineVideo(t *testing.T) {
 	input := `<a href="/attachments/att-vid-1">動画リンク</a>`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	checks := []string{
@@ -187,7 +187,7 @@ func TestFilterAttachments_InlineVideo(t *testing.T) {
 	}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
-			t.Errorf("result should contain %q\ngot: %s", check, got)
+			t.Errorf("結果に%qが含まれていない\n実測値: %s", check, got)
 		}
 	}
 }
@@ -210,11 +210,11 @@ func TestFilterAttachments_InlineVideoFormats(t *testing.T) {
 			input := `<a href="/attachments/att-` + ext + `">link</a>`
 			got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+				t.Fatalf("予期しないエラー: %v", err)
 			}
 
 			if !strings.Contains(got, `data-attachment-type="video"`) {
-				t.Errorf("%s should be rendered as inline video\ngot: %s", ext, got)
+				t.Errorf("%sがインライン動画として描画されていない\n実測値: %s", ext, got)
 			}
 		})
 	}
@@ -232,7 +232,7 @@ func TestFilterAttachments_AnchorWithDataAttrs(t *testing.T) {
 	input := `<a href="/attachments/att-doc-1">テキストファイル</a>`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	checks := []string{
@@ -243,7 +243,7 @@ func TestFilterAttachments_AnchorWithDataAttrs(t *testing.T) {
 	}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
-			t.Errorf("result should contain %q\ngot: %s", check, got)
+			t.Errorf("結果に%qが含まれていない\n実測値: %s", check, got)
 		}
 	}
 }
@@ -256,11 +256,11 @@ func TestFilterAttachments_NonAttachmentElementsPreserved(t *testing.T) {
 	input := `<p><img src="https://example.com/photo.jpg" alt="external"></p><p><a href="https://example.com">外部リンク</a></p>`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if got != input {
-		t.Errorf("non-attachment elements should be preserved\ngot:  %s\nwant: %s", got, input)
+		t.Errorf("添付ファイル以外の要素が保持されていない\n実測値: %s\n期待値: %s", got, input)
 	}
 }
 
@@ -272,11 +272,11 @@ func TestFilterAttachments_NonExistentAttachmentSkipped(t *testing.T) {
 	input := `<img src="/attachments/nonexistent">`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if got != input {
-		t.Errorf("non-existent attachment should be skipped\ngot:  %s\nwant: %s", got, input)
+		t.Errorf("存在しない添付ファイルが読み飛ばされていない\n実測値: %s\n期待値: %s", got, input)
 	}
 }
 
@@ -287,11 +287,11 @@ func TestFilterAttachments_EmptyHTML(t *testing.T) {
 
 	got, err := FilterAttachments(context.Background(), "", "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if got != "" {
-		t.Errorf("empty input should return empty string, got: %q", got)
+		t.Errorf("入力が空なのに空文字列を返さなかった: %q", got)
 	}
 }
 
@@ -306,7 +306,7 @@ func TestFilterAttachments_MixedContent(t *testing.T) {
 	input := `<p>テキスト<img src="/attachments/att-1">テキスト2</p><p><a href="/attachments/att-2">動画</a></p><p><a href="https://example.com">外部</a></p>`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	checks := []string{
@@ -319,7 +319,7 @@ func TestFilterAttachments_MixedContent(t *testing.T) {
 	}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
-			t.Errorf("result should contain %q\ngot: %s", check, got)
+			t.Errorf("結果に%qが含まれていない\n実測値: %s", check, got)
 		}
 	}
 }
@@ -335,7 +335,7 @@ func TestFilterAttachments_FinderError(t *testing.T) {
 	input := `<img src="/attachments/att-1">`
 	_, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err == nil {
-		t.Fatal("expected error but got nil")
+		t.Fatal("エラーを期待したが、nilだった")
 	}
 }
 
@@ -351,11 +351,11 @@ func TestFilterAttachments_SelfClosingImgTag(t *testing.T) {
 	input := `<img src="/attachments/att-1" />`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if !strings.Contains(got, `data-attachment-id="att-1"`) {
-		t.Errorf("self-closing img tag should be processed\ngot: %s", got)
+		t.Errorf("自己終了したimgタグが処理されていない\n実測値: %s", got)
 	}
 }
 
@@ -430,13 +430,13 @@ func TestWrapStandaloneImageLinks(t *testing.T) {
 
 			got := WrapStandaloneImageLinks(tt.input)
 			if got != tt.want {
-				t.Errorf("WrapStandaloneImageLinks() mismatch\ngot:  %s\nwant: %s", got, tt.want)
+				t.Errorf("WrapStandaloneImageLinks()の結果が一致しない\n実測値: %s\n期待値: %s", got, tt.want)
 			}
 		})
 	}
 }
 
-// spaceAwareMockFinder はスペースIDも検証するテスト用のAttachmentFinderモック。
+// spaceAwareMockFinderはスペースIDも検証するテスト用のAttachmentFinderモック。
 // 実際のリポジトリと同様に、スペースが一致しない添付ファイルはnilを返す。
 type spaceAwareMockFinder struct {
 	attachments map[string]*model.Attachment
@@ -465,14 +465,14 @@ func TestFilterAttachments_CrossSpaceAccessBlocked(t *testing.T) {
 	input := `<img src="/attachments/att-cross-1">`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if strings.Contains(got, `data-attachment-id`) {
-		t.Errorf("cross-space attachment should not be converted\ngot: %s", got)
+		t.Errorf("別スペースの添付ファイルが変換されている\n実測値: %s", got)
 	}
 	if !strings.Contains(got, `/attachments/att-cross-1`) {
-		t.Errorf("original URL should be preserved\ngot: %s", got)
+		t.Errorf("元のURLが保持されていない\n実測値: %s", got)
 	}
 }
 
@@ -488,14 +488,14 @@ func TestFilterAttachments_XSSFilenameEscaped(t *testing.T) {
 	input := `<img src="/attachments/att-xss-1">`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if strings.Contains(got, "<script>") {
-		t.Errorf("filename with <script> tag should be escaped\ngot: %s", got)
+		t.Errorf("<script>タグを含むファイル名がエスケープされていない\n実測値: %s", got)
 	}
 	if !strings.Contains(got, `data-attachment-id="att-xss-1"`) {
-		t.Errorf("attachment should still be converted\ngot: %s", got)
+		t.Errorf("添付ファイルが変換されていない\n実測値: %s", got)
 	}
 }
 
@@ -511,26 +511,26 @@ func TestFilterAttachments_MultipleHTMLImgTags(t *testing.T) {
 	input := `<p>First image:</p><img src="/attachments/att-multi-1" alt="image1"><p>Second image:</p><img src="/attachments/att-multi-2" alt="image2"><p>PDF as image:</p><img src="/attachments/att-multi-3" alt="pdf">`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	// 画像1と画像2はインライン画像として変換されること
 	if strings.Count(got, `data-attachment-type="image"`) != 2 {
-		t.Errorf("expected 2 inline images\ngot: %s", got)
+		t.Errorf("インライン画像が2つになっていない\n実測値: %s", got)
 	}
 	if !strings.Contains(got, `data-attachment-id="att-multi-1"`) {
-		t.Errorf("attachment 1 should be converted\ngot: %s", got)
+		t.Errorf("添付ファイル1が変換されていない\n実測値: %s", got)
 	}
 	if !strings.Contains(got, `data-attachment-id="att-multi-2"`) {
-		t.Errorf("attachment 2 should be converted\ngot: %s", got)
+		t.Errorf("添付ファイル2が変換されていない\n実測値: %s", got)
 	}
 
 	// PDFはダウンロードリンクに変換されること
 	if !strings.Contains(got, `data-attachment-id="att-multi-3"`) {
-		t.Errorf("attachment 3 should be converted\ngot: %s", got)
+		t.Errorf("添付ファイル3が変換されていない\n実測値: %s", got)
 	}
 	if !strings.Contains(got, "document.pdf") {
-		t.Errorf("PDF filename should appear in download link\ngot: %s", got)
+		t.Errorf("ダウンロードリンクにPDFのファイル名が含まれていない\n実測値: %s", got)
 	}
 }
 
@@ -547,17 +547,17 @@ func TestFilterAttachments_ImageFollowedByEmphasis(t *testing.T) {
 	input := `<p><a class="wikino-attachment-image-link" href="/attachments/att-em-1"><img src="/attachments/att-em-1" alt="photo.png"></a><br><em>サンプル画像です</em></p>`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	// 画像が変換されていること
 	if !strings.Contains(got, `data-attachment-type="image"`) {
-		t.Errorf("image should be converted\ngot: %s", got)
+		t.Errorf("画像が変換されていない\n実測値: %s", got)
 	}
 
 	// <em>要素が保持されていること
 	if !strings.Contains(got, "<em>サンプル画像です</em>") {
-		t.Errorf("emphasis element should be preserved\ngot: %s", got)
+		t.Errorf("強調要素が保持されていない\n実測値: %s", got)
 	}
 }
 
@@ -574,23 +574,23 @@ func TestWrapStandaloneImageLinks_IntegrationWithFilterAttachments(t *testing.T)
 	input := `<p>Test</p><img src="/attachments/att-wrap-1" width="600" alt="600x400.png"><p>Test</p>`
 	filtered, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	got := WrapStandaloneImageLinks(filtered)
 
 	// 画像リンクが<p>要素で囲まれていること
 	if !strings.Contains(got, "<p><a") {
-		t.Errorf("standalone image link should be wrapped in <p>\ngot: %s", got)
+		t.Errorf("単独の画像リンクが<p>で囲まれていない\n実測値: %s", got)
 	}
 	if !strings.Contains(got, `class="wikino-attachment-image-link"`) {
-		t.Errorf("image link class should be present\ngot: %s", got)
+		t.Errorf("画像リンクのクラスが含まれていない\n実測値: %s", got)
 	}
 	if !strings.Contains(got, `data-attachment-id="att-wrap-1"`) {
-		t.Errorf("attachment id should be present\ngot: %s", got)
+		t.Errorf("添付ファイルのIDが含まれていない\n実測値: %s", got)
 	}
 	if !strings.Contains(got, `width="600"`) {
-		t.Errorf("width attribute should be preserved\ngot: %s", got)
+		t.Errorf("width属性が保持されていない\n実測値: %s", got)
 	}
 }
 
@@ -655,7 +655,7 @@ func TestExtractAttachmentID(t *testing.T) {
 
 			got := extractAttachmentID(tt.url)
 			if got != tt.want {
-				t.Errorf("extractAttachmentID(%q) = %q, want %q", tt.url, got, tt.want)
+				t.Errorf("extractAttachmentID(%q) = %q、期待値 = %q", tt.url, got, tt.want)
 			}
 		})
 	}
@@ -674,12 +674,12 @@ func TestFilterAttachments_PercentEncodedBackslash(t *testing.T) {
 	input := `<img src="/attachments/att-1%5C">`
 	got, err := FilterAttachments(context.Background(), input, "space-1", finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	// バックスラッシュを含む不正なIDは変換されないこと
 	if strings.Contains(got, `data-attachment-id`) {
-		t.Errorf("percent-encoded backslash URL should not be converted\ngot: %s", got)
+		t.Errorf("パーセントエンコードしたバックスラッシュを含むURLが変換されている\n実測値: %s", got)
 	}
 }
 
@@ -692,7 +692,7 @@ func TestFileExtension(t *testing.T) {
 		want     string
 	}{
 		{name: "jpg", filename: "photo.jpg", want: "jpg"},
-		{name: "PNG（大文字）", filename: "IMAGE.PNG", want: "png"},
+		{name: "PNG (大文字)", filename: "IMAGE.PNG", want: "png"},
 		{name: "複数ドット", filename: "archive.tar.gz", want: "gz"},
 		{name: "拡張子なし", filename: "README", want: ""},
 		{name: "空文字列", filename: "", want: ""},
@@ -705,7 +705,7 @@ func TestFileExtension(t *testing.T) {
 
 			got := fileExtension(tt.filename)
 			if got != tt.want {
-				t.Errorf("fileExtension(%q) = %q, want %q", tt.filename, got, tt.want)
+				t.Errorf("fileExtension(%q) = %q、期待値 = %q", tt.filename, got, tt.want)
 			}
 		})
 	}

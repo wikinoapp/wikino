@@ -73,7 +73,7 @@ type GetActiveEmailConfirmationByEmailAndEventParams struct {
 }
 
 // メールアドレスとイベント種別で有効なメール確認情報を取得する
-// 有効条件: succeeded_at IS NULL（未確認）かつ started_at が15分以内
+// 有効条件: succeeded_at IS NULL (未確認) かつstarted_atが15分以内
 func (q *Queries) GetActiveEmailConfirmationByEmailAndEvent(ctx context.Context, arg GetActiveEmailConfirmationByEmailAndEventParams) (EmailConfirmation, error) {
 	row := q.db.QueryRowContext(ctx, getActiveEmailConfirmationByEmailAndEvent, arg.Email, arg.Event)
 	var i EmailConfirmation

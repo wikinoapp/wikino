@@ -9,10 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetPageBacklinksUsecase aggregates the backlinks of a page itself (as opposed to the backlinks
-// of the pages listed in its link list).
-//
-// [Ja] GetPageBacklinksUsecase はページ自身のバックリンク一覧を集約する読み取り UseCase
+// GetPageBacklinksUsecaseはページ自身のバックリンク一覧を集約する読み取りUseCase
 // (リンク一覧に並ぶ各ページのバックリンクとは別物)。
 type GetPageBacklinksUsecase struct {
 	spaceRepo       *repository.SpaceRepository
@@ -22,7 +19,7 @@ type GetPageBacklinksUsecase struct {
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
-// NewGetPageBacklinksUsecase は GetPageBacklinksUsecase を生成する
+// NewGetPageBacklinksUsecaseはGetPageBacklinksUsecaseを生成する
 func NewGetPageBacklinksUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -39,11 +36,8 @@ func NewGetPageBacklinksUsecase(
 	}
 }
 
-// GetPageBacklinksInput holds the input parameters for fetching a page's backlinks.
-// UserID is nil when the user is not signed in.
-//
-// [Ja] GetPageBacklinksInput はページレベルのバックリンク一覧取得の入力パラメータ。
-// UserID は未ログイン時に nil になる。
+// GetPageBacklinksInputはページレベルのバックリンク一覧取得の入力パラメータ。
+// UserIDは未ログイン時にnilになる。
 type GetPageBacklinksInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
@@ -52,7 +46,7 @@ type GetPageBacklinksInput struct {
 	Limit           int32
 }
 
-// GetPageBacklinksOutput はページレベルのバックリンク一覧取得の出力
+// GetPageBacklinksOutputはページレベルのバックリンク一覧取得の出力
 type GetPageBacklinksOutput struct {
 	Space         *model.Space
 	SpaceMember   *model.SpaceMember
@@ -64,11 +58,8 @@ type GetPageBacklinksOutput struct {
 	CanUpdatePage bool
 }
 
-// Execute fetches a page's backlinks. It returns a *model.AppError with
-// AppErrCodeResourceNotFound whenever the page must not be shown to the current viewer.
-//
-// [Ja] Execute はページレベルのバックリンク一覧を取得する。現在の閲覧者に見せてはいけない場合は
-// AppErrCodeResourceNotFound の *model.AppError を返す。
+// Executeはページレベルのバックリンク一覧を取得する。現在の閲覧者に見せてはいけない場合は
+// AppErrCodeResourceNotFoundの *model.AppErrorを返す。
 func (uc *GetPageBacklinksUsecase) Execute(ctx context.Context, input GetPageBacklinksInput) (*GetPageBacklinksOutput, error) {
 	data, err := fetchPageAccessDataAllowingGuest(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
 	if err != nil {

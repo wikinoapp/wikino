@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateSuggestionCommentUsecase は編集提案コメント作成ユースケース
+// CreateSuggestionCommentUsecaseは編集提案コメント作成ユースケース
 type CreateSuggestionCommentUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
@@ -22,7 +22,7 @@ type CreateSuggestionCommentUsecase struct {
 	createValidator       *validator.SuggestionCommentCreateValidator
 }
 
-// NewCreateSuggestionCommentUsecase は CreateSuggestionCommentUsecase を生成する
+// NewCreateSuggestionCommentUsecaseはCreateSuggestionCommentUsecaseを生成する
 func NewCreateSuggestionCommentUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -43,7 +43,7 @@ func NewCreateSuggestionCommentUsecase(
 	}
 }
 
-// CreateSuggestionCommentInput は編集提案コメント作成の入力パラメータ
+// CreateSuggestionCommentInputは編集提案コメント作成の入力パラメータ
 type CreateSuggestionCommentInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
@@ -51,12 +51,12 @@ type CreateSuggestionCommentInput struct {
 	Body             string
 }
 
-// CreateSuggestionCommentOutput は編集提案コメント作成の出力パラメータ
+// CreateSuggestionCommentOutputは編集提案コメント作成の出力パラメータ
 type CreateSuggestionCommentOutput struct {
 	Comment *model.SuggestionComment
 }
 
-// Execute は編集提案コメントを作成する
+// Executeは編集提案コメントを作成する
 func (uc *CreateSuggestionCommentUsecase) Execute(ctx context.Context, input CreateSuggestionCommentInput) (*CreateSuggestionCommentOutput, error) {
 	// 1. データ取得
 	space, spaceMember, suggestion, err := uc.fetchData(ctx, input)

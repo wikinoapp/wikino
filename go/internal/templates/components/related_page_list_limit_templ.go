@@ -11,13 +11,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// relatedPageListLimit takes the place of the "load more" link once the cumulative editor reaches
-// its safety limit. The stable focusID lets htmx restore keyboard focus to this notice after replacing
-// the link, and the ordinary href continues the draft-backed listing in the one-page editor mode.
-//
-// [Ja] relatedPageListLimit は、累積編集画面が安全上限へ達したとき「もっと見る」リンクの代わりに表示
-// する。安定した focusID により、リンクを差し替えたあと htmx がこの案内へキーボードフォーカスを戻せる。
-// 通常の href は、下書き由来の一覧を 1 ページ単位の編集モードで継続する。
+// relatedPageListLimitは、累積編集画面が安全上限へ達したとき「もっと見る」リンクの代わりに表示
+// する。安定したfocusIDにより、リンクを差し替えたあとhtmxがこの案内へキーボードフォーカスを戻せる。
+// 通常のhrefは、下書き由来の一覧を1ページ単位の編集モードで継続する。
 func relatedPageListLimit(pageURL string, focusID string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -46,7 +42,7 @@ func relatedPageListLimit(pageURL string, focusID string) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(focusID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 18, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 14, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -67,7 +63,7 @@ func relatedPageListLimit(pageURL string, focusID string) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_links_load_more_limit"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 25, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 21, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -80,7 +76,7 @@ func relatedPageListLimit(pageURL string, focusID string) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(pageURL))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 28, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 24, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -93,7 +89,7 @@ func relatedPageListLimit(pageURL string, focusID string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_links_load_more_limit_link"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 29, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 25, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -107,19 +103,11 @@ func relatedPageListLimit(pageURL string, focusID string) templ.Component {
 	})
 }
 
-// relatedPageListEnd replaces the final "load more" link with a visible, focusable completion
-// status. Reusing the link's id lets htmx preserve focus without client-side scripting.
-//
-// The notice only appears once the reader has walked a listing to its end, so it marks a finished
-// pass rather than labelling a resting state, which is what the confetti earns. The icon is
-// decorative, leaving what role="status" announces unchanged, and carries no fill class so that its
-// currentColor follows the paragraph's muted text colour.
-//
-// [Ja] relatedPageListEnd は最後の「もっと見る」リンクを、表示されフォーカス可能な完了状態へ置き換える。
-// リンクの id を引き継ぎ、クライアント側スクリプトを追加せず htmx がフォーカスを維持できるようにする。
+// relatedPageListEndは最後の「もっと見る」リンクを、表示されフォーカス可能な完了状態へ置き換える。
+// リンクのidを引き継ぎ、クライアント側スクリプトを追加せずhtmxがフォーカスを維持できるようにする。
 // この案内は読み手が一覧を最後まで辿ったときにだけ現れ、常時の状態ラベルではなく辿り切った瞬間を示す。
-// confetti が見合うのはそのためである。アイコンは装飾のため role="status" が読み上げる内容は変わらず、
-// fill のクラスを付けないことで currentColor が段落の抑えた文字色に追従する。
+// confettiが見合うのはそのためである。アイコンは装飾のためrole="status" が読み上げる内容は変わらず、
+// fillのクラスを付けないことでcurrentColorが段落の抑えた文字色に追従する。
 func relatedPageListEnd(focusID string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -148,7 +136,7 @@ func relatedPageListEnd(focusID string) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(focusID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 49, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 37, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
@@ -165,7 +153,7 @@ func relatedPageListEnd(focusID string) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_links_load_more_end"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 56, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/related_page_list_limit.templ`, Line: 44, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {

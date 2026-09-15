@@ -4,7 +4,7 @@ SELECT * FROM email_confirmations WHERE id = $1;
 
 -- name: GetActiveEmailConfirmationByEmailAndEvent :one
 -- メールアドレスとイベント種別で有効なメール確認情報を取得する
--- 有効条件: succeeded_at IS NULL（未確認）かつ started_at が15分以内
+-- 有効条件: succeeded_at IS NULL (未確認) かつstarted_atが15分以内
 SELECT * FROM email_confirmations
 WHERE email = $1
   AND event = $2

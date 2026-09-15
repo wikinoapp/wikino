@@ -62,14 +62,14 @@ func TestSignInCreateValidator_Validate(t *testing.T) {
 				})
 
 				if output != nil {
-					t.Error("expected nil output for validation error")
+					t.Error("バリデーションエラーなのに出力がnilではない")
 				}
 				ve := model.AsValidationError(err)
 				if ve == nil {
-					t.Fatal("expected ValidationError, got nil")
+					t.Fatal("ValidationErrorを期待したが、nilだった")
 				}
 				if tt.wantFieldError != "" && !ve.HasFieldError(tt.wantFieldError) {
-					t.Errorf("expected field error for %s, but not found", tt.wantFieldError)
+					t.Errorf("%sのフィールドエラーが見つからない", tt.wantFieldError)
 				}
 			})
 		}
@@ -109,16 +109,16 @@ func TestSignInCreateValidator_Validate(t *testing.T) {
 			})
 
 			if err != nil {
-				t.Errorf("unexpected error: %v", err)
+				t.Errorf("予期しないエラー: %v", err)
 			}
 			if output == nil {
-				t.Fatal("expected output, got nil")
+				t.Fatal("出力がnil")
 			}
 			if output.User == nil {
-				t.Fatal("expected user, got nil")
+				t.Fatal("ユーザーがnil")
 			}
 			if output.User.ID != userID {
-				t.Errorf("wrong user ID: got %v want %v", output.User.ID, userID)
+				t.Errorf("ユーザーID = %v、期待値 = %v", output.User.ID, userID)
 			}
 		})
 
@@ -142,14 +142,14 @@ func TestSignInCreateValidator_Validate(t *testing.T) {
 			})
 
 			if output != nil {
-				t.Error("expected nil output")
+				t.Error("出力がnilではない")
 			}
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError, got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if len(ve.Global) == 0 {
-				t.Error("expected global error")
+				t.Error("グローバルエラーが無い")
 			}
 		})
 
@@ -184,14 +184,14 @@ func TestSignInCreateValidator_Validate(t *testing.T) {
 			})
 
 			if output != nil {
-				t.Error("expected nil output")
+				t.Error("出力がnilではない")
 			}
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError, got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if len(ve.Global) == 0 {
-				t.Error("expected global error")
+				t.Error("グローバルエラーが無い")
 			}
 		})
 
@@ -220,14 +220,14 @@ func TestSignInCreateValidator_Validate(t *testing.T) {
 			})
 
 			if output != nil {
-				t.Error("expected nil output")
+				t.Error("出力がnilではない")
 			}
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError, got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if len(ve.Global) == 0 {
-				t.Error("expected global error")
+				t.Error("グローバルエラーが無い")
 			}
 		})
 	})

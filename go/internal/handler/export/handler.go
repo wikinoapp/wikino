@@ -1,6 +1,4 @@
-// Package export provides the HTTP handlers of the space export screens.
-//
-// [Ja] export パッケージはスペースのエクスポート画面の HTTP ハンドラーを提供します。
+// Package exportはスペースのエクスポート画面のHTTPハンドラーを提供します。
 package export
 
 import (
@@ -9,9 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler serves the screen an export is started from and the screen it is followed on.
-//
-// [Ja] Handler はエクスポートを開始する画面と、その経過を追う画面を提供します。
+// Handlerはエクスポートを開始する画面と、その経過を追う画面を提供します。
 type Handler struct {
 	cfg             *config.Config
 	flashMgr        *session.FlashManager
@@ -20,9 +16,7 @@ type Handler struct {
 	createExportUC  *usecase.CreateExportUsecase
 }
 
-// NewHandler creates an export Handler.
-//
-// [Ja] NewHandler はエクスポートのハンドラーを生成します。
+// NewHandlerはエクスポートのハンドラーを生成します。
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,

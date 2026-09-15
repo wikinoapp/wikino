@@ -96,16 +96,16 @@ func TestGetPageBacklinksUsecase_Execute(t *testing.T) {
 			Limit:           15,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.Backlinks) != 2 {
-			t.Fatalf("len(Backlinks) = %d, want 2", len(output.Backlinks))
+			t.Fatalf("len(Backlinks) = %d、期待値 = 2", len(output.Backlinks))
 		}
 		if output.TotalCount != 2 {
-			t.Errorf("TotalCount = %d, want 2", output.TotalCount)
+			t.Errorf("TotalCount = %d、期待値 = 2", output.TotalCount)
 		}
 		if !output.CanUpdatePage {
-			t.Error("CanUpdatePage should be true for a member holding page:write")
+			t.Error("page:writeを持つメンバーなのにCanUpdatePageがfalse")
 		}
 	})
 
@@ -117,22 +117,22 @@ func TestGetPageBacklinksUsecase_Execute(t *testing.T) {
 			Limit:           15,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.SpaceMember != nil {
-			t.Error("SpaceMember should be nil for a guest")
+			t.Error("ゲストなのにSpaceMemberがnilではない")
 		}
 		if len(output.Backlinks) != 1 {
-			t.Fatalf("len(Backlinks) = %d, want 1", len(output.Backlinks))
+			t.Fatalf("len(Backlinks) = %d、期待値 = 1", len(output.Backlinks))
 		}
 		if output.Backlinks[0].ID != publicLinkerID {
-			t.Errorf("Backlinks[0].ID = %v, want the public linker", output.Backlinks[0].ID)
+			t.Errorf("Backlinks[0].ID = %v、期待値 = 公開トピックのリンク元ページ", output.Backlinks[0].ID)
 		}
 		if output.TotalCount != 1 {
-			t.Errorf("TotalCount = %d, want 1", output.TotalCount)
+			t.Errorf("TotalCount = %d、期待値 = 1", output.TotalCount)
 		}
 		if output.CanUpdatePage {
-			t.Error("CanUpdatePage should be false for a guest")
+			t.Error("ゲストなのにCanUpdatePageがtrue")
 		}
 	})
 
@@ -361,10 +361,10 @@ func TestGetPageBacklinksUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 				return
 			}
 			if err != nil {
-				t.Fatalf("Execute() error = %v", err)
+				t.Fatalf("Execute()のエラー = %v", err)
 			}
 			if len(output.Backlinks) != len(tt.wantBacklinkIDs) {
-				t.Fatalf("len(Backlinks) = %d, want %d", len(output.Backlinks), len(tt.wantBacklinkIDs))
+				t.Fatalf("len(Backlinks) = %d、期待値 = %d", len(output.Backlinks), len(tt.wantBacklinkIDs))
 			}
 			gotBacklinkIDs := make(map[model.PageID]struct{}, len(output.Backlinks))
 			for _, page := range output.Backlinks {
@@ -372,11 +372,11 @@ func TestGetPageBacklinksUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			}
 			for _, wantPageID := range tt.wantBacklinkIDs {
 				if _, ok := gotBacklinkIDs[wantPageID]; !ok {
-					t.Errorf("Backlinks does not contain page ID %v", wantPageID)
+					t.Errorf("BacklinksにページID %vが含まれていない", wantPageID)
 				}
 			}
 			if tt.wantSpaceMemberNil && output.SpaceMember != nil {
-				t.Error("SpaceMember should be nil for a viewer who is not a space member")
+				t.Error("スペースメンバーでない閲覧者なのにSpaceMemberがnilではない")
 			}
 		})
 	}

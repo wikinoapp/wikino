@@ -11,12 +11,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はトップページを表示します (GET /)
-// ログイン済みの場合は /home にリダイレクトします
+// Showはトップページを表示します (GET /)
+// ログイン済みの場合は /homeにリダイレクトします
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// ログイン済みの場合は /home にリダイレクト
+	// ログイン済みの場合は /homeにリダイレクト
 	if user := middleware.UserFromContext(ctx); user != nil {
 		http.Redirect(w, r, "/home", http.StatusSeeOther)
 		return

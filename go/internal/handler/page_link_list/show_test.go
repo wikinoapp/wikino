@@ -20,7 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// setupHandler はテスト用のハンドラーを生成するヘルパーです
+// setupHandlerはテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page_link_list.Handler {
 	t.Helper()
 
@@ -37,7 +37,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_link_list.Handler 
 	)
 }
 
-// newRequestWithChiParams はchiのURLパラメータ付きリクエストを作成するヘルパーです
+// newRequestWithChiParamsはchiのURLパラメータ付きリクエストを作成するヘルパーです
 func newRequestWithChiParams(t *testing.T, method, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -51,13 +51,9 @@ func newRequestWithChiParams(t *testing.T, method, path string, params map[strin
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// TestShow_GuestCanOnlyFetchPagesInPublicTopics pins what a guest gets from the endpoint
-// behind the "load more" button of the public page detail screen: the listing for a page in a
-// public topic, a 404 for a page in a private one, and no edit link on the cards.
-//
-// [Ja] TestShow_GuestCanOnlyFetchPagesInPublicTopics は、公開のページ表示画面の
+// TestShow_GuestCanOnlyFetchPagesInPublicTopicsは、公開のページ表示画面の
 // 「もっと見る」ボタンが叩くエンドポイントでゲストが得るものを固定する。公開トピックのページの
-// 一覧は返り、非公開トピックのページは 404 になり、カードには編集リンクが出ない。
+// 一覧は返り、非公開トピックのページは404になり、カードには編集リンクが出ない。
 func TestShow_GuestCanOnlyFetchPagesInPublicTopics(t *testing.T) {
 	t.Parallel()
 
@@ -116,13 +112,11 @@ func TestShow_GuestCanOnlyFetchPagesInPublicTopics(t *testing.T) {
 			pageNumber:   "1",
 			wantStatus:   http.StatusOK,
 			wantContains: []string{"Guest Linked Page"},
-			// The edit link must not be offered to a viewer who cannot edit the linked page.
-			//
-			// [Ja] リンク先ページを編集できない閲覧者に編集リンクを出してはならない。
+			// リンク先ページを編集できない閲覧者に編集リンクを出してはならない。
 			wantNotContains: []string{"/pages/2/edit"},
 		},
 		{
-			name:            "非公開トピックのページのリンク一覧は 404",
+			name:            "非公開トピックのページのリンク一覧は404",
 			pageNumber:      "3",
 			wantStatus:      http.StatusNotFound,
 			wantNotContains: []string{"Guest Linked Page"},
@@ -140,18 +134,18 @@ func TestShow_GuestCanOnlyFetchPagesInPublicTopics(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != tt.wantStatus {
-				t.Errorf("wrong status code: got %v want %v", rr.Code, tt.wantStatus)
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, tt.wantStatus)
 			}
 
 			body := rr.Body.String()
 			for _, want := range tt.wantContains {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 			for _, notWant := range tt.wantNotContains {
 				if strings.Contains(body, notWant) {
-					t.Errorf("response unexpectedly contains %q", notWant)
+					t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
 				}
 			}
 		})
@@ -182,7 +176,7 @@ func TestShow_存在しないスペースで404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -221,7 +215,7 @@ func TestShow_スペースメンバーでない場合に404が返る(t *testing.
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -249,7 +243,7 @@ func TestShow_不正なページ番号で404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -303,23 +297,19 @@ func TestShow_正常系_リンクなしで空レスポンスが返る(t *testing
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// リンクなしの場合、ページネーションコンテナのみ返る
 	body := rr.Body.String()
 	if !strings.Contains(body, "page-link-list-pagination") {
-		t.Error("response should contain pagination container")
+		t.Error("レスポンスにページネーションのコンテナが含まれていない")
 	}
 }
 
-// TestShow_MemberSeesLinkedPagesWithStoredIdentifier pins the listing an editing member receives:
-// the linked pages, their edit links, and URLs built from the stored space identifier rather than
-// from the one spelled in the request.
-//
-// [Ja] TestShow_MemberSeesLinkedPagesWithStoredIdentifier は編集中のメンバーが受け取る一覧を固定する。
+// TestShow_MemberSeesLinkedPagesWithStoredIdentifierは編集中のメンバーが受け取る一覧を固定する。
 // リンク先ページ・その編集リンク、およびリクエストの表記ではなく保存済みスペース識別子から
-// 組み立てた URL が対象。
+// 組み立てたURLが対象。
 func TestShow_MemberSeesLinkedPagesWithStoredIdentifier(t *testing.T) {
 	t.Parallel()
 
@@ -357,7 +347,7 @@ func TestShow_MemberSeesLinkedPagesWithStoredIdentifier(t *testing.T) {
 		WithLinkedPageIDs([]model.PageID{}).
 		Build()
 
-	// 対象ページ（リンク先を持つ）
+	// 対象ページ (リンク先を持つ)
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -379,29 +369,27 @@ func TestShow_MemberSeesLinkedPagesWithStoredIdentifier(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	// リンク先ページのタイトルが含まれること
 	if !strings.Contains(body, "Linked Page") {
-		t.Error("response should contain linked page title 'Linked Page'")
+		t.Error("レスポンスにリンク先ページのタイトル'Linked Page'が含まれていない")
 	}
 
 	// ページネーションコンテナが含まれること
 	if !strings.Contains(body, "page-link-list-pagination") {
-		t.Error("response should contain pagination container")
+		t.Error("レスポンスにページネーションのコンテナが含まれていない")
 	}
 
-	// A member who can edit the page keeps the per-card edit link.
-	//
-	// [Ja] ページを編集できるメンバーには各カードの編集リンクが出る。
+	// ページを編集できるメンバーには各カードの編集リンクが出る。
 	if !strings.Contains(body, "/pages/2/edit") {
-		t.Error("response should contain the edit link of the linked page")
+		t.Error("レスポンスにリンク先ページの編集リンクが含まれていない")
 	}
 	if !strings.Contains(body, "/s/pll-has/") || strings.Contains(body, "/s/PLL-HAS/") {
-		t.Error("response URLs should use the stored space identifier")
+		t.Error("レスポンスのURLが保存済みのスペース識別子を使っていない")
 	}
 }
 
@@ -466,17 +454,15 @@ func TestShow_PaginationAndOutOfRangePage(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "Link Target") {
-		t.Error("page=1 should contain 'Link Target'")
+		t.Error("page=1に'Link Target'が含まれていない")
 	}
 
-	// An htmx request past the final page gets a local 404 fragment instead of an empty success.
-	//
-	// [Ja] 最終ページを超えた htmx リクエストは、空の成功レスポンスではなく局所的な 404 フラグメントを返す。
+	// 最終ページを超えたhtmxリクエストは、空の成功レスポンスではなく局所的な404フラグメントを返す。
 	req2 := newRequestWithChiParams(t, http.MethodGet, "/s/pll-page/pages/1/link_list?page=999", map[string]string{
 		"space_identifier": "pll-page",
 		"page_number":      "1",
@@ -490,27 +476,23 @@ func TestShow_PaginationAndOutOfRangePage(t *testing.T) {
 	handler.Show(rr2, req2)
 
 	if rr2.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr2.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr2.Code, http.StatusNotFound)
 	}
 
 	body2 := rr2.Body.String()
 	if !strings.Contains(body2, `role="alert"`) {
-		t.Error("out-of-range page should contain a local error fragment")
+		t.Error("範囲外のページに局所的なエラーの断片が含まれていない")
 	}
 	if strings.Contains(strings.ToLower(body2), "<!doctype html") {
-		t.Error("htmx 404 response should not contain a full-page document")
+		t.Error("htmxの404レスポンスにページ全体のドキュメントが含まれている")
 	}
 	if strings.Contains(body2, "Link Target") {
-		t.Error("page=999 should not contain 'Link Target'")
+		t.Error("page=999に'Link Target'が含まれている")
 	}
 }
 
-// The repository computes the SQL offset as (page-1)*limit in int32 arithmetic, so a large enough
-// page wraps to a negative offset and PostgreSQL rejects the query. Such a page has to be a 404
-// rather than a 500.
-//
-// [Ja] Repository は SQL offset を int32 演算の (page-1)*limit で求めるため、十分に大きいページでは
-// 負の offset に回り込み PostgreSQL がクエリを拒否する。そのようなページは 500 ではなく 404 にする。
+// RepositoryはSQL offsetをint32演算の (page-1)*limitで求めるため、十分に大きいページでは
+// 負のoffsetに回り込みPostgreSQLがクエリを拒否する。そのようなページは500ではなく404にする。
 func TestShow_OffsetBeyondInt32ReturnsNotFound(t *testing.T) {
 	t.Parallel()
 
@@ -556,10 +538,7 @@ func TestShow_OffsetBeyondInt32ReturnsNotFound(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	// RelatedPageFollowingLimit is 15, so page 143165578 has the first upper-bound offset past the int32 ceiling
-	// (143165577 * 15 = 2147483655).
-	//
-	// [Ja] RelatedPageFollowingLimit は 15 なので、143165578 ページ目が int32 の上限を最初に超える offset になる
+	// RelatedPageFollowingLimitは15なので、143165578ページ目がint32の上限を最初に超えるoffsetになる
 	// (143165577 * 15 = 2147483655)。
 	req := newRequestWithChiParams(t, http.MethodGet, "/s/pll-offset/pages/1/link_list?page=143165578", map[string]string{
 		"space_identifier": "pll-offset",
@@ -572,17 +551,14 @@ func TestShow_OffsetBeyondInt32ReturnsNotFound(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 	if strings.Contains(rr.Body.String(), "Link Target") {
-		t.Error("response should not contain 'Link Target'")
+		t.Error("レスポンスに'Link Target'が含まれている")
 	}
 }
 
-// TestShow_HTMXNotFoundReturnsLocalFragment verifies that htmx never receives a complete document
-// for a pagination-target 404.
-//
-// [Ja] TestShow_HTMXNotFoundReturnsLocalFragment はページネーション領域の 404 で、htmx に完全な
+// TestShow_HTMXNotFoundReturnsLocalFragmentはページネーション領域の404で、htmxに完全な
 // 文書を返さないことを確認する。
 func TestShow_HTMXNotFoundReturnsLocalFragment(t *testing.T) {
 	t.Parallel()
@@ -599,23 +575,18 @@ func TestShow_HTMXNotFoundReturnsLocalFragment(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Fatalf("status = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 	body := rr.Body.String()
 	if strings.Contains(strings.ToLower(body), "<!doctype html") {
-		t.Error("htmx 404 must not contain a complete HTML document")
+		t.Error("htmxの404に完全なHTMLドキュメントが含まれている")
 	}
 	if !strings.Contains(body, `role="alert"`) {
-		t.Error("htmx 404 should contain the local alert fragment")
+		t.Error("htmxの404に局所的なアラートの断片が含まれていない")
 	}
 }
 
-// TestShow_ShowContextKeepsSavedLinksAndScreenState pins the two things the context parameter
-// decides: which link set the fragment continues, and where the links it renders point. The page
-// detail screen must keep listing the saved links and must not have the fragment reset the other
-// listings or send the fallback to the editor.
-//
-// [Ja] TestShow_ShowContextKeepsSavedLinksAndScreenState は context パラメータが決める 2 つを固定する。
+// TestShow_ShowContextKeepsSavedLinksAndScreenStateはcontextパラメータが決める2つを固定する。
 // フラグメントがどのリンク集合の続きを返すかと、描画するリンクがどこを指すかである。ページ表示画面では
 // 保存済みリンクを一覧し続け、他の一覧を戻したり編集画面へフォールバックしたりしてはならない。
 func TestShow_ShowContextKeepsSavedLinksAndScreenState(t *testing.T) {
@@ -642,10 +613,7 @@ func TestShow_ShowContextKeepsSavedLinksAndScreenState(t *testing.T) {
 		WithVisibility(int32(model.TopicVisibilityPublic)).
 		Build()
 
-	// One more saved link than fits on a page, so the listing renders a "load more" link whose URLs
-	// can be inspected.
-	//
-	// [Ja] 1 ページに収まる件数より 1 件多く保存済みリンクを作り、URL を検査できる「もっと見る」リンクを
+	// 1ページに収まる件数より1件多く保存済みリンクを作り、URLを検査できる「もっと見る」リンクを
 	// 一覧に描画させる。
 	savedPageIDs := make([]model.PageID, 0, int(viewmodel.LinkLimit)+1)
 	for index := int32(0); index <= viewmodel.LinkLimit; index++ {
@@ -702,9 +670,7 @@ func TestShow_ShowContextKeepsSavedLinksAndScreenState(t *testing.T) {
 			name:         "編集画面の文脈では下書きのリンクを返す",
 			query:        "context=edit&page=1",
 			wantContains: []string{"Draft Link"},
-			// The editor's fallback goes to the editor, not to the page detail screen.
-			//
-			// [Ja] 編集画面のフォールバック先は、ページ表示画面ではなく編集画面である。
+			// 編集画面のフォールバック先は、ページ表示画面ではなく編集画面である。
 			wantNotContains: []string{"Saved Link"},
 		},
 	}
@@ -722,32 +688,27 @@ func TestShow_ShowContextKeepsSavedLinksAndScreenState(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("status = %d, want %d", rr.Code, http.StatusOK)
+				t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
 			for _, want := range tt.wantContains {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 			for _, notWant := range tt.wantNotContains {
 				if strings.Contains(body, notWant) {
-					t.Errorf("response unexpectedly contains %q", notWant)
+					t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
 				}
 			}
 		})
 	}
 }
 
-// TestShow_CumulativeFetchLimit pins that the editor's cumulative-fetch limit bounds every listing
-// page this fragment accepts, while the page detail screen stays unbounded. The editor re-renders
-// the whole loaded range of all three listings in one draft refresh, so a state this fragment
-// handed back past the limit would only produce a request the draft endpoint has to reject.
-//
-// [Ja] TestShow_CumulativeFetchLimit は、本フラグメントが受け付ける各一覧のページを編集画面の累積
-// 取得上限が縛る一方、ページ表示画面には上限が無いことを固定する。編集画面は 1 回の下書き再取得で
-// 3 一覧の読み込み済み範囲すべてを描画し直すため、上限を超えた状態を本フラグメントが返しても、
+// TestShow_CumulativeFetchLimitは、本フラグメントが受け付ける各一覧のページを編集画面の累積
+// 取得上限が縛る一方、ページ表示画面には上限が無いことを固定する。編集画面は1回の下書き再取得で
+// 3一覧の読み込み済み範囲すべてを描画し直すため、上限を超えた状態を本フラグメントが返しても、
 // 下書きエンドポイントが拒否するほかないリクエストにしかならない。
 func TestShow_CumulativeFetchLimit(t *testing.T) {
 	t.Parallel()
@@ -822,7 +783,7 @@ func TestShow_CumulativeFetchLimit(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != tt.wantStatus {
-				t.Errorf("status = %d, want %d", rr.Code, tt.wantStatus)
+				t.Errorf("ステータス = %d、期待値 = %d", rr.Code, tt.wantStatus)
 			}
 		})
 	}

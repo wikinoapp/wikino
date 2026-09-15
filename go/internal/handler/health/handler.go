@@ -1,10 +1,10 @@
-// Package health はヘルスチェックエンドポイントのハンドラーを提供します
+// Package healthはヘルスチェックエンドポイントのハンドラーを提供します
 package health
 
-// Handler はヘルスチェックエンドポイントのハンドラーです
+// Handlerはヘルスチェックエンドポイントのハンドラーです
 type Handler struct{}
 
-// NewHandler は新しいHealthハンドラーを作成します
+// NewHandlerは新しいHealthハンドラーを作成します
 func NewHandler() *Handler {
 	return &Handler{}
 }

@@ -1,13 +1,13 @@
 package email_confirmation
 
-// Data はメール確認テンプレートのデータ
+// Dataはメール確認テンプレートのデータ
 type Data struct {
 	Email  string
 	Code   string
 	AppURL string
 }
 
-// JaHTML は日本語HTMLテンプレート
+// JaHTMLは日本語HTMLテンプレート
 templ JaHTML(data Data) {
 	{ data.Email } さん、こんにちは。<br/>
 	<br/>

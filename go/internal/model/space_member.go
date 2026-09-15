@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// SpaceMember はスペースメンバーのドメインモデル
+// SpaceMemberはスペースメンバーのドメインモデル
 type SpaceMember struct {
 	ID       SpaceMemberID
 	SpaceID  SpaceID

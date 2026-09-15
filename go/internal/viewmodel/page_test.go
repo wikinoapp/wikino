@@ -23,7 +23,7 @@ func TestNewPageForEdit(t *testing.T) {
 		wantNum   int32
 	}{
 		{
-			name: "公開ページ（タイトルあり、下書きなし）",
+			name: "公開ページ (タイトルあり、下書きなし)",
 			page: &model.Page{
 				Number: 1,
 				Title:  strPtr("公開タイトル"),
@@ -35,7 +35,7 @@ func TestNewPageForEdit(t *testing.T) {
 			wantNum:   1,
 		},
 		{
-			name: "公開ページ（タイトルなし、下書きなし）",
+			name: "公開ページ (タイトルなし、下書きなし)",
 			page: &model.Page{
 				Number: 2,
 				Title:  nil,
@@ -47,7 +47,7 @@ func TestNewPageForEdit(t *testing.T) {
 			wantNum:   2,
 		},
 		{
-			name: "下書きあり（下書きのタイトル/本文が使われる）",
+			name: "下書きあり (下書きのタイトル/本文が使われる)",
 			page: &model.Page{
 				Number: 3,
 				Title:  strPtr("公開タイトル"),
@@ -62,7 +62,7 @@ func TestNewPageForEdit(t *testing.T) {
 			wantNum:   3,
 		},
 		{
-			name: "下書きあり（下書きのタイトルがnil）",
+			name: "下書きあり (下書きのタイトルがnil)",
 			page: &model.Page{
 				Number: 4,
 				Title:  strPtr("公開タイトル"),
@@ -85,15 +85,15 @@ func TestNewPageForEdit(t *testing.T) {
 			got := viewmodel.NewPageForEdit(tt.page, tt.draftPage)
 
 			if got.Title != tt.wantTitle {
-				t.Errorf("Title = %q, want %q", got.Title, tt.wantTitle)
+				t.Errorf("Title = %q、期待値 = %q", got.Title, tt.wantTitle)
 			}
 
 			if got.Body != tt.wantBody {
-				t.Errorf("Body = %q, want %q", got.Body, tt.wantBody)
+				t.Errorf("Body = %q、期待値 = %q", got.Body, tt.wantBody)
 			}
 
 			if got.Number != tt.wantNum {
-				t.Errorf("Number = %d, want %d", got.Number, tt.wantNum)
+				t.Errorf("Number = %d、期待値 = %d", got.Number, tt.wantNum)
 			}
 		})
 	}
@@ -112,13 +112,13 @@ func TestNewPageForShow(t *testing.T) {
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
 
 	if got.DisplayTitle(ctx) != title {
-		t.Errorf("DisplayTitle() = %q, want %q", got.DisplayTitle(ctx), title)
+		t.Errorf("DisplayTitle() = %q、期待値 = %q", got.DisplayTitle(ctx), title)
 	}
 	if got.BodyHTML != page.BodyHTML {
-		t.Errorf("BodyHTML = %q, want %q", got.BodyHTML, page.BodyHTML)
+		t.Errorf("BodyHTML = %q、期待値 = %q", got.BodyHTML, page.BodyHTML)
 	}
 	if got.Number != int32(page.Number) {
-		t.Errorf("Number = %d, want %d", got.Number, page.Number)
+		t.Errorf("Number = %d、期待値 = %d", got.Number, page.Number)
 	}
 }
 
@@ -135,8 +135,8 @@ func TestPageForShow_DisplayTitle(t *testing.T) {
 	}{
 		{name: "タイトルあり (日本語)", title: &title, locale: i18n.LangJa, want: title},
 		{name: "タイトルあり (英語)", title: &title, locale: i18n.LangEn, want: title},
-		{name: "タイトルが nil (日本語)", title: nil, locale: i18n.LangJa, want: "無題"},
-		{name: "タイトルが nil (英語)", title: nil, locale: i18n.LangEn, want: "Untitled"},
+		{name: "タイトルがnil (日本語)", title: nil, locale: i18n.LangJa, want: "無題"},
+		{name: "タイトルがnil (英語)", title: nil, locale: i18n.LangEn, want: "Untitled"},
 		{name: "タイトルが空 (日本語)", title: &emptyTitle, locale: i18n.LangJa, want: "無題"},
 		{name: "タイトルが空 (英語)", title: &emptyTitle, locale: i18n.LangEn, want: "Untitled"},
 	}
@@ -149,7 +149,7 @@ func TestPageForShow_DisplayTitle(t *testing.T) {
 			ctx := i18n.SetLocale(t.Context(), tt.locale)
 
 			if got := page.DisplayTitle(ctx); got != tt.want {
-				t.Errorf("DisplayTitle() = %q, want %q", got, tt.want)
+				t.Errorf("DisplayTitle() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}
@@ -189,10 +189,7 @@ func TestPageForShow_MetaDescription(t *testing.T) {
 			want:     strings.Repeat("あ", 119) + "…",
 		},
 		{
-			// The 119th rune is the space markup.PlainText emits between the two blocks, so the cut
-			// lands on it and no space may remain in front of the ellipsis.
-			//
-			// [Ja] 119 文字目は markup.PlainText が 2 つのブロックの間に出す半角スペースであり、
+			// 119文字目はmarkup.PlainTextが2つのブロックの間に出す半角スペースであり、
 			// 切り取り位置がそこに重なる。省略記号の直前に空白が残ってはいけない。
 			name:     "ブロック境界で切れる本文は省略記号の直前に空白を残さない",
 			bodyHTML: "<p>" + strings.Repeat("あ", 118) + "</p><p>" + strings.Repeat("い", 5) + "</p>",
@@ -207,17 +204,14 @@ func TestPageForShow_MetaDescription(t *testing.T) {
 			page := viewmodel.NewPageForShow(&model.Page{BodyHTML: tt.bodyHTML}, nil)
 
 			if got := page.MetaDescription(); got != tt.want {
-				t.Errorf("MetaDescription() = %q, want %q", got, tt.want)
+				t.Errorf("MetaDescription() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}
 }
 
-// TestPageForShow_OGImageAttachmentID fixes which cover images the og:image tag may point at. The
-// empty cases are the ones that must leave the caller on the site-wide default OGP image.
-//
-// [Ja] TestPageForShow_OGImageAttachmentID は og:image タグが指してよいアイキャッチ画像を固定する。
-// 空文字列を返すケースは、呼び出し元がサイト共通の既定 OGP 画像を保たなければならないケースにあたる。
+// TestPageForShow_OGImageAttachmentIDはog:imageタグが指してよいアイキャッチ画像を固定する。
+// 空文字列を返すケースは、呼び出し元がサイト共通の既定OGP画像を保たなければならないケースにあたる。
 func TestPageForShow_OGImageAttachmentID(t *testing.T) {
 	t.Parallel()
 
@@ -234,7 +228,7 @@ func TestPageForShow_OGImageAttachmentID(t *testing.T) {
 		want       string
 	}{
 		{
-			name:       "アイキャッチ画像を持つページは添付ファイルの ID を返す",
+			name:       "アイキャッチ画像を持つページは添付ファイルのIDを返す",
 			attachment: attachment("cover.png"),
 			want:       "550e8400-e29b-41d4-a716-446655440000",
 		},
@@ -244,33 +238,26 @@ func TestPageForShow_OGImageAttachmentID(t *testing.T) {
 			want:       "",
 		},
 		{
-			name:       "GIF のアイキャッチ画像は空文字列を返す",
+			name:       "GIFのアイキャッチ画像は空文字列を返す",
 			attachment: attachment("animation.gif"),
 			want:       "",
 		},
 		{
-			// Rails compares the downcased filename, so an uppercase extension is a GIF as well.
-			//
-			// [Ja] Rails 版は小文字化したファイル名で比較するため、大文字の拡張子も GIF として扱う。
-			name:       "拡張子が大文字の GIF も空文字列を返す",
+			// Rails版は小文字化したファイル名で比較するため、大文字の拡張子もGIFとして扱う。
+			name:       "拡張子が大文字のGIFも空文字列を返す",
 			attachment: attachment("ANIMATION.GIF"),
 			want:       "",
 		},
 		{
-			// Only the extension makes it a GIF: a name that merely contains "gif" does not.
-			//
-			// [Ja] GIF と判定するのは拡張子だけで、名前に "gif" を含むだけのファイルは判定しない。
-			name:       "ファイル名に gif を含むだけの画像は ID を返す",
+			// GIFと判定するのは拡張子だけで、名前に "gif" を含むだけのファイルは判定しない。
+			name:       "ファイル名にgifを含むだけの画像はIDを返す",
 			attachment: attachment("gift.png"),
 			want:       "550e8400-e29b-41d4-a716-446655440000",
 		},
 		{
-			// The filename is not populated on every fetch path, and an unknown format must not be
-			// treated as a GIF.
-			//
-			// [Ja] ファイル名はすべての取得経路で populate されるわけではなく、形式が分からない場合を
-			// GIF として扱ってはならない。
-			name:       "ファイル名が空の添付ファイルは ID を返す",
+			// ファイル名はすべての取得経路でpopulateされるわけではなく、形式が分からない場合を
+			// GIFとして扱ってはならない。
+			name:       "ファイル名が空の添付ファイルはIDを返す",
 			attachment: attachment(""),
 			want:       "550e8400-e29b-41d4-a716-446655440000",
 		},
@@ -283,7 +270,7 @@ func TestPageForShow_OGImageAttachmentID(t *testing.T) {
 			page := viewmodel.NewPageForShow(&model.Page{}, tt.attachment)
 
 			if got := page.OGImageAttachmentID(); got != tt.want {
-				t.Errorf("OGImageAttachmentID() = %q, want %q", got, tt.want)
+				t.Errorf("OGImageAttachmentID() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}
@@ -387,30 +374,30 @@ func TestNewCardLinkPage(t *testing.T) {
 			got := viewmodel.NewCardLinkPage(tt.page, tt.topicMap)
 
 			if got.Title != tt.wantTitle {
-				t.Errorf("Title = %q, want %q", got.Title, tt.wantTitle)
+				t.Errorf("Title = %q、期待値 = %q", got.Title, tt.wantTitle)
 			}
 			if got.Number != tt.wantNumber {
-				t.Errorf("Number = %d, want %d", got.Number, tt.wantNumber)
+				t.Errorf("Number = %d、期待値 = %d", got.Number, tt.wantNumber)
 			}
 			if got.CardImageURL != tt.wantCardImageURL {
-				t.Errorf("CardImageURL = %q, want %q", got.CardImageURL, tt.wantCardImageURL)
+				t.Errorf("CardImageURL = %q、期待値 = %q", got.CardImageURL, tt.wantCardImageURL)
 			}
 			if got.Pinned != tt.wantPinned {
-				t.Errorf("Pinned = %v, want %v", got.Pinned, tt.wantPinned)
+				t.Errorf("Pinned = %v、期待値 = %v", got.Pinned, tt.wantPinned)
 			}
 			if tt.wantTopicNil {
 				if got.Topic != nil {
-					t.Errorf("Topic = %v, want nil", got.Topic)
+					t.Errorf("Topic = %v、期待値 = nil", got.Topic)
 				}
 			} else {
 				if got.Topic == nil {
-					t.Fatal("Topic is nil, want non-nil")
+					t.Fatal("Topicがnil")
 				}
 				if got.Topic.Name != tt.wantTopicName {
-					t.Errorf("Topic.Name = %q, want %q", got.Topic.Name, tt.wantTopicName)
+					t.Errorf("Topic.Name = %q、期待値 = %q", got.Topic.Name, tt.wantTopicName)
 				}
 				if got.Topic.IconName != tt.wantTopicIcon {
-					t.Errorf("Topic.IconName = %q, want %q", got.Topic.IconName, tt.wantTopicIcon)
+					t.Errorf("Topic.IconName = %q、期待値 = %q", got.Topic.IconName, tt.wantTopicIcon)
 				}
 			}
 		})
@@ -442,7 +429,7 @@ func TestPage_AutofocusTitle(t *testing.T) {
 			t.Parallel()
 
 			if got := tt.page.AutofocusTitle(); got != tt.want {
-				t.Errorf("AutofocusTitle() = %v, want %v", got, tt.want)
+				t.Errorf("AutofocusTitle() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}

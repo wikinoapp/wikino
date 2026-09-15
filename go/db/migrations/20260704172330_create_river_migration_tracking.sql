@@ -1,40 +1,22 @@
 -- migrate:up
 
--- Introduce river_migration, the tracking table River (the background job
--- queue) uses to record which of its own schema migrations are applied. This
--- project vendors River's DDL as dbmate migrations and keeps a single dumped
--- db/schema.sql as the source of truth instead of running River's own migrator,
--- so the tracking table was never created. River's tables themselves already
--- exist from an earlier migration that reproduced River v0.39.0's schema up to
--- version 6, so this migration seeds river_migration with versions 1..6 to
--- record that those six main-line migrations are applied. Seeding lets River's
--- Go API (rivermigrate) recognize the applied versions so the schema can be
--- verified and advanced. River owns these tables at runtime via riverpgxv5; the
--- application never queries them through sqlc.
---
--- When River is bumped and a new migration version N appears, keep dbmate as
--- the source of truth: generate clean SQL with `river migrate-get --line main
--- --version N --up/--down` (pinned via `go run .../cmd/river@vX.Y.Z`, excluding
--- version 1), add it as a new dbmate migration, and append `INSERT INTO
--- river_migration (line, version) VALUES ('main', N);` (DELETE on down).
---
--- [Ja] River (バックグラウンドジョブキュー) が自身のどのスキーママイグレーション
--- を適用済みかを記録する追跡テーブル river_migration を導入する。本プロジェクトは
--- River 独自のマイグレータを走らせず、River の DDL を dbmate マイグレーションとして
--- 取り込み、ダンプ済みの単一 db/schema.sql を正本としているため、この追跡テーブルは
--- これまで作られていなかった。River のテーブル自体は River v0.39.0 のバージョン 6
+-- River (バックグラウンドジョブキュー) が自身のどのスキーママイグレーション
+-- を適用済みかを記録する追跡テーブルriver_migrationを導入する。本プロジェクトは
+-- River独自のマイグレータを走らせず、RiverのDDLをdbmateマイグレーションとして
+-- 取り込み、ダンプ済みの単一db/schema.sqlを正本としているため、この追跡テーブルは
+-- これまで作られていなかった。Riverのテーブル自体はRiver v0.39.0のバージョン6
 -- までのスキーマを再現した先行マイグレーションで既に存在するので、本マイグレーション
--- ではそれら 6 つの main ラインマイグレーションが適用済みであることを記録するために
--- river_migration にバージョン 1..6 を seed する。seed により River の Go API
+-- ではそれら6つのmainラインマイグレーションが適用済みであることを記録するために
+-- river_migrationにバージョン1..6をseedする。seedによりRiverのGo API
 -- (rivermigrate) が適用済みバージョンを認識でき、スキーマの検証・追随が可能になる。
--- これらのテーブルは実行時に riverpgxv5 経由で River が所有し、アプリケーションが
--- sqlc を通じてクエリすることはない。
+-- これらのテーブルは実行時にriverpgxv5経由でRiverが所有し、アプリケーションが
+-- sqlcを通じてクエリすることはない。
 --
--- River を bump して新しいマイグレーションバージョン N が増えたときは、dbmate を正本
+-- Riverをbumpして新しいマイグレーションバージョンNが増えたときは、dbmateを正本
 -- に保つ: `river migrate-get --line main --version N --up/--down` (`go run
--- .../cmd/river@vX.Y.Z` でバージョン固定、version 1 は除外) で clean SQL を生成し、
--- 新しい dbmate マイグレーションとして追加し、末尾に `INSERT INTO river_migration
--- (line, version) VALUES ('main', N);` を追記する (down では DELETE)。
+-- .../cmd/river@vX.Y.Z` でバージョン固定、version 1は除外) でclean SQLを生成し、
+-- 新しいdbmateマイグレーションとして追加し、末尾に `INSERT INTO river_migration
+-- (line, version) VALUES ('main', N);` を追記する (downではDELETE)。
 
 CREATE TABLE river_migration(
     line TEXT NOT NULL,

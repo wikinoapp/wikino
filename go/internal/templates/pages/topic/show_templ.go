@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData はトピック詳細画面に渡すデータ構造体です
+// ShowDataはトピック詳細画面に渡すデータ構造体です
 type ShowData struct {
 	Topic       viewmodel.TopicForShow
 	Space       viewmodel.Space
@@ -24,12 +24,12 @@ type ShowData struct {
 	Pagination  viewmodel.Pagination
 }
 
-// paginationPath はページネーション用のパスを生成します
+// paginationPathはページネーション用のパスを生成します
 func (d ShowData) paginationPath(page int) string {
 	return fmt.Sprintf("/s/%s/topics/%d?page=%d", d.Space.Identifier, d.Topic.Number, page)
 }
 
-// Show はトピック詳細画面のコンテンツを表示します
+// Showはトピック詳細画面のコンテンツを表示します
 func Show(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -160,7 +160,7 @@ func Show(data ShowData) templ.Component {
 	})
 }
 
-// showHeader はトピック詳細画面のヘッダーを表示します
+// showHeaderはトピック詳細画面のヘッダーを表示します
 func showHeader(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -194,45 +194,23 @@ func showHeader(data ShowData) templ.Component {
 	})
 }
 
-// showSubtitle puts the visibility and the description on the line below the title. The visibility
-// is stated here rather than beside the title because a title long enough to wrap would leave a
-// badge next to it floating against the middle of several lines; below the title it sits in the
-// same place whatever the title's length.
-//
-// The badge is laid out in the text flow rather than as a flex item, so a description too long for
-// one line wraps under the badge and continues from the left edge, instead of being pushed onto a
-// line of its own.
-//
-// This is the only place this screen says whether the topic is public: the listing cards elsewhere
-// carry the icon, but the topic's own screen carried nothing until here. The icon is decorative and
-// the word beside it is what names the state. A padlock on its own is read differently by different
-// readers, and it reaches no one using a screen reader, so the icon is left aria-hidden and the
-// label does the work for both.
-//
-// The badge is nudged down a pixel. It is an inline flex container, so the baseline it hands to the
-// line comes from its first flex item — the icon's bottom edge — rather than from its own text,
-// which leaves the badge sitting a pixel above the description beside it. Its height already
-// matches the description's line box (20px both), so the gap is not one of size. Measured against
-// the first character of the description, -1px is what brings the two centres together; middle and
-// last-baseline both overshoot by the same pixel in the other direction.
-//
-// [Ja] showSubtitle は公開範囲と説明文をタイトルの下の行に置く。公開範囲をタイトルの横ではなく
+// showSubtitleは公開範囲と説明文をタイトルの下の行に置く。公開範囲をタイトルの横ではなく
 // ここで述べるのは、折り返すほど長いタイトルの横に置いたバッジが、複数行の中央あたりに浮いて
 // しまうため。タイトルの下であれば、タイトルの長さに関わらず同じ位置に出る。
 //
-// バッジは flex アイテムではなくテキストの流れの中に並べる。そうすると、1 行に収まらない説明文は
+// バッジはflexアイテムではなくテキストの流れの中に並べる。そうすると、1行に収まらない説明文は
 // バッジの下へ回り込んで左端から続き、説明文だけが独立した行へ押し出されることがない。
 //
 // この画面が公開か非公開かを述べる唯一の場所である。他所の一覧カードはアイコンを持つが、トピック
 // 自身の画面はここまで何も持っていなかった。アイコンは装飾で、状態を名指すのは横に並ぶ言葉のほう
 // である。錠前だけでは読み手によって受け取り方が変わり、スクリーンリーダーの利用者には届かない
-// ため、アイコンは aria-hidden のままにしてラベルが両方の役割を果たす。
+// ため、アイコンはaria-hiddenのままにしてラベルが両方の役割を果たす。
 //
-// バッジは 1px 下げている。バッジは inline の flex コンテナであり、行へ渡すベースラインは
-// 自身のテキストではなく最初の flex アイテム (アイコンの下端) から来るため、隣の説明文より 1px 上に
-// 浮く。高さは説明文の行ボックスと既に一致している (どちらも 20px) ので、大きさの問題ではない。
-// 説明文の 1 文字目に対して実測すると、両者の中心が重なるのは -1px のときで、middle と
-// last-baseline はいずれも逆方向へ同じ 1px だけ行き過ぎる。
+// バッジは1px下げている。バッジはinlineのflexコンテナであり、行へ渡すベースラインは
+// 自身のテキストではなく最初のflexアイテム (アイコンの下端) から来るため、隣の説明文より1px上に
+// 浮く。高さは説明文の行ボックスと既に一致している (どちらも20px) ので、大きさの問題ではない。
+// 説明文の1文字目に対して実測すると、両者の中心が重なるのは -1pxのときで、middleと
+// last-baselineはいずれも逆方向へ同じ1pxだけ行き過ぎる。
 func showSubtitle(topic viewmodel.TopicForShow) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -266,7 +244,7 @@ func showSubtitle(topic viewmodel.TopicForShow) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_show_visibility_public"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 149, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 123, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -276,7 +254,7 @@ func showSubtitle(topic viewmodel.TopicForShow) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_show_visibility_private"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 151, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 125, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -291,7 +269,7 @@ func showSubtitle(topic viewmodel.TopicForShow) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(topic.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 155, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 129, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -302,7 +280,7 @@ func showSubtitle(topic viewmodel.TopicForShow) templ.Component {
 	})
 }
 
-// showActions はトピック詳細画面のアクションボタンを表示します
+// showActionsはトピック詳細画面のアクションボタンを表示します
 func showActions(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -332,7 +310,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var8 templ.SafeURL
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 163, Col: 96}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 137, Col: 96}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -349,7 +327,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_show_new_page"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 168, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 142, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -368,7 +346,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "topic_show_options_aria_label"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 180, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 154, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 			if templ_7745c5c3_Err != nil {
@@ -389,7 +367,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var11 templ.SafeURL
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier, data.Topic.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 193, Col: 106}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 167, Col: 106}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -406,7 +384,7 @@ func showActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_show_settings"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 196, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 170, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -421,7 +399,7 @@ func showActions(data ShowData) templ.Component {
 	})
 }
 
-// showEmptyState はトピック詳細画面の空状態を表示します
+// showEmptyStateはトピック詳細画面の空状態を表示します
 func showEmptyState(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -458,7 +436,7 @@ func showEmptyState(data ShowData) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_show_no_pages_message"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 212, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 186, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -476,7 +454,7 @@ func showEmptyState(data ShowData) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_show_no_pages_description"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 217, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 191, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -499,7 +477,7 @@ func showEmptyState(data ShowData) templ.Component {
 			var templ_7745c5c3_Var16 templ.SafeURL
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 224, Col: 97}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 198, Col: 97}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -516,7 +494,7 @@ func showEmptyState(data ShowData) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "topic_show_new_page"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 229, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/topic/show.templ`, Line: 203, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {

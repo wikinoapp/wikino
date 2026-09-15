@@ -50,59 +50,48 @@ func TestShow_Empty(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
-	// Home has no breadcrumb, but the shared header still renders for the navigation bar: outside
-	// <main> (the #main skip link has to bypass it) and at this screen's max-w-3xl content width. The
-	// bar is the header's only content here, so the header switches with it and leaves no banner
-	// landmark with nothing in it below the breakpoint.
-	//
-	// [Ja] ホームにパンくずは無いが、ナビバーのために共有ヘッダーは描画される。<main> の外
-	// (#main へのスキップリンクが飛ばせる必要があるため)・この画面の本文幅 max-w-3xl で出る。
+	// ホームにパンくずは無いが、ナビバーのために共有ヘッダーは描画される。<main> の外
+	// (#mainへのスキップリンクが飛ばせる必要があるため)・この画面の本文幅max-w-3xlで出る。
 	// ここではバーがヘッダーの唯一の中身になるため、ヘッダーはバーと一緒に切り替わり、ブレーク
-	// ポイント未満で中身の無い banner ランドマークが残らない。
+	// ポイント未満で中身の無いbannerランドマークが残らない。
 	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared header should keep the max-w-3xl content width")
+		t.Error("共通のヘッダーがmax-w-3xlのコンテンツ幅を保っていない")
 	}
 	if !strings.Contains(body, `<header class="pt-4 hidden md:block">`) {
-		t.Error("shared header should switch with the navigation bar it carries")
+		t.Error("共通のヘッダーが持っているナビゲーションバーと一緒に切り替わっていない")
 	}
 	if strings.Contains(body, `aria-label="パンくずリスト"`) {
-		t.Error("home should not render a breadcrumb landmark")
+		t.Error("ホームにパンくずのランドマークが描画されている")
 	}
 	if header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`); header == -1 || main == -1 || header > main {
-		t.Errorf("shared header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 
 	if !strings.Contains(body, "ホーム") {
-		t.Error("heading not found in response")
+		t.Error("レスポンスに見出しが見つからない")
 	}
 	if !strings.Contains(body, "Wikinoへようこそ") {
-		t.Error("welcome empty state message not found in response")
+		t.Error("レスポンスにウェルカムの空状態のメッセージが見つからない")
 	}
-	// home_welcome_description_html embeds `<br class="md:hidden"/>` between the two halves,
-	// so assert each half independently.
-	// [Ja] home_welcome_description_html は前後 2 文の間に <br class="md:hidden"/> を挟むため、
+	// home_welcome_description_htmlは前後2文の間に <br class="md:hidden"/> を挟むため、
 	// 半分ずつ独立して検証する。
 	if !strings.Contains(body, "まずはスペースを作成して") || !strings.Contains(body, "ページを書き始めましょう") {
-		t.Error("welcome empty state description not found in response")
+		t.Error("レスポンスにウェルカムの空状態の説明が見つからない")
 	}
 	if !strings.Contains(body, "/spaces/new") {
-		t.Error("new space link not found in response")
+		t.Error("レスポンスに新規スペースのリンクが見つからない")
 	}
 
-	// When the user has no spaces, no topics, and no drafts, the home content collapses
-	// into a single welcome empty state, so the per-section heading `home_joined_spaces_heading`
-	// (= "参加中のスペース") must not render.
-	//
-	// [Ja] スペース / トピック / 下書きがすべて 0 件のとき、ホーム本体は 1 つのウェルカム空状態に
+	// スペース / トピック / 下書きがすべて0件のとき、ホーム本体は1つのウェルカム空状態に
 	// 統合されるため、セクション見出し `home_joined_spaces_heading` (= "参加中のスペース") は
 	// 描画されない。
 	if strings.Contains(body, "参加中のスペース") {
-		t.Error("joined spaces section heading should not be rendered when everything is empty")
+		t.Error("すべてが空なのに参加中のスペースのセクション見出しが描画されている")
 	}
 }
 
@@ -155,33 +144,29 @@ func TestShow_WithSpaces(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	if !strings.Contains(body, "ホームスペース1") {
-		t.Error("first space name not found in response")
+		t.Error("レスポンスに1つ目のスペース名が見つからない")
 	}
 	if !strings.Contains(body, "ホームスペース2") {
-		t.Error("second space name not found in response")
+		t.Error("レスポンスに2つ目のスペース名が見つからない")
 	}
 	if !strings.Contains(body, "/s/home-space-1") {
-		t.Error("first space link not found in response")
+		t.Error("レスポンスに1つ目のスペースのリンクが見つからない")
 	}
 	if !strings.Contains(body, "/s/home-space-2") {
-		t.Error("second space link not found in response")
+		t.Error("レスポンスに2つ目のスペースのリンクが見つからない")
 	}
 	if strings.Contains(body, "Wikinoへようこそ") {
-		t.Error("welcome empty state should not be shown when spaces exist")
+		t.Error("スペースがあるのにウェルカムの空状態が表示されている")
 	}
 
-	// Verify the SpaceIcon (first-letter label and deterministic background color) is rendered for each space.
-	// We assert the IconBackgroundColor() output directly since FNV-1a maps each identifier to one of the
-	// 12 palette colors and the value would otherwise be brittle to read off by hand.
-	//
-	// [Ja] 各スペースカードに SpaceIcon (頭文字ラベルと決定論的な背景色) がレンダリングされていることを検証する。
-	// FNV-1a で 12 色パレットから決まる背景色は手計算ではなく IconBackgroundColor() の戻り値で比較する。
+	// 各スペースカードにSpaceIcon (頭文字ラベルと決定論的な背景色) がレンダリングされていることを検証する。
+	// FNV-1aで12色パレットから決まる背景色は手計算ではなくIconBackgroundColor() の戻り値で比較する。
 	spaces := []struct {
 		identifier string
 		label      string
@@ -193,11 +178,11 @@ func TestShow_WithSpaces(t *testing.T) {
 		vm := viewmodel.Space{Identifier: viewmodel.SpaceIdentifier(s.identifier)}
 		expectedBg := "background-color: " + vm.IconBackgroundColor()
 		if !strings.Contains(body, expectedBg) {
-			t.Errorf("space icon background-color for %q (%q) not found in response", s.identifier, expectedBg)
+			t.Errorf("レスポンスに%q (%q) のスペースアイコンのbackground-colorが見つからない", s.identifier, expectedBg)
 		}
 		expectedLabel := ">" + s.label + "</div>"
 		if !strings.Contains(body, expectedLabel) {
-			t.Errorf("space icon label for %q (%q) not found in response", s.identifier, expectedLabel)
+			t.Errorf("レスポンスに%q (%q) のスペースアイコンのラベルが見つからない", s.identifier, expectedLabel)
 		}
 	}
 }
@@ -266,22 +251,22 @@ func TestShow_WithJoinedTopics(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	if !strings.Contains(body, "参加中のトピック") {
-		t.Error("joined topics heading not found in response")
+		t.Error("レスポンスに参加中のトピックの見出しが見つからない")
 	}
 	if !strings.Contains(body, "ホームトピックA") {
-		t.Error("topic name not found in response")
+		t.Error("レスポンスにトピック名が見つからない")
 	}
 	if !strings.Contains(body, "/s/home-topics-space/topics/7") {
-		t.Error("topic link not found in response")
+		t.Error("レスポンスにトピックのリンクが見つからない")
 	}
 	if strings.Contains(body, "参加中のトピックは") {
-		t.Error("topics empty state should not be shown when topics exist")
+		t.Error("トピックがあるのにトピックの空状態が表示されている")
 	}
 }
 
@@ -348,44 +333,35 @@ func TestShow_WithDraftPages(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
-	// The home content's draft section renders its heading when drafts exist. It is the only place
-	// the draft list appears now that the sidebar is gone.
-	// [Ja] 下書きがあるとき、ホーム本体の下書きセクションが見出しを描画する。サイドバー廃止後は
+	// 下書きがあるとき、ホーム本体の下書きセクションが見出しを描画する。サイドバー廃止後は
 	// 下書き一覧が現れる唯一の場所。
 	if !strings.Contains(body, "下書きのページ") {
-		t.Error("draft pages heading not found in home content")
+		t.Error("ホームのコンテンツに下書きの見出しが見つからない")
 	}
 	if !strings.Contains(body, "下書きタイトル") {
-		t.Error("draft page title not found in response")
+		t.Error("レスポンスに下書きのタイトルが見つからない")
 	}
-	// Space name, separator, visibility icon and topic name are rendered as separate elements,
-	// so assert each piece is present independently.
-	// [Ja] スペース名・区切り・公開範囲アイコン・トピック名は個別の要素として描画されるため、
+	// スペース名・区切り・公開範囲アイコン・トピック名は個別の要素として描画されるため、
 	// それぞれが含まれることを別々に検証する
 	if !strings.Contains(body, "ホーム下書きスペース") {
-		t.Error("draft page space name not found in response")
+		t.Error("レスポンスに下書きのスペース名が見つからない")
 	}
 	if !strings.Contains(body, "ホーム下書きトピック") {
-		t.Error("draft page topic name not found in response")
+		t.Error("レスポンスに下書きのトピック名が見つからない")
 	}
-	// Link to the page editor for this draft (page number 11).
-	// [Ja] 下書きカードはページ編集 (PageEditPath) へのリンクを描画する
+	// 下書きカードはページ編集 (PageEditPath) へのリンクを描画する
 	if !strings.Contains(body, "/s/home-drafts-space/pages/11/edit") {
-		t.Error("draft page edit link not found in response")
+		t.Error("レスポンスに下書きの編集リンクが見つからない")
 	}
-	// The "View all" link in the home draft pages section heading points to /drafts.
-	// The link is rendered only when at least one draft exists; the 0-draft case is
-	// covered by TestShow_DraftPagesEmpty.
-	//
-	// [Ja] ホームの下書きセクション見出しの「全て見る」リンクは /drafts に張られる。
-	// リンクは下書きが 1 件以上あるときだけ描画される (0 件時の挙動は TestShow_DraftPagesEmpty で検証)。
+	// ホームの下書きセクション見出しの「全て見る」リンクは /draftsに張られる。
+	// リンクは下書きが1件以上あるときだけ描画される (0件時の挙動はTestShow_DraftPagesEmptyで検証)。
 	if !strings.Contains(body, `href="/drafts"`) {
-		t.Error(`"View all" link to /drafts not found in response`)
+		t.Error(`レスポンスに /draftsへの「すべて表示」リンクが見つからない`)
 	}
 }
 
@@ -400,13 +376,9 @@ func TestShow_DraftPagesEmpty(t *testing.T) {
 		WithAtname("homedraftsempty").
 		Build()
 
-	// The unified welcome empty state only renders when spaces / topics / drafts are all empty.
-	// To exercise the per-section drafts empty state we give the user at least one joined space,
-	// which forces the home content into the three-section layout.
-	//
-	// [Ja] 統合ウェルカム空状態は スペース / トピック / 下書き が全て 0 件のときのみ表示される。
-	// 下書きセクション固有の空状態を検証するため、ここでは参加スペースを 1 件だけ用意し、
-	// ホーム本体を 3 セクション構成に分岐させる。
+	// 統合ウェルカム空状態は スペース / トピック / 下書き が全て0件のときのみ表示される。
+	// 下書きセクション固有の空状態を検証するため、ここでは参加スペースを1件だけ用意し、
+	// ホーム本体を3セクション構成に分岐させる。
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("home-drafts-empty-space").
 		WithName("空のスペース").
@@ -438,22 +410,19 @@ func TestShow_DraftPagesEmpty(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
-	// With at least one joined space, the home content stays in the three-section layout
-	// and the drafts section renders its own empty state when there are 0 drafts.
-	// [Ja] 参加スペースが 1 件以上あるため、ホーム本体は 3 セクション構成のまま描画され、
-	// 下書きが 0 件のときは下書きセクション固有の空状態が表示される。
+	// 参加スペースが1件以上あるため、ホーム本体は3セクション構成のまま描画され、
+	// 下書きが0件のときは下書きセクション固有の空状態が表示される。
 	if !strings.Contains(body, "下書きのページは") {
-		t.Error("no draft pages empty state not found in response")
+		t.Error("レスポンスに下書きが無いときの空状態が見つからない")
 	}
 
-	// When there are 0 drafts, the home content's "View all" link to /drafts must not be rendered.
-	// [Ja] 下書き 0 件のときは、ホーム本体の /drafts への「全て見る」リンクは描画されない。
+	// 下書き0件のときは、ホーム本体の /draftsへの「全て見る」リンクは描画されない。
 	if strings.Contains(body, `href="/drafts"`) {
-		t.Error(`unexpected "View all" link to /drafts found when draft count is 0`)
+		t.Error(`下書きが0件なのに /draftsへの「すべて表示」リンクがある`)
 	}
 }

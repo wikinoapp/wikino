@@ -18,7 +18,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// setupHandler はテスト用のハンドラーを生成するヘルパーです
+// setupHandlerはテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page_location.Handler {
 	t.Helper()
 
@@ -32,7 +32,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_location.Handler {
 	)
 }
 
-// newRequestWithChiParams はchiのURLパラメータ付きリクエストを作成するヘルパーです
+// newRequestWithChiParamsはchiのURLパラメータ付きリクエストを作成するヘルパーです
 func newRequestWithChiParams(t *testing.T, method, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -107,30 +107,30 @@ func TestIndex(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// Content-Typeを確認
 	contentType := rr.Header().Get("Content-Type")
 	if contentType != "application/json" {
-		t.Errorf("wrong content type: got %v want application/json", contentType)
+		t.Errorf("Content-Type = %v、期待値 = application/json", contentType)
 	}
 
 	// JSONレスポンスをパース
 	var resp pageLocationsResponse
 	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
+		t.Fatalf("レスポンスのデコードに失敗: %v", err)
 	}
 
 	// 「Hello」を含むページが2件返ること
 	if len(resp.PageLocations) != 2 {
-		t.Errorf("wrong number of results: got %v want 2", len(resp.PageLocations))
+		t.Errorf("結果の件数 = %v、期待値 = 2", len(resp.PageLocations))
 	}
 
-	// キーの形式を確認（トピック名/ページタイトル）
+	// キーの形式を確認 (トピック名/ページタイトル)
 	for _, item := range resp.PageLocations {
 		if item.Key != "General/Hello World" && item.Key != "General/Hello Go" {
-			t.Errorf("unexpected key: %v", item.Key)
+			t.Errorf("予期しないキー: %v", item.Key)
 		}
 	}
 }
@@ -171,7 +171,7 @@ func TestIndex_MultipleWords(t *testing.T) {
 
 	handler := setupHandler(t, queries)
 
-	// 「Hello World」で検索（両方の単語を含むページのみ）
+	// 「Hello World」で検索 (両方の単語を含むページのみ)
 	req := newRequestWithChiParams(t, http.MethodGet, "/s/multi-space/page_locations?q=Hello+World", map[string]string{
 		"space_identifier": "multi-space",
 	})
@@ -183,21 +183,21 @@ func TestIndex_MultipleWords(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	var resp pageLocationsResponse
 	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
+		t.Fatalf("レスポンスのデコードに失敗: %v", err)
 	}
 
 	// 両方の単語を含む「Hello World」のみが返ること
 	if len(resp.PageLocations) != 1 {
-		t.Errorf("wrong number of results: got %v want 1", len(resp.PageLocations))
+		t.Errorf("結果の件数 = %v、期待値 = 1", len(resp.PageLocations))
 	}
 
 	if len(resp.PageLocations) > 0 && resp.PageLocations[0].Key != "Dev/Hello World" {
-		t.Errorf("wrong key: got %v want Dev/Hello World", resp.PageLocations[0].Key)
+		t.Errorf("キー = %v、期待値 = Dev/Hello World", resp.PageLocations[0].Key)
 	}
 }
 
@@ -242,17 +242,17 @@ func TestIndex_EmptyQuery(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	var resp pageLocationsResponse
 	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
+		t.Fatalf("レスポンスのデコードに失敗: %v", err)
 	}
 
 	// 空クエリでも公開済みページが返ること
 	if len(resp.PageLocations) != 1 {
-		t.Errorf("wrong number of results: got %v want 1", len(resp.PageLocations))
+		t.Errorf("結果の件数 = %v、期待値 = 1", len(resp.PageLocations))
 	}
 }
 
@@ -314,21 +314,21 @@ func TestIndex_ExcludesUnpublishedPages(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	var resp pageLocationsResponse
 	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
+		t.Fatalf("レスポンスのデコードに失敗: %v", err)
 	}
 
 	// 公開済みの1件のみが返ること
 	if len(resp.PageLocations) != 1 {
-		t.Errorf("wrong number of results: got %v want 1", len(resp.PageLocations))
+		t.Errorf("結果の件数 = %v、期待値 = 1", len(resp.PageLocations))
 	}
 
 	if len(resp.PageLocations) > 0 && resp.PageLocations[0].Key != "General/Published Page" {
-		t.Errorf("wrong key: got %v want General/Published Page", resp.PageLocations[0].Key)
+		t.Errorf("キー = %v、期待値 = General/Published Page", resp.PageLocations[0].Key)
 	}
 }
 
@@ -348,7 +348,7 @@ func TestIndex_NotLoggedIn(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -386,7 +386,7 @@ func TestIndex_NotSpaceMember(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -413,6 +413,6 @@ func TestIndex_SpaceNotFound(t *testing.T) {
 	handler.Index(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }

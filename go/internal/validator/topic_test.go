@@ -54,20 +54,17 @@ func TestTopicCreateValidator_FormatValidation(t *testing.T) {
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError but got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if !ve.HasFieldError(tt.field) {
-				t.Errorf("expected %s field error but got none", tt.field)
+				t.Errorf("%sのフィールドエラーが無い", tt.field)
 			}
 		})
 	}
 }
 
-// TestTopicCreateValidator_AllowedNames covers the names the validator lets through. They reach the
-// uniqueness check, which reads the database, so the test runs against a real one.
-//
-// [Ja] TestTopicCreateValidator_AllowedNames はバリデーターが通す名前を扱う。これらは DB を読む
-// 一意性チェックまで進むため、本テストは実際の DB に対して実行する。
+// TestTopicCreateValidator_AllowedNamesはバリデーターが通す名前を扱う。これらはDBを読む
+// 一意性チェックまで進むため、本テストは実際のDBに対して実行する。
 func TestTopicCreateValidator_AllowedNames(t *testing.T) {
 	t.Parallel()
 
@@ -99,8 +96,8 @@ func TestTopicCreateValidator_AllowedNames(t *testing.T) {
 		{name: "Obsidianが記法として読む文字を含む名前", topicName: "foo #bar ^baz [qux]", visibility: "public", want: model.TopicVisibilityPublic},
 		{name: "先頭ドットの名前", topicName: ".foo", visibility: "public", want: model.TopicVisibilityPublic},
 		{name: "末尾ドットの名前", topicName: "foo.", visibility: "public", want: model.TopicVisibilityPublic},
-		{name: "Windows予約デバイス名 CON", topicName: "CON", visibility: "public", want: model.TopicVisibilityPublic},
-		{name: "Windows予約デバイス名 com1 (小文字)", topicName: "com1", visibility: "public", want: model.TopicVisibilityPublic},
+		{name: "Windows予約デバイス名CON", topicName: "CON", visibility: "public", want: model.TopicVisibilityPublic},
+		{name: "Windows予約デバイス名com1 (小文字)", topicName: "com1", visibility: "public", want: model.TopicVisibilityPublic},
 		{name: "中間にスペースがある名前", topicName: "foo bar", visibility: "public", want: model.TopicVisibilityPublic},
 		{name: "中間にドットがある名前", topicName: "foo.bar", visibility: "public", want: model.TopicVisibilityPublic},
 		{name: "30文字ちょうどの名前", topicName: strings.Repeat("あ", 30), visibility: "public", want: model.TopicVisibilityPublic},
@@ -116,20 +113,16 @@ func TestTopicCreateValidator_AllowedNames(t *testing.T) {
 			})
 
 			if err != nil {
-				t.Errorf("unexpected error: %v", err)
+				t.Errorf("予期しないエラー: %v", err)
 			}
 			if visibility != tt.want {
-				t.Errorf("visibility = %v, want %v", visibility, tt.want)
+				t.Errorf("visibility = %v、期待値 = %v", visibility, tt.want)
 			}
 		})
 	}
 }
 
-// TestTopicCreateValidator_Uniqueness covers the name a space already carries. A discarded topic
-// keeps holding its name, because the unique index the database enforces covers discarded rows
-// too, so the name it holds cannot be given to a new topic either.
-//
-// [Ja] TestTopicCreateValidator_Uniqueness はスペースが既に持っている名前を扱う。削除済みの
+// TestTopicCreateValidator_Uniquenessはスペースが既に持っている名前を扱う。削除済みの
 // トピックも名前を持ち続ける。データベースの一意インデックスが削除済みの行も対象にするため、
 // その名前を新しいトピックに付けることもできない。
 func TestTopicCreateValidator_Uniqueness(t *testing.T) {
@@ -178,28 +171,24 @@ func TestTopicCreateValidator_Uniqueness(t *testing.T) {
 
 			if !tt.wantError {
 				if err != nil {
-					t.Errorf("unexpected error: %v", err)
+					t.Errorf("予期しないエラー: %v", err)
 				}
 				return
 			}
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError but got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if !ve.HasFieldError("name") {
-				t.Error("expected name field error but got none")
+				t.Error("nameのフィールドエラーが無い")
 			}
 		})
 	}
 }
 
-// TestTopicUpdateValidator_FormatValidation covers the format checks the general settings share
-// with the creation form. The checks themselves are covered by
-// TestTopicCreateValidator_FormatValidation, so this only confirms that the update reaches them.
-//
-// [Ja] TestTopicUpdateValidator_FormatValidation は一般設定が作成フォームと共有する形式チェックを
-// 扱う。チェック自体は TestTopicCreateValidator_FormatValidation で扱っているため、ここでは更新も
+// TestTopicUpdateValidator_FormatValidationは一般設定が作成フォームと共有する形式チェックを
+// 扱う。チェック自体はTestTopicCreateValidator_FormatValidationで扱っているため、ここでは更新も
 // そこへ到達することだけを確かめる。
 func TestTopicUpdateValidator_FormatValidation(t *testing.T) {
 	t.Parallel()
@@ -235,20 +224,16 @@ func TestTopicUpdateValidator_FormatValidation(t *testing.T) {
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError but got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if !ve.HasFieldError(tt.field) {
-				t.Errorf("expected %s field error but got none", tt.field)
+				t.Errorf("%sのフィールドエラーが無い", tt.field)
 			}
 		})
 	}
 }
 
-// TestTopicUpdateValidator_Uniqueness covers the name the space already carries. The topic being
-// updated keeps its own name, while a name another topic holds is refused, discarded topics
-// included.
-//
-// [Ja] TestTopicUpdateValidator_Uniqueness はスペースが既に持っている名前を扱う。更新するトピックは
+// TestTopicUpdateValidator_Uniquenessはスペースが既に持っている名前を扱う。更新するトピックは
 // 自身の名前をそのままにでき、別のトピックが持つ名前は削除済みのものも含めて拒否される。
 func TestTopicUpdateValidator_Uniqueness(t *testing.T) {
 	t.Parallel()
@@ -303,17 +288,17 @@ func TestTopicUpdateValidator_Uniqueness(t *testing.T) {
 
 			if !tt.wantError {
 				if err != nil {
-					t.Errorf("unexpected error: %v", err)
+					t.Errorf("予期しないエラー: %v", err)
 				}
 				return
 			}
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError but got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if !ve.HasFieldError("name") {
-				t.Error("expected name field error but got none")
+				t.Error("nameのフィールドエラーが無い")
 			}
 		})
 	}

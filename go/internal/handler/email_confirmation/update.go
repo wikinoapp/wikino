@@ -12,11 +12,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Update は確認コードを検証します (PATCH /email_confirmation)
+// Updateは確認コードを検証します (PATCH /email_confirmation)
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// セッションから email_confirmation_id を取得
+	// セッションからemail_confirmation_idを取得
 	emailConfirmationID := h.sessionMgr.GetEmailConfirmationID(r)
 	if emailConfirmationID == "" {
 		http.Redirect(w, r, "/sign_up", http.StatusFound)
@@ -32,7 +32,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	code := r.FormValue("code")
 
-	// UseCase を実行
+	// UseCaseを実行
 	err := h.markEmailAsConfirmedUC.Execute(ctx, usecase.MarkEmailAsConfirmedInput{
 		EmailConfirmationID: emailConfirmationID,
 		Code:                code,
@@ -68,7 +68,7 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
-// renderEditForm は確認コード入力フォームをエラー付きでレンダリングします
+// renderEditFormは確認コード入力フォームをエラー付きでレンダリングします
 func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, ve *model.ValidationError) {
 	ctx := r.Context()
 
@@ -82,7 +82,7 @@ func (h *Handler) renderEditForm(w http.ResponseWriter, r *http.Request, ve *mod
 		FormErrors: ve,
 	})
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	// バリデーションエラー時は422 Unprocessable Entityを返す
 	w.WriteHeader(http.StatusUnprocessableEntity)
 
 	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)

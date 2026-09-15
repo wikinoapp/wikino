@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Index は下書き一覧画面を表示します (GET /drafts)
+// Indexは下書き一覧画面を表示します (GET /drafts)
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -51,13 +51,9 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 					IconName:  "house-regular",
 					AriaLabel: i18n.T(ctx, "breadcrumb_home"),
 				},
-				// The screen is the current page. The item already renders without a link, but
-				// aria-current is what tells a screen reader which crumb the viewer is on, and it is
-				// IsCurrent that puts it there.
-				//
-				// [Ja] この画面が現在地。項目はすでにリンク無しで描画されるが、閲覧者がどの項目に
-				// いるかをスクリーンリーダーへ伝えるのは aria-current であり、それを付けるのは
-				// IsCurrent である。
+				// この画面が現在地。項目はすでにリンク無しで描画されるが、閲覧者がどの項目に
+				// いるかをスクリーンリーダーへ伝えるのはaria-currentであり、それを付けるのは
+				// IsCurrentである。
 				{
 					Label:     i18n.T(ctx, "draft_page_index_heading"),
 					IsCurrent: true,

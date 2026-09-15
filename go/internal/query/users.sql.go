@@ -114,7 +114,7 @@ const getUserByAtname = `-- name: GetUserByAtname :one
 SELECT id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at FROM users WHERE atname = $1 AND discarded_at IS NULL
 `
 
-// ユーザーをアットネーム（@ユーザー名）で取得する（削除されていないユーザーのみ）
+// ユーザーをアットネーム (@ユーザー名) で取得する (削除されていないユーザーのみ)
 func (q *Queries) GetUserByAtname(ctx context.Context, atname string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByAtname, atname)
 	var i User
@@ -138,7 +138,7 @@ const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at FROM users WHERE email = $1 AND discarded_at IS NULL
 `
 
-// ユーザーをメールアドレスで取得する（削除されていないユーザーのみ）
+// ユーザーをメールアドレスで取得する (削除されていないユーザーのみ)
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User

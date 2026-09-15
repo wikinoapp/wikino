@@ -9,10 +9,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetBacklinkListUsecase aggregates the backlinks of one page listed in another page's link list.
-//
-// [Ja] GetBacklinkListUsecase はあるページのリンク一覧に並ぶ 1 ページについて、その
-// バックリンク一覧を集約する読み取り UseCase。
+// GetBacklinkListUsecaseはあるページのリンク一覧に並ぶ1ページについて、その
+// バックリンク一覧を集約する読み取りUseCase。
 type GetBacklinkListUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -21,7 +19,7 @@ type GetBacklinkListUsecase struct {
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
-// NewGetBacklinkListUsecase は GetBacklinkListUsecase を生成する
+// NewGetBacklinkListUsecaseはGetBacklinkListUsecaseを生成する
 func NewGetBacklinkListUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -38,11 +36,8 @@ func NewGetBacklinkListUsecase(
 	}
 }
 
-// GetBacklinkListInput holds the input parameters for fetching a linked page's backlinks.
-// UserID is nil when the user is not signed in.
-//
-// [Ja] GetBacklinkListInput はバックリンク一覧取得の入力パラメータ。
-// UserID は未ログイン時に nil になる。
+// GetBacklinkListInputはバックリンク一覧取得の入力パラメータ。
+// UserIDは未ログイン時にnilになる。
 type GetBacklinkListInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	PageNumber       int32
@@ -52,7 +47,7 @@ type GetBacklinkListInput struct {
 	Limit            int32
 }
 
-// GetBacklinkListOutput はバックリンク一覧取得の出力
+// GetBacklinkListOutputはバックリンク一覧取得の出力
 type GetBacklinkListOutput struct {
 	Space         *model.Space
 	SpaceMember   *model.SpaceMember
@@ -65,13 +60,9 @@ type GetBacklinkListOutput struct {
 	CanUpdatePage bool
 }
 
-// Execute fetches the backlinks of the linked page. Both the page holding the link list and the
-// linked page itself must be visible to the current viewer; otherwise a *model.AppError with
-// AppErrCodeResourceNotFound is returned.
-//
-// [Ja] Execute はリンク先ページのバックリンク一覧を取得する。リンク一覧を持つページと
+// Executeはリンク先ページのバックリンク一覧を取得する。リンク一覧を持つページと
 // リンク先ページの両方が現在の閲覧者に見えることを要求し、そうでなければ
-// AppErrCodeResourceNotFound の *model.AppError を返す。
+// AppErrCodeResourceNotFoundの *model.AppErrorを返す。
 func (uc *GetBacklinkListUsecase) Execute(ctx context.Context, input GetBacklinkListInput) (*GetBacklinkListOutput, error) {
 	data, err := fetchPageAccessDataAllowingGuest(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
 	if err != nil {
@@ -100,12 +91,8 @@ func (uc *GetBacklinkListUsecase) Execute(ctx context.Context, input GetBacklink
 		}
 	}
 
-	// The backlinks belong to the linked page, so its own topic decides whether this list may be
-	// shown at all. Without this check a viewer could read the backlinks of a page in a topic they
-	// cannot open, just by walking the URL.
-	//
-	// [Ja] 返すバックリンクはリンク先ページのものなので、この一覧を見せてよいかはリンク先ページの
-	// トピックが決める。この判定が無いと、開けないトピックのページのバックリンクを URL 直打ちで
+	// 返すバックリンクはリンク先ページのものなので、この一覧を見せてよいかはリンク先ページの
+	// トピックが決める。この判定が無いと、開けないトピックのページのバックリンクをURL直打ちで
 	// 読めてしまう。
 	if !access.canShowPage(linkedPage) {
 		return nil, &model.AppError{

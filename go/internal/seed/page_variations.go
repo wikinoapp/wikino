@@ -11,31 +11,18 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// Titles of the pages that exist to show one state a page can be in. The two
-// states a run creates several of are numbered within their group, so that the
-// section they appear in shows at a glance how many there are and in which
-// order. The states a single page is enough for are named outright.
-//
-// [Ja] ページが取りうる状態を 1 つずつ見せるために存在するページのタイトル。実行 1 回で
-// 複数作る 2 つの状態は組の中で採番し、それらが並ぶ場所で件数と順序が一目で分かる
-// ようにする。1 ページで足りる状態はそのまま名前で表す。
+// ページが取りうる状態を1つずつ見せるために存在するページのタイトル。実行1回で
+// 複数作る2つの状態は組の中で採番し、それらが並ぶ場所で件数と順序が一目で分かる
+// ようにする。1ページで足りる状態はそのまま名前で表す。
 const (
 	pinnedPageTitleFormat  = "ピン留めページ %02d"
 	trashedPageTitleFormat = "ゴミ箱のページ %02d"
 	unwrittenPageTitle     = "未公開のページ"
 )
 
-// generatePageVariations creates the pages that show what a page can be
-// besides published and readable: pinned, trashed, and the two shapes a page
-// has before anything has been written into it.
-//
-// Publishing produces none of these states, so each page here is either
-// stamped with its state after being published, or written in the shape the
-// screen that creates it leaves behind.
-//
-// [Ja] generatePageVariations は、公開されて読める状態以外にページが取りうる姿を
+// generatePageVariationsは、公開されて読める状態以外にページが取りうる姿を
 // 見せるページを作成する。ピン留め・ゴミ箱、そして何も書かれる前のページが取る
-// 2 つの形。
+// 2つの形。
 //
 // これらの状態はいずれも公開では生まれないため、ここのページは公開後に状態を
 // 打刻するか、それを作る画面が残す形のまま書くかのどちらかになる。
@@ -47,10 +34,7 @@ func generatePageVariations(
 	spaces *seededSpaces,
 	topics *seededTopics,
 ) error {
-	// The two unwritten pages are counted as the two pages they are: unlike the
-	// pages a wiki link creates, nothing else is created along the way.
-	//
-	// [Ja] 何も書かれていない 2 ページは、そのまま 2 件として数える。Wiki リンクが
+	// 何も書かれていない2ページは、そのまま2件として数える。Wikiリンクが
 	// 作るページと違い、途中で他のページが作られることが無いため。
 	bar := newProgress(out, "状態バリエーションページ", amt.pinnedPages+amt.trashedPages+2)
 	defer bar.finish()
@@ -81,14 +65,8 @@ func generatePageVariations(
 			return err
 		}
 
-		// The pinned section is ordered by pinned_at descending, so the pages
-		// are pinned a minute apart and in the order their numbers read.
-		// Stamping them all with the same instant would leave the order to the
-		// page ids, and the section would read differently from the numbers
-		// printed on it.
-		//
-		// [Ja] ピン留めの区画は pinned_at の降順で並ぶため、番号の読み順どおりに
-		// 1 分ずつずらしてピン留めする。同じ時刻で打刻すると並び順がページ ID 任せに
+		// ピン留めの区画はpinned_atの降順で並ぶため、番号の読み順どおりに
+		// 1分ずつずらしてピン留めする。同じ時刻で打刻すると並び順がページID任せに
 		// なり、区画の並びがそこに出ている番号と食い違って見える。
 		if err := writer.pinPage(ctx, page, now.Add(-time.Duration(number)*time.Minute)); err != nil {
 			return err
@@ -114,14 +92,10 @@ func generatePageVariations(
 			return err
 		}
 
-		// Trashing is one of the few state changes the Go side already performs
-		// in production, so it goes through the repository instead of an UPDATE
-		// written here.
-		//
-		// [Ja] ゴミ箱への移動は、Go 側が本番で既に行っている数少ない状態変更の 1 つで
-		// あるため、ここで UPDATE を書かずに Repository を経由する。
+		// ゴミ箱への移動は、Go側が本番で既に行っている数少ない状態変更の1つで
+		// あるため、ここでUPDATEを書かずにRepositoryを経由する。
 		if err := writer.pageRepo.TrashByID(ctx, page.id, spaces.wiki.id, now); err != nil {
-			return fmt.Errorf("ページ %s のゴミ箱への移動に失敗: %w", title, err)
+			return fmt.Errorf("ページ %sのゴミ箱への移動に失敗: %w", title, err)
 		}
 		bar.advance()
 	}
@@ -139,18 +113,11 @@ func generatePageVariations(
 	return nil
 }
 
-// pinPage stamps pinned_at on a page, which moves it out of the page listing
-// and into the pinned section shown above it.
-//
-// The UPDATE is written here rather than taken from a repository because
-// pinning is still handled by the Rails side, and the Go side has no query for
-// it.
-//
-// [Ja] pinPage はページに pinned_at を打刻する。これによりページは通常の一覧から
+// pinPageはページにpinned_atを打刻する。これによりページは通常の一覧から
 // 外れ、その上に表示されるピン留めの区画へ移る。
 //
-// Repository ではなくここで UPDATE を書くのは、ピン留めを担当しているのが今も
-// Rails 側であり、Go 側にクエリが無いため。
+// RepositoryではなくここでUPDATEを書くのは、ピン留めを担当しているのが今も
+// Rails側であり、Go側にクエリが無いため。
 func (w *pageWriter) pinPage(ctx context.Context, page *seededPage, pinnedAt time.Time) error {
 	_, err := w.dbtx.ExecContext(
 		ctx,
@@ -158,20 +125,13 @@ func (w *pageWriter) pinPage(ctx context.Context, page *seededPage, pinnedAt tim
 		string(page.id), string(w.space.id), pinnedAt,
 	)
 	if err != nil {
-		return fmt.Errorf("ページ %s のピン留めに失敗: %w", page.title, err)
+		return fmt.Errorf("ページ %sのピン留めに失敗: %w", page.title, err)
 	}
 
 	return nil
 }
 
-// createUnwrittenPage creates the page a wiki link leaves behind when it names
-// a title nobody has written yet: a title, an empty body and no publication.
-//
-// The seed's other unpublished pages are all named by the link hub, so they are
-// reached from a link list. This one is linked from nowhere, which is how the
-// state looks when the page that once named it has been rewritten since.
-//
-// [Ja] createUnwrittenPage は、まだ誰も書いていないタイトルを Wiki リンクが名指し
+// createUnwrittenPageは、まだ誰も書いていないタイトルをWikiリンクが名指し
 // したときに残るページを作成する。タイトルがあり、本文は空で、公開されていない。
 //
 // シードの他の未公開ページはいずれもリンク集中ページが名指ししたものであり、
@@ -199,7 +159,7 @@ func (w *pageWriter) createUnwrittenPage(
 		Title:   title,
 	})
 	if err != nil {
-		return fmt.Errorf("ページ %s の作成に失敗: %w", title, err)
+		return fmt.Errorf("ページ %sの作成に失敗: %w", title, err)
 	}
 
 	if _, err := w.pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
@@ -208,30 +168,20 @@ func (w *pageWriter) createUnwrittenPage(
 		SpaceMemberID:      author.id,
 		LastPageModifiedAt: time.Now(),
 	}); err != nil {
-		return fmt.Errorf("ページ %s の編集者の登録に失敗: %w", title, err)
+		return fmt.Errorf("ページ %sの編集者の登録に失敗: %w", title, err)
 	}
 
 	return nil
 }
 
-// createBlankPage creates the page the new page button leaves behind: no title,
-// no body and no publication. Its NULL title is what the untitled label the
-// listings and the page detail screen fall back to is read from.
-//
-// The row is written here rather than through a repository because creating a
-// blank page is still handled by the Rails side (Pages::CreateBlankedService),
-// and the Go side has no Create to call. body_html is stored empty because
-// rendering an empty body produces an empty string, which is what Rails stores
-// for such a page too.
-//
-// [Ja] createBlankPage は、ページ作成ボタンが残すページを作成する。タイトルも本文も
+// createBlankPageは、ページ作成ボタンが残すページを作成する。タイトルも本文も
 // 無く、公開もされていない。一覧とページ詳細画面がフォールバックする「無題」の表示は、
-// このページの NULL のタイトルから来る。
+// このページのNULLのタイトルから来る。
 //
-// Repository ではなくここで行を書くのは、空のページの作成を担当しているのが今も
-// Rails 側 (Pages::CreateBlankedService) であり、Go 側に呼べる Create が無いため。
-// body_html を空で保存するのは、空の本文をレンダリングすると空文字列になるためで、
-// Rails もこの種のページには同じものを保存している。
+// Repositoryではなくここで行を書くのは、空のページの作成を担当しているのが今も
+// Rails側 (Pages::CreateBlankedService) であり、Go側に呼べるCreateが無いため。
+// body_htmlを空で保存するのは、空の本文をレンダリングすると空文字列になるためで、
+// Railsもこの種のページには同じものを保存している。
 func (w *pageWriter) createBlankPage(
 	ctx context.Context,
 	topic *seededTopic,
@@ -276,20 +226,14 @@ func (w *pageWriter) createBlankPage(
 	return &seededPage{id: pageID, number: number}, nil
 }
 
-// variationAuthor picks the account a page of the given position is attributed
-// to, handing the pages round the roles so that no home screen is left without
-// pages in these states.
-//
-// [Ja] variationAuthor は、その位置のページを誰の書いたものとして記録するかを選ぶ。
+// variationAuthorは、その位置のページを誰の書いたものとして記録するかを選ぶ。
 // ページを役割へ順に回すことで、これらの状態のページを持たないままのホーム画面が
 // 残らないようにする。
 func variationAuthor(space *seededSpace, number int) (*seededSpaceMember, error) {
 	return space.memberInTurn(contentAuthorRoles, number)
 }
 
-// pinnedPageBody builds the body of a pinned page.
-//
-// [Ja] pinnedPageBody はピン留めされたページの本文を組み立てる。
+// pinnedPageBodyはピン留めされたページの本文を組み立てる。
 func pinnedPageBody(title string) string {
 	return fmt.Sprintf(`%s はピン留めされているため、トピックとスペースのページ一覧では、更新日順の並びの中ではなく一覧の上に表示されます。
 
@@ -297,9 +241,7 @@ func pinnedPageBody(title string) string {
 `, title)
 }
 
-// trashedPageBody builds the body of a page that has been moved to the trash.
-//
-// [Ja] trashedPageBody はゴミ箱へ移されたページの本文を組み立てる。
+// trashedPageBodyはゴミ箱へ移されたページの本文を組み立てる。
 func trashedPageBody(title string) string {
 	return fmt.Sprintf(`%s はゴミ箱へ移されたページです。
 

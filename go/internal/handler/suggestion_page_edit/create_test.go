@@ -90,10 +90,10 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -167,7 +167,7 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
 
@@ -237,11 +237,11 @@ func TestCreate_下書きなしの場合にページ編集画面にリダイレ�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/spe-create-sp/pages/5/edit" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/s/spe-create-sp/pages/5/edit")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/s/spe-create-sp/pages/5/edit")
 	}
 }
 
@@ -320,12 +320,12 @@ func TestCreate_通常編集の下書きがある場合に確認画面にリダ�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	expectedPrefix := "/s/spe-conflict-sp/suggestions/1/page_edits/"
 	if !strings.HasPrefix(loc, expectedPrefix) {
-		t.Errorf("wrong redirect location: got %q, want prefix %q", loc, expectedPrefix)
+		t.Errorf("リダイレクト先 = %q、期待する接頭辞 = %q", loc, expectedPrefix)
 	}
 }
 
@@ -421,11 +421,11 @@ func TestCreate_別の編集提案の下書きがある場合に確認画面に�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	expectedPrefix := "/s/spe-other-sg-sp/suggestions/1/page_edits/"
 	if !strings.HasPrefix(loc, expectedPrefix) {
-		t.Errorf("wrong redirect location: got %q, want prefix %q", loc, expectedPrefix)
+		t.Errorf("リダイレクト先 = %q、期待する接頭辞 = %q", loc, expectedPrefix)
 	}
 }

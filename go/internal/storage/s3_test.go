@@ -19,10 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
-// S3ObjectStorage and FakeObjectStorage must both satisfy the interface the rest of the
-// application depends on, so that the fake can stand in for the real bucket everywhere.
-//
-// [Ja] S3ObjectStorage と FakeObjectStorage は、アプリケーションの他の部分が依存する interface を
+// S3ObjectStorageとFakeObjectStorageは、アプリケーションの他の部分が依存するinterfaceを
 // どちらも満たさなければならない。フェイクがどこでも実際のバケットの代わりになるようにするためである。
 var (
 	_ storage.ObjectStorage = (*storage.S3ObjectStorage)(nil)
@@ -37,11 +34,7 @@ type abortRequest struct {
 	contextCanceled bool
 }
 
-// fakeS3 answers the requests the adapter issues (PutObject, the multipart calls, GetObject and
-// DeleteObject) in path-style form, and records enough of them for a test to tell which path an
-// upload took.
-//
-// [Ja] fakeS3 はアダプタが発行するリクエスト (PutObject、multipart、GetObject、DeleteObject) に
+// fakeS3はアダプタが発行するリクエスト (PutObject、multipart、GetObject、DeleteObject) に
 // パス形式で応答し、アップロードがどの経路を通ったかをテストが判別できる程度に記録する。
 type fakeS3 struct {
 	mu           sync.Mutex
@@ -50,13 +43,9 @@ type fakeS3 struct {
 	putHeaders   http.Header
 	getHeaders   http.Header
 
-	// parts holds the uploaded parts per upload ID, and uploadIDs lists the IDs handed out in the
-	// order they were created. Scoping the parts by upload ID keeps a second multipart attempt
-	// against the same fake from completing with the parts the first one left behind.
-	//
-	// [Ja] parts は upload ID ごとにアップロード済みのパートを保持し、uploadIDs は払い出した ID を
-	// 作成順に並べる。パートを upload ID で区切ることで、同じフェイクに対する 2 回目の multipart が
-	// 1 回目の残したパートで complete してしまうことを防ぐ。
+	// partsはupload IDごとにアップロード済みのパートを保持し、uploadIDsは払い出したIDを
+	// 作成順に並べる。パートをupload IDで区切ることで、同じフェイクに対する2回目のmultipartが
+	// 1回目の残したパートでcompleteしてしまうことを防ぐ。
 	parts     map[string]map[int][]byte
 	uploadIDs []string
 
@@ -64,12 +53,8 @@ type fakeS3 struct {
 	abortRequests []abortRequest
 	failAbort     bool
 
-	// getErrorCode and deleteErrorCode make GetObject and DeleteObject answer with a 404 carrying
-	// that S3 error code. "NoSuchKey" is what a storage returns for an object that is not there;
-	// any other code stands for a failure the adapter must report rather than treat as absence.
-	//
-	// [Ja] getErrorCode / deleteErrorCode は、その S3 エラーコードを載せた 404 を GetObject /
-	// DeleteObject に返させる。"NoSuchKey" は存在しないオブジェクトに対してストレージが返すもので、
+	// getErrorCode / deleteErrorCodeは、そのS3エラーコードを載せた404をGetObject /
+	// DeleteObjectに返させる。"NoSuchKey" は存在しないオブジェクトに対してストレージが返すもので、
 	// それ以外のコードは、不在として扱うのではなくアダプタが報告すべき失敗を表す。
 	getErrorCode    string
 	deleteErrorCode string
@@ -214,11 +199,8 @@ func (f *fakeS3) abortMultipartUpload(w http.ResponseWriter, r *http.Request, ke
 	})
 	failAbort := f.failAbort
 	if !failAbort {
-		// A denied abort leaves the parts in the bucket, which is the state the returned error
-		// reports. Only discard them when the abort is answered as successful.
-		//
-		// [Ja] 拒否された abort はパートをバケットに残す。返されるエラーが報告しているのはこの
-		// 状態である。破棄するのは abort が成功として応答されるときだけにする。
+		// 拒否されたabortはパートをバケットに残す。返されるエラーが報告しているのはこの
+		// 状態である。破棄するのはabortが成功として応答されるときだけにする。
 		delete(f.parts, uploadID)
 	}
 	f.mu.Unlock()
@@ -268,31 +250,29 @@ func assertMultipartAbort(t *testing.T, fake *fakeS3, key string) {
 	fake.mu.Unlock()
 
 	if len(uploadIDs) != 1 {
-		t.Fatalf("CreateMultipartUpload の呼び出し回数 = %d, want 1", len(uploadIDs))
+		t.Fatalf("CreateMultipartUploadの呼び出し回数 = %d、期待値 = 1", len(uploadIDs))
 	}
 	if len(abortRequests) != 1 {
-		t.Fatalf("AbortMultipartUpload の呼び出し回数 = %d, want 1", len(abortRequests))
+		t.Fatalf("AbortMultipartUploadの呼び出し回数 = %d、期待値 = 1", len(abortRequests))
 	}
 	request := abortRequests[0]
 	if request.key != key {
-		t.Errorf("abort の key = %q, want %q", request.key, key)
+		t.Errorf("abortのkey = %q、期待値 = %q", request.key, key)
 	}
 	if request.uploadID != uploadIDs[0] {
-		t.Errorf("abort の upload ID = %q, want %q", request.uploadID, uploadIDs[0])
+		t.Errorf("abortのupload ID = %q、期待値 = %q", request.uploadID, uploadIDs[0])
 	}
 	if request.contextCanceled {
-		t.Error("abort の request context がキャンセルされている")
+		t.Error("abortのrequest contextがキャンセルされている")
 	}
 
-	// A successful abort discards the parts, while a denied one leaves them where they are.
-	//
-	// [Ja] 成功した abort はパートを破棄し、拒否された abort はそのまま残す。
+	// 成功したabortはパートを破棄し、拒否されたabortはそのまま残す。
 	wantUploads := 0
 	if failAbort {
 		wantUploads = 1
 	}
 	if remainingUploads != wantUploads {
-		t.Errorf("abort 後に残っている upload = %d, want %d", remainingUploads, wantUploads)
+		t.Errorf("abort後に残っているupload = %d、期待値 = %d", remainingUploads, wantUploads)
 	}
 }
 
@@ -302,18 +282,13 @@ func writeXML(w http.ResponseWriter, status int, body string) {
 	_, _ = w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>` + body))
 }
 
-// writeS3Error answers with a 404 carrying code. Both codes the adapter has to tell apart
-// (NoSuchKey and NoSuchBucket) come back as a 404, so the status alone cannot decide the outcome.
-//
-// [Ja] writeS3Error は code を載せた 404 を返す。アダプタが区別しなければならない 2 つのコード
-// (NoSuchKey と NoSuchBucket) はどちらも 404 で返るため、ステータスだけでは結果を決められない。
+// writeS3Errorはcodeを載せた404を返す。アダプタが区別しなければならない2つのコード
+// (NoSuchKeyとNoSuchBucket) はどちらも404で返るため、ステータスだけでは結果を決められない。
 func writeS3Error(w http.ResponseWriter, code string) {
 	writeXML(w, http.StatusNotFound, fmt.Sprintf(`<Error><Code>%s</Code><Message>%s</Message></Error>`, code, code))
 }
 
-// newTestStorage starts the fake storage and returns an adapter pointed at it.
-//
-// [Ja] newTestStorage はフェイクのストレージを起動し、それを向いたアダプタを返す。
+// newTestStorageはフェイクのストレージを起動し、それを向いたアダプタを返す。
 func newTestStorage(t *testing.T) (*storage.S3ObjectStorage, *fakeS3) {
 	t.Helper()
 	return newTestStorageWithRegion(t, "")
@@ -334,7 +309,7 @@ func newTestStorageWithRegion(t *testing.T, region string) (*storage.S3ObjectSto
 		Region:          region,
 	})
 	if err != nil {
-		t.Fatalf("NewS3ObjectStorage() error = %v", err)
+		t.Fatalf("NewS3ObjectStorage()のエラー = %v", err)
 	}
 	return s, fake
 }
@@ -388,7 +363,7 @@ func TestNewS3ObjectStorage_IncompleteConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "異常系: アクセスキー ID が空",
+			name: "異常系: アクセスキーIDが空",
 			cfg: func() storage.Config {
 				cfg := complete
 				cfg.AccessKeyID = ""
@@ -414,15 +389,15 @@ func TestNewS3ObjectStorage_IncompleteConfig(t *testing.T) {
 			s, err := storage.NewS3ObjectStorage(tt.cfg)
 			if tt.wantErr {
 				if err == nil {
-					t.Fatal("NewS3ObjectStorage() error = nil, want error")
+					t.Fatal("NewS3ObjectStorage()のエラー = nil、期待値 = エラー")
 				}
 				return
 			}
 			if err != nil {
-				t.Fatalf("NewS3ObjectStorage() error = %v", err)
+				t.Fatalf("NewS3ObjectStorage()のエラー = %v", err)
 			}
 			if s == nil {
-				t.Fatal("NewS3ObjectStorage() = nil, want non-nil")
+				t.Fatal("NewS3ObjectStorage() = nil、期待値 = nilではない")
 			}
 		})
 	}
@@ -441,7 +416,7 @@ func TestS3ObjectStorage_UploadAndGet(t *testing.T) {
 		Body:        bytes.NewReader(body),
 		ContentType: "application/zip",
 	}); err != nil {
-		t.Fatalf("Upload() error = %v", err)
+		t.Fatalf("Upload()のエラー = %v", err)
 	}
 
 	stored, contentType, ok := fake.object(key)
@@ -449,15 +424,15 @@ func TestS3ObjectStorage_UploadAndGet(t *testing.T) {
 		t.Fatalf("オブジェクトが保存されていない (key: %s)", key)
 	}
 	if !bytes.Equal(stored, body) {
-		t.Errorf("保存された本体 = %q, want %q", stored, body)
+		t.Errorf("保存された本体 = %q、期待値 = %q", stored, body)
 	}
 	if contentType != "application/zip" {
-		t.Errorf("Content-Type = %q, want %q", contentType, "application/zip")
+		t.Errorf("Content-Type = %q、期待値 = %q", contentType, "application/zip")
 	}
 
 	reader, err := s.Get(ctx, key)
 	if err != nil {
-		t.Fatalf("Get() error = %v", err)
+		t.Fatalf("Get()のエラー = %v", err)
 	}
 	defer func() { _ = reader.Close() }()
 
@@ -466,7 +441,7 @@ func TestS3ObjectStorage_UploadAndGet(t *testing.T) {
 		t.Fatalf("取得したオブジェクトの読み取りに失敗: %v", err)
 	}
 	if !bytes.Equal(got, body) {
-		t.Errorf("Get() = %q, want %q", got, body)
+		t.Errorf("Get() = %q、期待値 = %q", got, body)
 	}
 
 	fake.mu.Lock()
@@ -477,19 +452,16 @@ func TestS3ObjectStorage_UploadAndGet(t *testing.T) {
 	for name := range putHeaders {
 		if strings.HasPrefix(strings.ToLower(name), "x-amz-checksum-") ||
 			strings.EqualFold(name, "X-Amz-Sdk-Checksum-Algorithm") {
-			t.Errorf("PutObject の任意チェックサムヘッダー %q が設定されている", name)
+			t.Errorf("PutObjectの任意チェックサムヘッダー%qが設定されている", name)
 		}
 	}
 	if got := getHeaders.Get("X-Amz-Checksum-Mode"); got != "" {
-		t.Errorf("GetObject の X-Amz-Checksum-Mode = %q, want empty", got)
+		t.Errorf("GetObjectのX-Amz-Checksum-Mode = %q、期待値 = 空", got)
 	}
 }
 
-// TestS3ObjectStorage_UploadMultipart checks that a body larger than the uploader's single-part
-// threshold is split into parts and reassembled.
-//
-// [Ja] TestS3ObjectStorage_UploadMultipart は、アップローダーが単一 part で扱う閾値を超える body が
-// part に分割されて組み立て直されることを確認する。
+// TestS3ObjectStorage_UploadMultipartは、アップローダーが単一partで扱う閾値を超えるbodyが
+// partに分割されて組み立て直されることを確認する。
 func TestS3ObjectStorage_UploadMultipart(t *testing.T) {
 	t.Parallel()
 
@@ -497,11 +469,8 @@ func TestS3ObjectStorage_UploadMultipart(t *testing.T) {
 	ctx := context.Background()
 	const key = "exports/large.zip"
 
-	// The uploader keeps a floor of 5 MiB on the part size, so the body has to pass it to take the
-	// multipart path.
-	//
-	// [Ja] アップローダーはパートサイズに 5 MiB の下限を持つため、multipart の経路を通すには
-	// body がそれを超えている必要がある。
+	// アップローダーはパートサイズに5 MiBの下限を持つため、multipartの経路を通すには
+	// bodyがそれを超えている必要がある。
 	body := bytes.Repeat([]byte("wikino-export-"), 6*1024*1024/14+1)
 
 	if err := s.Upload(ctx, storage.UploadInput{
@@ -509,7 +478,7 @@ func TestS3ObjectStorage_UploadMultipart(t *testing.T) {
 		Body:        bytes.NewReader(body),
 		ContentType: "application/zip",
 	}); err != nil {
-		t.Fatalf("Upload() error = %v", err)
+		t.Fatalf("Upload()のエラー = %v", err)
 	}
 
 	fake.mu.Lock()
@@ -521,10 +490,10 @@ func TestS3ObjectStorage_UploadMultipart(t *testing.T) {
 	fake.mu.Unlock()
 
 	if uploadCount != 1 {
-		t.Errorf("CreateMultipartUpload の呼び出し回数 = %d, want 1", uploadCount)
+		t.Errorf("CreateMultipartUploadの呼び出し回数 = %d、期待値 = 1", uploadCount)
 	}
 	if partCount < 2 {
-		t.Errorf("パート数 = %d, want >= 2", partCount)
+		t.Errorf("パート数 = %d、期待値 = 2以上", partCount)
 	}
 
 	stored, _, ok := fake.object(key)
@@ -532,7 +501,7 @@ func TestS3ObjectStorage_UploadMultipart(t *testing.T) {
 		t.Fatalf("オブジェクトが保存されていない (key: %s)", key)
 	}
 	if !bytes.Equal(stored, body) {
-		t.Errorf("組み立て直された本体の長さ = %d, want %d", len(stored), len(body))
+		t.Errorf("組み立て直された本体の長さ = %d、期待値 = %d", len(stored), len(body))
 	}
 }
 
@@ -544,7 +513,7 @@ func TestS3ObjectStorage_UploadMultipartFailure(t *testing.T) {
 		firstPartSize = 5 * 1024 * 1024
 	)
 
-	t.Run("異常系: multipart に至らない失敗では abort しない", func(t *testing.T) {
+	t.Run("異常系: multipartに至らない失敗ではabortしない", func(t *testing.T) {
 		t.Parallel()
 
 		s, fake := newTestStorage(t)
@@ -557,7 +526,7 @@ func TestS3ObjectStorage_UploadMultipartFailure(t *testing.T) {
 			},
 		})
 		if !errors.Is(err, wantErr) {
-			t.Errorf("Upload() error = %v, want %v", err, wantErr)
+			t.Errorf("Upload()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 
 		fake.mu.Lock()
@@ -566,14 +535,14 @@ func TestS3ObjectStorage_UploadMultipartFailure(t *testing.T) {
 		fake.mu.Unlock()
 
 		if uploadCount != 0 {
-			t.Errorf("CreateMultipartUpload の呼び出し回数 = %d, want 0", uploadCount)
+			t.Errorf("CreateMultipartUploadの呼び出し回数 = %d、期待値 = 0", uploadCount)
 		}
 		if abortCount != 0 {
-			t.Errorf("AbortMultipartUpload の呼び出し回数 = %d, want 0", abortCount)
+			t.Errorf("AbortMultipartUploadの呼び出し回数 = %d、期待値 = 0", abortCount)
 		}
 	})
 
-	t.Run("異常系: reader の失敗後に同じ upload を一度 abort する", func(t *testing.T) {
+	t.Run("異常系: readerの失敗後に同じuploadを一度abortする", func(t *testing.T) {
 		t.Parallel()
 
 		s, fake := newTestStorage(t)
@@ -586,12 +555,12 @@ func TestS3ObjectStorage_UploadMultipartFailure(t *testing.T) {
 			},
 		})
 		if !errors.Is(err, wantErr) {
-			t.Errorf("Upload() error = %v, want %v", err, wantErr)
+			t.Errorf("Upload()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 		assertMultipartAbort(t, fake, key)
 	})
 
-	t.Run("異常系: upload context がキャンセルされても abort はキャンセルされない", func(t *testing.T) {
+	t.Run("異常系: upload contextがキャンセルされてもabortはキャンセルされない", func(t *testing.T) {
 		t.Parallel()
 
 		s, fake := newTestStorage(t)
@@ -607,15 +576,15 @@ func TestS3ObjectStorage_UploadMultipartFailure(t *testing.T) {
 			},
 		})
 		if !errors.Is(err, context.Canceled) {
-			t.Errorf("Upload() error = %v, want context.Canceled", err)
+			t.Errorf("Upload()のエラー = %v、期待値 = context.Canceled", err)
 		}
 		if !errors.Is(ctx.Err(), context.Canceled) {
-			t.Errorf("upload context error = %v, want context.Canceled", ctx.Err())
+			t.Errorf("uploadのcontextのエラー = %v、期待値 = context.Canceled", ctx.Err())
 		}
 		assertMultipartAbort(t, fake, key)
 	})
 
-	t.Run("異常系: reader と abort の両方の失敗を返す", func(t *testing.T) {
+	t.Run("異常系: readerとabortの両方の失敗を返す", func(t *testing.T) {
 		t.Parallel()
 
 		s, fake := newTestStorage(t)
@@ -632,16 +601,16 @@ func TestS3ObjectStorage_UploadMultipartFailure(t *testing.T) {
 			},
 		})
 		if !errors.Is(err, wantErr) {
-			t.Errorf("Upload() error = %v, want %v", err, wantErr)
+			t.Errorf("Upload()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 		var abortErr interface {
 			ErrorCode() string
 		}
 		if !errors.As(err, &abortErr) {
-			t.Fatalf("Upload() error = %v, want abort API error", err)
+			t.Fatalf("Upload()のエラー = %v、期待値 = abort APIのエラー", err)
 		}
 		if abortErr.ErrorCode() != "AbortDenied" {
-			t.Errorf("abort error code = %q, want %q", abortErr.ErrorCode(), "AbortDenied")
+			t.Errorf("abortのエラーコード = %q、期待値 = %q", abortErr.ErrorCode(), "AbortDenied")
 		}
 		assertMultipartAbort(t, fake, key)
 	})
@@ -650,7 +619,7 @@ func TestS3ObjectStorage_UploadMultipartFailure(t *testing.T) {
 func TestS3ObjectStorage_Get(t *testing.T) {
 	t.Parallel()
 
-	t.Run("異常系: 存在しないキーは ErrObjectNotFound になる", func(t *testing.T) {
+	t.Run("異常系: 存在しないキーはErrObjectNotFoundになる", func(t *testing.T) {
 		t.Parallel()
 
 		s, _ := newTestStorage(t)
@@ -658,21 +627,17 @@ func TestS3ObjectStorage_Get(t *testing.T) {
 		reader, err := s.Get(context.Background(), "attachments/gone.png")
 		if err == nil {
 			_ = reader.Close()
-			t.Fatal("Get() error = nil, want ErrObjectNotFound")
+			t.Fatal("Get()のエラー = nil、期待値 = ErrObjectNotFound")
 		}
 		if !errors.Is(err, storage.ErrObjectNotFound) {
-			t.Errorf("Get() error = %v, want ErrObjectNotFound", err)
+			t.Errorf("Get()のエラー = %v、期待値 = ErrObjectNotFound", err)
 		}
 	})
 
-	// A 404 that carries NoSuchBucket says the bucket is missing or unreachable. Reporting it as
-	// ErrObjectNotFound would turn a failure worth retrying into a broken attachment the export
-	// records, so the adapter has to pass the original error through.
-	//
-	// [Ja] NoSuchBucket を伴う 404 はバケットが存在しないか到達できないことを示す。これを
-	// ErrObjectNotFound として報告すると、リトライする価値のある失敗がエクスポートの記録する
+	// NoSuchBucketを伴う404はバケットが存在しないか到達できないことを示す。これを
+	// ErrObjectNotFoundとして報告すると、リトライする価値のある失敗がエクスポートの記録する
 	// 壊れた添付ファイルに変わってしまうため、アダプタは元のエラーをそのまま通す必要がある。
-	t.Run("異常系: NoSuchKey 以外のエラーは ErrObjectNotFound にしない", func(t *testing.T) {
+	t.Run("異常系: NoSuchKey以外のエラーはErrObjectNotFoundにしない", func(t *testing.T) {
 		t.Parallel()
 
 		s, fake := newTestStorage(t)
@@ -683,20 +648,20 @@ func TestS3ObjectStorage_Get(t *testing.T) {
 		reader, err := s.Get(context.Background(), "attachments/photo.png")
 		if err == nil {
 			_ = reader.Close()
-			t.Fatal("Get() error = nil, want error")
+			t.Fatal("Get()のエラー = nil、期待値 = エラー")
 		}
 		if errors.Is(err, storage.ErrObjectNotFound) {
-			t.Errorf("Get() error = %v, want an error that is not ErrObjectNotFound", err)
+			t.Errorf("Get()のエラー = %v、期待値 = ErrObjectNotFound以外のエラー", err)
 		}
 
 		var apiErr interface {
 			ErrorCode() string
 		}
 		if !errors.As(err, &apiErr) {
-			t.Fatalf("Get() error = %v, want an S3 API error", err)
+			t.Fatalf("Get()のエラー = %v、期待値 = S3 APIのエラー", err)
 		}
 		if apiErr.ErrorCode() != "NoSuchBucket" {
-			t.Errorf("error code = %q, want %q", apiErr.ErrorCode(), "NoSuchBucket")
+			t.Errorf("エラーコード = %q、期待値 = %q", apiErr.ErrorCode(), "NoSuchBucket")
 		}
 	})
 }
@@ -712,10 +677,10 @@ func TestS3ObjectStorage_Delete(t *testing.T) {
 		const key = "exports/old.zip"
 
 		if err := s.Upload(ctx, storage.UploadInput{Key: key, Body: strings.NewReader("old")}); err != nil {
-			t.Fatalf("Upload() error = %v", err)
+			t.Fatalf("Upload()のエラー = %v", err)
 		}
 		if err := s.Delete(ctx, key); err != nil {
-			t.Fatalf("Delete() error = %v", err)
+			t.Fatalf("Delete()のエラー = %v", err)
 		}
 
 		if _, _, ok := fake.object(key); ok {
@@ -732,16 +697,13 @@ func TestS3ObjectStorage_Delete(t *testing.T) {
 		fake.mu.Unlock()
 
 		if err := s.Delete(context.Background(), "exports/gone.zip"); err != nil {
-			t.Errorf("Delete() error = %v, want nil", err)
+			t.Errorf("Delete()のエラー = %v、期待値 = nil", err)
 		}
 	})
 
-	// Only NoSuchKey means the object is already gone. Swallowing any other 404 would report a
-	// cleanup as done while the object is still there.
-	//
-	// [Ja] オブジェクトがすでに無いことを意味するのは NoSuchKey だけである。それ以外の 404 まで
+	// オブジェクトがすでに無いことを意味するのはNoSuchKeyだけである。それ以外の404まで
 	// 飲み込むと、オブジェクトが残っているのに後片付けが終わったことにしてしまう。
-	t.Run("異常系: NoSuchKey 以外のエラーは失敗として返す", func(t *testing.T) {
+	t.Run("異常系: NoSuchKey以外のエラーは失敗として返す", func(t *testing.T) {
 		t.Parallel()
 
 		s, fake := newTestStorage(t)
@@ -751,17 +713,17 @@ func TestS3ObjectStorage_Delete(t *testing.T) {
 
 		err := s.Delete(context.Background(), "exports/wikino.zip")
 		if err == nil {
-			t.Fatal("Delete() error = nil, want error")
+			t.Fatal("Delete()のエラー = nil、期待値 = エラー")
 		}
 
 		var apiErr interface {
 			ErrorCode() string
 		}
 		if !errors.As(err, &apiErr) {
-			t.Fatalf("Delete() error = %v, want an S3 API error", err)
+			t.Fatalf("Delete()のエラー = %v、期待値 = S3 APIのエラー", err)
 		}
 		if apiErr.ErrorCode() != "NoSuchBucket" {
-			t.Errorf("error code = %q, want %q", apiErr.ErrorCode(), "NoSuchBucket")
+			t.Errorf("エラーコード = %q、期待値 = %q", apiErr.ErrorCode(), "NoSuchBucket")
 		}
 	})
 }
@@ -775,7 +737,7 @@ func TestS3ObjectStorage_PresignedGetURL(t *testing.T) {
 		region     string
 		wantRegion string
 	}{
-		{name: "正常系: リージョン未設定時は auto を使う", region: "", wantRegion: "auto"},
+		{name: "正常系: リージョン未設定時はautoを使う", region: "", wantRegion: "auto"},
 		{name: "正常系: 設定したリージョンを使う", region: "apac", wantRegion: "apac"},
 	}
 
@@ -786,29 +748,29 @@ func TestS3ObjectStorage_PresignedGetURL(t *testing.T) {
 			s, _ := newTestStorageWithRegion(t, tt.region)
 			presigned, err := s.PresignedGetURL(context.Background(), key, 24*time.Hour)
 			if err != nil {
-				t.Fatalf("PresignedGetURL() error = %v", err)
+				t.Fatalf("PresignedGetURL()のエラー = %v", err)
 			}
 
 			parsed, err := url.Parse(presigned)
 			if err != nil {
-				t.Fatalf("presigned URL のパースに失敗: %v", err)
+				t.Fatalf("presigned URLのパースに失敗: %v", err)
 			}
 			if want := "/" + testBucket + "/" + key; parsed.Path != want {
-				t.Errorf("presigned URL のパス = %q, want %q", parsed.Path, want)
+				t.Errorf("presigned URLのパス = %q、期待値 = %q", parsed.Path, want)
 			}
 			if got := parsed.Query().Get("X-Amz-Expires"); got != strconv.Itoa(int((24 * time.Hour).Seconds())) {
-				t.Errorf("X-Amz-Expires = %q, want %q", got, strconv.Itoa(int((24 * time.Hour).Seconds())))
+				t.Errorf("X-Amz-Expires = %q、期待値 = %q", got, strconv.Itoa(int((24 * time.Hour).Seconds())))
 			}
 			if parsed.Query().Get("X-Amz-Signature") == "" {
-				t.Error("presigned URL に署名が含まれていない")
+				t.Error("presigned URLに署名が含まれていない")
 			}
 
 			credential := strings.Split(parsed.Query().Get("X-Amz-Credential"), "/")
 			if len(credential) != 5 {
-				t.Fatalf("X-Amz-Credential = %q, want 5 slash-separated fields", credential)
+				t.Fatalf("X-Amz-Credential = %q、期待値 = スラッシュ区切りの5つのフィールド", credential)
 			}
 			if got := credential[2]; got != tt.wantRegion {
-				t.Errorf("署名リージョン = %q, want %q", got, tt.wantRegion)
+				t.Errorf("署名リージョン = %q、期待値 = %q", got, tt.wantRegion)
 			}
 		})
 	}

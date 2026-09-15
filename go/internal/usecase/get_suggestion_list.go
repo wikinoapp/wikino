@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetSuggestionListUsecase は編集提案一覧取得ユースケース
+// GetSuggestionListUsecaseは編集提案一覧取得ユースケース
 type GetSuggestionListUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -18,7 +18,7 @@ type GetSuggestionListUsecase struct {
 	userRepo        *repository.UserRepository
 }
 
-// NewGetSuggestionListUsecase は GetSuggestionListUsecase を生成する
+// NewGetSuggestionListUsecaseはGetSuggestionListUsecaseを生成する
 func NewGetSuggestionListUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -37,7 +37,7 @@ func NewGetSuggestionListUsecase(
 	}
 }
 
-// GetSuggestionListInput は編集提案一覧取得の入力パラメータ
+// GetSuggestionListInputは編集提案一覧取得の入力パラメータ
 type GetSuggestionListInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	TopicNumber     int32
@@ -45,7 +45,7 @@ type GetSuggestionListInput struct {
 	ShowClosed      bool
 }
 
-// GetSuggestionListOutput は編集提案一覧取得の出力
+// GetSuggestionListOutputは編集提案一覧取得の出力
 type GetSuggestionListOutput struct {
 	Space               *model.Space
 	SpaceMember         *model.SpaceMember
@@ -58,7 +58,7 @@ type GetSuggestionListOutput struct {
 	CanCreateSuggestion bool
 }
 
-// Execute は編集提案一覧を取得する
+// Executeは編集提案一覧を取得する
 func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSuggestionListInput) (*GetSuggestionListOutput, error) {
 	// スペースを取得
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
@@ -69,7 +69,7 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 		return nil, nil
 	}
 
-	// ログインユーザーのスペースメンバーを取得（未ログインならnil）
+	// ログインユーザーのスペースメンバーを取得 (未ログインならnil)
 	var spaceMember *model.SpaceMember
 	if input.UserID != nil {
 		spaceMember, err = uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, *input.UserID)
@@ -120,13 +120,13 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 		return nil, fmt.Errorf("編集提案一覧の取得に失敗: %w", err)
 	}
 
-	// オープン件数を取得（下書き・オープン）
+	// オープン件数を取得 (下書き・オープン)
 	openCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, topic.ID, space.ID, openStatuses)
 	if err != nil {
 		return nil, fmt.Errorf("オープン件数の取得に失敗: %w", err)
 	}
 
-	// クローズ件数を取得（反映済み・クローズ）
+	// クローズ件数を取得 (反映済み・クローズ)
 	closedCount, err := uc.suggestionRepo.CountByTopicAndStatuses(ctx, topic.ID, space.ID, closedStatuses)
 	if err != nil {
 		return nil, fmt.Errorf("クローズ件数の取得に失敗: %w", err)
@@ -151,9 +151,9 @@ func (uc *GetSuggestionListUsecase) Execute(ctx context.Context, input GetSugges
 	}, nil
 }
 
-// buildUserMap は編集提案の作成者のユーザー情報をマップで返す
+// buildUserMapは編集提案の作成者のユーザー情報をマップで返す
 func (uc *GetSuggestionListUsecase) buildUserMap(ctx context.Context, suggestions []*model.Suggestion, spaceID model.SpaceID) (map[model.SpaceMemberID]*model.User, error) {
-	// SpaceMemberIDを収集（重複排除）
+	// SpaceMemberIDを収集 (重複排除)
 	memberIDSet := make(map[model.SpaceMemberID]struct{})
 	for _, s := range suggestions {
 		memberIDSet[s.CreatedSpaceMemberID] = struct{}{}

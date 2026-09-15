@@ -12,33 +12,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DrawerData is the data passed to the Drawer component. The drawer overlays arbitrary content
-// on top of the page and can slide in from either side. It stays hidden until its open button
-// (DrawerOpenButton with a matching DrawerID) is clicked, and closes via the close button,
-// a backdrop click, or Esc.
-//
-// [Ja] DrawerData は Drawer コンポーネントに渡すデータです。ドロワーは任意のコンテンツをページの
-// 上にオーバーレイ表示し、左右どちらからでもスライドインできます。対応する DrawerID を持つ開く
-// ボタン (DrawerOpenButton) がクリックされるまで非表示で、閉じるボタン・背景クリック・Esc で閉じます。
+// DrawerDataはDrawerコンポーネントに渡すデータです。ドロワーは任意のコンテンツをページの
+// 上にオーバーレイ表示し、左右どちらからでもスライドインできます。対応するDrawerIDを持つ開く
+// ボタン (DrawerOpenButton) がクリックされるまで非表示で、閉じるボタン・背景クリック・Escで閉じます。
 type DrawerData struct {
-	// ID is the unique element id used to pair the drawer with its toggle button.
-	// [Ja] ID はドロワーと開閉ボタンを対応付けるための一意な要素 id です。
+	// IDはドロワーと開閉ボタンを対応付けるための一意な要素idです。
 	ID string
 
-	// Side is the edge the panel slides in from: "left" or "right".
-	// [Ja] Side はパネルがスライドインする端で、"left" または "right" を指定します。
+	// Sideはパネルがスライドインする端で、"left" または "right" を指定します。
 	Side string
 
-	// Content is the arbitrary content rendered inside the drawer panel.
-	// [Ja] Content はドロワーパネル内に表示する任意のコンテンツです。
+	// Contentはドロワーパネル内に表示する任意のコンテンツです。
 	Content templ.Component
 }
 
-// Drawer renders an overlay drawer that hosts arbitrary content. Opening and closing is driven by
-// the shared drawer JavaScript in web/drawer.ts, which keys off the data attributes below.
-//
-// [Ja] Drawer は任意のコンテンツを収めるオーバーレイ式のドロワーを表示します。開閉は web/drawer.ts の
-// 共通ドロワー JavaScript が下記の data 属性を手がかりに制御します。
+// Drawerは任意のコンテンツを収めるオーバーレイ式のドロワーを表示します。開閉はweb/drawer.tsの
+// 共通ドロワーJavaScriptが下記のdata属性を手がかりに制御します。
 func Drawer(data DrawerData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -67,7 +56,7 @@ func Drawer(data DrawerData) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 37, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 26, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -102,7 +91,7 @@ func Drawer(data DrawerData) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "drawer_close"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 50, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 39, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -132,11 +121,8 @@ func Drawer(data DrawerData) templ.Component {
 	})
 }
 
-// drawerPanelSideClass returns the Tailwind class that pins the panel to the requested side.
-// It defaults to the left edge for any unknown side value.
-//
-// [Ja] drawerPanelSideClass は指定された側にパネルを寄せる Tailwind クラスを返します。
-// 未知の side 値の場合は左端を既定とします。
+// drawerPanelSideClassは指定された側にパネルを寄せるTailwindクラスを返します。
+// 未知のside値の場合は左端を既定とします。
 func drawerPanelSideClass(side string) string {
 	if side == "right" {
 		return "right-0"
@@ -144,30 +130,21 @@ func drawerPanelSideClass(side string) string {
 	return "left-0"
 }
 
-// DrawerOpenData is the data passed to the DrawerOpenButton component.
-//
-// [Ja] DrawerOpenData は DrawerOpenButton コンポーネントに渡すデータです。
+// DrawerOpenDataはDrawerOpenButtonコンポーネントに渡すデータです。
 type DrawerOpenData struct {
-	// DrawerID is the id of the Drawer this button opens.
-	// [Ja] DrawerID はこのボタンが開く Drawer の id です。
+	// DrawerIDはこのボタンが開くDrawerのidです。
 	DrawerID string
 
-	// Label is the visible button text.
-	// [Ja] Label はボタンに表示するテキストです。
+	// Labelはボタンに表示するテキストです。
 	Label string
 
-	// IconName is the icon shown before the label.
-	// [Ja] IconName はラベルの前に表示するアイコンです。
+	// IconNameはラベルの前に表示するアイコンです。
 	IconName viewmodel.IconName
 }
 
-// DrawerOpenButton renders the icon + text button that opens the paired drawer. Callers place it
-// separately from the drawer itself (for example above the edit form). The drawer JavaScript keeps
-// aria-expanded in sync with the drawer's open state.
-//
-// [Ja] DrawerOpenButton は対応するドロワーを開くアイコン + テキストのボタンを表示します。
-// 呼び出し側はドロワー本体とは別に (例えば編集フォームの上に) 配置します。aria-expanded は
-// ドロワーの開閉状態に合わせてドロワー JavaScript が同期します。
+// DrawerOpenButtonは対応するドロワーを開くアイコン + テキストのボタンを表示します。
+// 呼び出し側はドロワー本体とは別に (例えば編集フォームの上に) 配置します。aria-expandedは
+// ドロワーの開閉状態に合わせてドロワーJavaScriptが同期します。
 func DrawerOpenButton(data DrawerOpenData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -196,7 +173,7 @@ func DrawerOpenButton(data DrawerOpenData) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.DrawerID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 103, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 80, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
@@ -209,7 +186,7 @@ func DrawerOpenButton(data DrawerOpenData) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.DrawerID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 104, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 81, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
@@ -226,7 +203,7 @@ func DrawerOpenButton(data DrawerOpenData) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(data.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 108, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/drawer.templ`, Line: 85, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {

@@ -6,7 +6,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// ResetPageData はパスワードリセット申請ページに渡すデータ構造体です
+// ResetPageDataはパスワードリセット申請ページに渡すデータ構造体です
 type ResetPageData struct {
 	CSRFToken        string
 	TurnstileSiteKey string
@@ -14,7 +14,7 @@ type ResetPageData struct {
 	Email            string
 }
 
-// Reset はパスワードリセット申請フォームを表示します
+// Resetはパスワードリセット申請フォームを表示します
 templ Reset(data ResetPageData) {
 	<div class="max-w-lg w-full flex flex-col gap-6">
 		<div class="text-center px-4">

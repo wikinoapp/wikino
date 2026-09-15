@@ -16,17 +16,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はバックリンク一覧をHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list)
+// Showはバックリンク一覧をHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/links/{linked_page_number}/backlink_list)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// The backlink list of a linked page is the continuation of a listing on the public page detail
-	// screen, so a guest reaches it through its "load more" button. Which pages it may return is
-	// decided by the usecase from the topics the viewer can open.
-	//
-	// [Ja] リンク先ページのバックリンク一覧は公開のページ表示画面に出る一覧の続きで、その
+	// リンク先ページのバックリンク一覧は公開のページ表示画面に出る一覧の続きで、その
 	// 「もっと見る」ボタンからゲストも到達する。何を返してよいかは閲覧者が開けるトピックから
-	// UseCase が判断する。
+	// UseCaseが判断する。
 	user := middleware.UserFromContext(ctx)
 	var userID *model.UserID
 	if user != nil {
@@ -52,21 +48,15 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the pagination parameter. A page whose SQL offset cannot fit the query's int32
-	// parameter is rejected before invoking the usecase.
-	//
-	// [Ja] ページネーションパラメータを取得する。SQL offset がクエリの int32 パラメータに収まらない
-	// ページは UseCase 呼び出し前に拒否する。
+	// ページネーションパラメータを取得する。SQL offsetがクエリのint32パラメータに収まらない
+	// ページはUseCase呼び出し前に拒否する。
 	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
 		return
 	}
-	// The other listings' pages ride along so that the links this fragment renders keep pointing at
-	// the state the whole screen is in, instead of resetting them to their first page.
-	//
-	// [Ja] 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
-	// 指し続けるようにする。受け取らないと、他の一覧が 1 ページ目へ戻ってしまう。
+	// 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
+	// 指し続けるようにする。受け取らないと、他の一覧が1ページ目へ戻ってしまう。
 	linkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
 		handler.RelatedPageListNotFound(w, r)
@@ -78,17 +68,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// This endpoint advances the card named by the path, so the parent page names that card's
-	// link-list page rather than whichever page the link list has since reached. It therefore
-	// travels under the fragment-scoped name: the editor also sends the shared state, whose
-	// linked_page_parent_page belongs to the card the screen currently holds open. An absent value
-	// stays zero so the state falls back to the link list's own page, which is what a request built
-	// before the parent page existed meant.
-	//
-	// [Ja] 本エンドポイントはパスが指すカードを進めるため、親ページは、リンク一覧が現在どこまで進んだか
+	// 本エンドポイントはパスが指すカードを進めるため、親ページは、リンク一覧が現在どこまで進んだか
 	// ではなくそのカードのリンク一覧ページを指す。よってフラグメント側の名前で受け取る。編集画面は共有
-	// 状態も送っており、その linked_page_parent_page は画面が現在開いているカードのものだからである。
-	// 値が無い場合は 0 のままにして、状態がリンク一覧自身のページへフォールバックできるようにする。
+	// 状態も送っており、そのlinked_page_parent_pageは画面が現在開いているカードのものだからである。
+	// 値が無い場合は0のままにして、状態がリンク一覧自身のページへフォールバックできるようにする。
 	// 親ページが存在しなかった頃のリクエストが意味していたのはその値である。
 	parentLinkPage, ok := httppagination.ParseOptionalNumberParam(r, viewmodel.FragmentParentPageQueryParam)
 	if !ok {
@@ -96,10 +79,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The response writes the card and its two page numbers back into the shared state, which is
-	// what lets a later full-page URL render the page the card is actually on.
-	//
-	// [Ja] 応答はカードとその 2 つのページ番号を共有状態へ書き戻す。これにより、後続のフルページ URL が
+	// 応答はカードとその2つのページ番号を共有状態へ書き戻す。これにより、後続のフルページURLが
 	// カードの実際に載るページを描画できる。
 	linkState := viewmodel.PageLinkState{
 		Context:              pageLinkContext,
@@ -157,19 +137,13 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		LoadMoreCapped:  loadMoreCapped,
 		SpaceIdentifier: output.Space.Identifier,
 		PageNumber:      int32(output.Page.Number),
-		// The listing resolves the page it renders itself on, so a request that carried no parent
-		// page still builds links naming the link-list page the card is on.
-		//
-		// [Ja] 一覧は自分が描画されるページを自ら解決するため、親ページを運ばなかったリクエストでも、
+		// 一覧は自分が描画されるページを自ら解決するため、親ページを運ばなかったリクエストでも、
 		// カードが載るリンク一覧ページを指すリンクを組み立てられる。
 		ParentLinkPage:   linkState.NestedBacklinkLinkPage(),
 		LinkedPageNumber: int32(output.LinkedPage.Number),
 		LinkedPageTitle:  linkedPageTitle,
 		State:            linkState,
-		// The per-card edit link follows the viewer's own permission, the same way the initial
-		// listing on the page detail screen does.
-		//
-		// [Ja] 各カードの編集リンクは、ページ表示画面の初回描画と同じく閲覧者自身の権限に従う。
+		// 各カードの編集リンクは、ページ表示画面の初回描画と同じく閲覧者自身の権限に従う。
 		CanEdit: output.CanUpdatePage,
 	})
 

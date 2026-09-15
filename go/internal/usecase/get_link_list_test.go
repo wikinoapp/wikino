@@ -81,10 +81,7 @@ func TestGetLinkListUsecase_Execute(t *testing.T) {
 		WithLinkedPageIDs([]model.PageID{publicLinkedID, privateLinkedID, trashedLinkedID}).
 		Build()
 
-	// Pages linking to publicLinkedID, used to check that the per-page backlinks are filtered the
-	// same way as the link list itself.
-	//
-	// [Ja] publicLinkedID にリンクしているページ。リンク一覧に並ぶ各ページのバックリンクにも
+	// publicLinkedIDにリンクしているページ。リンク一覧に並ぶ各ページのバックリンクにも
 	// 同じフィルタがかかることを検証するために作る。
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -119,24 +116,24 @@ func TestGetLinkListUsecase_Execute(t *testing.T) {
 			BacklinkLimit:   5,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.LinkedPages) != 2 {
-			t.Fatalf("len(LinkedPages) = %d, want 2", len(output.LinkedPages))
+			t.Fatalf("len(LinkedPages) = %d、期待値 = 2", len(output.LinkedPages))
 		}
 		if output.LinkedTotalCount != 2 {
-			t.Errorf("LinkedTotalCount = %d, want 2", output.LinkedTotalCount)
+			t.Errorf("LinkedTotalCount = %d、期待値 = 2", output.LinkedTotalCount)
 		}
 		for _, pg := range output.LinkedPages {
 			if pg.ID == trashedLinkedID {
-				t.Error("LinkedPages should not contain the trashed page")
+				t.Error("LinkedPagesにゴミ箱のページが含まれている")
 			}
 		}
 		if !output.CanUpdatePage {
-			t.Error("CanUpdatePage should be true for a member holding page:write")
+			t.Error("page:writeを持つメンバーなのにCanUpdatePageがfalse")
 		}
 		if backlinks := output.BacklinksPerPage[publicLinkedID]; backlinks == nil || backlinks.TotalCount != 2 {
-			t.Errorf("backlinks of the public linked page = %v, want TotalCount 2", backlinks)
+			t.Errorf("公開トピックのリンク先ページのバックリンク = %v、期待値 = TotalCount 2", backlinks)
 		}
 	})
 
@@ -149,29 +146,29 @@ func TestGetLinkListUsecase_Execute(t *testing.T) {
 			BacklinkLimit:   5,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.SpaceMember != nil {
-			t.Error("SpaceMember should be nil for a guest")
+			t.Error("ゲストなのにSpaceMemberがnilではない")
 		}
 		if len(output.LinkedPages) != 1 {
-			t.Fatalf("len(LinkedPages) = %d, want 1", len(output.LinkedPages))
+			t.Fatalf("len(LinkedPages) = %d、期待値 = 1", len(output.LinkedPages))
 		}
 		if output.LinkedPages[0].ID != publicLinkedID {
-			t.Errorf("LinkedPages[0].ID = %v, want the public linked page", output.LinkedPages[0].ID)
+			t.Errorf("LinkedPages[0].ID = %v、期待値 = 公開トピックのリンク先ページ", output.LinkedPages[0].ID)
 		}
 		if output.LinkedTotalCount != 1 {
-			t.Errorf("LinkedTotalCount = %d, want 1", output.LinkedTotalCount)
+			t.Errorf("LinkedTotalCount = %d、期待値 = 1", output.LinkedTotalCount)
 		}
 		if output.CanUpdatePage {
-			t.Error("CanUpdatePage should be false for a guest")
+			t.Error("ゲストなのにCanUpdatePageがtrue")
 		}
 		backlinks := output.BacklinksPerPage[publicLinkedID]
 		if backlinks == nil {
-			t.Fatal("backlinks of the public linked page should not be nil")
+			t.Fatal("公開トピックのリンク先ページのバックリンクがnil")
 		}
 		if len(backlinks.Pages) != 1 || backlinks.TotalCount != 1 {
-			t.Errorf("backlinks = %d pages / TotalCount %d, want 1 / 1", len(backlinks.Pages), backlinks.TotalCount)
+			t.Errorf("バックリンク = %dページ / TotalCount %d、期待値 = 1 / 1", len(backlinks.Pages), backlinks.TotalCount)
 		}
 	})
 
@@ -406,10 +403,10 @@ func TestGetLinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 				return
 			}
 			if err != nil {
-				t.Fatalf("Execute() error = %v", err)
+				t.Fatalf("Execute()のエラー = %v", err)
 			}
 			if len(output.LinkedPages) != len(tt.wantLinkedPageIDs) {
-				t.Fatalf("len(LinkedPages) = %d, want %d", len(output.LinkedPages), len(tt.wantLinkedPageIDs))
+				t.Fatalf("len(LinkedPages) = %d、期待値 = %d", len(output.LinkedPages), len(tt.wantLinkedPageIDs))
 			}
 			gotLinkedPageIDs := make(map[model.PageID]struct{}, len(output.LinkedPages))
 			for _, page := range output.LinkedPages {
@@ -417,21 +414,18 @@ func TestGetLinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			}
 			for _, wantPageID := range tt.wantLinkedPageIDs {
 				if _, ok := gotLinkedPageIDs[wantPageID]; !ok {
-					t.Errorf("LinkedPages does not contain page ID %v", wantPageID)
+					t.Errorf("LinkedPagesにページID %vが含まれていない", wantPageID)
 				}
 			}
 			if tt.wantSpaceMemberNil && output.SpaceMember != nil {
-				t.Error("SpaceMember should be nil for a viewer who is not a space member")
+				t.Error("スペースメンバーでない閲覧者なのにSpaceMemberがnilではない")
 			}
 		})
 	}
 }
 
-// TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset verifies that page 2 keeps using the
-// same saved or draft link set selected by the caller.
-//
-// [Ja] TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset は、呼び出し元が選んだ保存済みまたは
-// 下書きのリンク集合を 2 ページ目でも使い続けることを確認する。
+// TestGetLinkListUsecase_Execute_SourceKeepsPaginationDatasetは、呼び出し元が選んだ保存済みまたは
+// 下書きのリンク集合を2ページ目でも使い続けることを確認する。
 func TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset(t *testing.T) {
 	t.Parallel()
 
@@ -508,14 +502,14 @@ func TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset(t *testing.T) {
 	savedInput.Source = LinkListSourceSaved
 	savedOutput, err := uc.Execute(context.Background(), savedInput)
 	if err != nil {
-		t.Fatalf("saved Execute() error = %v", err)
+		t.Fatalf("保存済みのExecute()のエラー = %v", err)
 	}
 	if len(savedOutput.LinkedPages) != 5 {
-		t.Fatalf("len(saved page 2) = %d, want 5", len(savedOutput.LinkedPages))
+		t.Fatalf("len(保存済みの2ページ目) = %d、期待値 = 5", len(savedOutput.LinkedPages))
 	}
 	for index, page := range savedOutput.LinkedPages {
 		if page.ID != savedPageIDs[15+index] {
-			t.Errorf("saved page 2 item %d = %v, want %v", index, page.ID, savedPageIDs[15+index])
+			t.Errorf("保存済みの2ページ目の%d件目 = %v、期待値 = %v", index, page.ID, savedPageIDs[15+index])
 		}
 	}
 
@@ -523,25 +517,20 @@ func TestGetLinkListUsecase_Execute_SourceKeepsPaginationDataset(t *testing.T) {
 	draftInput.Source = LinkListSourceDraft
 	draftOutput, err := uc.Execute(context.Background(), draftInput)
 	if err != nil {
-		t.Fatalf("draft Execute() error = %v", err)
+		t.Fatalf("下書きのExecute()のエラー = %v", err)
 	}
 	if len(draftOutput.LinkedPages) != 5 {
-		t.Fatalf("len(draft page 2) = %d, want 5", len(draftOutput.LinkedPages))
+		t.Fatalf("len(下書きの2ページ目) = %d、期待値 = 5", len(draftOutput.LinkedPages))
 	}
 	for index, page := range draftOutput.LinkedPages {
 		if page.ID != draftPageIDs[15+index] {
-			t.Errorf("draft page 2 item %d = %v, want %v", index, page.ID, draftPageIDs[15+index])
+			t.Errorf("下書きの2ページ目の%d件目 = %v、期待値 = %v", index, page.ID, draftPageIDs[15+index])
 		}
 	}
 }
 
-// TestListingWindow_KeepsCumulativeGridRemainder ties the window this package resolves to the card
-// counts the view model declares. listingWindow derives a following page as one card more than the
-// initial one; the constants say the same thing, and a change to either side without the other has
-// to fail here rather than only shifting the rendered grid.
-//
-// [Ja] TestListingWindow_KeepsCumulativeGridRemainder は、本パッケージが解決する取得範囲を ViewModel
-// が宣言するカード数に結び付ける。listingWindow は後続ページを初回より 1 件多いものとして求めており、
+// TestListingWindow_KeepsCumulativeGridRemainderは、本パッケージが解決する取得範囲をViewModel
+// が宣言するカード数に結び付ける。listingWindowは後続ページを初回より1件多いものとして求めており、
 // 定数も同じことを言っている。片方だけを変えたときに、描画されるグリッドがずれるだけで済ませず、
 // ここで落ちるようにする。
 func TestListingWindow_KeepsCumulativeGridRemainder(t *testing.T) {
@@ -567,18 +556,18 @@ func TestListingWindow_KeepsCumulativeGridRemainder(t *testing.T) {
 
 			offset, limit := listingWindow(tt.page, initialLimit, false)
 			if offset != tt.wantOffset || limit != tt.wantLimit {
-				t.Errorf("listingWindow(%d, %d, false) = (%d, %d), want (%d, %d)", tt.page, initialLimit, offset, limit, tt.wantOffset, tt.wantLimit)
+				t.Errorf("listingWindow(%d, %d, false) = (%d, %d)、期待値 = (%d, %d)", tt.page, initialLimit, offset, limit, tt.wantOffset, tt.wantLimit)
 			}
 
 			cumulativeOffset, cumulativeSize := listingWindow(tt.page, initialLimit, true)
 			if cumulativeOffset != 0 || cumulativeSize != tt.wantCumulativeSize {
-				t.Errorf("listingWindow(%d, %d, true) = (%d, %d), want (0, %d)", tt.page, initialLimit, cumulativeOffset, cumulativeSize, tt.wantCumulativeSize)
+				t.Errorf("listingWindow(%d, %d, true) = (%d, %d)、期待値 = (0, %d)", tt.page, initialLimit, cumulativeOffset, cumulativeSize, tt.wantCumulativeSize)
 			}
 			if offset+limit != cumulativeSize {
-				t.Errorf("page %d leaves a gap or overlap: offset %d + limit %d != cumulative size %d", tt.page, offset, limit, cumulativeSize)
+				t.Errorf("%dページ目に隙間か重なりがある: offset %d + limit %d != 累積件数%d", tt.page, offset, limit, cumulativeSize)
 			}
 			if cumulativeSize%3 != 2 {
-				t.Errorf("page %d cumulative size = %d, want remainder 2 in a three-column grid", tt.page, cumulativeSize)
+				t.Errorf("%dページ目の累積件数 = %d、期待値 = 3列グリッドで余り2", tt.page, cumulativeSize)
 			}
 		})
 	}

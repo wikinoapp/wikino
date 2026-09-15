@@ -50,7 +50,7 @@ type FindAttachmentByIDAndSpaceRow struct {
 	Filename string `json:"filename"`
 }
 
-// IDとスペースIDで添付ファイルを取得する（ファイル名を含む）
+// IDとスペースIDで添付ファイルを取得する (ファイル名を含む)
 func (q *Queries) FindAttachmentByIDAndSpace(ctx context.Context, arg FindAttachmentByIDAndSpaceParams) (FindAttachmentByIDAndSpaceRow, error) {
 	row := q.db.QueryRowContext(ctx, findAttachmentByIDAndSpace, arg.ID, arg.SpaceID)
 	var i FindAttachmentByIDAndSpaceRow
@@ -77,7 +77,7 @@ type FindAttachmentsByIDsAndSpaceRow struct {
 	Filename string `json:"filename"`
 }
 
-// IDリストとスペースIDで添付ファイルを一括取得する（バッチレンダリング用）
+// IDリストとスペースIDで添付ファイルを一括取得する (バッチレンダリング用)
 func (q *Queries) FindAttachmentsByIDsAndSpace(ctx context.Context, arg FindAttachmentsByIDsAndSpaceParams) ([]FindAttachmentsByIDsAndSpaceRow, error) {
 	rows, err := q.db.QueryContext(ctx, findAttachmentsByIDsAndSpace, pq.Array(arg.Column1), arg.SpaceID)
 	if err != nil {
@@ -139,28 +139,16 @@ type FindPubliclyReferencedAttachmentBlobByIDRow struct {
 	BlobContentType sql.NullString `json:"blob_content_type"`
 }
 
-// Returns the blob info for public og:image delivery only when the attachment is referenced
-// exclusively by live pages in public topics. Equivalent to the Rails
-// AttachmentRecord#all_referencing_pages_public? (= referencing_topics.any? &&
-// referencing_topics.all?(&:visibility_public?)): the blob is returned only when at least one
-// live reference exists and every one of them has visibility=0. The reference set excludes
-// discarded pages and topics as well as pages moved to the trash, so that the og:image of a
-// trashed page stops appearing in social link previews. Both the EXISTS and the NOT EXISTS
-// branch use the same reference set; otherwise a reference from a trashed page in a private
-// topic would still veto the visibility check. The reference set is internally constrained to
-// the attachment's space. No caller-provided space scope is needed because the endpoint assumes
-// anyone who knows the URL (guests included) may view the image once this check succeeds.
-//
-// [Ja] 公開 og:image 配信用: 「生きている公開トピックのページからのみ参照されている」場合に限り
-// blob 情報を返す。Rails 版 AttachmentRecord#all_referencing_pages_public?
+// 公開og:image配信用: 「生きている公開トピックのページからのみ参照されている」場合に限り
+// blob情報を返す。Rails版AttachmentRecord#all_referencing_pages_public?
 // (= referencing_topics.any? && referencing_topics.all?(&:visibility_public?)) と等価で、
-// 生きている参照を 1 件以上持ち、かつそれらがすべて visibility=0 の場合のみ blob を返す。
+// 生きている参照を1件以上持ち、かつそれらがすべてvisibility=0の場合のみblobを返す。
 // 判定スコープからは論理削除済みのページ・トピックに加えてゴミ箱に入ったページも除外し、
-// ゴミ箱に入ったページの og:image が SNS のリンクプレビューに残らないようにする。EXISTS と
-// NOT EXISTS の双方で同じ参照集合を使う (揃えないと「ゴミ箱に入った非公開トピックのページ」
-// からの参照が visibility 判定に残ってしまう)。参照集合は attachment と同じ space に内部で
-// 限定する。呼び出し元から space スコープを受け取る必要はなく、この判定を通過した画像は
-// URL 文字列を知っている誰でも (ゲスト含む) 閲覧可能であることを前提にする。
+// ゴミ箱に入ったページのog:imageがSNSのリンクプレビューに残らないようにする。EXISTSと
+// NOT EXISTSの双方で同じ参照集合を使う (揃えないと「ゴミ箱に入った非公開トピックのページ」
+// からの参照がvisibility判定に残ってしまう)。参照集合はattachmentと同じspaceに内部で
+// 限定する。呼び出し元からspaceスコープを受け取る必要はなく、この判定を通過した画像は
+// URL文字列を知っている誰でも (ゲスト含む) 閲覧可能であることを前提にする。
 func (q *Queries) FindPubliclyReferencedAttachmentBlobByID(ctx context.Context, id string) (FindPubliclyReferencedAttachmentBlobByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, findPubliclyReferencedAttachmentBlobByID, id)
 	var i FindPubliclyReferencedAttachmentBlobByIDRow
@@ -197,18 +185,11 @@ type ListAttachmentsByPageIDsAndSpaceRow struct {
 	BlobKey  string `json:"blob_key"`
 }
 
-// Returns the attachments the given pages reference, together with the page that references
-// each one and the storage key of its object. The export needs both: the page decides which
-// topic directory carries the copy, and the key is what the object is fetched with.
-//
-// One attachment can come back more than once, since several pages of a space may reference
-// it. The order is fixed so that the archive names the copies the same way on every attempt.
-//
-// [Ja] 指定したページが参照している添付ファイルを、参照元のページとオブジェクトのストレージ
+// 指定したページが参照している添付ファイルを、参照元のページとオブジェクトのストレージ
 // キーとあわせて返す。エクスポートはその両方を使う。どのトピックのディレクトリに複製を置くかは
 // 参照元のページが決め、キーはオブジェクトの取得に使う。
 //
-// 1 つの添付ファイルが複数回返ることがある。スペース内の複数のページが同じ添付ファイルを参照
+// 1つの添付ファイルが複数回返ることがある。スペース内の複数のページが同じ添付ファイルを参照
 // しうるためである。並び順を固定しているのは、複製の名前が毎回同じになるようにするためである。
 func (q *Queries) ListAttachmentsByPageIDsAndSpace(ctx context.Context, arg ListAttachmentsByPageIDsAndSpaceParams) ([]ListAttachmentsByPageIDsAndSpaceRow, error) {
 	rows, err := q.db.QueryContext(ctx, listAttachmentsByPageIDsAndSpace, pq.Array(arg.PageIds), arg.SpaceID)

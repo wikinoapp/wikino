@@ -22,10 +22,10 @@ func TestSuggestionCommentCreateValidator_本文が空の場合エラーにな�
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("body") {
-		t.Error("expected body field error")
+		t.Error("bodyのフィールドエラーが無い")
 	}
 }
 
@@ -42,10 +42,10 @@ func TestSuggestionCommentCreateValidator_本文が長すぎる場合エラー�
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("body") {
-		t.Error("expected body field error")
+		t.Error("bodyのフィールドエラーが無い")
 	}
 }
 
@@ -60,7 +60,7 @@ func TestSuggestionCommentCreateValidator_有効な入力の場合エラーに�
 	})
 
 	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+		t.Errorf("予期しないエラー: %v", err)
 	}
 }
 
@@ -76,7 +76,7 @@ func TestSuggestionCommentCreateValidator_最大文字数ちょうどの場合�
 	})
 
 	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+		t.Errorf("予期しないエラー: %v", err)
 	}
 }
 
@@ -92,10 +92,10 @@ func TestSuggestionCommentUpdateValidator_本文が空の場合エラーにな�
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("body") {
-		t.Error("expected body field error")
+		t.Error("bodyのフィールドエラーが無い")
 	}
 }
 
@@ -112,10 +112,10 @@ func TestSuggestionCommentUpdateValidator_本文が長すぎる場合エラー�
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("body") {
-		t.Error("expected body field error")
+		t.Error("bodyのフィールドエラーが無い")
 	}
 }
 
@@ -130,6 +130,6 @@ func TestSuggestionCommentUpdateValidator_有効な入力の場合エラーに�
 	})
 
 	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+		t.Errorf("予期しないエラー: %v", err)
 	}
 }

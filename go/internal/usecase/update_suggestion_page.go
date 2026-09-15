@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// UpdateSuggestionPageUsecase は編集提案ページ更新ユースケース
+// UpdateSuggestionPageUsecaseは編集提案ページ更新ユースケース
 type UpdateSuggestionPageUsecase struct {
 	db                         *sql.DB
 	spaceRepo                  *repository.SpaceRepository
@@ -24,7 +24,7 @@ type UpdateSuggestionPageUsecase struct {
 	updateValidator            *validator.SuggestionPageUpdateValidator
 }
 
-// NewUpdateSuggestionPageUsecase は UpdateSuggestionPageUsecase を生成する
+// NewUpdateSuggestionPageUsecaseはUpdateSuggestionPageUsecaseを生成する
 func NewUpdateSuggestionPageUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -47,7 +47,7 @@ func NewUpdateSuggestionPageUsecase(
 	}
 }
 
-// UpdateSuggestionPageInput は編集提案ページ更新の入力パラメータ
+// UpdateSuggestionPageInputは編集提案ページ更新の入力パラメータ
 type UpdateSuggestionPageInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
@@ -55,12 +55,12 @@ type UpdateSuggestionPageInput struct {
 	UserID           model.UserID
 }
 
-// UpdateSuggestionPageOutput は編集提案ページ更新の出力パラメータ
+// UpdateSuggestionPageOutputは編集提案ページ更新の出力パラメータ
 type UpdateSuggestionPageOutput struct {
 	SuggestionPage *model.SuggestionPage
 }
 
-// Execute は編集提案ページを更新する
+// Executeは編集提案ページを更新する
 func (uc *UpdateSuggestionPageUsecase) Execute(ctx context.Context, input UpdateSuggestionPageInput) (*UpdateSuggestionPageOutput, error) {
 	// 1. データ取得
 	space, spaceMember, suggestion, suggestionPage, err := uc.fetchData(ctx, input)
@@ -91,7 +91,7 @@ func (uc *UpdateSuggestionPageUsecase) Execute(ctx context.Context, input Update
 		return nil, err
 	}
 
-	// 4. 永続化（トランザクション）
+	// 4. 永続化 (トランザクション)
 	return uc.updateSuggestionPage(ctx, space.ID, spaceMember.ID, input.SuggestionPageID, draftPage)
 }
 
@@ -192,7 +192,7 @@ func (uc *UpdateSuggestionPageUsecase) updateSuggestionPage(ctx context.Context,
 		return nil, fmt.Errorf("編集提案ページの更新に失敗しました: %w", err)
 	}
 
-	// SuggestionPageRevisionを作成（スナップショット）
+	// SuggestionPageRevisionを作成 (スナップショット)
 	_, err = suggestionPageRevisionRepo.Create(ctx, repository.CreateSuggestionPageRevisionInput{
 		SpaceID:             spaceID,
 		SuggestionPageID:    suggestionPageID,

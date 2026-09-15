@@ -1,16 +1,16 @@
-// Package page_backlink_list はページのバックリンク一覧ハンドラーを提供します
+// Package page_backlink_listはページのバックリンク一覧ハンドラーを提供します
 package page_backlink_list
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はバックリンク一覧ハンドラー
+// Handlerはバックリンク一覧ハンドラー
 type Handler struct {
 	getBacklinkListUC *usecase.GetBacklinkListUsecase
 }
 
-// NewHandler は新しいバックリンク一覧ハンドラーを作成します
+// NewHandlerは新しいバックリンク一覧ハンドラーを作成します
 func NewHandler(
 	getBacklinkListUC *usecase.GetBacklinkListUsecase,
 ) *Handler {

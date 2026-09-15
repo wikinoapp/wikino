@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// NewData は編集提案ページ追加画面に渡すデータ構造体です
+// NewDataは編集提案ページ追加画面に渡すデータ構造体です
 type NewData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
@@ -24,7 +24,7 @@ type NewData struct {
 	DraftPages []viewmodel.DraftPageForSuggestionNew
 }
 
-// New は編集提案ページ追加画面のコンテンツを表示します
+// Newは編集提案ページ追加画面のコンテンツを表示します
 func New(data NewData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

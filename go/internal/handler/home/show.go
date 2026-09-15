@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はホーム画面を表示します (GET /home)
+// Showはホーム画面を表示します (GET /home)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

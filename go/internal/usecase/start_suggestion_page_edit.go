@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// StartSuggestionPageEditUsecase は編集提案ページの編集開始ユースケース
+// StartSuggestionPageEditUsecaseは編集提案ページの編集開始ユースケース
 type StartSuggestionPageEditUsecase struct {
 	db                 *sql.DB
 	spaceRepo          *repository.SpaceRepository
@@ -23,7 +23,7 @@ type StartSuggestionPageEditUsecase struct {
 	pageRepo           *repository.PageRepository
 }
 
-// NewStartSuggestionPageEditUsecase は StartSuggestionPageEditUsecase を生成する
+// NewStartSuggestionPageEditUsecaseはStartSuggestionPageEditUsecaseを生成する
 func NewStartSuggestionPageEditUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -46,17 +46,17 @@ func NewStartSuggestionPageEditUsecase(
 	}
 }
 
-// StartSuggestionPageEditStatus は編集開始の結果ステータス
+// StartSuggestionPageEditStatusは編集開始の結果ステータス
 type StartSuggestionPageEditStatus int
 
 const (
-	// StartSuggestionPageEditRedirect はページ編集画面にリダイレクト可能な状態
+	// StartSuggestionPageEditRedirectはページ編集画面にリダイレクト可能な状態
 	StartSuggestionPageEditRedirect StartSuggestionPageEditStatus = iota
-	// StartSuggestionPageEditConflict は既存の下書きが存在する状態
+	// StartSuggestionPageEditConflictは既存の下書きが存在する状態
 	StartSuggestionPageEditConflict
 )
 
-// StartSuggestionPageEditInput は編集開始の入力パラメータ
+// StartSuggestionPageEditInputは編集開始の入力パラメータ
 type StartSuggestionPageEditInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
@@ -65,13 +65,13 @@ type StartSuggestionPageEditInput struct {
 	Force            bool
 }
 
-// StartSuggestionPageEditOutput は編集開始の出力
+// StartSuggestionPageEditOutputは編集開始の出力
 type StartSuggestionPageEditOutput struct {
 	Status     StartSuggestionPageEditStatus
 	PageNumber model.PageNumber
 }
 
-// Execute は編集提案ページの編集を開始する
+// Executeは編集提案ページの編集を開始する
 func (uc *StartSuggestionPageEditUsecase) Execute(ctx context.Context, input StartSuggestionPageEditInput) (*StartSuggestionPageEditOutput, error) {
 	// 1. データ取得
 	data, err := uc.fetchData(ctx, input)
@@ -93,7 +93,7 @@ func (uc *StartSuggestionPageEditUsecase) Execute(ctx context.Context, input Sta
 	return uc.startEdit(ctx, data, input.Force)
 }
 
-// startSuggestionPageEditData はデータ取得結果をまとめた構造体
+// startSuggestionPageEditDataはデータ取得結果をまとめた構造体
 type startSuggestionPageEditData struct {
 	space          *model.Space
 	spaceMember    *model.SpaceMember
@@ -151,7 +151,7 @@ func (uc *StartSuggestionPageEditUsecase) fetchData(ctx context.Context, input S
 		}
 	}
 
-	// ページを取得（番号の取得とトピックID確認用）
+	// ページを取得 (番号の取得とトピックID確認用)
 	pages, err := uc.pageRepo.FindByIDs(ctx, []model.PageID{suggestionPage.PageID}, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("ページの取得に失敗: %w", err)
@@ -218,9 +218,9 @@ func (uc *StartSuggestionPageEditUsecase) startEdit(ctx context.Context, data *s
 	}
 
 	// 下書きが存在し、Force=falseの場合はコンフリクト
-	// 通常の下書き（suggestion_page_id が NULL）と別の編集提案にリンクされた下書きを区別せず、
+	// 通常の下書き (suggestion_page_idがNULL) と別の編集提案にリンクされた下書きを区別せず、
 	// いずれの場合も同じ確認画面に誘導する。ユーザーの選択肢は「上書き」「保持」の二択であり、
-	// 下書きの種類に依らず同じであるため文言を出し分けない（spec の「採用しなかった方針」を参照）。
+	// 下書きの種類に依らず同じであるため文言を出し分けない (specの「採用しなかった方針」を参照)。
 	if draft != nil && !force {
 		return &StartSuggestionPageEditOutput{
 			Status:     StartSuggestionPageEditConflict,

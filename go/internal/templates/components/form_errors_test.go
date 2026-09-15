@@ -9,11 +9,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
-// TestFormErrorSummary owns the contract that callers previously had to repeat: only global errors
-// create the inset summary container. Nil, empty, and field-only validation errors render nothing.
-//
-// [Ja] TestFormErrorSummary は呼び出し側が以前繰り返していた契約を固定する。余白付きの概要領域を
-// 作るのは global error だけで、nil・空・フィールドだけの validation error は何も描画しない。
+// TestFormErrorSummaryは呼び出し側が以前繰り返していた契約を固定する。余白付きの概要領域を
+// 作るのはglobal errorだけで、nil・空・フィールドだけのvalidation errorは何も描画しない。
 func TestFormErrorSummary(t *testing.T) {
 	t.Parallel()
 
@@ -67,16 +64,16 @@ func TestFormErrorSummary(t *testing.T) {
 
 			got := body.String()
 			if tt.wantEmpty && got != "" {
-				t.Errorf("何も描画しないことを期待したが %q だった", got)
+				t.Errorf("何も描画しないことを期待したが%qだった", got)
 			}
 			for _, want := range tt.wantContains {
 				if !strings.Contains(got, want) {
-					t.Errorf("出力に %q を期待したが %q だった", want, got)
+					t.Errorf("出力に%qを期待したが%qだった", want, got)
 				}
 			}
 			for _, notWant := range tt.notWantContains {
 				if strings.Contains(got, notWant) {
-					t.Errorf("出力に %q を期待しなかったが %q だった", notWant, got)
+					t.Errorf("出力に%qを期待しなかったが%qだった", notWant, got)
 				}
 			}
 		})

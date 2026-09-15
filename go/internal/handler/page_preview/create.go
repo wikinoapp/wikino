@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Create はフォームの現在値からプレビュー用 HTML フラグメントを生成して返します
+// Createはフォームの現在値からプレビュー用HTMLフラグメントを生成して返します
 // (POST /s/{space_identifier}/pages/{page_number}/preview)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -40,7 +40,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	body := r.FormValue("body")
 
-	// UseCase 呼び出し (認可・レンダリングはすべて UseCase 内で実行)
+	// UseCase呼び出し (認可・レンダリングはすべてUseCase内で実行)
 	output, err := h.getPagePreviewUC.Execute(ctx, usecase.GetPagePreviewInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),
@@ -52,8 +52,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		if ae := model.AsAppError(err); ae != nil {
 			switch ae.Code {
 			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
-				// Treat non-members and missing pages as 404, same as the edit screen.
-				// [Ja] 非メンバー・存在しないページは編集画面と同じく 404 として扱う。
+				// 非メンバー・存在しないページは編集画面と同じく404として扱う。
 				handler.NotFound(w, r)
 			default:
 				slog.ErrorContext(ctx, "プレビューの生成に失敗", "error", ae.LogString())
@@ -66,7 +65,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// プレビュー用 HTML フラグメントをレンダリング
+	// プレビュー用HTMLフラグメントをレンダリング
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := pagepages.Preview(pagepages.PreviewData{
 		Title:    output.Title,

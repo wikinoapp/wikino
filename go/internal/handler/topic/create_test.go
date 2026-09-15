@@ -52,7 +52,7 @@ func TestCreate_公開設定が不正なら422で未選択のフォームを再�
 			setupCreateHandler(t, db).Create(rr, req)
 
 			if rr.Code != http.StatusUnprocessableEntity {
-				t.Fatalf("status code = %d, want %d", rr.Code, http.StatusUnprocessableEntity)
+				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
 			}
 
 			body := rr.Body.String()
@@ -61,40 +61,37 @@ func TestCreate_公開設定が不正なら422で未選択のフォームを再�
 				`id="visibility-error"`,
 			} {
 				if !strings.Contains(body, want) {
-					t.Errorf("response does not contain %q", want)
+					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
 			}
 			if tag := topicFormFieldsetTag(t, body); strings.Contains(tag, "aria-describedby") {
-				t.Errorf("fieldset tag contains aria-describedby: %s", tag)
+				t.Errorf("fieldsetタグにaria-describedbyが含まれている: %s", tag)
 			}
 			for _, id := range []string{"visibility_public", "visibility_private"} {
 				tag := topicFormInputTag(t, body, id)
 				for _, want := range []string{`aria-invalid="true"`, `aria-describedby="visibility-error"`} {
 					if !strings.Contains(tag, want) {
-						t.Errorf("input %q tag does not contain %q: %s", id, want, tag)
+						t.Errorf("入力%qのタグに%qが含まれていない: %s", id, want, tag)
 					}
 				}
 				if strings.Contains(tag, "checked") {
-					t.Errorf("input %q tag contains checked: %s", id, tag)
+					t.Errorf("入力%qのタグにcheckedが含まれている: %s", id, tag)
 				}
 			}
 
 			topicRepo := repository.NewTopicRepository(query.New(db))
 			topics, err := topicRepo.ListActiveBySpace(context.Background(), spaceID)
 			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+				t.Fatalf("予期しないエラー: %v", err)
 			}
 			if len(topics) != 0 {
-				t.Errorf("len(topics) = %d, want 0", len(topics))
+				t.Errorf("len(topics) = %d、期待値 = 0", len(topics))
 			}
 		})
 	}
 }
 
-// setupCreateHandler builds a handler against the shared pool. The create usecase opens its own
-// transaction, so the fixtures these tests set up are committed rather than held in one.
-//
-// [Ja] setupCreateHandler は共有プールを使うハンドラーを組み立てる。作成のユースケースは自身で
+// setupCreateHandlerは共有プールを使うハンドラーを組み立てる。作成のユースケースは自身で
 // トランザクションを開くため、これらのテストが用意するフィクスチャはトランザクションに閉じ込めず
 // コミットする。
 func setupCreateHandler(t *testing.T, db *sql.DB) *topichandler.Handler {
@@ -124,9 +121,7 @@ func setupCreateHandler(t *testing.T, db *sql.DB) *topichandler.Handler {
 	)
 }
 
-// topicSpaceDB seeds a committed space with one member and returns what the tests address them by.
-//
-// [Ja] topicSpaceDB はメンバーが 1 人いるスペースをコミットして用意し、テストがそれらを指すための
+// topicSpaceDBはメンバーが1人いるスペースをコミットして用意し、テストがそれらを指すための
 // 値を返す。
 func topicSpaceDB(t *testing.T, db *sql.DB, identifier string, scopes []model.Scope) (model.UserID, model.SpaceID) {
 	t.Helper()
@@ -165,22 +160,22 @@ func TestCreate_トピックが作成され詳細画面へリダイレクトす�
 	setupCreateHandler(t, db).Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusSeeOther)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusSeeOther)
 	}
 	if location := rr.Header().Get("Location"); location != "/s/"+identifier+"/topics/1" {
-		t.Errorf("Location = %q, want %q", location, "/s/"+identifier+"/topics/1")
+		t.Errorf("Location = %q、期待値 = %q", location, "/s/"+identifier+"/topics/1")
 	}
 
 	topicRepo := repository.NewTopicRepository(query.New(db))
 	topics, err := topicRepo.ListActiveBySpace(context.Background(), spaceID)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if len(topics) != 1 {
-		t.Fatalf("len(topics) = %d, want 1", len(topics))
+		t.Fatalf("len(topics) = %d、期待値 = 1", len(topics))
 	}
 	if topics[0].Name != "日報" {
-		t.Errorf("Name = %q, want %q", topics[0].Name, "日報")
+		t.Errorf("Name = %q、期待値 = %q", topics[0].Name, "日報")
 	}
 }
 
@@ -200,7 +195,7 @@ func TestCreate_入力が不正なら422でフォームを再描画する(t *tes
 	setupCreateHandler(t, db).Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusUnprocessableEntity)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
@@ -213,17 +208,17 @@ func TestCreate_入力が不正なら422でフォームを再描画する(t *tes
 		`value="説明"`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("response does not contain %q", want)
+			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
 
 	topicRepo := repository.NewTopicRepository(query.New(db))
 	topics, err := topicRepo.ListActiveBySpace(context.Background(), spaceID)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if len(topics) != 0 {
-		t.Errorf("len(topics) = %d, want 0", len(topics))
+		t.Errorf("len(topics) = %d、期待値 = 0", len(topics))
 	}
 }
 
@@ -242,7 +237,7 @@ func TestCreate_トピック作成権限がないメンバーには404が返る(
 	setupCreateHandler(t, db).Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("status code = %d, want %d", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -261,9 +256,9 @@ func TestCreate_未ログインならログイン画面へリダイレクトす�
 	setupCreateHandler(t, db).Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Fatalf("status code = %d, want %d", rr.Code, http.StatusFound)
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
 	}
 	if location := rr.Header().Get("Location"); location != "/sign_in" {
-		t.Errorf("Location = %q, want %q", location, "/sign_in")
+		t.Errorf("Location = %q、期待値 = %q", location, "/sign_in")
 	}
 }

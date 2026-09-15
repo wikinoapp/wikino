@@ -5,7 +5,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// Flash はフラッシュメッセージを表示します
+// Flashはフラッシュメッセージを表示します
 templ Flash(flash *session.FlashMessage) {
 	if flash != nil {
 		<div id="toaster" class="toaster">

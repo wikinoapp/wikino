@@ -11,16 +11,16 @@ func TestScanWikilinks_SinglePageName(t *testing.T) {
 	keys := ScanWikilinks("テキスト [[ページ1]] テキスト", "トピックA")
 
 	if len(keys) != 1 {
-		t.Fatalf("len(keys) = %d, want 1", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 1", len(keys))
 	}
 	if keys[0].Raw != "ページ1" {
-		t.Errorf("Raw = %q, want %q", keys[0].Raw, "ページ1")
+		t.Errorf("Raw = %q、期待値 = %q", keys[0].Raw, "ページ1")
 	}
 	if keys[0].TopicName != "トピックA" {
-		t.Errorf("TopicName = %q, want %q", keys[0].TopicName, "トピックA")
+		t.Errorf("TopicName = %q、期待値 = %q", keys[0].TopicName, "トピックA")
 	}
 	if keys[0].PageTitle != "ページ1" {
-		t.Errorf("PageTitle = %q, want %q", keys[0].PageTitle, "ページ1")
+		t.Errorf("PageTitle = %q、期待値 = %q", keys[0].PageTitle, "ページ1")
 	}
 }
 
@@ -30,16 +30,16 @@ func TestScanWikilinks_TopicAndPageName(t *testing.T) {
 	keys := ScanWikilinks("テキスト [[トピックB/ページ2]] テキスト", "トピックA")
 
 	if len(keys) != 1 {
-		t.Fatalf("len(keys) = %d, want 1", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 1", len(keys))
 	}
 	if keys[0].Raw != "トピックB/ページ2" {
-		t.Errorf("Raw = %q, want %q", keys[0].Raw, "トピックB/ページ2")
+		t.Errorf("Raw = %q、期待値 = %q", keys[0].Raw, "トピックB/ページ2")
 	}
 	if keys[0].TopicName != "トピックB" {
-		t.Errorf("TopicName = %q, want %q", keys[0].TopicName, "トピックB")
+		t.Errorf("TopicName = %q、期待値 = %q", keys[0].TopicName, "トピックB")
 	}
 	if keys[0].PageTitle != "ページ2" {
-		t.Errorf("PageTitle = %q, want %q", keys[0].PageTitle, "ページ2")
+		t.Errorf("PageTitle = %q、期待値 = %q", keys[0].PageTitle, "ページ2")
 	}
 }
 
@@ -49,22 +49,22 @@ func TestScanWikilinks_MultipleWikilinks(t *testing.T) {
 	keys := ScanWikilinks("[[ページ1]] テキスト [[トピックB/ページ2]] テキスト [[ページ3]]", "トピックA")
 
 	if len(keys) != 3 {
-		t.Fatalf("len(keys) = %d, want 3", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 3", len(keys))
 	}
 
 	// 1つ目: ページ名のみ
 	if keys[0].TopicName != "トピックA" || keys[0].PageTitle != "ページ1" {
-		t.Errorf("keys[0] = {TopicName: %q, PageTitle: %q}, want {トピックA, ページ1}", keys[0].TopicName, keys[0].PageTitle)
+		t.Errorf("keys[0] = {TopicName: %q, PageTitle: %q}、期待値 = {トピックA, ページ1}", keys[0].TopicName, keys[0].PageTitle)
 	}
 
 	// 2つ目: トピック名/ページ名
 	if keys[1].TopicName != "トピックB" || keys[1].PageTitle != "ページ2" {
-		t.Errorf("keys[1] = {TopicName: %q, PageTitle: %q}, want {トピックB, ページ2}", keys[1].TopicName, keys[1].PageTitle)
+		t.Errorf("keys[1] = {TopicName: %q, PageTitle: %q}、期待値 = {トピックB, ページ2}", keys[1].TopicName, keys[1].PageTitle)
 	}
 
 	// 3つ目: ページ名のみ
 	if keys[2].TopicName != "トピックA" || keys[2].PageTitle != "ページ3" {
-		t.Errorf("keys[2] = {TopicName: %q, PageTitle: %q}, want {トピックA, ページ3}", keys[2].TopicName, keys[2].PageTitle)
+		t.Errorf("keys[2] = {TopicName: %q, PageTitle: %q}、期待値 = {トピックA, ページ3}", keys[2].TopicName, keys[2].PageTitle)
 	}
 }
 
@@ -74,7 +74,7 @@ func TestScanWikilinks_EmptyBrackets(t *testing.T) {
 	keys := ScanWikilinks("テキスト [[]] テキスト", "トピックA")
 
 	if len(keys) != 0 {
-		t.Errorf("len(keys) = %d, want 0 (empty brackets should be skipped)", len(keys))
+		t.Errorf("len(keys) = %d、期待値 = 0 (空の括弧は読み飛ばす)", len(keys))
 	}
 }
 
@@ -84,7 +84,7 @@ func TestScanWikilinks_WhitespaceOnly(t *testing.T) {
 	keys := ScanWikilinks("テキスト [[  ]] テキスト", "トピックA")
 
 	if len(keys) != 0 {
-		t.Errorf("len(keys) = %d, want 0 (whitespace-only should be skipped)", len(keys))
+		t.Errorf("len(keys) = %d、期待値 = 0 (空白だけのものは読み飛ばす)", len(keys))
 	}
 }
 
@@ -94,7 +94,7 @@ func TestScanWikilinks_NoWikilinks(t *testing.T) {
 	keys := ScanWikilinks("Wikiリンクなしのテキスト", "トピックA")
 
 	if keys != nil {
-		t.Errorf("keys = %v, want nil", keys)
+		t.Errorf("keys = %v、期待値 = nil", keys)
 	}
 }
 
@@ -104,7 +104,7 @@ func TestScanWikilinks_EmptyBody(t *testing.T) {
 	keys := ScanWikilinks("", "トピックA")
 
 	if keys != nil {
-		t.Errorf("keys = %v, want nil", keys)
+		t.Errorf("keys = %v、期待値 = nil", keys)
 	}
 }
 
@@ -115,13 +115,13 @@ func TestScanWikilinks_SlashInPageTitle(t *testing.T) {
 	keys := ScanWikilinks("[[トピックA/ページ/サブページ]]", "デフォルト")
 
 	if len(keys) != 1 {
-		t.Fatalf("len(keys) = %d, want 1", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 1", len(keys))
 	}
 	if keys[0].TopicName != "トピックA" {
-		t.Errorf("TopicName = %q, want %q", keys[0].TopicName, "トピックA")
+		t.Errorf("TopicName = %q、期待値 = %q", keys[0].TopicName, "トピックA")
 	}
 	if keys[0].PageTitle != "ページ/サブページ" {
-		t.Errorf("PageTitle = %q, want %q", keys[0].PageTitle, "ページ/サブページ")
+		t.Errorf("PageTitle = %q、期待値 = %q", keys[0].PageTitle, "ページ/サブページ")
 	}
 }
 
@@ -131,13 +131,13 @@ func TestScanWikilinks_TrimWhitespace(t *testing.T) {
 	keys := ScanWikilinks("[[ ページ1 ]]", "トピックA")
 
 	if len(keys) != 1 {
-		t.Fatalf("len(keys) = %d, want 1", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 1", len(keys))
 	}
 	if keys[0].Raw != "ページ1" {
-		t.Errorf("Raw = %q, want %q", keys[0].Raw, "ページ1")
+		t.Errorf("Raw = %q、期待値 = %q", keys[0].Raw, "ページ1")
 	}
 	if keys[0].PageTitle != "ページ1" {
-		t.Errorf("PageTitle = %q, want %q", keys[0].PageTitle, "ページ1")
+		t.Errorf("PageTitle = %q、期待値 = %q", keys[0].PageTitle, "ページ1")
 	}
 }
 
@@ -147,10 +147,10 @@ func TestScanWikilinks_SpecialCharacters(t *testing.T) {
 	keys := ScanWikilinks("[[日記 (2025)]]", "トピックA")
 
 	if len(keys) != 1 {
-		t.Fatalf("len(keys) = %d, want 1", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 1", len(keys))
 	}
 	if keys[0].PageTitle != "日記 (2025)" {
-		t.Errorf("PageTitle = %q, want %q", keys[0].PageTitle, "日記 (2025)")
+		t.Errorf("PageTitle = %q、期待値 = %q", keys[0].PageTitle, "日記 (2025)")
 	}
 }
 
@@ -161,33 +161,33 @@ func TestScanWikilinks_TripleBrackets(t *testing.T) {
 	keys := ScanWikilinks("[[[a]]]", "トピックA")
 
 	if len(keys) != 1 {
-		t.Fatalf("len(keys) = %d, want 1", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 1", len(keys))
 	}
 	if keys[0].Raw != "[a" {
-		t.Errorf("Raw = %q, want %q", keys[0].Raw, "[a")
+		t.Errorf("Raw = %q、期待値 = %q", keys[0].Raw, "[a")
 	}
 	if keys[0].TopicName != "トピックA" {
-		t.Errorf("TopicName = %q, want %q", keys[0].TopicName, "トピックA")
+		t.Errorf("TopicName = %q、期待値 = %q", keys[0].TopicName, "トピックA")
 	}
 	if keys[0].PageTitle != "[a" {
-		t.Errorf("PageTitle = %q, want %q", keys[0].PageTitle, "[a")
+		t.Errorf("PageTitle = %q、期待値 = %q", keys[0].PageTitle, "[a")
 	}
 }
 
 func TestScanWikilinks_TripleBracketsWithSpaces(t *testing.T) {
 	t.Parallel()
 
-	// Obsidian互換: [[[ a ]]] は rawが "[ a" になる
+	// Obsidian互換: [[[ a ]]] はrawが "[ a" になる
 	keys := ScanWikilinks("[[[ a ]]]", "トピックA")
 
 	if len(keys) != 1 {
-		t.Fatalf("len(keys) = %d, want 1", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 1", len(keys))
 	}
 	if keys[0].Raw != "[ a" {
-		t.Errorf("Raw = %q, want %q", keys[0].Raw, "[ a")
+		t.Errorf("Raw = %q、期待値 = %q", keys[0].Raw, "[ a")
 	}
 	if keys[0].PageTitle != "[ a" {
-		t.Errorf("PageTitle = %q, want %q", keys[0].PageTitle, "[ a")
+		t.Errorf("PageTitle = %q、期待値 = %q", keys[0].PageTitle, "[ a")
 	}
 }
 
@@ -198,13 +198,13 @@ func TestScanWikilinks_TripleBracketsMixed(t *testing.T) {
 	keys := ScanWikilinks("[[[a]]] [[b]]", "トピックA")
 
 	if len(keys) != 2 {
-		t.Fatalf("len(keys) = %d, want 2", len(keys))
+		t.Fatalf("len(keys) = %d、期待値 = 2", len(keys))
 	}
 	if keys[0].Raw != "[a" {
-		t.Errorf("keys[0].Raw = %q, want %q", keys[0].Raw, "[a")
+		t.Errorf("keys[0].Raw = %q、期待値 = %q", keys[0].Raw, "[a")
 	}
 	if keys[1].Raw != "b" {
-		t.Errorf("keys[1].Raw = %q, want %q", keys[1].Raw, "b")
+		t.Errorf("keys[1].Raw = %q、期待値 = %q", keys[1].Raw, "b")
 	}
 }
 
@@ -215,15 +215,15 @@ func TestScanWikilinkMatches_ParsedLabelSyntax(t *testing.T) {
 		name  string
 		label string
 	}{
-		{name: "HTML 属性の閉じ角括弧", label: `<span title="]">label</span> [[A]]`},
-		{name: "HTML 属性の開き角括弧", label: `<span title="[">label</span> [[A]]`},
-		{name: "HTML コメントの閉じ角括弧", label: `<!-- ] -->label [[A]]`},
-		{name: "HTML コメントの開き角括弧", label: `<!-- [ -->label [[A]]`},
+		{name: "HTML属性の閉じ角括弧", label: `<span title="]">label</span> [[A]]`},
+		{name: "HTML属性の開き角括弧", label: `<span title="[">label</span> [[A]]`},
+		{name: "HTMLコメントの閉じ角括弧", label: `<!-- ] -->label [[A]]`},
+		{name: "HTMLコメントの開き角括弧", label: `<!-- [ -->label [[A]]`},
 		{name: "子画像のリンク先の閉じ角括弧", label: `![image](https://example.com/image]x.png) [[A]]`},
 		{name: "子画像のリンク先の開き角括弧", label: `![image](https://example.com/image[x.png) [[A]]`},
 		{name: "子画像のタイトルの閉じ角括弧", label: `![image](https://example.com/image.png "]") [[A]]`},
 		{name: "子画像のタイトルの開き角括弧", label: `![image](https://example.com/image.png "[") [[A]]`},
-		{name: "子画像の中の HTML", label: `![<span title="]">image</span>](https://example.com/image.png) [[A]]`},
+		{name: "子画像の中のHTML", label: `![<span title="]">image</span>](https://example.com/image.png) [[A]]`},
 	}
 
 	for _, tt := range tests {
@@ -233,11 +233,11 @@ func TestScanWikilinkMatches_ParsedLabelSyntax(t *testing.T) {
 			body := "[" + tt.label + "](https://example.com/) [[B]]"
 			matches := ScanWikilinkMatches(body, "T")
 			if len(matches) != 1 {
-				t.Fatalf("matches = %+v, want only [[B]]", matches)
+				t.Fatalf("matches = %+v、期待値 = [[B]]のみ", matches)
 			}
 			match := matches[0]
 			if body[match.Start:match.Stop] != "[[B]]" || match.Key.TopicName != "T" || match.Key.PageTitle != "B" {
-				t.Errorf("match = %+v, want [[B]] in topic T", match)
+				t.Errorf("match = %+v、期待値 = トピックTの[[B]]", match)
 			}
 		})
 	}
@@ -324,7 +324,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "raw HTML の code 要素の中のリンクは返さない",
+			name:             "raw HTMLのcode要素の中のリンクは返さない",
 			body:             "<code>[[ページ1]]</code> と [[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -332,7 +332,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "raw HTML の pre 要素の中のリンクは返さない",
+			name:             "raw HTMLのpre要素の中のリンクは返さない",
 			body:             "<pre>\n[[ページ1]]\n</pre>\n\n[[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -340,7 +340,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "自己終了記法の code 要素の後ろにあるリンクは返さない",
+			name:             "自己終了記法のcode要素の後ろにあるリンクは返さない",
 			body:             "<code/>[[ページ1]]</code> と [[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -348,7 +348,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "自己終了記法の pre 要素の後ろにあるリンクは返さない",
+			name:             "自己終了記法のpre要素の後ろにあるリンクは返さない",
 			body:             "<pre/>[[ページ1]]</pre>\n\n[[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -374,19 +374,19 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "破棄要素の中の script 要素の終了タグは破棄を終わらせない",
+			name:             "破棄要素の中のscript要素の終了タグは破棄を終わらせない",
 			body:             "<object>[[ページ1]]</script>[[ページ2]]",
 			currentTopicName: "トピックA",
 			want:             nil,
 		},
 		{
-			name:             "破棄要素の中の style 要素の終了タグは破棄を終わらせない",
+			name:             "破棄要素の中のstyle要素の終了タグは破棄を終わらせない",
 			body:             "<frameset>[[ページ1]]</style>[[ページ2]]",
 			currentTopicName: "トピックA",
 			want:             nil,
 		},
 		{
-			name:             "入れ子の a 要素の開始タグは開いている a 要素を閉じる",
+			name:             "入れ子のa要素の開始タグは開いているa要素を閉じる",
 			body:             `<a href="https://example.com/">[[ページ1]]<a href="https://example.com/">[[ページ2]]</a>[[ページ3]]`,
 			currentTopicName: "トピックA",
 			want: []want{
@@ -394,7 +394,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "raw HTML の構文は返さず通常要素の本文にあるリンクは返す",
+			name:             "raw HTMLの構文は返さず通常要素の本文にあるリンクは返す",
 			body:             `<div data-page="[[ページ1]]">[[ページ2]]</div>` + "\n\n<!-- [[ページ3]] -->\n\n[[ページ4]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -403,7 +403,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "Markdown リンクのリンク先にあるリンクは返さない",
+			name:             "Markdownリンクのリンク先にあるリンクは返さない",
 			body:             "[外部](https://example.com/[[ページ1]]) と [[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -411,7 +411,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "山括弧付き Markdown リンク先の丸括弧より後ろも既存リンクとして保護する",
+			name:             "山括弧付きMarkdownリンク先の丸括弧より後ろも既存リンクとして保護する",
 			body:             "[外部](<https://example.com/a)/[[ページ1]]>) と [[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -419,7 +419,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "山括弧付き Markdown リンク先の開き丸括弧も既存リンクとして保護する",
+			name:             "山括弧付きMarkdownリンク先の開き丸括弧も既存リンクとして保護する",
 			body:             "[外部](<https://example.com/a([[ページ1]]>) と [[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -451,7 +451,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "Markdown リンクのラベルにあるリンクは返さない",
+			name:             "Markdownリンクのラベルにあるリンクは返さない",
 			body:             "[参照 [[ページ1]]](https://example.com/) と [[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -476,7 +476,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 		},
 		{
 			// ショートカット参照の後ろの [...] はリンクの一部ではないため、
-			// 表示側と同じく通常の Wiki リンクとして扱う
+			// 表示側と同じく通常のWikiリンクとして扱う
 			name:             "ショートカット参照の直後のリンクは返す",
 			body:             "[a][[ページ1]]\n\n[a]: /url",
 			currentTopicName: "トピックA",
@@ -485,7 +485,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "raw HTML の a 要素の中のリンクは返さない",
+			name:             "raw HTMLのa要素の中のリンクは返さない",
 			body:             `<a href="https://example.com/">[[ページ1]]</a> と [[ページ2]]`,
 			currentTopicName: "トピックA",
 			want: []want{
@@ -493,7 +493,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "サニタイズで除去される a 要素の異なる終了タグ後は通常テキストとして返す",
+			name:             "サニタイズで除去されるa要素の異なる終了タグ後は通常テキストとして返す",
 			body:             "<a>[[ページ1]]</code>[[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -502,7 +502,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "raw HTML の script 要素の中のリンクは返さない",
+			name:             "raw HTMLのscript要素の中のリンクは返さない",
 			body:             `<script>const page = "[[ページ1]]"</script>` + "\n\n[[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -510,7 +510,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "raw HTML の style 要素の中のリンクは返さない",
+			name:             "raw HTMLのstyle要素の中のリンクは返さない",
 			body:             `<style>/* [[ページ1]] */</style>` + "\n\n[[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -518,9 +518,9 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			// コードブロックに見せている raw text 系のタグでトークナイザーが本文の残りを
-			// 飲み込むと、後ろの code 要素が認識されずリンクが返ってしまう
-			name:             "コードブロックに raw text の要素を見せていても後続の code 要素の中のリンクは返さない",
+			// コードブロックに見せているraw text系のタグでトークナイザーが本文の残りを
+			// 飲み込むと、後ろのcode要素が認識されずリンクが返ってしまう
+			name:             "コードブロックにraw textの要素を見せていても後続のcode要素の中のリンクは返さない",
 			body:             "```html\n<style>\n```\n\n<code>[[ページ1]]</code> と [[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -536,9 +536,9 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			// img タグだけの行は HTML ブロックを開かないため、続く行も画面と同じく Markdown として
+			// imgタグだけの行はHTMLブロックを開かないため、続く行も画面と同じくMarkdownとして
 			// 読まれる。コードスパンと既存リンクのラベルはそこでも保護される
-			name: "img タグの行に続くコードと既存リンクのラベルは保護する",
+			name: "imgタグの行に続くコードと既存リンクのラベルは保護する",
 			body: `<img src="https://example.com/i.png">` + "\n*キャプション*\n" +
 				"`[[ページ1]]` と [参照 [[ページ2]]](https://example.com/) と [[ページ3]]",
 			currentTopicName: "トピックA",
@@ -547,7 +547,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			// サニタイズが受け付けないリンク先の a 要素は落ち、ラベルは通常テキストとして画面に出る
+			// サニタイズが受け付けないリンク先のa要素は落ち、ラベルは通常テキストとして画面に出る
 			name:             "サニタイズが落とすリンクのラベルにあるリンクは返す",
 			body:             "[ラベル [[ページ1]]](tel:+81-3-0000-0000) と [[ページ2]]",
 			currentTopicName: "トピックA",
@@ -582,8 +582,8 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			// 画像のラベルは alt 属性になるため、リンク先によらずテキストにならない
-			name:             "サニタイズが src を落とす画像のラベルにあるリンクは返さない",
+			// 画像のラベルはalt属性になるため、リンク先によらずテキストにならない
+			name:             "サニタイズがsrcを落とす画像のラベルにあるリンクは返さない",
 			body:             "![ラベル [[ページ1]]](javascript:alert) と [[ページ2]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -592,7 +592,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 		},
 		{
 			// エスケープと文字参照は角括弧そのものであって、リンクを開く構文ではない。
-			// ScanWikilinks の読み方と揃える
+			// ScanWikilinksの読み方と揃える
 			name: "エスケープや文字参照で書いた角括弧のリンクは返さない",
 			body: `\[\[ページ1]]` + "\n\n&#91;&#91;ページ2]]\n\n[[ページ3&#93;&#93;\n\n" +
 				"&#x5B;&#x5B;ページ4]]\n\n[[ページ5]]",
@@ -610,7 +610,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "Wiki リンクを含まない本文では何も返さない",
+			name:             "Wikiリンクを含まない本文では何も返さない",
 			body:             "リンクの無い本文。",
 			currentTopicName: "トピックA",
 			want:             nil,
@@ -624,7 +624,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "対応の取れていない開始括弧と Markdown リンクの後ろのリンクを返す",
+			name:             "対応の取れていない開始括弧とMarkdownリンクの後ろのリンクを返す",
 			body:             "[[ と書く [リンク](/u) [[ページ1]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -640,7 +640,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "対応の取れていない開始括弧と raw HTML タグの後ろのリンクを返す",
+			name:             "対応の取れていない開始括弧とraw HTMLタグの後ろのリンクを返す",
 			body:             "[[ と書く <b>太字</b> [[ページ1]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -654,7 +654,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			want:             nil,
 		},
 		{
-			name:             "閉じていない a 要素を自動リンクが閉じた後のリンクを返す",
+			name:             "閉じていないa要素を自動リンクが閉じた後のリンクを返す",
 			body:             `<a href="/u">x <https://example.com> [[ページ1]]`,
 			currentTopicName: "トピックA",
 			want: []want{
@@ -662,7 +662,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "閉じていない a 要素を Markdown リンクが閉じた後のリンクを返す",
+			name:             "閉じていないa要素をMarkdownリンクが閉じた後のリンクを返す",
 			body:             `<a href="/u">x [リンク](/v) [[ページ1]]`,
 			currentTopicName: "トピックA",
 			want: []want{
@@ -670,7 +670,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "閉じていない a 要素をメールの自動リンクが閉じた後のリンクを返す",
+			name:             "閉じていないa要素をメールの自動リンクが閉じた後のリンクを返す",
 			body:             `<a href="/u">x <user@example.com> [[ページ1]]`,
 			currentTopicName: "トピックA",
 			want: []want{
@@ -678,25 +678,25 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "閉じていない a 要素の中の画像の後ろのリンクは返さない",
+			name:             "閉じていないa要素の中の画像の後ろのリンクは返さない",
 			body:             `<a href="/u">x ![図](/v) [[ページ1]]`,
 			currentTopicName: "トピックA",
 			want:             nil,
 		},
 		{
-			name:             "閉じていない a 要素をサニタイズが落とすリンクは閉じない",
+			name:             "閉じていないa要素をサニタイズが落とすリンクは閉じない",
 			body:             `<a href="/u">x [リンク](javascript:x) [[ページ1]]`,
 			currentTopicName: "トピックA",
 			want:             nil,
 		},
 		{
-			name:             "閉じていない code 要素は自動リンクでは閉じない",
+			name:             "閉じていないcode要素は自動リンクでは閉じない",
 			body:             "x <code>y <https://example.com> [[ページ1]]",
 			currentTopicName: "トピックA",
 			want:             nil,
 		},
 		{
-			name:             "引用の中の閉じていない pre 要素は引用の外を保護しない",
+			name:             "引用の中の閉じていないpre要素は引用の外を保護しない",
 			body:             "> x <pre>y\n\n> z [[ページ1]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -704,7 +704,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "見出しの中の閉じていない pre 要素は見出しの外を保護しない",
+			name:             "見出しの中の閉じていないpre要素は見出しの外を保護しない",
 			body:             "# x <pre>y\n\nz [[ページ1]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -712,7 +712,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "表のセルの中の閉じていない code 要素はセルの外を保護しない",
+			name:             "表のセルの中の閉じていないcode要素はセルの外を保護しない",
 			body:             "| a |\n| --- |\n| <code>y |\n\nz [[ページ1]]",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -720,7 +720,7 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "表のセルの中の閉じていない a 要素は次のセルを保護しない",
+			name:             "表のセルの中の閉じていないa要素は次のセルを保護しない",
 			body:             "| a | b |\n| --- | --- |\n| <a href=\"/u\">y | z [[ページ1]] |",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -728,25 +728,25 @@ func TestScanWikilinkMatches(t *testing.T) {
 			},
 		},
 		{
-			name:             "段落の中の閉じていない pre 要素は後続の段落も保護する",
+			name:             "段落の中の閉じていないpre要素は後続の段落も保護する",
 			body:             "x <pre>y\n\nz [[ページ1]]",
 			currentTopicName: "トピックA",
 			want:             nil,
 		},
 		{
-			name:             "引用の中の閉じていない code 要素は引用の外も保護する",
+			name:             "引用の中の閉じていないcode要素は引用の外も保護する",
 			body:             "> x <code>y\n\n> z [[ページ1]]",
 			currentTopicName: "トピックA",
 			want:             nil,
 		},
 		{
-			name:             "表のセルの中の閉じていない script 要素は表の外も保護する",
+			name:             "表のセルの中の閉じていないscript要素は表の外も保護する",
 			body:             "| a |\n| --- |\n| <script>y |\n\nz [[ページ1]]",
 			currentTopicName: "トピックA",
 			want:             nil,
 		},
 		{
-			name:             "HTML として読まれなかったタグの中のリンクを返す",
+			name:             "HTMLとして読まれなかったタグの中のリンクを返す",
 			body:             "before <!-- [[ページ1]] </script> after",
 			currentTopicName: "トピックA",
 			want: []want{
@@ -762,20 +762,20 @@ func TestScanWikilinkMatches(t *testing.T) {
 			matches := ScanWikilinkMatches(tt.body, tt.currentTopicName)
 
 			if len(matches) != len(tt.want) {
-				t.Fatalf("len(matches) = %d, want %d", len(matches), len(tt.want))
+				t.Fatalf("len(matches) = %d、期待値 = %d", len(matches), len(tt.want))
 			}
 
 			for i, w := range tt.want {
 				got := matches[i]
 
 				if text := tt.body[got.Start:got.Stop]; text != w.text {
-					t.Errorf("matches[%d] の範囲の文字列 = %q, want %q", i, text, w.text)
+					t.Errorf("matches[%d]の範囲の文字列 = %q、期待値 = %q", i, text, w.text)
 				}
 				if got.Key.TopicName != w.topicName {
-					t.Errorf("matches[%d].Key.TopicName = %q, want %q", i, got.Key.TopicName, w.topicName)
+					t.Errorf("matches[%d].Key.TopicName = %q、期待値 = %q", i, got.Key.TopicName, w.topicName)
 				}
 				if got.Key.PageTitle != w.pageTitle {
-					t.Errorf("matches[%d].Key.PageTitle = %q, want %q", i, got.Key.PageTitle, w.pageTitle)
+					t.Errorf("matches[%d].Key.PageTitle = %q、期待値 = %q", i, got.Key.PageTitle, w.pageTitle)
 				}
 			}
 		})
@@ -791,7 +791,7 @@ func TestScanWikilinkMatches_MultilineDestinations(t *testing.T) {
 	}{
 		{name: "引用内の閉じ丸括弧", link: "> [x](\n> <https://example.com/a)/[[A]]>)"},
 		{name: "引用内の開き丸括弧", link: "> [x](\n> <https://example.com/a([[A]]>)"},
-		{name: "CRLF の引用", link: "> [x](\r\n> <https://example.com/a)/[[A]]>)"},
+		{name: "CRLFの引用", link: "> [x](\r\n> <https://example.com/a)/[[A]]>)"},
 		{name: "入れ子の引用", link: "> > [x](\n> > <https://example.com/a([[A]]>)"},
 		{name: "引用内のリスト", link: "> - [x](\n>   <https://example.com/a)/[[A]]>)"},
 		{name: "リストの継続行", link: "- [x](\n  <https://example.com/a([[A]]>)"},
@@ -807,12 +807,12 @@ func TestScanWikilinkMatches_MultilineDestinations(t *testing.T) {
 			want := []string{"B"}
 
 			if len(matches) != len(want) {
-				t.Fatalf("matches = %+v, want %v", matches, want)
+				t.Fatalf("matches = %+v、期待値 = %v", matches, want)
 			}
 			for i, match := range matches {
 				if body[match.Start:match.Stop] != "[["+want[i]+"]]" ||
 					match.Key.TopicName != "T" || match.Key.PageTitle != want[i] {
-					t.Errorf("match[%d] = %+v, want [[%s]] in topic T", i, match, want[i])
+					t.Errorf("match[%d] = %+v、期待値 = トピックTの[[%s]]", i, match, want[i])
 				}
 			}
 
@@ -828,14 +828,14 @@ func TestScanWikilinkMatches_DestinationEscapes(t *testing.T) {
 		destination string
 		keepsLink   bool
 	}{
-		{name: "通常の許可 URL", destination: "https://example.com/[[A]]", keepsLink: true},
-		{name: "エスケープした許可 URL", destination: `https\://example.com/[[A]]`, keepsLink: true},
-		{name: "数値文字参照の許可 URL", destination: "https&#58;//example.com/[[A]]", keepsLink: true},
-		{name: "名前付き文字参照の許可 URL", destination: "https&colon;//example.com/[[A]]", keepsLink: true},
-		{name: "通常の拒否 URL", destination: "tel:+81-3-0000-0000/[[A]]"},
-		{name: "エスケープした拒否 URL", destination: `tel\:+81-3-0000-0000/[[A]]`},
-		{name: "数値文字参照の拒否 URL", destination: "tel&#58;+81-3-0000-0000/[[A]]"},
-		{name: "名前付き文字参照の拒否 URL", destination: "tel&colon;+81-3-0000-0000/[[A]]"},
+		{name: "通常の許可URL", destination: "https://example.com/[[A]]", keepsLink: true},
+		{name: "エスケープした許可URL", destination: `https\://example.com/[[A]]`, keepsLink: true},
+		{name: "数値文字参照の許可URL", destination: "https&#58;//example.com/[[A]]", keepsLink: true},
+		{name: "名前付き文字参照の許可URL", destination: "https&colon;//example.com/[[A]]", keepsLink: true},
+		{name: "通常の拒否URL", destination: "tel:+81-3-0000-0000/[[A]]"},
+		{name: "エスケープした拒否URL", destination: `tel\:+81-3-0000-0000/[[A]]`},
+		{name: "数値文字参照の拒否URL", destination: "tel&#58;+81-3-0000-0000/[[A]]"},
+		{name: "名前付き文字参照の拒否URL", destination: "tel&colon;+81-3-0000-0000/[[A]]"},
 	}
 
 	for _, tt := range tests {
@@ -851,7 +851,7 @@ func TestScanWikilinkMatches_DestinationEscapes(t *testing.T) {
 					body = "[x [[A]]][ref] [[B]]\n\n[ref]: " + tt.destination
 				}
 				if keepsLink := strings.Contains(RenderMarkdown(body), "<a "); keepsLink != tt.keepsLink {
-					t.Fatalf("rendered anchor exists = %v, want %v", keepsLink, tt.keepsLink)
+					t.Fatalf("描画されたアンカーの有無 = %v、期待値 = %v", keepsLink, tt.keepsLink)
 				}
 				matches := ScanWikilinkMatches(body, "T")
 				want := []string{"B"}
@@ -860,12 +860,12 @@ func TestScanWikilinkMatches_DestinationEscapes(t *testing.T) {
 				}
 
 				if len(matches) != len(want) {
-					t.Fatalf("matches = %+v, want %v", matches, want)
+					t.Fatalf("matches = %+v、期待値 = %v", matches, want)
 				}
 				for i, match := range matches {
 					if body[match.Start:match.Stop] != "[["+want[i]+"]]" ||
 						match.Key.TopicName != "T" || match.Key.PageTitle != want[i] {
-						t.Errorf("match[%d] = %+v, want [[%s]] in topic T", i, match, want[i])
+						t.Errorf("match[%d] = %+v、期待値 = トピックTの[[%s]]", i, match, want[i])
 					}
 				}
 
@@ -883,14 +883,14 @@ func TestScanWikilinkMatches_EscapedOpening(t *testing.T) {
 	}{
 		{name: "開始括弧のエスケープ", body: "\\[[A]] と [[B]]", want: []string{"B"}},
 		{name: "バックスラッシュのエスケープ", body: "\\\\[[A]] と [[B]]", want: []string{"A", "B"}},
-		{name: "3 本のバックスラッシュ", body: "\\\\\\[[A]] と [[B]]", want: []string{"B"}},
+		{name: "3本のバックスラッシュ", body: "\\\\\\[[A]] と [[B]]", want: []string{"B"}},
 		{name: "両方の開始括弧のエスケープ", body: "\\[\\[A]] と [[B]]", want: []string{"B"}},
 		{name: "文字参照の開始括弧", body: "&#91;&#91;A]] &lbrack;&lbrack;A]] [[B]]", want: []string{"B"}},
-		{name: "HTML ブロック内のバックスラッシュ", body: "<div>\n\\[[A]]\n</div>\n\n[[B]]", want: []string{"A", "B"}},
-		{name: "HTML ブロック内の 3 本のバックスラッシュ", body: "<div>\n\\\\\\[[A]]\n</div>\n\n[[B]]", want: []string{"A", "B"}},
-		{name: "引用の HTML ブロック", body: "> <div>\n> \\[[A]]\n> </div>\n\n[[B]]", want: []string{"A", "B"}},
-		{name: "HTML ブロックの後の Markdown", body: "<div>\\[[A]]</div>\n\n\\[[A]] [[B]]", want: []string{"A", "B"}},
-		{name: "インライン HTML 内の Markdown", body: "本文 <span>\\[[A]]</span> [[B]]", want: []string{"B"}},
+		{name: "HTMLブロック内のバックスラッシュ", body: "<div>\n\\[[A]]\n</div>\n\n[[B]]", want: []string{"A", "B"}},
+		{name: "HTMLブロック内の3本のバックスラッシュ", body: "<div>\n\\\\\\[[A]]\n</div>\n\n[[B]]", want: []string{"A", "B"}},
+		{name: "引用のHTMLブロック", body: "> <div>\n> \\[[A]]\n> </div>\n\n[[B]]", want: []string{"A", "B"}},
+		{name: "HTMLブロックの後のMarkdown", body: "<div>\\[[A]]</div>\n\n\\[[A]] [[B]]", want: []string{"A", "B"}},
+		{name: "インラインHTML内のMarkdown", body: "本文 <span>\\[[A]]</span> [[B]]", want: []string{"B"}},
 		{name: "拒否されたリンクのラベル", body: "[x \\[[A]]](tel:+81-3-0000-0000) [[B]]", want: []string{"B"}},
 	}
 	for _, tt := range tests {
@@ -900,12 +900,12 @@ func TestScanWikilinkMatches_EscapedOpening(t *testing.T) {
 			matches := ScanWikilinkMatches(body, "T")
 
 			if len(matches) != len(want) {
-				t.Fatalf("matches = %+v, want %v", matches, want)
+				t.Fatalf("matches = %+v、期待値 = %v", matches, want)
 			}
 			for i, match := range matches {
 				if body[match.Start:match.Stop] != "[["+want[i]+"]]" ||
 					match.Key.TopicName != "T" || match.Key.PageTitle != want[i] {
-					t.Errorf("match[%d] = %+v, want [[%s]] in topic T", i, match, want[i])
+					t.Errorf("match[%d] = %+v、期待値 = トピックTの[[%s]]", i, match, want[i])
 				}
 			}
 
@@ -921,20 +921,20 @@ func TestScanWikilinkMatches_ElementScopeEndTags(t *testing.T) {
 		body string
 		want []string
 	}{
-		{name: "囲む要素の終了タグが中の pre を終わらせる", body: "<div><pre></div>[[A]]", want: []string{"A"}},
+		{name: "囲む要素の終了タグが中のpreを終わらせる", body: "<div><pre></div>[[A]]", want: []string{"A"}},
 		{name: "段落をまたぐ囲む要素の終了タグ", body: "<div><pre></div>\n\n[[A]]", want: []string{"A"}},
 		{name: "対応しない終了タグは何も閉じない", body: "<h1></li><pre></h1>[[A]]", want: []string{"A"}},
 		{name: "同じ形が続いても独立して閉じる", body: "<div><pre></div>[[A]] <div><pre></div>[[B]]", want: []string{"A", "B"}},
 		{name: "閉じた後の余分な終了タグ", body: "<div><pre></div>[[A]]</pre>[[B]]", want: []string{"A", "B"}},
 		{name: "リスト項目の終了タグ", body: "<ul><li><pre></li>[[A]]", want: []string{"A"}},
-		{name: "formatting element は開き直される", body: "<div><code></div>[[A]]", want: nil},
-		{name: "段落の終了タグと formatting element", body: "<p><code></p>[[A]]", want: nil},
+		{name: "formatting elementは開き直される", body: "<div><code></div>[[A]]", want: nil},
+		{name: "段落の終了タグとformatting element", body: "<p><code></p>[[A]]", want: nil},
 		{name: "表の後の終了タグは手前へ届かない", body: "<div></div><code><table></code>[[A]]", want: nil},
-		{name: "表の後の pre の終了タグ", body: "<em><pre><table></pre>[[A]]", want: nil},
-		{name: "規則を持たない終了タグは special 要素で止まる", body: "<span><pre></span>[[A]]", want: nil},
+		{name: "表の後のpreの終了タグ", body: "<em><pre><table></pre>[[A]]", want: nil},
+		{name: "規則を持たない終了タグはspecial要素で止まる", body: "<span><pre></span>[[A]]", want: nil},
 		{name: "表の外のセルは何も開かない", body: `<code><td><img src="/x"></code>[[A]]`, want: []string{"A"}},
 		{name: "表の中のセルの終了タグ", body: "<table><td><code>[[A]]</code></td></table>[[B]]", want: []string{"B"}},
-		{name: "raw text の中の Markdown リンクは a を閉じない", body: `<a href="/x"><textarea>[l](/x)[[A]]`, want: nil},
+		{name: "raw textの中のMarkdownリンクはaを閉じない", body: `<a href="/x"><textarea>[l](/x)[[A]]`, want: nil},
 	}
 
 	for _, tt := range tests {
@@ -945,12 +945,12 @@ func TestScanWikilinkMatches_ElementScopeEndTags(t *testing.T) {
 			matches := ScanWikilinkMatches(body, "T")
 
 			if len(matches) != len(want) {
-				t.Fatalf("matches = %+v, want %v", matches, want)
+				t.Fatalf("matches = %+v、期待値 = %v", matches, want)
 			}
 			for i, match := range matches {
 				if body[match.Start:match.Stop] != "[["+want[i]+"]]" ||
 					match.Key.TopicName != "T" || match.Key.PageTitle != want[i] {
-					t.Errorf("match[%d] = %+v, want [[%s]] in topic T", i, match, want[i])
+					t.Errorf("match[%d] = %+v、期待値 = トピックTの[[%s]]", i, match, want[i])
 				}
 			}
 		})
@@ -960,10 +960,7 @@ func TestScanWikilinkMatches_ElementScopeEndTags(t *testing.T) {
 func TestScanWikilinks_SkipsCode(t *testing.T) {
 	t.Parallel()
 
-	// A [[...]] written as code is not a link on the screen, so the save paths must not create
-	// the page it names. Links outside code keep resolving as before.
-	//
-	// [Ja] コードとして書かれた [[...]] は画面上でリンクにならないため、保存経路がその名前の
+	// コードとして書かれた [[...]] は画面上でリンクにならないため、保存経路がその名前の
 	// ページを作ってはならない。コードの外のリンクは従来どおり解決される。
 	tests := []struct {
 		name string
@@ -986,12 +983,12 @@ func TestScanWikilinks_SkipsCode(t *testing.T) {
 			want: []string{"ページ1", "トピックB/ページ2"},
 		},
 		{
-			name: "raw HTML の code 要素内のリンクは返さない",
+			name: "raw HTMLのcode要素内のリンクは返さない",
 			body: "[[ページ1]] <code>[[コード1]]</code> [[ページ2]]",
 			want: []string{"ページ1", "ページ2"},
 		},
 		{
-			name: "raw HTML の pre 要素内のリンクは返さない",
+			name: "raw HTMLのpre要素内のリンクは返さない",
 			body: "[[ページ1]]\n\n<pre>\n[[コード1]]\n</pre>\n\n[[ページ2]]",
 			want: []string{"ページ1", "ページ2"},
 		},
@@ -1009,11 +1006,11 @@ func TestScanWikilinks_SkipsCode(t *testing.T) {
 			keys := ScanWikilinks(tt.body, "トピックA")
 
 			if len(keys) != len(tt.want) {
-				t.Fatalf("len(keys) = %d, want %d: %+v", len(keys), len(tt.want), keys)
+				t.Fatalf("len(keys) = %d、期待値 = %d: %+v", len(keys), len(tt.want), keys)
 			}
 			for i, raw := range tt.want {
 				if keys[i].Raw != raw {
-					t.Errorf("keys[%d].Raw = %q, want %q", i, keys[i].Raw, raw)
+					t.Errorf("keys[%d].Raw = %q、期待値 = %q", i, keys[i].Raw, raw)
 				}
 			}
 		})

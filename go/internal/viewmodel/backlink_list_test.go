@@ -51,12 +51,12 @@ func TestNewBacklinkList(t *testing.T) {
 			})
 
 			if len(got.Items) != tt.wantItemCount {
-				t.Errorf("len(Items) = %d, want %d", len(got.Items), tt.wantItemCount)
+				t.Errorf("len(Items) = %d、期待値 = %d", len(got.Items), tt.wantItemCount)
 			}
 
 			for i, item := range got.Items {
 				if i < len(tt.wantTitles) && item.CardLinkPage.Title != tt.wantTitles[i] {
-					t.Errorf("Items[%d].Page.Title = %q, want %q", i, item.CardLinkPage.Title, tt.wantTitles[i])
+					t.Errorf("Items[%d].Page.Title = %q、期待値 = %q", i, item.CardLinkPage.Title, tt.wantTitles[i])
 				}
 			}
 		})
@@ -85,24 +85,21 @@ func TestNewBacklinkList_WithPagination(t *testing.T) {
 	})
 
 	if got.Pagination.Current != 1 {
-		t.Errorf("Pagination.Current = %d, want 1", got.Pagination.Current)
+		t.Errorf("Pagination.Current = %d、期待値 = 1", got.Pagination.Current)
 	}
 	if got.Pagination.Total != 3 {
-		t.Errorf("Pagination.Total = %d, want 3", got.Pagination.Total)
+		t.Errorf("Pagination.Total = %d、期待値 = 3", got.Pagination.Total)
 	}
 	if !got.Pagination.HasNext {
-		t.Error("Pagination.HasNext = false, want true")
+		t.Error("Pagination.HasNext = false、期待値 = true")
 	}
 	if got.Pagination.HasPrevious {
-		t.Error("Pagination.HasPrevious = true, want false")
+		t.Error("Pagination.HasPrevious = true、期待値 = false")
 	}
 }
 
-// TestNewBacklinkList_CanEdit pins that the per-card edit link follows the caller's flag, for the
-// same reason as TestNewLinkList_CanEdit.
-//
-// [Ja] TestNewBacklinkList_CanEdit は各カードの編集リンクが呼び出し元のフラグに従うことを固定する
-// (理由は TestNewLinkList_CanEdit と同じ)。
+// TestNewBacklinkList_CanEditは各カードの編集リンクが呼び出し元のフラグに従うことを固定する
+// (理由はTestNewLinkList_CanEditと同じ)。
 func TestNewBacklinkList_CanEdit(t *testing.T) {
 	t.Parallel()
 
@@ -116,7 +113,7 @@ func TestNewBacklinkList_CanEdit(t *testing.T) {
 		})
 
 		if got.Items[0].CardLinkPage.CanEdit != canEdit {
-			t.Errorf("CanEdit = %t, want %t", got.Items[0].CardLinkPage.CanEdit, canEdit)
+			t.Errorf("CanEdit = %t、期待値 = %t", got.Items[0].CardLinkPage.CanEdit, canEdit)
 		}
 	}
 }

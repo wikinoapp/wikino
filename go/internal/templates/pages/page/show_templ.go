@@ -13,57 +13,36 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData is the data passed to the page detail screen.
-//
-// [Ja] ShowData はページ表示画面に渡すデータ構造体です。
+// ShowDataはページ表示画面に渡すデータ構造体です。
 type ShowData struct {
 	Page  viewmodel.PageForShow
 	Space viewmodel.Space
 
-	// IsTrashed reports that the page sits in the trash. The usecase only ever renders this screen
-	// for a viewer allowed to see a trashed page, so the alert can be shown whenever it is true.
-	//
-	// [Ja] IsTrashed はページがゴミ箱に入っていることを表す。UseCase はゴミ箱のページを見てよい
-	// 閲覧者にしか本画面を描画させないため、true ならそのままアラートを出してよい。
+	// IsTrashedはページがゴミ箱に入っていることを表す。UseCaseはゴミ箱のページを見てよい
+	// 閲覧者にしか本画面を描画させないため、trueならそのままアラートを出してよい。
 	IsTrashed bool
 
-	// CanUpdatePage reports that the viewer may edit this page, and gates the edit button in the
-	// header as well as the move item of the action dropdown.
-	//
-	// [Ja] CanUpdatePage は閲覧者がこのページを編集できるかを表し、ヘッダーの編集ボタンと操作
+	// CanUpdatePageは閲覧者がこのページを編集できるかを表し、ヘッダーの編集ボタンと操作
 	// ドロップダウンの移動項目の出し分けに使う。
 	CanUpdatePage bool
 
-	// CanTrashPage reports that the viewer may move this page into the trash, and gates the trash
-	// item of the action dropdown. It rides on a different permission than CanUpdatePage, so the two
-	// items are shown independently instead of the whole dropdown following the edit permission.
-	//
-	// [Ja] CanTrashPage は閲覧者がこのページをゴミ箱へ入れられるかを表し、操作ドロップダウンの
-	// ゴミ箱項目の出し分けに使う。CanUpdatePage とは別の権限に乗るため、ドロップダウン全体を編集
-	// 権限に従わせず 2 つの項目を独立に出し分ける。
+	// CanTrashPageは閲覧者がこのページをゴミ箱へ入れられるかを表し、操作ドロップダウンの
+	// ゴミ箱項目の出し分けに使う。CanUpdatePageとは別の権限に乗るため、ドロップダウン全体を編集
+	// 権限に従わせず2つの項目を独立に出し分ける。
 	CanTrashPage bool
 
-	// CSRFToken authenticates the trash form's POST. It is empty for a viewer without page:trash.
-	// The form and hidden input are rendered only when showsTrashAction is true, so an already-trashed
-	// page's HTML also carries no token even when this field has a value.
-	//
-	// [Ja] CSRFToken はゴミ箱フォームの POST を認証する。page:trash を持たない閲覧者では空になる。
-	// フォームと hidden input は showsTrashAction が true のときだけ描画するため、既にゴミ箱にある
-	// ページでも、このフィールドに値があっても HTML にはトークンが載らない。
+	// CSRFTokenはゴミ箱フォームのPOSTを認証する。page:trashを持たない閲覧者では空になる。
+	// フォームとhidden inputはshowsTrashActionがtrueのときだけ描画するため、既にゴミ箱にある
+	// ページでも、このフィールドに値があってもHTMLにはトークンが載らない。
 	CSRFToken string
 
-	// LinkList and BacklinkList are the listings rendered under the body. Each holds the selected
-	// slice: htmx appends later slices, while a full-page fallback renders the slice named by the URL.
-	//
-	// [Ja] LinkList と BacklinkList は本文の下に描画する一覧。各一覧は選択された範囲を保持し、htmx は
-	// 後続の範囲を追記する。フルページフォールバックでは URL が指す範囲を描画する。
+	// LinkListとBacklinkListは本文の下に描画する一覧。各一覧は選択された範囲を保持し、htmxは
+	// 後続の範囲を追記する。フルページフォールバックではURLが指す範囲を描画する。
 	LinkList     viewmodel.LinkList
 	BacklinkList viewmodel.BacklinkList
 }
 
-// Show renders the page detail screen content.
-//
-// [Ja] Show はページ表示画面のコンテンツを表示します。
+// Showはページ表示画面のコンテンツを表示します。
 func Show(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -108,14 +87,14 @@ func Show(data ShowData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if data.Page.BodyHTML != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "   <div class=\"wikino-markdown mt-6\" data-markdown-table-label=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " <div class=\"wikino-markdown mt-6\" data-markdown-table-label=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "markdown_table_scroll_label"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 77, Col: 115}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 54, Col: 115}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 			if templ_7745c5c3_Err != nil {
@@ -150,23 +129,14 @@ func Show(data ShowData) templ.Component {
 	})
 }
 
-// showsTrashAction reports whether the action dropdown offers moving this page into the trash. A
-// page already in the trash leaves the item out: re-posting it would only push back the 30-day
-// purge, and the alert above the title already links to the trash.
-//
-// [Ja] showsTrashAction は操作ドロップダウンにゴミ箱へ入れる項目を出すかを表す。すでにゴミ箱に
-// 入っているページでは項目を落とす。再度 POST しても 30 日の完全削除が先送りされるだけで、
+// showsTrashActionは操作ドロップダウンにゴミ箱へ入れる項目を出すかを表す。すでにゴミ箱に
+// 入っているページでは項目を落とす。再度POSTしても30日の完全削除が先送りされるだけで、
 // タイトルの上のアラートからすでにゴミ箱へ辿れるためである。
 func (d ShowData) showsTrashAction() bool {
 	return d.CanTrashPage && !d.IsTrashed
 }
 
-// showsPageActions reports whether the action dropdown holds any item. An empty dropdown is never
-// rendered, so a viewer holding neither permission sees no trigger button. It gates the header's
-// action area as a whole as well: the area holds the edit button beside the dropdown, but the edit
-// permission already puts the move item into the dropdown, so an empty dropdown means an empty area.
-//
-// [Ja] showsPageActions は操作ドロップダウンに項目が 1 つでもあるかを表す。空のドロップダウンは
+// showsPageActionsは操作ドロップダウンに項目が1つでもあるかを表す。空のドロップダウンは
 // 描画しないため、どちらの権限も持たない閲覧者にはトリガーボタンごと出ない。ヘッダーの操作領域
 // 全体の出し分けも兼ねる。領域にはドロップダウンの隣に編集ボタンが載るが、編集権限があれば
 // ドロップダウンにも移動項目が入るため、ドロップダウンが空なら領域も空になる。
@@ -174,38 +144,20 @@ func (d ShowData) showsPageActions() bool {
 	return d.CanUpdatePage || d.showsTrashAction()
 }
 
-// showHeader renders the page title and its action area in a header that pins itself to the top of
-// the viewport once it is scrolled past. While pinned (web/sticky-header.ts marks it with
-// data-stuck) the title shrinks to a single clamped line, which leaves the actions reachable
-// without scrolling back up. The expanded and pinned states share one header rather than duplicating
-// it: keeping a single copy of the title and the actions leaves the page with exactly one h1 and one
-// dropdown, both of which stay in the accessibility tree in either state (hiding one copy of the
-// header would take the h1 out of the outline for a reader who has scrolled).
-//
-// The dimensionally stable sentinel before the header is the observer target. The spacer after the
-// header receives the height lost when a long title becomes compact, so the body keeps the same
-// document position. The always-present transparent bottom border also keeps the compact header
-// itself from changing height when its color appears.
-//
-// Expanded, the action area sits at the top of the heading row so that it stays in the same place
-// however many lines the title wraps to. Pinned, it returns to the center: the title has shrunk to
-// a single text-sm line that is shorter than the 36px action area, and aligning it to the top would
-// make the title alone cling to the top of the compact bar.
-//
-// [Ja] showHeader はページタイトルと操作領域を、スクロールで通り過ぎると画面上端に固定されるヘッダーに
-// 描画する。固定されている間 (web/sticky-header.ts が data-stuck を付ける) はタイトルが 1 行に切り詰め
+// showHeaderはページタイトルと操作領域を、スクロールで通り過ぎると画面上端に固定されるヘッダーに
+// 描画する。固定されている間 (web/sticky-header.tsがdata-stuckを付ける) はタイトルが1行に切り詰め
 // られて縮み、上へ戻らなくても操作領域に手が届く。展開時と固定時のヘッダーを
-// 2 つに分けず、1 つとして描画する。タイトルと操作領域を 1 組だけ持てば、ページの h1 と
-// ドロップダウンはそれぞれ 1 つで済み、どちらの状態でも
-// アクセシビリティツリーに残る (ヘッダーを 2 つ持って片方を隠すと、スクロールした閲覧者のアウトライン
-// から h1 が消える)。
+// 2つに分けず、1つとして描画する。タイトルと操作領域を1組だけ持てば、ページのh1と
+// ドロップダウンはそれぞれ1つで済み、どちらの状態でも
+// アクセシビリティツリーに残る (ヘッダーを2つ持って片方を隠すと、スクロールした閲覧者のアウトライン
+// からh1が消える)。
 //
-// ヘッダー前方の寸法が変わらない sentinel を監視対象にする。ヘッダー後方の spacer には、長いタイトルが
+// ヘッダー前方の寸法が変わらないsentinelを監視対象にする。ヘッダー後方のspacerには、長いタイトルが
 // コンパクトになったときに失われる高さを設定し、本文のドキュメント上の位置を保つ。常に存在する透明な
 // 下境界線も、色が付いたときにコンパクトヘッダー自体の高さが変わることを防ぐ。
 //
 // 展開時は、タイトルが何行に折り返しても操作領域が同じ位置に出るよう、操作領域を見出し行の上端に
-// 置く。固定時は中央に戻す。そのときタイトルは text-sm の 1 行に縮んで 36px の操作領域より低くなり、
+// 置く。固定時は中央に戻す。そのときタイトルはtext-smの1行に縮んで36pxの操作領域より低くなり、
 // 上端に揃えるとコンパクトなバーの中でタイトルだけが上に張り付くためである。
 func showHeader(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -259,7 +211,7 @@ func showHeader(data ShowData) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(data.Page.DisplayTitle(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 156, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 106, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -291,9 +243,7 @@ func showHeader(data ShowData) templ.Component {
 	})
 }
 
-// showActions renders the edit button and the action dropdown next to the page title.
-//
-// [Ja] showActions はページタイトルの横に編集ボタンと操作ドロップダウンを描画する。
+// showActionsはページタイトルの横に編集ボタンと操作ドロップダウンを描画する。
 func showActions(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -331,9 +281,7 @@ func showActions(data ShowData) templ.Component {
 	})
 }
 
-// showPageActions renders the dropdown holding the page operations that are not the primary action.
-//
-// [Ja] showPageActions は主要な操作以外のページ操作をまとめたドロップダウンを描画する。
+// showPageActionsは主要な操作以外のページ操作をまとめたドロップダウンを描画する。
 func showPageActions(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -362,7 +310,7 @@ func showPageActions(data ShowData) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "page_show_page_actions_aria_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 192, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 138, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 		if templ_7745c5c3_Err != nil {
@@ -388,7 +336,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var10 templ.SafeURL
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PageMovePath(data.Space.Identifier, data.Page.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 205, Col: 100}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 151, Col: 100}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -405,7 +353,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_page_actions_move"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 208, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 154, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -424,7 +372,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var12 templ.SafeURL
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PageTrashPath(data.Space.Identifier, data.Page.Number))))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 222, Col: 103}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 164, Col: 103}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -437,7 +385,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "page_show_page_actions_trash_confirm"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 224, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 166, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 			if templ_7745c5c3_Err != nil {
@@ -450,7 +398,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 228, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 170, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 			if templ_7745c5c3_Err != nil {
@@ -471,7 +419,7 @@ func showPageActions(data ShowData) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_page_actions_trash"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 232, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 174, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -490,9 +438,7 @@ func showPageActions(data ShowData) templ.Component {
 	})
 }
 
-// showEditButton links to the editor of the page being shown.
-//
-// [Ja] showEditButton は表示中のページの編集画面へのリンクを出す。
+// showEditButtonは表示中のページの編集画面へのリンクを出す。
 func showEditButton(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -521,7 +467,7 @@ func showEditButton(data ShowData) templ.Component {
 		var templ_7745c5c3_Var17 templ.SafeURL
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PageEditPath(data.Space.Identifier, data.Page.Number))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 249, Col: 95}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 189, Col: 95}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -538,7 +484,7 @@ func showEditButton(data ShowData) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_edit_button"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 252, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 192, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -552,20 +498,12 @@ func showEditButton(data ShowData) templ.Component {
 	})
 }
 
-// showFooter renders the three related-page sections under the body through the component the
-// editor shares, so the two screens lay the listings out the same way. The listings are a subject of
-// this screen rather than something under an editor, so the headings are given the larger size.
-//
-// The whole block is dropped when this page has neither links nor backlinks: the sections hide
-// themselves individually, but the wrapper is a flex item of the page's own column and would still
-// take a gap under the body if it were left in place empty.
-//
-// [Ja] showFooter は本文の下の 3 つの関連ページセクションを、編集画面と共有するコンポーネントで
-// 描画し、2 つの画面の並べ方を揃える。この画面では一覧が画面の主題であり、エディタの下に置かれる
+// showFooterは本文の下の3つの関連ページセクションを、編集画面と共有するコンポーネントで
+// 描画し、2つの画面の並べ方を揃える。この画面では一覧が画面の主題であり、エディタの下に置かれる
 // ものではないため、見出しには大きいほうの大きさを与える。
 //
 // リンクもバックリンクも無いページではブロックごと落とす。セクション自身は個別に隠れるが、ラッパーは
-// ページ本体のカラムのフレックス項目であり、空のまま残すと本文の下に gap の分だけ余白が残るためである。
+// ページ本体のカラムのフレックス項目であり、空のまま残すと本文の下にgapの分だけ余白が残るためである。
 func showFooter(data ShowData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -609,10 +547,7 @@ func showFooter(data ShowData) templ.Component {
 	})
 }
 
-// trashedAlert tells a viewer holding the trash permission that this page is in the trash, and
-// links to the trash screen so they can restore it.
-//
-// [Ja] trashedAlert はゴミ箱権限を持つ閲覧者に、このページがゴミ箱に入っていることを伝え、
+// trashedAlertはゴミ箱権限を持つ閲覧者に、このページがゴミ箱に入っていることを伝え、
 // 復元できるようゴミ箱画面へのリンクを出す。
 func trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -650,7 +585,7 @@ func trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_trashed_alert"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 299, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 223, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -663,7 +598,7 @@ func trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		var templ_7745c5c3_Var22 templ.SafeURL
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.TrashPath(spaceIdentifier))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 301, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 225, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -676,7 +611,7 @@ func trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_show_view_trash_link"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 302, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/show.templ`, Line: 226, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {

@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// DraftPageRevisionRepository は下書きページリビジョンリポジトリ
+// DraftPageRevisionRepositoryは下書きページリビジョンリポジトリ
 type DraftPageRevisionRepository struct {
 	q *query.Queries
 }
 
-// NewDraftPageRevisionRepository は DraftPageRevisionRepository を生成する
+// NewDraftPageRevisionRepositoryはDraftPageRevisionRepositoryを生成する
 func NewDraftPageRevisionRepository(q *query.Queries) *DraftPageRevisionRepository {
 	return &DraftPageRevisionRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *DraftPageRevisionRepository) WithTx(tx *sql.Tx) *DraftPageRevisionRepository {
 	return &DraftPageRevisionRepository{q: r.q.WithTx(tx)}
 }
 
-// CreateDraftPageRevisionInput は下書きページリビジョン作成の入力パラメータ
+// CreateDraftPageRevisionInputは下書きページリビジョン作成の入力パラメータ
 type CreateDraftPageRevisionInput struct {
 	DraftPageID   model.DraftPageID
 	SpaceID       model.SpaceID
@@ -35,7 +35,7 @@ type CreateDraftPageRevisionInput struct {
 	BodyHTML      string
 }
 
-// Create は下書きページリビジョンを作成する
+// Createは下書きページリビジョンを作成する
 func (r *DraftPageRevisionRepository) Create(ctx context.Context, input CreateDraftPageRevisionInput) (*model.DraftPageRevision, error) {
 	row, err := r.q.CreateDraftPageRevision(ctx, query.CreateDraftPageRevisionParams{
 		DraftPageID:   string(input.DraftPageID),
@@ -52,7 +52,7 @@ func (r *DraftPageRevisionRepository) Create(ctx context.Context, input CreateDr
 	return r.toModel(row), nil
 }
 
-// DeleteByDraftPageID は下書きページIDに紐づくリビジョンをすべて削除する
+// DeleteByDraftPageIDは下書きページIDに紐づくリビジョンをすべて削除する
 func (r *DraftPageRevisionRepository) DeleteByDraftPageID(ctx context.Context, draftPageID model.DraftPageID, spaceID model.SpaceID) error {
 	return r.q.DeleteDraftPageRevisionsByDraftPageID(ctx, query.DeleteDraftPageRevisionsByDraftPageIDParams{
 		DraftPageID: string(draftPageID),
@@ -60,7 +60,7 @@ func (r *DraftPageRevisionRepository) DeleteByDraftPageID(ctx context.Context, d
 	})
 }
 
-// CountByDraftPageID は下書きページIDに紐づくリビジョン件数を返す
+// CountByDraftPageIDは下書きページIDに紐づくリビジョン件数を返す
 func (r *DraftPageRevisionRepository) CountByDraftPageID(ctx context.Context, draftPageID model.DraftPageID, spaceID model.SpaceID) (int64, error) {
 	return r.q.CountDraftPageRevisionsByDraftPageID(ctx, query.CountDraftPageRevisionsByDraftPageIDParams{
 		DraftPageID: string(draftPageID),
@@ -68,8 +68,7 @@ func (r *DraftPageRevisionRepository) CountByDraftPageID(ctx context.Context, dr
 	})
 }
 
-// ListByDraftPageID returns the draft page's revisions newest-first, up to limit, scoped by space_id.
-// [Ja] 下書きページのリビジョンを新しい順に最大 limit 件取得する (スペース ID でスコープ)。
+// 下書きページのリビジョンを新しい順に最大limit件取得する (スペースIDでスコープ)。
 func (r *DraftPageRevisionRepository) ListByDraftPageID(ctx context.Context, draftPageID model.DraftPageID, spaceID model.SpaceID, limit int32) ([]*model.DraftPageRevision, error) {
 	rows, err := r.q.ListDraftPageRevisionsByDraftPageID(ctx, query.ListDraftPageRevisionsByDraftPageIDParams{
 		DraftPageID: string(draftPageID),
@@ -86,8 +85,7 @@ func (r *DraftPageRevisionRepository) ListByDraftPageID(ctx context.Context, dra
 	return revisions, nil
 }
 
-// FindByID returns a draft page revision by ID, scoped by space_id. Returns (nil, nil) when not found.
-// [Ja] ID で下書きページリビジョンを取得する (スペース ID でスコープ)。見つからない場合は (nil, nil) を返す。
+// IDで下書きページリビジョンを取得する (スペースIDでスコープ)。見つからない場合は (nil, nil) を返す。
 func (r *DraftPageRevisionRepository) FindByID(ctx context.Context, id model.DraftPageRevisionID, spaceID model.SpaceID) (*model.DraftPageRevision, error) {
 	row, err := r.q.FindDraftPageRevisionByID(ctx, query.FindDraftPageRevisionByIDParams{
 		ID:      string(id),
@@ -102,13 +100,8 @@ func (r *DraftPageRevisionRepository) FindByID(ctx context.Context, id model.Dra
 	return r.toModel(row), nil
 }
 
-// FindPrevious returns the revision immediately preceding the given one (the diff comparison
-// target), located by the passed revision's DraftPageID / SpaceID / CreatedAt / ID. "Preceding"
-// uses the same (created_at, id) total order as ListByDraftPageID. Returns (nil, nil) when the
-// given revision is the oldest one (no predecessor).
-//
-// [Ja] 対象リビジョンの直前のリビジョンを取得する (差分の比較対象)。比較対象は渡された
-// リビジョンの DraftPageID / SpaceID / CreatedAt / ID で特定し、「直前」は ListByDraftPageID と
+// 対象リビジョンの直前のリビジョンを取得する (差分の比較対象)。比較対象は渡された
+// リビジョンのDraftPageID / SpaceID / CreatedAt / IDで特定し、「直前」はListByDraftPageIDと
 // 同じ (created_at, id) の全順序で定義する。対象が最古で直前が存在しない場合は (nil, nil) を返す。
 func (r *DraftPageRevisionRepository) FindPrevious(ctx context.Context, revision *model.DraftPageRevision) (*model.DraftPageRevision, error) {
 	row, err := r.q.FindPreviousDraftPageRevision(ctx, query.FindPreviousDraftPageRevisionParams{
@@ -126,7 +119,7 @@ func (r *DraftPageRevisionRepository) FindPrevious(ctx context.Context, revision
 	return r.toModel(row), nil
 }
 
-// toModel は query.DraftPageRevision を model.DraftPageRevision に変換する
+// toModelはquery.DraftPageRevisionをmodel.DraftPageRevisionに変換する
 func (r *DraftPageRevisionRepository) toModel(row query.DraftPageRevision) *model.DraftPageRevision {
 	return &model.DraftPageRevision{
 		ID:            model.DraftPageRevisionID(row.ID),

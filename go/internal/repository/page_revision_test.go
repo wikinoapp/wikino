@@ -51,37 +51,37 @@ func TestPageRevisionRepository_Create(t *testing.T) {
 			BodyHTML:      "<p>revision body</p>",
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if revision == nil {
-			t.Fatal("Create() returned nil, want page revision")
+			t.Fatal("Create()がnilを返した、期待値 = ページのリビジョン")
 		}
 		if revision.ID == "" {
-			t.Error("revision.ID should not be empty")
+			t.Error("revision.IDが空")
 		}
 		if revision.SpaceID != spaceID {
-			t.Errorf("revision.SpaceID = %v, want %v", revision.SpaceID, spaceID)
+			t.Errorf("revision.SpaceID = %v、期待値 = %v", revision.SpaceID, spaceID)
 		}
 		if revision.SpaceMemberID != spaceMemberID {
-			t.Errorf("revision.SpaceMemberID = %v, want %v", revision.SpaceMemberID, spaceMemberID)
+			t.Errorf("revision.SpaceMemberID = %v、期待値 = %v", revision.SpaceMemberID, spaceMemberID)
 		}
 		if revision.PageID != pageID {
-			t.Errorf("revision.PageID = %v, want %v", revision.PageID, pageID)
+			t.Errorf("revision.PageID = %v、期待値 = %v", revision.PageID, pageID)
 		}
 		if revision.Title != "Revision Title" {
-			t.Errorf("revision.Title = %v, want 'Revision Title'", revision.Title)
+			t.Errorf("revision.Title = %v、期待値 = 'Revision Title'", revision.Title)
 		}
 		if revision.Body != "revision body" {
-			t.Errorf("revision.Body = %v, want 'revision body'", revision.Body)
+			t.Errorf("revision.Body = %v、期待値 = 'revision body'", revision.Body)
 		}
 		if revision.BodyHTML != "<p>revision body</p>" {
-			t.Errorf("revision.BodyHTML = %v, want '<p>revision body</p>'", revision.BodyHTML)
+			t.Errorf("revision.BodyHTML = %v、期待値 = '<p>revision body</p>'", revision.BodyHTML)
 		}
 		if revision.CreatedAt.IsZero() {
-			t.Error("revision.CreatedAt should not be zero")
+			t.Error("revision.CreatedAtがゼロ値")
 		}
 		if revision.UpdatedAt.IsZero() {
-			t.Error("revision.UpdatedAt should not be zero")
+			t.Error("revision.UpdatedAtがゼロ値")
 		}
 	})
 
@@ -95,7 +95,7 @@ func TestPageRevisionRepository_Create(t *testing.T) {
 			BodyHTML:      "<p>first body</p>",
 		})
 		if err != nil {
-			t.Fatalf("Create() first revision error = %v", err)
+			t.Fatalf("Create() (1件目のリビジョン) のエラー = %v", err)
 		}
 
 		revision2, err := repo.Create(context.Background(), CreatePageRevisionInput{
@@ -107,17 +107,17 @@ func TestPageRevisionRepository_Create(t *testing.T) {
 			BodyHTML:      "<p>second body</p>",
 		})
 		if err != nil {
-			t.Fatalf("Create() second revision error = %v", err)
+			t.Fatalf("Create() (2件目のリビジョン) のエラー = %v", err)
 		}
 
 		if revision1.ID == revision2.ID {
-			t.Errorf("revision1.ID and revision2.ID should be different, got %v", revision1.ID)
+			t.Errorf("revision1.IDとrevision2.IDが同じ: %v", revision1.ID)
 		}
 		if revision1.Title != "First Revision" {
-			t.Errorf("revision1.Title = %v, want 'First Revision'", revision1.Title)
+			t.Errorf("revision1.Title = %v、期待値 = 'First Revision'", revision1.Title)
 		}
 		if revision2.Title != "Second Revision" {
-			t.Errorf("revision2.Title = %v, want 'Second Revision'", revision2.Title)
+			t.Errorf("revision2.Title = %v、期待値 = 'Second Revision'", revision2.Title)
 		}
 	})
 }

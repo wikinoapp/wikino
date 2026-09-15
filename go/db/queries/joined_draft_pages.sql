@@ -1,10 +1,6 @@
 -- name: ListDraftPagesByUser :many
--- Returns the user's draft pages for the home page.
--- Joins draft_pages → pages → topics → spaces → space_members and limits results to
--- spaces in which the user is an active member.
---
--- [Ja] ホーム画面に表示する、ユーザーの下書きページ一覧を取得する。
--- draft_pages → pages → topics → spaces → space_members を JOIN し、ユーザーがアクティブな
+-- ホーム画面に表示する、ユーザーの下書きページ一覧を取得する。
+-- draft_pages → pages → topics → spaces → space_membersをJOINし、ユーザーがアクティブな
 -- スペースメンバーであるスペースに限定する。
 SELECT
   dp.id AS draft_page_id,
@@ -31,14 +27,9 @@ ORDER BY dp.modified_at DESC
 LIMIT $2;
 
 -- name: ListDraftPagesBySpaceMember :many
--- Fetch a space member's own draft pages within a single space, newest first (for the page editor's draft list column).
--- Joins draft_pages → pages → topics → spaces, scoped to the given space and space member.
--- Suggestion-edit drafts (those with suggestion_page_id set) are intentionally included,
--- matching the home page's draft list behavior.
---
--- [Ja] 同一スペース内のスペースメンバー自身の下書きページ一覧を更新日時の降順で取得する (ページ編集画面の下書き一覧カラム用)。
--- draft_pages → pages → topics → spaces を JOIN し、指定スペース・スペースメンバーに限定する。
--- 提案編集用の下書き (suggestion_page_id 付き) も、ホーム画面の下書き一覧と同じく除外せず含める。
+-- 同一スペース内のスペースメンバー自身の下書きページ一覧を更新日時の降順で取得する (ページ編集画面の下書き一覧カラム用)。
+-- draft_pages → pages → topics → spacesをJOINし、指定スペース・スペースメンバーに限定する。
+-- 提案編集用の下書き (suggestion_page_id付き) も、ホーム画面の下書き一覧と同じく除外せず含める。
 SELECT
   dp.id AS draft_page_id,
   dp.title AS draft_page_title,
@@ -63,7 +54,7 @@ ORDER BY dp.modified_at DESC
 LIMIT $3;
 
 -- name: ListDraftPagesByUserForIndex :many
--- ユーザーの下書きページ一覧を取得する（下書き一覧画面用）
+-- ユーザーの下書きページ一覧を取得する (下書き一覧画面用)
 -- スペース名・トピック名を含み、スペース名・トピック名の順にソート
 SELECT
   dp.id AS draft_page_id,

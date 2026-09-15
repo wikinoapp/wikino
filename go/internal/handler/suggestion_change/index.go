@@ -19,7 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Index は編集提案の変更差分を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/changes)
+// Indexは編集提案の変更差分を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/changes)
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -81,10 +81,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		Pages:           output.Pages,
 	})
 
-	// Build links from the stored identifier, not from the URL, so that the canonical URL collapses
-	// to one address per screen.
-	//
-	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、正規 URL を 1 画面 1 アドレスに
+	// URLではなく保存済みの識別子からリンクを組み立て、正規URLを1画面1アドレスに
 	// 集約する。
 	spaceIdentVM := spaceVM.Identifier
 
@@ -99,22 +96,17 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	meta.OGURL = h.cfg.AppURL() + string(templates.SuggestionChangesPath(spaceIdentVM, suggestionVM.Number))
 	meta.CurrentSpaceIdentifier = spaceIdentVM
 
-	// 編集権限を判定（スペースメンバーかつオープンステータス）
+	// 編集権限を判定 (スペースメンバーかつオープンステータス)
 	canEditSuggestionPages := output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen
 
-	// CSRFトークンを取得（編集・削除ボタンのフォームで必要な場合のみ）
+	// CSRFトークンを取得 (編集・削除ボタンのフォームで必要な場合のみ)
 	var csrfToken string
 	if canEditSuggestionPages || output.CanAddSuggestionPage || output.CanRemoveSuggestionPage {
 		csrfToken = middleware.GetCSRFTokenFromContext(ctx)
 	}
 
-	// The change diff is public and declares a self-referencing canonical URL, so it opts into
-	// BreadcrumbList JSON-LD built from the same items. The other screens sharing
-	// DetailBreadcrumbHeaderData require authentication, so they leave the base URL empty and publish
-	// no structured data.
-	//
-	// [Ja] 変更差分は公開画面で自己参照 canonical を宣言するため、同じ項目列から作る BreadcrumbList
-	// JSON-LD を有効にする。DetailBreadcrumbHeaderData を共有する他の画面は認証必須のため、ベース URL
+	// 変更差分は公開画面で自己参照canonicalを宣言するため、同じ項目列から作るBreadcrumbList
+	// JSON-LDを有効にする。DetailBreadcrumbHeaderDataを共有する他の画面は認証必須のため、ベースURL
 	// を空のままにして構造化データを出さない。
 	breadcrumbHeader := suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, suggestionVM.Number, suggestionVM.Title, user != nil)
 	breadcrumbHeader.Items = append(breadcrumbHeader.Items, components.BreadcrumbItem{

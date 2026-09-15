@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// buildUserMapBySpaceMemberIDs はSpaceMemberIDのスライスからSpaceMemberID → Userのマップを構築する
+// buildUserMapBySpaceMemberIDsはSpaceMemberIDのスライスからSpaceMemberID → Userのマップを構築する
 func buildUserMapBySpaceMemberIDs(ctx context.Context, spaceMemberRepo *repository.SpaceMemberRepository, userRepo *repository.UserRepository, memberIDs []model.SpaceMemberID, spaceID model.SpaceID) (map[model.SpaceMemberID]*model.User, error) {
 	if len(memberIDs) == 0 {
 		return map[model.SpaceMemberID]*model.User{}, nil
@@ -38,7 +38,7 @@ func buildUserMapBySpaceMemberIDs(ctx context.Context, spaceMemberRepo *reposito
 		userByID[u.ID] = u
 	}
 
-	// SpaceMemberID → User のマップを構築
+	// SpaceMemberID → Userのマップを構築
 	result := make(map[model.SpaceMemberID]*model.User, len(memberIDs))
 	for memberID, userID := range memberToUser {
 		if u, ok := userByID[userID]; ok {

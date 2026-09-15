@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// PageRevisionRepository はページリビジョンリポジトリ
+// PageRevisionRepositoryはページリビジョンリポジトリ
 type PageRevisionRepository struct {
 	q *query.Queries
 }
 
-// NewPageRevisionRepository は PageRevisionRepository を生成する
+// NewPageRevisionRepositoryはPageRevisionRepositoryを生成する
 func NewPageRevisionRepository(q *query.Queries) *PageRevisionRepository {
 	return &PageRevisionRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *PageRevisionRepository) WithTx(tx *sql.Tx) *PageRevisionRepository {
 	return &PageRevisionRepository{q: r.q.WithTx(tx)}
 }
 
-// CreatePageRevisionInput はページリビジョン作成の入力パラメータ
+// CreatePageRevisionInputはページリビジョン作成の入力パラメータ
 type CreatePageRevisionInput struct {
 	SpaceID       model.SpaceID
 	SpaceMemberID model.SpaceMemberID
@@ -35,7 +35,7 @@ type CreatePageRevisionInput struct {
 	BodyHTML      string
 }
 
-// Create はページリビジョンを作成する
+// Createはページリビジョンを作成する
 func (r *PageRevisionRepository) Create(ctx context.Context, input CreatePageRevisionInput) (*model.PageRevision, error) {
 	now := time.Now()
 	row, err := r.q.CreatePageRevision(ctx, query.CreatePageRevisionParams{
@@ -54,7 +54,7 @@ func (r *PageRevisionRepository) Create(ctx context.Context, input CreatePageRev
 	return r.toModel(row), nil
 }
 
-// FindByID はIDでページリビジョンを取得する（スペースIDでスコープ）
+// FindByIDはIDでページリビジョンを取得する (スペースIDでスコープ)
 func (r *PageRevisionRepository) FindByID(ctx context.Context, id model.PageRevisionID, spaceID model.SpaceID) (*model.PageRevision, error) {
 	row, err := r.q.FindPageRevisionByID(ctx, query.FindPageRevisionByIDParams{
 		ID:      string(id),
@@ -69,7 +69,7 @@ func (r *PageRevisionRepository) FindByID(ctx context.Context, id model.PageRevi
 	return r.toModel(row), nil
 }
 
-// FindLatestByPageID はページの最新リビジョンを取得する（スペースIDでスコープ）
+// FindLatestByPageIDはページの最新リビジョンを取得する (スペースIDでスコープ)
 func (r *PageRevisionRepository) FindLatestByPageID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID) (*model.PageRevision, error) {
 	row, err := r.q.FindLatestPageRevisionByPage(ctx, query.FindLatestPageRevisionByPageParams{
 		PageID:  string(pageID),
@@ -84,7 +84,7 @@ func (r *PageRevisionRepository) FindLatestByPageID(ctx context.Context, pageID 
 	return r.toModel(row), nil
 }
 
-// toModel は query.PageRevision を model.PageRevision に変換する
+// toModelはquery.PageRevisionをmodel.PageRevisionに変換する
 func (r *PageRevisionRepository) toModel(row query.PageRevision) *model.PageRevision {
 	return &model.PageRevision{
 		ID:            model.PageRevisionID(row.ID),

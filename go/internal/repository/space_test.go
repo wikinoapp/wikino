@@ -25,35 +25,35 @@ func TestSpaceRepository_FindByIdentifier(t *testing.T) {
 	t.Run("存在するスペースを識別子で取得できる", func(t *testing.T) {
 		space, err := repo.FindByIdentifier(context.Background(), "find-by-identifier")
 		if err != nil {
-			t.Fatalf("FindByIdentifier() error = %v", err)
+			t.Fatalf("FindByIdentifier()のエラー = %v", err)
 		}
 		if space == nil {
-			t.Fatal("FindByIdentifier() returned nil, want space")
+			t.Fatal("FindByIdentifier()がnilを返した、期待値 = スペース")
 		}
 		if space.ID != spaceID {
-			t.Errorf("space.ID = %v, want %v", space.ID, spaceID)
+			t.Errorf("space.ID = %v、期待値 = %v", space.ID, spaceID)
 		}
 		if space.Identifier != "find-by-identifier" {
-			t.Errorf("space.Identifier = %v, want find-by-identifier", space.Identifier)
+			t.Errorf("space.Identifier = %v、期待値 = find-by-identifier", space.Identifier)
 		}
 		if space.Name != "Find By Identifier Space" {
-			t.Errorf("space.Name = %v, want Find By Identifier Space", space.Name)
+			t.Errorf("space.Name = %v、期待値 = Find By Identifier Space", space.Name)
 		}
 		if space.Plan != model.PlanSmall {
-			t.Errorf("space.Plan = %v, want PlanSmall", space.Plan)
+			t.Errorf("space.Plan = %v、期待値 = PlanSmall", space.Plan)
 		}
 		if space.DiscardedAt != nil {
-			t.Errorf("space.DiscardedAt = %v, want nil", space.DiscardedAt)
+			t.Errorf("space.DiscardedAt = %v、期待値 = nil", space.DiscardedAt)
 		}
 	})
 
 	t.Run("存在しない識別子はnilを返す", func(t *testing.T) {
 		space, err := repo.FindByIdentifier(context.Background(), "not-exist")
 		if err != nil {
-			t.Fatalf("FindByIdentifier() error = %v", err)
+			t.Fatalf("FindByIdentifier()のエラー = %v", err)
 		}
 		if space != nil {
-			t.Errorf("FindByIdentifier() = %v, want nil", space)
+			t.Errorf("FindByIdentifier() = %v、期待値 = nil", space)
 		}
 	})
 
@@ -75,10 +75,10 @@ func TestSpaceRepository_FindByIdentifier(t *testing.T) {
 
 		space, err := repo.FindByIdentifier(context.Background(), "discarded-space")
 		if err != nil {
-			t.Fatalf("FindByIdentifier() error = %v", err)
+			t.Fatalf("FindByIdentifier()のエラー = %v", err)
 		}
 		if space != nil {
-			t.Errorf("FindByIdentifier() = %v, want nil for discarded space", space)
+			t.Errorf("FindByIdentifier() = %v、期待値 = nil (削除済みスペース)", space)
 		}
 	})
 
@@ -91,13 +91,13 @@ func TestSpaceRepository_FindByIdentifier(t *testing.T) {
 
 		space, err := repo.FindByIdentifier(context.Background(), "free-plan-space")
 		if err != nil {
-			t.Fatalf("FindByIdentifier() error = %v", err)
+			t.Fatalf("FindByIdentifier()のエラー = %v", err)
 		}
 		if space == nil {
-			t.Fatal("FindByIdentifier() returned nil, want space")
+			t.Fatal("FindByIdentifier()がnilを返した、期待値 = スペース")
 		}
 		if space.Plan != model.PlanFree {
-			t.Errorf("space.Plan = %v, want PlanFree", space.Plan)
+			t.Errorf("space.Plan = %v、期待値 = PlanFree", space.Plan)
 		}
 	})
 }
@@ -116,7 +116,7 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 			WithAtname("active-user").
 			Build()
 
-		// 対象ユーザーがアクティブメンバーのスペース（含まれるべき）
+		// 対象ユーザーがアクティブメンバーのスペース (含まれるべき)
 		joinedSpaceID := testutil.NewSpaceBuilder(t, tx).
 			WithIdentifier("active-user-joined").
 			WithName("Joined Space").
@@ -126,7 +126,7 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 			WithUserID(userID).
 			Build()
 
-		// 別ユーザーが所有するスペース（含まれないべき）
+		// 別ユーザーが所有するスペース (含まれないべき)
 		otherUserID := testutil.NewUserBuilder(t, tx).
 			WithEmail("other-user@example.com").
 			WithAtname("other-user").
@@ -142,16 +142,16 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 
 		spaces, err := repo.ListActiveByUser(ctx, userID)
 		if err != nil {
-			t.Fatalf("ListActiveByUser() error = %v", err)
+			t.Fatalf("ListActiveByUser()のエラー = %v", err)
 		}
 		if len(spaces) != 1 {
-			t.Fatalf("len(spaces) = %d, want 1", len(spaces))
+			t.Fatalf("len(spaces) = %d、期待値 = 1", len(spaces))
 		}
 		if spaces[0].ID != joinedSpaceID {
-			t.Errorf("spaces[0].ID = %v, want %v", spaces[0].ID, joinedSpaceID)
+			t.Errorf("spaces[0].ID = %v、期待値 = %v", spaces[0].ID, joinedSpaceID)
 		}
 		if spaces[0].Identifier != "active-user-joined" {
-			t.Errorf("spaces[0].Identifier = %v, want active-user-joined", spaces[0].Identifier)
+			t.Errorf("spaces[0].Identifier = %v、期待値 = active-user-joined", spaces[0].Identifier)
 		}
 	})
 
@@ -190,13 +190,13 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 
 		spaces, err := repo.ListActiveByUser(ctx, userID)
 		if err != nil {
-			t.Fatalf("ListActiveByUser() error = %v", err)
+			t.Fatalf("ListActiveByUser()のエラー = %v", err)
 		}
 		if len(spaces) != 1 {
-			t.Fatalf("len(spaces) = %d, want 1", len(spaces))
+			t.Fatalf("len(spaces) = %d、期待値 = 1", len(spaces))
 		}
 		if spaces[0].ID != liveSpaceID {
-			t.Errorf("spaces[0].ID = %v, want %v", spaces[0].ID, liveSpaceID)
+			t.Errorf("spaces[0].ID = %v、期待値 = %v", spaces[0].ID, liveSpaceID)
 		}
 	})
 
@@ -216,7 +216,7 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 			WithUserID(userID).
 			Build()
 
-		// 退会メンバーのスペース（active = false）
+		// 退会メンバーのスペース (active = false)
 		inactiveSpaceID := testutil.NewSpaceBuilder(t, tx).
 			WithIdentifier("inactive-target-inactive").
 			WithName("Inactive Space").
@@ -229,17 +229,17 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 
 		spaces, err := repo.ListActiveByUser(ctx, userID)
 		if err != nil {
-			t.Fatalf("ListActiveByUser() error = %v", err)
+			t.Fatalf("ListActiveByUser()のエラー = %v", err)
 		}
 		if len(spaces) != 1 {
-			t.Fatalf("len(spaces) = %d, want 1", len(spaces))
+			t.Fatalf("len(spaces) = %d、期待値 = 1", len(spaces))
 		}
 		if spaces[0].ID != activeSpaceID {
-			t.Errorf("spaces[0].ID = %v, want %v", spaces[0].ID, activeSpaceID)
+			t.Errorf("spaces[0].ID = %v、期待値 = %v", spaces[0].ID, activeSpaceID)
 		}
 	})
 
-	t.Run("space_members.joined_at の降順で返す", func(t *testing.T) {
+	t.Run("space_members.joined_atの降順で返す", func(t *testing.T) {
 		userID := testutil.NewUserBuilder(t, tx).
 			WithEmail("ordered-user@example.com").
 			WithAtname("ordered-user").
@@ -278,15 +278,15 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 
 		spaces, err := repo.ListActiveByUser(ctx, userID)
 		if err != nil {
-			t.Fatalf("ListActiveByUser() error = %v", err)
+			t.Fatalf("ListActiveByUser()のエラー = %v", err)
 		}
 		if len(spaces) != 3 {
-			t.Fatalf("len(spaces) = %d, want 3", len(spaces))
+			t.Fatalf("len(spaces) = %d、期待値 = 3", len(spaces))
 		}
 		want := []model.SpaceID{newSpaceID, middleSpaceID, oldSpaceID}
 		for i, expected := range want {
 			if spaces[i].ID != expected {
-				t.Errorf("spaces[%d].ID = %v, want %v", i, spaces[i].ID, expected)
+				t.Errorf("spaces[%d].ID = %v、期待値 = %v", i, spaces[i].ID, expected)
 			}
 		}
 	})
@@ -299,10 +299,10 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 
 		spaces, err := repo.ListActiveByUser(ctx, userID)
 		if err != nil {
-			t.Fatalf("ListActiveByUser() error = %v", err)
+			t.Fatalf("ListActiveByUser()のエラー = %v", err)
 		}
 		if len(spaces) != 0 {
-			t.Errorf("len(spaces) = %d, want 0", len(spaces))
+			t.Errorf("len(spaces) = %d、期待値 = 0", len(spaces))
 		}
 	})
 }

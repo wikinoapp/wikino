@@ -9,83 +9,45 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// pageTitleLengthLimit mirrors pageTitleMaxLength in internal/validator, which
-// is unexported there. The longest title the seed writes sits exactly on it, so
-// that the headings and the listings are looked at in the worst case the
-// application actually accepts rather than in an arbitrary long one.
-//
-// [Ja] pageTitleLengthLimit は internal/validator の pageTitleMaxLength に合わせた
+// pageTitleLengthLimitはinternal/validatorのpageTitleMaxLengthに合わせた
 // もので、あちらは非公開になっている。シードが書く最も長いタイトルをちょうどこの
 // 長さにすることで、見出しや一覧を、任意に長くしたものではなく、アプリケーションが
 // 実際に受け付ける最悪のケースで確認できるようにする。
 const pageTitleLengthLimit = 200
 
-// Sizes of the two generated bodies. They are constants rather than literals in
-// the builders so that the reason each body is oversized can be read without
-// counting the output: the table is wider than any column the page is rendered
-// in, and the code block is longer than any screen is tall.
-//
-// [Ja] 生成する 2 つの本文の大きさ。ビルダーの中にリテラルで置かず定数にしているのは、
+// 生成する2つの本文の大きさ。ビルダーの中にリテラルで置かず定数にしているのは、
 // 各本文がなぜ過大なのかを、出力を数えずに読めるようにするため。テーブルはページが
 // 描画されるどの段よりも横に広く、コードブロックはどの画面よりも縦に長い。
 const (
 	wideTableColumns = 14
 	wideTableRows    = 12
 
-	// wideTableCellMinLength is the shortest a cell of that table may be while
-	// the table still reaches past the column it is read in. Fourteen columns of
-	// this many half-width characters, none of which a browser is allowed to
-	// break, stand wider than the body is ever given.
-	//
-	// [Ja] wideTableCellMinLength は、テーブルが読まれる段の幅を超えたままでいられる
-	// セルの最小の長さ。この長さの半角文字が 14 列並び、そのどれもブラウザには折り返せ
+	// wideTableCellMinLengthは、テーブルが読まれる段の幅を超えたままでいられる
+	// セルの最小の長さ。この長さの半角文字が14列並び、そのどれもブラウザには折り返せ
 	// ないため、本文に与えられるどの幅よりも広くなる。
 	wideTableCellMinLength = 16
 
-	// longCodeBlockPrintLines is the number of repeated output statements that
-	// make the block taller than the screen. It does not count the package,
-	// import, declarations, or braces around them.
-	//
-	// [Ja] longCodeBlockPrintLines は、コードブロックを画面より縦に長くするために
-	// 繰り返す出力文の件数。前後にある package・import・宣言・括弧は数に含めない。
+	// longCodeBlockPrintLinesは、コードブロックを画面より縦に長くするために
+	// 繰り返す出力文の件数。前後にあるpackage・import・宣言・括弧は数に含めない。
 	longCodeBlockPrintLines = 200
-	// longCodeBlockWideLineRepeats builds the one line inside the block that is
-	// far wider than the rest, which is what a horizontal scrollbar inside a
-	// code block has to be provoked by.
-	//
-	// [Ja] longCodeBlockWideLineRepeats は、ブロックの中で 1 行だけ突出して長い行を
+	// longCodeBlockWideLineRepeatsは、ブロックの中で1行だけ突出して長い行を
 	// 組み立てる。コードブロック内の横スクロールバーは、これによって初めて現れる。
 	longCodeBlockWideLineRepeats = 30
 )
 
-// codeFence opens and closes a fenced code block. It is a constant because a
-// Go raw string literal is delimited by the same character, so a body carrying
-// a fence cannot be written as one.
-//
-// [Ja] codeFence はコードブロックの開始と終了を表す。定数にしているのは、Go の raw
-// string literal が同じ文字で区切られるため、フェンスを含む本文をそれで書けないため。
+// codeFenceはコードブロックの開始と終了を表す。定数にしているのは、Goのraw
+// string literalが同じ文字で区切られるため、フェンスを含む本文をそれで書けないため。
 const codeFence = "```"
 
-// sandboxPageSpec describes one page written to push the layout somewhere it
-// does not usually go.
-//
-// [Ja] sandboxPageSpec は、レイアウトを普段は行かないところまで押し広げるために
-// 書くページ 1 件の内容。
+// sandboxPageSpecは、レイアウトを普段は行かないところまで押し広げるために
+// 書くページ1件の内容。
 type sandboxPageSpec struct {
 	title string
 	body  string
 }
 
-// Titles of the sandbox pages. The first two are the point of their own page:
-// one is as long as a title may get, the other is written in characters that
-// are neither one byte nor one column wide.
-//
-// The long one stays written in a language that puts spaces between words. That
-// is the wrapping none of the other pages is written to show, and rewriting it
-// would leave every title in the space wrapping by the same rules.
-//
-// [Ja] 表示崩れ確認用ページのタイトル。最初の 2 つはそれ自体がページの主題になる。
-// 一方はタイトルが取りうる最大の長さで、もう一方は 1 バイトでも 1 桁でもない文字で
+// 表示崩れ確認用ページのタイトル。最初の2つはそれ自体がページの主題になる。
+// 一方はタイトルが取りうる最大の長さで、もう一方は1バイトでも1桁でもない文字で
 // 書かれている。
 //
 // 長いほうは、単語の間に空白を置く言語で書いたまま残す。それは他のどのページも
@@ -98,16 +60,10 @@ const (
 	longCodeBlockPageTitle  = "長いコードブロック"
 )
 
-// sandboxPageSpecs builds the pages of topics.sandbox.
+// sandboxPageSpecsは「サンドボックス」トピックのページを組み立てる。
 //
-// They are built at call time rather than held as a package-level list because
-// two of the bodies are generated from the sizes above, and a list built once
-// at start-up would hide what decides how big they are.
-//
-// [Ja] sandboxPageSpecs は「サンドボックス」トピックのページを組み立てる。
-//
-// パッケージ変数の一覧ではなく呼び出し時に組み立てるのは、2 つの本文が上の大きさから
-// 生成されるため。起動時に 1 度だけ作る一覧にすると、その大きさを何が決めているのかが
+// パッケージ変数の一覧ではなく呼び出し時に組み立てるのは、2つの本文が上の大きさから
+// 生成されるため。起動時に1度だけ作る一覧にすると、その大きさを何が決めているのかが
 // 見えなくなる。
 func sandboxPageSpecs() []sandboxPageSpec {
 	return []sandboxPageSpec{
@@ -118,17 +74,8 @@ func sandboxPageSpecs() []sandboxPageSpec {
 	}
 }
 
-// generateSandboxPages creates the pages of topics.sandbox, each of which
-// pushes one part of the layout past what an ordinary page asks of it.
-//
-// A screen that holds together on the pages the rest of the seed writes has
-// only been shown to hold together on content of a comfortable size. These
-// pages are the uncomfortable sizes: a title with nowhere to fit, characters
-// that break lines by other rules, a table wider than its column and a code
-// block longer than the screen.
-//
-// [Ja] generateSandboxPages は「サンドボックス」トピックのページを作成する。各ページは
-// レイアウトのどこか 1 箇所を、通常のページが求める以上に押し広げる。
+// generateSandboxPagesは「サンドボックス」トピックのページを作成する。各ページは
+// レイアウトのどこか1箇所を、通常のページが求める以上に押し広げる。
 //
 // シードの他のページで崩れない画面は、扱いやすい大きさの内容で崩れないことしか
 // 示していない。ここのページは扱いにくい大きさそのものになる。収まり先の無い
@@ -168,14 +115,8 @@ func generateSandboxPages(
 	return nil
 }
 
-// longTitlePageBody says what to look at on the page whose title is the point
-// of it. The body itself is short: a long body would give the screen a second
-// thing to be wrong about. It is written in the language of its title, so that
-// the page reads as one piece rather than as a title and a body addressed to
-// different readers.
-//
-// [Ja] longTitlePageBody は、タイトルこそが主題であるページで何を見るかを述べる。
-// 本文自体は短くしている。長い本文にすると、画面が崩れうる箇所が 2 つになるため。
+// longTitlePageBodyは、タイトルこそが主題であるページで何を見るかを述べる。
+// 本文自体は短くしている。長い本文にすると、画面が崩れうる箇所が2つになるため。
 // 本文はタイトルと同じ言語で書いており、タイトルと本文が別々の読み手に向けて
 // 書かれたようには見えないようにしている。
 const longTitlePageBody = `This page exists for its title, which is as long as a title is allowed to get.
@@ -183,16 +124,9 @@ const longTitlePageBody = `This page exists for its title, which is as long as a
 Look at it in the topic listing, in the space listing, in the heading of this page and in the browser tab. Each of those has a different amount of room, and the title has to be wrapped or cut short in each of them rather than pushing the layout sideways.
 `
 
-// multibyteTitlePageBody exercises what changes when the text is not written in
-// the Latin alphabet: line breaking no longer follows spaces, and a character
-// is no longer one byte or one column wide. The seed's other Japanese bodies
-// carry such characters too, but this one is built to leave neither of those
-// anywhere to hide: a paragraph carrying no space at all, a table of full-width
-// headings, and emoji.
-//
-// [Ja] multibyteTitlePageBody は、テキストがラテン文字で書かれていないときに何が
-// 変わるのかを確認する。行の折り返しが空白に従わなくなり、1 文字が 1 バイトでも
-// 1 桁でもなくなる。シードの他の日本語の本文にもそうした文字は含まれるが、この本文は
+// multibyteTitlePageBodyは、テキストがラテン文字で書かれていないときに何が
+// 変わるのかを確認する。行の折り返しが空白に従わなくなり、1文字が1バイトでも
+// 1桁でもなくなる。シードの他の日本語の本文にもそうした文字は含まれるが、この本文は
 // そのどちらも紛れ込む余地が無いように組み立ててある。空白をひとつも含まない段落、
 // 全角の見出しを持つテーブル、そして絵文字。
 const multibyteTitlePageBody = `このページはタイトルと本文の両方に、日本語と絵文字を含んでいます 🎉
@@ -212,14 +146,9 @@ const multibyteTitlePageBody = `このページはタイトルと本文の両方
 - ` + "`コード`" + `を含む日本語の行
 `
 
-// wideTableBody builds a table wide enough to expose whether horizontal
-// overflow is contained within the page content. Each cell is one sufficiently
-// long token of ASCII letters, digits and underscores, so it has no ordinary
-// line-breaking opportunity and the columns retain their combined width.
-//
-// [Ja] wideTableBody は、横あふれがページ本文の内側に収まっているかを確認できる幅の
-// テーブルを組み立てる。各セルは ASCII の英数字とアンダースコアからなる十分に長い
-// 1 トークンであり、通常の改行機会を持たないため、列を合わせた幅が保たれる。
+// wideTableBodyは、横あふれがページ本文の内側に収まっているかを確認できる幅の
+// テーブルを組み立てる。各セルはASCIIの英数字とアンダースコアからなる十分に長い
+// 1トークンであり、通常の改行機会を持たないため、列を合わせた幅が保たれる。
 func wideTableBody() string {
 	var b strings.Builder
 
@@ -253,28 +182,15 @@ func wideTableBody() string {
 	return b.String()
 }
 
-// wideTableCell writes one cell of that table. The token names the cell it sits
-// in, so that the row and the column reached after moving sideways can be read
-// off the cell itself. Its ASCII letters, digits and underscores keep it as one
-// unbroken token under the browser's line-breaking rules.
-//
-// [Ja] wideTableCell はそのテーブルのセルを 1 つ書く。トークンは自分がどのセルなのかを
-// 名乗るため、横へ移動した先がどの行のどの列なのかをセル自身から読み取れる。ASCII の
-// 英数字とアンダースコアにより、ブラウザの改行規則でも 1 つの折り返されないトークンに
+// wideTableCellはそのテーブルのセルを1つ書く。トークンは自分がどのセルなのかを
+// 名乗るため、横へ移動した先がどの行のどの列なのかをセル自身から読み取れる。ASCIIの
+// 英数字とアンダースコアにより、ブラウザの改行規則でも1つの折り返されないトークンに
 // 保たれる。
 func wideTableCell(row, column int) string {
 	return fmt.Sprintf("no_break_r%02d_c%02d", row, column)
 }
 
-// longCodeBlockBody builds a page whose code block is longer than the screen is
-// tall and holds one line wider than the screen is wide.
-//
-// The block absorbs the two directions differently, and the body says which is
-// which. Sideways it scrolls on its own, so the page keeps its width. Downwards
-// nothing caps its height, so it grows with the lines and the page is what
-// scrolls.
-//
-// [Ja] longCodeBlockBody は、画面よりも縦に長く、1 行だけ画面よりも横に広い行を持つ
+// longCodeBlockBodyは、画面よりも縦に長く、1行だけ画面よりも横に広い行を持つ
 // コードブロックのページを組み立てる。
 //
 // ブロックは縦と横を別々の形で受け止めるため、本文にはどちらがどうなのかを書いている。

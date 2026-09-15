@@ -1,6 +1,4 @@
-// Package suggestion_application provides the HTTP handlers for applying a suggestion.
-//
-// [Ja] Package suggestion_application は編集提案を反映する操作の HTTP ハンドラーを提供します。
+// Package suggestion_applicationは編集提案を反映する操作のHTTPハンドラーを提供します。
 package suggestion_application
 
 import (
@@ -9,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は編集提案反映ハンドラー
+// Handlerは編集提案反映ハンドラー
 type Handler struct {
 	cfg                        *config.Config
 	flashMgr                   *session.FlashManager
@@ -17,7 +15,7 @@ type Handler struct {
 	getSuggestionDetailUsecase *usecase.GetSuggestionDetailUsecase
 }
 
-// NewHandler は新しい編集提案反映ハンドラーを作成します
+// NewHandlerは新しい編集提案反映ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,

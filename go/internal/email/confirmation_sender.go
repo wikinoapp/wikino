@@ -9,17 +9,17 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates/emails/email_confirmation"
 )
 
-// ConfirmationSender はメール確認コードのメール送信を行う
+// ConfirmationSenderはメール確認コードのメール送信を行う
 type ConfirmationSender struct {
 	sender Sender
 }
 
-// NewConfirmationSender は新しい ConfirmationSender を作成する
+// NewConfirmationSenderは新しいConfirmationSenderを作成する
 func NewConfirmationSender(sender Sender) *ConfirmationSender {
 	return &ConfirmationSender{sender: sender}
 }
 
-// Send はメール確認コードのメールをレンダリングして送信する
+// Sendはメール確認コードのメールをレンダリングして送信する
 func (s *ConfirmationSender) Send(ctx context.Context, to, code, appURL, locale string) error {
 	ctx = i18n.SetLocale(ctx, locale)
 	subject := i18n.T(ctx, "email_confirmation_subject")

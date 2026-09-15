@@ -1,4 +1,4 @@
-// Package sign_up はサインアップページのハンドラーを提供します
+// Package sign_upはサインアップページのハンドラーを提供します
 package sign_up
 
 import (
@@ -6,13 +6,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
-// Handler はサインアップハンドラー
+// Handlerはサインアップハンドラー
 type Handler struct {
 	cfg        *config.Config
 	sessionMgr *session.Manager
 }
 
-// NewHandler は新しいサインアップハンドラーを作成します
+// NewHandlerは新しいサインアップハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,

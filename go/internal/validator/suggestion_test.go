@@ -63,10 +63,10 @@ func TestSuggestionCreateValidator_FormatValidation(t *testing.T) {
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError, got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if !ve.HasFieldError(tt.expectedField) {
-				t.Errorf("expected %s field error but got none", tt.expectedField)
+				t.Errorf("%sのフィールドエラーが無い", tt.expectedField)
 			}
 		})
 	}
@@ -180,10 +180,10 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("予期しないエラー: %v", err)
 		}
 		if len(draftPages) != 1 {
-			t.Errorf("DraftPages count = %d, want 1", len(draftPages))
+			t.Errorf("DraftPagesの件数 = %d、期待値 = 1", len(draftPages))
 		}
 	})
 
@@ -199,10 +199,10 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("draft_page_ids") {
-			t.Error("expected draft_page_ids field error")
+			t.Error("draft_page_idsのフィールドエラーが無い")
 		}
 	})
 
@@ -217,10 +217,10 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("draft_page_ids") {
-			t.Error("expected draft_page_ids field error")
+			t.Error("draft_page_idsのフィールドエラーが無い")
 		}
 	})
 
@@ -235,10 +235,10 @@ func TestSuggestionCreateValidator_StateValidation(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("draft_page_ids") {
-			t.Error("expected draft_page_ids field error")
+			t.Error("draft_page_idsのフィールドエラーが無い")
 		}
 	})
 }
@@ -315,14 +315,14 @@ func TestSuggestionUpdateValidator(t *testing.T) {
 			if tt.wantError {
 				ve := model.AsValidationError(err)
 				if ve == nil {
-					t.Fatal("expected ValidationError, got nil")
+					t.Fatal("ValidationErrorを期待したが、nilだった")
 				}
 				if tt.expectedField != "" && !ve.HasFieldError(tt.expectedField) {
-					t.Errorf("expected %s field error but got none", tt.expectedField)
+					t.Errorf("%sのフィールドエラーが無い", tt.expectedField)
 				}
 			} else {
 				if err != nil {
-					t.Errorf("unexpected error: %v", err)
+					t.Errorf("予期しないエラー: %v", err)
 				}
 			}
 		})

@@ -13,16 +13,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// NewData is what the screen an export is started from is rendered with.
+// NewDataはエクスポートを開始する画面をレンダリングする元になるデータ。
 //
-// InProgressExport is the export the space is already running, and is nil when it is not running
-// one. The start button gives way to a link to it, because starting a second export while the
-// first is going is refused.
-//
-// [Ja] NewData はエクスポートを開始する画面をレンダリングする元になるデータ。
-//
-// InProgressExport はそのスペースが既に実行しているエクスポートで、実行していなければ nil になる。
-// 1 つ目が続いている間に 2 つ目を開始しても拒否されるため、開始ボタンはそのエクスポートへの
+// InProgressExportはそのスペースが既に実行しているエクスポートで、実行していなければnilになる。
+// 1つ目が続いている間に2つ目を開始しても拒否されるため、開始ボタンはそのエクスポートへの
 // リンクに置き換わる。
 type NewData struct {
 	CSRFToken        string
@@ -30,9 +24,7 @@ type NewData struct {
 	InProgressExport *viewmodel.Export
 }
 
-// New renders the screen an export is started from.
-//
-// [Ja] New はエクスポートを開始する画面を表示します。
+// Newはエクスポートを開始する画面を表示します。
 func New(data NewData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -97,7 +89,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "export_new_in_progress"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 45, Col: 53}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 37, Col: 53}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -110,7 +102,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var4 templ.SafeURL
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SpaceSettingsExportPath(data.Space.Identifier, data.InProgressExport.ID))))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 49, Col: 120}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 41, Col: 120}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -123,7 +115,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "export_new_in_progress_link"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 52, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 44, Col: 57}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -141,7 +133,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var6 templ.SafeURL
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SpaceSettingsExportsPath(data.Space.Identifier))))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 57, Col: 96}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 49, Col: 96}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -154,7 +146,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 61, Col: 68}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 53, Col: 68}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 				if templ_7745c5c3_Err != nil {
@@ -167,7 +159,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "export_new_start"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 63, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 55, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -180,7 +172,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var9 templ.SafeURL
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.SpaceSettingsPath(data.Space.Identifier))))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 66, Col: 88}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 58, Col: 88}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -193,7 +185,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "export_new_cancel"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 70, Col: 47}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/export/new.templ`, Line: 62, Col: 47}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -218,10 +210,7 @@ func New(data NewData) templ.Component {
 	})
 }
 
-// descriptionSubtitle renders the subtitle both export screens share, which carries a link to the
-// help page.
-//
-// [Ja] descriptionSubtitle は 2 つのエクスポート画面が共有するサブタイトルを表示します。
+// descriptionSubtitleは2つのエクスポート画面が共有するサブタイトルを表示します。
 // ヘルプページへのリンクを含みます。
 func descriptionSubtitle(key string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {

@@ -8,23 +8,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DiffViewData is the data passed to the diff component. PageTitle names the page the diff
-// belongs to, so that the caption of each block can tell one page's diff from another's when
-// several of them sit on the same screen.
-//
-// [Ja] DiffViewData は差分表示コンポーネントに渡すデータです。PageTitle は差分が属するページの
+// DiffViewDataは差分表示コンポーネントに渡すデータです。PageTitleは差分が属するページの
 // 名前で、複数の差分が同じ画面に並ぶときに、各ブロックのキャプションでページを区別するために使います。
 type DiffViewData struct {
 	PageTitle string
 	Blocks    []viewmodel.DiffBlock
 }
 
-// diffCaptionPageTitle names the page the diff belongs to, falling back to the same untitled
-// label the rest of the screens use so that an untitled page is named the same way everywhere.
-// A page keeps no title until it is published, so the caption would otherwise open with a bare
-// separator.
-//
-// [Ja] diffCaptionPageTitle は差分が属するページを言い表す。タイトルが無い場合は他の画面と同じ
+// diffCaptionPageTitleは差分が属するページを言い表す。タイトルが無い場合は他の画面と同じ
 // 「無題」の表記へ落とし、タイトルの無いページの呼び方を揃える。ページは公開されるまでタイトルを
 // 持たないことがあり、そのままではキャプションが区切り記号から始まってしまうためである。
 func diffCaptionPageTitle(ctx context.Context, pageTitle string) string {
@@ -35,9 +26,7 @@ func diffCaptionPageTitle(ctx context.Context, pageTitle string) string {
 	return templates.T(ctx, "page_show_untitled")
 }
 
-// DiffView displays the body diff of a page as one table per changed block.
-//
-// [Ja] DiffView はページ本文の差分を、変更のまとまりごとに 1 つのテーブルとして表示します。
+// DiffViewはページ本文の差分を、変更のまとまりごとに1つのテーブルとして表示します。
 templ DiffView(data DiffViewData) {
 	<div class="flex flex-col gap-4">
 		if len(data.Blocks) == 0 {
@@ -52,34 +41,19 @@ templ DiffView(data DiffViewData) {
 	</div>
 }
 
-// diffBlock displays one block of the diff. position is the block's 1-based place among the
-// total blocks of the same diff, and the caption reads out both of them after pageTitle.
-//
-// [Ja] diffBlock は差分の 1 ブロックを表示します。position は同じ差分の total ブロック中で
-// このブロックが何番目かを 1 始まりで表し、キャプションは pageTitle に続けてその両方を読み上げます。
+// diffBlockは差分の1ブロックを表示します。positionは同じ差分のtotalブロック中で
+// このブロックが何番目かを1始まりで表し、キャプションはpageTitleに続けてその両方を読み上げます。
 templ diffBlock(pageTitle string, block viewmodel.DiffBlock, position int, total int) {
-	// The box is decoration, not a scroller. The body cell wraps anywhere (whitespace-pre-wrap
-	// break-all), so the table never grows past the box at any width, and a scroller here would
-	// only add a focus stop that scrolls nothing to every block of every diff. overflow-clip cuts
-	// the row backgrounds at the rounded corners exactly as overflow-x-auto did, without leaving
-	// the box a scroll container the way overflow-hidden still would.
-	//
-	// [Ja] この箱は装飾であってスクロール領域ではない。本文のセルはどこでも折り返す
+	// この箱は装飾であってスクロール領域ではない。本文のセルはどこでも折り返す
 	// (whitespace-pre-wrap break-all) ため、テーブルはどの幅でも箱からはみ出さず、ここに横スクロール
 	// を置くと、どの差分のどのブロックにも「動かないフォーカス位置」が増えるだけになる。
-	// overflow-clip は行の背景を角丸で切り抜く働きを overflow-x-auto と同じまま保ちつつ、
-	// overflow-hidden なら残るスクロールコンテナを作らない。
+	// overflow-clipは行の背景を角丸で切り抜く働きをoverflow-x-autoと同じまま保ちつつ、
+	// overflow-hiddenなら残るスクロールコンテナを作らない。
 	<div class="overflow-clip rounded-md border border-border">
 		<table class="w-full text-sm font-mono border-collapse">
-			// The diff has no header cells: adding them would make every line read out
-			// "old line number" and "new line number" before its content. The caption is what
-			// tells a screen reader jumping straight to the table what it is looking at. One
-			// suggestion can change several pages, so the page name has to be part of it: without
-			// it, the diffs of two pages carry the very same caption.
-			//
-			// [Ja] 差分は見出しセルを持たない。見出しを足すと、すべての行が内容の前に「旧行番号」
+			// 差分は見出しセルを持たない。見出しを足すと、すべての行が内容の前に「旧行番号」
 			// 「新行番号」を読み上げることになるためである。表へ直接飛んだスクリーンリーダーに
-			// それが何の表かを伝えるのはキャプションになる。1 つの編集提案は複数のページを変更しうる
+			// それが何の表かを伝えるのはキャプションになる。1つの編集提案は複数のページを変更しうる
 			// ため、ページ名もそこに含める必要がある。含めないと、別々のページの差分がまったく同じ
 			// キャプションを持つことになる。
 			<caption class="sr-only">
@@ -95,7 +69,7 @@ templ diffBlock(pageTitle string, block viewmodel.DiffBlock, position int, total
 	</div>
 }
 
-// diffLine は差分の1行を表示します
+// diffLineは差分の1行を表示します
 templ diffLine(line viewmodel.DiffLine) {
 	switch line.Type {
 		case viewmodel.DiffLineEqual:

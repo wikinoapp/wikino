@@ -27,7 +27,7 @@ func TestEdit_未ログインでリダイレクトされる(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 }
 
@@ -55,7 +55,7 @@ func TestEdit_存在しない編集提案で404が返る(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -108,38 +108,30 @@ func TestEdit_編集権限がある場合にフォームが表示される(t *te
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "編集テスト提案") {
-		t.Error("response should contain suggestion title")
+		t.Error("レスポンスに編集提案のタイトルが含まれていない")
 	}
 	if !strings.Contains(body, "テスト本文") {
-		t.Error("response should contain suggestion body")
+		t.Error("レスポンスに編集提案の本文が含まれていない")
 	}
 
-	// The breadcrumb header comes from the layout, so it renders outside <main> (the #main skip
-	// link has to bypass it) and keeps this screen's max-w-3xl content width.
-	//
-	// [Ja] パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#main へのスキップ
-	// リンクが飛ばせる必要があるため)。この画面の本文幅 max-w-3xl も維持する。
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅max-w-3xlも維持する。
 	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
-		t.Error("shared breadcrumb header should keep the max-w-3xl content width")
+		t.Error("共通のパンくずヘッダーがmax-w-3xlのコンテンツ幅を保っていない")
 	}
 	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
 	if header == -1 || main == -1 || header > main {
-		t.Errorf("shared breadcrumb header (index %d) must precede <main> (index %d)", header, main)
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 
-	// The edit form shares DetailBreadcrumbHeaderData with the public change diff, but it requires
-	// authentication and carries no canonical URL, so it must stay opted out of BreadcrumbList
-	// JSON-LD. Moving the opt-in into the shared helper would publish this screen's labels and URLs
-	// as machine-readable data.
-	//
-	// [Ja] 編集フォームは公開の変更差分と DetailBreadcrumbHeaderData を共有するが、認証必須で canonical
-	// も持たないため BreadcrumbList JSON-LD の対象外のままでなければならない。オプトインを共有ヘルパーへ
-	// 移すと、この画面のラベルと URL が機械可読なデータとして出てしまう。
+	// 編集フォームは公開の変更差分とDetailBreadcrumbHeaderDataを共有するが、認証必須でcanonical
+	// も持たないためBreadcrumbList JSON-LDの対象外のままでなければならない。オプトインを共有ヘルパーへ
+	// 移すと、この画面のラベルとURLが機械可読なデータとして出てしまう。
 	for _, notWant := range []string{
 		"application/ld+json",
 		"BreadcrumbList",

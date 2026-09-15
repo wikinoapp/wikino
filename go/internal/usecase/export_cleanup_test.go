@@ -12,9 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// exportCleanupStorage injects storage failures and records contexts at the I/O boundary.
-//
-// [Ja] exportCleanupStorage はストレージの失敗を注入し、I/O 境界の context を記録する。
+// exportCleanupStorageはストレージの失敗を注入し、I/O境界のcontextを記録する。
 type exportCleanupStorage struct {
 	*storage.FakeObjectStorage
 	deleteErr     error
@@ -41,9 +39,7 @@ func (s *exportCleanupStorage) Delete(ctx context.Context, key string) error {
 	return s.FakeObjectStorage.Delete(ctx, key)
 }
 
-// exportOutcomeSender checks that heartbeat has stopped and notification has a live deadline.
-//
-// [Ja] exportOutcomeSender は heartbeat の停止と、通知用の有効な期限を確認する。
+// exportOutcomeSenderはheartbeatの停止と、通知用の有効な期限を確認する。
 type exportOutcomeSender struct {
 	fakeExportSender
 	t             *testing.T
@@ -53,27 +49,27 @@ type exportOutcomeSender struct {
 func (s *exportOutcomeSender) SendSucceeded(ctx context.Context, to, url, appURL, locale string) error {
 	s.t.Helper()
 	if s.objectStorage.uploadContext.Err() == nil {
-		s.t.Error("generation context remains active after success")
+		s.t.Error("成功後も生成処理のコンテキストが有効なまま")
 	}
 	if ctx.Err() != nil {
-		s.t.Errorf("notification context canceled: %v", ctx.Err())
+		s.t.Errorf("通知のコンテキストがキャンセルされた: %v", ctx.Err())
 	}
 	if _, ok := ctx.Deadline(); !ok {
-		s.t.Error("notification has no deadline")
+		s.t.Error("通知に期限が無い")
 	}
 	return s.fakeExportSender.SendSucceeded(ctx, to, url, appURL, locale)
 }
 
 func TestGenerateExportFilesUsecase_OutcomeContexts(t *testing.T) {
-	// Sequential execution avoids disturbing the existing temporary-file cleanup assertions.
-	//
-	// [Ja] 既存の一時ファイル数の検証に干渉しないよう逐次実行する。
+	// 既存の一時ファイル数の検証に干渉しないよう逐次実行する。
 	for _, replaced := range []bool{false, true} {
 		name := "success"
+		caseName := "生成成功"
 		if replaced {
 			name = "replaced"
+			caseName = "生成中に別のエクスポートへ置き換え"
 		}
-		t.Run(name, func(t *testing.T) {
+		t.Run(caseName, func(t *testing.T) {
 			f := setupGenerateExportFixture(t, "outcome-"+name)
 			id := f.queuedExport(t)
 			objectStorage := &exportCleanupStorage{FakeObjectStorage: f.objectStorage}
@@ -96,24 +92,22 @@ func TestGenerateExportFilesUsecase_OutcomeContexts(t *testing.T) {
 				wantMail = 0
 			}
 			if len(sender.succeededURLs) != wantMail {
-				t.Errorf("success mails=%d, want %d", len(sender.succeededURLs), wantMail)
+				t.Errorf("完了メールの送信数 = %d、期待値 = %d", len(sender.succeededURLs), wantMail)
 			}
 			if objectStorage.deleteContext == nil {
-				t.Fatal("cleanup not called")
+				t.Fatal("クリーンアップが呼ばれていない")
 			}
 			if _, ok := objectStorage.deleteContext.Deadline(); !ok {
-				t.Error("cleanup has no deadline")
+				t.Error("クリーンアップに期限が無い")
 			}
 			if keys := f.objectStorage.Keys(); len(keys) != wantMail {
-				t.Errorf("remaining objects=%v", keys)
+				t.Errorf("残っているオブジェクト = %v", keys)
 			}
 		})
 	}
 }
 
-// addLegacyExportFile creates the associations used by Rails has_one_attached :file.
-//
-// [Ja] addLegacyExportFile は Rails の has_one_attached :file が使う関連を作成する。
+// addLegacyExportFileはRailsのhas_one_attached :fileが使う関連を作成する。
 func addLegacyExportFile(t *testing.T, f generateExportFixture, id model.ExportID, key string) string {
 	t.Helper()
 	var blobID string
@@ -127,9 +121,7 @@ func addLegacyExportFile(t *testing.T, f generateExportFixture, id model.ExportI
 	return blobID
 }
 
-// attachLegacyExportFile links an existing blob to an export for shared-blob tests.
-//
-// [Ja] attachLegacyExportFile は共有 blob のテスト用に既存 blob をエクスポートへ関連付ける。
+// attachLegacyExportFileは共有blobのテスト用に既存blobをエクスポートへ関連付ける。
 func attachLegacyExportFile(t *testing.T, f generateExportFixture, id model.ExportID, blobID string) {
 	t.Helper()
 	_, err := f.db.ExecContext(context.Background(), `INSERT INTO active_storage_attachments (name,record_type,record_id,blob_id,created_at)
@@ -143,10 +135,12 @@ func TestGenerateExportFilesUsecase_CleanupRetry(t *testing.T) {
 	t.Parallel()
 	for _, legacy := range []bool{false, true} {
 		name := "go"
+		caseName := "オブジェクトキーで記録したエクスポート"
 		if legacy {
 			name = "rails"
+			caseName = "旧来の添付ファイルで記録したエクスポート"
 		}
-		t.Run(name, func(t *testing.T) {
+		t.Run(caseName, func(t *testing.T) {
 			t.Parallel()
 			f := setupGenerateExportFixture(t, "retry-cleanup-"+name)
 			key := "cleanup-retry-" + name + ".zip"
@@ -175,12 +169,12 @@ func TestGenerateExportFilesUsecase_CleanupRetry(t *testing.T) {
 				t.Fatal(err)
 			}
 			if old == nil {
-				t.Fatal("record lost after failed storage deletion")
+				t.Fatal("ストレージの削除に失敗した後にレコードが失われた")
 			}
 			if legacy {
 				files, err := f.exportRepo.ListLegacyFiles(ctx, oldID, f.spaceID)
 				if err != nil || len(files) != 1 {
-					t.Fatalf("legacy association lost: %v, %v", files, err)
+					t.Fatalf("旧来の紐付けが失われた: %v, %v", files, err)
 				}
 			}
 			objectStorage.deleteErr = nil
@@ -190,10 +184,10 @@ func TestGenerateExportFilesUsecase_CleanupRetry(t *testing.T) {
 				t.Fatal(err)
 			}
 			if old != nil {
-				t.Fatal("old record remains after successful retry")
+				t.Fatal("再試行の成功後も古いレコードが残っている")
 			}
 			if keys := f.objectStorage.Keys(); len(keys) != 0 {
-				t.Errorf("old ZIP remains: %v", keys)
+				t.Errorf("古いZIPが残っている: %v", keys)
 			}
 			if legacy {
 				var exists bool
@@ -201,7 +195,7 @@ func TestGenerateExportFilesUsecase_CleanupRetry(t *testing.T) {
 					t.Fatal(err)
 				}
 				if exists {
-					t.Error("unreferenced legacy blob remains")
+					t.Error("参照されていない旧来のblobが残っている")
 				}
 			}
 		})
@@ -218,14 +212,14 @@ func TestGenerateExportFilesUsecase_LegacySpaceIsolation(t *testing.T) {
 	attachLegacyExportFile(t, other, otherID, blobID)
 	ctx := context.Background()
 	if files, err := f.exportRepo.ListLegacyFiles(ctx, oldID, other.spaceID); err != nil || len(files) != 0 {
-		t.Fatalf("cross-space lookup: %v %v", files, err)
+		t.Fatalf("スペースをまたいだ検索: %v %v", files, err)
 	}
 	if err := f.exportRepo.Delete(ctx, oldID, other.spaceID); err != nil {
 		t.Fatal(err)
 	}
 	files, err := f.exportRepo.ListLegacyFiles(ctx, oldID, f.spaceID)
 	if err != nil || len(files) != 1 || !files[0].Shared {
-		t.Fatalf("shared archive lost or misclassified: %v %v", files, err)
+		t.Fatalf("共有のアーカイブが失われたか誤って分類された: %v %v", files, err)
 	}
 	currentID := f.queuedExport(t)
 	current, err := f.exportRepo.FindByIDAndSpace(ctx, currentID, f.spaceID)
@@ -235,23 +229,25 @@ func TestGenerateExportFilesUsecase_LegacySpaceIsolation(t *testing.T) {
 	f.usecase.deleteReplacedExports(ctx, current)
 	old, err := f.exportRepo.FindByIDAndSpace(ctx, oldID, f.spaceID)
 	if err != nil || old != nil {
-		t.Fatalf("old export remains: %v %v", old, err)
+		t.Fatalf("古いエクスポートが残っている: %v %v", old, err)
 	}
 	files, err = other.exportRepo.ListLegacyFiles(ctx, otherID, other.spaceID)
 	if err != nil || len(files) != 1 {
-		t.Fatalf("other export lost its archive: %v %v", files, err)
+		t.Fatalf("別のエクスポートのアーカイブが失われた: %v %v", files, err)
 	}
 	if _, _, ok := f.objectStorage.Object("shared-legacy.zip"); !ok {
-		t.Error("shared object deleted")
+		t.Error("共有のオブジェクトが削除された")
 	}
 }
 
 func TestGenerateExportFilesUsecase_UnrecordedArchiveCleanup(t *testing.T) {
-	// Sequential execution avoids disturbing the existing temporary-file cleanup assertions.
-	//
-	// [Ja] 既存の一時ファイル数の検証に干渉しないよう逐次実行する。
+	// 既存の一時ファイル数の検証に干渉しないよう逐次実行する。
 	for _, failure := range []string{"success-write", "replacement-delete"} {
-		t.Run(failure, func(t *testing.T) {
+		caseName := "成功記録の書き込み失敗"
+		if failure == "replacement-delete" {
+			caseName = "置き換え後のアーカイブ削除失敗"
+		}
+		t.Run(caseName, func(t *testing.T) {
 			f := setupGenerateExportFixture(t, "unrecorded-"+failure)
 			ctx := context.Background()
 			id := f.queuedExport(t)
@@ -262,7 +258,7 @@ func TestGenerateExportFilesUsecase_UnrecordedArchiveCleanup(t *testing.T) {
 			if failure == "success-write" {
 				export, err := f.exportRepo.MarkStarted(ctx, id, f.spaceID)
 				if err != nil || export == nil {
-					t.Fatalf("start export: %v, %v", export, err)
+					t.Fatalf("エクスポートの開始: %v, %v", export, err)
 				}
 				tx, err := f.db.BeginTx(ctx, nil)
 				if err != nil {
@@ -270,15 +266,12 @@ func TestGenerateExportFilesUsecase_UnrecordedArchiveCleanup(t *testing.T) {
 				}
 				defer func() { _ = tx.Rollback() }()
 				f.usecase.exportRepo = f.exportRepo.WithTx(tx)
-				// End the real transaction after upload so recording success fails at the DB boundary.
-				// Then use a live connection for the final-attempt failure handling performed by Execute.
-				//
-				// [Ja] アップロード直後に実トランザクションを終了し、DB 境界で成功記録を失敗させる。
-				// その後、有効な接続で Execute と同じ最終試行の失敗処理を行う。
+				// アップロード直後に実トランザクションを終了し、DB境界で成功記録を失敗させる。
+				// その後、有効な接続でExecuteと同じ最終試行の失敗処理を行う。
 				objectStorage.afterUpload = func(context.Context) error { return tx.Rollback() }
 				err = f.usecase.generate(ctx, export)
 				if !errors.Is(err, sql.ErrTxDone) {
-					t.Fatalf("success write error = %v, want transaction done", err)
+					t.Fatalf("成功時の書き込みのエラー = %v、期待値 = sql.ErrTxDone", err)
 				}
 				f.usecase.exportRepo = f.exportRepo
 				f.usecase.recordFailure(ctx, id, f.spaceID, true, err)
@@ -294,10 +287,10 @@ func TestGenerateExportFilesUsecase_UnrecordedArchiveCleanup(t *testing.T) {
 
 			old, err := f.exportRepo.FindByIDAndSpace(ctx, id, f.spaceID)
 			if err != nil || old == nil || old.Status != model.ExportStatusFailed || old.ObjectKey != nil {
-				t.Fatalf("failed export without recorded key = %v, %v", old, err)
+				t.Fatalf("キーが記録されていない失敗したエクスポート = %v, %v", old, err)
 			}
 			if _, _, ok := f.objectStorage.Object(key); !ok {
-				t.Fatal("uploaded archive missing before cleanup")
+				t.Fatal("クリーンアップ前にアップロードしたアーカイブが無い")
 			}
 			objectStorage.afterUpload = nil
 			for _, unavailable := range []bool{true, false} {
@@ -310,20 +303,20 @@ func TestGenerateExportFilesUsecase_UnrecordedArchiveCleanup(t *testing.T) {
 				}
 				current, err := f.exportRepo.FindByIDAndSpace(ctx, currentID, f.spaceID)
 				if err != nil || current == nil || current.Status != model.ExportStatusSucceeded {
-					t.Fatalf("next export did not succeed: %v, %v", current, err)
+					t.Fatalf("次のエクスポートが成功しなかった: %v, %v", current, err)
 				}
 				old, err = f.exportRepo.FindByIDAndSpace(ctx, id, f.spaceID)
 				if err != nil {
 					t.Fatal(err)
 				}
 				if (old != nil) != unavailable {
-					t.Fatalf("storage unavailable=%v: old record = %v", unavailable, old)
+					t.Fatalf("ストレージ利用不可 = %v: 古いレコード = %v", unavailable, old)
 				}
 				if _, _, ok := f.objectStorage.Object(key); ok != unavailable {
-					t.Fatalf("storage unavailable=%v: old archive exists=%v", unavailable, ok)
+					t.Fatalf("ストレージ利用不可 = %v: 古いアーカイブの有無 = %v", unavailable, ok)
 				}
 				if _, _, ok := f.objectStorage.Object(*current.ObjectKey); !ok {
-					t.Fatal("current archive was deleted")
+					t.Fatal("現在のアーカイブが削除された")
 				}
 			}
 		})

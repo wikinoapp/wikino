@@ -1,4 +1,4 @@
-// Package page_move はページ移動関連のHTTPハンドラーを提供します
+// Package page_moveはページ移動関連のHTTPハンドラーを提供します
 package page_move
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はページ移動ハンドラー
+// Handlerはページ移動ハンドラー
 type Handler struct {
 	cfg               *config.Config
 	flashMgr          *session.FlashManager
@@ -15,7 +15,7 @@ type Handler struct {
 	movePageUC        *usecase.MovePageUsecase
 }
 
-// NewHandler は新しいページ移動ハンドラーを作成します
+// NewHandlerは新しいページ移動ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,

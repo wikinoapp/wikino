@@ -65,7 +65,7 @@ func TestT_BasicTranslation(t *testing.T) {
 
 			got := i18n.T(ctx, tt.messageID)
 			if got != tt.want {
-				t.Errorf("T() = %v, want %v", got, tt.want)
+				t.Errorf("T() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
@@ -82,7 +82,7 @@ func TestT_MissingTranslation(t *testing.T) {
 
 	// 翻訳が見つからない場合はメッセージIDを返す
 	if got != messageID {
-		t.Errorf("T() = %v, want %v", got, messageID)
+		t.Errorf("T() = %v、期待値 = %v", got, messageID)
 	}
 }
 
@@ -98,7 +98,7 @@ func TestT_WithTemplateData(t *testing.T) {
 	// テンプレートデータを渡してもパニックしない
 	got := i18n.T(ctx, "sign_in_new_title", map[string]any{"Name": "テスト"})
 	if got != "ログイン" {
-		t.Errorf("T() = %v, want %v", got, "ログイン")
+		t.Errorf("T() = %v、期待値 = %v", got, "ログイン")
 	}
 }
 
@@ -111,9 +111,9 @@ func TestT_NilContext(t *testing.T) {
 	// エラーにならずにメッセージIDを返すか、翻訳を返すことを確認
 	got := i18n.T(ctx, "sign_in_new_title")
 
-	// デフォルト言語（日本語）で翻訳されるか、メッセージIDが返される
+	// デフォルト言語 (日本語) で翻訳されるか、メッセージIDが返される
 	if got != "ログイン" && got != "sign_in_new_title" {
-		t.Errorf("T() = %v, want 'ログイン' or 'sign_in_new_title'", got)
+		t.Errorf("T() = %v、期待値 = 'ログイン'または'sign_in_new_title'", got)
 	}
 }
 
@@ -155,7 +155,7 @@ func TestGetLocale(t *testing.T) {
 			ctx := tt.setup(context.Background())
 			got := i18n.GetLocale(ctx)
 			if got != tt.want {
-				t.Errorf("GetLocale() = %v, want %v", got, tt.want)
+				t.Errorf("GetLocale() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
@@ -169,13 +169,13 @@ func TestSetLocale(t *testing.T) {
 	// 日本語を設定
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	if got := i18n.GetLocale(ctx); got != i18n.LangJa {
-		t.Errorf("SetLocale() で日本語が設定されませんでした: got %v want %v", got, i18n.LangJa)
+		t.Errorf("SetLocale()で日本語が設定されなかった: 実測値 = %v、期待値 = %v", got, i18n.LangJa)
 	}
 
 	// 英語に変更
 	ctx = i18n.SetLocale(ctx, i18n.LangEn)
 	if got := i18n.GetLocale(ctx); got != i18n.LangEn {
-		t.Errorf("SetLocale() で英語が設定されませんでした: got %v want %v", got, i18n.LangEn)
+		t.Errorf("SetLocale()で英語が設定されなかった: 実測値 = %v、期待値 = %v", got, i18n.LangEn)
 	}
 }
 
@@ -208,7 +208,7 @@ func TestDetectLanguage(t *testing.T) {
 			want:           i18n.LangEn,
 		},
 		{
-			name:           "日本語と英語の両方（日本語優先）",
+			name:           "日本語と英語の両方 (日本語優先)",
 			acceptLanguage: "ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7",
 			want:           i18n.LangJa,
 		},
@@ -243,7 +243,7 @@ func TestDetectLanguage(t *testing.T) {
 
 			got := i18n.DetectLanguage(req)
 			if got != tt.want {
-				t.Errorf("DetectLanguage() = %v, want %v", got, tt.want)
+				t.Errorf("DetectLanguage() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
@@ -296,15 +296,15 @@ func TestMiddleware(t *testing.T) {
 			i18n.Middleware(testHandler).ServeHTTP(rr, req)
 
 			if capturedLocale != tt.wantLocale {
-				t.Errorf("Middleware() locale = %v, want %v", capturedLocale, tt.wantLocale)
+				t.Errorf("Middleware()のロケール = %v、期待値 = %v", capturedLocale, tt.wantLocale)
 			}
 
 			// 翻訳が正しく動作していることを確認
 			if capturedLocale == i18n.LangJa && capturedTranslation != "ログイン" {
-				t.Errorf("Middleware() translation = %v, want %v", capturedTranslation, "ログイン")
+				t.Errorf("Middleware()の翻訳 = %v、期待値 = %v", capturedTranslation, "ログイン")
 			}
 			if capturedLocale == i18n.LangEn && capturedTranslation != "Sign in" {
-				t.Errorf("Middleware() translation = %v, want %v", capturedTranslation, "Sign in")
+				t.Errorf("Middleware()の翻訳 = %v、期待値 = %v", capturedTranslation, "Sign in")
 			}
 		})
 	}
@@ -321,7 +321,7 @@ func TestGetLocalizer(t *testing.T) {
 
 		localizer := i18n.GetLocalizer(ctx)
 		if localizer == nil {
-			t.Error("GetLocalizer() returned nil")
+			t.Error("GetLocalizer()がnilを返した")
 		}
 	})
 
@@ -345,7 +345,7 @@ func TestGetLocalizer(t *testing.T) {
 
 		// 同じLocalizerインスタンスが返されることを確認
 		if capturedLocalizer1 != capturedLocalizer2 {
-			t.Error("GetLocalizer() should return the same localizer instance")
+			t.Error("GetLocalizer()が異なるlocalizerのインスタンスを返した")
 		}
 	})
 }
@@ -355,15 +355,15 @@ func TestConstants(t *testing.T) {
 
 	// 定数の値を確認
 	if i18n.LangJa != "ja" {
-		t.Errorf("LangJa = %v, want %v", i18n.LangJa, "ja")
+		t.Errorf("LangJa = %v、期待値 = %v", i18n.LangJa, "ja")
 	}
 
 	if i18n.LangEn != "en" {
-		t.Errorf("LangEn = %v, want %v", i18n.LangEn, "en")
+		t.Errorf("LangEn = %v、期待値 = %v", i18n.LangEn, "en")
 	}
 
 	if i18n.DefaultLang != i18n.LangJa {
-		t.Errorf("DefaultLang = %v, want %v", i18n.DefaultLang, i18n.LangJa)
+		t.Errorf("DefaultLang = %v、期待値 = %v", i18n.DefaultLang, i18n.LangJa)
 	}
 }
 
@@ -402,7 +402,7 @@ func TestT_TwoFactorAuthTranslations(t *testing.T) {
 
 			got := i18n.T(ctx, tt.messageID)
 			if got != tt.wantJa {
-				t.Errorf("T() = %v, want %v", got, tt.wantJa)
+				t.Errorf("T() = %v、期待値 = %v", got, tt.wantJa)
 			}
 		})
 
@@ -414,7 +414,7 @@ func TestT_TwoFactorAuthTranslations(t *testing.T) {
 
 			got := i18n.T(ctx, tt.messageID)
 			if got != tt.wantEn {
-				t.Errorf("T() = %v, want %v", got, tt.wantEn)
+				t.Errorf("T() = %v、期待値 = %v", got, tt.wantEn)
 			}
 		})
 	}

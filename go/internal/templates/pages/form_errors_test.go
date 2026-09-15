@@ -17,13 +17,9 @@ import (
 	signuppage "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_up"
 )
 
-// TestAuthFormsRenderOnlyGlobalErrorsInTheSummary covers every form that places the shared global
-// error component between its heading and card. Field-only validation must stay beside the field
-// without creating an empty flex child, while a global error must still render in the summary.
-//
-// [Ja] TestAuthFormsRenderOnlyGlobalErrorsInTheSummary は、見出しとカードの間へ共有の
-// global error component を置く全フォームを確認する。フィールドだけの validation error は
-// 空の flex 子要素を作らずフィールド横だけに残し、global error は概要へ引き続き表示する。
+// TestAuthFormsRenderOnlyGlobalErrorsInTheSummaryは、見出しとカードの間へ共有の
+// global error componentを置く全フォームを確認する。フィールドだけのvalidation errorは
+// 空のflex子要素を作らずフィールド横だけに残し、global errorは概要へ引き続き表示する。
 func TestAuthFormsRenderOnlyGlobalErrorsInTheSummary(t *testing.T) {
 	t.Parallel()
 

@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Edit は編集提案編集フォームを表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/edit)
+// Editは編集提案編集フォームを表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/edit)
 func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -62,13 +62,9 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	h.renderEditForm(w, r, user, output, nil, output.Suggestion.Title, output.Suggestion.Body)
 }
 
-// renderEditForm renders the suggestion edit form. Space-aware metadata and links are built from
-// the persisted identifier in output, so it deliberately does not take one derived from URL
-// parameters.
-//
-// [Ja] renderEditForm は編集提案編集フォームをレンダリングします。
-// スペース識別子を含むメタ情報やリンクの組み立てには output に含まれる保存済みの値を使うため、
-// URL パラメータ由来の識別子は受け取りません。
+// renderEditFormは編集提案編集フォームをレンダリングします。
+// スペース識別子を含むメタ情報やリンクの組み立てにはoutputに含まれる保存済みの値を使うため、
+// URLパラメータ由来の識別子は受け取りません。
 func (h *Handler) renderEditForm(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -89,10 +85,7 @@ func (h *Handler) renderEditForm(
 		UserMap:    output.UserMap,
 	})
 
-	// Build links from the stored identifier, not from the URL, so that every link on the screen uses
-	// the same form.
-	//
-	// [Ja] URL ではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
 	spaceIdentVM := spaceVM.Identifier
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)

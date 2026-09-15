@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// DraftPageRevisionBuilderDB はDBを直接使用する下書きページリビジョンテストデータのビルダー
+// DraftPageRevisionBuilderDBはDBを直接使用する下書きページリビジョンテストデータのビルダー
 type DraftPageRevisionBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
@@ -22,7 +22,7 @@ type DraftPageRevisionBuilderDB struct {
 	bodyHTML      string
 }
 
-// NewDraftPageRevisionBuilderDB は DraftPageRevisionBuilderDB を生成します
+// NewDraftPageRevisionBuilderDBはDraftPageRevisionBuilderDBを生成します
 func NewDraftPageRevisionBuilderDB(t *testing.T, db *sql.DB) *DraftPageRevisionBuilderDB {
 	t.Helper()
 	return &DraftPageRevisionBuilderDB{
@@ -34,25 +34,25 @@ func NewDraftPageRevisionBuilderDB(t *testing.T, db *sql.DB) *DraftPageRevisionB
 	}
 }
 
-// WithDraftPageID は下書きページIDを設定します
+// WithDraftPageIDは下書きページIDを設定します
 func (b *DraftPageRevisionBuilderDB) WithDraftPageID(draftPageID model.DraftPageID) *DraftPageRevisionBuilderDB {
 	b.draftPageID = string(draftPageID)
 	return b
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *DraftPageRevisionBuilderDB) WithSpaceID(spaceID model.SpaceID) *DraftPageRevisionBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *DraftPageRevisionBuilderDB) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *DraftPageRevisionBuilderDB {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// Build は下書きページリビジョンを作成し、IDを返します
+// Buildは下書きページリビジョンを作成し、IDを返します
 func (b *DraftPageRevisionBuilderDB) Build() model.DraftPageRevisionID {
 	b.t.Helper()
 

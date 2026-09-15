@@ -23,7 +23,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// newPostRequest はchiのURLパラメータ付きPOSTリクエストを作成するヘルパーです
+// newPostRequestはchiのURLパラメータ付きPOSTリクエストを作成するヘルパーです
 func newPostRequest(t *testing.T, path string, params map[string]string, form url.Values) *http.Request {
 	t.Helper()
 
@@ -38,7 +38,7 @@ func newPostRequest(t *testing.T, path string, params map[string]string, form ur
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用の編集提案反映ハンドラーを作成するヘルパーです
+// setupHandlerはテスト用の編集提案反映ハンドラーを作成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestionapplicationhandler.Handler {
 	t.Helper()
 
@@ -101,10 +101,10 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -137,7 +137,7 @@ func TestCreate_存在しない編集提案で404が返る(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -193,7 +193,7 @@ func TestCreate_スペースメンバーでないユーザーは404が返る(t *
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -259,7 +259,7 @@ func TestCreate_suggestion_applyスコープなしは404が返る(t *testing.T) 
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -335,11 +335,11 @@ func TestCreate_スペースオーナーが反映できる(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/apply-ok-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -391,11 +391,11 @@ func TestCreate_クローズ済みの編集提案はエラーリダイレクト�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/apply-closed-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -447,18 +447,18 @@ func TestCreate_反映済みの編集提案はべき等に成功する(t *testin
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/apply-idem-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
 func TestCreate_タイトル衝突時に編集提案詳細ページを422で再描画する(t *testing.T) {
 	t.Parallel()
 
-	// usecase が独自トランザクションを管理するため DB 直接書き込みを使用
+	// usecaseが独自トランザクションを管理するためDB直接書き込みを使用
 	db := testutil.GetTestDB()
 	queries := query.New(db)
 
@@ -490,7 +490,7 @@ func TestCreate_タイトル衝突時に編集提案詳細ページを422で再�
 		WithNumber(1).
 		WithTitle("元ページ").
 		Build()
-	// 公開済み同タイトルのページ（衝突相手）
+	// 公開済み同タイトルのページ (衝突相手)
 	testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -535,26 +535,26 @@ func TestCreate_タイトル衝突時に編集提案詳細ページを422で再�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "衝突タイトル") {
-		t.Errorf("response should mention conflicting title, got body: %s", body)
+		t.Errorf("レスポンスに競合したタイトルが含まれていない: 本文 = %s", body)
 	}
 	if !strings.Contains(body, `class="alert" data-variant="destructive"`) {
-		t.Errorf("response should include error alert markup")
+		t.Errorf("レスポンスにエラーアラートのマークアップが含まれていない")
 	}
 }
 
 // TestCreate_タイトルにHTMLを含む編集提案を反映時にXSSが発生しない は、
-// SuggestionPage.Title に `<script>` などの HTML を含む編集提案を反映しようとしたとき、
-// レスポンス HTML では生の `<script>` タグではなく HTML エスケープされた形式
-// (`&lt;script&gt;`) になっていることを確認する XSS 回帰テスト。
+// SuggestionPage.Titleに `<script>` などのHTMLを含む編集提案を反映しようとしたとき、
+// レスポンスHTMLでは生の `<script>` タグではなくHTMLエスケープされた形式
+// (`&lt;script&gt;`) になっていることを確認するXSS回帰テスト。
 func TestCreate_タイトルにHTMLを含む編集提案を反映時にXSSが発生しない(t *testing.T) {
 	t.Parallel()
 
-	// usecase が独自トランザクションを管理するため DB 直接書き込みを使用
+	// usecaseが独自トランザクションを管理するためDB直接書き込みを使用
 	db := testutil.GetTestDB()
 	queries := query.New(db)
 
@@ -598,8 +598,8 @@ func TestCreate_タイトルにHTMLを含む編集提案を反映時にXSSが発
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
-	// 禁止文字（"<"）を含むタイトルで SuggestionPage を作成。
-	// PageUpdateValidator で形式エラーになり、エラーメッセージに title が含まれる。
+	// 禁止文字 ("<") を含むタイトルでSuggestionPageを作成。
+	// PageUpdateValidatorで形式エラーになり、エラーメッセージにtitleが含まれる。
 	maliciousTitle := `<script>alert("xss")</script>`
 	testutil.NewSuggestionPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -628,18 +628,18 @@ func TestCreate_タイトルにHTMLを含む編集提案を反映時にXSSが発
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 
-	// 生の <script> タグはレスポンスに含まれない（エスケープされているため）
+	// 生の <script> タグはレスポンスに含まれない (エスケープされているため)
 	if strings.Contains(body, "<script>alert") {
-		t.Errorf("response contains unescaped <script> tag, which indicates XSS vulnerability")
+		t.Errorf("レスポンスにエスケープされていない<script>タグが含まれており、XSS脆弱性の疑いがある")
 	}
 
 	// 代わりにエスケープされた形式で含まれる
 	if !strings.Contains(body, "&lt;script&gt;") {
-		t.Errorf("response should contain escaped script tag, got body: %s", body)
+		t.Errorf("レスポンスにエスケープされたscriptタグが含まれていない: 本文 = %s", body)
 	}
 }

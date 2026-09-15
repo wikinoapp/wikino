@@ -69,7 +69,7 @@ func TestPlainText(t *testing.T) {
 			want:     "りんご みかん",
 		},
 		{
-			name:     "br は区切りとして扱う",
+			name:     "brは区切りとして扱う",
 			bodyHTML: "<p>1 行目<br>2 行目</p>",
 			want:     "1 行目 2 行目",
 		},
@@ -79,22 +79,22 @@ func TestPlainText(t *testing.T) {
 			want:     "見出し 本文",
 		},
 		{
-			name:     "HTML エンティティをデコードする",
+			name:     "HTMLエンティティをデコードする",
 			bodyHTML: "<p>A &amp; B &lt;C&gt;</p>",
 			want:     "A & B <C>",
 		},
 		{
-			name:     "連続する空白と改行を 1 個のスペースにまとめる",
+			name:     "連続する空白と改行を1個のスペースにまとめる",
 			bodyHTML: "<p>語   と\n\n語</p>",
 			want:     "語 と 語",
 		},
 		{
-			name:     "script の内容は取り出さない",
+			name:     "scriptの内容は取り出さない",
 			bodyHTML: "<p>本文</p><script>alert(1)</script>",
 			want:     "本文",
 		},
 		{
-			name:     "style の内容は取り出さない",
+			name:     "styleの内容は取り出さない",
 			bodyHTML: "<style>p { color: red }</style><p>本文</p>",
 			want:     "本文",
 		},
@@ -120,17 +120,14 @@ func TestPlainText(t *testing.T) {
 			t.Parallel()
 
 			if got := PlainText(tt.bodyHTML, 0); got != tt.want {
-				t.Errorf("PlainText() = %q, want %q", got, tt.want)
+				t.Errorf("PlainText() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}
 }
 
-// TestPlainText_MaxRunes pins the cap as a rune count, including the fact that a block boundary
-// costs one rune and that a non-positive value means no cap.
-//
-// [Ja] TestPlainText_MaxRunes は上限が rune 単位であることを固定する。ブロックの境界が 1 文字ぶんを
-// 占めること、0 以下が上限無しを意味することも含む。
+// TestPlainText_MaxRunesは上限がrune単位であることを固定する。ブロックの境界が1文字ぶんを
+// 占めること、0以下が上限無しを意味することも含む。
 func TestPlainText_MaxRunes(t *testing.T) {
 	t.Parallel()
 
@@ -147,7 +144,7 @@ func TestPlainText_MaxRunes(t *testing.T) {
 			want:     "abc",
 		},
 		{
-			name:     "ブロックの境界も 1 文字として数える",
+			name:     "ブロックの境界も1文字として数える",
 			bodyHTML: "<p>abc</p><p>def</p>",
 			maxRunes: 4,
 			want:     "abc ",
@@ -171,7 +168,7 @@ func TestPlainText_MaxRunes(t *testing.T) {
 			want:     "abc def",
 		},
 		{
-			name:     "0 は上限無し",
+			name:     "0は上限無し",
 			bodyHTML: "<p>abc</p><p>def</p>",
 			maxRunes: 0,
 			want:     "abc def",
@@ -201,18 +198,14 @@ func TestPlainText_MaxRunes(t *testing.T) {
 			t.Parallel()
 
 			if got := PlainText(tt.bodyHTML, tt.maxRunes); got != tt.want {
-				t.Errorf("PlainText() = %q, want %q", got, tt.want)
+				t.Errorf("PlainText() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}
 }
 
-// TestPlainText_MaxRunesReturnsPrefix pins that a capped result is exactly the first maxRunes runes
-// of the uncapped one. PageForShow.MetaDescription depends on it: it asks for one rune past its
-// limit and decides from the length alone whether the body had to be truncated.
-//
-// [Ja] TestPlainText_MaxRunesReturnsPrefix は、上限付きの結果が上限無しの結果の先頭 maxRunes 文字
-// そのものになることを固定する。PageForShow.MetaDescription はこれに依存しており、上限より 1 文字
+// TestPlainText_MaxRunesReturnsPrefixは、上限付きの結果が上限無しの結果の先頭maxRunes文字
+// そのものになることを固定する。PageForShow.MetaDescriptionはこれに依存しており、上限より1文字
 // 多く要求して長さだけで切り詰めの要否を決めている。
 func TestPlainText_MaxRunesReturnsPrefix(t *testing.T) {
 	t.Parallel()
@@ -231,7 +224,7 @@ func TestPlainText_MaxRunesReturnsPrefix(t *testing.T) {
 			for maxRunes := 1; maxRunes <= len(full)+2; maxRunes++ {
 				want := string(full[:min(maxRunes, len(full))])
 				if got := PlainText(bodyHTML, maxRunes); got != want {
-					t.Errorf("PlainText(_, %d) = %q, want %q", maxRunes, got, want)
+					t.Errorf("PlainText(_, %d) = %q、期待値 = %q", maxRunes, got, want)
 				}
 			}
 		})

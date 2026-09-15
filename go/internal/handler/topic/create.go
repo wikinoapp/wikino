@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create はトピックを作成します (POST /s/{space_identifier}/topics)
+// Createはトピックを作成します (POST /s/{space_identifier}/topics)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -52,10 +52,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, string(templates.TopicPath(spaceIdentVM, output.Topic.Number)), http.StatusSeeOther)
 }
 
-// handleCreateError redraws the form with what was submitted when the input is refused, and
-// otherwise answers the way the topic screens answer.
-//
-// [Ja] handleCreateError は入力が拒否されたときに送信された内容を戻したフォームを再描画し、
+// handleCreateErrorは入力が拒否されたときに送信された内容を戻したフォームを再描画し、
 // それ以外はトピックの画面と同じ形で応答する。
 func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err error, user *model.User, input usecase.CreateTopicInput) {
 	ctx := r.Context()

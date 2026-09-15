@@ -9,15 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// fetchTopicCreateAccess resolves the space a topic is created in together with the membership of
-// the user creating it, and refuses the ones that may not create one. The form and its submission
-// both go through it, so the screen and the create cannot come to different answers about who is
-// allowed in.
-//
-// A space the user is not an active member of is answered as not found, so that membership of a
-// space is not something an outsider can probe for.
-//
-// [Ja] fetchTopicCreateAccess は、トピックを作成するスペースと、それを作成するユーザーのメンバー
+// fetchTopicCreateAccessは、トピックを作成するスペースと、それを作成するユーザーのメンバー
 // シップを解決し、作成を許されないものを拒否する。フォームとその送信の両方がここを通るため、
 // 画面と作成処理が、誰を通すかについて別々の答えを出すことはない。
 //

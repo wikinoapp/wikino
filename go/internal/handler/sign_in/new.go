@@ -10,23 +10,20 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New はログインフォームを表示します (GET /sign_in)
+// Newはログインフォームを表示します (GET /sign_in)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	// backパラメータを取得（ログイン後のリダイレクト先）
+	// backパラメータを取得 (ログイン後のリダイレクト先)
 	backURL := r.URL.Query().Get("back")
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "sign_in_new_title")
-	// The back parameter only decides where to go after signing in, so it stays out of the canonical
-	// URL and every /sign_in?back=... collapses to the same address.
-	//
-	// [Ja] back パラメータはログイン後の遷移先を決めるだけなので正規 URL には入れず、
+	// backパラメータはログイン後の遷移先を決めるだけなので正規URLには入れず、
 	// /sign_in?back=... はすべて同じアドレスに集約する。
 	meta.OGURL = h.cfg.AppURL() + string(templates.SignInPath())
 

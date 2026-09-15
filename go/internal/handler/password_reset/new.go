@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New はパスワードリセット申請フォームを表示します (GET /password/reset)
+// Newはパスワードリセット申請フォームを表示します (GET /password/reset)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

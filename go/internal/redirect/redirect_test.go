@@ -101,7 +101,7 @@ func TestValidateBackURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if got := ValidateBackURL(tt.backURL); got != tt.want {
-				t.Errorf("ValidateBackURL(%q) = %v, want %v", tt.backURL, got, tt.want)
+				t.Errorf("ValidateBackURL(%q) = %v、期待値 = %v", tt.backURL, got, tt.want)
 			}
 		})
 	}
@@ -156,18 +156,14 @@ func TestGetSafeRedirectURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if got := GetSafeRedirectURL(tt.backURL); got != tt.want {
-				t.Errorf("GetSafeRedirectURL(%q) = %v, want %v", tt.backURL, got, tt.want)
+				t.Errorf("GetSafeRedirectURL(%q) = %v、期待値 = %v", tt.backURL, got, tt.want)
 			}
 		})
 	}
 }
 
-// TestToSignIn verifies which back parameters survive the redirect to the sign-in page. A safe
-// destination is carried so that signing in again reaches it, and anything else is dropped rather
-// than shown in the URL of the sign-in screen.
-//
-// [Ja] TestToSignIn は、サインインページへのリダイレクトでどの back が引き継がれるかを検証する。
-// 安全な遷移先はサインインし直したときに着けるよう引き継ぎ、それ以外はサインイン画面の URL に
+// TestToSignInは、サインインページへのリダイレクトでどのbackが引き継がれるかを検証する。
+// 安全な遷移先はサインインし直したときに着けるよう引き継ぎ、それ以外はサインイン画面のURLに
 // 見せずに捨てる。
 func TestToSignIn(t *testing.T) {
 	t.Parallel()
@@ -211,10 +207,10 @@ func TestToSignIn(t *testing.T) {
 			ToSignIn(rr, req, tt.backURL)
 
 			if rr.Code != http.StatusFound {
-				t.Errorf("ステータスコード: got %d, want %d", rr.Code, http.StatusFound)
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
 			}
 			if location := rr.Header().Get("Location"); location != tt.wantLocation {
-				t.Errorf("リダイレクト先: got %s, want %s", location, tt.wantLocation)
+				t.Errorf("リダイレクト先 = %s、期待値 = %s", location, tt.wantLocation)
 			}
 		})
 	}

@@ -26,10 +26,7 @@ type CreateTopicMemberParams struct {
 	Now           time.Time `json:"now"`
 }
 
-// Adds a space member to a topic. The scopes are left empty, so the member's permissions on the
-// topic come from the scopes they hold on the space.
-//
-// [Ja] スペースメンバーをトピックに参加させる。スコープは空のままにし、そのトピックでの権限は
+// スペースメンバーをトピックに参加させる。スコープは空のままにし、そのトピックでの権限は
 // メンバーがスペースに対して持つスコープから決まるようにする。
 func (q *Queries) CreateTopicMember(ctx context.Context, arg CreateTopicMemberParams) (TopicMember, error) {
 	row := q.db.QueryRowContext(ctx, createTopicMember,
@@ -91,9 +88,7 @@ type ListTopicMembersBySpaceMemberAndTopicsParams struct {
 	Column3       []string `json:"column_3"`
 }
 
-// Fetch the topic memberships for the given topic ids in one query (used to avoid N+1
-// when resolving per-topic permissions on the space detail page).
-// [Ja] トピック ID リストでトピックメンバーを 1 クエリ一括取得する (スペース詳細の権限判定で N+1 を避けるために使用)。
+// トピックIDリストでトピックメンバーを1クエリ一括取得する (スペース詳細の権限判定でN+1を避けるために使用)。
 func (q *Queries) ListTopicMembersBySpaceMemberAndTopics(ctx context.Context, arg ListTopicMembersBySpaceMemberAndTopicsParams) ([]TopicMember, error) {
 	rows, err := q.db.QueryContext(ctx, listTopicMembersBySpaceMemberAndTopics, arg.SpaceMemberID, arg.SpaceID, pq.Array(arg.Column3))
 	if err != nil {
@@ -139,15 +134,10 @@ type ListTopicMembersByUserAndTopicsParams struct {
 	Column3 []string `json:"column_3"`
 }
 
-// Fetch the topic memberships the given user holds across multiple topics in one query, joining
-// space_members to resolve the user (the user owns different space_members across spaces). Used to
-// avoid N+1 when resolving per-topic create permissions for joined topics spanning many spaces on
-// the home page. Scoped by space_id to satisfy the space_id query convention.
-//
-// [Ja] ユーザーが複数トピックで持つトピックメンバーを 1 クエリで一括取得する (スペースごとに
-// 別々の space_member を持つため space_members と JOIN してユーザーを解決する)。ホーム画面で
-// 複数スペースにまたがる参加中トピックのページ作成権限を解決する際の N+1 を避けるために使用。
-// space_id 条件でスコープし space_id クエリ規約を満たす。
+// ユーザーが複数トピックで持つトピックメンバーを1クエリで一括取得する (スペースごとに
+// 別々のspace_memberを持つためspace_membersとJOINしてユーザーを解決する)。ホーム画面で
+// 複数スペースにまたがる参加中トピックのページ作成権限を解決する際のN+1を避けるために使用。
+// space_id条件でスコープしspace_idクエリ規約を満たす。
 func (q *Queries) ListTopicMembersByUserAndTopics(ctx context.Context, arg ListTopicMembersByUserAndTopicsParams) ([]TopicMember, error) {
 	rows, err := q.db.QueryContext(ctx, listTopicMembersByUserAndTopics, arg.UserID, pq.Array(arg.Column2), pq.Array(arg.Column3))
 	if err != nil {
@@ -193,7 +183,7 @@ type UpdateTopicMemberLastPageModifiedAtParams struct {
 	SpaceID            string       `json:"space_id"`
 }
 
-// トピックメンバーのlast_page_modified_atを更新する（ページ公開時に使用）
+// トピックメンバーのlast_page_modified_atを更新する (ページ公開時に使用)
 func (q *Queries) UpdateTopicMemberLastPageModifiedAt(ctx context.Context, arg UpdateTopicMemberLastPageModifiedAtParams) error {
 	_, err := q.db.ExecContext(ctx, updateTopicMemberLastPageModifiedAt,
 		arg.LastPageModifiedAt,

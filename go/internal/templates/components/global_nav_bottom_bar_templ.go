@@ -11,23 +11,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// GlobalNavBottomBar renders the mobile bottom bar, shown only below md, where
-// GlobalNavTopBar takes over. It carries the shared menu laid out horizontally
-// as a floating pill; the pill styling is passed to the menu so the <nav> stays
-// a bare landmark. The layout is responsible for fixing it to the bottom of the
-// screen (following the existing bottom nav positioning), so this component only
-// owns the visibility, the landmark, and the pill.
-//
-// The wrapper is a <nav> landmark whose aria-label differs from the top bar's,
-// distinguishing the two coexisting navigation regions (see GlobalNavTopBar).
-//
-// [Ja] GlobalNavBottomBar はモバイル向けの下部バーを描画し、GlobalNavTopBar に役割を譲る
-// md 未満でのみ表示する。共通メニューを横並びの浮遊ピルとして持つ。ピルのスタイルはメニューに
+// GlobalNavBottomBarはモバイル向けの下部バーを描画し、GlobalNavTopBarに役割を譲る
+// md未満でのみ表示する。共通メニューを横並びの浮遊ピルとして持つ。ピルのスタイルはメニューに
 // 渡し、<nav> はランドマークに徹する。画面下部への固定はレイアウトの責務 (既存のボトムナビの
 // 配置を踏襲) のため、本コンポーネントは表示切り替え・ランドマーク・ピルのみを担う。
 //
-// ラッパーは <nav> ランドマークで、その aria-label は上部バーとは異なり、共存する 2 つの
-// ナビゲーション領域を区別する (GlobalNavTopBar を参照)。
+// ラッパーは <nav> ランドマークで、そのaria-labelは上部バーとは異なり、共存する2つの
+// ナビゲーション領域を区別する (GlobalNavTopBarを参照)。
 func GlobalNavBottomBar(data GlobalNavData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -56,7 +46,7 @@ func GlobalNavBottomBar(data GlobalNavData) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "global_nav_bottom_label"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/global_nav_bottom_bar.templ`, Line: 23, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/global_nav_bottom_bar.templ`, Line: 13, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
