@@ -20,11 +20,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// setupHandler builds the restore handler backed by the shared test DB. The UseCase manages its
-// own transaction, so the repositories read straight from the committed test DB.
-//
-// [Ja] setupHandler は共有テスト DB を使う復元ハンドラーを生成する。UseCase が自前で
-// トランザクションを管理するため、リポジトリはコミット済みのテスト DB を直接読む。
+// setupHandlerは共有テストDBを使う復元ハンドラーを生成する。UseCaseが自前で
+// トランザクションを管理するため、リポジトリはコミット済みのテストDBを直接読む。
 func setupHandler(t *testing.T, db *sql.DB) *draft_page_revision_restore.Handler {
 	t.Helper()
 
@@ -47,8 +44,7 @@ func setupHandler(t *testing.T, db *sql.DB) *draft_page_revision_restore.Handler
 	)
 }
 
-// restoreFixture is the fixture set shared by the Create handler tests.
-// [Ja] restoreFixture は Create ハンドラーのテストで共有するフィクスチャ一式。
+// restoreFixtureはCreateハンドラーのテストで共有するフィクスチャ一式。
 type restoreFixture struct {
 	userID      model.UserID
 	spaceID     model.SpaceID
@@ -57,11 +53,8 @@ type restoreFixture struct {
 	revision2   *model.DraftPageRevision
 }
 
-// setupRestoreFixture creates a space, member, topic, page, draft and two revisions (v1 then v2)
-// committed directly to the test DB. prefix keeps identifiers unique across parallel tests.
-//
-// [Ja] setupRestoreFixture はスペース・メンバー・トピック・ページ・下書きとリビジョン 2 件
-// (v1 → v2) をテスト DB へ直接コミットして作成する。prefix は並行テスト間で識別子を一意に保つ。
+// setupRestoreFixtureはスペース・メンバー・トピック・ページ・下書きとリビジョン2件
+// (v1 → v2) をテストDBへ直接コミットして作成する。prefixは並行テスト間で識別子を一意に保つ。
 func setupRestoreFixture(t *testing.T, db *sql.DB, prefix string) restoreFixture {
 	t.Helper()
 
@@ -111,7 +104,7 @@ func setupRestoreFixture(t *testing.T, db *sql.DB, prefix string) restoreFixture
 		BodyHTML:      "<p>old body</p>",
 	})
 	if err != nil {
-		t.Fatalf("Create() revision1 error = %v", err)
+		t.Fatalf("Create() (revision1) のエラー = %v", err)
 	}
 	revision2, err := revisionRepo.Create(context.Background(), repository.CreateDraftPageRevisionInput{
 		DraftPageID:   draftPageID,
@@ -122,7 +115,7 @@ func setupRestoreFixture(t *testing.T, db *sql.DB, prefix string) restoreFixture
 		BodyHTML:      "<p>current body</p>",
 	})
 	if err != nil {
-		t.Fatalf("Create() revision2 error = %v", err)
+		t.Fatalf("Create() (revision2) のエラー = %v", err)
 	}
 
 	return restoreFixture{
@@ -134,8 +127,7 @@ func setupRestoreFixture(t *testing.T, db *sql.DB, prefix string) restoreFixture
 	}
 }
 
-// newCreateRequest builds the restore POST request carrying chi URL parameters.
-// [Ja] newCreateRequest は chi の URL パラメータ付き復元 POST リクエストを作成する。
+// newCreateRequestはchiのURLパラメータ付き復元POSTリクエストを作成する。
 func newCreateRequest(t *testing.T, spaceIdentifier string, revisionID string) *http.Request {
 	t.Helper()
 
@@ -162,7 +154,7 @@ func TestCreate_NotLoggedIn(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnauthorized {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnauthorized)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnauthorized)
 	}
 }
 
@@ -189,7 +181,7 @@ func TestCreate_InvalidPageNumber(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -209,40 +201,38 @@ func TestCreate_Success(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Fatalf("wrong status code: got %v want %v (body: %s)", rr.Code, http.StatusSeeOther, rr.Body.String())
+		t.Fatalf("ステータスコード = %v、期待値 = %v (本文: %s)", rr.Code, http.StatusSeeOther, rr.Body.String())
 	}
 
-	// The handler must redirect back to the page editor so it reloads with the restored content.
-	// [Ja] 復元後の内容でエディタが再読み込みされるよう、ページ編集画面へリダイレクトすること。
+	// 復元後の内容でエディタが再読み込みされるよう、ページ編集画面へリダイレクトすること。
 	location := rr.Header().Get("Location")
 	wantLocation := "/s/restore-h-success-space/pages/1/edit"
 	if location != wantLocation {
-		t.Errorf("wrong redirect location: got %v want %v", location, wantLocation)
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, wantLocation)
 	}
 
-	// The draft must be updated and the restored state recorded as a new revision.
-	// [Ja] 下書きが更新され、復元後の状態が新しいリビジョンとして記録されていること。
+	// 下書きが更新され、復元後の状態が新しいリビジョンとして記録されていること。
 	q := query.New(db)
 	draftPage, err := repository.NewDraftPageRepository(q).FindByID(ctx, fixture.draftPageID, fixture.spaceID)
 	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+		t.Fatalf("FindByID()のエラー = %v", err)
 	}
 	if draftPage == nil {
-		t.Fatal("draftPage should not be nil")
+		t.Fatal("draftPageがnil")
 	}
 	if draftPage.Title == nil || *draftPage.Title != "Old Title" {
-		t.Errorf("DraftPage.Title = %v, want %q", draftPage.Title, "Old Title")
+		t.Errorf("DraftPage.Title = %v、期待値 = %q", draftPage.Title, "Old Title")
 	}
 	if draftPage.Body != "old body" {
-		t.Errorf("DraftPage.Body = %q, want %q", draftPage.Body, "old body")
+		t.Errorf("DraftPage.Body = %q、期待値 = %q", draftPage.Body, "old body")
 	}
 
 	count, err := repository.NewDraftPageRevisionRepository(q).CountByDraftPageID(ctx, fixture.draftPageID, fixture.spaceID)
 	if err != nil {
-		t.Fatalf("CountByDraftPageID() error = %v", err)
+		t.Fatalf("CountByDraftPageID()のエラー = %v", err)
 	}
 	if count != 3 {
-		t.Errorf("revision count = %d, want 3", count)
+		t.Errorf("リビジョンの件数 = %d、期待値 = 3", count)
 	}
 }
 
@@ -261,7 +251,7 @@ func TestCreate_RevisionNotFound(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -284,6 +274,6 @@ func TestCreate_NotSpaceMember(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }

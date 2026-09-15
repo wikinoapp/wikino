@@ -1,29 +1,16 @@
-// Resolves attachment placeholders in the page-editor preview. The markup filter
-// (internal/markup/attachment_filter.go) emits placeholders carrying a data-attachment-id whose
-// real URL is fetched on the client (same scheme as the Rails attachment_loader_controller):
-// <img>/<video> start with an empty src and a pending class, and <a> starts with href="#". This
-// module mirrors that controller for the Go frontend: after the preview HTML is swapped in, it
-// collects the placeholders, batch-requests short-lived signed URLs from POST
-// /attachments/signed_urls, and fills in src/href. For media it also swaps the pending class for
-// the loaded one once the resource finishes loading, so the CSS fade-in triggers; anchors only get
-// their href filled.
+// 描画されたページ本文の添付ファイルプレースホルダーを解決する。マークアップフィルタ
+// (internal/markup/attachment_filter.go) はdata-attachment-idを持つプレースホルダーを出力し、
+// 実URLはクライアント側で取得する。<img>/<video> は空のsrcと保留中クラスを持ち、<a> は
+// href="#" を持つ。本モジュールはプレースホルダーを集め、POST /attachments/signed_urlsから
+// 短命の署名付きURLをバッチ取得してsrc/hrefを埋める。
+// メディアではさらにリソースの読み込み完了時に保留中クラスを読み込み済みクラスへ差し替えてCSSの
+// フェードインを発火させる。アンカーはhrefを埋めるだけ。
 //
-// The preview body is injected by htmx (innerHTML swap into #page-edit-preview-content), so the
-// loader runs on htmx:after:settle rather than at DOMContentLoaded like the other initializers.
-//
-// [Ja] ページエディタのプレビューの添付ファイルプレースホルダーを解決する。マークアップフィルタ
-// (internal/markup/attachment_filter.go) は data-attachment-id を持つプレースホルダーを出力し、
-// 実 URL はクライアント側で取得する前提になっている (Rails の attachment_loader_controller と
-// 同じ方式)。<img>/<video> は空の src と保留中クラスを持ち、<a> は href="#" を持つ。本モジュールは
-// その方式を Go フロントエンドに移したもので、プレビュー HTML がスワップされた後にプレースホルダーを
-// 集め、POST /attachments/signed_urls から短命の署名付き URL をバッチ取得して src/href を埋める。
-// メディアではさらにリソースの読み込み完了時に保留中クラスを読み込み済みクラスへ差し替えて CSS の
-// フェードインを発火させる。アンカーは href を埋めるだけ。
-//
-// プレビュー本文は htmx が差し込む (#page-edit-preview-content への innerHTML スワップ) ため、
-// ローダーは他の初期化処理のような DOMContentLoaded ではなく htmx:after:settle で起動する。
+// 本文がDOMに現れる経路は2つあるため、ローダーの起点も2つある。ページ表示画面は本文を
+// サーバー側で描画し、初期化処理が走る時点で既にDOMにあるため、初期化時に一度だけ解決する。
+// ページエディタのプレビューはhtmxが差し込み、htmx:after:settleで通知されるため、
+// スワップされた部分木ごとに解決する。
 
-const PREVIEW_CONTENT_ID = "page-edit-preview-content";
 const CSRF_TOKEN_INPUT_ID = "page-edit-csrf-token";
 const SIGNED_URLS_ENDPOINT = "/attachments/signed_urls";
 
@@ -38,26 +25,24 @@ interface SignedUrlsResponse {
 
 export function initializeAttachmentLoader(): void {
   document.addEventListener("htmx:after:settle", handleAfterSettle);
+
+  // サーバー側で描画された本文は文書と一緒に届くため、スワップイベントでは通知されない。
+  void loadAttachments(document.body);
 }
 
-// handleAfterSettle runs the loader only when the settle is the preview swap. The event bubbles from
-// every htmx swap (including the autosave OOB swaps), so it is filtered to the preview container,
-// which is the innerHTML swap target and therefore the element the event fires on.
-//
-// [Ja] handleAfterSettle はプレビューのスワップのときだけローダーを走らせる。イベントは (自動保存の
-// OOB スワップを含む) あらゆる htmx スワップから伝播するため、innerHTML スワップの対象であり
-// イベントの発火元でもあるプレビューコンテナに絞り込む。
+// handleAfterSettleは今スワップされた部分木のプレースホルダーを解決する。イベントはあらゆる
+// htmxスワップから伝播するため、走査をスワップされた要素に絞ることで、プレースホルダーを持たない
+// スワップ (関連ページ一覧、自動保存のOOBスワップ) が文書の残りを走査し直さないようにし、画面の
+// 別の場所がスワップされたときに解決済みの本文を取得し直さないようにする。
 function handleAfterSettle(event: Event): void {
-  const previewContent = document.getElementById(PREVIEW_CONTENT_ID);
-  if (!previewContent || event.target !== previewContent) return;
+  const settled = event.target;
+  if (!(settled instanceof HTMLElement)) return;
 
-  void loadAttachments(previewContent);
+  void loadAttachments(settled);
 }
 
 async function loadAttachments(root: HTMLElement): Promise<void> {
-  // Skip placeholders already resolved by a previous run so a re-settle does not refetch them.
-  //
-  // [Ja] 前回の実行で既に解決済みのプレースホルダーはスキップし、再スワップで取得し直さないようにする。
+  // 前回の実行で既に解決済みのプレースホルダーはスキップし、再スワップで取得し直さないようにする。
   const elements = Array.from(root.querySelectorAll<HTMLElement>("[data-attachment-id]")).filter(
     (el) => !isResolved(el),
   );
@@ -71,6 +56,11 @@ async function loadAttachments(root: HTMLElement): Promise<void> {
   const signedUrls = await fetchSignedUrls(attachmentIds);
   if (!signedUrls) return;
 
+  // 本文の先頭の画像はページ表示画面のLCP候補になるため、ブラウザ既定 (eager) のままにし、
+  // 以降の画像を遅延読み込みにする。プレースホルダーは解決されるまで寸法を持たず、潰れたレイアウト
+  // ではビューポート判定に測るものが無いため、ここで使える手がかりは文書順になる。
+  const lcpCandidate = elements.find((el) => el instanceof HTMLImageElement);
+
   for (const el of elements) {
     const attachmentId = el.dataset.attachmentId;
     if (!attachmentId) continue;
@@ -78,7 +68,7 @@ async function loadAttachments(root: HTMLElement): Promise<void> {
     const signedUrl = signedUrls[attachmentId];
     if (!signedUrl) continue;
 
-    applySignedUrl(el, signedUrl);
+    applySignedUrl(el, signedUrl, el !== lcpCandidate);
   }
 }
 
@@ -86,40 +76,46 @@ function isResolved(el: HTMLElement): boolean {
   return el.classList.contains(IMAGE_LOADED_CLASS) || el.classList.contains(VIDEO_LOADED_CLASS);
 }
 
-// fetchSignedUrls batch-requests signed URLs, keyed by attachment id. It sends the request the
-// same way as the upload flow (file-upload-handler.ts POSTing to /attachments/presign): a JSON
-// body plus an X-CSRF-Token header read from the page. This endpoint is a Rails route reached
-// through the reverse proxy, and Rails opts out of CSRF for it (skip_forgery_protection), so the
-// header is carried for consistency with the upload path rather than verified here.
-//
-// [Ja] fetchSignedUrls は添付ファイル ID をキーにした署名付き URL をバッチ取得する。リクエストは
-// アップロード経路 (file-upload-handler.ts が /attachments/presign へ POST するのと同じ方式) に
-// 揃え、JSON ボディとページから読んだ X-CSRF-Token ヘッダーを送る。本エンドポイントは
-// リバースプロキシ越しに到達する Rails ルートで、Rails 側は CSRF をオプトアウトしている
+// fetchSignedUrlsは添付ファイルIDをキーにした署名付きURLをバッチ取得する。リクエストは
+// アップロード経路 (file-upload-handler.tsが /attachments/presignへPOSTするのと同じ方式) に
+// 揃え、JSONボディとページから読んだX-CSRF-Tokenヘッダーを送る。本エンドポイントは
+// リバースプロキシ越しに到達するRailsルートで、Rails側はCSRFをオプトアウトしている
 // (skip_forgery_protection) ため、ヘッダーはここで検証されるのではなくアップロード経路との
 // 一貫性のために付けている。
 async function fetchSignedUrls(attachmentIds: string[]): Promise<Record<string, string> | null> {
   try {
     const response = await fetch(SIGNED_URLS_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": readCsrfToken(),
-      },
+      headers: buildHeaders(),
       body: JSON.stringify({ attachment_ids: attachmentIds }),
     });
 
     if (!response.ok) {
-      console.error("Failed to fetch attachment signed URLs:", response.status);
+      console.error("添付ファイルの署名付きURLの取得に失敗しました:", response.status);
       return null;
     }
 
     const data = (await response.json()) as SignedUrlsResponse;
     return data.signed_urls ?? {};
   } catch (error) {
-    console.error("Error loading attachment signed URLs:", error);
+    console.error("添付ファイルの署名付きURLの読み込み中にエラーが発生しました:", error);
     return null;
   }
+}
+
+// buildHeadersは画面がトークンを持つときだけCSRFヘッダーを付ける。ページ編集画面は
+// トークンのinputを描画するが、ページ表示画面は描画しない。ゲストが到達でき、保護すべき
+// セッションを持たないためである。空のヘッダーを送るとページが持っていないトークンを名乗ることに
+// なり、いずれにせよエンドポイントはトークン無しでもリクエストを受け付ける。
+function buildHeaders(): HeadersInit {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+  const csrfToken = readCsrfToken();
+  if (csrfToken !== "") {
+    headers["X-CSRF-Token"] = csrfToken;
+  }
+
+  return headers;
 }
 
 function readCsrfToken(): string {
@@ -127,12 +123,11 @@ function readCsrfToken(): string {
   return input instanceof HTMLInputElement ? input.value : "";
 }
 
-// applySignedUrl fills in the real URL per element type and, for media, swaps the pending class for
-// the loaded class once the resource finishes loading so the CSS fade-in runs on fully-loaded media.
-//
-// [Ja] applySignedUrl は要素の種類ごとに実 URL を埋め、メディアではリソースの読み込み完了時に保留中
-// クラスを読み込み済みクラスへ差し替えて、読み込み済みメディアに対して CSS のフェードインを走らせる。
-function applySignedUrl(el: HTMLElement, signedUrl: string): void {
+// applySignedUrlは要素の種類ごとに実URLを埋め、メディアではリソースの読み込み完了時に保留中
+// クラスを読み込み済みクラスへ差し替えて、読み込み済みメディアに対してCSSのフェードインを走らせる。
+// lazyは閲覧者が最初に見るとは考えにくい画像を表す (loadAttachmentsのLCP候補を参照)。URLの
+// 代入を最後に置くのは、読み込みモードを決めた状態で取得を開始させるため。
+function applySignedUrl(el: HTMLElement, signedUrl: string, lazy: boolean): void {
   if (el instanceof HTMLImageElement) {
     el.addEventListener(
       "load",
@@ -142,7 +137,9 @@ function applySignedUrl(el: HTMLElement, signedUrl: string): void {
       },
       { once: true },
     );
-    el.loading = "lazy";
+    if (lazy) {
+      el.loading = "lazy";
+    }
     el.src = signedUrl;
     return;
   }

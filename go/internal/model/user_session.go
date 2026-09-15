@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// UserSession はユーザーセッションのドメインモデル
+// UserSessionはユーザーセッションのドメインモデル
 type UserSession struct {
 	ID         string
 	UserID     UserID

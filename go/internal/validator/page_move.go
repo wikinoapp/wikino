@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// PageMoveCreateValidator はページ移動のバリデーションを行う
+// PageMoveCreateValidatorはページ移動のバリデーションを行う
 type PageMoveCreateValidator struct {
 	pageRepo           *repository.PageRepository
 	topicRepo          *repository.TopicRepository
@@ -18,7 +18,7 @@ type PageMoveCreateValidator struct {
 	suggestionPageRepo *repository.SuggestionPageRepository
 }
 
-// NewPageMoveCreateValidator は PageMoveCreateValidator を生成する
+// NewPageMoveCreateValidatorはPageMoveCreateValidatorを生成する
 func NewPageMoveCreateValidator(
 	pageRepo *repository.PageRepository,
 	topicRepo *repository.TopicRepository,
@@ -33,7 +33,7 @@ func NewPageMoveCreateValidator(
 	}
 }
 
-// PageMoveCreateValidatorInput はバリデーションの入力パラメータ
+// PageMoveCreateValidatorInputはバリデーションの入力パラメータ
 type PageMoveCreateValidatorInput struct {
 	DestTopicNumber string
 	PageID          model.PageID
@@ -43,8 +43,8 @@ type PageMoveCreateValidatorInput struct {
 	SpaceMember     *model.SpaceMember
 }
 
-// Validate はバリデーションを行う。
-// 成功時は移動先トピックを返す。バリデーションエラー時は *model.ValidationError を返す。
+// Validateはバリデーションを行う。
+// 成功時は移動先トピックを返す。バリデーションエラー時は *model.ValidationErrorを返す。
 func (v *PageMoveCreateValidator) Validate(ctx context.Context, input PageMoveCreateValidatorInput) (*model.Topic, error) {
 	ve := model.NewValidationError()
 

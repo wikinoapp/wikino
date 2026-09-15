@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create はページ移動を実行します (POST /s/{space_identifier}/pages/{page_number}/move)
+// Createはページ移動を実行します (POST /s/{space_identifier}/pages/{page_number}/move)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -40,7 +40,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// フォームデータを取得
 	destTopicNumber := r.FormValue("dest_topic")
 
-	// UseCase を実行
+	// UseCaseを実行
 	moveOutput, err := h.movePageUC.Execute(ctx, usecase.MovePageInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),

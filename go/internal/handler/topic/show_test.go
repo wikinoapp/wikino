@@ -9,22 +9,24 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	xhtml "golang.org/x/net/html"
 
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// newShowRequest はchiのURLパラメータ付きGETリクエストを作成するヘルパーです
+// newShowRequestはchiのURLパラメータ付きGETリクエストを作成するヘルパーです
 func newShowRequest(t *testing.T, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -38,7 +40,7 @@ func newShowRequest(t *testing.T, path string, params map[string]string) *http.R
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用のトピックハンドラーを作成するヘルパーです
+// setupHandlerはテスト用のトピックハンドラーを作成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 	t.Helper()
 
@@ -52,16 +54,26 @@ func setupHandler(t *testing.T, queries *query.Queries) *topichandler.Handler {
 	topicRepo := repository.NewTopicRepository(queries)
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
+	getTopicNewUC := usecase.NewGetTopicNewUsecase(spaceRepo, spaceMemberRepo)
+	// 作成のユースケースは自身でトランザクションを開くため、画面の読み取りに使うトランザクション
+	// ではなく共有プールを受け取る。ここでテストする画面がそこへ到達することはない。
+	createTopicUC := usecase.NewCreateTopicUsecase(
+		testutil.GetTestDB(),
+		spaceRepo,
+		spaceMemberRepo,
+		topicRepo,
+		topicMemberRepo,
+		validator.NewTopicCreateValidator(topicRepo),
+	)
 
 	return topichandler.NewHandler(
 		cfg,
 		flashMgr,
 		getTopicDetailUC,
-		sidebarHelper,
+		getTopicNewUC,
+		createTopicUC,
 	)
 }
 
@@ -82,7 +94,7 @@ func TestShow_存在しないスペースで404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -103,7 +115,7 @@ func TestShow_不正なトピック番号で404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -128,7 +140,7 @@ func TestShow_存在しないトピックで404が返る(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -160,12 +172,12 @@ func TestShow_公開トピックを未ログインで閲覧できる(t *testing.
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "公開トピック") {
-		t.Error("response should contain topic name")
+		t.Error("レスポンスにトピック名が含まれていない")
 	}
 }
 
@@ -196,7 +208,7 @@ func TestShow_非公開トピックを未ログインで閲覧すると404が返
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -237,12 +249,12 @@ func TestShow_非公開トピックをスペースオーナーが閲覧できる
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "オーナー閲覧可能") {
-		t.Error("response should contain topic name")
+		t.Error("レスポンスにトピック名が含まれていない")
 	}
 }
 
@@ -288,12 +300,12 @@ func TestShow_非公開トピックをトピックメンバーが閲覧できる
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "メンバー閲覧可能") {
-		t.Error("response should contain topic name")
+		t.Error("レスポンスにトピック名が含まれていない")
 	}
 }
 
@@ -341,7 +353,7 @@ func TestShow_非公開トピックをスペースメンバーが閲覧できる
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -388,25 +400,36 @@ func TestShow_正常系_ページ一覧が表示される(t *testing.T) {
 	handler.Show(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "テストトピック") {
-		t.Error("response should contain topic name")
+		t.Error("レスポンスにトピック名が含まれていない")
 	}
 	if !strings.Contains(body, "最初のページ") {
-		t.Error("response should contain regular page title")
+		t.Error("レスポンスに通常ページのタイトルが含まれていない")
 	}
 	if !strings.Contains(body, "ピン留めページ") {
-		t.Error("response should contain pinned page title")
+		t.Error("レスポンスにピン留めしたページのタイトルが含まれていない")
+	}
+
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅max-w-3xlも維持する。末尾のパンくずは
+	// スペースへ戻るリンク。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("共通のパンくずヘッダーがmax-w-3xlのコンテンツ幅を保っていない")
+	}
+	if !strings.Contains(body, `href="/s/ts-pages"`) {
+		t.Error("パンくずがスペースへのリンクになっていない")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 }
 
-// Regression test verifying that the suggestion tab is shown in every viewable
-// scenario on the topic detail screen.
-//
-// [Ja] トピック詳細画面で、閲覧可能なすべてのシナリオで編集提案タブが
+// トピック詳細画面で、閲覧可能なすべてのシナリオで編集提案タブが
 // 表示されることを検証する回帰テスト。
 func TestShow_編集提案タブが常に表示される(t *testing.T) {
 	t.Parallel()
@@ -490,14 +513,515 @@ func TestShow_編集提案タブが常に表示される(t *testing.T) {
 			handler.Show(rr, req)
 
 			if rr.Code != http.StatusOK {
-				t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
 
 			body := rr.Body.String()
 			expected := fmt.Sprintf("/s/%s/topics/1/suggestions", tt.spaceIdentifier)
 			if !strings.Contains(body, expected) {
-				t.Errorf("response should contain suggestions tab link %q", expected)
+				t.Errorf("レスポンスに編集提案のタブのリンク%qが含まれていない", expected)
 			}
 		})
+	}
+}
+
+// トピックオプションのドロップダウントリガーはアイコンのみのため、アクセシブルネームは
+// 内容ではなく翻訳済みのaria-labelが供給する。
+func TestShow_トピックオプションのトリガーにアクセシブルネームがある(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		locale    string
+		wantLabel string
+	}{
+		{
+			name:      "日本語",
+			locale:    i18n.LangJa,
+			wantLabel: "トピックのオプション",
+		},
+		{
+			name:      "英語",
+			locale:    i18n.LangEn,
+			wantLabel: "Topic options",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			queries := testutil.QueriesWithTx(tx)
+
+			identifier := "ts-optlabel-" + tt.locale
+			atname := "tsoptlabel" + tt.locale
+
+			ownerID := testutil.NewUserBuilder(t, tx).
+				WithEmail(identifier + "@example.com").
+				WithAtname(atname).
+				Build()
+			spaceID := testutil.NewSpaceBuilder(t, tx).
+				WithIdentifier(identifier).
+				Build()
+			testutil.NewSpaceMemberBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithUserID(ownerID).
+				Build()
+			testutil.NewTopicBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithNumber(1).
+				WithVisibility(0).
+				Build()
+
+			handler := setupHandler(t, queries)
+
+			req := newShowRequest(t, "/s/"+identifier+"/topics/1", map[string]string{
+				"space_identifier": identifier,
+				"topic_number":     "1",
+			})
+			ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: atname})
+			ctx = i18n.SetLocale(ctx, tt.locale)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+			}
+
+			if !strings.Contains(rr.Body.String(), `aria-label="`+tt.wantLabel+`"`) {
+				t.Errorf("トピックオプションのトリガーにaria-label %qが含まれていない", tt.wantLabel)
+			}
+		})
+	}
+}
+
+// 正規URLが指すべきは保存済みの識別子である。spaces.identifierはcitextのため大文字小文字が
+// 違うリクエストでも同じ画面に到達し、そのままでは同じ内容に対して2つ目の正規アドレスを宣言して
+// しまう。トピック番号を保存済みのトピックから取るのも同じ理由で、/topics/007が独自のアドレスに
+// ならないようにするためである。
+func TestShow_CanonicalUsesStoredIdentifierAndTopicNumber(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-canonical").
+		WithName("Canonical Space").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開トピック").
+		WithVisibility(0). // public
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/TS-CANONICAL/topics/001", map[string]string{
+		"space_identifier": "TS-CANONICAL",
+		"topic_number":     "001",
+	})
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		"<title>公開トピック | Canonical Space</title>",
+		"<meta property=\"og:title\" content=\"公開トピック | Canonical Space\">",
+		`<link rel="canonical" href="https://localhost/s/ts-canonical/topics/1">`,
+		`<meta property="og:url" content="https://localhost/s/ts-canonical/topics/1">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに%qが含まれていない", want)
+		}
+	}
+	if strings.Contains(body, "TS-CANONICAL") {
+		t.Error("リクエストした表記がレスポンスに残っている")
+	}
+}
+
+func TestShow_PaginatedTitleIncludesPageNumber(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-paginated-title").
+		WithName("Paginated Space").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Paginated Topic").
+		WithVisibility(0).
+		Build()
+
+	for i := int32(1); i <= 101; i++ {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(i)).
+			WithTitle(fmt.Sprintf("Page %d", i)).
+			WithLinkedPageIDs([]model.PageID{}).
+			Build()
+	}
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-paginated-title/topics/1?page=2", map[string]string{
+		"space_identifier": "ts-paginated-title",
+		"topic_number":     "1",
+	})
+	req = req.WithContext(i18n.SetLocale(req.Context(), i18n.LangEn))
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	}
+
+	// 系列の各ページは載っているページが異なるため、1ページ目ではなく自分自身を正規アドレスとして
+	// 宣言する。
+	for _, want := range []string{
+		"<title>Paginated Topic | Paginated Space (Page 2)</title>",
+		"<meta property=\"og:title\" content=\"Paginated Topic | Paginated Space (Page 2)\">",
+		`<link rel="canonical" href="https://localhost/s/ts-paginated-title/topics/1?page=2">`,
+		`<meta property="og:url" content="https://localhost/s/ts-paginated-title/topics/1?page=2">`,
+	} {
+		if !strings.Contains(rr.Body.String(), want) {
+			t.Errorf("レスポンスに%qが含まれていない", want)
+		}
+	}
+}
+
+func TestShow_PageBeyondTotalReturnsNotFound(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-page-out-of-range").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Out of Range Topic").
+		WithVisibility(0).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	for _, page := range []string{"2", "2147483647"} {
+		t.Run("page="+page, func(t *testing.T) {
+			req := newShowRequest(t, "/s/ts-page-out-of-range/topics/1?page="+page, map[string]string{
+				"space_identifier": "ts-page-out-of-range",
+				"topic_number":     "1",
+			})
+
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusNotFound {
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
+			}
+
+			body := rr.Body.String()
+			if strings.Contains(body, "Out of Range Topic") {
+				t.Error("レスポンスにトピック名が含まれている")
+			}
+			if strings.Contains(body, "/s/ts-page-out-of-range/topics/1?page="+page) {
+				t.Error("レスポンスに自身を指すcanonical URLが含まれている")
+			}
+		})
+	}
+}
+
+// トピックはパンくずの末尾項目のため、現在ページとして印を付けたリンク無しの項目で経路を
+// 締め、名前の横に公開範囲のアイコンを装飾として持つ。同じ表示項目をBreadcrumbList構造化データ
+// にも出し、未ログインの閲覧者は公開スペースから、ログイン済みの閲覧者は /homeから始める。
+func TestShow_BreadcrumbMarksCurrentTopicWithStructuredData(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	viewerID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-breadcrumb-viewer@example.com").
+		WithAtname("tsbreadcrumbviewer").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-breadcrumb").
+		WithName("Breadcrumb Space").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開トピック").
+		WithVisibility(0). // public
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	tests := []struct {
+		name            string
+		user            *model.User
+		wantContains    []string
+		wantNotContains []string
+	}{
+		{
+			name: "未ログインの閲覧者は公開スペースから始まる",
+			wantContains: []string{
+				`aria-current="page"`,
+				"<script type=\"application/ld+json\">",
+				"\"@type\":\"BreadcrumbList\"",
+				"\"position\":1,\"name\":\"Breadcrumb Space\",\"item\":\"https://localhost/s/ts-breadcrumb\"",
+				"\"position\":2,\"name\":\"公開トピック\"",
+			},
+			wantNotContains: []string{`href="/home"`, `https://localhost/home`},
+		},
+		{
+			name: "ログイン済みの閲覧者は認証済みのホームから始まる",
+			user: &model.User{ID: viewerID, Atname: "tsbreadcrumbviewer"},
+			wantContains: []string{
+				`aria-current="page"`,
+				"<script type=\"application/ld+json\">",
+				"\"@type\":\"BreadcrumbList\"",
+				"\"position\":1,\"name\":\"ホーム\",\"item\":\"https://localhost/home\"",
+				"\"position\":2,\"name\":\"Breadcrumb Space\",\"item\":\"https://localhost/s/ts-breadcrumb\"",
+				"\"position\":3,\"name\":\"公開トピック\"",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newShowRequest(t, "/s/ts-breadcrumb/topics/1", map[string]string{
+				"space_identifier": "ts-breadcrumb",
+				"topic_number":     "1",
+			})
+			if tt.user != nil {
+				req = req.WithContext(middleware.SetUserToContext(req.Context(), tt.user))
+			}
+
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+			}
+
+			body := rr.Body.String()
+			for _, want := range tt.wantContains {
+				if !strings.Contains(body, want) {
+					t.Errorf("レスポンスに%qが含まれていない", want)
+				}
+			}
+			for _, notWant := range tt.wantNotContains {
+				if strings.Contains(body, notWant) {
+					t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
+				}
+			}
+			if strings.Contains(body, "\"name\":\"公開トピック\",\"item\":") {
+				t.Error("現在のパンくずの構造化データの項目が自身へリンクしている")
+			}
+			if !currentCrumbHasDecorativeIcon(t, body) {
+				t.Error("現在地のパンくず項目に装飾アイコンが出ていない")
+			}
+		})
+	}
+}
+
+// visibilityBadgeIDはshowSubtitleが公開範囲のバッジへ与えるidで、以下の検査がその要素
+// だけを名指しできるようにしているもの。
+const visibilityBadgeID = "topic-visibility-badge"
+
+// visibilityLabelTextは応答を解析し、トピックの公開範囲を示すバッジのテキスト全体を返す。
+// テキストを読む前にバッジ要素を特定することで、あるロケールで「公開」が「非公開」の接尾辞で
+// あるだけなのに検査を通ることを防ぐ。
+//
+// バッジはidで特定する。クラスは見た目を表すものであり、応答には他のoutlineの要素もあるため、
+// クラスでの一致はスタイルの変更に追従してしまうか、画面が育つにつれ別の要素を読み始める。
+func visibilityLabelText(t *testing.T, body string) string {
+	t.Helper()
+
+	tokenizer := xhtml.NewTokenizer(strings.NewReader(body))
+	labelDepth := 0
+	var labelText strings.Builder
+	for {
+		switch tokenizer.Next() {
+		case xhtml.ErrorToken:
+			t.Fatalf("公開範囲のバッジ (id=%s) が応答に見つからない", visibilityBadgeID)
+		case xhtml.StartTagToken:
+			token := tokenizer.Token()
+			if labelDepth > 0 {
+				labelDepth++
+				continue
+			}
+
+			if hasAttribute(token, "id", visibilityBadgeID) {
+				labelDepth = 1
+			}
+		case xhtml.TextToken:
+			if labelDepth > 0 {
+				labelText.WriteString(tokenizer.Token().Data)
+			}
+		case xhtml.EndTagToken:
+			if labelDepth == 0 {
+				continue
+			}
+			labelDepth--
+			if labelDepth == 0 {
+				return strings.TrimSpace(labelText.String())
+			}
+		}
+	}
+}
+
+// currentCrumbHasDecorativeIconは、現在ページとして印を付けたパンくず項目が、支援技術から
+// 隠したアイコンを持つかを返す。トピック画面は公開範囲をそこへ装飾として繰り返すため、アイコンは
+// 画面に残しつつ読み上げの順序からは外れている必要がある。
+func currentCrumbHasDecorativeIcon(t *testing.T, body string) bool {
+	t.Helper()
+
+	tokenizer := xhtml.NewTokenizer(strings.NewReader(body))
+	crumbDepth := 0
+	for {
+		switch tokenizer.Next() {
+		case xhtml.ErrorToken:
+			t.Fatal(`aria-current="page" のパンくず項目が応答に見つからない`)
+		case xhtml.StartTagToken:
+			token := tokenizer.Token()
+			if crumbDepth == 0 {
+				if token.Data == "li" && hasAttribute(token, "aria-current", "page") {
+					crumbDepth = 1
+				}
+
+				continue
+			}
+
+			crumbDepth++
+			if token.Data == "svg" && hasAttribute(token, "aria-hidden", "true") {
+				return true
+			}
+		case xhtml.EndTagToken:
+			if crumbDepth == 0 {
+				continue
+			}
+			crumbDepth--
+			if crumbDepth == 0 {
+				return false
+			}
+		}
+	}
+}
+
+func hasAttribute(token xhtml.Token, key string, value string) bool {
+	for _, attribute := range token.Attr {
+		if attribute.Key == key && attribute.Val == value {
+			return true
+		}
+	}
+
+	return false
+}
+
+// 公開範囲のラベルは、トピック画面が公開か非公開かを述べる唯一の場所であり、スクリーン
+// リーダーへ状態を運ぶのはアイコンではなくラベルのほうである。ラベルはタイトルの下の行を
+// 説明文と共有する。言葉を確認することで、それが
+// アイコンだけに置き換わるのを防ぐ。
+//
+// 応答の他の場所にある一覧カードは、アイコンだけを探す検査を通してしまうため、その横に並ぶ
+// 言葉を確認する。
+func TestShow_公開トピックの説明文の行に公開ラベルが出る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-vis-pub").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開ラベル確認").
+		WithVisibility(0). // public
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-vis-pub/topics/1", map[string]string{
+		"space_identifier": "ts-vis-pub",
+		"topic_number":     "1",
+	})
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if got := visibilityLabelText(t, body); got != "公開" {
+		t.Errorf("公開トピックのラベル = %q、期待値 = 「公開」", got)
+	}
+}
+
+func TestShow_非公開トピックの説明文の行に非公開ラベルが出る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ownerID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-vis-owner@example.com").
+		WithAtname("tsvisowner").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-vis-priv").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(ownerID).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("非公開ラベル確認").
+		WithVisibility(1). // private
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-vis-priv/topics/1", map[string]string{
+		"space_identifier": "ts-vis-priv",
+		"topic_number":     "1",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: ownerID, Atname: "tsvisowner"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if got := visibilityLabelText(t, body); got != "非公開" {
+		t.Errorf("非公開トピックのラベル = %q、期待値 = 「非公開」", got)
 	}
 }

@@ -21,10 +21,10 @@ import (
 )
 
 func TestUpdate_Success(t *testing.T) {
-	// このテストはUsecaseの内部動作（トランザクション）とテストのトランザクションが
-	// 競合するため、スキップします。Usecaseの動作は usecase/update_password_reset_test.go
+	// このテストはUsecaseの内部動作 (トランザクション) とテストのトランザクションが
+	// 競合するため、スキップします。Usecaseの動作はusecase/update_password_reset_test.go
 	// でテストされています。
-	t.Skip("Usecase uses separate transaction, tested in usecase package")
+	t.Skip("UseCaseが別のトランザクションを使うため、usecaseパッケージでテストする")
 }
 
 func TestUpdate_ValidationError_EmptyPassword(t *testing.T) {
@@ -54,7 +54,7 @@ func TestUpdate_ValidationError_EmptyPassword(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// UseCase を初期化
+	// UseCaseを初期化
 	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
 	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
@@ -66,7 +66,7 @@ func TestUpdate_ValidationError_EmptyPassword(t *testing.T) {
 		updatePasswordResetUC,
 	)
 
-	// フォームデータを作成（パスワードが空）
+	// フォームデータを作成 (パスワードが空)
 	form := url.Values{}
 	form.Set("token", "some-token")
 	form.Set("password", "")
@@ -85,13 +85,13 @@ func TestUpdate_ValidationError_EmptyPassword(t *testing.T) {
 
 	// フォームが再表示されることを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "パスワードを入力してください") {
-		t.Error("password required error message not found in response")
+		t.Error("レスポンスにパスワード必須のエラーメッセージが見つからない")
 	}
 }
 
@@ -122,7 +122,7 @@ func TestUpdate_ValidationError_PasswordMismatch(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// UseCase を初期化
+	// UseCaseを初期化
 	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
 	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
@@ -134,7 +134,7 @@ func TestUpdate_ValidationError_PasswordMismatch(t *testing.T) {
 		updatePasswordResetUC,
 	)
 
-	// フォームデータを作成（パスワード不一致）
+	// フォームデータを作成 (パスワード不一致)
 	form := url.Values{}
 	form.Set("token", "some-token")
 	form.Set("password", "newpassword123")
@@ -153,13 +153,13 @@ func TestUpdate_ValidationError_PasswordMismatch(t *testing.T) {
 
 	// フォームが再表示されることを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "パスワードが一致しません") {
-		t.Error("password mismatch error message not found in response")
+		t.Error("レスポンスにパスワード不一致のエラーメッセージが見つからない")
 	}
 }
 
@@ -190,7 +190,7 @@ func TestUpdate_ValidationError_InvalidToken(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// UseCase を初期化
+	// UseCaseを初期化
 	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
 	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
@@ -202,7 +202,7 @@ func TestUpdate_ValidationError_InvalidToken(t *testing.T) {
 		updatePasswordResetUC,
 	)
 
-	// フォームデータを作成（無効なトークン）
+	// フォームデータを作成 (無効なトークン)
 	form := url.Values{}
 	form.Set("token", "invalid-token")
 	form.Set("password", "newpassword123")
@@ -221,13 +221,13 @@ func TestUpdate_ValidationError_InvalidToken(t *testing.T) {
 
 	// フォームが再表示されることを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "無効なリンク") {
-		t.Error("invalid token error message not found in response")
+		t.Error("レスポンスに無効なトークンのエラーメッセージが見つからない")
 	}
 }
 
@@ -270,7 +270,7 @@ func TestUpdate_ValidationError_ExpiredToken(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// UseCase を初期化
+	// UseCaseを初期化
 	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
 	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
@@ -301,13 +301,13 @@ func TestUpdate_ValidationError_ExpiredToken(t *testing.T) {
 
 	// フォームが再表示されることを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "有効期限が切れています") {
-		t.Error("expired token error message not found in response")
+		t.Error("レスポンスに有効期限切れトークンのエラーメッセージが見つからない")
 	}
 }
 
@@ -352,7 +352,7 @@ func TestUpdate_ValidationError_UsedToken(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// UseCase を初期化
+	// UseCaseを初期化
 	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(nil, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
 	getTokenDataUC := usecase.NewGetPasswordResetTokenDataUsecase(passwordResetTokenRepo)
@@ -383,12 +383,12 @@ func TestUpdate_ValidationError_UsedToken(t *testing.T) {
 
 	// フォームが再表示されることを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "既に使用されています") {
-		t.Error("used token error message not found in response")
+		t.Error("レスポンスに使用済みトークンのエラーメッセージが見つからない")
 	}
 }

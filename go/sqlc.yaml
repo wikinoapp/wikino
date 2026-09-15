@@ -23,7 +23,7 @@ sql:
               type: "string"
               pointer: true
             nullable: true
-          # citext型をstringとして扱う（public.citext）
+          # citext型をstringとして扱う (public.citext)
           - db_type: "public.citext"
             go_type: "string"
           # timestamp without time zoneをtime.Timeとして扱う

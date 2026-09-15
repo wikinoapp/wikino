@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// UserSessionRepository はユーザーセッションリポジトリ
+// UserSessionRepositoryはユーザーセッションリポジトリ
 type UserSessionRepository struct {
 	q *query.Queries
 }
 
-// NewUserSessionRepository は UserSessionRepository を生成する
+// NewUserSessionRepositoryはUserSessionRepositoryを生成する
 func NewUserSessionRepository(q *query.Queries) *UserSessionRepository {
 	return &UserSessionRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *UserSessionRepository) WithTx(tx *sql.Tx) *UserSessionRepository {
 	return &UserSessionRepository{q: r.q.WithTx(tx)}
 }
 
-// FindByID はセッションIDでセッションを取得する
+// FindByIDはセッションIDでセッションを取得する
 func (r *UserSessionRepository) FindByID(ctx context.Context, id string) (*model.UserSession, error) {
 	row, err := r.q.GetUserSessionByID(ctx, id)
 	if err != nil {
@@ -37,7 +37,7 @@ func (r *UserSessionRepository) FindByID(ctx context.Context, id string) (*model
 	return r.toModel(row), nil
 }
 
-// FindByToken はセッショントークンでセッションを取得する
+// FindByTokenはセッショントークンでセッションを取得する
 func (r *UserSessionRepository) FindByToken(ctx context.Context, token string) (*model.UserSession, error) {
 	row, err := r.q.GetUserSessionByToken(ctx, token)
 	if err != nil {
@@ -49,7 +49,7 @@ func (r *UserSessionRepository) FindByToken(ctx context.Context, token string) (
 	return r.toModel(row), nil
 }
 
-// CreateInput はセッション作成の入力パラメータ
+// CreateInputはセッション作成の入力パラメータ
 type CreateInput struct {
 	UserID     model.UserID
 	Token      string
@@ -58,7 +58,7 @@ type CreateInput struct {
 	SignedInAt time.Time
 }
 
-// Create は新しいセッションを作成する
+// Createは新しいセッションを作成する
 func (r *UserSessionRepository) Create(ctx context.Context, input CreateInput) (*model.UserSession, error) {
 	now := time.Now()
 	row, err := r.q.CreateUserSession(ctx, query.CreateUserSessionParams{
@@ -76,17 +76,17 @@ func (r *UserSessionRepository) Create(ctx context.Context, input CreateInput) (
 	return r.toModel(row), nil
 }
 
-// Delete はセッションを削除する
+// Deleteはセッションを削除する
 func (r *UserSessionRepository) Delete(ctx context.Context, id string) error {
 	return r.q.DeleteUserSession(ctx, id)
 }
 
-// DeleteByToken はセッショントークンでセッションを削除する
+// DeleteByTokenはセッショントークンでセッションを削除する
 func (r *UserSessionRepository) DeleteByToken(ctx context.Context, token string) error {
 	return r.q.DeleteUserSessionByToken(ctx, token)
 }
 
-// toModel は query.UserSession を model.UserSession に変換する
+// toModelはquery.UserSessionをmodel.UserSessionに変換する
 func (r *UserSessionRepository) toModel(row query.UserSession) *model.UserSession {
 	return &model.UserSession{
 		ID:         row.ID,

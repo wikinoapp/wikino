@@ -12,21 +12,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// defaultEmptyStateIcon is used when EmptyStateData.IconName is left empty.
-//
-// [Ja] EmptyStateData.IconName が未指定のときに使われるデフォルトアイコン。
+// EmptyStateData.IconNameが未指定のときに使われるデフォルトアイコン。
 const defaultEmptyStateIcon viewmodel.IconName = "file-dashed-regular"
 
-// EmptyStateData is the data structure passed to the EmptyState component.
-// Message and Description are rendered as raw HTML so that callers can include
-// inline markup (e.g. `<br>`) inside translated messages. Message, Description,
-// IconName, and Action are each optional; when IconName is empty,
-// `defaultEmptyStateIcon` is used.
-//
-// [Ja] EmptyStateData は EmptyState コンポーネントに渡すデータ構造体。
-// Message と Description は HTML として描画されるため、翻訳メッセージに `<br>` のような
-// インラインマークアップを含められる。Message / Description / IconName / Action は
-// それぞれ任意で、IconName が未指定のときは `defaultEmptyStateIcon` が使われる。
+// EmptyStateDataはEmptyStateコンポーネントに渡すデータ構造体。
+// MessageとDescriptionはHTMLとして描画されるため、翻訳メッセージに `<br>` のような
+// インラインマークアップを含められる。Message / Description / IconName / Actionは
+// それぞれ任意で、IconNameが未指定のときは `defaultEmptyStateIcon` が使われる。
 type EmptyStateData struct {
 	Message     string
 	Description string
@@ -34,7 +26,7 @@ type EmptyStateData struct {
 	Action      templ.Component
 }
 
-// EmptyState はリスト系セクションが 0 件のときの空状態を表示する汎用コンポーネントです
+// EmptyStateはリスト系セクションが0件のときの空状態を表示する汎用コンポーネントです
 func EmptyState(data EmptyStateData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

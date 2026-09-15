@@ -1,0 +1,7 @@
+<div class="<%= container_class_name %>">
+  <% items.each do |item| %>
+    <%= link_to item.path, class: item_class_name(item.active), aria: {label: t(item.label_key), current: (item.active ? "page" : nil)} do %>
+      <%= render BaseUI::IconComponent.new(name: item.active ? item.active_icon : item.default_icon, size: "24px", class_name: "fill-current") %>
+    <% end %>
+  <% end %>
+</div>

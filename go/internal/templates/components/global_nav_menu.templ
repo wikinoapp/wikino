@@ -1,0 +1,99 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// GlobalNavDataはグローバルナビに必要な表示状態を保持する。
+type GlobalNavData struct {
+	CurrentPageName templates.PageName
+	SignedIn        bool
+	UserAtname      string
+	SpaceIdentifier viewmodel.SpaceIdentifier
+}
+
+// GlobalNavMenuは上部バーと下部バーの両方が埋め込む、アイコンのみの共通
+// メニューを描画する。メニューは項目を横並びに置き、classNameはそのフレックス
+// コンテナに追記されて、ラッパーが固有のスタイルを足せるようにする (下部バーは
+// ピルの装飾に使う)。アクティブ項目はCurrentPageNameで判定する。
+//
+// ログイン時はホーム / 検索 / プロフィール、未ログイン時はホーム / サインインを
+// 表示する。検索・プロフィールはログイン必須のため未ログイン時は表示しない。
+// 未ログイン時の2項目はいずれもアクティブにならない。未ログイン時のホームリンクが
+// 指す画面はトップページだけであり、そのページはグローバルナビの対象外だからである。
+templ GlobalNavMenu(data GlobalNavData, className string) {
+	<div class={ "flex items-center gap-2", templ.KV(className, className != "") }>
+		if data.SignedIn {
+			@globalNavItem(globalNavItemData{
+				Path:        templates.HomePath(),
+				Label:       templates.T(ctx, "global_nav_home"),
+				DefaultIcon: "house-regular",
+				ActiveIcon:  "house-fill",
+				Active:      data.CurrentPageName == templates.PageNameHome,
+			})
+			@globalNavItem(globalNavItemData{
+				Path:        templates.SearchPathFor(data.SpaceIdentifier),
+				Label:       templates.T(ctx, "global_nav_search"),
+				DefaultIcon: "magnifying-glass-regular",
+				ActiveIcon:  "magnifying-glass-fill",
+				Active:      data.CurrentPageName == templates.PageNameSearch,
+			})
+			@globalNavItem(globalNavItemData{
+				Path:        templates.ProfilePath(data.UserAtname),
+				Label:       templates.T(ctx, "global_nav_profile"),
+				DefaultIcon: "user-circle-regular",
+				ActiveIcon:  "user-circle-fill",
+				Active:      data.CurrentPageName == templates.PageNameProfile,
+			})
+		} else {
+			@globalNavItem(globalNavItemData{
+				Path:        templates.Path("/"),
+				Label:       templates.T(ctx, "global_nav_home"),
+				DefaultIcon: "house-regular",
+				ActiveIcon:  "house-regular",
+				Active:      false,
+			})
+			@globalNavItem(globalNavItemData{
+				Path:        templates.SignInPath(),
+				Label:       templates.T(ctx, "global_nav_sign_in"),
+				DefaultIcon: "sign-in-regular",
+				ActiveIcon:  "sign-in-regular",
+				Active:      false,
+			})
+		}
+	</div>
+}
+
+// globalNavItemDataはナビゲーションリンク1件のデータ。
+type globalNavItemData struct {
+	Path        templates.Path
+	Label       string
+	DefaultIcon viewmodel.IconName
+	ActiveIcon  viewmodel.IconName
+	Active      bool
+}
+
+// globalNavItemはアイコンのみのリンク1件を描画する。アイコンのみのリンクの
+// 目的をスクリーンリーダーが読み上げられるようaria-labelを付け、アクティブ項目は
+// 塗りつぶしアイコンをforeground色で強調し、aria-current="page" を付ける。リンクは
+// 完全な円 (rounded-full) にして、正方形アイコンを囲むhoverハイライトが円形に見える
+// ようにする。
+templ globalNavItem(data globalNavItemData) {
+	<a
+		href={ templ.SafeURL(string(data.Path)) }
+		aria-label={ data.Label }
+		if data.Active {
+			aria-current="page"
+		}
+		class={ "flex items-center justify-center rounded-full p-2 hover:bg-muted",
+			templ.KV("text-foreground", data.Active),
+			templ.KV("text-muted-foreground hover:text-foreground", !data.Active) }
+	>
+		if data.Active {
+			@templates.DecorativeIcon(data.ActiveIcon, "size-6")
+		} else {
+			@templates.DecorativeIcon(data.DefaultIcon, "size-6")
+		}
+	</a>
+}

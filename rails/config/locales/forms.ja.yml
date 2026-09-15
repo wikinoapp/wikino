@@ -34,22 +34,8 @@ ja:
       spaces/edit_form:
         identifier: 識別子
         name: 名前
-      topics/creation_form:
-        description: 説明
-        identifier: 識別子
-        name: 名前
-        visibility_private_hint: 非公開トピックに投稿されたページはこのスペースのメンバーのみに公開されます
-        visibility_private_hint_2_html: |-
-          非公開トピックは現在無料で利用できますが、今後有料プランが導入されたとき有料プランのみの機能となります。
-          %{learn_more_link}
-        visibility_public_hint: 公開トピックに投稿されたページはインターネット上に公開されます
-        visibility: 公開設定
       topics/destroy_confirmation_form:
         topic_name: トピック名
-      topics/edit_form:
-        description: 説明
-        name: 名前
-        visibility: 公開設定
       two_factor_auths/creation_form:
         password: パスワード
         totp_code: 認証コード
@@ -69,8 +55,6 @@ ja:
         q: 検索キーワード
     errors:
       messages:
-        cannot_start_or_end_with_space_or_dot: は半角スペースまたはピリオドで始まる・終わることはできません
-        contains_invalid_characters_html: "には次の文字を含めることができません: <code>/ \\ : * ? \" < > |</code>"
         incorrect: が間違っています
         reserved: は使用できません
         uniqueness: は既に存在しています

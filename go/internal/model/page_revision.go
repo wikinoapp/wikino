@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// PageRevision は公開されたページのスナップショットのドメインモデル
+// PageRevisionは公開されたページのスナップショットのドメインモデル
 type PageRevision struct {
 	ID            PageRevisionID
 	SpaceID       SpaceID

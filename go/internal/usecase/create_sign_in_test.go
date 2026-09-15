@@ -50,37 +50,37 @@ func TestCreateSignInUsecase_Execute(t *testing.T) {
 			UserAgent: "Mozilla/5.0",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("Execute() returned nil, want output")
+			t.Fatal("Execute()がnilを返した、期待値 = 出力")
 		}
 		if output.Token == "" {
-			t.Error("Execute() returned empty token")
+			t.Error("Execute()が空のトークンを返した")
 		}
 		if output.TwoFactorRequired {
-			t.Error("Execute() returned TwoFactorRequired = true, want false")
+			t.Error("Execute()がTwoFactorRequired = trueを返した、期待値 = false")
 		}
 		if output.UserID != userID {
-			t.Errorf("Execute() UserID = %v, want %v", output.UserID, userID)
+			t.Errorf("Execute()のUserID = %v、期待値 = %v", output.UserID, userID)
 		}
 
 		// DBに保存されていることを確認
 		session, err := userSessionRepo.FindByToken(ctx, output.Token)
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("FindByToken() returned nil, want session")
+			t.Fatal("FindByToken()がnilを返した、期待値 = セッション")
 		}
 		if session.UserID != userID {
-			t.Errorf("session.UserID = %v, want %v", session.UserID, userID)
+			t.Errorf("session.UserID = %v、期待値 = %v", session.UserID, userID)
 		}
 		if session.IPAddress != "192.168.1.1" {
-			t.Errorf("session.IPAddress = %v, want 192.168.1.1", session.IPAddress)
+			t.Errorf("session.IPAddress = %v、期待値 = 192.168.1.1", session.IPAddress)
 		}
 		if session.UserAgent != "Mozilla/5.0" {
-			t.Errorf("session.UserAgent = %v, want Mozilla/5.0", session.UserAgent)
+			t.Errorf("session.UserAgent = %v、期待値 = Mozilla/5.0", session.UserAgent)
 		}
 	})
 
@@ -121,16 +121,16 @@ func TestCreateSignInUsecase_Execute(t *testing.T) {
 
 		output1, err := uc.Execute(ctx, input)
 		if err != nil {
-			t.Fatalf("Execute() first call error = %v", err)
+			t.Fatalf("1回目のExecute()のエラー = %v", err)
 		}
 
 		output2, err := uc.Execute(ctx, input)
 		if err != nil {
-			t.Fatalf("Execute() second call error = %v", err)
+			t.Fatalf("2回目のExecute()のエラー = %v", err)
 		}
 
 		if output1.Token == output2.Token {
-			t.Error("Execute() returned same token for different calls")
+			t.Error("Execute()が別々の呼び出しで同じトークンを返した")
 		}
 	})
 
@@ -159,14 +159,14 @@ func TestCreateSignInUsecase_Execute(t *testing.T) {
 		})
 
 		if output != nil {
-			t.Error("expected nil output")
+			t.Error("出力がnilではない")
 		}
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("email") {
-			t.Error("expected email field error")
+			t.Error("emailのフィールドエラーが無い")
 		}
 	})
 
@@ -195,14 +195,14 @@ func TestCreateSignInUsecase_Execute(t *testing.T) {
 		})
 
 		if output != nil {
-			t.Error("expected nil output")
+			t.Error("出力がnilではない")
 		}
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if len(ve.Global) == 0 {
-			t.Error("expected global error")
+			t.Error("グローバルエラーが無い")
 		}
 	})
 
@@ -242,14 +242,14 @@ func TestCreateSignInUsecase_Execute(t *testing.T) {
 		})
 
 		if output != nil {
-			t.Error("expected nil output")
+			t.Error("出力がnilではない")
 		}
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if len(ve.Global) == 0 {
-			t.Error("expected global error")
+			t.Error("グローバルエラーが無い")
 		}
 	})
 }

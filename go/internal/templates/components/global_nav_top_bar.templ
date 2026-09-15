@@ -1,0 +1,20 @@
+package components
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// GlobalNavTopBarはPC向けのナビゲーションバーをパンくずヘッダーの右端に描画し、
+// GlobalNavBottomBarが自身を隠すmd以上でのみ表示する。共通メニューを横並びで持ち、自身のピルは
+// 持たない。バーはヘッダーと同じ行を共有するため通常フローに入り、本文にオーバーレイしない。長い
+// パンくずが行を埋めてもアイコンが潰れないようshrink-0を付ける。
+//
+// ラッパーは固有のaria-labelを持つ <nav> ランドマークで、GlobalNavBottomBarと対になる。上部バーと
+// 下部バーはCSSのブレークポイントで切り替わるが両方とも同一DOMに描画されるため、支援技術が2つの
+// ナビゲーション領域を区別できるよう、それぞれに固有のラベルを付ける。
+templ GlobalNavTopBar(data GlobalNavData) {
+	<nav
+		class="shrink-0 hidden md:flex"
+		aria-label={ templates.T(ctx, "global_nav_top_label") }
+	>
+		@GlobalNavMenu(data, "")
+	</nav>
+}

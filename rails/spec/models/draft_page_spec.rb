@@ -57,11 +57,9 @@ RSpec.describe DraftPage, type: :model do
       published_at: nil,
       pinned_at: nil,
       trashed_at: nil,
-      can_update: nil,
       space:,
       topic:,
-      card_image_url: nil,
-      og_image_url: nil
+      card_image_url: nil
     )
 
     DraftPage.new(

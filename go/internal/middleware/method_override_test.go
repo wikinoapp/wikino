@@ -105,7 +105,7 @@ func TestMethodOverride(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			if receivedMethod != tc.expectedMethod {
-				t.Errorf("メソッドが期待と異なる: got %q want %q", receivedMethod, tc.expectedMethod)
+				t.Errorf("メソッド = %q、期待値 = %q", receivedMethod, tc.expectedMethod)
 			}
 		})
 	}
@@ -134,10 +134,10 @@ func TestMethodOverride_WithOtherFormData(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if receivedMethod != http.MethodDelete {
-		t.Errorf("メソッドが期待と異なる: got %q want %q", receivedMethod, http.MethodDelete)
+		t.Errorf("メソッド = %q、期待値 = %q", receivedMethod, http.MethodDelete)
 	}
 
 	if receivedEmail != "test@example.com" {
-		t.Errorf("emailが期待と異なる: got %q want %q", receivedEmail, "test@example.com")
+		t.Errorf("email = %q、期待値 = %q", receivedEmail, "test@example.com")
 	}
 }

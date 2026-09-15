@@ -1,9 +1,11 @@
 /.env
+/.playwright-cli
 /.playwright-mcp
 /.pnpm-store
 /bin
 /e2e/node_modules
 /node_modules
+/seed-users.toml
 /server
 /static/css/*
 !/static/css/.gitkeep

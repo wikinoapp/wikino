@@ -3,6 +3,7 @@ package sign_in_two_factor_recovery_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -39,12 +40,14 @@ func TestNew_WithPendingUser(t *testing.T) {
 
 	// ユースケースとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 
@@ -67,7 +70,7 @@ func TestNew_WithPendingUser(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// レスポンスボディを検証
@@ -75,17 +78,23 @@ func TestNew_WithPendingUser(t *testing.T) {
 
 	// リカバリーコードフォームが含まれているか確認
 	if !strings.Contains(body, `action="/sign_in/two_factor/recovery"`) {
-		t.Error("recovery form action not found in response")
+		t.Error("レスポンスにリカバリーフォームの送信先が見つからない")
 	}
 
 	// CSRFトークンが含まれているか確認
 	if !strings.Contains(body, "test-csrf-token") {
-		t.Error("CSRF token not found in response")
+		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
 	// リカバリーコード入力フィールドが含まれているか確認
 	if !strings.Contains(body, `name="recovery_code"`) {
-		t.Error("recovery_code input field not found in response")
+		t.Error("レスポンスにrecovery_codeの入力フィールドが見つからない")
+	}
+
+	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
+		}
 	}
 }
 
@@ -112,12 +121,14 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 
 	// ユースケースとセッションマネージャーを作成
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
 	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
 
 	handler := sign_in_two_factor_recovery.NewHandler(
 		cfg,
 		sessionMgr,
+		flashMgr,
 		createRecoveryCodeSessionUC,
 	)
 
@@ -134,11 +145,143 @@ func TestNew_WithoutPendingUser(t *testing.T) {
 
 	// ログインページにリダイレクトされるか確認
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/sign_in" {
-		t.Errorf("wrong redirect location: got %v want /sign_in", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /sign_in", location)
+	}
+}
+
+// TestNew_BackParameterは、二要素認証画面から渡されたbackを隠しフィールドで引き継ぐことを
+// 検証する。リカバリーコードで認証したときも同じ宛先へ戻せるようにするため。
+func TestNew_BackParameter(t *testing.T) {
+	t.Parallel()
+
+	db, tx := testutil.SetupTx(t)
+
+	q := testutil.QueriesWithTx(tx)
+	userRepo := repository.NewUserRepository(q)
+	userSessionRepo := repository.NewUserSessionRepository(q)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
+
+	cfg := &config.Config{
+		Env:             "test",
+		Port:            "8080",
+		Domain:          "localhost",
+		CookieDomain:    "",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
+
+	handler := sign_in_two_factor_recovery.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		createRecoveryCodeSessionUC,
+	)
+
+	backURL := "/s/example/topics/1/pages/new?title=%E3%83%A1%E3%83%A2"
+
+	tests := []struct {
+		name       string
+		target     string
+		wantInBody string
+	}{
+		{
+			name:       "backパラメータあり",
+			target:     "/sign_in/two_factor/recovery/new?back=" + url.QueryEscape(backURL),
+			wantInBody: `name="back" value="` + backURL + `"`,
+		},
+		{
+			name:       "backパラメータなし",
+			target:     "/sign_in/two_factor/recovery/new",
+			wantInBody: `name="back" value=""`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tt.target, nil)
+			req.Header.Set("Accept-Language", "ja")
+			req.AddCookie(&http.Cookie{
+				Name:  session.PendingUserCookieName,
+				Value: "test-user-id",
+			})
+
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.New(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+			}
+			if !strings.Contains(rr.Body.String(), tt.wantInBody) {
+				t.Errorf("レスポンスに%qが含まれていない", tt.wantInBody)
+			}
+		})
+	}
+}
+
+// TestNew_WithoutPendingUserCarriesBackParameterは、pending user cookieが期限切れでも
+// 遷移先が失われないことを検証する。cookieの寿命は10分しかないため、リカバリーコードを探すのに
+// 手間取った訪問者が求めたページを失わないようにする。
+func TestNew_WithoutPendingUserCarriesBackParameter(t *testing.T) {
+	t.Parallel()
+
+	db, tx := testutil.SetupTx(t)
+
+	q := testutil.QueriesWithTx(tx)
+	userRepo := repository.NewUserRepository(q)
+	userSessionRepo := repository.NewUserSessionRepository(q)
+	userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
+
+	cfg := &config.Config{
+		Env:             "test",
+		Port:            "8080",
+		Domain:          "localhost",
+		CookieDomain:    "",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+	createValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(userTwoFactorAuthRepo)
+	createRecoveryCodeSessionUC := usecase.NewCreateRecoveryCodeSessionUsecase(db, createValidator, userTwoFactorAuthRepo, userSessionRepo)
+
+	handler := sign_in_two_factor_recovery.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		createRecoveryCodeSessionUC,
+	)
+
+	backURL := "/s/example/topics/1/pages/new?title=%E3%83%A1%E3%83%A2"
+
+	req := httptest.NewRequest(http.MethodGet, "/sign_in/two_factor/recovery/new?back="+url.QueryEscape(backURL), nil)
+	req.Header.Set("Accept-Language", "ja")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.New(rr, req)
+
+	if rr.Code != http.StatusFound {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
+	}
+
+	wantLocation := "/sign_in?back=" + url.QueryEscape(backURL)
+	if location := rr.Header().Get("Location"); location != wantLocation {
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, wantLocation)
 	}
 }

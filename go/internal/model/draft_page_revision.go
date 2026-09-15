@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// DraftPageRevision は下書きページのバージョン（スナップショット）のドメインモデル
+// DraftPageRevisionは下書きページのバージョン (スナップショット) のドメインモデル
 type DraftPageRevision struct {
 	ID            DraftPageRevisionID
 	DraftPageID   DraftPageID

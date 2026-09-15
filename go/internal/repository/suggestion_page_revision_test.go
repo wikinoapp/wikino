@@ -77,37 +77,37 @@ func TestSuggestionPageRevisionRepository_Create(t *testing.T) {
 			BodyHTML:            "<p>リビジョン本文</p>",
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if rev == nil {
-			t.Fatal("Create() returned nil")
+			t.Fatal("Create()がnilを返した")
 		}
 		if rev.ID == "" {
-			t.Error("rev.ID is empty")
+			t.Error("rev.IDが空")
 		}
 		if rev.SpaceID != spaceID {
-			t.Errorf("rev.SpaceID = %v, want %v", rev.SpaceID, spaceID)
+			t.Errorf("rev.SpaceID = %v、期待値 = %v", rev.SpaceID, spaceID)
 		}
 		if rev.SuggestionPageID != suggestionPageID {
-			t.Errorf("rev.SuggestionPageID = %v, want %v", rev.SuggestionPageID, suggestionPageID)
+			t.Errorf("rev.SuggestionPageID = %v、期待値 = %v", rev.SuggestionPageID, suggestionPageID)
 		}
 		if rev.EditorSpaceMemberID != spaceMemberID {
-			t.Errorf("rev.EditorSpaceMemberID = %v, want %v", rev.EditorSpaceMemberID, spaceMemberID)
+			t.Errorf("rev.EditorSpaceMemberID = %v、期待値 = %v", rev.EditorSpaceMemberID, spaceMemberID)
 		}
 		if rev.Title == nil || *rev.Title != "リビジョンタイトル" {
-			t.Errorf("rev.Title = %v, want リビジョンタイトル", rev.Title)
+			t.Errorf("rev.Title = %v、期待値 = リビジョンタイトル", rev.Title)
 		}
 		if rev.Body != "リビジョン本文" {
-			t.Errorf("rev.Body = %v, want リビジョン本文", rev.Body)
+			t.Errorf("rev.Body = %v、期待値 = リビジョン本文", rev.Body)
 		}
 		if rev.BodyHTML != "<p>リビジョン本文</p>" {
-			t.Errorf("rev.BodyHTML = %v, want <p>リビジョン本文</p>", rev.BodyHTML)
+			t.Errorf("rev.BodyHTML = %v、期待値 = <p>リビジョン本文</p>", rev.BodyHTML)
 		}
 		if rev.CreatedAt.IsZero() {
-			t.Error("rev.CreatedAt is zero")
+			t.Error("rev.CreatedAtがゼロ値")
 		}
 		if rev.UpdatedAt.IsZero() {
-			t.Error("rev.UpdatedAt is zero")
+			t.Error("rev.UpdatedAtがゼロ値")
 		}
 	})
 
@@ -121,10 +121,10 @@ func TestSuggestionPageRevisionRepository_Create(t *testing.T) {
 			BodyHTML:            "<p>タイトルなし本文</p>",
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if rev.Title != nil {
-			t.Errorf("rev.Title = %v, want nil", rev.Title)
+			t.Errorf("rev.Title = %v、期待値 = nil", rev.Title)
 		}
 	})
 }
@@ -203,21 +203,21 @@ func TestSuggestionPageRevisionRepository_ListBySuggestionPageID(t *testing.T) {
 	t.Run("編集提案ページに紐づくリビジョン一覧を取得できる", func(t *testing.T) {
 		revisions, err := repo.ListBySuggestionPageID(ctx, suggestionPageID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionPageID() error = %v", err)
+			t.Fatalf("ListBySuggestionPageID()のエラー = %v", err)
 		}
 		if len(revisions) != 2 {
-			t.Fatalf("len(revisions) = %v, want 2", len(revisions))
+			t.Fatalf("len(revisions) = %v、期待値 = 2", len(revisions))
 		}
 		if revisions[0].Title == nil || *revisions[0].Title != "リビジョン1" {
-			t.Errorf("revisions[0].Title = %v, want リビジョン1", revisions[0].Title)
+			t.Errorf("revisions[0].Title = %v、期待値 = リビジョン1", revisions[0].Title)
 		}
 		if revisions[1].Title == nil || *revisions[1].Title != "リビジョン2" {
-			t.Errorf("revisions[1].Title = %v, want リビジョン2", revisions[1].Title)
+			t.Errorf("revisions[1].Title = %v、期待値 = リビジョン2", revisions[1].Title)
 		}
 	})
 
 	t.Run("該当なしの場合は空のスライスを返す", func(t *testing.T) {
-		// 別のSuggestionPageを作成（リビジョンなし）
+		// 別のSuggestionPageを作成 (リビジョンなし)
 		pageID2 := testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -240,10 +240,10 @@ func TestSuggestionPageRevisionRepository_ListBySuggestionPageID(t *testing.T) {
 
 		revisions, err := repo.ListBySuggestionPageID(ctx, emptySuggestionPageID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionPageID() error = %v", err)
+			t.Fatalf("ListBySuggestionPageID()のエラー = %v", err)
 		}
 		if len(revisions) != 0 {
-			t.Errorf("len(revisions) = %v, want 0", len(revisions))
+			t.Errorf("len(revisions) = %v、期待値 = 0", len(revisions))
 		}
 	})
 }
@@ -321,13 +321,13 @@ func TestSuggestionPageRevisionRepository_FindLatest(t *testing.T) {
 	t.Run("最新のリビジョンを取得できる", func(t *testing.T) {
 		rev, err := repo.FindLatest(ctx, suggestionPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindLatest() error = %v", err)
+			t.Fatalf("FindLatest()のエラー = %v", err)
 		}
 		if rev == nil {
-			t.Fatal("FindLatest() returned nil")
+			t.Fatal("FindLatest()がnilを返した")
 		}
 		if rev.Title == nil || *rev.Title != "最新リビジョン" {
-			t.Errorf("rev.Title = %v, want 最新リビジョン", rev.Title)
+			t.Errorf("rev.Title = %v、期待値 = 最新リビジョン", rev.Title)
 		}
 	})
 
@@ -354,10 +354,10 @@ func TestSuggestionPageRevisionRepository_FindLatest(t *testing.T) {
 
 		rev, err := repo.FindLatest(ctx, emptySuggestionPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindLatest() error = %v", err)
+			t.Fatalf("FindLatest()のエラー = %v", err)
 		}
 		if rev != nil {
-			t.Errorf("FindLatest() = %v, want nil", rev)
+			t.Errorf("FindLatest() = %v、期待値 = nil", rev)
 		}
 	})
 
@@ -369,10 +369,10 @@ func TestSuggestionPageRevisionRepository_FindLatest(t *testing.T) {
 
 		rev, err := repo.FindLatest(ctx, suggestionPageID, otherSpaceID)
 		if err != nil {
-			t.Fatalf("FindLatest() error = %v", err)
+			t.Fatalf("FindLatest()のエラー = %v", err)
 		}
 		if rev != nil {
-			t.Errorf("FindLatest() = %v, want nil", rev)
+			t.Errorf("FindLatest() = %v、期待値 = nil", rev)
 		}
 	})
 }

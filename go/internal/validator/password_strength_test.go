@@ -9,8 +9,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// TestAddPasswordStrengthError は addPasswordStrengthError ヘルパーが
-// auth.ValidatePasswordStrength の sentinel error を `password` フィールドの
+// TestAddPasswordStrengthErrorはaddPasswordStrengthErrorヘルパーが
+// auth.ValidatePasswordStrengthのsentinel errorを `password` フィールドの
 // バリデーションエラーへ正しく変換することを検証する。
 func TestAddPasswordStrengthError(t *testing.T) {
 	t.Parallel()
@@ -77,7 +77,7 @@ func TestAddPasswordStrengthError(t *testing.T) {
 
 				gotFieldError := ve.HasFieldError("password")
 				if gotFieldError != tt.wantFieldError {
-					t.Errorf("locale=%s: HasFieldError(\"password\") = %v, want %v", locale, gotFieldError, tt.wantFieldError)
+					t.Errorf("locale=%s: HasFieldError(\"password\") = %v、期待値 = %v", locale, gotFieldError, tt.wantFieldError)
 				}
 
 				if !tt.wantFieldError {
@@ -91,7 +91,7 @@ func TestAddPasswordStrengthError(t *testing.T) {
 
 				errs := ve.GetFieldErrors("password")
 				if len(errs) == 0 {
-					t.Fatalf("locale=%s: expected at least one password field error", locale)
+					t.Fatalf("locale=%s: passwordのフィールドエラーが1件も無い", locale)
 				}
 
 				found := false
@@ -102,7 +102,7 @@ func TestAddPasswordStrengthError(t *testing.T) {
 					}
 				}
 				if !found {
-					t.Errorf("locale=%s: expected message containing %q, got %v", locale, wantMessage, errs)
+					t.Errorf("locale=%s: メッセージ = %v、期待値 = %qを含む", locale, errs, wantMessage)
 				}
 
 				for _, ph := range tt.wantPlaceholders {
@@ -114,7 +114,7 @@ func TestAddPasswordStrengthError(t *testing.T) {
 						}
 					}
 					if !placeholderFound {
-						t.Errorf("locale=%s: expected placeholder %q in message, got %v", locale, ph, errs)
+						t.Errorf("locale=%s: メッセージにプレースホルダー%qが含まれていない: %v", locale, ph, errs)
 					}
 				}
 			}
@@ -122,7 +122,7 @@ func TestAddPasswordStrengthError(t *testing.T) {
 	}
 }
 
-// TestAddPasswordStrengthError_DoesNotAddOtherFields は強度違反のエラーが
+// TestAddPasswordStrengthError_DoesNotAddOtherFieldsは強度違反のエラーが
 // `password` 以外のフィールドに紛れ込まないことを検証する。
 func TestAddPasswordStrengthError_DoesNotAddOtherFields(t *testing.T) {
 	t.Parallel()
@@ -133,12 +133,12 @@ func TestAddPasswordStrengthError_DoesNotAddOtherFields(t *testing.T) {
 	addPasswordStrengthError(ctx, ve, "abc")
 
 	if !ve.HasFieldError("password") {
-		t.Fatal("expected password field error")
+		t.Fatal("passwordのフィールドエラーが無い")
 	}
 	if ve.HasFieldError("password_confirmation") {
-		t.Error("did not expect password_confirmation field error")
+		t.Error("password_confirmationのフィールドエラーがある")
 	}
 	if len(ve.Global) != 0 {
-		t.Errorf("did not expect global errors, got %v", ve.Global)
+		t.Errorf("グローバルエラー = %v、期待値 = 無し", ve.Global)
 	}
 }

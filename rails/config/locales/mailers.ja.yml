@@ -2,6 +2,3 @@ ja:
   email_confirmation_mailer:
     email_confirmation:
       subject: "[Wikino] メールアドレスの確認"
-  export_mailer:
-    succeeded:
-      subject: "[Wikino] エクスポートデータの用意ができました"

@@ -32,7 +32,7 @@ func TestUpdate_未ログインでリダイレクトされる(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 }
 
@@ -95,7 +95,7 @@ func TestUpdate_本文が空の場合バリデーションエラーで422が返�
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 }
 
@@ -158,10 +158,10 @@ func TestUpdate_正常にコメントが更新されリダイレクトされる(
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/cupdate-ok-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }

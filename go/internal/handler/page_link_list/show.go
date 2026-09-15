@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httppagination"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -15,15 +16,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show はリンク一覧の追加ページをHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/link_list)
+// Showはリンク一覧の追加ページをHTMLフラグメントとして返します (GET /s/{space_identifier}/pages/{page_number}/link_list)
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// 認証済みユーザーを取得
+	// リンク一覧は公開のページ表示画面に出る一覧の続きで、その「もっと見る」ボタンからゲストも
+	// 到達する。何を返してよいかは閲覧者が開けるトピックからUseCaseが判断する。
 	user := middleware.UserFromContext(ctx)
-	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+	var userID *model.UserID
+	if user != nil {
+		userID = &user.ID
+	}
+
+	pageLinkContext := viewmodel.NormalizePageLinkContext(r.URL.Query().Get(viewmodel.PageLinkContextQueryParam))
+	linkListSource := usecase.LinkListSourceDraft
+	if pageLinkContext == viewmodel.PageLinkContextShow {
+		linkListSource = usecase.LinkListSourceSaved
 	}
 
 	// URLパラメータを取得
@@ -32,70 +40,114 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		handler.RelatedPageListNotFound(w, r)
 		return
 	}
 
-	// ページネーションパラメータを取得
-	currentPage := int32(1)
-	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
-		if p, err := strconv.ParseInt(pageStr, 10, 32); err == nil && p > 0 {
-			currentPage = int32(p)
-		}
+	// ページネーションパラメータを取得する。SQL offsetがクエリのint32パラメータに収まらない
+	// ページはUseCase呼び出し前に拒否する。
+	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.RelatedPageFollowingLimit)
+	if !ok {
+		handler.RelatedPageListNotFound(w, r)
+		return
+	}
+
+	// 他の一覧のページを一緒に受け取ることで、このフラグメントが描画するリンクが画面全体の状態を
+	// 指し続けるようにする。受け取らないと、他の一覧が1ページ目へ戻ってしまう。
+	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
+	if !ok {
+		handler.RelatedPageListNotFound(w, r)
+		return
+	}
+	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
+	if !ok {
+		handler.RelatedPageListNotFound(w, r)
+		return
+	}
+	linkedPageNumber, ok := httppagination.ParseOptionalNumberParam(r, viewmodel.LinkedPageNumberQueryParam)
+	if !ok {
+		handler.RelatedPageListNotFound(w, r)
+		return
+	}
+
+	linkState := viewmodel.PageLinkState{
+		Context:            pageLinkContext,
+		LinkPage:           currentPage,
+		LinkedPageNumber:   linkedPageNumber,
+		LinkedBacklinkPage: linkedBacklinkPage,
+		PageBacklinkPage:   pageBacklinkPage,
+	}.Normalized()
+	if !linkState.WithinCumulativeLimit(usecase.MaxCumulativeRelatedPagePages) {
+		handler.RelatedPageListNotFound(w, r)
+		return
 	}
 
 	// UseCaseを実行
 	output, err := h.getLinkListUC.Execute(ctx, usecase.GetLinkListInput{
 		SpaceIdentifier: spaceIdentifier,
 		PageNumber:      int32(pageNumber),
-		UserID:          user.ID,
+		UserID:          userID,
 		CurrentPage:     currentPage,
 		LinkLimit:       viewmodel.LinkLimit,
 		BacklinkLimit:   viewmodel.BacklinkLimit,
+		Source:          linkListSource,
 	})
 	if err != nil {
+		if ae := model.AsAppError(err); ae != nil {
+			switch ae.Code {
+			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
+				handler.RelatedPageListNotFound(w, r)
+			default:
+				slog.ErrorContext(ctx, ae.LogString())
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+			return
+		}
 		slog.ErrorContext(ctx, "リンク一覧の取得に失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if output == nil {
-		handler.NotFound(w, r)
-		return
-	}
 
-	// 認可チェック
-	if !output.CanUpdatePage {
-		handler.NotFound(w, r)
+	pagination, loadMoreCapped := viewmodel.NewRelatedPagePagination(currentPage, output.LinkedTotalCount, viewmodel.LinkLimit, linkState, linkState.CumulativePageLimit(usecase.MaxCumulativeRelatedPagePages))
+	if int(currentPage) > pagination.Total {
+		handler.RelatedPageListNotFound(w, r)
 		return
 	}
 
 	// ViewModelを構築
-	backlinkMap := make(map[model.PageID]viewmodel.BacklinkList, len(output.BacklinksPerPage))
+	backlinksPerPage := make(map[model.PageID]*viewmodel.PageSliceWithCount, len(output.BacklinksPerPage))
 	for pageID, backlinks := range output.BacklinksPerPage {
-		var linkedPageNumber int32
-		for _, p := range output.LinkedPages {
-			if p.ID == pageID {
-				linkedPageNumber = int32(p.Number)
-				break
-			}
+		backlinksPerPage[pageID] = &viewmodel.PageSliceWithCount{
+			Pages:      backlinks.Pages,
+			TotalCount: backlinks.TotalCount,
 		}
-		backlinkMap[pageID] = viewmodel.NewBacklinkList(viewmodel.NewBacklinkListInput{
-			Pages:            backlinks.Pages,
-			TopicMap:         output.TopicMap,
-			Pagination:       viewmodel.NewPagination(1, backlinks.TotalCount, int(viewmodel.BacklinkLimit)),
-			SpaceIdentifier:  spaceIdentifier,
-			PageNumber:       int32(output.Page.Number),
-			LinkedPageNumber: linkedPageNumber,
-		})
 	}
+
+	// 本フラグメントのカードはいずれも画面に新しく加わるため、ネストしたバックリンク一覧は
+	// それぞれ1ページ目から始まる。
+	backlinkMap := viewmodel.NewLinkedPageBacklinkLists(viewmodel.NewLinkedPageBacklinkListsInput{
+		LinkedPages:         output.LinkedPages,
+		BacklinksPerPage:    backlinksPerPage,
+		TopicMap:            output.TopicMap,
+		SpaceIdentifier:     output.Space.Identifier,
+		PageNumber:          int32(output.Page.Number),
+		LinkedPageFirstPage: currentPage,
+		CumulativePageLimit: linkState.CumulativePageLimit(usecase.MaxCumulativeRelatedPagePages),
+		State:               linkState,
+		CanEdit:             output.CanUpdatePage,
+	})
 
 	linkListVM := viewmodel.NewLinkList(viewmodel.NewLinkListInput{
 		Pages:           output.LinkedPages,
 		TopicMap:        output.TopicMap,
 		BacklinkMap:     backlinkMap,
-		Pagination:      viewmodel.NewPagination(int(currentPage), output.LinkedTotalCount, int(viewmodel.LinkLimit)),
-		SpaceIdentifier: spaceIdentifier,
+		Pagination:      pagination,
+		LoadMoreCapped:  loadMoreCapped,
+		SpaceIdentifier: output.Space.Identifier,
 		PageNumber:      int32(output.Page.Number),
+		State:           linkState,
+		// 各カードの編集リンクは、ページ表示画面の初回描画と同じく閲覧者自身の権限に従う。
+		CanEdit: output.CanUpdatePage,
 	})
 
 	// HTMLフラグメントとしてリンク一覧を送信

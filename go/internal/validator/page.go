@@ -3,8 +3,8 @@ package validator
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -15,31 +15,30 @@ import (
 
 const pageTitleMaxLength = 200
 
-// ファイル名として使用できない文字
-var invalidCharsRegex = regexp.MustCompile(`[/\\:*?"<>|]`)
+// pageTitleForbiddenCharsはページタイトルが持てない文字。いずれも名前どうしを分ける。
+// "/" はWikiリンクでトピック名とページタイトルを分け、UnixとObsidianのvaultのパス区切り
+// でもある。"\" はWindowsのパス区切り、":" はWindowsでドライブレターと代替データストリームを
+// 開く。
+//
+// タイトルはファイル名ではないため、"*" や "|" のようにファイルシステムだけが受け付けない文字は
+// ここで拒否せず、ページのエクスポート時に変換する (internal/exportfileを参照)。区切り文字だけは
+// 例外である。予定している双方向同期はファイル名からタイトルを読み戻すため、これらを含む
+// タイトルは書き出した名前から読み戻せない。
+const pageTitleForbiddenChars = `/\:`
 
-// Windowsの予約デバイス名
-var windowsReservedNames = map[string]bool{
-	"CON": true, "PRN": true, "AUX": true, "NUL": true,
-	"COM1": true, "COM2": true, "COM3": true, "COM4": true,
-	"COM5": true, "COM6": true, "COM7": true, "COM8": true, "COM9": true,
-	"LPT1": true, "LPT2": true, "LPT3": true, "LPT4": true,
-	"LPT5": true, "LPT6": true, "LPT7": true, "LPT8": true, "LPT9": true,
-}
-
-// PageUpdateValidator はページ更新のバリデーションを行う
+// PageUpdateValidatorはページ更新のバリデーションを行う
 type PageUpdateValidator struct {
 	pageRepo *repository.PageRepository
 }
 
-// NewPageUpdateValidator は PageUpdateValidator を生成する
+// NewPageUpdateValidatorはPageUpdateValidatorを生成する
 func NewPageUpdateValidator(pageRepo *repository.PageRepository) *PageUpdateValidator {
 	return &PageUpdateValidator{
 		pageRepo: pageRepo,
 	}
 }
 
-// PageUpdateValidatorInput はバリデーションの入力パラメータ
+// PageUpdateValidatorInputはバリデーションの入力パラメータ
 type PageUpdateValidatorInput struct {
 	Title           string
 	PageID          model.PageID
@@ -48,8 +47,8 @@ type PageUpdateValidatorInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 }
 
-// Validate はバリデーションを行う。
-// 戻り値の *model.PageID は未公開かつ本文が空の競合ページのID（存在する場合）。
+// Validateはバリデーションを行う。
+// 戻り値の *model.PageIDは未公開かつ本文が空の競合ページのID (存在する場合)。
 func (v *PageUpdateValidator) Validate(ctx context.Context, input PageUpdateValidatorInput) (*model.PageID, error) {
 	ve := model.NewValidationError()
 
@@ -65,27 +64,27 @@ func (v *PageUpdateValidator) Validate(ctx context.Context, input PageUpdateVali
 	}
 
 	// 禁止文字チェック
-	if invalidCharsRegex.MatchString(input.Title) {
+	if strings.ContainsAny(input.Title, pageTitleForbiddenChars) {
 		ve.AddField("title", i18n.T(ctx, "validation_page_title_invalid_chars"))
 	}
 
-	// 先頭・末尾のスペースとドットのチェック
-	if strings.HasPrefix(input.Title, " ") || strings.HasSuffix(input.Title, " ") ||
-		strings.HasPrefix(input.Title, ".") || strings.HasSuffix(input.Title, ".") {
-		ve.AddField("title", i18n.T(ctx, "validation_page_title_invalid_format"))
+	// 制御文字も拒否する。タイトルを表示する場所ごとに描画のされ方が異なり、読み手が読める
+	// タイトルの一部にもならないためである。
+	if strings.ContainsFunc(input.Title, unicode.IsControl) {
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_control_chars"))
 	}
 
-	// Windows予約語チェック
-	upperTitle := strings.ToUpper(input.Title)
-	if windowsReservedNames[upperTitle] {
-		ve.AddField("title", i18n.T(ctx, "validation_page_title_reserved"))
+	// 先頭・末尾の空白を拒否するのはファイル名の都合ではなくタイトル自身の都合である。
+	// そこだけが違う2つのタイトルは、一覧に並んだときに同じものに見える。
+	if strings.HasPrefix(input.Title, " ") || strings.HasSuffix(input.Title, " ") {
+		ve.AddField("title", i18n.T(ctx, "validation_page_title_invalid_format"))
 	}
 
 	if ve.HasErrors() {
 		return nil, ve
 	}
 
-	// タイトル一意性チェック（DB検証）
+	// タイトル一意性チェック (DB検証)
 	existingPage, err := v.pageRepo.FindByTopicAndTitle(ctx, input.TopicID, input.Title, input.SpaceID)
 	if err != nil {
 		return nil, fmt.Errorf("タイトル一意性チェックに失敗: %w", err)

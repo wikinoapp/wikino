@@ -52,7 +52,7 @@ func TestRemoveSuggestionPageUsecase_Execute(t *testing.T) {
 			WithStatus(model.SuggestionStatusOpen).
 			Build()
 
-		// 2つのページを作成（削除には2つ以上必要）
+		// 2つのページを作成 (削除には2つ以上必要)
 		pageID1 := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -108,16 +108,16 @@ func TestRemoveSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 
 		// SuggestionPageが削除されたことを確認
 		deletedSP, err := suggestionPageRepo.FindByID(context.Background(), suggestionPageID1, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if deletedSP != nil {
 			t.Error("SuggestionPageが削除されていません")
@@ -126,7 +126,7 @@ func TestRemoveSuggestionPageUsecase_Execute(t *testing.T) {
 		// SuggestionPageRevisionが削除されたことを確認
 		revisions, err := suggestionPageRevisionRepo.ListBySuggestionPageID(context.Background(), suggestionPageID1, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionPageID() error = %v", err)
+			t.Fatalf("ListBySuggestionPageID()のエラー = %v", err)
 		}
 		if len(revisions) != 0 {
 			t.Errorf("SuggestionPageRevisionが残っています: %d件", len(revisions))
@@ -135,22 +135,22 @@ func TestRemoveSuggestionPageUsecase_Execute(t *testing.T) {
 		// DraftPageのsuggestion_page_idがクリアされたことを確認
 		dp, err := draftPageRepo.FindByID(context.Background(), draftPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if dp == nil {
 			t.Fatal("DraftPageが見つかりません")
 		}
 		if dp.SuggestionPageID != nil {
-			t.Errorf("DraftPage.SuggestionPageID = %v, want nil", *dp.SuggestionPageID)
+			t.Errorf("DraftPage.SuggestionPageID = %v、期待値 = nil", *dp.SuggestionPageID)
 		}
 
 		// 残りのSuggestionPageが存在することを確認
 		remainingPages, err := suggestionPageRepo.ListBySuggestionID(context.Background(), suggestionID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionID() error = %v", err)
+			t.Fatalf("ListBySuggestionID()のエラー = %v", err)
 		}
 		if len(remainingPages) != 1 {
-			t.Errorf("残りの編集提案ページ数 = %d, want 1", len(remainingPages))
+			t.Errorf("残りの編集提案ページ数 = %d、期待値 = 1", len(remainingPages))
 		}
 	})
 
@@ -203,15 +203,15 @@ func TestRemoveSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error, got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeConflict {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeConflict)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeConflict)
 		}
 	})
 
@@ -269,15 +269,15 @@ func TestRemoveSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           nonMemberID,
 		})
 		if err == nil {
-			t.Fatal("expected error, got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -330,15 +330,15 @@ func TestRemoveSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error, got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -357,15 +357,15 @@ func TestRemoveSuggestionPageUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error, got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 }

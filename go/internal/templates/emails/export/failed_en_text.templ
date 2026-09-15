@@ -1,0 +1,13 @@
+package export
+
+// FailedEnTextは生成できなかったエクスポートの英語テキストテンプレート
+templ FailedEnText(data Data) {
+	Your export could not be produced.
+
+Nothing has changed in your space. You can start the export again from the page below.
+
+{ data.URL }
+
+Wikino
+{ data.AppURL }
+}

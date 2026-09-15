@@ -54,14 +54,12 @@ func TestCardLinkDraftPage_SpaceName(t *testing.T) {
 
 			html := buf.String()
 
-			// The page editor link is always present.
-			// [Ja] ページ編集画面へのリンクは常に存在する。
+			// ページ編集画面へのリンクは常に存在する。
 			if !strings.Contains(html, "/s/my-space/pages/5/edit") {
 				t.Error("ページ編集画面へのリンクが含まれていない")
 			}
 
-			// The topic name and draft title are always rendered.
-			// [Ja] トピック名と下書きタイトルは常に表示される。
+			// トピック名と下書きタイトルは常に表示される。
 			if !strings.Contains(html, "トピック名") {
 				t.Error("トピック名が含まれていない")
 			}
@@ -71,7 +69,7 @@ func TestCardLinkDraftPage_SpaceName(t *testing.T) {
 
 			gotSpaceName := strings.Contains(html, "マイスペース")
 			if gotSpaceName != tt.wantSpaceName {
-				t.Errorf("スペース名の表示 = %v, want %v", gotSpaceName, tt.wantSpaceName)
+				t.Errorf("スペース名の表示 = %v、期待値 = %v", gotSpaceName, tt.wantSpaceName)
 			}
 		})
 	}

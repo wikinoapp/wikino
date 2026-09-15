@@ -8,17 +8,16 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	suggestionpageeditpages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion_page_edit"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show は編集提案ページ編集の確認画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id})
+// Showは編集提案ページ編集の確認画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/page_edits/{suggestion_page_id})
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -40,7 +39,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 	suggestionNumber := model.SuggestionNumber(suggestionNumberInt)
 
-	// URLパラメータを取得（suggestion_page_id）
+	// URLパラメータを取得 (suggestion_page_id)
 	suggestionPageIDStr := chi.URLParam(r, "suggestion_page_id")
 	if suggestionPageIDStr == "" {
 		handler.NotFound(w, r)
@@ -70,7 +69,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	spaceVM := viewmodel.NewSpace(detailOutput.Space)
+
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
 
 	// オープンステータスでなければ変更差分画面にリダイレクト
 	if detailOutput.Suggestion.Status != model.SuggestionStatusOpen {
@@ -97,7 +99,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ViewModelに変換
-	spaceVM := viewmodel.NewSpace(detailOutput.Space)
 	topicVM := viewmodel.NewTopic(detailOutput.Topic)
 
 	// CSRFトークンを取得
@@ -120,31 +121,14 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		SuggestionPageTitle: suggestionPageTitle,
 	})
 
-	// サイドバーコンテンツを取得
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
-	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameSuggestionPageEditShow,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			SpaceIdentifier:   spaceIdentVM,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameSuggestionPageEditShow,
-			SignedIn:        true,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	err = layouts.Default(layoutData, content).Render(ctx, w)
-	if err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
+		User:             user,
+		SpaceIdentifier:  detailOutput.Space.Identifier,
+		CurrentPageName:  templates.PageNameSuggestionPageEditShow,
+		Meta:             meta,
+		BreadcrumbHeader: suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, int32(suggestionNumber), detailOutput.Suggestion.Title, true),
+		Content:          content,
+	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

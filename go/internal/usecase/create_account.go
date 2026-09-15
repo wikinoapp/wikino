@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateAccountUsecase はアカウント作成ユースケース
+// CreateAccountUsecaseはアカウント作成ユースケース
 type CreateAccountUsecase struct {
 	db                    *sql.DB
 	emailConfirmationRepo *repository.EmailConfirmationRepository
@@ -23,7 +23,7 @@ type CreateAccountUsecase struct {
 	createValidator       *validator.AccountCreateValidator
 }
 
-// NewCreateAccountUsecase は CreateAccountUsecase を生成する
+// NewCreateAccountUsecaseはCreateAccountUsecaseを生成する
 func NewCreateAccountUsecase(
 	db *sql.DB,
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
@@ -40,7 +40,7 @@ func NewCreateAccountUsecase(
 	}
 }
 
-// CreateAccountInput はアカウント作成の入力パラメータ
+// CreateAccountInputはアカウント作成の入力パラメータ
 type CreateAccountInput struct {
 	EmailConfirmationID string
 	Atname              string
@@ -49,12 +49,12 @@ type CreateAccountInput struct {
 	TimeZone            string
 }
 
-// CreateAccountOutput はアカウント作成の出力パラメータ
+// CreateAccountOutputはアカウント作成の出力パラメータ
 type CreateAccountOutput struct {
 	UserID model.UserID
 }
 
-// Execute はアカウントを作成する
+// Executeはアカウントを作成する
 func (uc *CreateAccountUsecase) Execute(ctx context.Context, input CreateAccountInput) (*CreateAccountOutput, error) {
 	// 1. データ取得
 	emailConfirmation, err := uc.fetchEmailConfirmation(ctx, input.EmailConfirmationID)
@@ -144,9 +144,9 @@ func (uc *CreateAccountUsecase) createAccount(ctx context.Context, emailConfirma
 	}, nil
 }
 
-// hashPassword はパスワードをbcryptでハッシュ化する
+// hashPasswordはパスワードをbcryptでハッシュ化する
 func hashPassword(password string) (string, error) {
-	// bcrypt.DefaultCostを使用（現在は10）
+	// bcrypt.DefaultCostを使用 (現在は10)
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err

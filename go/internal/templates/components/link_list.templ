@@ -1,63 +1,62 @@
 package components
 
-import (
-	"fmt"
+import "github.com/wikinoapp/wikino/go/internal/viewmodel"
 
-	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/viewmodel"
-)
-
-// LinkList renders the link list, and renders nothing when there are no links.
-// The heading (h2) lives in the caller so its style can differ per screen.
-//
-// [Ja] リンク一覧を表示します。リンクが空の場合は何も表示しません。
+// LinkListは「リンク」セクションを描画する。リンク先ページのカードだけを並べ、それ以外は
+// 出さない。リンク先ページのバックリンクはRelatedLinkListが別のセクションにまとめるため、この
+// セクションはこのページがリンクしているページの一覧としてそのまま読める。リンクが空の場合は何も
+// 表示しません。
 // 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
 templ LinkList(data viewmodel.LinkList) {
+	@linkList(data, false)
+}
+
+templ linkList(data viewmodel.LinkList, announceEnd bool) {
 	if len(data.Items) > 0 {
-		<div class="flex flex-col gap-2">
-			for _, item := range data.Items {
-				<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-					@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
-					@BacklinkList(item.BacklinkList)
-				</div>
-			}
-			<div
-				id="page-link-list-pagination"
-				class="contents"
-			>
-				if data.Pagination.HasNext {
-					@linkListLoadMore(data)
-				}
-			</div>
+		<div
+			id={ linkListFallbackAnchorID }
+			class="grid grid-cols-1 gap-2 md:grid-cols-3"
+		>
+			@linkListBody(data, announceEnd)
 		</div>
 	}
 }
 
-// LinkListResponse はリンク一覧の追加ページをHTMLフラグメントとして返します。
-// ページネーションコンテナを outerHTML で置換するレスポンスです。
+// LinkListResponseはリンク一覧の次ページを描画し、編集画面で共有する関連ページ状態のうち
+// リンク一覧の分を進める。1ページ単位の編集画面は一覧全体を差し替え、累積表示の画面はページ
+// ネーションコンテナだけを差し替えて追記する。
+//
+// リンク一覧の1ページは2つのセクションを養うため、応答は対応する「関連リンク」のグループも
+// OOBで運ぶ。スワップ対象にできるのは2つのうち片方だけで、「もっと見る」リンク自体が載っている
+// のはカードの側だからである。
 templ LinkListResponse(data viewmodel.LinkList) {
+	if isPaginatedEditPageLinkState(data.State) {
+		@linkList(data, true)
+	} else {
+		@linkListBody(data, true)
+	}
+	@relatedLinkGroupsOOB(data)
+	@linkPageStateOOB(data.State)
+}
+
+// linkListBodyは初回描画とフラグメント応答が共有するカードとページネーションコンテナを描画
+// する。コンテナのスワップ対象が両者でずれないようにするためである。announceEndはhtmx応答にだけ
+// フォーカス可能な完了状態を追加する。初回表示時点で完了している一覧は変化を通知する必要がない
+// ためである。
+templ linkListBody(data viewmodel.LinkList, announceEnd bool) {
 	for _, item := range data.Items {
-		<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-			@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
-			@BacklinkList(item.BacklinkList)
-		</div>
+		@CardLinkPage(item.CardLinkPage, data.SpaceIdentifier)
 	}
 	<div
-		id="page-link-list-pagination"
+		id={ linkListPaginationID }
 		class="contents"
 	>
 		if data.Pagination.HasNext {
-			@linkListLoadMore(data)
+			@LoadMoreLink(linkListLoadMoreData(data))
+		} else if data.LoadMoreCapped {
+			@relatedPageListLimit(linkListLimitURL(data), linkListLoadMoreFocusID)
+		} else if announceEnd {
+			@relatedPageListEnd(linkListLoadMoreFocusID)
 		}
-	</div>
-}
-
-// linkListLoadMore はリンク一覧の「もっと見る」ボタンを表示します
-templ linkListLoadMore(data viewmodel.LinkList) {
-	<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-		@LoadMoreButton(
-			fmt.Sprintf("%s?page=%d", string(templates.PageLinkListPath(data.SpaceIdentifier, data.PageNumber)), data.Pagination.Current+1),
-			"#page-link-list-pagination",
-		)
 	</div>
 }

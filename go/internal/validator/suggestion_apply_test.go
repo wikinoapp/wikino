@@ -18,8 +18,8 @@ func TestSuggestionApplyValidator_FormatValidation(t *testing.T) {
 	ctx := context.Background()
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 
-	// 形式バリデーションは PageUpdateValidator の形式チェック部分で処理される。
-	// 形式違反は DB を使わないため、nil pageRepo で動作する。
+	// 形式バリデーションはPageUpdateValidatorの形式チェック部分で処理される。
+	// 形式違反はDBを使わないため、nil pageRepoで動作する。
 	pageUpdateValidator := validator.NewPageUpdateValidator(nil)
 	v := validator.NewSuggestionApplyValidator(pageUpdateValidator)
 
@@ -33,9 +33,8 @@ func TestSuggestionApplyValidator_FormatValidation(t *testing.T) {
 		{name: "禁止文字バックスラッシュ", title: "foo\\bar"},
 		{name: "禁止文字コロン", title: "foo:bar"},
 		{name: "先頭スペース", title: " foo"},
-		{name: "末尾ドット", title: "foo."},
-		{name: "Windows予約語 CON", title: "CON"},
-		{name: "Windows予約語 NUL", title: "NUL"},
+		{name: "末尾スペース", title: "foo "},
+		{name: "制御文字", title: "foo\tbar"},
 	}
 
 	for _, tt := range tests {
@@ -55,10 +54,10 @@ func TestSuggestionApplyValidator_FormatValidation(t *testing.T) {
 
 			ae := model.AsSuggestionApplyError(err)
 			if ae == nil {
-				t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+				t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
 			}
 			if len(ae.PageErrors) != 1 {
-				t.Errorf("expected 1 page error but got %d: %v", len(ae.PageErrors), ae.PageErrors)
+				t.Errorf("ページのエラーの件数 = %d、期待値 = 1: %v", len(ae.PageErrors), ae.PageErrors)
 			}
 		})
 	}
@@ -103,13 +102,13 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 			},
 		})
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if out == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(out.ConflictingPageIDs) != 0 {
-			t.Errorf("ConflictingPageIDs should be empty, got %v", out.ConflictingPageIDs)
+			t.Errorf("ConflictingPageIDs = %v、期待値 = 空", out.ConflictingPageIDs)
 		}
 	})
 
@@ -123,13 +122,13 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 			},
 		})
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if out == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(out.ConflictingPageIDs) != 0 {
-			t.Errorf("ConflictingPageIDs should be empty, got %v", out.ConflictingPageIDs)
+			t.Errorf("ConflictingPageIDs = %v、期待値 = 空", out.ConflictingPageIDs)
 		}
 	})
 
@@ -153,13 +152,13 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 			},
 		})
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if out == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(out.ConflictingPageIDs) != 1 || out.ConflictingPageIDs[0] != unpublishedID {
-			t.Errorf("ConflictingPageIDs = %v, want [%v]", out.ConflictingPageIDs, unpublishedID)
+			t.Errorf("ConflictingPageIDs = %v、期待値 = [%v]", out.ConflictingPageIDs, unpublishedID)
 		}
 	})
 
@@ -182,18 +181,18 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 
 		ae := model.AsSuggestionApplyError(err)
 		if ae == nil {
-			t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+			t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if len(ae.PageErrors) != 1 {
-			t.Fatalf("expected 1 page error, got %d: %v", len(ae.PageErrors), ae.PageErrors)
+			t.Fatalf("ページのエラーの件数 = %d、期待値 = 1: %v", len(ae.PageErrors), ae.PageErrors)
 		}
-		// PageTitle に生タイトルが入っている
+		// PageTitleに生タイトルが入っている
 		if ae.PageErrors[0].PageTitle != "Published Page" {
-			t.Errorf("PageTitle = %q, want %q", ae.PageErrors[0].PageTitle, "Published Page")
+			t.Errorf("PageTitle = %q、期待値 = %q", ae.PageErrors[0].PageTitle, "Published Page")
 		}
-		// HTML リンクがメッセージに含まれる（@templ.Raw で展開される前提）
+		// HTMLリンクがメッセージに含まれる (@templ.Rawで展開される前提)
 		if !strings.Contains(ae.PageErrors[0].Message, "<a") {
-			t.Errorf("Message should contain HTML link, got %q", ae.PageErrors[0].Message)
+			t.Errorf("MessageにHTMLのリンクが含まれていない: %q", ae.PageErrors[0].Message)
 		}
 	})
 
@@ -218,10 +217,10 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 
 		ae := model.AsSuggestionApplyError(err)
 		if ae == nil {
-			t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+			t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if len(ae.PageErrors) != 1 {
-			t.Fatalf("expected 1 page error, got %d: %v", len(ae.PageErrors), ae.PageErrors)
+			t.Fatalf("ページのエラーの件数 = %d、期待値 = 1: %v", len(ae.PageErrors), ae.PageErrors)
 		}
 	})
 }
@@ -290,10 +289,10 @@ func TestSuggestionApplyValidator_MultipleEntries(t *testing.T) {
 
 		ae := model.AsSuggestionApplyError(err)
 		if ae == nil {
-			t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+			t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if len(ae.PageErrors) != 2 {
-			t.Errorf("expected 2 page errors, got %d: %v", len(ae.PageErrors), ae.PageErrors)
+			t.Errorf("ページのエラーの件数 = %d、期待値 = 2: %v", len(ae.PageErrors), ae.PageErrors)
 		}
 
 		titles := make([]string, 0, len(ae.PageErrors))
@@ -302,10 +301,10 @@ func TestSuggestionApplyValidator_MultipleEntries(t *testing.T) {
 		}
 		joined := strings.Join(titles, ",")
 		if !strings.Contains(joined, "Conflict A") {
-			t.Errorf("page errors should mention Conflict A, got %q", joined)
+			t.Errorf("ページのエラーにConflict Aが含まれていない: %q", joined)
 		}
 		if !strings.Contains(joined, "Conflict B") {
-			t.Errorf("page errors should mention Conflict B, got %q", joined)
+			t.Errorf("ページのエラーにConflict Bが含まれていない: %q", joined)
 		}
 	})
 }
@@ -332,21 +331,21 @@ func TestSuggestionApplyValidator_NilTitleSkipped(t *testing.T) {
 	})
 
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if out == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if len(out.ConflictingPageIDs) != 0 {
-		t.Errorf("ConflictingPageIDs should be empty, got %v", out.ConflictingPageIDs)
+		t.Errorf("ConflictingPageIDs = %v、期待値 = 空", out.ConflictingPageIDs)
 	}
 }
 
-// TestSuggestionApplyValidator_XSSRegression は、タイトルに HTML/JS を含む
-// SuggestionPage を反映しようとした場合、PageErrors[i].PageTitle に生文字列が
+// TestSuggestionApplyValidator_XSSRegressionは、タイトルにHTML/JSを含む
+// SuggestionPageを反映しようとした場合、PageErrors[i].PageTitleに生文字列が
 // そのまま保持されることを確認する。エスケープはテンプレート側の責務であり、
-// Validator では行わない（構造化により保持 → テンプレートの自動エスケープに
-// 委ねる方針）。
+// Validatorでは行わない (構造化により保持 → テンプレートの自動エスケープに
+// 委ねる方針)。
 func TestSuggestionApplyValidator_XSSRegression(t *testing.T) {
 	t.Parallel()
 
@@ -371,14 +370,14 @@ func TestSuggestionApplyValidator_XSSRegression(t *testing.T) {
 
 	ae := model.AsSuggestionApplyError(err)
 	if ae == nil {
-		t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+		t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
 	}
 	if len(ae.PageErrors) == 0 {
-		t.Fatal("expected at least 1 page error")
+		t.Fatal("ページのエラーが1件も無い")
 	}
 
-	// PageTitle には生文字列がそのまま保持される（テンプレート側で自動エスケープされる）
+	// PageTitleには生文字列がそのまま保持される (テンプレート側で自動エスケープされる)
 	if ae.PageErrors[0].PageTitle != maliciousTitle {
-		t.Errorf("PageTitle = %q, want %q", ae.PageErrors[0].PageTitle, maliciousTitle)
+		t.Errorf("PageTitle = %q、期待値 = %q", ae.PageErrors[0].PageTitle, maliciousTitle)
 	}
 }

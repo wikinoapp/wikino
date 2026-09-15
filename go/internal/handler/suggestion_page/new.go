@@ -8,17 +8,16 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	suggestionpagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion_page"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New は編集提案ページ追加フォームを表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/new)
+// Newは編集提案ページ追加フォームを表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/new)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -62,15 +61,16 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderNewForm(w, r, user, spaceIdentifier, output, nil)
+	h.renderNewForm(w, r, user, output, nil)
 }
 
-// renderNewForm は編集提案ページ追加フォームをレンダリングします
+// renderNewFormは編集提案ページ追加フォームをレンダリングします。
+// スペース識別子を含むメタ情報やリンクの組み立てにはoutputに含まれる保存済みの値を使うため、
+// URLパラメータ由来の識別子は受け取りません。
 func (h *Handler) renderNewForm(
 	w http.ResponseWriter,
 	r *http.Request,
 	user *model.User,
-	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetSuggestionPageNewOutput,
 	formErrors *model.ValidationError,
 ) {
@@ -79,15 +79,6 @@ func (h *Handler) renderNewForm(
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
-
-	// ページメタ情報を設定
-	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitleWithoutSuffix(ctx, "suggestion_page_new_title", map[string]any{
-		"SpaceName": output.Space.Name,
-	})
-	meta.CurrentSpaceIdentifier = spaceIdentVM
-
 	// ViewModelに変換
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
@@ -95,6 +86,16 @@ func (h *Handler) renderNewForm(
 		Suggestion: output.Suggestion,
 	})
 	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
+
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
+
+	// ページメタ情報を設定
+	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
+	meta.SetTitleWithoutSuffix(ctx, "suggestion_page_new_title", map[string]any{
+		"SpaceName": output.Space.Name,
+	})
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
 	content := suggestionpagepages.New(suggestionpagepages.NewData{
 		CSRFToken:  csrfToken,
@@ -105,30 +106,14 @@ func (h *Handler) renderNewForm(
 		DraftPages: draftPagesVM,
 	})
 
-	// サイドバーコンテンツを取得
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
-	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameSuggestionPageNew,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			SpaceIdentifier:   spaceIdentVM,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameSuggestionPageNew,
-			SignedIn:        true,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	if err := layouts.Default(layoutData, content).Render(ctx, w); err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
+		User:             user,
+		SpaceIdentifier:  output.Space.Identifier,
+		CurrentPageName:  templates.PageNameSuggestionPageNew,
+		Meta:             meta,
+		BreadcrumbHeader: suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, suggestionVM.Number, suggestionVM.Title, true),
+		Content:          content,
+	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

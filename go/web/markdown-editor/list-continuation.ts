@@ -16,15 +16,21 @@ const LIST_PATTERNS = {
 };
 
 export function detectListPattern(line: string): ListInfo | null {
+  // マッチ成功時のキャプチャグループは常に存在するが、noUncheckedIndexedAccess
+  // によりstring | undefinedに広がる。各分岐はグループを分解し、必須のものが欠けて
+  // いたら中断する。
   const taskMatch = line.match(LIST_PATTERNS.task);
 
   if (taskMatch) {
-    const checkboxState = taskMatch[3];
+    const [, indent, marker, checkboxState, content] = taskMatch;
+    if (indent === undefined || marker === undefined || checkboxState === undefined || content === undefined) {
+      return null;
+    }
     return {
       type: "task",
-      indent: taskMatch[1],
-      marker: taskMatch[2],
-      content: taskMatch[4],
+      indent,
+      marker,
+      content,
       taskState: checkboxState === " " ? "incomplete" : "complete",
     };
   }
@@ -32,23 +38,31 @@ export function detectListPattern(line: string): ListInfo | null {
   const unorderedMatch = line.match(LIST_PATTERNS.unordered);
 
   if (unorderedMatch) {
+    const [, indent, marker, content] = unorderedMatch;
+    if (indent === undefined || marker === undefined || content === undefined) {
+      return null;
+    }
     return {
       type: "unordered",
-      indent: unorderedMatch[1],
-      marker: unorderedMatch[2],
-      content: unorderedMatch[3],
+      indent,
+      marker,
+      content,
     };
   }
 
   const orderedMatch = line.match(LIST_PATTERNS.ordered);
 
   if (orderedMatch) {
+    const [, indent, marker, content] = orderedMatch;
+    if (indent === undefined || marker === undefined || content === undefined) {
+      return null;
+    }
     return {
       type: "ordered",
-      indent: orderedMatch[1],
-      marker: orderedMatch[2],
-      content: orderedMatch[3],
-      number: parseInt(orderedMatch[2], 10),
+      indent,
+      marker,
+      content,
+      number: parseInt(marker, 10),
     };
   }
 

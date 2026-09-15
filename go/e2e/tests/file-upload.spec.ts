@@ -28,9 +28,7 @@ async function visitPageEditor(pwPage: import("@playwright/test").Page): Promise
 
   await pwPage.goto(`/s/${space.identifier}/pages/${page_.number}/edit`);
   await pwPage.waitForSelector(".cm-content");
-  // Wait until upload listeners are wired up before any synthetic drag-and-drop.
-  //
-  // [Ja] 合成ドラッグ&ドロップの前に、アップロード用リスナーの登録完了を待つ。
+  // 合成ドラッグ&ドロップの前に、アップロード用リスナーの登録完了を待つ。
   await waitForEditorReady(pwPage);
   return page_;
 }
@@ -144,14 +142,9 @@ test.describe("ドラッグ&ドロップによるファイルアップロード"
       editor.dispatchEvent(dropEvent);
     });
 
-    // The optimistic placeholder is inserted synchronously on drop and removed
-    // again once validation/upload settles, so read it synchronously right after
-    // the drop. Editor readiness is awaited in visitPageEditor so the drop is
-    // never missed.
-    //
-    // [Ja] 楽観的プレースホルダーは drop で同期的に挿入され、検証/アップロードが
-    // 決着すると消えるため、drop 直後に同期で読む。drop の取りこぼしは
-    // visitPageEditor のエディタ準備待ちで防いでいる。
+    // 楽観的プレースホルダーはdropで同期的に挿入され、検証/アップロードが
+    // 決着すると消えるため、drop直後に同期で読む。dropの取りこぼしは
+    // visitPageEditorのエディタ準備待ちで防いでいる。
     const content = await getEditorContent(page);
     expect(content).toContain("test.txt");
   });
@@ -167,7 +160,7 @@ test.describe("ドラッグ&ドロップによるファイルアップロード"
           resolve(e.detail.messageHtml as string);
         }) as EventListener);
 
-        // .exe ファイルをドロップ
+        // .exeファイルをドロップ
         const editor = document.querySelector(".cm-editor");
         if (!editor) {
           resolve("");
@@ -251,12 +244,8 @@ test.describe("ドラッグ&ドロップによるファイルアップロード"
       editor.dispatchEvent(dropEvent);
     });
 
-    // Read synchronously right after the drop: the optimistic placeholder is
-    // inserted synchronously and removed once validation/upload settles. Editor
-    // readiness is awaited in visitPageEditor so the drop is never missed.
-    //
-    // [Ja] drop 直後に同期で読む: 楽観的プレースホルダーは同期的に挿入され、
-    // 検証/アップロードが決着すると消える。drop の取りこぼしは visitPageEditor の
+    // drop直後に同期で読む: 楽観的プレースホルダーは同期的に挿入され、
+    // 検証/アップロードが決着すると消える。dropの取りこぼしはvisitPageEditorの
     // エディタ準備待ちで防いでいる。
     const content = await getEditorContent(page);
     expect(content).toContain("既存のテキスト");

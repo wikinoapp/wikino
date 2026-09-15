@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// UserPasswordRepository はユーザーパスワードリポジトリ
+// UserPasswordRepositoryはユーザーパスワードリポジトリ
 type UserPasswordRepository struct {
 	q *query.Queries
 }
 
-// NewUserPasswordRepository は UserPasswordRepository を生成する
+// NewUserPasswordRepositoryはUserPasswordRepositoryを生成する
 func NewUserPasswordRepository(q *query.Queries) *UserPasswordRepository {
 	return &UserPasswordRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *UserPasswordRepository) WithTx(tx *sql.Tx) *UserPasswordRepository {
 	return &UserPasswordRepository{q: r.q.WithTx(tx)}
 }
 
-// FindByUserID はユーザーIDでパスワード情報を取得する
+// FindByUserIDはユーザーIDでパスワード情報を取得する
 func (r *UserPasswordRepository) FindByUserID(ctx context.Context, userID model.UserID) (*model.UserPassword, error) {
 	row, err := r.q.GetUserPasswordByUserID(ctx, string(userID))
 	if err != nil {
@@ -37,13 +37,13 @@ func (r *UserPasswordRepository) FindByUserID(ctx context.Context, userID model.
 	return r.toModel(row), nil
 }
 
-// CreateUserPasswordInput はユーザーパスワード作成の入力パラメータ
+// CreateUserPasswordInputはユーザーパスワード作成の入力パラメータ
 type CreateUserPasswordInput struct {
 	UserID         model.UserID
 	PasswordDigest string
 }
 
-// Create は新しいユーザーパスワードを作成する
+// Createは新しいユーザーパスワードを作成する
 func (r *UserPasswordRepository) Create(ctx context.Context, input CreateUserPasswordInput) (*model.UserPassword, error) {
 	now := time.Now()
 	row, err := r.q.CreateUserPassword(ctx, query.CreateUserPasswordParams{
@@ -58,7 +58,7 @@ func (r *UserPasswordRepository) Create(ctx context.Context, input CreateUserPas
 	return r.toModel(row), nil
 }
 
-// UpdatePasswordDigest はユーザーIDでパスワードダイジェストを更新する
+// UpdatePasswordDigestはユーザーIDでパスワードダイジェストを更新する
 func (r *UserPasswordRepository) UpdatePasswordDigest(ctx context.Context, userID model.UserID, passwordDigest string) error {
 	now := time.Now()
 	return r.q.UpdateUserPasswordDigest(ctx, query.UpdateUserPasswordDigestParams{
@@ -68,7 +68,7 @@ func (r *UserPasswordRepository) UpdatePasswordDigest(ctx context.Context, userI
 	})
 }
 
-// toModel は query.UserPassword を model.UserPassword に変換する
+// toModelはquery.UserPasswordをmodel.UserPasswordに変換する
 func (r *UserPasswordRepository) toModel(row query.UserPassword) *model.UserPassword {
 	return &model.UserPassword{
 		ID:             row.ID,

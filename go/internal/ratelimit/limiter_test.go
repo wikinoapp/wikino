@@ -36,10 +36,10 @@ func TestLimiter_Check(t *testing.T) {
 			t.Error("1回目のリクエストが許可されるべき")
 		}
 		if result.Count != 1 {
-			t.Errorf("1回目のカウントが1であるべき: got %d", result.Count)
+			t.Errorf("1回目のカウント = %d、期待値 = 1", result.Count)
 		}
 		if result.Remaining != 2 {
-			t.Errorf("残りが2であるべき: got %d", result.Remaining)
+			t.Errorf("残り = %d、期待値 = 2", result.Remaining)
 		}
 
 		// 2回目のリクエスト
@@ -51,10 +51,10 @@ func TestLimiter_Check(t *testing.T) {
 			t.Error("2回目のリクエストが許可されるべき")
 		}
 		if result.Count != 2 {
-			t.Errorf("2回目のカウントが2であるべき: got %d", result.Count)
+			t.Errorf("2回目のカウント = %d、期待値 = 2", result.Count)
 		}
 		if result.Remaining != 1 {
-			t.Errorf("残りが1であるべき: got %d", result.Remaining)
+			t.Errorf("残り = %d、期待値 = 1", result.Remaining)
 		}
 
 		// 3回目のリクエスト
@@ -66,10 +66,10 @@ func TestLimiter_Check(t *testing.T) {
 			t.Error("3回目のリクエストが許可されるべき")
 		}
 		if result.Count != 3 {
-			t.Errorf("3回目のカウントが3であるべき: got %d", result.Count)
+			t.Errorf("3回目のカウント = %d、期待値 = 3", result.Count)
 		}
 		if result.Remaining != 0 {
-			t.Errorf("残りが0であるべき: got %d", result.Remaining)
+			t.Errorf("残り = %d、期待値 = 0", result.Remaining)
 		}
 	})
 
@@ -104,10 +104,10 @@ func TestLimiter_Check(t *testing.T) {
 			t.Error("制限を超えたリクエストは拒否されるべき")
 		}
 		if result.Count != 3 {
-			t.Errorf("カウントが3であるべき: got %d", result.Count)
+			t.Errorf("カウント = %d、期待値 = 3", result.Count)
 		}
 		if result.Remaining != 0 {
-			t.Errorf("残りが0であるべき: got %d", result.Remaining)
+			t.Errorf("残り = %d、期待値 = 0", result.Remaining)
 		}
 	})
 
@@ -147,7 +147,7 @@ func TestLimiter_Check(t *testing.T) {
 			t.Error("key2の1回目のリクエストは許可されるべき")
 		}
 		if result.Count != 1 {
-			t.Errorf("key2のカウントが1であるべき: got %d", result.Count)
+			t.Errorf("key2のカウント = %d、期待値 = 1", result.Count)
 		}
 	})
 
@@ -258,7 +258,7 @@ func TestLimiter_Allow(t *testing.T) {
 		// 2回目は制限超過
 		err = limiter.Allow(context.Background(), input)
 		if err != ErrRateLimitExceeded {
-			t.Errorf("制限超過でErrRateLimitExceededを返すべき: got %v", err)
+			t.Errorf("制限超過のエラー = %v、期待値 = ErrRateLimitExceeded", err)
 		}
 	})
 }
@@ -285,7 +285,7 @@ func TestLimiter_CleanupOldRecords(t *testing.T) {
 			t.Fatalf("チェックでエラー: %v", err)
 		}
 
-		// 2時間の保持期間で削除（現在のレコードは削除されない）
+		// 2時間の保持期間で削除 (現在のレコードは削除されない)
 		err = limiter.CleanupOldRecords(context.Background(), 2*time.Hour)
 		if err != nil {
 			t.Errorf("クリーンアップでエラー: %v", err)
@@ -321,7 +321,7 @@ func TestLimiter_WithTx(t *testing.T) {
 			t.Error("リクエストが許可されるべき")
 		}
 		if result.Count != 1 {
-			t.Errorf("カウントが1であるべき: got %d", result.Count)
+			t.Errorf("カウント = %d、期待値 = 1", result.Count)
 		}
 	})
 }
@@ -332,7 +332,7 @@ func TestIPKey(t *testing.T) {
 	got := IPKey("192.168.1.1")
 	want := "ip:192.168.1.1"
 	if got != want {
-		t.Errorf("IPKey() = %q, want %q", got, want)
+		t.Errorf("IPKey() = %q、期待値 = %q", got, want)
 	}
 }
 
@@ -342,6 +342,6 @@ func TestEmailKey(t *testing.T) {
 	got := EmailKey("user@example.com")
 	want := "email:user@example.com"
 	if got != want {
-		t.Errorf("EmailKey() = %q, want %q", got, want)
+		t.Errorf("EmailKey() = %q、期待値 = %q", got, want)
 	}
 }

@@ -114,11 +114,11 @@ func TestPaginationNav(t *testing.T) {
 
 			if tt.wantPreviousLink {
 				if !strings.Contains(html, tt.previousPath) {
-					t.Errorf("前ページへのリンク %q が含まれていない", tt.previousPath)
+					t.Errorf("前ページへのリンク%qが含まれていない", tt.previousPath)
 				}
 			} else {
 				if strings.Contains(html, `<a`) && strings.Contains(html, "前へ") {
-					// disabled button が使われているか確認
+					// disabled buttonが使われているか確認
 					if !strings.Contains(html, "disabled") {
 						t.Error("前へボタンが無効になっていない")
 					}
@@ -127,7 +127,7 @@ func TestPaginationNav(t *testing.T) {
 
 			if tt.wantNextLink {
 				if !strings.Contains(html, tt.nextPath) {
-					t.Errorf("次ページへのリンク %q が含まれていない", tt.nextPath)
+					t.Errorf("次ページへのリンク%qが含まれていない", tt.nextPath)
 				}
 			} else {
 				if !strings.Contains(html, "disabled") {

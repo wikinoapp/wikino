@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// AutoSaveDraftPageUsecase は下書きページの自動保存ユースケース
+// AutoSaveDraftPageUsecaseは下書きページの自動保存ユースケース
 type AutoSaveDraftPageUsecase struct {
 	db              *sql.DB
 	spaceRepo       *repository.SpaceRepository
@@ -23,7 +23,7 @@ type AutoSaveDraftPageUsecase struct {
 	attachmentRepo  *repository.AttachmentRepository
 }
 
-// NewAutoSaveDraftPageUsecase は AutoSaveDraftPageUsecase を生成する
+// NewAutoSaveDraftPageUsecaseはAutoSaveDraftPageUsecaseを生成する
 func NewAutoSaveDraftPageUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -48,7 +48,7 @@ func NewAutoSaveDraftPageUsecase(
 	}
 }
 
-// AutoSaveDraftPageInput は下書き自動保存の入力パラメータ
+// AutoSaveDraftPageInputは下書き自動保存の入力パラメータ
 type AutoSaveDraftPageInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
@@ -57,13 +57,13 @@ type AutoSaveDraftPageInput struct {
 	Body            string
 }
 
-// AutoSaveDraftPageOutput は下書き自動保存の出力パラメータ
+// AutoSaveDraftPageOutputは下書き自動保存の出力パラメータ
 type AutoSaveDraftPageOutput struct {
 	DraftPage  *model.DraftPage
 	ModifiedAt time.Time
 }
 
-// Execute は下書きページを自動保存する
+// Executeは下書きページを自動保存する
 func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveDraftPageInput) (*AutoSaveDraftPageOutput, error) {
 	// 1. データ取得
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
@@ -93,12 +93,8 @@ func (uc *AutoSaveDraftPageUsecase) pageAccessRepos() pageAccessRepos {
 func (uc *AutoSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAccessData, input AutoSaveDraftPageInput) (*AutoSaveDraftPageOutput, error) {
 	now := time.Now()
 
-	// Before the transaction: extract the featured image only. The body HTML
-	// rendering and wiki link resolution are unified into saveDraftPageContent,
-	// which runs inside the transaction.
-	//
-	// [Ja] トランザクション前: アイキャッチ画像のみ抽出する。bodyHTML 本体のレンダリングと
-	// Wiki リンクの解決はトランザクション内の saveDraftPageContent に一本化した。
+	// トランザクション前: アイキャッチ画像のみ抽出する。bodyHTML本体のレンダリングと
+	// Wikiリンクの解決はトランザクション内のsaveDraftPageContentに一本化した。
 	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, input.Body, data.space.ID, uc.attachmentRepo)
 	if err != nil {
 		return nil, err
@@ -128,8 +124,8 @@ func (uc *AutoSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAcc
 		uc.draftPageRepo.WithTx(tx),
 		uc.pageRepo.WithTx(tx),
 		uc.pageEditorRepo.WithTx(tx),
-		uc.topicRepo,
-		uc.attachmentRepo,
+		uc.topicRepo.WithTx(tx),
+		uc.attachmentRepo.WithTx(tx),
 	)
 	if err != nil {
 		return nil, err

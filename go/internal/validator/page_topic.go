@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// validatePageTopicConsistency はページの現在のトピックが期待するトピックと一致するか検証する。
+// validatePageTopicConsistencyはページの現在のトピックが期待するトピックと一致するか検証する。
 // ページ移動後にDraftPageのトピックとPageのトピックが不整合になるケースを防止する。
 func validatePageTopicConsistency(ctx context.Context, pageRepo *repository.PageRepository, draftPages []*model.DraftPage, topicID model.TopicID, spaceID model.SpaceID, fieldName string, msgKey string) error {
 	pageIDs := make([]model.PageID, len(draftPages))

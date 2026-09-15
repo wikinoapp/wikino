@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// mockPageLocationResolver はテスト用のPageLocationResolverモック
+// mockPageLocationResolverはテスト用のPageLocationResolverモック
 type mockPageLocationResolver struct {
 	locations []PageLocation
 	err       error
@@ -22,13 +22,18 @@ func (m *mockPageLocationResolver) ResolveByKeys(_ context.Context, _ []Wikilink
 	return m.locations, nil
 }
 
-// mockBatchAttachmentFinder はテスト用のBatchAttachmentFinderモック
+// mockBatchAttachmentFinderはテスト用のBatchAttachmentFinderモック
 type mockBatchAttachmentFinder struct {
 	attachments []*model.Attachment
 	err         error
+
+	// requestedIDsはバッチが要求したものを記録する。本文がどの添付ファイルを参照している
+	// と読まれたかをテストで確かめられるようにするため
+	requestedIDs []model.AttachmentID
 }
 
-func (m *mockBatchAttachmentFinder) FindByIDsAndSpace(_ context.Context, _ []model.AttachmentID, _ model.SpaceID) ([]*model.Attachment, error) {
+func (m *mockBatchAttachmentFinder) FindByIDsAndSpace(_ context.Context, ids []model.AttachmentID, _ model.SpaceID) ([]*model.Attachment, error) {
+	m.requestedIDs = append(m.requestedIDs, ids...)
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -43,10 +48,10 @@ func TestRenderHTML_EmptyBody(t *testing.T) {
 
 	got, err := RenderHTML(context.Background(), "", "topic1", "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if got != "" {
-		t.Errorf("expected empty string, got %q", got)
+		t.Errorf("実測値 = %q、期待値 = 空文字列", got)
 	}
 }
 
@@ -58,10 +63,10 @@ func TestRenderHTML_PlainMarkdown(t *testing.T) {
 
 	got, err := RenderHTML(context.Background(), "Hello **world**", "topic1", "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if !strings.Contains(got, "<strong>world</strong>") {
-		t.Errorf("result should contain bold text, got: %s", got)
+		t.Errorf("結果に太字が含まれていない: %s", got)
 	}
 }
 
@@ -83,13 +88,13 @@ func TestRenderHTML_WithWikilinks(t *testing.T) {
 
 	got, err := RenderHTML(context.Background(), "リンク: [[ページA]]", "topic1", "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if !strings.Contains(got, `<a href="/s/my-space/pages/1"`) {
-		t.Errorf("result should contain wikilink, got: %s", got)
+		t.Errorf("結果にWikiリンクが含まれていない: %s", got)
 	}
 	if !strings.Contains(got, "ページA</a>") {
-		t.Errorf("result should contain page title in link, got: %s", got)
+		t.Errorf("結果のリンクにページタイトルが含まれていない: %s", got)
 	}
 }
 
@@ -105,10 +110,10 @@ func TestRenderHTML_WithAttachments(t *testing.T) {
 
 	got, err := RenderHTML(context.Background(), "画像: ![alt](/attachments/att-1)", "topic1", "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if !strings.Contains(got, `data-attachment-id="att-1"`) {
-		t.Errorf("result should contain attachment, got: %s", got)
+		t.Errorf("結果に添付ファイルが含まれていない: %s", got)
 	}
 }
 
@@ -134,13 +139,13 @@ func TestRenderHTML_MixedContent(t *testing.T) {
 
 	got, err := RenderHTML(context.Background(), "リンク: [[ページA]] と画像: ![alt](/attachments/att-1)", "topic1", "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if !strings.Contains(got, "<a") {
-		t.Errorf("result should contain wikilink, got: %s", got)
+		t.Errorf("結果にWikiリンクが含まれていない: %s", got)
 	}
 	if !strings.Contains(got, `data-attachment-id="att-1"`) {
-		t.Errorf("result should contain attachment, got: %s", got)
+		t.Errorf("結果に添付ファイルが含まれていない: %s", got)
 	}
 }
 
@@ -154,7 +159,7 @@ func TestRenderHTML_ResolverError(t *testing.T) {
 
 	_, err := RenderHTML(context.Background(), "リンク: [[ページA]]", "topic1", "space-1", "my-space", resolver, finder)
 	if err == nil {
-		t.Fatal("expected error but got nil")
+		t.Fatal("エラーを期待したが、nilだった")
 	}
 }
 
@@ -168,7 +173,7 @@ func TestRenderHTML_BatchFinderError(t *testing.T) {
 
 	_, err := RenderHTML(context.Background(), "画像: ![alt](/attachments/att-1)", "topic1", "space-1", "my-space", resolver, finder)
 	if err == nil {
-		t.Fatal("expected error but got nil")
+		t.Fatal("エラーを期待したが、nilだった")
 	}
 }
 
@@ -180,10 +185,10 @@ func TestRenderHTMLBatch_EmptyInputs(t *testing.T) {
 
 	got, err := RenderHTMLBatch(context.Background(), nil, "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if got != nil {
-		t.Errorf("expected nil, got %v", got)
+		t.Errorf("実測値 = %v、期待値 = nil", got)
 	}
 }
 
@@ -200,17 +205,17 @@ func TestRenderHTMLBatch_PlainMarkdown(t *testing.T) {
 
 	got, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if len(got) != 2 {
-		t.Fatalf("expected 2 results, got %d", len(got))
+		t.Fatalf("結果の件数 = %d、期待値 = 2", len(got))
 	}
 	if !strings.Contains(got[0], "<strong>world</strong>") {
-		t.Errorf("first result should contain bold text, got: %s", got[0])
+		t.Errorf("1つ目の結果に太字が含まれていない: %s", got[0])
 	}
 	if !strings.Contains(got[1], "<em>text</em>") {
-		t.Errorf("second result should contain italic text, got: %s", got[1])
+		t.Errorf("2つ目の結果に斜体が含まれていない: %s", got[1])
 	}
 }
 
@@ -244,22 +249,22 @@ func TestRenderHTMLBatch_WithWikilinks(t *testing.T) {
 
 	got, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if len(got) != 2 {
-		t.Fatalf("expected 2 results, got %d", len(got))
+		t.Fatalf("結果の件数 = %d、期待値 = 2", len(got))
 	}
 
 	// Wikiリンクが<a>タグに変換されていること
 	if !strings.Contains(got[0], "<a") {
-		t.Errorf("first result should contain link, got: %s", got[0])
+		t.Errorf("1つ目の結果にリンクが含まれていない: %s", got[0])
 	}
 	if !strings.Contains(got[0], "ページA") {
-		t.Errorf("first result should contain page title, got: %s", got[0])
+		t.Errorf("1つ目の結果にページタイトルが含まれていない: %s", got[0])
 	}
 	if !strings.Contains(got[1], "<a") {
-		t.Errorf("second result should contain link, got: %s", got[1])
+		t.Errorf("2つ目の結果にリンクが含まれていない: %s", got[1])
 	}
 }
 
@@ -281,20 +286,20 @@ func TestRenderHTMLBatch_WithAttachments(t *testing.T) {
 
 	got, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if len(got) != 2 {
-		t.Fatalf("expected 2 results, got %d", len(got))
+		t.Fatalf("結果の件数 = %d、期待値 = 2", len(got))
 	}
 
 	// 画像添付ファイルが変換されていること
 	if !strings.Contains(got[0], `data-attachment-id="att-1"`) {
-		t.Errorf("first result should contain attachment att-1, got: %s", got[0])
+		t.Errorf("1つ目の結果に添付ファイルatt-1が含まれていない: %s", got[0])
 	}
 	// PDF添付ファイルが変換されていること
 	if !strings.Contains(got[1], `data-attachment-id="att-2"`) {
-		t.Errorf("second result should contain attachment att-2, got: %s", got[1])
+		t.Errorf("2つ目の結果に添付ファイルatt-2が含まれていない: %s", got[1])
 	}
 }
 
@@ -312,7 +317,7 @@ func TestRenderHTMLBatch_ResolverError(t *testing.T) {
 
 	_, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "my-space", resolver, finder)
 	if err == nil {
-		t.Fatal("expected error but got nil")
+		t.Fatal("エラーを期待したが、nilだった")
 	}
 }
 
@@ -330,7 +335,7 @@ func TestRenderHTMLBatch_BatchFinderError(t *testing.T) {
 
 	_, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "my-space", resolver, finder)
 	if err == nil {
-		t.Fatal("expected error but got nil")
+		t.Fatal("エラーを期待したが、nilだった")
 	}
 }
 
@@ -347,14 +352,14 @@ func TestDeduplicateWikilinkKeys(t *testing.T) {
 
 	got := deduplicateWikilinkKeys(keys)
 	if len(got) != 2 {
-		t.Fatalf("expected 2 unique keys, got %d", len(got))
+		t.Fatalf("一意なキーの件数 = %d、期待値 = 2", len(got))
 	}
 
 	if got[0].TopicName != "topic1" || got[0].PageTitle != "ページA" {
-		t.Errorf("first key should be topic1/ページA, got %s/%s", got[0].TopicName, got[0].PageTitle)
+		t.Errorf("最初のキー = %s/%s、期待値 = topic1/ページA", got[0].TopicName, got[0].PageTitle)
 	}
 	if got[1].TopicName != "topic2" || got[1].PageTitle != "ページB" {
-		t.Errorf("second key should be topic2/ページB, got %s/%s", got[1].TopicName, got[1].PageTitle)
+		t.Errorf("2つ目のキー = %s/%s、期待値 = topic2/ページB", got[1].TopicName, got[1].PageTitle)
 	}
 }
 
@@ -363,29 +368,29 @@ func TestDeduplicateWikilinkKeys_Empty(t *testing.T) {
 
 	got := deduplicateWikilinkKeys(nil)
 	if len(got) != 0 {
-		t.Errorf("expected 0, got %d", len(got))
+		t.Errorf("実測値 = %d、期待値 = 0", len(got))
 	}
 }
 
 func TestCollectAllAttachmentIDs(t *testing.T) {
 	t.Parallel()
 
-	htmls := []string{
-		`<img src="/attachments/att-1"><img src="/attachments/att-2">`,
-		`<img src="/attachments/att-2"><img src="/attachments/att-3">`,
-		`<img src="/attachments/att-1">`,
+	perBody := [][]string{
+		{"att-1", "att-2"},
+		{"att-2", "att-3"},
+		{"att-1"},
 	}
 
-	got := collectAllAttachmentIDs(htmls)
+	got := collectAllAttachmentIDs(perBody)
 	if len(got) != 3 {
-		t.Fatalf("expected 3 unique IDs, got %d: %v", len(got), got)
+		t.Fatalf("一意なIDの件数 = %d、期待値 = 3: %v", len(got), got)
 	}
 
 	// 重複が除去され、出現順に並んでいること
 	expected := []string{"att-1", "att-2", "att-3"}
 	for i, want := range expected {
 		if got[i] != want {
-			t.Errorf("got[%d] = %q, want %q", i, got[i], want)
+			t.Errorf("got[%d] = %q、期待値 = %q", i, got[i], want)
 		}
 	}
 }
@@ -393,9 +398,9 @@ func TestCollectAllAttachmentIDs(t *testing.T) {
 func TestCollectAllAttachmentIDs_Empty(t *testing.T) {
 	t.Parallel()
 
-	got := collectAllAttachmentIDs([]string{"<p>テキスト</p>", "<p>テキスト2</p>"})
+	got := collectAllAttachmentIDs([][]string{nil, nil})
 	if len(got) != 0 {
-		t.Errorf("expected 0, got %d", len(got))
+		t.Errorf("実測値 = %d、期待値 = 0", len(got))
 	}
 }
 
@@ -412,22 +417,22 @@ func TestMapAttachmentFinder(t *testing.T) {
 	// 存在するIDの検索
 	got, err := finder.FindByIDAndSpace(context.Background(), "att-1", "space-1")
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if got == nil {
-		t.Fatal("expected attachment, got nil")
+		t.Fatal("添付ファイルがnil")
 	}
 	if got.Filename != "photo.jpg" {
-		t.Errorf("expected photo.jpg, got %s", got.Filename)
+		t.Errorf("実測値 = %s、期待値 = photo.jpg", got.Filename)
 	}
 
 	// 存在しないIDの検索
 	got, err = finder.FindByIDAndSpace(context.Background(), "nonexistent", "space-1")
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if got != nil {
-		t.Errorf("expected nil for nonexistent ID, got %v", got)
+		t.Errorf("存在しないIDの結果 = %v、期待値 = nil", got)
 	}
 }
 
@@ -438,10 +443,10 @@ func TestMapAttachmentFinder_Empty(t *testing.T) {
 
 	got, err := finder.FindByIDAndSpace(context.Background(), "att-1", "space-1")
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if got != nil {
-		t.Errorf("expected nil, got %v", got)
+		t.Errorf("実測値 = %v、期待値 = nil", got)
 	}
 }
 
@@ -472,24 +477,24 @@ func TestRenderHTMLBatch_MixedContent(t *testing.T) {
 
 	got, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if len(got) != 2 {
-		t.Fatalf("expected 2 results, got %d", len(got))
+		t.Fatalf("結果の件数 = %d、期待値 = 2", len(got))
 	}
 
 	// Wikiリンクと添付ファイルの両方が変換されていること
 	if !strings.Contains(got[0], "<a") {
-		t.Errorf("first result should contain wikilink, got: %s", got[0])
+		t.Errorf("1つ目の結果にWikiリンクが含まれていない: %s", got[0])
 	}
 	if !strings.Contains(got[0], `data-attachment-id="att-1"`) {
-		t.Errorf("first result should contain attachment, got: %s", got[0])
+		t.Errorf("1つ目の結果に添付ファイルが含まれていない: %s", got[0])
 	}
 
 	// 普通のテキストはそのまま
 	if !strings.Contains(got[1], "普通のテキスト") {
-		t.Errorf("second result should contain plain text, got: %s", got[1])
+		t.Errorf("2つ目の結果にプレーンテキストが含まれていない: %s", got[1])
 	}
 }
 
@@ -510,17 +515,68 @@ func TestRenderHTMLBatch_SharedAttachmentAcrossInputs(t *testing.T) {
 
 	got, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "my-space", resolver, finder)
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 
 	if len(got) != 2 {
-		t.Fatalf("expected 2 results, got %d", len(got))
+		t.Fatalf("結果の件数 = %d、期待値 = 2", len(got))
 	}
 
 	// 両方のテキストで同じ添付ファイルが変換されていること
 	for i, html := range got {
 		if !strings.Contains(html, `data-attachment-id="att-shared"`) {
-			t.Errorf("result[%d] should contain shared attachment, got: %s", i, html)
+			t.Errorf("result[%d]に共有の添付ファイルが含まれていない: %s", i, html)
 		}
+	}
+}
+
+func TestRenderHTML_ReferenceDefinitionInsideHiddenContent(t *testing.T) {
+	t.Parallel()
+
+	for _, element := range []string{"object", "textarea"} {
+		t.Run(element, func(t *testing.T) {
+			t.Parallel()
+
+			body := "[visible][r]\n\nx <" + element + ">\n\n[r]: /attachments/att-1\n\n</" + element + ">"
+			finder := &mockBatchAttachmentFinder{
+				attachments: []*model.Attachment{{ID: "att-1", SpaceID: "space-1", Filename: "file.pdf"}},
+			}
+			got, err := RenderHTML(context.Background(), body, "T", "space-1", "space", &mockPageLocationResolver{}, finder)
+			if err != nil {
+				t.Fatalf("RenderHTML()のエラー = %v", err)
+			}
+			if !strings.Contains(got, `data-attachment-id="att-1"`) || !strings.Contains(got, ">visible</a>") {
+				t.Errorf("有効な添付ファイルのリンクが変換されていない: %s", got)
+			}
+		})
+	}
+}
+
+func TestRenderHTMLBatch_AttachmentIDsComeFromTheRenderedBodies(t *testing.T) {
+	t.Parallel()
+
+	inputs := []BatchRenderInput{
+		{Body: `<img src="/attachments/att-1">`, CurrentTopicName: "T"},
+		{Body: "><!--\n\n" + `<img src="/attachments/att-2">`, CurrentTopicName: "T"},
+		{Body: "`" + `<img src="/attachments/att-3">` + "`", CurrentTopicName: "T"},
+	}
+	finder := &mockBatchAttachmentFinder{
+		attachments: []*model.Attachment{
+			{ID: "att-1", SpaceID: "space-1", Filename: "one.png"},
+			{ID: "att-2", SpaceID: "space-1", Filename: "two.png"},
+			{ID: "att-3", SpaceID: "space-1", Filename: "three.png"},
+		},
+	}
+
+	got, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "space", &mockPageLocationResolver{}, finder)
+	if err != nil {
+		t.Fatalf("RenderHTMLBatch()のエラー = %v", err)
+	}
+	if !strings.Contains(got[0], `data-attachment-id="att-1"`) {
+		t.Errorf("有効な添付ファイルが変換されていない: %s", got[0])
+	}
+	// どちらの本文も読み手に添付ファイルを指すものが出ないため、一括検索へ渡さない。
+	if len(finder.requestedIDs) != 1 || finder.requestedIDs[0] != "att-1" {
+		t.Errorf("要求されたID = %v、期待値 = att-1のみ", finder.requestedIDs)
 	}
 }

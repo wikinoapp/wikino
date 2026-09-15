@@ -9,8 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData is the data passed to the space detail page.
-// [Ja] ShowData はスペース詳細画面に渡すデータ構造体です。
+// ShowDataはスペース詳細画面に渡すデータ構造体です。
 type ShowData struct {
 	Space       viewmodel.Space
 	PinnedPages []viewmodel.CardLinkPage
@@ -18,17 +17,10 @@ type ShowData struct {
 	Pagination  viewmodel.Pagination
 	JoinedSpace bool
 
-	// SectionTopics are the topics shown in the topic section: the member's joined topics, or (for
-	// non-members and guests) the space's public topics. They are rendered with the shared
-	// CardLinkTopic component (the same card used on the home page), with the space name hidden since
-	// the space header already shows it. Each card links to its detail and, where CanCreatePage is
-	// true, offers a per-topic "new page" action. This is the page-creation entry point, replacing
-	// the space-level empty-state "new page" button that implicitly fixed the topic.
-	//
-	// [Ja] SectionTopics はトピックセクションに表示するトピック。メンバーは参加中トピック、
-	// 非メンバー・ゲストはスペースの公開トピック。ホーム画面と同じ共有コンポーネント CardLinkTopic で
+	// SectionTopicsはトピックセクションに表示するトピック。メンバーは参加中トピック、
+	// 非メンバー・ゲストはスペースの公開トピック。ホーム画面と同じ共有コンポーネントCardLinkTopicで
 	// 描画し、スペース名はヘッダーで既に表示しているためカード内では非表示にする。各カードは詳細へ
-	// リンクし、CanCreatePage が true のときトピックごとの「新規ページ」アクションを出す。これが
+	// リンクし、CanCreatePageがtrueのときトピックごとの「新規ページ」アクションを出す。これが
 	// ページ作成の導線であり、作成先トピックを暗黙に固定していたスペースレベルの空状態「新規ページ」
 	// ボタンを置き換える。
 	SectionTopics []viewmodel.CardLinkTopic
@@ -36,16 +28,12 @@ type ShowData struct {
 	CanCreateTopic bool
 }
 
-// paginationPath builds the offset pagination path for the space detail page.
-// [Ja] paginationPath はスペース詳細画面のオフセットページネーション用パスを生成します。
+// paginationPathはスペース詳細画面のオフセットページネーション用パスを生成します。
 func (d ShowData) paginationPath(page int) string {
 	return fmt.Sprintf("/s/%s?page=%d", d.Space.Identifier, page)
 }
 
-// noTopicsEmptyStateData builds the empty state shown to a member who has not joined any topic.
-// The "new topic" guidance and link appear only when the member can create topics.
-//
-// [Ja] noTopicsEmptyStateData は参加トピックが無いメンバーに表示する空状態を組み立てる。
+// noTopicsEmptyStateDataは参加トピックが無いメンバーに表示する空状態を組み立てる。
 // 「新規トピック」の補足とリンクはトピック作成権限があるときだけ表示する。
 func noTopicsEmptyStateData(ctx context.Context, data ShowData) components.EmptyStateData {
 	d := components.EmptyStateData{
@@ -58,11 +46,7 @@ func noTopicsEmptyStateData(ctx context.Context, data ShowData) components.Empty
 	return d
 }
 
-// noPagesEmptyStateData builds the empty state shown when the space has no pages to list.
-// It shows only the "no pages" message; the page-creation entry point lives in the topic section,
-// so the empty state no longer carries a "new page" button.
-//
-// [Ja] noPagesEmptyStateData は一覧するページが無いときに表示する空状態を組み立てる。
+// noPagesEmptyStateDataは一覧するページが無いときに表示する空状態を組み立てる。
 // 「ページはありません」のメッセージのみを表示する。ページ作成の導線はトピックセクションに集約したため、
 // 空状態には「新規ページ」ボタンを持たせない。
 func noPagesEmptyStateData(ctx context.Context) components.EmptyStateData {
@@ -71,50 +55,26 @@ func noPagesEmptyStateData(ctx context.Context) components.EmptyStateData {
 	}
 }
 
-// Show renders the space detail page content.
-// [Ja] Show はスペース詳細画面のコンテンツを表示します。
+// Showはスペース詳細画面のコンテンツを表示します。
 templ Show(data ShowData) {
 	<div class="py-4">
-		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					// The space is the current page, so show its name as a plain (unlinked) trailing
-					// crumb. This adds the "›" separator after the home icon for a clearer breadcrumb.
-					//
-					// [Ja] スペースは現在地のため、スペース名はリンク無しの末尾パンくずとして表示する。
-					// ホームアイコンの後に "›" 区切りが入り、パンくずとして分かりやすくなる。
-					{
-						Label: data.Space.Name,
-					},
-				},
-			})
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-6">
-					<div class="px-4">
-						@components.MainTitle(components.MainTitleData{
-							Title:   data.Space.Name,
-							Actions: showActions(data),
-						})
-					</div>
-					@topicSection(data)
-					@pagesSection(data)
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:   data.Space.Name,
+						Actions: showActions(data),
+					})
 				</div>
+				@topicSection(data)
+				@pagesSection(data)
 			</div>
 		</div>
 	</div>
 }
 
-// showActions renders the space options dropdown shown in the page header.
-// The RSS feed link is always shown; the topic / trash / settings links appear only to space members.
-//
-// [Ja] showActions はページヘッダーに表示するスペースオプションのドロップダウンを表示します。
-// RSS フィードリンクは常に表示し、トピック / ゴミ箱 / 設定リンクはスペースメンバーにのみ表示します。
+// showActionsはページヘッダーに表示するスペースオプションのドロップダウンを表示します。
+// RSSフィードリンクは常に表示し、トピック / ゴミ箱 / 設定リンクはスペースメンバーにのみ表示します。
 templ showActions(data ShowData) {
 	<div id="space-options-dropdown" class="dropdown-menu">
 		<button
@@ -123,9 +83,12 @@ templ showActions(data ShowData) {
 			aria-haspopup="menu"
 			aria-controls="space-options-dropdown-menu"
 			aria-expanded="false"
-			class="btn-sm-icon-outline border-primary rounded-full"
+			aria-label={ templates.T(ctx, "space_show_options_aria_label") }
+			class="btn border-primary rounded-full"
+			data-variant="outline"
+			data-size="icon-sm"
 		>
-			@templates.Icon("dots-three-regular")
+			@templates.DecorativeIcon("dots-three-regular")
 		</button>
 		<div id="space-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
 			<div role="menu" id="space-options-dropdown-menu" aria-labelledby="space-options-dropdown-trigger">
@@ -173,25 +136,19 @@ templ showActions(data ShowData) {
 	</div>
 }
 
-// newTopicButton renders the link to the new topic form.
-// [Ja] newTopicButton は新規トピック作成フォームへのリンクを表示します。
+// newTopicButtonは新規トピック作成フォームへのリンクを表示します。
 templ newTopicButton(spaceIdentifier viewmodel.SpaceIdentifier) {
 	<a
 		href={ templ.SafeURL(string(templates.NewTopicPath(spaceIdentifier))) }
-		class="btn btn-sm rounded-full"
+		class="btn rounded-full"
+		data-size="sm"
 	>
 		@templates.Icon("plus-regular", "size-[18px] fill-primary-foreground")
 		{ templates.T(ctx, "space_show_new_topic_button") }
 	</a>
 }
 
-// topicSection renders the topic list for the space detail as a grid of CardLinkTopic cards (the
-// same component the home page uses for joined topics). Each card links to its detail page, and
-// topics the user may write to expose a per-topic "new page" action. This is the page-creation
-// entry point. When there are no topics, the "no topics" empty state is shown in place of the grid,
-// so the heading always renders.
-//
-// [Ja] topicSection はスペース詳細のトピック一覧を CardLinkTopic カードのグリッドとして表示します
+// topicSectionはスペース詳細のトピック一覧をCardLinkTopicカードのグリッドとして表示します
 // (ホーム画面が参加中トピックに使うのと同じコンポーネント)。各カードは詳細ページへリンクし、
 // ユーザーが書き込めるトピックにはトピックごとの「新規ページ」アクションを出します。これがページ作成の
 // 導線です。トピックが無いときはグリッドの代わりに「トピックがありません」の空状態を表示するため、
@@ -213,12 +170,8 @@ templ topicSection(data ShowData) {
 	</div>
 }
 
-// pagesSection renders the page list for the space detail: pinned pages first, then the paginated
-// regular pages. When there are no pages at all, the "no pages" empty state is shown in place of the
-// lists, so the heading always renders.
-//
-// [Ja] pagesSection はスペース詳細のページ一覧を表示します。先頭にピン留めページ、続いてページ送り
-// 対象の通常ページを並べます。ページが 1 件も無いときは一覧の代わりに「ページがありません」の空状態を
+// pagesSectionはスペース詳細のページ一覧を表示します。先頭にピン留めページ、続いてページ送り
+// 対象の通常ページを並べます。ページが1件も無いときは一覧の代わりに「ページがありません」の空状態を
 // 表示するため、見出しは常に描画されます。
 templ pagesSection(data ShowData) {
 	<div class="flex flex-col gap-4 px-4">

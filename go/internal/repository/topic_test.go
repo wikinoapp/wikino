@@ -9,6 +9,137 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
+func TestTopicRepository_NextTopicNumber(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	targetSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-next-number-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-next-number-other").
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(2).
+		WithName("Active").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(5).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(99).
+		WithName("Other Space").
+		Build()
+
+	number, err := repo.NextTopicNumber(context.Background(), targetSpaceID)
+	if err != nil {
+		t.Fatalf("NextTopicNumber()のエラー = %v", err)
+	}
+	if number != 6 {
+		t.Errorf("NextTopicNumber() = %d、期待値 = 6", number)
+	}
+}
+
+func TestTopicRepository_ExistsBySpaceAndName(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	targetSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-name-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-name-other").
+		Build()
+
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(1).
+		WithName("Active").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(2).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Other Space Only").
+		Build()
+
+	tests := []struct {
+		name string
+		want bool
+	}{
+		{name: "Active", want: true},
+		{name: "Discarded", want: true},
+		{name: "Other Space Only", want: false},
+		{name: "Missing", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exists, err := repo.ExistsBySpaceAndName(context.Background(), targetSpaceID, tt.name)
+			if err != nil {
+				t.Fatalf("ExistsBySpaceAndName()のエラー = %v", err)
+			}
+			if exists != tt.want {
+				t.Errorf("ExistsBySpaceAndName() = %t、期待値 = %t", exists, tt.want)
+			}
+		})
+	}
+}
+
+func TestTopicRepository_Create(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-create-repository").
+		Build()
+
+	topic, err := repo.Create(context.Background(), CreateTopicInput{
+		SpaceID:     spaceID,
+		Number:      7,
+		Name:        "Created Topic",
+		Description: "Created description",
+		Visibility:  model.TopicVisibilityPrivate,
+	})
+	if err != nil {
+		t.Fatalf("Create()のエラー = %v", err)
+	}
+	if topic.ID == "" {
+		t.Error("topic.IDが空")
+	}
+	if topic.Space == nil || topic.Space.ID != spaceID {
+		t.Errorf("topic.Space = %v、期待値 = スペースID %v", topic.Space, spaceID)
+	}
+	if topic.Number != 7 {
+		t.Errorf("topic.Number = %d、期待値 = 7", topic.Number)
+	}
+	if topic.Name != "Created Topic" {
+		t.Errorf("topic.Name = %q、期待値 = %q", topic.Name, "Created Topic")
+	}
+	if topic.Description != "Created description" {
+		t.Errorf("topic.Description = %q、期待値 = %q", topic.Description, "Created description")
+	}
+	if topic.Visibility != model.TopicVisibilityPrivate {
+		t.Errorf("topic.Visibility = %v、期待値 = %v", topic.Visibility, model.TopicVisibilityPrivate)
+	}
+	if topic.DiscardedAt != nil {
+		t.Errorf("topic.DiscardedAt = %v、期待値 = nil", topic.DiscardedAt)
+	}
+}
+
 func TestTopicRepository_FindBySpaceAndNumber(t *testing.T) {
 	t.Parallel()
 
@@ -32,51 +163,51 @@ func TestTopicRepository_FindBySpaceAndNumber(t *testing.T) {
 	t.Run("存在するトピックをスペースIDとナンバーで取得できる", func(t *testing.T) {
 		topic, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, 1)
 		if err != nil {
-			t.Fatalf("FindBySpaceAndNumber() error = %v", err)
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
 		}
 		if topic == nil {
-			t.Fatal("FindBySpaceAndNumber() returned nil, want topic")
+			t.Fatal("FindBySpaceAndNumber()がnilを返した、期待値 = トピック")
 		}
 		if topic.ID != topicID {
-			t.Errorf("topic.ID = %v, want %v", topic.ID, topicID)
+			t.Errorf("topic.ID = %v、期待値 = %v", topic.ID, topicID)
 		}
 		if topic.Space.ID != spaceID {
-			t.Errorf("topic.Space.ID = %v, want %v", topic.Space.ID, spaceID)
+			t.Errorf("topic.Space.ID = %v、期待値 = %v", topic.Space.ID, spaceID)
 		}
 		if topic.Number != 1 {
-			t.Errorf("topic.Number = %v, want 1", topic.Number)
+			t.Errorf("topic.Number = %v、期待値 = 1", topic.Number)
 		}
 		if topic.Name != "General" {
-			t.Errorf("topic.Name = %v, want General", topic.Name)
+			t.Errorf("topic.Name = %v、期待値 = General", topic.Name)
 		}
 		if topic.Description != "General topic" {
-			t.Errorf("topic.Description = %v, want 'General topic'", topic.Description)
+			t.Errorf("topic.Description = %v、期待値 = 'General topic'", topic.Description)
 		}
 		if topic.Visibility != model.TopicVisibilityPublic {
-			t.Errorf("topic.Visibility = %v, want TopicVisibilityPublic", topic.Visibility)
+			t.Errorf("topic.Visibility = %v、期待値 = TopicVisibilityPublic", topic.Visibility)
 		}
 		if topic.DiscardedAt != nil {
-			t.Errorf("topic.DiscardedAt = %v, want nil", topic.DiscardedAt)
+			t.Errorf("topic.DiscardedAt = %v、期待値 = nil", topic.DiscardedAt)
 		}
 	})
 
 	t.Run("存在しないナンバーはnilを返す", func(t *testing.T) {
 		topic, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, 999)
 		if err != nil {
-			t.Fatalf("FindBySpaceAndNumber() error = %v", err)
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
 		}
 		if topic != nil {
-			t.Errorf("FindBySpaceAndNumber() = %v, want nil", topic)
+			t.Errorf("FindBySpaceAndNumber() = %v、期待値 = nil", topic)
 		}
 	})
 
 	t.Run("存在しないスペースIDはnilを返す", func(t *testing.T) {
 		topic, err := repo.FindBySpaceAndNumber(context.Background(), "00000000-0000-0000-0000-000000000000", 1)
 		if err != nil {
-			t.Fatalf("FindBySpaceAndNumber() error = %v", err)
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
 		}
 		if topic != nil {
-			t.Errorf("FindBySpaceAndNumber() = %v, want nil", topic)
+			t.Errorf("FindBySpaceAndNumber() = %v、期待値 = nil", topic)
 		}
 	})
 }
@@ -115,26 +246,26 @@ func TestTopicRepository_ListActiveBySpace(t *testing.T) {
 	t.Run("アクティブなトピック一覧をナンバー順で取得できる", func(t *testing.T) {
 		topics, err := repo.ListActiveBySpace(context.Background(), spaceID)
 		if err != nil {
-			t.Fatalf("ListActiveBySpace() error = %v", err)
+			t.Fatalf("ListActiveBySpace()のエラー = %v", err)
 		}
 		if len(topics) != 2 {
-			t.Fatalf("len(topics) = %v, want 2", len(topics))
+			t.Fatalf("len(topics) = %v、期待値 = 2", len(topics))
 		}
 		if topics[0].Name != "First" {
-			t.Errorf("topics[0].Name = %v, want First", topics[0].Name)
+			t.Errorf("topics[0].Name = %v、期待値 = First", topics[0].Name)
 		}
 		if topics[1].Name != "Second" {
-			t.Errorf("topics[1].Name = %v, want Second", topics[1].Name)
+			t.Errorf("topics[1].Name = %v、期待値 = Second", topics[1].Name)
 		}
 	})
 
 	t.Run("トピックがないスペースは空のスライスを返す", func(t *testing.T) {
 		topics, err := repo.ListActiveBySpace(context.Background(), "00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			t.Fatalf("ListActiveBySpace() error = %v", err)
+			t.Fatalf("ListActiveBySpace()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 }
@@ -151,8 +282,7 @@ func TestTopicRepository_ListPublicBySpace(t *testing.T) {
 		WithName("Public Topic Space").
 		Build()
 
-	// Create public topics out of number order to verify ORDER BY number.
-	// [Ja] ORDER BY number を検証するため、number 順とは異なる順序で公開トピックを作成する。
+	// ORDER BY numberを検証するため、number順とは異なる順序で公開トピックを作成する。
 	testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithNumber(2).
@@ -167,8 +297,7 @@ func TestTopicRepository_ListPublicBySpace(t *testing.T) {
 		WithVisibility(int32(model.TopicVisibilityPublic)).
 		Build()
 
-	// A private topic and a discarded public topic must both be excluded.
-	// [Ja] 非公開トピックと廃棄済みの公開トピックは、いずれも除外される。
+	// 非公開トピックと廃棄済みの公開トピックは、いずれも除外される。
 	testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithNumber(3).
@@ -184,9 +313,7 @@ func TestTopicRepository_ListPublicBySpace(t *testing.T) {
 		WithDiscarded().
 		Build()
 
-	// A public topic in another space must not leak into the target space's results,
-	// verifying the space_id scoping of the query.
-	// [Ja] 別スペースの公開トピックが対象スペースの結果に混入しないこと (クエリの space_id
+	// 別スペースの公開トピックが対象スペースの結果に混入しないこと (クエリのspace_id
 	// スコープが効いていること) を検証する。
 	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("other-public-topic-space").
@@ -203,24 +330,22 @@ func TestTopicRepository_ListPublicBySpace(t *testing.T) {
 	t.Run("公開トピックのみをナンバー順で取得できる", func(t *testing.T) {
 		topics, err := repo.ListPublicBySpace(context.Background(), spaceID)
 		if err != nil {
-			t.Fatalf("ListPublicBySpace() error = %v", err)
+			t.Fatalf("ListPublicBySpace()のエラー = %v", err)
 		}
-		// len == 2 and the exact names below also confirm the other space's public
-		// topic ("Other Space Public") is excluded by the space_id scoping.
-		// [Ja] len == 2 と下の名前一致により、別スペースの公開トピック ("Other Space
-		// Public") が space_id スコープで除外されることも合わせて確認している。
+		// len == 2と下の名前一致により、別スペースの公開トピック ("Other Space
+		// Public") がspace_idスコープで除外されることも合わせて確認している。
 		if len(topics) != 2 {
-			t.Fatalf("len(topics) = %v, want 2", len(topics))
+			t.Fatalf("len(topics) = %v、期待値 = 2", len(topics))
 		}
 		if topics[0].Name != "Public First" {
-			t.Errorf("topics[0].Name = %v, want 'Public First'", topics[0].Name)
+			t.Errorf("topics[0].Name = %v、期待値 = 'Public First'", topics[0].Name)
 		}
 		if topics[1].Name != "Public Second" {
-			t.Errorf("topics[1].Name = %v, want 'Public Second'", topics[1].Name)
+			t.Errorf("topics[1].Name = %v、期待値 = 'Public Second'", topics[1].Name)
 		}
 		for _, topic := range topics {
 			if topic.Visibility != model.TopicVisibilityPublic {
-				t.Errorf("topic %q Visibility = %v, want TopicVisibilityPublic", topic.Name, topic.Visibility)
+				t.Errorf("トピック%qのVisibility = %v、期待値 = TopicVisibilityPublic", topic.Name, topic.Visibility)
 			}
 		}
 	})
@@ -228,10 +353,10 @@ func TestTopicRepository_ListPublicBySpace(t *testing.T) {
 	t.Run("トピックがないスペースは空のスライスを返す", func(t *testing.T) {
 		topics, err := repo.ListPublicBySpace(context.Background(), "00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			t.Fatalf("ListPublicBySpace() error = %v", err)
+			t.Fatalf("ListPublicBySpace()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 }
@@ -269,40 +394,40 @@ func TestTopicRepository_FindBySpaceAndNames(t *testing.T) {
 	t.Run("指定した名前のトピックを取得できる", func(t *testing.T) {
 		topics, err := repo.FindBySpaceAndNames(context.Background(), spaceID, []string{"Alpha", "Gamma"})
 		if err != nil {
-			t.Fatalf("FindBySpaceAndNames() error = %v", err)
+			t.Fatalf("FindBySpaceAndNames()のエラー = %v", err)
 		}
 		if len(topics) != 2 {
-			t.Fatalf("len(topics) = %v, want 2", len(topics))
+			t.Fatalf("len(topics) = %v、期待値 = 2", len(topics))
 		}
 		names := map[string]bool{}
 		for _, topic := range topics {
 			names[topic.Name] = true
 		}
 		if !names["Alpha"] {
-			t.Error("Alpha が結果に含まれていない")
+			t.Error("Alphaが結果に含まれていない")
 		}
 		if !names["Gamma"] {
-			t.Error("Gamma が結果に含まれていない")
+			t.Error("Gammaが結果に含まれていない")
 		}
 	})
 
 	t.Run("存在しない名前は結果に含まれない", func(t *testing.T) {
 		topics, err := repo.FindBySpaceAndNames(context.Background(), spaceID, []string{"NotExist"})
 		if err != nil {
-			t.Fatalf("FindBySpaceAndNames() error = %v", err)
+			t.Fatalf("FindBySpaceAndNames()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 
 	t.Run("空のスライスを渡すと空の結果を返す", func(t *testing.T) {
 		topics, err := repo.FindBySpaceAndNames(context.Background(), spaceID, []string{})
 		if err != nil {
-			t.Fatalf("FindBySpaceAndNames() error = %v", err)
+			t.Fatalf("FindBySpaceAndNames()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 }
@@ -342,7 +467,7 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 		WithUserID(userID).
 		Build()
 
-	// スペース1のトピック（last_page_modified_atあり）
+	// スペース1のトピック (last_page_modified_atあり)
 	topic1ID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(space1ID).
 		WithNumber(1).
@@ -357,7 +482,7 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 		WithLastPageModifiedAt(recentTime).
 		Build()
 
-	// スペース2のトピック（last_page_modified_atが古い）
+	// スペース2のトピック (last_page_modified_atが古い)
 	topic2ID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(space2ID).
 		WithNumber(1).
@@ -372,7 +497,7 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 		WithLastPageModifiedAt(olderTime).
 		Build()
 
-	// スペース1の別トピック（last_page_modified_atなし）
+	// スペース1の別トピック (last_page_modified_atなし)
 	topic3ID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(space1ID).
 		WithNumber(2).
@@ -388,56 +513,56 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 	t.Run("参加しているトピック一覧をlast_page_modified_at降順で取得できる", func(t *testing.T) {
 		topics, err := repo.ListJoinedByUser(context.Background(), userID, 10)
 		if err != nil {
-			t.Fatalf("ListJoinedByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser()のエラー = %v", err)
 		}
 		if len(topics) != 3 {
-			t.Fatalf("len(topics) = %v, want 3", len(topics))
+			t.Fatalf("len(topics) = %v、期待値 = 3", len(topics))
 		}
 		// last_page_modified_atが最新のものが先頭
 		if topics[0].Name != "Topic Alpha" {
-			t.Errorf("topics[0].Name = %v, want 'Topic Alpha'", topics[0].Name)
+			t.Errorf("topics[0].Name = %v、期待値 = 'Topic Alpha'", topics[0].Name)
 		}
 		// 次にlast_page_modified_atが古いもの
 		if topics[1].Name != "Topic Beta" {
-			t.Errorf("topics[1].Name = %v, want 'Topic Beta'", topics[1].Name)
+			t.Errorf("topics[1].Name = %v、期待値 = 'Topic Beta'", topics[1].Name)
 		}
-		// last_page_modified_atがNULLのものは最後（NULLS LAST）、number DESCで並ぶ
+		// last_page_modified_atがNULLのものは最後 (NULLS LAST)、number DESCで並ぶ
 		if topics[2].Name != "Topic Gamma" {
-			t.Errorf("topics[2].Name = %v, want 'Topic Gamma'", topics[2].Name)
+			t.Errorf("topics[2].Name = %v、期待値 = 'Topic Gamma'", topics[2].Name)
 		}
 	})
 
 	t.Run("スペース情報が正しく取得できる", func(t *testing.T) {
 		topics, err := repo.ListJoinedByUser(context.Background(), userID, 10)
 		if err != nil {
-			t.Fatalf("ListJoinedByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser()のエラー = %v", err)
 		}
-		// Topic Alpha はスペース1に所属
+		// Topic Alphaはスペース1に所属
 		if topics[0].Space.ID != space1ID {
-			t.Errorf("topics[0].Space.ID = %v, want %v", topics[0].Space.ID, space1ID)
+			t.Errorf("topics[0].Space.ID = %v、期待値 = %v", topics[0].Space.ID, space1ID)
 		}
 		if string(topics[0].Space.Identifier) != "joined-user-space1" {
-			t.Errorf("topics[0].Space.Identifier = %v, want 'joined-user-space1'", topics[0].Space.Identifier)
+			t.Errorf("topics[0].Space.Identifier = %v、期待値 = 'joined-user-space1'", topics[0].Space.Identifier)
 		}
 		if topics[0].Space.Name != "Space One" {
-			t.Errorf("topics[0].Space.Name = %v, want 'Space One'", topics[0].Space.Name)
+			t.Errorf("topics[0].Space.Name = %v、期待値 = 'Space One'", topics[0].Space.Name)
 		}
-		// Topic Beta はスペース2に所属
+		// Topic Betaはスペース2に所属
 		if topics[1].Space.ID != space2ID {
-			t.Errorf("topics[1].Space.ID = %v, want %v", topics[1].Space.ID, space2ID)
+			t.Errorf("topics[1].Space.ID = %v、期待値 = %v", topics[1].Space.ID, space2ID)
 		}
 		if string(topics[1].Space.Identifier) != "joined-user-space2" {
-			t.Errorf("topics[1].Space.Identifier = %v, want 'joined-user-space2'", topics[1].Space.Identifier)
+			t.Errorf("topics[1].Space.Identifier = %v、期待値 = 'joined-user-space2'", topics[1].Space.Identifier)
 		}
 	})
 
 	t.Run("LIMITが正しく適用される", func(t *testing.T) {
 		topics, err := repo.ListJoinedByUser(context.Background(), userID, 2)
 		if err != nil {
-			t.Fatalf("ListJoinedByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser()のエラー = %v", err)
 		}
 		if len(topics) != 2 {
-			t.Errorf("len(topics) = %v, want 2", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 2", len(topics))
 		}
 	})
 
@@ -472,10 +597,10 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 
 		topics, err := repo.ListJoinedByUser(context.Background(), inactiveUserID, 10)
 		if err != nil {
-			t.Fatalf("ListJoinedByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 
@@ -510,10 +635,10 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 
 		topics, err := repo.ListJoinedByUser(context.Background(), discardedUserID, 10)
 		if err != nil {
-			t.Fatalf("ListJoinedByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 
@@ -548,20 +673,20 @@ func TestTopicRepository_ListJoinedByUser(t *testing.T) {
 
 		topics, err := repo.ListJoinedByUser(context.Background(), discardedSpaceUserID, 10)
 		if err != nil {
-			t.Fatalf("ListJoinedByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 
 	t.Run("トピックに参加していないユーザーは空のスライスを返す", func(t *testing.T) {
 		topics, err := repo.ListJoinedByUser(context.Background(), "00000000-0000-0000-0000-000000000000", 10)
 		if err != nil {
-			t.Fatalf("ListJoinedByUser() error = %v", err)
+			t.Fatalf("ListJoinedByUser()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 }
@@ -619,26 +744,26 @@ func TestTopicRepository_ListJoinedBySpaceMember(t *testing.T) {
 	t.Run("参加しているトピック一覧をナンバー順で取得できる", func(t *testing.T) {
 		topics, err := repo.ListJoinedBySpaceMember(context.Background(), spaceMemberID, spaceID)
 		if err != nil {
-			t.Fatalf("ListJoinedBySpaceMember() error = %v", err)
+			t.Fatalf("ListJoinedBySpaceMember()のエラー = %v", err)
 		}
 		if len(topics) != 2 {
-			t.Fatalf("len(topics) = %v, want 2", len(topics))
+			t.Fatalf("len(topics) = %v、期待値 = 2", len(topics))
 		}
 		if topics[0].Name != "Joined Topic 1" {
-			t.Errorf("topics[0].Name = %v, want 'Joined Topic 1'", topics[0].Name)
+			t.Errorf("topics[0].Name = %v、期待値 = 'Joined Topic 1'", topics[0].Name)
 		}
 		if topics[1].Name != "Joined Topic 2" {
-			t.Errorf("topics[1].Name = %v, want 'Joined Topic 2'", topics[1].Name)
+			t.Errorf("topics[1].Name = %v、期待値 = 'Joined Topic 2'", topics[1].Name)
 		}
 	})
 
 	t.Run("トピックに参加していないスペースメンバーは空のスライスを返す", func(t *testing.T) {
 		topics, err := repo.ListJoinedBySpaceMember(context.Background(), "00000000-0000-0000-0000-000000000000", spaceID)
 		if err != nil {
-			t.Fatalf("ListJoinedBySpaceMember() error = %v", err)
+			t.Fatalf("ListJoinedBySpaceMember()のエラー = %v", err)
 		}
 		if len(topics) != 0 {
-			t.Errorf("len(topics) = %v, want 0", len(topics))
+			t.Errorf("len(topics) = %v、期待値 = 0", len(topics))
 		}
 	})
 }
@@ -665,8 +790,7 @@ func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
 		WithUserID(userID).
 		Build()
 
-	// Create two joined topics and verify the one with the smallest id (id ASC) is returned.
-	// [Ja] 参加トピックを 2 件作成し、id 昇順で最初のものが返ることを検証する。
+	// 参加トピックを2件作成し、id昇順で最初のものが返ることを検証する。
 	topicID1 := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithNumber(1).
@@ -679,8 +803,7 @@ func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
 		WithName("Joined Topic 2").
 		Build()
 
-	// A topic the member has not joined (verify it is excluded from the result).
-	// [Ja] 参加していないトピック (結果に含まれないことを確認する)。
+	// 参加していないトピック (結果に含まれないことを確認する)。
 	testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithNumber(3).
@@ -698,35 +821,32 @@ func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
 	t.Run("参加トピックのうちid昇順で最初のものを返す", func(t *testing.T) {
 		topic, err := repo.FindFirstJoinedBySpaceMember(context.Background(), spaceMemberID, spaceID)
 		if err != nil {
-			t.Fatalf("FindFirstJoinedBySpaceMember() error = %v", err)
+			t.Fatalf("FindFirstJoinedBySpaceMember()のエラー = %v", err)
 		}
 		if topic == nil {
-			t.Fatal("FindFirstJoinedBySpaceMember() returned nil, want topic")
+			t.Fatal("FindFirstJoinedBySpaceMember()がnilを返した、期待値 = トピック")
 		}
-		// ULID-derived uuids sort the same way under string comparison as the DB's id ASC,
-		// so compute the expected value as the smaller id rather than relying on creation order.
-		//
-		// [Ja] ULID (uuid) は文字列比較が DB の id ASC と一致するため、生成順ではなく
-		// id の小さいほうを期待値として算出する。
+		// ULID (uuid) は文字列比較がDBのid ASCと一致するため、生成順ではなく
+		// idの小さいほうを期待値として算出する。
 		wantID := topicID1
 		if string(topicID2) < string(topicID1) {
 			wantID = topicID2
 		}
 		if topic.ID != wantID {
-			t.Errorf("topic.ID = %v, want %v (joined topic with smallest id)", topic.ID, wantID)
+			t.Errorf("topic.ID = %v、期待値 = %v (参加中でIDが最小のトピック)", topic.ID, wantID)
 		}
 		if topic.Space.ID != spaceID {
-			t.Errorf("topic.Space.ID = %v, want %v", topic.Space.ID, spaceID)
+			t.Errorf("topic.Space.ID = %v、期待値 = %v", topic.Space.ID, spaceID)
 		}
 	})
 
 	t.Run("トピックに参加していないスペースメンバーはnilを返す", func(t *testing.T) {
 		topic, err := repo.FindFirstJoinedBySpaceMember(context.Background(), "00000000-0000-0000-0000-000000000000", spaceID)
 		if err != nil {
-			t.Fatalf("FindFirstJoinedBySpaceMember() error = %v", err)
+			t.Fatalf("FindFirstJoinedBySpaceMember()のエラー = %v", err)
 		}
 		if topic != nil {
-			t.Errorf("FindFirstJoinedBySpaceMember() = %v, want nil", topic)
+			t.Errorf("FindFirstJoinedBySpaceMember() = %v、期待値 = nil", topic)
 		}
 	})
 
@@ -746,8 +866,7 @@ func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
 			WithUserID(discardedUserID).
 			Build()
 
-		// This member has joined only a discarded topic, so the result is nil.
-		// [Ja] このメンバーは削除済みトピックにのみ参加しているため、結果は nil になる。
+		// このメンバーは削除済みトピックにのみ参加しているため、結果はnilになる。
 		discardedTopicID := testutil.NewTopicBuilder(t, tx).
 			WithSpaceID(discardedSpaceID).
 			WithNumber(1).
@@ -763,16 +882,15 @@ func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
 
 		topic, err := repo.FindFirstJoinedBySpaceMember(context.Background(), discardedSpaceMemberID, discardedSpaceID)
 		if err != nil {
-			t.Fatalf("FindFirstJoinedBySpaceMember() error = %v", err)
+			t.Fatalf("FindFirstJoinedBySpaceMember()のエラー = %v", err)
 		}
 		if topic != nil {
-			t.Errorf("FindFirstJoinedBySpaceMember() = %v, want nil (discarded topic excluded)", topic)
+			t.Errorf("FindFirstJoinedBySpaceMember() = %v、期待値 = nil (削除済みトピックは除外される)", topic)
 		}
 	})
 
 	t.Run("idが最小でも参加していないトピックは除外される", func(t *testing.T) {
-		// Isolated space so the smaller-id topic stays unjoined regardless of generation order.
-		// [Ja] 生成順に関わらず id の小さいトピックを未参加にできるよう、独立したスペースを使う。
+		// 生成順に関わらずidの小さいトピックを未参加にできるよう、独立したスペースを使う。
 		excludeUserID := testutil.NewUserBuilder(t, tx).
 			WithEmail("first-joined-exclude@example.com").
 			WithAtname("firstjoinedexclude").
@@ -800,15 +918,13 @@ func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
 			WithName("Exclude Topic B").
 			Build()
 
-		// Determine the larger id by string comparison (matches DB id ASC) to avoid relying on generation order.
-		// [Ja] 文字列比較 (DB の id ASC と一致) で id の大きいほうを判定し、生成順に依存しないようにする。
+		// 文字列比較 (DBのid ASCと一致) でidの大きいほうを判定し、生成順に依存しないようにする。
 		largerID := topicA
 		if string(topicB) > string(topicA) {
 			largerID = topicB
 		}
 
-		// Join only the larger-id topic, leaving the smaller-id topic unjoined.
-		// [Ja] id が大きいトピックにのみ参加し、id が小さいトピックは未参加のままにする。
+		// idが大きいトピックにのみ参加し、idが小さいトピックは未参加のままにする。
 		testutil.NewTopicMemberBuilder(t, tx).
 			WithSpaceID(excludeSpaceID).
 			WithTopicID(largerID).
@@ -817,15 +933,138 @@ func TestTopicRepository_FindFirstJoinedBySpaceMember(t *testing.T) {
 
 		topic, err := repo.FindFirstJoinedBySpaceMember(context.Background(), excludeSpaceMemberID, excludeSpaceID)
 		if err != nil {
-			t.Fatalf("FindFirstJoinedBySpaceMember() error = %v", err)
+			t.Fatalf("FindFirstJoinedBySpaceMember()のエラー = %v", err)
 		}
 		if topic == nil {
-			t.Fatal("FindFirstJoinedBySpaceMember() returned nil, want joined topic")
+			t.Fatal("FindFirstJoinedBySpaceMember()がnilを返した、期待値 = 参加中のトピック")
 		}
-		// The joined larger-id topic must be returned, not the unjoined smaller-id topic.
-		// [Ja] 未参加で id が小さいトピックではなく、参加済みで id が大きいトピックが返る。
+		// 未参加でidが小さいトピックではなく、参加済みでidが大きいトピックが返る。
 		if topic.ID != largerID {
-			t.Errorf("topic.ID = %v, want %v (joined topic, even though the unjoined topic has a smaller id)", topic.ID, largerID)
+			t.Errorf("topic.ID = %v、期待値 = %v (未参加のトピックのほうがIDが小さくても参加中のトピック)", topic.ID, largerID)
 		}
 	})
+}
+
+// TestTopicRepository_ExistsBySpaceAndNameExcludingIDは一般設定が行う一意性チェックを扱う。
+// 更新するトピック自身は除かれ、それ以外のトピックは削除済みも含めて数えられる。
+func TestTopicRepository_ExistsBySpaceAndNameExcludingID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	targetSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-excluding-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-exists-excluding-other").
+		Build()
+
+	selfID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(1).
+		WithName("Self").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(2).
+		WithName("Sibling").
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(targetSpaceID).
+		WithNumber(3).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Other Space Only").
+		Build()
+
+	tests := []struct {
+		name      string
+		topicName string
+		want      bool
+	}{
+		{name: "更新するトピック自身の名前は数えない", topicName: "Self", want: false},
+		{name: "同じスペースの別のトピックの名前は数える", topicName: "Sibling", want: true},
+		{name: "削除済みトピックの名前も数える", topicName: "Discarded", want: true},
+		{name: "別のスペースのトピックの名前は数えない", topicName: "Other Space Only", want: false},
+		{name: "使われていない名前は数えない", topicName: "Unused", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exists, err := repo.ExistsBySpaceAndNameExcludingID(context.Background(), targetSpaceID, tt.topicName, selfID)
+			if err != nil {
+				t.Fatalf("ExistsBySpaceAndNameExcludingID()のエラー = %v", err)
+			}
+			if exists != tt.want {
+				t.Errorf("ExistsBySpaceAndNameExcludingID(%q) = %v、期待値 = %v", tt.topicName, exists, tt.want)
+			}
+		})
+	}
+}
+
+// TestTopicRepository_Updateは一般設定が保存する更新を扱う。同じidを渡されても別の
+// スペースのトピックには届かないことも含める。
+func TestTopicRepository_Update(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-update-target").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("topic-update-other").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Before").
+		WithDescription("before").
+		Build()
+
+	topic, err := repo.Update(context.Background(), UpdateTopicInput{
+		ID:          topicID,
+		SpaceID:     spaceID,
+		Name:        "After",
+		Description: "after",
+		Visibility:  model.TopicVisibilityPrivate,
+	})
+	if err != nil {
+		t.Fatalf("Update()のエラー = %v", err)
+	}
+	if topic.Name != "After" {
+		t.Errorf("Name = %q、期待値 = %q", topic.Name, "After")
+	}
+	if topic.Description != "after" {
+		t.Errorf("Description = %q、期待値 = %q", topic.Description, "after")
+	}
+	if topic.Visibility != model.TopicVisibilityPrivate {
+		t.Errorf("Visibility = %v、期待値 = %v", topic.Visibility, model.TopicVisibilityPrivate)
+	}
+	if topic.Number != 1 {
+		t.Errorf("Number = %d、期待値 = 1", topic.Number)
+	}
+
+	if _, err := repo.Update(context.Background(), UpdateTopicInput{
+		ID:          topicID,
+		SpaceID:     otherSpaceID,
+		Name:        "Wrong Space",
+		Description: "",
+		Visibility:  model.TopicVisibilityPublic,
+	}); err == nil {
+		t.Error("別スペースのIDを指定したUpdate()でエラーが返らなかった、期待値 = どの行も更新されない")
+	}
+
+	stored, err := repo.FindBySpaceAndID(context.Background(), spaceID, topicID)
+	if err != nil {
+		t.Fatalf("FindBySpaceAndID()のエラー = %v", err)
+	}
+	if stored.Name != "After" {
+		t.Errorf("Name = %q、期待値 = %q", stored.Name, "After")
+	}
 }

@@ -1,0 +1,16 @@
+package components
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// GlobalNavBottomBarはモバイル向けの下部バーを描画し、GlobalNavTopBarに役割を譲る
+// md未満でのみ表示する。共通メニューを横並びの浮遊ピルとして持つ。ピルのスタイルはメニューに
+// 渡し、<nav> はランドマークに徹する。画面下部への固定はレイアウトの責務 (既存のボトムナビの
+// 配置を踏襲) のため、本コンポーネントは表示切り替え・ランドマーク・ピルのみを担う。
+//
+// ラッパーは <nav> ランドマークで、そのaria-labelは上部バーとは異なり、共存する2つの
+// ナビゲーション領域を区別する (GlobalNavTopBarを参照)。
+templ GlobalNavBottomBar(data GlobalNavData) {
+	<nav class="md:hidden" aria-label={ templates.T(ctx, "global_nav_bottom_label") }>
+		@GlobalNavMenu(data, "bg-card w-fit rounded-full border border-stone-400 px-4 py-1")
+	</nav>
+}

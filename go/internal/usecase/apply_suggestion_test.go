@@ -106,57 +106,57 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Suggestion == nil {
-			t.Fatal("Suggestion should not be nil")
+			t.Fatal("Suggestionがnil")
 		}
 
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
-			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+			t.Errorf("Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
 		if output.Suggestion.AppliedAt == nil {
-			t.Error("AppliedAt should not be nil")
+			t.Error("AppliedAtがnil")
 		}
 
 		updatedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
+			t.Fatalf("FindByIDs()のエラー = %v", err)
 		}
 		if len(updatedPages) != 1 {
-			t.Fatalf("updated pages count = %d, want 1", len(updatedPages))
+			t.Fatalf("更新されたページの件数 = %d、期待値 = 1", len(updatedPages))
 		}
 		updatedPage := updatedPages[0]
 		if updatedPage.Body != "提案本文" {
-			t.Errorf("Page.Body = %q, want %q", updatedPage.Body, "提案本文")
+			t.Errorf("Page.Body = %q、期待値 = %q", updatedPage.Body, "提案本文")
 		}
 		wantTitle := "提案タイトル"
 		if updatedPage.Title == nil || *updatedPage.Title != wantTitle {
-			t.Errorf("Page.Title = %v, want %q", updatedPage.Title, wantTitle)
+			t.Errorf("Page.Title = %v、期待値 = %q", updatedPage.Title, wantTitle)
 		}
 
 		// 下書きのsuggestion_page_idがクリアされていることを確認
 		dp, err := draftPageRepo.FindByID(context.Background(), draftPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if dp != nil && dp.SuggestionPageID != nil {
-			t.Error("DraftPage.SuggestionPageID should be nil after apply")
+			t.Error("反映後もDraftPage.SuggestionPageIDがnilになっていない")
 		}
 
 		latestRevision, err := pageRevisionRepo.FindLatestByPageID(context.Background(), pageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindLatestByPageID() error = %v", err)
+			t.Fatalf("FindLatestByPageID()のエラー = %v", err)
 		}
 		if latestRevision == nil {
-			t.Fatal("latest revision should not be nil")
+			t.Fatal("最新のリビジョンがnil")
 		}
 		if latestRevision.Body != "提案本文" {
-			t.Errorf("PageRevision.Body = %q, want %q", latestRevision.Body, "提案本文")
+			t.Errorf("PageRevision.Body = %q、期待値 = %q", latestRevision.Body, "提案本文")
 		}
 	})
 
@@ -231,26 +231,26 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
-			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+			t.Errorf("Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
 		updatedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
+			t.Fatalf("FindByIDs()のエラー = %v", err)
 		}
 		if len(updatedPages) != 1 {
-			t.Fatalf("updated pages count = %d, want 1", len(updatedPages))
+			t.Fatalf("更新されたページの件数 = %d、期待値 = 1", len(updatedPages))
 		}
 		updatedPage := updatedPages[0]
 
 		if len(updatedPage.LinkedPageIDs) != 1 || updatedPage.LinkedPageIDs[0] != linkedPageID {
-			t.Errorf("Page.LinkedPageIDs = %v, want [%v]", updatedPage.LinkedPageIDs, linkedPageID)
+			t.Errorf("Page.LinkedPageIDs = %v、期待値 = [%v]", updatedPage.LinkedPageIDs, linkedPageID)
 		}
 		if updatedPage.FeaturedImageAttachmentID == nil || *updatedPage.FeaturedImageAttachmentID != featuredAttachmentID {
-			t.Errorf("Page.FeaturedImageAttachmentID = %v, want %v", updatedPage.FeaturedImageAttachmentID, featuredAttachmentID)
+			t.Errorf("Page.FeaturedImageAttachmentID = %v、期待値 = %v", updatedPage.FeaturedImageAttachmentID, featuredAttachmentID)
 		}
 	})
 
@@ -333,19 +333,19 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
-			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+			t.Errorf("Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
 		updatedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{page1ID, page2ID}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
+			t.Fatalf("FindByIDs()のエラー = %v", err)
 		}
 		if len(updatedPages) != 2 {
-			t.Fatalf("updated pages count = %d, want 2", len(updatedPages))
+			t.Fatalf("更新されたページの件数 = %d、期待値 = 2", len(updatedPages))
 		}
 
 		pageMap := make(map[model.PageID]*model.Page, len(updatedPages))
@@ -353,10 +353,10 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			pageMap[p.ID] = p
 		}
 		if pageMap[page1ID].Body != "提案本文1" {
-			t.Errorf("Page1.Body = %q, want %q", pageMap[page1ID].Body, "提案本文1")
+			t.Errorf("Page1.Body = %q、期待値 = %q", pageMap[page1ID].Body, "提案本文1")
 		}
 		if pageMap[page2ID].Body != "提案本文2" {
-			t.Errorf("Page2.Body = %q, want %q", pageMap[page2ID].Body, "提案本文2")
+			t.Errorf("Page2.Body = %q、期待値 = %q", pageMap[page2ID].Body, "提案本文2")
 		}
 	})
 
@@ -416,10 +416,10 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
-			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+			t.Errorf("Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
 		// PageEditorが作成されていることを確認
@@ -429,13 +429,13 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 		})
 		if err != nil {
-			t.Fatalf("FindByPageAndSpaceMember() error = %v", err)
+			t.Fatalf("FindByPageAndSpaceMember()のエラー = %v", err)
 		}
 		if pe == nil {
-			t.Fatal("PageEditor should exist after apply")
+			t.Fatal("反映後にPageEditorが存在しない")
 		}
 		if pe.LastPageModifiedAt.IsZero() {
-			t.Error("PageEditor.LastPageModifiedAt should not be zero")
+			t.Error("PageEditor.LastPageModifiedAtがゼロ値")
 		}
 	})
 
@@ -479,7 +479,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		// 反映前のTopicMemberを取得
 		tmBefore, err := topicMemberRepo.FindBySpaceMemberAndTopic(context.Background(), spaceID, spaceMemberID, topicID)
 		if err != nil {
-			t.Fatalf("FindBySpaceMemberAndTopic() error = %v", err)
+			t.Fatalf("FindBySpaceMemberAndTopic()のエラー = %v", err)
 		}
 
 		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
@@ -504,23 +504,23 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		// 反映後のTopicMemberを取得
 		tmAfter, err := topicMemberRepo.FindBySpaceMemberAndTopic(context.Background(), spaceID, spaceMemberID, topicID)
 		if err != nil {
-			t.Fatalf("FindBySpaceMemberAndTopic() error = %v", err)
+			t.Fatalf("FindBySpaceMemberAndTopic()のエラー = %v", err)
 		}
 		if tmAfter.LastPageModifiedAt == nil {
-			t.Fatal("TopicMember.LastPageModifiedAt should not be nil after apply")
+			t.Fatal("反映後もTopicMember.LastPageModifiedAtがnil")
 		}
 		if tmBefore.LastPageModifiedAt != nil && !tmAfter.LastPageModifiedAt.After(*tmBefore.LastPageModifiedAt) {
-			t.Error("TopicMember.LastPageModifiedAt should be updated after apply")
+			t.Error("反映後にTopicMember.LastPageModifiedAtが更新されていない")
 		}
 	})
 
-	t.Run("正常系: 新規ページ（リビジョンなし）を含む編集提案を反映できる", func(t *testing.T) {
+	t.Run("正常系: 新規ページ (リビジョンなし) を含む編集提案を反映できる", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -544,7 +544,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			Build()
 
-		// published_atがnilのページ（未公開）を作成
+		// published_atがnilのページ (未公開) を作成
 		pageID := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -576,44 +576,44 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
-			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+			t.Errorf("Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
 		// ページ内容が更新されていることを確認
 		updatedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
+			t.Fatalf("FindByIDs()のエラー = %v", err)
 		}
 		if len(updatedPages) != 1 {
-			t.Fatalf("updated pages count = %d, want 1", len(updatedPages))
+			t.Fatalf("更新されたページの件数 = %d、期待値 = 1", len(updatedPages))
 		}
 		updatedPage := updatedPages[0]
 		if updatedPage.Body != "新規ページ本文" {
-			t.Errorf("Page.Body = %q, want %q", updatedPage.Body, "新規ページ本文")
+			t.Errorf("Page.Body = %q、期待値 = %q", updatedPage.Body, "新規ページ本文")
 		}
 		wantTitle := "新規ページタイトル"
 		if updatedPage.Title == nil || *updatedPage.Title != wantTitle {
-			t.Errorf("Page.Title = %v, want %q", updatedPage.Title, wantTitle)
+			t.Errorf("Page.Title = %v、期待値 = %q", updatedPage.Title, wantTitle)
 		}
 
 		// published_atが設定されていることを確認
 		if updatedPage.PublishedAt == nil {
-			t.Error("Page.PublishedAt should not be nil after apply")
+			t.Error("反映後もPage.PublishedAtがnil")
 		}
 
 		// ページリビジョンが作成されていることを確認
 		latestRevision, err := pageRevisionRepo.FindLatestByPageID(context.Background(), pageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindLatestByPageID() error = %v", err)
+			t.Fatalf("FindLatestByPageID()のエラー = %v", err)
 		}
 		if latestRevision == nil {
-			t.Fatal("latest revision should not be nil")
+			t.Fatal("最新のリビジョンがnil")
 		}
 		if latestRevision.Body != "新規ページ本文" {
-			t.Errorf("PageRevision.Body = %q, want %q", latestRevision.Body, "新規ページ本文")
+			t.Errorf("PageRevision.Body = %q、期待値 = %q", latestRevision.Body, "新規ページ本文")
 		}
 	})
 
@@ -655,7 +655,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageID(pageID).
 			Build()
 
-		// 編集提案作成（v1がベース）
+		// 編集提案作成 (v1がベース)
 		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -672,7 +672,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithBodyHTML("<p>提案による本文</p>").
 			Build()
 
-		// ページを直接更新（v2） - ベースリビジョンが乖離する
+		// ページを直接更新 (v2) - ベースリビジョンが乖離する
 		_, err := db.Exec(
 			`UPDATE pages SET title = $1, body = $2, body_html = $3 WHERE id = $4 AND space_id = $5`,
 			"Updated v2", "Updated body v2", "<p>Updated body v2</p>", string(pageID), string(spaceID),
@@ -687,34 +687,34 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageID(pageID).
 			Build()
 
-		// 編集提案を反映（ベースリビジョンが乖離しているが上書き反映される）
+		// 編集提案を反映 (ベースリビジョンが乖離しているが上書き反映される)
 		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
 			SpaceIdentifier:  "apply-sug-diverge",
 			SuggestionNumber: 1,
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
-			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+			t.Errorf("Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
-		// ページ内容が編集提案の内容で上書きされていることを確認（v2ではなく提案内容）
+		// ページ内容が編集提案の内容で上書きされていることを確認 (v2ではなく提案内容)
 		updatedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
+			t.Fatalf("FindByIDs()のエラー = %v", err)
 		}
 		if len(updatedPages) != 1 {
-			t.Fatalf("updated pages count = %d, want 1", len(updatedPages))
+			t.Fatalf("更新されたページの件数 = %d、期待値 = 1", len(updatedPages))
 		}
 		updatedPage := updatedPages[0]
 		if updatedPage.Body != "提案による本文" {
-			t.Errorf("Page.Body = %q, want %q", updatedPage.Body, "提案による本文")
+			t.Errorf("Page.Body = %q、期待値 = %q", updatedPage.Body, "提案による本文")
 		}
 		wantTitle := "提案によるタイトル"
 		if updatedPage.Title == nil || *updatedPage.Title != wantTitle {
-			t.Errorf("Page.Title = %v, want %q", updatedPage.Title, wantTitle)
+			t.Errorf("Page.Title = %v、期待値 = %q", updatedPage.Title, wantTitle)
 		}
 	})
 
@@ -753,15 +753,15 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           nonMemberID,
 		})
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError but got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -796,15 +796,15 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError but got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeConflict {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeConflict)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeConflict)
 		}
 	})
 
@@ -839,13 +839,13 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
-			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+			t.Errorf("Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 	})
 
@@ -879,7 +879,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithTitle("Source Title").
 			Build()
 
-		// 未公開かつ本文が空の同タイトルページ（論理削除の対象）
+		// 未公開かつ本文が空の同タイトルページ (論理削除の対象)
 		conflictID := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -917,35 +917,35 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Suggestion.Status != model.SuggestionStatusApplied {
-			t.Errorf("Status = %d, want %d", output.Suggestion.Status, model.SuggestionStatusApplied)
+			t.Errorf("Status = %d、期待値 = %d", output.Suggestion.Status, model.SuggestionStatusApplied)
 		}
 
 		// 反映後、競合ページが論理削除されている
 		discardedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{conflictID}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
+			t.Fatalf("FindByIDs()のエラー = %v", err)
 		}
 		if len(discardedPages) != 0 {
-			t.Errorf("discarded page should not be returned by FindByIDs, got %d pages", len(discardedPages))
+			t.Errorf("破棄されたページがFindByIDsで返された: %dページ", len(discardedPages))
 		}
 
 		// 反映後、反映対象ページのタイトルが更新されている
 		appliedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
+			t.Fatalf("FindByIDs()のエラー = %v", err)
 		}
 		if len(appliedPages) != 1 {
-			t.Fatalf("applied page count = %d, want 1", len(appliedPages))
+			t.Fatalf("反映されたページの件数 = %d、期待値 = 1", len(appliedPages))
 		}
 		if appliedPages[0].Title == nil || *appliedPages[0].Title != "Target Title" {
-			t.Errorf("Page.Title = %v, want %q", appliedPages[0].Title, "Target Title")
+			t.Errorf("Page.Title = %v、期待値 = %q", appliedPages[0].Title, "Target Title")
 		}
 	})
 
-	t.Run("バリデーションエラー: 公開済みページと衝突する編集提案は ValidationError を返す", func(t *testing.T) {
+	t.Run("バリデーションエラー: 公開済みページと衝突する編集提案はValidationErrorを返す", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -1012,31 +1012,31 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsSuggestionApplyError(err)
 		if ae == nil {
-			t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+			t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if len(ae.PageErrors) == 0 {
-			t.Error("expected page errors but none")
+			t.Error("ページのエラーを期待したが、無かった")
 		}
 
 		// 反映対象のページが書き換わっていない
 		unchangedPages, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
 		if err != nil {
-			t.Fatalf("FindByIDs() error = %v", err)
+			t.Fatalf("FindByIDs()のエラー = %v", err)
 		}
 		if len(unchangedPages) != 1 {
-			t.Fatalf("page count = %d, want 1", len(unchangedPages))
+			t.Fatalf("ページの件数 = %d、期待値 = 1", len(unchangedPages))
 		}
 		if unchangedPages[0].Body != "original body" {
-			t.Errorf("Page.Body = %q, want %q", unchangedPages[0].Body, "original body")
+			t.Errorf("Page.Body = %q、期待値 = %q", unchangedPages[0].Body, "original body")
 		}
 	})
 
-	t.Run("バリデーションエラー: 禁止文字を含むタイトルの編集提案は SuggestionApplyError を返す", func(t *testing.T) {
+	t.Run("バリデーションエラー: 禁止文字を含むタイトルの編集提案はSuggestionApplyErrorを返す", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -1094,15 +1094,15 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 
 		ae := model.AsSuggestionApplyError(err)
 		if ae == nil {
-			t.Fatalf("expected SuggestionApplyError but got %T: %v", err, err)
+			t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if len(ae.PageErrors) == 0 {
-			t.Error("expected page errors but none")
+			t.Error("ページのエラーを期待したが、無かった")
 		}
 	})
 }

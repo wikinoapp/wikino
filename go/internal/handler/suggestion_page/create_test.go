@@ -51,10 +51,10 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -110,7 +110,7 @@ func TestCreate_スペースメンバーでないユーザーは404が返る(t *
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -183,11 +183,11 @@ func TestCreate_正常にページが追加される(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	expectedLoc := "/s/sp-cr-ok/suggestions/1/changes"
 	if loc := rr.Header().Get("Location"); loc != expectedLoc {
-		t.Errorf("wrong redirect location: got %q want %q", loc, expectedLoc)
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, expectedLoc)
 	}
 
 	// SuggestionPageが作成されたことを確認
@@ -197,7 +197,7 @@ func TestCreate_正常にページが追加される(t *testing.T) {
 		t.Fatalf("SuggestionPageの取得に失敗: %v", err)
 	}
 	if len(pages) != 1 {
-		t.Errorf("SuggestionPage count = %d, want 1", len(pages))
+		t.Errorf("SuggestionPageの件数 = %d、期待値 = 1", len(pages))
 	}
 }
 
@@ -230,7 +230,7 @@ func TestCreate_新規ページが正常に追加される(t *testing.T) {
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
-	// 新規ページ（リビジョンなし）
+	// 新規ページ (リビジョンなし)
 	pageID := testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -266,11 +266,11 @@ func TestCreate_新規ページが正常に追加される(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	expectedLoc := "/s/sp-cr-newpg/suggestions/1/changes"
 	if loc := rr.Header().Get("Location"); loc != expectedLoc {
-		t.Errorf("wrong redirect location: got %q want %q", loc, expectedLoc)
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, expectedLoc)
 	}
 
 	// SuggestionPageが作成され、PageRevisionIDがnilであることを確認
@@ -280,10 +280,10 @@ func TestCreate_新規ページが正常に追加される(t *testing.T) {
 		t.Fatalf("SuggestionPageの取得に失敗: %v", err)
 	}
 	if len(pages) != 1 {
-		t.Fatalf("SuggestionPage count = %d, want 1", len(pages))
+		t.Fatalf("SuggestionPageの件数 = %d、期待値 = 1", len(pages))
 	}
 	if pages[0].PageRevisionID != nil {
-		t.Errorf("PageRevisionID = %v, want nil", pages[0].PageRevisionID)
+		t.Errorf("PageRevisionID = %v、期待値 = nil", pages[0].PageRevisionID)
 	}
 }
 
@@ -335,6 +335,6 @@ func TestCreate_下書きページ未選択でバリデーションエラーが�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 }

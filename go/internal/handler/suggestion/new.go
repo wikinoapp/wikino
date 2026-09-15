@@ -8,17 +8,17 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	suggestionpages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New は編集提案作成フォームを表示します (GET /s/{space_identifier}/topics/{topic_number}/suggestions/new)
+// Newは編集提案作成フォームを表示します (GET /s/{space_identifier}/topics/{topic_number}/suggestions/new)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -58,15 +58,16 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	// クエリパラメータで事前選択する下書きIDを取得
 	selectedDraftIDs := r.URL.Query()["draft_page_ids"]
 
-	h.renderNewForm(w, r, user, spaceIdentifier, output, nil, "", "", selectedDraftIDs)
+	h.renderNewForm(w, r, user, output, nil, "", "", selectedDraftIDs)
 }
 
-// renderNewForm は編集提案作成フォームをレンダリングします
+// renderNewFormは編集提案作成フォームをレンダリングします。
+// スペース識別子を含むメタ情報やリンクの組み立てにはoutputに含まれる保存済みの値を使うため、
+// URLパラメータ由来の識別子は受け取りません。
 func (h *Handler) renderNewForm(
 	w http.ResponseWriter,
 	r *http.Request,
 	user *model.User,
-	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetSuggestionNewOutput,
 	formErrors *model.ValidationError,
 	title string,
@@ -78,7 +79,13 @@ func (h *Handler) renderNewForm(
 	// CSRFトークンを取得
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	// ViewModelに変換
+	spaceVM := viewmodel.NewSpace(output.Space)
+	topicVM := viewmodel.NewTopic(output.Topic)
+	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
+
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
@@ -87,11 +94,6 @@ func (h *Handler) renderNewForm(
 		"SpaceName": output.Space.Name,
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM
-
-	// ViewModelに変換
-	spaceVM := viewmodel.NewSpace(output.Space)
-	topicVM := viewmodel.NewTopic(output.Topic)
-	draftPagesVM := viewmodel.NewDraftPagesForSuggestionNew(output.DraftPages)
 
 	content := suggestionpages.New(suggestionpages.NewData{
 		CSRFToken:        csrfToken,
@@ -104,31 +106,23 @@ func (h *Handler) renderNewForm(
 		SelectedDraftIDs: selectedDraftIDs,
 	})
 
-	// サイドバーコンテンツを取得
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
+	// この画面が現在地のため、経路はaria-currentを持つリンク無しの項目で締める。ラベルは
+	// 見出しと同じ文字列だが、パンくずが見出しより短い語を必要としたときに後から変えられるよう、
+	// 独立したキーから引く。
+	breadcrumbHeader := topicBreadcrumbHeaderData(ctx, spaceVM, topicVM, true)
+	breadcrumbHeader.Items = append(breadcrumbHeader.Items, components.BreadcrumbItem{
+		Label:     i18n.T(ctx, "suggestion_new_breadcrumb"),
+		IsCurrent: true,
+	})
 
-	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameSuggestionNew,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			SpaceIdentifier:   spaceIdentVM,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameSuggestionNew,
-			SignedIn:        true,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	err := layouts.Default(layoutData, content).Render(ctx, w)
-	if err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+	if err := RenderLayout(ctx, w, RenderLayoutInput{
+		User:             user,
+		SpaceIdentifier:  output.Space.Identifier,
+		CurrentPageName:  templates.PageNameSuggestionNew,
+		Meta:             meta,
+		BreadcrumbHeader: breadcrumbHeader,
+		Content:          content,
+	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

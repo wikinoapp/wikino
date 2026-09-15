@@ -74,28 +74,28 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			Force:            false,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Status != StartSuggestionPageEditRedirect {
-			t.Errorf("Status = %d, want %d (Redirect)", output.Status, StartSuggestionPageEditRedirect)
+			t.Errorf("Status = %d、期待値 = %d (Redirect)", output.Status, StartSuggestionPageEditRedirect)
 		}
 		if output.PageNumber != 1 {
-			t.Errorf("PageNumber = %d, want 1", output.PageNumber)
+			t.Errorf("PageNumber = %d、期待値 = 1", output.PageNumber)
 		}
 
 		// 下書きが作成されたことを確認
 		draft, err := draftPageRepo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByPageAndMember() error = %v", err)
+			t.Fatalf("FindByPageAndMember()のエラー = %v", err)
 		}
 		if draft == nil {
-			t.Fatal("DraftPage should have been created")
+			t.Fatal("DraftPageが作成されていない")
 		}
 		if draft.SuggestionPageID == nil || *draft.SuggestionPageID != suggestionPageID {
-			t.Errorf("DraftPage.SuggestionPageID = %v, want %v", draft.SuggestionPageID, suggestionPageID)
+			t.Errorf("DraftPage.SuggestionPageID = %v、期待値 = %v", draft.SuggestionPageID, suggestionPageID)
 		}
 		if draft.Body != "提案本文" {
-			t.Errorf("DraftPage.Body = %q, want %q", draft.Body, "提案本文")
+			t.Errorf("DraftPage.Body = %q、期待値 = %q", draft.Body, "提案本文")
 		}
 	})
 
@@ -155,10 +155,10 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			Force:            false,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Status != StartSuggestionPageEditRedirect {
-			t.Errorf("Status = %d, want %d (Redirect)", output.Status, StartSuggestionPageEditRedirect)
+			t.Errorf("Status = %d、期待値 = %d (Redirect)", output.Status, StartSuggestionPageEditRedirect)
 		}
 	})
 
@@ -201,7 +201,7 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			Build()
 
-		// 通常編集の下書き（suggestion_page_id = NULL）を作成
+		// 通常編集の下書き (suggestion_page_id = NULL) を作成
 		testutil.NewDraftPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithPageID(pageID).
@@ -218,10 +218,10 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			Force:            false,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Status != StartSuggestionPageEditConflict {
-			t.Errorf("Status = %d, want %d (Conflict)", output.Status, StartSuggestionPageEditConflict)
+			t.Errorf("Status = %d、期待値 = %d (Conflict)", output.Status, StartSuggestionPageEditConflict)
 		}
 	})
 
@@ -283,29 +283,29 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			Force:            true,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Status != StartSuggestionPageEditRedirect {
-			t.Errorf("Status = %d, want %d (Redirect)", output.Status, StartSuggestionPageEditRedirect)
+			t.Errorf("Status = %d、期待値 = %d (Redirect)", output.Status, StartSuggestionPageEditRedirect)
 		}
 
 		// 下書きが上書きされたことを確認
 		draft, err := draftPageRepo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByPageAndMember() error = %v", err)
+			t.Fatalf("FindByPageAndMember()のエラー = %v", err)
 		}
 		if draft == nil {
-			t.Fatal("DraftPage should exist")
+			t.Fatal("DraftPageが存在しない")
 		}
 		if draft.SuggestionPageID == nil || *draft.SuggestionPageID != suggestionPageID {
-			t.Errorf("DraftPage.SuggestionPageID = %v, want %v", draft.SuggestionPageID, suggestionPageID)
+			t.Errorf("DraftPage.SuggestionPageID = %v、期待値 = %v", draft.SuggestionPageID, suggestionPageID)
 		}
 		if draft.Body != "提案の本文" {
-			t.Errorf("DraftPage.Body = %q, want %q", draft.Body, "提案の本文")
+			t.Errorf("DraftPage.Body = %q、期待値 = %q", draft.Body, "提案の本文")
 		}
 	})
 
-	t.Run("異常系: スペースメンバーでないユーザーは AppErrCodeForbidden が返る", func(t *testing.T) {
+	t.Run("異常系: スペースメンバーでないユーザーはAppErrCodeForbiddenが返る", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -357,14 +357,14 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
-	t.Run("異常系: オープンでない編集提案は AppErrCodeConflict が返る", func(t *testing.T) {
+	t.Run("異常系: オープンでない編集提案はAppErrCodeConflictが返る", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -412,10 +412,10 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 		})
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeConflict {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeConflict)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeConflict)
 		}
 	})
 }

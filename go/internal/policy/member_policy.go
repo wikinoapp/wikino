@@ -4,13 +4,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// MemberPolicy はスペース���ンバー用の権限判定を行う。
+// MemberPolicyはスペースメンバー用の権限判定を行う。
 // スペーススコープとトピックスコープの和集合を含意展開し、有効スコープの集合として保持する。
 type MemberPolicy struct {
 	effectiveScopes map[model.Scope]bool
 }
 
-// NewMemberPolicy はスペーススコープとトピックスコープから MemberPolicy を生成する。
+// NewMemberPolicyはスペーススコープとトピックスコープからMemberPolicyを生成する。
 // 両スコープの和集合を取り、含意ルールで展開する。
 func NewMemberPolicy(spaceScopes, topicScopes []model.Scope) *MemberPolicy {
 	merged := make([]model.Scope, 0, len(spaceScopes)+len(topicScopes))
@@ -41,6 +41,14 @@ func (p *MemberPolicy) CanCreatePage() bool {
 
 func (p *MemberPolicy) CanUpdatePage() bool {
 	return p.effectiveScopes[model.ScopePageWrite]
+}
+
+func (p *MemberPolicy) CanShowTrash() bool {
+	return p.effectiveScopes[model.ScopePageTrash]
+}
+
+func (p *MemberPolicy) CanTrashPage() bool {
+	return p.effectiveScopes[model.ScopePageTrash]
 }
 
 func (p *MemberPolicy) CanShowDraftPage(isOwner bool) bool {
@@ -108,4 +116,8 @@ func (p *MemberPolicy) CanUpdateSuggestionComment(suggestion *model.Suggestion) 
 
 func (p *MemberPolicy) CanCreateTopic() bool {
 	return p.effectiveScopes[model.ScopeTopicWrite]
+}
+
+func (p *MemberPolicy) CanExportSpace() bool {
+	return p.effectiveScopes[model.ScopeSpaceWrite]
 }

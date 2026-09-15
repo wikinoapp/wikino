@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetBacklinkListUsecase はバックリンク一覧取得ユースケース
+// GetBacklinkListUsecaseはあるページのリンク一覧に並ぶ1ページについて、その
+// バックリンク一覧を集約する読み取りUseCase。
 type GetBacklinkListUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -17,7 +19,7 @@ type GetBacklinkListUsecase struct {
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
-// NewGetBacklinkListUsecase は GetBacklinkListUsecase を生成する
+// NewGetBacklinkListUsecaseはGetBacklinkListUsecaseを生成する
 func NewGetBacklinkListUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -34,17 +36,18 @@ func NewGetBacklinkListUsecase(
 	}
 }
 
-// GetBacklinkListInput はバックリンク一覧取得の入力パラメータ
+// GetBacklinkListInputはバックリンク一覧取得の入力パラメータ。
+// UserIDは未ログイン時にnilになる。
 type GetBacklinkListInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	PageNumber       int32
 	LinkedPageNumber int32
-	UserID           model.UserID
+	UserID           *model.UserID
 	CurrentPage      int32
 	Limit            int32
 }
 
-// GetBacklinkListOutput はバックリンク一覧取得の出力
+// GetBacklinkListOutputはバックリンク一覧取得の出力
 type GetBacklinkListOutput struct {
 	Space         *model.Space
 	SpaceMember   *model.SpaceMember
@@ -57,75 +60,75 @@ type GetBacklinkListOutput struct {
 	CanUpdatePage bool
 }
 
-// Execute はバックリンク一覧を取得する
+// Executeはリンク先ページのバックリンク一覧を取得する。リンク一覧を持つページと
+// リンク先ページの両方が現在の閲覧者に見えることを要求し、そうでなければ
+// AppErrCodeResourceNotFoundの *model.AppErrorを返す。
 func (uc *GetBacklinkListUsecase) Execute(ctx context.Context, input GetBacklinkListInput) (*GetBacklinkListOutput, error) {
-	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
+	data, err := fetchPageAccessDataAllowingGuest(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
-	}
-	if space == nil {
-		return nil, nil
+		return nil, err
 	}
 
-	spaceMember, err := uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, input.UserID)
+	access, err := fetchTopicAccess(ctx, uc.pageAccessRepos(), data.space.ID, data.spaceMember)
 	if err != nil {
-		return nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
+		return nil, err
 	}
-	if spaceMember == nil {
-		return nil, nil
+	if !access.canShowPage(data.page) {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
 	}
 
-	pg, err := uc.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(input.PageNumber))
-	if err != nil {
-		return nil, fmt.Errorf("ページの取得に失敗: %w", err)
-	}
-	if pg == nil {
-		return nil, nil
-	}
-
-	topicMember, err := uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, pg.TopicID)
-	if err != nil {
-		return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
-	}
-
-	linkedPage, err := uc.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(input.LinkedPageNumber))
+	linkedPage, err := uc.pageRepo.FindBySpaceAndNumber(ctx, data.space.ID, model.PageNumber(input.LinkedPageNumber))
 	if err != nil {
 		return nil, fmt.Errorf("リンク先ページの取得に失敗: %w", err)
 	}
 	if linkedPage == nil {
-		return nil, nil
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
 	}
 
-	excludePageIDs := []model.PageID{pg.ID, linkedPage.ID}
-	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, space.ID, input.CurrentPage, input.Limit, excludePageIDs)
+	// 返すバックリンクはリンク先ページのものなので、この一覧を見せてよいかはリンク先ページの
+	// トピックが決める。この判定が無いと、開けないトピックのページのバックリンクをURL直打ちで
+	// 読めてしまう。
+	if !access.canShowPage(linkedPage) {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
+	excludePageIDs := []model.PageID{data.page.ID, linkedPage.ID}
+	offset, limit := listingWindow(input.CurrentPage, input.Limit, false)
+	paginatedBacklinks, err := uc.pageRepo.FindBacklinkedPagesPaginated(ctx, linkedPage.ID, data.space.ID, access.visibility(), offset, limit, excludePageIDs)
 	if err != nil {
 		return nil, fmt.Errorf("バックリンクの取得に失敗: %w", err)
 	}
 
-	topicIDs := collectTopicIDsFromPages(paginatedBacklinks.Pages)
-	topics, err := uc.topicRepo.FindByIDsAndSpace(ctx, topicIDs, space.ID)
-	if err != nil {
-		return nil, fmt.Errorf("トピックの一括取得に失敗: %w", err)
-	}
-
-	topicMap := make(map[model.TopicID]*model.Topic, len(topics))
-	for _, t := range topics {
-		topicMap[t.ID] = t
-	}
-
-	// 認可チェック
-	authorizer := newAuthorizer(spaceMember, topicMember)
-	canUpdatePage := authorizer.CanUpdatePage()
+	topicMap := access.topicMapForPages(paginatedBacklinks.Pages)
 
 	return &GetBacklinkListOutput{
-		Space:         space,
-		SpaceMember:   spaceMember,
-		Page:          pg,
-		TopicMember:   topicMember,
+		Space:         data.space,
+		SpaceMember:   data.spaceMember,
+		Page:          data.page,
+		TopicMember:   data.topicMember,
 		LinkedPage:    linkedPage,
 		Backlinks:     paginatedBacklinks.Pages,
 		TotalCount:    paginatedBacklinks.TotalCount,
 		TopicMap:      topicMap,
-		CanUpdatePage: canUpdatePage,
+		CanUpdatePage: access.authorizer(data.page.TopicID).CanUpdatePage(),
 	}, nil
+}
+
+func (uc *GetBacklinkListUsecase) pageAccessRepos() pageAccessRepos {
+	return pageAccessRepos{
+		spaceRepo:       uc.spaceRepo,
+		spaceMemberRepo: uc.spaceMemberRepo,
+		pageRepo:        uc.pageRepo,
+		topicRepo:       uc.topicRepo,
+		topicMemberRepo: uc.topicMemberRepo,
+	}
 }

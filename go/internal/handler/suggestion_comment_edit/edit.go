@@ -8,17 +8,16 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
+	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
-	"github.com/wikinoapp/wikino/go/internal/templates/components"
-	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	suggestioncommentpages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion_comment"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Edit は編集提案コメント編集フォームを表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/comments/{comment_number}/edit)
+// Editは編集提案コメント編集フォームを表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/comments/{comment_number}/edit)
 func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -84,15 +83,16 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderEditForm(w, r, user, spaceIdentifier, output, commentOutput.Comment, nil, commentOutput.Comment.Body)
+	h.renderEditForm(w, r, user, output, commentOutput.Comment, nil, commentOutput.Comment.Body)
 }
 
-// renderEditForm は編集提案コメント編集フォームをレンダリングします
+// renderEditFormは編集提案コメント編集フォームをレンダリングします。
+// スペース識別子を含むメタ情報やリンクの組み立てにはoutputに含まれる保存済みの値を使うため、
+// URLパラメータ由来の識別子は受け取りません。
 func (h *Handler) renderEditForm(
 	w http.ResponseWriter,
 	r *http.Request,
 	user *model.User,
-	spaceIdentifier model.SpaceIdentifier,
 	output *usecase.GetSuggestionEditOutput,
 	comment *model.SuggestionComment,
 	formErrors *model.ValidationError,
@@ -102,7 +102,10 @@ func (h *Handler) renderEditForm(
 
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
-	spaceIdentVM := viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	spaceVM := viewmodel.NewSpace(output.Space)
+
+	// URLではなく保存済みの識別子からリンクを組み立て、画面内のリンクの表記を揃える。
+	spaceIdentVM := spaceVM.Identifier
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "suggestion_comment_edit_title", map[string]any{
@@ -112,7 +115,6 @@ func (h *Handler) renderEditForm(
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM
 
-	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 	suggestionVM := viewmodel.NewSuggestionForDetail(viewmodel.NewSuggestionForDetailInput{
 		Suggestion: output.Suggestion,
@@ -133,30 +135,14 @@ func (h *Handler) renderEditForm(
 		Body:       body,
 	})
 
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
-	layoutData := layouts.DefaultLayoutData{
-		Meta: meta,
-
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameSuggestionCommentEdit,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			SpaceIdentifier:   spaceIdentVM,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
-			CurrentPageName: templates.PageNameSuggestionCommentEdit,
-			SignedIn:        true,
-			SpaceIdentifier: spaceIdentVM,
-		},
-	}
-
-	err := layouts.Default(layoutData, content).Render(ctx, w)
-	if err != nil {
-		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
+	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
+		User:             user,
+		SpaceIdentifier:  output.Space.Identifier,
+		CurrentPageName:  templates.PageNameSuggestionCommentEdit,
+		Meta:             meta,
+		BreadcrumbHeader: suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, suggestionVM.Number, suggestionVM.Title, true),
+		Content:          content,
+	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

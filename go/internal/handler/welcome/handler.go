@@ -1,4 +1,4 @@
-// Package welcome はトップページ（ウェルカムページ）のハンドラーを提供します
+// Package welcomeはトップページ (ウェルカムページ) のハンドラーを提供します
 package welcome
 
 import (
@@ -6,13 +6,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
-// Handler はトップページ関連のHTTPハンドラーです
+// Handlerはトップページ関連のHTTPハンドラーです
 type Handler struct {
 	cfg      *config.Config
 	flashMgr *session.FlashManager
 }
 
-// NewHandler は新しいHandlerを作成します
+// NewHandlerは新しいHandlerを作成します
 func NewHandler(cfg *config.Config, flashMgr *session.FlashManager) *Handler {
 	return &Handler{
 		cfg:      cfg,

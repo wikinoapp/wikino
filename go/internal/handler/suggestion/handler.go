@@ -1,14 +1,13 @@
-// Package suggestion は編集提案関連のHTTPハンドラーを提供します
+// Package suggestionは編集提案関連のHTTPハンドラーを提供します
 package suggestion
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は編集提案ハンドラー
+// Handlerは編集提案ハンドラー
 type Handler struct {
 	cfg                        *config.Config
 	flashMgr                   *session.FlashManager
@@ -18,10 +17,9 @@ type Handler struct {
 	getSuggestionNewUsecase    *usecase.GetSuggestionNewUsecase
 	createSuggestionUsecase    *usecase.CreateSuggestionUsecase
 	updateSuggestionUsecase    *usecase.UpdateSuggestionUsecase
-	sidebarHelper              *sidebar.Helper
 }
 
-// NewHandler は新しい編集提案ハンドラーを作成します
+// NewHandlerは新しい編集提案ハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
@@ -31,7 +29,6 @@ func NewHandler(
 	getSuggestionNewUsecase *usecase.GetSuggestionNewUsecase,
 	createSuggestionUsecase *usecase.CreateSuggestionUsecase,
 	updateSuggestionUsecase *usecase.UpdateSuggestionUsecase,
-	sidebarHelper *sidebar.Helper,
 ) *Handler {
 	return &Handler{
 		cfg:                        cfg,
@@ -42,6 +39,5 @@ func NewHandler(
 		getSuggestionNewUsecase:    getSuggestionNewUsecase,
 		createSuggestionUsecase:    createSuggestionUsecase,
 		updateSuggestionUsecase:    updateSuggestionUsecase,
-		sidebarHelper:              sidebarHelper,
 	}
 }

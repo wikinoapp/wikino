@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Update はパスワードを更新します (PATCH /password)
+// Updateはパスワードを更新します (PATCH /password)
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -24,7 +24,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	passwordConfirmation := r.FormValue("password_confirmation")
 
-	// UseCase を実行（バリデーション・永続化を統括）
+	// UseCaseを実行 (バリデーション・永続化を統括)
 	_, err := h.updatePasswordUsecase.Execute(ctx, usecase.UpdatePasswordResetInput{
 		Token:                token,
 		Password:             password,

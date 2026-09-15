@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// saveDraftPageContentInput はDraftPageの内容保存に必要な共通パラメータ
+// saveDraftPageContentInputはDraftPageの内容保存に必要な共通パラメータ
 type saveDraftPageContentInput struct {
 	SpaceID                   model.SpaceID
 	PageID                    model.PageID
@@ -24,13 +24,13 @@ type saveDraftPageContentInput struct {
 	CurrentTopicName          string
 }
 
-// saveDraftPageContentOutput はDraftPageの内容保存の結果
+// saveDraftPageContentOutputはDraftPageの内容保存の結果
 type saveDraftPageContentOutput struct {
 	DraftPage *model.DraftPage
 	BodyHTML  string
 }
 
-// saveDraftPageContent はDraftPageのfind_or_create・レンダリング・更新を行う共通ロジック
+// saveDraftPageContentはDraftPageのfind_or_create・レンダリング・更新を行う共通ロジック
 func saveDraftPageContent(
 	ctx context.Context,
 	input saveDraftPageContentInput,
@@ -47,13 +47,9 @@ func saveDraftPageContent(
 		return nil, fmt.Errorf("下書きページの取得・作成に失敗しました: %w", err)
 	}
 
-	// 2. Render the body HTML through markup.RenderHTML, the same unified path used by the
-	// preview and page detail screens. The resolver auto-creates missing linked pages
-	// within this transaction and records their IDs.
-	//
-	// [Ja] プレビュー・ページ詳細画面と同じ統合経路 markup.RenderHTML で本文 HTML を
-	// レンダリングする。resolver がこのトランザクション内で存在しないリンク先ページを自動作成し、
-	// その ID を記録する。
+	// プレビュー・ページ詳細画面と同じ統合経路markup.RenderHTMLで本文HTMLを
+	// レンダリングする。resolverがこのトランザクション内で存在しないリンク先ページを自動作成し、
+	// そのIDを記録する。
 	resolver := &linkCreatingPageLocationResolver{
 		spaceMemberID:  input.SpaceMemberID,
 		topicRepo:      topicRepo,
@@ -88,8 +84,8 @@ func saveDraftPageContent(
 	}, nil
 }
 
-// findOrCreateDraftPage はDraftPageを取得するか、存在しなければ作成する。
-// ユニーク制約（space_member_id + page_id）違反時はリトライする。
+// findOrCreateDraftPageはDraftPageを取得するか、存在しなければ作成する。
+// ユニーク制約 (space_member_id + page_id) 違反時はリトライする。
 func findOrCreateDraftPage(
 	ctx context.Context,
 	repo *repository.DraftPageRepository,

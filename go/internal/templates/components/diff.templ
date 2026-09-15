@@ -1,18 +1,32 @@
 package components
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DiffViewData は差分表示コンポーネントに渡すデータ構造体です
+// DiffViewDataは差分表示コンポーネントに渡すデータです。PageTitleは差分が属するページの
+// 名前で、複数の差分が同じ画面に並ぶときに、各ブロックのキャプションでページを区別するために使います。
 type DiffViewData struct {
-	Blocks []viewmodel.DiffBlock
+	PageTitle string
+	Blocks    []viewmodel.DiffBlock
 }
 
-// DiffView は差分表示コンポーネントを表示します
+// diffCaptionPageTitleは差分が属するページを言い表す。タイトルが無い場合は他の画面と同じ
+// 「無題」の表記へ落とし、タイトルの無いページの呼び方を揃える。ページは公開されるまでタイトルを
+// 持たないことがあり、そのままではキャプションが区切り記号から始まってしまうためである。
+func diffCaptionPageTitle(ctx context.Context, pageTitle string) string {
+	if pageTitle != "" {
+		return pageTitle
+	}
+
+	return templates.T(ctx, "page_show_untitled")
+}
+
+// DiffViewはページ本文の差分を、変更のまとまりごとに1つのテーブルとして表示します。
 templ DiffView(data DiffViewData) {
 	<div class="flex flex-col gap-4">
 		if len(data.Blocks) == 0 {
@@ -20,17 +34,32 @@ templ DiffView(data DiffViewData) {
 				{ templates.T(ctx, "diff_no_changes") }
 			</p>
 		} else {
-			for _, block := range data.Blocks {
-				@diffBlock(block)
+			for i, block := range data.Blocks {
+				@diffBlock(data.PageTitle, block, i+1, len(data.Blocks))
 			}
 		}
 	</div>
 }
 
-// diffBlock は1つの差分ブロックを表示します
-templ diffBlock(block viewmodel.DiffBlock) {
-	<div class="overflow-x-auto rounded-md border border-border">
+// diffBlockは差分の1ブロックを表示します。positionは同じ差分のtotalブロック中で
+// このブロックが何番目かを1始まりで表し、キャプションはpageTitleに続けてその両方を読み上げます。
+templ diffBlock(pageTitle string, block viewmodel.DiffBlock, position int, total int) {
+	// この箱は装飾であってスクロール領域ではない。本文のセルはどこでも折り返す
+	// (whitespace-pre-wrap break-all) ため、テーブルはどの幅でも箱からはみ出さず、ここに横スクロール
+	// を置くと、どの差分のどのブロックにも「動かないフォーカス位置」が増えるだけになる。
+	// overflow-clipは行の背景を角丸で切り抜く働きをoverflow-x-autoと同じまま保ちつつ、
+	// overflow-hiddenなら残るスクロールコンテナを作らない。
+	<div class="overflow-clip rounded-md border border-border">
 		<table class="w-full text-sm font-mono border-collapse">
+			// 差分は見出しセルを持たない。見出しを足すと、すべての行が内容の前に「旧行番号」
+			// 「新行番号」を読み上げることになるためである。表へ直接飛んだスクリーンリーダーに
+			// それが何の表かを伝えるのはキャプションになる。1つの編集提案は複数のページを変更しうる
+			// ため、ページ名もそこに含める必要がある。含めないと、別々のページの差分がまったく同じ
+			// キャプションを持つことになる。
+			<caption class="sr-only">
+				{ templates.T(ctx, "diff_block_caption", map[string]any{"PageTitle": diffCaptionPageTitle(ctx, pageTitle), "Position": position, "Total": total}) }
+			</caption>
+
 			<tbody>
 				for _, line := range block.Lines {
 					@diffLine(line)
@@ -40,7 +69,7 @@ templ diffBlock(block viewmodel.DiffBlock) {
 	</div>
 }
 
-// diffLine は差分の1行を表示します
+// diffLineは差分の1行を表示します
 templ diffLine(line viewmodel.DiffLine) {
 	switch line.Type {
 		case viewmodel.DiffLineEqual:

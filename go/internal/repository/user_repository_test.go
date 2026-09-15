@@ -24,29 +24,29 @@ func TestUserRepository_FindByID(t *testing.T) {
 	t.Run("存在するユーザーを取得できる", func(t *testing.T) {
 		user, err := repo.FindByID(context.Background(), userID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if user == nil {
-			t.Fatal("FindByID() returned nil, want user")
+			t.Fatal("FindByID()がnilを返した、期待値 = ユーザー")
 		}
 		if user.ID != userID {
-			t.Errorf("user.ID = %v, want %v", user.ID, userID)
+			t.Errorf("user.ID = %v、期待値 = %v", user.ID, userID)
 		}
 		if user.Email != "findbyid@example.com" {
-			t.Errorf("user.Email = %v, want findbyid@example.com", user.Email)
+			t.Errorf("user.Email = %v、期待値 = findbyid@example.com", user.Email)
 		}
 		if user.Atname != "findbyid" {
-			t.Errorf("user.Atname = %v, want findbyid", user.Atname)
+			t.Errorf("user.Atname = %v、期待値 = findbyid", user.Atname)
 		}
 	})
 
 	t.Run("存在しないユーザーはnilを返す", func(t *testing.T) {
 		user, err := repo.FindByID(context.Background(), "00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if user != nil {
-			t.Errorf("FindByID() = %v, want nil", user)
+			t.Errorf("FindByID() = %v、期待値 = nil", user)
 		}
 	})
 }
@@ -67,23 +67,23 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	t.Run("存在するユーザーをメールアドレスで取得できる", func(t *testing.T) {
 		user, err := repo.FindByEmail(context.Background(), "findbyemail@example.com")
 		if err != nil {
-			t.Fatalf("FindByEmail() error = %v", err)
+			t.Fatalf("FindByEmail()のエラー = %v", err)
 		}
 		if user == nil {
-			t.Fatal("FindByEmail() returned nil, want user")
+			t.Fatal("FindByEmail()がnilを返した、期待値 = ユーザー")
 		}
 		if user.Email != "findbyemail@example.com" {
-			t.Errorf("user.Email = %v, want findbyemail@example.com", user.Email)
+			t.Errorf("user.Email = %v、期待値 = findbyemail@example.com", user.Email)
 		}
 	})
 
 	t.Run("存在しないメールアドレスはnilを返す", func(t *testing.T) {
 		user, err := repo.FindByEmail(context.Background(), "notexist@example.com")
 		if err != nil {
-			t.Fatalf("FindByEmail() error = %v", err)
+			t.Fatalf("FindByEmail()のエラー = %v", err)
 		}
 		if user != nil {
-			t.Errorf("FindByEmail() = %v, want nil", user)
+			t.Errorf("FindByEmail() = %v、期待値 = nil", user)
 		}
 	})
 }
@@ -104,23 +104,23 @@ func TestUserRepository_FindByAtname(t *testing.T) {
 	t.Run("存在するユーザーをアットネームで取得できる", func(t *testing.T) {
 		user, err := repo.FindByAtname(context.Background(), "findbyatname")
 		if err != nil {
-			t.Fatalf("FindByAtname() error = %v", err)
+			t.Fatalf("FindByAtname()のエラー = %v", err)
 		}
 		if user == nil {
-			t.Fatal("FindByAtname() returned nil, want user")
+			t.Fatal("FindByAtname()がnilを返した、期待値 = ユーザー")
 		}
 		if user.Atname != "findbyatname" {
-			t.Errorf("user.Atname = %v, want findbyatname", user.Atname)
+			t.Errorf("user.Atname = %v、期待値 = findbyatname", user.Atname)
 		}
 	})
 
 	t.Run("存在しないアットネームはnilを返す", func(t *testing.T) {
 		user, err := repo.FindByAtname(context.Background(), "notexist")
 		if err != nil {
-			t.Fatalf("FindByAtname() error = %v", err)
+			t.Fatalf("FindByAtname()のエラー = %v", err)
 		}
 		if user != nil {
-			t.Errorf("FindByAtname() = %v, want nil", user)
+			t.Errorf("FindByAtname() = %v、期待値 = nil", user)
 		}
 	})
 }
@@ -141,18 +141,18 @@ func TestUserRepository_toModel(t *testing.T) {
 
 	user, err := repo.FindByID(context.Background(), userID)
 	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+		t.Fatalf("FindByID()のエラー = %v", err)
 	}
 
 	t.Run("LocaleがLocaleJaとして変換される", func(t *testing.T) {
 		if user.Locale != model.LocaleJa {
-			t.Errorf("user.Locale = %v, want LocaleJa", user.Locale)
+			t.Errorf("user.Locale = %v、期待値 = LocaleJa", user.Locale)
 		}
 	})
 
 	t.Run("DiscardedAtがnilとして変換される", func(t *testing.T) {
 		if user.DiscardedAt != nil {
-			t.Errorf("user.DiscardedAt = %v, want nil", user.DiscardedAt)
+			t.Errorf("user.DiscardedAt = %v、期待値 = nil", user.DiscardedAt)
 		}
 	})
 }

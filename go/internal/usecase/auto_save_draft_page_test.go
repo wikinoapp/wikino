@@ -63,22 +63,22 @@ func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
 		Body:            "Hello, world!",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if output == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if output.DraftPage == nil {
-		t.Fatal("DraftPage should not be nil")
+		t.Fatal("DraftPageがnil")
 	}
 	if output.DraftPage.Body != "Hello, world!" {
-		t.Errorf("Body = %q, want %q", output.DraftPage.Body, "Hello, world!")
+		t.Errorf("Body = %q、期待値 = %q", output.DraftPage.Body, "Hello, world!")
 	}
 	if output.DraftPage.BodyHTML == "" {
-		t.Error("BodyHTML should not be empty")
+		t.Error("BodyHTMLが空")
 	}
 	if output.ModifiedAt.IsZero() {
-		t.Error("ModifiedAt should not be zero")
+		t.Error("ModifiedAtがゼロ値")
 	}
 }
 
@@ -135,7 +135,7 @@ func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
 		Body:            "初回本文",
 	})
 	if err != nil {
-		t.Fatalf("1回目のExecute() error = %v, want nil", err)
+		t.Fatalf("1回目のExecute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// 2回目: 同じDraftPageを更新
@@ -148,15 +148,15 @@ func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
 		Body:            "更新本文",
 	})
 	if err != nil {
-		t.Fatalf("2回目のExecute() error = %v, want nil", err)
+		t.Fatalf("2回目のExecute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// 同じDraftPageが更新されていることを確認
 	if output2.DraftPage.ID != output1.DraftPage.ID {
-		t.Errorf("DraftPage ID changed: got %v, want %v", output2.DraftPage.ID, output1.DraftPage.ID)
+		t.Errorf("DraftPageのIDが変わった: %v、期待値 = %v", output2.DraftPage.ID, output1.DraftPage.ID)
 	}
 	if output2.DraftPage.Body != "更新本文" {
-		t.Errorf("Body = %q, want %q", output2.DraftPage.Body, "更新本文")
+		t.Errorf("Body = %q、期待値 = %q", output2.DraftPage.Body, "更新本文")
 	}
 }
 
@@ -211,10 +211,10 @@ func TestAutoSaveDraftPageUsecase_Execute_EmptyBody(t *testing.T) {
 		Body:            "",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if output.DraftPage.Body != "" {
-		t.Errorf("Body = %q, want empty string", output.DraftPage.Body)
+		t.Errorf("Body = %q、期待値 = 空文字列", output.DraftPage.Body)
 	}
 }
 
@@ -271,17 +271,17 @@ func TestAutoSaveDraftPageUsecase_Execute_WithWikilinks(t *testing.T) {
 		Body:            "See [[リンク先ページ]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// リンク先ページが自動作成され、LinkedPageIDsに含まれることを確認
 	if len(output.DraftPage.LinkedPageIDs) == 0 {
-		t.Error("LinkedPageIDs should not be empty")
+		t.Error("LinkedPageIDsが空")
 	}
 
 	// bodyHTMLにリンクが含まれることを確認
 	if output.DraftPage.BodyHTML == "" {
-		t.Error("BodyHTML should not be empty")
+		t.Error("BodyHTMLが空")
 	}
 }
 
@@ -346,15 +346,15 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkExistingPage(t *testing.T) {
 		Body:            "See [[既存ページ]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// LinkedPageIDsに既存ページのIDが含まれることを確認
 	if len(output.DraftPage.LinkedPageIDs) != 1 {
-		t.Fatalf("LinkedPageIDs length = %d, want 1", len(output.DraftPage.LinkedPageIDs))
+		t.Fatalf("LinkedPageIDsの長さ = %d、期待値 = 1", len(output.DraftPage.LinkedPageIDs))
 	}
 	if output.DraftPage.LinkedPageIDs[0] != existingPageID {
-		t.Errorf("LinkedPageIDs[0] = %v, want %v", output.DraftPage.LinkedPageIDs[0], existingPageID)
+		t.Errorf("LinkedPageIDs[0] = %v、期待値 = %v", output.DraftPage.LinkedPageIDs[0], existingPageID)
 	}
 }
 
@@ -411,12 +411,12 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T
 		Body:            "See [[自動作成ページ]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// 自動作成されたページのIDを取得
 	if len(output.DraftPage.LinkedPageIDs) == 0 {
-		t.Fatal("LinkedPageIDs should not be empty")
+		t.Fatal("LinkedPageIDsが空")
 	}
 	linkedPageID := output.DraftPage.LinkedPageIDs[0]
 
@@ -430,10 +430,10 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T
 		t.Fatalf("自動作成ページのpage_editorsが見つかりません: %v", err)
 	}
 	if editor.PageID != linkedPageID {
-		t.Errorf("PageID = %v, want %v", editor.PageID, linkedPageID)
+		t.Errorf("PageID = %v、期待値 = %v", editor.PageID, linkedPageID)
 	}
 	if editor.SpaceMemberID != spaceMemberID {
-		t.Errorf("SpaceMemberID = %v, want %v", editor.SpaceMemberID, spaceMemberID)
+		t.Errorf("SpaceMemberID = %v、期待値 = %v", editor.SpaceMemberID, spaceMemberID)
 	}
 }
 
@@ -499,15 +499,15 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 		Body:            "See [[廃棄済みページ]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// LinkedPageIDsに廃棄済みページのIDが含まれることを確認
 	if len(output.DraftPage.LinkedPageIDs) != 1 {
-		t.Fatalf("LinkedPageIDs length = %d, want 1", len(output.DraftPage.LinkedPageIDs))
+		t.Fatalf("LinkedPageIDsの長さ = %d、期待値 = 1", len(output.DraftPage.LinkedPageIDs))
 	}
 	if output.DraftPage.LinkedPageIDs[0] != discardedPageID {
-		t.Errorf("LinkedPageIDs[0] = %v, want %v", output.DraftPage.LinkedPageIDs[0], discardedPageID)
+		t.Errorf("LinkedPageIDs[0] = %v、期待値 = %v", output.DraftPage.LinkedPageIDs[0], discardedPageID)
 	}
 }
 
@@ -524,12 +524,12 @@ func TestUniqueTopicNames(t *testing.T) {
 	names := uniqueTopicNames(keys)
 
 	if len(names) != 2 {
-		t.Fatalf("len(names) = %d, want 2", len(names))
+		t.Fatalf("len(names) = %d、期待値 = 2", len(names))
 	}
 	if names[0] != "General" {
-		t.Errorf("names[0] = %q, want %q", names[0], "General")
+		t.Errorf("names[0] = %q、期待値 = %q", names[0], "General")
 	}
 	if names[1] != "Tech" {
-		t.Errorf("names[1] = %q, want %q", names[1], "Tech")
+		t.Errorf("names[1] = %q、期待値 = %q", names[1], "Tech")
 	}
 }

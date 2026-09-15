@@ -22,7 +22,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// newPostRequest はchiのURLパラメータ付きPOSTリクエストを作成するヘルパーです
+// newPostRequestはchiのURLパラメータ付きPOSTリクエストを作成するヘルパーです
 func newPostRequest(t *testing.T, path string, params map[string]string, form url.Values) *http.Request {
 	t.Helper()
 
@@ -37,7 +37,7 @@ func newPostRequest(t *testing.T, path string, params map[string]string, form ur
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用の編集提案コメント作成ハンドラーを作成するヘルパーです
+// setupHandlerはテスト用の編集提案コメント作成ハンドラーを作成するヘルパーです
 func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestioncommenthandler.Handler {
 	t.Helper()
 
@@ -79,10 +79,10 @@ func TestCreate_未ログインでサインインにリダイレクトされる(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -133,11 +133,11 @@ func TestCreate_本文が空の場合バリデーションエラーでリダイ�
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/comment-empty-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -170,7 +170,7 @@ func TestCreate_存在しない編集提案で404が返る(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -222,11 +222,11 @@ func TestCreate_正常にコメントが作成されリダイレクトされる(
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	loc := rr.Header().Get("Location")
 	if loc != "/s/comment-ok-sp/suggestions/1" {
-		t.Errorf("wrong redirect location: got %q", loc)
+		t.Errorf("リダイレクト先 = %q", loc)
 	}
 }
 
@@ -281,6 +281,6 @@ func TestCreate_スペースメンバーでないユーザーは404が返る(t *
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }

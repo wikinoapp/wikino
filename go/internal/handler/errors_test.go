@@ -53,18 +53,18 @@ func TestNotFound(t *testing.T) {
 			handler.NotFound(rr, req)
 
 			if rr.Code != tt.wantStatus {
-				t.Errorf("ステータスコード: got %d, want %d", rr.Code, tt.wantStatus)
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, tt.wantStatus)
 			}
 
 			contentType := rr.Header().Get("Content-Type")
 			if !strings.Contains(contentType, "text/html") {
-				t.Errorf("Content-Type: got %q, want text/html", contentType)
+				t.Errorf("Content-Type = %q、期待値 = text/html", contentType)
 			}
 
 			body := rr.Body.String()
 			for _, want := range tt.wantContents {
 				if !strings.Contains(body, want) {
-					t.Errorf("レスポンスに %q が含まれていません", want)
+					t.Errorf("レスポンスに%qが含まれていません", want)
 				}
 			}
 		})

@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// DeleteDraftPageUsecase は下書きページの削除ユースケース
+// DeleteDraftPageUsecaseは下書きページの削除ユースケース
 type DeleteDraftPageUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
@@ -22,7 +22,7 @@ type DeleteDraftPageUsecase struct {
 	topicMemberRepo       *repository.TopicMemberRepository
 }
 
-// NewDeleteDraftPageUsecase は DeleteDraftPageUsecase を生成する
+// NewDeleteDraftPageUsecaseはDeleteDraftPageUsecaseを生成する
 func NewDeleteDraftPageUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -45,15 +45,15 @@ func NewDeleteDraftPageUsecase(
 	}
 }
 
-// DeleteDraftPageInput は下書き削除の入力パラメータ
+// DeleteDraftPageInputは下書き削除の入力パラメータ
 type DeleteDraftPageInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
 	UserID          model.UserID
 }
 
-// Execute は呼び出しユーザー本人の下書きを削除する。
-// admin が他メンバーの下書きを操作する経路は別 UseCase で実装する想定。
+// Executeは呼び出しユーザー本人の下書きを削除する。
+// adminが他メンバーの下書きを操作する経路は別UseCaseで実装する想定。
 func (uc *DeleteDraftPageUsecase) Execute(ctx context.Context, input DeleteDraftPageInput) error {
 	// 1. データ取得
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
@@ -89,7 +89,7 @@ func (uc *DeleteDraftPageUsecase) Execute(ctx context.Context, input DeleteDraft
 		}
 	}
 
-	// 4. 永続化（トランザクション内で revision → draft の順で削除）
+	// 4. 永続化 (トランザクション内でrevision → draftの順で削除)
 	return uc.deleteDraftPage(ctx, draftPage.ID, data.space.ID)
 }
 
@@ -112,7 +112,7 @@ func (uc *DeleteDraftPageUsecase) deleteDraftPage(ctx context.Context, draftPage
 		_ = tx.Rollback()
 	}()
 
-	// draft_page_revisions の FK 制約があるためリビジョンを先に削除する
+	// draft_page_revisionsのFK制約があるためリビジョンを先に削除する
 	if err := uc.draftPageRevisionRepo.WithTx(tx).DeleteByDraftPageID(ctx, draftPageID, spaceID); err != nil {
 		return fmt.Errorf("下書きリビジョンの削除に失敗しました: %w", err)
 	}

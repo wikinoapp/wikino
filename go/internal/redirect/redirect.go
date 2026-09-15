@@ -1,39 +1,71 @@
-// Package redirect はリダイレクトURLのバリデーションを提供する
+// Package redirectはリダイレクトURLのバリデーションと、それに依存するリダイレクトを提供する。
 package redirect
 
-import "strings"
+import (
+	"net/http"
+	"net/url"
+	"strings"
+)
 
-// ValidateBackURL は back パラメータの値が安全かどうかを検証する
-// 安全な場合は true を返し、危険な場合は false を返す
-//
-// オープンリダイレクト攻撃を防ぐため、以下のルールでバリデーションを行う：
-// - 空文字は無効
-// - "/" で始まらない場合は無効（相対パスのみ許可）
-// - "//" で始まる場合は無効（プロトコル相対URL）
+// ValidateBackURLはbackパラメータが安全な同一オリジンのパスかを返す。
+// ブラウザが別オリジンとして解釈しうる値をすべて拒否する。絶対パスでない値、
+// ネットワークパス参照、ブラウザがスラッシュへ正規化するバックスラッシュ、
+// ブラウザが解析前に取り除く制御文字が対象である。
 func ValidateBackURL(backURL string) bool {
-	// 空文字の場合は無効
+	// 空文字は遷移先を指していない。
 	if backURL == "" {
 		return false
 	}
 
-	// "/" で始まらない場合は無効（相対パスのみ許可）
+	// 遷移先を同一オリジンに留めるため、絶対パスだけを許可する。
 	if !strings.HasPrefix(backURL, "/") {
 		return false
 	}
 
-	// "//" で始まる場合は無効（プロトコル相対URL）
+	// 先頭の `//` はネットワークパス参照で、別のオリジンを指す。
 	if strings.HasPrefix(backURL, "//") {
+		return false
+	}
+
+	// ブラウザは特殊URLの解析時にバックスラッシュをスラッシュへ正規化するため、
+	// `/\evil.example` は拒否しなければ外部のネットワークパス参照として解釈される。
+	if strings.Contains(backURL, `\`) {
+		return false
+	}
+
+	// ブラウザはURLの解析前にASCIIのタブと改行を取り除くため、`/<TAB>/evil.example` の
+	// 水平タブは消えてネットワークパス参照が残る。GoはこのタブをそのままLocationヘッダーへ
+	// 書き出すので、ここで拒否する必要がある。url.Parseは制御文字を含むURLをエラーにするため、
+	// 1文字ずつ列挙せずにこの種類をまとめて弾ける。解析後のURLにはスキームもホストも
+	// 無いことを求め、同一オリジンのパスだけが残るようにする。
+	parsed, err := url.Parse(backURL)
+	if err != nil {
+		return false
+	}
+	if parsed.Scheme != "" || parsed.Opaque != "" || parsed.Host != "" {
 		return false
 	}
 
 	return true
 }
 
-// GetSafeRedirectURL は安全なリダイレクトURLを返す
-// backURL が無効な場合はデフォルトURL（"/"）を返す
+// GetSafeRedirectURLは安全なリダイレクトURLを返す
+// backURLが無効な場合はデフォルトURL ("/") を返す
 func GetSafeRedirectURL(backURL string) string {
 	if ValidateBackURL(backURL) {
 		return backURL
 	}
 	return "/"
+}
+
+// ToSignInはサインインのフローを続けられなくなった訪問者を、その出発点へ戻す。
+// 安全な遷移先であるbackURLはクエリに載せ、サインインし直しても訪問者が求めたページへ着ける
+// ようにする。それ以外の値は、訪問者が目にする画面のURLに残さず捨てる。
+func ToSignIn(w http.ResponseWriter, r *http.Request, backURL string) {
+	signInURL := "/sign_in"
+	if ValidateBackURL(backURL) {
+		signInURL += "?back=" + url.QueryEscape(backURL)
+	}
+
+	http.Redirect(w, r, signInURL, http.StatusFound)
 }

@@ -20,7 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// setupHandler はテスト用のハンドラーを生成するヘルパーです
+// setupHandlerはテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *page_preview.Handler {
 	t.Helper()
 
@@ -36,7 +36,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_preview.Handler {
 	return page_preview.NewHandler(getPagePreviewUC)
 }
 
-// newPreviewRequest はプレビュー用の POST リクエストを作成するヘルパーです
+// newPreviewRequestはプレビュー用のPOSTリクエストを作成するヘルパーです
 func newPreviewRequest(t *testing.T, spaceIdentifier, pageNumber, title, body string) *http.Request {
 	t.Helper()
 
@@ -96,21 +96,26 @@ func TestCreate(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "Preview Title") {
-		t.Error("preview title not found in response")
+		t.Error("レスポンスにプレビューのタイトルが見つからない")
 	}
 	if !strings.Contains(body, "<h1") {
-		t.Error("rendered heading not found in response")
+		t.Error("レスポンスに描画された見出しが見つからない")
 	}
 	if !strings.Contains(body, "<strong>bold</strong>") {
-		t.Error("rendered bold text not found in response")
+		t.Error("レスポンスに描画された太字のテキストが見つからない")
 	}
 	if !strings.Contains(body, "wikino-markdown") {
-		t.Error("markdown wrapper not found in response")
+		t.Error("レスポンスにMarkdownのラッパーが見つからない")
+	}
+	// プレビューはhtmxが差し込み、web/markdown-table.tsはスワップされたコンテナから
+	// この属性を読んで、テーブルを包むスクロール領域に名前を付ける。
+	if !strings.Contains(body, `data-markdown-table-label="スクロールできる表"`) {
+		t.Error("レスポンスにMarkdownのテーブルのラベルが見つからない")
 	}
 }
 
@@ -128,7 +133,7 @@ func TestCreate_NotLoggedIn(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnauthorized {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnauthorized)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnauthorized)
 	}
 }
 
@@ -179,7 +184,7 @@ func TestCreate_NotSpaceMember(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -204,6 +209,6 @@ func TestCreate_InvalidPageNumber(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }

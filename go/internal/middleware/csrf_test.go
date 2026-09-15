@@ -40,7 +40,7 @@ func TestCSRFMiddleware_GET(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("GETリクエストで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("GETリクエストで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// CSRFトークンCookieが設定されていることを確認
@@ -61,9 +61,9 @@ func TestCSRFMiddleware_GET(t *testing.T) {
 		t.Error("CSRFトークンが空です")
 	}
 
-	// トークンの長さを確認（Base64エンコード後は44文字）
+	// トークンの長さを確認 (Base64エンコード後は44文字)
 	if len(csrfCookie.Value) != 44 {
-		t.Errorf("CSRFトークンの長さが不正です: got %d want 44", len(csrfCookie.Value))
+		t.Errorf("CSRFトークンの長さ = %d、期待値 = 44", len(csrfCookie.Value))
 	}
 }
 
@@ -88,7 +88,7 @@ func TestCSRFMiddleware_HEAD(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("HEADリクエストで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("HEADリクエストで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -113,7 +113,7 @@ func TestCSRFMiddleware_OPTIONS(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("OPTIONSリクエストで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("OPTIONSリクエストで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -152,11 +152,11 @@ func TestCSRFMiddleware_POST_ValidToken(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("正しいCSRFトークンで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("正しいCSRFトークンで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	if rr.Body.String() != "OK" {
-		t.Errorf("レスポンスが正しくありません: got %v want %v", rr.Body.String(), "OK")
+		t.Errorf("レスポンス = %v、期待値 = %v", rr.Body.String(), "OK")
 	}
 }
 
@@ -192,7 +192,7 @@ func TestCSRFMiddleware_POST_InvalidToken(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("不正なCSRFトークンで403が返されませんでした: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("不正なCSRFトークンで403が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
 
@@ -224,7 +224,7 @@ func TestCSRFMiddleware_POST_NoCookie(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("CSRFクッキーなしで403が返されませんでした: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("CSRFクッキーなしで403が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
 
@@ -260,7 +260,7 @@ func TestCSRFMiddleware_POST_NoFormToken(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("フォームトークンなしで403が返されませんでした: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("フォームトークンなしで403が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
 
@@ -295,11 +295,11 @@ func TestCSRFMiddleware_POST_HeaderToken(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("ヘッダーのCSRFトークンで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ヘッダーのCSRFトークンで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	if rr.Body.String() != "OK" {
-		t.Errorf("レスポンスが正しくありません: got %v want %v", rr.Body.String(), "OK")
+		t.Errorf("レスポンス = %v、期待値 = %v", rr.Body.String(), "OK")
 	}
 }
 
@@ -336,7 +336,7 @@ func TestCSRFMiddleware_PATCH(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("PATCHリクエストで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("PATCHリクエストで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -371,7 +371,7 @@ func TestCSRFMiddleware_DELETE(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("DELETEリクエストで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("DELETEリクエストで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -408,7 +408,7 @@ func TestCSRFMiddleware_PUT(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("PUTリクエストで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("PUTリクエストで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -428,7 +428,7 @@ func TestCSRFMiddleware_ExistingCookie(t *testing.T) {
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := middleware.GetCSRFTokenFromContext(r.Context())
 		if token != existingToken {
-			t.Errorf("既存のトークンが使用されていません: got %v want %v", token, existingToken)
+			t.Errorf("既存のトークンが使用されていない: 実測値 = %v、期待値 = %v", token, existingToken)
 		}
 		w.WriteHeader(http.StatusOK)
 	})
@@ -443,7 +443,7 @@ func TestCSRFMiddleware_ExistingCookie(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("既存のトークンでGETリクエストが失敗しました: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("既存のトークンでGETリクエストが失敗した: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -483,24 +483,24 @@ func TestCSRFMiddleware_CookieAttributes(t *testing.T) {
 	// Cookie属性を確認
 	// http.CookieはSet-Cookieヘッダーからのパース時にドメインの先頭のドットを削除する場合がある
 	if csrfCookie.Domain != ".example.com" && csrfCookie.Domain != "example.com" {
-		t.Errorf("Domainが正しくありません: got %v want .example.com or example.com", csrfCookie.Domain)
+		t.Errorf("Domain = %v、期待値 = .example.comまたはexample.com", csrfCookie.Domain)
 	}
 
 	if !csrfCookie.Secure {
 		t.Error("Secure属性がtrueではありません")
 	}
 
-	// HttpOnlyはfalse（JavaScriptからアクセス可能にする）
+	// HttpOnlyはfalse (JavaScriptからアクセス可能にする)
 	if csrfCookie.HttpOnly {
 		t.Error("HttpOnly属性がfalseではありません")
 	}
 
 	if csrfCookie.SameSite != http.SameSiteLaxMode {
-		t.Errorf("SameSite属性が正しくありません: got %v want %v", csrfCookie.SameSite, http.SameSiteLaxMode)
+		t.Errorf("SameSite属性 = %v、期待値 = %v", csrfCookie.SameSite, http.SameSiteLaxMode)
 	}
 
 	if csrfCookie.MaxAge != 24*60*60 {
-		t.Errorf("MaxAgeが正しくありません: got %v want %v", csrfCookie.MaxAge, 24*60*60)
+		t.Errorf("MaxAge = %v、期待値 = %v", csrfCookie.MaxAge, 24*60*60)
 	}
 }
 
@@ -554,7 +554,7 @@ func TestGetCSRFTokenFromContext(t *testing.T) {
 
 		result := middleware.GetCSRFTokenFromContext(ctx)
 		if result != token {
-			t.Errorf("トークンが正しく取得できませんでした: got %v want %v", result, token)
+			t.Errorf("トークンを正しく取得できなかった: 実測値 = %v、期待値 = %v", result, token)
 		}
 	})
 
@@ -564,7 +564,7 @@ func TestGetCSRFTokenFromContext(t *testing.T) {
 
 		result := middleware.GetCSRFTokenFromContext(ctx)
 		if result != "" {
-			t.Errorf("トークンが空文字列ではありません: got %v want %v", result, "")
+			t.Errorf("トークンが空文字列ではない: 実測値 = %v、期待値 = %v", result, "")
 		}
 	})
 }
@@ -601,7 +601,7 @@ func TestCSRFMiddleware_POST_EmptyFormToken(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("空のフォームトークンで403が返されませんでした: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("空のフォームトークンで403が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
 
@@ -630,7 +630,7 @@ func TestCSRFMiddleware_SkipPaths(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("スキップパスで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("スキップパスで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	if !handlerCalled {
@@ -663,7 +663,7 @@ func TestCSRFMiddleware_SkipPaths_POST(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("スキップパスで200が返されませんでした: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("スキップパスで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	if !handlerCalled {
@@ -694,7 +694,7 @@ func TestCSRFMiddleware_NonSkipPath_StillProtected(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("スキップパス以外で403が返されませんでした: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("スキップパス以外で403が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
 
@@ -729,6 +729,6 @@ func TestCSRFMiddleware_POST_EmptyCookieToken(t *testing.T) {
 	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
-		t.Errorf("空のクッキートークンで403が返されませんでした: got %v want %v", rr.Code, http.StatusForbidden)
+		t.Errorf("空のクッキートークンで403が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }

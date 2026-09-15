@@ -5,18 +5,18 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
 -- name: ListSuggestionPageRevisionsBySuggestionPageID :many
--- 編集提案ページIDでリビジョン一覧を取得する（作成日時の昇順）
+-- 編集提案ページIDでリビジョン一覧を取得する (作成日時の昇順)
 SELECT * FROM suggestion_page_revisions
 WHERE suggestion_page_id = $1 AND space_id = $2
 ORDER BY created_at ASC;
 
 -- name: FindLatestSuggestionPageRevision :one
--- 編集提案ページの最新リビジョンを取得する（スペースIDでスコープ）
+-- 編集提案ページの最新リビジョンを取得する (スペースIDでスコープ)
 SELECT * FROM suggestion_page_revisions
 WHERE suggestion_page_id = $1 AND space_id = $2
 ORDER BY created_at DESC
 LIMIT 1;
 
 -- name: DeleteSuggestionPageRevisionsBySuggestionPageID :exec
--- 編集提案ページIDでリビジョンを一括削除する（スペースIDでスコープ）
+-- 編集提案ページIDでリビジョンを一括削除する (スペースIDでスコープ)
 DELETE FROM suggestion_page_revisions WHERE suggestion_page_id = $1 AND space_id = $2;

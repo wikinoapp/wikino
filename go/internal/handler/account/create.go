@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create はアカウントを作成します (POST /accounts)
+// Createはアカウントを作成します (POST /accounts)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -29,7 +29,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	atname := r.FormValue("atname")
 	password := r.FormValue("password")
 
-	// セッションから email_confirmation_id を取得
+	// セッションからemail_confirmation_idを取得
 	emailConfirmationID := h.sessionMgr.GetEmailConfirmationID(r)
 	if emailConfirmationID == "" {
 		http.Redirect(w, r, "/sign_up", http.StatusFound)
@@ -108,11 +108,11 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
-// renderAccountForm はアカウント作成フォームをエラー付きでレンダリングします
+// renderAccountFormはアカウント作成フォームをエラー付きでレンダリングします
 func (h *Handler) renderAccountForm(w http.ResponseWriter, r *http.Request, ve *model.ValidationError, atname string) {
 	ctx := r.Context()
 
-	// メール確認情報を再取得（フォーム表示に必要）
+	// メール確認情報を再取得 (フォーム表示に必要)
 	emailConfirmationID := h.sessionMgr.GetEmailConfirmationID(r)
 	output, err := h.getAccountNewDataUC.Execute(ctx, usecase.GetAccountNewDataInput{
 		EmailConfirmationID: emailConfirmationID,

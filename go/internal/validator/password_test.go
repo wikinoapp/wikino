@@ -91,7 +91,7 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 		},
 	}
 
-	// DBアクセスなしでテスト（形式バリデーションのみ）
+	// DBアクセスなしでテスト (形式バリデーションのみ)
 	v := validator.NewPasswordUpdateValidator(nil)
 
 	for _, tt := range tests {
@@ -104,18 +104,18 @@ func TestPasswordUpdateValidator_Validate_FormValidation(t *testing.T) {
 			output, err := v.Validate(ctx, tt.input)
 
 			if output != nil {
-				t.Error("expected nil output for validation error")
+				t.Error("バリデーションエラーなのに出力がnilではない")
 			}
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError, but got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 			if tt.wantFieldError != "" && !ve.HasFieldError(tt.wantFieldError) {
-				t.Errorf("expected field error for %s, but not found", tt.wantFieldError)
+				t.Errorf("%sのフィールドエラーが見つからない", tt.wantFieldError)
 			}
 			if tt.wantGlobal && len(ve.Global) == 0 {
-				t.Error("expected global error, but not found")
+				t.Error("グローバルエラーが見つからない")
 			}
 		})
 	}
@@ -174,16 +174,16 @@ func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("予期しないエラー: %v", err)
 		}
 		if output == nil {
-			t.Fatal("expected output, but got nil")
+			t.Fatal("出力がnil")
 		}
 		if output.TokenID == "" {
-			t.Error("expected TokenID, but got empty")
+			t.Error("TokenIDが空")
 		}
 		if output.UserID == "" {
-			t.Error("expected UserID, but got empty")
+			t.Error("UserIDが空")
 		}
 	})
 
@@ -198,14 +198,14 @@ func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		})
 
 		if output != nil {
-			t.Error("expected nil output")
+			t.Error("出力がnilではない")
 		}
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if len(ve.Global) == 0 {
-			t.Error("expected global error for invalid token")
+			t.Error("無効なトークンなのにグローバルエラーが無い")
 		}
 	})
 
@@ -220,14 +220,14 @@ func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		})
 
 		if output != nil {
-			t.Error("expected nil output")
+			t.Error("出力がnilではない")
 		}
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if len(ve.Global) == 0 {
-			t.Error("expected global error for used token")
+			t.Error("使用済みのトークンなのにグローバルエラーが無い")
 		}
 	})
 
@@ -242,14 +242,14 @@ func TestPasswordUpdateValidator_Validate_TokenValidation(t *testing.T) {
 		})
 
 		if output != nil {
-			t.Error("expected nil output")
+			t.Error("出力がnilではない")
 		}
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if len(ve.Global) == 0 {
-			t.Error("expected global error for expired token")
+			t.Error("期限切れのトークンなのにグローバルエラーが無い")
 		}
 	})
 }
@@ -358,7 +358,7 @@ func TestPasswordUpdateValidator_Validate_I18nMessages(t *testing.T) {
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError, but got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 
 			// エラーメッセージに期待するテキストが含まれているか確認
@@ -383,7 +383,7 @@ func TestPasswordUpdateValidator_Validate_I18nMessages(t *testing.T) {
 			}
 
 			if !found {
-				t.Errorf("expected error message containing %q, got fields=%v, global=%v", tt.wantText, ve.Fields, ve.Global)
+				t.Errorf("%qを含むエラーメッセージが無い: fields = %v、global = %v", tt.wantText, ve.Fields, ve.Global)
 			}
 		})
 	}

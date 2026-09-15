@@ -24,6 +24,9 @@
   --app-link-foreground: var(--app-primary);
   --app-link-primary-foreground: oklch(0.5346 0.0836 210.24);
   --app-link-muted-foreground: var(--app-muted-foreground);
+  /* 周囲の文章の色をそのまま受け取るリンク。見出し下のサブタイトルのように、それ自体が
+     色を持つ文章の中へ置くヘルプリンク向け。 */
+  --app-link-inherit-foreground: currentcolor;
   --app-success: var(--color-green-600);
   --app-success-foreground: var(--color-white);
   --app-error: var(--color-red-600);
@@ -33,6 +36,17 @@
   --app-info: var(--color-blue-600);
   --app-info-foreground: var(--color-white);
   --app-bottom-nav-max-height: 54px;
+  /*
+    コンパクトなスティッキーヘッダーの最小高 (pages/page/show.templ)。操作領域がある場合、
+    ヘッダーはこのコンパクト高を確保する。折り返された展開時タイトルから失われる高さは
+    sticky-header.tsが別途計測し、隣接するspacerに加える。文書はコンパクト高をスクロール余白にも
+    使い、フォーカスされた要素が固定バーの下へ潜り込まないようにする。
+
+    md未満では操作領域が下の行に回るため、
+    20px (切り詰めたタイトル) + 8px (行間) + 36px (ボタン) + 16px (上下パディング) + 1px (下境界線)
+    = 81pxになる。
+  */
+  --app-sticky-header-height: 81px;
 
   /* Basecoatの変数上書き */
   --background: var(--app-primary-foreground);
@@ -46,11 +60,30 @@
   --accent: oklch(0.9402 0.017 61.95);
   --border: var(--color-stone-300);
   --input: var(--color-stone-300);
-  --sidebar: var(--background);
-  --sidebar-accent: var(--accent);
-  --sidebar-width: 200px;
 
   text-autospace: normal;
+}
+
+/*
+  md以上ではスティッキーヘッダーの操作領域がタイトルと同じ行に収まるため、
+  36px (ボタン) + 16px (上下パディング) + 1px (下境界線) = 53pxになる。
+
+  ブレークポイントは実値を書かずにテーマから読む。この高さは、ヘッダー自身のmd: ユーティリティが
+  操作領域の折り返しを切り替えるのとまったく同じ位置で切り替わる必要があるためである。
+*/
+@media (width >= theme(--breakpoint-md)) {
+  :root {
+    --app-sticky-header-height: 53px;
+  }
+}
+
+/*
+  フォーカス移動でスクロールしてきた要素がスティッキーヘッダーに覆われ、キーボード利用者が現在位置
+  を見失わないようにする (WCAG 2.4.11)。余白はヘッダーを描画する画面にだけ効かせ、ヘッダーが確保する
+  高さに揃える。
+*/
+:root:has([data-sticky-header]) {
+  scroll-padding-top: var(--app-sticky-header-height);
 }
 
 @theme {
@@ -69,6 +102,7 @@
   --color-link-foreground: var(--app-link-foreground);
   --color-link-primary-foreground: var(--app-link-primary-foreground);
   --color-link-muted-foreground: var(--app-link-muted-foreground);
+  --color-link-inherit-foreground: var(--app-link-inherit-foreground);
 
   --color-error-foreground: var(--app-error-foreground);
   --color-error: var(--app-error);
@@ -81,13 +115,9 @@
 
   --z-index-*: initial;
   --z-index-tooltip: 300;
-  /* Modal dialogs sit above the sidebar and the overlay (drawer) so a dialog
-     opened from inside the drawer covers it, while staying below tooltips.
-
-     [Ja] モーダルダイアログはサイドバーとオーバーレイ (ドロワー) より前面に置き、
+  /* モーダルダイアログはオーバーレイ (ドロワー) より前面に置き、
      ドロワー内から開いたダイアログがドロワーを覆うようにする。ツールチップよりは背面。 */
   --z-index-dialog: 280;
-  --z-index-sidebar: 250;
   --z-index-overlay: 240;
   --z-index-sticky-bar: 200;
 
@@ -103,7 +133,7 @@
 }
 
 @utility link-* {
-  /* `@apply link-bare-*;` と書きたいが、そうすると .link-bare-muted-foreground などが効かなくなる */
+  /* `@apply link-bare-*;` と書きたいが、そうすると .link-bare-muted-foregroundなどが効かなくなる */
   @apply transition-colors duration-100;
   @apply text-[--value(--color-link-*)] hover:text-[--value(--color-link-*)]/85;
   @apply underline underline-offset-4;
@@ -192,8 +222,12 @@
       @apply my-6 border-stone-300;
     }
 
+    /* 本文の画像にカードと同じ境界を与える。これが無いと、画像自身の背景色がappの背景色に
+       近いときに範囲が分からない。四辺を示すのはリングで、影は下へ落ちて上辺に何も残さないため
+       柔らかさを足す役割にとどめる。カードと違い角丸は付けない。border-radiusは置換要素の中身を
+       クリップするため、画像そのものの隅が削られてしまう。 */
     & img {
-      @apply mx-auto block;
+      @apply mx-auto block shadow-xs ring-1 ring-foreground/10;
     }
 
     /* 画像を含むリンクをインラインブロックにして画像の幅に合わせる */
@@ -259,8 +293,38 @@
       @apply block overflow-visible rounded-none bg-transparent p-0;
     }
 
+    /*
+      画面幅より広いテーブルをテーブル自身の中でスクロールさせ、ページ全体が横スクロール
+      しないようにする。スクロールコンテナは祖先に最小幅を伝えないため、フレックス項目の祖先
+      (レイアウトの本文カラムやページ表示画面のarticle) がビューポートより広く押し広げられる
+      こともない。既存ページはページ公開時に生成・保存された本文HTMLを持つため、修正は
+      マークアップパイプラインではなくスタイル側に置く。パイプラインに置くと、以後保存された
+      ページにしか届かない。
+
+      display: blockを併せて指定するのはoverflowを効かせるため。テーブルボックスに対する
+      overflowは無視される。スクリプトが使える環境ではmarkdown-table.tsがスクロールを
+      フォーカス可能なラッパーへ移し、テーブルはテーブルレイアウトに戻る。本ルールはそれが
+      無い場合のフォールバックにあたる。
+    */
     & table {
-      @apply mb-4;
+      @apply mb-4 block overflow-x-auto;
+    }
+
+    /*
+      markdown-table.tsがテーブルに被せるラッパー。スクロールをテーブルから引き取ることで、
+      テーブル自身はロールとレイアウトを保ったまま、スクロール操作のためのキーボードフォーカスを
+      ラッパーが受け取れるようになる。
+    */
+    & .wikino-markdown-table-scroll {
+      @apply mb-4 overflow-x-auto;
+    }
+
+    & .wikino-markdown-table-scroll > table {
+      @apply mb-0 table overflow-visible;
+    }
+
+    & .wikino-markdown-table-scroll:focus-visible {
+      @apply outline-2 outline-offset-2 outline-brand-600;
     }
 
     & table td {

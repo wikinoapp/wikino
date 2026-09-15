@@ -9,17 +9,17 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// calculateAttachmentRefDiff はbodyHTMLから添付ファイルIDを抽出し、
+// calculateAttachmentRefDiffはMarkdown本文から添付ファイルIDを抽出し、
 // 既存の参照との差分を計算して追加・削除すべきIDを返す
 func calculateAttachmentRefDiff(
 	ctx context.Context,
-	bodyHTML string,
+	body string,
 	pageID model.PageID,
 	spaceID model.SpaceID,
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
 ) (toAdd []model.AttachmentID, toRemove []model.AttachmentID, err error) {
-	newIDStrings := markup.ExtractAttachmentIDs(bodyHTML)
+	newIDStrings := markup.ExtractAttachmentIDs(body)
 
 	existingRefs, err := pageAttachmentRefRepo.ListByPageID(ctx, pageID, spaceID)
 	if err != nil {
@@ -57,7 +57,7 @@ func calculateAttachmentRefDiff(
 	return toAdd, toRemove, nil
 }
 
-// applyAttachmentRefChanges は事前に計算された添付ファイル参照の追加・削除を実行する
+// applyAttachmentRefChangesは事前に計算された添付ファイル参照の追加・削除を実行する
 func applyAttachmentRefChanges(
 	ctx context.Context,
 	pageID model.PageID,
@@ -81,17 +81,17 @@ func applyAttachmentRefChanges(
 	return nil
 }
 
-// syncAttachmentReferences はbodyHTMLから添付ファイルIDを抽出し、
+// syncAttachmentReferencesはMarkdown本文から添付ファイルIDを抽出し、
 // 既存の参照との差分を計算して追加・削除を行う
 func syncAttachmentReferences(
 	ctx context.Context,
-	bodyHTML string,
+	body string,
 	pageID model.PageID,
 	spaceID model.SpaceID,
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
 ) error {
-	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, bodyHTML, pageID, spaceID, attachmentRepo, pageAttachmentRefRepo)
+	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, body, pageID, spaceID, attachmentRepo, pageAttachmentRefRepo)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func syncAttachmentReferences(
 	return applyAttachmentRefChanges(ctx, pageID, spaceID, toAdd, toRemove, pageAttachmentRefRepo)
 }
 
-// extractFeaturedImageAttachmentID はbodyの1行目から画像IDを抽出し、
+// extractFeaturedImageAttachmentIDはbodyの1行目から画像IDを抽出し、
 // 添付ファイルの存在を確認した上でAttachmentIDを返す
 func extractFeaturedImageAttachmentID(
 	ctx context.Context,

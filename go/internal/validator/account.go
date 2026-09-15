@@ -14,15 +14,26 @@ const (
 	AtnameMaxLength = 20
 )
 
-// アットネームの形式（英数字とアンダースコアのみ）
+// アットネームの形式 (英数字とアンダースコアのみ)
 var atnameRegex = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 
-// AccountCreateValidator はアカウント作成のバリデーションを行う
+// IsValidAtnameは、アットネームがすべてのアカウントに課される形式と長さを
+// 満たすかを返す。サインアップフォームの外でアカウントを作る呼び出し元が、制約の
+// 写しではなく同じ規則を参照できるよう公開している。
+//
+// AccountCreateValidatorは同じ2つの制約を個別に適用する。フォームは2つを
+// 別のメッセージで伝え分けるため。ここへ規則を足したときは、あちらへも足す必要が
+// ある。そうしないと、フォームが受理するatnameを名簿が拒否することになる。
+func IsValidAtname(atname string) bool {
+	return len(atname) <= AtnameMaxLength && atnameRegex.MatchString(atname)
+}
+
+// AccountCreateValidatorはアカウント作成のバリデーションを行う
 type AccountCreateValidator struct {
 	userRepo *repository.UserRepository
 }
 
-// NewAccountCreateValidator は AccountCreateValidator を生成する
+// NewAccountCreateValidatorはAccountCreateValidatorを生成する
 func NewAccountCreateValidator(
 	userRepo *repository.UserRepository,
 ) *AccountCreateValidator {
@@ -31,13 +42,13 @@ func NewAccountCreateValidator(
 	}
 }
 
-// AccountCreateValidatorInput はバリデーションの入力パラメータ
+// AccountCreateValidatorInputはバリデーションの入力パラメータ
 type AccountCreateValidatorInput struct {
 	Atname   string
 	Password string
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *AccountCreateValidator) Validate(ctx context.Context, input AccountCreateValidatorInput) error {
 	ve := model.NewValidationError()
 
@@ -64,7 +75,7 @@ func (v *AccountCreateValidator) Validate(ctx context.Context, input AccountCrea
 		return ve
 	}
 
-	// アットネームの重複チェック（状態バリデーション）
+	// アットネームの重複チェック (状態バリデーション)
 	existingUser, err := v.userRepo.FindByAtname(ctx, input.Atname)
 	if err != nil {
 		return err

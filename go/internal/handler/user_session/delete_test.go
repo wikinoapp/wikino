@@ -71,16 +71,16 @@ func TestDelete_Success(t *testing.T) {
 
 	// リダイレクトを検証
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	// リダイレクト先を検証
 	location := rr.Header().Get("Location")
 	if location != "/" {
-		t.Errorf("wrong redirect location: got %v want /", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /", location)
 	}
 
-	// セッションCookieが削除されているか確認（MaxAge=-1）
+	// セッションCookieが削除されているか確認 (MaxAge=-1)
 	cookies := rr.Result().Cookies()
 	var sessionCookie *http.Cookie
 	for _, c := range cookies {
@@ -90,10 +90,10 @@ func TestDelete_Success(t *testing.T) {
 		}
 	}
 	if sessionCookie == nil {
-		t.Error("session cookie not found in response")
+		t.Error("レスポンスにセッションCookieが見つからない")
 	}
 	if sessionCookie != nil && sessionCookie.MaxAge != -1 {
-		t.Errorf("session cookie MaxAge should be -1, got %d", sessionCookie.MaxAge)
+		t.Errorf("セッションCookieのMaxAge = %d、期待値 = -1", sessionCookie.MaxAge)
 	}
 
 	// フラッシュCookieが設定されているか確認
@@ -105,7 +105,7 @@ func TestDelete_Success(t *testing.T) {
 		}
 	}
 	if flashCookie == nil {
-		t.Error("flash cookie not set")
+		t.Error("フラッシュのCookieがセットされていない")
 	}
 
 	// データベースからセッションが削除されているか確認
@@ -114,7 +114,7 @@ func TestDelete_Success(t *testing.T) {
 		t.Fatalf("セッション取得でエラー: %v", err)
 	}
 	if savedSession != nil {
-		t.Error("session should be deleted from database")
+		t.Error("データベースからセッションが削除されていない")
 	}
 }
 
@@ -158,15 +158,15 @@ func TestDelete_NoSession(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Delete(rr, req)
 
-	// リダイレクトを検証（エラーにならずにリダイレクトされる）
+	// リダイレクトを検証 (エラーにならずにリダイレクトされる)
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	// リダイレクト先を検証
 	location := rr.Header().Get("Location")
 	if location != "/" {
-		t.Errorf("wrong redirect location: got %v want /", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /", location)
 	}
 
 	// フラッシュCookieが設定されているか確認
@@ -179,7 +179,7 @@ func TestDelete_NoSession(t *testing.T) {
 		}
 	}
 	if flashCookie == nil {
-		t.Error("flash cookie not set")
+		t.Error("フラッシュのCookieがセットされていない")
 	}
 }
 
@@ -227,15 +227,15 @@ func TestDelete_InvalidSessionToken(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Delete(rr, req)
 
-	// リダイレクトを検証（エラーにならずにリダイレクトされる）
+	// リダイレクトを検証 (エラーにならずにリダイレクトされる)
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	// リダイレクト先を検証
 	location := rr.Header().Get("Location")
 	if location != "/" {
-		t.Errorf("wrong redirect location: got %v want /", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /", location)
 	}
 
 	// セッションCookieが削除されているか確認
@@ -248,9 +248,9 @@ func TestDelete_InvalidSessionToken(t *testing.T) {
 		}
 	}
 	if sessionCookie == nil {
-		t.Error("session cookie not found in response")
+		t.Error("レスポンスにセッションCookieが見つからない")
 	}
 	if sessionCookie != nil && sessionCookie.MaxAge != -1 {
-		t.Errorf("session cookie MaxAge should be -1, got %d", sessionCookie.MaxAge)
+		t.Errorf("セッションCookieのMaxAge = %d、期待値 = -1", sessionCookie.MaxAge)
 	}
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// pageAccessData はページ操作に必要な共通データ
+// pageAccessDataはページ操作に必要な共通データ
 type pageAccessData struct {
 	space       *model.Space
 	spaceMember *model.SpaceMember
@@ -18,7 +18,7 @@ type pageAccessData struct {
 	topicMember *model.TopicMember
 }
 
-// pageAccessRepos はページアクセスデータ取得に必要なリポジトリ群
+// pageAccessReposはページアクセスデータ取得に必要なリポジトリ群
 type pageAccessRepos struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -27,8 +27,15 @@ type pageAccessRepos struct {
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
-// fetchPageAccessData はページ操作に必要な共通データを取得する
+// fetchPageAccessDataはログイン済みユーザー向けに、ページ操作に必要な共通データを取得する。
 func fetchPageAccessData(ctx context.Context, repos pageAccessRepos, spaceIdentifier model.SpaceIdentifier, pageNumber int32, userID model.UserID) (*pageAccessData, error) {
+	return fetchPageAccessDataAllowingGuest(ctx, repos, spaceIdentifier, pageNumber, &userID)
+}
+
+// fetchPageAccessDataAllowingGuestはゲストも受け付ける呼び出し元向けに同じデータを取得する。
+// userIDは未ログイン時にnilになり、その場合spaceMember / topicMemberもnilになる。
+// スペースメンバーがnilでもここではエラーにしない (ゲストに何を見せるかは呼び出し元が判断する)。
+func fetchPageAccessDataAllowingGuest(ctx context.Context, repos pageAccessRepos, spaceIdentifier model.SpaceIdentifier, pageNumber int32, userID *model.UserID) (*pageAccessData, error) {
 	space, err := repos.spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
 	if err != nil {
 		return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
@@ -40,9 +47,12 @@ func fetchPageAccessData(ctx context.Context, repos pageAccessRepos, spaceIdenti
 		}
 	}
 
-	spaceMember, err := repos.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, userID)
-	if err != nil {
-		return nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
+	var spaceMember *model.SpaceMember
+	if userID != nil {
+		spaceMember, err = repos.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, *userID)
+		if err != nil {
+			return nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
+		}
 	}
 
 	pg, err := repos.pageRepo.FindBySpaceAndNumber(ctx, space.ID, model.PageNumber(pageNumber))
@@ -84,7 +94,7 @@ func fetchPageAccessData(ctx context.Context, repos pageAccessRepos, spaceIdenti
 	}, nil
 }
 
-// authorizePageUpdate はページ更新の認可チェックを行う
+// authorizePageUpdateはページ更新の認可チェックを行う
 func authorizePageUpdate(ctx context.Context, data *pageAccessData) error {
 	if data.spaceMember == nil {
 		return &model.AppError{

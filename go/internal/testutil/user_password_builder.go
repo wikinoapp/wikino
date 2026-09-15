@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// UserPasswordBuilder はユーザーパスワードテストデータのビルダー
+// UserPasswordBuilderはユーザーパスワードテストデータのビルダー
 type UserPasswordBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -18,7 +18,7 @@ type UserPasswordBuilder struct {
 	passwordDigest string
 }
 
-// NewUserPasswordBuilder は UserPasswordBuilder を生成します
+// NewUserPasswordBuilderはUserPasswordBuilderを生成します
 func NewUserPasswordBuilder(t *testing.T, tx *sql.Tx) *UserPasswordBuilder {
 	t.Helper()
 	return &UserPasswordBuilder{
@@ -28,24 +28,24 @@ func NewUserPasswordBuilder(t *testing.T, tx *sql.Tx) *UserPasswordBuilder {
 	}
 }
 
-// WithUserID はユーザーIDを設定します
+// WithUserIDはユーザーIDを設定します
 func (b *UserPasswordBuilder) WithUserID(userID model.UserID) *UserPasswordBuilder {
 	b.userID = userID
 	return b
 }
 
-// WithPasswordDigest はパスワードダイジェストを設定します
+// WithPasswordDigestはパスワードダイジェストを設定します
 func (b *UserPasswordBuilder) WithPasswordDigest(passwordDigest string) *UserPasswordBuilder {
 	b.passwordDigest = passwordDigest
 	return b
 }
 
-// Build はユーザーパスワードを作成し、IDを返します
+// Buildはユーザーパスワードを作成し、IDを返します
 func (b *UserPasswordBuilder) Build() string {
 	b.t.Helper()
 
 	if b.userID == "" {
-		b.t.Fatal("userID is required. Use WithUserID() to set it.")
+		b.t.Fatal("userIDが設定されていません。WithUserID()を呼んでください")
 	}
 
 	now := time.Now()
@@ -64,7 +64,7 @@ func (b *UserPasswordBuilder) Build() string {
 	return id
 }
 
-// UserPasswordBuilderDB はDBを直接使用するユーザーパスワードテストデータのビルダー
+// UserPasswordBuilderDBはDBを直接使用するユーザーパスワードテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type UserPasswordBuilderDB struct {
 	t  *testing.T
@@ -74,7 +74,7 @@ type UserPasswordBuilderDB struct {
 	passwordDigest string
 }
 
-// NewUserPasswordBuilderDB は UserPasswordBuilderDB を生成します
+// NewUserPasswordBuilderDBはUserPasswordBuilderDBを生成します
 func NewUserPasswordBuilderDB(t *testing.T, db *sql.DB) *UserPasswordBuilderDB {
 	t.Helper()
 	return &UserPasswordBuilderDB{
@@ -84,24 +84,24 @@ func NewUserPasswordBuilderDB(t *testing.T, db *sql.DB) *UserPasswordBuilderDB {
 	}
 }
 
-// WithUserID はユーザーIDを設定します
+// WithUserIDはユーザーIDを設定します
 func (b *UserPasswordBuilderDB) WithUserID(userID model.UserID) *UserPasswordBuilderDB {
 	b.userID = userID
 	return b
 }
 
-// WithPasswordDigest はパスワードダイジェストを設定します
+// WithPasswordDigestはパスワードダイジェストを設定します
 func (b *UserPasswordBuilderDB) WithPasswordDigest(passwordDigest string) *UserPasswordBuilderDB {
 	b.passwordDigest = passwordDigest
 	return b
 }
 
-// Build はユーザーパスワードを作成し、IDを返します
+// Buildはユーザーパスワードを作成し、IDを返します
 func (b *UserPasswordBuilderDB) Build() string {
 	b.t.Helper()
 
 	if b.userID == "" {
-		b.t.Fatal("userID is required. Use WithUserID() to set it.")
+		b.t.Fatal("userIDが設定されていません。WithUserID()を呼んでください")
 	}
 
 	now := time.Now()

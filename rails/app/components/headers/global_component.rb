@@ -9,14 +9,12 @@ module Headers
       params(
         current_page_name: PageName,
         current_user: T.nilable(User),
-        current_space: T.nilable(Space),
         content_screen: BaseUI::ContainerComponent::ContentScreen
       ).void
     end
-    def initialize(current_page_name:, current_user:, current_space: nil, content_screen: BaseUI::ContainerComponent::ContentScreen::Medium)
+    def initialize(current_page_name:, current_user:, content_screen: BaseUI::ContainerComponent::ContentScreen::Medium)
       @current_page_name = current_page_name
       @current_user = current_user
-      @current_space = current_space
       @content_screen = content_screen
     end
 
@@ -27,10 +25,6 @@ module Headers
     sig { returns(T.nilable(User)) }
     attr_reader :current_user
     private :current_user
-
-    sig { returns(T.nilable(Space)) }
-    attr_reader :current_space
-    private :current_space
 
     sig { returns(BaseUI::ContainerComponent::ContentScreen) }
     attr_reader :content_screen

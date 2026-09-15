@@ -52,21 +52,19 @@ func TestCardLinkTopic_SpaceName(t *testing.T) {
 
 			html := buf.String()
 
-			// The topic detail link is always present.
-			// [Ja] トピック詳細へのリンクは常に存在する。
+			// トピック詳細へのリンクは常に存在する。
 			if !strings.Contains(html, "/s/my-space/topics/3") {
 				t.Error("トピック詳細へのリンクが含まれていない")
 			}
 
-			// The topic name is always rendered.
-			// [Ja] トピック名は常に表示される。
+			// トピック名は常に表示される。
 			if !strings.Contains(html, "トピック名") {
 				t.Error("トピック名が含まれていない")
 			}
 
 			gotSpaceName := strings.Contains(html, "マイスペース")
 			if gotSpaceName != tt.wantSpaceName {
-				t.Errorf("スペース名の表示 = %v, want %v", gotSpaceName, tt.wantSpaceName)
+				t.Errorf("スペース名の表示 = %v、期待値 = %v", gotSpaceName, tt.wantSpaceName)
 			}
 		})
 	}
@@ -116,13 +114,38 @@ func TestCardLinkTopic_CanCreatePage(t *testing.T) {
 
 			gotNewPageLink := strings.Contains(html, "/s/my-space/topics/3/pages/new")
 			if gotNewPageLink != tt.wantNewPageLink {
-				t.Errorf("新規ページリンクの表示 = %v, want %v", gotNewPageLink, tt.wantNewPageLink)
+				t.Errorf("新規ページリンクの表示 = %v、期待値 = %v", gotNewPageLink, tt.wantNewPageLink)
 			}
 
-			gotTooltip := strings.Contains(html, "新規ページ")
-			if gotTooltip != tt.wantNewPageLink {
-				t.Errorf("新規ページツールチップの表示 = %v, want %v", gotTooltip, tt.wantNewPageLink)
+			gotAccessibleName := strings.Contains(html, `aria-label="新規ページ"`)
+			if gotAccessibleName != tt.wantNewPageLink {
+				t.Errorf("新規ページリンクのアクセシブルネームの有無 = %v、期待値 = %v", gotAccessibleName, tt.wantNewPageLink)
 			}
 		})
 	}
+}
+
+func TestCardLinkTopic_NewPageLinkAccessibleName(t *testing.T) {
+	t.Parallel()
+
+	topic := viewmodel.CardLinkTopic{
+		Name:            "トピック名",
+		Number:          3,
+		SpaceIdentifier: viewmodel.SpaceIdentifier("my-space"),
+		SpaceName:       "マイスペース",
+		TopicIconName:   "globe-regular",
+		CanCreatePage:   true,
+	}
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+
+	var buf bytes.Buffer
+	if err := components.CardLinkTopic(topic).Render(ctx, &buf); err != nil {
+		t.Fatalf("レンダリングに失敗: %v", err)
+	}
+
+	html := buf.String()
+
+	assertCardLinkIconLinkLabels(t, html, "新規ページ")
+	assertCardLinkFocusVisible(t, html)
 }

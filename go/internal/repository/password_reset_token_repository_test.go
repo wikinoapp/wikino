@@ -32,19 +32,19 @@ func TestPasswordResetTokenRepository_Create(t *testing.T) {
 
 		token, err := repo.Create(context.Background(), input)
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if token == nil {
-			t.Fatal("Create() returned nil, want password reset token")
+			t.Fatal("Create()がnilを返した、期待値 = パスワードリセットトークン")
 		}
 		if token.UserID != userID {
-			t.Errorf("token.UserID = %v, want %v", token.UserID, userID)
+			t.Errorf("token.UserID = %v、期待値 = %v", token.UserID, userID)
 		}
 		if token.TokenDigest != "test_token_digest_create" {
-			t.Errorf("token.TokenDigest = %v, want test_token_digest_create", token.TokenDigest)
+			t.Errorf("token.TokenDigest = %v、期待値 = test_token_digest_create", token.TokenDigest)
 		}
 		if token.UsedAt != nil {
-			t.Errorf("token.UsedAt = %v, want nil", token.UsedAt)
+			t.Errorf("token.UsedAt = %v、期待値 = nil", token.UsedAt)
 		}
 	})
 }
@@ -71,26 +71,26 @@ func TestPasswordResetTokenRepository_FindByTokenDigest(t *testing.T) {
 	t.Run("トークンダイジェストでトークンを取得できる", func(t *testing.T) {
 		token, err := repo.FindByTokenDigest(context.Background(), "unique_token_digest")
 		if err != nil {
-			t.Fatalf("FindByTokenDigest() error = %v", err)
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 		}
 		if token == nil {
-			t.Fatal("FindByTokenDigest() returned nil, want password reset token")
+			t.Fatal("FindByTokenDigest()がnilを返した、期待値 = パスワードリセットトークン")
 		}
 		if token.TokenDigest != "unique_token_digest" {
-			t.Errorf("token.TokenDigest = %v, want unique_token_digest", token.TokenDigest)
+			t.Errorf("token.TokenDigest = %v、期待値 = unique_token_digest", token.TokenDigest)
 		}
 		if token.UserID != userID {
-			t.Errorf("token.UserID = %v, want %v", token.UserID, userID)
+			t.Errorf("token.UserID = %v、期待値 = %v", token.UserID, userID)
 		}
 	})
 
 	t.Run("存在しないトークンダイジェストはnilを返す", func(t *testing.T) {
 		token, err := repo.FindByTokenDigest(context.Background(), "nonexistent_token_digest")
 		if err != nil {
-			t.Fatalf("FindByTokenDigest() error = %v", err)
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 		}
 		if token != nil {
-			t.Errorf("FindByTokenDigest() = %v, want nil", token)
+			t.Errorf("FindByTokenDigest() = %v、期待値 = nil", token)
 		}
 	})
 }
@@ -117,19 +117,19 @@ func TestPasswordResetTokenRepository_MarkAsUsed(t *testing.T) {
 	t.Run("トークンを使用済みにマークできる", func(t *testing.T) {
 		err := repo.MarkAsUsed(context.Background(), tokenID)
 		if err != nil {
-			t.Fatalf("MarkAsUsed() error = %v", err)
+			t.Fatalf("MarkAsUsed()のエラー = %v", err)
 		}
 
 		// 更新後のトークンを確認
 		token, err := repo.FindByTokenDigest(context.Background(), "mark_used_token_digest")
 		if err != nil {
-			t.Fatalf("FindByTokenDigest() error = %v", err)
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 		}
 		if token == nil {
-			t.Fatal("FindByTokenDigest() returned nil, want password reset token")
+			t.Fatal("FindByTokenDigest()がnilを返した、期待値 = パスワードリセットトークン")
 		}
 		if token.UsedAt == nil {
-			t.Error("token.UsedAt = nil, want not nil")
+			t.Error("token.UsedAt = nil、期待値 = nilではない")
 		}
 	})
 }
@@ -162,13 +162,13 @@ func TestPasswordResetTokenRepository_DeleteUnusedByUserID(t *testing.T) {
 	t.Run("未使用のトークンのみ削除できる", func(t *testing.T) {
 		err := repo.DeleteUnusedByUserID(context.Background(), userID)
 		if err != nil {
-			t.Fatalf("DeleteUnusedByUserID() error = %v", err)
+			t.Fatalf("DeleteUnusedByUserID()のエラー = %v", err)
 		}
 
 		// 未使用のトークンが削除されていることを確認
 		unusedToken, err := repo.FindByTokenDigest(context.Background(), "unused_token_to_delete")
 		if err != nil {
-			t.Fatalf("FindByTokenDigest() error = %v", err)
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 		}
 		if unusedToken != nil {
 			t.Errorf("未使用トークンが削除されていません: %v", unusedToken)
@@ -177,7 +177,7 @@ func TestPasswordResetTokenRepository_DeleteUnusedByUserID(t *testing.T) {
 		// 使用済みのトークンは削除されていないことを確認
 		usedToken, err := repo.FindByTokenDigest(context.Background(), "used_token_not_to_delete")
 		if err != nil {
-			t.Fatalf("FindByTokenDigest() error = %v", err)
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 		}
 		if usedToken == nil {
 			t.Error("使用済みトークンが誤って削除されています")
@@ -185,13 +185,9 @@ func TestPasswordResetTokenRepository_DeleteUnusedByUserID(t *testing.T) {
 	})
 }
 
-// Verifies the ON DELETE CASCADE contract that the Rails-side deletion
-// paths rely on: deleting a users row directly must also delete its
-// password reset tokens without an explicit DELETE on password_reset_tokens.
-//
-// [Ja] Rails 側の削除経路が頼る ON DELETE CASCADE の契約を検証する。
-// users の行を直接 DELETE したとき、password_reset_tokens への明示的な
-// DELETE なしでトークンも一緒に消えること。
+// Rails側の削除経路が頼るON DELETE CASCADEの契約を検証する。
+// usersの行を直接DELETEしたとき、password_reset_tokensへの明示的な
+// DELETEなしでトークンも一緒に消えること。
 func TestPasswordResetTokenRepository_CascadeOnUserDelete(t *testing.T) {
 	t.Parallel()
 
@@ -211,19 +207,18 @@ func TestPasswordResetTokenRepository_CascadeOnUserDelete(t *testing.T) {
 		Build()
 
 	t.Run("ユーザーの行を直接DELETEするとトークンも消える", func(t *testing.T) {
-		// Delete the parent users row directly (without going through application code)
-		// [Ja] 親の users の行を直接削除 (アプリケーションコードを経由しない)
+		// 親のusersの行を直接削除 (アプリケーションコードを経由しない)
 		_, err := tx.ExecContext(ctx, "DELETE FROM users WHERE id = $1", string(userID))
 		if err != nil {
-			t.Fatalf("DELETE users error = %v", err)
+			t.Fatalf("DELETE usersのエラー = %v", err)
 		}
 
 		token, err := repo.FindByTokenDigest(ctx, "cascade_user_delete_token")
 		if err != nil {
-			t.Fatalf("FindByTokenDigest() error = %v", err)
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 		}
 		if token != nil {
-			t.Errorf("FindByTokenDigest() = %v, want nil (token should be cascade-deleted)", token)
+			t.Errorf("FindByTokenDigest() = %v、期待値 = nil (トークンがカスケード削除されていない)", token)
 		}
 	})
 }
@@ -236,7 +231,7 @@ func TestPasswordResetToken_IsExpired(t *testing.T) {
 			ExpiresAt: time.Now().Add(30 * time.Minute),
 		}
 		if token.IsExpired() {
-			t.Error("IsExpired() = true, want false (30 minutes left)")
+			t.Error("IsExpired() = true、期待値 = false (残り30分)")
 		}
 	})
 
@@ -245,7 +240,7 @@ func TestPasswordResetToken_IsExpired(t *testing.T) {
 			ExpiresAt: time.Now().Add(-1 * time.Minute),
 		}
 		if !token.IsExpired() {
-			t.Error("IsExpired() = false, want true (expired 1 minute ago)")
+			t.Error("IsExpired() = false、期待値 = true (1分前に期限切れ)")
 		}
 	})
 }
@@ -258,7 +253,7 @@ func TestPasswordResetToken_IsUsed(t *testing.T) {
 			UsedAt: nil,
 		}
 		if token.IsUsed() {
-			t.Error("IsUsed() = true, want false")
+			t.Error("IsUsed() = true、期待値 = false")
 		}
 	})
 
@@ -268,7 +263,7 @@ func TestPasswordResetToken_IsUsed(t *testing.T) {
 			UsedAt: &now,
 		}
 		if !token.IsUsed() {
-			t.Error("IsUsed() = false, want true")
+			t.Error("IsUsed() = false、期待値 = true")
 		}
 	})
 }
@@ -282,7 +277,7 @@ func TestPasswordResetToken_IsValid(t *testing.T) {
 			ExpiresAt: time.Now().Add(30 * time.Minute),
 		}
 		if !token.IsValid() {
-			t.Error("IsValid() = false, want true")
+			t.Error("IsValid() = false、期待値 = true")
 		}
 	})
 
@@ -293,7 +288,7 @@ func TestPasswordResetToken_IsValid(t *testing.T) {
 			ExpiresAt: time.Now().Add(30 * time.Minute),
 		}
 		if token.IsValid() {
-			t.Error("IsValid() = true, want false (used)")
+			t.Error("IsValid() = true、期待値 = false (使用済み)")
 		}
 	})
 
@@ -303,7 +298,7 @@ func TestPasswordResetToken_IsValid(t *testing.T) {
 			ExpiresAt: time.Now().Add(-1 * time.Minute),
 		}
 		if token.IsValid() {
-			t.Error("IsValid() = true, want false (expired)")
+			t.Error("IsValid() = true、期待値 = false (期限切れ)")
 		}
 	})
 
@@ -314,7 +309,7 @@ func TestPasswordResetToken_IsValid(t *testing.T) {
 			ExpiresAt: time.Now().Add(-1 * time.Minute),
 		}
 		if token.IsValid() {
-			t.Error("IsValid() = true, want false (used and expired)")
+			t.Error("IsValid() = true、期待値 = false (使用済みかつ期限切れ)")
 		}
 	})
 }

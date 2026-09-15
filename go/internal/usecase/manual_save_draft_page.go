@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// ManualSaveDraftPageUsecase は下書きページの手動保存ユースケース
+// ManualSaveDraftPageUsecaseは下書きページの手動保存ユースケース
 type ManualSaveDraftPageUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
@@ -24,7 +24,7 @@ type ManualSaveDraftPageUsecase struct {
 	attachmentRepo        *repository.AttachmentRepository
 }
 
-// NewManualSaveDraftPageUsecase は ManualSaveDraftPageUsecase を生成する
+// NewManualSaveDraftPageUsecaseはManualSaveDraftPageUsecaseを生成する
 func NewManualSaveDraftPageUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -51,7 +51,7 @@ func NewManualSaveDraftPageUsecase(
 	}
 }
 
-// ManualSaveDraftPageInput は下書きページの手動保存の入力パラメータ
+// ManualSaveDraftPageInputは下書きページの手動保存の入力パラメータ
 type ManualSaveDraftPageInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
@@ -60,22 +60,18 @@ type ManualSaveDraftPageInput struct {
 	Body            string
 }
 
-// ManualSaveDraftPageOutput は下書きページの手動保存の出力パラメータ
+// ManualSaveDraftPageOutputは下書きページの手動保存の出力パラメータ
 type ManualSaveDraftPageOutput struct {
 	DraftPage *model.DraftPage
 
-	// DraftPageRevision is the revision created by this save. It is nil when the submitted
-	// title/body are identical to the draft's latest revision and revision creation was skipped
-	// (the save itself still succeeds).
-	//
-	// [Ja] DraftPageRevision はこの保存で作成されたリビジョン。送信されたタイトル・本文が
-	// 下書きの最新リビジョンと同一でリビジョン作成をスキップした場合は nil になる
+	// DraftPageRevisionはこの保存で作成されたリビジョン。送信されたタイトル・本文が
+	// 下書きの最新リビジョンと同一でリビジョン作成をスキップした場合はnilになる
 	// (保存自体は成功として扱う)。
 	DraftPageRevision *model.DraftPageRevision
 	TopicNumber       int32
 }
 
-// Execute はフォームから受け取った内容でDraftPageを更新し、リビジョンを作成する
+// Executeはフォームから受け取った内容でDraftPageを更新し、リビジョンを作成する
 func (uc *ManualSaveDraftPageUsecase) Execute(ctx context.Context, input ManualSaveDraftPageInput) (*ManualSaveDraftPageOutput, error) {
 	// 1. データ取得
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
@@ -102,12 +98,8 @@ func (uc *ManualSaveDraftPageUsecase) pageAccessRepos() pageAccessRepos {
 	}
 }
 
-// isSameAsLatestRevision reports whether the submitted title/body are identical to the draft's
-// latest revision. When the draft does not exist yet there is no revision to duplicate, so it
-// returns false.
-//
-// [Ja] isSameAsLatestRevision は送信されたタイトル・本文が下書きの最新リビジョンと同一かどうかを
-// 返す。下書きがまだ存在しない場合は重複するリビジョンも存在しないため false を返す。
+// isSameAsLatestRevisionは送信されたタイトル・本文が下書きの最新リビジョンと同一かどうかを
+// 返す。下書きがまだ存在しない場合は重複するリビジョンも存在しないためfalseを返す。
 func (uc *ManualSaveDraftPageUsecase) isSameAsLatestRevision(ctx context.Context, data *pageAccessData, title, body string) (bool, error) {
 	draftPage, err := uc.draftPageRepo.FindByPageAndMember(ctx, data.page.ID, data.spaceMember.ID, data.space.ID)
 	if err != nil {
@@ -128,12 +120,8 @@ func (uc *ManualSaveDraftPageUsecase) isSameAsLatestRevision(ctx context.Context
 func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAccessData, input ManualSaveDraftPageInput) (*ManualSaveDraftPageOutput, error) {
 	now := time.Now()
 
-	// Before the transaction: extract the featured image only. The body HTML
-	// rendering and wiki link resolution are unified into saveDraftPageContent,
-	// which runs inside the transaction.
-	//
-	// [Ja] トランザクション前: アイキャッチ画像のみ抽出する。bodyHTML 本体のレンダリングと
-	// Wiki リンクの解決はトランザクション内の saveDraftPageContent に一本化した。
+	// トランザクション前: アイキャッチ画像のみ抽出する。bodyHTML本体のレンダリングと
+	// Wikiリンクの解決はトランザクション内のsaveDraftPageContentに一本化した。
 	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, input.Body, data.space.ID, uc.attachmentRepo)
 	if err != nil {
 		return nil, err
@@ -144,11 +132,8 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		title = *input.Title
 	}
 
-	// Also before the transaction: decide whether to skip revision creation. Repeated saves of
-	// identical content (e.g. mashing cmd+s) would otherwise pile up duplicate revisions.
-	//
-	// [Ja] こちらもトランザクション前: リビジョン作成をスキップするか判定する。スキップしないと
-	// 同一内容の連続保存 (cmd+s の連打など) で重複リビジョンが積み上がってしまう。
+	// こちらもトランザクション前: リビジョン作成をスキップするか判定する。スキップしないと
+	// 同一内容の連続保存 (cmd+sの連打など) で重複リビジョンが積み上がってしまう。
 	skipRevision, err := uc.isSameAsLatestRevision(ctx, data, title, input.Body)
 	if err != nil {
 		return nil, err
@@ -181,15 +166,14 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		uc.draftPageRepo.WithTx(tx),
 		uc.pageRepo.WithTx(tx),
 		uc.pageEditorRepo.WithTx(tx),
-		uc.topicRepo,
-		uc.attachmentRepo,
+		uc.topicRepo.WithTx(tx),
+		uc.attachmentRepo.WithTx(tx),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create the revision unless this save is content-identical to the latest one.
-	// [Ja] この保存が最新リビジョンと同一内容の場合を除き、リビジョンを作成する。
+	// この保存が最新リビジョンと同一内容の場合を除き、リビジョンを作成する。
 	var revision *model.DraftPageRevision
 	if !skipRevision {
 		revision, err = draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{

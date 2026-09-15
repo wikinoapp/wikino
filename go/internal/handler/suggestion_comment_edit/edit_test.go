@@ -13,18 +13,18 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	suggestioncommentedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_comment_edit"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
-	"github.com/wikinoapp/wikino/go/internal/sidebar"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// newRequest はchiのURLパラメータ付きリクエストを作成するヘルパーです
+// newRequestはchiのURLパラメータ付きリクエストを作成するヘルパーです
 func newRequest(t *testing.T, method string, path string, params map[string]string, form url.Values) *http.Request {
 	t.Helper()
 
@@ -44,7 +44,7 @@ func newRequest(t *testing.T, method string, path string, params map[string]stri
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-// setupHandler はテスト用の編集提案コメント編集ハンドラーを作成するヘルパーです
+// setupHandlerはテスト用の編集提案コメント編集ハンドラーを作成するヘルパーです
 func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestioncommentedithandler.Handler {
 	t.Helper()
 
@@ -61,7 +61,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 	suggestionRepo := repository.NewSuggestionRepository(queries)
 	suggestionCommentRepo := repository.NewSuggestionCommentRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
-	draftPageRepo := repository.NewDraftPageRepository(queries)
 
 	getSuggestionEditUC := usecase.NewGetSuggestionEditUsecase(
 		spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
@@ -73,7 +72,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
 		suggestionRepo, suggestionCommentRepo, commentUpdateValidator,
 	)
-	sidebarHelper := sidebar.NewHelper(topicRepo, draftPageRepo)
 
 	return suggestioncommentedithandler.NewHandler(
 		cfg,
@@ -81,7 +79,6 @@ func setupHandler(t *testing.T, db *sql.DB, queries *query.Queries) *suggestionc
 		getSuggestionEditUC,
 		getSuggestionCommentUC,
 		updateSuggestionCommentUC,
-		sidebarHelper,
 	)
 }
 
@@ -102,7 +99,7 @@ func TestEdit_未ログインでリダイレクトされる(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 }
 
@@ -131,7 +128,7 @@ func TestEdit_存在しない編集提案で404が返る(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -183,7 +180,7 @@ func TestEdit_存在しないコメント番号で404が返る(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -236,17 +233,31 @@ func TestEdit_編集フォームが表示される(t *testing.T) {
 		"comment_number":    "1",
 	}, nil)
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "ceditok"})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "編集対象のコメント") {
-		t.Error("response should contain comment body")
+		t.Error("レスポンスにコメントの本文が含まれていない")
+	}
+	if !strings.Contains(body, `aria-label="コメント"`) {
+		t.Error("コメントのtextareaにアクセシブルな名前が無い")
+	}
+
+	// パンくずヘッダーはレイアウトが描画するため、<main> の外に出る (#mainへのスキップ
+	// リンクが飛ばせる必要があるため)。この画面の本文幅max-w-3xlも維持する。
+	if !strings.Contains(body, `<div class="max-w-3xl mx-auto flex w-full items-center justify-between gap-2 px-4">`) {
+		t.Error("共通のパンくずヘッダーがmax-w-3xlのコンテンツ幅を保っていない")
+	}
+	header, main := strings.Index(body, "<header"), strings.Index(body, `<main id="main" tabindex="-1">`)
+	if header == -1 || main == -1 || header > main {
+		t.Errorf("共通のパンくずヘッダー (位置%d) が <main> (位置%d) より前にない", header, main)
 	}
 }

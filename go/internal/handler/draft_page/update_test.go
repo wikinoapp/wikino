@@ -20,7 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// setupHandler はテスト用のハンドラーを生成するヘルパーです
+// setupHandlerはテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 	t.Helper()
 
@@ -76,7 +76,7 @@ func setupHandler(t *testing.T, queries *query.Queries) *draft_page.Handler {
 	)
 }
 
-// newRequestWithChiParams はchiのURLパラメータ付きPATCHリクエストを作成するヘルパーです
+// newRequestWithChiParamsはchiのURLパラメータ付きPATCHリクエストを作成するヘルパーです
 func newRequestWithChiParams(t *testing.T, path string, params map[string]string, formData url.Values) *http.Request {
 	t.Helper()
 
@@ -112,13 +112,13 @@ func TestUpdate_NotLoggedIn(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnauthorized {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnauthorized)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnauthorized)
 	}
 
 	// エラーメッセージを確認
 	body := strings.TrimSpace(rr.Body.String())
 	if body != "Unauthorized" {
-		t.Errorf("wrong error message: got %v want Unauthorized", body)
+		t.Errorf("エラーメッセージ = %v、期待値 = Unauthorized", body)
 	}
 }
 
@@ -150,7 +150,7 @@ func TestUpdate_InvalidPageNumber(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -182,7 +182,7 @@ func TestUpdate_SpaceNotFound(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -225,7 +225,7 @@ func TestUpdate_NotSpaceMember(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -264,7 +264,7 @@ func TestUpdate_PageNotFound(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -281,7 +281,7 @@ func TestUpdate_PermissionDenied(t *testing.T) {
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("dp-policy-space").
 		Build()
-	// page:write スコープを持たないメンバーを作成
+	// page:writeスコープを持たないメンバーを作成
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
@@ -317,7 +317,7 @@ func TestUpdate_PermissionDenied(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -341,6 +341,6 @@ func TestUpdate_ResponseContentType(t *testing.T) {
 
 	contentType := rr.Header().Get("Content-Type")
 	if !strings.Contains(contentType, "text/plain") {
-		t.Errorf("wrong content type: got %v want text/plain", contentType)
+		t.Errorf("Content-Type = %v、期待値 = text/plain", contentType)
 	}
 }

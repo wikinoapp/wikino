@@ -4,19 +4,19 @@ import (
 	"time"
 )
 
-// Plan はスペースの料金プランを表す
+// Planはスペースの料金プランを表す
 type Plan int32
 
 const (
-	// PlanFree は無料プラン
+	// PlanFreeは無料プラン
 	PlanFree Plan = 0
-	// PlanSmall はスモールプラン
+	// PlanSmallはスモールプラン
 	PlanSmall Plan = 1
-	// PlanLarge はラージプラン
+	// PlanLargeはラージプラン
 	PlanLarge Plan = 2
 )
 
-// Space はスペースのドメインモデル
+// Spaceはスペースのドメインモデル
 type Space struct {
 	ID          SpaceID
 	Identifier  SpaceIdentifier

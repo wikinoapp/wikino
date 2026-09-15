@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create は編集提案を作成します (POST /s/{space_identifier}/topics/{topic_number}/suggestions)
+// Createは編集提案を作成します (POST /s/{space_identifier}/topics/{topic_number}/suggestions)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -54,7 +54,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		draftPageIDs[i] = model.DraftPageID(id)
 	}
 
-	// UseCase を実行
+	// UseCaseを実行
 	createOutput, err := h.createSuggestionUsecase.Execute(ctx, usecase.CreateSuggestionInput{
 		SpaceIdentifier: spaceIdentifier,
 		TopicNumber:     int32(topicNumber),
@@ -91,7 +91,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		h.renderNewForm(w, r, user, spaceIdentifier, output, ve, title, body, draftPageIDStrs)
+		h.renderNewForm(w, r, user, output, ve, title, body, draftPageIDStrs)
 		return
 	}
 

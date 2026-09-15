@@ -1,0 +1,110 @@
+package components
+
+import (
+	"context"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// RelatedLinkListは「関連リンク」セクションを描画する。このページがリンクしているページの
+// バックリンクを、リンク一覧の並び順のままリンク先ページごとに束ねる。
+//
+// グループが1つも無いときもコンテナは描画する。後続のリンク一覧ページがOOBでここへグループを
+// スワップするため (relatedLinkGroupsOOB)、OOBスワップには既に存在する対象が要るからである。
+// コンテナが空の間セクションを隠すのは呼び出し側の役目とする。
+// 見出し (h2) は画面ごとにスタイルを変えられるよう呼び出し側に置きます。
+templ RelatedLinkList(data viewmodel.LinkList) {
+	<div id={ relatedLinkListID } class="flex flex-col gap-4">
+		@relatedLinkGroups(data)
+	</div>
+}
+
+// relatedLinkGroupsOOBは、さらに1ページ分のリンク一覧のグループをOOBでセクションへ運ぶ。
+// グループを描画する応答がスワップするのはリンクセクションの側だからである。ラッパーにはセクションの
+// コンテナと同じidを付けるため、htmxはラッパーを取り除いて中のグループだけを反映する。
+//
+// 反映のしかたは、その応答がリンクセクションに対して行うことに従う。累積表示の画面は画面上のカードに
+// もう1ページ分を加えるためグループも追記し、リンク先ページにバックリンクが無い応答は何も加えない
+// のでスワップ自体を送らない。1ページ単位の編集画面はリンク一覧を1ページずつ描画するため、離れる
+// ページのグループも一緒に落とす必要がある。そのスワップはセクションを差し替えるもので、新しい
+// ページがグループを1つも生まなくても送る。それがセクションを空にする手段そのものだからである。
+templ relatedLinkGroupsOOB(data viewmodel.LinkList) {
+	if isPaginatedEditPageLinkState(data.State) {
+		<div id={ relatedLinkListID } hx-swap-oob="innerHTML">
+			@relatedLinkGroups(data)
+		</div>
+	} else if hasRelatedLinkGroup(data) {
+		<div id={ relatedLinkListID } hx-swap-oob="beforeend">
+			@relatedLinkGroups(data)
+		</div>
+	}
+}
+
+// relatedLinkGroupsは、どこからもリンクされていないリンク先ページを落とす。セクションには
+// カードを1枚以上持つグループだけが残る。
+templ relatedLinkGroups(data viewmodel.LinkList) {
+	for _, item := range data.Items {
+		if len(item.BacklinkList.Items) > 0 {
+			@relatedLinkGroup(relatedLinkGroupData{
+				Item:            item,
+				SpaceIdentifier: data.SpaceIdentifier,
+			})
+		}
+	}
+}
+
+// relatedLinkGroupDataはリンク先ページ1件と、そのURLの組み立てに必要なスペースを保持する。
+type relatedLinkGroupData struct {
+	Item            viewmodel.LinkListItem
+	SpaceIdentifier viewmodel.SpaceIdentifier
+}
+
+// relatedLinkGroupは1つのリンク先ページのバックリンクを「viaリンク先ページ名」の小見出しの
+// もとに描画する。このネストした一覧の「もっと見る」をJavaScript無しで辿ったときの着地点となる
+// アンカーをグループが持つ。
+//
+// 小見出しのリンク先ページ名はそのページへのリンクにする。下に並ぶカードはそのページへ辿り着く
+// ページたちであり、リンクが無いと、グループがぶら下がっている当のページだけがここから開けない
+// ものになってしまうためである。
+templ relatedLinkGroup(data relatedLinkGroupData) {
+	<div id={ linkListItemFallbackAnchorID(data.Item.CardLinkPage.Number) } class="flex flex-col gap-2">
+		<h3 class="flex items-baseline gap-2">
+			<span class="font-mono text-xs text-muted-foreground">
+				{ templates.T(ctx, "page_links_related_via_label") }
+			</span>
+			<a
+				class="text-sm font-bold antialiased link-bare-foreground hover:underline underline-offset-4"
+				href={ templ.SafeURL(string(templates.PagePath(data.SpaceIdentifier, viewmodel.PageNumber(data.Item.CardLinkPage.Number)))) }
+			>
+				{ relatedLinkGroupTitle(ctx, data.Item) }
+			</a>
+		</h3>
+		<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+			@BacklinkList(data.Item.BacklinkList)
+		</div>
+	</div>
+}
+
+// hasRelatedLinkGroupは、このリンク一覧のページがグループを1つでも生むかを返す。リンク先
+// ページのどれにもバックリンクが無いページは何も追記しないため、累積表示の画面は空のOOBスワップを
+// 送らずに済む。
+func hasRelatedLinkGroup(data viewmodel.LinkList) bool {
+	for _, item := range data.Items {
+		if len(item.BacklinkList.Items) > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+// relatedLinkGroupTitleはグループがぶら下がるリンク先ページを言い表す。タイトルが無い場合は
+// カードと同じ代替表記へ落とし、無題のページの呼び方を画面内で揃える。
+func relatedLinkGroupTitle(ctx context.Context, item viewmodel.LinkListItem) string {
+	if item.CardLinkPage.Title != "" {
+		return item.CardLinkPage.Title
+	}
+
+	return templates.T(ctx, "page_edit_links_untitled")
+}

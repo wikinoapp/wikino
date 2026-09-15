@@ -1,11 +1,22 @@
 <div
   data-controller="global-hotkey"
   data-global-hotkey-search-path-target="searchPath"
-  <%= "data-global-hotkey-current-space-identifier-value=\"#{current_space.identifier}\"".html_safe if current_space %>
 >
-  <% if show_sidebar? %>
-    <%= render SidebarComponent.new(current_page_name:, current_user:, current_space:) %>
-  <% end %>
+  <%#
+    Skip link as the first focusable element so keyboard / screen-reader users can jump past the
+    always-visible navigation straight to the main content (WCAG 2.4.1). It stays visually hidden
+    until focused, then surfaces at the top-left.
+
+    [Ja] キーボード / スクリーンリーダー利用者が常時表示のナビゲーションを飛ばしてメインコンテンツへ
+    直接移動できるよう、最初のフォーカス可能要素としてスキップリンクを置く (WCAG 2.4.1)。
+    フォーカス時のみ左上に可視化する。
+  %>
+  <a
+    href="#main"
+    class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-tooltip focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:shadow focus:outline focus:outline-2 focus:outline-ring"
+  >
+    <%= t("messages._common.skip_to_main_content") %>
+  </a>
 
   <div class="bg-background min-h-screen">
     <meta name="search-path" content="<%= search_path %>" data-global-hotkey-target="searchPath">
@@ -13,7 +24,9 @@
     <div class="flex flex-col gap-4 py-4">
       <%= header %>
 
-      <%= main %>
+      <main id="main" tabindex="-1">
+        <%= main %>
+      </main>
 
       <% if footer? %>
         <%= footer %>
@@ -21,11 +34,18 @@
     </div>
   </div>
 
-  <div class="fixed bottom-2 left-1/2 z-50 flex w-full translate-x-[-50%] flex-col items-center gap-4 px-2">
+  <%#
+    pb-safe (padding-bottom: env(safe-area-inset-bottom)) lifts the nav pill above the home
+    indicator when a PWA runs in standalone mode; env resolves to 0 without a safe area, so the
+    position is unchanged elsewhere. The Flash toast keeps its place at the top of this column.
+
+    [Ja] pb-safe (padding-bottom: env(safe-area-inset-bottom)) は、PWA のスタンドアロン表示で
+    ナビのピルをホームインジケータの上へ押し上げる。safe-area の無い環境では env が 0 になるため
+    位置は従来どおり。Flash トーストはこのカラムの先頭という描画位置を維持する。
+  %>
+  <div class="fixed bottom-2 left-1/2 z-sticky-bar flex w-full translate-x-[-50%] flex-col items-center gap-4 px-2 pb-safe">
     <%= render BaseUI::Toasts::FlashComponent.new(flash:) %>
 
-    <% if show_bottom_navbar? %>
-      <%= render Navbars::BottomComponent.new(current_page_name:, current_user:, current_space:) %>
-    <% end %>
+    <%= render Navbars::GlobalBottomComponent.new(current_page_name:, current_user:) %>
   </div>
 </div>

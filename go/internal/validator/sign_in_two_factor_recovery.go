@@ -12,12 +12,12 @@ import (
 // リカバリーコードは8文字の英小文字と数字のみ
 var recoveryCodeRegex = regexp.MustCompile(`^[a-z0-9]{8}$`)
 
-// SignInTwoFactorRecoveryCreateValidator はリカバリーコード認証のバリデーションを行う
+// SignInTwoFactorRecoveryCreateValidatorはリカバリーコード認証のバリデーションを行う
 type SignInTwoFactorRecoveryCreateValidator struct {
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository
 }
 
-// NewSignInTwoFactorRecoveryCreateValidator は SignInTwoFactorRecoveryCreateValidator を生成する
+// NewSignInTwoFactorRecoveryCreateValidatorはSignInTwoFactorRecoveryCreateValidatorを生成する
 func NewSignInTwoFactorRecoveryCreateValidator(
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository,
 ) *SignInTwoFactorRecoveryCreateValidator {
@@ -26,13 +26,13 @@ func NewSignInTwoFactorRecoveryCreateValidator(
 	}
 }
 
-// SignInTwoFactorRecoveryCreateValidatorInput はバリデーションの入力パラメータ
+// SignInTwoFactorRecoveryCreateValidatorInputはバリデーションの入力パラメータ
 type SignInTwoFactorRecoveryCreateValidatorInput struct {
 	UserID       model.UserID
 	RecoveryCode string
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *SignInTwoFactorRecoveryCreateValidator) Validate(ctx context.Context, input SignInTwoFactorRecoveryCreateValidatorInput) (*model.UserTwoFactorAuth, error) {
 	// 1. 形式バリデーション
 	ve := model.NewValidationError()
@@ -47,7 +47,7 @@ func (v *SignInTwoFactorRecoveryCreateValidator) Validate(ctx context.Context, i
 		return nil, ve
 	}
 
-	// 2. 状態バリデーション（DB検証）
+	// 2. 状態バリデーション (DB検証)
 	twoFactorAuth, err := v.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, input.UserID)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (v *SignInTwoFactorRecoveryCreateValidator) Validate(ctx context.Context, i
 	return twoFactorAuth, nil
 }
 
-// isValidRecoveryCode はリカバリーコードが有効かどうかを確認する
+// isValidRecoveryCodeはリカバリーコードが有効かどうかを確認する
 func isValidRecoveryCode(twoFactorAuth *model.UserTwoFactorAuth, code string) bool {
 	for _, recoveryCode := range twoFactorAuth.RecoveryCodes {
 		if recoveryCode == code {

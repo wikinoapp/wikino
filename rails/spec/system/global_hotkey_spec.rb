@@ -22,28 +22,6 @@ RSpec.describe "Global Hotkey", type: :system do
     expect(page).to have_current_path(search_path)
   end
 
-  it "ページ内でsキーまたは/キーを押すとspace:フィルターが付与された検索ページに遷移すること", :js do
-    user_record = create(:user_record, :with_password)
-    space_record = create(:space_record, identifier: "test-space")
-    topic_record = create(:topic_record, space_record:)
-    create(:space_member_record, user_record:, space_record:)
-    page_record = create(:page_record, :published, space_record:, topic_record:)
-    sign_in(user_record:)
-
-    visit_with_global_hotkey(page_path(space_record.identifier, page_record.number))
-
-    # sキーを押すとspace:フィルターが付与された検索ページに遷移
-    page.driver.browser.action.send_keys("s").perform
-    expect(page).to have_current_path(search_path(q: "space:test-space"))
-
-    # ページに戻る
-    visit_with_global_hotkey(page_path(space_record.identifier, page_record.number))
-
-    # /キーを押すとspace:フィルターが付与された検索ページに遷移
-    page.driver.browser.action.send_keys("/").perform
-    expect(page).to have_current_path(search_path(q: "space:test-space"))
-  end
-
   # Visits the given path and waits until the global-hotkey controller is ready.
   #
   # [Ja] 指定パスへ遷移し、global-hotkey コントローラの connect 完了まで待つ。

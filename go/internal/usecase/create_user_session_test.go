@@ -30,31 +30,31 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 			UserAgent: "Mozilla/5.0",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("Execute() returned nil, want output")
+			t.Fatal("Execute()がnilを返した、期待値 = 出力")
 		}
 		if output.Token == "" {
-			t.Error("Execute() returned empty token")
+			t.Error("Execute()が空のトークンを返した")
 		}
 
 		// DBに保存されていることを確認
 		session, err := userSessionRepo.FindByToken(context.Background(), output.Token)
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("FindByToken() returned nil, want session")
+			t.Fatal("FindByToken()がnilを返した、期待値 = セッション")
 		}
 		if session.UserID != userID {
-			t.Errorf("session.UserID = %v, want %v", session.UserID, userID)
+			t.Errorf("session.UserID = %v、期待値 = %v", session.UserID, userID)
 		}
 		if session.IPAddress != "192.168.1.1" {
-			t.Errorf("session.IPAddress = %v, want 192.168.1.1", session.IPAddress)
+			t.Errorf("session.IPAddress = %v、期待値 = 192.168.1.1", session.IPAddress)
 		}
 		if session.UserAgent != "Mozilla/5.0" {
-			t.Errorf("session.UserAgent = %v, want Mozilla/5.0", session.UserAgent)
+			t.Errorf("session.UserAgent = %v、期待値 = Mozilla/5.0", session.UserAgent)
 		}
 	})
 
@@ -77,27 +77,27 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 			UserAgent: "",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("Execute() returned nil, want output")
+			t.Fatal("Execute()がnilを返した、期待値 = 出力")
 		}
 		if output.Token == "" {
-			t.Error("Execute() returned empty token")
+			t.Error("Execute()が空のトークンを返した")
 		}
 
 		session, err := userSessionRepo.FindByToken(context.Background(), output.Token)
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("FindByToken() returned nil, want session")
+			t.Fatal("FindByToken()がnilを返した、期待値 = セッション")
 		}
 		if session.IPAddress != "" {
-			t.Errorf("session.IPAddress = %v, want empty string", session.IPAddress)
+			t.Errorf("session.IPAddress = %v、期待値 = 空文字列", session.IPAddress)
 		}
 		if session.UserAgent != "" {
-			t.Errorf("session.UserAgent = %v, want empty string", session.UserAgent)
+			t.Errorf("session.UserAgent = %v、期待値 = 空文字列", session.UserAgent)
 		}
 	})
 
@@ -122,16 +122,16 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 
 		output1, err := uc.Execute(context.Background(), input)
 		if err != nil {
-			t.Fatalf("Execute() first call error = %v", err)
+			t.Fatalf("1回目のExecute()のエラー = %v", err)
 		}
 
 		output2, err := uc.Execute(context.Background(), input)
 		if err != nil {
-			t.Fatalf("Execute() second call error = %v", err)
+			t.Fatalf("2回目のExecute()のエラー = %v", err)
 		}
 
 		if output1.Token == output2.Token {
-			t.Error("Execute() returned same token for different calls")
+			t.Error("Execute()が別々の呼び出しで同じトークンを返した")
 		}
 	})
 
@@ -149,7 +149,7 @@ func TestCreateUserSessionUsecase_Execute(t *testing.T) {
 			UserAgent: "Mozilla/5.0",
 		})
 		if err == nil {
-			t.Error("Execute() expected error for non-existent user, got nil")
+			t.Error("存在しないユーザーでExecute()のエラーを期待したが、nilだった")
 		}
 	})
 }

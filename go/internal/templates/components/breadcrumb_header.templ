@@ -1,0 +1,302 @@
+package components
+
+import (
+	"context"
+	"strings"
+	"unicode"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// BreadcrumbItemはパンくずリストの1項目を表す。
+type BreadcrumbItem struct {
+	Label    string
+	Path     templates.Path
+	IconName viewmodel.IconName
+
+	// IsCurrentは現在のページを表す。現在項目はリンクにせずaria-current="page" を付ける。
+	IsCurrent bool
+
+	// AriaLabelはLabelが空のアイコンのみの項目をラベル付けする。
+	AriaLabel string
+}
+
+// HomeBreadcrumbItemsはログイン済みの閲覧者に先頭のホーム項目を返し、未ログインでは何も返さない。
+// /homeは認証必須のため、未ログインでも到達できる画面が経路の起点として提示してはいけない。リンクは
+// 未ログインの訪問者をログイン画面へ送ってしまい、同じ項目列から作るBreadcrumbList JSON-LDはそれを
+// ページの正規の親として宣言してしまう。認証必須の画面は常にtrueを渡す。
+func HomeBreadcrumbItems(ctx context.Context, signedIn bool) []BreadcrumbItem {
+	if !signedIn {
+		return nil
+	}
+
+	return []BreadcrumbItem{
+		{
+			Path:      templates.HomePath(),
+			IconName:  "house-regular",
+			AriaLabel: templates.T(ctx, "breadcrumb_home"),
+		},
+	}
+}
+
+// defaultBreadcrumbHeaderMaxWidthClassは、画面がMaxWidthClassを空のままにしたときにヘッダーが
+// フォールバックする幅。多くの画面が渡す値であり、渡し忘れた画面でもバーがビューポート端まで伸びず、
+// ヘッダーが本文コンテナに揃う。
+const defaultBreadcrumbHeaderMaxWidthClass = "max-w-3xl"
+
+// BreadcrumbHeaderDataはパンくずヘッダーに渡すデータ構造体です。
+type BreadcrumbHeaderData struct {
+	Items []BreadcrumbItem
+
+	// StructuredDataBaseURLはBreadcrumbList JSON-LDを有効にし、リンク項目を絶対URLにする
+	// 接頭辞を渡す。未ログインでも到達できるルートの画面が渡し、認証必須の画面は空のままにする。
+	// クローラーがたどれない経路を機械可読なデータとして出さないためである。公開ルートの画面は、個々の
+	// 応答が非公開になり得ても (非公開トピックのページ・ゴミ箱のページ) これを渡す。その応答が届くのは
+	// 読む権限をすでに持つ閲覧者だけで、クローラーは同じURLで404を受けるためである。
+	StructuredDataBaseURL string
+
+	// MaxWidthClassはヘッダーのコンテナのmax-widthクラス。各画面が本文コンテナと同じ値を
+	// 渡すことで、パンくずの左端とナビバーの右端が本文と揃う (例: "max-w-3xl")。空の値が既定幅に
+	// 解決されるよう、直接ではなくResolvedMaxWidthClass経由で読む。
+	MaxWidthClass string
+}
+
+// ResolvedMaxWidthClassはヘッダーのコンテナに付けるmax-widthクラスを返し、画面が渡していない
+// 場合は既定幅にフォールバックする。フォールバックが無いと、空の値はmax-widthの付かないコンテナに
+// なり、ヘッダーがビューポート端まで伸びてナビバーの右端が本文と揃わなくなる。
+func (d BreadcrumbHeaderData) ResolvedMaxWidthClass() string {
+	if d.MaxWidthClass == "" {
+		return defaultBreadcrumbHeaderMaxWidthClass
+	}
+	return d.MaxWidthClass
+}
+
+// hasNavigableItemsは経路に移動先の項目が1つ以上あるかを返す。現在項目 (リンクにせず描画する)
+// だけの経路は上位へ戻る手段を持たないため、たどる先の無いナビゲーションランドマークを描画せず
+// パンくずごと落とす。親が認証必須の公開画面は、未ログインの閲覧者にホーム項目を出さなくなった結果
+// この状態になる。
+func (d BreadcrumbHeaderData) hasNavigableItems() bool {
+	for _, item := range d.Items {
+		if item.Path != "" && !item.IsCurrent {
+			return true
+		}
+	}
+
+	return false
+}
+
+type breadcrumbListStructuredData struct {
+	Context         string               `json:"@context"`
+	Type            string               `json:"@type"`
+	ItemListElement []breadcrumbListItem `json:"itemListElement"`
+}
+
+type breadcrumbListItem struct {
+	Type     string `json:"@type"`
+	Position int    `json:"position"`
+	Name     string `json:"name"`
+	Item     string `json:"item,omitempty"`
+}
+
+// breadcrumbListStructuredDataはUIと同じ項目から機械可読なパンくずを作り、順序・ローカライズ
+// された名前・正規リンクがずれないようにする。
+func (d BreadcrumbHeaderData) breadcrumbListStructuredData() *breadcrumbListStructuredData {
+	if d.StructuredDataBaseURL == "" || !d.hasNavigableItems() {
+		return nil
+	}
+
+	items := make([]breadcrumbListItem, 0, len(d.Items))
+	for _, item := range d.Items {
+		name := item.Label
+		if name == "" {
+			name = item.AriaLabel
+		}
+		if name == "" {
+			continue
+		}
+
+		listItem := breadcrumbListItem{
+			Type:     "ListItem",
+			Position: len(items) + 1,
+			Name:     name,
+		}
+		if item.Path != "" && !item.IsCurrent {
+			listItem.Item = strings.TrimRight(d.StructuredDataBaseURL, "/") + string(item.Path)
+		}
+		items = append(items, listItem)
+	}
+
+	if len(items) == 0 {
+		return nil
+	}
+
+	return &breadcrumbListStructuredData{
+		Context:         "https://schema.org",
+		Type:            "BreadcrumbList",
+		ItemListElement: items,
+	}
+}
+
+// BreadcrumbListStructuredDataは絶対ベースURLを指定したヘッダーにBreadcrumbList JSON-LDを
+// 描画する。templ.JSONScriptがJSONエンコードするため、ラベルがscript要素の外へ脱出することはない。
+templ BreadcrumbListStructuredData(data BreadcrumbHeaderData) {
+	if structuredData := data.breadcrumbListStructuredData(); structuredData != nil {
+		@templ.JSONScript("", structuredData).WithType("application/ld+json")
+	}
+}
+
+// BreadcrumbHeaderRenderDataは、独立して供給されるパンくずヘッダーとグローバルナビのデータを、
+// BreadcrumbHeaderに渡す1つの値へまとめる。
+type BreadcrumbHeaderRenderData struct {
+	Header    BreadcrumbHeaderData
+	GlobalNav GlobalNavData
+
+	// HideGlobalNavはヘッダーからナビバーを落とし、パンくずをヘッダーの唯一の中身にする。
+	// グローバルナビの対象外にする画面が指定する。
+	HideGlobalNav bool
+}
+
+// ShouldRenderはヘッダーに描画する中身があるかを返す。falseになるのは、画面がたどれるパンくず
+// 項目を持たず、かつグローバルナビの対象外である場合だけ。ヘッダーの両方の枠が空になり、描画すると
+// 中身の無いbannerランドマークが残ってしまう。
+func (d BreadcrumbHeaderRenderData) ShouldRender() bool {
+	return d.Header.hasNavigableItems() || !d.HideGlobalNav
+}
+
+// BreadcrumbHeaderはパンくずヘッダーを描画する。本文と同じ幅のコンテナの中で、左にパンくず・右に
+// グローバルナビバーを置く。パンくずはバーを潰さずに折り返すため、パンくず側にmin-w-0・バー側に
+// shrink-0を付ける。
+//
+// グローバルナビの対象で、たどれるパンくず項目のない画面もバーのためにヘッダーを描画し、たどる先の無い
+// パンくずランドマークを出す代わりに左側を空のままにする。その画面ではバーがヘッダーの唯一の中身に
+// なるため、ヘッダーはバーと一緒にmdで切り替わる。md未満では両方が隠れ、中身の無いbannerランド
+// マークが残らない。表示状態がflexではなくblockなのは、ヘッダーが単一のコンテナを通常フローで
+// 並べるためである。
+//
+// 上余白はレイアウト側のラッパーから受け取らずヘッダー自身が持つ。md未満で自身を隠す画面では、余白も
+// ヘッダーと一緒に消えるようにするためである。ラッパーだと本文の上に空白だけが残ってしまう。
+//
+// ShouldRenderがfalseのときは何も出力しないため、どの呼び出し側も中身の無いbannerランドマークを
+// 残せない。ヘッダーと一緒に自身のマークアップを落とす呼び出し側は、自身でもShouldRenderを見る。
+templ BreadcrumbHeader(data BreadcrumbHeaderRenderData) {
+	if data.ShouldRender() {
+		<header
+			class={ "pt-4",
+				templ.KV("hidden md:block", !data.Header.hasNavigableItems()) }
+		>
+			<div class={ data.Header.ResolvedMaxWidthClass(), "mx-auto flex w-full items-center justify-between gap-2 px-4" }>
+				<div class="min-w-0">
+					if data.Header.hasNavigableItems() {
+						@breadcrumbNav(data.Header.Items)
+					}
+				</div>
+
+				if !data.HideGlobalNav {
+					@GlobalNavTopBar(data.GlobalNav)
+				}
+			</div>
+		</header>
+	}
+}
+
+// breadcrumbLabelClassはラベルを描く幅の上限。上限を超える項目は、必要以上に行数を増やす
+// のではなく省略記号で切る。スペース名もページタイトルも自由入力のテキストで、どちらも単独で
+// 携帯電話の画面幅を埋める長さになりうるため。全文はDOMに残るので、スクリーンリーダーは全体を
+// 読み、ポインタはtitle属性で全文を呼び戻せる。
+//
+// 上限を付けた項目が1行に収まらないときは、経路はこれまでどおり折り返す。必ず1行に収まる
+// ところまで上限を厳しくすると、短い名前まで意味なく切られてしまう。
+const breadcrumbLabelClass = "max-w-48 truncate"
+
+// breadcrumbLabelTitleThresholdは、breadcrumbLabelClassが切り詰めうるラベルとして扱う
+// 半角単位の幅。max-w-48は12remで、text-smではおよそ27単位が収まる。しきい値をそれより
+// 下に置くのは、見積もりが境界付近に置いたラベルにもツールチップを残すため。収まっていた
+// ラベルに付いたツールチップは繰り返しで済むが、付かなかった場合は切り詰めた文字列を
+// 取り戻す手段が無くなる。
+const breadcrumbLabelTitleThreshold = 24
+
+// breadcrumbLabelNeedsTitleは、breadcrumbLabelClassが切り詰めうる長さのラベルかを返す。
+// title属性を付けるのはそのときだけとする。全体が描かれるラベルでは画面に出ている文字列を
+// 繰り返すだけで、ポインタが通り過ぎる項目ごとにツールチップが出るため。
+//
+// 切り詰めが起きるかは幅の問題で、サーバ側では測れないため、長さで代用する。ASCIIの外の
+// ルーンを2単位と数えるのは、これらのラベルが主に持つ日本語が、同じ大きさのラテン文字の
+// およそ2倍の幅で描かれるため。
+func breadcrumbLabelNeedsTitle(label string) bool {
+	units := 0
+	for _, r := range label {
+		if r > unicode.MaxASCII {
+			units += 2
+		} else {
+			units++
+		}
+
+		if units > breadcrumbLabelTitleThreshold {
+			return true
+		}
+	}
+
+	return false
+}
+
+// breadcrumbNavはパンくずリストを描画する。
+templ breadcrumbNav(items []BreadcrumbItem) {
+	<nav aria-label={ templates.T(ctx, "breadcrumb_label") }>
+		<ol class="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm">
+			for i, item := range items {
+				// 区切りは純粋に視覚的なもので、項目の切れ目はリストの構造がすでに表している。項目ごと
+				// 隠すことで、経路が倍の項目数を持つリストとして読み上げられ、その半分がアクセシブルネームの
+				// 無い項目になるのを防ぐ。
+				if i > 0 {
+					<li class="leading-none" aria-hidden="true">
+						@templates.DecorativeIcon("caret-right-regular", "size-3.5 fill-gray-500")
+					</li>
+				}
+				// このgapは下のリンク項目の内側のgapと揃える。アイコンとラベルの間隔は、
+				// それらを収める要素が決める。リンクの項目ではリンクが、現在地の項目ではこの項目
+				// 自身が収めるためである。値が2つあると、同じ項目が現在地になったりリンクに
+				// 戻ったりするたび、その差だけずれて見える。
+				<li
+					class="inline-flex min-w-0 items-center gap-1"
+					if item.IsCurrent {
+						aria-current="page"
+					}
+				>
+					if item.Path != "" && !item.IsCurrent {
+						if item.Label == "" && item.IconName != "" {
+							<a class="hover:text-foreground transition-colors inline-flex items-center" href={ templ.SafeURL(item.Path) } aria-label={ item.AriaLabel }>
+								@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
+							</a>
+						} else {
+							<a
+								class="hover:text-foreground transition-colors inline-flex min-w-0 items-center gap-1"
+								href={ templ.SafeURL(item.Path) }
+								if breadcrumbLabelNeedsTitle(item.Label) {
+									title={ item.Label }
+								}
+							>
+								if item.IconName != "" {
+									@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
+								}
+								<span class={ breadcrumbLabelClass }>{ item.Label }</span>
+							</a>
+						}
+					} else {
+						if item.IconName != "" {
+							@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
+						}
+						if item.Label != "" {
+							<span
+								class={ breadcrumbLabelClass }
+								if breadcrumbLabelNeedsTitle(item.Label) {
+									title={ item.Label }
+								}
+							>{ item.Label }</span>
+						}
+					}
+				</li>
+			}
+		</ol>
+	</nav>
+}

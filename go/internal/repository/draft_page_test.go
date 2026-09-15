@@ -56,54 +56,54 @@ func TestDraftPageRepository_FindByPageAndMember(t *testing.T) {
 	t.Run("ページIDとスペースメンバーIDで下書きを取得できる", func(t *testing.T) {
 		draft, err := repo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByPageAndMember() error = %v", err)
+			t.Fatalf("FindByPageAndMember()のエラー = %v", err)
 		}
 		if draft == nil {
-			t.Fatal("FindByPageAndMember() returned nil, want draft page")
+			t.Fatal("FindByPageAndMember()がnilを返した、期待値 = 下書き")
 		}
 		if draft.ID != draftPageID {
-			t.Errorf("draft.ID = %v, want %v", draft.ID, draftPageID)
+			t.Errorf("draft.ID = %v、期待値 = %v", draft.ID, draftPageID)
 		}
 		if draft.SpaceID != spaceID {
-			t.Errorf("draft.SpaceID = %v, want %v", draft.SpaceID, spaceID)
+			t.Errorf("draft.SpaceID = %v、期待値 = %v", draft.SpaceID, spaceID)
 		}
 		if draft.PageID != pageID {
-			t.Errorf("draft.PageID = %v, want %v", draft.PageID, pageID)
+			t.Errorf("draft.PageID = %v、期待値 = %v", draft.PageID, pageID)
 		}
 		if draft.SpaceMemberID != spaceMemberID {
-			t.Errorf("draft.SpaceMemberID = %v, want %v", draft.SpaceMemberID, spaceMemberID)
+			t.Errorf("draft.SpaceMemberID = %v、期待値 = %v", draft.SpaceMemberID, spaceMemberID)
 		}
 		if draft.TopicID != topicID {
-			t.Errorf("draft.TopicID = %v, want %v", draft.TopicID, topicID)
+			t.Errorf("draft.TopicID = %v、期待値 = %v", draft.TopicID, topicID)
 		}
 		if draft.Title == nil || *draft.Title != "Draft Title" {
-			t.Errorf("draft.Title = %v, want 'Draft Title'", draft.Title)
+			t.Errorf("draft.Title = %v、期待値 = 'Draft Title'", draft.Title)
 		}
 		if draft.Body != "Draft body" {
-			t.Errorf("draft.Body = %v, want 'Draft body'", draft.Body)
+			t.Errorf("draft.Body = %v、期待値 = 'Draft body'", draft.Body)
 		}
 		if draft.BodyHTML != "<p>Draft body</p>" {
-			t.Errorf("draft.BodyHTML = %v, want '<p>Draft body</p>'", draft.BodyHTML)
+			t.Errorf("draft.BodyHTML = %v、期待値 = '<p>Draft body</p>'", draft.BodyHTML)
 		}
 	})
 
 	t.Run("存在しないページIDはnilを返す", func(t *testing.T) {
 		draft, err := repo.FindByPageAndMember(context.Background(), "00000000-0000-0000-0000-000000000000", spaceMemberID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByPageAndMember() error = %v", err)
+			t.Fatalf("FindByPageAndMember()のエラー = %v", err)
 		}
 		if draft != nil {
-			t.Errorf("FindByPageAndMember() = %v, want nil", draft)
+			t.Errorf("FindByPageAndMember() = %v、期待値 = nil", draft)
 		}
 	})
 
 	t.Run("存在しないスペースメンバーIDはnilを返す", func(t *testing.T) {
 		draft, err := repo.FindByPageAndMember(context.Background(), pageID, "00000000-0000-0000-0000-000000000000", spaceID)
 		if err != nil {
-			t.Fatalf("FindByPageAndMember() error = %v", err)
+			t.Fatalf("FindByPageAndMember()のエラー = %v", err)
 		}
 		if draft != nil {
-			t.Errorf("FindByPageAndMember() = %v, want nil", draft)
+			t.Errorf("FindByPageAndMember() = %v、期待値 = nil", draft)
 		}
 	})
 }
@@ -157,31 +157,31 @@ func TestDraftPageRepository_Create(t *testing.T) {
 			ModifiedAt:    now,
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if draft == nil {
-			t.Fatal("Create() returned nil, want draft page")
+			t.Fatal("Create()がnilを返した、期待値 = 下書き")
 		}
 		if draft.ID == "" {
-			t.Error("draft.ID should not be empty")
+			t.Error("draft.IDが空")
 		}
 		if draft.SpaceID != spaceID {
-			t.Errorf("draft.SpaceID = %v, want %v", draft.SpaceID, spaceID)
+			t.Errorf("draft.SpaceID = %v、期待値 = %v", draft.SpaceID, spaceID)
 		}
 		if draft.PageID != pageID {
-			t.Errorf("draft.PageID = %v, want %v", draft.PageID, pageID)
+			t.Errorf("draft.PageID = %v、期待値 = %v", draft.PageID, pageID)
 		}
 		if draft.SpaceMemberID != spaceMemberID {
-			t.Errorf("draft.SpaceMemberID = %v, want %v", draft.SpaceMemberID, spaceMemberID)
+			t.Errorf("draft.SpaceMemberID = %v、期待値 = %v", draft.SpaceMemberID, spaceMemberID)
 		}
 		if draft.Title == nil || *draft.Title != "New Draft" {
-			t.Errorf("draft.Title = %v, want 'New Draft'", draft.Title)
+			t.Errorf("draft.Title = %v、期待値 = 'New Draft'", draft.Title)
 		}
 		if draft.Body != "draft body" {
-			t.Errorf("draft.Body = %v, want 'draft body'", draft.Body)
+			t.Errorf("draft.Body = %v、期待値 = 'draft body'", draft.Body)
 		}
 		if draft.BodyHTML != "<p>draft body</p>" {
-			t.Errorf("draft.BodyHTML = %v, want '<p>draft body</p>'", draft.BodyHTML)
+			t.Errorf("draft.BodyHTML = %v、期待値 = '<p>draft body</p>'", draft.BodyHTML)
 		}
 	})
 
@@ -206,10 +206,10 @@ func TestDraftPageRepository_Create(t *testing.T) {
 			ModifiedAt:    now,
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if draft.Title != nil {
-			t.Errorf("draft.Title = %v, want nil", draft.Title)
+			t.Errorf("draft.Title = %v、期待値 = nil", draft.Title)
 		}
 	})
 }
@@ -272,19 +272,19 @@ func TestDraftPageRepository_Update(t *testing.T) {
 			ModifiedAt:    now,
 		})
 		if err != nil {
-			t.Fatalf("Update() error = %v", err)
+			t.Fatalf("Update()のエラー = %v", err)
 		}
 		if draft == nil {
-			t.Fatal("Update() returned nil, want draft page")
+			t.Fatal("Update()がnilを返した、期待値 = 下書き")
 		}
 		if draft.Title == nil || *draft.Title != "After Update" {
-			t.Errorf("draft.Title = %v, want 'After Update'", draft.Title)
+			t.Errorf("draft.Title = %v、期待値 = 'After Update'", draft.Title)
 		}
 		if draft.Body != "new body" {
-			t.Errorf("draft.Body = %v, want 'new body'", draft.Body)
+			t.Errorf("draft.Body = %v、期待値 = 'new body'", draft.Body)
 		}
 		if draft.BodyHTML != "<p>new body</p>" {
-			t.Errorf("draft.BodyHTML = %v, want '<p>new body</p>'", draft.BodyHTML)
+			t.Errorf("draft.BodyHTML = %v、期待値 = '<p>new body</p>'", draft.BodyHTML)
 		}
 	})
 }
@@ -333,16 +333,16 @@ func TestDraftPageRepository_Delete(t *testing.T) {
 	t.Run("下書きを削除できる", func(t *testing.T) {
 		err := repo.Delete(context.Background(), draftPageID, spaceID)
 		if err != nil {
-			t.Fatalf("Delete() error = %v", err)
+			t.Fatalf("Delete()のエラー = %v", err)
 		}
 
 		// 削除後に取得できないことを確認
 		draft, err := repo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByPageAndMember() error = %v", err)
+			t.Fatalf("FindByPageAndMember()のエラー = %v", err)
 		}
 		if draft != nil {
-			t.Errorf("FindByPageAndMember() = %v, want nil (deleted draft should not be returned)", draft)
+			t.Errorf("FindByPageAndMember() = %v、期待値 = nil (削除済みの下書きが返されている)", draft)
 		}
 	})
 }
@@ -419,13 +419,13 @@ func TestDraftPageRepository_CreateWithSuggestionPageID(t *testing.T) {
 			ModifiedAt:       now,
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if draft.SuggestionPageID == nil {
-			t.Fatal("draft.SuggestionPageID should not be nil")
+			t.Fatal("draft.SuggestionPageIDがnil")
 		}
 		if *draft.SuggestionPageID != suggestionPageID {
-			t.Errorf("draft.SuggestionPageID = %v, want %v", *draft.SuggestionPageID, suggestionPageID)
+			t.Errorf("draft.SuggestionPageID = %v、期待値 = %v", *draft.SuggestionPageID, suggestionPageID)
 		}
 	})
 }
@@ -496,23 +496,23 @@ func TestDraftPageRepository_UpdateSuggestionPageID(t *testing.T) {
 	t.Run("suggestion_page_idを設定できる", func(t *testing.T) {
 		draft, err := repo.UpdateSuggestionPageID(context.Background(), draftPageID, spaceID, &suggestionPageID)
 		if err != nil {
-			t.Fatalf("UpdateSuggestionPageID() error = %v", err)
+			t.Fatalf("UpdateSuggestionPageID()のエラー = %v", err)
 		}
 		if draft.SuggestionPageID == nil {
-			t.Fatal("draft.SuggestionPageID should not be nil")
+			t.Fatal("draft.SuggestionPageIDがnil")
 		}
 		if *draft.SuggestionPageID != suggestionPageID {
-			t.Errorf("draft.SuggestionPageID = %v, want %v", *draft.SuggestionPageID, suggestionPageID)
+			t.Errorf("draft.SuggestionPageID = %v、期待値 = %v", *draft.SuggestionPageID, suggestionPageID)
 		}
 	})
 
 	t.Run("suggestion_page_idをクリアできる", func(t *testing.T) {
 		draft, err := repo.UpdateSuggestionPageID(context.Background(), draftPageID, spaceID, nil)
 		if err != nil {
-			t.Fatalf("UpdateSuggestionPageID() error = %v", err)
+			t.Fatalf("UpdateSuggestionPageID()のエラー = %v", err)
 		}
 		if draft.SuggestionPageID != nil {
-			t.Errorf("draft.SuggestionPageID = %v, want nil", *draft.SuggestionPageID)
+			t.Errorf("draft.SuggestionPageID = %v、期待値 = nil", *draft.SuggestionPageID)
 		}
 	})
 }
@@ -572,13 +572,13 @@ func TestDraftPageRepository_CreateWithFeaturedImageAttachmentID(t *testing.T) {
 			ModifiedAt:                now,
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if draft.FeaturedImageAttachmentID == nil {
-			t.Fatal("draft.FeaturedImageAttachmentID should not be nil")
+			t.Fatal("draft.FeaturedImageAttachmentIDがnil")
 		}
 		if *draft.FeaturedImageAttachmentID != attachmentID {
-			t.Errorf("draft.FeaturedImageAttachmentID = %v, want %v", *draft.FeaturedImageAttachmentID, attachmentID)
+			t.Errorf("draft.FeaturedImageAttachmentID = %v、期待値 = %v", *draft.FeaturedImageAttachmentID, attachmentID)
 		}
 	})
 
@@ -605,10 +605,10 @@ func TestDraftPageRepository_CreateWithFeaturedImageAttachmentID(t *testing.T) {
 			ModifiedAt:                now,
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if draft.FeaturedImageAttachmentID != nil {
-			t.Errorf("draft.FeaturedImageAttachmentID = %v, want nil", *draft.FeaturedImageAttachmentID)
+			t.Errorf("draft.FeaturedImageAttachmentID = %v、期待値 = nil", *draft.FeaturedImageAttachmentID)
 		}
 	})
 }
@@ -677,13 +677,13 @@ func TestDraftPageRepository_UpdateWithFeaturedImageAttachmentID(t *testing.T) {
 			ModifiedAt:                now,
 		})
 		if err != nil {
-			t.Fatalf("Update() error = %v", err)
+			t.Fatalf("Update()のエラー = %v", err)
 		}
 		if draft.FeaturedImageAttachmentID == nil {
-			t.Fatal("draft.FeaturedImageAttachmentID should not be nil")
+			t.Fatal("draft.FeaturedImageAttachmentIDがnil")
 		}
 		if *draft.FeaturedImageAttachmentID != attachmentID {
-			t.Errorf("draft.FeaturedImageAttachmentID = %v, want %v", *draft.FeaturedImageAttachmentID, attachmentID)
+			t.Errorf("draft.FeaturedImageAttachmentID = %v、期待値 = %v", *draft.FeaturedImageAttachmentID, attachmentID)
 		}
 	})
 
@@ -702,10 +702,10 @@ func TestDraftPageRepository_UpdateWithFeaturedImageAttachmentID(t *testing.T) {
 			ModifiedAt:                now,
 		})
 		if err != nil {
-			t.Fatalf("Update() error = %v", err)
+			t.Fatalf("Update()のエラー = %v", err)
 		}
 		if draft.FeaturedImageAttachmentID != nil {
-			t.Errorf("draft.FeaturedImageAttachmentID = %v, want nil", *draft.FeaturedImageAttachmentID)
+			t.Errorf("draft.FeaturedImageAttachmentID = %v、期待値 = nil", *draft.FeaturedImageAttachmentID)
 		}
 	})
 }
@@ -722,7 +722,7 @@ func TestDraftPageRepository_ListByUserForIndex(t *testing.T) {
 		WithAtname("draftindex").
 		Build()
 
-	// スペースBを先に作成（名前順ソートでBが後に来ることを確認するため）
+	// スペースBを先に作成 (名前順ソートでBが後に来ることを確認するため)
 	spaceB := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("draft-idx-b").
 		WithName("Space B").
@@ -750,7 +750,7 @@ func TestDraftPageRepository_ListByUserForIndex(t *testing.T) {
 		WithTitle("Draft B").
 		Build()
 
-	// スペースA（名前順ソートでAが先に来る）
+	// スペースA (名前順ソートでAが先に来る)
 	spaceA := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("draft-idx-a").
 		WithName("Space A").
@@ -781,35 +781,35 @@ func TestDraftPageRepository_ListByUserForIndex(t *testing.T) {
 	t.Run("スペース名・トピック名の順にソートされた下書き一覧を取得できる", func(t *testing.T) {
 		drafts, err := repo.ListByUserForIndex(context.Background(), userID)
 		if err != nil {
-			t.Fatalf("ListByUserForIndex() error = %v", err)
+			t.Fatalf("ListByUserForIndex()のエラー = %v", err)
 		}
 		if len(drafts) != 2 {
-			t.Fatalf("ListByUserForIndex() returned %d drafts, want 2", len(drafts))
+			t.Fatalf("ListByUserForIndex()が返した下書きの件数 = %d、期待値 = 2", len(drafts))
 		}
 
-		// Space A が先、Space B が後
+		// Space Aが先、Space Bが後
 		if drafts[0].Title == nil || *drafts[0].Title != "Draft A" {
-			t.Errorf("drafts[0].Title = %v, want 'Draft A'", drafts[0].Title)
+			t.Errorf("drafts[0].Title = %v、期待値 = 'Draft A'", drafts[0].Title)
 		}
 		if drafts[1].Title == nil || *drafts[1].Title != "Draft B" {
-			t.Errorf("drafts[1].Title = %v, want 'Draft B'", drafts[1].Title)
+			t.Errorf("drafts[1].Title = %v、期待値 = 'Draft B'", drafts[1].Title)
 		}
 
 		// スペース名・トピック名・IDが設定されていることを確認
 		if drafts[0].Topic == nil || drafts[0].Topic.Space == nil {
-			t.Fatal("drafts[0].Topic.Space should not be nil")
+			t.Fatal("drafts[0].Topic.Spaceがnil")
 		}
 		if drafts[0].Topic.Space.Name != "Space A" {
-			t.Errorf("drafts[0].Topic.Space.Name = %v, want 'Space A'", drafts[0].Topic.Space.Name)
+			t.Errorf("drafts[0].Topic.Space.Name = %v、期待値 = 'Space A'", drafts[0].Topic.Space.Name)
 		}
 		if string(drafts[0].Topic.Space.ID) == "" {
-			t.Error("drafts[0].Topic.Space.ID should not be empty")
+			t.Error("drafts[0].Topic.Space.IDが空")
 		}
 		if drafts[0].Topic.Name != "Topic A1" {
-			t.Errorf("drafts[0].Topic.Name = %v, want 'Topic A1'", drafts[0].Topic.Name)
+			t.Errorf("drafts[0].Topic.Name = %v、期待値 = 'Topic A1'", drafts[0].Topic.Name)
 		}
 		if string(drafts[0].Topic.ID) == "" {
-			t.Error("drafts[0].Topic.ID should not be empty")
+			t.Error("drafts[0].Topic.IDが空")
 		}
 	})
 
@@ -821,10 +821,10 @@ func TestDraftPageRepository_ListByUserForIndex(t *testing.T) {
 
 		drafts, err := repo.ListByUserForIndex(context.Background(), otherUserID)
 		if err != nil {
-			t.Fatalf("ListByUserForIndex() error = %v", err)
+			t.Fatalf("ListByUserForIndex()のエラー = %v", err)
 		}
 		if len(drafts) != 0 {
-			t.Errorf("ListByUserForIndex() returned %d drafts, want 0", len(drafts))
+			t.Errorf("ListByUserForIndex()が返した下書きの件数 = %d、期待値 = 0", len(drafts))
 		}
 	})
 }
@@ -856,7 +856,7 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 		WithName("General").
 		Build()
 
-	// 下書きを3件作成（modified_atの順序をテストするため時間をずらす）
+	// 下書きを3件作成 (modified_atの順序をテストするため時間をずらす)
 	now := time.Now()
 
 	pageID1 := testutil.NewPageBuilder(t, tx).
@@ -907,56 +907,55 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 	t.Run("ユーザーの下書き一覧をmodified_at降順で取得できる", func(t *testing.T) {
 		drafts, err := repo.ListByUser(context.Background(), userID, 5)
 		if err != nil {
-			t.Fatalf("ListByUser() error = %v", err)
+			t.Fatalf("ListByUser()のエラー = %v", err)
 		}
 		if len(drafts) != 3 {
-			t.Fatalf("ListByUser() returned %d drafts, want 3", len(drafts))
+			t.Fatalf("ListByUser()が返した下書きの件数 = %d、期待値 = 3", len(drafts))
 		}
 
-		// modified_at DESC でソートされていることを確認
+		// modified_at DESCでソートされていることを確認
 		if drafts[0].Title == nil || *drafts[0].Title != "Draft 2" {
-			t.Errorf("drafts[0].Title = %v, want 'Draft 2'", drafts[0].Title)
+			t.Errorf("drafts[0].Title = %v、期待値 = 'Draft 2'", drafts[0].Title)
 		}
 		if drafts[1].Title == nil || *drafts[1].Title != "Draft 3" {
-			t.Errorf("drafts[1].Title = %v, want 'Draft 3'", drafts[1].Title)
+			t.Errorf("drafts[1].Title = %v、期待値 = 'Draft 3'", drafts[1].Title)
 		}
 		if drafts[2].Title == nil || *drafts[2].Title != "Draft 1" {
-			t.Errorf("drafts[2].Title = %v, want 'Draft 1'", drafts[2].Title)
+			t.Errorf("drafts[2].Title = %v、期待値 = 'Draft 1'", drafts[2].Title)
 		}
 
 		// 関連エンティティの情報が正しいことを確認
 		if drafts[0].Page == nil {
-			t.Fatal("drafts[0].Page should not be nil")
+			t.Fatal("drafts[0].Pageがnil")
 		}
 		if drafts[0].Page.Number != 2 {
-			t.Errorf("drafts[0].Page.Number = %v, want 2", drafts[0].Page.Number)
+			t.Errorf("drafts[0].Page.Number = %v、期待値 = 2", drafts[0].Page.Number)
 		}
 		if drafts[0].Topic == nil {
-			t.Fatal("drafts[0].Topic should not be nil")
+			t.Fatal("drafts[0].Topicがnil")
 		}
 		if drafts[0].Topic.Name != "General" {
-			t.Errorf("drafts[0].Topic.Name = %v, want 'General'", drafts[0].Topic.Name)
+			t.Errorf("drafts[0].Topic.Name = %v、期待値 = 'General'", drafts[0].Topic.Name)
 		}
 		if drafts[0].Topic.Space == nil {
-			t.Fatal("drafts[0].Topic.Space should not be nil")
+			t.Fatal("drafts[0].Topic.Spaceがnil")
 		}
 		if string(drafts[0].Topic.Space.Identifier) != "draft-list-space" {
-			t.Errorf("drafts[0].Topic.Space.Identifier = %v, want 'draft-list-space'", drafts[0].Topic.Space.Identifier)
+			t.Errorf("drafts[0].Topic.Space.Identifier = %v、期待値 = 'draft-list-space'", drafts[0].Topic.Space.Identifier)
 		}
-		// Verify Space.Name is populated for the home page CardLinkDraftPage. Builder default is "Test Space".
-		// [Ja] ホーム画面のカードでスペース名を表示するため Space.Name が設定されていることを確認する。SpaceBuilder のデフォルト名は "Test Space"。
+		// ホーム画面のカードでスペース名を表示するためSpace.Nameが設定されていることを確認する。SpaceBuilderのデフォルト名は "Test Space"。
 		if drafts[0].Topic.Space.Name != "Test Space" {
-			t.Errorf("drafts[0].Topic.Space.Name = %v, want 'Test Space'", drafts[0].Topic.Space.Name)
+			t.Errorf("drafts[0].Topic.Space.Name = %v、期待値 = 'Test Space'", drafts[0].Topic.Space.Name)
 		}
 	})
 
 	t.Run("LIMITが適用される", func(t *testing.T) {
 		drafts, err := repo.ListByUser(context.Background(), userID, 2)
 		if err != nil {
-			t.Fatalf("ListByUser() error = %v", err)
+			t.Fatalf("ListByUser()のエラー = %v", err)
 		}
 		if len(drafts) != 2 {
-			t.Fatalf("ListByUser() returned %d drafts, want 2", len(drafts))
+			t.Fatalf("ListByUser()が返した下書きの件数 = %d、期待値 = 2", len(drafts))
 		}
 	})
 
@@ -968,10 +967,10 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 
 		drafts, err := repo.ListByUser(context.Background(), otherUserID, 5)
 		if err != nil {
-			t.Fatalf("ListByUser() error = %v", err)
+			t.Fatalf("ListByUser()のエラー = %v", err)
 		}
 		if len(drafts) != 0 {
-			t.Errorf("ListByUser() returned %d drafts, want 0", len(drafts))
+			t.Errorf("ListByUser()が返した下書きの件数 = %d、期待値 = 0", len(drafts))
 		}
 	})
 
@@ -1014,10 +1013,10 @@ func TestDraftPageRepository_ListByUser(t *testing.T) {
 
 		drafts, err := repo.ListByUser(context.Background(), otherUserID, 5)
 		if err != nil {
-			t.Fatalf("ListByUser() error = %v", err)
+			t.Fatalf("ListByUser()のエラー = %v", err)
 		}
 		if len(drafts) != 0 {
-			t.Errorf("ListByUser() returned %d drafts, want 0 (discarded page should be excluded)", len(drafts))
+			t.Errorf("ListByUser()が返した下書きの件数 = %d、期待値 = 0 (削除済みページは除外される)", len(drafts))
 		}
 	})
 }
@@ -1051,8 +1050,7 @@ func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
 
 	now := time.Now()
 
-	// Create 3 drafts with staggered modified_at to test ordering.
-	// [Ja] 下書きを 3 件作成 (modified_at の順序をテストするため時間をずらす)。
+	// 下書きを3件作成 (modified_atの順序をテストするため時間をずらす)。
 	pageID1 := testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -1101,46 +1099,45 @@ func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
 	t.Run("スペースメンバーの下書き一覧をmodified_at降順で取得できる", func(t *testing.T) {
 		drafts, err := repo.ListBySpaceMember(context.Background(), spaceMemberID, spaceID, 20)
 		if err != nil {
-			t.Fatalf("ListBySpaceMember() error = %v", err)
+			t.Fatalf("ListBySpaceMember()のエラー = %v", err)
 		}
 		if len(drafts) != 3 {
-			t.Fatalf("ListBySpaceMember() returned %d drafts, want 3", len(drafts))
+			t.Fatalf("ListBySpaceMember()が返した下書きの件数 = %d、期待値 = 3", len(drafts))
 		}
 
 		if drafts[0].Title == nil || *drafts[0].Title != "Draft 2" {
-			t.Errorf("drafts[0].Title = %v, want 'Draft 2'", drafts[0].Title)
+			t.Errorf("drafts[0].Title = %v、期待値 = 'Draft 2'", drafts[0].Title)
 		}
 		if drafts[1].Title == nil || *drafts[1].Title != "Draft 3" {
-			t.Errorf("drafts[1].Title = %v, want 'Draft 3'", drafts[1].Title)
+			t.Errorf("drafts[1].Title = %v、期待値 = 'Draft 3'", drafts[1].Title)
 		}
 		if drafts[2].Title == nil || *drafts[2].Title != "Draft 1" {
-			t.Errorf("drafts[2].Title = %v, want 'Draft 1'", drafts[2].Title)
+			t.Errorf("drafts[2].Title = %v、期待値 = 'Draft 1'", drafts[2].Title)
 		}
 
-		// Verify the related entities are populated for the card view-model.
-		// [Ja] 関連エンティティの情報が正しいことを確認する。
+		// 関連エンティティの情報が正しいことを確認する。
 		if drafts[0].Page == nil || drafts[0].Page.Number != 2 {
-			t.Errorf("drafts[0].Page.Number = %v, want 2", drafts[0].Page)
+			t.Errorf("drafts[0].Page.Number = %v、期待値 = 2", drafts[0].Page)
 		}
 		if drafts[0].Topic == nil || drafts[0].Topic.Name != "General" {
-			t.Errorf("drafts[0].Topic.Name = %v, want 'General'", drafts[0].Topic)
+			t.Errorf("drafts[0].Topic.Name = %v、期待値 = 'General'", drafts[0].Topic)
 		}
 		if drafts[0].Topic.Space == nil || string(drafts[0].Topic.Space.Identifier) != "draft-sm-space" {
-			t.Errorf("drafts[0].Topic.Space.Identifier = %v, want 'draft-sm-space'", drafts[0].Topic.Space)
+			t.Errorf("drafts[0].Topic.Space.Identifier = %v、期待値 = 'draft-sm-space'", drafts[0].Topic.Space)
 		}
 	})
 
 	t.Run("LIMITが適用される", func(t *testing.T) {
 		drafts, err := repo.ListBySpaceMember(context.Background(), spaceMemberID, spaceID, 2)
 		if err != nil {
-			t.Fatalf("ListBySpaceMember() error = %v", err)
+			t.Fatalf("ListBySpaceMember()のエラー = %v", err)
 		}
 		if len(drafts) != 2 {
-			t.Fatalf("ListBySpaceMember() returned %d drafts, want 2", len(drafts))
+			t.Fatalf("ListBySpaceMember()が返した下書きの件数 = %d、期待値 = 2", len(drafts))
 		}
 	})
 
-	t.Run("提案編集用の下書き (suggestion_page_id 付き) も含まれる", func(t *testing.T) {
+	t.Run("提案編集用の下書き (suggestion_page_id付き) も含まれる", func(t *testing.T) {
 		pageID := testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -1178,7 +1175,7 @@ func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
 
 		drafts, err := repo.ListBySpaceMember(context.Background(), spaceMemberID, spaceID, 20)
 		if err != nil {
-			t.Fatalf("ListBySpaceMember() error = %v", err)
+			t.Fatalf("ListBySpaceMember()のエラー = %v", err)
 		}
 		found := false
 		for _, d := range drafts {
@@ -1187,7 +1184,7 @@ func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
 			}
 		}
 		if !found {
-			t.Error("suggestion-edit draft should be included in the list")
+			t.Error("一覧に編集提案用の下書きが含まれていない")
 		}
 	})
 
@@ -1203,10 +1200,10 @@ func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
 
 		drafts, err := repo.ListBySpaceMember(context.Background(), otherMemberID, spaceID, 20)
 		if err != nil {
-			t.Fatalf("ListBySpaceMember() error = %v", err)
+			t.Fatalf("ListBySpaceMember()のエラー = %v", err)
 		}
 		if len(drafts) != 0 {
-			t.Errorf("ListBySpaceMember() returned %d drafts, want 0 for a member with no drafts", len(drafts))
+			t.Errorf("ListBySpaceMember()が返した下書きの件数 = %d、期待値 = 0 (下書きの無いメンバー)", len(drafts))
 		}
 	})
 
@@ -1229,24 +1226,19 @@ func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
 
 		drafts, err := repo.ListBySpaceMember(context.Background(), spaceMemberID, spaceID, 20)
 		if err != nil {
-			t.Fatalf("ListBySpaceMember() error = %v", err)
+			t.Fatalf("ListBySpaceMember()のエラー = %v", err)
 		}
 		for _, d := range drafts {
 			if d.Title != nil && *d.Title == "Draft on discarded page" {
-				t.Error("draft on a discarded page should be excluded")
+				t.Error("削除済みページの下書きが除外されていない")
 			}
 		}
 	})
 }
 
-// Verifies the ON DELETE SET NULL contract on draft_pages that the Rails-side
-// deletion paths rely on: deleting the referenced suggestion_pages /
-// attachments row must null the reference while keeping the draft alive,
-// because drafts are user work-in-progress and must not be deleted along.
-//
-// [Ja] Rails 側の削除経路が頼る draft_pages の ON DELETE SET NULL の契約を
-// 検証する。参照先の suggestion_pages / attachments の行を削除したとき、
-// 参照は NULL になり下書き自体は残ること。下書きはユーザーの書きかけ原稿で
+// Rails側の削除経路が頼るdraft_pagesのON DELETE SET NULLの契約を
+// 検証する。参照先のsuggestion_pages / attachmentsの行を削除したとき、
+// 参照はNULLになり下書き自体は残ること。下書きはユーザーの書きかけ原稿で
 // あり、巻き添えで消してはならない。
 func TestDraftPageRepository_OnDeleteSetNull(t *testing.T) {
 	t.Parallel()
@@ -1302,15 +1294,14 @@ func TestDraftPageRepository_OnDeleteSetNull(t *testing.T) {
 			WithSuggestionPageID(suggestionPageID).
 			Build()
 
-		// Delete the referenced suggestion_pages row directly (without going through application code)
-		// [Ja] 参照先の suggestion_pages の行を直接削除 (アプリケーションコードを経由しない)
+		// 参照先のsuggestion_pagesの行を直接削除 (アプリケーションコードを経由しない)
 		_, err := tx.ExecContext(
 			ctx,
 			"DELETE FROM suggestion_pages WHERE id = $1 AND space_id = $2",
 			string(suggestionPageID), string(spaceID),
 		)
 		if err != nil {
-			t.Fatalf("DELETE suggestion_pages error = %v", err)
+			t.Fatalf("DELETE suggestion_pagesのエラー = %v", err)
 		}
 
 		var suggestionPageIsNull bool
@@ -1319,10 +1310,10 @@ func TestDraftPageRepository_OnDeleteSetNull(t *testing.T) {
 			"SELECT suggestion_page_id IS NULL FROM draft_pages WHERE id = $1 AND space_id = $2",
 			string(draftPageID), string(spaceID),
 		).Scan(&suggestionPageIsNull); err != nil {
-			t.Fatalf("SELECT draft_pages.suggestion_page_id error = %v", err)
+			t.Fatalf("SELECT draft_pages.suggestion_page_idのエラー = %v", err)
 		}
 		if !suggestionPageIsNull {
-			t.Error("draft_pages.suggestion_page_id should be NULL after deleting the suggestion page")
+			t.Error("編集提案ページの削除後もdraft_pages.suggestion_page_idがNULLになっていない")
 		}
 	})
 
@@ -1353,7 +1344,7 @@ func TestDraftPageRepository_OnDeleteSetNull(t *testing.T) {
 			string(attachmentID), string(spaceID),
 		)
 		if err != nil {
-			t.Fatalf("DELETE attachments error = %v", err)
+			t.Fatalf("DELETE attachmentsのエラー = %v", err)
 		}
 
 		var featuredImageIsNull bool
@@ -1362,24 +1353,23 @@ func TestDraftPageRepository_OnDeleteSetNull(t *testing.T) {
 			"SELECT featured_image_attachment_id IS NULL FROM draft_pages WHERE id = $1 AND space_id = $2",
 			string(draftPageID), string(spaceID),
 		).Scan(&featuredImageIsNull); err != nil {
-			t.Fatalf("SELECT draft_pages.featured_image_attachment_id error = %v", err)
+			t.Fatalf("SELECT draft_pages.featured_image_attachment_idのエラー = %v", err)
 		}
 		if !featuredImageIsNull {
-			t.Error("draft_pages.featured_image_attachment_id should be NULL after deleting the attachment")
+			t.Error("添付ファイルの削除後もdraft_pages.featured_image_attachment_idがNULLになっていない")
 		}
 
-		// The draft itself must survive the attachment deletion.
-		// [Ja] 下書き自体は添付ファイルの削除後も残ること。
+		// 下書き自体は添付ファイルの削除後も残ること。
 		var draftCount int
 		if err := tx.QueryRowContext(
 			ctx,
 			"SELECT COUNT(*) FROM draft_pages WHERE id = $1 AND space_id = $2",
 			string(draftPageID), string(spaceID),
 		).Scan(&draftCount); err != nil {
-			t.Fatalf("SELECT COUNT(*) FROM draft_pages error = %v", err)
+			t.Fatalf("SELECT COUNT(*) FROM draft_pagesのエラー = %v", err)
 		}
 		if draftCount != 1 {
-			t.Errorf("draft_pages count = %d, want 1 (draft must not be deleted)", draftCount)
+			t.Errorf("draft_pagesの件数 = %d、期待値 = 1 (下書きが削除されている)", draftCount)
 		}
 	})
 }

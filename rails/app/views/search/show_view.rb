@@ -33,6 +33,11 @@ module Search
       PageName::Search
     end
 
+    sig { returns(BaseUI::ContainerComponent::ContentScreen) }
+    private def content_screen
+      BaseUI::ContainerComponent::ContentScreen::Medium
+    end
+
     sig { returns(T::Boolean) }
     private def has_search_results?
       pages.any?

@@ -1,4 +1,4 @@
-// Package testutil はテスト用のユーティリティを提供します
+// Package testutilはテスト用のユーティリティを提供します
 package testutil
 
 import (
@@ -12,11 +12,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/auth"
 )
 
-// testDB はパッケージレベルで共有するDB接続プール
+// testDBはパッケージレベルで共有するDB接続プール
 // SetupTestMainで初期化される
 var testDB *sql.DB
 
-// getTestDBURL はテスト用DBのURLを取得します
+// getTestDBURLはテスト用DBのURLを取得します
 func getTestDBURL() string {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -25,7 +25,7 @@ func getTestDBURL() string {
 	return dbURL
 }
 
-// SetupTestMain はTestMain内で呼び出し、パッケージ共有のDB接続を初期化します。
+// SetupTestMainはTestMain内で呼び出し、パッケージ共有のDB接続を初期化します。
 // 戻り値をos.Exitに渡してください。
 //
 // 使用例:
@@ -34,7 +34,7 @@ func getTestDBURL() string {
 //	    os.Exit(testutil.SetupTestMain(m))
 //	}
 func SetupTestMain(m *testing.M) int {
-	// テスト用にbcryptコストを下げる（DefaultCost 10 → MinCost 4 で約64倍高速化）
+	// テスト用にbcryptコストを下げる (DefaultCost 10 → MinCost 4で約64倍高速化)
 	auth.BcryptCost = auth.TestBcryptCost
 
 	var err error
@@ -53,7 +53,7 @@ func SetupTestMain(m *testing.M) int {
 	return m.Run()
 }
 
-// GetTestDB はSetupTestMainで初期化されたDB接続プールへの参照を返します。
+// GetTestDBはSetupTestMainで初期化されたDB接続プールへの参照を返します。
 // SetupTestMainが呼ばれていない場合はpanicします。
 func GetTestDB() *sql.DB {
 	if testDB == nil {
@@ -62,7 +62,7 @@ func GetTestDB() *sql.DB {
 	return testDB
 }
 
-// SetupTx はテスト用のトランザクションをセットアップします。
+// SetupTxはテスト用のトランザクションをセットアップします。
 // SetupTestMainで初期化されたDB接続プールを使用します。
 // テスト終了時にトランザクションは自動的にロールバックされます。
 func SetupTx(t *testing.T) (*sql.DB, *sql.Tx) {

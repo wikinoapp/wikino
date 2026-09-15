@@ -13,7 +13,8 @@
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true
+    "noImplicitReturns": true,
+    "types": []
   },
   "include": ["web/**/*"],
   "exclude": ["node_modules"]

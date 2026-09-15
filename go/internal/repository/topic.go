@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// TopicRepository はトピックリポジトリ
+// TopicRepositoryはトピックリポジトリ
 type TopicRepository struct {
 	q *query.Queries
 }
 
-// NewTopicRepository は TopicRepository を生成する
+// NewTopicRepositoryはTopicRepositoryを生成する
 func NewTopicRepository(q *query.Queries) *TopicRepository {
 	return &TopicRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *TopicRepository) WithTx(tx *sql.Tx) *TopicRepository {
 	return &TopicRepository{q: r.q.WithTx(tx)}
 }
 
-// FindBySpaceAndID はスペースIDとIDでトピックを取得する（削除されていないトピックのみ）
+// FindBySpaceAndIDはスペースIDとIDでトピックを取得する (削除されていないトピックのみ)
 func (r *TopicRepository) FindBySpaceAndID(ctx context.Context, spaceID model.SpaceID, topicID model.TopicID) (*model.Topic, error) {
 	row, err := r.q.FindTopicBySpaceAndID(ctx, query.FindTopicBySpaceAndIDParams{
 		SpaceID: string(spaceID),
@@ -40,7 +40,7 @@ func (r *TopicRepository) FindBySpaceAndID(ctx context.Context, spaceID model.Sp
 	return r.toModel(row), nil
 }
 
-// FindBySpaceAndNumber はスペースIDとナンバーでトピックを取得する（削除されていないトピックのみ）
+// FindBySpaceAndNumberはスペースIDとナンバーでトピックを取得する (削除されていないトピックのみ)
 func (r *TopicRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model.SpaceID, number int32) (*model.Topic, error) {
 	row, err := r.q.FindTopicBySpaceAndNumber(ctx, query.FindTopicBySpaceAndNumberParams{
 		SpaceID: string(spaceID),
@@ -55,7 +55,7 @@ func (r *TopicRepository) FindBySpaceAndNumber(ctx context.Context, spaceID mode
 	return r.toModel(row), nil
 }
 
-// ListActiveBySpace はスペースIDでアクティブなトピック一覧を取得する
+// ListActiveBySpaceはスペースIDでアクティブなトピック一覧を取得する
 func (r *TopicRepository) ListActiveBySpace(ctx context.Context, spaceID model.SpaceID) ([]*model.Topic, error) {
 	rows, err := r.q.ListActiveTopicsBySpace(ctx, string(spaceID))
 	if err != nil {
@@ -64,12 +64,8 @@ func (r *TopicRepository) ListActiveBySpace(ctx context.Context, spaceID model.S
 	return r.toModels(rows), nil
 }
 
-// ListPublicBySpace returns the active public topics (not-discarded, visibility = public) in the
-// given space, ordered by number. Used by the topic section shown to non-members (guests) on the
-// space detail page, where only public topics are visible.
-//
-// [Ja] ListPublicBySpace は指定スペース内のアクティブな公開トピック (未廃棄・visibility = public) を
-// number 順で返す。スペース詳細画面で非メンバー (ゲスト) に表示するトピックセクションで使用し、
+// ListPublicBySpaceは指定スペース内のアクティブな公開トピック (未廃棄・visibility = public) を
+// number順で返す。スペース詳細画面で非メンバー (ゲスト) に表示するトピックセクションで使用し、
 // ここでは公開トピックのみが見える。
 func (r *TopicRepository) ListPublicBySpace(ctx context.Context, spaceID model.SpaceID) ([]*model.Topic, error) {
 	rows, err := r.q.ListPublicTopicsBySpace(ctx, string(spaceID))
@@ -79,7 +75,7 @@ func (r *TopicRepository) ListPublicBySpace(ctx context.Context, spaceID model.S
 	return r.toModels(rows), nil
 }
 
-// FindBySpaceAndNames はスペースIDと名前リストでトピックを取得する（Wikiリンク解析時のトピック一括検索用）
+// FindBySpaceAndNamesはスペースIDと名前リストでトピックを取得する (Wikiリンク解析時のトピック一括検索用)
 func (r *TopicRepository) FindBySpaceAndNames(ctx context.Context, spaceID model.SpaceID, names []string) ([]*model.Topic, error) {
 	rows, err := r.q.FindTopicsBySpaceAndNames(ctx, query.FindTopicsBySpaceAndNamesParams{
 		SpaceID: string(spaceID),
@@ -91,7 +87,7 @@ func (r *TopicRepository) FindBySpaceAndNames(ctx context.Context, spaceID model
 	return r.toModels(rows), nil
 }
 
-// ListJoinedBySpaceMember はスペースメンバーが参加しているトピック一覧を取得する（編集画面のトピックセレクター用）
+// ListJoinedBySpaceMemberはスペースメンバーが参加しているトピック一覧を取得する (編集画面のトピックセレクター用)
 func (r *TopicRepository) ListJoinedBySpaceMember(ctx context.Context, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID) ([]*model.Topic, error) {
 	rows, err := r.q.ListTopicsJoinedBySpaceMember(ctx, query.ListTopicsJoinedBySpaceMemberParams{
 		SpaceMemberID: string(spaceMemberID),
@@ -103,12 +99,7 @@ func (r *TopicRepository) ListJoinedBySpaceMember(ctx context.Context, spaceMemb
 	return r.toModels(rows), nil
 }
 
-// FindFirstJoinedBySpaceMember returns the topic with the smallest id among those the
-// space member has joined (not-discarded topics only), scoped to the given space. Returns
-// (nil, nil) when none is found. Used by the empty-state "create a new page" link on the
-// space detail page.
-//
-// [Ja] FindFirstJoinedBySpaceMember はスペースメンバーが参加しているトピックのうち id が
+// FindFirstJoinedBySpaceMemberはスペースメンバーが参加しているトピックのうちidが
 // 最小のもの (削除されていないトピックのみ) を、指定スペースにスコープして返す。未存在の
 // 場合は (nil, nil) を返す。スペース詳細画面の空状態で表示する「新しいページを作る」導線で使用する。
 func (r *TopicRepository) FindFirstJoinedBySpaceMember(ctx context.Context, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID) (*model.Topic, error) {
@@ -125,7 +116,7 @@ func (r *TopicRepository) FindFirstJoinedBySpaceMember(ctx context.Context, spac
 	return r.toModel(row), nil
 }
 
-// FindByIDsAndSpace はIDリストとスペースIDでトピックを一括取得する
+// FindByIDsAndSpaceはIDリストとスペースIDでトピックを一括取得する
 func (r *TopicRepository) FindByIDsAndSpace(ctx context.Context, ids []model.TopicID, spaceID model.SpaceID) ([]*model.Topic, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -140,12 +131,8 @@ func (r *TopicRepository) FindByIDsAndSpace(ctx context.Context, ids []model.Top
 	return r.toModels(rows), nil
 }
 
-// ListJoinedByUser returns the topics the user is joined to (used by both the sidebar and
-// the home page). Ordering and tradeoffs are documented on the underlying SQL query
-// (db/queries/joined_topics.sql) — see ListJoinedTopicsByUser there.
-//
-// [Ja] ListJoinedByUser はユーザーが参加しているトピック一覧を取得する（サイドバー / ホーム画面の両方で使用）。
-// 並び順と採用理由・トレードオフは db/queries/joined_topics.sql の ListJoinedTopicsByUser のコメントを参照。
+// ListJoinedByUserはホーム画面に表示する、ユーザーが参加しているトピック一覧を取得する。
+// 並び順と採用理由・トレードオフはdb/queries/joined_topics.sqlのListJoinedTopicsByUserのコメントを参照。
 func (r *TopicRepository) ListJoinedByUser(ctx context.Context, userID model.UserID, limit int32) ([]*model.Topic, error) {
 	rows, err := r.q.ListJoinedTopicsByUser(ctx, query.ListJoinedTopicsByUserParams{
 		UserID: string(userID),
@@ -157,7 +144,85 @@ func (r *TopicRepository) ListJoinedByUser(ctx context.Context, userID model.Use
 	return r.toTopicsFromJoinedRows(rows), nil
 }
 
-// toModel は query.Topic を model.Topic に変換する
+// NextTopicNumberはスペース内で次に作られるトピックが取る番号を返す。
+func (r *TopicRepository) NextTopicNumber(ctx context.Context, spaceID model.SpaceID) (int32, error) {
+	n, err := r.q.GetNextTopicNumber(ctx, string(spaceID))
+	if err != nil {
+		return 0, err
+	}
+	return int32(n), nil
+}
+
+// ExistsBySpaceAndNameは同じ名前のトピックがそのスペースに既にあるかを返す。削除済みの
+// トピックも数える。データベースが (space_id, name) に張っている一意インデックスに合わせるため。
+func (r *TopicRepository) ExistsBySpaceAndName(ctx context.Context, spaceID model.SpaceID, name string) (bool, error) {
+	return r.q.ExistsTopicBySpaceAndName(ctx, query.ExistsTopicBySpaceAndNameParams{
+		SpaceID: string(spaceID),
+		Name:    name,
+	})
+}
+
+// ExistsBySpaceAndNameExcludingIDはexcludedID以外のトピックが同じ名前をそのスペースで
+// 既に持っているかを返す。ExistsBySpaceAndNameと同じ理由で削除済みのトピックも数える。
+func (r *TopicRepository) ExistsBySpaceAndNameExcludingID(ctx context.Context, spaceID model.SpaceID, name string, excludedID model.TopicID) (bool, error) {
+	return r.q.ExistsTopicBySpaceAndNameExcludingID(ctx, query.ExistsTopicBySpaceAndNameExcludingIDParams{
+		SpaceID:    string(spaceID),
+		Name:       name,
+		ExcludedID: string(excludedID),
+	})
+}
+
+// CreateTopicInputはトピックの作成に必要な値を保持する。
+type CreateTopicInput struct {
+	SpaceID     model.SpaceID
+	Number      int32
+	Name        string
+	Description string
+	Visibility  model.TopicVisibility
+}
+
+// Createはトピックを作成する。
+func (r *TopicRepository) Create(ctx context.Context, input CreateTopicInput) (*model.Topic, error) {
+	row, err := r.q.CreateTopic(ctx, query.CreateTopicParams{
+		SpaceID:     string(input.SpaceID),
+		Number:      input.Number,
+		Name:        input.Name,
+		Description: input.Description,
+		Visibility:  int32(input.Visibility),
+		Now:         time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// UpdateTopicInputはトピックの更新に必要な値を保持する。
+type UpdateTopicInput struct {
+	ID          model.TopicID
+	SpaceID     model.SpaceID
+	Name        string
+	Description string
+	Visibility  model.TopicVisibility
+}
+
+// Updateはトピックの一般設定を更新する。
+func (r *TopicRepository) Update(ctx context.Context, input UpdateTopicInput) (*model.Topic, error) {
+	row, err := r.q.UpdateTopic(ctx, query.UpdateTopicParams{
+		ID:          string(input.ID),
+		SpaceID:     string(input.SpaceID),
+		Name:        input.Name,
+		Description: input.Description,
+		Visibility:  int32(input.Visibility),
+		Now:         time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// toModelはquery.Topicをmodel.Topicに変換する
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	var discardedAt *time.Time
 	if row.DiscardedAt.Valid {
@@ -175,7 +240,7 @@ func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	}
 }
 
-// toModels は query.Topic のスライスを model.Topic のスライスに変換する
+// toModelsはquery.Topicのスライスをmodel.Topicのスライスに変換する
 func (r *TopicRepository) toModels(rows []query.Topic) []*model.Topic {
 	topics := make([]*model.Topic, len(rows))
 	for i, row := range rows {
@@ -184,7 +249,7 @@ func (r *TopicRepository) toModels(rows []query.Topic) []*model.Topic {
 	return topics
 }
 
-// toTopicsFromJoinedRows は query.ListJoinedTopicsByUserRow のスライスを model.Topic のスライスに変換する
+// toTopicsFromJoinedRowsはquery.ListJoinedTopicsByUserRowのスライスをmodel.Topicのスライスに変換する
 func (r *TopicRepository) toTopicsFromJoinedRows(rows []query.ListJoinedTopicsByUserRow) []*model.Topic {
 	topics := make([]*model.Topic, len(rows))
 	for i, row := range rows {

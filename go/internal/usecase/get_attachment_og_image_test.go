@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -13,7 +12,7 @@ import (
 func TestGetAttachmentOgImageUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
-	t.Run("正常系: 公開トピックのページから参照されている添付の blob 情報を返す", func(t *testing.T) {
+	t.Run("正常系: 公開トピックのページから参照されている添付のblob情報を返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -41,25 +40,25 @@ func TestGetAttachmentOgImageUsecase_Execute(t *testing.T) {
 			WithContentType("image/png").
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		output, err := uc.Execute(context.Background(), GetAttachmentOgImageInput{AttachmentID: attachmentID})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil || output.Attachment == nil {
-			t.Fatal("Execute() returned nil attachment")
+			t.Fatal("Execute()がnilの添付ファイルを返した")
 		}
 		if output.Attachment.ID != attachmentID {
-			t.Errorf("Attachment.ID = %v, want %v", output.Attachment.ID, attachmentID)
+			t.Errorf("Attachment.ID = %v、期待値 = %v", output.Attachment.ID, attachmentID)
 		}
 		if output.Attachment.BlobKey == "" {
-			t.Error("Attachment.BlobKey should not be empty")
+			t.Error("Attachment.BlobKeyが空")
 		}
 	})
 
-	t.Run("異常系: 非公開トピックのページからの参照のみは AppErrCodeResourceNotFound を返す", func(t *testing.T) {
+	t.Run("異常系: 非公開トピックのページからの参照のみはAppErrCodeResourceNotFoundを返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -85,17 +84,17 @@ func TestGetAttachmentOgImageUsecase_Execute(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			Build()
 		if _, err := parRepo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID}); err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 
 		output, err := uc.Execute(context.Background(), GetAttachmentOgImageInput{AttachmentID: attachmentID})
 		if output != nil {
-			t.Errorf("Execute() output = %v, want nil", output)
+			t.Errorf("Execute()の出力 = %v、期待値 = nil", output)
 		}
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	t.Run("異常系: どのページからも参照されていない添付は AppErrCodeResourceNotFound を返す", func(t *testing.T) {
+	t.Run("異常系: どのページからも参照されていない添付はAppErrCodeResourceNotFoundを返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -112,7 +111,7 @@ func TestGetAttachmentOgImageUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	t.Run("異常系: 存在しない attachment_id は AppErrCodeResourceNotFound を返す", func(t *testing.T) {
+	t.Run("異常系: 存在しないattachment_idはAppErrCodeResourceNotFoundを返す", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -125,7 +124,7 @@ func TestGetAttachmentOgImageUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	t.Run("異常系: UUID 形式でない ID も AppErrCodeResourceNotFound を返す (DB アクセスせず)", func(t *testing.T) {
+	t.Run("異常系: UUID形式でないIDもAppErrCodeResourceNotFoundを返す (DBアクセスせず)", func(t *testing.T) {
 		t.Parallel()
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
@@ -137,19 +136,4 @@ func TestGetAttachmentOgImageUsecase_Execute(t *testing.T) {
 		})
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
-}
-
-// assertAppErrCode は err が *model.AppError かつ指定した Code を持つかを検証する
-func assertAppErrCode(t *testing.T, err error, code model.AppErrorCode) {
-	t.Helper()
-	if err == nil {
-		t.Fatal("expected *model.AppError, got nil")
-	}
-	var ae *model.AppError
-	if !errors.As(err, &ae) {
-		t.Fatalf("expected *model.AppError, got %T: %v", err, err)
-	}
-	if ae.Code != code {
-		t.Errorf("AppError.Code = %d, want %d", ae.Code, code)
-	}
 }

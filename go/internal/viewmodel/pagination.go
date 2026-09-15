@@ -1,7 +1,7 @@
 package viewmodel
 
-// Pagination はオフセットベースのページネーション情報です。
-// フィールド名に "Page" を使わない（Wikinoのドメインモデル Page との混同を避けるため）。
+// Paginationはオフセットベースのページネーション情報です。
+// フィールド名に "Page" を使わない (WikinoのドメインモデルPageとの混同を避けるため)。
 type Pagination struct {
 	Current     int
 	Total       int
@@ -9,7 +9,7 @@ type Pagination struct {
 	HasPrevious bool
 }
 
-// NewPagination は現在ページ・総件数・1ページあたりの件数からPaginationを生成する
+// NewPaginationは現在ページ・総件数・1ページあたりの件数からPaginationを生成する
 func NewPagination(current int, totalCount int64, limit int) Pagination {
 	total := int((totalCount + int64(limit) - 1) / int64(limit))
 	if total < 1 {

@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// SubNavItem はサブナビゲーションの各タブ項目です
+// SubNavItemはサブナビゲーションの各タブ項目です
 type SubNavItem struct {
 	Label          string
 	Path           string
@@ -22,7 +22,7 @@ type SubNavItem struct {
 	Badge          string
 }
 
-// SubNav はページ内セクションを切り替えるタブナビゲーションを表示します
+// SubNavはページ内セクションを切り替えるタブナビゲーションを表示します
 func SubNav(items []SubNavItem) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

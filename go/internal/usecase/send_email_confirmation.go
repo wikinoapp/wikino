@@ -6,24 +6,24 @@ import (
 	"log/slog"
 )
 
-// EmailConfirmationSender はメール確認コードの送信を行うインターフェース
+// EmailConfirmationSenderはメール確認コードの送信を行うインターフェース
 type EmailConfirmationSender interface {
 	Send(ctx context.Context, to, code, appURL, locale string) error
 }
 
-// SendEmailConfirmationUsecase はメール確認コードのメール送信ユースケース
+// SendEmailConfirmationUsecaseはメール確認コードのメール送信ユースケース
 type SendEmailConfirmationUsecase struct {
 	sender EmailConfirmationSender
 }
 
-// NewSendEmailConfirmationUsecase は SendEmailConfirmationUsecase を生成する
+// NewSendEmailConfirmationUsecaseはSendEmailConfirmationUsecaseを生成する
 func NewSendEmailConfirmationUsecase(sender EmailConfirmationSender) *SendEmailConfirmationUsecase {
 	return &SendEmailConfirmationUsecase{
 		sender: sender,
 	}
 }
 
-// SendEmailConfirmationInput はメール確認コード送信の入力パラメータ
+// SendEmailConfirmationInputはメール確認コード送信の入力パラメータ
 type SendEmailConfirmationInput struct {
 	Email  string
 	Code   string
@@ -31,7 +31,7 @@ type SendEmailConfirmationInput struct {
 	Locale string
 }
 
-// Execute はメール確認コードのメールを送信する
+// Executeはメール確認コードのメールを送信する
 func (uc *SendEmailConfirmationUsecase) Execute(ctx context.Context, input SendEmailConfirmationInput) error {
 	if input.Email == "" {
 		return fmt.Errorf("メールアドレスが空です")

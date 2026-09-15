@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Show は編集提案詳細画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number})
+// Showは編集提案詳細画面を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number})
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -51,11 +51,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := RenderShow(ctx, w, RenderShowInput{
-		Cfg:             h.cfg,
-		SidebarHelper:   h.sidebarHelper,
-		User:            user,
-		SpaceIdentifier: spaceIdentifier,
-		Output:          output,
+		Cfg:    h.cfg,
+		User:   user,
+		Output: output,
 	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

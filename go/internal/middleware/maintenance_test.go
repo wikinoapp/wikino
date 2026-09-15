@@ -24,7 +24,7 @@ func TestMaintenanceMiddleware_Disabled(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("メンテナンスモード無効時にステータスが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("メンテナンスモード無効時のステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -47,7 +47,7 @@ func TestMaintenanceMiddleware_Enabled_GeneralIP(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusServiceUnavailable {
-		t.Errorf("一般IPのステータスが期待と異なる: got %d want %d", rr.Code, http.StatusServiceUnavailable)
+		t.Errorf("一般IPのステータス = %d、期待値 = %d", rr.Code, http.StatusServiceUnavailable)
 	}
 }
 
@@ -70,7 +70,7 @@ func TestMaintenanceMiddleware_Enabled_AdminIP(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("管理者IPのステータスが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("管理者IPのステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -93,7 +93,7 @@ func TestMaintenanceMiddleware_Enabled_HealthCheck(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("ヘルスチェックのステータスが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("ヘルスチェックのステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -147,7 +147,7 @@ func TestMaintenanceMiddleware_MultipleAdminIPs(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			if rr.Code != tc.wantStatus {
-				t.Errorf("ステータスが期待と異なる: got %d want %d", rr.Code, tc.wantStatus)
+				t.Errorf("ステータス = %d、期待値 = %d", rr.Code, tc.wantStatus)
 			}
 		})
 	}
@@ -173,7 +173,7 @@ func TestMaintenanceMiddleware_XForwardedFor(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("X-Forwarded-For経由の管理者IPのステータスが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("X-Forwarded-For経由の管理者IPのステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -197,7 +197,7 @@ func TestMaintenanceMiddleware_CFConnectingIP(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("CF-Connecting-IP経由の管理者IPのステータスが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("CF-Connecting-IP経由の管理者IPのステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -221,7 +221,7 @@ func TestMaintenanceMiddleware_XRealIP(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("X-Real-IP経由の管理者IPのステータスが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("X-Real-IP経由の管理者IPのステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -244,7 +244,7 @@ func TestMaintenanceMiddleware_NoAdminIPs(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusServiceUnavailable {
-		t.Errorf("管理者IP未設定時のステータスが期待と異なる: got %d want %d", rr.Code, http.StatusServiceUnavailable)
+		t.Errorf("管理者IP未設定時のステータス = %d、期待値 = %d", rr.Code, http.StatusServiceUnavailable)
 	}
 }
 
@@ -268,7 +268,7 @@ func TestMaintenanceMiddleware_ResponseHeaders(t *testing.T) {
 
 	contentType := rr.Header().Get("Content-Type")
 	if contentType != "text/html; charset=utf-8" {
-		t.Errorf("Content-Typeが期待と異なる: got %q want %q", contentType, "text/html; charset=utf-8")
+		t.Errorf("Content-Type = %q、期待値 = %q", contentType, "text/html; charset=utf-8")
 	}
 
 	retryAfter := rr.Header().Get("Retry-After")
@@ -305,7 +305,7 @@ func TestMaintenanceMiddleware_PageContent(t *testing.T) {
 
 	for _, expected := range expectedContents {
 		if !strings.Contains(body, expected) {
-			t.Errorf("レスポンスボディに %q が含まれていない", expected)
+			t.Errorf("レスポンスボディに%qが含まれていない", expected)
 		}
 	}
 }

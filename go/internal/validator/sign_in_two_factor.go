@@ -15,12 +15,12 @@ import (
 // TOTPコードは6桁の数字のみ
 var totpCodeRegex = regexp.MustCompile(`^\d{6}$`)
 
-// SignInTwoFactorCreateValidator は2FAコード検証のバリデーションを行う
+// SignInTwoFactorCreateValidatorは2FAコード検証のバリデーションを行う
 type SignInTwoFactorCreateValidator struct {
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository
 }
 
-// NewSignInTwoFactorCreateValidator は SignInTwoFactorCreateValidator を生成する
+// NewSignInTwoFactorCreateValidatorはSignInTwoFactorCreateValidatorを生成する
 func NewSignInTwoFactorCreateValidator(
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository,
 ) *SignInTwoFactorCreateValidator {
@@ -29,13 +29,13 @@ func NewSignInTwoFactorCreateValidator(
 	}
 }
 
-// SignInTwoFactorCreateValidatorInput はバリデーションの入力パラメータ
+// SignInTwoFactorCreateValidatorInputはバリデーションの入力パラメータ
 type SignInTwoFactorCreateValidatorInput struct {
 	UserID   model.UserID
 	TOTPCode string
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input SignInTwoFactorCreateValidatorInput) error {
 	// 1. 形式バリデーション
 	ve := model.NewValidationError()
@@ -50,7 +50,7 @@ func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input Sig
 		return ve
 	}
 
-	// 2. 状態バリデーション（DB検証）
+	// 2. 状態バリデーション (DB検証)
 	twoFactorAuth, err := v.userTwoFactorAuthRepo.FindEnabledByUserID(ctx, input.UserID)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input Sig
 	return nil
 }
 
-// validateWithDrift は前後のタイムステップも考慮してTOTPコードを検証する
+// validateWithDriftは前後のタイムステップも考慮してTOTPコードを検証する
 func validateWithDrift(code, secret string, driftSeconds int) bool {
 	now := time.Now()
 
@@ -93,7 +93,7 @@ func validateWithDrift(code, secret string, driftSeconds int) bool {
 		Period:    30,
 		Skew:      1,
 		Digits:    6,
-		Algorithm: 0, // SHA1 (default)
+		Algorithm: 0, // SHA1 (デフォルト)
 	}
 
 	// 前後のタイムステップで検証

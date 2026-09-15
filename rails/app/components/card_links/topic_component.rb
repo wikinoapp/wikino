@@ -26,35 +26,9 @@ module CardLinks
       )
     end
 
-    sig { returns(T::Boolean) }
-    private def can_create_page?
-      topic.can_create_page?
-    end
-
-    sig { returns(T::Boolean) }
-    private def can_update?
-      topic.can_update?
-    end
-
     sig { returns(String) }
     private def topic_path
       Rails.application.routes.url_helpers.topic_path(
-        space_identifier: topic.space.identifier,
-        topic_number: topic.number
-      )
-    end
-
-    sig { returns(String) }
-    private def new_page_path
-      Rails.application.routes.url_helpers.new_page_path(
-        space_identifier: topic.space.identifier,
-        topic_number: topic.number
-      )
-    end
-
-    sig { returns(String) }
-    private def settings_path
-      Rails.application.routes.url_helpers.topic_settings_path(
         space_identifier: topic.space.identifier,
         topic_number: topic.number
       )

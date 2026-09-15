@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowData はトピック詳細画面に渡すデータ構造体です
+// ShowDataはトピック詳細画面に渡すデータ構造体です
 type ShowData struct {
 	Topic       viewmodel.TopicForShow
 	Space       viewmodel.Space
@@ -17,108 +17,126 @@ type ShowData struct {
 	Pagination  viewmodel.Pagination
 }
 
-// paginationPath はページネーション用のパスを生成します
+// paginationPathはページネーション用のパスを生成します
 func (d ShowData) paginationPath(page int) string {
 	return fmt.Sprintf("/s/%s/topics/%d?page=%d", d.Space.Identifier, d.Topic.Number, page)
 }
 
-// Show はトピック詳細画面のコンテンツを表示します
+// Showはトピック詳細画面のコンテンツを表示します
 templ Show(data ShowData) {
 	<div class="py-4">
-		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					{
-						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier),
-					},
-				},
-			})
-
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-6">
-					<div class="flex flex-col gap-4">
-						<div class="px-4">
-							@showHeader(data)
-						</div>
-
-						<div class="px-4">
-							@components.SubNav([]components.SubNavItem{
-								{
-									Label:          templates.T(ctx, "topic_show_tab_pages"),
-									Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
-									IconName:       "file-regular",
-									ActiveIconName: "file-fill",
-									IsActive:       true,
-								},
-								{
-									Label:          templates.T(ctx, "topic_show_tab_suggestions"),
-									Path:           string(templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number)),
-									IconName:       "git-pull-request-regular",
-									ActiveIconName: "git-pull-request-fill",
-								},
-							})
-						</div>
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6">
+				<div class="flex flex-col gap-4">
+					<div class="px-4">
+						@showHeader(data)
 					</div>
 
-					if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
-						<div class="flex flex-col gap-6 px-4">
-							if len(data.PinnedPages) > 0 {
+					<div class="px-4">
+						@components.SubNav([]components.SubNavItem{
+							{
+								Label:          templates.T(ctx, "topic_show_tab_pages"),
+								Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
+								IconName:       "file-regular",
+								ActiveIconName: "file-fill",
+								IsActive:       true,
+							},
+							{
+								Label:          templates.T(ctx, "topic_show_tab_suggestions"),
+								Path:           string(templates.SuggestionListPath(data.Space.Identifier, data.Topic.Number)),
+								IconName:       "git-pull-request-regular",
+								ActiveIconName: "git-pull-request-fill",
+							},
+						})
+					</div>
+				</div>
+
+				if len(data.PinnedPages) > 0 || len(data.Pages) > 0 {
+					<div class="flex flex-col gap-6 px-4">
+						if len(data.PinnedPages) > 0 {
+							<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
+								for _, page := range data.PinnedPages {
+									@components.CardLinkPage(page, data.Space.Identifier)
+								}
+							</div>
+						}
+
+						if len(data.Pages) > 0 {
+							<div class="flex flex-col gap-6">
 								<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-									for _, page := range data.PinnedPages {
+									for _, page := range data.Pages {
 										@components.CardLinkPage(page, data.Space.Identifier)
 									}
 								</div>
-							}
 
-							if len(data.Pages) > 0 {
-								<div class="flex flex-col gap-6">
-									<div class="grid grid-cols-1 items-stretch gap-2 md:grid-cols-3">
-										for _, page := range data.Pages {
-											@components.CardLinkPage(page, data.Space.Identifier)
-										}
-									</div>
-
-									@components.PaginationNav(
-										data.Pagination,
-										data.paginationPath(data.Pagination.Current-1),
-										data.paginationPath(data.Pagination.Current+1),
-									)
-								</div>
-							}
-						</div>
-					} else {
-						<div class="px-4">
-							@showEmptyState(data)
-						</div>
-					}
-				</div>
+								@components.PaginationNav(
+									data.Pagination,
+									data.paginationPath(data.Pagination.Current-1),
+									data.paginationPath(data.Pagination.Current+1),
+								)
+							</div>
+						}
+					</div>
+				} else {
+					<div class="px-4">
+						@showEmptyState(data)
+					</div>
+				}
 			</div>
 		</div>
 	</div>
 }
 
-// showHeader はトピック詳細画面のヘッダーを表示します
+// showHeaderはトピック詳細画面のヘッダーを表示します
 templ showHeader(data ShowData) {
 	@components.MainTitle(components.MainTitleData{
 		Title:    data.Topic.Name,
-		Subtitle: components.SubtitleText(data.Topic.Description),
+		Subtitle: showSubtitle(data.Topic),
 		Actions:  showActions(data),
 	})
 }
 
-// showActions はトピック詳細画面のアクションボタンを表示します
+// showSubtitleは公開範囲と説明文をタイトルの下の行に置く。公開範囲をタイトルの横ではなく
+// ここで述べるのは、折り返すほど長いタイトルの横に置いたバッジが、複数行の中央あたりに浮いて
+// しまうため。タイトルの下であれば、タイトルの長さに関わらず同じ位置に出る。
+//
+// バッジはflexアイテムではなくテキストの流れの中に並べる。そうすると、1行に収まらない説明文は
+// バッジの下へ回り込んで左端から続き、説明文だけが独立した行へ押し出されることがない。
+//
+// この画面が公開か非公開かを述べる唯一の場所である。他所の一覧カードはアイコンを持つが、トピック
+// 自身の画面はここまで何も持っていなかった。アイコンは装飾で、状態を名指すのは横に並ぶ言葉のほう
+// である。錠前だけでは読み手によって受け取り方が変わり、スクリーンリーダーの利用者には届かない
+// ため、アイコンはaria-hiddenのままにしてラベルが両方の役割を果たす。
+//
+// バッジは1px下げている。バッジはinlineのflexコンテナであり、行へ渡すベースラインは
+// 自身のテキストではなく最初のflexアイテム (アイコンの下端) から来るため、隣の説明文より1px上に
+// 浮く。高さは説明文の行ボックスと既に一致している (どちらも20px) ので、大きさの問題ではない。
+// 説明文の1文字目に対して実測すると、両者の中心が重なるのは -1pxのときで、middleと
+// last-baselineはいずれも逆方向へ同じ1pxだけ行き過ぎる。
+templ showSubtitle(topic viewmodel.TopicForShow) {
+	// idは、公開範囲のラベルを読むテストのためにバッジを名指しする。クラスで特定すると、
+	// テストがスタイルの選択と、このバッジが画面で唯一のoutlineのバッジであり続けることに
+	// 縛られてしまう。
+	<span id="topic-visibility-badge" class="badge mr-1 gap-1 font-normal [vertical-align:-1px]" data-variant="outline">
+		@templates.DecorativeIcon(topic.IconName, "size-3.5 fill-current")
+		if topic.IsPublic {
+			{ templates.T(ctx, "topic_show_visibility_public") }
+		} else {
+			{ templates.T(ctx, "topic_show_visibility_private") }
+		}
+	</span>
+	if topic.Description != "" {
+		{ topic.Description }
+	}
+}
+
+// showActionsはトピック詳細画面のアクションボタンを表示します
 templ showActions(data ShowData) {
 	if data.Topic.CanCreatePage {
 		<a
 			href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
-			class="btn btn-sm rounded-full"
+			class="btn rounded-full"
+			data-size="sm"
 		>
 			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
 			{ templates.T(ctx, "topic_show_new_page") }
@@ -133,9 +151,12 @@ templ showActions(data ShowData) {
 				aria-haspopup="menu"
 				aria-controls="topic-options-dropdown-menu"
 				aria-expanded="false"
-				class="btn-sm-icon-outline border-primary rounded-full"
+				aria-label={ templates.T(ctx, "topic_show_options_aria_label") }
+				class="btn border-primary rounded-full"
+				data-variant="outline"
+				data-size="icon-sm"
 			>
-				@templates.Icon("dots-three-regular")
+				@templates.DecorativeIcon("dots-three-regular")
 			</button>
 
 			<div id="topic-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
@@ -155,7 +176,7 @@ templ showActions(data ShowData) {
 	}
 }
 
-// showEmptyState はトピック詳細画面の空状態を表示します
+// showEmptyStateはトピック詳細画面の空状態を表示します
 templ showEmptyState(data ShowData) {
 	<div class="flex flex-col items-center gap-4 py-12 text-center">
 		@templates.Icon("file-dashed-regular", "size-[50px] fill-muted-foreground")
@@ -175,7 +196,8 @@ templ showEmptyState(data ShowData) {
 		if data.Topic.CanCreatePage {
 			<a
 				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
-				class="btn-sm rounded-full"
+				class="btn rounded-full"
+				data-size="sm"
 			>
 				@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
 				{ templates.T(ctx, "topic_show_new_page") }
