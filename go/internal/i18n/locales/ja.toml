@@ -30,15 +30,15 @@ description = "ホームへ戻るリンクのラベル"
 other = "ホームに戻る"
 
 [home_link_aria_label]
-description = "ホームへ遷移するロゴリンクの aria-label"
-other = "Wikino のホーム"
+description = "ホームへ遷移するロゴリンクのaria-label"
+other = "Wikinoのホーム"
 
 [form_optional]
 description = "フォームの任意項目に表示するラベル"
 other = "任意"
 
 [markdown_table_scroll_label]
-description = "ページ本文のテーブルを包む横スクロール領域の aria-label"
+description = "ページ本文のテーブルを包む横スクロール領域のaria-label"
 other = "スクロールできる表"
 
 # サインイン
@@ -215,11 +215,11 @@ description = "メールアドレス重複エラー"
 other = "このメールアドレスは既に登録されています"
 
 [validation_invalid_event]
-description = "Turnstile などで無効なイベントが検知された場合のエラー"
+description = "Turnstileなどで無効なイベントが検知された場合のエラー"
 other = "無効なイベントタイプです"
 
 [validation_bot_detected]
-description = "Bot 判定された場合のエラー"
+description = "Bot判定された場合のエラー"
 other = "しばらくしてからもう一度お試しください"
 
 [validation_rate_limit_exceeded]
@@ -497,20 +497,20 @@ description = "トップページのタイトル"
 other = "Wikino | リンクで見つかるWikiのアプリ"
 
 [welcome_description]
-description = "トップページの meta description"
+description = "トップページのmeta description"
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 [welcome_hero_title_html]
-description = "トップページのヒーローエリアの見出し (HTML を含む)"
+description = "トップページのヒーローエリアの見出し (HTMLを含む)"
 other = "リンクで見つかる<br class=\"md:hidden\"/>Wikiのアプリ"
 
 [welcome_hero_description_html]
-description = "トップページのヒーローエリアの説明文 (HTML を含む)"
+description = "トップページのヒーローエリアの説明文 (HTMLを含む)"
 other = "Wikino (ウィキノ) は、Wikiを作成して共有することができるウェブサービスです"
 
 
 [welcome_screenshot_alt]
-description = "トップページのスクリーンショット画像の alt テキスト"
+description = "トップページのスクリーンショット画像のaltテキスト"
 other = "Wikinoのページ編集画面のスクリーンショット。エディタや下書きへのリンク、下書きの編集履歴などが表示されている。"
 
 [welcome_features_title]
@@ -518,27 +518,27 @@ description = "トップページの「特徴」セクションの見出し"
 other = "特徴"
 
 [welcome_feature_markdown_title]
-description = "Markdown 機能紹介の見出し"
+description = "Markdown機能紹介の見出し"
 other = "Markdownでシンプルに書ける"
 
 [welcome_feature_markdown_description]
-description = "Markdown 機能紹介の説明文"
+description = "Markdown機能紹介の説明文"
 other = "リッチテキストではないプレーンなエディタでMarkdown形式の文書が書けます"
 
 [welcome_feature_markdown_help_title]
-description = "Markdown 機能のヘルプリンクのタイトル"
+description = "Markdown機能のヘルプリンクのタイトル"
 other = "Wikinoで使えるMarkdown記法について"
 
 [welcome_feature_wikilink_title]
-description = "Wiki リンク機能紹介の見出し"
+description = "Wikiリンク機能紹介の見出し"
 other = "ページ同士を簡単につなげる"
 
 [welcome_feature_wikilink_description]
-description = "Wiki リンク機能紹介の説明文"
+description = "Wikiリンク機能紹介の説明文"
 other = "独自のリンク記法でページタイトルを囲むと、そのページを作成してリンクすることができます"
 
 [welcome_feature_wikilink_help_title]
-description = "Wiki リンク機能のヘルプリンクのタイトル"
+description = "Wikiリンク機能のヘルプリンクのタイトル"
 other = "Wikiリンク記法について"
 
 [welcome_feature_backlinks_title]
@@ -582,7 +582,7 @@ description = "ページ公開機能のヘルプリンクのタイトル"
 other = "トピックについて"
 
 [welcome_cta_title]
-description = "トップページの CTA セクションの見出し"
+description = "トップページのCTAセクションの見出し"
 other = "Wikinoを始めよう"
 
 [welcome_footer_resources]
@@ -677,7 +677,7 @@ description = "ページ編集画面のプレビュータブのラベル"
 other = "プレビュー"
 
 [page_edit_zen_mode_button]
-description = "ページ編集画面の Zenモード切り替えボタンのラベル"
+description = "ページ編集画面のZenモード切り替えボタンのラベル"
 other = "Zenモード"
 
 [page_edit_preview_loading]
@@ -701,7 +701,7 @@ description = "ページ編集画面で下書き一覧カラムを開く開閉�
 other = "下書き一覧"
 
 [page_edit_draft_pages_empty]
-description = "ページ編集画面の下書き一覧カラムで下書きが 1 件もないときの空状態テキスト"
+description = "ページ編集画面の下書き一覧カラムで下書きが1件もないときの空状態テキスト"
 other = "下書きはありません"
 
 [page_edit_revisions_heading]
@@ -713,7 +713,7 @@ description = "ページ編集画面で編集履歴カラムを開く開閉ボ�
 other = "編集履歴"
 
 [page_edit_revisions_empty]
-description = "ページ編集画面の編集履歴カラムでリビジョンが 1 件もないときの空状態テキスト"
+description = "ページ編集画面の編集履歴カラムでリビジョンが1件もないときの空状態テキスト"
 other = "下書きを保存すると、ここに編集履歴が表示されます"
 
 [page_edit_revisions_current_badge]
@@ -817,7 +817,7 @@ description = "下書き保存ボタンのラベル"
 other = "下書き保存"
 
 [page_edit_save_draft_options_aria_label]
-description = "ページ編集画面の下書き保存ドロップダウントリガーボタンの aria-label"
+description = "ページ編集画面の下書き保存ドロップダウントリガーボタンのaria-label"
 other = "下書き保存のオプション"
 
 [page_edit_save_draft_and_create_suggestion_button]
@@ -862,7 +862,7 @@ description = "ページ表示画面のページ編集画面へのリンクテ�
 other = "編集する"
 
 [page_show_page_actions_aria_label]
-description = "ページ表示画面の操作ドロップダウンを開くボタンの aria-label"
+description = "ページ表示画面の操作ドロップダウンを開くボタンのaria-label"
 other = "ページのアクション"
 
 [page_show_page_actions_move]
@@ -1052,15 +1052,15 @@ description = "ホーム画面の「新規スペース」ボタン"
 other = "新規スペース"
 
 [home_no_joined_spaces_html]
-description = "ホーム画面の参加中スペースが 0 件のときの見出しメッセージ (HTML を含む)"
+description = "ホーム画面の参加中スペースが0件のときの見出しメッセージ (HTMLを含む)"
 other = "参加中のスペースは<br class=\"block sm:hidden\">ありません"
 
 [home_welcome_message]
-description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て 0 件) の見出し"
+description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て0件) の見出し"
 other = "Wikinoへようこそ！"
 
 [home_welcome_description_html]
-description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て 0 件) の補足説明"
+description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て0件) の補足説明"
 other = "まずはスペースを作成して<br class=\"md:hidden\"/>ページを書き始めましょう"
 
 [home_joined_topics_heading]
@@ -1068,7 +1068,7 @@ description = "ホーム画面の「参加中のトピック」見出し"
 other = "参加中のトピック"
 
 [home_no_joined_topics_html]
-description = "ホーム画面の参加中トピックが 0 件のときの見出しメッセージ (HTML を含む)"
+description = "ホーム画面の参加中トピックが0件のときの見出しメッセージ (HTMLを含む)"
 other = "参加中のトピックは<br class=\"block sm:hidden\">ありません"
 
 [home_draft_pages_heading]
@@ -1080,7 +1080,7 @@ description = "ホーム画面の「下書きのページ」セクションか�
 other = "全て見る"
 
 [home_no_draft_pages_html]
-description = "ホーム画面の下書きが 0 件のときの見出しメッセージ (HTML を含む)"
+description = "ホーム画面の下書きが0件のときの見出しメッセージ (HTMLを含む)"
 other = "下書きのページは<br class=\"block sm:hidden\">ありません"
 
 [home_draft_pages_untitled]
@@ -1120,7 +1120,7 @@ description = "下書き一覧画面の編集提案作成ボタン"
 other = "新規編集提案"
 
 [draft_page_index_actions_aria_label]
-description = "下書き一覧の各行のアクションメニューを開くボタンの aria-label"
+description = "下書き一覧の各行のアクションメニューを開くボタンのaria-label"
 other = "下書きのアクション"
 
 [draft_page_delete_menu_item]
@@ -1195,7 +1195,7 @@ description = "トピック詳細画面の新規ページ作成ボタン"
 other = "新規ページ"
 
 [topic_show_options_aria_label]
-description = "トピック詳細画面のオプションメニューを開くボタンの aria-label"
+description = "トピック詳細画面のオプションメニューを開くボタンのaria-label"
 other = "トピックのオプション"
 
 [topic_show_settings]
@@ -1346,7 +1346,7 @@ description = "スペース詳細画面でトピックがない場合のメッ�
 other = "トピックはありません"
 
 [space_show_no_topics_description_html]
-description = "スペース詳細画面でトピックがない場合の説明文 (HTML を含む)"
+description = "スペース詳細画面でトピックがない場合の説明文 (HTMLを含む)"
 other = "トピックはページを分類するためのものです<br>トピックを作成してページを追加できるようにしましょう"
 
 [space_show_new_topic_button]
@@ -1370,11 +1370,11 @@ description = "トピックリンクカードに表示する新規ページ作�
 other = "新規ページ"
 
 [space_show_options_aria_label]
-description = "スペース詳細画面のオプションメニューを開くボタンの aria-label"
+description = "スペース詳細画面のオプションメニューを開くボタンのaria-label"
 other = "スペースのオプション"
 
 [space_show_options_rss_feed]
-description = "スペース詳細画面のオプションメニューの RSS フィードリンク"
+description = "スペース詳細画面のオプションメニューのRSSフィードリンク"
 other = "RSSフィード"
 
 [space_show_options_new_topic]
@@ -1648,7 +1648,7 @@ description = "編集提案コメントのドロップダウンメニューの�
 other = "編集する"
 
 [suggestion_comment_actions_aria_label]
-description = "編集提案コメントのドロップダウントリガーボタンの aria-label"
+description = "編集提案コメントのドロップダウントリガーボタンのaria-label"
 other = "コメントの操作"
 
 [suggestion_comment_submit]
@@ -1694,7 +1694,7 @@ description = "編集提案反映エラーメッセージ"
 other = "編集提案の反映に失敗しました"
 
 [suggestion_apply_page_error]
-description = "編集提案反映バリデーションエラーのページ名プレフィックス ({{.PageTitle}} は templ 側の自動エスケープ後に挿入される)"
+description = "編集提案反映バリデーションエラーのページ名プレフィックス ({{.PageTitle}} はtempl側の自動エスケープ後に挿入される)"
 other = "ページ「{{.PageTitle}}」: "
 
 [error_suggestion_conflict_during_apply]

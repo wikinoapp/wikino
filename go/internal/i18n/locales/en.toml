@@ -2,1892 +2,1892 @@
 
 # Common
 [default_title]
-description = "Default page title"
+description = "デフォルトのページタイトル"
 other = "Wikino"
 
 [default_description]
-description = "Default meta description for the page"
+description = "デフォルトのページ説明文 (meta description)"
 other = "Wikino is a wiki application for sharing and organizing information online."
 
 [flash_dismiss]
-description = "Dismiss button label for the flash message"
+description = "フラッシュメッセージの閉じるボタンのラベル"
 other = "Dismiss"
 
 [dialog_close]
-description = "Close button label for dialogs"
+description = "ダイアログの閉じるボタンのラベル"
 other = "Close"
 
 [drawer_close]
-description = "Close button label for drawers"
+description = "ドロワーの閉じるボタンのラベル"
 other = "Close"
 
 [label_error]
-description = "Generic error label"
+description = "エラーラベルの汎用表示"
 other = "Error"
 
 [back_to_home]
-description = "Label for the back-to-home link"
+description = "ホームへ戻るリンクのラベル"
 other = "Back to Home"
 
 [home_link_aria_label]
-description = "Aria label for the logo link that goes to the home page"
+description = "ホームへ遷移するロゴリンクのaria-label"
 other = "Wikino home"
 
 [form_optional]
-description = "Label for optional form fields"
+description = "フォームの任意項目に表示するラベル"
 other = "Optional"
 
 [markdown_table_scroll_label]
-description = "Aria label for the scrollable region wrapping a table in a page body"
+description = "ページ本文のテーブルを包む横スクロール領域のaria-label"
 other = "Scrollable table"
 
 # Sign in
 [sign_in_new_title]
-description = "Sign-in page title"
+description = "サインインページのタイトル"
 other = "Sign in"
 
 [sign_in_new_heading]
-description = "Sign-in page heading"
+description = "サインインページの見出し"
 other = "Sign in to Wikino"
 
 [sign_in_new_email_label]
-description = "Sign-in email input label"
+description = "サインインのメールアドレス入力ラベル"
 other = "Email address"
 
 [sign_in_new_password_label]
-description = "Sign-in password input label"
+description = "サインインのパスワード入力ラベル"
 other = "Password"
 
 [sign_in_new_submit_button]
-description = "Sign-in submit button label"
+description = "サインインの送信ボタンのラベル"
 other = "Sign in"
 
 [sign_in_new_forgot_password]
-description = "Sign-in forgot password link label"
+description = "サインインページのパスワード忘れリンクのラベル"
 other = "Forgot your password?"
 
 [sign_in_new_no_account]
-description = "Sign-in copy shown to users without an account"
+description = "サインインページのアカウント未所持時の案内文"
 other = "Don't have an account?"
 
 [sign_in_new_sign_up]
-description = "Link to the sign-up page from sign-in"
+description = "サインインページから新規登録への導線リンク"
 other = "Sign up"
 
 # Validation errors
 [validation_required]
-description = "Generic required-field error"
+description = "汎用の必須入力エラー"
 other = "This field is required"
 
 [validation_email_invalid]
-description = "Email format error"
+description = "メールアドレス形式エラー"
 other = "Please enter a valid email address"
 
 [validation_email_or_password_invalid]
-description = "Email or password mismatch error on sign-in"
+description = "サインイン時のメールアドレスまたはパスワード不一致エラー"
 other = "Invalid email or password"
 
 # Two-factor authentication
 [sign_in_two_factor_new_title]
-description = "Two-factor authentication page title"
+description = "二要素認証ページのタイトル"
 other = "Two-factor authentication"
 
 [sign_in_two_factor_new_heading]
-description = "Two-factor authentication page heading"
+description = "二要素認証ページの見出し"
 other = "Two-factor authentication"
 
 [sign_in_two_factor_new_enter_code]
-description = "Two-factor authentication code entry instruction"
+description = "二要素認証ページの認証コード入力案内文"
 other = "Enter the authentication code from your app"
 
 [sign_in_two_factor_new_code_label]
-description = "Two-factor authentication code input label"
+description = "二要素認証の認証コード入力ラベル"
 other = "Authentication code"
 
 [sign_in_two_factor_new_code_hint]
-description = "Two-factor authentication code input hint"
+description = "二要素認証の認証コード入力ヒント"
 other = "Enter a 6-digit code"
 
 [sign_in_two_factor_new_submit_button]
-description = "Two-factor authentication submit button label"
+description = "二要素認証の送信ボタンのラベル"
 other = "Verify"
 
 [sign_in_two_factor_new_recovery_description]
-description = "Description for using a recovery code on the two-factor page"
+description = "二要素認証ページのリカバリーコード使用案内"
 other = "If you lose your authenticator app, you can sign in using a recovery code"
 
 [sign_in_two_factor_new_recovery_link]
-description = "Link to the recovery-code flow"
+description = "リカバリーコード使用への遷移リンクのラベル"
 other = "Use a recovery code"
 
 # Two-factor authentication recovery
 [sign_in_two_factor_recovery_new_title]
-description = "Recovery code entry page title"
+description = "リカバリーコード入力ページのタイトル"
 other = "Two-factor recovery"
 
 [sign_in_two_factor_recovery_new_heading]
-description = "Recovery code entry page heading"
+description = "リカバリーコード入力ページの見出し"
 other = "Recovery code"
 
 [sign_in_two_factor_recovery_new_code_usage]
-description = "Recovery code usage explanation"
+description = "リカバリーコード入力ページの使用方法案内"
 other = "If you can't access your authenticator app, you can sign in using a recovery code you saved earlier"
 
 [sign_in_two_factor_recovery_new_code_label]
-description = "Recovery code input label"
+description = "リカバリーコード入力ラベル"
 other = "Recovery code"
 
 [sign_in_two_factor_recovery_new_code_hint]
-description = "Recovery code input hint"
+description = "リカバリーコード入力ヒント"
 other = "Recovery codes are 8 alphanumeric characters"
 
 [sign_in_two_factor_recovery_new_submit_button]
-description = "Recovery code page submit button label"
+description = "リカバリーコード入力ページの送信ボタンのラベル"
 other = "Verify"
 
 # Two-factor authentication validation errors
 [validation_totp_code_invalid]
-description = "Invalid TOTP code validation error"
+description = "認証コードのバリデーションエラー"
 other = "Invalid authentication code"
 
 [validation_recovery_code_invalid]
-description = "Invalid recovery code validation error"
+description = "リカバリーコードのバリデーションエラー"
 other = "Invalid recovery code"
 
 [sign_in_two_factor_invalid_code]
-description = "Two-factor authentication code mismatch error"
+description = "二要素認証の認証コード不一致エラー"
 other = "The authentication code is incorrect"
 
 [sign_in_two_factor_recovery_invalid_code]
-description = "Recovery code mismatch error"
+description = "リカバリーコード不一致エラー"
 other = "The recovery code is incorrect"
 
 # Sign in success
 [flash_sign_in_success]
-description = "Flash message after successful sign-in"
+description = "サインイン成功時のフラッシュメッセージ"
 other = "Signed in successfully."
 
 # Sign out
 [signed_out_successfully]
-description = "Flash message after successful sign-out"
+description = "サインアウト成功時のフラッシュメッセージ"
 other = "Signed out successfully."
 
 # Sign up
 [sign_up_new_title]
-description = "Sign-up page title"
+description = "サインアップページのタイトル"
 other = "Sign up"
 
 [sign_up_new_heading]
-description = "Sign-up page heading"
+description = "サインアップページの見出し"
 other = "Sign up for Wikino"
 
 [sign_up_new_email_instruction]
-description = "Description for email input field on sign up"
+description = "サインアップ時のメール入力フィールドの説明"
 other = "We'll send a confirmation code to the email address you enter to verify it"
 
 [sign_up_new_email_label]
-description = "Sign-up email input label"
+description = "サインアップのメールアドレス入力ラベル"
 other = "Email address"
 
 [sign_up_new_submit_button]
-description = "Sign-up submit button label"
+description = "サインアップの送信ボタンのラベル"
 other = "Send confirmation code"
 
 [sign_up_new_have_account]
-description = "Sign-up copy shown to users who already have an account"
+description = "サインアップページのアカウント所持済み案内文"
 other = "Already have an account?"
 
 [sign_up_new_sign_in]
-description = "Link to the sign-in page from sign-up"
+description = "サインアップページからサインインへの導線リンク"
 other = "Sign in"
 
 # Email confirmation
 [email_confirmation_subject]
-description = "Subject line for the confirmation code email"
+description = "メール確認コード送信メールの件名"
 other = "[Wikino] Confirmation Code"
 
 [flash_email_confirmation_sent]
-description = "Flash message when the confirmation code is sent"
+description = "確認コード送信完了時のフラッシュメッセージ"
 other = "Confirmation code sent."
 
 [validation_email_already_registered]
-description = "Email already registered validation error"
+description = "メールアドレス重複エラー"
 other = "This email address is already registered"
 
 [validation_invalid_event]
-description = "Error when an invalid event type (e.g. Turnstile) is detected"
+description = "Turnstileなどで無効なイベントが検知された場合のエラー"
 other = "Invalid event type"
 
 [validation_bot_detected]
-description = "Error when a request is detected as a bot"
+description = "Bot判定された場合のエラー"
 other = "Please try again later"
 
 [validation_rate_limit_exceeded]
-description = "Rate-limit exceeded validation error"
+description = "レート制限超過エラー"
 other = "Too many requests. Please try again later"
 
 # Email confirmation code entry
 [email_confirmation_edit_title]
-description = "Confirmation code entry page title"
+description = "確認コード入力ページのタイトル"
 other = "Enter confirmation code"
 
 [email_confirmation_edit_heading]
-description = "Confirmation code entry page heading"
+description = "確認コード入力ページの見出し"
 other = "Enter confirmation code"
 
 [email_confirmation_edit_description]
-description = "Confirmation code entry page instruction"
+description = "確認コード入力ページの案内文"
 other = "Enter the 6-character confirmation code sent to your email address"
 
 [email_confirmation_edit_code_label]
-description = "Confirmation code input label"
+description = "確認コード入力ラベル"
 other = "Confirmation code"
 
 [email_confirmation_edit_code_hint]
-description = "Confirmation code input hint"
+description = "確認コード入力のヒント"
 other = "Enter the 6-character code"
 
 [email_confirmation_edit_submit_button]
-description = "Confirmation code submit button label"
+description = "確認コード入力の送信ボタンのラベル"
 other = "Verify"
 
 [email_confirmation_edit_back_to_sign_up]
-description = "Back-to-sign-up link from the confirmation code page"
+description = "確認コード入力ページから新規登録への戻るリンク"
 other = "Back to sign up"
 
 # Email confirmation code validation
 [validation_confirmation_code_invalid_length]
-description = "Confirmation code length validation error"
+description = "確認コード文字数エラー"
 other = "Confirmation code must be 6 characters"
 
 [validation_confirmation_code_mismatch]
-description = "Confirmation code mismatch error"
+description = "確認コード不一致エラー"
 other = "The confirmation code is incorrect"
 
 [validation_confirmation_code_expired]
-description = "Confirmation code expired error"
+description = "確認コードの有効期限切れエラー"
 other = "The confirmation code has expired. Please try again"
 
 [validation_confirmation_not_found]
-description = "Error when the confirmation record is not found"
+description = "確認情報が見つからない場合のエラー"
 other = "Confirmation not found. Please try again"
 
 [validation_confirmation_already_succeeded]
-description = "Error when confirmation is already completed"
+description = "既に確認済みの場合のエラー"
 other = "This confirmation has already been completed"
 
 # Account creation
 [account_new_title]
-description = "Account creation page title"
+description = "アカウント作成ページのタイトル"
 other = "Create Account"
 
 [account_new_heading]
-description = "Account creation page heading"
+description = "アカウント作成ページの見出し"
 other = "Create your account"
 
 [account_new_email_label]
-description = "Email display label on the account creation page"
+description = "アカウント作成のメールアドレス表示ラベル"
 other = "Email address"
 
 [account_new_email_verified]
-description = "Label indicating the email has been verified"
+description = "アカウント作成画面でメール確認済みであることを示すラベル"
 other = "Verified"
 
 [account_new_atname_label]
-description = "Account creation atname input label"
+description = "アカウント作成のアットネーム入力ラベル"
 other = "Username"
 
 [account_new_atname_hint]
-description = "Account creation atname input hint"
+description = "アカウント作成のアットネーム入力ヒント"
 other = "Only letters, numbers, and underscores (max 20 characters)"
 
 [account_new_password_label]
-description = "Account creation password input label"
+description = "アカウント作成のパスワード入力ラベル"
 other = "Password"
 
 [account_new_password_hint]
-description = "Password input hint on the account creation page"
+description = "アカウント作成画面のパスワード入力ヒント"
 other = "Must be at least {{.MinLength}} characters"
 
 [account_new_submit_button]
-description = "Account creation submit button label"
+description = "アカウント作成の送信ボタンのラベル"
 other = "Create account"
 
 [account_new_back_to_sign_up]
-description = "Back-to-sign-up link from the account creation page"
+description = "アカウント作成ページから新規登録への戻るリンク"
 other = "Back to sign up"
 
 # Account creation validation
 [validation_atname_required]
-description = "Atname required validation error"
+description = "アットネーム必須エラー"
 other = "Please enter a username"
 
 [validation_atname_too_long]
-description = "Atname too long validation error"
+description = "アットネーム文字数超過エラー"
 other = "Username must be 20 characters or less"
 
 [validation_atname_invalid_format]
-description = "Atname invalid format validation error"
+description = "アットネーム形式エラー (許可されない文字を含む)"
 other = "Username can only contain letters, numbers, and underscores"
 
 [validation_atname_already_taken]
-description = "Atname already taken validation error"
+description = "アットネーム重複エラー"
 other = "This username is already taken"
 
 [validation_password_required]
-description = "Password required validation error"
+description = "パスワード必須エラー"
 other = "Please enter a password"
 
 [validation_password_too_short]
-description = "Error when password is shorter than the minimum length"
+description = "パスワードが最小文字数未満のときのエラー"
 other = "Password must be at least {{.MinLength}} characters"
 
 [validation_password_too_long]
-description = "Error when password exceeds the maximum length"
+description = "パスワードが最大文字数を超えたときのエラー"
 other = "Password must be at most {{.MaxLength}} characters"
 
 [validation_password_invalid_chars]
-description = "Error when password contains characters outside printable ASCII"
+description = "パスワードに印字可能ASCII文字以外が含まれるときのエラー"
 other = "Password can only contain printable ASCII characters"
 
 # Account creation success
 [flash_account_created]
-description = "Flash message after successful account creation"
+description = "アカウント作成成功時のフラッシュメッセージ"
 other = "Your account has been created"
 
 # Password reset request
 [password_reset_new_title]
-description = "Password reset request page title"
+description = "パスワードリセット申請ページのタイトル"
 other = "Password Reset"
 
 [password_reset_new_heading]
-description = "Password reset request page heading"
+description = "パスワードリセット申請ページの見出し"
 other = "Reset your password"
 
 [password_reset_new_description]
-description = "Password reset request page description"
+description = "パスワードリセット申請ページの案内文"
 other = "Enter your registered email address and we'll send you a link to reset your password."
 
 [password_reset_new_email_label]
-description = "Password reset email input label"
+description = "パスワードリセット申請のメールアドレス入力ラベル"
 other = "Email address"
 
 [password_reset_new_submit_button]
-description = "Password reset request submit button label"
+description = "パスワードリセット申請の送信ボタンのラベル"
 other = "Send reset link"
 
 [password_reset_new_back_to_sign_in]
-description = "Back-to-sign-in link from the password reset request page"
+description = "パスワードリセット申請ページからサインインへの戻るリンク"
 other = "Back to sign in"
 
 # Password reset email sent
 [password_reset_sent_title]
-description = "Password reset email sent confirmation page title"
+description = "パスワードリセットメール送信完了ページのタイトル"
 other = "Email Sent"
 
 [password_reset_sent_heading]
-description = "Password reset email sent confirmation page heading"
+description = "パスワードリセットメール送信完了ページの見出し"
 other = "Check your email"
 
 [password_reset_sent_message]
-description = "Password reset email sent confirmation message body"
+description = "パスワードリセットメール送信完了の本文メッセージ"
 other = "We've sent you a password reset link"
 
 [password_reset_sent_instructions]
-description = "Password reset email sent instructions"
+description = "パスワードリセットメール送信完了の操作手順案内"
 other = "Click the link in the email to set a new password. The link expires in 1 hour."
 
 [password_reset_email_not_received_heading]
-description = "Heading for the email-not-received help section on the reset confirmation page"
+description = "パスワードリセットメールが届かない場合の見出し"
 other = "Didn't receive the email?"
 
 [password_reset_email_not_received_help]
-description = "Help text for users who did not receive the password reset email"
+description = "パスワードリセットメールが届かない場合のヘルプ文"
 other = "Check your spam folder. If you still don't see it after a few minutes, verify the email address and try again."
 
 [password_reset_sent_back_to_sign_in]
-description = "Back-to-sign-in link from the password reset sent page"
+description = "パスワードリセット送信完了ページからサインインへの戻るリンク"
 other = "Back to sign in"
 
 # Password reset email
 [password_reset_email_subject]
-description = "Password reset email subject line"
+description = "パスワードリセットメールの件名"
 other = "[Wikino] Password Reset"
 
 # Password change
 [password_edit_title]
-description = "Password edit page title"
+description = "パスワード変更ページのタイトル"
 other = "Set New Password"
 
 [password_edit_heading]
-description = "Password edit page heading"
+description = "パスワード変更ページの見出し"
 other = "Set a new password"
 
 [password_edit_description]
-description = "Password edit page instruction"
+description = "パスワード変更ページの案内文"
 other = "Enter your new password below."
 
 [password_edit_password_label]
-description = "Password edit new password input label"
+description = "パスワード変更の新パスワード入力ラベル"
 other = "New password"
 
 [password_edit_password_requirements]
-description = "Password input hint on the password edit page"
+description = "パスワード変更画面のパスワード入力ヒント"
 other = "Must be at least {{.MinLength}} characters"
 
 [password_edit_password_confirmation_label]
-description = "Password edit confirmation password input label"
+description = "パスワード変更の確認用パスワード入力ラベル"
 other = "Confirm new password"
 
 [password_edit_submit_button]
-description = "Password edit submit button label"
+description = "パスワード変更の送信ボタンのラベル"
 other = "Change password"
 
 [password_edit_back_to_sign_in]
-description = "Back-to-sign-in link from the password edit page"
+description = "パスワード変更ページからサインインへの戻るリンク"
 other = "Back to sign in"
 
 # Password validation (additional)
 [validation_password_confirmation_required]
-description = "Password confirmation required validation error"
+description = "確認用パスワード必須エラー"
 other = "Please enter password confirmation"
 
 [validation_password_confirmation_mismatch]
-description = "Password confirmation mismatch error"
+description = "確認用パスワード不一致エラー"
 other = "Passwords do not match"
 
 # Token validation
 [validation_token_required]
-description = "Token required validation error"
+description = "トークン必須エラー"
 other = "Token is required"
 
 [validation_token_invalid]
-description = "Invalid token validation error"
+description = "無効なトークンのエラー"
 other = "Invalid link. Please request a new password reset."
 
 [validation_token_expired]
-description = "Expired token validation error"
+description = "トークン有効期限切れエラー"
 other = "This link has expired. Please request a new password reset."
 
 [validation_token_used]
-description = "Already-used token validation error"
+description = "使用済みトークンエラー"
 other = "This link has already been used. Please request a new password reset."
 
 [validation_system_error]
-description = "Generic system error message"
+description = "汎用のシステムエラー"
 other = "A system error occurred. Please try again later."
 
 # Password change success
 [flash_password_updated]
-description = "Flash message after successful password change"
+description = "パスワード変更成功時のフラッシュメッセージ"
 other = "Your password has been updated"
 
 # Common buttons/links
 [sign_up]
-description = "Sign-up button label used in the hero area and similar places"
+description = "ヒーローエリアなどで使うサインアップボタンのラベル"
 other = "Sign up"
 
 [sign_in]
-description = "Sign-in button label used in the hero area and similar places"
+description = "ヒーローエリアなどで使うサインインボタンのラベル"
 other = "Sign in"
 
 # Welcome page
 [welcome_title]
-description = "Welcome (top) page title"
+description = "トップページのタイトル"
 other = "Wikino"
 
 [welcome_description]
-description = "Welcome (top) page meta description"
+description = "トップページのmeta description"
 other = "Wikino is a web service where you can create and share wikis."
 
 [welcome_hero_title_html]
-description = "Welcome page hero heading (contains HTML)"
+description = "トップページのヒーローエリアの見出し (HTMLを含む)"
 other = "A Wiki app to discover through links"
 
 [welcome_hero_description_html]
-description = "Welcome page hero description (contains HTML)"
+description = "トップページのヒーローエリアの説明文 (HTMLを含む)"
 other = "Wikino is a web service where you can create and share wikis."
 
 
 [welcome_screenshot_alt]
-description = "Alt text for the welcome page screenshot image"
+description = "トップページのスクリーンショット画像のaltテキスト"
 other = "Screenshot of Wikino's page edit screen, showing the editor, links to drafts, and draft revision history."
 
 [welcome_features_title]
-description = "Welcome page features section heading"
+description = "トップページの「特徴」セクションの見出し"
 other = "Features"
 
 [welcome_feature_markdown_title]
-description = "Markdown feature heading on the welcome page"
+description = "Markdown機能紹介の見出し"
 other = "Write simply in Markdown"
 
 [welcome_feature_markdown_description]
-description = "Markdown feature description on the welcome page"
+description = "Markdown機能紹介の説明文"
 other = "Write documents in Markdown format with a clean, plain text editor."
 
 [welcome_feature_markdown_help_title]
-description = "Title for the Markdown feature help link"
+description = "Markdown機能のヘルプリンクのタイトル"
 other = "About Markdown syntax in Wikino"
 
 [welcome_feature_wikilink_title]
-description = "Wiki link feature heading on the welcome page"
+description = "Wikiリンク機能紹介の見出し"
 other = "Easily connect pages"
 
 [welcome_feature_wikilink_description]
-description = "Wiki link feature description on the welcome page"
+description = "Wikiリンク機能紹介の説明文"
 other = "Wrap a page title with our link syntax to create and link to that page."
 
 [welcome_feature_wikilink_help_title]
-description = "Title for the Wiki link feature help link"
+description = "Wikiリンク機能のヘルプリンクのタイトル"
 other = "About Wiki link syntax"
 
 [welcome_feature_backlinks_title]
-description = "Backlinks feature heading on the welcome page"
+description = "バックリンク機能紹介の見出し"
 other = "See the connections"
 
 [welcome_feature_backlinks_description]
-description = "Backlinks feature description on the welcome page"
+description = "バックリンク機能紹介の説明文"
 other = "By linking pages together, you can navigate to linked pages and discover related content through backlinks."
 
 [welcome_feature_backlinks_help_title]
-description = "Title for the backlinks feature help link"
+description = "バックリンク機能のヘルプリンクのタイトル"
 other = "About page connections"
 
 [welcome_feature_suggestion_title]
-description = "Suggestion feature heading on the welcome page"
+description = "編集提案機能紹介の見出し"
 other = "Propose and review changes"
 
 [welcome_feature_suggestion_description]
-description = "Suggestion feature description on the welcome page"
+description = "編集提案機能紹介の説明文"
 other = "Instead of editing directly, submit changes as a suggestion and apply them after a review through comments."
 
 [welcome_feature_suggestion_help_title]
-description = "Title for the suggestion feature help link"
+description = "編集提案機能のヘルプリンクのタイトル"
 other = "About suggestions"
 
 [welcome_feature_publish_title]
-description = "Page publish feature heading on the welcome page"
+description = "ページ公開機能紹介の見出し"
 other = "Publish and share your pages"
 
 [welcome_feature_publish_description]
-description = "Page publish feature description on the welcome page"
+description = "ページ公開機能紹介の説明文"
 other = "Make your pages public and share them with others."
 
 [welcome_feature_publish_note]
-description = "Note for the page publish feature on the welcome page"
+description = "ページ公開機能の補足注釈"
 other = "* Private spaces are currently free but will become a paid feature in the future."
 
 [welcome_feature_publish_help_title]
-description = "Title for the page publish feature help link"
+description = "ページ公開機能のヘルプリンクのタイトル"
 other = "About topics"
 
 [welcome_cta_title]
-description = "Welcome page CTA section heading"
+description = "トップページのCTAセクションの見出し"
 other = "Get Started with Wikino"
 
 [welcome_footer_resources]
-description = "Welcome page footer resources group heading"
+description = "トップページフッターのリソースグループ見出し"
 other = "Resources"
 
 [welcome_footer_help_page]
-description = "Welcome page footer help link label"
+description = "トップページフッターのヘルプページリンクのラベル"
 other = "Help Page"
 
 [welcome_footer_release_notes]
-description = "Welcome page footer release notes link label"
+description = "トップページフッターのリリースノートリンクのラベル"
 other = "Release Notes"
 
 [welcome_footer_about_developer]
-description = "Welcome page footer about-developer link label"
+description = "トップページフッターの開発者紹介リンクのラベル"
 other = "About the Developer"
 
 [welcome_footer_community]
-description = "Welcome page footer community group heading"
+description = "トップページフッターのコミュニティグループ見出し"
 other = "Community"
 
 [welcome_footer_open_source]
-description = "Welcome page footer open-source group heading"
+description = "トップページフッターのオープンソース項目見出し"
 other = "Open Source"
 
 [welcome_open_source_description]
-description = "Welcome page open-source group description"
+description = "トップページのオープンソース項目の説明文"
 other = "Wikino's source code is publicly available on GitHub."
 
 # Breadcrumb
 [breadcrumb_label]
-description = "Aria label for the breadcrumb"
+description = "パンくずリストのaria-label"
 other = "Breadcrumb"
 
 [breadcrumb_home]
-description = "Label for the home link in the breadcrumb"
+description = "パンくずリストのホームリンクのラベル"
 other = "Home"
 
 # Footer
 [footer_terms]
-description = "Footer terms-of-service link label"
+description = "フッターの利用規約リンクのラベル"
 other = "Terms of Service"
 
 [footer_privacy]
-description = "Footer privacy-policy link label"
+description = "フッターのプライバシーポリシーリンクのラベル"
 other = "Privacy Policy"
 
 # Page edit
 [page_edit_title]
-description = "Page edit screen title"
+description = "ページ編集画面のタイトル"
 other = "Edit Page | {{.SpaceName}}"
 
 [page_edit_breadcrumb]
-description = "Breadcrumb item for the page edit screen itself (the current item)"
+description = "ページ編集画面自身を指すパンくず項目 (現在項目)"
 other = "Edit Page"
 
 [page_edit_title_label]
-description = "Label for the page title input field"
+description = "ページタイトル入力フィールドのラベル"
 other = "Title"
 
 [page_edit_title_placeholder]
-description = "Placeholder for the page title input field"
+description = "ページタイトル入力フィールドのプレースホルダー"
 other = "Page title"
 
 [page_edit_body_label]
-description = "Label for the page body input field"
+description = "ページ本文入力フィールドのラベル"
 other = "Body"
 
 [page_edit_body_placeholder]
-description = "Placeholder for the page body input field"
+description = "ページ本文入力フィールドのプレースホルダー"
 other = "Write something..."
 
 [page_edit_publish_to_topic_button]
-description = "Label for the publish to topic button"
+description = "トピックに公開ボタンのラベル"
 other = "Publish to topic"
 
 [page_edit_cancel]
-description = "Label for the cancel link"
+description = "ページ編集キャンセルリンクのラベル"
 other = "Cancel"
 
 [page_edit_tabs_label]
-description = "Label for the edit/preview tab group on the page edit screen"
+description = "ページ編集画面の編集/プレビュータブグループのラベル"
 other = "Edit and preview"
 
 [page_edit_tab_edit]
-description = "Label for the edit tab on the page edit screen"
+description = "ページ編集画面の編集タブのラベル"
 other = "Edit"
 
 [page_edit_tab_preview]
-description = "Label for the preview tab on the page edit screen"
+description = "ページ編集画面のプレビュータブのラベル"
 other = "Preview"
 
 [page_edit_zen_mode_button]
-description = "Label for the Zen mode toggle button on the page edit screen"
+description = "ページ編集画面のZenモード切り替えボタンのラベル"
 other = "Zen mode"
 
 [page_edit_preview_loading]
-description = "Loading text shown while generating the preview on the page edit screen"
+description = "ページ編集画面でプレビュー生成中に表示するローディングテキスト"
 other = "Generating preview..."
 
 [page_edit_current_page_is_draft]
-description = "Alert message when viewing a draft"
+description = "下書きを表示中のアラートメッセージ"
 other = "You are currently viewing a draft."
 
 [page_edit_draft_pages_heading]
-description = "Heading for the draft list column on the page edit screen"
+description = "ページ編集画面の下書き一覧カラムの見出し"
 other = "Drafts"
 
 [page_edit_draft_pages_view_all_link]
-description = "Link text from the page edit screen draft list column to the draft pages index"
+description = "ページ編集画面の下書き一覧カラムから下書き一覧ページへのリンクテキスト"
 other = "View all"
 
 [page_edit_draft_pages_toggle_label]
-description = "Label for the button that opens the draft list column on the page edit screen (narrow screens)"
+description = "ページ編集画面で下書き一覧カラムを開く開閉ボタンのラベル (画面幅が狭いとき)"
 other = "Drafts"
 
 [page_edit_draft_pages_empty]
-description = "Empty state text shown in the page edit screen draft list column when there are no drafts"
+description = "ページ編集画面の下書き一覧カラムで下書きが1件もないときの空状態テキスト"
 other = "No drafts yet."
 
 [page_edit_revisions_heading]
-description = "Heading for the edit history column on the page edit screen"
+description = "ページ編集画面の編集履歴カラムの見出し"
 other = "Draft edit history"
 
 [page_edit_revisions_toggle_label]
-description = "Label for the button that opens the edit history column on the page edit screen (narrow screens)"
+description = "ページ編集画面で編集履歴カラムを開く開閉ボタンのラベル (画面幅が狭いとき)"
 other = "Edit history"
 
 [page_edit_revisions_empty]
-description = "Empty state text shown in the page edit screen edit history column when there are no revisions"
+description = "ページ編集画面の編集履歴カラムでリビジョンが1件もないときの空状態テキスト"
 other = "Your draft edits will appear here after you save."
 
 [page_edit_revisions_current_badge]
-description = "Badge shown on the newest revision in the page edit screen edit history column"
+description = "ページ編集画面の編集履歴カラムで最新リビジョンに表示するバッジ"
 other = "Current"
 
 [page_edit_revision_diff_heading]
-description = "Heading of the revision diff modal on the page edit screen"
+description = "ページ編集画面のリビジョン差分モーダルの見出し"
 other = "Changes"
 
 [page_edit_revision_diff_title_change]
-description = "Title change label in the revision diff modal"
+description = "リビジョン差分モーダルのタイトル変更ラベル"
 other = "Title change"
 
 [page_edit_revision_diff_loading]
-description = "Loading text shown while fetching the diff in the revision diff modal"
+description = "リビジョン差分モーダルで差分取得中に表示するローディングテキスト"
 other = "Loading diff..."
 
 [page_edit_revision_diff_restore_button]
-description = "Restore button in the revision diff modal"
+description = "リビジョン差分モーダルの復元ボタン"
 other = "Restore this version"
 
 [page_edit_revision_diff_restore_confirm_message]
-description = "Inline restore confirmation message in the revision diff modal"
+description = "リビジョン差分モーダルのインライン復元確認メッセージ"
 other = "Really restore this version?"
 
 [page_edit_revision_diff_restore_confirm_button]
-description = "Restore confirm button in the revision diff modal"
+description = "リビジョン差分モーダルの復元確定ボタン"
 other = "Restore"
 
 [page_edit_revision_diff_restore_cancel_button]
-description = "Restore cancel button in the revision diff modal"
+description = "リビジョン差分モーダルの復元キャンセルボタン"
 other = "Cancel"
 
 [page_edit_links_untitled]
-description = "Display text for an untitled linked page"
+description = "タイトルなしのリンク先ページの表示テキスト"
 other = "Untitled"
 
 [page_edit_links_edit_page]
-description = "Accessible name and hover tooltip for the edit link on a linked page card"
+description = "リンク先ページの編集リンクのアクセシブルネームとホバー時のツールチップ"
 other = "Edit page"
 
 [page_links_heading]
-description = "Heading for the link list, shared by the page show and page edit screens"
+description = "リンク一覧の見出し (ページ表示画面と編集画面で共有)"
 other = "Links"
 
 [page_links_description]
-description = "Description shown beside the link list heading, shared by the page show and page edit screens"
+description = "リンク一覧の見出しに添える説明 (ページ表示画面と編集画面で共有)"
 other = "Pages this page links to directly"
 
 [page_links_related_heading]
-description = "Heading for the related link list, shared by the page show and page edit screens"
+description = "関連リンク一覧の見出し (ページ表示画面と編集画面で共有)"
 other = "Related links"
 
 [page_links_related_description]
-description = "Description shown beside the related link list heading, shared by the page show and page edit screens"
+description = "関連リンク一覧の見出しに添える説明 (ページ表示画面と編集画面で共有)"
 other = "Pages reachable through the linked pages"
 
 [page_links_backlinks_heading]
-description = "Heading for the backlink list, shared by the page show and page edit screens"
+description = "バックリンク一覧の見出し (ページ表示画面と編集画面で共有)"
 other = "Backlinks"
 
 [page_links_backlinks_description]
-description = "Description shown beside the backlink list heading, shared by the page show and page edit screens"
+description = "バックリンク一覧の見出しに添える説明 (ページ表示画面と編集画面で共有)"
 other = "Pages that link to this page"
 
 [page_links_load_more]
-description = "Shared load more link for related page lists"
+description = "関連ページ一覧で共有する「もっと見る」リンク"
 other = "More"
 
 [page_links_load_more_end]
-description = "Status shown after the final related-page listing page loads"
+description = "関連ページ一覧の最終ページを読み込んだ後の状態"
 other = "All items have been loaded."
 
 [page_links_load_more_links_aria_label]
-description = "Accessible name for the load more link of the link list"
+description = "リンク一覧の「もっと見る」リンクのアクセシブルネーム"
 other = "Show more links"
 
 [page_links_load_more_linked_page_backlinks_aria_label]
-description = "Accessible name for the load more link of a linked page's backlink list"
+description = "リンク先ページのバックリンク一覧の「もっと見る」リンクのアクセシブルネーム"
 other = "Show more backlinks of {{.PageTitle}}"
 
 [page_links_load_more_page_backlinks_aria_label]
-description = "Accessible name for the load more link of the page's own backlink list"
+description = "ページ自身のバックリンク一覧の「もっと見る」リンクのアクセシブルネーム"
 other = "Show more backlinks"
 
 [page_links_related_via_label]
-description = "Label of the subheading naming the linked page a group of related links is reached through"
+description = "関連リンクをどのリンク先ページ経由で辿れるかを示す小見出しのラベル"
 other = "via"
 
 [page_edit_links_load_more_limit]
-description = "Notice shown when the page edit screen reaches the related page list load limit"
+description = "ページ編集画面で関連ページ一覧の読み込み上限に達したときの案内"
 other = "This is as far as the editor loads this list."
 
 [page_edit_links_load_more_limit_link]
-description = "Link text that continues a capped related-page list one page at a time in the editor"
+description = "上限に達した関連ページ一覧を編集画面で1ページずつ継続するリンクテキスト"
 other = "Continue one page at a time"
 
 [page_edit_save_draft_button]
-description = "Label for the save draft button"
+description = "下書き保存ボタンのラベル"
 other = "Save Draft"
 
 [page_edit_save_draft_options_aria_label]
-description = "Aria label for the save draft dropdown trigger button on the page edit screen"
+description = "ページ編集画面の下書き保存ドロップダウントリガーボタンのaria-label"
 other = "Save draft options"
 
 [page_edit_save_draft_and_create_suggestion_button]
-description = "Label for the save draft and create suggestion button"
+description = "下書き保存して編集提案を作成するボタンのラベル"
 other = "Save Draft and Create Suggestion..."
 
 [page_edit_draft_saved_time]
-description = "Auto-saved time display"
+description = "自動保存時刻の表示"
 other = "Auto-saved: <span class=\"font-bold\">{{.Time}}</span>"
 
 [page_edit_draft_manual_saved_time]
-description = "Manually saved time display"
+description = "手動保存時刻の表示"
 other = "Saved: <span class=\"font-bold\">{{.Time}}</span>"
 
 [page_edit_suggestion_editing]
-description = "Message shown when editing a page for a suggestion"
+description = "編集提案のページ編集中メッセージ"
 other = "Editing a page for <a href=\"{{.URL}}\" class=\"underline\">suggestion #{{.Number}}</a>"
 
 [page_edit_update_suggestion_button]
-description = "Label for the update suggestion button"
+description = "編集提案を更新ボタンのラベル"
 other = "Update Suggestion"
 
 # Page show screen
 [page_show_title]
-description = "Page show screen title ({page_title} | {space_name} format)"
+description = "ページ表示画面のタイトル ({page_title} | {space_name} 形式)"
 other = "{{.PageTitle}} | {{.SpaceName}}"
 
 [page_show_untitled]
-description = "Display name for a page with no title"
+description = "タイトル未設定のページの表示名"
 other = "Untitled"
 
 [page_show_trashed_alert]
-description = "Alert shown when viewing a page that is in the trash"
+description = "ゴミ箱に入っているページを表示したときのアラート"
 other = "This page is in the trash."
 
 [page_show_view_trash_link]
-description = "Link text from the trash alert to the trash screen"
+description = "ゴミ箱アラートからゴミ箱画面へのリンクテキスト"
 other = "View trash"
 
 [page_show_edit_button]
-description = "Link text from the page show screen to the page edit screen"
+description = "ページ表示画面のページ編集画面へのリンクテキスト"
 other = "Edit"
 
 [page_show_page_actions_aria_label]
-description = "Aria label for the page actions dropdown trigger button on the page show screen"
+description = "ページ表示画面の操作ドロップダウンを開くボタンのaria-label"
 other = "Page actions"
 
 [page_show_page_actions_move]
-description = "Dropdown menu item on the page show screen: move the page to another topic"
+description = "ページ表示画面のドロップダウンメニュー: ページを別のトピックへ移動する"
 other = "Move"
 
 [page_show_page_actions_trash]
-description = "Dropdown menu item on the page show screen: move the page to the trash"
+description = "ページ表示画面のドロップダウンメニュー: ページをゴミ箱に入れる"
 other = "Move to Trash"
 
 [page_show_page_actions_trash_confirm]
-description = "Confirmation dialog before moving a page to the trash"
+description = "ページをゴミ箱に入れる操作の確認ダイアログ"
 other = "Are you sure you want to move this page to trash?"
 
 # Page publish validation
 [validation_page_title_required]
-description = "Page title required error"
+description = "ページタイトル必須エラー"
 other = "Please enter a title"
 
 [validation_page_title_too_long]
-description = "Page title too long error"
+description = "ページタイトル文字数超過エラー"
 other = "Title must be 200 characters or less"
 
 [validation_page_title_invalid_chars]
-description = "Page title invalid characters error"
+description = "ページタイトル禁止文字エラー"
 other = "Title cannot contain / \\ :"
 
 [validation_page_title_control_chars]
-description = "Page title control characters error"
+description = "ページタイトル制御文字エラー"
 other = "Title cannot contain control characters"
 
 [validation_page_title_invalid_format]
-description = "Page title invalid format error"
+description = "ページタイトル不正フォーマットエラー"
 other = "Title cannot start or end with a space"
 
 [validation_page_title_uniqueness_html]
-description = "Page title uniqueness error (HTML included)"
+description = "ページタイトル重複エラー (HTML含む)"
 other = "has already existed. <a class=\"underline\" href=\"%s\">Edit the existing page</a>"
 
 # Page publish success
 [flash_page_saved]
-description = "Page saved success message"
+description = "ページ保存成功メッセージ"
 other = "Page saved."
 
 # Draft page save success
 [flash_draft_page_saved]
-description = "Draft page saved success message"
+description = "下書き保存成功メッセージ"
 other = "Draft saved."
 
 [flash_draft_page_revision_restored]
-description = "Draft page revision restored success message"
+description = "下書きリビジョン復元成功メッセージ"
 other = "Restored the draft to the selected version."
 
 # Page moved to trash
 [flash_page_moved_to_trash]
-description = "Page moved to trash success message"
+description = "ページのゴミ箱への移動成功メッセージ"
 other = "Page moved to trash."
 
 # Suggestion page update success
 [flash_suggestion_page_updated]
-description = "Suggestion page updated success message"
+description = "編集提案ページ更新成功メッセージ"
 other = "Suggestion updated."
 
 [flash_suggestion_page_added]
-description = "Suggestion page added success message"
+description = "編集提案ページ追加成功メッセージ"
 other = "Page added."
 
 [flash_suggestion_page_removed]
-description = "Suggestion page removed success message"
+description = "編集提案ページ削除成功メッセージ"
 other = "Page removed."
 
 [error_suggestion_page_remove_last_page]
-description = "Cannot remove last page from suggestion error"
+description = "編集提案ページ削除時の最後のページエラー"
 other = "A suggestion must have at least one page."
 
 [suggestion_page_new_title]
-description = "Add suggestion page title"
+description = "編集提案ページ追加のページタイトル"
 other = "Add Page | {{.SpaceName}}"
 
 [suggestion_page_new_heading]
-description = "Add suggestion page heading"
+description = "編集提案ページ追加の見出し"
 other = "Add Page"
 
 [suggestion_page_new_draft_pages_label]
-description = "Draft pages selection label for adding suggestion page"
+description = "編集提案ページ追加の下書きページ選択ラベル"
 other = "Draft pages to add"
 
 [suggestion_page_new_no_draft_pages]
-description = "Message when no draft pages available to add"
+description = "編集提案ページ追加で追加可能な下書きがない場合のメッセージ"
 other = "No draft pages available to add."
 
 [suggestion_page_new_submit]
-description = "Add suggestion page submit button"
+description = "編集提案ページ追加の送信ボタン"
 other = "Add"
 
 [suggestion_page_new_cancel]
-description = "Cancel link on add suggestion page"
+description = "編集提案ページ追加のキャンセルリンク"
 other = "Cancel"
 
 [error_suggestion_page_update_conflict]
-description = "Conflict error when updating suggestion page"
+description = "編集提案ページ更新時の競合エラー"
 other = "Could not update the suggestion because the draft was not found."
 
 # Page move
 [page_move_title]
-description = "Page move screen title"
+description = "ページ移動画面のタイトル"
 other = "Move Page | {{.SpaceName}}"
 
 [page_move_heading]
-description = "Page move screen heading"
+description = "ページ移動画面の見出し"
 other = "Move Page"
 
 [page_move_breadcrumb]
-description = "Breadcrumb item for the page move screen itself (the current item)"
+description = "ページ移動画面自身を指すパンくず項目 (現在項目)"
 other = "Move Page"
 
 [page_move_subtitle]
-description = "Page move screen subtitle"
+description = "ページ移動画面の説明文"
 other = "Move this page to a different topic."
 
 [page_move_page_title_label]
-description = "Label for the page being moved"
+description = "移動対象ページタイトルのラベル"
 other = "Page"
 
 [page_move_current_topic_label]
-description = "Current topic label"
+description = "現在のトピックラベル"
 other = "Current topic"
 
 [page_move_destination_topic_label]
-description = "Destination topic label"
+description = "移動先トピックラベル"
 other = "Destination topic"
 
 [page_move_select_topic_placeholder]
-description = "Placeholder for the destination topic selector"
+description = "移動先トピックのプレースホルダー"
 other = "Select a topic"
 
 [page_move_submit]
-description = "Page move button"
+description = "ページ移動ボタン"
 other = "Move"
 
 [page_move_cancel]
-description = "Cancel link"
+description = "キャンセルリンク"
 other = "Cancel"
 
 [page_move_no_available_topics]
-description = "Message when no topics are available for move"
+description = "移動先トピックがない場合のメッセージ"
 other = "No topics available to move to."
 
 [page_move_success]
-description = "Page move success message"
+description = "ページ移動成功メッセージ"
 other = "Page moved."
 
 [page_move_error_topic_required]
-description = "Destination topic required error"
+description = "移動先トピック未選択エラー"
 other = "Please select a destination topic."
 
 [page_move_error_same_topic]
-description = "Same topic error"
+description = "同一トピックエラー"
 other = "Cannot move to the same topic."
 
 [page_move_error_no_permission]
-description = "No permission to destination topic error"
+description = "移動先トピック権限エラー"
 other = "You do not have permission to create pages in the destination topic."
 
 [page_move_error_title_exists]
-description = "Title exists in destination topic error"
+description = "移動先トピックにタイトル重複エラー"
 other = "A page with the same title already exists in the destination topic."
 
 [page_move_error_open_suggestion_exists]
-description = "Cannot move page referenced by open suggestion error"
+description = "オープンな編集提案が存在するため移動不可エラー"
 other = "Pages referenced by open suggestions cannot be moved."
 
 [home_show_title]
-description = "Home page title (meta tag)"
+description = "ホーム画面のタイトル (meta tag)"
 other = "Home"
 
 [home_heading]
-description = "Home page main heading"
+description = "ホーム画面のメイン見出し"
 other = "Home"
 
 [home_joined_spaces_heading]
-description = "Home page 'Joined spaces' section heading"
+description = "ホーム画面の「参加中のスペース」見出し"
 other = "Joined spaces"
 
 [home_new_space_button]
-description = "Home page 'New space' button label"
+description = "ホーム画面の「新規スペース」ボタン"
 other = "New space"
 
 [home_no_joined_spaces_html]
-description = "Home page heading shown when the user has no joined spaces (contains HTML)"
+description = "ホーム画面の参加中スペースが0件のときの見出しメッセージ (HTMLを含む)"
 other = "No joined spaces."
 
 [home_welcome_message]
-description = "Heading shown in the home page's welcome empty state when the user has no joined spaces / topics / drafts"
+description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て0件) の見出し"
 other = "Welcome to Wikino!"
 
 [home_welcome_description_html]
-description = "Description shown in the home page's welcome empty state when the user has no joined spaces / topics / drafts"
+description = "ホーム画面のウェルカム空状態 (スペース・トピック・下書きが全て0件) の補足説明"
 other = "Create your first space to start writing pages."
 
 [home_joined_topics_heading]
-description = "Home page 'Joined topics' section heading"
+description = "ホーム画面の「参加中のトピック」見出し"
 other = "Joined topics"
 
 [home_no_joined_topics_html]
-description = "Home page heading shown when the user has no joined topics (contains HTML)"
+description = "ホーム画面の参加中トピックが0件のときの見出しメッセージ (HTMLを含む)"
 other = "No joined topics."
 
 [home_draft_pages_heading]
-description = "Home page 'Draft pages' section heading"
+description = "ホーム画面の「下書きのページ」見出し"
 other = "Draft pages"
 
 [home_draft_pages_view_all_link]
-description = "Link text from the home page 'Draft pages' section to the draft pages index"
+description = "ホーム画面の「下書きのページ」セクションから下書き一覧ページへのリンクテキスト"
 other = "View all"
 
 [home_no_draft_pages_html]
-description = "Home page heading shown when the user has no draft pages (contains HTML)"
+description = "ホーム画面の下書きが0件のときの見出しメッセージ (HTMLを含む)"
 other = "No draft pages."
 
 [home_draft_pages_untitled]
-description = "Fallback text shown on a home page draft card when the title is empty"
+description = "ホーム画面の下書きカードでタイトルが未設定のときに表示する代替テキスト"
 other = "Untitled"
 
 [draft_page_index_title]
-description = "Draft page index page title"
+description = "下書き一覧ページのタイトル"
 other = "Draft Pages"
 
 [draft_page_index_heading]
-description = "Draft page index page heading"
+description = "下書き一覧ページの見出し"
 other = "Draft Pages"
 
 [draft_page_index_empty]
-description = "Message when there are no drafts"
+description = "下書きがない場合のメッセージ"
 other = "No drafts."
 
 [draft_page_index_table_caption]
-description = "Draft page index table caption (visually hidden)"
+description = "下書き一覧テーブルのキャプション (視覚的には非表示)"
 other = "Drafts in {{.TopicName}} ({{.SpaceName}})"
 
 [draft_page_index_column_title]
-description = "Draft page index table title column header"
+description = "下書き一覧テーブルのタイトル列ヘッダー"
 other = "Title"
 
 [draft_page_index_column_modified_at]
-description = "Draft page index table modified at column header"
+description = "下書き一覧テーブルの更新日時列ヘッダー"
 other = "Modified"
 
 [draft_page_index_untitled]
-description = "Untitled draft page"
+description = "タイトル未設定の下書き"
 other = "Untitled"
 
 [draft_page_index_create_suggestion_button]
-description = "Create suggestion button on draft page index"
+description = "下書き一覧画面の編集提案作成ボタン"
 other = "New suggestion"
 
 [draft_page_index_actions_aria_label]
-description = "Aria label for the dropdown trigger button on each draft row"
+description = "下書き一覧の各行のアクションメニューを開くボタンのaria-label"
 other = "Draft actions"
 
 [draft_page_delete_menu_item]
-description = "Dropdown menu item: delete a draft from the index"
+description = "下書き一覧のドロップダウンメニュー: 削除アクション"
 other = "Delete"
 
 [draft_page_delete_confirm]
-description = "Confirmation dialog before deleting a draft"
+description = "下書き削除の確認ダイアログ"
 other = "Delete this draft?"
 
 [flash_draft_page_deleted]
-description = "Flash message shown after a draft is deleted"
+description = "下書き削除成功時のフラッシュメッセージ"
 other = "Draft deleted"
 
 # Global navigation
 [global_nav_top_label]
-description = "Aria label for the global navigation top bar (desktop)"
+description = "グローバルナビゲーション上部バー (PC) のaria-label"
 other = "Global navigation"
 
 [global_nav_bottom_label]
-description = "Aria label for the global navigation bottom bar (mobile)"
+description = "グローバルナビゲーション下部バー (モバイル) のaria-label"
 other = "Global navigation (mobile)"
 
 [global_nav_home]
-description = "Aria label for the home link in the global navigation"
+description = "グローバルナビのホームリンクのaria-label"
 other = "Home"
 
 [global_nav_search]
-description = "Aria label for the search link in the global navigation"
+description = "グローバルナビの検索リンクのaria-label"
 other = "Search"
 
 [global_nav_profile]
-description = "Aria label for the profile link in the global navigation"
+description = "グローバルナビのプロフィールリンクのaria-label"
 other = "Profile"
 
 [global_nav_sign_in]
-description = "Aria label for the sign in link in the global navigation"
+description = "グローバルナビのログインリンクのaria-label"
 other = "Sign in"
 
 # Skip link
 [skip_to_main_content]
-description = "Text for the skip link that jumps to the main content (WCAG 2.4.1)"
+description = "メインコンテンツへ移動するスキップリンクのテキスト (WCAG 2.4.1)"
 other = "Skip to main content"
 
 # Topic show
 [topic_show_title]
-description = "Topic show page title ({topic_name} | {space_name} format)"
+description = "トピック詳細画面のタイトル ({topic_name} | {space_name}形式)"
 other = "{{.TopicName}} | {{.SpaceName}}"
 
 [topic_show_visibility_public]
-description = "Label for a public topic, shown below the title on the same line as the description on the topic show page"
+description = "トピック詳細画面のタイトル下で説明文と同じ行に出す公開トピックのラベル"
 other = "Public"
 
 [topic_show_visibility_private]
-description = "Label for a private topic, shown below the title on the same line as the description on the topic show page"
+description = "トピック詳細画面のタイトル下で説明文と同じ行に出す非公開トピックのラベル"
 other = "Private"
 
 [topic_show_paginated_title]
-description = "Paginated topic show page title ({topic_name} | {space_name} (Page {page_number}) format)"
+description = "ページネーションされたトピック詳細画面のタイトル ({topic_name} | {space_name} ({page_number} ページ目) 形式)"
 other = "{{.TopicName}} | {{.SpaceName}} (Page {{.PageNumber}})"
 
 [topic_show_no_pages_message]
-description = "Message when there are no pages in the topic"
+description = "トピック詳細画面でページがない場合のメッセージ"
 other = "No pages"
 
 [topic_show_no_pages_description]
-description = "Description when there are no pages in the topic"
+description = "トピック詳細画面でページがない場合の説明文"
 other = "Create your first page."
 
 [topic_show_new_page]
-description = "New page button on the topic show page"
+description = "トピック詳細画面の新規ページ作成ボタン"
 other = "New page"
 
 [topic_show_options_aria_label]
-description = "Aria label for the options dropdown trigger button on the topic show page"
+description = "トピック詳細画面のオプションメニューを開くボタンのaria-label"
 other = "Topic options"
 
 [topic_show_settings]
-description = "Topic settings link on the topic show page"
+description = "トピック詳細画面のトピック設定リンク"
 other = "Topic settings"
 
 [topic_show_tab_pages]
-description = "Pages tab label on the topic show page"
+description = "トピック詳細画面の「ページ」タブラベル"
 other = "Pages"
 
 [topic_show_tab_suggestions]
-description = "Suggestions tab label on the topic show page"
+description = "トピック詳細画面の「編集提案」タブラベル"
 other = "Suggestions"
 
 # Topic new
 [topic_new_title]
-description = "Topic creation page title"
+description = "トピック作成画面のページタイトル"
 other = "New topic | {{.SpaceName}}"
 
 [topic_new_heading]
-description = "Heading on the topic creation page"
+description = "トピック作成画面の見出し"
 other = "New topic"
 
 [topic_new_breadcrumb]
-description = "Breadcrumb item for the topic creation page itself (the current item)"
+description = "トピック作成画面自身を指すパンくず項目 (現在項目)"
 other = "New topic"
 
 [topic_new_hint_html]
-description = "Subtitle on the topic creation page (contains links to the help pages)"
+description = "トピック作成画面のサブタイトル (ヘルプページへのリンクを含む)"
 other = "For more information about topics, please see <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/11\" target=\"_blank\">Topic help</a>.<br>If you are unsure what kind of topic to create, <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/52\" target=\"_blank\">Best Practices</a> may be helpful."
 
 [topic_form_name_label]
-description = "Name label on the topic form (shared by the creation and general settings pages)"
+description = "トピックのフォームの名前ラベル (作成画面と一般設定画面で共有)"
 other = "Name"
 
 [topic_form_description_label]
-description = "Description label on the topic form (shared by the creation and general settings pages)"
+description = "トピックのフォームの説明ラベル (作成画面と一般設定画面で共有)"
 other = "Description"
 
 [topic_form_visibility_label]
-description = "Visibility label on the topic form (shared by the creation and general settings pages)"
+description = "トピックのフォームの公開設定ラベル (作成画面と一般設定画面で共有)"
 other = "Visibility"
 
 [topic_form_visibility_public]
-description = "Public topic option on the topic form (shared by the creation and general settings pages)"
+description = "トピックのフォームの公開トピックの選択肢 (作成画面と一般設定画面で共有)"
 other = "Public"
 
 [topic_form_visibility_private]
-description = "Private topic option on the topic form (shared by the creation and general settings pages)"
+description = "トピックのフォームの非公開トピックの選択肢 (作成画面と一般設定画面で共有)"
 other = "Private"
 
 [topic_form_visibility_public_hint]
-description = "Hint for the public topic option on the topic form (shared by the creation and general settings pages)"
+description = "トピックのフォームの公開トピックの補足 (作成画面と一般設定画面で共有)"
 other = "Pages posted in public topics are visible on the internet."
 
 [topic_form_visibility_private_hint]
-description = "Hint for the private topic option on the topic form (shared by the creation and general settings pages)"
+description = "トピックのフォームの非公開トピックの補足 (作成画面と一般設定画面で共有)"
 other = "Pages posted in private topics are visible only in this space."
 
 [topic_form_visibility_private_note_html]
-description = "Note for the private topic option on the topic form (shared by the creation and general settings pages; contains a link to the help page)"
+description = "トピックのフォームの非公開トピックの注意書き (作成画面と一般設定画面で共有。ヘルプページへのリンクを含む)"
 other = "Private topics are currently available for free, but if a paid plan is introduced in the future, it will be a paid plan only feature. <a class=\"link-foreground\" href=\"https://wikino.app/s/wikino/pages/38\" target=\"_blank\">Private topic help</a>"
 
 [topic_new_submit_button]
-description = "Submit button on the topic creation page"
+description = "トピック作成画面の送信ボタン"
 other = "Create"
 
 [topic_new_cancel]
-description = "Cancel link on the topic creation page"
+description = "トピック作成画面のキャンセルリンク"
 other = "Cancel"
 
 [validation_topic_name_required]
-description = "Topic name required error"
+description = "トピック名必須エラー"
 other = "Please enter a name"
 
 [validation_topic_name_too_long]
-description = "Topic name too long error"
+description = "トピック名文字数超過エラー"
 other = "Name must be 30 characters or less"
 
 [validation_topic_name_invalid_chars]
-description = "Topic name invalid characters error"
+description = "トピック名禁止文字エラー"
 other = "Name cannot contain / \\ :"
 
 [validation_topic_name_control_chars]
-description = "Topic name control characters error"
+description = "トピック名制御文字エラー"
 other = "Name cannot contain control characters"
 
 [validation_topic_name_invalid_format]
-description = "Topic name invalid format error"
+description = "トピック名不正フォーマットエラー"
 other = "Name cannot start or end with a space"
 
 [validation_topic_name_uniqueness]
-description = "Topic name uniqueness error"
+description = "トピック名重複エラー"
 other = "This name has already been taken"
 
 [validation_topic_description_too_long]
-description = "Topic description too long error"
+description = "トピックの説明の文字数超過エラー"
 other = "Description must be 150 characters or less"
 
 [validation_topic_visibility_required]
-description = "Topic visibility not selected error"
+description = "トピックの公開設定未選択エラー"
 other = "Please select a visibility"
 
 [flash_topic_created]
-description = "Flash message shown when a topic has been created"
+description = "トピック作成成功時のフラッシュメッセージ"
 other = "Topic created."
 
 [flash_topic_updated]
-description = "Flash message shown when a topic has been updated"
+description = "トピック更新成功時のフラッシュメッセージ"
 other = "Topic updated."
 
 # Topic general settings
 [topic_settings_general_title]
-description = "Topic general settings page title"
+description = "トピックの一般設定画面のページタイトル"
 other = "General | {{.TopicName}} | {{.SpaceName}}"
 
 [topic_settings_general_heading]
-description = "Heading on the topic general settings page"
+description = "トピックの一般設定画面の見出し"
 other = "General"
 
 [topic_settings_general_breadcrumb_settings]
-description = "Topic settings label shown in the breadcrumb of the topic general settings page"
+description = "トピックの一般設定画面のパンくずに出すトピック設定のラベル"
 other = "Settings"
 
 [topic_settings_general_breadcrumb]
-description = "Breadcrumb item for the topic general settings page itself (the current item)"
+description = "トピックの一般設定画面自身を指すパンくず項目 (現在項目)"
 other = "General"
 
 [topic_settings_general_submit_button]
-description = "Submit button on the topic general settings page"
+description = "トピックの一般設定画面の送信ボタン"
 other = "Save"
 
 [topic_settings_general_cancel]
-description = "Cancel link on the topic general settings page"
+description = "トピックの一般設定画面のキャンセルリンク"
 other = "Cancel"
 
 # Space show
 [space_show_title]
-description = "Space show page title ({space_name})"
+description = "スペース詳細画面のタイトル ({space_name})"
 other = "{{.SpaceName}}"
 
 [space_show_paginated_title]
-description = "Paginated space show page title ({space_name} (Page {page_number}) format)"
+description = "ページネーションされたスペース詳細画面のタイトル ({space_name} ({page_number} ページ目) 形式)"
 other = "{{.SpaceName}} (Page {{.PageNumber}})"
 
 [space_show_no_topics_message]
-description = "Message when there are no topics in the space"
+description = "スペース詳細画面でトピックがない場合のメッセージ"
 other = "No topics."
 
 [space_show_no_topics_description_html]
-description = "Description when there are no topics in the space (contains HTML)"
+description = "スペース詳細画面でトピックがない場合の説明文 (HTMLを含む)"
 other = "Topics are used to classify pages.<br>Create a topic to add pages."
 
 [space_show_new_topic_button]
-description = "New topic button on the space show page"
+description = "スペース詳細画面の新規トピック作成ボタン"
 other = "New topic"
 
 [space_show_no_pages_message]
-description = "Message when there are no pages in the space"
+description = "スペース詳細画面でページがない場合のメッセージ"
 other = "No pages."
 
 [space_show_pages_heading]
-description = "Heading of the pages section on the space show page"
+description = "スペース詳細画面のページセクションの見出し"
 other = "Pages"
 
 [space_show_topics_heading]
-description = "Heading of the topic section on the space show page"
+description = "スペース詳細画面のトピックセクションの見出し"
 other = "Topics"
 
 [card_link_topic_new_page]
-description = "Accessible name and hover tooltip of the new page link shown on a topic link card"
+description = "トピックリンクカードに表示する新規ページ作成リンクのアクセシブルネームとホバー時のツールチップ"
 other = "New page"
 
 [space_show_options_aria_label]
-description = "Aria label for the options dropdown trigger button on the space show page"
+description = "スペース詳細画面のオプションメニューを開くボタンのaria-label"
 other = "Space options"
 
 [space_show_options_rss_feed]
-description = "RSS feed link in the options menu on the space show page"
+description = "スペース詳細画面のオプションメニューのRSSフィードリンク"
 other = "RSS feed"
 
 [space_show_options_new_topic]
-description = "New topic link in the options menu on the space show page"
+description = "スペース詳細画面のオプションメニューの新規トピックリンク"
 other = "New topic"
 
 [space_show_options_trash]
-description = "Trash link in the options menu on the space show page"
+description = "スペース詳細画面のオプションメニューのゴミ箱リンク"
 other = "Trash"
 
 [space_show_options_settings]
-description = "Settings link in the options menu on the space show page"
+description = "スペース詳細画面のオプションメニューの設定リンク"
 other = "Settings"
 
 # Pagination
 [pagination_previous]
-description = "Link to the previous page in pagination"
+description = "ページネーションの前のページへのリンク"
 other = "Prev"
 
 [pagination_next]
-description = "Link to the next page in pagination"
+description = "ページネーションの次のページへのリンク"
 other = "Next"
 
 # 404 error page
 [error_not_found_title]
-description = "404 error page title"
+description = "404エラーページのタイトル"
 other = "Page Not Found | Wikino"
 
 [error_not_found_message]
-description = "404 error page message"
+description = "404エラーページのメッセージ"
 other = "The page you are looking for could not be found"
 
 [error_email_not_confirmed]
-description = "Error message when email is not confirmed"
+description = "メール確認が未完了の場合のエラーメッセージ"
 other = "Email has not been confirmed"
 
 [error_two_factor_not_enabled]
-description = "Error message when two-factor authentication is not enabled"
+description = "二要素認証が有効になっていない場合のエラーメッセージ"
 other = "Two-factor authentication is not enabled"
 
 [error_not_found_back_to_top]
-description = "404 error page link to top page"
+description = "404エラーページのトップページリンク"
 other = "Back to top page"
 
 # Forbidden error
 [error_forbidden]
-description = "Error message when the user is not allowed to perform the operation"
+description = "操作する権限がない場合のエラーメッセージ"
 other = "You do not have permission to perform this operation"
 
 # Suggestions
 [suggestion_index_title]
-description = "Suggestion list page title"
+description = "編集提案一覧のページタイトル"
 other = "Suggestions | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_index_closed_title]
-description = "Closed suggestion list page title"
+description = "クローズした編集提案一覧のページタイトル"
 other = "Closed Suggestions | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_index_heading]
-description = "Suggestion list heading"
+description = "編集提案一覧の見出し"
 other = "Suggestions"
 
 [suggestion_index_subtitle_html]
-description = "Suggestion list subtitle (includes help page link)"
+description = "編集提案一覧のサブタイトル (ヘルプページへのリンクを含む)"
 other = "See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/254\" target=\"_blank\">Suggestion help</a> for more information about suggestions."
 
 [suggestion_index_breadcrumb]
-description = "Breadcrumb item for the suggestion list (the current item on the list screen, a link to it on the screens below)"
+description = "編集提案一覧を指すパンくず項目 (一覧画面では現在項目、配下の画面では一覧へのリンク)"
 other = "Suggestions"
 
 [suggestion_index_open_tab]
-description = "Suggestion list open tab"
+description = "編集提案一覧のオープンタブ"
 other = "Open"
 
 [suggestion_index_closed_tab]
-description = "Suggestion list closed tab"
+description = "編集提案一覧のクローズタブ"
 other = "Closed"
 
 [suggestion_index_opened_by]
-description = "Suggestion author display"
+description = "編集提案の作成者表示"
 other = "by"
 
 [suggestion_index_no_open]
-description = "Message when no open suggestions"
+description = "オープンの編集提案がない場合のメッセージ"
 other = "No open suggestions"
 
 [suggestion_index_no_closed]
-description = "Message when no closed suggestions"
+description = "クローズの編集提案がない場合のメッセージ"
 other = "No closed suggestions"
 
 # Suggestion validation
 
 [validation_suggestion_title_required]
-description = "Suggestion title required error"
+description = "編集提案タイトル必須エラー"
 other = "Please enter a title"
 
 [validation_suggestion_title_too_long]
-description = "Suggestion title too long error"
+description = "編集提案タイトル文字数超過エラー"
 other = "Title must be 200 characters or less"
 
 [validation_suggestion_draft_pages_required]
-description = "Draft pages not selected error"
+description = "下書きページ未選択エラー"
 other = "Please select at least one draft page"
 
 [validation_suggestion_draft_page_not_found]
-description = "Draft page not found error"
+description = "下書きページが見つからないエラー"
 other = "Selected draft page was not found"
 
 [validation_suggestion_draft_page_already_linked]
-description = "Draft page already linked to another suggestion error"
+description = "下書きページが別の編集提案にリンク済みエラー"
 other = "The selected draft page is already used in another suggestion"
 
 [validation_suggestion_body_too_long]
-description = "Suggestion body too long error"
+description = "編集提案本文文字数超過エラー"
 other = "Body must be 10000 characters or less"
 
 # Suggestion creation
 
 [suggestion_new_title]
-description = "Suggestion creation page title"
+description = "編集提案作成のページタイトル"
 other = "New Suggestion | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_new_heading]
-description = "Suggestion creation heading"
+description = "編集提案作成の見出し"
 other = "New Suggestion"
 
 [suggestion_new_breadcrumb]
-description = "Breadcrumb item for the suggestion creation screen itself (the current item)"
+description = "編集提案作成画面自身を指すパンくず項目 (現在項目)"
 other = "New Suggestion"
 
 [suggestion_new_title_label]
-description = "Suggestion title label"
+description = "編集提案タイトルのラベル"
 other = "Title"
 
 [suggestion_new_title_placeholder]
-description = "Suggestion title placeholder"
+description = "編集提案タイトルのプレースホルダー"
 other = "Briefly describe your changes"
 
 [suggestion_new_body_label]
-description = "Suggestion body label"
+description = "編集提案概要のラベル"
 other = "Body"
 
 [suggestion_new_body_placeholder]
-description = "Suggestion body placeholder"
+description = "編集提案概要のプレースホルダー"
 other = "Describe the reason and context for your changes"
 
 [suggestion_new_draft_pages_label]
-description = "Draft pages selection label"
+description = "下書きページ選択のラベル"
 other = "Select draft pages"
 
 [suggestion_new_no_draft_pages]
-description = "Message when no draft pages available"
+description = "下書きページがない場合のメッセージ"
 other = "No draft pages in this topic"
 
 [suggestion_new_submit]
-description = "Suggestion creation submit button"
+description = "編集提案作成の送信ボタン"
 other = "Create"
 
 [suggestion_new_cancel]
-description = "Cancel link on suggestion creation page"
+description = "編集提案作成のキャンセルリンク"
 other = "Cancel"
 
 [suggestion_create_success]
-description = "Suggestion creation success message"
+description = "編集提案作成成功メッセージ"
 other = "Suggestion has been created"
 
 # Suggestion edit
 
 [suggestion_edit_title]
-description = "Suggestion edit page title"
+description = "編集提案編集のページタイトル"
 other = "Edit - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_edit_heading]
-description = "Suggestion edit page heading"
+description = "編集提案編集画面の見出し"
 other = "Edit Suggestion"
 
 [suggestion_edit_title_label]
-description = "Suggestion edit title label"
+description = "編集提案編集のタイトルラベル"
 other = "Title"
 
 [suggestion_edit_body_label]
-description = "Suggestion edit body label"
+description = "編集提案編集の本文ラベル"
 other = "Body"
 
 [suggestion_edit_submit]
-description = "Suggestion edit submit button"
+description = "編集提案編集の送信ボタン"
 other = "Update"
 
 [suggestion_edit_cancel]
-description = "Cancel link on suggestion edit page"
+description = "編集提案編集のキャンセルリンク"
 other = "Cancel"
 
 [suggestion_update_success]
-description = "Suggestion update success message"
+description = "編集提案更新成功メッセージ"
 other = "Suggestion has been updated"
 
 # Suggestion detail
 
 [suggestion_show_title]
-description = "Suggestion detail page title"
+description = "編集提案詳細のページタイトル"
 other = "{{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_change_index_title]
-description = "Suggestion changes page title"
+description = "編集提案の変更差分画面のページタイトル"
 other = "Changes: {{.SuggestionTitle}} - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_change_index_breadcrumb]
-description = "Current breadcrumb label on the suggestion changes page"
+description = "編集提案の変更差分画面の現在地パンくず"
 other = "Changes"
 
 [suggestion_show_status_draft]
-description = "Suggestion status: draft"
+description = "編集提案のステータス: 下書き"
 other = "Draft"
 
 [suggestion_show_status_open]
-description = "Suggestion status: open"
+description = "編集提案のステータス: オープン"
 other = "Open"
 
 [suggestion_show_status_applied]
-description = "Suggestion status: applied"
+description = "編集提案のステータス: 反映済み"
 other = "Applied"
 
 [suggestion_show_status_closed]
-description = "Suggestion status: closed"
+description = "編集提案のステータス: クローズ"
 other = "Closed"
 
 [suggestion_show_conversation_tab]
-description = "Suggestion detail conversation tab"
+description = "編集提案詳細の会話タブ"
 other = "Conversation"
 
 [suggestion_show_changed_pages_tab]
-description = "Suggestion detail changed pages tab"
+description = "編集提案詳細の編集したページタブ"
 other = "Changed pages"
 
 [suggestion_show_no_body]
-description = "Text displayed when suggestion body is empty"
+description = "編集提案の本文が空のときに表示するテキスト"
 other = "No description provided"
 
 # Suggestion comments
 
 [validation_suggestion_comment_body_required]
-description = "Suggestion comment body required error"
+description = "編集提案コメント本文必須エラー"
 other = "Please enter a comment"
 
 [validation_suggestion_comment_body_too_long]
-description = "Suggestion comment body too long error"
+description = "編集提案コメント本文文字数超過エラー"
 other = "Comment must be 10000 characters or less"
 
 [suggestion_comment_body_label]
-description = "Suggestion comment body label"
+description = "編集提案コメント本文のラベル"
 other = "Comment"
 
 [suggestion_comment_body_placeholder]
-description = "Suggestion comment body placeholder"
+description = "編集提案コメント本文のプレースホルダー"
 other = "Write a comment"
 
 [suggestion_show_comments_heading]
-description = "Comments heading on suggestion detail page"
+description = "編集提案詳細画面のコメント見出し"
 other = "Comments"
 
 [suggestion_show_edit_button]
-description = "Edit button on suggestion detail page"
+description = "編集提案詳細画面の編集ボタン"
 other = "Edit"
 
 [suggestion_show_action_description]
-description = "Description text for suggestion apply/close action area"
+description = "編集提案の反映・クローズボタンエリアの補足説明"
 other = "You can apply the changes from this suggestion to the topic, or close it."
 
 [suggestion_comment_edit_action]
-description = "Edit action in suggestion comment dropdown menu"
+description = "編集提案コメントのドロップダウンメニューの編集アクション"
 other = "Edit"
 
 [suggestion_comment_actions_aria_label]
-description = "Aria label for the suggestion comment dropdown trigger button"
+description = "編集提案コメントのドロップダウントリガーボタンのaria-label"
 other = "Comment actions"
 
 [suggestion_comment_submit]
-description = "Suggestion comment submit button"
+description = "編集提案コメント送信ボタン"
 other = "Comment"
 
 [suggestion_comment_create_success]
-description = "Suggestion comment creation success message"
+description = "編集提案コメント作成成功メッセージ"
 other = "Comment has been posted"
 
 [suggestion_comment_edit_heading]
-description = "Suggestion comment edit page heading"
+description = "編集提案コメント編集画面の見出し"
 other = "Edit comment"
 
 [suggestion_comment_edit_title]
-description = "Suggestion comment edit page title"
+description = "編集提案コメント編集画面のタイトル"
 other = "Edit Comment - Suggestion #{{.SuggestionNumber}} | {{.TopicName}} | {{.SpaceName}}"
 
 [suggestion_comment_edit_body_placeholder]
-description = "Suggestion comment edit body placeholder"
+description = "編集提案コメント編集画面の本文プレースホルダー"
 other = "Write a comment"
 
 [suggestion_comment_edit_submit]
-description = "Suggestion comment edit submit button"
+description = "編集提案コメント編集画面の送信ボタン"
 other = "Update"
 
 [suggestion_comment_update_success]
-description = "Suggestion comment update success message"
+description = "編集提案コメント更新成功メッセージ"
 other = "Comment has been updated"
 
 # Suggestion apply
 
 [suggestion_apply_button]
-description = "Suggestion apply button"
+description = "編集提案反映ボタン"
 other = "Apply"
 
 [suggestion_apply_success]
-description = "Suggestion apply success message"
+description = "編集提案反映成功メッセージ"
 other = "Suggestion has been applied"
 
 [suggestion_apply_error]
-description = "Suggestion apply error message"
+description = "編集提案反映エラーメッセージ"
 other = "Failed to apply suggestion"
 
 [suggestion_apply_page_error]
-description = "Suggestion apply validation error page name prefix ({{.PageTitle}} is inserted after templ auto-escape)"
+description = "編集提案反映バリデーションエラーのページ名プレフィックス ({{.PageTitle}} はtempl側の自動エスケープ後に挿入される)"
 other = "Page \"{{.PageTitle}}\": "
 
 [error_suggestion_conflict_during_apply]
-description = "Error when a page state changes during suggestion apply"
+description = "編集提案反映中に競合ページの状態が変わった場合のエラー"
 other = "Page state changed during apply. Please try again."
 
 # Suggestion close
 
 [suggestion_close_button]
-description = "Suggestion close button"
+description = "編集提案クローズボタン"
 other = "Close"
 
 [suggestion_close_success]
-description = "Suggestion close success message"
+description = "編集提案クローズ成功メッセージ"
 other = "Suggestion has been closed"
 
 [suggestion_close_error]
-description = "Suggestion close error message"
+description = "編集提案クローズエラーメッセージ"
 other = "Failed to close suggestion"
 
 # Diff view
 [diff_no_changes]
-description = "Message when there are no changes"
+description = "差分がない場合のメッセージ"
 other = "No changes in body"
 
 [diff_block_caption]
-description = "Caption of one diff block table (visually hidden)"
+description = "差分ブロックのテーブルのキャプション (視覚的には隠す)"
 other = "Body diff of {{.PageTitle}} ({{.Position}} of {{.Total}})"
 
 [suggestion_diff_title_change]
-description = "Suggestion title change label"
+description = "編集提案のタイトル変更ラベル"
 other = "Title change"
 
 [suggestion_change_add_page_button]
-description = "Add page button on suggestion changes page"
+description = "変更差分画面のページ追加ボタン"
 other = "Add page"
 
 [suggestion_change_remove_page_button]
-description = "Remove page button on suggestion changes page"
+description = "変更差分画面のページ削除ボタン"
 other = "Remove"
 
 [suggestion_change_remove_page_confirm]
-description = "Confirmation dialog for removing a page from suggestion"
+description = "変更差分画面のページ削除確認ダイアログ"
 other = "Remove this page from the suggestion?\n(Your draft will remain)"
 
 # Suggestion page edit
 [suggestion_page_edit_button]
-description = "Edit button on suggestion changes page"
+description = "編集提案の変更差分画面の編集ボタン"
 other = "Edit"
 
 [suggestion_page_edit_confirm_title]
-description = "Suggestion page edit confirmation page title"
+description = "編集提案ページ編集の確認画面タイトル"
 other = "Draft confirmation | {{.SpaceName}}"
 
 [suggestion_page_edit_confirm_heading]
-description = "Suggestion page edit confirmation heading"
+description = "編集提案ページ編集の確認画面見出し"
 other = "An existing draft is present"
 
 [suggestion_page_edit_confirm_message]
-description = "Suggestion page edit confirmation message"
+description = "編集提案ページ編集の確認画面メッセージ"
 other = "This page already has another draft. Choose whether to overwrite it with the suggestion content and continue editing, or keep your existing draft."
 
 [suggestion_page_edit_overwrite_button]
-description = "Button to overwrite with suggestion content"
+description = "編集提案の内容で上書きして編集するボタン"
 other = "Continue with suggestion content"
 
 [suggestion_page_edit_keep_draft_button]
-description = "Button to keep existing draft"
+description = "もとの下書きを保持するボタン"
 other = "Keep existing draft"
 
 [suggestion_page_edit_error_not_open]
-description = "Error message when suggestion is not open for editing"
+description = "編集提案がオープンでないため編集を開始できないエラーメッセージ"
 other = "This suggestion is not open, so editing cannot be started"
 
 # Datetime display
 [datetime_just_now]
-description = "Relative time for less than 1 minute"
+description = "1分未満の相対時間"
 other = "just now"
 
 [datetime_minutes_ago]
-description = "Relative time for N minutes ago"
+description = "N分前の相対時間"
 other = "{{.Count}} minutes ago"
 
 [datetime_hours_ago]
-description = "Relative time for N hours ago"
+description = "N時間前の相対時間"
 other = "{{.Count}} hours ago"
 
 [datetime_days_ago]
-description = "Relative time for N days ago"
+description = "N日前の相対時間"
 other = "{{.Count}} days ago"
 
 [validation_suggestion_page_draft_page_not_found]
-description = "Draft page not found when adding a suggestion page"
+description = "編集提案ページ追加時に下書きページが見つからないエラー"
 other = "The selected draft page was not found"
 
 [validation_suggestion_page_already_exists]
-description = "Page already included in the suggestion"
+description = "編集提案に同じページが既に含まれているエラー"
 other = "This page is already included in the suggestion"
 
 # Space export
 [export_succeeded_email_subject]
-description = "Subject line for the finished export email"
+description = "エクスポート完了メールの件名"
 other = "[Wikino] Your export data is ready"
 
 [export_failed_email_subject]
-description = "Subject line for the failed export email"
+description = "エクスポート失敗メールの件名"
 other = "[Wikino] Your export could not be produced"
 
 [validation_export_in_progress]
-description = "Error shown when an export is already running and another cannot be started"
+description = "実行中のエクスポートがあるため新しいエクスポートを開始できないエラー"
 other = "An export is already running. Please try again once it has finished"
 
 # Space export screens
 [export_new_title]
-description = "Page title of the screen an export is started from"
+description = "エクスポート開始画面のページタイトル"
 other = "Export | {{.SpaceName}}"
 
 [export_show_title]
-description = "Page title of the screen an export is followed on"
+description = "エクスポート状態表示画面のページタイトル"
 other = "Export | {{.SpaceName}}"
 
 [export_new_heading]
-description = "Heading of the export screens"
+description = "エクスポート画面の見出し"
 other = "Export"
 
 [export_show_heading]
-description = "Heading of the export screens"
+description = "エクスポート画面の見出し"
 other = "Export"
 
 [export_new_description_html]
-description = "Subtitle of the export screens, with a link to the help page"
+description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
 other = "Export pages posted in the space. <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">Learn more about exporting</a>"
 
 [export_show_description_html]
-description = "Subtitle of the export screens, with a link to the help page"
+description = "エクスポート画面のサブタイトル (ヘルプページへのリンクを含む)"
 other = "Export pages posted in the space. <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/35\" target=\"_blank\">Learn more about exporting</a>"
 
 [export_new_breadcrumb_settings]
-description = "Breadcrumb item of the export screens linking to the space settings"
+description = "エクスポート画面のパンくずのスペース設定へのリンク"
 other = "Settings"
 
 [export_new_breadcrumb]
-description = "Breadcrumb item for the export start screen itself (the current item)"
+description = "エクスポート開始画面自身を指すパンくず項目 (現在項目)"
 other = "Export"
 
 [export_show_breadcrumb_settings]
-description = "Breadcrumb item of the export screens linking to the space settings"
+description = "エクスポート画面のパンくずのスペース設定へのリンク"
 other = "Settings"
 
 [export_show_breadcrumb_exports]
-description = "Breadcrumb item of the export detail screen linking to the export start screen"
+description = "エクスポート詳細画面のパンくずのエクスポート開始画面へのリンク"
 other = "Export"
 
 [export_new_start]
-description = "Button that starts an export"
+description = "エクスポート開始画面の開始ボタン"
 other = "Start export"
 
 [export_new_cancel]
-description = "Link that leaves the screen an export is started from"
+description = "エクスポート開始画面のキャンセルリンク"
 other = "Cancel"
 
 [export_new_in_progress]
-description = "Explanation shown instead of the start button while an export is already running"
+description = "エクスポート開始画面で、実行中のエクスポートがあるため開始できないことの説明"
 other = "An export is already running"
 
 [export_new_in_progress_link]
-description = "Link from the start screen to the export that is already running"
+description = "エクスポート開始画面から実行中のエクスポートの画面へ移動するリンク"
 other = "View the running export"
 
 [flash_export_started]
-description = "Flash message shown when an export has been started"
+description = "エクスポートを開始したときのフラッシュメッセージ"
 other = "Export has started"
 
 [export_show_processing_html]
-description = "Explanation shown while an export is still running"
+description = "エクスポート状態表示画面の処理中の説明"
 other = "Export has started<br>You will be notified by email when it is complete"
 
 [export_show_succeeded]
-description = "Explanation shown when an export has finished"
+description = "エクスポート状態表示画面の完了の説明"
 other = "Export completed"
 
 [export_show_download]
-description = "Button that downloads the archive of a finished export"
+description = "エクスポート状態表示画面のダウンロードボタン"
 other = "Download"
 
 [export_show_expired]
-description = "Explanation shown when the download of a finished export is no longer available"
+description = "エクスポート状態表示画面で、ダウンロードの有効期限が切れたことの説明"
 other = "The download has expired. Please export again"
 
 [export_show_failed_html]
-description = "Explanation shown when an export could not be produced"
+description = "エクスポート状態表示画面の失敗の説明"
 other = "The export could not be completed<br>Please try again"
 
 [export_show_retry]
-description = "Link that starts another export from the screen of a failed one"
+description = "エクスポート状態表示画面から再実行するリンク"
 other = "Export again"
