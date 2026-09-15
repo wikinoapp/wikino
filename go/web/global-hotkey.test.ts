@@ -4,12 +4,8 @@ import { initializeGlobalHotkey } from "./global-hotkey";
 
 const SEARCH_PATH = "/s/example-space/search";
 
-// global-hotkey navigates by assigning window.location.href. happy-dom would
-// try to resolve that as a real navigation, so shadow href with an own accessor
-// that only records the assigned value.
-//
-// [Ja] global-hotkey は window.location.href への代入で遷移する。happy-dom は
-// これを実遷移として解決しようとするため、href を独自のアクセサで上書きし、
+// global-hotkeyはwindow.location.hrefへの代入で遷移する。happy-domは
+// これを実遷移として解決しようとするため、hrefを独自のアクセサで上書きし、
 // 代入された値を記録するだけにする。
 function stubLocationHref(): () => string | null {
   let assigned: string | null = null;
@@ -23,12 +19,8 @@ function stubLocationHref(): () => string | null {
   return () => assigned;
 }
 
-// The hotkey reads the search path from <meta name="wikino-search-path">, so
-// install one to give the navigation a destination (omit it to simulate a page
-// without the meta).
-//
-// [Ja] ホットキーは <meta name="wikino-search-path"> から検索パスを読むため、
-// 遷移先を与えるために meta を設置する (meta が無いページを再現するときは省く)。
+// ホットキーは <meta name="wikino-search-path"> から検索パスを読むため、
+// 遷移先を与えるためにmetaを設置する (metaが無いページを再現するときは省く)。
 function setSearchPathMeta(path: string): void {
   const meta = document.createElement("meta");
   meta.name = "wikino-search-path";
@@ -56,13 +48,11 @@ describe("initializeGlobalHotkey", () => {
   });
 
   afterEach(() => {
-    // Drop the own href accessor so the next test re-stubs a fresh location.
-    //
-    // [Ja] 独自の href アクセサを外し、次のテストが location を新たにスタブし直せるようにする。
+    // 独自のhrefアクセサを外し、次のテストがlocationを新たにスタブし直せるようにする。
     Reflect.deleteProperty(window.location, "href");
   });
 
-  it("navigates to the search path when 's' is pressed", () => {
+  it("'s' キーを押すと検索パスへ遷移する", () => {
     setSearchPathMeta(SEARCH_PATH);
 
     const event = dispatchKey("s");
@@ -71,7 +61,7 @@ describe("initializeGlobalHotkey", () => {
     expect(currentHref()).toBe(SEARCH_PATH);
   });
 
-  it("navigates to the search path when '/' is pressed", () => {
+  it("'/' キーを押すと検索パスへ遷移する", () => {
     setSearchPathMeta(SEARCH_PATH);
 
     const event = dispatchKey("/");
@@ -80,10 +70,7 @@ describe("initializeGlobalHotkey", () => {
     expect(currentHref()).toBe(SEARCH_PATH);
   });
 
-  // Modified 's' presses belong to browser/OS shortcuts (Ctrl+S to save etc.),
-  // so the hotkey must ignore them.
-  //
-  // [Ja] 修飾キー付きの 's' はブラウザ / OS のショートカット (Ctrl+S の保存など)
+  // 修飾キー付きの 's' はブラウザ / OSのショートカット (Ctrl+Sの保存など)
   // に属するため、ホットキーは無視しなければならない。
   const modifiers: Array<{ name: string; init: KeyboardEventInit }> = [
     { name: "Ctrl", init: { ctrlKey: true } },
@@ -91,7 +78,7 @@ describe("initializeGlobalHotkey", () => {
     { name: "Alt", init: { altKey: true } },
   ];
 
-  it.each(modifiers)("does not navigate when 's' is pressed with $name held", ({ init }) => {
+  it.each(modifiers)("修飾キー ($name) と 's' キーを同時に押しても遷移しない", ({ init }) => {
     setSearchPathMeta(SEARCH_PATH);
 
     const event = dispatchKey("s", init);
@@ -100,7 +87,7 @@ describe("initializeGlobalHotkey", () => {
     expect(currentHref()).toBeNull();
   });
 
-  it("does not navigate for keys other than 's' or '/'", () => {
+  it("'s' と '/' 以外のキーを押しても遷移しない", () => {
     setSearchPathMeta(SEARCH_PATH);
 
     const event = dispatchKey("a");
@@ -109,10 +96,7 @@ describe("initializeGlobalHotkey", () => {
     expect(currentHref()).toBeNull();
   });
 
-  // In editable/typing contexts, 's' and '/' must stay literal input instead of
-  // triggering navigation.
-  //
-  // [Ja] 編集・入力中のコンテキストでは 's' や '/' を遷移ではなくそのままの入力
+  // 編集・入力中のコンテキストでは 's' や '/' を遷移ではなくそのままの入力
   // として扱わなければならない。
   const focusCases: Array<{ name: string; build: () => HTMLElement }> = [
     { name: "input", build: () => document.createElement("input") },
@@ -128,7 +112,7 @@ describe("initializeGlobalHotkey", () => {
       },
     },
     {
-      name: "CodeMirror content",
+      name: "CodeMirrorの編集領域",
       build: () => {
         const el = document.createElement("div");
         el.className = "cm-content";
@@ -138,7 +122,7 @@ describe("initializeGlobalHotkey", () => {
     },
   ];
 
-  it.each(focusCases)("does not navigate while a $name element is focused", ({ build }) => {
+  it.each(focusCases)("要素 ($name) にフォーカスしている間は遷移しない", ({ build }) => {
     setSearchPathMeta(SEARCH_PATH);
     const el = build();
     document.body.appendChild(el);
@@ -150,7 +134,7 @@ describe("initializeGlobalHotkey", () => {
     expect(currentHref()).toBeNull();
   });
 
-  it("does not navigate when the search path meta is absent", () => {
+  it("検索パスのmeta要素が無ければ遷移しない", () => {
     const event = dispatchKey("s");
 
     expect(event.defaultPrevented).toBe(false);

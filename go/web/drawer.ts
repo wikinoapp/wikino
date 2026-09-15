@@ -1,13 +1,7 @@
-// Generic overlay drawer wiring for the drawer component (components/drawer.templ). It uses event
-// delegation so any number of drawers (and drawers added to the DOM later) work without re-binding:
-// clicking a [data-drawer-open] opens the matching drawer, and clicking the backdrop
-// ([data-drawer-close]) or pressing Esc closes it. The open button's aria-expanded is kept in sync
-// with the drawer's open state.
-//
-// [Ja] ドロワーコンポーネント (components/drawer.templ) のための汎用オーバーレイ式ドロワーの結線。
-// イベント委譲を使うため、ドロワーが何個あっても (後から DOM に追加されても) 再バインド不要で動作する。
+// ドロワーコンポーネント (components/drawer.templ) のための汎用オーバーレイ式ドロワーの結線。
+// イベント委譲を使うため、ドロワーが何個あっても (後からDOMに追加されても) 再バインド不要で動作する。
 // [data-drawer-open] のクリックで対応するドロワーを開き、背景 ([data-drawer-close]) のクリックまたは
-// Esc キーで閉じる。開くボタンの aria-expanded はドロワーの開閉状態に同期させる。
+// Escキーで閉じる。開くボタンのaria-expandedはドロワーの開閉状態に同期させる。
 
 export function initializeDrawers(): void {
   document.addEventListener("click", handleClick);
@@ -59,10 +53,7 @@ function closeDrawer(drawer: Element): void {
   setOpenButtonsExpanded(drawer, false);
 }
 
-// setOpenButtonsExpanded reflects the drawer's open state on every open button that controls it,
-// so assistive technologies announce whether the drawer is currently expanded.
-//
-// [Ja] setOpenButtonsExpanded はドロワーの開閉状態を、それを操作するすべての開くボタンに反映する。
+// setOpenButtonsExpandedはドロワーの開閉状態を、それを操作するすべての開くボタンに反映する。
 // 支援技術がドロワーの開閉状態を読み上げられるようにするため。
 function setOpenButtonsExpanded(drawer: Element, expanded: boolean): void {
   if (!drawer.id) {

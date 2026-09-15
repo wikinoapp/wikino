@@ -1,5 +1,5 @@
 // グローバルホットキー: `s` または `/` キーで検索ページへ遷移する
-// Rails 版 (app/javascript/controllers/global-hotkey-controller.ts) と同等の挙動を提供する
+// Rails版 (app/javascript/controllers/global-hotkey-controller.ts) と同等の挙動を提供する
 
 const SEARCH_PATH_META_NAME = "wikino-search-path";
 
@@ -43,7 +43,7 @@ function isInputElement(element: Element | null): boolean {
     return true;
   }
 
-  // CodeMirror エディタの編集領域
+  // CodeMirrorエディタの編集領域
   if (element.classList.contains("cm-content")) {
     return true;
   }

@@ -2,14 +2,9 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { initializeDrawers } from "./drawer";
 
-// Build the DOM that components/drawer.templ renders: an open button that
-// references the drawer by id (data-drawer-open), and a drawer that starts
-// hidden (hidden class + aria-hidden="true") wrapping a backdrop
-// (data-drawer-close). This is the minimal shape initializeDrawers keys off.
-//
-// [Ja] components/drawer.templ が描画する DOM を組み立てる。id で drawer を参照する
-// 開くボタン (data-drawer-open) と、hidden クラス + aria-hidden="true" で閉じた状態から
-// 始まり背景 (data-drawer-close) を内包する drawer。initializeDrawers が手がかりにする
+// components/drawer.templが描画するDOMを組み立てる。idでdrawerを参照する
+// 開くボタン (data-drawer-open) と、hiddenクラス + aria-hidden="true" で閉じた状態から
+// 始まり背景 (data-drawer-close) を内包するdrawer。initializeDrawersが手がかりにする
 // 最小の構造。
 function drawerMarkup(id: string): string {
   return `
@@ -26,11 +21,7 @@ function drawerMarkup(id: string): string {
 function refs(id: string) {
   const opener = document.querySelector(`[data-drawer-open="${id}"]`) as HTMLButtonElement;
   const drawer = document.getElementById(id) as HTMLElement;
-  // Two elements carry data-drawer-close: the backdrop overlay (the first one,
-  // any element) and the panel's close button (a <button>). Grab them
-  // separately so tests can exercise each close entry point.
-  //
-  // [Ja] data-drawer-close を持つ要素は 2 つある。背景オーバーレイ (最初の要素、任意の
+  // data-drawer-closeを持つ要素は2つある。背景オーバーレイ (最初の要素、任意の
   // 要素) と、パネルの閉じるボタン (<button>)。各閉じる起点を検証できるよう別々に取得する。
   const backdrop = drawer.querySelector("[data-drawer-close]") as HTMLElement;
   const closeButton = drawer.querySelector("button[data-drawer-close]") as HTMLButtonElement;
@@ -50,7 +41,7 @@ describe("initializeDrawers", () => {
     document.body.innerHTML = "";
   });
 
-  it("opens the matching drawer and reflects it on the open button when the opener is clicked", () => {
+  it("開くボタンをクリックすると対応するドロワーを開き、ボタンに状態を反映する", () => {
     document.body.innerHTML = drawerMarkup("side-drawer");
     const { opener, drawer } = refs("side-drawer");
 
@@ -60,7 +51,7 @@ describe("initializeDrawers", () => {
     expect(opener.getAttribute("aria-expanded")).toBe("true");
   });
 
-  it("closes the drawer and resets the open button when the backdrop is clicked", () => {
+  it("背景をクリックするとドロワーを閉じ、開くボタンの状態を戻す", () => {
     document.body.innerHTML = drawerMarkup("side-drawer");
     const { opener, drawer, backdrop } = refs("side-drawer");
 
@@ -73,7 +64,7 @@ describe("initializeDrawers", () => {
     expect(opener.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("closes the drawer and resets the open button when the panel close button is clicked", () => {
+  it("パネルの閉じるボタンをクリックするとドロワーを閉じ、開くボタンの状態を戻す", () => {
     document.body.innerHTML = drawerMarkup("side-drawer");
     const { opener, drawer, closeButton } = refs("side-drawer");
 
@@ -86,7 +77,7 @@ describe("initializeDrawers", () => {
     expect(opener.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("closes the open drawer when Escape is pressed", () => {
+  it("Escapeキーを押すと開いているドロワーを閉じる", () => {
     document.body.innerHTML = drawerMarkup("side-drawer");
     const { opener, drawer } = refs("side-drawer");
 
@@ -100,7 +91,7 @@ describe("initializeDrawers", () => {
     expect(opener.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("leaves an already closed drawer untouched on Escape", () => {
+  it("閉じているドロワーはEscapeキーを押しても変更しない", () => {
     document.body.innerHTML = drawerMarkup("side-drawer");
     const { drawer } = refs("side-drawer");
 
@@ -109,7 +100,7 @@ describe("initializeDrawers", () => {
     expect(isOpen(drawer)).toBe(false);
   });
 
-  it("opens only the drawer whose opener was clicked when several are present", () => {
+  it("複数のドロワーがある場合はクリックした開くボタンに対応するものだけを開く", () => {
     document.body.innerHTML = drawerMarkup("first-drawer") + drawerMarkup("second-drawer");
     const first = refs("first-drawer");
     const second = refs("second-drawer");
@@ -120,12 +111,9 @@ describe("initializeDrawers", () => {
     expect(isOpen(second.drawer)).toBe(false);
   });
 
-  it("follows a drawer added to the DOM after init via event delegation", () => {
-    // initializeDrawers is bound once in beforeAll, so a drawer inserted in this
-    // test must open without re-binding.
-    //
-    // [Ja] initializeDrawers は beforeAll で一度だけバインドされるため、このテストで
-    // 挿入した drawer も再バインド無しで開かなければならない。
+  it("初期化後にDOMへ追加したドロワーもイベント委譲で操作できる", () => {
+    // initializeDrawersはbeforeAllで一度だけバインドされるため、このテストで
+    // 挿入したdrawerも再バインド無しで開かなければならない。
 
     document.body.innerHTML = drawerMarkup("late-drawer");
     const { opener, drawer } = refs("late-drawer");

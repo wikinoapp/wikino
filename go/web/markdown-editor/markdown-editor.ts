@@ -67,11 +67,8 @@ function createEditor(config: EditorConfig): EditorView {
       crosshairCursor(),
       highlightSelectionMatches(),
       EditorView.lineWrapping,
-      // Guard on the id, not just on the label: aria-labelledby has to reference an id, so a label
-      // matched by some other selector would leave an empty reference on the editor.
-      //
-      // [Ja] ラベルの有無ではなく id の有無で判定する。aria-labelledby は id を参照する属性なので、
-      // id 以外のセレクタで拾ったラベルだとエディタに空の参照が残ってしまう。
+      // ラベルの有無ではなくidの有無で判定する。aria-labelledbyはidを参照する属性なので、
+      // id以外のセレクタで拾ったラベルだとエディタに空の参照が残ってしまう。
       ...(config.label?.id ? [EditorView.contentAttributes.of({ "aria-labelledby": config.label.id })] : []),
       keymap.of([
         { key: "Enter", run: insertNewlineAndContinueList },
@@ -153,14 +150,9 @@ export function initializeEditors(): void {
     const titleInput = document.querySelector<HTMLInputElement>(titleSelector);
     if (!titleInput) return;
 
-    // The label only supplies the editor's accessible name, so a missing or mistargeted selector
-    // degrades to an unnamed editor instead of taking the editor (and everything main.js
-    // initializes after it) down. An empty selector string makes querySelector throw, so guard on
-    // the string rather than on the lookup result.
-    //
-    // [Ja] ラベルはエディタのアクセシブルネームを供給するだけなので、セレクタが無い / 解決できない
-    // ときは名前の無いエディタに退化させ、エディタ (と main.js がこの後に初期化するもの) までは
-    // 巻き込まない。空文字列のセレクタでは querySelector が例外を投げるため、検索結果ではなく
+    // ラベルはエディタのアクセシブルネームを供給するだけなので、セレクタが無い / 解決できない
+    // ときは名前の無いエディタに退化させ、エディタ (とmain.jsがこの後に初期化するもの) までは
+    // 巻き込まない。空文字列のセレクタではquerySelectorが例外を投げるため、検索結果ではなく
     // 文字列側でガードする。
     const labelSelector = container.dataset.markdownEditorLabel || "";
     const label = labelSelector ? document.querySelector<HTMLLabelElement>(labelSelector) : null;
@@ -185,30 +177,19 @@ export function initializeEditors(): void {
       spaceIdentifier,
     });
 
-    // The visible label has no form control to point at: the editing surface is CodeMirror's
-    // contenteditable, which `for` cannot target. Forward the click so the label still moves focus
-    // to the field it names, like the native inputs on this form do.
-    //
-    // [Ja] 可視ラベルには関連付けられるフォーム部品が無い。入力面が `for` では指せない
-    // CodeMirror の contenteditable であるため。ラベルが名前を与えている入力欄へフォーカスが移る
+    // 可視ラベルには関連付けられるフォーム部品が無い。入力面が `for` では指せない
+    // CodeMirrorのcontenteditableであるため。ラベルが名前を与えている入力欄へフォーカスが移る
     // ようクリックを転送し、このフォームのネイティブ入力欄と同じ挙動にする。
     label?.addEventListener("click", () => {
       view.focus();
     });
 
-    // Mod-s on the title input also triggers a manual save. The CodeMirror keymap only covers
-    // the editor body, and without this the browser's "save page" dialog would appear while the
-    // title is focused.
-    //
-    // [Ja] タイトル入力欄での Mod-s でも手動保存を実行する。CodeMirror のキーマップはエディタ
+    // タイトル入力欄でのMod-sでも手動保存を実行する。CodeMirrorのキーマップはエディタ
     // 本文しかカバーせず、これが無いとタイトルにフォーカス中はブラウザの「ページを保存」
     // ダイアログが出てしまう。
     titleInput.addEventListener("keydown", (event) => {
-      // Match the CodeMirror Mod-s binding exactly: ignore Shift/Alt combinations so
-      // browser shortcuts like Ctrl+Shift+S keep working while the title is focused.
-      //
-      // [Ja] CodeMirror の Mod-s バインドと同じ完全一致にする。Shift / Alt 併用時は無視し、
-      // タイトルにフォーカス中も Ctrl+Shift+S などのブラウザショートカットを妨げない。
+      // CodeMirrorのMod-sバインドと同じ完全一致にする。Shift / Alt併用時は無視し、
+      // タイトルにフォーカス中もCtrl+Shift+Sなどのブラウザショートカットを妨げない。
       if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "s") {
         event.preventDefault();
         clickManualSaveButton();
