@@ -16,13 +16,9 @@ on:
 env:
   GO_VERSION: "1.26.4"
   NODE_VERSION: "24.13.0"
-  # dbmate is installed from its release binary, the same way the Dockerfiles do
-  # it. Never use `releases/latest` (a floating pointer) - pin both the version
-  # and the digest, and bump them together with go/Dockerfile and Dockerfile.dev.
-  #
-  # [Ja] dbmate はリリースバイナリからインストールする (Dockerfile 群と同じ方法)。
+  # dbmateはリリースバイナリからインストールする (Dockerfile群と同じ方法)。
   # 浮動参照である `releases/latest` は使わず、バージョンとハッシュを必ず固定し、
-  # 更新時は go/Dockerfile・Dockerfile.dev と揃えて変更する。
+  # 更新時はgo/Dockerfile・Dockerfile.devと揃えて変更する。
   DBMATE_VERSION: "v2.33.0"
   DBMATE_SHA256: "dfd4027141b6e4357158099bdfe6c02b286af70f8e49057937744cf80b38ea1c"
 
@@ -35,25 +31,13 @@ jobs:
         working-directory: go
     steps:
       - uses: actions/checkout@v7
-        with:
-          # Fetch the full history because the comment-check diff mode needs the merge-base with the base branch.
-          # [Ja] コメント併記チェックの差分モードが基準ブランチとの merge-base を必要とするため全履歴を取得
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      # `Check sqlc generate` and `Check goimports` run before `Check templ generate`
-      # because that step's `make templ-generate` invokes `goimports -w .` across the
-      # whole tree. Placed after it, both checks would still pass while the drift they
-      # are meant to report had already been silently repaired.
-      #
-      # Neither check rewrites the tree (`sqlc diff` and `goimports -l` only report),
-      # so neither needs a `git diff --exit-code` step of its own.
-      #
-      # [Ja] `Check sqlc generate` と `Check goimports` を `Check templ generate` より
+      # `Check sqlc generate` と `Check goimports` を `Check templ generate` より
       # 前に置くのは、同ステップの `make templ-generate` がツリー全体に `goimports -w .`
       # を実行するため。後ろに置くと、報告すべきドリフトが先に修復された状態で
       # どちらのチェックも通ってしまう。
@@ -83,19 +67,11 @@ jobs:
           working-directory: go
           args: --config=.golangci.yml ./...
 
-      # Bilingual comment check ([Ja] marker misuse).
-      # Whole tree: scan the entire tree for the misuse where [Ja] sits on a line with no Japanese.
-      #
-      # [Ja] コメントの英日併記チェック ([Ja] マーカーの誤用)
-      # 全体: [Ja] が日本語を含まない行に付く誤用をツリー全体で検査
-      - name: Check bilingual comments (whole tree)
-        run: go tool koryluslint comment
-
-      # PR only: check marker placement (missing English block / duplicate markers), limited to added lines.
-      # [Ja] PR のみ: マーカー配置 (英語ブロックの欠落・マーカー重複) を追加行に限定して検査
-      - name: Check bilingual comments (added lines)
-        if: github.event_name == 'pull_request'
-        run: go tool koryluslint comment -base=origin/${{ github.base_ref }}
+      # koryluslintのcommentサブコマンドで、コメント・文字列・日本語を含む行が
+      # 日本語テキストのスタイル (半角丸括弧、英数字と日本語の間のスペース) に従っているかを検査する。
+      # 既存ファイルを含めて表記の逸脱を検出するため、go/配下の検査対象ファイルを全体モードで走査する。
+      - name: 日本語テキストスタイルをチェック
+        run: make lint-style
 
   test:
     name: Test
@@ -136,15 +112,9 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      # cmd/wikino's browse.sh test runs the script's real password-script
-      # generator, which is a `node -e` program, so this job needs Node as much
-      # as it needs Go. The runner image happens to carry one, but a job that
-      # depends on a tool without asking for it breaks on an image change for a
-      # reason that has nothing to do with the change under test.
-      #
-      # [Ja] cmd/wikino の browse.sh のテストは、スクリプト本体のパスワードスクリプト
-      # 生成器 (`node -e` のプログラム) をそのまま動かすため、本ジョブは Go と同じく
-      # Node を必要とする。ランナーのイメージがたまたま持ってはいるが、要求せずに
+      # cmd/wikinoのbrowse.shのテストは、スクリプト本体のパスワードスクリプト
+      # 生成器 (`node -e` のプログラム) をそのまま動かすため、本ジョブはGoと同じく
+      # Nodeを必要とする。ランナーのイメージがたまたま持ってはいるが、要求せずに
       # ツールへ依存しているジョブは、イメージの変更で、対象の変更とは無関係な理由に
       # よって落ちる。
       - name: Set up Node.js
@@ -163,16 +133,10 @@ jobs:
         env:
           CI: true
 
-  # Every database in this repository is built by loading go/db/schema.sql, so
-  # the SQL of the migration files is executed nowhere else in CI: a migration
-  # whose result was never dumped back into that file would run for the first
-  # time in production. This job applies the migrations to a database built from
-  # the committed schema and fails when the dump that follows differs from it.
-  #
-  # [Ja] このリポジトリのデータベースはいずれも go/db/schema.sql をロードして作る
-  # ため、マイグレーションファイルの SQL は CI の他のどこでも実行されない。結果を
+  # このリポジトリのデータベースはいずれもgo/db/schema.sqlをロードして作る
+  # ため、マイグレーションファイルのSQLはCIの他のどこでも実行されない。結果を
   # そのファイルへダンプし戻していないマイグレーションは、本番で初めて実行される
-  # ことになる。本ジョブは Git 管理下のスキーマから作ったデータベースへ
+  # ことになる。本ジョブはGit管理下のスキーマから作ったデータベースへ
   # マイグレーションを適用し、続くダンプがそれと食い違えば失敗する。
   schema:
     name: Schema
@@ -201,16 +165,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # pg_dump refuses to dump a server newer than itself, and the runner image
-      # carries an older client than the service container above runs. Install
-      # the client of the server's major version and put it first on PATH, so
-      # the dump this job compares is produced by the same pg_dump major version
-      # as the committed file.
-      #
-      # [Ja] pg_dump は自分より新しいサーバーのダンプを拒否するが、ランナーの
+      # pg_dumpは自分より新しいサーバーのダンプを拒否するが、ランナーの
       # イメージが持つクライアントは上のサービスコンテナのサーバーより古い。
-      # サーバーのメジャーバージョンに合わせたクライアントを入れて PATH の先頭に
-      # 置き、本ジョブが比較するダンプが Git 管理下のファイルと同じ pg_dump の
+      # サーバーのメジャーバージョンに合わせたクライアントを入れてPATHの先頭に
+      # 置き、本ジョブが比較するダンプがGit管理下のファイルと同じpg_dumpの
       # メジャーバージョンで作られるようにする。
       - name: Set up PostgreSQL client
         run: |
@@ -253,7 +211,7 @@ jobs:
       - name: Check binary exists
         run: |
           if [ ! -f bin/wikino ]; then
-            echo "Build failed: binary not found"
+            echo "ビルドに失敗しました: バイナリが見つかりません"
             exit 1
           fi
 
