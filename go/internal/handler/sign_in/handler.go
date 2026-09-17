@@ -1,4 +1,4 @@
-// Package sign_in はログインページのハンドラーを提供します
+// Package sign_inはログインページのハンドラーを提供します
 package sign_in
 
 import (
@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はログインハンドラー
+// Handlerはログインハンドラー
 type Handler struct {
 	cfg               *config.Config
 	sessionMgr        *session.Manager
@@ -17,7 +17,7 @@ type Handler struct {
 	turnstileVerifier turnstile.Verifier
 }
 
-// NewHandler は新しいログインハンドラーを作成します
+// NewHandlerは新しいログインハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,

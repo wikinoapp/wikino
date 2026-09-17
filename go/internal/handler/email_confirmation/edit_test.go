@@ -24,7 +24,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// mockTurnstileVerifierForEdit はテスト用のTurnstile検証モック
+// mockTurnstileVerifierForEditはテスト用のTurnstile検証モック
 type mockTurnstileVerifierForEdit struct {
 	valid bool
 	err   error
@@ -34,7 +34,7 @@ func (m *mockTurnstileVerifierForEdit) Verify(_ context.Context, _ string) (bool
 	return m.valid, m.err
 }
 
-// mockJobInserterForEdit はテスト用のモック inserter
+// mockJobInserterForEditはテスト用のモックinserter
 type mockJobInserterForEdit struct{}
 
 func (m *mockJobInserterForEdit) Insert(_ context.Context, _ river.JobArgs, _ *river.InsertOpts) (*rivertype.JobInsertResult, error) {
@@ -108,33 +108,39 @@ func TestEdit(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 
 	if !strings.Contains(body, `action="/email_confirmation"`) {
-		t.Error("confirmation form action not found in response")
+		t.Error("レスポンスに確認フォームの送信先が見つからない")
 	}
 
 	if !strings.Contains(body, `name="_method" value="PATCH"`) {
-		t.Error("_method hidden field not found in response")
+		t.Error("レスポンスに_methodのhiddenフィールドが見つからない")
 	}
 
 	if !strings.Contains(body, "test-csrf-token") {
-		t.Error("CSRF token not found in response")
+		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
 	if !strings.Contains(body, `name="code"`) {
-		t.Error("code input field not found in response")
+		t.Error("レスポンスにコードの入力フィールドが見つからない")
 	}
 
 	if !strings.Contains(body, "確認コードを入力") {
-		t.Error("Japanese heading not found in response")
+		t.Error("レスポンスに日本語の見出しが見つからない")
 	}
 
 	if !strings.Contains(body, `href="/sign_up"`) {
-		t.Error("back to sign up link not found in response")
+		t.Error("レスポンスにサインアップへ戻るリンクが見つからない")
+	}
+
+	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
+		}
 	}
 }
 
@@ -156,12 +162,12 @@ func TestEdit_NoEmailConfirmationID(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/sign_up" {
-		t.Errorf("wrong redirect location: got %v want %v", location, "/sign_up")
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, "/sign_up")
 	}
 }
 
@@ -189,19 +195,19 @@ func TestEdit_EnglishLocale(t *testing.T) {
 	handler.Edit(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "Enter confirmation code") {
-		t.Error("English heading not found in response")
+		t.Error("レスポンスに英語の見出しが見つからない")
 	}
 
 	if !strings.Contains(body, "Verify") {
-		t.Error("English submit button text not found in response")
+		t.Error("レスポンスに英語の送信ボタンの文言が見つからない")
 	}
 
 	if !strings.Contains(body, "Back to sign up") {
-		t.Error("English back link not found in response")
+		t.Error("レスポンスに英語の戻るリンクが見つからない")
 	}
 }

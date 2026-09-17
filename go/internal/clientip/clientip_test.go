@@ -33,19 +33,19 @@ func TestGetClientIP(t *testing.T) {
 			wantIP:   "203.0.113.1",
 		},
 		{
-			name:     "X-Forwarded-Forヘッダーがある場合（単一IP）",
+			name:     "X-Forwarded-Forヘッダーがある場合 (単一IP)",
 			headers:  map[string]string{"X-Forwarded-For": "192.168.1.1"},
 			remoteIP: "10.0.0.1:12345",
 			wantIP:   "192.168.1.1",
 		},
 		{
-			name:     "X-Forwarded-Forヘッダーがある場合（複数IP）",
+			name:     "X-Forwarded-Forヘッダーがある場合 (複数IP)",
 			headers:  map[string]string{"X-Forwarded-For": "192.168.1.1, 10.0.0.2, 172.16.0.1"},
 			remoteIP: "10.0.0.1:12345",
 			wantIP:   "192.168.1.1",
 		},
 		{
-			name:     "X-Forwarded-Forヘッダーがある場合（空白付き）",
+			name:     "X-Forwarded-Forヘッダーがある場合 (空白付き)",
 			headers:  map[string]string{"X-Forwarded-For": "  192.168.1.1  "},
 			remoteIP: "10.0.0.1:12345",
 			wantIP:   "192.168.1.1",
@@ -66,13 +66,13 @@ func TestGetClientIP(t *testing.T) {
 			wantIP:   "192.168.1.1",
 		},
 		{
-			name:     "ヘッダーがない場合はRemoteAddrを使用（ポート付き）",
+			name:     "ヘッダーがない場合はRemoteAddrを使用 (ポート付き)",
 			headers:  map[string]string{},
 			remoteIP: "10.0.0.1:12345",
 			wantIP:   "10.0.0.1",
 		},
 		{
-			name:     "ヘッダーがない場合はRemoteAddrを使用（ポートなし）",
+			name:     "ヘッダーがない場合はRemoteAddrを使用 (ポートなし)",
 			headers:  map[string]string{},
 			remoteIP: "10.0.0.1",
 			wantIP:   "10.0.0.1",
@@ -98,7 +98,7 @@ func TestGetClientIP(t *testing.T) {
 
 			gotIP := clientip.GetClientIP(req)
 			if gotIP != tc.wantIP {
-				t.Errorf("GetClientIP() = %q, want %q", gotIP, tc.wantIP)
+				t.Errorf("GetClientIP() = %q、期待値 = %q", gotIP, tc.wantIP)
 			}
 		})
 	}

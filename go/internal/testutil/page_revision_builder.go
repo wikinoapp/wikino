@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// PageRevisionBuilder はページリビジョンテストデータのビルダー
+// PageRevisionBuilderはページリビジョンテストデータのビルダー
 type PageRevisionBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -19,58 +19,50 @@ type PageRevisionBuilder struct {
 	pageID        string
 	title         string
 	body          string
-	bodyHTML      string
 }
 
-// NewPageRevisionBuilder は PageRevisionBuilder を生成します
+// NewPageRevisionBuilderはPageRevisionBuilderを生成します
 func NewPageRevisionBuilder(t *testing.T, tx *sql.Tx) *PageRevisionBuilder {
 	t.Helper()
 	return &PageRevisionBuilder{
-		t:        t,
-		tx:       tx,
-		title:    "Revision Title",
-		body:     "Revision body",
-		bodyHTML: "<p>Revision body</p>",
+		t:     t,
+		tx:    tx,
+		title: "Revision Title",
+		body:  "Revision body",
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *PageRevisionBuilder) WithSpaceID(spaceID model.SpaceID) *PageRevisionBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *PageRevisionBuilder) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *PageRevisionBuilder {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// WithPageID はページIDを設定します
+// WithPageIDはページIDを設定します
 func (b *PageRevisionBuilder) WithPageID(pageID model.PageID) *PageRevisionBuilder {
 	b.pageID = string(pageID)
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *PageRevisionBuilder) WithTitle(title string) *PageRevisionBuilder {
 	b.title = title
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *PageRevisionBuilder) WithBody(body string) *PageRevisionBuilder {
 	b.body = body
 	return b
 }
 
-// WithBodyHTML はHTML本文を設定します
-func (b *PageRevisionBuilder) WithBodyHTML(bodyHTML string) *PageRevisionBuilder {
-	b.bodyHTML = bodyHTML
-	return b
-}
-
-// Build はページリビジョンを作成し、IDを返します
+// Buildはページリビジョンを作成し、IDを返します
 func (b *PageRevisionBuilder) Build() model.PageRevisionID {
 	b.t.Helper()
 
@@ -88,10 +80,10 @@ func (b *PageRevisionBuilder) Build() model.PageRevisionID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, body_html, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, b.bodyHTML, now, now,
+		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページリビジョン作成に失敗: %v", err)
@@ -100,7 +92,7 @@ func (b *PageRevisionBuilder) Build() model.PageRevisionID {
 	return model.PageRevisionID(id)
 }
 
-// PageRevisionBuilderDB はDBを直接使用するページリビジョンテストデータのビルダー
+// PageRevisionBuilderDBはDBを直接使用するページリビジョンテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type PageRevisionBuilderDB struct {
 	t  *testing.T
@@ -111,40 +103,38 @@ type PageRevisionBuilderDB struct {
 	pageID        string
 	title         string
 	body          string
-	bodyHTML      string
 }
 
-// NewPageRevisionBuilderDB は PageRevisionBuilderDB を生成します
+// NewPageRevisionBuilderDBはPageRevisionBuilderDBを生成します
 func NewPageRevisionBuilderDB(t *testing.T, db *sql.DB) *PageRevisionBuilderDB {
 	t.Helper()
 	return &PageRevisionBuilderDB{
-		t:        t,
-		db:       db,
-		title:    "Revision Title",
-		body:     "Revision body",
-		bodyHTML: "<p>Revision body</p>",
+		t:     t,
+		db:    db,
+		title: "Revision Title",
+		body:  "Revision body",
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *PageRevisionBuilderDB) WithSpaceID(spaceID model.SpaceID) *PageRevisionBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSpaceMemberID はスペースメンバーIDを設定します
+// WithSpaceMemberIDはスペースメンバーIDを設定します
 func (b *PageRevisionBuilderDB) WithSpaceMemberID(spaceMemberID model.SpaceMemberID) *PageRevisionBuilderDB {
 	b.spaceMemberID = string(spaceMemberID)
 	return b
 }
 
-// WithPageID はページIDを設定します
+// WithPageIDはページIDを設定します
 func (b *PageRevisionBuilderDB) WithPageID(pageID model.PageID) *PageRevisionBuilderDB {
 	b.pageID = string(pageID)
 	return b
 }
 
-// Build はページリビジョンを作成し、IDを返します
+// Buildはページリビジョンを作成し、IDを返します
 func (b *PageRevisionBuilderDB) Build() model.PageRevisionID {
 	b.t.Helper()
 
@@ -162,10 +152,10 @@ func (b *PageRevisionBuilderDB) Build() model.PageRevisionID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, body_html, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, b.bodyHTML, now, now,
+		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページリビジョン作成に失敗: %v", err)

@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// UpdatePasswordResetUsecase はパスワードリセットによるパスワード更新ユースケース
+// UpdatePasswordResetUsecaseはパスワードリセットによるパスワード更新ユースケース
 type UpdatePasswordResetUsecase struct {
 	db                     *sql.DB
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository
@@ -19,7 +19,7 @@ type UpdatePasswordResetUsecase struct {
 	updateValidator        *validator.PasswordUpdateValidator
 }
 
-// NewUpdatePasswordResetUsecase は UpdatePasswordResetUsecase を生成する
+// NewUpdatePasswordResetUsecaseはUpdatePasswordResetUsecaseを生成する
 func NewUpdatePasswordResetUsecase(
 	db *sql.DB,
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository,
@@ -34,19 +34,19 @@ func NewUpdatePasswordResetUsecase(
 	}
 }
 
-// UpdatePasswordResetInput はパスワード更新（リセット経由）の入力パラメータ
+// UpdatePasswordResetInputはパスワード更新 (リセット経由) の入力パラメータ
 type UpdatePasswordResetInput struct {
 	Token                string
 	Password             string
 	PasswordConfirmation string
 }
 
-// UpdatePasswordResetOutput はパスワード更新（リセット経由）の出力パラメータ
+// UpdatePasswordResetOutputはパスワード更新 (リセット経由) の出力パラメータ
 type UpdatePasswordResetOutput struct {
 	UserID model.UserID
 }
 
-// Execute はバリデーション・パスワード更新・トークン使用済みマークを行う
+// Executeはバリデーション・パスワード更新・トークン使用済みマークを行う
 func (uc *UpdatePasswordResetUsecase) Execute(ctx context.Context, input UpdatePasswordResetInput) (*UpdatePasswordResetOutput, error) {
 	// 1. バリデーション
 	validated, err := uc.updateValidator.Validate(ctx, validator.PasswordUpdateValidatorInput{
@@ -58,13 +58,13 @@ func (uc *UpdatePasswordResetUsecase) Execute(ctx context.Context, input UpdateP
 		return nil, err
 	}
 
-	// 2. パスワードをハッシュ化（トランザクション前）
+	// 2. パスワードをハッシュ化 (トランザクション前)
 	passwordDigest, err := auth.HashPassword(input.Password)
 	if err != nil {
 		return nil, fmt.Errorf("パスワードのハッシュ化に失敗しました: %w", err)
 	}
 
-	// 3. トランザクション（永続化のみ）
+	// 3. トランザクション (永続化のみ)
 	return uc.updatePassword(ctx, validated, passwordDigest)
 }
 

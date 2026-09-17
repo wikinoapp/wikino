@@ -4,21 +4,21 @@ import (
 	"time"
 )
 
-// SuggestionStatus は編集提案のステータスを表す
+// SuggestionStatusは編集提案のステータスを表す
 type SuggestionStatus int32
 
 const (
-	// SuggestionStatusDraft は下書きステータス
+	// SuggestionStatusDraftは下書きステータス
 	SuggestionStatusDraft SuggestionStatus = 0
-	// SuggestionStatusOpen はオープンステータス
+	// SuggestionStatusOpenはオープンステータス
 	SuggestionStatusOpen SuggestionStatus = 1
-	// SuggestionStatusApplied は反映済みステータス
+	// SuggestionStatusAppliedは反映済みステータス
 	SuggestionStatusApplied SuggestionStatus = 2
-	// SuggestionStatusClosed はクローズステータス
+	// SuggestionStatusClosedはクローズステータス
 	SuggestionStatusClosed SuggestionStatus = 3
 )
 
-// Suggestion は編集提案のドメインモデル
+// Suggestionは編集提案のドメインモデル
 type Suggestion struct {
 	ID                   SuggestionID
 	SpaceID              SpaceID

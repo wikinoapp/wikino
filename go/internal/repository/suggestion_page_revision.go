@@ -10,32 +10,31 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// SuggestionPageRevisionRepository は編集提案ページリビジョンリポジトリ
+// SuggestionPageRevisionRepositoryは編集提案ページリビジョンリポジトリ
 type SuggestionPageRevisionRepository struct {
 	q *query.Queries
 }
 
-// NewSuggestionPageRevisionRepository は SuggestionPageRevisionRepository を生成する
+// NewSuggestionPageRevisionRepositoryはSuggestionPageRevisionRepositoryを生成する
 func NewSuggestionPageRevisionRepository(q *query.Queries) *SuggestionPageRevisionRepository {
 	return &SuggestionPageRevisionRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *SuggestionPageRevisionRepository) WithTx(tx *sql.Tx) *SuggestionPageRevisionRepository {
 	return &SuggestionPageRevisionRepository{q: r.q.WithTx(tx)}
 }
 
-// CreateSuggestionPageRevisionInput は編集提案ページリビジョン作成の入力パラメータ
+// CreateSuggestionPageRevisionInputは編集提案ページリビジョン作成の入力パラメータ
 type CreateSuggestionPageRevisionInput struct {
 	SpaceID             model.SpaceID
 	SuggestionPageID    model.SuggestionPageID
 	EditorSpaceMemberID model.SpaceMemberID
 	Title               *string
 	Body                string
-	BodyHTML            string
 }
 
-// Create は編集提案ページリビジョンを作成する
+// Createは編集提案ページリビジョンを作成する
 func (r *SuggestionPageRevisionRepository) Create(ctx context.Context, input CreateSuggestionPageRevisionInput) (*model.SuggestionPageRevision, error) {
 	now := time.Now()
 
@@ -50,7 +49,6 @@ func (r *SuggestionPageRevisionRepository) Create(ctx context.Context, input Cre
 		EditorSpaceMemberID: string(input.EditorSpaceMemberID),
 		Title:               title,
 		Body:                input.Body,
-		BodyHtml:            input.BodyHTML,
 		CreatedAt:           now,
 		UpdatedAt:           now,
 	})
@@ -60,7 +58,7 @@ func (r *SuggestionPageRevisionRepository) Create(ctx context.Context, input Cre
 	return r.toModel(row), nil
 }
 
-// ListBySuggestionPageID は編集提案ページIDでリビジョン一覧を取得する
+// ListBySuggestionPageIDは編集提案ページIDでリビジョン一覧を取得する
 func (r *SuggestionPageRevisionRepository) ListBySuggestionPageID(ctx context.Context, suggestionPageID model.SuggestionPageID, spaceID model.SpaceID) ([]*model.SuggestionPageRevision, error) {
 	rows, err := r.q.ListSuggestionPageRevisionsBySuggestionPageID(ctx, query.ListSuggestionPageRevisionsBySuggestionPageIDParams{
 		SuggestionPageID: string(suggestionPageID),
@@ -72,7 +70,7 @@ func (r *SuggestionPageRevisionRepository) ListBySuggestionPageID(ctx context.Co
 	return r.toModels(rows), nil
 }
 
-// FindLatest は編集提案ページの最新リビジョンを取得する（スペースIDでスコープ）
+// FindLatestは編集提案ページの最新リビジョンを取得する (スペースIDでスコープ)
 func (r *SuggestionPageRevisionRepository) FindLatest(ctx context.Context, suggestionPageID model.SuggestionPageID, spaceID model.SpaceID) (*model.SuggestionPageRevision, error) {
 	row, err := r.q.FindLatestSuggestionPageRevision(ctx, query.FindLatestSuggestionPageRevisionParams{
 		SuggestionPageID: string(suggestionPageID),
@@ -87,7 +85,7 @@ func (r *SuggestionPageRevisionRepository) FindLatest(ctx context.Context, sugge
 	return r.toModel(row), nil
 }
 
-// DeleteBySuggestionPageID は編集提案ページIDでリビジョンを一括削除する
+// DeleteBySuggestionPageIDは編集提案ページIDでリビジョンを一括削除する
 func (r *SuggestionPageRevisionRepository) DeleteBySuggestionPageID(ctx context.Context, suggestionPageID model.SuggestionPageID, spaceID model.SpaceID) error {
 	return r.q.DeleteSuggestionPageRevisionsBySuggestionPageID(ctx, query.DeleteSuggestionPageRevisionsBySuggestionPageIDParams{
 		SuggestionPageID: string(suggestionPageID),
@@ -95,7 +93,7 @@ func (r *SuggestionPageRevisionRepository) DeleteBySuggestionPageID(ctx context.
 	})
 }
 
-// toModel は query.SuggestionPageRevision を model.SuggestionPageRevision に変換する
+// toModelはquery.SuggestionPageRevisionをmodel.SuggestionPageRevisionに変換する
 func (r *SuggestionPageRevisionRepository) toModel(row query.SuggestionPageRevision) *model.SuggestionPageRevision {
 	var title *string
 	if row.Title.Valid {
@@ -109,13 +107,12 @@ func (r *SuggestionPageRevisionRepository) toModel(row query.SuggestionPageRevis
 		EditorSpaceMemberID: model.SpaceMemberID(row.EditorSpaceMemberID),
 		Title:               title,
 		Body:                row.Body,
-		BodyHTML:            row.BodyHtml,
 		CreatedAt:           row.CreatedAt,
 		UpdatedAt:           row.UpdatedAt,
 	}
 }
 
-// toModels は query.SuggestionPageRevision のスライスを model.SuggestionPageRevision のスライスに変換する
+// toModelsはquery.SuggestionPageRevisionのスライスをmodel.SuggestionPageRevisionのスライスに変換する
 func (r *SuggestionPageRevisionRepository) toModels(rows []query.SuggestionPageRevision) []*model.SuggestionPageRevision {
 	revisions := make([]*model.SuggestionPageRevision, len(rows))
 	for i, row := range rows {

@@ -52,28 +52,28 @@ func TestPageEditorRepository_FindOrCreate(t *testing.T) {
 			LastPageModifiedAt: now,
 		})
 		if err != nil {
-			t.Fatalf("FindOrCreate() error = %v", err)
+			t.Fatalf("FindOrCreate()のエラー = %v", err)
 		}
 		if editor == nil {
-			t.Fatal("FindOrCreate() returned nil, want page editor")
+			t.Fatal("FindOrCreate()がnilを返した、期待値 = ページ編集者")
 		}
 		if editor.ID == "" {
-			t.Error("editor.ID should not be empty")
+			t.Error("editor.IDが空")
 		}
 		if editor.SpaceID != spaceID {
-			t.Errorf("editor.SpaceID = %v, want %v", editor.SpaceID, spaceID)
+			t.Errorf("editor.SpaceID = %v、期待値 = %v", editor.SpaceID, spaceID)
 		}
 		if editor.PageID != pageID {
-			t.Errorf("editor.PageID = %v, want %v", editor.PageID, pageID)
+			t.Errorf("editor.PageID = %v、期待値 = %v", editor.PageID, pageID)
 		}
 		if editor.SpaceMemberID != spaceMemberID {
-			t.Errorf("editor.SpaceMemberID = %v, want %v", editor.SpaceMemberID, spaceMemberID)
+			t.Errorf("editor.SpaceMemberID = %v、期待値 = %v", editor.SpaceMemberID, spaceMemberID)
 		}
 		if editor.CreatedAt.IsZero() {
-			t.Error("editor.CreatedAt should not be zero")
+			t.Error("editor.CreatedAtがゼロ値")
 		}
 		if editor.UpdatedAt.IsZero() {
-			t.Error("editor.UpdatedAt should not be zero")
+			t.Error("editor.UpdatedAtがゼロ値")
 		}
 	})
 
@@ -85,7 +85,7 @@ func TestPageEditorRepository_FindOrCreate(t *testing.T) {
 			LastPageModifiedAt: now,
 		})
 		if err != nil {
-			t.Fatalf("FindOrCreate() first call error = %v", err)
+			t.Fatalf("FindOrCreate() (1回目の呼び出し) のエラー = %v", err)
 		}
 
 		editor2, err := repo.FindOrCreate(context.Background(), FindOrCreateInput{
@@ -95,11 +95,11 @@ func TestPageEditorRepository_FindOrCreate(t *testing.T) {
 			LastPageModifiedAt: now.Add(time.Hour),
 		})
 		if err != nil {
-			t.Fatalf("FindOrCreate() second call error = %v", err)
+			t.Fatalf("FindOrCreate() (2回目の呼び出し) のエラー = %v", err)
 		}
 
 		if editor1.ID != editor2.ID {
-			t.Errorf("FindOrCreate() should return same record, got IDs %v and %v", editor1.ID, editor2.ID)
+			t.Errorf("FindOrCreate()が異なるレコードを返した: ID = %v、%v", editor1.ID, editor2.ID)
 		}
 	})
 
@@ -121,7 +121,7 @@ func TestPageEditorRepository_FindOrCreate(t *testing.T) {
 			LastPageModifiedAt: now,
 		})
 		if err != nil {
-			t.Fatalf("FindOrCreate() for member1 error = %v", err)
+			t.Fatalf("FindOrCreate() (member1) のエラー = %v", err)
 		}
 
 		editor2, err := repo.FindOrCreate(context.Background(), FindOrCreateInput{
@@ -131,11 +131,11 @@ func TestPageEditorRepository_FindOrCreate(t *testing.T) {
 			LastPageModifiedAt: now,
 		})
 		if err != nil {
-			t.Fatalf("FindOrCreate() for member2 error = %v", err)
+			t.Fatalf("FindOrCreate() (member2) のエラー = %v", err)
 		}
 
 		if editor1.ID == editor2.ID {
-			t.Errorf("FindOrCreate() should return different records for different members, got same ID %v", editor1.ID)
+			t.Errorf("FindOrCreate()がメンバーが異なるのに同じレコードを返した: ID = %v", editor1.ID)
 		}
 	})
 }
@@ -184,7 +184,7 @@ func TestPageEditorRepository_UpdateLastPageModifiedAt(t *testing.T) {
 		LastPageModifiedAt: now,
 	})
 	if err != nil {
-		t.Fatalf("FindOrCreate() error = %v", err)
+		t.Fatalf("FindOrCreate()のエラー = %v", err)
 	}
 
 	t.Run("LastPageModifiedAtを更新できる", func(t *testing.T) {
@@ -195,19 +195,19 @@ func TestPageEditorRepository_UpdateLastPageModifiedAt(t *testing.T) {
 			LastPageModifiedAt: newTime,
 		})
 		if err != nil {
-			t.Fatalf("UpdateLastPageModifiedAt() error = %v", err)
+			t.Fatalf("UpdateLastPageModifiedAt()のエラー = %v", err)
 		}
 		if updated == nil {
-			t.Fatal("UpdateLastPageModifiedAt() returned nil, want page editor")
+			t.Fatal("UpdateLastPageModifiedAt()がnilを返した、期待値 = ページ編集者")
 		}
 		if updated.ID != editor.ID {
-			t.Errorf("updated.ID = %v, want %v", updated.ID, editor.ID)
+			t.Errorf("updated.ID = %v、期待値 = %v", updated.ID, editor.ID)
 		}
 		if !updated.LastPageModifiedAt.Equal(newTime) {
-			t.Errorf("updated.LastPageModifiedAt = %v, want %v", updated.LastPageModifiedAt, newTime)
+			t.Errorf("updated.LastPageModifiedAt = %v、期待値 = %v", updated.LastPageModifiedAt, newTime)
 		}
 		if !updated.UpdatedAt.After(editor.UpdatedAt) {
-			t.Error("updated.UpdatedAt should be after original UpdatedAt")
+			t.Error("updated.UpdatedAtが元のUpdatedAtより後になっていない")
 		}
 	})
 }

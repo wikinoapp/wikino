@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// PageAttachmentReference はページと添付ファイルの関連のドメインモデル
+// PageAttachmentReferenceはページと添付ファイルの関連のドメインモデル
 type PageAttachmentReference struct {
 	ID           PageAttachmentReferenceID
 	AttachmentID AttachmentID

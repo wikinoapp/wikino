@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// DraftPage はページの下書きのドメインモデル
+// DraftPageはページの下書きのドメインモデル
 type DraftPage struct {
 	ID                        DraftPageID
 	SpaceID                   SpaceID
@@ -14,7 +14,6 @@ type DraftPage struct {
 	SuggestionPageID          *SuggestionPageID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []PageID
 	FeaturedImageAttachmentID *AttachmentID
 	ModifiedAt                time.Time

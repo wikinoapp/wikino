@@ -3,30 +3,33 @@ package markup
 import (
 	"context"
 
+	"github.com/yuin/goldmark/ast"
+	"golang.org/x/net/html"
+
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// PageLocationResolver はWikiリンクキーからページ位置情報を一括解決するインターフェース。
+// PageLocationResolverはWikiリンクキーからページ位置情報を一括解決するインターフェース。
 // バッチレンダリング時にN+1クエリを防止するため、複数のキーを一括で解決する。
 type PageLocationResolver interface {
 	ResolveByKeys(ctx context.Context, keys []WikilinkKey, spaceID model.SpaceID) ([]PageLocation, error)
 }
 
-// BatchAttachmentFinder は添付ファイルの一括検索インターフェース。
+// BatchAttachmentFinderは添付ファイルの一括検索インターフェース。
 // バッチレンダリング時にN+1クエリを防止するため、複数のIDを一括で検索する。
 type BatchAttachmentFinder interface {
 	FindByIDsAndSpace(ctx context.Context, ids []model.AttachmentID, spaceID model.SpaceID) ([]*model.Attachment, error)
 }
 
-// BatchRenderInput はバッチレンダリングの入力
+// BatchRenderInputはバッチレンダリングの入力
 type BatchRenderInput struct {
 	Body             string
 	CurrentTopicName string
 }
 
-// RenderHTML は単一テキストのHTMLをレンダリングする。
+// RenderHTMLは単一テキストのHTMLをレンダリングする。
 // Markdownレンダリング → HTMLサニタイズ → Wikiリンク変換 → 添付ファイルフィルター →
-// スタンドアロン画像ラッピングの一連の処理を統合して実行する。
+// 見出しレベルの調整 → スタンドアロン画像ラッピングの一連の処理を統合して実行する。
 func RenderHTML(
 	ctx context.Context,
 	body string,
@@ -56,7 +59,7 @@ func RenderHTML(
 	return results[0], nil
 }
 
-// RenderHTMLBatch は複数テキストのHTMLを一括レンダリングする。
+// RenderHTMLBatchは複数テキストのHTMLを一括レンダリングする。
 // Wikiリンクの解決と添付ファイルの検索をバッチ化してN+1クエリを防止する。
 func RenderHTMLBatch(
 	ctx context.Context,
@@ -70,17 +73,42 @@ func RenderHTMLBatch(
 		return nil, nil
 	}
 
-	// 1. 全テキストをMarkdown→HTMLに変換
-	htmls := make([]string, len(inputs))
+	// 1. 全テキストをMarkdown→HTMLに変換してツリーにし、あわせて添付ファイルIDを収集する。
+	// 以降の工程はこのツリーを順に書き換え、最後に1回だけ直列化する。サニタイザーの出力は
+	// 要素の対応が取れているとは限らず、直列化を必ず通すことで保存するHTMLの対応を取る。
+	// 解析結果とツリーを添付ファイルの走査と共有するため、本文の読み取りは1回で済む。
+	// IDをWikiリンク変換の後ではなくここで集めるのは、変換が走査の読むHTMLを書き換えるためである。
+	trees := make([]*html.Node, len(inputs))
+	sources := make([][]byte, len(inputs))
+	documents := make([]ast.Node, len(inputs))
+	matches := make([][]WikilinkMatch, len(inputs))
+	attachmentIDs := make([][]string, len(inputs))
 	for i, input := range inputs {
-		htmls[i] = RenderMarkdown(input.Body)
+		source, document, bodyHTML := renderBody(input.Body)
+		if document == nil {
+			continue
+		}
+		tree, err := parseHTMLFragmentWithContainer(bodyHTML)
+		if err != nil {
+			return nil, err
+		}
+		trees[i] = tree
+		sources[i] = source
+		documents[i] = document
+		if holdsAttachmentPath(input.Body) {
+			attachmentIDs[i] = attachmentIDsOf(scanAttachmentRefMatches(source, document, func() *html.Node { return tree }))
+		}
+
+		// 一致は正規化後のソースから読む。解析結果と下の置換が指す位置はそちらのものである。
+		matches[i] = ScanWikilinkMatches(string(source), input.CurrentTopicName)
 	}
 
 	// 2. 全テキストからWikiリンクキーを収集し一括解決
 	var allKeys []WikilinkKey
-	for _, input := range inputs {
-		keys := ScanWikilinks(input.Body, input.CurrentTopicName)
-		allKeys = append(allKeys, keys...)
+	for _, bodyMatches := range matches {
+		for _, match := range bodyMatches {
+			allKeys = append(allKeys, match.Key)
+		}
 	}
 
 	if len(allKeys) > 0 {
@@ -89,13 +117,16 @@ func RenderHTMLBatch(
 		if err != nil {
 			return nil, err
 		}
-		for i, input := range inputs {
-			htmls[i] = ReplaceWikilinks(htmls[i], input.CurrentTopicName, spaceIdentifier, pageLocations)
+		for i := range inputs {
+			// マーカーを含む本文はレンダリングし直すため、リンクを置いたツリーで差し替える。
+			if replaced, ok := replaceWikilinkMatches(sources[i], documents[i], matches[i], spaceIdentifier, pageLocations); ok {
+				trees[i] = replaced
+			}
 		}
 	}
 
-	// 3. 全HTMLから添付ファイルIDを収集し一括検索
-	allAttachmentIDStrings := collectAllAttachmentIDs(htmls)
+	// 3. 収集済みの添付ファイルIDを一括検索
+	allAttachmentIDStrings := collectAllAttachmentIDs(attachmentIDs)
 	if len(allAttachmentIDStrings) > 0 {
 		ids := make([]model.AttachmentID, len(allAttachmentIDStrings))
 		for i, id := range allAttachmentIDStrings {
@@ -106,24 +137,31 @@ func RenderHTMLBatch(
 			return nil, err
 		}
 		finder := newMapAttachmentFinder(attachments)
-		for i := range htmls {
-			processed, err := FilterAttachments(ctx, htmls[i], spaceID, finder)
-			if err != nil {
+		for _, tree := range trees {
+			if tree == nil {
+				continue
+			}
+			if _, err := processAttachmentNodes(ctx, tree, spaceID, finder); err != nil {
 				return nil, err
 			}
-			htmls[i] = processed
 		}
 	}
 
-	// 4. 画像リンクのラッピング
-	for i := range htmls {
-		htmls[i] = WrapStandaloneImageLinks(htmls[i])
+	// 4. 見出しレベルの調整、画像リンクのラッピングと直列化
+	htmls := make([]string, len(inputs))
+	for i, tree := range trees {
+		if tree == nil {
+			continue
+		}
+		shiftHeadingsInNode(tree)
+		wrapImageLinksInNode(tree)
+		htmls[i] = renderContainerChildren(tree)
 	}
 
 	return htmls, nil
 }
 
-// deduplicateWikilinkKeys はWikiリンクキーの重複を除去する
+// deduplicateWikilinkKeysはWikiリンクキーの重複を除去する
 func deduplicateWikilinkKeys(keys []WikilinkKey) []WikilinkKey {
 	seen := make(map[string]bool, len(keys))
 	unique := make([]WikilinkKey, 0, len(keys))
@@ -137,12 +175,12 @@ func deduplicateWikilinkKeys(keys []WikilinkKey) []WikilinkKey {
 	return unique
 }
 
-// collectAllAttachmentIDs は複数のHTML文字列から添付ファイルIDを重複なしで収集する
-func collectAllAttachmentIDs(htmls []string) []string {
+// collectAllAttachmentIDsは本文ごとの添付ファイルIDを重複なしで1つにまとめる
+func collectAllAttachmentIDs(perBody [][]string) []string {
 	seen := make(map[string]bool)
 	var ids []string
-	for _, h := range htmls {
-		for _, id := range ExtractAttachmentIDs(h) {
+	for _, bodyIDs := range perBody {
+		for _, id := range bodyIDs {
 			if !seen[id] {
 				seen[id] = true
 				ids = append(ids, id)
@@ -152,7 +190,7 @@ func collectAllAttachmentIDs(htmls []string) []string {
 	return ids
 }
 
-// mapAttachmentFinder はマップベースのAttachmentFinder実装。
+// mapAttachmentFinderはマップベースのAttachmentFinder実装。
 // バッチ検索結果をマップに保持し、個別の検索をO(1)で処理する。
 type mapAttachmentFinder struct {
 	attachments map[model.AttachmentID]*model.Attachment

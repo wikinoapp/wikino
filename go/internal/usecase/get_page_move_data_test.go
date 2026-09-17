@@ -77,10 +77,10 @@ func TestGetPageMoveDataUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -97,10 +97,10 @@ func TestGetPageMoveDataUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -113,10 +113,10 @@ func TestGetPageMoveDataUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -127,35 +127,35 @@ func TestGetPageMoveDataUsecase_Execute(t *testing.T) {
 			UserID:          ownerID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Space.Name != "GPMD Space" {
-			t.Errorf("Space.Name = %q, want %q", output.Space.Name, "GPMD Space")
+			t.Errorf("Space.Name = %q、期待値 = %q", output.Space.Name, "GPMD Space")
 		}
 		if output.SpaceMember == nil {
-			t.Fatal("SpaceMember should not be nil")
+			t.Fatal("SpaceMemberがnil")
 		}
 		if output.Page == nil {
-			t.Fatal("Page should not be nil")
+			t.Fatal("Pageがnil")
 		}
 		if output.TopicMember == nil {
-			t.Fatal("TopicMember should not be nil")
+			t.Fatal("TopicMemberがnil")
 		}
 		if output.CurrentTopic == nil {
-			t.Fatal("CurrentTopic should not be nil")
+			t.Fatal("CurrentTopicがnil")
 		}
 		if output.CurrentTopic.Name != "トピック1" {
-			t.Errorf("CurrentTopic.Name = %q, want %q", output.CurrentTopic.Name, "トピック1")
+			t.Errorf("CurrentTopic.Name = %q、期待値 = %q", output.CurrentTopic.Name, "トピック1")
 		}
 		// AvailableTopicsは現在のトピックを除外するので、トピック2のみ
 		if len(output.AvailableTopics) != 1 {
-			t.Fatalf("AvailableTopics count = %d, want 1", len(output.AvailableTopics))
+			t.Fatalf("AvailableTopicsの件数 = %d、期待値 = 1", len(output.AvailableTopics))
 		}
 		if output.AvailableTopics[0].Name != "トピック2" {
-			t.Errorf("AvailableTopics[0].Name = %q, want %q", output.AvailableTopics[0].Name, "トピック2")
+			t.Errorf("AvailableTopics[0].Name = %q、期待値 = %q", output.AvailableTopics[0].Name, "トピック2")
 		}
 	})
 }

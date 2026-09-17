@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -13,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Index は下書き一覧画面を表示します (GET /drafts)
+// Indexは下書き一覧画面を表示します (GET /drafts)
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -33,22 +34,31 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "draft_page_index_title")
 
-	sidebarContent := h.sidebarHelper.Content(ctx, user.ID)
-
 	layoutData := layouts.DefaultLayoutData{
 		Meta: meta,
 
-		Sidebar: components.SidebarData{
-			CurrentPageName:   templates.PageNameDraftPageIndex,
-			SignedIn:          true,
-			UserAtname:        user.Atname,
-			JoinedTopics:      sidebarContent.JoinedTopics,
-			DraftPages:        sidebarContent.DraftPages,
-			HasMoreDraftPages: sidebarContent.HasMoreDraftPages,
-		},
-		BottomNav: components.BottomNavData{
+		GlobalNav: components.GlobalNavData{
 			CurrentPageName: templates.PageNameDraftPageIndex,
 			SignedIn:        true,
+			UserAtname:      user.Atname,
+		},
+
+		BreadcrumbHeader: components.BreadcrumbHeaderData{
+			MaxWidthClass: "max-w-3xl",
+			Items: []components.BreadcrumbItem{
+				{
+					Path:      templates.HomePath(),
+					IconName:  "house-regular",
+					AriaLabel: i18n.T(ctx, "breadcrumb_home"),
+				},
+				// この画面が現在地。項目はすでにリンク無しで描画されるが、閲覧者がどの項目に
+				// いるかをスクリーンリーダーへ伝えるのはaria-currentであり、それを付けるのは
+				// IsCurrentである。
+				{
+					Label:     i18n.T(ctx, "draft_page_index_heading"),
+					IsCurrent: true,
+				},
+			},
 		},
 	}
 

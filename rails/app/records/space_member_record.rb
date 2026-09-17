@@ -27,35 +27,6 @@ class SpaceMemberRecord < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
 
-  sig { params(topic_record: TopicRecord, title: String).returns(PageRecord) }
-  def create_linked_page!(topic_record:, title:)
-    page = space_record.not_nil!.page_records.where(topic_record:, title:).first_or_create!(
-      space_record:,
-      body: "",
-      body_html: "",
-      linked_page_ids: [],
-      modified_at: Time.zone.now
-    )
-    page_editor_records.where(page_record: page).first_or_create!(space_record:, last_page_modified_at: page.modified_at)
-
-    page
-  end
-
-  sig { params(page: PageRecord).returns(DraftPageRecord) }
-  def find_or_create_draft_page!(page:)
-    draft_page_records.create_with(
-      space_record: page.space_record,
-      topic_record: page.topic_record,
-      title: page.title,
-      body: page.body,
-      body_html: page.body_html,
-      linked_page_ids: page.linked_page_ids,
-      modified_at: Time.zone.now
-    ).find_or_create_by!(page_record: page)
-  rescue ActiveRecord::RecordNotUnique
-    retry
-  end
-
   sig { params(page_record: PageRecord).void }
   def destroy_draft_page!(page_record:)
     draft_page_records.where(page_record:).destroy_all

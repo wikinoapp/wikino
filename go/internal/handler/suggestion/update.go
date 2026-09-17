@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Update は編集提案を更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number})
+// Updateは編集提案を更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number})
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -47,7 +47,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	body := r.FormValue("body")
 
-	// UseCase を実行
+	// UseCaseを実行
 	_, err = h.updateSuggestionUsecase.Execute(ctx, usecase.UpdateSuggestionInput{
 		SpaceIdentifier:  spaceIdentifier,
 		SuggestionNumber: model.SuggestionNumber(suggestionNumber),
@@ -83,7 +83,7 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		h.renderEditForm(w, r, user, spaceIdentifier, output, ve, title, body)
+		h.renderEditForm(w, r, user, output, ve, title, body)
 		return
 	}
 

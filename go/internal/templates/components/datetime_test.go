@@ -121,13 +121,13 @@ func TestRelativeTime(t *testing.T) {
 
 			for _, want := range tt.wantContains {
 				if !strings.Contains(html, want) {
-					t.Errorf("出力に %q が含まれていない\n出力: %s", want, html)
+					t.Errorf("出力に%qが含まれていない\n出力: %s", want, html)
 				}
 			}
 
 			for _, exclude := range tt.wantExcludes {
 				if strings.Contains(html, exclude) {
-					t.Errorf("出力に %q が含まれるべきではない\n出力: %s", exclude, html)
+					t.Errorf("出力に%qが含まれるべきではない\n出力: %s", exclude, html)
 				}
 			}
 		})
@@ -155,7 +155,7 @@ func TestRelativeTime_datetime属性にRFC3339形式のUTC時刻が設定され�
 
 	expectedDatetime := "2026-03-25T05:14:00Z"
 	if !strings.Contains(html, expectedDatetime) {
-		t.Errorf("datetime属性に %q が含まれていない\n出力: %s", expectedDatetime, html)
+		t.Errorf("datetime属性に%qが含まれていない\n出力: %s", expectedDatetime, html)
 	}
 }
 
@@ -181,7 +181,7 @@ func TestRelativeTime_title属性にタイムゾーン変換済みの絶対時�
 	// UTC 05:14 → Asia/Tokyo 14:14
 	expectedTitle := "2026/03/25 14:14"
 	if !strings.Contains(html, expectedTitle) {
-		t.Errorf("title属性に %q が含まれていない\n出力: %s", expectedTitle, html)
+		t.Errorf("title属性に%qが含まれていない\n出力: %s", expectedTitle, html)
 	}
 }
 
@@ -251,7 +251,7 @@ func TestAbsoluteTime(t *testing.T) {
 
 			for _, want := range tt.wantContains {
 				if !strings.Contains(html, want) {
-					t.Errorf("出力に %q が含まれていない\n出力: %s", want, html)
+					t.Errorf("出力に%qが含まれていない\n出力: %s", want, html)
 				}
 			}
 		})

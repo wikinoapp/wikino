@@ -22,26 +22,22 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
-	// Space owner (holds the space:admin scope by default).
-	// [Ja] スペースオーナー (デフォルトで space:admin スコープを持つ)。
+	// スペースオーナー (デフォルトでspace:adminスコープを持つ)。
 	ownerID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gss-owner@example.com").
 		WithAtname("gssowner").
 		Build()
-	// Member with a limited scope that lacks topic:write (used to verify CanCreateTopic=false).
-	// [Ja] topic:write を持たない限定スコープのメンバー (CanCreateTopic=false の検証用)。
+	// topic:writeを持たない限定スコープのメンバー (CanCreateTopic=falseの検証用)。
 	limitedID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gss-limited@example.com").
 		WithAtname("gsslimited").
 		Build()
-	// Logged-in user who has not joined the space (used to verify guest-equivalent behavior).
-	// [Ja] スペースに参加していないログイン済みユーザー (ゲスト相当の挙動の検証用)。
+	// スペースに参加していないログイン済みユーザー (ゲスト相当の挙動の検証用)。
 	nonMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gss-nonmember@example.com").
 		WithAtname("gssnonmember").
 		Build()
-	// Member who has joined a topic, used to verify FirstJoinedTopic is fetched even when pages exist.
-	// [Ja] トピックに参加済みのメンバー。ページが存在しても FirstJoinedTopic が取得されることの検証用。
+	// トピックに参加済みのメンバー。ページが存在してもFirstJoinedTopicが取得されることの検証用。
 	joinedMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gss-joined@example.com").
 		WithAtname("gssjoined").
@@ -78,18 +74,14 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		WithVisibility(int32(model.TopicVisibilityPrivate)).
 		Build()
 
-	// Make the joined member a member of the public topic so it has a smallest-id joined topic.
-	// [Ja] 参加済みメンバーを公開トピックに参加させ、id が最小の参加トピックを持たせる。
+	// 参加済みメンバーを公開トピックに参加させ、idが最小の参加トピックを持たせる。
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
 		WithSpaceMemberID(joinedMemberSpaceMemberID).
 		Build()
-	// Make the limited member join the public topic with no extra topic scopes, so the topic section
-	// lists it but CanCreatePageByTopic stays false (the member lacks page:write).
-	//
-	// [Ja] 限定メンバーを追加のトピックスコープ無しで公開トピックに参加させ、トピックセクションには
-	// 表示されるが CanCreatePageByTopic は false のままになる (page:write を持たない) ようにする。
+	// 限定メンバーを追加のトピックスコープ無しで公開トピックに参加させ、トピックセクションには
+	// 表示されるがCanCreatePageByTopicはfalseのままになる (page:writeを持たない) ようにする。
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
@@ -98,8 +90,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 
 	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	// Pinned and regular pages in the public topic.
-	// [Ja] 公開トピックのピン留めページと通常ページ。
+	// 公開トピックのピン留めページと通常ページ。
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
@@ -116,8 +107,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		WithLinkedPageIDs([]model.PageID{}).
 		Build()
 
-	// Pinned and regular pages in the private topic (visible to members only).
-	// [Ja] 非公開トピックのピン留めページと通常ページ (メンバーのみ閲覧可)。
+	// 非公開トピックのピン留めページと通常ページ (メンバーのみ閲覧可)。
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(privateTopicID).
@@ -141,10 +131,10 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for non-existent space")
+			t.Error("存在しないスペースなのに出力がnilではない")
 		}
 	})
 
@@ -155,52 +145,49 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SpaceMember != nil {
-			t.Error("SpaceMember should be nil for unauthenticated user")
+			t.Error("未ログインのユーザーなのにSpaceMemberがnilではない")
 		}
 		if output.JoinedSpace {
-			t.Error("JoinedSpace should be false for unauthenticated user")
+			t.Error("未ログインのユーザーなのにJoinedSpaceがtrue")
 		}
 		if len(output.PinnedPages) != 1 {
-			t.Errorf("len(PinnedPages) = %d, want 1 (public-topic pinned only)", len(output.PinnedPages))
+			t.Errorf("len(PinnedPages) = %d、期待値 = 1 (公開トピックのピン留めのみ)", len(output.PinnedPages))
 		}
 		if len(output.Pages) != 1 {
-			t.Errorf("len(Pages) = %d, want 1 (public-topic regular only)", len(output.Pages))
+			t.Errorf("len(Pages) = %d、期待値 = 1 (公開トピックの通常ページのみ)", len(output.Pages))
 		}
 		if output.TotalCount != 1 {
-			t.Errorf("TotalCount = %d, want 1", output.TotalCount)
+			t.Errorf("TotalCount = %d、期待値 = 1", output.TotalCount)
 		}
 		if output.CanCreateTopic {
-			t.Error("CanCreateTopic should be false for guest")
+			t.Error("ゲストなのにCanCreateTopicがtrue")
 		}
 		if output.FirstJoinedTopic != nil {
-			t.Error("FirstJoinedTopic should be nil for guest")
+			t.Error("ゲストなのにFirstJoinedTopicがnilではない")
 		}
-		// The public topic label is still resolved for the guest's visible cards.
-		// [Ja] ゲストに見えるカードのために公開トピックのラベルは解決される。
+		// ゲストに見えるカードのために公開トピックのラベルは解決される。
 		if output.TopicMap[publicTopicID] == nil {
-			t.Error("TopicMap should contain the public topic for a guest")
+			t.Error("ゲストなのにTopicMapに公開トピックが含まれていない")
 		}
-		// A guest cannot edit any page.
-		// [Ja] ゲストはどのページも編集できない。
+		// ゲストはどのページも編集できない。
 		if output.CanEditPageByTopic[publicTopicID] {
-			t.Error("CanEditPageByTopic should be false for a guest")
+			t.Error("ゲストなのにCanEditPageByTopicがtrue")
 		}
-		// The topic section shows only public topics to a guest, with no create action anywhere.
-		// [Ja] トピックセクションはゲストには公開トピックのみを表示し、どこにも作成導線を出さない。
+		// トピックセクションはゲストには公開トピックのみを表示し、どこにも作成導線を出さない。
 		if len(output.SectionTopics) != 1 {
-			t.Fatalf("len(SectionTopics) = %d, want 1 (public topic only)", len(output.SectionTopics))
+			t.Fatalf("len(SectionTopics) = %d、期待値 = 1 (公開トピックのみ)", len(output.SectionTopics))
 		}
 		if output.SectionTopics[0].ID != publicTopicID {
-			t.Errorf("SectionTopics[0].ID = %v, want %v (public topic)", output.SectionTopics[0].ID, publicTopicID)
+			t.Errorf("SectionTopics[0].ID = %v、期待値 = %v (公開トピック)", output.SectionTopics[0].ID, publicTopicID)
 		}
 		if output.CanCreatePageByTopic[publicTopicID] {
-			t.Error("CanCreatePageByTopic should be false for a guest")
+			t.Error("ゲストなのにCanCreatePageByTopicがtrue")
 		}
 	})
 
@@ -213,45 +200,42 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SpaceMember != nil {
-			t.Error("SpaceMember should be nil for a logged-in non-member")
+			t.Error("ログイン中の非メンバーなのにSpaceMemberがnilではない")
 		}
 		if output.JoinedSpace {
-			t.Error("JoinedSpace should be false for a logged-in non-member")
+			t.Error("ログイン中の非メンバーなのにJoinedSpaceがtrue")
 		}
 		if len(output.PinnedPages) != 1 {
-			t.Errorf("len(PinnedPages) = %d, want 1 (public-topic pinned only)", len(output.PinnedPages))
+			t.Errorf("len(PinnedPages) = %d、期待値 = 1 (公開トピックのピン留めのみ)", len(output.PinnedPages))
 		}
 		if len(output.Pages) != 1 {
-			t.Errorf("len(Pages) = %d, want 1 (public-topic regular only)", len(output.Pages))
+			t.Errorf("len(Pages) = %d、期待値 = 1 (公開トピックの通常ページのみ)", len(output.Pages))
 		}
 		if output.TotalCount != 1 {
-			t.Errorf("TotalCount = %d, want 1", output.TotalCount)
+			t.Errorf("TotalCount = %d、期待値 = 1", output.TotalCount)
 		}
 		if output.CanCreateTopic {
-			t.Error("CanCreateTopic should be false for a logged-in non-member")
+			t.Error("ログイン中の非メンバーなのにCanCreateTopicがtrue")
 		}
 		if output.FirstJoinedTopic != nil {
-			t.Error("FirstJoinedTopic should be nil for a logged-in non-member")
+			t.Error("ログイン中の非メンバーなのにFirstJoinedTopicがnilではない")
 		}
-		// A logged-in non-member goes through the same nil-spaceMember path as a guest, so the
-		// topic section shows only public topics with no create action anywhere.
-		//
-		// [Ja] ログイン済み非メンバーはゲストと同じ spaceMember == nil 経路を通るため、トピック
+		// ログイン済み非メンバーはゲストと同じspaceMember == nil経路を通るため、トピック
 		// セクションには公開トピックのみが表示され、どこにも作成導線は出ない。
 		if len(output.SectionTopics) != 1 {
-			t.Fatalf("len(SectionTopics) = %d, want 1 (public topic only)", len(output.SectionTopics))
+			t.Fatalf("len(SectionTopics) = %d、期待値 = 1 (公開トピックのみ)", len(output.SectionTopics))
 		}
 		if output.SectionTopics[0].ID != publicTopicID {
-			t.Errorf("SectionTopics[0].ID = %v, want %v (public topic)", output.SectionTopics[0].ID, publicTopicID)
+			t.Errorf("SectionTopics[0].ID = %v、期待値 = %v (公開トピック)", output.SectionTopics[0].ID, publicTopicID)
 		}
 		if output.CanCreatePageByTopic[publicTopicID] {
-			t.Error("CanCreatePageByTopic should be false for a logged-in non-member")
+			t.Error("ログイン中の非メンバーなのにCanCreatePageByTopicがtrue")
 		}
 	})
 
@@ -264,59 +248,52 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.SpaceMember == nil {
-			t.Fatal("SpaceMember should not be nil for member")
+			t.Fatal("メンバーなのにSpaceMemberがnil")
 		}
 		if !output.JoinedSpace {
-			t.Error("JoinedSpace should be true for member")
+			t.Error("メンバーなのにJoinedSpaceがfalse")
 		}
 		if len(output.PinnedPages) != 2 {
-			t.Errorf("len(PinnedPages) = %d, want 2 (public + private pinned)", len(output.PinnedPages))
+			t.Errorf("len(PinnedPages) = %d、期待値 = 2 (公開 + 非公開のピン留め)", len(output.PinnedPages))
 		}
 		if len(output.Pages) != 2 {
-			t.Errorf("len(Pages) = %d, want 2 (public + private regular)", len(output.Pages))
+			t.Errorf("len(Pages) = %d、期待値 = 2 (公開 + 非公開の通常ページ)", len(output.Pages))
 		}
 		if output.TotalCount != 2 {
-			t.Errorf("TotalCount = %d, want 2", output.TotalCount)
+			t.Errorf("TotalCount = %d、期待値 = 2", output.TotalCount)
 		}
-		// space:admin implies topic:write, so CanCreateTopic is true.
-		// [Ja] space:admin は topic:write を含意するため CanCreateTopic は true。
+		// space:adminはtopic:writeを含意するためCanCreateTopicはtrue。
 		if !output.CanCreateTopic {
-			t.Error("CanCreateTopic should be true for space:admin member")
+			t.Error("space:adminメンバーなのにCanCreateTopicがfalse")
 		}
-		// TopicMap covers both topics that the listed pages belong to (for card labels).
-		// [Ja] TopicMap は一覧ページが属する両トピックを含む (カードラベル用)。
+		// TopicMapは一覧ページが属する両トピックを含む (カードラベル用)。
 		if output.TopicMap[publicTopicID] == nil {
-			t.Error("TopicMap should contain the public topic")
+			t.Error("TopicMapに公開トピックが含まれていない")
 		}
 		if output.TopicMap[privateTopicID] == nil {
-			t.Error("TopicMap should contain the private topic")
+			t.Error("TopicMapに非公開トピックが含まれていない")
 		}
-		// space:admin implies page:write across every topic, so both topics are editable.
-		// [Ja] space:admin は全トピックで page:write を含意するため、両トピックとも編集可能。
+		// space:adminは全トピックでpage:writeを含意するため、両トピックとも編集可能。
 		if !output.CanEditPageByTopic[publicTopicID] {
-			t.Error("CanEditPageByTopic should be true for the public topic for a space:admin member")
+			t.Error("space:adminメンバーなのに公開トピックのCanEditPageByTopicがfalse")
 		}
 		if !output.CanEditPageByTopic[privateTopicID] {
-			t.Error("CanEditPageByTopic should be true for the private topic for a space:admin member")
+			t.Error("space:adminメンバーなのに非公開トピックのCanEditPageByTopicがfalse")
 		}
-		// The owner has not joined any topic (no topic_member), so FirstJoinedTopic is nil.
-		// [Ja] オーナーはどのトピックにも参加していない (topic_member なし) ため FirstJoinedTopic は nil。
+		// オーナーはどのトピックにも参加していない (topic_memberなし) ためFirstJoinedTopicはnil。
 		if output.FirstJoinedTopic != nil {
-			t.Error("FirstJoinedTopic should be nil for a member who has not joined any topic")
+			t.Error("どのトピックにも参加していないメンバーなのにFirstJoinedTopicがnilではない")
 		}
-		// The topic section lists the member's joined topics, so it is empty for the owner who has
-		// joined none, even though space:admin grants access to every topic's pages.
-		//
-		// [Ja] トピックセクションはメンバーの参加トピックを並べるため、space:admin が全トピックの
+		// トピックセクションはメンバーの参加トピックを並べるため、space:adminが全トピックの
 		// ページへのアクセスを与えていても、どのトピックにも参加していないオーナーでは空になる。
 		if len(output.SectionTopics) != 0 {
-			t.Errorf("len(SectionTopics) = %d, want 0 (owner joined no topic)", len(output.SectionTopics))
+			t.Errorf("len(SectionTopics) = %d、期待値 = 0 (オーナーはどのトピックにも参加していない)", len(output.SectionTopics))
 		}
 	})
 
@@ -329,38 +306,34 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if !output.JoinedSpace {
-			t.Error("JoinedSpace should be true for member")
+			t.Error("メンバーなのにJoinedSpaceがfalse")
 		}
 		if output.CanCreateTopic {
-			t.Error("CanCreateTopic should be false for a member without topic:write scope")
+			t.Error("topic:writeスコープを持たないメンバーなのにCanCreateTopicがtrue")
 		}
-		// A member with only page:read (no page:write) cannot edit pages in any topic.
-		// [Ja] page:read のみ (page:write 無し) のメンバーはどのトピックのページも編集できない。
+		// page:readのみ (page:write無し) のメンバーはどのトピックのページも編集できない。
 		if output.CanEditPageByTopic[publicTopicID] {
-			t.Error("CanEditPageByTopic should be false for a member without page:write scope")
+			t.Error("page:writeスコープを持たないメンバーなのにCanEditPageByTopicがtrue")
 		}
 		if output.CanEditPageByTopic[privateTopicID] {
-			t.Error("CanEditPageByTopic should be false for a member without page:write scope")
+			t.Error("page:writeスコープを持たないメンバーなのにCanEditPageByTopicがtrue")
 		}
-		// The limited member has joined the public topic, so the section lists it, but without
-		// page:write the per-topic create action stays off.
-		//
-		// [Ja] 限定メンバーは公開トピックに参加しているためセクションに表示されるが、page:write が
+		// 限定メンバーは公開トピックに参加しているためセクションに表示されるが、page:writeが
 		// 無いためトピックごとの作成導線は出ない。
 		if len(output.SectionTopics) != 1 {
-			t.Fatalf("len(SectionTopics) = %d, want 1 (joined public topic)", len(output.SectionTopics))
+			t.Fatalf("len(SectionTopics) = %d、期待値 = 1 (参加中の公開トピック)", len(output.SectionTopics))
 		}
 		if output.SectionTopics[0].ID != publicTopicID {
-			t.Errorf("SectionTopics[0].ID = %v, want %v (public topic)", output.SectionTopics[0].ID, publicTopicID)
+			t.Errorf("SectionTopics[0].ID = %v、期待値 = %v (公開トピック)", output.SectionTopics[0].ID, publicTopicID)
 		}
 		if output.CanCreatePageByTopic[publicTopicID] {
-			t.Error("CanCreatePageByTopic should be false for a member without page:write scope")
+			t.Error("page:writeスコープを持たないメンバーなのにCanCreatePageByTopicがtrue")
 		}
 	})
 
@@ -373,40 +346,35 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if !output.JoinedSpace {
-			t.Error("JoinedSpace should be true for member")
+			t.Error("メンバーなのにJoinedSpaceがfalse")
 		}
-		// Verify FirstJoinedTopic is fetched even when pages exist, locking in the
-		// "not gated on the empty state" decision against regression.
-		// [Ja] ページが存在する状態でも FirstJoinedTopic が取得されることを検証し、
+		// ページが存在する状態でもFirstJoinedTopicが取得されることを検証し、
 		// 「空状態判定でゲートしない」という実装判断の退行を防ぐ。
 		if len(output.Pages) == 0 {
-			t.Error("Pages should not be empty for a member of this space")
+			t.Error("このスペースのメンバーなのにPagesが空")
 		}
 		if output.FirstJoinedTopic == nil {
-			t.Fatal("FirstJoinedTopic should not be nil for a member who has joined a topic")
+			t.Fatal("トピックに参加しているメンバーなのにFirstJoinedTopicがnil")
 		}
 		if output.FirstJoinedTopic.ID != publicTopicID {
-			t.Errorf("FirstJoinedTopic.ID = %v, want %v", output.FirstJoinedTopic.ID, publicTopicID)
+			t.Errorf("FirstJoinedTopic.ID = %v、期待値 = %v", output.FirstJoinedTopic.ID, publicTopicID)
 		}
-		// The joined member sees the joined public topic in the section and, holding space:admin
-		// (which implies page:write), may create a page there.
-		//
-		// [Ja] 参加メンバーはセクションに参加中の公開トピックを見て、space:admin (page:write を含意) を
+		// 参加メンバーはセクションに参加中の公開トピックを見て、space:admin (page:writeを含意) を
 		// 持つためそこにページを作成できる。
 		if len(output.SectionTopics) != 1 {
-			t.Fatalf("len(SectionTopics) = %d, want 1 (joined public topic)", len(output.SectionTopics))
+			t.Fatalf("len(SectionTopics) = %d、期待値 = 1 (参加中の公開トピック)", len(output.SectionTopics))
 		}
 		if output.SectionTopics[0].ID != publicTopicID {
-			t.Errorf("SectionTopics[0].ID = %v, want %v (public topic)", output.SectionTopics[0].ID, publicTopicID)
+			t.Errorf("SectionTopics[0].ID = %v、期待値 = %v (公開トピック)", output.SectionTopics[0].ID, publicTopicID)
 		}
 		if !output.CanCreatePageByTopic[publicTopicID] {
-			t.Error("CanCreatePageByTopic should be true for a space:admin member in the joined topic")
+			t.Error("参加中のトピックのspace:adminメンバーなのにCanCreatePageByTopicがfalse")
 		}
 	})
 }
@@ -436,8 +404,7 @@ func TestGetSpaceShowUsecase_Execute_空状態(t *testing.T) {
 		WithUserID(userID).
 		Build()
 
-	// A topic the member has joined (it has no pages).
-	// [Ja] メンバーが参加するトピック (ページは無い)。
+	// メンバーが参加するトピック (ページは無い)。
 	joinedTopicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithNumber(1).
@@ -458,39 +425,36 @@ func TestGetSpaceShowUsecase_Execute_空状態(t *testing.T) {
 			PageLimit:       100,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.PinnedPages) != 0 {
-			t.Errorf("len(PinnedPages) = %d, want 0", len(output.PinnedPages))
+			t.Errorf("len(PinnedPages) = %d、期待値 = 0", len(output.PinnedPages))
 		}
 		if len(output.Pages) != 0 {
-			t.Errorf("len(Pages) = %d, want 0", len(output.Pages))
+			t.Errorf("len(Pages) = %d、期待値 = 0", len(output.Pages))
 		}
 		if output.TotalCount != 0 {
-			t.Errorf("TotalCount = %d, want 0", output.TotalCount)
+			t.Errorf("TotalCount = %d、期待値 = 0", output.TotalCount)
 		}
 		if output.FirstJoinedTopic == nil {
-			t.Fatal("FirstJoinedTopic should not be nil for a member with a joined topic")
+			t.Fatal("参加中のトピックがあるメンバーなのにFirstJoinedTopicがnil")
 		}
 		if output.FirstJoinedTopic.ID != joinedTopicID {
-			t.Errorf("FirstJoinedTopic.ID = %v, want %v", output.FirstJoinedTopic.ID, joinedTopicID)
+			t.Errorf("FirstJoinedTopic.ID = %v、期待値 = %v", output.FirstJoinedTopic.ID, joinedTopicID)
 		}
-		// Even with no pages, the joined topic appears in the section with a create action, which is
-		// the per-topic replacement for the old space-level empty-state "new page" button.
-		//
-		// [Ja] ページが無くても参加トピックは作成導線付きでセクションに現れる。これは旧来の
+		// ページが無くても参加トピックは作成導線付きでセクションに現れる。これは旧来の
 		// スペースレベル空状態「新規ページ」ボタンを置き換えるトピックごとの導線である。
 		if len(output.SectionTopics) != 1 {
-			t.Fatalf("len(SectionTopics) = %d, want 1 (joined topic)", len(output.SectionTopics))
+			t.Fatalf("len(SectionTopics) = %d、期待値 = 1 (参加中のトピック)", len(output.SectionTopics))
 		}
 		if output.SectionTopics[0].ID != joinedTopicID {
-			t.Errorf("SectionTopics[0].ID = %v, want %v (joined topic)", output.SectionTopics[0].ID, joinedTopicID)
+			t.Errorf("SectionTopics[0].ID = %v、期待値 = %v (参加中のトピック)", output.SectionTopics[0].ID, joinedTopicID)
 		}
 		if !output.CanCreatePageByTopic[joinedTopicID] {
-			t.Error("CanCreatePageByTopic should be true for a space:admin member in the joined topic")
+			t.Error("参加中のトピックのspace:adminメンバーなのにCanCreatePageByTopicがfalse")
 		}
 	})
 }

@@ -9,22 +9,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// PageAttachmentReferenceRepository はページ添付ファイル参照リポジトリ
+// PageAttachmentReferenceRepositoryはページ添付ファイル参照リポジトリ
 type PageAttachmentReferenceRepository struct {
 	q *query.Queries
 }
 
-// NewPageAttachmentReferenceRepository は PageAttachmentReferenceRepository を生成する
+// NewPageAttachmentReferenceRepositoryはPageAttachmentReferenceRepositoryを生成する
 func NewPageAttachmentReferenceRepository(q *query.Queries) *PageAttachmentReferenceRepository {
 	return &PageAttachmentReferenceRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *PageAttachmentReferenceRepository) WithTx(tx *sql.Tx) *PageAttachmentReferenceRepository {
 	return &PageAttachmentReferenceRepository{q: r.q.WithTx(tx)}
 }
 
-// ListByPageID はページIDに紐づく添付ファイル参照を取得する（スペースIDでスコープ）
+// ListByPageIDはページIDに紐づく添付ファイル参照を取得する (スペースIDでスコープ)
 func (r *PageAttachmentReferenceRepository) ListByPageID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID) ([]*model.PageAttachmentReference, error) {
 	rows, err := r.q.ListPageAttachmentReferencesByPageID(ctx, query.ListPageAttachmentReferencesByPageIDParams{
 		PageID:  string(pageID),
@@ -36,7 +36,7 @@ func (r *PageAttachmentReferenceRepository) ListByPageID(ctx context.Context, pa
 	return r.toModels(rows), nil
 }
 
-// CreateBatch は複数の添付ファイル参照を一括作成する（スペースIDでスコープ）
+// CreateBatchは複数の添付ファイル参照を一括作成する (スペースIDでスコープ)
 func (r *PageAttachmentReferenceRepository) CreateBatch(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, attachmentIDs []model.AttachmentID) ([]*model.PageAttachmentReference, error) {
 	now := time.Now()
 	refs := make([]*model.PageAttachmentReference, 0, len(attachmentIDs))
@@ -58,7 +58,7 @@ func (r *PageAttachmentReferenceRepository) CreateBatch(ctx context.Context, pag
 	return refs, nil
 }
 
-// DeleteByPageAndAttachmentIDs はページIDと添付ファイルIDリストに該当する参照を削除する（スペースIDでスコープ）
+// DeleteByPageAndAttachmentIDsはページIDと添付ファイルIDリストに該当する参照を削除する (スペースIDでスコープ)
 func (r *PageAttachmentReferenceRepository) DeleteByPageAndAttachmentIDs(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, attachmentIDs []model.AttachmentID) error {
 	strIDs := make([]string, len(attachmentIDs))
 	for i, id := range attachmentIDs {
@@ -71,7 +71,7 @@ func (r *PageAttachmentReferenceRepository) DeleteByPageAndAttachmentIDs(ctx con
 	})
 }
 
-// toModel は query.PageAttachmentReference を model.PageAttachmentReference に変換する
+// toModelはquery.PageAttachmentReferenceをmodel.PageAttachmentReferenceに変換する
 func (r *PageAttachmentReferenceRepository) toModel(row query.PageAttachmentReference) *model.PageAttachmentReference {
 	return &model.PageAttachmentReference{
 		ID:           model.PageAttachmentReferenceID(row.ID),
@@ -82,7 +82,7 @@ func (r *PageAttachmentReferenceRepository) toModel(row query.PageAttachmentRefe
 	}
 }
 
-// toModels は query.PageAttachmentReference のスライスを model.PageAttachmentReference のスライスに変換する
+// toModelsはquery.PageAttachmentReferenceのスライスをmodel.PageAttachmentReferenceのスライスに変換する
 func (r *PageAttachmentReferenceRepository) toModels(rows []query.PageAttachmentReference) []*model.PageAttachmentReference {
 	refs := make([]*model.PageAttachmentReference, len(rows))
 	for i, row := range rows {

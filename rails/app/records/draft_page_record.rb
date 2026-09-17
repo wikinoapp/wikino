@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 class DraftPageRecord < ApplicationRecord
-  include RecordConcerns::Pageable
-
   self.table_name = "draft_pages"
 
   belongs_to :space_record, foreign_key: :space_id

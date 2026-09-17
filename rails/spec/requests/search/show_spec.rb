@@ -20,6 +20,22 @@ RSpec.describe "GET /search", type: :request do
     expect(response).to redirect_to("/sign_in")
   end
 
+  it "ヘッダーと本文が同じコンテナ幅で描画されること" do
+    user_record = create(:user_record, :with_password)
+    space_record = create(:space_record)
+    create(:topic_record, space_record:)
+    create(:space_member_record, user_record:, space_record:)
+    sign_in(user_record:)
+
+    get search_path
+
+    doc = Nokogiri::HTML(response.body)
+    width_class = "max-w-(--content-screen-max-width-medium)"
+
+    expect(doc.at_css("header > div")["class"]).to include(width_class)
+    expect(doc.at_css("main#main > div")["class"]).to include(width_class)
+  end
+
   it "検索キーワードがない場合、検索フォームのみが表示されること" do
     user_record = create(:user_record, :with_password)
     space_record = create(:space_record)

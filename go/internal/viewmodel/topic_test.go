@@ -52,15 +52,15 @@ func TestNewTopic(t *testing.T) {
 			got := viewmodel.NewTopic(tt.topic)
 
 			if got.Name != tt.wantName {
-				t.Errorf("Name = %q, want %q", got.Name, tt.wantName)
+				t.Errorf("Name = %q、期待値 = %q", got.Name, tt.wantName)
 			}
 
 			if got.Number != tt.wantNumber {
-				t.Errorf("Number = %d, want %d", got.Number, tt.wantNumber)
+				t.Errorf("Number = %d、期待値 = %d", got.Number, tt.wantNumber)
 			}
 
 			if got.IconName != tt.wantIconName {
-				t.Errorf("IconName = %q, want %q", got.IconName, tt.wantIconName)
+				t.Errorf("IconName = %q、期待値 = %q", got.IconName, tt.wantIconName)
 			}
 		})
 	}
@@ -127,27 +127,27 @@ func TestNewTopicForShow(t *testing.T) {
 			got := viewmodel.NewTopicForShow(tt.topic, tt.canUpdate, tt.canCreatePage)
 
 			if got.Name != tt.wantName {
-				t.Errorf("Name = %q, want %q", got.Name, tt.wantName)
+				t.Errorf("Name = %q、期待値 = %q", got.Name, tt.wantName)
 			}
 
 			if got.Number != tt.wantNumber {
-				t.Errorf("Number = %d, want %d", got.Number, tt.wantNumber)
+				t.Errorf("Number = %d、期待値 = %d", got.Number, tt.wantNumber)
 			}
 
 			if got.Description != tt.wantDescription {
-				t.Errorf("Description = %q, want %q", got.Description, tt.wantDescription)
+				t.Errorf("Description = %q、期待値 = %q", got.Description, tt.wantDescription)
 			}
 
 			if got.IconName != tt.wantIconName {
-				t.Errorf("IconName = %q, want %q", got.IconName, tt.wantIconName)
+				t.Errorf("IconName = %q、期待値 = %q", got.IconName, tt.wantIconName)
 			}
 
 			if got.CanUpdate != tt.wantCanUpdate {
-				t.Errorf("CanUpdate = %v, want %v", got.CanUpdate, tt.wantCanUpdate)
+				t.Errorf("CanUpdate = %v、期待値 = %v", got.CanUpdate, tt.wantCanUpdate)
 			}
 
 			if got.CanCreatePage != tt.wantCanCreatePage {
-				t.Errorf("CanCreatePage = %v, want %v", got.CanCreatePage, tt.wantCanCreatePage)
+				t.Errorf("CanCreatePage = %v、期待値 = %v", got.CanCreatePage, tt.wantCanCreatePage)
 			}
 		})
 	}
@@ -160,51 +160,47 @@ func TestNewCardLinkTopicsForSpace(t *testing.T) {
 	topic2 := &model.Topic{ID: "topic-2", Number: 2, Name: "T2", Visibility: model.TopicVisibilityPrivate}
 	topics := []*model.Topic{topic1, topic2}
 
-	// Only topic1 may be written to; topic2 is missing from the map and defaults to false.
-	// [Ja] topic1 のみ書き込み可。topic2 はマップに無く false にフォールバックする。
+	// topic1のみ書き込み可。topic2はマップに無くfalseにフォールバックする。
 	canCreatePageByTopic := map[model.TopicID]bool{"topic-1": true}
 	spaceIdentifier := viewmodel.NewSpaceIdentifier("my-space")
 
 	got := viewmodel.NewCardLinkTopicsForSpace(topics, canCreatePageByTopic, spaceIdentifier)
 
 	if len(got) != 2 {
-		t.Fatalf("len(got) = %d, want 2", len(got))
+		t.Fatalf("len(got) = %d、期待値 = 2", len(got))
 	}
 
-	// Every card uses the space identifier passed in (the topics carry no loaded Space) and hides the
-	// space name, while the visibility icon and create permission come from each topic / the map.
-	//
-	// [Ja] 各カードは渡されたスペース識別子を使い (トピックは Space を読み込んでいない)、スペース名は
+	// 各カードは渡されたスペース識別子を使い (トピックはSpaceを読み込んでいない)、スペース名は
 	// 非表示にする。一方、公開範囲アイコンと作成権限はトピックごと / マップから決まる。
 	if got[0].Name != "T1" || got[1].Name != "T2" {
-		t.Errorf("topic names mismatch: got %q, %q", got[0].Name, got[1].Name)
+		t.Errorf("トピック名が一致しない: %q、%q", got[0].Name, got[1].Name)
 	}
 	for i, card := range got {
 		if card.SpaceIdentifier != spaceIdentifier {
-			t.Errorf("got[%d].SpaceIdentifier = %q, want %q", i, card.SpaceIdentifier, spaceIdentifier)
+			t.Errorf("got[%d].SpaceIdentifier = %q、期待値 = %q", i, card.SpaceIdentifier, spaceIdentifier)
 		}
 		if card.SpaceName != "" {
-			t.Errorf("got[%d].SpaceName = %q, want empty", i, card.SpaceName)
+			t.Errorf("got[%d].SpaceName = %q、期待値 = 空", i, card.SpaceName)
 		}
 	}
 	if got[0].TopicIconName != "globe-regular" {
-		t.Errorf("got[0].TopicIconName = %q, want %q", got[0].TopicIconName, "globe-regular")
+		t.Errorf("got[0].TopicIconName = %q、期待値 = %q", got[0].TopicIconName, "globe-regular")
 	}
 	if got[1].TopicIconName != "lock-regular" {
-		t.Errorf("got[1].TopicIconName = %q, want %q", got[1].TopicIconName, "lock-regular")
+		t.Errorf("got[1].TopicIconName = %q、期待値 = %q", got[1].TopicIconName, "lock-regular")
 	}
 	if !got[0].CanCreatePage {
-		t.Error("got[0].CanCreatePage = false, want true")
+		t.Error("got[0].CanCreatePage = false、期待値 = true")
 	}
 	if got[1].CanCreatePage {
-		t.Error("got[1].CanCreatePage = true, want false (missing from map)")
+		t.Error("got[1].CanCreatePage = true、期待値 = false (mapに無い)")
 	}
 }
 
 func TestNewCardLinkTopic_FieldMapping(t *testing.T) {
 	t.Parallel()
 
-	t.Run("公開トピックは globe-regular アイコンを設定し、作成権限を引き継ぐ", func(t *testing.T) {
+	t.Run("公開トピックはglobe-regularアイコンを設定し、作成権限を引き継ぐ", func(t *testing.T) {
 		topic := &model.Topic{
 			Number:     7,
 			Name:       "トピックA",
@@ -217,26 +213,26 @@ func TestNewCardLinkTopic_FieldMapping(t *testing.T) {
 		card := viewmodel.NewCardLinkTopic(topic, true)
 
 		if card.Name != "トピックA" {
-			t.Errorf("Name = %q, want %q", card.Name, "トピックA")
+			t.Errorf("Name = %q、期待値 = %q", card.Name, "トピックA")
 		}
 		if card.Number != 7 {
-			t.Errorf("Number = %d, want %d", card.Number, 7)
+			t.Errorf("Number = %d、期待値 = %d", card.Number, 7)
 		}
 		if string(card.SpaceIdentifier) != "space-a" {
-			t.Errorf("SpaceIdentifier = %q, want %q", string(card.SpaceIdentifier), "space-a")
+			t.Errorf("SpaceIdentifier = %q、期待値 = %q", string(card.SpaceIdentifier), "space-a")
 		}
 		if card.SpaceName != "スペースA" {
-			t.Errorf("SpaceName = %q, want %q", card.SpaceName, "スペースA")
+			t.Errorf("SpaceName = %q、期待値 = %q", card.SpaceName, "スペースA")
 		}
 		if card.TopicIconName != "globe-regular" {
-			t.Errorf("TopicIconName = %q, want %q", card.TopicIconName, "globe-regular")
+			t.Errorf("TopicIconName = %q、期待値 = %q", card.TopicIconName, "globe-regular")
 		}
 		if !card.CanCreatePage {
-			t.Error("CanCreatePage = false, want true")
+			t.Error("CanCreatePage = false、期待値 = true")
 		}
 	})
 
-	t.Run("非公開トピックは lock-regular アイコンを設定し、作成権限なしを引き継ぐ", func(t *testing.T) {
+	t.Run("非公開トピックはlock-regularアイコンを設定し、作成権限なしを引き継ぐ", func(t *testing.T) {
 		topic := &model.Topic{
 			Number:     3,
 			Name:       "プライベートトピック",
@@ -249,10 +245,10 @@ func TestNewCardLinkTopic_FieldMapping(t *testing.T) {
 		card := viewmodel.NewCardLinkTopic(topic, false)
 
 		if card.TopicIconName != "lock-regular" {
-			t.Errorf("TopicIconName = %q, want %q", card.TopicIconName, "lock-regular")
+			t.Errorf("TopicIconName = %q、期待値 = %q", card.TopicIconName, "lock-regular")
 		}
 		if card.CanCreatePage {
-			t.Error("CanCreatePage = true, want false")
+			t.Error("CanCreatePage = true、期待値 = false")
 		}
 	})
 }
@@ -277,27 +273,26 @@ func TestNewCardLinkTopics(t *testing.T) {
 		},
 	}
 
-	// Only topic-1 may be written to; topic-2 is missing from the map and defaults to false.
-	// [Ja] topic-1 のみ書き込み可。topic-2 はマップに無く false にフォールバックする。
+	// topic-1のみ書き込み可。topic-2はマップに無くfalseにフォールバックする。
 	canCreatePageByTopic := map[model.TopicID]bool{"topic-1": true}
 
 	cards := viewmodel.NewCardLinkTopics(topics, canCreatePageByTopic)
 	if len(cards) != 2 {
-		t.Fatalf("len(cards) = %d, want 2", len(cards))
+		t.Fatalf("len(cards) = %d、期待値 = 2", len(cards))
 	}
 	if cards[0].Name != "T1" || cards[1].Name != "T2" {
-		t.Errorf("topic names mismatch: got %q, %q", cards[0].Name, cards[1].Name)
+		t.Errorf("トピック名が一致しない: %q、%q", cards[0].Name, cards[1].Name)
 	}
 	if cards[0].TopicIconName != "globe-regular" {
-		t.Errorf("cards[0].TopicIconName = %q, want %q", cards[0].TopicIconName, "globe-regular")
+		t.Errorf("cards[0].TopicIconName = %q、期待値 = %q", cards[0].TopicIconName, "globe-regular")
 	}
 	if cards[1].TopicIconName != "lock-regular" {
-		t.Errorf("cards[1].TopicIconName = %q, want %q", cards[1].TopicIconName, "lock-regular")
+		t.Errorf("cards[1].TopicIconName = %q、期待値 = %q", cards[1].TopicIconName, "lock-regular")
 	}
 	if !cards[0].CanCreatePage {
-		t.Error("cards[0].CanCreatePage = false, want true")
+		t.Error("cards[0].CanCreatePage = false、期待値 = true")
 	}
 	if cards[1].CanCreatePage {
-		t.Error("cards[1].CanCreatePage = true, want false (missing from map)")
+		t.Error("cards[1].CanCreatePage = true、期待値 = false (mapに無い)")
 	}
 }

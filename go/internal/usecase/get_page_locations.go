@@ -8,14 +8,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetPageLocationsUsecase はページロケーション検索のデータ取得ユースケース
+// GetPageLocationsUsecaseはページロケーション検索のデータ取得ユースケース
 type GetPageLocationsUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
 	pageRepo        *repository.PageRepository
 }
 
-// NewGetPageLocationsUsecase は GetPageLocationsUsecase を生成する
+// NewGetPageLocationsUsecaseはGetPageLocationsUsecaseを生成する
 func NewGetPageLocationsUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -28,19 +28,19 @@ func NewGetPageLocationsUsecase(
 	}
 }
 
-// GetPageLocationsInput はページロケーション検索の入力パラメータ
+// GetPageLocationsInputはページロケーション検索の入力パラメータ
 type GetPageLocationsInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	UserID          model.UserID
 	Query           string
 }
 
-// GetPageLocationsOutput はページロケーション検索の出力
+// GetPageLocationsOutputはページロケーション検索の出力
 type GetPageLocationsOutput struct {
 	Locations []repository.PageLocation
 }
 
-// Execute はページロケーションを検索する
+// Executeはページロケーションを検索する
 func (uc *GetPageLocationsUsecase) Execute(ctx context.Context, input GetPageLocationsInput) (*GetPageLocationsOutput, error) {
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
 	if err != nil {

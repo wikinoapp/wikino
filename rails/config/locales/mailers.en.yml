@@ -2,6 +2,3 @@ en:
   email_confirmation_mailer:
     email_confirmation:
       subject: "[Wikino] Confirm your email address"
-  export_mailer:
-    succeeded:
-      subject: "[Wikino] Your export data is ready"

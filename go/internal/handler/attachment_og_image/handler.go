@@ -1,8 +1,8 @@
-// Package attachment_og_image は公開 og:image 配信用エンドポイントのハンドラーを提供します。
+// Package attachment_og_imageは公開og:image配信用エンドポイントのハンドラーを提供します。
 //
-// 公開トピックのページから参照されている添付ファイルのみを imgproxy 経由で配信します。
-// visibility 検証は Repository の SQL クエリ (`FindPubliclyReferencedBlobByID`) に統合
-// されており、Handler / UseCase は受け取った blob をそのまま返します。
+// 公開トピックのページから参照されている添付ファイルのみをimgproxy経由で配信します。
+// visibility検証はRepositoryのSQLクエリ (`FindPubliclyReferencedBlobByID`) に統合
+// されており、Handler / UseCaseは受け取ったblobをそのまま返します。
 package attachment_og_image
 
 import (
@@ -10,18 +10,18 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler は公開 og:image 配信ハンドラー
+// Handlerは公開og:image配信ハンドラー
 //
-// ogImageBuilder が nil の場合は imgproxy 設定が不完全 (WIKINO_IMGPROXY_URL または
-// WIKINO_R2_BUCKET_NAME 未設定) と判断し、リクエスト時に 500 を返す。設定済み環境への
-// デプロイで初めてフラグ ON ユーザーに 500 が露出するのを避けるため、main.go 起動時に
-// WARN ログを出して状態を可視化している。
+// ogImageBuilderがnilの場合はimgproxy設定が不完全 (WIKINO_IMGPROXY_URLまたは
+// WIKINO_R2_BUCKET_NAME未設定) と判断し、リクエスト時に500を返す。設定済み環境への
+// デプロイで初めてフラグONユーザーに500が露出するのを避けるため、main.go起動時に
+// WARNログを出して状態を可視化している。
 type Handler struct {
 	ogImageBuilder         *image.OgImageBuilder
 	getAttachmentOgImageUC *usecase.GetAttachmentOgImageUsecase
 }
 
-// NewHandler は新しい Handler を作成する
+// NewHandlerは新しいHandlerを作成する
 func NewHandler(
 	ogImageBuilder *image.OgImageBuilder,
 	getAttachmentOgImageUC *usecase.GetAttachmentOgImageUsecase,

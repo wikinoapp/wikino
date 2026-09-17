@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// RemoveSuggestionPageUsecase は編集提案ページ削除ユースケース
+// RemoveSuggestionPageUsecaseは編集提案ページ削除ユースケース
 type RemoveSuggestionPageUsecase struct {
 	db                         *sql.DB
 	spaceRepo                  *repository.SpaceRepository
@@ -22,7 +22,7 @@ type RemoveSuggestionPageUsecase struct {
 	draftPageRepo              *repository.DraftPageRepository
 }
 
-// NewRemoveSuggestionPageUsecase は RemoveSuggestionPageUsecase を生成する
+// NewRemoveSuggestionPageUsecaseはRemoveSuggestionPageUsecaseを生成する
 func NewRemoveSuggestionPageUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -45,7 +45,7 @@ func NewRemoveSuggestionPageUsecase(
 	}
 }
 
-// RemoveSuggestionPageInput は編集提案ページ削除の入力パラメータ
+// RemoveSuggestionPageInputは編集提案ページ削除の入力パラメータ
 type RemoveSuggestionPageInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
@@ -53,12 +53,12 @@ type RemoveSuggestionPageInput struct {
 	UserID           model.UserID
 }
 
-// RemoveSuggestionPageOutput は編集提案ページ削除の出力パラメータ
+// RemoveSuggestionPageOutputは編集提案ページ削除の出力パラメータ
 type RemoveSuggestionPageOutput struct {
 	Suggestion *model.Suggestion
 }
 
-// Execute は編集提案からページを削除する
+// Executeは編集提案からページを削除する
 func (uc *RemoveSuggestionPageUsecase) Execute(ctx context.Context, input RemoveSuggestionPageInput) (*RemoveSuggestionPageOutput, error) {
 	// 1. データ取得
 	space, spaceMember, suggestion, suggestionPage, err := uc.fetchData(ctx, input)
@@ -76,7 +76,7 @@ func (uc *RemoveSuggestionPageUsecase) Execute(ctx context.Context, input Remove
 		return nil, err
 	}
 
-	// 4. 永続化（トランザクション）
+	// 4. 永続化 (トランザクション)
 	return uc.removeSuggestionPage(ctx, space.ID, suggestion, suggestionPage)
 }
 

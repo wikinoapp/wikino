@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetSuggestionNewUsecase は編集提案作成画面のデータ取得ユースケース
+// GetSuggestionNewUsecaseは編集提案作成画面のデータ取得ユースケース
 type GetSuggestionNewUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -17,7 +17,7 @@ type GetSuggestionNewUsecase struct {
 	draftPageRepo   *repository.DraftPageRepository
 }
 
-// NewGetSuggestionNewUsecase は GetSuggestionNewUsecase を生成する
+// NewGetSuggestionNewUsecaseはGetSuggestionNewUsecaseを生成する
 func NewGetSuggestionNewUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -34,14 +34,14 @@ func NewGetSuggestionNewUsecase(
 	}
 }
 
-// GetSuggestionNewInput は編集提案作成画面のデータ取得の入力パラメータ
+// GetSuggestionNewInputは編集提案作成画面のデータ取得の入力パラメータ
 type GetSuggestionNewInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	TopicNumber     int32
 	UserID          model.UserID
 }
 
-// GetSuggestionNewOutput は編集提案作成画面のデータ取得の出力パラメータ
+// GetSuggestionNewOutputは編集提案作成画面のデータ取得の出力パラメータ
 type GetSuggestionNewOutput struct {
 	Space       *model.Space
 	SpaceMember *model.SpaceMember
@@ -50,7 +50,7 @@ type GetSuggestionNewOutput struct {
 	DraftPages  []*model.DraftPage
 }
 
-// Execute は編集提案作成画面用のデータを取得する
+// Executeは編集提案作成画面用のデータを取得する
 func (uc *GetSuggestionNewUsecase) Execute(ctx context.Context, input GetSuggestionNewInput) (*GetSuggestionNewOutput, error) {
 	// スペースを取得
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
@@ -61,7 +61,7 @@ func (uc *GetSuggestionNewUsecase) Execute(ctx context.Context, input GetSuggest
 		return nil, nil
 	}
 
-	// スペースメンバーを取得（編集提案作成にはスペースメンバーであることが必須）
+	// スペースメンバーを取得 (編集提案作成にはスペースメンバーであることが必須)
 	spaceMember, err := uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, input.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("スペースメンバーの取得に失敗: %w", err)
@@ -91,7 +91,7 @@ func (uc *GetSuggestionNewUsecase) Execute(ctx context.Context, input GetSuggest
 		return nil, nil
 	}
 
-	// トピック内の自分の下書きページ一覧を取得（編集提案にリンクされていないもの）
+	// トピック内の自分の下書きページ一覧を取得 (編集提案にリンクされていないもの)
 	draftPages, err := uc.draftPageRepo.ListByMemberAndTopic(ctx, spaceMember.ID, topic.ID, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("下書きページの取得に失敗: %w", err)

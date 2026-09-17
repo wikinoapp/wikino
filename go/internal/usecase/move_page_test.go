@@ -82,23 +82,23 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 			DestTopicNumber: "2",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v, want nil", err)
+			t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 		}
 		if output == nil || output.Page == nil {
-			t.Fatal("output.Page should not be nil")
+			t.Fatal("output.Pageがnil")
 		}
 		if output.Page.SpaceID != spaceID {
-			t.Errorf("Page.SpaceID = %v, want %v", output.Page.SpaceID, spaceID)
+			t.Errorf("Page.SpaceID = %v、期待値 = %v", output.Page.SpaceID, spaceID)
 		}
 
 		// 下書きのトピックも移動��に更新されていることを確認
 		q := repository.NewDraftPageRepository(query.New(db))
 		dp, err := q.FindByID(ctx, draftPageID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if dp.TopicID != destTopicID {
-			t.Errorf("DraftPage.TopicID = %v, want %v", dp.TopicID, destTopicID)
+			t.Errorf("DraftPage.TopicID = %v、期待値 = %v", dp.TopicID, destTopicID)
 		}
 	})
 
@@ -122,10 +122,10 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -164,10 +164,10 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError but got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("AppError.Code = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -215,10 +215,10 @@ func TestMovePageUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("dest_topic") {
-			t.Error("expected dest_topic field error")
+			t.Error("dest_topicのフィールドエラーが無い")
 		}
 	})
 }

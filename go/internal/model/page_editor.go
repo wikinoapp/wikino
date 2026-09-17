@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// PageEditor はページの編集者のドメインモデル
+// PageEditorはページの編集者のドメインモデル
 type PageEditor struct {
 	ID                 PageEditorID
 	SpaceID            SpaceID

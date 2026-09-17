@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SpaceMemberBuilder はスペースメンバーテストデータのビルダー
+// SpaceMemberBuilderはスペースメンバーテストデータのビルダー
 type SpaceMemberBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -23,7 +23,7 @@ type SpaceMemberBuilder struct {
 	active   bool
 }
 
-// NewSpaceMemberBuilder は SpaceMemberBuilder を生成します
+// NewSpaceMemberBuilderはSpaceMemberBuilderを生成します
 func NewSpaceMemberBuilder(t *testing.T, tx *sql.Tx) *SpaceMemberBuilder {
 	t.Helper()
 	now := time.Now()
@@ -36,25 +36,25 @@ func NewSpaceMemberBuilder(t *testing.T, tx *sql.Tx) *SpaceMemberBuilder {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SpaceMemberBuilder) WithSpaceID(spaceID model.SpaceID) *SpaceMemberBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithUserID はユーザーIDを設定します
+// WithUserIDはユーザーIDを設定します
 func (b *SpaceMemberBuilder) WithUserID(userID model.UserID) *SpaceMemberBuilder {
 	b.userID = userID
 	return b
 }
 
-// WithActive はアクティブ状態を設定します
+// WithActiveはアクティブ状態を設定します
 func (b *SpaceMemberBuilder) WithActive(active bool) *SpaceMemberBuilder {
 	b.active = active
 	return b
 }
 
-// WithScopes はスコープを設定します
+// WithScopesはスコープを設定します
 func (b *SpaceMemberBuilder) WithScopes(scopes []model.Scope) *SpaceMemberBuilder {
 	ss := make([]string, len(scopes))
 	for i, s := range scopes {
@@ -64,13 +64,13 @@ func (b *SpaceMemberBuilder) WithScopes(scopes []model.Scope) *SpaceMemberBuilde
 	return b
 }
 
-// WithJoinedAt は参加日時を設定します
+// WithJoinedAtは参加日時を設定します
 func (b *SpaceMemberBuilder) WithJoinedAt(joinedAt time.Time) *SpaceMemberBuilder {
 	b.joinedAt = joinedAt
 	return b
 }
 
-// Build はスペースメンバーを作成し、IDを返します
+// Buildはスペースメンバーを作成し、IDを返します
 func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 	b.t.Helper()
 
@@ -97,7 +97,7 @@ func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 	return model.SpaceMemberID(id)
 }
 
-// SpaceMemberBuilderDB はDBを直接使用するスペースメンバーテストデータのビルダー
+// SpaceMemberBuilderDBはDBを直接使用するスペースメンバーテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type SpaceMemberBuilderDB struct {
 	t  *testing.T
@@ -110,7 +110,7 @@ type SpaceMemberBuilderDB struct {
 	active   bool
 }
 
-// NewSpaceMemberBuilderDB は SpaceMemberBuilderDB を生成します
+// NewSpaceMemberBuilderDBはSpaceMemberBuilderDBを生成します
 func NewSpaceMemberBuilderDB(t *testing.T, db *sql.DB) *SpaceMemberBuilderDB {
 	t.Helper()
 	now := time.Now()
@@ -123,19 +123,19 @@ func NewSpaceMemberBuilderDB(t *testing.T, db *sql.DB) *SpaceMemberBuilderDB {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SpaceMemberBuilderDB) WithSpaceID(spaceID model.SpaceID) *SpaceMemberBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithUserID はユーザーIDを設定します
+// WithUserIDはユーザーIDを設定します
 func (b *SpaceMemberBuilderDB) WithUserID(userID model.UserID) *SpaceMemberBuilderDB {
 	b.userID = userID
 	return b
 }
 
-// WithScopes はスコープを設定します
+// WithScopesはスコープを設定します
 func (b *SpaceMemberBuilderDB) WithScopes(scopes []model.Scope) *SpaceMemberBuilderDB {
 	ss := make([]string, len(scopes))
 	for i, s := range scopes {
@@ -145,7 +145,7 @@ func (b *SpaceMemberBuilderDB) WithScopes(scopes []model.Scope) *SpaceMemberBuil
 	return b
 }
 
-// Build はスペースメンバーを作成し、IDを返します
+// Buildはスペースメンバーを作成し、IDを返します
 func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 	b.t.Helper()
 

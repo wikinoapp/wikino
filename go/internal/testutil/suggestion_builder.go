@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SuggestionBuilder は編集提案テストデータのビルダー
+// SuggestionBuilderは編集提案テストデータのビルダー
 type SuggestionBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -23,7 +23,7 @@ type SuggestionBuilder struct {
 	appliedAt            *time.Time
 }
 
-// NewSuggestionBuilder は SuggestionBuilder を生成します
+// NewSuggestionBuilderはSuggestionBuilderを生成します
 func NewSuggestionBuilder(t *testing.T, tx *sql.Tx) *SuggestionBuilder {
 	t.Helper()
 	return &SuggestionBuilder{
@@ -35,43 +35,43 @@ func NewSuggestionBuilder(t *testing.T, tx *sql.Tx) *SuggestionBuilder {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SuggestionBuilder) WithSpaceID(spaceID model.SpaceID) *SuggestionBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *SuggestionBuilder) WithTopicID(topicID model.TopicID) *SuggestionBuilder {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithCreatedSpaceMemberID は作成者のスペースメンバーIDを設定します
+// WithCreatedSpaceMemberIDは作成者のスペースメンバーIDを設定します
 func (b *SuggestionBuilder) WithCreatedSpaceMemberID(id model.SpaceMemberID) *SuggestionBuilder {
 	b.createdSpaceMemberID = string(id)
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *SuggestionBuilder) WithTitle(title string) *SuggestionBuilder {
 	b.title = title
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *SuggestionBuilder) WithBody(body string) *SuggestionBuilder {
 	b.body = body
 	return b
 }
 
-// WithStatus はステータスを設定します
+// WithStatusはステータスを設定します
 func (b *SuggestionBuilder) WithStatus(status model.SuggestionStatus) *SuggestionBuilder {
 	b.status = int32(status)
 	return b
 }
 
-// Build は編集提案を作成し、IDを返します
+// Buildは編集提案を作成し、IDを返します
 func (b *SuggestionBuilder) Build() model.SuggestionID {
 	b.t.Helper()
 
@@ -112,7 +112,7 @@ func (b *SuggestionBuilder) Build() model.SuggestionID {
 	return model.SuggestionID(id)
 }
 
-// SuggestionBuilderDB はDBを直接使用する編集提案テストデータのビルダー
+// SuggestionBuilderDBはDBを直接使用する編集提案テストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type SuggestionBuilderDB struct {
 	t  *testing.T
@@ -127,7 +127,7 @@ type SuggestionBuilderDB struct {
 	appliedAt            *time.Time
 }
 
-// NewSuggestionBuilderDB は SuggestionBuilderDB を生成します
+// NewSuggestionBuilderDBはSuggestionBuilderDBを生成します
 func NewSuggestionBuilderDB(t *testing.T, db *sql.DB) *SuggestionBuilderDB {
 	t.Helper()
 	return &SuggestionBuilderDB{
@@ -139,37 +139,37 @@ func NewSuggestionBuilderDB(t *testing.T, db *sql.DB) *SuggestionBuilderDB {
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SuggestionBuilderDB) WithSpaceID(spaceID model.SpaceID) *SuggestionBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *SuggestionBuilderDB) WithTopicID(topicID model.TopicID) *SuggestionBuilderDB {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithCreatedSpaceMemberID は作成者のスペースメンバーIDを設定します
+// WithCreatedSpaceMemberIDは作成者のスペースメンバーIDを設定します
 func (b *SuggestionBuilderDB) WithCreatedSpaceMemberID(id model.SpaceMemberID) *SuggestionBuilderDB {
 	b.createdSpaceMemberID = string(id)
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *SuggestionBuilderDB) WithTitle(title string) *SuggestionBuilderDB {
 	b.title = title
 	return b
 }
 
-// WithStatus はステータスを設定します
+// WithStatusはステータスを設定します
 func (b *SuggestionBuilderDB) WithStatus(status model.SuggestionStatus) *SuggestionBuilderDB {
 	b.status = int32(status)
 	return b
 }
 
-// Build は編集提案を作成し、IDを返します
+// Buildは編集提案を作成し、IDを返します
 func (b *SuggestionBuilderDB) Build() model.SuggestionID {
 	b.t.Helper()
 

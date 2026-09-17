@@ -44,19 +44,19 @@ func TestPasswordResetCreateValidator_Validate(t *testing.T) {
 				wantFieldError: "email",
 			},
 			{
-				name:           "異常系: メールアドレスの形式が不正（@なし）",
+				name:           "異常系: メールアドレスの形式が不正 (@なし)",
 				email:          "invalid-email",
 				wantErrors:     true,
 				wantFieldError: "email",
 			},
 			{
-				name:           "異常系: メールアドレスの形式が不正（ドメインなし）",
+				name:           "異常系: メールアドレスの形式が不正 (ドメインなし)",
 				email:          "user@",
 				wantErrors:     true,
 				wantFieldError: "email",
 			},
 			{
-				name:           "異常系: メールアドレスの形式が不正（ユーザー名なし）",
+				name:           "異常系: メールアドレスの形式が不正 (ユーザー名なし)",
 				email:          "@example.com",
 				wantErrors:     true,
 				wantFieldError: "email",
@@ -78,15 +78,15 @@ func TestPasswordResetCreateValidator_Validate(t *testing.T) {
 				if tt.wantErrors {
 					ve := model.AsValidationError(err)
 					if ve == nil {
-						t.Error("expected ValidationError, but got nil")
+						t.Error("ValidationErrorを期待したが、nilだった")
 						return
 					}
 					if tt.wantFieldError != "" && !ve.HasFieldError(tt.wantFieldError) {
-						t.Errorf("expected field error for %s, but not found", tt.wantFieldError)
+						t.Errorf("%sのフィールドエラーが見つからない", tt.wantFieldError)
 					}
 				} else {
 					if err != nil {
-						t.Errorf("unexpected error: %v", err)
+						t.Errorf("予期しないエラー: %v", err)
 					}
 				}
 			})
@@ -143,13 +143,13 @@ func TestPasswordResetCreateValidator_Validate_I18nMessages(t *testing.T) {
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError, but got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 
 			// エラーメッセージに期待するテキストが含まれているか確認
 			errors := ve.GetFieldErrors("email")
 			if len(errors) == 0 {
-				t.Fatal("expected email field error, but not found")
+				t.Fatal("emailのフィールドエラーが見つからない")
 			}
 
 			found := false
@@ -160,7 +160,7 @@ func TestPasswordResetCreateValidator_Validate_I18nMessages(t *testing.T) {
 				}
 			}
 			if !found {
-				t.Errorf("expected error message containing %q, got %v", tt.wantText, errors)
+				t.Errorf("エラーメッセージ = %v、期待値 = %qを含む", errors, tt.wantText)
 			}
 		})
 	}

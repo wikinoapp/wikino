@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// IndexData は編集提案一覧画面に渡すデータ構造体です
+// IndexDataは編集提案一覧画面に渡すデータ構造体です
 type IndexData struct {
 	Space               viewmodel.Space
 	Topic               viewmodel.Topic
@@ -19,97 +19,78 @@ type IndexData struct {
 	CanCreateSuggestion bool
 }
 
-// suggestionsPath は編集提案一覧のパスを生成します
-func (d IndexData) suggestionsPath(tab string) string {
-	base := string(templates.SuggestionListPath(d.Space.Identifier, d.Topic.Number))
-	if tab == "" {
-		return base
-	}
-	return base + "?tab=" + tab
+// suggestionsPathはこの編集提案一覧のステータスタブのパスを返す。正規URLを組み立てる
+// ハンドラーとtemplates.SuggestionListTabPathを共有するため、タブのリンクと正規アドレスが同じ
+// 文字列のままになる。
+func (d IndexData) suggestionsPath(showClosed bool) string {
+	return string(templates.SuggestionListTabPath(d.Space.Identifier, d.Topic.Number, showClosed))
 }
 
-// Index は編集提案一覧画面のコンテンツを表示します
+// Indexは編集提案一覧画面のコンテンツを表示します
 templ Index(data IndexData) {
 	<div class="py-4">
-		<div class="flex flex-col gap-4">
-			@components.TopNav(components.TopNavData{
-				MaxWidthClass: "max-w-3xl",
-				Items: []components.BreadcrumbItem{
-					{
-						Path:      templates.HomePath(),
-						IconName:  "house-regular",
-						AriaLabel: templates.T(ctx, "breadcrumb_home"),
-					},
-					{
-						Label: data.Space.Name,
-						Path:  templates.SpacePath(data.Space.Identifier),
-					},
-				},
-			})
-
-			<div class="max-w-3xl w-full mx-auto">
-				<div class="flex flex-col gap-6">
-					<div class="flex flex-col gap-4">
-						<div class="px-4">
-							@components.MainTitle(components.MainTitleData{
-								Title:    data.Topic.Name,
-								Subtitle: indexSubtitle(),
-								Actions:  suggestionNewButton(data),
-							})
-						</div>
-
-						<div class="px-4">
-							@components.SubNav([]components.SubNavItem{
-								{
-									Label:          templates.T(ctx, "topic_show_tab_pages"),
-									Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
-									IconName:       "file-regular",
-									ActiveIconName: "file-fill",
-								},
-								{
-									Label:          templates.T(ctx, "topic_show_tab_suggestions"),
-									Path:           data.suggestionsPath(""),
-									IconName:       "git-pull-request-regular",
-									ActiveIconName: "git-pull-request-fill",
-									IsActive:       true,
-								},
-							})
-						</div>
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6">
+				<div class="flex flex-col gap-4">
+					<div class="px-4">
+						@components.MainTitle(components.MainTitleData{
+							Title:    data.Topic.Name,
+							Subtitle: indexSubtitle(),
+							Actions:  suggestionNewButton(data),
+						})
 					</div>
 
-					<div class="flex flex-col gap-2">
-						<div class="px-4">
-							@indexTabs(data)
-						</div>
+					<div class="px-4">
+						@components.SubNav([]components.SubNavItem{
+							{
+								Label:          templates.T(ctx, "topic_show_tab_pages"),
+								Path:           string(templates.TopicPath(data.Space.Identifier, data.Topic.Number)),
+								IconName:       "file-regular",
+								ActiveIconName: "file-fill",
+							},
+							{
+								Label:          templates.T(ctx, "topic_show_tab_suggestions"),
+								Path:           data.suggestionsPath(false),
+								IconName:       "git-pull-request-regular",
+								ActiveIconName: "git-pull-request-fill",
+								IsActive:       true,
+							},
+						})
+					</div>
+				</div>
 
-						if len(data.Suggestions) > 0 {
-							@components.ContentCard() {
-								@indexList(data)
-							}
-						} else {
-							<div class="px-4">
-								@indexEmptyState(data)
-							</div>
+				<div class="flex flex-col gap-2">
+					<div class="px-4">
+						@indexTabs(data)
+					</div>
+
+					if len(data.Suggestions) > 0 {
+						@components.ContentCard() {
+							@indexList(data)
 						}
-					</div>
+					} else {
+						<div class="px-4">
+							@indexEmptyState(data)
+						</div>
+					}
 				</div>
 			</div>
 		</div>
 	</div>
 }
 
-// indexSubtitle は編集提案一覧のサブタイトル（ヘルプページへのリンクを含む）を表示します
+// indexSubtitleは編集提案一覧のサブタイトル (ヘルプページへのリンクを含む) を表示します
 templ indexSubtitle() {
 	@templ.Raw(templates.T(ctx, "suggestion_index_subtitle_html"))
 }
 
-// indexTabs はオープン/クローズのタブ切り替えを表示します
+// indexTabsはオープン/クローズのタブ切り替えを表示します
 templ indexTabs(data IndexData) {
 	<div class="tabs">
 		<nav class="bg-card" role="tablist" aria-orientation="horizontal">
 			<a
 				role="tab"
-				href={ templ.SafeURL(data.suggestionsPath("")) }
+				href={ templ.SafeURL(data.suggestionsPath(false)) }
 				if !data.ShowClosed {
 					aria-selected="true"
 				} else {
@@ -122,7 +103,7 @@ templ indexTabs(data IndexData) {
 			</a>
 			<a
 				role="tab"
-				href={ templ.SafeURL(data.suggestionsPath("closed")) }
+				href={ templ.SafeURL(data.suggestionsPath(true)) }
 				if data.ShowClosed {
 					aria-selected="true"
 				} else {
@@ -137,41 +118,42 @@ templ indexTabs(data IndexData) {
 	</div>
 }
 
-// indexList は編集提案のリストを表示します
+// indexListは編集提案のリストを表示する。
+//
+// 編集提案は表形式の関係を持たない順序のない並びなので、ネイティブなリストを使って中身が持つ
+// 構造を支援技術へ伝える。overflow-wrap:anywhereは区切れないタイトルをカード内に収める。
+// 各リスト項目に余白と境界線を置くことで、リンクの当たり判定を広げずに項目を区切る。
+// ホバー時の背景をリスト項目に置くことで、余白と内容が1つの視覚的な行として反応する。
+// リンクの当たり判定を広げず、ポインタを使う利用者に明確な手がかりを残す。
 templ indexList(data IndexData) {
-	<div class="overflow-x-auto">
-		<table class="table">
-			<tbody>
-				for _, s := range data.Suggestions {
-					<tr>
-						<td>
-							<a
-								href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier, s.Number))) }
-								class="flex flex-col gap-1"
-							>
-								<div class="font-medium">
-									{ s.Title }
-								</div>
-								<div class="text-sm text-muted-foreground">
-									{ fmt.Sprintf("#%d", s.Number) }
-									{ templates.T(ctx, "suggestion_index_opened_by") }
-									{ s.CreatorName }
-								</div>
-							</a>
-						</td>
-					</tr>
-				}
-			</tbody>
-		</table>
-	</div>
+	<ul>
+		for _, s := range data.Suggestions {
+			<li class="border-b p-2 last:border-b-0 transition-colors hover:bg-muted/50">
+				<a
+					href={ templ.SafeURL(string(templates.SuggestionShowPath(data.Space.Identifier, s.Number))) }
+					class="flex flex-col gap-1 [overflow-wrap:anywhere]"
+				>
+					<div class="font-medium">
+						{ s.Title }
+					</div>
+					<div class="text-sm text-muted-foreground">
+						{ fmt.Sprintf("#%d", s.Number) }
+						{ templates.T(ctx, "suggestion_index_opened_by") }
+						{ s.CreatorName }
+					</div>
+				</a>
+			</li>
+		}
+	</ul>
 }
 
-// suggestionNewButton は編集提案作成ボタンを表示します
+// suggestionNewButtonは編集提案作成ボタンを表示します
 templ suggestionNewButton(data IndexData) {
 	if data.CanCreateSuggestion {
 		<a
 			href={ templ.SafeURL(string(templates.SuggestionNewPath(data.Space.Identifier, data.Topic.Number))) }
-			class="btn-sm rounded-full"
+			class="btn rounded-full"
+			data-size="sm"
 		>
 			@templates.Icon("git-pull-request-regular", "size-4")
 			{ templates.T(ctx, "draft_page_index_create_suggestion_button") }
@@ -179,7 +161,7 @@ templ suggestionNewButton(data IndexData) {
 	}
 }
 
-// indexEmptyState は編集提案がない場合の空状態を表示します
+// indexEmptyStateは編集提案がない場合の空状態を表示します
 templ indexEmptyState(data IndexData) {
 	<div class="flex flex-col items-center gap-4 py-12 text-center">
 		@templates.Icon("git-pull-request-regular", "size-[50px] fill-muted-foreground")

@@ -48,25 +48,25 @@ func TestCreateTwoFactorSessionUsecase_Execute(t *testing.T) {
 			UserAgent: "TestAgent",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("Execute() returned nil, want output")
+			t.Fatal("Execute()がnilを返した、期待値 = 出力")
 		}
 		if output.Token == "" {
-			t.Error("Execute() returned empty token")
+			t.Error("Execute()が空のトークンを返した")
 		}
 
 		// セッションがDBに保存されていることを確認
 		session, err := userSessionRepo.FindByToken(ctx, output.Token)
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("session not found in DB")
+			t.Fatal("DBにセッションが見つからない")
 		}
 		if session.UserID != userID {
-			t.Errorf("session.UserID = %v, want %v", session.UserID, userID)
+			t.Errorf("session.UserID = %v、期待値 = %v", session.UserID, userID)
 		}
 	})
 
@@ -98,10 +98,10 @@ func TestCreateTwoFactorSessionUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatalf("expected ValidationError, got %v", err)
+			t.Fatalf("ValidationErrorを期待したが、%vだった", err)
 		}
 		if !ve.HasErrors() {
-			t.Error("expected validation errors")
+			t.Error("バリデーションエラーが無い")
 		}
 	})
 
@@ -127,10 +127,10 @@ func TestCreateTwoFactorSessionUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatalf("expected ValidationError, got %v", err)
+			t.Fatalf("ValidationErrorを期待したが、%vだった", err)
 		}
 		if !ve.HasFieldError("totp_code") {
-			t.Error("expected field error for totp_code")
+			t.Error("totp_codeのフィールドエラーが無い")
 		}
 	})
 
@@ -161,10 +161,10 @@ func TestCreateTwoFactorSessionUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError, got %v", err)
+			t.Fatalf("AppErrorを期待したが、%vだった", err)
 		}
 		if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
-			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
+			t.Errorf("AppErrCodeTwoFactorNotEnabledを期待したが、%dだった", ae.Code)
 		}
 	})
 }

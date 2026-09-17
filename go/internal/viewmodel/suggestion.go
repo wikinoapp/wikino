@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SuggestionForList は編集提案一覧用の表示データです
+// SuggestionForListは編集提案一覧用の表示データです
 type SuggestionForList struct {
 	Number      int32
 	Title       string
@@ -17,13 +17,13 @@ type SuggestionForList struct {
 	CreatedAt   time.Time
 }
 
-// NewSuggestionForListInput はNewSuggestionForListの入力パラメータです
+// NewSuggestionForListInputはNewSuggestionForListの入力パラメータです
 type NewSuggestionForListInput struct {
 	Suggestions []*model.Suggestion
 	UserMap     map[model.SpaceMemberID]*model.User
 }
 
-// NewSuggestionsForList は編集提案モデルのスライスから一覧用ViewModelのスライスを生成します
+// NewSuggestionsForListは編集提案モデルのスライスから一覧用ViewModelのスライスを生成します
 func NewSuggestionsForList(input NewSuggestionForListInput) []SuggestionForList {
 	items := make([]SuggestionForList, len(input.Suggestions))
 	for i, s := range input.Suggestions {
@@ -42,7 +42,7 @@ func NewSuggestionsForList(input NewSuggestionForListInput) []SuggestionForList 
 	return items
 }
 
-// userDisplayName はユーザーの表示名を返す（名前があれば名前、なければアットネーム）
+// userDisplayNameはユーザーの表示名を返す (名前があれば名前、なければアットネーム)
 func userDisplayName(user *model.User) string {
 	if user.Name != "" {
 		return user.Name
@@ -50,7 +50,7 @@ func userDisplayName(user *model.User) string {
 	return user.Atname
 }
 
-// SuggestionForDetail は編集提案詳細画面用の表示データです
+// SuggestionForDetailは編集提案詳細画面用の表示データです
 type SuggestionForDetail struct {
 	Number        int32
 	Title         string
@@ -61,13 +61,13 @@ type SuggestionForDetail struct {
 	CreatedAt     time.Time
 }
 
-// NewSuggestionForDetailInput はNewSuggestionForDetailの入力パラメータです
+// NewSuggestionForDetailInputはNewSuggestionForDetailの入力パラメータです
 type NewSuggestionForDetailInput struct {
 	Suggestion *model.Suggestion
 	UserMap    map[model.SpaceMemberID]*model.User
 }
 
-// NewSuggestionForDetail は編集提案モデルから詳細画面用ViewModelを生成します
+// NewSuggestionForDetailは編集提案モデルから詳細画面用ViewModelを生成します
 func NewSuggestionForDetail(input NewSuggestionForDetailInput) SuggestionForDetail {
 	var creatorName, creatorAtname string
 	if user, ok := input.UserMap[input.Suggestion.CreatedSpaceMemberID]; ok {
@@ -85,7 +85,7 @@ func NewSuggestionForDetail(input NewSuggestionForDetailInput) SuggestionForDeta
 	}
 }
 
-// SuggestionCommentForList は編集提案コメント一覧用の表示データです
+// SuggestionCommentForListは編集提案コメント一覧用の表示データです
 type SuggestionCommentForList struct {
 	Number        int32
 	CreatorName   string
@@ -94,13 +94,13 @@ type SuggestionCommentForList struct {
 	CreatedAt     time.Time
 }
 
-// NewSuggestionCommentsForListInput はNewSuggestionCommentsForListの入力パラメータです
+// NewSuggestionCommentsForListInputはNewSuggestionCommentsForListの入力パラメータです
 type NewSuggestionCommentsForListInput struct {
 	Comments []*model.SuggestionComment
 	UserMap  map[model.SpaceMemberID]*model.User
 }
 
-// NewSuggestionCommentsForList はコメントモデルのスライスから一覧用ViewModelのスライスを生成します
+// NewSuggestionCommentsForListはコメントモデルのスライスから一覧用ViewModelのスライスを生成します
 func NewSuggestionCommentsForList(input NewSuggestionCommentsForListInput) []SuggestionCommentForList {
 	items := make([]SuggestionCommentForList, len(input.Comments))
 	for i, c := range input.Comments {
@@ -120,12 +120,12 @@ func NewSuggestionCommentsForList(input NewSuggestionCommentsForListInput) []Sug
 	return items
 }
 
-// SuggestionPageForList は編集提案ページ一覧用の表示データです
+// SuggestionPageForListは編集提案ページ一覧用の表示データです
 type SuggestionPageForList struct {
 	Title string
 }
 
-// NewSuggestionPagesForList は編集提案ページモデルのスライスから一覧用ViewModelのスライスを生成します
+// NewSuggestionPagesForListは編集提案ページモデルのスライスから一覧用ViewModelのスライスを生成します
 func NewSuggestionPagesForList(pages []*model.SuggestionPage) []SuggestionPageForList {
 	items := make([]SuggestionPageForList, len(pages))
 	for i, p := range pages {
@@ -140,7 +140,7 @@ func NewSuggestionPagesForList(pages []*model.SuggestionPage) []SuggestionPageFo
 	return items
 }
 
-// SuggestionPageDiff は編集提案ページの差分表示データです
+// SuggestionPageDiffは編集提案ページの差分表示データです
 type SuggestionPageDiff struct {
 	SuggestionPageID string
 	PageNumber       PageNumber
@@ -151,14 +151,14 @@ type SuggestionPageDiff struct {
 	BodyBlocks       []DiffBlock
 }
 
-// NewSuggestionPageDiffsInput はNewSuggestionPageDiffsの入力パラメータです
+// NewSuggestionPageDiffsInputはNewSuggestionPageDiffsの入力パラメータです
 type NewSuggestionPageDiffsInput struct {
 	SuggestionPages []*model.SuggestionPage
 	BaseRevisions   map[model.SuggestionPageID]*model.PageRevision
 	Pages           []*model.Page
 }
 
-// NewSuggestionPageDiffs は編集提案ページとベースリビジョンから差分表示用ViewModelのスライスを生成します
+// NewSuggestionPageDiffsは編集提案ページとベースリビジョンから差分表示用ViewModelのスライスを生成します
 func NewSuggestionPageDiffs(input NewSuggestionPageDiffsInput) []SuggestionPageDiff {
 	pageNumberByID := make(map[model.PageID]model.PageNumber, len(input.Pages))
 	for _, p := range input.Pages {
@@ -197,14 +197,14 @@ func NewSuggestionPageDiffs(input NewSuggestionPageDiffsInput) []SuggestionPageD
 	return diffs
 }
 
-// DraftPageForSuggestionNew は編集提案作成画面で選択可能な下書きページの表示データです
+// DraftPageForSuggestionNewは編集提案作成画面で選択可能な下書きページの表示データです
 type DraftPageForSuggestionNew struct {
 	ID         model.DraftPageID
 	Title      string
 	PageNumber int32
 }
 
-// DisplayTitle は表示用タイトルを返します。タイトルが未設定の場合は「無題」を返します。
+// DisplayTitleは表示用タイトルを返します。タイトルが未設定の場合は「無題」を返します。
 func (d DraftPageForSuggestionNew) DisplayTitle(ctx context.Context) string {
 	if d.Title != "" {
 		return d.Title
@@ -212,7 +212,7 @@ func (d DraftPageForSuggestionNew) DisplayTitle(ctx context.Context) string {
 	return i18n.T(ctx, "draft_page_index_untitled")
 }
 
-// NewDraftPagesForSuggestionNew は下書きページモデルのスライスから編集提案作成画面用のViewModelスライスを生成します
+// NewDraftPagesForSuggestionNewは下書きページモデルのスライスから編集提案作成画面用のViewModelスライスを生成します
 func NewDraftPagesForSuggestionNew(drafts []*model.DraftPage) []DraftPageForSuggestionNew {
 	items := make([]DraftPageForSuggestionNew, len(drafts))
 	for i, d := range drafts {

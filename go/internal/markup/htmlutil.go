@@ -1,14 +1,16 @@
 package markup
 
 import (
+	"bytes"
 	"log/slog"
 	"strings"
 
+	"github.com/yuin/goldmark/ast"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
 
-// parseHTMLFragmentWithContainer はHTMLフラグメントをパースし、
+// parseHTMLFragmentWithContainerはHTMLフラグメントをパースし、
 // 全ノードを一時的なコンテナノードの子として保持する。
 // コンテナノードを返すので、子ノードには必ず親が存在する。
 func parseHTMLFragmentWithContainer(s string) (*html.Node, error) {
@@ -32,7 +34,7 @@ func parseHTMLFragmentWithContainer(s string) (*html.Node, error) {
 	return container, nil
 }
 
-// renderContainerChildren はコンテナノードの子ノードをHTML文字列に変換する。
+// renderContainerChildrenはコンテナノードの子ノードをHTML文字列に変換する。
 func renderContainerChildren(container *html.Node) string {
 	var b strings.Builder
 	for c := container.FirstChild; c != nil; c = c.NextSibling {
@@ -44,7 +46,7 @@ func renderContainerChildren(container *html.Node) string {
 	return b.String()
 }
 
-// getAttr はノードから指定キーの属性値を取得する。見つからない場合は空文字列を返す。
+// getAttrはノードから指定キーの属性値を取得する。見つからない場合は空文字列を返す。
 func getAttr(n *html.Node, key string) string {
 	for _, a := range n.Attr {
 		if a.Key == key {
@@ -52,4 +54,28 @@ func getAttr(n *html.Node, key string) string {
 		}
 	}
 	return ""
+}
+
+// renderSanitizedはdocumentをレンダリングして結果をサニタイズする。これは表示側が
+// 読み手へ渡すHTMLである。sourceはdocumentの解析元、または呼び出し元がそれを拡張したもので、
+// レンダラーは各ノードのセグメントをここから読む。
+func renderSanitized(source []byte, document ast.Node) (string, error) {
+	var rendered bytes.Buffer
+	if err := md.Renderer().Render(&rendered, source, document); err != nil {
+		return "", err
+	}
+
+	return policy.Sanitize(rendered.String()), nil
+}
+
+// renderedTreeはdocumentをレンダリングし、表示側が組み立てるのと同じHTMLツリーを返す。
+// レンダラー・サニタイザー・フラグメントパーサーは表示側と同じものを使う。画面の見え方どおりに
+// 本文を読む側は、これにより読み手と同じ要素・テキスト・欠落を見ることになる。
+func renderedTree(source []byte, document ast.Node) (*html.Node, error) {
+	bodyHTML, err := renderSanitized(source, document)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseHTMLFragmentWithContainer(bodyHTML)
 }

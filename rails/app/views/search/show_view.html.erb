@@ -1,13 +1,10 @@
 <%= render Layouts::Column1Component.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_page_name:, current_user:) %>
+    <%= render Headers::GlobalComponent.new(current_page_name:, current_user:, content_screen:) %>
   <% end %>
 
   <%= layout.with_main do %>
-    <%= render BaseUI::ContainerComponent.new(
-      as: BaseUI::ContainerComponent::As::Main,
-      options: {class: "flex flex-col gap-6 px-4"}
-    ) do %>
+    <%= render Containers::MainComponent.new(content_screen:) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.search")) do |main_title| %>
         <%= main_title.with_subtitle do %>
           <%= t("messages.search.subtitle_html",

@@ -97,7 +97,7 @@ func TestSignInTwoFactorCreateValidator_Validate_FormatValidation(t *testing.T) 
 			userTwoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(q)
 			v := validator.NewSignInTwoFactorCreateValidator(userTwoFactorAuthRepo)
 
-			// ダミーのユーザーIDを使用（形式バリデーションのテストなのでDB検証には到達しない）
+			// ダミーのユーザーIDを使用 (形式バリデーションのテストなのでDB検証には到達しない)
 			ctx := context.Background()
 			ctx = i18n.SetLocale(ctx, "ja")
 
@@ -109,9 +109,9 @@ func TestSignInTwoFactorCreateValidator_Validate_FormatValidation(t *testing.T) 
 			if tt.wantErrors {
 				ve := model.AsValidationError(err)
 				if ve == nil {
-					t.Error("expected validation error, but got nil or different error type")
+					t.Error("バリデーションエラーではない (nilまたは別の型のエラー)")
 				} else if tt.wantFieldError != "" && !ve.HasFieldError(tt.wantFieldError) {
-					t.Errorf("expected field error for %s, but not found", tt.wantFieldError)
+					t.Errorf("%sのフィールドエラーが見つからない", tt.wantFieldError)
 				}
 			}
 		})
@@ -146,7 +146,7 @@ func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("予期しないエラー: %v", err)
 		}
 	})
 
@@ -174,9 +174,9 @@ func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Errorf("expected ValidationError, got %v", err)
+			t.Errorf("ValidationErrorを期待したが、%vだった", err)
 		} else if !ve.HasErrors() {
-			t.Error("expected form errors")
+			t.Error("フォームのエラーが無い")
 		}
 	})
 
@@ -206,9 +206,9 @@ func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Errorf("expected AppError, got %v", err)
+			t.Errorf("AppErrorを期待したが、%vだった", err)
 		} else if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
-			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
+			t.Errorf("AppErrCodeTwoFactorNotEnabledを期待したが、%dだった", ae.Code)
 		}
 	})
 
@@ -235,9 +235,9 @@ func TestSignInTwoFactorCreateValidator_Validate_StateValidation(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Errorf("expected AppError, got %v", err)
+			t.Errorf("AppErrorを期待したが、%vだった", err)
 		} else if ae.Code != model.AppErrCodeTwoFactorNotEnabled {
-			t.Errorf("expected AppErrCodeTwoFactorNotEnabled, got %d", ae.Code)
+			t.Errorf("AppErrCodeTwoFactorNotEnabledを期待したが、%dだった", ae.Code)
 		}
 	})
 }

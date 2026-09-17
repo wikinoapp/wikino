@@ -27,22 +27,22 @@ func TestEmailConfirmationRepository_Create(t *testing.T) {
 
 		ec, err := repo.Create(context.Background(), input)
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if ec == nil {
-			t.Fatal("Create() returned nil, want email confirmation")
+			t.Fatal("Create()がnilを返した、期待値 = メールアドレス確認")
 		}
 		if ec.Email != "create@example.com" {
-			t.Errorf("ec.Email = %v, want create@example.com", ec.Email)
+			t.Errorf("ec.Email = %v、期待値 = create@example.com", ec.Email)
 		}
 		if ec.Event != model.EmailConfirmationEventSignUp {
-			t.Errorf("ec.Event = %v, want %v", ec.Event, model.EmailConfirmationEventSignUp)
+			t.Errorf("ec.Event = %v、期待値 = %v", ec.Event, model.EmailConfirmationEventSignUp)
 		}
 		if ec.Code != "ABC123" {
-			t.Errorf("ec.Code = %v, want ABC123", ec.Code)
+			t.Errorf("ec.Code = %v、期待値 = ABC123", ec.Code)
 		}
 		if ec.SucceededAt != nil {
-			t.Errorf("ec.SucceededAt = %v, want nil", ec.SucceededAt)
+			t.Errorf("ec.SucceededAt = %v、期待値 = nil", ec.SucceededAt)
 		}
 	})
 }
@@ -63,29 +63,29 @@ func TestEmailConfirmationRepository_FindByID(t *testing.T) {
 	t.Run("IDでメール確認情報を取得できる", func(t *testing.T) {
 		ec, err := repo.FindByID(context.Background(), ecID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if ec == nil {
-			t.Fatal("FindByID() returned nil, want email confirmation")
+			t.Fatal("FindByID()がnilを返した、期待値 = メールアドレス確認")
 		}
 		if ec.ID != ecID {
-			t.Errorf("ec.ID = %v, want %v", ec.ID, ecID)
+			t.Errorf("ec.ID = %v、期待値 = %v", ec.ID, ecID)
 		}
 		if ec.Email != "findbyid@example.com" {
-			t.Errorf("ec.Email = %v, want findbyid@example.com", ec.Email)
+			t.Errorf("ec.Email = %v、期待値 = findbyid@example.com", ec.Email)
 		}
 		if ec.Code != "XYZ789" {
-			t.Errorf("ec.Code = %v, want XYZ789", ec.Code)
+			t.Errorf("ec.Code = %v、期待値 = XYZ789", ec.Code)
 		}
 	})
 
 	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
 		ec, err := repo.FindByID(context.Background(), "00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if ec != nil {
-			t.Errorf("FindByID() = %v, want nil", ec)
+			t.Errorf("FindByID() = %v、期待値 = nil", ec)
 		}
 	})
 }
@@ -97,7 +97,7 @@ func TestEmailConfirmationRepository_FindActiveByEmailAndEvent(t *testing.T) {
 	q := testutil.QueriesWithTx(tx)
 	repo := NewEmailConfirmationRepository(q)
 
-	// 有効なメール確認を作成（15分以内）
+	// 有効なメール確認を作成 (15分以内)
 	testutil.NewEmailConfirmationBuilder(t, tx).
 		WithEmail("active@example.com").
 		WithEvent(model.EmailConfirmationEventSignUp).
@@ -108,21 +108,21 @@ func TestEmailConfirmationRepository_FindActiveByEmailAndEvent(t *testing.T) {
 	t.Run("有効なメール確認情報を取得できる", func(t *testing.T) {
 		ec, err := repo.FindActiveByEmailAndEvent(context.Background(), "active@example.com", model.EmailConfirmationEventSignUp)
 		if err != nil {
-			t.Fatalf("FindActiveByEmailAndEvent() error = %v", err)
+			t.Fatalf("FindActiveByEmailAndEvent()のエラー = %v", err)
 		}
 		if ec == nil {
-			t.Fatal("FindActiveByEmailAndEvent() returned nil, want email confirmation")
+			t.Fatal("FindActiveByEmailAndEvent()がnilを返した、期待値 = メールアドレス確認")
 		}
 		if ec.Email != "active@example.com" {
-			t.Errorf("ec.Email = %v, want active@example.com", ec.Email)
+			t.Errorf("ec.Email = %v、期待値 = active@example.com", ec.Email)
 		}
 		if ec.Code != "ACTIVE1" {
-			t.Errorf("ec.Code = %v, want ACTIVE1", ec.Code)
+			t.Errorf("ec.Code = %v、期待値 = ACTIVE1", ec.Code)
 		}
 	})
 
 	t.Run("期限切れのメール確認はnilを返す", func(t *testing.T) {
-		// 16分前のメール確認を作成（期限切れ）
+		// 16分前のメール確認を作成 (期限切れ)
 		testutil.NewEmailConfirmationBuilder(t, tx).
 			WithEmail("expired@example.com").
 			WithEvent(model.EmailConfirmationEventSignUp).
@@ -132,10 +132,10 @@ func TestEmailConfirmationRepository_FindActiveByEmailAndEvent(t *testing.T) {
 
 		ec, err := repo.FindActiveByEmailAndEvent(context.Background(), "expired@example.com", model.EmailConfirmationEventSignUp)
 		if err != nil {
-			t.Fatalf("FindActiveByEmailAndEvent() error = %v", err)
+			t.Fatalf("FindActiveByEmailAndEvent()のエラー = %v", err)
 		}
 		if ec != nil {
-			t.Errorf("FindActiveByEmailAndEvent() = %v, want nil (expired)", ec)
+			t.Errorf("FindActiveByEmailAndEvent() = %v、期待値 = nil (期限切れ)", ec)
 		}
 	})
 
@@ -149,10 +149,10 @@ func TestEmailConfirmationRepository_FindActiveByEmailAndEvent(t *testing.T) {
 
 		ec, err := repo.FindActiveByEmailAndEvent(context.Background(), "succeeded@example.com", model.EmailConfirmationEventSignUp)
 		if err != nil {
-			t.Fatalf("FindActiveByEmailAndEvent() error = %v", err)
+			t.Fatalf("FindActiveByEmailAndEvent()のエラー = %v", err)
 		}
 		if ec != nil {
-			t.Errorf("FindActiveByEmailAndEvent() = %v, want nil (succeeded)", ec)
+			t.Errorf("FindActiveByEmailAndEvent() = %v、期待値 = nil (確認済み)", ec)
 		}
 	})
 
@@ -166,20 +166,20 @@ func TestEmailConfirmationRepository_FindActiveByEmailAndEvent(t *testing.T) {
 
 		ec, err := repo.FindActiveByEmailAndEvent(context.Background(), "different-event@example.com", model.EmailConfirmationEventSignUp)
 		if err != nil {
-			t.Fatalf("FindActiveByEmailAndEvent() error = %v", err)
+			t.Fatalf("FindActiveByEmailAndEvent()のエラー = %v", err)
 		}
 		if ec != nil {
-			t.Errorf("FindActiveByEmailAndEvent() = %v, want nil (different event)", ec)
+			t.Errorf("FindActiveByEmailAndEvent() = %v、期待値 = nil (イベント種別が異なる)", ec)
 		}
 	})
 
 	t.Run("存在しないメールアドレスはnilを返す", func(t *testing.T) {
 		ec, err := repo.FindActiveByEmailAndEvent(context.Background(), "nonexistent@example.com", model.EmailConfirmationEventSignUp)
 		if err != nil {
-			t.Fatalf("FindActiveByEmailAndEvent() error = %v", err)
+			t.Fatalf("FindActiveByEmailAndEvent()のエラー = %v", err)
 		}
 		if ec != nil {
-			t.Errorf("FindActiveByEmailAndEvent() = %v, want nil", ec)
+			t.Errorf("FindActiveByEmailAndEvent() = %v、期待値 = nil", ec)
 		}
 	})
 }
@@ -200,28 +200,28 @@ func TestEmailConfirmationRepository_Succeed(t *testing.T) {
 	t.Run("メール確認を完了状態に更新できる", func(t *testing.T) {
 		err := repo.Succeed(context.Background(), ecID)
 		if err != nil {
-			t.Fatalf("Succeed() error = %v", err)
+			t.Fatalf("Succeed()のエラー = %v", err)
 		}
 
-		// 更新後は取得できないことを確認（succeeded_atがnot nullになるため）
+		// 更新後は取得できないことを確認 (succeeded_atがnot nullになるため)
 		ec, err := repo.FindActiveByEmailAndEvent(context.Background(), "succeed@example.com", model.EmailConfirmationEventSignUp)
 		if err != nil {
-			t.Fatalf("FindActiveByEmailAndEvent() error = %v", err)
+			t.Fatalf("FindActiveByEmailAndEvent()のエラー = %v", err)
 		}
 		if ec != nil {
-			t.Errorf("Succeed() did not mark as succeeded, FindActiveByEmailAndEvent() = %v, want nil", ec)
+			t.Errorf("Succeed()で確認済みになっていない: FindActiveByEmailAndEvent() = %v、期待値 = nil", ec)
 		}
 
 		// IDで取得すると、succeeded_atが設定されていることを確認
 		ecByID, err := repo.FindByID(context.Background(), ecID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if ecByID == nil {
-			t.Fatal("FindByID() returned nil, want email confirmation")
+			t.Fatal("FindByID()がnilを返した、期待値 = メールアドレス確認")
 		}
 		if ecByID.SucceededAt == nil {
-			t.Error("ecByID.SucceededAt = nil, want not nil")
+			t.Error("ecByID.SucceededAt = nil、期待値 = nilではない")
 		}
 	})
 }
@@ -234,7 +234,7 @@ func TestEmailConfirmation_IsExpired(t *testing.T) {
 			StartedAt: time.Now().Add(-14 * time.Minute),
 		}
 		if ec.IsExpired() {
-			t.Error("IsExpired() = true, want false (14 minutes)")
+			t.Error("IsExpired() = true、期待値 = false (14分経過)")
 		}
 	})
 
@@ -243,7 +243,7 @@ func TestEmailConfirmation_IsExpired(t *testing.T) {
 			StartedAt: time.Now().Add(-16 * time.Minute),
 		}
 		if !ec.IsExpired() {
-			t.Error("IsExpired() = false, want true (16 minutes)")
+			t.Error("IsExpired() = false、期待値 = true (16分経過)")
 		}
 	})
 }
@@ -256,7 +256,7 @@ func TestEmailConfirmation_IsSucceeded(t *testing.T) {
 			SucceededAt: nil,
 		}
 		if ec.IsSucceeded() {
-			t.Error("IsSucceeded() = true, want false")
+			t.Error("IsSucceeded() = true、期待値 = false")
 		}
 	})
 
@@ -266,7 +266,7 @@ func TestEmailConfirmation_IsSucceeded(t *testing.T) {
 			SucceededAt: &now,
 		}
 		if !ec.IsSucceeded() {
-			t.Error("IsSucceeded() = false, want true")
+			t.Error("IsSucceeded() = false、期待値 = true")
 		}
 	})
 }

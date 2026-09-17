@@ -53,7 +53,7 @@ func TestFormatDateTime(t *testing.T) {
 
 			got := templates.FormatDateTime(ctx, utcTime)
 			if got != tt.expected {
-				t.Errorf("FormatDateTime() = %q, want %q", got, tt.expected)
+				t.Errorf("FormatDateTime() = %q、期待値 = %q", got, tt.expected)
 			}
 		})
 	}
@@ -95,7 +95,7 @@ func TestFormatTime(t *testing.T) {
 
 			got := templates.FormatTime(ctx, utcTime)
 			if got != tt.expected {
-				t.Errorf("FormatTime() = %q, want %q", got, tt.expected)
+				t.Errorf("FormatTime() = %q、期待値 = %q", got, tt.expected)
 			}
 		})
 	}
@@ -208,7 +208,7 @@ func TestRelativeTime(t *testing.T) {
 
 			got := templates.RelativeTime(ctx, tt.input)
 			if got != tt.expected {
-				t.Errorf("RelativeTime() = %q, want %q", got, tt.expected)
+				t.Errorf("RelativeTime() = %q、期待値 = %q", got, tt.expected)
 			}
 		})
 	}
@@ -246,7 +246,7 @@ func TestRelativeTime_タイムゾーンを考慮したフォールバック(t *
 
 			got := templates.RelativeTime(ctx, utcTime)
 			if got != tt.expected {
-				t.Errorf("RelativeTime() = %q, want %q", got, tt.expected)
+				t.Errorf("RelativeTime() = %q、期待値 = %q", got, tt.expected)
 			}
 		})
 	}
@@ -305,7 +305,7 @@ func TestIsRelativeTime(t *testing.T) {
 
 			got := templates.IsRelativeTime(tt.input)
 			if got != tt.expected {
-				t.Errorf("IsRelativeTime() = %v, want %v", got, tt.expected)
+				t.Errorf("IsRelativeTime() = %v、期待値 = %v", got, tt.expected)
 			}
 		})
 	}
@@ -322,6 +322,6 @@ func TestFormatDateTime_不正なタイムゾーンでUTCにフォールバッ�
 	got := templates.FormatDateTime(ctx, utcTime)
 	expected := "2026/03/25 05:30"
 	if got != expected {
-		t.Errorf("FormatDateTime() with invalid timezone = %q, want %q", got, expected)
+		t.Errorf("不正なタイムゾーンでのFormatDateTime() = %q、期待値 = %q", got, expected)
 	}
 }

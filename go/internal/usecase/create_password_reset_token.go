@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreatePasswordResetTokenUsecase はパスワードリセットトークン作成ユースケース
+// CreatePasswordResetTokenUsecaseはパスワードリセットトークン作成ユースケース
 type CreatePasswordResetTokenUsecase struct {
 	cfg                    *config.Config
 	db                     *sql.DB
@@ -25,7 +25,7 @@ type CreatePasswordResetTokenUsecase struct {
 	createValidator        *validator.PasswordResetCreateValidator
 }
 
-// NewCreatePasswordResetTokenUsecase は CreatePasswordResetTokenUsecase を生成する
+// NewCreatePasswordResetTokenUsecaseはCreatePasswordResetTokenUsecaseを生成する
 func NewCreatePasswordResetTokenUsecase(
 	cfg *config.Config,
 	db *sql.DB,
@@ -44,19 +44,19 @@ func NewCreatePasswordResetTokenUsecase(
 	}
 }
 
-// CreatePasswordResetTokenInput はパスワードリセットトークン作成の入力パラメータ
+// CreatePasswordResetTokenInputはパスワードリセットトークン作成の入力パラメータ
 type CreatePasswordResetTokenInput struct {
 	Email  string
 	Locale string
 }
 
-// CreatePasswordResetTokenOutput はパスワードリセットトークン作成の出力パラメータ
+// CreatePasswordResetTokenOutputはパスワードリセットトークン作成の出力パラメータ
 type CreatePasswordResetTokenOutput struct {
 	TokenID string
 }
 
-// Execute はバリデーション・トークン生成・メール送信ジョブエンキューを行う。
-// ユーザーが存在しない場合は nil を返す（セキュリティ対策: ユーザーの存在を明かさない）。
+// Executeはバリデーション・トークン生成・メール送信ジョブエンキューを行う。
+// ユーザーが存在しない場合はnilを返す (セキュリティ対策: ユーザーの存在を明かさない)。
 func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input CreatePasswordResetTokenInput) (*CreatePasswordResetTokenOutput, error) {
 	// 1. バリデーション
 	if err := uc.createValidator.Validate(ctx, validator.PasswordResetCreateValidatorInput{
@@ -116,7 +116,7 @@ func (uc *CreatePasswordResetTokenUsecase) Execute(ctx context.Context, input Cr
 		return nil, fmt.Errorf("トランザクションのコミットに失敗しました: %w", err)
 	}
 
-	// パスワードリセットURL を生成
+	// パスワードリセットURLを生成
 	resetURL := fmt.Sprintf("%s/password/edit?token=%s", uc.cfg.AppURL(), plainToken)
 
 	// メール送信ジョブをエンキュー

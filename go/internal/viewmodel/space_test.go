@@ -21,11 +21,11 @@ func TestNewSpace(t *testing.T) {
 	vm := viewmodel.NewSpace(space)
 
 	if vm.Name != "マイスペース" {
-		t.Errorf("Name = %q, want %q", vm.Name, "マイスペース")
+		t.Errorf("Name = %q、期待値 = %q", vm.Name, "マイスペース")
 	}
 
 	if vm.Identifier != "my-space" {
-		t.Errorf("Identifier = %q, want %q", vm.Identifier, "my-space")
+		t.Errorf("Identifier = %q、期待値 = %q", vm.Identifier, "my-space")
 	}
 }
 
@@ -41,12 +41,12 @@ func TestSpace_IconBackgroundColor_Deterministic(t *testing.T) {
 		for i := 0; i < 5; i++ {
 			got := space.IconBackgroundColor()
 			if got != first {
-				t.Errorf("IconBackgroundColor for %q is not deterministic: first=%q, got=%q", id, first, got)
+				t.Errorf("%qのIconBackgroundColorが一定でない: 1回目 = %q、2回目 = %q", id, first, got)
 			}
 		}
 
 		if !strings.HasPrefix(first, "#") {
-			t.Errorf("IconBackgroundColor for %q = %q, want a hex color starting with #", id, first)
+			t.Errorf("%qのIconBackgroundColor = %q、期待値 = #で始まる16進数の色", id, first)
 		}
 	}
 }
@@ -68,10 +68,9 @@ func TestSpace_IconBackgroundColor_Distribution(t *testing.T) {
 		seen[space.IconBackgroundColor()] = struct{}{}
 	}
 
-	// At least 5 distinct colors are expected when 24 identifiers are mapped to a 12-color palette.
-	// [Ja] 24 個の identifier を 12 色パレットに割り当てたとき、最低でも 5 色は分散することを期待する。
+	// 24個のidentifierを12色パレットに割り当てたとき、最低でも5色は分散することを期待する。
 	if len(seen) < 5 {
-		t.Errorf("expected colors to be distributed across the palette, got %d distinct colors", len(seen))
+		t.Errorf("色がパレット全体に分散していない: 異なる色の数 = %d", len(seen))
 	}
 }
 
@@ -83,7 +82,7 @@ func TestSpace_IconLabel(t *testing.T) {
 		identifier string
 		want       string
 	}{
-		{name: "ASCII の先頭文字を大文字化", identifier: "my-space", want: "M"},
+		{name: "ASCIIの先頭文字を大文字化", identifier: "my-space", want: "M"},
 		{name: "大文字はそのまま", identifier: "Tech", want: "T"},
 		{name: "数字はそのまま", identifier: "123", want: "1"},
 		{name: "日本語はそのまま", identifier: "あいうえお", want: "あ"},
@@ -96,7 +95,7 @@ func TestSpace_IconLabel(t *testing.T) {
 
 			space := viewmodel.Space{Identifier: viewmodel.SpaceIdentifier(tt.identifier)}
 			if got := space.IconLabel(); got != tt.want {
-				t.Errorf("IconLabel() = %q, want %q", got, tt.want)
+				t.Errorf("IconLabel() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}

@@ -11,14 +11,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New はアカウント作成フォームを表示します (GET /accounts/new)
+// Newはアカウント作成フォームを表示します (GET /accounts/new)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// セッションから email_confirmation_id を取得
+	// セッションからemail_confirmation_idを取得
 	emailConfirmationID := h.sessionMgr.GetEmailConfirmationID(r)
 	if emailConfirmationID == "" {
-		// email_confirmation_id がない場合は /sign_up にリダイレクト
+		// email_confirmation_idがない場合は /sign_upにリダイレクト
 		http.Redirect(w, r, "/sign_up", http.StatusFound)
 		return
 	}
@@ -33,14 +33,14 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if output == nil {
-		// 確認情報が見つからない場合は /sign_up にリダイレクト
+		// 確認情報が見つからない場合は /sign_upにリダイレクト
 		http.Redirect(w, r, "/sign_up", http.StatusFound)
 		return
 	}
 
 	emailConfirmation := output.EmailConfirmation
 
-	// メール確認が完了していない場合は /email_confirmation/edit にリダイレクト
+	// メール確認が完了していない場合は /email_confirmation/editにリダイレクト
 	if !emailConfirmation.IsSucceeded() {
 		http.Redirect(w, r, "/email_confirmation/edit", http.StatusFound)
 		return

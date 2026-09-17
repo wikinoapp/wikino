@@ -13,12 +13,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// RelativeTimeData は相対時間コンポーネントのデータです
+// RelativeTimeDataは相対時間コンポーネントのデータです
 type RelativeTimeData struct {
 	Time time.Time
 }
 
-// RelativeTime は相対時間を表示するコンポーネントです。
+// RelativeTimeは相対時間を表示するコンポーネントです。
 // 相対時間表示の場合はtitle属性に絶対時間を設定し、ホバー時に正確な日時を確認できます。
 // 絶対時間にフォールバックした場合はtitle属性を付与しません。
 func RelativeTime(data RelativeTimeData) templ.Component {
@@ -96,12 +96,12 @@ func RelativeTime(data RelativeTimeData) templ.Component {
 	})
 }
 
-// AbsoluteTimeData は絶対時間コンポーネントのデータです
+// AbsoluteTimeDataは絶対時間コンポーネントのデータです
 type AbsoluteTimeData struct {
 	Time time.Time
 }
 
-// AbsoluteTime は絶対時間を表示するコンポーネントです。
+// AbsoluteTimeは絶対時間を表示するコンポーネントです。
 func AbsoluteTime(data AbsoluteTimeData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

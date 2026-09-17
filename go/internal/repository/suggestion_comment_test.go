@@ -53,34 +53,34 @@ func TestSuggestionCommentRepository_Create(t *testing.T) {
 			Body:                 "コメント本文",
 		})
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if comment == nil {
-			t.Fatal("Create() returned nil")
+			t.Fatal("Create()がnilを返した")
 		}
 		if comment.ID == "" {
-			t.Error("comment.ID is empty")
+			t.Error("comment.IDが空")
 		}
 		if comment.SpaceID != spaceID {
-			t.Errorf("comment.SpaceID = %v, want %v", comment.SpaceID, spaceID)
+			t.Errorf("comment.SpaceID = %v、期待値 = %v", comment.SpaceID, spaceID)
 		}
 		if comment.SuggestionID != suggestionID {
-			t.Errorf("comment.SuggestionID = %v, want %v", comment.SuggestionID, suggestionID)
+			t.Errorf("comment.SuggestionID = %v、期待値 = %v", comment.SuggestionID, suggestionID)
 		}
 		if comment.CreatedSpaceMemberID != spaceMemberID {
-			t.Errorf("comment.CreatedSpaceMemberID = %v, want %v", comment.CreatedSpaceMemberID, spaceMemberID)
+			t.Errorf("comment.CreatedSpaceMemberID = %v、期待値 = %v", comment.CreatedSpaceMemberID, spaceMemberID)
 		}
 		if comment.Number != 1 {
-			t.Errorf("comment.Number = %v, want 1", comment.Number)
+			t.Errorf("comment.Number = %v、期待値 = 1", comment.Number)
 		}
 		if comment.Body != "コメント本文" {
-			t.Errorf("comment.Body = %v, want コメント本文", comment.Body)
+			t.Errorf("comment.Body = %v、期待値 = コメント本文", comment.Body)
 		}
 		if comment.CreatedAt.IsZero() {
-			t.Error("comment.CreatedAt is zero")
+			t.Error("comment.CreatedAtがゼロ値")
 		}
 		if comment.UpdatedAt.IsZero() {
-			t.Error("comment.UpdatedAt is zero")
+			t.Error("comment.UpdatedAtがゼロ値")
 		}
 	})
 }
@@ -124,10 +124,10 @@ func TestSuggestionCommentRepository_GetNextNumber(t *testing.T) {
 	t.Run("コメントがない場合は1を返す", func(t *testing.T) {
 		n, err := repo.GetNextNumber(ctx, suggestionID)
 		if err != nil {
-			t.Fatalf("GetNextNumber() error = %v", err)
+			t.Fatalf("GetNextNumber()のエラー = %v", err)
 		}
 		if n != 1 {
-			t.Errorf("GetNextNumber() = %v, want 1", n)
+			t.Errorf("GetNextNumber() = %v、期待値 = 1", n)
 		}
 	})
 
@@ -140,10 +140,10 @@ func TestSuggestionCommentRepository_GetNextNumber(t *testing.T) {
 
 		n, err := repo.GetNextNumber(ctx, suggestionID)
 		if err != nil {
-			t.Fatalf("GetNextNumber() error = %v", err)
+			t.Fatalf("GetNextNumber()のエラー = %v", err)
 		}
 		if n != 2 {
-			t.Errorf("GetNextNumber() = %v, want 2", n)
+			t.Errorf("GetNextNumber() = %v、期待値 = 2", n)
 		}
 	})
 }
@@ -193,26 +193,26 @@ func TestSuggestionCommentRepository_FindByID(t *testing.T) {
 	t.Run("IDでコメントを取得できる", func(t *testing.T) {
 		comment, err := repo.FindByID(ctx, commentID, spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if comment == nil {
-			t.Fatal("FindByID() returned nil")
+			t.Fatal("FindByID()がnilを返した")
 		}
 		if comment.ID != commentID {
-			t.Errorf("comment.ID = %v, want %v", comment.ID, commentID)
+			t.Errorf("comment.ID = %v、期待値 = %v", comment.ID, commentID)
 		}
 		if comment.Body != "検索対象コメント" {
-			t.Errorf("comment.Body = %v, want 検索対象コメント", comment.Body)
+			t.Errorf("comment.Body = %v、期待値 = 検索対象コメント", comment.Body)
 		}
 	})
 
 	t.Run("存在しないIDの場合はnilを返す", func(t *testing.T) {
 		comment, err := repo.FindByID(ctx, "00000000-0000-0000-0000-000000000000", spaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if comment != nil {
-			t.Errorf("FindByID() = %v, want nil", comment)
+			t.Errorf("FindByID() = %v、期待値 = nil", comment)
 		}
 	})
 
@@ -224,10 +224,10 @@ func TestSuggestionCommentRepository_FindByID(t *testing.T) {
 
 		comment, err := repo.FindByID(ctx, commentID, otherSpaceID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if comment != nil {
-			t.Errorf("FindByID() = %v, want nil", comment)
+			t.Errorf("FindByID() = %v、期待値 = nil", comment)
 		}
 	})
 }
@@ -286,16 +286,16 @@ func TestSuggestionCommentRepository_ListBySuggestionID(t *testing.T) {
 	t.Run("編集提案に紐づくコメント一覧を取得できる", func(t *testing.T) {
 		comments, err := repo.ListBySuggestionID(ctx, suggestionID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionID() error = %v", err)
+			t.Fatalf("ListBySuggestionID()のエラー = %v", err)
 		}
 		if len(comments) != 2 {
-			t.Fatalf("len(comments) = %v, want 2", len(comments))
+			t.Fatalf("len(comments) = %v、期待値 = 2", len(comments))
 		}
 		if comments[0].Body != "コメント1" {
-			t.Errorf("comments[0].Body = %v, want コメント1", comments[0].Body)
+			t.Errorf("comments[0].Body = %v、期待値 = コメント1", comments[0].Body)
 		}
 		if comments[1].Body != "コメント2" {
-			t.Errorf("comments[1].Body = %v, want コメント2", comments[1].Body)
+			t.Errorf("comments[1].Body = %v、期待値 = コメント2", comments[1].Body)
 		}
 	})
 
@@ -309,10 +309,10 @@ func TestSuggestionCommentRepository_ListBySuggestionID(t *testing.T) {
 
 		comments, err := repo.ListBySuggestionID(ctx, otherSuggestionID, spaceID)
 		if err != nil {
-			t.Fatalf("ListBySuggestionID() error = %v", err)
+			t.Fatalf("ListBySuggestionID()のエラー = %v", err)
 		}
 		if len(comments) != 0 {
-			t.Errorf("len(comments) = %v, want 0", len(comments))
+			t.Errorf("len(comments) = %v、期待値 = 0", len(comments))
 		}
 	})
 }
@@ -362,26 +362,26 @@ func TestSuggestionCommentRepository_FindByNumber(t *testing.T) {
 	t.Run("番号でコメントを取得できる", func(t *testing.T) {
 		comment, err := repo.FindByNumber(ctx, suggestionID, 1, spaceID)
 		if err != nil {
-			t.Fatalf("FindByNumber() error = %v", err)
+			t.Fatalf("FindByNumber()のエラー = %v", err)
 		}
 		if comment == nil {
-			t.Fatal("FindByNumber() returned nil")
+			t.Fatal("FindByNumber()がnilを返した")
 		}
 		if comment.Body != "番号検索対象コメント" {
-			t.Errorf("comment.Body = %v, want 番号検索対象コメント", comment.Body)
+			t.Errorf("comment.Body = %v、期待値 = 番号検索対象コメント", comment.Body)
 		}
 		if comment.Number != 1 {
-			t.Errorf("comment.Number = %v, want 1", comment.Number)
+			t.Errorf("comment.Number = %v、期待値 = 1", comment.Number)
 		}
 	})
 
 	t.Run("存在しない番号の場合はnilを返す", func(t *testing.T) {
 		comment, err := repo.FindByNumber(ctx, suggestionID, 999, spaceID)
 		if err != nil {
-			t.Fatalf("FindByNumber() error = %v", err)
+			t.Fatalf("FindByNumber()のエラー = %v", err)
 		}
 		if comment != nil {
-			t.Errorf("FindByNumber() = %v, want nil", comment)
+			t.Errorf("FindByNumber() = %v、期待値 = nil", comment)
 		}
 	})
 
@@ -393,10 +393,10 @@ func TestSuggestionCommentRepository_FindByNumber(t *testing.T) {
 
 		comment, err := repo.FindByNumber(ctx, suggestionID, 1, otherSpaceID)
 		if err != nil {
-			t.Fatalf("FindByNumber() error = %v", err)
+			t.Fatalf("FindByNumber()のエラー = %v", err)
 		}
 		if comment != nil {
-			t.Errorf("FindByNumber() = %v, want nil", comment)
+			t.Errorf("FindByNumber() = %v、期待値 = nil", comment)
 		}
 	})
 }
@@ -450,13 +450,13 @@ func TestSuggestionCommentRepository_Update(t *testing.T) {
 			Body:    "更新後のコメント",
 		})
 		if err != nil {
-			t.Fatalf("Update() error = %v", err)
+			t.Fatalf("Update()のエラー = %v", err)
 		}
 		if comment == nil {
-			t.Fatal("Update() returned nil")
+			t.Fatal("Update()がnilを返した")
 		}
 		if comment.Body != "更新後のコメント" {
-			t.Errorf("comment.Body = %v, want 更新後のコメント", comment.Body)
+			t.Errorf("comment.Body = %v、期待値 = 更新後のコメント", comment.Body)
 		}
 	})
 
@@ -472,10 +472,10 @@ func TestSuggestionCommentRepository_Update(t *testing.T) {
 			Body:    "不正な更新",
 		})
 		if err != nil {
-			t.Fatalf("Update() error = %v", err)
+			t.Fatalf("Update()のエラー = %v", err)
 		}
 		if comment != nil {
-			t.Errorf("Update() = %v, want nil", comment)
+			t.Errorf("Update() = %v、期待値 = nil", comment)
 		}
 	})
 }
@@ -530,10 +530,10 @@ func TestSuggestionCommentRepository_CountBySuggestionID(t *testing.T) {
 	t.Run("コメント数を取得できる", func(t *testing.T) {
 		count, err := repo.CountBySuggestionID(ctx, suggestionID, spaceID)
 		if err != nil {
-			t.Fatalf("CountBySuggestionID() error = %v", err)
+			t.Fatalf("CountBySuggestionID()のエラー = %v", err)
 		}
 		if count != 2 {
-			t.Errorf("count = %v, want 2", count)
+			t.Errorf("count = %v、期待値 = 2", count)
 		}
 	})
 
@@ -547,10 +547,10 @@ func TestSuggestionCommentRepository_CountBySuggestionID(t *testing.T) {
 
 		count, err := repo.CountBySuggestionID(ctx, otherSuggestionID, spaceID)
 		if err != nil {
-			t.Fatalf("CountBySuggestionID() error = %v", err)
+			t.Fatalf("CountBySuggestionID()のエラー = %v", err)
 		}
 		if count != 0 {
-			t.Errorf("count = %v, want 0", count)
+			t.Errorf("count = %v、期待値 = 0", count)
 		}
 	})
 }

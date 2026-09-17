@@ -57,21 +57,21 @@ func TestSetupTx_TransactionIsolation(t *testing.T) {
 		 VALUES ('isolation-test@example.com', 'isolation_user', 'Isolation User', '', 0, 'Asia/Tokyo', NOW(), NOW(), NOW())`,
 	)
 	if err != nil {
-		t.Fatalf("INSERT に失敗: %v", err)
+		t.Fatalf("INSERTに失敗: %v", err)
 	}
 
 	// トランザクション内ではデータが見える
 	var count int
 	err = tx.QueryRow("SELECT COUNT(*) FROM users WHERE email = 'isolation-test@example.com'").Scan(&count)
 	if err != nil {
-		t.Fatalf("SELECT COUNT に失敗: %v", err)
+		t.Fatalf("SELECT COUNTに失敗: %v", err)
 	}
 	if count != 1 {
 		t.Errorf("トランザクション内でINSERTしたデータが見えない: count=%d", count)
 	}
 
 	// テスト終了時にCleanupでロールバックされるため、
-	// データはDBに残らない（他のテストに影響しない）
+	// データはDBに残らない (他のテストに影響しない)
 }
 
 func TestSetupTx_MultipleTransactions(t *testing.T) {

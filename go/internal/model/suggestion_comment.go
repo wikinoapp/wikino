@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// SuggestionComment は編集提案コメントのドメインモデル
+// SuggestionCommentは編集提案コメントのドメインモデル
 type SuggestionComment struct {
 	ID                   SuggestionCommentID
 	SpaceID              SpaceID

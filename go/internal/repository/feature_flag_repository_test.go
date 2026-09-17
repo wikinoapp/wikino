@@ -29,10 +29,10 @@ func TestFeatureFlagRepository_IsEnabled(t *testing.T) {
 	t.Run("フラグが有効なユーザーに対してtrueを返す", func(t *testing.T) {
 		enabled, err := repo.IsEnabled(ctx, userID, model.FeatureFlagName("go_page_edit"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if !enabled {
-			t.Error("expected enabled to be true, got false")
+			t.Error("enabled = false、期待値 = true")
 		}
 	})
 
@@ -44,20 +44,20 @@ func TestFeatureFlagRepository_IsEnabled(t *testing.T) {
 
 		enabled, err := repo.IsEnabled(ctx, otherUserID, model.FeatureFlagName("go_page_edit"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if enabled {
-			t.Error("expected enabled to be false, got true")
+			t.Error("enabled = true、期待値 = false")
 		}
 	})
 
 	t.Run("存在しないフラグ名に対してfalseを返す", func(t *testing.T) {
 		enabled, err := repo.IsEnabled(ctx, userID, model.FeatureFlagName("nonexistent_flag"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if enabled {
-			t.Error("expected enabled to be false, got true")
+			t.Error("enabled = true、期待値 = false")
 		}
 	})
 }
@@ -78,20 +78,20 @@ func TestFeatureFlagRepository_IsEnabledForDevice(t *testing.T) {
 
 		enabled, err := repo.IsEnabledForDevice(ctx, "device-token-enabled", "", model.FeatureFlagName("go_page_edit"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if !enabled {
-			t.Error("expected enabled to be true, got false")
+			t.Error("enabled = false、期待値 = true")
 		}
 	})
 
 	t.Run("device_tokenでフラグが無効な場合falseを返す", func(t *testing.T) {
 		enabled, err := repo.IsEnabledForDevice(ctx, "unknown-device-token", "", model.FeatureFlagName("go_page_edit"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if enabled {
-			t.Error("expected enabled to be false, got true")
+			t.Error("enabled = true、期待値 = false")
 		}
 	})
 
@@ -113,10 +113,10 @@ func TestFeatureFlagRepository_IsEnabledForDevice(t *testing.T) {
 
 		enabled, err := repo.IsEnabledForDevice(ctx, "", sessionToken, model.FeatureFlagName("go_page_edit_session"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if !enabled {
-			t.Error("expected enabled to be true, got false")
+			t.Error("enabled = false、期待値 = true")
 		}
 	})
 
@@ -133,10 +133,10 @@ func TestFeatureFlagRepository_IsEnabledForDevice(t *testing.T) {
 
 		enabled, err := repo.IsEnabledForDevice(ctx, "", otherToken, model.FeatureFlagName("go_page_edit_session"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if enabled {
-			t.Error("expected enabled to be false, got true")
+			t.Error("enabled = true、期待値 = false")
 		}
 	})
 
@@ -166,50 +166,46 @@ func TestFeatureFlagRepository_IsEnabledForDevice(t *testing.T) {
 		// device_tokenのフラグはdevice_tokenで有効
 		enabled, err := repo.IsEnabledForDevice(ctx, "device-token-both", sessionToken, model.FeatureFlagName("go_page_edit_both"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if !enabled {
-			t.Error("expected enabled to be true for device_token flag, got false")
+			t.Error("device_tokenのフラグでenabled = false、期待値 = true")
 		}
 
 		// user_idのフラグはsessionToken経由で有効
 		enabled, err = repo.IsEnabledForDevice(ctx, "device-token-both", sessionToken, model.FeatureFlagName("go_page_edit_user_only"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if !enabled {
-			t.Error("expected enabled to be true for user_id flag via session, got false")
+			t.Error("セッション経由のuser_idのフラグでenabled = false、期待値 = true")
 		}
 	})
 
 	t.Run("両方のCookieが空の場合falseを返す", func(t *testing.T) {
 		enabled, err := repo.IsEnabledForDevice(ctx, "", "", model.FeatureFlagName("go_page_edit"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if enabled {
-			t.Error("expected enabled to be false, got true")
+			t.Error("enabled = true、期待値 = false")
 		}
 	})
 
 	t.Run("存在しないフラグ名に対してfalseを返す", func(t *testing.T) {
 		enabled, err := repo.IsEnabledForDevice(ctx, "device-token-enabled", "", model.FeatureFlagName("nonexistent_flag"))
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("予期しないエラー: %v", err)
 		}
 		if enabled {
-			t.Error("expected enabled to be false, got true")
+			t.Error("enabled = true、期待値 = false")
 		}
 	})
 }
 
-// Verifies the ON DELETE CASCADE contract that the Rails-side deletion
-// paths rely on: deleting a users row directly must also delete its
-// feature flags without an explicit DELETE on feature_flags.
-//
-// [Ja] Rails 側の削除経路が頼る ON DELETE CASCADE の契約を検証する。
-// users の行を直接 DELETE したとき、feature_flags への明示的な
-// DELETE なしでフラグも一緒に消えること。
+// Rails側の削除経路が頼るON DELETE CASCADEの契約を検証する。
+// usersの行を直接DELETEしたとき、feature_flagsへの明示的な
+// DELETEなしでフラグも一緒に消えること。
 func TestFeatureFlagRepository_CascadeOnUserDelete(t *testing.T) {
 	t.Parallel()
 
@@ -232,11 +228,10 @@ func TestFeatureFlagRepository_CascadeOnUserDelete(t *testing.T) {
 		Build()
 
 	t.Run("ユーザーの行を直接DELETEするとユーザー紐づけのフラグも消える", func(t *testing.T) {
-		// Delete the parent users row directly (without going through application code)
-		// [Ja] 親の users の行を直接削除 (アプリケーションコードを経由しない)
+		// 親のusersの行を直接削除 (アプリケーションコードを経由しない)
 		_, err := tx.ExecContext(ctx, "DELETE FROM users WHERE id = $1", string(userID))
 		if err != nil {
-			t.Fatalf("DELETE users error = %v", err)
+			t.Fatalf("DELETE usersのエラー = %v", err)
 		}
 
 		var userFlagCount int
@@ -245,24 +240,23 @@ func TestFeatureFlagRepository_CascadeOnUserDelete(t *testing.T) {
 			"SELECT COUNT(*) FROM feature_flags WHERE id = $1",
 			string(userFlagID),
 		).Scan(&userFlagCount); err != nil {
-			t.Fatalf("SELECT COUNT(*) FROM feature_flags error = %v", err)
+			t.Fatalf("SELECT COUNT(*) FROM feature_flagsのエラー = %v", err)
 		}
 		if userFlagCount != 0 {
-			t.Errorf("user flag count = %d, want 0 (should be cascade-deleted)", userFlagCount)
+			t.Errorf("ユーザーのフラグの件数 = %d、期待値 = 0 (カスケード削除されていない)", userFlagCount)
 		}
 
-		// The device-token flag (user_id IS NULL) must survive the cascade.
-		// [Ja] デバイストークンのフラグ (user_id が NULL) は連鎖削除に巻き込まれないこと。
+		// デバイストークンのフラグ (user_idがNULL) は連鎖削除に巻き込まれないこと。
 		var deviceFlagCount int
 		if err := tx.QueryRowContext(
 			ctx,
 			"SELECT COUNT(*) FROM feature_flags WHERE id = $1",
 			string(deviceFlagID),
 		).Scan(&deviceFlagCount); err != nil {
-			t.Fatalf("SELECT COUNT(*) FROM feature_flags error = %v", err)
+			t.Fatalf("SELECT COUNT(*) FROM feature_flagsのエラー = %v", err)
 		}
 		if deviceFlagCount != 1 {
-			t.Errorf("device flag count = %d, want 1 (should not be cascade-deleted)", deviceFlagCount)
+			t.Errorf("デバイスのフラグの件数 = %d、期待値 = 1 (カスケード削除されている)", deviceFlagCount)
 		}
 	})
 }

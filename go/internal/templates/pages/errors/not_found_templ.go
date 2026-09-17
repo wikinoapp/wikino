@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// NotFoundPage は404エラーページを表示するテンプレート。
+// NotFoundPageは404エラーページを表示するテンプレート。
 // 404発生時にはセッションやDBが利用できない可能性があるため、
 // レイアウトテンプレートを使用せず外部依存のない完全なHTMLドキュメントとして生成する。
 func NotFoundPage() templ.Component {

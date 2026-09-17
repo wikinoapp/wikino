@@ -61,14 +61,14 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			Body:             "新本文",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		if output.Suggestion.Title != "新タイトル" {
-			t.Errorf("Title = %q, want %q", output.Suggestion.Title, "新タイトル")
+			t.Errorf("Title = %q、期待値 = %q", output.Suggestion.Title, "新タイトル")
 		}
 		if output.Suggestion.Body != "新本文" {
-			t.Errorf("Body = %q, want %q", output.Suggestion.Body, "新本文")
+			t.Errorf("Body = %q、期待値 = %q", output.Suggestion.Body, "新本文")
 		}
 	})
 
@@ -108,14 +108,14 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			Body:             "",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		if output.Suggestion.Title != "更新タイトル" {
-			t.Errorf("Title = %q, want %q", output.Suggestion.Title, "更新タイトル")
+			t.Errorf("Title = %q、期待値 = %q", output.Suggestion.Title, "更新タイトル")
 		}
 		if output.Suggestion.Body != "" {
-			t.Errorf("Body = %q, want empty", output.Suggestion.Body)
+			t.Errorf("Body = %q、期待値 = 空", output.Suggestion.Body)
 		}
 	})
 
@@ -139,10 +139,10 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError, got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("Code = %d, want %d", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("Code = %d、期待値 = %d", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -174,7 +174,7 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 			WithStatus(model.SuggestionStatusOpen).
 			Build()
 
-		// 別のユーザー（スペースメンバーではない）
+		// 別のユーザー (スペースメンバーではない)
 		nonMemberUserID := testutil.NewUserBuilderDB(t, db).
 			WithEmail("update-sug-nonmember@example.com").
 			WithAtname("updatesugnonmember").
@@ -190,10 +190,10 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError, got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("Code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("Code = %d、期待値 = %d", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -235,10 +235,10 @@ func TestUpdateSuggestionUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("title") {
-			t.Error("expected title field error")
+			t.Error("titleのフィールドエラーが無い")
 		}
 	})
 }

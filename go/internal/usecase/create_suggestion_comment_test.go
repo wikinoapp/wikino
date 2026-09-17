@@ -63,13 +63,13 @@ func TestCreateSuggestionCommentUsecase_Execute(t *testing.T) {
 			Body:             "テストコメント",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil || output.Comment == nil {
-			t.Fatal("output.Comment should not be nil")
+			t.Fatal("output.Commentがnil")
 		}
 		if output.Comment.Body != "テストコメント" {
-			t.Errorf("Body = %q, want %q", output.Comment.Body, "テストコメント")
+			t.Errorf("Body = %q、期待値 = %q", output.Comment.Body, "テストコメント")
 		}
 	})
 
@@ -92,10 +92,10 @@ func TestCreateSuggestionCommentUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError, got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("Code = %v, want AppErrCodeResourceNotFound", ae.Code)
+			t.Errorf("Code = %v、期待値 = AppErrCodeResourceNotFound", ae.Code)
 		}
 	})
 
@@ -141,10 +141,10 @@ func TestCreateSuggestionCommentUsecase_Execute(t *testing.T) {
 
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatal("expected AppError, got nil")
+			t.Fatal("AppErrorを期待したが、nilだった")
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("Code = %v, want AppErrCodeForbidden", ae.Code)
+			t.Errorf("Code = %v、期待値 = AppErrCodeForbidden", ae.Code)
 		}
 	})
 
@@ -185,10 +185,10 @@ func TestCreateSuggestionCommentUsecase_Execute(t *testing.T) {
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("body") {
-			t.Error("expected body field error")
+			t.Error("bodyのフィールドエラーが無い")
 		}
 	})
 }

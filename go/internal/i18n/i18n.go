@@ -1,4 +1,4 @@
-// Package i18n は国際化機能を提供します
+// Package i18nは国際化機能を提供します
 package i18n
 
 import (
@@ -36,7 +36,7 @@ const (
 // グローバルなバンドル
 var bundle *i18n.Bundle
 
-// init でlocalesディレクトリから全ての翻訳ファイルを読み込む
+// initでlocalesディレクトリから全ての翻訳ファイルを読み込む
 func init() {
 	// 日本語をデフォルト言語として設定
 	bundle = i18n.NewBundle(language.Japanese)
@@ -61,7 +61,7 @@ func init() {
 	}
 }
 
-// T は翻訳関数（テンプレートから呼び出される）
+// Tは翻訳関数 (テンプレートから呼び出される)
 func T(ctx context.Context, messageID string, templateData ...map[string]any) string {
 	localizer := GetLocalizer(ctx)
 	if localizer == nil {
@@ -93,7 +93,7 @@ func T(ctx context.Context, messageID string, templateData ...map[string]any) st
 	return message
 }
 
-// GetLocale はコンテキストから言語設定を取得する
+// GetLocaleはコンテキストから言語設定を取得する
 func GetLocale(ctx context.Context) string {
 	if locale, ok := ctx.Value(localeContextKey).(string); ok {
 		return locale
@@ -101,12 +101,12 @@ func GetLocale(ctx context.Context) string {
 	return DefaultLang
 }
 
-// SetLocale はコンテキストに言語設定を保存する
+// SetLocaleはコンテキストに言語設定を保存する
 func SetLocale(ctx context.Context, locale string) context.Context {
 	return context.WithValue(ctx, localeContextKey, locale)
 }
 
-// GetLocalizer はコンテキストからLocalizerを取得する
+// GetLocalizerはコンテキストからLocalizerを取得する
 func GetLocalizer(ctx context.Context) *i18n.Localizer {
 	if localizer, ok := ctx.Value(localizerContextKey).(*i18n.Localizer); ok {
 		return localizer
@@ -116,12 +116,12 @@ func GetLocalizer(ctx context.Context) *i18n.Localizer {
 	return i18n.NewLocalizer(bundle, locale)
 }
 
-// SetLocalizer はコンテキストにLocalizerを保存する
+// SetLocalizerはコンテキストにLocalizerを保存する
 func SetLocalizer(ctx context.Context, localizer *i18n.Localizer) context.Context {
 	return context.WithValue(ctx, localizerContextKey, localizer)
 }
 
-// DetectLanguage はリクエストのAccept-Languageヘッダーから言語を検出する
+// DetectLanguageはリクエストのAccept-Languageヘッダーから言語を検出する
 func DetectLanguage(r *http.Request) string {
 	// Accept-Languageヘッダーから取得
 	acceptLang := r.Header.Get("Accept-Language")
@@ -137,7 +137,7 @@ func DetectLanguage(r *http.Request) string {
 	return DefaultLang
 }
 
-// Middleware はI18nミドルウェアを提供する
+// MiddlewareはI18nミドルウェアを提供する
 // Accept-Languageヘッダーから言語を決定する
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

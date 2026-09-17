@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// UpdateSuggestionCommentUsecase は編集提案コメント更新ユースケース
+// UpdateSuggestionCommentUsecaseは編集提案コメント更新ユースケース
 type UpdateSuggestionCommentUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
@@ -22,7 +22,7 @@ type UpdateSuggestionCommentUsecase struct {
 	updateValidator       *validator.SuggestionCommentUpdateValidator
 }
 
-// NewUpdateSuggestionCommentUsecase は UpdateSuggestionCommentUsecase を生成する
+// NewUpdateSuggestionCommentUsecaseはUpdateSuggestionCommentUsecaseを生成する
 func NewUpdateSuggestionCommentUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -43,7 +43,7 @@ func NewUpdateSuggestionCommentUsecase(
 	}
 }
 
-// UpdateSuggestionCommentInput は編集提案コメント更新の入力パラメータ
+// UpdateSuggestionCommentInputは編集提案コメント更新の入力パラメータ
 type UpdateSuggestionCommentInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
@@ -52,12 +52,12 @@ type UpdateSuggestionCommentInput struct {
 	Body             string
 }
 
-// UpdateSuggestionCommentOutput は編集提案コメント更新の出力パラメータ
+// UpdateSuggestionCommentOutputは編集提案コメント更新の出力パラメータ
 type UpdateSuggestionCommentOutput struct {
 	Comment *model.SuggestionComment
 }
 
-// Execute は編集提案コメントを更新する
+// Executeは編集提案コメントを更新する
 func (uc *UpdateSuggestionCommentUsecase) Execute(ctx context.Context, input UpdateSuggestionCommentInput) (*UpdateSuggestionCommentOutput, error) {
 	// 1. データ取得
 	space, spaceMember, suggestion, comment, err := uc.fetchData(ctx, input)
@@ -77,7 +77,7 @@ func (uc *UpdateSuggestionCommentUsecase) Execute(ctx context.Context, input Upd
 		return nil, err
 	}
 
-	// 4. 永続化（トランザクション）
+	// 4. 永続化 (トランザクション)
 	return uc.updateComment(ctx, comment.ID, space.ID, input.Body)
 }
 

@@ -9,14 +9,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Edit は確認コード入力フォームを表示します (GET /email_confirmation/edit)
+// Editは確認コード入力フォームを表示します (GET /email_confirmation/edit)
 func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// セッションから email_confirmation_id を取得
+	// セッションからemail_confirmation_idを取得
 	emailConfirmationID := h.sessionMgr.GetEmailConfirmationID(r)
 	if emailConfirmationID == "" {
-		// email_confirmation_id がない場合は /sign_up にリダイレクト
+		// email_confirmation_idがない場合は /sign_upにリダイレクト
 		http.Redirect(w, r, "/sign_up", http.StatusFound)
 		return
 	}

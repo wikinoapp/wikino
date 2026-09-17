@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Delete はログアウト処理を行う (DELETE /user_session)
+// Deleteはログアウト処理を行う (DELETE /user_session)
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

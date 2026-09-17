@@ -9,32 +9,32 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 )
 
-// CSRFCookieName はCSRFトークンを保存するクッキー名
+// CSRFCookieNameはCSRFトークンを保存するクッキー名
 const CSRFCookieName = "wikino_csrf_token"
 
-// csrfSkipPaths はCSRF検証をスキップするパス
+// csrfSkipPathsはCSRF検証をスキップするパス
 // Rails版のページからのリクエストはRails独自のCSRFトークンを使用しているため、
 // Go版のCSRF検証を適用できない
 var csrfSkipPaths = []string{
 	"/user_session", // Rails版からのログアウトリクエスト対応
 }
 
-// csrfTokenContextKey はコンテキストにCSRFトークンを保存するためのキー
+// csrfTokenContextKeyはコンテキストにCSRFトークンを保存するためのキー
 type csrfTokenContextKey struct{}
 
-// CSRF はCSRF保護のためのミドルウェアを提供する
+// CSRFはCSRF保護のためのミドルウェアを提供する
 type CSRF struct {
 	cfg *config.Config
 }
 
-// NewCSRF は新しいCSRFミドルウェアを作成する
+// NewCSRFは新しいCSRFミドルウェアを作成する
 func NewCSRF(cfg *config.Config) *CSRF {
 	return &CSRF{
 		cfg: cfg,
 	}
 }
 
-// Middleware はCSRF保護ミドルウェアを返す
+// MiddlewareはCSRF保護ミドルウェアを返す
 // GET/HEAD/OPTIONSリクエストではCSRFトークンを生成してコンテキストに設定
 // その他のメソッドではCSRFトークンを検証する
 func (c *CSRF) Middleware(next http.Handler) http.Handler {
@@ -86,7 +86,7 @@ func (c *CSRF) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// getOrCreateCSRFToken は既存のCSRFトークンを取得するか、新しく生成する
+// getOrCreateCSRFTokenは既存のCSRFトークンを取得するか、新しく生成する
 func (c *CSRF) getOrCreateCSRFToken(w http.ResponseWriter, r *http.Request) (string, error) {
 	// 既存のトークンがあれば返す
 	cookie, err := r.Cookie(CSRFCookieName)
@@ -105,7 +105,7 @@ func (c *CSRF) getOrCreateCSRFToken(w http.ResponseWriter, r *http.Request) (str
 	return token, nil
 }
 
-// setCSRFCookie はCSRFトークンをクッキーに設定する
+// setCSRFCookieはCSRFトークンをクッキーに設定する
 func (c *CSRF) setCSRFCookie(w http.ResponseWriter, r *http.Request, token string) {
 	secure := c.cfg.SessionSecure
 	// リバースプロキシ経由のHTTPS接続を検出
@@ -119,19 +119,19 @@ func (c *CSRF) setCSRFCookie(w http.ResponseWriter, r *http.Request, token strin
 		Path:     "/",
 		Domain:   c.cfg.CookieDomain,
 		Secure:   secure,
-		HttpOnly: false, // JavaScriptからアクセス可能にする（AJAXリクエスト用）
+		HttpOnly: false, // JavaScriptからアクセス可能にする (AJAXリクエスト用)
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   24 * 60 * 60, // 24時間
 	}
 	http.SetCookie(w, cookie)
 }
 
-// SetCSRFTokenToContext はコンテキストにCSRFトークンを設定する
+// SetCSRFTokenToContextはコンテキストにCSRFトークンを設定する
 func SetCSRFTokenToContext(ctx context.Context, token string) context.Context {
 	return context.WithValue(ctx, csrfTokenContextKey{}, token)
 }
 
-// GetCSRFTokenFromContext はコンテキストからCSRFトークンを取得する
+// GetCSRFTokenFromContextはコンテキストからCSRFトークンを取得する
 func GetCSRFTokenFromContext(ctx context.Context) string {
 	token, ok := ctx.Value(csrfTokenContextKey{}).(string)
 	if !ok {
@@ -140,7 +140,7 @@ func GetCSRFTokenFromContext(ctx context.Context) string {
 	return token
 }
 
-// generateCSRFToken は安全なCSRFトークンを生成する
+// generateCSRFTokenは安全なCSRFトークンを生成する
 // 32バイトのランダムデータをBase64エンコードして44文字のトークンを生成
 func generateCSRFToken() (string, error) {
 	b := make([]byte, 32)

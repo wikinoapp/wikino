@@ -3,7 +3,3 @@ ja:
     attributes:
       page:
         mutation_error: ""
-      topic:
-        visibility:
-          private: 非公開
-          public: 公開

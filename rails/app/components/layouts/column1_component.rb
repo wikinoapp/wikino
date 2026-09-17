@@ -2,7 +2,9 @@
 # frozen_string_literal: true
 
 module Layouts
-  # サイドバーを除いた1カラムのレイアウト
+  # Single-column layout for authenticated pages (header / main / footer slots).
+  #
+  # [Ja] 認証後ページ向けの 1 カラムレイアウト (ヘッダー / メイン / フッターのスロットを持つ)。
   class Column1Component < ApplicationComponent
     renders_one :header
     renders_one :main
@@ -11,24 +13,15 @@ module Layouts
     sig do
       params(
         current_page_name: PageName,
-        current_user: T.nilable(User),
-        current_space: T.nilable(Space),
-        show_sidebar: T::Boolean,
-        show_bottom_navbar: T::Boolean
+        current_user: T.nilable(User)
       ).void
     end
     def initialize(
       current_page_name:,
-      current_user:,
-      current_space: nil,
-      show_sidebar: true,
-      show_bottom_navbar: true
+      current_user:
     )
       @current_page_name = current_page_name
       @current_user = current_user
-      @current_space = current_space
-      @show_sidebar = show_sidebar
-      @show_bottom_navbar = show_bottom_navbar
     end
 
     sig { returns(PageName) }
@@ -38,18 +31,5 @@ module Layouts
     sig { returns(T.nilable(User)) }
     attr_reader :current_user
     private :current_user
-
-    sig { returns(T.nilable(Space)) }
-    attr_reader :current_space
-    private :current_space
-
-    sig { returns(T::Boolean) }
-    attr_reader :show_sidebar
-    alias_method :show_sidebar?, :show_sidebar
-
-    sig { returns(T::Boolean) }
-    attr_reader :show_bottom_navbar
-    private :show_bottom_navbar
-    alias_method :show_bottom_navbar?, :show_bottom_navbar
   end
 end

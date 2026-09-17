@@ -9,15 +9,17 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	suggestionchangepages "github.com/wikinoapp/wikino/go/internal/templates/pages/suggestion_change"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Index は編集提案の変更差分を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/changes)
+// Indexは編集提案の変更差分を表示します (GET /s/{space_identifier}/suggestions/{suggestion_number}/changes)
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -79,24 +81,39 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		Pages:           output.Pages,
 	})
 
+	// URLではなく保存済みの識別子からリンクを組み立て、正規URLを1画面1アドレスに
+	// 集約する。
+	spaceIdentVM := spaceVM.Identifier
+
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitleWithoutSuffix(ctx, "suggestion_show_title", map[string]any{
+	meta.SetTitleWithoutSuffix(ctx, "suggestion_change_index_title", map[string]any{
 		"SuggestionTitle":  output.Suggestion.Title,
 		"SuggestionNumber": output.Suggestion.Number,
 		"TopicName":        output.Topic.Name,
 		"SpaceName":        output.Space.Name,
 	})
-	meta.CurrentSpaceIdentifier = viewmodel.NewSpaceIdentifier(spaceIdentifier)
+	meta.OGURL = h.cfg.AppURL() + string(templates.SuggestionChangesPath(spaceIdentVM, suggestionVM.Number))
+	meta.CurrentSpaceIdentifier = spaceIdentVM
 
-	// 編集権限を判定（スペースメンバーかつオープンステータス）
+	// 編集権限を判定 (スペースメンバーかつオープンステータス)
 	canEditSuggestionPages := output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen
 
-	// CSRFトークンを取得（編集・削除ボタンのフォームで必要な場合のみ）
+	// CSRFトークンを取得 (編集・削除ボタンのフォームで必要な場合のみ)
 	var csrfToken string
 	if canEditSuggestionPages || output.CanAddSuggestionPage || output.CanRemoveSuggestionPage {
 		csrfToken = middleware.GetCSRFTokenFromContext(ctx)
 	}
+
+	// 変更差分は公開画面で自己参照canonicalを宣言するため、同じ項目列から作るBreadcrumbList
+	// JSON-LDを有効にする。DetailBreadcrumbHeaderDataを共有する他の画面は認証必須のため、ベースURL
+	// を空のままにして構造化データを出さない。
+	breadcrumbHeader := suggestionhandler.DetailBreadcrumbHeaderData(ctx, spaceVM, topicVM, suggestionVM.Number, suggestionVM.Title, user != nil)
+	breadcrumbHeader.Items = append(breadcrumbHeader.Items, components.BreadcrumbItem{
+		Label:     i18n.T(ctx, "suggestion_change_index_breadcrumb"),
+		IsCurrent: true,
+	})
+	breadcrumbHeader.StructuredDataBaseURL = h.cfg.AppURL()
 
 	// テンプレートをレンダリング
 	content := suggestionchangepages.Index(suggestionchangepages.IndexData{
@@ -112,13 +129,12 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err := suggestionhandler.RenderLayout(ctx, w, suggestionhandler.RenderLayoutInput{
-		Cfg:             h.cfg,
-		SidebarHelper:   h.sidebarHelper,
-		User:            user,
-		SpaceIdentifier: spaceIdentifier,
-		CurrentPageName: templates.PageNameSuggestionChanges,
-		Meta:            meta,
-		Content:         content,
+		User:             user,
+		SpaceIdentifier:  output.Space.Identifier,
+		CurrentPageName:  templates.PageNameSuggestionChanges,
+		Meta:             meta,
+		BreadcrumbHeader: breadcrumbHeader,
+		Content:          content,
 	}); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

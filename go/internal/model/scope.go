@@ -1,10 +1,10 @@
 package model
 
-// Scope はリソースに対する権限を表すドメイン型。
-// GitHub 風の "resource:action" 形式で命名する。
+// Scopeはリソースに対する権限を表すドメイン型。
+// GitHub風の "resource:action" 形式で命名する。
 type Scope string
 
-// String は Scope を文字列に変換する
+// StringはScopeを文字列に変換する
 func (s Scope) String() string { return string(s) }
 
 // トピック関連スコープ
@@ -23,10 +23,15 @@ const (
 
 // ページ関連スコープ
 const (
-	ScopePageRead    Scope = "page:read"
-	ScopePageWrite   Scope = "page:write"
-	ScopePageTrash   Scope = "page:trash"
-	ScopePageRestore Scope = "page:restore"
+	ScopePageRead  Scope = "page:read"
+	ScopePageWrite Scope = "page:write"
+)
+
+// ゴミ箱関連スコープ
+const (
+	ScopePageTrashRead   Scope = "page_trash:read"
+	ScopePageTrashWrite  Scope = "page_trash:write"
+	ScopePageTrashDelete Scope = "page_trash:delete"
 )
 
 // 下書きページ関連スコープ
@@ -40,8 +45,12 @@ const (
 const (
 	ScopeSuggestionRead  Scope = "suggestion:read"
 	ScopeSuggestionWrite Scope = "suggestion:write"
-	ScopeSuggestionApply Scope = "suggestion:apply"
-	ScopeSuggestionClose Scope = "suggestion:close"
+)
+
+// 編集提案の反映・クローズ関連スコープ
+const (
+	ScopeSuggestionApplicationWrite Scope = "suggestion_application:write"
+	ScopeSuggestionClosureWrite     Scope = "suggestion_closure:write"
 )
 
 // 編集提案コメント関連スコープ
@@ -62,7 +71,7 @@ const (
 	ScopeSpaceRead   Scope = "space:read"
 	ScopeSpaceWrite  Scope = "space:write"
 	ScopeSpaceDelete Scope = "space:delete"
-	// ScopeSpaceAdmin は全スコープを包括する唯一の特別スコープ
+	// ScopeSpaceAdminは全スコープを包括する唯一の特別スコープ
 	ScopeSpaceAdmin Scope = "space:admin"
 )
 
@@ -73,7 +82,15 @@ const (
 	ScopeAttachmentDelete Scope = "attachment:delete"
 )
 
-// HasScope は指定のスコープがスライスに含まれているかチェックする
+// 保存済みの旧名を権限判定時に読み替えるための互換スコープ
+const (
+	ScopePageTrash       Scope = "page:trash"
+	ScopePageRestore     Scope = "page:restore"
+	ScopeSuggestionApply Scope = "suggestion:apply"
+	ScopeSuggestionClose Scope = "suggestion:close"
+)
+
+// HasScopeは指定のスコープがスライスに含まれているかチェックする
 func HasScope(scopes []Scope, target Scope) bool {
 	for _, s := range scopes {
 		if s == target {
@@ -83,7 +100,7 @@ func HasScope(scopes []Scope, target Scope) bool {
 	return false
 }
 
-// StringsToScopes は []string を []Scope に変換する
+// StringsToScopesは []stringを []Scopeに変換する
 func StringsToScopes(ss []string) []Scope {
 	scopes := make([]Scope, len(ss))
 	for i, s := range ss {

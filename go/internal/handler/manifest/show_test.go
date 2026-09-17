@@ -63,62 +63,62 @@ func TestShow(t *testing.T) {
 
 			// ステータスコードを検証
 			if rr.Code != tt.wantStatus {
-				t.Errorf("wrong status code: got %v want %v", rr.Code, tt.wantStatus)
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, tt.wantStatus)
 			}
 
 			// Content-Typeを検証
 			contentType := rr.Header().Get("Content-Type")
 			if contentType != "application/manifest+json" {
-				t.Errorf("wrong content type: got %v want %v", contentType, "application/manifest+json")
+				t.Errorf("Content-Type = %v、期待値 = %v", contentType, "application/manifest+json")
 			}
 
 			// JSONをパースして検証
 			var m manifest.Manifest
 			if err := json.NewDecoder(rr.Body).Decode(&m); err != nil {
-				t.Fatalf("failed to decode response: %v", err)
+				t.Fatalf("レスポンスのデコードに失敗: %v", err)
 			}
 
 			// アプリ名を検証
 			if m.Name != tt.wantName {
-				t.Errorf("wrong name: got %v want %v", m.Name, tt.wantName)
+				t.Errorf("name = %v、期待値 = %v", m.Name, tt.wantName)
 			}
 
 			// 固定値を検証
 			if m.ShortName != "Wikino" {
-				t.Errorf("wrong short_name: got %v want %v", m.ShortName, "Wikino")
+				t.Errorf("short_name = %v、期待値 = %v", m.ShortName, "Wikino")
 			}
 			if m.Display != "standalone" {
-				t.Errorf("wrong display: got %v want %v", m.Display, "standalone")
+				t.Errorf("display = %v、期待値 = %v", m.Display, "standalone")
 			}
 			if m.StartURL != "/" {
-				t.Errorf("wrong start_url: got %v want %v", m.StartURL, "/")
+				t.Errorf("start_url = %v、期待値 = %v", m.StartURL, "/")
 			}
 			if m.Scope != "/" {
-				t.Errorf("wrong scope: got %v want %v", m.Scope, "/")
+				t.Errorf("scope = %v、期待値 = %v", m.Scope, "/")
 			}
 			if m.BackgroundColor != "#ffffff" {
-				t.Errorf("wrong background_color: got %v want %v", m.BackgroundColor, "#ffffff")
+				t.Errorf("background_color = %v、期待値 = %v", m.BackgroundColor, "#ffffff")
 			}
 			if m.ThemeColor != "#ffffff" {
-				t.Errorf("wrong theme_color: got %v want %v", m.ThemeColor, "#ffffff")
+				t.Errorf("theme_color = %v、期待値 = %v", m.ThemeColor, "#ffffff")
 			}
 
 			// アイコンを検証
 			if len(m.Icons) != 2 {
-				t.Errorf("wrong number of icons: got %v want %v", len(m.Icons), 2)
+				t.Errorf("アイコンの件数 = %v、期待値 = %v", len(m.Icons), 2)
 			}
 
 			// 192x192アイコンを検証
 			if m.Icons[0].Sizes != "192x192" {
-				t.Errorf("wrong icon sizes: got %v want %v", m.Icons[0].Sizes, "192x192")
+				t.Errorf("アイコンのサイズ = %v、期待値 = %v", m.Icons[0].Sizes, "192x192")
 			}
 			if m.Icons[0].Type != "image/png" {
-				t.Errorf("wrong icon type: got %v want %v", m.Icons[0].Type, "image/png")
+				t.Errorf("アイコンのtype = %v、期待値 = %v", m.Icons[0].Type, "image/png")
 			}
 
 			// 512x512アイコンを検証
 			if m.Icons[1].Sizes != "512x512" {
-				t.Errorf("wrong icon sizes: got %v want %v", m.Icons[1].Sizes, "512x512")
+				t.Errorf("アイコンのサイズ = %v、期待値 = %v", m.Icons[1].Sizes, "512x512")
 			}
 		})
 	}

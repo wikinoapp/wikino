@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// setupTestEnv は必須の環境変数を設定するヘルパー関数です
+// setupTestEnvは必須の環境変数を設定するヘルパー関数です
 func setupTestEnv(t *testing.T) func() {
 	t.Helper()
 
@@ -21,6 +21,7 @@ func setupTestEnv(t *testing.T) func() {
 		"WIKINO_SESSION_HTTPONLY":          os.Getenv("WIKINO_SESSION_HTTPONLY"),
 		"WIKINO_DISABLE_RATE_LIMIT":        os.Getenv("WIKINO_DISABLE_RATE_LIMIT"),
 		"WIKINO_RAILS_APP_URL":             os.Getenv("WIKINO_RAILS_APP_URL"),
+		"WIKINO_TURNSTILE_ENABLED":         os.Getenv("WIKINO_TURNSTILE_ENABLED"),
 		"WIKINO_TURNSTILE_SITE_KEY":        os.Getenv("WIKINO_TURNSTILE_SITE_KEY"),
 		"WIKINO_TURNSTILE_SECRET_KEY":      os.Getenv("WIKINO_TURNSTILE_SECRET_KEY"),
 		"WIKINO_MAINTENANCE_MODE":          os.Getenv("WIKINO_MAINTENANCE_MODE"),
@@ -29,6 +30,11 @@ func setupTestEnv(t *testing.T) func() {
 		"WIKINO_SENTRY_ENVIRONMENT":        os.Getenv("WIKINO_SENTRY_ENVIRONMENT"),
 		"WIKINO_SENTRY_TRACES_SAMPLE_RATE": os.Getenv("WIKINO_SENTRY_TRACES_SAMPLE_RATE"),
 		"WIKINO_SENTRY_DEBUG":              os.Getenv("WIKINO_SENTRY_DEBUG"),
+		"WIKINO_R2_BUCKET_NAME":            os.Getenv("WIKINO_R2_BUCKET_NAME"),
+		"WIKINO_R2_ENDPOINT":               os.Getenv("WIKINO_R2_ENDPOINT"),
+		"WIKINO_R2_ACCESS_KEY_ID":          os.Getenv("WIKINO_R2_ACCESS_KEY_ID"),
+		"WIKINO_R2_SECRET_ACCESS_KEY":      os.Getenv("WIKINO_R2_SECRET_ACCESS_KEY"),
+		"WIKINO_R2_REGION":                 os.Getenv("WIKINO_R2_REGION"),
 	}
 
 	// 必須の環境変数を設定
@@ -40,12 +46,21 @@ func setupTestEnv(t *testing.T) func() {
 	_ = os.Setenv("WIKINO_SESSION_SECURE", "false")
 	_ = os.Setenv("WIKINO_SESSION_HTTPONLY", "true")
 
-	// Reset Sentry env vars so each test can control them independently.
-	// [Ja] Sentry 関連は各テストが独立して状態を制御できるよう、デフォルトでは未設定にする。
+	// Sentry関連は各テストが独立して状態を制御できるよう、デフォルトでは未設定にする。
 	_ = os.Unsetenv("WIKINO_SENTRY_DSN")
 	_ = os.Unsetenv("WIKINO_SENTRY_ENVIRONMENT")
 	_ = os.Unsetenv("WIKINO_SENTRY_TRACES_SAMPLE_RATE")
 	_ = os.Unsetenv("WIKINO_SENTRY_DEBUG")
+
+	// オブジェクトストレージの設定は、実 .envの値がテストに混入しないよう未設定にする。
+	_ = os.Unsetenv("WIKINO_R2_BUCKET_NAME")
+	_ = os.Unsetenv("WIKINO_R2_ENDPOINT")
+	_ = os.Unsetenv("WIKINO_R2_ACCESS_KEY_ID")
+	_ = os.Unsetenv("WIKINO_R2_SECRET_ACCESS_KEY")
+	_ = os.Unsetenv("WIKINO_R2_REGION")
+
+	// Turnstileの有効/無効フラグは実 .envの値がテストに混入しないよう未設定にする。
+	_ = os.Unsetenv("WIKINO_TURNSTILE_ENABLED")
 
 	// クリーンアップ関数を返す
 	return func() {
@@ -59,41 +74,41 @@ func setupTestEnv(t *testing.T) func() {
 	}
 }
 
-// TestLoad は環境変数から設定を読み込むテスト
+// TestLoadは環境変数から設定を読み込むテスト
 func TestLoad(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
 
 	cfg, err := Load()
 	if err != nil {
-		t.Fatalf("Load() failed: %v", err)
+		t.Fatalf("Load()に失敗: %v", err)
 	}
 
 	// 基本的な設定が読み込まれていることを確認
 	if cfg.DatabaseURL == "" {
-		t.Error("DatabaseURL should not be empty")
+		t.Error("DatabaseURLが空")
 	}
 	if cfg.Port == "" {
-		t.Error("Port should not be empty")
+		t.Error("Portが空")
 	}
 	if cfg.Env != "test" {
-		t.Errorf("Env = %v, want test", cfg.Env)
+		t.Errorf("Env = %v、期待値 = test", cfg.Env)
 	}
 	if cfg.Domain != "test.wikino.app" {
-		t.Errorf("Domain = %v, want test.wikino.app", cfg.Domain)
+		t.Errorf("Domain = %v、期待値 = test.wikino.app", cfg.Domain)
 	}
 	if cfg.CookieDomain != ".test.wikino.app" {
-		t.Errorf("CookieDomain = %v, want .test.wikino.app", cfg.CookieDomain)
+		t.Errorf("CookieDomain = %v、期待値 = .test.wikino.app", cfg.CookieDomain)
 	}
 	if cfg.SessionSecure != false {
-		t.Errorf("SessionSecure = %v, want false", cfg.SessionSecure)
+		t.Errorf("SessionSecure = %v、期待値 = false", cfg.SessionSecure)
 	}
 	if cfg.SessionHTTPOnly != true {
-		t.Errorf("SessionHTTPOnly = %v, want true", cfg.SessionHTTPOnly)
+		t.Errorf("SessionHTTPOnly = %v、期待値 = true", cfg.SessionHTTPOnly)
 	}
 }
 
-// TestLoad_MissingDatabaseURL は DATABASE_URL が未設定の場合のエラーをテスト
+// TestLoad_MissingDatabaseURLはDATABASE_URLが未設定の場合のエラーをテスト
 func TestLoad_MissingDatabaseURL(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -102,11 +117,11 @@ func TestLoad_MissingDatabaseURL(t *testing.T) {
 
 	_, err := Load()
 	if err == nil {
-		t.Error("Load() should return error when DATABASE_URL is missing")
+		t.Error("DATABASE_URLが無いのにLoad()がエラーを返さなかった")
 	}
 }
 
-// TestLoad_MissingPort は WIKINO_PORT が未設定の場合のエラーをテスト
+// TestLoad_MissingPortはWIKINO_PORTが未設定の場合のエラーをテスト
 func TestLoad_MissingPort(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -115,11 +130,11 @@ func TestLoad_MissingPort(t *testing.T) {
 
 	_, err := Load()
 	if err == nil {
-		t.Error("Load() should return error when WIKINO_PORT is missing")
+		t.Error("WIKINO_PORTが無いのにLoad()がエラーを返さなかった")
 	}
 }
 
-// TestLoad_MissingDomain は WIKINO_DOMAIN が未設定の場合のエラーをテスト
+// TestLoad_MissingDomainはWIKINO_DOMAINが未設定の場合のエラーをテスト
 func TestLoad_MissingDomain(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -128,11 +143,11 @@ func TestLoad_MissingDomain(t *testing.T) {
 
 	_, err := Load()
 	if err == nil {
-		t.Error("Load() should return error when WIKINO_DOMAIN is missing")
+		t.Error("WIKINO_DOMAINが無いのにLoad()がエラーを返さなかった")
 	}
 }
 
-// TestLoad_MissingCookieDomain は WIKINO_COOKIE_DOMAIN が未設定の場合のエラーをテスト
+// TestLoad_MissingCookieDomainはWIKINO_COOKIE_DOMAINが未設定の場合のエラーをテスト
 func TestLoad_MissingCookieDomain(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -141,11 +156,11 @@ func TestLoad_MissingCookieDomain(t *testing.T) {
 
 	_, err := Load()
 	if err == nil {
-		t.Error("Load() should return error when WIKINO_COOKIE_DOMAIN is missing")
+		t.Error("WIKINO_COOKIE_DOMAINが無いのにLoad()がエラーを返さなかった")
 	}
 }
 
-// TestLoad_MissingSessionSecure は WIKINO_SESSION_SECURE が未設定の場合のエラーをテスト
+// TestLoad_MissingSessionSecureはWIKINO_SESSION_SECUREが未設定の場合のエラーをテスト
 func TestLoad_MissingSessionSecure(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -154,11 +169,11 @@ func TestLoad_MissingSessionSecure(t *testing.T) {
 
 	_, err := Load()
 	if err == nil {
-		t.Error("Load() should return error when WIKINO_SESSION_SECURE is missing")
+		t.Error("WIKINO_SESSION_SECUREが無いのにLoad()がエラーを返さなかった")
 	}
 }
 
-// TestLoad_MissingSessionHTTPOnly は WIKINO_SESSION_HTTPONLY が未設定の場合のエラーをテスト
+// TestLoad_MissingSessionHTTPOnlyはWIKINO_SESSION_HTTPONLYが未設定の場合のエラーをテスト
 func TestLoad_MissingSessionHTTPOnly(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -167,11 +182,11 @@ func TestLoad_MissingSessionHTTPOnly(t *testing.T) {
 
 	_, err := Load()
 	if err == nil {
-		t.Error("Load() should return error when WIKINO_SESSION_HTTPONLY is missing")
+		t.Error("WIKINO_SESSION_HTTPONLYが無いのにLoad()がエラーを返さなかった")
 	}
 }
 
-// TestLoad_DefaultEnv は APP_ENV が未設定の場合のデフォルト値をテスト
+// TestLoad_DefaultEnvはAPP_ENVが未設定の場合のデフォルト値をテスト
 func TestLoad_DefaultEnv(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -180,15 +195,15 @@ func TestLoad_DefaultEnv(t *testing.T) {
 
 	cfg, err := Load()
 	if err != nil {
-		t.Fatalf("Load() failed: %v", err)
+		t.Fatalf("Load()に失敗: %v", err)
 	}
 
 	if cfg.Env != "dev" {
-		t.Errorf("Env = %v, want dev (default)", cfg.Env)
+		t.Errorf("Env = %v、期待値 = dev (デフォルト)", cfg.Env)
 	}
 }
 
-// TestDatabaseDSN は DatabaseDSN メソッドをテスト
+// TestDatabaseDSNはDatabaseDSNメソッドをテスト
 func TestDatabaseDSN(t *testing.T) {
 	cfg := &Config{
 		DatabaseURL: "postgres://user:pass@localhost:5432/testdb?sslmode=disable",
@@ -198,11 +213,11 @@ func TestDatabaseDSN(t *testing.T) {
 	expected := "postgres://user:pass@localhost:5432/testdb?sslmode=disable"
 
 	if dsn != expected {
-		t.Errorf("DatabaseDSN() = %v, want %v", dsn, expected)
+		t.Errorf("DatabaseDSN() = %v、期待値 = %v", dsn, expected)
 	}
 }
 
-// TestIsDev は IsDev メソッドをテスト
+// TestIsDevはIsDevメソッドをテスト
 func TestIsDev(t *testing.T) {
 	tests := []struct {
 		env  string
@@ -218,13 +233,13 @@ func TestIsDev(t *testing.T) {
 		t.Run(tt.env, func(t *testing.T) {
 			cfg := &Config{Env: tt.env}
 			if got := cfg.IsDev(); got != tt.want {
-				t.Errorf("IsDev() = %v, want %v", got, tt.want)
+				t.Errorf("IsDev() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
 }
 
-// TestIsTest は IsTest メソッドをテスト
+// TestIsTestはIsTestメソッドをテスト
 func TestIsTest(t *testing.T) {
 	tests := []struct {
 		env  string
@@ -240,13 +255,13 @@ func TestIsTest(t *testing.T) {
 		t.Run(tt.env, func(t *testing.T) {
 			cfg := &Config{Env: tt.env}
 			if got := cfg.IsTest(); got != tt.want {
-				t.Errorf("IsTest() = %v, want %v", got, tt.want)
+				t.Errorf("IsTest() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
 }
 
-// TestIsProduction は IsProduction メソッドをテスト
+// TestIsProductionはIsProductionメソッドをテスト
 func TestIsProduction(t *testing.T) {
 	tests := []struct {
 		env  string
@@ -262,13 +277,13 @@ func TestIsProduction(t *testing.T) {
 		t.Run(tt.env, func(t *testing.T) {
 			cfg := &Config{Env: tt.env}
 			if got := cfg.IsProduction(); got != tt.want {
-				t.Errorf("IsProduction() = %v, want %v", got, tt.want)
+				t.Errorf("IsProduction() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
 }
 
-// TestAppURL は AppURL メソッドをテスト
+// TestAppURLはAppURLメソッドをテスト
 func TestAppURL(t *testing.T) {
 	tests := []struct {
 		env    string
@@ -284,13 +299,13 @@ func TestAppURL(t *testing.T) {
 		t.Run(tt.env, func(t *testing.T) {
 			cfg := &Config{Env: tt.env, Domain: tt.domain}
 			if got := cfg.AppURL(); got != tt.want {
-				t.Errorf("AppURL() = %v, want %v", got, tt.want)
+				t.Errorf("AppURL() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
 }
 
-// TestLoad_SessionSecure は WIKINO_SESSION_SECURE の bool 変換をテスト
+// TestLoad_SessionSecureはWIKINO_SESSION_SECUREのbool変換をテスト
 func TestLoad_SessionSecure(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -311,17 +326,17 @@ func TestLoad_SessionSecure(t *testing.T) {
 
 			cfg, err := Load()
 			if err != nil {
-				t.Fatalf("Load() failed: %v", err)
+				t.Fatalf("Load()に失敗: %v", err)
 			}
 
 			if cfg.SessionSecure != tt.want {
-				t.Errorf("SessionSecure = %v, want %v", cfg.SessionSecure, tt.want)
+				t.Errorf("SessionSecure = %v、期待値 = %v", cfg.SessionSecure, tt.want)
 			}
 		})
 	}
 }
 
-// TestLoad_SessionHTTPOnly は WIKINO_SESSION_HTTPONLY の bool 変換をテスト
+// TestLoad_SessionHTTPOnlyはWIKINO_SESSION_HTTPONLYのbool変換をテスト
 func TestLoad_SessionHTTPOnly(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -342,17 +357,17 @@ func TestLoad_SessionHTTPOnly(t *testing.T) {
 
 			cfg, err := Load()
 			if err != nil {
-				t.Fatalf("Load() failed: %v", err)
+				t.Fatalf("Load()に失敗: %v", err)
 			}
 
 			if cfg.SessionHTTPOnly != tt.want {
-				t.Errorf("SessionHTTPOnly = %v, want %v", cfg.SessionHTTPOnly, tt.want)
+				t.Errorf("SessionHTTPOnly = %v、期待値 = %v", cfg.SessionHTTPOnly, tt.want)
 			}
 		})
 	}
 }
 
-// TestLoad_TurnstileConfig は Turnstile 環境変数の読み込みをテスト
+// TestLoad_TurnstileConfigはTurnstile環境変数の読み込みをテスト
 func TestLoad_TurnstileConfig(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -402,20 +417,78 @@ func TestLoad_TurnstileConfig(t *testing.T) {
 
 			cfg, err := Load()
 			if err != nil {
-				t.Fatalf("Load() failed: %v", err)
+				t.Fatalf("Load()に失敗: %v", err)
 			}
 
 			if cfg.TurnstileSiteKey != tt.wantSiteKey {
-				t.Errorf("TurnstileSiteKey = %q, want %q", cfg.TurnstileSiteKey, tt.wantSiteKey)
+				t.Errorf("TurnstileSiteKey = %q、期待値 = %q", cfg.TurnstileSiteKey, tt.wantSiteKey)
 			}
 			if cfg.TurnstileSecretKey != tt.wantSecretKey {
-				t.Errorf("TurnstileSecretKey = %q, want %q", cfg.TurnstileSecretKey, tt.wantSecretKey)
+				t.Errorf("TurnstileSecretKey = %q、期待値 = %q", cfg.TurnstileSecretKey, tt.wantSecretKey)
 			}
 		})
 	}
 }
 
-// TestLoad_MaintenanceMode は メンテナンスモード設定のテスト
+// TestLoad_TurnstileEnabledはWIKINO_TURNSTILE_ENABLEDの読み込みと、
+// 本番では無効化を無視するfail-closedガードを検証する。
+func TestLoad_TurnstileEnabled(t *testing.T) {
+	tests := []struct {
+		name                  string
+		env                   string
+		turnstileEnabledSet   bool
+		turnstileEnabledValue string
+		want                  bool
+		wantErr               bool
+	}{
+		{name: "非本番 + falseは無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "false", want: false},
+		{name: "非本番 + FALSEは無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "FALSE", want: false},
+		{name: "非本番 + 0は無効化される", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "0", want: false},
+		{name: "本番 + falseはfail-closedで有効を維持", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "false", want: true},
+		{name: "本番 + FALSEもfail-closedで有効を維持", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "FALSE", want: true},
+		{name: "未設定は有効 (デフォルト)", env: "test", turnstileEnabledSet: false, want: true},
+		{name: "空文字列は有効 (デフォルト)", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "", want: true},
+		{name: "trueは有効", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "true", want: true},
+		{name: "1は有効", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "1", want: true},
+		{name: "本番 + 未設定は有効", env: "prod", turnstileEnabledSet: false, want: true},
+		{name: "解釈できない値は起動エラー", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "yes", wantErr: true},
+		{name: "打ち間違いも起動エラー", env: "test", turnstileEnabledSet: true, turnstileEnabledValue: "flase", wantErr: true},
+		{name: "本番でも解釈できない値は起動エラー", env: "prod", turnstileEnabledSet: true, turnstileEnabledValue: "yes", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := setupTestEnv(t)
+			defer cleanup()
+
+			_ = os.Setenv("APP_ENV", tt.env)
+			if tt.turnstileEnabledSet {
+				_ = os.Setenv("WIKINO_TURNSTILE_ENABLED", tt.turnstileEnabledValue)
+			} else {
+				_ = os.Unsetenv("WIKINO_TURNSTILE_ENABLED")
+			}
+
+			cfg, err := Load()
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("WIKINO_TURNSTILE_ENABLED=%qでLoad()がエラーを返さなかった", tt.turnstileEnabledValue)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("Load()に失敗: %v", err)
+			}
+
+			if cfg.TurnstileEnabled != tt.want {
+				t.Errorf("TurnstileEnabled = %v、期待値 = %v", cfg.TurnstileEnabled, tt.want)
+			}
+		})
+	}
+}
+
+// TestLoad_MaintenanceModeは メンテナンスモード設定のテスト
 func TestLoad_MaintenanceMode(t *testing.T) {
 	tests := []struct {
 		name                string
@@ -479,20 +552,20 @@ func TestLoad_MaintenanceMode(t *testing.T) {
 
 			cfg, err := Load()
 			if err != nil {
-				t.Fatalf("Load() failed: %v", err)
+				t.Fatalf("Load()に失敗: %v", err)
 			}
 
 			if cfg.MaintenanceMode != tt.wantMaintenanceMode {
-				t.Errorf("MaintenanceMode = %v, want %v", cfg.MaintenanceMode, tt.wantMaintenanceMode)
+				t.Errorf("MaintenanceMode = %v、期待値 = %v", cfg.MaintenanceMode, tt.wantMaintenanceMode)
 			}
 			if !reflect.DeepEqual(cfg.AdminIPs, tt.wantAdminIPs) {
-				t.Errorf("AdminIPs = %v, want %v", cfg.AdminIPs, tt.wantAdminIPs)
+				t.Errorf("AdminIPs = %v、期待値 = %v", cfg.AdminIPs, tt.wantAdminIPs)
 			}
 		})
 	}
 }
 
-// TestLoad_DisableRateLimit は DisableRateLimit 設定のテスト
+// TestLoad_DisableRateLimitはDisableRateLimit設定のテスト
 func TestLoad_DisableRateLimit(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -518,17 +591,17 @@ func TestLoad_DisableRateLimit(t *testing.T) {
 
 			cfg, err := Load()
 			if err != nil {
-				t.Fatalf("Load() failed: %v", err)
+				t.Fatalf("Load()に失敗: %v", err)
 			}
 
 			if cfg.DisableRateLimit != tt.want {
-				t.Errorf("DisableRateLimit = %v, want %v", cfg.DisableRateLimit, tt.want)
+				t.Errorf("DisableRateLimit = %v、期待値 = %v", cfg.DisableRateLimit, tt.want)
 			}
 		})
 	}
 }
 
-// TestLoad_RailsAppURL は RailsAppURL 設定のテスト
+// TestLoad_RailsAppURLはRailsAppURL設定のテスト
 func TestLoad_RailsAppURL(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
@@ -538,15 +611,64 @@ func TestLoad_RailsAppURL(t *testing.T) {
 
 	cfg, err := Load()
 	if err != nil {
-		t.Fatalf("Load() failed: %v", err)
+		t.Fatalf("Load()に失敗: %v", err)
 	}
 
 	if cfg.RailsAppURL != railsURL {
-		t.Errorf("RailsAppURL = %v, want %v", cfg.RailsAppURL, railsURL)
+		t.Errorf("RailsAppURL = %v、期待値 = %v", cfg.RailsAppURL, railsURL)
 	}
 }
 
-// TestParseAdminIPs は parseAdminIPs 関数のテスト
+// TestLoad_R2Configは、オブジェクトストレージの設定がそのまま読まれること、およびすべてが
+// 未設定でもエラーにならないことを検証する。imgproxyもエクスポートも使わないデプロイは、それでも
+// 起動できなければならない。
+func TestLoad_R2Config(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load()に失敗: %v", err)
+	}
+	if cfg.R2BucketName != "" || cfg.R2Endpoint != "" || cfg.R2AccessKeyID != "" || cfg.R2SecretAccessKey != "" || cfg.R2Region != "" {
+		t.Errorf(
+			"未設定のときR2の設定は空であるべき: bucket=%t endpoint=%t access_key_id=%t secret_access_key=%t region=%t",
+			cfg.R2BucketName != "",
+			cfg.R2Endpoint != "",
+			cfg.R2AccessKeyID != "",
+			cfg.R2SecretAccessKey != "",
+			cfg.R2Region != "",
+		)
+	}
+
+	_ = os.Setenv("WIKINO_R2_BUCKET_NAME", "wikino-test")
+	_ = os.Setenv("WIKINO_R2_ENDPOINT", "https://storage.example.com")
+	_ = os.Setenv("WIKINO_R2_ACCESS_KEY_ID", "test-access-key-id")
+	_ = os.Setenv("WIKINO_R2_SECRET_ACCESS_KEY", "test-secret-access-key")
+	_ = os.Setenv("WIKINO_R2_REGION", "apac")
+
+	cfg, err = Load()
+	if err != nil {
+		t.Fatalf("Load()に失敗: %v", err)
+	}
+	if cfg.R2BucketName != "wikino-test" {
+		t.Errorf("R2BucketName = %q、期待値 = %q", cfg.R2BucketName, "wikino-test")
+	}
+	if cfg.R2Endpoint != "https://storage.example.com" {
+		t.Errorf("R2Endpoint = %q、期待値 = %q", cfg.R2Endpoint, "https://storage.example.com")
+	}
+	if cfg.R2AccessKeyID != "test-access-key-id" {
+		t.Errorf("R2AccessKeyID = %q、期待値 = %q", cfg.R2AccessKeyID, "test-access-key-id")
+	}
+	if cfg.R2SecretAccessKey != "test-secret-access-key" {
+		t.Errorf("R2SecretAccessKey = %q、期待値 = %q", cfg.R2SecretAccessKey, "test-secret-access-key")
+	}
+	if cfg.R2Region != "apac" {
+		t.Errorf("R2Region = %q、期待値 = %q", cfg.R2Region, "apac")
+	}
+}
+
+// TestParseAdminIPsはparseAdminIPs関数のテスト
 func TestParseAdminIPs(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -589,13 +711,13 @@ func TestParseAdminIPs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := parseAdminIPs(tt.input)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseAdminIPs(%q) = %v, want %v", tt.input, got, tt.want)
+				t.Errorf("parseAdminIPs(%q) = %v、期待値 = %v", tt.input, got, tt.want)
 			}
 		})
 	}
 }
 
-// TestLoad_SentryConfig は Sentry 環境変数の読み込みをテスト
+// TestLoad_SentryConfigはSentry環境変数の読み込みをテスト
 func TestLoad_SentryConfig(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -609,13 +731,13 @@ func TestLoad_SentryConfig(t *testing.T) {
 		wantDebug            bool
 	}{
 		{
-			name:                 "全て未設定 (Sentry 無効化、Environment は APP_ENV にフォールバック)",
+			name:                 "全て未設定 (Sentry無効化、EnvironmentはAPP_ENVにフォールバック)",
 			dsn:                  "",
 			environment:          "",
 			tracesSampleRate:     "",
 			debug:                "",
 			wantDSN:              "",
-			wantEnvironment:      "test", // setupTestEnv で APP_ENV=test に設定済み
+			wantEnvironment:      "test", // setupTestEnvでAPP_ENV=testに設定済み
 			wantTracesSampleRate: 0.5,
 			wantDebug:            false,
 		},
@@ -631,7 +753,7 @@ func TestLoad_SentryConfig(t *testing.T) {
 			wantDebug:            true,
 		},
 		{
-			name:                 "DSN のみ設定 (他はデフォルト)",
+			name:                 "DSNのみ設定 (他はデフォルト)",
 			dsn:                  "https://example@o0.ingest.sentry.io/0",
 			environment:          "",
 			tracesSampleRate:     "",
@@ -642,7 +764,7 @@ func TestLoad_SentryConfig(t *testing.T) {
 			wantDebug:            false,
 		},
 		{
-			name:                 "Debug が true 以外の値は false 扱い",
+			name:                 "Debugがtrue以外の値はfalse扱い",
 			dsn:                  "",
 			environment:          "",
 			tracesSampleRate:     "",
@@ -674,35 +796,35 @@ func TestLoad_SentryConfig(t *testing.T) {
 
 			cfg, err := Load()
 			if err != nil {
-				t.Fatalf("Load() failed: %v", err)
+				t.Fatalf("Load()に失敗: %v", err)
 			}
 
 			if cfg.SentryDSN != tt.wantDSN {
-				t.Errorf("SentryDSN = %q, want %q", cfg.SentryDSN, tt.wantDSN)
+				t.Errorf("SentryDSN = %q、期待値 = %q", cfg.SentryDSN, tt.wantDSN)
 			}
 			if cfg.SentryEnvironment != tt.wantEnvironment {
-				t.Errorf("SentryEnvironment = %q, want %q", cfg.SentryEnvironment, tt.wantEnvironment)
+				t.Errorf("SentryEnvironment = %q、期待値 = %q", cfg.SentryEnvironment, tt.wantEnvironment)
 			}
 			if cfg.SentryTracesSampleRate != tt.wantTracesSampleRate {
-				t.Errorf("SentryTracesSampleRate = %v, want %v", cfg.SentryTracesSampleRate, tt.wantTracesSampleRate)
+				t.Errorf("SentryTracesSampleRate = %v、期待値 = %v", cfg.SentryTracesSampleRate, tt.wantTracesSampleRate)
 			}
 			if cfg.SentryDebug != tt.wantDebug {
-				t.Errorf("SentryDebug = %v, want %v", cfg.SentryDebug, tt.wantDebug)
+				t.Errorf("SentryDebug = %v、期待値 = %v", cfg.SentryDebug, tt.wantDebug)
 			}
 		})
 	}
 }
 
-// TestLoad_SentryEnvironment_FallbackToAppEnv は SentryEnvironment が APP_ENV にフォールバックすることをテスト
+// TestLoad_SentryEnvironment_FallbackToAppEnvはSentryEnvironmentがAPP_ENVにフォールバックすることをテスト
 func TestLoad_SentryEnvironment_FallbackToAppEnv(t *testing.T) {
 	tests := []struct {
 		name    string
 		appEnv  string
 		wantEnv string
 	}{
-		{name: "dev へフォールバック", appEnv: "dev", wantEnv: "dev"},
-		{name: "test へフォールバック", appEnv: "test", wantEnv: "test"},
-		{name: "prod へフォールバック", appEnv: "prod", wantEnv: "prod"},
+		{name: "devへフォールバック", appEnv: "dev", wantEnv: "dev"},
+		{name: "testへフォールバック", appEnv: "test", wantEnv: "test"},
+		{name: "prodへフォールバック", appEnv: "prod", wantEnv: "prod"},
 	}
 
 	for _, tt := range tests {
@@ -715,31 +837,31 @@ func TestLoad_SentryEnvironment_FallbackToAppEnv(t *testing.T) {
 
 			cfg, err := Load()
 			if err != nil {
-				t.Fatalf("Load() failed: %v", err)
+				t.Fatalf("Load()に失敗: %v", err)
 			}
 
 			if cfg.SentryEnvironment != tt.wantEnv {
-				t.Errorf("SentryEnvironment = %q, want %q", cfg.SentryEnvironment, tt.wantEnv)
+				t.Errorf("SentryEnvironment = %q、期待値 = %q", cfg.SentryEnvironment, tt.wantEnv)
 			}
 		})
 	}
 }
 
-// TestParseSentryTracesSampleRate は parseSentryTracesSampleRate 関数のテスト
+// TestParseSentryTracesSampleRateはparseSentryTracesSampleRate関数のテスト
 func TestParseSentryTracesSampleRate(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
 		want  float64
 	}{
-		{name: "空文字列はデフォルト 0.5", input: "", want: 0.5},
-		{name: "下限 0.0", input: "0.0", want: 0.0},
-		{name: "中間値 0.5", input: "0.5", want: 0.5},
-		{name: "0.25 を受理", input: "0.25", want: 0.25},
-		{name: "上限 1.0", input: "1.0", want: 1.0},
-		{name: "範囲外 (負数) はデフォルト 0.5", input: "-0.1", want: 0.5},
-		{name: "範囲外 (1.0 超過) はデフォルト 0.5", input: "1.5", want: 0.5},
-		{name: "パース不可文字列はデフォルト 0.5", input: "abc", want: 0.5},
+		{name: "空文字列はデフォルト0.5", input: "", want: 0.5},
+		{name: "下限0.0", input: "0.0", want: 0.0},
+		{name: "中間値0.5", input: "0.5", want: 0.5},
+		{name: "0.25を受理", input: "0.25", want: 0.25},
+		{name: "上限1.0", input: "1.0", want: 1.0},
+		{name: "範囲外 (負数) はデフォルト0.5", input: "-0.1", want: 0.5},
+		{name: "範囲外 (1.0超過) はデフォルト0.5", input: "1.5", want: 0.5},
+		{name: "パース不可文字列はデフォルト0.5", input: "abc", want: 0.5},
 		{name: "整数表記も許容", input: "1", want: 1.0},
 	}
 
@@ -747,13 +869,13 @@ func TestParseSentryTracesSampleRate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := parseSentryTracesSampleRate(tt.input)
 			if got != tt.want {
-				t.Errorf("parseSentryTracesSampleRate(%q) = %v, want %v", tt.input, got, tt.want)
+				t.Errorf("parseSentryTracesSampleRate(%q) = %v、期待値 = %v", tt.input, got, tt.want)
 			}
 		})
 	}
 }
 
-// TestGetAssetVersion は GetAssetVersion メソッドのテスト
+// TestGetAssetVersionはGetAssetVersionメソッドのテスト
 func TestGetAssetVersion(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -789,34 +911,27 @@ func TestGetAssetVersion(t *testing.T) {
 			got2 := cfg.GetAssetVersion()
 
 			if tt.wantStatic {
-				// 静的値（GitRev）が返されるべき
+				// 静的値 (GitRev) が返されるべき
 				if got1 != tt.assetVersion {
-					t.Errorf("GetAssetVersion() = %v, want %v", got1, tt.assetVersion)
+					t.Errorf("GetAssetVersion() = %v、期待値 = %v", got1, tt.assetVersion)
 				}
 				if got1 != got2 {
-					t.Errorf("GetAssetVersion() should return same value, got %v and %v", got1, got2)
+					t.Errorf("GetAssetVersion()が異なる値を返した: %v、%v", got1, got2)
 				}
 			} else {
-				// 動的値（タイムスタンプ）が返されるべき
+				// 動的値 (タイムスタンプ) が返されるべき
 				if got1 == "" {
-					t.Error("GetAssetVersion() should not return empty string")
+					t.Error("GetAssetVersion()が空文字列を返した")
 				}
 			}
 		})
 	}
 }
 
-// TestGetGitCommitHash verifies that the GIT_REV environment variable takes
-// precedence and is shortened to 7 characters.
+// GIT_REV環境変数が最優先され、7文字に短縮されることを検証する。
 //
-// A Dokku deploy target has no .git directory, so the git command fails;
-// whether GIT_REV is usable therefore decides the Sentry release (avoiding a
-// fallback to "dev").
-//
-// [Ja] GIT_REV 環境変数が最優先され、7 文字に短縮されることを検証する。
-//
-// Dokku のデプロイ先には .git が無く git コマンドが失敗するため、GIT_REV を
-// 使えるかどうかが Sentry の release ("dev" 化の回避) を左右する。
+// Dokkuのデプロイ先には .gitが無くgitコマンドが失敗するため、GIT_REVを
+// 使えるかどうかがSentryのrelease ("dev" 化の回避) を左右する。
 func TestGetGitCommitHash(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -846,7 +961,7 @@ func TestGetGitCommitHash(t *testing.T) {
 
 			got := getGitCommitHash()
 			if got != tt.want {
-				t.Errorf("getGitCommitHash() = %q, want %q", got, tt.want)
+				t.Errorf("getGitCommitHash() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}

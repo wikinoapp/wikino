@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// UserPassword はユーザーパスワードのドメインモデル
+// UserPasswordはユーザーパスワードのドメインモデル
 type UserPassword struct {
 	ID             string
 	UserID         UserID

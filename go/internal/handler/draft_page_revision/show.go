@@ -16,10 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Show returns the revision diff as an HTML fragment rendered into the diff modal on the page
-// editor (GET /s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}).
-//
-// [Ja] Show はページ編集画面の差分モーダルに表示する、リビジョン差分の HTML フラグメントを返します
+// Showはページ編集画面の差分モーダルに表示する、リビジョン差分のHTMLフラグメントを返します
 // (GET /s/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id})。
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -63,12 +60,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The diff is computed in the view-model layer from the two revisions the UseCase returned.
-	// [Ja] 差分は UseCase が返した 2 つのリビジョンからビューモデル層で計算する。
+	// 差分はUseCaseが返した2つのリビジョンからビューモデル層で計算する。
 	diff := viewmodel.NewDraftPageRevisionDiff(output.Revision, output.PreviousRevision)
 
-	// The fragment includes the inline restore form, so pass the restore URL and the CSRF token.
-	// [Ja] フラグメントはインラインの復元フォームを含むため、復元 URL と CSRF トークンを渡す。
+	// フラグメントはインラインの復元フォームを含むため、復元URLとCSRFトークンを渡す。
 	restoreURL := string(templates.PageDraftPageRevisionRestorePath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(pageNumber), string(output.Revision.ID)))
 
 	if err := components.DraftPageRevisionDiff(components.DraftPageRevisionDiffData{

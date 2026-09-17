@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// DraftPageForIndex は下書き一覧画面に表示する下書きページ情報です
+// DraftPageForIndexは下書き一覧画面に表示する下書きページ情報です
 type DraftPageForIndex struct {
 	title           string
 	PageNumber      int32
@@ -16,7 +16,7 @@ type DraftPageForIndex struct {
 	ModifiedAt      time.Time
 }
 
-// DisplayTitle は表示用タイトルを返します。タイトルが未設定の場合は「無題」を返します。
+// DisplayTitleは表示用タイトルを返します。タイトルが未設定の場合は「無題」を返します。
 func (d DraftPageForIndex) DisplayTitle(ctx context.Context) string {
 	if d.title != "" {
 		return d.title
@@ -24,7 +24,7 @@ func (d DraftPageForIndex) DisplayTitle(ctx context.Context) string {
 	return i18n.T(ctx, "draft_page_index_untitled")
 }
 
-// DraftPageGroupForIndex は下書き一覧画面のスペース・トピック単位のグループです
+// DraftPageGroupForIndexは下書き一覧画面のスペース・トピック単位のグループです
 type DraftPageGroupForIndex struct {
 	SpaceName       string
 	SpaceIdentifier SpaceIdentifier
@@ -34,7 +34,7 @@ type DraftPageGroupForIndex struct {
 	DraftPages      []DraftPageForIndex
 }
 
-// NewDraftPageGroupsForIndex はモデルのスライスからスペース・トピック単位のグループに変換します。
+// NewDraftPageGroupsForIndexはモデルのスライスからスペース・トピック単位のグループに変換します。
 // モデルはスペース名・トピック名順にソート済みの前提です。
 func NewDraftPageGroupsForIndex(drafts []*model.DraftPage) []DraftPageGroupForIndex {
 	if len(drafts) == 0 {

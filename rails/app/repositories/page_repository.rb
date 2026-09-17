@@ -5,11 +5,10 @@ class PageRepository < ApplicationRepository
   sig do
     params(
       page_record: PageRecord,
-      can_update: T.nilable(T::Boolean),
       current_space_member: T.nilable(SpaceMemberRecord)
     ).returns(Page)
   end
-  def to_model(page_record:, can_update: nil, current_space_member: nil)
+  def to_model(page_record:, current_space_member: nil)
     topic = TopicRepository.new.to_model(topic_record: page_record.topic_record.not_nil!)
     space = SpaceRepository.new.to_model(space_record: page_record.space_record.not_nil!)
 
@@ -18,16 +17,13 @@ class PageRepository < ApplicationRepository
       number: page_record.number,
       title: page_record.title,
       body: page_record.body,
-      body_html: page_record.body_html,
       modified_at: page_record.modified_at,
       published_at: page_record.published_at,
       pinned_at: page_record.pinned_at,
       trashed_at: page_record.trashed_at,
-      can_update:,
       space:,
       topic:,
-      card_image_url: page_record.card_image_url,
-      og_image_url: page_record.og_image_url
+      card_image_url: page_record.card_image_url
     )
   end
 
@@ -66,16 +62,13 @@ class PageRepository < ApplicationRepository
         number: page_record.number,
         title: page_record.title,
         body: page_record.body,
-        body_html: page_record.body_html,
         modified_at: page_record.modified_at,
         published_at: page_record.published_at,
         pinned_at: page_record.pinned_at,
         trashed_at: page_record.trashed_at,
-        can_update: nil,
         space:,
         topic:,
-        card_image_url: page_record.card_image_url,
-        og_image_url: page_record.og_image_url
+        card_image_url: page_record.card_image_url
       )
     end
 

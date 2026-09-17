@@ -14,13 +14,13 @@ const (
 	suggestionBodyMaxLength  = 10000
 )
 
-// SuggestionCreateValidator は編集提案作成のバリデーションを行う
+// SuggestionCreateValidatorは編集提案作成のバリデーションを行う
 type SuggestionCreateValidator struct {
 	draftPageRepo *repository.DraftPageRepository
 	pageRepo      *repository.PageRepository
 }
 
-// NewSuggestionCreateValidator は SuggestionCreateValidator を生成する
+// NewSuggestionCreateValidatorはSuggestionCreateValidatorを生成する
 func NewSuggestionCreateValidator(draftPageRepo *repository.DraftPageRepository, pageRepo *repository.PageRepository) *SuggestionCreateValidator {
 	return &SuggestionCreateValidator{
 		draftPageRepo: draftPageRepo,
@@ -28,7 +28,7 @@ func NewSuggestionCreateValidator(draftPageRepo *repository.DraftPageRepository,
 	}
 }
 
-// SuggestionCreateValidatorInput はバリデーションの入力パラメータ
+// SuggestionCreateValidatorInputはバリデーションの入力パラメータ
 type SuggestionCreateValidatorInput struct {
 	Title         string
 	Body          string
@@ -38,7 +38,7 @@ type SuggestionCreateValidatorInput struct {
 	SpaceID       model.SpaceID
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *SuggestionCreateValidator) Validate(ctx context.Context, input SuggestionCreateValidatorInput) ([]*model.DraftPage, error) {
 	ve := model.NewValidationError()
 
@@ -66,7 +66,7 @@ func (v *SuggestionCreateValidator) Validate(ctx context.Context, input Suggesti
 		return nil, ve
 	}
 
-	// 下書きページの存在確認（状態バリデーション）
+	// 下書きページの存在確認 (状態バリデーション)
 	draftPages := make([]*model.DraftPage, 0, len(input.DraftPageIDs))
 	for _, draftPageID := range input.DraftPageIDs {
 		draftPage, err := v.draftPageRepo.FindByID(ctx, draftPageID, input.SpaceID)
@@ -87,7 +87,7 @@ func (v *SuggestionCreateValidator) Validate(ctx context.Context, input Suggesti
 		draftPages = append(draftPages, draftPage)
 	}
 
-	// ページの現在のトピックが一致するか確認（ページ移動後の不整合を防止）
+	// ページの現在のトピックが一致するか確認 (ページ移動後の不整合を防止)
 	if err := validatePageTopicConsistency(ctx, v.pageRepo, draftPages, input.TopicID, input.SpaceID, "draft_page_ids", "validation_suggestion_draft_page_not_found"); err != nil {
 		return nil, err
 	}
@@ -95,21 +95,21 @@ func (v *SuggestionCreateValidator) Validate(ctx context.Context, input Suggesti
 	return draftPages, nil
 }
 
-// SuggestionUpdateValidator は編集提案更新のバリデーションを行う
+// SuggestionUpdateValidatorは編集提案更新のバリデーションを行う
 type SuggestionUpdateValidator struct{}
 
-// NewSuggestionUpdateValidator は SuggestionUpdateValidator を生成する
+// NewSuggestionUpdateValidatorはSuggestionUpdateValidatorを生成する
 func NewSuggestionUpdateValidator() *SuggestionUpdateValidator {
 	return &SuggestionUpdateValidator{}
 }
 
-// SuggestionUpdateValidatorInput はバリデーションの入力パラメータ
+// SuggestionUpdateValidatorInputはバリデーションの入力パラメータ
 type SuggestionUpdateValidatorInput struct {
 	Title string
 	Body  string
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *SuggestionUpdateValidator) Validate(ctx context.Context, input SuggestionUpdateValidatorInput) error {
 	ve := model.NewValidationError()
 

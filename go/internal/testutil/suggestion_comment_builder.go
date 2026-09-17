@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SuggestionCommentBuilder は編集提案コメントテストデータのビルダー
+// SuggestionCommentBuilderは編集提案コメントテストデータのビルダー
 type SuggestionCommentBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -20,7 +20,7 @@ type SuggestionCommentBuilder struct {
 	body                 string
 }
 
-// NewSuggestionCommentBuilder は SuggestionCommentBuilder を生成します
+// NewSuggestionCommentBuilderはSuggestionCommentBuilderを生成します
 func NewSuggestionCommentBuilder(t *testing.T, tx *sql.Tx) *SuggestionCommentBuilder {
 	t.Helper()
 	return &SuggestionCommentBuilder{
@@ -30,31 +30,31 @@ func NewSuggestionCommentBuilder(t *testing.T, tx *sql.Tx) *SuggestionCommentBui
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SuggestionCommentBuilder) WithSpaceID(spaceID model.SpaceID) *SuggestionCommentBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSuggestionID は編集提案IDを設定します
+// WithSuggestionIDは編集提案IDを設定します
 func (b *SuggestionCommentBuilder) WithSuggestionID(suggestionID model.SuggestionID) *SuggestionCommentBuilder {
 	b.suggestionID = string(suggestionID)
 	return b
 }
 
-// WithCreatedSpaceMemberID は作成者のスペースメンバーIDを設定します
+// WithCreatedSpaceMemberIDは作成者のスペースメンバーIDを設定します
 func (b *SuggestionCommentBuilder) WithCreatedSpaceMemberID(createdSpaceMemberID model.SpaceMemberID) *SuggestionCommentBuilder {
 	b.createdSpaceMemberID = string(createdSpaceMemberID)
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *SuggestionCommentBuilder) WithBody(body string) *SuggestionCommentBuilder {
 	b.body = body
 	return b
 }
 
-// Build は編集提案コメントを作成し、IDを返します
+// Buildは編集提案コメントを作成し、IDを返します
 func (b *SuggestionCommentBuilder) Build() model.SuggestionCommentID {
 	b.t.Helper()
 
@@ -95,7 +95,7 @@ func (b *SuggestionCommentBuilder) Build() model.SuggestionCommentID {
 	return model.SuggestionCommentID(id)
 }
 
-// SuggestionCommentBuilderDB はDB直接書き込みを使用する編集提案コメントテストデータのビルダー
+// SuggestionCommentBuilderDBはDB直接書き込みを使用する編集提案コメントテストデータのビルダー
 type SuggestionCommentBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
@@ -106,7 +106,7 @@ type SuggestionCommentBuilderDB struct {
 	body                 string
 }
 
-// NewSuggestionCommentBuilderDB は SuggestionCommentBuilderDB を生成します
+// NewSuggestionCommentBuilderDBはSuggestionCommentBuilderDBを生成します
 func NewSuggestionCommentBuilderDB(t *testing.T, db *sql.DB) *SuggestionCommentBuilderDB {
 	t.Helper()
 	return &SuggestionCommentBuilderDB{
@@ -116,31 +116,31 @@ func NewSuggestionCommentBuilderDB(t *testing.T, db *sql.DB) *SuggestionCommentB
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *SuggestionCommentBuilderDB) WithSpaceID(spaceID model.SpaceID) *SuggestionCommentBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithSuggestionID は編集提案IDを設定します
+// WithSuggestionIDは編集提案IDを設定します
 func (b *SuggestionCommentBuilderDB) WithSuggestionID(suggestionID model.SuggestionID) *SuggestionCommentBuilderDB {
 	b.suggestionID = string(suggestionID)
 	return b
 }
 
-// WithCreatedSpaceMemberID は作成者のスペースメンバーIDを設定します
+// WithCreatedSpaceMemberIDは作成者のスペースメンバーIDを設定します
 func (b *SuggestionCommentBuilderDB) WithCreatedSpaceMemberID(createdSpaceMemberID model.SpaceMemberID) *SuggestionCommentBuilderDB {
 	b.createdSpaceMemberID = string(createdSpaceMemberID)
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *SuggestionCommentBuilderDB) WithBody(body string) *SuggestionCommentBuilderDB {
 	b.body = body
 	return b
 }
 
-// Build は編集提案コメントを作成し、IDを返します
+// Buildは編集提案コメントを作成し、IDを返します
 func (b *SuggestionCommentBuilderDB) Build() model.SuggestionCommentID {
 	b.t.Helper()
 

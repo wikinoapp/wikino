@@ -78,28 +78,37 @@ func TestEdit_Success(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// フォームが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, `action="/password"`) {
-		t.Error("password form not found in response")
+		t.Error("レスポンスにパスワードのフォームが見つからない")
 	}
 
 	// CSRFトークンが含まれているか確認
 	if !strings.Contains(body, "csrf_token") {
-		t.Error("CSRF token not found in form")
+		t.Error("フォームにCSRFトークンが見つからない")
 	}
 
-	// トークンが hidden フィールドに含まれているか確認
+	// トークンがhiddenフィールドに含まれているか確認
 	if !strings.Contains(body, validToken) {
-		t.Error("token not found in form")
+		t.Error("フォームにトークンが見つからない")
 	}
 
-	// _method=PATCH が含まれているか確認
+	// _method=PATCHが含まれているか確認
 	if !strings.Contains(body, `value="PATCH"`) {
-		t.Error("method override not found in form")
+		t.Error("フォームにメソッドオーバーライドが見つからない")
+	}
+
+	// 本画面はクエリのトークンがあって初めて成立するため、正規アドレスを宣言しない。空のcanonical
+	// は「無い」ことにはならず、リクエストされたURLに解決されるため、トークンごとに別の正規アドレスが
+	// できてしまう。
+	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
+		if strings.Contains(body, notWant) {
+			t.Errorf("レスポンスに想定外の%qが含まれている", notWant)
+		}
 	}
 }
 
@@ -148,15 +157,15 @@ func TestEdit_TokenNotFound(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Edit(rr, req)
 
-	// ステータスコードを検証（エラーページもOKで返す）
+	// ステータスコードを検証 (エラーページもOKで返す)
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "無効なリンク") {
-		t.Error("invalid token error message not found in response")
+		t.Error("レスポンスに無効なトークンのエラーメッセージが見つからない")
 	}
 }
 
@@ -208,7 +217,7 @@ func TestEdit_TokenEmpty(t *testing.T) {
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "無効なリンク") {
-		t.Error("invalid token error message not found in response")
+		t.Error("レスポンスに無効なトークンのエラーメッセージが見つからない")
 	}
 }
 
@@ -272,7 +281,7 @@ func TestEdit_TokenExpired(t *testing.T) {
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "有効期限が切れています") {
-		t.Error("expired token error message not found in response")
+		t.Error("レスポンスに有効期限切れトークンのエラーメッセージが見つからない")
 	}
 }
 
@@ -338,7 +347,7 @@ func TestEdit_TokenUsed(t *testing.T) {
 	// エラーメッセージが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "既に使用されています") {
-		t.Error("used token error message not found in response")
+		t.Error("レスポンスに使用済みトークンのエラーメッセージが見つからない")
 	}
 }
 
@@ -402,7 +411,7 @@ func TestEdit_I18n_English(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// 英語のテキストが含まれているか確認
@@ -415,7 +424,7 @@ func TestEdit_I18n_English(t *testing.T) {
 
 	for _, expected := range expectedTexts {
 		if !strings.Contains(body, expected) {
-			t.Errorf("expected text not found: %s", expected)
+			t.Errorf("期待したテキストが見つからない: %s", expected)
 		}
 	}
 }

@@ -25,7 +25,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// generateUniqueCode はユニークな確認コードを生成します
+// generateUniqueCodeはユニークな確認コードを生成します
 func generateUniqueCode() string {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	code := make([]byte, 6)
@@ -88,12 +88,12 @@ func createConfirmedEmailConfirmation(t *testing.T, emailConfirmationRepo *repos
 		StartedAt: now,
 	})
 	if err != nil {
-		t.Fatalf("failed to create email confirmation: %v", err)
+		t.Fatalf("メールアドレス確認の作成に失敗: %v", err)
 	}
 
 	err = emailConfirmationRepo.Succeed(t.Context(), emailConfirmation.ID)
 	if err != nil {
-		t.Fatalf("failed to succeed email confirmation: %v", err)
+		t.Fatalf("メールアドレス確認の成功処理に失敗: %v", err)
 	}
 
 	return emailConfirmation.ID
@@ -125,7 +125,7 @@ func TestCreate_Success(t *testing.T) {
 	ctx = timezone.ToContext(ctx, "America/New_York")
 	req = req.WithContext(ctx)
 
-	// email_confirmation_id を Cookie に設定
+	// email_confirmation_idをCookieに設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: ecID,
@@ -136,13 +136,13 @@ func TestCreate_Success(t *testing.T) {
 
 	// リダイレクトのステータスコードを検証
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	// リダイレクト先を検証
 	location := rr.Header().Get("Location")
 	if location != "/home" {
-		t.Errorf("wrong redirect location: got %v want %v", location, "/home")
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, "/home")
 	}
 
 	// セッションCookieが設定されているか確認
@@ -152,28 +152,28 @@ func TestCreate_Success(t *testing.T) {
 		if cookie.Name == session.CookieName {
 			hasSessionCookie = true
 			if cookie.Value == "" {
-				t.Error("session cookie value is empty")
+				t.Error("セッションCookieの値が空")
 			}
 		}
 	}
 	if !hasSessionCookie {
-		t.Error("session cookie not set")
+		t.Error("セッションCookieがセットされていない")
 	}
 
 	// ユーザーが作成されているか確認
 	user, err := userRepo.FindByAtname(t.Context(), testAtname)
 	if err != nil {
-		t.Fatalf("failed to find user: %v", err)
+		t.Fatalf("ユーザーの取得に失敗: %v", err)
 	}
 	if user == nil {
-		t.Error("user not created")
+		t.Error("ユーザーが作成されていない")
 	}
 	if user != nil && user.Email != testEmail {
-		t.Errorf("wrong email: got %v want %v", user.Email, testEmail)
+		t.Errorf("メールアドレス = %v、期待値 = %v", user.Email, testEmail)
 	}
 	// コンテキストから取得したタイムゾーンが保存されているか確認
 	if user != nil && user.TimeZone != "America/New_York" {
-		t.Errorf("wrong timezone: got %v want %v", user.TimeZone, "America/New_York")
+		t.Errorf("タイムゾーン = %v、期待値 = %v", user.TimeZone, "America/New_York")
 	}
 }
 
@@ -187,7 +187,7 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 
 	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
-	// フォームデータを作成（アットネーム空）
+	// フォームデータを作成 (アットネーム空)
 	form := url.Values{}
 	form.Set("atname", "")
 	form.Set("password", "password123")
@@ -202,7 +202,7 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	req = req.WithContext(ctx)
 
-	// email_confirmation_id を Cookie に設定
+	// email_confirmation_idをCookieに設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: ecID,
@@ -213,13 +213,13 @@ func TestCreate_ValidationError_AtnameRequired(t *testing.T) {
 
 	// バリデーションエラーのステータスコードを検証
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// エラーメッセージが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "アットネームを入力してください") {
-		t.Error("atname required error not found in response")
+		t.Error("レスポンスにatname必須のエラーが見つからない")
 	}
 }
 
@@ -233,7 +233,7 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 
 	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
-	// フォームデータを作成（パスワードが短い）
+	// フォームデータを作成 (パスワードが短い)
 	form := url.Values{}
 	form.Set("atname", "testuser")
 	form.Set("password", "short")
@@ -248,7 +248,7 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	req = req.WithContext(ctx)
 
-	// email_confirmation_id を Cookie に設定
+	// email_confirmation_idをCookieに設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: ecID,
@@ -259,13 +259,13 @@ func TestCreate_ValidationError_PasswordTooShort(t *testing.T) {
 
 	// バリデーションエラーのステータスコードを検証
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// エラーメッセージが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "パスワードは8文字以上で入力してください") {
-		t.Error("password too short error not found in response")
+		t.Error("レスポンスにパスワードが短すぎるエラーが見つからない")
 	}
 }
 
@@ -279,7 +279,7 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 
 	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
-	// フォームデータを作成（アットネームに無効な文字）
+	// フォームデータを作成 (アットネームに無効な文字)
 	form := url.Values{}
 	form.Set("atname", "test-user!@")
 	form.Set("password", "password123")
@@ -294,7 +294,7 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	req = req.WithContext(ctx)
 
-	// email_confirmation_id を Cookie に設定
+	// email_confirmation_idをCookieに設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: ecID,
@@ -305,13 +305,13 @@ func TestCreate_ValidationError_AtnameInvalidFormat(t *testing.T) {
 
 	// バリデーションエラーのステータスコードを検証
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// エラーメッセージが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "アットネームは英数字とアンダースコアのみ使用できます") {
-		t.Error("atname invalid format error not found in response")
+		t.Error("レスポンスにatnameの形式が不正なエラーが見つからない")
 	}
 }
 
@@ -335,12 +335,12 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 		JoinedAt:    time.Now(),
 	})
 	if err != nil {
-		t.Fatalf("failed to create existing user: %v", err)
+		t.Fatalf("既存ユーザーの作成に失敗: %v", err)
 	}
 
 	ecID := createConfirmedEmailConfirmation(t, emailConfirmationRepo, testEmail)
 
-	// フォームデータを作成（既存のアットネームを使用）
+	// フォームデータを作成 (既存のアットネームを使用)
 	form := url.Values{}
 	form.Set("atname", existingAtname)
 	form.Set("password", "password123")
@@ -355,7 +355,7 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 	ctx = i18n.SetLocale(ctx, i18n.LangJa)
 	req = req.WithContext(ctx)
 
-	// email_confirmation_id を Cookie に設定
+	// email_confirmation_idをCookieに設定
 	req.AddCookie(&http.Cookie{
 		Name:  session.EmailConfirmationCookieName,
 		Value: ecID,
@@ -366,13 +366,13 @@ func TestCreate_AtnameAlreadyTaken(t *testing.T) {
 
 	// バリデーションエラーのステータスコードを検証
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// エラーメッセージが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "このアットネームは既に使用されています") {
-		t.Error("atname already taken error not found in response")
+		t.Error("レスポンスにatname使用済みのエラーが見つからない")
 	}
 }
 
@@ -386,7 +386,7 @@ func TestCreate_NoEmailConfirmationID(t *testing.T) {
 	form.Set("atname", "testuser")
 	form.Set("password", "password123")
 
-	// HTTPリクエストを作成（email_confirmation_id のCookieなし）
+	// HTTPリクエストを作成 (email_confirmation_idのCookieなし)
 	req := httptest.NewRequest(http.MethodPost, "/accounts", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept-Language", "ja")
@@ -400,26 +400,20 @@ func TestCreate_NoEmailConfirmationID(t *testing.T) {
 
 	// リダイレクトのステータスコードを検証
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	// リダイレクト先を検証
 	location := rr.Header().Get("Location")
 	if location != "/sign_up" {
-		t.Errorf("wrong redirect location: got %v want %v", location, "/sign_up")
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, "/sign_up")
 	}
 }
 
-// TestCreate_SessionIPAddress_PrioritizesCFConnectingIP locks in that the created
-// session records the client IP resolved by internal/clientip (CF-Connecting-IP
-// first), not the raw r.RemoteAddr. chi's RealIP middleware was removed, so the
-// session IP now comes from clientip.GetClientIP; sending CF-Connecting-IP and a
-// different X-Forwarded-For proves CF-Connecting-IP wins.
-//
-// [Ja] 作成されるセッションの IP が、生の r.RemoteAddr ではなく internal/clientip
-// (CF-Connecting-IP 優先) で解決したクライアント IP で記録されることを固定する。
-// chi の RealIP ミドルウェアを削除したためセッション IP は clientip.GetClientIP 由来になる。
-// CF-Connecting-IP と異なる X-Forwarded-For を同時に送り、CF-Connecting-IP が勝つことを確認する。
+// 作成されるセッションのIPが、生のr.RemoteAddrではなくinternal/clientip
+// (CF-Connecting-IP優先) で解決したクライアントIPで記録されることを固定する。
+// chiのRealIPミドルウェアを削除したためセッションIPはclientip.GetClientIP由来になる。
+// CF-Connecting-IPと異なるX-Forwarded-Forを同時に送り、CF-Connecting-IPが勝つことを確認する。
 func TestCreate_SessionIPAddress_PrioritizesCFConnectingIP(t *testing.T) {
 	t.Parallel()
 
@@ -454,11 +448,10 @@ func TestCreate_SessionIPAddress_PrioritizesCFConnectingIP(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Fatalf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
-	// Pull the session token out of the response cookie.
-	// [Ja] レスポンスの Cookie からセッショントークンを取り出す。
+	// レスポンスのCookieからセッショントークンを取り出す。
 	var sessionToken string
 	for _, cookie := range rr.Result().Cookies() {
 		if cookie.Name == session.CookieName {
@@ -467,20 +460,19 @@ func TestCreate_SessionIPAddress_PrioritizesCFConnectingIP(t *testing.T) {
 		}
 	}
 	if sessionToken == "" {
-		t.Fatal("session cookie not set")
+		t.Fatal("セッションCookieがセットされていない")
 	}
 
-	// Read the persisted session back and verify the recorded IP.
-	// [Ja] 永続化されたセッションを読み戻し、記録された IP を検証する。
+	// 永続化されたセッションを読み戻し、記録されたIPを検証する。
 	userSessionRepo := repository.NewUserSessionRepository(query.New(testutil.GetTestDB()))
 	sess, err := userSessionRepo.FindByToken(t.Context(), sessionToken)
 	if err != nil {
-		t.Fatalf("failed to find session: %v", err)
+		t.Fatalf("セッションの取得に失敗: %v", err)
 	}
 	if sess == nil {
-		t.Fatal("session not found")
+		t.Fatal("セッションが見つからない")
 	}
 	if sess.IPAddress != "203.0.113.7" {
-		t.Errorf("session IP address: got %q want %q", sess.IPAddress, "203.0.113.7")
+		t.Errorf("セッションのIPアドレス = %q、期待値 = %q", sess.IPAddress, "203.0.113.7")
 	}
 }

@@ -28,10 +28,10 @@ func TestBodyLimit_WithinLimit(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("ステータスコードが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 	if string(receivedBody) != body {
-		t.Errorf("ボディが期待と異なる: got len=%d want len=%d", len(receivedBody), len(body))
+		t.Errorf("ボディの長さ = %d、期待値 = %d", len(receivedBody), len(body))
 	}
 }
 
@@ -52,7 +52,7 @@ func TestBodyLimit_ExactLimit(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("ステータスコードが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
@@ -71,7 +71,7 @@ func TestBodyLimit_OverLimitReturns413(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusRequestEntityTooLarge {
-		t.Errorf("ステータスコードが期待と異なる: got %d want %d", rr.Code, http.StatusRequestEntityTooLarge)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusRequestEntityTooLarge)
 	}
 	if !strings.Contains(rr.Body.String(), "Request Entity Too Large") {
 		t.Errorf("レスポンスボディに期待する文字列が含まれない: body=%q", rr.Body.String())
@@ -81,8 +81,8 @@ func TestBodyLimit_OverLimitReturns413(t *testing.T) {
 	}
 }
 
-// TestBodyLimit_ContentLengthOverLimitRejectsEarly は Content-Length が上限を超えている場合に
-// ボディを読み込まずに 413 を返すことを検証する。下流ハンドラーに到達しないこと・
+// TestBodyLimit_ContentLengthOverLimitRejectsEarlyはContent-Lengthが上限を超えている場合に
+// ボディを読み込まずに413を返すことを検証する。下流ハンドラーに到達しないこと・
 // リクエストボディがまったく読まれていないこと(カウンタで検証)を確認する。
 func TestBodyLimit_ContentLengthOverLimitRejectsEarly(t *testing.T) {
 	t.Parallel()
@@ -93,8 +93,8 @@ func TestBodyLimit_ContentLengthOverLimitRejectsEarly(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// 実際のボディは短いが Content-Length を上限超過で申告する。早期拒否が効いていれば
-	// ボディの中身は読まれずに 413 が返る。
+	// 実際のボディは短いがContent-Lengthを上限超過で申告する。早期拒否が効いていれば
+	// ボディの中身は読まれずに413が返る。
 	body := &readCounter{src: strings.NewReader("dummy")}
 	req := httptest.NewRequest(http.MethodPost, "/test", body)
 	req.ContentLength = DefaultMaxBodyBytes + 1
@@ -102,21 +102,21 @@ func TestBodyLimit_ContentLengthOverLimitRejectsEarly(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusRequestEntityTooLarge {
-		t.Errorf("ステータスコードが期待と異なる: got %d want %d", rr.Code, http.StatusRequestEntityTooLarge)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusRequestEntityTooLarge)
 	}
 	if !strings.Contains(rr.Body.String(), "Request Entity Too Large") {
 		t.Errorf("レスポンスボディに期待する文字列が含まれない: body=%q", rr.Body.String())
 	}
 	if called {
-		t.Error("Content-Length 超過時は下流ハンドラーを呼び出すべきでない")
+		t.Error("Content-Length超過時は下流ハンドラーを呼び出すべきでない")
 	}
 	if body.reads > 0 {
-		t.Errorf("Content-Length による早期拒否時はボディを読むべきでない: reads=%d", body.reads)
+		t.Errorf("Content-Lengthによる早期拒否時はボディを読むべきでない: reads=%d", body.reads)
 	}
 }
 
-// readCounter はボディの読み込み回数をカウントする io.Reader。
-// Content-Length での早期拒否時にボディが読まれていないことを検証するために使う。
+// readCounterはボディの読み込み回数をカウントするio.Reader。
+// Content-Lengthでの早期拒否時にボディが読まれていないことを検証するために使う。
 type readCounter struct {
 	src   io.Reader
 	reads int
@@ -144,12 +144,12 @@ func TestBodyLimit_GetRequestPassesThrough(t *testing.T) {
 		t.Error("ハンドラーが呼ばれていない")
 	}
 	if rr.Code != http.StatusOK {
-		t.Errorf("ステータスコードが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 }
 
-// TestBodyLimit_DownstreamCanReadFormValue は先読み後に下流ハンドラーで
-// r.ParseForm / r.FormValue が引き続き機能することを検証する。
+// TestBodyLimit_DownstreamCanReadFormValueは先読み後に下流ハンドラーで
+// r.ParseForm / r.FormValueが引き続き機能することを検証する。
 func TestBodyLimit_DownstreamCanReadFormValue(t *testing.T) {
 	t.Parallel()
 
@@ -166,9 +166,9 @@ func TestBodyLimit_DownstreamCanReadFormValue(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("ステータスコードが期待と異なる: got %d want %d", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 	if receivedValue != "hello" {
-		t.Errorf("フォーム値が期待と異なる: got %q want %q", receivedValue, "hello")
+		t.Errorf("フォーム値 = %q、期待値 = %q", receivedValue, "hello")
 	}
 }

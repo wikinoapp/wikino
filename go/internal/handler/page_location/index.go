@@ -13,24 +13,24 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// writeJSONError はJSON形式のエラーレスポンスを返す
+// writeJSONErrorはJSON形式のエラーレスポンスを返す
 func writeJSONError(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(map[string]string{"error": message}) //nolint:errcheck
 }
 
-// pageLocationItem はページロケーション検索結果の1件を表す
+// pageLocationItemはページロケーション検索結果の1件を表す
 type pageLocationItem struct {
 	Key string `json:"key"`
 }
 
-// pageLocationsResponse はページロケーション検索のJSONレスポンス
+// pageLocationsResponseはページロケーション検索のJSONレスポンス
 type pageLocationsResponse struct {
 	PageLocations []pageLocationItem `json:"page_locations"`
 }
 
-// Index はページロケーションを検索します (GET /s/{space_identifier}/page_locations)
+// Indexはページロケーションを検索します (GET /s/{space_identifier}/page_locations)
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

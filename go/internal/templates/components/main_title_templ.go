@@ -10,7 +10,7 @@ import (
 	templruntime "github.com/a-h/templ/runtime"
 )
 
-// MainTitleData はメインタイトルコンポーネントに渡すデータ構造体です
+// MainTitleDataはメインタイトルコンポーネントに渡すデータ構造体です
 type MainTitleData struct {
 	Title    string
 	Subtitle templ.Component
@@ -18,8 +18,8 @@ type MainTitleData struct {
 	Actions  templ.Component
 }
 
-// SubtitleText は文字列をサブタイトル用の templ.Component に変換します。
-// 空文字列の場合は nil を返し、MainTitle のサブタイトル表示をスキップさせます。
+// SubtitleTextは文字列をサブタイトル用のtempl.Componentに変換します。
+// 空文字列の場合はnilを返し、MainTitleのサブタイトル表示をスキップさせます。
 func SubtitleText(text string) templ.Component {
 	if text == "" {
 		return nil
@@ -61,7 +61,16 @@ func subtitleText(text string) templ.Component {
 	})
 }
 
-// MainTitle はページのメインタイトルと区切り線を表示します
+// MainTitleはページのメインタイトルと、それに紐づく操作領域を描画する。
+//
+// 操作領域は見出し行の中央ではなく上端に置く。隣の列がどれだけ高くなっても — タイトルが複数行に
+// 折り返しても、その下にサブタイトルや追加のコンテンツが付いても — 操作領域が同じ位置に出るように
+// するためである。中央に置くと、その列が伸びるほど操作領域が下がり、画面ごとにボタンを探し直す
+// ことになる。
+//
+// 操作領域にはタイトルの1行目の高さ (text-3xlの行ボックスと同じ36px) を与え、中に入る32pxの
+// ボタンが行ボックスの上端に張り付かず、タイトルに対して中央に来るようにする。md未満では操作領域
+// が独立した行に回り、揃える相手が無いため、この高さはmd以上でのみ効かせる。
 func MainTitle(data MainTitleData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -83,14 +92,14 @@ func MainTitle(data MainTitleData) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4\"><div class=\"flex flex-wrap md:flex-nowrap items-center justify-between gap-2\"><div class=\"flex flex-col gap-2\"><h1 class=\"flex items-center gap-2 text-3xl text-primary font-bold antialiased\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4\"><div class=\"flex flex-wrap md:flex-nowrap items-start justify-between gap-2\"><div class=\"flex min-w-0 flex-col gap-2\"><h1 class=\"text-3xl text-primary font-bold antialiased wrap-anywhere\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(data.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/main_title.templ`, Line: 32, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/main_title.templ`, Line: 41, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -125,7 +134,7 @@ func MainTitle(data MainTitleData) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if data.Actions != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"flex w-full flex-none items-center justify-end gap-2 md:w-auto\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"flex w-full flex-none items-center justify-end gap-2 md:w-auto md:min-h-9\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

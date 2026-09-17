@@ -14,12 +14,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// SimpleLayoutData はシンプルレイアウトに渡すデータ構造体です
+// SimpleLayoutDataはシンプルレイアウトに渡すデータ構造体です
 type SimpleLayoutData struct {
 	Meta viewmodel.PageMeta
 }
 
-// Simple はシンプルなレイアウトです
+// Simpleはシンプルなレイアウトです
 // ヘッダー、フラッシュメッセージ、コンテンツのみを含みます
 func Simple(data SimpleLayoutData, content templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {

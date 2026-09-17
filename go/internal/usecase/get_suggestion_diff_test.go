@@ -59,7 +59,7 @@ func TestGetSuggestionDiffUsecase_Execute(t *testing.T) {
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
-	// 編集提案ページを作成（ベースリビジョンを参照）
+	// 編集提案ページを作成 (ベースリビジョンを参照)
 	suggestionPageID := testutil.NewSuggestionPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithSuggestionID(suggestionID).
@@ -87,24 +87,24 @@ func TestGetSuggestionDiffUsecase_Execute(t *testing.T) {
 			SuggestionPages: suggestionPages,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 
 		baseRev, ok := output.BaseRevisions[suggestionPageID]
 		if !ok {
-			t.Fatal("BaseRevisions should contain the suggestion page ID")
+			t.Fatal("BaseRevisionsに編集提案ページのIDが含まれていない")
 		}
 		if baseRev == nil {
-			t.Fatal("base revision should not be nil")
+			t.Fatal("ベースリビジョンがnil")
 		}
 		if baseRev.Title != "元のタイトル" {
-			t.Errorf("baseRev.Title = %q, want %q", baseRev.Title, "元のタイトル")
+			t.Errorf("baseRev.Title = %q、期待値 = %q", baseRev.Title, "元のタイトル")
 		}
 		if baseRev.Body != "元の本文\n2行目\n3行目" {
-			t.Errorf("baseRev.Body = %q, want %q", baseRev.Body, "元の本文\n2行目\n3行目")
+			t.Errorf("baseRev.Body = %q、期待値 = %q", baseRev.Body, "元の本文\n2行目\n3行目")
 		}
 	})
 
@@ -137,17 +137,17 @@ func TestGetSuggestionDiffUsecase_Execute(t *testing.T) {
 			SuggestionPages: suggestionPages,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		// ベースリビジョンがある方は含まれる
 		if _, ok := output.BaseRevisions[suggestionPageID]; !ok {
-			t.Error("BaseRevisions should contain suggestionPageID")
+			t.Error("BaseRevisionsにsuggestionPageIDが含まれていない")
 		}
 
 		// ベースリビジョンがない方は含まれない
 		if _, ok := output.BaseRevisions[newPageSuggestionPageID]; ok {
-			t.Error("BaseRevisions should not contain newPageSuggestionPageID")
+			t.Error("BaseRevisionsにnewPageSuggestionPageIDが含まれている")
 		}
 	})
 
@@ -157,10 +157,10 @@ func TestGetSuggestionDiffUsecase_Execute(t *testing.T) {
 			SuggestionPages: []*model.SuggestionPage{},
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.BaseRevisions) != 0 {
-			t.Errorf("len(BaseRevisions) = %d, want 0", len(output.BaseRevisions))
+			t.Errorf("len(BaseRevisions) = %d、期待値 = 0", len(output.BaseRevisions))
 		}
 	})
 }

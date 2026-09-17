@@ -11,12 +11,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// SpaceIconSize controls the rendered SpaceIcon size. Each size maps to a Tailwind
-// size-* class for the container and a matching text-* class for the label so the
-// first character stays readable at any size.
-//
-// [Ja] SpaceIconSize は SpaceIcon の表示サイズを切り替えるための型。コンテナ用の
-// size-* クラスと、ラベル文字用の text-* クラスをセットで切り替え、頭文字が
+// SpaceIconSizeはSpaceIconの表示サイズを切り替えるための型。コンテナ用の
+// size-* クラスと、ラベル文字用のtext-* クラスをセットで切り替え、頭文字が
 // どのサイズでも読める比率になるようにする。
 type SpaceIconSize string
 
@@ -26,17 +22,14 @@ const (
 	SpaceIconSizeLg SpaceIconSize = "lg" // size-10
 )
 
-// SpaceIconData はスペースアイコンコンポーネントに渡すデータ構造体です
+// SpaceIconDataはスペースアイコンコンポーネントに渡すデータ構造体です
 type SpaceIconData struct {
 	Space viewmodel.Space
 	Size  SpaceIconSize
 }
 
-// sizeClass returns the Tailwind container size + label text-size classes for the data's Size.
-// Falls back to the md classes when Size is the zero value or an unknown variant.
-//
-// [Ja] sizeClass は Size に対応する Tailwind の size-* と text-* クラスを返す。
-// Size が未指定 (ゼロ値) または未知の値だった場合は md にフォールバックする。
+// sizeClassはSizeに対応するTailwindのsize-* とtext-* クラスを返す。
+// Sizeが未指定 (ゼロ値) または未知の値だった場合はmdにフォールバックする。
 func (d SpaceIconData) sizeClass() string {
 	switch d.Size {
 	case SpaceIconSizeSm:
@@ -48,16 +41,10 @@ func (d SpaceIconData) sizeClass() string {
 	}
 }
 
-// SpaceIcon renders an icon with a deterministic background color and a first-character label
-// derived from the space identifier. The container and label sizes are controlled by
-// SpaceIconData.Size (sm / md / lg).
-// The background color is chosen by viewmodel.Space.IconBackgroundColor() which hashes the identifier.
-// The label is the first character of the identifier uppercased, returned by viewmodel.Space.IconLabel().
-//
-// [Ja] SpaceIcon はスペース識別子から決定的に決まる背景色と頭文字を持つアイコンを表示します。
-// コンテナとラベルのサイズは SpaceIconData.Size (sm / md / lg) で切り替えます。
-// 背景色は viewmodel.Space.IconBackgroundColor() で identifier をハッシュして選択され、
-// ラベルは viewmodel.Space.IconLabel() で identifier の先頭 1 文字を大文字化したものが使われます。
+// SpaceIconはスペース識別子から決定的に決まる背景色と頭文字を持つアイコンを表示します。
+// コンテナとラベルのサイズはSpaceIconData.Size (sm / md / lg) で切り替えます。
+// 背景色はviewmodel.Space.IconBackgroundColor() でidentifierをハッシュして選択され、
+// ラベルはviewmodel.Space.IconLabel() でidentifierの先頭1文字を大文字化したものが使われます。
 func SpaceIcon(data SpaceIconData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -104,7 +91,7 @@ func SpaceIcon(data SpaceIconData) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(templ.SafeCSS("background-color: " + data.Space.IconBackgroundColor()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 58, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 45, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -117,7 +104,7 @@ func SpaceIcon(data SpaceIconData) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(data.Space.IconLabel())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 61, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/space_icon.templ`, Line: 48, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {

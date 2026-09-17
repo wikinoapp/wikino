@@ -1,4 +1,4 @@
-// Package password はパスワード更新機能のハンドラーを提供します
+// Package passwordはパスワード更新機能のハンドラーを提供します
 package password
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はパスワード更新機能のハンドラー
+// Handlerはパスワード更新機能のハンドラー
 type Handler struct {
 	cfg                   *config.Config
 	sessionMgr            *session.Manager
@@ -16,7 +16,7 @@ type Handler struct {
 	updatePasswordUsecase *usecase.UpdatePasswordResetUsecase
 }
 
-// NewHandler は新しいHandlerを作成します
+// NewHandlerは新しいHandlerを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,

@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetSuggestionDetailUsecase は編集提案詳細取得ユースケース
+// GetSuggestionDetailUsecaseは編集提案詳細取得ユースケース
 type GetSuggestionDetailUsecase struct {
 	spaceRepo             *repository.SpaceRepository
 	spaceMemberRepo       *repository.SpaceMemberRepository
@@ -21,7 +21,7 @@ type GetSuggestionDetailUsecase struct {
 	userRepo              *repository.UserRepository
 }
 
-// NewGetSuggestionDetailUsecase は GetSuggestionDetailUsecase を生成する
+// NewGetSuggestionDetailUsecaseはGetSuggestionDetailUsecaseを生成する
 func NewGetSuggestionDetailUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -46,14 +46,14 @@ func NewGetSuggestionDetailUsecase(
 	}
 }
 
-// GetSuggestionDetailInput は編集提案詳細取得の入力パラメータ
+// GetSuggestionDetailInputは編集提案詳細取得の入力パラメータ
 type GetSuggestionDetailInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
 	UserID           *model.UserID
 }
 
-// GetSuggestionDetailOutput は編集提案詳細取得の出力
+// GetSuggestionDetailOutputは編集提案詳細取得の出力
 type GetSuggestionDetailOutput struct {
 	Space                      *model.Space
 	SpaceMember                *model.SpaceMember
@@ -72,7 +72,7 @@ type GetSuggestionDetailOutput struct {
 	CanRemoveSuggestionPage    bool
 }
 
-// Execute は編集提案詳細を取得する
+// Executeは編集提案詳細を取得する
 func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSuggestionDetailInput) (*GetSuggestionDetailOutput, error) {
 	// スペースを取得
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
@@ -83,7 +83,7 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		return nil, nil
 	}
 
-	// 編集提案を取得（スペースIDと番号で検索）
+	// 編集提案を取得 (スペースIDと番号で検索)
 	suggestion, err := uc.suggestionRepo.FindBySpaceAndNumber(ctx, space.ID, input.SuggestionNumber)
 	if err != nil {
 		return nil, fmt.Errorf("編集提案の取得に失敗: %w", err)
@@ -92,7 +92,7 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		return nil, nil
 	}
 
-	// ログインユーザーのスペースメンバーを取得（未ログインならnil）
+	// ログインユーザーのスペースメンバーを取得 (未ログインならnil)
 	var spaceMember *model.SpaceMember
 	if input.UserID != nil {
 		spaceMember, err = uc.spaceMemberRepo.FindActiveBySpaceAndUser(ctx, space.ID, *input.UserID)
@@ -101,7 +101,7 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		}
 	}
 
-	// トピックを取得（編集提案のTopicIDから逆引き）
+	// トピックを取得 (編集提案のTopicIDから逆引き)
 	topic, err := uc.topicRepo.FindBySpaceAndID(ctx, space.ID, suggestion.TopicID)
 	if err != nil {
 		return nil, fmt.Errorf("トピックの取得に失敗: %w", err)
@@ -150,7 +150,7 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 		return nil, fmt.Errorf("コメント一覧の取得に失敗: %w", err)
 	}
 
-	// ユーザー情報を取得（作成者 + コメント投稿者）
+	// ユーザー情報を取得 (作成者 + コメント投稿者)
 	userMap, err := uc.buildUserMap(ctx, suggestion, comments, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("ユーザー情報の取得に失敗: %w", err)
@@ -187,9 +187,9 @@ func (uc *GetSuggestionDetailUsecase) Execute(ctx context.Context, input GetSugg
 	}, nil
 }
 
-// buildUserMap は編集提案の作成者とコメント投稿者のユーザー情報をマップで返す
+// buildUserMapは編集提案の作成者とコメント投稿者のユーザー情報をマップで返す
 func (uc *GetSuggestionDetailUsecase) buildUserMap(ctx context.Context, suggestion *model.Suggestion, comments []*model.SuggestionComment, spaceID model.SpaceID) (map[model.SpaceMemberID]*model.User, error) {
-	// SpaceMemberIDを収集（重複排除）
+	// SpaceMemberIDを収集 (重複排除)
 	memberIDSet := make(map[model.SpaceMemberID]struct{})
 	memberIDSet[suggestion.CreatedSpaceMemberID] = struct{}{}
 	for _, c := range comments {

@@ -1,6 +1,6 @@
 package password_reset
 
-// Data はパスワードリセットメールテンプレートのデータ
+// Dataはパスワードリセットメールテンプレートのデータ
 type Data struct {
 	Email    string
 	ResetURL string

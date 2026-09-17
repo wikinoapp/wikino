@@ -15,44 +15,16 @@ class Page < T::Struct
   const :number, Integer
   const :title, T.nilable(String)
   const :body, String
-  const :body_html, String
   const :modified_at, ActiveSupport::TimeWithZone
   const :published_at, T.nilable(ActiveSupport::TimeWithZone)
   const :pinned_at, T.nilable(ActiveSupport::TimeWithZone)
   const :trashed_at, T.nilable(ActiveSupport::TimeWithZone)
-  const :can_update, T.nilable(T::Boolean)
   const :space, Space
   const :topic, Topic
   const :card_image_url, T.nilable(String)
-  const :og_image_url, T.nilable(String)
-
-  sig { returns(T::Boolean) }
-  def published?
-    published_at.present?
-  end
 
   sig { returns(T::Boolean) }
   def pinned?
     pinned_at.present?
-  end
-
-  sig { returns(T::Boolean) }
-  def trashed?
-    trashed_at.present?
-  end
-
-  sig { returns(T::Boolean) }
-  def modified_after_published?
-    published? && modified_at > published_at
-  end
-
-  sig { returns(T::Boolean) }
-  def can_update?
-    can_update.not_nil!
-  end
-
-  sig { returns(String) }
-  def display_title
-    title.presence || I18n.t("messages.pages.untitled")
   end
 end

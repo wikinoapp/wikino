@@ -16,12 +16,12 @@ var (
 	ErrPasswordResetTokenExpired  = errors.New("トークンの有効期限が切れています")
 )
 
-// GetPasswordResetTokenDataUsecase はパスワードリセットトークンの検証ユースケース
+// GetPasswordResetTokenDataUsecaseはパスワードリセットトークンの検証ユースケース
 type GetPasswordResetTokenDataUsecase struct {
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository
 }
 
-// NewGetPasswordResetTokenDataUsecase は GetPasswordResetTokenDataUsecase を生成する
+// NewGetPasswordResetTokenDataUsecaseはGetPasswordResetTokenDataUsecaseを生成する
 func NewGetPasswordResetTokenDataUsecase(
 	passwordResetTokenRepo *repository.PasswordResetTokenRepository,
 ) *GetPasswordResetTokenDataUsecase {
@@ -30,17 +30,17 @@ func NewGetPasswordResetTokenDataUsecase(
 	}
 }
 
-// GetPasswordResetTokenDataInput はパスワードリセットトークン検証の入力パラメータ
+// GetPasswordResetTokenDataInputはパスワードリセットトークン検証の入力パラメータ
 type GetPasswordResetTokenDataInput struct {
 	Token string
 }
 
-// GetPasswordResetTokenDataOutput はパスワードリセットトークン検証の出力
+// GetPasswordResetTokenDataOutputはパスワードリセットトークン検証の出力
 type GetPasswordResetTokenDataOutput struct {
 	PasswordResetToken *model.PasswordResetToken
 }
 
-// Execute はパスワードリセットトークンを検証する
+// Executeはパスワードリセットトークンを検証する
 func (uc *GetPasswordResetTokenDataUsecase) Execute(ctx context.Context, input GetPasswordResetTokenDataInput) (*GetPasswordResetTokenDataOutput, error) {
 	tokenDigest := password_reset.HashToken(input.Token)
 	token, err := uc.passwordResetTokenRepo.FindByTokenDigest(ctx, tokenDigest)

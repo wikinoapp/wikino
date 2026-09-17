@@ -13,8 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// newTestRevisionDiff builds a diff view-model from old/new title and body pairs.
-// [Ja] newTestRevisionDiff は新旧のタイトル・本文のペアから差分ビューモデルを生成する。
+// newTestRevisionDiffは新旧のタイトル・本文のペアから差分ビューモデルを生成する。
 func newTestRevisionDiff(t *testing.T, oldTitle, newTitle, oldBody, newBody string) viewmodel.DraftPageRevisionDiff {
 	t.Helper()
 
@@ -32,11 +31,8 @@ func newTestRevisionDiff(t *testing.T, oldTitle, newTitle, oldBody, newBody stri
 	return viewmodel.NewDraftPageRevisionDiff(revision, previous)
 }
 
-// renderRevisionDiff renders the DraftPageRevisionDiff component to a string. isCurrent toggles
-// whether the shown revision is the newest one (which hides the restore area).
-//
-// [Ja] renderRevisionDiff は DraftPageRevisionDiff コンポーネントを文字列にレンダリングする。
-// isCurrent は表示中のリビジョンが最新かどうか (最新のときは復元領域を隠す) を切り替える。
+// renderRevisionDiffはDraftPageRevisionDiffコンポーネントを文字列にレンダリングする。
+// isCurrentは表示中のリビジョンが最新かどうか (最新のときは復元領域を隠す) を切り替える。
 func renderRevisionDiff(t *testing.T, ctx context.Context, diff viewmodel.DraftPageRevisionDiff, isCurrent bool) string {
 	t.Helper()
 
@@ -108,16 +104,14 @@ func TestDraftPageRevisionDiff(t *testing.T) {
 		if !strings.Contains(html, "本当にこのバージョンに戻しますか？") {
 			t.Error("インライン確認メッセージが含まれていない")
 		}
-		// The confirmation form must POST to the restore URL with the CSRF token.
-		// [Ja] 確認フォームは CSRF トークン付きで復元 URL へ POST すること。
+		// 確認フォームはCSRFトークン付きで復元URLへPOSTすること。
 		if !strings.Contains(html, `action="/s/test-space/pages/1/draft_page_revisions/test-revision-id/restore"`) {
 			t.Error("復元フォームのaction属性が含まれていない")
 		}
 		if !strings.Contains(html, `value="test-csrf-token"`) {
 			t.Error("CSRFトークンが含まれていない")
 		}
-		// The confirmation starts hidden and replaces the button area inline (no second modal).
-		// [Ja] 確認 UI は初期状態で非表示で、ボタン領域をインラインで置き換える (2 重モーダルなし)。
+		// 確認UIは初期状態で非表示で、ボタン領域をインラインで置き換える (2重モーダルなし)。
 		if !strings.Contains(html, `id="page-edit-revision-restore-confirm" class="hidden"`) {
 			t.Error("インライン確認が初期非表示になっていない")
 		}
@@ -126,10 +120,7 @@ func TestDraftPageRevisionDiff(t *testing.T) {
 	t.Run("現在のバージョンでは復元ボタンを表示しない", func(t *testing.T) {
 		t.Parallel()
 
-		// The newest revision is the draft's current state, so restoring to it is a no-op and
-		// the restore area is hidden. The diff itself is still rendered.
-		//
-		// [Ja] 最新リビジョンは下書きの現在状態のため、そこへの復元は no-op であり復元領域は隠れる。
+		// 最新リビジョンは下書きの現在状態のため、そこへの復元はno-opであり復元領域は隠れる。
 		// 差分自体は引き続き描画される。
 		diff := newTestRevisionDiff(t, "Old Title", "New Title", "a\n", "b\n")
 		html := renderRevisionDiff(t, ctx, diff, true)
@@ -143,8 +134,7 @@ func TestDraftPageRevisionDiff(t *testing.T) {
 		if strings.Contains(html, `action="/s/test-space/pages/1/draft_page_revisions/test-revision-id/restore"`) {
 			t.Error("現在のバージョンで復元フォームのaction属性が含まれている")
 		}
-		// The diff body is still shown even when the restore area is hidden.
-		// [Ja] 復元領域が隠れていても差分本文は表示される。
+		// 復元領域が隠れていても差分本文は表示される。
 		if !strings.Contains(html, "タイトルの変更") {
 			t.Error("差分のタイトル変更ラベルが含まれていない")
 		}

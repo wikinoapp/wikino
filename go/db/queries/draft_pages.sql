@@ -4,8 +4,8 @@ SELECT * FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_
 
 -- name: CreateDraftPage :one
 -- 下書きを作成する
-INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 RETURNING *;
 
 -- name: UpdateDraftPage :one
@@ -14,12 +14,11 @@ UPDATE draft_pages
 SET topic_id = $2,
     title = $3,
     body = $4,
-    body_html = $5,
-    linked_page_ids = $6,
-    featured_image_attachment_id = $7,
-    modified_at = $8,
-    updated_at = $9
-WHERE id = $1 AND space_id = $10
+    linked_page_ids = $5,
+    featured_image_attachment_id = $6,
+    modified_at = $7,
+    updated_at = $8
+WHERE id = $1 AND space_id = $9
 RETURNING *;
 
 -- name: UpdateDraftPageSuggestionPageID :one
@@ -31,7 +30,7 @@ WHERE id = $1 AND space_id = $4
 RETURNING *;
 
 -- name: FindDraftPageByID :one
--- IDで下書きを取得する（スペースIDでスコープ）
+-- IDで下書きを取得する (スペースIDでスコープ)
 SELECT * FROM draft_pages WHERE id = $1 AND space_id = $2;
 
 -- name: DeleteDraftPage :exec
@@ -39,11 +38,11 @@ SELECT * FROM draft_pages WHERE id = $1 AND space_id = $2;
 DELETE FROM draft_pages WHERE id = $1 AND space_id = $2;
 
 -- name: FindDraftPageBySuggestionPageID :one
--- 編集提案ページIDで下書きを取得する（スペースIDでスコープ）
+-- 編集提案ページIDで下書きを取得する (スペースIDでスコープ)
 SELECT * FROM draft_pages WHERE suggestion_page_id = $1 AND space_id = $2;
 
 -- name: ClearSuggestionPageIDsBySuggestionID :exec
--- 編集提案に紐づく下書きのsuggestion_page_idをクリアする（編集提案クローズ・反映時に使用）
+-- 編集提案に紐づく下書きのsuggestion_page_idをクリアする (編集提案クローズ・反映時に使用)
 UPDATE draft_pages dp
 SET suggestion_page_id = NULL,
     updated_at = $2
@@ -53,14 +52,14 @@ WHERE dp.suggestion_page_id IN (
 AND dp.space_id = $3;
 
 -- name: UpdateDraftPageTopicByPageID :exec
--- ページIDに紐づく下書きのトピックIDを更新する（ページ移動時に使用）
+-- ページIDに紐づく下書きのトピックIDを更新する (ページ移動時に使用)
 UPDATE draft_pages
 SET topic_id = $2,
     updated_at = $3
 WHERE page_id = $1 AND space_id = $4;
 
 -- name: ListDraftPagesByMemberAndTopic :many
--- スペースメンバーIDとトピックIDで下書きページ一覧を取得する（編集提案作成画面用）
+-- スペースメンバーIDとトピックIDで下書きページ一覧を取得する (編集提案作成画面用)
 SELECT
   dp.*,
   p.title AS page_title,
