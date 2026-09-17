@@ -29,7 +29,7 @@ type BatchRenderInput struct {
 
 // RenderHTMLは単一テキストのHTMLをレンダリングする。
 // Markdownレンダリング → HTMLサニタイズ → Wikiリンク変換 → 添付ファイルフィルター →
-// スタンドアロン画像ラッピングの一連の処理を統合して実行する。
+// 見出しレベルの調整 → スタンドアロン画像ラッピングの一連の処理を統合して実行する。
 func RenderHTML(
 	ctx context.Context,
 	body string,
@@ -147,12 +147,13 @@ func RenderHTMLBatch(
 		}
 	}
 
-	// 4. 画像リンクのラッピングと直列化
+	// 4. 見出しレベルの調整、画像リンクのラッピングと直列化
 	htmls := make([]string, len(inputs))
 	for i, tree := range trees {
 		if tree == nil {
 			continue
 		}
+		shiftHeadingsInNode(tree)
 		wrapImageLinksInNode(tree)
 		htmls[i] = renderContainerChildren(tree)
 	}

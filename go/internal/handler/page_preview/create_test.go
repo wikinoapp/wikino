@@ -103,7 +103,8 @@ func TestCreate(t *testing.T) {
 	if !strings.Contains(body, "Preview Title") {
 		t.Error("レスポンスにプレビューのタイトルが見つからない")
 	}
-	if !strings.Contains(body, "<h1") {
+	// 本文の最初の見出しはh2に揃うため、#はh2として描画される。
+	if !strings.Contains(body, "<h2") {
 		t.Error("レスポンスに描画された見出しが見つからない")
 	}
 	if !strings.Contains(body, "<strong>bold</strong>") {

@@ -334,12 +334,12 @@ func TestRenderHTML_ComplexDocument(t *testing.T) {
 		t.Fatalf("予期しないエラー: %v", err)
 	}
 
-	// 見出しが変換されていること
-	if !strings.Contains(got, "<h1") {
-		t.Errorf("結果にh1の見出しが含まれていない: %s", got)
-	}
+	// 見出しが変換されていること。本文の最初の見出しがh2に揃うため、#はh2、##はh3になる。
 	if !strings.Contains(got, "<h2") {
 		t.Errorf("結果にh2の見出しが含まれていない: %s", got)
+	}
+	if !strings.Contains(got, "<h3") {
+		t.Errorf("結果にh3の見出しが含まれていない: %s", got)
 	}
 	// 太字が変換されていること
 	if !strings.Contains(got, "<strong>重要な</strong>") {

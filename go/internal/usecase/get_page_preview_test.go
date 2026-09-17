@@ -67,7 +67,8 @@ func TestGetPagePreviewUsecase_Execute_RendersMarkdown(t *testing.T) {
 	if output.Title != "My Draft Title" {
 		t.Errorf("Title = %q、期待値 = %q", output.Title, "My Draft Title")
 	}
-	if !strings.Contains(output.BodyHTML, "<h1") {
+	// 本文の最初の見出しはh2に揃うため、#はh2として描画される。
+	if !strings.Contains(output.BodyHTML, "<h2") {
 		t.Errorf("BodyHTMLに描画された見出しが含まれていない: %q", output.BodyHTML)
 	}
 	if !strings.Contains(output.BodyHTML, "<strong>bold</strong>") {

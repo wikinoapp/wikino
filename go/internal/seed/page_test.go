@@ -237,7 +237,8 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 		notation string
 		want     string
 	}{
-		{notation: "見出し", want: "<h1"},
+		// 本文の最初の見出しはh2に揃うため、#はh2として描画される。
+		{notation: "見出し", want: "<h2"},
 		{notation: "テーブル", want: "<table"},
 		{notation: "引用", want: "<blockquote"},
 		{notation: "タスクリスト", want: `type="checkbox"`},

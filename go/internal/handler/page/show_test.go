@@ -1029,3 +1029,97 @@ func TestShow_EmptyRelatedLinkSection(t *testing.T) {
 		t.Error("空の関連リンクセクションにグループが含まれている")
 	}
 }
+
+// TestShow_HeadingLevelsは、本文の最初の見出しがh2になるよう見出しがずれて描画され、
+// 画面に出るh1がページタイトルの1つだけになることを固定する。アウトラインの頂点はページ
+// タイトルであり、本文の見出しはその下の階層として飛ばずに読まれなければならない。
+func TestShow_HeadingLevels(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		identifier string
+		body       string
+		want       []string
+	}{
+		{
+			// Markdownの見出しと、本文に直接書かれたh1の両方を置く。どちらも下がる。
+			name:       "#から書いた本文は1段下がる",
+			identifier: "show-heading-h1-space",
+			body:       "# Chapter\n\n## Section\n\n<h1>Raw</h1>",
+			want: []string{
+				`<h2 id="chapter">Chapter</h2>`,
+				`<h3 id="section">Section</h3>`,
+				"<h2>Raw</h2>",
+			},
+		},
+		{
+			name:       "##から書いた本文はそのまま",
+			identifier: "show-heading-h2-space",
+			body:       "## Chapter\n\n### Section",
+			want: []string{
+				`<h2 id="chapter">Chapter</h2>`,
+				`<h3 id="section">Section</h3>`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			queries := testutil.QueriesWithTx(tx)
+
+			spaceID := testutil.NewSpaceBuilder(t, tx).
+				WithIdentifier(tt.identifier).
+				WithName("Show Heading Space").
+				Build()
+			topicID := testutil.NewTopicBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithNumber(1).
+				WithName("Heading Topic").
+				WithVisibility(int32(model.TopicVisibilityPublic)).
+				Build()
+			testutil.NewPageBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithNumber(1).
+				WithTitle("Heading Page Title").
+				WithBody(tt.body).
+				WithLinkedPageIDs([]model.PageID{}).
+				Build()
+
+			h := setupHandler(t, queries)
+
+			req := newRequestWithChiParams(t, http.MethodGet, "/s/"+tt.identifier+"/pages/1", map[string]string{
+				"space_identifier": tt.identifier,
+				"page_number":      "1",
+			})
+			req = req.WithContext(i18n.SetLocale(req.Context(), i18n.LangJa))
+
+			rr := httptest.NewRecorder()
+			h.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+			}
+
+			body := rr.Body.String()
+			for _, want := range tt.want {
+				if !strings.Contains(body, want) {
+					t.Errorf("レスポンスに%qが含まれていない", want)
+				}
+			}
+
+			// 残る1つはページタイトルの見出しである。本文から出たh1はここに数えられてしまうため、
+			// 件数で確かめる。
+			if got := strings.Count(body, "<h1"); got != 1 {
+				t.Errorf("画面のh1の件数 = %d、期待値 = 1", got)
+			}
+			if !strings.Contains(body, "Heading Page Title") {
+				t.Error("レスポンスにページタイトルが含まれていない")
+			}
+		})
+	}
+}
