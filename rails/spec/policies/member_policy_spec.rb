@@ -195,15 +195,15 @@ RSpec.describe MemberPolicy do
   end
 
   describe "#can_show_trash?" do
-    it "page:trashでゴミ箱を閲覧可能であること" do
+    it "page_trash:readでゴミ箱を閲覧可能であること" do
       policy = MemberPolicy.new(
-        space_scopes: [Scope::PAGE_TRASH],
+        space_scopes: [Scope::PAGE_TRASH_READ],
         topic_scopes: []
       )
       expect(policy.can_show_trash?).to be(true)
     end
 
-    it "page:trashなしでゴミ箱を閲覧不可であること" do
+    it "page_trash:readなしでゴミ箱を閲覧不可であること" do
       policy = MemberPolicy.new(
         space_scopes: [Scope::PAGE_WRITE],
         topic_scopes: []
@@ -221,15 +221,15 @@ RSpec.describe MemberPolicy do
   end
 
   describe "#can_create_bulk_restore_pages?" do
-    it "page:restoreで一括復元可能であること" do
+    it "page_trash:deleteで一括復元可能であること" do
       policy = MemberPolicy.new(
-        space_scopes: [Scope::PAGE_RESTORE],
+        space_scopes: [Scope::PAGE_TRASH_DELETE],
         topic_scopes: []
       )
       expect(policy.can_create_bulk_restore_pages?).to be(true)
     end
 
-    it "page:restoreなしで一括復元不可であること" do
+    it "page_trash:deleteなしで一括復元不可であること" do
       policy = MemberPolicy.new(
         space_scopes: [Scope::PAGE_WRITE],
         topic_scopes: []
@@ -242,6 +242,42 @@ RSpec.describe MemberPolicy do
         space_scopes: [Scope::SPACE_ADMIN],
         topic_scopes: []
       )
+      expect(policy.can_create_bulk_restore_pages?).to be(true)
+    end
+  end
+
+  describe "ページ編集とゴミ箱の権限境界" do
+    [
+      [[], false, false, false],
+      [["page:write"], true, false, false],
+      [["page_trash:read"], false, true, false],
+      [["page_trash:write"], false, true, false],
+      [["page:trash"], false, true, false],
+      [["page_trash:delete"], false, false, true],
+      [["page:restore"], false, false, true],
+      [["page:trash", "page_trash:write", "page:restore", "page_trash:delete"], false, true, true],
+      [["space:admin"], true, true, true],
+      [["unknown:write", "page:trash_extra", "page:restore_extra"], false, false, false]
+    ].each do |scopes, can_create, can_show, can_restore|
+      [:space_scopes, :topic_scopes].each do |source|
+        it "#{source}の#{scopes.inspect}でページ作成・ゴミ箱閲覧・復元の権限を分離すること" do
+          policy = MemberPolicy.new(:space_scopes => [], :topic_scopes => [], source => scopes)
+
+          expect(policy.can_create_page?).to be(can_create)
+          expect(policy.can_show_trash?).to be(can_show)
+          expect(policy.can_create_bulk_restore_pages?).to be(can_restore)
+        end
+      end
+    end
+
+    it "スペースとトピックの新旧スコープを合わせて権限を判定すること" do
+      policy = MemberPolicy.new(
+        space_scopes: ["page:trash", "page_trash:write"],
+        topic_scopes: ["page:restore", "page_trash:delete"]
+      )
+
+      expect(policy.can_create_page?).to be(false)
+      expect(policy.can_show_trash?).to be(true)
       expect(policy.can_create_bulk_restore_pages?).to be(true)
     end
   end

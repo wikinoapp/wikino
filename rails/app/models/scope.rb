@@ -19,8 +19,11 @@ module Scope
   # ページ関連スコープ
   PAGE_READ = T.let("page:read", String)
   PAGE_WRITE = T.let("page:write", String)
-  PAGE_TRASH = T.let("page:trash", String)
-  PAGE_RESTORE = T.let("page:restore", String)
+
+  # ゴミ箱関連スコープ
+  PAGE_TRASH_READ = T.let("page_trash:read", String)
+  PAGE_TRASH_WRITE = T.let("page_trash:write", String)
+  PAGE_TRASH_DELETE = T.let("page_trash:delete", String)
 
   # 下書きページ関連スコープ
   DRAFT_PAGE_READ = T.let("draft_page:read", String)
@@ -30,8 +33,10 @@ module Scope
   # 編集提案関連スコープ
   SUGGESTION_READ = T.let("suggestion:read", String)
   SUGGESTION_WRITE = T.let("suggestion:write", String)
-  SUGGESTION_APPLY = T.let("suggestion:apply", String)
-  SUGGESTION_CLOSE = T.let("suggestion:close", String)
+
+  # 編集提案の反映・クローズ関連スコープ
+  SUGGESTION_APPLICATION_WRITE = T.let("suggestion_application:write", String)
+  SUGGESTION_CLOSURE_WRITE = T.let("suggestion_closure:write", String)
 
   # 編集提案コメント関連スコープ
   SUGGESTION_COMMENT_READ = T.let("suggestion_comment:read", String)
@@ -53,4 +58,10 @@ module Scope
   ATTACHMENT_READ = T.let("attachment:read", String)
   ATTACHMENT_WRITE = T.let("attachment:write", String)
   ATTACHMENT_DELETE = T.let("attachment:delete", String)
+
+  # 保存済みの旧名を権限判定時に読み替えるための互換スコープ
+  PAGE_TRASH = T.let("page:trash", String)
+  PAGE_RESTORE = T.let("page:restore", String)
+  SUGGESTION_APPLY = T.let("suggestion:apply", String)
+  SUGGESTION_CLOSE = T.let("suggestion:close", String)
 end

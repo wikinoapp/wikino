@@ -79,12 +79,12 @@ class MemberPolicy
 
   sig { returns(T::Boolean) }
   def can_show_trash?
-    effective_scopes.include?(Scope::PAGE_TRASH)
+    effective_scopes.include?(Scope::PAGE_TRASH_READ)
   end
 
   sig { returns(T::Boolean) }
   def can_create_bulk_restore_pages?
-    effective_scopes.include?(Scope::PAGE_RESTORE)
+    effective_scopes.include?(Scope::PAGE_TRASH_DELETE)
   end
 
   # 添付ファイル
