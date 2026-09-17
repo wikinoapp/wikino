@@ -141,6 +141,11 @@ func TestNew(t *testing.T) {
 
 	body := rr.Body.String()
 
+	// 文書のタイトルには移動元のトピック名が入ること (移動先は画面を開いた時点では決まっていない)
+	if !strings.Contains(body, "<title>ページの移動 | Topic 1 | Test Space</title>") {
+		t.Error("レスポンスに移動元のトピック名を含む文書のタイトルが見つからない")
+	}
+
 	// ページタイトルが表示されていること
 	if !strings.Contains(body, "Test Page Title") {
 		t.Error("レスポンスにページタイトルが見つからない")

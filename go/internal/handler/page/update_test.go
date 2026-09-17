@@ -93,6 +93,11 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 		t.Error("レスポンスにタイトル必須のエラーメッセージが見つからない")
 	}
 
+	// バリデーションエラーの再描画でも編集画面と同じ文書のタイトルになること
+	if !strings.Contains(body, "<title>ページを編集 | General | Test Space</title>") {
+		t.Error("再描画したレスポンスにトピック名を含む文書のタイトルが見つからない")
+	}
+
 	// 編集フォームが再表示されること
 	if !strings.Contains(body, `name="title"`) {
 		t.Error("レスポンスにタイトルの入力欄が見つからない")

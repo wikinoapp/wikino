@@ -100,6 +100,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "page_show_title", map[string]any{
 		"PageTitle": pageTitle,
+		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
 	// 本文にテキストが無いページはサイト共通の既定の説明文を保つ。
