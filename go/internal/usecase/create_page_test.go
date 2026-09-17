@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -245,10 +244,6 @@ func TestCreatePageUsecase_Execute_WithTitleAndBody(t *testing.T) {
 	}
 	if draftPage.Body != "https://example.com/article\n\n> 引用文" {
 		t.Errorf("DraftPage.Body = %q、期待値 = 事前入力された本文", draftPage.Body)
-	}
-	// 本文は自動保存と同じ経路でレンダリングされる。
-	if !strings.Contains(draftPage.BodyHTML, "blockquote") {
-		t.Errorf("DraftPage.BodyHTML = %q、期待値 = 描画された引用を含む", draftPage.BodyHTML)
 	}
 }
 

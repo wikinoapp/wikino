@@ -32,7 +32,6 @@ type CreateDraftPageRevisionInput struct {
 	SpaceMemberID model.SpaceMemberID
 	Title         string
 	Body          string
-	BodyHTML      string
 }
 
 // Createは下書きページリビジョンを作成する
@@ -43,7 +42,6 @@ func (r *DraftPageRevisionRepository) Create(ctx context.Context, input CreateDr
 		SpaceMemberID: string(input.SpaceMemberID),
 		Title:         input.Title,
 		Body:          input.Body,
-		BodyHtml:      input.BodyHTML,
 		CreatedAt:     time.Now(),
 	})
 	if err != nil {
@@ -128,7 +126,6 @@ func (r *DraftPageRevisionRepository) toModel(row query.DraftPageRevision) *mode
 		SpaceMemberID: model.SpaceMemberID(row.SpaceMemberID),
 		Title:         row.Title,
 		Body:          row.Body,
-		BodyHTML:      row.BodyHtml,
 		CreatedAt:     row.CreatedAt,
 	}
 }

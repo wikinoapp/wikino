@@ -315,7 +315,6 @@ func (r *PageRepository) toModelFromTargetRow(row query.FindBacklinkedPagesForTa
 		Number:                    model.PageNumber(row.Number),
 		Title:                     title,
 		Body:                      row.Body,
-		BodyHTML:                  row.BodyHtml,
 		LinkedPageIDs:             model.StringsToPageIDs(row.LinkedPageIds),
 		ModifiedAt:                row.ModifiedAt,
 		PublishedAt:               publishedAt,
@@ -359,7 +358,6 @@ type UpdatePageInput struct {
 	TopicID                   model.TopicID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []model.PageID
 	ModifiedAt                time.Time
 	PublishedAt               *time.Time
@@ -384,7 +382,6 @@ func (r *PageRepository) Update(ctx context.Context, input UpdatePageInput) (*mo
 		TopicID:                   string(input.TopicID),
 		Title:                     input.Title,
 		Body:                      input.Body,
-		BodyHtml:                  input.BodyHTML,
 		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
 		ModifiedAt:                input.ModifiedAt,
 		PublishedAt:               publishedAt,
@@ -454,6 +451,73 @@ func (r *PageRepository) FindByTopicAndTitle(ctx context.Context, topicID model.
 		return nil, err
 	}
 	return r.toModel(row), nil
+}
+
+// TopicPageTitleはトピックIDとページタイトルの組。Wikiリンクの解決で、本文中のリンクが指す
+// ページをまとめて引くために使う。
+type TopicPageTitle struct {
+	TopicID model.TopicID
+	Title   string
+}
+
+// LinkedPageはWikiリンクの解決に必要な値だけを持つページの射影。リンク数に比例して
+// 行が増えるため、解決に使わない本文 (body) を転送しないようmodel.Pageでは返さない。
+type LinkedPage struct {
+	ID     model.PageID
+	Number model.PageNumber
+	Title  *string
+}
+
+// FindByTopicAndTitlePairsはトピックIDとタイトルの組に一致するページを1クエリで取得する
+// (廃棄済みを含む、スペースIDでスコープ)。タイトルの比較はFindByTopicAndTitleと同じく
+// 大文字小文字を区別しない。返すmapのキーは入力の表記を保持する。
+// 組に一致するページが無い場合、その組は結果に現れない。
+func (r *PageRepository) FindByTopicAndTitlePairs(ctx context.Context, pairs []TopicPageTitle, spaceID model.SpaceID) (map[TopicPageTitle]*LinkedPage, error) {
+	if len(pairs) == 0 {
+		return nil, nil
+	}
+
+	topicIDs := make([]string, 0, len(pairs))
+	titles := make([]string, 0, len(pairs))
+	for _, pair := range pairs {
+		topicIDs = append(topicIDs, string(pair.TopicID))
+		titles = append(titles, pair.Title)
+	}
+
+	rows, err := r.q.FindPagesByTopicAndTitlePairs(ctx, query.FindPagesByTopicAndTitlePairsParams{
+		TopicIds: topicIDs,
+		Titles:   titles,
+		SpaceID:  string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	pages := make(map[TopicPageTitle]*LinkedPage, len(rows))
+	for _, row := range rows {
+		key := TopicPageTitle{TopicID: model.TopicID(row.TopicID), Title: row.RequestedTitle}
+		pages[key] = r.toLinkedPage(row)
+	}
+	return pages, nil
+}
+
+// toLinkedPageはFindPagesByTopicAndTitlePairsRowをLinkedPageに変換する
+func (r *PageRepository) toLinkedPage(row query.FindPagesByTopicAndTitlePairsRow) *LinkedPage {
+	var title *string
+	if row.Title != nil {
+		switch v := row.Title.(type) {
+		case string:
+			title = &v
+		case []byte:
+			s := string(v)
+			title = &s
+		}
+	}
+
+	return &LinkedPage{
+		ID:     model.PageID(row.ID),
+		Number: model.PageNumber(row.Number),
+		Title:  title,
+	}
 }
 
 // NextPageNumberはスペース内の次のページ番号を取得する
@@ -612,7 +676,6 @@ func (r *PageRepository) toModel(row query.Page) *model.Page {
 		Number:                    model.PageNumber(row.Number),
 		Title:                     title,
 		Body:                      row.Body,
-		BodyHTML:                  row.BodyHtml,
 		LinkedPageIDs:             model.StringsToPageIDs(row.LinkedPageIds),
 		ModifiedAt:                row.ModifiedAt,
 		PublishedAt:               publishedAt,

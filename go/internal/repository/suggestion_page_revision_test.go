@@ -74,7 +74,6 @@ func TestSuggestionPageRevisionRepository_Create(t *testing.T) {
 			EditorSpaceMemberID: spaceMemberID,
 			Title:               &title,
 			Body:                "リビジョン本文",
-			BodyHTML:            "<p>リビジョン本文</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create()のエラー = %v", err)
@@ -100,9 +99,6 @@ func TestSuggestionPageRevisionRepository_Create(t *testing.T) {
 		if rev.Body != "リビジョン本文" {
 			t.Errorf("rev.Body = %v、期待値 = リビジョン本文", rev.Body)
 		}
-		if rev.BodyHTML != "<p>リビジョン本文</p>" {
-			t.Errorf("rev.BodyHTML = %v、期待値 = <p>リビジョン本文</p>", rev.BodyHTML)
-		}
 		if rev.CreatedAt.IsZero() {
 			t.Error("rev.CreatedAtがゼロ値")
 		}
@@ -118,7 +114,6 @@ func TestSuggestionPageRevisionRepository_Create(t *testing.T) {
 			EditorSpaceMemberID: spaceMemberID,
 			Title:               nil,
 			Body:                "タイトルなし本文",
-			BodyHTML:            "<p>タイトルなし本文</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create()のエラー = %v", err)

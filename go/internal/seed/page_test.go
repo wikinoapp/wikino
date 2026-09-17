@@ -10,7 +10,10 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/query"
+	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
@@ -54,20 +57,10 @@ func TestCreatePage(t *testing.T) {
 		t.Error("ページが公開済みであることを期待したが未公開だった")
 	}
 
-	// 本文はページ詳細画面が配信するHTMLとして保存されるため、Markdownが
-	// そのまま複写されたのではなく、レンダラーを通っている必要がある。
-	if !strings.Contains(row.bodyHTML, "<h1") {
-		t.Errorf("body_htmlに見出しのHTMLが含まれていない: %q", row.bodyHTML)
-	}
-
-	// 解決されたWikiリンクは、スペース識別子とリンク先のページ番号から
-	// 組み立てたhrefになる。解決されなかったものは書いたままの姿で残る。
+	// 本文のWikiリンクは、現在のトピックのページと別トピックのページの2つが解決され、
+	// 存在しないトピックへのリンクは解決されない。
 	target := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.notes.id, "Link Target")
 	crossTopic := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.handbook.id, "Cross Topic")
-
-	assertContains(t, row.bodyHTML, hrefOf(spaces.wiki, target.number))
-	assertContains(t, row.bodyHTML, hrefOf(spaces.wiki, crossTopic.number))
-	assertContains(t, row.bodyHTML, "[[Nowhere/Missing]]")
 
 	// Wikiリンクの指す先のページは未公開で作成される。画面からリンクを
 	// 辿ったときと同じ。
@@ -236,6 +229,7 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 	}
 
 	row := readPage(ctx, t, tx, spaces.wiki.id, guide.id)
+	html := renderSeededBody(ctx, t, tx, spaces.wiki, topics.notes, row.body)
 
 	// このページは目視のために存在するため、重要なのは、並べた記法が
 	// 意図した要素としてブラウザまで届くこと。
@@ -250,7 +244,7 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 		{notation: "コードブロック", want: "<pre"},
 		{notation: "水平線", want: "<hr"},
 	} {
-		if !strings.Contains(row.bodyHTML, tt.want) {
+		if !strings.Contains(html, tt.want) {
 			t.Errorf("%sが%sとしてレンダリングされていない", tt.notation, tt.want)
 		}
 	}
@@ -259,7 +253,7 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 	// このページが見せるのは記法であって書き手が選んだ折り返しではなく、シードの他の
 	// ページはいずれも <br> なしで描画される。ここに <br> が出たなら、段落がまた複数行に
 	// またがって書かれたということになる。
-	if got := strings.Count(row.bodyHTML, "<br"); got != 0 {
+	if got := strings.Count(html, "<br"); got != 0 {
 		t.Errorf("段落内の改行が%d箇所 <br> として描画されている", got)
 	}
 
@@ -270,23 +264,27 @@ func TestGenerateMarkdownGuide(t *testing.T) {
 	otherTopic := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.handbook.id, "Wiki リンクの例")
 	assertLinkedPageIDs(t, row.linkedPageIDs, []model.PageID{sameTopic.id, otherTopic.id})
 
-	assertContains(t, row.bodyHTML, hrefOf(spaces.wiki, sameTopic.number))
-	assertContains(t, row.bodyHTML, hrefOf(spaces.wiki, otherTopic.number))
+	assertContains(t, html, hrefOf(spaces.wiki, sameTopic.number))
+	assertContains(t, html, hrefOf(spaces.wiki, otherTopic.number))
 
 	// このページは存在しないトピックへのリンクを意図的に含んでおり、未解決の
 	// 見た目も画面で確認できるようにしている。件数で確認するのは、Wikiリンクが
 	// <pre> の中では置換されず、コードフェンス内の1件は何があっても残るため。
 	// 本文中の1件も書いたままであることは、両方を数えて初めて確認できる。
-	if got := strings.Count(row.bodyHTML, "[[存在しないトピック/"); got != 2 {
+	if got := strings.Count(html, "[[存在しないトピック/"); got != 2 {
 		t.Errorf("未解決のWikiリンクが2箇所残ることを期待したが%d箇所だった", got)
 	}
 
-	// ページ内リンクの節はアンカーを例示している。このページの見出しには
-	// IDの元になる英字が無く、IDは出現順から採番される。アンカーがページに実在する
-	// IDを指していることを確認しておくと、上に見出しが増えたときに、例示が黙って
-	// 死んだリンクへ変わるのを防げる。
-	assertContains(t, row.bodyHTML, `<a href="#heading"`)
-	assertContains(t, row.bodyHTML, `<h2 id="heading">`)
+	// ページ内リンクの節は日本語の見出しを指すアンカーを例示している。アンカーがページに
+	// 実在するIDを指していることを確認しておくと、見出しのIDの付け方が変わったときに、
+	// 例示が黙って死んだリンクへ変わるのを防げる。
+	assertContains(t, html, `<a href="#%E8%A6%8B%E5%87%BA%E3%81%97"`)
+	assertContains(t, html, `<h2 id="見出し">`)
+
+	// 本文は##の節で構成し、見出しの節の途中にだけ記法の例として#を書いている。見出しは
+	// 本文の最初の見出しをh2に揃えるため、その#があっても節の見出しは##のままh2になる。
+	assertContains(t, html, `<h2 id="wiki-リンク">Wiki リンク</h2>`)
+	assertContains(t, html, `<h2 id="見出し1">見出し1</h2>`)
 }
 
 func TestMarkdownGuideBody(t *testing.T) {
@@ -325,10 +323,42 @@ func TestMarkdownGuideBody(t *testing.T) {
 type pageRow struct {
 	title         string
 	body          string
-	bodyHTML      string
 	topicID       model.TopicID
 	published     bool
 	linkedPageIDs []model.PageID
+}
+
+// renderSeededBodyは、シードが保存したMarkdownをページ詳細画面が配信するHTMLに変換し、
+// 描画結果を確かめるテストで使う。
+// resolverは存在しないリンク先を作成するが、リンク先はこの時点でシードが作り終えて
+// いるため、確認のための描画がページを増やすことはない。
+func renderSeededBody(
+	ctx context.Context,
+	t *testing.T,
+	tx *sql.Tx,
+	space *seededSpace,
+	topic *seededTopic,
+	body string,
+) string {
+	t.Helper()
+
+	writer := newPageWriter(tx, space)
+	resolver := &seedPageLocationResolver{
+		author:         space.member(roleOwner),
+		topicRepo:      writer.topicRepo,
+		pageRepo:       writer.pageRepo,
+		pageEditorRepo: writer.pageEditorRepo,
+	}
+
+	html, err := markup.RenderHTML(
+		ctx, body, topic.name, space.id, space.identifier,
+		resolver, repository.NewAttachmentRepository(query.New(tx)),
+	)
+	if err != nil {
+		t.Fatalf("本文の描画に失敗: %v", err)
+	}
+
+	return html
 }
 
 // readPageは保存されたページを読み戻す。
@@ -342,10 +372,10 @@ func readPage(ctx context.Context, t *testing.T, tx *sql.Tx, spaceID model.Space
 	)
 	err := tx.QueryRowContext(
 		ctx,
-		`SELECT title, body, body_html, topic_id, published_at IS NOT NULL, linked_page_ids
+		`SELECT title, body, topic_id, published_at IS NOT NULL, linked_page_ids
          FROM pages WHERE id = $1 AND space_id = $2`,
 		string(pageID), string(spaceID),
-	).Scan(&row.title, &row.body, &row.bodyHTML, &topicID, &row.published, pq.Array(&linked))
+	).Scan(&row.title, &row.body, &topicID, &row.published, pq.Array(&linked))
 	if err != nil {
 		t.Fatalf("ページの取得に失敗: %v", err)
 	}
@@ -408,7 +438,7 @@ func assertContains(t *testing.T, html string, want string) {
 	t.Helper()
 
 	if !strings.Contains(html, want) {
-		t.Errorf("body_htmlに%qが含まれていない: %q", want, html)
+		t.Errorf("描画結果に%qが含まれていない: %q", want, html)
 	}
 }
 
@@ -448,15 +478,14 @@ func assertPageRevision(
 		count         int
 		title         string
 		body          string
-		bodyHTML      string
 		spaceMemberID string
 	)
 	err := tx.QueryRowContext(
 		ctx,
-		`SELECT count(*) OVER (), title, body, body_html, space_member_id
+		`SELECT count(*) OVER (), title, body, space_member_id
          FROM page_revisions WHERE page_id = $1 AND space_id = $2`,
 		string(pageID), string(space.id),
-	).Scan(&count, &title, &body, &bodyHTML, &spaceMemberID)
+	).Scan(&count, &title, &body, &spaceMemberID)
 	if err != nil {
 		t.Fatalf("ページリビジョンの取得に失敗: %v", err)
 	}
@@ -464,7 +493,7 @@ func assertPageRevision(
 	if count != 1 {
 		t.Errorf("ページリビジョンが1件であることを期待したが%d件だった", count)
 	}
-	if title != page.title || body != page.body || bodyHTML != page.bodyHTML {
+	if title != page.title || body != page.body {
 		t.Error("ページリビジョンの内容がページと一致しない")
 	}
 	if model.SpaceMemberID(spaceMemberID) != author.id {

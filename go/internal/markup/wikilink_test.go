@@ -108,6 +108,46 @@ func TestScanWikilinks_EmptyBody(t *testing.T) {
 	}
 }
 
+// TestScanWikilinks_CRLFBodyは、CRLFで届いた本文がLFのときと同じリンクを返すことを固定する。
+//
+// ScanWikilinkMatchesは正規化後のソースを読む前提の関数で、その前提の外から渡す唯一の経路が
+// ScanWikilinksである。保存経路はここが返すキーからリンク先ページを作るため、ブラウザが
+// CRLFで送っても、表示がレンダリング経由で読むリンクと一致している必要がある。
+//
+// 固定するのはこの一致であって、ScanWikilinks内のCRLF正規化そのものではない。現在は
+// ScanWikilinkMatchesもCRLFを扱えるため、正規化を外してもこのテストは通る。下の層がCRLFに
+// 反応するようになったときに、この一致が崩れたことを検出する。
+func TestScanWikilinks_CRLFBody(t *testing.T) {
+	t.Parallel()
+
+	// コードブロックを挟み、改行の扱いがブロックの範囲の判定に響く本文にする。
+	const lfBody = "[[ページ1]]\n\n```\n[[コード1]]\n```\n\n> [[ページ2]]\n\n[[ページ3]]"
+	crlfBody := strings.ReplaceAll(lfBody, "\n", "\r\n")
+
+	want := []string{"ページ1", "ページ2", "ページ3"}
+
+	crlfKeys := ScanWikilinks(crlfBody, "トピックA")
+	lfKeys := ScanWikilinks(lfBody, "トピックA")
+
+	if len(crlfKeys) != len(want) {
+		t.Fatalf("len(crlfKeys) = %d、期待値 = %d: %+v", len(crlfKeys), len(want), crlfKeys)
+	}
+	for i, raw := range want {
+		if crlfKeys[i].Raw != raw {
+			t.Errorf("crlfKeys[%d].Raw = %q、期待値 = %q", i, crlfKeys[i].Raw, raw)
+		}
+	}
+
+	if len(crlfKeys) != len(lfKeys) {
+		t.Fatalf("len(crlfKeys) = %d、期待値 = LFのときと同じ%d", len(crlfKeys), len(lfKeys))
+	}
+	for i := range crlfKeys {
+		if crlfKeys[i] != lfKeys[i] {
+			t.Errorf("crlfKeys[%d] = %+v、期待値 = LFのときと同じ%+v", i, crlfKeys[i], lfKeys[i])
+		}
+	}
+}
+
 func TestScanWikilinks_SlashInPageTitle(t *testing.T) {
 	t.Parallel()
 

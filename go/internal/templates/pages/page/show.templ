@@ -50,7 +50,7 @@ templ Show(data ShowData) {
 					@showHeader(data)
 
 					if data.Page.BodyHTML != "" {
-						// 本文HTMLはページ公開時にサニタイズ済みのため、ここでは生のまま展開する。
+						// 本文HTMLはUseCaseが表示時にサニタイズ済みのため、ここでは生のまま展開する。
 						<div class="wikino-markdown mt-6" data-markdown-table-label={ templates.T(ctx, "markdown_table_scroll_label") }>
 							@templ.Raw(data.Page.BodyHTML)
 						</div>

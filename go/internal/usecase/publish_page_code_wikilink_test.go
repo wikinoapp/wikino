@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -77,8 +76,5 @@ func TestPublishPageUsecase_Execute_CodeWikilinkCreatesNoPage(t *testing.T) {
 	}
 	if len(output.Page.LinkedPageIDs) != 1 || output.Page.LinkedPageIDs[0] != linked.ID {
 		t.Errorf("LinkedPageIDs = %v、期待値 = %vのみ", output.Page.LinkedPageIDs, linked.ID)
-	}
-	if !strings.Contains(output.Page.BodyHTML, "テキストのリンク先</a>") {
-		t.Errorf("公開後のHTMLに作成したページへのリンクが無い: %s", output.Page.BodyHTML)
 	}
 }

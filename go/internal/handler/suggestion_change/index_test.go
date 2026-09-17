@@ -154,7 +154,6 @@ func TestIndex_公開トピックの差分を未ログインで閲覧できる(t
 		WithPageRevisionID(pageRevisionID).
 		WithTitle("提案タイトル").
 		WithBody("提案本文").
-		WithBodyHTML("<p>提案本文</p>").
 		Build()
 
 	handler := setupHandler(t, db, queries)

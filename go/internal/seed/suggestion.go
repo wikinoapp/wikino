@@ -390,16 +390,13 @@ type createSuggestionInput struct {
 	editStarted bool
 }
 
-// suggestedPageは、編集提案が変更を提案するページ1件を、提案された本文の
-// レンダリング後の形で表す。レンダリング結果を保持するのは、編集提案の反映が同じ
-// タイトル・本文・リンクをページ自体へ書き込むことと、進行中の編集が残す下書きが
-// それらの写しを持つことによる。
+// suggestedPageは、編集提案が変更を提案するページ1件を表す。タイトル・本文・リンクを
+// 保持するのは、編集提案の反映が同じ内容をページ自体へ書き込むことによる。
 type suggestedPage struct {
 	id            model.SuggestionPageID
 	target        suggestionTarget
 	title         string
 	body          string
-	bodyHTML      string
 	linkedPageIDs []model.PageID
 }
 
@@ -470,7 +467,7 @@ func (w *suggestionWriter) createSuggestionPages(
 		}
 		body := suggestionPageBody(target.body)
 
-		bodyHTML, linkedPageIDs, err := w.pages.render(ctx, createPageInput{
+		linkedPageIDs, err := w.pages.resolveLinks(ctx, createPageInput{
 			topic:  input.topic,
 			author: input.creator,
 			title:  title,
@@ -495,7 +492,6 @@ func (w *suggestionWriter) createSuggestionPages(
 			PageRevisionID: &baseRevision.ID,
 			Title:          &title,
 			Body:           body,
-			BodyHTML:       bodyHTML,
 			LinkedPageIDs:  linkedPageIDs,
 		})
 		if err != nil {
@@ -508,7 +504,6 @@ func (w *suggestionWriter) createSuggestionPages(
 			EditorSpaceMemberID: input.creator.id,
 			Title:               &title,
 			Body:                body,
-			BodyHTML:            bodyHTML,
 		}); err != nil {
 			return nil, fmt.Errorf("編集提案 %sの提案ページのリビジョンの作成に失敗: %w", input.title, err)
 		}
@@ -518,7 +513,6 @@ func (w *suggestionWriter) createSuggestionPages(
 			target:        target,
 			title:         title,
 			body:          body,
-			bodyHTML:      bodyHTML,
 			linkedPageIDs: linkedPageIDs,
 		})
 	}
@@ -578,7 +572,6 @@ func (w *suggestionWriter) startEdit(ctx context.Context, input createSuggestion
 		SuggestionPageID: &page.id,
 		Title:            &page.title,
 		Body:             page.body,
-		BodyHTML:         page.bodyHTML,
 		LinkedPageIDs:    page.linkedPageIDs,
 		ModifiedAt:       w.draftStamps.next(),
 	}); err != nil {
@@ -641,7 +634,6 @@ func (w *suggestionWriter) applyToPages(ctx context.Context, topic *seededTopic,
 			TopicID:       topic.id,
 			Title:         &title,
 			Body:          page.body,
-			BodyHTML:      page.bodyHTML,
 			LinkedPageIDs: page.linkedPageIDs,
 			ModifiedAt:    now,
 			PublishedAt:   &now,
@@ -655,7 +647,6 @@ func (w *suggestionWriter) applyToPages(ctx context.Context, topic *seededTopic,
 			PageID:        page.target.page.id,
 			Title:         title,
 			Body:          page.body,
-			BodyHTML:      page.bodyHTML,
 		}); err != nil {
 			return fmt.Errorf("ページ %sのリビジョンの作成に失敗: %w", title, err)
 		}

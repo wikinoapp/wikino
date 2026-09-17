@@ -46,7 +46,6 @@ func createSuggestionPageFromDraftPage(
 ) (*model.SuggestionPage, error) {
 	dp := input.DraftPage
 
-	// SuggestionPageを作成
 	suggestionPage, err := suggestionPageRepo.Create(ctx, repository.CreateSuggestionPageInput{
 		SpaceID:                   input.SpaceID,
 		SuggestionID:              input.SuggestionID,
@@ -54,7 +53,6 @@ func createSuggestionPageFromDraftPage(
 		PageRevisionID:            input.PageRevisionID,
 		Title:                     dp.Title,
 		Body:                      dp.Body,
-		BodyHTML:                  dp.BodyHTML,
 		LinkedPageIDs:             dp.LinkedPageIDs,
 		FeaturedImageAttachmentID: dp.FeaturedImageAttachmentID,
 	})
@@ -69,7 +67,6 @@ func createSuggestionPageFromDraftPage(
 		EditorSpaceMemberID: input.SpaceMemberID,
 		Title:               dp.Title,
 		Body:                dp.Body,
-		BodyHTML:            dp.BodyHTML,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("編集提案ページリビジョンの作成に失敗しました: %w", err)

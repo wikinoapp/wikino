@@ -193,7 +193,7 @@ func createDemoPages(
 	return nil
 }
 
-// publishDemoPagesは各本文をレンダリングしてページを公開し、画面から公開した
+// publishDemoPagesは各本文のリンク先を解決してページを公開し、画面から公開した
 // ときに残るリビジョンと編集者エントリを残す。2つのパスのうちの2つ目にあたり、
 // これが走る時点では本文が名指しするタイトルはすべて存在している。
 func publishDemoPages(
@@ -209,7 +209,7 @@ func publishDemoPages(
 	for _, page := range pages {
 		at := stamps.next()
 
-		bodyHTML, linkedPageIDs, err := writer.render(ctx, createPageInput{
+		linkedPageIDs, err := writer.resolveLinks(ctx, createPageInput{
 			topic:  topic,
 			author: author,
 			title:  page.title,
@@ -225,7 +225,6 @@ func publishDemoPages(
 			TopicID:       topic.id,
 			Title:         &page.title,
 			Body:          page.body,
-			BodyHTML:      bodyHTML,
 			LinkedPageIDs: linkedPageIDs,
 			ModifiedAt:    at,
 			PublishedAt:   &at,
@@ -252,7 +251,6 @@ func publishDemoPages(
 			PageID:        page.id,
 			Title:         page.title,
 			Body:          page.body,
-			BodyHTML:      bodyHTML,
 		}); err != nil {
 			return fmt.Errorf("デモページ %sのリビジョンの作成に失敗: %w", page.title, err)
 		}

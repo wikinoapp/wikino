@@ -43,22 +43,24 @@ func TestGenerateSandboxPages(t *testing.T) {
 		}
 	}
 
-	// 生成した本文は、組み立て元のMarkdownではなく保存されたHTMLで確認する。
+	// 生成した本文は、組み立て元のMarkdownではなく描画した結果で確認する。
 	// レンダラーがテーブルとして読まなかった表や、閉じられなかったフェンスは、その
 	// ページを、見せるために書いたものとはまったく別の見た目にしてしまうため。
 	tablePage := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.sandbox.id, wideTablePageTitle)
 	tableRow := readPage(ctx, t, tx, spaces.wiki.id, tablePage.id)
-	if got := strings.Count(tableRow.bodyHTML, "<th>"); got != wideTableColumns {
+	tableHTML := renderSeededBody(ctx, t, tx, spaces.wiki, topics.sandbox, tableRow.body)
+	if got := strings.Count(tableHTML, "<th>"); got != wideTableColumns {
 		t.Errorf("横に長いテーブルの列が%d列であることを期待したが%d列だった", wideTableColumns, got)
 	}
-	if got := strings.Count(tableRow.bodyHTML, "<tr>"); got != wideTableRows+1 {
+	if got := strings.Count(tableHTML, "<tr>"); got != wideTableRows+1 {
 		t.Errorf("横に長いテーブルの行が%d行であることを期待したが%d行だった", wideTableRows+1, got)
 	}
 
 	codePage := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.sandbox.id, longCodeBlockPageTitle)
 	codeRow := readPage(ctx, t, tx, spaces.wiki.id, codePage.id)
-	if !strings.Contains(codeRow.bodyHTML, "<pre><code") {
-		t.Errorf("長大なコードブロックがコードブロックとして描画されていない: %q", codeRow.bodyHTML)
+	codeHTML := renderSeededBody(ctx, t, tx, spaces.wiki, topics.sandbox, codeRow.body)
+	if !strings.Contains(codeHTML, "<pre><code") {
+		t.Errorf("長大なコードブロックがコードブロックとして描画されていない: %q", codeHTML)
 	}
 	if got := strings.Count(codeRow.body, "\tfmt.Printf("); got != longCodeBlockPrintLines {
 		t.Errorf(

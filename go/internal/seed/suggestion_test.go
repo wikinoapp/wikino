@@ -115,10 +115,6 @@ func assertSuggestionPageShowsADiff(
 	if sharedLineCount(base, suggestionPage.body) == 0 {
 		t.Errorf("編集提案%qの提案ページに、基準リビジョンと共通する行が1行も無い", suggestion.title)
 	}
-	if suggestionPage.bodyHTML == "" {
-		t.Errorf("編集提案%qの提案ページの本文HTMLが空だった", suggestion.title)
-	}
-
 	page := readPageUnderSuggestion(ctx, t, tx, spaceID, suggestionPage.pageID)
 
 	// 提案の内容がページに載るのは反映によってであり、それ以外では載らない。
@@ -634,7 +630,6 @@ func TestGenerateSuggestionsExcludesPagesWithDrafts(t *testing.T) {
 		TopicID:       topics.handbook.id,
 		Title:         &draftTitle,
 		Body:          excluded.body,
-		BodyHTML:      "<p>Draft on a suggestion target.</p>",
 		LinkedPageIDs: []model.PageID{},
 		ModifiedAt:    time.Now(),
 	}); err != nil {
@@ -920,7 +915,6 @@ type suggestionPageRow struct {
 	pageRevisionID *model.PageRevisionID
 	title          *string
 	body           string
-	bodyHTML       string
 }
 
 // listSuggestionPagesは、編集提案の提案ページを、変更差分画面が見せる順序で
@@ -936,7 +930,7 @@ func listSuggestionPages(
 
 	rows, err := tx.QueryContext(
 		ctx,
-		`SELECT id, page_id, page_revision_id, title, body, body_html
+		`SELECT id, page_id, page_revision_id, title, body
          FROM suggestion_pages
          WHERE space_id = $1 AND suggestion_id = $2
          ORDER BY created_at ASC, id ASC`,
@@ -957,7 +951,7 @@ func listSuggestionPages(
 			pageID         string
 			pageRevisionID *string
 		)
-		if err := rows.Scan(&id, &pageID, &pageRevisionID, &page.title, &page.body, &page.bodyHTML); err != nil {
+		if err := rows.Scan(&id, &pageID, &pageRevisionID, &page.title, &page.body); err != nil {
 			t.Fatalf("提案ページの読み取りに失敗: %v", err)
 		}
 

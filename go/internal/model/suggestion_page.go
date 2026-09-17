@@ -13,7 +13,6 @@ type SuggestionPage struct {
 	PageRevisionID            *PageRevisionID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []PageID
 	FeaturedImageAttachmentID *AttachmentID
 	CreatedAt                 time.Time

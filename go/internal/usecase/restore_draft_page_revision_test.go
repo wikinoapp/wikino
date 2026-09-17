@@ -28,11 +28,6 @@ func newRestoreUC(db *sql.DB) *RestoreDraftPageRevisionUsecase {
 	)
 }
 
-// staleBodyHTMLはrevision1のbody_htmlとして保存する値で、本文の再レンダリング結果と
-// 意図的に異なる値にしてある。保存済みHTMLがsaveDraftPageContentで再レンダリングされずに
-// 使い回された場合に、成功テストで検出できるようにするため。
-const staleBodyHTML = "<p>stale html</p>"
-
 // restoreFixtureは復元UseCaseのテストで共有するフィクスチャ一式。
 type restoreFixture struct {
 	userID        model.UserID
@@ -94,7 +89,6 @@ func setupRestoreFixture(t *testing.T, db *sql.DB, prefix string) restoreFixture
 		SpaceMemberID: spaceMemberID,
 		Title:         "Old Title",
 		Body:          "old body",
-		BodyHTML:      staleBodyHTML,
 	})
 	if err != nil {
 		t.Fatalf("Create() (revision1) のエラー = %v", err)
@@ -105,7 +99,6 @@ func setupRestoreFixture(t *testing.T, db *sql.DB, prefix string) restoreFixture
 		SpaceMemberID: spaceMemberID,
 		Title:         "Current Title",
 		Body:          "current body",
-		BodyHTML:      "<p>current body</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (revision2) のエラー = %v", err)
@@ -153,16 +146,6 @@ func TestRestoreDraftPageRevisionUsecase_Execute(t *testing.T) {
 		t.Errorf("DraftPage.Body = %q、期待値 = %q", output.DraftPage.Body, "old body")
 	}
 
-	// 本文HTMLはsaveDraftPageContentで再レンダリングされること (リビジョン保存済みの
-	// 古いbody_htmlの使い回しではないこと)。リンク先ページIDや添付参照が復元後の本文と
-	// 整合するための設計判断を検証する。
-	if output.DraftPage.BodyHTML == staleBodyHTML {
-		t.Error("DraftPage.BodyHTMLが再描画されず、保存済みのリビジョンからコピーされている")
-	}
-	if output.DraftPage.BodyHTML == "" {
-		t.Error("DraftPage.BodyHTMLが空")
-	}
-
 	// 復元後の状態が新しいリビジョンとして記録されていること (履歴は削除されない)。
 	if output.DraftPageRevision == nil {
 		t.Fatal("DraftPageRevisionがnil")
@@ -176,14 +159,6 @@ func TestRestoreDraftPageRevisionUsecase_Execute(t *testing.T) {
 	if output.DraftPageRevision.Body != "old body" {
 		t.Errorf("DraftPageRevision.Body = %q、期待値 = %q", output.DraftPageRevision.Body, "old body")
 	}
-	// 新しいリビジョンにも、保存済みの古いHTMLではなく再レンダリングされたHTMLが記録されること。
-	if output.DraftPageRevision.BodyHTML == staleBodyHTML {
-		t.Error("DraftPageRevision.BodyHTMLが再描画されず、保存済みのリビジョンからコピーされている")
-	}
-	if output.DraftPageRevision.BodyHTML == "" {
-		t.Error("DraftPageRevision.BodyHTMLが空")
-	}
-
 	revisionRepo := repository.NewDraftPageRevisionRepository(query.New(db))
 	count, err := revisionRepo.CountByDraftPageID(ctx, fixture.draftPageID, fixture.spaceID)
 	if err != nil {
@@ -291,7 +266,6 @@ func TestRestoreDraftPageRevisionUsecase_Execute_OtherMembersRevision(t *testing
 		SpaceMemberID: otherMemberID,
 		Title:         "Other Member Title",
 		Body:          "other member body",
-		BodyHTML:      "<p>other member body</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (otherRev) のエラー = %v", err)

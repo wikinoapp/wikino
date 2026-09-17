@@ -97,13 +97,11 @@ func TestGenerateDemoPages(t *testing.T) {
 			t.Errorf("ページ%sの本文のWikiリンクが1つも解決していない", row.title)
 		}
 		for _, linked := range row.linkedPageIDs {
-			number, ok := numbers[linked]
-			if !ok {
+			if _, ok := numbers[linked]; !ok {
 				t.Errorf("ページ%sがデモスペースの外のページ%sへリンクしている", row.title, linked)
 
 				continue
 			}
-			assertContains(t, row.bodyHTML, hrefOf(spaces.demo, number))
 			backlinked[linked] = true
 		}
 	}
@@ -202,7 +200,6 @@ type demoPageRow struct {
 	id            model.PageID
 	number        model.PageNumber
 	title         string
-	bodyHTML      string
 	linkedPageIDs []model.PageID
 	createdAt     time.Time
 	modifiedAt    time.Time
@@ -216,7 +213,7 @@ func readDemoPages(ctx context.Context, t *testing.T, tx *sql.Tx, spaceID model.
 
 	rows, err := tx.QueryContext(
 		ctx,
-		`SELECT id, number, title, body_html, linked_page_ids, created_at, modified_at, published_at
+		`SELECT id, number, title, linked_page_ids, created_at, modified_at, published_at
          FROM pages WHERE space_id = $1 ORDER BY number`,
 		string(spaceID),
 	)
@@ -234,7 +231,7 @@ func readDemoPages(ctx context.Context, t *testing.T, tx *sql.Tx, spaceID model.
 			linked []string
 		)
 		err := rows.Scan(
-			&id, &number, &row.title, &row.bodyHTML, pq.Array(&linked),
+			&id, &number, &row.title, pq.Array(&linked),
 			&row.createdAt, &row.modifiedAt, &row.publishedAt,
 		)
 		if err != nil {

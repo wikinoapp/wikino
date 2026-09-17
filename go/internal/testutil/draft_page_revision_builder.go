@@ -19,18 +19,16 @@ type DraftPageRevisionBuilderDB struct {
 	spaceMemberID string
 	title         string
 	body          string
-	bodyHTML      string
 }
 
 // NewDraftPageRevisionBuilderDBはDraftPageRevisionBuilderDBを生成します
 func NewDraftPageRevisionBuilderDB(t *testing.T, db *sql.DB) *DraftPageRevisionBuilderDB {
 	t.Helper()
 	return &DraftPageRevisionBuilderDB{
-		t:        t,
-		db:       db,
-		title:    "Draft Revision Title",
-		body:     "Draft revision body",
-		bodyHTML: "<p>Draft revision body</p>",
+		t:     t,
+		db:    db,
+		title: "Draft Revision Title",
+		body:  "Draft revision body",
 	}
 }
 
@@ -70,10 +68,10 @@ func (b *DraftPageRevisionBuilderDB) Build() model.DraftPageRevisionID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO draft_page_revisions (draft_page_id, space_id, space_member_id, title, body, body_html, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO draft_page_revisions (draft_page_id, space_id, space_member_id, title, body, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6)
 		 RETURNING id`,
-		b.draftPageID, b.spaceID, b.spaceMemberID, b.title, b.body, b.bodyHTML, now,
+		b.draftPageID, b.spaceID, b.spaceMemberID, b.title, b.body, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("下書きページリビジョン作成に失敗: %v", err)

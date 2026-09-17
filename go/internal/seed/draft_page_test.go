@@ -156,12 +156,6 @@ func assertDraftsCarryWhatTheLastSaveWrote(
 		if draft.body != revisions[0].body {
 			t.Errorf("%sの本文が最新リビジョンの本文と一致しない", draftLabelOf(draft))
 		}
-		if draft.bodyHTML != revisions[0].bodyHTML {
-			t.Errorf("%sの本文HTMLが最新リビジョンの本文HTMLと一致しない", draftLabelOf(draft))
-		}
-		if draft.bodyHTML == "" {
-			t.Errorf("%sの本文HTMLが空だった", draftLabelOf(draft))
-		}
 	}
 }
 
@@ -406,15 +400,13 @@ type draftPageRow struct {
 	topicID    model.TopicID
 	title      *string
 	body       string
-	bodyHTML   string
 	modifiedAt time.Time
 }
 
 // draftPageRevisionRowは保存された下書きのリビジョン1件。
 type draftPageRevisionRow struct {
-	title    string
-	body     string
-	bodyHTML string
+	title string
+	body  string
 }
 
 // listDraftPagesは、あるメンバーの下書きを、一覧が見せる順序で読み戻す。
@@ -429,7 +421,7 @@ func listDraftPages(
 
 	rows, err := tx.QueryContext(
 		ctx,
-		`SELECT id, page_id, topic_id, title, body, body_html, modified_at
+		`SELECT id, page_id, topic_id, title, body, modified_at
          FROM draft_pages
          WHERE space_id = $1 AND space_member_id = $2
          ORDER BY modified_at DESC`,
@@ -451,7 +443,7 @@ func listDraftPages(
 			topicID string
 		)
 		if err := rows.Scan(
-			&id, &pageID, &topicID, &draft.title, &draft.body, &draft.bodyHTML, &draft.modifiedAt,
+			&id, &pageID, &topicID, &draft.title, &draft.body, &draft.modifiedAt,
 		); err != nil {
 			t.Fatalf("下書きの読み取りに失敗: %v", err)
 		}
@@ -481,7 +473,7 @@ func listDraftPageRevisions(
 
 	rows, err := tx.QueryContext(
 		ctx,
-		`SELECT title, body, body_html
+		`SELECT title, body
          FROM draft_page_revisions
          WHERE space_id = $1 AND draft_page_id = $2
          ORDER BY created_at DESC, id DESC`,
@@ -497,7 +489,7 @@ func listDraftPageRevisions(
 	var revisions []draftPageRevisionRow
 	for rows.Next() {
 		var revision draftPageRevisionRow
-		if err := rows.Scan(&revision.title, &revision.body, &revision.bodyHTML); err != nil {
+		if err := rows.Scan(&revision.title, &revision.body); err != nil {
 			t.Fatalf("下書きリビジョンの読み取りに失敗: %v", err)
 		}
 		revisions = append(revisions, revision)

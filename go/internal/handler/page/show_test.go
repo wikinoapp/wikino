@@ -104,7 +104,10 @@ func TestShow(t *testing.T) {
 		WithTopicID(publicTopicID).
 		WithNumber(1).
 		WithTitle("Public Page Title").
-		WithBodyHTML("<p>public page body</p>").
+		WithBody("public page body").
+		// 本文HTMLは表示時にレンダリングするため、保存済みHTMLは画面に出ない。食い違う値を
+		// 保存して、Handlerが読むのがUseCaseのレンダリング結果であることを固定する。
+		WithBodyHTML("<p>stale saved body</p>").
 		WithLinkedPageIDs([]model.PageID{linkedPageID}).
 		Build()
 	testutil.NewPageBuilder(t, tx).
@@ -136,7 +139,7 @@ func TestShow(t *testing.T) {
 		WithTopicID(publicTopicID).
 		WithNumber(3).
 		WithTitle("Trashed Page Title").
-		WithBodyHTML("<p>trashed page body</p>").
+		WithBody("trashed page body").
 		WithLinkedPageIDs([]model.PageID{}).
 		WithTrashed().
 		Build()
@@ -147,7 +150,7 @@ func TestShow(t *testing.T) {
 		WithTopicID(publicTopicID).
 		WithNumber(4).
 		WithNilTitle().
-		WithBodyHTML("").
+		WithBody("").
 		WithLinkedPageIDs([]model.PageID{}).
 		Build()
 
@@ -235,6 +238,8 @@ func TestShow(t *testing.T) {
 			},
 			wantNotContains: []string{
 				"このページはゴミ箱に入れられています。",
+				// 本文は表示時にレンダリングするため、保存済みHTMLは画面に出ない。
+				"stale saved body",
 				// ゲストは編集できないため、ヘッダーの編集ボタンも各カードの編集リンクも出さない。
 				"/s/page-show-space/pages/1/edit",
 				"/s/page-show-space/pages/5/edit",
@@ -739,7 +744,7 @@ func TestShow_RelatedPagePagination(t *testing.T) {
 		WithTopicID(topicID).
 		WithNumber(1).
 		WithTitle("Shown Page").
-		WithBodyHTML("<p>shown page body</p>").
+		WithBody("shown page body").
 		WithLinkedPageIDs(linkedPageIDs).
 		Build()
 
@@ -871,7 +876,7 @@ func TestShow_RelatedLinkSections(t *testing.T) {
 		WithTopicID(topicID).
 		WithNumber(1).
 		WithTitle("Shown Page").
-		WithBodyHTML("<p>shown page body</p>").
+		WithBody("shown page body").
 		WithLinkedPageIDs([]model.PageID{linkedPageID, lonelyLinkedPageID}).
 		Build()
 

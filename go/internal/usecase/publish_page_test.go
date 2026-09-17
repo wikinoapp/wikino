@@ -89,9 +89,6 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 	if output.Page.Title == nil || *output.Page.Title != "Updated Title" {
 		t.Errorf("Title = %v、期待値 = %q", output.Page.Title, "Updated Title")
 	}
-	if output.Page.BodyHTML == "" {
-		t.Error("BodyHTMLが空")
-	}
 	if output.PublishedAt.IsZero() {
 		t.Error("PublishedAtがゼロ値")
 	}
@@ -171,14 +168,130 @@ func TestPublishPageUsecase_Execute_WithWikilinks(t *testing.T) {
 		t.Error("LinkedPageIDsが空")
 	}
 
-	// bodyHTMLにリンクが含まれることを確認
-	if output.Page.BodyHTML == "" {
-		t.Error("BodyHTMLが空")
-	}
-
 	// PublishedAtが設定されていることを確認
 	if output.Page.PublishedAt == nil {
 		t.Error("Page.PublishedAtがnil")
+	}
+}
+
+// TestPublishPageUsecase_Execute_DoesNotWriteBodyHTMLは、公開がページとそのリビジョンに
+// 本文HTMLを保存しないことを確かめる。ページ詳細画面は表示時にレンダリングするため、
+// 公開はHTMLを書かない。あわせて、本文下のリンク一覧が読むlinked_page_idsは公開時に
+// 永続化したままであることも確かめる。
+func TestPublishPageUsecase_Execute_DoesNotWriteBodyHTML(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	pageRevisionRepo := repository.NewPageRevisionRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewPageUpdateValidator(pageRepo))
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-no-html").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-no-html@example.com").
+		WithAtname("publishnohtml").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("No HTML Page").
+		Build()
+
+	// 公開より前にページが持っていた保存済みHTML。公開がこの列を書くようになれば、
+	// 下のレンダリング結果かその一部で上書きされる。
+	const storedBodyHTML = "<p>公開より前に保存されたHTML</p>"
+	if _, err := db.ExecContext(ctx,
+		`UPDATE pages SET body_html = $1 WHERE id = $2 AND space_id = $3`,
+		storedBodyHTML, string(pageID), string(spaceID),
+	); err != nil {
+		t.Fatalf("pages.body_htmlの設定に失敗: %v", err)
+	}
+
+	// 見出し・強調・Wikiリンクを含む本文にして、レンダリング結果が列に残れば分かるようにする。
+	body := "# 見出し\n\n**強調** と [[リンク先ページ]]"
+	testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("No HTML Page").
+		WithBody(body).
+		Build()
+
+	output, err := uc.Execute(ctx, PublishPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("publish-no-html"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "No HTML Page",
+		Body:            body,
+	})
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v", err)
+	}
+
+	var pageBodyHTML string
+	if err := db.QueryRowContext(ctx,
+		`SELECT body_html FROM pages WHERE id = $1 AND space_id = $2`,
+		string(pageID), string(spaceID),
+	).Scan(&pageBodyHTML); err != nil {
+		t.Fatalf("pages.body_htmlの取得に失敗: %v", err)
+	}
+	if pageBodyHTML != storedBodyHTML {
+		t.Errorf("pages.body_html = %q、期待値 = %q (公開は列に触れない)", pageBodyHTML, storedBodyHTML)
+	}
+
+	var revisionBodyHTML string
+	if err := db.QueryRowContext(ctx,
+		`SELECT body_html FROM page_revisions
+		 WHERE page_id = $1 AND space_id = $2
+		 ORDER BY created_at DESC
+		 LIMIT 1`,
+		string(pageID), string(spaceID),
+	).Scan(&revisionBodyHTML); err != nil {
+		t.Fatalf("page_revisions.body_htmlの取得に失敗: %v", err)
+	}
+	if revisionBodyHTML != "" {
+		t.Errorf("page_revisions.body_html = %q、期待値 = 空文字列 (DBのデフォルト値のまま)", revisionBodyHTML)
+	}
+
+	// 本文下のリンク一覧はlinked_page_idsを読むため、HTMLを保存しなくなってもリンク先の
+	// 解決と永続化は続ける。
+	linked, err := pageRepo.FindByTopicAndTitle(ctx, topicID, "リンク先ページ", spaceID)
+	if err != nil {
+		t.Fatalf("FindByTopicAndTitle()のエラー = %v", err)
+	}
+	if linked == nil {
+		t.Fatal("Wikiリンクのリンク先ページが作成されていない")
+	}
+	if len(output.Page.LinkedPageIDs) != 1 || output.Page.LinkedPageIDs[0] != linked.ID {
+		t.Errorf("LinkedPageIDs = %v、期待値 = %vのみ", output.Page.LinkedPageIDs, linked.ID)
 	}
 }
 
@@ -956,6 +1069,7 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 	publishUC := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 	previewUC := NewGetPagePreviewUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	showUC := NewGetPageShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, attachmentRepo)
 
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
 		WithIdentifier("publish-preview-eq").
@@ -1001,14 +1115,13 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 		WithBody(body).
 		Build()
 
-	publishOutput, err := publishUC.Execute(context.Background(), PublishPageInput{
+	if _, err := publishUC.Execute(context.Background(), PublishPageInput{
 		SpaceIdentifier: model.SpaceIdentifier("publish-preview-eq"),
 		PageNumber:      1,
 		UserID:          userID,
 		Title:           "Eq Test",
 		Body:            body,
-	})
-	if err != nil {
+	}); err != nil {
 		t.Fatalf("公開のExecute()のエラー = %v", err)
 	}
 
@@ -1024,7 +1137,21 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 		t.Fatalf("プレビューのExecute()のエラー = %v", err)
 	}
 
-	if previewOutput.BodyHTML != publishOutput.Page.BodyHTML {
-		t.Errorf("プレビューのBodyHTMLが公開後のBodyHTMLと異なる:\nプレビュー: %q\n公開後: %q", previewOutput.BodyHTML, publishOutput.Page.BodyHTML)
+	// 公開はHTMLを保存しないため、公開後の表示はページ表示画面がその場でレンダリングする。
+	// プレビューで見た結果と公開後の表示が一致することを、この2つの出力で突き合わせる。
+	showOutput, err := showUC.Execute(context.Background(), GetPageShowInput{
+		SpaceIdentifier:        model.SpaceIdentifier("publish-preview-eq"),
+		PageNumber:             1,
+		UserID:                 &userID,
+		LinkPage:               1,
+		LinkedPageBacklinkPage: 1,
+		PageBacklinkPage:       1,
+	})
+	if err != nil {
+		t.Fatalf("ページ表示のExecute()のエラー = %v", err)
+	}
+
+	if previewOutput.BodyHTML != showOutput.BodyHTML {
+		t.Errorf("プレビューのBodyHTMLが公開後の表示と異なる:\nプレビュー: %q\n公開後の表示: %q", previewOutput.BodyHTML, showOutput.BodyHTML)
 	}
 }

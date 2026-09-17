@@ -220,7 +220,6 @@ func TestCreate_新規ページで編集提案が作成されリダイレクト�
 		WithTopicID(topicID).
 		WithTitle("新規ページタイトル").
 		WithBody("新規ページ本文").
-		WithBodyHTML("<p>新規ページ本文</p>").
 		Build()
 
 	handler := setupHandler(t, db, queries)

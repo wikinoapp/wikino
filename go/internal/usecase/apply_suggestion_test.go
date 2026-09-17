@@ -12,6 +12,7 @@ import (
 )
 
 func TestApplySuggestionUsecase_Execute(t *testing.T) {
+	t.Parallel()
 	db := testutil.GetTestDB()
 	q := query.New(db)
 
@@ -89,7 +90,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("提案タイトル").
 			WithBody("提案本文").
-			WithBodyHTML("<p>提案本文</p>").
 			Build()
 
 		// 編集提案ページにリンクされた下書きを作成
@@ -222,7 +222,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("提案タイトル").
 			WithBody("提案本文").
-			WithBodyHTML("<p>提案本文</p>").
 			WithLinkedPageIDs([]model.PageID{linkedPageID}).
 			WithFeaturedImageAttachmentID(featuredAttachmentID).
 			Build()
@@ -317,7 +316,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(rev1ID).
 			WithTitle("提案ページ1").
 			WithBody("提案本文1").
-			WithBodyHTML("<p>提案本文1</p>").
 			Build()
 		testutil.NewSuggestionPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -326,7 +324,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(rev2ID).
 			WithTitle("提案ページ2").
 			WithBody("提案本文2").
-			WithBodyHTML("<p>提案本文2</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
@@ -409,7 +406,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("エディターテスト").
 			WithBody("エディターテスト本文").
-			WithBodyHTML("<p>エディターテスト本文</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
@@ -497,7 +493,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("TMテスト").
 			WithBody("TMテスト本文").
-			WithBodyHTML("<p>TMテスト本文</p>").
 			Build()
 
 		_, err = uc.Execute(context.Background(), ApplySuggestionInput{
@@ -569,7 +564,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageID(pageID).
 			WithTitle("新規ページタイトル").
 			WithBody("新規ページ本文").
-			WithBodyHTML("<p>新規ページ本文</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
@@ -671,7 +665,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(revV1ID).
 			WithTitle("提案によるタイトル").
 			WithBody("提案による本文").
-			WithBodyHTML("<p>提案による本文</p>").
 			Build()
 
 		// ページを直接更新 (v2) - ベースリビジョンが乖離する
@@ -910,7 +903,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("Target Title").
 			WithBody("new body").
-			WithBodyHTML("<p>new body</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), ApplySuggestionInput{
@@ -1005,7 +997,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("Conflict").
 			WithBody("new body").
-			WithBodyHTML("<p>new body</p>").
 			Build()
 
 		_, err := uc.Execute(context.Background(), ApplySuggestionInput{
@@ -1087,7 +1078,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("foo/bar").
 			WithBody("body").
-			WithBodyHTML("<p>body</p>").
 			Build()
 
 		_, err := uc.Execute(context.Background(), ApplySuggestionInput{
@@ -1105,6 +1095,103 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		}
 		if len(ae.PageErrors) == 0 {
 			t.Error("ページのエラーを期待したが、無かった")
+		}
+	})
+
+	// 保存済みHTMLの内容にかかわらず、反映後のページとリビジョンにHTMLが
+	// 保存されないことを確認する。
+	t.Run("正常系: 反映がページに本文HTMLをコピーしない", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).
+			WithIdentifier("apply-sug-no-html").
+			Build()
+		userID := testutil.NewUserBuilderDB(t, db).
+			WithEmail("apply-sug-no-html@example.com").
+			WithAtname("applysugnohtml").
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			WithScopes([]model.Scope{model.ScopeSuggestionApplicationWrite}).
+			Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithName("General").
+			Build()
+		testutil.NewTopicMemberBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithSpaceMemberID(spaceMemberID).
+			WithScopes([]model.Scope{}).
+			Build()
+		pageID := testutil.NewPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Original Title").
+			WithBody("Original body").
+			Build()
+
+		pageRevisionID := testutil.NewPageRevisionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSpaceMemberID(spaceMemberID).
+			WithPageID(pageID).
+			Build()
+
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).
+			WithStatus(model.SuggestionStatusOpen).
+			Build()
+		suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).
+			WithSpaceID(spaceID).
+			WithSuggestionID(suggestionID).
+			WithPageID(pageID).
+			WithPageRevisionID(pageRevisionID).
+			WithTitle("提案タイトル").
+			WithBody("# 見出し\n\n**強調** と [[Original Title]]").
+			Build()
+
+		if _, err := db.ExecContext(context.Background(),
+			`UPDATE suggestion_pages SET body_html = $1 WHERE id = $2 AND space_id = $3`,
+			"<p>本文と異なる保存済みHTML</p>", string(suggestionPageID), string(spaceID),
+		); err != nil {
+			t.Fatalf("suggestion_pages.body_htmlの設定に失敗: %v", err)
+		}
+
+		if _, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-sug-no-html",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		}); err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+
+		var pageBodyHTML string
+		if err := db.QueryRowContext(context.Background(),
+			`SELECT body_html FROM pages WHERE id = $1 AND space_id = $2`,
+			string(pageID), string(spaceID),
+		).Scan(&pageBodyHTML); err != nil {
+			t.Fatalf("pages.body_htmlの取得に失敗: %v", err)
+		}
+		if pageBodyHTML != "" {
+			t.Errorf("pages.body_html = %q、期待値 = 空文字列", pageBodyHTML)
+		}
+
+		var revisionBodyHTML string
+		if err := db.QueryRowContext(context.Background(),
+			`SELECT body_html FROM page_revisions
+			 WHERE page_id = $1 AND space_id = $2
+			 ORDER BY created_at DESC
+			 LIMIT 1`,
+			string(pageID), string(spaceID),
+		).Scan(&revisionBodyHTML); err != nil {
+			t.Fatalf("page_revisions.body_htmlの取得に失敗: %v", err)
+		}
+		if revisionBodyHTML != "" {
+			t.Errorf("page_revisions.body_html = %q、期待値 = 空文字列", revisionBodyHTML)
 		}
 	})
 }

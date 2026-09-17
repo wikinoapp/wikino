@@ -317,7 +317,6 @@ func TestCreate_反映権限を持つメンバーが反映できる(t *testing.T
 		WithPageRevisionID(pageRevisionID).
 		WithTitle("更新タイトル").
 		WithBody("更新本文").
-		WithBodyHTML("<p>更新本文</p>").
 		Build()
 
 	handler := setupHandler(t, queries, db)
@@ -517,7 +516,6 @@ func TestCreate_タイトル衝突時に編集提案詳細ページを422で再�
 		WithPageRevisionID(pageRevisionID).
 		WithTitle("衝突タイトル").
 		WithBody("衝突する本文").
-		WithBodyHTML("<p>衝突する本文</p>").
 		Build()
 
 	handler := setupHandler(t, queries, db)
@@ -610,7 +608,6 @@ func TestCreate_タイトルにHTMLを含む編集提案を反映時にXSSが発
 		WithPageRevisionID(pageRevisionID).
 		WithTitle(maliciousTitle).
 		WithBody("本文").
-		WithBodyHTML("<p>本文</p>").
 		Build()
 
 	handler := setupHandler(t, queries, db)

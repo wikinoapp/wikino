@@ -88,7 +88,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pageVM := viewmodel.NewPageForShow(output.Page, output.FeaturedImageAttachment)
+	pageVM := viewmodel.NewPageForShow(output.Page, output.BodyHTML, output.FeaturedImageAttachment)
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 

@@ -3,8 +3,11 @@ package markup
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
+
+	"golang.org/x/net/html"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
@@ -579,4 +582,93 @@ func TestRenderHTMLBatch_AttachmentIDsComeFromTheRenderedBodies(t *testing.T) {
 	if len(finder.requestedIDs) != 1 || finder.requestedIDs[0] != "att-1" {
 		t.Errorf("要求されたID = %v、期待値 = att-1のみ", finder.requestedIDs)
 	}
+}
+
+func TestRenderHTMLBatch_ClosesUnclosedElements(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		body     string
+		wantText string
+		// wantHTMLは出力に含まれるべきHTML。工程が変換したものも直列化まで残ることを確かめる
+		wantHTML          string
+		wantExternalLinks int
+	}{
+		{name: "閉じていないpre", body: "<pre>x", wantText: "x"},
+		{name: "入れ子で閉じていないdivとspan", body: "<div><span>z", wantText: "z"},
+		{name: "table要素の外にあるtd", body: "<td>y", wantText: "y"},
+		{name: "閉じていない表", body: "<table><tr><td>a", wantText: "a"},
+		{name: "段落をまたいで閉じていないem", body: "<em>強調\n\n次の段落", wantText: "強調 次の段落"},
+		{name: "閉じていないdetails", body: "本文\n\n<details><summary>s</summary>\n\n中身", wantText: "本文 s 中身"},
+		{name: "Wikiリンクを含む閉じていないdiv", body: "<div>\n\n[[ページA]]", wantText: "ページA", wantHTML: `<a href="/s/my-space/pages/1"`},
+		{name: "添付ファイルを含む閉じていないdiv", body: "<div>\n\n![写真](/attachments/att-1)", wantText: "", wantHTML: `data-attachment-id="att-1"`},
+		{name: "リンク内の添付画像", body: `<div><a href="https://example.com"><img src="/attachments/att-1"></a></div>`, wantHTML: `data-attachment-id="att-1"`, wantExternalLinks: 1},
+		{name: "リンク内の添付画像とキャプション", body: `<div><a href="https://example.com"><img src="/attachments/att-1"><br><em>説明</em></a></div>`, wantText: "説明", wantHTML: `data-attachment-id="att-1"`, wantExternalLinks: 1},
+		{name: "Markdownのリンク付き画像", body: `[![写真](/attachments/att-1)](https://example.com)`, wantHTML: `data-attachment-id="att-1"`, wantExternalLinks: 1},
+		{name: "強調を挟むリンク付き画像", body: `[**前![写真](/attachments/att-1)後**末尾](https://example.com)`, wantText: "前後末尾", wantHTML: `data-attachment-id="att-1"`, wantExternalLinks: 1},
+		{name: "複数のリンク付き画像", body: `<div><a href="https://example.com">前<img src="/attachments/att-1">中<img src="/attachments/att-1">後</a></div>`, wantText: "前 中 後", wantHTML: `data-attachment-id="att-1"`, wantExternalLinks: 1},
+	}
+
+	resolver := &mockPageLocationResolver{
+		locations: []PageLocation{
+			{
+				Key:        WikilinkKey{Raw: "ページA", TopicName: "topic1", PageTitle: "ページA"},
+				TopicName:  "topic1",
+				PageID:     model.PageID("page-1"),
+				PageNumber: 1,
+				PageTitle:  "ページA",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			finder := &mockBatchAttachmentFinder{
+				attachments: []*model.Attachment{{ID: "att-1", SpaceID: "space-1", Filename: "photo.jpg"}},
+			}
+			inputs := []BatchRenderInput{{Body: tt.body, CurrentTopicName: "topic1"}}
+			got, err := RenderHTMLBatch(context.Background(), inputs, "space-1", "my-space", resolver, finder)
+			if err != nil {
+				t.Fatalf("RenderHTMLBatch()のエラー = %v", err)
+			}
+
+			// ツリーを直列化したHTMLは、パースして直列化し直しても変わらない。
+			container, err := parseHTMLFragmentWithContainer(got[0])
+			if err != nil {
+				t.Fatalf("出力のパースのエラー = %v", err)
+			}
+			reparsed := renderContainerChildren(container)
+			if !slices.Equal(htmlTokens(got[0]), htmlTokens(reparsed)) {
+				t.Errorf("出力の要素の対応が取れていない: 出力 = %q、パースし直した結果 = %q", got[0], reparsed)
+			}
+			if text := PlainText(got[0], 0); text != tt.wantText {
+				t.Errorf("出力のテキスト = %q、期待値 = %q (出力 = %q)", text, tt.wantText, got[0])
+			}
+			if count := strings.Count(got[0], `href="https://example.com"`); count != tt.wantExternalLinks {
+				t.Errorf("外部リンクの数 = %d、期待値 = %d: %s", count, tt.wantExternalLinks, got[0])
+			}
+			if !strings.Contains(got[0], tt.wantHTML) {
+				t.Errorf("出力に %qが含まれていない: %s", tt.wantHTML, got[0])
+			}
+		})
+	}
+}
+
+// htmlTokensはsをトークンの文字列表現の列にする。パーサーは書式要素の属性を並べ替えて
+// 保持するため、直列化し直した結果と比べられるよう各トークンの属性はキーの順に並べる。
+func htmlTokens(s string) []string {
+	var tokens []string
+	tokenizer := html.NewTokenizer(strings.NewReader(s))
+	for tokenizer.Next() != html.ErrorToken {
+		token := tokenizer.Token()
+		slices.SortFunc(token.Attr, func(a, b html.Attribute) int {
+			return strings.Compare(a.Key, b.Key)
+		})
+		tokens = append(tokens, token.String())
+	}
+
+	return tokens
 }

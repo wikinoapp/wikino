@@ -12,8 +12,8 @@ import (
 )
 
 const createSuggestionPageRevision = `-- name: CreateSuggestionPageRevision :one
-INSERT INTO suggestion_page_revisions (space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO suggestion_page_revisions (space_id, suggestion_page_id, editor_space_member_id, title, body, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at
 `
 
@@ -23,7 +23,6 @@ type CreateSuggestionPageRevisionParams struct {
 	EditorSpaceMemberID string         `json:"editor_space_member_id"`
 	Title               sql.NullString `json:"title"`
 	Body                string         `json:"body"`
-	BodyHtml            string         `json:"body_html"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 }
@@ -36,7 +35,6 @@ func (q *Queries) CreateSuggestionPageRevision(ctx context.Context, arg CreateSu
 		arg.EditorSpaceMemberID,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)

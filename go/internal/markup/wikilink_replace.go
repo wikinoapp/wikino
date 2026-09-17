@@ -31,20 +31,19 @@ type wikilinkReplacer struct {
 }
 
 // replaceWikilinkMatchesはpageLocationsが解決する一致をリンクにしてdocumentをもう一度
-// レンダリングする。どれも解決しなければbodyHTMLをそのまま返す。sourceはdocumentの解析元で、
-// matchesの位置が指すものである。
+// レンダリングし、そのツリーを返す。どれも解決しなければ2つ目の戻り値をfalseにし、呼び出し元は
+// 最初のレンダリング結果をそのまま使う。sourceはdocumentの解析元で、matchesの位置が指すものである。
 //
-// マーカーのすべてが通常のテキストとして戻ってこない本文は、リンクなしで返す。走査とこの
-// レンダリングの判断が食い違っているためで、マーカーを見せたりテキストを失ったりするよりは
+// マーカーのすべてが通常のテキストとして戻ってこない本文もfalseを返し、リンクなしで表示させる。
+// 走査とこのレンダリングの判断が食い違っているためで、マーカーを見せたりテキストを失ったりするよりは
 // 記法をそのまま見せるほうがよい。
 func replaceWikilinkMatches(
 	source []byte,
 	document ast.Node,
-	bodyHTML string,
 	matches []WikilinkMatch,
 	spaceIdentifier model.SpaceIdentifier,
 	pageLocations []PageLocation,
-) string {
+) (*html.Node, bool) {
 	var links []resolvedWikilink
 	for _, match := range matches {
 		if location := findPageLocation(match.Key, pageLocations); location != nil {
@@ -52,7 +51,7 @@ func replaceWikilinkMatches(
 		}
 	}
 	if len(links) == 0 {
-		return bodyHTML
+		return nil, false
 	}
 
 	replacer := wikilinkReplacer{prefix: "Wikino" + rand.Text(), links: links}
@@ -61,17 +60,17 @@ func replaceWikilinkMatches(
 	if err != nil {
 		slog.Warn("Wikiリンクのマーカーを含む本文のレンダリングに失敗", "error", err)
 
-		return bodyHTML
+		return nil, false
 	}
 
 	if replaced := replacer.replace(container, false, spaceIdentifier); replaced != len(links) {
 		slog.Warn("Wikiリンクのマーカーの一部が通常のテキストとして描画されなかった",
 			"replaced", replaced, "links", len(links))
 
-		return bodyHTML
+		return nil, false
 	}
 
-	return renderContainerChildren(container)
+	return container, true
 }
 
 // markerはindexのリンクを表すマーカーを返す。

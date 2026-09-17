@@ -33,7 +33,6 @@ type CreateSuggestionPageInput struct {
 	PageRevisionID            *model.PageRevisionID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []model.PageID
 	FeaturedImageAttachmentID *model.AttachmentID
 }
@@ -66,7 +65,6 @@ func (r *SuggestionPageRepository) Create(ctx context.Context, input CreateSugge
 		PageRevisionID:            pageRevisionID,
 		Title:                     title,
 		Body:                      input.Body,
-		BodyHtml:                  input.BodyHTML,
 		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		CreatedAt:                 now,
@@ -111,7 +109,6 @@ type UpdateSuggestionPageContentInput struct {
 	SpaceID                   model.SpaceID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []model.PageID
 	FeaturedImageAttachmentID *model.AttachmentID
 }
@@ -133,7 +130,6 @@ func (r *SuggestionPageRepository) UpdateContent(ctx context.Context, input Upda
 		ID:                        string(input.ID),
 		Title:                     title,
 		Body:                      input.Body,
-		BodyHtml:                  input.BodyHTML,
 		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		UpdatedAt:                 time.Now(),
@@ -191,7 +187,6 @@ func (r *SuggestionPageRepository) toModel(row query.SuggestionPage) *model.Sugg
 		PageRevisionID:            pageRevisionID,
 		Title:                     title,
 		Body:                      row.Body,
-		BodyHTML:                  row.BodyHtml,
 		LinkedPageIDs:             model.StringsToPageIDs(row.LinkedPageIds),
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		CreatedAt:                 row.CreatedAt,

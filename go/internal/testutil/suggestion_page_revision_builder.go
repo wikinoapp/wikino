@@ -19,7 +19,6 @@ type SuggestionPageRevisionBuilder struct {
 	editorSpaceMemberID string
 	title               *string
 	body                string
-	bodyHTML            string
 }
 
 // NewSuggestionPageRevisionBuilderはSuggestionPageRevisionBuilderを生成します
@@ -27,11 +26,10 @@ func NewSuggestionPageRevisionBuilder(t *testing.T, tx *sql.Tx) *SuggestionPageR
 	t.Helper()
 	title := "テストリビジョン"
 	return &SuggestionPageRevisionBuilder{
-		t:        t,
-		tx:       tx,
-		title:    &title,
-		body:     "テストリビジョン本文",
-		bodyHTML: "<p>テストリビジョン本文</p>",
+		t:     t,
+		tx:    tx,
+		title: &title,
+		body:  "テストリビジョン本文",
 	}
 }
 
@@ -71,12 +69,6 @@ func (b *SuggestionPageRevisionBuilder) WithBody(body string) *SuggestionPageRev
 	return b
 }
 
-// WithBodyHTMLはHTML本文を設定します
-func (b *SuggestionPageRevisionBuilder) WithBodyHTML(bodyHTML string) *SuggestionPageRevisionBuilder {
-	b.bodyHTML = bodyHTML
-	return b
-}
-
 // Buildは編集提案ページリビジョンを作成し、IDを返します
 func (b *SuggestionPageRevisionBuilder) Build() model.SuggestionPageRevisionID {
 	b.t.Helper()
@@ -95,10 +87,10 @@ func (b *SuggestionPageRevisionBuilder) Build() model.SuggestionPageRevisionID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO suggestion_page_revisions (space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO suggestion_page_revisions (space_id, suggestion_page_id, editor_space_member_id, title, body, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.suggestionPageID, b.editorSpaceMemberID, b.title, b.body, b.bodyHTML, now, now,
+		b.spaceID, b.suggestionPageID, b.editorSpaceMemberID, b.title, b.body, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("編集提案ページリビジョン作成に失敗: %v", err)

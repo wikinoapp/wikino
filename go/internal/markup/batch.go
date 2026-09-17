@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/yuin/goldmark/ast"
+	"golang.org/x/net/html"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
@@ -72,24 +73,30 @@ func RenderHTMLBatch(
 		return nil, nil
 	}
 
-	// 1. 全テキストをMarkdown→HTMLに変換し、あわせて添付ファイルIDを収集する。
-	// 解析結果とレンダリング結果を添付ファイルの走査と共有するため、本文の読み取りは1回で済む。
+	// 1. 全テキストをMarkdown→HTMLに変換してツリーにし、あわせて添付ファイルIDを収集する。
+	// 以降の工程はこのツリーを順に書き換え、最後に1回だけ直列化する。サニタイザーの出力は
+	// 要素の対応が取れているとは限らず、直列化を必ず通すことで保存するHTMLの対応を取る。
+	// 解析結果とツリーを添付ファイルの走査と共有するため、本文の読み取りは1回で済む。
 	// IDをWikiリンク変換の後ではなくここで集めるのは、変換が走査の読むHTMLを書き換えるためである。
-	htmls := make([]string, len(inputs))
+	trees := make([]*html.Node, len(inputs))
 	sources := make([][]byte, len(inputs))
 	documents := make([]ast.Node, len(inputs))
 	matches := make([][]WikilinkMatch, len(inputs))
 	attachmentIDs := make([][]string, len(inputs))
 	for i, input := range inputs {
 		source, document, bodyHTML := renderBody(input.Body)
-		htmls[i] = bodyHTML
-		sources[i] = source
-		documents[i] = document
 		if document == nil {
 			continue
 		}
+		tree, err := parseHTMLFragmentWithContainer(bodyHTML)
+		if err != nil {
+			return nil, err
+		}
+		trees[i] = tree
+		sources[i] = source
+		documents[i] = document
 		if holdsAttachmentPath(input.Body) {
-			attachmentIDs[i] = attachmentIDsOf(scanAttachmentRefMatches(source, document, bodyHTML, true))
+			attachmentIDs[i] = attachmentIDsOf(scanAttachmentRefMatches(source, document, func() *html.Node { return tree }))
 		}
 
 		// 一致は正規化後のソースから読む。解析結果と下の置換が指す位置はそちらのものである。
@@ -111,7 +118,10 @@ func RenderHTMLBatch(
 			return nil, err
 		}
 		for i := range inputs {
-			htmls[i] = replaceWikilinkMatches(sources[i], documents[i], htmls[i], matches[i], spaceIdentifier, pageLocations)
+			// マーカーを含む本文はレンダリングし直すため、リンクを置いたツリーで差し替える。
+			if replaced, ok := replaceWikilinkMatches(sources[i], documents[i], matches[i], spaceIdentifier, pageLocations); ok {
+				trees[i] = replaced
+			}
 		}
 	}
 
@@ -127,18 +137,24 @@ func RenderHTMLBatch(
 			return nil, err
 		}
 		finder := newMapAttachmentFinder(attachments)
-		for i := range htmls {
-			processed, err := FilterAttachments(ctx, htmls[i], spaceID, finder)
-			if err != nil {
+		for _, tree := range trees {
+			if tree == nil {
+				continue
+			}
+			if _, err := processAttachmentNodes(ctx, tree, spaceID, finder); err != nil {
 				return nil, err
 			}
-			htmls[i] = processed
 		}
 	}
 
-	// 4. 画像リンクのラッピング
-	for i := range htmls {
-		htmls[i] = WrapStandaloneImageLinks(htmls[i])
+	// 4. 画像リンクのラッピングと直列化
+	htmls := make([]string, len(inputs))
+	for i, tree := range trees {
+		if tree == nil {
+			continue
+		}
+		wrapImageLinksInNode(tree)
+		htmls[i] = renderContainerChildren(tree)
 	}
 
 	return htmls, nil

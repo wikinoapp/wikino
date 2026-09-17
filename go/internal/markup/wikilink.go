@@ -58,8 +58,11 @@ type PageLocation struct {
 // リンクを読むため、コードとして書かれた [[...]]、既存のリンクの中の [[...]]、エスケープされた
 // [[...]] はページを指さない。保存経路はキーが指すページを作成するので、画面がリンクとして
 // 見せないものからページを作らないためである。
+//
+// 受け取るのはブラウザから届いたままの本文であるため、レンダリングと同じように改行を正規化して
+// から読む。位置ではなくキーだけを返すので、正規化でずれる位置を呼び出し元が見ることはない。
 func ScanWikilinks(body string, currentTopicName string) []WikilinkKey {
-	matches := ScanWikilinkMatches(body, currentTopicName)
+	matches := ScanWikilinkMatches(strings.ReplaceAll(body, "\r\n", "\n"), currentTopicName)
 	if len(matches) == 0 {
 		return nil
 	}
@@ -84,8 +87,12 @@ func ReplaceWikilinks(body string, currentTopicName string, spaceIdentifier mode
 	}
 
 	matches := ScanWikilinkMatches(string(source), currentTopicName)
+	container, replaced := replaceWikilinkMatches(source, document, matches, spaceIdentifier, pageLocations)
+	if !replaced {
+		return bodyHTML
+	}
 
-	return replaceWikilinkMatches(source, document, bodyHTML, matches, spaceIdentifier, pageLocations)
+	return renderContainerChildren(container)
 }
 
 // parseWikilinkRawはWikiリンクの原文からWikilinkKeyを構築する

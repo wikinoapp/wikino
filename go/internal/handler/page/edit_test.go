@@ -638,7 +638,6 @@ func TestEdit_RevisionColumn(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         title,
 			Body:          "body of " + title,
-			BodyHTML:      "<p>body of " + title + "</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (revision) のエラー = %v", err)

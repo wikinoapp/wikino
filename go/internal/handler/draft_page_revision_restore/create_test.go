@@ -101,7 +101,6 @@ func setupRestoreFixture(t *testing.T, db *sql.DB, prefix string) restoreFixture
 		SpaceMemberID: spaceMemberID,
 		Title:         "Old Title",
 		Body:          "old body",
-		BodyHTML:      "<p>old body</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (revision1) のエラー = %v", err)
@@ -112,7 +111,6 @@ func setupRestoreFixture(t *testing.T, db *sql.DB, prefix string) restoreFixture
 		SpaceMemberID: spaceMemberID,
 		Title:         "Current Title",
 		Body:          "current body",
-		BodyHTML:      "<p>current body</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (revision2) のエラー = %v", err)

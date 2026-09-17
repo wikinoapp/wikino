@@ -51,7 +51,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 		WithTopicID(topicID).
 		WithTitle("Draft Title").
 		WithBody("Draft body").
-		WithBodyHTML("<p>Draft body</p>").
 		Build()
 
 	t.Run("下書きページリビジョンを作成できる", func(t *testing.T) {
@@ -61,7 +60,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "Revision Title",
 			Body:          "revision body",
-			BodyHTML:      "<p>revision body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create()のエラー = %v", err)
@@ -87,9 +85,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 		if revision.Body != "revision body" {
 			t.Errorf("revision.Body = %v、期待値 = 'revision body'", revision.Body)
 		}
-		if revision.BodyHTML != "<p>revision body</p>" {
-			t.Errorf("revision.BodyHTML = %v、期待値 = '<p>revision body</p>'", revision.BodyHTML)
-		}
 		if revision.CreatedAt.IsZero() {
 			t.Error("revision.CreatedAtがゼロ値")
 		}
@@ -102,7 +97,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "Delete Test 1",
 			Body:          "delete body 1",
-			BodyHTML:      "<p>delete body 1</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (1件目のリビジョン) のエラー = %v", err)
@@ -114,7 +108,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "Delete Test 2",
 			Body:          "delete body 2",
-			BodyHTML:      "<p>delete body 2</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (2件目のリビジョン) のエラー = %v", err)
@@ -142,7 +135,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("Count Draft Title").
 			WithBody("count draft body").
-			WithBodyHTML("<p>count draft body</p>").
 			Build()
 
 		count, err := repo.CountByDraftPageID(context.Background(), countDraftPageID, spaceID)
@@ -159,7 +151,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "Count Test 1",
 			Body:          "count body 1",
-			BodyHTML:      "<p>count body 1</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (1件目のリビジョン) のエラー = %v", err)
@@ -170,7 +161,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "Count Test 2",
 			Body:          "count body 2",
-			BodyHTML:      "<p>count body 2</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (2件目のリビジョン) のエラー = %v", err)
@@ -204,7 +194,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("Cascade Draft Title").
 			WithBody("cascade draft body").
-			WithBodyHTML("<p>cascade draft body</p>").
 			Build()
 
 		_, err := repo.Create(context.Background(), CreateDraftPageRevisionInput{
@@ -213,7 +202,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "Cascade Test",
 			Body:          "cascade body",
-			BodyHTML:      "<p>cascade body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create()のエラー = %v", err)
@@ -245,7 +233,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "First Revision",
 			Body:          "first body",
-			BodyHTML:      "<p>first body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (1件目のリビジョン) のエラー = %v", err)
@@ -257,7 +244,6 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "Second Revision",
 			Body:          "second body",
-			BodyHTML:      "<p>second body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (2件目のリビジョン) のエラー = %v", err)
@@ -361,7 +347,6 @@ func TestDraftPageRevisionRepository_FindByID(t *testing.T) {
 		SpaceMemberID: spaceMemberID,
 		Title:         "Find Title",
 		Body:          "find body",
-		BodyHTML:      "<p>find body</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create()のエラー = %v", err)
@@ -514,7 +499,6 @@ func setupDraftRevisionFixture(t *testing.T, tx *sql.Tx, suffix string) (model.S
 		WithTopicID(topicID).
 		WithTitle("Draft Title").
 		WithBody("Draft body").
-		WithBodyHTML("<p>Draft body</p>").
 		Build()
 
 	return spaceID, spaceMemberID, draftPageID
@@ -528,15 +512,14 @@ func insertDraftRevision(t *testing.T, tx *sql.Tx, draftPageID model.DraftPageID
 	t.Helper()
 
 	body := "body-" + title
-	bodyHTML := "<p>" + title + "</p>"
 
 	var id string
 	var storedCreatedAt time.Time
 	err := tx.QueryRowContext(context.Background(),
-		`INSERT INTO draft_page_revisions (draft_page_id, space_id, space_member_id, title, body, body_html, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO draft_page_revisions (draft_page_id, space_id, space_member_id, title, body, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6)
 		 RETURNING id, created_at`,
-		string(draftPageID), string(spaceID), string(spaceMemberID), title, body, bodyHTML, createdAt,
+		string(draftPageID), string(spaceID), string(spaceMemberID), title, body, createdAt,
 	).Scan(&id, &storedCreatedAt)
 	if err != nil {
 		t.Fatalf("insertDraftRevision()のエラー = %v", err)
@@ -549,7 +532,6 @@ func insertDraftRevision(t *testing.T, tx *sql.Tx, draftPageID model.DraftPageID
 		SpaceMemberID: spaceMemberID,
 		Title:         title,
 		Body:          body,
-		BodyHTML:      bodyHTML,
 		CreatedAt:     storedCreatedAt,
 	}
 }

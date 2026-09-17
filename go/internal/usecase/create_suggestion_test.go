@@ -30,7 +30,6 @@ func createPageRevisionForTest(t *testing.T, q *query.Queries, spaceID model.Spa
 		PageID:        pageID,
 		Title:         "Revision Title",
 		Body:          "Revision body",
-		BodyHTML:      "<p>Revision body</p>",
 	})
 	if err != nil {
 		t.Fatalf("ページリビジョン作成に失敗: %v", err)
@@ -92,7 +91,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("提案タイトル").
 			WithBody("提案ページ本文").
-			WithBodyHTML("<p>提案ページ本文</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
@@ -193,7 +191,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("提案タイトル").
 			WithBody("本文").
-			WithBodyHTML("<p>本文</p>").
 			WithLinkedPageIDs([]model.PageID{linkedPageID}).
 			WithFeaturedImageAttachmentID(featuredID).
 			Build()
@@ -268,7 +265,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("提案ページ1").
 			WithBody("本文1").
-			WithBodyHTML("<p>本文1</p>").
 			Build()
 		draftPage2ID := testutil.NewDraftPageBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -277,7 +273,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("提案ページ2").
 			WithBody("本文2").
-			WithBodyHTML("<p>本文2</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
@@ -335,7 +330,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("提案タイトル").
 			WithBody("提案ページ本文").
-			WithBodyHTML("<p>提案ページ本文</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), CreateSuggestionInput{
@@ -534,7 +528,6 @@ func TestCreateSuggestionUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("タイトル").
 			WithBody("本文").
-			WithBodyHTML("<p>本文</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), CreateSuggestionInput{

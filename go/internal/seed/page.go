@@ -31,7 +31,6 @@ type pageWriter struct {
 	pageRepo         *repository.PageRepository
 	pageRevisionRepo *repository.PageRevisionRepository
 	pageEditorRepo   *repository.PageEditorRepository
-	attachmentRepo   *repository.AttachmentRepository
 }
 
 // newPageWriterはspaceにページを作成するwriterを返す。
@@ -45,7 +44,6 @@ func newPageWriter(dbtx query.DBTX, space *seededSpace) *pageWriter {
 		pageRepo:         repository.NewPageRepository(queries),
 		pageRevisionRepo: repository.NewPageRevisionRepository(queries),
 		pageEditorRepo:   repository.NewPageEditorRepository(queries),
-		attachmentRepo:   repository.NewAttachmentRepository(queries),
 	}
 }
 
@@ -70,10 +68,10 @@ func (w *pageWriter) createPage(ctx context.Context, input createPageInput) (*se
 		return nil, err
 	}
 
-	// 先にレンダリングする。resolverは本文がリンクする先のページを作成し、
+	// 先にリンク先を解決する。resolverは本文がリンクする先のページを作成し、
 	// それらがページ番号を消費するため。先にこのページの番号を取ると、リンク先が
 	// あとからその番号を取ってしまう。
-	bodyHTML, linkedPageIDs, err := w.render(ctx, input)
+	linkedPageIDs, err := w.resolveLinks(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -89,12 +87,12 @@ func (w *pageWriter) createPage(ctx context.Context, input createPageInput) (*se
 	err = w.dbtx.QueryRowContext(
 		ctx,
 		`INSERT INTO pages
-           (space_id, topic_id, number, title, body, body_html, linked_page_ids,
+           (space_id, topic_id, number, title, body, linked_page_ids,
             modified_at, published_at, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $8, $8)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $7, $7)
          RETURNING id`,
 		string(w.space.id), string(input.topic.id), int32(number), input.title,
-		input.body, bodyHTML, pq.Array(pageIDStrings(linkedPageIDs)), now,
+		input.body, pq.Array(pageIDStrings(linkedPageIDs)), now,
 	).Scan(&id)
 	if err != nil {
 		return nil, fmt.Errorf("ページ %sの作成に失敗: %w", input.title, err)
@@ -108,7 +106,6 @@ func (w *pageWriter) createPage(ctx context.Context, input createPageInput) (*se
 		PageID:        pageID,
 		Title:         input.title,
 		Body:          input.body,
-		BodyHTML:      bodyHTML,
 	}); err != nil {
 		return nil, fmt.Errorf("ページ %sのリビジョンの作成に失敗: %w", input.title, err)
 	}
@@ -138,24 +135,26 @@ func (w *pageWriter) ensureTopicInSpace(topic *seededTopic) error {
 	return nil
 }
 
-// renderはMarkdown本文を、ページ詳細画面が配信するHTMLに変換し、
-// 本文がリンクする先のページを併せて返す。
-func (w *pageWriter) render(ctx context.Context, input createPageInput) (string, []model.PageID, error) {
+// resolveLinksは本文がリンクする先のページを作成し、そのIDを返す。HTMLを保存しない行の
+// 書き手が使う。画面と同じリンク集合を読むため、ScanWikilinks内部ではHTMLの描画・
+// サニタイズを行う。
+func (w *pageWriter) resolveLinks(ctx context.Context, input createPageInput) ([]model.PageID, error) {
+	keys := markup.ScanWikilinks(input.body, input.topic.name)
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
 	resolver := &seedPageLocationResolver{
 		author:         input.author,
 		topicRepo:      w.topicRepo,
 		pageRepo:       w.pageRepo,
 		pageEditorRepo: w.pageEditorRepo,
 	}
-
-	bodyHTML, err := markup.RenderHTML(
-		ctx, input.body, input.topic.name, w.space.id, w.space.identifier, resolver, w.attachmentRepo,
-	)
-	if err != nil {
-		return "", nil, fmt.Errorf("ページ %sの本文のレンダリングに失敗: %w", input.title, err)
+	if _, err := resolver.ResolveByKeys(ctx, keys, w.space.id); err != nil {
+		return nil, fmt.Errorf("ページ %sのリンク先の解決に失敗: %w", input.title, err)
 	}
 
-	return bodyHTML, resolver.linkedPageIDs, nil
+	return resolver.linkedPageIDs, nil
 }
 
 // seedPageLocationResolverは本文のWikiリンクを解決し、リンク先のページを

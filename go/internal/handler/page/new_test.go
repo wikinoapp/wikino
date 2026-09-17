@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -234,9 +233,6 @@ func TestNew_WithPrefilledContent(t *testing.T) {
 	}
 	if draftPage.Body != body {
 		t.Errorf("DraftPage.Body = %q、期待値 = %q", draftPage.Body, body)
-	}
-	if !strings.Contains(draftPage.BodyHTML, "引用された文章") {
-		t.Errorf("DraftPage.BodyHTML = %q、期待値 = 引用したテキストを含む", draftPage.BodyHTML)
 	}
 }
 

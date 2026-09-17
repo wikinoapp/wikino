@@ -1,7 +1,7 @@
 -- name: CreateSuggestionPageRevision :one
 -- 編集提案ページリビジョンを作成する
-INSERT INTO suggestion_page_revisions (space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO suggestion_page_revisions (space_id, suggestion_page_id, editor_space_member_id, title, body, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: ListSuggestionPageRevisionsBySuggestionPageID :many

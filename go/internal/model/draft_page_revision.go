@@ -12,6 +12,5 @@ type DraftPageRevision struct {
 	SpaceMemberID SpaceMemberID
 	Title         string
 	Body          string
-	BodyHTML      string
 	CreatedAt     time.Time
 }

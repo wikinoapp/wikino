@@ -178,13 +178,11 @@ func (uc *UpdateSuggestionPageUsecase) updateSuggestionPage(ctx context.Context,
 	suggestionPageRepo := uc.suggestionPageRepo.WithTx(tx)
 	suggestionPageRevisionRepo := uc.suggestionPageRevisionRepo.WithTx(tx)
 
-	// SuggestionPageのコンテンツを更新
 	updatedSP, err := suggestionPageRepo.UpdateContent(ctx, repository.UpdateSuggestionPageContentInput{
 		ID:                        suggestionPageID,
 		SpaceID:                   spaceID,
 		Title:                     draftPage.Title,
 		Body:                      draftPage.Body,
-		BodyHTML:                  draftPage.BodyHTML,
 		LinkedPageIDs:             draftPage.LinkedPageIDs,
 		FeaturedImageAttachmentID: draftPage.FeaturedImageAttachmentID,
 	})
@@ -199,7 +197,6 @@ func (uc *UpdateSuggestionPageUsecase) updateSuggestionPage(ctx context.Context,
 		EditorSpaceMemberID: spaceMemberID,
 		Title:               draftPage.Title,
 		Body:                draftPage.Body,
-		BodyHTML:            draftPage.BodyHTML,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("編集提案ページリビジョンの作成に失敗しました: %w", err)

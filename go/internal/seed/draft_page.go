@@ -417,25 +417,23 @@ func (w *draftWriter) createDraft(ctx context.Context, input createDraftInput) e
 	// 繰り返しではなく、時間をかけて書かれていく本文として読め、どのリビジョンの
 	// 差分もその保存が足した1行を見せるようになる。
 	bodies := make([]string, input.revisions)
-	rendered := make([]string, input.revisions)
-	var linkedPageIDs []model.PageID
 	for i := range bodies {
 		bodies[i] = draftRevisionBody(input.intro, i+1)
-
-		html, linked, err := w.pages.render(ctx, createPageInput{
-			topic:  input.topic,
-			author: input.member,
-			title:  input.label(),
-			body:   bodies[i],
-		})
-		if err != nil {
-			return err
-		}
-		rendered[i] = html
-		linkedPageIDs = linked
 	}
 
 	last := input.revisions - 1
+
+	// 書き足す行はWikiリンクを含まないため、どのリビジョンの本文も同じリンク集合を持つ。
+	// 下書きが持つのは最後の保存の本文なので、リンク先の解決もそれに対して1回だけ行う。
+	linkedPageIDs, err := w.pages.resolveLinks(ctx, createPageInput{
+		topic:  input.topic,
+		author: input.member,
+		title:  input.label(),
+		body:   bodies[last],
+	})
+	if err != nil {
+		return err
+	}
 
 	draftPage, err := w.draftPageRepo.Create(ctx, repository.CreateDraftPageInput{
 		SpaceID:       w.space.id,
@@ -444,7 +442,6 @@ func (w *draftWriter) createDraft(ctx context.Context, input createDraftInput) e
 		TopicID:       input.topic.id,
 		Title:         input.title,
 		Body:          bodies[last],
-		BodyHTML:      rendered[last],
 		LinkedPageIDs: linkedPageIDs,
 		ModifiedAt:    input.modifiedAt,
 	})
@@ -459,7 +456,6 @@ func (w *draftWriter) createDraft(ctx context.Context, input createDraftInput) e
 			SpaceMemberID: input.member.id,
 			Title:         title,
 			Body:          bodies[i],
-			BodyHTML:      rendered[i],
 		}); err != nil {
 			return fmt.Errorf("下書き %sのリビジョンの作成に失敗: %w", input.label(), err)
 		}

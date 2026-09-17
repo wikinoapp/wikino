@@ -250,7 +250,6 @@ func TestGetPageDetailUsecase_Execute(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         "rev flag",
 			Body:          "rev flag body",
-			BodyHTML:      "<p>rev flag body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (revision) のエラー = %v", err)
@@ -323,7 +322,6 @@ func TestGetPageDetailUsecase_Execute(t *testing.T) {
 				SpaceMemberID: spaceMemberID,
 				Title:         title,
 				Body:          "body of " + title,
-				BodyHTML:      "<p>body of " + title + "</p>",
 			})
 			if err != nil {
 				t.Fatalf("Create() (revision) のエラー = %v", err)

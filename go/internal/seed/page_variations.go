@@ -180,8 +180,6 @@ func (w *pageWriter) createUnwrittenPage(
 //
 // Repositoryではなくここで行を書くのは、空のページの作成を担当しているのが今も
 // Rails側 (Pages::CreateBlankedService) であり、Go側に呼べるCreateが無いため。
-// body_htmlを空で保存するのは、空の本文をレンダリングすると空文字列になるためで、
-// Railsもこの種のページには同じものを保存している。
 func (w *pageWriter) createBlankPage(
 	ctx context.Context,
 	topic *seededTopic,
@@ -202,9 +200,9 @@ func (w *pageWriter) createBlankPage(
 	err = w.dbtx.QueryRowContext(
 		ctx,
 		`INSERT INTO pages
-           (space_id, topic_id, number, title, body, body_html, linked_page_ids,
+           (space_id, topic_id, number, title, body, linked_page_ids,
             modified_at, published_at, created_at, updated_at)
-         VALUES ($1, $2, $3, NULL, '', '', '{}', $4, NULL, $4, $4)
+         VALUES ($1, $2, $3, NULL, '', '{}', $4, NULL, $4, $4)
          RETURNING id`,
 		string(w.space.id), string(topic.id), int32(number), now,
 	).Scan(&id)
