@@ -211,6 +211,18 @@ func TestRenderMarkdown_Sanitization(t *testing.T) {
 			input:       `<a href="javascript:alert('xss')">link</a>`,
 			notContains: "javascript:",
 		},
+		{
+			// 日本語だけのidを許すのは見出しに限るため、他の要素では除去される。
+			name:        "見出し以外の要素の日本語だけのidが除去される",
+			input:       `<p id="見出し">段落</p>`,
+			notContains: "id=",
+		},
+		{
+			// 見出しのidは規則で作られうる文字だけからなる値に限り、一部に含むだけの値は許さない。
+			name:        "見出しの規則にない記号を含むidが除去される",
+			input:       `<h2 id="見出し!">見出し</h2>`,
+			notContains: "id=",
+		},
 	}
 
 	for _, tt := range tests {
