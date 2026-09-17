@@ -112,12 +112,12 @@ func visibleAttachmentRefs(source []byte, document ast.Node, refs []attachmentRe
 		}
 		return ast.WalkContinue, nil
 	})
-	markedHTML, err := renderSanitized(augmented, document)
+	markedTree, err := renderedTree(augmented, document)
 	if err != nil {
 		slog.Warn("添付ファイル参照のマーカーのレンダリングに失敗しました", "error", err)
 		return nil, false
 	}
-	live, known := liveAttachmentIDs(markedHTML, true)
+	live, known := liveAttachmentIDs(markedTree)
 	if !known {
 		return nil, false
 	}

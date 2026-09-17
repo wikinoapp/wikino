@@ -211,6 +211,11 @@ func TestEdit(t *testing.T) {
 		t.Error("レスポンスにCSRFトークンが見つからない")
 	}
 
+	// 文書のタイトルがトピック配下の他の画面と同じく、トピック名をスペース名の前に挟むこと
+	if !strings.Contains(body, "<title>ページを編集 | General | Test Space</title>") {
+		t.Error("レスポンスにトピック名を含む文書のタイトルが見つからない")
+	}
+
 	// タイトルが表示されているか確認
 	if !strings.Contains(body, "Test Page Title") {
 		t.Error("レスポンスにページタイトルが見つからない")
@@ -633,7 +638,6 @@ func TestEdit_RevisionColumn(t *testing.T) {
 			SpaceMemberID: spaceMemberID,
 			Title:         title,
 			Body:          "body of " + title,
-			BodyHTML:      "<p>body of " + title + "</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (revision) のエラー = %v", err)

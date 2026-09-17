@@ -24,13 +24,12 @@ UPDATE pages
 SET topic_id = $2,
     title = $3,
     body = $4,
-    body_html = $5,
-    linked_page_ids = $6,
-    modified_at = $7,
-    published_at = $8,
-    featured_image_attachment_id = $9,
-    updated_at = $10
-WHERE id = $1 AND space_id = $11
+    linked_page_ids = $5,
+    modified_at = $6,
+    published_at = $7,
+    featured_image_attachment_id = $8,
+    updated_at = $9
+WHERE id = $1 AND space_id = $10
 RETURNING *;
 
 -- name: FindPageByTopicAndTitle :one
@@ -39,6 +38,18 @@ SELECT * FROM pages
 WHERE topic_id = $1
   AND title = $2
   AND space_id = $3;
+
+-- name: FindPagesByTopicAndTitlePairs :many
+-- トピックIDとタイトルの組の集合でページを一括取得する (廃棄済みを含む。Wikiリンクのページ存在確認用)
+-- タイトルの比較はcitextに揃え、FindPageByTopicAndTitleと同じく大文字小文字を区別しない
+-- DBで一致した入力との対応を維持するため、入力タイトルも返す
+-- 本文 (body) はリンクの解決に使わないため、返す列をリンク先の特定に要るものだけに絞る
+SELECT pages.id, pages.topic_id, pages.number, pages.title, pairs.title::text AS requested_title FROM pages
+INNER JOIN (
+  SELECT unnest(@topic_ids::uuid[]) AS topic_id, unnest(@titles::citext[]) AS title
+) AS pairs
+  ON pages.topic_id = pairs.topic_id AND pages.title = pairs.title
+WHERE pages.space_id = @space_id;
 
 -- name: SearchPageLocations :many
 -- ページロケーションを検索する (Wikiリンク補完用。公開済み・未廃棄・未ゴミ箱のページのみ)
@@ -281,8 +292,8 @@ WHERE id = @id
 -- タイトルが先に決まるのに対し、新規作成の入口では未定であり、ユーザーが公開するまで
 -- タイトルの無いページのままになるため。ユーザーが明示的に公開するまで未公開状態を保ち、
 -- 公開済みページの一覧から除外するため、published_atはNULLのままにする。
-INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
-VALUES (@space_id, @topic_id, @number, sqlc.narg('title'), '', '', '{}', @modified_at, NULL, @modified_at, @modified_at)
+INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, created_at, updated_at)
+VALUES (@space_id, @topic_id, @number, sqlc.narg('title'), '', '{}', @modified_at, NULL, @modified_at, @modified_at)
 RETURNING *;
 
 -- name: ListActivePagesBySpace :many

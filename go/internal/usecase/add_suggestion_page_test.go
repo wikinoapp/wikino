@@ -82,7 +82,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			PageRevisionID: pageRevisionIDPtr(model.PageRevisionID(existingPageRevisionID)),
 			Title:          strPtr("既存ページ"),
 			Body:           "既存本文",
-			BodyHTML:       "<p>既存本文</p>",
 		})
 		if err != nil {
 			t.Fatalf("編集提案ページの作成に失敗: %v", err)
@@ -104,7 +103,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("追加ページ提案").
 			WithBody("追加本文").
-			WithBodyHTML("<p>追加本文</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), AddSuggestionPageInput{
@@ -216,7 +214,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("新規ページタイトル").
 			WithBody("新規ページ本文").
-			WithBodyHTML("<p>新規ページ本文</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), AddSuggestionPageInput{
@@ -453,7 +450,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			PageRevisionID: pageRevisionIDPtr(model.PageRevisionID(pageRevisionID)),
 			Title:          strPtr("対象ページ"),
 			Body:           "本文",
-			BodyHTML:       "<p>本文</p>",
 		})
 		if err != nil {
 			t.Fatalf("編集提案ページの作成に失敗: %v", err)
@@ -467,7 +463,6 @@ func TestAddSuggestionPageUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithTitle("対象ページ").
 			WithBody("本文").
-			WithBodyHTML("<p>本文</p>").
 			Build()
 
 		_, err = uc.Execute(context.Background(), AddSuggestionPageInput{

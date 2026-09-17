@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
@@ -20,17 +19,10 @@ type saveDraftPageContentInput struct {
 	Title                     *string
 	Body                      string
 	FeaturedImageAttachmentID *model.AttachmentID
-	SpaceIdentifier           model.SpaceIdentifier
 	CurrentTopicName          string
 }
 
-// saveDraftPageContentOutputはDraftPageの内容保存の結果
-type saveDraftPageContentOutput struct {
-	DraftPage *model.DraftPage
-	BodyHTML  string
-}
-
-// saveDraftPageContentはDraftPageのfind_or_create・レンダリング・更新を行う共通ロジック
+// saveDraftPageContentはDraftPageのfind_or_create・Wikiリンクの解決・更新を行う共通ロジック
 func saveDraftPageContent(
 	ctx context.Context,
 	input saveDraftPageContentInput,
@@ -39,28 +31,25 @@ func saveDraftPageContent(
 	pageRepo *repository.PageRepository,
 	pageEditorRepo *repository.PageEditorRepository,
 	topicRepo *repository.TopicRepository,
-	attachmentRepo *repository.AttachmentRepository,
-) (*saveDraftPageContentOutput, error) {
+) (*model.DraftPage, error) {
 	// 1. DraftPageをfind_or_createで取得・作成
 	draftPage, err := findOrCreateDraftPage(ctx, draftPageRepo, input, now)
 	if err != nil {
 		return nil, fmt.Errorf("下書きページの取得・作成に失敗しました: %w", err)
 	}
 
-	// プレビュー・ページ詳細画面と同じ統合経路markup.RenderHTMLで本文HTMLを
-	// レンダリングする。resolverがこのトランザクション内で存在しないリンク先ページを自動作成し、
-	// そのIDを記録する。
-	resolver := &linkCreatingPageLocationResolver{
-		spaceMemberID:  input.SpaceMemberID,
-		topicRepo:      topicRepo,
-		pageRepo:       pageRepo,
-		pageEditorRepo: pageEditorRepo,
-	}
-	bodyHTML, err := markup.RenderHTML(ctx, input.Body, input.CurrentTopicName, input.SpaceID, input.SpaceIdentifier, resolver, attachmentRepo)
+	// 2. 本文のWikiリンクを解決し、リンク先ページIDを集める。下書きは本文HTMLを保存せず、
+	// 表示するときにレンダリングするため、ここで必要なのは画面が読む先だけである。
+	// 解決はこのトランザクション内で存在しないリンク先ページを自動作成する。
+	linkedPageIDs, err := resolveLinkedPageIDs(ctx, resolveLinkedPageIDsInput{
+		Body:             input.Body,
+		CurrentTopicName: input.CurrentTopicName,
+		SpaceID:          input.SpaceID,
+		SpaceMemberID:    input.SpaceMemberID,
+	}, topicRepo, pageRepo, pageEditorRepo)
 	if err != nil {
-		return nil, fmt.Errorf("本文のレンダリングに失敗しました: %w", err)
+		return nil, fmt.Errorf("リンク先ページの解決に失敗しました: %w", err)
 	}
-	linkedPageIDs := resolver.linkedPageIDs
 
 	// 3. DraftPageを更新
 	updatedDraftPage, err := draftPageRepo.Update(ctx, repository.UpdateDraftPageInput{
@@ -69,7 +58,6 @@ func saveDraftPageContent(
 		TopicID:                   input.TopicID,
 		Title:                     input.Title,
 		Body:                      input.Body,
-		BodyHTML:                  bodyHTML,
 		LinkedPageIDs:             linkedPageIDs,
 		FeaturedImageAttachmentID: input.FeaturedImageAttachmentID,
 		ModifiedAt:                now,
@@ -78,10 +66,7 @@ func saveDraftPageContent(
 		return nil, fmt.Errorf("下書きページの更新に失敗しました: %w", err)
 	}
 
-	return &saveDraftPageContentOutput{
-		DraftPage: updatedDraftPage,
-		BodyHTML:  bodyHTML,
-	}, nil
+	return updatedDraftPage, nil
 }
 
 // findOrCreateDraftPageはDraftPageを取得するか、存在しなければ作成する。
@@ -108,7 +93,6 @@ func findOrCreateDraftPage(
 			TopicID:       input.TopicID,
 			Title:         input.Title,
 			Body:          "",
-			BodyHTML:      "",
 			LinkedPageIDs: nil,
 			ModifiedAt:    now,
 		})

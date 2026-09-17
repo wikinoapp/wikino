@@ -138,6 +138,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "page_edit_title", map[string]any{
+		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM

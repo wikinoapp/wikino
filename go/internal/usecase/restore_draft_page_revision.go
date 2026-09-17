@@ -122,9 +122,8 @@ func (uc *RestoreDraftPageRevisionUsecase) pageAccessRepos() pageAccessRepos {
 }
 
 // restoreは1トランザクションで下書きをリビジョンのタイトル・本文で更新し、新しい
-// リビジョンを作成する。本文HTMLはリビジョンに保存済みのbody_htmlを使い回さず、手動保存と
-// 同じ経路saveDraftPageContentで再レンダリングする。これによりリンク先ページIDや添付参照が
-// 復元後の本文と整合する。
+// リビジョンを作成する。復元後の本文とリンク一覧を一致させるため、手動保存と同じ経路
+// saveDraftPageContentでリンク先ページIDを再計算する。
 func (uc *RestoreDraftPageRevisionUsecase) restore(ctx context.Context, data *pageAccessData, input RestoreDraftPageRevisionInput, revision *model.DraftPageRevision) (*RestoreDraftPageRevisionOutput, error) {
 	now := time.Now()
 
@@ -156,28 +155,25 @@ func (uc *RestoreDraftPageRevisionUsecase) restore(ctx context.Context, data *pa
 		Title:                     titlePtr,
 		Body:                      revision.Body,
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
-		SpaceIdentifier:           input.SpaceIdentifier,
 		CurrentTopicName:          data.topic.Name,
 	}
 
-	result, err := saveDraftPageContent(ctx, contentInput, now,
+	draftPage, err := saveDraftPageContent(ctx, contentInput, now,
 		uc.draftPageRepo.WithTx(tx),
 		uc.pageRepo.WithTx(tx),
 		uc.pageEditorRepo.WithTx(tx),
 		uc.topicRepo.WithTx(tx),
-		uc.attachmentRepo.WithTx(tx),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	newRevision, err := uc.draftPageRevisionRepo.WithTx(tx).Create(ctx, repository.CreateDraftPageRevisionInput{
-		DraftPageID:   result.DraftPage.ID,
+		DraftPageID:   draftPage.ID,
 		SpaceID:       data.space.ID,
 		SpaceMemberID: data.spaceMember.ID,
 		Title:         revision.Title,
 		Body:          revision.Body,
-		BodyHTML:      result.BodyHTML,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("下書きページリビジョンの作成に失敗しました: %w", err)
@@ -188,7 +184,7 @@ func (uc *RestoreDraftPageRevisionUsecase) restore(ctx context.Context, data *pa
 	}
 
 	return &RestoreDraftPageRevisionOutput{
-		DraftPage:         result.DraftPage,
+		DraftPage:         draftPage,
 		DraftPageRevision: newRevision,
 	}, nil
 }

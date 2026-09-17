@@ -65,7 +65,6 @@ type CreateDraftPageInput struct {
 	SuggestionPageID          *model.SuggestionPageID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []model.PageID
 	FeaturedImageAttachmentID *model.AttachmentID
 	ModifiedAt                time.Time
@@ -95,7 +94,6 @@ func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageI
 		SuggestionPageID:          suggestionPageID,
 		Title:                     input.Title,
 		Body:                      input.Body,
-		BodyHtml:                  input.BodyHTML,
 		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		ModifiedAt:                input.ModifiedAt,
@@ -115,7 +113,6 @@ type UpdateDraftPageInput struct {
 	TopicID                   model.TopicID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []model.PageID
 	FeaturedImageAttachmentID *model.AttachmentID
 	ModifiedAt                time.Time
@@ -134,7 +131,6 @@ func (r *DraftPageRepository) Update(ctx context.Context, input UpdateDraftPageI
 		TopicID:                   string(input.TopicID),
 		Title:                     input.Title,
 		Body:                      input.Body,
-		BodyHtml:                  input.BodyHTML,
 		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		ModifiedAt:                input.ModifiedAt,
@@ -440,7 +436,6 @@ func (r *DraftPageRepository) toDraftPagesFromMemberTopicRows(rows []query.ListD
 			TopicID:       model.TopicID(row.TopicID),
 			Title:         draftTitle,
 			Body:          row.Body,
-			BodyHTML:      row.BodyHtml,
 			LinkedPageIDs: model.StringsToPageIDs(row.LinkedPageIds),
 			ModifiedAt:    row.ModifiedAt,
 			CreatedAt:     row.CreatedAt,
@@ -489,7 +484,6 @@ func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
 		SuggestionPageID:          suggestionPageID,
 		Title:                     title,
 		Body:                      row.Body,
-		BodyHTML:                  row.BodyHtml,
 		LinkedPageIDs:             model.StringsToPageIDs(row.LinkedPageIds),
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		ModifiedAt:                row.ModifiedAt,

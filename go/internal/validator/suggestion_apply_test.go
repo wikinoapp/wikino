@@ -139,7 +139,6 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 			WithNumber(2).
 			WithTitle("Empty Unpublished").
 			WithBody("").
-			WithBodyHTML("").
 			WithUnpublished().
 			Build()
 

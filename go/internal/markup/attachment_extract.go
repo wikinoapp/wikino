@@ -146,7 +146,19 @@ func ScanAttachmentRefMatches(body string) []AttachmentRefMatch {
 		slog.Warn("添付ファイル参照の走査でのMarkdown変換に失敗", "error", err)
 	}
 
-	return scanAttachmentRefMatches(source, document, bodyHTML, err == nil)
+	return scanAttachmentRefMatches(source, document, func() *html.Node {
+		if err != nil {
+			return nil
+		}
+		container, parseErr := parseHTMLFragmentWithContainer(bodyHTML)
+		if parseErr != nil {
+			slog.Warn("描画済み添付ファイル参照の読み取りに失敗", "error", parseErr)
+
+			return nil
+		}
+
+		return container
+	})
 }
 
 // holdsAttachmentPathは、本文が添付ファイルへの参照を持ちうるかを返す。パスを一度も
@@ -157,14 +169,14 @@ func holdsAttachmentPath(body string) bool {
 	return strings.Contains(body, attachmentPathPrefix) || strings.ContainsAny(body, escapeMarkers)
 }
 
-// scanAttachmentRefMatchesは解析済みの本文から参照を読む。bodyHTMLは同じ本文の
-// サニタイズ済みHTMLで、呼び出し元が通常の描画を繰り返さずに済むよう渡す。
-// renderedは実際の描画結果かどうかを表す。重複IDは参照元を区別するマーカー付き描画も行う。
+// scanAttachmentRefMatchesは解析済みの本文から参照を読む。renderedTreeは同じ本文の
+// サニタイズ済みHTMLのツリーを返し、呼び出し元が通常の描画とパースを繰り返さずに済むよう渡す。
+// 候補が1つも無い本文ではツリーを読まないため、呼び出しは必要になるまで遅らせる。描画結果を
+// 得られなかった場合はnilを返す。重複IDは参照元を区別するマーカー付き描画も行う。
 func scanAttachmentRefMatches(
 	source []byte,
 	document ast.Node,
-	bodyHTML string,
-	rendered bool,
+	renderedTree func() *html.Node,
 ) []AttachmentRefMatch {
 	excludedRanges, tagRanges := scanRawHTMLRanges(source, rawHTMLScanOptions{
 		rawHTMLRanges: rawHTMLNodeRanges(document),
@@ -197,7 +209,7 @@ func scanAttachmentRefMatches(
 		return cmp.Compare(a.match.Start, b.match.Start)
 	})
 
-	live, liveKnown := liveAttachmentIDs(bodyHTML, rendered)
+	live, liveKnown := liveAttachmentIDs(renderedTree())
 
 	var eligible []attachmentRef
 	for _, ref := range matches {
@@ -240,15 +252,9 @@ func scanAttachmentRefMatches(
 // 2つ目の戻り値は、その集合を読み取れたかどうかを表す。読み取れなかった場合、呼び出し元は
 // すべての参照を残してソース側の範囲だけで判断する。参照を失うと、添付ファイルが孤児として
 // 扱われないようにしている行が消えてしまい、2つの方向のうち間違えたときの害が大きいためである。
-func liveAttachmentIDs(bodyHTML string, rendered bool) (map[model.AttachmentID]bool, bool) {
-	if !rendered {
-		return nil, false
-	}
-
-	container, err := parseHTMLFragmentWithContainer(bodyHTML)
-	if err != nil {
-		slog.Warn("描画済み添付ファイル参照の読み取りに失敗", "error", err)
-
+// containerがnilの場合、すなわち描画後のツリーを得られなかった場合がこれに当たる。
+func liveAttachmentIDs(container *html.Node) (map[model.AttachmentID]bool, bool) {
+	if container == nil {
 		return nil, false
 	}
 

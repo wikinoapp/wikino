@@ -22,7 +22,6 @@ type SuggestionPageBuilder struct {
 	pageRevisionID            *string
 	title                     *string
 	body                      string
-	bodyHTML                  string
 	linkedPageIDs             []string
 	featuredImageAttachmentID *string
 }
@@ -36,7 +35,6 @@ func NewSuggestionPageBuilder(t *testing.T, tx *sql.Tx) *SuggestionPageBuilder {
 		tx:            tx,
 		title:         &title,
 		body:          "テスト本文",
-		bodyHTML:      "<p>テスト本文</p>",
 		linkedPageIDs: []string{},
 	}
 }
@@ -84,12 +82,6 @@ func (b *SuggestionPageBuilder) WithBody(body string) *SuggestionPageBuilder {
 	return b
 }
 
-// WithBodyHTMLはHTML本文を設定します
-func (b *SuggestionPageBuilder) WithBodyHTML(bodyHTML string) *SuggestionPageBuilder {
-	b.bodyHTML = bodyHTML
-	return b
-}
-
 // WithLinkedPageIDsはリンクページIDを設定します
 func (b *SuggestionPageBuilder) WithLinkedPageIDs(ids []model.PageID) *SuggestionPageBuilder {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)
@@ -121,10 +113,10 @@ func (b *SuggestionPageBuilder) Build() model.SuggestionPageID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		`INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, linked_page_ids, featured_image_attachment_id, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		 RETURNING id`,
-		b.spaceID, b.suggestionID, b.pageID, b.pageRevisionID, b.title, b.body, b.bodyHTML, pq.Array(b.linkedPageIDs), b.featuredImageAttachmentID, now, now,
+		b.spaceID, b.suggestionID, b.pageID, b.pageRevisionID, b.title, b.body, pq.Array(b.linkedPageIDs), b.featuredImageAttachmentID, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("編集提案ページ作成に失敗: %v", err)
@@ -145,7 +137,6 @@ type SuggestionPageBuilderDB struct {
 	pageRevisionID            *string
 	title                     *string
 	body                      string
-	bodyHTML                  string
 	linkedPageIDs             []string
 	featuredImageAttachmentID *string
 }
@@ -159,7 +150,6 @@ func NewSuggestionPageBuilderDB(t *testing.T, db *sql.DB) *SuggestionPageBuilder
 		db:            db,
 		title:         &title,
 		body:          "テスト本文",
-		bodyHTML:      "<p>テスト本文</p>",
 		linkedPageIDs: []string{},
 	}
 }
@@ -201,12 +191,6 @@ func (b *SuggestionPageBuilderDB) WithBody(body string) *SuggestionPageBuilderDB
 	return b
 }
 
-// WithBodyHTMLはHTML本文を設定します
-func (b *SuggestionPageBuilderDB) WithBodyHTML(bodyHTML string) *SuggestionPageBuilderDB {
-	b.bodyHTML = bodyHTML
-	return b
-}
-
 // WithLinkedPageIDsはリンクページIDを設定します
 func (b *SuggestionPageBuilderDB) WithLinkedPageIDs(ids []model.PageID) *SuggestionPageBuilderDB {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)
@@ -238,10 +222,10 @@ func (b *SuggestionPageBuilderDB) Build() model.SuggestionPageID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		`INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, linked_page_ids, featured_image_attachment_id, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		 RETURNING id`,
-		b.spaceID, b.suggestionID, b.pageID, b.pageRevisionID, b.title, b.body, b.bodyHTML, pq.Array(b.linkedPageIDs), b.featuredImageAttachmentID, now, now,
+		b.spaceID, b.suggestionID, b.pageID, b.pageRevisionID, b.title, b.body, pq.Array(b.linkedPageIDs), b.featuredImageAttachmentID, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("編集提案ページ作成に失敗: %v", err)

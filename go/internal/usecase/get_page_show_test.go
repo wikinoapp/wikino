@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -29,7 +30,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithEmail("gps-owner@example.com").
 		WithAtname("gpsowner").
 		Build()
-	// page:writeを持たずpage:trashを持つメンバー (編集権限なしでゴミ箱表示経路を検証する)。
+	// page:writeを持たずpage_trash:writeを持つメンバー (編集権限なしでゴミ箱表示経路を検証する)。
 	trashMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-trash@example.com").
 		WithAtname("gpstrash").
@@ -63,12 +64,21 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrash}).
+		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(readerID).
 		WithScopes([]model.Scope{model.ScopePageRead}).
+		Build()
+	trashReaderID := testutil.NewUserBuilder(t, tx).
+		WithEmail("gps-trash-reader@example.com").
+		WithAtname("gpstrashreader").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(trashReaderID).
+		WithScopes([]model.Scope{model.ScopePageTrashRead}).
 		Build()
 	topicScopedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -107,7 +117,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
 		WithSpaceMemberID(topicScopedSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrash}).
+		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
 		Build()
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -182,6 +192,36 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithTitle("Page With Cross-Space Cover Image").
 		WithLinkedPageIDs([]model.PageID{}).
 		WithFeaturedImageAttachmentID(otherSpaceAttachmentID).
+		Build()
+
+	// 本文のMarkdownと保存済みHTMLが食い違うページ。保存済みHTMLを読んでいれば
+	// 「古い本文」が出るため、表示時レンダリングに切り替わったことをこのページで固定する。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(15).
+		WithTitle("Stale HTML Page").
+		WithBody("新しい本文").
+		WithBodyHTML("<p>古い本文</p>").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	// 保存時に存在しなかったページへのWikiリンクを持つページ。リンク先 (ページ17) はこのページの
+	// 保存より後に作られた想定で、保存済みHTMLにはリンクが含まれていない。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(16).
+		WithTitle("Wikilink Source Page").
+		WithBody("[[Public/Wikilink Target Page]] を参照。\n\n[[Public/Missing Page]] は未作成。").
+		WithBodyHTML("<p>[[Public/Wikilink Target Page]] を参照。</p>").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(17).
+		WithTitle("Wikilink Target Page").
+		WithLinkedPageIDs([]model.PageID{}).
 		Build()
 
 	// ページ10は公開トピックのページと非公開トピックのページの双方へリンクし、双方から
@@ -432,6 +472,67 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
+	// 表示時レンダリングに切り替えたことを、保存済みHTMLとの食い違いで固定する。保存済みHTMLを
+	// 読んでいればここで古い本文が出る。
+	t.Run("正常系: 本文HTMLは保存済みHTMLではなく現在のMarkdownから作られる", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetPageShowInput{
+			LinkPage:               1,
+			LinkedPageBacklinkPage: 1,
+			PageBacklinkPage:       1,
+			SpaceIdentifier:        "gps-space",
+			PageNumber:             15,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if !strings.Contains(output.BodyHTML, "新しい本文") {
+			t.Errorf("BodyHTML = %q、期待値 = 現在のMarkdownをレンダリングした本文", output.BodyHTML)
+		}
+		if strings.Contains(output.BodyHTML, "古い本文") {
+			t.Errorf("BodyHTML = %q、期待値 = 保存済みHTMLを含まない本文", output.BodyHTML)
+		}
+	})
+
+	// 保存時に存在しなかったページへのWikiリンクが、リンク先の作成後にリンクとして表示される。
+	// 保存済みHTMLではリンクの解決状態が保存時のまま凍結されていた。
+	t.Run("正常系: 保存後に作られたリンク先へのWikiリンクもリンクになる", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetPageShowInput{
+			LinkPage:               1,
+			LinkedPageBacklinkPage: 1,
+			PageBacklinkPage:       1,
+			SpaceIdentifier:        "gps-space",
+			PageNumber:             16,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if !strings.Contains(output.BodyHTML, `href="/s/gps-space/pages/17"`) {
+			t.Errorf("BodyHTML = %q、期待値 = リンク先ページ17へのリンクを含む本文", output.BodyHTML)
+		}
+	})
+
+	// 表示のたびにページが作られると、閲覧しただけでスペースのページが増える。リンク先を自動作成
+	// しないリゾルバを使っていることを、未作成のリンク先が作られないことで固定する。
+	t.Run("正常系: 未作成のリンク先ページは表示しても作られない", func(t *testing.T) {
+		if _, err := uc.Execute(context.Background(), GetPageShowInput{
+			LinkPage:               1,
+			LinkedPageBacklinkPage: 1,
+			PageBacklinkPage:       1,
+			SpaceIdentifier:        "gps-space",
+			PageNumber:             16,
+		}); err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+
+		created, err := repository.NewPageRepository(q).FindByTopicAndTitle(context.Background(), publicTopicID, "Missing Page", spaceID)
+		if err != nil {
+			t.Fatalf("FindByTopicAndTitle()のエラー = %v", err)
+		}
+		if created != nil {
+			t.Error("ページを表示しただけで未作成のリンク先ページが作られている")
+		}
+	})
+
 	t.Run("正常系: ページを編集できるメンバーはCanUpdatePageがtrueになる", func(t *testing.T) {
 		userID := ownerID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
@@ -459,7 +560,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 	// ヘッダーの操作ドロップダウンは編集とゴミ箱を別々のスコープで出し分けるため、2つのフラグ
 	// をスコープごとに固定する。page:writeでゴミ箱項目が開いてはならない。ページを書き換えてよい
 	// 編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
-	t.Run("正常系: CanTrashPageはpage:writeではなくpage:trashで決まる", func(t *testing.T) {
+	t.Run("正常系: CanTrashPageはpage:writeではなくpage_trash:writeで決まる", func(t *testing.T) {
 		tests := []struct {
 			name              string
 			userID            model.UserID
@@ -473,7 +574,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 				wantCanTrashPage:  true,
 			},
 			{
-				name:              "page:trashだけを持つメンバーはゴミ箱へ入れるだけできる",
+				name:              "page_trash:writeだけを持つメンバーはゴミ箱へ入れるだけできる",
 				userID:            trashMemberID,
 				wantCanUpdatePage: false,
 				wantCanTrashPage:  true,
@@ -624,7 +725,20 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: page:trashを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
+	t.Run("正常系: ゴミ箱の閲覧専用メンバーは閲覧できるが移動できない", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetPageShowInput{
+			LinkPage: 1, LinkedPageBacklinkPage: 1, PageBacklinkPage: 1,
+			SpaceIdentifier: "gps-space", PageNumber: 3, UserID: &trashReaderID,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if !output.IsTrashed || output.CanTrashPage || output.CanUpdatePage {
+			t.Errorf("閲覧専用メンバーの権限が不正: IsTrashed=%v CanTrashPage=%v CanUpdatePage=%v", output.IsTrashed, output.CanTrashPage, output.CanUpdatePage)
+		}
+	})
+
+	t.Run("正常系: page_trash:writeを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
 		userID := trashMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -648,7 +762,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: トピックのpage:trashを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
+	t.Run("正常系: トピックのpage_trash:writeを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
 		userID := topicScopedMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -696,7 +810,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	// page:readだけではゴミ箱のページを見せない。判定軸はpage:trashであり、page:writeは
+	// page:readだけではゴミ箱のページを見せない。判定軸はpage_trash:readであり、page:writeは
 	// 含意でpage:readを得るため、両方を固定して要件が静かに壊れないようにする。
 	t.Run("異常系: page:readだけのメンバーはゴミ箱のページを閲覧できない", func(t *testing.T) {
 		userID := readerID

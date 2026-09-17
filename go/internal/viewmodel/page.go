@@ -59,8 +59,8 @@ func (p Page) AutofocusTitle() bool {
 	return p.Title == ""
 }
 
-// PageForShowはページ表示画面に描画するページ情報。BodyHTMLはページ公開時に
-// レンダリング・サニタイズ済みの本文のため、テンプレートでは生のHTMLとして展開する。
+// PageForShowはページ表示画面に描画するページ情報。BodyHTMLは表示時にレンダリング・
+// サニタイズ済みの本文のため、テンプレートでは生のHTMLとして展開する。
 type PageForShow struct {
 	title    string
 	BodyHTML string
@@ -73,8 +73,9 @@ type PageForShow struct {
 }
 
 // NewPageForShowはmodel.Pageからページ表示画面用のViewModelを生成する。
-// featuredImageAttachmentはページのアイキャッチ画像で、持たない場合はnil。
-func NewPageForShow(pg *model.Page, featuredImageAttachment *model.Attachment) PageForShow {
+// bodyHTMLはUseCaseが表示時にレンダリングした本文HTMLで、ページが保存時に持っていたHTMLでは
+// ない。featuredImageAttachmentはページのアイキャッチ画像で、持たない場合はnil。
+func NewPageForShow(pg *model.Page, bodyHTML string, featuredImageAttachment *model.Attachment) PageForShow {
 	var title string
 	if pg.Title != nil {
 		title = *pg.Title
@@ -82,7 +83,7 @@ func NewPageForShow(pg *model.Page, featuredImageAttachment *model.Attachment) P
 
 	return PageForShow{
 		title:               title,
-		BodyHTML:            pg.BodyHTML,
+		BodyHTML:            bodyHTML,
 		Number:              int32(pg.Number),
 		ogImageAttachmentID: ogImageAttachmentID(featuredImageAttachment),
 	}

@@ -221,7 +221,7 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrash}).
+		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -422,14 +422,14 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			wantNotFound:     true,
 		},
 		{
-			name:             "異常系: page:trashを持たないメンバーはゴミ箱の元ページを取得できない",
+			name:             "異常系: page_trash:readを持たないメンバーはゴミ箱の元ページを取得できない",
 			pageNumber:       11,
 			linkedPageNumber: 2,
 			userID:           &restrictedMemberID,
 			wantNotFound:     true,
 		},
 		{
-			name:             "正常系: page:trashを持つメンバーはゴミ箱の元ページを取得できる",
+			name:             "正常系: page_trash:writeを持つメンバーはゴミ箱の元ページを取得できる",
 			pageNumber:       11,
 			linkedPageNumber: 2,
 			userID:           &trashMemberID,
@@ -442,14 +442,14 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			wantNotFound:     true,
 		},
 		{
-			name:             "異常系: page:trashを持たないメンバーはゴミ箱のリンク先ページを取得できない",
+			name:             "異常系: page_trash:readを持たないメンバーはゴミ箱のリンク先ページを取得できない",
 			pageNumber:       13,
 			linkedPageNumber: 12,
 			userID:           &restrictedMemberID,
 			wantNotFound:     true,
 		},
 		{
-			name:             "正常系: page:trashを持つメンバーはゴミ箱のリンク先ページを取得できる",
+			name:             "正常系: page_trash:writeを持つメンバーはゴミ箱のリンク先ページを取得できる",
 			pageNumber:       13,
 			linkedPageNumber: 12,
 			userID:           &trashMemberID,

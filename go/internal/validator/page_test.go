@@ -244,7 +244,6 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 			WithNumber(10).
 			WithTitle("Target Title").
 			WithBody("").
-			WithBodyHTML("").
 			WithUnpublished().
 			Build()
 

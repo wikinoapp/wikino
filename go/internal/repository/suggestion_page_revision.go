@@ -32,7 +32,6 @@ type CreateSuggestionPageRevisionInput struct {
 	EditorSpaceMemberID model.SpaceMemberID
 	Title               *string
 	Body                string
-	BodyHTML            string
 }
 
 // Createは編集提案ページリビジョンを作成する
@@ -50,7 +49,6 @@ func (r *SuggestionPageRevisionRepository) Create(ctx context.Context, input Cre
 		EditorSpaceMemberID: string(input.EditorSpaceMemberID),
 		Title:               title,
 		Body:                input.Body,
-		BodyHtml:            input.BodyHTML,
 		CreatedAt:           now,
 		UpdatedAt:           now,
 	})
@@ -109,7 +107,6 @@ func (r *SuggestionPageRevisionRepository) toModel(row query.SuggestionPageRevis
 		EditorSpaceMemberID: model.SpaceMemberID(row.EditorSpaceMemberID),
 		Title:               title,
 		Body:                row.Body,
-		BodyHTML:            row.BodyHtml,
 		CreatedAt:           row.CreatedAt,
 		UpdatedAt:           row.UpdatedAt,
 	}

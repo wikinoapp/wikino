@@ -196,8 +196,8 @@ func (q *Queries) CountRegularPagesByTopic(ctx context.Context, arg CountRegular
 }
 
 const createUnpublishedPage = `-- name: CreateUnpublishedPage :one
-INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, '', '', '{}', $5, NULL, $5, $5)
+INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, '', '{}', $5, NULL, $5, $5)
 RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
 `
 
@@ -705,6 +705,62 @@ func (q *Queries) FindPagesByIDs(ctx context.Context, arg FindPagesByIDsParams) 
 	return items, nil
 }
 
+const findPagesByTopicAndTitlePairs = `-- name: FindPagesByTopicAndTitlePairs :many
+SELECT pages.id, pages.topic_id, pages.number, pages.title, pairs.title::text AS requested_title FROM pages
+INNER JOIN (
+  SELECT unnest($1::uuid[]) AS topic_id, unnest($2::citext[]) AS title
+) AS pairs
+  ON pages.topic_id = pairs.topic_id AND pages.title = pairs.title
+WHERE pages.space_id = $3
+`
+
+type FindPagesByTopicAndTitlePairsParams struct {
+	TopicIds []string `json:"topic_ids"`
+	Titles   []string `json:"titles"`
+	SpaceID  string   `json:"space_id"`
+}
+
+type FindPagesByTopicAndTitlePairsRow struct {
+	ID             string      `json:"id"`
+	TopicID        string      `json:"topic_id"`
+	Number         int32       `json:"number"`
+	Title          interface{} `json:"title"`
+	RequestedTitle string      `json:"requested_title"`
+}
+
+// トピックIDとタイトルの組の集合でページを一括取得する (廃棄済みを含む。Wikiリンクのページ存在確認用)
+// タイトルの比較はcitextに揃え、FindPageByTopicAndTitleと同じく大文字小文字を区別しない
+// DBで一致した入力との対応を維持するため、入力タイトルも返す
+// 本文 (body) はリンクの解決に使わないため、返す列をリンク先の特定に要るものだけに絞る
+func (q *Queries) FindPagesByTopicAndTitlePairs(ctx context.Context, arg FindPagesByTopicAndTitlePairsParams) ([]FindPagesByTopicAndTitlePairsRow, error) {
+	rows, err := q.db.QueryContext(ctx, findPagesByTopicAndTitlePairs, pq.Array(arg.TopicIds), pq.Array(arg.Titles), arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FindPagesByTopicAndTitlePairsRow{}
+	for rows.Next() {
+		var i FindPagesByTopicAndTitlePairsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.RequestedTitle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findPinnedPagesBySpace = `-- name: FindPinnedPagesBySpace :many
 SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
@@ -1148,13 +1204,12 @@ UPDATE pages
 SET topic_id = $2,
     title = $3,
     body = $4,
-    body_html = $5,
-    linked_page_ids = $6,
-    modified_at = $7,
-    published_at = $8,
-    featured_image_attachment_id = $9,
-    updated_at = $10
-WHERE id = $1 AND space_id = $11
+    linked_page_ids = $5,
+    modified_at = $6,
+    published_at = $7,
+    featured_image_attachment_id = $8,
+    updated_at = $9
+WHERE id = $1 AND space_id = $10
 RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
 `
 
@@ -1163,7 +1218,6 @@ type UpdatePageParams struct {
 	TopicID                   string       `json:"topic_id"`
 	Title                     interface{}  `json:"title"`
 	Body                      string       `json:"body"`
-	BodyHtml                  string       `json:"body_html"`
 	LinkedPageIds             []string     `json:"linked_page_ids"`
 	ModifiedAt                time.Time    `json:"modified_at"`
 	PublishedAt               sql.NullTime `json:"published_at"`
@@ -1179,7 +1233,6 @@ func (q *Queries) UpdatePage(ctx context.Context, arg UpdatePageParams) (Page, e
 		arg.TopicID,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		pq.Array(arg.LinkedPageIds),
 		arg.ModifiedAt,
 		arg.PublishedAt,

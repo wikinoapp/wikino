@@ -62,9 +62,22 @@ func FilterAttachments(ctx context.Context, bodyHTML string, spaceID model.Space
 	return renderContainerChildren(container), nil
 }
 
-// processAttachmentNodesはDOMツリーを再帰的に走査し、
-// img要素とa要素の添付ファイルURLを変換する。変更があればtrueを返す。
+// processAttachmentNodesは添付ファイルのimg・a要素を変換し、リンクの入れ子を解消する。
+// 変更があればtrueを返す。
 func processAttachmentNodes(ctx context.Context, n *html.Node, spaceID model.SpaceID, finder AttachmentFinder) (bool, error) {
+	modified, err := filterAttachmentNodes(ctx, n, spaceID, finder)
+	if err != nil {
+		return false, err
+	}
+	if modified {
+		separateNestedAttachmentLinks(n)
+	}
+	return modified, nil
+}
+
+// filterAttachmentNodesは添付ファイルのノードを変換する。移動を伴うリンクの分割は
+// この走査の後に行い、走査中の兄弟ノードを動かして変換を取りこぼすことを避ける。
+func filterAttachmentNodes(ctx context.Context, n *html.Node, spaceID model.SpaceID, finder AttachmentFinder) (bool, error) {
 	modified := false
 
 	if n.Type == html.ElementNode {
@@ -90,7 +103,7 @@ func processAttachmentNodes(ctx context.Context, n *html.Node, spaceID model.Spa
 
 	for c := n.FirstChild; c != nil; {
 		next := c.NextSibling
-		m, err := processAttachmentNodes(ctx, c, spaceID, finder)
+		m, err := filterAttachmentNodes(ctx, c, spaceID, finder)
 		if err != nil {
 			return false, err
 		}
@@ -101,6 +114,59 @@ func processAttachmentNodes(ctx context.Context, n *html.Node, spaceID model.Spa
 	}
 
 	return modified, nil
+}
+
+// separateNestedAttachmentLinksは添付ファイルへのリンクが既存のリンクに入った場合、
+// 外側のリンクを添付ファイルの直前で閉じる。a要素は入れ子にできず、そのまま段落で囲むと
+// パーサーが外側のリンクを再構築し、空のリンクを増やしてしまうためである。
+func separateNestedAttachmentLinks(container *html.Node) {
+	var links []*html.Node
+	var collect func(*html.Node, bool)
+	collect = func(n *html.Node, inLink bool) {
+		if n.Type == html.ElementNode && n.DataAtom == atom.A {
+			if inLink && getAttr(n, "data-attachment-link") == "true" {
+				links = append(links, n)
+			}
+			inLink = true
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			collect(c, inLink)
+		}
+	}
+	collect(container, false)
+
+	for _, link := range links {
+		for outer := link.Parent; outer != nil; outer = outer.Parent {
+			if outer.Type != html.ElementNode || outer.DataAtom != atom.A {
+				continue
+			}
+			// 間にある要素を前後に分け、強調などの親子関係と兄弟の順序を保持する。
+			first := link
+			for first.Parent != outer {
+				parent := first.Parent
+				tail := &html.Node{
+					Type: parent.Type, DataAtom: parent.DataAtom, Data: parent.Data,
+					Namespace: parent.Namespace, Attr: append([]html.Attribute(nil), parent.Attr...),
+				}
+				for c := first; c != nil; {
+					next := c.NextSibling
+					parent.RemoveChild(c)
+					tail.AppendChild(c)
+					c = next
+				}
+				parent.Parent.InsertBefore(tail, parent.NextSibling)
+				first = tail
+			}
+			after := outer.NextSibling
+			for c := first; c != nil; {
+				next := c.NextSibling
+				outer.RemoveChild(c)
+				outer.Parent.InsertBefore(c, after)
+				c = next
+			}
+			break
+		}
+	}
 }
 
 // processImgNodeはimg要素の添付ファイルURLを変換する。

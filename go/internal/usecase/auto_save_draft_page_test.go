@@ -74,9 +74,6 @@ func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
 	if output.DraftPage.Body != "Hello, world!" {
 		t.Errorf("Body = %q、期待値 = %q", output.DraftPage.Body, "Hello, world!")
 	}
-	if output.DraftPage.BodyHTML == "" {
-		t.Error("BodyHTMLが空")
-	}
 	if output.ModifiedAt.IsZero() {
 		t.Error("ModifiedAtがゼロ値")
 	}
@@ -277,11 +274,6 @@ func TestAutoSaveDraftPageUsecase_Execute_WithWikilinks(t *testing.T) {
 	// リンク先ページが自動作成され、LinkedPageIDsに含まれることを確認
 	if len(output.DraftPage.LinkedPageIDs) == 0 {
 		t.Error("LinkedPageIDsが空")
-	}
-
-	// bodyHTMLにリンクが含まれることを確認
-	if output.DraftPage.BodyHTML == "" {
-		t.Error("BodyHTMLが空")
 	}
 }
 

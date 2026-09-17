@@ -42,7 +42,6 @@ func NewPageBuilder(t *testing.T, tx *sql.Tx) *PageBuilder {
 		number:        1,
 		title:         &title,
 		body:          "Test body",
-		bodyHTML:      "<p>Test body</p>",
 		linkedPageIDs: []string{},
 		modifiedAt:    now,
 		publishedAt:   &now,
@@ -85,7 +84,9 @@ func (b *PageBuilder) WithBody(body string) *PageBuilder {
 	return b
 }
 
-// WithBodyHTMLはHTML本文を設定します
+// WithBodyHTMLは現在のMarkdownと食い違う保存済みHTMLを設定します。
+// 画面が保存済みHTMLではなくMarkdownを参照することを固定するテスト専用の
+// フィクスチャです (body_html列の削除と一緒に消えます)。
 func (b *PageBuilder) WithBodyHTML(bodyHTML string) *PageBuilder {
 	b.bodyHTML = bodyHTML
 	return b
@@ -182,7 +183,6 @@ type PageBuilderDB struct {
 	number        model.PageNumber
 	title         *string
 	body          string
-	bodyHTML      string
 	linkedPageIDs []string
 	modifiedAt    time.Time
 	publishedAt   *time.Time
@@ -200,7 +200,6 @@ func NewPageBuilderDB(t *testing.T, db *sql.DB) *PageBuilderDB {
 		number:        1,
 		title:         &title,
 		body:          "Test body",
-		bodyHTML:      "<p>Test body</p>",
 		linkedPageIDs: []string{},
 		modifiedAt:    now,
 		publishedAt:   &now,
@@ -271,10 +270,10 @@ func (b *PageBuilderDB) Build() model.PageID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, discarded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, discarded_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		 RETURNING id`,
-		b.spaceID, b.topicID, int32(b.number), b.title, b.body, b.bodyHTML,
+		b.spaceID, b.topicID, int32(b.number), b.title, b.body,
 		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.discardedAt, now, now,
 	).Scan(&id)
 	if err != nil {

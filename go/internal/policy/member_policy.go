@@ -44,11 +44,11 @@ func (p *MemberPolicy) CanUpdatePage() bool {
 }
 
 func (p *MemberPolicy) CanShowTrash() bool {
-	return p.effectiveScopes[model.ScopePageTrash]
+	return p.effectiveScopes[model.ScopePageTrashRead]
 }
 
 func (p *MemberPolicy) CanTrashPage() bool {
-	return p.effectiveScopes[model.ScopePageTrash]
+	return p.effectiveScopes[model.ScopePageTrashWrite]
 }
 
 func (p *MemberPolicy) CanShowDraftPage(isOwner bool) bool {
@@ -80,11 +80,11 @@ func (p *MemberPolicy) CanCreateSuggestion(topic *model.Topic) bool {
 }
 
 func (p *MemberPolicy) CanApplySuggestion() bool {
-	return p.effectiveScopes[model.ScopeSuggestionApply]
+	return p.effectiveScopes[model.ScopeSuggestionApplicationWrite]
 }
 
 func (p *MemberPolicy) CanCloseSuggestion(isCreator bool) bool {
-	if p.effectiveScopes[model.ScopeSuggestionClose] {
+	if p.effectiveScopes[model.ScopeSuggestionClosureWrite] {
 		return true
 	}
 	return isCreator

@@ -35,8 +35,8 @@ func (q *Queries) ClearSuggestionPageIDsBySuggestionID(ctx context.Context, arg 
 }
 
 const createDraftPage = `-- name: CreateDraftPage :one
-INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
 `
 
@@ -48,7 +48,6 @@ type CreateDraftPageParams struct {
 	SuggestionPageID          *string     `json:"suggestion_page_id"`
 	Title                     interface{} `json:"title"`
 	Body                      string      `json:"body"`
-	BodyHtml                  string      `json:"body_html"`
 	LinkedPageIds             []string    `json:"linked_page_ids"`
 	FeaturedImageAttachmentID *string     `json:"featured_image_attachment_id"`
 	ModifiedAt                time.Time   `json:"modified_at"`
@@ -66,7 +65,6 @@ func (q *Queries) CreateDraftPage(ctx context.Context, arg CreateDraftPageParams
 		arg.SuggestionPageID,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		pq.Array(arg.LinkedPageIds),
 		arg.FeaturedImageAttachmentID,
 		arg.ModifiedAt,
@@ -291,12 +289,11 @@ UPDATE draft_pages
 SET topic_id = $2,
     title = $3,
     body = $4,
-    body_html = $5,
-    linked_page_ids = $6,
-    featured_image_attachment_id = $7,
-    modified_at = $8,
-    updated_at = $9
-WHERE id = $1 AND space_id = $10
+    linked_page_ids = $5,
+    featured_image_attachment_id = $6,
+    modified_at = $7,
+    updated_at = $8
+WHERE id = $1 AND space_id = $9
 RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
 `
 
@@ -305,7 +302,6 @@ type UpdateDraftPageParams struct {
 	TopicID                   string      `json:"topic_id"`
 	Title                     interface{} `json:"title"`
 	Body                      string      `json:"body"`
-	BodyHtml                  string      `json:"body_html"`
 	LinkedPageIds             []string    `json:"linked_page_ids"`
 	FeaturedImageAttachmentID *string     `json:"featured_image_attachment_id"`
 	ModifiedAt                time.Time   `json:"modified_at"`
@@ -320,7 +316,6 @@ func (q *Queries) UpdateDraftPage(ctx context.Context, arg UpdateDraftPageParams
 		arg.TopicID,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		pq.Array(arg.LinkedPageIds),
 		arg.FeaturedImageAttachmentID,
 		arg.ModifiedAt,

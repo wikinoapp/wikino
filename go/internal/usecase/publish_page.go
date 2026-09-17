@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -151,20 +150,18 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
 
-	// プレビュー・ページ詳細画面と同じ統合経路markup.RenderHTMLで本文HTMLを
-	// レンダリングする。resolverがこのトランザクション内で存在しないリンク先ページを自動作成し、
-	// そのIDを記録する。
-	resolver := &linkCreatingPageLocationResolver{
-		spaceMemberID:  data.spaceMember.ID,
-		topicRepo:      uc.topicRepo,
-		pageRepo:       pageRepo,
-		pageEditorRepo: pageEditorRepo,
-	}
-	bodyHTML, err := markup.RenderHTML(ctx, input.Body, data.topic.Name, data.space.ID, input.SpaceIdentifier, resolver, uc.attachmentRepo)
+	// 本文HTMLはページ詳細画面が表示時にレンダリングするため、公開では保存しない。
+	// リンク一覧が読むlinked_page_idsのために、本文のWikiリンクが指すページだけを解決する。
+	// このトランザクション内で、存在しないリンク先ページは自動作成される。
+	linkedPageIDs, err := resolveLinkedPageIDs(ctx, resolveLinkedPageIDsInput{
+		Body:             input.Body,
+		CurrentTopicName: data.topic.Name,
+		SpaceID:          data.space.ID,
+		SpaceMemberID:    data.spaceMember.ID,
+	}, uc.topicRepo.WithTx(tx), pageRepo, pageEditorRepo)
 	if err != nil {
-		return nil, fmt.Errorf("本文のレンダリングに失敗しました: %w", err)
+		return nil, fmt.Errorf("リンク先ページの解決に失敗しました: %w", err)
 	}
-	linkedPageIDs := resolver.linkedPageIDs
 
 	// 添付ファイル参照の書き込み
 	if err := applyAttachmentRefChanges(ctx, data.page.ID, data.space.ID, pd.attachmentRefsToAdd, pd.attachmentRefsToRemove, pageAttachmentRefRepo); err != nil {
@@ -192,7 +189,6 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 		TopicID:                   data.page.TopicID,
 		Title:                     titlePtr,
 		Body:                      input.Body,
-		BodyHTML:                  bodyHTML,
 		LinkedPageIDs:             linkedPageIDs,
 		ModifiedAt:                now,
 		PublishedAt:               &now,
@@ -209,7 +205,6 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 		PageID:        data.page.ID,
 		Title:         input.Title,
 		Body:          input.Body,
-		BodyHTML:      bodyHTML,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページリビジョンの作成に失敗しました: %w", err)
@@ -272,9 +267,8 @@ type publishData struct {
 }
 
 // calculatePublishDataは添付ファイル参照の差分計算とアイキャッチ画像抽出を行う。
-// bodyHTML本体のレンダリングは保存トランザクション内のmarkup.RenderHTML
-// (プレビュー・ページ詳細と同じ経路) に一本化している。参照抽出では別途ここでMarkdownの
-// ソースを解析・描画し、サニタイズ後に残る添付参照を判定する。
+// 表示用HTMLは保存しないが、参照抽出はここでMarkdownのソースを解析・描画し、
+// サニタイズ後に残る添付参照を判定する。
 func (uc *PublishPageUsecase) calculatePublishData(ctx context.Context, body string, pageID model.PageID, spaceID model.SpaceID) (*publishData, error) {
 	toAdd, toRemove, err := calculateAttachmentRefDiff(ctx, body, pageID, spaceID, uc.attachmentRepo, uc.pageAttachmentRefRepo)
 	if err != nil {

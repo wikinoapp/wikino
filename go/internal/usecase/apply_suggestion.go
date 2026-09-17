@@ -306,7 +306,6 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 			TopicID:                   page.TopicID,
 			Title:                     sp.Title,
 			Body:                      sp.Body,
-			BodyHTML:                  sp.BodyHTML,
 			LinkedPageIDs:             sp.LinkedPageIDs,
 			FeaturedImageAttachmentID: sp.FeaturedImageAttachmentID,
 			ModifiedAt:                now,
@@ -332,7 +331,6 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 			PageID:        sp.PageID,
 			Title:         title,
 			Body:          sp.Body,
-			BodyHTML:      sp.BodyHTML,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("ページリビジョンの作成に失敗しました: %w", err)

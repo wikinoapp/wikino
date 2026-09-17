@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
@@ -74,15 +75,20 @@ type GetPageShowOutput struct {
 	Page        *model.Page
 	Topic       *model.Topic
 
+	// BodyHTMLはページの現在のMarkdownをその場でレンダリング・サニタイズした本文HTML。
+	// 保存済みのHTMLは読まないため、保存時に存在しなかったページへのWikiリンクも、リンク先が
+	// 作られていればリンクとして表示される。
+	BodyHTML string
+
 	// IsTrashedはページがゴミ箱に入っているかを表す。trueになるのは閲覧を許可された閲覧者
-	// (page:trashを持つメンバー) の場合だけで、それ以外にはnot foundエラーを返す。したがって
+	// (page_trash:readを持つメンバー) の場合だけで、それ以外にはnot foundエラーを返す。したがって
 	// テンプレートはtrueのときにゴミ箱アラートを出せばよい。
 	IsTrashed bool
 
 	CanUpdatePage bool
 
 	// CanTrashPageは閲覧者がこのページをゴミ箱へ入れられるかを表し、ヘッダーの操作ドロップ
-	// ダウンのゴミ箱項目の出し分けに使う。判定軸はpage:writeではなくpage:trashのため、ページを
+	// ダウンのゴミ箱項目の出し分けに使う。判定軸はpage:writeではなくpage_trash:writeのため、ページを
 	// 書き換えてよいメンバーというだけでは項目は出ない (Authorizer.CanTrashPageを参照)。
 	CanTrashPage bool
 
@@ -129,7 +135,7 @@ func (uc *GetPageShowUsecase) Execute(ctx context.Context, input GetPageShowInpu
 	}
 
 	// ゴミ箱に入ったページは、復元の判断ができるようゴミ箱を開ける権限を持つメンバーにだけ
-	// 見せる。ゲストとpage:trashを持たないメンバーには本文ではなく404を返す。
+	// 見せる。ゲストとpage_trash:readを持たないメンバーには本文ではなく404を返す。
 	isTrashed := data.page.TrashedAt != nil
 	if isTrashed && !authorizer.CanShowTrash() {
 		return nil, &model.AppError{
@@ -148,11 +154,17 @@ func (uc *GetPageShowUsecase) Execute(ctx context.Context, input GetPageShowInpu
 		return nil, err
 	}
 
+	bodyHTML, err := uc.renderBodyHTML(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+
 	return &GetPageShowOutput{
 		Space:                   data.space,
 		SpaceMember:             data.spaceMember,
 		Page:                    data.page,
 		Topic:                   data.topic,
+		BodyHTML:                bodyHTML,
 		IsTrashed:               isTrashed,
 		CanUpdatePage:           authorizer.CanUpdatePage(),
 		CanTrashPage:            authorizer.CanTrashPage(),
@@ -164,6 +176,30 @@ func (uc *GetPageShowUsecase) Execute(ctx context.Context, input GetPageShowInpu
 		PageBacklinkCount:       links.pageBacklinkCount,
 		LinkTopics:              links.topics,
 	}, nil
+}
+
+// renderBodyHTMLはページの現在のMarkdownを表示用のHTMLにする。
+//
+// Wikiリンクの解決にはプレビューと同じ副作用の無いリゾルバを使い、リンク先ページの自動作成は
+// 行わない。表示のたびにページが作られると、閲覧しただけでスペースのページが増えてしまう。
+// 同じ経路をプレビューと共有することで、書き手がプレビューで見た結果と公開後の表示も一致する。
+func (uc *GetPageShowUsecase) renderBodyHTML(ctx context.Context, data *pageAccessData) (string, error) {
+	resolver := &previewPageLocationResolver{topicRepo: uc.topicRepo, pageRepo: uc.pageRepo}
+
+	bodyHTML, err := markup.RenderHTML(
+		ctx,
+		data.page.Body,
+		data.topic.Name,
+		data.space.ID,
+		data.space.Identifier,
+		resolver,
+		uc.attachmentRepo,
+	)
+	if err != nil {
+		return "", fmt.Errorf("ページ本文のレンダリングに失敗: %w", err)
+	}
+
+	return bodyHTML, nil
 }
 
 // pageShowLinksは本文の下に描画する一覧の選択ページを保持する。

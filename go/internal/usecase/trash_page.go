@@ -67,7 +67,7 @@ func (uc *TrashPageUsecase) Execute(ctx context.Context, input TrashPageInput) (
 
 	authorizer := newAuthorizer(data.spaceMember, data.topicMember)
 
-	// 開けないトピックのページはページ表示画面と同じく「存在しない」扱いにする。page:trashは
+	// 開けないトピックのページはページ表示画面と同じく「存在しない」扱いにする。page_trash:writeは
 	// スペース単位でも持てるスコープのため、このゲートが無いと、参加しておらず読むこともできない
 	// 非公開トピックのページをゴミ箱へ入れられてしまう。
 	if !authorizer.CanShowTopic(data.topic) {

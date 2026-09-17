@@ -32,7 +32,6 @@ type CreatePageRevisionInput struct {
 	PageID        model.PageID
 	Title         string
 	Body          string
-	BodyHTML      string
 }
 
 // Createはページリビジョンを作成する
@@ -44,7 +43,6 @@ func (r *PageRevisionRepository) Create(ctx context.Context, input CreatePageRev
 		PageID:        string(input.PageID),
 		Title:         input.Title,
 		Body:          input.Body,
-		BodyHtml:      input.BodyHTML,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	})
@@ -93,7 +91,6 @@ func (r *PageRevisionRepository) toModel(row query.PageRevision) *model.PageRevi
 		PageID:        model.PageID(row.PageID),
 		Title:         row.Title,
 		Body:          row.Body,
-		BodyHTML:      row.BodyHtml,
 		CreatedAt:     row.CreatedAt,
 		UpdatedAt:     row.UpdatedAt,
 	}

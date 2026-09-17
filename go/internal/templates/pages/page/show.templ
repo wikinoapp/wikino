@@ -24,7 +24,7 @@ type ShowData struct {
 	// 権限に従わせず2つの項目を独立に出し分ける。
 	CanTrashPage bool
 
-	// CSRFTokenはゴミ箱フォームのPOSTを認証する。page:trashを持たない閲覧者では空になる。
+	// CSRFTokenはゴミ箱フォームのPOSTを認証する。page_trash:writeを持たない閲覧者では空になる。
 	// フォームとhidden inputはshowsTrashActionがtrueのときだけ描画するため、既にゴミ箱にある
 	// ページでも、このフィールドに値があってもHTMLにはトークンが載らない。
 	CSRFToken string
@@ -50,7 +50,7 @@ templ Show(data ShowData) {
 					@showHeader(data)
 
 					if data.Page.BodyHTML != "" {
-						// 本文HTMLはページ公開時にサニタイズ済みのため、ここでは生のまま展開する。
+						// 本文HTMLはUseCaseが表示時にサニタイズ済みのため、ここでは生のまま展開する。
 						<div class="wikino-markdown mt-6" data-markdown-table-label={ templates.T(ctx, "markdown_table_scroll_label") }>
 							@templ.Raw(data.Page.BodyHTML)
 						</div>

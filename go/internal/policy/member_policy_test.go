@@ -163,13 +163,13 @@ func TestMemberPolicy_CanUpdatePage(t *testing.T) {
 func TestMemberPolicy_CanShowTrash(t *testing.T) {
 	t.Parallel()
 
-	t.Run("page:trashで閲覧可能", func(t *testing.T) {
+	t.Run("page_trash:writeで閲覧可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopePageTrash}, nil)
+		p := NewMemberPolicy([]model.Scope{model.ScopePageTrashWrite}, nil)
 
 		if !p.CanShowTrash() {
-			t.Error("page:trashを持つメンバーはゴミ箱を閲覧可能であるべき")
+			t.Error("page_trash:writeを持つメンバーはゴミ箱を閲覧可能であるべき")
 		}
 	})
 
@@ -179,7 +179,7 @@ func TestMemberPolicy_CanShowTrash(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
 
 		if !p.CanShowTrash() {
-			t.Error("space:adminはpage:trashを含意展開するためゴミ箱を閲覧可能であるべき")
+			t.Error("space:adminはpage_trash:writeを含意展開するためゴミ箱を閲覧可能であるべき")
 		}
 	})
 
@@ -189,7 +189,7 @@ func TestMemberPolicy_CanShowTrash(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopePageWrite}, nil)
 
 		if p.CanShowTrash() {
-			t.Error("page:writeだけではゴミ箱を閲覧できないべき (page:trashが必要)")
+			t.Error("page:writeだけではゴミ箱を閲覧できないべき (page_trash:readが必要)")
 		}
 	})
 
@@ -199,27 +199,27 @@ func TestMemberPolicy_CanShowTrash(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopePageRead}, nil)
 
 		if p.CanShowTrash() {
-			t.Error("page:readだけではゴミ箱を閲覧できないべき (page:trashが必要)")
+			t.Error("page:readだけではゴミ箱を閲覧できないべき (page_trash:readが必要)")
 		}
 	})
 
-	t.Run("page:restoreだけでは閲覧不可", func(t *testing.T) {
+	t.Run("page_trash:deleteだけでは閲覧不可", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopePageRestore}, nil)
+		p := NewMemberPolicy([]model.Scope{model.ScopePageTrashDelete}, nil)
 
 		if p.CanShowTrash() {
-			t.Error("page:restoreだけではゴミ箱を閲覧できないべき (page:trashが必要)")
+			t.Error("page_trash:deleteだけではゴミ箱を閲覧できないべき (page_trash:readが必要)")
 		}
 	})
 
-	t.Run("トピックスコープのpage:trashでも閲覧可能", func(t *testing.T) {
+	t.Run("トピックスコープのpage_trash:writeでも閲覧可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy(nil, []model.Scope{model.ScopePageTrash})
+		p := NewMemberPolicy(nil, []model.Scope{model.ScopePageTrashWrite})
 
 		if !p.CanShowTrash() {
-			t.Error("トピックスコープでpage:trashを持つメンバーもゴミ箱を閲覧可能であるべき")
+			t.Error("トピックスコープでpage_trash:writeを持つメンバーもゴミ箱を閲覧可能であるべき")
 		}
 	})
 }
@@ -227,13 +227,13 @@ func TestMemberPolicy_CanShowTrash(t *testing.T) {
 func TestMemberPolicy_CanTrashPage(t *testing.T) {
 	t.Parallel()
 
-	t.Run("page:trashでゴミ箱に入れられる", func(t *testing.T) {
+	t.Run("page_trash:writeでゴミ箱に入れられる", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopePageTrash}, nil)
+		p := NewMemberPolicy([]model.Scope{model.ScopePageTrashWrite}, nil)
 
 		if !p.CanTrashPage() {
-			t.Error("page:trashを持つメンバーはページをゴミ箱に入れられるべき")
+			t.Error("page_trash:writeを持つメンバーはページをゴミ箱に入れられるべき")
 		}
 	})
 
@@ -243,7 +243,7 @@ func TestMemberPolicy_CanTrashPage(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
 
 		if !p.CanTrashPage() {
-			t.Error("space:adminはpage:trashを含意展開するためページをゴミ箱に入れられるべき")
+			t.Error("space:adminはpage_trash:writeを含意展開するためページをゴミ箱に入れられるべき")
 		}
 	})
 
@@ -253,7 +253,7 @@ func TestMemberPolicy_CanTrashPage(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopePageWrite}, nil)
 
 		if p.CanTrashPage() {
-			t.Error("page:writeだけではページをゴミ箱に入れられないべき (page:trashが必要)")
+			t.Error("page:writeだけではページをゴミ箱に入れられないべき (page_trash:writeが必要)")
 		}
 	})
 
@@ -263,27 +263,27 @@ func TestMemberPolicy_CanTrashPage(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopePageRead}, nil)
 
 		if p.CanTrashPage() {
-			t.Error("page:readだけではページをゴミ箱に入れられないべき (page:trashが必要)")
+			t.Error("page:readだけではページをゴミ箱に入れられないべき (page_trash:writeが必要)")
 		}
 	})
 
-	t.Run("page:restoreだけでは入れられない", func(t *testing.T) {
+	t.Run("page_trash:deleteだけでは入れられない", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopePageRestore}, nil)
+		p := NewMemberPolicy([]model.Scope{model.ScopePageTrashDelete}, nil)
 
 		if p.CanTrashPage() {
-			t.Error("page:restoreだけではページをゴミ箱に入れられないべき (page:trashが必要)")
+			t.Error("page_trash:deleteだけではページをゴミ箱に入れられないべき (page_trash:writeが必要)")
 		}
 	})
 
-	t.Run("トピックスコープのpage:trashでも入れられる", func(t *testing.T) {
+	t.Run("トピックスコープのpage_trash:writeでも入れられる", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy(nil, []model.Scope{model.ScopePageTrash})
+		p := NewMemberPolicy(nil, []model.Scope{model.ScopePageTrashWrite})
 
 		if !p.CanTrashPage() {
-			t.Error("トピックスコープでpage:trashを持つメンバーもページをゴミ箱に入れられるべき")
+			t.Error("トピックスコープでpage_trash:writeを持つメンバーもページをゴミ箱に入れられるべき")
 		}
 	})
 }
@@ -461,23 +461,23 @@ func TestMemberPolicy_CanCreateSuggestion(t *testing.T) {
 func TestMemberPolicy_CanApplySuggestion(t *testing.T) {
 	t.Parallel()
 
-	t.Run("suggestion:applyで反映可能", func(t *testing.T) {
+	t.Run("suggestion_application:writeで反映可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionApply}, nil)
+		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionApplicationWrite}, nil)
 
 		if !p.CanApplySuggestion() {
-			t.Error("suggestion:applyを持つメンバーは反映可能であるべき")
+			t.Error("suggestion_application:writeを持つメンバーは反映可能であるべき")
 		}
 	})
 
-	t.Run("suggestion:applyなしで反映不可", func(t *testing.T) {
+	t.Run("suggestion_application:writeなしで反映不可", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionWrite}, nil)
 
 		if p.CanApplySuggestion() {
-			t.Error("suggestion:applyを持たないメンバーは反映できないべき")
+			t.Error("suggestion_application:writeを持たないメンバーは反映できないべき")
 		}
 	})
 }
@@ -485,13 +485,13 @@ func TestMemberPolicy_CanApplySuggestion(t *testing.T) {
 func TestMemberPolicy_CanCloseSuggestion(t *testing.T) {
 	t.Parallel()
 
-	t.Run("suggestion:closeで他人の提案もクローズ可能", func(t *testing.T) {
+	t.Run("suggestion_closure:writeで他人の提案もクローズ可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionClose}, nil)
+		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionClosureWrite}, nil)
 
 		if !p.CanCloseSuggestion(false) {
-			t.Error("suggestion:closeを持つメンバーは他人の提案もクローズ可能であるべき")
+			t.Error("suggestion_closure:writeを持つメンバーは他人の提案もクローズ可能であるべき")
 		}
 	})
 
@@ -505,13 +505,13 @@ func TestMemberPolicy_CanCloseSuggestion(t *testing.T) {
 		}
 	})
 
-	t.Run("suggestion:closeなしで他人の提案はクローズ不可", func(t *testing.T) {
+	t.Run("suggestion_closure:writeなしで他人の提案はクローズ不可", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewMemberPolicy([]model.Scope{model.ScopeSuggestionWrite}, nil)
 
 		if p.CanCloseSuggestion(false) {
-			t.Error("suggestion:closeを持たない非作成者はクローズできないべき")
+			t.Error("suggestion_closure:writeを持たない非作成者はクローズできないべき")
 		}
 	})
 }
@@ -774,4 +774,66 @@ func TestMemberPolicy_CanExportSpace(t *testing.T) {
 			t.Error("space:writeを持たないメンバーはスペースをエクスポートできないべき")
 		}
 	})
+}
+
+func TestMemberPolicy_ScopeBoundaries(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                                                                               string
+		scopes                                                                             []model.Scope
+		showTrash, trashPage, updatePage, editSuggestion, applySuggestion, closeSuggestion bool
+	}{
+		{name: "ゴミ箱閲覧", scopes: []model.Scope{model.ScopePageTrashRead}, showTrash: true},
+		{name: "ゴミ箱移動", scopes: []model.Scope{model.ScopePageTrashWrite}, showTrash: true, trashPage: true},
+		{name: "旧ゴミ箱移動", scopes: []model.Scope{model.ScopePageTrash}, showTrash: true, trashPage: true},
+		{name: "ゴミ箱復元", scopes: []model.Scope{model.ScopePageTrashDelete}},
+		{name: "旧ゴミ箱復元", scopes: []model.Scope{model.ScopePageRestore}},
+		{name: "ページ編集", scopes: []model.Scope{model.ScopePageWrite}, updatePage: true},
+		{name: "編集提案編集", scopes: []model.Scope{model.ScopeSuggestionWrite}, editSuggestion: true},
+		{name: "編集提案反映", scopes: []model.Scope{model.ScopeSuggestionApplicationWrite}, applySuggestion: true},
+		{name: "旧編集提案反映", scopes: []model.Scope{model.ScopeSuggestionApply}, applySuggestion: true},
+		{name: "編集提案クローズ", scopes: []model.Scope{model.ScopeSuggestionClosureWrite}, closeSuggestion: true},
+		{name: "旧編集提案クローズ", scopes: []model.Scope{model.ScopeSuggestionClose}, closeSuggestion: true},
+		{name: "新旧混在", scopes: []model.Scope{model.ScopePageTrash, model.ScopePageTrashWrite, model.ScopeSuggestionClose, model.ScopeSuggestionClosureWrite}, showTrash: true, trashPage: true, closeSuggestion: true},
+		{name: "管理者", scopes: []model.Scope{model.ScopeSpaceAdmin}, showTrash: true, trashPage: true, updatePage: true, editSuggestion: true, applySuggestion: true, closeSuggestion: true},
+		{name: "未知のスコープ", scopes: []model.Scope{"page:trash:write", "page:restore_extra", "suggestion:apply_extra", "suggestion:close_extra", "space:admin_extra"}},
+		{name: "スコープなし"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			for _, source := range []struct {
+				name         string
+				space, topic []model.Scope
+			}{
+				{"スペース", tt.scopes, nil},
+				{"トピック", nil, tt.scopes},
+				{"両方", tt.scopes, tt.scopes},
+			} {
+				t.Run(source.name, func(t *testing.T) {
+					t.Parallel()
+
+					p := NewMemberPolicy(source.space, source.topic)
+					for _, check := range []struct {
+						name      string
+						got, want bool
+					}{
+						{"CanShowTrash", p.CanShowTrash(), tt.showTrash},
+						{"CanTrashPage", p.CanTrashPage(), tt.trashPage},
+						{"CanUpdatePage", p.CanUpdatePage(), tt.updatePage},
+						{"CanEditSuggestionPage", p.CanEditSuggestionPage(), tt.editSuggestion},
+						{"CanApplySuggestion", p.CanApplySuggestion(), tt.applySuggestion},
+						{"CanCloseSuggestion", p.CanCloseSuggestion(false), tt.closeSuggestion},
+						{"作成者のCanCloseSuggestion", p.CanCloseSuggestion(true), true},
+					} {
+						if check.got != check.want {
+							t.Errorf("%s = %v、期待値 = %v", check.name, check.got, check.want)
+						}
+					}
+				})
+			}
+		})
+	}
 }

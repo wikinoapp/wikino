@@ -84,6 +84,7 @@ func (h *Handler) renderMoveForm(
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "page_move_title", map[string]any{
+		"TopicName": output.CurrentTopic.Name,
 		"SpaceName": output.Space.Name,
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM

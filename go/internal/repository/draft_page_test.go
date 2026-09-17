@@ -50,7 +50,6 @@ func TestDraftPageRepository_FindByPageAndMember(t *testing.T) {
 		WithTopicID(topicID).
 		WithTitle("Draft Title").
 		WithBody("Draft body").
-		WithBodyHTML("<p>Draft body</p>").
 		Build()
 
 	t.Run("ページIDとスペースメンバーIDで下書きを取得できる", func(t *testing.T) {
@@ -81,9 +80,6 @@ func TestDraftPageRepository_FindByPageAndMember(t *testing.T) {
 		}
 		if draft.Body != "Draft body" {
 			t.Errorf("draft.Body = %v、期待値 = 'Draft body'", draft.Body)
-		}
-		if draft.BodyHTML != "<p>Draft body</p>" {
-			t.Errorf("draft.BodyHTML = %v、期待値 = '<p>Draft body</p>'", draft.BodyHTML)
 		}
 	})
 
@@ -152,7 +148,6 @@ func TestDraftPageRepository_Create(t *testing.T) {
 			TopicID:       topicID,
 			Title:         &title,
 			Body:          "draft body",
-			BodyHTML:      "<p>draft body</p>",
 			LinkedPageIDs: []model.PageID{},
 			ModifiedAt:    now,
 		})
@@ -180,9 +175,6 @@ func TestDraftPageRepository_Create(t *testing.T) {
 		if draft.Body != "draft body" {
 			t.Errorf("draft.Body = %v、期待値 = 'draft body'", draft.Body)
 		}
-		if draft.BodyHTML != "<p>draft body</p>" {
-			t.Errorf("draft.BodyHTML = %v、期待値 = '<p>draft body</p>'", draft.BodyHTML)
-		}
 	})
 
 	t.Run("タイトルがnilの下書きを作成できる", func(t *testing.T) {
@@ -201,7 +193,6 @@ func TestDraftPageRepository_Create(t *testing.T) {
 			TopicID:       topicID,
 			Title:         nil,
 			Body:          "no title draft",
-			BodyHTML:      "<p>no title draft</p>",
 			LinkedPageIDs: []model.PageID{},
 			ModifiedAt:    now,
 		})
@@ -255,7 +246,6 @@ func TestDraftPageRepository_Update(t *testing.T) {
 		WithTopicID(topicID).
 		WithTitle("Before Update").
 		WithBody("old body").
-		WithBodyHTML("<p>old body</p>").
 		Build()
 
 	t.Run("下書きを更新できる", func(t *testing.T) {
@@ -267,7 +257,6 @@ func TestDraftPageRepository_Update(t *testing.T) {
 			TopicID:       topicID,
 			Title:         &newTitle,
 			Body:          "new body",
-			BodyHTML:      "<p>new body</p>",
 			LinkedPageIDs: []model.PageID{},
 			ModifiedAt:    now,
 		})
@@ -282,9 +271,6 @@ func TestDraftPageRepository_Update(t *testing.T) {
 		}
 		if draft.Body != "new body" {
 			t.Errorf("draft.Body = %v、期待値 = 'new body'", draft.Body)
-		}
-		if draft.BodyHTML != "<p>new body</p>" {
-			t.Errorf("draft.BodyHTML = %v、期待値 = '<p>new body</p>'", draft.BodyHTML)
 		}
 	})
 }
@@ -387,7 +373,6 @@ func TestDraftPageRepository_CreateWithSuggestionPageID(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		WithTitle("Test Page").
 		WithBody("body").
-		WithBodyHTML("<p>body</p>").
 		Build()
 
 	suggestionID := testutil.NewSuggestionBuilder(t, tx).
@@ -414,7 +399,6 @@ func TestDraftPageRepository_CreateWithSuggestionPageID(t *testing.T) {
 			SuggestionPageID: &suggestionPageID,
 			Title:            &title,
 			Body:             "body",
-			BodyHTML:         "<p>body</p>",
 			LinkedPageIDs:    []model.PageID{},
 			ModifiedAt:       now,
 		})
@@ -470,7 +454,6 @@ func TestDraftPageRepository_UpdateSuggestionPageID(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		WithTitle("Test Page").
 		WithBody("body").
-		WithBodyHTML("<p>body</p>").
 		Build()
 
 	suggestionID := testutil.NewSuggestionBuilder(t, tx).
@@ -566,7 +549,6 @@ func TestDraftPageRepository_CreateWithFeaturedImageAttachmentID(t *testing.T) {
 			TopicID:                   topicID,
 			Title:                     &title,
 			Body:                      "body",
-			BodyHTML:                  "<p>body</p>",
 			LinkedPageIDs:             []model.PageID{},
 			FeaturedImageAttachmentID: &attachmentID,
 			ModifiedAt:                now,
@@ -599,7 +581,6 @@ func TestDraftPageRepository_CreateWithFeaturedImageAttachmentID(t *testing.T) {
 			TopicID:                   topicID,
 			Title:                     &title,
 			Body:                      "body",
-			BodyHTML:                  "<p>body</p>",
 			LinkedPageIDs:             []model.PageID{},
 			FeaturedImageAttachmentID: nil,
 			ModifiedAt:                now,
@@ -659,7 +640,6 @@ func TestDraftPageRepository_UpdateWithFeaturedImageAttachmentID(t *testing.T) {
 		WithTopicID(topicID).
 		WithTitle("Before Update").
 		WithBody("old body").
-		WithBodyHTML("<p>old body</p>").
 		Build()
 
 	t.Run("featured_image_attachment_idを設定して下書きを更新できる", func(t *testing.T) {
@@ -671,7 +651,6 @@ func TestDraftPageRepository_UpdateWithFeaturedImageAttachmentID(t *testing.T) {
 			TopicID:                   topicID,
 			Title:                     &newTitle,
 			Body:                      "new body",
-			BodyHTML:                  "<p>new body</p>",
 			LinkedPageIDs:             []model.PageID{},
 			FeaturedImageAttachmentID: &attachmentID,
 			ModifiedAt:                now,
@@ -696,7 +675,6 @@ func TestDraftPageRepository_UpdateWithFeaturedImageAttachmentID(t *testing.T) {
 			TopicID:                   topicID,
 			Title:                     &title,
 			Body:                      "body",
-			BodyHTML:                  "<p>body</p>",
 			LinkedPageIDs:             []model.PageID{},
 			FeaturedImageAttachmentID: nil,
 			ModifiedAt:                now,
@@ -1150,7 +1128,6 @@ func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			WithTitle("Suggestion Page").
 			WithBody("body").
-			WithBodyHTML("<p>body</p>").
 			Build()
 		suggestionID := testutil.NewSuggestionBuilder(t, tx).
 			WithSpaceID(spaceID).

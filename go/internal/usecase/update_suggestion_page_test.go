@@ -81,7 +81,6 @@ func TestUpdateSuggestionPageUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithSuggestionPageID(suggestionPageID).
 			WithBody("更新された本文").
-			WithBodyHTML("<p>更新された本文</p>").
 			WithTitle("更新されたタイトル").
 			Build()
 
@@ -108,9 +107,6 @@ func TestUpdateSuggestionPageUsecase_Execute(t *testing.T) {
 		}
 		if updatedSP.Body != "更新された本文" {
 			t.Errorf("SuggestionPage.Body = %q、期待値 = %q", updatedSP.Body, "更新された本文")
-		}
-		if updatedSP.BodyHTML != "<p>更新された本文</p>" {
-			t.Errorf("SuggestionPage.BodyHTML = %q、期待値 = %q", updatedSP.BodyHTML, "<p>更新された本文</p>")
 		}
 		if updatedSP.Title == nil || *updatedSP.Title != "更新されたタイトル" {
 			t.Errorf("SuggestionPage.Title = %v、期待値 = %q", updatedSP.Title, "更新されたタイトル")
@@ -336,7 +332,6 @@ func TestUpdateSuggestionPageUsecase_Execute(t *testing.T) {
 			WithTopicID(topicID).
 			WithSuggestionPageID(suggestionPageID).
 			WithBody("本文のみ更新").
-			WithBodyHTML("<p>本文のみ更新</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), UpdateSuggestionPageInput{

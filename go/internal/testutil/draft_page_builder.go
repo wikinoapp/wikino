@@ -23,7 +23,6 @@ type DraftPageBuilder struct {
 	suggestionPageID          *string
 	title                     *string
 	body                      string
-	bodyHTML                  string
 	linkedPageIDs             []string
 	featuredImageAttachmentID *string
 	modifiedAt                time.Time
@@ -39,7 +38,6 @@ func NewDraftPageBuilder(t *testing.T, tx *sql.Tx) *DraftPageBuilder {
 		tx:            tx,
 		title:         &title,
 		body:          "Draft body",
-		bodyHTML:      "<p>Draft body</p>",
 		linkedPageIDs: []string{},
 		modifiedAt:    now,
 	}
@@ -84,12 +82,6 @@ func (b *DraftPageBuilder) WithNilTitle() *DraftPageBuilder {
 // WithBodyは本文を設定します
 func (b *DraftPageBuilder) WithBody(body string) *DraftPageBuilder {
 	b.body = body
-	return b
-}
-
-// WithBodyHTMLはHTML本文を設定します
-func (b *DraftPageBuilder) WithBodyHTML(bodyHTML string) *DraftPageBuilder {
-	b.bodyHTML = bodyHTML
 	return b
 }
 
@@ -140,10 +132,10 @@ func (b *DraftPageBuilder) Build() model.DraftPageID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		`INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		 RETURNING id`,
-		b.spaceID, b.pageID, b.spaceMemberID, b.topicID, b.suggestionPageID, b.title, b.body, b.bodyHTML,
+		b.spaceID, b.pageID, b.spaceMemberID, b.topicID, b.suggestionPageID, b.title, b.body,
 		pq.Array(b.linkedPageIDs), b.featuredImageAttachmentID, b.modifiedAt, now, now,
 	).Scan(&id)
 	if err != nil {
@@ -166,7 +158,6 @@ type DraftPageBuilderDB struct {
 	suggestionPageID          *string
 	title                     *string
 	body                      string
-	bodyHTML                  string
 	linkedPageIDs             []string
 	featuredImageAttachmentID *string
 	modifiedAt                time.Time
@@ -182,7 +173,6 @@ func NewDraftPageBuilderDB(t *testing.T, db *sql.DB) *DraftPageBuilderDB {
 		db:            db,
 		title:         &title,
 		body:          "Draft body",
-		bodyHTML:      "<p>Draft body</p>",
 		linkedPageIDs: []string{},
 		modifiedAt:    now,
 	}
@@ -221,12 +211,6 @@ func (b *DraftPageBuilderDB) WithTitle(title string) *DraftPageBuilderDB {
 // WithBodyは本文を設定します
 func (b *DraftPageBuilderDB) WithBody(body string) *DraftPageBuilderDB {
 	b.body = body
-	return b
-}
-
-// WithBodyHTMLはHTML本文を設定します
-func (b *DraftPageBuilderDB) WithBodyHTML(bodyHTML string) *DraftPageBuilderDB {
-	b.bodyHTML = bodyHTML
 	return b
 }
 
@@ -271,10 +255,10 @@ func (b *DraftPageBuilderDB) Build() model.DraftPageID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		`INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		 RETURNING id`,
-		b.spaceID, b.pageID, b.spaceMemberID, b.topicID, b.suggestionPageID, b.title, b.body, b.bodyHTML,
+		b.spaceID, b.pageID, b.spaceMemberID, b.topicID, b.suggestionPageID, b.title, b.body,
 		pq.Array(b.linkedPageIDs), b.featuredImageAttachmentID, b.modifiedAt, now, now,
 	).Scan(&id)
 	if err != nil {

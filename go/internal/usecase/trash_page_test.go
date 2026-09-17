@@ -23,17 +23,17 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		repository.NewTopicMemberRepository(q),
 	)
 
-	// スペース単位でpage:trashを持つメンバー (本操作の判定軸となる権限)。
+	// スペース単位でpage_trash:writeを持つメンバー (本操作の判定軸となる権限)。
 	trashMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-trash@example.com").
 		WithAtname("tptrash").
 		Build()
-	// page:writeは持つがpage:trashを持たないメンバー (編集者がゴミ箱に入れられないこと)。
+	// page:writeは持つがpage_trash:writeを持たないメンバー (編集者がゴミ箱に入れられないこと)。
 	writerMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-writer@example.com").
 		WithAtname("tpwriter").
 		Build()
-	// page:trashをトピックメンバーからだけ得るメンバー。
+	// page_trash:writeをトピックメンバーからだけ得るメンバー。
 	topicScopedMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-topic-scoped@example.com").
 		WithAtname("tptopicscoped").
@@ -51,7 +51,7 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrash}).
+		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -80,7 +80,7 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(privateTopicID).
 		WithSpaceMemberID(topicScopedSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopeTopicRead, model.ScopePageTrash}).
+		WithScopes([]model.Scope{model.ScopeTopicRead, model.ScopePageTrashWrite}).
 		Build()
 
 	newPage := func(t *testing.T, topicID model.TopicID, number model.PageNumber, title string) {
@@ -114,7 +114,7 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 	newPage(t, privateTopicID, 4, "Private Page")
 	newPage(t, privateTopicID, 5, "Topic Scoped Page")
 
-	t.Run("正常系: page:trashを持つメンバーはページをゴミ箱に入れられる", func(t *testing.T) {
+	t.Run("正常系: page_trash:writeを持つメンバーはページをゴミ箱に入れられる", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      1,
@@ -184,7 +184,7 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 	})
 
 	t.Run("異常系: 開けない非公開トピックのページはゴミ箱に入れられない", func(t *testing.T) {
-		// スペース単位のpage:trashだけでは足りない。topic:readが無ければ、そのページは
+		// スペース単位のpage_trash:writeだけでは足りない。topic:readが無ければ、そのページは
 		// 存在しないページと区別が付かないままであるべき。
 		_, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
@@ -204,7 +204,7 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: トピックスコープのpage:trashでもゴミ箱に入れられる", func(t *testing.T) {
+	t.Run("正常系: トピックスコープのpage_trash:writeでもゴミ箱に入れられる", func(t *testing.T) {
 		_, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      5,

@@ -70,7 +70,6 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		SpaceMemberID: spaceMemberID,
 		Title:         "Old Title",
 		Body:          "line one\n",
-		BodyHTML:      "<p>line one</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (rev1) のエラー = %v", err)
@@ -81,7 +80,6 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		SpaceMemberID: spaceMemberID,
 		Title:         "New Title",
 		Body:          "line one\nline two\n",
-		BodyHTML:      "<p>line one</p><p>line two</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (rev2) のエラー = %v", err)
@@ -196,7 +194,6 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 			SpaceMemberID: otherMemberID,
 			Title:         "Other Member Title",
 			Body:          "other member body\n",
-			BodyHTML:      "<p>other member body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (otherRev) のエラー = %v", err)

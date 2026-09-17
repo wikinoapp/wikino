@@ -32,7 +32,6 @@ func TestPageRepository_FindBySpaceAndNumber(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Test Page").
 		WithBody("Hello").
-		WithBodyHTML("<p>Hello</p>").
 		Build()
 
 	t.Run("存在するページをスペースIDとページ番号で取得できる", func(t *testing.T) {
@@ -60,9 +59,6 @@ func TestPageRepository_FindBySpaceAndNumber(t *testing.T) {
 		}
 		if page.Body != "Hello" {
 			t.Errorf("page.Body = %v、期待値 = 'Hello'", page.Body)
-		}
-		if page.BodyHTML != "<p>Hello</p>" {
-			t.Errorf("page.BodyHTML = %v、期待値 = '<p>Hello</p>'", page.BodyHTML)
 		}
 		if page.PublishedAt == nil {
 			t.Error("page.PublishedAtがnil")
@@ -1431,6 +1427,136 @@ func TestPageRepository_FindByTopicAndTitle(t *testing.T) {
 	})
 }
 
+func TestPageRepository_FindByTopicAndTitlePairs(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-title-pairs-space").
+		Build()
+
+	generalTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	devTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Dev").
+		Build()
+
+	alphaPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(generalTopicID).
+		WithNumber(1).
+		WithTitle("Alpha").
+		Build()
+
+	betaPageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(devTopicID).
+		WithNumber(2).
+		WithTitle("Beta").
+		Build()
+
+	t.Run("複数の組に一致するページをまとめて取得できる", func(t *testing.T) {
+		pages, err := repo.FindByTopicAndTitlePairs(context.Background(), []TopicPageTitle{
+			{TopicID: generalTopicID, Title: "Alpha"},
+			{TopicID: devTopicID, Title: "Beta"},
+		}, spaceID)
+		if err != nil {
+			t.Fatalf("FindByTopicAndTitlePairs()のエラー = %v", err)
+		}
+
+		gotIDs := make(map[model.PageID]bool, len(pages))
+		for _, page := range pages {
+			gotIDs[page.ID] = true
+		}
+		if len(gotIDs) != 2 || !gotIDs[alphaPageID] || !gotIDs[betaPageID] {
+			t.Errorf("取得したページID = %v、期待値 = %v と %v の2件", gotIDs, alphaPageID, betaPageID)
+		}
+
+		// ページ番号はWikiリンクのURLに使うため、組ごとに正しい値が載ることを確認する。
+		alpha := pages[TopicPageTitle{TopicID: generalTopicID, Title: "Alpha"}]
+		beta := pages[TopicPageTitle{TopicID: devTopicID, Title: "Beta"}]
+		if alpha == nil || beta == nil {
+			t.Fatalf("入力の組で結果を引けない (Alpha = %v、Beta = %v)", alpha, beta)
+		}
+		if alpha.Number != 1 || beta.Number != 2 {
+			t.Errorf("取得したページ番号 = Alpha %d / Beta %d、期待値 = Alpha 1 / Beta 2", alpha.Number, beta.Number)
+		}
+	})
+
+	t.Run("組をまたいだ一致は返さない", func(t *testing.T) {
+		pages, err := repo.FindByTopicAndTitlePairs(context.Background(), []TopicPageTitle{
+			{TopicID: generalTopicID, Title: "Beta"},
+			{TopicID: devTopicID, Title: "Alpha"},
+		}, spaceID)
+		if err != nil {
+			t.Fatalf("FindByTopicAndTitlePairs()のエラー = %v", err)
+		}
+		if len(pages) != 0 {
+			t.Errorf("len(pages) = %v、期待値 = 0", len(pages))
+		}
+	})
+
+	t.Run("大小文字が異なる入力も元の表記で結果を引ける", func(t *testing.T) {
+		pairs := []TopicPageTitle{
+			{TopicID: generalTopicID, Title: "alpha"},
+			{TopicID: generalTopicID, Title: "Alpha"},
+			{TopicID: generalTopicID, Title: "ALPHA"},
+		}
+		pages, err := repo.FindByTopicAndTitlePairs(context.Background(), pairs, spaceID)
+		if err != nil {
+			t.Fatalf("FindByTopicAndTitlePairs()のエラー = %v", err)
+		}
+		if len(pages) != len(pairs) {
+			t.Fatalf("取得した組の数 = %d、期待値 = %d", len(pages), len(pairs))
+		}
+		for _, pair := range pairs {
+			page := pages[pair]
+			if page == nil {
+				t.Errorf("入力 %q に対応するページがない", pair.Title)
+				continue
+			}
+			if page.ID != alphaPageID || page.Title == nil || *page.Title != "Alpha" {
+				t.Errorf("入力 %q のページ = %+v、期待値 = ページ %v、タイトル Alpha", pair.Title, page, alphaPageID)
+			}
+		}
+	})
+
+	t.Run("別スペースのページは取得しない", func(t *testing.T) {
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("page-title-pairs-other").
+			Build()
+
+		pages, err := repo.FindByTopicAndTitlePairs(context.Background(), []TopicPageTitle{
+			{TopicID: generalTopicID, Title: "Alpha"},
+		}, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByTopicAndTitlePairs()のエラー = %v", err)
+		}
+		if len(pages) != 0 {
+			t.Errorf("len(pages) = %v、期待値 = 0", len(pages))
+		}
+	})
+
+	t.Run("組が空のときはnilを返す", func(t *testing.T) {
+		pages, err := repo.FindByTopicAndTitlePairs(context.Background(), nil, spaceID)
+		if err != nil {
+			t.Fatalf("FindByTopicAndTitlePairs()のエラー = %v", err)
+		}
+		if pages != nil {
+			t.Errorf("FindByTopicAndTitlePairs() = %v、期待値 = nil", pages)
+		}
+	})
+}
+
 func TestPageRepository_Update(t *testing.T) {
 	t.Parallel()
 
@@ -1454,7 +1580,6 @@ func TestPageRepository_Update(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Before Update").
 		WithBody("old body").
-		WithBodyHTML("<p>old body</p>").
 		Build()
 
 	t.Run("ページを更新できる", func(t *testing.T) {
@@ -1466,7 +1591,6 @@ func TestPageRepository_Update(t *testing.T) {
 			TopicID:       topicID,
 			Title:         &newTitle,
 			Body:          "new body",
-			BodyHTML:      "<p>new body</p>",
 			LinkedPageIDs: []model.PageID{},
 			ModifiedAt:    now,
 			PublishedAt:   &now,
@@ -1482,9 +1606,6 @@ func TestPageRepository_Update(t *testing.T) {
 		}
 		if page.Body != "new body" {
 			t.Errorf("page.Body = %v、期待値 = 'new body'", page.Body)
-		}
-		if page.BodyHTML != "<p>new body</p>" {
-			t.Errorf("page.BodyHTML = %v、期待値 = '<p>new body</p>'", page.BodyHTML)
 		}
 	})
 }
@@ -1866,9 +1987,6 @@ func TestPageRepository_CreateLinkedPage(t *testing.T) {
 		if page.Body != "" {
 			t.Errorf("page.Body = %v、期待値 = 空文字列", page.Body)
 		}
-		if page.BodyHTML != "" {
-			t.Errorf("page.BodyHTML = %v、期待値 = 空文字列", page.BodyHTML)
-		}
 		if page.PublishedAt != nil {
 			t.Errorf("page.PublishedAt = %v、期待値 = nil", page.PublishedAt)
 		}
@@ -1918,9 +2036,6 @@ func TestPageRepository_CreateBlankPage(t *testing.T) {
 		}
 		if page.Body != "" {
 			t.Errorf("page.Body = %v、期待値 = 空文字列", page.Body)
-		}
-		if page.BodyHTML != "" {
-			t.Errorf("page.BodyHTML = %v、期待値 = 空文字列", page.BodyHTML)
 		}
 		if len(page.LinkedPageIDs) != 0 {
 			t.Errorf("page.LinkedPageIDs = %v、期待値 = 空", page.LinkedPageIDs)

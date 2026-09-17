@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"golang.org/x/net/html"
 )
 
 func TestScanAttachmentRefMatches_PreservesParsedDocument(t *testing.T) {
@@ -20,8 +22,12 @@ func TestScanAttachmentRefMatches_PreservesParsedDocument(t *testing.T) {
 		t.Run(body, func(t *testing.T) {
 			t.Parallel()
 			source, document, before := renderBody(body)
-			first := scanAttachmentRefMatches(source, document, before, true)
-			second := scanAttachmentRefMatches(source, document, before, true)
+			tree, err := parseHTMLFragmentWithContainer(before)
+			if err != nil {
+				t.Fatal(err)
+			}
+			first := scanAttachmentRefMatches(source, document, func() *html.Node { return tree })
+			second := scanAttachmentRefMatches(source, document, func() *html.Node { return tree })
 			if !reflect.DeepEqual(first, second) {
 				t.Errorf("再スキャンで一致が変わった: %v / %v", first, second)
 			}

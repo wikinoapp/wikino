@@ -163,7 +163,7 @@ func assertSoloPageBodiesNameTheAccountThatWalksThem(
 	} {
 		title := fmt.Sprintf("%s %02d", tt.topic.name, 1)
 		page := findPageByTitle(ctx, t, tx, solo.id, tt.topic.id, title)
-		bodyText := markup.PlainText(readPage(ctx, t, tx, solo.id, page.id).bodyHTML, 0)
+		bodyText := markup.PlainText(markup.RenderMarkdown(readPage(ctx, t, tx, solo.id, page.id).body), 0)
 		guestText := strings.Join(strings.Fields(guestName), " ")
 		ownerText := strings.Join(strings.Fields(ownerName), " ")
 

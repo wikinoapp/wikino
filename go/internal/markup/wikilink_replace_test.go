@@ -313,7 +313,7 @@ func TestReplaceWikilinks_BlockContexts(t *testing.T) {
 		{
 			name: "見出し",
 			body: "# [[ページ1]]",
-			want: "<h1 id=\"1\"><a href=\"/s/my-space/pages/1\">ページ1</a></h1>\n",
+			want: "<h1 id=\"ページ1\"><a href=\"/s/my-space/pages/1\">ページ1</a></h1>\n",
 		},
 		{
 			name: "行末の改行を保つ",

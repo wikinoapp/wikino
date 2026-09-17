@@ -12,7 +12,6 @@ type PageRevision struct {
 	PageID        PageID
 	Title         string
 	Body          string
-	BodyHTML      string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

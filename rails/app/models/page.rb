@@ -15,7 +15,6 @@ class Page < T::Struct
   const :number, Integer
   const :title, T.nilable(String)
   const :body, String
-  const :body_html, String
   const :modified_at, ActiveSupport::TimeWithZone
   const :published_at, T.nilable(ActiveSupport::TimeWithZone)
   const :pinned_at, T.nilable(ActiveSupport::TimeWithZone)

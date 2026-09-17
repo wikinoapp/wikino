@@ -10,6 +10,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/exportfile"
 	"github.com/wikinoapp/wikino/go/internal/markup"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
@@ -75,9 +76,7 @@ func TestGenerateExportPages(t *testing.T) {
 
 	percentPage := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.export.id, exportPercentAndDotPageTitle)
 	frontmatterPage := findPageByTitle(ctx, t, tx, spaces.wiki.id, topics.exportSymbol.id, exportFrontmatterPageTitle)
-	for _, target := range []foundPage{percentPage, frontmatterPage, missing} {
-		assertContains(t, wikilinkRow.bodyHTML, hrefOf(spaces.wiki, target.number))
-	}
+	assertLinkedPageIDs(t, wikilinkRow.linkedPageIDs, []model.PageID{percentPage.id, frontmatterPage.id, missing.id})
 }
 
 func TestExportPageSpecsCreateLinkTargetsFirst(t *testing.T) {

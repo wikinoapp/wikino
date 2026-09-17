@@ -19,18 +19,16 @@ type PageRevisionBuilder struct {
 	pageID        string
 	title         string
 	body          string
-	bodyHTML      string
 }
 
 // NewPageRevisionBuilderはPageRevisionBuilderを生成します
 func NewPageRevisionBuilder(t *testing.T, tx *sql.Tx) *PageRevisionBuilder {
 	t.Helper()
 	return &PageRevisionBuilder{
-		t:        t,
-		tx:       tx,
-		title:    "Revision Title",
-		body:     "Revision body",
-		bodyHTML: "<p>Revision body</p>",
+		t:     t,
+		tx:    tx,
+		title: "Revision Title",
+		body:  "Revision body",
 	}
 }
 
@@ -64,12 +62,6 @@ func (b *PageRevisionBuilder) WithBody(body string) *PageRevisionBuilder {
 	return b
 }
 
-// WithBodyHTMLはHTML本文を設定します
-func (b *PageRevisionBuilder) WithBodyHTML(bodyHTML string) *PageRevisionBuilder {
-	b.bodyHTML = bodyHTML
-	return b
-}
-
 // Buildはページリビジョンを作成し、IDを返します
 func (b *PageRevisionBuilder) Build() model.PageRevisionID {
 	b.t.Helper()
@@ -88,10 +80,10 @@ func (b *PageRevisionBuilder) Build() model.PageRevisionID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, body_html, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, b.bodyHTML, now, now,
+		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページリビジョン作成に失敗: %v", err)
@@ -111,18 +103,16 @@ type PageRevisionBuilderDB struct {
 	pageID        string
 	title         string
 	body          string
-	bodyHTML      string
 }
 
 // NewPageRevisionBuilderDBはPageRevisionBuilderDBを生成します
 func NewPageRevisionBuilderDB(t *testing.T, db *sql.DB) *PageRevisionBuilderDB {
 	t.Helper()
 	return &PageRevisionBuilderDB{
-		t:        t,
-		db:       db,
-		title:    "Revision Title",
-		body:     "Revision body",
-		bodyHTML: "<p>Revision body</p>",
+		t:     t,
+		db:    db,
+		title: "Revision Title",
+		body:  "Revision body",
 	}
 }
 
@@ -162,10 +152,10 @@ func (b *PageRevisionBuilderDB) Build() model.PageRevisionID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, body_html, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, b.bodyHTML, now, now,
+		b.spaceID, b.spaceMemberID, b.pageID, b.title, b.body, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページリビジョン作成に失敗: %v", err)

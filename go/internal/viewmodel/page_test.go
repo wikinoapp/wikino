@@ -104,18 +104,18 @@ func TestNewPageForShow(t *testing.T) {
 
 	title := "Page title"
 	page := &model.Page{
-		Title:    &title,
-		BodyHTML: "<p>Page body</p>",
-		Number:   42,
+		Title:  &title,
+		Number: 42,
 	}
-	got := viewmodel.NewPageForShow(page, nil)
+	bodyHTML := "<p>Page body</p>"
+	got := viewmodel.NewPageForShow(page, bodyHTML, nil)
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
 
 	if got.DisplayTitle(ctx) != title {
 		t.Errorf("DisplayTitle() = %q、期待値 = %q", got.DisplayTitle(ctx), title)
 	}
-	if got.BodyHTML != page.BodyHTML {
-		t.Errorf("BodyHTML = %q、期待値 = %q", got.BodyHTML, page.BodyHTML)
+	if got.BodyHTML != bodyHTML {
+		t.Errorf("BodyHTML = %q、期待値 = %q", got.BodyHTML, bodyHTML)
 	}
 	if got.Number != int32(page.Number) {
 		t.Errorf("Number = %d、期待値 = %d", got.Number, page.Number)
@@ -145,7 +145,7 @@ func TestPageForShow_DisplayTitle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			page := viewmodel.NewPageForShow(&model.Page{Title: tt.title}, nil)
+			page := viewmodel.NewPageForShow(&model.Page{Title: tt.title}, "", nil)
 			ctx := i18n.SetLocale(t.Context(), tt.locale)
 
 			if got := page.DisplayTitle(ctx); got != tt.want {
@@ -201,7 +201,7 @@ func TestPageForShow_MetaDescription(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			page := viewmodel.NewPageForShow(&model.Page{BodyHTML: tt.bodyHTML}, nil)
+			page := viewmodel.NewPageForShow(&model.Page{}, tt.bodyHTML, nil)
 
 			if got := page.MetaDescription(); got != tt.want {
 				t.Errorf("MetaDescription() = %q、期待値 = %q", got, tt.want)
@@ -267,7 +267,7 @@ func TestPageForShow_OGImageAttachmentID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			page := viewmodel.NewPageForShow(&model.Page{}, tt.attachment)
+			page := viewmodel.NewPageForShow(&model.Page{}, "", tt.attachment)
 
 			if got := page.OGImageAttachmentID(); got != tt.want {
 				t.Errorf("OGImageAttachmentID() = %q、期待値 = %q", got, tt.want)

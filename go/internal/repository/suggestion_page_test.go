@@ -67,7 +67,6 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 			PageRevisionID: &pageRevisionID,
 			Title:          &title,
 			Body:           "提案ページ本文",
-			BodyHTML:       "<p>提案ページ本文</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create()のエラー = %v", err)
@@ -96,9 +95,6 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 		if sp.Body != "提案ページ本文" {
 			t.Errorf("sp.Body = %v、期待値 = 提案ページ本文", sp.Body)
 		}
-		if sp.BodyHTML != "<p>提案ページ本文</p>" {
-			t.Errorf("sp.BodyHTML = %v、期待値 = <p>提案ページ本文</p>", sp.BodyHTML)
-		}
 	})
 
 	t.Run("PageRevisionIDなしで編集提案ページを作成できる", func(t *testing.T) {
@@ -119,7 +115,6 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 			PageRevisionID: nil,
 			Title:          &title,
 			Body:           "新規ページ本文",
-			BodyHTML:       "<p>新規ページ本文</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create()のエラー = %v", err)
@@ -161,7 +156,6 @@ func TestSuggestionPageRepository_Create(t *testing.T) {
 			PageRevisionID: &pageRevisionID2,
 			Title:          nil,
 			Body:           "タイトルなし本文",
-			BodyHTML:       "<p>タイトルなし本文</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create()のエラー = %v", err)
@@ -429,16 +423,14 @@ func TestSuggestionPageRepository_UpdateContent(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("更新前タイトル").
 			WithBody("更新前本文").
-			WithBodyHTML("<p>更新前本文</p>").
 			Build()
 
 		newTitle := "更新後タイトル"
 		sp, err := repo.UpdateContent(ctx, UpdateSuggestionPageContentInput{
-			ID:       suggestionPageID,
-			SpaceID:  spaceID,
-			Title:    &newTitle,
-			Body:     "更新後本文",
-			BodyHTML: "<p>更新後本文</p>",
+			ID:      suggestionPageID,
+			SpaceID: spaceID,
+			Title:   &newTitle,
+			Body:    "更新後本文",
 		})
 		if err != nil {
 			t.Fatalf("UpdateContent()のエラー = %v", err)
@@ -452,19 +444,15 @@ func TestSuggestionPageRepository_UpdateContent(t *testing.T) {
 		if sp.Body != "更新後本文" {
 			t.Errorf("sp.Body = %v、期待値 = 更新後本文", sp.Body)
 		}
-		if sp.BodyHTML != "<p>更新後本文</p>" {
-			t.Errorf("sp.BodyHTML = %v、期待値 = <p>更新後本文</p>", sp.BodyHTML)
-		}
 	})
 
 	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
 		title := "更新タイトル"
 		sp, err := repo.UpdateContent(ctx, UpdateSuggestionPageContentInput{
-			ID:       "00000000-0000-0000-0000-000000000000",
-			SpaceID:  spaceID,
-			Title:    &title,
-			Body:     "更新本文",
-			BodyHTML: "<p>更新本文</p>",
+			ID:      "00000000-0000-0000-0000-000000000000",
+			SpaceID: spaceID,
+			Title:   &title,
+			Body:    "更新本文",
 		})
 		if err != nil {
 			t.Fatalf("UpdateContent()のエラー = %v", err)
@@ -859,7 +847,6 @@ func TestSuggestionPageRepository_OnDeleteContract(t *testing.T) {
 			WithSpaceMemberID(spaceMemberID).
 			WithTitle("Revision Page").
 			WithBody("body").
-			WithBodyHTML("<p>body</p>").
 			Build()
 
 		suggestionID := testutil.NewSuggestionBuilder(t, tx).

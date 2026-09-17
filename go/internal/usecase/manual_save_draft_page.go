@@ -120,8 +120,8 @@ func (uc *ManualSaveDraftPageUsecase) isSameAsLatestRevision(ctx context.Context
 func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAccessData, input ManualSaveDraftPageInput) (*ManualSaveDraftPageOutput, error) {
 	now := time.Now()
 
-	// トランザクション前: アイキャッチ画像のみ抽出する。bodyHTML本体のレンダリングと
-	// Wikiリンクの解決はトランザクション内のsaveDraftPageContentに一本化した。
+	// アイキャッチ画像の抽出はトランザクション前に済ませ、トランザクションの保持時間を抑える。
+	// Wikiリンクの解決と下書き更新は、リンク先ページの自動作成と一緒にトランザクション内で行う。
 	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, input.Body, data.space.ID, uc.attachmentRepo)
 	if err != nil {
 		return nil, err
@@ -157,17 +157,15 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		Title:                     input.Title,
 		Body:                      input.Body,
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
-		SpaceIdentifier:           input.SpaceIdentifier,
 		CurrentTopicName:          data.topic.Name,
 	}
 
-	// DraftPageのfind_or_create・レンダリング・更新
-	result, err := saveDraftPageContent(ctx, contentInput, now,
+	// DraftPageのfind_or_create・Wikiリンクの解決・更新
+	draftPage, err := saveDraftPageContent(ctx, contentInput, now,
 		uc.draftPageRepo.WithTx(tx),
 		uc.pageRepo.WithTx(tx),
 		uc.pageEditorRepo.WithTx(tx),
 		uc.topicRepo.WithTx(tx),
-		uc.attachmentRepo.WithTx(tx),
 	)
 	if err != nil {
 		return nil, err
@@ -177,12 +175,11 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 	var revision *model.DraftPageRevision
 	if !skipRevision {
 		revision, err = draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
-			DraftPageID:   result.DraftPage.ID,
+			DraftPageID:   draftPage.ID,
 			SpaceID:       data.space.ID,
 			SpaceMemberID: data.spaceMember.ID,
 			Title:         title,
 			Body:          input.Body,
-			BodyHTML:      result.BodyHTML,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("下書きページリビジョンの作成に失敗しました: %w", err)
@@ -194,7 +191,7 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 	}
 
 	return &ManualSaveDraftPageOutput{
-		DraftPage:         result.DraftPage,
+		DraftPage:         draftPage,
 		DraftPageRevision: revision,
 		TopicNumber:       data.topic.Number,
 	}, nil

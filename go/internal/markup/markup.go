@@ -87,7 +87,7 @@ var md = goldmark.New(
 		extension.TaskList,
 	),
 	goldmark.WithParserOptions(
-		parser.WithAutoHeadingID(),
+		parser.WithASTTransformers(util.Prioritized(headingIDTransformer{}, 100)),
 		withInlineImgBlocks{},
 	),
 	goldmark.WithRendererOptions(
@@ -97,6 +97,9 @@ var md = goldmark.New(
 		html.WithHardWraps(),
 	),
 )
+
+// headingIDRegexは、headingAnchorizerが作るidに一致する。
+var headingIDRegex = regexp.MustCompile(`^[\p{L}\p{M}\p{N}\p{Pc}-]+$`)
 
 // policyはHTMLサニタイズポリシー。
 // bluemondayのUGCPolicy (User Generated Content向け) をベースに、
@@ -114,6 +117,10 @@ func newSanitizationPolicy() *bluemonday.Policy {
 
 	// テーブルの配置指定 (GFM) で生成されるalign属性を許可
 	p.AllowAttrs("align").OnElements("td", "th")
+
+	// 見出しに付けたidを許可する。UGCPolicyのidはASCII英数字などを含む値しか通さず、
+	// `見出し` のような日本語だけのidが落ちるため、見出しのidに現れうる文字に広げる。
+	p.AllowAttrs("id").Matching(headingIDRegex).OnElements("h1", "h2", "h3", "h4", "h5", "h6")
 
 	return p
 }

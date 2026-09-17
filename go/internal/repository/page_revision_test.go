@@ -48,7 +48,6 @@ func TestPageRevisionRepository_Create(t *testing.T) {
 			PageID:        pageID,
 			Title:         "Revision Title",
 			Body:          "revision body",
-			BodyHTML:      "<p>revision body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create()のエラー = %v", err)
@@ -74,9 +73,6 @@ func TestPageRevisionRepository_Create(t *testing.T) {
 		if revision.Body != "revision body" {
 			t.Errorf("revision.Body = %v、期待値 = 'revision body'", revision.Body)
 		}
-		if revision.BodyHTML != "<p>revision body</p>" {
-			t.Errorf("revision.BodyHTML = %v、期待値 = '<p>revision body</p>'", revision.BodyHTML)
-		}
 		if revision.CreatedAt.IsZero() {
 			t.Error("revision.CreatedAtがゼロ値")
 		}
@@ -92,7 +88,6 @@ func TestPageRevisionRepository_Create(t *testing.T) {
 			PageID:        pageID,
 			Title:         "First Revision",
 			Body:          "first body",
-			BodyHTML:      "<p>first body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (1件目のリビジョン) のエラー = %v", err)
@@ -104,7 +99,6 @@ func TestPageRevisionRepository_Create(t *testing.T) {
 			PageID:        pageID,
 			Title:         "Second Revision",
 			Body:          "second body",
-			BodyHTML:      "<p>second body</p>",
 		})
 		if err != nil {
 			t.Fatalf("Create() (2件目のリビジョン) のエラー = %v", err)

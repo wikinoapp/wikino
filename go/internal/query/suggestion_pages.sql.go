@@ -14,8 +14,8 @@ import (
 )
 
 const createSuggestionPage = `-- name: CreateSuggestionPage :one
-INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, body_html, linked_page_ids, featured_image_attachment_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, linked_page_ids, featured_image_attachment_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id
 `
 
@@ -26,7 +26,6 @@ type CreateSuggestionPageParams struct {
 	PageRevisionID            *string        `json:"page_revision_id"`
 	Title                     sql.NullString `json:"title"`
 	Body                      string         `json:"body"`
-	BodyHtml                  string         `json:"body_html"`
 	LinkedPageIds             []string       `json:"linked_page_ids"`
 	FeaturedImageAttachmentID *string        `json:"featured_image_attachment_id"`
 	CreatedAt                 time.Time      `json:"created_at"`
@@ -42,7 +41,6 @@ func (q *Queries) CreateSuggestionPage(ctx context.Context, arg CreateSuggestion
 		arg.PageRevisionID,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		pq.Array(arg.LinkedPageIds),
 		arg.FeaturedImageAttachmentID,
 		arg.CreatedAt,
@@ -182,8 +180,8 @@ func (q *Queries) ListSuggestionPagesBySuggestionID(ctx context.Context, arg Lis
 
 const updateSuggestionPageContent = `-- name: UpdateSuggestionPageContent :one
 UPDATE suggestion_pages
-SET title = $2, body = $3, body_html = $4, linked_page_ids = $5, featured_image_attachment_id = $6, updated_at = $7
-WHERE id = $1 AND space_id = $8
+SET title = $2, body = $3, linked_page_ids = $4, featured_image_attachment_id = $5, updated_at = $6
+WHERE id = $1 AND space_id = $7
 RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id
 `
 
@@ -191,7 +189,6 @@ type UpdateSuggestionPageContentParams struct {
 	ID                        string         `json:"id"`
 	Title                     sql.NullString `json:"title"`
 	Body                      string         `json:"body"`
-	BodyHtml                  string         `json:"body_html"`
 	LinkedPageIds             []string       `json:"linked_page_ids"`
 	FeaturedImageAttachmentID *string        `json:"featured_image_attachment_id"`
 	UpdatedAt                 time.Time      `json:"updated_at"`
@@ -204,7 +201,6 @@ func (q *Queries) UpdateSuggestionPageContent(ctx context.Context, arg UpdateSug
 		arg.ID,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		pq.Array(arg.LinkedPageIds),
 		arg.FeaturedImageAttachmentID,
 		arg.UpdatedAt,

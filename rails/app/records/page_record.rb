@@ -175,18 +175,6 @@ class PageRecord < ApplicationRecord
     where(id: combined_ids).active.order(modified_at: :desc)
   end
 
-  sig do
-    params(
-      editor_record: SpaceMemberRecord,
-      body: String,
-      body_html: String,
-      title: String
-    ).returns(PageRevisionRecord)
-  end
-  def create_revision!(editor_record:, body:, body_html:, title:)
-    revision_records.create!(space_record:, space_member_record: editor_record, body:, body_html:, title:)
-  end
-
   # ページ本文から添付ファイルIDを抽出し、page_attachment_referencesレコードを更新
   sig { params(body: String).void }
   def update_attachment_references!(body:)

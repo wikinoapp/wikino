@@ -66,11 +66,10 @@ func TestPublishPageUsecase_ReferenceDefinitionInsideHiddenContent(t *testing.T)
 				testutil.NewDraftPageBuilderDB(t, db).WithSpaceID(spaceID).WithPageID(pageID).
 					WithSpaceMemberID(memberID).WithTopicID(topicID).WithTitle("References").WithBody(body).Build()
 
-				output, err := uc.Execute(ctx, PublishPageInput{
+				if _, err := uc.Execute(ctx, PublishPageInput{
 					SpaceIdentifier: model.SpaceIdentifier(identifier), PageNumber: 1, UserID: userID,
 					Title: "References", Body: body,
-				})
-				if err != nil {
+				}); err != nil {
 					t.Fatalf("Execute()のエラー = %v", err)
 				}
 				refs, err := refRepo.ListByPageID(ctx, pageID, spaceID)
@@ -82,9 +81,6 @@ func TestPublishPageUsecase_ReferenceDefinitionInsideHiddenContent(t *testing.T)
 				}
 				if existing && refs[0].ID != oldRefs[1].ID {
 					t.Errorf("既存の参照が置き換えられた: %s、期待値 = %s", refs[0].ID, oldRefs[1].ID)
-				}
-				if !strings.Contains(output.Page.BodyHTML, fmt.Sprintf(`data-attachment-id="%s"`, attachmentID)) {
-					t.Errorf("公開後のHTMLに有効な添付ファイルが無い: %s", output.Page.BodyHTML)
 				}
 			})
 		}

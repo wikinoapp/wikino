@@ -52,7 +52,6 @@ RSpec.describe DraftPage, type: :model do
       number: 1,
       title: page_title,
       body: "",
-      body_html: "",
       modified_at: Time.current,
       published_at: nil,
       pinned_at: nil,

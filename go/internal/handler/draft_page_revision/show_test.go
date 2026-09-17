@@ -91,7 +91,6 @@ func setupShowFixture(t *testing.T, tx *sql.Tx, queries *query.Queries, prefix s
 		SpaceMemberID: spaceMemberID,
 		Title:         "Old Title",
 		Body:          "line one\n",
-		BodyHTML:      "<p>line one</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (revision1) のエラー = %v", err)
@@ -102,7 +101,6 @@ func setupShowFixture(t *testing.T, tx *sql.Tx, queries *query.Queries, prefix s
 		SpaceMemberID: spaceMemberID,
 		Title:         "New Title",
 		Body:          "line one\nline two\n",
-		BodyHTML:      "<p>line one</p><p>line two</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (revision2) のエラー = %v", err)
@@ -328,7 +326,6 @@ func TestShow_OtherMembersRevision(t *testing.T) {
 		SpaceMemberID: otherMemberID,
 		Title:         "Other Member Title",
 		Body:          "other member body\n",
-		BodyHTML:      "<p>other member body</p>",
 	})
 	if err != nil {
 		t.Fatalf("Create() (otherRev) のエラー = %v", err)

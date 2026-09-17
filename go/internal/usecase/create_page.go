@@ -183,7 +183,6 @@ func (uc *CreatePageUsecase) createPage(ctx context.Context, data *createPageAcc
 	pageEditorRepo := uc.pageEditorRepo.WithTx(tx)
 	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 	topicRepo := uc.topicRepo.WithTx(tx)
-	attachmentRepo := uc.attachmentRepo.WithTx(tx)
 
 	// 1. 空ページを作成する。
 	nextNumber, err := pageRepo.NextPageNumber(ctx, data.space.ID)
@@ -228,14 +227,12 @@ func (uc *CreatePageUsecase) createPage(ctx context.Context, data *createPageAcc
 			Title:                     draftTitle,
 			Body:                      input.Body,
 			FeaturedImageAttachmentID: featuredImageAttachmentID,
-			SpaceIdentifier:           input.SpaceIdentifier,
 			CurrentTopicName:          data.topic.Name,
 		}, now,
 			draftPageRepo,
 			pageRepo,
 			pageEditorRepo,
 			topicRepo,
-			attachmentRepo,
 		)
 		if err != nil {
 			return nil, err

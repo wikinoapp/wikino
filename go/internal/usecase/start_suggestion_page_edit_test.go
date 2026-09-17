@@ -63,7 +63,6 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("提案タイトル").
 			WithBody("提案本文").
-			WithBodyHTML("<p>提案本文</p>").
 			Build()
 
 		output, err := uc.Execute(context.Background(), StartSuggestionPageEditInput{
@@ -263,7 +262,6 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 			WithPageID(pageID).
 			WithPageRevisionID(pageRevisionID).
 			WithBody("提案の本文").
-			WithBodyHTML("<p>提案の本文</p>").
 			Build()
 
 		// 通常編集の下書きを作成

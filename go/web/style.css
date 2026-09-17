@@ -186,14 +186,18 @@
       @apply rotate-90;
     }
 
+    /*
+      本文の見出しはレンダリング時に最初の見出しがh2に揃うため、ここにh1は現れない
+      Tailwindのpreflightが見出しのfont-sizeをinheritに落とすため、万一現れたときに見出しに見えるよう保険として残す
+    */
     & h1 {
-      /*
-        h2と同じスタイルにする
-        ページタイトルがh1なので本文内でh1をあまり使ってほしくないため
-      */
-      @apply mt-10 mb-4 text-2xl/8 font-bold antialiased;
+      @apply mt-10 mb-4 text-3xl/9 font-bold antialiased;
     }
 
+    /*
+      本文の見出しはh2から始まるため、h2だけを大きくし、h3以降を本文と同じ大きさにする
+      文字サイズは書いたレベルではなく本文の中で何段目の見出しかで決まる
+    */
     & h2 {
       @apply mt-10 mb-4 text-2xl/8 font-bold antialiased;
     }
@@ -202,10 +206,6 @@
       @apply mt-6 mb-2 text-base/8 font-bold antialiased;
     }
 
-    /*
-      h4以降をh3と同じスタイルにする
-      h4以降が必要になったときはページの分割をおすすめしたい
-    */
     & h4 {
       @apply mt-6 mb-2 text-base/8 font-bold antialiased;
     }

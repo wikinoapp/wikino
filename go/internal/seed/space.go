@@ -84,8 +84,8 @@ var adminSpaceScopes = []model.Scope{model.ScopeSpaceAdmin}
 // (topicMemberScopes参照)。
 var nonAdminSpaceScopes = []model.Scope{
 	model.ScopePageWrite,
-	model.ScopePageTrash,
-	model.ScopePageRestore,
+	model.ScopePageTrashWrite,
+	model.ScopePageTrashDelete,
 	model.ScopeDraftPageWrite,
 	model.ScopeDraftPageDelete,
 	model.ScopeSuggestionWrite,

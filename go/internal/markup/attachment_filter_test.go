@@ -3,6 +3,7 @@ package markup
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -706,6 +707,54 @@ func TestFileExtension(t *testing.T) {
 			got := fileExtension(tt.filename)
 			if got != tt.want {
 				t.Errorf("fileExtension(%q) = %q、期待値 = %q", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFilterAttachments_SeparatesNestedLinks(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		body       string
+		wantPrefix string
+		wantText   string
+		wantImages int
+	}{
+		{name: "前後のテキスト", body: `<p><a href="https://example.com">前<img src="/attachments/att-1">後</a>末尾</p>`, wantPrefix: "前", wantText: "前後末尾", wantImages: 1},
+		{name: "強調と後続の兄弟", body: `<p><a href="https://example.com"><strong>前<img src="/attachments/att-1">後</strong>末尾</a></p>`, wantPrefix: "<strong>前</strong>", wantText: "前後末尾", wantImages: 1},
+		{name: "複数階層の要素", body: `<p><a href="https://example.com"><strong><em>前<img src="/attachments/att-1">後</em>中</strong>末尾</a></p>`, wantPrefix: "<strong><em>前</em></strong>", wantText: "前後中末尾", wantImages: 1},
+		{name: "複数の画像", body: `<p><a href="https://example.com">前<img src="/attachments/att-1">中<img src="/attachments/att-1">後</a></p>`, wantPrefix: "前", wantText: "前中後", wantImages: 2},
+		{name: "空の外側リンク", body: `<p><a href="https://example.com"><img src="/attachments/att-1"></a></p>`, wantImages: 1},
+		{name: "独立した後続のリンク", body: `<p><a href="https://example.com">前<img src="/attachments/att-1">後</a><a href="/next">次</a></p>`, wantPrefix: "前", wantText: "前後次", wantImages: 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			finder := newMockFinder(&model.Attachment{ID: "att-1", SpaceID: "space-1", Filename: "photo.jpg"})
+			got, err := FilterAttachments(context.Background(), tt.body, "space-1", finder)
+			if err != nil {
+				t.Fatal(err)
+			}
+			tree, err := parseHTMLFragmentWithContainer(got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(htmlTokens(got), htmlTokens(renderContainerChildren(tree))) {
+				t.Errorf("再パースで構造が変わる: %s", got)
+			}
+			if !strings.Contains(got, `<a href="https://example.com">`+tt.wantPrefix+`</a>`) {
+				t.Errorf("外側のリンクが画像の直前で閉じられていない: %s", got)
+			}
+			if count := strings.Count(got, `href="https://example.com"`); count != 1 {
+				t.Errorf("外部リンクの数 = %d、期待値 = 1", count)
+			}
+			if count := strings.Count(got, `data-attachment-type="image"`); count != tt.wantImages {
+				t.Errorf("変換された画像の数 = %d、期待値 = %d", count, tt.wantImages)
+			}
+			if text := PlainText(got, 0); text != tt.wantText {
+				t.Errorf("テキスト = %q、期待値 = %q", text, tt.wantText)
 			}
 		})
 	}

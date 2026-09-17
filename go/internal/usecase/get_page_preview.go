@@ -120,6 +120,12 @@ func (r *previewPageLocationResolver) ResolveByKeys(ctx context.Context, keys []
 		topicMap[t.Name] = t
 	}
 
+	// リンク先ページは1クエリでまとめて引き、ループ内ではmapを引くだけにする。
+	existingPages, err := findPagesByWikilinkKeys(ctx, r.pageRepo, keys, topicMap, spaceID)
+	if err != nil {
+		return nil, err
+	}
+
 	var locations []markup.PageLocation
 	seen := make(map[string]bool, len(keys))
 	for _, key := range keys {
@@ -134,10 +140,7 @@ func (r *previewPageLocationResolver) ResolveByKeys(ctx context.Context, keys []
 			continue
 		}
 
-		page, err := r.pageRepo.FindByTopicAndTitle(ctx, topic.ID, key.PageTitle, spaceID)
-		if err != nil {
-			return nil, err
-		}
+		page := existingPages[repository.TopicPageTitle{TopicID: topic.ID, Title: key.PageTitle}]
 		if page == nil {
 			// プレビューでは既存ページのみ解決し、存在しないリンク先は作成しない。
 			continue

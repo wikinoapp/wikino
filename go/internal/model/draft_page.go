@@ -14,7 +14,6 @@ type DraftPage struct {
 	SuggestionPageID          *SuggestionPageID
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []PageID
 	FeaturedImageAttachmentID *AttachmentID
 	ModifiedAt                time.Time

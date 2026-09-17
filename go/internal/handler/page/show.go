@@ -88,7 +88,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pageVM := viewmodel.NewPageForShow(output.Page, output.FeaturedImageAttachment)
+	pageVM := viewmodel.NewPageForShow(output.Page, output.BodyHTML, output.FeaturedImageAttachment)
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
@@ -100,6 +100,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitleWithoutSuffix(ctx, "page_show_title", map[string]any{
 		"PageTitle": pageTitle,
+		"TopicName": output.Topic.Name,
 		"SpaceName": output.Space.Name,
 	})
 	// 本文にテキストが無いページはサイト共通の既定の説明文を保つ。
@@ -151,9 +152,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		CanEdit: output.CanUpdatePage,
 	})
 
-	// page:trashを持つ閲覧者のときだけトークンを取得する。既にゴミ箱にあるページでは
+	// page_trash:writeを持つ閲覧者のときだけトークンを取得する。既にゴミ箱にあるページでは
 	// ShowDataにトークンを渡すが、ゴミ箱フォームとhidden inputは描画しない。ゲストを含む
-	// page:trashを持たない閲覧者には空文字を渡すため、そのHTMLにはトークンが載らない。
+	// page_trash:writeを持たない閲覧者には空文字を渡すため、そのHTMLにはトークンが載らない。
 	var csrfToken string
 	if output.CanTrashPage {
 		csrfToken = middleware.GetCSRFTokenFromContext(ctx)

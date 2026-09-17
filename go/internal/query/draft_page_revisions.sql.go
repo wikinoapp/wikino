@@ -28,8 +28,8 @@ func (q *Queries) CountDraftPageRevisionsByDraftPageID(ctx context.Context, arg 
 }
 
 const createDraftPageRevision = `-- name: CreateDraftPageRevision :one
-INSERT INTO draft_page_revisions (draft_page_id, space_id, space_member_id, title, body, body_html, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO draft_page_revisions (draft_page_id, space_id, space_member_id, title, body, created_at)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id, draft_page_id, space_id, space_member_id, title, body, body_html, created_at
 `
 
@@ -39,7 +39,6 @@ type CreateDraftPageRevisionParams struct {
 	SpaceMemberID string    `json:"space_member_id"`
 	Title         string    `json:"title"`
 	Body          string    `json:"body"`
-	BodyHtml      string    `json:"body_html"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
@@ -51,7 +50,6 @@ func (q *Queries) CreateDraftPageRevision(ctx context.Context, arg CreateDraftPa
 		arg.SpaceMemberID,
 		arg.Title,
 		arg.Body,
-		arg.BodyHtml,
 		arg.CreatedAt,
 	)
 	var i DraftPageRevision
