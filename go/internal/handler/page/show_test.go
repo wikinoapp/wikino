@@ -24,7 +24,7 @@ import (
 const showCSRFToken = "page-show-csrf-token"
 
 // TestShowはページ表示画面の可視性ルールをHTTP境界で固定する。ゴミ箱に入ったページは
-// page:trashを持つメンバー以外には404で、当該メンバーにはゴミ箱アラート付きで返る。同じ
+// page_trash:readを持つメンバー以外には404で、当該メンバーにはゴミ箱アラート付きで返る。同じ
 // ルールはUseCase側でも分岐ごとに検証しており (get_page_show_test.go)、本テストは
 // ステータスコードと実際に描画される内容を固定する。
 func TestShow(t *testing.T) {
@@ -33,7 +33,7 @@ func TestShow(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// page:trashを持つメンバー (ゴミ箱を開けるため、ゴミ箱のページも閲覧できる)。
+	// page_trash:writeを持つメンバー (ゴミ箱を開けるため、ゴミ箱のページも閲覧できる)。
 	trashUserID := testutil.NewUserBuilder(t, tx).
 		WithEmail("page-show-trash@example.com").
 		WithAtname("pageshowtrash").
@@ -56,12 +56,21 @@ func TestShow(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(trashUserID).
-		WithScopes([]model.Scope{model.ScopePageTrash}).
+		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(readerUserID).
 		WithScopes([]model.Scope{model.ScopePageRead}).
+		Build()
+	trashReaderUserID := testutil.NewUserBuilder(t, tx).
+		WithEmail("page-show-trash-reader@example.com").
+		WithAtname("pageshowtrashreader").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(trashReaderUserID).
+		WithScopes([]model.Scope{model.ScopePageTrashRead}).
 		Build()
 	editorSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -366,9 +375,9 @@ func TestShow(t *testing.T) {
 			},
 		},
 		{
-			// 2つの項目は別々のスコープに乗るため、page:trashだけのメンバーには移動項目も
+			// 2つの項目は別々のスコープに乗るため、page_trash:writeだけのメンバーには移動項目も
 			// 編集ボタンも出ないままゴミ箱項目だけが開く。
-			name:       "page:trashだけを持つメンバーにはゴミ箱項目だけが出る",
+			name:       "page_trash:writeだけを持つメンバーにはゴミ箱項目だけが出る",
 			pageNumber: "1",
 			userID:     &trashUserID,
 			wantStatus: http.StatusOK,
@@ -395,6 +404,21 @@ func TestShow(t *testing.T) {
 			},
 		},
 		{
+			name:            "ゴミ箱の閲覧専用メンバーには操作フォームもトークンも出ない",
+			pageNumber:      "1",
+			userID:          &trashReaderUserID,
+			wantStatus:      http.StatusOK,
+			wantNotContains: []string{"page-actions-dropdown", showCSRFToken, "/s/page-show-space/pages/1/trash"},
+		},
+		{
+			name:            "ゴミ箱の閲覧専用メンバーはゴミ箱のページを閲覧できる",
+			pageNumber:      "3",
+			userID:          &trashReaderUserID,
+			wantStatus:      http.StatusOK,
+			wantContains:    []string{"Trashed Page Title", "<p>trashed page body</p>", "このページはゴミ箱に入れられています。"},
+			wantNotContains: []string{"page-actions-dropdown", showCSRFToken},
+		},
+		{
 			name:            "ゲストは非公開トピックのページを閲覧できない",
 			pageNumber:      "2",
 			wantStatus:      http.StatusNotFound,
@@ -407,14 +431,14 @@ func TestShow(t *testing.T) {
 			wantNotContains: []string{"Trashed Page Title", "<p>trashed page body</p>"},
 		},
 		{
-			name:            "page:trashを持たないメンバーはゴミ箱のページを閲覧できない",
+			name:            "page_trash:readを持たないメンバーはゴミ箱のページを閲覧できない",
 			pageNumber:      "3",
 			userID:          &readerUserID,
 			wantStatus:      http.StatusNotFound,
 			wantNotContains: []string{"Trashed Page Title", "<p>trashed page body</p>"},
 		},
 		{
-			name:       "page:trashを持つメンバーはゴミ箱のページをアラート付きで閲覧できる",
+			name:       "page_trash:writeを持つメンバーはゴミ箱のページをアラート付きで閲覧できる",
 			pageNumber: "3",
 			userID:     &trashUserID,
 			wantStatus: http.StatusOK,

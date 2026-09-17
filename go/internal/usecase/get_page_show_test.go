@@ -29,7 +29,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithEmail("gps-owner@example.com").
 		WithAtname("gpsowner").
 		Build()
-	// page:writeを持たずpage:trashを持つメンバー (編集権限なしでゴミ箱表示経路を検証する)。
+	// page:writeを持たずpage_trash:writeを持つメンバー (編集権限なしでゴミ箱表示経路を検証する)。
 	trashMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-trash@example.com").
 		WithAtname("gpstrash").
@@ -63,12 +63,21 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrash}).
+		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(readerID).
 		WithScopes([]model.Scope{model.ScopePageRead}).
+		Build()
+	trashReaderID := testutil.NewUserBuilder(t, tx).
+		WithEmail("gps-trash-reader@example.com").
+		WithAtname("gpstrashreader").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(trashReaderID).
+		WithScopes([]model.Scope{model.ScopePageTrashRead}).
 		Build()
 	topicScopedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -107,7 +116,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
 		WithSpaceMemberID(topicScopedSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrash}).
+		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
 		Build()
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -459,7 +468,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 	// ヘッダーの操作ドロップダウンは編集とゴミ箱を別々のスコープで出し分けるため、2つのフラグ
 	// をスコープごとに固定する。page:writeでゴミ箱項目が開いてはならない。ページを書き換えてよい
 	// 編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
-	t.Run("正常系: CanTrashPageはpage:writeではなくpage:trashで決まる", func(t *testing.T) {
+	t.Run("正常系: CanTrashPageはpage:writeではなくpage_trash:writeで決まる", func(t *testing.T) {
 		tests := []struct {
 			name              string
 			userID            model.UserID
@@ -473,7 +482,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 				wantCanTrashPage:  true,
 			},
 			{
-				name:              "page:trashだけを持つメンバーはゴミ箱へ入れるだけできる",
+				name:              "page_trash:writeだけを持つメンバーはゴミ箱へ入れるだけできる",
 				userID:            trashMemberID,
 				wantCanUpdatePage: false,
 				wantCanTrashPage:  true,
@@ -624,7 +633,20 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: page:trashを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
+	t.Run("正常系: ゴミ箱の閲覧専用メンバーは閲覧できるが移動できない", func(t *testing.T) {
+		output, err := uc.Execute(context.Background(), GetPageShowInput{
+			LinkPage: 1, LinkedPageBacklinkPage: 1, PageBacklinkPage: 1,
+			SpaceIdentifier: "gps-space", PageNumber: 3, UserID: &trashReaderID,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if !output.IsTrashed || output.CanTrashPage || output.CanUpdatePage {
+			t.Errorf("閲覧専用メンバーの権限が不正: IsTrashed=%v CanTrashPage=%v CanUpdatePage=%v", output.IsTrashed, output.CanTrashPage, output.CanUpdatePage)
+		}
+	})
+
+	t.Run("正常系: page_trash:writeを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
 		userID := trashMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -648,7 +670,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: トピックのpage:trashを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
+	t.Run("正常系: トピックのpage_trash:writeを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
 		userID := topicScopedMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -696,7 +718,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	// page:readだけではゴミ箱のページを見せない。判定軸はpage:trashであり、page:writeは
+	// page:readだけではゴミ箱のページを見せない。判定軸はpage_trash:readであり、page:writeは
 	// 含意でpage:readを得るため、両方を固定して要件が静かに壊れないようにする。
 	t.Run("異常系: page:readだけのメンバーはゴミ箱のページを閲覧できない", func(t *testing.T) {
 		userID := readerID

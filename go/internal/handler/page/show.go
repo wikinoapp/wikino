@@ -151,9 +151,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		CanEdit: output.CanUpdatePage,
 	})
 
-	// page:trashを持つ閲覧者のときだけトークンを取得する。既にゴミ箱にあるページでは
+	// page_trash:writeを持つ閲覧者のときだけトークンを取得する。既にゴミ箱にあるページでは
 	// ShowDataにトークンを渡すが、ゴミ箱フォームとhidden inputは描画しない。ゲストを含む
-	// page:trashを持たない閲覧者には空文字を渡すため、そのHTMLにはトークンが載らない。
+	// page_trash:writeを持たない閲覧者には空文字を渡すため、そのHTMLにはトークンが載らない。
 	var csrfToken string
 	if output.CanTrashPage {
 		csrfToken = middleware.GetCSRFTokenFromContext(ctx)

@@ -75,14 +75,14 @@ type GetPageShowOutput struct {
 	Topic       *model.Topic
 
 	// IsTrashedはページがゴミ箱に入っているかを表す。trueになるのは閲覧を許可された閲覧者
-	// (page:trashを持つメンバー) の場合だけで、それ以外にはnot foundエラーを返す。したがって
+	// (page_trash:readを持つメンバー) の場合だけで、それ以外にはnot foundエラーを返す。したがって
 	// テンプレートはtrueのときにゴミ箱アラートを出せばよい。
 	IsTrashed bool
 
 	CanUpdatePage bool
 
 	// CanTrashPageは閲覧者がこのページをゴミ箱へ入れられるかを表し、ヘッダーの操作ドロップ
-	// ダウンのゴミ箱項目の出し分けに使う。判定軸はpage:writeではなくpage:trashのため、ページを
+	// ダウンのゴミ箱項目の出し分けに使う。判定軸はpage:writeではなくpage_trash:writeのため、ページを
 	// 書き換えてよいメンバーというだけでは項目は出ない (Authorizer.CanTrashPageを参照)。
 	CanTrashPage bool
 
@@ -129,7 +129,7 @@ func (uc *GetPageShowUsecase) Execute(ctx context.Context, input GetPageShowInpu
 	}
 
 	// ゴミ箱に入ったページは、復元の判断ができるようゴミ箱を開ける権限を持つメンバーにだけ
-	// 見せる。ゲストとpage:trashを持たないメンバーには本文ではなく404を返す。
+	// 見せる。ゲストとpage_trash:readを持たないメンバーには本文ではなく404を返す。
 	isTrashed := data.page.TrashedAt != nil
 	if isTrashed && !authorizer.CanShowTrash() {
 		return nil, &model.AppError{

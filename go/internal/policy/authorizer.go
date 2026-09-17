@@ -17,13 +17,13 @@ type Authorizer interface {
 
 	// ゴミ箱
 
-	// CanShowTrashはpage:readではなくpage:trashスコープで判定する。
+	// CanShowTrashはpage_trash:readスコープで判定する。
 	// これにより、読み取り専用メンバーからゴミ箱内の内容を隠しつつ、ゴミ箱を
 	// 開ける権限を持つメンバーは内容を確認できる。
 	CanShowTrash() bool
 
-	// CanTrashPageはpage:trashスコープで判定し、ページをゴミ箱へ入れる操作とその後ゴミ箱を
-	// 覗く操作を同じ権限軸に揃える。page:writeでは意図的に足りないものとする。ページを書き換えて
+	// CanTrashPageはpage_trash:writeスコープで判定し、ページをゴミ箱へ入れる操作とその後ゴミ箱を
+	// 覗く操作もpage_trash:readの含意によって許可する。page:writeでは意図的に足りないものとする。ページを書き換えて
 	// よい編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
 	CanTrashPage() bool
 

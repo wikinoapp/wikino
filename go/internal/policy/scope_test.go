@@ -2,6 +2,7 @@ package policy
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -42,6 +43,7 @@ func TestExpandScopes(t *testing.T) {
 			{"topic", model.ScopeTopicWrite, model.ScopeTopicRead},
 			{"topic_member", model.ScopeTopicMemberWrite, model.ScopeTopicMemberRead},
 			{"page", model.ScopePageWrite, model.ScopePageRead},
+			{"page_trash", model.ScopePageTrashWrite, model.ScopePageTrashRead},
 			{"draft_page", model.ScopeDraftPageWrite, model.ScopeDraftPageRead},
 			{"suggestion", model.ScopeSuggestionWrite, model.ScopeSuggestionRead},
 			{"suggestion_comment", model.ScopeSuggestionCommentWrite, model.ScopeSuggestionCommentRead},
@@ -61,12 +63,12 @@ func TestExpandScopes(t *testing.T) {
 		}
 	})
 
-	t.Run("ドメイン固有アクションは含意を持たない", func(t *testing.T) {
+	t.Run("編集提案の反映は含意を持たない", func(t *testing.T) {
 		t.Parallel()
 
-		scopes := []model.Scope{model.ScopeSuggestionApply}
+		scopes := []model.Scope{model.ScopeSuggestionApplicationWrite}
 		result := expandScopes(scopes)
-		assertScopes(t, result, []model.Scope{model.ScopeSuggestionApply})
+		assertScopes(t, result, []model.Scope{model.ScopeSuggestionApplicationWrite})
 	})
 
 	t.Run("deleteスコープは含意を持たない", func(t *testing.T) {
@@ -149,6 +151,23 @@ func TestAllResourceScopes(t *testing.T) {
 
 	scopes := allResourceScopes()
 
+	t.Run("通常actionはread・write・deleteだけでadminは唯一の例外", func(t *testing.T) {
+		t.Parallel()
+
+		for _, scope := range expandScopes([]model.Scope{model.ScopeSpaceAdmin}) {
+			if scope == model.ScopeSpaceAdmin {
+				if scope.String() != "space:admin" {
+					t.Errorf("特別スコープ = %q、期待値 = space:admin", scope)
+				}
+				continue
+			}
+			resource, action, ok := strings.Cut(scope.String(), ":")
+			if !ok || resource == "" || !slices.Contains([]string{"read", "write", "delete"}, action) {
+				t.Errorf("正式スコープの形式が不正: %q", scope)
+			}
+		}
+	})
+
 	t.Run("space:adminを含まない", func(t *testing.T) {
 		t.Parallel()
 
@@ -164,9 +183,10 @@ func TestAllResourceScopes(t *testing.T) {
 			model.ScopeSpaceRead, model.ScopeSpaceWrite, model.ScopeSpaceDelete,
 			model.ScopeTopicRead, model.ScopeTopicWrite, model.ScopeTopicDelete,
 			model.ScopeTopicMemberRead, model.ScopeTopicMemberWrite, model.ScopeTopicMemberDelete,
-			model.ScopePageRead, model.ScopePageWrite, model.ScopePageTrash, model.ScopePageRestore,
+			model.ScopePageRead, model.ScopePageWrite,
+			model.ScopePageTrashRead, model.ScopePageTrashWrite, model.ScopePageTrashDelete,
 			model.ScopeDraftPageRead, model.ScopeDraftPageWrite, model.ScopeDraftPageDelete,
-			model.ScopeSuggestionRead, model.ScopeSuggestionWrite, model.ScopeSuggestionApply, model.ScopeSuggestionClose,
+			model.ScopeSuggestionRead, model.ScopeSuggestionWrite, model.ScopeSuggestionApplicationWrite, model.ScopeSuggestionClosureWrite,
 			model.ScopeSuggestionCommentRead, model.ScopeSuggestionCommentWrite,
 			model.ScopeSpaceMemberRead, model.ScopeSpaceMemberWrite, model.ScopeSpaceMemberDelete,
 			model.ScopeAttachmentRead, model.ScopeAttachmentWrite, model.ScopeAttachmentDelete,
@@ -227,5 +247,48 @@ func assertNoDuplicates(t *testing.T, scopes []model.Scope) {
 			t.Errorf("スコープが重複している: %s", s)
 		}
 		seen[s] = true
+	}
+}
+
+func TestExpandScopes_LegacyScopes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		legacy    model.Scope
+		canonical model.Scope
+	}{
+		{model.ScopePageTrash, model.ScopePageTrashWrite},
+		{model.ScopePageRestore, model.ScopePageTrashDelete},
+		{model.ScopeSuggestionApply, model.ScopeSuggestionApplicationWrite},
+		{model.ScopeSuggestionClose, model.ScopeSuggestionClosureWrite},
+	}
+	for _, tt := range tests {
+		t.Run(tt.legacy.String(), func(t *testing.T) {
+			t.Parallel()
+
+			want := expandScopes([]model.Scope{tt.canonical})
+			for _, input := range [][]model.Scope{{tt.legacy}, {tt.legacy, tt.canonical, tt.legacy}} {
+				original := slices.Clone(input)
+				assertScopes(t, expandScopes(input), want)
+				if !slices.Equal(input, original) {
+					t.Errorf("入力スコープが変更された: %v", input)
+				}
+			}
+		})
+	}
+}
+
+func TestExpandScopes_IndependentScopes(t *testing.T) {
+	t.Parallel()
+
+	for _, scope := range []model.Scope{
+		model.ScopePageTrashRead, model.ScopePageTrashDelete,
+		model.ScopeSuggestionApplicationWrite, model.ScopeSuggestionClosureWrite,
+		"page:trash:write", "page:restore_extra", "suggestion:apply_extra", "suggestion:close_extra",
+	} {
+		t.Run(scope.String(), func(t *testing.T) {
+			t.Parallel()
+			assertScopes(t, expandScopes([]model.Scope{scope}), []model.Scope{scope})
+		})
 	}
 }

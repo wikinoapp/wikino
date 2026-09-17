@@ -197,7 +197,7 @@ func TestCreate_スペースメンバーでないユーザーは404が返る(t *
 	}
 }
 
-func TestCreate_suggestion_applyスコープなしは404が返る(t *testing.T) {
+func TestCreate_suggestion_application_writeスコープなしは404が返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -263,7 +263,7 @@ func TestCreate_suggestion_applyスコープなしは404が返る(t *testing.T) 
 	}
 }
 
-func TestCreate_スペースオーナーが反映できる(t *testing.T) {
+func TestCreate_反映権限を持つメンバーが反映できる(t *testing.T) {
 	t.Parallel()
 
 	// usecaseが独自トランザクションを管理するためDB直接書き込みを使用
@@ -281,6 +281,7 @@ func TestCreate_スペースオーナーが反映できる(t *testing.T) {
 	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
+		WithScopes([]model.Scope{model.ScopeSuggestionApplicationWrite}).
 		Build()
 	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -291,6 +292,7 @@ func TestCreate_スペースオーナーが反映できる(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
+		WithScopes([]model.Scope{}).
 		Build()
 	pageID := testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).

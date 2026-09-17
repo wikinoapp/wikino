@@ -23,10 +23,15 @@ const (
 
 // ページ関連スコープ
 const (
-	ScopePageRead    Scope = "page:read"
-	ScopePageWrite   Scope = "page:write"
-	ScopePageTrash   Scope = "page:trash"
-	ScopePageRestore Scope = "page:restore"
+	ScopePageRead  Scope = "page:read"
+	ScopePageWrite Scope = "page:write"
+)
+
+// ゴミ箱関連スコープ
+const (
+	ScopePageTrashRead   Scope = "page_trash:read"
+	ScopePageTrashWrite  Scope = "page_trash:write"
+	ScopePageTrashDelete Scope = "page_trash:delete"
 )
 
 // 下書きページ関連スコープ
@@ -40,8 +45,12 @@ const (
 const (
 	ScopeSuggestionRead  Scope = "suggestion:read"
 	ScopeSuggestionWrite Scope = "suggestion:write"
-	ScopeSuggestionApply Scope = "suggestion:apply"
-	ScopeSuggestionClose Scope = "suggestion:close"
+)
+
+// 編集提案の反映・クローズ関連スコープ
+const (
+	ScopeSuggestionApplicationWrite Scope = "suggestion_application:write"
+	ScopeSuggestionClosureWrite     Scope = "suggestion_closure:write"
 )
 
 // 編集提案コメント関連スコープ
@@ -71,6 +80,14 @@ const (
 	ScopeAttachmentRead   Scope = "attachment:read"
 	ScopeAttachmentWrite  Scope = "attachment:write"
 	ScopeAttachmentDelete Scope = "attachment:delete"
+)
+
+// 保存済みの旧名を権限判定時に読み替えるための互換スコープ
+const (
+	ScopePageTrash       Scope = "page:trash"
+	ScopePageRestore     Scope = "page:restore"
+	ScopeSuggestionApply Scope = "suggestion:apply"
+	ScopeSuggestionClose Scope = "suggestion:close"
 )
 
 // HasScopeは指定のスコープがスライスに含まれているかチェックする

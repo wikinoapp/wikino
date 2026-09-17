@@ -201,7 +201,7 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("異常系: suggestion:closeスコープなしの非作成者はAppErrCodeForbiddenが返る", func(t *testing.T) {
+	t.Run("異常系: suggestion_closure:writeスコープなしの非作成者はAppErrCodeForbiddenが返る", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).

@@ -36,7 +36,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		suggestionApplyValidator,
 	)
 
-	t.Run("正常系: 1つのページの編集提案を反映できる", func(t *testing.T) {
+	t.Run("正常系: 反映権限で1つのページの編集提案を反映できる", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -49,6 +49,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithUserID(userID).
+			WithScopes([]model.Scope{model.ScopeSuggestionApplicationWrite}).
 			Build()
 		topicID := testutil.NewTopicBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -58,6 +59,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithSpaceMemberID(spaceMemberID).
+			WithScopes([]model.Scope{}).
 			Build()
 		pageID := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).

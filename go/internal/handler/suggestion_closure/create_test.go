@@ -172,7 +172,7 @@ func TestCreate_スペースメンバーでないユーザーは403が返る(t *
 	}
 }
 
-func TestCreate_suggestion_closeスコープなしの非作成者は403が返る(t *testing.T) {
+func TestCreate_suggestion_closure_writeスコープなしの非作成者は403が返る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -370,7 +370,7 @@ func TestCreate_スペースオーナーがクローズできる(t *testing.T) {
 	}
 }
 
-func TestCreate_トピック管理者がクローズできる(t *testing.T) {
+func TestCreate_トピックのクローズ権限で他人の提案をクローズできる(t *testing.T) {
 	t.Parallel()
 
 	// UseCaseが独自トランザクションを管理するためDB直接書き込みを使用
@@ -400,6 +400,7 @@ func TestCreate_トピック管理者がクローズできる(t *testing.T) {
 	adminSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(adminID).
+		WithScopes([]model.Scope{}).
 		Build()
 	creatorSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -413,6 +414,7 @@ func TestCreate_トピック管理者がクローズできる(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(adminSmID).
+		WithScopes([]model.Scope{model.ScopeSuggestionClosureWrite}).
 		Build()
 	testutil.NewSuggestionBuilderDB(t, db).
 		WithSpaceID(spaceID).
