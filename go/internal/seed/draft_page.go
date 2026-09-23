@@ -347,8 +347,7 @@ func (w *draftWriter) createNewPageDraft(ctx context.Context, input newPageDraft
 		member:     input.member,
 		page:       page,
 		title:      input.spec.title,
-		intro:      input.spec.intro,
-		revisions:  input.revisions,
+		bodies:     draftRevisionBodies(input.spec.intro, input.revisions),
 		modifiedAt: input.modifiedAt,
 	})
 }
@@ -369,8 +368,7 @@ func (w *draftWriter) createPublishedPageDraft(
 		member:     member,
 		page:       target.page,
 		title:      &title,
-		intro:      publishedPageDraftIntro(target.page.title),
-		revisions:  ordinaryDraftRevisions,
+		bodies:     draftRevisionBodies(publishedPageDraftIntro(target.page.title), ordinaryDraftRevisions),
 		modifiedAt: modifiedAt,
 	})
 }
@@ -381,11 +379,13 @@ type createDraftInput struct {
 	member *seededSpaceMember
 	page   *seededPage
 	title  *string
-	intro  string
-	// revisionsは下書きが保存された回数。下書きは最後の保存が書いたものを
-	// 保持し、編集履歴はそのすべてを保持する。
-	revisions  int
+	// bodiesは各保存が書いた本文を、古い保存から順に持つ。下書きは最後の保存が
+	// 書いたものを保持し、編集履歴はそのすべてを保持する。
+	bodies     []string
 	modifiedAt time.Time
+	// savedAtは各保存の時刻で、bodiesと同じ位置に並ぶ。nilのときは、画面から
+	// 保存したときと同じくリビジョンを作成した時刻になる。
+	savedAt []time.Time
 }
 
 // labelはエラーメッセージ内で下書きを名指しする。一度もタイトルを
@@ -408,28 +408,29 @@ func (w *draftWriter) createDraft(ctx context.Context, input createDraftInput) e
 		return err
 	}
 
+	if len(input.bodies) == 0 {
+		return fmt.Errorf("下書き %sに保存が1回も無い", input.label())
+	}
+	if input.savedAt != nil && len(input.savedAt) != len(input.bodies) {
+		return fmt.Errorf(
+			"下書き %sの保存時刻が %d件あり、本文の %d件と揃っていない",
+			input.label(), len(input.savedAt), len(input.bodies),
+		)
+	}
+
 	var title string
 	if input.title != nil {
 		title = *input.title
 	}
 
-	// 保存のたびに1行を書き足す。これにより履歴が、同じ本文の保存の
-	// 繰り返しではなく、時間をかけて書かれていく本文として読め、どのリビジョンの
-	// 差分もその保存が足した1行を見せるようになる。
-	bodies := make([]string, input.revisions)
-	for i := range bodies {
-		bodies[i] = draftRevisionBody(input.intro, i+1)
-	}
+	last := len(input.bodies) - 1
 
-	last := input.revisions - 1
-
-	// 書き足す行はWikiリンクを含まないため、どのリビジョンの本文も同じリンク集合を持つ。
 	// 下書きが持つのは最後の保存の本文なので、リンク先の解決もそれに対して1回だけ行う。
 	linkedPageIDs, err := w.pages.resolveLinks(ctx, createPageInput{
 		topic:  input.topic,
 		author: input.member,
 		title:  input.label(),
-		body:   bodies[last],
+		body:   input.bodies[last],
 	})
 	if err != nil {
 		return err
@@ -441,7 +442,7 @@ func (w *draftWriter) createDraft(ctx context.Context, input createDraftInput) e
 		SpaceMemberID: input.member.id,
 		TopicID:       input.topic.id,
 		Title:         input.title,
-		Body:          bodies[last],
+		Body:          input.bodies[last],
 		LinkedPageIDs: linkedPageIDs,
 		ModifiedAt:    input.modifiedAt,
 	})
@@ -449,19 +450,47 @@ func (w *draftWriter) createDraft(ctx context.Context, input createDraftInput) e
 		return fmt.Errorf("下書き %sの作成に失敗: %w", input.label(), err)
 	}
 
-	for i := range bodies {
-		if _, err := w.draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
+	for i, body := range input.bodies {
+		revision, err := w.draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
 			DraftPageID:   draftPage.ID,
 			SpaceID:       w.space.id,
 			SpaceMemberID: input.member.id,
 			Title:         title,
-			Body:          bodies[i],
-		}); err != nil {
+			Body:          body,
+		})
+		if err != nil {
 			return fmt.Errorf("下書き %sのリビジョンの作成に失敗: %w", input.label(), err)
+		}
+
+		if input.savedAt == nil {
+			continue
+		}
+
+		// created_atをここで打つのは、Createが作成した時刻を打刻するため。
+		if _, err := w.pages.dbtx.ExecContext(
+			ctx,
+			`UPDATE draft_page_revisions SET created_at = $3 WHERE id = $1 AND space_id = $2`,
+			string(revision.ID), string(w.space.id), input.savedAt[i],
+		); err != nil {
+			return fmt.Errorf("下書き %sのリビジョンの保存時刻の打刻に失敗: %w", input.label(), err)
 		}
 	}
 
 	return nil
+}
+
+// draftRevisionBodiesは、introで書き始めた下書きをrevisions回保存したときに、
+// 各保存が書いた本文を返す。保存のたびに1行を書き足す。これにより履歴が、同じ
+// 本文の保存の繰り返しではなく、時間をかけて書かれていく本文として読め、どの
+// リビジョンの差分もその保存が足した1行を見せるようになる。書き足す行はWikiリンクを
+// 含まないため、どの本文も同じリンク集合を持つ。
+func draftRevisionBodies(intro string, revisions int) []string {
+	bodies := make([]string, revisions)
+	for i := range bodies {
+		bodies[i] = draftRevisionBody(intro, i+1)
+	}
+
+	return bodies
 }
 
 // draftRevisionBodyは、指定の保存を終えた時点で下書きが持っていた本文を

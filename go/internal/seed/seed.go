@@ -246,6 +246,9 @@ func (r *Runner) Run(ctx context.Context) error {
 		{name: "デモスペースのページ", run: func(ctx context.Context, st *state) error {
 			return generateDemoPages(ctx, r.db, r.out, st.spaces, st.topics)
 		}},
+		{name: "デモスペースの下書き", run: func(ctx context.Context, st *state) error {
+			return generateDemoDrafts(ctx, r.db, r.out, st.spaces, st.topics, st.draftStamps)
+		}},
 		// エクスポート確認用ページを末尾に置く理由は、そのトピックがトピックの
 		// 仕様の末尾に置かれているのと同じである。ページ番号は生成器の実行順に配られ、
 		// ブラウザ確認はURLの番号で画面を指すため、これより上に生成器を挟むと、
