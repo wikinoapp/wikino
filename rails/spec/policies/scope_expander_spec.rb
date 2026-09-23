@@ -88,33 +88,13 @@ RSpec.describe ScopeExpander do
       expect(result).to match_array(scopes)
     end
 
-    [
-      ["page:trash", "page_trash:write", ["page_trash:write", "page_trash:read"]],
-      ["page:restore", "page_trash:delete", ["page_trash:delete"]],
-      ["suggestion:apply", "suggestion_application:write", ["suggestion_application:write"]],
-      ["suggestion:close", "suggestion_closure:write", ["suggestion_closure:write"]]
-    ].each do |legacy, canonical, expected|
-      it "#{legacy}と#{canonical}が同じ正式スコープへ展開されること" do
-        expect(ScopeExpander.expand([legacy])).to match_array(expected)
-        expect(ScopeExpander.expand([canonical])).to match_array(expected)
-      end
-
-      it "#{legacy}と#{canonical}が混在しても重複せず、入力を変更しないこと" do
-        scopes = [legacy, canonical, legacy].freeze
-
-        expect(ScopeExpander.expand(scopes)).to match_array(expected)
-        expect(scopes).to eq([legacy, canonical, legacy])
-      end
-    end
-
-    it "space:adminは正式な新名を包括し、旧名を含まないこと" do
+    it "space:adminはゴミ箱と編集提案の反映・クローズのスコープを包括すること" do
       result = ScopeExpander.expand([Scope::SPACE_ADMIN])
 
       expect(result).to include(
         "page_trash:read", "page_trash:write", "page_trash:delete",
         "suggestion_application:write", "suggestion_closure:write"
       )
-      expect(result).not_to include("page:trash", "page:restore", "suggestion:apply", "suggestion:close")
     end
 
     it "page:writeはゴミ箱の権限を含意しないこと" do
@@ -129,8 +109,8 @@ RSpec.describe ScopeExpander do
       )
     end
 
-    it "未知のスコープや旧名の類似文字列から権限を展開しないこと" do
-      scopes = ["unknown:write", "page:trash:write", "page:restore_extra", "suggestion:apply_extra", "suggestion:close_extra"]
+    it "未知のスコープから権限を展開しないこと" do
+      scopes = ["unknown:write", "page_trash:admin", "suggestion_application:read", "suggestion_closure:delete"]
 
       expect(ScopeExpander.expand(scopes)).to match_array(scopes)
     end

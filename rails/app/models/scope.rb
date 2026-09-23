@@ -58,10 +58,4 @@ module Scope
   ATTACHMENT_READ = T.let("attachment:read", String)
   ATTACHMENT_WRITE = T.let("attachment:write", String)
   ATTACHMENT_DELETE = T.let("attachment:delete", String)
-
-  # 保存済みの旧名を権限判定時に読み替えるための互換スコープ
-  PAGE_TRASH = T.let("page:trash", String)
-  PAGE_RESTORE = T.let("page:restore", String)
-  SUGGESTION_APPLY = T.let("suggestion:apply", String)
-  SUGGESTION_CLOSE = T.let("suggestion:close", String)
 end

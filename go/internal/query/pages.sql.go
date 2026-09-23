@@ -198,7 +198,7 @@ func (q *Queries) CountRegularPagesByTopic(ctx context.Context, arg CountRegular
 const createUnpublishedPage = `-- name: CreateUnpublishedPage :one
 INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, '', '{}', $5, NULL, $5, $5)
-RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
+RETURNING id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
 `
 
 type CreateUnpublishedPageParams struct {
@@ -230,7 +230,6 @@ func (q *Queries) CreateUnpublishedPage(ctx context.Context, arg CreateUnpublish
 		&i.Number,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.PublishedAt,
@@ -272,7 +271,7 @@ func (q *Queries) DiscardPageByID(ctx context.Context, arg DiscardPageByIDParams
 }
 
 const findBacklinkedPagesByPageID = `-- name: FindBacklinkedPagesByPageID :many
-SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE $1::varchar = ANY(linked_page_ids)
   AND space_id = $2
   AND discarded_at IS NULL
@@ -301,7 +300,6 @@ func (q *Queries) FindBacklinkedPagesByPageID(ctx context.Context, arg FindBackl
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -326,10 +324,10 @@ func (q *Queries) FindBacklinkedPagesByPageID(ctx context.Context, arg FindBackl
 }
 
 const findBacklinkedPagesForTargets = `-- name: FindBacklinkedPagesForTargets :many
-SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id, targets.target_id
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id, targets.target_id
 FROM unnest($1::uuid[]) AS targets(target_id)
 CROSS JOIN LATERAL (
-  SELECT pg.id, pg.space_id, pg.topic_id, pg.number, pg.title, pg.body, pg.body_html, pg.linked_page_ids, pg.modified_at, pg.published_at, pg.trashed_at, pg.created_at, pg.updated_at, pg.pinned_at, pg.discarded_at, pg.featured_image_attachment_id
+  SELECT pg.id, pg.space_id, pg.topic_id, pg.number, pg.title, pg.body, pg.linked_page_ids, pg.modified_at, pg.published_at, pg.trashed_at, pg.created_at, pg.updated_at, pg.pinned_at, pg.discarded_at, pg.featured_image_attachment_id
   FROM pages pg
   INNER JOIN topics t ON pg.topic_id = t.id AND t.space_id = $2
   WHERE targets.target_id::varchar = ANY(pg.linked_page_ids)
@@ -360,7 +358,6 @@ type FindBacklinkedPagesForTargetsRow struct {
 	Number                    int32        `json:"number"`
 	Title                     interface{}  `json:"title"`
 	Body                      string       `json:"body"`
-	BodyHtml                  string       `json:"body_html"`
 	LinkedPageIds             []string     `json:"linked_page_ids"`
 	ModifiedAt                time.Time    `json:"modified_at"`
 	PublishedAt               sql.NullTime `json:"published_at"`
@@ -399,7 +396,6 @@ func (q *Queries) FindBacklinkedPagesForTargets(ctx context.Context, arg FindBac
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -425,7 +421,7 @@ func (q *Queries) FindBacklinkedPagesForTargets(ctx context.Context, arg FindBac
 }
 
 const findBacklinkedPagesPaginated = `-- name: FindBacklinkedPagesPaginated :many
-SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
 WHERE $2::varchar = ANY(p.linked_page_ids)
   AND p.space_id = $1
@@ -477,7 +473,6 @@ func (q *Queries) FindBacklinkedPagesPaginated(ctx context.Context, arg FindBack
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -502,7 +497,7 @@ func (q *Queries) FindBacklinkedPagesPaginated(ctx context.Context, arg FindBack
 }
 
 const findLinkedPagesPaginated = `-- name: FindLinkedPagesPaginated :many
-SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
 WHERE p.id = ANY($2::uuid[])
   AND p.space_id = $1
@@ -555,7 +550,6 @@ func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPa
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -580,7 +574,7 @@ func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPa
 }
 
 const findPageBySpaceAndNumber = `-- name: FindPageBySpaceAndNumber :one
-SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages WHERE space_id = $1 AND number = $2 AND discarded_at IS NULL
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages WHERE space_id = $1 AND number = $2 AND discarded_at IS NULL
 `
 
 type FindPageBySpaceAndNumberParams struct {
@@ -599,7 +593,6 @@ func (q *Queries) FindPageBySpaceAndNumber(ctx context.Context, arg FindPageBySp
 		&i.Number,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.PublishedAt,
@@ -614,7 +607,7 @@ func (q *Queries) FindPageBySpaceAndNumber(ctx context.Context, arg FindPageBySp
 }
 
 const findPageByTopicAndTitle = `-- name: FindPageByTopicAndTitle :one
-SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE topic_id = $1
   AND title = $2
   AND space_id = $3
@@ -637,7 +630,6 @@ func (q *Queries) FindPageByTopicAndTitle(ctx context.Context, arg FindPageByTop
 		&i.Number,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.PublishedAt,
@@ -652,7 +644,7 @@ func (q *Queries) FindPageByTopicAndTitle(ctx context.Context, arg FindPageByTop
 }
 
 const findPagesByIDs = `-- name: FindPagesByIDs :many
-SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE id = ANY($1::uuid[])
   AND space_id = $2
   AND discarded_at IS NULL
@@ -681,7 +673,6 @@ func (q *Queries) FindPagesByIDs(ctx context.Context, arg FindPagesByIDsParams) 
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -762,7 +753,7 @@ func (q *Queries) FindPagesByTopicAndTitlePairs(ctx context.Context, arg FindPag
 }
 
 const findPinnedPagesBySpace = `-- name: FindPinnedPagesBySpace :many
-SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
 WHERE p.space_id = $1
   AND p.pinned_at IS NOT NULL
@@ -801,7 +792,6 @@ func (q *Queries) FindPinnedPagesBySpace(ctx context.Context, arg FindPinnedPage
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -826,7 +816,7 @@ func (q *Queries) FindPinnedPagesBySpace(ctx context.Context, arg FindPinnedPage
 }
 
 const findPinnedPagesByTopic = `-- name: FindPinnedPagesByTopic :many
-SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE topic_id = $1
   AND space_id = $2
   AND pinned_at IS NOT NULL
@@ -858,7 +848,6 @@ func (q *Queries) FindPinnedPagesByTopic(ctx context.Context, arg FindPinnedPage
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -883,7 +872,7 @@ func (q *Queries) FindPinnedPagesByTopic(ctx context.Context, arg FindPinnedPage
 }
 
 const findRegularPagesBySpacePaginated = `-- name: FindRegularPagesBySpacePaginated :many
-SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
 WHERE p.space_id = $1
   AND p.pinned_at IS NULL
@@ -928,7 +917,6 @@ func (q *Queries) FindRegularPagesBySpacePaginated(ctx context.Context, arg Find
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -953,7 +941,7 @@ func (q *Queries) FindRegularPagesBySpacePaginated(ctx context.Context, arg Find
 }
 
 const findRegularPagesByTopicPaginated = `-- name: FindRegularPagesByTopicPaginated :many
-SELECT id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages
 WHERE topic_id = $1
   AND space_id = $2
   AND pinned_at IS NULL
@@ -994,7 +982,6 @@ func (q *Queries) FindRegularPagesByTopicPaginated(ctx context.Context, arg Find
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -1031,7 +1018,7 @@ func (q *Queries) GetNextPageNumber(ctx context.Context, spaceID string) (int32,
 }
 
 const listActivePagesBySpace = `-- name: ListActivePagesBySpace :many
-SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.body_html, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
 WHERE p.space_id = $1
   AND p.published_at IS NOT NULL
@@ -1060,7 +1047,6 @@ func (q *Queries) ListActivePagesBySpace(ctx context.Context, spaceID string) ([
 			&i.Number,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.PublishedAt,
@@ -1088,7 +1074,7 @@ const movePageToTopic = `-- name: MovePageToTopic :one
 UPDATE pages
 SET topic_id = $2, updated_at = NOW()
 WHERE id = $1 AND space_id = $3
-RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
+RETURNING id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
 `
 
 type MovePageToTopicParams struct {
@@ -1108,7 +1094,6 @@ func (q *Queries) MovePageToTopic(ctx context.Context, arg MovePageToTopicParams
 		&i.Number,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.PublishedAt,
@@ -1210,7 +1195,7 @@ SET topic_id = $2,
     featured_image_attachment_id = $8,
     updated_at = $9
 WHERE id = $1 AND space_id = $10
-RETURNING id, space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
+RETURNING id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id
 `
 
 type UpdatePageParams struct {
@@ -1248,7 +1233,6 @@ func (q *Queries) UpdatePage(ctx context.Context, arg UpdatePageParams) (Page, e
 		&i.Number,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.PublishedAt,

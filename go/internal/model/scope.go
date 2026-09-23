@@ -82,14 +82,6 @@ const (
 	ScopeAttachmentDelete Scope = "attachment:delete"
 )
 
-// 保存済みの旧名を権限判定時に読み替えるための互換スコープ
-const (
-	ScopePageTrash       Scope = "page:trash"
-	ScopePageRestore     Scope = "page:restore"
-	ScopeSuggestionApply Scope = "suggestion:apply"
-	ScopeSuggestionClose Scope = "suggestion:close"
-)
-
 // HasScopeは指定のスコープがスライスに含まれているかチェックする
 func HasScope(scopes []Scope, target Scope) bool {
 	for _, s := range scopes {

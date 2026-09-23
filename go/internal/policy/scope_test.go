@@ -250,41 +250,13 @@ func assertNoDuplicates(t *testing.T, scopes []model.Scope) {
 	}
 }
 
-func TestExpandScopes_LegacyScopes(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		legacy    model.Scope
-		canonical model.Scope
-	}{
-		{model.ScopePageTrash, model.ScopePageTrashWrite},
-		{model.ScopePageRestore, model.ScopePageTrashDelete},
-		{model.ScopeSuggestionApply, model.ScopeSuggestionApplicationWrite},
-		{model.ScopeSuggestionClose, model.ScopeSuggestionClosureWrite},
-	}
-	for _, tt := range tests {
-		t.Run(tt.legacy.String(), func(t *testing.T) {
-			t.Parallel()
-
-			want := expandScopes([]model.Scope{tt.canonical})
-			for _, input := range [][]model.Scope{{tt.legacy}, {tt.legacy, tt.canonical, tt.legacy}} {
-				original := slices.Clone(input)
-				assertScopes(t, expandScopes(input), want)
-				if !slices.Equal(input, original) {
-					t.Errorf("入力スコープが変更された: %v", input)
-				}
-			}
-		})
-	}
-}
-
 func TestExpandScopes_IndependentScopes(t *testing.T) {
 	t.Parallel()
 
 	for _, scope := range []model.Scope{
 		model.ScopePageTrashRead, model.ScopePageTrashDelete,
 		model.ScopeSuggestionApplicationWrite, model.ScopeSuggestionClosureWrite,
-		"page:trash:write", "page:restore_extra", "suggestion:apply_extra", "suggestion:close_extra",
+		"unknown:write", "page_trash:admin", "suggestion_application:read", "suggestion_closure:delete",
 	} {
 		t.Run(scope.String(), func(t *testing.T) {
 			t.Parallel()
