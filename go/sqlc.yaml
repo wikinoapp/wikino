@@ -2,10 +2,7 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "db/queries/"
-    # 実DBには次のリリースまで列を残す。生成コードは先に列を読まない形へ切り替える。
-    schema:
-      - "db/schema.sql"
-      - "db/sqlc_schema/omit_body_html.sql"
+    schema: "db/schema.sql"
     gen:
       go:
         package: "query"

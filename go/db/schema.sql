@@ -180,7 +180,6 @@ CREATE TABLE public.draft_page_revisions (
     space_member_id uuid NOT NULL,
     title character varying NOT NULL,
     body character varying NOT NULL,
-    body_html character varying DEFAULT ''::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -197,7 +196,6 @@ CREATE TABLE public.draft_pages (
     topic_id uuid NOT NULL,
     title public.citext,
     body public.citext NOT NULL,
-    body_html text DEFAULT ''::text NOT NULL,
     linked_page_ids character varying[] NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
@@ -292,7 +290,6 @@ CREATE TABLE public.page_revisions (
     space_member_id uuid NOT NULL,
     page_id uuid NOT NULL,
     body public.citext NOT NULL,
-    body_html text DEFAULT ''::text NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     title public.citext NOT NULL
@@ -310,7 +307,6 @@ CREATE TABLE public.pages (
     number integer NOT NULL,
     title public.citext,
     body public.citext NOT NULL,
-    body_html text DEFAULT ''::text NOT NULL,
     linked_page_ids character varying[] NOT NULL,
     modified_at timestamp(6) without time zone NOT NULL,
     published_at timestamp(6) without time zone,
@@ -542,7 +538,6 @@ CREATE TABLE public.suggestion_page_revisions (
     editor_space_member_id uuid NOT NULL,
     title character varying,
     body character varying DEFAULT ''::character varying NOT NULL,
-    body_html character varying DEFAULT ''::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -562,7 +557,6 @@ CREATE TABLE public.suggestion_pages (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     title character varying,
     body character varying DEFAULT ''::character varying NOT NULL,
-    body_html character varying DEFAULT ''::character varying NOT NULL,
     linked_page_ids character varying[] DEFAULT '{}'::character varying[] NOT NULL,
     featured_image_attachment_id uuid
 );
@@ -2165,4 +2159,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260908075645'),
     ('20260908090236'),
     ('20260915152808'),
-    ('20260916161028');
+    ('20260916161028'),
+    ('20260923093006');
