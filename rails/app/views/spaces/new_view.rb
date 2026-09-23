@@ -32,6 +32,11 @@ module Spaces
       PageName::SpaceNew
     end
 
+    sig { returns(BaseUI::ContainerComponent::ContentScreen) }
+    private def content_screen
+      BaseUI::ContainerComponent::ContentScreen::Small
+    end
+
     sig { returns(String) }
     private def title
       I18n.t("meta.title.spaces.new")

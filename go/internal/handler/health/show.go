@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// Show はヘルスチェックレスポンスを返します
+// Showはヘルスチェックレスポンスを返します
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

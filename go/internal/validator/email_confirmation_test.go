@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateValidator のテスト
+// CreateValidatorのテスト
 
 func TestEmailConfirmationCreateValidator_Validate_FormatValidation(t *testing.T) {
 	t.Parallel()
@@ -64,9 +64,9 @@ func TestEmailConfirmationCreateValidator_Validate_FormatValidation(t *testing.T
 			if tc.wantError {
 				ve := model.AsValidationError(err)
 				if ve == nil {
-					t.Error("expected validation error, but got nil or different error type")
+					t.Error("バリデーションエラーではない (nilまたは別の型のエラー)")
 				} else if !ve.HasFieldError(tc.errorField) {
-					t.Errorf("expected field error for %s, but not found", tc.errorField)
+					t.Errorf("%sのフィールドエラーが見つからない", tc.errorField)
 				}
 			}
 		})
@@ -82,14 +82,14 @@ func TestEmailConfirmationCreateValidator_Validate_SignUp_NewEmail(t *testing.T)
 	v := validator.NewEmailConfirmationCreateValidator(userRepo)
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
-	// 新規メールアドレスで signup イベント → 成功
+	// 新規メールアドレスでsignupイベント → 成功
 	err := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: "newuser@example.com",
 		Event: model.EmailConfirmationEventSignUp,
 	})
 
 	if err != nil {
-		t.Fatalf("Validate() error = %v, want nil", err)
+		t.Fatalf("Validate()のエラー = %v、期待値 = nil", err)
 	}
 }
 
@@ -108,7 +108,7 @@ func TestEmailConfirmationCreateValidator_Validate_SignUp_ExistingEmail(t *testi
 		Build()
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
-	// 既存メールアドレスで signup イベント → エラー
+	// 既存メールアドレスでsignupイベント → エラー
 	err := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: "existing@example.com",
 		Event: model.EmailConfirmationEventSignUp,
@@ -116,10 +116,10 @@ func TestEmailConfirmationCreateValidator_Validate_SignUp_ExistingEmail(t *testi
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil or different error type")
+		t.Fatal("ValidationErrorを期待したが、nilか別の型のエラーだった")
 	}
 	if !ve.HasFieldError("email") {
-		t.Error("expected field error for 'email'")
+		t.Error("'email'のフィールドエラーが無い")
 	}
 }
 
@@ -138,14 +138,14 @@ func TestEmailConfirmationCreateValidator_Validate_PasswordReset_ExistingEmail(t
 		Build()
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
-	// 既存メールアドレスで password_reset イベント → 成功（重複チェックをスキップ）
+	// 既存メールアドレスでpassword_resetイベント → 成功 (重複チェックをスキップ)
 	err := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: "resetuser@example.com",
 		Event: model.EmailConfirmationEventPasswordReset,
 	})
 
 	if err != nil {
-		t.Fatalf("Validate() error = %v, want nil", err)
+		t.Fatalf("Validate()のエラー = %v、期待値 = nil", err)
 	}
 }
 
@@ -164,18 +164,18 @@ func TestEmailConfirmationCreateValidator_Validate_EmailUpdate_ExistingEmail(t *
 		Build()
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
-	// 既存メールアドレスで email_update イベント → 成功（重複チェックをスキップ）
+	// 既存メールアドレスでemail_updateイベント → 成功 (重複チェックをスキップ)
 	err := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: "updateuser@example.com",
 		Event: model.EmailConfirmationEventEmailUpdate,
 	})
 
 	if err != nil {
-		t.Fatalf("Validate() error = %v, want nil", err)
+		t.Fatalf("Validate()のエラー = %v、期待値 = nil", err)
 	}
 }
 
-// UpdateValidator のテスト
+// UpdateValidatorのテスト
 
 func TestEmailConfirmationUpdateValidator_Validate_FormatValidation(t *testing.T) {
 	t.Parallel()
@@ -198,13 +198,13 @@ func TestEmailConfirmationUpdateValidator_Validate_FormatValidation(t *testing.T
 			errorField: "code",
 		},
 		{
-			name:       "5文字のコード（短すぎる）",
+			name:       "5文字のコード (短すぎる)",
 			code:       "ABC12",
 			wantError:  true,
 			errorField: "code",
 		},
 		{
-			name:       "7文字のコード（長すぎる）",
+			name:       "7文字のコード (長すぎる)",
 			code:       "ABC1234",
 			wantError:  true,
 			errorField: "code",
@@ -229,9 +229,9 @@ func TestEmailConfirmationUpdateValidator_Validate_FormatValidation(t *testing.T
 			if tc.wantError {
 				ve := model.AsValidationError(err)
 				if ve == nil {
-					t.Error("expected validation error, but got nil or different error type")
+					t.Error("バリデーションエラーではない (nilまたは別の型のエラー)")
 				} else if !ve.HasFieldError(tc.errorField) {
-					t.Errorf("expected field error for %s, but not found", tc.errorField)
+					t.Errorf("%sのフィールドエラーが見つからない", tc.errorField)
 				}
 			}
 		})
@@ -246,7 +246,7 @@ func TestEmailConfirmationUpdateValidator_Validate_Success(t *testing.T) {
 	repo := repository.NewEmailConfirmationRepository(q)
 	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
-	// テストデータを作成（有効な確認コード）
+	// テストデータを作成 (有効な確認コード)
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
 		WithEmail("validator-success@example.com").
 		WithEvent(model.EmailConfirmationEventSignUp).
@@ -261,10 +261,10 @@ func TestEmailConfirmationUpdateValidator_Validate_Success(t *testing.T) {
 	})
 
 	if err != nil {
-		t.Fatalf("Validate() error = %v, want nil", err)
+		t.Fatalf("Validate()のエラー = %v、期待値 = nil", err)
 	}
 	if confirmation == nil {
-		t.Error("EmailConfirmation should not be nil")
+		t.Error("EmailConfirmationがnil")
 	}
 }
 
@@ -276,7 +276,7 @@ func TestEmailConfirmationUpdateValidator_Validate_CaseInsensitive(t *testing.T)
 	repo := repository.NewEmailConfirmationRepository(q)
 	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
-	// テストデータを作成（大文字のコード）
+	// テストデータを作成 (大文字のコード)
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
 		WithEmail("case-insensitive@example.com").
 		WithEvent(model.EmailConfirmationEventSignUp).
@@ -292,7 +292,7 @@ func TestEmailConfirmationUpdateValidator_Validate_CaseInsensitive(t *testing.T)
 	})
 
 	if err != nil {
-		t.Fatalf("Validate() error = %v, want nil（小文字でも成功すべき）", err)
+		t.Fatalf("Validate()のエラー = %v、期待値 = nil (小文字でも成功する)", err)
 	}
 }
 
@@ -313,10 +313,10 @@ func TestEmailConfirmationUpdateValidator_Validate_NotFound(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil or different error type")
+		t.Fatal("ValidationErrorを期待したが、nilか別の型のエラーだった")
 	}
 	if !ve.HasErrors() {
-		t.Error("ValidationError should have errors")
+		t.Error("ValidationErrorにエラーが無い")
 	}
 }
 
@@ -337,7 +337,7 @@ func TestEmailConfirmationUpdateValidator_Validate_AlreadySucceeded(t *testing.T
 		BuildSucceeded()
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
-	// 検証しようとすると AppError が返る
+	// 検証しようとするとAppErrorが返る
 	_, err := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: ecID,
 		Code:                "DEF456",
@@ -345,10 +345,10 @@ func TestEmailConfirmationUpdateValidator_Validate_AlreadySucceeded(t *testing.T
 
 	ae := model.AsAppError(err)
 	if ae == nil {
-		t.Fatal("expected AppError, got nil or different error type")
+		t.Fatal("AppErrorを期待したが、nilか別の型のエラーだった")
 	}
 	if ae.Code != model.AppErrCodeConflict {
-		t.Errorf("AppError.Code = %d, want %d (AppErrCodeConflict)", ae.Code, model.AppErrCodeConflict)
+		t.Errorf("AppError.Code = %d、期待値 = %d (AppErrCodeConflict)", ae.Code, model.AppErrCodeConflict)
 	}
 }
 
@@ -360,7 +360,7 @@ func TestEmailConfirmationUpdateValidator_Validate_Expired(t *testing.T) {
 	repo := repository.NewEmailConfirmationRepository(q)
 	v := validator.NewEmailConfirmationUpdateValidator(repo)
 
-	// 16分前のテストデータを作成（15分で有効期限切れ）
+	// 16分前のテストデータを作成 (15分で有効期限切れ)
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
 		WithEmail("expired@example.com").
 		WithEvent(model.EmailConfirmationEventSignUp).
@@ -377,10 +377,10 @@ func TestEmailConfirmationUpdateValidator_Validate_Expired(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil or different error type")
+		t.Fatal("ValidationErrorを期待したが、nilか別の型のエラーだった")
 	}
 	if !ve.HasErrors() {
-		t.Error("ValidationError should have errors")
+		t.Error("ValidationErrorにエラーが無い")
 	}
 }
 
@@ -409,10 +409,10 @@ func TestEmailConfirmationUpdateValidator_Validate_CodeMismatch(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil or different error type")
+		t.Fatal("ValidationErrorを期待したが、nilか別の型のエラーだった")
 	}
 	if !ve.HasFieldError("code") {
-		t.Error("ValidationError should have field error for 'code'")
+		t.Error("ValidationErrorに'code'のフィールドエラーが無い")
 	}
 }
 
@@ -433,13 +433,13 @@ func TestEmailConfirmationUpdateValidator_Validate_PasswordResetEvent(t *testing
 		Build()
 
 	ctx := i18n.SetLocale(context.Background(), "ja")
-	// 確認コードを検証（イベント種別に関係なく検証できる）
+	// 確認コードを検証 (イベント種別に関係なく検証できる)
 	_, err := v.Validate(ctx, validator.EmailConfirmationUpdateValidatorInput{
 		EmailConfirmationID: ecID,
 		Code:                "MNO345",
 	})
 
 	if err != nil {
-		t.Fatalf("Validate() error = %v, want nil", err)
+		t.Fatalf("Validate()のエラー = %v、期待値 = nil", err)
 	}
 }

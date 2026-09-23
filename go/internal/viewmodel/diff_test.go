@@ -15,7 +15,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		text := "line1\nline2\nline3\n"
 		blocks := viewmodel.ComputeDiffBlocks(text, text, 3)
 		if len(blocks) != 0 {
-			t.Errorf("len(blocks) = %d, want 0", len(blocks))
+			t.Errorf("len(blocks) = %d、期待値 = 0", len(blocks))
 		}
 	})
 
@@ -24,7 +24,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 
 		blocks := viewmodel.ComputeDiffBlocks("", "", 3)
 		if len(blocks) != 0 {
-			t.Errorf("len(blocks) = %d, want 0", len(blocks))
+			t.Errorf("len(blocks) = %d、期待値 = 0", len(blocks))
 		}
 	})
 
@@ -36,7 +36,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
 
 		if len(blocks) == 0 {
-			t.Fatal("expected at least one block")
+			t.Fatal("ブロックが1つも無い")
 		}
 
 		hasInsert := false
@@ -48,7 +48,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 			}
 		}
 		if !hasInsert {
-			t.Error("expected an insert line with content 'line3'")
+			t.Error("内容が'line3'の追加行が無い")
 		}
 	})
 
@@ -60,7 +60,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
 
 		if len(blocks) == 0 {
-			t.Fatal("expected at least one block")
+			t.Fatal("ブロックが1つも無い")
 		}
 
 		hasDelete := false
@@ -72,7 +72,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 			}
 		}
 		if !hasDelete {
-			t.Error("expected a delete line with content 'line2'")
+			t.Error("内容が'line2'の削除行が無い")
 		}
 	})
 
@@ -84,7 +84,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
 
 		if len(blocks) == 0 {
-			t.Fatal("expected at least one block")
+			t.Fatal("ブロックが1つも無い")
 		}
 
 		hasDelete := false
@@ -100,10 +100,10 @@ func TestComputeDiffBlocks(t *testing.T) {
 			}
 		}
 		if !hasDelete {
-			t.Error("expected a delete line with content 'old content'")
+			t.Error("内容が'old content'の削除行が無い")
 		}
 		if !hasInsert {
-			t.Error("expected an insert line with content 'new content'")
+			t.Error("内容が'new content'の追加行が無い")
 		}
 	})
 
@@ -115,7 +115,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
 
 		if len(blocks) == 0 {
-			t.Fatal("expected at least one block")
+			t.Fatal("ブロックが1つも無い")
 		}
 
 		for _, block := range blocks {
@@ -123,18 +123,18 @@ func TestComputeDiffBlocks(t *testing.T) {
 				switch line.Type {
 				case viewmodel.DiffLineEqual:
 					if line.OldNumber == 0 {
-						t.Errorf("equal line should have OldNumber > 0, got %d", line.OldNumber)
+						t.Errorf("一致行のOldNumber = %d、期待値 = 0より大きい", line.OldNumber)
 					}
 					if line.NewNumber == 0 {
-						t.Errorf("equal line should have NewNumber > 0, got %d", line.NewNumber)
+						t.Errorf("一致行のNewNumber = %d、期待値 = 0より大きい", line.NewNumber)
 					}
 				case viewmodel.DiffLineDelete:
 					if line.OldNumber == 0 {
-						t.Errorf("delete line should have OldNumber > 0, got %d", line.OldNumber)
+						t.Errorf("削除行のOldNumber = %d、期待値 = 0より大きい", line.OldNumber)
 					}
 				case viewmodel.DiffLineInsert:
 					if line.NewNumber == 0 {
-						t.Errorf("insert line should have NewNumber > 0, got %d", line.NewNumber)
+						t.Errorf("追加行のNewNumber = %d、期待値 = 0より大きい", line.NewNumber)
 					}
 				}
 			}
@@ -150,7 +150,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 1)
 
 		if len(blocks) != 2 {
-			t.Errorf("len(blocks) = %d, want 2", len(blocks))
+			t.Errorf("len(blocks) = %d、期待値 = 2", len(blocks))
 		}
 	})
 
@@ -163,7 +163,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
 
 		if len(blocks) != 1 {
-			t.Errorf("len(blocks) = %d, want 1", len(blocks))
+			t.Errorf("len(blocks) = %d、期待値 = 1", len(blocks))
 		}
 	})
 
@@ -173,7 +173,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks("", "new line\n", 3)
 
 		if len(blocks) == 0 {
-			t.Fatal("expected at least one block")
+			t.Fatal("ブロックが1つも無い")
 		}
 
 		hasInsert := false
@@ -185,7 +185,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 			}
 		}
 		if !hasInsert {
-			t.Error("expected insert lines")
+			t.Error("追加行が無い")
 		}
 	})
 
@@ -197,13 +197,13 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
 
 		if len(blocks) == 0 {
-			t.Fatal("expected at least one block")
+			t.Fatal("ブロックが1つも無い")
 		}
 
 		for _, block := range blocks {
 			for _, line := range block.Lines {
 				if line.Type == viewmodel.DiffLineInsert && line.Content == "" {
-					t.Error("unexpected empty insert line")
+					t.Error("予期しない空の追加行")
 				}
 			}
 		}
@@ -222,10 +222,10 @@ func TestComputeDiffBlocks(t *testing.T) {
 			}
 		}
 		if !hasEqual {
-			t.Error("expected an equal line with content 'foo'")
+			t.Error("内容が'foo'の一致行が無い")
 		}
 		if !hasInsert {
-			t.Error("expected an insert line with content 'buz'")
+			t.Error("内容が'buz'の追加行が無い")
 		}
 	})
 
@@ -237,7 +237,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks(oldText, newText, 3)
 
 		if len(blocks) == 0 {
-			t.Fatal("expected at least one block")
+			t.Fatal("ブロックが1つも無い")
 		}
 
 		var lines []viewmodel.DiffLine
@@ -262,17 +262,17 @@ func TestComputeDiffBlocks(t *testing.T) {
 			// "foo"や"bar"がDelete/Insertとして検出されていないこと
 			if (line.Type == viewmodel.DiffLineDelete || line.Type == viewmodel.DiffLineInsert) &&
 				(line.Content == "foo" || line.Content == "bar") {
-				t.Errorf("'%s' should be equal, not %v", line.Content, line.Type)
+				t.Errorf("'%s'が一致していない: %v", line.Content, line.Type)
 			}
 		}
 		if !equalFoo {
-			t.Error("expected 'foo' as equal line")
+			t.Error("'foo'が一致行になっていない")
 		}
 		if !equalBar {
-			t.Error("expected 'bar' as equal line")
+			t.Error("'bar'が一致行になっていない")
 		}
 		if !insertBuz {
-			t.Error("expected 'buz' as insert line")
+			t.Error("'buz'が追加行になっていない")
 		}
 	})
 
@@ -282,7 +282,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 		blocks := viewmodel.ComputeDiffBlocks("old line\n", "", 3)
 
 		if len(blocks) == 0 {
-			t.Fatal("expected at least one block")
+			t.Fatal("ブロックが1つも無い")
 		}
 
 		hasDelete := false
@@ -294,7 +294,7 @@ func TestComputeDiffBlocks(t *testing.T) {
 			}
 		}
 		if !hasDelete {
-			t.Error("expected delete lines")
+			t.Error("削除行が無い")
 		}
 	})
 }
@@ -312,7 +312,7 @@ func TestDiffBlock_HasChanges(t *testing.T) {
 			},
 		}
 		if !block.HasChanges() {
-			t.Error("HasChanges() = false, want true")
+			t.Error("HasChanges() = false、期待値 = true")
 		}
 	})
 
@@ -326,7 +326,7 @@ func TestDiffBlock_HasChanges(t *testing.T) {
 			},
 		}
 		if block.HasChanges() {
-			t.Error("HasChanges() = true, want false")
+			t.Error("HasChanges() = true、期待値 = false")
 		}
 	})
 
@@ -335,7 +335,7 @@ func TestDiffBlock_HasChanges(t *testing.T) {
 
 		block := viewmodel.DiffBlock{}
 		if block.HasChanges() {
-			t.Error("HasChanges() = true, want false")
+			t.Error("HasChanges() = true、期待値 = false")
 		}
 	})
 }

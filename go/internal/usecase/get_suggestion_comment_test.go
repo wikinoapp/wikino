@@ -55,13 +55,13 @@ func TestGetSuggestionCommentUsecase_Execute(t *testing.T) {
 			SpaceID:       spaceID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Comment == nil {
-			t.Fatal("Comment should not be nil")
+			t.Fatal("Commentがnil")
 		}
 		if output.Comment.Body != "テストコメント" {
-			t.Errorf("Comment.Body = %q, want %q", output.Comment.Body, "テストコメント")
+			t.Errorf("Comment.Body = %q、期待値 = %q", output.Comment.Body, "テストコメント")
 		}
 	})
 
@@ -73,10 +73,10 @@ func TestGetSuggestionCommentUsecase_Execute(t *testing.T) {
 			SpaceID:       spaceID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Comment != nil {
-			t.Errorf("Comment should be nil, got: %v", output.Comment)
+			t.Errorf("Commentがnilではない: %v", output.Comment)
 		}
 	})
 
@@ -92,10 +92,10 @@ func TestGetSuggestionCommentUsecase_Execute(t *testing.T) {
 			SpaceID:       otherSpaceID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output.Comment != nil {
-			t.Errorf("Comment should be nil, got: %v", output.Comment)
+			t.Errorf("Commentがnilではない: %v", output.Comment)
 		}
 	})
 }

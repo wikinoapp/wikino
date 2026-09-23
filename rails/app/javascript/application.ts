@@ -7,14 +7,12 @@ import { Application } from "@hotwired/stimulus";
 ActiveStorage.start();
 
 import AbsoluteTimeController from "./controllers/absolute-time-controller";
-import AttachmentLoaderController from "./controllers/attachment_loader_controller";
 import BulkActionFormController from "./controllers/bulk-action-form-controller";
 import FlashToastController from "./controllers/flash-toast-controller";
 import GlobalHotkeyController from "./controllers/global-hotkey-controller";
 import MarkdownEditorController from "./controllers/markdown-editor-controller";
 import MarkdownEditorFormController from "./controllers/markdown-editor-form-controller";
 import SearchCursorController from "./controllers/search-cursor-controller";
-import StuckController from "./controllers/stuck-controller";
 
 declare global {
   interface Window {
@@ -27,29 +25,18 @@ application.debug = false;
 window.Stimulus = application;
 
 window.Stimulus.register("absolute-time", AbsoluteTimeController);
-window.Stimulus.register("attachment-loader", AttachmentLoaderController);
 window.Stimulus.register("bulk-action-form", BulkActionFormController);
 window.Stimulus.register("flash-toast", FlashToastController);
 window.Stimulus.register("global-hotkey", GlobalHotkeyController);
 window.Stimulus.register("markdown-editor-form", MarkdownEditorFormController);
 window.Stimulus.register("markdown-editor", MarkdownEditorController);
 window.Stimulus.register("search-cursor", SearchCursorController);
-window.Stimulus.register("stuck", StuckController);
 
-// サイドバー開閉状態をlocalStorageに保存する
-// basecoat-cssがaria-hiddenを更新した後に読み取るため、requestAnimationFrameで遅延させる
-document.addEventListener("basecoat:sidebar", () => {
-  requestAnimationFrame(() => {
-    const sidebar = document.querySelector(".sidebar");
-    if (!sidebar) return;
-    const isOpen = sidebar.getAttribute("aria-hidden") === "false";
-    localStorage.setItem("wikinoSidebarOpen", String(isOpen));
-  });
-});
-
-// basecoat-cssのJSコンポーネントを動的に読み込む
+// Dynamically load basecoat-css JS components.
+//
+// [Ja] basecoat-css の JS コンポーネントを動的に読み込む。
 document.addEventListener("turbo:load", () => {
-  const basecoatScripts = ["dropdown-menu", "sidebar"];
+  const basecoatScripts = ["dropdown-menu"];
 
   for (const name of basecoatScripts) {
     const existingScript = document.querySelector(`script[src*="basecoat-css"][src*="${name}"]`);

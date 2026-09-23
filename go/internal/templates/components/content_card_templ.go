@@ -10,7 +10,13 @@ import (
 	templruntime "github.com/a-h/templ/runtime"
 )
 
-// ContentCard はコンテンツ表示用のカードUIです
+// ContentCardは画面の主要コンテンツを収めるカード。
+//
+// overflow-visibleはbasecoatの .cardが持つ切り抜きを外す。これが無いと、カードの内側で
+// 開いたドロップダウンやポップオーバーがz-indexをどれだけ上げてもカードの境界で切り取られる。
+// 祖先による切り抜きは重なり順とは無関係に効くためである。外して失うものは無い。子は必ず
+// sectionのpx-4の内側に入り、カード自身もpy-4を持つため、切り抜きが担っていた角に届く
+// 中身がそもそも存在しない。
 func ContentCard() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -32,7 +38,7 @@ func ContentCard() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"card py-4 rounded-none md:rounded-xl mx-0 md:mx-4\"><section class=\"px-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"card py-4 rounded-none md:rounded-xl mx-0 md:mx-4 overflow-visible\"><section class=\"px-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

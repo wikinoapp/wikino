@@ -10,22 +10,22 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// UserTwoFactorAuthRepository はユーザーの二要素認証リポジトリ
+// UserTwoFactorAuthRepositoryはユーザーの二要素認証リポジトリ
 type UserTwoFactorAuthRepository struct {
 	q *query.Queries
 }
 
-// NewUserTwoFactorAuthRepository は UserTwoFactorAuthRepository を生成する
+// NewUserTwoFactorAuthRepositoryはUserTwoFactorAuthRepositoryを生成する
 func NewUserTwoFactorAuthRepository(q *query.Queries) *UserTwoFactorAuthRepository {
 	return &UserTwoFactorAuthRepository{q: q}
 }
 
-// WithTx はトランザクションを使用する新しいRepositoryを返す
+// WithTxはトランザクションを使用する新しいRepositoryを返す
 func (r *UserTwoFactorAuthRepository) WithTx(tx *sql.Tx) *UserTwoFactorAuthRepository {
 	return &UserTwoFactorAuthRepository{q: r.q.WithTx(tx)}
 }
 
-// FindByUserID はユーザーIDで二要素認証設定を取得する
+// FindByUserIDはユーザーIDで二要素認証設定を取得する
 func (r *UserTwoFactorAuthRepository) FindByUserID(ctx context.Context, userID model.UserID) (*model.UserTwoFactorAuth, error) {
 	row, err := r.q.GetUserTwoFactorAuthByUserID(ctx, string(userID))
 	if err != nil {
@@ -37,7 +37,7 @@ func (r *UserTwoFactorAuthRepository) FindByUserID(ctx context.Context, userID m
 	return r.toModel(row), nil
 }
 
-// FindEnabledByUserID はユーザーIDで有効な二要素認証設定を取得する
+// FindEnabledByUserIDはユーザーIDで有効な二要素認証設定を取得する
 func (r *UserTwoFactorAuthRepository) FindEnabledByUserID(ctx context.Context, userID model.UserID) (*model.UserTwoFactorAuth, error) {
 	row, err := r.q.GetEnabledUserTwoFactorAuthByUserID(ctx, string(userID))
 	if err != nil {
@@ -49,7 +49,7 @@ func (r *UserTwoFactorAuthRepository) FindEnabledByUserID(ctx context.Context, u
 	return r.toModel(row), nil
 }
 
-// UpdateRecoveryCodes はリカバリーコードを更新する
+// UpdateRecoveryCodesはリカバリーコードを更新する
 func (r *UserTwoFactorAuthRepository) UpdateRecoveryCodes(ctx context.Context, userID model.UserID, recoveryCodes []string) error {
 	return r.q.UpdateUserTwoFactorAuthRecoveryCodes(ctx, query.UpdateUserTwoFactorAuthRecoveryCodesParams{
 		UserID:        string(userID),
@@ -58,7 +58,7 @@ func (r *UserTwoFactorAuthRepository) UpdateRecoveryCodes(ctx context.Context, u
 	})
 }
 
-// toModel は query.UserTwoFactorAuth を model.UserTwoFactorAuth に変換する
+// toModelはquery.UserTwoFactorAuthをmodel.UserTwoFactorAuthに変換する
 func (r *UserTwoFactorAuthRepository) toModel(row query.UserTwoFactorAuth) *model.UserTwoFactorAuth {
 	var enabledAt *time.Time
 	if row.EnabledAt.Valid {

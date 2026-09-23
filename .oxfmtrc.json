@@ -20,7 +20,6 @@
     "go/internal/templates/*_templ.go",
     "go/static/",
     "rails/app/assets/builds/",
-    "rails/db/",
-    "rails/sorbet/"
+    "rails/db/"
   ]
 }

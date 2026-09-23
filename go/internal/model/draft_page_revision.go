@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// DraftPageRevision は下書きページのバージョン（スナップショット）のドメインモデル
+// DraftPageRevisionは下書きページのバージョン (スナップショット) のドメインモデル
 type DraftPageRevision struct {
 	ID            DraftPageRevisionID
 	DraftPageID   DraftPageID
@@ -12,6 +12,5 @@ type DraftPageRevision struct {
 	SpaceMemberID SpaceMemberID
 	Title         string
 	Body          string
-	BodyHTML      string
 	CreatedAt     time.Time
 }

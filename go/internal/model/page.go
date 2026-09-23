@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Page はページのドメインモデル
+// Pageはページのドメインモデル
 type Page struct {
 	ID                        PageID
 	SpaceID                   SpaceID
@@ -12,7 +12,6 @@ type Page struct {
 	Number                    PageNumber
 	Title                     *string
 	Body                      string
-	BodyHTML                  string
 	LinkedPageIDs             []PageID
 	ModifiedAt                time.Time
 	PublishedAt               *time.Time

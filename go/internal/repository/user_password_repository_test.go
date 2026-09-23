@@ -24,26 +24,26 @@ func TestUserPasswordRepository_FindByUserID(t *testing.T) {
 	t.Run("存在するユーザーのパスワードを取得できる", func(t *testing.T) {
 		password, err := repo.FindByUserID(context.Background(), userID)
 		if err != nil {
-			t.Fatalf("FindByUserID() error = %v", err)
+			t.Fatalf("FindByUserID()のエラー = %v", err)
 		}
 		if password == nil {
-			t.Fatal("FindByUserID() returned nil, want password")
+			t.Fatal("FindByUserID()がnilを返した、期待値 = パスワード")
 		}
 		if password.UserID != userID {
-			t.Errorf("password.UserID = %v, want %v", password.UserID, userID)
+			t.Errorf("password.UserID = %v、期待値 = %v", password.UserID, userID)
 		}
 		if password.PasswordDigest != passwordDigest {
-			t.Errorf("password.PasswordDigest = %v, want %v", password.PasswordDigest, passwordDigest)
+			t.Errorf("password.PasswordDigest = %v、期待値 = %v", password.PasswordDigest, passwordDigest)
 		}
 	})
 
 	t.Run("存在しないユーザーIDはnilを返す", func(t *testing.T) {
 		password, err := repo.FindByUserID(context.Background(), "00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			t.Fatalf("FindByUserID() error = %v", err)
+			t.Fatalf("FindByUserID()のエラー = %v", err)
 		}
 		if password != nil {
-			t.Errorf("FindByUserID() = %v, want nil", password)
+			t.Errorf("FindByUserID() = %v、期待値 = nil", password)
 		}
 	})
 }
@@ -67,19 +67,19 @@ func TestUserPasswordRepository_UpdatePasswordDigest(t *testing.T) {
 
 		err := repo.UpdatePasswordDigest(context.Background(), userID, newPasswordDigest)
 		if err != nil {
-			t.Fatalf("UpdatePasswordDigest() error = %v", err)
+			t.Fatalf("UpdatePasswordDigest()のエラー = %v", err)
 		}
 
 		// 更新後のパスワードを確認
 		password, err := repo.FindByUserID(context.Background(), userID)
 		if err != nil {
-			t.Fatalf("FindByUserID() error = %v", err)
+			t.Fatalf("FindByUserID()のエラー = %v", err)
 		}
 		if password == nil {
-			t.Fatal("FindByUserID() returned nil, want password")
+			t.Fatal("FindByUserID()がnilを返した、期待値 = パスワード")
 		}
 		if password.PasswordDigest != newPasswordDigest {
-			t.Errorf("password.PasswordDigest = %v, want %v", password.PasswordDigest, newPasswordDigest)
+			t.Errorf("password.PasswordDigest = %v、期待値 = %v", password.PasswordDigest, newPasswordDigest)
 		}
 	})
 }

@@ -49,25 +49,25 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			TopicNumber:     1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.Suggestions) != 0 {
-			t.Errorf("len(Suggestions) = %d, want 0", len(output.Suggestions))
+			t.Errorf("len(Suggestions) = %d、期待値 = 0", len(output.Suggestions))
 		}
 		if output.OpenCount != 0 {
-			t.Errorf("OpenCount = %d, want 0", output.OpenCount)
+			t.Errorf("OpenCount = %d、期待値 = 0", output.OpenCount)
 		}
 		if output.ClosedCount != 0 {
-			t.Errorf("ClosedCount = %d, want 0", output.ClosedCount)
+			t.Errorf("ClosedCount = %d、期待値 = 0", output.ClosedCount)
 		}
 		if output.Space == nil {
-			t.Error("Space should not be nil")
+			t.Error("Spaceがnil")
 		}
 		if output.Topic == nil {
-			t.Error("Topic should not be nil")
+			t.Error("Topicがnil")
 		}
 	})
 
@@ -96,22 +96,22 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			WithStatus(model.SuggestionStatusClosed).
 			Build()
 
-		// オープン表示（下書き・オープン）
+		// オープン表示 (下書き・オープン)
 		output, err := uc.Execute(context.Background(), GetSuggestionListInput{
 			SpaceIdentifier: "sug-list-space",
 			TopicNumber:     1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if len(output.Suggestions) != 2 {
-			t.Errorf("len(Suggestions) = %d, want 2", len(output.Suggestions))
+			t.Errorf("len(Suggestions) = %d、期待値 = 2", len(output.Suggestions))
 		}
 		if output.OpenCount != 2 {
-			t.Errorf("OpenCount = %d, want 2", output.OpenCount)
+			t.Errorf("OpenCount = %d、期待値 = 2", output.OpenCount)
 		}
 		if output.ClosedCount != 1 {
-			t.Errorf("ClosedCount = %d, want 1", output.ClosedCount)
+			t.Errorf("ClosedCount = %d、期待値 = 1", output.ClosedCount)
 		}
 	})
 
@@ -121,15 +121,15 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			TopicNumber:     1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		user, ok := output.UserMap[spaceMemberID]
 		if !ok {
-			t.Fatal("UserMap should contain the creator's user info")
+			t.Fatal("UserMapに作成者のユーザー情報が含まれていない")
 		}
 		if user.Name != "提案太郎" {
-			t.Errorf("user.Name = %q, want %q", user.Name, "提案太郎")
+			t.Errorf("user.Name = %q、期待値 = %q", user.Name, "提案太郎")
 		}
 	})
 
@@ -139,10 +139,10 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			TopicNumber:     1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for nonexistent space")
+			t.Error("存在しないスペースなのに出力がnilではない")
 		}
 	})
 
@@ -152,10 +152,10 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			TopicNumber:     999,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output != nil {
-			t.Error("output should be nil for nonexistent topic")
+			t.Error("存在しないトピックなのに出力がnilではない")
 		}
 	})
 
@@ -166,13 +166,13 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			UserID:          &userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if !output.CanCreateSuggestion {
-			t.Error("CanCreateSuggestion should be true for space member")
+			t.Error("スペースメンバーなのにCanCreateSuggestionがfalse")
 		}
 	})
 
@@ -189,13 +189,13 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			UserID:          &outsiderID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.CanCreateSuggestion {
-			t.Error("CanCreateSuggestion should be false for non-member")
+			t.Error("非メンバーなのにCanCreateSuggestionがtrue")
 		}
 	})
 
@@ -205,13 +205,13 @@ func TestGetSuggestionListUsecase_Execute(t *testing.T) {
 			TopicNumber:     1,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.CanCreateSuggestion {
-			t.Error("CanCreateSuggestion should be false for guest")
+			t.Error("ゲストなのにCanCreateSuggestionがtrue")
 		}
 	})
 }

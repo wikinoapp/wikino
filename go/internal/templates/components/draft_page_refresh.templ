@@ -1,0 +1,161 @@
+package components
+
+import (
+	"strconv"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// DraftPageRefreshTriggerはdraft-autosavedを受け取り、関連ページ一覧2つを再取得する。
+// 一覧のOOBスワップでリスナーが消えないよう一覧のスワップ対象の外に置く。画面の関連ページ状態は
+// 自身のURLへ埋め込まず、リクエスト時にrelatedPageStateから読むため、初回描画のあとに進めた一覧も
+// 反映される。共有hx-syncグループは手動の「もっと見る」実行中なら自動再取得を破棄し、「もっと見る」
+// 側は先行する自動再取得を置き換える。これにより古い応答を防ぎながら、利用者の明示操作を優先する。
+templ DraftPageRefreshTrigger(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32, state viewmodel.PageLinkState) {
+	if viewmodel.NormalizePageLinkContext(string(state.Context)).IsEdit() {
+		<div
+			id={ draftPageRefreshTriggerID }
+			hidden
+			hx-get={ string(templates.PageDraftPagePath(spaceIdentifier, pageNumber)) }
+			hx-trigger="draft-autosaved from:window"
+			hx-swap="none"
+			hx-include={ relatedPageStateSelector }
+			hx-sync={ draftRelatedPageRequestSync }
+		></div>
+		@relatedPageState(state)
+	}
+}
+
+// relatedPageStateは編集画面のページング方式と3つの関連ページ一覧の状態を保持する。各
+// 「もっと見る」リンクと下書き再取得がこれを含めるため、どのリクエストも自分が進めない一覧の状態を運ぶ。
+//
+// コンテナの中では1つの一覧が1つの要素を持ち、フラグメント応答は自分の分だけを差し替える
+// (linkPageStateOOBなどを参照)。コンテナごと差し替えると、実行が重なった2つのリクエストが互いの
+// 更新を打ち消してしまう。後に返ったほうが、もう片方が進める前に読んだ値を書き戻すためである。
+// 文脈は1回の編集画面表示中には変わらないため、OOBで差し替える必要はない。
+templ relatedPageState(state viewmodel.PageLinkState) {
+	<div id={ relatedPageStateID } hidden>
+		<input
+			id={ relatedPageContextStateID }
+			type="hidden"
+			name={ viewmodel.PageLinkContextQueryParam }
+			value={ string(viewmodel.NormalizePageLinkContext(string(state.Context))) }
+		/>
+		@linkPageState(state, false)
+		@nestedBacklinkPageState(state, false)
+		@pageBacklinkPageState(state, false)
+	</div>
+}
+
+// relatedPageStateOOBは、下書き再取得後に編集画面の全一覧状態を整合させる。単一一覧の応答と違い、
+// 再取得は3一覧すべての総件数を取得済みなので、下書き変更後も存在する範囲へ古いページ番号を安全に戻せる。
+templ relatedPageStateOOB(state viewmodel.PageLinkState) {
+	if viewmodel.NormalizePageLinkContext(string(state.Context)).IsEdit() {
+		@linkPageState(state, true)
+		@nestedBacklinkPageState(state, true)
+		@pageBacklinkPageState(state, true)
+	}
+}
+
+// linkPageStateOOBは共有状態のうちリンク一覧の分を進める。状態要素を持たない公開ページでは
+// 何も描画しない。他の2つの一覧には触れないため、本リクエストの実行中にそれらが進めた分を応答が
+// 巻き戻すことはない。
+templ linkPageStateOOB(state viewmodel.PageLinkState) {
+	if viewmodel.NormalizePageLinkContext(string(state.Context)).IsEdit() {
+		@linkPageState(state, true)
+	}
+}
+
+// nestedBacklinkPageStateOOBは、選択したカードとそのネストしたバックリンクのページを1つの
+// 要素としてまとめて進める。ページ番号だけでは、どのカードのものか分からないためである。
+templ nestedBacklinkPageStateOOB(state viewmodel.PageLinkState) {
+	if viewmodel.NormalizePageLinkContext(string(state.Context)).IsEdit() {
+		@nestedBacklinkPageState(state, true)
+	}
+}
+
+// pageBacklinkPageStateOOBは共有状態のうちページ自身のバックリンク一覧の分を進める。
+templ pageBacklinkPageStateOOB(state viewmodel.PageLinkState) {
+	if viewmodel.NormalizePageLinkContext(string(state.Context)).IsEdit() {
+		@pageBacklinkPageState(state, true)
+	}
+}
+
+// linkPageStateはリンク一覧のページを運ぶ。一覧が1ページ目にあるときも要素は描画する。OOB
+// スワップは既に存在するidしか差し替えられないためである。1ページ目の一覧は空の値を送り、Handlerは
+// これを1ページ目として読む。
+templ linkPageState(state viewmodel.PageLinkState, oob bool) {
+	<input
+		id={ linkPageStateID }
+		type="hidden"
+		name={ viewmodel.LinkPageQueryParam }
+		value={ relatedPageStateValue(state.LinkPage) }
+		if oob {
+			hx-swap-oob="outerHTML"
+		}
+	/>
+}
+
+// nestedBacklinkPageStateは、どのカードのネストしたバックリンク一覧をどこまで進めたかと、その
+// カードを含むリンク一覧のページを運ぶ。親ページはリンク一覧自身のページの側ではなくここに置く。
+// 選択カードがどこに存在するかを表す値であり、この状態から組み立てるフルページURLがカードを成立
+// させるために描画しなければならないページだからである。
+templ nestedBacklinkPageState(state viewmodel.PageLinkState, oob bool) {
+	<span
+		id={ nestedBacklinkStateID }
+		if oob {
+			hx-swap-oob="outerHTML"
+		}
+	>
+		<input
+			type="hidden"
+			name={ viewmodel.LinkedPageNumberQueryParam }
+			value={ nestedBacklinkStateValue(state, state.LinkedPageNumber) }
+		/>
+		<input
+			type="hidden"
+			name={ viewmodel.LinkedBacklinkPageQueryParam }
+			value={ nestedBacklinkStateValue(state, state.LinkedBacklinkPage) }
+		/>
+		<input
+			type="hidden"
+			name={ viewmodel.LinkedPageParentPageQueryParam }
+			value={ nestedBacklinkStateValue(state, state.NestedBacklinkLinkPage()) }
+		/>
+	</span>
+}
+
+// pageBacklinkPageStateはページ自身のバックリンク一覧のページを運ぶ。
+templ pageBacklinkPageState(state viewmodel.PageLinkState, oob bool) {
+	<input
+		id={ pageBacklinkStateID }
+		type="hidden"
+		name={ viewmodel.PageBacklinkPageQueryParam }
+		value={ relatedPageStateValue(state.PageBacklinkPage) }
+		if oob {
+			hx-swap-oob="outerHTML"
+		}
+	/>
+}
+
+// relatedPageStateValueは一覧のページを描画する。1ページ目は空にして、通常のリクエストを
+// 短いままに保つ。
+func relatedPageStateValue(page int32) string {
+	if page <= 1 {
+		return ""
+	}
+
+	return strconv.Itoa(int(page))
+}
+
+// nestedBacklinkStateValueはネストしたバックリンク状態の1つを描画する。カードが選ばれていて、
+// かつその一覧が2ページ目以降にある場合を除き、すべて空にする。1ページ目のままのカード番号は、
+// 画面が実際には開いていないカードを選んでしまうためである。
+func nestedBacklinkStateValue(state viewmodel.PageLinkState, value int32) string {
+	if !state.HasNestedBacklinkState() {
+		return ""
+	}
+
+	return strconv.Itoa(int(value))
+}

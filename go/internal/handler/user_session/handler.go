@@ -1,4 +1,4 @@
-// Package user_session はユーザーセッション（ログアウト）のハンドラーを提供します
+// Package user_sessionはユーザーセッション (ログアウト) のハンドラーを提供します
 package user_session
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はユーザーセッションハンドラー
+// Handlerはユーザーセッションハンドラー
 type Handler struct {
 	cfg                 *config.Config
 	sessionMgr          *session.Manager
@@ -15,7 +15,7 @@ type Handler struct {
 	deleteUserSessionUC *usecase.DeleteUserSessionUsecase
 }
 
-// NewHandler は新しいユーザーセッションハンドラーを作成します
+// NewHandlerは新しいユーザーセッションハンドラーを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,

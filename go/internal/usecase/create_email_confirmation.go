@@ -1,4 +1,4 @@
-// Package usecase はアプリケーションのユースケース（ビジネスロジック）を提供します
+// Package usecaseはアプリケーションのユースケース (ビジネスロジック) を提供します
 package usecase
 
 import (
@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateEmailConfirmationUsecase はメール確認コード作成ユースケース
+// CreateEmailConfirmationUsecaseはメール確認コード作成ユースケース
 type CreateEmailConfirmationUsecase struct {
 	cfg                   *config.Config
 	emailConfirmationRepo *repository.EmailConfirmationRepository
@@ -24,7 +24,7 @@ type CreateEmailConfirmationUsecase struct {
 	createValidator       *validator.EmailConfirmationCreateValidator
 }
 
-// NewCreateEmailConfirmationUsecase は CreateEmailConfirmationUsecase を生成する
+// NewCreateEmailConfirmationUsecaseはCreateEmailConfirmationUsecaseを生成する
 func NewCreateEmailConfirmationUsecase(
 	cfg *config.Config,
 	emailConfirmationRepo *repository.EmailConfirmationRepository,
@@ -39,19 +39,19 @@ func NewCreateEmailConfirmationUsecase(
 	}
 }
 
-// CreateEmailConfirmationInput はメール確認コード送信の入力パラメータ
+// CreateEmailConfirmationInputはメール確認コード送信の入力パラメータ
 type CreateEmailConfirmationInput struct {
 	Email  string
 	Event  model.EmailConfirmationEvent
 	Locale string
 }
 
-// CreateEmailConfirmationOutput はメール確認コード送信の出力パラメータ
+// CreateEmailConfirmationOutputはメール確認コード送信の出力パラメータ
 type CreateEmailConfirmationOutput struct {
 	EmailConfirmationID string
 }
 
-// Execute はメール確認コードを生成してメール送信ジョブをエンキューする
+// Executeはメール確認コードを生成してメール送信ジョブをエンキューする
 func (uc *CreateEmailConfirmationUsecase) Execute(ctx context.Context, input CreateEmailConfirmationInput) (*CreateEmailConfirmationOutput, error) {
 	// 1. バリデーション
 	if err := uc.createValidator.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
@@ -79,7 +79,7 @@ func (uc *CreateEmailConfirmationUsecase) Execute(ctx context.Context, input Cre
 		return nil, fmt.Errorf("メール確認情報の作成に失敗しました: %w", err)
 	}
 
-	// メール送信ジョブをエンキュー（テンプレートのレンダリングはWorkerで行う）
+	// メール送信ジョブをエンキュー (テンプレートのレンダリングはWorkerで行う)
 	err = uc.dispatcher.EnqueueEmailConfirmation(ctx, input.Email, code, uc.cfg.AppURL(), input.Locale)
 	if err != nil {
 		// ジョブエンキューに失敗してもコードは有効なので、エラーログを出力して続行
@@ -98,7 +98,7 @@ func (uc *CreateEmailConfirmationUsecase) Execute(ctx context.Context, input Cre
 	}, nil
 }
 
-// generateConfirmationCode は6文字のランダムな大文字英数字を生成する
+// generateConfirmationCodeは6文字のランダムな大文字英数字を生成する
 func generateConfirmationCode() (string, error) {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	code := make([]byte, 6)

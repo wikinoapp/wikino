@@ -9,13 +9,14 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/redirect"
+	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	signinpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create はログイン処理を行います (POST /sign_in)
+// Createはログイン処理を行います (POST /sign_in)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -44,7 +45,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// UseCase を実行
+	// UseCaseを実行
 	output, err := h.signInUC.Execute(ctx, usecase.CreateSignInInput{
 		Email:     email,
 		Password:  password,
@@ -59,7 +60,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// 二要素認証が必要な場合
 	if output.TwoFactorRequired {
 		h.sessionMgr.SetPendingUserCookie(w, output.UserID)
-		http.Redirect(w, r, "/sign_in/two_factor/new", http.StatusFound)
+
+		// backパラメータは安全な遷移先のときだけ二要素認証の画面へ引き継ぐ。
+		// どのみち捨てられる値がURLに載らないようにするためである。
+		twoFactorBackURL := ""
+		if redirect.ValidateBackURL(backURL) {
+			twoFactorBackURL = backURL
+		}
+
+		http.Redirect(w, r, string(templates.SignInTwoFactorNewPath(twoFactorBackURL)), http.StatusFound)
 		return
 	}
 
@@ -69,7 +78,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// フラッシュメッセージを設定
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_sign_in_success"))
 
-	// リダイレクト先を決定（backパラメータが有効な場合はそのURLへ、それ以外はホームへ）
+	// リダイレクト先を決定 (backパラメータが有効な場合はそのURLへ、それ以外はホームへ)
 	redirectURL := redirect.GetSafeRedirectURL(backURL)
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
@@ -86,14 +95,15 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
-// renderSignInForm はログインフォームをエラー付きでレンダリングします
+// renderSignInFormはログインフォームをエラー付きでレンダリングします
 func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, ve *model.ValidationError, email string, backURL string) {
 	ctx := r.Context()
 
 	csrfToken := middleware.GetCSRFTokenFromContext(ctx)
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_in_title")
+	meta.SetTitle(ctx, "sign_in_new_title")
+	meta.OGURL = h.cfg.AppURL() + string(templates.SignInPath())
 
 	content := signinpages.New(signinpages.NewPageData{
 		CSRFToken:        csrfToken,
@@ -102,7 +112,7 @@ func (h *Handler) renderSignInForm(w http.ResponseWriter, r *http.Request, ve *m
 		BackURL:          backURL,
 	})
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	// バリデーションエラー時は422 Unprocessable Entityを返す
 	w.WriteHeader(http.StatusUnprocessableEntity)
 
 	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)

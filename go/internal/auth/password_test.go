@@ -53,7 +53,7 @@ func TestVerifyPassword(t *testing.T) {
 			t.Parallel()
 			got := VerifyPassword(tt.hashedPassword, tt.plainPassword)
 			if got != tt.want {
-				t.Errorf("VerifyPassword() = %v, want %v", got, tt.want)
+				t.Errorf("VerifyPassword() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
@@ -119,13 +119,13 @@ func TestHashPassword(t *testing.T) {
 			t.Parallel()
 			hash, err := HashPassword(tt.password)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("HashPassword() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("HashPassword()のエラー = %v、wantErr = %v", err, tt.wantErr)
 				return
 			}
 			if !tt.wantErr {
 				// ハッシュが生成されていることを確認
 				if hash == "" {
-					t.Error("HashPassword() returned empty hash")
+					t.Error("HashPassword()が空のハッシュを返した")
 				}
 				// 生成したハッシュが検証できることを確認
 				if !VerifyPassword(hash, tt.password) {
@@ -139,7 +139,7 @@ func TestHashPassword(t *testing.T) {
 func TestHashPassword_UniqueHashes(t *testing.T) {
 	t.Parallel()
 
-	// 同じパスワードでも異なるハッシュが生成されることを確認（bcryptのソルト機能）
+	// 同じパスワードでも異なるハッシュが生成されることを確認 (bcryptのソルト機能)
 	password := "samepassword"
 	hash1, err := HashPassword(password)
 	if err != nil {
@@ -152,7 +152,7 @@ func TestHashPassword_UniqueHashes(t *testing.T) {
 	}
 
 	if hash1 == hash2 {
-		t.Error("同じパスワードで同じハッシュが生成された（ソルトが機能していない）")
+		t.Error("同じパスワードで同じハッシュが生成された (ソルトが機能していない)")
 	}
 
 	// 両方のハッシュで元のパスワードが検証できることを確認
@@ -189,7 +189,7 @@ func TestValidatePasswordStrength(t *testing.T) {
 			wantErr:  nil,
 		},
 		{
-			name:     "印字可能ASCIIの境界文字を含む (0x21 と 0x7E)",
+			name:     "印字可能ASCIIの境界文字を含む (0x21と0x7E)",
 			password: "!~!~!~!~",
 			wantErr:  nil,
 		},
@@ -276,7 +276,7 @@ func TestValidatePasswordStrength(t *testing.T) {
 			t.Parallel()
 			err := ValidatePasswordStrength(tt.password)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("ValidatePasswordStrength() error = %v, want %v", err, tt.wantErr)
+				t.Errorf("ValidatePasswordStrength()のエラー = %v、期待値 = %v", err, tt.wantErr)
 			}
 		})
 	}

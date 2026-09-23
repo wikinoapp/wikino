@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateSuggestionUsecase は編集提案作成ユースケース
+// CreateSuggestionUsecaseは編集提案作成ユースケース
 type CreateSuggestionUsecase struct {
 	db                         *sql.DB
 	spaceRepo                  *repository.SpaceRepository
@@ -26,7 +26,7 @@ type CreateSuggestionUsecase struct {
 	createValidator            *validator.SuggestionCreateValidator
 }
 
-// NewCreateSuggestionUsecase は CreateSuggestionUsecase を生成する
+// NewCreateSuggestionUsecaseはCreateSuggestionUsecaseを生成する
 func NewCreateSuggestionUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -55,7 +55,7 @@ func NewCreateSuggestionUsecase(
 	}
 }
 
-// CreateSuggestionInput は編集提案作成の入力パラメータ
+// CreateSuggestionInputは編集提案作成の入力パラメータ
 type CreateSuggestionInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	TopicNumber     int32
@@ -65,12 +65,12 @@ type CreateSuggestionInput struct {
 	DraftPageIDs    []model.DraftPageID
 }
 
-// CreateSuggestionOutput は編集提案作成の出力パラメータ
+// CreateSuggestionOutputは編集提案作成の出力パラメータ
 type CreateSuggestionOutput struct {
 	Suggestion *model.Suggestion
 }
 
-// Execute は編集提案を作成する
+// Executeは編集提案を作成する
 func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSuggestionInput) (*CreateSuggestionOutput, error) {
 	// 1. データ取得
 	space, spaceMember, topic, err := uc.fetchData(ctx, input)
@@ -96,13 +96,13 @@ func (uc *CreateSuggestionUsecase) Execute(ctx context.Context, input CreateSugg
 		return nil, err
 	}
 
-	// 4. ビジネスロジック（トランザクション前）
+	// 4. ビジネスロジック (トランザクション前)
 	pageRevisions, err := fetchLatestPageRevisions(ctx, draftPages, space.ID, uc.pageRevisionRepo)
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. 永続化（トランザクション）
+	// 5. 永続化 (トランザクション)
 	return uc.createSuggestion(ctx, createSuggestionInput{
 		SpaceID:       space.ID,
 		TopicID:       topic.ID,
@@ -173,7 +173,7 @@ func (uc *CreateSuggestionUsecase) authorize(ctx context.Context, space *model.S
 	return nil
 }
 
-// createSuggestionInput はトランザクション内で編集提案を作成するための入力パラメータ
+// createSuggestionInputはトランザクション内で編集提案を作成するための入力パラメータ
 type createSuggestionInput struct {
 	SpaceID       model.SpaceID
 	TopicID       model.TopicID
@@ -184,7 +184,7 @@ type createSuggestionInput struct {
 	PageRevisions map[model.PageID]*model.PageRevision
 }
 
-// createSuggestion はトランザクション内で編集提案を作成する
+// createSuggestionはトランザクション内で編集提案を作成する
 func (uc *CreateSuggestionUsecase) createSuggestion(ctx context.Context, input createSuggestionInput) (*CreateSuggestionOutput, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {

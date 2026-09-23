@@ -87,7 +87,7 @@ test.describe("Wikiリンク補完", () => {
     // 補完候補が閉じること
     await expect(page.locator(".cm-tooltip-autocomplete")).toBeHidden();
 
-    // テキストが挿入されていること（[[トピック名/ページタイトル の形式）
+    // テキストが挿入されていること ([[トピック名/ページタイトル の形式)
     const textarea = page.locator("#page_body");
     const value = await textarea.inputValue();
     expect(value).toContain("[[TestTopic/Page");

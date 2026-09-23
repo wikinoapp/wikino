@@ -2,139 +2,145 @@ package model
 
 import "strconv"
 
-// SpaceID はスペースのID型
+// SpaceIDはスペースのID型
 type SpaceID string
 
-// TopicID はトピックのID型
+// TopicIDはトピックのID型
 type TopicID string
 
-// PageID はページのID型
+// PageIDはページのID型
 type PageID string
 
-// SpaceMemberID はスペースメンバーのID型
+// SpaceMemberIDはスペースメンバーのID型
 type SpaceMemberID string
 
-// TopicMemberID はトピックメンバーのID型
+// TopicMemberIDはトピックメンバーのID型
 type TopicMemberID string
 
-// DraftPageID は下書きページのID型
+// DraftPageIDは下書きページのID型
 type DraftPageID string
 
-// PageRevisionID はページリビジョンのID型
+// PageRevisionIDはページリビジョンのID型
 type PageRevisionID string
 
-// DraftPageRevisionID は下書きページリビジョンのID型
+// DraftPageRevisionIDは下書きページリビジョンのID型
 type DraftPageRevisionID string
 
-// PageEditorID はページ編集者のID型
+// PageEditorIDはページ編集者のID型
 type PageEditorID string
 
-// PageAttachmentReferenceID はページ添付ファイル参照のID型
+// PageAttachmentReferenceIDはページ添付ファイル参照のID型
 type PageAttachmentReferenceID string
 
-// UserID はユーザーのID型
+// UserIDはユーザーのID型
 type UserID string
 
-// AttachmentID は添付ファイルのID型
+// AttachmentIDは添付ファイルのID型
 type AttachmentID string
 
-// SuggestionID は編集提案のID型
+// SuggestionIDは編集提案のID型
 type SuggestionID string
 
-// SuggestionPageID は編集提案ページのID型
+// SuggestionPageIDは編集提案ページのID型
 type SuggestionPageID string
 
-// SuggestionPageRevisionID は編集提案ページリビジョンのID型
+// SuggestionPageRevisionIDは編集提案ページリビジョンのID型
 type SuggestionPageRevisionID string
 
-// SuggestionCommentID は編集提案コメントのID型
+// SuggestionCommentIDは編集提案コメントのID型
 type SuggestionCommentID string
 
-// FeatureFlagID はフィーチャーフラグのID型
+// FeatureFlagIDはフィーチャーフラグのID型
 type FeatureFlagID string
 
-// FeatureFlagName はフィーチャーフラグ名の型
+// FeatureFlagNameはフィーチャーフラグ名の型
 type FeatureFlagName string
 
-// SpaceIdentifier はスペース識別子の型
+// ExportIDはスペースのエクスポートのID型
+type ExportID string
+
+// SpaceIdentifierはスペース識別子の型
 type SpaceIdentifier string
 
-// PageNumber はページ番号の型
+// PageNumberはページ番号の型
 type PageNumber int32
 
-// SuggestionNumber は編集提案番号の型
+// SuggestionNumberは編集提案番号の型
 type SuggestionNumber int32
 
-// String はSpaceIDを文字列に変換する
+// StringはSpaceIDを文字列に変換する
 func (id SpaceID) String() string { return string(id) }
 
-// String はTopicIDを文字列に変換する
+// StringはTopicIDを文字列に変換する
 func (id TopicID) String() string { return string(id) }
 
-// String はPageIDを文字列に変換する
+// StringはPageIDを文字列に変換する
 func (id PageID) String() string { return string(id) }
 
-// String はSpaceMemberIDを文字列に変換する
+// StringはSpaceMemberIDを文字列に変換する
 func (id SpaceMemberID) String() string { return string(id) }
 
-// String はTopicMemberIDを文字列に変換する
+// StringはTopicMemberIDを文字列に変換する
 func (id TopicMemberID) String() string { return string(id) }
 
-// String はDraftPageIDを文字列に変換する
+// StringはDraftPageIDを文字列に変換する
 func (id DraftPageID) String() string { return string(id) }
 
-// String はPageRevisionIDを文字列に変換する
+// StringはPageRevisionIDを文字列に変換する
 func (id PageRevisionID) String() string { return string(id) }
 
-// String はDraftPageRevisionIDを文字列に変換する
+// StringはDraftPageRevisionIDを文字列に変換する
 func (id DraftPageRevisionID) String() string { return string(id) }
 
-// String はPageEditorIDを文字列に変換する
+// StringはPageEditorIDを文字列に変換する
 func (id PageEditorID) String() string { return string(id) }
 
-// String はPageAttachmentReferenceIDを文字列に変換する
+// StringはPageAttachmentReferenceIDを文字列に変換する
 func (id PageAttachmentReferenceID) String() string { return string(id) }
 
-// String はUserIDを文字列に変換する
+// StringはUserIDを文字列に変換する
 func (id UserID) String() string { return string(id) }
 
-// String はAttachmentIDを文字列に変換する
+// StringはAttachmentIDを文字列に変換する
 func (id AttachmentID) String() string { return string(id) }
 
-// String はSuggestionIDを文字列に変換する
+// StringはSuggestionIDを文字列に変換する
 func (id SuggestionID) String() string { return string(id) }
 
-// String はSuggestionPageIDを文字列に変換する
+// StringはSuggestionPageIDを文字列に変換する
 func (id SuggestionPageID) String() string { return string(id) }
 
-// String はSuggestionPageRevisionIDを文字列に変換する
+// StringはSuggestionPageRevisionIDを文字列に変換する
 func (id SuggestionPageRevisionID) String() string { return string(id) }
 
-// String はSuggestionCommentIDを文字列に変換する
+// StringはSuggestionCommentIDを文字列に変換する
 func (id SuggestionCommentID) String() string { return string(id) }
 
-// String はFeatureFlagIDを文字列に変換する
+// StringはFeatureFlagIDを文字列に変換する
 func (id FeatureFlagID) String() string { return string(id) }
 
-// String はFeatureFlagNameを文字列に変換する
+// StringはFeatureFlagNameを文字列に変換する
 func (n FeatureFlagName) String() string { return string(n) }
 
-// String はSpaceIdentifierを文字列に変換する
+// StringはExportIDを文字列に変換する
+func (id ExportID) String() string { return string(id) }
+
+// StringはSpaceIdentifierを文字列に変換する
 func (s SpaceIdentifier) String() string { return string(s) }
 
-// String はPageNumberを文字列に変換する
+// StringはPageNumberを文字列に変換する
 func (n PageNumber) String() string { return strconv.FormatInt(int64(n), 10) }
 
-// SuggestionCommentNumber は編集提案コメント番号の型
+// SuggestionCommentNumberは編集提案コメント番号の型
 type SuggestionCommentNumber int32
 
-// String はSuggestionNumberを文字列に変換する
+// StringはSuggestionNumberを文字列に変換する
 func (n SuggestionNumber) String() string { return strconv.FormatInt(int64(n), 10) }
 
-// String はSuggestionCommentNumberを文字列に変換する
+// StringはSuggestionCommentNumberを文字列に変換する
 func (n SuggestionCommentNumber) String() string { return strconv.FormatInt(int64(n), 10) }
 
-// TopicIDsToStrings はTopicIDスライスをstringスライスに変換する
+// TopicIDsToStringsはTopicIDスライスをstringスライスに変換する
 func TopicIDsToStrings(ids []TopicID) []string {
 	s := make([]string, len(ids))
 	for i, id := range ids {
@@ -143,7 +149,7 @@ func TopicIDsToStrings(ids []TopicID) []string {
 	return s
 }
 
-// PageIDsToStrings はPageIDスライスをstringスライスに変換する
+// PageIDsToStringsはPageIDスライスをstringスライスに変換する
 func PageIDsToStrings(ids []PageID) []string {
 	s := make([]string, len(ids))
 	for i, id := range ids {
@@ -152,7 +158,7 @@ func PageIDsToStrings(ids []PageID) []string {
 	return s
 }
 
-// SpaceMemberIDsToStrings はSpaceMemberIDスライスをstringスライスに変換する
+// SpaceMemberIDsToStringsはSpaceMemberIDスライスをstringスライスに変換する
 func SpaceMemberIDsToStrings(ids []SpaceMemberID) []string {
 	s := make([]string, len(ids))
 	for i, id := range ids {
@@ -161,8 +167,7 @@ func SpaceMemberIDsToStrings(ids []SpaceMemberID) []string {
 	return s
 }
 
-// SpaceIDsToStrings converts a slice of SpaceID to a slice of string.
-// [Ja] SpaceIDsToStrings は SpaceID スライスを string スライスに変換する。
+// SpaceIDsToStringsはSpaceIDスライスをstringスライスに変換する。
 func SpaceIDsToStrings(ids []SpaceID) []string {
 	s := make([]string, len(ids))
 	for i, id := range ids {
@@ -171,7 +176,7 @@ func SpaceIDsToStrings(ids []SpaceID) []string {
 	return s
 }
 
-// UserIDsToStrings はUserIDスライスをstringスライスに変換する
+// UserIDsToStringsはUserIDスライスをstringスライスに変換する
 func UserIDsToStrings(ids []UserID) []string {
 	s := make([]string, len(ids))
 	for i, id := range ids {
@@ -180,7 +185,7 @@ func UserIDsToStrings(ids []UserID) []string {
 	return s
 }
 
-// StringsToPageIDs はstringスライスをPageIDスライスに変換する
+// StringsToPageIDsはstringスライスをPageIDスライスに変換する
 func StringsToPageIDs(ss []string) []PageID {
 	ids := make([]PageID, len(ss))
 	for i, s := range ss {

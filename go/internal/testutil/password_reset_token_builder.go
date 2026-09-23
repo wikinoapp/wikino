@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// PasswordResetTokenBuilder はパスワードリセットトークンテストデータのビルダー
+// PasswordResetTokenBuilderはパスワードリセットトークンテストデータのビルダー
 type PasswordResetTokenBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -20,7 +20,7 @@ type PasswordResetTokenBuilder struct {
 	usedAt      *time.Time
 }
 
-// NewPasswordResetTokenBuilder は PasswordResetTokenBuilder を生成します
+// NewPasswordResetTokenBuilderはPasswordResetTokenBuilderを生成します
 func NewPasswordResetTokenBuilder(t *testing.T, tx *sql.Tx) *PasswordResetTokenBuilder {
 	t.Helper()
 	return &PasswordResetTokenBuilder{
@@ -31,36 +31,36 @@ func NewPasswordResetTokenBuilder(t *testing.T, tx *sql.Tx) *PasswordResetTokenB
 	}
 }
 
-// WithUserID はユーザーIDを設定します
+// WithUserIDはユーザーIDを設定します
 func (b *PasswordResetTokenBuilder) WithUserID(userID model.UserID) *PasswordResetTokenBuilder {
 	b.userID = userID
 	return b
 }
 
-// WithTokenDigest はトークンダイジェストを設定します
+// WithTokenDigestはトークンダイジェストを設定します
 func (b *PasswordResetTokenBuilder) WithTokenDigest(tokenDigest string) *PasswordResetTokenBuilder {
 	b.tokenDigest = tokenDigest
 	return b
 }
 
-// WithExpiresAt は有効期限を設定します
+// WithExpiresAtは有効期限を設定します
 func (b *PasswordResetTokenBuilder) WithExpiresAt(expiresAt time.Time) *PasswordResetTokenBuilder {
 	b.expiresAt = expiresAt
 	return b
 }
 
-// WithUsedAt は使用日時を設定します
+// WithUsedAtは使用日時を設定します
 func (b *PasswordResetTokenBuilder) WithUsedAt(usedAt time.Time) *PasswordResetTokenBuilder {
 	b.usedAt = &usedAt
 	return b
 }
 
-// Build はパスワードリセットトークンを作成し、IDを返します
+// Buildはパスワードリセットトークンを作成し、IDを返します
 func (b *PasswordResetTokenBuilder) Build() string {
 	b.t.Helper()
 
 	if b.userID == "" {
-		b.t.Fatal("userID is required. Use WithUserID() to set it.")
+		b.t.Fatal("userIDが設定されていません。WithUserID()を呼んでください")
 	}
 
 	now := time.Now()
@@ -91,12 +91,12 @@ func (b *PasswordResetTokenBuilder) Build() string {
 	return id
 }
 
-// BuildUsed は使用済みのパスワードリセットトークンを作成し、IDを返します
+// BuildUsedは使用済みのパスワードリセットトークンを作成し、IDを返します
 func (b *PasswordResetTokenBuilder) BuildUsed() string {
 	b.t.Helper()
 
 	if b.userID == "" {
-		b.t.Fatal("userID is required. Use WithUserID() to set it.")
+		b.t.Fatal("userIDが設定されていません。WithUserID()を呼んでください")
 	}
 
 	now := time.Now()
@@ -115,7 +115,7 @@ func (b *PasswordResetTokenBuilder) BuildUsed() string {
 	return id
 }
 
-// PasswordResetTokenBuilderDB はDBを直接使用するパスワードリセットトークンテストデータのビルダー
+// PasswordResetTokenBuilderDBはDBを直接使用するパスワードリセットトークンテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type PasswordResetTokenBuilderDB struct {
 	t  *testing.T
@@ -127,7 +127,7 @@ type PasswordResetTokenBuilderDB struct {
 	usedAt      *time.Time
 }
 
-// NewPasswordResetTokenBuilderDB は PasswordResetTokenBuilderDB を生成します
+// NewPasswordResetTokenBuilderDBはPasswordResetTokenBuilderDBを生成します
 func NewPasswordResetTokenBuilderDB(t *testing.T, db *sql.DB) *PasswordResetTokenBuilderDB {
 	t.Helper()
 	return &PasswordResetTokenBuilderDB{
@@ -138,36 +138,36 @@ func NewPasswordResetTokenBuilderDB(t *testing.T, db *sql.DB) *PasswordResetToke
 	}
 }
 
-// WithUserID はユーザーIDを設定します
+// WithUserIDはユーザーIDを設定します
 func (b *PasswordResetTokenBuilderDB) WithUserID(userID model.UserID) *PasswordResetTokenBuilderDB {
 	b.userID = userID
 	return b
 }
 
-// WithTokenDigest はトークンダイジェストを設定します
+// WithTokenDigestはトークンダイジェストを設定します
 func (b *PasswordResetTokenBuilderDB) WithTokenDigest(tokenDigest string) *PasswordResetTokenBuilderDB {
 	b.tokenDigest = tokenDigest
 	return b
 }
 
-// WithExpiresAt は有効期限を設定します
+// WithExpiresAtは有効期限を設定します
 func (b *PasswordResetTokenBuilderDB) WithExpiresAt(expiresAt time.Time) *PasswordResetTokenBuilderDB {
 	b.expiresAt = expiresAt
 	return b
 }
 
-// WithUsedAt は使用日時を設定します
+// WithUsedAtは使用日時を設定します
 func (b *PasswordResetTokenBuilderDB) WithUsedAt(usedAt time.Time) *PasswordResetTokenBuilderDB {
 	b.usedAt = &usedAt
 	return b
 }
 
-// Build はパスワードリセットトークンを作成し、IDを返します
+// Buildはパスワードリセットトークンを作成し、IDを返します
 func (b *PasswordResetTokenBuilderDB) Build() string {
 	b.t.Helper()
 
 	if b.userID == "" {
-		b.t.Fatal("userID is required. Use WithUserID() to set it.")
+		b.t.Fatal("userIDが設定されていません。WithUserID()を呼んでください")
 	}
 
 	now := time.Now()
@@ -198,12 +198,12 @@ func (b *PasswordResetTokenBuilderDB) Build() string {
 	return id
 }
 
-// BuildUsed は使用済みのパスワードリセットトークンを作成し、IDを返します
+// BuildUsedは使用済みのパスワードリセットトークンを作成し、IDを返します
 func (b *PasswordResetTokenBuilderDB) BuildUsed() string {
 	b.t.Helper()
 
 	if b.userID == "" {
-		b.t.Fatal("userID is required. Use WithUserID() to set it.")
+		b.t.Fatal("userIDが設定されていません。WithUserID()を呼んでください")
 	}
 
 	now := time.Now()

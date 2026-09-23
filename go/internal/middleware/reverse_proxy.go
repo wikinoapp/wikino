@@ -18,17 +18,17 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
-// DeviceTokenCookieName はデバイス（ブラウザ）識別用のCookieキー名
+// DeviceTokenCookieNameはデバイス (ブラウザ) 識別用のCookieキー名
 // ログイン状態に関わらずデバイス単位でサイト訪問者を識別するために使用する
 const DeviceTokenCookieName = "device_token"
 
-// featureFlagChecker はフィーチャーフラグの有効判定を行うインターフェース
-// repository.FeatureFlagRepository がこのインターフェースを満たす
+// featureFlagCheckerはフィーチャーフラグの有効判定を行うインターフェース
+// repository.FeatureFlagRepositoryがこのインターフェースを満たす
 type featureFlagChecker interface {
 	IsEnabledForDevice(ctx context.Context, deviceToken string, sessionToken string, name model.FeatureFlagName) (bool, error)
 }
 
-// featureFlaggedPattern はフィーチャーフラグで制御するURLパターンを定義
+// featureFlaggedPatternはフィーチャーフラグで制御するURLパターンを定義
 type featureFlaggedPattern struct {
 	pattern *regexp.Regexp
 	flag    model.FeatureFlagName
@@ -39,7 +39,7 @@ type featureFlaggedPattern struct {
 // パターンを追加するには、このスライスに要素を追加する
 var featureFlaggedPatterns = []featureFlaggedPattern{}
 
-// ReverseProxyMiddleware はRails版へのリバースプロキシミドルウェア
+// ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
 	railsURL        *url.URL
 	proxy           *httputil.ReverseProxy
@@ -47,13 +47,13 @@ type ReverseProxyMiddleware struct {
 	featureFlagRepo featureFlagChecker
 }
 
-// Go版で処理するパス（ホワイトリスト）
+// Go版で処理するパス (ホワイトリスト)
 // これらのパスはRails版にプロキシせず、Go版のハンドラーで処理する
 //
 // 3種類のマッチング方式：
-// - 完全一致（exactPaths）: パスが完全に一致する場合のみマッチ
-// - プレフィックス一致（prefixPaths）: パスが指定した文字列で始まる場合にマッチ
-// - 正規表現（goHandledRegexPatterns）: 動的セグメントやメソッド制限が必要なパスに使用
+// - 完全一致 (exactPaths): パスが完全に一致する場合のみマッチ
+// - プレフィックス一致 (prefixPaths): パスが指定した文字列で始まる場合にマッチ
+// - 正規表現 (goHandledRegexPatterns): 動的セグメントやメソッド制限が必要なパスに使用
 var (
 	// 完全一致でチェックするパス
 	// "/" をプレフィックス一致に追加すると全パスがマッチしてしまうため、完全一致で処理する
@@ -65,7 +65,7 @@ var (
 
 	// プレフィックス一致でチェックするパス
 	goHandledPrefixPaths = []string{
-		"/static",                          // 静的ファイル（CSS、JS、画像など）
+		"/static",                          // 静的ファイル (CSS、JS、画像など)
 		"/health",                          // ヘルスチェックエンドポイント
 		"/sign_in",                         // ログインページ・処理
 		"/sign_up",                         // サインアップページ
@@ -83,62 +83,70 @@ var (
 	}
 )
 
-// goHandledPattern はGo版で常に処理するURLパターンを定義（正規表現 + メソッドフィルタ）
+// goHandledPatternはGo版で常に処理するURLパターンを定義 (正規表現 + メソッドフィルタ)
 type goHandledPattern struct {
 	pattern *regexp.Regexp
 	methods []string // nilまたは空なら全メソッドにマッチ
 }
 
-// Go版で処理するURLパターン（正規表現マッチング）
-// プレフィックス一致では表現できないパス（動的セグメントやメソッド制限が必要なパス）に使用する
+// Go版で処理するURLパターン (正規表現マッチング)
+// プレフィックス一致では表現できないパス (動的セグメントやメソッド制限が必要なパス) に使用する
 var goHandledRegexPatterns = []goHandledPattern{
-	// Space detail page (GET /s/:identifier). The trailing "$" keeps this from
-	// matching sub-paths such as /s/:id/topics/..., which are matched by their
-	// own patterns below.
-	//
-	// [Ja] スペース詳細画面 (GET /s/:identifier)。末尾の "$" により
+	// スペース詳細画面 (GET /s/:identifier)。末尾の "$" により
 	// /s/:id/topics/... などのサブパスにはマッチさせず、それらは
 	// 下記の各パターンで処理する。
 	{pattern: regexp.MustCompile(`^/s/[^/]+$`), methods: []string{http.MethodGet}},
+	// トピックの作成。フォーム (GET・HEAD /s/:identifier/topics/new) と作成処理 (POST
+	// /s/:identifier/topics)。それぞれGoルートが応答するメソッドに限定し、他のメソッドは
+	// 従来どおりRails版へ届くようにする。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
+	// トピックの一般設定。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
+	// パンくずが戻る設定画面を含め、トピック設定の残りは従来どおりRails版へ届く。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/general$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
+	// ページ新規作成の入口 (GET /s/:identifier/topics/:number/pages/new)。ページを作成して
+	// 編集画面へリダイレクトする。GoルートはGETのみなのでメソッドを限定し、他のメソッドは
+	// 従来どおりRails版へ届くようにする。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/pages/new$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/suggestions/\d+`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/edit$`)},
-	// Preview fragment (POST /s/:identifier/pages/:number/preview). The Go route is
-	// POST-only, so restrict the method; otherwise the request falls through to Rails,
-	// which has no such route and returns a RoutingError.
-	//
-	// [Ja] プレビュー用フラグメント (POST /s/:identifier/pages/:number/preview)。Go ルートは
-	// POST のみなのでメソッドを限定する。限定しないとリクエストが Rails に転送され、Rails には
-	// このルートが無いため RoutingError になる。
+	// プレビュー用フラグメント (POST /s/:identifier/pages/:number/preview)。Goルートは
+	// POSTのみなのでメソッドを限定する。限定しないとリクエストがRailsに転送され、Railsには
+	// このルートが無いためRoutingErrorになる。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/preview$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revision$`)},
-	// Draft revision diff fragment (GET) and restore (POST). These plural + ID routes back the
-	// edit-history modal: show returns the diff fragment, restore reverts the draft to that
-	// revision. The Go routes are GET-only / POST-only respectively, so restrict the methods to
-	// match (mirroring the preview pattern above); otherwise the request falls through to Rails,
-	// which has no such route and returns a RoutingError.
-	//
-	// [Ja] 下書きリビジョンの差分フラグメント (GET) と復元 (POST)。これら複数形 + ID のルートは
-	// 編集履歴モーダルを支える。show は差分フラグメントを返し、restore は下書きをそのリビジョンへ
-	// 戻す。Go ルートはそれぞれ GET のみ・POST のみなので、上のプレビューパターンに揃えてメソッドを
-	// 限定する。限定しないとリクエストが Rails に転送され、Rails にはこのルートが無いため
-	// RoutingError になる。
+	// 下書きリビジョンの差分フラグメント (GET) と復元 (POST)。これら複数形 + IDのルートは
+	// 編集履歴モーダルを支える。showは差分フラグメントを返し、restoreは下書きをそのリビジョンへ
+	// 戻す。GoルートはそれぞれGETのみ・POSTのみなので、上のプレビューパターンに揃えてメソッドを
+	// 限定する。限定しないとリクエストがRailsに転送され、Railsにはこのルートが無いため
+	// RoutingErrorになる。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revisions/[^/]+$`), methods: []string{http.MethodGet}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/draft_page_revisions/[^/]+/restore$`), methods: []string{http.MethodPost}},
-	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{"PATCH"}},
+	// ページ表示画面 (GETまたはHEAD) とページ更新 (PATCH。Method Override変換前はPOST)
+	// (/s/:identifier/pages/:number)。末尾の "$" により /editや /previewなどのサブパスには
+	// マッチさせず、それらは上記の各パターンで処理する。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/page_locations$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/link_list$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/links/\d+/backlink_list$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`)},
-	// /attachments/:id/og_image: 公開トピックのページから参照される添付ファイルを imgproxy 経由で配信する
-	// /attachments/:id (ダウンロードURL) は Rails が提供するため、og_image 末尾でパスを限定する
+	// ページをゴミ箱へ入れる操作 (POST /s/:identifier/pages/:number/trash)。GoルートはPOSTの
+	// みなので、上のプレビューパターンに揃えてメソッドを限定する。スペース単位のゴミ箱画面
+	// (/s/:identifier/trash) はパスが異なり、Rails版のまま残る。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`), methods: []string{http.MethodPost}},
+	// Railsのformat拡張子や連続するスラッシュも含め、エクスポート配下はGoで処理する。
+	// 未対応のパスやメソッドはGoルーターが拒否し、多重実行防止を持たない旧処理へ転送しない。
+	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+exports([/.]|$)`)},
+	// /attachments/:id/og_image: 公開トピックのページから参照される添付ファイルをimgproxy経由で配信する
+	// /attachments/:id (ダウンロードURL) はRailsが提供するため、og_image末尾でパスを限定する
 	{pattern: regexp.MustCompile(`^/attachments/[^/]+/og_image$`), methods: []string{http.MethodGet}},
 }
 
-// NewReverseProxyMiddleware は新しいReverseProxyMiddlewareを作成
+// NewReverseProxyMiddlewareは新しいReverseProxyMiddlewareを作成
 // featureFlagRepoがnilの場合、フィーチャーフラグ判定はスキップされる
 func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagRepo featureFlagChecker) (*ReverseProxyMiddleware, error) {
 	parsedURL, err := url.Parse(railsURL)
@@ -149,7 +157,7 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 	// httputil.ReverseProxyを作成
 	proxy := &httputil.ReverseProxy{}
 
-	// カスタムのHTTP Transportを設定（タイムアウトと接続プーリング）
+	// カスタムのHTTP Transportを設定 (タイムアウトと接続プーリング)
 	proxy.Transport = &http.Transport{
 		// 接続タイムアウト: 10秒
 		DialContext: (&net.Dialer{
@@ -166,44 +174,44 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
-	// プロキシの Rewrite 関数でヘッダー設定を行う
-	// httputil.ReverseProxy は Rewrite 呼び出し前に Forwarded / X-Forwarded-For /
-	// X-Forwarded-Host / X-Forwarded-Proto を Out.Header から削除するため、
-	// 元の値を参照したい場合は pr.In.Header から取得する必要がある。
+	// プロキシのRewrite関数でヘッダー設定を行う
+	// httputil.ReverseProxyはRewrite呼び出し前にForwarded / X-Forwarded-For /
+	// X-Forwarded-Host / X-Forwarded-ProtoをOut.Headerから削除するため、
+	// 元の値を参照したい場合はpr.In.Headerから取得する必要がある。
 	proxy.Rewrite = func(pr *httputil.ProxyRequest) {
-		// URL を Rails 版のホストに書き換える
-		// SetURL は Out.Host = "" をセットしてしまうため、続けて
-		// Out.Host = In.Host を設定することで、クライアントが送ってきた
-		// Host ヘッダをそのまま Rails 版に転送する挙動を維持する。
+		// URLをRails版のホストに書き換える
+		// SetURLはOut.Host = "" をセットしてしまうため、続けて
+		// Out.Host = In.Hostを設定することで、クライアントが送ってきた
+		// HostヘッダをそのままRails版に転送する挙動を維持する。
 		pr.SetURL(parsedURL)
 		pr.Out.Host = pr.In.Host
 
-		// クライアントIPアドレスを取得（CF-Connecting-IP 優先）
+		// クライアントIPアドレスを取得 (CF-Connecting-IP優先)
 		clientIP := clientip.GetClientIP(pr.In)
 
-		// X-Forwarded-For の設定
+		// X-Forwarded-Forの設定
 		if originalXForwardedFor := pr.In.Header.Get("X-Forwarded-For"); originalXForwardedFor != "" {
-			// 既存の値を維持（Cloudflareなどが設定した値を保持）
+			// 既存の値を維持 (Cloudflareなどが設定した値を保持)
 			pr.Out.Header.Set("X-Forwarded-For", originalXForwardedFor)
 		} else {
 			// 既存の値がない場合、clientIPを設定
 			pr.Out.Header.Set("X-Forwarded-For", clientIP)
 		}
 
-		// X-Real-IP の設定（既存の値がない場合のみ clientIP を設定）
+		// X-Real-IPの設定 (既存の値がない場合のみclientIPを設定)
 		if originalXRealIP := pr.In.Header.Get("X-Real-IP"); originalXRealIP != "" {
 			pr.Out.Header.Set("X-Real-IP", originalXRealIP)
 		} else {
 			pr.Out.Header.Set("X-Real-IP", clientIP)
 		}
 
-		// X-Forwarded-Proto の設定
+		// X-Forwarded-Protoの設定
 		pr.Out.Header.Set("X-Forwarded-Proto", "https")
 
-		// X-Forwarded-Host の設定
+		// X-Forwarded-Hostの設定
 		pr.Out.Header.Set("X-Forwarded-Host", cfg.Domain)
 
-		// ログ出力（開発者向け）
+		// ログ出力 (開発者向け)
 		slog.Info("リバースプロキシでRails版にリクエストを転送",
 			"path", pr.In.URL.Path,
 			"method", pr.In.Method,
@@ -212,9 +220,9 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 		)
 	}
 
-	// レスポンス処理後のログ出力（成功時）
+	// レスポンス処理後のログ出力 (成功時)
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		// プロキシが成功した場合のレスポンスログを出力（開発者向け）
+		// プロキシが成功した場合のレスポンスログを出力 (開発者向け)
 		slog.Info("Rails版からレスポンスを受信",
 			"status_code", resp.StatusCode,
 			"status", resp.Status,
@@ -228,13 +236,9 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		ctx := r.Context()
 
-		// Detailed error log for developers. The "source" attribute lets the
-		// Sentry beforeSend hook drop this event: Rails-side proxy failures
-		// belong to the Rails Sentry project, not the Go one.
-		//
-		// [Ja] 開発者向けの詳細エラーログ。"source" 属性を載せておくと
-		// Sentry の beforeSend で本イベントを破棄できる (Rails 側のプロキシ
-		// 失敗は Rails の Sentry プロジェクトで扱うべきため)。
+		// 開発者向けの詳細エラーログ。"source" 属性を載せておくと
+		// SentryのbeforeSendで本イベントを破棄できる (Rails側のプロキシ
+		// 失敗はRailsのSentryプロジェクトで扱うべきため)。
 		slog.ErrorContext(ctx, "Rails版へのプロキシでエラーが発生",
 			wikinosentry.SourceAttrKey, wikinosentry.ReverseProxySource,
 			"error", err,
@@ -258,38 +262,28 @@ func NewReverseProxyMiddleware(railsURL string, cfg *config.Config, featureFlagR
 	}, nil
 }
 
-// Middleware returns the HTTP middleware.
-// [Ja] Middleware は HTTP ミドルウェアを返す。
+// MiddlewareはHTTPミドルウェアを返す。
 func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 1. Paths always handled by Go (exact match / prefix match).
-		// [Ja] 1. 常に Go で処理するパス (完全一致・プレフィックス一致)
+		// 1. 常にGoで処理するパス (完全一致・プレフィックス一致)
 		if m.isGoHandledPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 2. Paths always handled by Go (regex + method filter).
-		// [Ja] 2. 常に Go で処理するパス (正規表現 + メソッドフィルタ)
+		// 2. 常にGoで処理するパス (正規表現 + メソッドフィルタ)
 		if m.isGoHandledByRegex(r) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Issue device_token only for real content pages that are proxied to
-		// Rails or evaluated against a feature flag. Attaching Set-Cookie to
-		// static assets and health checks (= paths always handled by Go) hurts
-		// CDN caching and lets the token be issued multiple times on the first
-		// load, so limit issuance to requests that fell through to this point.
-		//
-		// [Ja] device_token は Rails 転送対象・フラグ評価対象の実コンテンツ
-		// ページにのみ発行する。静的アセット・ヘルスチェック (= 常に Go で処理する
-		// パス) に Set-Cookie を付けると CDN キャッシュを損ね、初回ロードで
+		// device_tokenはRails転送対象・フラグ評価対象の実コンテンツ
+		// ページにのみ発行する。静的アセット・ヘルスチェック (= 常にGoで処理する
+		// パス) にSet-Cookieを付けるとCDNキャッシュを損ね、初回ロードで
 		// トークンが多重発行されるため、ここまで判定を通り抜けたリクエストに限定する。
 		m.ensureDeviceToken(w, r)
 
-		// 3. Paths controlled by a feature flag.
-		// [Ja] 3. フィーチャーフラグで制御するパス
+		// 3. フィーチャーフラグで制御するパス
 		if flagName := m.getFeatureFlagForRequest(r); flagName != "" {
 			if m.isFeatureFlagEnabled(r, flagName) {
 				next.ServeHTTP(w, r)
@@ -297,13 +291,12 @@ func (m *ReverseProxyMiddleware) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// 4. Everything else is proxied to Rails.
-		// [Ja] 4. その他はすべて Rails にプロキシ
+		// 4. その他はすべてRailsにプロキシ
 		m.proxy.ServeHTTP(w, r)
 	})
 }
 
-// ensureDeviceToken は device_token Cookie が存在しない場合に自動生成する
+// ensureDeviceTokenはdevice_token Cookieが存在しない場合に自動生成する
 func (m *ReverseProxyMiddleware) ensureDeviceToken(w http.ResponseWriter, r *http.Request) {
 	if _, err := r.Cookie(DeviceTokenCookieName); err == nil {
 		return // 既にCookieが存在する
@@ -327,7 +320,7 @@ func (m *ReverseProxyMiddleware) ensureDeviceToken(w http.ResponseWriter, r *htt
 	})
 }
 
-// isGoHandledPath はGo版で処理するパスかどうかを判定
+// isGoHandledPathはGo版で処理するパスかどうかを判定
 func (m *ReverseProxyMiddleware) isGoHandledPath(path string) bool {
 	// 完全一致でチェック
 	for _, p := range goHandledExactPaths {
@@ -346,7 +339,7 @@ func (m *ReverseProxyMiddleware) isGoHandledPath(path string) bool {
 	return false
 }
 
-// isGoHandledByRegex はGo版で処理するパスかどうかを正規表現パターンで判定する
+// isGoHandledByRegexはGo版で処理するパスかどうかを正規表現パターンで判定する
 // メソッドフィルタが指定されている場合はHTTPメソッドも考慮する
 func (m *ReverseProxyMiddleware) isGoHandledByRegex(r *http.Request) bool {
 	for _, gp := range goHandledRegexPatterns {
@@ -361,7 +354,7 @@ func (m *ReverseProxyMiddleware) isGoHandledByRegex(r *http.Request) bool {
 	return false
 }
 
-// getFeatureFlagForRequest はHTTPリクエストのパスとメソッドに対応するフィーチャーフラグ名を返す
+// getFeatureFlagForRequestはHTTPリクエストのパスとメソッドに対応するフィーチャーフラグ名を返す
 // マッチするパターンがない場合は空文字列を返す
 func (m *ReverseProxyMiddleware) getFeatureFlagForRequest(r *http.Request) model.FeatureFlagName {
 	for _, fp := range featureFlaggedPatterns {
@@ -376,10 +369,10 @@ func (m *ReverseProxyMiddleware) getFeatureFlagForRequest(r *http.Request) model
 	return ""
 }
 
-// containsMethod は指定されたHTTPメソッドがスライスに含まれるかを判定する
+// containsMethodは指定されたHTTPメソッドがスライスに含まれるかを判定する
 //
 // HTMLフォームはGETとPOSTのみサポートするため、PATCH/PUT/DELETEリクエストは
-// POST + _methodパラメータとして送信される（Method Overrideパターン）。
+// POST + _methodパラメータとして送信される (Method Overrideパターン)。
 // このミドルウェアはMethod Overrideミドルウェアより前に実行されるため、
 // POSTリクエストもPATCH/PUT/DELETEパターンにマッチさせる必要がある。
 func containsMethod(methods []string, method string) bool {
@@ -402,20 +395,20 @@ func containsMethod(methods []string, method string) bool {
 	return false
 }
 
-// isFeatureFlagEnabled はリクエストのCookieからフィーチャーフラグが有効かどうかを判定する
-// エラー時またはCookieなし時はfalseを返す（Rails版にフォールバック）
+// isFeatureFlagEnabledはリクエストのCookieからフィーチャーフラグが有効かどうかを判定する
+// エラー時またはCookieなし時はfalseを返す (Rails版にフォールバック)
 func (m *ReverseProxyMiddleware) isFeatureFlagEnabled(r *http.Request, flagName model.FeatureFlagName) bool {
 	if m.featureFlagRepo == nil {
 		return false
 	}
 
-	// device_token Cookie の値を取得
+	// device_token Cookieの値を取得
 	deviceToken := ""
 	if cookie, err := r.Cookie(DeviceTokenCookieName); err == nil {
 		deviceToken = cookie.Value
 	}
 
-	// user_session_tokens Cookie の値を取得
+	// user_session_tokens Cookieの値を取得
 	sessionToken := ""
 	if cookie, err := r.Cookie(session.CookieName); err == nil {
 		sessionToken = cookie.Value
@@ -429,7 +422,7 @@ func (m *ReverseProxyMiddleware) isFeatureFlagEnabled(r *http.Request, flagName 
 	// 1クエリでdevice_tokenとuser_idの両方をチェック
 	enabled, err := m.featureFlagRepo.IsEnabledForDevice(r.Context(), deviceToken, sessionToken, flagName)
 	if err != nil {
-		slog.WarnContext(r.Context(), "フィーチャーフラグ判定でエラーが発生（Rails版にフォールバック）",
+		slog.WarnContext(r.Context(), "フィーチャーフラグ判定でエラーが発生 (Rails版にフォールバック)",
 			"error", err,
 			"flag", flagName,
 			"path", r.URL.Path,
@@ -440,7 +433,7 @@ func (m *ReverseProxyMiddleware) isFeatureFlagEnabled(r *http.Request, flagName 
 	return enabled
 }
 
-// render502ErrorHTML は502エラーページのHTMLを返す
+// render502ErrorHTMLは502エラーページのHTMLを返す
 func render502ErrorHTML() string {
 	return `<!DOCTYPE html>
 <html lang="ja">

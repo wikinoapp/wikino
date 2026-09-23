@@ -1,0 +1,46 @@
+package components
+
+import (
+	"github.com/a-h/templ"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// relatedPageListLimitは、累積編集画面が安全上限へ達したとき「もっと見る」リンクの代わりに表示
+// する。安定したfocusIDにより、リンクを差し替えたあとhtmxがこの案内へキーボードフォーカスを戻せる。
+// 通常のhrefは、下書き由来の一覧を1ページ単位の編集モードで継続する。
+templ relatedPageListLimit(pageURL string, focusID string) {
+	<div
+		id={ focusID }
+		tabindex="-1"
+		class="alert col-span-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+	>
+		@templates.DecorativeIcon("info-regular", "fill-info")
+
+		<span role="status">
+			{ templates.T(ctx, "page_edit_links_load_more_limit") }
+		</span>
+
+		<a class="underline" href={ templ.SafeURL(pageURL) }>
+			{ templates.T(ctx, "page_edit_links_load_more_limit_link") }
+		</a>
+	</div>
+}
+
+// relatedPageListEndは最後の「もっと見る」リンクを、表示されフォーカス可能な完了状態へ置き換える。
+// リンクのidを引き継ぎ、クライアント側スクリプトを追加せずhtmxがフォーカスを維持できるようにする。
+// この案内は読み手が一覧を最後まで辿ったときにだけ現れ、常時の状態ラベルではなく辿り切った瞬間を示す。
+// confettiが見合うのはそのためである。アイコンは装飾のためrole="status" が読み上げる内容は変わらず、
+// fillのクラスを付けないことでcurrentColorが段落の抑えた文字色に追従する。
+templ relatedPageListEnd(focusID string) {
+	<p
+		id={ focusID }
+		tabindex="-1"
+		role="status"
+		class="col-span-full flex items-center gap-1 text-sm text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+	>
+		@templates.DecorativeIcon("confetti-regular", "size-4 shrink-0")
+
+		{ templates.T(ctx, "page_links_load_more_end") }
+	</p>
+}

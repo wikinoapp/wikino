@@ -24,10 +24,7 @@ module CardLinks
 
     sig { returns(String) }
     private def new_page_path
-      Rails.application.routes.url_helpers.new_page_path(
-        space_identifier: topic.space.identifier,
-        topic_number: topic.number
-      )
+      "/s/#{topic.space.identifier}/topics/#{topic.number}/pages/new"
     end
   end
 end

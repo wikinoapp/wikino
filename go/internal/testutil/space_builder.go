@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// SpaceBuilder はスペーステストデータのビルダー
+// SpaceBuilderはスペーステストデータのビルダー
 type SpaceBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -21,7 +21,7 @@ type SpaceBuilder struct {
 	discardedAt *time.Time
 }
 
-// NewSpaceBuilder は SpaceBuilder を生成します
+// NewSpaceBuilderはSpaceBuilderを生成します
 func NewSpaceBuilder(t *testing.T, tx *sql.Tx) *SpaceBuilder {
 	t.Helper()
 	now := time.Now()
@@ -35,32 +35,32 @@ func NewSpaceBuilder(t *testing.T, tx *sql.Tx) *SpaceBuilder {
 	}
 }
 
-// WithIdentifier は識別子を設定します
+// WithIdentifierは識別子を設定します
 func (b *SpaceBuilder) WithIdentifier(identifier string) *SpaceBuilder {
 	b.identifier = identifier
 	return b
 }
 
-// WithName は名前を設定します
+// WithNameは名前を設定します
 func (b *SpaceBuilder) WithName(name string) *SpaceBuilder {
 	b.name = name
 	return b
 }
 
-// WithPlan はプランを設定します
+// WithPlanはプランを設定します
 func (b *SpaceBuilder) WithPlan(plan int32) *SpaceBuilder {
 	b.plan = plan
 	return b
 }
 
-// WithDiscarded は廃棄済み状態に設定します
+// WithDiscardedは廃棄済み状態に設定します
 func (b *SpaceBuilder) WithDiscarded() *SpaceBuilder {
 	now := time.Now()
 	b.discardedAt = &now
 	return b
 }
 
-// Build はスペースを作成し、IDを返します
+// Buildはスペースを作成し、IDを返します
 func (b *SpaceBuilder) Build() model.SpaceID {
 	b.t.Helper()
 
@@ -80,7 +80,7 @@ func (b *SpaceBuilder) Build() model.SpaceID {
 	return model.SpaceID(id)
 }
 
-// SpaceBuilderDB はDBを直接使用するスペーステストデータのビルダー
+// SpaceBuilderDBはDBを直接使用するスペーステストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type SpaceBuilderDB struct {
 	t  *testing.T
@@ -92,7 +92,7 @@ type SpaceBuilderDB struct {
 	joinedAt   time.Time
 }
 
-// NewSpaceBuilderDB は SpaceBuilderDB を生成します
+// NewSpaceBuilderDBはSpaceBuilderDBを生成します
 func NewSpaceBuilderDB(t *testing.T, db *sql.DB) *SpaceBuilderDB {
 	t.Helper()
 	now := time.Now()
@@ -106,19 +106,19 @@ func NewSpaceBuilderDB(t *testing.T, db *sql.DB) *SpaceBuilderDB {
 	}
 }
 
-// WithIdentifier は識別子を設定します
+// WithIdentifierは識別子を設定します
 func (b *SpaceBuilderDB) WithIdentifier(identifier string) *SpaceBuilderDB {
 	b.identifier = identifier
 	return b
 }
 
-// WithName は名前を設定します
+// WithNameは名前を設定します
 func (b *SpaceBuilderDB) WithName(name string) *SpaceBuilderDB {
 	b.name = name
 	return b
 }
 
-// Build はスペースを作成し、IDを返します
+// Buildはスペースを作成し、IDを返します
 func (b *SpaceBuilderDB) Build() model.SpaceID {
 	b.t.Helper()
 

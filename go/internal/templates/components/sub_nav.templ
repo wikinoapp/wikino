@@ -5,7 +5,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// SubNavItem はサブナビゲーションの各タブ項目です
+// SubNavItemはサブナビゲーションの各タブ項目です
 type SubNavItem struct {
 	Label          string
 	Path           string
@@ -15,7 +15,7 @@ type SubNavItem struct {
 	Badge          string
 }
 
-// SubNav はページ内セクションを切り替えるタブナビゲーションを表示します
+// SubNavはページ内セクションを切り替えるタブナビゲーションを表示します
 templ SubNav(items []SubNavItem) {
 	<div class="flex gap-4 border-b border-border">
 		for _, item := range items {

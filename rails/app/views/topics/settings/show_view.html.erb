@@ -1,6 +1,6 @@
 <%= render Layouts::Column1Component.new(current_page_name:, current_user:) do |layout| %>
   <%= layout.with_header do %>
-    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:) do |header| %>
+    <%= render Headers::GlobalComponent.new(current_user:, current_page_name:, content_screen:) do |header| %>
       <%= header.with_breadcrumb do %>
         <%= render Breadcrumbs::TopicComponent.new(signed_in: current_user.present?, topic:) %>
       <% end %>
@@ -8,9 +8,7 @@
   <% end %>
 
   <%= layout.with_main do %>
-    <%= render Containers::MainComponent.new(
-      content_screen: BaseUI::ContainerComponent::ContentScreen::Small
-    ) do %>
+    <%= render Containers::MainComponent.new(content_screen:) do %>
       <%= render Headers::MainTitleComponent.new(title: t("nouns.settings")) %>
 
       <%= render BaseUI::CardComponent.new do |card| %>
@@ -18,7 +16,7 @@
           <div class="flex flex-col gap-3">
             <%= render BaseUI::LinkComponent.new(
               variant: BaseUI::LinkComponent::Variant::Underline,
-              options: {href: topic_settings_general_path(space.identifier, topic.number)}
+              options: {href: "/s/#{space.identifier}/topics/#{topic.number}/settings/general"}
             ) do %>
               <%= t("nouns.general") %>
             <% end %>

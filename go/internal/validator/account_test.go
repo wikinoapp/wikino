@@ -31,99 +31,99 @@ func TestAccountCreateValidator_Validate_FormatValidation(t *testing.T) {
 		expectedField string
 	}{
 		{
-			name:       "valid request",
+			name:       "正しいリクエスト",
 			atname:     "testuser",
 			password:   "password123",
 			wantErrors: false,
 		},
 		{
-			name:          "empty atname",
+			name:          "空のアットネーム",
 			atname:        "",
 			password:      "password123",
 			wantErrors:    true,
 			expectedField: "atname",
 		},
 		{
-			name:          "empty password",
+			name:          "空のパスワード",
 			atname:        "testuser",
 			password:      "",
 			wantErrors:    true,
 			expectedField: "password",
 		},
 		{
-			name:       "both empty",
+			name:       "両方とも空",
 			atname:     "",
 			password:   "",
 			wantErrors: true,
 		},
 		{
-			name:          "atname too long",
+			name:          "アットネームが長すぎる",
 			atname:        "verylongusernameover20",
 			password:      "password123",
 			wantErrors:    true,
 			expectedField: "atname",
 		},
 		{
-			name:          "atname with invalid characters",
+			name:          "不正な文字を含むアットネーム",
 			atname:        "test-user!@",
 			password:      "password123",
 			wantErrors:    true,
 			expectedField: "atname",
 		},
 		{
-			name:          "password too short",
+			name:          "パスワードが短すぎる",
 			atname:        "testuser",
 			password:      "short",
 			wantErrors:    true,
 			expectedField: "password",
 		},
 		{
-			name:          "password too long",
+			name:          "パスワードが長すぎる",
 			atname:        "testuser",
 			password:      strings.Repeat("a", 129),
 			wantErrors:    true,
 			expectedField: "password",
 		},
 		{
-			name:          "password with multibyte characters",
+			name:          "マルチバイト文字を含むパスワード",
 			atname:        "testuser",
 			password:      "パスワード123",
 			wantErrors:    true,
 			expectedField: "password",
 		},
 		{
-			name:          "password with space",
+			name:          "スペースを含むパスワード",
 			atname:        "testuser",
 			password:      "pass word",
 			wantErrors:    true,
 			expectedField: "password",
 		},
 		{
-			name:       "atname with underscore",
+			name:       "アンダースコアを含むアットネーム",
 			atname:     "test_user",
 			password:   "password123",
 			wantErrors: false,
 		},
 		{
-			name:       "atname with numbers",
+			name:       "数字を含むアットネーム",
 			atname:     "user123",
 			password:   "password123",
 			wantErrors: false,
 		},
 		{
-			name:       "atname exactly 20 chars",
+			name:       "アットネームがちょうど20文字",
 			atname:     "12345678901234567890",
 			password:   "password123",
 			wantErrors: false,
 		},
 		{
-			name:       "password exactly 8 chars",
+			name:       "パスワードがちょうど8文字",
 			atname:     "testuser8",
 			password:   "12345678",
 			wantErrors: false,
 		},
 		{
-			name:       "password exactly 128 chars",
+			name:       "パスワードがちょうど128文字",
 			atname:     "testuser",
 			password:   strings.Repeat("a", 128),
 			wantErrors: false,
@@ -143,18 +143,18 @@ func TestAccountCreateValidator_Validate_FormatValidation(t *testing.T) {
 			if tt.wantErrors {
 				ve := model.AsValidationError(err)
 				if ve == nil {
-					t.Error("expected ValidationError, got nil")
+					t.Error("ValidationErrorを期待したが、nilだった")
 					return
 				}
 				if !ve.HasErrors() {
-					t.Error("expected errors, got none")
+					t.Error("エラーが無い")
 				}
 				if tt.expectedField != "" && !ve.HasFieldError(tt.expectedField) {
-					t.Errorf("expected field error for %q", tt.expectedField)
+					t.Errorf("%qのフィールドエラーが無い", tt.expectedField)
 				}
 			} else {
 				if err != nil {
-					t.Errorf("expected no error, got %v", err)
+					t.Errorf("予期しないエラー: %v", err)
 				}
 			}
 		})
@@ -178,98 +178,98 @@ func TestAccountCreateValidator_Validate_ErrorMessages(t *testing.T) {
 		expectedMessage string
 	}{
 		{
-			name:            "atname required ja",
+			name:            "アットネームが未入力 (ja)",
 			atname:          "",
 			password:        "password123",
 			locale:          "ja",
 			expectedMessage: "アットネームを入力してください",
 		},
 		{
-			name:            "atname required en",
+			name:            "アットネームが未入力 (en)",
 			atname:          "",
 			password:        "password123",
 			locale:          "en",
 			expectedMessage: "Please enter a username",
 		},
 		{
-			name:            "atname too long ja",
+			name:            "アットネームが長すぎる (ja)",
 			atname:          "verylongusernameover20",
 			password:        "password123",
 			locale:          "ja",
 			expectedMessage: "アットネームは20文字以内で入力してください",
 		},
 		{
-			name:            "atname too long en",
+			name:            "アットネームが長すぎる (en)",
 			atname:          "verylongusernameover20",
 			password:        "password123",
 			locale:          "en",
 			expectedMessage: "Username must be 20 characters or less",
 		},
 		{
-			name:            "atname invalid format ja",
+			name:            "アットネームの形式が不正 (ja)",
 			atname:          "test-user!",
 			password:        "password123",
 			locale:          "ja",
 			expectedMessage: "アットネームは英数字とアンダースコアのみ使用できます",
 		},
 		{
-			name:            "atname invalid format en",
+			name:            "アットネームの形式が不正 (en)",
 			atname:          "test-user!",
 			password:        "password123",
 			locale:          "en",
 			expectedMessage: "Username can only contain letters, numbers, and underscores",
 		},
 		{
-			name:            "password required ja",
+			name:            "パスワードが未入力 (ja)",
 			atname:          "testuser",
 			password:        "",
 			locale:          "ja",
 			expectedMessage: "パスワードを入力してください",
 		},
 		{
-			name:            "password required en",
+			name:            "パスワードが未入力 (en)",
 			atname:          "testuser",
 			password:        "",
 			locale:          "en",
 			expectedMessage: "Please enter a password",
 		},
 		{
-			name:            "password too short ja",
+			name:            "パスワードが短すぎる (ja)",
 			atname:          "testuser",
 			password:        "short",
 			locale:          "ja",
 			expectedMessage: "パスワードは8文字以上で入力してください",
 		},
 		{
-			name:            "password too short en",
+			name:            "パスワードが短すぎる (en)",
 			atname:          "testuser",
 			password:        "short",
 			locale:          "en",
 			expectedMessage: "Password must be at least 8 characters",
 		},
 		{
-			name:            "password too long ja",
+			name:            "パスワードが長すぎる (ja)",
 			atname:          "testuser",
 			password:        strings.Repeat("a", 129),
 			locale:          "ja",
 			expectedMessage: "パスワードは128文字以内で入力してください",
 		},
 		{
-			name:            "password too long en",
+			name:            "パスワードが長すぎる (en)",
 			atname:          "testuser",
 			password:        strings.Repeat("a", 129),
 			locale:          "en",
 			expectedMessage: "Password must be at most 128 characters",
 		},
 		{
-			name:            "password invalid chars ja",
+			name:            "パスワードに不正な文字 (ja)",
 			atname:          "testuser",
 			password:        "パスワード123",
 			locale:          "ja",
 			expectedMessage: "パスワードには印字可能なASCII文字のみ使用できます",
 		},
 		{
-			name:            "password invalid chars en",
+			name:            "パスワードに不正な文字 (en)",
 			atname:          "testuser",
 			password:        "パスワード123",
 			locale:          "en",
@@ -293,7 +293,7 @@ func TestAccountCreateValidator_Validate_ErrorMessages(t *testing.T) {
 
 			ve := model.AsValidationError(err)
 			if ve == nil {
-				t.Fatal("expected ValidationError, got nil")
+				t.Fatal("ValidationErrorを期待したが、nilだった")
 			}
 
 			// エラーメッセージが含まれているか確認
@@ -307,7 +307,7 @@ func TestAccountCreateValidator_Validate_ErrorMessages(t *testing.T) {
 				}
 			}
 			if !found {
-				t.Errorf("expected message %q not found in errors", tt.expectedMessage)
+				t.Errorf("エラーにメッセージ%qが見つからない", tt.expectedMessage)
 			}
 		})
 	}
@@ -329,7 +329,7 @@ func TestAccountCreateValidator_Validate_Success(t *testing.T) {
 		Password: "password123",
 	})
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 }
 
@@ -352,7 +352,7 @@ func TestAccountCreateValidator_Validate_AtnameAlreadyTaken(t *testing.T) {
 		JoinedAt:    now,
 	})
 	if err != nil {
-		t.Fatalf("failed to create existing user: %v", err)
+		t.Fatalf("既存ユーザーの作成に失敗: %v", err)
 	}
 
 	v := validator.NewAccountCreateValidator(userRepo)
@@ -366,12 +366,41 @@ func TestAccountCreateValidator_Validate_AtnameAlreadyTaken(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasErrors() {
-		t.Error("expected form errors to have errors")
+		t.Error("フォームのエラーにエラーが含まれていない")
 	}
 	if !ve.HasFieldError("atname") {
-		t.Error("expected atname field error")
+		t.Error("atnameのフィールドエラーが無い")
+	}
+}
+
+func TestIsValidAtname(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		atname string
+		want   bool
+	}{
+		{name: "英数字とアンダースコア", atname: "seed_user1", want: true},
+		{name: "大文字を含む", atname: "SeedUser1", want: true},
+		{name: "上限ちょうど", atname: strings.Repeat("a", validator.AtnameMaxLength), want: true},
+		{name: "上限を1文字超える", atname: strings.Repeat("a", validator.AtnameMaxLength+1), want: false},
+		{name: "空文字列", atname: "", want: false},
+		{name: "ハイフンを含む", atname: "seed-user1", want: false},
+		{name: "空白を含む", atname: "seed user1", want: false},
+		{name: "日本語を含む", atname: "シードユーザー", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := validator.IsValidAtname(tt.atname); got != tt.want {
+				t.Errorf("IsValidAtname(%q) = %vであることを期待したが%vだった", tt.atname, tt.want, got)
+			}
+		})
 	}
 }

@@ -21,7 +21,7 @@ func TestMarkEmailAsConfirmedUsecase_Execute_Success(t *testing.T) {
 	updateValidator := validator.NewEmailConfirmationUpdateValidator(repo)
 	uc := NewMarkEmailAsConfirmedUsecase(repo, updateValidator)
 
-	// テストデータを作成（有効な確認コード）
+	// テストデータを作成 (有効な確認コード)
 	ecID := testutil.NewEmailConfirmationBuilder(t, tx).
 		WithEmail("mark-success@example.com").
 		WithEvent(model.EmailConfirmationEventSignUp).
@@ -37,16 +37,16 @@ func TestMarkEmailAsConfirmedUsecase_Execute_Success(t *testing.T) {
 		Code:                "ABC123",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// 確認完了状態に更新されたことを確認
 	ec, err := repo.FindByID(context.Background(), ecID)
 	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+		t.Fatalf("FindByID()のエラー = %v", err)
 	}
 	if ec.SucceededAt == nil {
-		t.Error("確認が完了状態に更新されていません（SucceededAt = nil）")
+		t.Error("確認が完了状態に更新されていません (SucceededAt = nil)")
 	}
 }
 
@@ -77,10 +77,10 @@ func TestMarkEmailAsConfirmedUsecase_Execute_ValidationError(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError, got nil or different error type")
+		t.Fatal("ValidationErrorを期待したが、nilか別の型のエラーだった")
 	}
 	if !ve.HasFieldError("code") {
-		t.Error("expected field error for 'code'")
+		t.Error("'code'のフィールドエラーが無い")
 	}
 }
 
@@ -111,9 +111,9 @@ func TestMarkEmailAsConfirmedUsecase_Execute_AlreadySucceeded(t *testing.T) {
 
 	ae := model.AsAppError(err)
 	if ae == nil {
-		t.Fatal("expected AppError, got nil or different error type")
+		t.Fatal("AppErrorを期待したが、nilか別の型のエラーだった")
 	}
 	if ae.Code != model.AppErrCodeConflict {
-		t.Errorf("AppError.Code = %d, want %d (AppErrCodeConflict)", ae.Code, model.AppErrCodeConflict)
+		t.Errorf("AppError.Code = %d、期待値 = %d (AppErrCodeConflict)", ae.Code, model.AppErrCodeConflict)
 	}
 }

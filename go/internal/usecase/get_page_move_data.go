@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetPageMoveDataUsecase はページ移動フォームのデータ取得ユースケース
+// GetPageMoveDataUsecaseはページ移動フォームのデータ取得ユースケース
 type GetPageMoveDataUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -17,7 +17,7 @@ type GetPageMoveDataUsecase struct {
 	topicMemberRepo *repository.TopicMemberRepository
 }
 
-// NewGetPageMoveDataUsecase は GetPageMoveDataUsecase を生成する
+// NewGetPageMoveDataUsecaseはGetPageMoveDataUsecaseを生成する
 func NewGetPageMoveDataUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -34,14 +34,14 @@ func NewGetPageMoveDataUsecase(
 	}
 }
 
-// GetPageMoveDataInput はページ移動データ取得の入力パラメータ
+// GetPageMoveDataInputはページ移動データ取得の入力パラメータ
 type GetPageMoveDataInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	PageNumber      int32
 	UserID          model.UserID
 }
 
-// GetPageMoveDataOutput はページ移動データ取得の出力
+// GetPageMoveDataOutputはページ移動データ取得の出力
 type GetPageMoveDataOutput struct {
 	Space           *model.Space
 	SpaceMember     *model.SpaceMember
@@ -51,7 +51,7 @@ type GetPageMoveDataOutput struct {
 	AvailableTopics []*model.Topic
 }
 
-// Execute はページ移動フォームに必要なデータを取得する
+// Executeはページ移動フォームに必要なデータを取得する
 func (uc *GetPageMoveDataUsecase) Execute(ctx context.Context, input GetPageMoveDataInput) (*GetPageMoveDataOutput, error) {
 	// 1. データ取得 + 認可チェック
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
@@ -89,10 +89,10 @@ func (uc *GetPageMoveDataUsecase) pageAccessRepos() pageAccessRepos {
 	}
 }
 
-// availableTopicsForMove は移動先候補のトピック一覧を取得する。
-// space:admin スコープを持つメンバーは全アクティブトピック、それ以外は所属トピックのみ返す。
+// availableTopicsForMoveは移動先候補のトピック一覧を取得する。
+// space:adminスコープを持つメンバーは全アクティブトピック、それ以外は所属トピックのみ返す。
 // 現在のトピックは除外する。
-// space:admin を持つメンバーは同スペース内の全トピックにCanCreatePageが真であり、
+// space:adminを持つメンバーは同スペース内の全トピックにCanCreatePageが真であり、
 // それ以外はListJoinedBySpaceMemberが所属トピックのみを返すため、
 // いずれの場合もリスト取得の段階で権限が暗黙的に満たされている。
 func (uc *GetPageMoveDataUsecase) availableTopicsForMove(

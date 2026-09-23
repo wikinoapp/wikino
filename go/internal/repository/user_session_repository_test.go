@@ -33,22 +33,22 @@ func TestUserSessionRepository_Create(t *testing.T) {
 
 		session, err := repo.Create(context.Background(), input)
 		if err != nil {
-			t.Fatalf("Create() error = %v", err)
+			t.Fatalf("Create()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("Create() returned nil, want session")
+			t.Fatal("Create()がnilを返した、期待値 = セッション")
 		}
 		if session.UserID != userID {
-			t.Errorf("session.UserID = %v, want %v", session.UserID, userID)
+			t.Errorf("session.UserID = %v、期待値 = %v", session.UserID, userID)
 		}
 		if session.Token != "test-token-12345" {
-			t.Errorf("session.Token = %v, want test-token-12345", session.Token)
+			t.Errorf("session.Token = %v、期待値 = test-token-12345", session.Token)
 		}
 		if session.IPAddress != "192.168.1.1" {
-			t.Errorf("session.IPAddress = %v, want 192.168.1.1", session.IPAddress)
+			t.Errorf("session.IPAddress = %v、期待値 = 192.168.1.1", session.IPAddress)
 		}
 		if session.UserAgent != "Mozilla/5.0" {
-			t.Errorf("session.UserAgent = %v, want Mozilla/5.0", session.UserAgent)
+			t.Errorf("session.UserAgent = %v、期待値 = Mozilla/5.0", session.UserAgent)
 		}
 	})
 }
@@ -82,23 +82,23 @@ func TestUserSessionRepository_FindByToken(t *testing.T) {
 	t.Run("トークンでセッションを取得できる", func(t *testing.T) {
 		session, err := repo.FindByToken(context.Background(), "find-by-token-test")
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("FindByToken() returned nil, want session")
+			t.Fatal("FindByToken()がnilを返した、期待値 = セッション")
 		}
 		if session.Token != "find-by-token-test" {
-			t.Errorf("session.Token = %v, want find-by-token-test", session.Token)
+			t.Errorf("session.Token = %v、期待値 = find-by-token-test", session.Token)
 		}
 	})
 
 	t.Run("存在しないトークンはnilを返す", func(t *testing.T) {
 		session, err := repo.FindByToken(context.Background(), "nonexistent-token")
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session != nil {
-			t.Errorf("FindByToken() = %v, want nil", session)
+			t.Errorf("FindByToken() = %v、期待値 = nil", session)
 		}
 	})
 }
@@ -132,23 +132,23 @@ func TestUserSessionRepository_FindByID(t *testing.T) {
 	t.Run("IDでセッションを取得できる", func(t *testing.T) {
 		session, err := repo.FindByID(context.Background(), created.ID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("FindByID() returned nil, want session")
+			t.Fatal("FindByID()がnilを返した、期待値 = セッション")
 		}
 		if session.ID != created.ID {
-			t.Errorf("session.ID = %v, want %v", session.ID, created.ID)
+			t.Errorf("session.ID = %v、期待値 = %v", session.ID, created.ID)
 		}
 	})
 
 	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
 		session, err := repo.FindByID(context.Background(), "00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if session != nil {
-			t.Errorf("FindByID() = %v, want nil", session)
+			t.Errorf("FindByID() = %v、期待値 = nil", session)
 		}
 	})
 }
@@ -182,16 +182,16 @@ func TestUserSessionRepository_Delete(t *testing.T) {
 	t.Run("セッションを削除できる", func(t *testing.T) {
 		err := repo.Delete(context.Background(), created.ID)
 		if err != nil {
-			t.Fatalf("Delete() error = %v", err)
+			t.Fatalf("Delete()のエラー = %v", err)
 		}
 
 		// 削除後は取得できない
 		session, err := repo.FindByID(context.Background(), created.ID)
 		if err != nil {
-			t.Fatalf("FindByID() error = %v", err)
+			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if session != nil {
-			t.Errorf("Delete() did not delete session, FindByID() = %v, want nil", session)
+			t.Errorf("Delete()でセッションが削除されていない: FindByID() = %v、期待値 = nil", session)
 		}
 	})
 }
@@ -225,16 +225,16 @@ func TestUserSessionRepository_DeleteByToken(t *testing.T) {
 	t.Run("トークンでセッションを削除できる", func(t *testing.T) {
 		err := repo.DeleteByToken(context.Background(), "delete-by-token-test")
 		if err != nil {
-			t.Fatalf("DeleteByToken() error = %v", err)
+			t.Fatalf("DeleteByToken()のエラー = %v", err)
 		}
 
 		// 削除後は取得できない
 		session, err := repo.FindByToken(context.Background(), "delete-by-token-test")
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session != nil {
-			t.Errorf("DeleteByToken() did not delete session, FindByToken() = %v, want nil", session)
+			t.Errorf("DeleteByToken()でセッションが削除されていない: FindByToken() = %v、期待値 = nil", session)
 		}
 	})
 }

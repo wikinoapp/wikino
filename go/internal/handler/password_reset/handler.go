@@ -1,4 +1,4 @@
-// Package password_reset はパスワードリセット申請機能のハンドラーを提供します
+// Package password_resetはパスワードリセット申請機能のハンドラーを提供します
 package password_reset
 
 import (
@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// Handler はパスワードリセット申請機能のハンドラー
+// Handlerはパスワードリセット申請機能のハンドラー
 type Handler struct {
 	cfg                *config.Config
 	sessionMgr         *session.Manager
@@ -19,7 +19,7 @@ type Handler struct {
 	createTokenUsecase *usecase.CreatePasswordResetTokenUsecase
 }
 
-// NewHandler は新しいHandlerを作成します
+// NewHandlerは新しいHandlerを作成します
 func NewHandler(
 	cfg *config.Config,
 	sessionMgr *session.Manager,

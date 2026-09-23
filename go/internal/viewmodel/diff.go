@@ -6,19 +6,19 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-// DiffLineType は差分行の種類を表します
+// DiffLineTypeは差分行の種類を表します
 type DiffLineType int
 
 const (
-	// DiffLineEqual は変更のない行を表します
+	// DiffLineEqualは変更のない行を表します
 	DiffLineEqual DiffLineType = iota
-	// DiffLineInsert は追加行を表します
+	// DiffLineInsertは追加行を表します
 	DiffLineInsert
-	// DiffLineDelete は削除行を表します
+	// DiffLineDeleteは削除行を表します
 	DiffLineDelete
 )
 
-// DiffLine は差分表示の1行分のデータです
+// DiffLineは差分表示の1行分のデータです
 type DiffLine struct {
 	Type      DiffLineType
 	Content   string
@@ -26,12 +26,12 @@ type DiffLine struct {
 	NewNumber int
 }
 
-// DiffBlock は連続する差分行のまとまりです。変更のある箇所とその前後のコンテキスト行を含みます。
+// DiffBlockは連続する差分行のまとまりです。変更のある箇所とその前後のコンテキスト行を含みます。
 type DiffBlock struct {
 	Lines []DiffLine
 }
 
-// HasChanges はブロック内に変更（追加・削除）が含まれるかを返します
+// HasChangesはブロック内に変更 (追加・削除) が含まれるかを返します
 func (b DiffBlock) HasChanges() bool {
 	for _, line := range b.Lines {
 		if line.Type == DiffLineInsert || line.Type == DiffLineDelete {
@@ -41,8 +41,8 @@ func (b DiffBlock) HasChanges() bool {
 	return false
 }
 
-// ComputeDiffBlocks は2つのテキストの差分を計算し、DiffBlockのスライスとして返します。
-// contextLines は変更箇所の前後に表示するコンテキスト行数です。
+// ComputeDiffBlocksは2つのテキストの差分を計算し、DiffBlockのスライスとして返します。
+// contextLinesは変更箇所の前後に表示するコンテキスト行数です。
 func ComputeDiffBlocks(oldText, newText string, contextLines int) []DiffBlock {
 	// 改行コードを正規化する。ブラウザのフォーム送信では\r\nが使われることがあり、
 	// DB内の既存データと改行コードが異なると同じ行内容でも差分として検出される。
@@ -63,7 +63,7 @@ func ComputeDiffBlocks(oldText, newText string, contextLines int) []DiffBlock {
 	return groupIntoBlocks(lines, contextLines)
 }
 
-// normalizeNewlines は改行コードを\nに統一し、末尾に改行がなければ追加します
+// normalizeNewlinesは改行コードを\nに統一し、末尾に改行がなければ追加します
 func normalizeNewlines(text string) string {
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	text = strings.ReplaceAll(text, "\r", "\n")
@@ -73,7 +73,7 @@ func normalizeNewlines(text string) string {
 	return text
 }
 
-// buildDiffLines はdiffの結果からDiffLineのスライスを構築します
+// buildDiffLinesはdiffの結果からDiffLineのスライスを構築します
 func buildDiffLines(diffs []diffmatchpatch.Diff) []DiffLine {
 	var lines []DiffLine
 	oldNum := 1
@@ -124,7 +124,7 @@ func buildDiffLines(diffs []diffmatchpatch.Diff) []DiffLine {
 	return lines
 }
 
-// groupIntoBlocks は差分行をコンテキスト行数に基づいてブロックに分割します
+// groupIntoBlocksは差分行をコンテキスト行数に基づいてブロックに分割します
 func groupIntoBlocks(lines []DiffLine, contextLines int) []DiffBlock {
 	// 変更行のインデックスを収集
 	changeIndices := make([]int, 0)
@@ -138,7 +138,7 @@ func groupIntoBlocks(lines []DiffLine, contextLines int) []DiffBlock {
 		return nil
 	}
 
-	// 変更行を含む範囲を計算（コンテキスト行を含む）
+	// 変更行を含む範囲を計算 (コンテキスト行を含む)
 	type span struct {
 		start, end int
 	}

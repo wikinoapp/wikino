@@ -8,12 +8,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetDraftPagesUsecase は下書きページ一覧取得ユースケース
+// GetDraftPagesUsecaseは下書きページ一覧取得ユースケース
 type GetDraftPagesUsecase struct {
 	draftPageRepo *repository.DraftPageRepository
 }
 
-// NewGetDraftPagesUsecase は GetDraftPagesUsecase を生成する
+// NewGetDraftPagesUsecaseはGetDraftPagesUsecaseを生成する
 func NewGetDraftPagesUsecase(
 	draftPageRepo *repository.DraftPageRepository,
 ) *GetDraftPagesUsecase {
@@ -22,17 +22,17 @@ func NewGetDraftPagesUsecase(
 	}
 }
 
-// GetDraftPagesInput は下書きページ一覧取得の入力パラメータ
+// GetDraftPagesInputは下書きページ一覧取得の入力パラメータ
 type GetDraftPagesInput struct {
 	UserID model.UserID
 }
 
-// GetDraftPagesOutput は下書きページ一覧取得の出力
+// GetDraftPagesOutputは下書きページ一覧取得の出力
 type GetDraftPagesOutput struct {
 	DraftPages []*model.DraftPage
 }
 
-// Execute は下書きページ一覧を取得する
+// Executeは下書きページ一覧を取得する
 func (uc *GetDraftPagesUsecase) Execute(ctx context.Context, input GetDraftPagesInput) (*GetDraftPagesOutput, error) {
 	drafts, err := uc.draftPageRepo.ListByUserForIndex(ctx, input.UserID)
 	if err != nil {

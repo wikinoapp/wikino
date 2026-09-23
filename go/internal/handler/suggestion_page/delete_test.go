@@ -52,10 +52,10 @@ func TestDelete_未ログインでサインインにリダイレクトされる(
 	handler.Delete(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect location: got %q want %q", loc, "/sign_in")
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, "/sign_in")
 	}
 }
 
@@ -129,7 +129,7 @@ func TestDelete_スペースメンバーでないユーザーは404が返る(t *
 	handler.Delete(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -226,11 +226,11 @@ func TestDelete_正常に編集提案ページが削除される(t *testing.T) {
 	handler.Delete(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	expectedLoc := "/s/del-sp-ok-sp/suggestions/1/changes"
 	if loc := rr.Header().Get("Location"); loc != expectedLoc {
-		t.Errorf("wrong redirect location: got %q want %q", loc, expectedLoc)
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, expectedLoc)
 	}
 
 	// SuggestionPageが削除されたことを確認
@@ -253,7 +253,7 @@ func TestDelete_正常に編集提案ページが削除される(t *testing.T) {
 		t.Fatal("DraftPageが見つかりません")
 	}
 	if dp.SuggestionPageID != nil {
-		t.Error("DraftPage.SuggestionPageID should be nil after deletion")
+		t.Error("削除後もDraftPage.SuggestionPageIDがnilになっていない")
 	}
 }
 
@@ -322,11 +322,11 @@ func TestDelete_最後の1ページは削除できずリダイレクトされる
 
 	// Conflictエラー → フラッシュメッセージ付きリダイレクト
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	expectedLoc := "/s/del-sp-lastpg/suggestions/1/changes"
 	if loc := rr.Header().Get("Location"); loc != expectedLoc {
-		t.Errorf("wrong redirect location: got %q want %q", loc, expectedLoc)
+		t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, expectedLoc)
 	}
 
 	// SuggestionPageが削除されていないことを確認

@@ -27,13 +27,13 @@ func TestGetDraftPagesUsecase_Execute(t *testing.T) {
 			UserID: userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.DraftPages) != 0 {
-			t.Errorf("len(DraftPages) = %d, want 0", len(output.DraftPages))
+			t.Errorf("len(DraftPages) = %d、期待値 = 0", len(output.DraftPages))
 		}
 	})
 
@@ -76,13 +76,13 @@ func TestGetDraftPagesUsecase_Execute(t *testing.T) {
 			UserID: userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if len(output.DraftPages) != 1 {
-			t.Errorf("len(DraftPages) = %d, want 1", len(output.DraftPages))
+			t.Errorf("len(DraftPages) = %d、期待値 = 1", len(output.DraftPages))
 		}
 	})
 }

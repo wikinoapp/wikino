@@ -1,0 +1,240 @@
+package seed
+
+import (
+	"context"
+	"database/sql"
+	"io"
+	"testing"
+	"time"
+
+	"github.com/lib/pq"
+	"github.com/pquerna/otp/totp"
+
+	"github.com/wikinoapp/wikino/go/internal/auth"
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/query"
+	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
+)
+
+// testRosterPasswordはtestRosterがハッシュ化する平文。名簿が持つのは
+// ダイジェストだけであるため、検証にパスワードを必要とするテストはここで保持する。
+const testRosterPassword = "seed-password"
+
+// testRosterは生成器のテストが使う名簿。シードと同じ役割を挙げているため、
+// 生成器が役割で求めるものはここにも揃っている。値はテスト独自のものにしており、
+// 開発用の名簿がたまたま持っている内容にテストが依存しないようにしている。
+func testRoster(t *testing.T) *userRoster {
+	t.Helper()
+
+	passwordDigest, err := auth.HashPassword(testRosterPassword)
+	if err != nil {
+		t.Fatalf("テスト用パスワードのハッシュ化に失敗: %v", err)
+	}
+
+	return &userRoster{
+		path:           "seed-users.toml",
+		passwordDigest: passwordDigest,
+		users: []rosterUser{
+			{
+				role:         roleOwner,
+				atname:       "seedowner",
+				name:         "シードオーナー",
+				email:        "seed-owner@example.com",
+				featureFlags: model.AllFeatureFlagNames,
+			},
+			{
+				role:      roleCollaborator,
+				atname:    "seedcollaborator",
+				name:      "シードコラボレーター",
+				email:     "seed-collaborator@example.com",
+				twoFactor: true,
+			},
+			{
+				role:         roleGuest,
+				atname:       "seedguest",
+				name:         "シードゲスト",
+				email:        "seed-guest@example.com",
+				featureFlags: model.AllFeatureFlagNames,
+			},
+		},
+	}
+}
+
+func TestGenerateUsers(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	ctx := context.Background()
+
+	roster := testRoster(t)
+
+	users, err := generateUsers(ctx, tx, io.Discard, roster)
+	if err != nil {
+		t.Fatalf("ユーザー生成に失敗: %v", err)
+	}
+
+	for _, want := range roster.users {
+		user := users.user(want.role)
+		if user == nil {
+			t.Fatalf("役割%sのアカウントが作成されていない", want.role)
+		}
+
+		if user.Email != want.email {
+			t.Errorf("役割%sのメールアドレスが%qであることを期待したが%qだった", want.role, want.email, user.Email)
+		}
+		if user.Atname != want.atname {
+			t.Errorf("役割%sのアットネームが%qであることを期待したが%qだった", want.role, want.atname, user.Atname)
+		}
+		if user.Name != want.name {
+			t.Errorf("役割%sの名前が%qであることを期待したが%qだった", want.role, want.name, user.Name)
+		}
+		wantDescription := "ブラウザ確認用のシードユーザーです。"
+		if user.Description != wantDescription {
+			t.Errorf("役割%sの説明が%qであることを期待したが%qだった", want.role, wantDescription, user.Description)
+		}
+
+		// 生成したダイジェストは名簿のパスワードそのもので検証できる必要がある。
+		// これにより、同じ資格情報を使うサインインクライアントはシード完了直後に認証
+		// できる。
+		var digest string
+		if err := tx.QueryRowContext(ctx, `SELECT password_digest FROM user_passwords WHERE user_id = $1`, string(user.ID)).Scan(&digest); err != nil {
+			t.Fatalf("役割%sのパスワード取得に失敗: %v", want.role, err)
+		}
+		if !auth.VerifyPassword(digest, testRosterPassword) {
+			t.Errorf("役割%sのパスワードダイジェストが名簿のパスワードと一致しない", want.role)
+		}
+
+		assertFeatureFlags(ctx, t, tx, user.ID, want.featureFlags)
+
+		if want.twoFactor {
+			assertTwoFactorAuthEnabled(ctx, t, tx, user.ID)
+		} else {
+			assertTwoFactorAuthAbsent(ctx, t, tx, user.ID)
+		}
+	}
+}
+
+func TestSeededUsersRequireName(t *testing.T) {
+	t.Parallel()
+
+	users := &seededUsers{byRole: map[seedRole]*model.User{
+		roleOwner: {Name: "テストオーナー"},
+	}}
+
+	name, err := users.requireName(roleOwner)
+	if err != nil {
+		t.Fatalf("作成済みの役割で予期しないエラー: %v", err)
+	}
+	if name != "テストオーナー" {
+		t.Errorf("表示名が%qであることを期待したが%qだった", "テストオーナー", name)
+	}
+
+	_, err = users.requireName(roleGuest)
+	wantErr := "役割 guestのアカウントが作成されていない"
+	if err == nil {
+		t.Fatal("作成されていない役割でエラーを期待したがnilだった")
+	}
+	if err.Error() != wantErr {
+		t.Errorf("エラーが%qであることを期待したが%qだった", wantErr, err)
+	}
+}
+
+// assertFeatureFlagsは、ユーザーが与えられたフラグだけを持つことを確認する。
+func assertFeatureFlags(ctx context.Context, t *testing.T, tx *sql.Tx, userID model.UserID, want []model.FeatureFlagName) {
+	t.Helper()
+
+	rows, err := tx.QueryContext(ctx, `SELECT name FROM feature_flags WHERE user_id = $1`, string(userID))
+	if err != nil {
+		t.Fatalf("フィーチャーフラグの取得に失敗: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	got := make(map[string]bool)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			t.Fatalf("フィーチャーフラグ名の読み取りに失敗: %v", err)
+		}
+		got[name] = true
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("フィーチャーフラグの走査に失敗: %v", err)
+	}
+
+	if len(got) != len(want) {
+		t.Errorf("フィーチャーフラグが%d件であることを期待したが%d件だった", len(want), len(got))
+	}
+	for _, name := range want {
+		if !got[string(name)] {
+			t.Errorf("フィーチャーフラグ%sが付与されていない", name)
+		}
+	}
+}
+
+// assertTwoFactorAuthEnabledは、生成コードとリカバリーコードのどちらでも
+// ユーザーが2要素認証ステップを通過できることを確認する。
+func assertTwoFactorAuthEnabled(ctx context.Context, t *testing.T, tx *sql.Tx, userID model.UserID) {
+	t.Helper()
+
+	var (
+		secret        string
+		enabled       bool
+		recoveryCodes []string
+	)
+	err := tx.QueryRowContext(
+		ctx,
+		`SELECT secret, enabled, recovery_codes FROM user_two_factor_auths WHERE user_id = $1`,
+		string(userID),
+	).Scan(&secret, &enabled, pq.Array(&recoveryCodes))
+	if err != nil {
+		t.Fatalf("二要素認証設定の取得に失敗: %v", err)
+	}
+
+	if !enabled {
+		t.Error("二要素認証が有効であることを期待したが無効だった")
+	}
+	if len(recoveryCodes) != recoveryCodeCount {
+		t.Errorf("リカバリーコードが%d件であることを期待したが%d件だった", recoveryCodeCount, len(recoveryCodes))
+	}
+	if len(recoveryCodes) > 0 {
+		twoFactorAuthRepo := repository.NewUserTwoFactorAuthRepository(query.New(tx))
+		recoveryValidator := validator.NewSignInTwoFactorRecoveryCreateValidator(twoFactorAuthRepo)
+		if _, err := recoveryValidator.Validate(ctx, validator.SignInTwoFactorRecoveryCreateValidatorInput{
+			UserID:       userID,
+			RecoveryCode: recoveryCodes[0],
+		}); err != nil {
+			t.Errorf("シードしたリカバリーコードが認証経路で受理されなかった: %v", err)
+		}
+	}
+
+	// cmd/devtotpがコードに変換できないsecretだと、そのアカウントは
+	// そもそもサインインできなくなる。
+	code, err := totp.GenerateCode(secret, time.Now())
+	if err != nil {
+		t.Fatalf("TOTPコードの生成に失敗: %v", err)
+	}
+	if !totp.Validate(code, secret) {
+		t.Error("生成したTOTPコードが検証を通らなかった")
+	}
+}
+
+// assertTwoFactorAuthAbsentは、ユーザーが2要素認証の設定をまったく
+// 持たないことを確認する。パスワードだけでサインインが完了するはずのアカウントは、
+// ここに行ができた時点でその経路を見せなくなる。
+func assertTwoFactorAuthAbsent(ctx context.Context, t *testing.T, tx *sql.Tx, userID model.UserID) {
+	t.Helper()
+
+	var count int
+	if err := tx.QueryRowContext(
+		ctx,
+		`SELECT count(*) FROM user_two_factor_auths WHERE user_id = $1`,
+		string(userID),
+	).Scan(&count); err != nil {
+		t.Fatalf("二要素認証設定の件数取得に失敗: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("二要素認証が無いことを期待したが%d件の設定があった", count)
+	}
+}

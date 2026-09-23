@@ -10,20 +10,20 @@ import (
 
 var passwordResetEmailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
-// PasswordResetCreateValidator はパスワードリセット申請のバリデーションを行う
+// PasswordResetCreateValidatorはパスワードリセット申請のバリデーションを行う
 type PasswordResetCreateValidator struct{}
 
-// NewPasswordResetCreateValidator は PasswordResetCreateValidator を生成する
+// NewPasswordResetCreateValidatorはPasswordResetCreateValidatorを生成する
 func NewPasswordResetCreateValidator() *PasswordResetCreateValidator {
 	return &PasswordResetCreateValidator{}
 }
 
-// PasswordResetCreateValidatorInput はバリデーションの入力パラメータ
+// PasswordResetCreateValidatorInputはバリデーションの入力パラメータ
 type PasswordResetCreateValidatorInput struct {
 	Email string
 }
 
-// Validate はバリデーションを行う
+// Validateはバリデーションを行う
 func (v *PasswordResetCreateValidator) Validate(ctx context.Context, input PasswordResetCreateValidatorInput) error {
 	ve := model.NewValidationError()
 

@@ -11,26 +11,27 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// PageBuilder はページテストデータのビルダー
+// PageBuilderはページテストデータのビルダー
 type PageBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	spaceID       string
-	topicID       string
-	number        model.PageNumber
-	title         *string
-	body          string
-	bodyHTML      string
-	linkedPageIDs []string
-	modifiedAt    time.Time
-	publishedAt   *time.Time
-	pinnedAt      *time.Time
-	trashedAt     *time.Time
-	discardedAt   *time.Time
+	spaceID                   string
+	topicID                   string
+	number                    model.PageNumber
+	title                     *string
+	body                      string
+	bodyHTML                  string
+	linkedPageIDs             []string
+	modifiedAt                time.Time
+	publishedAt               *time.Time
+	pinnedAt                  *time.Time
+	trashedAt                 *time.Time
+	discardedAt               *time.Time
+	featuredImageAttachmentID *string
 }
 
-// NewPageBuilder は PageBuilder を生成します
+// NewPageBuilderはPageBuilderを生成します
 func NewPageBuilder(t *testing.T, tx *sql.Tx) *PageBuilder {
 	t.Helper()
 	now := time.Now()
@@ -41,100 +42,108 @@ func NewPageBuilder(t *testing.T, tx *sql.Tx) *PageBuilder {
 		number:        1,
 		title:         &title,
 		body:          "Test body",
-		bodyHTML:      "<p>Test body</p>",
 		linkedPageIDs: []string{},
 		modifiedAt:    now,
 		publishedAt:   &now,
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *PageBuilder) WithSpaceID(spaceID model.SpaceID) *PageBuilder {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *PageBuilder) WithTopicID(topicID model.TopicID) *PageBuilder {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithNumber はページ番号を設定します
+// WithNumberはページ番号を設定します
 func (b *PageBuilder) WithNumber(number model.PageNumber) *PageBuilder {
 	b.number = number
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *PageBuilder) WithTitle(title string) *PageBuilder {
 	b.title = &title
 	return b
 }
 
-// WithNilTitle はタイトルをnilに設定します
+// WithNilTitleはタイトルをnilに設定します
 func (b *PageBuilder) WithNilTitle() *PageBuilder {
 	b.title = nil
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *PageBuilder) WithBody(body string) *PageBuilder {
 	b.body = body
 	return b
 }
 
-// WithBodyHTML はHTML本文を設定します
+// WithBodyHTMLは現在のMarkdownと食い違う保存済みHTMLを設定します。
+// 画面が保存済みHTMLではなくMarkdownを参照することを固定するテスト専用の
+// フィクスチャです (body_html列の削除と一緒に消えます)。
 func (b *PageBuilder) WithBodyHTML(bodyHTML string) *PageBuilder {
 	b.bodyHTML = bodyHTML
 	return b
 }
 
-// WithLinkedPageIDs はリンク先ページIDリストを設定します
+// WithLinkedPageIDsはリンク先ページIDリストを設定します
 func (b *PageBuilder) WithLinkedPageIDs(ids []model.PageID) *PageBuilder {
 	b.linkedPageIDs = model.PageIDsToStrings(ids)
 	return b
 }
 
-// WithModifiedAt は更新日時を設定します
+// WithModifiedAtは更新日時を設定します
 func (b *PageBuilder) WithModifiedAt(modifiedAt time.Time) *PageBuilder {
 	b.modifiedAt = modifiedAt
 	return b
 }
 
-// WithPublishedAt は公開日時を設定します
+// WithPublishedAtは公開日時を設定します
 func (b *PageBuilder) WithPublishedAt(publishedAt time.Time) *PageBuilder {
 	b.publishedAt = &publishedAt
 	return b
 }
 
-// WithUnpublished は非公開状態に設定します
+// WithUnpublishedは非公開状態に設定します
 func (b *PageBuilder) WithUnpublished() *PageBuilder {
 	b.publishedAt = nil
 	return b
 }
 
-// WithPinnedAt はピン留め日時を設定します
+// WithPinnedAtはピン留め日時を設定します
 func (b *PageBuilder) WithPinnedAt(pinnedAt time.Time) *PageBuilder {
 	b.pinnedAt = &pinnedAt
 	return b
 }
 
-// WithTrashed はゴミ箱状態に設定します
+// WithTrashedはゴミ箱状態に設定します
 func (b *PageBuilder) WithTrashed() *PageBuilder {
 	now := time.Now()
 	b.trashedAt = &now
 	return b
 }
 
-// WithDiscarded は廃棄済み状態に設定します
+// WithDiscardedは廃棄済み状態に設定します
 func (b *PageBuilder) WithDiscarded() *PageBuilder {
 	now := time.Now()
 	b.discardedAt = &now
 	return b
 }
 
-// Build はページを作成し、IDを返します
+// WithFeaturedImageAttachmentIDはアイキャッチ画像の添付ファイルIDを設定します。
+func (b *PageBuilder) WithFeaturedImageAttachmentID(id model.AttachmentID) *PageBuilder {
+	s := string(id)
+	b.featuredImageAttachmentID = &s
+	return b
+}
+
+// Buildはページを作成し、IDを返します
 func (b *PageBuilder) Build() model.PageID {
 	b.t.Helper()
 
@@ -149,11 +158,12 @@ func (b *PageBuilder) Build() model.PageID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, pinned_at, trashed_at, discarded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, pinned_at, trashed_at, discarded_at, featured_image_attachment_id, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		 RETURNING id`,
 		b.spaceID, b.topicID, int32(b.number), b.title, b.body, b.bodyHTML,
-		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.pinnedAt, b.trashedAt, b.discardedAt, now, now,
+		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.pinnedAt, b.trashedAt, b.discardedAt,
+		b.featuredImageAttachmentID, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページ作成に失敗: %v", err)
@@ -162,7 +172,7 @@ func (b *PageBuilder) Build() model.PageID {
 	return model.PageID(id)
 }
 
-// PageBuilderDB はDBを直接使用するページテストデータのビルダー
+// PageBuilderDBはDBを直接使用するページテストデータのビルダー
 // トランザクション管理を自前で行うUsecaseのテストに使用します
 type PageBuilderDB struct {
 	t  *testing.T
@@ -173,14 +183,13 @@ type PageBuilderDB struct {
 	number        model.PageNumber
 	title         *string
 	body          string
-	bodyHTML      string
 	linkedPageIDs []string
 	modifiedAt    time.Time
 	publishedAt   *time.Time
 	discardedAt   *time.Time
 }
 
-// NewPageBuilderDB は PageBuilderDB を生成します
+// NewPageBuilderDBはPageBuilderDBを生成します
 func NewPageBuilderDB(t *testing.T, db *sql.DB) *PageBuilderDB {
 	t.Helper()
 	now := time.Now()
@@ -191,63 +200,62 @@ func NewPageBuilderDB(t *testing.T, db *sql.DB) *PageBuilderDB {
 		number:        1,
 		title:         &title,
 		body:          "Test body",
-		bodyHTML:      "<p>Test body</p>",
 		linkedPageIDs: []string{},
 		modifiedAt:    now,
 		publishedAt:   &now,
 	}
 }
 
-// WithSpaceID はスペースIDを設定します
+// WithSpaceIDはスペースIDを設定します
 func (b *PageBuilderDB) WithSpaceID(spaceID model.SpaceID) *PageBuilderDB {
 	b.spaceID = string(spaceID)
 	return b
 }
 
-// WithTopicID はトピックIDを設定します
+// WithTopicIDはトピックIDを設定します
 func (b *PageBuilderDB) WithTopicID(topicID model.TopicID) *PageBuilderDB {
 	b.topicID = string(topicID)
 	return b
 }
 
-// WithNumber はページ番号を設定します
+// WithNumberはページ番号を設定します
 func (b *PageBuilderDB) WithNumber(number model.PageNumber) *PageBuilderDB {
 	b.number = number
 	return b
 }
 
-// WithTitle はタイトルを設定します
+// WithTitleはタイトルを設定します
 func (b *PageBuilderDB) WithTitle(title string) *PageBuilderDB {
 	b.title = &title
 	return b
 }
 
-// WithBody は本文を設定します
+// WithBodyは本文を設定します
 func (b *PageBuilderDB) WithBody(body string) *PageBuilderDB {
 	b.body = body
 	return b
 }
 
-// WithPublishedAt は公開日時を設定します
+// WithPublishedAtは公開日時を設定します
 func (b *PageBuilderDB) WithPublishedAt(publishedAt time.Time) *PageBuilderDB {
 	b.publishedAt = &publishedAt
 	return b
 }
 
-// WithUnpublished は非公開状態に設定します
+// WithUnpublishedは非公開状態に設定します
 func (b *PageBuilderDB) WithUnpublished() *PageBuilderDB {
 	b.publishedAt = nil
 	return b
 }
 
-// WithDiscarded は廃棄済み状態に設定します
+// WithDiscardedは廃棄済み状態に設定します
 func (b *PageBuilderDB) WithDiscarded() *PageBuilderDB {
 	now := time.Now()
 	b.discardedAt = &now
 	return b
 }
 
-// Build はページを作成し、IDを返します
+// Buildはページを作成し、IDを返します
 func (b *PageBuilderDB) Build() model.PageID {
 	b.t.Helper()
 
@@ -262,10 +270,10 @@ func (b *PageBuilderDB) Build() model.PageID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, discarded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, discarded_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		 RETURNING id`,
-		b.spaceID, b.topicID, int32(b.number), b.title, b.body, b.bodyHTML,
+		b.spaceID, b.topicID, int32(b.number), b.title, b.body,
 		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.discardedAt, now, now,
 	).Scan(&id)
 	if err != nil {

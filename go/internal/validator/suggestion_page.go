@@ -14,14 +14,14 @@ var (
 	ErrDraftPageNotLinked = errors.New("下書きページが編集提案ページにリンクされていません")
 )
 
-// SuggestionPageCreateValidator は編集提案ページ追加のバリデーションを行う
+// SuggestionPageCreateValidatorは編集提案ページ追加のバリデーションを行う
 type SuggestionPageCreateValidator struct {
 	draftPageRepo      *repository.DraftPageRepository
 	pageRepo           *repository.PageRepository
 	suggestionPageRepo *repository.SuggestionPageRepository
 }
 
-// NewSuggestionPageCreateValidator は SuggestionPageCreateValidator を生成する
+// NewSuggestionPageCreateValidatorはSuggestionPageCreateValidatorを生成する
 func NewSuggestionPageCreateValidator(
 	draftPageRepo *repository.DraftPageRepository,
 	pageRepo *repository.PageRepository,
@@ -34,7 +34,7 @@ func NewSuggestionPageCreateValidator(
 	}
 }
 
-// SuggestionPageCreateValidatorInput はバリデーションの入力パラメータ
+// SuggestionPageCreateValidatorInputはバリデーションの入力パラメータ
 type SuggestionPageCreateValidatorInput struct {
 	DraftPageIDs  []model.DraftPageID
 	SpaceMemberID model.SpaceMemberID
@@ -43,8 +43,8 @@ type SuggestionPageCreateValidatorInput struct {
 	SuggestionID  model.SuggestionID
 }
 
-// Validate はバリデーションを行う。
-// 成功時は検証済みの DraftPage スライスを返す。
+// Validateはバリデーションを行う。
+// 成功時は検証済みのDraftPageスライスを返す。
 func (v *SuggestionPageCreateValidator) Validate(ctx context.Context, input SuggestionPageCreateValidatorInput) ([]*model.DraftPage, error) {
 	ve := model.NewValidationError()
 
@@ -54,7 +54,7 @@ func (v *SuggestionPageCreateValidator) Validate(ctx context.Context, input Sugg
 		return nil, ve
 	}
 
-	// 既存の編集提案ページを取得（重複チェック用）
+	// 既存の編集提案ページを取得 (重複チェック用)
 	existingPages, err := v.suggestionPageRepo.ListBySuggestionID(ctx, input.SuggestionID, input.SpaceID)
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (v *SuggestionPageCreateValidator) Validate(ctx context.Context, input Sugg
 		draftPages = append(draftPages, draftPage)
 	}
 
-	// ページの現在のトピックが一致するか確認（ページ移動後の不整合を防止）
+	// ページの現在のトピックが一致するか確認 (ページ移動後の不整合を防止)
 	if err := validatePageTopicConsistency(ctx, v.pageRepo, draftPages, input.TopicID, input.SpaceID, "draft_page_ids", "validation_suggestion_page_draft_page_not_found"); err != nil {
 		return nil, err
 	}
@@ -101,19 +101,19 @@ func (v *SuggestionPageCreateValidator) Validate(ctx context.Context, input Sugg
 	return draftPages, nil
 }
 
-// SuggestionPageUpdateValidator は編集提案ページ更新のバリデーションを行う
+// SuggestionPageUpdateValidatorは編集提案ページ更新のバリデーションを行う
 type SuggestionPageUpdateValidator struct {
 	draftPageRepo *repository.DraftPageRepository
 }
 
-// NewSuggestionPageUpdateValidator は SuggestionPageUpdateValidator を生成する
+// NewSuggestionPageUpdateValidatorはSuggestionPageUpdateValidatorを生成する
 func NewSuggestionPageUpdateValidator(draftPageRepo *repository.DraftPageRepository) *SuggestionPageUpdateValidator {
 	return &SuggestionPageUpdateValidator{
 		draftPageRepo: draftPageRepo,
 	}
 }
 
-// SuggestionPageUpdateValidatorInput はバリデーションの入力パラメータ
+// SuggestionPageUpdateValidatorInputはバリデーションの入力パラメータ
 type SuggestionPageUpdateValidatorInput struct {
 	SuggestionPageID model.SuggestionPageID
 	PageID           model.PageID
@@ -121,7 +121,7 @@ type SuggestionPageUpdateValidatorInput struct {
 	SpaceID          model.SpaceID
 }
 
-// Validate はバリデーションを行う。
+// Validateはバリデーションを行う。
 // 成功時はDraftPageを返す。エラー時はErrDraftPageNotFound、ErrDraftPageNotLinked、またはシステムエラーを返す。
 func (v *SuggestionPageUpdateValidator) Validate(ctx context.Context, input SuggestionPageUpdateValidatorInput) (*model.DraftPage, error) {
 	// DraftPageの存在確認

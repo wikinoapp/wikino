@@ -1,15 +1,24 @@
-// Package policy はリソースに対する権限チェックを提供する
+// Package policyはリソースに対する権限チェックを提供する
 package policy
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// implications はリソース内の含意ルール（上位スコープ → 下位スコープ）
+// 互換入力として受け付ける旧名だけを正式名へ読み替える。
+var legacyScopes = map[model.Scope]model.Scope{
+	model.ScopePageTrash:       model.ScopePageTrashWrite,
+	model.ScopePageRestore:     model.ScopePageTrashDelete,
+	model.ScopeSuggestionApply: model.ScopeSuggestionApplicationWrite,
+	model.ScopeSuggestionClose: model.ScopeSuggestionClosureWrite,
+}
+
+// implicationsはリソース内の含意ルール (上位スコープ → 下位スコープ)
 var implications = map[model.Scope][]model.Scope{
 	model.ScopeTopicWrite:             {model.ScopeTopicRead},
 	model.ScopeTopicMemberWrite:       {model.ScopeTopicMemberRead},
 	model.ScopePageWrite:              {model.ScopePageRead},
+	model.ScopePageTrashWrite:         {model.ScopePageTrashRead},
 	model.ScopeDraftPageWrite:         {model.ScopeDraftPageRead},
 	model.ScopeSuggestionWrite:        {model.ScopeSuggestionRead},
 	model.ScopeSuggestionCommentWrite: {model.ScopeSuggestionCommentRead},
@@ -18,8 +27,8 @@ var implications = map[model.Scope][]model.Scope{
 	model.ScopeAttachmentWrite:        {model.ScopeAttachmentRead},
 }
 
-// allResourceScopes は space:admin が包括するすべてのリソーススコープを返す。
-// space:admin 自体は含まない。
+// allResourceScopesはspace:adminが包括するすべてのリソーススコープを返す。
+// space:admin自体は含まない。
 func allResourceScopes() []model.Scope {
 	return []model.Scope{
 		// スペース
@@ -37,8 +46,10 @@ func allResourceScopes() []model.Scope {
 		// ページ
 		model.ScopePageRead,
 		model.ScopePageWrite,
-		model.ScopePageTrash,
-		model.ScopePageRestore,
+		// ゴミ箱
+		model.ScopePageTrashRead,
+		model.ScopePageTrashWrite,
+		model.ScopePageTrashDelete,
 		// 下書きページ
 		model.ScopeDraftPageRead,
 		model.ScopeDraftPageWrite,
@@ -46,8 +57,8 @@ func allResourceScopes() []model.Scope {
 		// 編集提案
 		model.ScopeSuggestionRead,
 		model.ScopeSuggestionWrite,
-		model.ScopeSuggestionApply,
-		model.ScopeSuggestionClose,
+		model.ScopeSuggestionApplicationWrite,
+		model.ScopeSuggestionClosureWrite,
 		// 編集提案コメント
 		model.ScopeSuggestionCommentRead,
 		model.ScopeSuggestionCommentWrite,
@@ -62,28 +73,35 @@ func allResourceScopes() []model.Scope {
 	}
 }
 
-// expandScopes はスコープの含意を展開し、有効なスコープの集合を返す。
-// DB 保存時には展開しない。判定時にのみ使用する。
+// expandScopesはスコープの含意を展開し、有効なスコープの集合を返す。
+// DB保存時には展開しない。判定時にのみ使用する。
 func expandScopes(scopes []model.Scope) []model.Scope {
 	expanded := make([]model.Scope, 0, len(scopes)*2)
-	expanded = append(expanded, scopes...)
+	normalized := make([]model.Scope, len(scopes))
+	for i, s := range scopes {
+		if canonical, ok := legacyScopes[s]; ok {
+			s = canonical
+		}
+		normalized[i] = s
+	}
+	expanded = append(expanded, normalized...)
 
-	// リソース内の含意展開（write → read）
-	for _, s := range scopes {
+	// リソース内の含意展開 (write → read)
+	for _, s := range normalized {
 		if implied, ok := implications[s]; ok {
 			expanded = append(expanded, implied...)
 		}
 	}
 
-	// space:admin は全リソーススコープを包括する（唯一の特別スコープ）
-	if hasScope(scopes, model.ScopeSpaceAdmin) {
+	// space:adminは全リソーススコープを包括する (唯一の特別スコープ)
+	if hasScope(normalized, model.ScopeSpaceAdmin) {
 		expanded = append(expanded, allResourceScopes()...)
 	}
 
 	return deduplicate(expanded)
 }
 
-// hasScope は指定のスコープがスライスに含まれているかチェックする
+// hasScopeは指定のスコープがスライスに含まれているかチェックする
 func hasScope(scopes []model.Scope, target model.Scope) bool {
 	for _, s := range scopes {
 		if s == target {
@@ -93,7 +111,7 @@ func hasScope(scopes []model.Scope, target model.Scope) bool {
 	return false
 }
 
-// deduplicate はスコープのスライスから重複を除去する
+// deduplicateはスコープのスライスから重複を除去する
 func deduplicate(scopes []model.Scope) []model.Scope {
 	seen := make(map[model.Scope]bool, len(scopes))
 	result := make([]model.Scope, 0, len(scopes))

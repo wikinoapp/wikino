@@ -22,8 +22,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// newTestHandler builds the handler with all dependent usecases wired to the given queries.
-// [Ja] newTestHandler は依存するユースケース一式を queries に結線したハンドラーを生成します。
+// newTestHandlerは依存するユースケース一式をqueriesに結線したハンドラーを生成します。
 func newTestHandler(db *sql.DB, queries *query.Queries) *draft_page_revision.Handler {
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
@@ -73,14 +72,14 @@ func newTestHandler(db *sql.DB, queries *query.Queries) *draft_page_revision.Han
 	)
 }
 
-// setupHandler はテスト用のハンドラーを生成するヘルパーです
+// setupHandlerはテスト用のハンドラーを生成するヘルパーです
 func setupHandler(t *testing.T, queries *query.Queries) *draft_page_revision.Handler {
 	t.Helper()
 
 	return newTestHandler(testutil.GetTestDB(), queries)
 }
 
-// newRequestWithChiParams はchiのURLパラメータ付きPATCHリクエストを作成するヘルパーです
+// newRequestWithChiParamsはchiのURLパラメータ付きPATCHリクエストを作成するヘルパーです
 func newRequestWithChiParams(t *testing.T, path string, params map[string]string, formData url.Values) *http.Request {
 	t.Helper()
 
@@ -112,7 +111,7 @@ func TestUpdate_NotLoggedIn(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnauthorized {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnauthorized)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnauthorized)
 	}
 }
 
@@ -140,7 +139,7 @@ func TestUpdate_InvalidPageNumber(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -168,7 +167,7 @@ func TestUpdate_SpaceNotFound(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -232,12 +231,12 @@ func TestUpdate_Success(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/drafts" {
-		t.Errorf("wrong redirect location: got %v want /drafts", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /drafts", location)
 	}
 }
 
@@ -293,12 +292,12 @@ func TestUpdate_WithoutDraftPage(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/drafts" {
-		t.Errorf("wrong redirect location: got %v want /drafts", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /drafts", location)
 	}
 }
 
@@ -361,22 +360,18 @@ func TestUpdate_RedirectToSuggestionNew(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 
 	location := rr.Header().Get("Location")
 	expectedLocation := fmt.Sprintf("/s/dpr-suggest-redir-sp/topics/1/suggestions/new?draft_page_ids=%s", string(draftPageID))
 	if location != expectedLocation {
-		t.Errorf("wrong redirect location: got %v, want %v", location, expectedLocation)
+		t.Errorf("リダイレクト先 = %v、期待値 = %v", location, expectedLocation)
 	}
 }
 
-// TestUpdate_HTMXRequest verifies that a manual save sent by htmx responds without navigation:
-// it returns the OOB swap fragment that refreshes the saved-at indicator and both edit history
-// columns instead of redirecting.
-//
-// [Ja] TestUpdate_HTMXRequest は htmx からの手動保存が画面遷移なしで応答することを検証する。
-// リダイレクトの代わりに、保存時刻表示と編集履歴カラム 2 箇所を更新する OOB スワップ
+// TestUpdate_HTMXRequestはhtmxからの手動保存が画面遷移なしで応答することを検証する。
+// リダイレクトの代わりに、保存時刻表示と編集履歴カラム2箇所を更新するOOBスワップ
 // フラグメントが返る。
 func TestUpdate_HTMXRequest(t *testing.T) {
 	t.Parallel()
@@ -438,10 +433,10 @@ func TestUpdate_HTMXRequest(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 	if location := rr.Header().Get("Location"); location != "" {
-		t.Errorf("htmx request should not redirect, got Location: %v", location)
+		t.Errorf("htmxのリクエストがリダイレクトされている: Location = %v", location)
 	}
 
 	body := rr.Body.String()
@@ -449,13 +444,12 @@ func TestUpdate_HTMXRequest(t *testing.T) {
 		`id="page-draft-saved-at" hx-swap-oob="outerHTML"`,
 		`id="page-revision-list" hx-swap-oob="innerHTML"`,
 		`id="page-revision-list-drawer" hx-swap-oob="innerHTML"`,
-		// The save created the draft's first revision, so the refreshed history shows v1.
-		// [Ja] この保存で下書きの最初のリビジョンが作成されるため、更新後の履歴に v1 が表示される。
+		// この保存で下書きの最初のリビジョンが作成されるため、更新後の履歴にv1が表示される。
 		"v1",
 	}
 	for _, expected := range expectedChecks {
 		if !strings.Contains(body, expected) {
-			t.Errorf("response doesn't contain: %q", expected)
+			t.Errorf("レスポンスに%qが含まれていない", expected)
 		}
 	}
 }

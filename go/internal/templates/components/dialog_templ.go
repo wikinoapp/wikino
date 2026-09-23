@@ -11,42 +11,27 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
-// DialogData is the data passed to the Dialog component (a basecoat Dialog built on the native
-// <dialog> element). Callers open it with dialog.showModal(), which puts it in the browser's
-// top layer; Esc closes it natively and a click on the backdrop closes it via the handler below.
-//
-// [Ja] DialogData は Dialog コンポーネント (native の <dialog> 要素上に構築した basecoat Dialog)
-// に渡すデータです。呼び出し側は dialog.showModal() で開きます。これによりブラウザの
-// トップレイヤーに表示され、Esc はネイティブに閉じ、バックドロップのクリックは下記の
+// DialogDataはDialogコンポーネント (nativeの <dialog> 要素上に構築したbasecoat Dialog)
+// に渡すデータです。呼び出し側はdialog.showModal() で開きます。これによりブラウザの
+// トップレイヤーに表示され、Escはネイティブに閉じ、バックドロップのクリックは下記の
 // ハンドラーで閉じます。
 type DialogData struct {
-	// ID is the unique element id callers use to open the dialog (showModal).
-	// [Ja] ID は呼び出し側がダイアログを開く (showModal) ために使う一意な要素 id です。
+	// IDは呼び出し側がダイアログを開く (showModal) ために使う一意な要素idです。
 	ID string
 
-	// Title is the heading text shown in the dialog header.
-	// [Ja] Title はダイアログのヘッダーに表示する見出しテキストです。
+	// Titleはダイアログのヘッダーに表示する見出しテキストです。
 	Title string
 
-	// MaxWidthClass optionally widens the dialog panel (e.g. "sm:max-w-2xl").
-	// basecoat's default is sm:max-w-lg.
-	//
-	// [Ja] MaxWidthClass はダイアログパネルの幅を広げる任意のクラスです (例: "sm:max-w-2xl")。
-	// basecoat のデフォルトは sm:max-w-lg。
+	// MaxWidthClassはダイアログパネルの幅を広げる任意のクラスです (例: "sm:max-w-2xl")。
+	// basecoatのデフォルトはsm:max-w-lg。
 	MaxWidthClass string
 
-	// Content is the arbitrary content rendered inside the dialog body.
-	// [Ja] Content はダイアログ本文に表示する任意のコンテンツです。
+	// Contentはダイアログ本文に表示する任意のコンテンツです。
 	Content templ.Component
 }
 
-// Dialog renders a modal dialog. The inner panel carries z-dialog (the CSS-variable-based
-// z-index scale in style.css) instead of basecoat's default bare z-50, so the stacking order
-// against the drawer (z-overlay) stays managed in one place even if the dialog is ever shown
-// outside the top layer.
-//
-// [Ja] Dialog はモーダルダイアログを表示します。内側のパネルには basecoat デフォルトの素の
-// z-50 ではなく z-dialog (style.css のCSS変数ベースの z-index スケール) を当て、ドロワー
+// Dialogはモーダルダイアログを表示します。内側のパネルにはbasecoatデフォルトの素の
+// z-50ではなくz-dialog (style.cssのCSS変数ベースのz-indexスケール) を当て、ドロワー
 // (z-overlay) との重なり順をトップレイヤー外で表示された場合でも一箇所で管理できるようにします。
 func Dialog(data DialogData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -76,7 +61,7 @@ func Dialog(data DialogData) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 44, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 29, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -89,7 +74,7 @@ func Dialog(data DialogData) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ID + "-title")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 46, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 31, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -124,7 +109,7 @@ func Dialog(data DialogData) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ID + "-title")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 51, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 36, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -137,7 +122,7 @@ func Dialog(data DialogData) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(data.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 51, Col: 46}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 36, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -158,7 +143,7 @@ func Dialog(data DialogData) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "dialog_close"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 61, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/dialog.templ`, Line: 46, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {

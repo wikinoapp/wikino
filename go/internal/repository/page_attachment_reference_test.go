@@ -48,16 +48,16 @@ func TestPageAttachmentReferenceRepository_ListByPageID(t *testing.T) {
 	// テストデータを作成
 	_, err := repo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID1, attachmentID2})
 	if err != nil {
-		t.Fatalf("CreateBatch() error = %v", err)
+		t.Fatalf("CreateBatch()のエラー = %v", err)
 	}
 
 	t.Run("ページIDに紐づく添付ファイル参照を取得できる", func(t *testing.T) {
 		refs, err := repo.ListByPageID(context.Background(), pageID, spaceID)
 		if err != nil {
-			t.Fatalf("ListByPageID() error = %v", err)
+			t.Fatalf("ListByPageID()のエラー = %v", err)
 		}
 		if len(refs) != 2 {
-			t.Fatalf("ListByPageID() returned %d refs, want 2", len(refs))
+			t.Fatalf("ListByPageID()が返した参照の件数 = %d、期待値 = 2", len(refs))
 		}
 	})
 
@@ -71,10 +71,10 @@ func TestPageAttachmentReferenceRepository_ListByPageID(t *testing.T) {
 
 		refs, err := repo.ListByPageID(context.Background(), otherPageID, spaceID)
 		if err != nil {
-			t.Fatalf("ListByPageID() error = %v", err)
+			t.Fatalf("ListByPageID()のエラー = %v", err)
 		}
 		if len(refs) != 0 {
-			t.Errorf("ListByPageID() returned %d refs, want 0", len(refs))
+			t.Errorf("ListByPageID()が返した参照の件数 = %d、期待値 = 0", len(refs))
 		}
 	})
 }
@@ -119,40 +119,40 @@ func TestPageAttachmentReferenceRepository_CreateBatch(t *testing.T) {
 
 		refs, err := repo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID1, attachmentID2})
 		if err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 		if len(refs) != 2 {
-			t.Fatalf("CreateBatch() returned %d refs, want 2", len(refs))
+			t.Fatalf("CreateBatch()が返した参照の件数 = %d、期待値 = 2", len(refs))
 		}
 		for _, ref := range refs {
 			if ref.ID == "" {
-				t.Error("ref.ID should not be empty")
+				t.Error("ref.IDが空")
 			}
 			if ref.PageID != pageID {
-				t.Errorf("ref.PageID = %v, want %v", ref.PageID, pageID)
+				t.Errorf("ref.PageID = %v、期待値 = %v", ref.PageID, pageID)
 			}
 			if ref.CreatedAt.IsZero() {
-				t.Error("ref.CreatedAt should not be zero")
+				t.Error("ref.CreatedAtがゼロ値")
 			}
 			if ref.UpdatedAt.IsZero() {
-				t.Error("ref.UpdatedAt should not be zero")
+				t.Error("ref.UpdatedAtがゼロ値")
 			}
 		}
 		if refs[0].AttachmentID != attachmentID1 {
-			t.Errorf("refs[0].AttachmentID = %v, want %v", refs[0].AttachmentID, attachmentID1)
+			t.Errorf("refs[0].AttachmentID = %v、期待値 = %v", refs[0].AttachmentID, attachmentID1)
 		}
 		if refs[1].AttachmentID != attachmentID2 {
-			t.Errorf("refs[1].AttachmentID = %v, want %v", refs[1].AttachmentID, attachmentID2)
+			t.Errorf("refs[1].AttachmentID = %v、期待値 = %v", refs[1].AttachmentID, attachmentID2)
 		}
 	})
 
 	t.Run("空のattachmentIDsリストの場合は空スライスを返す", func(t *testing.T) {
 		refs, err := repo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{})
 		if err != nil {
-			t.Fatalf("CreateBatch() error = %v", err)
+			t.Fatalf("CreateBatch()のエラー = %v", err)
 		}
 		if len(refs) != 0 {
-			t.Errorf("CreateBatch() returned %d refs, want 0", len(refs))
+			t.Errorf("CreateBatch()が返した参照の件数 = %d、期待値 = 0", len(refs))
 		}
 	})
 }
@@ -198,24 +198,24 @@ func TestPageAttachmentReferenceRepository_DeleteByPageAndAttachmentIDs(t *testi
 	// テストデータを作成
 	_, err := repo.CreateBatch(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID1, attachmentID2, attachmentID3})
 	if err != nil {
-		t.Fatalf("CreateBatch() error = %v", err)
+		t.Fatalf("CreateBatch()のエラー = %v", err)
 	}
 
 	t.Run("指定した添付ファイルIDの参照のみ削除される", func(t *testing.T) {
 		err := repo.DeleteByPageAndAttachmentIDs(context.Background(), pageID, spaceID, []model.AttachmentID{attachmentID1, attachmentID2})
 		if err != nil {
-			t.Fatalf("DeleteByPageAndAttachmentIDs() error = %v", err)
+			t.Fatalf("DeleteByPageAndAttachmentIDs()のエラー = %v", err)
 		}
 
 		refs, err := repo.ListByPageID(context.Background(), pageID, spaceID)
 		if err != nil {
-			t.Fatalf("ListByPageID() error = %v", err)
+			t.Fatalf("ListByPageID()のエラー = %v", err)
 		}
 		if len(refs) != 1 {
-			t.Fatalf("ListByPageID() returned %d refs, want 1", len(refs))
+			t.Fatalf("ListByPageID()が返した参照の件数 = %d、期待値 = 1", len(refs))
 		}
 		if refs[0].AttachmentID != attachmentID3 {
-			t.Errorf("remaining ref.AttachmentID = %v, want %v", refs[0].AttachmentID, attachmentID3)
+			t.Errorf("残った参照のAttachmentID = %v、期待値 = %v", refs[0].AttachmentID, attachmentID3)
 		}
 	})
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// CloseSuggestionUsecase は編集提案クローズユースケース
+// CloseSuggestionUsecaseは編集提案クローズユースケース
 type CloseSuggestionUsecase struct {
 	db              *sql.DB
 	spaceRepo       *repository.SpaceRepository
@@ -20,7 +20,7 @@ type CloseSuggestionUsecase struct {
 	draftPageRepo   *repository.DraftPageRepository
 }
 
-// NewCloseSuggestionUsecase は CloseSuggestionUsecase を生成する
+// NewCloseSuggestionUsecaseはCloseSuggestionUsecaseを生成する
 func NewCloseSuggestionUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -39,19 +39,19 @@ func NewCloseSuggestionUsecase(
 	}
 }
 
-// CloseSuggestionInput は編集提案クローズの入力パラメータ
+// CloseSuggestionInputは編集提案クローズの入力パラメータ
 type CloseSuggestionInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
 	UserID           model.UserID
 }
 
-// CloseSuggestionOutput は編集提案クローズの出力パラメータ
+// CloseSuggestionOutputは編集提案クローズの出力パラメータ
 type CloseSuggestionOutput struct {
 	Suggestion *model.Suggestion
 }
 
-// Execute は編集提案をクローズする
+// Executeは編集提案をクローズする
 func (uc *CloseSuggestionUsecase) Execute(ctx context.Context, input CloseSuggestionInput) (*CloseSuggestionOutput, error) {
 	// 1. データ取得
 	data, err := uc.fetchData(ctx, input)
@@ -69,11 +69,11 @@ func (uc *CloseSuggestionUsecase) Execute(ctx context.Context, input CloseSugges
 		return output, err
 	}
 
-	// 4. 永続化（トランザクション）
+	// 4. 永続化 (トランザクション)
 	return uc.closeSuggestion(ctx, data)
 }
 
-// closeSuggestionData はデータ取得結果をまとめた構造体
+// closeSuggestionDataはデータ取得結果をまとめた構造体
 type closeSuggestionData struct {
 	spaceMember *model.SpaceMember
 	topicMember *model.TopicMember
@@ -143,8 +143,8 @@ func (uc *CloseSuggestionUsecase) authorize(ctx context.Context, data *closeSugg
 	return nil
 }
 
-// checkStatusForClose はステータスに基づく事前チェックを行う。
-// Closed → べき等に成功出力を返す、Open → nil,nil で続行、その他 → Conflict エラー。
+// checkStatusForCloseはステータスに基づく事前チェックを行う。
+// Closed → べき等に成功出力を返す、Open → nil,nilで続行、その他 → Conflictエラー。
 func (uc *CloseSuggestionUsecase) checkStatusForClose(ctx context.Context, suggestion *model.Suggestion) (*CloseSuggestionOutput, error) {
 	switch suggestion.Status {
 	case model.SuggestionStatusClosed:

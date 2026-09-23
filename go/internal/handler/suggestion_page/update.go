@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Update は編集提案ページを更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id})
+// Updateは編集提案ページを更新します (PATCH /s/{space_identifier}/suggestions/{suggestion_number}/suggestion_pages/{suggestion_page_id})
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

@@ -1,4 +1,4 @@
-// Package usecase はアプリケーションのユースケース（ビジネスロジック）を提供します
+// Package usecaseはアプリケーションのユースケース (ビジネスロジック) を提供します
 package usecase
 
 import (
@@ -12,13 +12,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateSignInUsecase はサインインユースケース
+// CreateSignInUsecaseはサインインユースケース
 type CreateSignInUsecase struct {
 	signInValidator *validator.SignInCreateValidator
 	userSessionRepo *repository.UserSessionRepository
 }
 
-// NewCreateSignInUsecase は CreateSignInUsecase を生成する
+// NewCreateSignInUsecaseはCreateSignInUsecaseを生成する
 func NewCreateSignInUsecase(
 	signInValidator *validator.SignInCreateValidator,
 	userSessionRepo *repository.UserSessionRepository,
@@ -29,7 +29,7 @@ func NewCreateSignInUsecase(
 	}
 }
 
-// CreateSignInInput はサインインの入力パラメータ
+// CreateSignInInputはサインインの入力パラメータ
 type CreateSignInInput struct {
 	Email     string
 	Password  string
@@ -37,14 +37,14 @@ type CreateSignInInput struct {
 	UserAgent string
 }
 
-// CreateSignInOutput はサインインの出力パラメータ
+// CreateSignInOutputはサインインの出力パラメータ
 type CreateSignInOutput struct {
 	Token             string
 	TwoFactorRequired bool
 	UserID            model.UserID
 }
 
-// Execute はサインイン処理を実行する
+// Executeはサインイン処理を実行する
 func (uc *CreateSignInUsecase) Execute(ctx context.Context, input CreateSignInInput) (*CreateSignInOutput, error) {
 	// 1. バリデーション
 	validateOutput, err := uc.signInValidator.Validate(ctx, validator.SignInCreateValidatorInput{

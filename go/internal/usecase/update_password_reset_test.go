@@ -59,17 +59,17 @@ func TestUpdatePasswordResetUsecase_Execute(t *testing.T) {
 
 		output, err := uc.Execute(ctx, input)
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		if output.UserID != userID {
-			t.Errorf("UserID = %s, want %s", output.UserID, userID)
+			t.Errorf("UserID = %s、期待値 = %s", output.UserID, userID)
 		}
 
 		// パスワードが更新されていることを確認
 		updatedPassword, err := userPasswordRepo.FindByUserID(ctx, userID)
 		if err != nil {
-			t.Fatalf("FindByUserID() error = %v", err)
+			t.Fatalf("FindByUserID()のエラー = %v", err)
 		}
 		if updatedPassword == nil {
 			t.Fatal("パスワードが見つかりません")
@@ -83,7 +83,7 @@ func TestUpdatePasswordResetUsecase_Execute(t *testing.T) {
 		// トークンが使用済みになっていることを確認
 		usedToken, err := passwordResetTokenRepo.FindByTokenDigest(ctx, tokenDigest)
 		if err != nil {
-			t.Fatalf("FindByTokenDigest() error = %v", err)
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 		}
 		if usedToken == nil {
 			t.Fatal("トークンが見つかりません")
@@ -93,7 +93,7 @@ func TestUpdatePasswordResetUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("異常系: バリデーションエラー（パスワード不一致）", func(t *testing.T) {
+	t.Run("異常系: バリデーションエラー (パスワード不一致)", func(t *testing.T) {
 		t.Parallel()
 
 		// テストユーザーを作成
@@ -125,19 +125,19 @@ func TestUpdatePasswordResetUsecase_Execute(t *testing.T) {
 
 		output, err := uc.Execute(ctx, input)
 		if output != nil {
-			t.Error("expected nil output for validation error")
+			t.Error("バリデーションエラーなのに出力がnilではない")
 		}
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if !ve.HasFieldError("password_confirmation") {
-			t.Error("expected field error for password_confirmation")
+			t.Error("password_confirmationのフィールドエラーが無い")
 		}
 	})
 
-	t.Run("異常系: バリデーションエラー（無効なトークン）", func(t *testing.T) {
+	t.Run("異常系: バリデーションエラー (無効なトークン)", func(t *testing.T) {
 		t.Parallel()
 
 		passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
@@ -154,15 +154,15 @@ func TestUpdatePasswordResetUsecase_Execute(t *testing.T) {
 
 		output, err := uc.Execute(ctx, input)
 		if output != nil {
-			t.Error("expected nil output for validation error")
+			t.Error("バリデーションエラーなのに出力がnilではない")
 		}
 
 		ve := model.AsValidationError(err)
 		if ve == nil {
-			t.Fatal("expected ValidationError, but got nil")
+			t.Fatal("ValidationErrorを期待したが、nilだった")
 		}
 		if len(ve.Global) == 0 {
-			t.Error("expected global error for invalid token")
+			t.Error("無効なトークンなのにグローバルエラーが無い")
 		}
 	})
 }

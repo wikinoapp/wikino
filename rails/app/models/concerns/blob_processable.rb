@@ -88,18 +88,36 @@ module BlobProcessable
     # EXIF情報に基づいて自動回転を適用
     image = image.autorot
 
-    # EXIF情報を削除して保存
-    # stripオプションでメタデータを削除
-    case extension
-    when "jpg", "jpeg"
-      image.jpegsave(input_path, strip: true, Q: 90)
-    when "png"
-      image.pngsave(input_path, strip: true, compression: 9)
-    when "webp"
-      image.webpsave(input_path, strip: true, Q: 90)
-    else
-      # その他の形式はそのまま保存
-      image.write_to_file(input_path)
+    # libvips evaluates lazily and keeps the input file mapped until the save
+    # finishes, so saving over the path being read from truncates data that is
+    # still in use. Write to a separate temporary file and swap it in once the
+    # save is done. The temporary file has to carry the same extension as the
+    # input because `write_to_file` derives the output format from the path.
+    #
+    # [Ja] libvips は遅延評価で、保存が終わるまで入力ファイルをマップしたまま
+    # 保持する。そのため読み込み元と同じパスへ保存すると、まだ使用中のデータを
+    # 切り詰めてしまう。別の一時ファイルへ書き出し、保存後に読み込み元へ
+    # 差し替える。`write_to_file` は出力形式をパスの拡張子から決めるため、
+    # 一時ファイルの拡張子は読み込み元と揃える必要がある。
+    Tempfile.create(["image_processing", File.extname(input_path)]) do |output|
+      # libvips writes through the path it is given, so the open handle is not
+      # needed.
+      #
+      # [Ja] libvips は渡されたパス経由で書き出すため、開いたハンドルは使わない。
+      output.close
+
+      case extension
+      when "jpg", "jpeg"
+        image.jpegsave(output.path, strip: true, Q: 90)
+      when "png"
+        image.pngsave(output.path, strip: true, compression: 9)
+      when "webp"
+        image.webpsave(output.path, strip: true, Q: 90)
+      else
+        image.write_to_file(output.path)
+      end
+
+      FileUtils.mv(output.path, input_path)
     end
   end
 

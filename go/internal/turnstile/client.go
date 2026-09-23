@@ -1,4 +1,4 @@
-// Package turnstile はCloudflare TurnstileによるBot対策機能を提供します
+// Package turnstileはCloudflare TurnstileによるBot対策機能を提供します
 package turnstile
 
 import (
@@ -14,23 +14,23 @@ import (
 const (
 	// CloudflareのSiteverify APIエンドポイント
 	siteverifyURL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-	// タイムアウト時間（10秒）
+	// タイムアウト時間 (10秒)
 	requestTimeout = 10 * time.Second
 )
 
-// Verifier はTurnstileトークンを検証するインターフェース
+// VerifierはTurnstileトークンを検証するインターフェース
 type Verifier interface {
 	Verify(ctx context.Context, token string) (bool, error)
 }
 
-// Client はTurnstile APIクライアント
+// ClientはTurnstile APIクライアント
 type Client struct {
 	enabled    bool
 	secretKey  string
 	httpClient *http.Client
 }
 
-// VerifyResponse はCloudflare Siteverify APIのレスポンス
+// VerifyResponseはCloudflare Siteverify APIのレスポンス
 type VerifyResponse struct {
 	Success     bool     `json:"success"`
 	ChallengeTS string   `json:"challenge_ts"`
@@ -38,13 +38,13 @@ type VerifyResponse struct {
 	ErrorCodes  []string `json:"error-codes"`
 }
 
-// verifyRequest はCloudflare Siteverify APIへのリクエストボディ
+// verifyRequestはCloudflare Siteverify APIへのリクエストボディ
 type verifyRequest struct {
 	Secret   string `json:"secret"`
 	Response string `json:"response"`
 }
 
-// NewClient は新しいTurnstile APIクライアントを作成する
+// NewClientは新しいTurnstile APIクライアントを作成する
 func NewClient(enabled bool, secretKey string) *Client {
 	return &Client{
 		enabled:   enabled,
@@ -55,7 +55,7 @@ func NewClient(enabled bool, secretKey string) *Client {
 	}
 }
 
-// Verify はTurnstileトークンを検証する
+// VerifyはTurnstileトークンを検証する
 // トークンが有効な場合はtrue、無効な場合はfalseを返す
 func (c *Client) Verify(ctx context.Context, token string) (bool, error) {
 	// Turnstileが無効の場合は常に検証成功を返す
@@ -74,8 +74,8 @@ func (c *Client) Verify(ctx context.Context, token string) (bool, error) {
 		Response: token,
 	}
 
-	// Turnstile siteverify API は仕様上 secret_key の送信が必須のため、
-	// reqBody.Secret を含む構造体のシリアライズに対する gosec G117 は false positive として抑制する。
+	// Turnstile siteverify APIは仕様上secret_keyの送信が必須のため、
+	// reqBody.Secretを含む構造体のシリアライズに対するgosec G117はfalse positiveとして抑制する。
 	//nolint:gosec // G117
 	jsonBody, err := json.Marshal(reqBody)
 	if err != nil {
@@ -104,7 +104,7 @@ func (c *Client) Verify(ctx context.Context, token string) (bool, error) {
 
 	// ステータスコードが200でない場合はエラー
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("siteverify APIがエラーを返しました（ステータスコード: %d）: %s", resp.StatusCode, string(body))
+		return false, fmt.Errorf("siteverify APIがエラーを返しました (ステータスコード: %d): %s", resp.StatusCode, string(body))
 	}
 
 	// JSONデコード
@@ -117,7 +117,7 @@ func (c *Client) Verify(ctx context.Context, token string) (bool, error) {
 	if !verifyResp.Success {
 		// error-codesがある場合はログに記録できるように返す
 		if len(verifyResp.ErrorCodes) > 0 {
-			return false, fmt.Errorf("turnstile検証に失敗しました（エラーコード: %v）", verifyResp.ErrorCodes)
+			return false, fmt.Errorf("turnstile検証に失敗しました (エラーコード: %v)", verifyResp.ErrorCodes)
 		}
 		return false, fmt.Errorf("turnstile検証に失敗しました")
 	}

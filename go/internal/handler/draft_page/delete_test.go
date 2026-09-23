@@ -17,7 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// newDeleteRequestWithChiParams は chi の URL パラメータ付き DELETE リクエストを作成するヘルパーです
+// newDeleteRequestWithChiParamsはchiのURLパラメータ付きDELETEリクエストを作成するヘルパーです
 func newDeleteRequestWithChiParams(t *testing.T, path string, params map[string]string) *http.Request {
 	t.Helper()
 
@@ -49,10 +49,10 @@ func TestDelete_NotLoggedIn(t *testing.T) {
 	handler.Delete(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/sign_in" {
-		t.Errorf("wrong redirect: got %q want /sign_in", loc)
+		t.Errorf("リダイレクト先 = %q、期待値 = /sign_in", loc)
 	}
 }
 
@@ -80,7 +80,7 @@ func TestDelete_InvalidPageNumber(t *testing.T) {
 	handler.Delete(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
@@ -131,15 +131,15 @@ func TestDelete_DraftNotFound(t *testing.T) {
 	handler.Delete(rr, req)
 
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }
 
 func TestDelete_Success(t *testing.T) {
 	t.Parallel()
 
-	// 削除 UseCase 内でトランザクションを開始するため、ここではトランザクション分離せず
-	// 共有 DB を直接使う。テストデータはユニーク識別子で衝突を避ける。
+	// 削除UseCase内でトランザクションを開始するため、ここではトランザクション分離せず
+	// 共有DBを直接使う。テストデータはユニーク識別子で衝突を避ける。
 	db := testutil.GetTestDB()
 
 	userID := testutil.NewUserBuilderDB(t, db).
@@ -190,13 +190,13 @@ func TestDelete_Success(t *testing.T) {
 	handler.Delete(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 	if loc := rr.Header().Get("Location"); loc != "/drafts" {
-		t.Errorf("wrong redirect: got %q want /drafts", loc)
+		t.Errorf("リダイレクト先 = %q、期待値 = /drafts", loc)
 	}
 
-	// 成功時はフラッシュ Cookie がセットされていることを確認
+	// 成功時はフラッシュCookieがセットされていることを確認
 	hasFlashCookie := false
 	for _, c := range rr.Result().Cookies() {
 		if c.Name == session.FlashCookieName && c.Value != "" {
@@ -205,14 +205,14 @@ func TestDelete_Success(t *testing.T) {
 		}
 	}
 	if !hasFlashCookie {
-		t.Errorf("成功時はフラッシュ Cookie (%s) がセットされるべき", session.FlashCookieName)
+		t.Errorf("成功時はフラッシュCookie (%s) がセットされるべき", session.FlashCookieName)
 	}
 
-	// DB から削除されていることを確認
+	// DBから削除されていることを確認
 	draftPageRepo := repository.NewDraftPageRepository(queries)
 	got, err := draftPageRepo.FindByID(context.Background(), draftPageID, spaceID)
 	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+		t.Fatalf("FindByID()のエラー = %v", err)
 	}
 	if got != nil {
 		t.Error("削除後は下書きが取得できないべき")
@@ -232,7 +232,7 @@ func TestDelete_PermissionDenied(t *testing.T) {
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("delete-noperm-space").
 		Build()
-	// draft_page:delete を持たないメンバー (draft_page:write のみ)
+	// draft_page:deleteを持たないメンバー (draft_page:writeのみ)
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
@@ -273,8 +273,8 @@ func TestDelete_PermissionDenied(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Delete(rr, req)
 
-	// Forbidden は 404 に変換される (リソース存在の漏洩を防ぐ既存パターン)
+	// Forbiddenは404に変換される (リソース存在の漏洩を防ぐ既存パターン)
 	if rr.Code != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusNotFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }

@@ -75,28 +75,25 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 		Body:            "Updated body",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if output == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if output.Page == nil {
-		t.Fatal("Page should not be nil")
+		t.Fatal("Pageがnil")
 	}
 	if output.Page.Body != "Updated body" {
-		t.Errorf("Body = %q, want %q", output.Page.Body, "Updated body")
+		t.Errorf("Body = %q、期待値 = %q", output.Page.Body, "Updated body")
 	}
 	if output.Page.Title == nil || *output.Page.Title != "Updated Title" {
-		t.Errorf("Title = %v, want %q", output.Page.Title, "Updated Title")
-	}
-	if output.Page.BodyHTML == "" {
-		t.Error("BodyHTML should not be empty")
+		t.Errorf("Title = %v、期待値 = %q", output.Page.Title, "Updated Title")
 	}
 	if output.PublishedAt.IsZero() {
-		t.Error("PublishedAt should not be zero")
+		t.Error("PublishedAtがゼロ値")
 	}
 	if output.Page.PublishedAt == nil {
-		t.Error("Page.PublishedAt should not be nil")
+		t.Error("Page.PublishedAtがnil")
 	}
 }
 
@@ -163,22 +160,138 @@ func TestPublishPageUsecase_Execute_WithWikilinks(t *testing.T) {
 		Body:            "See [[リンク先ページ]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// リンク先ページが自動作成され、LinkedPageIDsに含まれることを確認
 	if len(output.Page.LinkedPageIDs) == 0 {
-		t.Error("LinkedPageIDs should not be empty")
-	}
-
-	// bodyHTMLにリンクが含まれることを確認
-	if output.Page.BodyHTML == "" {
-		t.Error("BodyHTML should not be empty")
+		t.Error("LinkedPageIDsが空")
 	}
 
 	// PublishedAtが設定されていることを確認
 	if output.Page.PublishedAt == nil {
-		t.Error("Page.PublishedAt should not be nil")
+		t.Error("Page.PublishedAtがnil")
+	}
+}
+
+// TestPublishPageUsecase_Execute_DoesNotWriteBodyHTMLは、公開がページとそのリビジョンに
+// 本文HTMLを保存しないことを確かめる。ページ詳細画面は表示時にレンダリングするため、
+// 公開はHTMLを書かない。あわせて、本文下のリンク一覧が読むlinked_page_idsは公開時に
+// 永続化したままであることも確かめる。
+func TestPublishPageUsecase_Execute_DoesNotWriteBodyHTML(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	spaceRepo := repository.NewSpaceRepository(q)
+	spaceMemberRepo := repository.NewSpaceMemberRepository(q)
+	pageRepo := repository.NewPageRepository(q)
+	pageRevisionRepo := repository.NewPageRevisionRepository(q)
+	pageEditorRepo := repository.NewPageEditorRepository(q)
+	draftPageRepo := repository.NewDraftPageRepository(q)
+	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(q)
+	topicRepo := repository.NewTopicRepository(q)
+	topicMemberRepo := repository.NewTopicMemberRepository(q)
+	attachmentRepo := repository.NewAttachmentRepository(q)
+	pageAttachmentRefRepo := repository.NewPageAttachmentReferenceRepository(q)
+	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewPageUpdateValidator(pageRepo))
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-no-html").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-no-html@example.com").
+		WithAtname("publishnohtml").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("No HTML Page").
+		Build()
+
+	// 公開より前にページが持っていた保存済みHTML。公開がこの列を書くようになれば、
+	// 下のレンダリング結果かその一部で上書きされる。
+	const storedBodyHTML = "<p>公開より前に保存されたHTML</p>"
+	if _, err := db.ExecContext(ctx,
+		`UPDATE pages SET body_html = $1 WHERE id = $2 AND space_id = $3`,
+		storedBodyHTML, string(pageID), string(spaceID),
+	); err != nil {
+		t.Fatalf("pages.body_htmlの設定に失敗: %v", err)
+	}
+
+	// 見出し・強調・Wikiリンクを含む本文にして、レンダリング結果が列に残れば分かるようにする。
+	body := "# 見出し\n\n**強調** と [[リンク先ページ]]"
+	testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("No HTML Page").
+		WithBody(body).
+		Build()
+
+	output, err := uc.Execute(ctx, PublishPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("publish-no-html"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "No HTML Page",
+		Body:            body,
+	})
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v", err)
+	}
+
+	var pageBodyHTML string
+	if err := db.QueryRowContext(ctx,
+		`SELECT body_html FROM pages WHERE id = $1 AND space_id = $2`,
+		string(pageID), string(spaceID),
+	).Scan(&pageBodyHTML); err != nil {
+		t.Fatalf("pages.body_htmlの取得に失敗: %v", err)
+	}
+	if pageBodyHTML != storedBodyHTML {
+		t.Errorf("pages.body_html = %q、期待値 = %q (公開は列に触れない)", pageBodyHTML, storedBodyHTML)
+	}
+
+	var revisionBodyHTML string
+	if err := db.QueryRowContext(ctx,
+		`SELECT body_html FROM page_revisions
+		 WHERE page_id = $1 AND space_id = $2
+		 ORDER BY created_at DESC
+		 LIMIT 1`,
+		string(pageID), string(spaceID),
+	).Scan(&revisionBodyHTML); err != nil {
+		t.Fatalf("page_revisions.body_htmlの取得に失敗: %v", err)
+	}
+	if revisionBodyHTML != "" {
+		t.Errorf("page_revisions.body_html = %q、期待値 = 空文字列 (DBのデフォルト値のまま)", revisionBodyHTML)
+	}
+
+	// 本文下のリンク一覧はlinked_page_idsを読むため、HTMLを保存しなくなってもリンク先の
+	// 解決と永続化は続ける。
+	linked, err := pageRepo.FindByTopicAndTitle(ctx, topicID, "リンク先ページ", spaceID)
+	if err != nil {
+		t.Fatalf("FindByTopicAndTitle()のエラー = %v", err)
+	}
+	if linked == nil {
+		t.Fatal("Wikiリンクのリンク先ページが作成されていない")
+	}
+	if len(output.Page.LinkedPageIDs) != 1 || output.Page.LinkedPageIDs[0] != linked.ID {
+		t.Errorf("LinkedPageIDs = %v、期待値 = %vのみ", output.Page.LinkedPageIDs, linked.ID)
 	}
 }
 
@@ -244,15 +357,15 @@ func TestPublishPageUsecase_Execute_NilTitle(t *testing.T) {
 		Body:            "Body without title",
 	})
 	if err == nil {
-		t.Fatal("Execute() should return error for empty title")
+		t.Fatal("タイトルが空なのにExecute()がエラーを返さなかった")
 	}
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatalf("expected ValidationError but got: %v", err)
+		t.Fatalf("ValidationErrorを期待したが、%vだった", err)
 	}
 	if !ve.HasFieldError("title") {
-		t.Error("expected title field error")
+		t.Error("titleのフィールドエラーが無い")
 	}
 }
 
@@ -328,15 +441,15 @@ func TestPublishPageUsecase_Execute_ExistingLinkedPage(t *testing.T) {
 		Body:            "See [[既存ページ]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// LinkedPageIDsに既存ページのIDが含まれることを確認
 	if len(output.Page.LinkedPageIDs) != 1 {
-		t.Fatalf("LinkedPageIDs length = %d, want 1", len(output.Page.LinkedPageIDs))
+		t.Fatalf("LinkedPageIDsの長さ = %d、期待値 = 1", len(output.Page.LinkedPageIDs))
 	}
 	if output.Page.LinkedPageIDs[0] != existingPageID {
-		t.Errorf("LinkedPageIDs[0] = %v, want %v", output.Page.LinkedPageIDs[0], existingPageID)
+		t.Errorf("LinkedPageIDs[0] = %v、期待値 = %v", output.Page.LinkedPageIDs[0], existingPageID)
 	}
 }
 
@@ -403,12 +516,12 @@ func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
 		Body:            "See [[公開時自動作成ページ]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// 自動作成されたページのIDを取得
 	if len(output.Page.LinkedPageIDs) == 0 {
-		t.Fatal("LinkedPageIDs should not be empty")
+		t.Fatal("LinkedPageIDsが空")
 	}
 	linkedPageID := output.Page.LinkedPageIDs[0]
 
@@ -422,10 +535,10 @@ func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
 		t.Fatalf("自動作成ページのpage_editorsが見つかりません: %v", err)
 	}
 	if editor.PageID != linkedPageID {
-		t.Errorf("PageID = %v, want %v", editor.PageID, linkedPageID)
+		t.Errorf("PageID = %v、期待値 = %v", editor.PageID, linkedPageID)
 	}
 	if editor.SpaceMemberID != spaceMemberID {
-		t.Errorf("SpaceMemberID = %v, want %v", editor.SpaceMemberID, spaceMemberID)
+		t.Errorf("SpaceMemberID = %v、期待値 = %v", editor.SpaceMemberID, spaceMemberID)
 	}
 }
 
@@ -502,15 +615,15 @@ func TestPublishPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 		Body:            "See [[廃棄済みページ]]",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// LinkedPageIDsに廃棄済みページのIDが含まれることを確認
 	if len(output.Page.LinkedPageIDs) != 1 {
-		t.Fatalf("LinkedPageIDs length = %d, want 1", len(output.Page.LinkedPageIDs))
+		t.Fatalf("LinkedPageIDsの長さ = %d、期待値 = 1", len(output.Page.LinkedPageIDs))
 	}
 	if output.Page.LinkedPageIDs[0] != discardedPageID {
-		t.Errorf("LinkedPageIDs[0] = %v, want %v", output.Page.LinkedPageIDs[0], discardedPageID)
+		t.Errorf("LinkedPageIDs[0] = %v、期待値 = %v", output.Page.LinkedPageIDs[0], discardedPageID)
 	}
 }
 
@@ -587,26 +700,26 @@ func TestPublishPageUsecase_Execute_WithAttachments(t *testing.T) {
 		Body:            body,
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// 添付ファイル参照が作成されていることを確認
 	refs, err := pageAttachmentRefRepo.ListByPageID(context.Background(), pageID, spaceID)
 	if err != nil {
-		t.Fatalf("ListByPageID() error = %v", err)
+		t.Fatalf("ListByPageID()のエラー = %v", err)
 	}
 	if len(refs) != 1 {
-		t.Fatalf("PageAttachmentReferences count = %d, want 1", len(refs))
+		t.Fatalf("PageAttachmentReferencesの件数 = %d、期待値 = 1", len(refs))
 	}
 	if refs[0].AttachmentID != attachmentID {
-		t.Errorf("AttachmentID = %v, want %v", refs[0].AttachmentID, attachmentID)
+		t.Errorf("AttachmentID = %v、期待値 = %v", refs[0].AttachmentID, attachmentID)
 	}
 
-	// アイキャッチ画像が設定されていることを確認（1行目が画像のため）
+	// アイキャッチ画像が設定されていることを確認 (1行目が画像のため)
 	if output.Page.FeaturedImageAttachmentID == nil {
-		t.Error("FeaturedImageAttachmentID should not be nil")
+		t.Error("FeaturedImageAttachmentIDがnil")
 	} else if *output.Page.FeaturedImageAttachmentID != attachmentID {
-		t.Errorf("FeaturedImageAttachmentID = %v, want %v", *output.Page.FeaturedImageAttachmentID, attachmentID)
+		t.Errorf("FeaturedImageAttachmentID = %v、期待値 = %v", *output.Page.FeaturedImageAttachmentID, attachmentID)
 	}
 }
 
@@ -657,7 +770,7 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 		WithTitle("No Featured Image").
 		Build()
 
-	// 1行目がテキストのみの本文（アイキャッチ画像なし）
+	// 1行目がテキストのみの本文 (アイキャッチ画像なし)
 	body := "This is plain text\nSome more content"
 	testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -676,12 +789,12 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 		Body:            body,
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// アイキャッチ画像が設定されていないことを確認
 	if output.Page.FeaturedImageAttachmentID != nil {
-		t.Errorf("FeaturedImageAttachmentID should be nil, got %v", *output.Page.FeaturedImageAttachmentID)
+		t.Errorf("FeaturedImageAttachmentIDがnilではない: %v", *output.Page.FeaturedImageAttachmentID)
 	}
 }
 
@@ -740,19 +853,19 @@ func TestPublishPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 		Body:            "Published directly",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if output == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if output.Page.Body != "Published directly" {
-		t.Errorf("Body = %q, want %q", output.Page.Body, "Published directly")
+		t.Errorf("Body = %q、期待値 = %q", output.Page.Body, "Published directly")
 	}
 	if output.Page.Title == nil || *output.Page.Title != "Updated Without Draft" {
-		t.Errorf("Title = %v, want %q", output.Page.Title, "Updated Without Draft")
+		t.Errorf("Title = %v、期待値 = %q", output.Page.Title, "Updated Without Draft")
 	}
 	if output.PublishedAt.IsZero() {
-		t.Error("PublishedAt should not be zero")
+		t.Error("PublishedAtがゼロ値")
 	}
 }
 
@@ -805,7 +918,7 @@ func TestPublishPageUsecase_Execute_DiscardUnpublishedConflictingPage(t *testing
 		WithTitle("Original Title").
 		Build()
 
-	// 未公開かつ本文が空の競合ページ（Wikiリンクの自動保存で作成されたもの）
+	// 未公開かつ本文が空の競合ページ (Wikiリンクの自動保存で作成されたもの)
 	conflictingPageID := testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -823,25 +936,25 @@ func TestPublishPageUsecase_Execute_DiscardUnpublishedConflictingPage(t *testing
 		Body:            "Updated body",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if output == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if output.Page.Title == nil || *output.Page.Title != "New Title" {
-		t.Errorf("Title = %v, want %q", output.Page.Title, "New Title")
+		t.Errorf("Title = %v、期待値 = %q", output.Page.Title, "New Title")
 	}
 
 	// 競合ページが論理削除されていることを確認
 	discardedPage, err := pageRepo.FindByTopicAndTitle(context.Background(), topicID, conflictingPageID.String(), spaceID)
 	if err != nil {
-		t.Fatalf("FindByTopicAndTitle() error = %v", err)
+		t.Fatalf("FindByTopicAndTitle()のエラー = %v", err)
 	}
 	if discardedPage == nil {
-		t.Fatal("discarded page should exist (with title changed to its ID)")
+		t.Fatal("破棄されたページが存在しない (タイトルはIDに変更されているはず)")
 	}
 	if discardedPage.DiscardedAt == nil {
-		t.Error("discarded page should have DiscardedAt set")
+		t.Error("破棄されたページにDiscardedAtが設定されていない")
 	}
 }
 
@@ -900,7 +1013,7 @@ func TestPublishPageUsecase_Execute_WithDraftPageRevisions(t *testing.T) {
 		WithBody("Draft body with revisions").
 		Build()
 
-	// 下書きリビジョンを作成（外部キー制約の再現）
+	// 下書きリビジョンを作成 (外部キー制約の再現)
 	testutil.NewDraftPageRevisionBuilderDB(t, db).
 		WithDraftPageID(draftPageID).
 		WithSpaceID(spaceID).
@@ -920,27 +1033,22 @@ func TestPublishPageUsecase_Execute_WithDraftPageRevisions(t *testing.T) {
 		Body:            "Draft body with revisions",
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 	if output == nil {
-		t.Fatal("output should not be nil")
+		t.Fatal("出力がnil")
 	}
 	if output.Page.Body != "Draft body with revisions" {
-		t.Errorf("Body = %q, want %q", output.Page.Body, "Draft body with revisions")
+		t.Errorf("Body = %q、期待値 = %q", output.Page.Body, "Draft body with revisions")
 	}
 	if output.PublishedAt.IsZero() {
-		t.Error("PublishedAt should not be zero")
+		t.Error("PublishedAtがゼロ値")
 	}
 }
 
-// TestPublishPageUsecase_Execute_SharesPreviewRenderPath verifies that the body HTML
-// persisted by the publish save path is identical to what GetPagePreviewUsecase renders
-// for the same input. This locks in that both paths share a single markup pipeline
-// (markup.RenderHTML), so the page detail screen and the preview cannot diverge.
-//
-// [Ja] TestPublishPageUsecase_Execute_SharesPreviewRenderPath は、公開保存経路が永続化する
-// 本文 HTML が、同じ入力に対して GetPagePreviewUsecase がレンダリングするものと一致することを
-// 検証する。両経路が単一の markup パイプライン (markup.RenderHTML) を共有し、ページ詳細画面と
+// TestPublishPageUsecase_Execute_SharesPreviewRenderPathは、公開保存経路が永続化する
+// 本文HTMLが、同じ入力に対してGetPagePreviewUsecaseがレンダリングするものと一致することを
+// 検証する。両経路が単一のmarkupパイプライン (markup.RenderHTML) を共有し、ページ詳細画面と
 // プレビューが乖離しないことを担保する。
 func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 	t.Parallel()
@@ -961,6 +1069,7 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 	publishUC := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 	previewUC := NewGetPagePreviewUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	showUC := NewGetPageShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, attachmentRepo)
 
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
 		WithIdentifier("publish-preview-eq").
@@ -983,7 +1092,7 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		Build()
 
-	// 添付ファイルと Wiki リンクの両方を含む本文で、レンダリング経路の差が出やすい入力にする。
+	// 添付ファイルとWikiリンクの両方を含む本文で、レンダリング経路の差が出やすい入力にする。
 	attachmentID := testutil.NewAttachmentBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithSpaceMemberID(spaceMemberID).
@@ -1006,15 +1115,14 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 		WithBody(body).
 		Build()
 
-	publishOutput, err := publishUC.Execute(context.Background(), PublishPageInput{
+	if _, err := publishUC.Execute(context.Background(), PublishPageInput{
 		SpaceIdentifier: model.SpaceIdentifier("publish-preview-eq"),
 		PageNumber:      1,
 		UserID:          userID,
 		Title:           "Eq Test",
 		Body:            body,
-	})
-	if err != nil {
-		t.Fatalf("publish Execute() error = %v", err)
+	}); err != nil {
+		t.Fatalf("公開のExecute()のエラー = %v", err)
 	}
 
 	// 公開後はリンク先ページが作成済みのため、プレビューも同じリンクへ解決する。
@@ -1026,10 +1134,24 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 		Body:            body,
 	})
 	if err != nil {
-		t.Fatalf("preview Execute() error = %v", err)
+		t.Fatalf("プレビューのExecute()のエラー = %v", err)
 	}
 
-	if previewOutput.BodyHTML != publishOutput.Page.BodyHTML {
-		t.Errorf("preview BodyHTML differs from published BodyHTML:\npreview:   %q\npublished: %q", previewOutput.BodyHTML, publishOutput.Page.BodyHTML)
+	// 公開はHTMLを保存しないため、公開後の表示はページ表示画面がその場でレンダリングする。
+	// プレビューで見た結果と公開後の表示が一致することを、この2つの出力で突き合わせる。
+	showOutput, err := showUC.Execute(context.Background(), GetPageShowInput{
+		SpaceIdentifier:        model.SpaceIdentifier("publish-preview-eq"),
+		PageNumber:             1,
+		UserID:                 &userID,
+		LinkPage:               1,
+		LinkedPageBacklinkPage: 1,
+		PageBacklinkPage:       1,
+	})
+	if err != nil {
+		t.Fatalf("ページ表示のExecute()のエラー = %v", err)
+	}
+
+	if previewOutput.BodyHTML != showOutput.BodyHTML {
+		t.Errorf("プレビューのBodyHTMLが公開後の表示と異なる:\nプレビュー: %q\n公開後の表示: %q", previewOutput.BodyHTML, showOutput.BodyHTML)
 	}
 }

@@ -5,10 +5,36 @@ default: &default
   # http://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
+# schema_dump: false marks the primary database as one Rails does not own. Its
+# canonical schema is go/db/schema.sql. The Go-side database targets apply it
+# with psql, while dbmate manages pending migrations. Rails keeps neither
+# migrations nor a schema dump for the primary database.
+#
+# Without the flag Rails would treat db/structure.sql as the primary schema file
+# again: db:migrate would recreate it by dumping the live database, and
+# ActiveRecord::Migration.maintain_test_schema! would purge the test database to
+# load it over the schema that was just applied from the Go side.
+#
+# The queue database keeps its dump, because Rails still owns its migrations
+# under db/queue_migrate.
+#
+# [Ja] schema_dump: false は、primary が Rails の管理下にないことを示す。primary の
+# 正本は go/db/schema.sql であり、Go 側の DB ターゲットが psql で適用し、未適用の
+# マイグレーションは dbmate が管理する。Rails 側は primary のマイグレーションも
+# スキーマのダンプも持たない。
+#
+# このフラグが無いと Rails は db/structure.sql を再び primary のスキーマファイルとして
+# 扱う。db:migrate が稼働中のデータベースをダンプしてこのファイルを作り直し、
+# ActiveRecord::Migration.maintain_test_schema! はテスト用データベースを purge して、
+# Go 側から適用したばかりのスキーマの上にそれをロードしてしまう。
+#
+# queue はマイグレーションを引き続き Rails (db/queue_migrate) が持つため、ダンプは
+# そのまま残す。
 development:
   primary:
     <<: *default
     url: <%= ENV.fetch("DATABASE_URL") %>
+    schema_dump: false
 
   queue:
     <<: *default
@@ -19,11 +45,13 @@ test:
   primary:
     <<: *default
     url: <%= ENV.fetch("DATABASE_URL") %>
+    schema_dump: false
 
 production:
   primary:
     <<: *default
     url: <%= ENV.fetch("DATABASE_URL") %>
+    schema_dump: false
 
   queue:
     <<: *default

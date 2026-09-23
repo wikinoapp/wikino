@@ -1,0 +1,46 @@
+# `wikino seed` が作成する開発用アカウントの名簿。実際に使う名簿は個人の
+# メールアドレスを持つためバージョン管理には入れず、代わりに本ファイルをコミットして
+# いる。シードを使えるようにするには、本ファイルを .gitignoreが除外している
+# go/seed-users.tomlへコピーし、アドレスを自分がメールを読めるものへ置き換える。
+#
+# feature_flagsには、アプリケーションが定義するフラグを全件与える文字列 "all" か、
+# ["go_example"] のようなフラグ名の配列のどちらかを書く。それぞれの役割が何のため
+# にあるのかは、生成器がそれを名指ししているinternal/seed/user.goに書いてある。
+
+# passwordは以下のすべてのアカウントで共通。シードは開発環境以外での実行を
+# 拒否し、devサイト自体もBasic認証の内側にあるため、アカウントごとに別の
+# パスワードを持たせても得るものが無い。
+password = "password"
+
+# 両スペースの管理者。フィーチャーフラグの内側にあるすべての画面を開き、
+# サインインはパスワードだけで完了する。
+[[users]]
+role = "owner"
+atname = "seeduser1"
+name = "シードユーザー1"
+email = "seeduser1@example.com"
+feature_flags = "all"
+two_factor = false
+
+# 管理者の横で書く共同編集者。フィーチャーフラグを1つも持たず、サインインは
+# 2要素認証ステップを通る。これによって、フラグ有無による画面の比較と、2要素認証の
+# 経路の通過ができるようになる。
+[[users]]
+role = "collaborator"
+atname = "seeduser2"
+name = "シードユーザー2"
+email = "seeduser2@example.com"
+feature_flags = []
+two_factor = true
+
+# スペースを外側から見るためのアカウント。管理者と同じくフィーチャーフラグを
+# 全件持ち、seed-wikiには共同編集者と同じ立場で参加しているが、seed-soloの
+# メンバーではない。あのスペースの画面には非メンバーとして、しかもGo版が有効な
+# 状態で辿り着く。
+[[users]]
+role = "guest"
+atname = "seeduser3"
+name = "シードユーザー3"
+email = "seeduser3@example.com"
+feature_flags = "all"
+two_factor = false

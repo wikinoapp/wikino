@@ -31,27 +31,27 @@ func TestDeleteUserSessionUsecase_Execute(t *testing.T) {
 		// セッションが存在することを確認
 		session, err := userSessionRepo.FindByToken(context.Background(), sessionToken)
 		if err != nil {
-			t.Fatalf("FindByToken() error = %v", err)
+			t.Fatalf("FindByToken()のエラー = %v", err)
 		}
 		if session == nil {
-			t.Fatal("session should exist before deletion")
+			t.Fatal("削除前にセッションが存在しない")
 		}
 
-		// UseCase を実行
+		// UseCaseを実行
 		err = uc.Execute(context.Background(), DeleteUserSessionInput{
 			Token: sessionToken,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		// セッションが削除されていることを確認
 		session, err = userSessionRepo.FindByToken(context.Background(), sessionToken)
 		if err != nil {
-			t.Fatalf("FindByToken() after delete error = %v", err)
+			t.Fatalf("削除後のFindByToken()のエラー = %v", err)
 		}
 		if session != nil {
-			t.Error("session should be deleted from database")
+			t.Error("データベースからセッションが削除されていない")
 		}
 	})
 
@@ -60,7 +60,7 @@ func TestDeleteUserSessionUsecase_Execute(t *testing.T) {
 			Token: "non-existent-token",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v, want nil for non-existent token", err)
+			t.Fatalf("存在しないトークンでのExecute()のエラー = %v、期待値 = nil", err)
 		}
 	})
 }

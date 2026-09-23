@@ -63,23 +63,23 @@ func TestNew_Success(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// フォームが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, `action="/password/reset"`) {
-		t.Error("password reset form not found in response")
+		t.Error("レスポンスにパスワードリセットのフォームが見つからない")
 	}
 
 	// CSRFトークンが含まれているか確認
 	if !strings.Contains(body, "csrf_token") {
-		t.Error("CSRF token not found in form")
+		t.Error("フォームにCSRFトークンが見つからない")
 	}
 
 	// Turnstileウィジェットが含まれているか確認
 	if !strings.Contains(body, "cf-turnstile") {
-		t.Error("Turnstile widget not found in form")
+		t.Error("フォームにTurnstileのウィジェットが見つからない")
 	}
 }
 
@@ -132,7 +132,7 @@ func TestNew_I18n_Japanese(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// 日本語のテキストが含まれているか確認
@@ -145,7 +145,7 @@ func TestNew_I18n_Japanese(t *testing.T) {
 
 	for _, expected := range expectedTexts {
 		if !strings.Contains(body, expected) {
-			t.Errorf("expected text not found: %s", expected)
+			t.Errorf("期待したテキストが見つからない: %s", expected)
 		}
 	}
 }
@@ -199,7 +199,7 @@ func TestNew_I18n_English(t *testing.T) {
 
 	// ステータスコードを検証
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// 英語のテキストが含まれているか確認
@@ -212,7 +212,7 @@ func TestNew_I18n_English(t *testing.T) {
 
 	for _, expected := range expectedTexts {
 		if !strings.Contains(body, expected) {
-			t.Errorf("expected text not found: %s", expected)
+			t.Errorf("期待したテキストが見つからない: %s", expected)
 		}
 	}
 }

@@ -12,13 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// CardLinkDraftPage renders a reusable draft page card shared by the home page's "draft pages"
-// section and the page editor's draft list column. The card links to the page editor and shows
-// the topic name plus the draft title. The space label (icon and name) is shown only when the
-// draft carries a space name: the home page lists drafts across spaces and passes it, while the
-// editor stays within a single space and omits it.
-//
-// [Ja] CardLinkDraftPage はホーム画面の「下書きのページ」セクションとページ編集画面の下書き一覧
+// CardLinkDraftPageはホーム画面の「下書きのページ」セクションとページ編集画面の下書き一覧
 // カラムで共有する、再利用可能な下書きカードを表示する。カードはページ編集画面へリンクし、
 // トピック名と下書きタイトルを表示する。スペースラベル (アイコンと名前) は下書きがスペース名を
 // 保持しているときのみ表示する。ホーム画面はスペース横断の一覧のため渡し、編集画面は同一スペース
@@ -44,14 +38,14 @@ func CardLinkDraftPage(draft viewmodel.CardLinkDraftPage) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"card min-h-[96px] transition p-0 duration-200 ease-in-out hover:border-brand-600\"><div class=\"card-body h-full\"><a class=\"h-full\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"card min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600\"><div class=\"h-full\"><a class=\"h-full\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 templ.SafeURL
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(string(templates.PageEditPath(draft.SpaceIdentifier, draft.PageNumber))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_draft_page.templ`, Line: 24, Col: 97}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_draft_page.templ`, Line: 18, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -80,7 +74,7 @@ func CardLinkDraftPage(draft viewmodel.CardLinkDraftPage) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(draft.SpaceName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_draft_page.templ`, Line: 36, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_draft_page.templ`, Line: 30, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -106,7 +100,7 @@ func CardLinkDraftPage(draft viewmodel.CardLinkDraftPage) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(draft.TopicName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_draft_page.templ`, Line: 47, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_draft_page.templ`, Line: 41, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -119,7 +113,7 @@ func CardLinkDraftPage(draft viewmodel.CardLinkDraftPage) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(draft.DisplayTitle(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_draft_page.templ`, Line: 53, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/card_link_draft_page.templ`, Line: 47, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {

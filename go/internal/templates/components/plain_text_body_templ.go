@@ -11,13 +11,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/markup"
 )
 
-// PlainTextBodyData はプレーンテキスト本文コンポーネントのデータです
+// PlainTextBodyDataはプレーンテキスト本文コンポーネントのデータです
 type PlainTextBodyData struct {
 	Text string
 }
 
-// PlainTextBody はプレーンテキストの本文を表示するコンポーネントです。
-// 改行を `white-space: pre-wrap` で保持し、http:// / https:// で始まる URL を
+// PlainTextBodyはプレーンテキストの本文を表示するコンポーネントです。
+// 改行を `white-space: pre-wrap` で保持し、http:// / https:// で始まるURLを
 // 自動的に <a> タグに変換します。
 func PlainTextBody(data PlainTextBodyData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {

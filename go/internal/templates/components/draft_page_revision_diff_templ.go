@@ -12,56 +12,38 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DraftPageRevisionDiffData is the data passed to the DraftPageRevisionDiff component.
-// [Ja] DraftPageRevisionDiffData は DraftPageRevisionDiff コンポーネントに渡すデータです。
+// DraftPageRevisionDiffDataはDraftPageRevisionDiffコンポーネントに渡すデータです。
 type DraftPageRevisionDiffData struct {
 	Diff viewmodel.DraftPageRevisionDiff
 
-	// RestoreURL is the POST endpoint that restores the draft to this revision.
-	// [Ja] RestoreURL はこのリビジョンに下書きを復元する POST エンドポイント。
+	// RestoreURLはこのリビジョンに下書きを復元するPOSTエンドポイント。
 	RestoreURL string
 
-	// CSRFToken is rendered into the inline restore form.
-	// [Ja] CSRFToken はインラインの復元フォームに埋め込む。
+	// CSRFTokenはインラインの復元フォームに埋め込む。
 	CSRFToken string
 
-	// IsCurrent reports whether the shown revision is the newest one. Restoring the draft to its
-	// current state only piles up a duplicate revision, so the restore button is hidden for it.
-	//
-	// [Ja] IsCurrent は表示中のリビジョンが最新かどうかを表す。現在の状態への復元は重複リビジョンを
+	// IsCurrentは表示中のリビジョンが最新かどうかを表す。現在の状態への復元は重複リビジョンを
 	// 積むだけのため、このとき復元ボタンを隠す。
 	IsCurrent bool
 }
 
-// revisionRestoreInitialID / revisionRestoreConfirmID identify the two states of the inline
-// restore confirmation inside the diff modal. Fixed ids are safe: the modal exists once per page
-// and the fragment is re-rendered fresh on every revision click, resetting the state.
-//
-// [Ja] revisionRestoreInitialID / revisionRestoreConfirmID は差分モーダル内のインライン復元確認の
-// 2 状態を識別する。モーダルはページに 1 つだけ存在し、フラグメントはリビジョンクリックのたびに
-// 描画し直されて状態がリセットされるため、固定 id で安全。
+// revisionRestoreInitialID / revisionRestoreConfirmIDは差分モーダル内のインライン復元確認の
+// 2状態を識別する。モーダルはページに1つだけ存在し、フラグメントはリビジョンクリックのたびに
+// 描画し直されて状態がリセットされるため、固定idで安全。
 const revisionRestoreInitialID = "page-edit-revision-restore-initial"
 
 const revisionRestoreConfirmID = "page-edit-revision-restore-confirm"
 
-// revisionRestoreShowConfirmScript swaps the restore button for the inline confirmation (and
-// revisionRestoreHideConfirmScript swaps it back). Both are compile-time constants built from
-// the id constants above, so passing them through templ.JSUnsafeFuncCall is safe.
-//
-// [Ja] revisionRestoreShowConfirmScript は復元ボタンをインライン確認に置き換える
-// (revisionRestoreHideConfirmScript はその逆)。どちらも上記の id 定数から組み立てた
-// コンパイル時定数のため、templ.JSUnsafeFuncCall に渡しても安全。
+// revisionRestoreShowConfirmScriptは復元ボタンをインライン確認に置き換える
+// (revisionRestoreHideConfirmScriptはその逆)。どちらも上記のid定数から組み立てた
+// コンパイル時定数のため、templ.JSUnsafeFuncCallに渡しても安全。
 const revisionRestoreShowConfirmScript = "document.getElementById('" + revisionRestoreInitialID + "').classList.add('hidden');" +
 	"document.getElementById('" + revisionRestoreConfirmID + "').classList.remove('hidden')"
 
 const revisionRestoreHideConfirmScript = "document.getElementById('" + revisionRestoreConfirmID + "').classList.add('hidden');" +
 	"document.getElementById('" + revisionRestoreInitialID + "').classList.remove('hidden')"
 
-// DraftPageRevisionDiff renders the diff fragment shown inside the revision diff modal on the
-// page editor: the revision's creation time, the title change (old → new, mirroring the
-// suggestion diff display) and the body diff blocks.
-//
-// [Ja] DraftPageRevisionDiff はページ編集画面のリビジョン差分モーダル内に表示する差分
+// DraftPageRevisionDiffはページ編集画面のリビジョン差分モーダル内に表示する差分
 // フラグメントを描画します。リビジョンの作成日時、タイトルの変更 (新旧の矢印表示。編集提案の
 // 差分表示に揃える)、本文の差分ブロックを表示します。
 func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
@@ -97,7 +79,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revision_diff_title_change"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 65, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 47, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -115,7 +97,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(data.Diff.OldTitle)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 70, Col: 27}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 52, Col: 27}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -137,7 +119,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(data.Diff.NewTitle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 75, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 57, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -148,7 +130,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = DiffView(DiffViewData{Blocks: data.Diff.BodyBlocks}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = DiffView(DiffViewData{PageTitle: data.Diff.NewTitle, Blocks: data.Diff.BodyBlocks}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -160,7 +142,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(revisionRestoreInitialID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 94, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 71, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
@@ -174,7 +156,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button type=\"button\" class=\"btn-outline rounded-full w-fit\" onclick=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button type=\"button\" class=\"btn rounded-full w-fit\" data-variant=\"outline\" onclick=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -194,7 +176,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revision_diff_restore_button"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 101, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 79, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -207,7 +189,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(revisionRestoreConfirmID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 105, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 83, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 			if templ_7745c5c3_Err != nil {
@@ -220,7 +202,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revision_diff_restore_confirm_message"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 108, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 86, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -233,7 +215,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var10 templ.SafeURL
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(data.RestoreURL))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 112, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 90, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -246,13 +228,13 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 113, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 91, Col: 69}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"> <button type=\"submit\" class=\"btn-primary rounded-full w-fit\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"> <button type=\"submit\" class=\"btn rounded-full w-fit\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -263,7 +245,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revision_diff_restore_confirm_button"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 117, Col: 77}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 95, Col: 77}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -277,7 +259,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<button type=\"button\" class=\"btn-outline rounded-full w-fit\" onclick=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<button type=\"button\" class=\"btn rounded-full w-fit\" data-variant=\"outline\" onclick=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -293,7 +275,7 @@ func DraftPageRevisionDiff(data DraftPageRevisionDiffData) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "page_edit_revision_diff_restore_cancel_button"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 126, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/draft_page_revision_diff.templ`, Line: 105, Col: 75}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {

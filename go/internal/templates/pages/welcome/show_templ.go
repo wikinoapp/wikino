@@ -12,10 +12,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// ShowPageData はトップページに渡すデータ構造体です
+// ShowPageDataはトップページに渡すデータ構造体です
 type ShowPageData struct{}
 
-// Show はトップページのコンテンツを表示します
+// Showはトップページのコンテンツを表示します
 func Show(data ShowPageData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -78,7 +78,7 @@ func Show(data ShowPageData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</a> <a href=\"/sign_in\" class=\"btn-secondary rounded-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</a> <a href=\"/sign_in\" class=\"btn rounded-full\" data-variant=\"secondary\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -314,7 +314,7 @@ func Show(data ShowPageData) templ.Component {
 	})
 }
 
-// featureItem は機能紹介の1項目を表示するコンポーネントです
+// featureItemは機能紹介の1項目を表示するコンポーネントです
 func featureItem(title string, description string, iconName viewmodel.IconName, imagePath string, note string, helpTitle string, helpURL string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Create は編集提案ページの編集を開始します (POST /s/{space_identifier}/suggestions/{suggestion_number}/page_edits)
+// Createは編集提案ページの編集を開始します (POST /s/{space_identifier}/suggestions/{suggestion_number}/page_edits)
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

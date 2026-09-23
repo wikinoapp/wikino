@@ -1,8 +1,14 @@
 package components
 
-// ContentCard はコンテンツ表示用のカードUIです
+// ContentCardは画面の主要コンテンツを収めるカード。
+//
+// overflow-visibleはbasecoatの .cardが持つ切り抜きを外す。これが無いと、カードの内側で
+// 開いたドロップダウンやポップオーバーがz-indexをどれだけ上げてもカードの境界で切り取られる。
+// 祖先による切り抜きは重なり順とは無関係に効くためである。外して失うものは無い。子は必ず
+// sectionのpx-4の内側に入り、カード自身もpy-4を持つため、切り抜きが担っていた角に届く
+// 中身がそもそも存在しない。
 templ ContentCard() {
-	<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4">
+	<div class="card py-4 rounded-none md:rounded-xl mx-0 md:mx-4 overflow-visible">
 		<section class="px-4">
 			{ children... }
 		</section>

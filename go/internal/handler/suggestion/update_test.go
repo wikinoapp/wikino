@@ -66,7 +66,7 @@ func TestUpdate_バリデーションエラーで422が返る(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 }
 
@@ -124,12 +124,12 @@ func TestUpdate_正常に更新してリダイレクトされる(t *testing.T) {
 	handler.Update(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
 	}
 
 	location := rr.Header().Get("Location")
 	expectedLocation := "/s/update-ok-sp/suggestions/1"
 	if location != expectedLocation {
-		t.Errorf("Location = %q, want %q", location, expectedLocation)
+		t.Errorf("Location = %q、期待値 = %q", location, expectedLocation)
 	}
 }

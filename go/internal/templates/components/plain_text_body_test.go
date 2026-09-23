@@ -19,7 +19,7 @@ func TestPlainTextBody(t *testing.T) {
 		wantExcludes []string
 	}{
 		{
-			name: "通常のテキストが p タグでラップされる",
+			name: "通常のテキストがpタグでラップされる",
 			text: "Hello, World",
 			wantContains: []string{
 				`<p class="whitespace-pre-wrap">`,
@@ -28,7 +28,7 @@ func TestPlainTextBody(t *testing.T) {
 			},
 		},
 		{
-			name: "URL が <a> タグに変換される",
+			name: "URLが <a> タグに変換される",
 			text: "See https://example.com for more info",
 			wantContains: []string{
 				`<p class="whitespace-pre-wrap">`,
@@ -37,7 +37,7 @@ func TestPlainTextBody(t *testing.T) {
 			},
 		},
 		{
-			name: "HTML タグがエスケープされる",
+			name: "HTMLタグがエスケープされる",
 			text: "<script>alert('xss')</script>",
 			wantContains: []string{
 				"&lt;script&gt;",
@@ -47,7 +47,7 @@ func TestPlainTextBody(t *testing.T) {
 			},
 		},
 		{
-			name: "空文字列でも p タグはレンダリングされる",
+			name: "空文字列でもpタグはレンダリングされる",
 			text: "",
 			wantContains: []string{
 				`<p class="whitespace-pre-wrap">`,
@@ -73,13 +73,13 @@ func TestPlainTextBody(t *testing.T) {
 
 			for _, want := range tt.wantContains {
 				if !strings.Contains(output, want) {
-					t.Errorf("出力に %q が含まれていない\n出力: %s", want, output)
+					t.Errorf("出力に%qが含まれていない\n出力: %s", want, output)
 				}
 			}
 
 			for _, exclude := range tt.wantExcludes {
 				if strings.Contains(output, exclude) {
-					t.Errorf("出力に %q が含まれるべきではない\n出力: %s", exclude, output)
+					t.Errorf("出力に%qが含まれるべきではない\n出力: %s", exclude, output)
 				}
 			}
 		})

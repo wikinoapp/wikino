@@ -13,36 +13,26 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// findOrCreateRetryLimit はfind_or_create時のリトライ上限
+// findOrCreateRetryLimitはfind_or_create時のリトライ上限
 const findOrCreateRetryLimit = 3
 
-// linkCreatingPageLocationResolver is the markup.PageLocationResolver used by the save
-// paths (publish / draft save). Unlike previewPageLocationResolver, it auto-creates
-// missing linked pages (and their page_editors) as a side effect and records the
-// resulting linked page IDs so the page / draft_page row can persist them. Because it
-// performs writes, it must be constructed with transaction-bound page repositories and
-// used inside that transaction.
-//
-// [Ja] linkCreatingPageLocationResolver は保存経路 (公開・下書き保存) が使う
-// markup.PageLocationResolver。previewPageLocationResolver と異なり、存在しないリンク先
-// ページ (と page_editors) を副作用として自動作成し、得られたリンク先ページ ID を記録して
-// page / draft_page 行に永続化できるようにする。書き込みを行うため、トランザクションに
-// バインドした page リポジトリで構築し、そのトランザクション内で使う。
+// linkCreatingPageLocationResolverは保存経路 (公開・下書き保存) が使う
+// markup.PageLocationResolver。previewPageLocationResolverと異なり、存在しないリンク先
+// ページ (とpage_editors) を副作用として自動作成し、得られたリンク先ページIDを記録して
+// page / draft_page行に永続化できるようにする。書き込みを行うため、トランザクションに
+// バインドしたpageリポジトリで構築し、そのトランザクション内で使う。
 type linkCreatingPageLocationResolver struct {
 	spaceMemberID  model.SpaceMemberID
 	topicRepo      *repository.TopicRepository
 	pageRepo       *repository.PageRepository
 	pageEditorRepo *repository.PageEditorRepository
 
-	// linkedPageIDs holds the IDs resolved or created during ResolveByKeys, for the
-	// caller to persist on the page / draft_page row.
-	// [Ja] linkedPageIDs は ResolveByKeys で解決・作成されたリンク先ページ ID を保持し、
-	// 呼び出し元が page / draft_page 行に永続化するために使う。
+	// linkedPageIDsはResolveByKeysで解決・作成されたリンク先ページIDを保持し、
+	// 呼び出し元がpage / draft_page行に永続化するために使う。
 	linkedPageIDs []model.PageID
 }
 
-// ResolveByKeys resolves wiki link keys to page locations, auto-creating missing pages.
-// [Ja] ResolveByKeys は Wiki リンクキーをページ位置情報に解決し、存在しないページを自動作成する。
+// ResolveByKeysはWikiリンクキーをページ位置情報に解決し、存在しないページを自動作成する。
 func (r *linkCreatingPageLocationResolver) ResolveByKeys(ctx context.Context, keys []markup.WikilinkKey, spaceID model.SpaceID) ([]markup.PageLocation, error) {
 	topics, err := r.topicRepo.FindBySpaceAndNames(ctx, spaceID, uniqueTopicNames(keys))
 	if err != nil {
@@ -63,7 +53,45 @@ func (r *linkCreatingPageLocationResolver) ResolveByKeys(ctx context.Context, ke
 	return locations, nil
 }
 
-// resolveAndCreateLinkedPages は事前に取得したWikiリンクキーとトピックMapを使い、リンク先ページを自動作成する
+// resolveLinkedPageIDsInputはリンク先ページIDの解決に必要なパラメータ
+type resolveLinkedPageIDsInput struct {
+	Body             string
+	CurrentTopicName string
+	SpaceID          model.SpaceID
+	SpaceMemberID    model.SpaceMemberID
+}
+
+// resolveLinkedPageIDsは本文のWikiリンクが指すページIDを現れる順に返し、存在しないリンク先
+// ページを自動作成する。本文HTMLを保存しない保存経路で、ScanWikilinksが抽出したキーを
+// linkCreatingPageLocationResolverに解決させる。画面と同じリンク集合を読むため、
+// ScanWikilinks内部ではHTMLの描画・サニタイズを行う。
+// 書き込みを行うため、トランザクションにバインドしたリポジトリを渡すこと。
+func resolveLinkedPageIDs(
+	ctx context.Context,
+	input resolveLinkedPageIDsInput,
+	topicRepo *repository.TopicRepository,
+	pageRepo *repository.PageRepository,
+	pageEditorRepo *repository.PageEditorRepository,
+) ([]model.PageID, error) {
+	keys := markup.ScanWikilinks(input.Body, input.CurrentTopicName)
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
+	resolver := &linkCreatingPageLocationResolver{
+		spaceMemberID:  input.SpaceMemberID,
+		topicRepo:      topicRepo,
+		pageRepo:       pageRepo,
+		pageEditorRepo: pageEditorRepo,
+	}
+	if _, err := resolver.ResolveByKeys(ctx, keys, input.SpaceID); err != nil {
+		return nil, err
+	}
+
+	return resolver.linkedPageIDs, nil
+}
+
+// resolveAndCreateLinkedPagesは事前に取得したWikiリンクキーとトピックMapを使い、リンク先ページを自動作成する
 func resolveAndCreateLinkedPages(
 	ctx context.Context,
 	keys []markup.WikilinkKey,
@@ -75,6 +103,12 @@ func resolveAndCreateLinkedPages(
 ) ([]model.PageID, []markup.PageLocation, error) {
 	if len(keys) == 0 {
 		return nil, nil, nil
+	}
+
+	// 既存のリンク先ページを1クエリでまとめて引き、ループ内では作成が要るキーだけをDBに問い合わせる。
+	existingPages, err := findPagesByWikilinkKeys(ctx, pageRepo, keys, topicMap, spaceID)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	now := time.Now()
@@ -94,9 +128,20 @@ func resolveAndCreateLinkedPages(
 			continue
 		}
 
-		page, created, err := findOrCreateLinkedPage(ctx, pageRepo, spaceID, topic.ID, key.PageTitle)
-		if err != nil {
-			return nil, nil, err
+		page := existingPages[repository.TopicPageTitle{TopicID: topic.ID, Title: key.PageTitle}]
+		created := false
+		if page == nil {
+			createdPage, createdNow, err := findOrCreateLinkedPage(ctx, pageRepo, spaceID, topic.ID, key.PageTitle)
+			if err != nil {
+				return nil, nil, err
+			}
+			// 一括取得と同じ射影に揃え、この先の組み立てが取得経路を意識せずに済むようにする。
+			page = &repository.LinkedPage{
+				ID:     createdPage.ID,
+				Number: createdPage.Number,
+				Title:  createdPage.Title,
+			}
+			created = createdNow
 		}
 
 		// Rails版と同様に、ページを新規作成した場合はpage_editorsレコードも作成する
@@ -130,8 +175,8 @@ func resolveAndCreateLinkedPages(
 	return linkedPageIDs, pageLocations, nil
 }
 
-// findOrCreateLinkedPage はWikiリンクのリンク先ページを取得するか、存在しなければ作成する。
-// ページ番号のユニーク制約（space_id + number）違反時はリトライする。
+// findOrCreateLinkedPageはWikiリンクのリンク先ページを取得するか、存在しなければ作成する。
+// ページ番号のユニーク制約 (space_id + number) 違反時はリトライする。
 // 戻り値のboolはページが新規作成された場合にtrueを返す。
 func findOrCreateLinkedPage(
 	ctx context.Context,
@@ -174,7 +219,36 @@ func findOrCreateLinkedPage(
 	return nil, false, fmt.Errorf("リンク先ページの作成が%d回のリトライ後も失敗しました", findOrCreateRetryLimit)
 }
 
-// uniqueTopicNames はWikiリンクキーからユニークなトピック名を抽出する
+// findPagesByWikilinkKeysはWikiリンクキーが指す既存ページを1クエリで取得する。
+// DBの照合結果を保持するため、入力のトピックIDとタイトルをそのままmapのキーにする。
+func findPagesByWikilinkKeys(
+	ctx context.Context,
+	pageRepo *repository.PageRepository,
+	keys []markup.WikilinkKey,
+	topicMap map[string]*model.Topic,
+	spaceID model.SpaceID,
+) (map[repository.TopicPageTitle]*repository.LinkedPage, error) {
+	pairs := make([]repository.TopicPageTitle, 0, len(keys))
+	seen := make(map[repository.TopicPageTitle]bool, len(keys))
+	for _, key := range keys {
+		topic := topicMap[key.TopicName]
+		if topic == nil {
+			continue
+		}
+
+		lookupKey := repository.TopicPageTitle{TopicID: topic.ID, Title: key.PageTitle}
+		if seen[lookupKey] {
+			continue
+		}
+		seen[lookupKey] = true
+
+		pairs = append(pairs, lookupKey)
+	}
+
+	return pageRepo.FindByTopicAndTitlePairs(ctx, pairs, spaceID)
+}
+
+// uniqueTopicNamesはWikiリンクキーからユニークなトピック名を抽出する
 func uniqueTopicNames(keys []markup.WikilinkKey) []string {
 	seen := make(map[string]bool, len(keys))
 	var names []string
@@ -187,7 +261,7 @@ func uniqueTopicNames(keys []markup.WikilinkKey) []string {
 	return names
 }
 
-// isUniqueViolation はPostgreSQLのユニーク制約違反エラーかを判定する
+// isUniqueViolationはPostgreSQLのユニーク制約違反エラーかを判定する
 func isUniqueViolation(err error) bool {
 	if pqErr, ok := err.(*pq.Error); ok {
 		return pqErr.Code == "23505"

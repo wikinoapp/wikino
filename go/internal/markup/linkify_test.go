@@ -35,7 +35,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "https URL がリンク化される",
+			name: "https URLがリンク化される",
 			text: "https://example.com",
 			wantContains: []string{
 				`<a href="https://example.com"`,
@@ -45,7 +45,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "http URL がリンク化される",
+			name: "http URLがリンク化される",
 			text: "http://example.com",
 			wantContains: []string{
 				`<a href="http://example.com"`,
@@ -53,7 +53,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "テキスト中の URL がリンク化される",
+			name: "テキスト中のURLがリンク化される",
 			text: "Visit https://example.com for more info",
 			wantContains: []string{
 				"Visit ",
@@ -62,7 +62,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "複数の URL が含まれる場合は全てリンク化される",
+			name: "複数のURLが含まれる場合は全てリンク化される",
 			text: "https://example.com and https://example.org",
 			wantContains: []string{
 				`<a href="https://example.com"`,
@@ -77,7 +77,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "改行を含むテキストの URL がリンク化される",
+			name: "改行を含むテキストのURLがリンク化される",
 			text: "https://example.com\nhttps://example.org",
 			wantContains: []string{
 				`<a href="https://example.com"`,
@@ -86,7 +86,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "URL 末尾の句読点はリンクから除外される",
+			name: "URL末尾の句読点はリンクから除外される",
 			text: "See https://example.com.",
 			wantContains: []string{
 				`<a href="https://example.com"`,
@@ -98,7 +98,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "クエリパラメータに & を含む URL がリンク化される",
+			name: "クエリパラメータに & を含むURLがリンク化される",
 			text: "https://example.com/?a=b&c=d",
 			wantContains: []string{
 				`<a href="https://example.com/?a=b&amp;c=d"`,
@@ -121,7 +121,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			wantContains: []string{},
 		},
 		{
-			name: "URL の中の HTML 特殊文字がエスケープされる",
+			name: "URLの中のHTML特殊文字がエスケープされる",
 			text: `https://example.com/?q=<script>`,
 			wantContains: []string{
 				`<a href="https://example.com/?q=`,
@@ -131,7 +131,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "アングルブラケットで囲まれた URL がリンク化される",
+			name: "アングルブラケットで囲まれたURLがリンク化される",
 			text: "<https://example.com>",
 			wantContains: []string{
 				`&lt;<a href="https://example.com" rel="noopener noreferrer" target="_blank">https://example.com</a>&gt;`,
@@ -141,7 +141,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "丸括弧で囲まれた URL は閉じ括弧がリンクから除外される",
+			name: "丸括弧で囲まれたURLは閉じ括弧がリンクから除外される",
 			text: "(https://example.com)",
 			wantContains: []string{
 				`(<a href="https://example.com" rel="noopener noreferrer" target="_blank">https://example.com</a>)`,
@@ -151,14 +151,14 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "Wikipedia 形式の URL(対応する括弧を含む)はリンク全体に保持される",
+			name: "Wikipedia形式のURL (対応する括弧を含む) はリンク全体に保持される",
 			text: "https://en.wikipedia.org/wiki/Foo_(bar)",
 			wantContains: []string{
 				`<a href="https://en.wikipedia.org/wiki/Foo_(bar)" rel="noopener noreferrer" target="_blank">https://en.wikipedia.org/wiki/Foo_(bar)</a>`,
 			},
 		},
 		{
-			name: "丸括弧で囲まれた Wikipedia 形式の URL は外側の閉じ括弧のみ除外される",
+			name: "丸括弧で囲まれたWikipedia形式のURLは外側の閉じ括弧のみ除外される",
 			text: "See (https://en.wikipedia.org/wiki/Foo_(bar)) for details",
 			wantContains: []string{
 				`See (<a href="https://en.wikipedia.org/wiki/Foo_(bar)" rel="noopener noreferrer" target="_blank">https://en.wikipedia.org/wiki/Foo_(bar)</a>) for details`,
@@ -176,7 +176,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "角括弧で囲まれた URL は閉じ括弧がリンクから除外される",
+			name: "角括弧で囲まれたURLは閉じ括弧がリンクから除外される",
 			text: "[https://example.com]",
 			wantContains: []string{
 				`[<a href="https://example.com" rel="noopener noreferrer" target="_blank">https://example.com</a>]`,
@@ -186,7 +186,7 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "波括弧で囲まれた URL は閉じ括弧がリンクから除外される",
+			name: "波括弧で囲まれたURLは閉じ括弧がリンクから除外される",
 			text: "{https://example.com}",
 			wantContains: []string{
 				`{<a href="https://example.com" rel="noopener noreferrer" target="_blank">https://example.com</a>}`,
@@ -196,14 +196,14 @@ func TestLinkifyPlainText(t *testing.T) {
 			},
 		},
 		{
-			name: "マルチバイト文字（日本語）を含む URL がリンク化される",
+			name: "マルチバイト文字 (日本語) を含むURLがリンク化される",
 			text: "https://ja.wikipedia.org/wiki/日本語",
 			wantContains: []string{
 				`<a href="https://ja.wikipedia.org/wiki/日本語" rel="noopener noreferrer" target="_blank">https://ja.wikipedia.org/wiki/日本語</a>`,
 			},
 		},
 		{
-			name: "マルチバイト文字を含む URL の後ろに句読点がある場合",
+			name: "マルチバイト文字を含むURLの後ろに句読点がある場合",
 			text: "See https://ja.wikipedia.org/wiki/日本語.",
 			wantContains: []string{
 				`<a href="https://ja.wikipedia.org/wiki/日本語" rel="noopener noreferrer" target="_blank">https://ja.wikipedia.org/wiki/日本語</a>.`,
@@ -223,20 +223,20 @@ func TestLinkifyPlainText(t *testing.T) {
 			// 空文字列を期待するケース
 			if tt.text == "" {
 				if got != "" {
-					t.Errorf("LinkifyPlainText(\"\") = %q, want \"\"", got)
+					t.Errorf("LinkifyPlainText(\"\") = %q、期待値 = \"\"", got)
 				}
 				return
 			}
 
 			for _, want := range tt.wantContains {
 				if !strings.Contains(got, want) {
-					t.Errorf("出力に %q が含まれていない\n出力: %s", want, got)
+					t.Errorf("出力に%qが含まれていない\n出力: %s", want, got)
 				}
 			}
 
 			for _, exclude := range tt.wantExcludes {
 				if strings.Contains(got, exclude) {
-					t.Errorf("出力に %q が含まれるべきではない\n出力: %s", exclude, got)
+					t.Errorf("出力に%qが含まれるべきではない\n出力: %s", exclude, got)
 				}
 			}
 		})

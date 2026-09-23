@@ -1,7 +1,7 @@
 import { test as setup } from "@playwright/test";
 import { createTestUser, createTestSpace, createTestSpaceMember, saveSharedTestData } from "../helpers/database";
 
-setup("authenticate", async ({ page }) => {
+setup("認証する", async ({ page }) => {
   const user = await createTestUser();
   const space = await createTestSpace();
   const spaceMemberId = await createTestSpaceMember(space.id, user.id);
@@ -15,7 +15,7 @@ setup("authenticate", async ({ page }) => {
   await page.locator('button[type="submit"]').click();
   const response = await responsePromise;
   if (response.status() !== 302) {
-    throw new Error(`Sign-in failed with status ${response.status()}`);
+    throw new Error(`サインインに失敗しました (ステータス: ${response.status()})`);
   }
 
   await page.context().storageState({ path: "playwright/.auth/user.json" });

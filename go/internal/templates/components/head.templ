@@ -2,7 +2,7 @@ package components
 
 import "github.com/wikinoapp/wikino/go/internal/viewmodel"
 
-// Head はHTMLのheadセクションの共通メタタグを出力します
+// HeadはHTMLのheadセクションの共通メタタグを出力します
 templ Head(meta viewmodel.PageMeta) {
 	<meta charset="UTF-8"/>
 
@@ -21,7 +21,12 @@ templ Head(meta viewmodel.PageMeta) {
 	<meta property="og:site_name" content="Wikino"/>
 	<meta property="og:title" content={ meta.Title }/>
 	<meta property="og:type" content={ meta.OGType }/>
-	<meta property="og:url" content={ meta.OGURL }/>
+	// 正規アドレスが分かっている画面だけがそれを宣言する。空の値は「canonicalが無い」ことには
+	// ならず、空のhrefも空のcontentもリクエストされたURLに解決されるため、画面のクエリ違いが
+	// それぞれ自分自身を正規アドレスとして宣言してしまう。
+	if meta.OGURL != "" {
+		<meta property="og:url" content={ meta.OGURL }/>
+	}
 
 	<meta name="twitter:card" content="summary"/>
 	<meta name="twitter:site" content="@wikino_app"/>
@@ -30,7 +35,9 @@ templ Head(meta viewmodel.PageMeta) {
 	<meta name="twitter:image" content={ meta.OGImage }/>
 
 	<link rel="apple-touch-icon" href="/static/images/apple-touch-icon.png"/>
-	<link rel="canonical" href={ meta.OGURL }/>
+	if meta.OGURL != "" {
+		<link rel="canonical" href={ meta.OGURL }/>
+	}
 	<link rel="icon" href="/static/images/favicon.ico" sizes="any"/>
 	<link rel="icon" href="/static/images/icon.svg" type="image/svg+xml"/>
 	<link rel="manifest" href="/manifest.json"/>

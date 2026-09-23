@@ -20,7 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// mockTurnstileVerifier はテスト用のTurnstile検証モック
+// mockTurnstileVerifierはテスト用のTurnstile検証モック
 type mockTurnstileVerifier struct {
 	valid bool
 	err   error
@@ -71,7 +71,7 @@ func TestCreate_TurnstileVerification_Success(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// モックTurnstileを初期化（常に成功）
+	// モックTurnstileを初期化 (常に成功)
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ユースケースを初期化
@@ -83,7 +83,7 @@ func TestCreate_TurnstileVerification_Success(t *testing.T) {
 		cfg,
 		sessionMgr,
 		flashMgr,
-		nil, // limiter（テストでは不要）
+		nil, // limiter (テストでは不要)
 		mockTurnstile,
 		createTokenUsecase,
 	)
@@ -106,13 +106,13 @@ func TestCreate_TurnstileVerification_Success(t *testing.T) {
 
 	// 成功時はメール送信完了ページを表示
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// メール送信完了ページが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "メールを送信しました") && !strings.Contains(body, "Check your email") {
-		t.Error("email sent page not displayed")
+		t.Error("メール送信完了ページが表示されていない")
 	}
 }
 
@@ -143,10 +143,10 @@ func TestCreate_TurnstileVerification_Failed(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// モックTurnstileを初期化（常に失敗）
+	// モックTurnstileを初期化 (常に失敗)
 	mockTurnstile := &mockTurnstileVerifier{valid: false, err: nil}
 
-	// ハンドラーを初期化（Turnstile失敗でUseCaseには到達しないためnil）
+	// ハンドラーを初期化 (Turnstile失敗でUseCaseには到達しないためnil)
 	handler := password_reset.NewHandler(
 		cfg,
 		sessionMgr,
@@ -172,9 +172,9 @@ func TestCreate_TurnstileVerification_Failed(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	// バリデーションエラー時は422 Unprocessable Entityを返す
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 }
 
@@ -205,10 +205,10 @@ func TestCreate_ValidationError(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// モックTurnstileを初期化（常に成功）
+	// モックTurnstileを初期化 (常に成功)
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
-	// UseCase を初期化（バリデーションエラーで永続化には到達しないため db, repo は nil）
+	// UseCaseを初期化 (バリデーションエラーで永続化には到達しないためdb, repoはnil)
 	passwordResetCreateValidator := validator.NewPasswordResetCreateValidator()
 	createTokenUsecase := usecase.NewCreatePasswordResetTokenUsecase(cfg, nil, nil, nil, nil, passwordResetCreateValidator)
 
@@ -238,15 +238,15 @@ func TestCreate_ValidationError(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.Create(rr, req)
 
-	// バリデーションエラー時は 422 Unprocessable Entity を返す
+	// バリデーションエラー時は422 Unprocessable Entityを返す
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	// エラーメッセージが含まれているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, `action="/password/reset"`) {
-		t.Error("password reset form not found in response")
+		t.Error("レスポンスにパスワードリセットのフォームが見つからない")
 	}
 }
 
@@ -269,7 +269,7 @@ func TestCreate_RateLimiting_IP(t *testing.T) {
 		TurnstileSecretKey: "test-secret-key",
 	}
 
-	// Rate Limiterを初期化（PostgreSQLベース）
+	// Rate Limiterを初期化 (PostgreSQLベース)
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
@@ -282,7 +282,7 @@ func TestCreate_RateLimiting_IP(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// モックTurnstileを初期化（常に成功）
+	// モックTurnstileを初期化 (常に成功)
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ユースケースを初期化
@@ -299,7 +299,7 @@ func TestCreate_RateLimiting_IP(t *testing.T) {
 		createTokenUsecase,
 	)
 
-	// 5回まではOK（IPアドレス単位: 5回/時間）
+	// 5回まではOK (IPアドレス単位: 5回/時間)
 	for i := 0; i < 5; i++ {
 		form := url.Values{}
 		form.Set("email", "test"+string(rune('0'+i))+"@example.com")
@@ -320,7 +320,7 @@ func TestCreate_RateLimiting_IP(t *testing.T) {
 		if rr.Code == http.StatusUnprocessableEntity {
 			body := rr.Body.String()
 			if strings.Contains(body, "リクエストが多すぎます") || strings.Contains(body, "Too many requests") {
-				t.Errorf("attempt %d should not be rate limited yet", i+1)
+				t.Errorf("%d回目の試行がまだレート制限されるべきでないのに制限された", i+1)
 			}
 		}
 	}
@@ -343,12 +343,12 @@ func TestCreate_RateLimiting_IP(t *testing.T) {
 
 	// Rate Limitingエラー
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("6th attempt should be rate limited, got status %d", rr.Code)
+		t.Errorf("6回目の試行がレート制限されていない: ステータス = %d", rr.Code)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "リクエストが多すぎます") && !strings.Contains(body, "Too many requests") {
-		t.Error("rate limit error message not found")
+		t.Error("レート制限のエラーメッセージが見つからない")
 	}
 }
 
@@ -371,7 +371,7 @@ func TestCreate_RateLimiting_Email(t *testing.T) {
 		TurnstileSecretKey: "test-secret-key",
 	}
 
-	// Rate Limiterを初期化（PostgreSQLベース）
+	// Rate Limiterを初期化 (PostgreSQLベース)
 	rateLimitRepo := repository.NewRateLimitRepository(queries)
 	limiter := ratelimit.NewLimiter(rateLimitRepo)
 
@@ -384,7 +384,7 @@ func TestCreate_RateLimiting_Email(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// モックTurnstileを初期化（常に成功）
+	// モックTurnstileを初期化 (常に成功)
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ユースケースを初期化
@@ -401,7 +401,7 @@ func TestCreate_RateLimiting_Email(t *testing.T) {
 		createTokenUsecase,
 	)
 
-	// 3回まではOK（メールアドレス単位: 3回/時間）
+	// 3回まではOK (メールアドレス単位: 3回/時間)
 	for i := 0; i < 3; i++ {
 		form := url.Values{}
 		form.Set("email", "ratelimit@example.com")
@@ -423,7 +423,7 @@ func TestCreate_RateLimiting_Email(t *testing.T) {
 		if rr.Code == http.StatusUnprocessableEntity {
 			body := rr.Body.String()
 			if strings.Contains(body, "リクエストが多すぎます") || strings.Contains(body, "Too many requests") {
-				t.Errorf("attempt %d should not be rate limited yet", i+1)
+				t.Errorf("%d回目の試行がまだレート制限されるべきでないのに制限された", i+1)
 			}
 		}
 	}
@@ -446,12 +446,12 @@ func TestCreate_RateLimiting_Email(t *testing.T) {
 
 	// Rate Limitingエラー
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("4th attempt should be rate limited by email, got status %d", rr.Code)
+		t.Errorf("4回目の試行がメールアドレス単位でレート制限されていない: ステータス = %d", rr.Code)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, "リクエストが多すぎます") && !strings.Contains(body, "Too many requests") {
-		t.Error("rate limit error message not found")
+		t.Error("レート制限のエラーメッセージが見つからない")
 	}
 }
 
@@ -483,7 +483,7 @@ func TestCreate_UserNotExists_ShowsSuccessPage(t *testing.T) {
 	sessionMgr := session.NewManager(userRepo, userSessionRepo, cfg)
 	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
 
-	// モックTurnstileを初期化（常に成功）
+	// モックTurnstileを初期化 (常に成功)
 	mockTurnstile := &mockTurnstileVerifier{valid: true, err: nil}
 
 	// ユースケースを初期化
@@ -518,12 +518,12 @@ func TestCreate_UserNotExists_ShowsSuccessPage(t *testing.T) {
 
 	// セキュリティ上、ユーザーが存在しなくても成功ページを表示
 	if rr.Code != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusOK)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 	}
 
 	// メール送信完了ページが表示されているか確認
 	body := rr.Body.String()
 	if !strings.Contains(body, "メールを送信しました") && !strings.Contains(body, "Check your email") {
-		t.Error("email sent page not displayed for non-existent user")
+		t.Error("存在しないユーザーでメール送信完了ページが表示されていない")
 	}
 }

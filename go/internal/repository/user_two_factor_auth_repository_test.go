@@ -14,7 +14,7 @@ func TestUserTwoFactorAuthRepository_FindByUserID(t *testing.T) {
 	q := testutil.QueriesWithTx(tx)
 	repo := NewUserTwoFactorAuthRepository(q)
 
-	// テストユーザーと二要素認証設定を作成（無効）
+	// テストユーザーと二要素認証設定を作成 (無効)
 	userID := testutil.NewUserBuilder(t, tx).
 		WithEmail("repo-2fa@example.com").
 		WithAtname("repo-twofauser").
@@ -23,29 +23,29 @@ func TestUserTwoFactorAuthRepository_FindByUserID(t *testing.T) {
 	t.Run("存在するユーザーの二要素認証設定を取得できる", func(t *testing.T) {
 		twoFA, err := repo.FindByUserID(context.Background(), userID)
 		if err != nil {
-			t.Fatalf("FindByUserID() error = %v", err)
+			t.Fatalf("FindByUserID()のエラー = %v", err)
 		}
 		if twoFA == nil {
-			t.Fatal("FindByUserID() returned nil, want twoFA")
+			t.Fatal("FindByUserID()がnilを返した、期待値 = twoFA")
 		}
 		if twoFA.UserID != userID {
-			t.Errorf("twoFA.UserID = %v, want %v", twoFA.UserID, userID)
+			t.Errorf("twoFA.UserID = %v、期待値 = %v", twoFA.UserID, userID)
 		}
 		if twoFA.Secret != "JBSWY3DPEHPK3PXP" {
-			t.Errorf("twoFA.Secret = %v, want JBSWY3DPEHPK3PXP", twoFA.Secret)
+			t.Errorf("twoFA.Secret = %v、期待値 = JBSWY3DPEHPK3PXP", twoFA.Secret)
 		}
 		if twoFA.Enabled != false {
-			t.Errorf("twoFA.Enabled = %v, want false", twoFA.Enabled)
+			t.Errorf("twoFA.Enabled = %v、期待値 = false", twoFA.Enabled)
 		}
 	})
 
 	t.Run("存在しないユーザーIDはnilを返す", func(t *testing.T) {
 		twoFA, err := repo.FindByUserID(context.Background(), "00000000-0000-0000-0000-000000000000")
 		if err != nil {
-			t.Fatalf("FindByUserID() error = %v", err)
+			t.Fatalf("FindByUserID()のエラー = %v", err)
 		}
 		if twoFA != nil {
-			t.Errorf("FindByUserID() = %v, want nil", twoFA)
+			t.Errorf("FindByUserID() = %v、期待値 = nil", twoFA)
 		}
 	})
 }
@@ -72,26 +72,26 @@ func TestUserTwoFactorAuthRepository_FindEnabledByUserID(t *testing.T) {
 	t.Run("有効な二要素認証設定を取得できる", func(t *testing.T) {
 		twoFA, err := repo.FindEnabledByUserID(context.Background(), enabledUserID)
 		if err != nil {
-			t.Fatalf("FindEnabledByUserID() error = %v", err)
+			t.Fatalf("FindEnabledByUserID()のエラー = %v", err)
 		}
 		if twoFA == nil {
-			t.Fatal("FindEnabledByUserID() returned nil, want twoFA")
+			t.Fatal("FindEnabledByUserID()がnilを返した、期待値 = twoFA")
 		}
 		if twoFA.Enabled != true {
-			t.Errorf("twoFA.Enabled = %v, want true", twoFA.Enabled)
+			t.Errorf("twoFA.Enabled = %v、期待値 = true", twoFA.Enabled)
 		}
 		if twoFA.EnabledAt == nil {
-			t.Error("twoFA.EnabledAt should not be nil")
+			t.Error("twoFA.EnabledAtがnil")
 		}
 	})
 
 	t.Run("無効な二要素認証設定はnilを返す", func(t *testing.T) {
 		twoFA, err := repo.FindEnabledByUserID(context.Background(), disabledUserID)
 		if err != nil {
-			t.Fatalf("FindEnabledByUserID() error = %v", err)
+			t.Fatalf("FindEnabledByUserID()のエラー = %v", err)
 		}
 		if twoFA != nil {
-			t.Errorf("FindEnabledByUserID() = %v, want nil", twoFA)
+			t.Errorf("FindEnabledByUserID() = %v、期待値 = nil", twoFA)
 		}
 	})
 }
@@ -113,19 +113,19 @@ func TestUserTwoFactorAuthRepository_UpdateRecoveryCodes(t *testing.T) {
 		newCodes := []string{"CODE1", "CODE2", "CODE3", "CODE4"}
 		err := repo.UpdateRecoveryCodes(context.Background(), userID, newCodes)
 		if err != nil {
-			t.Fatalf("UpdateRecoveryCodes() error = %v", err)
+			t.Fatalf("UpdateRecoveryCodes()のエラー = %v", err)
 		}
 
 		// 更新後の値を確認
 		twoFA, err := repo.FindByUserID(context.Background(), userID)
 		if err != nil {
-			t.Fatalf("FindByUserID() error = %v", err)
+			t.Fatalf("FindByUserID()のエラー = %v", err)
 		}
 		if twoFA == nil {
-			t.Fatal("FindByUserID() returned nil, want twoFA")
+			t.Fatal("FindByUserID()がnilを返した、期待値 = twoFA")
 		}
 		if len(twoFA.RecoveryCodes) != 4 {
-			t.Errorf("len(twoFA.RecoveryCodes) = %d, want 4", len(twoFA.RecoveryCodes))
+			t.Errorf("len(twoFA.RecoveryCodes) = %d、期待値 = 4", len(twoFA.RecoveryCodes))
 		}
 	})
 }

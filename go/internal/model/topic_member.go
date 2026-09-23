@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// TopicMember はトピックメンバーのドメインモデル
+// TopicMemberはトピックメンバーのドメインモデル
 type TopicMember struct {
 	ID                 TopicMemberID
 	SpaceID            SpaceID

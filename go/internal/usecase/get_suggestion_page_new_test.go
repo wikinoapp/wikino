@@ -59,7 +59,7 @@ func TestGetSuggestionPageNewUsecase_Execute(t *testing.T) {
 		WithStatus(model.SuggestionStatusOpen).
 		Build()
 
-	// 下書きページ（編集提案に未リンク）
+	// 下書きページ (編集提案に未リンク)
 	pageID1 := testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -74,7 +74,7 @@ func TestGetSuggestionPageNewUsecase_Execute(t *testing.T) {
 		WithBody("未リンク下書き").
 		Build()
 
-	// 下書きページ（編集提案にリンク済み）
+	// 下書きページ (編集提案にリンク済み)
 	pageID2 := testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
@@ -108,22 +108,22 @@ func TestGetSuggestionPageNewUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		if output == nil {
-			t.Fatal("output should not be nil")
+			t.Fatal("出力がnil")
 		}
 		if output.Space == nil {
-			t.Fatal("Space should not be nil")
+			t.Fatal("Spaceがnil")
 		}
 		if output.Topic == nil {
-			t.Fatal("Topic should not be nil")
+			t.Fatal("Topicがnil")
 		}
 		if output.Suggestion == nil {
-			t.Fatal("Suggestion should not be nil")
+			t.Fatal("Suggestionがnil")
 		}
 		if output.DraftPages == nil {
-			t.Fatal("DraftPages should not be nil")
+			t.Fatal("DraftPagesがnil")
 		}
 	})
 
@@ -134,12 +134,12 @@ func TestGetSuggestionPageNewUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 
 		for _, dp := range output.DraftPages {
 			if dp.SuggestionPageID != nil {
-				t.Error("DraftPages should not contain drafts linked to a suggestion page")
+				t.Error("DraftPagesに編集提案ページに紐付いた下書きが含まれている")
 			}
 		}
 	})
@@ -151,14 +151,14 @@ func TestGetSuggestionPageNewUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError but got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeResourceNotFound)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeResourceNotFound)
 		}
 	})
 
@@ -169,14 +169,14 @@ func TestGetSuggestionPageNewUsecase_Execute(t *testing.T) {
 			UserID:           nonMemberID,
 		})
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError but got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 
@@ -195,14 +195,14 @@ func TestGetSuggestionPageNewUsecase_Execute(t *testing.T) {
 			UserID:           userID,
 		})
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal("エラーを期待したが、nilだった")
 		}
 		ae := model.AsAppError(err)
 		if ae == nil {
-			t.Fatalf("expected AppError but got %T: %v", err, err)
+			t.Fatalf("AppErrorを期待したが、%Tだった: %v", err, err)
 		}
 		if ae.Code != model.AppErrCodeForbidden {
-			t.Errorf("error code = %d, want %d", ae.Code, model.AppErrCodeForbidden)
+			t.Errorf("エラーコード = %d、期待値 = %d", ae.Code, model.AppErrCodeForbidden)
 		}
 	})
 }

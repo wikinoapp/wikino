@@ -24,10 +24,10 @@ func TestPageMoveCreateValidator_EmptyDestTopic(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError but got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("dest_topic") {
-		t.Error("expected dest_topic field error")
+		t.Error("dest_topicのフィールドエラーが無い")
 	}
 }
 
@@ -44,10 +44,10 @@ func TestPageMoveCreateValidator_InvalidDestTopicNumber(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError but got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("dest_topic") {
-		t.Error("expected dest_topic field error")
+		t.Error("dest_topicのフィールドエラーが無い")
 	}
 }
 
@@ -103,10 +103,10 @@ func TestPageMoveCreateValidator_SameTopic(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError but got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("dest_topic") {
-		t.Error("expected dest_topic field error for same topic")
+		t.Error("同じトピックなのにdest_topicのフィールドエラーが無い")
 	}
 }
 
@@ -179,10 +179,10 @@ func TestPageMoveCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError but got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("dest_topic") {
-		t.Error("expected dest_topic field error for title exists")
+		t.Error("タイトルが存在するのにdest_topicのフィールドエラーが無い")
 	}
 }
 
@@ -268,10 +268,10 @@ func TestPageMoveCreateValidator_OpenSuggestionExists(t *testing.T) {
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		t.Fatal("expected ValidationError but got nil")
+		t.Fatal("ValidationErrorを期待したが、nilだった")
 	}
 	if !ve.HasFieldError("dest_topic") {
-		t.Error("expected dest_topic field error for open suggestion exists")
+		t.Error("オープンな編集提案があるのにdest_topicのフィールドエラーが無い")
 	}
 }
 
@@ -336,9 +336,9 @@ func TestPageMoveCreateValidator_Success(t *testing.T) {
 	})
 
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("予期しないエラー: %v", err)
 	}
 	if destTopic == nil {
-		t.Error("expected dest topic but got nil")
+		t.Error("移動先トピックがnil")
 	}
 }

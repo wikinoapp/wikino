@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetSuggestionEditUsecase は編集提案編集フォーム用のデータ取得ユースケース
+// GetSuggestionEditUsecaseは編集提案編集フォーム用のデータ取得ユースケース
 type GetSuggestionEditUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
@@ -18,7 +18,7 @@ type GetSuggestionEditUsecase struct {
 	userRepo        *repository.UserRepository
 }
 
-// NewGetSuggestionEditUsecase は GetSuggestionEditUsecase を生成する
+// NewGetSuggestionEditUsecaseはGetSuggestionEditUsecaseを生成する
 func NewGetSuggestionEditUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
@@ -37,14 +37,14 @@ func NewGetSuggestionEditUsecase(
 	}
 }
 
-// GetSuggestionEditInput は編集提案編集フォーム用データ取得の入力パラメータ
+// GetSuggestionEditInputは編集提案編集フォーム用データ取得の入力パラメータ
 type GetSuggestionEditInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
 	UserID           model.UserID
 }
 
-// GetSuggestionEditOutput は編集提案編集フォーム用データ取得の出力
+// GetSuggestionEditOutputは編集提案編集フォーム用データ取得の出力
 type GetSuggestionEditOutput struct {
 	Space                      *model.Space
 	Topic                      *model.Topic
@@ -54,7 +54,7 @@ type GetSuggestionEditOutput struct {
 	CanUpdateSuggestionComment bool
 }
 
-// Execute は編集提案編集フォームに必要なデータを取得する
+// Executeは編集提案編集フォームに必要なデータを取得する
 func (uc *GetSuggestionEditUsecase) Execute(ctx context.Context, input GetSuggestionEditInput) (*GetSuggestionEditOutput, error) {
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
 	if err != nil {

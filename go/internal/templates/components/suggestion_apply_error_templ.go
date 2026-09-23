@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// SuggestionApplyError は編集提案反映時のバリデーションエラーを表示します
+// SuggestionApplyErrorは編集提案反映時のバリデーションエラーを表示します。
 func SuggestionApplyError(data *viewmodel.SuggestionApplyError) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -35,7 +35,7 @@ func SuggestionApplyError(data *viewmodel.SuggestionApplyError) templ.Component 
 		}
 		ctx = templ.ClearChildren(ctx)
 		if data != nil && len(data.PageErrors) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"px-4\"><div class=\"alert-destructive\"><section class=\"flex flex-col gap-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"px-4\"><div class=\"alert\" data-variant=\"destructive\"><section class=\"flex flex-col gap-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

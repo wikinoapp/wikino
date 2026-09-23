@@ -85,26 +85,26 @@ func TestDeleteDraftPageUsecase_Execute_Success(t *testing.T) {
 		UserID:          userID,
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v, want nil", err)
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
 	}
 
 	// 下書きが削除されていることを確認
 	got, err := draftPageRepo.FindByID(context.Background(), draftPageID, spaceID)
 	if err != nil {
-		t.Fatalf("FindByID() error = %v", err)
+		t.Fatalf("FindByID()のエラー = %v", err)
 	}
 	if got != nil {
-		t.Error("削除後は下書きが取得できないべき")
+		t.Error("削除後も下書きが取得できる")
 	}
 
-	// リビジョンも削除されていることを確認 (FK 制約があるため、ここが 0 でないと
+	// リビジョンも削除されていることを確認 (FK制約があるため、ここが0でないと
 	// そもそも下書きの削除も失敗する想定)
 	count, err := draftPageRevisionRepo.CountByDraftPageID(context.Background(), draftPageID, spaceID)
 	if err != nil {
-		t.Fatalf("CountByDraftPageID() error = %v", err)
+		t.Fatalf("CountByDraftPageID()のエラー = %v", err)
 	}
 	if count != 0 {
-		t.Errorf("削除後のリビジョン件数 = %d, want 0", count)
+		t.Errorf("削除後のリビジョン件数 = %d、期待値 = 0", count)
 	}
 }
 
@@ -140,7 +140,7 @@ func TestDeleteDraftPageUsecase_Execute_DraftNotFound(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Test Page").
 		Build()
-	// DraftPage は作成しない
+	// DraftPageは作成しない
 
 	err := uc.Execute(context.Background(), DeleteDraftPageInput{
 		SpaceIdentifier: model.SpaceIdentifier("delete-draft-notfound"),
@@ -150,10 +150,10 @@ func TestDeleteDraftPageUsecase_Execute_DraftNotFound(t *testing.T) {
 
 	var ae *model.AppError
 	if !errors.As(err, &ae) {
-		t.Fatalf("expected *model.AppError, got %T (%v)", err, err)
+		t.Fatalf("*model.AppErrorを期待したが、%T (%v) だった", err, err)
 	}
 	if ae.Code != model.AppErrCodeResourceNotFound {
-		t.Errorf("AppErrCode = %v, want %v", ae.Code, model.AppErrCodeResourceNotFound)
+		t.Errorf("AppErrCode = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
 	}
 }
 
@@ -198,7 +198,7 @@ func TestDeleteDraftPageUsecase_Execute_NotMember(t *testing.T) {
 		WithBody("other's draft").
 		Build()
 
-	// 別ユーザー（スペースメンバーでない）
+	// 別ユーザー (スペースメンバーでない)
 	intruderID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("delete-draft-intruder@example.com").
 		WithAtname("deletedraftintruder").
@@ -212,10 +212,10 @@ func TestDeleteDraftPageUsecase_Execute_NotMember(t *testing.T) {
 
 	var ae *model.AppError
 	if !errors.As(err, &ae) {
-		t.Fatalf("expected *model.AppError, got %T (%v)", err, err)
+		t.Fatalf("*model.AppErrorを期待したが、%T (%v) だった", err, err)
 	}
 	if ae.Code != model.AppErrCodeForbidden {
-		t.Errorf("AppErrCode = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+		t.Errorf("AppErrCode = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 	}
 }
 
@@ -232,7 +232,7 @@ func TestDeleteDraftPageUsecase_Execute_MissingDeleteScope(t *testing.T) {
 		WithEmail("delete-draft-noscope@example.com").
 		WithAtname("deletedraftnoscope").
 		Build()
-	// space:admin を付与せず draft_page:write のみのメンバー
+	// space:adminを付与せずdraft_page:writeのみのメンバー
 	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
@@ -269,9 +269,9 @@ func TestDeleteDraftPageUsecase_Execute_MissingDeleteScope(t *testing.T) {
 
 	var ae *model.AppError
 	if !errors.As(err, &ae) {
-		t.Fatalf("expected *model.AppError, got %T (%v)", err, err)
+		t.Fatalf("*model.AppErrorを期待したが、%T (%v) だった", err, err)
 	}
 	if ae.Code != model.AppErrCodeForbidden {
-		t.Errorf("AppErrCode = %v, want %v", ae.Code, model.AppErrCodeForbidden)
+		t.Errorf("AppErrCode = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 	}
 }

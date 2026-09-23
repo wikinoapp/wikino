@@ -99,15 +99,15 @@ func TestNewSuggestionsForList(t *testing.T) {
 			})
 
 			if len(got) != tt.wantCount {
-				t.Errorf("len(result) = %d, want %d", len(got), tt.wantCount)
+				t.Errorf("len(result) = %d、期待値 = %d", len(got), tt.wantCount)
 			}
 
 			for i, item := range got {
 				if i < len(tt.wantTitles) && item.Title != tt.wantTitles[i] {
-					t.Errorf("result[%d].Title = %q, want %q", i, item.Title, tt.wantTitles[i])
+					t.Errorf("result[%d].Title = %q、期待値 = %q", i, item.Title, tt.wantTitles[i])
 				}
 				if i < len(tt.wantCreatorName) && item.CreatorName != tt.wantCreatorName[i] {
-					t.Errorf("result[%d].CreatorName = %q, want %q", i, item.CreatorName, tt.wantCreatorName[i])
+					t.Errorf("result[%d].CreatorName = %q、期待値 = %q", i, item.CreatorName, tt.wantCreatorName[i])
 				}
 			}
 		})
@@ -122,7 +122,7 @@ func TestNewDraftPagesForSuggestionNew(t *testing.T) {
 
 		got := viewmodel.NewDraftPagesForSuggestionNew([]*model.DraftPage{})
 		if len(got) != 0 {
-			t.Errorf("len(result) = %d, want 0", len(got))
+			t.Errorf("len(result) = %d、期待値 = 0", len(got))
 		}
 	})
 
@@ -145,13 +145,13 @@ func TestNewDraftPagesForSuggestionNew(t *testing.T) {
 
 		got := viewmodel.NewDraftPagesForSuggestionNew(drafts)
 		if len(got) != 1 {
-			t.Fatalf("len(result) = %d, want 1", len(got))
+			t.Fatalf("len(result) = %d、期待値 = 1", len(got))
 		}
 		if got[0].Title != "下書きタイトル" {
-			t.Errorf("Title = %q, want %q", got[0].Title, "下書きタイトル")
+			t.Errorf("Title = %q、期待値 = %q", got[0].Title, "下書きタイトル")
 		}
 		if got[0].PageNumber != 1 {
-			t.Errorf("PageNumber = %d, want 1", got[0].PageNumber)
+			t.Errorf("PageNumber = %d、期待値 = 1", got[0].PageNumber)
 		}
 	})
 
@@ -172,10 +172,10 @@ func TestNewDraftPagesForSuggestionNew(t *testing.T) {
 
 		got := viewmodel.NewDraftPagesForSuggestionNew(drafts)
 		if len(got) != 1 {
-			t.Fatalf("len(result) = %d, want 1", len(got))
+			t.Fatalf("len(result) = %d、期待値 = 1", len(got))
 		}
 		if got[0].Title != "ページタイトル" {
-			t.Errorf("Title = %q, want %q", got[0].Title, "ページタイトル")
+			t.Errorf("Title = %q、期待値 = %q", got[0].Title, "ページタイトル")
 		}
 	})
 
@@ -194,10 +194,10 @@ func TestNewDraftPagesForSuggestionNew(t *testing.T) {
 
 		got := viewmodel.NewDraftPagesForSuggestionNew(drafts)
 		if len(got) != 1 {
-			t.Fatalf("len(result) = %d, want 1", len(got))
+			t.Fatalf("len(result) = %d、期待値 = 1", len(got))
 		}
 		if got[0].Title != "" {
-			t.Errorf("Title = %q, want empty string", got[0].Title)
+			t.Errorf("Title = %q、期待値 = 空文字列", got[0].Title)
 		}
 	})
 }
@@ -218,7 +218,7 @@ func TestDraftPageForSuggestionNew_DisplayTitle(t *testing.T) {
 
 		got := dp.DisplayTitle(ctx)
 		if got != "テストタイトル" {
-			t.Errorf("DisplayTitle() = %q, want %q", got, "テストタイトル")
+			t.Errorf("DisplayTitle() = %q、期待値 = %q", got, "テストタイトル")
 		}
 	})
 
@@ -232,7 +232,7 @@ func TestDraftPageForSuggestionNew_DisplayTitle(t *testing.T) {
 
 		got := dp.DisplayTitle(ctx)
 		if got == "" {
-			t.Error("DisplayTitle() should not be empty for untitled draft")
+			t.Error("無題の下書きなのにDisplayTitle()が空")
 		}
 	})
 }

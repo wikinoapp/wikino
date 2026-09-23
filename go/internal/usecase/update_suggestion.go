@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// UpdateSuggestionUsecase は編集提案更新ユースケース
+// UpdateSuggestionUsecaseは編集提案更新ユースケース
 type UpdateSuggestionUsecase struct {
 	db              *sql.DB
 	spaceRepo       *repository.SpaceRepository
@@ -21,7 +21,7 @@ type UpdateSuggestionUsecase struct {
 	updateValidator *validator.SuggestionUpdateValidator
 }
 
-// NewUpdateSuggestionUsecase は UpdateSuggestionUsecase を生成する
+// NewUpdateSuggestionUsecaseはUpdateSuggestionUsecaseを生成する
 func NewUpdateSuggestionUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
@@ -40,7 +40,7 @@ func NewUpdateSuggestionUsecase(
 	}
 }
 
-// UpdateSuggestionInput は編集提案更新の入力パラメータ
+// UpdateSuggestionInputは編集提案更新の入力パラメータ
 type UpdateSuggestionInput struct {
 	SpaceIdentifier  model.SpaceIdentifier
 	SuggestionNumber model.SuggestionNumber
@@ -49,12 +49,12 @@ type UpdateSuggestionInput struct {
 	Body             string
 }
 
-// UpdateSuggestionOutput は編集提案更新の出力パラメータ
+// UpdateSuggestionOutputは編集提案更新の出力パラメータ
 type UpdateSuggestionOutput struct {
 	Suggestion *model.Suggestion
 }
 
-// Execute は編集提案を更新する
+// Executeは編集提案を更新する
 func (uc *UpdateSuggestionUsecase) Execute(ctx context.Context, input UpdateSuggestionInput) (*UpdateSuggestionOutput, error) {
 	// 1. データ取得
 	space, spaceMember, suggestion, err := uc.fetchData(ctx, input)
@@ -75,7 +75,7 @@ func (uc *UpdateSuggestionUsecase) Execute(ctx context.Context, input UpdateSugg
 		return nil, err
 	}
 
-	// 4. 永続化（トランザクション）
+	// 4. 永続化 (トランザクション)
 	return uc.updateSuggestion(ctx, suggestion.ID, space.ID, input.Title, input.Body)
 }
 
@@ -138,7 +138,7 @@ func (uc *UpdateSuggestionUsecase) authorize(ctx context.Context, space *model.S
 	return nil
 }
 
-// updateSuggestion はトランザクション内で編集提案を更新する
+// updateSuggestionはトランザクション内で編集提案を更新する
 func (uc *UpdateSuggestionUsecase) updateSuggestion(ctx context.Context, suggestionID model.SuggestionID, spaceID model.SpaceID, title, body string) (*UpdateSuggestionOutput, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {

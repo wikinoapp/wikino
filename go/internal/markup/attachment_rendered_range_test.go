@@ -1,0 +1,49 @@
+package markup
+
+import (
+	"reflect"
+	"strings"
+	"testing"
+
+	"golang.org/x/net/html"
+)
+
+func TestScanAttachmentRefMatches_PreservesParsedDocument(t *testing.T) {
+	t.Parallel()
+	bodies := []string{
+		"[![image](/attachments/01A)](/attachments/01A)",
+		"[one][r] ![two][r]\n\n[r]: /attachments/01A",
+		"<img src='/attachments/01A'> <a href=/attachments/01A>file</a>",
+		"<div>\n<img src=\"/attachments/01A\">\n<img src=\"/attachments/01A\"></div>",
+		"<!-- comment\n--><img src=\"/attachments/01A\"><img src=\"/attachments/01A\">",
+		"[visible](/attachments/01A)\n\n> <!--\n\n<img src=\"/attachments/01A\">",
+	}
+	for _, body := range bodies {
+		t.Run(body, func(t *testing.T) {
+			t.Parallel()
+			source, document, before := renderBody(body)
+			tree, err := parseHTMLFragmentWithContainer(before)
+			if err != nil {
+				t.Fatal(err)
+			}
+			first := scanAttachmentRefMatches(source, document, func() *html.Node { return tree })
+			second := scanAttachmentRefMatches(source, document, func() *html.Node { return tree })
+			if !reflect.DeepEqual(first, second) {
+				t.Errorf("再スキャンで一致が変わった: %v / %v", first, second)
+			}
+			after, err := renderSanitized(source, document)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if after != before {
+				t.Errorf("ドキュメントが変わった: 変更前 = %q、変更後 = %q", before, after)
+			}
+			if string(source) != body {
+				t.Errorf("ソースが変わった: %q", source)
+			}
+			if strings.Contains(after, "Wikino") {
+				t.Errorf("出力にマーカーが漏れている: %s", after)
+			}
+		})
+	}
+}

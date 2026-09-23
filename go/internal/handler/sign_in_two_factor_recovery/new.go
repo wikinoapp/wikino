@@ -4,20 +4,25 @@ import (
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/redirect"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
 	twofactorpages "github.com/wikinoapp/wikino/go/internal/templates/pages/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// New はリカバリーコード入力フォームを表示します (GET /sign_in/two_factor/recovery/new)
+// Newはリカバリーコード入力フォームを表示します (GET /sign_in/two_factor/recovery/new)
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	// 二要素認証画面から引き継がれた遷移先を読む。pending user cookieが期限切れのときも
+	// 訪問者が求めたページを付けてサインインへ戻せるよう、pending userの確認より前に読む。
+	backURL := r.URL.Query().Get("back")
 
 	// ペンディングユーザーIDを確認
 	pendingUserID := h.sessionMgr.GetPendingUserID(r)
 	if pendingUserID == "" {
 		// ペンディングユーザーIDがない場合はログインページにリダイレクト
-		http.Redirect(w, r, "/sign_in", http.StatusFound)
+		redirect.ToSignIn(w, r, backURL)
 		return
 	}
 
@@ -26,12 +31,13 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 
 	// ページメタ情報を設定
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
-	meta.SetTitle(ctx, "sign_in_two_factor_recovery_title")
+	meta.SetTitle(ctx, "sign_in_two_factor_recovery_new_title")
 
 	// テンプレートをレンダリング
 	pageData := twofactorpages.RecoveryNewPageData{
 		CSRFToken:  csrfToken,
 		FormErrors: nil,
+		BackURL:    backURL,
 	}
 	content := twofactorpages.RecoveryNew(pageData)
 	err := layouts.Simple(layouts.SimpleLayoutData{Meta: meta}, content).Render(ctx, w)

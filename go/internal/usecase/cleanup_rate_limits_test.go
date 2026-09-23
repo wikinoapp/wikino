@@ -29,7 +29,7 @@ func TestCleanupRateLimitsUsecase_Execute(t *testing.T) {
 		Window: time.Hour,
 	})
 	if err != nil {
-		t.Fatalf("Check() error = %v", err)
+		t.Fatalf("Check()のエラー = %v", err)
 	}
 
 	// 正常に実行できること
@@ -37,7 +37,7 @@ func TestCleanupRateLimitsUsecase_Execute(t *testing.T) {
 		RetentionHours: 24,
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 }
 
@@ -57,6 +57,6 @@ func TestCleanupRateLimitsUsecase_Execute_DefaultRetention(t *testing.T) {
 		RetentionHours: 0,
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 }

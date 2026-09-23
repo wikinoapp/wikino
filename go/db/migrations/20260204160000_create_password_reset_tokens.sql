@@ -12,10 +12,10 @@ CREATE TABLE password_reset_tokens (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- token_digestのユニークインデックス（トークン検索の高速化）
+-- token_digestのユニークインデックス (トークン検索の高速化)
 CREATE UNIQUE INDEX idx_password_reset_tokens_token_digest ON password_reset_tokens(token_digest);
 
--- user_idのインデックス（ユーザーのトークン検索・削除の高速化）
+-- user_idのインデックス (ユーザーのトークン検索・削除の高速化)
 CREATE INDEX idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
 
 -- migrate:down

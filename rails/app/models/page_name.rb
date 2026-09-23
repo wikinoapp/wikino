@@ -7,7 +7,6 @@ class PageName < T::Enum
     EmailConfirmationEdit = new
     Home = new
     Inbox = new
-    PageDetail = new
     PageEdit = new
     PasswordEdit = new
     PasswordReset = new
@@ -27,15 +26,11 @@ class PageName < T::Enum
     SpaceSettings = new
     SpaceSettingsAttachments = new
     SpaceSettingsDeletion = new
-    SpaceSettingsExportDetail = new
-    SpaceSettingsExportsNew = new
     SpaceSettingsGeneral = new
     TopicDetail = new
     TopicEdit = new
-    TopicNew = new
     TopicSettings = new
     TopicSettingsDeletion = new
-    TopicSettingsGeneral = new
     Trash = new
     Welcome = new
   end

@@ -9,24 +9,24 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 )
 
-// CleanupRateLimitsUsecase は古いRate Limitレコードを削除するユースケース
+// CleanupRateLimitsUsecaseは古いRate Limitレコードを削除するユースケース
 type CleanupRateLimitsUsecase struct {
 	limiter *ratelimit.Limiter
 }
 
-// NewCleanupRateLimitsUsecase は CleanupRateLimitsUsecase を生成する
+// NewCleanupRateLimitsUsecaseはCleanupRateLimitsUsecaseを生成する
 func NewCleanupRateLimitsUsecase(limiter *ratelimit.Limiter) *CleanupRateLimitsUsecase {
 	return &CleanupRateLimitsUsecase{
 		limiter: limiter,
 	}
 }
 
-// CleanupRateLimitsInput は古いRate Limitレコード削除の入力パラメータ
+// CleanupRateLimitsInputは古いRate Limitレコード削除の入力パラメータ
 type CleanupRateLimitsInput struct {
 	RetentionHours int
 }
 
-// Execute は古いRate Limitレコードを削除する
+// Executeは古いRate Limitレコードを削除する
 func (uc *CleanupRateLimitsUsecase) Execute(ctx context.Context, input CleanupRateLimitsInput) error {
 	retention := time.Duration(input.RetentionHours) * time.Hour
 	if retention <= 0 {

@@ -113,7 +113,7 @@ export class FileUploadHandler {
         const attachmentUrl = `/attachments/${presignData.attachmentId}`;
         replacePlaceholderWithUrl(this.editorView, placeholderId, attachmentUrl, file.name, width, height, file.type);
       } catch (error) {
-        console.error("Upload error:", error);
+        console.error("アップロードエラー:", error);
         removePlaceholder(this.editorView, placeholderId);
 
         if (error instanceof UploadError) {
@@ -170,7 +170,7 @@ export class FileUploadHandler {
       presignData.directUploadUrl,
       presignData.directUploadHeaders,
       (progress: UploadProgress) => {
-        console.log(`Uploading ${file.name}: ${progress.percentage}%`);
+        console.log(`アップロード中: ${file.name} (${progress.percentage}%)`);
       },
     );
 
@@ -204,7 +204,7 @@ export class FileUploadHandler {
     const limit = FILE_SIZE_LIMITS[category];
     if (file.size > limit) {
       const limitMB = Math.round(limit / (1024 * 1024));
-      throw new UploadError(`ファイルサイズが制限（${limitMB}MB）を超えています`);
+      throw new UploadError(`ファイルサイズが制限 (${limitMB}MB) を超えています`);
     }
 
     if (file.type.startsWith("image/")) {

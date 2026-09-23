@@ -71,19 +71,19 @@ func TestNewLinkList(t *testing.T) {
 			})
 
 			if len(got.Items) != tt.wantItemCount {
-				t.Errorf("len(Items) = %d, want %d", len(got.Items), tt.wantItemCount)
+				t.Errorf("len(Items) = %d、期待値 = %d", len(got.Items), tt.wantItemCount)
 			}
 
 			if got.SpaceIdentifier != viewmodel.NewSpaceIdentifier(tt.spaceIdentifier) {
-				t.Errorf("SpaceIdentifier = %q, want %q", got.SpaceIdentifier, tt.spaceIdentifier)
+				t.Errorf("SpaceIdentifier = %q、期待値 = %q", got.SpaceIdentifier, tt.spaceIdentifier)
 			}
 
 			for i, item := range got.Items {
 				if i < len(tt.wantTitles) && item.CardLinkPage.Title != tt.wantTitles[i] {
-					t.Errorf("Items[%d].Page.Title = %q, want %q", i, item.CardLinkPage.Title, tt.wantTitles[i])
+					t.Errorf("Items[%d].Page.Title = %q、期待値 = %q", i, item.CardLinkPage.Title, tt.wantTitles[i])
 				}
 				if i < len(tt.wantNumbers) && item.CardLinkPage.Number != tt.wantNumbers[i] {
-					t.Errorf("Items[%d].Page.Number = %d, want %d", i, item.CardLinkPage.Number, tt.wantNumbers[i])
+					t.Errorf("Items[%d].Page.Number = %d、期待値 = %d", i, item.CardLinkPage.Number, tt.wantNumbers[i])
 				}
 			}
 		})
@@ -118,17 +118,17 @@ func TestNewLinkList_WithBacklinkMap(t *testing.T) {
 	})
 
 	if len(got.Items) != 2 {
-		t.Fatalf("len(Items) = %d, want 2", len(got.Items))
+		t.Fatalf("len(Items) = %d、期待値 = 2", len(got.Items))
 	}
 
 	// page1にはバックリンクが設定される
 	if len(got.Items[0].BacklinkList.Items) != 1 {
-		t.Errorf("Items[0].BacklinkList.Items の件数 = %d, want 1", len(got.Items[0].BacklinkList.Items))
+		t.Errorf("Items[0].BacklinkList.Itemsの件数 = %d、期待値 = 1", len(got.Items[0].BacklinkList.Items))
 	}
 
 	// page2にはバックリンクがない
 	if len(got.Items[1].BacklinkList.Items) != 0 {
-		t.Errorf("Items[1].BacklinkList.Items の件数 = %d, want 0", len(got.Items[1].BacklinkList.Items))
+		t.Errorf("Items[1].BacklinkList.Itemsの件数 = %d、期待値 = 0", len(got.Items[1].BacklinkList.Items))
 	}
 }
 
@@ -156,18 +156,38 @@ func TestNewLinkList_WithPagination(t *testing.T) {
 	})
 
 	if got.Pagination.Current != 1 {
-		t.Errorf("Pagination.Current = %d, want 1", got.Pagination.Current)
+		t.Errorf("Pagination.Current = %d、期待値 = 1", got.Pagination.Current)
 	}
 	if got.Pagination.Total != 3 {
-		t.Errorf("Pagination.Total = %d, want 3", got.Pagination.Total)
+		t.Errorf("Pagination.Total = %d、期待値 = 3", got.Pagination.Total)
 	}
 	if !got.Pagination.HasNext {
-		t.Error("Pagination.HasNext = false, want true")
+		t.Error("Pagination.HasNext = false、期待値 = true")
 	}
 	if got.Pagination.HasPrevious {
-		t.Error("Pagination.HasPrevious = true, want false")
+		t.Error("Pagination.HasPrevious = true、期待値 = false")
 	}
 	if got.PageNumber != 42 {
-		t.Errorf("PageNumber = %d, want 42", got.PageNumber)
+		t.Errorf("PageNumber = %d、期待値 = 42", got.PageNumber)
+	}
+}
+
+// TestNewLinkList_CanEditは各カードの編集リンクが呼び出し元のフラグに従うことを固定する。
+// リンク一覧は公開のページ表示画面にも出るため、編集権限の無い閲覧者に編集リンクを出してはならない。
+func TestNewLinkList_CanEdit(t *testing.T) {
+	t.Parallel()
+
+	pages := []*model.Page{{Number: 1}}
+
+	for _, canEdit := range []bool{true, false} {
+		got := viewmodel.NewLinkList(viewmodel.NewLinkListInput{
+			Pages:           pages,
+			SpaceIdentifier: "test-space",
+			CanEdit:         canEdit,
+		})
+
+		if got.Items[0].CardLinkPage.CanEdit != canEdit {
+			t.Errorf("CanEdit = %t、期待値 = %t", got.Items[0].CardLinkPage.CanEdit, canEdit)
+		}
 	}
 }

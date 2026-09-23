@@ -6,6 +6,7 @@ package components
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/a-h/templ"
@@ -14,12 +15,25 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// DiffViewData は差分表示コンポーネントに渡すデータ構造体です
+// DiffViewDataは差分表示コンポーネントに渡すデータです。PageTitleは差分が属するページの
+// 名前で、複数の差分が同じ画面に並ぶときに、各ブロックのキャプションでページを区別するために使います。
 type DiffViewData struct {
-	Blocks []viewmodel.DiffBlock
+	PageTitle string
+	Blocks    []viewmodel.DiffBlock
 }
 
-// DiffView は差分表示コンポーネントを表示します
+// diffCaptionPageTitleは差分が属するページを言い表す。タイトルが無い場合は他の画面と同じ
+// 「無題」の表記へ落とし、タイトルの無いページの呼び方を揃える。ページは公開されるまでタイトルを
+// 持たないことがあり、そのままではキャプションが区切り記号から始まってしまうためである。
+func diffCaptionPageTitle(ctx context.Context, pageTitle string) string {
+	if pageTitle != "" {
+		return pageTitle
+	}
+
+	return templates.T(ctx, "page_show_untitled")
+}
+
+// DiffViewはページ本文の差分を、変更のまとまりごとに1つのテーブルとして表示します。
 func DiffView(data DiffViewData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -53,7 +67,7 @@ func DiffView(data DiffViewData) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "diff_no_changes"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 20, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 34, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -64,8 +78,8 @@ func DiffView(data DiffViewData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			for _, block := range data.Blocks {
-				templ_7745c5c3_Err = diffBlock(block).Render(ctx, templ_7745c5c3_Buffer)
+			for i, block := range data.Blocks {
+				templ_7745c5c3_Err = diffBlock(data.PageTitle, block, i+1, len(data.Blocks)).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -79,8 +93,9 @@ func DiffView(data DiffViewData) templ.Component {
 	})
 }
 
-// diffBlock は1つの差分ブロックを表示します
-func diffBlock(block viewmodel.DiffBlock) templ.Component {
+// diffBlockは差分の1ブロックを表示します。positionは同じ差分のtotalブロック中で
+// このブロックが何番目かを1始まりで表し、キャプションはpageTitleに続けてその両方を読み上げます。
+func diffBlock(pageTitle string, block viewmodel.DiffBlock, position int, total int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -101,7 +116,20 @@ func diffBlock(block viewmodel.DiffBlock) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"overflow-x-auto rounded-md border border-border\"><table class=\"w-full text-sm font-mono border-collapse\"><tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"overflow-clip rounded-md border border-border\"><table class=\"w-full text-sm font-mono border-collapse\"><caption class=\"sr-only\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "diff_block_caption", map[string]any{"PageTitle": diffCaptionPageTitle(ctx, pageTitle), "Position": position, "Total": total}))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 60, Col: 149}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</caption> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -111,7 +139,7 @@ func diffBlock(block viewmodel.DiffBlock) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</tbody></table></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</tbody></table></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -119,7 +147,7 @@ func diffBlock(block viewmodel.DiffBlock) templ.Component {
 	})
 }
 
-// diffLine は差分の1行を表示します
+// diffLineは差分の1行を表示します
 func diffLine(line viewmodel.DiffLine) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -136,154 +164,154 @@ func diffLine(line viewmodel.DiffLine) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		switch line.Type {
 		case viewmodel.DiffLineEqual:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<tr class=\"bg-background\"><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-border\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", line.OldNumber))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 49, Col: 40}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</td><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-border\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<tr class=\"bg-background\"><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-border\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", line.NewNumber))
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", line.OldNumber))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 52, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 78, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</td><td class=\"select-none w-[1%] px-1 py-0 text-center text-muted-foreground/50 align-top\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</td><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-border\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", line.NewNumber))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 55, Col: 10}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 81, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</td><td class=\"px-2 py-0 whitespace-pre-wrap break-all\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</td><td class=\"select-none w-[1%] px-1 py-0 text-center text-muted-foreground/50 align-top\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(line.Content)
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 58, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 84, Col: 10}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</td></tr>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		case viewmodel.DiffLineDelete:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<tr class=\"bg-red-50 dark:bg-red-950/30\"><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-red-400 align-top border-r border-red-200 dark:border-red-900\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</td><td class=\"px-2 py-0 whitespace-pre-wrap break-all\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", line.OldNumber))
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(line.Content)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 64, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 87, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</td><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-red-200 dark:border-red-900\"></td><td class=\"select-none w-[1%] px-1 py-0 text-center text-red-500 font-bold align-top\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</td></tr>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		case viewmodel.DiffLineDelete:
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<tr class=\"bg-red-50 dark:bg-red-950/30\"><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-red-400 align-top border-r border-red-200 dark:border-red-900\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs("-")
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", line.OldNumber))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 69, Col: 10}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 93, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</td><td class=\"px-2 py-0 whitespace-pre-wrap break-all text-red-700 dark:text-red-300\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</td><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-red-200 dark:border-red-900\"></td><td class=\"select-none w-[1%] px-1 py-0 text-center text-red-500 font-bold align-top\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(line.Content)
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs("-")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 72, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 98, Col: 10}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</td></tr>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		case viewmodel.DiffLineInsert:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<tr class=\"bg-green-50 dark:bg-green-950/30\"><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-green-200 dark:border-green-900\"></td><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-green-400 align-top border-r border-green-200 dark:border-green-900\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</td><td class=\"px-2 py-0 whitespace-pre-wrap break-all text-red-700 dark:text-red-300\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", line.NewNumber))
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(line.Content)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 80, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 101, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td><td class=\"select-none w-[1%] px-1 py-0 text-center text-green-500 font-bold align-top\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</td></tr>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		case viewmodel.DiffLineInsert:
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<tr class=\"bg-green-50 dark:bg-green-950/30\"><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-green-200 dark:border-green-900\"></td><td class=\"select-none w-[1%] min-w-10 px-2 py-0 text-right text-green-400 align-top border-r border-green-200 dark:border-green-900\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
-			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs("+")
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", line.NewNumber))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 83, Col: 10}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 109, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td><td class=\"px-2 py-0 whitespace-pre-wrap break-all text-green-700 dark:text-green-300\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td><td class=\"select-none w-[1%] px-1 py-0 text-center text-green-500 font-bold align-top\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var14 string
-			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(line.Content)
+			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs("+")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 86, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 112, Col: 10}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td><td class=\"px-2 py-0 whitespace-pre-wrap break-all text-green-700 dark:text-green-300\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var15 string
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(line.Content)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/diff.templ`, Line: 115, Col: 19}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	// timeZoneCookieName はブラウザのタイムゾーンを保存するクッキー名
+	// timeZoneCookieNameはブラウザのタイムゾーンを保存するクッキー名
 	timeZoneCookieName = "wikino_time_zone"
 )
 
-// TimeZone はリクエストからタイムゾーンを解決しコンテキストに格納するミドルウェア
-// 認証ミドルウェアより後に配置すること（UserFromContextを使用するため）
+// TimeZoneはリクエストからタイムゾーンを解決しコンテキストに格納するミドルウェア
+// 認証ミドルウェアより後に配置すること (UserFromContextを使用するため)
 func TimeZone(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tz := resolveTimeZone(r)
@@ -22,7 +22,7 @@ func TimeZone(next http.Handler) http.Handler {
 	})
 }
 
-// resolveTimeZone はリクエストからタイムゾーンを解決する
+// resolveTimeZoneはリクエストからタイムゾーンを解決する
 // 優先順位: 1. ログインユーザーの設定 → 2. クッキー → 3. UTC
 func resolveTimeZone(r *http.Request) string {
 	if user := UserFromContext(r.Context()); user != nil && user.TimeZone != "" {

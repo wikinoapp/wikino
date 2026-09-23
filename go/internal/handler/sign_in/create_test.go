@@ -20,7 +20,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// mockTurnstileVerifier はテスト用のTurnstile検証モック
+// mockTurnstileVerifierはテスト用のTurnstile検証モック
 type mockTurnstileVerifier struct {
 	valid bool
 	err   error
@@ -102,12 +102,12 @@ func TestCreate_Success(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusFound {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 	}
 
 	location := rr.Header().Get("Location")
 	if location != "/" {
-		t.Errorf("wrong redirect location: got %v want /", location)
+		t.Errorf("リダイレクト先 = %v、期待値 = /", location)
 	}
 
 	cookies := rr.Result().Cookies()
@@ -119,7 +119,7 @@ func TestCreate_Success(t *testing.T) {
 		}
 	}
 	if sessionCookie == nil {
-		t.Error("session cookie not set")
+		t.Error("セッションCookieがセットされていない")
 	}
 
 	if sessionCookie != nil {
@@ -130,10 +130,10 @@ func TestCreate_Success(t *testing.T) {
 			t.Fatalf("セッション取得でエラー: %v", err)
 		}
 		if savedSession == nil {
-			t.Error("session not saved to database")
+			t.Error("データベースにセッションが保存されていない")
 		}
 		if savedSession != nil && savedSession.UserID != userID {
-			t.Errorf("wrong user ID in session: got %v want %v", savedSession.UserID, userID)
+			t.Errorf("セッションのユーザーID = %v、期待値 = %v", savedSession.UserID, userID)
 		}
 	}
 }
@@ -160,12 +160,12 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	if !strings.Contains(body, `action="/sign_in"`) {
-		t.Error("login form not found in response")
+		t.Error("レスポンスにログインフォームが見つからない")
 	}
 }
 
@@ -203,13 +203,13 @@ func TestCreate_WrongPassword(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	cookies := rr.Result().Cookies()
 	for _, c := range cookies {
 		if c.Name == session.CookieName {
-			t.Error("session cookie should not be set for wrong password")
+			t.Error("誤ったパスワードでセッションCookieがセットされている")
 		}
 	}
 }
@@ -236,13 +236,13 @@ func TestCreate_UserNotFound(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	cookies := rr.Result().Cookies()
 	for _, c := range cookies {
 		if c.Name == session.CookieName {
-			t.Error("session cookie should not be set for nonexistent user")
+			t.Error("存在しないユーザーでセッションCookieがセットされている")
 		}
 	}
 }
@@ -269,13 +269,13 @@ func TestCreate_TurnstileFailure(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	cookies := rr.Result().Cookies()
 	for _, c := range cookies {
 		if c.Name == session.CookieName {
-			t.Error("session cookie should not be set for Turnstile failure")
+			t.Error("Turnstileの失敗時にセッションCookieがセットされている")
 		}
 	}
 }
@@ -304,12 +304,12 @@ func TestCreate_WithBackParameter(t *testing.T) {
 			wantRedirectPath: "/",
 		},
 		{
-			name:             "危険なbackパラメータ（絶対URL）は無視される",
+			name:             "危険なbackパラメータ (絶対URL) は無視される",
 			backURL:          "https://evil.com",
 			wantRedirectPath: "/",
 		},
 		{
-			name:             "危険なbackパラメータ（プロトコル相対URL）は無視される",
+			name:             "危険なbackパラメータ (プロトコル相対URL) は無視される",
 			backURL:          "//evil.com",
 			wantRedirectPath: "/",
 		},
@@ -351,12 +351,12 @@ func TestCreate_WithBackParameter(t *testing.T) {
 			handler.Create(rr, req)
 
 			if rr.Code != http.StatusFound {
-				t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusFound)
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
 			}
 
 			location := rr.Header().Get("Location")
 			if location != tt.wantRedirectPath {
-				t.Errorf("wrong redirect location: got %v want %v", location, tt.wantRedirectPath)
+				t.Errorf("リダイレクト先 = %v、期待値 = %v", location, tt.wantRedirectPath)
 			}
 		})
 	}
@@ -386,12 +386,91 @@ func TestCreate_ValidationErrorPreservesBackParameter(t *testing.T) {
 	handler.Create(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
-		t.Errorf("wrong status code: got %v want %v", rr.Code, http.StatusUnprocessableEntity)
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 
 	body := rr.Body.String()
 	wantInBody := `name="back" value="/dashboard"`
 	if !strings.Contains(body, wantInBody) {
-		t.Errorf("backパラメータがフォームに保持されていません\nwant: %s", wantInBody)
+		t.Errorf("backパラメータがフォームに保持されていません\n期待値: %s", wantInBody)
+	}
+}
+
+// TestCreate_TwoFactorRequiredCarriesBackParameterは、二要素認証を挟むときもbackを
+// 引き継ぐことを検証する。引き継がないと、二要素認証を有効にしているユーザーだけが
+// サインイン後に元の宛先を失う。
+func TestCreate_TwoFactorRequiredCarriesBackParameter(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		email        string
+		atname       string
+		backURL      string
+		wantLocation string
+	}{
+		{
+			name:         "有効なbackパラメータを引き継ぐ",
+			email:        "2fa-back-valid@example.com",
+			atname:       "twofabackvalid",
+			backURL:      "/s/example/topics/1/pages/new?title=%E3%83%A1%E3%83%A2",
+			wantLocation: "/sign_in/two_factor/new?back=" + url.QueryEscape("/s/example/topics/1/pages/new?title=%E3%83%A1%E3%83%A2"),
+		},
+		{
+			name:         "backパラメータなし",
+			email:        "2fa-back-none@example.com",
+			atname:       "twofabacknone",
+			backURL:      "",
+			wantLocation: "/sign_in/two_factor/new",
+		},
+		{
+			name:         "危険なbackパラメータは引き継がない",
+			email:        "2fa-back-evil@example.com",
+			atname:       "twofabackevil",
+			backURL:      "//evil.com",
+			wantLocation: "/sign_in/two_factor/new",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, tx := testutil.SetupTx(t)
+
+			password := "testpassword123"
+			passwordDigest, err := auth.HashPassword(password)
+			if err != nil {
+				t.Fatalf("パスワードのハッシュ化に失敗: %v", err)
+			}
+
+			testutil.NewUserBuilder(t, tx).
+				WithEmail(tt.email).
+				WithAtname(tt.atname).
+				BuildWithPasswordAndTwoFactorAuth(passwordDigest, "JBSWY3DPEHPK3PXP", true)
+
+			handler := setupHandler(t, tx, true)
+
+			form := url.Values{}
+			form.Set("email", tt.email)
+			form.Set("password", password)
+			form.Set("csrf_token", "test-csrf-token")
+			form.Set("cf-turnstile-response", "test-token")
+			form.Set("back", tt.backURL)
+
+			req := httptest.NewRequest(http.MethodPost, "/sign_in", strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Create(rr, req)
+
+			if rr.Code != http.StatusFound {
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusFound)
+			}
+			if location := rr.Header().Get("Location"); location != tt.wantLocation {
+				t.Errorf("リダイレクト先 = %v、期待値 = %v", location, tt.wantLocation)
+			}
+		})
 	}
 }
