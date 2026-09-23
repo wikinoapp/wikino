@@ -16,7 +16,7 @@ import (
 const createSuggestionPage = `-- name: CreateSuggestionPage :one
 INSERT INTO suggestion_pages (space_id, suggestion_id, page_id, page_revision_id, title, body, linked_page_ids, featured_image_attachment_id, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id
+RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, linked_page_ids, featured_image_attachment_id
 `
 
 type CreateSuggestionPageParams struct {
@@ -57,7 +57,6 @@ func (q *Queries) CreateSuggestionPage(ctx context.Context, arg CreateSuggestion
 		&i.UpdatedAt,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.FeaturedImageAttachmentID,
 	)
@@ -101,7 +100,7 @@ func (q *Queries) ExistsOpenSuggestionByPageID(ctx context.Context, arg ExistsOp
 }
 
 const findSuggestionPageByID = `-- name: FindSuggestionPageByID :one
-SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id FROM suggestion_pages WHERE id = $1 AND space_id = $2
+SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, linked_page_ids, featured_image_attachment_id FROM suggestion_pages WHERE id = $1 AND space_id = $2
 `
 
 type FindSuggestionPageByIDParams struct {
@@ -123,7 +122,6 @@ func (q *Queries) FindSuggestionPageByID(ctx context.Context, arg FindSuggestion
 		&i.UpdatedAt,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.FeaturedImageAttachmentID,
 	)
@@ -131,7 +129,7 @@ func (q *Queries) FindSuggestionPageByID(ctx context.Context, arg FindSuggestion
 }
 
 const listSuggestionPagesBySuggestionID = `-- name: ListSuggestionPagesBySuggestionID :many
-SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id FROM suggestion_pages
+SELECT id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, linked_page_ids, featured_image_attachment_id FROM suggestion_pages
 WHERE suggestion_id = $1 AND space_id = $2
 ORDER BY created_at ASC
 `
@@ -161,7 +159,6 @@ func (q *Queries) ListSuggestionPagesBySuggestionID(ctx context.Context, arg Lis
 			&i.UpdatedAt,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.FeaturedImageAttachmentID,
 		); err != nil {
@@ -182,7 +179,7 @@ const updateSuggestionPageContent = `-- name: UpdateSuggestionPageContent :one
 UPDATE suggestion_pages
 SET title = $2, body = $3, linked_page_ids = $4, featured_image_attachment_id = $5, updated_at = $6
 WHERE id = $1 AND space_id = $7
-RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, body_html, linked_page_ids, featured_image_attachment_id
+RETURNING id, space_id, suggestion_id, page_id, page_revision_id, created_at, updated_at, title, body, linked_page_ids, featured_image_attachment_id
 `
 
 type UpdateSuggestionPageContentParams struct {
@@ -217,7 +214,6 @@ func (q *Queries) UpdateSuggestionPageContent(ctx context.Context, arg UpdateSug
 		&i.UpdatedAt,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.FeaturedImageAttachmentID,
 	)

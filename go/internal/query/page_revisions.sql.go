@@ -13,7 +13,7 @@ import (
 const createPageRevision = `-- name: CreatePageRevision :one
 INSERT INTO page_revisions (space_id, space_member_id, page_id, title, body, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, space_id, space_member_id, page_id, body, body_html, created_at, updated_at, title
+RETURNING id, space_id, space_member_id, page_id, body, created_at, updated_at, title
 `
 
 type CreatePageRevisionParams struct {
@@ -44,7 +44,6 @@ func (q *Queries) CreatePageRevision(ctx context.Context, arg CreatePageRevision
 		&i.SpaceMemberID,
 		&i.PageID,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Title,
@@ -53,7 +52,7 @@ func (q *Queries) CreatePageRevision(ctx context.Context, arg CreatePageRevision
 }
 
 const findLatestPageRevisionByPage = `-- name: FindLatestPageRevisionByPage :one
-SELECT id, space_id, space_member_id, page_id, body, body_html, created_at, updated_at, title FROM page_revisions WHERE page_id = $1 AND space_id = $2 ORDER BY created_at DESC LIMIT 1
+SELECT id, space_id, space_member_id, page_id, body, created_at, updated_at, title FROM page_revisions WHERE page_id = $1 AND space_id = $2 ORDER BY created_at DESC LIMIT 1
 `
 
 type FindLatestPageRevisionByPageParams struct {
@@ -71,7 +70,6 @@ func (q *Queries) FindLatestPageRevisionByPage(ctx context.Context, arg FindLate
 		&i.SpaceMemberID,
 		&i.PageID,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Title,
@@ -80,7 +78,7 @@ func (q *Queries) FindLatestPageRevisionByPage(ctx context.Context, arg FindLate
 }
 
 const findPageRevisionByID = `-- name: FindPageRevisionByID :one
-SELECT id, space_id, space_member_id, page_id, body, body_html, created_at, updated_at, title FROM page_revisions WHERE id = $1 AND space_id = $2
+SELECT id, space_id, space_member_id, page_id, body, created_at, updated_at, title FROM page_revisions WHERE id = $1 AND space_id = $2
 `
 
 type FindPageRevisionByIDParams struct {
@@ -98,7 +96,6 @@ func (q *Queries) FindPageRevisionByID(ctx context.Context, arg FindPageRevision
 		&i.SpaceMemberID,
 		&i.PageID,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Title,
