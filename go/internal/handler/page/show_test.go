@@ -105,9 +105,6 @@ func TestShow(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Public Page Title").
 		WithBody("public page body").
-		// 本文HTMLは表示時にレンダリングするため、保存済みHTMLは画面に出ない。食い違う値を
-		// 保存して、Handlerが読むのがUseCaseのレンダリング結果であることを固定する。
-		WithBodyHTML("<p>stale saved body</p>").
 		WithLinkedPageIDs([]model.PageID{linkedPageID}).
 		Build()
 	testutil.NewPageBuilder(t, tx).
@@ -238,8 +235,6 @@ func TestShow(t *testing.T) {
 			},
 			wantNotContains: []string{
 				"このページはゴミ箱に入れられています。",
-				// 本文は表示時にレンダリングするため、保存済みHTMLは画面に出ない。
-				"stale saved body",
 				// ゲストは編集できないため、ヘッダーの編集ボタンも各カードの編集リンクも出さない。
 				"/s/page-show-space/pages/1/edit",
 				"/s/page-show-space/pages/5/edit",

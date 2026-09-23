@@ -172,13 +172,12 @@ export async function createTestPage(
 ): Promise<TestPage> {
   const title = overrides.title || null;
   const body = overrides.body || "";
-  const bodyHtml = body ? `<p>${body}</p>` : "";
 
   const result = await queryWithRetry(
-    `INSERT INTO pages (space_id, topic_id, number, title, body, body_html, linked_page_ids, modified_at, published_at, created_at, updated_at)
-     VALUES ($1, $2, (SELECT COALESCE(MAX(number), 0) + 1 FROM pages WHERE space_id = $1), $3, $4, $5, $6, NOW(), NOW(), NOW(), NOW())
+    `INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, created_at, updated_at)
+     VALUES ($1, $2, (SELECT COALESCE(MAX(number), 0) + 1 FROM pages WHERE space_id = $1), $3, $4, $5, NOW(), NOW(), NOW(), NOW())
      RETURNING id, number`,
-    [spaceId, topicId, title, body, bodyHtml, "{}"],
+    [spaceId, topicId, title, body, "{}"],
   );
 
   return { id: result.rows[0].id, number: result.rows[0].number };
