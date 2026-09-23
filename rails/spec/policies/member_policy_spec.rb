@@ -252,12 +252,10 @@ RSpec.describe MemberPolicy do
       [["page:write"], true, false, false],
       [["page_trash:read"], false, true, false],
       [["page_trash:write"], false, true, false],
-      [["page:trash"], false, true, false],
       [["page_trash:delete"], false, false, true],
-      [["page:restore"], false, false, true],
-      [["page:trash", "page_trash:write", "page:restore", "page_trash:delete"], false, true, true],
+      [["page_trash:write", "page_trash:delete"], false, true, true],
       [["space:admin"], true, true, true],
-      [["unknown:write", "page:trash_extra", "page:restore_extra"], false, false, false]
+      [["unknown:write", "page_trash:admin"], false, false, false]
     ].each do |scopes, can_create, can_show, can_restore|
       [:space_scopes, :topic_scopes].each do |source|
         it "#{source}の#{scopes.inspect}でページ作成・ゴミ箱閲覧・復元の権限を分離すること" do
@@ -270,10 +268,10 @@ RSpec.describe MemberPolicy do
       end
     end
 
-    it "スペースとトピックの新旧スコープを合わせて権限を判定すること" do
+    it "スペースとトピックのスコープを合わせて権限を判定すること" do
       policy = MemberPolicy.new(
-        space_scopes: ["page:trash", "page_trash:write"],
-        topic_scopes: ["page:restore", "page_trash:delete"]
+        space_scopes: ["page_trash:write"],
+        topic_scopes: ["page_trash:delete"]
       )
 
       expect(policy.can_create_page?).to be(false)

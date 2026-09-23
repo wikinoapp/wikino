@@ -113,7 +113,6 @@ type DraftPage struct {
 	TopicID                   string      `json:"topic_id"`
 	Title                     interface{} `json:"title"`
 	Body                      string      `json:"body"`
-	BodyHtml                  string      `json:"body_html"`
 	LinkedPageIds             []string    `json:"linked_page_ids"`
 	ModifiedAt                time.Time   `json:"modified_at"`
 	CreatedAt                 time.Time   `json:"created_at"`
@@ -129,7 +128,6 @@ type DraftPageRevision struct {
 	SpaceMemberID string    `json:"space_member_id"`
 	Title         string    `json:"title"`
 	Body          string    `json:"body"`
-	BodyHtml      string    `json:"body_html"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
@@ -171,7 +169,6 @@ type Page struct {
 	Number                    int32        `json:"number"`
 	Title                     interface{}  `json:"title"`
 	Body                      string       `json:"body"`
-	BodyHtml                  string       `json:"body_html"`
 	LinkedPageIds             []string     `json:"linked_page_ids"`
 	ModifiedAt                time.Time    `json:"modified_at"`
 	PublishedAt               sql.NullTime `json:"published_at"`
@@ -207,7 +204,6 @@ type PageRevision struct {
 	SpaceMemberID string    `json:"space_member_id"`
 	PageID        string    `json:"page_id"`
 	Body          string    `json:"body"`
-	BodyHtml      string    `json:"body_html"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 	Title         string    `json:"title"`
@@ -342,7 +338,6 @@ type SuggestionPage struct {
 	UpdatedAt                 time.Time      `json:"updated_at"`
 	Title                     sql.NullString `json:"title"`
 	Body                      string         `json:"body"`
-	BodyHtml                  string         `json:"body_html"`
 	LinkedPageIds             []string       `json:"linked_page_ids"`
 	FeaturedImageAttachmentID *string        `json:"featured_image_attachment_id"`
 }
@@ -354,7 +349,6 @@ type SuggestionPageRevision struct {
 	EditorSpaceMemberID string         `json:"editor_space_member_id"`
 	Title               sql.NullString `json:"title"`
 	Body                string         `json:"body"`
-	BodyHtml            string         `json:"body_html"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 }

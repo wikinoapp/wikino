@@ -30,7 +30,7 @@ func (q *Queries) CountDraftPageRevisionsByDraftPageID(ctx context.Context, arg 
 const createDraftPageRevision = `-- name: CreateDraftPageRevision :one
 INSERT INTO draft_page_revisions (draft_page_id, space_id, space_member_id, title, body, created_at)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, draft_page_id, space_id, space_member_id, title, body, body_html, created_at
+RETURNING id, draft_page_id, space_id, space_member_id, title, body, created_at
 `
 
 type CreateDraftPageRevisionParams struct {
@@ -60,7 +60,6 @@ func (q *Queries) CreateDraftPageRevision(ctx context.Context, arg CreateDraftPa
 		&i.SpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -82,7 +81,7 @@ func (q *Queries) DeleteDraftPageRevisionsByDraftPageID(ctx context.Context, arg
 }
 
 const findDraftPageRevisionByID = `-- name: FindDraftPageRevisionByID :one
-SELECT id, draft_page_id, space_id, space_member_id, title, body, body_html, created_at FROM draft_page_revisions WHERE id = $1 AND space_id = $2
+SELECT id, draft_page_id, space_id, space_member_id, title, body, created_at FROM draft_page_revisions WHERE id = $1 AND space_id = $2
 `
 
 type FindDraftPageRevisionByIDParams struct {
@@ -101,14 +100,13 @@ func (q *Queries) FindDraftPageRevisionByID(ctx context.Context, arg FindDraftPa
 		&i.SpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const findPreviousDraftPageRevision = `-- name: FindPreviousDraftPageRevision :one
-SELECT id, draft_page_id, space_id, space_member_id, title, body, body_html, created_at FROM draft_page_revisions
+SELECT id, draft_page_id, space_id, space_member_id, title, body, created_at FROM draft_page_revisions
 WHERE draft_page_id = $1 AND space_id = $2
   AND (created_at < $3 OR (created_at = $3 AND id < $4))
 ORDER BY created_at DESC, id DESC
@@ -140,14 +138,13 @@ func (q *Queries) FindPreviousDraftPageRevision(ctx context.Context, arg FindPre
 		&i.SpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listDraftPageRevisionsByDraftPageID = `-- name: ListDraftPageRevisionsByDraftPageID :many
-SELECT id, draft_page_id, space_id, space_member_id, title, body, body_html, created_at FROM draft_page_revisions
+SELECT id, draft_page_id, space_id, space_member_id, title, body, created_at FROM draft_page_revisions
 WHERE draft_page_id = $1 AND space_id = $2
 ORDER BY created_at DESC, id DESC
 LIMIT $3
@@ -179,7 +176,6 @@ func (q *Queries) ListDraftPageRevisionsByDraftPageID(ctx context.Context, arg L
 			&i.SpaceMemberID,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

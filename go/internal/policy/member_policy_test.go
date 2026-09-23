@@ -786,18 +786,13 @@ func TestMemberPolicy_ScopeBoundaries(t *testing.T) {
 	}{
 		{name: "ゴミ箱閲覧", scopes: []model.Scope{model.ScopePageTrashRead}, showTrash: true},
 		{name: "ゴミ箱移動", scopes: []model.Scope{model.ScopePageTrashWrite}, showTrash: true, trashPage: true},
-		{name: "旧ゴミ箱移動", scopes: []model.Scope{model.ScopePageTrash}, showTrash: true, trashPage: true},
 		{name: "ゴミ箱復元", scopes: []model.Scope{model.ScopePageTrashDelete}},
-		{name: "旧ゴミ箱復元", scopes: []model.Scope{model.ScopePageRestore}},
 		{name: "ページ編集", scopes: []model.Scope{model.ScopePageWrite}, updatePage: true},
 		{name: "編集提案編集", scopes: []model.Scope{model.ScopeSuggestionWrite}, editSuggestion: true},
 		{name: "編集提案反映", scopes: []model.Scope{model.ScopeSuggestionApplicationWrite}, applySuggestion: true},
-		{name: "旧編集提案反映", scopes: []model.Scope{model.ScopeSuggestionApply}, applySuggestion: true},
 		{name: "編集提案クローズ", scopes: []model.Scope{model.ScopeSuggestionClosureWrite}, closeSuggestion: true},
-		{name: "旧編集提案クローズ", scopes: []model.Scope{model.ScopeSuggestionClose}, closeSuggestion: true},
-		{name: "新旧混在", scopes: []model.Scope{model.ScopePageTrash, model.ScopePageTrashWrite, model.ScopeSuggestionClose, model.ScopeSuggestionClosureWrite}, showTrash: true, trashPage: true, closeSuggestion: true},
 		{name: "管理者", scopes: []model.Scope{model.ScopeSpaceAdmin}, showTrash: true, trashPage: true, updatePage: true, editSuggestion: true, applySuggestion: true, closeSuggestion: true},
-		{name: "未知のスコープ", scopes: []model.Scope{"page:trash:write", "page:restore_extra", "suggestion:apply_extra", "suggestion:close_extra", "space:admin_extra"}},
+		{name: "未知のスコープ", scopes: []model.Scope{"unknown:write", "page_trash:admin", "suggestion_application:read", "suggestion_closure:delete", "space:admin_extra"}},
 		{name: "スコープなし"},
 	}
 	for _, tt := range tests {

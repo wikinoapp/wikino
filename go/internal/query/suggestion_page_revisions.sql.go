@@ -14,7 +14,7 @@ import (
 const createSuggestionPageRevision = `-- name: CreateSuggestionPageRevision :one
 INSERT INTO suggestion_page_revisions (space_id, suggestion_page_id, editor_space_member_id, title, body, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at
+RETURNING id, space_id, suggestion_page_id, editor_space_member_id, title, body, created_at, updated_at
 `
 
 type CreateSuggestionPageRevisionParams struct {
@@ -46,7 +46,6 @@ func (q *Queries) CreateSuggestionPageRevision(ctx context.Context, arg CreateSu
 		&i.EditorSpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -69,7 +68,7 @@ func (q *Queries) DeleteSuggestionPageRevisionsBySuggestionPageID(ctx context.Co
 }
 
 const findLatestSuggestionPageRevision = `-- name: FindLatestSuggestionPageRevision :one
-SELECT id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at FROM suggestion_page_revisions
+SELECT id, space_id, suggestion_page_id, editor_space_member_id, title, body, created_at, updated_at FROM suggestion_page_revisions
 WHERE suggestion_page_id = $1 AND space_id = $2
 ORDER BY created_at DESC
 LIMIT 1
@@ -91,7 +90,6 @@ func (q *Queries) FindLatestSuggestionPageRevision(ctx context.Context, arg Find
 		&i.EditorSpaceMemberID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -99,7 +97,7 @@ func (q *Queries) FindLatestSuggestionPageRevision(ctx context.Context, arg Find
 }
 
 const listSuggestionPageRevisionsBySuggestionPageID = `-- name: ListSuggestionPageRevisionsBySuggestionPageID :many
-SELECT id, space_id, suggestion_page_id, editor_space_member_id, title, body, body_html, created_at, updated_at FROM suggestion_page_revisions
+SELECT id, space_id, suggestion_page_id, editor_space_member_id, title, body, created_at, updated_at FROM suggestion_page_revisions
 WHERE suggestion_page_id = $1 AND space_id = $2
 ORDER BY created_at ASC
 `
@@ -126,7 +124,6 @@ func (q *Queries) ListSuggestionPageRevisionsBySuggestionPageID(ctx context.Cont
 			&i.EditorSpaceMemberID,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

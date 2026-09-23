@@ -37,7 +37,7 @@ func (q *Queries) ClearSuggestionPageIDsBySuggestionID(ctx context.Context, arg 
 const createDraftPage = `-- name: CreateDraftPage :one
 INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
+RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
 `
 
 type CreateDraftPageParams struct {
@@ -80,7 +80,6 @@ func (q *Queries) CreateDraftPage(ctx context.Context, arg CreateDraftPageParams
 		&i.TopicID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.CreatedAt,
@@ -107,7 +106,7 @@ func (q *Queries) DeleteDraftPage(ctx context.Context, arg DeleteDraftPageParams
 }
 
 const findDraftPageByID = `-- name: FindDraftPageByID :one
-SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE id = $1 AND space_id = $2
+SELECT id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE id = $1 AND space_id = $2
 `
 
 type FindDraftPageByIDParams struct {
@@ -127,7 +126,6 @@ func (q *Queries) FindDraftPageByID(ctx context.Context, arg FindDraftPageByIDPa
 		&i.TopicID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.CreatedAt,
@@ -139,7 +137,7 @@ func (q *Queries) FindDraftPageByID(ctx context.Context, arg FindDraftPageByIDPa
 }
 
 const findDraftPageByPageAndMember = `-- name: FindDraftPageByPageAndMember :one
-SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3
+SELECT id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3
 `
 
 type FindDraftPageByPageAndMemberParams struct {
@@ -160,7 +158,6 @@ func (q *Queries) FindDraftPageByPageAndMember(ctx context.Context, arg FindDraf
 		&i.TopicID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.CreatedAt,
@@ -172,7 +169,7 @@ func (q *Queries) FindDraftPageByPageAndMember(ctx context.Context, arg FindDraf
 }
 
 const findDraftPageBySuggestionPageID = `-- name: FindDraftPageBySuggestionPageID :one
-SELECT id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE suggestion_page_id = $1 AND space_id = $2
+SELECT id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE suggestion_page_id = $1 AND space_id = $2
 `
 
 type FindDraftPageBySuggestionPageIDParams struct {
@@ -192,7 +189,6 @@ func (q *Queries) FindDraftPageBySuggestionPageID(ctx context.Context, arg FindD
 		&i.TopicID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.CreatedAt,
@@ -205,7 +201,7 @@ func (q *Queries) FindDraftPageBySuggestionPageID(ctx context.Context, arg FindD
 
 const listDraftPagesByMemberAndTopic = `-- name: ListDraftPagesByMemberAndTopic :many
 SELECT
-  dp.id, dp.space_id, dp.page_id, dp.space_member_id, dp.topic_id, dp.title, dp.body, dp.body_html, dp.linked_page_ids, dp.modified_at, dp.created_at, dp.updated_at, dp.suggestion_page_id, dp.featured_image_attachment_id,
+  dp.id, dp.space_id, dp.page_id, dp.space_member_id, dp.topic_id, dp.title, dp.body, dp.linked_page_ids, dp.modified_at, dp.created_at, dp.updated_at, dp.suggestion_page_id, dp.featured_image_attachment_id,
   p.title AS page_title,
   p.number AS page_number
 FROM draft_pages dp
@@ -232,7 +228,6 @@ type ListDraftPagesByMemberAndTopicRow struct {
 	TopicID                   string      `json:"topic_id"`
 	Title                     interface{} `json:"title"`
 	Body                      string      `json:"body"`
-	BodyHtml                  string      `json:"body_html"`
 	LinkedPageIds             []string    `json:"linked_page_ids"`
 	ModifiedAt                time.Time   `json:"modified_at"`
 	CreatedAt                 time.Time   `json:"created_at"`
@@ -261,7 +256,6 @@ func (q *Queries) ListDraftPagesByMemberAndTopic(ctx context.Context, arg ListDr
 			&i.TopicID,
 			&i.Title,
 			&i.Body,
-			&i.BodyHtml,
 			pq.Array(&i.LinkedPageIds),
 			&i.ModifiedAt,
 			&i.CreatedAt,
@@ -294,7 +288,7 @@ SET topic_id = $2,
     modified_at = $7,
     updated_at = $8
 WHERE id = $1 AND space_id = $9
-RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
+RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
 `
 
 type UpdateDraftPageParams struct {
@@ -331,7 +325,6 @@ func (q *Queries) UpdateDraftPage(ctx context.Context, arg UpdateDraftPageParams
 		&i.TopicID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.CreatedAt,
@@ -347,7 +340,7 @@ UPDATE draft_pages
 SET suggestion_page_id = $2,
     updated_at = $3
 WHERE id = $1 AND space_id = $4
-RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, body_html, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
+RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
 `
 
 type UpdateDraftPageSuggestionPageIDParams struct {
@@ -374,7 +367,6 @@ func (q *Queries) UpdateDraftPageSuggestionPageID(ctx context.Context, arg Updat
 		&i.TopicID,
 		&i.Title,
 		&i.Body,
-		&i.BodyHtml,
 		pq.Array(&i.LinkedPageIds),
 		&i.ModifiedAt,
 		&i.CreatedAt,
