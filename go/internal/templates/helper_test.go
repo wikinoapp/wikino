@@ -179,6 +179,24 @@ func TestRelativeTime(t *testing.T) {
 			expected: "just now",
 		},
 		{
+			name:     "英語: 1分前",
+			locale:   "en",
+			input:    now.Add(-1 * time.Minute),
+			expected: "1 minute ago",
+		},
+		{
+			name:     "英語: 1時間前",
+			locale:   "en",
+			input:    now.Add(-1 * time.Hour),
+			expected: "1 hour ago",
+		},
+		{
+			name:     "英語: 1日前",
+			locale:   "en",
+			input:    now.Add(-24 * time.Hour),
+			expected: "1 day ago",
+		},
+		{
 			name:     "英語: 5分前",
 			locale:   "en",
 			input:    now.Add(-5 * time.Minute),

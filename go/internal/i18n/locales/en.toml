@@ -1776,14 +1776,17 @@ other = "just now"
 
 [datetime_minutes_ago]
 description = "N分前の相対時間"
+one = "{{.Count}} minute ago"
 other = "{{.Count}} minutes ago"
 
 [datetime_hours_ago]
 description = "N時間前の相対時間"
+one = "{{.Count}} hour ago"
 other = "{{.Count}} hours ago"
 
 [datetime_days_ago]
 description = "N日前の相対時間"
+one = "{{.Count}} day ago"
 other = "{{.Count}} days ago"
 
 [validation_suggestion_page_draft_page_not_found]
