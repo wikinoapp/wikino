@@ -367,7 +367,7 @@ func runServe() {
 		attachmentRepo,
 	)
 	getEditLinkDataUC := usecase.NewGetEditLinkDataUsecase(pageRepo, topicRepo)
-	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)
+	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	getPageBacklinksUC := usecase.NewGetPageBacklinksUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	getBacklinkListUC := usecase.NewGetBacklinkListUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 	getLinkListUC := usecase.NewGetLinkListUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, draftPageRepo)

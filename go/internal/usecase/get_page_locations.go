@@ -13,6 +13,8 @@ type GetPageLocationsUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
 	pageRepo        *repository.PageRepository
+	topicRepo       *repository.TopicRepository
+	topicMemberRepo *repository.TopicMemberRepository
 }
 
 // NewGetPageLocationsUsecaseはGetPageLocationsUsecaseを生成する
@@ -20,11 +22,15 @@ func NewGetPageLocationsUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	pageRepo *repository.PageRepository,
+	topicRepo *repository.TopicRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
 ) *GetPageLocationsUsecase {
 	return &GetPageLocationsUsecase{
 		spaceRepo:       spaceRepo,
 		spaceMemberRepo: spaceMemberRepo,
 		pageRepo:        pageRepo,
+		topicRepo:       topicRepo,
+		topicMemberRepo: topicMemberRepo,
 	}
 }
 
@@ -58,7 +64,13 @@ func (uc *GetPageLocationsUsecase) Execute(ctx context.Context, input GetPageLoc
 		return nil, nil
 	}
 
-	locations, err := uc.pageRepo.SearchPageLocations(ctx, space.ID, input.Query)
+	// 開けないトピックのページタイトルを、キーワードを打つだけで探せないようにする
+	access, err := fetchTopicAccess(ctx, uc.pageAccessRepos(), space.ID, spaceMember)
+	if err != nil {
+		return nil, err
+	}
+
+	locations, err := uc.pageRepo.SearchPageLocations(ctx, space.ID, spaceMember.ID, access.visibility(), input.Query)
 	if err != nil {
 		return nil, fmt.Errorf("ページロケーションの検索に失敗: %w", err)
 	}
@@ -66,4 +78,14 @@ func (uc *GetPageLocationsUsecase) Execute(ctx context.Context, input GetPageLoc
 	return &GetPageLocationsOutput{
 		Locations: locations,
 	}, nil
+}
+
+func (uc *GetPageLocationsUsecase) pageAccessRepos() pageAccessRepos {
+	return pageAccessRepos{
+		spaceRepo:       uc.spaceRepo,
+		spaceMemberRepo: uc.spaceMemberRepo,
+		pageRepo:        uc.pageRepo,
+		topicRepo:       uc.topicRepo,
+		topicMemberRepo: uc.topicMemberRepo,
+	}
 }
