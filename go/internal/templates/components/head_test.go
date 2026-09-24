@@ -58,3 +58,51 @@ func TestHead_OmitsCanonicalURLWhenUnset(t *testing.T) {
 		}
 	}
 }
+
+// twitter:cardは画面ごとに変わる。ページ固有の画像を出す画面だけがXで大きなカードになるよう、
+// PageMetaの値をそのまま出す。
+func TestHead_DeclaresTwitterCard(t *testing.T) {
+	t.Parallel()
+
+	for _, card := range []string{viewmodel.TwitterCardSummary, viewmodel.TwitterCardSummaryLargeImage} {
+		html := renderHead(t, viewmodel.PageMeta{TwitterCard: card})
+
+		want := `<meta name="twitter:card" content="` + card + `">`
+		if !strings.Contains(html, want) {
+			t.Errorf("headに%qが含まれていない", want)
+		}
+	}
+}
+
+// 寸法はog:imageが常に同じ寸法の画像 (カード画像) を指すときだけ宣言する。
+// リサイズ後の寸法が画像ごとに変わるアイキャッチ画像では誤った寸法を宣言しないよう出さない。
+func TestHead_OGImageDimensions(t *testing.T) {
+	t.Parallel()
+
+	t.Run("寸法があれば宣言する", func(t *testing.T) {
+		t.Parallel()
+
+		html := renderHead(t, viewmodel.PageMeta{OGImage: "https://localhost/card.png", OGImageWidth: 1200, OGImageHeight: 630})
+
+		for _, want := range []string{
+			`<meta property="og:image:width" content="1200">`,
+			`<meta property="og:image:height" content="630">`,
+		} {
+			if !strings.Contains(html, want) {
+				t.Errorf("headに%qが含まれていない", want)
+			}
+		}
+	})
+
+	t.Run("寸法が無ければ宣言しない", func(t *testing.T) {
+		t.Parallel()
+
+		html := renderHead(t, viewmodel.PageMeta{OGImage: "https://localhost/cover.jpg"})
+
+		for _, notWant := range []string{`property="og:image:width"`, `property="og:image:height"`} {
+			if strings.Contains(html, notWant) {
+				t.Errorf("headに%qが含まれている", notWant)
+			}
+		}
+	})
+}

@@ -274,6 +274,9 @@ func TestEdit(t *testing.T) {
 	if strings.Contains(body, "現在下書きを表示しています") {
 		t.Error("下書きが無いのに下書きのアラートが表示されている")
 	}
+	if strings.Contains(body, "data-draft-delete-form") {
+		t.Error("下書きが無いのに下書きの削除フォームが表示されている")
+	}
 
 	// メンバーに下書きが1件もないとき、下書き一覧カラムに空状態テキストが表示されること
 	if !strings.Contains(body, "下書きはありません") {
@@ -460,6 +463,21 @@ func TestEdit_WithDraftPage(t *testing.T) {
 	// 下書きアラートが表示されていることを確認
 	if !strings.Contains(body, "現在下書きを表示しています") {
 		t.Error("レスポンスに下書きのアラートメッセージが見つからない")
+	}
+
+	// 下書きアラート内に、削除後にページ表示画面へ戻る削除フォームがあることを確認
+	if !strings.Contains(body, "下書きを削除") {
+		t.Error("下書きのアラートに削除ボタンが見つからない")
+	}
+	// 否定側のケースと削除フォームのスクリプトがこの属性で削除フォームを見つけるため、存在も確認する
+	if !strings.Contains(body, "data-draft-delete-form") {
+		t.Error("下書きの削除フォームにdata-draft-delete-form属性が無い")
+	}
+	if !strings.Contains(body, `action="/s/draft-space/pages/1/draft_page?redirect_to=page"`) {
+		t.Error("削除フォームの送信先がredirect_to=page付きの下書きのパスになっていない")
+	}
+	if !strings.Contains(body, `<input type="hidden" name="_method" value="DELETE">`) {
+		t.Error("削除フォームに_method=DELETEが無い")
 	}
 }
 
@@ -1879,6 +1897,9 @@ func TestEdit_SuggestionMode(t *testing.T) {
 	// 通常の下書きアラートが表示されていないことを確認 (編集提案メッセージが代わりに表示される)
 	if strings.Contains(body, "現在下書きを表示しています") {
 		t.Error("編集提案モードで通常の下書きアラートが表示されている")
+	}
+	if strings.Contains(body, "data-draft-delete-form") {
+		t.Error("編集提案モードで下書きの削除フォームが表示されている")
 	}
 }
 

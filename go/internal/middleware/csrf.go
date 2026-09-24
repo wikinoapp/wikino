@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
 // CSRFCookieNameはCSRFトークンを保存するクッキー名
@@ -43,6 +44,12 @@ func (c *CSRF) Middleware(next http.Handler) http.Handler {
 
 		// GET/HEAD/OPTIONSリクエストはCSRFトークンを生成して設定
 		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+			// トークンを発行しないパスでは、コンテキストにもトークンを載せずに次へ渡す
+			if isCSRFTokenlessPath(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			token, err := c.getOrCreateCSRFToken(w, r)
 			if err != nil {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -84,6 +91,18 @@ func (c *CSRF) Middleware(next http.Handler) http.Handler {
 		ctx = SetCSRFTokenToContext(ctx, cookieToken.Value)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// isCSRFTokenlessPathはGET/HEAD/OPTIONSでCSRFトークンを発行しないパスかを判定する。
+// SNSのクローラーが取得するog:image配信の画像など、フォームを持たずCDNにキャッシュさせたい
+// レスポンスを対象にする。Cookieを持たないリクエストにトークンを発行すると `Set-Cookie` が付き、
+// Cloudflareは既定では `Set-Cookie` 付きのレスポンスをキャッシュしない。キャッシュする設定に
+// した場合も、他人向けのCookieがキャッシュから配られることになる。
+// POSTなどのCSRF検証はこの判定に関わらず行う。
+// リバースプロキシが有効な環境では、Goへ届くメソッドは `goHandledRegexPatterns` で決まる
+// (og:image配信はGET・HEADのみで、OPTIONSはRailsへ転送される)。
+func isCSRFTokenlessPath(path string) bool {
+	return session.IsOGImagePath(path)
 }
 
 // getOrCreateCSRFTokenは既存のCSRFトークンを取得するか、新しく生成する

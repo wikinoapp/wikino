@@ -1,6 +1,10 @@
 package components
 
-import "github.com/wikinoapp/wikino/go/internal/viewmodel"
+import (
+	"strconv"
+
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
 
 // HeadはHTMLのheadセクションの共通メタタグを出力します
 templ Head(meta viewmodel.PageMeta) {
@@ -17,6 +21,11 @@ templ Head(meta viewmodel.PageMeta) {
 
 	<meta property="og:description" content={ meta.Description }/>
 	<meta property="og:image" content={ meta.OGImage }/>
+	// 寸法が決まっている画像だけが宣言する。SNSは寸法が分かると画像を取得する前にプレビューの枠を組める
+	if meta.OGImageWidth > 0 && meta.OGImageHeight > 0 {
+		<meta property="og:image:width" content={ strconv.Itoa(meta.OGImageWidth) }/>
+		<meta property="og:image:height" content={ strconv.Itoa(meta.OGImageHeight) }/>
+	}
 	<meta property="og:locale" content={ meta.OGLocale }/>
 	<meta property="og:site_name" content="Wikino"/>
 	<meta property="og:title" content={ meta.Title }/>
@@ -28,7 +37,7 @@ templ Head(meta viewmodel.PageMeta) {
 		<meta property="og:url" content={ meta.OGURL }/>
 	}
 
-	<meta name="twitter:card" content="summary"/>
+	<meta name="twitter:card" content={ meta.TwitterCard }/>
 	<meta name="twitter:site" content="@wikino_app"/>
 	<meta name="twitter:title" content={ meta.Title }/>
 	<meta name="twitter:description" content={ meta.Description }/>

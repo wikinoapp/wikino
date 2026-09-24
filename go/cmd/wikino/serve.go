@@ -37,6 +37,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_link_list"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_move"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_og_image"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_preview"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_trash"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
@@ -61,6 +62,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/image"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/ogcard"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -266,6 +268,16 @@ func runServe() {
 
 	getAttachmentOgImageUC := usecase.NewGetAttachmentOgImageUsecase(attachmentRepo)
 	attachmentOgImageHandler := attachment_og_image.NewHandler(ogImageBuilder, getAttachmentOgImageUC)
+
+	// カード画像のフォントは起動時に1回だけ解析する。埋め込みのフォントが壊れているのは
+	// ビルドの不備で、起動後にリクエストごとに500を返すより起動時に止めたほうが気付きやすい。
+	ogCardRenderer, err := ogcard.NewRenderer()
+	if err != nil {
+		slog.Error("カード画像のRendererの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	getPageOgImageUC := usecase.NewGetPageOgImageUsecase(spaceRepo, pageRepo, topicRepo)
+	pageOgImageHandler := page_og_image.NewHandler(ogCardRenderer, getPageOgImageUC)
 	signInHandler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
@@ -656,8 +668,12 @@ func runServe() {
 	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
 
-	// og:image配信エンドポイント (認証不要、公開トピックのog:imageをimgproxy経由で配信する)
+	// og:image配信エンドポイント (認証不要、公開トピックのog:imageをimgproxy経由で配信する・
+	// カバー画像の無い公開ページのカード画像を描画する)
 	r.Get("/attachments/{attachment_id}/og_image", attachmentOgImageHandler.Show)
+	r.Head("/attachments/{attachment_id}/og_image", attachmentOgImageHandler.Show)
+	r.Get("/s/{space_identifier}/pages/{page_number}/og_image/{version}.png", pageOgImageHandler.Show)
+	r.Head("/s/{space_identifier}/pages/{page_number}/og_image/{version}.png", pageOgImageHandler.Show)
 
 	// トップページ (ログイン状態に応じてハンドラー内でリダイレクト)
 	r.Group(func(r chi.Router) {
