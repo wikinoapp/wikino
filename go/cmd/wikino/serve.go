@@ -658,6 +658,7 @@ func runServe() {
 
 	// og:image配信エンドポイント (認証不要、公開トピックのog:imageをimgproxy経由で配信する)
 	r.Get("/attachments/{attachment_id}/og_image", attachmentOgImageHandler.Show)
+	r.Head("/attachments/{attachment_id}/og_image", attachmentOgImageHandler.Show)
 
 	// トップページ (ログイン状態に応じてハンドラー内でリダイレクト)
 	r.Group(func(r chi.Router) {
