@@ -25,7 +25,9 @@ func setupHandler(t *testing.T, queries *query.Queries) *page_location.Handler {
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
-	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo)
+	topicRepo := repository.NewTopicRepository(queries)
+	topicMemberRepo := repository.NewTopicMemberRepository(queries)
+	getPageLocationsUC := usecase.NewGetPageLocationsUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
 
 	return page_location.NewHandler(
 		getPageLocationsUC,
@@ -256,7 +258,7 @@ func TestIndex_EmptyQuery(t *testing.T) {
 	}
 }
 
-func TestIndex_ExcludesUnpublishedPages(t *testing.T) {
+func TestIndex_ExcludesUnlinkedUnpublishedPages(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -284,7 +286,7 @@ func TestIndex_ExcludesUnpublishedPages(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Published Page").
 		Build()
-	// 非公開ページ
+	// どこからもリンクされていない未公開ページ
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).

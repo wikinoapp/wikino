@@ -10,8 +10,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
 	"github.com/wikinoapp/wikino/go/internal/image"
+	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -244,6 +246,54 @@ func TestShow(t *testing.T) {
 		}
 		assertNoStoreCacheControl(t, rr)
 	})
+}
+
+func TestShow_HeadWithoutCookie(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	attachmentRepo := repository.NewAttachmentRepository(testutil.QueriesWithTx(tx))
+	attachmentID := newReferencedAttachment(t, tx, referencedAttachmentParams{
+		prefix:      "ogimg-head",
+		visibility:  model.TopicVisibilityPublic,
+		filename:    "og.png",
+		contentType: "image/png",
+	})
+	imageHandler := newOgImageHandler(t, attachmentRepo, true)
+
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer railsServer.Close()
+
+	cfg := &config.Config{Domain: "example.com"}
+	reverseProxy, err := middleware.NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddleware()のエラー = %v", err)
+	}
+
+	router := chi.NewRouter()
+	router.Use(reverseProxy.Middleware)
+	router.Use(middleware.NewCSRF(cfg).Middleware)
+	router.Head("/attachments/{attachment_id}/og_image", imageHandler.Show)
+
+	req := httptest.NewRequest(http.MethodHead, "/attachments/"+string(attachmentID)+"/og_image", nil)
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusFound {
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusFound)
+	}
+	if got := rr.Header().Get("Location"); !strings.HasPrefix(got, testImgproxyURL+"/") {
+		t.Errorf("Location = %q、期待する接頭辞 = %q", got, testImgproxyURL+"/")
+	}
+	if got := rr.Header().Values("Set-Cookie"); len(got) != 0 {
+		t.Errorf("Set-Cookie = %v、期待値 = なし", got)
+	}
+	if got := rr.Header().Get("X-Rails-Handled"); got != "" {
+		t.Errorf("X-Rails-Handled = %q、期待値 = 空", got)
+	}
 }
 
 // assertNoStoreCacheControlは404 / 500レスポンスでCache-Control: private, no-storeが

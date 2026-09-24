@@ -219,6 +219,92 @@ func TestDelete_Success(t *testing.T) {
 	}
 }
 
+func TestDelete_RedirectTo(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		identifier string
+		query      string
+		wantLoc    string
+	}{
+		{
+			name:       "redirect_to=pageならページ表示画面へ戻る",
+			identifier: "delete-redirect-page-space",
+			query:      "?redirect_to=page",
+			wantLoc:    "/s/delete-redirect-page-space/pages/1",
+		},
+		{
+			name:       "未知のredirect_toは/draftsへ戻る",
+			identifier: "delete-redirect-unknown-space",
+			query:      "?redirect_to=https://example.com",
+			wantLoc:    "/drafts",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// 削除UseCase内でトランザクションを開始するため、共有DBを直接使う
+			db := testutil.GetTestDB()
+
+			userID := testutil.NewUserBuilderDB(t, db).
+				WithEmail(tt.identifier + "@example.com").
+				WithAtname(strings.ReplaceAll(tt.identifier, "-", "")).
+				Build()
+			spaceID := testutil.NewSpaceBuilderDB(t, db).
+				WithIdentifier(tt.identifier).
+				Build()
+			spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+				WithSpaceID(spaceID).
+				WithUserID(userID).
+				Build()
+			topicID := testutil.NewTopicBuilderDB(t, db).
+				WithSpaceID(spaceID).
+				WithName("General").
+				Build()
+			testutil.NewTopicMemberBuilderDB(t, db).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithSpaceMemberID(spaceMemberID).
+				Build()
+			pageID := testutil.NewPageBuilderDB(t, db).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID).
+				WithNumber(1).
+				WithTitle("Test Page").
+				Build()
+			testutil.NewDraftPageBuilderDB(t, db).
+				WithSpaceID(spaceID).
+				WithPageID(pageID).
+				WithSpaceMemberID(spaceMemberID).
+				WithTopicID(topicID).
+				WithBody("draft body").
+				Build()
+
+			handler := setupHandler(t, query.New(db))
+
+			req := newDeleteRequestWithChiParams(t, "/s/"+tt.identifier+"/pages/1/draft_page"+tt.query, map[string]string{
+				"space_identifier": tt.identifier,
+				"page_number":      "1",
+			})
+			ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			handler.Delete(rr, req)
+
+			if rr.Code != http.StatusSeeOther {
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
+			}
+			if loc := rr.Header().Get("Location"); loc != tt.wantLoc {
+				t.Errorf("リダイレクト先 = %q、期待値 = %q", loc, tt.wantLoc)
+			}
+		})
+	}
+}
+
 func TestDelete_PermissionDenied(t *testing.T) {
 	t.Parallel()
 

@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/ogcard"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
@@ -105,9 +106,6 @@ func TestShow(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Public Page Title").
 		WithBody("public page body").
-		// 本文HTMLは表示時にレンダリングするため、保存済みHTMLは画面に出ない。食い違う値を
-		// 保存して、Handlerが読むのがUseCaseのレンダリング結果であることを固定する。
-		WithBodyHTML("<p>stale saved body</p>").
 		WithLinkedPageIDs([]model.PageID{linkedPageID}).
 		Build()
 	testutil.NewPageBuilder(t, tx).
@@ -182,8 +180,31 @@ func TestShow(t *testing.T) {
 		WithFeaturedImageAttachmentID(gifAttachmentID).
 		WithLinkedPageIDs([]model.PageID{}).
 		Build()
+	// ゲストに見せられないページのアイキャッチ画像。メンバーには本文が見えるが、og:imageを
+	// 取得するクローラー (ゲスト) には配信されないため、タグの対象外になる。
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(privateTopicID).
+		WithNumber(9).
+		WithTitle("Private Cover Image Page Title").
+		WithFeaturedImageAttachmentID(coverAttachmentID).
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(10).
+		WithTitle("Trashed Cover Image Page Title").
+		WithFeaturedImageAttachmentID(coverAttachmentID).
+		WithLinkedPageIDs([]model.PageID{}).
+		WithTrashed().
+		Build()
 
 	h := setupHandler(t, queries)
+
+	// カード画像のURLに含むバージョン。ページのスペース名・トピック名・タイトルから決まる
+	publicPageCardVersion := ogcard.Card{SpaceName: "Page Show Space", TopicName: "Public Topic", PageTitle: "Public Page Title"}.Version()
+	gifCoverPageCardVersion := ogcard.Card{SpaceName: "Page Show Space", TopicName: "Public Topic", PageTitle: "GIF Cover Image Page Title"}.Version()
 
 	tests := []struct {
 		name string
@@ -238,8 +259,6 @@ func TestShow(t *testing.T) {
 			},
 			wantNotContains: []string{
 				"このページはゴミ箱に入れられています。",
-				// 本文は表示時にレンダリングするため、保存済みHTMLは画面に出ない。
-				"stale saved body",
 				// ゲストは編集できないため、ヘッダーの編集ボタンも各カードの編集リンクも出さない。
 				"/s/page-show-space/pages/1/edit",
 				"/s/page-show-space/pages/5/edit",
@@ -311,29 +330,87 @@ func TestShow(t *testing.T) {
 			wantContains: []string{
 				fmt.Sprintf(`<meta property="og:image" content="https://localhost/attachments/%s/og_image">`, coverAttachmentID),
 				fmt.Sprintf(`<meta name="twitter:image" content="https://localhost/attachments/%s/og_image">`, coverAttachmentID),
+				// ページ固有の画像はXで大きなカードとして出す。
+				`<meta name="twitter:card" content="summary_large_image">`,
+			},
+			// アイキャッチ画像はリサイズ後の寸法が画像ごとに変わるため、寸法を宣言しない。
+			wantNotContains: []string{"/static/images/og-image.png", "og:image:width", "og:image:height"},
+		},
+		{
+			// og:imageを取得するのはHTMLの閲覧者ではなくクローラー (ゲスト) で、エンドポイントは
+			// 非公開トピックのページの画像に404を返す。メンバーが開いたHTMLでも配信されない画像の
+			// URLは出さない。
+			name:       "非公開トピックのページはアイキャッチ画像を持っていても既定のOGP画像を出す",
+			pageNumber: "9",
+			userID:     &editorUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				"Private Cover Image Page Title",
+				`<meta property="og:image" content="https://localhost/static/images/og-image.png">`,
+				`<meta name="twitter:card" content="summary">`,
+			},
+			wantNotContains: []string{"/og_image", "summary_large_image"},
+		},
+		{
+			name:       "ゴミ箱のページはアイキャッチ画像を持っていても既定のOGP画像を出す",
+			pageNumber: "10",
+			userID:     &trashUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				"Trashed Cover Image Page Title",
+				`<meta property="og:image" content="https://localhost/static/images/og-image.png">`,
+				`<meta name="twitter:card" content="summary">`,
+			},
+			wantNotContains: []string{"/og_image", "summary_large_image"},
+		},
+		{
+			// og:imageエンドポイントは静止画のjpgを配信するため、アニメーション画像を指すと画像の
+			// 持ち味を失ったプレビューを宣伝することになる。代わりにページのカード画像を出す。
+			name:       "GIFのアイキャッチ画像はカード画像にフォールバックする",
+			pageNumber: "8",
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf(`<meta property="og:image" content="https://localhost/s/page-show-space/pages/8/og_image/%s.png">`, gifCoverPageCardVersion),
+				`<meta name="twitter:card" content="summary_large_image">`,
+			},
+			wantNotContains: []string{fmt.Sprintf("/attachments/%s/og_image", gifAttachmentID), "/static/images/og-image.png"},
+		},
+		{
+			// カード画像は常に同じ寸法のため、SNSが画像を取得する前にプレビューの枠を組めるよう
+			// 寸法を宣言する。
+			name:       "アイキャッチ画像を持たない公開ページはカード画像とその寸法を出す",
+			pageNumber: "1",
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf(`<meta property="og:image" content="https://localhost/s/page-show-space/pages/1/og_image/%s.png">`, publicPageCardVersion),
+				fmt.Sprintf(`<meta name="twitter:image" content="https://localhost/s/page-show-space/pages/1/og_image/%s.png">`, publicPageCardVersion),
+				`<meta property="og:image:width" content="1200">`,
+				`<meta property="og:image:height" content="630">`,
+				`<meta name="twitter:card" content="summary_large_image">`,
 			},
 			wantNotContains: []string{"/static/images/og-image.png"},
 		},
 		{
-			// og:imageエンドポイントは静止画のjpgを配信するため、アニメーション画像を指すと画像の
-			// 持ち味を失ったプレビューを宣伝することになる。Rails版も同じく対象外にしている。
-			name:       "GIFのアイキャッチ画像は既定のOGP画像にフォールバックする",
-			pageNumber: "8",
-			wantStatus: http.StatusOK,
+			// URLのスペース識別子はリクエストではなく保存済みの識別子から組み立て、カード画像の
+			// エンドポイントの正規URLと一致させる (一致しないとクローラーが毎回302を経由する)。
+			name:            "大文字小文字の違うスペース識別子で開いてもカード画像は正規URLを指す",
+			spaceIdentifier: "PAGE-SHOW-SPACE",
+			pageNumber:      "1",
+			wantStatus:      http.StatusOK,
 			wantContains: []string{
-				`<meta property="og:image" content="https://localhost/static/images/og-image.png">`,
+				fmt.Sprintf(`<meta property="og:image" content="https://localhost/s/page-show-space/pages/1/og_image/%s.png">`, publicPageCardVersion),
 			},
-			wantNotContains: []string{fmt.Sprintf("/attachments/%s/og_image", gifAttachmentID)},
 		},
 		{
-			// アイキャッチ画像を持たないページはサイト共通の既定OGP画像を保つ。
-			name:       "アイキャッチ画像を持たないページは既定のOGP画像を出す",
-			pageNumber: "1",
+			// タイトルの無いページはカードに描く見出しが無く、カード画像のエンドポイントも404を返す。
+			name:       "タイトルの無い公開ページは既定のOGP画像を出す",
+			pageNumber: "4",
 			wantStatus: http.StatusOK,
 			wantContains: []string{
 				`<meta property="og:image" content="https://localhost/static/images/og-image.png">`,
+				`<meta name="twitter:card" content="summary">`,
 			},
-			wantNotContains: []string{"/og_image"},
+			wantNotContains: []string{"/og_image", "summary_large_image", "og:image:width"},
 		},
 		{
 			name:       "ページを編集できるメンバーには編集ボタンとカードの編集リンクが出る",

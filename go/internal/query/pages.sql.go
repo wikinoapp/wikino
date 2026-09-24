@@ -1110,20 +1110,48 @@ func (q *Queries) MovePageToTopic(ctx context.Context, arg MovePageToTopicParams
 const searchPageLocations = `-- name: SearchPageLocations :many
 SELECT p.title, t.name AS topic_name
 FROM pages p
-INNER JOIN topics t ON p.topic_id = t.id AND t.discarded_at IS NULL
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
 WHERE p.space_id = $1
   AND p.discarded_at IS NULL
   AND p.trashed_at IS NULL
-  AND p.published_at IS NOT NULL
   AND p.title IS NOT NULL
   AND p.title ILIKE ALL($2::text[])
+  AND t.discarded_at IS NULL
+  AND ($3::boolean IS TRUE OR t.id = ANY($4::uuid[]))
+  AND (
+    p.published_at IS NOT NULL
+    OR EXISTS (
+      SELECT 1 FROM pages src
+      INNER JOIN topics src_t ON src.topic_id = src_t.id AND src_t.space_id = $1
+      WHERE src.space_id = $1
+        AND src.published_at IS NOT NULL
+        AND src.discarded_at IS NULL
+        AND src.trashed_at IS NULL
+        AND src_t.discarded_at IS NULL
+        AND ($3::boolean IS TRUE OR src_t.id = ANY($4::uuid[]))
+        AND src.linked_page_ids @> ARRAY[p.id::varchar]
+    )
+    OR EXISTS (
+      SELECT 1 FROM draft_pages dp
+      INNER JOIN pages dp_p ON dp.page_id = dp_p.id
+        AND dp_p.space_id = $1
+        AND dp_p.discarded_at IS NULL
+        AND dp_p.trashed_at IS NULL
+      WHERE dp.space_id = $1
+        AND dp.space_member_id = $5
+        AND dp.linked_page_ids @> ARRAY[p.id::varchar]
+    )
+  )
 ORDER BY p.modified_at DESC
 LIMIT 10
 `
 
 type SearchPageLocationsParams struct {
-	SpaceID string   `json:"space_id"`
-	Column2 []string `json:"column_2"`
+	SpaceID          string   `json:"space_id"`
+	TitlePatterns    []string `json:"title_patterns"`
+	AllTopicsVisible bool     `json:"all_topics_visible"`
+	VisibleTopicIds  []string `json:"visible_topic_ids"`
+	SpaceMemberID    string   `json:"space_member_id"`
 }
 
 type SearchPageLocationsRow struct {
@@ -1131,9 +1159,20 @@ type SearchPageLocationsRow struct {
 	TopicName string      `json:"topic_name"`
 }
 
-// ページロケーションを検索する (Wikiリンク補完用。公開済み・未廃棄・未ゴミ箱のページのみ)
+// ページロケーションを検索する (Wikiリンク補完用。未廃棄・未ゴミ箱のページのみ)。
+// ページは閲覧者が開けるトピック (visible_topic_ids) に絞る。この集合は呼び出し元がページ画面と
+// 同じCanShowTopicの規則で解決する。LIMITの前に絞るため、SQLで絞り込む。
+// 未公開ページは、開けるトピックの公開ページか呼び出したメンバー自身の下書きからリンクされているものだけを含める。
+// 入力途中のタイトルで自動作成されたページや、リンクを消したあとに残ったページを候補に出さないためである。
+// キー入力のたびに呼ばれるため、リンク元の判定はGINインデックスが効く @> で書く。
 func (q *Queries) SearchPageLocations(ctx context.Context, arg SearchPageLocationsParams) ([]SearchPageLocationsRow, error) {
-	rows, err := q.db.QueryContext(ctx, searchPageLocations, arg.SpaceID, pq.Array(arg.Column2))
+	rows, err := q.db.QueryContext(ctx, searchPageLocations,
+		arg.SpaceID,
+		pq.Array(arg.TitlePatterns),
+		arg.AllTopicsVisible,
+		pq.Array(arg.VisibleTopicIds),
+		arg.SpaceMemberID,
+	)
 	if err != nil {
 		return nil, err
 	}

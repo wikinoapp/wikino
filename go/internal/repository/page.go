@@ -590,8 +590,10 @@ func escapeLikePattern(s string) string {
 	return s
 }
 
-// SearchPageLocationsはスペース内のページをタイトルで検索する (Wikiリンク補完用)
-func (r *PageRepository) SearchPageLocations(ctx context.Context, spaceID model.SpaceID, q string) ([]PageLocation, error) {
+// SearchPageLocationsはスペース内のページをタイトルで検索する (Wikiリンク補完用)。
+// 閲覧者が開けるトピックのページに絞る (TopicVisibilityを参照)。
+// 未公開ページは、開けるトピックの公開ページかspaceMemberIDのメンバー自身の下書きからリンクされているものだけを含める。
+func (r *PageRepository) SearchPageLocations(ctx context.Context, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, visibility TopicVisibility, q string) ([]PageLocation, error) {
 	// 検索キーワードをスペースで分割し、各ワードをILIKEパターンに変換
 	words := strings.Fields(q)
 	patterns := make([]string, len(words))
@@ -600,8 +602,11 @@ func (r *PageRepository) SearchPageLocations(ctx context.Context, spaceID model.
 	}
 
 	rows, err := r.q.SearchPageLocations(ctx, query.SearchPageLocationsParams{
-		SpaceID: string(spaceID),
-		Column2: patterns,
+		SpaceID:          string(spaceID),
+		TitlePatterns:    patterns,
+		AllTopicsVisible: visibility.AllVisible,
+		VisibleTopicIds:  model.TopicIDsToStrings(visibility.TopicIDs),
+		SpaceMemberID:    string(spaceMemberID),
 	})
 	if err != nil {
 		return nil, err

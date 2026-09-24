@@ -52,16 +52,46 @@ INNER JOIN (
 WHERE pages.space_id = @space_id;
 
 -- name: SearchPageLocations :many
--- ページロケーションを検索する (Wikiリンク補完用。公開済み・未廃棄・未ゴミ箱のページのみ)
+-- ページロケーションを検索する (Wikiリンク補完用。未廃棄・未ゴミ箱のページのみ)。
+-- ページは閲覧者が開けるトピック (visible_topic_ids) に絞る。この集合は呼び出し元がページ画面と
+-- 同じCanShowTopicの規則で解決する。LIMITの前に絞るため、SQLで絞り込む。
+-- 未公開ページは、開けるトピックの公開ページか呼び出したメンバー自身の下書きからリンクされているものだけを含める。
+-- 入力途中のタイトルで自動作成されたページや、リンクを消したあとに残ったページを候補に出さないためである。
+-- キー入力のたびに呼ばれるため、リンク元の判定はGINインデックスが効く @> で書く。
 SELECT p.title, t.name AS topic_name
 FROM pages p
-INNER JOIN topics t ON p.topic_id = t.id AND t.discarded_at IS NULL
-WHERE p.space_id = $1
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
   AND p.discarded_at IS NULL
   AND p.trashed_at IS NULL
-  AND p.published_at IS NOT NULL
   AND p.title IS NOT NULL
-  AND p.title ILIKE ALL($2::text[])
+  AND p.title ILIKE ALL(@title_patterns::text[])
+  AND t.discarded_at IS NULL
+  AND (@all_topics_visible::boolean IS TRUE OR t.id = ANY(@visible_topic_ids::uuid[]))
+  AND (
+    p.published_at IS NOT NULL
+    OR EXISTS (
+      SELECT 1 FROM pages src
+      INNER JOIN topics src_t ON src.topic_id = src_t.id AND src_t.space_id = @space_id
+      WHERE src.space_id = @space_id
+        AND src.published_at IS NOT NULL
+        AND src.discarded_at IS NULL
+        AND src.trashed_at IS NULL
+        AND src_t.discarded_at IS NULL
+        AND (@all_topics_visible::boolean IS TRUE OR src_t.id = ANY(@visible_topic_ids::uuid[]))
+        AND src.linked_page_ids @> ARRAY[p.id::varchar]
+    )
+    OR EXISTS (
+      SELECT 1 FROM draft_pages dp
+      INNER JOIN pages dp_p ON dp.page_id = dp_p.id
+        AND dp_p.space_id = @space_id
+        AND dp_p.discarded_at IS NULL
+        AND dp_p.trashed_at IS NULL
+      WHERE dp.space_id = @space_id
+        AND dp.space_member_id = @space_member_id
+        AND dp.linked_page_ids @> ARRAY[p.id::varchar]
+    )
+  )
 ORDER BY p.modified_at DESC
 LIMIT 10;
 

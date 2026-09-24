@@ -732,3 +732,90 @@ func TestCSRFMiddleware_POST_EmptyCookieToken(t *testing.T) {
 		t.Errorf("空のクッキートークンで403が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
 	}
 }
+
+// og:image配信のレスポンスはSNSのクローラー (Cookieを持たない) が取得し、CDNにキャッシュさせる。
+// Set-Cookieが付くとCloudflareは既定でキャッシュしないため、トークンを発行しない。
+func TestCSRFMiddleware_TokenlessPaths(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		CookieDomain:    ".example.com",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	csrfMiddleware := middleware.NewCSRF(cfg)
+
+	tests := []struct {
+		name       string
+		method     string
+		path       string
+		wantCookie bool
+	}{
+		{name: "og:image配信のGETにはCookieを付けない", method: http.MethodGet, path: "/attachments/550e8400-e29b-41d4-a716-446655440000/og_image", wantCookie: false},
+		{name: "og:image配信のHEADにはCookieを付けない", method: http.MethodHead, path: "/attachments/550e8400-e29b-41d4-a716-446655440000/og_image", wantCookie: false},
+		// 添付ファイルのダウンロードURLなど、og_imageで終わらないパスは従来どおり発行する。
+		{name: "添付ファイルのダウンロードURLには従来どおりCookieを付ける", method: http.MethodGet, path: "/attachments/550e8400-e29b-41d4-a716-446655440000", wantCookie: true},
+		{name: "og_imageの後ろにパスが続く場合は従来どおりCookieを付ける", method: http.MethodGet, path: "/attachments/550e8400-e29b-41d4-a716-446655440000/og_image/extra", wantCookie: true},
+		{name: "ページのカード画像のGETにはCookieを付けない", method: http.MethodGet, path: "/s/example/pages/1/og_image/0123456789abcdef.png", wantCookie: false},
+		{name: "ページのカード画像のHEADにはCookieを付けない", method: http.MethodHead, path: "/s/example/pages/1/og_image/0123456789abcdef.png", wantCookie: false},
+		{name: "ページ表示画面には従来どおりCookieを付ける", method: http.MethodGet, path: "/s/example/pages/1", wantCookie: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var contextToken string
+			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				contextToken = middleware.GetCSRFTokenFromContext(r.Context())
+				w.WriteHeader(http.StatusOK)
+			})
+
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			rr := httptest.NewRecorder()
+
+			csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+			}
+
+			gotCookie := rr.Header().Get("Set-Cookie") != ""
+			if gotCookie != tt.wantCookie {
+				t.Errorf("Set-Cookieの有無 = %v、期待値 = %v (Set-Cookie: %q)", gotCookie, tt.wantCookie, rr.Header().Get("Set-Cookie"))
+			}
+			// 発行しないパスではコンテキストにもトークンを載せない。載せるとハンドラーがHTMLに
+			// 埋め込んでも、対応するCookieがブラウザに無いトークンになる。
+			if (contextToken != "") != tt.wantCookie {
+				t.Errorf("コンテキストのトークンの有無 = %v、期待値 = %v", contextToken != "", tt.wantCookie)
+			}
+		})
+	}
+}
+
+// トークンを発行しないのは安全なメソッドだけで、状態を変えるメソッドの検証は外さない。
+func TestCSRFMiddleware_TokenlessPaths_POSTStillProtected(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		CookieDomain:    ".example.com",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	csrfMiddleware := middleware.NewCSRF(cfg)
+
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/attachments/550e8400-e29b-41d4-a716-446655440000/og_image", nil)
+	rr := httptest.NewRecorder()
+
+	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
+	}
+}
