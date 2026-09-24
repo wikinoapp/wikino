@@ -247,6 +247,14 @@ func AttachmentOGImagePath(attachmentID string) Path {
 	return Path(fmt.Sprintf("/attachments/%s/og_image", attachmentID))
 }
 
+// PageOGImagePathはページのog:image用カード画像のパスを生成します。
+// versionはカードに描く内容から計算した値 (`ogcard.Card.Version`) で、内容が変わるとパスも
+// 変わるため、SNSとCDNが改名後に新しい画像を取りに来ます。拡張子の `.png` は、Cloudflareが
+// 既定で拡張子からキャッシュ対象を決めるために付けています。
+func PageOGImagePath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber viewmodel.PageNumber, version string) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/og_image/%s.png", spaceIdentifier, pageNumber, version))
+}
+
 // SuggestionListPathは編集提案一覧のパスを生成します
 func SuggestionListPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/suggestions", spaceIdentifier, topicNumber))

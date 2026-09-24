@@ -70,30 +70,45 @@ type PageForShow struct {
 	// アイキャッチ画像を持たない場合や、その画像をプレビューとして出してはいけない場合は空になる
 	// (NewPageForShowを参照)。
 	ogImageAttachmentID string
+
+	// usesOGCardはog:imageタグにページのカード画像を出すかを表す。ogImageAttachmentIDが
+	// 空でないときは常にfalseになる。
+	usesOGCard bool
 }
 
 // NewPageForShowはmodel.Pageからページ表示画面用のViewModelを生成する。
 // bodyHTMLはUseCaseが表示時にレンダリングした本文HTMLで、ページが保存時に持っていたHTMLでは
-// ない。featuredImageAttachmentはページのアイキャッチ画像で、持たない場合はnil。
-func NewPageForShow(pg *model.Page, bodyHTML string, featuredImageAttachment *model.Attachment) PageForShow {
+// ない。featuredImageAttachmentはページのアイキャッチ画像で、持たない場合はnil。isPublicは
+// ページをゲストに見せてよいか (usecase.GetPageShowOutput.IsPublic) を表す。
+func NewPageForShow(pg *model.Page, bodyHTML string, featuredImageAttachment *model.Attachment, isPublic bool) PageForShow {
 	var title string
 	if pg.Title != nil {
 		title = *pg.Title
 	}
 
+	attachmentID := ogImageAttachmentID(featuredImageAttachment, isPublic)
+
 	return PageForShow{
 		title:               title,
 		BodyHTML:            bodyHTML,
 		Number:              int32(pg.Number),
-		ogImageAttachmentID: ogImageAttachmentID(featuredImageAttachment),
+		ogImageAttachmentID: attachmentID,
+		// カバー画像を出せない公開ページ (カバー画像が無い、またはGIF) はカード画像で補う。
+		// タイトルの無いページはカードに描く見出しが無く、カード画像のエンドポイントも404を返すため、
+		// サイト共通の既定OGP画像のままにする。
+		usesOGCard: isPublic && attachmentID == "" && title != "",
 	}
 }
 
 // ogImageAttachmentIDはog:imageタグが指してよいアイキャッチ画像を選び、無い場合は空文字列を
 // 返す。GIFのアイキャッチ画像は対象外とする。og:imageエンドポイントは静止画の1200x630 jpgを
 // 配信するため、アニメーション画像を指すと画像の持ち味を失ったプレビューを宣伝することになる。
-func ogImageAttachmentID(featuredImageAttachment *model.Attachment) string {
-	if featuredImageAttachment == nil {
+//
+// ゲストに見せられないページ (非公開トピック・ゴミ箱) も対象外とする。og:imageを取得するのは
+// HTMLの閲覧者ではなくSNSのクローラーで、エンドポイントはゲストに見せられないページの画像に
+// 404を返す。メンバーが開いたHTMLに、配信されない画像のURLを出さないためである。
+func ogImageAttachmentID(featuredImageAttachment *model.Attachment, isPublic bool) string {
+	if !isPublic || featuredImageAttachment == nil {
 		return ""
 	}
 	if strings.HasSuffix(strings.ToLower(featuredImageAttachment.Filename), ".gif") {
@@ -104,9 +119,15 @@ func ogImageAttachmentID(featuredImageAttachment *model.Attachment) string {
 }
 
 // OGImageAttachmentIDはog:imageタグが指す添付ファイルのIDを返し、対象が無い場合は空文字列を
-// 返す。呼び出し元はそのときサイト共通の既定OGP画像を保つ。
+// 返す。呼び出し元はそのときUsesOGCardを見て、カード画像か既定OGP画像を選ぶ。
 func (p PageForShow) OGImageAttachmentID() string {
 	return p.ogImageAttachmentID
+}
+
+// UsesOGCardはog:imageタグにページのカード画像を出すかを返す。OGImageAttachmentIDが空でない
+// ときは常にfalseで、両方が空・falseのとき呼び出し元はサイト共通の既定OGP画像を保つ。
+func (p PageForShow) UsesOGCard() bool {
+	return p.usesOGCard
 }
 
 // DisplayTitleはページの表示用タイトルを返し、未設定の場合はローカライズされた「無題」へ

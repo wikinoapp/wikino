@@ -691,6 +691,37 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
+	// IsPublicはHTMLに出すog:imageの選択に使う。og:imageはHTMLの閲覧者ではなくSNSのクローラー
+	// (ゲスト) が取得するため、メンバーが開いた場合でもゲストとしての可否で決まらなければならない。
+	t.Run("正常系: IsPublicは閲覧者ではなくゲストとしての可否で決まる", func(t *testing.T) {
+		tests := []struct {
+			name       string
+			userID     *model.UserID
+			pageNumber int32
+			want       bool
+		}{
+			{name: "ゲストが開いた公開トピックのページ", userID: nil, pageNumber: 1, want: true},
+			{name: "メンバーが開いた公開トピックのページ", userID: &ownerID, pageNumber: 1, want: true},
+			{name: "メンバーが開いた非公開トピックのページ", userID: &ownerID, pageNumber: 2, want: false},
+			{name: "メンバーが開いたゴミ箱のページ", userID: &trashMemberID, pageNumber: 3, want: false},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				output, err := uc.Execute(context.Background(), GetPageShowInput{
+					LinkPage: 1, LinkedPageBacklinkPage: 1, PageBacklinkPage: 1,
+					SpaceIdentifier: "gps-space", PageNumber: tt.pageNumber, UserID: tt.userID,
+				})
+				if err != nil {
+					t.Fatalf("Execute()のエラー = %v", err)
+				}
+				if output.IsPublic != tt.want {
+					t.Errorf("IsPublic = %v、期待値 = %v", output.IsPublic, tt.want)
+				}
+			})
+		}
+	})
+
 	t.Run("正常系: ゴミ箱の閲覧専用メンバーは閲覧できるが移動できない", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage: 1, LinkedPageBacklinkPage: 1, PageBacklinkPage: 1,
