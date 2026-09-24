@@ -118,9 +118,38 @@ templ Edit(data EditPageData) {
 								<div class="px-4">
 									<div class="alert">
 										@templates.Icon("warning-circle-regular", "fill-info")
-										<h2>
-											{ templates.T(ctx, "page_edit_current_page_is_draft") }
-										</h2>
+										// 見出しと削除ボタンを1つの折り返す行に並べ、幅に余裕があれば同じ行の右端へ、
+						// 収まらなければ見出しの下へ送る。ラベルの幅がロケールで変わるため、折り返しは
+						// 実際の幅に委ねる。見出しはアラートの直接の子でなくなりBasecoatの見出しスタイルが
+						// 当たらないため、font-mediumを直接付ける。
+										//
+										// 確認はフォーム自身のsubmitイベントで走らせる。確認後の送信はdata-draft-delete-form
+										// を見るスクリプト (web/markdown-editor/draft-delete-handler.ts) が引き取り、自動保存を
+										// 止めて送信中の保存を待ってから送る。削除した下書きが自動保存で作り直されないようにするため。
+										<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+											<h2 class="font-medium">
+												{ templates.T(ctx, "page_edit_current_page_is_draft") }
+											</h2>
+											<form
+												action={ templ.SafeURL(string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) + "?redirect_to=page") }
+												data-draft-delete-form
+												data-confirm={ templates.T(ctx, "draft_page_delete_confirm") }
+												hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+												method="POST"
+											>
+												<input type="hidden" name="_method" value="DELETE"/>
+												<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+												<button
+													class="btn h-fit p-0 text-error"
+													data-variant="link"
+													data-size="sm"
+													type="submit"
+												>
+													@templates.DecorativeIcon("trash-regular", "size-3 fill-error")
+													{ templates.T(ctx, "page_edit_delete_draft_button") }
+												</button>
+											</form>
+										</div>
 									</div>
 								</div>
 							}

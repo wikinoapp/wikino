@@ -3,6 +3,7 @@ import "basecoat-css/all";
 import { initializeAttachmentLoader } from "./attachment-loader";
 import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
+import { initializeDraftDeleteForms } from "./markdown-editor/draft-delete-handler";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
 import { initializeMarkdownTables } from "./markdown-table";
 import { initializePlatform } from "./platform";
@@ -23,6 +24,7 @@ function setTimeZoneCookie() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeEditors();
+  initializeDraftDeleteForms();
   initializeGlobalHotkey();
   initializeDrawers();
   initializeZenMode();
