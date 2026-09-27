@@ -282,3 +282,48 @@ func TestFlashManager_CookieAttributes(t *testing.T) {
 		}
 	})
 }
+
+func TestFlashManager_Middleware_OGImagesDoNotConsumeFlash(t *testing.T) {
+	t.Parallel()
+
+	fm := session.NewFlashManager("", false, false)
+	cookieResponse := httptest.NewRecorder()
+	fm.SetSuccess(cookieResponse, "保存しました")
+	flashCookie := cookieResponse.Result().Cookies()[0]
+
+	tests := []struct {
+		name        string
+		method      string
+		path        string
+		wantCookie  bool
+		wantMessage string
+	}{
+		{name: "添付画像のGET", method: http.MethodGet, path: "/attachments/123/og_image"},
+		{name: "添付画像のHEAD", method: http.MethodHead, path: "/attachments/123/og_image"},
+		{name: "カード画像のGET", method: http.MethodGet, path: "/s/example/pages/1/og_image/old.png"},
+		{name: "カード画像のHEAD", method: http.MethodHead, path: "/s/example/pages/1/og_image/old.png"},
+		{name: "通常のページ", method: http.MethodGet, path: "/s/example/pages/1", wantCookie: true, wantMessage: "保存しました"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			req.AddCookie(flashCookie)
+			rr := httptest.NewRecorder()
+			h := fm.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				flash := session.FlashFromContext(r.Context())
+				if tt.wantMessage == "" && flash != nil {
+					t.Errorf("画像リクエストでフラッシュが消費された: %+v", flash)
+				}
+				if tt.wantMessage != "" && (flash == nil || flash.Message != tt.wantMessage) {
+					t.Errorf("フラッシュ = %+v、期待メッセージ = %q", flash, tt.wantMessage)
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			h.ServeHTTP(rr, req)
+			if got := rr.Header().Get("Set-Cookie") != ""; got != tt.wantCookie {
+				t.Errorf("Set-Cookieの有無 = %v、期待値 = %v", got, tt.wantCookie)
+			}
+		})
+	}
+}

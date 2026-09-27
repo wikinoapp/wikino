@@ -108,7 +108,7 @@ func TestNewPageForShow(t *testing.T) {
 		Number: 42,
 	}
 	bodyHTML := "<p>Page body</p>"
-	got := viewmodel.NewPageForShow(page, bodyHTML, nil)
+	got := viewmodel.NewPageForShow(page, bodyHTML, nil, true)
 	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
 
 	if got.DisplayTitle(ctx) != title {
@@ -145,7 +145,7 @@ func TestPageForShow_DisplayTitle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			page := viewmodel.NewPageForShow(&model.Page{Title: tt.title}, "", nil)
+			page := viewmodel.NewPageForShow(&model.Page{Title: tt.title}, "", nil, true)
 			ctx := i18n.SetLocale(t.Context(), tt.locale)
 
 			if got := page.DisplayTitle(ctx); got != tt.want {
@@ -201,7 +201,7 @@ func TestPageForShow_MetaDescription(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			page := viewmodel.NewPageForShow(&model.Page{}, tt.bodyHTML, nil)
+			page := viewmodel.NewPageForShow(&model.Page{}, tt.bodyHTML, nil, true)
 
 			if got := page.MetaDescription(); got != tt.want {
 				t.Errorf("MetaDescription() = %q、期待値 = %q", got, tt.want)
@@ -225,12 +225,22 @@ func TestPageForShow_OGImageAttachmentID(t *testing.T) {
 	tests := []struct {
 		name       string
 		attachment *model.Attachment
-		want       string
+		// isPrivateはゲストに見せられないページ (非公開トピック・ゴミ箱) を表す。ゼロ値を公開
+		// ページにして、公開状態を問わないケースでは指定を省けるようにしている。
+		isPrivate bool
+		want      string
 	}{
 		{
 			name:       "アイキャッチ画像を持つページは添付ファイルのIDを返す",
 			attachment: attachment("cover.png"),
 			want:       "550e8400-e29b-41d4-a716-446655440000",
+		},
+		{
+			// og:imageを取得するのはゲストのクローラーで、エンドポイントは404を返す。
+			name:       "ゲストに見せられないページはアイキャッチ画像を持っていても空文字列を返す",
+			attachment: attachment("cover.png"),
+			isPrivate:  true,
+			want:       "",
 		},
 		{
 			name:       "アイキャッチ画像を持たないページは空文字列を返す",
@@ -267,10 +277,86 @@ func TestPageForShow_OGImageAttachmentID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			page := viewmodel.NewPageForShow(&model.Page{}, "", tt.attachment)
+			page := viewmodel.NewPageForShow(&model.Page{}, "", tt.attachment, !tt.isPrivate)
 
 			if got := page.OGImageAttachmentID(); got != tt.want {
 				t.Errorf("OGImageAttachmentID() = %q、期待値 = %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestPageForShow_UsesOGCardはog:imageタグにページのカード画像を出すケースを固定する。
+// アイキャッチ画像を出せる公開ページはその画像を優先し、出せない公開ページだけをカード画像で補う。
+func TestPageForShow_UsesOGCard(t *testing.T) {
+	t.Parallel()
+
+	title := "タイトル"
+	emptyTitle := ""
+	attachment := func(filename string) *model.Attachment {
+		return &model.Attachment{
+			ID:       model.AttachmentID("550e8400-e29b-41d4-a716-446655440000"),
+			Filename: filename,
+		}
+	}
+
+	tests := []struct {
+		name       string
+		title      *string
+		attachment *model.Attachment
+		// isPrivateはゲストに見せられないページ (非公開トピック・ゴミ箱) を表す。
+		isPrivate bool
+		want      bool
+	}{
+		{
+			name:       "アイキャッチ画像を持つ公開ページはカード画像を出さない",
+			title:      &title,
+			attachment: attachment("cover.png"),
+			want:       false,
+		},
+		{
+			name:       "GIFのアイキャッチ画像を持つ公開ページはカード画像を出す",
+			title:      &title,
+			attachment: attachment("animation.gif"),
+			want:       true,
+		},
+		{
+			name:  "アイキャッチ画像を持たない公開ページはカード画像を出す",
+			title: &title,
+			want:  true,
+		},
+		{
+			// カードに描く見出しが無く、カード画像のエンドポイントも404を返す。
+			name:  "タイトルがnilのページはカード画像を出さない",
+			title: nil,
+			want:  false,
+		},
+		{
+			name:  "タイトルが空文字列のページはカード画像を出さない",
+			title: &emptyTitle,
+			want:  false,
+		},
+		{
+			// og:imageを取得するのはゲストのクローラーで、エンドポイントは404を返す。
+			name:      "ゲストに見せられないページはカード画像を出さない",
+			title:     &title,
+			isPrivate: true,
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			page := viewmodel.NewPageForShow(&model.Page{Title: tt.title}, "", tt.attachment, !tt.isPrivate)
+
+			if got := page.UsesOGCard(); got != tt.want {
+				t.Errorf("UsesOGCard() = %v、期待値 = %v", got, tt.want)
+			}
+			// アイキャッチ画像とカード画像は同時に選ばれない
+			if page.UsesOGCard() && page.OGImageAttachmentID() != "" {
+				t.Errorf("OGImageAttachmentID() = %q、カード画像を出すときは空を期待", page.OGImageAttachmentID())
 			}
 		})
 	}

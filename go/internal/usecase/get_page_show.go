@@ -7,6 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -84,6 +85,12 @@ type GetPageShowOutput struct {
 	// (page_trash:readを持つメンバー) の場合だけで、それ以外にはnot foundエラーを返す。したがって
 	// テンプレートはtrueのときにゴミ箱アラートを出せばよい。
 	IsTrashed bool
+
+	// IsPublicはページをゲストに見せてよいか (ゲスト用Policyがトピックを見せてよいと判定し、
+	// かつゴミ箱に入っていない) を表す。閲覧者本人の権限ではなくゲストとしての可否で判定するため、
+	// メンバーが非公開ページを開いたときはfalseになる。og:imageなど、HTMLの閲覧者以外 (SNSの
+	// クローラー) が取得するURLを出してよいかの判定に使う。
+	IsPublic bool
 
 	CanUpdatePage bool
 
@@ -166,6 +173,7 @@ func (uc *GetPageShowUsecase) Execute(ctx context.Context, input GetPageShowInpu
 		Topic:                   data.topic,
 		BodyHTML:                bodyHTML,
 		IsTrashed:               isTrashed,
+		IsPublic:                policy.NewGuestPolicy().CanShowTopic(data.topic) && !isTrashed,
 		CanUpdatePage:           authorizer.CanUpdatePage(),
 		CanTrashPage:            authorizer.CanTrashPage(),
 		FeaturedImageAttachment: featuredImageAttachment,

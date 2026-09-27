@@ -15,10 +15,19 @@ type PageMeta struct {
 	OGType                 string          // og:typeの値 ("website", "article"など)
 	OGURL                  string          // og:urlの値
 	OGImage                string          // og:imageの値
+	OGImageWidth           int             // og:image:widthの値。0のときは出力しない (画像ごとに寸法が変わるカバー画像など)
+	OGImageHeight          int             // og:image:heightの値。0のときは出力しない
+	TwitterCard            string          // twitter:cardの値 ("summary"、"summary_large_image")
 	OGLocale               string          // og:localeの値 ("ja_JP", "en_US"など)
 	AssetVersion           string          // CSSやJSのバージョン (キャッシュバスティング用)
 	CurrentSpaceIdentifier SpaceIdentifier // 現在のスペース識別子。グローバルホットキーの検索URL (`/search?q=space:{identifier}`) をdefault.templで組み立てるために使用する。スペース外画面では空文字
 }
+
+// twitter:cardの値。
+const (
+	TwitterCardSummary           = "summary"
+	TwitterCardSummaryLargeImage = "summary_large_image"
+)
 
 // localeToOGLocaleはlocale ("ja", "en"など) をOGPのlocale形式 ("ja_JP", "en_US"など) に変換します
 func localeToOGLocale(locale string) string {
@@ -38,11 +47,14 @@ func DefaultPageMeta(ctx context.Context, cfg *config.Config) PageMeta {
 	title := i18n.T(ctx, "default_title") + " | Wikino"
 	locale := i18n.GetLocale(ctx)
 	return PageMeta{
-		Title:        title,
-		Description:  i18n.T(ctx, "default_description"),
-		OGType:       "website",
-		OGURL:        "",
-		OGImage:      ogImageURL,
+		Title:       title,
+		Description: i18n.T(ctx, "default_description"),
+		OGType:      "website",
+		OGURL:       "",
+		OGImage:     ogImageURL,
+		// 既定のOGP画像はサイト共通のロゴのため、Xでは小さなサムネイルで出す。ページ固有の
+		// 画像を出す画面だけが大きなカード (summary_large_image) に上書きする。
+		TwitterCard:  TwitterCardSummary,
 		OGLocale:     localeToOGLocale(locale),
 		AssetVersion: cfg.GetAssetVersion(),
 	}

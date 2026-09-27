@@ -13,6 +13,7 @@ import { EditorState } from "@codemirror/state";
 import {
   keymap,
   highlightSpecialChars,
+  ViewPlugin,
   drawSelection,
   dropCursor,
   rectangularSelection,
@@ -32,6 +33,16 @@ import { wikilinkCompletions } from "./wikilink-completions";
 
 const AUTOSAVE_DEBOUNCE_MS = 500;
 
+// AutosaveStateはエディタ1つ分の自動保存の状態。下書きの削除前に自動保存を止め、送信中の
+// 保存の完了を待てるようにするため、停止フラグと送信中の保存を保持する。
+interface AutosaveState {
+  debounceTimer: ReturnType<typeof setTimeout> | null;
+  stopped: boolean;
+  inFlight: Set<Promise<void>>;
+}
+
+const autosaveStates = new Set<AutosaveState>();
+
 interface EditorConfig {
   container: HTMLElement;
   textarea: HTMLTextAreaElement;
@@ -46,7 +57,8 @@ interface EditorConfig {
 }
 
 function createEditor(config: EditorConfig): EditorView {
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const autosave: AutosaveState = { debounceTimer: null, stopped: false, inFlight: new Set() };
+  autosaveStates.add(autosave);
 
   const state = EditorState.create({
     doc: config.body,
@@ -84,6 +96,9 @@ function createEditor(config: EditorConfig): EditorView {
         ...completionKeymap,
       ]),
       fileDropHandler,
+      // エディタを破棄したら自動保存の状態も手放し、以降のstopAutosaveが破棄済みのエディタの
+      // 保存を待たないようにする
+      ViewPlugin.define(() => ({ destroy: () => autosaveStates.delete(autosave) })),
       EditorView.domEventHandlers({
         paste: (event, view) => pasteHandler(view, event),
       }),
@@ -92,11 +107,19 @@ function createEditor(config: EditorConfig): EditorView {
           config.textarea.value = update.state.doc.toString();
           config.textarea.dispatchEvent(new Event("input"));
 
-          if (debounceTimer) {
-            clearTimeout(debounceTimer);
+          if (autosave.stopped) return;
+
+          if (autosave.debounceTimer) {
+            clearTimeout(autosave.debounceTimer);
           }
-          debounceTimer = setTimeout(() => {
-            saveAsDraft(config);
+          autosave.debounceTimer = setTimeout(() => {
+            autosave.debounceTimer = null;
+            const saving = saveAsDraft(config);
+            autosave.inFlight.add(saving);
+            void saving.then(
+              () => autosave.inFlight.delete(saving),
+              () => autosave.inFlight.delete(saving),
+            );
           }, AUTOSAVE_DEBOUNCE_MS);
         }
       }),
@@ -113,6 +136,22 @@ function createEditor(config: EditorConfig): EditorView {
   }
 
   return view;
+}
+
+// stopAutosaveはすべてのエディタの自動保存を止め、送信中の保存が終わったら解決するPromiseを
+// 返す。保存の成否は問わない。下書きを削除する前に呼び、削除した下書きが自動保存で作り直され
+// ないようにする。止めた自動保存は再開しない (削除後は画面遷移するため)。
+export function stopAutosave(): Promise<void> {
+  const pending: Promise<void>[] = [];
+  autosaveStates.forEach((autosave) => {
+    autosave.stopped = true;
+    if (autosave.debounceTimer) {
+      clearTimeout(autosave.debounceTimer);
+      autosave.debounceTimer = null;
+    }
+    pending.push(...autosave.inFlight);
+  });
+  return Promise.allSettled(pending).then(() => undefined);
 }
 
 async function saveAsDraft(config: EditorConfig): Promise<void> {

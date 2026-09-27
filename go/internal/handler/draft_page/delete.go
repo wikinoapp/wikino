@@ -14,6 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 // Deleteは下書きページを削除します (DELETE /s/{space_identifier}/pages/{page_number}/draft_page)
@@ -60,7 +61,14 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// フラッシュメッセージを設定して /draftsへリダイレクト
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_draft_page_deleted"))
+
+	// 戻り先は固定値だけを解釈し、任意のURLは受け取らない (オープンリダイレクトを防ぐため)。
+	// 編集画面からの削除はページ表示画面へ、それ以外 (/draftsからの削除) は /draftsへ戻す。
+	if r.URL.Query().Get("redirect_to") == "page" {
+		http.Redirect(w, r, string(templates.PagePath(viewmodel.NewSpaceIdentifier(spaceIdentifier), viewmodel.PageNumber(pageNumber))), http.StatusSeeOther)
+		return
+	}
+
 	http.Redirect(w, r, string(templates.DraftsPath()), http.StatusSeeOther)
 }

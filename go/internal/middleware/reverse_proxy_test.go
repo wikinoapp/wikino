@@ -943,6 +943,31 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: true,
 		},
+		{
+			name:     "og:imageエンドポイント (HEAD)",
+			method:   http.MethodHead,
+			path:     "/attachments/01HXYZ123/og_image",
+			expected: true,
+		},
+		{
+			name:     "ページのカード画像 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/og_image/0123456789abcdef.png",
+			expected: true,
+		},
+		{
+			name:     "ページのカード画像 (HEAD)",
+			method:   http.MethodHead,
+			path:     "/s/my-space/pages/1/og_image/0123456789abcdef.png",
+			expected: true,
+		},
+		{
+			// 古いHTMLから来たバージョンの違うURLもGoが受けて正規URLへ転送する
+			name:     "ページのカード画像はバージョンの形式を問わない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/og_image/old-version.png",
+			expected: true,
+		},
 
 		// Rails版に転送するパス
 		{
@@ -1012,13 +1037,13 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "og:imageエンドポイント (POST) はGETのみフィルタによりマッチしない",
+			name:     "og:imageエンドポイント (POST) はGET・HEADのフィルタによりマッチしない",
 			method:   http.MethodPost,
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: false,
 		},
 		{
-			name:     "og:imageエンドポイント (PATCH) はGETのみフィルタによりマッチしない",
+			name:     "og:imageエンドポイント (PATCH) はGET・HEADのフィルタによりマッチしない",
 			method:   http.MethodPatch,
 			path:     "/attachments/01HXYZ123/og_image",
 			expected: false,
@@ -1033,6 +1058,24 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "og:imageの末尾に余分なセグメントがあるとマッチしない",
 			method:   http.MethodGet,
 			path:     "/attachments/01HXYZ123/og_image/extra",
+			expected: false,
+		},
+		{
+			name:     "ページのカード画像 (POST) はGET・HEADのフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/og_image/0123456789abcdef.png",
+			expected: false,
+		},
+		{
+			name:     "ページのカード画像で拡張子がpngでないパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/og_image/0123456789abcdef.jpg",
+			expected: false,
+		},
+		{
+			name:     "ページのカード画像でバージョンの無いパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/og_image",
 			expected: false,
 		},
 		{
@@ -1356,5 +1399,28 @@ func TestReverseProxyMiddleware_ExportNamespace(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// og:image配信のパスはCSRFトークンとフラッシュの除外と定義を共有する。
+// `session.OGImagePathPatterns` に足したパスがGoへ振り分けられないと、Railsへ転送されて
+// 除外が働かないため、GET・HEADで登録されていることを確かめる。
+func TestGoHandledRegexPatterns_IncludeOGImagePaths(t *testing.T) {
+	t.Parallel()
+
+	for _, want := range session.OGImagePathPatterns {
+		t.Run(want.String(), func(t *testing.T) {
+			t.Parallel()
+
+			for _, gp := range goHandledRegexPatterns {
+				if gp.pattern == want {
+					if !containsMethod(gp.methods, http.MethodGet) || !containsMethod(gp.methods, http.MethodHead) {
+						t.Errorf("メソッド = %v、GETとHEADを含むことを期待", gp.methods)
+					}
+					return
+				}
+			}
+			t.Errorf("goHandledRegexPatternsに %s が登録されていない", want)
+		})
 	}
 }

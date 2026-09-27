@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -2116,5 +2117,493 @@ func TestPageRepository_ListActiveBySpace(t *testing.T) {
 		if gotTitles[i] != want {
 			t.Errorf("pages[%d].Title = %q、期待値 = %q", i, gotTitles[i], want)
 		}
+	}
+}
+
+func TestPageRepository_SearchPageLocations(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "search-page-locations")
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("廃棄済みトピック").
+		WithDiscarded().
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// 候補に出るページ。modified_atの新しい順に並ぶことを検証するため、1時間ずつずらす
+	visibleTitles := []string{
+		"Wiki入門",
+		"wiki応用",
+		"100%達成",
+		"100点",
+		"snake_case",
+		"snakeXcase",
+		`back\slash`,
+		"backslash",
+	}
+	for i, title := range visibleTitles {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(i + 1)).
+			WithTitle(title).
+			WithModifiedAt(baseTime.Add(time.Duration(i) * time.Hour)).
+			Build()
+	}
+
+	// 候補に出ないページ。どれも最も新しいmodified_atにし、並び順の都合で漏れないようにする。
+	// 未公開ページはどこからもリンクされていないため除外される (リンク元による出し分けは
+	// TestPageRepository_SearchPageLocations_LinkedUnpublishedPagesで検証する)
+	latest := baseTime.Add(24 * time.Hour)
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(101).WithTitle("Wiki未公開").WithUnpublished().WithModifiedAt(latest).Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(102).WithTitle("Wikiゴミ箱").WithTrashed().WithModifiedAt(latest).Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(103).WithTitle("Wiki廃棄済み").WithDiscarded().WithModifiedAt(latest).Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(discardedTopicID).WithNumber(104).WithTitle("Wiki廃棄済みトピック").WithModifiedAt(latest).Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(105).WithNilTitle().WithModifiedAt(latest).Build()
+
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("search-page-locations-other").
+		Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).WithNumber(1).WithTitle("Wiki別スペース").WithModifiedAt(latest).Build()
+
+	tests := []struct {
+		name       string
+		q          string
+		wantTitles []string
+	}{
+		{
+			// キーワードが空のときはタイトルで絞らないため、タイトル未設定のページを
+			// 除外しているのはtitle IS NOT NULLの条件になる
+			name:       "空のキーワードではリンクされていない未公開ページを除いてmodified_atの新しい順に返す",
+			q:          "",
+			wantTitles: []string{"backslash", `back\slash`, "snakeXcase", "snake_case", "100点", "100%達成", "wiki応用", "Wiki入門"},
+		},
+		{
+			name:       "大文字小文字を区別せずに部分一致で検索する",
+			q:          "WIKI",
+			wantTitles: []string{"wiki応用", "Wiki入門"},
+		},
+		{
+			name:       "空白で区切った複数語はすべてを含むページに絞る",
+			q:          "wiki 入門",
+			wantTitles: []string{"Wiki入門"},
+		},
+		{
+			name:       "連続する空白や全角空白も区切りとして扱う",
+			q:          "  wiki　 入門  ",
+			wantTitles: []string{"Wiki入門"},
+		},
+		{
+			name:       "%は任意の文字列ではなく文字として扱う",
+			q:          "100%",
+			wantTitles: []string{"100%達成"},
+		},
+		{
+			name:       "_は任意の1文字ではなく文字として扱う",
+			q:          "snake_case",
+			wantTitles: []string{"snake_case"},
+		},
+		{
+			name:       `\はエスケープ文字ではなく文字として扱う`,
+			q:          `back\slash`,
+			wantTitles: []string{`back\slash`},
+		},
+		{
+			name:       "一致するページが無いときは空を返す",
+			q:          "存在しないタイトル",
+			wantTitles: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// トピックの絞り込みはTestPageRepository_SearchPageLocations_TopicVisibilityで検証する。
+			// ここでは絞り込まずに、廃棄済みトピックのページが除外されることを確かめる
+			locations, err := repo.SearchPageLocations(ctx, spaceID, spaceMemberID, AllTopicsVisible(), tt.q)
+			if err != nil {
+				t.Fatalf("SearchPageLocations()のエラー = %v", err)
+			}
+
+			gotTitles := make([]string, len(locations))
+			for i, loc := range locations {
+				gotTitles[i] = loc.PageTitle
+				if loc.TopicName != "General" {
+					t.Errorf("locations[%d].TopicName = %q、期待値 = %q", i, loc.TopicName, "General")
+				}
+			}
+			if len(gotTitles) != len(tt.wantTitles) {
+				t.Fatalf("SearchPageLocations() = %v、期待値 = %v", gotTitles, tt.wantTitles)
+			}
+			for i, want := range tt.wantTitles {
+				if gotTitles[i] != want {
+					t.Errorf("locations[%d].PageTitle = %q、期待値 = %q", i, gotTitles[i], want)
+				}
+			}
+		})
+	}
+}
+
+func TestPageRepository_SearchPageLocations_Limit(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "search-page-locations-limit")
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	for i := 1; i <= 12; i++ {
+		testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(model.PageNumber(i)).
+			WithTitle(fmt.Sprintf("ページ%02d", i)).
+			WithModifiedAt(baseTime.Add(time.Duration(i) * time.Hour)).
+			Build()
+	}
+
+	locations, err := repo.SearchPageLocations(ctx, spaceID, spaceMemberID, AllTopicsVisible(), "ページ")
+	if err != nil {
+		t.Fatalf("SearchPageLocations()のエラー = %v", err)
+	}
+
+	// 12件のうち、modified_atの新しい10件 (ページ12〜ページ03) を返す
+	if len(locations) != 10 {
+		t.Fatalf("len(locations) = %d、期待値 = 10", len(locations))
+	}
+	for i, loc := range locations {
+		want := fmt.Sprintf("ページ%02d", 12-i)
+		if loc.PageTitle != want {
+			t.Errorf("locations[%d].PageTitle = %q、期待値 = %q", i, loc.PageTitle, want)
+		}
+	}
+}
+
+func TestPageRepository_SearchPageLocations_TopicVisibility(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "search-page-locations-visibility")
+	visibleTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Visible").
+		Build()
+	hiddenTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Hidden").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(visibleTopicID).
+		WithNumber(1).
+		WithTitle("開けるページ").
+		WithModifiedAt(baseTime).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(hiddenTopicID).
+		WithNumber(2).
+		WithTitle("開けないページ").
+		WithModifiedAt(baseTime.Add(time.Hour)).
+		Build()
+
+	tests := []struct {
+		name       string
+		visibility TopicVisibility
+		want       []PageLocation
+	}{
+		{
+			name:       "VisibleTopicsに含まれないトピックのページは除外する",
+			visibility: VisibleTopics([]model.TopicID{visibleTopicID}),
+			want:       []PageLocation{{TopicName: "Visible", PageTitle: "開けるページ"}},
+		},
+		{
+			name:       "開けるトピックが無いときは空を返す",
+			visibility: VisibleTopics([]model.TopicID{}),
+			want:       []PageLocation{},
+		},
+		{
+			name:       "AllTopicsVisibleではトピックで絞らない",
+			visibility: AllTopicsVisible(),
+			want: []PageLocation{
+				{TopicName: "Hidden", PageTitle: "開けないページ"},
+				{TopicName: "Visible", PageTitle: "開けるページ"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			locations, err := repo.SearchPageLocations(ctx, spaceID, spaceMemberID, tt.visibility, "ページ")
+			if err != nil {
+				t.Fatalf("SearchPageLocations()のエラー = %v", err)
+			}
+			if len(locations) != len(tt.want) {
+				t.Fatalf("SearchPageLocations() = %v、期待値 = %v", locations, tt.want)
+			}
+			for i, want := range tt.want {
+				if locations[i] != want {
+					t.Errorf("locations[%d] = %v、期待値 = %v", i, locations[i], want)
+				}
+			}
+		})
+	}
+}
+
+func TestPageRepository_SearchPageLocations_LinkedUnpublishedPages(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "search-page-locations-linked")
+	otherUserID := testutil.NewUserBuilder(t, tx).
+		WithEmail("search-page-locations-linked-other@example.com").
+		WithAtname("searchpagelocationslinkedother").
+		Build()
+	otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(otherUserID).
+		Build()
+
+	visibleTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Visible").
+		Build()
+	hiddenTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Hidden").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+
+	// 廃棄済みトピックは開けるトピックに含めておき、リンク元のトピックが廃棄済みであることだけで
+	// 除外されることを確かめる
+	visibility := VisibleTopics([]model.TopicID{visibleTopicID, discardedTopicID})
+
+	var pageNumber model.PageNumber
+	newPage := func(topicID model.TopicID, title string) *testutil.PageBuilder {
+		pageNumber++
+		return testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(pageNumber).
+			WithTitle(title)
+	}
+	newDraft := func(pageID model.PageID, topicID model.TopicID, memberID model.SpaceMemberID, linked model.PageID) {
+		testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithTopicID(topicID).
+			WithSpaceMemberID(memberID).
+			WithLinkedPageIDs([]model.PageID{linked}).
+			Build()
+	}
+
+	tests := []struct {
+		name  string
+		title string
+		// setupはtitleの未公開ページ (リンク先) を受け取り、リンク元を作る
+		setup    func(target model.PageID)
+		topicID  model.TopicID
+		wantHits bool
+	}{
+		{
+			name:     "開けるトピックの公開ページからリンクされている未公開ページは含める",
+			title:    "リンク先-公開ページから",
+			topicID:  visibleTopicID,
+			wantHits: true,
+			setup: func(target model.PageID) {
+				newPage(visibleTopicID, "リンク元-公開ページ").WithLinkedPageIDs([]model.PageID{target}).Build()
+			},
+		},
+		{
+			name:     "自分の下書きからリンクされている未公開ページは含める",
+			title:    "リンク先-自分の下書きから",
+			topicID:  visibleTopicID,
+			wantHits: true,
+			setup: func(target model.PageID) {
+				src := newPage(visibleTopicID, "リンク元-自分の下書き").Build()
+				newDraft(src, visibleTopicID, spaceMemberID, target)
+			},
+		},
+		{
+			name:     "未公開ページの自分の下書きからリンクされている未公開ページは含める",
+			title:    "リンク先-未公開ページの自分の下書きから",
+			topicID:  visibleTopicID,
+			wantHits: true,
+			setup: func(target model.PageID) {
+				src := newPage(visibleTopicID, "リンク元-未公開ページの自分の下書き").WithUnpublished().Build()
+				newDraft(src, visibleTopicID, spaceMemberID, target)
+			},
+		},
+		{
+			name:     "開けないトピックのページの自分の下書きからリンクされている未公開ページは含める",
+			title:    "リンク先-開けないトピックの自分の下書きから",
+			topicID:  visibleTopicID,
+			wantHits: true,
+			setup: func(target model.PageID) {
+				src := newPage(hiddenTopicID, "リンク元-開けないトピックの自分の下書き").Build()
+				newDraft(src, hiddenTopicID, spaceMemberID, target)
+			},
+		},
+		{
+			name:     "開けないトピックの公開ページからのみリンクされている未公開ページは含めない",
+			title:    "リンク先-開けないトピックの公開ページから",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				newPage(hiddenTopicID, "リンク元-開けないトピックの公開ページ").WithLinkedPageIDs([]model.PageID{target}).Build()
+			},
+		},
+		{
+			name:     "廃棄済みトピックの公開ページからのみリンクされている未公開ページは含めない",
+			title:    "リンク先-廃棄済みトピックの公開ページから",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				newPage(discardedTopicID, "リンク元-廃棄済みトピックの公開ページ").WithLinkedPageIDs([]model.PageID{target}).Build()
+			},
+		},
+		{
+			name:     "未公開ページからのみリンクされている未公開ページは含めない",
+			title:    "リンク先-未公開ページから",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				newPage(visibleTopicID, "リンク元-未公開ページ").WithUnpublished().WithLinkedPageIDs([]model.PageID{target}).Build()
+			},
+		},
+		{
+			name:     "ゴミ箱に入ったページからのみリンクされている未公開ページは含めない",
+			title:    "リンク先-ゴミ箱のページから",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				newPage(visibleTopicID, "リンク元-ゴミ箱のページ").WithTrashed().WithLinkedPageIDs([]model.PageID{target}).Build()
+			},
+		},
+		{
+			name:     "廃棄済みのページからのみリンクされている未公開ページは含めない",
+			title:    "リンク先-廃棄済みのページから",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				newPage(visibleTopicID, "リンク元-廃棄済みのページ").WithDiscarded().WithLinkedPageIDs([]model.PageID{target}).Build()
+			},
+		},
+		{
+			name:     "他のメンバーの下書きからのみリンクされている未公開ページは含めない",
+			title:    "リンク先-他メンバーの下書きから",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				src := newPage(visibleTopicID, "リンク元-他メンバーの下書き").Build()
+				newDraft(src, visibleTopicID, otherSpaceMemberID, target)
+			},
+		},
+		{
+			name:     "ゴミ箱に入ったページの自分の下書きからのみリンクされている未公開ページは含めない",
+			title:    "リンク先-ゴミ箱のページの下書きから",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				src := newPage(visibleTopicID, "リンク元-ゴミ箱のページの下書き").WithTrashed().Build()
+				newDraft(src, visibleTopicID, spaceMemberID, target)
+			},
+		},
+		{
+			name:     "廃棄済みのページの自分の下書きからのみリンクされている未公開ページは含めない",
+			title:    "リンク先-廃棄済みのページの下書きから",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				src := newPage(visibleTopicID, "リンク元-廃棄済みのページの下書き").WithDiscarded().Build()
+				newDraft(src, visibleTopicID, spaceMemberID, target)
+			},
+		},
+		{
+			name:     "どこからもリンクされていない未公開ページは含めない",
+			title:    "リンク先-リンクなし",
+			topicID:  visibleTopicID,
+			wantHits: false,
+			setup:    func(model.PageID) {},
+		},
+		{
+			// リンク元の条件を満たしていても、候補のページ自体のトピックの絞り込みが優先される
+			name:     "開けないトピックの未公開ページは自分の下書きからリンクされていても含めない",
+			title:    "リンク先-開けないトピック",
+			topicID:  hiddenTopicID,
+			wantHits: false,
+			setup: func(target model.PageID) {
+				src := newPage(visibleTopicID, "リンク元-開けないトピックへの自分の下書き").Build()
+				newDraft(src, visibleTopicID, spaceMemberID, target)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		target := newPage(tt.topicID, tt.title).WithUnpublished().Build()
+		tt.setup(target)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			locations, err := repo.SearchPageLocations(ctx, spaceID, spaceMemberID, visibility, tt.title)
+			if err != nil {
+				t.Fatalf("SearchPageLocations()のエラー = %v", err)
+			}
+
+			// タイトルの部分一致で他のケースのページが混ざらないよう、完全一致の有無で判定する
+			gotHits := false
+			for _, loc := range locations {
+				if loc.PageTitle == tt.title {
+					gotHits = true
+				}
+			}
+			if gotHits != tt.wantHits {
+				t.Errorf("%qが候補に含まれるか = %v、期待値 = %v (locations = %v)", tt.title, gotHits, tt.wantHits, locations)
+			}
+		})
 	}
 }

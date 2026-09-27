@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// ShowはGET /attachments/:id/og_image - 公開トピックのog:image用リサイズ画像へリダイレクトする
+// ShowはGETまたはHEAD /attachments/:id/og_image -公開トピックのog:image用リサイズ画像へリダイレクトする
 //
 // 処理の流れ:
 //  1. URLからattachment IDを取得

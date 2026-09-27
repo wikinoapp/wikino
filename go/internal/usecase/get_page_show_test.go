@@ -194,26 +194,14 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		WithFeaturedImageAttachmentID(otherSpaceAttachmentID).
 		Build()
 
-	// 本文のMarkdownと保存済みHTMLが食い違うページ。保存済みHTMLを読んでいれば
-	// 「古い本文」が出るため、表示時レンダリングに切り替わったことをこのページで固定する。
-	testutil.NewPageBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(publicTopicID).
-		WithNumber(15).
-		WithTitle("Stale HTML Page").
-		WithBody("新しい本文").
-		WithBodyHTML("<p>古い本文</p>").
-		WithLinkedPageIDs([]model.PageID{}).
-		Build()
 	// 保存時に存在しなかったページへのWikiリンクを持つページ。リンク先 (ページ17) はこのページの
-	// 保存より後に作られた想定で、保存済みHTMLにはリンクが含まれていない。
+	// 保存より後に作られた想定。
 	testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
 		WithNumber(16).
 		WithTitle("Wikilink Source Page").
 		WithBody("[[Public/Wikilink Target Page]] を参照。\n\n[[Public/Missing Page]] は未作成。").
-		WithBodyHTML("<p>[[Public/Wikilink Target Page]] を参照。</p>").
 		WithLinkedPageIDs([]model.PageID{}).
 		Build()
 	testutil.NewPageBuilder(t, tx).
@@ -472,29 +460,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	// 表示時レンダリングに切り替えたことを、保存済みHTMLとの食い違いで固定する。保存済みHTMLを
-	// 読んでいればここで古い本文が出る。
-	t.Run("正常系: 本文HTMLは保存済みHTMLではなく現在のMarkdownから作られる", func(t *testing.T) {
-		output, err := uc.Execute(context.Background(), GetPageShowInput{
-			LinkPage:               1,
-			LinkedPageBacklinkPage: 1,
-			PageBacklinkPage:       1,
-			SpaceIdentifier:        "gps-space",
-			PageNumber:             15,
-		})
-		if err != nil {
-			t.Fatalf("Execute()のエラー = %v", err)
-		}
-		if !strings.Contains(output.BodyHTML, "新しい本文") {
-			t.Errorf("BodyHTML = %q、期待値 = 現在のMarkdownをレンダリングした本文", output.BodyHTML)
-		}
-		if strings.Contains(output.BodyHTML, "古い本文") {
-			t.Errorf("BodyHTML = %q、期待値 = 保存済みHTMLを含まない本文", output.BodyHTML)
-		}
-	})
-
 	// 保存時に存在しなかったページへのWikiリンクが、リンク先の作成後にリンクとして表示される。
-	// 保存済みHTMLではリンクの解決状態が保存時のまま凍結されていた。
 	t.Run("正常系: 保存後に作られたリンク先へのWikiリンクもリンクになる", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
@@ -722,6 +688,37 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 		if output.FeaturedImageAttachment != nil {
 			t.Errorf("別スペースの添付ファイルでのFeaturedImageAttachment = %v、期待値 = nil", output.FeaturedImageAttachment)
+		}
+	})
+
+	// IsPublicはHTMLに出すog:imageの選択に使う。og:imageはHTMLの閲覧者ではなくSNSのクローラー
+	// (ゲスト) が取得するため、メンバーが開いた場合でもゲストとしての可否で決まらなければならない。
+	t.Run("正常系: IsPublicは閲覧者ではなくゲストとしての可否で決まる", func(t *testing.T) {
+		tests := []struct {
+			name       string
+			userID     *model.UserID
+			pageNumber int32
+			want       bool
+		}{
+			{name: "ゲストが開いた公開トピックのページ", userID: nil, pageNumber: 1, want: true},
+			{name: "メンバーが開いた公開トピックのページ", userID: &ownerID, pageNumber: 1, want: true},
+			{name: "メンバーが開いた非公開トピックのページ", userID: &ownerID, pageNumber: 2, want: false},
+			{name: "メンバーが開いたゴミ箱のページ", userID: &trashMemberID, pageNumber: 3, want: false},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				output, err := uc.Execute(context.Background(), GetPageShowInput{
+					LinkPage: 1, LinkedPageBacklinkPage: 1, PageBacklinkPage: 1,
+					SpaceIdentifier: "gps-space", PageNumber: tt.pageNumber, UserID: tt.userID,
+				})
+				if err != nil {
+					t.Fatalf("Execute()のエラー = %v", err)
+				}
+				if output.IsPublic != tt.want {
+					t.Errorf("IsPublic = %v、期待値 = %v", output.IsPublic, tt.want)
+				}
+			})
 		}
 	})
 

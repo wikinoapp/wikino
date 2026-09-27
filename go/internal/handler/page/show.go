@@ -10,6 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/ogcard"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/templates/layouts"
@@ -88,7 +89,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pageVM := viewmodel.NewPageForShow(output.Page, output.BodyHTML, output.FeaturedImageAttachment)
+	pageVM := viewmodel.NewPageForShow(output.Page, output.BodyHTML, output.FeaturedImageAttachment, output.IsPublic)
 	spaceVM := viewmodel.NewSpace(output.Space)
 	topicVM := viewmodel.NewTopic(output.Topic)
 
@@ -112,10 +113,20 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// ことで、組み合わせの直積ぶんのURLを、内容を持つ1つのアドレスへ集約する。組み合わせごとに
 	// インデックス対象のアドレスを宣言しない。
 	meta.OGURL = h.cfg.AppURL() + string(templates.PagePath(spaceIdentVM, viewmodel.PageNumber(pageVM.Number)))
-	// アイキャッチ画像を持つページはその画像をリンクプレビューとして出す。持たないページは
-	// DefaultPageMetaが設定したサイト共通の既定OGP画像を保つ。
+	// アイキャッチ画像を持つ公開ページはその画像を、アイキャッチ画像を出せない公開ページは
+	// ページのカード画像をリンクプレビューとして出し、Xでは大きなカードにする。それ以外のページは
+	// DefaultPageMetaが設定したサイト共通の既定OGP画像と小さなカードを保つ。
+	// アイキャッチ画像は画像ごとにリサイズ後の寸法が変わるため寸法を宣言せず、常に同じ寸法の
+	// カード画像だけが宣言する。
 	if attachmentID := pageVM.OGImageAttachmentID(); attachmentID != "" {
 		meta.OGImage = h.cfg.AppURL() + string(templates.AttachmentOGImagePath(attachmentID))
+		meta.TwitterCard = viewmodel.TwitterCardSummaryLargeImage
+	} else if pageVM.UsesOGCard() {
+		card := ogcard.NewPageCard(output.Space, output.Topic, output.Page)
+		meta.OGImage = h.cfg.AppURL() + string(templates.PageOGImagePath(spaceIdentVM, viewmodel.PageNumber(pageVM.Number), card.Version()))
+		meta.OGImageWidth = ogcard.Width
+		meta.OGImageHeight = ogcard.Height
+		meta.TwitterCard = viewmodel.TwitterCardSummaryLargeImage
 	}
 	// ページ表示画面は唯一の本文ページのため、サイト共通のwebsiteではなくarticleを宣言する。
 	meta.OGType = "article"

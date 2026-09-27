@@ -688,6 +688,10 @@ other = "Generating preview..."
 description = "下書きを表示中のアラートメッセージ"
 other = "You are currently viewing a draft."
 
+[page_edit_delete_draft_button]
+description = "下書きを表示中のアラート内の下書き削除ボタン"
+other = "Delete draft"
+
 [page_edit_draft_pages_heading]
 description = "ページ編集画面の下書き一覧カラムの見出し"
 other = "Drafts"
