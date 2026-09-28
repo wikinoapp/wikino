@@ -253,6 +253,99 @@ CREATE TABLE public.feature_flags (
 
 
 --
+-- Name: oauth_access_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oauth_access_tokens (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    oauth_grant_id uuid NOT NULL,
+    space_id uuid NOT NULL,
+    token_digest character varying NOT NULL,
+    scopes text[] DEFAULT '{}'::text[] NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    revoked_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: oauth_applications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oauth_applications (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid,
+    created_space_member_id uuid,
+    name character varying NOT NULL,
+    client_id text NOT NULL,
+    client_secret_digest character varying,
+    client_type integer NOT NULL,
+    redirect_uris text[] DEFAULT '{}'::text[] NOT NULL,
+    discarded_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    version bigint DEFAULT 1 NOT NULL,
+    CONSTRAINT chk_oauth_applications_client_secret_digest CHECK (((client_type = 0) = (client_secret_digest IS NOT NULL))),
+    CONSTRAINT chk_oauth_applications_client_type CHECK ((client_type = ANY (ARRAY[0, 1])))
+);
+
+
+--
+-- Name: oauth_authorization_codes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oauth_authorization_codes (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    oauth_grant_id uuid NOT NULL,
+    space_id uuid NOT NULL,
+    code_digest character varying NOT NULL,
+    scopes text[] DEFAULT '{}'::text[] NOT NULL,
+    redirect_uri text NOT NULL,
+    code_challenge character varying NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: oauth_grants; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oauth_grants (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    oauth_application_id uuid NOT NULL,
+    space_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
+    scopes text[] DEFAULT '{}'::text[] NOT NULL,
+    revoked_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: oauth_refresh_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oauth_refresh_tokens (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    oauth_grant_id uuid NOT NULL,
+    space_id uuid NOT NULL,
+    token_digest character varying NOT NULL,
+    scopes text[] DEFAULT '{}'::text[] NOT NULL,
+    previous_refresh_token_id uuid,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    revoked_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: page_attachment_references; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -329,6 +422,26 @@ CREATE TABLE public.password_reset_tokens (
     token_digest character varying NOT NULL,
     expires_at timestamp with time zone NOT NULL,
     used_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: personal_access_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.personal_access_tokens (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    space_id uuid NOT NULL,
+    space_member_id uuid NOT NULL,
+    name character varying NOT NULL,
+    token_digest character varying NOT NULL,
+    token_last_chars character varying NOT NULL,
+    scopes text[] DEFAULT '{}'::text[] NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    last_used_at timestamp with time zone,
+    revoked_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -790,6 +903,54 @@ ALTER TABLE ONLY public.feature_flags
 
 
 --
+-- Name: oauth_access_tokens oauth_access_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_access_tokens
+    ADD CONSTRAINT oauth_access_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth_applications oauth_applications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_applications
+    ADD CONSTRAINT oauth_applications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth_authorization_codes oauth_authorization_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_authorization_codes
+    ADD CONSTRAINT oauth_authorization_codes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth_grants oauth_grants_id_space_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_id_space_id_key UNIQUE (id, space_id);
+
+
+--
+-- Name: oauth_grants oauth_grants_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth_refresh_tokens oauth_refresh_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_refresh_tokens
+    ADD CONSTRAINT oauth_refresh_tokens_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: page_attachment_references page_attachment_references_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -827,6 +988,14 @@ ALTER TABLE ONLY public.pages
 
 ALTER TABLE ONLY public.password_reset_tokens
     ADD CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: personal_access_tokens personal_access_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.personal_access_tokens
+    ADD CONSTRAINT personal_access_tokens_pkey PRIMARY KEY (id);
 
 
 --
@@ -899,6 +1068,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 ALTER TABLE ONLY public.user_sessions
     ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: space_members space_members_id_space_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.space_members
+    ADD CONSTRAINT space_members_id_space_id_key UNIQUE (id, space_id);
 
 
 --
@@ -1032,6 +1209,132 @@ CREATE INDEX idx_feature_flags_user_id ON public.feature_flags USING btree (user
 
 
 --
+-- Name: idx_oauth_access_tokens_oauth_grant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_access_tokens_oauth_grant_id ON public.oauth_access_tokens USING btree (oauth_grant_id);
+
+
+--
+-- Name: idx_oauth_access_tokens_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_access_tokens_space_id ON public.oauth_access_tokens USING btree (space_id);
+
+
+--
+-- Name: idx_oauth_access_tokens_token_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_oauth_access_tokens_token_digest ON public.oauth_access_tokens USING btree (token_digest);
+
+
+--
+-- Name: idx_oauth_applications_client_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_oauth_applications_client_id ON public.oauth_applications USING btree (client_id);
+
+
+--
+-- Name: idx_oauth_applications_created_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_applications_created_space_member_id ON public.oauth_applications USING btree (created_space_member_id);
+
+
+--
+-- Name: idx_oauth_applications_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_applications_space_id ON public.oauth_applications USING btree (space_id);
+
+
+--
+-- Name: idx_oauth_authorization_codes_code_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_oauth_authorization_codes_code_digest ON public.oauth_authorization_codes USING btree (code_digest);
+
+
+--
+-- Name: idx_oauth_authorization_codes_oauth_grant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_authorization_codes_oauth_grant_id ON public.oauth_authorization_codes USING btree (oauth_grant_id);
+
+
+--
+-- Name: idx_oauth_authorization_codes_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_authorization_codes_space_id ON public.oauth_authorization_codes USING btree (space_id);
+
+
+--
+-- Name: idx_oauth_grants_oauth_application_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_grants_oauth_application_id ON public.oauth_grants USING btree (oauth_application_id);
+
+
+--
+-- Name: idx_oauth_grants_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_grants_space_id ON public.oauth_grants USING btree (space_id);
+
+
+--
+-- Name: idx_oauth_grants_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_grants_space_member_id ON public.oauth_grants USING btree (space_member_id);
+
+
+--
+-- Name: idx_oauth_grants_unrevoked_application_member; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_oauth_grants_unrevoked_application_member ON public.oauth_grants USING btree (oauth_application_id, space_member_id) WHERE (revoked_at IS NULL);
+
+
+--
+-- Name: idx_oauth_refresh_tokens_oauth_grant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_refresh_tokens_oauth_grant_id ON public.oauth_refresh_tokens USING btree (oauth_grant_id);
+
+
+--
+-- Name: idx_oauth_refresh_tokens_previous_refresh_token_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_refresh_tokens_previous_refresh_token_id ON public.oauth_refresh_tokens USING btree (previous_refresh_token_id);
+
+
+--
+-- Name: idx_oauth_refresh_tokens_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_refresh_tokens_space_id ON public.oauth_refresh_tokens USING btree (space_id);
+
+
+--
+-- Name: idx_oauth_refresh_tokens_token_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_oauth_refresh_tokens_token_digest ON public.oauth_refresh_tokens USING btree (token_digest);
+
+
+--
+-- Name: idx_pages_on_space_id_and_modified_at_and_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_pages_on_space_id_and_modified_at_and_id ON public.pages USING btree (space_id, modified_at, id);
+
+
+--
 -- Name: idx_password_reset_tokens_token_digest; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1043,6 +1346,27 @@ CREATE UNIQUE INDEX idx_password_reset_tokens_token_digest ON public.password_re
 --
 
 CREATE INDEX idx_password_reset_tokens_user_id ON public.password_reset_tokens USING btree (user_id);
+
+
+--
+-- Name: idx_personal_access_tokens_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_personal_access_tokens_space_id ON public.personal_access_tokens USING btree (space_id);
+
+
+--
+-- Name: idx_personal_access_tokens_space_member_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_personal_access_tokens_space_member_id ON public.personal_access_tokens USING btree (space_member_id);
+
+
+--
+-- Name: idx_personal_access_tokens_token_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_personal_access_tokens_token_digest ON public.personal_access_tokens USING btree (token_digest);
 
 
 --
@@ -1980,11 +2304,123 @@ ALTER TABLE ONLY public.suggestion_pages
 
 
 --
+-- Name: oauth_access_tokens oauth_access_tokens_oauth_grant_id_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_access_tokens
+    ADD CONSTRAINT oauth_access_tokens_oauth_grant_id_space_id_fkey FOREIGN KEY (oauth_grant_id, space_id) REFERENCES public.oauth_grants(id, space_id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_access_tokens oauth_access_tokens_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_access_tokens
+    ADD CONSTRAINT oauth_access_tokens_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_applications oauth_applications_created_space_member_id_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_applications
+    ADD CONSTRAINT oauth_applications_created_space_member_id_space_id_fkey FOREIGN KEY (created_space_member_id, space_id) REFERENCES public.space_members(id, space_id) ON DELETE SET NULL (created_space_member_id);
+
+
+--
+-- Name: oauth_applications oauth_applications_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_applications
+    ADD CONSTRAINT oauth_applications_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_authorization_codes oauth_authorization_codes_oauth_grant_id_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_authorization_codes
+    ADD CONSTRAINT oauth_authorization_codes_oauth_grant_id_space_id_fkey FOREIGN KEY (oauth_grant_id, space_id) REFERENCES public.oauth_grants(id, space_id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_authorization_codes oauth_authorization_codes_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_authorization_codes
+    ADD CONSTRAINT oauth_authorization_codes_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_grants oauth_grants_oauth_application_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_oauth_application_id_fkey FOREIGN KEY (oauth_application_id) REFERENCES public.oauth_applications(id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_grants oauth_grants_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_grants oauth_grants_space_member_id_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_space_member_id_space_id_fkey FOREIGN KEY (space_member_id, space_id) REFERENCES public.space_members(id, space_id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_refresh_tokens oauth_refresh_tokens_oauth_grant_id_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_refresh_tokens
+    ADD CONSTRAINT oauth_refresh_tokens_oauth_grant_id_space_id_fkey FOREIGN KEY (oauth_grant_id, space_id) REFERENCES public.oauth_grants(id, space_id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_refresh_tokens oauth_refresh_tokens_previous_refresh_token_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_refresh_tokens
+    ADD CONSTRAINT oauth_refresh_tokens_previous_refresh_token_id_fkey FOREIGN KEY (previous_refresh_token_id) REFERENCES public.oauth_refresh_tokens(id) ON DELETE SET NULL;
+
+
+--
+-- Name: oauth_refresh_tokens oauth_refresh_tokens_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_refresh_tokens
+    ADD CONSTRAINT oauth_refresh_tokens_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
+
+
+--
 -- Name: password_reset_tokens password_reset_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.password_reset_tokens
     ADD CONSTRAINT password_reset_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: personal_access_tokens personal_access_tokens_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.personal_access_tokens
+    ADD CONSTRAINT personal_access_tokens_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
+
+
+--
+-- Name: personal_access_tokens personal_access_tokens_space_member_id_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.personal_access_tokens
+    ADD CONSTRAINT personal_access_tokens_space_member_id_space_id_fkey FOREIGN KEY (space_member_id, space_id) REFERENCES public.space_members(id, space_id) ON DELETE CASCADE;
 
 
 --
@@ -2160,4 +2596,8 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260908090236'),
     ('20260915152808'),
     ('20260916161028'),
-    ('20260923093006');
+    ('20260923093006'),
+    ('20260925083328'),
+    ('20260925182825'),
+    ('20260927152857'),
+    ('20260928010000');
