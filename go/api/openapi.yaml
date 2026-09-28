@@ -1,0 +1,911 @@
+openapi: 3.1.1
+info:
+  title: Wikino API
+  version: 1.0.0
+  summary: WikinoのスペースのトピックとページをAPIで読み書きする
+  description: |
+    Wikinoの公開Web APIです。
+    APIを呼び出すには、スペース設定で発行する個人アクセストークンか、OAuth 2.0 (Authorization Code + PKCE) で取得したアクセストークンを `Authorization: Bearer` ヘッダーで送ります。
+    どちらのトークンも1つのスペースに束縛され、そのスペースに対する操作だけに使えます。
+
+    エラーはRFC 9457のProblem Details (`application/problem+json`) で返します。
+
+    トークンを使うリクエストには、トークンの持ち主のユーザー単位で1時間あたり5000件のレート制限があります。
+    残量はIETFで標準化中の `RateLimit-Policy` / `RateLimit` ヘッダーで返します (例: `RateLimit-Policy: "user";q=5000;w=3600`、`RateLimit: "user";r=4999;t=1800`)。
+    `q` は1時間あたりの上限、`w` は時間枠の秒数、`r` は残りの件数、`t` は時間枠が切り替わるまでの秒数です。
+    上限を超えると429を返し、再試行できるまでの秒数を `Retry-After` ヘッダーで示します。
+  contact:
+    name: Wikino
+    url: https://github.com/wikinoapp/wikino
+servers:
+  - url: /api/v1
+    description: このドキュメントを配信しているホストのAPI
+security:
+  - oauth2: []
+  - personalAccessToken: []
+tags:
+  - name: user
+    description: トークンの持ち主のユーザーの情報
+  - name: space
+    description: トークンを束縛したスペースの情報
+  - name: topic
+    description: スペースのトピック
+  - name: page
+    description: スペースのページ
+  - name: openapi
+    description: このAPIのOpenAPI記述
+paths:
+  /user:
+    get:
+      operationId: getUser
+      summary: トークンの持ち主のユーザーを取得する
+      description: |
+        トークンの持ち主のユーザーを返します。
+        どのユーザーのトークンかを確かめるための操作で、スコープは要りません。
+      tags:
+        - user
+      responses:
+        "200":
+          description: トークンの持ち主のユーザー
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}:
+    get:
+      operationId: getSpace
+      summary: トークンを束縛したスペースを取得する
+      description: |
+        トークンを束縛したスペースを返します。
+        どのスペースに束縛されたトークンかを確かめるための操作で、スコープは要りません。
+        束縛先と異なるスペースを指定すると404を返します。
+      tags:
+        - space
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+      responses:
+        "200":
+          description: トークンを束縛したスペース
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Space"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/topics:
+    get:
+      operationId: listTopics
+      summary: トピックの一覧を取得する
+      description: |
+        トークンを束縛したスペースのトピックを、トピック番号の小さい順に返します。
+        非公開トピックは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ含みます。
+
+        一覧はカーソル方式で分割して返します。
+        続きがある場合は、本文の `next_cursor` と `Link` ヘッダー (`rel="next"`) で次のページを示します。
+        続きが無い場合は `next_cursor` が `null` になり、`Link` ヘッダーは付きません。
+      tags:
+        - topic
+      security:
+        - oauth2:
+            - topic:read
+        - personalAccessToken:
+            - topic:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: トピックの一覧
+          headers:
+            Link:
+              $ref: "#/components/headers/Link"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopicList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/topics/{topic_number}:
+    get:
+      operationId: getTopic
+      summary: トピックを取得する
+      description: |
+        トピック番号で指定したトピックを返します。
+        非公開トピックは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ返し、それ以外は404を返します。
+      tags:
+        - topic
+      security:
+        - oauth2:
+            - topic:read
+        - personalAccessToken:
+            - topic:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/TopicNumber"
+      responses:
+        "200":
+          description: トピック
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Topic"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages:
+    get:
+      operationId: listPages
+      summary: ページの一覧を取得する
+      description: |
+        トークンを束縛したスペースの公開済みのページを、更新日時の新しい順に返します。
+        下書きのまま公開していないページと、ゴミ箱に入れたページは含みません。
+        非公開トピックのページは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ含みます。
+
+        `topic_number` でトピックを、`modified_since` で更新日時を絞り込めます。
+        前回の取得以降に更新されたページだけを取得するには、前回の取得を始めた日時を `modified_since` に渡します。
+
+        一覧はカーソル方式で分割して返します。
+        続きがある場合は、本文の `next_cursor` と `Link` ヘッダー (`rel="next"`) で次のページを示します。
+        続きが無い場合は `next_cursor` が `null` になり、`Link` ヘッダーは付きません。
+      tags:
+        - page
+      security:
+        - oauth2:
+            - page:read
+        - personalAccessToken:
+            - page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - name: topic_number
+          in: query
+          required: false
+          description: |
+            このトピック番号のトピックのページだけを返します。
+            存在しないトピックや見られないトピックを指定すると、空の一覧を返します。
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+        - name: modified_since
+          in: query
+          required: false
+          description: この日時 (RFC 3339) 以降に更新されたページだけを返します。指定した日時ちょうどに更新されたページも含みます。
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: ページの一覧
+          headers:
+            Link:
+              $ref: "#/components/headers/Link"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post:
+      operationId: createPage
+      summary: ページを作成する
+      description: |
+        トピック番号で指定したトピックにページを作成し、そのまま公開します。
+        非公開トピックにページを作成するには、トークンが `page:write` に加えて `topic:read` を持つ必要があります。
+        存在しないトピックや見られないトピックを指定すると、`topic_number` の問題として422を返します。
+        トピックは見られるがトークンの持ち主がページを作成できない場合は404を返します。
+
+        タイトルはトピック内で重複できません。同じタイトルのページがあれば422を返します。
+        本文のWikiリンクが存在しないページを指す場合は、Web画面での公開と同じく、リンク先のページを下書きの状態で作成します。
+
+        応答の `Location` ヘッダーは作成したページのURL、`ETag` ヘッダーは `getPage` と同じ値です。
+      tags:
+        - page
+      security:
+        - oauth2:
+            - page:write
+        - personalAccessToken:
+            - page:write
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+      requestBody:
+        description: 作成するページのトピック番号・タイトル・本文です。
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewPage"
+      responses:
+        "201":
+          description: 作成したページ
+          headers:
+            Location:
+              description: "作成したページのURLです (例: `/api/v1/spaces/seed-wiki/pages/42`)。"
+              required: true
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Page"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}:
+    get:
+      operationId: getPage
+      summary: ページを取得する
+      description: |
+        ページ番号で指定した公開済みのページを返します。
+        下書きのまま公開していないページ、ゴミ箱に入れたページ、見られない非公開トピックのページは404を返します。
+        非公開トピックのページを読むには、トークンが `page:read` に加えて `topic:read` を持つ必要があります。
+
+        応答の `ETag` ヘッダーはページのタイトル・本文・所属トピック・更新日時から計算します。
+        前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
+      tags:
+        - page
+      security:
+        - oauth2:
+            - page:read
+        - personalAccessToken:
+            - page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - name: If-None-Match
+          in: header
+          required: false
+          description: 前回の応答の `ETag` です。ページの応答が変わっていなければ304を返します。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ページ
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Page"
+        "304":
+          description: "`If-None-Match` の `ETag` とページの応答が一致したため、本文を返しません。"
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    patch:
+      operationId: updatePage
+      summary: ページを更新する
+      description: |
+        ページ番号で指定した公開済みのページのタイトルと本文を、JSON Merge Patch (RFC 7396) で更新します。
+        リクエスト本文に含めた項目だけを更新し、含めなかった項目は変えません。
+        非公開トピックのページを更新するには、トークンが `page:write` に加えて `topic:read` を持つ必要があります。
+        ページが存在しない場合や、トークンの持ち主がページを更新できない場合は404を返します。
+
+        `If-Match` ヘッダーに `getPage` などで受け取った `ETag` を送ってください。
+        `If-Match` が無い場合は428を、ページがその後に更新されていて `ETag` が一致しない場合は412を返します。
+        412を受け取ったら、ページを取得し直して変更を反映してから、新しい `ETag` で更新し直してください。
+
+        タイトルはトピック内で重複できません。同じタイトルのページがあれば422を返します。
+        本文のWikiリンクが存在しないページを指す場合は、Web画面での公開と同じく、リンク先のページを下書きの状態で作成します。
+        トークンの持ち主がWeb画面で編集中の下書きは、更新しても削除しません。
+        タイトルと本文が今と同じ場合は何も更新せず、今のページを返します。
+      tags:
+        - page
+      security:
+        - oauth2:
+            - page:write
+        - personalAccessToken:
+            - page:write
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - name: If-Match
+          in: header
+          required: false
+          description: |
+            更新の前提にするページの `ETag` です。ページの今の `ETag` と一致する場合だけ更新します。
+            省略すると428を返します。
+          schema:
+            type: string
+      requestBody:
+        description: 更新する項目です。JSON Merge Patch (`application/merge-patch+json`) で送ります。
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/PagePatch"
+      responses:
+        "200":
+          description: 更新したページ
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Page"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedPatchMediaType"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /openapi.yaml:
+    get:
+      operationId: getOpenAPIDescription
+      summary: OpenAPI記述を取得する
+      description: このAPIのOpenAPI記述をYAMLで返します。トークンは要りません。
+      tags:
+        - openapi
+      security: []
+      responses:
+        "200":
+          description: OpenAPI記述
+          content:
+            application/yaml:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: |
+        OAuth 2.0のAuthorization Code + PKCE (S256) で取得したアクセストークンです。
+        トークンは、OAuthアプリを登録したスペースに束縛されます。
+        全スペース共通の公式クライアントは、認可要求の `resource` パラメーターでスペースのAPIのURL (例: `https://example.com/api/v1/spaces/{space_identifier}`) を指定し、そのスペースに束縛します。
+        アクセストークンの有効期間は1時間で、リフレッシュトークンで更新できます。
+      flows:
+        authorizationCode:
+          authorizationUrl: /oauth/authorize
+          tokenUrl: /oauth/token
+          refreshUrl: /oauth/token
+          scopes:
+            topic:read: トピックを読む。非公開トピックとそのページを読むにもこのスコープが要ります
+            page:read: ページを読む
+            page:write: ページを作成・更新する (`page:read` を含みます)
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      description: |
+        スペース設定で発行した個人アクセストークンです。
+        発行したスペースに束縛され、発行時に選んだスコープの範囲で使えます。
+  parameters:
+    SpaceIdentifier:
+      name: space_identifier
+      in: path
+      required: true
+      description: スペースの識別子です。WebのURL (`/s/{space_identifier}`) と同じ値です。
+      schema:
+        type: string
+    TopicNumber:
+      name: topic_number
+      in: path
+      required: true
+      description: スペース内のトピックの番号です。WebのURL (`/s/{space_identifier}/topics/{topic_number}`) と同じ値です。
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+    PageNumber:
+      name: page_number
+      in: path
+      required: true
+      description: スペース内のページの番号です。WebのURL (`/s/{space_identifier}/pages/{page_number}`) と同じ値です。
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: |
+        続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
+        中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: 1ページの件数です。100を超える値は100として扱います。
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        default: 20
+  headers:
+    Link:
+      description: |
+        次のページのURLです (RFC 8288。例: `</api/v1/spaces/seed-wiki/topics?cursor=...>; rel="next"`)。
+        続きが無い場合は付きません。
+      schema:
+        type: string
+    ETag:
+      description: |
+        ページのタイトル・本文・所属トピック・更新日時から計算したエンティティタグです (例: `"3q2-7wEBYm8aHqhqcl7IJ4K_xGJmBGyBMs5-yHaI0Wk"`)。
+        応答が変われば値も変わります。
+      required: true
+      schema:
+        type: string
+    RateLimitPolicy:
+      description: |
+        レート制限のポリシーです (例: `"user";q=5000;w=3600`)。
+        レート制限のカウンターを確かめられなかった場合は付きません。
+      schema:
+        type: string
+    RateLimit:
+      description: |
+        レート制限の残量です (例: `"user";r=4999;t=1800`)。
+        レート制限のカウンターを確かめられなかった場合は付きません。
+      schema:
+        type: string
+    RetryAfter:
+      description: 再試行できるまでの秒数です。
+      required: true
+      schema:
+        type: integer
+    WWWAuthenticate:
+      description: |
+        RFC 6750のBearer認証のチャレンジです。
+        トークンを送らなかった場合は `Bearer`、送ったトークンを受け付けられない場合は `Bearer error="invalid_token"` です。
+        トークンのスコープが足りない場合 (403) は `Bearer error="insufficient_scope", scope="topic:read"` のように要るスコープを示します。
+        スペース配下のoperation (`/spaces/{space_identifier}` とその下) では、401・403のどちらにも、そのスペースの保護リソースのメタデータ (RFC 9728) のURLを `resource_metadata="https://example.com/.well-known/oauth-protected-resource/api/v1/spaces/{space_identifier}"` のように付けます。
+        スペースに属さないoperation (`getUser` など) には付けません。
+      required: true
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: リクエスト本文がJSONとして読めません。
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    UnsupportedMediaType:
+      description: |
+        リクエスト本文のメディアタイプを受け付けません。
+        受け付けるメディアタイプを `Accept-Post` ヘッダーで示します。
+      headers:
+        Accept-Post:
+          description: "受け付けるリクエスト本文のメディアタイプです (例: `application/json`)。"
+          required: true
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    UnsupportedPatchMediaType:
+      description: |
+        リクエスト本文のメディアタイプを受け付けません。
+        受け付けるメディアタイプを `Accept-Patch` ヘッダーで示します。
+      headers:
+        Accept-Patch:
+          description: "受け付けるリクエスト本文のメディアタイプです (例: `application/merge-patch+json`)。"
+          required: true
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    PreconditionFailed:
+      description: |
+        `If-Match` の `ETag` がリソースの今の `ETag` と一致しません。
+        リクエストを送る前に、別の更新が行われています。
+        `detail` で、取得し直してから更新し直すなどの対処を示します。
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    PreconditionRequired:
+      description: 更新の前提にする `ETag` を `If-Match` ヘッダーで送る必要があります。
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Unauthorized:
+      description: |
+        トークンが無い、無効・期限切れ・失効済み、またはトークンの持ち主がトークンを使い続ける権限を失っています。
+      headers:
+        WWW-Authenticate:
+          $ref: "#/components/headers/WWWAuthenticate"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Forbidden:
+      description: |
+        トークンにこの操作に要るスコープがありません。
+        `WWW-Authenticate` ヘッダーの `scope` で要るスコープを示します。
+      headers:
+        WWW-Authenticate:
+          $ref: "#/components/headers/WWWAuthenticate"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    NotFound:
+      description: |
+        リソースが存在しないか、見る権限がありません。
+        トークンの束縛先と異なるスペースを指定した場合も404です。
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    ValidationFailed:
+      description: |
+        パラメーターやリクエスト本文の内容が正しくありません。
+        `errors` でフィールド単位の問題を示します。
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    TooManyRequests:
+      description: レート制限を超えました。
+      headers:
+        RateLimit-Policy:
+          $ref: "#/components/headers/RateLimitPolicy"
+        RateLimit:
+          $ref: "#/components/headers/RateLimit"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    UnexpectedError:
+      description: 予期しないエラー
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+  schemas:
+    User:
+      type: object
+      description: ユーザーです。
+      required:
+        - id
+        - atname
+        - name
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ユーザーのIDです。
+        atname:
+          type: string
+          description: ユーザー名 (`@` の後に続く名前) です。
+        name:
+          type: string
+          description: 表示名です。設定していない場合は空文字列です。
+        description:
+          type: string
+          description: 自己紹介です。設定していない場合は空文字列です。
+    Space:
+      type: object
+      description: スペースです。
+      required:
+        - id
+        - identifier
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: スペースのIDです。
+        identifier:
+          type: string
+          description: スペースの識別子です。パスの `space_identifier` に使います。
+        name:
+          type: string
+          description: スペースの名前です。
+    Topic:
+      type: object
+      description: トピックです。
+      required:
+        - id
+        - number
+        - name
+        - description
+        - visibility
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: トピックのIDです。
+        number:
+          type: integer
+          format: int32
+          description: スペース内のトピックの番号です。パスの `topic_number` に使います。
+        name:
+          type: string
+          description: トピックの名前です。
+        description:
+          type: string
+          description: トピックの説明です。設定していない場合は空文字列です。
+        visibility:
+          type: string
+          enum:
+            - public
+            - private
+          description: |
+            トピックの公開範囲です。`public` は誰でも見られる公開トピック、`private` はトピックに参加しているメンバーなどだけが見られる非公開トピックです。
+    TopicList:
+      type: object
+      description: トピックの一覧の1ページです。
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          description: このページのトピックです。
+          items:
+            $ref: "#/components/schemas/Topic"
+        next_cursor:
+          $ref: "#/components/schemas/NextCursor"
+    Page:
+      type: object
+      description: ページです。
+      required:
+        - id
+        - number
+        - topic_number
+        - title
+        - body
+        - modified_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ページのIDです。
+        number:
+          type: integer
+          format: int32
+          description: スペース内のページの番号です。パスの `page_number` に使います。
+        topic_number:
+          type: integer
+          format: int32
+          description: ページが属するトピックの番号です。
+        title:
+          type: [string, "null"]
+          description: ページのタイトルです。タイトルの無いページでは `null` です。
+        body:
+          type: string
+          description: ページの本文 (Markdown) です。
+        modified_at:
+          type: string
+          format: date-time
+          description: |
+            ページの内容を最後に更新した日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+            秒未満はマイクロ秒まで含み、末尾の0は省きます。`modified_since` にそのまま渡せます。
+    NewPage:
+      type: object
+      description: 作成するページです。
+      required:
+        - topic_number
+        - title
+        - body
+      properties:
+        topic_number:
+          type: integer
+          format: int32
+          minimum: 1
+          description: ページを作成するトピックの番号です。
+        title:
+          $ref: "#/components/schemas/PageTitleInput"
+        body:
+          $ref: "#/components/schemas/PageBodyInput"
+    PagePatch:
+      type: object
+      description: |
+        ページの更新内容です (JSON Merge Patch)。含めた項目だけを更新します。
+        どの項目も `null` にはできません。定義していない項目を含めると422を返します。
+      additionalProperties: false
+      properties:
+        title:
+          $ref: "#/components/schemas/PageTitleInput"
+        body:
+          $ref: "#/components/schemas/PageBodyInput"
+    PageTitleInput:
+      type: string
+      minLength: 1
+      maxLength: 200
+      description: |
+        ページのタイトルです。トピック内で重複できません。
+        `/`・`\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けません。
+    PageBodyInput:
+      type: string
+      description: ページの本文 (Markdown) です。空文字列にもできます。
+    PageList:
+      type: object
+      description: ページの一覧の1ページです。
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          description: このページのページです。
+          items:
+            $ref: "#/components/schemas/Page"
+        next_cursor:
+          $ref: "#/components/schemas/NextCursor"
+    NextCursor:
+      type: [string, "null"]
+      description: 次のページを取得するカーソルです。`cursor` パラメーターに渡します。続きが無い場合は `null` です。
+    ProblemDetails:
+      type: object
+      description: RFC 9457のProblem Detailsです。
+      required:
+        - type
+        - title
+        - status
+        - detail
+      properties:
+        type:
+          type: string
+          format: uri
+          description: |
+            問題の種類を表すURIです。種類ごとに変わらない値で、プログラムでの判別に使えます。
+            ステータスコード以上の情報を持たない問題では `about:blank` です。
+        title:
+          type: string
+          description: 問題の種類の短い説明です。
+        status:
+          type: integer
+          description: HTTPステータスコードです。
+        detail:
+          type: [string, "null"]
+          description: この発生に固有の説明です。
+        errors:
+          type: array
+          description: フィールド単位の問題です。`type` が `validation-failed` の問題にだけ含みます。
+          items:
+            $ref: "#/components/schemas/ProblemDetailsError"
+    ProblemDetailsError:
+      type: object
+      description: リクエストの検証で見つかった1つの問題です。
+      required:
+        - detail
+        - pointer
+        - parameter
+      properties:
+        detail:
+          type: string
+          description: 問題の説明です。
+        pointer:
+          type: [string, "null"]
+          description: リクエスト本文の問題の箇所を指すJSON Pointer (URIフラグメント形式。例 `#/title`) です。本文以外の問題では `null` です。
+        parameter:
+          type: [string, "null"]
+          description: 問題のあったパラメーター (パス・クエリ・ヘッダー) の名前です。パラメーター以外の問題では `null` です。

@@ -121,3 +121,14 @@ func IPKey(ip string) string {
 func EmailKey(email string) string {
 	return fmt.Sprintf("email:%s", email)
 }
+
+// OAuthIPKeyはOAuthのトークンエンドポイントのIPアドレス単位のレート制限に使うキーを生成する。
+// 窓の長さの違う他のIPアドレス単位の制限 (IPKey) とカウンターを分けるため、別の名前空間にする
+func OAuthIPKey(ip string) string {
+	return fmt.Sprintf("oauth:ip:%s", ip)
+}
+
+// APIUserKeyは公開APIのユーザー単位のレート制限に使うキーを生成する
+func APIUserKey(userID string) string {
+	return fmt.Sprintf("api:user:%s", userID)
+}

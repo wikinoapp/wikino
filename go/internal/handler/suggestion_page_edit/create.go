@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -32,7 +32,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	suggestionNumberInt, err := strconv.ParseInt(suggestionNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	suggestionNumber := model.SuggestionNumber(suggestionNumberInt)
@@ -40,7 +40,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// フォームパラメータを取得
 	suggestionPageID := model.SuggestionPageID(r.FormValue("suggestion_page_id"))
 	if suggestionPageID == "" {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	force := r.FormValue("force") == "true"
@@ -84,7 +84,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 	if ae := model.AsAppError(err); ae != nil {
 		switch ae.Code {
 		case model.AppErrCodeResourceNotFound:
-			handler.NotFound(w, r)
+			httperror.NotFound(w, r)
 		case model.AppErrCodeForbidden:
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		case model.AppErrCodeConflict:

@@ -760,6 +760,12 @@ func TestCSRFMiddleware_TokenlessPaths(t *testing.T) {
 		{name: "ページのカード画像のGETにはCookieを付けない", method: http.MethodGet, path: "/s/example/pages/1/og_image/0123456789abcdef.png", wantCookie: false},
 		{name: "ページのカード画像のHEADにはCookieを付けない", method: http.MethodHead, path: "/s/example/pages/1/og_image/0123456789abcdef.png", wantCookie: false},
 		{name: "ページ表示画面には従来どおりCookieを付ける", method: http.MethodGet, path: "/s/example/pages/1", wantCookie: true},
+		{name: "APIのGETにはCookieを付けない", method: http.MethodGet, path: "/api/v1/openapi.yaml", wantCookie: false},
+		{name: "APIのHEADにはCookieを付けない", method: http.MethodHead, path: "/api/v1/openapi.yaml", wantCookie: false},
+		{name: "認可サーバーのメタデータにはCookieを付けない", method: http.MethodGet, path: "/.well-known/oauth-authorization-server", wantCookie: false},
+		{name: "保護リソースのメタデータにはCookieを付けない", method: http.MethodGet, path: "/.well-known/oauth-protected-resource/api/v1/spaces/example", wantCookie: false},
+		{name: "APIカタログにはCookieを付けない", method: http.MethodGet, path: "/.well-known/api-catalog", wantCookie: false},
+		{name: "OAuthの同意画面にはCookieを付ける", method: http.MethodGet, path: "/oauth/authorize", wantCookie: true},
 	}
 
 	for _, tt := range tests {
@@ -817,5 +823,69 @@ func TestCSRFMiddleware_TokenlessPaths_POSTStillProtected(t *testing.T) {
 
 	if rr.Code != http.StatusForbidden {
 		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusForbidden)
+	}
+}
+
+// APIはBearerトークンで認証しCookieを使わないため、状態を変えるメソッドでもCSRFトークンを求めない。
+// CSRFトークンのCookieも発行しない。
+func TestCSRFMiddleware_APISkipsVerification(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		CookieDomain:    ".example.com",
+		SessionSecure:   false,
+		SessionHTTPOnly: true,
+	}
+
+	csrfMiddleware := middleware.NewCSRF(cfg)
+
+	for _, method := range []string{http.MethodPost, http.MethodPatch, http.MethodPut, http.MethodDelete} {
+		t.Run(method, func(t *testing.T) {
+			t.Parallel()
+
+			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if token := middleware.GetCSRFTokenFromContext(r.Context()); token != "" {
+					t.Errorf("コンテキストにトークンが載っている: %q", token)
+				}
+				w.WriteHeader(http.StatusOK)
+			})
+
+			req := httptest.NewRequest(method, "/api/v1/spaces/example/pages", nil)
+			rr := httptest.NewRecorder()
+
+			csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+			}
+			if got := rr.Header().Get("Set-Cookie"); got != "" {
+				t.Errorf("Set-Cookie = %q、期待値は無し", got)
+			}
+		})
+	}
+}
+
+func TestCSRFMiddleware_OAuthTokenPathsSkipVerification(t *testing.T) {
+	t.Parallel()
+
+	csrfMiddleware := middleware.NewCSRF(&config.Config{})
+	for _, path := range []string{"/oauth/token", "/oauth/revoke"} {
+		t.Run(path, func(t *testing.T) {
+			t.Parallel()
+			called := false
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				called = true
+				w.WriteHeader(http.StatusOK)
+			})
+			req := httptest.NewRequest(http.MethodPost, path, nil)
+			rr := httptest.NewRecorder()
+			csrfMiddleware.Middleware(next).ServeHTTP(rr, req)
+			if !called || rr.Code != http.StatusOK {
+				t.Errorf("CSRFトークン無しのPOSTが通過しない: called=%v、status=%d", called, rr.Code)
+			}
+			if got := rr.Header().Get("Set-Cookie"); got != "" {
+				t.Errorf("Set-Cookie = %q、期待値は無し", got)
+			}
+		})
 	}
 }

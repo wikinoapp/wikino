@@ -72,8 +72,29 @@ type CreateDraftPageInput struct {
 
 // Createは下書きを作成する
 func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageInput) (*model.DraftPage, error) {
-	now := time.Now()
+	row, err := r.q.CreateDraftPage(ctx, input.toParams(time.Now()))
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
 
+// CreateIfNotExistsは下書きが無ければ作成する。
+// 同じページとスペースメンバーの下書きがすでにある場合は作成せず、nilを返す。
+// Createと違い、一意制約の競合でトランザクションを中断させない
+func (r *DraftPageRepository) CreateIfNotExists(ctx context.Context, input CreateDraftPageInput) (*model.DraftPage, error) {
+	row, err := r.q.CreateDraftPageIfNotExists(ctx, query.CreateDraftPageIfNotExistsParams(input.toParams(time.Now())))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// toParamsは下書き作成のクエリパラメータを組み立てる
+func (input CreateDraftPageInput) toParams(now time.Time) query.CreateDraftPageParams {
 	var suggestionPageID *string
 	if input.SuggestionPageID != nil {
 		s := string(*input.SuggestionPageID)
@@ -86,7 +107,7 @@ func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageI
 		featuredImageAttachmentID = &s
 	}
 
-	row, err := r.q.CreateDraftPage(ctx, query.CreateDraftPageParams{
+	return query.CreateDraftPageParams{
 		SpaceID:                   string(input.SpaceID),
 		PageID:                    string(input.PageID),
 		SpaceMemberID:             string(input.SpaceMemberID),
@@ -99,11 +120,7 @@ func (r *DraftPageRepository) Create(ctx context.Context, input CreateDraftPageI
 		ModifiedAt:                input.ModifiedAt,
 		CreatedAt:                 now,
 		UpdatedAt:                 now,
-	})
-	if err != nil {
-		return nil, err
 	}
-	return r.toModel(row), nil
 }
 
 // UpdateDraftPageInputは下書き更新の入力パラメータ

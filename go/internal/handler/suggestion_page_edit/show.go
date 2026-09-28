@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -34,7 +34,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	suggestionNumberInt, err := strconv.ParseInt(suggestionNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	suggestionNumber := model.SuggestionNumber(suggestionNumberInt)
@@ -42,7 +42,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// URLパラメータを取得 (suggestion_page_id)
 	suggestionPageIDStr := chi.URLParam(r, "suggestion_page_id")
 	if suggestionPageIDStr == "" {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	suggestionPageID := model.SuggestionPageID(suggestionPageIDStr)
@@ -59,7 +59,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if detailOutput == nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -94,7 +94,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !found {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 

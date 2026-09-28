@@ -1,0 +1,75 @@
+package personal_access_token
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// CreateDataは個人アクセストークンを発行した直後の画面をレンダリングする元になるデータ。
+//
+// TokenValueはトークンの値そのもの。データベースにはダイジェストしか残らないため、値を
+// 示せるのはこの画面だけである。
+type CreateData struct {
+	Space      viewmodel.Space
+	Token      viewmodel.PersonalAccessToken
+	TokenValue string
+}
+
+// Createは個人アクセストークンを発行した直後の画面を表示します。
+templ Create(data CreateData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "personal_access_token_create_heading"),
+					})
+				</div>
+
+				<div class="px-4">
+					<div class="alert">
+						@templates.DecorativeIcon("warning-regular", "fill-warning")
+						<section>
+							{ templates.T(ctx, "personal_access_token_create_notice") }
+						</section>
+					</div>
+				</div>
+
+				@components.ContentCard() {
+					<div class="grid gap-6">
+						<div class="grid gap-2">
+							<label class="label" for="token_value">
+								{ templates.T(ctx, "personal_access_token_create_token_label", map[string]any{"Name": data.Token.Name}) }
+							</label>
+							// 利用者がコピーするための欄で、送信はしない。値を選択しやすいよう入力欄に入れる。
+							<input
+								autocomplete="off"
+								class="input font-mono"
+								id="token_value"
+								readonly
+								spellcheck="false"
+								type="text"
+								value={ data.TokenValue }
+							/>
+						</div>
+
+						@components.APITokenScopeBadges(data.Token.Scopes)
+
+						<p class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "personal_access_token_create_expires_at") }
+							@components.AbsoluteTime(components.AbsoluteTimeData{Time: data.Token.ExpiresAt})
+						</p>
+
+						<a
+							href={ templ.SafeURL(string(templates.SpaceSettingsPersonalAccessTokensPath(data.Space.Identifier))) }
+							class="btn rounded-full w-fit"
+						>
+							{ templates.T(ctx, "personal_access_token_create_back") }
+						</a>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

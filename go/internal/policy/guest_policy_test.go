@@ -64,6 +64,17 @@ func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 		{"CanUpdateSuggestionComment", p.CanUpdateSuggestionComment(openSuggestion)},
 		{"CanCreateTopic", p.CanCreateTopic()},
 		{"CanExportSpace", p.CanExportSpace()},
+		{"CanUpdateSpace", p.CanUpdateSpace()},
+		{"CanShowPersonalAccessTokens", p.CanShowPersonalAccessTokens()},
+		{"CanCreatePersonalAccessToken", p.CanCreatePersonalAccessToken()},
+		{"CanDeletePersonalAccessToken", p.CanDeletePersonalAccessToken()},
+		{"CanShowOAuthGrants", p.CanShowOAuthGrants()},
+		{"CanCreateOAuthGrant", p.CanCreateOAuthGrant()},
+		{"CanDeleteOAuthGrant", p.CanDeleteOAuthGrant()},
+		{"CanShowOAuthApplications", p.CanShowOAuthApplications()},
+		{"CanCreateOAuthApplication", p.CanCreateOAuthApplication()},
+		{"CanUpdateOAuthApplication", p.CanUpdateOAuthApplication()},
+		{"CanDeleteOAuthApplication", p.CanDeleteOAuthApplication()},
 	}
 
 	for _, tt := range tests {

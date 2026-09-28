@@ -1,0 +1,66 @@
+package oauth_application
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// clientTypeBadgeはクライアントの種別をバッジで表示します。
+templ clientTypeBadge(confidential bool) {
+	<span class="badge bg-muted text-muted-foreground font-normal">
+		if confidential {
+			@clientTypeLabel(model.OAuthClientTypeConfidential)
+		} else {
+			@clientTypeLabel(model.OAuthClientTypePublic)
+		}
+	</span>
+}
+
+// clientTypeLabelはクライアントの種別の選択肢の名前を表示します。文言のキーは種別の値から
+// 組み立てず名指しし、画面が持つキーをgrepで追えるようにします。
+templ clientTypeLabel(clientType model.OAuthClientType) {
+	switch clientType {
+		case model.OAuthClientTypeConfidential:
+			{ templates.T(ctx, "oauth_application_client_type_confidential") }
+		case model.OAuthClientTypePublic:
+			{ templates.T(ctx, "oauth_application_client_type_public") }
+	}
+}
+
+// creatorNameはアプリを作成したメンバーの表示名を表示します。作成したメンバーがスペースから
+// いなくなっていれば、そのことを示します。
+templ creatorName(name string) {
+	if name != "" {
+		{ name }
+	} else {
+		{ templates.T(ctx, "oauth_application_creator_unknown") }
+	}
+}
+
+// clientIDFieldはクライアントIDを、選択してコピーしやすい読み取り専用の入力欄で表示します。
+templ clientIDField(clientID string) {
+	<div class="grid gap-2">
+		<label class="label" for="client_id">
+			{ templates.T(ctx, "oauth_application_client_id_label") }
+		</label>
+		// 利用者がコピーするための欄で、送信はしない。
+		<input
+			autocomplete="off"
+			class="input font-mono"
+			id="client_id"
+			readonly
+			spellcheck="false"
+			type="text"
+			value={ clientID }
+		/>
+	</div>
+}
+
+// redirectURIListは登録したリダイレクトURIを並べます。
+templ redirectURIList(redirectURIs []string) {
+	<ul class="flex flex-col gap-1">
+		for _, uri := range redirectURIs {
+			<li><code class="text-sm [overflow-wrap:anywhere]">{ uri }</code></li>
+		}
+	</ul>
+}

@@ -2,9 +2,61 @@
 package clientip
 
 import (
+	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 )
+
+// GetTrustedClientIPは接続元が信頼済みプロキシのときだけX-Forwarded-Forを右から読む。
+// 各プロキシが送信元IPをヘッダーの末尾に追記する構成を前提とする。
+// 信頼していない接続元から送られた転送ヘッダーは無視する。
+func GetTrustedClientIP(r *http.Request, trustedProxies []netip.Prefix) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	peer, err := netip.ParseAddr(host)
+	if err != nil {
+		return host
+	}
+	peer = peer.Unmap()
+	if !isTrustedProxy(peer, trustedProxies) {
+		return peer.String()
+	}
+	for _, raw := range reverseForwardedFor(r.Header.Get("X-Forwarded-For")) {
+		ip, err := netip.ParseAddr(strings.TrimSpace(raw))
+		if err != nil {
+			return peer.String()
+		}
+		ip = ip.Unmap()
+		if !isTrustedProxy(ip, trustedProxies) {
+			return ip.String()
+		}
+		peer = ip
+	}
+	return peer.String()
+}
+
+func isTrustedProxy(ip netip.Addr, prefixes []netip.Prefix) bool {
+	for _, prefix := range prefixes {
+		if prefix.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+func reverseForwardedFor(value string) []string {
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	for i, j := 0, len(parts)-1; i < j; i, j = i+1, j-1 {
+		parts[i], parts[j] = parts[j], parts[i]
+	}
+	return parts
+}
 
 // GetClientIPはHTTPリクエストからクライアントのIPアドレスを取得します
 //

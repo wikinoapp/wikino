@@ -24,6 +24,22 @@ func NewMemberPolicy(spaceScopes, topicScopes []model.Scope) *MemberPolicy {
 	return &MemberPolicy{effectiveScopes: m}
 }
 
+// NewAPIMemberPolicyは公開APIのトークンで呼び出したスペースメンバー用のMemberPolicyを生成する。
+// メンバーのスコープ (スペース + トピック) とトークンのスコープをそれぞれ含意展開してから積を取り、
+// メンバーとトークンの両方が持つスコープだけを有効にする。
+// トークンのスコープは付与できるもの (APITokenScopes) に限るため、管理系のスコープは有効にならない
+func NewAPIMemberPolicy(spaceScopes, topicScopes, tokenScopes []model.Scope) *MemberPolicy {
+	p := NewMemberPolicy(spaceScopes, topicScopes)
+	tokenExpanded := ExpandAPITokenScopes(tokenScopes)
+	m := make(map[model.Scope]bool, len(tokenExpanded))
+	for _, s := range tokenExpanded {
+		if p.effectiveScopes[s] {
+			m[s] = true
+		}
+	}
+	return &MemberPolicy{effectiveScopes: m}
+}
+
 func (p *MemberPolicy) CanShowTopic(topic *model.Topic) bool {
 	if topic.Visibility == model.TopicVisibilityPublic {
 		return true
@@ -120,4 +136,48 @@ func (p *MemberPolicy) CanCreateTopic() bool {
 
 func (p *MemberPolicy) CanExportSpace() bool {
 	return p.effectiveScopes[model.ScopeSpaceWrite]
+}
+
+func (p *MemberPolicy) CanUpdateSpace() bool {
+	return p.effectiveScopes[model.ScopeSpaceWrite]
+}
+
+func (p *MemberPolicy) CanShowPersonalAccessTokens() bool {
+	return p.effectiveScopes[model.ScopePersonalAccessTokenRead]
+}
+
+func (p *MemberPolicy) CanCreatePersonalAccessToken() bool {
+	return p.effectiveScopes[model.ScopePersonalAccessTokenWrite]
+}
+
+func (p *MemberPolicy) CanDeletePersonalAccessToken() bool {
+	return p.effectiveScopes[model.ScopePersonalAccessTokenDelete]
+}
+
+func (p *MemberPolicy) CanShowOAuthGrants() bool {
+	return p.effectiveScopes[model.ScopeOAuthGrantRead]
+}
+
+func (p *MemberPolicy) CanCreateOAuthGrant() bool {
+	return p.effectiveScopes[model.ScopeOAuthGrantWrite]
+}
+
+func (p *MemberPolicy) CanDeleteOAuthGrant() bool {
+	return p.effectiveScopes[model.ScopeOAuthGrantDelete]
+}
+
+func (p *MemberPolicy) CanShowOAuthApplications() bool {
+	return p.effectiveScopes[model.ScopeOAuthApplicationRead]
+}
+
+func (p *MemberPolicy) CanCreateOAuthApplication() bool {
+	return p.effectiveScopes[model.ScopeOAuthApplicationWrite]
+}
+
+func (p *MemberPolicy) CanUpdateOAuthApplication() bool {
+	return p.effectiveScopes[model.ScopeOAuthApplicationWrite]
+}
+
+func (p *MemberPolicy) CanDeleteOAuthApplication() bool {
+	return p.effectiveScopes[model.ScopeOAuthApplicationDelete]
 }

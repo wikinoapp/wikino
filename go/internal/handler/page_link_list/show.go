@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/httppagination"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -40,7 +40,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
 	if err != nil {
-		handler.RelatedPageListNotFound(w, r)
+		httperror.RelatedPageListNotFound(w, r)
 		return
 	}
 
@@ -48,7 +48,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// ページはUseCase呼び出し前に拒否する。
 	currentPage, ok := httppagination.ParsePageParam(r, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
-		handler.RelatedPageListNotFound(w, r)
+		httperror.RelatedPageListNotFound(w, r)
 		return
 	}
 
@@ -56,17 +56,17 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// 指し続けるようにする。受け取らないと、他の一覧が1ページ目へ戻ってしまう。
 	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
-		handler.RelatedPageListNotFound(w, r)
+		httperror.RelatedPageListNotFound(w, r)
 		return
 	}
 	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
-		handler.RelatedPageListNotFound(w, r)
+		httperror.RelatedPageListNotFound(w, r)
 		return
 	}
 	linkedPageNumber, ok := httppagination.ParseOptionalNumberParam(r, viewmodel.LinkedPageNumberQueryParam)
 	if !ok {
-		handler.RelatedPageListNotFound(w, r)
+		httperror.RelatedPageListNotFound(w, r)
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		PageBacklinkPage:   pageBacklinkPage,
 	}.Normalized()
 	if !linkState.WithinCumulativeLimit(usecase.MaxCumulativeRelatedPagePages) {
-		handler.RelatedPageListNotFound(w, r)
+		httperror.RelatedPageListNotFound(w, r)
 		return
 	}
 
@@ -96,7 +96,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		if ae := model.AsAppError(err); ae != nil {
 			switch ae.Code {
 			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
-				handler.RelatedPageListNotFound(w, r)
+				httperror.RelatedPageListNotFound(w, r)
 			default:
 				slog.ErrorContext(ctx, ae.LogString())
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -110,7 +110,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	pagination, loadMoreCapped := viewmodel.NewRelatedPagePagination(currentPage, output.LinkedTotalCount, viewmodel.LinkLimit, linkState, linkState.CumulativePageLimit(usecase.MaxCumulativeRelatedPagePages))
 	if int(currentPage) > pagination.Total {
-		handler.RelatedPageListNotFound(w, r)
+		httperror.RelatedPageListNotFound(w, r)
 		return
 	}
 

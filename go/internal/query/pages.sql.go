@@ -243,6 +243,45 @@ func (q *Queries) CreateUnpublishedPage(ctx context.Context, arg CreateUnpublish
 	return i, err
 }
 
+const discardEmptyUnpublishedPageByID = `-- name: DiscardEmptyUnpublishedPageByID :one
+UPDATE pages
+SET title = id::varchar,
+    discarded_at = $1,
+    updated_at = $2
+WHERE id = $3
+  AND space_id = $4
+  AND topic_id = $5
+  AND title = $6
+  AND published_at IS NULL
+  AND body = ''
+  AND discarded_at IS NULL
+RETURNING id
+`
+
+type DiscardEmptyUnpublishedPageByIDParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	SpaceID     string       `json:"space_id"`
+	TopicID     string       `json:"topic_id"`
+	Title       interface{}  `json:"title"`
+}
+
+// APIの作成時に、検証後も同じタイトルの空の未公開ページである場合だけ置き換える
+func (q *Queries) DiscardEmptyUnpublishedPageByID(ctx context.Context, arg DiscardEmptyUnpublishedPageByIDParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, discardEmptyUnpublishedPageByID,
+		arg.DiscardedAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SpaceID,
+		arg.TopicID,
+		arg.Title,
+	)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
 const discardPageByID = `-- name: DiscardPageByID :exec
 UPDATE pages
 SET title = id::varchar,
@@ -571,6 +610,43 @@ func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPa
 		return nil, err
 	}
 	return items, nil
+}
+
+const findPageByIDForUpdate = `-- name: FindPageByIDForUpdate :one
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages WHERE id = $1 AND space_id = $2 AND discarded_at IS NULL FOR NO KEY UPDATE
+`
+
+type FindPageByIDForUpdateParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// APIの更新で、`If-Match` の照合から更新までの間に他の更新が割り込まないよう、ページの行を
+// トランザクションが終わるまでロックして取得する (廃棄されていないページのみ)。
+// FOR UPDATEではなくFOR NO KEY UPDATEを使うのは、LockSpaceByIDと同じく、pages(id) を参照する
+// テーブル (下書き・リビジョンなど) への書き込みの外部キー検査を待たせないためである。
+// UPDATEもFOR NO KEY UPDATEを取るため、同じページの更新どうしは直列化される。
+func (q *Queries) FindPageByIDForUpdate(ctx context.Context, arg FindPageByIDForUpdateParams) (Page, error) {
+	row := q.db.QueryRowContext(ctx, findPageByIDForUpdate, arg.ID, arg.SpaceID)
+	var i Page
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.TopicID,
+		&i.Number,
+		&i.Title,
+		&i.Body,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.PublishedAt,
+		&i.TrashedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PinnedAt,
+		&i.DiscardedAt,
+		&i.FeaturedImageAttachmentID,
+	)
+	return i, err
 }
 
 const findPageBySpaceAndNumber = `-- name: FindPageBySpaceAndNumber :one
@@ -1033,6 +1109,85 @@ ORDER BY t.number, p.number
 // スペースからは毎回同じアーカイブができる。リトライが先頭からやり直せるのはこのためである。
 func (q *Queries) ListActivePagesBySpace(ctx context.Context, spaceID string) ([]Page, error) {
 	rows, err := q.db.QueryContext(ctx, listActivePagesBySpace, spaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPublishedPagesByModifiedAt = `-- name: ListPublishedPagesByModifiedAt :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY($2::uuid[])
+  AND ($3::timestamp IS NULL OR p.modified_at >= $3::timestamp)
+  AND (
+    $4::timestamp IS NULL
+    OR (p.modified_at, p.id) < ($4::timestamp, $5::uuid)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT $6
+`
+
+type ListPublishedPagesByModifiedAtParams struct {
+	SpaceID         string       `json:"space_id"`
+	VisibleTopicIds []string     `json:"visible_topic_ids"`
+	ModifiedSince   sql.NullTime `json:"modified_since"`
+	AfterModifiedAt sql.NullTime `json:"after_modified_at"`
+	AfterID         *string      `json:"after_id"`
+	RowLimit        int32        `json:"row_limit"`
+}
+
+// 公開APIのページ一覧。公開済み・未廃棄・未ゴミ箱で、閲覧者が開けるトピック (visible_topic_ids) の
+// ページを更新日時の新しい順に返す。この集合は呼び出し元がCanShowTopicの規則で解決する。
+// modified_sinceを渡すとその日時以降に更新されたページに絞る。カーソル (after_modified_at,
+// after_id) を渡すと、並び順でその位置より後ろのページだけを返す。更新日時が同じページも
+// 主キーで順序を決めるため、取得中に更新が無ければ重複や読み飛ばしなく辿れる。
+// 並び順は (space_id, modified_at, id) のインデックスに合わせてある。
+func (q *Queries) ListPublishedPagesByModifiedAt(ctx context.Context, arg ListPublishedPagesByModifiedAtParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, listPublishedPagesByModifiedAt,
+		arg.SpaceID,
+		pq.Array(arg.VisibleTopicIds),
+		arg.ModifiedSince,
+		arg.AfterModifiedAt,
+		arg.AfterID,
+		arg.RowLimit,
+	)
 	if err != nil {
 		return nil, err
 	}

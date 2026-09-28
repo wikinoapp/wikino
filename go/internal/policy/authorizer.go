@@ -55,4 +55,34 @@ type Authorizer interface {
 	// エクスポートはスペースの全ページを1つのアーカイブに収めるため、読める全員ではなく
 	// スペースを変更してよいと認められたメンバーに開く。
 	CanExportSpace() bool
+
+	// CanUpdateSpaceはspace:writeスコープで判定し、Rails版のcan_update_space?と揃える。
+	// スペース設定の既存の項目 (一般・エクスポート・添付ファイル・削除) はこの権限を持つメンバーにだけ出す。
+	CanUpdateSpace() bool
+
+	// 個人アクセストークン (所有者チェックパターン)
+	// 一覧・失効の対象は自分のトークンに限る。所有者チェックはUseCase側で
+	// 「本人のトークンしか取得しない」ことで担保する。
+	CanShowPersonalAccessTokens() bool
+	// CanCreatePersonalAccessTokenはpersonal_access_token:writeスコープで判定する。
+	// 発行時だけでなく、トークン認証のたびに持ち主がトークンを使い続けてよいかもこれで判定する。
+	CanCreatePersonalAccessToken() bool
+	CanDeletePersonalAccessToken() bool
+
+	// OAuthの連携 (所有者チェックパターン)
+	// 一覧・解除の対象は自分が許可した連携に限る。所有者チェックはUseCase側で担保する。
+	CanShowOAuthGrants() bool
+	// CanCreateOAuthGrantはoauth_grant:writeスコープで判定する。
+	// 許可時だけでなく、トークン認証のたびに持ち主がOAuthのトークンを使い続けてよいかもこれで判定する。
+	CanCreateOAuthGrant() bool
+	CanDeleteOAuthGrant() bool
+
+	// OAuthアプリ
+	// トークン管理とは違い、自分が作成したものに限らずスペースのアプリ全体を対象にする。
+	CanShowOAuthApplications() bool
+	// CanCreateOAuthApplicationとCanUpdateOAuthApplicationはoauth_application:writeスコープで判定する。
+	// シークレットの再発行も編集として扱い、CanUpdateOAuthApplicationで判定する。
+	CanCreateOAuthApplication() bool
+	CanUpdateOAuthApplication() bool
+	CanDeleteOAuthApplication() bool
 }

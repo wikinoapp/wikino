@@ -1,0 +1,55 @@
+package api_reference
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowPageDataはAPIリファレンスに渡すデータ構造体です
+type ShowPageData struct {
+	Meta viewmodel.PageMeta
+	// SpecURLは描画するOpenAPI記述のURLです
+	SpecURL string
+}
+
+// ShowはOpenAPI記述をRedocで描画するAPIリファレンスです。
+// Redocがページ全体のレイアウトとスタイルを持つため、Wikinoのレイアウト (components.Head) を使いません。
+// WikinoのCSS (Tailwindのリセット) とmain.jsを読み込むと、Redocの表示や操作に干渉するためです
+templ Show(data ShowPageData) {
+	<!DOCTYPE html>
+	<html lang={ templates.Locale(ctx) }>
+		<head>
+			<meta charset="UTF-8"/>
+			<title>{ data.Meta.Title }</title>
+			<meta name="description" content={ data.Meta.Description }/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta property="og:title" content={ data.Meta.Title }/>
+			<meta property="og:description" content={ data.Meta.Description }/>
+			<meta property="og:image" content={ data.Meta.OGImage }/>
+			<meta property="og:locale" content={ data.Meta.OGLocale }/>
+			<meta property="og:site_name" content="Wikino"/>
+			<meta property="og:type" content={ data.Meta.OGType }/>
+			<meta property="og:url" content={ data.Meta.OGURL }/>
+			<meta name="twitter:card" content={ data.Meta.TwitterCard }/>
+			<meta name="twitter:site" content="@wikino_app"/>
+			<link rel="canonical" href={ data.Meta.OGURL }/>
+			<link rel="icon" href="/static/images/favicon.ico" sizes="any"/>
+			<link rel="icon" href="/static/images/icon.svg" type="image/svg+xml"/>
+			<link rel="service-desc" href={ data.SpecURL } type="application/yaml"/>
+			<script type="module" src={ "/static/js/api-reference.js?v=" + data.Meta.AssetVersion }></script>
+		</head>
+		<body style="margin: 0">
+			// Redocの描画領域の中に置き、Redocが描画を始めた時点で同じ位置のまま置き換わるようにする
+			<div id="api-reference" data-spec-url={ data.SpecURL }>
+				<div id="api-reference-fallback" style="padding: 2rem">
+					<h1>{ data.Meta.Title }</h1>
+					<p>{ data.Meta.Description }</p>
+					<p>
+						{ templates.T(ctx, "api_reference_fallback") }
+						<a href={ templ.SafeURL(data.SpecURL) }>openapi.yaml</a>
+					</p>
+				</div>
+			</div>
+		</body>
+	</html>
+}

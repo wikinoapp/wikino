@@ -90,6 +90,64 @@ func (q *Queries) CreateDraftPage(ctx context.Context, arg CreateDraftPageParams
 	return i, err
 }
 
+const createDraftPageIfNotExists = `-- name: CreateDraftPageIfNotExists :one
+INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+ON CONFLICT (space_member_id, page_id) DO NOTHING
+RETURNING id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id
+`
+
+type CreateDraftPageIfNotExistsParams struct {
+	SpaceID                   string      `json:"space_id"`
+	PageID                    string      `json:"page_id"`
+	SpaceMemberID             string      `json:"space_member_id"`
+	TopicID                   string      `json:"topic_id"`
+	SuggestionPageID          *string     `json:"suggestion_page_id"`
+	Title                     interface{} `json:"title"`
+	Body                      string      `json:"body"`
+	LinkedPageIds             []string    `json:"linked_page_ids"`
+	FeaturedImageAttachmentID *string     `json:"featured_image_attachment_id"`
+	ModifiedAt                time.Time   `json:"modified_at"`
+	CreatedAt                 time.Time   `json:"created_at"`
+	UpdatedAt                 time.Time   `json:"updated_at"`
+}
+
+// 下書きが無ければ作成する。同じページとスペースメンバーの下書きがすでにあれば何もせず、行を返さない。
+// 一意制約の違反でトランザクションを中断させないため、競合はエラーにしない
+func (q *Queries) CreateDraftPageIfNotExists(ctx context.Context, arg CreateDraftPageIfNotExistsParams) (DraftPage, error) {
+	row := q.db.QueryRowContext(ctx, createDraftPageIfNotExists,
+		arg.SpaceID,
+		arg.PageID,
+		arg.SpaceMemberID,
+		arg.TopicID,
+		arg.SuggestionPageID,
+		arg.Title,
+		arg.Body,
+		pq.Array(arg.LinkedPageIds),
+		arg.FeaturedImageAttachmentID,
+		arg.ModifiedAt,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i DraftPage
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.PageID,
+		&i.SpaceMemberID,
+		&i.TopicID,
+		&i.Title,
+		&i.Body,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SuggestionPageID,
+		&i.FeaturedImageAttachmentID,
+	)
+	return i, err
+}
+
 const deleteDraftPage = `-- name: DeleteDraftPage :exec
 DELETE FROM draft_pages WHERE id = $1 AND space_id = $2
 `

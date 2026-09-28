@@ -1,0 +1,132 @@
+package oauth_application
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowDataはOAuthアプリの詳細の画面をレンダリングする元になるデータ。
+//
+// CanUpdateは編集とシークレットの再発行ができるか (oauth_application:write)、CanDeleteは
+// 削除できるか (oauth_application:delete) を表し、偽ならその操作を出さない。
+type ShowData struct {
+	CSRFToken   string
+	Space       viewmodel.Space
+	Application viewmodel.OAuthApplication
+	CanUpdate   bool
+	CanDelete   bool
+}
+
+// ShowはOAuthアプリの詳細の画面を表示します。
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: data.Application.Name,
+					})
+				</div>
+
+				@components.ContentCard() {
+					<div class="grid gap-6">
+						@clientIDField(data.Application.ClientID)
+
+						<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-3 text-sm">
+							<dt class="text-muted-foreground">{ templates.T(ctx, "oauth_application_show_client_type") }</dt>
+							<dd>
+								@clientTypeBadge(data.Application.Confidential)
+							</dd>
+							if data.Application.Confidential {
+								<dt class="text-muted-foreground">{ templates.T(ctx, "oauth_application_show_client_secret") }</dt>
+								<dd class="flex flex-col items-start gap-1">
+									{ templates.T(ctx, "oauth_application_show_client_secret_hidden") }
+									if data.CanUpdate {
+										@regenerateClientSecretForm(data)
+									}
+								</dd>
+							}
+							<dt class="text-muted-foreground">{ templates.T(ctx, "oauth_application_show_redirect_uris") }</dt>
+							<dd>
+								@redirectURIList(data.Application.RedirectURIs)
+							</dd>
+							<dt class="text-muted-foreground">{ templates.T(ctx, "oauth_application_show_creator") }</dt>
+							<dd>
+								@creatorName(data.Application.CreatorName)
+							</dd>
+							<dt class="text-muted-foreground">{ templates.T(ctx, "oauth_application_show_created_at") }</dt>
+							<dd>
+								@components.AbsoluteTime(components.AbsoluteTimeData{Time: data.Application.CreatedAt})
+							</dd>
+						</dl>
+
+						<div class="flex flex-wrap gap-2">
+							if data.CanUpdate {
+								<a
+									href={ templ.SafeURL(string(templates.EditSpaceSettingsOAuthApplicationPath(data.Space.Identifier, data.Application.ID))) }
+									class="btn rounded-full w-fit"
+								>
+									@templates.Icon("pencil-simple-line-regular", "size-4")
+									{ templates.T(ctx, "oauth_application_show_edit") }
+								</a>
+							}
+							<a
+								href={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationsPath(data.Space.Identifier))) }
+								class="btn rounded-full w-fit"
+								data-variant="outline"
+							>
+								{ templates.T(ctx, "oauth_application_show_back") }
+							</a>
+						</div>
+					</div>
+				}
+
+				if data.CanDelete {
+					@components.ContentCard() {
+						@deleteForm(data)
+					}
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// regenerateClientSecretFormはクライアントシークレットを再発行するボタンを表示します。再発行
+// すると今のシークレットはすぐに使えなくなるため、送信の前に確認します。
+templ regenerateClientSecretForm(data ShowData) {
+	<form
+		action={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationClientSecretPath(data.Space.Identifier, data.Application.ID))) }
+		data-confirm={ templates.T(ctx, "oauth_application_show_regenerate_client_secret_confirm", map[string]any{"Name": data.Application.Name}) }
+		hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+		method="POST"
+	>
+		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+		<button class="btn h-fit p-0" data-variant="link" data-size="sm" type="submit">
+			{ templates.T(ctx, "oauth_application_show_regenerate_client_secret") }
+		</button>
+	</form>
+}
+
+// deleteFormはアプリを削除するボタンを表示します。削除は取り消せず、連携しているクライアントが
+// すべて使えなくなるため、何が起きるかを添え、送信の前に確認します。
+templ deleteForm(data ShowData) {
+	<div class="grid gap-2">
+		<p class="text-sm text-muted-foreground">
+			{ templates.T(ctx, "oauth_application_show_delete_description") }
+		</p>
+		<form
+			action={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationPath(data.Space.Identifier, data.Application.ID))) }
+			data-confirm={ templates.T(ctx, "oauth_application_show_delete_confirm", map[string]any{"Name": data.Application.Name}) }
+			hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+			method="POST"
+		>
+			<input type="hidden" name="_method" value="DELETE"/>
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			<button class="btn h-fit p-0 text-error" data-variant="link" type="submit">
+				@templates.Icon("trash-regular", "size-4")
+				{ templates.T(ctx, "oauth_application_show_delete") }
+			</button>
+		</form>
+	</div>
+}

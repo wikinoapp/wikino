@@ -64,6 +64,124 @@ func TestNewMemberPolicy(t *testing.T) {
 	})
 }
 
+func TestNewAPIMemberPolicy(t *testing.T) {
+	t.Parallel()
+
+	t.Run("メンバーが持ちトークンが持たないスコープは有効にならない", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewAPIMemberPolicy(
+			[]model.Scope{model.ScopePageWrite, model.ScopeTopicRead},
+			nil,
+			[]model.Scope{model.ScopePageRead},
+		)
+
+		if !p.effectiveScopes[model.ScopePageRead] {
+			t.Error("両方が持つpage:readは有効であるべき")
+		}
+		if p.CanCreatePage() {
+			t.Error("トークンが持たないpage:writeでページを作成できるべきでない")
+		}
+		if p.CanShowTopic(&model.Topic{Visibility: model.TopicVisibilityPrivate}) {
+			t.Error("トークンが持たないtopic:readで非公開トピックを閲覧できるべきでない")
+		}
+	})
+
+	t.Run("トークンが持ちメンバーが持たないスコープは有効にならない", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewAPIMemberPolicy(
+			[]model.Scope{model.ScopePageRead},
+			nil,
+			[]model.Scope{model.ScopePageWrite, model.ScopeTopicRead},
+		)
+
+		if !p.effectiveScopes[model.ScopePageRead] {
+			t.Error("メンバーのpage:readとトークンのpage:write (含意でpage:read) の積でpage:readは有効であるべき")
+		}
+		if p.CanCreatePage() {
+			t.Error("メンバーが持たないpage:writeでページを作成できるべきでない")
+		}
+		if p.CanShowTopic(&model.Topic{Visibility: model.TopicVisibilityPrivate}) {
+			t.Error("メンバーが持たないtopic:readで非公開トピックを閲覧できるべきでない")
+		}
+	})
+
+	t.Run("トピックスコープもメンバー側に含めてから積を取る", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewAPIMemberPolicy(
+			nil,
+			[]model.Scope{model.ScopeTopicWrite},
+			[]model.Scope{model.ScopeTopicRead},
+		)
+
+		if !p.CanShowTopic(&model.Topic{Visibility: model.TopicVisibilityPrivate}) {
+			t.Error("トピックスコープのtopic:write (含意でtopic:read) とトークンのtopic:readの積で非公開トピックを閲覧できるべき")
+		}
+		if p.CanUpdateTopic() {
+			t.Error("トークンが持たないtopic:writeでトピックを更新できるべきでない")
+		}
+	})
+
+	t.Run("space:adminを持つメンバーでもトークンのスコープに限られる", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewAPIMemberPolicy(
+			[]model.Scope{model.ScopeSpaceAdmin},
+			nil,
+			[]model.Scope{model.ScopePageWrite, model.ScopeTopicRead},
+		)
+
+		want := map[model.Scope]bool{
+			model.ScopePageRead:  true,
+			model.ScopePageWrite: true,
+			model.ScopeTopicRead: true,
+		}
+		if len(p.effectiveScopes) != len(want) {
+			t.Errorf("effectiveScopes = %v、期待値 = %v", p.effectiveScopes, want)
+		}
+		for s := range want {
+			if !p.effectiveScopes[s] {
+				t.Errorf("%sが含まれるべき", s)
+			}
+		}
+		if p.CanUpdateSpace() {
+			t.Error("space:adminのメンバーでもトークン経由でスペースを更新できるべきでない")
+		}
+		if p.CanCreatePersonalAccessToken() {
+			t.Error("space:adminのメンバーでもトークン経由で個人アクセストークンを発行できるべきでない")
+		}
+		if p.CanShowDraftPage(false) {
+			t.Error("space:adminのメンバーでもトークン経由で他人の下書きを閲覧できるべきでない")
+		}
+	})
+
+	t.Run("トークンに付与できないスコープはトークン側に保存されていても有効にならない", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewAPIMemberPolicy(
+			[]model.Scope{model.ScopeSpaceAdmin},
+			nil,
+			[]model.Scope{model.ScopeSpaceAdmin},
+		)
+
+		if len(p.effectiveScopes) != 0 {
+			t.Errorf("effectiveScopesの件数 = %d、期待値 = 0", len(p.effectiveScopes))
+		}
+	})
+
+	t.Run("公開トピックはどちらのスコープにも関係なく閲覧できる", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewAPIMemberPolicy(nil, nil, nil)
+
+		if !p.CanShowTopic(&model.Topic{Visibility: model.TopicVisibilityPublic}) {
+			t.Error("公開トピックは閲覧可能であるべき")
+		}
+	})
+}
+
 func TestMemberPolicy_CanShowTopic(t *testing.T) {
 	t.Parallel()
 
@@ -776,6 +894,31 @@ func TestMemberPolicy_CanExportSpace(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanUpdateSpace(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		scopes []model.Scope
+		want   bool
+	}{
+		{name: "space:write", scopes: []model.Scope{model.ScopeSpaceWrite}, want: true},
+		{name: "space:adminはspace:writeを含意展開する", scopes: []model.Scope{model.ScopeSpaceAdmin}, want: true},
+		{name: "読み取り権限だけ", scopes: []model.Scope{model.ScopeSpaceRead, model.ScopePageRead}, want: false},
+		{name: "トークン管理の権限だけ", scopes: []model.Scope{model.ScopePersonalAccessTokenWrite, model.ScopeOAuthGrantWrite}, want: false},
+		{name: "OAuthアプリの管理の権限だけ", scopes: []model.Scope{model.ScopeOAuthApplicationWrite, model.ScopeOAuthApplicationDelete}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := NewMemberPolicy(tt.scopes, nil).CanUpdateSpace(); got != tt.want {
+				t.Errorf("CanUpdateSpace() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMemberPolicy_ScopeBoundaries(t *testing.T) {
 	t.Parallel()
 
@@ -828,6 +971,89 @@ func TestMemberPolicy_ScopeBoundaries(t *testing.T) {
 						}
 					}
 				})
+			}
+		})
+	}
+}
+
+func TestMemberPolicy_TokenManagement(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                                               string
+		scopes                                             []model.Scope
+		showPAT, createPAT, deletePAT                      bool
+		showOAuthGrant, createOAuthGrant, deleteOAuthGrant bool
+	}{
+		{name: "個人アクセストークンの閲覧", scopes: []model.Scope{model.ScopePersonalAccessTokenRead}, showPAT: true},
+		{name: "個人アクセストークンの発行", scopes: []model.Scope{model.ScopePersonalAccessTokenWrite}, showPAT: true, createPAT: true},
+		{name: "個人アクセストークンの失効", scopes: []model.Scope{model.ScopePersonalAccessTokenDelete}, showPAT: true, deletePAT: true},
+		{name: "OAuthの連携の閲覧", scopes: []model.Scope{model.ScopeOAuthGrantRead}, showOAuthGrant: true},
+		{name: "OAuthの連携の許可", scopes: []model.Scope{model.ScopeOAuthGrantWrite}, showOAuthGrant: true, createOAuthGrant: true},
+		{name: "OAuthの連携の解除", scopes: []model.Scope{model.ScopeOAuthGrantDelete}, showOAuthGrant: true, deleteOAuthGrant: true},
+		{name: "管理者", scopes: []model.Scope{model.ScopeSpaceAdmin}, showPAT: true, createPAT: true, deletePAT: true, showOAuthGrant: true, createOAuthGrant: true, deleteOAuthGrant: true},
+		// スペースを変更できるメンバーでも、トークンを管理するスコープは別に要る
+		{name: "スペースの編集", scopes: []model.Scope{model.ScopeSpaceWrite, model.ScopeSpaceDelete, model.ScopePageWrite}},
+		{name: "スコープなし"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewMemberPolicy(tt.scopes, nil)
+			for _, check := range []struct {
+				name      string
+				got, want bool
+			}{
+				{"CanShowPersonalAccessTokens", p.CanShowPersonalAccessTokens(), tt.showPAT},
+				{"CanCreatePersonalAccessToken", p.CanCreatePersonalAccessToken(), tt.createPAT},
+				{"CanDeletePersonalAccessToken", p.CanDeletePersonalAccessToken(), tt.deletePAT},
+				{"CanShowOAuthGrants", p.CanShowOAuthGrants(), tt.showOAuthGrant},
+				{"CanCreateOAuthGrant", p.CanCreateOAuthGrant(), tt.createOAuthGrant},
+				{"CanDeleteOAuthGrant", p.CanDeleteOAuthGrant(), tt.deleteOAuthGrant},
+			} {
+				if check.got != check.want {
+					t.Errorf("%s = %v、期待値 = %v", check.name, check.got, check.want)
+				}
+			}
+		})
+	}
+}
+
+func TestMemberPolicy_OAuthApplication(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                         string
+		scopes                       []model.Scope
+		show, create, update, delete bool
+	}{
+		{name: "閲覧", scopes: []model.Scope{model.ScopeOAuthApplicationRead}, show: true},
+		{name: "登録・編集", scopes: []model.Scope{model.ScopeOAuthApplicationWrite}, show: true, create: true, update: true},
+		{name: "削除", scopes: []model.Scope{model.ScopeOAuthApplicationDelete}, show: true, delete: true},
+		{name: "管理者", scopes: []model.Scope{model.ScopeSpaceAdmin}, show: true, create: true, update: true, delete: true},
+		// スペースを変更できるメンバーや、連携を許可できるメンバーでも、アプリを管理するスコープは別に要る
+		{name: "スペースの編集", scopes: []model.Scope{model.ScopeSpaceWrite, model.ScopeSpaceDelete}},
+		{name: "OAuthの連携", scopes: []model.Scope{model.ScopeOAuthGrantWrite, model.ScopeOAuthGrantDelete}},
+		{name: "スコープなし"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewMemberPolicy(tt.scopes, nil)
+			for _, check := range []struct {
+				name      string
+				got, want bool
+			}{
+				{"CanShowOAuthApplications", p.CanShowOAuthApplications(), tt.show},
+				{"CanCreateOAuthApplication", p.CanCreateOAuthApplication(), tt.create},
+				{"CanUpdateOAuthApplication", p.CanUpdateOAuthApplication(), tt.update},
+				{"CanDeleteOAuthApplication", p.CanDeleteOAuthApplication(), tt.delete},
+			} {
+				if check.got != check.want {
+					t.Errorf("%s = %v、期待値 = %v", check.name, check.got, check.want)
+				}
 			}
 		})
 	}

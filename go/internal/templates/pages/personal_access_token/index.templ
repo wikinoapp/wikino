@@ -1,0 +1,141 @@
+package personal_access_token
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// IndexDataは個人アクセストークンの一覧の画面をレンダリングする元になるデータ。
+//
+// Tokensは閲覧者自身の失効していないトークンで、期限切れのものも含む。CanCreateは
+// 新しいトークンを発行できるか (personal_access_token:write) を表し、偽なら発行へのリンクを
+// 出さない。CanDeleteはトークンを失効できるか (personal_access_token:delete) を表し、偽なら
+// 失効のボタンを出さない。
+type IndexData struct {
+	CSRFToken string
+	Space     viewmodel.Space
+	Tokens    []viewmodel.PersonalAccessToken
+	CanCreate bool
+	CanDelete bool
+}
+
+// Indexは個人アクセストークンの一覧の画面を表示します。
+templ Index(data IndexData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4 flex flex-col gap-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:    templates.T(ctx, "personal_access_token_index_heading"),
+						Subtitle: indexSubtitle(),
+					})
+					if data.CanCreate {
+						<a
+							href={ templ.SafeURL(string(templates.NewSpaceSettingsPersonalAccessTokenPath(data.Space.Identifier))) }
+							class="btn rounded-full w-fit"
+						>
+							@templates.Icon("plus-regular", "size-4")
+							{ templates.T(ctx, "personal_access_token_index_new") }
+						</a>
+					}
+				</div>
+				if len(data.Tokens) == 0 {
+					<div class="px-4">
+						@components.EmptyState(components.EmptyStateData{
+							Message:  templates.T(ctx, "personal_access_token_index_empty"),
+							IconName: "lock-regular",
+						})
+					</div>
+				} else {
+					@components.ContentCard() {
+						<ul class="flex flex-col divide-y">
+							for _, token := range data.Tokens {
+								<li class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
+									@tokenItem(token)
+									if data.CanDelete {
+										@revokeForm(data.CSRFToken, data.Space.Identifier, token)
+									}
+								</li>
+							}
+						</ul>
+					}
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// indexSubtitleは一覧の画面のサブタイトルを表示します。
+templ indexSubtitle() {
+	{ templates.T(ctx, "personal_access_token_index_description") }
+}
+
+// tokenItemは一覧の1件のトークンを表示します。トークンの値は表示できないため、見分けるための
+// 末尾の数文字を名前に添えます。
+templ tokenItem(token viewmodel.PersonalAccessToken) {
+	<div class="flex flex-wrap items-center gap-2">
+		<span id={ tokenNameID(token) } class="font-bold [overflow-wrap:anywhere]">{ token.Name }</span>
+		<code class="text-sm text-muted-foreground">
+			{ templates.T(ctx, "personal_access_token_index_last_chars", map[string]any{"LastChars": token.TokenLastChars}) }
+		</code>
+		if token.Expired {
+			<span class="badge bg-error font-bold">
+				{ templates.T(ctx, "personal_access_token_index_expired") }
+			</span>
+		}
+	</div>
+	@components.APITokenScopeBadges(token.Scopes)
+	<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-muted-foreground">
+		<dt>{ templates.T(ctx, "personal_access_token_index_expires_at") }</dt>
+		<dd>
+			@components.AbsoluteTime(components.AbsoluteTimeData{Time: token.ExpiresAt})
+		</dd>
+		<dt>{ templates.T(ctx, "personal_access_token_index_last_used_at") }</dt>
+		<dd>
+			if token.LastUsedAt != nil {
+				@components.RelativeTime(components.RelativeTimeData{Time: *token.LastUsedAt})
+			} else {
+				{ templates.T(ctx, "personal_access_token_index_never_used") }
+			}
+		</dd>
+	</dl>
+}
+
+// revokeFormはトークンを失効するボタンを表示します。失効は取り消せないため、送信の前に
+// 確認します。
+//
+// 一覧にはトークンごとに同じ文言のボタンが並ぶため、ボタンの名前にトークン名を連ねる。
+// スクリーンリーダーでボタンだけを取り出したときに、どのトークンのボタンか区別できるように
+// するためである。見えている文言を名前の先頭に置き、音声操作でもその文言で指定できるようにする。
+templ revokeForm(csrfToken string, spaceIdentifier viewmodel.SpaceIdentifier, token viewmodel.PersonalAccessToken) {
+	<form
+		action={ templ.SafeURL(string(templates.SpaceSettingsPersonalAccessTokenPath(spaceIdentifier, token.ID))) }
+		data-confirm={ templates.T(ctx, "personal_access_token_index_revoke_confirm", map[string]any{"Name": token.Name}) }
+		hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+		method="POST"
+	>
+		<input type="hidden" name="_method" value="DELETE"/>
+		<input type="hidden" name="csrf_token" value={ csrfToken }/>
+		<button
+			aria-labelledby={ revokeLabelID(token) + " " + tokenNameID(token) }
+			class="btn h-fit p-0 text-error"
+			data-variant="link"
+			data-size="sm"
+			type="submit"
+		>
+			@templates.Icon("trash-regular", "size-3")
+			<span id={ revokeLabelID(token) }>{ templates.T(ctx, "personal_access_token_index_revoke") }</span>
+		</button>
+	</form>
+}
+
+// tokenNameIDは一覧の1件のトークンの名前を収める要素のidを返します。
+func tokenNameID(token viewmodel.PersonalAccessToken) string {
+	return "personal-access-token-" + token.ID + "-name"
+}
+
+// revokeLabelIDはトークンを失効するボタンの文言を収める要素のidを返します。
+func revokeLabelID(token viewmodel.PersonalAccessToken) string {
+	return "personal-access-token-" + token.ID + "-revoke-label"
+}

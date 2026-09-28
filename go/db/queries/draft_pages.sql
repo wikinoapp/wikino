@@ -8,6 +8,14 @@ INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestio
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 RETURNING *;
 
+-- name: CreateDraftPageIfNotExists :one
+-- 下書きが無ければ作成する。同じページとスペースメンバーの下書きがすでにあれば何もせず、行を返さない。
+-- 一意制約の違反でトランザクションを中断させないため、競合はエラーにしない
+INSERT INTO draft_pages (space_id, page_id, space_member_id, topic_id, suggestion_page_id, title, body, linked_page_ids, featured_image_attachment_id, modified_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+ON CONFLICT (space_member_id, page_id) DO NOTHING
+RETURNING *;
+
 -- name: UpdateDraftPage :one
 -- 下書きを更新する
 UPDATE draft_pages

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 	"time"
@@ -1693,6 +1694,107 @@ func TestPageRepository_TrashByID(t *testing.T) {
 			t.Errorf("page.TrashedAt = %v、期待値 = nil (別スペースの指定で更新されている)", page.TrashedAt)
 		}
 	})
+}
+
+func TestPageRepository_DiscardEmptyUnpublishedByID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-discard-empty-space").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-discard-empty-other-space").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Other").
+		Build()
+
+	tests := []struct {
+		name string
+		// 対象のページはタイトル "Target" で、published・body・discardedの状態で作る
+		published bool
+		body      string
+		discarded bool
+		spaceID   model.SpaceID
+		topicID   model.TopicID
+		title     string
+		want      bool
+	}{
+		{name: "同じタイトルの空の未公開ページは論理削除する", spaceID: spaceID, topicID: topicID, title: "Target", want: true},
+		{name: "公開済みのページは論理削除しない", published: true, spaceID: spaceID, topicID: topicID, title: "Target"},
+		{name: "本文のあるページは論理削除しない", body: "本文", spaceID: spaceID, topicID: topicID, title: "Target"},
+		{name: "タイトルが変わったページは論理削除しない", spaceID: spaceID, topicID: topicID, title: "Changed"},
+		{name: "別トピックを指定した場合は論理削除しない", spaceID: spaceID, topicID: otherTopicID, title: "Target"},
+		{name: "別スペースを指定した場合は論理削除しない", spaceID: otherSpaceID, topicID: topicID, title: "Target"},
+		{name: "論理削除済みのページは更新しない", discarded: true, spaceID: spaceID, topicID: topicID, title: "Target"},
+	}
+
+	// 同じトピック・タイトルのページは1つしか作れないため、サブテストは直列に実行し、
+	// 論理削除されなかったページは後始末としてタイトルを変える
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			builder := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).
+				WithNumber(model.PageNumber(i + 1)).WithTitle("Target").WithBody(tt.body)
+			if !tt.published {
+				builder = builder.WithUnpublished()
+			}
+			if tt.discarded {
+				builder = builder.WithDiscarded()
+			}
+			pageID := builder.Build()
+			t.Cleanup(func() {
+				if _, err := tx.ExecContext(context.Background(), "UPDATE pages SET title = id::varchar WHERE id = $1", pageID); err != nil {
+					t.Fatalf("後始末のタイトル変更のエラー = %v", err)
+				}
+			})
+
+			var before sql.NullTime
+			if err := tx.QueryRowContext(context.Background(), "SELECT discarded_at FROM pages WHERE id = $1", pageID).Scan(&before); err != nil {
+				t.Fatalf("更新前のページの取得のエラー = %v", err)
+			}
+
+			discardedAt := time.Now().Truncate(time.Microsecond)
+			got, err := repo.DiscardEmptyUnpublishedByID(context.Background(), pageID, tt.spaceID, tt.topicID, tt.title, discardedAt)
+			if err != nil {
+				t.Fatalf("DiscardEmptyUnpublishedByID()のエラー = %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("DiscardEmptyUnpublishedByID() = %t、期待値 = %t", got, tt.want)
+			}
+
+			var title string
+			var after sql.NullTime
+			if err := tx.QueryRowContext(context.Background(), "SELECT title, discarded_at FROM pages WHERE id = $1", pageID).Scan(&title, &after); err != nil {
+				t.Fatalf("更新後のページの取得のエラー = %v", err)
+			}
+			if tt.want {
+				if !after.Valid || !after.Time.Equal(discardedAt) {
+					t.Errorf("discarded_at = %v、期待値 = %v", after, discardedAt)
+				}
+				if title != string(pageID) {
+					t.Errorf("title = %q、期待値 = ページID (%q)", title, pageID)
+				}
+				return
+			}
+			if after.Valid != before.Valid || !after.Time.Equal(before.Time) {
+				t.Errorf("discarded_at = %v、期待値 = 更新前と同じ %v", after, before)
+			}
+			if title != "Target" {
+				t.Errorf("title = %q、期待値 = 'Target'", title)
+			}
+		})
+	}
 }
 
 func TestPageRepository_FindBacklinksForPages(t *testing.T) {
