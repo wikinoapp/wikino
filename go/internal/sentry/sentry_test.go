@@ -188,6 +188,16 @@ func TestBeforeSend_FiltersRequestData(t *testing.T) {
 			expected: "PASSWORD=%5BFILTERED%5D&SECRET=%5BFILTERED%5D&Token=%5BFILTERED%5D",
 		},
 		{
+			name:     "OAuthのトークン要求の認可コードとcode_verifierをマスク",
+			data:     "grant_type=authorization_code&code=abc&code_verifier=xyz&client_id=app",
+			expected: "client_id=app&code=%5BFILTERED%5D&code_verifier=%5BFILTERED%5D&grant_type=authorization_code",
+		},
+		{
+			name:     "OAuthのリフレッシュトークンとクライアントシークレットをマスク",
+			data:     "grant_type=refresh_token&refresh_token=wkr_abc&client_secret=wks_xyz",
+			expected: "client_secret=%5BFILTERED%5D&grant_type=refresh_token&refresh_token=%5BFILTERED%5D",
+		},
+		{
 			name:     "センシティブでないフィールドは変更しない",
 			data:     "username=user&email=test@example.com",
 			expected: "username=user&email=test@example.com",
