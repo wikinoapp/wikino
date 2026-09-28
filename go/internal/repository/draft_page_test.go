@@ -205,6 +205,116 @@ func TestDraftPageRepository_Create(t *testing.T) {
 	})
 }
 
+func TestDraftPageRepository_CreateIfNotExists(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("draft-create-if-not-exists@example.com").
+		WithAtname("draftcreateifnotexists").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("draft-create-if-not-exists-space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	t.Run("下書きが無ければ作成する", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Page 1").
+			Build()
+
+		title := "New Draft"
+		draft, err := repo.CreateIfNotExists(context.Background(), CreateDraftPageInput{
+			SpaceID:       spaceID,
+			PageID:        pageID,
+			SpaceMemberID: spaceMemberID,
+			TopicID:       topicID,
+			Title:         &title,
+			Body:          "draft body",
+			ModifiedAt:    time.Now(),
+		})
+		if err != nil {
+			t.Fatalf("CreateIfNotExists()のエラー = %v", err)
+		}
+		if draft == nil {
+			t.Fatal("CreateIfNotExists()がnilを返した、期待値 = 下書き")
+		}
+		if draft.PageID != pageID {
+			t.Errorf("draft.PageID = %v、期待値 = %v", draft.PageID, pageID)
+		}
+		if draft.SpaceMemberID != spaceMemberID {
+			t.Errorf("draft.SpaceMemberID = %v、期待値 = %v", draft.SpaceMemberID, spaceMemberID)
+		}
+		if draft.Title == nil || *draft.Title != "New Draft" {
+			t.Errorf("draft.Title = %v、期待値 = 'New Draft'", draft.Title)
+		}
+		if draft.Body != "draft body" {
+			t.Errorf("draft.Body = %v、期待値 = 'draft body'", draft.Body)
+		}
+	})
+
+	t.Run("下書きがすでにあればnilを返し、トランザクションを中断させない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Page 2").
+			Build()
+
+		existingID := testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithPageID(pageID).
+			WithSpaceMemberID(spaceMemberID).
+			WithTopicID(topicID).
+			WithBody("existing body").
+			Build()
+
+		draft, err := repo.CreateIfNotExists(context.Background(), CreateDraftPageInput{
+			SpaceID:       spaceID,
+			PageID:        pageID,
+			SpaceMemberID: spaceMemberID,
+			TopicID:       topicID,
+			Body:          "new body",
+			ModifiedAt:    time.Now(),
+		})
+		if err != nil {
+			t.Fatalf("CreateIfNotExists()のエラー = %v", err)
+		}
+		if draft != nil {
+			t.Errorf("CreateIfNotExists() = %v、期待値 = nil", draft)
+		}
+
+		// 競合の後も同じトランザクションで取得でき、既存の下書きは書き換わっていない
+		found, err := repo.FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByPageAndMember()のエラー = %v", err)
+		}
+		if found == nil || found.ID != existingID {
+			t.Fatalf("FindByPageAndMember() = %v、期待値 = ID %v の下書き", found, existingID)
+		}
+		if found.Body != "existing body" {
+			t.Errorf("found.Body = %v、期待値 = 'existing body'", found.Body)
+		}
+	})
+}
+
 func TestDraftPageRepository_Update(t *testing.T) {
 	t.Parallel()
 
