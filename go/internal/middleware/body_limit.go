@@ -6,6 +6,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+
+	"github.com/wikinoapp/wikino/go/internal/apierror"
+	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
 // DefaultMaxBodyBytesはリクエストボディのデフォルトサイズ上限 (1 MiB)。
@@ -24,51 +27,75 @@ const DefaultMaxBodyBytes = 1 << 20
 // 下流ハンドラーには先読み済みのボディを [io.NopCloser] でラップして渡すため、既存の
 // r.FormValue / r.ParseFormの挙動は維持される。
 func BodyLimit(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// ボディがないリクエスト(GET/HEAD/OPTIONS等)はそのまま通す
-		if r.Body == nil || r.Body == http.NoBody {
-			next.ServeHTTP(w, r)
-			return
-		}
+	return NewBodyLimit(nil)(next)
+}
 
-		// Content-Lengthが上限を超えていることが事前に分かる場合は、ボディを読まずに413を返す。
-		// chunked転送等でContentLengthが不明な場合は -1になるため、ここでは拒否せず
-		// 後段のMaxBytesReaderに判定を委ねる。
-		if r.ContentLength > DefaultMaxBodyBytes {
-			slog.WarnContext(r.Context(), "リクエストボディサイズ上限超過(Content-Length)",
-				"path", r.URL.Path,
-				"method", r.Method,
-				"content_length", r.ContentLength,
-				"max", int64(DefaultMaxBodyBytes),
-			)
-			http.Error(w, "Request Entity Too Large", http.StatusRequestEntityTooLarge)
-			return
-		}
-
-		limited := http.MaxBytesReader(w, r.Body, DefaultMaxBodyBytes)
-		buf, err := io.ReadAll(limited)
-		if err != nil {
-			var maxBytesErr *http.MaxBytesError
-			if errors.As(err, &maxBytesErr) {
-				slog.WarnContext(r.Context(), "リクエストボディサイズ上限超過(読み込み中)",
-					"path", r.URL.Path,
-					"method", r.Method,
-					"limit", maxBytesErr.Limit,
-				)
-				http.Error(w, "Request Entity Too Large", http.StatusRequestEntityTooLarge)
+// NewBodyLimitはAPIのエラーをProblem Detailsで返す本文サイズ制限ミドルウェアを作成する。
+// problemsがnilの場合は従来のHTML画面向けの応答を返す
+func NewBodyLimit(problems *apierror.Writer) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// ボディがないリクエスト(GET/HEAD/OPTIONS等)はそのまま通す
+			if r.Body == nil || r.Body == http.NoBody {
+				next.ServeHTTP(w, r)
 				return
 			}
-			slog.ErrorContext(r.Context(), "リクエストボディの読み込み失敗",
-				"error", err,
-				"path", r.URL.Path,
-				"method", r.Method,
-			)
-			http.Error(w, "Bad Request", http.StatusBadRequest)
-			return
-		}
 
-		r.Body = io.NopCloser(bytes.NewReader(buf))
-		r.ContentLength = int64(len(buf))
-		next.ServeHTTP(w, r)
-	})
+			// Content-Lengthが上限を超えていることが事前に分かる場合は、ボディを読まずに413を返す。
+			// chunked転送等でContentLengthが不明な場合は -1になるため、ここでは拒否せず
+			// 後段のMaxBytesReaderに判定を委ねる。
+			if r.ContentLength > DefaultMaxBodyBytes {
+				slog.WarnContext(r.Context(), "リクエストボディサイズ上限超過(Content-Length)",
+					"path", r.URL.Path,
+					"method", r.Method,
+					"content_length", r.ContentLength,
+					"max", int64(DefaultMaxBodyBytes),
+				)
+				writeBodyLimitError(w, r, problems, http.StatusRequestEntityTooLarge)
+				return
+			}
+
+			limited := http.MaxBytesReader(w, r.Body, DefaultMaxBodyBytes)
+			buf, err := io.ReadAll(limited)
+			if err != nil {
+				var maxBytesErr *http.MaxBytesError
+				if errors.As(err, &maxBytesErr) {
+					slog.WarnContext(r.Context(), "リクエストボディサイズ上限超過(読み込み中)",
+						"path", r.URL.Path,
+						"method", r.Method,
+						"limit", maxBytesErr.Limit,
+					)
+					writeBodyLimitError(w, r, problems, http.StatusRequestEntityTooLarge)
+					return
+				}
+				slog.ErrorContext(r.Context(), "リクエストボディの読み込み失敗",
+					"error", err,
+					"path", r.URL.Path,
+					"method", r.Method,
+				)
+				writeBodyLimitError(w, r, problems, http.StatusBadRequest)
+				return
+			}
+
+			r.Body = io.NopCloser(bytes.NewReader(buf))
+			r.ContentLength = int64(len(buf))
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func writeBodyLimitError(w http.ResponseWriter, r *http.Request, problems *apierror.Writer, status int) {
+	if problems != nil && session.IsAPIPath(r.URL.Path) {
+		if status == http.StatusRequestEntityTooLarge {
+			problems.ContentTooLarge(w, r)
+		} else {
+			problems.BadRequest(w, r, "リクエスト本文を読み取れません")
+		}
+		return
+	}
+	if status == http.StatusRequestEntityTooLarge {
+		http.Error(w, "Request Entity Too Large", status)
+	} else {
+		http.Error(w, "Bad Request", status)
+	}
 }

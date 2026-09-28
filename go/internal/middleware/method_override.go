@@ -3,6 +3,8 @@ package middleware
 import (
 	"net/http"
 	"strings"
+
+	"github.com/wikinoapp/wikino/go/internal/session"
 )
 
 // MethodOverrideはHTMLフォームから送信された_methodパラメータを読み取り、
@@ -14,12 +16,14 @@ import (
 //	  <input type="hidden" name="_method" value="DELETE">
 //	</form>
 //
-// これにより、HTMLフォーム (GETとPOSTのみサポート) とREST API (PUT/PATCH/DELETE) で
-// 同じルーティングを使用できます。
+// これにより、HTMLフォーム (GETとPOSTのみサポート) からPUT/PATCH/DELETEのルートを呼び出せます。
+//
+// 公開Web API (`/api/`) には適用しない。APIのクライアントはメソッドをそのまま送れるうえ、
+// 本文をフォームとして読み込むとJSONの本文を消費してしまうため。
 func MethodOverride(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// POSTリクエストのみ処理
-		if r.Method == http.MethodPost {
+		if r.Method == http.MethodPost && !session.IsAPIPath(r.URL.Path) {
 			// フォームデータから_methodパラメータを取得
 			if err := r.ParseForm(); err == nil {
 				method := r.PostFormValue("_method")

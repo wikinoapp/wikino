@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -139,5 +140,37 @@ func TestMethodOverride_WithOtherFormData(t *testing.T) {
 
 	if receivedEmail != "test@example.com" {
 		t.Errorf("email = %q、期待値 = %q", receivedEmail, "test@example.com")
+	}
+}
+
+// APIのパスには適用せず、フォームとして本文を読み込まない
+func TestMethodOverride_SkipsAPIPath(t *testing.T) {
+	t.Parallel()
+
+	var receivedMethod string
+	var receivedBody string
+	handler := MethodOverride(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedMethod = r.Method
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("本文を読めない: %v", err)
+		}
+		receivedBody = string(body)
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	form := url.Values{}
+	form.Set("_method", "DELETE")
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/spaces/example/pages", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if receivedMethod != http.MethodPost {
+		t.Errorf("メソッド = %q、期待値 = %q", receivedMethod, http.MethodPost)
+	}
+	if receivedBody != form.Encode() {
+		t.Errorf("本文 = %q、期待値 = %q", receivedBody, form.Encode())
 	}
 }

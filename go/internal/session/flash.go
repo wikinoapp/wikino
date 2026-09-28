@@ -126,8 +126,9 @@ type flashContextKey struct{}
 // Cookieからフラッシュを読み取り後、自動的にCookieを削除します。
 func (f *FlashManager) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// og:image配信ではフラッシュを消費せず、Cookie削除用のSet-Cookieを画像レスポンスに付けない
-		if (r.Method == http.MethodGet || r.Method == http.MethodHead) && IsOGImagePath(r.URL.Path) {
+		// og:image配信やAPIなどCookieを使わないリクエストではフラッシュを消費せず、
+		// Cookie削除用のSet-Cookieをレスポンスに付けない
+		if IsCookielessRequest(r.Method, r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
