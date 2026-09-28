@@ -1,0 +1,70 @@
+package oauth_application
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// CreateDataはconfidentialクライアントを登録した直後の画面をレンダリングする元になるデータ。
+//
+// ClientSecretはクライアントシークレットの値そのもの。データベースにはダイジェストしか
+// 残らないため、値を示せるのはこの画面だけである。
+type CreateData struct {
+	Space        viewmodel.Space
+	Application  viewmodel.OAuthApplication
+	ClientSecret string
+}
+
+// Createはconfidentialクライアントを登録した直後の画面を表示します。
+templ Create(data CreateData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "oauth_application_create_heading"),
+					})
+				</div>
+
+				<div class="px-4">
+					<div class="alert">
+						@templates.DecorativeIcon("warning-regular", "fill-warning")
+						<section>
+							{ templates.T(ctx, "oauth_application_create_notice") }
+						</section>
+					</div>
+				</div>
+
+				@components.ContentCard() {
+					<div class="grid gap-6">
+						@clientIDField(data.Application.ClientID)
+
+						<div class="grid gap-2">
+							<label class="label" for="client_secret">
+								{ templates.T(ctx, "oauth_application_create_client_secret_label") }
+							</label>
+							// 利用者がコピーするための欄で、送信はしない。値を選択しやすいよう入力欄に入れる。
+							<input
+								autocomplete="off"
+								class="input font-mono"
+								id="client_secret"
+								readonly
+								spellcheck="false"
+								type="text"
+								value={ data.ClientSecret }
+							/>
+						</div>
+
+						<a
+							href={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationPath(data.Space.Identifier, data.Application.ID))) }
+							class="btn rounded-full w-fit"
+						>
+							{ templates.T(ctx, "oauth_application_create_continue") }
+						</a>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

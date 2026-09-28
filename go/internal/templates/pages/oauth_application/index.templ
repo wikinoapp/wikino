@@ -1,0 +1,89 @@
+package oauth_application
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// IndexDataはOAuthアプリの一覧の画面をレンダリングする元になるデータ。
+//
+// Applicationsはスペースの削除されていないアプリで、閲覧者以外のメンバーが作成したものも
+// 含む。CanCreateは新しいアプリを登録できるか (oauth_application:write) を表し、偽なら
+// 登録へのリンクを出さない。
+type IndexData struct {
+	Space        viewmodel.Space
+	Applications []viewmodel.OAuthApplication
+	CanCreate    bool
+}
+
+// IndexはOAuthアプリの一覧の画面を表示します。
+templ Index(data IndexData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4 flex flex-col gap-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:    templates.T(ctx, "oauth_application_index_heading"),
+						Subtitle: indexSubtitle(),
+					})
+					if data.CanCreate {
+						<a
+							href={ templ.SafeURL(string(templates.NewSpaceSettingsOAuthApplicationPath(data.Space.Identifier))) }
+							class="btn rounded-full w-fit"
+						>
+							@templates.Icon("plus-regular", "size-4")
+							{ templates.T(ctx, "oauth_application_index_new") }
+						</a>
+					}
+				</div>
+				if len(data.Applications) == 0 {
+					<div class="px-4">
+						@components.EmptyState(components.EmptyStateData{
+							Message:  templates.T(ctx, "oauth_application_index_empty"),
+							IconName: "link-regular",
+						})
+					</div>
+				} else {
+					@components.ContentCard() {
+						<ul class="flex flex-col divide-y">
+							for _, app := range data.Applications {
+								<li class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
+									@applicationItem(data.Space.Identifier, app)
+								</li>
+							}
+						</ul>
+					}
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// indexSubtitleは一覧の画面のサブタイトルを表示します。
+templ indexSubtitle() {
+	{ templates.T(ctx, "oauth_application_index_description") }
+}
+
+// applicationItemは一覧の1件のアプリを表示します。名前から詳細の画面へ移れます。
+templ applicationItem(spaceIdentifier viewmodel.SpaceIdentifier, app viewmodel.OAuthApplication) {
+	<div class="flex flex-wrap items-center gap-2">
+		<a
+			class="font-bold underline underline-offset-4 [overflow-wrap:anywhere]"
+			href={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationPath(spaceIdentifier, app.ID))) }
+		>
+			{ app.Name }
+		</a>
+		@clientTypeBadge(app.Confidential)
+	</div>
+	<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-muted-foreground">
+		<dt>{ templates.T(ctx, "oauth_application_index_creator") }</dt>
+		<dd>
+			@creatorName(app.CreatorName)
+		</dd>
+		<dt>{ templates.T(ctx, "oauth_application_index_created_at") }</dt>
+		<dd>
+			@components.AbsoluteTime(components.AbsoluteTimeData{Time: app.CreatedAt})
+		</dd>
+	</dl>
+}

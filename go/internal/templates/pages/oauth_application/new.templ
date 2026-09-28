@@ -1,0 +1,162 @@
+package oauth_application
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// NewDataはOAuthアプリの登録フォームをレンダリングする元になるデータ。
+//
+// Name・RedirectURIs・ClientTypeは送信された値をフォームへ戻すためのもので、拒否された
+// 送信でも入力した内容が残るようにする。ClientTypeが空のときはconfidentialを選ぶ。
+type NewData struct {
+	CSRFToken    string
+	Space        viewmodel.Space
+	FormErrors   *model.ValidationError
+	Name         string
+	RedirectURIs string
+	ClientType   string
+}
+
+// NewはOAuthアプリの登録フォームを表示します。
+templ New(data NewData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:    templates.T(ctx, "oauth_application_new_heading"),
+						Subtitle: newSubtitle(),
+					})
+				</div>
+
+				@components.FormErrorSummary(data.FormErrors)
+
+				@components.ContentCard() {
+					<form
+						action={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationsPath(data.Space.Identifier))) }
+						class="grid gap-6"
+						method="POST"
+					>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+						@formFields(FormFieldsData{
+							FormErrors:   data.FormErrors,
+							Name:         data.Name,
+							RedirectURIs: data.RedirectURIs,
+						})
+
+						// 選択肢のグループはトピックの公開範囲と同じく、basecoatの .fieldsetでまとめます。
+						<fieldset class="fieldset gap-3">
+							<legend class="label">
+								{ templates.T(ctx, "oauth_application_new_client_type_label") }
+								@components.RequiredBadge()
+							</legend>
+							@fieldErrors(data.FormErrors, "client_type")
+							for i, clientType := range model.OAuthClientTypes {
+								<div class="flex flex-col gap-1">
+									<label class="label flex items-center gap-2 cursor-pointer" for={ clientTypeInputID(clientType) }>
+										<input
+											class="input"
+											id={ clientTypeInputID(clientType) }
+											name="client_type"
+											required
+											type="radio"
+											value={ clientType.String() }
+											if i == 0 && data.FormErrors != nil && !data.FormErrors.HasFieldError("name") && !data.FormErrors.HasFieldError("redirect_uris") && data.FormErrors.HasFieldError("client_type") {
+												autofocus
+											}
+											if clientType.String() == selectedClientType(data.ClientType) {
+												checked
+											}
+											if data.FormErrors != nil && data.FormErrors.HasFieldError("client_type") {
+												aria-invalid="true"
+												aria-describedby={ clientTypeHintID(clientType) + " " + fieldErrorID("client_type") }
+											} else {
+												aria-describedby={ clientTypeHintID(clientType) }
+											}
+										/>
+										@clientTypeLabel(clientType)
+									</label>
+									<p id={ clientTypeHintID(clientType) } class="text-muted-foreground pl-[25px] text-sm">
+										@clientTypeHint(clientType)
+									</p>
+								</div>
+							}
+						</fieldset>
+
+						<div class="flex justify-between gap-2">
+							<button type="submit" class="btn rounded-full w-fit">
+								@templates.Icon("paper-plane-tilt-regular")
+								{ templates.T(ctx, "oauth_application_new_submit_button") }
+							</button>
+
+							<a
+								href={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationsPath(data.Space.Identifier))) }
+								class="btn rounded-full w-fit"
+								data-variant="outline"
+							>
+								{ templates.T(ctx, "oauth_application_new_cancel") }
+							</a>
+						</div>
+					</form>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// newSubtitleは登録フォームのサブタイトルを表示します。
+templ newSubtitle() {
+	{ templates.T(ctx, "oauth_application_new_description") }
+}
+
+// clientTypeHintはクライアントの種別の選択肢の補足を表示します。
+templ clientTypeHint(clientType model.OAuthClientType) {
+	switch clientType {
+		case model.OAuthClientTypeConfidential:
+			{ templates.T(ctx, "oauth_application_new_client_type_confidential_hint") }
+		case model.OAuthClientTypePublic:
+			{ templates.T(ctx, "oauth_application_new_client_type_public_hint") }
+	}
+}
+
+// fieldErrorsはフォームの1つの項目のエラーを表示します。項目が1つのaria-describedbyで
+// すべてのエラーを指せるよう、エラーは1つの要素にまとめます。
+templ fieldErrors(formErrors *model.ValidationError, field string) {
+	if formErrors != nil && formErrors.HasFieldError(field) {
+		<div id={ fieldErrorID(field) }>
+			for _, errorMsg := range formErrors.GetFieldErrors(field) {
+				<p class="text-sm text-error">
+					{ errorMsg }
+				</p>
+			}
+		</div>
+	}
+}
+
+// fieldErrorIDはフォームの1つの項目のエラーを収める要素のidを返します。
+func fieldErrorID(field string) string {
+	return field + "-error"
+}
+
+// clientTypeInputIDはクライアントの種別のラジオボタンのidを返します。
+func clientTypeInputID(clientType model.OAuthClientType) string {
+	return "client_type_" + clientType.String()
+}
+
+// clientTypeHintIDはクライアントの種別の選択肢の補足を収める要素のidを返します。
+// 補足は種別を選ぶ判断材料なので、ラジオボタンのaria-describedbyから指して読み上げさせます。
+func clientTypeHintID(clientType model.OAuthClientType) string {
+	return clientTypeInputID(clientType) + "-hint"
+}
+
+// selectedClientTypeはクライアントの種別の選択肢のうち選んでおく値を返します。
+func selectedClientType(value string) string {
+	if value == "" {
+		return model.OAuthClientTypeConfidential.String()
+	}
+	return value
+}

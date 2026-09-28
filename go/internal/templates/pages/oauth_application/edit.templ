@@ -1,0 +1,116 @@
+package oauth_application
+
+import (
+	"strconv"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// EditDataはOAuthアプリの編集フォームをレンダリングする元になるデータ。
+//
+// Applicationは編集するアプリで、画面の見出しと戻り先に使う。フォームの初期値はFieldsに
+// 入れる。検証に失敗した送信の再表示では、Fieldsに送信された値を戻す。競合した場合は
+// Fieldsに現在の値と版を入れ、送信された値はConflictedに入れてフォームの外に示す。
+// 古い値で上書きさせずに、利用者が入力した内容をコピーして入力し直せるようにするためである。
+type EditData struct {
+	CSRFToken   string
+	Space       viewmodel.Space
+	Application viewmodel.OAuthApplication
+	Version     int64
+	Fields      FormFieldsData
+	Conflicted  *ConflictedFieldsData
+}
+
+// ConflictedFieldsDataは競合で保存されなかった送信の値。
+type ConflictedFieldsData struct {
+	Name         string
+	RedirectURIs string
+}
+
+// EditはOAuthアプリの編集フォームを表示します。クライアントの種別は編集できないため、
+// 項目にはせず表示だけにします。
+templ Edit(data EditData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "oauth_application_edit_heading"),
+					})
+				</div>
+
+				@components.FormErrorSummary(data.Fields.FormErrors)
+
+				@components.ContentCard() {
+					<form
+						action={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationPath(data.Space.Identifier, data.Application.ID))) }
+						class="grid gap-6"
+						method="POST"
+					>
+						<input type="hidden" name="_method" value="PATCH"/>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<input type="hidden" name="version" value={ strconv.FormatInt(data.Version, 10) }/>
+
+						@formFields(data.Fields)
+
+						<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+							<dt class="text-muted-foreground">{ templates.T(ctx, "oauth_application_edit_client_type") }</dt>
+							<dd class="flex flex-col gap-1">
+								@clientTypeBadge(data.Application.Confidential)
+								<span class="text-muted-foreground">{ templates.T(ctx, "oauth_application_edit_client_type_hint") }</span>
+							</dd>
+						</dl>
+
+						<div class="flex justify-between gap-2">
+							<button type="submit" class="btn rounded-full w-fit">
+								@templates.Icon("paper-plane-tilt-regular")
+								{ templates.T(ctx, "oauth_application_edit_submit_button") }
+							</button>
+
+							<a
+								href={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationPath(data.Space.Identifier, data.Application.ID))) }
+								class="btn rounded-full w-fit"
+								data-variant="outline"
+							>
+								{ templates.T(ctx, "oauth_application_edit_cancel") }
+							</a>
+						</div>
+					</form>
+				}
+
+				if data.Conflicted != nil {
+					@conflictedFields(*data.Conflicted)
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// conflictedFieldsは競合で保存されなかった送信の値を読み取り専用で表示します。フォームの外に
+// 置き、name属性を持たせないため、再度の保存で送信されることはありません。
+templ conflictedFields(data ConflictedFieldsData) {
+	@components.ContentCard() {
+		<section class="grid gap-4" aria-labelledby="conflicted-heading">
+			<div class="grid gap-1">
+				<h2 id="conflicted-heading" class="font-bold">{ templates.T(ctx, "oauth_application_edit_conflicted_heading") }</h2>
+				<p class="text-muted-foreground text-sm">{ templates.T(ctx, "oauth_application_edit_conflicted_description") }</p>
+			</div>
+			<div class="grid gap-2">
+				<label class="label" for="conflicted_name">
+					{ templates.T(ctx, "oauth_application_form_name_label") }
+				</label>
+				<input class="input" id="conflicted_name" readonly type="text" value={ data.Name }/>
+			</div>
+			<div class="grid gap-2">
+				<label class="label" for="conflicted_redirect_uris">
+					{ templates.T(ctx, "oauth_application_form_redirect_uris_label") }
+				</label>
+				<textarea class="textarea font-mono" id="conflicted_redirect_uris" readonly rows="3" spellcheck="false">
+					{ data.RedirectURIs }
+				</textarea>
+			</div>
+		</section>
+	}
+}
