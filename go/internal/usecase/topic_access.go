@@ -15,7 +15,8 @@ import (
 // 関連一覧 (リンク一覧・バックリンク一覧) と、その一覧が指すページを1つの解決結果から判定する
 // ため、閲覧者が開けないページがタイトルだけでも一覧に現れることがなくなる。
 type topicAccess struct {
-	spaceMember   *model.SpaceMember
+	// authorizeはトピックメンバーから、そのトピックにおける閲覧者のAuthorizerを生成する
+	authorize     func(topicMember *model.TopicMember) policy.Authorizer
 	topics        []*model.Topic
 	topicByID     map[model.TopicID]*model.Topic
 	memberByTopic map[model.TopicID]*model.TopicMember
@@ -25,7 +26,30 @@ type topicAccess struct {
 // どちらもそれぞれ1クエリで取得するため、一覧のページ数に比例してクエリが増えることはない。
 // ゲストはトピックメンバーを持たないため、その取得自体を行わない。
 func fetchTopicAccess(ctx context.Context, repos pageAccessRepos, spaceID model.SpaceID, spaceMember *model.SpaceMember) (*topicAccess, error) {
-	topics, err := repos.topicRepo.ListActiveBySpace(ctx, spaceID)
+	return loadTopicAccess(ctx, repos.topicRepo, repos.topicMemberRepo, spaceID, spaceMember, func(topicMember *model.TopicMember) policy.Authorizer {
+		return newAuthorizer(spaceMember, topicMember)
+	})
+}
+
+// fetchAPITopicAccessは公開APIのトークンの主体について、束縛先のスペースのトピックと
+// 主体のトピックメンバーを解決する。判定はメンバーのスコープとトークンのスコープの論理積で行う。
+func fetchAPITopicAccess(ctx context.Context, topicRepo *repository.TopicRepository, topicMemberRepo *repository.TopicMemberRepository, principal *model.APIPrincipal) (*topicAccess, error) {
+	return loadTopicAccess(ctx, topicRepo, topicMemberRepo, principal.Space.ID, principal.SpaceMember, func(topicMember *model.TopicMember) policy.Authorizer {
+		return newAPIAuthorizer(principal, topicMember)
+	})
+}
+
+// loadTopicAccessはスペースのトピックと閲覧者のトピックメンバーを取得し、authorizeで判定する
+// topicAccessを返す。
+func loadTopicAccess(
+	ctx context.Context,
+	topicRepo *repository.TopicRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
+	spaceID model.SpaceID,
+	spaceMember *model.SpaceMember,
+	authorize func(topicMember *model.TopicMember) policy.Authorizer,
+) (*topicAccess, error) {
+	topics, err := topicRepo.ListActiveBySpace(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("トピック一覧の取得に失敗: %w", err)
 	}
@@ -39,7 +63,7 @@ func fetchTopicAccess(ctx context.Context, repos pageAccessRepos, spaceID model.
 
 	memberByTopic := make(map[model.TopicID]*model.TopicMember, len(topics))
 	if spaceMember != nil {
-		topicMembers, err := repos.topicMemberRepo.ListBySpaceMemberAndTopics(ctx, spaceID, spaceMember.ID, topicIDs)
+		topicMembers, err := topicMemberRepo.ListBySpaceMemberAndTopics(ctx, spaceID, spaceMember.ID, topicIDs)
 		if err != nil {
 			return nil, fmt.Errorf("トピックメンバーの一括取得に失敗: %w", err)
 		}
@@ -49,7 +73,7 @@ func fetchTopicAccess(ctx context.Context, repos pageAccessRepos, spaceID model.
 	}
 
 	return &topicAccess{
-		spaceMember:   spaceMember,
+		authorize:     authorize,
 		topics:        topics,
 		topicByID:     topicByID,
 		memberByTopic: memberByTopic,
@@ -58,11 +82,10 @@ func fetchTopicAccess(ctx context.Context, repos pageAccessRepos, spaceID model.
 
 // visibilityは閲覧者が開けるトピックに一覧を絞り込む条件を返す。
 func (a *topicAccess) visibility() repository.TopicVisibility {
-	visibleTopicIDs := make([]model.TopicID, 0, len(a.topics))
-	for _, topic := range a.topics {
-		if a.authorizer(topic.ID).CanShowTopic(topic) {
-			visibleTopicIDs = append(visibleTopicIDs, topic.ID)
-		}
+	visible := a.visibleTopics()
+	visibleTopicIDs := make([]model.TopicID, len(visible))
+	for i, topic := range visible {
+		visibleTopicIDs[i] = topic.ID
 	}
 	return repository.VisibleTopics(visibleTopicIDs)
 }
@@ -107,5 +130,16 @@ func (a *topicAccess) canShowPage(pg *model.Page) bool {
 // トピックのトピックメンバーが持つスコープを統合する。CanUpdatePageのようにページの所属トピック
 // に依存する権限の判定に使う。
 func (a *topicAccess) authorizer(topicID model.TopicID) policy.Authorizer {
-	return newAuthorizer(a.spaceMember, a.memberByTopic[topicID])
+	return a.authorize(a.memberByTopic[topicID])
+}
+
+// visibleTopicsは閲覧者が開けるトピックを、スペースのトピックと同じnumber順で返す。
+func (a *topicAccess) visibleTopics() []*model.Topic {
+	visible := make([]*model.Topic, 0, len(a.topics))
+	for _, topic := range a.topics {
+		if a.authorizer(topic.ID).CanShowTopic(topic) {
+			visible = append(visible, topic)
+		}
+	}
+	return visible
 }

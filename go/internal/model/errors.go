@@ -93,6 +93,9 @@ const (
 	AppErrCodeConflict
 	AppErrCodeInternal
 	AppErrCodeTwoFactorNotEnabled
+	// AppErrCodePreconditionFailedは、更新の前提にした版 (公開APIの `If-Match`) がリソースの今の版と
+	// 一致しないことを表す
+	AppErrCodePreconditionFailed
 )
 
 // AppErrorはアプリケーションエラーを表す (SafeErrorパターン)。

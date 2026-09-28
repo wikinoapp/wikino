@@ -2,6 +2,14 @@
 -- スペースIDとページ番号でページを取得する (廃棄されていないページのみ)
 SELECT * FROM pages WHERE space_id = $1 AND number = $2 AND discarded_at IS NULL;
 
+-- name: FindPageByIDForUpdate :one
+-- APIの更新で、`If-Match` の照合から更新までの間に他の更新が割り込まないよう、ページの行を
+-- トランザクションが終わるまでロックして取得する (廃棄されていないページのみ)。
+-- FOR UPDATEではなくFOR NO KEY UPDATEを使うのは、LockSpaceByIDと同じく、pages(id) を参照する
+-- テーブル (下書き・リビジョンなど) への書き込みの外部キー検査を待たせないためである。
+-- UPDATEもFOR NO KEY UPDATEを取るため、同じページの更新どうしは直列化される。
+SELECT * FROM pages WHERE id = @id AND space_id = @space_id AND discarded_at IS NULL FOR NO KEY UPDATE;
+
 -- name: FindPagesByIDs :many
 -- IDリストに含まれるページを取得する (同スペース・未廃棄のページのみ。リンク一覧表示用)
 SELECT * FROM pages
@@ -316,6 +324,21 @@ SET title = id::varchar,
 WHERE id = @id
   AND space_id = @space_id;
 
+-- name: DiscardEmptyUnpublishedPageByID :one
+-- APIの作成時に、検証後も同じタイトルの空の未公開ページである場合だけ置き換える
+UPDATE pages
+SET title = id::varchar,
+    discarded_at = @discarded_at,
+    updated_at = @updated_at
+WHERE id = @id
+  AND space_id = @space_id
+  AND topic_id = @topic_id
+  AND title = @title
+  AND published_at IS NULL
+  AND body = ''
+  AND discarded_at IS NULL
+RETURNING id;
+
 -- name: CreateUnpublishedPage :one
 -- 未公開のページを作成する。Wikiリンクの解決とページ新規作成の入口は同じ列をINSERTする
 -- ため、このクエリを共有する。titleをnullableにしているのは、Wikiリンクの解決では
@@ -338,3 +361,26 @@ WHERE p.space_id = @space_id
   AND p.trashed_at IS NULL
   AND t.discarded_at IS NULL
 ORDER BY t.number, p.number;
+
+-- name: ListPublishedPagesByModifiedAt :many
+-- 公開APIのページ一覧。公開済み・未廃棄・未ゴミ箱で、閲覧者が開けるトピック (visible_topic_ids) の
+-- ページを更新日時の新しい順に返す。この集合は呼び出し元がCanShowTopicの規則で解決する。
+-- modified_sinceを渡すとその日時以降に更新されたページに絞る。カーソル (after_modified_at,
+-- after_id) を渡すと、並び順でその位置より後ろのページだけを返す。更新日時が同じページも
+-- 主キーで順序を決めるため、取得中に更新が無ければ重複や読み飛ばしなく辿れる。
+-- 並び順は (space_id, modified_at, id) のインデックスに合わせてある。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY(@visible_topic_ids::uuid[])
+  AND (sqlc.narg('modified_since')::timestamp IS NULL OR p.modified_at >= sqlc.narg('modified_since')::timestamp)
+  AND (
+    sqlc.narg('after_modified_at')::timestamp IS NULL
+    OR (p.modified_at, p.id) < (sqlc.narg('after_modified_at')::timestamp, sqlc.narg('after_id')::uuid)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT @row_limit;
