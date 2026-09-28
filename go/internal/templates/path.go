@@ -49,9 +49,24 @@ func TrashPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/trash", spaceIdentifier))
 }
 
-// SpaceSettingsPathはスペース設定のパスを生成します (現状はRails版にプロキシされる)。
+// SpaceSettingsPathはスペース設定のトップのパスを生成します。
 func SpaceSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/settings", spaceIdentifier))
+}
+
+// SpaceSettingsGeneralPathはスペースの一般設定のパスを生成します (現状はRails版にプロキシされる)。
+func SpaceSettingsGeneralPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPath(spaceIdentifier) + "/general"
+}
+
+// SpaceSettingsAttachmentsPathはスペースの添付ファイルの一覧のパスを生成します (現状はRails版にプロキシされる)。
+func SpaceSettingsAttachmentsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPath(spaceIdentifier) + "/attachments"
+}
+
+// NewSpaceSettingsDeletionPathはスペースを削除する画面のパスを生成します (現状はRails版にプロキシされる)。
+func NewSpaceSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPath(spaceIdentifier) + "/deletion/new"
 }
 
 // SpaceSettingsExportsPathはスペースのエクスポートのパスを生成します。エクスポートは、この
@@ -73,6 +88,62 @@ func SpaceSettingsExportPath(spaceIdentifier viewmodel.SpaceIdentifier, exportID
 // SpaceSettingsExportDownloadPathはエクスポートのアーカイブをダウンロードするパスを生成します。
 func SpaceSettingsExportDownloadPath(spaceIdentifier viewmodel.SpaceIdentifier, exportID string) Path {
 	return SpaceSettingsExportPath(spaceIdentifier, exportID) + "/download"
+}
+
+// SpaceSettingsPersonalAccessTokensPathは個人アクセストークンの一覧のパスを生成します。
+// トークンの発行も、このパスへの送信で行います。
+func SpaceSettingsPersonalAccessTokensPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPath(spaceIdentifier) + "/personal_access_tokens"
+}
+
+// NewSpaceSettingsPersonalAccessTokenPathは個人アクセストークンの発行フォームのパスを生成します。
+func NewSpaceSettingsPersonalAccessTokenPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPersonalAccessTokensPath(spaceIdentifier) + "/new"
+}
+
+// SpaceSettingsPersonalAccessTokenPathは個人アクセストークン1件のパスを生成します。
+// トークンの失効は、このパスへのDELETEで行います。
+func SpaceSettingsPersonalAccessTokenPath(spaceIdentifier viewmodel.SpaceIdentifier, tokenID string) Path {
+	return SpaceSettingsPersonalAccessTokensPath(spaceIdentifier) + Path("/"+url.PathEscape(tokenID))
+}
+
+// SpaceSettingsOAuthApplicationsPathはOAuthアプリの一覧のパスを生成します。
+// アプリの登録も、このパスへの送信で行います。
+func SpaceSettingsOAuthApplicationsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPath(spaceIdentifier) + "/oauth_applications"
+}
+
+// NewSpaceSettingsOAuthApplicationPathはOAuthアプリの登録フォームのパスを生成します。
+func NewSpaceSettingsOAuthApplicationPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsOAuthApplicationsPath(spaceIdentifier) + "/new"
+}
+
+// SpaceSettingsOAuthApplicationPathはOAuthアプリ1件の詳細のパスを生成します。
+// アプリの更新 (PATCH) と削除 (DELETE) も、このパスへの送信で行います。
+func SpaceSettingsOAuthApplicationPath(spaceIdentifier viewmodel.SpaceIdentifier, applicationID string) Path {
+	return SpaceSettingsOAuthApplicationsPath(spaceIdentifier) + Path("/"+url.PathEscape(applicationID))
+}
+
+// EditSpaceSettingsOAuthApplicationPathはOAuthアプリの編集フォームのパスを生成します。
+func EditSpaceSettingsOAuthApplicationPath(spaceIdentifier viewmodel.SpaceIdentifier, applicationID string) Path {
+	return SpaceSettingsOAuthApplicationPath(spaceIdentifier, applicationID) + "/edit"
+}
+
+// SpaceSettingsOAuthApplicationClientSecretPathはOAuthアプリのクライアントシークレットのパスを
+// 生成します。シークレットの再発行は、このパスへのPOSTで行います。
+func SpaceSettingsOAuthApplicationClientSecretPath(spaceIdentifier viewmodel.SpaceIdentifier, applicationID string) Path {
+	return SpaceSettingsOAuthApplicationPath(spaceIdentifier, applicationID) + "/client_secret"
+}
+
+// SpaceSettingsOAuthGrantsPathは連携中のアプリの一覧のパスを生成します。
+func SpaceSettingsOAuthGrantsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPath(spaceIdentifier) + "/oauth_grants"
+}
+
+// SpaceSettingsOAuthGrantPathは連携 (OAuthアプリの許可) 1件のパスを生成します。
+// 連携の解除は、このパスへのDELETEで行います。
+func SpaceSettingsOAuthGrantPath(spaceIdentifier viewmodel.SpaceIdentifier, grantID string) Path {
+	return SpaceSettingsOAuthGrantsPath(spaceIdentifier) + Path("/"+url.PathEscape(grantID))
 }
 
 // HomePathはホームのパスを生成します

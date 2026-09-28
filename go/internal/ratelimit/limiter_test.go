@@ -345,3 +345,23 @@ func TestEmailKey(t *testing.T) {
 		t.Errorf("EmailKey() = %q、期待値 = %q", got, want)
 	}
 }
+
+func TestAPIUserKey(t *testing.T) {
+	t.Parallel()
+
+	got := APIUserKey("user-1")
+	want := "api:user:user-1"
+	if got != want {
+		t.Errorf("APIUserKey() = %q、期待値 = %q", got, want)
+	}
+}
+
+func TestOAuthIPKey(t *testing.T) {
+	t.Parallel()
+
+	got := OAuthIPKey("192.168.1.1")
+	want := "oauth:ip:192.168.1.1"
+	if got != want {
+		t.Errorf("OAuthIPKey() = %q、期待値 = %q", got, want)
+	}
+}

@@ -20,7 +20,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, repository.NewFeatureFlagRepository(q))
 
 	// スペースオーナー (デフォルトでspace:adminスコープを持つ)。
 	ownerID := testutil.NewUserBuilder(t, tx).
@@ -168,6 +168,9 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if output.CanCreateTopic {
 			t.Error("ゲストなのにCanCreateTopicがtrue")
 		}
+		if output.CanShowSpaceSettings {
+			t.Error("ゲストなのにCanShowSpaceSettingsがtrue")
+		}
 		if output.FirstJoinedTopic != nil {
 			t.Error("ゲストなのにFirstJoinedTopicがnilではない")
 		}
@@ -223,6 +226,9 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if output.CanCreateTopic {
 			t.Error("ログイン中の非メンバーなのにCanCreateTopicがtrue")
 		}
+		if output.CanShowSpaceSettings {
+			t.Error("ログイン中の非メンバーなのにCanShowSpaceSettingsがtrue")
+		}
 		if output.FirstJoinedTopic != nil {
 			t.Error("ログイン中の非メンバーなのにFirstJoinedTopicがnilではない")
 		}
@@ -272,6 +278,10 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if !output.CanCreateTopic {
 			t.Error("space:adminメンバーなのにCanCreateTopicがfalse")
 		}
+		// space:adminはspace:writeを含意するため、スペース設定を開ける。
+		if !output.CanShowSpaceSettings {
+			t.Error("space:adminメンバーなのにCanShowSpaceSettingsがfalse")
+		}
 		// TopicMapは一覧ページが属する両トピックを含む (カードラベル用)。
 		if output.TopicMap[publicTopicID] == nil {
 			t.Error("TopicMapに公開トピックが含まれていない")
@@ -316,6 +326,10 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		}
 		if output.CanCreateTopic {
 			t.Error("topic:writeスコープを持たないメンバーなのにCanCreateTopicがtrue")
+		}
+		// space:writeもトークン管理のスコープも持たないメンバーはスペース設定を開けない。
+		if output.CanShowSpaceSettings {
+			t.Error("スペース設定の項目を1つも開けないメンバーなのにCanShowSpaceSettingsがtrue")
 		}
 		// page:readのみ (page:write無し) のメンバーはどのトピックのページも編集できない。
 		if output.CanEditPageByTopic[publicTopicID] {
@@ -389,7 +403,7 @@ func TestGetSpaceShowUsecase_Execute_空状態(t *testing.T) {
 	pageRepo := repository.NewPageRepository(q)
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
-	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, repository.NewFeatureFlagRepository(q))
 
 	userID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gss-empty@example.com").

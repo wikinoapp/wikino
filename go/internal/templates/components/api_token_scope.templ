@@ -1,0 +1,53 @@
+package components
+
+import (
+	"context"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+)
+
+// APITokenScopeBadgesはトークンに付与したスコープをバッジで並べます。
+templ APITokenScopeBadges(scopes []model.Scope) {
+	<ul class="flex flex-wrap gap-1">
+		for _, scope := range scopes {
+			<li class="badge bg-muted text-muted-foreground font-normal">
+				{ APITokenScopeLabel(ctx, scope) }
+			</li>
+		}
+	</ul>
+}
+
+// APITokenScopeLabelは公開APIのトークンのスコープの表示名を返します。個人アクセストークンの画面と
+// OAuthの同意画面が同じ表示名を使います。トークンに付与できるスコープ (model.APITokenScopes)
+// 以外が保存されていても画面が崩れないよう、表示名の無いスコープはスコープの文字列をそのまま
+// 返します。
+//
+// 文言のキーはスコープの文字列から組み立てず、ここで名指しします。画面が持つキーをgrepで
+// 追えるようにするためです。
+func APITokenScopeLabel(ctx context.Context, scope model.Scope) string {
+	switch scope {
+	case model.ScopeTopicRead:
+		return templates.T(ctx, "api_token_scope_topic_read")
+	case model.ScopePageRead:
+		return templates.T(ctx, "api_token_scope_page_read")
+	case model.ScopePageWrite:
+		return templates.T(ctx, "api_token_scope_page_write")
+	default:
+		return string(scope)
+	}
+}
+
+// APITokenScopeHintはスコープで何ができるようになるかの説明を返します。
+func APITokenScopeHint(ctx context.Context, scope model.Scope) string {
+	switch scope {
+	case model.ScopeTopicRead:
+		return templates.T(ctx, "api_token_scope_topic_read_hint")
+	case model.ScopePageRead:
+		return templates.T(ctx, "api_token_scope_page_read_hint")
+	case model.ScopePageWrite:
+		return templates.T(ctx, "api_token_scope_page_write_hint")
+	default:
+		return ""
+	}
+}

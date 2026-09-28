@@ -16,6 +16,7 @@ type GetSpaceShowUsecase struct {
 	pageRepo        *repository.PageRepository
 	topicRepo       *repository.TopicRepository
 	topicMemberRepo *repository.TopicMemberRepository
+	featureFlagRepo *repository.FeatureFlagRepository
 }
 
 // NewGetSpaceShowUsecaseはGetSpaceShowUsecaseを生成する。
@@ -25,6 +26,7 @@ func NewGetSpaceShowUsecase(
 	pageRepo *repository.PageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
+	featureFlagRepo *repository.FeatureFlagRepository,
 ) *GetSpaceShowUsecase {
 	return &GetSpaceShowUsecase{
 		spaceRepo:       spaceRepo,
@@ -32,6 +34,7 @@ func NewGetSpaceShowUsecase(
 		pageRepo:        pageRepo,
 		topicRepo:       topicRepo,
 		topicMemberRepo: topicMemberRepo,
+		featureFlagRepo: featureFlagRepo,
 	}
 }
 
@@ -78,6 +81,10 @@ type GetSpaceShowOutput struct {
 
 	JoinedSpace    bool
 	CanCreateTopic bool
+
+	// CanShowSpaceSettingsは、スペース設定のトップを開けるか (オプションメニューに設定への
+	// リンクを出すか) を表す。設定のトップと同じ条件 (SpaceSettingsItems.CanShow) で判定する。
+	CanShowSpaceSettings bool
 }
 
 // Executeはスペース詳細画面に表示するデータを取得する。スペースが見つからない場合は (nil, nil) を返す。
@@ -138,6 +145,11 @@ func (uc *GetSpaceShowUsecase) Execute(ctx context.Context, input GetSpaceShowIn
 		}
 	}
 
+	settingsItems, err := resolveSpaceSettingsItems(ctx, uc.featureFlagRepo, spaceMember)
+	if err != nil {
+		return nil, err
+	}
+
 	return &GetSpaceShowOutput{
 		Space:                space,
 		SpaceMember:          spaceMember,
@@ -151,6 +163,7 @@ func (uc *GetSpaceShowUsecase) Execute(ctx context.Context, input GetSpaceShowIn
 		FirstJoinedTopic:     firstJoinedTopic,
 		JoinedSpace:          joinedSpace,
 		CanCreateTopic:       authorizer.CanCreateTopic(),
+		CanShowSpaceSettings: settingsItems.CanShow(),
 	}, nil
 }
 

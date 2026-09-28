@@ -1,0 +1,68 @@
+package space
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// SettingsDataはスペース設定のトップをレンダリングする元になるデータ。
+//
+// CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル・削除) を出すかを表す。
+// エクスポート以外のリンク先はRails版の画面のまま残る。
+// CanShowPersonalAccessTokensは個人アクセストークンの項目を、CanShowOAuthGrantsは連携中の
+// アプリの項目を、CanShowOAuthApplicationsはOAuthアプリの項目を出すかを表す。
+type SettingsData struct {
+	Space                       viewmodel.Space
+	CanUpdateSpace              bool
+	CanShowPersonalAccessTokens bool
+	CanShowOAuthGrants          bool
+	CanShowOAuthApplications    bool
+}
+
+// Settingsはスペース設定のトップのコンテンツを表示します。
+templ Settings(data SettingsData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "space_settings_heading"),
+					})
+				</div>
+				if data.CanUpdateSpace {
+					@components.ContentCard() {
+						<div class="flex flex-col gap-3">
+							@settingsLink(templates.SpaceSettingsGeneralPath(data.Space.Identifier), "space_settings_general")
+							@settingsLink(templates.NewSpaceSettingsExportPath(data.Space.Identifier), "space_settings_export")
+							@settingsLink(templates.SpaceSettingsAttachmentsPath(data.Space.Identifier), "space_settings_attachments")
+							@settingsLink(templates.NewSpaceSettingsDeletionPath(data.Space.Identifier), "space_settings_deletion")
+						</div>
+					}
+				}
+				if data.CanShowPersonalAccessTokens || data.CanShowOAuthGrants || data.CanShowOAuthApplications {
+					@components.ContentCard() {
+						<div class="flex flex-col gap-3">
+							if data.CanShowPersonalAccessTokens {
+								@settingsLink(templates.SpaceSettingsPersonalAccessTokensPath(data.Space.Identifier), "space_settings_personal_access_tokens")
+							}
+							if data.CanShowOAuthGrants {
+								@settingsLink(templates.SpaceSettingsOAuthGrantsPath(data.Space.Identifier), "space_settings_oauth_grants")
+							}
+							if data.CanShowOAuthApplications {
+								@settingsLink(templates.SpaceSettingsOAuthApplicationsPath(data.Space.Identifier), "space_settings_oauth_applications")
+							}
+						</div>
+					}
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// settingsLinkはスペース設定の各項目へのリンクを表示します。
+templ settingsLink(path templates.Path, labelKey string) {
+	<a class="underline underline-offset-4 w-fit" href={ templ.SafeURL(string(path)) }>
+		{ templates.T(ctx, labelKey) }
+	</a>
+}

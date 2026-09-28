@@ -26,6 +26,10 @@ type ShowData struct {
 	SectionTopics []viewmodel.CardLinkTopic
 
 	CanCreateTopic bool
+
+	// CanShowSettingsはオプションメニューにスペース設定へのリンクを出すかを表す。
+	// 設定のトップを開けるメンバーにだけ出す。
+	CanShowSettings bool
 }
 
 // paginationPathはスペース詳細画面のオフセットページネーション用パスを生成します。
@@ -74,7 +78,8 @@ templ Show(data ShowData) {
 }
 
 // showActionsはページヘッダーに表示するスペースオプションのドロップダウンを表示します。
-// RSSフィードリンクは常に表示し、トピック / ゴミ箱 / 設定リンクはスペースメンバーにのみ表示します。
+// RSSフィードリンクは常に表示し、トピック / ゴミ箱リンクはスペースメンバーにのみ、設定リンクは
+// スペース設定のトップを開けるメンバーにのみ表示します。
 templ showActions(data ShowData) {
 	<div id="space-options-dropdown" class="dropdown-menu">
 		<button
@@ -121,6 +126,8 @@ templ showActions(data ShowData) {
 							{ templates.T(ctx, "space_show_options_trash") }
 						</a>
 					</div>
+				}
+				if data.CanShowSettings {
 					<div role="menuitem">
 						<a
 							class="flex gap-2 items-center w-full"

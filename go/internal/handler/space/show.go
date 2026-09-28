@@ -106,6 +106,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		JoinedSpace:    output.JoinedSpace,
 		SectionTopics:  viewmodel.NewCardLinkTopicsForSpace(output.SectionTopics, output.CanCreatePageByTopic, spaceIdentVM),
 		CanCreateTopic: output.CanCreateTopic,
+
+		CanShowSettings: output.CanShowSpaceSettings,
 	}
 	content := spacepages.Show(showData)
 
