@@ -82,6 +82,27 @@ const (
 	ScopeAttachmentDelete Scope = "attachment:delete"
 )
 
+// 個人アクセストークン関連スコープ
+const (
+	ScopePersonalAccessTokenRead   Scope = "personal_access_token:read"
+	ScopePersonalAccessTokenWrite  Scope = "personal_access_token:write"
+	ScopePersonalAccessTokenDelete Scope = "personal_access_token:delete"
+)
+
+// OAuthの連携関連スコープ
+const (
+	ScopeOAuthGrantRead   Scope = "oauth_grant:read"
+	ScopeOAuthGrantWrite  Scope = "oauth_grant:write"
+	ScopeOAuthGrantDelete Scope = "oauth_grant:delete"
+)
+
+// OAuthアプリ関連スコープ
+const (
+	ScopeOAuthApplicationRead   Scope = "oauth_application:read"
+	ScopeOAuthApplicationWrite  Scope = "oauth_application:write"
+	ScopeOAuthApplicationDelete Scope = "oauth_application:delete"
+)
+
 // HasScopeは指定のスコープがスライスに含まれているかチェックする
 func HasScope(scopes []Scope, target Scope) bool {
 	for _, s := range scopes {
@@ -99,4 +120,41 @@ func StringsToScopes(ss []string) []Scope {
 		scopes[i] = Scope(s)
 	}
 	return scopes
+}
+
+// ScopesToStringsは []Scopeを []stringに変換する
+func ScopesToStrings(scopes []Scope) []string {
+	ss := make([]string, len(scopes))
+	for i, s := range scopes {
+		ss[i] = string(s)
+	}
+	return ss
+}
+
+// APITokenScopesは、公開APIのトークン (個人アクセストークン・OAuthのアクセストークン) に
+// 付与できるスコープ。管理系のスコープとトークン管理のスコープは含めない。トークンでトークンを
+// 発行できると、権限の範囲を利用者の意図より広げられるためである
+var APITokenScopes = []Scope{
+	ScopeTopicRead,
+	ScopePageRead,
+	ScopePageWrite,
+}
+
+// SortAPITokenScopesは、トークンや許可のスコープをAPITokenScopesの順に並べ直した新しいスライスを
+// 返す。許可のスコープは保存順が揃っていない (新規作成では要求の順、既存の許可の拡張では文字列の順)
+// ため、表示の前に並べ直す。APITokenScopesに無いスコープが保存されていても隠さないよう、それらは
+// 元の順のまま末尾に置く
+func SortAPITokenScopes(scopes []Scope) []Scope {
+	sorted := make([]Scope, 0, len(scopes))
+	for _, s := range APITokenScopes {
+		if HasScope(scopes, s) {
+			sorted = append(sorted, s)
+		}
+	}
+	for _, s := range scopes {
+		if !HasScope(APITokenScopes, s) && !HasScope(sorted, s) {
+			sorted = append(sorted, s)
+		}
+	}
+	return sorted
 }
