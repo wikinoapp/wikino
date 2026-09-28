@@ -1,4 +1,4 @@
-package handler_test
+package httperror_test
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 )
 
@@ -50,7 +50,7 @@ func TestNotFound(t *testing.T) {
 			req = req.WithContext(ctx)
 
 			rr := httptest.NewRecorder()
-			handler.NotFound(rr, req)
+			httperror.NotFound(rr, req)
 
 			if rr.Code != tt.wantStatus {
 				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, tt.wantStatus)

@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -33,7 +33,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	suggestionNumber, err := strconv.ParseInt(suggestionNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -49,13 +49,13 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if output == nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
 	// 認可チェック
 	if !output.CanUpdateSuggestion {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 

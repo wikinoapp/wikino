@@ -117,6 +117,31 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/validator
               desc: "HandlerはValidatorに直接依存できません。UseCaseを経由してください。"
 
+        httperror-layer:
+          files:
+            - "**/internal/httperror/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "httperrorはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "httperrorはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/dispatcher
+              desc: "httperrorはDispatcherに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/model
+              desc: "httperrorはDomain層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/policy
+              desc: "httperrorはDomain層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "httperrorはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/validator
+              desc: "httperrorはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "httperrorはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "httperrorはMiddlewareに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/worker
+              desc: "httperrorはWorkerに依存できません。"
+
         # バリデーター層のルール: 形式チェック + DBの状態を使った検証
         # Repository/Modelは許可、query/usecaseへの依存禁止
         validator-layer:

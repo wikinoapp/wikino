@@ -18,7 +18,6 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/dispatcher"
-	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
@@ -59,6 +58,7 @@ import (
 	topicsettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings_general"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/image"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -600,7 +600,7 @@ func runServe() {
 	r := chi.NewRouter()
 
 	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
-	r.NotFound(handler.NotFound)
+	r.NotFound(httperror.NotFound)
 
 	// リバースプロキシミドルウェアを初期化 (Rails版へのプロキシ)
 	// 注: RailsAppURLが設定されている場合のみ有効化
@@ -847,7 +847,7 @@ func runServe() {
 		// フォールバックしない一方、Railsのルーターは一致しないHEADをGETとして読むため。
 		// 併記しないと、GETに200を返す画面がHEADには405を返す。
 		r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
-			r.MethodNotAllowed(handler.NotFound)
+			r.MethodNotAllowed(httperror.NotFound)
 
 			r.Post("/", exportHandler.Create)
 			r.Get("/new", exportHandler.New)

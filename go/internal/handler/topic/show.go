@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/httppagination"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -31,7 +31,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	topicNumber, err := strconv.ParseInt(topicNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -40,7 +40,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// 処理する。
 	currentPage, ok := httppagination.ParsePageParam(r, topicShowPageLimit)
 	if !ok {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -65,12 +65,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if output == nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	pagination := viewmodel.NewPagination(int(currentPage), output.TotalCount, topicShowPageLimit)
 	if pagination.Current > pagination.Total {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 

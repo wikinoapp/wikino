@@ -1,5 +1,5 @@
-// Package handlerはHTTPハンドラーの共通関数を提供する。
-package handler
+// Package httperrorはハンドラー共通のHTTPエラーレスポンスを描画する。
+package httperror
 
 import (
 	"net/http"
