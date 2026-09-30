@@ -374,14 +374,15 @@ type Space struct {
 }
 
 type SpaceMember struct {
-	ID        string    `json:"id"`
-	SpaceID   string    `json:"space_id"`
-	UserID    string    `json:"user_id"`
-	JoinedAt  time.Time `json:"joined_at"`
-	Active    bool      `json:"active"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Scopes    []string  `json:"scopes"`
+	ID        string         `json:"id"`
+	SpaceID   string         `json:"space_id"`
+	UserID    string         `json:"user_id"`
+	JoinedAt  time.Time      `json:"joined_at"`
+	Active    bool           `json:"active"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	Scopes    []string       `json:"scopes"`
+	Role      sql.NullString `json:"role"`
 }
 
 type Suggestion struct {
@@ -447,15 +448,16 @@ type Topic struct {
 }
 
 type TopicMember struct {
-	ID                 string       `json:"id"`
-	SpaceID            string       `json:"space_id"`
-	TopicID            string       `json:"topic_id"`
-	SpaceMemberID      string       `json:"space_member_id"`
-	JoinedAt           time.Time    `json:"joined_at"`
-	LastPageModifiedAt sql.NullTime `json:"last_page_modified_at"`
-	CreatedAt          time.Time    `json:"created_at"`
-	UpdatedAt          time.Time    `json:"updated_at"`
-	Scopes             []string     `json:"scopes"`
+	ID                 string         `json:"id"`
+	SpaceID            string         `json:"space_id"`
+	TopicID            string         `json:"topic_id"`
+	SpaceMemberID      string         `json:"space_member_id"`
+	JoinedAt           time.Time      `json:"joined_at"`
+	LastPageModifiedAt sql.NullTime   `json:"last_page_modified_at"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	Scopes             []string       `json:"scopes"`
+	Role               sql.NullString `json:"role"`
 }
 
 type User struct {

@@ -2,7 +2,10 @@ package repository
 
 import (
 	"context"
+	"slices"
 	"testing"
+
+	"github.com/lib/pq"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -49,8 +52,8 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 		if member.UserID != model.UserID(userID) {
 			t.Errorf("member.UserID = %v、期待値 = %v", member.UserID, userID)
 		}
-		if len(member.Scopes) != 1 || member.Scopes[0] != model.ScopeSpaceAdmin {
-			t.Errorf("member.Scopes = %v、期待値 = [%v]", member.Scopes, model.ScopeSpaceAdmin)
+		if member.Role != model.SpaceRoleAdmin {
+			t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.SpaceRoleAdmin)
 		}
 		if !member.Active {
 			t.Error("member.Active = false、期待値 = true")
@@ -214,4 +217,90 @@ func TestSpaceMemberRepository_ListActiveByUserAndSpaceIDs(t *testing.T) {
 			t.Errorf("ListActiveByUserAndSpaceIDs() = %v、期待値 = nil", members)
 		}
 	})
+}
+
+func TestSpaceMemberRepository_Create(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceMemberRepository(testutil.QueriesWithTx(tx))
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("spacemember-create@example.com").
+		WithAtname("spacemember_create").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("member-create-space").Build()
+
+	created, err := repo.Create(context.Background(), CreateSpaceMemberInput{
+		SpaceID: spaceID,
+		UserID:  model.UserID(userID),
+		Role:    model.SpaceRoleAdmin,
+	})
+	if err != nil {
+		t.Fatalf("Create()のエラー = %v", err)
+	}
+
+	member, err := repo.FindActiveBySpaceAndUser(context.Background(), spaceID, model.UserID(userID))
+	if err != nil {
+		t.Fatalf("FindActiveBySpaceAndUser()のエラー = %v", err)
+	}
+	if member == nil {
+		t.Fatal("作成したスペースメンバーがアクティブなメンバーとして見つからない")
+	}
+	if member.ID != created.ID {
+		t.Errorf("member.ID = %v、期待値 = %v", member.ID, created.ID)
+	}
+	if member.Role != model.SpaceRoleAdmin {
+		t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.SpaceRoleAdmin)
+	}
+	// Rails版が判定に使うスコープも書かれていること
+	var scopes []string
+	if err := tx.QueryRowContext(context.Background(),
+		`SELECT scopes FROM space_members WHERE id = $1 AND space_id = $2`,
+		string(created.ID), string(spaceID),
+	).Scan(pq.Array(&scopes)); err != nil {
+		t.Fatalf("scopesの取得に失敗: %v", err)
+	}
+	if want := []string{"space:admin"}; !slices.Equal(scopes, want) {
+		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
+	}
+	if member.JoinedAt.IsZero() {
+		t.Error("member.JoinedAtがゼロ値")
+	}
+}
+
+func TestSpaceMemberRepository_Create_EditorWritesRoleScopesForRails(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceMemberRepository(testutil.QueriesWithTx(tx))
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("spacemember-create-editor@example.com").
+		WithAtname("spacemember_editor").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("member-create-editor").Build()
+
+	created, err := repo.Create(context.Background(), CreateSpaceMemberInput{
+		SpaceID: spaceID,
+		UserID:  model.UserID(userID),
+		Role:    model.SpaceRoleEditor,
+	})
+	if err != nil {
+		t.Fatalf("Create()のエラー = %v", err)
+	}
+	if created.Role != model.SpaceRoleEditor {
+		t.Errorf("created.Role = %q、期待値 = %q", created.Role, model.SpaceRoleEditor)
+	}
+
+	var scopes []string
+	if err := tx.QueryRowContext(context.Background(),
+		`SELECT scopes FROM space_members WHERE id = $1 AND space_id = $2`,
+		string(created.ID), string(spaceID),
+	).Scan(pq.Array(&scopes)); err != nil {
+		t.Fatalf("scopesの取得に失敗: %v", err)
+	}
+	if want := model.ScopesToStrings(model.SpaceRoleEditor.Scopes()); !slices.Equal(scopes, want) {
+		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
+	}
 }
