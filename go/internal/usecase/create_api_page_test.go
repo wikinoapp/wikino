@@ -203,7 +203,7 @@ func TestCreateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 			wantField:    "topic_number",
 		},
 		{
-			name:         "メンバーがpage:writeを持たなければ未存在",
+			name:         "メンバーがpage:writeを持たなければ権限不足になる",
 			memberScopes: []model.Scope{model.ScopePageRead, model.ScopePersonalAccessTokenWrite},
 			tokenScopes:  writeScopes,
 			topicNumber:  1,
