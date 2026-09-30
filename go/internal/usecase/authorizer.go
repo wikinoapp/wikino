@@ -17,3 +17,17 @@ func newAuthorizer(spaceMember *model.SpaceMember, topicMember *model.TopicMembe
 	}
 	return policy.NewMemberPolicy(spaceMember.Scopes, topicScopes)
 }
+
+// newAPIAuthorizerは公開APIのトークンの主体とトピックメンバーからAuthorizerを生成する。
+// メンバーのスコープ (スペース + トピック) とトークンのスコープの論理積で判定する。
+func newAPIAuthorizer(principal *model.APIPrincipal, topicMember *model.TopicMember) policy.Authorizer {
+	var spaceScopes []model.Scope
+	if principal.SpaceMember != nil {
+		spaceScopes = principal.SpaceMember.Scopes
+	}
+	var topicScopes []model.Scope
+	if topicMember != nil {
+		topicScopes = topicMember.Scopes
+	}
+	return policy.NewAPIMemberPolicy(spaceScopes, topicScopes, principal.Scopes)
+}

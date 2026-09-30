@@ -52,8 +52,8 @@ func TestTopicMemberRepository_Create(t *testing.T) {
 	if member.SpaceMemberID != spaceMemberID {
 		t.Errorf("member.SpaceMemberID = %v、期待値 = %v", member.SpaceMemberID, spaceMemberID)
 	}
-	if len(member.Scopes) != 0 {
-		t.Errorf("member.Scopes = %v、期待値 = 空", member.Scopes)
+	if member.Role != "" {
+		t.Errorf("member.Role = %q、期待値 = 空", member.Role)
 	}
 	if member.JoinedAt.Before(beforeCreate) || member.JoinedAt.After(afterCreate) {
 		t.Errorf("member.JoinedAt = %v、期待値 = %vから%vの間", member.JoinedAt, beforeCreate, afterCreate)
@@ -99,6 +99,19 @@ func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 		WithSpaceMemberID(spaceMemberID).
 		Build()
 
+	adminTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Admin").
+		Build()
+
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(adminTopicID).
+		WithSpaceMemberID(spaceMemberID).
+		WithRole(model.TopicRoleAdmin).
+		Build()
+
 	t.Run("トピックメンバーを取得できる", func(t *testing.T) {
 		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceID, spaceMemberID, topicID)
 		if err != nil {
@@ -119,11 +132,24 @@ func TestTopicMemberRepository_FindBySpaceMemberAndTopic(t *testing.T) {
 		if member.SpaceMemberID != spaceMemberID {
 			t.Errorf("member.SpaceMemberID = %v、期待値 = %v", member.SpaceMemberID, spaceMemberID)
 		}
-		if len(member.Scopes) != 0 {
-			t.Errorf("member.Scopes = %v、期待値 = 空", member.Scopes)
+		if member.Role != "" {
+			t.Errorf("member.Role = %q、期待値 = 空", member.Role)
 		}
 		if member.LastPageModifiedAt != nil {
 			t.Errorf("member.LastPageModifiedAt = %v、期待値 = nil", member.LastPageModifiedAt)
+		}
+	})
+
+	t.Run("保存したトピックのロールを読み込む", func(t *testing.T) {
+		member, err := repo.FindBySpaceMemberAndTopic(context.Background(), spaceID, spaceMemberID, adminTopicID)
+		if err != nil {
+			t.Fatalf("FindBySpaceMemberAndTopic()のエラー = %v", err)
+		}
+		if member == nil {
+			t.Fatal("FindBySpaceMemberAndTopic()がnilを返した、期待値 = メンバー")
+		}
+		if member.Role != model.TopicRoleAdmin {
+			t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.TopicRoleAdmin)
 		}
 	})
 

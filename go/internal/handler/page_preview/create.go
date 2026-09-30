@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	pagepages "github.com/wikinoapp/wikino/go/internal/templates/pages/page"
@@ -32,7 +32,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -53,7 +53,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			switch ae.Code {
 			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
 				// 非メンバー・存在しないページは編集画面と同じく404として扱う。
-				handler.NotFound(w, r)
+				httperror.NotFound(w, r)
 			default:
 				slog.ErrorContext(ctx, "プレビューの生成に失敗", "error", ae.LogString())
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)

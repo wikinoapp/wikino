@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/handler/export_download"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -36,7 +36,7 @@ func exportRouter(t *testing.T, queries *query.Queries, userID model.UserID) *ch
 	))
 
 	r := chi.NewRouter()
-	r.NotFound(handler.NotFound)
+	r.NotFound(httperror.NotFound)
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -45,7 +45,7 @@ func exportRouter(t *testing.T, queries *query.Queries, userID model.UserID) *ch
 		})
 	})
 	r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
-		r.MethodNotAllowed(handler.NotFound)
+		r.MethodNotAllowed(httperror.NotFound)
 
 		r.Post("/", exportHandler.Create)
 		r.Get("/new", exportHandler.New)

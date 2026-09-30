@@ -1,0 +1,35 @@
+package oauth_authorization
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// InvalidRequestDataは、クライアントへ戻せない認可要求のエラー画面をレンダリングする元になるデータ
+type InvalidRequestData struct {
+	Message string
+}
+
+// InvalidRequestは、クライアントIDかリダイレクトURIを確かめられない認可要求の理由を示します。
+// 攻撃者の指定した先へ利用者を送らないよう、クライアントへ戻るボタンは出しません。
+templ InvalidRequest(data InvalidRequestData) {
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="flex flex-col gap-2 px-4">
+			<h1 class="text-center text-2xl font-bold antialiased">
+				{ templates.T(ctx, "oauth_authorization_invalid_request_heading") }
+			</h1>
+		</div>
+
+		@components.ContentCard() {
+			<div class="grid gap-4">
+				<p>{ data.Message }</p>
+				<p class="text-sm text-muted-foreground">
+					{ templates.T(ctx, "oauth_authorization_invalid_request_hint") }
+				</p>
+				<a href="/" class="btn rounded-full w-fit" data-variant="outline">
+					{ templates.T(ctx, "oauth_authorization_invalid_request_home") }
+				</a>
+			</div>
+		}
+	</div>
+}

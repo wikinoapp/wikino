@@ -37,6 +37,10 @@ other = "Wikinoのホーム"
 description = "フォームの任意項目に表示するラベル"
 other = "任意"
 
+[form_required_label]
+description = "フォームの必須項目のラベルに表示する印"
+other = "必須"
+
 [markdown_table_scroll_label]
 description = "ページ本文のテーブルを包む横スクロール領域のaria-label"
 other = "スクロールできる表"
@@ -1215,6 +1219,42 @@ description = "トピック詳細画面の「編集提案」タブラベル"
 other = "編集提案"
 
 # トピック作成
+[space_new_title]
+description = "スペース作成画面のページタイトル"
+other = "新規スペース"
+
+[space_new_heading]
+description = "スペース作成画面の見出し"
+other = "新規スペース"
+
+[space_new_breadcrumb]
+description = "スペース作成画面自身を指すパンくず項目 (現在項目)"
+other = "新規スペース"
+
+[space_new_hint_html]
+description = "スペース作成画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "スペースについては <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/16\" target=\"_blank\">スペースについてのヘルプ</a> をご覧ください<br>どんなスペースを作ると良いかわからないときは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/50\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
+
+[space_form_identifier_label]
+description = "スペース作成フォームの識別子のラベル"
+other = "識別子"
+
+[space_form_identifier_hint]
+description = "スペース作成フォームの識別子の補足"
+other = "この識別子はスペースのURLに使用されます。あとから変更もできます。{{.MaxLength}}文字以内で半角英数字とハイフンのみ使用できます"
+
+[space_form_name_label]
+description = "スペース作成フォームの名前のラベル"
+other = "名前"
+
+[space_new_submit_button]
+description = "スペース作成画面の送信ボタン"
+other = "作成する"
+
+[space_new_cancel]
+description = "スペース作成画面のキャンセルリンク"
+other = "キャンセル"
+
 [topic_new_title]
 description = "トピック作成画面のページタイトル"
 other = "新規トピック | {{.SpaceName}}"
@@ -1271,6 +1311,34 @@ other = "作成する"
 description = "トピック作成画面のキャンセルリンク"
 other = "キャンセル"
 
+[validation_space_identifier_required]
+description = "スペースの識別子必須エラー"
+other = "識別子を入力してください"
+
+[validation_space_identifier_too_long]
+description = "スペースの識別子文字数超過エラー"
+other = "識別子は20文字以内で入力してください"
+
+[validation_space_identifier_invalid_format]
+description = "スペースの識別子形式エラー"
+other = "識別子には半角英数字とハイフンのみ使用できます"
+
+[validation_space_identifier_reserved]
+description = "スペースの識別子予約語エラー"
+other = "この識別子は使用できません"
+
+[validation_space_identifier_uniqueness]
+description = "スペースの識別子重複エラー"
+other = "この識別子は既に使用されています"
+
+[validation_space_name_required]
+description = "スペース名必須エラー"
+other = "名前を入力してください"
+
+[validation_space_name_too_long]
+description = "スペース名文字数超過エラー"
+other = "名前は30文字以内で入力してください"
+
 [validation_topic_name_required]
 description = "トピック名必須エラー"
 other = "名前を入力してください"
@@ -1295,6 +1363,78 @@ other = "名前の先頭・末尾にスペースは使用できません"
 description = "トピック名重複エラー"
 other = "この名前は既に使用されています"
 
+[validation_personal_access_token_name_required]
+description = "個人アクセストークン名必須エラー"
+other = "名前を入力してください"
+
+[validation_personal_access_token_name_too_long]
+description = "個人アクセストークン名文字数超過エラー"
+other = "名前は50文字以内で入力してください"
+
+[validation_personal_access_token_name_control_chars]
+description = "個人アクセストークン名制御文字エラー"
+other = "名前に制御文字は使用できません"
+
+[validation_personal_access_token_name_invalid_format]
+description = "個人アクセストークン名不正フォーマットエラー"
+other = "名前の先頭・末尾にスペースは使用できません"
+
+[validation_personal_access_token_scopes_required]
+description = "個人アクセストークンのスコープ未選択エラー"
+other = "スコープを1つ以上選んでください"
+
+[validation_personal_access_token_scopes_invalid]
+description = "個人アクセストークンに付与できないスコープのエラー"
+other = "選べないスコープが含まれています"
+
+[validation_personal_access_token_expiration_days_invalid]
+description = "個人アクセストークンの有効期限不正エラー"
+other = "有効期限を選択肢から選んでください"
+
+[validation_oauth_application_name_required]
+description = "OAuthアプリ名必須エラー"
+other = "名前を入力してください"
+
+[validation_oauth_application_name_too_long]
+description = "OAuthアプリ名文字数超過エラー"
+other = "名前は50文字以内で入力してください"
+
+[validation_oauth_application_name_control_chars]
+description = "OAuthアプリ名制御文字エラー"
+other = "名前に制御文字は使用できません"
+
+[validation_oauth_application_name_invalid_format]
+description = "OAuthアプリ名不正フォーマットエラー"
+other = "名前の先頭・末尾にスペースは使用できません"
+
+[validation_oauth_application_redirect_uris_required]
+description = "OAuthアプリのリダイレクトURI未入力エラー"
+other = "リダイレクトURIを1つ以上入力してください"
+
+[validation_oauth_application_redirect_uris_too_many]
+description = "OAuthアプリのリダイレクトURIの数の超過エラー"
+other = "リダイレクトURIは{{.Max}}個まで登録できます"
+
+[validation_oauth_application_redirect_uri_too_long]
+description = "OAuthアプリのリダイレクトURIの文字数超過エラー"
+other = "「{{.URI}}」は長すぎます。2000文字以内で入力してください"
+
+[validation_oauth_application_redirect_uri_invalid]
+description = "OAuthアプリのリダイレクトURIの形式エラー"
+other = "「{{.URI}}」はURLとして正しくありません"
+
+[validation_oauth_application_redirect_uri_fragment]
+description = "OAuthアプリのリダイレクトURIのフラグメントのエラー"
+other = "「{{.URI}}」にフラグメント (#以降) は含められません"
+
+[validation_oauth_application_redirect_uri_insecure]
+description = "OAuthアプリのリダイレクトURIがHTTPSでないエラー"
+other = "「{{.URI}}」はHTTPSのURLにしてください (HTTPはhttp://127.0.0.1とhttp://[::1]だけ使えます)"
+
+[validation_oauth_application_client_type_invalid]
+description = "OAuthアプリのクライアントの種別不正エラー"
+other = "クライアントの種別を選択肢から選んでください"
+
 [validation_topic_description_too_long]
 description = "トピックの説明の文字数超過エラー"
 other = "説明は150文字以内で入力してください"
@@ -1302,6 +1442,10 @@ other = "説明は150文字以内で入力してください"
 [validation_topic_visibility_required]
 description = "トピックの公開設定未選択エラー"
 other = "公開設定を選択してください"
+
+[flash_space_created]
+description = "スペース作成成功時のフラッシュメッセージ"
+other = "スペースを作成しました"
 
 [flash_topic_created]
 description = "トピック作成成功時のフラッシュメッセージ"
@@ -1392,6 +1536,48 @@ other = "ゴミ箱"
 [space_show_options_settings]
 description = "スペース詳細画面のオプションメニューの設定リンク"
 other = "設定"
+
+# スペース設定のトップ
+[space_settings_title]
+description = "スペース設定のトップのページタイトル"
+other = "設定 | {{.SpaceName}}"
+
+[space_settings_heading]
+description = "スペース設定のトップの見出し"
+other = "設定"
+
+[space_settings_breadcrumb]
+description = "スペース設定のトップ自身を指すパンくず項目 (現在項目)"
+other = "設定"
+
+[space_settings_general]
+description = "スペース設定のトップの一般設定へのリンク"
+other = "基本情報"
+
+[space_settings_export]
+description = "スペース設定のトップのエクスポートへのリンク"
+other = "エクスポート"
+
+[space_settings_attachments]
+description = "スペース設定のトップの添付ファイルへのリンク"
+other = "添付ファイル"
+
+[space_settings_deletion]
+description = "スペース設定のトップのスペースの削除へのリンク"
+other = "スペースの削除"
+
+[space_settings_personal_access_tokens]
+description = "スペース設定のトップの個人アクセストークンへのリンク"
+other = "個人アクセストークン"
+
+[space_settings_oauth_grants]
+description = "スペース設定のトップの連携中のアプリへのリンク"
+other = "連携中のアプリ"
+
+[space_settings_oauth_applications]
+description = "スペース設定のトップのOAuthアプリへのリンク"
+other = "OAuthアプリ"
+
 
 # ページネーション
 [pagination_previous]
@@ -1895,3 +2081,630 @@ other = "エクスポートを完了できませんでした<br>もう一度お�
 [export_show_retry]
 description = "エクスポート状態表示画面から再実行するリンク"
 other = "もう一度エクスポートする"
+
+# 個人アクセストークンの画面
+[api_token_scope_topic_read]
+description = "公開APIのトークンのスコープtopic:readの表示名"
+other = "トピックの読み取り"
+
+[api_token_scope_topic_read_hint]
+description = "公開APIのトークンのスコープtopic:readの説明"
+other = "トピックの一覧と詳細を取得できます。非公開トピックのページを読むときにも必要です"
+
+[api_token_scope_page_read]
+description = "公開APIのトークンのスコープpage:readの表示名"
+other = "ページの読み取り"
+
+[api_token_scope_page_read_hint]
+description = "公開APIのトークンのスコープpage:readの説明"
+other = "ページの一覧と内容を取得できます"
+
+[api_token_scope_page_write]
+description = "公開APIのトークンのスコープpage:writeの表示名"
+other = "ページの作成・更新"
+
+[api_token_scope_page_write_hint]
+description = "公開APIのトークンのスコープpage:writeの説明"
+other = "ページを作成・更新できます。ページの読み取りも含みます"
+
+[personal_access_token_index_title]
+description = "個人アクセストークンの一覧のページタイトル"
+other = "個人アクセストークン | {{.SpaceName}}"
+
+[personal_access_token_index_heading]
+description = "個人アクセストークンの一覧の見出し"
+other = "個人アクセストークン"
+
+[personal_access_token_index_description]
+description = "個人アクセストークンの一覧のサブタイトル"
+other = "公開APIを呼び出すためのトークンです。このスペースで発行したトークンは、このスペースにだけ使えます。"
+
+[personal_access_token_index_breadcrumb_settings]
+description = "個人アクセストークンの一覧のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[personal_access_token_index_breadcrumb]
+description = "個人アクセストークンの一覧自身を指すパンくず項目 (現在項目)"
+other = "個人アクセストークン"
+
+[personal_access_token_index_new]
+description = "個人アクセストークンの一覧の発行フォームへのリンク"
+other = "トークンを発行する"
+
+[personal_access_token_index_empty]
+description = "個人アクセストークンの一覧でトークンが無いときの表示"
+other = "発行したトークンはありません"
+
+[personal_access_token_index_last_chars]
+description = "個人アクセストークンの一覧でトークンを見分けるための末尾の文字"
+other = "…{{.LastChars}}"
+
+[personal_access_token_index_expired]
+description = "個人アクセストークンの一覧の期限切れのバッジ"
+other = "期限切れ"
+
+[personal_access_token_index_expires_at]
+description = "個人アクセストークンの一覧の有効期限の項目名"
+other = "有効期限"
+
+[personal_access_token_index_last_used_at]
+description = "個人アクセストークンの一覧の最終使用日時の項目名"
+other = "最終使用"
+
+[personal_access_token_index_never_used]
+description = "個人アクセストークンの一覧で一度も使われていないことの表示"
+other = "未使用"
+
+[personal_access_token_index_revoke]
+description = "個人アクセストークンの一覧の失効ボタン"
+other = "トークンを失効する"
+
+[personal_access_token_index_revoke_confirm]
+description = "個人アクセストークンの失効の確認ダイアログ"
+other = "「{{.Name}}」を失効しますか？このトークンを使っているツールは、APIを呼び出せなくなります。"
+
+[flash_personal_access_token_revoked]
+description = "個人アクセストークンを失効したときのフラッシュメッセージ"
+other = "「{{.Name}}」を失効しました"
+
+[oauth_grant_index_title]
+description = "連携中のアプリの一覧のページタイトル"
+other = "連携中のアプリ | {{.SpaceName}}"
+
+[oauth_grant_index_heading]
+description = "連携中のアプリの一覧の見出し"
+other = "連携中のアプリ"
+
+[oauth_grant_index_description]
+description = "連携中のアプリの一覧のサブタイトル"
+other = "このスペースへのアクセスを許可したOAuthアプリです。連携を解除すると、アプリはこのスペースのAPIを呼び出せなくなります。"
+
+[oauth_grant_index_breadcrumb_settings]
+description = "連携中のアプリの一覧のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[oauth_grant_index_breadcrumb]
+description = "連携中のアプリの一覧自身を指すパンくず項目 (現在項目)"
+other = "連携中のアプリ"
+
+[oauth_grant_index_empty]
+description = "連携中のアプリの一覧で連携が無いときの表示"
+other = "連携中のアプリはありません"
+
+[oauth_grant_index_created_at]
+description = "連携中のアプリの一覧の許可した日時の項目名"
+other = "許可した日時"
+
+[oauth_grant_index_revoke]
+description = "連携中のアプリの一覧の解除ボタン"
+other = "連携を解除する"
+
+[oauth_grant_index_revoke_confirm]
+description = "連携の解除の確認ダイアログ"
+other = "「{{.Name}}」との連携を解除しますか？このアプリは、このスペースのAPIを呼び出せなくなります。"
+
+[flash_oauth_grant_revoked]
+description = "連携を解除したときのフラッシュメッセージ"
+other = "「{{.Name}}」との連携を解除しました"
+
+[personal_access_token_new_title]
+description = "個人アクセストークンの発行フォームのページタイトル"
+other = "トークンの発行 | {{.SpaceName}}"
+
+[personal_access_token_new_heading]
+description = "個人アクセストークンの発行フォームの見出し"
+other = "トークンの発行"
+
+[personal_access_token_new_description]
+description = "個人アクセストークンの発行フォームのサブタイトル"
+other = "このスペースの公開APIに使えるトークンを発行します。トークンでできることは、選んだスコープとあなたのメンバー権限の両方で許された操作に限られます。"
+
+[personal_access_token_new_breadcrumb_settings]
+description = "個人アクセストークンの発行フォームのパンくずのスペース設定へのリンク"
+other = "設定"
+
+[personal_access_token_new_breadcrumb_index]
+description = "個人アクセストークンの発行フォームのパンくずの一覧へのリンク"
+other = "個人アクセストークン"
+
+[personal_access_token_new_breadcrumb]
+description = "個人アクセストークンの発行フォーム自身を指すパンくず項目 (現在項目)"
+other = "発行"
+
+[personal_access_token_new_name_label]
+description = "個人アクセストークンの発行フォームの名前のラベル"
+other = "名前"
+
+[personal_access_token_new_name_hint]
+description = "個人アクセストークンの発行フォームの名前の補足"
+other = "用途が分かる名前を付けてください (例: 自宅のPCのCLI)"
+
+[personal_access_token_new_scopes_label]
+description = "個人アクセストークンの発行フォームのスコープのラベル"
+other = "スコープ"
+
+[personal_access_token_new_expiration_days_label]
+description = "個人アクセストークンの発行フォームの有効期限のラベル"
+other = "有効期限"
+
+[personal_access_token_new_expiration_days_option]
+description = "個人アクセストークンの発行フォームの有効期限の選択肢"
+other = "{{.Days}}日"
+
+[personal_access_token_new_submit_button]
+description = "個人アクセストークンの発行フォームの送信ボタン"
+other = "発行する"
+
+[personal_access_token_new_cancel]
+description = "個人アクセストークンの発行フォームのキャンセルリンク"
+other = "キャンセル"
+
+[personal_access_token_create_title]
+description = "個人アクセストークンを発行した直後の画面のページタイトル"
+other = "トークンを発行しました | {{.SpaceName}}"
+
+[personal_access_token_create_heading]
+description = "個人アクセストークンを発行した直後の画面の見出し"
+other = "トークンを発行しました"
+
+[personal_access_token_create_notice]
+description = "個人アクセストークンの値を1度だけ表示することの注意"
+other = "トークンはこの画面でだけ表示します。この画面を離れると二度と表示できないため、今すぐコピーして安全な場所に保管してください。"
+
+[personal_access_token_create_token_label]
+description = "個人アクセストークンを発行した直後の画面のトークンの値のラベル"
+other = "トークン ({{.Name}})"
+
+[personal_access_token_create_expires_at]
+description = "個人アクセストークンを発行した直後の画面の有効期限の項目名"
+other = "有効期限:"
+
+[personal_access_token_create_breadcrumb_settings]
+description = "個人アクセストークンを発行した直後の画面のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[personal_access_token_create_breadcrumb_index]
+description = "個人アクセストークンを発行した直後の画面のパンくずの一覧へのリンク"
+other = "個人アクセストークン"
+
+[personal_access_token_create_breadcrumb]
+description = "個人アクセストークンを発行した直後の画面自身を指すパンくず項目 (現在項目)"
+other = "発行"
+
+[personal_access_token_create_back]
+description = "個人アクセストークンを発行した直後の画面の一覧へ戻るリンク"
+other = "トークンの一覧に戻る"
+
+[oauth_application_client_type_confidential]
+description = "OAuthアプリのクライアントの種別 (confidential) の表示名"
+other = "サーバーで動くアプリ (confidential)"
+
+[oauth_application_client_type_public]
+description = "OAuthアプリのクライアントの種別 (public) の表示名"
+other = "CLI・デスクトップアプリ (public)"
+
+[oauth_application_creator_unknown]
+description = "OAuthアプリを作成したメンバーがスペースにいないことの表示"
+other = "退出したメンバー"
+
+[oauth_application_client_id_label]
+description = "OAuthアプリのクライアントIDのラベル"
+other = "クライアントID"
+
+[oauth_application_index_title]
+description = "OAuthアプリの一覧のページタイトル"
+other = "OAuthアプリ | {{.SpaceName}}"
+
+[oauth_application_index_heading]
+description = "OAuthアプリの一覧の見出し"
+other = "OAuthアプリ"
+
+[oauth_application_index_description]
+description = "OAuthアプリの一覧のサブタイトル"
+other = "OAuthで公開APIと連携する外部アプリです。このスペースで登録したアプリは、このスペースとの連携にだけ使えます。"
+
+[oauth_application_index_breadcrumb_settings]
+description = "OAuthアプリの一覧のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[oauth_application_index_breadcrumb]
+description = "OAuthアプリの一覧自身を指すパンくず項目 (現在項目)"
+other = "OAuthアプリ"
+
+[oauth_application_index_new]
+description = "OAuthアプリの一覧の登録フォームへのリンク"
+other = "アプリを登録する"
+
+[oauth_application_index_empty]
+description = "OAuthアプリの一覧でアプリが無いときの表示"
+other = "登録したアプリはありません"
+
+[oauth_application_index_creator]
+description = "OAuthアプリの一覧の作成者の項目名"
+other = "作成者"
+
+[oauth_application_index_created_at]
+description = "OAuthアプリの一覧の登録日時の項目名"
+other = "登録日時"
+
+[oauth_application_new_title]
+description = "OAuthアプリの登録フォームのページタイトル"
+other = "アプリの登録 | {{.SpaceName}}"
+
+[oauth_application_new_heading]
+description = "OAuthアプリの登録フォームの見出し"
+other = "アプリの登録"
+
+[oauth_application_new_description]
+description = "OAuthアプリの登録フォームのサブタイトル"
+other = "このスペースとOAuthで連携するアプリを登録します。"
+
+[oauth_application_new_breadcrumb_settings]
+description = "OAuthアプリの登録フォームのパンくずのスペース設定へのリンク"
+other = "設定"
+
+[oauth_application_new_breadcrumb_index]
+description = "OAuthアプリの登録フォームのパンくずの一覧へのリンク"
+other = "OAuthアプリ"
+
+[oauth_application_new_breadcrumb]
+description = "OAuthアプリの登録フォーム自身を指すパンくず項目 (現在項目)"
+other = "登録"
+
+[oauth_application_form_name_label]
+description = "OAuthアプリの登録・編集フォームの名前のラベル"
+other = "名前"
+
+[oauth_application_form_name_hint]
+description = "OAuthアプリの登録・編集フォームの名前の補足"
+other = "連携を許可する画面で利用者に表示します"
+
+[oauth_application_form_redirect_uris_label]
+description = "OAuthアプリの登録・編集フォームのリダイレクトURIのラベル"
+other = "リダイレクトURI"
+
+[oauth_application_form_redirect_uris_hint]
+description = "OAuthアプリの登録・編集フォームのリダイレクトURIの補足"
+other = "1行に1つずつ書いてください。認可要求のリダイレクトURIと完全に一致する必要があります。HTTPSのURLのほか、手元で受け取るアプリ向けにhttp://127.0.0.1とhttp://[::1]を使えます (ポート番号は問いません)。"
+
+[oauth_application_new_client_type_label]
+description = "OAuthアプリの登録フォームのクライアントの種別のラベル"
+other = "クライアントの種別"
+
+[oauth_application_new_client_type_confidential_hint]
+description = "OAuthアプリの登録フォームのconfidentialの補足"
+other = "クライアントシークレットを安全に保管できるサーバーで動くアプリです。登録するとシークレットを発行します。"
+
+[oauth_application_new_client_type_public_hint]
+description = "OAuthアプリの登録フォームのpublicの補足"
+other = "利用者の端末で動き、シークレットを保管できないアプリです。シークレットを発行せず、PKCEだけで認可します。"
+
+[oauth_application_new_submit_button]
+description = "OAuthアプリの登録フォームの送信ボタン"
+other = "登録する"
+
+[oauth_application_new_cancel]
+description = "OAuthアプリの登録フォームのキャンセルリンク"
+other = "キャンセル"
+
+[flash_oauth_application_created]
+description = "OAuthアプリを登録したときのフラッシュメッセージ"
+other = "「{{.Name}}」を登録しました"
+
+[oauth_application_create_title]
+description = "confidentialクライアントを登録した直後の画面のページタイトル"
+other = "アプリを登録しました | {{.SpaceName}}"
+
+[oauth_application_create_heading]
+description = "confidentialクライアントを登録した直後の画面の見出し"
+other = "アプリを登録しました"
+
+[oauth_application_create_notice]
+description = "クライアントシークレットを1度だけ表示することの注意"
+other = "クライアントシークレットはこの画面でだけ表示します。この画面を離れると二度と表示できないため、今すぐコピーして安全な場所に保管してください。"
+
+[oauth_application_create_client_secret_label]
+description = "confidentialクライアントを登録した直後の画面のシークレットのラベル"
+other = "クライアントシークレット"
+
+[oauth_application_create_breadcrumb_settings]
+description = "confidentialクライアントを登録した直後の画面のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[oauth_application_create_breadcrumb_index]
+description = "confidentialクライアントを登録した直後の画面のパンくずの一覧へのリンク"
+other = "OAuthアプリ"
+
+[oauth_application_create_breadcrumb]
+description = "confidentialクライアントを登録した直後の画面自身を指すパンくず項目 (現在項目)"
+other = "登録"
+
+[oauth_application_create_continue]
+description = "confidentialクライアントを登録した直後の画面の詳細へ進むリンク"
+other = "アプリの詳細へ進む"
+
+[oauth_application_show_title]
+description = "OAuthアプリの詳細のページタイトル"
+other = "{{.Name}} | OAuthアプリ | {{.SpaceName}}"
+
+[oauth_application_show_breadcrumb_settings]
+description = "OAuthアプリの詳細のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[oauth_application_show_breadcrumb_index]
+description = "OAuthアプリの詳細のパンくずの一覧へのリンク"
+other = "OAuthアプリ"
+
+[oauth_application_show_client_type]
+description = "OAuthアプリの詳細のクライアントの種別の項目名"
+other = "クライアントの種別"
+
+[oauth_application_show_client_secret]
+description = "OAuthアプリの詳細のクライアントシークレットの項目名"
+other = "クライアントシークレット"
+
+[oauth_application_show_client_secret_hidden]
+description = "OAuthアプリの詳細でシークレットを表示できないことの説明"
+other = "発行したときにだけ表示しました"
+
+[oauth_application_show_redirect_uris]
+description = "OAuthアプリの詳細のリダイレクトURIの項目名"
+other = "リダイレクトURI"
+
+[oauth_application_show_creator]
+description = "OAuthアプリの詳細の作成者の項目名"
+other = "作成者"
+
+[oauth_application_show_created_at]
+description = "OAuthアプリの詳細の登録日時の項目名"
+other = "登録日時"
+
+[oauth_application_show_back]
+description = "OAuthアプリの詳細の一覧へ戻るリンク"
+other = "アプリの一覧に戻る"
+
+[oauth_application_show_edit]
+description = "OAuthアプリの詳細の編集フォームへのリンク"
+other = "編集する"
+
+[oauth_application_show_regenerate_client_secret]
+description = "OAuthアプリの詳細のクライアントシークレットを再発行するボタン"
+other = "再発行する"
+
+[oauth_application_show_regenerate_client_secret_confirm]
+description = "クライアントシークレットを再発行する前の確認"
+other = "「{{.Name}}」のクライアントシークレットを再発行しますか？今のシークレットはすぐに使えなくなります。"
+
+[oauth_application_show_delete]
+description = "OAuthアプリの詳細の削除ボタン"
+other = "このアプリを削除する"
+
+[oauth_application_show_delete_description]
+description = "OAuthアプリの詳細の削除ボタンの説明"
+other = "アプリを削除すると、このアプリとの連携はすべて解除され、発行済みのトークンは使えなくなります。削除は取り消せません。"
+
+[oauth_application_show_delete_confirm]
+description = "OAuthアプリを削除する前の確認"
+other = "「{{.Name}}」を削除しますか？このアプリとの連携はすべて解除され、発行済みのトークンは使えなくなります。"
+
+[flash_oauth_application_deleted]
+description = "OAuthアプリを削除したときのフラッシュメッセージ"
+other = "「{{.Name}}」を削除しました"
+
+[oauth_application_edit_title]
+description = "OAuthアプリの編集フォームのページタイトル"
+other = "{{.Name}}の編集 | OAuthアプリ | {{.SpaceName}}"
+
+[oauth_application_edit_heading]
+description = "OAuthアプリの編集フォームの見出し"
+other = "アプリの編集"
+
+[oauth_application_edit_breadcrumb_settings]
+description = "OAuthアプリの編集フォームのパンくずのスペース設定へのリンク"
+other = "設定"
+
+[oauth_application_edit_breadcrumb_index]
+description = "OAuthアプリの編集フォームのパンくずの一覧へのリンク"
+other = "OAuthアプリ"
+
+[oauth_application_edit_breadcrumb]
+description = "OAuthアプリの編集フォーム自身を指すパンくず項目 (現在項目)"
+other = "編集"
+
+[oauth_application_edit_client_type]
+description = "OAuthアプリの編集フォームのクライアントの種別の項目名"
+other = "クライアントの種別"
+
+[oauth_application_edit_client_type_hint]
+description = "OAuthアプリの編集フォームでクライアントの種別を変えられないことの説明"
+other = "クライアントの種別は登録した後に変えられません"
+
+[oauth_application_edit_submit_button]
+description = "OAuthアプリの編集フォームの送信ボタン"
+other = "保存する"
+
+[oauth_application_edit_cancel]
+description = "OAuthアプリの編集フォームのキャンセルリンク"
+other = "キャンセル"
+
+[flash_oauth_application_updated]
+description = "OAuthアプリを更新したときのフラッシュメッセージ"
+other = "「{{.Name}}」を更新しました"
+
+[oauth_application_edit_conflict]
+description = "OAuthアプリの編集内容が他の保存によって古くなったときの案内"
+other = "他の操作でアプリが更新されました。現在の内容を確認し、変更を入力し直してから保存してください。"
+
+[oauth_application_edit_conflicted_heading]
+description = "OAuthアプリの編集が競合したときに、保存されなかった送信の値を示す欄の見出し"
+other = "保存されなかった入力内容"
+
+[oauth_application_edit_conflicted_description]
+description = "OAuthアプリの編集が競合したときに、保存されなかった送信の値を示す欄の説明"
+other = "他の操作による更新と競合したため、次の内容は保存していません。必要な部分をコピーして、上のフォームに入力し直してください。"
+
+[oauth_application_client_secret_create_title]
+description = "クライアントシークレットを再発行した直後の画面のページタイトル"
+other = "シークレットを再発行しました | {{.Name}} | {{.SpaceName}}"
+
+[oauth_application_client_secret_create_heading]
+description = "クライアントシークレットを再発行した直後の画面の見出し"
+other = "シークレットを再発行しました"
+
+[oauth_application_client_secret_create_description]
+description = "クライアントシークレットを再発行した直後の画面のサブタイトル"
+other = "「{{.Name}}」の新しいクライアントシークレットです。以前のシークレットは使えなくなりました。"
+
+[oauth_application_client_secret_create_notice]
+description = "再発行したクライアントシークレットを1度だけ表示することの注意"
+other = "クライアントシークレットはこの画面でだけ表示します。この画面を離れると二度と表示できないため、今すぐコピーして安全な場所に保管してください。"
+
+[oauth_application_client_secret_create_label]
+description = "クライアントシークレットを再発行した直後の画面のシークレットのラベル"
+other = "クライアントシークレット"
+
+[oauth_application_client_secret_create_breadcrumb_settings]
+description = "クライアントシークレットを再発行した直後の画面のパンくずのスペース設定へのリンク"
+other = "設定"
+
+[oauth_application_client_secret_create_breadcrumb_index]
+description = "クライアントシークレットを再発行した直後の画面のパンくずの一覧へのリンク"
+other = "OAuthアプリ"
+
+[oauth_application_client_secret_create_breadcrumb]
+description = "クライアントシークレットを再発行した直後の画面自身を指すパンくず項目 (現在項目)"
+other = "シークレットの再発行"
+
+[oauth_application_client_secret_create_back]
+description = "クライアントシークレットを再発行した直後の画面の詳細へ戻るリンク"
+other = "アプリの詳細に戻る"
+
+
+# OAuthの同意画面
+[oauth_authorization_new_title]
+description = "同意画面のページタイトル"
+other = "{{.ApplicationName}}との連携 | Wikino"
+
+[oauth_authorization_new_heading]
+description = "同意画面の見出し"
+other = "{{.ApplicationName}}にアクセスを許可しますか？"
+
+[oauth_authorization_new_denied_heading]
+description = "アプリを許可できない場合の同意画面の見出し"
+other = "{{.ApplicationName}}と連携できません"
+
+[oauth_authorization_new_space_label]
+description = "同意画面の連携先のスペースの見出し"
+other = "連携先のスペース"
+
+[oauth_authorization_new_user_label]
+description = "同意画面の許可するアカウントの見出し"
+other = "アカウント"
+
+[oauth_authorization_new_scopes_label]
+description = "同意画面の要求されたスコープの一覧の前置き"
+other = "許可すると、{{.ApplicationName}}は次の操作ができるようになります"
+
+[oauth_authorization_new_not_member]
+description = "連携先のスペースのメンバーでないために許可できないことの説明"
+other = "このスペースのメンバーではないため、アプリとの連携を許可できません"
+
+[oauth_authorization_new_no_permission]
+description = "OAuthアプリを許可する権限が無いために許可できないことの説明"
+other = "このスペースでアプリとの連携を許可する権限がありません。スペースの管理者に問い合わせてください"
+
+[oauth_authorization_new_redirect_notice]
+description = "同意画面の、選択後に移動する先の説明"
+other = "許可または拒否すると{{.RedirectHost}}に移動します"
+
+[oauth_authorization_new_back_notice]
+description = "アプリを許可できない場合の同意画面の、アプリへ戻ると移動する先の説明"
+other = "アプリに戻ると{{.RedirectHost}}に移動します"
+
+[oauth_authorization_new_approve]
+description = "同意画面の許可するボタン"
+other = "許可する"
+
+[oauth_authorization_new_deny]
+description = "同意画面の拒否するボタン"
+other = "拒否する"
+
+[oauth_authorization_new_back_to_application]
+description = "アプリを許可できない場合の同意画面のアプリへ戻るボタン"
+other = "アプリに戻る"
+
+[oauth_authorization_invalid_request_title]
+description = "クライアントへ戻せない認可要求のエラー画面のページタイトル"
+other = "連携の要求が不正です | Wikino"
+
+[oauth_authorization_invalid_request_heading]
+description = "クライアントへ戻せない認可要求のエラー画面の見出し"
+other = "連携の要求が不正です"
+
+[oauth_authorization_invalid_request_hint]
+description = "クライアントへ戻せない認可要求のエラー画面の対処の案内"
+other = "連携しようとしたアプリの開発者に問い合わせてください"
+
+[oauth_authorization_invalid_request_home]
+description = "クライアントへ戻せない認可要求のエラー画面のホームへのリンク"
+other = "ホームに戻る"
+
+[oauth_authorization_error_invalid_client]
+description = "認可要求のクライアントIDが無い・登録されていない場合のエラー"
+other = "アプリのクライアントIDが無いか、登録されていません"
+
+[oauth_authorization_error_invalid_redirect_uri]
+description = "認可要求のリダイレクトURIが無い・登録と一致しない場合のエラー"
+other = "アプリのリダイレクトURIが無いか、登録されたものと一致しません"
+
+
+# 公開APIのエラー
+[api_error_invalid_cursor]
+description = "公開APIの一覧で、カーソルが読めない場合のProblem Detailsのdetail"
+other = "カーソルを読めません。前のページの応答のnext_cursorをそのまま渡してください"
+
+[api_error_page_modified]
+description = "公開APIのページ更新で、If-Matchの版の後にページが更新されていた場合の412のProblem Detailsのdetail"
+other = "ページはIf-MatchのETagの版の後に更新されています。ページを取得し直し、変更を反映してから新しいETagで更新してください"
+
+[api_error_page_title_taken]
+description = "公開APIのページ作成・更新で、トピック内に同じタイトルのページがある場合のエラー"
+other = "このトピックには同じタイトルのページがすでにあります"
+
+[api_error_topic_not_found]
+description = "公開APIのページ作成で、指定したトピックが存在しないか見られない場合のエラー"
+other = "トピックが見つかりません"
+
+
+# 公開APIのリファレンス
+[api_reference_title]
+description = "公開APIのリファレンスのタイトル"
+other = "Wikino API V1リファレンス"
+
+[api_reference_description]
+description = "公開APIのリファレンスのmeta description"
+other = "Wikinoの公開Web API V1のリファレンスです。エンドポイント・スコープ・リクエストとレスポンスの形式を説明します"
+
+[api_reference_fallback]
+description = "公開APIのリファレンスで、OpenAPI記述へのリンクの前に出す案内"
+other = "OpenAPI記述を直接読む: "

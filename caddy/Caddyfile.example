@@ -2,5 +2,12 @@
   basicauth {
     user xxxxx/xxxxx
   }
+  # Basic認証を通ったあと、そのAuthorizationヘッダーをアプリに渡さない。
+  # ブラウザは同じオリジンへのfetchにもBasic認証のヘッダーを付けるため、
+  # 渡すと公開APIのトークン認証がBearerでないとして401を返す
+  # (APIリファレンスがOpenAPI記述を読み込めなくなる)。
+  # request_headerはbasicauthより後に実行される (Caddyのディレクティブの既定順)
+  @basic_auth header_regexp Authorization ^Basic\s
+  request_header @basic_auth -Authorization
   reverse_proxy app:8080
 }

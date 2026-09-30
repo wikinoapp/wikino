@@ -324,3 +324,181 @@ func TestPageUpdateValidator_UnpublishedConflict(t *testing.T) {
 		}
 	})
 }
+
+func TestPageCreateValidator(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("create-validator").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("公開済み").
+		Build()
+	unpublishedID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("中身の無い未公開").
+		WithBody("").
+		WithUnpublished().
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("本文のある未公開").
+		WithBody("本文").
+		WithUnpublished().
+		Build()
+
+	v := validator.NewPageCreateValidator(repository.NewPageRepository(queries))
+	validate := func(title string) (*model.PageID, error) {
+		return v.Validate(ctx, validator.PageCreateValidatorInput{
+			Title:   title,
+			TopicID: topicID,
+			SpaceID: spaceID,
+		})
+	}
+
+	// サブテストは親のトランザクションを共有するため、並列にしない
+
+	t.Run("重複しないタイトルは通る", func(t *testing.T) {
+		conflictingPageID, err := validate("新しいページ")
+		if err != nil || conflictingPageID != nil {
+			t.Errorf("Validate() = (%v, %v)、期待値 = (nil, nil)", conflictingPageID, err)
+		}
+	})
+
+	t.Run("形式の問題はtitleのエラー", func(t *testing.T) {
+		_, err := validate("foo/bar")
+		if ve := model.AsValidationError(err); ve == nil || !ve.HasFieldError("title") {
+			t.Errorf("error = %v、期待値 = titleのValidationError", err)
+		}
+	})
+
+	for _, title := range []string{"公開済み", "本文のある未公開"} {
+		t.Run("重複はHTMLを含まないtitleのエラー: "+title, func(t *testing.T) {
+			_, err := validate(title)
+			ve := model.AsValidationError(err)
+			if ve == nil || !ve.HasFieldError("title") {
+				t.Fatalf("error = %v、期待値 = titleのValidationError", err)
+			}
+			if got := ve.Fields["title"][0]; strings.Contains(got, "<") {
+				t.Errorf("メッセージ = %q、期待値 = HTMLを含まない", got)
+			}
+		})
+	}
+
+	t.Run("中身の無い未公開のページとの重複は、そのページのIDを返す", func(t *testing.T) {
+		conflictingPageID, err := validate("中身の無い未公開")
+		if err != nil {
+			t.Fatalf("Validate() error = %v", err)
+		}
+		if conflictingPageID == nil || *conflictingPageID != unpublishedID {
+			t.Errorf("conflictingPageID = %v、期待値 = %s", conflictingPageID, unpublishedID)
+		}
+	})
+}
+
+func TestAPIPageUpdateValidator(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("api-update-validator").
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	pageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("更新するページ").
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("公開済み").
+		Build()
+	unpublishedID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("中身の無い未公開").
+		WithBody("").
+		WithUnpublished().
+		Build()
+
+	v := validator.NewAPIPageUpdateValidator(repository.NewPageRepository(queries))
+	validate := func(title string) (*model.PageID, error) {
+		return v.Validate(ctx, validator.APIPageUpdateValidatorInput{
+			Title:   title,
+			PageID:  pageID,
+			TopicID: topicID,
+			SpaceID: spaceID,
+		})
+	}
+
+	// サブテストは親のトランザクションを共有するため、並列にしない
+
+	t.Run("重複しないタイトルは通る", func(t *testing.T) {
+		conflictingPageID, err := validate("新しいタイトル")
+		if err != nil || conflictingPageID != nil {
+			t.Errorf("Validate() = (%v, %v)、期待値 = (nil, nil)", conflictingPageID, err)
+		}
+	})
+
+	t.Run("ページ自身のタイトルは重複として扱わない", func(t *testing.T) {
+		conflictingPageID, err := validate("更新するページ")
+		if err != nil || conflictingPageID != nil {
+			t.Errorf("Validate() = (%v, %v)、期待値 = (nil, nil)", conflictingPageID, err)
+		}
+	})
+
+	t.Run("形式の問題はtitleのエラー", func(t *testing.T) {
+		_, err := validate("foo:bar")
+		if ve := model.AsValidationError(err); ve == nil || !ve.HasFieldError("title") {
+			t.Errorf("error = %v、期待値 = titleのValidationError", err)
+		}
+	})
+
+	t.Run("他のページとの重複はHTMLを含まないtitleのエラー", func(t *testing.T) {
+		_, err := validate("公開済み")
+		ve := model.AsValidationError(err)
+		if ve == nil || !ve.HasFieldError("title") {
+			t.Fatalf("error = %v、期待値 = titleのValidationError", err)
+		}
+		if got := ve.Fields["title"][0]; strings.Contains(got, "<") {
+			t.Errorf("メッセージ = %q、期待値 = HTMLを含まない", got)
+		}
+	})
+
+	t.Run("中身の無い未公開のページとの重複は、そのページのIDを返す", func(t *testing.T) {
+		conflictingPageID, err := validate("中身の無い未公開")
+		if err != nil {
+			t.Fatalf("Validate() error = %v", err)
+		}
+		if conflictingPageID == nil || *conflictingPageID != unpublishedID {
+			t.Errorf("conflictingPageID = %v、期待値 = %s", conflictingPageID, unpublishedID)
+		}
+	})
+}

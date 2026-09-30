@@ -42,6 +42,22 @@ func (r *PageRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model
 	return r.toModel(row), nil
 }
 
+// FindByIDForUpdateはページを取得し、呼び出し元のトランザクションが終わるまでその行をロックする
+// (廃棄されていないページのみ)。ページが存在しない場合はnilを返す
+func (r *PageRepository) FindByIDForUpdate(ctx context.Context, id model.PageID, spaceID model.SpaceID) (*model.Page, error) {
+	row, err := r.q.FindPageByIDForUpdate(ctx, query.FindPageByIDForUpdateParams{
+		ID:      string(id),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindPinnedByTopicはトピック内のピン留めページを取得する (公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート)
 func (r *PageRepository) FindPinnedByTopic(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) ([]*model.Page, error) {
 	rows, err := r.q.FindPinnedPagesByTopic(ctx, query.FindPinnedPagesByTopicParams{
@@ -437,6 +453,26 @@ func (r *PageRepository) DiscardByID(ctx context.Context, pageID model.PageID, s
 	})
 }
 
+// DiscardEmptyUnpublishedByIDは同じタイトルの空の未公開ページが残っている場合だけ論理削除する。
+// 更新自体がページ行をロックするため、並行する公開が終わった後に条件を確かめ直せる。
+func (r *PageRepository) DiscardEmptyUnpublishedByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, topicID model.TopicID, title string, discardedAt time.Time) (bool, error) {
+	_, err := r.q.DiscardEmptyUnpublishedPageByID(ctx, query.DiscardEmptyUnpublishedPageByIDParams{
+		ID:          string(pageID),
+		SpaceID:     string(spaceID),
+		TopicID:     string(topicID),
+		Title:       title,
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+		UpdatedAt:   discardedAt,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // FindByTopicAndTitleは指定トピック内で指定タイトルのページを取得する (廃棄済みを含む、スペースIDでスコープ)
 func (r *PageRepository) FindByTopicAndTitle(ctx context.Context, topicID model.TopicID, title string, spaceID model.SpaceID) (*model.Page, error) {
 	row, err := r.q.FindPageByTopicAndTitle(ctx, query.FindPageByTopicAndTitleParams{
@@ -707,6 +743,49 @@ func (r *PageRepository) toModels(rows []query.Page) []*model.Page {
 // ページを1ページずつではなく1回の読み取りで取得する。
 func (r *PageRepository) ListActiveBySpace(ctx context.Context, spaceID model.SpaceID) ([]*model.Page, error) {
 	rows, err := r.q.ListActivePagesBySpace(ctx, string(spaceID))
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
+// ListPublishedByModifiedAtInputはListPublishedByModifiedAtの入力
+type ListPublishedByModifiedAtInput struct {
+	SpaceID model.SpaceID
+	// VisibleTopicIDsは閲覧者が開けるトピック。このトピックのページだけを返す
+	VisibleTopicIDs []model.TopicID
+	// ModifiedSinceはこの日時以降に更新されたページに絞る。nilなら絞らない
+	ModifiedSince *time.Time
+	// AfterModifiedAtとAfterIDは前のページの最後のページの位置。どちらもnilなら先頭から返す
+	AfterModifiedAt *time.Time
+	AfterID         *model.PageID
+	Limit           int32
+}
+
+// ListPublishedByModifiedAtは、公開済み・未廃棄・未ゴミ箱で閲覧者が開けるトピックのページを、
+// 更新日時の新しい順 (同じ日時ならIDの大きい順) にLimit件まで返す。
+// pages.modified_atはタイムゾーンを持たずUTCで保存しているため、日時はUTCに直して渡す
+func (r *PageRepository) ListPublishedByModifiedAt(ctx context.Context, input ListPublishedByModifiedAtInput) ([]*model.Page, error) {
+	var modifiedSince sql.NullTime
+	if input.ModifiedSince != nil {
+		modifiedSince = sql.NullTime{Time: input.ModifiedSince.UTC(), Valid: true}
+	}
+	var afterModifiedAt sql.NullTime
+	var afterID *string
+	if input.AfterModifiedAt != nil && input.AfterID != nil {
+		afterModifiedAt = sql.NullTime{Time: input.AfterModifiedAt.UTC(), Valid: true}
+		id := string(*input.AfterID)
+		afterID = &id
+	}
+
+	rows, err := r.q.ListPublishedPagesByModifiedAt(ctx, query.ListPublishedPagesByModifiedAtParams{
+		SpaceID:         string(input.SpaceID),
+		VisibleTopicIds: model.TopicIDsToStrings(input.VisibleTopicIDs),
+		ModifiedSince:   modifiedSince,
+		AfterModifiedAt: afterModifiedAt,
+		AfterID:         afterID,
+		RowLimit:        input.Limit,
+	})
 	if err != nil {
 		return nil, err
 	}

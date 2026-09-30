@@ -1,0 +1,22 @@
+# OpenAPI記述のlintルール (vacuum)
+# https://quobix.com/vacuum/rulesets/
+extends: [[vacuum:oas, recommended]]
+rules:
+  # すべてのスキーマ・プロパティに例を求めるルール。
+  # 例は利用者の理解を助けるところにだけ書き、網羅は求めない。
+  oas3-missing-example: off
+
+  # プロパティ名にcamelCaseを求めるルール。
+  # APIのJSONのキーは `snake_case` にする規約のため、使わない。
+  camel-case-properties: off
+
+  # 予期しないエラー (500・503など) もProblem Detailsで返すことを記述に残すため、
+  # すべてのoperationに `default` 応答を求める。
+  wikino-operation-default-response:
+    description: operationには `default` 応答を定義してください
+    message: operationには `default` 応答を定義してください
+    severity: error
+    given: $.paths[*][get,put,post,patch,delete,head,options,trace]
+    then:
+      field: responses.default
+      function: defined

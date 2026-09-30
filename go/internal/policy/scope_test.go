@@ -50,6 +50,9 @@ func TestExpandScopes(t *testing.T) {
 			{"space", model.ScopeSpaceWrite, model.ScopeSpaceRead},
 			{"space_member", model.ScopeSpaceMemberWrite, model.ScopeSpaceMemberRead},
 			{"attachment", model.ScopeAttachmentWrite, model.ScopeAttachmentRead},
+			{"personal_access_token", model.ScopePersonalAccessTokenWrite, model.ScopePersonalAccessTokenRead},
+			{"oauth_grant", model.ScopeOAuthGrantWrite, model.ScopeOAuthGrantRead},
+			{"oauth_application", model.ScopeOAuthApplicationWrite, model.ScopeOAuthApplicationRead},
 		}
 
 		for _, tt := range tests {
@@ -71,11 +74,32 @@ func TestExpandScopes(t *testing.T) {
 		assertScopes(t, result, []model.Scope{model.ScopeSuggestionApplicationWrite})
 	})
 
-	t.Run("deleteスコープは含意を持たない", func(t *testing.T) {
+	t.Run("topic:deleteは含意を持たない", func(t *testing.T) {
 		t.Parallel()
 
 		result := expandScopes([]model.Scope{model.ScopeTopicDelete})
 		assertScopes(t, result, []model.Scope{model.ScopeTopicDelete})
+	})
+
+	t.Run("personal_access_token:deleteはreadを含意する", func(t *testing.T) {
+		t.Parallel()
+
+		result := expandScopes([]model.Scope{model.ScopePersonalAccessTokenDelete})
+		assertScopes(t, result, []model.Scope{model.ScopePersonalAccessTokenDelete, model.ScopePersonalAccessTokenRead})
+	})
+
+	t.Run("oauth_grant:deleteはreadを含意する", func(t *testing.T) {
+		t.Parallel()
+
+		result := expandScopes([]model.Scope{model.ScopeOAuthGrantDelete})
+		assertScopes(t, result, []model.Scope{model.ScopeOAuthGrantDelete, model.ScopeOAuthGrantRead})
+	})
+
+	t.Run("oauth_application:deleteはreadを含意する", func(t *testing.T) {
+		t.Parallel()
+
+		result := expandScopes([]model.Scope{model.ScopeOAuthApplicationDelete})
+		assertScopes(t, result, []model.Scope{model.ScopeOAuthApplicationDelete, model.ScopeOAuthApplicationRead})
 	})
 
 	t.Run("draft_page:deleteは含意を持たない", func(t *testing.T) {
@@ -182,6 +206,7 @@ func TestAllResourceScopes(t *testing.T) {
 		expected := []model.Scope{
 			model.ScopeSpaceRead, model.ScopeSpaceWrite, model.ScopeSpaceDelete,
 			model.ScopeTopicRead, model.ScopeTopicWrite, model.ScopeTopicDelete,
+			model.ScopeTopicVisibilityWrite,
 			model.ScopeTopicMemberRead, model.ScopeTopicMemberWrite, model.ScopeTopicMemberDelete,
 			model.ScopePageRead, model.ScopePageWrite,
 			model.ScopePageTrashRead, model.ScopePageTrashWrite, model.ScopePageTrashDelete,
@@ -190,6 +215,9 @@ func TestAllResourceScopes(t *testing.T) {
 			model.ScopeSuggestionCommentRead, model.ScopeSuggestionCommentWrite,
 			model.ScopeSpaceMemberRead, model.ScopeSpaceMemberWrite, model.ScopeSpaceMemberDelete,
 			model.ScopeAttachmentRead, model.ScopeAttachmentWrite, model.ScopeAttachmentDelete,
+			model.ScopePersonalAccessTokenRead, model.ScopePersonalAccessTokenWrite, model.ScopePersonalAccessTokenDelete,
+			model.ScopeOAuthGrantRead, model.ScopeOAuthGrantWrite, model.ScopeOAuthGrantDelete,
+			model.ScopeOAuthApplicationRead, model.ScopeOAuthApplicationWrite, model.ScopeOAuthApplicationDelete,
 		}
 
 		for _, s := range expected {
@@ -200,6 +228,17 @@ func TestAllResourceScopes(t *testing.T) {
 			t.Errorf("len(allResourceScopes()) = %d、期待値 = %d", len(scopes), len(expected))
 		}
 	})
+}
+
+func TestExpandScopes_SpaceAdminExpandsToAllDefinitions(t *testing.T) {
+	t.Parallel()
+
+	expected := []model.Scope{model.ScopeSpaceAdmin}
+	for _, d := range model.ScopeDefinitions {
+		expected = append(expected, d.Scope)
+	}
+
+	assertScopes(t, expandScopes([]model.Scope{model.ScopeSpaceAdmin}), expected)
 }
 
 func TestImplications(t *testing.T) {
@@ -255,12 +294,51 @@ func TestExpandScopes_IndependentScopes(t *testing.T) {
 
 	for _, scope := range []model.Scope{
 		model.ScopePageTrashRead, model.ScopePageTrashDelete,
+		model.ScopePersonalAccessTokenRead,
+		model.ScopeOAuthGrantRead,
+		model.ScopeOAuthApplicationRead,
 		model.ScopeSuggestionApplicationWrite, model.ScopeSuggestionClosureWrite,
 		"unknown:write", "page_trash:admin", "suggestion_application:read", "suggestion_closure:delete",
 	} {
 		t.Run(scope.String(), func(t *testing.T) {
 			t.Parallel()
 			assertScopes(t, expandScopes([]model.Scope{scope}), []model.Scope{scope})
+		})
+	}
+}
+
+func TestExpandAPITokenScopes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		input    []model.Scope
+		expected []model.Scope
+	}{
+		{name: "スコープなし", input: nil, expected: []model.Scope{}},
+		{name: "topic:read", input: []model.Scope{model.ScopeTopicRead}, expected: []model.Scope{model.ScopeTopicRead}},
+		{name: "page:writeはpage:readを含意する", input: []model.Scope{model.ScopePageWrite}, expected: []model.Scope{model.ScopePageWrite, model.ScopePageRead}},
+		{
+			name:     "トークンに付与できないスコープは落とす",
+			input:    []model.Scope{model.ScopePageRead, model.ScopeTopicWrite, model.ScopePersonalAccessTokenWrite, model.ScopeOAuthApplicationWrite},
+			expected: []model.Scope{model.ScopePageRead},
+		},
+		{
+			name:     "space:adminだけが保存されていても権限は生まれない",
+			input:    []model.Scope{model.ScopeSpaceAdmin},
+			expected: []model.Scope{},
+		},
+		{
+			name:     "space:adminとpage:writeが保存されていてもページの権限だけを展開する",
+			input:    []model.Scope{model.ScopeSpaceAdmin, model.ScopePageWrite},
+			expected: []model.Scope{model.ScopePageWrite, model.ScopePageRead},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assertScopes(t, ExpandAPITokenScopes(tt.input), tt.expected)
 		})
 	}
 }

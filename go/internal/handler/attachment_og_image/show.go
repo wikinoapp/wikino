@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -77,10 +77,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 // 公開トピック → 非公開トピックへの移動などで一時的に404になった添付ファイルが、
 // 再度公開トピックへ戻った際にCDNキャッシュ済みの404を返し続ける「逆方向leak」を
 // 防ぐため、404はキャッシュ禁止にする。`Cache-Control` は `WriteHeader` 前にセットする
-// 必要があるため、`handler.NotFound` を呼ぶ前にHeaderをセットしている。
+// 必要があるため、`httperror.NotFound` を呼ぶ前にHeaderをセットしている。
 func writeNotFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "private, no-store")
-	handler.NotFound(w, r)
+	httperror.NotFound(w, r)
 }
 
 // writeServerErrorは500レスポンスを書き込む際にCache-Control: private, no-storeを付与する。

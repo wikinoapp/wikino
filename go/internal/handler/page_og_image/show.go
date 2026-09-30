@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ogcard"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -133,7 +133,7 @@ func etagMatches(ifNoneMatch, etag string) bool {
 // CDNにキャッシュされた404を返し続けないよう、404はキャッシュ禁止にする。
 func writeNotFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "private, no-store")
-	handler.NotFound(w, r)
+	httperror.NotFound(w, r)
 }
 
 // writeServerErrorは500レスポンスを書き込む際にCache-Control: private, no-storeを付与する。

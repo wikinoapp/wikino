@@ -3,6 +3,7 @@ package clientip_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/clientip"
@@ -99,6 +100,38 @@ func TestGetClientIP(t *testing.T) {
 			gotIP := clientip.GetClientIP(req)
 			if gotIP != tc.wantIP {
 				t.Errorf("GetClientIP() = %q、期待値 = %q", gotIP, tc.wantIP)
+			}
+		})
+	}
+}
+
+func TestGetTrustedClientIP(t *testing.T) {
+	t.Parallel()
+
+	trusted := []netip.Prefix{
+		netip.MustParsePrefix("192.0.2.0/24"),
+		netip.MustParsePrefix("198.51.100.0/24"),
+	}
+	tests := []struct {
+		name       string
+		remoteAddr string
+		forwarded  string
+		want       string
+	}{
+		{name: "直接接続は偽装したヘッダーを無視する", remoteAddr: "203.0.113.10:1234", forwarded: "203.0.113.99", want: "203.0.113.10"},
+		{name: "信頼済みプロキシが追加した送信元を使う", remoteAddr: "192.0.2.10:1234", forwarded: "203.0.113.99, 203.0.113.10", want: "203.0.113.10"},
+		{name: "複数の信頼済みプロキシを右からたどる", remoteAddr: "192.0.2.10:1234", forwarded: "203.0.113.99, 203.0.113.10, 198.51.100.10", want: "203.0.113.10"},
+		{name: "不正な転送ヘッダーは接続元に戻す", remoteAddr: "192.0.2.10:1234", forwarded: "invalid", want: "192.0.2.10"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			req := httptest.NewRequest("POST", "/oauth/token", nil)
+			req.RemoteAddr = tt.remoteAddr
+			req.Header.Set("CF-Connecting-IP", "203.0.113.99")
+			req.Header.Set("X-Forwarded-For", tt.forwarded)
+			if got := clientip.GetTrustedClientIP(req, trusted); got != tt.want {
+				t.Errorf("GetTrustedClientIP() = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}

@@ -162,6 +162,72 @@ type FeatureFlag struct {
 	DeviceToken sql.NullString `json:"device_token"`
 }
 
+type OauthAccessToken struct {
+	ID           string       `json:"id"`
+	OauthGrantID string       `json:"oauth_grant_id"`
+	SpaceID      string       `json:"space_id"`
+	TokenDigest  string       `json:"token_digest"`
+	Scopes       []string     `json:"scopes"`
+	ExpiresAt    time.Time    `json:"expires_at"`
+	RevokedAt    sql.NullTime `json:"revoked_at"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+}
+
+type OauthApplication struct {
+	ID                   string         `json:"id"`
+	SpaceID              *string        `json:"space_id"`
+	CreatedSpaceMemberID *string        `json:"created_space_member_id"`
+	Name                 string         `json:"name"`
+	ClientID             string         `json:"client_id"`
+	ClientSecretDigest   sql.NullString `json:"client_secret_digest"`
+	ClientType           int32          `json:"client_type"`
+	RedirectUris         []string       `json:"redirect_uris"`
+	DiscardedAt          sql.NullTime   `json:"discarded_at"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	Version              int64          `json:"version"`
+}
+
+type OauthAuthorizationCode struct {
+	ID            string       `json:"id"`
+	OauthGrantID  string       `json:"oauth_grant_id"`
+	SpaceID       string       `json:"space_id"`
+	CodeDigest    string       `json:"code_digest"`
+	Scopes        []string     `json:"scopes"`
+	RedirectUri   string       `json:"redirect_uri"`
+	CodeChallenge string       `json:"code_challenge"`
+	ExpiresAt     time.Time    `json:"expires_at"`
+	UsedAt        sql.NullTime `json:"used_at"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+}
+
+type OauthGrant struct {
+	ID                 string       `json:"id"`
+	OauthApplicationID string       `json:"oauth_application_id"`
+	SpaceID            string       `json:"space_id"`
+	SpaceMemberID      string       `json:"space_member_id"`
+	Scopes             []string     `json:"scopes"`
+	RevokedAt          sql.NullTime `json:"revoked_at"`
+	CreatedAt          time.Time    `json:"created_at"`
+	UpdatedAt          time.Time    `json:"updated_at"`
+}
+
+type OauthRefreshToken struct {
+	ID                     string       `json:"id"`
+	OauthGrantID           string       `json:"oauth_grant_id"`
+	SpaceID                string       `json:"space_id"`
+	TokenDigest            string       `json:"token_digest"`
+	Scopes                 []string     `json:"scopes"`
+	PreviousRefreshTokenID *string      `json:"previous_refresh_token_id"`
+	ExpiresAt              time.Time    `json:"expires_at"`
+	UsedAt                 sql.NullTime `json:"used_at"`
+	RevokedAt              sql.NullTime `json:"revoked_at"`
+	CreatedAt              time.Time    `json:"created_at"`
+	UpdatedAt              time.Time    `json:"updated_at"`
+}
+
 type Page struct {
 	ID                        string       `json:"id"`
 	SpaceID                   string       `json:"space_id"`
@@ -217,6 +283,21 @@ type PasswordResetToken struct {
 	UsedAt      sql.NullTime `json:"used_at"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
+}
+
+type PersonalAccessToken struct {
+	ID             string       `json:"id"`
+	SpaceID        string       `json:"space_id"`
+	SpaceMemberID  string       `json:"space_member_id"`
+	Name           string       `json:"name"`
+	TokenDigest    string       `json:"token_digest"`
+	TokenLastChars string       `json:"token_last_chars"`
+	Scopes         []string     `json:"scopes"`
+	ExpiresAt      time.Time    `json:"expires_at"`
+	LastUsedAt     sql.NullTime `json:"last_used_at"`
+	RevokedAt      sql.NullTime `json:"revoked_at"`
+	CreatedAt      time.Time    `json:"created_at"`
+	UpdatedAt      time.Time    `json:"updated_at"`
 }
 
 type RateLimit struct {
@@ -293,14 +374,15 @@ type Space struct {
 }
 
 type SpaceMember struct {
-	ID        string    `json:"id"`
-	SpaceID   string    `json:"space_id"`
-	UserID    string    `json:"user_id"`
-	JoinedAt  time.Time `json:"joined_at"`
-	Active    bool      `json:"active"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Scopes    []string  `json:"scopes"`
+	ID        string         `json:"id"`
+	SpaceID   string         `json:"space_id"`
+	UserID    string         `json:"user_id"`
+	JoinedAt  time.Time      `json:"joined_at"`
+	Active    bool           `json:"active"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	Scopes    []string       `json:"scopes"`
+	Role      sql.NullString `json:"role"`
 }
 
 type Suggestion struct {
@@ -366,15 +448,16 @@ type Topic struct {
 }
 
 type TopicMember struct {
-	ID                 string       `json:"id"`
-	SpaceID            string       `json:"space_id"`
-	TopicID            string       `json:"topic_id"`
-	SpaceMemberID      string       `json:"space_member_id"`
-	JoinedAt           time.Time    `json:"joined_at"`
-	LastPageModifiedAt sql.NullTime `json:"last_page_modified_at"`
-	CreatedAt          time.Time    `json:"created_at"`
-	UpdatedAt          time.Time    `json:"updated_at"`
-	Scopes             []string     `json:"scopes"`
+	ID                 string         `json:"id"`
+	SpaceID            string         `json:"space_id"`
+	TopicID            string         `json:"topic_id"`
+	SpaceMemberID      string         `json:"space_member_id"`
+	JoinedAt           time.Time      `json:"joined_at"`
+	LastPageModifiedAt sql.NullTime   `json:"last_page_modified_at"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	Scopes             []string       `json:"scopes"`
+	Role               sql.NullString `json:"role"`
 }
 
 type User struct {

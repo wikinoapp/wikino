@@ -1,0 +1,148 @@
+package space
+
+import (
+	"strconv"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// identifierHintIDは識別子の補足を収める要素のid
+const identifierHintID = "identifier-hint"
+
+// NewDataはスペース作成画面をレンダリングする元になるデータ。
+//
+// IdentifierとNameは送信された値をフォームへ戻すためのもので、拒否された送信でも入力した
+// 内容が残るようにする。
+type NewData struct {
+	CSRFToken           string
+	FormErrors          *model.ValidationError
+	Identifier          string
+	Name                string
+}
+
+// Newはスペース作成画面のコンテンツを表示します。
+//
+// 最初に誤りのある項目へフォーカスを置きます。誤りが無い場合と、項目に結び付かない誤りだけの
+// 場合は識別子に置きます。
+templ New(data NewData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:    templates.T(ctx, "space_new_heading"),
+						Subtitle: newHintSubtitle(),
+					})
+				</div>
+
+				@components.FormErrorSummary(data.FormErrors)
+
+				@components.ContentCard() {
+					<form
+						action={ templ.SafeURL(string(templates.SpaceListPath())) }
+						class="grid gap-6"
+						method="POST"
+					>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+						<div class="grid gap-2">
+							<label class="label" for="identifier">
+								{ templates.T(ctx, "space_form_identifier_label") }
+								@components.RequiredBadge()
+							</label>
+							// 識別子はURLに使う英数字のため、モバイルの自動大文字化とスペルチェックを止める
+							<input
+								autocapitalize="off"
+								if data.FormErrors == nil || data.FormErrors.HasFieldError("identifier") || !data.FormErrors.HasFieldError("name") {
+									autofocus
+								}
+								class="input"
+								id="identifier"
+								name="identifier"
+								required
+								spellcheck="false"
+								type="text"
+								value={ data.Identifier }
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("identifier") {
+									aria-invalid="true"
+									aria-describedby={ identifierHintID + " " + fieldErrorID("identifier") }
+								} else {
+									aria-describedby={ identifierHintID }
+								}
+							/>
+							<p id={ identifierHintID } class="text-muted-foreground text-sm">
+								{ templates.T(ctx, "space_form_identifier_hint", map[string]any{"MaxLength": strconv.Itoa(model.SpaceIdentifierMaxLength)}) }
+							</p>
+							@fieldErrors(data.FormErrors, "identifier")
+						</div>
+
+						<div class="grid gap-2">
+							<label class="label" for="name">
+								{ templates.T(ctx, "space_form_name_label") }
+								@components.RequiredBadge()
+							</label>
+							<input
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("name") && !data.FormErrors.HasFieldError("identifier") {
+									autofocus
+								}
+								class="input"
+								id="name"
+								name="name"
+								required
+								type="text"
+								value={ data.Name }
+								if data.FormErrors != nil && data.FormErrors.HasFieldError("name") {
+									aria-invalid="true"
+									aria-describedby={ fieldErrorID("name") }
+								}
+							/>
+							@fieldErrors(data.FormErrors, "name")
+						</div>
+
+						<div class="flex justify-between gap-2">
+							<button type="submit" class="btn rounded-full w-fit">
+								@templates.Icon("paper-plane-tilt-regular")
+								{ templates.T(ctx, "space_new_submit_button") }
+							</button>
+
+							<a
+								href={ templ.SafeURL(string(templates.HomePath())) }
+								class="btn rounded-full w-fit"
+								data-variant="outline"
+							>
+								{ templates.T(ctx, "space_new_cancel") }
+							</a>
+						</div>
+					</form>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// newHintSubtitleはスペース作成画面のサブタイトルを表示します。ヘルプページへのリンクを
+// 含みます。
+templ newHintSubtitle() {
+	@templ.Raw(templates.T(ctx, "space_new_hint_html"))
+}
+
+// fieldErrorsはフォームの1つの項目のエラーを表示します。項目が1つのaria-describedbyで
+// すべてのエラーを指せるよう、エラーは1つの要素にまとめます。
+templ fieldErrors(formErrors *model.ValidationError, field string) {
+	if formErrors != nil && formErrors.HasFieldError(field) {
+		<div id={ fieldErrorID(field) }>
+			for _, errorMsg := range formErrors.GetFieldErrors(field) {
+				<p class="text-sm text-error">
+					{ errorMsg }
+				</p>
+			}
+		</div>
+	}
+}
+
+// fieldErrorIDはフォームの1つの項目のエラーを収める要素のidを返します。
+func fieldErrorID(field string) string {
+	return field + "-error"
+}

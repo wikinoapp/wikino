@@ -7,12 +7,52 @@ package query
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/lib/pq"
 )
 
+const createSpaceMember = `-- name: CreateSpaceMember :one
+INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $5, $5)
+RETURNING id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role
+`
+
+type CreateSpaceMemberParams struct {
+	SpaceID string         `json:"space_id"`
+	UserID  string         `json:"user_id"`
+	Role    sql.NullString `json:"role"`
+	Scopes  []string       `json:"scopes"`
+	Now     time.Time      `json:"now"`
+}
+
+// ユーザーをスペースに参加させる。scopesにはRails版が判定に使う、ロールに応じた値を書く。
+func (q *Queries) CreateSpaceMember(ctx context.Context, arg CreateSpaceMemberParams) (SpaceMember, error) {
+	row := q.db.QueryRowContext(ctx, createSpaceMember,
+		arg.SpaceID,
+		arg.UserID,
+		arg.Role,
+		pq.Array(arg.Scopes),
+		arg.Now,
+	)
+	var i SpaceMember
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.UserID,
+		&i.JoinedAt,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		pq.Array(&i.Scopes),
+		&i.Role,
+	)
+	return i, err
+}
+
 const findActiveSpaceMemberBySpaceAndUser = `-- name: FindActiveSpaceMemberBySpaceAndUser :one
-SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
 `
 
 type FindActiveSpaceMemberBySpaceAndUserParams struct {
@@ -33,12 +73,13 @@ func (q *Queries) FindActiveSpaceMemberBySpaceAndUser(ctx context.Context, arg F
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		pq.Array(&i.Scopes),
+		&i.Role,
 	)
 	return i, err
 }
 
 const findSpaceMembersByIDs = `-- name: FindSpaceMembersByIDs :many
-SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
 `
 
 type FindSpaceMembersByIDsParams struct {
@@ -65,6 +106,7 @@ func (q *Queries) FindSpaceMembersByIDs(ctx context.Context, arg FindSpaceMember
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			pq.Array(&i.Scopes),
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}
@@ -80,7 +122,7 @@ func (q *Queries) FindSpaceMembersByIDs(ctx context.Context, arg FindSpaceMember
 }
 
 const listActiveSpaceMembersByUserAndSpaceIDs = `-- name: ListActiveSpaceMembersByUserAndSpaceIDs :many
-SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes FROM space_members WHERE user_id = $1 AND space_id = ANY($2::uuid[]) AND active = true
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role FROM space_members WHERE user_id = $1 AND space_id = ANY($2::uuid[]) AND active = true
 `
 
 type ListActiveSpaceMembersByUserAndSpaceIDsParams struct {
@@ -108,6 +150,7 @@ func (q *Queries) ListActiveSpaceMembersByUserAndSpaceIDs(ctx context.Context, a
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			pq.Array(&i.Scopes),
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}

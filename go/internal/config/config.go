@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"os"
 	"os/exec"
 	"strconv"
@@ -32,6 +33,8 @@ type Config struct {
 
 	// Rate Limiting設定
 	DisableRateLimit bool
+	// TrustedProxyCIDRsはX-Forwarded-Forを右からたどるときに信頼するプロキシのIP範囲
+	TrustedProxyCIDRs []netip.Prefix
 
 	// Rails版アプリのURL (リバースプロキシ用)
 	RailsAppURL string
@@ -132,6 +135,23 @@ func Load() (*Config, error) {
 
 	// Rate Limiting設定 (オプショナル - 開発環境でRate Limitingを無効化)
 	cfg.DisableRateLimit = os.Getenv("WIKINO_DISABLE_RATE_LIMIT") == "true"
+	for _, raw := range strings.Split(os.Getenv("WIKINO_TRUSTED_PROXY_CIDRS"), ",") {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			continue
+		}
+		prefix, err := netip.ParsePrefix(raw)
+		if err != nil {
+			return nil, fmt.Errorf("環境変数WIKINO_TRUSTED_PROXY_CIDRSのCIDRが不正です: %w", err)
+		}
+		cfg.TrustedProxyCIDRs = append(cfg.TrustedProxyCIDRs, prefix.Masked())
+	}
+	if len(cfg.TrustedProxyCIDRs) == 0 && cfg.IsProduction() {
+		// 本番はCloudflareの背後にあり、未設定だとIPアドレス単位の制限を接続元 (Cloudflareや
+		// 手前のプロキシ) のIPで数え、多数の利用者が1つのカウンターを共有してしまう。
+		// 起動は止めずに、設定漏れに気付けるよう記録する (開発者向けの運用ログ)
+		slog.Warn("本番環境でWIKINO_TRUSTED_PROXY_CIDRSが未設定です。OAuthのトークンエンドポイントのレート制限は接続元のIPで数えます")
+	}
 
 	// Rails版アプリのURL (オプショナル - リバースプロキシ機能で使用)
 	cfg.RailsAppURL = os.Getenv("WIKINO_RAILS_APP_URL")

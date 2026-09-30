@@ -306,3 +306,72 @@ func TestSpaceRepository_ListActiveByUser(t *testing.T) {
 		}
 	})
 }
+
+func TestSpaceRepository_ExistsByIdentifier(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceRepository(testutil.QueriesWithTx(tx))
+
+	testutil.NewSpaceBuilder(t, tx).WithIdentifier("exists-by-identifier").Build()
+	testutil.NewSpaceBuilder(t, tx).WithIdentifier("exists-discarded").WithDiscarded().Build()
+
+	tests := []struct {
+		name       string
+		identifier model.SpaceIdentifier
+		want       bool
+	}{
+		{name: "同じ識別子のスペースがあればtrue", identifier: "exists-by-identifier", want: true},
+		{name: "大文字と小文字を区別しない", identifier: "EXISTS-By-Identifier", want: true},
+		{name: "削除済みのスペースも数える", identifier: "exists-discarded", want: true},
+		{name: "同じ識別子のスペースが無ければfalse", identifier: "exists-not-found", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repo.ExistsByIdentifier(context.Background(), tt.identifier)
+			if err != nil {
+				t.Fatalf("ExistsByIdentifier()のエラー = %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("ExistsByIdentifier(%q) = %v、期待値 = %v", tt.identifier, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSpaceRepository_Create(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceRepository(testutil.QueriesWithTx(tx))
+
+	space, err := repo.Create(context.Background(), CreateSpaceInput{
+		Identifier: "repo-create-space",
+		Name:       "作成したスペース",
+		Plan:       model.PlanFree,
+	})
+	if err != nil {
+		t.Fatalf("Create()のエラー = %v", err)
+	}
+
+	found, err := repo.FindByIdentifier(context.Background(), "repo-create-space")
+	if err != nil {
+		t.Fatalf("FindByIdentifier()のエラー = %v", err)
+	}
+	if found == nil {
+		t.Fatal("作成したスペースが見つからない")
+	}
+	if found.ID != space.ID {
+		t.Errorf("found.ID = %v、期待値 = %v", found.ID, space.ID)
+	}
+	if found.Name != "作成したスペース" {
+		t.Errorf("found.Name = %q、期待値 = %q", found.Name, "作成したスペース")
+	}
+	if found.Plan != model.PlanFree {
+		t.Errorf("found.Plan = %v、期待値 = PlanFree", found.Plan)
+	}
+	if found.JoinedAt.IsZero() {
+		t.Error("found.JoinedAtがゼロ値")
+	}
+}

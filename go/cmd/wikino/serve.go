@@ -16,10 +16,20 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
 
+	"github.com/wikinoapp/wikino/go/api"
+	"github.com/wikinoapp/wikino/go/internal/apierror"
+	"github.com/wikinoapp/wikino/go/internal/apigen"
+	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
+	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
+	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
+	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
+	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/dispatcher"
-	"github.com/wikinoapp/wikino/go/internal/handler"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
+	"github.com/wikinoapp/wikino/go/internal/handler/api_catalog"
+	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
@@ -31,6 +41,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
+	oauthapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_application"
+	oauthapplicationclientsecrethandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_application_client_secret"
+	oauthauthorizationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_authorization"
+	"github.com/wikinoapp/wikino/go/internal/handler/oauth_authorization_server_metadata"
+	oauthgranthandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_grant"
+	"github.com/wikinoapp/wikino/go/internal/handler/oauth_protected_resource_metadata"
+	oauthtokenhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_token"
 	"github.com/wikinoapp/wikino/go/internal/handler/page"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_backlink_list"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_backlinks"
@@ -42,11 +59,13 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_trash"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
+	personalaccesstokenhandler "github.com/wikinoapp/wikino/go/internal/handler/personal_access_token"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	spacehandler "github.com/wikinoapp/wikino/go/internal/handler/space"
+	spacesettingshandler "github.com/wikinoapp/wikino/go/internal/handler/space_settings"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	suggestionapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_application"
 	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
@@ -59,9 +78,11 @@ import (
 	topicsettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings_general"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/image"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ogcard"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
@@ -150,6 +171,12 @@ func runServe() {
 	pageRevisionRepo := repository.NewPageRevisionRepository(queries)
 	pageEditorRepo := repository.NewPageEditorRepository(queries)
 	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
+	personalAccessTokenRepo := repository.NewPersonalAccessTokenRepository(queries)
+	oauthApplicationRepo := repository.NewOAuthApplicationRepository(queries)
+	oauthAuthorizationCodeRepo := repository.NewOAuthAuthorizationCodeRepository(queries)
+	oauthGrantRepo := repository.NewOAuthGrantRepository(queries)
+	oauthAccessTokenRepo := repository.NewOAuthAccessTokenRepository(queries)
+	oauthRefreshTokenRepo := repository.NewOAuthRefreshTokenRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
@@ -265,6 +292,10 @@ func runServe() {
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
 	manifestHandler := manifest.NewHandler(cfg)
+	oauthAuthorizationServerMetadataHandler := oauth_authorization_server_metadata.NewHandler(cfg)
+	oauthProtectedResourceMetadataHandler := oauth_protected_resource_metadata.NewHandler(cfg, usecase.NewGetOAuthProtectedResourceMetadataUsecase(spaceRepo))
+	apiCatalogHandler := api_catalog.NewHandler(cfg)
+	apiReferenceHandler := api_reference.NewHandler(cfg)
 
 	getAttachmentOgImageUC := usecase.NewGetAttachmentOgImageUsecase(attachmentRepo)
 	attachmentOgImageHandler := attachment_og_image.NewHandler(ogImageBuilder, getAttachmentOgImageUC)
@@ -466,10 +497,64 @@ func runServe() {
 		flashMgr,
 		trashPageUC,
 	)
-	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, featureFlagRepo)
+	createSpaceUC := usecase.NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
+		flashMgr,
 		getSpaceShowUC,
+		createSpaceUC,
+	)
+	getSpaceSettingsUC := usecase.NewGetSpaceSettingsUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo)
+	spaceSettingsHandler := spacesettingshandler.NewHandler(
+		cfg,
+		getSpaceSettingsUC,
+	)
+	getPersonalAccessTokensUC := usecase.NewGetPersonalAccessTokensUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, personalAccessTokenRepo)
+	getPersonalAccessTokenNewUC := usecase.NewGetPersonalAccessTokenNewUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo)
+	personalAccessTokenCreateValidator := validator.NewPersonalAccessTokenCreateValidator()
+	createPersonalAccessTokenUC := usecase.NewCreatePersonalAccessTokenUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, personalAccessTokenRepo, personalAccessTokenCreateValidator)
+	revokePersonalAccessTokenUC := usecase.NewRevokePersonalAccessTokenUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, personalAccessTokenRepo)
+	personalAccessTokenHandler := personalaccesstokenhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getPersonalAccessTokensUC,
+		getPersonalAccessTokenNewUC,
+		createPersonalAccessTokenUC,
+		revokePersonalAccessTokenUC,
+	)
+	getOAuthApplicationsUC := usecase.NewGetOAuthApplicationsUsecase(spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo, oauthApplicationRepo)
+	getOAuthApplicationNewUC := usecase.NewGetOAuthApplicationNewUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo)
+	oauthApplicationCreateValidator := validator.NewOAuthApplicationCreateValidator()
+	createOAuthApplicationUC := usecase.NewCreateOAuthApplicationUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthApplicationRepo, oauthApplicationCreateValidator)
+	getOAuthApplicationUC := usecase.NewGetOAuthApplicationUsecase(spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo, oauthApplicationRepo)
+	getOAuthApplicationEditUC := usecase.NewGetOAuthApplicationEditUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthApplicationRepo)
+	oauthApplicationUpdateValidator := validator.NewOAuthApplicationUpdateValidator()
+	updateOAuthApplicationUC := usecase.NewUpdateOAuthApplicationUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthApplicationRepo, oauthApplicationUpdateValidator)
+	deleteOAuthApplicationUC := usecase.NewDeleteOAuthApplicationUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthApplicationRepo)
+	regenerateOAuthApplicationClientSecretUC := usecase.NewRegenerateOAuthApplicationClientSecretUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthApplicationRepo)
+	oauthApplicationHandler := oauthapplicationhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getOAuthApplicationsUC,
+		getOAuthApplicationNewUC,
+		createOAuthApplicationUC,
+		getOAuthApplicationUC,
+		getOAuthApplicationEditUC,
+		updateOAuthApplicationUC,
+		deleteOAuthApplicationUC,
+	)
+	oauthApplicationClientSecretHandler := oauthapplicationclientsecrethandler.NewHandler(cfg, regenerateOAuthApplicationClientSecretUC)
+	oauthGrantHandler := oauthgranthandler.NewHandler(
+		cfg,
+		flashMgr,
+		usecase.NewGetOAuthGrantsUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthGrantRepo, oauthApplicationRepo),
+		usecase.NewRevokeOAuthGrantUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthGrantRepo, oauthApplicationRepo),
+	)
+	oauthAuthorizationHandler := oauthauthorizationhandler.NewHandler(
+		cfg,
+		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo),
+		usecase.NewCreateOAuthAuthorizationUsecase(cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo, oauthAuthorizationCodeRepo),
 	)
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
 	getTopicNewUC := usecase.NewGetTopicNewUsecase(spaceRepo, spaceMemberRepo)
@@ -597,10 +682,58 @@ func runServe() {
 	)
 	getExportDownloadUC := usecase.NewGetExportDownloadUsecase(spaceRepo, spaceMemberRepo, exportRepo, objectStorage)
 	exportDownloadHandler := export_download.NewHandler(getExportDownloadUC)
+
+	// 公開Web APIのハンドラーとリクエスト検証を初期化
+	apiProblems := apierror.NewWriter(cfg.AppURL())
+	apiSpec, err := apigen.GetSpec()
+	if err != nil {
+		slog.Error("OpenAPI記述の読み込みに失敗しました", "error", err)
+		os.Exit(1)
+	}
+	apiRequestValidator, err := middleware.NewAPIRequestValidator(apiSpec, apiProblems)
+	if err != nil {
+		slog.Error("APIのリクエスト検証の初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	authenticateAPITokenUC := usecase.NewAuthenticateAPITokenUsecase(personalAccessTokenRepo, oauthAccessTokenRepo, oauthGrantRepo, spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo)
+	apiTokenAuth := middleware.NewAPITokenAuth(authenticateAPITokenUC, apiProblems)
+	apiRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.APISpaceMemberRateLimitPolicy)
+	oauthRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.OAuthIPRateLimitPolicy(cfg.TrustedProxyCIDRs))
+	oauthTokenHandler := oauthtokenhandler.NewHandler(
+		usecase.NewCreateOAuthTokenUsecase(
+			cfg,
+			oauthApplicationRepo,
+			oauthGrantRepo,
+			oauthAuthorizationCodeRepo,
+			oauthAccessTokenRepo,
+			oauthRefreshTokenRepo,
+			spaceRepo,
+			spaceMemberRepo,
+			userRepo,
+			featureFlagRepo,
+		),
+		usecase.NewRevokeOAuthTokenUsecase(oauthApplicationRepo, oauthGrantRepo, oauthAccessTokenRepo, oauthRefreshTokenRepo),
+	)
+	apiServer := apihandler.NewServer(
+		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		openapi_description.NewHandler(api.OpenAPIDescription),
+		apipage.NewHandler(
+			usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
+			usecase.NewGetAPIPageUsecase(pageRepo, topicRepo, topicMemberRepo),
+			usecase.NewCreateAPIPageUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewPageCreateValidator(pageRepo)),
+			usecase.NewUpdateAPIPageUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewAPIPageUpdateValidator(pageRepo)),
+		),
+		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
+		apitopic.NewHandler(
+			usecase.NewListAPITopicsUsecase(topicRepo, topicMemberRepo),
+			usecase.NewGetAPITopicUsecase(topicRepo, topicMemberRepo),
+		),
+	)
+
 	r := chi.NewRouter()
 
 	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
-	r.NotFound(handler.NotFound)
+	r.NotFound(httperror.NotFound)
 
 	// リバースプロキシミドルウェアを初期化 (Rails版へのプロキシ)
 	// 注: RailsAppURLが設定されている場合のみ有効化
@@ -616,14 +749,18 @@ func runServe() {
 		r.Use(reverseProxyMiddleware.Middleware)
 	}
 
+	// 公開Web APIのレスポンスに共通のヘッダーを付ける。メンテナンス中の503や
+	// パニック時の500にも付けるため、それらのミドルウェアより前に配置する
+	r.Use(middleware.APIResponseHeader)
+
 	// メンテナンスモードミドルウェア
-	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg)
+	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg, apiProblems)
 	r.Use(maintenanceMW.Middleware)
 
 	// リクエストボディサイズ制限ミドルウェア
 	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
 	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
-	r.Use(middleware.BodyLimit)
+	r.Use(middleware.NewBodyLimit(apiProblems))
 
 	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
 	r.Use(middleware.MethodOverride)
@@ -638,8 +775,8 @@ func runServe() {
 	// Recovererはsentryhttpより前 (= 外側) に登録する。sentryhttpが
 	// Repanic: trueで再panicしたものをここで握り潰して500を返す。
 	// Sentry SDK公式READMEも「recovery middlewareはsentryhttpより外側に
-	// 置く」と指示している。
-	r.Use(chimiddleware.Recoverer)
+	// 置く」と指示している。APIのパスには500をProblem Detailsで返す。
+	r.Use(middleware.NewRecoverer(apiProblems).Middleware)
 
 	// sentryhttpはリクエスト単位のHubをcontextに積み、panicを捕捉
 	// してSentryに送信し、パフォーマンストランザクションを開始する。
@@ -667,6 +804,26 @@ func runServe() {
 
 	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
+
+	// 公開Web API。`Authorization: Bearer` のトークンで認証し、Cookieのセッションを使わないため、
+	// セッションで認証するミドルウェア (SetUserなど) を掛けたグループには入れない
+	r.Mount(apiMountPath, newAPIRouter(apiServer, apiReferenceHandler.Show, apiProblems, apiTokenAuth, apiRateLimit, apiRequestValidator))
+
+	// OAuthのトークンエンドポイントとトークンの失効のエンドポイント。クライアントはCookieの
+	// セッションを使わずに呼ぶため、セッションで認証するミドルウェアを掛けたグループには入れない
+	// (CSRFの検証からも除外している)。クライアントの認証より前に、IPアドレス単位のレート制限を掛ける。
+	// 2つのエンドポイントはカウンターを共有する
+	r.With(oauthRateLimit.Middleware).Post(model.OAuthTokenEndpointPath, oauthTokenHandler.Create)
+	r.With(oauthRateLimit.Middleware).Post(model.OAuthRevocationEndpointPath, oauthTokenHandler.Delete)
+
+	// OAuthとAPIのメタデータ (RFC 8414・RFC 9728・RFC 9727)。個人のデータを含まないため認証せず、
+	// フィーチャーフラグでも隠さない
+	r.Get(model.OAuthAuthorizationServerMetadataPath, oauthAuthorizationServerMetadataHandler.Show)
+	r.Head(model.OAuthAuthorizationServerMetadataPath, oauthAuthorizationServerMetadataHandler.Show)
+	r.Get(spaceAPIResourceMetadataRoute, oauthProtectedResourceMetadataHandler.Show)
+	r.Head(spaceAPIResourceMetadataRoute, oauthProtectedResourceMetadataHandler.Show)
+	r.Get(model.APICatalogPath, apiCatalogHandler.Show)
+	r.Head(model.APICatalogPath, apiCatalogHandler.Show)
 
 	// og:image配信エンドポイント (認証不要、公開トピックのog:imageをimgproxy経由で配信する・
 	// カバー画像の無い公開ページのカード画像を描画する)
@@ -755,6 +912,13 @@ func runServe() {
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)
 
+		// スペースの作成。フォームと作成処理。
+		//
+		// HEADを単独で登録する理由は下のトピックの作成と同じ。
+		r.Get("/spaces/new", spaceHandler.New)
+		r.Head("/spaces/new", spaceHandler.New)
+		r.Post("/spaces", spaceHandler.Create)
+
 		// トピックの作成。フォームと作成処理。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録
@@ -835,8 +999,68 @@ func runServe() {
 		// ページロケーション検索API (Wikiリンク補完用)
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 
+		// スペース設定のトップ。項目のうちエクスポート以外のリンク先はRails版のまま残る。
+		//
+		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
+		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。
+		r.Get("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
+		r.Head("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
+
+		// 個人アクセストークンの一覧・発行フォーム・発行・失効。Rails版には無い画面で、リバース
+		// プロキシは名前空間全体をGoへ渡してくる。サブルーターにするのはエクスポートと同じく、
+		// どのルートも受けないリクエストにchi既定の本文なし405ではなく404ページを返すため。
+		r.Route("/s/{space_identifier}/settings/personal_access_tokens", func(r chi.Router) {
+			r.MethodNotAllowed(httperror.NotFound)
+
+			r.Get("/", personalAccessTokenHandler.Index)
+			r.Head("/", personalAccessTokenHandler.Index)
+			r.Post("/", personalAccessTokenHandler.Create)
+			r.Get("/new", personalAccessTokenHandler.New)
+			r.Head("/new", personalAccessTokenHandler.New)
+			r.Delete("/{personal_access_token_id}", personalAccessTokenHandler.Delete)
+		})
+
+		// スペースのOAuthアプリの一覧・登録・詳細・編集・削除とシークレットの再発行。個人アクセストークンと同じく
+		// Rails版には無い画面で、リバースプロキシは名前空間全体をGoへ渡してくるため、どのルートも
+		// 受けないリクエストには404ページを返す。
+		r.Route("/s/{space_identifier}/settings/oauth_applications", func(r chi.Router) {
+			r.MethodNotAllowed(httperror.NotFound)
+
+			r.Get("/", oauthApplicationHandler.Index)
+			r.Head("/", oauthApplicationHandler.Index)
+			r.Post("/", oauthApplicationHandler.Create)
+			r.Get("/new", oauthApplicationHandler.New)
+			r.Head("/new", oauthApplicationHandler.New)
+			r.Get("/{oauth_application_id}", oauthApplicationHandler.Show)
+			r.Head("/{oauth_application_id}", oauthApplicationHandler.Show)
+			r.Patch("/{oauth_application_id}", oauthApplicationHandler.Update)
+			r.Delete("/{oauth_application_id}", oauthApplicationHandler.Delete)
+			r.Get("/{oauth_application_id}/edit", oauthApplicationHandler.Edit)
+			r.Head("/{oauth_application_id}/edit", oauthApplicationHandler.Edit)
+			r.Post("/{oauth_application_id}/client_secret", oauthApplicationClientSecretHandler.Create)
+		})
+
+		// 自分が許可した連携中のアプリの一覧と解除。個人アクセストークンと同じくRails版には無い
+		// 画面で、リバースプロキシは名前空間全体をGoへ渡してくるため、どのルートも受けない
+		// リクエストには404ページを返す。
+		r.Route("/s/{space_identifier}/settings/oauth_grants", func(r chi.Router) {
+			r.MethodNotAllowed(httperror.NotFound)
+
+			r.Get("/", oauthGrantHandler.Index)
+			r.Head("/", oauthGrantHandler.Index)
+			r.Delete("/{oauth_grant_id}", oauthGrantHandler.Delete)
+		})
+
+		// OAuthの認可エンドポイント (同意画面と同意の送信)。未ログインの利用者はサインインを経て
+		// この認可要求へ戻る。同意の送信はセッションで認証し、CSRFトークンで保護する。
+		//
+		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしないため。
+		r.Get(model.OAuthAuthorizationEndpointPath, oauthAuthorizationHandler.New)
+		r.Head(model.OAuthAuthorizationEndpointPath, oauthAuthorizationHandler.New)
+		r.Post(model.OAuthAuthorizationEndpointPath, oauthAuthorizationHandler.Create)
+
 		// スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
-		// ダウンロード。スペース設定の残りはRails版のままで、これらの画面のパンくずはそこへ戻る。
+		// ダウンロード。これらの画面のパンくずは上のスペース設定のトップへ戻る。
 		//
 		// この名前空間をサブルーターにするのは、どのルートも受けないリクエストに、chi既定の
 		// 本文なし405ではなく404ページを返すため。リバースプロキシは、2つ目のエクスポートを
@@ -847,7 +1071,7 @@ func runServe() {
 		// フォールバックしない一方、Railsのルーターは一致しないHEADをGETとして読むため。
 		// 併記しないと、GETに200を返す画面がHEADには405を返す。
 		r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
-			r.MethodNotAllowed(handler.NotFound)
+			r.MethodNotAllowed(httperror.NotFound)
 
 			r.Post("/", exportHandler.Create)
 			r.Get("/new", exportHandler.New)

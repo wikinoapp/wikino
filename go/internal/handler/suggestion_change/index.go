@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -29,7 +29,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	suggestionNumber, err := strconv.ParseInt(suggestionNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -52,7 +52,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if output == nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 

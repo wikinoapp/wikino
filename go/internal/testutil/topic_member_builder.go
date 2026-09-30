@@ -20,6 +20,7 @@ type TopicMemberBuilderDB struct {
 	spaceID       string
 	topicID       string
 	spaceMemberID string
+	role          model.TopicRole
 	scopes        []string
 	joinedAt      time.Time
 }
@@ -81,10 +82,10 @@ func (b *TopicMemberBuilderDB) Build() model.TopicMemberID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO topic_members (space_id, topic_id, space_member_id, scopes, joined_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, scopes, joined_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.spaceMemberID, pq.Array(b.scopes), b.joinedAt, now, now,
+		b.spaceID, b.topicID, b.spaceMemberID, nullableTopicRole(b.role), pq.Array(b.scopes), b.joinedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("トピックメンバー作成に失敗: %v", err)
@@ -101,6 +102,7 @@ type TopicMemberBuilder struct {
 	spaceID            string
 	topicID            string
 	spaceMemberID      string
+	role               model.TopicRole
 	scopes             []string
 	joinedAt           time.Time
 	lastPageModifiedAt *time.Time
@@ -169,14 +171,31 @@ func (b *TopicMemberBuilder) Build() model.TopicMemberID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO topic_members (space_id, topic_id, space_member_id, scopes, joined_at, last_page_modified_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, scopes, joined_at, last_page_modified_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		 RETURNING id`,
-		b.spaceID, b.topicID, b.spaceMemberID, pq.Array(b.scopes), b.joinedAt, b.lastPageModifiedAt, now, now,
+		b.spaceID, b.topicID, b.spaceMemberID, nullableTopicRole(b.role), pq.Array(b.scopes), b.joinedAt, b.lastPageModifiedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("トピックメンバー作成に失敗: %v", err)
 	}
 
 	return model.TopicMemberID(id)
+}
+
+// WithRoleは保存するロールを設定します
+func (b *TopicMemberBuilder) WithRole(role model.TopicRole) *TopicMemberBuilder {
+	b.role = role
+	return b
+}
+
+// WithRoleは保存するロールを設定します
+func (b *TopicMemberBuilderDB) WithRole(role model.TopicRole) *TopicMemberBuilderDB {
+	b.role = role
+	return b
+}
+
+// nullableTopicRoleは空のロールをNULLとして保存する値を返す
+func nullableTopicRole(role model.TopicRole) sql.NullString {
+	return sql.NullString{String: string(role), Valid: role != ""}
 }

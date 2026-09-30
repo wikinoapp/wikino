@@ -74,3 +74,10 @@ UPDATE topics
 SET name = @name, description = @description, visibility = @visibility, updated_at = @now
 WHERE id = @id AND space_id = @space_id
 RETURNING *;
+
+-- name: UpdateTopicNameAndDescription :one
+-- 公開範囲を変更できないメンバーの保存で、並行して行われた公開範囲の変更を上書きしない。
+UPDATE topics
+SET name = @name, description = @description, updated_at = @now
+WHERE id = @id AND space_id = @space_id
+RETURNING *;

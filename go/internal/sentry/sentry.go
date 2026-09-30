@@ -32,10 +32,13 @@ var sensitiveHeaders = []string{
 }
 
 // マスクすべきリクエストボディのキー (トークン境界一致、小文字)。
+// "code" はOAuthのトークン要求の認可コード (`code`) とPKCEの `code_verifier` を対象にする。
+// `access_token`・`refresh_token`・`client_secret` は "token"・"secret" で対象になる。
 var sensitiveBodyKeys = []string{
 	"password",
 	"token",
 	"secret",
+	"code",
 }
 
 // マスクすべきクエリパラメータのキー (トークン境界一致、小文字)。

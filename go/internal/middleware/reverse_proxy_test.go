@@ -763,6 +763,37 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 	}{
 		// Go版で処理するパス
 		{
+			name:     "スペース作成フォーム (GET)",
+			method:   http.MethodGet,
+			path:     "/spaces/new",
+			expected: true,
+		},
+		{
+			name:     "スペース作成フォーム (HEAD)",
+			method:   http.MethodHead,
+			path:     "/spaces/new",
+			expected: true,
+		},
+		{
+			name:     "スペース作成 (POST)",
+			method:   http.MethodPost,
+			path:     "/spaces",
+			expected: true,
+		},
+		{
+			// Goルートはスペースの作成のPOSTだけに応答するため、GETはRailsへフォールスルーする。
+			name:     "/spaces (GET) はPOSTのみフィルタによりマッチしない",
+			method:   http.MethodGet,
+			path:     "/spaces",
+			expected: false,
+		},
+		{
+			name:     "スペース作成フォーム配下のサブパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/spaces/new/extra",
+			expected: false,
+		},
+		{
 			name:     "スペース詳細 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space",
@@ -1145,11 +1176,116 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
-			// スペース設定の残りはRails版のままなので、パターンが設定のパス自体を巻き込んでは
-			// ならない。
-			name:     "スペース設定はマッチしない",
+			name:     "スペース設定のトップ (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/settings",
+			expected: true,
+		},
+		{
+			name:     "スペース設定のトップ (HEAD)",
+			method:   http.MethodHead,
+			path:     "/s/my-space/settings",
+			expected: true,
+		},
+		{
+			// スペース設定のトップはGETとHEADだけを受けるため、他のメソッドはRails版へ届く。
+			name:     "スペース設定のトップへのPOSTはマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/settings",
+			expected: false,
+		},
+		{
+			// スペース設定の残りはRails版のままなので、パターンがトップ以外の設定のパスを
+			// 巻き込んではならない。
+			name:     "スペースの一般設定はマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/general",
+			expected: false,
+		},
+		{
+			name:     "スペースの添付ファイルはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/attachments",
+			expected: false,
+		},
+		{
+			name:     "個人アクセストークンの一覧 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/personal_access_tokens",
+			expected: true,
+		},
+		{
+			name:     "個人アクセストークンの発行フォーム (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/personal_access_tokens/new",
+			expected: true,
+		},
+		{
+			name:     "個人アクセストークンの発行 (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/settings/personal_access_tokens",
+			expected: true,
+		},
+		{
+			// Rails版には無い画面のため、未対応のパスやメソッドもGoルーターで404にする。
+			name:     "個人アクセストークン配下の未対応のパスもGoルーターで拒否する",
+			method:   http.MethodDelete,
+			path:     "/s/my-space/settings/personal_access_tokens/unknown",
+			expected: true,
+		},
+		{
+			name:     "personal_access_tokensで始まる別の設定のパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/personal_access_tokens_old",
+			expected: false,
+		},
+		{
+			name:     "OAuthアプリの一覧 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/oauth_applications",
+			expected: true,
+		},
+		{
+			name:     "OAuthアプリの登録 (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/settings/oauth_applications",
+			expected: true,
+		},
+		{
+			name:     "OAuthアプリの詳細 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/oauth_applications/01234567-89ab-cdef-0123-456789abcdef",
+			expected: true,
+		},
+		{
+			// Rails版には無い画面のため、未対応のパスやメソッドもGoルーターで404にする。
+			name:     "OAuthアプリ配下の未対応のメソッドもGoルーターで拒否する",
+			method:   http.MethodPut,
+			path:     "/s/my-space/settings/oauth_applications/new",
+			expected: true,
+		},
+		{
+			name:     "oauth_applicationsで始まる別の設定のパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/oauth_applications_old",
+			expected: false,
+		},
+		{
+			name:     "連携中のアプリの一覧 (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/oauth_grants",
+			expected: true,
+		},
+		{
+			name:     "連携の解除 (DELETE)",
+			method:   http.MethodDelete,
+			path:     "/s/my-space/settings/oauth_grants/01234567-89ab-cdef-0123-456789abcdef",
+			expected: true,
+		},
+		{
+			name:     "oauth_grantsで始まる別の設定のパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/settings/oauth_grants_old",
 			expected: false,
 		},
 		{
@@ -1162,6 +1298,66 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "マッチしないパス",
 			method:   http.MethodGet,
 			path:     "/settings",
+			expected: false,
+		},
+		{
+			name:     "APIのGET",
+			method:   http.MethodGet,
+			path:     "/api/v1/openapi.yaml",
+			expected: true,
+		},
+		{
+			name:     "APIのPATCH",
+			method:   http.MethodPatch,
+			path:     "/api/v1/spaces/my-space/pages/1",
+			expected: true,
+		},
+		{
+			name:     "ルートの無いAPIのパスもGoで受ける",
+			method:   http.MethodDelete,
+			path:     "/api/v2/unknown",
+			expected: true,
+		},
+		{
+			name:     "apiで始まる別のパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/apis",
+			expected: false,
+		},
+		{
+			name:     "OAuthの認可エンドポイント",
+			method:   http.MethodGet,
+			path:     "/oauth/authorize",
+			expected: true,
+		},
+		{
+			name:     "OAuthのトークンエンドポイント",
+			method:   http.MethodPost,
+			path:     "/oauth/token",
+			expected: true,
+		},
+		{
+			name:     "認可サーバーのメタデータ",
+			method:   http.MethodGet,
+			path:     "/.well-known/oauth-authorization-server",
+			expected: true,
+		},
+		{
+			name:     "保護リソースのメタデータ",
+			method:   http.MethodGet,
+			path:     "/.well-known/oauth-protected-resource/api/v1/spaces/my-space",
+			expected: true,
+		},
+		{
+			name:     "APIカタログ",
+			method:   http.MethodGet,
+			path:     "/.well-known/api-catalog",
+			expected: true,
+		},
+		{
+			name:     "使わない名前のwell-knownはマッチしない",
+			method:   http.MethodGet,
+			path:     "/.well-known/security.txt",
 			expected: false,
 		},
 	}
@@ -1382,7 +1578,7 @@ func TestReverseProxyMiddleware_ExportNamespace(t *testing.T) {
 		{path: "/s/demo/settings/exports/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6.json"},
 		{path: "/s/demo/settings/exports/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6/download.json"},
 		{path: "/s//demo//settings//exports.json"},
-		{path: "/s/demo/settings", rails: true},
+		{path: "/s/demo/settings/general", rails: true},
 		{path: "/s/demo/settings/deletion", rails: true},
 		{path: "/s/demo/settings/exports-other", rails: true},
 	} {
@@ -1402,25 +1598,34 @@ func TestReverseProxyMiddleware_ExportNamespace(t *testing.T) {
 	}
 }
 
-// og:image配信のパスはCSRFトークンとフラッシュの除外と定義を共有する。
-// `session.OGImagePathPatterns` に足したパスがGoへ振り分けられないと、Railsへ転送されて
-// 除外が働かないため、GET・HEADで登録されていることを確かめる。
-func TestGoHandledRegexPatterns_IncludeOGImagePaths(t *testing.T) {
+// Cookieを使わないパスはCSRFトークンとフラッシュの除外と定義を共有する。
+// `session.CookielessPaths` に足したパスがGoへ振り分けられないと、Railsへ転送されて
+// 除外が働かないため、同じパターンが同じメソッドで登録されていることを確かめる。
+func TestGoHandledRegexPatterns_IncludeCookielessPaths(t *testing.T) {
 	t.Parallel()
 
-	for _, want := range session.OGImagePathPatterns {
-		t.Run(want.String(), func(t *testing.T) {
+	for _, want := range session.CookielessPaths {
+		t.Run(want.Pattern.String(), func(t *testing.T) {
 			t.Parallel()
 
 			for _, gp := range goHandledRegexPatterns {
-				if gp.pattern == want {
-					if !containsMethod(gp.methods, http.MethodGet) || !containsMethod(gp.methods, http.MethodHead) {
-						t.Errorf("メソッド = %v、GETとHEADを含むことを期待", gp.methods)
+				if gp.pattern != want.Pattern {
+					continue
+				}
+				if len(want.Methods) == 0 {
+					if len(gp.methods) != 0 {
+						t.Errorf("メソッド = %v、全メソッドを期待", gp.methods)
 					}
 					return
 				}
+				for _, method := range want.Methods {
+					if len(gp.methods) != 0 && !containsMethod(gp.methods, method) {
+						t.Errorf("メソッド = %v、%sを含むことを期待", gp.methods, method)
+					}
+				}
+				return
 			}
-			t.Errorf("goHandledRegexPatternsに %s が登録されていない", want)
+			t.Errorf("goHandledRegexPatternsに %s が登録されていない", want.Pattern)
 		})
 	}
 }

@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/httppagination"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -49,18 +49,18 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
 	pageLinkContext := viewmodel.NormalizePageLinkContext(r.URL.Query().Get(viewmodel.PageLinkContextQueryParam))
 	if !pageLinkContext.IsEdit() {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	linkState, ok := parseRelatedPageState(r, pageLinkContext)
 	if !ok {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -78,13 +78,13 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if output == nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
 	// 認可チェック
 	if !output.CanUpdatePage {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		LinkedPages:           linkData.LinkedPages,
 		BacklinkCountByPageID: linkedPageBacklinkCounts(linkData.BacklinksPerPage),
 	}) {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 

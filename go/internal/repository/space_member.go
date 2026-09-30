@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -82,6 +83,29 @@ func (r *SpaceMemberRepository) ListActiveByUserAndSpaceIDs(ctx context.Context,
 	return members, nil
 }
 
+// CreateSpaceMemberInputはスペースメンバーの作成に必要な値を保持する。
+type CreateSpaceMemberInput struct {
+	SpaceID model.SpaceID
+	UserID  model.UserID
+	Role    model.SpaceRole
+}
+
+// Createはユーザーをスペースに参加させる。Rails版が権限を判定できるよう、
+// ロールに応じたスコープもspace_members.scopesへ書く。
+func (r *SpaceMemberRepository) Create(ctx context.Context, input CreateSpaceMemberInput) (*model.SpaceMember, error) {
+	row, err := r.q.CreateSpaceMember(ctx, query.CreateSpaceMemberParams{
+		SpaceID: string(input.SpaceID),
+		UserID:  string(input.UserID),
+		Role:    sql.NullString{String: string(input.Role), Valid: true},
+		Scopes:  model.ScopesToStrings(input.Role.RailsScopes()),
+		Now:     time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModelはquery.SpaceMemberをmodel.SpaceMemberに変換する
 func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMember {
 	return &model.SpaceMember{
@@ -89,6 +113,7 @@ func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMembe
 		SpaceID:  model.SpaceID(row.SpaceID),
 		UserID:   model.UserID(row.UserID),
 		Scopes:   model.StringsToScopes(row.Scopes),
+		Role:     model.SpaceRole(row.Role.String),
 		JoinedAt: row.JoinedAt,
 		Active:   row.Active,
 	}

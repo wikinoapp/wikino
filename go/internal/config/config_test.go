@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/netip"
 	"os"
 	"reflect"
 	"testing"
@@ -20,6 +21,7 @@ func setupTestEnv(t *testing.T) func() {
 		"WIKINO_SESSION_SECURE":            os.Getenv("WIKINO_SESSION_SECURE"),
 		"WIKINO_SESSION_HTTPONLY":          os.Getenv("WIKINO_SESSION_HTTPONLY"),
 		"WIKINO_DISABLE_RATE_LIMIT":        os.Getenv("WIKINO_DISABLE_RATE_LIMIT"),
+		"WIKINO_TRUSTED_PROXY_CIDRS":       os.Getenv("WIKINO_TRUSTED_PROXY_CIDRS"),
 		"WIKINO_RAILS_APP_URL":             os.Getenv("WIKINO_RAILS_APP_URL"),
 		"WIKINO_TURNSTILE_ENABLED":         os.Getenv("WIKINO_TURNSTILE_ENABLED"),
 		"WIKINO_TURNSTILE_SITE_KEY":        os.Getenv("WIKINO_TURNSTILE_SITE_KEY"),
@@ -45,6 +47,7 @@ func setupTestEnv(t *testing.T) func() {
 	_ = os.Setenv("WIKINO_COOKIE_DOMAIN", ".test.wikino.app")
 	_ = os.Setenv("WIKINO_SESSION_SECURE", "false")
 	_ = os.Setenv("WIKINO_SESSION_HTTPONLY", "true")
+	_ = os.Unsetenv("WIKINO_TRUSTED_PROXY_CIDRS")
 
 	// Sentry関連は各テストが独立して状態を制御できるよう、デフォルトでは未設定にする。
 	_ = os.Unsetenv("WIKINO_SENTRY_DSN")
@@ -71,6 +74,26 @@ func setupTestEnv(t *testing.T) func() {
 				_ = os.Unsetenv(key)
 			}
 		}
+	}
+}
+
+func TestLoad_TrustedProxyCIDRs(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	_ = os.Setenv("WIKINO_TRUSTED_PROXY_CIDRS", "192.0.2.3/24, 2001:db8::/32")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load()のエラー = %v", err)
+	}
+	want := []netip.Prefix{netip.MustParsePrefix("192.0.2.0/24"), netip.MustParsePrefix("2001:db8::/32")}
+	if !reflect.DeepEqual(cfg.TrustedProxyCIDRs, want) {
+		t.Errorf("TrustedProxyCIDRs = %v、期待値 = %v", cfg.TrustedProxyCIDRs, want)
+	}
+
+	_ = os.Setenv("WIKINO_TRUSTED_PROXY_CIDRS", "not-a-cidr")
+	if _, err := Load(); err == nil {
+		t.Error("不正なCIDRでLoad()がエラーを返さなかった")
 	}
 }
 

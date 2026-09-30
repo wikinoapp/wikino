@@ -16,7 +16,7 @@ import (
 const createTopicMember = `-- name: CreateTopicMember :one
 INSERT INTO topic_members (space_id, topic_id, space_member_id, joined_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $4, $4)
-RETURNING id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes
+RETURNING id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes, role
 `
 
 type CreateTopicMemberParams struct {
@@ -26,8 +26,8 @@ type CreateTopicMemberParams struct {
 	Now           time.Time `json:"now"`
 }
 
-// スペースメンバーをトピックに参加させる。スコープは空のままにし、そのトピックでの権限は
-// メンバーがスペースに対して持つスコープから決まるようにする。
+// スペースメンバーをトピックに参加させる。ロールは付けず (NULL)、そのトピックでの権限は
+// メンバーのスペースのロールから決まるようにする。
 func (q *Queries) CreateTopicMember(ctx context.Context, arg CreateTopicMemberParams) (TopicMember, error) {
 	row := q.db.QueryRowContext(ctx, createTopicMember,
 		arg.SpaceID,
@@ -46,12 +46,13 @@ func (q *Queries) CreateTopicMember(ctx context.Context, arg CreateTopicMemberPa
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		pq.Array(&i.Scopes),
+		&i.Role,
 	)
 	return i, err
 }
 
 const findTopicMemberBySpaceMemberAndTopic = `-- name: FindTopicMemberBySpaceMemberAndTopic :one
-SELECT id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
+SELECT id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes, role FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
 `
 
 type FindTopicMemberBySpaceMemberAndTopicParams struct {
@@ -74,12 +75,13 @@ func (q *Queries) FindTopicMemberBySpaceMemberAndTopic(ctx context.Context, arg 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		pq.Array(&i.Scopes),
+		&i.Role,
 	)
 	return i, err
 }
 
 const listTopicMembersBySpaceMemberAndTopics = `-- name: ListTopicMembersBySpaceMemberAndTopics :many
-SELECT id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes FROM topic_members WHERE space_member_id = $1 AND space_id = $2 AND topic_id = ANY($3::uuid[])
+SELECT id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes, role FROM topic_members WHERE space_member_id = $1 AND space_id = $2 AND topic_id = ANY($3::uuid[])
 `
 
 type ListTopicMembersBySpaceMemberAndTopicsParams struct {
@@ -108,6 +110,7 @@ func (q *Queries) ListTopicMembersBySpaceMemberAndTopics(ctx context.Context, ar
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			pq.Array(&i.Scopes),
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}
@@ -123,7 +126,7 @@ func (q *Queries) ListTopicMembersBySpaceMemberAndTopics(ctx context.Context, ar
 }
 
 const listTopicMembersByUserAndTopics = `-- name: ListTopicMembersByUserAndTopics :many
-SELECT tm.id, tm.space_id, tm.topic_id, tm.space_member_id, tm.joined_at, tm.last_page_modified_at, tm.created_at, tm.updated_at, tm.scopes FROM topic_members tm
+SELECT tm.id, tm.space_id, tm.topic_id, tm.space_member_id, tm.joined_at, tm.last_page_modified_at, tm.created_at, tm.updated_at, tm.scopes, tm.role FROM topic_members tm
 INNER JOIN space_members sm ON tm.space_member_id = sm.id AND tm.space_id = sm.space_id
 WHERE sm.user_id = $1 AND tm.space_id = ANY($2::uuid[]) AND tm.topic_id = ANY($3::uuid[])
 `
@@ -157,6 +160,7 @@ func (q *Queries) ListTopicMembersByUserAndTopics(ctx context.Context, arg ListT
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			pq.Array(&i.Scopes),
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}

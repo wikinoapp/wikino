@@ -100,3 +100,59 @@ func TestGetTopicSettingsGeneralUsecase_ExecuteRefused(t *testing.T) {
 		})
 	}
 }
+
+// TestGetTopicSettingsGeneralUsecase_ExecuteCanUpdateVisibilityは、画面が公開範囲の選択肢を
+// 出すかどうかをtopic_visibility:writeで決めることを扱う。
+func TestGetTopicSettingsGeneralUsecase_ExecuteCanUpdateVisibility(t *testing.T) {
+	t.Parallel()
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+
+	tests := []struct {
+		name   string
+		suffix string
+		scopes []model.Scope
+		want   bool
+	}{
+		{
+			name:   "topic:writeだけのメンバーは公開範囲を変えられない",
+			suffix: "get-writer",
+			scopes: []model.Scope{model.ScopeTopicWrite},
+			want:   false,
+		},
+		{
+			name:   "topic_visibility:writeを持つメンバーは公開範囲を変えられる",
+			suffix: "get-visibility-writer",
+			scopes: []model.Scope{model.ScopeTopicWrite, model.ScopeTopicVisibilityWrite},
+			want:   true,
+		},
+		{
+			name:   "space:adminを持つメンバーは公開範囲を変えられる",
+			suffix: "get-admin",
+			scopes: []model.Scope{model.ScopeSpaceAdmin},
+			want:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.scopes)
+			uc := newGetTopicSettingsGeneralUsecase(f)
+
+			output, err := uc.Execute(ctx, GetTopicSettingsGeneralInput{
+				SpaceIdentifier: f.identifier,
+				TopicNumber:     1,
+				UserID:          f.userID,
+			})
+			if err != nil {
+				t.Fatalf("予期しないエラー: %v", err)
+			}
+
+			if output.CanUpdateVisibility != tt.want {
+				t.Errorf("CanUpdateVisibility = %v、期待値 = %v", output.CanUpdateVisibility, tt.want)
+			}
+		})
+	}
+}

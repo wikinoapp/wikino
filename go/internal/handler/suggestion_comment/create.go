@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -33,7 +33,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	suggestionNumberInt, err := strconv.ParseInt(suggestionNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	suggestionNumber := model.SuggestionNumber(suggestionNumberInt)
@@ -82,9 +82,9 @@ func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error,
 	if ae := model.AsAppError(err); ae != nil {
 		switch ae.Code {
 		case model.AppErrCodeResourceNotFound:
-			handler.NotFound(w, r)
+			httperror.NotFound(w, r)
 		case model.AppErrCodeForbidden:
-			handler.NotFound(w, r)
+			httperror.NotFound(w, r)
 		default:
 			slog.ErrorContext(ctx, ae.LogString())
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -61,7 +61,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		if ae := model.AsAppError(err); ae != nil {
 			switch ae.Code {
 			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
-				handler.NotFound(w, r)
+				httperror.NotFound(w, r)
 			default:
 				slog.ErrorContext(ctx, ae.LogString())
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -122,7 +122,7 @@ func (h *Handler) renderUpdateFragment(
 	}
 	if detail == nil {
 		// 直前の保存が成功しているため、競合以外でページが消えていることはない。
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 

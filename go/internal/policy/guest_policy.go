@@ -18,6 +18,7 @@ func (p *GuestPolicy) CanShowTopic(topic *model.Topic) bool {
 }
 
 func (p *GuestPolicy) CanUpdateTopic() bool                                { return false }
+func (p *GuestPolicy) CanUpdateTopicVisibility() bool                      { return false }
 func (p *GuestPolicy) CanCreatePage() bool                                 { return false }
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
 func (p *GuestPolicy) CanShowTrash() bool                                  { return false }
@@ -36,3 +37,14 @@ func (p *GuestPolicy) CanCreateSuggestionComment() bool                    { ret
 func (p *GuestPolicy) CanUpdateSuggestionComment(_ *model.Suggestion) bool { return false }
 func (p *GuestPolicy) CanCreateTopic() bool                                { return false }
 func (p *GuestPolicy) CanExportSpace() bool                                { return false }
+func (p *GuestPolicy) CanUpdateSpace() bool                                { return false }
+func (p *GuestPolicy) CanShowPersonalAccessTokens() bool                   { return false }
+func (p *GuestPolicy) CanCreatePersonalAccessToken() bool                  { return false }
+func (p *GuestPolicy) CanDeletePersonalAccessToken() bool                  { return false }
+func (p *GuestPolicy) CanShowOAuthGrants() bool                            { return false }
+func (p *GuestPolicy) CanCreateOAuthGrant() bool                           { return false }
+func (p *GuestPolicy) CanDeleteOAuthGrant() bool                           { return false }
+func (p *GuestPolicy) CanShowOAuthApplications() bool                      { return false }
+func (p *GuestPolicy) CanCreateOAuthApplication() bool                     { return false }
+func (p *GuestPolicy) CanUpdateOAuthApplication() bool                     { return false }
+func (p *GuestPolicy) CanDeleteOAuthApplication() bool                     { return false }

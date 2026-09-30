@@ -18,6 +18,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -50,9 +51,9 @@ func setupHandler(t *testing.T, queries *query.Queries) *spacehandler.Handler {
 	topicMemberRepo := repository.NewTopicMemberRepository(queries)
 	pageRepo := repository.NewPageRepository(queries)
 
-	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, repository.NewFeatureFlagRepository(queries))
 
-	return spacehandler.NewHandler(cfg, getSpaceShowUC)
+	return spacehandler.NewHandler(cfg, session.NewFlashManager("", false, true), getSpaceShowUC, nil)
 }
 
 func TestShow_存在しないスペースで404が返る(t *testing.T) {
@@ -395,6 +396,92 @@ func TestShow_メンバーにスペースオプションメニューが全て表
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスにオプションメニューのリンク%qが含まれていない", want)
 		}
+	}
+}
+
+// 設定のリンクは、スペース設定のトップを開けるメンバー (space:write、またはフラグが有効で
+// トークン管理の権限を持つ) にだけ出す。開けないメンバーに出すと、リンク先が404になる。
+func TestShow_設定を開けないメンバーには設定のリンクが表示されない(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	readerID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ss-options-reader@example.com").
+		WithAtname("ssoptionsreader").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-options-reader").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(readerID).
+		WithScopes([]model.Scope{model.ScopePageRead, model.ScopePersonalAccessTokenRead}).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ss-options-reader", map[string]string{
+		"space_identifier": "ss-options-reader",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: readerID, Atname: "ssoptionsreader"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	// メンバー向けのゴミ箱のリンクは出るが、フラグが無効なため設定のリンクは出ない。
+	if !strings.Contains(body, "/s/ss-options-reader/trash") {
+		t.Error("メンバーのレスポンスにゴミ箱のリンクが含まれていない")
+	}
+	if strings.Contains(body, "/s/ss-options-reader/settings") {
+		t.Error("設定を開けないメンバーのレスポンスに設定のリンクが含まれている")
+	}
+}
+
+func TestShow_トークン管理の権限だけを持つメンバーにはフラグが有効なら設定のリンクが表示される(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ss-options-pat@example.com").
+		WithAtname("ssoptionspat").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-options-pat").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		WithScopes([]model.Scope{model.ScopePersonalAccessTokenRead}).
+		Build()
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithUserID(userID).
+		WithName(string(model.FeatureFlagPublicAPI)).
+		Build()
+
+	req := newShowRequest(t, "/s/ss-options-pat", map[string]string{
+		"space_identifier": "ss-options-pat",
+	})
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID, Atname: "ssoptionspat"})
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, queries).Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	}
+	if !strings.Contains(rr.Body.String(), `href="/s/ss-options-pat/settings"`) {
+		t.Error("トークン管理の権限と有効なフラグを持つメンバーのメニューに設定リンクが含まれていない")
 	}
 }
 

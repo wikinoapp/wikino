@@ -1,0 +1,109 @@
+package oauth_grant
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// IndexDataは連携中のアプリの一覧の画面をレンダリングする元になるデータ。
+//
+// Grantsは閲覧者自身が許可した失効していない連携である。CanDeleteは連携を解除できるか
+// (oauth_grant:delete) を表し、偽なら解除のボタンを出さない。
+type IndexData struct {
+	CSRFToken string
+	Space     viewmodel.Space
+	Grants    []viewmodel.OAuthGrant
+	CanDelete bool
+}
+
+// Indexは連携中のアプリの一覧の画面を表示します。
+templ Index(data IndexData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:    templates.T(ctx, "oauth_grant_index_heading"),
+						Subtitle: indexSubtitle(),
+					})
+				</div>
+				if len(data.Grants) == 0 {
+					<div class="px-4">
+						@components.EmptyState(components.EmptyStateData{
+							Message:  templates.T(ctx, "oauth_grant_index_empty"),
+							IconName: "lock-regular",
+						})
+					</div>
+				} else {
+					@components.ContentCard() {
+						<ul class="flex flex-col divide-y">
+							for _, grant := range data.Grants {
+								<li class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
+									@grantItem(grant)
+									if data.CanDelete {
+										@revokeForm(data.CSRFToken, data.Space.Identifier, grant)
+									}
+								</li>
+							}
+						</ul>
+					}
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// indexSubtitleは一覧の画面のサブタイトルを表示します。
+templ indexSubtitle() {
+	{ templates.T(ctx, "oauth_grant_index_description") }
+}
+
+// grantItemは一覧の1件の連携を表示します。
+templ grantItem(grant viewmodel.OAuthGrant) {
+	<span id={ grantNameID(grant) } class="font-bold [overflow-wrap:anywhere]">{ grant.ApplicationName }</span>
+	@components.APITokenScopeBadges(grant.Scopes)
+	<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-muted-foreground">
+		<dt>{ templates.T(ctx, "oauth_grant_index_created_at") }</dt>
+		<dd>
+			@components.AbsoluteTime(components.AbsoluteTimeData{Time: grant.CreatedAt})
+		</dd>
+	</dl>
+}
+
+// revokeFormは連携を解除するボタンを表示します。解除は取り消せないため、送信の前に確認します。
+//
+// 一覧には連携ごとに同じ文言のボタンが並ぶため、ボタンの名前にアプリ名を連ねる。
+// スクリーンリーダーでボタンだけを取り出したときに、どのアプリのボタンか区別できるように
+// するためである。見えている文言を名前の先頭に置き、音声操作でもその文言で指定できるようにする。
+templ revokeForm(csrfToken string, spaceIdentifier viewmodel.SpaceIdentifier, grant viewmodel.OAuthGrant) {
+	<form
+		action={ templ.SafeURL(string(templates.SpaceSettingsOAuthGrantPath(spaceIdentifier, grant.ID))) }
+		data-confirm={ templates.T(ctx, "oauth_grant_index_revoke_confirm", map[string]any{"Name": grant.ApplicationName}) }
+		hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
+		method="POST"
+	>
+		<input type="hidden" name="_method" value="DELETE"/>
+		<input type="hidden" name="csrf_token" value={ csrfToken }/>
+		<button
+			aria-labelledby={ revokeLabelID(grant) + " " + grantNameID(grant) }
+			class="btn h-fit p-0 text-error"
+			data-variant="link"
+			data-size="sm"
+			type="submit"
+		>
+			@templates.Icon("trash-regular", "size-3")
+			<span id={ revokeLabelID(grant) }>{ templates.T(ctx, "oauth_grant_index_revoke") }</span>
+		</button>
+	</form>
+}
+
+// grantNameIDは一覧の1件の連携のアプリ名を収める要素のidを返します。
+func grantNameID(grant viewmodel.OAuthGrant) string {
+	return "oauth-grant-" + grant.ID + "-name"
+}
+
+// revokeLabelIDは連携を解除するボタンの文言を収める要素のidを返します。
+func revokeLabelID(grant viewmodel.OAuthGrant) string {
+	return "oauth-grant-" + grant.ID + "-revoke-label"
+}

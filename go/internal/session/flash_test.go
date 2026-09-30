@@ -283,7 +283,7 @@ func TestFlashManager_CookieAttributes(t *testing.T) {
 	})
 }
 
-func TestFlashManager_Middleware_OGImagesDoNotConsumeFlash(t *testing.T) {
+func TestFlashManager_Middleware_CookielessRequestsDoNotConsumeFlash(t *testing.T) {
 	t.Parallel()
 
 	fm := session.NewFlashManager("", false, false)
@@ -302,6 +302,14 @@ func TestFlashManager_Middleware_OGImagesDoNotConsumeFlash(t *testing.T) {
 		{name: "添付画像のHEAD", method: http.MethodHead, path: "/attachments/123/og_image"},
 		{name: "カード画像のGET", method: http.MethodGet, path: "/s/example/pages/1/og_image/old.png"},
 		{name: "カード画像のHEAD", method: http.MethodHead, path: "/s/example/pages/1/og_image/old.png"},
+		{name: "APIのGET", method: http.MethodGet, path: "/api/v1/openapi.yaml"},
+		{name: "APIのPOST", method: http.MethodPost, path: "/api/v1/spaces/example/pages"},
+		{name: "OAuthのトークン発行", method: http.MethodPost, path: "/oauth/token"},
+		{name: "OAuthのトークン失効", method: http.MethodPost, path: "/oauth/revoke"},
+		{name: "認可サーバーのメタデータ", method: http.MethodGet, path: "/.well-known/oauth-authorization-server"},
+		{name: "保護リソースのメタデータ", method: http.MethodGet, path: "/.well-known/oauth-protected-resource/api/v1/spaces/example"},
+		{name: "APIカタログ", method: http.MethodGet, path: "/.well-known/api-catalog"},
+		{name: "OAuthの同意画面", method: http.MethodGet, path: "/oauth/authorize", wantCookie: true, wantMessage: "保存しました"},
 		{name: "通常のページ", method: http.MethodGet, path: "/s/example/pages/1", wantCookie: true, wantMessage: "保存しました"},
 	}
 
@@ -313,7 +321,7 @@ func TestFlashManager_Middleware_OGImagesDoNotConsumeFlash(t *testing.T) {
 			h := fm.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				flash := session.FlashFromContext(r.Context())
 				if tt.wantMessage == "" && flash != nil {
-					t.Errorf("画像リクエストでフラッシュが消費された: %+v", flash)
+					t.Errorf("Cookieを使わないリクエストでフラッシュが消費された: %+v", flash)
 				}
 				if tt.wantMessage != "" && (flash == nil || flash.Message != tt.wantMessage) {
 					t.Errorf("フラッシュ = %+v、期待メッセージ = %q", flash, tt.wantMessage)

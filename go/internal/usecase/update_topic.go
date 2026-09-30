@@ -36,7 +36,8 @@ func NewUpdateTopicUsecase(
 }
 
 // UpdateTopicInputはトピック更新の入力パラメータ。
-// Visibilityはフォームが送信した文字列で、変換はバリデーターが行う。
+// Visibilityはフォームが送信した文字列で、変換はバリデーターが行う。公開範囲を変えられない
+// メンバーのフォームは公開範囲を送らないため、空文字列になる。
 type UpdateTopicInput struct {
 	SpaceIdentifier model.SpaceIdentifier
 	TopicNumber     int32
@@ -69,11 +70,22 @@ func (uc *UpdateTopicUsecase) Execute(ctx context.Context, input UpdateTopicInpu
 		return nil, err
 	}
 
+	// 公開範囲を変えられないメンバーから今と違う公開範囲が送られたときは、
+	// 名前や説明だけを保存せずに拒否する。検証には読み取り時の公開範囲を使う
+	submittedVisibility := input.Visibility
+	if !access.CanUpdateVisibility {
+		current := access.Topic.Visibility.String()
+		if submittedVisibility != "" && submittedVisibility != current {
+			return nil, forbiddenError(ctx)
+		}
+		submittedVisibility = current
+	}
+
 	// 2. バリデーション
 	visibility, err := uc.updateValidator.Validate(ctx, validator.TopicUpdateValidatorInput{
 		Name:        input.Name,
 		Description: input.Description,
-		Visibility:  input.Visibility,
+		Visibility:  submittedVisibility,
 		TopicID:     access.Topic.ID,
 		SpaceID:     access.Space.ID,
 	})
@@ -84,16 +96,31 @@ func (uc *UpdateTopicUsecase) Execute(ctx context.Context, input UpdateTopicInpu
 	// 3. 永続化
 	//
 	// 更新は1文で済むため、専用のトランザクションを開かずに実行する。
-	topic, err := uc.topicRepo.Update(ctx, repository.UpdateTopicInput{
+	topic, err := uc.persistTopicUpdate(ctx, input, access, visibility)
+	if err != nil {
+		return nil, fmt.Errorf("トピックの更新に失敗: %w", err)
+	}
+
+	return &UpdateTopicOutput{Space: access.Space, Topic: topic}, nil
+}
+
+// persistTopicUpdateは許可された項目だけを保存する。
+// 公開範囲を変更できないメンバーの保存では、取得後に他のメンバーが変更した公開範囲を保持する。
+func (uc *UpdateTopicUsecase) persistTopicUpdate(ctx context.Context, input UpdateTopicInput, access *topicUpdateAccess, visibility model.TopicVisibility) (*model.Topic, error) {
+	if !access.CanUpdateVisibility {
+		return uc.topicRepo.UpdateNameAndDescription(ctx, repository.UpdateTopicNameAndDescriptionInput{
+			ID:          access.Topic.ID,
+			SpaceID:     access.Space.ID,
+			Name:        input.Name,
+			Description: input.Description,
+		})
+	}
+
+	return uc.topicRepo.Update(ctx, repository.UpdateTopicInput{
 		ID:          access.Topic.ID,
 		SpaceID:     access.Space.ID,
 		Name:        input.Name,
 		Description: input.Description,
 		Visibility:  visibility,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("トピックの更新に失敗: %w", err)
-	}
-
-	return &UpdateTopicOutput{Space: access.Space, Topic: topic}, nil
 }

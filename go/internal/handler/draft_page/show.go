@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/wikinoapp/wikino/go/internal/handler"
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/httppagination"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -39,7 +39,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 32)
 	if err != nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -55,13 +55,13 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if output == nil {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
 	// 認可チェック
 	if !output.CanUpdatePage {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -70,33 +70,33 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// これにより、同じ名前を入力に持つ共有状態の要素から編集画面がそのまま送れるようにもなる。
 	pageLinkContext := viewmodel.NormalizePageLinkContext(r.URL.Query().Get(viewmodel.PageLinkContextQueryParam))
 	if !pageLinkContext.IsEdit() {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
 	currentPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	linkedBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.LinkedBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	pageBacklinkPage, ok := httppagination.ParseNamedPageParam(r, viewmodel.PageBacklinkPageQueryParam, viewmodel.RelatedPageFollowingLimit)
 	if !ok {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	linkedPageNumber, ok := httppagination.ParseOptionalNumberParam(r, viewmodel.LinkedPageNumberQueryParam)
 	if !ok {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 	linkedPageParentPage, ok := httppagination.ParseOptionalNumberParam(r, viewmodel.LinkedPageParentPageQueryParam)
 	if !ok {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		PageBacklinkPage:     pageBacklinkPage,
 	}.Normalized()
 	if !linkState.WithinCumulativeLimit(usecase.MaxCumulativeRelatedPagePages) {
-		handler.NotFound(w, r)
+		httperror.NotFound(w, r)
 		return
 	}
 
