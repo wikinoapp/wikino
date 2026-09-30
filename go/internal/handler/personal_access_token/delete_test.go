@@ -18,7 +18,7 @@ func TestDelete_自分のトークンを失効して一覧へ戻す(t *testing.T
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "pat-delete"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenDelete}, true)
+	m := setupPATMember(t, tx, identifier, model.SpaceRoleViewer, true)
 	tokenID := testutil.NewPersonalAccessTokenBuilder(t, tx).
 		WithSpaceID(m.spaceID).WithSpaceMemberID(m.spaceMemberID).
 		WithName("自宅のCLI").WithTokenDigest("pat_delete").
@@ -62,14 +62,13 @@ func TestDelete_失効できない場合は404が返る(t *testing.T) {
 	tests := []struct {
 		name        string
 		identifier  string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		// otherMemberが真なら、同じスペースの他のメンバーのトークンを失効しようとする
 		otherMember bool
 	}{
-		{name: "personal_access_token:deleteを持たない", identifier: "pat-delete-noscope", scopes: []model.Scope{model.ScopePersonalAccessTokenWrite}, flagEnabled: true},
-		{name: "フィーチャーフラグが無効", identifier: "pat-delete-noflag", scopes: []model.Scope{model.ScopeSpaceAdmin}},
-		{name: "他のメンバーのトークン", identifier: "pat-delete-other", scopes: []model.Scope{model.ScopeSpaceAdmin}, flagEnabled: true, otherMember: true},
+		{name: "フィーチャーフラグが無効", identifier: "pat-delete-noflag", role: model.SpaceRoleAdmin},
+		{name: "他のメンバーのトークン", identifier: "pat-delete-other", role: model.SpaceRoleAdmin, flagEnabled: true, otherMember: true},
 	}
 
 	for _, tt := range tests {
@@ -78,13 +77,13 @@ func TestDelete_失効できない場合は404が返る(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			m := setupPATMember(t, tx, tt.identifier, tt.scopes, tt.flagEnabled)
+			m := setupPATMember(t, tx, tt.identifier, tt.role, tt.flagEnabled)
 
 			spaceMemberID := m.spaceMemberID
 			if tt.otherMember {
 				otherUserID := testutil.NewUserBuilder(t, tx).WithEmail(tt.identifier + "-other@example.com").Build()
 				spaceMemberID = testutil.NewSpaceMemberBuilder(t, tx).
-					WithSpaceID(m.spaceID).WithUserID(otherUserID).WithScopes([]model.Scope{model.ScopeSpaceAdmin}).Build()
+					WithSpaceID(m.spaceID).WithUserID(otherUserID).Build()
 			}
 			tokenID := testutil.NewPersonalAccessTokenBuilder(t, tx).
 				WithSpaceID(m.spaceID).WithSpaceMemberID(spaceMemberID).WithTokenDigest(tt.identifier).
@@ -115,7 +114,7 @@ func TestDelete_未ログインならログイン画面へリダイレクトす�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "pat-delete-anon"
-	setupPATMember(t, tx, identifier, []model.Scope{model.ScopeSpaceAdmin}, true)
+	setupPATMember(t, tx, identifier, model.SpaceRoleAdmin, true)
 
 	req := newRequest(t, http.MethodDelete, "/s/"+identifier+"/settings/personal_access_tokens/00000000-0000-0000-0000-000000000000", identifier, "", nil)
 	rr := httptest.NewRecorder()

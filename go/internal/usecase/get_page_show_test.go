@@ -25,24 +25,24 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		repository.NewAttachmentRepository(q),
 	)
 
-	// スペースオーナー (デフォルトでspace:adminスコープを持つため、ページを編集できる)。
+	// スペースオーナー (既定で管理者のロールを持つため、ページを編集できる)。
 	ownerID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-owner@example.com").
 		WithAtname("gpsowner").
 		Build()
-	// page:writeを持たずpage_trash:writeを持つメンバー (編集権限なしでゴミ箱表示経路を検証する)。
-	trashMemberID := testutil.NewUserBuilder(t, tx).
+	// 編集者のロールのメンバー (page_trash:writeでゴミ箱表示経路を検証する)。
+	editorMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-trash@example.com").
 		WithAtname("gpstrash").
 		Build()
-	// 読み取り専用メンバー (page:readだけではゴミ箱のページも非公開トピックのページも見えない
-	// ことを検証する)。
-	readerID := testutil.NewUserBuilder(t, tx).
+	// 閲覧者のロールのメンバー (page_trash:readを持たないためゴミ箱のページは見えないが、
+	// topic:readを持つため非公開トピックのページは見えることを検証する)。
+	viewerMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-reader@example.com").
 		WithAtname("gpsreader").
 		Build()
-	// 非公開トピックとゴミ箱の権限をトピックメンバーからだけ得るメンバー。
-	topicScopedMemberID := testutil.NewUserBuilder(t, tx).
+	// スペースでは閲覧者で、ゴミ箱の権限を公開トピックのトピック編集者のロールからだけ得るメンバー。
+	topicEditorMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gps-topic-scoped@example.com").
 		WithAtname("gpstopicscoped").
 		Build()
@@ -63,27 +63,18 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
+		WithUserID(editorMemberID).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(readerID).
-		WithScopes([]model.Scope{model.ScopePageRead}).
+		WithUserID(viewerMemberID).
+		WithRole(model.SpaceRoleViewer).
 		Build()
-	trashReaderID := testutil.NewUserBuilder(t, tx).
-		WithEmail("gps-trash-reader@example.com").
-		WithAtname("gpstrashreader").
-		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
+	topicEditorSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(trashReaderID).
-		WithScopes([]model.Scope{model.ScopePageTrashRead}).
-		Build()
-	topicScopedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(topicScopedMemberID).
-		WithScopes([]model.Scope{}).
+		WithUserID(topicEditorMemberID).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("gps-other-space").
@@ -116,14 +107,8 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithTopicID(publicTopicID).
-		WithSpaceMemberID(topicScopedSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(privateTopicID).
-		WithSpaceMemberID(topicScopedSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopeTopicRead}).
+		WithSpaceMemberID(topicEditorSpaceMemberID).
+		WithRole(model.TopicRoleEditor).
 		Build()
 
 	attachmentID := testutil.NewAttachmentBuilder(t, tx).
@@ -524,9 +509,8 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 	})
 
 	// ヘッダーの操作ドロップダウンは編集とゴミ箱を別々のスコープで出し分けるため、2つのフラグ
-	// をスコープごとに固定する。page:writeでゴミ箱項目が開いてはならない。ページを書き換えてよい
-	// 編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
-	t.Run("正常系: CanTrashPageはpage:writeではなくpage_trash:writeで決まる", func(t *testing.T) {
+	// をロールごとに固定する。
+	t.Run("正常系: CanUpdatePageとCanTrashPageはロールのスコープで決まる", func(t *testing.T) {
 		tests := []struct {
 			name              string
 			userID            model.UserID
@@ -534,20 +518,20 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			wantCanTrashPage  bool
 		}{
 			{
-				name:              "space:adminを持つオーナーは両方できる",
+				name:              "管理者のオーナーは両方できる",
 				userID:            ownerID,
 				wantCanUpdatePage: true,
 				wantCanTrashPage:  true,
 			},
 			{
-				name:              "page_trash:writeだけを持つメンバーはゴミ箱へ入れるだけできる",
-				userID:            trashMemberID,
-				wantCanUpdatePage: false,
+				name:              "編集者は両方できる",
+				userID:            editorMemberID,
+				wantCanUpdatePage: true,
 				wantCanTrashPage:  true,
 			},
 			{
-				name:              "page:readだけを持つメンバーはどちらもできない",
-				userID:            readerID,
+				name:              "閲覧者はどちらもできない",
+				userID:            viewerMemberID,
 				wantCanUpdatePage: false,
 				wantCanTrashPage:  false,
 			},
@@ -625,8 +609,8 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: トピックのtopic:readを持つメンバーは非公開ページを閲覧できる", func(t *testing.T) {
-		userID := topicScopedMemberID
+	t.Run("正常系: 閲覧者のロールのメンバーは非公開ページを閲覧できる", func(t *testing.T) {
+		userID := viewerMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
 			LinkedPageBacklinkPage: 1,
@@ -703,7 +687,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			{name: "ゲストが開いた公開トピックのページ", userID: nil, pageNumber: 1, want: true},
 			{name: "メンバーが開いた公開トピックのページ", userID: &ownerID, pageNumber: 1, want: true},
 			{name: "メンバーが開いた非公開トピックのページ", userID: &ownerID, pageNumber: 2, want: false},
-			{name: "メンバーが開いたゴミ箱のページ", userID: &trashMemberID, pageNumber: 3, want: false},
+			{name: "メンバーが開いたゴミ箱のページ", userID: &editorMemberID, pageNumber: 3, want: false},
 		}
 
 		for _, tt := range tests {
@@ -722,21 +706,8 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: ゴミ箱の閲覧専用メンバーは閲覧できるが移動できない", func(t *testing.T) {
-		output, err := uc.Execute(context.Background(), GetPageShowInput{
-			LinkPage: 1, LinkedPageBacklinkPage: 1, PageBacklinkPage: 1,
-			SpaceIdentifier: "gps-space", PageNumber: 3, UserID: &trashReaderID,
-		})
-		if err != nil {
-			t.Fatalf("Execute()のエラー = %v", err)
-		}
-		if !output.IsTrashed || output.CanTrashPage || output.CanUpdatePage {
-			t.Errorf("閲覧専用メンバーの権限が不正: IsTrashed=%v CanTrashPage=%v CanUpdatePage=%v", output.IsTrashed, output.CanTrashPage, output.CanUpdatePage)
-		}
-	})
-
-	t.Run("正常系: page_trash:writeを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
-		userID := trashMemberID
+	t.Run("正常系: page_trash:writeを持つ編集者はゴミ箱のページを閲覧できる", func(t *testing.T) {
+		userID := editorMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
 			LinkedPageBacklinkPage: 1,
@@ -754,13 +725,10 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		if !output.IsTrashed {
 			t.Error("ゴミ箱にあるページなのにIsTrashedがfalse")
 		}
-		if output.CanUpdatePage {
-			t.Error("page:writeを持たないメンバーなのにCanUpdatePageがtrue")
-		}
 	})
 
-	t.Run("正常系: トピックのpage_trash:writeを持つメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
-		userID := topicScopedMemberID
+	t.Run("正常系: トピック編集者のロールでpage_trash:writeを得たメンバーはゴミ箱のページを閲覧できる", func(t *testing.T) {
+		userID := topicEditorMemberID
 		output, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
 			LinkedPageBacklinkPage: 1,
@@ -778,8 +746,8 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		if !output.IsTrashed {
 			t.Error("ゴミ箱にあるページなのにIsTrashedがfalse")
 		}
-		if output.CanUpdatePage {
-			t.Error("page:writeを持たないメンバーなのにCanUpdatePageがtrue")
+		if !output.CanTrashPage {
+			t.Error("トピック編集者のロールを持つメンバーなのにCanTrashPageがfalse")
 		}
 	})
 
@@ -807,10 +775,9 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})
 
-	// page:readだけではゴミ箱のページを見せない。判定軸はpage_trash:readであり、page:writeは
-	// 含意でpage:readを得るため、両方を固定して要件が静かに壊れないようにする。
-	t.Run("異常系: page:readだけのメンバーはゴミ箱のページを閲覧できない", func(t *testing.T) {
-		userID := readerID
+	// page:readだけではゴミ箱のページを見せない。判定軸はpage_trash:readである。
+	t.Run("異常系: page_trash:readを持たない閲覧者はゴミ箱のページを閲覧できない", func(t *testing.T) {
+		userID := viewerMemberID
 		_, err := uc.Execute(context.Background(), GetPageShowInput{
 			LinkPage:               1,
 			LinkedPageBacklinkPage: 1,
@@ -829,22 +796,6 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 			PageBacklinkPage:       1,
 			SpaceIdentifier:        "gps-space",
 			PageNumber:             2,
-		})
-		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
-	})
-
-	// 非公開トピックはスペースメンバーであるだけでは見せない。判定軸はtopic:readであり、
-	// space:adminとトピック単位の付与のどちらからも得られる。false側を固定して、メンバーが
-	// すべての非公開トピックに静かにアクセスできるようになる退行を防ぐ。
-	t.Run("異常系: topic:readを持たないメンバーは非公開トピックのページを閲覧できない", func(t *testing.T) {
-		userID := readerID
-		_, err := uc.Execute(context.Background(), GetPageShowInput{
-			LinkPage:               1,
-			LinkedPageBacklinkPage: 1,
-			PageBacklinkPage:       1,
-			SpaceIdentifier:        "gps-space",
-			PageNumber:             2,
-			UserID:                 &userID,
 		})
 		assertAppErrCode(t, err, model.AppErrCodeResourceNotFound)
 	})

@@ -219,7 +219,7 @@ func TestDeleteDraftPageUsecase_Execute_NotMember(t *testing.T) {
 	}
 }
 
-func TestDeleteDraftPageUsecase_Execute_MissingDeleteScope(t *testing.T) {
+func TestDeleteDraftPageUsecase_Execute_ViewerRole(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
@@ -232,11 +232,11 @@ func TestDeleteDraftPageUsecase_Execute_MissingDeleteScope(t *testing.T) {
 		WithEmail("delete-draft-noscope@example.com").
 		WithAtname("deletedraftnoscope").
 		Build()
-	// space:adminを付与せずdraft_page:writeのみのメンバー
+	// draft_page:deleteを持たない閲覧者のメンバー
 	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes([]model.Scope{model.ScopeDraftPageWrite}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).

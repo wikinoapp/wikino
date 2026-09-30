@@ -50,7 +50,7 @@ func setupTokenFixture(t *testing.T, tx *sql.Tx, key string, confidential bool) 
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes([]model.Scope{model.ScopePageWrite, model.ScopeOAuthGrantWrite}).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	testutil.NewFeatureFlagBuilder(t, tx).WithUserID(userID).WithName(string(model.FeatureFlagPublicAPI)).Build()
 

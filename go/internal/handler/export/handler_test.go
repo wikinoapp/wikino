@@ -71,7 +71,7 @@ func TestExportRoutes_HeadAnswersLikeGet(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-route-head", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-route-head", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -138,7 +138,7 @@ func TestExportRoutes_RejectsUnsupportedRequestsWithNotFound(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, _, _ := exportSpace(t, tx, "exp-route-reject", nil)
+	userID, _, _ := exportSpace(t, tx, "exp-route-reject", "")
 
 	server := httptest.NewServer(exportRouter(t, queries, userID))
 	t.Cleanup(server.Close)
@@ -194,7 +194,7 @@ func TestExportRoutes_StartResolvesOnTheBarePath(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, _, _ := exportSpace(t, tx, "exp-route-start", nil)
+	userID, _, _ := exportSpace(t, tx, "exp-route-start", "")
 	router := exportRouter(t, queries, userID)
 
 	for _, path := range []string{

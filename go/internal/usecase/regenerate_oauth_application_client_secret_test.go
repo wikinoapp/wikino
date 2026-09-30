@@ -29,7 +29,7 @@ func TestRegenerateOAuthApplicationClientSecretUsecase_Execute(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "roa-regenerate", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+		f := setupPATMember(t, tx, "roa-regenerate", model.SpaceRoleAdmin, true)
 		appID := testutil.NewOAuthApplicationBuilder(t, tx).
 			WithSpaceID(f.spaceID).
 			WithClientID("roa-regenerate-client").
@@ -64,35 +64,35 @@ func TestRegenerateOAuthApplicationClientSecretUsecase_Execute_再発行でき�
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		public      bool
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "oauth_application:readだけを持つ",
+			name:        "編集者 (OAuthアプリの権限を持たない)",
 			key:         "roa-readonly",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationRead},
+			role:        model.SpaceRoleEditor,
 			flagEnabled: true,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 		{
-			name:        "oauth_application:deleteだけを持つ",
+			name:        "閲覧者 (OAuthアプリの権限を持たない)",
 			key:         "roa-deleteonly",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationDelete},
+			role:        model.SpaceRoleViewer,
 			flagEnabled: true,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 		{
 			name:        "フィーチャーフラグが無効",
 			key:         "roa-noflag",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationWrite},
+			role:        model.SpaceRoleAdmin,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 		{
 			name:        "publicクライアント",
 			key:         "roa-public",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationWrite},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			public:      true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -105,7 +105,7 @@ func TestRegenerateOAuthApplicationClientSecretUsecase_Execute_再発行でき�
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 			builder := testutil.NewOAuthApplicationBuilder(t, tx).
 				WithSpaceID(f.spaceID).
 				WithClientID(tt.key + "-client")

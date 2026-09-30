@@ -53,7 +53,7 @@ func TestCreate(t *testing.T) {
 		{name: "正常系: エクスポートを開始できる", key: "success", status: http.StatusSeeOther, count: 1, jobs: 1, flashType: session.FlashSuccess, flashMessage: "エクスポートを開始しました"},
 		{name: "異常系: 待機中のエクスポートがあると開始できない", key: "queued", previous: new(model.ExportStatusQueued), status: http.StatusSeeOther, count: 1, flashType: session.FlashError, flashMessage: "エクスポートを実行中です。完了してからお試しください"},
 		{name: "異常系: 実行中のエクスポートがあると開始できない", key: "started", previous: new(model.ExportStatusStarted), status: http.StatusSeeOther, count: 1, flashType: session.FlashError, flashMessage: "エクスポートを実行中です。完了してからお試しください"},
-		{name: "異常系: 読み取り権限のみのメンバーは開始できない", key: "reader", membership: "reader", status: http.StatusNotFound},
+		{name: "異常系: space:writeを持たない編集者は開始できない", key: "reader", membership: "reader", status: http.StatusNotFound},
 		{name: "異常系: スペースのメンバーでないユーザーは開始できない", key: "outsider", membership: "none", status: http.StatusNotFound},
 		{name: "異常系: 未ログインではサインインへ移動する", key: "anonymous", anonymous: true, status: http.StatusFound},
 		{name: "異常系: ジョブの投入に失敗すると内部サーバーエラーになる", key: "enqueue-failure", enqueueError: true, status: http.StatusInternalServerError, jobs: 1},
@@ -84,7 +84,7 @@ func TestCreate(t *testing.T) {
 			if tc.membership != "none" {
 				builder := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(spaceID).WithUserID(userID)
 				if tc.membership == "reader" {
-					builder.WithScopes([]model.Scope{model.ScopeSpaceRead})
+					builder.WithRole(model.SpaceRoleEditor)
 				}
 				memberID = builder.Build()
 			}

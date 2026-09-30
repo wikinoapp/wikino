@@ -23,9 +23,9 @@ type authenticateAPITokenFixture struct {
 }
 
 // authenticateAPITokenFixtureOptionsはフィクスチャの既定値 (フラグ有効・有効なメンバー・
-// `personal_access_token:write` を持つ・有効期限内のトークン) から変える点
+// 編集者のロール (`personal_access_token:write` を持つ)・有効期限内のトークン) から変える点
 type authenticateAPITokenFixtureOptions struct {
-	memberScopes   []model.Scope
+	memberRole     model.SpaceRole
 	memberActive   bool
 	tokenScopes    []model.Scope
 	flagDisabled   bool
@@ -37,7 +37,7 @@ type authenticateAPITokenFixtureOptions struct {
 
 func defaultAuthenticateAPITokenFixtureOptions() authenticateAPITokenFixtureOptions {
 	return authenticateAPITokenFixtureOptions{
-		memberScopes: []model.Scope{model.ScopePageWrite, model.ScopePersonalAccessTokenWrite},
+		memberRole:   model.SpaceRoleEditor,
 		memberActive: true,
 		tokenScopes:  []model.Scope{model.ScopePageRead},
 		expiresAt:    time.Now().Add(24 * time.Hour),
@@ -63,7 +63,7 @@ func setupAuthenticateAPITokenFixture(t *testing.T, tx *sql.Tx, opts authenticat
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(opts.memberScopes).
+		WithRole(opts.memberRole).
 		WithActive(opts.memberActive).
 		Build()
 
@@ -205,12 +205,6 @@ func TestAuthenticateAPITokenUsecase_Execute_Rejected(t *testing.T) {
 			modify: func(opts *authenticateAPITokenFixtureOptions) { opts.memberActive = false },
 		},
 		{
-			name: "持ち主がpersonal_access_token:writeを外された",
-			modify: func(opts *authenticateAPITokenFixtureOptions) {
-				opts.memberScopes = []model.Scope{model.ScopePageWrite, model.ScopePersonalAccessTokenRead, model.ScopePersonalAccessTokenDelete}
-			},
-		},
-		{
 			name:   "持ち主が退会済み",
 			modify: func(opts *authenticateAPITokenFixtureOptions) { opts.userDiscarded = true },
 		},
@@ -250,9 +244,9 @@ func TestAuthenticateAPITokenUsecase_Execute_Rejected(t *testing.T) {
 }
 
 // oauthAccessTokenAuthFixtureOptionsは、OAuthのアクセストークンの照合のフィクスチャの既定値
-// (フラグ有効・有効なメンバー・`oauth_grant:write` を持つ・失効していない許可・有効期限内のトークン) から変える点
+// (フラグ有効・有効なメンバー・編集者のロール (`oauth_grant:write` を持つ)・失効していない許可・有効期限内のトークン) から変える点
 type oauthAccessTokenAuthFixtureOptions struct {
-	memberScopes   []model.Scope
+	memberRole     model.SpaceRole
 	memberActive   bool
 	tokenScopes    []model.Scope
 	flagDisabled   bool
@@ -263,7 +257,7 @@ type oauthAccessTokenAuthFixtureOptions struct {
 
 func defaultOAuthAccessTokenAuthFixtureOptions() oauthAccessTokenAuthFixtureOptions {
 	return oauthAccessTokenAuthFixtureOptions{
-		memberScopes: []model.Scope{model.ScopePageWrite, model.ScopeOAuthGrantWrite},
+		memberRole:   model.SpaceRoleEditor,
 		memberActive: true,
 		tokenScopes:  []model.Scope{model.ScopePageRead},
 		expiresAt:    time.Now().Add(time.Hour),
@@ -284,7 +278,7 @@ func setupOAuthAccessTokenAuthFixture(t *testing.T, tx *sql.Tx, key string, opts
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(opts.memberScopes).
+		WithRole(opts.memberRole).
 		WithActive(opts.memberActive).
 		Build()
 	if !opts.flagDisabled {
@@ -386,12 +380,6 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessTokenRejected(t *testing
 		{
 			name:   "許可が失効した (連携の解除・アプリの削除)",
 			modify: func(opts *oauthAccessTokenAuthFixtureOptions) { opts.grantRevokedAt = &past },
-		},
-		{
-			name: "持ち主がoauth_grant:writeを外された",
-			modify: func(opts *oauthAccessTokenAuthFixtureOptions) {
-				opts.memberScopes = []model.Scope{model.ScopePageWrite, model.ScopePersonalAccessTokenWrite, model.ScopeOAuthGrantRead}
-			},
 		},
 		{
 			name:   "持ち主がスペースの有効なメンバーでない",

@@ -17,8 +17,8 @@ func TestIndex_スペースのアプリの一覧を作成者とともに表示�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-index"
-	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", []model.Scope{model.ScopeSpaceAdmin}, true)
-	other := setupAppMember(t, tx, "oauth-app-index-other", "別のスペースのメンバー", []model.Scope{model.ScopeSpaceAdmin}, true)
+	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", model.SpaceRoleAdmin, true)
+	other := setupAppMember(t, tx, "oauth-app-index-other", "別のスペースのメンバー", model.SpaceRoleAdmin, true)
 
 	creatorUserID := testutil.NewUserBuilder(t, tx).
 		WithEmail("oauth-app-index-creator@example.com").
@@ -87,41 +87,17 @@ func TestIndex_スペースのアプリの一覧を作成者とともに表示�
 	}
 }
 
-func TestIndex_登録の権限が無ければ登録へのリンクを出さない(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	identifier := "oauth-app-index-readonly"
-	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", []model.Scope{model.ScopeOAuthApplicationRead}, true)
-
-	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_applications", identifier, m.userID, nil)
-	rr := httptest.NewRecorder()
-	setupHandler(t, q).Index(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
-	}
-	body := rr.Body.String()
-	if !strings.Contains(body, "登録したアプリはありません") {
-		t.Error("レスポンスにアプリが無いことの表示が含まれていない")
-	}
-	if strings.Contains(body, "/settings/oauth_applications/new") {
-		t.Error("oauth_application:writeを持たないメンバーのレスポンスに登録へのリンクが含まれている")
-	}
-}
-
 func TestIndex_開けない場合は404が返る(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name        string
 		identifier  string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 	}{
-		{name: "oauth_application:readを持たない", identifier: "oauth-app-index-noscope", scopes: []model.Scope{model.ScopeSpaceRead}, flagEnabled: true},
-		{name: "フィーチャーフラグが無効", identifier: "oauth-app-index-noflag", scopes: []model.Scope{model.ScopeSpaceAdmin}},
+		{name: "oauth_application:readを持たない編集者", identifier: "oauth-app-index-noscope", role: model.SpaceRoleEditor, flagEnabled: true},
+		{name: "フィーチャーフラグが無効", identifier: "oauth-app-index-noflag", role: model.SpaceRoleAdmin},
 	}
 
 	for _, tt := range tests {
@@ -130,7 +106,7 @@ func TestIndex_開けない場合は404が返る(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			m := setupAppMember(t, tx, tt.identifier, "閲覧するメンバー", tt.scopes, tt.flagEnabled)
+			m := setupAppMember(t, tx, tt.identifier, "閲覧するメンバー", tt.role, tt.flagEnabled)
 
 			req := newRequest(t, http.MethodGet, "/s/"+tt.identifier+"/settings/oauth_applications", tt.identifier, m.userID, nil)
 			rr := httptest.NewRecorder()

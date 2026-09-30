@@ -34,17 +34,17 @@ func TestShow(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	// page_trash:writeを持つメンバー (ゴミ箱を開けるため、ゴミ箱のページも閲覧できる)。
+	// 編集者 (page_trash:writeを持ちゴミ箱を開けるため、ゴミ箱のページも閲覧できる)。
 	trashUserID := testutil.NewUserBuilder(t, tx).
 		WithEmail("page-show-trash@example.com").
 		WithAtname("pageshowtrash").
 		Build()
-	// 読み取り専用メンバー (page:readだけではゴミ箱のページは見えてはならない)。
+	// 閲覧者 (page_trash:readを持たないため、ゴミ箱のページは見えてはならない)。
 	readerUserID := testutil.NewUserBuilder(t, tx).
 		WithEmail("page-show-reader@example.com").
 		WithAtname("pageshowreader").
 		Build()
-	// ページを編集できるメンバー (ヘッダーの編集ボタンはこのメンバーにだけ出る)。
+	// 管理者 (ビルダーの既定。ページを編集でき、ヘッダーの編集ボタンが出る)。
 	editorUserID := testutil.NewUserBuilder(t, tx).
 		WithEmail("page-show-editor@example.com").
 		WithAtname("pageshoweditor").
@@ -57,21 +57,12 @@ func TestShow(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(trashUserID).
-		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(readerUserID).
-		WithScopes([]model.Scope{model.ScopePageRead}).
-		Build()
-	trashReaderUserID := testutil.NewUserBuilder(t, tx).
-		WithEmail("page-show-trash-reader@example.com").
-		WithAtname("pageshowtrashreader").
-		Build()
-	testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(trashReaderUserID).
-		WithScopes([]model.Scope{model.ScopePageTrashRead}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	editorSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -423,7 +414,7 @@ func TestShow(t *testing.T) {
 			},
 		},
 		{
-			// space:adminのメンバーは両方のスコープを持つため、ドロップダウンには2つの項目が
+			// 管理者は両方のスコープを持つため、ドロップダウンには2つの項目が
 			// 載り、ゴミ箱フォームにはPOSTに使うトークンが載る。
 			name:       "移動とゴミ箱の権限を持つメンバーには操作ドロップダウンの両方の項目が出る",
 			pageNumber: "1",
@@ -457,26 +448,9 @@ func TestShow(t *testing.T) {
 			},
 		},
 		{
-			// 2つの項目は別々のスコープに乗るため、page_trash:writeだけのメンバーには移動項目も
-			// 編集ボタンも出ないままゴミ箱項目だけが開く。
-			name:       "page_trash:writeだけを持つメンバーにはゴミ箱項目だけが出る",
-			pageNumber: "1",
-			userID:     &trashUserID,
-			wantStatus: http.StatusOK,
-			wantContains: []string{
-				`id="page-actions-dropdown"`,
-				"/s/page-show-space/pages/1/trash",
-				fmt.Sprintf(`name="csrf_token" value="%s"`, showCSRFToken),
-			},
-			wantNotContains: []string{
-				"/s/page-show-space/pages/1/move",
-				"/s/page-show-space/pages/1/edit",
-			},
-		},
-		{
 			// どちらの項目も出ないため、空のドロップダウンを描画するのではなくトリガー
 			// ボタンごと落とす。
-			name:       "page:readだけを持つメンバーには操作ドロップダウンが出ない",
+			name:       "閲覧者には操作ドロップダウンが出ない",
 			pageNumber: "1",
 			userID:     &readerUserID,
 			wantStatus: http.StatusOK,
@@ -484,21 +458,6 @@ func TestShow(t *testing.T) {
 				"page-actions-dropdown",
 				showCSRFToken,
 			},
-		},
-		{
-			name:            "ゴミ箱の閲覧専用メンバーには操作フォームもトークンも出ない",
-			pageNumber:      "1",
-			userID:          &trashReaderUserID,
-			wantStatus:      http.StatusOK,
-			wantNotContains: []string{"page-actions-dropdown", showCSRFToken, "/s/page-show-space/pages/1/trash"},
-		},
-		{
-			name:            "ゴミ箱の閲覧専用メンバーはゴミ箱のページを閲覧できる",
-			pageNumber:      "3",
-			userID:          &trashReaderUserID,
-			wantStatus:      http.StatusOK,
-			wantContains:    []string{"Trashed Page Title", "<p>trashed page body</p>", "このページはゴミ箱に入れられています。"},
-			wantNotContains: []string{"page-actions-dropdown", showCSRFToken},
 		},
 		{
 			name:            "ゲストは非公開トピックのページを閲覧できない",
@@ -513,14 +472,14 @@ func TestShow(t *testing.T) {
 			wantNotContains: []string{"Trashed Page Title", "<p>trashed page body</p>"},
 		},
 		{
-			name:            "page_trash:readを持たないメンバーはゴミ箱のページを閲覧できない",
+			name:            "page_trash:readを持たない閲覧者はゴミ箱のページを閲覧できない",
 			pageNumber:      "3",
 			userID:          &readerUserID,
 			wantStatus:      http.StatusNotFound,
 			wantNotContains: []string{"Trashed Page Title", "<p>trashed page body</p>"},
 		},
 		{
-			name:       "page_trash:writeを持つメンバーはゴミ箱のページをアラート付きで閲覧できる",
+			name:       "page_trash:writeを持つ編集者はゴミ箱のページをアラート付きで閲覧できる",
 			pageNumber: "3",
 			userID:     &trashUserID,
 			wantStatus: http.StatusOK,
@@ -535,8 +494,7 @@ func TestShow(t *testing.T) {
 			},
 			wantNotContains: []string{
 				// ページはすでにゴミ箱にあり、再度POSTしても完全削除が先送りされるだけで
-				// ある。このメンバーには他の項目も残らないため、ドロップダウンごと消える。
-				"page-actions-dropdown",
+				// あるため、ゴミ箱項目は出さない。
 				"/s/page-show-space/pages/3/trash",
 			},
 		},

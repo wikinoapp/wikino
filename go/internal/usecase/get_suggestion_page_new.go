@@ -92,12 +92,9 @@ func (uc *GetSuggestionPageNewUsecase) Execute(ctx context.Context, input GetSug
 	}
 
 	// 認可チェック
-	var topicMember *model.TopicMember
-	if !model.HasScope(spaceMember.Scopes, model.ScopeSpaceAdmin) {
-		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, suggestion.TopicID)
-		if err != nil {
-			return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
-		}
+	topicMember, err := uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, suggestion.TopicID)
+	if err != nil {
+		return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 	}
 
 	authorizer := newAuthorizer(spaceMember, topicMember)

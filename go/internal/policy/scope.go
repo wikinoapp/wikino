@@ -18,16 +18,6 @@ func buildImplications() map[model.Scope][]model.Scope {
 	return m
 }
 
-// allResourceScopesはspace:adminが包括するすべてのリソーススコープ (定義の表のすべてのスコープ) を返す。
-// space:admin自体は含まない。
-func allResourceScopes() []model.Scope {
-	scopes := make([]model.Scope, len(model.ScopeDefinitions))
-	for i, d := range model.ScopeDefinitions {
-		scopes[i] = d.Scope
-	}
-	return scopes
-}
-
 // expandScopesはスコープの含意を展開し、有効なスコープの集合を返す。
 // DB保存時には展開しない。判定時にのみ使用する。
 func expandScopes(scopes []model.Scope) []model.Scope {
@@ -39,11 +29,6 @@ func expandScopes(scopes []model.Scope) []model.Scope {
 		if implied, ok := implications[s]; ok {
 			expanded = append(expanded, implied...)
 		}
-	}
-
-	// space:adminは全リソーススコープを包括する (唯一の特別スコープ)
-	if model.HasScope(scopes, model.ScopeSpaceAdmin) {
-		expanded = append(expanded, allResourceScopes()...)
 	}
 
 	return deduplicate(expanded)

@@ -88,9 +88,9 @@ func setupSettingsGeneralHandler(t *testing.T, queries *query.Queries) *settings
 	)
 }
 
-// settingsGeneralSpaceは非公開トピックを1つ持つスペースと、渡したスコープを持つメンバー
-// 1人を用意し、テストがそれらを指すための値を返す。
-func settingsGeneralSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) (model.UserID, model.SpaceID, model.TopicID) {
+// settingsGeneralSpaceは非公開トピックを1つ持つスペースと、渡したロールを持つメンバー
+// 1人を用意し、テストがそれらを指すための値を返す。roleが空のときはビルダーの既定 (管理者) になる。
+func settingsGeneralSpace(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole) (model.UserID, model.SpaceID, model.TopicID) {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -103,8 +103,8 @@ func settingsGeneralSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []
 	memberBuilder := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID)
-	if scopes != nil {
-		memberBuilder = memberBuilder.WithScopes(scopes)
+	if role != "" {
+		memberBuilder = memberBuilder.WithRole(role)
 	}
 	memberBuilder.Build()
 
@@ -125,7 +125,7 @@ func TestShow_保存済みの値が入ったフォームが表示される(t *te
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-show"
-	userID, _, _ := settingsGeneralSpace(t, tx, identifier, nil)
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, "")
 
 	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
 	rr := httptest.NewRecorder()
@@ -163,7 +163,7 @@ func TestShow_公開範囲を変えられないメンバーには公開範囲の
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-show-writer"
-	userID, _, _ := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite})
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, model.SpaceRoleEditor)
 
 	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
 	rr := httptest.NewRecorder()
@@ -190,7 +190,7 @@ func TestShow_公開範囲を変えられるメンバーには公開範囲の選
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-show-visibility"
-	userID, _, _ := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite, model.ScopeTopicVisibilityWrite})
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, model.SpaceRoleAdmin)
 
 	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
 	rr := httptest.NewRecorder()
@@ -214,7 +214,7 @@ func TestShow_HEADでも200が返る(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-head"
-	userID, _, _ := settingsGeneralSpace(t, tx, identifier, nil)
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, "")
 
 	req := newSettingsGeneralRequest(t, http.MethodHead, identifier, "1", userID, nil)
 	rr := httptest.NewRecorder()
@@ -231,14 +231,14 @@ func TestShow_到達できない場合は404が返る(t *testing.T) {
 	tests := []struct {
 		name        string
 		identifier  string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		topicNumber string
 		outsider    bool
 	}{
 		{
-			name:        "トピック更新権限がないメンバー",
+			name:        "トピック更新権限がない閲覧者",
 			identifier:  "topic-general-reader",
-			scopes:      []model.Scope{model.ScopePageRead},
+			role:        model.SpaceRoleViewer,
 			topicNumber: "1",
 		},
 		{
@@ -265,7 +265,7 @@ func TestShow_到達できない場合は404が返る(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			queries := testutil.QueriesWithTx(tx)
-			userID, _, _ := settingsGeneralSpace(t, tx, tt.identifier, tt.scopes)
+			userID, _, _ := settingsGeneralSpace(t, tx, tt.identifier, tt.role)
 			if tt.outsider {
 				userID = testutil.NewUserBuilder(t, tx).
 					WithEmail(tt.identifier + "-other@example.com").
@@ -290,7 +290,7 @@ func TestShow_未ログインならログイン画面へリダイレクトする
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-anon"
-	settingsGeneralSpace(t, tx, identifier, nil)
+	settingsGeneralSpace(t, tx, identifier, "")
 
 	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", "", nil)
 	rr := httptest.NewRecorder()
@@ -313,7 +313,7 @@ func TestShow_公開設定のラベルと選択肢の間に余白が入る(t *te
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-gap"
-	userID, _, _ := settingsGeneralSpace(t, tx, identifier, nil)
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, "")
 
 	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
 	rr := httptest.NewRecorder()
@@ -342,7 +342,7 @@ func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-crumb"
-	userID, _, _ := settingsGeneralSpace(t, tx, identifier, nil)
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, "")
 
 	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
 	rr := httptest.NewRecorder()

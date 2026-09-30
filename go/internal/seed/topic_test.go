@@ -8,8 +8,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/lib/pq"
-
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -66,31 +64,30 @@ func TestGenerateTopics(t *testing.T) {
 		assertTopicMemberCount(ctx, t, tx, tt.topic, tt.wantMembers)
 	}
 
-	// 「シークレット」トピックは、スペースに参加したあとも非公開トピックが見えない
-	// ままであることを示す唯一のケースであるため、roleCollaboratorがそこに
-	// メンバーシップを持っていてはならない。
-	assertTopicMemberScopes(ctx, t, tx, "「シークレット」のcollaborator", topics.secret, spaces.wiki.member(roleCollaborator), nil, false)
+	// 「シークレット」トピックはroleOwnerだけが参加するトピックであるため、
+	// roleCollaboratorがそこにメンバーシップを持っていてはならない。
+	assertTopicMemberRole(ctx, t, tx, "「シークレット」のcollaborator", topics.secret, spaces.wiki.member(roleCollaborator), "", false)
 
-	assertTopicMemberScopes(ctx, t, tx, "「ハンドブック」のowner", topics.handbook, spaces.wiki.member(roleOwner), nil, true)
-	assertTopicMemberScopes(ctx, t, tx, "「ハンドブック」のcollaborator", topics.handbook, spaces.wiki.member(roleCollaborator), nil, true)
-	assertTopicMemberScopes(ctx, t, tx, "「シークレット」のowner", topics.secret, spaces.wiki.member(roleOwner), nil, true)
+	assertTopicMemberRole(ctx, t, tx, "「ハンドブック」のowner", topics.handbook, spaces.wiki.member(roleOwner), "", true)
+	assertTopicMemberRole(ctx, t, tx, "「ハンドブック」のcollaborator", topics.handbook, spaces.wiki.member(roleCollaborator), "", true)
+	assertTopicMemberRole(ctx, t, tx, "「シークレット」のowner", topics.secret, spaces.wiki.member(roleOwner), "", true)
 
-	// roleCollaboratorが「非公開ノート」を見られるのは、メンバーシップ自身が
-	// topic:readを持つからに他ならない。スペースメンバーシップは意図的にそれを
-	// 持っていない。
-	assertTopicMemberScopes(
+	// roleCollaboratorは「非公開ノート」でだけトピック管理者になる。トピックのロールで
+	// だけ開く操作を画面で確かめられるのは、このメンバーシップだけである。
+	assertTopicMemberRole(ctx, t, tx, "「非公開ノート」のowner", topics.privateNotes, spaces.wiki.member(roleOwner), "", true)
+	assertTopicMemberRole(
 		ctx, t, tx, "「非公開ノート」のcollaborator",
-		topics.privateNotes, spaces.wiki.member(roleCollaborator), []model.Scope{model.ScopeTopicRead}, true,
+		topics.privateNotes, spaces.wiki.member(roleCollaborator), model.TopicRoleAdmin, true,
 	)
 
 	// エクスポートの2つのトピックには、上の公開トピックと同じ2つのアカウントが
 	// 参加している。メンバー数に頼らずここで両方の役割を名指しすることが、その
 	// アカウントがownerとcollaboratorであることを示す。2件という数は、どちらかへ
 	// guestを参加させても同じになる。
-	assertTopicMemberScopes(ctx, t, tx, "「エクスポート」のowner", topics.export, spaces.wiki.member(roleOwner), nil, true)
-	assertTopicMemberScopes(ctx, t, tx, "「エクスポート」のcollaborator", topics.export, spaces.wiki.member(roleCollaborator), nil, true)
-	assertTopicMemberScopes(ctx, t, tx, "「エクスポート*記号」のowner", topics.exportSymbol, spaces.wiki.member(roleOwner), nil, true)
-	assertTopicMemberScopes(ctx, t, tx, "「エクスポート*記号」のcollaborator", topics.exportSymbol, spaces.wiki.member(roleCollaborator), nil, true)
+	assertTopicMemberRole(ctx, t, tx, "「エクスポート」のowner", topics.export, spaces.wiki.member(roleOwner), "", true)
+	assertTopicMemberRole(ctx, t, tx, "「エクスポート」のcollaborator", topics.export, spaces.wiki.member(roleCollaborator), "", true)
+	assertTopicMemberRole(ctx, t, tx, "「エクスポート*記号」のowner", topics.exportSymbol, spaces.wiki.member(roleOwner), "", true)
+	assertTopicMemberRole(ctx, t, tx, "「エクスポート*記号」のcollaborator", topics.exportSymbol, spaces.wiki.member(roleCollaborator), "", true)
 
 	// 「エクスポート*記号」の名前は、半角の "*" を保ったままデータベースへ届く
 	// 必要がある。この文字こそがこのトピックの目的であり、エクスポートはディレクトリ名を
@@ -151,46 +148,25 @@ func TestCreateTopicRejectsRoleWithoutSpaceMembership(t *testing.T) {
 	}
 }
 
-func TestTopicVisibilityForSeededMembers(t *testing.T) {
+func TestTopicRoleForSeededMembers(t *testing.T) {
 	t.Parallel()
 
 	privateTopic := &model.Topic{Visibility: model.TopicVisibilityPrivate}
-	publicTopic := &model.Topic{Visibility: model.TopicVisibilityPublic}
 
-	admin := &seededSpaceMember{scopes: adminSpaceScopes}
-	collaborator := &seededSpaceMember{scopes: nonAdminSpaceScopes}
-
-	// この4つが、seed-wikiのトピックが作り出そうとしている状態。スコープの
-	// 組み合わせがずれると、トピックは置かれた目的を示さなくなるが、シードは
-	// それを告げずに動き続けてしまう。
-	tests := []struct {
-		name       string
-		topic      *model.Topic
-		member     *seededSpaceMember
-		wantCanSee bool
-	}{
-		{name: "管理者は参加した非公開トピックを見られる", topic: privateTopic, member: admin, wantCanSee: true},
-		{name: "非管理者も参加した非公開トピックを見られる", topic: privateTopic, member: collaborator, wantCanSee: true},
-		{name: "公開トピックはスコープ無しでも見られる", topic: publicTopic, member: collaborator, wantCanSee: true},
+	// 「非公開ノート」のトピック管理者は、スペースの編集者に無い公開範囲の変更を
+	// そのトピックでだけ足す。これがずれると、トピックのロールで開く操作を画面で
+	// 確かめる場所が無くなるが、シードはそれを告げずに動き続けてしまう。
+	inPrivateNotes := policy.NewMemberPolicy(nonAdminSpaceRole.Scopes(), model.TopicRoleAdmin.Scopes())
+	if !inPrivateNotes.CanUpdateTopicVisibility() {
+		t.Error("「非公開ノート」のcollaboratorは公開範囲を変更できることを期待したができなかった")
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			scopes := topicMemberScopes(tt.topic.Visibility, tt.member)
-			got := policy.NewMemberPolicy(tt.member.scopes, scopes).CanShowTopic(tt.topic)
-			if got != tt.wantCanSee {
-				t.Errorf("トピックの閲覧可否が%tであることを期待したが%tだった", tt.wantCanSee, got)
-			}
-		})
+	elsewhere := policy.NewMemberPolicy(nonAdminSpaceRole.Scopes(), nil)
+	if elsewhere.CanUpdateTopicVisibility() {
+		t.Error("ほかのトピックのcollaboratorは公開範囲を変更できないことを期待したができた")
 	}
-
-	// 非公開トピックに参加していないことだけで、それが隠れたままである必要が
-	// ある。それを成り立たせているのは非管理者のスコープ集合であるため、前提に
-	// せずここで確認する。
-	if policy.NewMemberPolicy(collaborator.scopes, nil).CanShowTopic(privateTopic) {
-		t.Error("非管理者は参加していない非公開トピックを見られないことを期待したが見られた")
+	if !elsewhere.CanShowTopic(privateTopic) {
+		t.Error("編集者のcollaboratorは参加していない非公開トピックも見られることを期待したが見られなかった")
 	}
 }
 
@@ -227,10 +203,10 @@ func buildSeedUsersAndSpaces(t *testing.T, tx *sql.Tx, prefix string) (*seededUs
 				id: testutil.NewSpaceMemberBuilder(t, tx).
 					WithSpaceID(spaceID).
 					WithUserID(users.user(memberSpec.role).ID).
-					WithScopes(memberSpec.scopes).
+					WithRole(memberSpec.spaceRole).
 					Build(),
-				name:   users.user(memberSpec.role).Name,
-				scopes: memberSpec.scopes,
+				name: users.user(memberSpec.role).Name,
+				role: memberSpec.spaceRole,
 			}
 		}
 
@@ -239,13 +215,13 @@ func buildSeedUsersAndSpaces(t *testing.T, tx *sql.Tx, prefix string) (*seededUs
 
 	return users, &seededSpaces{
 		wiki: build("wiki", []spaceMemberSpec{
-			{role: roleOwner, scopes: adminSpaceScopes},
-			{role: roleCollaborator, scopes: nonAdminSpaceScopes},
-			{role: roleGuest, scopes: nonAdminSpaceScopes},
+			{role: roleOwner, spaceRole: model.SpaceRoleAdmin},
+			{role: roleCollaborator, spaceRole: nonAdminSpaceRole},
+			{role: roleGuest, spaceRole: nonAdminSpaceRole},
 		}),
-		solo:     build("solo", []spaceMemberSpec{{role: roleOwner, scopes: adminSpaceScopes}}),
-		longName: build("long", []spaceMemberSpec{{role: roleOwner, scopes: adminSpaceScopes}}),
-		demo:     build("demo", []spaceMemberSpec{{role: roleOwner, scopes: adminSpaceScopes}}),
+		solo:     build("solo", []spaceMemberSpec{{role: roleOwner, spaceRole: model.SpaceRoleAdmin}}),
+		longName: build("long", []spaceMemberSpec{{role: roleOwner, spaceRole: model.SpaceRoleAdmin}}),
+		demo:     build("demo", []spaceMemberSpec{{role: roleOwner, spaceRole: model.SpaceRoleAdmin}}),
 	}
 }
 
@@ -310,27 +286,27 @@ func assertTopicMemberCount(ctx context.Context, t *testing.T, tx *sql.Tx, topic
 	}
 }
 
-// assertTopicMemberScopesは、スペースメンバーがトピックに参加しているかと、
-// 参加している場合にそのメンバーシップが与えられたスコープと完全に一致することを
-// 確認する。
-func assertTopicMemberScopes(
+// assertTopicMemberRoleは、スペースメンバーがトピックに参加しているかと、
+// 参加している場合にそのメンバーシップのロールが与えられたものと一致することを
+// 確認する。空のロールは、ロール無し (NULL) を表す。
+func assertTopicMemberRole(
 	ctx context.Context,
 	t *testing.T,
 	tx *sql.Tx,
 	label string,
 	topic *seededTopic,
 	member *seededSpaceMember,
-	want []model.Scope,
+	want model.TopicRole,
 	wantJoined bool,
 ) {
 	t.Helper()
 
-	var stored []string
+	var role sql.NullString
 	err := tx.QueryRowContext(
 		ctx,
-		`SELECT scopes FROM topic_members WHERE space_id = $1 AND topic_id = $2 AND space_member_id = $3`,
+		`SELECT role FROM topic_members WHERE space_id = $1 AND topic_id = $2 AND space_member_id = $3`,
 		string(topic.spaceID), string(topic.id), string(member.id),
-	).Scan(pq.Array(&stored))
+	).Scan(&role)
 
 	if !wantJoined {
 		if err == nil {
@@ -344,7 +320,9 @@ func assertTopicMemberScopes(
 	if err != nil {
 		t.Fatalf("%sのトピックメンバーの取得に失敗: %v", label, err)
 	}
-	assertScopesEqual(t, label, stored, want)
+	if got := model.TopicRole(role.String); got != want {
+		t.Errorf("%sのロールが%qであることを期待したが%qだった", label, want, got)
+	}
 }
 
 // assertSoloTopicsはseed-soloのトピックを確認する。このスペースの要点は
@@ -561,7 +539,7 @@ func assertDemoTopic(ctx context.Context, t *testing.T, tx *sql.Tx, demo *seeded
 		1,
 	)
 	assertTopicMemberCount(ctx, t, tx, topic, 1)
-	assertTopicMemberScopes(ctx, t, tx, "Memoのowner", topic, demo.member(roleOwner), nil, true)
+	assertTopicMemberRole(ctx, t, tx, "Memoのowner", topic, demo.member(roleOwner), "", true)
 
 	// デモスペースが持つトピックはこれだけである。デモ本文のWikiリンクは
 	// いずれもトピックを伴わずタイトルだけを名指ししており、その種のリンクは書かれた

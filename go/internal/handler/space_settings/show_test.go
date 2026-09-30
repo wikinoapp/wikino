@@ -57,9 +57,9 @@ func setupSettingsHandler(t *testing.T, queries *query.Queries) *spacesettings.H
 	)
 }
 
-// settingsSpaceはスペースと、渡したスコープを持つメンバー1人を用意し、メンバーのユーザーを返す。
-// scopesがnilのときはビルダーの既定 (space:admin) になる。
-func settingsSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) model.UserID {
+// settingsSpaceはスペースと、渡したロールを持つメンバー1人を用意し、メンバーのユーザーを返す。
+// roleが空のときはビルダーの既定 (管理者) になる。
+func settingsSpace(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole) model.UserID {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -73,8 +73,8 @@ func settingsSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.S
 	memberBuilder := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID)
-	if scopes != nil {
-		memberBuilder = memberBuilder.WithScopes(scopes)
+	if role != "" {
+		memberBuilder = memberBuilder.WithRole(role)
 	}
 	memberBuilder.Build()
 
@@ -97,7 +97,7 @@ func TestShow_space_writeを持つメンバーに既存の項目が表示され�
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "space-settings-show"
-	userID := settingsSpace(t, tx, identifier, nil)
+	userID := settingsSpace(t, tx, identifier, "")
 
 	req := newSettingsRequest(t, http.MethodGet, identifier, userID)
 	rr := httptest.NewRecorder()
@@ -128,7 +128,7 @@ func TestShow_HEADでも200が返る(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "space-settings-head"
-	userID := settingsSpace(t, tx, identifier, nil)
+	userID := settingsSpace(t, tx, identifier, "")
 
 	req := newSettingsRequest(t, http.MethodHead, identifier, userID)
 	rr := httptest.NewRecorder()
@@ -139,13 +139,13 @@ func TestShow_HEADでも200が返る(t *testing.T) {
 	}
 }
 
-func TestShow_トークン管理の権限だけを持つメンバーはフラグが有効なら開けるが既存の項目は出ない(t *testing.T) {
+func TestShow_トークン管理の権限を持つ閲覧者はフラグが有効なら開けるが既存の項目は出ない(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "space-settings-pat"
-	userID := settingsSpace(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenRead})
+	userID := settingsSpace(t, tx, identifier, model.SpaceRoleViewer)
 	testutil.NewFeatureFlagBuilder(t, tx).
 		WithUserID(userID).
 		WithName(string(model.FeatureFlagPublicAPI)).
@@ -168,76 +168,11 @@ func TestShow_トークン管理の権限だけを持つメンバーはフラグ
 	if !strings.Contains(body, `href="/s/`+identifier+`/settings/personal_access_tokens"`) {
 		t.Error("レスポンスに個人アクセストークンへのリンクが含まれていない")
 	}
-	if strings.Contains(body, `href="/s/`+identifier+`/settings/oauth_grants"`) {
-		t.Error("oauth_grant:readを持たないメンバーのレスポンスに連携中のアプリへのリンクが含まれている")
-	}
-}
-
-func TestShow_連携の閲覧権限だけを持つメンバーはフラグが有効なら開けるが既存の項目は出ない(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
-	identifier := "space-settings-oauth-grant"
-	userID := settingsSpace(t, tx, identifier, []model.Scope{model.ScopeOAuthGrantRead})
-	testutil.NewFeatureFlagBuilder(t, tx).
-		WithUserID(userID).
-		WithName(string(model.FeatureFlagPublicAPI)).
-		Build()
-
-	req := newSettingsRequest(t, http.MethodGet, identifier, userID)
-	rr := httptest.NewRecorder()
-	setupSettingsHandler(t, queries).Show(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
-	}
-
-	body := rr.Body.String()
-	for _, notWant := range existingItemPaths(identifier) {
-		if strings.Contains(body, notWant) {
-			t.Errorf("space:writeを持たないメンバーのレスポンスに%qが含まれている", notWant)
-		}
-	}
 	if !strings.Contains(body, `href="/s/`+identifier+`/settings/oauth_grants"`) {
 		t.Error("レスポンスに連携中のアプリへのリンクが含まれていない")
 	}
-	if strings.Contains(body, `href="/s/`+identifier+`/settings/personal_access_tokens"`) {
-		t.Error("personal_access_token:readを持たないメンバーのレスポンスに個人アクセストークンへのリンクが含まれている")
-	}
-}
-
-func TestShow_OAuthアプリの閲覧権限だけを持つメンバーはフラグが有効なら開けるが既存の項目は出ない(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	queries := testutil.QueriesWithTx(tx)
-	identifier := "space-settings-oauth-app"
-	userID := settingsSpace(t, tx, identifier, []model.Scope{model.ScopeOAuthApplicationRead})
-	testutil.NewFeatureFlagBuilder(t, tx).
-		WithUserID(userID).
-		WithName(string(model.FeatureFlagPublicAPI)).
-		Build()
-
-	req := newSettingsRequest(t, http.MethodGet, identifier, userID)
-	rr := httptest.NewRecorder()
-	setupSettingsHandler(t, queries).Show(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
-	}
-
-	body := rr.Body.String()
-	for _, notWant := range existingItemPaths(identifier) {
-		if strings.Contains(body, notWant) {
-			t.Errorf("space:writeを持たないメンバーのレスポンスに%qが含まれている", notWant)
-		}
-	}
-	if !strings.Contains(body, `href="/s/`+identifier+`/settings/oauth_applications"`) {
-		t.Error("レスポンスにOAuthアプリへのリンクが含まれていない")
-	}
-	if strings.Contains(body, `href="/s/`+identifier+`/settings/personal_access_tokens"`) {
-		t.Error("personal_access_token:readを持たないメンバーのレスポンスに個人アクセストークンへのリンクが含まれている")
+	if strings.Contains(body, `href="/s/`+identifier+`/settings/oauth_applications"`) {
+		t.Error("oauth_application:readを持たないメンバーのレスポンスにOAuthアプリへのリンクが含まれている")
 	}
 }
 
@@ -248,7 +183,7 @@ func TestShow_フラグが無効なら公開APIの項目へのリンクを出さ
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "space-settings-pat-link-noflag"
-	userID := settingsSpace(t, tx, identifier, nil)
+	userID := settingsSpace(t, tx, identifier, "")
 
 	req := newSettingsRequest(t, http.MethodGet, identifier, userID)
 	rr := httptest.NewRecorder()
@@ -274,24 +209,19 @@ func TestShow_到達できない場合は404が返る(t *testing.T) {
 	tests := []struct {
 		name       string
 		identifier string
-		scopes     []model.Scope
+		role       model.SpaceRole
 		outsider   bool
 		missing    bool
 	}{
 		{
-			name:       "どの項目の権限も持たないメンバー",
+			name:       "space:writeを持たずフラグが無効な編集者",
 			identifier: "space-settings-reader",
-			scopes:     []model.Scope{model.ScopeSpaceRead, model.ScopePageWrite},
+			role:       model.SpaceRoleEditor,
 		},
 		{
-			name:       "トークン管理の権限だけを持つがフラグが無効なメンバー",
+			name:       "トークン管理の権限を持つがフラグが無効な閲覧者",
 			identifier: "space-settings-pat-noflag",
-			scopes:     []model.Scope{model.ScopePersonalAccessTokenRead, model.ScopeOAuthGrantRead},
-		},
-		{
-			name:       "OAuthアプリの権限だけを持つがフラグが無効なメンバー",
-			identifier: "space-settings-oauth-app-noflag",
-			scopes:     []model.Scope{model.ScopeOAuthApplicationRead},
+			role:       model.SpaceRoleViewer,
 		},
 		{
 			name:       "スペースのメンバーではないユーザー",
@@ -311,7 +241,7 @@ func TestShow_到達できない場合は404が返る(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			queries := testutil.QueriesWithTx(tx)
-			userID := settingsSpace(t, tx, tt.identifier, tt.scopes)
+			userID := settingsSpace(t, tx, tt.identifier, tt.role)
 			if tt.outsider {
 				userID = testutil.NewUserBuilder(t, tx).
 					WithEmail(tt.identifier + "-other@example.com").
@@ -340,7 +270,7 @@ func TestShow_未ログインならログイン画面へリダイレクトする
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "space-settings-anon"
-	settingsSpace(t, tx, identifier, nil)
+	settingsSpace(t, tx, identifier, "")
 
 	req := newSettingsRequest(t, http.MethodGet, identifier, "")
 	rr := httptest.NewRecorder()
@@ -361,7 +291,7 @@ func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "space-settings-crumb"
-	userID := settingsSpace(t, tx, identifier, nil)
+	userID := settingsSpace(t, tx, identifier, "")
 
 	req := newSettingsRequest(t, http.MethodGet, identifier, userID)
 	rr := httptest.NewRecorder()

@@ -171,7 +171,7 @@ func (uc *GetSpaceShowUsecase) Execute(ctx context.Context, input GetSpaceShowIn
 // トピックごとのページ編集権限マップを構築する。クエリ回数はトピック数に依らず一定で、トピックの
 // 一括取得に1回、(メンバーの場合) トピックメンバーの一括取得に1回だけ実行し、トピックに対する
 // N+1を避ける。編集権限はトピックごとに判定し、編集できないゲストではスキップする。スペースレベルの
-// page:writeスコープ (例: space:admin) を持つメンバーは、トピックメンバーでなくても全トピックの
+// page:writeスコープ (例: 管理者・編集者のロール) を持つメンバーは、トピックメンバーでなくても全トピックの
 // ページを編集できる。これはnewAuthorizerがスペーススコープとトピックスコープを統合して扱う。
 func (uc *GetSpaceShowUsecase) resolvePageTopicViews(
 	ctx context.Context,
@@ -234,7 +234,7 @@ func (uc *GetSpaceShowUsecase) resolvePageTopicViews(
 // トピックごとに現在のユーザーがそこにページを作成できるかを解決する。メンバーは参加中のトピックを、
 // 非メンバー (ゲスト含む) は公開トピックのみを見る。トピックごとの作成権限はトピックメンバーの
 // 一括取得1回で解決し、トピックに対するN+1を避ける。ゲストはページを作成できないため空になる。
-// スペースレベルのpage:writeスコープ (例: space:admin) を持つメンバーは、トピックメンバーで
+// スペースレベルのpage:writeスコープ (例: 管理者・編集者のロール) を持つメンバーは、トピックメンバーで
 // なくてもページを作成できる。これはnewAuthorizerがスペーススコープとトピックスコープを統合して扱う。
 func (uc *GetSpaceShowUsecase) resolveSectionTopics(
 	ctx context.Context,

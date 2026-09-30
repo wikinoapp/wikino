@@ -23,9 +23,10 @@ type topicSettingsGeneralFixture struct {
 }
 
 // setupTopicSettingsGeneralFixtureは、トランザクションで分離された、トピックを1つ持つ
-// スペースと、渡したスコープを持つメンバー1人を作成する。並行トランザクションが開いている間も
-// 一意な列が衝突しないよう、suffixで区別する。
-func setupTopicSettingsGeneralFixture(t *testing.T, suffix string, scopes []model.Scope) topicSettingsGeneralFixture {
+// スペースと、spaceRoleのロールを持つメンバー1人を作成する。topicRoleが空でなければ、メンバーを
+// そのロールのトピックメンバーにする。並行トランザクションが開いている間も一意な列が衝突しないよう、
+// suffixで区別する。
+func setupTopicSettingsGeneralFixture(t *testing.T, suffix string, spaceRole model.SpaceRole, topicRole model.TopicRole) topicSettingsGeneralFixture {
 	t.Helper()
 
 	_, tx := testutil.SetupTx(t)
@@ -41,10 +42,10 @@ func setupTopicSettingsGeneralFixture(t *testing.T, suffix string, scopes []mode
 		WithIdentifier(identifier).
 		Build()
 
-	testutil.NewSpaceMemberBuilder(t, tx).
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(scopes).
+		WithRole(spaceRole).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -52,6 +53,15 @@ func setupTopicSettingsGeneralFixture(t *testing.T, suffix string, scopes []mode
 		WithNumber(1).
 		WithName("日報 " + suffix).
 		Build()
+
+	if topicRole != "" {
+		testutil.NewTopicMemberBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithSpaceMemberID(spaceMemberID).
+			WithRole(topicRole).
+			Build()
+	}
 
 	return topicSettingsGeneralFixture{
 		queries:    queries,
@@ -78,7 +88,7 @@ func TestUpdateTopicUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
 	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
-	f := setupTopicSettingsGeneralFixture(t, "success", []model.Scope{model.ScopeSpaceAdmin})
+	f := setupTopicSettingsGeneralFixture(t, "success", model.SpaceRoleAdmin, "")
 	uc := newUpdateTopicUsecase(f)
 
 	output, err := uc.Execute(ctx, UpdateTopicInput{
@@ -122,7 +132,7 @@ func TestUpdateTopicUsecase_ExecuteKeepsOwnName(t *testing.T) {
 	t.Parallel()
 
 	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
-	f := setupTopicSettingsGeneralFixture(t, "samename", []model.Scope{model.ScopeSpaceAdmin})
+	f := setupTopicSettingsGeneralFixture(t, "samename", model.SpaceRoleAdmin, "")
 	uc := newUpdateTopicUsecase(f)
 
 	if _, err := uc.Execute(ctx, UpdateTopicInput{
@@ -147,7 +157,7 @@ func TestUpdateTopicUsecase_ExecuteKeepsOwnName(t *testing.T) {
 }
 
 // TestUpdateTopicUsecase_ExecuteRefusedは何も変わらない送信を扱う。バリデーターが拒否する
-// 入力・トピックを変更するスコープを持たないメンバー・どのトピックも指さないトピック番号である。
+// 入力・トピックを変更できないロールのメンバー・どのトピックも指さないトピック番号である。
 func TestUpdateTopicUsecase_ExecuteRefused(t *testing.T) {
 	t.Parallel()
 
@@ -156,7 +166,7 @@ func TestUpdateTopicUsecase_ExecuteRefused(t *testing.T) {
 	tests := []struct {
 		name           string
 		suffix         string
-		scopes         []model.Scope
+		spaceRole      model.SpaceRole
 		topicNumber    int32
 		topicName      string
 		wantValidation bool
@@ -165,15 +175,15 @@ func TestUpdateTopicUsecase_ExecuteRefused(t *testing.T) {
 		{
 			name:           "名前が不正な場合は更新されない",
 			suffix:         "invalid",
-			scopes:         []model.Scope{model.ScopeSpaceAdmin},
+			spaceRole:      model.SpaceRoleAdmin,
 			topicNumber:    1,
 			topicName:      "foo/bar",
 			wantValidation: true,
 		},
 		{
-			name:           "トピック更新権限がない場合は更新されない",
+			name:           "閲覧者はトピック更新権限がないため更新されない",
 			suffix:         "reader",
-			scopes:         []model.Scope{model.ScopePageRead},
+			spaceRole:      model.SpaceRoleViewer,
 			topicNumber:    1,
 			topicName:      "週報",
 			wantAppErrCode: model.AppErrCodeForbidden,
@@ -181,7 +191,7 @@ func TestUpdateTopicUsecase_ExecuteRefused(t *testing.T) {
 		{
 			name:           "存在しないトピックでは更新されない",
 			suffix:         "notopic",
-			scopes:         []model.Scope{model.ScopeSpaceAdmin},
+			spaceRole:      model.SpaceRoleAdmin,
 			topicNumber:    999,
 			topicName:      "週報",
 			wantAppErrCode: model.AppErrCodeResourceNotFound,
@@ -192,7 +202,7 @@ func TestUpdateTopicUsecase_ExecuteRefused(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.scopes)
+			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.spaceRole, "")
 			uc := newUpdateTopicUsecase(f)
 
 			_, err := uc.Execute(ctx, UpdateTopicInput{
@@ -233,7 +243,7 @@ func TestUpdateTopicUsecase_ExecuteRefused(t *testing.T) {
 }
 
 // TestUpdateTopicUsecase_ExecuteVisibilityは、公開範囲の変更をtopic_visibility:writeで判定し、
-// topic:writeだけのメンバーには名前と説明の変更だけを許すことを扱う。フィクスチャのトピックは公開である。
+// topic:writeだけを持つ編集者には名前と説明の変更だけを許すことを扱う。フィクスチャのトピックは公開である。
 func TestUpdateTopicUsecase_ExecuteVisibility(t *testing.T) {
 	t.Parallel()
 
@@ -242,44 +252,46 @@ func TestUpdateTopicUsecase_ExecuteVisibility(t *testing.T) {
 	tests := []struct {
 		name           string
 		suffix         string
-		scopes         []model.Scope
+		spaceRole      model.SpaceRole
+		topicRole      model.TopicRole
 		visibility     string
 		wantForbidden  bool
 		wantVisibility model.TopicVisibility
 	}{
 		{
-			name:           "topic:writeだけのメンバーは公開範囲を送らなければ名前と説明を変えられる",
+			name:           "編集者は公開範囲を送らなければ名前と説明を変えられる",
 			suffix:         "writer-omit",
-			scopes:         []model.Scope{model.ScopeTopicWrite},
+			spaceRole:      model.SpaceRoleEditor,
 			visibility:     "",
 			wantVisibility: model.TopicVisibilityPublic,
 		},
 		{
-			name:           "topic:writeだけのメンバーは今と同じ公開範囲を送っても名前と説明を変えられる",
+			name:           "編集者は今と同じ公開範囲を送っても名前と説明を変えられる",
 			suffix:         "writer-same",
-			scopes:         []model.Scope{model.ScopeTopicWrite},
+			spaceRole:      model.SpaceRoleEditor,
 			visibility:     "public",
 			wantVisibility: model.TopicVisibilityPublic,
 		},
 		{
-			name:           "topic:writeだけのメンバーは公開範囲を変えられない",
+			name:           "編集者は公開範囲を変えられない",
 			suffix:         "writer-change",
-			scopes:         []model.Scope{model.ScopeTopicWrite},
+			spaceRole:      model.SpaceRoleEditor,
 			visibility:     "private",
 			wantForbidden:  true,
 			wantVisibility: model.TopicVisibilityPublic,
 		},
 		{
-			name:           "topic_visibility:writeを持つメンバーは公開範囲を変えられる",
+			name:           "編集者でもトピック管理者なら公開範囲を変えられる",
 			suffix:         "visibility-writer",
-			scopes:         []model.Scope{model.ScopeTopicWrite, model.ScopeTopicVisibilityWrite},
+			spaceRole:      model.SpaceRoleEditor,
+			topicRole:      model.TopicRoleAdmin,
 			visibility:     "private",
 			wantVisibility: model.TopicVisibilityPrivate,
 		},
 		{
-			name:           "space:adminを持つメンバーは公開範囲を変えられる",
+			name:           "管理者は公開範囲を変えられる",
 			suffix:         "visibility-admin",
-			scopes:         []model.Scope{model.ScopeSpaceAdmin},
+			spaceRole:      model.SpaceRoleAdmin,
 			visibility:     "private",
 			wantVisibility: model.TopicVisibilityPrivate,
 		},
@@ -289,7 +301,7 @@ func TestUpdateTopicUsecase_ExecuteVisibility(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.scopes)
+			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.spaceRole, tt.topicRole)
 			uc := newUpdateTopicUsecase(f)
 
 			_, err := uc.Execute(ctx, UpdateTopicInput{
@@ -349,7 +361,7 @@ func TestUpdateTopicUsecase_PersistTopicUpdateKeepsChangedVisibility(t *testing.
 			t.Parallel()
 
 			ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
-			f := setupTopicSettingsGeneralFixture(t, "concurrent-"+tt.name, []model.Scope{model.ScopeTopicWrite})
+			f := setupTopicSettingsGeneralFixture(t, "concurrent-"+tt.name, model.SpaceRoleEditor, "")
 			uc := newUpdateTopicUsecase(f)
 			if _, err := uc.topicRepo.Update(ctx, repository.UpdateTopicInput{
 				ID: f.topicID, SpaceID: f.spaceID, Name: "日報", Visibility: tt.before,

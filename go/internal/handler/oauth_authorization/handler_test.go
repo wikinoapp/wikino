@@ -35,10 +35,10 @@ type authorizationFixture struct {
 	clientID string
 }
 
-// setupAuthorizationFixtureは、identifierを識別子に持つスペースと、scopesを持つメンバーと、
+// setupAuthorizationFixtureは、identifierを識別子に持つスペースと、指定したロールを持つメンバーと、
 // そのスペースのOAuthアプリ「連携するCLI」を作る。flagEnabledが真ならメンバーのユーザーに
 // 公開APIのフィーチャーフラグを有効にする
-func setupAuthorizationFixture(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope, flagEnabled bool) authorizationFixture {
+func setupAuthorizationFixture(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole, flagEnabled bool) authorizationFixture {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -52,7 +52,7 @@ func setupAuthorizationFixture(t *testing.T, tx *sql.Tx, identifier string, scop
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(scopes).
+		WithRole(role).
 		Build()
 	if flagEnabled {
 		testutil.NewFeatureFlagBuilder(t, tx).
@@ -180,7 +180,7 @@ func TestRedirectToClient_登録URIの予約パラメーターを認可レスポ
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-response-collision", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+	f := setupAuthorizationFixture(t, tx, "oauthz-response-collision", model.SpaceRoleAdmin, true)
 	h := setupHandler(t, testutil.QueriesWithTx(tx))
 	params := validParams(f.clientID)
 	params.Set("redirect_uri", redirectURIWithReservedParams)

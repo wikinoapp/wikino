@@ -139,7 +139,7 @@ func setupOAuthFlowFixture(t *testing.T, tx *sql.Tx) oauthFlowFixture {
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes([]model.Scope{model.ScopePageWrite, model.ScopeTopicRead, model.ScopeOAuthGrantWrite}).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	testutil.NewFeatureFlagBuilder(t, tx).WithUserID(userID).WithName(string(model.FeatureFlagPublicAPI)).Build()
 
@@ -304,23 +304,6 @@ func TestOAuthFlow(t *testing.T) {
 		}
 	})
 
-	t.Run("oauth_grant:writeを外されたメンバーのトークンは401", func(t *testing.T) {
-		setScopes := func(scopes []model.Scope) {
-			if _, err := tx.ExecContext(ctx, "UPDATE space_members SET scopes = $1 WHERE id = $2",
-				"{"+strings.Join(model.ScopesToStrings(scopes), ",")+"}", string(f.spaceMemberID)); err != nil {
-				t.Fatalf("メンバーのスコープの更新に失敗: %v", err)
-			}
-		}
-		setScopes([]model.Scope{model.ScopePageWrite, model.ScopeTopicRead, model.ScopeOAuthGrantRead})
-		if status := getCurrentSpaceMemberStatus(t, srv, refreshed.AccessToken); status != http.StatusUnauthorized {
-			t.Errorf("oauth_grant:writeを外した後のステータス = %d、期待値 = 401", status)
-		}
-		setScopes([]model.Scope{model.ScopePageWrite, model.ScopeTopicRead, model.ScopeOAuthGrantWrite})
-		if status := getCurrentSpaceMemberStatus(t, srv, refreshed.AccessToken); status != http.StatusOK {
-			t.Errorf("oauth_grant:writeを戻した後のステータス = %d、期待値 = 200", status)
-		}
-	})
-
 	t.Run("使用済みのリフレッシュトークンの再提示で、許可のトークンがすべて失効する", func(t *testing.T) {
 		replayed := &oauth2.Token{RefreshToken: token.RefreshToken, Expiry: time.Now().Add(-time.Minute)}
 		_, err := conf.TokenSource(ctx, replayed).Token()
@@ -450,12 +433,7 @@ func TestAPIRateLimit_スペースのメンバー単位(t *testing.T) {
 		t.Fatalf("認可コードの交換に失敗: %v", err)
 	}
 
-	// 個人アクセストークンを使えるよう、メンバーにトークンの発行の権限を足す
-	patMemberScopes := []model.Scope{model.ScopePageWrite, model.ScopeTopicRead, model.ScopeOAuthGrantWrite, model.ScopePersonalAccessTokenWrite}
-	if _, err := tx.ExecContext(ctx, "UPDATE space_members SET scopes = $1 WHERE id = $2",
-		"{"+strings.Join(model.ScopesToStrings(patMemberScopes), ",")+"}", string(f.spaceMemberID)); err != nil {
-		t.Fatalf("メンバーのスコープの更新に失敗: %v", err)
-	}
+	// 編集者はトークンの発行の権限を持つため、同じメンバーで個人アクセストークンも使える
 	pat := newPersonalAccessToken(t, tx, f.spaceID, f.spaceMemberID)
 
 	// 同じ人が参加している、別のスペース
@@ -463,7 +441,7 @@ func TestAPIRateLimit_スペースのメンバー単位(t *testing.T) {
 	otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(otherSpaceID).
 		WithUserID(f.userID).
-		WithScopes(patMemberScopes).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	otherPAT := newPersonalAccessToken(t, tx, otherSpaceID, otherSpaceMemberID)
 	const otherSpacePath = "/api/v1/spaces/oauth-flow-other/members/me"

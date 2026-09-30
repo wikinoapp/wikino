@@ -26,9 +26,9 @@ import (
 // clientSecretPatternは再発行した直後の画面に出るクライアントシークレットを取り出す
 var clientSecretPattern = regexp.MustCompile(`value="(wks_[A-Za-z0-9_-]+)"`)
 
-// setupMemberは、identifierを識別子に持つスペースと、scopesを持ち公開APIのフィーチャーフラグが
+// setupMemberは、identifierを識別子に持つスペースと、指定したロールを持ち公開APIのフィーチャーフラグが
 // 有効なメンバーを作り、ユーザーとスペースのIDを返す。
-func setupMember(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) (model.UserID, model.SpaceID) {
+func setupMember(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole) (model.UserID, model.SpaceID) {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -42,7 +42,7 @@ func setupMember(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Sco
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(scopes).
+		WithRole(role).
 		Build()
 	testutil.NewFeatureFlagBuilder(t, tx).
 		WithUserID(userID).
@@ -92,7 +92,7 @@ func TestCreate_新しいシークレットをその応答でだけ表示する(
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-secret"
-	userID, spaceID := setupMember(t, tx, identifier, []model.Scope{model.ScopeOAuthApplicationWrite})
+	userID, spaceID := setupMember(t, tx, identifier, model.SpaceRoleAdmin)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithName("連携するWebアプリ").
@@ -140,8 +140,8 @@ func TestCreate_再発行できないメンバーとアプリには404が返る(
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-secret-denied"
-	writerID, spaceID := setupMember(t, tx, identifier, []model.Scope{model.ScopeOAuthApplicationWrite})
-	readerID, readerSpaceID := setupMember(t, tx, identifier+"-reader", []model.Scope{model.ScopeOAuthApplicationRead})
+	writerID, spaceID := setupMember(t, tx, identifier, model.SpaceRoleAdmin)
+	readerID, readerSpaceID := setupMember(t, tx, identifier+"-reader", model.SpaceRoleEditor)
 	publicID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithClientID("oauth-app-secret-denied-public").
@@ -159,7 +159,7 @@ func TestCreate_再発行できないメンバーとアプリには404が返る(
 		userID     model.UserID
 		appID      model.OAuthApplicationID
 	}{
-		{name: "oauth_application:readだけを持つ", identifier: identifier + "-reader", userID: readerID, appID: readerAppID},
+		{name: "oauth_application:*を持たない編集者", identifier: identifier + "-reader", userID: readerID, appID: readerAppID},
 		{name: "publicクライアント", identifier: identifier, userID: writerID, appID: publicID},
 		{name: "別のスペースのアプリ", identifier: identifier, userID: writerID, appID: readerAppID},
 	} {

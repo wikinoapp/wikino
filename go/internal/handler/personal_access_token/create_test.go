@@ -24,7 +24,7 @@ func TestCreate_発行したトークンの値をその応答でだけ表示す�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "pat-create"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenWrite}, true)
+	m := setupPATMember(t, tx, identifier, model.SpaceRoleViewer, true)
 
 	form := url.Values{
 		"name":            {"自宅のCLI"},
@@ -71,7 +71,7 @@ func TestCreate_入力が不正なら422で送信内容を戻したフォーム�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "pat-create-invalid"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenWrite}, true)
+	m := setupPATMember(t, tx, identifier, model.SpaceRoleViewer, true)
 
 	form := url.Values{
 		"name":            {"自宅のCLI"},
@@ -147,7 +147,7 @@ func TestCreate_入力エラーの最初の欄にフォーカスする(t *testin
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
 			identifier := "pat-create-focus-" + strings.ReplaceAll(tt.wantInputID, "_", "-")
-			m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenWrite}, true)
+			m := setupPATMember(t, tx, identifier, model.SpaceRoleViewer, true)
 
 			req := newRequest(t, http.MethodPost, "/s/"+identifier+"/settings/personal_access_tokens", identifier, m.userID, tt.form)
 			rr := httptest.NewRecorder()
@@ -161,27 +161,5 @@ func TestCreate_入力エラーの最初の欄にフォーカスする(t *testin
 				t.Errorf("フォーカス先 = %v、期待値のID = %q", focused, tt.wantInputID)
 			}
 		})
-	}
-}
-
-func TestCreate_発行の権限が無ければ404が返る(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	identifier := "pat-create-readonly"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenRead}, true)
-
-	form := url.Values{
-		"name":            {"CLI"},
-		"scopes":          {"page:read"},
-		"expiration_days": {"30"},
-	}
-	req := newRequest(t, http.MethodPost, "/s/"+identifier+"/settings/personal_access_tokens", identifier, m.userID, form)
-	rr := httptest.NewRecorder()
-	setupHandler(t, q).Create(rr, req)
-
-	if rr.Code != http.StatusNotFound {
-		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
 	}
 }

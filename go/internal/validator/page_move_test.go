@@ -2,6 +2,7 @@ package validator_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -98,7 +99,7 @@ func TestPageMoveCreateValidator_SameTopic(t *testing.T) {
 		PageTitle:       "Test Page",
 		CurrentTopicID:  topicID,
 		SpaceID:         spaceID,
-		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Scopes: []model.Scope{model.ScopeSpaceAdmin}},
+		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Role: model.SpaceRoleAdmin},
 	})
 
 	ve := model.AsValidationError(err)
@@ -174,7 +175,7 @@ func TestPageMoveCreateValidator_TitleExistsInDestTopic(t *testing.T) {
 		PageTitle:       "Duplicate Title",
 		CurrentTopicID:  topicID1,
 		SpaceID:         spaceID,
-		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Scopes: []model.Scope{model.ScopeSpaceAdmin}},
+		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Role: model.SpaceRoleAdmin},
 	})
 
 	ve := model.AsValidationError(err)
@@ -263,7 +264,7 @@ func TestPageMoveCreateValidator_OpenSuggestionExists(t *testing.T) {
 		PageTitle:       "Test Page",
 		CurrentTopicID:  topicID1,
 		SpaceID:         spaceID,
-		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Scopes: []model.Scope{model.ScopeSpaceAdmin}},
+		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Role: model.SpaceRoleAdmin},
 	})
 
 	ve := model.AsValidationError(err)
@@ -332,7 +333,7 @@ func TestPageMoveCreateValidator_Success(t *testing.T) {
 		PageTitle:       "Test Page",
 		CurrentTopicID:  topicID1,
 		SpaceID:         spaceID,
-		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Scopes: []model.Scope{model.ScopeSpaceAdmin}},
+		SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Role: model.SpaceRoleAdmin},
 	})
 
 	if err != nil {
@@ -340,5 +341,90 @@ func TestPageMoveCreateValidator_Success(t *testing.T) {
 	}
 	if destTopic == nil {
 		t.Error("移動先トピックがnil")
+	}
+}
+
+// TestPageMoveCreateValidator_Permissionは、移動先トピックにページを作成できるかを、
+// スペースのロールと移動先トピックのロールから判定することを扱う
+func TestPageMoveCreateValidator_Permission(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		spaceRole model.SpaceRole
+		// destTopicRoleは移動先トピックでのロール。空ならトピックメンバーにしない
+		destTopicRole model.TopicRole
+		wantErr       bool
+	}{
+		{name: "編集者はトピックメンバーでなくても移動できる", spaceRole: model.SpaceRoleEditor},
+		{name: "閲覧者は移動先のトピック編集者なら移動できる", spaceRole: model.SpaceRoleViewer, destTopicRole: model.TopicRoleEditor},
+		{name: "閲覧者は移動先のトピック閲覧者では移動できない", spaceRole: model.SpaceRoleViewer, destTopicRole: model.TopicRoleViewer, wantErr: true},
+		{name: "閲覧者は移動先のトピックメンバーでなければ移動できない", spaceRole: model.SpaceRoleViewer, wantErr: true},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			queries := testutil.QueriesWithTx(tx)
+			ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+
+			userID := testutil.NewUserBuilder(t, tx).Build()
+			spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier(fmt.Sprintf("page-move-perm-%d", i)).Build()
+			spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithUserID(userID).
+				WithRole(tt.spaceRole).
+				Build()
+			topicID1 := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("Topic 1").Build()
+			topicID2 := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("Topic 2").Build()
+			if tt.destTopicRole != "" {
+				testutil.NewTopicMemberBuilder(t, tx).
+					WithSpaceID(spaceID).
+					WithTopicID(topicID2).
+					WithSpaceMemberID(spaceMemberID).
+					WithRole(tt.destTopicRole).
+					Build()
+			}
+			pageID := testutil.NewPageBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicID1).
+				WithNumber(1).
+				WithTitle("Test Page").
+				Build()
+
+			v := validator.NewPageMoveCreateValidator(
+				repository.NewPageRepository(queries),
+				repository.NewTopicRepository(queries),
+				repository.NewTopicMemberRepository(queries),
+				repository.NewSuggestionPageRepository(queries),
+			)
+			destTopic, err := v.Validate(ctx, validator.PageMoveCreateValidatorInput{
+				DestTopicNumber: "2",
+				PageID:          pageID,
+				PageTitle:       "Test Page",
+				CurrentTopicID:  topicID1,
+				SpaceID:         spaceID,
+				SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Role: tt.spaceRole},
+			})
+
+			if tt.wantErr {
+				ve := model.AsValidationError(err)
+				if ve == nil {
+					t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+				}
+				if !ve.HasFieldError("dest_topic") {
+					t.Error("権限が無いのにdest_topicのフィールドエラーが無い")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("予期しないエラー: %v", err)
+			}
+			if destTopic == nil || destTopic.ID != topicID2 {
+				t.Errorf("移動先トピック = %v、期待値 = トピック2", destTopic)
+			}
+		})
 	}
 }

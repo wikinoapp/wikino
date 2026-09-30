@@ -23,9 +23,9 @@ type createTopicFixture struct {
 	userID     model.UserID
 }
 
-// setupCreateTopicFixtureは、渡したスコープを持つメンバーが1人いるスペースを作成する。
+// setupCreateTopicFixtureは、渡したロールを持つメンバーが1人いるスペースを作成する。
 // テストは同じデータベースに対して並行に走るため、一意性のある列をsuffixで区別する。
-func setupCreateTopicFixture(t *testing.T, suffix string, scopes []model.Scope) createTopicFixture {
+func setupCreateTopicFixture(t *testing.T, suffix string, role model.SpaceRole) createTopicFixture {
 	t.Helper()
 
 	db := testutil.GetTestDB()
@@ -43,7 +43,7 @@ func setupCreateTopicFixture(t *testing.T, suffix string, scopes []model.Scope) 
 	memberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(scopes).
+		WithRole(role).
 		Build()
 
 	return createTopicFixture{
@@ -73,7 +73,7 @@ func TestCreateTopicUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
 	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
-	f := setupCreateTopicFixture(t, "success", []model.Scope{model.ScopeSpaceAdmin})
+	f := setupCreateTopicFixture(t, "success", model.SpaceRoleAdmin)
 	uc := newCreateTopicUsecase(f)
 
 	output, err := uc.Execute(ctx, CreateTopicInput{
@@ -129,7 +129,7 @@ func TestCreateTopicUsecase_Execute(t *testing.T) {
 }
 
 // TestCreateTopicUsecase_ExecuteRefusedは何も作成されない送信を扱う。バリデーターが拒否する
-// 入力・トピックを作成するスコープを持たないメンバー・存在しないスペースである。
+// 入力・トピックを作成する権限を持たないメンバー・存在しないスペースである。
 func TestCreateTopicUsecase_ExecuteRefused(t *testing.T) {
 	t.Parallel()
 
@@ -138,7 +138,7 @@ func TestCreateTopicUsecase_ExecuteRefused(t *testing.T) {
 	tests := []struct {
 		name            string
 		suffix          string
-		scopes          []model.Scope
+		role            model.SpaceRole
 		spaceIdentifier func(f createTopicFixture) model.SpaceIdentifier
 		topicName       string
 		visibility      string
@@ -148,7 +148,7 @@ func TestCreateTopicUsecase_ExecuteRefused(t *testing.T) {
 		{
 			name:            "名前が不正な場合は作成されない",
 			suffix:          "invalid",
-			scopes:          []model.Scope{model.ScopeSpaceAdmin},
+			role:            model.SpaceRoleAdmin,
 			spaceIdentifier: func(f createTopicFixture) model.SpaceIdentifier { return f.identifier },
 			topicName:       "foo/bar",
 			visibility:      "public",
@@ -157,7 +157,7 @@ func TestCreateTopicUsecase_ExecuteRefused(t *testing.T) {
 		{
 			name:            "トピック作成権限がない場合は作成されない",
 			suffix:          "reader",
-			scopes:          []model.Scope{model.ScopePageRead},
+			role:            model.SpaceRoleViewer,
 			spaceIdentifier: func(f createTopicFixture) model.SpaceIdentifier { return f.identifier },
 			topicName:       "日報",
 			visibility:      "public",
@@ -166,7 +166,7 @@ func TestCreateTopicUsecase_ExecuteRefused(t *testing.T) {
 		{
 			name:            "存在しないスペースでは作成されない",
 			suffix:          "nospace",
-			scopes:          []model.Scope{model.ScopeSpaceAdmin},
+			role:            model.SpaceRoleAdmin,
 			spaceIdentifier: func(_ createTopicFixture) model.SpaceIdentifier { return "nonexistent-space" },
 			topicName:       "日報",
 			visibility:      "public",
@@ -178,7 +178,7 @@ func TestCreateTopicUsecase_ExecuteRefused(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupCreateTopicFixture(t, tt.suffix, tt.scopes)
+			f := setupCreateTopicFixture(t, tt.suffix, tt.role)
 			uc := newCreateTopicUsecase(f)
 
 			_, err := uc.Execute(ctx, CreateTopicInput{
@@ -224,7 +224,7 @@ func TestCreateTopicUsecase_ExecuteConcurrently(t *testing.T) {
 	t.Parallel()
 
 	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
-	f := setupCreateTopicFixture(t, "concurrent", []model.Scope{model.ScopeSpaceAdmin})
+	f := setupCreateTopicFixture(t, "concurrent", model.SpaceRoleAdmin)
 	uc := newCreateTopicUsecase(f)
 
 	names := []string{"日報", "週報"}

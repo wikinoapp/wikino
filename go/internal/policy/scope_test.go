@@ -143,102 +143,25 @@ func TestExpandScopes(t *testing.T) {
 		assertNoDuplicates(t, result)
 	})
 
-	t.Run("space:adminは全リソーススコープを包括する", func(t *testing.T) {
+	t.Run("space:adminは展開しない", func(t *testing.T) {
 		t.Parallel()
 
-		result := expandScopes([]model.Scope{model.ScopeSpaceAdmin})
+		// 権限はロールから引くため、space:adminはRails版向けに保存する値でしかない
+		result := expandScopes([]model.Scope{model.ScopeSpaceAdmin, model.ScopeTopicWrite})
 
-		assertHasScope(t, result, model.ScopeSpaceAdmin)
-
-		for _, s := range allResourceScopes() {
-			assertHasScope(t, result, s)
-		}
-
-		assertNoDuplicates(t, result)
-	})
-
-	t.Run("space:adminと個別スコープの組み合わせでも重複しない", func(t *testing.T) {
-		t.Parallel()
-
-		input := []model.Scope{model.ScopeSpaceAdmin, model.ScopeTopicWrite}
-		result := expandScopes(input)
-
-		assertHasScope(t, result, model.ScopeSpaceAdmin)
-		assertHasScope(t, result, model.ScopeTopicWrite)
-		assertHasScope(t, result, model.ScopeTopicRead)
-		assertNoDuplicates(t, result)
+		assertScopes(t, result, []model.Scope{model.ScopeSpaceAdmin, model.ScopeTopicWrite, model.ScopeTopicRead})
 	})
 }
 
-func TestAllResourceScopes(t *testing.T) {
+func TestScopeDefinitions_Actions(t *testing.T) {
 	t.Parallel()
 
-	scopes := allResourceScopes()
-
-	t.Run("通常actionはread・write・deleteだけでadminは唯一の例外", func(t *testing.T) {
-		t.Parallel()
-
-		for _, scope := range expandScopes([]model.Scope{model.ScopeSpaceAdmin}) {
-			if scope == model.ScopeSpaceAdmin {
-				if scope.String() != "space:admin" {
-					t.Errorf("特別スコープ = %q、期待値 = space:admin", scope)
-				}
-				continue
-			}
-			resource, action, ok := strings.Cut(scope.String(), ":")
-			if !ok || resource == "" || !slices.Contains([]string{"read", "write", "delete"}, action) {
-				t.Errorf("正式スコープの形式が不正: %q", scope)
-			}
-		}
-	})
-
-	t.Run("space:adminを含まない", func(t *testing.T) {
-		t.Parallel()
-
-		if slices.Contains(scopes, model.ScopeSpaceAdmin) {
-			t.Error("allResourceScopes()にspace:adminが含まれている")
-		}
-	})
-
-	t.Run("全リソースのスコープを含む", func(t *testing.T) {
-		t.Parallel()
-
-		expected := []model.Scope{
-			model.ScopeSpaceRead, model.ScopeSpaceWrite, model.ScopeSpaceDelete,
-			model.ScopeTopicRead, model.ScopeTopicWrite, model.ScopeTopicDelete,
-			model.ScopeTopicVisibilityWrite,
-			model.ScopeTopicMemberRead, model.ScopeTopicMemberWrite, model.ScopeTopicMemberDelete,
-			model.ScopePageRead, model.ScopePageWrite,
-			model.ScopePageTrashRead, model.ScopePageTrashWrite, model.ScopePageTrashDelete,
-			model.ScopeDraftPageRead, model.ScopeDraftPageWrite, model.ScopeDraftPageDelete,
-			model.ScopeSuggestionRead, model.ScopeSuggestionWrite, model.ScopeSuggestionApplicationWrite, model.ScopeSuggestionClosureWrite,
-			model.ScopeSuggestionCommentRead, model.ScopeSuggestionCommentWrite,
-			model.ScopeSpaceMemberRead, model.ScopeSpaceMemberWrite, model.ScopeSpaceMemberDelete,
-			model.ScopeAttachmentRead, model.ScopeAttachmentWrite, model.ScopeAttachmentDelete,
-			model.ScopePersonalAccessTokenRead, model.ScopePersonalAccessTokenWrite, model.ScopePersonalAccessTokenDelete,
-			model.ScopeOAuthGrantRead, model.ScopeOAuthGrantWrite, model.ScopeOAuthGrantDelete,
-			model.ScopeOAuthApplicationRead, model.ScopeOAuthApplicationWrite, model.ScopeOAuthApplicationDelete,
-		}
-
-		for _, s := range expected {
-			assertHasScope(t, scopes, s)
-		}
-
-		if len(scopes) != len(expected) {
-			t.Errorf("len(allResourceScopes()) = %d、期待値 = %d", len(scopes), len(expected))
-		}
-	})
-}
-
-func TestExpandScopes_SpaceAdminExpandsToAllDefinitions(t *testing.T) {
-	t.Parallel()
-
-	expected := []model.Scope{model.ScopeSpaceAdmin}
 	for _, d := range model.ScopeDefinitions {
-		expected = append(expected, d.Scope)
+		resource, action, ok := strings.Cut(d.Scope.String(), ":")
+		if !ok || resource == "" || !slices.Contains([]string{"read", "write", "delete"}, action) {
+			t.Errorf("スコープの形式が不正: %q", d.Scope)
+		}
 	}
-
-	assertScopes(t, expandScopes([]model.Scope{model.ScopeSpaceAdmin}), expected)
 }
 
 func TestImplications(t *testing.T) {

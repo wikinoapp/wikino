@@ -21,9 +21,9 @@ func newRevokeOAuthGrantUsecaseForTest(q *query.Queries) *RevokeOAuthGrantUsecas
 	)
 }
 
-// oauth_grant:deleteだけのメンバーでも、解除の後に照合がトークンを受け付けなくなるところまでを通す。
-// 照合はoauth_grant:writeを持つメンバーのトークンしか受け付けないため、トークンを使えるメンバーの
-// 許可を解除する経路として、:writeと:deleteを持つメンバーで確かめる
+// 許可を解除した後に、照合がトークンを受け付けなくなるところまでを通す。
+// 照合はoauth_grant:writeを持つメンバーのトークンしか受け付けないため、:writeと:deleteを持つ
+// 編集者 (フィクスチャの既定) で確かめる
 func TestRevokeOAuthGrantUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
@@ -31,7 +31,6 @@ func TestRevokeOAuthGrantUsecase_Execute(t *testing.T) {
 	q := testutil.QueriesWithTx(tx)
 	ctx := context.Background()
 	opts := defaultOAuthAccessTokenAuthFixtureOptions()
-	opts.memberScopes = append(opts.memberScopes, model.ScopeOAuthGrantDelete)
 	f, token := setupOAuthAccessTokenAuthFixture(t, tx, "rog-revoke", opts)
 	authenticateUC := newAuthenticateAPITokenUC(tx)
 
@@ -79,18 +78,18 @@ func TestRevokeOAuthGrantUsecase_Execute(t *testing.T) {
 	}
 }
 
-func TestRevokeOAuthGrantUsecase_Execute_deleteだけのメンバーも解除できる(t *testing.T) {
+func TestRevokeOAuthGrantUsecase_Execute_閲覧者も解除できる(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
-	f := setupPATMember(t, tx, "rog-delete-only", []model.Scope{model.ScopeOAuthGrantDelete}, true)
-	appID := testutil.NewOAuthApplicationBuilder(t, tx).WithSpaceID(f.spaceID).WithClientID("rog-delete-only-client").Build()
+	f := setupPATMember(t, tx, "rog-viewer", model.SpaceRoleViewer, true)
+	appID := testutil.NewOAuthApplicationBuilder(t, tx).WithSpaceID(f.spaceID).WithClientID("rog-viewer-client").Build()
 	grantID := testutil.NewOAuthGrantBuilder(t, tx).
 		WithOAuthApplicationID(appID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).Build()
 
 	output, err := newRevokeOAuthGrantUsecaseForTest(q).Execute(context.Background(), RevokeOAuthGrantInput{
-		SpaceIdentifier: "rog-delete-only",
+		SpaceIdentifier: "rog-viewer",
 		UserID:          f.userID,
 		OAuthGrantID:    grantID,
 	})
@@ -108,7 +107,7 @@ func TestRevokeOAuthGrantUsecase_Execute_解除できない(t *testing.T) {
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		// otherMemberが真なら、同じスペースの他のメンバーの許可を解除しようとする
 		otherMember bool
@@ -117,22 +116,15 @@ func TestRevokeOAuthGrantUsecase_Execute_解除できない(t *testing.T) {
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "oauth_grant:deleteを持たない",
-			key:         "rog-nodelete",
-			scopes:      []model.Scope{model.ScopeOAuthGrantWrite},
-			flagEnabled: true,
-			wantErrCode: model.AppErrCodeForbidden,
-		},
-		{
 			name:        "フィーチャーフラグが無効",
 			key:         "rog-noflag",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 		{
 			name:        "他のメンバーの許可",
 			key:         "rog-other",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			otherMember: true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -140,7 +132,7 @@ func TestRevokeOAuthGrantUsecase_Execute_解除できない(t *testing.T) {
 		{
 			name:        "解除済みの許可",
 			key:         "rog-revoked",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			revoked:     true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -148,7 +140,7 @@ func TestRevokeOAuthGrantUsecase_Execute_解除できない(t *testing.T) {
 		{
 			name:        "UUIDでないID",
 			key:         "rog-invalid",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			invalidID:   true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -161,7 +153,7 @@ func TestRevokeOAuthGrantUsecase_Execute_解除できない(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 			ownerMemberID := f.spaceMemberID
 			if tt.otherMember {
 				otherUserID := testutil.NewUserBuilder(t, tx).

@@ -304,7 +304,7 @@ func (uc *CreateOAuthTokenUsecase) checkGrantUsable(ctx context.Context, grant *
 	if err != nil {
 		return err
 	}
-	if owner == nil || !policy.NewMemberPolicy(owner.SpaceMember.Scopes, nil).CanCreateOAuthGrant() {
+	if owner == nil || !policy.NewMemberPolicy(owner.SpaceMember.Role.Scopes(), nil).CanCreateOAuthGrant() {
 		return oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 	}
 

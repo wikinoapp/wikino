@@ -24,10 +24,9 @@ const oauthTokenTestRedirectURI = "http://127.0.0.1:53123/callback"
 // oauthTokenTestClientSecretはconfidentialクライアントのシークレット
 const oauthTokenTestClientSecret = "wks_test_client_secret"
 
-// oauthTokenFixtureOptionsは、トークン要求のフィクスチャの既定値 (フラグ有効・`oauth_grant:write`
-// を持つメンバー・スペースのpublicクライアント・失効していない許可) から変える点
+// oauthTokenFixtureOptionsは、トークン要求のフィクスチャの既定値 (フラグ有効・編集者のロール
+// (`oauth_grant:write` を持つ) のメンバー・スペースのpublicクライアント・失効していない許可) から変える点
 type oauthTokenFixtureOptions struct {
-	memberScopes   []model.Scope
 	flagDisabled   bool
 	confidential   bool
 	officialClient bool
@@ -46,11 +45,7 @@ type oauthTokenFixture struct {
 func setupOAuthTokenFixture(t *testing.T, tx *sql.Tx, key string, opts oauthTokenFixtureOptions) oauthTokenFixture {
 	t.Helper()
 
-	memberScopes := opts.memberScopes
-	if memberScopes == nil {
-		memberScopes = []model.Scope{model.ScopePageWrite, model.ScopeOAuthGrantWrite}
-	}
-	f := setupPATMember(t, tx, key, memberScopes, !opts.flagDisabled)
+	f := setupPATMember(t, tx, key, model.SpaceRoleEditor, !opts.flagDisabled)
 
 	clientID := key + "-client"
 	appBuilder := testutil.NewOAuthApplicationBuilder(t, tx).
@@ -484,11 +479,6 @@ func TestCreateOAuthTokenUsecase_Execute_AuthorizationCode(t *testing.T) {
 			wantCode: model.OAuthTokenErrorInvalidGrant,
 		},
 		{
-			name:     "持ち主がoauth_grant:writeを持たない",
-			opts:     oauthTokenFixtureOptions{memberScopes: []model.Scope{model.ScopePageWrite, model.ScopeOAuthGrantRead}},
-			wantCode: model.OAuthTokenErrorInvalidGrant,
-		},
-		{
 			name:     "持ち主のフィーチャーフラグが無効",
 			opts:     oauthTokenFixtureOptions{flagDisabled: true},
 			wantCode: model.OAuthTokenErrorInvalidGrant,
@@ -703,11 +693,6 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 			name:         "トークンに付与できないスコープ",
 			modifyParams: func(p *OAuthTokenParams) { p.Scope = "space:admin" },
 			wantCode:     model.OAuthTokenErrorInvalidScope,
-		},
-		{
-			name:     "持ち主がoauth_grant:writeを持たない",
-			opts:     oauthTokenFixtureOptions{memberScopes: []model.Scope{model.ScopePageWrite}},
-			wantCode: model.OAuthTokenErrorInvalidGrant,
 		},
 		{
 			name:         "resourceが別のスペースを指す",

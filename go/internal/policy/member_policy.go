@@ -71,20 +71,6 @@ func (p *MemberPolicy) CanTrashPage() bool {
 	return p.effectiveScopes[model.ScopePageTrashWrite]
 }
 
-func (p *MemberPolicy) CanShowDraftPage(isOwner bool) bool {
-	if !p.effectiveScopes[model.ScopeDraftPageRead] {
-		return false
-	}
-	return isOwner || p.effectiveScopes[model.ScopeSpaceAdmin]
-}
-
-func (p *MemberPolicy) CanUpdateDraftPage(isOwner bool) bool {
-	if !p.effectiveScopes[model.ScopeDraftPageWrite] {
-		return false
-	}
-	return isOwner || p.effectiveScopes[model.ScopeSpaceAdmin]
-}
-
 func (p *MemberPolicy) CanDeleteDraftPage() bool {
 	return p.effectiveScopes[model.ScopeDraftPageDelete]
 }

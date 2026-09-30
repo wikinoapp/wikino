@@ -18,7 +18,7 @@ func TestShow_Processing(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-running", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-running", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -52,7 +52,7 @@ func TestShow_Succeeded(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-ok", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-ok", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -90,7 +90,7 @@ func TestShow_SucceededAfterDownloadExpired(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-expired", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-expired", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -125,7 +125,7 @@ func TestShow_Failed(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-failed", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-failed", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -161,7 +161,7 @@ func TestShow_StaleStartedShownAsFailed(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-stale", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-stale", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -197,8 +197,8 @@ func TestShow_NotFoundForExportOfAnotherSpace(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, _, _ := exportSpace(t, tx, "exp-show-mine", nil)
-	_, otherSpaceID, otherMemberID := exportSpace(t, tx, "exp-show-theirs", nil)
+	userID, _, _ := exportSpace(t, tx, "exp-show-mine", "")
+	_, otherSpaceID, otherMemberID := exportSpace(t, tx, "exp-show-theirs", "")
 	otherExportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(otherSpaceID).
 		WithQueuedByID(otherMemberID).
@@ -228,7 +228,7 @@ func TestShow_パンくずが現在地の項目で終わる(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-crumb", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-show-crumb", "")
 	createdAt := time.Date(2026, 3, 25, 5, 14, 0, 0, time.UTC)
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).

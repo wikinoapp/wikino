@@ -45,7 +45,7 @@ func TestCreate_公開設定が不正なら422で未選択のフォームを再�
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := testutil.GetTestDB()
-			userID, spaceID := topicSpaceDB(t, db, tt.identifier, nil)
+			userID, spaceID := topicSpaceDB(t, db, tt.identifier, "")
 
 			req := newTopicFormRequest(t, http.MethodPost, "/s/"+tt.identifier+"/topics", tt.identifier, userID, tt.form)
 			rr := httptest.NewRecorder()
@@ -122,8 +122,8 @@ func setupCreateHandler(t *testing.T, db *sql.DB) *topichandler.Handler {
 }
 
 // topicSpaceDBはメンバーが1人いるスペースをコミットして用意し、テストがそれらを指すための
-// 値を返す。
-func topicSpaceDB(t *testing.T, db *sql.DB, identifier string, scopes []model.Scope) (model.UserID, model.SpaceID) {
+// 値を返す。roleが空のときはビルダーの既定 (管理者) になる。
+func topicSpaceDB(t *testing.T, db *sql.DB, identifier string, role model.SpaceRole) (model.UserID, model.SpaceID) {
 	t.Helper()
 
 	userID := testutil.NewUserBuilderDB(t, db).
@@ -136,8 +136,8 @@ func topicSpaceDB(t *testing.T, db *sql.DB, identifier string, scopes []model.Sc
 	memberBuilder := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID)
-	if scopes != nil {
-		memberBuilder = memberBuilder.WithScopes(scopes)
+	if role != "" {
+		memberBuilder = memberBuilder.WithRole(role)
 	}
 	memberBuilder.Build()
 
@@ -149,7 +149,7 @@ func TestCreate_トピックが作成され詳細画面へリダイレクトす�
 
 	db := testutil.GetTestDB()
 	identifier := "topic-create-ok"
-	userID, spaceID := topicSpaceDB(t, db, identifier, nil)
+	userID, spaceID := topicSpaceDB(t, db, identifier, "")
 
 	req := newTopicFormRequest(t, http.MethodPost, "/s/"+identifier+"/topics", identifier, userID, map[string]string{
 		"name":        "日報",
@@ -184,7 +184,7 @@ func TestCreate_入力が不正なら422でフォームを再描画する(t *tes
 
 	db := testutil.GetTestDB()
 	identifier := "topic-create-invalid"
-	userID, spaceID := topicSpaceDB(t, db, identifier, nil)
+	userID, spaceID := topicSpaceDB(t, db, identifier, "")
 
 	req := newTopicFormRequest(t, http.MethodPost, "/s/"+identifier+"/topics", identifier, userID, map[string]string{
 		"name":        "foo/bar",
@@ -227,7 +227,7 @@ func TestCreate_トピック作成権限がないメンバーには404が返る(
 
 	db := testutil.GetTestDB()
 	identifier := "topic-create-reader"
-	userID, _ := topicSpaceDB(t, db, identifier, []model.Scope{model.ScopePageRead})
+	userID, _ := topicSpaceDB(t, db, identifier, model.SpaceRoleViewer)
 
 	req := newTopicFormRequest(t, http.MethodPost, "/s/"+identifier+"/topics", identifier, userID, map[string]string{
 		"name":       "日報",
@@ -246,7 +246,7 @@ func TestCreate_未ログインならログイン画面へリダイレクトす�
 
 	db := testutil.GetTestDB()
 	identifier := "topic-create-anon"
-	topicSpaceDB(t, db, identifier, nil)
+	topicSpaceDB(t, db, identifier, "")
 
 	req := newTopicFormRequest(t, http.MethodPost, "/s/"+identifier+"/topics", identifier, "", map[string]string{
 		"name":       "日報",

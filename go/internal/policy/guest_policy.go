@@ -23,8 +23,6 @@ func (p *GuestPolicy) CanCreatePage() bool                                 { ret
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
 func (p *GuestPolicy) CanShowTrash() bool                                  { return false }
 func (p *GuestPolicy) CanTrashPage() bool                                  { return false }
-func (p *GuestPolicy) CanShowDraftPage(_ bool) bool                        { return false }
-func (p *GuestPolicy) CanUpdateDraftPage(_ bool) bool                      { return false }
 func (p *GuestPolicy) CanDeleteDraftPage() bool                            { return false }
 func (p *GuestPolicy) CanCreateSuggestion(_ *model.Topic) bool             { return false }
 func (p *GuestPolicy) CanApplySuggestion() bool                            { return false }

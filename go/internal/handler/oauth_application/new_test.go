@@ -17,7 +17,7 @@ func TestNew_登録フォームを表示する(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-new"
-	m := setupAppMember(t, tx, identifier, "登録するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "登録するメンバー", model.SpaceRoleAdmin, true)
 
 	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_applications/new", identifier, m.userID, nil)
 	rr := httptest.NewRecorder()
@@ -98,7 +98,7 @@ func TestNew_登録の権限が無ければ404が返る(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-new-readonly"
-	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", []model.Scope{model.ScopeOAuthApplicationRead}, true)
+	m := setupAppMember(t, tx, identifier, "編集者のメンバー", model.SpaceRoleEditor, true)
 
 	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_applications/new", identifier, m.userID, nil)
 	rr := httptest.NewRecorder()

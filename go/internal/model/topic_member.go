@@ -10,8 +10,7 @@ type TopicMember struct {
 	SpaceID       SpaceID
 	TopicID       TopicID
 	SpaceMemberID SpaceMemberID
-	Scopes        []Scope
-	// Roleはトピックのロール。認可の切り替えまではScopesで判定する
+	// Roleは、このトピックで付けたロール。空なら、このトピックで追加する権限は無い
 	Role               TopicRole
 	JoinedAt           time.Time
 	LastPageModifiedAt *time.Time

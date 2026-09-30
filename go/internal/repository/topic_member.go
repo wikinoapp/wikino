@@ -132,7 +132,6 @@ func (r *TopicMemberRepository) toModel(row query.TopicMember) *model.TopicMembe
 		SpaceID:            model.SpaceID(row.SpaceID),
 		TopicID:            model.TopicID(row.TopicID),
 		SpaceMemberID:      model.SpaceMemberID(row.SpaceMemberID),
-		Scopes:             model.StringsToScopes(row.Scopes),
 		Role:               model.TopicRole(row.Role.String),
 		JoinedAt:           row.JoinedAt,
 		LastPageModifiedAt: lastPageModifiedAt,

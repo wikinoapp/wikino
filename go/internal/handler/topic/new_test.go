@@ -86,7 +86,7 @@ func TestNew_公開設定は初期状態で未選択になる(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	userID := topicSpace(t, tx, "topic-new-no-visibility", nil)
+	userID := topicSpace(t, tx, "topic-new-no-visibility", "")
 
 	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-no-visibility/topics/new", "topic-new-no-visibility", userID, nil)
 	rr := httptest.NewRecorder()
@@ -108,7 +108,7 @@ func TestNew_ヘルプリンク名が各言語で行き先を説明する(t *tes
 
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	userID := topicSpace(t, tx, "topic-new-help-link", nil)
+	userID := topicSpace(t, tx, "topic-new-help-link", "")
 
 	tests := []struct {
 		name   string
@@ -157,7 +157,7 @@ func TestNew_サブタイトルのヘルプリンクが本文色を継承する(
 
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	userID := topicSpace(t, tx, "topic-new-link-color", nil)
+	userID := topicSpace(t, tx, "topic-new-link-color", "")
 
 	tests := []struct {
 		name   string
@@ -207,7 +207,7 @@ func TestNew_公開設定のラベルと選択肢の間に余白が入る(t *tes
 
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	userID := topicSpace(t, tx, "topic-new-fieldset", nil)
+	userID := topicSpace(t, tx, "topic-new-fieldset", "")
 
 	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-fieldset/topics/new", "topic-new-fieldset", userID, nil)
 	rr := httptest.NewRecorder()
@@ -227,7 +227,8 @@ func TestNew_公開設定のラベルと選択肢の間に余白が入る(t *tes
 }
 
 // topicSpaceはメンバーが1人いるスペースを用意し、テストがそれらを指すための値を返す。
-func topicSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) model.UserID {
+// roleが空のときはビルダーの既定 (管理者) になる。
+func topicSpace(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole) model.UserID {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -240,8 +241,8 @@ func topicSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scop
 	memberBuilder := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID)
-	if scopes != nil {
-		memberBuilder = memberBuilder.WithScopes(scopes)
+	if role != "" {
+		memberBuilder = memberBuilder.WithRole(role)
 	}
 	memberBuilder.Build()
 
@@ -254,7 +255,7 @@ func TestNew_フォームが表示される(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID := topicSpace(t, tx, "topic-new-ok", nil)
+	userID := topicSpace(t, tx, "topic-new-ok", "")
 
 	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-ok/topics/new", "topic-new-ok", userID, nil)
 	rr := httptest.NewRecorder()
@@ -286,7 +287,7 @@ func TestNew_HEADでも200が返る(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID := topicSpace(t, tx, "topic-new-head", nil)
+	userID := topicSpace(t, tx, "topic-new-head", "")
 
 	req := newTopicFormRequest(t, http.MethodHead, "/s/topic-new-head/topics/new", "topic-new-head", userID, nil)
 	rr := httptest.NewRecorder()
@@ -303,7 +304,7 @@ func TestNew_トピック作成権限がないメンバーには404が返る(t *
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID := topicSpace(t, tx, "topic-new-reader", []model.Scope{model.ScopePageRead})
+	userID := topicSpace(t, tx, "topic-new-reader", model.SpaceRoleViewer)
 
 	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-reader/topics/new", "topic-new-reader", userID, nil)
 	rr := httptest.NewRecorder()
@@ -320,7 +321,7 @@ func TestNew_スペースのメンバーでなければ404が返る(t *testing.T
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	topicSpace(t, tx, "topic-new-space", nil)
+	topicSpace(t, tx, "topic-new-space", "")
 	outsiderID := testutil.NewUserBuilder(t, tx).
 		WithEmail("topic-new-outsider@example.com").
 		WithAtname("topic_new_outsider").
@@ -341,7 +342,7 @@ func TestNew_未ログインならログイン画面へリダイレクトする(
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	topicSpace(t, tx, "topic-new-anon", nil)
+	topicSpace(t, tx, "topic-new-anon", "")
 
 	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-anon/topics/new", "topic-new-anon", "", nil)
 	rr := httptest.NewRecorder()
@@ -362,7 +363,7 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	userID := topicSpace(t, tx, "topic-new-crumb", nil)
+	userID := topicSpace(t, tx, "topic-new-crumb", "")
 
 	req := newTopicFormRequest(t, http.MethodGet, "/s/topic-new-crumb/topics/new", "topic-new-crumb", userID, nil)
 	rr := httptest.NewRecorder()

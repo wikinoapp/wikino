@@ -118,13 +118,9 @@ func (uc *UpdateSuggestionUsecase) authorize(ctx context.Context, space *model.S
 		}
 	}
 
-	var topicMember *model.TopicMember
-	if !model.HasScope(spaceMember.Scopes, model.ScopeSpaceAdmin) {
-		var err error
-		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, suggestion.TopicID)
-		if err != nil {
-			return fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
-		}
+	topicMember, err := uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, suggestion.TopicID)
+	if err != nil {
+		return fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 	}
 
 	authorizer := newAuthorizer(spaceMember, topicMember)

@@ -15,9 +15,11 @@ import (
 // apiTopicFixtureは公開APIのトピックのテストで使うスペースとトピック。
 // トピックは次の4つを作る
 //   - 1: 公開トピック
-//   - 2: 非公開トピック。メンバーは `topic:read` を持つトピックメンバーとして参加している
+//   - 2: 非公開トピック。メンバーはトピック編集者として参加している
 //   - 3: 非公開トピック。メンバーは参加していない
 //   - 4: 廃棄済みの公開トピック
+//
+// どのスペースのロールも `topic:read` を持つため、トークンが `topic:read` を持てば2と3の両方を開ける
 type apiTopicFixture struct {
 	space         *model.Space
 	spaceMemberID model.SpaceMemberID
@@ -26,7 +28,7 @@ type apiTopicFixture struct {
 	topicIDs map[int32]model.TopicID
 }
 
-func setupAPITopicFixture(t *testing.T, tx *sql.Tx, identifier string, memberScopes []model.Scope) apiTopicFixture {
+func setupAPITopicFixture(t *testing.T, tx *sql.Tx, identifier string, memberRole model.SpaceRole) apiTopicFixture {
 	t.Helper()
 
 	// 1つのトランザクションで複数のフィクスチャを作れるよう、ユーザーをスペースの識別子で区別する
@@ -36,7 +38,7 @@ func setupAPITopicFixture(t *testing.T, tx *sql.Tx, identifier string, memberSco
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(memberScopes).
+		WithRole(memberRole).
 		Build()
 
 	publicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("公開").Build()
@@ -46,7 +48,7 @@ func setupAPITopicFixture(t *testing.T, tx *sql.Tx, identifier string, memberSco
 		WithSpaceID(spaceID).
 		WithTopicID(joinedPrivateID).
 		WithSpaceMemberID(spaceMemberID).
-		WithScopes([]model.Scope{model.ScopeTopicRead, model.ScopePageWrite}).
+		WithRole(model.TopicRoleEditor).
 		Build()
 	notJoinedPrivateID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(3).WithName("参加していない非公開").
 		WithVisibility(int32(model.TopicVisibilityPrivate)).Build()
@@ -61,11 +63,11 @@ func setupAPITopicFixture(t *testing.T, tx *sql.Tx, identifier string, memberSco
 }
 
 // principalはフィクスチャのメンバーが、tokenScopesを持つトークンで呼び出した主体を返す
-func (f apiTopicFixture) principal(memberScopes, tokenScopes []model.Scope) *model.APIPrincipal {
+func (f apiTopicFixture) principal(memberRole model.SpaceRole, tokenScopes []model.Scope) *model.APIPrincipal {
 	return &model.APIPrincipal{
 		User:        &model.User{ID: f.userID},
 		Space:       f.space,
-		SpaceMember: &model.SpaceMember{ID: f.spaceMemberID, SpaceID: f.space.ID, UserID: f.userID, Scopes: memberScopes, Active: true},
+		SpaceMember: &model.SpaceMember{ID: f.spaceMemberID, SpaceID: f.space.ID, UserID: f.userID, Role: memberRole, Active: true},
 		TokenKind:   model.APITokenKindPersonalAccessToken,
 		Scopes:      policy.ExpandAPITokenScopes(tokenScopes),
 	}
@@ -76,46 +78,52 @@ func newListAPITopicsUC(tx *sql.Tx) *ListAPITopicsUsecase {
 	return NewListAPITopicsUsecase(repository.NewTopicRepository(q), repository.NewTopicMemberRepository(q))
 }
 
-// メンバー権限のスコープの組み合わせ
+// メンバーのスペースのロール
 var (
-	// 一般メンバー: スペース全体では非公開トピックを読めず、参加したトピックだけを読める
-	apiTopicRegularMemberScopes = []model.Scope{model.ScopePageWrite, model.ScopePersonalAccessTokenWrite}
-	// 管理者: スペース全体で非公開トピックを読める
-	apiTopicAdminMemberScopes = []model.Scope{model.ScopeSpaceAdmin}
+	// 一般メンバー: ページを書け、トークンを作れる編集者
+	apiTopicRegularMemberRole = model.SpaceRoleEditor
+	// 管理者
+	apiTopicAdminMemberRole = model.SpaceRoleAdmin
 )
 
 func TestListAPITopicsUsecase_Execute_Visibility(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		memberScopes []model.Scope
-		tokenScopes  []model.Scope
-		wantNumbers  []int32
+		name        string
+		memberRole  model.SpaceRole
+		tokenScopes []model.Scope
+		wantNumbers []int32
 	}{
 		{
-			name:         "一般メンバーでトークンがtopic:readを持てば、公開と参加している非公開トピックを返す",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopeTopicRead},
-			wantNumbers:  []int32{1, 2},
+			name:        "一般メンバーでトークンがtopic:readを持てば、参加していない非公開トピックも返す",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: []model.Scope{model.ScopeTopicRead},
+			wantNumbers: []int32{1, 2, 3},
 		},
 		{
-			name:         "一般メンバーでトークンがtopic:readを持たなければ、公開トピックだけを返す",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageWrite},
-			wantNumbers:  []int32{1},
+			name:        "閲覧者でもトークンがtopic:readを持てば、すべての非公開トピックを返す",
+			memberRole:  model.SpaceRoleViewer,
+			tokenScopes: []model.Scope{model.ScopeTopicRead},
+			wantNumbers: []int32{1, 2, 3},
 		},
 		{
-			name:         "管理者でトークンがtopic:readを持てば、すべての非公開トピックを返す",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopeTopicRead},
-			wantNumbers:  []int32{1, 2, 3},
+			name:        "一般メンバーでトークンがtopic:readを持たなければ、公開トピックだけを返す",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageWrite},
+			wantNumbers: []int32{1},
 		},
 		{
-			name:         "管理者でもトークンがtopic:readを持たなければ、公開トピックだけを返す",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead},
-			wantNumbers:  []int32{1},
+			name:        "管理者でトークンがtopic:readを持てば、すべての非公開トピックを返す",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopeTopicRead},
+			wantNumbers: []int32{1, 2, 3},
+		},
+		{
+			name:        "管理者でもトークンがtopic:readを持たなければ、公開トピックだけを返す",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead},
+			wantNumbers: []int32{1},
 		},
 	}
 
@@ -124,10 +132,10 @@ func TestListAPITopicsUsecase_Execute_Visibility(t *testing.T) {
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupAPITopicFixture(t, tx, "api-topic-visibility", tt.memberScopes)
+			f := setupAPITopicFixture(t, tx, "api-topic-visibility", tt.memberRole)
 
 			output, err := newListAPITopicsUC(tx).Execute(t.Context(), ListAPITopicsInput{
-				Principal:       f.principal(tt.memberScopes, tt.tokenScopes),
+				Principal:       f.principal(tt.memberRole, tt.tokenScopes),
 				SpaceIdentifier: f.space.Identifier,
 				Limit:           20,
 			})
@@ -146,12 +154,12 @@ func TestListAPITopicsUsecase_Execute_Cursor(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAPITopicFixture(t, tx, "api-topic-cursor", apiTopicAdminMemberScopes)
+	f := setupAPITopicFixture(t, tx, "api-topic-cursor", apiTopicAdminMemberRole)
 	// 番号の間に見えないトピック (廃棄済みの4) を挟み、番号が連続しなくても辿れることを確かめる
 	for number := int32(5); number <= 7; number++ {
 		testutil.NewTopicBuilder(t, tx).WithSpaceID(f.space.ID).WithNumber(number).WithName(fmt.Sprintf("追加のトピック%d", number)).Build()
 	}
-	principal := f.principal(apiTopicAdminMemberScopes, []model.Scope{model.ScopeTopicRead})
+	principal := f.principal(apiTopicAdminMemberRole, []model.Scope{model.ScopeTopicRead})
 	uc := newListAPITopicsUC(tx)
 
 	// サブテストは親のトランザクションを共有するため、並列にしない
@@ -230,11 +238,11 @@ func TestListAPITopicsUsecase_Execute_OtherSpace(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAPITopicFixture(t, tx, "api-topic-bound", apiTopicAdminMemberScopes)
-	setupAPITopicFixture(t, tx, "api-topic-other", apiTopicAdminMemberScopes)
+	f := setupAPITopicFixture(t, tx, "api-topic-bound", apiTopicAdminMemberRole)
+	setupAPITopicFixture(t, tx, "api-topic-other", apiTopicAdminMemberRole)
 
 	output, err := newListAPITopicsUC(tx).Execute(t.Context(), ListAPITopicsInput{
-		Principal:       f.principal(apiTopicAdminMemberScopes, []model.Scope{model.ScopeTopicRead}),
+		Principal:       f.principal(apiTopicAdminMemberRole, []model.Scope{model.ScopeTopicRead}),
 		SpaceIdentifier: "api-topic-other",
 		Limit:           20,
 	})

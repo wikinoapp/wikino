@@ -2,11 +2,10 @@ package seed
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"time"
-
-	"github.com/lib/pq"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -36,10 +35,13 @@ type topicSpec struct {
 	name        string
 	description string
 	visibility  model.TopicVisibility
-	// memberRolesはトピックに参加させるアカウント。スペースから導かずここで
-	// 名指しするのは、1つの役割だけが読めるトピックが、後からスペースへ足した
-	// アカウントに開いてしまわないようにするため。
+	// memberRolesはトピックに参加させるアカウント。閲覧できるかはスペースのロールで
+	// 決まるため、ここではトピックの画面が取りうる参加状態 (複数のアカウントが参加して
+	// いるもの、1つだけが参加しているもの) を作るためにアカウントを名指しする。
 	memberRoles []seedRole
+	// topicRolesは、memberRolesのうちトピックのロールを付けるアカウント。
+	// 本番はトピックメンバーをロール無しで作るため、名指ししないアカウントはロール無しになる。
+	topicRoles map[seedRole]model.TopicRole
 	// assignは、後続の生成器がページを書き込むトピックについて、作成した
 	// トピックを結果へ格納する。それ以外ではnil。
 	assign func(topics *seededTopics, topic *seededTopic)
@@ -95,7 +97,10 @@ func wikiTopicSpecs(wiki *seededSpace) ([]topicSpec, error) {
 			description: fmt.Sprintf("%s と %s が参加している非公開トピックです。", owner.name, collaborator.name),
 			visibility:  model.TopicVisibilityPrivate,
 			memberRoles: []seedRole{roleOwner, roleCollaborator},
-			assign:      func(topics *seededTopics, topic *seededTopic) { topics.privateNotes = topic },
+			// スペースでは編集者のroleCollaboratorを、このトピックだけのトピック管理者にする。
+			// 公開範囲の変更のように、トピックのロールでだけ開く操作を画面で確認するため。
+			topicRoles: map[seedRole]model.TopicRole{roleCollaborator: model.TopicRoleAdmin},
+			assign:     func(topics *seededTopics, topic *seededTopic) { topics.privateNotes = topic },
 		},
 		{
 			name:        topicNameSecret,
@@ -182,7 +187,7 @@ var longNameTopicSpecs = []topicSpec{
 //
 // 非公開にしているのは、このスペースが個人が自分のために持つメモ置き場であり、
 // その種のトピックはそう持たれるため。それで失うものは無い。参加する唯一の
-// アカウントはspace:adminを持つため非公開トピックも開けるうえ、このスペースを
+// アカウントは管理者のロールを持つため非公開トピックも開けるうえ、このスペースを
 // 外から見たスクリーンショットを撮ることも無い。
 var demoTopicSpecs = []topicSpec{
 	{
@@ -268,13 +273,13 @@ func createTopic(
 	spec topicSpec,
 	number int32,
 ) (*seededTopic, error) {
-	members := make([]*seededSpaceMember, 0, len(spec.memberRoles))
+	members := make(map[seedRole]*seededSpaceMember, len(spec.memberRoles))
 	for _, role := range spec.memberRoles {
 		member := space.member(role)
 		if member == nil {
 			return nil, fmt.Errorf("トピック %sは役割 %sの参加を指定しているが、その役割はスペースに参加していない", spec.name, role)
 		}
-		members = append(members, member)
+		members[role] = member
 	}
 
 	now := time.Now()
@@ -293,8 +298,8 @@ func createTopic(
 
 	topic := &seededTopic{id: model.TopicID(id), spaceID: space.id, name: spec.name}
 
-	for _, member := range members {
-		if err := addTopicMember(ctx, dbtx, topic, member, topicMemberScopes(spec.visibility, member)); err != nil {
+	for _, role := range spec.memberRoles {
+		if err := addTopicMember(ctx, dbtx, topic, members[role], spec.topicRoles[role]); err != nil {
 			return nil, fmt.Errorf("トピック %sへのメンバー追加に失敗: %w", spec.name, err)
 		}
 	}
@@ -302,41 +307,23 @@ func createTopic(
 	return topic, nil
 }
 
-// topicMemberScopesは、トピックメンバーシップが持つスコープを返す。
-//
-// 本番はトピックメンバーシップをスコープ無しで作る。本番が作るスペース
-// メンバーシップはspace:adminを持つものだけであり、それが既にtopic:readへ
-// 展開されて全トピックを開くため。space:adminを持たないメンバーにはその展開が
-// 無く、非公開トピックは参加後も、メンバーシップ自身がtopic:readを持たない限り
-// 見えないままになる。シードはそこにこのスコープを与え、管理者でないメンバーから
-// 見た非公開トピックを、画面として実際に開ける状態にする。
-func topicMemberScopes(visibility model.TopicVisibility, member *seededSpaceMember) []model.Scope {
-	if visibility == model.TopicVisibilityPublic {
-		return nil
-	}
-	if model.HasScope(member.scopes, model.ScopeSpaceAdmin) {
-		return nil
-	}
-
-	return []model.Scope{model.ScopeTopicRead}
-}
-
-// addTopicMemberは、指定のスコープでスペースメンバーをトピックに参加させる。
+// addTopicMemberは、指定のロールでスペースメンバーをトピックに参加させる。
+// ロールが空なら、本番と同じくロール無し (NULL) で参加させる。
 func addTopicMember(
 	ctx context.Context,
 	dbtx query.DBTX,
 	topic *seededTopic,
 	member *seededSpaceMember,
-	scopes []model.Scope,
+	role model.TopicRole,
 ) error {
 	now := time.Now()
 
 	_, err := dbtx.ExecContext(
 		ctx,
-		`INSERT INTO topic_members (space_id, topic_id, space_member_id, scopes, joined_at, created_at, updated_at)
+		`INSERT INTO topic_members (space_id, topic_id, space_member_id, role, joined_at, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		string(topic.spaceID), string(topic.id), string(member.id),
-		pq.Array(scopeStrings(scopes)), now, now, now,
+		sql.NullString{String: string(role), Valid: role != ""}, now, now, now,
 	)
 
 	return err

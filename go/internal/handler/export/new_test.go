@@ -72,7 +72,8 @@ func newRequest(t *testing.T, method, path string, params map[string]string, use
 }
 
 // exportSpaceはメンバーが1人いるスペースを用意し、テストがそれらを指すための値を返す。
-func exportSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) (model.UserID, model.SpaceID, model.SpaceMemberID) {
+// roleが空のときはビルダーの既定 (管理者) になる。
+func exportSpace(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole) (model.UserID, model.SpaceID, model.SpaceMemberID) {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -85,8 +86,8 @@ func exportSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Sco
 	memberBuilder := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID)
-	if scopes != nil {
-		memberBuilder = memberBuilder.WithScopes(scopes)
+	if role != "" {
+		memberBuilder = memberBuilder.WithRole(role)
 	}
 
 	return userID, spaceID, memberBuilder.Build()
@@ -98,7 +99,7 @@ func TestNew_ShowsStartButton(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, _, _ := exportSpace(t, tx, "exp-new-ok", nil)
+	userID, _, _ := exportSpace(t, tx, "exp-new-ok", "")
 
 	req := newRequest(t, http.MethodGet, "/s/exp-new-ok/settings/exports/new", map[string]string{
 		"space_identifier": "exp-new-ok",
@@ -126,7 +127,7 @@ func TestNew_HidesStartButtonWhileExporting(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-new-running", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-new-running", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -160,7 +161,7 @@ func TestNew_NotFoundWithoutExportPermission(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, _, _ := exportSpace(t, tx, "exp-new-forbidden", []model.Scope{model.ScopeSpaceRead})
+	userID, _, _ := exportSpace(t, tx, "exp-new-forbidden", model.SpaceRoleEditor)
 
 	req := newRequest(t, http.MethodGet, "/s/exp-new-forbidden/settings/exports/new", map[string]string{
 		"space_identifier": "exp-new-forbidden",
@@ -180,7 +181,7 @@ func TestNew_NotFoundForNonMember(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	exportSpace(t, tx, "exp-new-outsider-space", nil)
+	exportSpace(t, tx, "exp-new-outsider-space", "")
 	outsiderID := testutil.NewUserBuilder(t, tx).
 		WithEmail("exp-new-outsider@example.com").
 		WithAtname("exp-new-outsider").
@@ -205,7 +206,7 @@ func TestNew_パンくずが現在地の項目で終わる(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
-	userID, _, _ := exportSpace(t, tx, "exp-new-crumb", nil)
+	userID, _, _ := exportSpace(t, tx, "exp-new-crumb", "")
 
 	req := newRequest(t, http.MethodGet, "/s/exp-new-crumb/settings/exports/new", map[string]string{
 		"space_identifier": "exp-new-crumb",

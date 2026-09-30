@@ -7,27 +7,28 @@ import (
 
 // newAuthorizerはスペースメンバーとトピックメンバーから適切なAuthorizerを生成する。
 // spaceMemberがnilの場合はGuestPolicyを返し、そうでなければMemberPolicyを返す。
+// スコープはスペースのロールとトピックのロールから引く。
 func newAuthorizer(spaceMember *model.SpaceMember, topicMember *model.TopicMember) policy.Authorizer {
 	if spaceMember == nil {
 		return policy.NewGuestPolicy()
 	}
-	var topicScopes []model.Scope
-	if topicMember != nil {
-		topicScopes = topicMember.Scopes
-	}
-	return policy.NewMemberPolicy(spaceMember.Scopes, topicScopes)
+	return policy.NewMemberPolicy(spaceMember.Role.Scopes(), topicRoleScopes(topicMember))
 }
 
 // newAPIAuthorizerは公開APIのトークンの主体とトピックメンバーからAuthorizerを生成する。
-// メンバーのスコープ (スペース + トピック) とトークンのスコープの論理積で判定する。
+// メンバーのロールから引いたスコープ (スペース + トピック) とトークンのスコープの論理積で判定する。
 func newAPIAuthorizer(principal *model.APIPrincipal, topicMember *model.TopicMember) policy.Authorizer {
 	var spaceScopes []model.Scope
 	if principal.SpaceMember != nil {
-		spaceScopes = principal.SpaceMember.Scopes
+		spaceScopes = principal.SpaceMember.Role.Scopes()
 	}
-	var topicScopes []model.Scope
-	if topicMember != nil {
-		topicScopes = topicMember.Scopes
+	return policy.NewAPIMemberPolicy(spaceScopes, topicRoleScopes(topicMember), principal.Scopes)
+}
+
+// topicRoleScopesは、トピックメンバーのロールが持つスコープを返す。トピックメンバーでなければnil
+func topicRoleScopes(topicMember *model.TopicMember) []model.Scope {
+	if topicMember == nil {
+		return nil
 	}
-	return policy.NewAPIMemberPolicy(spaceScopes, topicScopes, principal.Scopes)
+	return topicMember.Role.Scopes()
 }

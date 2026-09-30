@@ -38,68 +38,48 @@ func TestGetSpaceSettingsUsecase_Execute(t *testing.T) {
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		want        *SpaceSettingsItems
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:   "space:adminは既存の項目を開け、フラグが無効ならトークン管理の項目は出ない",
-			key:    "gsset-admin",
-			scopes: []model.Scope{model.ScopeSpaceAdmin},
-			want:   &SpaceSettingsItems{CanUpdateSpace: true},
+			name: "管理者は既存の項目を開け、フラグが無効ならトークン管理の項目は出ない",
+			key:  "gsset-admin",
+			role: model.SpaceRoleAdmin,
+			want: &SpaceSettingsItems{CanUpdateSpace: true},
 		},
 		{
-			name:        "space:adminでフラグが有効ならトークン管理の項目も出る",
+			name:        "管理者でフラグが有効ならトークン管理の項目も出る",
 			key:         "gsset-admin-flag",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			want:        &SpaceSettingsItems{CanUpdateSpace: true, CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true, CanShowOAuthApplications: true},
 		},
 		{
-			name:   "space:writeだけで既存の項目を開ける",
-			key:    "gsset-write",
-			scopes: []model.Scope{model.ScopeSpaceWrite},
-			want:   &SpaceSettingsItems{CanUpdateSpace: true},
-		},
-		{
-			name:        "personal_access_token:readだけでフラグが有効なら個人アクセストークンの項目だけを開ける",
-			key:         "gsset-pat",
-			scopes:      []model.Scope{model.ScopePersonalAccessTokenRead},
+			name:        "編集者でフラグが有効なら個人アクセストークンと連携中のアプリの項目だけを開ける",
+			key:         "gsset-editor",
+			role:        model.SpaceRoleEditor,
 			flagEnabled: true,
-			want:        &SpaceSettingsItems{CanShowPersonalAccessTokens: true},
+			want:        &SpaceSettingsItems{CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true},
 		},
 		{
-			name:        "oauth_grant:readだけでフラグが有効なら連携中のアプリの項目だけを開ける",
-			key:         "gsset-oauth",
-			scopes:      []model.Scope{model.ScopeOAuthGrantRead},
+			name:        "閲覧者でフラグが有効なら個人アクセストークンと連携中のアプリの項目だけを開ける",
+			key:         "gsset-viewer",
+			role:        model.SpaceRoleViewer,
 			flagEnabled: true,
-			want:        &SpaceSettingsItems{CanShowOAuthGrants: true},
+			want:        &SpaceSettingsItems{CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true},
 		},
 		{
-			name:        "oauth_application:readだけでフラグが有効ならOAuthアプリの項目だけを開ける",
-			key:         "gsset-oauth-app",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationRead},
-			flagEnabled: true,
-			want:        &SpaceSettingsItems{CanShowOAuthApplications: true},
-		},
-		{
-			name:        "oauth_application:readだけでフラグが無効なら開けない",
-			key:         "gsset-oauth-app-noflag",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationRead},
+			name:        "編集者でフラグが無効なら開けない",
+			key:         "gsset-editor-noflag",
+			role:        model.SpaceRoleEditor,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 		{
-			name:        "personal_access_token:readだけでフラグが無効なら開けない",
-			key:         "gsset-pat-noflag",
-			scopes:      []model.Scope{model.ScopePersonalAccessTokenRead},
-			wantErrCode: model.AppErrCodeForbidden,
-		},
-		{
-			name:        "どの項目のスコープも持たないメンバーは開けない",
-			key:         "gsset-reader",
-			scopes:      []model.Scope{model.ScopeSpaceRead, model.ScopePageWrite},
-			flagEnabled: true,
+			name:        "閲覧者でフラグが無効なら開けない",
+			key:         "gsset-viewer-noflag",
+			role:        model.SpaceRoleViewer,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 	}
@@ -117,7 +97,7 @@ func TestGetSpaceSettingsUsecase_Execute(t *testing.T) {
 			testutil.NewSpaceMemberBuilder(t, tx).
 				WithSpaceID(spaceID).
 				WithUserID(userID).
-				WithScopes(tt.scopes).
+				WithRole(tt.role).
 				Build()
 			if tt.flagEnabled {
 				testutil.NewFeatureFlagBuilder(t, tx).

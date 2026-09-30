@@ -9,8 +9,7 @@ type SpaceMember struct {
 	ID      SpaceMemberID
 	SpaceID SpaceID
 	UserID  UserID
-	Scopes  []Scope
-	// Roleはスペースのロール。認可の切り替えまではScopesで判定する
+	// Roleは、スペースのロール。権限はロールから引き、space_members.scopesは読まない
 	Role     SpaceRole
 	JoinedAt time.Time
 	Active   bool

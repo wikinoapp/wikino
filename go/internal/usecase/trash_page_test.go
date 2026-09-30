@@ -23,17 +23,17 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		repository.NewTopicMemberRepository(q),
 	)
 
-	// スペース単位でpage_trash:writeを持つメンバー (本操作の判定軸となる権限)。
+	// スペースの編集者 (page_trash:writeを持つ)。
 	trashMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-trash@example.com").
 		WithAtname("tptrash").
 		Build()
-	// page:writeは持つがpage_trash:writeを持たないメンバー (編集者がゴミ箱に入れられないこと)。
+	// スペースの閲覧者 (page_trash:writeを持たない)。
 	writerMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-writer@example.com").
 		WithAtname("tpwriter").
 		Build()
-	// page_trash:writeをトピックメンバーからだけ得るメンバー。
+	// スペースの閲覧者で、非公開トピックのトピック編集者 (page_trash:writeをトピックのロールからだけ得る)。
 	topicScopedMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-topic-scoped@example.com").
 		WithAtname("tptopicscoped").
@@ -51,17 +51,17 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(writerMemberID).
-		WithScopes([]model.Scope{model.ScopePageWrite}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	topicScopedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(topicScopedMemberID).
-		WithScopes([]model.Scope{}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 
 	publicTopicID := testutil.NewTopicBuilder(t, tx).
@@ -80,7 +80,7 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(privateTopicID).
 		WithSpaceMemberID(topicScopedSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopeTopicRead, model.ScopePageTrashWrite}).
+		WithRole(model.TopicRoleEditor).
 		Build()
 
 	newPage := func(t *testing.T, topicID model.TopicID, number model.PageNumber, title string) {
@@ -111,10 +111,10 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 	newPage(t, publicTopicID, 1, "Trashable Page")
 	newPage(t, publicTopicID, 2, "Writer Page")
 	newPage(t, publicTopicID, 3, "Non Member Page")
-	newPage(t, privateTopicID, 4, "Private Page")
+	newPage(t, publicTopicID, 4, "Other Topic Page")
 	newPage(t, privateTopicID, 5, "Topic Scoped Page")
 
-	t.Run("正常系: page_trash:writeを持つメンバーはページをゴミ箱に入れられる", func(t *testing.T) {
+	t.Run("正常系: 編集者はページをゴミ箱に入れられる", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      1,
@@ -145,7 +145,7 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("異常系: page:writeだけのメンバーはゴミ箱に入れられない", func(t *testing.T) {
+	t.Run("異常系: 閲覧者はゴミ箱に入れられない", func(t *testing.T) {
 		_, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      2,
@@ -183,28 +183,26 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("異常系: 開けない非公開トピックのページはゴミ箱に入れられない", func(t *testing.T) {
-		// スペース単位のpage_trash:writeだけでは足りない。topic:readが無ければ、そのページは
-		// 存在しないページと区別が付かないままであるべき。
+	t.Run("異常系: トピック編集者のロールは他のトピックのページには及ばない", func(t *testing.T) {
 		_, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      4,
-			UserID:          trashMemberID,
+			UserID:          topicScopedMemberID,
 		})
 
 		ae := model.AsAppError(err)
 		if ae == nil {
 			t.Fatal("AppErrorを期待したが、nilだった")
 		}
-		if ae.Code != model.AppErrCodeResourceNotFound {
-			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeResourceNotFound)
+		if ae.Code != model.AppErrCodeForbidden {
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
 		}
 		if page := findPage(t, 4); page.TrashedAt != nil {
-			t.Errorf("page.TrashedAt = %v、期待値 = nil (開けないトピックのページは更新されない)", page.TrashedAt)
+			t.Errorf("page.TrashedAt = %v、期待値 = nil (トピック編集者でないトピックのページは更新されない)", page.TrashedAt)
 		}
 	})
 
-	t.Run("正常系: トピックスコープのpage_trash:writeでもゴミ箱に入れられる", func(t *testing.T) {
+	t.Run("正常系: トピック編集者のロールでもゴミ箱に入れられる", func(t *testing.T) {
 		_, err := uc.Execute(context.Background(), TrashPageInput{
 			SpaceIdentifier: "tp-space",
 			PageNumber:      5,
