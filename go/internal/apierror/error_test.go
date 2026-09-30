@@ -219,8 +219,8 @@ func TestWriter_ResourceMetadata(t *testing.T) {
 			want: `Bearer resource_metadata="https://example.com/.well-known/oauth-protected-resource/api/v1/spaces/a%22b"`,
 		},
 		{
-			name: "スペースに属さないAPIには付けない",
-			path: "/api/v1/user",
+			name: "スペースに属さないパスには付けない",
+			path: "/api/v1/openapi.yaml",
 			want: "Bearer",
 		},
 		{

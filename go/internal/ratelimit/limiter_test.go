@@ -346,13 +346,13 @@ func TestEmailKey(t *testing.T) {
 	}
 }
 
-func TestAPIUserKey(t *testing.T) {
+func TestAPISpaceMemberKey(t *testing.T) {
 	t.Parallel()
 
-	got := APIUserKey("user-1")
-	want := "api:user:user-1"
+	got := APISpaceMemberKey("space-member-1")
+	want := "api:space_member:space-member-1"
 	if got != want {
-		t.Errorf("APIUserKey() = %q、期待値 = %q", got, want)
+		t.Errorf("APISpaceMemberKey() = %q、期待値 = %q", got, want)
 	}
 }
 

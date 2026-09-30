@@ -128,7 +128,7 @@ func OAuthIPKey(ip string) string {
 	return fmt.Sprintf("oauth:ip:%s", ip)
 }
 
-// APIUserKeyは公開APIのユーザー単位のレート制限に使うキーを生成する
-func APIUserKey(userID string) string {
-	return fmt.Sprintf("api:user:%s", userID)
+// APISpaceMemberKeyは公開APIのスペースのメンバー単位のレート制限に使うキーを生成する
+func APISpaceMemberKey(spaceMemberID string) string {
+	return fmt.Sprintf("api:space_member:%s", spaceMemberID)
 }

@@ -20,11 +20,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
-	apiuser "github.com/wikinoapp/wikino/go/internal/apihandler/user"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
@@ -694,7 +694,7 @@ func runServe() {
 	}
 	authenticateAPITokenUC := usecase.NewAuthenticateAPITokenUsecase(personalAccessTokenRepo, oauthAccessTokenRepo, oauthGrantRepo, spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo)
 	apiTokenAuth := middleware.NewAPITokenAuth(authenticateAPITokenUC, apiProblems)
-	apiRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.APIUserRateLimitPolicy)
+	apiRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.APISpaceMemberRateLimitPolicy)
 	oauthRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.OAuthIPRateLimitPolicy(cfg.TrustedProxyCIDRs))
 	oauthTokenHandler := oauthtokenhandler.NewHandler(
 		usecase.NewCreateOAuthTokenUsecase(
@@ -712,6 +712,7 @@ func runServe() {
 		usecase.NewRevokeOAuthTokenUsecase(oauthApplicationRepo, oauthGrantRepo, oauthAccessTokenRepo, oauthRefreshTokenRepo),
 	)
 	apiServer := apihandler.NewServer(
+		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(
 			usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
@@ -724,7 +725,6 @@ func runServe() {
 			usecase.NewListAPITopicsUsecase(topicRepo, topicMemberRepo),
 			usecase.NewGetAPITopicUsecase(topicRepo, topicMemberRepo),
 		),
-		apiuser.NewHandler(),
 	)
 
 	r := chi.NewRouter()

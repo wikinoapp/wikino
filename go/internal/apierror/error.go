@@ -140,7 +140,7 @@ func (pw *Writer) Forbidden(w http.ResponseWriter, r *http.Request, challenge Be
 // resourceMetadataURLは、401・403の `WWW-Authenticate` の `resource_metadata` に載せる、
 // リクエストのパスのスペースの保護リソースのメタデータのURLを返す。
 // トークンはスペースに束縛され、保護リソース (RFC 8707の `resource`) はスペースのAPIのため、
-// スペースに属さないAPI (`getUser` など) では指す先が無く、空を返して付けない
+// スペースに属さないパス (`/api/v1/openapi.yaml` など) では指す先が無く、空を返して付けない
 func (pw *Writer) resourceMetadataURL(r *http.Request) string {
 	identifier, ok := model.SpaceIdentifierFromAPIPath(r.URL.EscapedPath())
 	if !ok {

@@ -34,10 +34,11 @@ func (s *stubAPIRateLimiter) Check(_ context.Context, input ratelimit.CheckInput
 func TestAPIRateLimit_Middleware(t *testing.T) {
 	t.Parallel()
 
-	policy := middleware.APIRateLimitPolicy{Name: "user", Limit: 100, Window: time.Minute, Key: middleware.APIUserRateLimitPolicy.Key}
+	policy := middleware.APIRateLimitPolicy{Name: "space_member", Limit: 100, Window: time.Minute, Key: middleware.APISpaceMemberRateLimitPolicy.Key}
 	principal := &model.APIPrincipal{
-		User:      &model.User{ID: "user-1"},
-		TokenKind: model.APITokenKindPersonalAccessToken,
+		User:        &model.User{ID: "user-1"},
+		SpaceMember: &model.SpaceMember{ID: "space-member-1", UserID: "user-1"},
+		TokenKind:   model.APITokenKindPersonalAccessToken,
 	}
 
 	tests := []struct {
@@ -65,10 +66,10 @@ func TestAPIRateLimit_Middleware(t *testing.T) {
 				Remaining: 99,
 				ResetAt:   time.Now().Add(30 * time.Second),
 			}},
-			wantInput:     &ratelimit.CheckInput{Key: "api:user:user-1", Limit: 100, Window: time.Minute},
+			wantInput:     &ratelimit.CheckInput{Key: "api:space_member:space-member-1", Limit: 100, Window: time.Minute},
 			wantStatus:    http.StatusOK,
-			wantPolicy:    `"user";q=100;w=60`,
-			wantRateLimit: `"user";r=99;t=30`,
+			wantPolicy:    `"space_member";q=100;w=60`,
+			wantRateLimit: `"space_member";r=99;t=30`,
 		},
 		{
 			name:      "制限を超えたら429とRetry-Afterを返す",
@@ -79,17 +80,17 @@ func TestAPIRateLimit_Middleware(t *testing.T) {
 				Remaining: 0,
 				ResetAt:   time.Now().Add(30 * time.Second),
 			}},
-			wantInput:      &ratelimit.CheckInput{Key: "api:user:user-1", Limit: 100, Window: time.Minute},
+			wantInput:      &ratelimit.CheckInput{Key: "api:space_member:space-member-1", Limit: 100, Window: time.Minute},
 			wantStatus:     http.StatusTooManyRequests,
-			wantPolicy:     `"user";q=100;w=60`,
-			wantRateLimit:  `"user";r=0;t=30`,
+			wantPolicy:     `"space_member";q=100;w=60`,
+			wantRateLimit:  `"space_member";r=0;t=30`,
 			wantRetryAfter: "30",
 		},
 		{
 			name:       "チェックに失敗したらヘッダーを付けずに通す",
 			principal:  principal,
 			limiter:    &stubAPIRateLimiter{err: errors.New("DBに接続できない")},
-			wantInput:  &ratelimit.CheckInput{Key: "api:user:user-1", Limit: 100, Window: time.Minute},
+			wantInput:  &ratelimit.CheckInput{Key: "api:space_member:space-member-1", Limit: 100, Window: time.Minute},
 			wantStatus: http.StatusOK,
 		},
 	}
@@ -102,7 +103,7 @@ func TestAPIRateLimit_Middleware(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			})
 
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/user", nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/spaces/example/members/me", nil)
 			if tt.principal != nil {
 				req = req.WithContext(middleware.SetAPIPrincipalToContext(req.Context(), tt.principal))
 			}
@@ -151,9 +152,21 @@ func TestAPIRateLimit_Middleware(t *testing.T) {
 func TestAPIRateLimitPolicy_Key(t *testing.T) {
 	t.Parallel()
 
-	principal := &model.APIPrincipal{
-		User:      &model.User{ID: "user-1"},
-		TokenKind: model.APITokenKindOAuthAccessToken,
+	// 同じユーザーの、2つのスペースのメンバーとしての主体
+	pat := &model.APIPrincipal{
+		User:        &model.User{ID: "user-1"},
+		SpaceMember: &model.SpaceMember{ID: "space-member-1", SpaceID: "space-1", UserID: "user-1"},
+		TokenKind:   model.APITokenKindPersonalAccessToken,
+	}
+	oauth := &model.APIPrincipal{
+		User:        pat.User,
+		SpaceMember: pat.SpaceMember,
+		TokenKind:   model.APITokenKindOAuthAccessToken,
+	}
+	otherSpace := &model.APIPrincipal{
+		User:        pat.User,
+		SpaceMember: &model.SpaceMember{ID: "space-member-2", SpaceID: "space-2", UserID: "user-1"},
+		TokenKind:   model.APITokenKindPersonalAccessToken,
 	}
 
 	tests := []struct {
@@ -163,8 +176,10 @@ func TestAPIRateLimitPolicy_Key(t *testing.T) {
 		wantKey   string
 		wantOK    bool
 	}{
-		{name: "ユーザー単位の制限は呼び出し主体のユーザーで数える", policy: middleware.APIUserRateLimitPolicy, principal: principal, wantKey: "api:user:user-1", wantOK: true},
-		{name: "ユーザー単位の制限はトークンの無いリクエストを数えない", policy: middleware.APIUserRateLimitPolicy, wantOK: false},
+		{name: "メンバー単位の制限は個人アクセストークンの持ち主のメンバーで数える", policy: middleware.APISpaceMemberRateLimitPolicy, principal: pat, wantKey: "api:space_member:space-member-1", wantOK: true},
+		{name: "メンバー単位の制限は同じメンバーのOAuthのトークンを個人アクセストークンと合わせて数える", policy: middleware.APISpaceMemberRateLimitPolicy, principal: oauth, wantKey: "api:space_member:space-member-1", wantOK: true},
+		{name: "メンバー単位の制限は同じユーザーでもスペースが違えば別に数える", policy: middleware.APISpaceMemberRateLimitPolicy, principal: otherSpace, wantKey: "api:space_member:space-member-2", wantOK: true},
+		{name: "メンバー単位の制限はトークンの無いリクエストを数えない", policy: middleware.APISpaceMemberRateLimitPolicy, wantOK: false},
 		{name: "OAuthのIPアドレス単位の制限は未信頼の転送ヘッダーを無視する", policy: middleware.OAuthIPRateLimitPolicy(nil), wantKey: "oauth:ip:192.0.2.1", wantOK: true},
 		{name: "OAuthのIPアドレス単位の制限は信頼済みプロキシを経由した送信元で数える", policy: middleware.OAuthIPRateLimitPolicy([]netip.Prefix{netip.MustParsePrefix("192.0.2.0/24")}), wantKey: "oauth:ip:203.0.113.1", wantOK: true},
 	}

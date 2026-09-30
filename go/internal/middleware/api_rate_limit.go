@@ -31,19 +31,22 @@ type APIRateLimitPolicy struct {
 	Key func(r *http.Request) (string, bool)
 }
 
-// APIUserRateLimitPolicyは、トークンで認証した公開APIのリクエストに掛けるユーザー単位のレート制限。
+// APISpaceMemberRateLimitPolicyは、トークンで認証した公開APIのリクエストに掛ける、トークンの持ち主の
+// スペースのメンバー単位のレート制限。同じスペースのトークンは個人アクセストークンとOAuthのアクセス
+// トークンを合わせて数え、スペースが違えば別に数える。ユーザー単位で数えると、あるスペースのトークンで
+// 受け取る残量や429から、同じ人がほかのスペースでAPIを使った量が分かってしまうため。
 // 呼び出し主体をコンテキストから読むため、APITokenAuthの後に掛ける。トークンの無いリクエストは
 // 制限せずに通す
-var APIUserRateLimitPolicy = APIRateLimitPolicy{
-	Name:   "user",
+var APISpaceMemberRateLimitPolicy = APIRateLimitPolicy{
+	Name:   "space_member",
 	Limit:  5000,
 	Window: time.Hour,
 	Key: func(r *http.Request) (string, bool) {
 		principal := APIPrincipalFromContext(r.Context())
-		if principal == nil {
+		if principal == nil || principal.SpaceMember == nil {
 			return "", false
 		}
-		return ratelimit.APIUserKey(string(principal.User.ID)), true
+		return ratelimit.APISpaceMemberKey(string(principal.SpaceMember.ID)), true
 	},
 }
 

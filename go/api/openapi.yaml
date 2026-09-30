@@ -10,8 +10,9 @@ info:
 
     エラーはRFC 9457のProblem Details (`application/problem+json`) で返します。
 
-    トークンを使うリクエストには、トークンの持ち主のユーザー単位で1時間あたり5000件のレート制限があります。
-    残量はIETFで標準化中の `RateLimit-Policy` / `RateLimit` ヘッダーで返します (例: `RateLimit-Policy: "user";q=5000;w=3600`、`RateLimit: "user";r=4999;t=1800`)。
+    トークンを使うリクエストには、トークンの持ち主のスペースのメンバー単位で1時間あたり5000件のレート制限があります。
+    同じスペースのトークンは個人アクセストークンとOAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えます。
+    残量はIETFで標準化中の `RateLimit-Policy` / `RateLimit` ヘッダーで返します (例: `RateLimit-Policy: "space_member";q=5000;w=3600`、`RateLimit: "space_member";r=4999;t=1800`)。
     `q` は1時間あたりの上限、`w` は時間枠の秒数、`r` は残りの件数、`t` は時間枠が切り替わるまでの秒数です。
     上限を超えると429を返し、再試行できるまでの秒数を `Retry-After` ヘッダーで示します。
   contact:
@@ -24,10 +25,10 @@ security:
   - oauth2: []
   - personalAccessToken: []
 tags:
-  - name: user
-    description: トークンの持ち主のユーザーの情報
   - name: space
     description: トークンを束縛したスペースの情報
+  - name: space_member
+    description: スペースのメンバー
   - name: topic
     description: スペースのトピック
   - name: page
@@ -35,33 +36,6 @@ tags:
   - name: openapi
     description: このAPIのOpenAPI記述
 paths:
-  /user:
-    get:
-      operationId: getUser
-      summary: トークンの持ち主のユーザーを取得する
-      description: |
-        トークンの持ち主のユーザーを返します。
-        どのユーザーのトークンかを確かめるための操作で、スコープは要りません。
-      tags:
-        - user
-      responses:
-        "200":
-          description: トークンの持ち主のユーザー
-          headers:
-            RateLimit-Policy:
-              $ref: "#/components/headers/RateLimitPolicy"
-            RateLimit:
-              $ref: "#/components/headers/RateLimit"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "429":
-          $ref: "#/components/responses/TooManyRequests"
-        default:
-          $ref: "#/components/responses/UnexpectedError"
   /spaces/{space_identifier}:
     get:
       operationId: getSpace
@@ -86,6 +60,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Space"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/members/me:
+    get:
+      operationId: getCurrentSpaceMember
+      summary: トークンの持ち主のメンバーを取得する
+      description: |
+        トークンを束縛したスペースでの、トークンの持ち主のメンバーを返します。
+        誰のトークンかを確かめるための操作で、スコープは要りません。
+        束縛先と異なるスペースを指定すると404を返します。
+      tags:
+        - space_member
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+      responses:
+        "200":
+          description: トークンの持ち主のメンバー
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceMember"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -556,13 +562,13 @@ components:
         type: string
     RateLimitPolicy:
       description: |
-        レート制限のポリシーです (例: `"user";q=5000;w=3600`)。
+        レート制限のポリシーです (例: `"space_member";q=5000;w=3600`)。
         レート制限のカウンターを確かめられなかった場合は付きません。
       schema:
         type: string
     RateLimit:
       description: |
-        レート制限の残量です (例: `"user";r=4999;t=1800`)。
+        レート制限の残量です (例: `"space_member";r=4999;t=1800`)。
         レート制限のカウンターを確かめられなかった場合は付きません。
       schema:
         type: string
@@ -576,8 +582,7 @@ components:
         RFC 6750のBearer認証のチャレンジです。
         トークンを送らなかった場合は `Bearer`、送ったトークンを受け付けられない場合は `Bearer error="invalid_token"` です。
         トークンのスコープが足りない場合 (403) は `Bearer error="insufficient_scope", scope="topic:read"` のように要るスコープを示します。
-        スペース配下のoperation (`/spaces/{space_identifier}` とその下) では、401・403のどちらにも、そのスペースの保護リソースのメタデータ (RFC 9728) のURLを `resource_metadata="https://example.com/.well-known/oauth-protected-resource/api/v1/spaces/{space_identifier}"` のように付けます。
-        スペースに属さないoperation (`getUser` など) には付けません。
+        トークンを使うoperationはすべてスペース配下 (`/spaces/{space_identifier}` とその下) にあり、401・403のどちらにも、そのスペースの保護リソースのメタデータ (RFC 9728) のURLを `resource_metadata="https://example.com/.well-known/oauth-protected-resource/api/v1/spaces/{space_identifier}"` のように付けます。
       required: true
       schema:
         type: string
@@ -688,28 +693,6 @@ components:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
   schemas:
-    User:
-      type: object
-      description: ユーザーです。
-      required:
-        - id
-        - atname
-        - name
-        - description
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: ユーザーのIDです。
-        atname:
-          type: string
-          description: ユーザー名 (`@` の後に続く名前) です。
-        name:
-          type: string
-          description: 表示名です。設定していない場合は空文字列です。
-        description:
-          type: string
-          description: 自己紹介です。設定していない場合は空文字列です。
     Space:
       type: object
       description: スペースです。
@@ -728,6 +711,24 @@ components:
         name:
           type: string
           description: スペースの名前です。
+    SpaceMember:
+      type: object
+      description: スペースのメンバーです。
+      required:
+        - id
+        - atname
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: メンバーのIDです。同じ人でもスペースごとに異なります。
+        atname:
+          type: string
+          description: アットネーム (`@` の後に続く名前) です。
+        name:
+          type: string
+          description: 表示名です。設定していない場合は空文字列です。
     Topic:
       type: object
       description: トピックです。

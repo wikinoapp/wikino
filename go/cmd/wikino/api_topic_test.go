@@ -13,11 +13,11 @@ import (
 	"github.com/wikinoapp/wikino/go/api"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
-	apiuser "github.com/wikinoapp/wikino/go/internal/apihandler/user"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -73,6 +73,7 @@ func TestAPIRouter_Topics(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	server := apihandler.NewServer(
+		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
@@ -80,7 +81,6 @@ func TestAPIRouter_Topics(t *testing.T) {
 			usecase.NewListAPITopicsUsecase(topicRepo, topicMemberRepo),
 			usecase.NewGetAPITopicUsecase(topicRepo, topicMemberRepo),
 		),
-		apiuser.NewHandler(),
 	)
 	r := newTestAPIHandlerWith(t, server, topicTestAuthenticator{principal: principal}, topicTestRateLimiter{})
 

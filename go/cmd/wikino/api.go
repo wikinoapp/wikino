@@ -52,7 +52,7 @@ func newAPIRouter(server apigen.StrictServerInterface, reference http.HandlerFun
 	r.Route("/v1", func(r chi.Router) {
 		// リクエスト検証はoperationのsecurityをトークン認証で得た主体と照合するため、トークン認証の後に掛ける
 		r.Use(tokenAuth.Middleware)
-		// レート制限はトークン認証で得た主体のユーザー単位で数えるため、トークン認証の後に掛ける
+		// レート制限はトークン認証で得た主体のスペースのメンバー単位で数えるため、トークン認証の後に掛ける
 		r.Use(rateLimit.Middleware)
 		r.Use(requestValidator.Middleware)
 
