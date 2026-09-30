@@ -25,7 +25,7 @@ func TestRevokePersonalAccessTokenUsecase_Execute(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
-	f := setupPATMember(t, tx, "rpat-revoke", []model.Scope{model.ScopePersonalAccessTokenDelete}, true)
+	f := setupPATMember(t, tx, "rpat-revoke", model.SpaceRoleViewer, true)
 	tokenID := testutil.NewPersonalAccessTokenBuilder(t, tx).
 		WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).WithTokenDigest("rpat_revoke").Build()
 
@@ -54,7 +54,6 @@ func TestRevokePersonalAccessTokenUsecase_Execute_失効したトークンは次
 
 	_, tx := testutil.SetupTx(t)
 	opts := defaultAuthenticateAPITokenFixtureOptions()
-	opts.memberScopes = append(opts.memberScopes, model.ScopePersonalAccessTokenDelete)
 	f := setupAuthenticateAPITokenFixture(t, tx, opts)
 	authenticateUC := newAuthenticateAPITokenUC(tx)
 
@@ -93,7 +92,7 @@ func TestRevokePersonalAccessTokenUsecase_Execute_失効できない(t *testing.
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		// tokenOfは失効を求めるトークンの持ち主。"other"なら同じスペースの他のメンバー
 		tokenOf     string
@@ -102,22 +101,15 @@ func TestRevokePersonalAccessTokenUsecase_Execute_失効できない(t *testing.
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "personal_access_token:deleteを持たない",
-			key:         "rpat-nodelete",
-			scopes:      []model.Scope{model.ScopePersonalAccessTokenWrite},
-			flagEnabled: true,
-			wantErrCode: model.AppErrCodeForbidden,
-		},
-		{
 			name:        "フィーチャーフラグが無効",
 			key:         "rpat-noflag",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 		{
 			name:        "他のメンバーのトークン",
 			key:         "rpat-other",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			tokenOf:     "other",
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -125,7 +117,7 @@ func TestRevokePersonalAccessTokenUsecase_Execute_失効できない(t *testing.
 		{
 			name:        "既に失効したトークン",
 			key:         "rpat-revoked",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			revoked:     true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -133,7 +125,7 @@ func TestRevokePersonalAccessTokenUsecase_Execute_失効できない(t *testing.
 		{
 			name:        "UUIDでないID",
 			key:         "rpat-invalid-id",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			invalidID:   true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -146,13 +138,13 @@ func TestRevokePersonalAccessTokenUsecase_Execute_失効できない(t *testing.
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 
 			spaceMemberID := f.spaceMemberID
 			if tt.tokenOf == "other" {
 				otherUserID := testutil.NewUserBuilder(t, tx).WithEmail(tt.key + "-other@example.com").Build()
 				spaceMemberID = testutil.NewSpaceMemberBuilder(t, tx).
-					WithSpaceID(f.spaceID).WithUserID(otherUserID).WithScopes([]model.Scope{model.ScopeSpaceAdmin}).Build()
+					WithSpaceID(f.spaceID).WithUserID(otherUserID).Build()
 			}
 			builder := testutil.NewPersonalAccessTokenBuilder(t, tx).
 				WithSpaceID(f.spaceID).WithSpaceMemberID(spaceMemberID).WithTokenDigest(tt.key)

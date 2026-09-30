@@ -17,7 +17,7 @@ func TestCreate_許可すると認可コードとstateとissを付けて303で�
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
-	f := setupAuthorizationFixture(t, tx, "oauthz-create", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+	f := setupAuthorizationFixture(t, tx, "oauthz-create", model.SpaceRoleAdmin, true)
 	params := validParams(f.clientID)
 	params.Set("decision", "approve")
 
@@ -43,7 +43,7 @@ func TestCreate_拒否するとaccess_deniedを付けて303でクライアント
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-create-deny", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+	f := setupAuthorizationFixture(t, tx, "oauthz-create-deny", model.SpaceRoleAdmin, true)
 	params := validParams(f.clientID)
 	params.Set("decision", "deny")
 
@@ -59,28 +59,11 @@ func TestCreate_拒否するとaccess_deniedを付けて303でクライアント
 	}
 }
 
-func TestCreate_許可できないユーザーの許可の送信はaccess_deniedにする(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-create-no-permission", []model.Scope{model.ScopeOAuthGrantRead}, true)
-	params := validParams(f.clientID)
-	params.Set("decision", "approve")
-
-	rr := httptest.NewRecorder()
-	setupHandler(t, testutil.QueriesWithTx(tx)).Create(rr, newRequest(t, http.MethodPost, f.userID, params))
-
-	query := assertRedirectToClient(t, rr, http.StatusSeeOther, map[string]string{"error": "access_denied"})
-	if query.Has("code") {
-		t.Error("許可できないユーザーに認可コードが発行された")
-	}
-}
-
 func TestCreate_リダイレクトURIが不正ならクライアントへ戻さない(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-create-bad-redirect", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+	f := setupAuthorizationFixture(t, tx, "oauthz-create-bad-redirect", model.SpaceRoleAdmin, true)
 	params := validParams(f.clientID)
 	params.Set("redirect_uri", "https://evil.example/callback")
 	params.Set("decision", "approve")
@@ -100,7 +83,7 @@ func TestCreate_未ログインならサインインへ送る(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-create-signin", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+	f := setupAuthorizationFixture(t, tx, "oauthz-create-signin", model.SpaceRoleAdmin, true)
 	params := validParams(f.clientID)
 	params.Set("decision", "approve")
 

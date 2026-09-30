@@ -46,7 +46,7 @@ func setupPageHandler(t *testing.T, tx *sql.Tx, pageCount int32) (*page.Handler,
 	ctx := middleware.SetAPIPrincipalToContext(context.Background(), &model.APIPrincipal{
 		User:        &model.User{ID: userID},
 		Space:       &model.Space{ID: spaceID, Identifier: "page-handler"},
-		SpaceMember: &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, UserID: userID, Scopes: []model.Scope{model.ScopeSpaceAdmin}, Active: true},
+		SpaceMember: &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, UserID: userID, Role: model.SpaceRoleAdmin, Active: true},
 		TokenKind:   model.APITokenKindPersonalAccessToken,
 		Scopes:      []model.Scope{model.ScopePageRead},
 	})

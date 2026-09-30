@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
@@ -158,4 +160,109 @@ func TestGetPageMoveDataUsecase_Execute(t *testing.T) {
 			t.Errorf("AvailableTopics[0].Name = %q、期待値 = %q", output.AvailableTopics[0].Name, "トピック2")
 		}
 	})
+}
+
+// TestGetPageMoveDataUsecase_Execute_AvailableTopicsは、移動先候補をページを作成できるトピックに
+// 限ることを扱う。編集者はすべてのトピックを、閲覧者は所属トピックのうちトピック編集者以上のもの
+// だけを候補にする
+func TestGetPageMoveDataUsecase_Execute_AvailableTopics(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	uc := NewGetPageMoveDataUsecase(
+		repository.NewSpaceRepository(q),
+		repository.NewSpaceMemberRepository(q),
+		repository.NewPageRepository(q),
+		repository.NewTopicRepository(q),
+		repository.NewTopicMemberRepository(q),
+	)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("gpmd-available").
+		Build()
+	// トピックは次の5つ。移動するページは1に属する
+	//   - 1: 閲覧者はトピック編集者 (ページを編集できるよう)
+	//   - 2: 閲覧者はトピック管理者
+	//   - 3: 閲覧者はトピック閲覧者
+	//   - 4: 閲覧者は参加していない
+	//   - 5: 非公開で、閲覧者は参加していない
+	topicIDs := map[int32]model.TopicID{}
+	for number := int32(1); number <= 5; number++ {
+		b := testutil.NewTopicBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithNumber(number).
+			WithName(fmt.Sprintf("トピック%d", number))
+		if number == 5 {
+			b = b.WithVisibility(int32(model.TopicVisibilityPrivate))
+		}
+		topicIDs[number] = b.Build()
+	}
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicIDs[1]).
+		WithNumber(1).
+		WithTitle("移動するページ").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+
+	newMember := func(atname string, role model.SpaceRole, topicRoles map[int32]model.TopicRole) model.UserID {
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail(atname + "@example.com").
+			WithAtname(atname).
+			Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithUserID(userID).
+			WithRole(role).
+			Build()
+		for number, topicRole := range topicRoles {
+			testutil.NewTopicMemberBuilder(t, tx).
+				WithSpaceID(spaceID).
+				WithTopicID(topicIDs[number]).
+				WithSpaceMemberID(spaceMemberID).
+				WithRole(topicRole).
+				Build()
+		}
+		return userID
+	}
+	editorID := newMember("gpmdeditor", model.SpaceRoleEditor, nil)
+	viewerID := newMember("gpmdviewer", model.SpaceRoleViewer, map[int32]model.TopicRole{
+		1: model.TopicRoleEditor,
+		2: model.TopicRoleAdmin,
+		3: model.TopicRoleViewer,
+	})
+
+	tests := []struct {
+		name        string
+		userID      model.UserID
+		wantNumbers []int32
+	}{
+		{name: "編集者は現在のトピック以外のすべてのトピックが候補になる", userID: editorID, wantNumbers: []int32{2, 3, 4, 5}},
+		{name: "閲覧者は所属トピックのうちトピック編集者以上のものだけが候補になる", userID: viewerID, wantNumbers: []int32{2}},
+	}
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+	// サブテストは親のトランザクションを共有するため、並列にしない
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output, err := uc.Execute(ctx, GetPageMoveDataInput{
+				SpaceIdentifier: "gpmd-available",
+				PageNumber:      1,
+				UserID:          tt.userID,
+			})
+			if err != nil {
+				t.Fatalf("Execute()のエラー = %v", err)
+			}
+
+			got := make([]int32, len(output.AvailableTopics))
+			for i, topic := range output.AvailableTopics {
+				got[i] = topic.Number
+			}
+			slices.Sort(got)
+			if !slices.Equal(got, tt.wantNumbers) {
+				t.Errorf("移動先候補のトピック番号 = %v、期待値 = %v", got, tt.wantNumbers)
+			}
+		})
+	}
 }

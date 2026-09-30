@@ -66,7 +66,7 @@ func TestAPIRouter_Topics(t *testing.T) {
 	principal := &model.APIPrincipal{
 		User:        &model.User{ID: userID},
 		Space:       &model.Space{ID: spaceID, Identifier: "api-http-topics"},
-		SpaceMember: &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, UserID: userID, Scopes: []model.Scope{model.ScopeSpaceAdmin}, Active: true},
+		SpaceMember: &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, UserID: userID, Role: model.SpaceRoleAdmin, Active: true},
 		TokenKind:   model.APITokenKindPersonalAccessToken,
 	}
 	q := testutil.QueriesWithTx(tx)

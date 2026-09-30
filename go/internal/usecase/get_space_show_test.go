@@ -22,12 +22,12 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	uc := NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, repository.NewFeatureFlagRepository(q))
 
-	// スペースオーナー (デフォルトでspace:adminスコープを持つ)。
+	// スペースオーナー (既定で管理者のロールを持つ)。
 	ownerID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gss-owner@example.com").
 		WithAtname("gssowner").
 		Build()
-	// topic:writeを持たない限定スコープのメンバー (CanCreateTopic=falseの検証用)。
+	// topic:writeを持たない閲覧者のメンバー (CanCreateTopic=falseの検証用)。
 	limitedID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gss-limited@example.com").
 		WithAtname("gsslimited").
@@ -54,7 +54,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 	limitedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(limitedID).
-		WithScopes([]model.Scope{model.ScopePageRead}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	joinedMemberSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -80,7 +80,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		WithTopicID(publicTopicID).
 		WithSpaceMemberID(joinedMemberSpaceMemberID).
 		Build()
-	// 限定メンバーを追加のトピックスコープ無しで公開トピックに参加させ、トピックセクションには
+	// 限定メンバーをトピックのロール無しで公開トピックに参加させ、トピックセクションには
 	// 表示されるがCanCreatePageByTopicはfalseのままになる (page:writeを持たない) ようにする。
 	testutil.NewTopicMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -274,13 +274,13 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if output.TotalCount != 2 {
 			t.Errorf("TotalCount = %d、期待値 = 2", output.TotalCount)
 		}
-		// space:adminはtopic:writeを含意するためCanCreateTopicはtrue。
+		// 管理者のロールはtopic:writeを持つためCanCreateTopicはtrue。
 		if !output.CanCreateTopic {
-			t.Error("space:adminメンバーなのにCanCreateTopicがfalse")
+			t.Error("管理者のメンバーなのにCanCreateTopicがfalse")
 		}
-		// space:adminはspace:writeを含意するため、スペース設定を開ける。
+		// 管理者のロールはspace:writeを持つため、スペース設定を開ける。
 		if !output.CanShowSpaceSettings {
-			t.Error("space:adminメンバーなのにCanShowSpaceSettingsがfalse")
+			t.Error("管理者のメンバーなのにCanShowSpaceSettingsがfalse")
 		}
 		// TopicMapは一覧ページが属する両トピックを含む (カードラベル用)。
 		if output.TopicMap[publicTopicID] == nil {
@@ -289,25 +289,25 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if output.TopicMap[privateTopicID] == nil {
 			t.Error("TopicMapに非公開トピックが含まれていない")
 		}
-		// space:adminは全トピックでpage:writeを含意するため、両トピックとも編集可能。
+		// 管理者のロールはスペース全体でpage:writeを持つため、両トピックとも編集可能。
 		if !output.CanEditPageByTopic[publicTopicID] {
-			t.Error("space:adminメンバーなのに公開トピックのCanEditPageByTopicがfalse")
+			t.Error("管理者のメンバーなのに公開トピックのCanEditPageByTopicがfalse")
 		}
 		if !output.CanEditPageByTopic[privateTopicID] {
-			t.Error("space:adminメンバーなのに非公開トピックのCanEditPageByTopicがfalse")
+			t.Error("管理者のメンバーなのに非公開トピックのCanEditPageByTopicがfalse")
 		}
 		// オーナーはどのトピックにも参加していない (topic_memberなし) ためFirstJoinedTopicはnil。
 		if output.FirstJoinedTopic != nil {
 			t.Error("どのトピックにも参加していないメンバーなのにFirstJoinedTopicがnilではない")
 		}
-		// トピックセクションはメンバーの参加トピックを並べるため、space:adminが全トピックの
+		// トピックセクションはメンバーの参加トピックを並べるため、管理者のロールが全トピックの
 		// ページへのアクセスを与えていても、どのトピックにも参加していないオーナーでは空になる。
 		if len(output.SectionTopics) != 0 {
 			t.Errorf("len(SectionTopics) = %d、期待値 = 0 (オーナーはどのトピックにも参加していない)", len(output.SectionTopics))
 		}
 	})
 
-	t.Run("topic_writeを持たないメンバーはCanCreateTopicがfalse", func(t *testing.T) {
+	t.Run("topic:writeを持たない閲覧者はCanCreateTopicがfalse", func(t *testing.T) {
 		userID := limitedID
 		output, err := uc.Execute(context.Background(), GetSpaceShowInput{
 			SpaceIdentifier: "gss-space",
@@ -325,18 +325,18 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			t.Error("メンバーなのにJoinedSpaceがfalse")
 		}
 		if output.CanCreateTopic {
-			t.Error("topic:writeスコープを持たないメンバーなのにCanCreateTopicがtrue")
+			t.Error("topic:writeを持たない閲覧者なのにCanCreateTopicがtrue")
 		}
-		// space:writeもトークン管理のスコープも持たないメンバーはスペース設定を開けない。
+		// space:writeを持たず、公開APIのフィーチャーフラグも無い閲覧者はスペース設定を開けない。
 		if output.CanShowSpaceSettings {
 			t.Error("スペース設定の項目を1つも開けないメンバーなのにCanShowSpaceSettingsがtrue")
 		}
-		// page:readのみ (page:write無し) のメンバーはどのトピックのページも編集できない。
+		// 閲覧者のロール (page:write無し) のメンバーはどのトピックのページも編集できない。
 		if output.CanEditPageByTopic[publicTopicID] {
-			t.Error("page:writeスコープを持たないメンバーなのにCanEditPageByTopicがtrue")
+			t.Error("page:writeを持たない閲覧者なのにCanEditPageByTopicがtrue")
 		}
 		if output.CanEditPageByTopic[privateTopicID] {
-			t.Error("page:writeスコープを持たないメンバーなのにCanEditPageByTopicがtrue")
+			t.Error("page:writeを持たない閲覧者なのにCanEditPageByTopicがtrue")
 		}
 		// 限定メンバーは公開トピックに参加しているためセクションに表示されるが、page:writeが
 		// 無いためトピックごとの作成導線は出ない。
@@ -347,7 +347,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			t.Errorf("SectionTopics[0].ID = %v、期待値 = %v (公開トピック)", output.SectionTopics[0].ID, publicTopicID)
 		}
 		if output.CanCreatePageByTopic[publicTopicID] {
-			t.Error("page:writeスコープを持たないメンバーなのにCanCreatePageByTopicがtrue")
+			t.Error("page:writeを持たない閲覧者なのにCanCreatePageByTopicがtrue")
 		}
 	})
 
@@ -379,7 +379,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 		if output.FirstJoinedTopic.ID != publicTopicID {
 			t.Errorf("FirstJoinedTopic.ID = %v、期待値 = %v", output.FirstJoinedTopic.ID, publicTopicID)
 		}
-		// 参加メンバーはセクションに参加中の公開トピックを見て、space:admin (page:writeを含意) を
+		// 参加メンバーはセクションに参加中の公開トピックを見て、管理者のロール (page:writeを持つ) を
 		// 持つためそこにページを作成できる。
 		if len(output.SectionTopics) != 1 {
 			t.Fatalf("len(SectionTopics) = %d、期待値 = 1 (参加中の公開トピック)", len(output.SectionTopics))
@@ -388,7 +388,7 @@ func TestGetSpaceShowUsecase_Execute(t *testing.T) {
 			t.Errorf("SectionTopics[0].ID = %v、期待値 = %v (公開トピック)", output.SectionTopics[0].ID, publicTopicID)
 		}
 		if !output.CanCreatePageByTopic[publicTopicID] {
-			t.Error("参加中のトピックのspace:adminメンバーなのにCanCreatePageByTopicがfalse")
+			t.Error("参加中のトピックの管理者のメンバーなのにCanCreatePageByTopicがfalse")
 		}
 	})
 }
@@ -468,7 +468,7 @@ func TestGetSpaceShowUsecase_Execute_空状態(t *testing.T) {
 			t.Errorf("SectionTopics[0].ID = %v、期待値 = %v (参加中のトピック)", output.SectionTopics[0].ID, joinedTopicID)
 		}
 		if !output.CanCreatePageByTopic[joinedTopicID] {
-			t.Error("参加中のトピックのspace:adminメンバーなのにCanCreatePageByTopicがfalse")
+			t.Error("参加中のトピックの管理者のメンバーなのにCanCreatePageByTopicがfalse")
 		}
 	})
 }

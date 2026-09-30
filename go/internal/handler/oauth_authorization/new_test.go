@@ -15,7 +15,7 @@ func TestNew_同意画面にアプリ名と連携先のスペースとスコー�
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-new", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+	f := setupAuthorizationFixture(t, tx, "oauthz-new", model.SpaceRoleAdmin, true)
 
 	rr := httptest.NewRecorder()
 	setupHandler(t, testutil.QueriesWithTx(tx)).New(rr, newRequest(t, http.MethodGet, f.userID, validParams(f.clientID)))
@@ -53,7 +53,7 @@ func TestNew_未ログインならサインインへ送りサインイン後に�
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-new-signin", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+	f := setupAuthorizationFixture(t, tx, "oauthz-new-signin", model.SpaceRoleAdmin, true)
 	req := newRequest(t, http.MethodGet, "", validParams(f.clientID))
 
 	rr := httptest.NewRecorder()
@@ -80,22 +80,16 @@ func TestNew_許可できないユーザーには理由とクライアントへ�
 	tests := []struct {
 		name       string
 		identifier string
-		scopes     []model.Scope
+		role       model.SpaceRole
 		outsider   bool
 		wantText   string
 	}{
 		{
 			name:       "連携先のスペースのメンバーでない",
 			identifier: "oauthz-new-outsider",
-			scopes:     []model.Scope{model.ScopeOAuthGrantWrite},
+			role:       model.SpaceRoleAdmin,
 			outsider:   true,
 			wantText:   "このスペースのメンバーではないため",
-		},
-		{
-			name:       "oauth_grant:writeを持たない",
-			identifier: "oauthz-new-no-permission",
-			scopes:     []model.Scope{model.ScopeOAuthGrantRead},
-			wantText:   "連携を許可する権限がありません",
 		},
 	}
 
@@ -104,10 +98,10 @@ func TestNew_許可できないユーザーには理由とクライアントへ�
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupAuthorizationFixture(t, tx, tt.identifier, tt.scopes, true)
+			f := setupAuthorizationFixture(t, tx, tt.identifier, tt.role, true)
 			userID := f.userID
 			if tt.outsider {
-				outsider := setupAuthorizationFixture(t, tx, tt.identifier+"-other", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+				outsider := setupAuthorizationFixture(t, tx, tt.identifier+"-other", model.SpaceRoleAdmin, true)
 				userID = outsider.userID
 			}
 
@@ -172,7 +166,7 @@ func TestNew_クライアントIDかリダイレクトURIが不正ならクラ�
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupAuthorizationFixture(t, tx, tt.identifier, []model.Scope{model.ScopeOAuthGrantWrite}, true)
+			f := setupAuthorizationFixture(t, tx, tt.identifier, model.SpaceRoleAdmin, true)
 			params := validParams(f.clientID)
 			tt.modify(params)
 
@@ -236,7 +230,7 @@ func TestNew_その他の不正はエラーをリダイレクトURIに付けて�
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupAuthorizationFixture(t, tx, tt.identifier, []model.Scope{model.ScopeOAuthGrantWrite}, true)
+			f := setupAuthorizationFixture(t, tx, tt.identifier, model.SpaceRoleAdmin, true)
 			params := validParams(f.clientID)
 			tt.modify(params)
 
@@ -286,7 +280,7 @@ func TestNew_壊れたGETクエリは認可要求のエラーにする(t *testin
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupAuthorizationFixture(t, tx, tt.identifier, []model.Scope{model.ScopeOAuthGrantWrite}, true)
+			f := setupAuthorizationFixture(t, tx, tt.identifier, model.SpaceRoleAdmin, true)
 			req := newRequest(t, http.MethodGet, f.userID, validParams(f.clientID))
 			tt.change(req)
 
@@ -308,7 +302,7 @@ func TestNew_壊れたリダイレクトURIを含むGETクエリはクライア�
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-new-bad-query-redirect", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+	f := setupAuthorizationFixture(t, tx, "oauthz-new-bad-query-redirect", model.SpaceRoleAdmin, true)
 	params := validParams(f.clientID)
 	params.Del("redirect_uri")
 	req := newRequest(t, http.MethodGet, f.userID, params)
@@ -326,7 +320,7 @@ func TestNew_フィーチャーフラグが無効なら404を返す(t *testing.T
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-new-noflag", []model.Scope{model.ScopeOAuthGrantWrite}, false)
+	f := setupAuthorizationFixture(t, tx, "oauthz-new-noflag", model.SpaceRoleAdmin, false)
 
 	rr := httptest.NewRecorder()
 	setupHandler(t, testutil.QueriesWithTx(tx)).New(rr, newRequest(t, http.MethodGet, f.userID, validParams(f.clientID)))

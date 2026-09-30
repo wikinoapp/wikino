@@ -29,7 +29,7 @@ func TestDeleteOAuthApplicationUsecase_Execute(t *testing.T) {
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
 		ctx := context.Background()
-		f := setupPATMember(t, tx, "doa-delete", []model.Scope{model.ScopeOAuthApplicationDelete}, true)
+		f := setupPATMember(t, tx, "doa-delete", model.SpaceRoleAdmin, true)
 		// 作成したメンバーがいなくなったアプリ。閲覧者が作成したものでなくても削除できる
 		appID := testutil.NewOAuthApplicationBuilder(t, tx).
 			WithSpaceID(f.spaceID).
@@ -96,29 +96,29 @@ func TestDeleteOAuthApplicationUsecase_Execute_削除できない(t *testing.T) 
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		otherSpace  bool
 		discarded   bool
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "oauth_application:writeだけを持つ",
+			name:        "編集者 (OAuthアプリの権限を持たない)",
 			key:         "doa-writeonly",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationWrite},
+			role:        model.SpaceRoleEditor,
 			flagEnabled: true,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 		{
 			name:        "フィーチャーフラグが無効",
 			key:         "doa-noflag",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationDelete},
+			role:        model.SpaceRoleAdmin,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 		{
 			name:        "別のスペースのアプリ",
 			key:         "doa-otherspace",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationDelete},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			otherSpace:  true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -126,7 +126,7 @@ func TestDeleteOAuthApplicationUsecase_Execute_削除できない(t *testing.T) 
 		{
 			name:        "削除済みのアプリ",
 			key:         "doa-discarded",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationDelete},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			discarded:   true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -139,7 +139,7 @@ func TestDeleteOAuthApplicationUsecase_Execute_削除できない(t *testing.T) 
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 			appSpaceID := f.spaceID
 			if tt.otherSpace {
 				appSpaceID = testutil.NewSpaceBuilder(t, tx).WithIdentifier(tt.key + "-other").Build()

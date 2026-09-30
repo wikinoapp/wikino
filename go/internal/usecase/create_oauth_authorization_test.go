@@ -33,7 +33,7 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-approve", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupOAuthAuthorizationFixture(t, tx, "coa-approve", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 		params.RedirectURI = "http://127.0.0.1:53123/callback"
 
@@ -89,7 +89,7 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-deny", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupOAuthAuthorizationFixture(t, tx, "coa-deny", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 
 		_, err := newCreateOAuthAuthorizationUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), CreateOAuthAuthorizationInput{
@@ -105,8 +105,8 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-not-member", []model.Scope{model.ScopeOAuthGrantWrite}, true)
-		outsider := setupPATMember(t, tx, "coa-not-member-outsider", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupOAuthAuthorizationFixture(t, tx, "coa-not-member", model.SpaceRoleViewer, true)
+		outsider := setupPATMember(t, tx, "coa-not-member-outsider", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 
 		_, err := newCreateOAuthAuthorizationUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), CreateOAuthAuthorizationInput{
@@ -118,27 +118,11 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		assertNoOAuthGrant(t, tx, f)
 	})
 
-	t.Run("oauth_grant:writeを持たないメンバーが許可を送信するとaccess_deniedを返す", func(t *testing.T) {
-		t.Parallel()
-
-		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-no-permission", []model.Scope{model.ScopeOAuthGrantRead}, true)
-		params := validOAuthAuthorizationParams(f.clientID)
-
-		_, err := newCreateOAuthAuthorizationUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), CreateOAuthAuthorizationInput{
-			UserID:   f.userID,
-			Params:   params,
-			Approved: true,
-		})
-		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorAccessDenied, params)
-		assertNoOAuthGrant(t, tx, f)
-	})
-
 	t.Run("送信された要求も表示と同じく検証する", func(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-invalid", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupOAuthAuthorizationFixture(t, tx, "coa-invalid", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 		params.RedirectURI = "https://evil.example/callback"
 
@@ -157,7 +141,7 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-noflag", []model.Scope{model.ScopeOAuthGrantWrite}, false)
+		f := setupOAuthAuthorizationFixture(t, tx, "coa-noflag", model.SpaceRoleViewer, false)
 
 		_, err := newCreateOAuthAuthorizationUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), CreateOAuthAuthorizationInput{
 			UserID:   f.userID,

@@ -95,7 +95,7 @@ func (uc *GetHomeShowUsecase) Execute(ctx context.Context, input GetHomeShowInpu
 // 解決する。参加中トピックは複数スペースに跨るため、ユーザーはスペースごとに別々のスペースメンバーを、
 // トピックごとに別々のトピックメンバーを持つ。どちらもANY(...) によるバルククエリ1回ずつで取得し、
 // トピックに対するN+1を避ける (get_space_show.goのresolveSectionTopicsと同じ構造)。スペースレベルの
-// page:writeスコープ (例: space:admin) を持つユーザーは、トピックメンバーでなくてもページを作成できる。
+// page:writeスコープ (例: 管理者・編集者のロール) を持つユーザーは、トピックメンバーでなくてもページを作成できる。
 // これはnewAuthorizerがスペーススコープとトピックスコープを統合して扱う。
 func (uc *GetHomeShowUsecase) resolveCanCreatePageByTopic(
 	ctx context.Context,

@@ -24,7 +24,7 @@ func TestGetTopicSettingsGeneralUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
 	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
-	f := setupTopicSettingsGeneralFixture(t, "get-success", []model.Scope{model.ScopeSpaceAdmin})
+	f := setupTopicSettingsGeneralFixture(t, "get-success", model.SpaceRoleAdmin, "")
 	uc := newGetTopicSettingsGeneralUsecase(f)
 
 	output, err := uc.Execute(ctx, GetTopicSettingsGeneralInput{
@@ -54,21 +54,21 @@ func TestGetTopicSettingsGeneralUsecase_ExecuteRefused(t *testing.T) {
 	tests := []struct {
 		name        string
 		suffix      string
-		scopes      []model.Scope
+		spaceRole   model.SpaceRole
 		topicNumber int32
 		wantCode    model.AppErrorCode
 	}{
 		{
 			name:        "トピック更新権限がない場合は拒否する",
 			suffix:      "get-reader",
-			scopes:      []model.Scope{model.ScopePageRead},
+			spaceRole:   model.SpaceRoleViewer,
 			topicNumber: 1,
 			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
 			name:        "存在しないトピックでは拒否する",
 			suffix:      "get-notopic",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			spaceRole:   model.SpaceRoleAdmin,
 			topicNumber: 999,
 			wantCode:    model.AppErrCodeResourceNotFound,
 		},
@@ -78,7 +78,7 @@ func TestGetTopicSettingsGeneralUsecase_ExecuteRefused(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.scopes)
+			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.spaceRole, "")
 			uc := newGetTopicSettingsGeneralUsecase(f)
 
 			_, err := uc.Execute(ctx, GetTopicSettingsGeneralInput{
@@ -109,28 +109,30 @@ func TestGetTopicSettingsGeneralUsecase_ExecuteCanUpdateVisibility(t *testing.T)
 	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
 
 	tests := []struct {
-		name   string
-		suffix string
-		scopes []model.Scope
-		want   bool
+		name      string
+		suffix    string
+		spaceRole model.SpaceRole
+		topicRole model.TopicRole
+		want      bool
 	}{
 		{
-			name:   "topic:writeだけのメンバーは公開範囲を変えられない",
-			suffix: "get-writer",
-			scopes: []model.Scope{model.ScopeTopicWrite},
-			want:   false,
+			name:      "topic:writeだけを持つ編集者は公開範囲を変えられない",
+			suffix:    "get-writer",
+			spaceRole: model.SpaceRoleEditor,
+			want:      false,
 		},
 		{
-			name:   "topic_visibility:writeを持つメンバーは公開範囲を変えられる",
-			suffix: "get-visibility-writer",
-			scopes: []model.Scope{model.ScopeTopicWrite, model.ScopeTopicVisibilityWrite},
-			want:   true,
+			name:      "トピック管理者のロールでtopic_visibility:writeを持つメンバーは公開範囲を変えられる",
+			suffix:    "get-visibility-writer",
+			spaceRole: model.SpaceRoleEditor,
+			topicRole: model.TopicRoleAdmin,
+			want:      true,
 		},
 		{
-			name:   "space:adminを持つメンバーは公開範囲を変えられる",
-			suffix: "get-admin",
-			scopes: []model.Scope{model.ScopeSpaceAdmin},
-			want:   true,
+			name:      "管理者は公開範囲を変えられる",
+			suffix:    "get-admin",
+			spaceRole: model.SpaceRoleAdmin,
+			want:      true,
 		},
 	}
 
@@ -138,7 +140,7 @@ func TestGetTopicSettingsGeneralUsecase_ExecuteCanUpdateVisibility(t *testing.T)
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.scopes)
+			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.spaceRole, tt.topicRole)
 			uc := newGetTopicSettingsGeneralUsecase(f)
 
 			output, err := uc.Execute(ctx, GetTopicSettingsGeneralInput{

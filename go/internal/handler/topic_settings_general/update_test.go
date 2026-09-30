@@ -18,7 +18,7 @@ func TestUpdate_保存され一般設定へリダイレクトする(t *testing.T
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-update"
-	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, nil)
+	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, "")
 
 	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
 		"name":        "週報",
@@ -58,7 +58,7 @@ func TestUpdate_入力が不正なら422でフォームを再描画する(t *tes
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-invalid"
-	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, nil)
+	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, "")
 
 	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
 		"name":        "foo/bar",
@@ -102,7 +102,7 @@ func TestUpdate_トピック更新権限がないメンバーには404が返る(
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-update-reader"
-	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopePageRead})
+	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, model.SpaceRoleViewer)
 
 	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
 		"name":       "週報",
@@ -131,7 +131,7 @@ func TestUpdate_公開範囲を変えられないメンバーは名前と説明�
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-update-writer"
-	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite})
+	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, model.SpaceRoleEditor)
 
 	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
 		"name":        "週報",
@@ -163,7 +163,7 @@ func TestUpdate_公開範囲を変えられないメンバーが公開範囲を�
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-update-writer-public"
-	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite})
+	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, model.SpaceRoleEditor)
 
 	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
 		"name":       "週報",
@@ -195,7 +195,7 @@ func TestUpdate_公開範囲を変えられないメンバーの入力が不正�
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-update-writer-invalid"
-	userID, _, _ := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite})
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, model.SpaceRoleEditor)
 
 	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
 		"name": "foo/bar",
@@ -222,7 +222,7 @@ func TestUpdate_未ログインならログイン画面へリダイレクトす�
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 	identifier := "topic-general-update-anon"
-	settingsGeneralSpace(t, tx, identifier, nil)
+	settingsGeneralSpace(t, tx, identifier, "")
 
 	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", "", map[string]string{
 		"name":       "週報",

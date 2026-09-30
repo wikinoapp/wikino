@@ -29,14 +29,14 @@ type newPageFixture struct {
 // コミットして作成する (ハンドラーの背後のUseCaseが自前でトランザクションを管理するため)。
 // prefixとatnameはどちらもテストDBを共有する並行テスト間で識別子を一意に保つ。atnameを別に
 // 受け取るのは、prefixでは超えてしまうvalidator.AtnameMaxLengthにも収める必要があるため。
-// スコープの引数がnilの場合は各ビルダーの既定値を使う。
+// ロールの引数が空の場合は各ビルダーの既定値を使う。
 func setupNewPageFixture(
 	t *testing.T,
 	db *sql.DB,
 	prefix string,
 	atname string,
-	spaceMemberScopes []model.Scope,
-	topicMemberScopes []model.Scope,
+	spaceMemberRole model.SpaceRole,
+	topicMemberRole model.TopicRole,
 ) newPageFixture {
 	t.Helper()
 
@@ -51,8 +51,8 @@ func setupNewPageFixture(
 	spaceMemberBuilder := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID)
-	if spaceMemberScopes != nil {
-		spaceMemberBuilder = spaceMemberBuilder.WithScopes(spaceMemberScopes)
+	if spaceMemberRole != "" {
+		spaceMemberBuilder = spaceMemberBuilder.WithRole(spaceMemberRole)
 	}
 	spaceMemberID := spaceMemberBuilder.Build()
 
@@ -65,8 +65,8 @@ func setupNewPageFixture(
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID)
-	if topicMemberScopes != nil {
-		topicMemberBuilder = topicMemberBuilder.WithScopes(topicMemberScopes)
+	if topicMemberRole != "" {
+		topicMemberBuilder = topicMemberBuilder.WithRole(topicMemberRole)
 	}
 	topicMemberBuilder.Build()
 
@@ -173,7 +173,7 @@ func TestNew_WithoutPrefilledContent(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	f := setupNewPageFixture(t, db, "handler-new-blank", "hnblank", nil, nil)
+	f := setupNewPageFixture(t, db, "handler-new-blank", "hnblank", "", "")
 
 	rr := requestNewPage(t, db, f, f.spaceIdentifier, "1", "")
 
@@ -198,7 +198,7 @@ func TestNew_WithPrefilledContent(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	f := setupNewPageFixture(t, db, "handler-new-prefill", "hnprefill", nil, nil)
+	f := setupNewPageFixture(t, db, "handler-new-prefill", "hnprefill", "", "")
 
 	title := "記事タイトル - example.com"
 	body := "https://example.com/article\n\n> 引用された文章"
@@ -242,7 +242,7 @@ func TestNew_NotFound(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	f := setupNewPageFixture(t, db, "handler-new-notfound", "hnnf", nil, nil)
+	f := setupNewPageFixture(t, db, "handler-new-notfound", "hnnf", "", "")
 
 	testCases := []struct {
 		name            string
@@ -290,8 +290,8 @@ func TestNew_WithoutPageWriteScope(t *testing.T) {
 		db,
 		"handler-new-readonly",
 		"hnread",
-		[]model.Scope{model.ScopePageRead},
-		[]model.Scope{model.ScopePageRead},
+		model.SpaceRoleViewer,
+		model.TopicRoleViewer,
 	)
 
 	rr := requestNewPage(t, db, f, f.spaceIdentifier, "1", "title=%E3%83%86%E3%82%B9%E3%83%88")

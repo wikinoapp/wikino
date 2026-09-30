@@ -201,7 +201,7 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("異常系: suggestion_closure:writeスコープなしの非作成者はAppErrCodeForbiddenが返る", func(t *testing.T) {
+	t.Run("異常系: suggestion_closure:writeを持たない閲覧者の非作成者はAppErrCodeForbiddenが返る", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -222,7 +222,7 @@ func TestCloseSuggestionUsecase_Execute(t *testing.T) {
 		testutil.NewSpaceMemberBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithUserID(memberID).
-			WithScopes([]model.Scope{model.ScopeSuggestionWrite}).
+			WithRole(model.SpaceRoleViewer).
 			Build()
 		topicID := testutil.NewTopicBuilderDB(t, db).
 			WithSpaceID(spaceID).

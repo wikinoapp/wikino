@@ -26,12 +26,12 @@ type oauthAuthorizationFixture struct {
 	clientID string
 }
 
-// setupOAuthAuthorizationFixtureは、スペースkeyのメンバーと、そのスペースのOAuthアプリを作る。
+// setupOAuthAuthorizationFixtureは、スペースkeyのroleのロールを持つメンバーと、そのスペースのOAuthアプリを作る。
 // アプリのリダイレクトURIは `https://example.com/callback` とループバックの `http://127.0.0.1/callback`
-func setupOAuthAuthorizationFixture(t *testing.T, tx *sql.Tx, key string, scopes []model.Scope, flagEnabled bool) oauthAuthorizationFixture {
+func setupOAuthAuthorizationFixture(t *testing.T, tx *sql.Tx, key string, role model.SpaceRole, flagEnabled bool) oauthAuthorizationFixture {
 	t.Helper()
 
-	f := setupPATMember(t, tx, key, scopes, flagEnabled)
+	f := setupPATMember(t, tx, key, role, flagEnabled)
 	clientID := key + "-client"
 	testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(f.spaceID).
@@ -73,7 +73,7 @@ func TestGetOAuthAuthorizationNewUsecase_Execute(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "goan-space-app", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-space-app", model.SpaceRoleViewer, true)
 
 		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
 			UserID: f.userID,
@@ -101,7 +101,7 @@ func TestGetOAuthAuthorizationNewUsecase_Execute(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "goan-resource", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-resource", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 		params.Resource = "https://example.com/api/v1/spaces/goan-resource"
 
@@ -121,7 +121,7 @@ func TestGetOAuthAuthorizationNewUsecase_Execute(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupPATMember(t, tx, "goan-official", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupPATMember(t, tx, "goan-official", model.SpaceRoleViewer, true)
 		testutil.NewOAuthApplicationBuilder(t, tx).
 			AsOfficialClient().
 			WithClientID("goan-official-client").
@@ -150,8 +150,8 @@ func TestGetOAuthAuthorizationNewUsecase_Execute(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "goan-not-member", []model.Scope{model.ScopeOAuthGrantWrite}, true)
-		outsider := setupPATMember(t, tx, "goan-not-member-outsider", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-not-member", model.SpaceRoleViewer, true)
+		outsider := setupPATMember(t, tx, "goan-not-member-outsider", model.SpaceRoleViewer, true)
 
 		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
 			UserID: outsider.userID,
@@ -165,29 +165,11 @@ func TestGetOAuthAuthorizationNewUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("oauth_grant:writeを持たなければ、その理由を返す", func(t *testing.T) {
-		t.Parallel()
-
-		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "goan-no-permission", []model.Scope{model.ScopeOAuthGrantRead, model.ScopeOAuthGrantDelete}, true)
-
-		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
-			UserID: f.userID,
-			Params: validOAuthAuthorizationParams(f.clientID),
-		})
-		if err != nil {
-			t.Fatalf("Execute()のエラー = %v", err)
-		}
-		if output.DeniedReason != OAuthAuthorizationDeniedNoPermission {
-			t.Errorf("DeniedReason = %q、期待値 = %q", output.DeniedReason, OAuthAuthorizationDeniedNoPermission)
-		}
-	})
-
 	t.Run("フィーチャーフラグが無効なら見つからないとして答える", func(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "goan-noflag", []model.Scope{model.ScopeOAuthGrantWrite}, false)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-noflag", model.SpaceRoleViewer, false)
 
 		_, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
 			UserID: f.userID,
@@ -222,7 +204,7 @@ func TestGetOAuthAuthorizationNewUsecase_Execute_クライアントへ戻さな�
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupOAuthAuthorizationFixture(t, tx, tt.key, []model.Scope{model.ScopeOAuthGrantWrite}, true)
+			f := setupOAuthAuthorizationFixture(t, tx, tt.key, model.SpaceRoleViewer, true)
 			params := validOAuthAuthorizationParams(f.clientID)
 			tt.modify(&params)
 
@@ -247,7 +229,7 @@ func TestGetOAuthAuthorizationNewUsecase_Execute_クライアントへ戻さな�
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupPATMember(t, tx, "goan-fatal-discarded", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupPATMember(t, tx, "goan-fatal-discarded", model.SpaceRoleViewer, true)
 		testutil.NewOAuthApplicationBuilder(t, tx).
 			WithSpaceID(f.spaceID).
 			WithClientID("goan-fatal-discarded-client").
@@ -300,7 +282,7 @@ func TestGetOAuthAuthorizationNewUsecase_Execute_クライアントへ戻すエ�
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupOAuthAuthorizationFixture(t, tx, tt.key, []model.Scope{model.ScopeOAuthGrantWrite}, true)
+			f := setupOAuthAuthorizationFixture(t, tx, tt.key, model.SpaceRoleViewer, true)
 			params := validOAuthAuthorizationParams(f.clientID)
 			tt.modify(&params)
 
@@ -316,8 +298,8 @@ func TestGetOAuthAuthorizationNewUsecase_Execute_クライアントへ戻すエ�
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "goan-res-other", []model.Scope{model.ScopeOAuthGrantWrite}, true)
-		setupPATMember(t, tx, "goan-res-other-space", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-res-other", model.SpaceRoleViewer, true)
+		setupPATMember(t, tx, "goan-res-other-space", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 		params.Resource = "https://example.com/api/v1/spaces/goan-res-other-space"
 
@@ -332,7 +314,7 @@ func TestGetOAuthAuthorizationNewUsecase_Execute_クライアントへ戻すエ�
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
-		f := setupPATMember(t, tx, "goan-official-nores", []model.Scope{model.ScopeOAuthGrantWrite}, true)
+		f := setupPATMember(t, tx, "goan-official-nores", model.SpaceRoleViewer, true)
 		testutil.NewOAuthApplicationBuilder(t, tx).
 			AsOfficialClient().
 			WithClientID("goan-official-nores-client").

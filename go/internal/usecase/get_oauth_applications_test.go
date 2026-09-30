@@ -38,7 +38,7 @@ func TestGetOAuthApplicationsUsecase_Execute(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "goa-list", []model.Scope{model.ScopeOAuthApplicationRead}, true)
+		f := setupPATMember(t, tx, "goa-list", model.SpaceRoleAdmin, true)
 
 		otherUserID := testutil.NewUserBuilder(t, tx).
 			WithEmail("goa-list-other@example.com").
@@ -75,8 +75,8 @@ func TestGetOAuthApplicationsUsecase_Execute(t *testing.T) {
 		if len(output.Creators) != 1 {
 			t.Errorf("Creatorsの件数 = %d、期待値 = 1 (作成者のいないアプリは引かない)", len(output.Creators))
 		}
-		if output.CanCreate {
-			t.Error("CanCreate = true、期待値 = false (oauth_application:readだけを持つ)")
+		if !output.CanCreate {
+			t.Error("CanCreate = false、期待値 = true (管理者はOAuthアプリを作成できる)")
 		}
 	})
 
@@ -86,12 +86,12 @@ func TestGetOAuthApplicationsUsecase_Execute(t *testing.T) {
 		tests := []struct {
 			name        string
 			key         string
-			scopes      []model.Scope
+			role        model.SpaceRole
 			flagEnabled bool
 			wantErrCode model.AppErrorCode
 		}{
-			{name: "oauth_application:readを持たない", key: "goa-noscope", scopes: []model.Scope{model.ScopePersonalAccessTokenRead}, flagEnabled: true, wantErrCode: model.AppErrCodeForbidden},
-			{name: "フィーチャーフラグが無効", key: "goa-noflag", scopes: []model.Scope{model.ScopeOAuthApplicationRead}, wantErrCode: model.AppErrCodeResourceNotFound},
+			{name: "編集者 (OAuthアプリの権限を持たない)", key: "goa-noscope", role: model.SpaceRoleEditor, flagEnabled: true, wantErrCode: model.AppErrCodeForbidden},
+			{name: "フィーチャーフラグが無効", key: "goa-noflag", role: model.SpaceRoleAdmin, wantErrCode: model.AppErrCodeResourceNotFound},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestGetOAuthApplicationsUsecase_Execute(t *testing.T) {
 
 				_, tx := testutil.SetupTx(t)
 				q := testutil.QueriesWithTx(tx)
-				f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+				f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 
 				_, err := newGetOAuthApplicationsUsecaseForTest(q).Execute(context.Background(), GetOAuthApplicationsInput{
 					SpaceIdentifier: model.SpaceIdentifier(tt.key),
@@ -116,8 +116,8 @@ func TestGetOAuthApplicationUsecase_Execute(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
-	f := setupPATMember(t, tx, "goa-show", []model.Scope{model.ScopeOAuthApplicationRead}, true)
-	other := setupPATMember(t, tx, "goa-show-other", []model.Scope{model.ScopeOAuthApplicationRead}, true)
+	f := setupPATMember(t, tx, "goa-show", model.SpaceRoleAdmin, true)
+	other := setupPATMember(t, tx, "goa-show-other", model.SpaceRoleAdmin, true)
 
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(f.spaceID).

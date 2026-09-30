@@ -50,7 +50,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 			WithSpaceID(spaceID).
 			WithUserID(userID).
-			WithScopes([]model.Scope{model.ScopeSuggestionApplicationWrite}).
+			WithRole(model.SpaceRoleEditor).
 			Build()
 		topicID := testutil.NewTopicBuilderDB(t, db).
 			WithSpaceID(spaceID).
@@ -60,7 +60,6 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
 			WithSpaceMemberID(spaceMemberID).
-			WithScopes([]model.Scope{}).
 			Build()
 		pageID := testutil.NewPageBuilderDB(t, db).
 			WithSpaceID(spaceID).

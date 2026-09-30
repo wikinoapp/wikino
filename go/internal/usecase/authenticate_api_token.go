@@ -71,7 +71,7 @@ func (uc *AuthenticateAPITokenUsecase) authenticatePersonalAccessToken(ctx conte
 	if err != nil {
 		return nil, err
 	}
-	if principal == nil || !policy.NewMemberPolicy(principal.SpaceMember.Scopes, nil).CanCreatePersonalAccessToken() {
+	if principal == nil || !policy.NewMemberPolicy(principal.SpaceMember.Role.Scopes(), nil).CanCreatePersonalAccessToken() {
 		return nil, nil
 	}
 
@@ -108,7 +108,7 @@ func (uc *AuthenticateAPITokenUsecase) authenticateOAuthAccessToken(ctx context.
 	if err != nil {
 		return nil, err
 	}
-	if principal == nil || !policy.NewMemberPolicy(principal.SpaceMember.Scopes, nil).CanCreateOAuthGrant() {
+	if principal == nil || !policy.NewMemberPolicy(principal.SpaceMember.Role.Scopes(), nil).CanCreateOAuthGrant() {
 		return nil, nil
 	}
 

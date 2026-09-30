@@ -24,10 +24,10 @@ var apiPageBaseTime = time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
 //   - 6: 参加している非公開トピックのページ
 //   - 7: 参加していない非公開トピックのページ
 //   - 8: 廃棄済みのトピックのページ
-func setupAPIPageFixture(t *testing.T, tx *sql.Tx, identifier string, memberScopes []model.Scope) apiTopicFixture {
+func setupAPIPageFixture(t *testing.T, tx *sql.Tx, identifier string, memberRole model.SpaceRole) apiTopicFixture {
 	t.Helper()
 
-	f := setupAPITopicFixture(t, tx, identifier, memberScopes)
+	f := setupAPITopicFixture(t, tx, identifier, memberRole)
 	pages := []struct {
 		number      model.PageNumber
 		topicNumber int32
@@ -70,74 +70,74 @@ func TestListAPIPagesUsecase_Execute_Filters(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		memberScopes  []model.Scope
+		memberRole    model.SpaceRole
 		tokenScopes   []model.Scope
 		topicNumber   *int32
 		modifiedSince *time.Time
 		wantNumbers   []model.PageNumber
 	}{
 		{
-			name:         "一般メンバーでトークンがtopic:readを持てば、公開と参加している非公開トピックのページを返す",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
-			wantNumbers:  []model.PageNumber{1, 2, 6},
+			name:        "一般メンバーでトークンがtopic:readを持てば、参加していない非公開トピックのページも返す",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			wantNumbers: []model.PageNumber{1, 2, 6, 7},
 		},
 		{
-			name:         "一般メンバーでトークンがtopic:readを持たなければ、公開トピックのページだけを返す",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead},
-			wantNumbers:  []model.PageNumber{1, 2},
+			name:        "一般メンバーでトークンがtopic:readを持たなければ、公開トピックのページだけを返す",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead},
+			wantNumbers: []model.PageNumber{1, 2},
 		},
 		{
-			name:         "管理者でトークンがtopic:readを持てば、すべての非公開トピックのページを返す",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
-			wantNumbers:  []model.PageNumber{1, 2, 6, 7},
+			name:        "管理者でトークンがtopic:readを持てば、すべての非公開トピックのページを返す",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			wantNumbers: []model.PageNumber{1, 2, 6, 7},
 		},
 		{
-			name:         "管理者でもトークンがtopic:readを持たなければ、公開トピックのページだけを返す",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageWrite},
-			wantNumbers:  []model.PageNumber{1, 2},
+			name:        "管理者でもトークンがtopic:readを持たなければ、公開トピックのページだけを返す",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageWrite},
+			wantNumbers: []model.PageNumber{1, 2},
 		},
 		{
-			name:         "topic_numberでトピックを絞り込む",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
-			topicNumber:  int32Ptr(2),
-			wantNumbers:  []model.PageNumber{6},
+			name:        "topic_numberでトピックを絞り込む",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			topicNumber: int32Ptr(2),
+			wantNumbers: []model.PageNumber{6},
 		},
 		{
-			name:         "開けない非公開トピックで絞り込むと空の一覧",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
-			topicNumber:  int32Ptr(3),
-			wantNumbers:  []model.PageNumber{},
+			name:        "トークンがtopic:readを持たず開けない非公開トピックで絞り込むと空の一覧",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead},
+			topicNumber: int32Ptr(3),
+			wantNumbers: []model.PageNumber{},
 		},
 		{
-			name:         "廃棄済みのトピックで絞り込むと空の一覧",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
-			topicNumber:  int32Ptr(4),
-			wantNumbers:  []model.PageNumber{},
+			name:        "廃棄済みのトピックで絞り込むと空の一覧",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			topicNumber: int32Ptr(4),
+			wantNumbers: []model.PageNumber{},
 		},
 		{
-			name:         "存在しないトピックで絞り込むと空の一覧",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
-			topicNumber:  int32Ptr(99),
-			wantNumbers:  []model.PageNumber{},
+			name:        "存在しないトピックで絞り込むと空の一覧",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			topicNumber: int32Ptr(99),
+			wantNumbers: []model.PageNumber{},
 		},
 		{
 			name:          "modified_sinceより前に更新したページを除き、ちょうどの日時は含める",
-			memberScopes:  apiTopicAdminMemberScopes,
+			memberRole:    apiTopicAdminMemberRole,
 			tokenScopes:   []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
 			modifiedSince: timePtr(apiPageBaseTime.Add(-2 * time.Hour)),
 			wantNumbers:   []model.PageNumber{1, 2},
 		},
 		{
 			name:          "modified_sinceはUTC以外のオフセットでも同じ時点として扱う",
-			memberScopes:  apiTopicAdminMemberScopes,
+			memberRole:    apiTopicAdminMemberRole,
 			tokenScopes:   []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
 			modifiedSince: timePtr(apiPageBaseTime.Add(-2 * time.Hour).In(time.FixedZone("JST", 9*60*60))),
 			wantNumbers:   []model.PageNumber{1, 2},
@@ -149,10 +149,10 @@ func TestListAPIPagesUsecase_Execute_Filters(t *testing.T) {
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupAPIPageFixture(t, tx, "api-page-filters", tt.memberScopes)
+			f := setupAPIPageFixture(t, tx, "api-page-filters", tt.memberRole)
 
 			output, err := newListAPIPagesUC(tx).Execute(t.Context(), ListAPIPagesInput{
-				Principal:       f.principal(tt.memberScopes, tt.tokenScopes),
+				Principal:       f.principal(tt.memberRole, tt.tokenScopes),
 				SpaceIdentifier: f.space.Identifier,
 				TopicNumber:     tt.topicNumber,
 				ModifiedSince:   tt.modifiedSince,
@@ -179,7 +179,7 @@ func TestListAPIPagesUsecase_Execute_Cursor(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAPIPageFixture(t, tx, "api-page-cursor", apiTopicAdminMemberScopes)
+	f := setupAPIPageFixture(t, tx, "api-page-cursor", apiTopicAdminMemberRole)
 	// 更新日時が同じページを並べ、主キーで順序が決まり重複も読み飛ばしも起きないことを確かめる
 	sameModifiedAt := apiPageBaseTime.Add(-30 * time.Minute)
 	for number := model.PageNumber(11); number <= 14; number++ {
@@ -191,7 +191,7 @@ func TestListAPIPagesUsecase_Execute_Cursor(t *testing.T) {
 			WithModifiedAt(sameModifiedAt).
 			Build()
 	}
-	principal := f.principal(apiTopicAdminMemberScopes, []model.Scope{model.ScopePageRead, model.ScopeTopicRead})
+	principal := f.principal(apiTopicAdminMemberRole, []model.Scope{model.ScopePageRead, model.ScopeTopicRead})
 	uc := newListAPIPagesUC(tx)
 
 	// サブテストは親のトランザクションを共有するため、並列にしない
@@ -261,11 +261,11 @@ func TestListAPIPagesUsecase_Execute_OtherSpace(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
-	f := setupAPIPageFixture(t, tx, "api-page-bound", apiTopicAdminMemberScopes)
-	setupAPIPageFixture(t, tx, "api-page-other", apiTopicAdminMemberScopes)
+	f := setupAPIPageFixture(t, tx, "api-page-bound", apiTopicAdminMemberRole)
+	setupAPIPageFixture(t, tx, "api-page-other", apiTopicAdminMemberRole)
 
 	output, err := newListAPIPagesUC(tx).Execute(t.Context(), ListAPIPagesInput{
-		Principal:       f.principal(apiTopicAdminMemberScopes, []model.Scope{model.ScopePageRead}),
+		Principal:       f.principal(apiTopicAdminMemberRole, []model.Scope{model.ScopePageRead}),
 		SpaceIdentifier: "api-page-other",
 		Limit:           20,
 	})

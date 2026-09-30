@@ -19,7 +19,6 @@ type SpaceMemberBuilder struct {
 	spaceID  string
 	userID   model.UserID
 	role     model.SpaceRole
-	scopes   []string
 	joinedAt time.Time
 	active   bool
 }
@@ -32,7 +31,6 @@ func NewSpaceMemberBuilder(t *testing.T, tx *sql.Tx) *SpaceMemberBuilder {
 		t:        t,
 		tx:       tx,
 		role:     model.SpaceRoleAdmin,
-		scopes:   []string{string(model.ScopeSpaceAdmin)},
 		joinedAt: now,
 		active:   true,
 	}
@@ -56,15 +54,9 @@ func (b *SpaceMemberBuilder) WithActive(active bool) *SpaceMemberBuilder {
 	return b
 }
 
-// WithScopesはスコープを設定します。ロールは空 (NULL) にし、認可をロールへ切り替えた後に
-// スコープだけで作ったメンバーが既定の管理者として扱われないようにする
-func (b *SpaceMemberBuilder) WithScopes(scopes []model.Scope) *SpaceMemberBuilder {
-	ss := make([]string, len(scopes))
-	for i, s := range scopes {
-		ss[i] = string(s)
-	}
-	b.scopes = ss
-	b.role = ""
+// WithRoleはスペースのロールを設定します
+func (b *SpaceMemberBuilder) WithRole(role model.SpaceRole) *SpaceMemberBuilder {
+	b.role = role
 	return b
 }
 
@@ -92,7 +84,7 @@ func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), nullableSpaceRole(b.role), pq.Array(b.scopes), b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), string(b.role), pq.Array(model.ScopesToStrings(b.role.RailsScopes())), b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
@@ -110,7 +102,6 @@ type SpaceMemberBuilderDB struct {
 	spaceID  string
 	userID   model.UserID
 	role     model.SpaceRole
-	scopes   []string
 	joinedAt time.Time
 	active   bool
 }
@@ -123,7 +114,6 @@ func NewSpaceMemberBuilderDB(t *testing.T, db *sql.DB) *SpaceMemberBuilderDB {
 		t:        t,
 		db:       db,
 		role:     model.SpaceRoleAdmin,
-		scopes:   []string{string(model.ScopeSpaceAdmin)},
 		joinedAt: now,
 		active:   true,
 	}
@@ -141,15 +131,9 @@ func (b *SpaceMemberBuilderDB) WithUserID(userID model.UserID) *SpaceMemberBuild
 	return b
 }
 
-// WithScopesはスコープを設定します。ロールは空 (NULL) にし、認可をロールへ切り替えた後に
-// スコープだけで作ったメンバーが既定の管理者として扱われないようにする
-func (b *SpaceMemberBuilderDB) WithScopes(scopes []model.Scope) *SpaceMemberBuilderDB {
-	ss := make([]string, len(scopes))
-	for i, s := range scopes {
-		ss[i] = string(s)
-	}
-	b.scopes = ss
-	b.role = ""
+// WithRoleはスペースのロールを設定します
+func (b *SpaceMemberBuilderDB) WithRole(role model.SpaceRole) *SpaceMemberBuilderDB {
+	b.role = role
 	return b
 }
 
@@ -171,30 +155,11 @@ func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), nullableSpaceRole(b.role), pq.Array(b.scopes), b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), string(b.role), pq.Array(model.ScopesToStrings(b.role.RailsScopes())), b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
 	}
 
 	return model.SpaceMemberID(id)
-}
-
-// WithRoleは保存するロールを設定します
-func (b *SpaceMemberBuilder) WithRole(role model.SpaceRole) *SpaceMemberBuilder {
-	b.role = role
-	b.scopes = model.ScopesToStrings(role.RailsScopes())
-	return b
-}
-
-// WithRoleは保存するロールを設定します
-func (b *SpaceMemberBuilderDB) WithRole(role model.SpaceRole) *SpaceMemberBuilderDB {
-	b.role = role
-	b.scopes = model.ScopesToStrings(role.RailsScopes())
-	return b
-}
-
-// nullableSpaceRoleは空のロールをNULLとして保存する値を返す
-func nullableSpaceRole(role model.SpaceRole) sql.NullString {
-	return sql.NullString{String: string(role), Valid: role != ""}
 }

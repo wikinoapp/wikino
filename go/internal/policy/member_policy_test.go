@@ -38,18 +38,25 @@ func TestNewMemberPolicy(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminで全スコープが展開される", func(t *testing.T) {
+	t.Run("管理者のロールで定義の表の全スコープが有効になる", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy(
-			[]model.Scope{model.ScopeSpaceAdmin},
-			nil,
-		)
+		p := NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
 
-		for _, s := range allResourceScopes() {
-			if !p.effectiveScopes[s] {
-				t.Errorf("space:adminで%sが含まれるべき", s)
+		for _, d := range model.ScopeDefinitions {
+			if !p.effectiveScopes[d.Scope] {
+				t.Errorf("管理者のロールで%sが含まれるべき", d.Scope)
 			}
+		}
+	})
+
+	t.Run("space:adminは権限を生まない", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+
+		if p.CanUpdateSpace() || p.CanCreatePage() {
+			t.Error("space:adminはRails版向けの値であり、Go版の判定で権限を生むべきでない")
 		}
 	})
 
@@ -124,11 +131,11 @@ func TestNewAPIMemberPolicy(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminを持つメンバーでもトークンのスコープに限られる", func(t *testing.T) {
+	t.Run("管理者のロールを持つメンバーでもトークンのスコープに限られる", func(t *testing.T) {
 		t.Parallel()
 
 		p := NewAPIMemberPolicy(
-			[]model.Scope{model.ScopeSpaceAdmin},
+			model.SpaceRoleAdmin.Scopes(),
 			nil,
 			[]model.Scope{model.ScopePageWrite, model.ScopeTopicRead},
 		)
@@ -147,13 +154,10 @@ func TestNewAPIMemberPolicy(t *testing.T) {
 			}
 		}
 		if p.CanUpdateSpace() {
-			t.Error("space:adminのメンバーでもトークン経由でスペースを更新できるべきでない")
+			t.Error("管理者のロールのメンバーでもトークン経由でスペースを更新できるべきでない")
 		}
 		if p.CanCreatePersonalAccessToken() {
-			t.Error("space:adminのメンバーでもトークン経由で個人アクセストークンを発行できるべきでない")
-		}
-		if p.CanShowDraftPage(false) {
-			t.Error("space:adminのメンバーでもトークン経由で他人の下書きを閲覧できるべきでない")
+			t.Error("管理者のロールのメンバーでもトークン経由で個人アクセストークンを発行できるべきでない")
 		}
 	})
 
@@ -161,7 +165,7 @@ func TestNewAPIMemberPolicy(t *testing.T) {
 		t.Parallel()
 
 		p := NewAPIMemberPolicy(
-			[]model.Scope{model.ScopeSpaceAdmin},
+			model.SpaceRoleAdmin.Scopes(),
 			nil,
 			[]model.Scope{model.ScopeSpaceAdmin},
 		)
@@ -218,14 +222,14 @@ func TestMemberPolicy_CanShowTopic(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminは非公開トピックを閲覧可能", func(t *testing.T) {
+	t.Run("管理者のロールは非公開トピックを閲覧可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+		p := NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
 		topic := &model.Topic{Visibility: model.TopicVisibilityPrivate}
 
 		if !p.CanShowTopic(topic) {
-			t.Error("space:adminは非公開トピックを閲覧可能であるべき")
+			t.Error("管理者のロールは非公開トピックを閲覧可能であるべき")
 		}
 	})
 }
@@ -291,13 +295,13 @@ func TestMemberPolicy_CanShowTrash(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminで閲覧可能", func(t *testing.T) {
+	t.Run("管理者のロールで閲覧可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+		p := NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
 
 		if !p.CanShowTrash() {
-			t.Error("space:adminはpage_trash:writeを含意展開するためゴミ箱を閲覧可能であるべき")
+			t.Error("管理者のロールはpage_trash:writeを持つためゴミ箱を閲覧可能であるべき")
 		}
 	})
 
@@ -355,13 +359,13 @@ func TestMemberPolicy_CanTrashPage(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminでゴミ箱に入れられる", func(t *testing.T) {
+	t.Run("管理者のロールでゴミ箱に入れられる", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+		p := NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
 
 		if !p.CanTrashPage() {
-			t.Error("space:adminはpage_trash:writeを含意展開するためページをゴミ箱に入れられるべき")
+			t.Error("管理者のロールはpage_trash:writeを持つためページをゴミ箱に入れられるべき")
 		}
 	})
 
@@ -406,94 +410,6 @@ func TestMemberPolicy_CanTrashPage(t *testing.T) {
 	})
 }
 
-func TestMemberPolicy_CanShowDraftPage(t *testing.T) {
-	t.Parallel()
-
-	t.Run("所有者はdraft_page:readで閲覧可能", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewMemberPolicy([]model.Scope{model.ScopeDraftPageRead}, nil)
-
-		if !p.CanShowDraftPage(true) {
-			t.Error("所有者かつdraft_page:readを持つメンバーは閲覧可能であるべき")
-		}
-	})
-
-	t.Run("非所有者はdraft_page:readだけでは閲覧不可", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewMemberPolicy([]model.Scope{model.ScopeDraftPageRead}, nil)
-
-		if p.CanShowDraftPage(false) {
-			t.Error("非所有者はdraft_page:readだけでは閲覧できないべき")
-		}
-	})
-
-	t.Run("非所有者でもspace:adminなら閲覧可能", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
-
-		if !p.CanShowDraftPage(false) {
-			t.Error("space:adminは非所有者でも閲覧可能であるべき")
-		}
-	})
-
-	t.Run("draft_page:readなしでは所有者でも閲覧不可", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewMemberPolicy([]model.Scope{model.ScopePageRead}, nil)
-
-		if p.CanShowDraftPage(true) {
-			t.Error("draft_page:readを持たないメンバーは所有者でも閲覧できないべき")
-		}
-	})
-}
-
-func TestMemberPolicy_CanUpdateDraftPage(t *testing.T) {
-	t.Parallel()
-
-	t.Run("所有者はdraft_page:writeで編集可能", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewMemberPolicy([]model.Scope{model.ScopeDraftPageWrite}, nil)
-
-		if !p.CanUpdateDraftPage(true) {
-			t.Error("所有者かつdraft_page:writeを持つメンバーは編集可能であるべき")
-		}
-	})
-
-	t.Run("非所有者はdraft_page:writeだけでは編集不可", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewMemberPolicy([]model.Scope{model.ScopeDraftPageWrite}, nil)
-
-		if p.CanUpdateDraftPage(false) {
-			t.Error("非所有者はdraft_page:writeだけでは編集できないべき")
-		}
-	})
-
-	t.Run("非所有者でもspace:adminなら編集可能", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
-
-		if !p.CanUpdateDraftPage(false) {
-			t.Error("space:adminは非所有者でも編集可能であるべき")
-		}
-	})
-
-	t.Run("draft_page:writeなしでは所有者でも編集不可", func(t *testing.T) {
-		t.Parallel()
-
-		p := NewMemberPolicy([]model.Scope{model.ScopePageWrite}, nil)
-
-		if p.CanUpdateDraftPage(true) {
-			t.Error("draft_page:writeを持たないメンバーは所有者でも編集できないべき")
-		}
-	})
-}
-
 func TestMemberPolicy_CanDeleteDraftPage(t *testing.T) {
 	t.Parallel()
 
@@ -507,13 +423,13 @@ func TestMemberPolicy_CanDeleteDraftPage(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminで削除可能", func(t *testing.T) {
+	t.Run("管理者のロールで削除可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+		p := NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
 
 		if !p.CanDeleteDraftPage() {
-			t.Error("space:adminはdraft_page:deleteを含意展開するため削除可能であるべき")
+			t.Error("管理者のロールはdraft_page:deleteを持つため削除可能であるべき")
 		}
 	})
 
@@ -832,13 +748,13 @@ func TestMemberPolicy_CanCreateTopic(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminで作成可能", func(t *testing.T) {
+	t.Run("管理者のロールで作成可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+		p := NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
 
 		if !p.CanCreateTopic() {
-			t.Error("space:adminはtopic:writeを含意展開するためトピックを作成可能であるべき")
+			t.Error("管理者のロールはtopic:writeを持つためトピックを作成可能であるべき")
 		}
 	})
 
@@ -876,13 +792,13 @@ func TestMemberPolicy_CanUpdateTopicVisibility(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminで変更可能", func(t *testing.T) {
+	t.Run("管理者のロールで変更可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+		p := NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
 
 		if !p.CanUpdateTopicVisibility() {
-			t.Error("space:adminはtopic_visibility:writeに展開されるため公開範囲を変更可能であるべき")
+			t.Error("管理者のロールはtopic_visibility:writeを持つため公開範囲を変更可能であるべき")
 		}
 	})
 
@@ -920,13 +836,13 @@ func TestMemberPolicy_CanExportSpace(t *testing.T) {
 		}
 	})
 
-	t.Run("space:adminでエクスポート可能", func(t *testing.T) {
+	t.Run("管理者のロールでエクスポート可能", func(t *testing.T) {
 		t.Parallel()
 
-		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+		p := NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
 
 		if !p.CanExportSpace() {
-			t.Error("space:adminはspace:writeを含意展開するためスペースをエクスポート可能であるべき")
+			t.Error("管理者のロールはspace:writeを持つためスペースをエクスポート可能であるべき")
 		}
 	})
 
@@ -950,7 +866,7 @@ func TestMemberPolicy_CanUpdateSpace(t *testing.T) {
 		want   bool
 	}{
 		{name: "space:write", scopes: []model.Scope{model.ScopeSpaceWrite}, want: true},
-		{name: "space:adminはspace:writeを含意展開する", scopes: []model.Scope{model.ScopeSpaceAdmin}, want: true},
+		{name: "管理者のロールはspace:writeを持つ", scopes: model.SpaceRoleAdmin.Scopes(), want: true},
 		{name: "読み取り権限だけ", scopes: []model.Scope{model.ScopeSpaceRead, model.ScopePageRead}, want: false},
 		{name: "トークン管理の権限だけ", scopes: []model.Scope{model.ScopePersonalAccessTokenWrite, model.ScopeOAuthGrantWrite}, want: false},
 		{name: "OAuthアプリの管理の権限だけ", scopes: []model.Scope{model.ScopeOAuthApplicationWrite, model.ScopeOAuthApplicationDelete}, want: false},
@@ -981,7 +897,7 @@ func TestMemberPolicy_ScopeBoundaries(t *testing.T) {
 		{name: "編集提案編集", scopes: []model.Scope{model.ScopeSuggestionWrite}, editSuggestion: true},
 		{name: "編集提案反映", scopes: []model.Scope{model.ScopeSuggestionApplicationWrite}, applySuggestion: true},
 		{name: "編集提案クローズ", scopes: []model.Scope{model.ScopeSuggestionClosureWrite}, closeSuggestion: true},
-		{name: "管理者", scopes: []model.Scope{model.ScopeSpaceAdmin}, showTrash: true, trashPage: true, updatePage: true, editSuggestion: true, applySuggestion: true, closeSuggestion: true},
+		{name: "管理者", scopes: model.SpaceRoleAdmin.Scopes(), showTrash: true, trashPage: true, updatePage: true, editSuggestion: true, applySuggestion: true, closeSuggestion: true},
 		{name: "未知のスコープ", scopes: []model.Scope{"unknown:write", "page_trash:admin", "suggestion_application:read", "suggestion_closure:delete", "space:admin_extra"}},
 		{name: "スコープなし"},
 	}
@@ -1038,7 +954,7 @@ func TestMemberPolicy_TokenManagement(t *testing.T) {
 		{name: "OAuthの連携の閲覧", scopes: []model.Scope{model.ScopeOAuthGrantRead}, showOAuthGrant: true},
 		{name: "OAuthの連携の許可", scopes: []model.Scope{model.ScopeOAuthGrantWrite}, showOAuthGrant: true, createOAuthGrant: true},
 		{name: "OAuthの連携の解除", scopes: []model.Scope{model.ScopeOAuthGrantDelete}, showOAuthGrant: true, deleteOAuthGrant: true},
-		{name: "管理者", scopes: []model.Scope{model.ScopeSpaceAdmin}, showPAT: true, createPAT: true, deletePAT: true, showOAuthGrant: true, createOAuthGrant: true, deleteOAuthGrant: true},
+		{name: "管理者", scopes: model.SpaceRoleAdmin.Scopes(), showPAT: true, createPAT: true, deletePAT: true, showOAuthGrant: true, createOAuthGrant: true, deleteOAuthGrant: true},
 		// スペースを変更できるメンバーでも、トークンを管理するスコープは別に要る
 		{name: "スペースの編集", scopes: []model.Scope{model.ScopeSpaceWrite, model.ScopeSpaceDelete, model.ScopePageWrite}},
 		{name: "スコープなし"},
@@ -1078,7 +994,7 @@ func TestMemberPolicy_OAuthApplication(t *testing.T) {
 		{name: "閲覧", scopes: []model.Scope{model.ScopeOAuthApplicationRead}, show: true},
 		{name: "登録・編集", scopes: []model.Scope{model.ScopeOAuthApplicationWrite}, show: true, create: true, update: true},
 		{name: "削除", scopes: []model.Scope{model.ScopeOAuthApplicationDelete}, show: true, delete: true},
-		{name: "管理者", scopes: []model.Scope{model.ScopeSpaceAdmin}, show: true, create: true, update: true, delete: true},
+		{name: "管理者", scopes: model.SpaceRoleAdmin.Scopes(), show: true, create: true, update: true, delete: true},
 		// スペースを変更できるメンバーや、連携を許可できるメンバーでも、アプリを管理するスコープは別に要る
 		{name: "スペースの編集", scopes: []model.Scope{model.ScopeSpaceWrite, model.ScopeSpaceDelete}},
 		{name: "OAuthの連携", scopes: []model.Scope{model.ScopeOAuthGrantWrite, model.ScopeOAuthGrantDelete}},

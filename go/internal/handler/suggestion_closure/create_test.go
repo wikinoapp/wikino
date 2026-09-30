@@ -198,7 +198,7 @@ func TestCreate_suggestion_closure_writeスコープなしの非作成者は403�
 	memberSmID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(memberID).
-		WithScopes([]model.Scope{model.ScopeSuggestionWrite}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -400,7 +400,7 @@ func TestCreate_トピックのクローズ権限で他人の提案をクロー�
 	adminSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(adminID).
-		WithScopes([]model.Scope{}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	creatorSmID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -414,7 +414,7 @@ func TestCreate_トピックのクローズ権限で他人の提案をクロー�
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(adminSmID).
-		WithScopes([]model.Scope{model.ScopeSuggestionClosureWrite}).
+		WithRole(model.TopicRoleEditor).
 		Build()
 	testutil.NewSuggestionBuilderDB(t, db).
 		WithSpaceID(spaceID).

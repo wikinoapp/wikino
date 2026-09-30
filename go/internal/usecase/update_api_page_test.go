@@ -48,13 +48,13 @@ func TestUpdateAPIPageUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
+	memberRole := apiTopicRegularMemberRole
 	tokenScopes := []model.Scope{model.ScopePageWrite}
 
 	t.Run("タイトルと本文を更新し、下書きと公開日時に触れない", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-update", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-update", memberRole)
 		publishedAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
 		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
 			WithTitle("元のタイトル").WithBody("元の本文").WithPublishedAt(publishedAt).Build()
@@ -65,7 +65,7 @@ func TestUpdateAPIPageUsecase_Execute(t *testing.T) {
 		// 本文は新しいタイトルで自身を指すWikiリンクと、存在しないページへのWikiリンクを含む
 		body := "[[新しいタイトル]] [[まだ無いページ]]"
 		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			PageNumber:      1,
 			IfMatchDigests:  []string{"古い版", before.ContentDigest()},
@@ -118,13 +118,13 @@ func TestUpdateAPIPageUsecase_Execute(t *testing.T) {
 	t.Run("含めなかった項目は変えない", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-update-partial", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-partial", memberRole)
 		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
 			WithTitle("タイトル").WithBody("元の本文").Build()
 		before := findPageForTest(t, db, f.space.ID, 1)
 
 		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			PageNumber:      1,
 			IfMatchDigests:  []string{before.ContentDigest()},
@@ -141,13 +141,13 @@ func TestUpdateAPIPageUsecase_Execute(t *testing.T) {
 	t.Run("タイトルと本文が今と同じなら何も書き込まない", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-update-noop", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-noop", memberRole)
 		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
 			WithTitle("タイトル").WithBody("本文").Build()
 		before := findPageForTest(t, db, f.space.ID, 1)
 
 		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			PageNumber:      1,
 			IfMatchDigests:  []string{before.ContentDigest()},
@@ -168,13 +168,13 @@ func TestUpdateAPIPageUsecase_Execute(t *testing.T) {
 	t.Run("タイトルを変えなければ、今の規則に合わないタイトルのページも本文を更新できる", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-update-legacy", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-legacy", memberRole)
 		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
 			WithTitle("古い:タイトル").WithBody("本文").Build()
 		before := findPageForTest(t, db, f.space.ID, 1)
 
 		if _, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			PageNumber:      1,
 			IfMatchDigests:  []string{before.ContentDigest()},
@@ -190,7 +190,7 @@ func TestUpdateAPIPageUsecase_Execute_Precondition(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
+	memberRole := apiTopicRegularMemberRole
 	tokenScopes := []model.Scope{model.ScopePageWrite}
 
 	tests := []struct {
@@ -209,7 +209,7 @@ func TestUpdateAPIPageUsecase_Execute_Precondition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupCreateAPIPageFixture(t, db, "api-page-update-pre-"+string(rune('a'+i)), memberScopes)
+			f := setupCreateAPIPageFixture(t, db, "api-page-update-pre-"+string(rune('a'+i)), memberRole)
 			testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
 				WithTitle("タイトル").WithBody("本文").Build()
 			current := findPageForTest(t, db, f.space.ID, 1).ContentDigest()
@@ -219,7 +219,7 @@ func TestUpdateAPIPageUsecase_Execute_Precondition(t *testing.T) {
 			}
 
 			output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-				Principal:       f.principal(memberScopes, tokenScopes),
+				Principal:       f.principal(memberRole, tokenScopes),
 				SpaceIdentifier: f.space.Identifier,
 				PageNumber:      1,
 				IfMatchDigests:  digests,
@@ -252,72 +252,71 @@ func TestUpdateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 	writeScopes := []model.Scope{model.ScopePageWrite}
 	writeAndTopicScopes := []model.Scope{model.ScopePageWrite, model.ScopeTopicRead}
 	tests := []struct {
-		name         string
-		memberScopes []model.Scope
-		tokenScopes  []model.Scope
-		identifier   model.SpaceIdentifier
-		topicNumber  int32
+		name        string
+		memberRole  model.SpaceRole
+		tokenScopes []model.Scope
+		identifier  model.SpaceIdentifier
+		topicNumber int32
 		// setupはページの状態を変える
 		setup    func(t *testing.T, db *sql.DB, spaceID model.SpaceID, pageID model.PageID)
 		wantCode model.AppErrorCode
 	}{
 		{
-			name:         "トークンがtopic:readを持てば参加している非公開トピックのページを更新できる",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeAndTopicScopes,
-			topicNumber:  2,
+			name:        "トークンがtopic:readを持てば参加している非公開トピックのページを更新できる",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeAndTopicScopes,
+			topicNumber: 2,
 		},
 		{
-			name:         "トークンがtopic:readを持たなければ参加している非公開トピックのページは未存在",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeScopes,
-			topicNumber:  2,
-			wantCode:     model.AppErrCodeResourceNotFound,
+			name:        "トークンがtopic:readを持たなければ参加している非公開トピックのページは未存在",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeScopes,
+			topicNumber: 2,
+			wantCode:    model.AppErrCodeResourceNotFound,
 		},
 		{
-			name:         "参加していない非公開トピックのページは未存在",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeAndTopicScopes,
-			topicNumber:  3,
-			wantCode:     model.AppErrCodeResourceNotFound,
+			name:        "編集者はトークンがtopic:readを持てば参加していない非公開トピックのページも更新できる",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeAndTopicScopes,
+			topicNumber: 3,
 		},
 		{
-			name:         "メンバーがpage:writeを持たなければ未存在",
-			memberScopes: []model.Scope{model.ScopePageRead, model.ScopePersonalAccessTokenWrite},
-			tokenScopes:  writeScopes,
-			topicNumber:  1,
-			wantCode:     model.AppErrCodeForbidden,
+			name:        "メンバーが閲覧者でpage:writeを持たなければ更新できない",
+			memberRole:  model.SpaceRoleViewer,
+			tokenScopes: writeScopes,
+			topicNumber: 1,
+			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
-			name:         "トークンがpage:writeを持たなければ、メンバーが持っていても更新できない",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
-			topicNumber:  1,
-			wantCode:     model.AppErrCodeForbidden,
+			name:        "トークンがpage:writeを持たなければ、メンバーが持っていても更新できない",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			topicNumber: 1,
+			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
-			name:         "束縛先と異なるスペースは未存在",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeScopes,
-			identifier:   "api-page-update-auth-other",
-			topicNumber:  1,
-			wantCode:     model.AppErrCodeResourceNotFound,
+			name:        "束縛先と異なるスペースは未存在",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeScopes,
+			identifier:  "api-page-update-auth-other",
+			topicNumber: 1,
+			wantCode:    model.AppErrCodeResourceNotFound,
 		},
 		{
-			name:         "未公開のページは未存在",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeScopes,
-			topicNumber:  1,
+			name:        "未公開のページは未存在",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeScopes,
+			topicNumber: 1,
 			setup: func(t *testing.T, db *sql.DB, spaceID model.SpaceID, pageID model.PageID) {
 				execForTest(t, db, "UPDATE pages SET published_at = NULL WHERE id = $1 AND space_id = $2", pageID, spaceID)
 			},
 			wantCode: model.AppErrCodeResourceNotFound,
 		},
 		{
-			name:         "ゴミ箱のページは未存在",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  writeAndTopicScopes,
-			topicNumber:  1,
+			name:        "ゴミ箱のページは未存在",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: writeAndTopicScopes,
+			topicNumber: 1,
 			setup: func(t *testing.T, db *sql.DB, spaceID model.SpaceID, pageID model.PageID) {
 				execForTest(t, db, "UPDATE pages SET trashed_at = now() WHERE id = $1 AND space_id = $2", pageID, spaceID)
 			},
@@ -330,7 +329,7 @@ func TestUpdateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupCreateAPIPageFixture(t, db, "api-page-update-auth-"+string(rune('a'+i)), tt.memberScopes)
+			f := setupCreateAPIPageFixture(t, db, "api-page-update-auth-"+string(rune('a'+i)), tt.memberRole)
 			pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[tt.topicNumber]).WithNumber(1).
 				WithTitle("タイトル").WithBody("本文").Build()
 			if tt.setup != nil {
@@ -342,7 +341,7 @@ func TestUpdateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 			}
 
 			output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-				Principal:       f.principal(tt.memberScopes, tt.tokenScopes),
+				Principal:       f.principal(tt.memberRole, tt.tokenScopes),
 				SpaceIdentifier: identifier,
 				PageNumber:      1,
 				IfMatchAny:      true,
@@ -373,18 +372,18 @@ func TestUpdateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
+	memberRole := apiTopicRegularMemberRole
 	tokenScopes := []model.Scope{model.ScopePageWrite}
 
 	t.Run("公開済みの他のページと同じタイトルは422", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-update-dup", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-dup", memberRole)
 		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).WithTitle("更新するページ").Build()
 		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(2).WithTitle("重複").Build()
 
 		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			PageNumber:      1,
 			IfMatchAny:      true,
@@ -401,13 +400,13 @@ func TestUpdateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 	t.Run("Wikiリンクで作られた中身の無い未公開のページは論理削除して置き換える", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-update-linked", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-linked", memberRole)
 		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).WithTitle("更新するページ").Build()
 		linkedID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(2).
 			WithTitle("リンク先").WithBody("").WithUnpublished().Build()
 
 		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			PageNumber:      1,
 			IfMatchAny:      true,
@@ -431,8 +430,8 @@ func TestUpdateAPIPageUsecase_ExecuteConcurrently(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
-	f := setupCreateAPIPageFixture(t, db, "api-page-update-cc-"+uuid.NewString()[:8], memberScopes)
+	memberRole := apiTopicRegularMemberRole
+	f := setupCreateAPIPageFixture(t, db, "api-page-update-cc-"+uuid.NewString()[:8], memberRole)
 	testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
 		WithTitle("タイトル").WithBody("本文").Build()
 	digest := findPageForTest(t, db, f.space.ID, 1).ContentDigest()
@@ -448,7 +447,7 @@ func TestUpdateAPIPageUsecase_ExecuteConcurrently(t *testing.T) {
 			defer wg.Done()
 			<-start
 			_, errs[i] = uc.Execute(t.Context(), UpdateAPIPageInput{
-				Principal:       f.principal(memberScopes, []model.Scope{model.ScopePageWrite}),
+				Principal:       f.principal(memberRole, []model.Scope{model.ScopePageWrite}),
 				SpaceIdentifier: f.space.Identifier,
 				PageNumber:      1,
 				IfMatchDigests:  []string{digest},
@@ -483,8 +482,8 @@ func TestUpdateAPIPageUsecase_ExecuteWithWebPublish(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
-	f := setupCreateAPIPageFixture(t, db, "api-page-update-web-"+uuid.NewString()[:8], memberScopes)
+	memberRole := apiTopicRegularMemberRole
+	f := setupCreateAPIPageFixture(t, db, "api-page-update-web-"+uuid.NewString()[:8], memberRole)
 	pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
 		WithTitle("タイトル").WithBody("本文").Build()
 	digest := findPageForTest(t, db, f.space.ID, 1).ContentDigest()
@@ -498,7 +497,7 @@ func TestUpdateAPIPageUsecase_ExecuteWithWebPublish(t *testing.T) {
 	resultCh := make(chan createAPIPageResult, 1)
 	go func() {
 		_, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
-			Principal:       f.principal(memberScopes, []model.Scope{model.ScopePageWrite}),
+			Principal:       f.principal(memberRole, []model.Scope{model.ScopePageWrite}),
 			SpaceIdentifier: f.space.Identifier,
 			PageNumber:      1,
 			IfMatchDigests:  []string{digest},

@@ -109,7 +109,7 @@ func (uc *CloseSuggestionUsecase) fetchData(ctx context.Context, input CloseSugg
 	}
 
 	var topicMember *model.TopicMember
-	if spaceMember != nil && !model.HasScope(spaceMember.Scopes, model.ScopeSpaceAdmin) {
+	if spaceMember != nil {
 		topicMember, err = uc.topicMemberRepo.FindBySpaceMemberAndTopic(ctx, space.ID, spaceMember.ID, suggestion.TopicID)
 		if err != nil {
 			return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)

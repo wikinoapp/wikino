@@ -16,7 +16,7 @@ func TestShow_アプリの詳細を表示する(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-show"
-	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", []model.Scope{model.ScopeOAuthApplicationRead}, true)
+	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", model.SpaceRoleAdmin, true)
 
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
@@ -56,16 +56,6 @@ func TestShow_アプリの詳細を表示する(t *testing.T) {
 	if strings.Contains(body, "oauth_app_show_secret") {
 		t.Error("レスポンスにシークレットのダイジェストが含まれている")
 	}
-	// oauth_application:readだけでは編集・再発行・削除の操作を出さない
-	for _, unwanted := range []string{
-		`href="` + path + `/edit"`,
-		`action="` + path + `/client_secret"`,
-		`name="_method" value="DELETE"`,
-	} {
-		if strings.Contains(body, unwanted) {
-			t.Errorf("レスポンスに%qが含まれている", unwanted)
-		}
-	}
 }
 
 func TestShow_権限に応じて編集と再発行と削除の操作を出す(t *testing.T) {
@@ -74,7 +64,7 @@ func TestShow_権限に応じて編集と再発行と削除の操作を出す(t 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-show-actions"
-	m := setupAppMember(t, tx, identifier, "管理するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite, model.ScopeOAuthApplicationDelete}, true)
+	m := setupAppMember(t, tx, identifier, "管理するメンバー", model.SpaceRoleAdmin, true)
 
 	confidentialID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
@@ -134,8 +124,8 @@ func TestShow_見られないアプリは404が返る(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-show-missing"
-	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", []model.Scope{model.ScopeOAuthApplicationRead}, true)
-	other := setupAppMember(t, tx, "oauth-app-show-missing-other", "別のスペースのメンバー", []model.Scope{model.ScopeOAuthApplicationRead}, true)
+	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", model.SpaceRoleAdmin, true)
+	other := setupAppMember(t, tx, "oauth-app-show-missing-other", "別のスペースのメンバー", model.SpaceRoleAdmin, true)
 	otherAppID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(other.spaceID).
 		WithClientID("oauth-app-show-other-client").
@@ -157,61 +147,6 @@ func TestShow_見られないアプリは404が返る(t *testing.T) {
 
 			if rr.Code != http.StatusNotFound {
 				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
-			}
-		})
-	}
-}
-
-func TestShow_単独の操作権限だけを持つメンバーに許可された操作を出す(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name         string
-		identifier   string
-		scope        model.Scope
-		confidential bool
-		wantEdit     bool
-		wantSecret   bool
-		wantDelete   bool
-	}{
-		{name: "writeのみのconfidentialクライアント", identifier: "oauth-app-write-only", scope: model.ScopeOAuthApplicationWrite, confidential: true, wantEdit: true, wantSecret: true},
-		{name: "writeのみのpublicクライアント", identifier: "oauth-app-write-public", scope: model.ScopeOAuthApplicationWrite, wantEdit: true},
-		{name: "deleteのみのconfidentialクライアント", identifier: "oauth-app-delete-only", scope: model.ScopeOAuthApplicationDelete, confidential: true, wantDelete: true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			_, tx := testutil.SetupTx(t)
-			q := testutil.QueriesWithTx(tx)
-			m := setupAppMember(t, tx, tt.identifier, "操作するメンバー", []model.Scope{tt.scope}, true)
-			builder := testutil.NewOAuthApplicationBuilder(t, tx).
-				WithSpaceID(m.spaceID).
-				WithClientID(tt.identifier + "-client")
-			if tt.confidential {
-				builder = builder.WithConfidentialClientSecretDigest(tt.identifier + "-digest")
-			}
-			appID := builder.Build()
-
-			path := "/s/" + tt.identifier + "/settings/oauth_applications/" + string(appID)
-			req := newRequest(t, http.MethodGet, path, tt.identifier, m.userID, nil)
-			rr := httptest.NewRecorder()
-			setupHandler(t, q).Show(rr, req)
-			if rr.Code != http.StatusOK {
-				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
-			}
-			for _, check := range []struct {
-				name string
-				text string
-				want bool
-			}{
-				{name: "編集", text: `href="` + path + `/edit"`, want: tt.wantEdit},
-				{name: "シークレット再発行", text: `action="` + path + `/client_secret"`, want: tt.wantSecret},
-				{name: "削除", text: `name="_method" value="DELETE"`, want: tt.wantDelete},
-			} {
-				if got := strings.Contains(rr.Body.String(), check.text); got != check.want {
-					t.Errorf("%sの操作の表示 = %v、期待値 = %v", check.name, got, check.want)
-				}
 			}
 		})
 	}

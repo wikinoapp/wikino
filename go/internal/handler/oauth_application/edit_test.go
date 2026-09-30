@@ -17,7 +17,7 @@ func TestEdit_今の値を入れた編集フォームを表示する(t *testing.
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-edit"
-	m := setupAppMember(t, tx, identifier, "編集するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "編集するメンバー", model.SpaceRoleAdmin, true)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
 		WithName("連携するWebアプリ").
@@ -79,8 +79,8 @@ func TestEdit_編集できないメンバーとアプリには404が返る(t *te
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-edit-denied"
-	writer := setupAppMember(t, tx, identifier, "編集するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
-	reader := setupAppMember(t, tx, identifier+"-reader", "閲覧だけのメンバー", []model.Scope{model.ScopeOAuthApplicationRead}, true)
+	writer := setupAppMember(t, tx, identifier, "編集するメンバー", model.SpaceRoleAdmin, true)
+	reader := setupAppMember(t, tx, identifier+"-reader", "編集者のメンバー", model.SpaceRoleEditor, true)
 	readerAppID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(reader.spaceID).
 		WithClientID("oauth-app-edit-reader-client").
@@ -93,7 +93,7 @@ func TestEdit_編集できないメンバーとアプリには404が返る(t *te
 		userID     model.UserID
 		appID      string
 	}{
-		{name: "oauth_application:readだけを持つ", identifier: identifier + "-reader", userID: reader.userID, appID: string(readerAppID)},
+		{name: "oauth_application:*を持たない編集者", identifier: identifier + "-reader", userID: reader.userID, appID: string(readerAppID)},
 		{name: "別のスペースのアプリ", identifier: identifier, userID: writer.userID, appID: string(readerAppID)},
 		{name: "UUIDでないID", identifier: identifier, userID: writer.userID, appID: "not-a-uuid"},
 	} {

@@ -9,6 +9,7 @@ import {
   createTestTopic,
   createTestTopicMember,
   createTestUser,
+  type SpaceRole,
   type TestUser,
 } from "../helpers/database";
 
@@ -35,12 +36,12 @@ interface StickyViewer {
 let adminViewer: StickyViewer | undefined;
 let readerViewer: StickyViewer | undefined;
 
-// scopesはヘッダーが操作領域を持つかどうかを決める。2つのケースの違いはそこだけで、200文字の
+// roleはヘッダーが操作領域を持つかどうかを決める。2つのケースの違いはそこだけで、200文字の
 // タイトルを含めページの条件は同じにする。
-async function createStickyViewer(scopes: string[]): Promise<StickyViewer> {
+async function createStickyViewer(role: SpaceRole): Promise<StickyViewer> {
   const user = await createTestUser();
   const space = await createTestSpace();
-  const spaceMemberId = await createTestSpaceMember(space.id, user.id, scopes);
+  const spaceMemberId = await createTestSpaceMember(space.id, user.id, role);
   const topic = await createTestTopic(space.id);
   await createTestTopicMember(space.id, topic.id, spaceMemberId);
   const page = await createTestPage(space.id, topic.id, { title: LONG_TITLE, body: LONG_BODY });
@@ -56,8 +57,8 @@ function requireViewer(viewer: StickyViewer | undefined, label: string): StickyV
 }
 
 test.beforeAll(async () => {
-  adminViewer = await createStickyViewer(["space:admin"]);
-  readerViewer = await createStickyViewer(["page:read"]);
+  adminViewer = await createStickyViewer("admin");
+  readerViewer = await createStickyViewer("viewer");
 });
 
 test.afterAll(async () => {

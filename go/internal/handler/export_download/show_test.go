@@ -55,7 +55,8 @@ func newRequest(t *testing.T, spaceIdentifier string, exportID model.ExportID, u
 }
 
 // exportSpaceはメンバーが1人いるスペースを用意し、テストがそれらを指すための値を返す。
-func exportSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope) (model.UserID, model.SpaceID, model.SpaceMemberID) {
+// roleが空のときはビルダーの既定 (管理者) になる。
+func exportSpace(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole) (model.UserID, model.SpaceID, model.SpaceMemberID) {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -68,8 +69,8 @@ func exportSpace(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Sco
 	memberBuilder := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID)
-	if scopes != nil {
-		memberBuilder = memberBuilder.WithScopes(scopes)
+	if role != "" {
+		memberBuilder = memberBuilder.WithRole(role)
 	}
 
 	return userID, spaceID, memberBuilder.Build()
@@ -81,7 +82,7 @@ func TestShow_RedirectsToPresignedURL(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-dl-ok", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-dl-ok", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -112,7 +113,7 @@ func TestShow_NotFoundAfterExpiration(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-dl-expired", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-dl-expired", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -135,7 +136,7 @@ func TestShow_NotFoundWhileStillRunning(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-dl-running", nil)
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-dl-running", "")
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -157,7 +158,7 @@ func TestShow_NotFoundWithoutExportPermission(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-dl-forbidden", []model.Scope{model.ScopeSpaceRead})
+	userID, spaceID, spaceMemberID := exportSpace(t, tx, "exp-dl-forbidden", model.SpaceRoleEditor)
 	exportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithQueuedByID(spaceMemberID).
@@ -183,8 +184,8 @@ func TestShow_NotFoundForExportOfAnotherSpace(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	queries := testutil.QueriesWithTx(tx)
 
-	userID, _, _ := exportSpace(t, tx, "exp-dl-mine", nil)
-	_, otherSpaceID, otherMemberID := exportSpace(t, tx, "exp-dl-theirs", nil)
+	userID, _, _ := exportSpace(t, tx, "exp-dl-mine", "")
+	_, otherSpaceID, otherMemberID := exportSpace(t, tx, "exp-dl-theirs", "")
 	otherExportID := testutil.NewExportBuilder(t, tx).
 		WithSpaceID(otherSpaceID).
 		WithQueuedByID(otherMemberID).

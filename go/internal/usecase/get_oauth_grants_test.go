@@ -30,8 +30,8 @@ func TestGetOAuthGrantsUsecase_Execute(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "gog-list", []model.Scope{model.ScopeOAuthGrantRead}, true)
-		other := setupPATMember(t, tx, "gog-list-other", []model.Scope{model.ScopeSpaceAdmin}, true)
+		f := setupPATMember(t, tx, "gog-list", model.SpaceRoleViewer, true)
+		other := setupPATMember(t, tx, "gog-list-other", model.SpaceRoleAdmin, true)
 
 		spaceAppID := testutil.NewOAuthApplicationBuilder(t, tx).
 			WithSpaceID(f.spaceID).WithName("スペースのアプリ").WithClientID("gog-list-space-client").Build()
@@ -75,17 +75,14 @@ func TestGetOAuthGrantsUsecase_Execute(t *testing.T) {
 				t.Errorf("アプリ%vの名前 = %q、期待値 = %q", appID, app.Name, wantName)
 			}
 		}
-		if output.CanDelete {
-			t.Error("CanDelete = true、oauth_grant:readだけのメンバーはfalseを期待")
-		}
 	})
 
-	t.Run("oauth_grant:deleteだけのメンバーも一覧を開け、解除できる", func(t *testing.T) {
+	t.Run("閲覧者のメンバーも一覧を開け、解除できる", func(t *testing.T) {
 		t.Parallel()
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "gog-delete-only", []model.Scope{model.ScopeOAuthGrantDelete}, true)
+		f := setupPATMember(t, tx, "gog-delete-only", model.SpaceRoleViewer, true)
 
 		output, err := newGetOAuthGrantsUsecaseForTest(q).Execute(context.Background(), GetOAuthGrantsInput{
 			SpaceIdentifier: "gog-delete-only",
@@ -106,28 +103,21 @@ func TestGetOAuthGrantsUsecase_Execute_開けない(t *testing.T) {
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		outsider    bool
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "oauth_grant:readを持たない",
-			key:         "gog-noscope",
-			scopes:      []model.Scope{model.ScopePersonalAccessTokenRead},
-			flagEnabled: true,
-			wantErrCode: model.AppErrCodeForbidden,
-		},
-		{
 			name:        "フィーチャーフラグが無効",
 			key:         "gog-noflag",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 		{
 			name:        "スペースのメンバーではない",
 			key:         "gog-outsider",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			outsider:    true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -140,10 +130,10 @@ func TestGetOAuthGrantsUsecase_Execute_開けない(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 			userID := f.userID
 			if tt.outsider {
-				userID = setupPATMember(t, tx, tt.key+"-other", tt.scopes, tt.flagEnabled).userID
+				userID = setupPATMember(t, tx, tt.key+"-other", tt.role, tt.flagEnabled).userID
 			}
 
 			_, err := newGetOAuthGrantsUsecaseForTest(q).Execute(context.Background(), GetOAuthGrantsInput{

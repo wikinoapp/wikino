@@ -21,9 +21,9 @@ type patMemberFixture struct {
 	spaceMemberID model.SpaceMemberID
 }
 
-// setupPATMemberは、keyを識別子に持つスペースと、scopesを持つメンバーを作る。flagEnabledが
+// setupPATMemberは、keyを識別子に持つスペースと、roleのロールを持つメンバーを作る。flagEnabledが
 // 真ならメンバーのユーザーに公開APIのフィーチャーフラグを有効にする。
-func setupPATMember(t *testing.T, tx *sql.Tx, key string, scopes []model.Scope, flagEnabled bool) patMemberFixture {
+func setupPATMember(t *testing.T, tx *sql.Tx, key string, role model.SpaceRole, flagEnabled bool) patMemberFixture {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -34,7 +34,7 @@ func setupPATMember(t *testing.T, tx *sql.Tx, key string, scopes []model.Scope, 
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(scopes).
+		WithRole(role).
 		Build()
 	if flagEnabled {
 		testutil.NewFeatureFlagBuilder(t, tx).
@@ -63,8 +63,8 @@ func TestGetPersonalAccessTokensUsecase_Execute(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "gpat-list", []model.Scope{model.ScopeSpaceAdmin}, true)
-		other := setupPATMember(t, tx, "gpat-list-other", []model.Scope{model.ScopeSpaceAdmin}, true)
+		f := setupPATMember(t, tx, "gpat-list", model.SpaceRoleAdmin, true)
+		other := setupPATMember(t, tx, "gpat-list-other", model.SpaceRoleAdmin, true)
 
 		older := testutil.NewPersonalAccessTokenBuilder(t, tx).
 			WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).WithTokenDigest("gpat_older").Build()
@@ -102,31 +102,6 @@ func TestGetPersonalAccessTokensUsecase_Execute(t *testing.T) {
 			t.Error("CanDelete = false、期待値 = true")
 		}
 	})
-
-	t.Run("personal_access_token:writeとdeleteを持たなければ発行も失効もできない", func(t *testing.T) {
-		t.Parallel()
-
-		_, tx := testutil.SetupTx(t)
-		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "gpat-readonly", []model.Scope{model.ScopePersonalAccessTokenRead}, true)
-
-		output, err := newGetPersonalAccessTokensUsecaseForTest(q).Execute(context.Background(), GetPersonalAccessTokensInput{
-			SpaceIdentifier: "gpat-readonly",
-			UserID:          f.userID,
-		})
-		if err != nil {
-			t.Fatalf("Execute()のエラー = %v", err)
-		}
-		if output.CanCreate {
-			t.Error("CanCreate = true、期待値 = false")
-		}
-		if output.CanDelete {
-			t.Error("CanDelete = true、期待値 = false")
-		}
-		if len(output.Tokens) != 0 {
-			t.Errorf("Tokensの件数 = %d、期待値 = 0", len(output.Tokens))
-		}
-	})
 }
 
 func TestGetPersonalAccessTokensUsecase_Execute_開けない(t *testing.T) {
@@ -135,28 +110,21 @@ func TestGetPersonalAccessTokensUsecase_Execute_開けない(t *testing.T) {
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		identifier  model.SpaceIdentifier
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "personal_access_token:readを持たない",
-			key:         "gpat-noscope",
-			scopes:      []model.Scope{model.ScopeSpaceWrite, model.ScopePageWrite},
-			flagEnabled: true,
-			wantErrCode: model.AppErrCodeForbidden,
-		},
-		{
 			name:        "フィーチャーフラグが無効",
 			key:         "gpat-noflag",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 		{
 			name:        "存在しないスペース",
 			key:         "gpat-missing",
-			scopes:      []model.Scope{model.ScopeSpaceAdmin},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			identifier:  "gpat-missing-none",
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -169,7 +137,7 @@ func TestGetPersonalAccessTokensUsecase_Execute_開けない(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 			identifier := tt.identifier
 			if identifier == "" {
 				identifier = model.SpaceIdentifier(tt.key)
@@ -188,8 +156,8 @@ func TestGetPersonalAccessTokensUsecase_Execute_開けない(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		setupPATMember(t, tx, "gpat-owner", []model.Scope{model.ScopeSpaceAdmin}, true)
-		outsider := setupPATMember(t, tx, "gpat-outsider", []model.Scope{model.ScopeSpaceAdmin}, true)
+		setupPATMember(t, tx, "gpat-owner", model.SpaceRoleAdmin, true)
+		outsider := setupPATMember(t, tx, "gpat-outsider", model.SpaceRoleAdmin, true)
 
 		_, err := newGetPersonalAccessTokensUsecaseForTest(q).Execute(context.Background(), GetPersonalAccessTokensInput{
 			SpaceIdentifier: "gpat-owner",

@@ -33,7 +33,7 @@ func TestCreateOAuthApplicationUsecase_Execute(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "coa-confidential", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+		f := setupPATMember(t, tx, "coa-confidential", model.SpaceRoleAdmin, true)
 
 		output, err := newCreateOAuthApplicationUsecaseForTest(q).Execute(context.Background(), CreateOAuthApplicationInput{
 			SpaceIdentifier: "coa-confidential",
@@ -82,7 +82,7 @@ func TestCreateOAuthApplicationUsecase_Execute(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "coa-public", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+		f := setupPATMember(t, tx, "coa-public", model.SpaceRoleAdmin, true)
 
 		output, err := newCreateOAuthApplicationUsecaseForTest(q).Execute(context.Background(), CreateOAuthApplicationInput{
 			SpaceIdentifier: "coa-public",
@@ -109,28 +109,28 @@ func TestCreateOAuthApplicationUsecase_Execute_登録できない(t *testing.T) 
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "oauth_application:readだけを持つ",
+			name:        "編集者 (OAuthアプリの権限を持たない)",
 			key:         "coa-readonly",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationRead},
+			role:        model.SpaceRoleEditor,
 			flagEnabled: true,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 		{
-			name:        "oauth_application:deleteだけを持つ",
+			name:        "閲覧者 (OAuthアプリの権限を持たない)",
 			key:         "coa-deleteonly",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationDelete},
+			role:        model.SpaceRoleViewer,
 			flagEnabled: true,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 		{
 			name:        "フィーチャーフラグが無効",
 			key:         "coa-noflag",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationWrite},
+			role:        model.SpaceRoleAdmin,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 	}
@@ -141,7 +141,7 @@ func TestCreateOAuthApplicationUsecase_Execute_登録できない(t *testing.T) 
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 
 			_, err := newCreateOAuthApplicationUsecaseForTest(q).Execute(context.Background(), CreateOAuthApplicationInput{
 				SpaceIdentifier: model.SpaceIdentifier(tt.key),
@@ -160,7 +160,7 @@ func TestCreateOAuthApplicationUsecase_Execute_登録できない(t *testing.T) 
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "coa-invalid", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+		f := setupPATMember(t, tx, "coa-invalid", model.SpaceRoleAdmin, true)
 
 		ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
 		_, err := newCreateOAuthApplicationUsecaseForTest(q).Execute(ctx, CreateOAuthApplicationInput{

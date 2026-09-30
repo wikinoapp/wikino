@@ -145,7 +145,7 @@ func TestShow_メンバーがピン留めと通常ページを閲覧できる(t 
 	if !strings.Contains(body, "テストトピックラベル") {
 		t.Error("レスポンスのカードにトピックのラベルが含まれていない")
 	}
-	// space:adminメンバーは編集できるため、カードごとの編集リンクが描画される。
+	// 管理者は編集できるため、カードごとの編集リンクが描画される。
 	if !strings.Contains(body, "/s/ss-pages/pages/1/edit") {
 		t.Error("レスポンスに通常ページの編集リンクが含まれていない")
 	}
@@ -255,7 +255,7 @@ func TestShow_参加トピックが無いメンバーにトピック作成導線
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("ss-notopic").
 		Build()
-	// デフォルトのspace:adminスコープでトピック作成が許可される。
+	// ビルダーの既定の管理者ロールでトピック作成が許可される。
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
@@ -417,7 +417,7 @@ func TestShow_設定を開けないメンバーには設定のリンクが表示
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(readerID).
-		WithScopes([]model.Scope{model.ScopePageRead, model.ScopePersonalAccessTokenRead}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 
 	handler := setupHandler(t, queries)
@@ -445,7 +445,7 @@ func TestShow_設定を開けないメンバーには設定のリンクが表示
 	}
 }
 
-func TestShow_トークン管理の権限だけを持つメンバーにはフラグが有効なら設定のリンクが表示される(t *testing.T) {
+func TestShow_トークン管理の権限を持つ閲覧者にはフラグが有効なら設定のリンクが表示される(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -461,7 +461,7 @@ func TestShow_トークン管理の権限だけを持つメンバーにはフラ
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes([]model.Scope{model.ScopePersonalAccessTokenRead}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	testutil.NewFeatureFlagBuilder(t, tx).
 		WithUserID(userID).

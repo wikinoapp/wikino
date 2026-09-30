@@ -318,11 +318,11 @@ func TestDelete_PermissionDenied(t *testing.T) {
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("delete-noperm-space").
 		Build()
-	// draft_page:deleteを持たないメンバー (draft_page:writeのみ)
+	// draft_page:deleteを持たない閲覧者
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes([]model.Scope{model.ScopeDraftPageWrite}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).

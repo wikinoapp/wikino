@@ -39,15 +39,15 @@ type createPageFixture struct {
 // setupCreatePageFixtureはスペース・メンバー・トピック・トピックメンバーをテストDBへ
 // 直接コミットして作成する (UseCaseが自前でトランザクションを管理するため)。prefixとatnameは
 // どちらもテストDBを共有する並行テスト間で識別子を一意に保つ。atnameを別に受け取るのは、
-// prefixでは超えてしまうvalidator.AtnameMaxLengthにも収める必要があるため。スコープの引数が
-// nilの場合は各ビルダーの既定値を使う。
+// prefixでは超えてしまうvalidator.AtnameMaxLengthにも収める必要があるため。ロールの引数が
+// 空の場合は各ビルダーの既定値 (スペースは管理者、トピックはロール無し) を使う。
 func setupCreatePageFixture(
 	t *testing.T,
 	db *sql.DB,
 	prefix string,
 	atname string,
-	spaceMemberScopes []model.Scope,
-	topicMemberScopes []model.Scope,
+	spaceRole model.SpaceRole,
+	topicRole model.TopicRole,
 ) createPageFixture {
 	t.Helper()
 
@@ -62,8 +62,8 @@ func setupCreatePageFixture(
 	spaceMemberBuilder := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID)
-	if spaceMemberScopes != nil {
-		spaceMemberBuilder = spaceMemberBuilder.WithScopes(spaceMemberScopes)
+	if spaceRole != "" {
+		spaceMemberBuilder = spaceMemberBuilder.WithRole(spaceRole)
 	}
 	spaceMemberID := spaceMemberBuilder.Build()
 
@@ -77,8 +77,8 @@ func setupCreatePageFixture(
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID)
-	if topicMemberScopes != nil {
-		topicMemberBuilder = topicMemberBuilder.WithScopes(topicMemberScopes)
+	if topicRole != "" {
+		topicMemberBuilder = topicMemberBuilder.WithRole(topicRole)
 	}
 	topicMemberBuilder.Build()
 
@@ -109,7 +109,7 @@ func TestCreatePageUsecase_Execute_WithoutPrefilledContent(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-blank", "cpblank", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-blank", "cpblank", "", "")
 
 	output, err := uc.Execute(context.Background(), CreatePageInput{
 		SpaceIdentifier: f.spaceIdentifier,
@@ -159,7 +159,7 @@ func TestCreatePageUsecase_Execute_WithTitleOnly(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-title", "cptitle", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-title", "cptitle", "", "")
 
 	output, err := uc.Execute(context.Background(), CreatePageInput{
 		SpaceIdentifier: f.spaceIdentifier,
@@ -193,7 +193,7 @@ func TestCreatePageUsecase_Execute_WithBodyOnly(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-body", "cpbody", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-body", "cpbody", "", "")
 
 	output, err := uc.Execute(context.Background(), CreatePageInput{
 		SpaceIdentifier: f.spaceIdentifier,
@@ -222,7 +222,7 @@ func TestCreatePageUsecase_Execute_WithTitleAndBody(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-both", "cpboth", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-both", "cpboth", "", "")
 
 	output, err := uc.Execute(context.Background(), CreatePageInput{
 		SpaceIdentifier: f.spaceIdentifier,
@@ -252,7 +252,7 @@ func TestCreatePageUsecase_Execute_WithFeaturedImage(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-featured-image", "cpfeaturedimg", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-featured-image", "cpfeaturedimg", "", "")
 	attachmentID := testutil.NewAttachmentBuilderDB(t, db).
 		WithSpaceID(f.spaceID).
 		WithSpaceMemberID(f.spaceMemberID).
@@ -291,7 +291,7 @@ func TestCreatePageUsecase_Execute_WithWikilink(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-wikilink", "cpwikilink", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-wikilink", "cpwikilink", "", "")
 
 	output, err := uc.Execute(context.Background(), CreatePageInput{
 		SpaceIdentifier: f.spaceIdentifier,
@@ -326,7 +326,7 @@ func TestCreatePageUsecase_Execute_SpaceNotFound(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-nospace", "cpnospace", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-nospace", "cpnospace", "", "")
 
 	_, err := uc.Execute(context.Background(), CreatePageInput{
 		SpaceIdentifier: model.SpaceIdentifier("create-page-nospace-missing"),
@@ -341,7 +341,7 @@ func TestCreatePageUsecase_Execute_TopicNotFound(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-notopic", "cpnotopic", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-notopic", "cpnotopic", "", "")
 
 	_, err := uc.Execute(context.Background(), CreatePageInput{
 		SpaceIdentifier: f.spaceIdentifier,
@@ -356,7 +356,7 @@ func TestCreatePageUsecase_Execute_NotSpaceMember(t *testing.T) {
 
 	db := testutil.GetTestDB()
 	uc := newCreatePageUC(db)
-	f := setupCreatePageFixture(t, db, "create-page-nonmember", "cpnonmember", nil, nil)
+	f := setupCreatePageFixture(t, db, "create-page-nonmember", "cpnonmember", "", "")
 
 	otherUserID := testutil.NewUserBuilderDB(t, db).
 		WithEmail("create-page-nonmember-other@example.com").
@@ -371,7 +371,7 @@ func TestCreatePageUsecase_Execute_NotSpaceMember(t *testing.T) {
 	assertAppErrCode(t, err, model.AppErrCodeForbidden)
 }
 
-func TestCreatePageUsecase_Execute_WithTopicPageWriteScope(t *testing.T) {
+func TestCreatePageUsecase_Execute_WithTopicEditorRole(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
@@ -381,8 +381,8 @@ func TestCreatePageUsecase_Execute_WithTopicPageWriteScope(t *testing.T) {
 		db,
 		"create-page-topic-writer",
 		"cptopicwriter",
-		[]model.Scope{model.ScopePageRead},
-		[]model.Scope{model.ScopePageWrite},
+		model.SpaceRoleViewer,
+		model.TopicRoleEditor,
 	)
 
 	output, err := uc.Execute(context.Background(), CreatePageInput{
@@ -398,7 +398,7 @@ func TestCreatePageUsecase_Execute_WithTopicPageWriteScope(t *testing.T) {
 	}
 }
 
-func TestCreatePageUsecase_Execute_WithSpacePageWriteScopeWithoutTopicMembership(t *testing.T) {
+func TestCreatePageUsecase_Execute_WithSpaceEditorRoleWithoutTopicMembership(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
@@ -408,8 +408,8 @@ func TestCreatePageUsecase_Execute_WithSpacePageWriteScopeWithoutTopicMembership
 		db,
 		"create-page-space-writer",
 		"cpspacewriter",
-		[]model.Scope{model.ScopePageWrite},
-		nil,
+		model.SpaceRoleEditor,
+		"",
 	)
 	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(f.spaceID).
@@ -433,7 +433,7 @@ func TestCreatePageUsecase_Execute_WithSpacePageWriteScopeWithoutTopicMembership
 	}
 }
 
-func TestCreatePageUsecase_Execute_WithoutPageWriteScope(t *testing.T) {
+func TestCreatePageUsecase_Execute_WithViewerRoles(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
@@ -443,8 +443,8 @@ func TestCreatePageUsecase_Execute_WithoutPageWriteScope(t *testing.T) {
 		db,
 		"create-page-readonly",
 		"cpreadonly",
-		[]model.Scope{model.ScopePageRead},
-		[]model.Scope{model.ScopePageRead},
+		model.SpaceRoleViewer,
+		model.TopicRoleViewer,
 	)
 
 	_, err := uc.Execute(context.Background(), CreatePageInput{

@@ -141,13 +141,9 @@ func TestGetPageLocationsUsecase_Execute_TopicVisibility(t *testing.T) {
 		repository.NewTopicMemberRepository(q),
 	)
 
-	restrictedUserID := testutil.NewUserBuilder(t, tx).
-		WithEmail("gpl-vis-restricted@example.com").
-		WithAtname("gplvisrestricted").
-		Build()
-	topicReaderUserID := testutil.NewUserBuilder(t, tx).
-		WithEmail("gpl-vis-topic-reader@example.com").
-		WithAtname("gplvistopicreader").
+	viewerUserID := testutil.NewUserBuilder(t, tx).
+		WithEmail("gpl-vis-viewer@example.com").
+		WithAtname("gplvisviewer").
 		Build()
 
 	spaceID := testutil.NewSpaceBuilder(t, tx).
@@ -155,13 +151,8 @@ func TestGetPageLocationsUsecase_Execute_TopicVisibility(t *testing.T) {
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(restrictedUserID).
-		WithScopes([]model.Scope{}).
-		Build()
-	topicReaderSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(topicReaderUserID).
-		WithScopes([]model.Scope{}).
+		WithUserID(viewerUserID).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 
 	publicTopicID := testutil.NewTopicBuilder(t, tx).
@@ -175,12 +166,6 @@ func TestGetPageLocationsUsecase_Execute_TopicVisibility(t *testing.T) {
 		WithNumber(2).
 		WithName("Private").
 		WithVisibility(int32(model.TopicVisibilityPrivate)).
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(privateTopicID).
-		WithSpaceMemberID(topicReaderSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopeTopicRead}).
 		Build()
 
 	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -205,15 +190,8 @@ func TestGetPageLocationsUsecase_Execute_TopicVisibility(t *testing.T) {
 		want   []repository.PageLocation
 	}{
 		{
-			name:   "topic:readを持たないメンバーには公開トピックのページだけを返す",
-			userID: restrictedUserID,
-			want: []repository.PageLocation{
-				{TopicName: "Public", PageTitle: "公開トピックのWiki"},
-			},
-		},
-		{
-			name:   "トピックメンバーとしてtopic:readを持つメンバーには非公開トピックのページも返す",
-			userID: topicReaderUserID,
+			name:   "閲覧者のロールはtopic:readを持つため非公開トピックのページも返す",
+			userID: viewerUserID,
 			want: []repository.PageLocation{
 				{TopicName: "Private", PageTitle: "非公開トピックのWiki"},
 				{TopicName: "Public", PageTitle: "公開トピックのWiki"},

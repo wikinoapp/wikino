@@ -223,7 +223,7 @@ func TestCreate_suggestion_application_writeスコープなしは404が返る(t 
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(memberID).
-		WithScopes([]model.Scope{model.ScopeSuggestionWrite}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	topicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -281,7 +281,7 @@ func TestCreate_反映権限を持つメンバーが反映できる(t *testing.T
 	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(ownerID).
-		WithScopes([]model.Scope{model.ScopeSuggestionApplicationWrite}).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	topicID := testutil.NewTopicBuilderDB(t, db).
 		WithSpaceID(spaceID).
@@ -292,7 +292,6 @@ func TestCreate_反映権限を持つメンバーが反映できる(t *testing.T
 		WithSpaceID(spaceID).
 		WithTopicID(topicID).
 		WithSpaceMemberID(spaceMemberID).
-		WithScopes([]model.Scope{}).
 		Build()
 	pageID := testutil.NewPageBuilderDB(t, db).
 		WithSpaceID(spaceID).

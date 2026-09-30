@@ -37,7 +37,7 @@ func newCreateAPIPageUC(db *sql.DB) *CreateAPIPageUsecase {
 }
 
 // createAPIPageFixtureはページ作成APIのUseCaseのテストで共有するフィクスチャ。
-// トピックは1が公開、2が参加している非公開、3が参加していない非公開
+// トピックは1が公開、2がトピック編集者として参加している非公開、3が参加していない非公開
 type createAPIPageFixture struct {
 	space         *model.Space
 	spaceMemberID model.SpaceMemberID
@@ -47,7 +47,7 @@ type createAPIPageFixture struct {
 
 // setupCreateAPIPageFixtureは、UseCaseが自前でトランザクションを管理するため、フィクスチャを
 // テストDBへ直接コミットして作成する。identifierは並行テスト間で一意にする
-func setupCreateAPIPageFixture(t *testing.T, db *sql.DB, identifier string, memberScopes []model.Scope) createAPIPageFixture {
+func setupCreateAPIPageFixture(t *testing.T, db *sql.DB, identifier string, memberRole model.SpaceRole) createAPIPageFixture {
 	t.Helper()
 
 	atname := strings.ReplaceAll(identifier, "-", "_")
@@ -56,7 +56,7 @@ func setupCreateAPIPageFixture(t *testing.T, db *sql.DB, identifier string, memb
 	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(memberScopes).
+		WithRole(memberRole).
 		Build()
 
 	publicID := testutil.NewTopicBuilderDB(t, db).WithSpaceID(spaceID).WithNumber(1).WithName("公開").Build()
@@ -66,7 +66,7 @@ func setupCreateAPIPageFixture(t *testing.T, db *sql.DB, identifier string, memb
 		WithSpaceID(spaceID).
 		WithTopicID(joinedPrivateID).
 		WithSpaceMemberID(spaceMemberID).
-		WithScopes([]model.Scope{model.ScopeTopicRead, model.ScopePageWrite}).
+		WithRole(model.TopicRoleEditor).
 		Build()
 	notJoinedPrivateID := testutil.NewTopicBuilderDB(t, db).WithSpaceID(spaceID).WithNumber(3).WithName("参加していない非公開").
 		WithVisibility(int32(model.TopicVisibilityPrivate)).Build()
@@ -80,11 +80,11 @@ func setupCreateAPIPageFixture(t *testing.T, db *sql.DB, identifier string, memb
 }
 
 // principalはフィクスチャのメンバーが、tokenScopesを持つトークンで呼び出した主体を返す
-func (f createAPIPageFixture) principal(memberScopes, tokenScopes []model.Scope) *model.APIPrincipal {
+func (f createAPIPageFixture) principal(memberRole model.SpaceRole, tokenScopes []model.Scope) *model.APIPrincipal {
 	return &model.APIPrincipal{
 		User:        &model.User{ID: f.userID},
 		Space:       f.space,
-		SpaceMember: &model.SpaceMember{ID: f.spaceMemberID, SpaceID: f.space.ID, UserID: f.userID, Scopes: memberScopes, Active: true},
+		SpaceMember: &model.SpaceMember{ID: f.spaceMemberID, SpaceID: f.space.ID, UserID: f.userID, Role: memberRole, Active: true},
 		TokenKind:   model.APITokenKindPersonalAccessToken,
 		Scopes:      policy.ExpandAPITokenScopes(tokenScopes),
 	}
@@ -109,15 +109,15 @@ func TestCreateAPIPageUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
-	f := setupCreateAPIPageFixture(t, db, "api-page-create", memberScopes)
+	memberRole := apiTopicRegularMemberRole
+	f := setupCreateAPIPageFixture(t, db, "api-page-create", memberRole)
 
 	// 本文はこのページ自身・既存のページ・存在しないページへのWikiリンクを含む
 	existingID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).WithTitle("既存").Build()
 	body := "[[新しいページ]] [[既存]] [[まだ無いページ]]"
 
 	output, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
-		Principal:       f.principal(memberScopes, []model.Scope{model.ScopePageWrite}),
+		Principal:       f.principal(memberRole, []model.Scope{model.ScopePageWrite}),
 		SpaceIdentifier: f.space.Identifier,
 		TopicNumber:     1,
 		Title:           "新しいページ",
@@ -166,63 +166,63 @@ func TestCreateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 	writeScopes := []model.Scope{model.ScopePageWrite}
 	writeAndTopicScopes := []model.Scope{model.ScopePageWrite, model.ScopeTopicRead}
 	tests := []struct {
-		name         string
-		memberScopes []model.Scope
-		tokenScopes  []model.Scope
-		identifier   model.SpaceIdentifier
-		topicNumber  int32
+		name        string
+		memberRole  model.SpaceRole
+		tokenScopes []model.Scope
+		identifier  model.SpaceIdentifier
+		topicNumber int32
 		// wantFieldは422になる場合の問題のフィールド、wantCodeは未存在などのエラーのコード
 		wantField string
 		wantCode  model.AppErrorCode
 	}{
 		{
-			name:         "トークンがtopic:readを持てば参加している非公開トピックに作成できる",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeAndTopicScopes,
-			topicNumber:  2,
+			name:        "トークンがtopic:readを持てば参加している非公開トピックに作成できる",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeAndTopicScopes,
+			topicNumber: 2,
 		},
 		{
-			name:         "トークンがtopic:readを持たなければ参加している非公開トピックは見つからない",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeScopes,
-			topicNumber:  2,
-			wantField:    "topic_number",
+			name:        "トークンがtopic:readを持たなければ参加している非公開トピックは見つからない",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeScopes,
+			topicNumber: 2,
+			wantField:   "topic_number",
 		},
 		{
-			name:         "参加していない非公開トピックは見つからない",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeAndTopicScopes,
-			topicNumber:  3,
-			wantField:    "topic_number",
+			// どのスペースのロールもtopic:readを持つため、参加していない非公開トピックも開ける
+			name:        "トークンがtopic:readを持てば参加していない非公開トピックにも作成できる",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeAndTopicScopes,
+			topicNumber: 3,
 		},
 		{
-			name:         "存在しないトピックは見つからない",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeAndTopicScopes,
-			topicNumber:  99,
-			wantField:    "topic_number",
+			name:        "存在しないトピックは見つからない",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeAndTopicScopes,
+			topicNumber: 99,
+			wantField:   "topic_number",
 		},
 		{
-			name:         "メンバーがpage:writeを持たなければ権限不足になる",
-			memberScopes: []model.Scope{model.ScopePageRead, model.ScopePersonalAccessTokenWrite},
-			tokenScopes:  writeScopes,
-			topicNumber:  1,
-			wantCode:     model.AppErrCodeForbidden,
+			name:        "メンバーが閲覧者でpage:writeを持たなければ権限不足になる",
+			memberRole:  model.SpaceRoleViewer,
+			tokenScopes: writeScopes,
+			topicNumber: 1,
+			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
-			name:         "トークンがpage:writeを持たなければ、メンバーが持っていても作成できない",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
-			topicNumber:  1,
-			wantCode:     model.AppErrCodeForbidden,
+			name:        "トークンがpage:writeを持たなければ、メンバーが持っていても作成できない",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			topicNumber: 1,
+			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
-			name:         "束縛先と異なるスペースは未存在",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  writeScopes,
-			identifier:   "api-page-create-auth-other",
-			topicNumber:  1,
-			wantCode:     model.AppErrCodeResourceNotFound,
+			name:        "束縛先と異なるスペースは未存在",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: writeScopes,
+			identifier:  "api-page-create-auth-other",
+			topicNumber: 1,
+			wantCode:    model.AppErrCodeResourceNotFound,
 		},
 	}
 
@@ -231,14 +231,14 @@ func TestCreateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupCreateAPIPageFixture(t, db, "api-page-create-auth-"+string(rune('a'+i)), tt.memberScopes)
+			f := setupCreateAPIPageFixture(t, db, "api-page-create-auth-"+string(rune('a'+i)), tt.memberRole)
 			identifier := f.space.Identifier
 			if tt.identifier != "" {
 				identifier = tt.identifier
 			}
 
 			output, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
-				Principal:       f.principal(tt.memberScopes, tt.tokenScopes),
+				Principal:       f.principal(tt.memberRole, tt.tokenScopes),
 				SpaceIdentifier: identifier,
 				TopicNumber:     tt.topicNumber,
 				Title:           "ページ",
@@ -278,17 +278,17 @@ func TestCreateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
+	memberRole := apiTopicRegularMemberRole
 	tokenScopes := []model.Scope{model.ScopePageWrite}
 
 	t.Run("公開済みのページと同じタイトルは422", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-create-dup", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-create-dup", memberRole)
 		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).WithTitle("重複").Build()
 
 		output, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			TopicNumber:     1,
 			Title:           "重複",
@@ -305,11 +305,11 @@ func TestCreateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 	t.Run("別のトピックなら同じタイトルでも作成できる", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-create-other-topic", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-create-other-topic", memberRole)
 		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[2]).WithNumber(1).WithTitle("重複").Build()
 
 		if _, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			TopicNumber:     1,
 			Title:           "重複",
@@ -322,12 +322,12 @@ func TestCreateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 	t.Run("Wikiリンクで作られた中身の無い未公開のページは論理削除して置き換える", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupCreateAPIPageFixture(t, db, "api-page-create-linked", memberScopes)
+		f := setupCreateAPIPageFixture(t, db, "api-page-create-linked", memberRole)
 		linkedID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
 			WithTitle("リンク先").WithBody("").WithUnpublished().Build()
 
 		output, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
-			Principal:       f.principal(memberScopes, tokenScopes),
+			Principal:       f.principal(memberRole, tokenScopes),
 			SpaceIdentifier: f.space.Identifier,
 			TopicNumber:     1,
 			Title:           "リンク先",
@@ -421,8 +421,8 @@ func TestCreateAPIPageUsecase_ExecuteConcurrently(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
-	f := setupCreateAPIPageFixture(t, db, "api-page-cc-"+uuid.NewString()[:8], memberScopes)
+	memberRole := apiTopicRegularMemberRole
+	f := setupCreateAPIPageFixture(t, db, "api-page-cc-"+uuid.NewString()[:8], memberRole)
 	uc := newCreateAPIPageUC(db)
 
 	// 1回の競合で番号を得られるのは1件だけのため、再試行の上限より多く並行させる
@@ -437,7 +437,7 @@ func TestCreateAPIPageUsecase_ExecuteConcurrently(t *testing.T) {
 			defer wg.Done()
 			<-start
 			outputs[i], errs[i] = uc.Execute(t.Context(), CreateAPIPageInput{
-				Principal:       f.principal(memberScopes, []model.Scope{model.ScopePageWrite}),
+				Principal:       f.principal(memberRole, []model.Scope{model.ScopePageWrite}),
 				SpaceIdentifier: f.space.Identifier,
 				TopicNumber:     1,
 				Title:           fmt.Sprintf("日報%d", i),
@@ -523,12 +523,12 @@ func TestCreateAPIPageUsecase_ExecuteWithWebConflict(t *testing.T) {
 	}
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
+	memberRole := apiTopicRegularMemberRole
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f := setupCreateAPIPageFixture(t, db, "api-page-web-cc-"+uuid.NewString()[:8], memberScopes)
+			f := setupCreateAPIPageFixture(t, db, "api-page-web-cc-"+uuid.NewString()[:8], memberRole)
 			testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).WithTitle("既存").Build()
 
 			webTx, webPID := beginWebTx(t, db)
@@ -540,7 +540,7 @@ func TestCreateAPIPageUsecase_ExecuteWithWebConflict(t *testing.T) {
 			webPageID := webPage.Build()
 
 			resultCh := executeCreateAPIPageAsync(t, db, CreateAPIPageInput{
-				Principal:       f.principal(memberScopes, []model.Scope{model.ScopePageWrite}),
+				Principal:       f.principal(memberRole, []model.Scope{model.ScopePageWrite}),
 				SpaceIdentifier: f.space.Identifier,
 				TopicNumber:     1,
 				Title:           tt.apiTitle,
@@ -596,8 +596,8 @@ func TestCreateAPIPageUsecase_ExecuteWhenReplacementIsPublished(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.GetTestDB()
-	memberScopes := apiTopicRegularMemberScopes
-	f := setupCreateAPIPageFixture(t, db, "api-page-publish-cc-"+uuid.NewString()[:8], memberScopes)
+	memberRole := apiTopicRegularMemberRole
+	f := setupCreateAPIPageFixture(t, db, "api-page-publish-cc-"+uuid.NewString()[:8], memberRole)
 	pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).
 		WithNumber(1).WithTitle("同じタイトル").WithBody("").WithUnpublished().Build()
 
@@ -610,7 +610,7 @@ func TestCreateAPIPageUsecase_ExecuteWhenReplacementIsPublished(t *testing.T) {
 	}
 
 	resultCh := executeCreateAPIPageAsync(t, db, CreateAPIPageInput{
-		Principal:       f.principal(memberScopes, []model.Scope{model.ScopePageWrite}),
+		Principal:       f.principal(memberRole, []model.Scope{model.ScopePageWrite}),
 		SpaceIdentifier: f.space.Identifier,
 		TopicNumber:     1,
 		Title:           "同じタイトル",

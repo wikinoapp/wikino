@@ -17,7 +17,7 @@ func TestIndex_自分が許可した連携の一覧を表示する(t *testing.T)
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "grant-index"
-	m := setupGrantMember(t, tx, identifier, []model.Scope{model.ScopeSpaceAdmin}, true)
+	m := setupGrantMember(t, tx, identifier, model.SpaceRoleAdmin, true)
 	otherUserID := testutil.NewUserBuilder(t, tx).WithEmail(identifier + "-other@example.com").WithAtname("grant_index_other").Build()
 	otherMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(m.spaceID).WithUserID(otherUserID).Build()
 
@@ -70,13 +70,13 @@ func TestIndex_自分が許可した連携の一覧を表示する(t *testing.T)
 	}
 }
 
-func TestIndex_解除の権限だけで一覧と解除ボタンを表示する(t *testing.T) {
+func TestIndex_閲覧者にも一覧と解除ボタンを表示する(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "grant-index-delete-only"
-	m := setupGrantMember(t, tx, identifier, []model.Scope{model.ScopeOAuthGrantDelete}, true)
+	m := setupGrantMember(t, tx, identifier, model.SpaceRoleViewer, true)
 	m.buildGrant(t, tx, m.spaceMemberID, "自宅のCLI", "grant-index-delete-only-cli", []model.Scope{model.ScopePageRead})
 
 	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_grants", identifier, m.userID)
@@ -91,38 +91,13 @@ func TestIndex_解除の権限だけで一覧と解除ボタンを表示する(t
 	}
 }
 
-func TestIndex_閲覧の権限だけなら解除ボタンを出さない(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	identifier := "grant-index-readonly"
-	m := setupGrantMember(t, tx, identifier, []model.Scope{model.ScopeOAuthGrantRead}, true)
-	m.buildGrant(t, tx, m.spaceMemberID, "自宅のCLI", "grant-index-readonly-cli", []model.Scope{model.ScopePageRead})
-
-	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_grants", identifier, m.userID)
-	rr := httptest.NewRecorder()
-	setupHandler(t, q).Index(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
-	}
-	body := rr.Body.String()
-	if !strings.Contains(body, "自宅のCLI") {
-		t.Error("レスポンスに連携中のアプリが含まれていない")
-	}
-	if strings.Contains(body, `name="_method" value="DELETE"`) {
-		t.Error("解除の権限が無いメンバーのレスポンスに解除のフォームが含まれている")
-	}
-}
-
 func TestIndex_連携が無ければその旨を表示する(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "grant-index-empty"
-	m := setupGrantMember(t, tx, identifier, []model.Scope{model.ScopeOAuthGrantRead}, true)
+	m := setupGrantMember(t, tx, identifier, model.SpaceRoleViewer, true)
 
 	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_grants", identifier, m.userID)
 	rr := httptest.NewRecorder()
@@ -142,11 +117,10 @@ func TestIndex_開けない場合は404が返る(t *testing.T) {
 	tests := []struct {
 		name        string
 		identifier  string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 	}{
-		{name: "oauth_grant:readを持たない", identifier: "grant-index-noscope", scopes: []model.Scope{model.ScopePersonalAccessTokenRead}, flagEnabled: true},
-		{name: "フィーチャーフラグが無効", identifier: "grant-index-noflag", scopes: []model.Scope{model.ScopeSpaceAdmin}},
+		{name: "フィーチャーフラグが無効", identifier: "grant-index-noflag", role: model.SpaceRoleAdmin},
 	}
 
 	for _, tt := range tests {
@@ -155,7 +129,7 @@ func TestIndex_開けない場合は404が返る(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			m := setupGrantMember(t, tx, tt.identifier, tt.scopes, tt.flagEnabled)
+			m := setupGrantMember(t, tx, tt.identifier, tt.role, tt.flagEnabled)
 
 			req := newRequest(t, http.MethodGet, "/s/"+tt.identifier+"/settings/oauth_grants", tt.identifier, m.userID)
 			rr := httptest.NewRecorder()
@@ -174,7 +148,7 @@ func TestIndex_未ログインならログイン画面へリダイレクトす�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "grant-index-anon"
-	setupGrantMember(t, tx, identifier, []model.Scope{model.ScopeSpaceAdmin}, true)
+	setupGrantMember(t, tx, identifier, model.SpaceRoleAdmin, true)
 
 	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_grants", identifier, "")
 	rr := httptest.NewRecorder()

@@ -17,7 +17,7 @@ func TestDelete_アプリを削除して許可を失効し一覧へリダイレ�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-delete"
-	m := setupAppMember(t, tx, identifier, "削除するメンバー", []model.Scope{model.ScopeOAuthApplicationDelete}, true)
+	m := setupAppMember(t, tx, identifier, "削除するメンバー", model.SpaceRoleAdmin, true)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
 		WithClientID("oauth-app-delete-client").
@@ -59,8 +59,8 @@ func TestDelete_削除できないメンバーとアプリには404が返る(t *
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-delete-denied"
-	deleter := setupAppMember(t, tx, identifier, "削除するメンバー", []model.Scope{model.ScopeOAuthApplicationDelete}, true)
-	writer := setupAppMember(t, tx, identifier+"-writer", "編集だけのメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	deleter := setupAppMember(t, tx, identifier, "削除するメンバー", model.SpaceRoleAdmin, true)
+	writer := setupAppMember(t, tx, identifier+"-writer", "編集者のメンバー", model.SpaceRoleEditor, true)
 	writerAppID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(writer.spaceID).
 		WithClientID("oauth-app-delete-writer-client").
@@ -72,7 +72,7 @@ func TestDelete_削除できないメンバーとアプリには404が返る(t *
 		identifier string
 		userID     model.UserID
 	}{
-		{name: "oauth_application:writeだけを持つ", identifier: identifier + "-writer", userID: writer.userID},
+		{name: "oauth_application:*を持たない編集者", identifier: identifier + "-writer", userID: writer.userID},
 		{name: "別のスペースのアプリ", identifier: identifier, userID: deleter.userID},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

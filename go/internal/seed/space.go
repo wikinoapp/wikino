@@ -60,52 +60,32 @@ const (
 	demoSpaceName       = "みゆきのスペース"
 )
 
-// adminSpaceScopesは、スペースを作成したメンバーに本番が与えるスコープ。
-// space:adminは他のすべてのスコープへ展開される唯一の特別スコープ。
-var adminSpaceScopes = []model.Scope{model.ScopeSpaceAdmin}
+// nonAdminSpaceRoleは、seed-wikiを管理しないアカウント、すなわち
+// roleCollaboratorとroleGuestがそこで持つロール。編集者はページ・トピック・
+// 編集提案を書けるが、スペースの設定・トピックの公開範囲・メンバーは扱えない。
+// この線の両側にアカウントを置くことで、画面の管理者専用部分が、信じるしか
+// ないものではなく目に見える差分になる。
+//
+// 2つに同じロールを持たせるのは、両者を隔てるものをフィーチャーフラグだけにする
+// ため。そうすると、2つの間で見比べた画面が示すものは、フラグと異なるロールが
+// 一緒に変えたものではなく、フラグが変えたものになる。
+//
+// 編集者のロールはスペース単位のtopic:readを持つため、これらのアカウントは
+// 参加していない非公開トピックも開ける。非公開トピックが見えない状態は、
+// seed-soloを外から開くことで確認する。
+const nonAdminSpaceRole = model.SpaceRoleEditor
 
-// nonAdminSpaceScopesは、seed-wikiを管理しないアカウント、すなわち
-// roleCollaboratorとroleGuestがそこで持つスコープ。ページ・下書き・編集提案・
-// コメントを書けるだけの権限を与え、space:adminは持たせない。この線の両側に
-// アカウントを置くことで、画面の管理者専用部分が、信じるしかないものではなく
-// 目に見える差分になる。
+// seededSpaceMemberは1アカウントのスペースへのメンバーシップ。
 //
-// 2つに同じ集合を持たせるのは、両者を隔てるものをフィーチャーフラグだけにする
-// ため。そうすると、2つの間で見比べた画面が示すものは、フラグと異なるスコープが
-// 一緒に変えたものではなく、フラグが変えたものになる。加えて、管理者以外の画面の
-// Go版がそもそも開けるようになる。フラグを持つもう一方のアカウントである
-// roleOwnerは、すべての画面を管理者として見るためである。
-//
-// topic:readは意図的に外している。スペースメンバーのスコープはスペース内の全
-// トピックに効くため、ここで与えるとこれらのアカウントが参加していない非公開
-// トピックまで見えてしまい、そのトピックを置いた唯一の目的が失われる。
-// roleCollaboratorが参加している非公開トピックは、そのトピックメンバー側の
-// スコープで開く
-// (topicMemberScopes参照)。
-var nonAdminSpaceScopes = []model.Scope{
-	model.ScopePageWrite,
-	model.ScopePageTrashWrite,
-	model.ScopePageTrashDelete,
-	model.ScopeDraftPageWrite,
-	model.ScopeDraftPageDelete,
-	model.ScopeSuggestionWrite,
-	model.ScopeSuggestionCommentWrite,
-	model.ScopeAttachmentWrite,
-}
-
-// seededSpaceMemberは1アカウントのスペースへのメンバーシップ。スコープを
-// 一緒に持たせるのは、トピックメンバーシップが何を持つべきかが、スペース
-// メンバーシップが既に与えているものによって決まるため。
-//
-// 表示名を一緒に持たせるのも同じ種類の理由による。生成器がスペースへ書き込む
+// 表示名を一緒に持たせるのは、生成器がスペースへ書き込む
 // テキストが名指しするのはそのスペースのアカウントであり、メンバーシップは生成器が
 // そのために既に持っている手がかりである。名前をここに持たせていることが、その
 // テキストが、書かれた日に名簿が言っていたことを繰り返すのではなく、名簿へ追随
 // できる理由になる。
 type seededSpaceMember struct {
-	id     model.SpaceMemberID
-	name   string
-	scopes []model.Scope
+	id   model.SpaceMemberID
+	name string
+	role model.SpaceRole
 }
 
 // seededSpaceは作成したスペース1つと、その中のメンバーシップ。後続の
@@ -118,7 +98,7 @@ type seededSpace struct {
 	// 一緒に持たせている。
 	identifier model.SpaceIdentifier
 	// membersはスペース内のメンバーシップを、それぞれが属するアカウントの
-	// 役割をキーにして持つ。参加していない役割は、スコープ無しで存在するのではなく
+	// 役割をキーにして持つ。参加していない役割は、ロール無しで存在するのではなく
 	// 存在しない。seed-soloは、そのメンバーではまったくないアカウントから眺める
 	// ものであるため。
 	members map[seedRole]*seededSpaceMember
@@ -161,8 +141,8 @@ func (s *seededSpace) memberInTurn(roles []seedRole, position int) (*seededSpace
 
 // spaceMemberSpecは、スペース内に作成するメンバーシップ1件の内容。
 type spaceMemberSpec struct {
-	role   seedRole
-	scopes []model.Scope
+	role      seedRole
+	spaceRole model.SpaceRole
 }
 
 // spaceSpecは、作成するスペース1件の内容。
@@ -180,9 +160,9 @@ var spaceSpecs = []spaceSpec{
 		identifier: wikiSpaceIdentifier,
 		name:       wikiSpaceName,
 		members: []spaceMemberSpec{
-			{role: roleOwner, scopes: adminSpaceScopes},
-			{role: roleCollaborator, scopes: nonAdminSpaceScopes},
-			{role: roleGuest, scopes: nonAdminSpaceScopes},
+			{role: roleOwner, spaceRole: model.SpaceRoleAdmin},
+			{role: roleCollaborator, spaceRole: nonAdminSpaceRole},
+			{role: roleGuest, spaceRole: nonAdminSpaceRole},
 		},
 		assign: func(spaces *seededSpaces, space *seededSpace) { spaces.wiki = space },
 	},
@@ -190,7 +170,7 @@ var spaceSpecs = []spaceSpec{
 		identifier: soloSpaceIdentifier,
 		name:       soloSpaceName,
 		members: []spaceMemberSpec{
-			{role: roleOwner, scopes: adminSpaceScopes},
+			{role: roleOwner, spaceRole: model.SpaceRoleAdmin},
 		},
 		assign: func(spaces *seededSpaces, space *seededSpace) { spaces.solo = space },
 	},
@@ -198,7 +178,7 @@ var spaceSpecs = []spaceSpec{
 		identifier: longNameSpaceIdentifier,
 		name:       longNameSpaceName,
 		members: []spaceMemberSpec{
-			{role: roleOwner, scopes: adminSpaceScopes},
+			{role: roleOwner, spaceRole: model.SpaceRoleAdmin},
 		},
 		assign: func(spaces *seededSpaces, space *seededSpace) { spaces.longName = space },
 	},
@@ -206,7 +186,7 @@ var spaceSpecs = []spaceSpec{
 		identifier: demoSpaceIdentifier,
 		name:       demoSpaceName,
 		members: []spaceMemberSpec{
-			{role: roleOwner, scopes: adminSpaceScopes},
+			{role: roleOwner, spaceRole: model.SpaceRoleAdmin},
 		},
 		assign: func(spaces *seededSpaces, space *seededSpace) { spaces.demo = space },
 	},
@@ -246,7 +226,7 @@ func generateSpaces(ctx context.Context, dbtx query.DBTX, out io.Writer, users *
 				return nil, fmt.Errorf("スペース %sに参加させる役割 %sのユーザーが作成されていない", spec.identifier, memberSpec.role)
 			}
 
-			member, err := addSpaceMember(ctx, dbtx, space.id, user, memberSpec.scopes)
+			member, err := addSpaceMember(ctx, dbtx, space.id, user, memberSpec.spaceRole)
 			if err != nil {
 				return nil, fmt.Errorf("スペース %sへの役割 %sの追加に失敗: %w", spec.identifier, memberSpec.role, err)
 			}
@@ -286,19 +266,16 @@ func createSpace(ctx context.Context, dbtx query.DBTX, identifier string, name s
 	}, nil
 }
 
-// addSpaceMemberは指定のスコープを維持し、認可の切り替えに備えてロールも保存する。
+// addSpaceMemberは、指定のロールでユーザーをスペースに参加させる。
+// scopesには本番と同じく、Rails版が判定に使うロールに応じた値を書く。
 func addSpaceMember(
 	ctx context.Context,
 	dbtx query.DBTX,
 	spaceID model.SpaceID,
 	user *model.User,
-	scopes []model.Scope,
+	role model.SpaceRole,
 ) (*seededSpaceMember, error) {
 	now := time.Now()
-	role := model.SpaceRoleEditor
-	if model.HasScope(scopes, model.ScopeSpaceAdmin) {
-		role = model.SpaceRoleAdmin
-	}
 
 	var id string
 	err := dbtx.QueryRowContext(
@@ -306,23 +283,11 @@ func addSpaceMember(
 		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, true, $6, $7)
          RETURNING id`,
-		string(spaceID), string(user.ID), string(role), pq.Array(scopeStrings(scopes)), now, now, now,
+		string(spaceID), string(user.ID), string(role), pq.Array(model.ScopesToStrings(role.RailsScopes())), now, now, now,
 	).Scan(&id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &seededSpaceMember{id: model.SpaceMemberID(id), name: user.Name, scopes: scopes}, nil
-}
-
-// scopeStringsはスコープを保存用に変換する。結果がnilになることはない。
-// scopes列はNOT NULLであり、pqはnilのスライスを、スコープ無しの
-// メンバーシップに必要な空配列ではなくNULLとして送るため。
-func scopeStrings(scopes []model.Scope) []string {
-	ss := make([]string, 0, len(scopes))
-	for _, scope := range scopes {
-		ss = append(ss, string(scope))
-	}
-
-	return ss
+	return &seededSpaceMember{id: model.SpaceMemberID(id), name: user.Name, role: role}, nil
 }
