@@ -34,9 +34,14 @@ func PaginatedPath(path Path, page int32) Path {
 	return Path(fmt.Sprintf("%s%spage=%d", path, separator, page))
 }
 
-// 新規スペース作成フォームのパスを生成します (現状はRails版にプロキシされる)。
+// NewSpacePathはスペース作成フォームのパスを生成します。
 func NewSpacePath() Path {
 	return Path("/spaces/new")
+}
+
+// SpaceListPathはスペースの作成処理のパスを生成します。
+func SpaceListPath() Path {
+	return Path("/spaces")
 }
 
 // AtomPathはスペースのRSS (Atom) フィードのパスを生成します。

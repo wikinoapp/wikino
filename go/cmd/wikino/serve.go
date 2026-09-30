@@ -498,9 +498,12 @@ func runServe() {
 		trashPageUC,
 	)
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, featureFlagRepo)
+	createSpaceUC := usecase.NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
+		flashMgr,
 		getSpaceShowUC,
+		createSpaceUC,
 	)
 	getSpaceSettingsUC := usecase.NewGetSpaceSettingsUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo)
 	spaceSettingsHandler := spacesettingshandler.NewHandler(
@@ -908,6 +911,13 @@ func runServe() {
 
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)
+
+		// スペースの作成。フォームと作成処理。
+		//
+		// HEADを単独で登録する理由は下のトピックの作成と同じ。
+		r.Get("/spaces/new", spaceHandler.New)
+		r.Head("/spaces/new", spaceHandler.New)
+		r.Post("/spaces", spaceHandler.Create)
 
 		// トピックの作成。フォームと作成処理。
 		//

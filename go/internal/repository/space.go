@@ -92,3 +92,30 @@ func (r *SpaceRepository) LockByID(ctx context.Context, id model.SpaceID) (bool,
 	}
 	return err == nil, err
 }
+
+// ExistsByIdentifierはその識別子を持つスペースが既にあるかを返す。削除済みのスペースも数え、
+// 大文字と小文字を区別しない。識別子の一意インデックスと同じ範囲で重複を判定するためである。
+func (r *SpaceRepository) ExistsByIdentifier(ctx context.Context, identifier model.SpaceIdentifier) (bool, error) {
+	return r.q.ExistsSpaceByIdentifier(ctx, string(identifier))
+}
+
+// CreateSpaceInputはスペースの作成に必要な値を保持する。
+type CreateSpaceInput struct {
+	Identifier model.SpaceIdentifier
+	Name       string
+	Plan       model.Plan
+}
+
+// Createはスペースを作成する。
+func (r *SpaceRepository) Create(ctx context.Context, input CreateSpaceInput) (*model.Space, error) {
+	row, err := r.q.CreateSpace(ctx, query.CreateSpaceParams{
+		Identifier: string(input.Identifier),
+		Name:       input.Name,
+		Plan:       int32(input.Plan),
+		Now:        time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}

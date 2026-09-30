@@ -1219,6 +1219,42 @@ description = "トピック詳細画面の「編集提案」タブラベル"
 other = "Suggestions"
 
 # Topic new
+[space_new_title]
+description = "スペース作成画面のページタイトル"
+other = "New space"
+
+[space_new_heading]
+description = "スペース作成画面の見出し"
+other = "New space"
+
+[space_new_breadcrumb]
+description = "スペース作成画面自身を指すパンくず項目 (現在項目)"
+other = "New space"
+
+[space_new_hint_html]
+description = "スペース作成画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "For more information about spaces, please see <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/16\" target=\"_blank\">Space help</a>.<br>If you are unsure what kind of space to create, <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/50\" target=\"_blank\">Best Practices</a> may be helpful."
+
+[space_form_identifier_label]
+description = "スペース作成フォームの識別子のラベル"
+other = "Identifier"
+
+[space_form_identifier_hint]
+description = "スペース作成フォームの識別子の補足"
+other = "This identifier is used in the URL of the space. You can change it later. It must be at most {{.MaxLength}} characters long and can only contain alphanumeric characters and hyphens."
+
+[space_form_name_label]
+description = "スペース作成フォームの名前のラベル"
+other = "Name"
+
+[space_new_submit_button]
+description = "スペース作成画面の送信ボタン"
+other = "Create"
+
+[space_new_cancel]
+description = "スペース作成画面のキャンセルリンク"
+other = "Cancel"
+
 [topic_new_title]
 description = "トピック作成画面のページタイトル"
 other = "New topic | {{.SpaceName}}"
@@ -1274,6 +1310,34 @@ other = "Create"
 [topic_new_cancel]
 description = "トピック作成画面のキャンセルリンク"
 other = "Cancel"
+
+[validation_space_identifier_required]
+description = "スペースの識別子必須エラー"
+other = "Please enter an identifier"
+
+[validation_space_identifier_too_long]
+description = "スペースの識別子文字数超過エラー"
+other = "Identifier must be 20 characters or less"
+
+[validation_space_identifier_invalid_format]
+description = "スペースの識別子形式エラー"
+other = "Identifier can only contain alphanumeric characters and hyphens"
+
+[validation_space_identifier_reserved]
+description = "スペースの識別子予約語エラー"
+other = "This identifier cannot be used"
+
+[validation_space_identifier_uniqueness]
+description = "スペースの識別子重複エラー"
+other = "This identifier has already been taken"
+
+[validation_space_name_required]
+description = "スペース名必須エラー"
+other = "Please enter a name"
+
+[validation_space_name_too_long]
+description = "スペース名文字数超過エラー"
+other = "Name must be 30 characters or less"
 
 [validation_topic_name_required]
 description = "トピック名必須エラー"
@@ -1378,6 +1442,10 @@ other = "Description must be 150 characters or less"
 [validation_topic_visibility_required]
 description = "トピックの公開設定未選択エラー"
 other = "Please select a visibility"
+
+[flash_space_created]
+description = "スペース作成成功時のフラッシュメッセージ"
+other = "Space created."
 
 [flash_topic_created]
 description = "トピック作成成功時のフラッシュメッセージ"

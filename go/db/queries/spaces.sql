@@ -27,3 +27,16 @@ SELECT * FROM spaces WHERE id = @id AND discarded_at IS NULL;
 -- そのスペースへのページ・トピックの書き込みまで待たされる。弱いほうのロックどうしは
 -- 競合したままなので、直列化に必要なものは失われない。
 SELECT id FROM spaces WHERE id = @id AND discarded_at IS NULL FOR NO KEY UPDATE;
+
+-- name: ExistsSpaceByIdentifier :one
+-- その識別子を持つスペースが既にあるかを返す (削除済みのスペースも含む)。識別子の一意インデックスは
+-- 削除済みのスペースも対象にしており、citextのため大文字と小文字を区別しない。
+SELECT EXISTS (
+    SELECT 1 FROM spaces WHERE identifier = @identifier
+) AS space_exists;
+
+-- name: CreateSpace :one
+-- スペースを作成する。
+INSERT INTO spaces (identifier, name, plan, joined_at, created_at, updated_at)
+VALUES (@identifier, @name, @plan, @now, @now, @now)
+RETURNING *;
