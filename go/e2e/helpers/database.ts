@@ -120,16 +120,22 @@ export async function createTestSpace(
   return { id, identifier, name };
 }
 
+// SpaceRoleとTopicRoleは、Go版のmodel.SpaceRole / model.TopicRoleのキー
+export type SpaceRole = "admin" | "editor" | "viewer";
+export type TopicRole = "admin" | "editor" | "viewer";
+
+// createTestSpaceMemberは、指定のロールでユーザーをスペースに参加させる。
+// E2EはGo版だけを相手にし、Go版は権限をロールから引いてscopesを読まないため、scopesは既定値のままにする
 export async function createTestSpaceMember(
   spaceId: string,
   userId: string,
-  scopes: string[] = ["space:admin"],
+  role: SpaceRole = "admin",
 ): Promise<string> {
   const result = await query(
-    `INSERT INTO space_members (space_id, user_id, scopes, joined_at, active, created_at, updated_at)
+    `INSERT INTO space_members (space_id, user_id, role, joined_at, active, created_at, updated_at)
      VALUES ($1, $2, $3, NOW(), true, NOW(), NOW())
      RETURNING id`,
-    [spaceId, userId, scopes],
+    [spaceId, userId, role],
   );
 
   return result.rows[0].id;
@@ -149,17 +155,19 @@ export async function createTestTopic(spaceId: string, overrides: Partial<{ name
   return { id: result.rows[0].id, name };
 }
 
+// createTestTopicMemberは、スペースメンバーをトピックに参加させる。
+// roleを省くとロール無しになり、トピックで追加する権限は持たない
 export async function createTestTopicMember(
   spaceId: string,
   topicId: string,
   spaceMemberId: string,
-  scopes: string[] = [],
+  role: TopicRole | null = null,
 ): Promise<string> {
   const result = await query(
-    `INSERT INTO topic_members (space_id, topic_id, space_member_id, scopes, joined_at, created_at, updated_at)
+    `INSERT INTO topic_members (space_id, topic_id, space_member_id, role, joined_at, created_at, updated_at)
      VALUES ($1, $2, $3, $4, NOW(), NOW(), NOW())
      RETURNING id`,
-    [spaceId, topicId, spaceMemberId, scopes],
+    [spaceId, topicId, spaceMemberId, role],
   );
 
   return result.rows[0].id;
