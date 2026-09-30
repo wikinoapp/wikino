@@ -10,6 +10,10 @@ type Authorizer interface {
 	// トピック
 	CanShowTopic(topic *model.Topic) bool
 	CanUpdateTopic() bool
+	// CanUpdateTopicVisibilityはtopic_visibility:writeスコープで判定する。
+	// 非公開トピックを公開すると内容がスペースの外へ出るため、トピックの名前や説明を
+	// 変えられるtopic:writeとは分けている。
+	CanUpdateTopicVisibility() bool
 
 	// ページ
 	CanCreatePage() bool

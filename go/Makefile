@@ -288,6 +288,7 @@ api-lint: ## OpenAPI記述をlint (vacuum)
 # BASEのOpenAPI記述と比べて、公開済みの契約を壊す変更があれば失敗する。BASEに
 # 記述がまだ無い場合 (記述を追加するブランチ自身) は比較の対象が無いため成功とする。
 # BASE自体を解決できない場合は、ref名の誤りで検査が素通りしないよう失敗させる。
+# 意図して行った破壊的変更はapi/oasdiff-err-ignore.txtに書いて除外する。
 API_BREAKING_BASE ?= develop
 
 .PHONY: api-breaking
@@ -304,7 +305,7 @@ api-breaking: ## OpenAPI記述の破壊的変更をチェック (例: make api-b
 		exit 0; \
 	fi; \
 	status=0; \
-	go tool oasdiff breaking --fail-on ERR "$$base" api/openapi.yaml || status=$$?; \
+	go tool oasdiff breaking --fail-on ERR --err-ignore api/oasdiff-err-ignore.txt "$$base" api/openapi.yaml || status=$$?; \
 	rm -f "$$base"; \
 	exit "$$status"
 

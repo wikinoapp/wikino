@@ -92,6 +92,10 @@ type goHandledPattern struct {
 // Go版で処理するURLパターン (正規表現マッチング)
 // プレフィックス一致では表現できないパス (動的セグメントやメソッド制限が必要なパス) に使用する
 var goHandledRegexPatterns = []goHandledPattern{
+	// スペースの作成。フォーム (GET・HEAD /spaces/new) と作成処理 (POST /spaces)。それぞれGo
+	// ルートが応答するメソッドに限定し、他のメソッドは従来どおりRails版へ届くようにする。
+	{pattern: regexp.MustCompile(`^/spaces/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/spaces$`), methods: []string{http.MethodPost}},
 	// スペース詳細画面 (GET /s/:identifier)。末尾の "$" により
 	// /s/:id/topics/... などのサブパスにはマッチさせず、それらは
 	// 下記の各パターンで処理する。

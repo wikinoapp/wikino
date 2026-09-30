@@ -43,6 +43,8 @@ func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 		name   string
 		result bool
 	}{
+		{"CanUpdateTopic", p.CanUpdateTopic()},
+		{"CanUpdateTopicVisibility", p.CanUpdateTopicVisibility()},
 		{"CanCreatePage", p.CanCreatePage()},
 		{"CanUpdatePage", p.CanUpdatePage()},
 		{"CanShowTrash", p.CanShowTrash()},

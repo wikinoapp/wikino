@@ -49,8 +49,6 @@ Rails.application.routes.draw do
   match "/settings/two_factor_auth/new",                                   via: :get,    as: :settings_new_two_factor_auth,                 to: "settings/two_factor_auths/new#call"
   match "/settings/two_factor_auth/recovery_codes",                        via: :get,    as: :settings_two_factor_auth_recovery_code_list,  to: "settings/two_factor_auths/recovery_codes/show#call"
   match "/settings/two_factor_auth/recovery_codes",                        via: :post,                                                      to: "settings/two_factor_auths/recovery_codes/create#call"
-  match "/spaces",                                                         via: :post,   as: :space_list,                                   to: "spaces/create#call"
-  match "/spaces/new",                                                     via: :get,    as: :new_space,                                    to: "spaces/new#call"
   match "/terms",                                                          via: :get,    as: :terms,                                        to: redirect("https://wikino.app/s/wikino/pages/41")
   # standard:enable Layout/ExtraSpacing, Rails/MatchRoute
 end

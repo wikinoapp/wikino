@@ -5,13 +5,13 @@ test("APIリファレンスがOpenAPI記述を読み込んで操作を描画す�
   await page.goto("/api/reference/v1");
 
   expect((await specResponse).status()).toBe(200);
-  await expect(page.locator("#api-reference")).toContainText("トークンの持ち主のユーザーを取得する");
+  await expect(page.locator("#api-reference")).toContainText("トークンの持ち主のメンバーを取得する");
   await expect(page.locator("#api-reference-fallback")).toHaveCount(0);
 
   const search = page.getByRole("textbox", { name: "Search" });
   await expect(search).toBeVisible();
-  await search.fill("トークンの持ち主のユーザーを取得する");
-  await expect(page.locator('[data-role="search:results"]')).toContainText("トークンの持ち主のユーザーを取得する");
+  await search.fill("トークンの持ち主のメンバーを取得する");
+  await expect(page.locator('[data-role="search:results"]')).toContainText("トークンの持ち主のメンバーを取得する");
 });
 
 test("スクリプトを読み込めなくてもOpenAPI記述へ辿れること", async ({ page }) => {
@@ -29,7 +29,7 @@ test("OpenAPI記述を読み込めなくてもOpenAPI記述へのリンクが残
 
   const fallback = page.locator("#api-reference-fallback");
   await expect(fallback.getByRole("link", { name: "openapi.yaml" })).toBeVisible();
-  await expect(page.locator("#api-reference")).not.toContainText("トークンの持ち主のユーザーを取得する");
+  await expect(page.locator("#api-reference")).not.toContainText("トークンの持ち主のメンバーを取得する");
 });
 
 test.describe("JavaScriptが無効な場合", () => {

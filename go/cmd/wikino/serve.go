@@ -20,11 +20,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
-	apiuser "github.com/wikinoapp/wikino/go/internal/apihandler/user"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
@@ -498,9 +498,12 @@ func runServe() {
 		trashPageUC,
 	)
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, featureFlagRepo)
+	createSpaceUC := usecase.NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
+		flashMgr,
 		getSpaceShowUC,
+		createSpaceUC,
 	)
 	getSpaceSettingsUC := usecase.NewGetSpaceSettingsUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo)
 	spaceSettingsHandler := spacesettingshandler.NewHandler(
@@ -694,7 +697,7 @@ func runServe() {
 	}
 	authenticateAPITokenUC := usecase.NewAuthenticateAPITokenUsecase(personalAccessTokenRepo, oauthAccessTokenRepo, oauthGrantRepo, spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo)
 	apiTokenAuth := middleware.NewAPITokenAuth(authenticateAPITokenUC, apiProblems)
-	apiRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.APIUserRateLimitPolicy)
+	apiRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.APISpaceMemberRateLimitPolicy)
 	oauthRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.OAuthIPRateLimitPolicy(cfg.TrustedProxyCIDRs))
 	oauthTokenHandler := oauthtokenhandler.NewHandler(
 		usecase.NewCreateOAuthTokenUsecase(
@@ -712,6 +715,7 @@ func runServe() {
 		usecase.NewRevokeOAuthTokenUsecase(oauthApplicationRepo, oauthGrantRepo, oauthAccessTokenRepo, oauthRefreshTokenRepo),
 	)
 	apiServer := apihandler.NewServer(
+		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(
 			usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
@@ -724,7 +728,6 @@ func runServe() {
 			usecase.NewListAPITopicsUsecase(topicRepo, topicMemberRepo),
 			usecase.NewGetAPITopicUsecase(topicRepo, topicMemberRepo),
 		),
-		apiuser.NewHandler(),
 	)
 
 	r := chi.NewRouter()
@@ -908,6 +911,13 @@ func runServe() {
 
 		// 下書き一覧
 		r.Get("/drafts", draftPageIndexHandler.Index)
+
+		// スペースの作成。フォームと作成処理。
+		//
+		// HEADを単独で登録する理由は下のトピックの作成と同じ。
+		r.Get("/spaces/new", spaceHandler.New)
+		r.Head("/spaces/new", spaceHandler.New)
+		r.Post("/spaces", spaceHandler.Create)
 
 		// トピックの作成。フォームと作成処理。
 		//

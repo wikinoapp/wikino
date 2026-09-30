@@ -286,7 +286,7 @@ func createSpace(ctx context.Context, dbtx query.DBTX, identifier string, name s
 	}, nil
 }
 
-// addSpaceMemberは、指定のスコープでユーザーをスペースに参加させる。
+// addSpaceMemberは指定のスコープを維持し、認可の切り替えに備えてロールも保存する。
 func addSpaceMember(
 	ctx context.Context,
 	dbtx query.DBTX,
@@ -295,14 +295,18 @@ func addSpaceMember(
 	scopes []model.Scope,
 ) (*seededSpaceMember, error) {
 	now := time.Now()
+	role := model.SpaceRoleEditor
+	if model.HasScope(scopes, model.ScopeSpaceAdmin) {
+		role = model.SpaceRoleAdmin
+	}
 
 	var id string
 	err := dbtx.QueryRowContext(
 		ctx,
-		`INSERT INTO space_members (space_id, user_id, scopes, joined_at, active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, true, $5, $6)
+		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, true, $6, $7)
          RETURNING id`,
-		string(spaceID), string(user.ID), pq.Array(scopeStrings(scopes)), now, now, now,
+		string(spaceID), string(user.ID), string(role), pq.Array(scopeStrings(scopes)), now, now, now,
 	).Scan(&id)
 	if err != nil {
 		return nil, err

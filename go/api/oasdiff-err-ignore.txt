@@ -1,0 +1,6 @@
+# APIを公開するまでの間に意図して行った破壊的変更を、make api-breakingの検査から除外する。
+# oasdiffの--err-ignoreに渡すファイルで、メソッドとパス、oasdiffが報告する変更の説明を含む行だけが照合に使われる。
+# 公開後の変更はここに足さず、非推奨化 (deprecatedとx-sunset) を経てから削除する。
+
+# トークンの持ち主を、グローバルなユーザーではなく束縛先のスペースのメンバーとして返すgetCurrentSpaceMemberに置き換えた。
+GET /user api path removed without deprecation

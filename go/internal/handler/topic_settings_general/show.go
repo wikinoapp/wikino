@@ -34,9 +34,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		Space:     viewmodel.NewSpace(output.Space),
 		Topic:     viewmodel.NewTopic(output.Topic),
 		Fields: topicpages.FormFieldsData{
-			Name:        output.Topic.Name,
-			Description: output.Topic.Description,
-			Visibility:  output.Topic.Visibility.String(),
+			Name:           output.Topic.Name,
+			Description:    output.Topic.Description,
+			Visibility:     output.Topic.Visibility.String(),
+			HideVisibility: !output.CanUpdateVisibility,
 		},
 	})
 }

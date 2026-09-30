@@ -18,11 +18,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
-	apiuser "github.com/wikinoapp/wikino/go/internal/apihandler/user"
 	"github.com/wikinoapp/wikino/go/internal/apipagination"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
@@ -64,7 +64,7 @@ func newTestAPIHandlerWith(t *testing.T, server apigen.StrictServerInterface, au
 	}
 
 	tokenAuth := middleware.NewAPITokenAuth(authenticator, problems)
-	rateLimit := middleware.NewAPIRateLimit(limiter, problems, middleware.APIUserRateLimitPolicy)
+	rateLimit := middleware.NewAPIRateLimit(limiter, problems, middleware.APISpaceMemberRateLimitPolicy)
 
 	r := chi.NewRouter()
 	reference := api_reference.NewHandler(&config.Config{Domain: "example.com"})
@@ -85,8 +85,9 @@ func (testAPITokenAuthenticator) Execute(_ context.Context, token string) (*mode
 		return nil, nil
 	}
 	return &model.APIPrincipal{
-		User:      &model.User{ID: "user-1"},
-		TokenKind: model.APITokenKindPersonalAccessToken,
+		User:        &model.User{ID: "user-1"},
+		SpaceMember: &model.SpaceMember{ID: "space-member-1", UserID: "user-1"},
+		TokenKind:   model.APITokenKindPersonalAccessToken,
 	}, nil
 }
 
@@ -102,11 +103,11 @@ func TestAPIRouter(t *testing.T) {
 	t.Parallel()
 
 	handler := newTestAPIHandler(t, apihandler.NewServer(
+		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
-		apiuser.NewHandler(),
 	))
 
 	t.Run("OpenAPI記述をトークン無しで配信する", func(t *testing.T) {
@@ -144,12 +145,12 @@ func TestAPIRouter(t *testing.T) {
 	t.Run("トークンの要るoperationにトークンが無ければ401", func(t *testing.T) {
 		t.Parallel()
 
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/user", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/spaces/example/members/me", nil)
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 
 		assertProblem(t, rr, http.StatusUnauthorized)
-		if got, want := rr.Header().Get("WWW-Authenticate"), "Bearer"; got != want {
+		if got, want := rr.Header().Get("WWW-Authenticate"), `Bearer resource_metadata="https://example.com/.well-known/oauth-protected-resource/api/v1/spaces/example"`; got != want {
 			t.Errorf("WWW-Authenticate = %q、期待値 = %q", got, want)
 		}
 	})
@@ -193,6 +194,7 @@ func TestAPIRouter(t *testing.T) {
 		wantAllow  string
 	}{
 		{name: "v1のルートの無いパスは404", method: http.MethodGet, target: "/api/v1/unknown", wantStatus: http.StatusNotFound},
+		{name: "トークンの持ち主はメンバーとして返すため、スペースに属さない/api/v1/userは404", method: http.MethodGet, target: "/api/v1/user", wantStatus: http.StatusNotFound},
 		{name: "未知のバージョンは404", method: http.MethodGet, target: "/api/v2/openapi.yaml", wantStatus: http.StatusNotFound},
 		{name: "ルートのあるパスへの別のメソッドは405とAllow", method: http.MethodPost, target: "/api/v1/openapi.yaml", wantStatus: http.StatusMethodNotAllowed, wantAllow: "GET"},
 		{name: "バージョンの無いAPIリファレンスは404", method: http.MethodGet, target: "/api/reference", wantStatus: http.StatusNotFound},
@@ -227,11 +229,11 @@ func TestAPIRouter_BodyLimitProblems(t *testing.T) {
 
 	problems := apierror.NewWriter("https://example.com")
 	handler := middleware.APIResponseHeader(middleware.NewBodyLimit(problems)(newTestAPIHandler(t, apihandler.NewServer(
+		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
-		apiuser.NewHandler(),
 	))))
 
 	tests := []struct {
@@ -319,7 +321,7 @@ func (s errorServer) GetTopic(context.Context, apigen.GetTopicRequestObject) (ap
 	return nil, s.err
 }
 
-func (s errorServer) GetUser(context.Context, apigen.GetUserRequestObject) (apigen.GetUserResponseObject, error) {
+func (s errorServer) GetCurrentSpaceMember(context.Context, apigen.GetCurrentSpaceMemberRequestObject) (apigen.GetCurrentSpaceMemberResponseObject, error) {
 	return nil, s.err
 }
 

@@ -1219,6 +1219,42 @@ description = "トピック詳細画面の「編集提案」タブラベル"
 other = "編集提案"
 
 # トピック作成
+[space_new_title]
+description = "スペース作成画面のページタイトル"
+other = "新規スペース"
+
+[space_new_heading]
+description = "スペース作成画面の見出し"
+other = "新規スペース"
+
+[space_new_breadcrumb]
+description = "スペース作成画面自身を指すパンくず項目 (現在項目)"
+other = "新規スペース"
+
+[space_new_hint_html]
+description = "スペース作成画面のサブタイトル (ヘルプページへのリンクを含む)"
+other = "スペースについては <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/16\" target=\"_blank\">スペースについてのヘルプ</a> をご覧ください<br>どんなスペースを作ると良いかわからないときは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/50\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
+
+[space_form_identifier_label]
+description = "スペース作成フォームの識別子のラベル"
+other = "識別子"
+
+[space_form_identifier_hint]
+description = "スペース作成フォームの識別子の補足"
+other = "この識別子はスペースのURLに使用されます。あとから変更もできます。{{.MaxLength}}文字以内で半角英数字とハイフンのみ使用できます"
+
+[space_form_name_label]
+description = "スペース作成フォームの名前のラベル"
+other = "名前"
+
+[space_new_submit_button]
+description = "スペース作成画面の送信ボタン"
+other = "作成する"
+
+[space_new_cancel]
+description = "スペース作成画面のキャンセルリンク"
+other = "キャンセル"
+
 [topic_new_title]
 description = "トピック作成画面のページタイトル"
 other = "新規トピック | {{.SpaceName}}"
@@ -1274,6 +1310,34 @@ other = "作成する"
 [topic_new_cancel]
 description = "トピック作成画面のキャンセルリンク"
 other = "キャンセル"
+
+[validation_space_identifier_required]
+description = "スペースの識別子必須エラー"
+other = "識別子を入力してください"
+
+[validation_space_identifier_too_long]
+description = "スペースの識別子文字数超過エラー"
+other = "識別子は20文字以内で入力してください"
+
+[validation_space_identifier_invalid_format]
+description = "スペースの識別子形式エラー"
+other = "識別子には半角英数字とハイフンのみ使用できます"
+
+[validation_space_identifier_reserved]
+description = "スペースの識別子予約語エラー"
+other = "この識別子は使用できません"
+
+[validation_space_identifier_uniqueness]
+description = "スペースの識別子重複エラー"
+other = "この識別子は既に使用されています"
+
+[validation_space_name_required]
+description = "スペース名必須エラー"
+other = "名前を入力してください"
+
+[validation_space_name_too_long]
+description = "スペース名文字数超過エラー"
+other = "名前は30文字以内で入力してください"
 
 [validation_topic_name_required]
 description = "トピック名必須エラー"
@@ -1378,6 +1442,10 @@ other = "説明は150文字以内で入力してください"
 [validation_topic_visibility_required]
 description = "トピックの公開設定未選択エラー"
 other = "公開設定を選択してください"
+
+[flash_space_created]
+description = "スペース作成成功時のフラッシュメッセージ"
+other = "スペースを作成しました"
 
 [flash_topic_created]
 description = "トピック作成成功時のフラッシュメッセージ"

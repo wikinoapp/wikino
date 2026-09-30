@@ -44,7 +44,7 @@ func TestSpaceIdentifierFromAPIPath(t *testing.T) {
 		{name: "識別子が無い", path: "/api/v1/spaces/", wantOK: false},
 		{name: "識別子が空", path: "/api/v1/spaces//pages", wantOK: false},
 		{name: "エスケープが壊れている", path: "/api/v1/spaces/%zz", wantOK: false},
-		{name: "スペースに属さないAPI", path: "/api/v1/user", wantOK: false},
+		{name: "スペースに属さないパス", path: "/api/v1/openapi.yaml", wantOK: false},
 		{name: "Webの画面", path: "/s/seed-wiki", wantOK: false},
 	}
 

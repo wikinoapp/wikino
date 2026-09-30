@@ -13,6 +13,7 @@ const (
 	PageNamePageMove                           PageName = "page_move"
 	PageNameDraftPageIndex                     PageName = "draft_page_index"
 	PageNameSpaceShow                          PageName = "space_show"
+	PageNameSpaceNew                           PageName = "space_new"
 	PageNameSpaceSettings                      PageName = "space_settings"
 	PageNameTopicShow                          PageName = "topic_show"
 	PageNameTopicNew                           PageName = "topic_new"

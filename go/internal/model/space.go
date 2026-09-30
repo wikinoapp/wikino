@@ -16,6 +16,9 @@ const (
 	PlanLarge Plan = 2
 )
 
+// SpaceIdentifierMaxLengthはスペースの識別子の最大文字数。識別子はURLに使うため短く保つ
+const SpaceIdentifierMaxLength = 20
+
 // Spaceはスペースのドメインモデル
 type Space struct {
 	ID          SpaceID

@@ -125,6 +125,97 @@ func TestUpdate_トピック更新権限がないメンバーには404が返る(
 	}
 }
 
+func TestUpdate_公開範囲を変えられないメンバーは名前と説明だけを保存できる(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-update-writer"
+	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite})
+
+	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
+		"name":        "週報",
+		"description": "毎週の記録",
+	})
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Update(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusSeeOther)
+	}
+
+	topicRepo := repository.NewTopicRepository(queries)
+	stored, err := topicRepo.FindBySpaceAndID(context.Background(), spaceID, topicID)
+	if err != nil {
+		t.Fatalf("予期しないエラー: %v", err)
+	}
+	if stored.Name != "週報" {
+		t.Errorf("Name = %q、期待値 = %q", stored.Name, "週報")
+	}
+	if stored.Visibility != model.TopicVisibilityPrivate {
+		t.Errorf("Visibility = %v、期待値 = %v", stored.Visibility, model.TopicVisibilityPrivate)
+	}
+}
+
+func TestUpdate_公開範囲を変えられないメンバーが公開範囲を送ると404が返る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-update-writer-public"
+	userID, spaceID, topicID := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite})
+
+	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
+		"name":       "週報",
+		"visibility": "public",
+	})
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Update(rr, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
+	}
+
+	topicRepo := repository.NewTopicRepository(queries)
+	stored, err := topicRepo.FindBySpaceAndID(context.Background(), spaceID, topicID)
+	if err != nil {
+		t.Fatalf("予期しないエラー: %v", err)
+	}
+	if stored.Name != "日報" {
+		t.Errorf("Name = %q、期待値 = %q", stored.Name, "日報")
+	}
+	if stored.Visibility != model.TopicVisibilityPrivate {
+		t.Errorf("Visibility = %v、期待値 = %v", stored.Visibility, model.TopicVisibilityPrivate)
+	}
+}
+
+func TestUpdate_公開範囲を変えられないメンバーの入力が不正なら公開範囲の選択肢なしで再描画する(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-update-writer-invalid"
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite})
+
+	req := newSettingsGeneralRequest(t, http.MethodPatch, identifier, "1", userID, map[string]string{
+		"name": "foo/bar",
+	})
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Update(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
+	}
+
+	body := rr.Body.String()
+	if !strings.Contains(body, `value="foo/bar"`) {
+		t.Errorf("レスポンスに%qが含まれていない", `value="foo/bar"`)
+	}
+	if strings.Contains(body, `name="visibility"`) {
+		t.Errorf("レスポンスに%qが含まれている", `name="visibility"`)
+	}
+}
+
 func TestUpdate_未ログインならログイン画面へリダイレクトする(t *testing.T) {
 	t.Parallel()
 

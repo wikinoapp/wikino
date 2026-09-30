@@ -231,3 +231,164 @@ func TestUpdateTopicUsecase_ExecuteRefused(t *testing.T) {
 		})
 	}
 }
+
+// TestUpdateTopicUsecase_ExecuteVisibilityは、公開範囲の変更をtopic_visibility:writeで判定し、
+// topic:writeだけのメンバーには名前と説明の変更だけを許すことを扱う。フィクスチャのトピックは公開である。
+func TestUpdateTopicUsecase_ExecuteVisibility(t *testing.T) {
+	t.Parallel()
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+
+	tests := []struct {
+		name           string
+		suffix         string
+		scopes         []model.Scope
+		visibility     string
+		wantForbidden  bool
+		wantVisibility model.TopicVisibility
+	}{
+		{
+			name:           "topic:writeだけのメンバーは公開範囲を送らなければ名前と説明を変えられる",
+			suffix:         "writer-omit",
+			scopes:         []model.Scope{model.ScopeTopicWrite},
+			visibility:     "",
+			wantVisibility: model.TopicVisibilityPublic,
+		},
+		{
+			name:           "topic:writeだけのメンバーは今と同じ公開範囲を送っても名前と説明を変えられる",
+			suffix:         "writer-same",
+			scopes:         []model.Scope{model.ScopeTopicWrite},
+			visibility:     "public",
+			wantVisibility: model.TopicVisibilityPublic,
+		},
+		{
+			name:           "topic:writeだけのメンバーは公開範囲を変えられない",
+			suffix:         "writer-change",
+			scopes:         []model.Scope{model.ScopeTopicWrite},
+			visibility:     "private",
+			wantForbidden:  true,
+			wantVisibility: model.TopicVisibilityPublic,
+		},
+		{
+			name:           "topic_visibility:writeを持つメンバーは公開範囲を変えられる",
+			suffix:         "visibility-writer",
+			scopes:         []model.Scope{model.ScopeTopicWrite, model.ScopeTopicVisibilityWrite},
+			visibility:     "private",
+			wantVisibility: model.TopicVisibilityPrivate,
+		},
+		{
+			name:           "space:adminを持つメンバーは公開範囲を変えられる",
+			suffix:         "visibility-admin",
+			scopes:         []model.Scope{model.ScopeSpaceAdmin},
+			visibility:     "private",
+			wantVisibility: model.TopicVisibilityPrivate,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := setupTopicSettingsGeneralFixture(t, tt.suffix, tt.scopes)
+			uc := newUpdateTopicUsecase(f)
+
+			_, err := uc.Execute(ctx, UpdateTopicInput{
+				SpaceIdentifier: f.identifier,
+				TopicNumber:     1,
+				UserID:          f.userID,
+				Name:            "週報 " + tt.suffix,
+				Description:     "毎週の記録",
+				Visibility:      tt.visibility,
+			})
+
+			wantName := "週報 " + tt.suffix
+			if tt.wantForbidden {
+				ae := model.AsAppError(err)
+				if ae == nil {
+					t.Fatalf("AppErrorを期待したが、%vだった", err)
+				}
+				if ae.Code != model.AppErrCodeForbidden {
+					t.Errorf("Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
+				}
+				wantName = "日報 " + tt.suffix
+			} else if err != nil {
+				t.Fatalf("予期しないエラー: %v", err)
+			}
+
+			topicRepo := repository.NewTopicRepository(f.queries)
+			stored, err := topicRepo.FindBySpaceAndID(ctx, f.spaceID, f.topicID)
+			if err != nil {
+				t.Fatalf("予期しないエラー: %v", err)
+			}
+			if stored.Name != wantName {
+				t.Errorf("Name = %q、期待値 = %q", stored.Name, wantName)
+			}
+			if stored.Visibility != tt.wantVisibility {
+				t.Errorf("Visibility = %v、期待値 = %v", stored.Visibility, tt.wantVisibility)
+			}
+		})
+	}
+}
+
+// TestUpdateTopicUsecase_PersistTopicUpdateKeepsChangedVisibilityは、公開範囲を変えられない
+// メンバーの保存が、取得後に管理者が変えた公開範囲を上書きしないことを扱う。取得と保存の間に
+// 管理者の更新を挟み、競合時の順序を待ち時間に依存せず再現する。
+func TestUpdateTopicUsecase_PersistTopicUpdateKeepsChangedVisibility(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		before model.TopicVisibility
+		after  model.TopicVisibility
+	}{
+		{name: "private", before: model.TopicVisibilityPublic, after: model.TopicVisibilityPrivate},
+		{name: "public", before: model.TopicVisibilityPrivate, after: model.TopicVisibilityPublic},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+			f := setupTopicSettingsGeneralFixture(t, "concurrent-"+tt.name, []model.Scope{model.ScopeTopicWrite})
+			uc := newUpdateTopicUsecase(f)
+			if _, err := uc.topicRepo.Update(ctx, repository.UpdateTopicInput{
+				ID: f.topicID, SpaceID: f.spaceID, Name: "日報", Visibility: tt.before,
+			}); err != nil {
+				t.Fatalf("初期値の設定に失敗: %v", err)
+			}
+
+			access, err := fetchTopicUpdateAccess(ctx, uc.spaceRepo, uc.spaceMemberRepo, uc.topicRepo, uc.topicMemberRepo, f.identifier, 1, f.userID)
+			if err != nil {
+				t.Fatalf("認可チェックに失敗: %v", err)
+			}
+			if access.CanUpdateVisibility {
+				t.Fatal("公開範囲を変更できないメンバーを期待した")
+			}
+			input := UpdateTopicInput{
+				SpaceIdentifier: f.identifier, TopicNumber: 1, UserID: f.userID,
+				Name: "週報", Description: "毎週の記録",
+			}
+
+			// メンバーの認可の後、保存の前に管理者が公開範囲を変更する。
+			if _, err := uc.topicRepo.Update(ctx, repository.UpdateTopicInput{
+				ID: f.topicID, SpaceID: f.spaceID, Name: "日報", Visibility: tt.after,
+			}); err != nil {
+				t.Fatalf("公開範囲の変更に失敗: %v", err)
+			}
+			updated, err := uc.persistTopicUpdate(ctx, input, access, access.Topic.Visibility)
+			if err != nil {
+				t.Fatalf("名前と説明の保存に失敗: %v", err)
+			}
+			if updated.Visibility != tt.after {
+				t.Errorf("返された公開範囲 = %v、期待値 = %v", updated.Visibility, tt.after)
+			}
+			stored, err := uc.topicRepo.FindBySpaceAndID(ctx, f.spaceID, f.topicID)
+			if err != nil {
+				t.Fatalf("保存結果の取得に失敗: %v", err)
+			}
+			if stored.Name != input.Name || stored.Description != input.Description || stored.Visibility != tt.after {
+				t.Errorf("管理者の公開範囲の変更を保って名前と説明を保存できていない: %+v", stored)
+			}
+		})
+	}
+}

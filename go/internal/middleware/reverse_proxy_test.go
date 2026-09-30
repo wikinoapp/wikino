@@ -763,6 +763,37 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 	}{
 		// Go版で処理するパス
 		{
+			name:     "スペース作成フォーム (GET)",
+			method:   http.MethodGet,
+			path:     "/spaces/new",
+			expected: true,
+		},
+		{
+			name:     "スペース作成フォーム (HEAD)",
+			method:   http.MethodHead,
+			path:     "/spaces/new",
+			expected: true,
+		},
+		{
+			name:     "スペース作成 (POST)",
+			method:   http.MethodPost,
+			path:     "/spaces",
+			expected: true,
+		},
+		{
+			// Goルートはスペースの作成のPOSTだけに応答するため、GETはRailsへフォールスルーする。
+			name:     "/spaces (GET) はPOSTのみフィルタによりマッチしない",
+			method:   http.MethodGet,
+			path:     "/spaces",
+			expected: false,
+		},
+		{
+			name:     "スペース作成フォーム配下のサブパスはマッチしない",
+			method:   http.MethodGet,
+			path:     "/spaces/new/extra",
+			expected: false,
+		},
+		{
 			name:     "スペース詳細 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space",

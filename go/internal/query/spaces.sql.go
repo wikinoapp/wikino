@@ -7,7 +7,58 @@ package query
 
 import (
 	"context"
+	"time"
 )
+
+const createSpace = `-- name: CreateSpace :one
+INSERT INTO spaces (identifier, name, plan, joined_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $4, $4)
+RETURNING id, identifier, name, plan, joined_at, discarded_at, created_at, updated_at
+`
+
+type CreateSpaceParams struct {
+	Identifier string    `json:"identifier"`
+	Name       string    `json:"name"`
+	Plan       int32     `json:"plan"`
+	Now        time.Time `json:"now"`
+}
+
+// スペースを作成する。
+func (q *Queries) CreateSpace(ctx context.Context, arg CreateSpaceParams) (Space, error) {
+	row := q.db.QueryRowContext(ctx, createSpace,
+		arg.Identifier,
+		arg.Name,
+		arg.Plan,
+		arg.Now,
+	)
+	var i Space
+	err := row.Scan(
+		&i.ID,
+		&i.Identifier,
+		&i.Name,
+		&i.Plan,
+		&i.JoinedAt,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const existsSpaceByIdentifier = `-- name: ExistsSpaceByIdentifier :one
+SELECT EXISTS (
+    SELECT 1 FROM spaces WHERE identifier = $1
+) AS space_exists
+`
+
+// その識別子を持つスペースが既にあるかを返す (削除済みのスペースも含む)。識別子の一意インデックスは
+// 削除済みのスペースも対象にしており、citextのため大文字と小文字を区別しない。
+func (q *Queries) ExistsSpaceByIdentifier(ctx context.Context, identifier string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsSpaceByIdentifier, identifier)
+	var space_exists bool
+	err := row.Scan(&space_exists)
+	return space_exists, err
+}
 
 const getSpaceByID = `-- name: GetSpaceByID :one
 SELECT id, identifier, name, plan, joined_at, discarded_at, created_at, updated_at FROM spaces WHERE id = $1 AND discarded_at IS NULL
