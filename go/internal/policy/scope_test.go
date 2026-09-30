@@ -206,6 +206,7 @@ func TestAllResourceScopes(t *testing.T) {
 		expected := []model.Scope{
 			model.ScopeSpaceRead, model.ScopeSpaceWrite, model.ScopeSpaceDelete,
 			model.ScopeTopicRead, model.ScopeTopicWrite, model.ScopeTopicDelete,
+			model.ScopeTopicVisibilityWrite,
 			model.ScopeTopicMemberRead, model.ScopeTopicMemberWrite, model.ScopeTopicMemberDelete,
 			model.ScopePageRead, model.ScopePageWrite,
 			model.ScopePageTrashRead, model.ScopePageTrashWrite, model.ScopePageTrashDelete,
@@ -227,6 +228,17 @@ func TestAllResourceScopes(t *testing.T) {
 			t.Errorf("len(allResourceScopes()) = %d、期待値 = %d", len(scopes), len(expected))
 		}
 	})
+}
+
+func TestExpandScopes_SpaceAdminExpandsToAllDefinitions(t *testing.T) {
+	t.Parallel()
+
+	expected := []model.Scope{model.ScopeSpaceAdmin}
+	for _, d := range model.ScopeDefinitions {
+		expected = append(expected, d.Scope)
+	}
+
+	assertScopes(t, expandScopes([]model.Scope{model.ScopeSpaceAdmin}), expected)
 }
 
 func TestImplications(t *testing.T) {
