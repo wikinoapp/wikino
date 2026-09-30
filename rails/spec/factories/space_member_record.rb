@@ -7,6 +7,7 @@ FactoryBot.define do
     user_record
     active { true }
     joined_at { Time.current }
+    role { "admin" }
     scopes { ["space:admin"] }
   end
 end

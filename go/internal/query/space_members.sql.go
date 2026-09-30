@@ -7,7 +7,6 @@ package query
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/lib/pq"
@@ -20,11 +19,11 @@ RETURNING id, space_id, user_id, joined_at, active, created_at, updated_at, scop
 `
 
 type CreateSpaceMemberParams struct {
-	SpaceID string         `json:"space_id"`
-	UserID  string         `json:"user_id"`
-	Role    sql.NullString `json:"role"`
-	Scopes  []string       `json:"scopes"`
-	Now     time.Time      `json:"now"`
+	SpaceID string    `json:"space_id"`
+	UserID  string    `json:"user_id"`
+	Role    string    `json:"role"`
+	Scopes  []string  `json:"scopes"`
+	Now     time.Time `json:"now"`
 }
 
 // ユーザーをスペースに参加させる。scopesにはRails版が判定に使う、ロールに応じた値を書く。

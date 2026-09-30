@@ -96,7 +96,7 @@ func (r *SpaceMemberRepository) Create(ctx context.Context, input CreateSpaceMem
 	row, err := r.q.CreateSpaceMember(ctx, query.CreateSpaceMemberParams{
 		SpaceID: string(input.SpaceID),
 		UserID:  string(input.UserID),
-		Role:    sql.NullString{String: string(input.Role), Valid: true},
+		Role:    string(input.Role),
 		Scopes:  model.ScopesToStrings(input.Role.RailsScopes()),
 		Now:     time.Now(),
 	})
@@ -112,7 +112,7 @@ func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMembe
 		ID:       model.SpaceMemberID(row.ID),
 		SpaceID:  model.SpaceID(row.SpaceID),
 		UserID:   model.UserID(row.UserID),
-		Role:     model.SpaceRole(row.Role.String),
+		Role:     model.SpaceRole(row.Role),
 		JoinedAt: row.JoinedAt,
 		Active:   row.Active,
 	}

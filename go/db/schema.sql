@@ -605,7 +605,7 @@ CREATE TABLE public.space_members (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     scopes text[] DEFAULT '{}'::text[] NOT NULL,
-    role text,
+    role text NOT NULL,
     CONSTRAINT chk_space_members_role CHECK ((role = ANY (ARRAY['admin'::text, 'editor'::text, 'viewer'::text])))
 );
 
@@ -2606,4 +2606,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260927152857'),
     ('20260928010000'),
     ('20260930000000'),
-    ('20260930104436');
+    ('20260930104436'),
+    ('20260930164032');
