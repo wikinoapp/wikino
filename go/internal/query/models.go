@@ -374,15 +374,15 @@ type Space struct {
 }
 
 type SpaceMember struct {
-	ID        string         `json:"id"`
-	SpaceID   string         `json:"space_id"`
-	UserID    string         `json:"user_id"`
-	JoinedAt  time.Time      `json:"joined_at"`
-	Active    bool           `json:"active"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	Scopes    []string       `json:"scopes"`
-	Role      sql.NullString `json:"role"`
+	ID        string    `json:"id"`
+	SpaceID   string    `json:"space_id"`
+	UserID    string    `json:"user_id"`
+	JoinedAt  time.Time `json:"joined_at"`
+	Active    bool      `json:"active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Scopes    []string  `json:"scopes"`
+	Role      string    `json:"role"`
 }
 
 type Suggestion struct {
