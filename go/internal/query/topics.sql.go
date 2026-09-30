@@ -445,3 +445,42 @@ func (q *Queries) UpdateTopic(ctx context.Context, arg UpdateTopicParams) (Topic
 	)
 	return i, err
 }
+
+const updateTopicNameAndDescription = `-- name: UpdateTopicNameAndDescription :one
+UPDATE topics
+SET name = $1, description = $2, updated_at = $3
+WHERE id = $4 AND space_id = $5
+RETURNING id, space_id, number, name, description, visibility, discarded_at, created_at, updated_at
+`
+
+type UpdateTopicNameAndDescriptionParams struct {
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Now         time.Time `json:"now"`
+	ID          string    `json:"id"`
+	SpaceID     string    `json:"space_id"`
+}
+
+// 公開範囲を変更できないメンバーの保存で、並行して行われた公開範囲の変更を上書きしない。
+func (q *Queries) UpdateTopicNameAndDescription(ctx context.Context, arg UpdateTopicNameAndDescriptionParams) (Topic, error) {
+	row := q.db.QueryRowContext(ctx, updateTopicNameAndDescription,
+		arg.Name,
+		arg.Description,
+		arg.Now,
+		arg.ID,
+		arg.SpaceID,
+	)
+	var i Topic
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.Number,
+		&i.Name,
+		&i.Description,
+		&i.Visibility,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

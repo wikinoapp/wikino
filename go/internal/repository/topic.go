@@ -222,6 +222,30 @@ func (r *TopicRepository) Update(ctx context.Context, input UpdateTopicInput) (*
 	return r.toModel(row), nil
 }
 
+// UpdateTopicNameAndDescriptionInputは公開範囲を変更しないトピック更新の入力。
+type UpdateTopicNameAndDescriptionInput struct {
+	ID          model.TopicID
+	SpaceID     model.SpaceID
+	Name        string
+	Description string
+}
+
+// UpdateNameAndDescriptionは公開範囲に触れず、名前と説明を更新する。
+// 読み取り後に公開範囲が変わっていても、その変更を保持する。
+func (r *TopicRepository) UpdateNameAndDescription(ctx context.Context, input UpdateTopicNameAndDescriptionInput) (*model.Topic, error) {
+	row, err := r.q.UpdateTopicNameAndDescription(ctx, query.UpdateTopicNameAndDescriptionParams{
+		ID:          string(input.ID),
+		SpaceID:     string(input.SpaceID),
+		Name:        input.Name,
+		Description: input.Description,
+		Now:         time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModelはquery.Topicをmodel.Topicに変換する
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	var discardedAt *time.Time

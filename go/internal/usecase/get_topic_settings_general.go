@@ -41,6 +41,8 @@ type GetTopicSettingsGeneralInput struct {
 type GetTopicSettingsGeneralOutput struct {
 	Space *model.Space
 	Topic *model.Topic
+	// CanUpdateVisibilityは、閲覧者がトピックの公開範囲も変えられるか
+	CanUpdateVisibility bool
 }
 
 // Executeは一般設定を編集するトピックを解決する
@@ -59,5 +61,9 @@ func (uc *GetTopicSettingsGeneralUsecase) Execute(ctx context.Context, input Get
 		return nil, err
 	}
 
-	return &GetTopicSettingsGeneralOutput{Space: access.Space, Topic: access.Topic}, nil
+	return &GetTopicSettingsGeneralOutput{
+		Space:               access.Space,
+		Topic:               access.Topic,
+		CanUpdateVisibility: access.CanUpdateVisibility,
+	}, nil
 }

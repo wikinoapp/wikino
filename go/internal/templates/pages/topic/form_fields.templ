@@ -14,6 +14,9 @@ type FormFieldsData struct {
 	Name        string
 	Description string
 	Visibility  string
+	// HideVisibilityは公開範囲の選択肢を出さないときにtrueにする。公開範囲を変えられない
+	// メンバーの一般設定で使う
+	HideVisibility bool
 }
 
 // formFieldsはトピック作成フォームと一般設定フォームが共有する項目を表示します。どちらも
@@ -63,67 +66,69 @@ templ formFields(data FormFieldsData) {
 	// なので、選択肢どうしの12pxを保つためにgap-3を指定します。legendには
 	// data-variant="label" を付けません。basecoatがこの属性でmargin-bottomを0に戻すためです。
 	// 選択肢を囲むdivにも .fieldを付けません。付けると選択肢が枠線付きのカードになるためです。
-	<fieldset class="fieldset gap-3">
-		<legend class="label">
-			{ templates.T(ctx, "topic_form_visibility_label") }
-		</legend>
-		@fieldErrors(data.FormErrors, "visibility")
-		<div class="flex flex-col gap-2">
-			<label class="label flex items-center gap-2 cursor-pointer" for="visibility_public">
-				<input
-					class="input"
-					id="visibility_public"
-					name="visibility"
-					type="radio"
-					value={ model.TopicVisibilityPublic.String() }
-					if data.Visibility == model.TopicVisibilityPublic.String() {
-						checked
-					}
-					if data.FormErrors != nil && data.FormErrors.HasFieldError("visibility") {
-						aria-invalid="true"
-						aria-describedby={ fieldErrorID("visibility") }
-					}
-				/>
-				<span class="flex items-center gap-1">
-					@templates.DecorativeIcon("globe-regular", "size-4")
-					{ templates.T(ctx, "topic_form_visibility_public") }
-				</span>
-			</label>
-			<p class="text-muted-foreground pl-[25px] text-sm">
-				{ templates.T(ctx, "topic_form_visibility_public_hint") }
-			</p>
-		</div>
-		<div class="flex flex-col gap-2">
-			<label class="label flex items-center gap-2 cursor-pointer" for="visibility_private">
-				<input
-					class="input"
-					id="visibility_private"
-					name="visibility"
-					type="radio"
-					value={ model.TopicVisibilityPrivate.String() }
-					if data.Visibility == model.TopicVisibilityPrivate.String() {
-						checked
-					}
-					if data.FormErrors != nil && data.FormErrors.HasFieldError("visibility") {
-						aria-invalid="true"
-						aria-describedby={ fieldErrorID("visibility") }
-					}
-				/>
-				<span class="flex items-center gap-1">
-					@templates.DecorativeIcon("lock-regular", "size-4")
-					{ templates.T(ctx, "topic_form_visibility_private") }
-				</span>
-			</label>
-			<div class="text-muted-foreground pl-[25px] text-sm">
-				<p>
-					{ templates.T(ctx, "topic_form_visibility_private_hint") }
-				</p>
-				<p class="font-bold">
-					@templ.Raw(templates.T(ctx, "topic_form_visibility_private_note_html"))
+	if !data.HideVisibility {
+		<fieldset class="fieldset gap-3">
+			<legend class="label">
+				{ templates.T(ctx, "topic_form_visibility_label") }
+			</legend>
+			@fieldErrors(data.FormErrors, "visibility")
+			<div class="flex flex-col gap-2">
+				<label class="label flex items-center gap-2 cursor-pointer" for="visibility_public">
+					<input
+						class="input"
+						id="visibility_public"
+						name="visibility"
+						type="radio"
+						value={ model.TopicVisibilityPublic.String() }
+						if data.Visibility == model.TopicVisibilityPublic.String() {
+							checked
+						}
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("visibility") {
+							aria-invalid="true"
+							aria-describedby={ fieldErrorID("visibility") }
+						}
+					/>
+					<span class="flex items-center gap-1">
+						@templates.DecorativeIcon("globe-regular", "size-4")
+						{ templates.T(ctx, "topic_form_visibility_public") }
+					</span>
+				</label>
+				<p class="text-muted-foreground pl-[25px] text-sm">
+					{ templates.T(ctx, "topic_form_visibility_public_hint") }
 				</p>
 			</div>
-		</div>
-	</fieldset>
+			<div class="flex flex-col gap-2">
+				<label class="label flex items-center gap-2 cursor-pointer" for="visibility_private">
+					<input
+						class="input"
+						id="visibility_private"
+						name="visibility"
+						type="radio"
+						value={ model.TopicVisibilityPrivate.String() }
+						if data.Visibility == model.TopicVisibilityPrivate.String() {
+							checked
+						}
+						if data.FormErrors != nil && data.FormErrors.HasFieldError("visibility") {
+							aria-invalid="true"
+							aria-describedby={ fieldErrorID("visibility") }
+						}
+					/>
+					<span class="flex items-center gap-1">
+						@templates.DecorativeIcon("lock-regular", "size-4")
+						{ templates.T(ctx, "topic_form_visibility_private") }
+					</span>
+				</label>
+				<div class="text-muted-foreground pl-[25px] text-sm">
+					<p>
+						{ templates.T(ctx, "topic_form_visibility_private_hint") }
+					</p>
+					<p class="font-bold">
+						@templ.Raw(templates.T(ctx, "topic_form_visibility_private_note_html"))
+					</p>
+				</div>
+			</div>
+		</fieldset>
+	}
 }
 
 // fieldErrorsはフォームの1つの項目のエラーを表示します。項目が1つのaria-describedbyで

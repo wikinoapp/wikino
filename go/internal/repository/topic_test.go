@@ -1068,3 +1068,43 @@ func TestTopicRepository_Update(t *testing.T) {
 		t.Errorf("Name = %q、期待値 = %q", stored.Name, "After")
 	}
 }
+
+func TestTopicRepository_UpdateNameAndDescription(t *testing.T) {
+	t.Parallel()
+
+	for _, visibility := range []model.TopicVisibility{model.TopicVisibilityPublic, model.TopicVisibilityPrivate} {
+		t.Run(visibility.String(), func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+			spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("topic-update-fields-" + visibility.String()).Build()
+			otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("topic-update-fields-other-" + visibility.String()).Build()
+			topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithName("日報").WithVisibility(int32(visibility)).Build()
+			ctx := context.Background()
+
+			updated, err := repo.UpdateNameAndDescription(ctx, UpdateTopicNameAndDescriptionInput{
+				ID: topicID, SpaceID: spaceID, Name: "週報", Description: "毎週の記録",
+			})
+			if err != nil {
+				t.Fatalf("予期しないエラー: %v", err)
+			}
+			if updated.Name != "週報" || updated.Description != "毎週の記録" || updated.Visibility != visibility {
+				t.Fatalf("更新結果が期待値と異なる: %+v", updated)
+			}
+
+			if _, err := repo.UpdateNameAndDescription(ctx, UpdateTopicNameAndDescriptionInput{
+				ID: topicID, SpaceID: otherSpaceID, Name: "別の名前", Description: "別の説明",
+			}); err == nil {
+				t.Fatal("別スペースのIDで更新できてしまった")
+			}
+			stored, err := repo.FindBySpaceAndID(ctx, spaceID, topicID)
+			if err != nil {
+				t.Fatalf("予期しないエラー: %v", err)
+			}
+			if stored.Name != "週報" || stored.Description != "毎週の記録" || stored.Visibility != visibility {
+				t.Errorf("保存結果が期待値と異なる: %+v", stored)
+			}
+		})
+	}
+}

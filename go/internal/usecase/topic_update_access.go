@@ -13,6 +13,8 @@ import (
 type topicUpdateAccess struct {
 	Space *model.Space
 	Topic *model.Topic
+	// CanUpdateVisibilityは、閲覧者がトピックの公開範囲も変えられるか
+	CanUpdateVisibility bool
 }
 
 // fetchTopicUpdateAccessは、一般設定を開こうとしているトピックと、それが属するスペースを
@@ -60,14 +62,24 @@ func fetchTopicUpdateAccess(
 		return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 	}
 
-	if !newAuthorizer(spaceMember, topicMember).CanUpdateTopic() {
-		return nil, &model.AppError{
-			Code:    model.AppErrCodeForbidden,
-			UserMsg: i18n.T(ctx, "error_forbidden"),
-		}
+	authorizer := newAuthorizer(spaceMember, topicMember)
+	if !authorizer.CanUpdateTopic() {
+		return nil, forbiddenError(ctx)
 	}
 
-	return &topicUpdateAccess{Space: space, Topic: topic}, nil
+	return &topicUpdateAccess{
+		Space:               space,
+		Topic:               topic,
+		CanUpdateVisibility: authorizer.CanUpdateTopicVisibility(),
+	}, nil
+}
+
+// forbiddenErrorはトピック設定が、閲覧者に許されていない変更を求められたときに返すエラーを組み立てる。
+func forbiddenError(ctx context.Context) error {
+	return &model.AppError{
+		Code:    model.AppErrCodeForbidden,
+		UserMsg: i18n.T(ctx, "error_forbidden"),
+	}
 }
 
 // notFoundErrorはトピック設定が、求められたものに手が届かないときに返すエラーを組み立てる。

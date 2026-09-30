@@ -18,6 +18,7 @@ func (p *GuestPolicy) CanShowTopic(topic *model.Topic) bool {
 }
 
 func (p *GuestPolicy) CanUpdateTopic() bool                                { return false }
+func (p *GuestPolicy) CanUpdateTopicVisibility() bool                      { return false }
 func (p *GuestPolicy) CanCreatePage() bool                                 { return false }
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
 func (p *GuestPolicy) CanShowTrash() bool                                  { return false }

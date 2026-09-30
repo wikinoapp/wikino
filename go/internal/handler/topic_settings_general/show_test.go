@@ -157,6 +157,57 @@ func TestShow_保存済みの値が入ったフォームが表示される(t *te
 	}
 }
 
+func TestShow_公開範囲を変えられないメンバーには公開範囲の選択肢を出さない(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-show-writer"
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite})
+
+	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if !strings.Contains(body, `value="日報"`) {
+		t.Errorf("レスポンスに%qが含まれていない", `value="日報"`)
+	}
+	for _, unwanted := range []string{`name="visibility"`, `id="visibility_public"`, `id="visibility_private"`} {
+		if strings.Contains(body, unwanted) {
+			t.Errorf("レスポンスに%qが含まれている", unwanted)
+		}
+	}
+}
+
+func TestShow_公開範囲を変えられるメンバーには公開範囲の選択肢を出す(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+	identifier := "topic-general-show-visibility"
+	userID, _, _ := settingsGeneralSpace(t, tx, identifier, []model.Scope{model.ScopeTopicWrite, model.ScopeTopicVisibilityWrite})
+
+	req := newSettingsGeneralRequest(t, http.MethodGet, identifier, "1", userID, nil)
+	rr := httptest.NewRecorder()
+	setupSettingsGeneralHandler(t, queries).Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{`id="visibility_public"`, `id="visibility_private"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに%qが含まれていない", want)
+		}
+	}
+}
+
 func TestShow_HEADでも200が返る(t *testing.T) {
 	t.Parallel()
 

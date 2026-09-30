@@ -853,6 +853,53 @@ func TestMemberPolicy_CanCreateTopic(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanUpdateTopicVisibility(t *testing.T) {
+	t.Parallel()
+
+	t.Run("topic_visibility:writeで変更可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeTopicVisibilityWrite}, nil)
+
+		if !p.CanUpdateTopicVisibility() {
+			t.Error("topic_visibility:writeを持つメンバーは公開範囲を変更可能であるべき")
+		}
+	})
+
+	t.Run("トピックメンバーのtopic_visibility:writeで変更可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy(nil, []model.Scope{model.ScopeTopicVisibilityWrite})
+
+		if !p.CanUpdateTopicVisibility() {
+			t.Error("トピックでtopic_visibility:writeを持つメンバーは公開範囲を変更可能であるべき")
+		}
+	})
+
+	t.Run("space:adminで変更可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
+
+		if !p.CanUpdateTopicVisibility() {
+			t.Error("space:adminはtopic_visibility:writeに展開されるため公開範囲を変更可能であるべき")
+		}
+	})
+
+	t.Run("topic:writeだけでは変更不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeTopicWrite}, nil)
+
+		if p.CanUpdateTopicVisibility() {
+			t.Error("topic:writeだけを持つメンバーは公開範囲を変更できないべき")
+		}
+		if !p.CanUpdateTopic() {
+			t.Error("topic:writeを持つメンバーはトピックを更新可能であるべき")
+		}
+	})
+}
+
 // TestMemberPolicy_AuthorizerはMemberPolicyがAuthorizerインターフェースを満たすことを検証する
 func TestMemberPolicy_Authorizer(t *testing.T) {
 	t.Parallel()

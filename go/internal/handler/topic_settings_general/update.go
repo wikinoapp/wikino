@@ -77,10 +77,11 @@ func (h *Handler) handleUpdateError(w http.ResponseWriter, r *http.Request, err 
 		Space:     viewmodel.NewSpace(output.Space),
 		Topic:     viewmodel.NewTopic(output.Topic),
 		Fields: topicpages.FormFieldsData{
-			FormErrors:  ve,
-			Name:        input.Name,
-			Description: input.Description,
-			Visibility:  input.Visibility,
+			FormErrors:     ve,
+			Name:           input.Name,
+			Description:    input.Description,
+			Visibility:     input.Visibility,
+			HideVisibility: !output.CanUpdateVisibility,
 		},
 	})
 }
