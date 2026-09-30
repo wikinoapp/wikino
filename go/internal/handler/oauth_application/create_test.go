@@ -28,7 +28,7 @@ func TestCreate_confidentialクライアントのシークレットをその応�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-create"
-	m := setupAppMember(t, tx, identifier, "登録するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "登録するメンバー", model.SpaceRoleAdmin, true)
 
 	form := url.Values{
 		"name":          {"連携するWebアプリ"},
@@ -86,7 +86,7 @@ func TestCreate_publicクライアントは詳細へリダイレクトする(t *
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-create-public"
-	m := setupAppMember(t, tx, identifier, "登録するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "登録するメンバー", model.SpaceRoleAdmin, true)
 
 	form := url.Values{
 		"name":          {"手元のCLI"},
@@ -122,7 +122,7 @@ func TestCreate_入力が不正なら422で送信内容を戻したフォーム�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-create-invalid"
-	m := setupAppMember(t, tx, identifier, "登録するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "登録するメンバー", model.SpaceRoleAdmin, true)
 
 	form := url.Values{
 		"name":          {"連携するWebアプリ"},
@@ -173,7 +173,7 @@ func TestCreate_エラーのある項目は補足とエラーの両方を指す(
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-create-describedby"
-	m := setupAppMember(t, tx, identifier, "登録するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "登録するメンバー", model.SpaceRoleAdmin, true)
 
 	form := url.Values{
 		"name":          {""},
@@ -210,7 +210,7 @@ func TestCreate_登録の権限が無ければ404が返る(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-create-readonly"
-	m := setupAppMember(t, tx, identifier, "閲覧するメンバー", []model.Scope{model.ScopeOAuthApplicationRead}, true)
+	m := setupAppMember(t, tx, identifier, "編集者のメンバー", model.SpaceRoleEditor, true)
 
 	form := url.Values{
 		"name":          {"連携するWebアプリ"},

@@ -187,21 +187,17 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 		WithEmail("gbl-auth-non-member@example.com").
 		WithAtname("gblauthnonmember").
 		Build()
-	restrictedMemberID := testutil.NewUserBuilder(t, tx).
+	viewerMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gbl-auth-restricted@example.com").
 		WithAtname("gblauthrestricted").
 		Build()
-	trashMemberID := testutil.NewUserBuilder(t, tx).
+	editorMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gbl-auth-trash@example.com").
 		WithAtname("gblauthtrash").
 		Build()
 	fullMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gbl-auth-full@example.com").
 		WithAtname("gblauthfull").
-		Build()
-	topicReaderID := testutil.NewUserBuilder(t, tx).
-		WithEmail("gbl-auth-topic-reader@example.com").
-		WithAtname("gblauthtopicreader").
 		Build()
 
 	spaceID := testutil.NewSpaceBuilder(t, tx).
@@ -210,18 +206,13 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(restrictedMemberID).
-		WithScopes([]model.Scope{model.ScopePageWrite}).
-		Build()
-	topicReaderSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(topicReaderID).
-		WithScopes([]model.Scope{}).
+		WithUserID(viewerMemberID).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
+		WithUserID(editorMemberID).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -245,12 +236,6 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 		WithNumber(3).
 		WithName("Private B").
 		WithVisibility(int32(model.TopicVisibilityPrivate)).
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(privateTopicID).
-		WithSpaceMemberID(topicReaderSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopeTopicRead}).
 		Build()
 
 	publicLinkedPageID := testutil.NewPageBuilder(t, tx).
@@ -354,18 +339,11 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			wantSpaceMemberNil: true,
 		},
 		{
-			name:             "正常系: topic:readを持たないメンバーには非公開トピックのバックリンクが見えない",
+			name:             "正常系: 閲覧者のロールはtopic:readを持つため非公開トピックのバックリンクも見える",
 			pageNumber:       1,
 			linkedPageNumber: 2,
-			userID:           &restrictedMemberID,
-			wantBacklinkIDs:  []model.PageID{publicLinkerID},
-		},
-		{
-			name:             "正常系: トピック単位のtopic:readを持つメンバーは参加中の非公開トピックだけを見る",
-			pageNumber:       1,
-			linkedPageNumber: 2,
-			userID:           &topicReaderID,
-			wantBacklinkIDs:  []model.PageID{privateBasePageID, publicLinkerID, privateLinkerID},
+			userID:           &viewerMemberID,
+			wantBacklinkIDs:  []model.PageID{privateBasePageID, publicLinkerID, privateLinkerID, privateLinkerBID},
 		},
 		{
 			name:             "正常系: 全トピックを開けるメンバーは非公開トピックのバックリンクも見える",
@@ -389,51 +367,25 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			wantNotFound:     true,
 		},
 		{
-			name:             "異常系: topic:readを持たないメンバーは非公開の元ページを取得できない",
-			pageNumber:       10,
-			linkedPageNumber: 2,
-			userID:           &restrictedMemberID,
-			wantNotFound:     true,
-		},
-		{
-			name:             "異常系: topic:readを持たないメンバーは非公開のリンク先ページを取得できない",
-			pageNumber:       1,
-			linkedPageNumber: 3,
-			userID:           &restrictedMemberID,
-			wantNotFound:     true,
-		},
-		{
-			name:             "正常系: トピック単位のtopic:readを持つメンバーは参加中の非公開リンク先を取得できる",
-			pageNumber:       1,
-			linkedPageNumber: 3,
-			userID:           &topicReaderID,
-		},
-		{
-			name:             "異常系: トピック単位のtopic:readを持つメンバーは未参加の非公開リンク先を取得できない",
-			pageNumber:       1,
-			linkedPageNumber: 4,
-			userID:           &topicReaderID,
-			wantNotFound:     true,
-		},
-		{
 			name:             "異常系: ゲストはゴミ箱の元ページを取得できない",
 			pageNumber:       11,
 			linkedPageNumber: 2,
 			wantNotFound:     true,
 		},
 		{
-			name:             "異常系: page_trash:readを持たないメンバーはゴミ箱の元ページを取得できない",
+			name:             "異常系: page_trash:readを持たない閲覧者はゴミ箱の元ページを取得できない",
 			pageNumber:       11,
 			linkedPageNumber: 2,
-			userID:           &restrictedMemberID,
+			userID:           &viewerMemberID,
 			wantNotFound:     true,
 		},
 		{
-			name:             "正常系: page_trash:writeを持つメンバーはゴミ箱の元ページを取得できる",
+			name:             "正常系: page_trash:writeを持つ編集者はゴミ箱の元ページを取得できる",
 			pageNumber:       11,
 			linkedPageNumber: 2,
-			userID:           &trashMemberID,
-			wantBacklinkIDs:  []model.PageID{publicBasePageID, publicLinkerID},
+			userID:           &editorMemberID,
+			// 編集者のロールはtopic:readを持つため、非公開トピックのバックリンクも見える
+			wantBacklinkIDs: []model.PageID{publicBasePageID, privateBasePageID, publicLinkerID, privateLinkerID, privateLinkerBID},
 		},
 		{
 			name:             "異常系: ゲストはゴミ箱のリンク先ページを取得できない",
@@ -442,17 +394,17 @@ func TestGetBacklinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			wantNotFound:     true,
 		},
 		{
-			name:             "異常系: page_trash:readを持たないメンバーはゴミ箱のリンク先ページを取得できない",
+			name:             "異常系: page_trash:readを持たない閲覧者はゴミ箱のリンク先ページを取得できない",
 			pageNumber:       13,
 			linkedPageNumber: 12,
-			userID:           &restrictedMemberID,
+			userID:           &viewerMemberID,
 			wantNotFound:     true,
 		},
 		{
-			name:             "正常系: page_trash:writeを持つメンバーはゴミ箱のリンク先ページを取得できる",
+			name:             "正常系: page_trash:writeを持つ編集者はゴミ箱のリンク先ページを取得できる",
 			pageNumber:       13,
 			linkedPageNumber: 12,
-			userID:           &trashMemberID,
+			userID:           &editorMemberID,
 		},
 	}
 

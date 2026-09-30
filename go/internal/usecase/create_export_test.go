@@ -36,7 +36,7 @@ type createExportFixture struct {
 	exportRepo *repository.ExportRepository
 }
 
-// setupCreateExportFixtureは、すべてのスコープを持つメンバーが1人いるスペースを作成する。
+// setupCreateExportFixtureは、管理者のメンバーが1人いるスペースを作成する。
 // テストは同じデータベースに対して並行に走るため、一意性のある列をsuffixで区別する。
 func setupCreateExportFixture(t *testing.T, suffix string) createExportFixture {
 	t.Helper()
@@ -220,6 +220,7 @@ func TestCreateExportUsecase_Execute(t *testing.T) {
 	t.Run("エクスポート権限が無いメンバーは開始できない", func(t *testing.T) {
 		t.Parallel()
 
+		// 編集者はspace:writeを持たないため、エクスポートを開始できない
 		f := setupCreateExportFixture(t, "reader")
 		readerID := testutil.NewUserBuilderDB(t, f.db).
 			WithEmail("create-export-reader-only@example.com").
@@ -228,7 +229,7 @@ func TestCreateExportUsecase_Execute(t *testing.T) {
 		testutil.NewSpaceMemberBuilderDB(t, f.db).
 			WithSpaceID(f.spaceID).
 			WithUserID(readerID).
-			WithScopes([]model.Scope{model.ScopePageRead}).
+			WithRole(model.SpaceRoleEditor).
 			Build()
 
 		uc := newCreateExportUsecase(f, &mockJobInserter{})

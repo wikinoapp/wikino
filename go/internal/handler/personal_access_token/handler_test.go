@@ -32,9 +32,9 @@ type patMember struct {
 	spaceMemberID model.SpaceMemberID
 }
 
-// setupPATMemberは、identifierを識別子に持つスペースと、scopesを持つメンバーを作る。
+// setupPATMemberは、identifierを識別子に持つスペースと、roleを持つメンバーを作る。
 // flagEnabledが真ならメンバーのユーザーに公開APIのフィーチャーフラグを有効にする。
-func setupPATMember(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope, flagEnabled bool) patMember {
+func setupPATMember(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole, flagEnabled bool) patMember {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -48,7 +48,7 @@ func setupPATMember(t *testing.T, tx *sql.Tx, identifier string, scopes []model.
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(scopes).
+		WithRole(role).
 		Build()
 	if flagEnabled {
 		testutil.NewFeatureFlagBuilder(t, tx).

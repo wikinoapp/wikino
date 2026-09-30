@@ -246,18 +246,18 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithSpaceMemberID(adminSpaceMemberID).
 			Build()
 
-		// スペース2: ユーザーはスペースレベルのスコープを持たないメンバー。ページ作成権限は
-		// トピックメンバーのスコープによってトピックごとに決まる。
+		// スペース2: ユーザーはpage:writeを持たない閲覧者のメンバー。ページ作成権限は
+		// トピックメンバーのロールによってトピックごとに決まる。
 		memberSpaceID := testutil.NewSpaceBuilder(t, tx).
 			WithIdentifier("ghs-cancreate-member").
 			Build()
 		memberSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 			WithSpaceID(memberSpaceID).
 			WithUserID(userID).
-			WithScopes([]model.Scope{}).
+			WithRole(model.SpaceRoleViewer).
 			Build()
 
-		// トピックレベルのpage:writeスコープを持つトピック → 作成可能。
+		// トピック編集者のロール (page:writeを持つ) を持つトピック → 作成可能。
 		writableTopicID := testutil.NewTopicBuilder(t, tx).
 			WithSpaceID(memberSpaceID).
 			WithNumber(1).
@@ -267,10 +267,10 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithSpaceID(memberSpaceID).
 			WithTopicID(writableTopicID).
 			WithSpaceMemberID(memberSpaceMemberID).
-			WithScopes([]model.Scope{model.ScopePageWrite}).
+			WithRole(model.TopicRoleEditor).
 			Build()
 
-		// スコープを持たないトピック → 作成不可。
+		// トピック閲覧者のロール (page:writeを持たない) を持つトピック → 作成不可。
 		readonlyTopicID := testutil.NewTopicBuilder(t, tx).
 			WithSpaceID(memberSpaceID).
 			WithNumber(2).
@@ -280,7 +280,7 @@ func TestGetHomeShowUsecase_Execute(t *testing.T) {
 			WithSpaceID(memberSpaceID).
 			WithTopicID(readonlyTopicID).
 			WithSpaceMemberID(memberSpaceMemberID).
-			WithScopes([]model.Scope{}).
+			WithRole(model.TopicRoleViewer).
 			Build()
 
 		output, err := uc.Execute(context.Background(), GetHomeShowInput{

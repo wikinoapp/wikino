@@ -281,11 +281,11 @@ func TestUpdate_PermissionDenied(t *testing.T) {
 	spaceID := testutil.NewSpaceBuilder(t, tx).
 		WithIdentifier("dp-policy-space").
 		Build()
-	// page:writeスコープを持たないメンバーを作成
+	// page:writeを持たない閲覧者を作成
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes([]model.Scope{model.ScopeTopicRead}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).

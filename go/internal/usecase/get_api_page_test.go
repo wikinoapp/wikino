@@ -19,82 +19,84 @@ func TestGetAPIPageUsecase_Execute(t *testing.T) {
 
 	readScopes := []model.Scope{model.ScopePageRead, model.ScopeTopicRead}
 	tests := []struct {
-		name         string
-		memberScopes []model.Scope
-		tokenScopes  []model.Scope
-		identifier   model.SpaceIdentifier
-		pageNumber   int32
-		wantFound    bool
+		name        string
+		memberRole  model.SpaceRole
+		tokenScopes []model.Scope
+		identifier  model.SpaceIdentifier
+		pageNumber  int32
+		wantFound   bool
 	}{
 		{
-			name:         "公開トピックのページを返す",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead},
-			pageNumber:   1,
-			wantFound:    true,
+			name:        "公開トピックのページを返す",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead},
+			pageNumber:  1,
+			wantFound:   true,
 		},
 		{
-			name:         "トークンがtopic:readを持てば参加している非公開トピックのページを返す",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  readScopes,
-			pageNumber:   6,
-			wantFound:    true,
+			name:        "トークンがtopic:readを持てば参加している非公開トピックのページを返す",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: readScopes,
+			pageNumber:  6,
+			wantFound:   true,
 		},
 		{
-			name:         "トークンがtopic:readを持たなければ参加している非公開トピックのページは未存在",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  []model.Scope{model.ScopePageRead},
-			pageNumber:   6,
+			name:        "トークンがtopic:readを持たなければ参加している非公開トピックのページは未存在",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: []model.Scope{model.ScopePageRead},
+			pageNumber:  6,
 		},
 		{
-			name:         "一般メンバーは参加していない非公開トピックのページを開けない",
-			memberScopes: apiTopicRegularMemberScopes,
-			tokenScopes:  readScopes,
-			pageNumber:   7,
+			// どのスペースのロールもtopic:readを持つため、参加していない非公開トピックも開ける
+			name:        "一般メンバーはトークンがtopic:readを持てば参加していない非公開トピックのページも返す",
+			memberRole:  apiTopicRegularMemberRole,
+			tokenScopes: readScopes,
+			pageNumber:  7,
+			wantFound:   true,
 		},
 		{
-			name:         "管理者はトークンがtopic:readを持てば参加していない非公開トピックのページも返す",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  readScopes,
-			pageNumber:   7,
-			wantFound:    true,
+			name:        "管理者はトークンがtopic:readを持てば参加していない非公開トピックのページも返す",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: readScopes,
+			pageNumber:  7,
+			wantFound:   true,
 		},
 		{
-			name:         "未公開のページは未存在",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  readScopes,
-			pageNumber:   3,
+			name:        "未公開のページは未存在",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: readScopes,
+			pageNumber:  3,
 		},
 		{
-			name:         "ゴミ箱のページはゴミ箱を開けるメンバーにも未存在",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  readScopes,
-			pageNumber:   4,
+			name:        "ゴミ箱のページはゴミ箱を開けるメンバーにも未存在",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: readScopes,
+			pageNumber:  4,
 		},
 		{
-			name:         "廃棄済みのページは未存在",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  readScopes,
-			pageNumber:   5,
+			name:        "廃棄済みのページは未存在",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: readScopes,
+			pageNumber:  5,
 		},
 		{
-			name:         "廃棄済みのトピックのページは未存在",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  readScopes,
-			pageNumber:   8,
+			name:        "廃棄済みのトピックのページは未存在",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: readScopes,
+			pageNumber:  8,
 		},
 		{
-			name:         "存在しない番号は未存在",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  readScopes,
-			pageNumber:   99,
+			name:        "存在しない番号は未存在",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: readScopes,
+			pageNumber:  99,
 		},
 		{
-			name:         "束縛先と異なるスペースは未存在",
-			memberScopes: apiTopicAdminMemberScopes,
-			tokenScopes:  readScopes,
-			identifier:   "api-page-get-other",
-			pageNumber:   1,
+			name:        "束縛先と異なるスペースは未存在",
+			memberRole:  apiTopicAdminMemberRole,
+			tokenScopes: readScopes,
+			identifier:  "api-page-get-other",
+			pageNumber:  1,
 		},
 	}
 
@@ -103,15 +105,15 @@ func TestGetAPIPageUsecase_Execute(t *testing.T) {
 			t.Parallel()
 
 			_, tx := testutil.SetupTx(t)
-			f := setupAPIPageFixture(t, tx, "api-page-get", tt.memberScopes)
-			setupAPIPageFixture(t, tx, "api-page-get-other", tt.memberScopes)
+			f := setupAPIPageFixture(t, tx, "api-page-get", tt.memberRole)
+			setupAPIPageFixture(t, tx, "api-page-get-other", tt.memberRole)
 			identifier := f.space.Identifier
 			if tt.identifier != "" {
 				identifier = tt.identifier
 			}
 
 			output, err := newGetAPIPageUC(tx).Execute(t.Context(), GetAPIPageInput{
-				Principal:       f.principal(tt.memberScopes, tt.tokenScopes),
+				Principal:       f.principal(tt.memberRole, tt.tokenScopes),
 				SpaceIdentifier: identifier,
 				PageNumber:      tt.pageNumber,
 			})

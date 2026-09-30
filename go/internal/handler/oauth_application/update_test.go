@@ -20,7 +20,7 @@ func TestUpdate_名前とリダイレクトURIを更新して詳細へリダイ�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-update"
-	m := setupAppMember(t, tx, identifier, "編集するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "編集するメンバー", model.SpaceRoleAdmin, true)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
 		WithName("元の名前").
@@ -62,7 +62,7 @@ func TestUpdate_入力が不正なら422で送信内容を戻したフォーム�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-update-invalid"
-	m := setupAppMember(t, tx, identifier, "編集するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "編集するメンバー", model.SpaceRoleAdmin, true)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
 		WithName("元の名前").
@@ -111,7 +111,7 @@ func TestUpdate_更新できないメンバーには404が返る(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-update-denied"
-	m := setupAppMember(t, tx, identifier, "削除だけのメンバー", []model.Scope{model.ScopeOAuthApplicationDelete}, true)
+	m := setupAppMember(t, tx, identifier, "編集者のメンバー", model.SpaceRoleEditor, true)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
 		WithName("元の名前").
@@ -139,7 +139,7 @@ func TestUpdate_古いフォームは409で現在の値を示す(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-update-conflict"
-	m := setupAppMember(t, tx, identifier, "編集するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "編集するメンバー", model.SpaceRoleAdmin, true)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
 		WithName("元の名前").
@@ -218,7 +218,7 @@ func TestUpdate_版を指定しない送信は400で更新しない(t *testing.T
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "oauth-app-update-no-version"
-	m := setupAppMember(t, tx, identifier, "編集するメンバー", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	m := setupAppMember(t, tx, identifier, "編集するメンバー", model.SpaceRoleAdmin, true)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).
 		WithName("元の名前").

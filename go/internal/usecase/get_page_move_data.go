@@ -90,11 +90,9 @@ func (uc *GetPageMoveDataUsecase) pageAccessRepos() pageAccessRepos {
 }
 
 // availableTopicsForMoveは移動先候補のトピック一覧を取得する。
-// space:adminスコープを持つメンバーは全アクティブトピック、それ以外は所属トピックのみ返す。
-// 現在のトピックは除外する。
-// space:adminを持つメンバーは同スペース内の全トピックにCanCreatePageが真であり、
-// それ以外はListJoinedBySpaceMemberが所属トピックのみを返すため、
-// いずれの場合もリスト取得の段階で権限が暗黙的に満たされている。
+// 候補はページを作成できるトピックに限り、現在のトピックは除外する。
+// スペースのロールでページを作成できるメンバーは全アクティブトピックを、それ以外は所属トピックの
+// うちトピックのロールでページを作成できるものを返す。移動の確定時もvalidatorが同じ判定をする。
 func (uc *GetPageMoveDataUsecase) availableTopicsForMove(
 	ctx context.Context,
 	spaceMember *model.SpaceMember,
@@ -104,10 +102,10 @@ func (uc *GetPageMoveDataUsecase) availableTopicsForMove(
 	var topics []*model.Topic
 	var err error
 
-	if model.HasScope(spaceMember.Scopes, model.ScopeSpaceAdmin) {
+	if newAuthorizer(spaceMember, nil).CanCreatePage() {
 		topics, err = uc.topicRepo.ListActiveBySpace(ctx, space.ID)
 	} else {
-		topics, err = uc.topicRepo.ListJoinedBySpaceMember(ctx, spaceMember.ID, space.ID)
+		topics, err = uc.writableJoinedTopics(ctx, spaceMember, space)
 	}
 	if err != nil {
 		return nil, err
@@ -122,4 +120,36 @@ func (uc *GetPageMoveDataUsecase) availableTopicsForMove(
 	}
 
 	return filtered, nil
+}
+
+// writableJoinedTopicsは、所属トピックのうち、トピックのロールでページを作成できるものを返す
+func (uc *GetPageMoveDataUsecase) writableJoinedTopics(ctx context.Context, spaceMember *model.SpaceMember, space *model.Space) ([]*model.Topic, error) {
+	joined, err := uc.topicRepo.ListJoinedBySpaceMember(ctx, spaceMember.ID, space.ID)
+	if err != nil {
+		return nil, err
+	}
+	if len(joined) == 0 {
+		return nil, nil
+	}
+
+	topicIDs := make([]model.TopicID, len(joined))
+	for i, t := range joined {
+		topicIDs[i] = t.ID
+	}
+	topicMembers, err := uc.topicMemberRepo.ListBySpaceMemberAndTopics(ctx, space.ID, spaceMember.ID, topicIDs)
+	if err != nil {
+		return nil, err
+	}
+	topicMemberByTopic := make(map[model.TopicID]*model.TopicMember, len(topicMembers))
+	for _, tm := range topicMembers {
+		topicMemberByTopic[tm.TopicID] = tm
+	}
+
+	var topics []*model.Topic
+	for _, t := range joined {
+		if newAuthorizer(spaceMember, topicMemberByTopic[t.ID]).CanCreatePage() {
+			topics = append(topics, t)
+		}
+	}
+	return topics, nil
 }

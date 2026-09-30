@@ -32,10 +32,10 @@ type appMember struct {
 	spaceMemberID model.SpaceMemberID
 }
 
-// setupAppMemberは、identifierを識別子に持つスペースと、scopesを持つメンバーを作る。
+// setupAppMemberは、identifierを識別子に持つスペースと、roleを持つメンバーを作る。
 // flagEnabledが真ならメンバーのユーザーに公開APIのフィーチャーフラグを有効にする。
 // メンバーのユーザーの名前はnameにする。
-func setupAppMember(t *testing.T, tx *sql.Tx, identifier string, name string, scopes []model.Scope, flagEnabled bool) appMember {
+func setupAppMember(t *testing.T, tx *sql.Tx, identifier string, name string, role model.SpaceRole, flagEnabled bool) appMember {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -50,7 +50,7 @@ func setupAppMember(t *testing.T, tx *sql.Tx, identifier string, name string, sc
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(scopes).
+		WithRole(role).
 		Build()
 	if flagEnabled {
 		testutil.NewFeatureFlagBuilder(t, tx).

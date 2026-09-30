@@ -18,7 +18,7 @@ func TestDelete_自分の連携を解除して一覧へ戻す(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "grant-delete"
-	m := setupGrantMember(t, tx, identifier, []model.Scope{model.ScopeOAuthGrantDelete}, true)
+	m := setupGrantMember(t, tx, identifier, model.SpaceRoleViewer, true)
 	grantID := m.buildGrant(t, tx, m.spaceMemberID, "自宅のCLI", "grant-delete-cli", []model.Scope{model.ScopePageRead})
 	testutil.NewOAuthAccessTokenBuilder(t, tx).
 		WithOAuthGrantID(grantID).WithSpaceID(m.spaceID).WithTokenDigest("grant_delete_access_digest").Build()
@@ -69,14 +69,13 @@ func TestDelete_解除できない場合は404が返る(t *testing.T) {
 	tests := []struct {
 		name        string
 		identifier  string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		// otherMemberが真なら、同じスペースの他のメンバーの連携を解除しようとする
 		otherMember bool
 	}{
-		{name: "oauth_grant:deleteを持たない", identifier: "grant-delete-noscope", scopes: []model.Scope{model.ScopeOAuthGrantWrite}, flagEnabled: true},
-		{name: "フィーチャーフラグが無効", identifier: "grant-delete-noflag", scopes: []model.Scope{model.ScopeSpaceAdmin}},
-		{name: "他のメンバーの連携", identifier: "grant-delete-other", scopes: []model.Scope{model.ScopeSpaceAdmin}, flagEnabled: true, otherMember: true},
+		{name: "フィーチャーフラグが無効", identifier: "grant-delete-noflag", role: model.SpaceRoleAdmin},
+		{name: "他のメンバーの連携", identifier: "grant-delete-other", role: model.SpaceRoleAdmin, flagEnabled: true, otherMember: true},
 	}
 
 	for _, tt := range tests {
@@ -85,13 +84,13 @@ func TestDelete_解除できない場合は404が返る(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			m := setupGrantMember(t, tx, tt.identifier, tt.scopes, tt.flagEnabled)
+			m := setupGrantMember(t, tx, tt.identifier, tt.role, tt.flagEnabled)
 
 			spaceMemberID := m.spaceMemberID
 			if tt.otherMember {
 				otherUserID := testutil.NewUserBuilder(t, tx).WithEmail(tt.identifier + "-other@example.com").WithAtname("grant_delete_other_owner").Build()
 				spaceMemberID = testutil.NewSpaceMemberBuilder(t, tx).
-					WithSpaceID(m.spaceID).WithUserID(otherUserID).WithScopes([]model.Scope{model.ScopeSpaceAdmin}).Build()
+					WithSpaceID(m.spaceID).WithUserID(otherUserID).Build()
 			}
 			grantID := m.buildGrant(t, tx, spaceMemberID, "自宅のCLI", tt.identifier+"-cli", []model.Scope{model.ScopePageRead})
 
@@ -120,7 +119,7 @@ func TestDelete_未ログインならログイン画面へリダイレクトす�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "grant-delete-anon"
-	setupGrantMember(t, tx, identifier, []model.Scope{model.ScopeSpaceAdmin}, true)
+	setupGrantMember(t, tx, identifier, model.SpaceRoleAdmin, true)
 
 	req := newRequest(t, http.MethodDelete, "/s/"+identifier+"/settings/oauth_grants/00000000-0000-0000-0000-000000000000", identifier, "")
 	rr := httptest.NewRecorder()

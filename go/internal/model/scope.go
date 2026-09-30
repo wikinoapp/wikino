@@ -76,7 +76,8 @@ const (
 	ScopeSpaceRead   Scope = "space:read"
 	ScopeSpaceWrite  Scope = "space:write"
 	ScopeSpaceDelete Scope = "space:delete"
-	// ScopeSpaceAdminは全スコープを包括する唯一の特別スコープ
+	// ScopeSpaceAdminは、Rails版が全スコープに展開する特別なスコープ。Go版の判定では使わず、
+	// 管理者のロールを持つメンバーのspace_members.scopesにRails版のために書くだけの値
 	ScopeSpaceAdmin Scope = "space:admin"
 )
 
@@ -130,7 +131,7 @@ type ScopeDefinition struct {
 }
 
 // ScopeDefinitionsは、メンバーに付けられるすべてのスコープの定義。並び順は画面でスコープを並べる順とする。
-// space:adminはこの表のすべてのスコープに展開される特別なスコープのため、表には載せない
+// space:adminはRails版のために書くだけの値でメンバーに付けるスコープではないため、表には載せない
 var ScopeDefinitions = []ScopeDefinition{
 	// スペース
 	{Scope: ScopeSpaceRead, LowestLevel: ScopeLevelSpace},

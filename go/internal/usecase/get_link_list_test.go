@@ -213,21 +213,17 @@ func TestGetLinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 		WithEmail("gll-auth-non-member@example.com").
 		WithAtname("gllauthnonmember").
 		Build()
-	restrictedMemberID := testutil.NewUserBuilder(t, tx).
+	viewerMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gll-auth-restricted@example.com").
 		WithAtname("gllauthrestricted").
 		Build()
-	trashMemberID := testutil.NewUserBuilder(t, tx).
+	editorMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gll-auth-trash@example.com").
 		WithAtname("gllauthtrash").
 		Build()
 	fullMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("gll-auth-full@example.com").
 		WithAtname("gllauthfull").
-		Build()
-	topicReaderID := testutil.NewUserBuilder(t, tx).
-		WithEmail("gll-auth-topic-reader@example.com").
-		WithAtname("gllauthtopicreader").
 		Build()
 
 	spaceID := testutil.NewSpaceBuilder(t, tx).
@@ -236,18 +232,13 @@ func TestGetLinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(restrictedMemberID).
-		WithScopes([]model.Scope{model.ScopePageWrite}).
-		Build()
-	topicReaderSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithUserID(topicReaderID).
-		WithScopes([]model.Scope{}).
+		WithUserID(viewerMemberID).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
-		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
+		WithUserID(editorMemberID).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -271,12 +262,6 @@ func TestGetLinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 		WithNumber(3).
 		WithName("Private B").
 		WithVisibility(int32(model.TopicVisibilityPrivate)).
-		Build()
-	testutil.NewTopicMemberBuilder(t, tx).
-		WithSpaceID(spaceID).
-		WithTopicID(privateTopicID).
-		WithSpaceMemberID(topicReaderSpaceMemberID).
-		WithScopes([]model.Scope{model.ScopeTopicRead}).
 		Build()
 	publicLinkedPageID := testutil.NewPageBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -340,16 +325,10 @@ func TestGetLinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			wantSpaceMemberNil: true,
 		},
 		{
-			name:              "正常系: topic:readを持たないメンバーには非公開トピックのリンク先が見えない",
+			name:              "正常系: 閲覧者のロールはtopic:readを持つため非公開トピックのリンク先も見える",
 			pageNumber:        1,
-			userID:            &restrictedMemberID,
-			wantLinkedPageIDs: []model.PageID{publicLinkedPageID},
-		},
-		{
-			name:              "正常系: トピック単位のtopic:readを持つメンバーは参加中の非公開トピックだけを見る",
-			pageNumber:        1,
-			userID:            &topicReaderID,
-			wantLinkedPageIDs: []model.PageID{publicLinkedPageID, privateLinkedPageID},
+			userID:            &viewerMemberID,
+			wantLinkedPageIDs: []model.PageID{publicLinkedPageID, privateLinkedPageID, privateLinkedPageBID},
 		},
 		{
 			name:              "正常系: 全トピックを開けるメンバーは非公開トピックのリンク先も見える",
@@ -364,27 +343,22 @@ func TestGetLinkListUsecase_Execute_AuthorizationBoundaries(t *testing.T) {
 			wantNotFound: true,
 		},
 		{
-			name:         "異常系: topic:readを持たないメンバーは非公開ページを取得できない",
-			pageNumber:   10,
-			userID:       &restrictedMemberID,
-			wantNotFound: true,
-		},
-		{
 			name:         "異常系: ゲストはゴミ箱のページを取得できない",
 			pageNumber:   11,
 			wantNotFound: true,
 		},
 		{
-			name:         "異常系: page_trash:readを持たないメンバーはゴミ箱のページを取得できない",
+			name:         "異常系: page_trash:readを持たない閲覧者はゴミ箱のページを取得できない",
 			pageNumber:   11,
-			userID:       &restrictedMemberID,
+			userID:       &viewerMemberID,
 			wantNotFound: true,
 		},
 		{
-			name:              "正常系: page_trash:writeを持つメンバーはゴミ箱のページを取得できる",
-			pageNumber:        11,
-			userID:            &trashMemberID,
-			wantLinkedPageIDs: []model.PageID{publicLinkedPageID},
+			name:       "正常系: page_trash:writeを持つ編集者はゴミ箱のページを取得できる",
+			pageNumber: 11,
+			userID:     &editorMemberID,
+			// 編集者のロールはtopic:readを持つため、非公開トピックのリンク先も見える
+			wantLinkedPageIDs: []model.PageID{publicLinkedPageID, privateLinkedPageID, privateLinkedPageBID},
 		},
 	}
 

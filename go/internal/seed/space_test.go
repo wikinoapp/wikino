@@ -64,15 +64,15 @@ func TestGenerateSpaces(t *testing.T) {
 		role    seedRole
 		spaceID model.SpaceID
 		member  *seededSpaceMember
-		want    []model.Scope
+		want    model.SpaceRole
 	}{
-		{label: "seed-wikiのowner", role: roleOwner, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleOwner), want: adminSpaceScopes},
-		{label: "seed-wikiのcollaborator", role: roleCollaborator, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleCollaborator), want: nonAdminSpaceScopes},
-		{label: "seed-wikiのguest", role: roleGuest, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleGuest), want: nonAdminSpaceScopes},
-		{label: "seed-soloのowner", role: roleOwner, spaceID: spaces.solo.id, member: spaces.solo.member(roleOwner), want: adminSpaceScopes},
-		{label: "demoのowner", role: roleOwner, spaceID: spaces.demo.id, member: spaces.demo.member(roleOwner), want: adminSpaceScopes},
+		{label: "seed-wikiのowner", role: roleOwner, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleOwner), want: model.SpaceRoleAdmin},
+		{label: "seed-wikiのcollaborator", role: roleCollaborator, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleCollaborator), want: nonAdminSpaceRole},
+		{label: "seed-wikiのguest", role: roleGuest, spaceID: spaces.wiki.id, member: spaces.wiki.member(roleGuest), want: nonAdminSpaceRole},
+		{label: "seed-soloのowner", role: roleOwner, spaceID: spaces.solo.id, member: spaces.solo.member(roleOwner), want: model.SpaceRoleAdmin},
+		{label: "demoのowner", role: roleOwner, spaceID: spaces.demo.id, member: spaces.demo.member(roleOwner), want: model.SpaceRoleAdmin},
 	} {
-		assertSpaceMemberScopes(ctx, t, tx, tt.label, tt.spaceID, tt.member.id, tt.want)
+		assertSpaceMemberRole(ctx, t, tx, tt.label, tt.spaceID, tt.member.id, tt.want)
 		if got, want := tt.member.name, users.user(tt.role).Name; got != want {
 			t.Errorf("%sの表示名が%qであることを期待したが%qだった", tt.label, want, got)
 		}
@@ -173,16 +173,16 @@ func TestSeededSpaceMemberInTurn(t *testing.T) {
 	}
 }
 
-func TestNonAdminSpaceScopes(t *testing.T) {
+func TestNonAdminSpaceRole(t *testing.T) {
 	t.Parallel()
 
 	publicTopic := &model.Topic{Visibility: model.TopicVisibilityPublic}
 	privateTopic := &model.Topic{Visibility: model.TopicVisibilityPrivate}
 
-	// 2つのスコープ集合に意味があるのは、画面が行う判定の異なる側に着地する
+	// 2つのロールに意味があるのは、画面が行う判定の異なる側に着地する
 	// 場合だけ。ここに並ぶのが、シードデータが作り出そうとしている差分そのもの。
-	admin := policy.NewMemberPolicy(adminSpaceScopes, nil)
-	nonAdmin := policy.NewMemberPolicy(nonAdminSpaceScopes, nil)
+	admin := policy.NewMemberPolicy(model.SpaceRoleAdmin.Scopes(), nil)
+	nonAdmin := policy.NewMemberPolicy(nonAdminSpaceRole.Scopes(), nil)
 
 	tests := []struct {
 		name         string
@@ -197,10 +197,10 @@ func TestNonAdminSpaceScopes(t *testing.T) {
 			wantNonAdmin: true,
 		},
 		{
-			name:         "参加していない非公開トピックは管理者にしか見えない",
+			name:         "参加していない非公開トピックもどちらからも見える",
 			check:        func(p *policy.MemberPolicy) bool { return p.CanShowTopic(privateTopic) },
 			wantAdmin:    true,
-			wantNonAdmin: false,
+			wantNonAdmin: true,
 		},
 		{
 			name:         "ページの作成はどちらもできる",
@@ -209,34 +209,28 @@ func TestNonAdminSpaceScopes(t *testing.T) {
 			wantNonAdmin: true,
 		},
 		{
-			name:         "編集提案の作成はどちらもできる",
-			check:        func(p *policy.MemberPolicy) bool { return p.CanCreateSuggestion(publicTopic) },
-			wantAdmin:    true,
-			wantNonAdmin: true,
-		},
-		{
-			name:         "編集提案の適用は管理者にしかできない",
-			check:        func(p *policy.MemberPolicy) bool { return p.CanApplySuggestion() },
-			wantAdmin:    true,
-			wantNonAdmin: false,
-		},
-		{
-			name:         "トピックの作成は管理者にしかできない",
+			name:         "トピックの作成はどちらもできる",
 			check:        func(p *policy.MemberPolicy) bool { return p.CanCreateTopic() },
 			wantAdmin:    true,
-			wantNonAdmin: false,
-		},
-		{
-			name:         "他人の下書きは管理者にしか見えない",
-			check:        func(p *policy.MemberPolicy) bool { return p.CanShowDraftPage(false) },
-			wantAdmin:    true,
-			wantNonAdmin: false,
-		},
-		{
-			name:         "自分の下書きはどちらも見える",
-			check:        func(p *policy.MemberPolicy) bool { return p.CanShowDraftPage(true) },
-			wantAdmin:    true,
 			wantNonAdmin: true,
+		},
+		{
+			name:         "トピックの公開範囲の変更は管理者にしかできない",
+			check:        func(p *policy.MemberPolicy) bool { return p.CanUpdateTopicVisibility() },
+			wantAdmin:    true,
+			wantNonAdmin: false,
+		},
+		{
+			name:         "スペースの設定の変更は管理者にしかできない",
+			check:        func(p *policy.MemberPolicy) bool { return p.CanUpdateSpace() },
+			wantAdmin:    true,
+			wantNonAdmin: false,
+		},
+		{
+			name:         "OAuthアプリの管理は管理者にしかできない",
+			check:        func(p *policy.MemberPolicy) bool { return p.CanShowOAuthApplications() },
+			wantAdmin:    true,
+			wantNonAdmin: false,
 		},
 	}
 
@@ -254,33 +248,6 @@ func TestNonAdminSpaceScopes(t *testing.T) {
 	}
 }
 
-func TestScopeStrings(t *testing.T) {
-	t.Parallel()
-
-	// スコープ無しのメンバーシップは、空配列としてデータベースへ届く必要が
-	// ある。pqはnilのスライスをNULLに変換し、NOT NULL列がそれを拒否するため。
-	if got := scopeStrings(nil); got == nil || len(got) != 0 {
-		t.Errorf("空のスライスを期待したが%#vだった", got)
-	}
-
-	got := scopeStrings([]model.Scope{model.ScopeSpaceAdmin, model.ScopeTopicRead})
-	want := []string{"space:admin", "topic:read"}
-	if len(got) != len(want) {
-		t.Fatalf("%d件を期待したが%d件だった", len(want), len(got))
-	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Errorf("%d番目が%qであることを期待したが%qだった", i, want[i], got[i])
-		}
-	}
-}
-
-// buildSeedUsersは生成器が必要とするアカウントを、generateUsersを経由せずに
-// 作成する。generateUsersは各アカウントのメールアドレスとatnameを固定するため、
-// それを呼ぶテストは一意インデックスの上で互いに待ち合わせることになるため。
-//
-// アカウントはallSeedRolesが挙げる役割をキーにして持つ。そこへ役割を足したとき、
-// 本ヘルパーを直さなくてもテスト対象の生成器へ届くようにするため。
 func buildSeedUsers(t *testing.T, tx *sql.Tx, prefix string) *seededUsers {
 	t.Helper()
 
@@ -377,30 +344,34 @@ func assertSpaceMemberCount(ctx context.Context, t *testing.T, tx *sql.Tx, space
 	}
 }
 
-// assertSpaceMemberScopesは、保存されたスコープがシードの与えようとした
-// ものと完全に一致することを確認する。
-func assertSpaceMemberScopes(
+// assertSpaceMemberRoleは、保存されたロールがシードの与えようとしたものと一致し、
+// Rails版が判定に使うscopesにそのロールに応じた値が書かれていることを確認する。
+func assertSpaceMemberRole(
 	ctx context.Context,
 	t *testing.T,
 	tx *sql.Tx,
 	label string,
 	spaceID model.SpaceID,
 	memberID model.SpaceMemberID,
-	want []model.Scope,
+	want model.SpaceRole,
 ) {
 	t.Helper()
 
+	var role string
 	var stored []string
 	err := tx.QueryRowContext(
 		ctx,
-		`SELECT scopes FROM space_members WHERE id = $1 AND space_id = $2`,
+		`SELECT role, scopes FROM space_members WHERE id = $1 AND space_id = $2`,
 		string(memberID),
 		string(spaceID),
-	).Scan(pq.Array(&stored))
+	).Scan(&role, pq.Array(&stored))
 	if err != nil {
-		t.Fatalf("%sのスコープの取得に失敗: %v", label, err)
+		t.Fatalf("%sのロールの取得に失敗: %v", label, err)
 	}
-	assertScopesEqual(t, label, stored, want)
+	if role != string(want) {
+		t.Errorf("%sのロールが%qであることを期待したが%qだった", label, want, role)
+	}
+	assertScopesEqual(t, label, stored, want.RailsScopes())
 }
 
 // assertScopesEqualは、保存されたスコープを意図した集合と、順序を無視して

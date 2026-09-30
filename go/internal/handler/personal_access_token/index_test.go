@@ -17,8 +17,8 @@ func TestIndex_自分のトークンの一覧を表示する(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "pat-index"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopeSpaceAdmin}, true)
-	other := setupPATMember(t, tx, "pat-index-other", []model.Scope{model.ScopeSpaceAdmin}, true)
+	m := setupPATMember(t, tx, identifier, model.SpaceRoleAdmin, true)
+	other := setupPATMember(t, tx, "pat-index-other", model.SpaceRoleAdmin, true)
 
 	lastUsedAt := time.Now().Add(-time.Hour)
 	activeID := testutil.NewPersonalAccessTokenBuilder(t, tx).
@@ -90,37 +90,13 @@ func TestIndex_自分のトークンの一覧を表示する(t *testing.T) {
 	}
 }
 
-func TestIndex_発行の権限が無ければ発行へのリンクを出さない(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	identifier := "pat-index-readonly"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenRead}, true)
-
-	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/personal_access_tokens", identifier, m.userID, nil)
-	rr := httptest.NewRecorder()
-	setupHandler(t, q).Index(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
-	}
-	body := rr.Body.String()
-	if strings.Contains(body, "/settings/personal_access_tokens/new") {
-		t.Error("発行の権限が無いメンバーのレスポンスに発行フォームへのリンクが含まれている")
-	}
-	if !strings.Contains(body, "発行したトークンはありません") {
-		t.Error("トークンが無いことの表示が含まれていない")
-	}
-}
-
-func TestIndex_失効の権限だけで一覧と失効ボタンを表示する(t *testing.T) {
+func TestIndex_閲覧者にも一覧と失効ボタンを表示する(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "pat-index-delete-only"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenDelete}, true)
+	m := setupPATMember(t, tx, identifier, model.SpaceRoleViewer, true)
 	tokenID := testutil.NewPersonalAccessTokenBuilder(t, tx).
 		WithSpaceID(m.spaceID).WithSpaceMemberID(m.spaceMemberID).
 		WithTokenDigest("pat_index_delete_only").Build()
@@ -132,40 +108,8 @@ func TestIndex_失効の権限だけで一覧と失効ボタンを表示する(t
 	if rr.Code != http.StatusOK {
 		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
-	body := rr.Body.String()
-	if !strings.Contains(body, `action="/s/`+identifier+`/settings/personal_access_tokens/`+string(tokenID)+`"`) {
+	if !strings.Contains(rr.Body.String(), `action="/s/`+identifier+`/settings/personal_access_tokens/`+string(tokenID)+`"`) {
 		t.Error("失効フォームが含まれていない")
-	}
-	if strings.Contains(body, "/settings/personal_access_tokens/new") {
-		t.Error("発行の権限が無いメンバーのレスポンスに発行フォームへのリンクが含まれている")
-	}
-}
-
-func TestIndex_失効の権限が無ければ失効のボタンを出さない(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	identifier := "pat-index-nodelete"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenWrite}, true)
-	testutil.NewPersonalAccessTokenBuilder(t, tx).
-		WithSpaceID(m.spaceID).WithSpaceMemberID(m.spaceMemberID).
-		WithName("自宅のCLI").WithTokenDigest("pat_index_nodelete").
-		Build()
-
-	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/personal_access_tokens", identifier, m.userID, nil)
-	rr := httptest.NewRecorder()
-	setupHandler(t, q).Index(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
-	}
-	body := rr.Body.String()
-	if !strings.Contains(body, "自宅のCLI") {
-		t.Error("レスポンスにトークンが含まれていない")
-	}
-	if strings.Contains(body, `name="_method" value="DELETE"`) {
-		t.Error("失効の権限が無いメンバーのレスポンスに失効のフォームが含まれている")
 	}
 }
 
@@ -175,11 +119,10 @@ func TestIndex_開けない場合は404が返る(t *testing.T) {
 	tests := []struct {
 		name        string
 		identifier  string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 	}{
-		{name: "personal_access_token:readを持たない", identifier: "pat-index-noscope", scopes: []model.Scope{model.ScopeSpaceWrite}, flagEnabled: true},
-		{name: "フィーチャーフラグが無効", identifier: "pat-index-noflag", scopes: []model.Scope{model.ScopeSpaceAdmin}},
+		{name: "フィーチャーフラグが無効", identifier: "pat-index-noflag", role: model.SpaceRoleAdmin},
 	}
 
 	for _, tt := range tests {
@@ -188,7 +131,7 @@ func TestIndex_開けない場合は404が返る(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			m := setupPATMember(t, tx, tt.identifier, tt.scopes, tt.flagEnabled)
+			m := setupPATMember(t, tx, tt.identifier, tt.role, tt.flagEnabled)
 
 			req := newRequest(t, http.MethodGet, "/s/"+tt.identifier+"/settings/personal_access_tokens", tt.identifier, m.userID, nil)
 			rr := httptest.NewRecorder()
@@ -207,7 +150,7 @@ func TestIndex_未ログインならログイン画面へリダイレクトす�
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "pat-index-anon"
-	setupPATMember(t, tx, identifier, []model.Scope{model.ScopeSpaceAdmin}, true)
+	setupPATMember(t, tx, identifier, model.SpaceRoleAdmin, true)
 
 	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/personal_access_tokens", identifier, "", nil)
 	rr := httptest.NewRecorder()

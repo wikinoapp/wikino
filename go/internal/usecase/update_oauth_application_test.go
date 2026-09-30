@@ -33,7 +33,7 @@ func TestUpdateOAuthApplicationUsecase_Execute(t *testing.T) {
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "uoa-update", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+		f := setupPATMember(t, tx, "uoa-update", model.SpaceRoleAdmin, true)
 		// 作成したメンバーがいなくなったアプリ。閲覧者が作成したものでなくても編集できる
 		appID := testutil.NewOAuthApplicationBuilder(t, tx).
 			WithSpaceID(f.spaceID).
@@ -75,36 +75,36 @@ func TestUpdateOAuthApplicationUsecase_Execute_更新できない(t *testing.T) 
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		otherSpace  bool
 		discarded   bool
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "oauth_application:readだけを持つ",
+			name:        "編集者 (OAuthアプリの権限を持たない)",
 			key:         "uoa-readonly",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationRead},
+			role:        model.SpaceRoleEditor,
 			flagEnabled: true,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 		{
-			name:        "oauth_application:deleteだけを持つ",
+			name:        "閲覧者 (OAuthアプリの権限を持たない)",
 			key:         "uoa-deleteonly",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationDelete},
+			role:        model.SpaceRoleViewer,
 			flagEnabled: true,
 			wantErrCode: model.AppErrCodeForbidden,
 		},
 		{
 			name:        "フィーチャーフラグが無効",
 			key:         "uoa-noflag",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationWrite},
+			role:        model.SpaceRoleAdmin,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 		{
 			name:        "別のスペースのアプリ",
 			key:         "uoa-otherspace",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationWrite},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			otherSpace:  true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -112,7 +112,7 @@ func TestUpdateOAuthApplicationUsecase_Execute_更新できない(t *testing.T) 
 		{
 			name:        "削除されたアプリ",
 			key:         "uoa-discarded",
-			scopes:      []model.Scope{model.ScopeOAuthApplicationWrite},
+			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			discarded:   true,
 			wantErrCode: model.AppErrCodeResourceNotFound,
@@ -125,7 +125,7 @@ func TestUpdateOAuthApplicationUsecase_Execute_更新できない(t *testing.T) 
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 			appSpaceID := f.spaceID
 			if tt.otherSpace {
 				appSpaceID = testutil.NewSpaceBuilder(t, tx).WithIdentifier(tt.key + "-other").Build()
@@ -157,7 +157,7 @@ func TestUpdateOAuthApplicationUsecase_Execute_更新できない(t *testing.T) 
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "uoa-invalid", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+		f := setupPATMember(t, tx, "uoa-invalid", model.SpaceRoleAdmin, true)
 		appID := testutil.NewOAuthApplicationBuilder(t, tx).
 			WithSpaceID(f.spaceID).
 			WithClientID("uoa-invalid-client").
@@ -189,7 +189,7 @@ func TestUpdateOAuthApplicationUsecase_Execute_版が古い(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
-	f := setupPATMember(t, tx, "uoa-stale", []model.Scope{model.ScopeOAuthApplicationWrite}, true)
+	f := setupPATMember(t, tx, "uoa-stale", model.SpaceRoleAdmin, true)
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(f.spaceID).
 		WithClientID("uoa-stale-client").

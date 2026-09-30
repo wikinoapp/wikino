@@ -90,12 +90,12 @@ func TestCreate(t *testing.T) {
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(trashMemberID).
-		WithScopes([]model.Scope{model.ScopePageTrashWrite}).
+		WithRole(model.SpaceRoleEditor).
 		Build()
 	testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(writerMemberID).
-		WithScopes([]model.Scope{model.ScopePageWrite}).
+		WithRole(model.SpaceRoleViewer).
 		Build()
 
 	topicID := testutil.NewTopicBuilder(t, tx).
@@ -159,7 +159,7 @@ func TestCreate(t *testing.T) {
 		}
 	})
 
-	t.Run("異常系: page_trash:writeを持たないメンバーは404になる", func(t *testing.T) {
+	t.Run("異常系: page_trash:writeを持たない閲覧者は404になる", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		h.Create(rr, newRequest(t, "pt-space", 2, writerMemberID))
 

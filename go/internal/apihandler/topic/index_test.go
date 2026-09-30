@@ -34,7 +34,7 @@ func setupTopicHandler(t *testing.T, tx *sql.Tx, topicCount int32) (*topic.Handl
 	ctx := middleware.SetAPIPrincipalToContext(context.Background(), &model.APIPrincipal{
 		User:        &model.User{ID: userID},
 		Space:       &model.Space{ID: spaceID, Identifier: "topic-handler"},
-		SpaceMember: &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, UserID: userID, Scopes: []model.Scope{model.ScopeSpaceAdmin}, Active: true},
+		SpaceMember: &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, UserID: userID, Role: model.SpaceRoleAdmin, Active: true},
 		TokenKind:   model.APITokenKindPersonalAccessToken,
 		Scopes:      []model.Scope{model.ScopeTopicRead},
 	})

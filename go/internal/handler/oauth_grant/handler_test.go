@@ -29,9 +29,9 @@ type grantMember struct {
 	spaceMemberID model.SpaceMemberID
 }
 
-// setupGrantMemberは、identifierを識別子に持つスペースと、scopesを持つメンバーを作る。
+// setupGrantMemberは、identifierを識別子に持つスペースと、roleを持つメンバーを作る。
 // flagEnabledが真ならメンバーのユーザーに公開APIのフィーチャーフラグを有効にする。
-func setupGrantMember(t *testing.T, tx *sql.Tx, identifier string, scopes []model.Scope, flagEnabled bool) grantMember {
+func setupGrantMember(t *testing.T, tx *sql.Tx, identifier string, role model.SpaceRole, flagEnabled bool) grantMember {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
@@ -45,7 +45,7 @@ func setupGrantMember(t *testing.T, tx *sql.Tx, identifier string, scopes []mode
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
-		WithScopes(scopes).
+		WithRole(role).
 		Build()
 	if flagEnabled {
 		testutil.NewFeatureFlagBuilder(t, tx).

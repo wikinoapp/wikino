@@ -24,13 +24,13 @@ const (
 	// ベースを手で触らずに画面のGo版を開けるようにするため。サインインはパス
 	// ワードだけで完了する。
 	roleOwner seedRole = "owner"
-	// roleCollaboratorはspace:adminを持たずにseed-wikiで書くアカウントで、
+	// roleCollaboratorは管理者のロールを持たずにseed-wikiで書くアカウントで、
 	// seed-soloには参加していない。フィーチャーフラグを1つも持たず2要素認証が
 	// 有効になっており、2つの役割を合わせると、フラグ有無による画面の比較と、
 	// サインインの2要素認証ステップの通過の双方を確認できる。
 	roleCollaborator seedRole = "collaborator"
 	// roleGuestは、自分が参加していないスペースを開くアカウント。roleOwnerと
-	// 同じくフィーチャーフラグを全件持ち、roleCollaboratorと同じくspace:admin無しで
+	// 同じくフィーチャーフラグを全件持ち、roleCollaboratorと同じく管理者のロール無しで
 	// seed-wikiに参加しているが、seed-soloのメンバーではない。画面のGo版へ
 	// GuestPolicyを通って辿り着けるのは、この組み合わせだけである。roleOwnerは
 	// フラグを持つが両方のスペースに参加しており、roleCollaboratorはseed-soloの

@@ -31,7 +31,7 @@ func TestCreatePersonalAccessTokenUsecase_Execute(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
-	f := setupPATMember(t, tx, "cpat-success", []model.Scope{model.ScopePersonalAccessTokenWrite}, true)
+	f := setupPATMember(t, tx, "cpat-success", model.SpaceRoleViewer, true)
 
 	before := time.Now()
 	output, err := newCreatePersonalAccessTokenUsecaseForTest(q).Execute(context.Background(), CreatePersonalAccessTokenInput{
@@ -84,21 +84,14 @@ func TestCreatePersonalAccessTokenUsecase_Execute_発行できない(t *testing.
 	tests := []struct {
 		name        string
 		key         string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 		wantErrCode model.AppErrorCode
 	}{
 		{
-			name:        "personal_access_token:readだけを持つ",
-			key:         "cpat-readonly",
-			scopes:      []model.Scope{model.ScopePersonalAccessTokenRead},
-			flagEnabled: true,
-			wantErrCode: model.AppErrCodeForbidden,
-		},
-		{
 			name:        "フィーチャーフラグが無効",
 			key:         "cpat-noflag",
-			scopes:      []model.Scope{model.ScopePersonalAccessTokenWrite},
+			role:        model.SpaceRoleViewer,
 			wantErrCode: model.AppErrCodeResourceNotFound,
 		},
 	}
@@ -109,7 +102,7 @@ func TestCreatePersonalAccessTokenUsecase_Execute_発行できない(t *testing.
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			f := setupPATMember(t, tx, tt.key, tt.scopes, tt.flagEnabled)
+			f := setupPATMember(t, tx, tt.key, tt.role, tt.flagEnabled)
 
 			_, err := newCreatePersonalAccessTokenUsecaseForTest(q).Execute(context.Background(), CreatePersonalAccessTokenInput{
 				SpaceIdentifier: model.SpaceIdentifier(tt.key),
@@ -128,7 +121,7 @@ func TestCreatePersonalAccessTokenUsecase_Execute_発行できない(t *testing.
 
 		_, tx := testutil.SetupTx(t)
 		q := testutil.QueriesWithTx(tx)
-		f := setupPATMember(t, tx, "cpat-invalid", []model.Scope{model.ScopePersonalAccessTokenWrite}, true)
+		f := setupPATMember(t, tx, "cpat-invalid", model.SpaceRoleViewer, true)
 
 		ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
 		_, err := newCreatePersonalAccessTokenUsecaseForTest(q).Execute(ctx, CreatePersonalAccessTokenInput{

@@ -17,7 +17,7 @@ func TestNew_発行フォームを表示する(t *testing.T) {
 	_, tx := testutil.SetupTx(t)
 	q := testutil.QueriesWithTx(tx)
 	identifier := "pat-new"
-	m := setupPATMember(t, tx, identifier, []model.Scope{model.ScopePersonalAccessTokenWrite}, true)
+	m := setupPATMember(t, tx, identifier, model.SpaceRoleViewer, true)
 
 	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/personal_access_tokens/new", identifier, m.userID, nil)
 	rr := httptest.NewRecorder()
@@ -90,11 +90,10 @@ func TestNew_発行の権限が無ければ404が返る(t *testing.T) {
 	tests := []struct {
 		name        string
 		identifier  string
-		scopes      []model.Scope
+		role        model.SpaceRole
 		flagEnabled bool
 	}{
-		{name: "personal_access_token:readだけを持つ", identifier: "pat-new-readonly", scopes: []model.Scope{model.ScopePersonalAccessTokenRead}, flagEnabled: true},
-		{name: "フィーチャーフラグが無効", identifier: "pat-new-noflag", scopes: []model.Scope{model.ScopeSpaceAdmin}},
+		{name: "フィーチャーフラグが無効", identifier: "pat-new-noflag", role: model.SpaceRoleAdmin},
 	}
 
 	for _, tt := range tests {
@@ -103,7 +102,7 @@ func TestNew_発行の権限が無ければ404が返る(t *testing.T) {
 
 			_, tx := testutil.SetupTx(t)
 			q := testutil.QueriesWithTx(tx)
-			m := setupPATMember(t, tx, tt.identifier, tt.scopes, tt.flagEnabled)
+			m := setupPATMember(t, tx, tt.identifier, tt.role, tt.flagEnabled)
 
 			req := newRequest(t, http.MethodGet, "/s/"+tt.identifier+"/settings/personal_access_tokens/new", tt.identifier, m.userID, nil)
 			rr := httptest.NewRecorder()
