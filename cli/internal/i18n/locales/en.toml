@@ -1,0 +1,2975 @@
+# 英語翻訳ファイル (ja.tomlの翻訳)
+
+# ルートコマンド
+[root_short]
+description = "ルートコマンドの短い説明"
+other = "Command-line tool for Wikino"
+
+[root_long]
+description = "ルートコマンドの説明"
+other = "A command-line tool that reads and writes pages and drafts through the Wikino public API."
+
+[root_example]
+description = "ルートコマンドの使用例"
+other = """
+  # Show the version
+  wikino --version"""
+
+[root_version_flag]
+description = "--versionフラグの説明"
+other = "Show the version"
+
+[root_output]
+description = "ルートコマンドのヘルプの「出力」の節。すべてのコマンドに共通の出力の規則"
+other = """
+  Prints human-readable output when stdout is a TTY, and JSON when it is not or when `--json` is given.
+  Selecting fields with `--fields` or giving `--jq` also prints JSON.
+  Only results go to stdout; progress and warnings go to stderr."""
+
+[root_errors]
+description = "ルートコマンドのヘルプの「エラー」の節。ExitCodesは終了コードの表"
+other = """
+  The exit code tells the kind of failure.
+{{.ExitCodes}}
+
+  When stderr is not a TTY or `--json` is given, errors are printed to stderr as single-line JSON.
+    {"error": {"code": "usage_error", "message": "...", "hint": "...", "status": 412}}
+  `hint` tells what to do next. `status` is the HTTP status of the API response and is omitted for errors not from the API."""
+
+# authコマンド
+[auth_short]
+description = "authコマンドの短い説明"
+other = "Manage login and credentials"
+
+[auth_long]
+description = "authコマンドの説明"
+other = """
+Log in to Wikino spaces and manage saved credentials.
+
+Credentials are saved per combination of host, space, and member.
+Tokens are saved in the OS keychain, or in a 0600 file in the config directory (`$XDG_CONFIG_HOME/wikino/`, or `~/.config/wikino/` if unset) where the keychain is unavailable.
+Set `WIKINO_TOKEN_STORE=file` to always save to a file.
+
+Commands decide the host, space, and member in this order.
+  Host: `--host` → `WIKINO_HOST` → default host → https://wikino.app
+  Space: `--space` → `WIKINO_SPACE` → default space → the only space with credentials
+  Member: `--member` → `WIKINO_MEMBER` → the space's default member → the only member with credentials in the space
+
+A token in `WIKINO_TOKEN` takes precedence over saved credentials, and nothing is written to disk.
+In that case, give the space with `--space` or `WIKINO_SPACE`, and do not give `--member` or `WIKINO_MEMBER`."""
+
+[auth_example]
+description = "authコマンドの使用例"
+other = """
+  # Log in by approving in the browser
+  wikino auth login my-space
+
+  # Over SSH, log in by entering a code in a browser on another device
+  wikino auth login my-space --device
+
+  # Log in with a personal access token from stdin
+  wikino auth login my-space --with-token < token.txt
+
+  # Check saved credentials and token scopes
+  wikino auth status"""
+[auth_output]
+description = "authコマンドのヘルプの「出力」の節"
+other = "  See the help of each subcommand."
+
+[auth_errors]
+description = "authコマンドのヘルプの「エラー」の節"
+other = "  A missing or unknown subcommand fails as a usage error (exit code 2)."
+
+[auth_login_short]
+description = "auth loginコマンドの短い説明"
+other = "Log in to a space"
+
+[auth_login_long]
+description = "auth loginコマンドの説明"
+other = """
+Log in to a space and save the credentials.
+
+By default, Wikino's authorization page opens in the browser and a token is obtained after approval (OAuth).
+The URL of the authorization page is also printed to stderr; open it if the browser does not open.
+Approval is awaited for up to 5 minutes.
+
+When connected over SSH, when there is no display, or when launching the browser or listening on a port fails, device authorization is used instead.
+With `--device`, device authorization is always used.
+With device authorization, a verification URL and a code are printed to stderr; open the URL in a browser on your own device, enter the code, and approve.
+Approval is awaited until the code expires (10 minutes on Wikino).
+
+By default all scopes that can be granted to a token are requested, and the granted scopes can be chosen on the authorization page.
+To request fewer scopes, give `--scopes`.
+OAuth access tokens are refreshed automatically shortly before they expire, before calling the API.
+
+With `--with-token`, a personal access token issued in the space settings is read from stdin.
+
+Either way, the token is saved only after the API confirms it works in the space; nothing is saved otherwise.
+When logging in with the browser, a token that was not saved is revoked on the server.
+The member is determined by the token, so do not give `--member`.
+
+If there is no default yet, the logged-in combination becomes the default.
+If the space has no default member yet, the logged-in member becomes the space's default.
+Logging in again as the same member replaces the saved token."""
+[auth_login_example]
+description = "auth loginコマンドの使用例"
+other = """
+  # Log in by approving in the browser
+  wikino auth login my-space
+
+  # Over SSH, log in by entering a code in a browser on another device
+  wikino auth login my-space --device
+
+  # Request only the read and draft scopes
+  wikino auth login my-space --scopes page:read,draft_page:read,draft_page:write
+
+  # Log in with a personal access token saved in a file
+  wikino auth login my-space --with-token < token.txt
+
+  # Log in to a development server
+  wikino auth login my-space --host http://localhost:4000"""
+[auth_login_output]
+description = "auth loginコマンドのヘルプの「出力」の節"
+other = """
+  Prints the saved credentials.
+    host           Host URL
+    space          Space identifier
+    member         Member (id, atname, name)
+    token_store    Where the token is saved (keyring, file)
+    default        Whether this is the default combination
+    space_default  Whether this is the space's default member
+    scopes         Scopes granted when logging in with the browser (not printed with `--with-token`)
+  The authorization page URL, the device authorization's verification URL and code, and a warning when the keychain is unavailable and the token is saved to a file, are printed to stderr."""
+[auth_login_errors]
+description = "auth loginコマンドのヘルプの「エラー」の節"
+other = """
+  2  No space is given, `--member` is given, `--scopes` is empty or has an unknown scope, `--with-token` is combined with `--scopes` or `--device`, or the token on stdin is empty or malformed
+  3  Approval was denied on the authorization page (authorization_denied), the authorization response did not match the request, the authorization server returned an error, or it does not support device authorization (oauth_error), or the token is invalid or expired (401)
+  5  The token does not belong to the space (404). Give the identifier of the space that issued the token
+  1  Approval did not happen within 5 minutes or before the device authorization code expired (login_timeout), the authorization server's response could not be read (response_error), the connection failed, or saving the token or configuration (or restoring after a failed save) failed
+  Nothing is saved if API validation fails.
+  If only removing the token from its previous store fails, login succeeds with a warning, and the removal can be retried with login or logout."""
+[auth_login_with_token_flag]
+description = "auth loginの--with-tokenフラグの説明"
+other = "Read a personal access token from stdin"
+
+
+[auth_login_device_flag]
+description = "auth loginの--deviceフラグの説明"
+other = "Log in with device authorization (approve by entering a code in a browser on another device)"
+
+[auth_login_scopes_flag]
+description = "auth loginの--scopesフラグの説明"
+other = "Scopes to request (comma-separated). Defaults to all scopes that can be granted to a token"
+
+[auth_login_error_scopes_with_token]
+description = "auth loginで--with-tokenと--scopesを併用したときのメッセージ"
+other = "`--scopes` cannot be combined with `--with-token`. A personal access token's scopes are fixed when it is issued."
+
+[auth_login_error_device_with_token]
+description = "auth loginで--with-tokenと--deviceを併用したときのメッセージ"
+other = "`--device` cannot be combined with `--with-token`."
+
+[auth_login_error_unknown_scope]
+description = "auth loginの--scopesに未知のスコープを指定したときのメッセージ。Scopeは指定した値、Scopesは選べるスコープ"
+other = "Unknown scope {{.Scope}}. Available scopes: {{.Scopes}}"
+
+[auth_login_error_scopes_empty]
+description = "auth loginの--scopesが空のときのメッセージ"
+other = "Give at least one scope to `--scopes`."
+
+[auth_login_open_browser]
+description = "auth loginで認可画面のURLを示す文言。URLは認可画面のURL"
+other = "Opened Wikino's authorization page in the browser. Approve it there. If it does not appear, open the following URL in a browser on this computer:\n  {{.URL}}"
+
+[auth_login_device_fallback]
+description = "auth loginでループバックを使えずデバイス認可に切り替えるときの文言"
+other = "The authorization response cannot be received from a browser in this environment, so logging in with device authorization."
+
+[auth_login_device_code]
+description = "auth loginのデバイス認可で確認用のURLとコードを示す文言。URLは確認用のURL、UserCodeはユーザーコード、Minutesは期限までの分数"
+other = "Open the following URL in a browser on your own device, enter the code {{.UserCode}}, and approve (within {{.Minutes}} minutes):\n  {{.URL}}"
+
+[auth_login_device_code_complete]
+description = "auth loginのデバイス認可でコードを入力済みの確認用のURLを示す文言。URLはコードを含む確認用のURL"
+other = "URL with the code already entered:\n  {{.URL}}"
+
+[auth_login_page_success]
+description = "auth loginで許可の後にブラウザへ表示する文言"
+other = "The authorization response was received. Close this window and check the login result in the terminal."
+
+[auth_login_page_failure]
+description = "auth loginで認可の応答を受け付けなかったときにブラウザへ表示する文言"
+other = "Login failed. Check the message in the terminal."
+[auth_login_error_member]
+description = "auth loginで--memberを指定したときのメッセージ"
+other = "`auth login` does not accept `--member`. The member is determined by the token."
+
+[auth_login_error_space_required]
+description = "auth loginでスペースの指定が無いときのメッセージ"
+other = "Give the space to log in to."
+
+[auth_login_error_token_empty]
+description = "auth loginで標準入力のトークンが空のときのメッセージ"
+other = "No token was read from stdin."
+
+[auth_login_error_token_invalid]
+description = "auth loginで標準入力のトークンの形式が誤っているときのメッセージ"
+other = "The token on stdin is malformed. Pass only the token on a single line."
+
+[auth_login_error_unauthorized_hint]
+description = "auth loginでトークンの検証が401になったときのヒント"
+other = "Check that the token is correct and not expired. You can issue a new one in the space settings."
+
+[auth_login_error_not_found_hint]
+description = "auth loginでトークンの検証が404になったときのヒント"
+other = "Give the identifier of the space that issued the token (the `/s/{identifier}` part of the web URL)."
+
+
+[auth_error_oauth_retry_hint]
+description = "OAuthのログインに失敗したとき・ログインの期限が切れたときのヒント。Spaceはスペースの識別子"
+other = "Log in again with `wikino auth login {{.Space}}`."
+
+[auth_error_state_mismatch]
+description = "認可の応答のstateが要求と一致しないときのメッセージ"
+other = "The authorization response did not match this login request, so the login was aborted."
+
+[auth_error_issuer_mismatch]
+description = "認可の応答のissが認可サーバーと一致しないときのメッセージ"
+other = "The authorization response did not come from the host's authorization server, so the login was aborted."
+
+[auth_error_login_timeout]
+description = "ブラウザでの許可を待つ時間が過ぎたときのメッセージ"
+other = "Timed out waiting for approval in the browser (5 minutes)."
+
+[auth_error_device_expired]
+description = "デバイス認可で許可される前にコードの期限が切れたときのメッセージ"
+other = "The device authorization code expired before approval."
+
+[auth_error_device_unsupported]
+description = "認可サーバーがデバイス認可に対応しないときのメッセージ"
+other = "The authorization server does not support device authorization."
+
+[auth_error_device_unsupported_hint]
+description = "認可サーバーがデバイス認可に対応しないときのヒント"
+other = "Log in on a computer that can open a browser, or pass a personal access token with `--with-token`."
+
+[auth_error_access_denied]
+description = "認可画面で拒否されたときのメッセージ"
+other = "Approval was not given on the authorization page."
+
+[auth_error_oauth]
+description = "認可サーバーがエラーを返したときのメッセージ。Codeはエラーコード"
+other = "The authorization server returned an error ({{.Code}})."
+
+[auth_error_oauth_response]
+description = "認可サーバーの応答を読めないときのメッセージ"
+other = "Could not read the authorization server's response."
+
+[auth_error_oauth_response_hint]
+description = "認可サーバーの応答を読めないときのヒント"
+other = "Check that the host (`--host`, `WIKINO_HOST`) is a Wikino server."
+
+[auth_error_refresh_rejected]
+description = "リフレッシュトークンが拒否されたときのメッセージ。Spaceはスペースの識別子、Memberはメンバーのアットネーム"
+other = "The login for member {{.Member}} in space {{.Space}} has expired or the app was disconnected."
+
+[auth_error_refresh_lock]
+description = "トークンの更新のロックを待つ間に中止したときのメッセージ"
+other = "Aborted while waiting to refresh the token."
+
+[auth_error_refresh_lock_hint]
+description = "トークンの更新のロックを待つ間に中止したときのヒント"
+other = "Run again after other `wikino` processes using the same credentials have finished."
+
+[auth_warning_refresh_save_failed]
+description = "更新したトークンを保存できなかったときの警告。Spaceはスペースの識別子"
+other = "Warning: could not save the refreshed token. The next run will require logging in again with `wikino auth login {{.Space}}`."
+
+[auth_warning_revoke_failed]
+description = "ログアウトでリフレッシュトークンを失効させられなかったときの警告。Spaceはスペースの識別子"
+other = "Warning: could not revoke the token on the server. The local credentials were removed. Disconnect the app on the connected apps page of space {{.Space}}."
+[auth_logout_short]
+description = "auth logoutコマンドの短い説明"
+other = "Remove saved credentials"
+
+[auth_logout_long]
+description = "auth logoutコマンドの説明"
+other = """
+Remove saved credentials (the token and the configured combination).
+
+The target is decided in the same order as other commands.
+`<space>` means the same as `--space`.
+When the space has credentials for several members, choose one with `--member`.
+
+Credentials from a browser login are removed after their refresh token is revoked on the server.
+If revocation fails (for example, the host is unreachable), the local credentials are still removed and a warning is printed to stderr.
+In that case, disconnect the app on Wikino's connected apps page.
+
+Personal access tokens are not revoked on the server.
+To make a token unusable, delete it in the space settings.
+A token in `WIKINO_TOKEN` is not saved, so it is not a target of this command.
+
+Removing the default combination clears the default."""
+[auth_logout_example]
+description = "auth logoutコマンドの使用例"
+other = """
+  # Remove the credentials for the space my-space
+  wikino auth logout my-space
+
+  # Remove the credentials for another member of the same space
+  wikino auth logout my-space --member bot"""
+
+[auth_logout_output]
+description = "auth logoutコマンドのヘルプの「出力」の節"
+other = "  Prints the removed credentials with the same fields as `wikino auth login`. default and space_default are the values before removal."
+
+[auth_logout_errors]
+description = "auth logoutコマンドのヘルプの「エラー」の節"
+other = """
+  2  The space or member cannot be decided (candidates are shown in the hint)
+  3  There are no credentials for the given space or member
+  1  The token or configuration could not be removed. Credentials remain in the configuration so logout can be retried."""
+
+[auth_status_short]
+description = "auth statusコマンドの短い説明"
+other = "Check credentials and tokens"
+
+[auth_status_long]
+description = "auth statusコマンドの説明"
+other = """
+For each saved credential, fetch and print the host, space, member, and the token's kind, scopes, and expiry from the API.
+
+With `--host`, `--space`, or `--member`, only matching credentials are printed.
+When a token is given in `WIKINO_TOKEN`, that token is checked instead of saved credentials (`--space` or `WIKINO_SPACE` is required).
+
+Use this before an operation to check that the token has the scopes it needs.
+Whether an operation is allowed also depends on the member's permissions, not only the scopes."""
+
+[auth_status_example]
+description = "auth statusコマンドの使用例"
+other = """
+  # Check all saved credentials
+  wikino auth status
+
+  # Print only the token scopes for the space my-space
+  wikino auth status --space my-space --jq '.items[].token.scopes'"""
+
+[auth_status_output]
+description = "auth statusコマンドのヘルプの「出力」の節"
+other = """
+  Prints `{"items": [...]}` with these fields per credential.
+    host, space, member, default, space_default  Same as `wikino auth login`
+    token_store  Where the token is saved (keyring, file, or env for `WIKINO_TOKEN`)
+    token        Token information (kind, scopes, expires_at). null when it could not be fetched
+    error        Why it could not be fetched (code, message, hint, status). Omitted on success"""
+
+[auth_status_errors]
+description = "auth statusコマンドのヘルプの「エラー」の節"
+other = """
+  2  With `WIKINO_TOKEN`, no space is given or `--member` is given
+  3  Not logged in, the saved token is missing, or the token is invalid or expired (401)
+  5  The token does not belong to the space (404)
+  If some credentials could not be checked, all items are printed and the command exits with the exit code of the first failed item.
+  The reason is in the item's `error`, not on stderr."""
+
+[auth_switch_short]
+description = "auth switchコマンドの短い説明"
+other = "Switch the default space and member"
+
+[auth_switch_long]
+description = "auth switchコマンドの説明"
+other = """
+Switch the default space to `<space>`.
+With `--member`, also switch the space's default member.
+
+Without `--member`, the space's default member is used.
+If there is no default member and several have credentials, the command fails and asks for `--member`.
+
+The default host becomes the host given by `--host` or `WIKINO_HOST` (the current default host if not given)."""
+
+[auth_switch_example]
+description = "auth switchコマンドの使用例"
+other = """
+  # Switch the default space
+  wikino auth switch my-space
+
+  # Also switch the space's default member
+  wikino auth switch my-space --member bot"""
+
+[auth_switch_output]
+description = "auth switchコマンドのヘルプの「出力」の節"
+other = "  Prints the new default credentials with the same fields as `wikino auth login`."
+
+[auth_switch_errors]
+description = "auth switchコマンドのヘルプの「エラー」の節"
+other = """
+  2  No `--member` is given and the space's default member cannot be decided (candidates are shown in the hint)
+  3  There are no credentials for the space or member"""
+
+[auth_label_host]
+description = "authコマンドの人間向けの表示のラベル: 接続先"
+other = "Host"
+
+[auth_label_space]
+description = "authコマンドの人間向けの表示のラベル: スペース"
+other = "Space"
+
+[auth_label_member]
+description = "authコマンドの人間向けの表示のラベル: メンバー"
+other = "Member"
+
+[auth_label_token_store]
+description = "authコマンドの人間向けの表示のラベル: トークンの保存先"
+other = "Token store"
+
+[auth_label_default]
+description = "authコマンドの人間向けの表示のラベル: 既定かどうか"
+other = "Default"
+
+[auth_label_token_kind]
+description = "authコマンドの人間向けの表示のラベル: トークンの種類"
+other = "Token kind"
+
+[auth_label_scopes]
+description = "authコマンドの人間向けの表示のラベル: スコープ"
+other = "Scopes"
+
+[auth_label_expires_at]
+description = "authコマンドの人間向けの表示のラベル: 有効期限"
+other = "Expires at"
+
+[auth_label_error]
+description = "authコマンドの人間向けの表示のラベル: 取得できなかった理由"
+other = "Error"
+
+[auth_value_store_keyring]
+description = "トークンの保存先の表示: キーチェーン"
+other = "Keychain"
+
+[auth_value_store_file]
+description = "トークンの保存先の表示: ファイル"
+other = "File"
+
+[auth_value_store_env]
+description = "トークンの保存先の表示: 環境変数"
+other = "Environment variable (WIKINO_TOKEN)"
+
+[auth_value_default]
+description = "既定の表示: 既定の組"
+other = "Default"
+
+[auth_value_space_default]
+description = "既定の表示: スペースの既定のメンバー"
+other = "Space default member"
+
+[auth_value_not_default]
+description = "既定の表示: 既定でない"
+other = "No"
+
+[auth_warning_keyring_unavailable]
+description = "キーチェーンを使えずトークンをファイルに保存したときの警告。Pathは保存したファイル"
+other = "Warning: The keychain is unavailable, so the token was saved to a file ({{.Path}})."
+
+[auth_warning_loose_permissions]
+description = "設定のディレクトリ・トークンのディレクトリ・トークンのファイルのパーミッションが緩いときの警告。Pathはパス、Permは今のパーミッション、Modeは勧めるパーミッション"
+other = "Warning: {{.Path}} is accessible by other users (permissions {{.Perm}}). Restrict it with `chmod {{.Mode}} {{.Path}}`."
+
+[auth_warning_cleanup_failed]
+description = "再ログインで新しい資格情報は保存したが、以前の保存先からトークンを削除できなかったときの警告"
+other = "Warning: Logged in, but the token could not be removed from its previous store. That store remains in the configuration. Make it available, then log in again or log out to retry the removal."
+
+[auth_error_backup]
+description = "既存トークンを退避できないときのメッセージ"
+other = "The existing token could not be read, so it was not overwritten."
+
+[auth_error_backup_hint]
+description = "既存トークンを退避できないときのヒント"
+other = "Make the token store available, then retry login."
+
+[auth_error_rollback]
+description = "設定保存失敗後にトークンの復元や削除も失敗したときのメッセージ"
+other = "Saving the credentials failed, and restoring or removing the token also failed."
+
+[auth_error_rollback_hint]
+description = "トークンの復元や削除が失敗したときのヒント"
+other = "Make the token store available, then retry login. Unneeded PATs can be deleted in the space settings."
+
+[auth_error_cleanup]
+description = "保存したトークンを削除できないときのメッセージ"
+other = "Removing a saved token failed. Its credentials remain in the configuration so removal can be retried."
+
+[auth_error_cleanup_hint]
+description = "保存したトークンを削除できないときのヒント"
+other = "Make the token store available, then retry `wikino auth logout` or login for the same credentials."
+
+# topicコマンド
+[topic_short]
+description = "topicコマンドの短い説明"
+other = "Work with topics"
+
+[topic_long]
+description = "topicコマンドの説明"
+other = """
+Works with the topics of a space.
+
+Every page belongs to one topic.
+Use a topic number to filter pages with `wikino page list --topic`."""
+
+[topic_example]
+description = "topicコマンドの使用例"
+other = """
+  # List topics
+  wikino topic list
+
+  # Show topic 3
+  wikino topic get 3"""
+
+[topic_output]
+description = "topicコマンドのヘルプの「出力」の節"
+other = "  See the help of each subcommand."
+
+[topic_errors]
+description = "topicコマンドのヘルプの「エラー」の節"
+other = "  Fails with a usage error (exit code 2) when no subcommand or an unknown subcommand is given."
+
+[topic_list_short]
+description = "topic listコマンドの短い説明"
+other = "List topics"
+
+[topic_list_long]
+description = "topic listコマンドの説明"
+other = """
+Lists the topics of the space in ascending order of topic number.
+
+By default, fetches only one page with the API's default size (20).
+When there is a next page, prints how to fetch it to standard error.
+With `--all`, fetches every item and the output becomes JSON Lines (see Output).
+
+Private topics are included only when the token has the topic:read scope and the member can see the topic."""
+
+[topic_list_example]
+description = "topic listコマンドの使用例"
+other = """
+  # List topics
+  wikino topic list
+
+  # Print the number and name of every topic, one per line
+  wikino topic list --all --fields number,name"""
+
+[topic_list_output]
+description = "topic listコマンドのヘルプの「出力」の節"
+other = """
+  Prints `{"items": [...], "next_cursor": ...}` with these fields per topic.
+    id           Topic ID
+    number       Topic number. Pass it to `wikino topic get` and `wikino page list --topic`
+    name         Topic name
+    description  Topic description. An empty string when not set
+    visibility   Visibility (public, private)
+  `next_cursor` is the cursor of the next page, or null when there is none.
+  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
+  When there are no topics, returns an empty list with exit code 0."""
+
+[topic_list_errors]
+description = "topic listコマンドのヘルプの「エラー」の節"
+other = """
+  2  `--limit` is less than 1, `--all` is combined with `--cursor`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the topic:read scope (403)
+  7  The `--cursor` value is invalid (422). Remove `--cursor` and fetch again from the first page"""
+
+[topic_get_short]
+description = "topic getコマンドの短い説明"
+other = "Show a topic"
+
+[topic_get_long]
+description = "topic getコマンドの説明"
+other = """
+Shows the topic with the given topic number."""
+
+[topic_get_example]
+description = "topic getコマンドの使用例"
+other = """
+  # Show topic 3
+  wikino topic get 3
+
+  # Print only the name of topic 3
+  wikino topic get 3 --jq .name"""
+
+[topic_get_output]
+description = "topic getコマンドのヘルプの「出力」の節"
+other = """
+  Prints the topic with the same fields as an item of `wikino topic list`."""
+
+[topic_get_errors]
+description = "topic getコマンドのヘルプの「エラー」の節"
+other = """
+  2  The topic number is not a positive integer, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the topic:read scope (403)
+  5  The topic does not exist or is a private topic you cannot see (404). Check the number with `wikino topic list`"""
+
+[topic_get_error_not_found_hint]
+description = "topic getでトピックが見つからないときのヒント"
+other = "Check the numbers of the topics you can see with `wikino topic list`. Seeing private topics requires the topic:read scope on the token."
+
+[topic_label_number]
+description = "トピックの表示の「番号」のラベル"
+other = "Number"
+
+[topic_label_name]
+description = "トピックの表示の「名前」のラベル"
+other = "Name"
+
+[topic_label_visibility]
+description = "トピックの表示の「公開範囲」のラベル"
+other = "Visibility"
+
+[topic_label_description]
+description = "トピックの表示の「説明」のラベル"
+other = "Description"
+
+[topic_value_public]
+description = "トピックの公開範囲の値: 公開"
+other = "Public"
+
+[topic_value_private]
+description = "トピックの公開範囲の値: 非公開"
+other = "Private"
+
+# pageコマンド
+[page_short]
+description = "pageコマンドの短い説明"
+other = "Work with pages"
+
+[page_long]
+description = "pageコマンドの説明"
+other = """
+Works with the pages of a space.
+
+A page is identified by its page number, which is unique within the space.
+You can find it in `number` of `wikino page list` or in the `/pages/{number}` part of the web URL."""
+
+[page_example]
+description = "pageコマンドの使用例"
+other = """
+  # List recently updated pages
+  wikino page list
+
+  # Search pages containing "minutes"
+  wikino page search minutes
+
+  # Read page 12 as Markdown in the Wikino file format
+  wikino page get 12 --md"""
+
+[page_output]
+description = "pageコマンドのヘルプの「出力」の節"
+other = "  See the help of each subcommand."
+
+[page_errors]
+description = "pageコマンドのヘルプの「エラー」の節"
+other = "  Fails with a usage error (exit code 2) when no subcommand or an unknown subcommand is given."
+
+[page_list_short]
+description = "page listコマンドの短い説明"
+other = "List pages"
+
+[page_list_long]
+description = "page listコマンドの説明"
+other = """
+Lists the pages of the space, most recently updated first.
+Pages in the trash are not included.
+
+By default, lists only published pages.
+With `--status unpublished` or `--status all`, also lists pages not yet published, such as pages created automatically by wiki links.
+Unpublished pages are included only when referenced by wiki links from published pages in topics you can see or from your own drafts.
+Unpublished pages without those links are not included.
+
+The list does not include page bodies; it includes an excerpt of the beginning of the body (`excerpt`) instead.
+Use `wikino page get` to read a body.
+When you need bodies in the list, include `body` in `--fields`.
+
+By default, fetches only one page with the API's default size (20).
+When there is a next page, prints how to fetch it to standard error.
+With `--all`, fetches every item and the output becomes JSON Lines (see Output).
+
+Pages in private topics are included only when the token has the topic:read scope and the member can see the topic."""
+
+[page_list_example]
+description = "page listコマンドの使用例"
+other = """
+  # List recently updated pages
+  wikino page list
+
+  # List the pages of topic 3, including unpublished ones
+  wikino page list --topic 3 --status all
+
+  # Find the number of the page titled "Minutes" in topic 3
+  wikino page list --topic 3 --title Minutes --jq '.items[].number'
+
+  # Print pages updated since a time, with bodies, one per line
+  wikino page list --modified-since 2026-10-01T00:00:00Z --all --fields number,title,body"""
+
+[page_list_output]
+description = "page listコマンドのヘルプの「出力」の節"
+other = """
+  Prints `{"items": [...], "next_cursor": ...}` with these fields per page.
+    id            Page ID
+    number        Page number. Pass it to `wikino page get` and other commands
+    title         Title. null for a page without a title
+    status        Publication status (published, unpublished)
+    topic_number  Number of the topic the page belongs to
+    modified_at   When the content was last updated (RFC 3339)
+    url           URL to open the page on the web. Use it to cite the page
+    excerpt       Excerpt of the beginning of the body: the first 80 characters with line breaks collapsed into spaces,
+                  ending with "…" when truncated. Not part of the API response; the CLI builds it from the body
+    body          Body (Markdown). Omitted by default; printed only when included in `--fields`
+  `next_cursor` is the cursor of the next page, or null when there is none.
+  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
+  When no pages match, returns an empty list with exit code 0."""
+
+[page_list_errors]
+description = "page listコマンドのヘルプの「エラー」の節"
+other = """
+  2  `--topic` is not a positive integer, `--status` has an unknown value, `--modified-since` is not an RFC 3339 time,
+     `--limit` is less than 1, `--all` is combined with `--cursor`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the page:read scope (403)
+  7  The `--cursor` value is invalid (422). Remove `--cursor` and fetch again from the first page"""
+
+[page_list_topic_flag]
+description = "page listの--topicフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Filter by topic number (`number`)"
+
+[page_list_status_flag]
+description = "page listの--statusフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Filter by publication status (`status`: published, unpublished, or all. Defaults to published)"
+
+[page_list_title_flag]
+description = "page listの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Only pages whose whole title matches (`title`, case-insensitive)"
+
+[page_list_modified_since_flag]
+description = "page listの--modified-sinceフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Only pages updated at or after this time (`time`, RFC 3339)"
+
+[page_error_invalid_status]
+description = "page list・page searchの--statusの値が未知のときのメッセージ。Valueは指定された値"
+other = "Cannot accept the value of `--status`: \"{{.Value}}\" (specify published, unpublished, or all)"
+
+[page_list_error_invalid_modified_since]
+description = "page listの--modified-sinceの値を日時として読めないときのメッセージ。Valueは指定された値"
+other = "Cannot read the value of `--modified-since` as an RFC 3339 time: \"{{.Value}}\" (e.g. 2026-10-01T09:00:00Z)"
+
+[page_search_short]
+description = "page searchコマンドの短い説明"
+other = "Search pages by keywords"
+
+[page_search_long]
+description = "page searchコマンドの説明"
+other = """
+Lists the pages whose title or body contains the keywords, most recently updated first.
+Searches only within the token's space.
+Pages in the trash are not included.
+
+You can quote the keywords as one argument or list them separated by spaces.
+Multiple keywords separated by whitespace (including full-width spaces) match only pages containing all of them (AND search).
+Each keyword may appear in either the title or the body.
+Matching is by substring and case-insensitive.
+You can specify up to 10 keywords.
+
+By default, searches only published pages.
+With `--status all`, also searches pages not yet published.
+
+The output format and paging are the same as `wikino page list`.
+The list does not include page bodies; it includes an excerpt of the beginning of the body (`excerpt`) instead.
+Use `wikino page get` to read a body.
+
+Pages in private topics are included only when the token has the topic:read scope and the member can see the topic."""
+
+[page_search_example]
+description = "page searchコマンドの使用例"
+other = """
+  # Search pages containing "minutes"
+  wikino page search minutes
+
+  # Search pages in topic 3 containing both "minutes" and "budget"
+  wikino page search minutes budget --topic 3
+
+  # Search including unpublished pages, printing only numbers and titles
+  wikino page search 'weekly meeting' --status all --fields number,title"""
+
+[page_search_output]
+description = "page searchコマンドのヘルプの「出力」の節"
+other = """
+  Like `wikino page list`, prints `{"items": [...], "next_cursor": ...}`.
+  See the help of `wikino page list` for the fields of each page.
+  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.
+  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
+  When no pages match, returns an empty list with exit code 0.
+  In human-readable output, prints a hint on loosening the search to standard error."""
+
+[page_search_errors]
+description = "page searchコマンドのヘルプの「エラー」の節"
+other = """
+  2  No keywords, `--topic` is not a positive integer, `--status` has an unknown value, `--limit` is less than 1,
+     `--all` is combined with `--cursor`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the page:read scope (403)
+  7  There are 11 or more keywords, or the `--cursor` value is invalid (422)"""
+
+[page_search_topic_flag]
+description = "page searchの--topicフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Filter by topic number (`number`)"
+
+[page_search_status_flag]
+description = "page searchの--statusフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Filter by publication status (`status`: published, unpublished, or all. Defaults to published)"
+
+[page_search_error_query_required]
+description = "page searchでキーワードが無いとき (引数が無いか空白だけのとき) のメッセージ"
+other = "Specify keywords to search for."
+
+[page_search_empty_hint]
+description = "page searchの人間向けの表示で、該当するページが無いときに標準エラーに出すヒント"
+other = "Try again with fewer keywords, without `--topic`, or with `--status all`."
+
+[page_links_short]
+description = "page linksコマンドの短い説明"
+other = "List the pages a page links to"
+
+[page_links_long]
+description = "page linksコマンドの説明"
+other = """
+Lists the pages that the body of the specified page points to with wiki links, most recently updated first.
+These are the same pages as the list of links shown below the page on the web.
+
+Only links in the published body count; links only in a draft are not included.
+Link targets not yet published, such as pages created automatically by wiki links, are included with `status` set to `unpublished`.
+Pages in the trash and pages in private topics you cannot see are not included.
+
+To find the pages that link to this page instead, use `wikino page backlinks`.
+
+The output format and paging are the same as `wikino page list`.
+The list does not include page bodies; it includes an excerpt of the beginning of the body (`excerpt`) instead."""
+
+[page_links_example]
+description = "page linksコマンドの使用例"
+other = """
+  # List the pages page 12 links to
+  wikino page links 12
+
+  # Print only the numbers of the pages page 12 links to
+  wikino page links 12 --jq '.items[].number'"""
+
+[page_links_output]
+description = "page linksコマンドのヘルプの「出力」の節"
+other = """
+  Like `wikino page list`, prints `{"items": [...], "next_cursor": ...}`.
+  See the help of `wikino page list` for the fields of each page.
+  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.
+  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
+  When the page links to nothing, returns an empty list with exit code 0."""
+
+[page_links_errors]
+description = "page linksコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, `--limit` is less than 1, `--all` is combined with `--cursor`,
+     or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the page:read scope (403)
+  5  The page does not exist, is in the trash, or is in a private topic you cannot see (404). Check the number with `wikino page list`
+  7  The `--cursor` value is invalid (422)"""
+
+[page_links_empty_hint]
+description = "page linksの人間向けの表示で、リンク先が無いときに標準エラーに出すヒント"
+other = "Only wiki links in published bodies count; links only in drafts are not included."
+
+[page_backlinks_short]
+description = "page backlinksコマンドの短い説明"
+other = "List the pages that link to a page"
+
+[page_backlinks_long]
+description = "page backlinksコマンドの説明"
+other = """
+Lists the pages that link to the specified page with wiki links, most recently updated first.
+These are the same pages as the list of backlinks shown below the page on the web.
+
+Only links in each page's published body count; links only in a draft are not included.
+Pages in the trash and pages in private topics you cannot see are not included.
+
+To find the pages this page links to instead, use `wikino page links`.
+
+The output format and paging are the same as `wikino page list`.
+The list does not include page bodies; it includes an excerpt of the beginning of the body (`excerpt`) instead."""
+
+[page_backlinks_example]
+description = "page backlinksコマンドの使用例"
+other = """
+  # List the pages that link to page 12
+  wikino page backlinks 12
+
+  # Print every page linking to page 12, one per line
+  wikino page backlinks 12 --all --fields number,title,url"""
+
+[page_backlinks_output]
+description = "page backlinksコマンドのヘルプの「出力」の節"
+other = """
+  Like `wikino page list`, prints `{"items": [...], "next_cursor": ...}`.
+  See the help of `wikino page list` for the fields of each page.
+  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.
+  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
+  When no pages link to the page, returns an empty list with exit code 0."""
+
+[page_backlinks_errors]
+description = "page backlinksコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, `--limit` is less than 1, `--all` is combined with `--cursor`,
+     or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the page:read scope (403)
+  5  The page does not exist, is in the trash, or is in a private topic you cannot see (404). Check the number with `wikino page list`
+  7  The `--cursor` value is invalid (422)"""
+
+[page_backlinks_empty_hint]
+description = "page backlinksの人間向けの表示で、バックリンクが無いときに標準エラーに出すヒント"
+other = "Only wiki links in published bodies count; links only in drafts are not included."
+
+[page_get_short]
+description = "page getコマンドの短い説明"
+other = "Show a page"
+
+[page_get_long]
+description = "page getコマンドの説明"
+other = """
+Shows the page with the given page number, including its body.
+Unpublished pages are shown too.
+
+With `--md`, prints a page file in the Wikino file format (Markdown with frontmatter).
+`--md` suits reading bodies because line breaks and quotes are not escaped.
+For a large page, write it to a file with `--md` and read only the parts you need.
+
+`etag` in the output is the version of the page.
+When updating the page, pass the version you read to `--if-match`."""
+
+[page_get_example]
+description = "page getコマンドの使用例"
+other = """
+  # Show page 12
+  wikino page get 12
+
+  # Write page 12 to a file as Markdown in the Wikino file format
+  wikino page get 12 --md > page-12.md
+
+  # Print only the version (ETag) of page 12
+  wikino page get 12 --jq .etag"""
+
+[page_get_output]
+description = "page getコマンドのヘルプの「出力」の節"
+other = """
+  Prints the page with the fields of `wikino page list` (without excerpt, with body) plus the following.
+    etag  Version of the page (the ETag response header). Pass it to `--if-match` of update commands
+  With `--md`, prints a page file in the Wikino file format instead of JSON.
+  The frontmatter keys starting with `wikino_` hold the number, title, version, topic number, status, update time, and URL,
+  followed by the body as is. When the body itself starts with frontmatter, the keys are added to that block."""
+
+[page_get_errors]
+description = "page getコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, `--md` is combined with `--json`, `--fields`, or `--jq`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the page:read scope (403)
+  5  The page does not exist, is in the trash, or is in a private topic you cannot see (404). Check the number with `wikino page list`"""
+
+[page_error_not_found_hint]
+description = "ページ番号で指すコマンド (page get・page links・page backlinks) でページが見つからないときのヒント"
+other = "Check the numbers of the pages you can see with `wikino page list`. Seeing pages in private topics requires the topic:read scope on the token."
+
+[page_label_number]
+description = "ページの表示の「番号」のラベル"
+other = "Number"
+
+[page_label_title]
+description = "ページの表示の「タイトル」のラベル"
+other = "Title"
+
+[page_label_topic_number]
+description = "ページの表示の「トピック番号」のラベル"
+other = "Topic"
+
+[page_label_status]
+description = "ページの表示の「公開状態」のラベル"
+other = "Status"
+
+[page_label_modified_at]
+description = "ページの表示の「更新日時」のラベル"
+other = "Updated"
+
+[page_label_url]
+description = "ページの表示の「URL」のラベル"
+other = "URL"
+
+[page_label_etag]
+description = "ページの表示の「版 (ETag)」のラベル"
+other = "ETag"
+
+[page_value_untitled]
+description = "タイトルの無いページの、人間向けの表示"
+other = "(untitled)"
+
+[page_value_published]
+description = "ページの公開状態の値: 公開済み"
+other = "Published"
+
+[page_value_unpublished]
+description = "ページの公開状態の値: 未公開"
+other = "Unpublished"
+
+[page_create_short]
+description = "page createコマンドの短い説明"
+other = "Create a page"
+
+[page_create_long]
+description = "page createコマンドの説明"
+other = """
+Creates and publishes a page with a title and a body in the topic with the given topic number.
+
+Pass the body with either `--body` or `--body-file`.
+To create an empty page, say so explicitly with `--body ''`.
+`--body-file -` reads the body from standard input.
+The body is sent as given, including trailing newlines.
+
+If an unpublished page with the same title and no body exists (such as a page created by a wikilink), the body is written to that page and it is published instead of creating a new page.
+In that case, `number` in the output is the number of that page.
+
+When a wikilink in the body points to a page that does not exist, the linked page is created as an unpublished page.
+Before creating, the command checks where the wikilinks in the body point, and if any linked pages will be created, it lists them on standard error after creating.
+The list is an estimate made just before creating; if other users create or delete pages in between, it can differ from the actual result.
+To check for unintended linked pages beforehand, use `--dry-run`.
+
+Creating a page is not idempotent.
+When the result is unknown (such as after a network failure), check whether the page was created with `wikino page list --topic <number> --title <title>` before sending again.
+
+To change the content of an existing page, use `wikino page update`.
+Creating a page in a private topic requires the topic:read scope on the token in addition to page:write."""
+
+[page_create_example]
+description = "page createコマンドの使用例"
+other = """
+  # Create a page titled "Minutes" in topic 3
+  wikino page create --topic 3 --title 'Minutes' --body '# Minutes'
+
+  # Create a page with the content of a file as the body
+  wikino page create --topic 3 --title 'Minutes' --body-file minutes.md
+
+  # Read the body from standard input and print only the number and version of the created page
+  cat minutes.md | wikino page create --topic 3 --title 'Minutes' --body-file - --fields number,etag
+
+  # Check the request that would be sent and where the wikilinks in the body point (without sending it)
+  wikino page create --topic 3 --title 'Minutes' --body-file minutes.md --dry-run"""
+
+[page_create_output]
+description = "page createコマンドのヘルプの「出力」の節"
+other = """
+  Prints the created page with the same fields as `wikino page get` (including `etag`).
+  To update it next, pass `etag` to `--if-match` of `wikino page update`.
+  The human-readable output omits the body and prints a completion line to standard error.
+  If wikilinks in the body are estimated to have created linked pages, lists them on standard error, also with JSON output.
+  With `--dry-run`, prints the request that would be sent and where the wikilinks in the body point as `{"dry_run": true, "requests": [...], "wikilinks": [...]}` without sending the create request.
+  Each element of `wikilinks` has the wikilink text (`text`), the name of the linked topic (`topic_name`), the page title (`page_title`), the resolution (`resolution`), and the existing page (`page`).
+  `resolution` is one of: an existing page (`existing_page`), a page that writing creates as unpublished (`new_page`), or a topic that does not exist or cannot be seen, so the text is not a link (`topic_not_found`).
+  The request that checks the linked pages (a read) is sent even with `--dry-run`.
+  `--dry-run` cannot be combined with `--fields`."""
+
+[page_create_errors]
+description = "page createコマンドのヘルプの「エラー」の節"
+other = """
+  1  Network failure or server error (5xx). The page may have been created, so check with `wikino page list --topic <number> --title <title>` before sending again
+  2  `--topic` or `--title` is missing, neither or both of `--body` and `--body-file` are given, `--topic` is not a positive integer,
+     the body file cannot be read or is not UTF-8, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the page:write scope (403)
+  5  You cannot create pages in the topic (404)
+  7  The title has characters that cannot be used, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).
+     For a duplicate, find the existing page with `wikino page list --topic <number> --title <title>` and use `wikino page update` to change its content"""
+
+[page_create_topic_flag]
+description = "page createの--topicフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Topic `number` to create the page in. Required"
+
+[page_create_title_flag]
+description = "page createの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Page `title`. Required"
+
+[page_create_error_body_required]
+description = "page createで本文が指定されていないときのメッセージ"
+other = "Specify the body with `--body` or `--body-file`. To create an empty page, specify `--body ''`."
+
+[page_create_error_not_found_hint]
+description = "page createでトピックにページを作成できない (404) ときのヒント。Topicはトピック番号"
+other = "The token owner cannot create pages in topic {{.Topic}}. Check in the web UI that you have joined the topic."
+
+[page_create_error_validation_failed_hint]
+description = "page createの入力が検証で拒否された (422) ときのヒント。ListCommandは同じタイトルのページを探すコマンド"
+other = "Fix the fields shown in the message and run again. If a page with the same title exists, find it with `{{.ListCommand}}` and use `wikino page update` to change its content. If the topic does not exist, check the number with `wikino topic list`."
+
+[page_create_error_unknown_result_hint]
+description = "page createで通信の失敗やサーバーのエラーにより作成されたか分からないときのヒント。ListCommandは作成済みかを確かめるコマンド"
+other = "It is unknown whether the page was created. Creating is not idempotent, so check with `{{.ListCommand}}` before sending again."
+
+[page_create_done]
+description = "page createの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "Created page {{.Number}}."
+
+[page_update_short]
+description = "page updateコマンドの短い説明"
+other = "Update a page"
+
+[page_update_long]
+description = "page updateコマンドの説明"
+other = """
+Updates the title and body of the page with the given page number.
+Only the given fields are updated; the others are left unchanged.
+
+Choose one of three ways to pass the body, depending on the size of the change.
+
+- `--body` or `--body-file`: pass the whole body, including the parts you do not change. `--body-file -` reads the body from standard input. The body is sent as given, including trailing newlines
+- `--md-file`: write back a page file written by `wikino page get --md` and edited. The command uses `wikino_etag` in the frontmatter as the version and `wikino_title` as the title, and sends the rest, without the keys starting with `wikino_`, as the body
+- `--edits`: find and replace part of the body. Reads JSON shaped like `{"edits": [{"old_str": "...", "new_str": "...", "replace_all": false}]}` from a file or standard input (`-`)
+
+Passing a page file to `--body-file` makes the frontmatter part of the body.
+Pass page files with `--md-file`.
+
+A page file for `--md-file` is read as follows.
+A file whose `wikino_number` differs from the page number argument, and a file without `wikino_etag`, are rejected.
+Without `wikino_title`, the title is not changed.
+Other `wikino_` keys (status, modification time, URL, and so on) are read-only and ignored even if edited.
+The body's own frontmatter (keys that do not start with `wikino_`) is kept as part of the body.
+
+Each edit in `--edits` replaces, in array order, the places matching `old_str` in the body after the earlier edits are applied with `new_str`.
+`old_str` must match the body exactly, including case, spaces, and line breaks.
+An edit with `replace_all` set to `false` (the default) fails unless it matches exactly one place, and then no edit is applied.
+`--edits` cannot change the title.
+
+To update, pass the version you read to `--if-match`.
+The version is `etag` in the output of `wikino page get`.
+If the page has been updated since you read it, the command fails with exit code 6 without overwriting.
+With `--force`, the version is not checked and the latest version, fetched just before, is overwritten.
+This can discard other people's changes, so use it only when overwriting without reading is acceptable.
+With `--md-file`, the version is read from the file, so do not add `--if-match` or `--force`.
+With `--edits`, `--if-match` can be omitted.
+That `old_str` matches the current body itself confirms that the edit is based on the body you read.
+With `--if-match`, the edits are applied only to the body of the version you read.
+
+When a wikilink in the body points to a page that does not exist, the linked page is created as an unpublished page.
+Before writing the body, the command checks where its wikilinks point (with `--edits`, the wikilinks in each `new_str`), and if any linked pages will be created, it lists them on standard error after updating.
+The list is an estimate made just before updating; if other users create or delete pages in between, it can differ from the actual result.
+To check for unintended linked pages beforehand, use `--dry-run`.
+
+Updating a page that is not yet published publishes it.
+If the title and body are the same as now, nothing is updated and the current page is printed.
+
+Updating a page in a private topic requires the topic:read scope on the token in addition to page:write."""
+
+[page_update_example]
+description = "page updateコマンドの使用例"
+other = """
+  # Get the version of page 12, then update its body with the content of a file
+  wikino page get 12 --jq .etag
+  wikino page update 12 --body-file body.md --if-match '"d41d8cd9"'
+
+  # Change only the title of page 12
+  wikino page update 12 --title 'Minutes of the weekly meeting' --if-match '"d41d8cd9"'
+
+  # Write page 12 to a file, edit it, and write it back
+  wikino page get 12 --md > page.md
+  wikino page update 12 --md-file page.md
+
+  # Find and replace part of the body of page 12
+  echo '{"edits": [{"old_str": "- [ ] Share the minutes", "new_str": "- [x] Share the minutes"}]}' | wikino page update 12 --edits -
+
+  # Overwrite the latest version without checking the version
+  wikino page update 12 --body-file body.md --force
+
+  # Check the request that would be sent and where the wikilinks in the body point (without sending it)
+  wikino page update 12 --body-file body.md --if-match '"d41d8cd9"' --dry-run"""
+
+[page_update_output]
+description = "page updateコマンドのヘルプの「出力」の節"
+other = """
+  Prints the updated page with the same fields as `wikino page get` (including `etag`).
+  `etag` is the version after the update; pass it to `--if-match` to update again.
+  The human-readable output omits the body and prints a completion line to standard error.
+  If wikilinks in the body are estimated to have created linked pages, lists them on standard error, also with JSON output.
+  With `--dry-run`, prints the request that would be sent and where the wikilinks in the body point as `{"dry_run": true, "requests": [...], "wikilinks": [...]}` without sending the update request.
+  Each element of `wikilinks` has the wikilink text (`text`), the name of the linked topic (`topic_name`), the page title (`page_title`), the resolution (`resolution`), and the existing page (`page`).
+  `resolution` is one of: an existing page (`existing_page`), a page that writing creates as unpublished (`new_page`), or a topic that does not exist or cannot be seen, so the text is not a link (`topic_not_found`).
+  The requests that fetch the page (when writing the body or with `--force`) and check the linked pages (reads) are sent even with `--dry-run`.
+  `--dry-run` cannot be combined with `--fields`."""
+
+[page_update_errors]
+description = "page updateコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, none of `--title`, `--body`, `--body-file`, `--md-file`, and `--edits` is given, flags that cannot be combined are combined,
+     neither or both of `--if-match` and `--force` are given (except with `--md-file` and `--edits`), `--if-match` is empty or `*`, a file cannot be read or is not UTF-8,
+     `wikino_number` in `--md-file` differs from the page number or `wikino_etag` is missing, the JSON in `--edits` has the wrong shape, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the page:write scope (403)
+  5  The page does not exist, is in the trash, or cannot be updated (404). Check the number with `wikino page list`
+  6  The page has been updated since you read it (412). Get the latest content and version with `wikino page get`, apply your changes, and update again.
+     With `--md-file`, apply your changes to a file written again with `wikino page get --md`
+  7  The title has characters that cannot be used, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).
+     `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.
+     Check the current body with `wikino page get --md` and send the whole `edits` again"""
+
+[page_update_title_flag]
+description = "page updateの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "New `title`"
+
+[page_update_error_nothing_to_update]
+description = "page updateで更新する項目が指定されていないときのメッセージ"
+other = "Specify what to update with `--title`, `--body`, `--body-file`, `--md-file`, or `--edits`."
+
+[page_update_error_precondition_failed_hint]
+description = "page updateで読んだ後にページが更新されていた (412) ときのヒント。Commandは最新の版を取得するコマンド"
+other = "Get the latest content and version (`etag`) with `{{.Command}}`, apply your changes to the current content, and update again with the new version in `--if-match`."
+
+[page_update_error_md_file_precondition_failed_hint]
+description = "page update --md-fileで読んだ後にページが更新されていた (412) ときのヒント。Commandはページファイルを書き出すコマンド"
+other = "The page has been updated since you read it. Write the latest content again with `{{.Command}} > page.md`, apply your changes, and write it back with `--md-file`."
+
+[page_update_error_validation_failed_hint]
+description = "page updateの入力が検証で拒否された (422) ときのヒント"
+other = "Fix the fields shown in the message and run again. Find pages with the same title with `wikino page list --title <title>`. Update an untitled unpublished page with `--title`."
+
+[page_update_error_edits_precondition_failed_hint]
+description = "page update --editsで--if-matchの版の後にページが更新されていた (412) ときのヒント。Commandは今の本文と版を取得するコマンド"
+other = "The page has been updated since the version in `--if-match`. Get the current body and version with `{{.Command}}`, check that `old_str` matches the current body, and send again."
+
+[page_update_done]
+description = "page updateの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "Updated page {{.Number}}."
+
+# draftコマンド
+
+[draft_short]
+description = "draftコマンドの短い説明"
+other = "Work with page drafts"
+
+[draft_long]
+description = "draftコマンドの説明"
+other = """
+Works with the drafts of pages owned by the token's owner.
+
+A draft is for rewriting a page without publishing it, and there is one per pair of page and member.
+Drafts are referred to by page number.
+You cannot work with other members' drafts."""
+
+[draft_example]
+description = "draftコマンドの使用例"
+other = """
+  # List your drafts
+  wikino draft list
+
+  # Create a draft of page 12
+  wikino draft create 12
+
+  # Read the draft of page 12 as Markdown in the Wikino file format
+  wikino draft get 12 --md"""
+
+[draft_output]
+description = "draftコマンドのヘルプの「出力」の節"
+other = "  See the help of each subcommand."
+
+[draft_errors]
+description = "draftコマンドのヘルプの「エラー」の節"
+other = "  Fails as a usage error (exit code 2) when no subcommand or an unknown subcommand is given."
+
+[draft_list_short]
+description = "draft listコマンドの短い説明"
+other = "List drafts"
+
+[draft_list_long]
+description = "draft listコマンドの説明"
+other = """
+Lists the drafts the token's owner has in the space, most recently modified first.
+Drafts of new pages that have not been published yet are included.
+Drafts of pages in the trash are not included.
+
+The list does not include bodies; it includes an excerpt of the beginning of each body (`excerpt`) instead.
+To read a body, use `wikino draft get`.
+When you need bodies in the list, include `body` in `--fields`.
+
+By default, only one page of the API's default size (20 items) is fetched.
+When there is a next page, how to fetch it is printed to standard error.
+With `--all`, all items are fetched and the output format changes to JSON Lines (see "Output").
+
+Drafts of pages in private topics are included only when the token has the topic:read scope and the member can see the topic."""
+
+[draft_list_example]
+description = "draft listコマンドの使用例"
+other = """
+  # List your drafts
+  wikino draft list
+
+  # Print only the numbers of pages that have drafts
+  wikino draft list --jq '.items[].page_number'
+
+  # Print all drafts with their bodies, one per line
+  wikino draft list --all --fields page_number,title,body"""
+
+[draft_list_output]
+description = "draft listコマンドのヘルプの「出力」の節"
+other = """
+  Prints `{"items": [...], "next_cursor": ...}` with the following fields for each draft.
+    page_number   The number of the draft's page. Pass it to `wikino draft get` and others
+    title         The draft's title. null for drafts without a title
+    topic_number  The number of the topic the draft's page belongs to
+    modified_at   When the draft's content was last modified (RFC 3339). Autosaves in the web UI also update it
+    url           The URL of the edit screen of the draft's page in the web UI
+    excerpt       An excerpt of the beginning of the body: the first 80 characters with newlines collapsed to spaces,
+                  ending with "…" when truncated. Not in the API response; the CLI makes it from the body
+    body          The body (Markdown). Not printed by default; printed only when included in `--fields`
+  `next_cursor` is the cursor of the next page, or null when there is no more.
+  With `--all`, prints JSON Lines with one item per line, without `next_cursor`.
+  When there are no drafts, returns an empty list with exit code 0."""
+
+[draft_list_errors]
+description = "draft listコマンドのヘルプの「エラー」の節"
+other = """
+  2  `--limit` is less than 1, `--all` is combined with `--cursor`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the draft_page:read scope (403)
+  7  The `--cursor` value is invalid (422). Remove `--cursor` and fetch again from the first page"""
+
+[draft_list_empty_hint]
+description = "draft listの人間向けの表示で、下書きが無いときに標準エラーに出すヒント"
+other = "If a draft you expect is missing, check with `wikino auth status` that the token has the topic:read scope, which is needed to see drafts of pages in private topics."
+
+[draft_get_short]
+description = "draft getコマンドの短い説明"
+other = "Print the content of a draft"
+
+[draft_get_long]
+description = "draft getコマンドの説明"
+other = """
+Prints the token owner's draft of the page with the given page number, including its body.
+
+With `--md`, prints it as a page file in the Wikino file format (Markdown with frontmatter).
+For reading the body, `--md` is better because newlines and quotes are not escaped.
+For a large draft, write it to a file with `--md` and read only the parts you need.
+
+`etag` in the output is the version of the draft.
+When updating the draft, pass the version you read to `--if-match`.
+
+Reading a draft of a page in a private topic requires the topic:read scope on the token in addition to draft_page:read."""
+
+[draft_get_example]
+description = "draft getコマンドの使用例"
+other = """
+  # Print the draft of page 12
+  wikino draft get 12
+
+  # Write the draft of page 12 to a file as Markdown in the Wikino file format
+  wikino draft get 12 --md > draft-12.md
+
+  # Print only the version (ETag) of the draft of page 12
+  wikino draft get 12 --jq .etag"""
+
+[draft_get_output]
+description = "draft getコマンドのヘルプの「出力」の節"
+other = """
+  Prints the draft with the fields of `wikino draft list` (without excerpt, with body) plus the following.
+    etag  The version of the draft (the value of the ETag response header). Pass it to `--if-match` of commands that update the draft
+  With `--md`, prints a page file in the Wikino file format instead of JSON.
+  The frontmatter keys starting with `wikino_` hold the page number, title, version, topic number, modification time, and URL, followed by the body as is.
+  Drafts have no publication status, so `wikino_status` is not written.
+  When the body itself starts with frontmatter, the keys are added to that block."""
+
+[draft_get_errors]
+description = "draft getコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, `--md` is combined with `--json`, `--fields`, or `--jq`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the draft_page:read scope (403)
+  5  The page has no draft of yours, the page does not exist or is in the trash, or it is in a private topic you cannot see (404).
+     Check the numbers of pages with drafts with `wikino draft list`"""
+
+[draft_error_not_found_hint]
+description = "ページ番号で下書きを指すコマンドで下書きが見つからないときのヒント"
+other = "Check the numbers of pages with drafts with `wikino draft list`. If there is no draft, create one with `wikino draft create`. Seeing drafts of pages in private topics requires the topic:read scope on the token."
+
+[draft_label_page_number]
+description = "下書きの表示の「ページ番号」のラベル"
+other = "Page number"
+
+[draft_label_title]
+description = "下書きの表示の「タイトル」のラベル"
+other = "Title"
+
+[draft_label_topic_number]
+description = "下書きの表示の「トピック番号」のラベル"
+other = "Topic"
+
+[draft_label_modified_at]
+description = "下書きの表示の「更新日時」のラベル"
+other = "Modified"
+
+[draft_label_url]
+description = "下書きの表示の「URL」のラベル"
+other = "URL"
+
+[draft_label_etag]
+description = "下書きの表示の「版 (ETag)」のラベル"
+other = "ETag"
+
+[draft_label_revision_id]
+description = "下書きのリビジョンの表示の「リビジョンID」のラベル"
+other = "Revision ID"
+
+[draft_label_created_at]
+description = "下書きのリビジョンの表示の「作成日時」のラベル"
+other = "Created"
+
+[draft_value_untitled]
+description = "タイトルの無い下書きの、人間向けの表示"
+other = "(untitled)"
+
+[draft_create_short]
+description = "draft createコマンドの短い説明"
+other = "Create a draft"
+
+[draft_create_long]
+description = "draft createコマンドの説明"
+other = """
+Creates a draft for rewriting a page without publishing it.
+One revision of the draft's history is created at the same time.
+
+To create a draft of an existing page, pass the page number as the argument.
+If `--title` and the body are omitted, the page's current title and body become the draft.
+You cannot create one when the page already has a draft of yours.
+Read the current draft with `wikino draft get` and update it with `wikino draft update`.
+
+To create a draft of a new page, specify the topic with `--topic` instead of a page number.
+As when creating one in the web UI, an unpublished page without a title or body is created, along with its draft.
+Omitting `--title` gives a draft without a title, and omitting the body gives a draft with an empty body.
+`page_number` in the output is the number of the new page.
+
+Pass the body with `--body` or `--body-file`; `--body-file -` reads it from standard input.
+The body is sent as given, including trailing newlines.
+Title rules (such as no duplicates within a topic) are checked when the draft is published.
+
+When a wikilink in the body points to a page that does not exist, the linked page is created as an unpublished page.
+When a body is given, the command checks where the wikilinks in the body point before creating, and if any linked pages will be created, it lists them on standard error after creating.
+The list is an estimate made just before creating; if other users create or delete pages in between, it can differ from the actual result.
+To check for unintended linked pages beforehand, use `--dry-run`.
+
+Creating a draft of a new page is not idempotent.
+When the result is unknown (such as after a network failure), check whether it was created with `wikino draft list` before sending again.
+
+Creating a draft of a new page requires the page:write scope on the token in addition to draft_page:write.
+Checking the linked pages of the body requires the page:read scope.
+Creating a draft of a page in a private topic also requires the topic:read scope."""
+
+[draft_create_example]
+description = "draft createコマンドの使用例"
+other = """
+  # Create a draft of page 12 with its current content
+  wikino draft create 12
+
+  # Create a draft of page 12 with the content of a file as the body
+  wikino draft create 12 --body-file minutes.md
+
+  # Create a draft of a new page titled "Minutes" in topic 3, and print only the page number and version
+  wikino draft create --topic 3 --title 'Minutes' --body '# Minutes' --fields page_number,etag
+
+  # Check the request that would be sent and where the wikilinks in the body point (without sending it)
+  wikino draft create 12 --body-file minutes.md --dry-run"""
+
+[draft_create_output]
+description = "draft createコマンドのヘルプの「出力」の節"
+other = """
+  Prints the created draft with the same fields as `wikino draft get` (including `etag`).
+  To update it next, pass `etag` to `--if-match` of `wikino draft update`.
+  The human-readable output omits the body and prints a completion line to standard error.
+  If wikilinks in the body are estimated to have created linked pages, lists them on standard error, also with JSON output.
+  With `--dry-run`, prints the request that would be sent and where the wikilinks in the body point as `{"dry_run": true, "requests": [...], "wikilinks": [...]}` without sending the create request.
+  See the help of `wikino page create` for the fields of `wikilinks`.
+  The requests that fetch the existing page to check the linked pages and that check the linked pages (both reads) are sent even with `--dry-run`.
+  `--dry-run` cannot be combined with `--fields`."""
+
+[draft_create_errors]
+description = "draft createコマンドのヘルプの「エラー」の節"
+other = """
+  1  Network failure or server error (5xx). The draft may have been created.
+     Check with `wikino draft get <page_number>` for an existing page, or `wikino draft list` for a new page, before sending again
+  2  Neither or both of a page number and `--topic` are given, the page number or `--topic` is not a positive integer, both `--body` and `--body-file` are given,
+     the body file cannot be read or is not UTF-8, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the draft_page:write scope, lacks page:write for a new page, or lacks page:read for checking the linked pages of the body (403)
+  5  You cannot create drafts in the page or topic, or the page does not exist when checking the linked pages of the body (404)
+  6  The page already has a draft of yours (409). Read the current draft with `wikino draft get <page_number>` and update it with `wikino draft update <page_number>`
+  7  Invalid input such as the title, or the page or topic does not exist or cannot be seen (422). Fix the field shown in the error.
+     If the page or topic number is the problem, check it with `wikino page list` or `wikino topic list`"""
+
+[draft_create_topic_flag]
+description = "draft createの--topicフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "The `number` of the topic to create a draft of a new page in. Cannot be combined with a page number"
+
+[draft_create_title_flag]
+description = "draft createの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "The draft's `title`. For an existing page, defaults to the page's current title"
+
+[draft_create_error_page_and_topic]
+description = "draft createでページ番号と--topicを両方指定したときのメッセージ"
+other = "A page number and `--topic` cannot be given together. Give a page number for a draft of an existing page, or `--topic` for a draft of a new page."
+
+[draft_create_error_target_required]
+description = "draft createでページ番号も--topicも指定していないときのメッセージ"
+other = "Give a page number for a draft of an existing page, or `--topic` for a draft of a new page."
+
+[draft_create_error_page_not_found_hint]
+description = "draft createで既存のページが無いか見られない (ページの取得の404・作成の422) ときのヒント"
+other = "Check the page number with `wikino page list`. Seeing pages in private topics requires the topic:read scope on the token."
+
+[draft_create_error_page_forbidden_hint]
+description = "draft createで既存のページに下書きを作成できない (404) ときのヒント。Numberはページ番号"
+other = "The token's owner cannot create a draft of page {{.Number}}. Check in the web UI that you have joined the page's topic."
+
+[draft_create_error_conflict_hint]
+description = "draft createで下書きが既にある (409) ときのヒント。GetCommandは下書きを取得するコマンド、UpdateCommandは下書きを更新するコマンド"
+other = "Read the current draft with `{{.GetCommand}}` and update it with `{{.UpdateCommand}}`."
+
+[draft_create_error_page_unknown_result_hint]
+description = "draft createで既存のページの下書きが作成されたか分からないときのヒント。GetCommandは下書きを取得するコマンド"
+other = "It is unknown whether the draft was created. Check with `{{.GetCommand}}`. If sending again fails because the draft already exists (409), it was created."
+
+[draft_create_error_topic_not_found_hint]
+description = "draft createでトピックに新しいページの下書きを作成できない (404) ときのヒント。Topicはトピック番号"
+other = "The token's owner cannot create a new page in topic {{.Topic}}. Check that the token has the page:write scope and that you have joined the topic in the web UI."
+
+[draft_create_error_topic_validation_failed_hint]
+description = "draft createで新しいページのトピックが検証で拒否された (422) ときのヒント"
+other = "Check the topic number with `wikino topic list`."
+
+[draft_create_error_topic_unknown_result_hint]
+description = "draft createで新しいページの下書きが作成されたか分からないときのヒント"
+other = "It is unknown whether the draft was created. Creating a draft of a new page is not idempotent, so check whether it was created with `wikino draft list` before sending again."
+
+[draft_create_done]
+description = "draft createの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "Created a draft of page {{.Number}}."
+
+[draft_update_short]
+description = "draft updateコマンドの短い説明"
+other = "Update a draft"
+
+[draft_update_long]
+description = "draft updateコマンドの説明"
+other = """
+Updates the title and body of your draft of the page with the given page number.
+Only the given fields are updated; the others are left unchanged.
+The page is not published, and the content of the published page does not change.
+Each update also creates one draft revision (none if it is the same as the previous revision).
+
+Choose one of three ways to pass the body, depending on the size of the change.
+
+- `--body` or `--body-file`: pass the whole body, including the parts you do not change. `--body-file -` reads the body from standard input. The body is sent as given, including trailing newlines
+- `--md-file`: write back a page file written by `wikino draft get --md` and edited. The command uses `wikino_etag` in the frontmatter as the version and `wikino_title` as the title, and sends the rest, without the keys starting with `wikino_`, as the body
+- `--edits`: find and replace part of the body. Reads JSON shaped like `{"edits": [{"old_str": "...", "new_str": "...", "replace_all": false}]}` from a file or standard input (`-`)
+
+`--md-file` and `--edits` follow the same rules as in `wikino page update`.
+With `--md-file`, a file whose `wikino_number` differs from the page number or that has no `wikino_etag` is rejected, and the title is unchanged if `wikino_title` is missing.
+`--edits` cannot change the title.
+
+Pass the version you read in `--if-match`.
+The version is `etag` in the output of `wikino draft get`.
+The version also changes when the web editor saves automatically, so if the draft has been updated since you read it, the command fails with exit code 6 without overwriting it.
+With `--force`, the command does not check the version and overwrites the latest version it has just fetched.
+This can discard what is being written in the web editor, so use it only when it is fine to overwrite without reading.
+With `--md-file`, the version is read from the file, so do not pass `--if-match` or `--force`.
+With `--edits`, `--if-match` is optional.
+
+When a wikilink in the body points to a page that does not exist, the linked page is created as an unpublished page.
+Before writing the body, the command checks where its wikilinks point (with `--edits`, it checks the links in each `new_str`), and if any linked pages will be created, lists them on standard error after the update.
+The list is an estimate made just before the update and can differ from the actual result if other users create or delete pages in between.
+Use `--dry-run` to check for unintended linked pages first.
+
+Title rules (such as no duplicate titles in a topic) are checked when the draft is published.
+
+Checking where the links in the body point requires the page:read scope on the token in addition to draft_page:write.
+Updating drafts of pages in private topics also requires the topic:read scope."""
+
+[draft_update_example]
+description = "draft updateコマンドの使用例"
+other = """
+  # Get the version of the draft of page 12, then update its body with the content of a file
+  wikino draft get 12 --jq .etag
+  wikino draft update 12 --body-file body.md --if-match '"d41d8cd9"'
+
+  # Change only the title of the draft of page 12
+  wikino draft update 12 --title 'Meeting notes' --if-match '"d41d8cd9"'
+
+  # Write the draft of page 12 to a file, edit it, and write it back
+  wikino draft get 12 --md > draft.md
+  wikino draft update 12 --md-file draft.md
+
+  # Find and replace part of the body of the draft of page 12
+  echo '{"edits": [{"old_str": "- [ ] Share the notes", "new_str": "- [x] Share the notes"}]}' | wikino draft update 12 --edits -
+
+  # Check the request and where the wikilinks in the body point (without sending)
+  wikino draft update 12 --body-file body.md --if-match '"d41d8cd9"' --dry-run"""
+
+[draft_update_output]
+description = "draft updateコマンドのヘルプの「出力」の節"
+other = """
+  Prints the updated draft with the same fields as `wikino draft get` (including `etag`).
+  `etag` is the version after the update; pass it to `--if-match` for the next update.
+  The human-readable output omits the body and prints a completion line to standard error.
+  If wikilinks in the body are expected to have created linked pages, lists them on standard error, even with JSON output.
+  With `--dry-run`, prints the request and where the wikilinks in the body point as `{"dry_run": true, "requests": [...], "wikilinks": [...]}` without sending the update.
+  See the help for `wikino page update` for the fields in `wikilinks`.
+  Fetching the draft when writing the body or with `--force`, and checking the links (both reads), are sent even with `--dry-run`.
+  `--dry-run` cannot be combined with `--fields`."""
+
+[draft_update_errors]
+description = "draft updateコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, none of `--title`, `--body`, `--body-file`, `--md-file`, and `--edits` is given, flags that cannot be combined are combined,
+     neither or both of `--if-match` and `--force` are given (except with `--md-file` and `--edits`), `--if-match` is empty or `*`, a file cannot be read or is not UTF-8,
+     `wikino_number` in `--md-file` differs from the page number or `wikino_etag` is missing, the JSON in `--edits` has the wrong shape, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the draft_page:write scope, or the page:read scope for checking the links in the body (403)
+  5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).
+     Check the number with `wikino draft list`, and create a draft with `wikino draft create` if there is none
+  6  The draft has been updated since you read it (412). Get the latest content and version with `wikino draft get`, apply your changes, and update again.
+     With `--md-file`, apply your changes to a file written again with `wikino draft get --md`
+  7  The input is invalid, such as a title or body that is too long (422).
+     `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.
+     Check the current body with `wikino draft get --md` and send the whole `edits` again"""
+
+[draft_update_title_flag]
+description = "draft updateの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "New `title` of the draft"
+
+[draft_update_error_nothing_to_update]
+description = "draft updateで更新する項目が指定されていないときのメッセージ"
+other = "Specify what to update with `--title`, `--body`, `--body-file`, `--md-file`, or `--edits`."
+
+[draft_update_error_precondition_failed_hint]
+description = "draft updateで読んだ後に下書きが更新されていた (412) ときのヒント。Commandは最新の版を取得するコマンド"
+other = "Get the latest content and version (`etag`) with `{{.Command}}`, apply your changes to the current content, and update again with the new version in `--if-match`. Automatic saves in the web editor also change the version."
+
+[draft_update_error_md_file_precondition_failed_hint]
+description = "draft update --md-fileで読んだ後に下書きが更新されていた (412) ときのヒント。Commandはページファイルを書き出すコマンド"
+other = "The draft has been updated since you read it. Write the latest content again with `{{.Command}} > draft.md`, apply your changes, and write it back with `--md-file`."
+
+[draft_update_error_edits_precondition_failed_hint]
+description = "draft update --editsで--if-matchの版の後に下書きが更新されていた (412) ときのヒント。Commandは今の本文と版を取得するコマンド"
+other = "The draft has been updated since the version in `--if-match`. Get the current body and version with `{{.Command}}`, check that `old_str` matches the current body, and send again."
+
+[draft_update_error_validation_failed_hint]
+description = "draft updateの入力が検証で拒否された (422) ときのヒント"
+other = "Fix the fields shown in the message and run again."
+
+[draft_update_done]
+description = "draft updateの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "Updated the draft of page {{.Number}}."
+
+[draft_delete_short]
+description = "draft deleteコマンドの短い説明"
+other = "Delete a draft"
+
+[draft_delete_long]
+description = "draft deleteコマンドの説明"
+other = """
+Deletes your draft of the page with the given page number, together with its revisions.
+The deleted draft and revisions cannot be restored.
+The page itself is not deleted, and the content of the published page does not change.
+
+Pass the version you read in `--if-match`.
+The version is `etag` in the output of `wikino draft get`.
+If the draft has been updated since you read it (including automatic saves in the web editor), the command fails with exit code 6 without deleting it.
+With `--force`, the command does not check the version and deletes the latest version it has just fetched.
+
+Because this cannot be undone, the command asks for confirmation before deleting unless `--yes` is given.
+When run from a terminal, it shows the draft and the number of revisions to delete and asks.
+Otherwise (when run from an agent or a script), it does not send the delete request; it prints what will happen (`changes`) and the command to run after approval (`confirm_command`) as JSON on standard output, and exits with code 9.
+Show `changes` to the user, and run `confirm_command` as is after getting approval.
+`confirm_command` contains the version fetched for the confirmation in `--if-match`.
+
+Deleting requires the draft_page:delete scope on the token.
+Reading the draft and its revisions for the confirmation and for `--force` also requires the draft_page:read scope.
+Deleting drafts of pages in private topics also requires the topic:read scope."""
+
+[draft_delete_example]
+description = "draft deleteコマンドの使用例"
+other = """
+  # Read the draft of page 12 and check its version, then ask for confirmation to delete it
+  wikino draft get 12 --md
+  wikino draft delete 12 --if-match '"d41d8cd9"'
+
+  # Delete without asking, after getting the user's approval
+  wikino draft delete 12 --if-match '"d41d8cd9"' --yes
+
+  # Check the request (without sending)
+  wikino draft delete 12 --if-match '"d41d8cd9"' --dry-run"""
+
+[draft_delete_output]
+description = "draft deleteコマンドのヘルプの「出力」の節"
+other = """
+  After deleting, prints `{"page_number": 12, "deleted": true}` as JSON.
+  The human-readable output prints nothing on standard output and prints a completion line to standard error.
+  Without `--yes` and outside a terminal, prints `{"status": "confirmation_required", "changes": [...], "confirm_command": "..."}` without deleting, and exits with code 9.
+  With `--dry-run`, prints the request as `{"dry_run": true, "requests": [...]}` without sending the delete request. It does not ask for confirmation.
+  Fetching the draft with `--force` (a read) is sent even with `--dry-run`.
+  `--dry-run` cannot be combined with `--fields`."""
+
+[draft_delete_errors]
+description = "draft deleteコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, neither or both of `--if-match` and `--force` are given, `--if-match` is empty or `*`, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the draft_page:delete scope, or the draft_page:read scope for the confirmation or `--force` (403)
+  5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).
+     If you get 5 when deleting again, the draft has already been deleted
+  6  The draft has been updated since you read it (412). Check the current content with `wikino draft get`, and delete again with the new version if it is fine to delete
+  9  Confirmation by the user is required because `--yes` is not given, or the confirmation was declined in a terminal"""
+
+[draft_delete_error_version_changed]
+description = "draft deleteの確認の前に、--if-matchの版の後に下書きが更新されていたことが分かったときのメッセージ"
+other = "The draft has been updated since the version in `--if-match`. The delete request was not sent."
+
+[draft_delete_error_precondition_failed_hint]
+description = "draft deleteで読んだ後に下書きが更新されていた (412) ときのヒント。Commandは今の内容と版を取得するコマンド"
+other = "Check the current content and version (`etag`) with `{{.Command}}`, and if it is fine to delete, delete again with the new version in `--if-match`. Automatic saves in the web editor also change the version."
+
+[draft_delete_error_not_found_hint]
+description = "draft deleteで下書きが見つからない (404) ときのヒント"
+other = "Check the numbers of pages with drafts with `wikino draft list`. If you get this error when deleting again, the draft has already been deleted."
+
+[draft_delete_confirm_change_draft]
+description = "draft deleteの確認で示す、削除する下書き。Numberはページ番号、Titleは下書きのタイトル、ModifiedAtは下書きの更新日時"
+other = "Delete your draft of page {{.Number}} \"{{.Title}}\" (modified at {{.ModifiedAt}})"
+
+[draft_delete_confirm_change_revisions]
+description = "draft deleteの確認で示す、一緒に削除する編集履歴の件数。Countは件数"
+other = "Also delete {{.Count}} revision(s) of the draft. The deleted draft and revisions cannot be restored"
+
+[draft_delete_confirm_change_page_unchanged]
+description = "draft deleteの確認で示す、ページそのものは変わらないこと"
+other = "The page itself and its published content do not change"
+
+[draft_delete_done]
+description = "draft deleteの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "Deleted the draft of page {{.Number}}."
+
+[draft_publish_short]
+description = "draft publishコマンドの短い説明"
+other = "Publish a draft"
+
+[draft_publish_long]
+description = "draft publishコマンドの説明"
+other = """
+Publishes the page with the given page number using the title and body of your draft, and prints the published page.
+Publishing deletes the draft together with its revisions, and adds one revision to the page's history.
+A page that has not been published yet becomes published.
+The current content of the page is not checked, so the draft overwrites the page even if the page was updated after the draft was created.
+
+Pass the version of the draft you read in `--if-match`.
+The version is `etag` in the output of `wikino draft get`.
+If the draft has been updated since you read it (including automatic saves in the web editor), the command fails with exit code 6 without publishing.
+With `--force`, the command does not check the version and publishes the latest draft it has just fetched.
+
+Before publishing, the command fetches the draft and checks the targets of the wikilinks in its body.
+If a wikilink in the body points to a page that does not exist, the target is created as an unpublished page.
+If any targets will be created, the command lists them on standard error after publishing.
+The list is an estimate made just before publishing, and can differ from the actual result if other users create or delete pages in between.
+
+Because this publishes a page, the command asks for confirmation before publishing unless `--yes` is given.
+The confirmation shows the change of the title and the numbers of added and deleted lines of the body compared with the current page, the link targets that will be created, and that the draft will be deleted after publishing.
+When run from a terminal, it shows these and asks.
+Otherwise (when run from an agent or a script), it does not send the publish request; it prints what will happen (`changes`) and the command to run after approval (`confirm_command`) as JSON on standard output, and exits with code 9.
+Show `changes` to the user, and run `confirm_command` as is after getting approval.
+`confirm_command` contains the version fetched for the confirmation in `--if-match`.
+A draft without a title cannot be published, so the command fails with exit code 7 without asking for confirmation.
+
+Publishing requires the draft_page:write and page:write scopes on the token.
+Publishing drafts of pages in private topics also requires the topic:read scope."""
+
+[draft_publish_example]
+description = "draft publishコマンドの使用例"
+other = """
+  # Read the draft of page 12 and check its version, then ask for confirmation to publish it
+  wikino draft get 12 --md
+  wikino draft publish 12 --if-match '"d41d8cd9"'
+
+  # Publish without asking, after getting the user's approval
+  wikino draft publish 12 --if-match '"d41d8cd9"' --yes
+
+  # Check the request and the targets of the wikilinks in the body (without sending)
+  wikino draft publish 12 --if-match '"d41d8cd9"' --dry-run"""
+
+[draft_publish_output]
+description = "draft publishコマンドのヘルプの「出力」の節"
+other = """
+  Prints the published page with the same fields as `wikino page get` (including `etag`).
+  `etag` is the version of the page after publishing; pass it to `--if-match` to update the page next.
+  The human-readable output omits the body and prints a completion line to standard error.
+  If link targets were likely created by wikilinks in the body, they are listed on standard error, even with JSON output.
+  Without `--yes` and outside a terminal, prints `{"status": "confirmation_required", "changes": [...], "confirm_command": "..."}` without publishing, and exits with code 9.
+  With `--dry-run`, prints the request and the targets of the wikilinks in the body as `{"dry_run": true, "requests": [...], "wikilinks": [...]}` without sending the publish request. It does not ask for confirmation.
+  See the help of `wikino page update` for the fields of `wikilinks`.
+  Fetching the draft and checking the link targets (reads) are sent even with `--dry-run`.
+  `--dry-run` cannot be combined with `--fields`."""
+
+[draft_publish_errors]
+description = "draft publishコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, neither or both of `--if-match` and `--force` are given, `--if-match` is empty or `*`, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the draft_page:write or page:write scope, or the member is not allowed to save drafts and publish pages (403)
+  5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).
+     If you get 5 when publishing again, the draft has already been published or deleted. Check the page with `wikino page get`
+  6  The draft has been updated since you read it (412). Check the current content with `wikino draft get`, and publish again with the new version if it is fine to publish
+  7  The draft has no title, the title has characters that cannot be used, or a page with the same title exists in the topic (422).
+     Fix the title of the draft with `wikino draft update --title` and publish again
+  9  Confirmation by the user is required because `--yes` is not given, or the confirmation was declined in a terminal"""
+
+[draft_publish_error_version_changed]
+description = "draft publishで公開の前に、--if-matchの版の後に下書きが更新されていたことが分かったときのメッセージ"
+other = "The draft has been updated since the version in `--if-match`. The publish request was not sent."
+
+[draft_publish_error_precondition_failed_hint]
+description = "draft publishで読んだ後に下書きが更新されていた (412) ときのヒント。Commandは今の内容と版を取得するコマンド"
+other = "Check the current content and version (`etag`) with `{{.Command}}`, and if it is fine to publish, publish again with the new version in `--if-match`. Automatic saves in the web editor also change the version."
+
+[draft_publish_error_not_found_hint]
+description = "draft publishで下書きが見つからない (404) ときのヒント。Commandはページを取得するコマンド"
+other = "Check the numbers of pages with drafts with `wikino draft list`. If you get this error when publishing again, the draft has already been published or deleted. Check the page with `{{.Command}}`."
+
+[draft_publish_error_untitled]
+description = "draft publishの確認の前に、下書きにタイトルが無いことが分かったときのメッセージ"
+other = "The draft cannot be published because it has no title. The publish request was not sent."
+
+[draft_publish_error_validation_failed_hint]
+description = "draft publishで下書きのタイトルが検証で拒否された (422) ときのヒント。Commandは下書きのタイトルを直すコマンドの例"
+other = "Fix the title of the draft with `{{.Command}}`, then publish again with the new version."
+
+[draft_publish_confirm_change_publish]
+description = "draft publishの確認で示す、公開する内容。Numberはページ番号、Titleは下書きのタイトル、TitleChangeはタイトルの変更の有無、Added・Deletedは本文で足す・消す行数"
+other = "Publish page {{.Number}} \"{{.Title}}\" with the content of the draft ({{.TitleChange}}, body +{{.Added}} -{{.Deleted}} lines)"
+
+[draft_publish_confirm_title_unchanged]
+description = "draft publishの確認で示す、タイトルを変えないこと"
+other = "title unchanged"
+
+[draft_publish_confirm_title_changed]
+description = "draft publishの確認で示す、タイトルを変えること。Oldは今のページのタイトル"
+other = "title changed from \"{{.Old}}\""
+
+[draft_publish_confirm_change_unpublished]
+description = "draft publishの確認で示す、まだ公開していないページが公開済みになること。Numberはページ番号"
+other = "Page {{.Number}} has not been published yet and becomes published"
+
+[draft_publish_confirm_change_new_pages]
+description = "draft publishの確認で示す、本文のWikiリンクで作成されるリンク先。Countは件数、Pagesは「トピック名/ページのタイトル」の一覧"
+other = "Create {{.Count}} link target(s) that do not exist as unpublished pages: {{.Pages}}"
+
+[draft_publish_confirm_change_draft_deleted]
+description = "draft publishの確認で示す、公開後に下書きと編集履歴が削除されること"
+other = "After publishing, this draft and its revisions are deleted"
+
+[draft_publish_done]
+description = "draft publishの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "Published page {{.Number}} with the content of the draft."
+
+[draft_revision_short]
+description = "draft revisionコマンドの短い説明"
+other = "Work with draft revisions"
+
+[draft_revision_long]
+description = "draft revisionコマンドの説明"
+other = """
+Works with the revisions of drafts owned by the token's owner.
+
+A revision is a record of the title and body of a draft at a point in time, and does not change after it is created.
+Revisions are created when a draft is created or updated, and when it is saved manually or restored in the web editor.
+Automatic saves in the web editor do not create revisions, so the latest revision is not always the same as the current draft.
+Publishing or deleting a draft also deletes its revisions."""
+
+[draft_revision_example]
+description = "draft revisionコマンドの使用例"
+other = """
+  # List the revisions of the draft of page 12
+  wikino draft revision list 12
+
+  # Read the body of a revision as Markdown in the Wikino file format
+  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --md"""
+
+[draft_revision_output]
+description = "draft revisionコマンドのヘルプの「出力」の節"
+other = "  See the help of each subcommand."
+
+[draft_revision_errors]
+description = "draft revisionコマンドのヘルプの「エラー」の節"
+other = "  A missing or unknown subcommand fails as a usage error (exit code 2)."
+
+[draft_revision_list_short]
+description = "draft revision listコマンドの短い説明"
+other = "List the revisions of a draft"
+
+[draft_revision_list_long]
+description = "draft revision listコマンドの説明"
+other = """
+Lists the revisions of your draft of the page with the given page number, newest first.
+
+The list does not include the body; it includes an excerpt of the beginning of the body (`excerpt`) instead.
+Use `wikino draft revision get` to read the body.
+If you need the body in the list, include `body` in `--fields`.
+
+By default, the command fetches only one page with the API's default size (20 items).
+If there is a next page, how to get it is printed on standard error.
+With `--all`, the command fetches all items, and the output format changes to JSON Lines (see "Output").
+
+Reading the revisions of drafts of pages in private topics requires the topic:read scope in addition to draft_page:read on the token."""
+
+[draft_revision_list_example]
+description = "draft revision listコマンドの使用例"
+other = """
+  # List the revisions of the draft of page 12
+  wikino draft revision list 12
+
+  # Print only the IDs and creation times of the revisions
+  wikino draft revision list 12 --fields id,created_at
+
+  # Print all revisions with their bodies, one per line
+  wikino draft revision list 12 --all --fields id,title,body"""
+
+[draft_revision_list_output]
+description = "draft revision listコマンドのヘルプの「出力」の節"
+other = """
+  Prints `{"items": [...], "next_cursor": ...}` with the following fields for each revision.
+    id          The ID of the revision. Pass it to `wikino draft revision get`
+    title       The title of the draft when the revision was created. null for drafts without a title
+    created_at  When the revision was created (RFC 3339)
+    excerpt     An excerpt of the beginning of the body: the first 80 characters with line breaks collapsed into spaces, followed by "…" when truncated
+                This field is not in the API response; the CLI creates it from the body
+    body        The body (Markdown). Not printed by default; printed only when included in `--fields`
+  `next_cursor` is the cursor of the next page, or null when there are no more items.
+  With `--all`, prints JSON Lines with one item per line, without `next_cursor`.
+  When there are no revisions, prints an empty list and exits with code 0."""
+
+[draft_revision_list_errors]
+description = "draft revision listコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, `--limit` is less than 1, `--all` is combined with `--cursor`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the draft_page:read scope (403)
+  5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).
+     Check the numbers of pages with drafts with `wikino draft list`
+  7  The value of `--cursor` is invalid (422). Remove `--cursor` and fetch again from the first page"""
+
+[draft_revision_list_empty_hint]
+description = "draft revision listの人間向けの表示で、リビジョンが無いときに標準エラーに出すヒント"
+other = "Automatic saves in the web editor do not create revisions. Read the current draft with `wikino draft get`."
+
+[draft_revision_get_short]
+description = "draft revision getコマンドの短い説明"
+other = "Print a revision of a draft"
+
+[draft_revision_get_long]
+description = "draft revision getコマンドの説明"
+other = """
+Prints the revision of your draft with the given page number and revision ID, including its body.
+The revision ID is `id` in the output of `wikino draft revision list`.
+
+With `--md`, prints a page file in the Wikino file format (Markdown with frontmatter).
+To read the body, `--md` is better because line breaks and quotes are not escaped.
+
+Revisions do not change after they are created, so they have no version (`etag`).
+To bring the draft back to the content of a past revision, pass its body to `wikino draft update`.
+The `--md` output has no `wikino_etag`, so it cannot be written back with `--md-file` as is.
+
+Reading revisions of drafts of pages in private topics requires the topic:read scope in addition to draft_page:read on the token."""
+
+[draft_revision_get_example]
+description = "draft revision getコマンドの使用例"
+other = """
+  # Print a revision of the draft of page 12
+  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30
+
+  # Write the body of the revision to a file as Markdown in the Wikino file format
+  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --md > revision.md
+
+  # Print only the creation time of the revision
+  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --jq .created_at"""
+
+[draft_revision_get_output]
+description = "draft revision getコマンドのヘルプの「出力」の節"
+other = """
+  Prints the revision with the fields of `wikino draft revision list` (without excerpt, with body).
+  With `--md`, prints a page file in the Wikino file format instead of JSON.
+  The frontmatter has only `wikino_title`, followed by the body as is. For revisions without a title, no frontmatter is written.
+  When the body itself starts with frontmatter, the key is added to that block."""
+
+[draft_revision_get_errors]
+description = "draft revision getコマンドのヘルプの「エラー」の節"
+other = """
+  2  The page number is not a positive integer, the revision ID is not a UUID, `--md` is combined with `--json`, `--fields`, or `--jq`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the draft_page:read scope (403)
+  5  The revision does not exist, is not a revision of the draft of the page, or the draft was published or deleted and has no revisions (404).
+     Check the revision IDs with `wikino draft revision list`"""
+
+[draft_revision_get_error_not_found_hint]
+description = "draft revision getでリビジョンが見つからない (404) ときのヒント。Commandは編集履歴の一覧を出すコマンド"
+other = "Check the revision IDs with `{{.Command}}`. Publishing or deleting a draft also deletes its revisions."
+
+# attachmentコマンド
+[attachment_short]
+description = "attachmentコマンドの短い説明"
+other = "Work with attachments"
+
+[attachment_long]
+description = "attachmentコマンドの説明"
+other = """
+Works with the attachments of a space.
+
+Page bodies refer to attachments by the path `/attachments/{ID}` (e.g. `![diagram](/attachments/01234567-89ab-cdef-0123-456789abcdef)`).
+To check a diagram or screenshot in a body, pass that ID to `wikino attachment get` and save the file locally."""
+
+[attachment_example]
+description = "attachmentコマンドの使用例"
+other = """
+  # Save an attachment referenced by a body to the current directory with its original file name
+  wikino attachment get /attachments/01234567-89ab-cdef-0123-456789abcdef"""
+
+[attachment_output]
+description = "attachmentコマンドのヘルプの「出力」の節"
+other = "  See the help of each subcommand."
+
+[attachment_errors]
+description = "attachmentコマンドのヘルプの「エラー」の節"
+other = "  Missing and unknown subcommands fail as usage errors (exit code 2)."
+
+[attachment_get_short]
+description = "attachment getコマンドの短い説明"
+other = "Save an attachment"
+
+[attachment_get_long]
+description = "attachment getコマンドの説明"
+other = """
+Downloads the attachment with the given ID and saves it to a file.
+The ID is the one in `/attachments/{ID}` in a body. You can also pass it with `/attachments/` left on.
+
+By default, the file is saved to the current directory with its original file name.
+The original file name is first cleaned into a name that points to a single file in the destination directory,
+for example by removing path separators, control characters, and leading and trailing `.`.
+`--output` (`-O`) sets the destination file or directory, and `-` prints the contents to standard output.
+An existing file is not overwritten and the command fails, unless `--clobber` is given.
+
+The contents are downloaded from a short-lived signed URL returned by the API, without the token."""
+
+[attachment_get_example]
+description = "attachment getコマンドの使用例"
+other = """
+  # Save an attachment to the current directory with its original file name
+  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef
+
+  # Pass the reference path from a body as is and save to the directory images/
+  wikino attachment get /attachments/01234567-89ab-cdef-0123-456789abcdef -O images/
+
+  # Save with a given file name, overwriting an existing file
+  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O diagram.png --clobber
+
+  # Print the contents to standard output
+  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O - > diagram.png"""
+
+[attachment_get_output]
+description = "attachment getコマンドのヘルプの「出力」の節"
+other = """
+  Prints the following fields of the saved file.
+    id            ID of the attachment
+    path          Path of the saved file
+    filename      Original file name at upload. The saved file uses the cleaned name
+    content_type  Type of the file (e.g. image/png). null if not recorded
+    byte_size     Number of bytes saved
+  With `--output -`, only the contents are printed to standard output, without these fields."""
+
+[attachment_get_errors]
+description = "attachment getコマンドのヘルプの「エラー」の節"
+other = """
+  1  Downloading from the signed URL failed (including expiry and interruption). Run the same command again. Or writing to the destination failed (permissions, disk space, and so on)
+  2  The ID is not a UUID, the destination directory does not exist, a file already exists at the destination (overwrite with `--clobber`), `--output -` is combined with `--json`, `--fields`, `--jq`, or `--clobber`, or `--fields` has an unknown field
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks the attachment:read scope (403)
+  5  The attachment does not exist or belongs to another space (404). Check the ID in `/attachments/{ID}` in the body and the space"""
+
+[attachment_get_output_flag]
+description = "attachment get --outputフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Destination file or directory (`path`; - for standard output)"
+
+[attachment_get_clobber_flag]
+description = "attachment get --clobberフラグの説明"
+other = "Overwrite an existing file at the destination"
+
+[attachment_get_error_not_found_hint]
+description = "attachment getで添付ファイルが見つからないときのヒント"
+other = "Check the ID in `/attachments/{ID}` in the body, and that the space of `--space` is the one that has the attachment."
+
+[attachment_get_error_file_exists]
+description = "attachment getで保存先に既にファイルがあるときのメッセージ。Pathは保存先のパス"
+other = "A file already exists at the destination: {{.Path}}"
+
+[attachment_get_error_file_exists_hint]
+description = "attachment getで保存先に既にファイルがあるときのヒント"
+other = "Add `--clobber` to overwrite it. To save elsewhere, set the destination with `--output`."
+
+[attachment_get_error_no_directory]
+description = "attachment getで保存先のディレクトリが無いときのメッセージ。Pathは保存先のディレクトリ"
+other = "The destination directory does not exist: {{.Path}}"
+
+[attachment_get_error_no_directory_hint]
+description = "attachment getで保存先のディレクトリが無いときのヒント"
+other = "Create the directory and run the command again, or set an existing directory or a file path with `--output`."
+
+[attachment_get_error_write]
+description = "attachment getで保存先に書き込めなかったときのメッセージ。Pathは保存先のパス、Detailは原因"
+other = "Could not write to the destination: {{.Path}} ({{.Detail}})"
+
+[attachment_get_error_write_hint]
+description = "attachment getで保存先に書き込めなかったときのヒント"
+other = "Check that you have permission to write to the destination and enough disk space, or set another destination with `--output`."
+
+[attachment_get_error_write_stdout]
+description = "attachment get --output -で中身を標準出力に書き込めなかったときのメッセージ。Detailは原因"
+other = "Could not write the contents to standard output ({{.Detail}})"
+
+[attachment_label_path]
+description = "添付ファイルの表示の「保存先」のラベル"
+other = "Path"
+
+[attachment_label_filename]
+description = "添付ファイルの表示の「ファイル名」のラベル"
+other = "File name"
+
+[attachment_label_content_type]
+description = "添付ファイルの表示の「種類」のラベル"
+other = "Type"
+
+[attachment_label_byte_size]
+description = "添付ファイルの表示の「バイト数」のラベル"
+other = "Bytes"
+
+[attachment_value_unknown_content_type]
+description = "添付ファイルの表示で、種類が記録されていないときの値"
+other = "(unknown)"
+
+# apiコマンド
+[api_short]
+description = "apiコマンドの短い説明"
+other = "Call the public API directly with authentication"
+
+[api_long]
+description = "apiコマンドの説明"
+other = """
+Calls the public API (`/api/v1`) directly with the credentials you are logged in with.
+Use it for operations the CLI has no command for yet.
+
+<path> is a path from `/api/v1` and may include a query (e.g. /spaces/{space}/pages?limit=5).
+`{space}` in the path is replaced with the identifier of the space the command runs in (`--space`, `WIKINO_SPACE`, or the default space).
+URLs, paths starting with `/api/v1`, and paths containing `..` are rejected.
+
+Unless Content-Type is given with `--header`, the `--input` body is sent as JSON Merge Patch (`application/merge-patch+json`) for PATCH and as JSON otherwise.
+Operations that need the user's confirmation, such as irreversible operations and publishing, are not sent without `--yes`.
+When not on a TTY, it prints what will happen (`changes`) and the command to run after approval (`confirm_command`) as JSON, and exits with code 9.
+With `--dry-run`, no requests are sent to the public API, including read requests, and the requests that would be sent are printed.
+
+Check the operations and paths of the API in the OpenAPI description, available with `wikino api GET /openapi.yaml`."""
+
+[api_example]
+description = "apiコマンドの使用例"
+other = """
+  # Get only 5 pages
+  wikino api GET '/spaces/{space}/pages?limit=5'
+
+  # Change the title of page 12 (the version is the etag of `wikino page get 12`)
+  echo '{"title": "Weekly meeting"}' | wikino api PATCH '/spaces/{space}/pages/12' --input - --header 'If-Match: "d41d8cd9"'
+
+  # Check the request without sending it
+  wikino api POST '/spaces/{space}/pages' --input page.json --dry-run
+
+  # Get the OpenAPI description
+  wikino api GET /openapi.yaml"""
+
+[api_output]
+description = "apiコマンドのヘルプの「出力」の節"
+other = """
+  Prints the body of a successful response as returned by the API (the CLI adds no fields).
+  JSON responses are indented on a TTY. With `--jq`, prints the result of applying it to the response JSON.
+  Prints nothing for responses without a body (such as 204).
+  With `--dry-run`, prints the requests that would be sent as {"dry_run": true, "requests": [{"method", "url", "headers", "body"}]}. The Authorization value is redacted.
+  Failed responses (4xx, 5xx) are printed to standard error as errors, as with other commands."""
+
+[api_errors]
+description = "apiコマンドのヘルプの「エラー」の節"
+other = """
+  1  Server error (5xx) or network failure, or `--jq` on a non-JSON response
+  2  Unsupported method, a path that is not from `/api/v1` (a URL or one containing `..`), a malformed `--header` or an authentication header, `--fields`, `--input` on GET, an unreadable `--input` file, or `--input -` on an operation that needs confirmation
+  3  Not logged in, or the token is invalid or expired (401)
+  4  The token lacks a required scope (403)
+  5  Nothing matches the path (404)
+  6  Conflict (409), version mismatch (412), or missing version (428). Pass `If-Match` with `--header`
+  7  Invalid body (400, 422)
+  8  Rate limited (429)
+  9  An operation that needs the user's confirmation (deleting or publishing a draft) without `--yes`"""
+
+[api_input_flag]
+description = "api --inputフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "File (`file`) to read the request body from (- for standard input)"
+
+[api_header_flag]
+description = "api --headerフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Header (`header`) to add to the request, as \"Name: value\" (can be repeated)"
+
+[api_error_invalid_method]
+description = "apiに使えないHTTPメソッドを指定したときのメッセージ。Valueは指定された値、Methodsは使えるメソッドの一覧"
+other = "Unsupported HTTP method: \"{{.Value}}\" (use one of {{.Methods}})"
+
+[api_error_invalid_header]
+description = "apiの--headerの値を読めないときのメッセージ。Positionは何番目の--headerか (1始まり)。秘密を含みうるため入力の値は表示しない"
+other = "Cannot accept the `--header` value at position {{.Position}} (use the form \"Name: value\" without control characters such as line breaks in the value)"
+
+[api_error_forbidden_header]
+description = "apiの--headerで認証のヘッダーなどを指定したときのメッセージ。Nameはヘッダーの名前"
+other = "The {{.Name}} header cannot be set with `--header`."
+
+[api_error_forbidden_header_hint]
+description = "apiの--headerで認証のヘッダーなどを指定したときのヒント"
+other = "The CLI adds the authentication header. Pass the token with `wikino auth login` or the `WIKINO_TOKEN` environment variable, and the host with `--host`."
+
+[api_error_fields_unsupported]
+description = "apiに--fieldsを指定したときのメッセージ"
+other = "`wikino api` does not support `--fields`. Use `--jq` to narrow down the response."
+
+[api_error_input_with_get]
+description = "apiのGETの要求に--inputを指定したときのメッセージ"
+other = "A GET request cannot have an `--input` body."
+
+[api_error_stdin_with_confirmation]
+description = "利用者の確認が要る操作に--input -を指定したときのメッセージ。Operationはoperationの名前"
+other = "`--input -` cannot be used for an operation that needs the user's confirmation ({{.Operation}}). Write the body to a file and pass its path to `--input`."
+
+[api_error_read_input]
+description = "apiの--inputの本文を読めないときのメッセージ。Pathは指定された値、Detailは理由"
+other = "Cannot read the `--input` body ({{.Path}}): {{.Detail}}"
+
+[api_error_jq_not_json]
+description = "JSONでない応答に--jqを指定したときのメッセージ。ContentTypeは応答のContent-Type"
+other = "Cannot apply `--jq` because the response is not JSON (Content-Type: {{.ContentType}})."
+
+[api_confirm_change_request]
+description = "apiの確認で示す、送る要求。Methodはメソッド、Pathはパス、Operationはoperationの名前"
+other = "Sends {{.Method}} {{.Path}} ({{.Operation}})"
+
+[api_confirm_change_irreversible]
+description = "apiの確認で示す、取り消せない操作であること"
+other = "This operation cannot be undone"
+
+# skillコマンド
+[skill_short]
+description = "skillコマンドの短い説明"
+other = "Manage the skill for coding agents"
+
+[skill_long]
+description = "skillコマンドの説明"
+other = """
+Manage the skill for coding agents (such as Claude Code).
+
+The skill describes Wikino's concepts and has a guide for each situation: finding and reading pages, writing pages, publishing drafts, and logging in.
+Agents read the skill to learn how to use this CLI and what to watch out for.
+The skill is embedded in this CLI's binary, so the skill you install matches the version of the CLI."""
+
+[skill_example]
+description = "skillコマンドの使用例"
+other = """
+  # Install into Claude Code's user-level skills directory
+  wikino skill install"""
+
+[skill_output]
+description = "skillコマンドのヘルプの「出力」の節"
+other = "  See the help of each subcommand."
+
+[skill_errors]
+description = "skillコマンドのヘルプの「エラー」の節"
+other = "  A missing or unknown subcommand fails as a usage error (exit code 2)."
+
+[skill_install_short]
+description = "skill installコマンドの短い説明"
+other = "Install the skill"
+
+[skill_install_long]
+description = "skill installコマンドの説明"
+other = """
+Write the skill embedded in this CLI (SKILL.md and the guides) to `wikino/` under a skills directory.
+
+By default, it is written to Claude Code's user-level skills directory (`$CLAUDE_CONFIG_DIR/skills/`, or `~/.claude/skills/` if unset).
+To use it with another agent, give the directory that agent reads skills from with `--dir`.
+A repository's `.claude/skills/` holds the skills for developing that repository, so it is not the default.
+
+The skill is written in the display language (`WIKINO_LANG`, `LC_ALL`, `LC_MESSAGES`, `LANG`), and in English for languages other than Japanese.
+Skill files already in `wikino/` are overwritten, and other files are kept.
+After updating the CLI, run this again to update the skill too."""
+
+[skill_install_example]
+description = "skill installコマンドの使用例"
+other = """
+  # Install into Claude Code's user-level skills directory
+  wikino skill install
+
+  # Install the Japanese skill
+  WIKINO_LANG=ja wikino skill install
+
+  # Install into another agent's skills directory
+  wikino skill install --dir ~/.agents/skills"""
+
+[skill_install_output]
+description = "skill installコマンドのヘルプの「出力」の節"
+other = """
+  Prints the following fields for the installed skill.
+    path   The directory of the installed skill (`wikino/` under `--dir`)
+    lang   The language of the installed skill (ja, en)
+    files  The names of the written files"""
+
+[skill_install_errors]
+description = "skill installコマンドのヘルプの「エラー」の節"
+other = """
+  1  Could not write to the destination (permissions, disk space, etc.)
+  2  Arguments were given, the home directory could not be determined and `--dir` was not given, or `--fields` has an unknown field"""
+
+[skill_install_dir_flag]
+description = "skill install --dirフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "The skills directory (`dir`). The skill is written to wikino/ under it. Defaults to ~/.claude/skills"
+
+[skill_install_error_no_home]
+description = "skill installで既定の書き出し先を決めるホームディレクトリが分からないときのメッセージ。Detailは原因"
+other = "Could not determine the default destination ({{.Detail}})."
+
+[skill_install_error_no_home_hint]
+description = "skill installで既定の書き出し先を決めるホームディレクトリが分からないときのヒント"
+other = "Give the skills directory with `--dir`."
+
+[skill_install_error_write]
+description = "skill installで書き出し先に書き込めなかったときのメッセージ。Pathは書き出し先のパス、Detailは原因"
+other = "Could not write the skill: {{.Path}} ({{.Detail}})"
+
+[skill_install_error_write_hint]
+description = "skill installで書き出し先に書き込めなかったときのヒント"
+other = "Check the write permission and disk space of the destination, or give another destination with `--dir`."
+
+[skill_label_path]
+description = "スキルの表示の「書き出し先」のラベル"
+other = "Path"
+
+[skill_label_lang]
+description = "スキルの表示の「言語」のラベル"
+other = "Language"
+
+[skill_label_files]
+description = "スキルの表示の「ファイル」のラベル"
+other = "Files"
+
+# ヘルプの共通の要素
+[help_flag]
+description = "--helpフラグの説明"
+other = "Show help (as JSON when combined with --json)"
+
+[help_heading_usage]
+description = "ヘルプの「使い方」の見出し"
+other = "Usage"
+
+[help_heading_aliases]
+description = "ヘルプの「別名」の見出し"
+other = "Aliases"
+
+[help_heading_examples]
+description = "ヘルプの「例」の見出し"
+other = "Examples"
+
+[help_heading_commands]
+description = "ヘルプの「コマンド」の見出し"
+other = "Commands"
+
+[help_heading_flags]
+description = "ヘルプの「フラグ」の見出し"
+other = "Flags"
+
+[help_heading_global_flags]
+description = "ヘルプの、すべてのコマンドに共通のフラグの見出し"
+other = "Global Flags"
+
+[help_heading_output]
+description = "ヘルプの「出力」の見出し"
+other = "Output"
+
+[help_heading_errors]
+description = "ヘルプの「エラー」の見出し"
+other = "Errors"
+
+[help_more_information]
+description = "サブコマンドのヘルプの見方の案内。Commandはヘルプを見るコマンドの形"
+other = "Use `{{.Command}} --help` for more information about a command."
+
+[help_json_flag]
+description = "--jsonフラグの説明"
+other = "Print results as JSON even on a TTY"
+
+[help_fields_flag]
+description = "--fieldsフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Comma-separated fields to print (e.g. `number,title`; applied to each item in lists)"
+
+[help_jq_flag]
+description = "--jqフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Filter results with a jq `expr` (applied after --fields)"
+
+[help_host_flag]
+description = "--hostフラグの説明"
+other = "Host `url` (defaults to the default host, or https://wikino.app)"
+
+[help_space_flag]
+description = "--spaceフラグの説明"
+other = "Space identifier (`space`)"
+
+[help_member_flag]
+description = "--memberフラグの説明"
+other = "Member `atname` (to choose when the space has credentials for several members)"
+
+[help_limit_flag]
+description = "一覧の--limitフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Number of items per page (`n`. Defaults to 20; values over 100 are treated as 100)"
+
+[help_cursor_flag]
+description = "一覧の--cursorフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Cursor (`cursor`) of the following page to fetch (next_cursor in the previous output)"
+
+[help_all_flag]
+description = "一覧の--allフラグの説明"
+other = "Follow every page to fetch all items and print them as JSON Lines, one per line"
+
+[help_md_flag]
+description = "--mdフラグの説明"
+other = "Print a page file in the Wikino file format (Markdown with frontmatter)"
+
+[help_dry_run_flag]
+description = "--dry-runフラグの説明"
+other = "Print the requests that would be sent without sending them"
+
+[help_yes_flag]
+description = "--yesフラグの説明"
+other = "Run without asking for the user's confirmation"
+
+[help_body_flag]
+description = "--bodyフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Body `text` (Markdown) as a string"
+
+[help_body_file_flag]
+description = "--body-fileフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Read the body from the file at `path` (`-` reads from standard input)"
+
+[help_if_match_flag]
+description = "--if-matchフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Write only if the version is still the one you read (`etag` from the output of `get`)"
+
+[help_force_flag]
+description = "--forceフラグの説明"
+other = "Overwrite the latest version, fetched just before, without checking the version you read"
+
+[help_md_file_flag]
+description = "--md-fileフラグの説明。最初にバッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Write back a page file (`path`) written by --md, using the version and title in its frontmatter (`-` reads from standard input)"
+
+[help_edits_flag]
+description = "--editsフラグの説明。最初にバッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "Read find-and-replace edits as JSON (`path`) and replace part of the body (`-` reads from standard input)"
+
+# 使い方の誤り
+[usage_error_unknown_subcommand]
+description = "未知のサブコマンドが指定されたときのメッセージ。Nameは指定されたサブコマンド"
+other = "Unknown subcommand: \"{{.Name}}\""
+
+[usage_error_subcommand_required]
+description = "サブコマンドが指定されていないときのメッセージ"
+other = "Specify a subcommand."
+
+[usage_error_invalid_flag]
+description = "分類できないフラグの解析エラーのメッセージ"
+other = "Invalid flag specification."
+
+[usage_error_hint]
+description = "使い方の誤りのときに、ヘルプの確認を案内するヒント。Commandはヘルプを見るコマンド"
+other = "Run `{{.Command}} --help` to see the usage."
+
+[usage_error_unknown_flag]
+description = "未知のフラグのメッセージ。Flagは指定されたフラグ"
+other = "Unknown flag: {{.Flag}}"
+
+[usage_error_unknown_shorthand]
+description = "未知の短縮フラグのメッセージ。Flagは短縮フラグ、Groupは未知の短縮フラグから後ろの組"
+other = "Unknown shorthand flag: {{.Flag}} ({{.Group}})"
+
+[usage_error_flag_value_required]
+description = "フラグの値が無いときのメッセージ。Flagは指定されたフラグ"
+other = "Specify a value for flag: {{.Flag}}"
+
+[usage_error_flag_invalid_value]
+description = "フラグの値が不正なときのメッセージ。Flagはフラグ、Valueは指定値、Typeは型"
+other = "Invalid value for flag {{.Flag}}: \"{{.Value}}\" (type: {{.Type}})"
+
+[usage_error_flag_invalid_syntax]
+description = "フラグの構文が不正なときのメッセージ。Flagは指定されたフラグ"
+other = "Invalid flag syntax: {{.Flag}}"
+
+[usage_error_unknown_field]
+description = "--fieldsに未知の項目名が指定されたときのメッセージ。Fieldは指定された項目名"
+other = "Unknown field: \"{{.Field}}\""
+
+[usage_error_unknown_field_hint]
+description = "--fieldsに未知の項目名が指定されたときのヒント。Fieldsは選べる項目のカンマ区切り"
+other = "Available fields: {{.Fields}}"
+
+[usage_error_invalid_jq]
+description = "--jqの式を解釈できないときのメッセージ。Detailはjqの処理系の説明"
+other = "Cannot parse the --jq expression: {{.Detail}}"
+
+[usage_error_invalid_jq_hint]
+description = "--jqの式を解釈できないときのヒント"
+other = "Fix the expression and run the command again. No request has been sent yet."
+
+[usage_error_invalid_value]
+description = "パスに埋め込む値や接続先を受け付けられないときのメッセージ。Nameは値の名前、Valueは値、Reasonは理由"
+other = "Invalid value for {{.Name}}: \"{{.Value}}\" ({{.Reason}})"
+
+[usage_error_invalid_value_empty]
+description = "値を受け付けられない理由: 空"
+other = "the value is empty"
+
+[usage_error_invalid_value_control_character]
+description = "値を受け付けられない理由: 制御文字"
+other = "it contains control characters such as newlines or tabs"
+
+[usage_error_invalid_value_dot_segment]
+description = "値を受け付けられない理由: パスの階層を移る `..`"
+other = "it contains `..`"
+
+[usage_error_invalid_value_reserved_character]
+description = "値を受け付けられない理由: URLで意味を持つ文字"
+other = "it contains `/`, `\\`, `?`, `#`, or `%`. Pass only the unencoded value, without a URL or query"
+
+[usage_error_invalid_value_format]
+description = "値を受け付けられない理由: 形式の誤り"
+other = "the format is invalid. Numbers are integers of 1 or greater, IDs are hyphenated UUIDs, and space identifiers use ASCII letters, digits, and hyphens"
+
+[usage_error_invalid_value_insecure_scheme]
+description = "値を受け付けられない理由: 接続先がHTTPSでない"
+other = "use HTTPS for the host. HTTP is allowed only for loopback hosts (127.0.0.1, localhost)"
+
+[usage_error_invalid_value_not_api_path]
+description = "値を受け付けられない理由: `/api/v1` からのパスでない"
+other = "not a path from `/api/v1` (e.g. /spaces/{space}/pages). URLs, paths starting with `/api/v1`, `#`, `\\`, and malformed `%` encodings are not allowed"
+
+[usage_error_invalid_value_hint]
+description = "値を受け付けられないときのヒント"
+other = "Fix the value and run the command again. No request has been sent yet."
+
+[usage_error_arg_count]
+description = "位置引数の数が違うときのメッセージ。Wantは求める数、Gotは指定された数"
+other = "Wrong number of arguments (want {{.Want}}, got {{.Got}})"
+
+[usage_error_too_many_args]
+description = "位置引数が多すぎるときのメッセージ。Maxは上限、Gotは指定された数"
+other = "Too many arguments (max {{.Max}}, got {{.Got}})"
+
+[usage_error_env_token_with_member]
+description = "WIKINO_TOKENとメンバーの指定を併用したときのメッセージ"
+other = "`--member` and `WIKINO_MEMBER` cannot be used with `WIKINO_TOKEN`."
+
+[usage_error_env_token_with_member_hint]
+description = "WIKINO_TOKENとメンバーの指定を併用したときのヒント"
+other = "The member is determined by the token. Remove `--member` and `WIKINO_MEMBER`, or remove `WIKINO_TOKEN` to use saved credentials."
+
+[usage_error_env_token_without_space]
+description = "WIKINO_TOKENを使うときにスペースの指定が無いときのメッセージ"
+other = "A space is required when using `WIKINO_TOKEN`."
+
+[usage_error_env_token_without_space_hint]
+description = "WIKINO_TOKENを使うときにスペースの指定が無いときのヒント"
+other = "Give the identifier of the space that issued the token (the `/s/{identifier}` part of the web URL) with `--space` or `WIKINO_SPACE`."
+
+[usage_error_invalid_token_store]
+description = "WIKINO_TOKEN_STOREの値を受け付けられないときのメッセージ。Valueは値"
+other = "Invalid value for `WIKINO_TOKEN_STORE`: \"{{.Value}}\""
+
+[usage_error_invalid_token_store_hint]
+description = "WIKINO_TOKEN_STOREの値を受け付けられないときのヒント"
+other = "Set it to `file` (save to a file) or `keyring` (save to the keychain, falling back to a file), or unset it."
+
+[usage_error_space_ambiguous]
+description = "スペースを決められないときのメッセージ"
+other = "Cannot decide the space. Several spaces have credentials and there is no default space."
+
+[usage_error_space_ambiguous_hint]
+description = "スペースを決められないときのヒント。Spacesは資格情報のあるスペース"
+other = "Give the space with `--space`, or set the default space with `wikino auth switch <space>`. Spaces with credentials: {{.Spaces}}"
+
+[usage_error_member_ambiguous]
+description = "メンバーを決められないときのメッセージ。Spaceはスペースの識別子"
+other = "Cannot decide the member in the space {{.Space}}. Several members have credentials and there is no default member."
+
+[usage_error_member_ambiguous_hint]
+description = "メンバーを決められないときのヒント。Spaceはスペースの識別子、Membersは資格情報のあるメンバー"
+other = "Give the member with `--member`, or set the default member with `wikino auth switch {{.Space}} --member <member>`. Members with credentials: {{.Members}}"
+
+[usage_error_space_conflict]
+description = "引数のスペースと--spaceが違うときのメッセージ"
+other = "The space argument and `--space` differ. Give the space only once."
+
+[usage_error_invalid_limit]
+description = "--limitの値が1未満のときのメッセージ。Valueは指定された値"
+other = "Specify an integer of 1 or more for `--limit` (given: {{.Value}})"
+
+[usage_error_flags_exclusive]
+description = "同時に指定できないフラグを指定したときのメッセージ。Flagsはフラグをカンマ区切りで並べたもの"
+other = "These flags cannot be used together: {{.Flags}}"
+
+[usage_error_dry_run_fields_hint]
+description = "--dry-runと--fieldsを併用したときのヒント"
+other = "Remove `--fields` and run again with `--dry-run` to inspect the requests that would be sent."
+
+[usage_error_flag_required]
+description = "必須のフラグが無いときのメッセージ。Flagはフラグ"
+other = "Specify the flag: {{.Flag}}"
+
+[usage_error_input_read_file]
+description = "--body-file・--md-file・--editsのファイル (または標準入力) を読めないときのメッセージ。Pathは指定された値、Detailは原因"
+other = "Cannot read the file: {{.Path}} ({{.Detail}})"
+
+[usage_error_input_invalid_utf8]
+description = "--body-file・--md-file・--editsのファイル (または標準入力) がUTF-8として正しくないときのメッセージ。Pathは指定された値"
+other = "The file is not UTF-8 text: {{.Path}}"
+
+[usage_error_body_invalid_utf8]
+description = "本文がUTF-8として正しくないときのメッセージ"
+other = "The body is not UTF-8 text."
+
+[usage_error_if_match_required]
+description = "書き込みのコマンドで--if-matchも--forceも無いときのメッセージ"
+other = "Specify the version (ETag) you read with `--if-match`."
+
+[usage_error_if_match_required_hint]
+description = "読んだ版が要るときのヒント。Commandは版を取得するコマンド"
+other = "Get the content and version (`etag`) with `{{.Command}}`, check the content, and pass the version to `--if-match`. Use `--force` only when overwriting the latest version without reading is acceptable."
+
+[usage_error_if_match_invalid]
+description = "--if-match (またはページファイルのwikino_etag) の値が空か制御文字を含むときのメッセージ。Nameはフラグかキーの名前"
+other = "The value of `{{.Name}}` is empty or contains control characters."
+
+[usage_error_if_match_wildcard]
+description = "--if-match (またはページファイルのwikino_etag) に*を指定したときのメッセージ。Nameはフラグかキーの名前"
+other = "`{{.Name}}` cannot be `*`, because it matches any version and does not check the version you read."
+
+[usage_error_md_file_hint]
+description = "--md-fileのファイルを受け付けないときのヒント。Commandはページファイルを書き出すコマンド"
+other = "Edit a page file written with `{{.Command}} > page.md` and pass it with `wikino_number` and `wikino_etag` left in the frontmatter."
+
+[usage_error_md_file_etag_required]
+description = "--md-fileのfrontmatterにwikino_etagが無いときのメッセージ"
+other = "The frontmatter of `--md-file` has no `wikino_etag`. A file without the version you read cannot be written back."
+
+[usage_error_md_file_number_mismatch]
+description = "--md-fileのwikino_numberが引数のページ番号と違うときのメッセージ。FileNumberはファイルの番号、Numberは引数の番号"
+other = "`wikino_number` in `--md-file` ({{.FileNumber}}) differs from the page number to write back to ({{.Number}})."
+
+[usage_error_md_file_invalid_value]
+description = "--md-fileのfrontmatterのWikinoのキーの値の形が違うときのメッセージ。Keyはキーの名前"
+other = "The value of `{{.Key}}` in the frontmatter of `--md-file` has the wrong shape."
+
+[usage_error_md_file_unremovable_keys]
+description = "--md-fileの本文自身のfrontmatterからwikino_のキーを取り除けないときのメッセージ"
+other = "Removing the `wikino_` keys from the frontmatter of `--md-file` would change other properties (for example, they share values through aliases)."
+
+[usage_error_edits_invalid]
+description = "--editsのJSONを受け付けないときのメッセージ。Detailは原因"
+other = "Cannot accept the JSON in `--edits`: {{.Detail}}"
+
+[usage_error_edits_invalid_hint]
+description = "--editsのJSONを受け付けないときのヒント"
+other = "Pass JSON shaped like `{\"edits\": [{\"old_str\": \"text to replace\", \"new_str\": \"replacement\"}]}`. `replace_all` is optional."
+
+[usage_error_edits_trailing_data]
+description = "--editsのJSONの後に余分なデータがあるときの原因"
+other = "extra data after the JSON"
+
+[usage_error_edits_empty]
+description = "--editsのeditsが無いか空のときの原因"
+other = "specify at least one edit in `edits`"
+
+[usage_error_edits_missing]
+description = "--editsの編集に必須の項目が無いときの原因。Indexは編集の位置 (0始まり)、Keyは項目の名前"
+other = "`edits[{{.Index}}]` has no `{{.Key}}`"
+
+[usage_error_edits_empty_old_str]
+description = "--editsの編集のold_strが空のときの原因。Indexは編集の位置 (0始まり)"
+other = "`edits[{{.Index}}].old_str` is empty"
+
+# 終了コードの表
+[exit_code_ok]
+description = "終了コード0の意味"
+other = "Success"
+
+[exit_code_error]
+description = "終了コード1の意味"
+other = "Unexpected failure: network failure, server error (5xx), etc."
+
+[exit_code_usage]
+description = "終了コード2の意味"
+other = "Usage error: invalid arguments or flags, unknown subcommand"
+
+[exit_code_auth]
+description = "終了コード3の意味"
+other = "Authentication failed: not logged in, invalid or expired token (401)"
+
+[exit_code_forbidden]
+description = "終了コード4の意味"
+other = "Permission denied: missing token scopes, etc. (403)"
+
+[exit_code_not_found]
+description = "終了コード5の意味"
+other = "Not found (404)"
+
+[exit_code_conflict]
+description = "終了コード6の意味"
+other = "Conflict: version mismatch (412) or missing (428), already exists (409)"
+
+[exit_code_validation]
+description = "終了コード7の意味"
+other = "Validation error (422)"
+
+[exit_code_rate_limited]
+description = "終了コード8の意味"
+other = "Rate limited (429)"
+
+[exit_code_confirmation_required]
+description = "終了コード9の意味"
+other = "Confirmation required: an irreversible operation or publishing without `--yes`. Prints what will happen and the command to run after approval to stdout"
+
+[exit_code_interrupted]
+description = "終了コード130の意味"
+other = "Interrupted: Ctrl-C"
+
+# 共通のエラー
+[error_jq_failed]
+description = "--jqの式を結果に適用できなかったときのメッセージ。Detailはjqの処理系の説明"
+other = "Cannot apply the --jq expression to the result: {{.Detail}}"
+
+[error_jq_failed_hint]
+description = "--jqの式を結果に適用できなかったときのヒント"
+other = "The command itself has completed. Do not run the same command again; check the result with a read command."
+
+[error_confirmation_declined]
+description = "対話の確認で承認されなかったときのメッセージ"
+other = "Operation canceled."
+
+[error_network]
+description = "APIに要求を送れなかったとき (接続・タイムアウトの失敗) のメッセージ。Detailは原因"
+other = "Could not send the request to the host: {{.Detail}}"
+
+[error_network_hint]
+description = "APIに要求を送れなかったときのヒント"
+other = "Check the host (`--host`) and your network. A write command may have been applied, so check with a read command before running it again."
+
+[error_insecure_redirect]
+description = "HTTPSでもループバックのHTTPでもないリダイレクト先を辿らなかったときのメッセージ"
+other = "Stopped because the host redirected to a URL that is neither HTTPS nor loopback HTTP. The request has already been sent to the original host."
+
+[error_download_network]
+description = "署名付きURLへの通信に失敗したときの安全なメッセージ"
+other = "Could not download the contents because the request to the signed URL failed."
+
+[error_download_failed]
+description = "署名付きURLから添付ファイルの中身を取得できなかったときのメッセージ。Statusは応答のHTTPステータス"
+other = "Could not download the contents from the signed URL (HTTP {{.Status}})."
+
+[error_download_failed_hint]
+description = "署名付きURLから添付ファイルの中身を取得できなかったときのヒント"
+other = "Signed URLs expire a few minutes after they are issued. Running the same command again downloads with a new signed URL."
+
+[error_insecure_download_url]
+description = "APIが返した署名付きURLがHTTPSでもループバックのHTTPでもないときのメッセージ"
+other = "Stopped downloading because the signed URL returned by the API is neither HTTPS nor loopback HTTP."
+
+[error_insecure_download_redirect]
+description = "署名付きURLがHTTPSでもループバックのHTTPでもないURLへリダイレクトしたため、辿らなかったときのメッセージ"
+other = "Stopped the download because the signed URL redirected to a URL that is neither HTTPS nor loopback HTTP."
+
+[error_insecure_download_url_hint]
+description = "APIが返した署名付きURLか、そのリダイレクト先がHTTPSでもループバックのHTTPでもないときのヒント"
+other = "Check that the host (`--host`) is the Wikino server you intended."
+
+[error_api_status]
+description = "APIのエラーの応答に説明が無いときのメッセージ。StatusはHTTPステータス"
+other = "The API returned an error (HTTP {{.Status}})"
+
+[error_api_bad_request_hint]
+description = "APIが400を返したときのヒント"
+other = "The request body could not be read as JSON. Check the body you passed."
+
+[error_api_unauthorized_hint]
+description = "APIが401を返したときのヒント"
+other = "Log in again with `wikino auth login`. If you use `WIKINO_TOKEN`, check that the token has not expired and belongs to the specified space."
+
+[error_api_forbidden_hint]
+description = "APIが403を返し、要るスコープが分からないときのヒント"
+other = "Check the token's scopes with `wikino auth status`."
+
+[error_api_forbidden_scope_hint]
+description = "APIが403を返したときのヒント。Scopesは操作に要るスコープ (空白区切り)"
+other = "This operation requires the scope {{.Scopes}}. Log in again with `wikino auth login` granting that scope, or use a token that has it."
+
+[error_api_not_found_hint]
+description = "APIが404を返したときのヒント"
+other = "Check the number or ID, and the space (`--space`)."
+
+[error_api_conflict_hint]
+description = "APIが409を返したときのヒント"
+other = "Check the existing resource with `get`, then use the update command."
+
+[error_api_precondition_failed_hint]
+description = "APIが412を返したときのヒント"
+other = "It has been updated since you read it. Get the latest content and ETag with `get`, review the content, then pass the ETag to `--if-match` and run the command again."
+
+[error_api_precondition_required_hint]
+description = "APIが428を返したときのヒント"
+other = "Get the content and ETag with `get`, then pass the ETag to `--if-match`."
+
+[error_api_validation_failed_hint]
+description = "APIが422を返したときのヒント"
+other = "Fix the input and run the command again."
+
+[error_api_rate_limited_hint]
+description = "APIが429を返し、再試行までの時間が分からないときのヒント"
+other = "Wait a while and run the command again."
+
+[error_api_rate_limited_retry_after_hint]
+description = "APIが429を返したときのヒント。Secondsは再試行できるまでの秒数"
+other = "Wait {{.Seconds}} seconds and run the command again."
+
+[error_api_server_error_hint]
+description = "APIが5xxを返したときのヒント"
+other = "Run the command again later. A write command may have been applied, so check with a read command before running it again."
+
+[error_api_error_hint]
+description = "APIが分類していないエラーを返したときのヒント"
+other = "Check the usage with `--help`."
+
+[error_not_logged_in]
+description = "接続先のどのスペースにもログインしていないときのメッセージ。Hostは接続先"
+other = "Not logged in to {{.Host}}."
+
+[error_not_logged_in_hint]
+description = "接続先のどのスペースにもログインしていないときのヒント"
+other = "Log in with `wikino auth login <space>`, or pass a token and space with `WIKINO_TOKEN` and `WIKINO_SPACE`."
+[error_space_not_logged_in]
+description = "スペースにログインしていないときのメッセージ。Hostは接続先、Spaceはスペースの識別子"
+other = "Not logged in to the space {{.Space}} on {{.Host}}."
+
+[error_space_not_logged_in_hint]
+description = "スペースにログインしていないとき・保存したトークンが無いときのヒント。Spaceはスペースの識別子"
+other = "Log in with `wikino auth login {{.Space}}`. Check saved credentials with `wikino auth status`."
+[error_member_not_logged_in]
+description = "指定したメンバーの資格情報が無いときのメッセージ。Spaceはスペースの識別子、Memberは指定したメンバー"
+other = "There are no credentials for the member {{.Member}} in the space {{.Space}}."
+
+[error_member_not_logged_in_hint]
+description = "指定したメンバーの資格情報が無いときのヒント。Spaceはスペースの識別子、Membersは資格情報のあるメンバー"
+other = "Members with credentials: {{.Members}}. To use another member, run `wikino auth login {{.Space}}` as that member."
+[error_token_not_found]
+description = "保存したトークンが見つからないときのメッセージ。Spaceはスペースの識別子、Memberはメンバーのアットネーム"
+other = "The saved token for the member {{.Member}} in the space {{.Space}} was not found."
+
+[error_keyring_read]
+description = "キーチェーンからトークンを読み取れないときのメッセージ"
+other = "Could not read the token from the keychain."
+
+[error_keyring_read_hint]
+description = "キーチェーンからトークンを読み取れないときのヒント"
+other = "Make the keychain available (for example, unlock it), then run the command again."
+
+[error_config_invalid]
+description = "設定ファイルを解析できないときのメッセージ。Pathは設定ファイルのパス"
+other = "Could not parse the configuration file {{.Path}}."
+
+[error_config_invalid_hint]
+description = "設定ファイルを解析できないときのヒント。Pathは設定ファイルのパス"
+other = "Fix the TOML syntax in {{.Path}}, then run the command again."
+
+# 一覧の案内
+[list_empty]
+description = "人間向けの表示で、一覧に該当するものが無いときに標準エラーに出す案内"
+other = "Nothing matched."
+
+[list_next_page]
+description = "一覧に次のページがあるときに標準エラーに出す案内。Cursorは次のページのカーソル"
+other = "There are more items. Add `--cursor {{.Cursor}}` to the same command for the next page, or `--all` for every item."
+
+# 確認
+[confirm_prompt]
+description = "取り消せない操作・公開の前に、続けるかを尋ねるプロンプト"
+other = "Proceed? [y/N]:"
+
+[error_response]
+description = "送信済みの要求の応答を読み取り・解析できなかったときのメッセージ"
+other = "Could not read or parse the API response."
+
+[error_response_hint]
+description = "送信済みの要求の応答を読み取り・解析できなかったときのヒント"
+other = "The request has been sent. A write may have been applied, so check the result with a read command before running the same command again."
+
+[error_edits_old_str_hint]
+description = "検索置換で編集のold_strが本文に1件だけ一致しない (422) ときのヒント。Ordinalは何番目 (1始まり)、Indexは位置 (0始まり)、Commandは今の本文を確かめるコマンド"
+other = "`old_str` of edit {{.Ordinal}} (`edits[{{.Index}}]`) does not match exactly one place in the body after the earlier edits are applied. No edit was applied. Check the current body with `{{.Command}}`, fix `old_str`, and send the whole `edits` again. To replace every matching place, set `replace_all` to `true`."
+
+[error_edits_new_str_hint]
+description = "検索置換で編集を適用すると本文が上限を超える (422) ときのヒント。Ordinalは何番目 (1始まり)、Indexは位置 (0始まり)"
+other = "Applying edit {{.Ordinal}} (`edits[{{.Index}}]`) makes the body exceed the limit (1 MiB). No edit was applied. Reduce the edits and send the whole `edits` again."
+
+# --dry-run
+[dry_run_not_sent]
+description = "--dry-runで要求を送らなかったことを標準エラーに出す案内"
+other = "No requests were sent because of `--dry-run`."
+
+# Wikiリンクのリンク先の確認
+[wikilink_preview_error]
+description = "本文を書き込む前のWikiリンクのリンク先の確認に失敗したときのメッセージ。MessageはAPIのエラーのメッセージ"
+other = "Could not check where the wikilinks in the body point, so the write request was not sent: {{.Message}}"
+
+[wikilink_preview_error_validation_failed_hint]
+description = "Wikiリンクのリンク先の確認でトピックが無いか見られない (422) ときのヒント。Topicはトピック番号"
+other = "Topic {{.Topic}} does not exist or cannot be seen. Check the topic number with `wikino topic list`."
+
+[wikilink_will_create]
+description = "--dry-runで、書き込むと作られるリンク先を標準エラーに出す案内。Countは件数、Pagesは「トピック名/タイトル」をカンマ区切りで並べたもの"
+other = "Writing would create {{.Count}} linked pages that do not exist as unpublished pages: {{.Pages}}"
+
+[wikilink_created]
+description = "書き込みの後に、作られた見込みのリンク先を標準エラーに出す案内。Countは件数、Pagesは「トピック名/タイトル」をカンマ区切りで並べたもの"
+other = "Estimated {{.Count}} linked pages that did not exist to have been created as unpublished pages: {{.Pages}}"
+
+# スキル (SKILL.md) のコマンドの一覧表
+[command_table_heading_command]
+description = "コマンドの一覧表の「コマンド」の列の見出し"
+other = "Command"
+
+[command_table_heading_description]
+description = "コマンドの一覧表の「説明」の列の見出し"
+other = "Description"
