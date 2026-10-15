@@ -43,6 +43,13 @@ type exportArchiveAttachment struct {
 	localPath string
 }
 
+// exportPageFileStatusPublishedとexportPageFileStatusUnpublishedは、ページファイルの
+// `wikino_status` に書く値。公開APIのページの `status` と同じ値にする (Wikinoファイル形式。ADR 0025)
+const (
+	exportPageFileStatusPublished   = "published"
+	exportPageFileStatusUnpublished = "unpublished"
+)
+
 // plannedExportTopicは、名前が決まったトピックについて、構成決めの2巡目が必要とするものを
 // 保持する。トピック自身、アーカイブでの並び順のページ、そして添付ファイルに与えられた名前である。
 type plannedExportTopic struct {
@@ -54,9 +61,12 @@ type plannedExportTopic struct {
 
 // planExportArchiveは、アーカイブの構成をその元になるスペースからすべて決める。
 //
+// appURLはWikinoのオリジン (例: `https://example.com`) で、spaceはエクスポートするスペース。
+// どちらもページファイルの `wikino_url` を組み立てるのに使う。
+//
 // アクティブなページを持たないトピックにはディレクトリを与えない。空のディレクトリはスペースに
 // ついて何も語らず、Rails版も同じくそれを含めていなかった。
-func planExportArchive(topics []*model.Topic, pages []*model.Page, pageAttachments []*repository.PageAttachment) *exportArchive {
+func planExportArchive(appURL string, space *model.Space, topics []*model.Topic, pages []*model.Page, pageAttachments []*repository.PageAttachment) *exportArchive {
 	pagesByTopic := groupPagesByTopic(pages)
 	attachmentsByPage := groupAttachmentsByPage(pageAttachments)
 
@@ -98,7 +108,8 @@ func planExportArchive(topics []*model.Topic, pages []*model.Page, pageAttachmen
 
 	for _, plan := range planned {
 		for i, page := range plan.pages {
-			plan.archiveTopic.pages[i].body = rewriteExportBody(page, plan.topic.Name, pagePaths, plan.attachmentNames)
+			body := rewriteExportBody(page, plan.topic.Name, pagePaths, plan.attachmentNames)
+			plan.archiveTopic.pages[i].body = exportfile.WithFrontmatter(body, exportPageMetadata(appURL, space, page, plan.topic))
 		}
 	}
 
@@ -106,15 +117,33 @@ func planExportArchive(topics []*model.Topic, pages []*model.Page, pageAttachmen
 }
 
 // rewriteExportBodyはページの本文を、アーカイブが持つ形に変える。添付ファイルへの参照と
-// Wikiリンクは隣にあるファイルを指し、ファイル名がもう綴っていないタイトルはfrontmatterに残る。
+// Wikiリンクは隣にあるファイルを指す。
 //
 // どちらの書き換えも自身が走査した本文の位置を読むため、他方が拾う記法を書き込まない限り順に
 // 適用して問題ない。実際どちらも書き込まない。添付ファイルのリンク先はパーセントエンコードされた
 // 形になり、書き換えたWikiリンクは添付ファイルのパスを名乗らない。
 func rewriteExportBody(page *model.Page, topicName string, pagePaths map[exportfile.PageRef]string, attachmentNames map[model.AttachmentID]string) string {
 	body := exportfile.RewriteAttachmentLinks(page.Body, attachmentNames)
-	body = exportfile.RewriteWikilinks(body, topicName, pagePaths)
-	return exportfile.WithFrontmatter(body, pageTitle(page))
+	return exportfile.RewriteWikilinks(body, topicName, pagePaths)
+}
+
+// exportPageMetadataは、ページファイルのfrontmatterに書く値を作る。ファイル名がもう綴って
+// いないタイトルはここに残る。値は公開APIのページの応答 (`ETag` ヘッダーと `url` を含む) と
+// 同じにし、CLIの `--md` が書き出すページファイルと揃える
+func exportPageMetadata(appURL string, space *model.Space, page *model.Page, topic *model.Topic) exportfile.PageMetadata {
+	status := exportPageFileStatusUnpublished
+	if page.IsPublished() {
+		status = exportPageFileStatusPublished
+	}
+	return exportfile.PageMetadata{
+		Title:       page.Title,
+		Number:      int32(page.Number),
+		ETag:        `"` + page.ContentDigest() + `"`,
+		TopicNumber: topic.Number,
+		Status:      status,
+		ModifiedAt:  page.ModifiedAt,
+		URL:         model.PageWebURL(appURL, space, page.Number),
+	}
 }
 
 // planTopicAttachmentsはトピックのディレクトリの添付ファイルを埋め、それぞれがどの名前で

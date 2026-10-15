@@ -244,7 +244,7 @@ func TestExportPageBodiesReachTheirArchiveForms(t *testing.T) {
 	// 持っているブロックへキーを受け取る必要があり、書き手が置いたキーは残る必要がある。
 	// YAMLとして読めなくなった本文も、下のページと同じくエクスポートはされる。そして
 	// 失われるのは、まさにこの2ページの違いである。
-	withFrontmatter := exportfile.WithFrontmatter(exportFrontmatterPageBody, exportFrontmatterPageTitle)
+	withFrontmatter := exportfile.WithFrontmatter(exportFrontmatterPageBody, exportPageMetadata(exportFrontmatterPageTitle))
 	if got := strings.Count(withFrontmatter, "\n---\n"); got != 1 {
 		t.Errorf("%qのfrontmatterが1ブロックであることを期待したが区切りが%d箇所あった: %q",
 			exportFrontmatterPageTitle, got+1, withFrontmatter)
@@ -260,12 +260,12 @@ func TestExportPageBodiesReachTheirArchiveForms(t *testing.T) {
 
 	// frontmatterに見えるだけの本文は、区切りをその位置に保ったまま、その前に
 	// 自分のブロックを受け取る必要がある。
-	frontmatterLike := exportfile.WithFrontmatter(exportFrontmatterLikePageBody, exportFrontmatterLikePageTitle)
-	wantPrefix := "---\nwikino_title: \"" + exportFrontmatterLikePageTitle + "\"\n---\n\n"
+	frontmatterLike := exportfile.WithFrontmatter(exportFrontmatterLikePageBody, exportPageMetadata(exportFrontmatterLikePageTitle))
+	wantPrefix := "---\nwikino_title: \"" + exportFrontmatterLikePageTitle + "\"\n"
 	if !strings.HasPrefix(frontmatterLike, wantPrefix) {
 		t.Errorf("%qが%qで始まることを期待したが%qだった", exportFrontmatterLikePageTitle, wantPrefix, frontmatterLike)
 	}
-	if !strings.HasSuffix(frontmatterLike, exportFrontmatterLikePageBody) {
+	if !strings.HasSuffix(frontmatterLike, "\n---\n\n"+exportFrontmatterLikePageBody) {
 		t.Errorf("%qの本文が原文のまま残ることを期待したが%qだった", exportFrontmatterLikePageTitle, frontmatterLike)
 	}
 
@@ -289,5 +289,17 @@ func TestExportPageBodiesReachTheirArchiveForms(t *testing.T) {
 		if !strings.Contains(rewritten, want) {
 			t.Errorf("書き換え後の%qに%qが含まれていない: %q", exportWikilinkPageTitle, want, rewritten)
 		}
+	}
+}
+
+// exportPageMetadataは、タイトル以外の値を固定したページファイルのfrontmatterの値を返す。
+// このテストが確かめるのは、本文のfrontmatterとタイトルの扱いだけである
+func exportPageMetadata(title string) exportfile.PageMetadata {
+	return exportfile.PageMetadata{
+		Title:  &title,
+		Number: 1,
+		ETag:   `"etag"`,
+		Status: "published",
+		URL:    "https://wikino.example.com/s/example/pages/1",
 	}
 }

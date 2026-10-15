@@ -1,0 +1,492 @@
+[
+  {
+    "name": "本文の前にfrontmatterのブロックを置く",
+    "page": {
+      "body": "本文がここから始まる。\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n本文がここから始まる。\n"
+  },
+  {
+    "name": "空の本文にもfrontmatterのブロックを置く",
+    "page": {
+      "body": "",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n"
+  },
+  {
+    "name": "末尾に改行の無い本文はそのまま続ける",
+    "page": {
+      "body": "本文",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n本文"
+  },
+  {
+    "name": "タイトルのコロン・引用符・バックスラッシュ・改行をエスケープする",
+    "page": {
+      "body": "本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録: \"重要\" \\ 2026\n続き",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録: \\\"重要\\\" \\\\ 2026\\n続き\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n本文\n"
+  },
+  {
+    "name": "タイトルのHTMLの記号はエスケープしない",
+    "page": {
+      "body": "本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "a < b & c > d",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"a < b & c > d\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n本文\n"
+  },
+  {
+    "name": "タイトルが無ければwikino_titleを書かない",
+    "page": {
+      "body": "本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "unpublished",
+      "title": null,
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"unpublished\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n本文\n"
+  },
+  {
+    "name": "更新日時の秒未満を残し、UTCで書く",
+    "page": {
+      "body": "本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T18:00:00.123456+09:00",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00.123456Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n本文\n"
+  },
+  {
+    "name": "本文自身のfrontmatterに、先頭のキーの前でキーを足す",
+    "page": {
+      "body": "---\n# Obsidianのプロパティ\ntags:   [設計, 'メモ']   # インラインのコメント\naliases:\n    - \"別名\"\n    - 'もう1つ'\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\n# Obsidianのプロパティ\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\ntags:   [設計, 'メモ']   # インラインのコメント\naliases:\n    - \"別名\"\n    - 'もう1つ'\n---\n\n本文\n"
+  },
+  {
+    "name": "本文自身のfrontmatterの既存のwikino_のキーは複数行の値ごと取り除く",
+    "page": {
+      "body": "---\nwikino_title: |\n  古い\n  タイトル\naliases: [other]\nwikino_unknown: 1\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\naliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "本文自身のfrontmatterの引用符付きのwikino_のキーも取り除く",
+    "page": {
+      "body": "---\n\"wikino_title\": 古い\naliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\naliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "wikino_のキーだけのfrontmatterはキーを入れ替える",
+    "page": {
+      "body": "---\nwikino_title: 古い\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n本文\n"
+  },
+  {
+    "name": "タグの行の後にキーを足す",
+    "page": {
+      "body": "---\n!!map\naliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\n!!map\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\naliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "アンカーの行の後にキーを足す",
+    "page": {
+      "body": "---\n&properties\naliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\n&properties\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\naliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "CRLFの本文自身のfrontmatterにはCRLFでキーを足す",
+    "page": {
+      "body": "---\r\naliases: []\r\n---\r\n\r\n本文\r\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\r\nwikino_title: \"議事録\"\r\nwikino_number: 12\r\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\r\nwikino_topic_number: 3\r\nwikino_status: \"published\"\r\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\r\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\r\naliases: []\r\n---\r\n\r\n本文\r\n"
+  },
+  {
+    "name": "CRLFの本文の前にはCRLFでブロックを置く",
+    "page": {
+      "body": "本文がここから始まる。\r\n続き\r\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\r\nwikino_title: \"議事録\"\r\nwikino_number: 12\r\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\r\nwikino_topic_number: 3\r\nwikino_status: \"published\"\r\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\r\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\r\n---\r\n\r\n本文がここから始まる。\r\n続き\r\n"
+  },
+  {
+    "name": "フロー形式のfrontmatterは書き換えず、新しいブロックを前に置く",
+    "page": {
+      "body": "---\n{aliases: [other]}\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\n{aliases: [other]}\n---\n\n本文\n"
+  },
+  {
+    "name": "消すキーをエイリアスが参照するfrontmatterは書き換えず、新しいブロックを前に置く",
+    "page": {
+      "body": "---\nwikino_title: &title 古い\naliases: [*title]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\nwikino_title: &title 古い\naliases: [*title]\n---\n\n本文\n"
+  },
+  {
+    "name": "インデントされたfrontmatterは書き換えず、新しいブロックを前に置く",
+    "page": {
+      "body": "---\n  aliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\n  aliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "BOMで始まるfrontmatterは書き換えず、新しいブロックを前に置く",
+    "page": {
+      "body": "---\n\ufeffaliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\n\ufeffaliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "閉じられていない区切りは水平線として本文に残す",
+    "page": {
+      "body": "---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\n\n本文\n"
+  },
+  {
+    "name": "区切りの間の通常の文章は本文に残す",
+    "page": {
+      "body": "---\n\nふつうの段落\n\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\n\nふつうの段落\n\n---\n\n本文\n"
+  },
+  {
+    "name": "mappingでないYAMLは本文に残す",
+    "page": {
+      "body": "---\n- リストの項目\n---\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\n- リストの項目\n---\n本文\n"
+  },
+  {
+    "name": "不正なYAMLは本文に残す",
+    "page": {
+      "body": "---\ninvalid: [\n---\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\ninvalid: [\n---\n本文\n"
+  },
+  {
+    "name": "キーが重複するYAMLは本文に残す",
+    "page": {
+      "body": "---\na: 1\na: 2\n---\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\na: 1\na: 2\n---\n本文\n"
+  },
+  {
+    "name": "区切りで始まらない本文の水平線は本文に残す",
+    "page": {
+      "body": "# 見出し\n\n---\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n# 見出し\n\n---\n"
+  },
+  {
+    "name": "Wikinoのキーの後の空行と次のキーの説明コメントを残す",
+    "page": {
+      "body": "---\nwikino_title: 古い\n\n# aliasesの説明\naliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n\n# aliasesの説明\naliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "末尾のWikinoのキーの後のコメントと空行を残す",
+    "page": {
+      "body": "---\naliases: [other]\nwikino_title: 古い\n\n# 末尾の説明\n\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\naliases: [other]\n\n# 末尾の説明\n\n---\n\n本文\n"
+  },
+  {
+    "name": "インデントされた説明コメントも残す",
+    "page": {
+      "body": "---\nwikino_title: 古い\n  # aliasesの説明\naliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n  # aliasesの説明\naliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "複数行スカラーのコメント風の値を取り除き説明コメントを残す",
+    "page": {
+      "body": "---\nwikino_title: |\n  古い\n  # タイトルの一部\n\n# aliasesの説明\naliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n\n# aliasesの説明\naliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "折り畳みスカラーのコメント風の値を取り除く",
+    "page": {
+      "body": "---\nwikino_title: >\n  古い\n  # タイトルの一部\n# 末尾の説明\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n# 末尾の説明\n---\n\n本文\n"
+  },
+  {
+    "name": "改行を保持するスカラーの値とブロック末尾のコメントを区別する",
+    "page": {
+      "body": "---\nwikino_title: |+\n  古い\n  # タイトルの一部\n\n# 末尾の説明\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n# 末尾の説明\n---\n\n本文\n"
+  },
+  {
+    "name": "複数行の引用符の中のコメント風の行を値として取り除く",
+    "page": {
+      "body": "---\nwikino_title: \"古い\n# タイトルの一部\"\n\n# 末尾の説明\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n\n# 末尾の説明\n---\n\n本文\n"
+  },
+  {
+    "name": "入れ子の複数行スカラーの値と説明コメントを区別する",
+    "page": {
+      "body": "---\nwikino_unknown:\n  note: |\n    古い\n    # 値の一部\n\n# aliasesの説明\naliases: [other]\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n\n# aliasesの説明\naliases: [other]\n---\n\n本文\n"
+  },
+  {
+    "name": "CRLFのキー削除でもコメントと空行を保持する",
+    "page": {
+      "body": "---\r\nwikino_title: 古い\r\n\r\n# aliasesの説明\r\naliases: [other]\r\n---\r\n\r\n本文\r\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\r\nwikino_title: \"議事録\"\r\nwikino_number: 12\r\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\r\nwikino_topic_number: 3\r\nwikino_status: \"published\"\r\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\r\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\r\n\r\n# aliasesの説明\r\naliases: [other]\r\n---\r\n\r\n本文\r\n"
+  },
+  {
+    "name": "エントリ単独でエイリアスの値を確認できないときは元のコメントごと残す",
+    "page": {
+      "body": "---\naliases: &names [other]\nwikino_unknown: *names\n\n# 末尾の説明\n---\n\n本文\n",
+      "etag": "\"Xc3kLq9vT0aB-1\"",
+      "modified_at": "2026-10-01T09:00:00Z",
+      "number": 12,
+      "status": "published",
+      "title": "議事録",
+      "topic_number": 3,
+      "url": "https://wikino.example.com/s/example/pages/12"
+    },
+    "want": "---\nwikino_title: \"議事録\"\nwikino_number: 12\nwikino_etag: \"\\\"Xc3kLq9vT0aB-1\\\"\"\nwikino_topic_number: 3\nwikino_status: \"published\"\nwikino_modified_at: \"2026-10-01T09:00:00Z\"\nwikino_url: \"https://wikino.example.com/s/example/pages/12\"\n---\n\n---\naliases: &names [other]\nwikino_unknown: *names\n\n# 末尾の説明\n---\n\n本文\n"
+  }
+]

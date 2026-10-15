@@ -1,147 +1,193 @@
 package exportfile
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+	"unicode"
 
 	"go.yaml.in/yaml/v3"
 )
 
-func TestWithFrontmatter(t *testing.T) {
+// pageFileCaseは、リポジトリ直下の共通のテストデータ (`testdata/wikino-file-format/page-files.json`)
+// の1件。CLIの `--md` も同じテストデータで検査する
+type pageFileCase struct {
+	Name string `json:"name"`
+	Page struct {
+		Title       *string `json:"title"`
+		Number      int32   `json:"number"`
+		ETag        string  `json:"etag"`
+		TopicNumber int32   `json:"topic_number"`
+		Status      string  `json:"status"`
+		ModifiedAt  string  `json:"modified_at"`
+		URL         string  `json:"url"`
+		Body        string  `json:"body"`
+	} `json:"page"`
+	Want string `json:"want"`
+}
+
+// readPageFilesは共通のテストデータの生のバイト列を読む
+func readPageFiles(t *testing.T) []byte {
+	t.Helper()
+
+	data, err := os.ReadFile(filepath.Join("..", "..", "..", "testdata", "wikino-file-format", "page-files.json"))
+	if err != nil {
+		t.Fatalf("共通のテストデータを読めません: %v", err)
+	}
+	return data
+}
+
+// loadPageFileCasesは共通のテストデータを読む
+func loadPageFileCases(t *testing.T) []pageFileCase {
+	t.Helper()
+
+	data := readPageFiles(t)
+	var cases []pageFileCase
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatalf("共通のテストデータを解釈できません: %v", err)
+	}
+	if len(cases) == 0 {
+		t.Fatal("共通のテストデータにケースがありません")
+	}
+	return cases
+}
+
+// metadataはケースのページから、frontmatterに書く値を作る
+func (c pageFileCase) metadata(t *testing.T) PageMetadata {
+	t.Helper()
+
+	modifiedAt, err := time.Parse(time.RFC3339Nano, c.Page.ModifiedAt)
+	if err != nil {
+		t.Fatalf("modified_atを解釈できません: %v", err)
+	}
+	return PageMetadata{
+		Title:       c.Page.Title,
+		Number:      c.Page.Number,
+		ETag:        c.Page.ETag,
+		TopicNumber: c.Page.TopicNumber,
+		Status:      c.Page.Status,
+		ModifiedAt:  modifiedAt,
+		URL:         c.Page.URL,
+	}
+}
+
+func TestWithFrontmatter_SharedTestdata(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name  string
-		body  string
-		title string
-		want  string
-	}{
-		{
-			name:  "本文の前にfrontmatterのブロックを置く",
-			body:  "本文がここから始まる。\n",
-			title: "設計メモ",
-			want:  "---\nwikino_title: \"設計メモ\"\n---\n\n本文がここから始まる。\n",
-		},
-		{
-			name:  "空の本文でもfrontmatterを持たせる",
-			body:  "",
-			title: "設計メモ",
-			want:  "---\nwikino_title: \"設計メモ\"\n---\n\n",
-		},
-		{
-			name:  "記号を含むタイトルをYAMLの文字列としてエスケープする",
-			body:  "本文\n",
-			title: `Annict | "見たアニメ" \ 記録`,
-			want:  "---\nwikino_title: \"Annict | \\\"見たアニメ\\\" \\\\ 記録\"\n---\n\n本文\n",
-		},
-		{
-			name:  "HTMLの記号はエスケープせずそのまま残す",
-			body:  "本文\n",
-			title: "a < b & c > d",
-			want:  "---\nwikino_title: \"a < b & c > d\"\n---\n\n本文\n",
-		},
-		{
-			name:  "既にあるfrontmatterのブロックへ差し込む",
-			body:  "---\naliases:\n  - 別名\n---\n\n本文\n",
-			title: "設計メモ",
-			want:  "---\nwikino_title: \"設計メモ\"\naliases:\n  - 別名\n---\n\n本文\n",
-		},
-		{
-			name:  "CRLFのfrontmatterのブロックへも差し込む",
-			body:  "---\r\naliases: []\r\n---\r\n\r\n本文\r\n",
-			title: "設計メモ",
-			want:  "---\r\nwikino_title: \"設計メモ\"\r\naliases: []\r\n---\r\n\r\n本文\r\n",
-		},
-		{
-			name:  "CRLFの本文へ置くブロックもCRLFで書く",
-			body:  "本文がここから始まる。\r\n続き\r\n",
-			title: "設計メモ",
-			want:  "---\r\nwikino_title: \"設計メモ\"\r\n---\r\n\r\n本文がここから始まる。\r\n続き\r\n",
-		},
-		{
-			name:  "閉じられていない区切りはfrontmatterではなく水平線として扱う",
-			body:  "---\n\n本文\n",
-			title: "設計メモ",
-			want:  "---\nwikino_title: \"設計メモ\"\n---\n\n---\n\n本文\n",
-		},
-		{
-			name:  "区切りで始まらない本文には新しいブロックを置く",
-			body:  "# 見出し\n\n---\n",
-			title: "設計メモ",
-			want:  "---\nwikino_title: \"設計メモ\"\n---\n\n# 見出し\n\n---\n",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tt := range loadPageFileCases(t) {
+		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := WithFrontmatter(tt.body, tt.title); got != tt.want {
-				t.Errorf("WithFrontmatter() = %q、期待値 = %q", got, tt.want)
+			if got := WithFrontmatter(tt.Page.Body, tt.metadata(t)); got != tt.Want {
+				t.Errorf("WithFrontmatter() = %q、期待値 = %q", got, tt.Want)
 			}
 		})
 	}
 }
 
-func TestWithFrontmatter_ExistingMappings(t *testing.T) {
+// テストデータの期待値そのものが、先頭のブロックにページの値を持つ有効なfrontmatterであることを確かめる。
+// 期待値を手で足したときの誤りを、CLIの側で初めて見つけることにならないようにする
+func TestWithFrontmatter_SharedTestdataIsValid(t *testing.T) {
 	t.Parallel()
-	tests := []struct{ name, body, wantAlias string }{
-		{"既存のキー", "---\nwikino_title: old\naliases: [other]\n---\n\nbody\n", "other"},
-		{"引用符付きのキー", "---\n\"wikino_title\": old\naliases: [other]\n---\n\nbody\n", "other"},
-		{"フロー形式のマッピング", "---\n{wikino_title: old, aliases: [other]}\n---\n\nbody\n", "other"},
-		{"BOM付きのマッピング", "---\n\uFEFFaliases: [other]\n---\n\nbody\n", "other"},
-		{"フロー形式への差し込み", "---\n{aliases: [other]}\n---\n\nbody\n", "other"},
-		{"タグ付きのマッピング", "---\n!!map\naliases: [other]\n---\n\nbody\n", "other"},
-		{"アンカー付きのマッピング", "---\n&properties\naliases: [other]\n---\n\nbody\n", "other"},
-		{"複数行の値", "---\nwikino_title: |\n  old\n  title\naliases: [other]\n---\n\nbody\n", "other"},
-		{"アンカー付きの値", "---\nwikino_title: &title old\naliases: [*title]\n---\n\nbody\n", "current: \"title\""},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+
+	for _, tt := range loadPageFileCases(t) {
+		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
-			got := WithFrontmatter(tt.body, "current: \"title\"")
-			if !strings.HasSuffix(got, "---\n\nbody\n") {
-				t.Errorf("本文が変わった: %q", got)
-			}
-			opening, closing, _, ok := frontmatterBlock(got)
+
+			opening, closing, _, ok := frontmatterBlock(tt.Want)
 			if !ok {
-				t.Fatalf("不正なフロントマター: %q", got)
+				t.Fatalf("期待値の先頭が有効なfrontmatterではありません: %q", tt.Want)
 			}
 			var properties map[string]any
-			if err := yaml.Unmarshal([]byte(got[opening:closing]), &properties); err != nil {
-				t.Fatal(err)
+			if err := yaml.Unmarshal([]byte(tt.Want[opening:closing]), &properties); err != nil {
+				t.Fatalf("frontmatterを読めません: %v", err)
 			}
-			if properties[titleKey] != "current: \"title\"" {
-				t.Errorf("title=%v", properties[titleKey])
+
+			metadata := tt.metadata(t)
+			want := map[string]any{
+				"wikino_number":       int(metadata.Number),
+				"wikino_etag":         metadata.ETag,
+				"wikino_topic_number": int(metadata.TopicNumber),
+				"wikino_status":       metadata.Status,
+				"wikino_modified_at":  metadata.ModifiedAt.UTC().Format(time.RFC3339Nano),
+				"wikino_url":          metadata.URL,
 			}
-			aliases, ok := properties["aliases"].([]any)
-			if !ok || len(aliases) != 1 {
-				t.Fatalf("エイリアスが失われた: %v", properties)
+			if metadata.Title != nil {
+				want["wikino_title"] = *metadata.Title
+			} else if _, ok := properties["wikino_title"]; ok {
+				t.Errorf("タイトルの無いページにwikino_titleがあります: %v", properties)
 			}
-			if aliases[0] != tt.wantAlias {
-				t.Errorf("alias = %v、期待値 = %s", aliases[0], tt.wantAlias)
-			}
-			if count := strings.Count(got, "wikino_title"); count != 1 {
-				t.Errorf("タイトルのキーの件数 = %d: %q", count, got)
+			for key, value := range want {
+				if properties[key] != value {
+					t.Errorf("%s = %#v、期待値 = %#v", key, properties[key], value)
+				}
 			}
 		})
+	}
+}
+
+// テストデータのBOMや制御文字は、JSONのエスケープで書かれていることを確かめる。
+// 文字そのものはdiffやエディタで見えず、編集の過程で消えたり紛れ込んだりしても気付けないため
+func TestWithFrontmatter_SharedTestdataEscapesInvisibleCharacters(t *testing.T) {
+	t.Parallel()
+
+	for i, r := range string(readPageFiles(t)) {
+		if r != '\n' && (unicode.IsControl(r) || unicode.Is(unicode.Cf, r)) {
+			t.Errorf("%dバイト目に見えない文字 %U がそのまま書かれています。JSONのエスケープで書いてください", i, r)
+		}
+	}
+}
+
+func TestWithFrontmatter_ReplacesTitleKeyOnce(t *testing.T) {
+	t.Parallel()
+
+	title := "新しい"
+	got := WithFrontmatter("---\nwikino_title: 古い\nwikino_title_note: 残らない\naliases: [other]\n---\n\n本文\n", PageMetadata{
+		Title:      &title,
+		Number:     1,
+		ETag:       `"abc"`,
+		Status:     "published",
+		ModifiedAt: time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC),
+		URL:        "https://wikino.example.com/s/example/pages/1",
+	})
+
+	want := "---\n" +
+		"wikino_title: \"新しい\"\n" +
+		"wikino_number: 1\n" +
+		"wikino_etag: \"\\\"abc\\\"\"\n" +
+		"wikino_topic_number: 0\n" +
+		"wikino_status: \"published\"\n" +
+		"wikino_modified_at: \"2026-10-01T09:00:00Z\"\n" +
+		"wikino_url: \"https://wikino.example.com/s/example/pages/1\"\n" +
+		"aliases: [other]\n" +
+		"---\n\n本文\n"
+	if got != want {
+		t.Errorf("WithFrontmatter() = %q、期待値 = %q", got, want)
 	}
 }
 
 func TestWithFrontmatter_PreservesNonMappings(t *testing.T) {
 	t.Parallel()
+
+	title := "current"
+	metadata := PageMetadata{Title: &title, Status: "published"}
+	block := "---\n" + strings.Join(metadata.lines(), "\n") + "\n---\n\n"
+
 	for _, body := range []string{
 		"---\n\nordinary paragraph\n\n---\n\nbody",
 		"---\n- list item\n---\nbody",
 		"---\ninvalid: [\n---\nbody",
 		"---\na: 1\na: 2\n---\nbody",
 		"---\n{}\n...\nstray content\n---\nbody",
+		"---\n---\nbody",
 	} {
 		t.Run(body, func(t *testing.T) {
 			t.Parallel()
-			got := WithFrontmatter(body, "current")
-			want := "---\nwikino_title: \"current\"\n---\n\n" + body
-			if got != want {
+
+			if got := WithFrontmatter(body, metadata); got != block+body {
 				t.Errorf("本文がメタデータとして消費された: %q", got)
 			}
 		})
