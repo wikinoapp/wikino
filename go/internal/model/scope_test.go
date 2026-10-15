@@ -156,12 +156,14 @@ func TestScopeDefinitions(t *testing.T) {
 		}
 	})
 
-	t.Run("トークンに付与できるスコープはトピックまで付けられる", func(t *testing.T) {
+	t.Run("トークンにはトークン管理のスコープを付与できない", func(t *testing.T) {
 		t.Parallel()
 
+		// トークンでトークンを発行できると、権限の範囲を利用者の意図より広げられるため
 		for _, d := range model.ScopeDefinitions {
-			if d.APIToken && d.LowestLevel != model.ScopeLevelTopic {
-				t.Errorf("%sの付けられる最も下の単位 = %d、期待値 = %d", d.Scope, d.LowestLevel, model.ScopeLevelTopic)
+			resource, _, _ := strings.Cut(d.Scope.String(), ":")
+			if d.APIToken && slices.Contains([]string{"personal_access_token", "oauth_grant", "oauth_application"}, resource) {
+				t.Errorf("トークン管理のスコープ%sがトークンに付与できる", d.Scope)
 			}
 		}
 	})

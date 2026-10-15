@@ -221,6 +221,12 @@ func (b *PageBuilderDB) WithTitle(title string) *PageBuilderDB {
 	return b
 }
 
+// WithNilTitleはタイトルをnilに設定します
+func (b *PageBuilderDB) WithNilTitle() *PageBuilderDB {
+	b.title = nil
+	return b
+}
+
 // WithBodyは本文を設定します
 func (b *PageBuilderDB) WithBody(body string) *PageBuilderDB {
 	b.body = body

@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetAPIPageUsecaseは、公開APIでトークンを束縛したスペースのページを取得するユースケース
+// GetAPIPageUsecaseは、公開APIでトークンが属するスペースのページを取得するユースケース
 type GetAPIPageUsecase struct {
 	pageRepo        *repository.PageRepository
 	topicRepo       *repository.TopicRepository
@@ -39,9 +39,10 @@ type GetAPIPageOutput struct {
 	Topic *model.Topic
 }
 
-// Executeはトークンを束縛したスペースの公開済みのページを返す。
-// ページが存在しない場合に加え、下書きのまま公開していないページ・ゴミ箱のページ・廃棄済みの
-// トピックのページ・閲覧者が開けない非公開トピックのページも、存在を秘匿するため未存在として扱う。
+// Executeはトークンが属するスペースのページを返す。
+// Web画面のページ画面と同じく、未公開のページ (Wikiリンクで自動作成されたページなど) も返す。
+// ページが存在しない場合に加え、ゴミ箱のページ・廃棄済みのトピックのページ・閲覧者が開けない
+// 非公開トピックのページも、存在を秘匿するため未存在として扱う。
 // Web画面と違い、ゴミ箱を開ける権限を持つメンバーにもゴミ箱のページを返さない (一覧と揃えるため)
 func (uc *GetAPIPageUsecase) Execute(ctx context.Context, input GetAPIPageInput) (*GetAPIPageOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
@@ -58,7 +59,7 @@ func (uc *GetAPIPageUsecase) Execute(ctx context.Context, input GetAPIPageInput)
 	if err != nil {
 		return nil, fmt.Errorf("ページの取得に失敗: %w", err)
 	}
-	if page == nil || page.PublishedAt == nil || page.TrashedAt != nil {
+	if !isAPIVisiblePage(page) {
 		return nil, notFound
 	}
 

@@ -90,6 +90,8 @@ linters:
               desc: "TemplatesはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
               desc: "TemplatesはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
+              desc: "TemplatesはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "TemplatesはMiddlewareに依存できません。"
 
@@ -112,6 +114,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/apierror
               desc: "ViewModelはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
+              desc: "ViewModelはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
               desc: "ViewModelはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "ViewModelはMiddlewareに依存できません。"
@@ -212,6 +216,36 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "apipaginationはTemplatesに依存できません。JSONで応答してください。"
 
+        # API条件付きリクエストヘルパー層のルール: 他の層へ依存せず、`If-Match` と `If-None-Match` をETagと照合する
+        apietag-layer:
+          files:
+            - "**/internal/apietag/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/query
+              desc: "apietagはQueryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/repository
+              desc: "apietagはRepositoryに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/dispatcher
+              desc: "apietagはDispatcherに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/policy
+              desc: "apietagはPolicyに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/usecase
+              desc: "apietagはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/validator
+              desc: "apietagはApplication層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/handler
+              desc: "apietagはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apigen
+              desc: "apietagはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apihandler
+              desc: "apietagはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/middleware
+              desc: "apietagはMiddlewareに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/worker
+              desc: "apietagはWorkerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/templates
+              desc: "apietagはTemplatesに依存できません。JSONで応答してください。"
+
         # HTTPエラーヘルパー層のルール: 他の層へ依存せず、共通のエラーレスポンスを描画する
         # templates, i18nへの依存は許可
         httperror-layer:
@@ -241,6 +275,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/apierror
               desc: "httperrorはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
+              desc: "httperrorはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
               desc: "httperrorはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "httperrorはMiddlewareに依存できません。"
@@ -297,6 +333,8 @@ linters:
               desc: "Application層はPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
               desc: "Application層はPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
+              desc: "Application層はPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "Application層はPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
@@ -325,6 +363,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/apierror
               desc: "EmailはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
+              desc: "EmailはHandlerに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
               desc: "EmailはHandlerに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "EmailはMiddlewareに依存できません。"
@@ -363,6 +403,8 @@ linters:
               desc: "ModelはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
               desc: "ModelはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
+              desc: "ModelはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "ModelはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
@@ -392,6 +434,8 @@ linters:
               desc: "PolicyはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
               desc: "PolicyはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
+              desc: "PolicyはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "PolicyはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
@@ -420,6 +464,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/apierror
               desc: "MarkupはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
+              desc: "MarkupはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
               desc: "MarkupはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "MarkupはPresentation層に依存できません。"
@@ -456,6 +502,8 @@ linters:
               desc: "ExportfileはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
               desc: "ExportfileはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
+              desc: "ExportfileはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "ExportfileはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
@@ -480,6 +528,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/apierror
               desc: "RepositoryはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
+              desc: "RepositoryはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
               desc: "RepositoryはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "RepositoryはPresentation層に依存できません。"
@@ -510,6 +560,8 @@ linters:
               desc: "QueryはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
               desc: "QueryはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
+              desc: "QueryはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "QueryはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
@@ -534,6 +586,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/apierror
               desc: "WorkerはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
+              desc: "WorkerはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
               desc: "WorkerはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "WorkerはPresentation層に依存できません。"
@@ -563,6 +617,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/apierror
               desc: "DispatcherはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
+              desc: "DispatcherはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
               desc: "DispatcherはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "DispatcherはPresentation層に依存できません。"
@@ -602,6 +658,8 @@ linters:
               desc: "StorageはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
               desc: "StorageはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
+              desc: "StorageはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "StorageはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
@@ -639,6 +697,8 @@ linters:
               desc: "RateLimitはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
               desc: "RateLimitはPresentation層に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
+              desc: "RateLimitはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "RateLimitはPresentation層に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/viewmodel
@@ -671,6 +731,8 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/apierror
               desc: "authはPresentation層 (handler) に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/apipagination
+              desc: "authはPresentation層 (handler) に依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/apietag
               desc: "authはPresentation層 (handler) に依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/middleware
               desc: "authはPresentation層 (middleware) に依存できません。"

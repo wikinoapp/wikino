@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// GetAPISpaceUsecaseは、公開APIでトークンを束縛したスペースを取得するユースケース
+// GetAPISpaceUsecaseは、公開APIでトークンが属するスペースを取得するユースケース
 type GetAPISpaceUsecase struct{}
 
 // NewGetAPISpaceUsecaseはGetAPISpaceUsecaseを生成する
@@ -26,7 +26,7 @@ type GetAPISpaceOutput struct {
 	Space *model.Space
 }
 
-// Executeはパスのスペースがトークンの束縛先であればそのスペースを返す
+// Executeはパスのスペースにトークンが属していればそのスペースを返す
 func (uc *GetAPISpaceUsecase) Execute(ctx context.Context, input GetAPISpaceInput) (*GetAPISpaceOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {
@@ -35,9 +35,9 @@ func (uc *GetAPISpaceUsecase) Execute(ctx context.Context, input GetAPISpaceInpu
 	return &GetAPISpaceOutput{Space: space}, nil
 }
 
-// resolveAPISpaceは公開APIのパスで指定されたスペースを、トークンの束縛先として解決する。
-// 束縛先と異なるスペースは、存在を秘匿するため未存在として扱う。
-// 束縛先のスペースはトークン認証の時点で削除済みでないことを確かめてあるため、ここではDBを引かない
+// resolveAPISpaceは公開APIのパスで指定されたスペースを、トークンが属するスペースとして解決する。
+// トークンが属さないスペースは、存在を秘匿するため未存在として扱う。
+// トークンが属するスペースはトークン認証の時点で削除済みでないことを確かめてあるため、ここではDBを引かない
 func resolveAPISpace(ctx context.Context, principal *model.APIPrincipal, identifier model.SpaceIdentifier) (*model.Space, error) {
 	if !principal.IsBoundTo(identifier) {
 		return nil, &model.AppError{

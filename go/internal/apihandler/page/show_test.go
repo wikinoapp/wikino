@@ -24,7 +24,7 @@ func TestHandler_GetPage(t *testing.T) {
 			Params:          apigen.GetPageParams{IfNoneMatch: ifNoneMatch},
 		})
 		if err != nil {
-			t.Fatalf("GetPage() error = %v", err)
+			t.Fatalf("GetPage()のエラー = %v", err)
 		}
 		return res
 	}
@@ -44,6 +44,9 @@ func TestHandler_GetPage(t *testing.T) {
 		res := get200(t, 2, nil)
 		if res.Body.Number != 2 || res.Body.TopicNumber != 1 || res.Body.Title == nil || *res.Body.Title != "ページ2" || res.Body.Body != "本文2" {
 			t.Errorf("ページ = %+v", res.Body)
+		}
+		if res.Body.Status != apigen.PageStatusPublished {
+			t.Errorf("Status = %q、期待値 = %q", res.Body.Status, apigen.PageStatusPublished)
 		}
 		if len(res.Headers.ETag) < 3 || res.Headers.ETag[0] != '"' || res.Headers.ETag[len(res.Headers.ETag)-1] != '"' {
 			t.Errorf("ETag = %q、期待値 = 引用符で囲んだ強いエンティティタグ", res.Headers.ETag)
@@ -102,6 +105,25 @@ func TestHandler_GetPage(t *testing.T) {
 		}
 		if res.Body.Body != "本文2" {
 			t.Errorf("Body = %q、期待値 = 本文2", res.Body.Body)
+		}
+	})
+
+	t.Run("未公開のページはstatusをunpublishedにして返し、公開状態が変わればETagも変わる", func(t *testing.T) {
+		publishedETag := get200(t, 2, nil).Headers.ETag
+		spaceID := middleware.APIPrincipalFromContext(ctx).Space.ID
+		if _, err := tx.ExecContext(ctx,
+			"UPDATE pages SET published_at = NULL WHERE space_id = $1 AND number = $2",
+			spaceID, 2,
+		); err != nil {
+			t.Fatalf("公開状態の変更に失敗: %v", err)
+		}
+
+		res := get200(t, 2, &publishedETag)
+		if res.Body.Status != apigen.PageStatusUnpublished {
+			t.Errorf("Status = %q、期待値 = %q", res.Body.Status, apigen.PageStatusUnpublished)
+		}
+		if res.Headers.ETag == publishedETag {
+			t.Errorf("ETag = %q、期待値 = 公開済みのときとは別の値", res.Headers.ETag)
 		}
 	})
 

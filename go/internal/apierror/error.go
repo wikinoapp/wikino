@@ -23,6 +23,8 @@ const ContentType = "application/problem+json"
 const (
 	// ProblemTypeValidationFailedはリクエストの内容がスキーマや業務ルールに反することを表す
 	ProblemTypeValidationFailed = "validation-failed"
+	// ProblemTypeAlreadyExistsは作成しようとしたリソースがすでにあることを表す
+	ProblemTypeAlreadyExists = "already-exists"
 )
 
 // problemTypeAboutBlankはステータスコード以上の情報を持たない問題タイプ (RFC 9457 §4.2.1)
@@ -139,7 +141,7 @@ func (pw *Writer) Forbidden(w http.ResponseWriter, r *http.Request, challenge Be
 
 // resourceMetadataURLは、401・403の `WWW-Authenticate` の `resource_metadata` に載せる、
 // リクエストのパスのスペースの保護リソースのメタデータのURLを返す。
-// トークンはスペースに束縛され、保護リソース (RFC 8707の `resource`) はスペースのAPIのため、
+// トークンはスペースに属し、保護リソース (RFC 8707の `resource`) はスペースのAPIのため、
 // スペースに属さないパス (`/api/v1/openapi.yaml` など) では指す先が無く、空を返して付けない
 func (pw *Writer) resourceMetadataURL(r *http.Request) string {
 	identifier, ok := model.SpaceIdentifierFromAPIPath(r.URL.EscapedPath())
@@ -165,6 +167,18 @@ func (pw *Writer) Conflict(w http.ResponseWriter, r *http.Request, detail string
 	pw.write(w, r, Problem{
 		Type:   problemTypeAboutBlank,
 		Title:  http.StatusText(http.StatusConflict),
+		Status: http.StatusConflict,
+		Detail: &detail,
+	})
+}
+
+// AlreadyExistsは、作成しようとしたリソースがすでにあるときに409を書き込む。
+// ほかの競合 (Conflict) と区別できるよう、問題タイプを `already-exists` にする。
+// detailには、すでにあるリソースを読む方法を書く
+func (pw *Writer) AlreadyExists(w http.ResponseWriter, r *http.Request, detail string) {
+	pw.write(w, r, Problem{
+		Type:   pw.problemTypeBaseURL + ProblemTypeAlreadyExists,
+		Title:  "Already Exists",
 		Status: http.StatusConflict,
 		Detail: &detail,
 	})
@@ -235,7 +249,7 @@ func (pw *Writer) ServiceUnavailable(w http.ResponseWriter, r *http.Request, ret
 // WriteErrorはUseCaseが返したエラーをProblem Detailsに変換して書き込む。
 //   - *ParameterError・*model.ValidationError: 422
 //   - ErrPreconditionRequired: 428
-//   - *model.AppError: 未存在と権限不足は404 (リソースの存在を秘匿する)、競合は409、前提の不一致は412 (どちらもUserMsgをdetailにする)、それ以外は500
+//   - *model.AppError: 未存在と権限不足は404 (リソースの存在を秘匿する)、競合と既存は409、前提の不一致は412 (いずれもUserMsgをdetailにする)、それ以外は500
 //   - それ以外のエラー: 500
 func (pw *Writer) WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
@@ -263,6 +277,8 @@ func (pw *Writer) WriteError(w http.ResponseWriter, r *http.Request, err error) 
 			pw.NotFound(w, r)
 		case model.AppErrCodeConflict:
 			pw.Conflict(w, r, ae.UserMsg)
+		case model.AppErrCodeAlreadyExists:
+			pw.AlreadyExists(w, r, ae.UserMsg)
 		case model.AppErrCodePreconditionFailed:
 			pw.PreconditionFailed(w, r, ae.UserMsg)
 		default:
@@ -301,7 +317,8 @@ func (pw *Writer) write(w http.ResponseWriter, r *http.Request, problem Problem)
 }
 
 // validationFieldErrorsは *model.ValidationErrorを、フィールド名の順に並べたFieldErrorへ変換する。
-// フィールド名はリクエスト本文のキーとしてJSON Pointerにする
+// フィールド名はリクエスト本文のキーとしてJSON Pointerにする。
+// 入れ子の項目は `/` で区切ったフィールド名 (例: `edits/2/old_str`) で表し、区切りごとのキーにする
 func validationFieldErrors(ve *model.ValidationError) []FieldError {
 	errs := make([]FieldError, 0, len(ve.Global)+len(ve.Fields))
 	for _, message := range ve.Global {
@@ -314,7 +331,7 @@ func validationFieldErrors(ve *model.ValidationError) []FieldError {
 	}
 	slices.Sort(fields)
 	for _, field := range fields {
-		pointer := JSONPointer(field)
+		pointer := JSONPointer(strings.Split(field, "/")...)
 		for _, message := range ve.Fields[field] {
 			errs = append(errs, FieldError{Detail: message, Pointer: &pointer})
 		}

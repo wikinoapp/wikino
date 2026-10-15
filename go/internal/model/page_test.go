@@ -11,7 +11,8 @@ func TestPage_ContentDigest(t *testing.T) {
 	t.Parallel()
 
 	title := "タイトル"
-	base := model.Page{ID: "page-1", TopicID: "topic-1", Title: &title, Body: "本文", ModifiedAt: time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)}
+	publishedAt := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
+	base := model.Page{ID: "page-1", TopicID: "topic-1", Title: &title, Body: "本文", ModifiedAt: time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC), PublishedAt: &publishedAt}
 
 	otherTitle := "別のタイトル"
 	tests := []struct {
@@ -68,6 +69,24 @@ func TestPage_ContentDigest(t *testing.T) {
 				p.ModifiedAt = p.ModifiedAt.Add(time.Second)
 				return p
 			}(),
+		},
+		{
+			name: "内容が同じでも公開状態が違えば別の値",
+			page: func() model.Page {
+				p := base
+				p.PublishedAt = nil
+				return p
+			}(),
+		},
+		{
+			name: "公開日時が違うだけなら同じ値",
+			page: func() model.Page {
+				p := base
+				otherPublishedAt := time.Date(2026, 9, 2, 12, 0, 0, 0, time.UTC)
+				p.PublishedAt = &otherPublishedAt
+				return p
+			}(),
+			wantSame: true,
 		},
 		{
 			name: "項目の境界をずらしても同じ値にならない",

@@ -100,8 +100,8 @@ type PageCreateValidatorInput struct {
 
 // Validateはバリデーションを行う。
 // 戻り値の *model.PageIDは未公開かつ本文が空の競合ページのID (存在する場合)。
-// このページはWikiリンクの自動作成などで作られた中身の無いページで、Web画面の公開と同じく
-// 呼び出し側で論理削除して置き換える
+// このページはWikiリンクの自動作成などで作られた中身の無いページで、呼び出し側でそのページに
+// 本文を書いて公開する (ゴミ箱に入っているページは論理削除して置き換える)
 func (v *PageCreateValidator) Validate(ctx context.Context, input PageCreateValidatorInput) (*model.PageID, error) {
 	ve := model.NewValidationError()
 
@@ -149,7 +149,7 @@ type APIPageUpdateValidatorInput struct {
 
 // Validateはバリデーションを行う。
 // 戻り値の *model.PageIDは未公開かつ本文が空の競合ページのID (存在する場合)。
-// PageCreateValidatorと同じく、呼び出し側で論理削除して置き換える
+// 呼び出し側で競合する未公開ページを論理削除して置き換える
 func (v *APIPageUpdateValidator) Validate(ctx context.Context, input APIPageUpdateValidatorInput) (*model.PageID, error) {
 	ve := model.NewValidationError()
 

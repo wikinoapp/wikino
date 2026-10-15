@@ -124,7 +124,7 @@ func TestCreateAPIPageUsecase_Execute(t *testing.T) {
 		Body:            body,
 	})
 	if err != nil {
-		t.Fatalf("Execute() error = %v", err)
+		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
 	page := output.Page
@@ -217,7 +217,7 @@ func TestCreateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
-			name:        "束縛先と異なるスペースは未存在",
+			name:        "トークンが属さないスペースは未存在",
 			memberRole:  apiTopicRegularMemberRole,
 			tokenScopes: writeScopes,
 			identifier:  "api-page-create-auth-other",
@@ -252,11 +252,11 @@ func TestCreateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 				}
 			case tt.wantCode != 0:
 				if ae := model.AsAppError(err); ae == nil || ae.Code != tt.wantCode {
-					t.Errorf("error = %v、期待値 = AppErrorCode %d", err, tt.wantCode)
+					t.Errorf("エラー = %v、期待値 = AppErrorCode %d", err, tt.wantCode)
 				}
 			default:
 				if err != nil {
-					t.Fatalf("Execute() error = %v", err)
+					t.Fatalf("Execute()のエラー = %v", err)
 				}
 				if output.Page.TopicID != f.topicIDs[tt.topicNumber] {
 					t.Errorf("TopicID = %s、期待値 = %s", output.Page.TopicID, f.topicIDs[tt.topicNumber])
@@ -269,6 +269,128 @@ func TestCreateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 			}
 			if n := countRows(t, db, "pages", f.space.ID, ""); n != 0 {
 				t.Errorf("ページの数 = %d、期待値 = 0", n)
+			}
+		})
+	}
+}
+
+// TestCreateAPIPageUsecase_Execute_TopicMemberScopeは、スペースのロールではpage:writeを持たないメンバーが、
+// トピックメンバーとして持つpage:writeで作成できるのはそのトピックだけであることを確かめる。
+// フィクスチャのメンバーはトピック2にだけトピック編集者として参加している
+func TestCreateAPIPageUsecase_Execute_TopicMemberScope(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		tokenScopes []model.Scope
+		topicNumber int32
+		wantCode    model.AppErrorCode
+	}{
+		{
+			name:        "トピック編集者として参加しているトピックには作成できる",
+			tokenScopes: []model.Scope{model.ScopePageWrite, model.ScopeTopicRead},
+			topicNumber: 2,
+		},
+		{
+			name:        "参加していないトピックには作成できない",
+			tokenScopes: []model.Scope{model.ScopePageWrite, model.ScopeTopicRead},
+			topicNumber: 1,
+			wantCode:    model.AppErrCodeForbidden,
+		},
+		{
+			name:        "トークンがpage:writeを持たなければ、参加しているトピックにも作成できない",
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			topicNumber: 2,
+			wantCode:    model.AppErrCodeForbidden,
+		},
+	}
+
+	db := testutil.GetTestDB()
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := setupCreateAPIPageFixture(t, db, "api-page-create-topic-member-"+string(rune('a'+i)), model.SpaceRoleViewer)
+
+			output, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
+				Principal:       f.principal(model.SpaceRoleViewer, tt.tokenScopes),
+				SpaceIdentifier: f.space.Identifier,
+				TopicNumber:     tt.topicNumber,
+				Title:           "ページ",
+				Body:            "本文",
+			})
+
+			if tt.wantCode == 0 {
+				if err != nil {
+					t.Fatalf("Execute()のエラー = %v", err)
+				}
+				if output.Page.TopicID != f.topicIDs[tt.topicNumber] {
+					t.Errorf("TopicID = %s、期待値 = %s", output.Page.TopicID, f.topicIDs[tt.topicNumber])
+				}
+				return
+			}
+
+			if ae := model.AsAppError(err); ae == nil || ae.Code != tt.wantCode {
+				t.Errorf("エラー = %v、期待値 = AppErrorCode %d", err, tt.wantCode)
+			}
+			if n := countRows(t, db, "pages", f.space.ID, ""); n != 0 {
+				t.Errorf("ページの数 = %d、期待値 = 0", n)
+			}
+		})
+	}
+}
+
+func TestCreateAPIPageUsecase_Execute_MaxTopicRole(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	tokenScopes := []model.Scope{model.ScopePageWrite, model.ScopeTopicRead}
+
+	tests := []struct {
+		name         string
+		maxTopicRole *model.TopicRole
+		wantCode     model.AppErrorCode
+	}{
+		{name: "上限が無ければ、閲覧者もトピック編集者として参加している非公開トピックに作成できる"},
+		{name: "上限がトピック閲覧者なら、トピック編集者として参加していても作成できない", maxTopicRole: new(model.TopicRoleViewer), wantCode: model.AppErrCodeForbidden},
+	}
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := setupCreateAPIPageFixture(t, db, "api-page-create-max-"+string(rune('a'+i)), model.SpaceRoleViewer)
+			if tt.maxTopicRole != nil {
+				if _, err := db.ExecContext(t.Context(),
+					"UPDATE space_members SET max_topic_role = $1 WHERE id = $2 AND space_id = $3",
+					string(*tt.maxTopicRole), f.spaceMemberID, f.space.ID,
+				); err != nil {
+					t.Fatalf("上限の設定に失敗: %v", err)
+				}
+			}
+
+			// 本番の主体と同じく、スペースメンバーはRepositoryから読んだものを使う
+			members, err := repository.NewSpaceMemberRepository(query.New(db)).FindByIDs(t.Context(), []model.SpaceMemberID{f.spaceMemberID}, f.space.ID)
+			if err != nil || len(members) != 1 {
+				t.Fatalf("スペースメンバーの読み込みに失敗: members = %v, err = %v", members, err)
+			}
+			principal := f.principal(model.SpaceRoleViewer, tokenScopes)
+			principal.SpaceMember = members[0]
+
+			_, err = newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
+				Principal:       principal,
+				SpaceIdentifier: f.space.Identifier,
+				TopicNumber:     2,
+				Title:           "ページ",
+				Body:            "本文",
+			})
+			if tt.wantCode == 0 {
+				if err != nil {
+					t.Fatalf("Execute()のエラー = %v", err)
+				}
+				return
+			}
+			if ae := model.AsAppError(err); ae == nil || ae.Code != tt.wantCode {
+				t.Errorf("エラー = %v、期待値 = AppErrorCode %d", err, tt.wantCode)
 			}
 		})
 	}
@@ -315,11 +437,11 @@ func TestCreateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 			Title:           "重複",
 			Body:            "本文",
 		}); err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
 	})
 
-	t.Run("Wikiリンクで作られた中身の無い未公開のページは論理削除して置き換える", func(t *testing.T) {
+	t.Run("Wikiリンクで作られた中身の無い未公開のページに本文を書いて公開する", func(t *testing.T) {
 		t.Parallel()
 
 		f := setupCreateAPIPageFixture(t, db, "api-page-create-linked", memberRole)
@@ -334,15 +456,209 @@ func TestCreateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 			Body:            "本文",
 		})
 		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
+			t.Fatalf("Execute()のエラー = %v", err)
 		}
-		if output.Page.ID == linkedID || output.Page.Number != 2 {
-			t.Errorf("ページ = %+v、期待値 = 番号2の新しいページ", output.Page)
+		if output.Page.ID != linkedID || output.Page.Number != 1 {
+			t.Errorf("ページ = %+v、期待値 = 番号1の既存のページ", output.Page)
 		}
-		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND discarded_at IS NOT NULL", linkedID); n != 1 {
-			t.Error("未公開のページが論理削除されていない")
+		if output.Page.PublishedAt == nil || output.Page.Body != "本文" {
+			t.Errorf("ページ = %+v、期待値 = 本文を書いて公開したページ", output.Page)
+		}
+		if n := countRows(t, db, "pages", f.space.ID, ""); n != 1 {
+			t.Errorf("ページの数 = %d、期待値 = 1", n)
+		}
+		if n := countRows(t, db, "page_revisions", f.space.ID, "page_id = $2", linkedID); n != 1 {
+			t.Errorf("リビジョンの数 = %d、期待値 = 1", n)
 		}
 	})
+
+	t.Run("ゴミ箱にある中身の無い未公開のページは論理削除して新しいページを作る", func(t *testing.T) {
+		t.Parallel()
+
+		f := setupCreateAPIPageFixture(t, db, "api-page-create-trashed", memberRole)
+		trashedID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
+			WithTitle("リンク先").WithBody("").WithUnpublished().Build()
+		if _, err := db.ExecContext(t.Context(), "UPDATE pages SET trashed_at = now() WHERE id = $1 AND space_id = $2", trashedID, f.space.ID); err != nil {
+			t.Fatalf("ページをゴミ箱に入れる: %v", err)
+		}
+
+		output, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
+			Principal:       f.principal(memberRole, tokenScopes),
+			SpaceIdentifier: f.space.Identifier,
+			TopicNumber:     1,
+			Title:           "リンク先",
+			Body:            "本文",
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if output.Page.ID == trashedID || output.Page.Number != 2 || output.Page.TrashedAt != nil {
+			t.Errorf("ページ = %+v、期待値 = ゴミ箱に入っていない番号2の新しいページ", output.Page)
+		}
+		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND discarded_at IS NOT NULL", trashedID); n != 1 {
+			t.Error("ゴミ箱の未公開のページが論理削除されていない")
+		}
+	})
+}
+
+// TestCreateAPIPageUsecase_ExecuteWithCaseInsensitiveTitleは、検証とロック後の同名判定が
+// DBのcitextの比較に揃い、大文字・小文字だけ異なる未公開ページも扱えることを確かめる。
+func TestCreateAPIPageUsecase_ExecuteWithCaseInsensitiveTitle(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	memberRole := apiTopicRegularMemberRole
+	for _, tt := range []struct {
+		name       string
+		identifier string
+		trashed    bool
+	}{
+		{name: "ゴミ箱にない未公開ページは同じIDと番号で公開する", identifier: "api-page-case-linked"},
+		{name: "ゴミ箱にある未公開ページは論理削除して新しく作る", identifier: "api-page-case-trashed", trashed: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := setupCreateAPIPageFixture(t, db, tt.identifier, memberRole)
+			pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
+				WithTitle("LinkedPage").WithBody("").WithUnpublished().Build()
+			if tt.trashed {
+				if _, err := db.ExecContext(t.Context(), "UPDATE pages SET trashed_at = now() WHERE id = $1 AND space_id = $2", pageID, f.space.ID); err != nil {
+					t.Fatalf("ページをゴミ箱に入れる: %v", err)
+				}
+			}
+
+			output, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
+				Principal:       f.principal(memberRole, []model.Scope{model.ScopePageWrite}),
+				SpaceIdentifier: f.space.Identifier,
+				TopicNumber:     1,
+				Title:           "linkedpage",
+				Body:            "本文",
+			})
+			if err != nil {
+				t.Fatalf("Execute()のエラー = %v", err)
+			}
+			if output.Page.PublishedAt == nil || output.Page.Body != "本文" || output.Page.Title == nil || *output.Page.Title != "linkedpage" || output.Page.TrashedAt != nil {
+				t.Errorf("ページ = %+v、期待値 = 入力のタイトルと本文で公開したページ", output.Page)
+			}
+			if tt.trashed {
+				if output.Page.ID == pageID || output.Page.Number != 2 {
+					t.Errorf("ページ = %+v、期待値 = 番号2の新しいページ", output.Page)
+				}
+				if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND discarded_at IS NOT NULL", pageID); n != 1 {
+					t.Error("ゴミ箱の未公開ページが論理削除されていない")
+				}
+			} else {
+				if output.Page.ID != pageID || output.Page.Number != 1 {
+					t.Errorf("ページ = %+v、期待値 = 番号1の既存ページ", output.Page)
+				}
+				if n := countRows(t, db, "pages", f.space.ID, ""); n != 1 {
+					t.Errorf("ページの数 = %d、期待値 = 1", n)
+				}
+			}
+		})
+	}
+}
+
+// TestCreateAPIPageUsecase_ExecuteForLinkedPageは、Wikiリンクで自動作成されたページのタイトルで
+// 作成したときに、リンク元とリンク先が互いのリンク一覧とバックリンクに含まれ続けることと、
+// リンク先にある他のスペースメンバーの下書きに触れず、公開したメンバーの最終編集日時を更新することを確かめる。
+func TestCreateAPIPageUsecase_ExecuteForLinkedPage(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	memberRole := apiTopicRegularMemberRole
+	f := setupCreateAPIPageFixture(t, db, "api-page-create-link-back", memberRole)
+	uc := newCreateAPIPageUC(db)
+	principal := f.principal(memberRole, []model.Scope{model.ScopePageWrite})
+
+	source, err := uc.Execute(t.Context(), CreateAPIPageInput{
+		Principal:       principal,
+		SpaceIdentifier: f.space.Identifier,
+		TopicNumber:     1,
+		Title:           "リンク元",
+		Body:            "[[リンク先]]",
+	})
+	if err != nil {
+		t.Fatalf("リンク元の作成のエラー = %v", err)
+	}
+	if len(source.Page.LinkedPageIDs) != 1 {
+		t.Fatalf("リンク元のLinkedPageIDs = %v、期待値 = 自動作成されたリンク先1件", source.Page.LinkedPageIDs)
+	}
+	linkedID := source.Page.LinkedPageIDs[0]
+	var linkedNumber model.PageNumber
+	if err := db.QueryRowContext(t.Context(), "SELECT number FROM pages WHERE id = $1 AND space_id = $2", linkedID, f.space.ID).
+		Scan(&linkedNumber); err != nil {
+		t.Fatalf("リンク先の番号の取得: %v", err)
+	}
+
+	pageEditorRepo := repository.NewPageEditorRepository(query.New(db))
+	editorInput := repository.FindByPageAndSpaceMemberInput{
+		SpaceID:       f.space.ID,
+		PageID:        linkedID,
+		SpaceMemberID: f.spaceMemberID,
+	}
+	editorBefore, err := pageEditorRepo.FindByPageAndSpaceMember(t.Context(), editorInput)
+	if err != nil {
+		t.Fatalf("公開前の編集者の取得: %v", err)
+	}
+	// 自動作成から公開までの時間の差を固定し、実行速度やDBの日時精度に依存せず更新を検証する。
+	oldModifiedAt := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	if _, err := pageEditorRepo.UpdateLastPageModifiedAt(t.Context(), repository.UpdateLastPageModifiedAtInput{
+		ID:                 editorBefore.ID,
+		SpaceID:            f.space.ID,
+		LastPageModifiedAt: oldModifiedAt,
+	}); err != nil {
+		t.Fatalf("公開前の編集者日時の設定: %v", err)
+	}
+
+	otherUserID := testutil.NewUserBuilderDB(t, db).WithAtname("api_page_create_link_back_other").
+		WithEmail("api_page_create_link_back_other@example.com").Build()
+	otherMemberID := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(f.space.ID).WithUserID(otherUserID).
+		WithRole(memberRole).Build()
+	testutil.NewDraftPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithPageID(linkedID).
+		WithSpaceMemberID(otherMemberID).WithTitle("リンク先").WithBody("他のメンバーの下書き").Build()
+
+	target, err := uc.Execute(t.Context(), CreateAPIPageInput{
+		Principal:       principal,
+		SpaceIdentifier: f.space.Identifier,
+		TopicNumber:     1,
+		Title:           "リンク先",
+		Body:            "[[リンク元]]",
+	})
+	if err != nil {
+		t.Fatalf("リンク先の作成のエラー = %v", err)
+	}
+
+	editorAfter, err := pageEditorRepo.FindByPageAndSpaceMember(t.Context(), editorInput)
+	if err != nil {
+		t.Fatalf("公開後の編集者の取得: %v", err)
+	}
+	if editorAfter.ID != editorBefore.ID || !editorAfter.LastPageModifiedAt.Equal(target.Page.ModifiedAt) {
+		t.Errorf("編集者 = %+v、期待値 = IDを保ち最終編集日時を%vに更新", editorAfter, target.Page.ModifiedAt)
+	}
+
+	if target.Page.ID != linkedID || target.Page.Number != linkedNumber {
+		t.Errorf("リンク先 = (%s, %d)、期待値 = (%s, %d)", target.Page.ID, target.Page.Number, linkedID, linkedNumber)
+	}
+	if len(target.Page.LinkedPageIDs) != 1 || target.Page.LinkedPageIDs[0] != source.Page.ID {
+		t.Errorf("リンク先のLinkedPageIDs = %v、期待値 = [%s]", target.Page.LinkedPageIDs, source.Page.ID)
+	}
+	if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND $3::varchar = ANY(linked_page_ids)", source.Page.ID, linkedID); n != 1 {
+		t.Error("リンク元のリンク一覧にリンク先が含まれていない")
+	}
+
+	backlinks, err := repository.NewPageRepository(query.New(db)).FindBacklinkedByPageID(t.Context(), linkedID, f.space.ID)
+	if err != nil {
+		t.Fatalf("バックリンクの取得: %v", err)
+	}
+	if len(backlinks) != 1 || backlinks[0].ID != source.Page.ID {
+		t.Errorf("リンク先のバックリンク = %v、期待値 = リンク元1件", backlinks)
+	}
+
+	if n := countRows(t, db, "draft_pages", f.space.ID, "page_id = $2 AND space_member_id = $3 AND body = $4", linkedID, otherMemberID, "他のメンバーの下書き"); n != 1 {
+		t.Errorf("他のスペースメンバーの下書きの数 = %d、期待値 = 1", n)
+	}
 }
 
 // TestCreateAPIPageUsecase_ExecuteConcurrentlyは、同じスペースへ異なるタイトルのページを
@@ -481,8 +797,8 @@ func TestCreateAPIPageUsecase_ExecuteWithWebConflict(t *testing.T) {
 		wantNumber   model.PageNumber
 		// wantLinkedToWebはAPIのページのリンク先がWeb側のページになること
 		wantLinkedToWeb bool
-		// wantWebDiscardedはWeb側のページが論理削除されて置き換えられること
-		wantWebDiscarded bool
+		// wantWebPageはAPIがWeb側のページに本文を書いて公開すること
+		wantWebPage bool
 	}{
 		{
 			// 番号2はAPI自身のページに使わせ、リンク先が採番する番号3で競合させる
@@ -512,13 +828,13 @@ func TestCreateAPIPageUsecase_ExecuteWithWebConflict(t *testing.T) {
 			wantTitleErr: true,
 		},
 		{
-			name:             "中身の無い未公開ページとのタイトルの競合は置き換える",
-			webNumber:        100,
-			webTitle:         "APIのページ",
-			apiTitle:         "APIのページ",
-			apiBody:          "本文",
-			wantNumber:       101,
-			wantWebDiscarded: true,
+			name:        "中身の無い未公開ページとのタイトルの競合はそのページを公開する",
+			webNumber:   100,
+			webTitle:    "APIのページ",
+			apiTitle:    "APIのページ",
+			apiBody:     "本文",
+			wantNumber:  100,
+			wantWebPage: true,
 		},
 	}
 
@@ -582,16 +898,18 @@ func TestCreateAPIPageUsecase_ExecuteWithWebConflict(t *testing.T) {
 			if tt.wantLinkedToWeb && (len(page.LinkedPageIDs) != 1 || page.LinkedPageIDs[0] != webPageID) {
 				t.Errorf("LinkedPageIDs = %v、期待値 = [%s]", page.LinkedPageIDs, webPageID)
 			}
-			discarded := countRows(t, db, "pages", f.space.ID, "id = $2 AND discarded_at IS NOT NULL", webPageID) == 1
-			if discarded != tt.wantWebDiscarded {
-				t.Errorf("Web側のページの論理削除 = %t、期待値 = %t", discarded, tt.wantWebDiscarded)
+			if (page.ID == webPageID) != tt.wantWebPage {
+				t.Errorf("APIのページのID = %s、Web側のページのID = %s、Web側のページの公開 = %t", page.ID, webPageID, tt.wantWebPage)
+			}
+			if n := countRows(t, db, "pages", f.space.ID, "discarded_at IS NOT NULL"); n != 0 {
+				t.Errorf("論理削除されたページの数 = %d、期待値 = 0", n)
 			}
 		})
 	}
 }
 
 // TestCreateAPIPageUsecase_ExecuteWhenReplacementIsPublishedは、APIが空の未公開ページを
-// 置き換えると判断した後にWeb画面が公開しても、そのページを論理削除しないことを確かめる。
+// 公開すると判断した後にWeb画面が公開しても、そのページを上書きせず、タイトルの重複になることを確かめる。
 func TestCreateAPIPageUsecase_ExecuteWhenReplacementIsPublished(t *testing.T) {
 	t.Parallel()
 
@@ -617,10 +935,10 @@ func TestCreateAPIPageUsecase_ExecuteWhenReplacementIsPublished(t *testing.T) {
 		Body:            "API側の本文",
 	})
 
-	// 条件付き更新がWeb側のページ行を待ったことを確認してから公開を確定する
+	// ページ行のロックがWeb側のページ行を待ったことを確認してから公開を確定する
 	waitCtx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
-	waitUntilBlockedBy(t, waitCtx, db, webPID, "DiscardEmptyUnpublishedPageByID", resultCh)
+	waitUntilBlockedBy(t, waitCtx, db, webPID, "FindPageByIDForUpdate", resultCh)
 
 	if err := webTx.Commit(); err != nil {
 		t.Fatalf("Web側トランザクションのコミット: %v", err)

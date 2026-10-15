@@ -28,10 +28,11 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		spaceRole model.SpaceRole
-		topicRole model.TopicRole
-		want      want
+		name         string
+		spaceRole    model.SpaceRole
+		topicRole    model.TopicRole
+		maxTopicRole model.TopicRole
+		want         want
 	}{
 		{
 			name:      "管理者はすべての操作ができる",
@@ -77,6 +78,37 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 				createComment: true, deleteDraft: true,
 			},
 		},
+		{
+			name:         "上限がトピック閲覧者なら、閲覧者にトピック管理者を付けてもページを書けない",
+			spaceRole:    model.SpaceRoleViewer,
+			topicRole:    model.TopicRoleAdmin,
+			maxTopicRole: model.TopicRoleViewer,
+			want: want{
+				showPrivateTopic: true, createSuggestion: true, createPAT: true, createComment: true,
+			},
+		},
+		{
+			name:         "上限がトピック編集者なら、編集者にトピック管理者を付けても公開範囲を変えられない",
+			spaceRole:    model.SpaceRoleEditor,
+			topicRole:    model.TopicRoleAdmin,
+			maxTopicRole: model.TopicRoleEditor,
+			want: want{
+				showPrivateTopic: true, createTopic: true, createPage: true, trashPage: true,
+				applySuggestion: true, createSuggestion: true, createPAT: true,
+				createComment: true, deleteDraft: true,
+			},
+		},
+		{
+			name:         "スペースのロールは上限で削られない",
+			spaceRole:    model.SpaceRoleAdmin,
+			topicRole:    model.TopicRoleViewer,
+			maxTopicRole: model.TopicRoleViewer,
+			want: want{
+				showPrivateTopic: true, createTopic: true, updateVisibility: true, createPage: true, trashPage: true,
+				applySuggestion: true, createSuggestion: true, updateSpace: true, createPAT: true, showOAuthApps: true,
+				createComment: true, deleteDraft: true,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -84,6 +116,9 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 			t.Parallel()
 
 			spaceMember := &model.SpaceMember{Role: tt.spaceRole}
+			if tt.maxTopicRole != "" {
+				spaceMember.MaxTopicRole = &tt.maxTopicRole
+			}
 			var topicMember *model.TopicMember
 			if tt.topicRole != "" {
 				topicMember = &model.TopicMember{Role: tt.topicRole}
@@ -108,6 +143,37 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 				t.Errorf("判定が期待と異なる\n得られた値: %+v\n期待した値: %+v", got, tt.want)
 			}
 		})
+	}
+}
+
+// 下書きの参照・保存の判定をpage:writeからdraft_page:*へ切り替えても、どのロールの組み合わせでも
+// 結果が変わらないことを確かめる。Web画面の下書きの操作の挙動を保つための前提である
+func TestNewAuthorizer_DraftPageMatchesPageUpdate(t *testing.T) {
+	t.Parallel()
+
+	topicRoles := append([]model.TopicRole{""}, model.TopicRoles...)
+	for _, spaceRole := range model.SpaceRoles {
+		for _, topicRole := range topicRoles {
+			for _, maxTopicRole := range topicRoles {
+				spaceMember := &model.SpaceMember{Role: spaceRole}
+				if maxTopicRole != "" {
+					spaceMember.MaxTopicRole = &maxTopicRole
+				}
+				var topicMember *model.TopicMember
+				if topicRole != "" {
+					topicMember = &model.TopicMember{Role: topicRole}
+				}
+				a := newAuthorizer(spaceMember, topicMember)
+
+				canUpdatePage := a.CanUpdatePage()
+				if a.CanShowDraftPage() != canUpdatePage || a.CanSaveDraftPage() != canUpdatePage {
+					t.Errorf(
+						"スペース %q・トピック %q・上限 %qで、CanShowDraftPage() = %v、CanSaveDraftPage() = %v、期待値 = %v (CanUpdatePage())",
+						spaceRole, topicRole, maxTopicRole, a.CanShowDraftPage(), a.CanSaveDraftPage(), canUpdatePage,
+					)
+				}
+			}
+		}
 	}
 }
 
@@ -159,6 +225,40 @@ func TestNewAPIAuthorizer_IntersectsTokenScopesWithRole(t *testing.T) {
 		}, &model.TopicMember{Role: model.TopicRoleEditor})
 		if !a.CanCreatePage() {
 			t.Error("トピック編集者のpage:writeとトークンのpage:writeの積でページを書けるべき")
+		}
+	})
+
+	t.Run("上限がトピック閲覧者なら、トピック編集者を付けた閲覧者もページを書けない", func(t *testing.T) {
+		t.Parallel()
+
+		maxTopicRole := model.TopicRoleViewer
+		a := newAPIAuthorizer(&model.APIPrincipal{
+			SpaceMember: &model.SpaceMember{Role: model.SpaceRoleViewer, MaxTopicRole: &maxTopicRole},
+			Scopes:      tokenScopes,
+		}, &model.TopicMember{Role: model.TopicRoleEditor})
+		if a.CanCreatePage() {
+			t.Error("上限を超えるトピック編集者のpage:writeがトークンで有効になってはならない")
+		}
+		if !a.CanShowTopic(privateTopic) {
+			t.Error("閲覧者のtopic:readとトークンのtopic:readの積で非公開トピックを閲覧できるべき")
+		}
+	})
+
+	t.Run("draft_page:writeだけのトークンは下書きを保存できるが、ページを公開できない", func(t *testing.T) {
+		t.Parallel()
+
+		a := newAPIAuthorizer(&model.APIPrincipal{
+			SpaceMember: &model.SpaceMember{Role: model.SpaceRoleEditor},
+			Scopes:      policy.ExpandAPITokenScopes([]model.Scope{model.ScopeDraftPageWrite}),
+		}, nil)
+		if !a.CanSaveDraftPage() || !a.CanShowDraftPage() {
+			t.Error("編集者のdraft_page:writeとトークンのdraft_page:writeの積で下書きを参照・保存できるべき")
+		}
+		if a.CanUpdatePage() || a.CanCreatePage() {
+			t.Error("トークンが持たないpage:writeでページを公開・作成できてはならない")
+		}
+		if a.CanDeleteDraftPage() {
+			t.Error("トークンが持たないdraft_page:deleteで下書きを削除できてはならない")
 		}
 	})
 

@@ -80,7 +80,7 @@ func (uc *ManualSaveDraftPageUsecase) Execute(ctx context.Context, input ManualS
 	}
 
 	// 2. 認可チェック
-	if err := authorizePageUpdate(ctx, data); err != nil {
+	if err := authorizeDraftPageSave(ctx, data); err != nil {
 		return nil, err
 	}
 

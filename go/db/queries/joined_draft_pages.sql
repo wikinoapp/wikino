@@ -81,3 +81,28 @@ WHERE sm.user_id = $1
   AND t.discarded_at IS NULL
   AND s.discarded_at IS NULL
 ORDER BY s.name, t.name, dp.modified_at DESC;
+
+-- name: ListDraftPagesByModifiedAt :many
+-- 公開APIの下書き一覧。スペースメンバー自身の下書きのうち、ページが未廃棄・未ゴミ箱で、
+-- 対象のトピック (topic_ids) に属するものを更新日時の新しい順に返す。
+-- topic_idsは呼び出し元が、閲覧者が開けて下書きを読めるトピックに解決したもので、廃棄済みのトピックを含まない。
+-- トピックはWeb画面の下書き一覧と同じく下書きの所属トピックで絞る (ページを移動すると下書きの所属トピックも移る)。
+-- カーソル (after_modified_at, after_id) を渡すと、並び順でその位置より後ろの下書きだけを返す。
+-- 更新日時が同じ下書きも主キーで順序を決めるため、取得中に更新が無ければ重複や読み飛ばしなく辿れる。
+-- メンバーの下書きは (space_member_id, page_id) のインデックスで引き、並べ替えはその件数の中で行う。
+SELECT
+  dp.*,
+  p.number AS page_number
+FROM draft_pages dp
+INNER JOIN pages p ON dp.page_id = p.id AND p.space_id = @space_id
+WHERE dp.space_id = @space_id
+  AND dp.space_member_id = @space_member_id
+  AND dp.topic_id = ANY(@topic_ids::uuid[])
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND (
+    sqlc.narg('after_modified_at')::timestamp IS NULL
+    OR (dp.modified_at, dp.id) < (sqlc.narg('after_modified_at')::timestamp, sqlc.narg('after_id')::uuid)
+  )
+ORDER BY dp.modified_at DESC, dp.id DESC
+LIMIT @row_limit;

@@ -38,6 +38,11 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		WithEmail("tp-topic-scoped@example.com").
 		WithAtname("tptopicscoped").
 		Build()
+	// スペースの閲覧者で、非公開トピックのトピック編集者だが、上限がトピック閲覧者のメンバー。
+	limitedMemberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("tp-limited@example.com").
+		WithAtname("tplimited").
+		Build()
 	// スペースに参加していないログイン済みユーザー。
 	nonMemberID := testutil.NewUserBuilder(t, tx).
 		WithEmail("tp-nonmember@example.com").
@@ -63,6 +68,12 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		WithUserID(topicScopedMemberID).
 		WithRole(model.SpaceRoleViewer).
 		Build()
+	limitedSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(limitedMemberID).
+		WithRole(model.SpaceRoleViewer).
+		WithMaxTopicRole(model.TopicRoleViewer).
+		Build()
 
 	publicTopicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -80,6 +91,12 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		WithSpaceID(spaceID).
 		WithTopicID(privateTopicID).
 		WithSpaceMemberID(topicScopedSpaceMemberID).
+		WithRole(model.TopicRoleEditor).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(privateTopicID).
+		WithSpaceMemberID(limitedSpaceMemberID).
 		WithRole(model.TopicRoleEditor).
 		Build()
 
@@ -113,6 +130,7 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 	newPage(t, publicTopicID, 3, "Non Member Page")
 	newPage(t, publicTopicID, 4, "Other Topic Page")
 	newPage(t, privateTopicID, 5, "Topic Scoped Page")
+	newPage(t, privateTopicID, 6, "Limited Page")
 
 	t.Run("正常系: 編集者はページをゴミ箱に入れられる", func(t *testing.T) {
 		output, err := uc.Execute(context.Background(), TrashPageInput{
@@ -213,6 +231,25 @@ func TestTrashPageUsecase_Execute(t *testing.T) {
 		}
 		if page := findPage(t, 5); page.TrashedAt == nil {
 			t.Error("page.TrashedAt = nil、期待値 = 打刻された時刻")
+		}
+	})
+
+	t.Run("異常系: 上限がトピック閲覧者なら、トピック編集者のロールでもゴミ箱に入れられない", func(t *testing.T) {
+		_, err := uc.Execute(context.Background(), TrashPageInput{
+			SpaceIdentifier: "tp-space",
+			PageNumber:      6,
+			UserID:          limitedMemberID,
+		})
+
+		ae := model.AsAppError(err)
+		if ae == nil {
+			t.Fatal("AppErrorを期待したが、nilだった")
+		}
+		if ae.Code != model.AppErrCodeForbidden {
+			t.Errorf("AppError.Code = %v、期待値 = %v", ae.Code, model.AppErrCodeForbidden)
+		}
+		if page := findPage(t, 6); page.TrashedAt != nil {
+			t.Errorf("page.TrashedAt = %v、期待値 = nil (上限を超えるトピックのロールでは更新されない)", page.TrashedAt)
 		}
 	})
 

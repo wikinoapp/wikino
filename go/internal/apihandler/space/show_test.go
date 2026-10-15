@@ -25,7 +25,7 @@ func TestHandler_GetSpace(t *testing.T) {
 	})
 	h := space.NewHandler(usecase.NewGetAPISpaceUsecase())
 
-	t.Run("トークンを束縛したスペースを返す", func(t *testing.T) {
+	t.Run("トークンが属するスペースを返す", func(t *testing.T) {
 		t.Parallel()
 
 		res, err := h.GetSpace(ctx, apigen.GetSpaceRequestObject{SpaceIdentifier: "alice-wiki"})
@@ -48,7 +48,7 @@ func TestHandler_GetSpace(t *testing.T) {
 		}
 	})
 
-	t.Run("束縛先と異なるスペースは未存在のエラーを返す", func(t *testing.T) {
+	t.Run("トークンが属さないスペースは未存在のエラーを返す", func(t *testing.T) {
 		t.Parallel()
 
 		res, err := h.GetSpace(ctx, apigen.GetSpaceRequestObject{SpaceIdentifier: "other-wiki"})

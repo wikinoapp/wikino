@@ -41,7 +41,7 @@ func TestGetAPICurrentSpaceMemberUsecase_Execute(t *testing.T) {
 		principal  *model.APIPrincipal
 		identifier model.SpaceIdentifier
 	}{
-		{name: "束縛先と異なるスペースは未存在として扱う", principal: principal, identifier: "other-space"},
+		{name: "トークンが属さないスペースは未存在として扱う", principal: principal, identifier: "other-space"},
 		{name: "主体が無い場合は未存在として扱う", principal: nil, identifier: "bound-space"},
 	}
 	for _, tt := range notFoundTests {

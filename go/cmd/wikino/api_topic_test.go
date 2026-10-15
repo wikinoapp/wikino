@@ -13,11 +13,21 @@ import (
 	"github.com/wikinoapp/wikino/go/api"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apiattachment "github.com/wikinoapp/wikino/go/internal/apihandler/attachment"
 	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
+	apicurrenttoken "github.com/wikinoapp/wikino/go/internal/apihandler/current_token"
+	apidraftpage "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page"
+	apidraftpagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_body_edit"
+	apidraftpagepublication "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_publication"
+	apidraftpagerevision "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
+	apipagebacklink "github.com/wikinoapp/wikino/go/internal/apihandler/page_backlink"
+	apipagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/page_body_edit"
+	apipagelink "github.com/wikinoapp/wikino/go/internal/apihandler/page_link"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
+	apiwikilinkpreview "github.com/wikinoapp/wikino/go/internal/apihandler/wikilink_preview"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -73,14 +83,24 @@ func TestAPIRouter_Topics(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	server := apihandler.NewServer(
+		apiattachment.NewHandler(nil),
 		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
+		apidraftpagebodyedit.NewHandler("https://example.com", nil),
+		apidraftpagepublication.NewHandler("https://example.com", nil),
+		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
-		apipage.NewHandler(usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
+		apipage.NewHandler("https://example.com", usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
+		apipagebacklink.NewHandler("https://example.com", nil),
+		apipagebodyedit.NewHandler("https://example.com", nil),
+		apipagelink.NewHandler("https://example.com", nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(
 			usecase.NewListAPITopicsUsecase(topicRepo, topicMemberRepo),
 			usecase.NewGetAPITopicUsecase(topicRepo, topicMemberRepo),
 		),
+		apiwikilinkpreview.NewHandler("https://example.com", nil),
 	)
 	r := newTestAPIHandlerWith(t, server, topicTestAuthenticator{principal: principal}, topicTestRateLimiter{})
 
@@ -158,7 +178,7 @@ func TestAPIRouter_Topics(t *testing.T) {
 		assertProblem(t, request(base+"?cursor=invalid!", "wkp_topic_read"), http.StatusUnprocessableEntity)
 	})
 
-	t.Run("束縛先が違えば壊れたカーソルより先に404", func(t *testing.T) {
+	t.Run("トークンが属さないスペースなら壊れたカーソルより先に404", func(t *testing.T) {
 		assertProblem(t, request("/api/v1/spaces/other-space/topics?cursor=invalid!", "wkp_topic_read"), http.StatusNotFound)
 	})
 }

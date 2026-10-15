@@ -35,3 +35,17 @@ WHERE draft_page_id = $1 AND space_id = $2
   AND (created_at < $3 OR (created_at = $3 AND id < $4))
 ORDER BY created_at DESC, id DESC
 LIMIT 1;
+
+-- name: ListDraftPageRevisionsByCreatedAt :many
+-- 公開APIの下書きの編集履歴。下書きのリビジョンを新しい順に返す。
+-- 並び順はListDraftPageRevisionsByDraftPageIDと同じ (created_at, id) の全順序とする。
+-- カーソル (after_created_at, after_id) を渡すと、並び順でその位置より後ろのリビジョンだけを返す。
+-- リビジョンは作成後に書き換えないため、取得中に新しいリビジョンが作られても重複や読み飛ばしなく辿れる。
+SELECT * FROM draft_page_revisions
+WHERE draft_page_id = @draft_page_id AND space_id = @space_id
+  AND (
+    sqlc.narg('after_created_at')::timestamptz IS NULL
+    OR (created_at, id) < (sqlc.narg('after_created_at')::timestamptz, sqlc.narg('after_id')::uuid)
+  )
+ORDER BY created_at DESC, id DESC
+LIMIT @row_limit;

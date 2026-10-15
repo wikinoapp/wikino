@@ -78,7 +78,7 @@ func (uc *RestoreDraftPageRevisionUsecase) Execute(ctx context.Context, input Re
 	if err != nil {
 		return nil, err
 	}
-	if err := authorizePageUpdate(ctx, data); err != nil {
+	if err := authorizeDraftPageSave(ctx, data); err != nil {
 		return nil, err
 	}
 

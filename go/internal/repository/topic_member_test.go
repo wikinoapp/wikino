@@ -222,6 +222,37 @@ func TestTopicMemberRepository_ListBySpaceMemberAndTopics(t *testing.T) {
 	})
 }
 
+func TestTopicMemberRepository_ListWithRoleBySpaceMember(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicMemberRepository(testutil.QueriesWithTx(tx))
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("tm-with-role-space").Build()
+	userID := testutil.NewUserBuilder(t, tx).WithEmail("tm-with-role@example.com").WithAtname("tmwithrole").Build()
+	otherUserID := testutil.NewUserBuilder(t, tx).WithEmail("tm-with-role-other@example.com").WithAtname("tmwithroleother").Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+	otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(otherUserID).Build()
+
+	withRoleTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("With Role").Build()
+	withoutRoleTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("Without Role").Build()
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(3).WithName("Discarded").WithDiscarded().Build()
+
+	wantID := testutil.NewTopicMemberBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(withRoleTopicID).WithSpaceMemberID(spaceMemberID).WithRole(model.TopicRoleEditor).Build()
+	testutil.NewTopicMemberBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(withoutRoleTopicID).WithSpaceMemberID(spaceMemberID).Build()
+	testutil.NewTopicMemberBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(discardedTopicID).WithSpaceMemberID(spaceMemberID).WithRole(model.TopicRoleAdmin).Build()
+	testutil.NewTopicMemberBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(withoutRoleTopicID).WithSpaceMemberID(otherSpaceMemberID).WithRole(model.TopicRoleAdmin).Build()
+
+	// ロールの無いトピック・削除されたトピック・別のメンバーのトピックメンバーは返さない
+	members, err := repo.ListWithRoleBySpaceMember(context.Background(), spaceID, spaceMemberID)
+	if err != nil {
+		t.Fatalf("ListWithRoleBySpaceMember()のエラー = %v", err)
+	}
+	if len(members) != 1 || members[0].ID != wantID || members[0].Role != model.TopicRoleEditor {
+		t.Errorf("ListWithRoleBySpaceMember() = %+v、期待値 = トピック編集者のトピックメンバー %v だけ", members, wantID)
+	}
+}
+
 func TestTopicMemberRepository_ListByUserAndTopics(t *testing.T) {
 	t.Parallel()
 

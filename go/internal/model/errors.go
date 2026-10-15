@@ -96,6 +96,9 @@ const (
 	// AppErrCodePreconditionFailedは、更新の前提にした版 (公開APIの `If-Match`) がリソースの今の版と
 	// 一致しないことを表す
 	AppErrCodePreconditionFailed
+	// AppErrCodeAlreadyExistsは、作成しようとしたリソース (ページとスペースメンバーの組に1つの下書きなど) が
+	// すでにあることを表す。公開APIでは、ほかの競合と区別できる問題タイプの409にする
+	AppErrCodeAlreadyExists
 )
 
 // AppErrorはアプリケーションエラーを表す (SafeErrorパターン)。

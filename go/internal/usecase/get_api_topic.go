@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetAPITopicUsecaseは、公開APIでトークンを束縛したスペースのトピックを取得するユースケース
+// GetAPITopicUsecaseは、公開APIでトークンが属するスペースのトピックを取得するユースケース
 type GetAPITopicUsecase struct {
 	topicRepo       *repository.TopicRepository
 	topicMemberRepo *repository.TopicMemberRepository
@@ -35,7 +35,7 @@ type GetAPITopicOutput struct {
 	Topic *model.Topic
 }
 
-// Executeはトークンを束縛したスペースのトピックを返す。
+// Executeはトークンが属するスペースのトピックを返す。
 // トピックが存在しない場合と、閲覧者が開けない非公開トピックの場合は、存在を秘匿するため未存在として扱う
 func (uc *GetAPITopicUsecase) Execute(ctx context.Context, input GetAPITopicInput) (*GetAPITopicOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)

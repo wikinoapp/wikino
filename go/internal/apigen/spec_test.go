@@ -2,6 +2,8 @@ package apigen_test
 
 import (
 	"context"
+	"encoding/json"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -15,15 +17,15 @@ func TestGetSpec(t *testing.T) {
 
 	spec, err := apigen.GetSpec()
 	if err != nil {
-		t.Fatalf("GetSpec() error = %v", err)
+		t.Fatalf("GetSpec()のエラー = %v", err)
 	}
 
 	if !strings.HasPrefix(spec.OpenAPI, "3.1.") {
-		t.Errorf("OpenAPI = %q, want 3.1.x", spec.OpenAPI)
+		t.Errorf("OpenAPI = %q、期待値 = 3.1.x", spec.OpenAPI)
 	}
 
 	if err := spec.Validate(context.Background()); err != nil {
-		t.Errorf("Validate() error = %v", err)
+		t.Errorf("Validate()のエラー = %v", err)
 	}
 
 	t.Run("トークンに付与できるスコープがOAuthのスキームに定義されている", func(t *testing.T) {
@@ -31,11 +33,11 @@ func TestGetSpec(t *testing.T) {
 
 		scheme, ok := spec.Components.SecuritySchemes["oauth2"]
 		if !ok || scheme.Value == nil {
-			t.Fatal("securitySchemes.oauth2 is not defined")
+			t.Fatal("securitySchemes.oauth2が定義されていない")
 		}
 		flow := scheme.Value.Flows.AuthorizationCode
 		if flow == nil {
-			t.Fatal("securitySchemes.oauth2.flows.authorizationCode is not defined")
+			t.Fatal("securitySchemes.oauth2.flows.authorizationCodeが定義されていない")
 		}
 
 		var got []string
@@ -43,9 +45,9 @@ func TestGetSpec(t *testing.T) {
 			got = append(got, scope)
 		}
 		slices.Sort(got)
-		want := []string{"page:read", "page:write", "topic:read"}
+		want := []string{"attachment:read", "draft_page:delete", "draft_page:read", "draft_page:write", "page:read", "page:write", "topic:read"}
 		if !slices.Equal(got, want) {
-			t.Errorf("scopes = %v, want %v", got, want)
+			t.Errorf("scopes = %v、期待値 = %v", got, want)
 		}
 	})
 
@@ -54,10 +56,45 @@ func TestGetSpec(t *testing.T) {
 
 		scheme, ok := spec.Components.SecuritySchemes["personalAccessToken"]
 		if !ok || scheme.Value == nil {
-			t.Fatal("securitySchemes.personalAccessToken is not defined")
+			t.Fatal("securitySchemes.personalAccessTokenが定義されていない")
 		}
 		if scheme.Value.Type != "http" || scheme.Value.Scheme != "bearer" {
-			t.Errorf("type = %q, scheme = %q, want http bearer", scheme.Value.Type, scheme.Value.Scheme)
+			t.Errorf("type = %q、scheme = %q、期待値 = http bearer", scheme.Value.Type, scheme.Value.Scheme)
+		}
+	})
+
+	// リモートMCPサーバーなどGoの利用側は、読み込んだ記述の拡張項目から操作の分類を読む。
+	// 分類の値の矛盾はvacuumの独自ルールが検査するため、ここでは読み込んだ記述に分類が残ることを確かめる。
+	t.Run("すべてのoperationの操作の分類を読み込んだ記述から読める", func(t *testing.T) {
+		t.Parallel()
+
+		wantKeys := []string{"confirmation_required", "idempotent", "irreversible", "read_only"}
+		count := 0
+		for path, item := range spec.Paths.Map() {
+			for method, op := range item.Operations() {
+				count++
+				raw, ok := op.Extensions["x-wikino-operation"]
+				if !ok {
+					t.Errorf("%s %sに x-wikino-operationが無い", method, path)
+					continue
+				}
+				encoded, err := json.Marshal(raw)
+				if err != nil {
+					t.Fatalf("%s %sの x-wikino-operationのエンコードのエラー = %v", method, path, err)
+				}
+				var classification map[string]bool
+				if err := json.Unmarshal(encoded, &classification); err != nil {
+					t.Errorf("%s %sの x-wikino-operationを真偽値のマップとして読めない: %v", method, path, err)
+					continue
+				}
+				gotKeys := slices.Sorted(maps.Keys(classification))
+				if !slices.Equal(gotKeys, wantKeys) {
+					t.Errorf("%s %sの x-wikino-operationの項目 = %v、期待値 = %v", method, path, gotKeys, wantKeys)
+				}
+			}
+		}
+		if count == 0 {
+			t.Error("operationが1件も読み込まれていない")
 		}
 	})
 
@@ -66,10 +103,10 @@ func TestGetSpec(t *testing.T) {
 
 		op := spec.Paths.Find("/openapi.yaml")
 		if op == nil || op.Get == nil {
-			t.Fatal("GET /openapi.yaml is not defined")
+			t.Fatal("GET /openapi.yamlが定義されていない")
 		}
 		if op.Get.Security == nil || len(*op.Get.Security) != 0 {
-			t.Errorf("security = %v, want []", op.Get.Security)
+			t.Errorf("security = %v、期待値 = []", op.Get.Security)
 		}
 	})
 }

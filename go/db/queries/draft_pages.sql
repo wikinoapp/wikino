@@ -41,6 +41,13 @@ RETURNING *;
 -- IDで下書きを取得する (スペースIDでスコープ)
 SELECT * FROM draft_pages WHERE id = $1 AND space_id = $2;
 
+-- name: FindDraftPageByIDForUpdate :one
+-- APIの更新・削除で、`If-Match` の照合から書き込みまでの間にWeb画面の保存などが割り込まないよう、
+-- 下書きの行をトランザクションが終わるまでロックして取得する。
+-- FOR UPDATEではなくFOR NO KEY UPDATEを使うのは、draft_pages(id) を参照するリビジョンの作成の
+-- 外部キー検査を待たせないためである。UPDATEもFOR NO KEY UPDATEを取るため、同じ下書きの更新どうしは直列化される。
+SELECT * FROM draft_pages WHERE id = @id AND space_id = @space_id FOR NO KEY UPDATE;
+
 -- name: DeleteDraftPage :exec
 -- 下書きを削除する
 DELETE FROM draft_pages WHERE id = $1 AND space_id = $2;

@@ -128,7 +128,25 @@ func OAuthIPKey(ip string) string {
 	return fmt.Sprintf("oauth:ip:%s", ip)
 }
 
+// OAuthDeviceAuthorizationIPKeyはOAuthのデバイス認可の要求のIPアドレス単位のレート制限に使うキーを
+// 生成する。窓の長さと割り当て量がトークンエンドポイント (OAuthIPKey) と違うため、別の名前空間にする
+func OAuthDeviceAuthorizationIPKey(ip string) string {
+	return fmt.Sprintf("oauth:device_authorization:ip:%s", ip)
+}
+
 // APISpaceMemberKeyは公開APIのスペースのメンバー単位のレート制限に使うキーを生成する
 func APISpaceMemberKey(spaceMemberID string) string {
 	return fmt.Sprintf("api:space_member:%s", spaceMemberID)
+}
+
+// OAuthDeviceVerificationUserKeyは、OAuthのデバイス認可のユーザーコードの入力をユーザー単位で
+// 制限するキーを生成する
+func OAuthDeviceVerificationUserKey(userID string) string {
+	return fmt.Sprintf("oauth:device_verification:user:%s", userID)
+}
+
+// OAuthDeviceVerificationIPKeyは、OAuthのデバイス認可のユーザーコードの入力をIPアドレス単位で
+// 制限するキーを生成する
+func OAuthDeviceVerificationIPKey(ip string) string {
+	return fmt.Sprintf("oauth:device_verification:ip:%s", ip)
 }

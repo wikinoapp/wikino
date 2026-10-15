@@ -345,7 +345,7 @@ func TestPageMoveCreateValidator_Success(t *testing.T) {
 }
 
 // TestPageMoveCreateValidator_Permissionは、移動先トピックにページを作成できるかを、
-// スペースのロールと移動先トピックのロールから判定することを扱う
+// スペースのロールと移動先トピックのロール、トピックのロールの上限から判定することを扱う
 func TestPageMoveCreateValidator_Permission(t *testing.T) {
 	t.Parallel()
 
@@ -354,10 +354,13 @@ func TestPageMoveCreateValidator_Permission(t *testing.T) {
 		spaceRole model.SpaceRole
 		// destTopicRoleは移動先トピックでのロール。空ならトピックメンバーにしない
 		destTopicRole model.TopicRole
+		maxTopicRole  *model.TopicRole
 		wantErr       bool
 	}{
 		{name: "編集者はトピックメンバーでなくても移動できる", spaceRole: model.SpaceRoleEditor},
 		{name: "閲覧者は移動先のトピック編集者なら移動できる", spaceRole: model.SpaceRoleViewer, destTopicRole: model.TopicRoleEditor},
+		{name: "上限がトピック閲覧者なら、閲覧者は移動先のトピック編集者でも移動できない", spaceRole: model.SpaceRoleViewer, destTopicRole: model.TopicRoleEditor, maxTopicRole: new(model.TopicRoleViewer), wantErr: true},
+		{name: "上限がトピック閲覧者でも、スペース編集者のページ作成権限は保たれる", spaceRole: model.SpaceRoleEditor, destTopicRole: model.TopicRoleEditor, maxTopicRole: new(model.TopicRoleViewer)},
 		{name: "閲覧者は移動先のトピック閲覧者では移動できない", spaceRole: model.SpaceRoleViewer, destTopicRole: model.TopicRoleViewer, wantErr: true},
 		{name: "閲覧者は移動先のトピックメンバーでなければ移動できない", spaceRole: model.SpaceRoleViewer, wantErr: true},
 	}
@@ -372,11 +375,18 @@ func TestPageMoveCreateValidator_Permission(t *testing.T) {
 
 			userID := testutil.NewUserBuilder(t, tx).Build()
 			spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier(fmt.Sprintf("page-move-perm-%d", i)).Build()
-			spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			spaceMemberBuilder := testutil.NewSpaceMemberBuilder(t, tx).
 				WithSpaceID(spaceID).
 				WithUserID(userID).
-				WithRole(tt.spaceRole).
-				Build()
+				WithRole(tt.spaceRole)
+			if tt.maxTopicRole != nil {
+				spaceMemberBuilder.WithMaxTopicRole(*tt.maxTopicRole)
+			}
+			spaceMemberID := spaceMemberBuilder.Build()
+			spaceMember, err := repository.NewSpaceMemberRepository(queries).FindActiveBySpaceAndUser(ctx, spaceID, userID)
+			if err != nil || spaceMember == nil {
+				t.Fatalf("スペースメンバーの読み込みに失敗: メンバー = %v、エラー = %v", spaceMember, err)
+			}
 			topicID1 := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("Topic 1").Build()
 			topicID2 := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("Topic 2").Build()
 			if tt.destTopicRole != "" {
@@ -406,7 +416,7 @@ func TestPageMoveCreateValidator_Permission(t *testing.T) {
 				PageTitle:       "Test Page",
 				CurrentTopicID:  topicID1,
 				SpaceID:         spaceID,
-				SpaceMember:     &model.SpaceMember{ID: spaceMemberID, SpaceID: spaceID, Active: true, Role: tt.spaceRole},
+				SpaceMember:     spaceMember,
 			})
 
 			if tt.wantErr {

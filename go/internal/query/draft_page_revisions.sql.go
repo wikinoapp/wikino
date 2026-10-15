@@ -7,6 +7,7 @@ package query
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -141,6 +142,66 @@ func (q *Queries) FindPreviousDraftPageRevision(ctx context.Context, arg FindPre
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listDraftPageRevisionsByCreatedAt = `-- name: ListDraftPageRevisionsByCreatedAt :many
+SELECT id, draft_page_id, space_id, space_member_id, title, body, created_at FROM draft_page_revisions
+WHERE draft_page_id = $1 AND space_id = $2
+  AND (
+    $3::timestamptz IS NULL
+    OR (created_at, id) < ($3::timestamptz, $4::uuid)
+  )
+ORDER BY created_at DESC, id DESC
+LIMIT $5
+`
+
+type ListDraftPageRevisionsByCreatedAtParams struct {
+	DraftPageID    string       `json:"draft_page_id"`
+	SpaceID        string       `json:"space_id"`
+	AfterCreatedAt sql.NullTime `json:"after_created_at"`
+	AfterID        *string      `json:"after_id"`
+	RowLimit       int32        `json:"row_limit"`
+}
+
+// 公開APIの下書きの編集履歴。下書きのリビジョンを新しい順に返す。
+// 並び順はListDraftPageRevisionsByDraftPageIDと同じ (created_at, id) の全順序とする。
+// カーソル (after_created_at, after_id) を渡すと、並び順でその位置より後ろのリビジョンだけを返す。
+// リビジョンは作成後に書き換えないため、取得中に新しいリビジョンが作られても重複や読み飛ばしなく辿れる。
+func (q *Queries) ListDraftPageRevisionsByCreatedAt(ctx context.Context, arg ListDraftPageRevisionsByCreatedAtParams) ([]DraftPageRevision, error) {
+	rows, err := q.db.QueryContext(ctx, listDraftPageRevisionsByCreatedAt,
+		arg.DraftPageID,
+		arg.SpaceID,
+		arg.AfterCreatedAt,
+		arg.AfterID,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DraftPageRevision{}
+	for rows.Next() {
+		var i DraftPageRevision
+		if err := rows.Scan(
+			&i.ID,
+			&i.DraftPageID,
+			&i.SpaceID,
+			&i.SpaceMemberID,
+			&i.Title,
+			&i.Body,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listDraftPageRevisionsByDraftPageID = `-- name: ListDraftPageRevisionsByDraftPageID :many

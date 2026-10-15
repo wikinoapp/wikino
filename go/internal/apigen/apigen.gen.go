@@ -20,9 +20,46 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
+	"github.com/oapi-codegen/nullable"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for PageStatus.
+const (
+	PageStatusPublished   PageStatus = "published"
+	PageStatusUnpublished PageStatus = "unpublished"
+)
+
+// Valid indicates whether the value is a known member of the PageStatus enum.
+func (e PageStatus) Valid() bool {
+	switch e {
+	case PageStatusPublished:
+		return true
+	case PageStatusUnpublished:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TokenKind.
+const (
+	OauthAccessToken    TokenKind = "oauth_access_token"
+	PersonalAccessToken TokenKind = "personal_access_token"
+)
+
+// Valid indicates whether the value is a known member of the TokenKind enum.
+func (e TokenKind) Valid() bool {
+	switch e {
+	case OauthAccessToken:
+		return true
+	case PersonalAccessToken:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for TopicVisibility.
 const (
@@ -42,6 +79,201 @@ func (e TopicVisibility) Valid() bool {
 	}
 }
 
+// Defines values for WikilinkPreviewLinkResolution.
+const (
+	WikilinkPreviewLinkResolutionExistingPage  WikilinkPreviewLinkResolution = "existing_page"
+	WikilinkPreviewLinkResolutionNewPage       WikilinkPreviewLinkResolution = "new_page"
+	WikilinkPreviewLinkResolutionTopicNotFound WikilinkPreviewLinkResolution = "topic_not_found"
+)
+
+// Valid indicates whether the value is a known member of the WikilinkPreviewLinkResolution enum.
+func (e WikilinkPreviewLinkResolution) Valid() bool {
+	switch e {
+	case WikilinkPreviewLinkResolutionExistingPage:
+		return true
+	case WikilinkPreviewLinkResolutionNewPage:
+		return true
+	case WikilinkPreviewLinkResolutionTopicNotFound:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WikilinkPreviewPageStatus.
+const (
+	WikilinkPreviewPageStatusPublished   WikilinkPreviewPageStatus = "published"
+	WikilinkPreviewPageStatusUnpublished WikilinkPreviewPageStatus = "unpublished"
+)
+
+// Valid indicates whether the value is a known member of the WikilinkPreviewPageStatus enum.
+func (e WikilinkPreviewPageStatus) Valid() bool {
+	switch e {
+	case WikilinkPreviewPageStatusPublished:
+		return true
+	case WikilinkPreviewPageStatusUnpublished:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPagesParamsStatus.
+const (
+	ListPagesParamsStatusAll         ListPagesParamsStatus = "all"
+	ListPagesParamsStatusPublished   ListPagesParamsStatus = "published"
+	ListPagesParamsStatusUnpublished ListPagesParamsStatus = "unpublished"
+)
+
+// Valid indicates whether the value is a known member of the ListPagesParamsStatus enum.
+func (e ListPagesParamsStatus) Valid() bool {
+	switch e {
+	case ListPagesParamsStatusAll:
+		return true
+	case ListPagesParamsStatusPublished:
+		return true
+	case ListPagesParamsStatusUnpublished:
+		return true
+	default:
+		return false
+	}
+}
+
+// Attachment スペースの添付ファイルの情報と、中身をダウンロードする署名付きURLです。
+type Attachment struct {
+	// ByteSize ファイルのバイト数です。
+	ByteSize int64 `json:"byte_size"`
+
+	// ContentType ファイルの種類 (メディアタイプ。例: `image/png`) です。
+	// 種類が記録されていないファイルでは `null` です。
+	ContentType *string `json:"content_type"`
+
+	// DownloadUrl 中身をダウンロードする署名付きURLです。
+	// `Authorization` ヘッダーのトークンを付けずに `GET` を送ってください。
+	// URL自体が取得の権限を持つため、ログなどに残さないでください。
+	DownloadUrl string `json:"download_url"`
+
+	// DownloadUrlExpiresAt `download_url` の有効期限です (RFC 3339のUTC。例: `2026-09-01T12:34:56Z`)。
+	// 署名付きURLが実際に使えなくなる時刻より遅くならないよう、秒未満は含みません。
+	// 過ぎたら `getAttachment` を呼び直して新しいURLを受け取ってください。
+	DownloadUrlExpiresAt time.Time `json:"download_url_expires_at"`
+
+	// Filename アップロードしたときのファイル名です。
+	Filename string `json:"filename"`
+
+	// Id 添付ファイルのIDです。ページの本文の `/attachments/{ID}` のIDと同じ値です。
+	Id openapi_types.UUID `json:"id"`
+}
+
+// BodyEdit 本文の検索置換の1件の編集です。
+type BodyEdit struct {
+	// NewStr 置き換えた後の文字列です。空文字列にすると、一致した箇所を削除します。
+	NewStr string `json:"new_str"`
+
+	// OldStr 置き換える文字列です。大文字小文字・空白・改行も含めて、本文と完全に一致する必要があります。改行コードのCRLFはLFとして照合します。
+	OldStr string `json:"old_str"`
+
+	// ReplaceAll `true` なら、`old_str` に一致する箇所をすべて置き換えます。
+	// `false` なら、一致がちょうど1件の場合だけ置き換え、0件か複数件なら422を返します。
+	ReplaceAll *bool `json:"replace_all,omitempty"`
+}
+
+// DraftPage トークンの持ち主のページの下書きです。
+// 下書きはページとメンバーの組に1つで、ページ番号で指します。
+type DraftPage struct {
+	// Body 下書きの本文 (Markdown) です。
+	Body string `json:"body"`
+
+	// ModifiedAt 下書きの内容を最後に更新した日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+	// Web画面の自動保存でも更新されます。
+	// 秒未満はマイクロ秒まで含み、末尾の0は省きます。
+	ModifiedAt time.Time `json:"modified_at"`
+
+	// PageNumber 下書きのページの番号です。パスの `page_number` に使います。
+	PageNumber int32 `json:"page_number"`
+
+	// Title 下書きのタイトルです。タイトルの無い下書きでは `null` です。
+	Title *string `json:"title"`
+
+	// TopicNumber 下書きのページが属するトピックの番号です。
+	TopicNumber int32 `json:"topic_number"`
+
+	// Url Web画面で下書きのページの編集画面を開くURLです (例: `https://example.com/s/my-space/pages/12/edit`)。
+	// 利用者に下書きを確かめてもらうときに使います。
+	// URLはサーバーが決めるため、`page_number` などから組み立てずにこの値を使ってください。
+	// 下書きの `ETag` の計算には含めません。
+	Url string `json:"url"`
+}
+
+// DraftPageList 下書きの一覧の1ページです。
+type DraftPageList struct {
+	// Items このページの下書きです。
+	Items []DraftPage `json:"items"`
+
+	// NextCursor 次のページを取得するカーソルです。`cursor` パラメーターに渡します。続きが無い場合は `null` です。
+	NextCursor *NextCursor `json:"next_cursor"`
+}
+
+// DraftPagePatch 下書きの更新内容です (JSON Merge Patch)。含めた項目だけを更新します。
+// `title` だけは `null` にでき、下書きのタイトルを外します。定義していない項目を含めると422を返します。
+type DraftPagePatch struct {
+	// Body 下書きの新しい本文 (Markdown) です。変えない部分も含めた本文の全体を送ります。空文字列にもできます。
+	Body *string `json:"body,omitempty"`
+
+	// Title 下書きのタイトルです。`null` にするとタイトルを外します。
+	// ページのタイトルの規則 (トピック内で重複できないなど) は、下書きを公開するときに確かめます。
+	Title nullable.Nullable[string] `json:"title,omitempty"`
+}
+
+// DraftPageRevision トークンの持ち主の下書きのリビジョンです。
+// 下書きのある時点のタイトルと本文の記録で、作成した後は変わりません。
+type DraftPageRevision struct {
+	// Body リビジョンを作ったときの下書きの本文 (Markdown) です。
+	Body string `json:"body"`
+
+	// CreatedAt リビジョンを作った日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+	// 秒未満はマイクロ秒まで含み、末尾の0は省きます。
+	CreatedAt time.Time `json:"created_at"`
+
+	// Id リビジョンのIDです。パスの `draft_page_revision_id` に使います。
+	Id openapi_types.UUID `json:"id"`
+
+	// Title リビジョンを作ったときの下書きのタイトルです。タイトルの無い下書きでは `null` です。
+	Title *string `json:"title"`
+}
+
+// DraftPageRevisionList 下書きの編集履歴の1ページです。
+type DraftPageRevisionList struct {
+	// Items このページのリビジョンです。
+	Items []DraftPageRevision `json:"items"`
+
+	// NextCursor 次のページを取得するカーソルです。`cursor` パラメーターに渡します。続きが無い場合は `null` です。
+	NextCursor *NextCursor `json:"next_cursor"`
+}
+
+// NewBodyEdit 本文に順に適用する編集です。
+type NewBodyEdit struct {
+	// Edits 配列の順に、前の編集を適用した後の本文へ適用する編集です。
+	Edits []BodyEdit `json:"edits"`
+}
+
+// NewDraftPage 作成する下書きです。
+// `page_number` と `topic_number` のどちらか一方を指定します。
+type NewDraftPage struct {
+	// Body 下書きの本文 (Markdown) です。空文字列にもできます。
+	Body *string `json:"body,omitempty"`
+
+	// PageNumber 下書きを作成する既存のページの番号です。
+	PageNumber *int32 `json:"page_number,omitempty"`
+
+	// Title 下書きのタイトルです。
+	// ページのタイトルの規則 (トピック内で重複できないなど) は、下書きを公開するときに確かめます。
+	Title *string `json:"title,omitempty"`
+
+	// TopicNumber 新しいページを作成するトピックの番号です。
+	TopicNumber *int32 `json:"topic_number,omitempty"`
+}
+
 // NewPage 作成するページです。
 type NewPage struct {
 	// Body ページの本文 (Markdown) です。空文字列にもできます。
@@ -52,6 +284,16 @@ type NewPage struct {
 	Title PageTitleInput `json:"title"`
 
 	// TopicNumber ページを作成するトピックの番号です。
+	TopicNumber int32 `json:"topic_number"`
+}
+
+// NewWikilinkPreview リンク先を確かめる本文です。
+type NewWikilinkPreview struct {
+	// Body ページの本文 (Markdown) です。空文字列にもできます。
+	Body PageBodyInput `json:"body"`
+
+	// TopicNumber 本文を書き込むページのトピックの番号です。
+	// トピックを書かないWikiリンク (`[[タイトル]]`) は、このトピックのページを指します。
 	TopicNumber int32 `json:"topic_number"`
 }
 
@@ -73,12 +315,26 @@ type Page struct {
 	// Number スペース内のページの番号です。パスの `page_number` に使います。
 	Number int32 `json:"number"`
 
+	// Status ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+	// `updatePage` で未公開のページを更新すると `published` になります。
+	Status PageStatus `json:"status"`
+
 	// Title ページのタイトルです。タイトルの無いページでは `null` です。
 	Title *string `json:"title"`
 
 	// TopicNumber ページが属するトピックの番号です。
 	TopicNumber int32 `json:"topic_number"`
+
+	// Url Web画面でページを開くURLです (例: `https://example.com/s/my-space/pages/12`)。
+	// 利用者に出典としてページを示すときに使います。
+	// URLはサーバーが決めるため、`number` などから組み立てずにこの値を使ってください。
+	// ページの `ETag` の計算には含めません。
+	Url string `json:"url"`
 }
+
+// PageStatus ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+// `updatePage` で未公開のページを更新すると `published` になります。
+type PageStatus string
 
 // PageBodyInput ページの本文 (Markdown) です。空文字列にもできます。
 type PageBodyInput = string
@@ -150,17 +406,36 @@ type Space struct {
 	Name string `json:"name"`
 }
 
-// SpaceMember スペースのメンバーです。
+// SpaceMember スペースメンバーです。
 type SpaceMember struct {
 	// Atname アットネーム (`@` の後に続く名前) です。
 	Atname string `json:"atname"`
 
-	// Id メンバーのIDです。同じ人でもスペースごとに異なります。
+	// Id スペースメンバーのIDです。同じ人でもスペースごとに異なります。
 	Id openapi_types.UUID `json:"id"`
 
 	// Name 表示名です。設定していない場合は空文字列です。
 	Name string `json:"name"`
 }
+
+// Token リクエストに使ったトークンの情報です。
+type Token struct {
+	// ExpiresAt トークンの有効期限です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+	// 秒未満はマイクロ秒まで含み、末尾の0は省きます。
+	// 個人アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
+	// OAuthのアクセストークンは、期限が切れる前でもリフレッシュトークンで更新できます。
+	ExpiresAt time.Time `json:"expires_at"`
+
+	// Kind トークンの種類です。`personal_access_token` はスペース設定で発行した個人アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+	Kind TokenKind `json:"kind"`
+
+	// Scopes トークンのスコープに含意を展開したものです。
+	// トークンに付与できるスコープ (`securitySchemes` の `oauth2` に並べたもの) の順に並びます。
+	Scopes []string `json:"scopes"`
+}
+
+// TokenKind トークンの種類です。`personal_access_token` はスペース設定で発行した個人アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+type TokenKind string
 
 // Topic トピックです。
 type Topic struct {
@@ -176,11 +451,11 @@ type Topic struct {
 	// Number スペース内のトピックの番号です。パスの `topic_number` に使います。
 	Number int32 `json:"number"`
 
-	// Visibility トピックの公開範囲です。`public` は誰でも見られる公開トピック、`private` はトピックに参加しているメンバーなどだけが見られる非公開トピックです。
+	// Visibility トピックの公開範囲です。`public` は誰でも見られる公開トピック、`private` はトピックメンバーなどだけが見られる非公開トピックです。
 	Visibility TopicVisibility `json:"visibility"`
 }
 
-// TopicVisibility トピックの公開範囲です。`public` は誰でも見られる公開トピック、`private` はトピックに参加しているメンバーなどだけが見られる非公開トピックです。
+// TopicVisibility トピックの公開範囲です。`public` は誰でも見られる公開トピック、`private` はトピックメンバーなどだけが見られる非公開トピックです。
 type TopicVisibility string
 
 // TopicList トピックの一覧の1ページです。
@@ -192,8 +467,71 @@ type TopicList struct {
 	NextCursor *NextCursor `json:"next_cursor"`
 }
 
+// WikilinkPreview 本文のWikiリンクのリンク先です。
+type WikilinkPreview struct {
+	// Links 本文のWikiリンクを、本文に現れる順に並べたものです。
+	// 同じトピックとタイトルを指すWikiリンクが複数ある場合は、最初の1つだけを含みます。
+	Links []WikilinkPreviewLink `json:"links"`
+}
+
+// WikilinkPreviewLink 本文の1つのWikiリンクのリンク先です。
+type WikilinkPreviewLink struct {
+	// Page リンク先の既存のページです。`resolution` が `existing_page` のときに返します。
+	// `existing_page` でも、ゴミ箱に入っているなどで `getPage` で開けないページでは `null` です。
+	// `new_page` と `topic_not_found` では `null` です。
+	Page *WikilinkPreviewPage `json:"page"`
+
+	// PageTitle リンク先のページのタイトルです。Wikiリンクに書かれたとおりの表記です。
+	PageTitle string `json:"page_title"`
+
+	// Resolution リンク先の解決の結果です。
+	// `existing_page` はリンク先のページが既にあること、`new_page` は書き込むとリンク先のページが未公開の状態で作られること、`topic_not_found` はリンク先のトピックが無いか見られずリンクにならないことを表します。
+	Resolution WikilinkPreviewLinkResolution `json:"resolution"`
+
+	// Text Wikiリンクの `[[` と `]]` の間に書かれた文字列です (前後の空白を除く。例: `トピック/タイトル`)。
+	Text string `json:"text"`
+
+	// TopicName リンク先のトピックの名前です。トピックを書かないWikiリンクでは、`topic_number` のトピックの名前です。
+	TopicName string `json:"topic_name"`
+}
+
+// WikilinkPreviewLinkResolution リンク先の解決の結果です。
+// `existing_page` はリンク先のページが既にあること、`new_page` は書き込むとリンク先のページが未公開の状態で作られること、`topic_not_found` はリンク先のトピックが無いか見られずリンクにならないことを表します。
+type WikilinkPreviewLinkResolution string
+
+// WikilinkPreviewPage Wikiリンクが指す既存のページです。
+type WikilinkPreviewPage struct {
+	// Id ページのIDです。
+	Id openapi_types.UUID `json:"id"`
+
+	// Number スペース内のページの番号です。パスの `page_number` に使います。
+	Number int32 `json:"number"`
+
+	// Status ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+	Status WikilinkPreviewPageStatus `json:"status"`
+
+	// Title ページのタイトルです。タイトルの無いページでは `null` です。
+	Title *string `json:"title"`
+
+	// TopicNumber ページが属するトピックの番号です。
+	TopicNumber int32 `json:"topic_number"`
+
+	// Url Web画面でページを開くURLです (例: `https://example.com/s/my-space/pages/12`)。
+	// URLはサーバーが決めるため、`number` などから組み立てずにこの値を使ってください。
+	Url string `json:"url"`
+}
+
+// WikilinkPreviewPageStatus ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+type WikilinkPreviewPageStatus string
+
+// AttachmentID defines model for AttachmentID.
+type AttachmentID = openapi_types.UUID
+
 // Cursor defines model for Cursor.
 type Cursor = string
+
+// DraftPageRevisionID defines model for DraftPageRevisionID.
+type DraftPageRevisionID = openapi_types.UUID
 
 // Limit defines model for Limit.
 type Limit = int32
@@ -206,6 +544,9 @@ type SpaceIdentifier = string
 
 // TopicNumber defines model for TopicNumber.
 type TopicNumber = int32
+
+// AlreadyExists RFC 9457のProblem Detailsです。
+type AlreadyExists = ProblemDetails
 
 // BadRequest RFC 9457のProblem Detailsです。
 type BadRequest = ProblemDetails
@@ -240,11 +581,34 @@ type UnsupportedPatchMediaType = ProblemDetails
 // ValidationFailed RFC 9457のProblem Detailsです。
 type ValidationFailed = ProblemDetails
 
+// ListDraftPagesParams defines parameters for ListDraftPages.
+type ListDraftPagesParams struct {
+	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
+	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit 1ページの件数です。100を超える値は100として扱います。
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListPagesParams defines parameters for ListPages.
 type ListPagesParams struct {
 	// TopicNumber このトピック番号のトピックのページだけを返します。
 	// 存在しないトピックや見られないトピックを指定すると、空の一覧を返します。
 	TopicNumber *int32 `form:"topic_number,omitempty" json:"topic_number,omitempty"`
+
+	// Status 返すページの公開状態です。`published` は公開済みのページだけ、`unpublished` はまだ公開していないページだけ、`all` は両方を返します。
+	// 省略すると `published` として扱います。
+	Status *ListPagesParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// Title このタイトルのページだけを返します。タイトル全体が一致するページだけを返し、大文字と小文字は区別しません。
+	Title *string `form:"title,omitempty" json:"title,omitempty"`
+
+	// Q このキーワードをタイトルか本文に含むページだけを返します。
+	// 空白 (全角の空白を含む) で区切った複数のキーワードは、すべてを含むページだけを返します (AND検索)。各キーワードはタイトルと本文のどちらに含まれていても構いません。
+	// 部分一致で探し、大文字と小文字は区別しません。`%`・`_` も1つの文字として探します。
+	// キーワードは10個まで指定できます。空白だけの値と、11個以上のキーワードは422を返します。
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
 
 	// ModifiedSince この日時 (RFC 3339) 以降に更新されたページだけを返します。指定した日時ちょうどに更新されたページも含みます。
 	ModifiedSince *time.Time `form:"modified_since,omitempty" json:"modified_since,omitempty"`
@@ -256,6 +620,9 @@ type ListPagesParams struct {
 	// Limit 1ページの件数です。100を超える値は100として扱います。
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 }
+
+// ListPagesParamsStatus defines parameters for ListPages.
+type ListPagesParamsStatus string
 
 // GetPageParams defines parameters for GetPage.
 type GetPageParams struct {
@@ -270,6 +637,77 @@ type UpdatePageParams struct {
 	IfMatch *string `json:"If-Match,omitempty"`
 }
 
+// ListPageBacklinksParams defines parameters for ListPageBacklinks.
+type ListPageBacklinksParams struct {
+	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
+	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit 1ページの件数です。100を超える値は100として扱います。
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// CreatePageBodyEditParams defines parameters for CreatePageBodyEdit.
+type CreatePageBodyEditParams struct {
+	// IfMatch 置換の前提にするページの `ETag` です。送った場合は、ページの今の `ETag` と一致する場合だけ置換します。
+	// 省略すると版を照合せず、今の本文に置換を適用します。
+	IfMatch *string `json:"If-Match,omitempty"`
+}
+
+// DeleteDraftPageParams defines parameters for DeleteDraftPage.
+type DeleteDraftPageParams struct {
+	// IfMatch 削除の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ削除します。
+	// 省略すると428を返します。
+	IfMatch *string `json:"If-Match,omitempty"`
+}
+
+// GetDraftPageParams defines parameters for GetDraftPage.
+type GetDraftPageParams struct {
+	// IfNoneMatch 前回の応答の `ETag` です。下書きの応答が変わっていなければ304を返します。
+	IfNoneMatch *string `json:"If-None-Match,omitempty"`
+}
+
+// UpdateDraftPageParams defines parameters for UpdateDraftPage.
+type UpdateDraftPageParams struct {
+	// IfMatch 更新の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ更新します。
+	// 省略すると428を返します。
+	IfMatch *string `json:"If-Match,omitempty"`
+}
+
+// CreateDraftPageBodyEditParams defines parameters for CreateDraftPageBodyEdit.
+type CreateDraftPageBodyEditParams struct {
+	// IfMatch 置換の前提にする下書きの `ETag` です。送った場合は、下書きの今の `ETag` と一致する場合だけ置換します。
+	// 省略すると版を照合せず、今の本文に置換を適用します。
+	IfMatch *string `json:"If-Match,omitempty"`
+}
+
+// CreateDraftPagePublicationParams defines parameters for CreateDraftPagePublication.
+type CreateDraftPagePublicationParams struct {
+	// IfMatch 公開の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ公開します。
+	// 省略すると428を返します。
+	IfMatch *string `json:"If-Match,omitempty"`
+}
+
+// ListDraftPageRevisionsParams defines parameters for ListDraftPageRevisions.
+type ListDraftPageRevisionsParams struct {
+	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
+	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit 1ページの件数です。100を超える値は100として扱います。
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListPageLinksParams defines parameters for ListPageLinks.
+type ListPageLinksParams struct {
+	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
+	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit 1ページの件数です。100を超える値は100として扱います。
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListTopicsParams defines parameters for ListTopics.
 type ListTopicsParams struct {
 	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
@@ -280,21 +718,45 @@ type ListTopicsParams struct {
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// CreateDraftPageJSONRequestBody defines body for CreateDraftPage for application/json ContentType.
+type CreateDraftPageJSONRequestBody = NewDraftPage
+
 // CreatePageJSONRequestBody defines body for CreatePage for application/json ContentType.
 type CreatePageJSONRequestBody = NewPage
 
 // UpdatePageApplicationMergePatchPlusJSONRequestBody defines body for UpdatePage for application/merge-patch+json ContentType.
 type UpdatePageApplicationMergePatchPlusJSONRequestBody = PagePatch
 
+// CreatePageBodyEditJSONRequestBody defines body for CreatePageBodyEdit for application/json ContentType.
+type CreatePageBodyEditJSONRequestBody = NewBodyEdit
+
+// UpdateDraftPageApplicationMergePatchPlusJSONRequestBody defines body for UpdateDraftPage for application/merge-patch+json ContentType.
+type UpdateDraftPageApplicationMergePatchPlusJSONRequestBody = DraftPagePatch
+
+// CreateDraftPageBodyEditJSONRequestBody defines body for CreateDraftPageBodyEdit for application/json ContentType.
+type CreateDraftPageBodyEditJSONRequestBody = NewBodyEdit
+
+// CreateWikilinkPreviewJSONRequestBody defines body for CreateWikilinkPreview for application/json ContentType.
+type CreateWikilinkPreviewJSONRequestBody = NewWikilinkPreview
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// GetOpenAPIDescription OpenAPI記述を取得する
 	// (GET /openapi.yaml)
 	GetOpenAPIDescription(w http.ResponseWriter, r *http.Request)
-	// GetSpace トークンを束縛したスペースを取得する
+	// GetSpace トークンが属するスペースを取得する
 	// (GET /spaces/{space_identifier})
 	GetSpace(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier)
-	// GetCurrentSpaceMember トークンの持ち主のメンバーを取得する
+	// GetAttachment 添付ファイルを取得する
+	// (GET /spaces/{space_identifier}/attachments/{attachment_id})
+	GetAttachment(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, attachmentId AttachmentID)
+	// ListDraftPages 下書きの一覧を取得する
+	// (GET /spaces/{space_identifier}/draft_pages)
+	ListDraftPages(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, params ListDraftPagesParams)
+	// CreateDraftPage 下書きを作成する
+	// (POST /spaces/{space_identifier}/draft_pages)
+	CreateDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier)
+	// GetCurrentSpaceMember トークンの持ち主のスペースメンバーを取得する
 	// (GET /spaces/{space_identifier}/members/me)
 	GetCurrentSpaceMember(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier)
 	// ListPages ページの一覧を取得する
@@ -309,12 +771,48 @@ type ServerInterface interface {
 	// UpdatePage ページを更新する
 	// (PATCH /spaces/{space_identifier}/pages/{page_number})
 	UpdatePage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params UpdatePageParams)
+	// ListPageBacklinks ページのバックリンクの一覧を取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/backlinks)
+	ListPageBacklinks(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListPageBacklinksParams)
+	// CreatePageBodyEdit ページの本文を検索置換する
+	// (POST /spaces/{space_identifier}/pages/{page_number}/body_edits)
+	CreatePageBodyEdit(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreatePageBodyEditParams)
+	// DeleteDraftPage 下書きを削除する
+	// (DELETE /spaces/{space_identifier}/pages/{page_number}/draft_page)
+	DeleteDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params DeleteDraftPageParams)
+	// GetDraftPage 下書きを取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page)
+	GetDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params GetDraftPageParams)
+	// UpdateDraftPage 下書きを更新する
+	// (PATCH /spaces/{space_identifier}/pages/{page_number}/draft_page)
+	UpdateDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params UpdateDraftPageParams)
+	// CreateDraftPageBodyEdit 下書きの本文を検索置換する
+	// (POST /spaces/{space_identifier}/pages/{page_number}/draft_page/body_edits)
+	CreateDraftPageBodyEdit(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreateDraftPageBodyEditParams)
+	// CreateDraftPagePublication 下書きを公開する
+	// (POST /spaces/{space_identifier}/pages/{page_number}/draft_page/publication)
+	CreateDraftPagePublication(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreateDraftPagePublicationParams)
+	// ListDraftPageRevisions 下書きの編集履歴を取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions)
+	ListDraftPageRevisions(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListDraftPageRevisionsParams)
+	// GetDraftPageRevision 下書きのリビジョンを取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id})
+	GetDraftPageRevision(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, draftPageRevisionId DraftPageRevisionID)
+	// ListPageLinks ページのリンク先の一覧を取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/links)
+	ListPageLinks(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListPageLinksParams)
+	// GetCurrentToken リクエストに使ったトークンの情報を取得する
+	// (GET /spaces/{space_identifier}/tokens/current)
+	GetCurrentToken(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier)
 	// ListTopics トピックの一覧を取得する
 	// (GET /spaces/{space_identifier}/topics)
 	ListTopics(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, params ListTopicsParams)
 	// GetTopic トピックを取得する
 	// (GET /spaces/{space_identifier}/topics/{topic_number})
 	GetTopic(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, topicNumber TopicNumber)
+	// CreateWikilinkPreview 本文のWikiリンクのリンク先を確かめる
+	// (POST /spaces/{space_identifier}/wikilink_previews)
+	CreateWikilinkPreview(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -327,13 +825,31 @@ func (_ Unimplemented) GetOpenAPIDescription(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// GetSpace トークンを束縛したスペースを取得する
+// GetSpace トークンが属するスペースを取得する
 // (GET /spaces/{space_identifier})
 func (_ Unimplemented) GetSpace(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// GetCurrentSpaceMember トークンの持ち主のメンバーを取得する
+// GetAttachment 添付ファイルを取得する
+// (GET /spaces/{space_identifier}/attachments/{attachment_id})
+func (_ Unimplemented) GetAttachment(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, attachmentId AttachmentID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListDraftPages 下書きの一覧を取得する
+// (GET /spaces/{space_identifier}/draft_pages)
+func (_ Unimplemented) ListDraftPages(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, params ListDraftPagesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateDraftPage 下書きを作成する
+// (POST /spaces/{space_identifier}/draft_pages)
+func (_ Unimplemented) CreateDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCurrentSpaceMember トークンの持ち主のスペースメンバーを取得する
 // (GET /spaces/{space_identifier}/members/me)
 func (_ Unimplemented) GetCurrentSpaceMember(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -363,6 +879,72 @@ func (_ Unimplemented) UpdatePage(w http.ResponseWriter, r *http.Request, spaceI
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListPageBacklinks ページのバックリンクの一覧を取得する
+// (GET /spaces/{space_identifier}/pages/{page_number}/backlinks)
+func (_ Unimplemented) ListPageBacklinks(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListPageBacklinksParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePageBodyEdit ページの本文を検索置換する
+// (POST /spaces/{space_identifier}/pages/{page_number}/body_edits)
+func (_ Unimplemented) CreatePageBodyEdit(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreatePageBodyEditParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteDraftPage 下書きを削除する
+// (DELETE /spaces/{space_identifier}/pages/{page_number}/draft_page)
+func (_ Unimplemented) DeleteDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params DeleteDraftPageParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDraftPage 下書きを取得する
+// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page)
+func (_ Unimplemented) GetDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params GetDraftPageParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateDraftPage 下書きを更新する
+// (PATCH /spaces/{space_identifier}/pages/{page_number}/draft_page)
+func (_ Unimplemented) UpdateDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params UpdateDraftPageParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateDraftPageBodyEdit 下書きの本文を検索置換する
+// (POST /spaces/{space_identifier}/pages/{page_number}/draft_page/body_edits)
+func (_ Unimplemented) CreateDraftPageBodyEdit(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreateDraftPageBodyEditParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateDraftPagePublication 下書きを公開する
+// (POST /spaces/{space_identifier}/pages/{page_number}/draft_page/publication)
+func (_ Unimplemented) CreateDraftPagePublication(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreateDraftPagePublicationParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListDraftPageRevisions 下書きの編集履歴を取得する
+// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions)
+func (_ Unimplemented) ListDraftPageRevisions(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListDraftPageRevisionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDraftPageRevision 下書きのリビジョンを取得する
+// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id})
+func (_ Unimplemented) GetDraftPageRevision(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, draftPageRevisionId DraftPageRevisionID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPageLinks ページのリンク先の一覧を取得する
+// (GET /spaces/{space_identifier}/pages/{page_number}/links)
+func (_ Unimplemented) ListPageLinks(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListPageLinksParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCurrentToken リクエストに使ったトークンの情報を取得する
+// (GET /spaces/{space_identifier}/tokens/current)
+func (_ Unimplemented) GetCurrentToken(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListTopics トピックの一覧を取得する
 // (GET /spaces/{space_identifier}/topics)
 func (_ Unimplemented) ListTopics(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, params ListTopicsParams) {
@@ -372,6 +954,12 @@ func (_ Unimplemented) ListTopics(w http.ResponseWriter, r *http.Request, spaceI
 // GetTopic トピックを取得する
 // (GET /spaces/{space_identifier}/topics/{topic_number})
 func (_ Unimplemented) GetTopic(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, topicNumber TopicNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateWikilinkPreview 本文のWikiリンクのリンク先を確かめる
+// (POST /spaces/{space_identifier}/wikilink_previews)
+func (_ Unimplemented) CreateWikilinkPreview(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -415,6 +1003,122 @@ func (siw *ServerInterfaceWrapper) GetSpace(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetSpace(w, r, spaceIdentifier)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAttachment operation middleware
+func (siw *ServerInterfaceWrapper) GetAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId AttachmentID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAttachment(w, r, spaceIdentifier, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDraftPages operation middleware
+func (siw *ServerInterfaceWrapper) ListDraftPages(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDraftPagesParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDraftPages(w, r, spaceIdentifier, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDraftPage operation middleware
+func (siw *ServerInterfaceWrapper) CreateDraftPage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDraftPage(w, r, spaceIdentifier)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -477,6 +1181,45 @@ func (siw *ServerInterfaceWrapper) ListPages(w http.ResponseWriter, r *http.Requ
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "topic_number"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "topic_number", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "title" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "title", r.URL.Query(), &params.Title, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "title"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "title", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
 		}
 		return
 	}
@@ -675,6 +1418,622 @@ func (siw *ServerInterfaceWrapper) UpdatePage(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// ListPageBacklinks operation middleware
+func (siw *ServerInterfaceWrapper) ListPageBacklinks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPageBacklinksParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPageBacklinks(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePageBodyEdit operation middleware
+func (siw *ServerInterfaceWrapper) CreatePageBodyEdit(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreatePageBodyEditParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = &IfMatch
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePageBodyEdit(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDraftPage operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDraftPage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteDraftPageParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = &IfMatch
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDraftPage(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDraftPage operation middleware
+func (siw *ServerInterfaceWrapper) GetDraftPage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDraftPageParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "If-None-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-None-Match")]; found {
+		var IfNoneMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-None-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-None-Match", valueList[0], &IfNoneMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-None-Match", Err: err})
+			return
+		}
+
+		params.IfNoneMatch = &IfNoneMatch
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDraftPage(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateDraftPage operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDraftPage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateDraftPageParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = &IfMatch
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateDraftPage(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDraftPageBodyEdit operation middleware
+func (siw *ServerInterfaceWrapper) CreateDraftPageBodyEdit(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateDraftPageBodyEditParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = &IfMatch
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDraftPageBodyEdit(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDraftPagePublication operation middleware
+func (siw *ServerInterfaceWrapper) CreateDraftPagePublication(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateDraftPagePublicationParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = &IfMatch
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDraftPagePublication(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDraftPageRevisions operation middleware
+func (siw *ServerInterfaceWrapper) ListDraftPageRevisions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDraftPageRevisionsParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDraftPageRevisions(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDraftPageRevision operation middleware
+func (siw *ServerInterfaceWrapper) GetDraftPageRevision(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "draft_page_revision_id" -------------
+	var draftPageRevisionId DraftPageRevisionID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "draft_page_revision_id", chi.URLParam(r, "draft_page_revision_id"), &draftPageRevisionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "draft_page_revision_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDraftPageRevision(w, r, spaceIdentifier, pageNumber, draftPageRevisionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPageLinks operation middleware
+func (siw *ServerInterfaceWrapper) ListPageLinks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page_number" -------------
+	var pageNumber PageNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page_number", chi.URLParam(r, "page_number"), &pageNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_number", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPageLinksParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPageLinks(w, r, spaceIdentifier, pageNumber, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCurrentToken operation middleware
+func (siw *ServerInterfaceWrapper) GetCurrentToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCurrentToken(w, r, spaceIdentifier)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListTopics operation middleware
 func (siw *ServerInterfaceWrapper) ListTopics(w http.ResponseWriter, r *http.Request) {
 
@@ -756,6 +2115,32 @@ func (siw *ServerInterfaceWrapper) GetTopic(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetTopic(w, r, spaceIdentifier, topicNumber)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWikilinkPreview operation middleware
+func (siw *ServerInterfaceWrapper) CreateWikilinkPreview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "space_identifier" -------------
+	var spaceIdentifier SpaceIdentifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "space_identifier", chi.URLParam(r, "space_identifier"), &spaceIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_identifier", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWikilinkPreview(w, r, spaceIdentifier)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -885,6 +2270,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/spaces/{space_identifier}/members/me", wrapper.GetCurrentSpaceMember)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/spaces/{space_identifier}/tokens/current", wrapper.GetCurrentToken)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/spaces/{space_identifier}/topics", wrapper.ListTopics)
 	})
 	r.Group(func(r chi.Router) {
@@ -903,11 +2291,55 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Patch(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}", wrapper.UpdatePage)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/links", wrapper.ListPageLinks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/backlinks", wrapper.ListPageBacklinks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/body_edits", wrapper.CreatePageBodyEdit)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/spaces/{space_identifier}/wikilink_previews", wrapper.CreateWikilinkPreview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/spaces/{space_identifier}/draft_pages", wrapper.ListDraftPages)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/spaces/{space_identifier}/draft_pages", wrapper.CreateDraftPage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/draft_page", wrapper.DeleteDraftPage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/draft_page", wrapper.GetDraftPage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/draft_page", wrapper.UpdateDraftPage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/draft_page/body_edits", wrapper.CreateDraftPageBodyEdit)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/draft_page/publication", wrapper.CreateDraftPagePublication)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/draft_page_revisions", wrapper.ListDraftPageRevisions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/spaces/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}", wrapper.GetDraftPageRevision)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/spaces/{space_identifier}/attachments/{attachment_id}", wrapper.GetAttachment)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/openapi.yaml", wrapper.GetOpenAPIDescription)
 	})
 
 	return r
 }
+
+type AlreadyExistsApplicationProblemPlusJSONResponse ProblemDetails
 
 type BadRequestApplicationProblemPlusJSONResponse ProblemDetails
 
@@ -1110,6 +2542,492 @@ type GetSpacedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response GetSpacedefaultApplicationProblemPlusJSONResponse) VisitGetSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachmentRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	AttachmentId    AttachmentID    `json:"attachment_id"`
+}
+
+type GetAttachmentResponseObject interface {
+	VisitGetAttachmentResponse(w http.ResponseWriter) error
+}
+
+type GetAttachment200ResponseHeaders struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type GetAttachment200JSONResponse struct {
+	Body    Attachment
+	Headers GetAttachment200ResponseHeaders
+}
+
+func (response GetAttachment200JSONResponse) VisitGetAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachment401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetAttachment401ApplicationProblemPlusJSONResponse) VisitGetAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachment403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response GetAttachment403ApplicationProblemPlusJSONResponse) VisitGetAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachment404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetAttachment404ApplicationProblemPlusJSONResponse) VisitGetAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachment422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response GetAttachment422ApplicationProblemPlusJSONResponse) VisitGetAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachment429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response GetAttachment429ApplicationProblemPlusJSONResponse) VisitGetAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachmentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response GetAttachmentdefaultApplicationProblemPlusJSONResponse) VisitGetAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPagesRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	Params          ListDraftPagesParams
+}
+
+type ListDraftPagesResponseObject interface {
+	VisitListDraftPagesResponse(w http.ResponseWriter) error
+}
+
+type ListDraftPages200ResponseHeaders struct {
+	Link            *string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type ListDraftPages200JSONResponse struct {
+	Body    DraftPageList
+	Headers ListDraftPages200ResponseHeaders
+}
+
+func (response ListDraftPages200JSONResponse) VisitListDraftPagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.Link != nil {
+		w.Header().Set("Link", fmt.Sprint(*response.Headers.Link))
+	}
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPages401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPages401ApplicationProblemPlusJSONResponse) VisitListDraftPagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPages403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPages403ApplicationProblemPlusJSONResponse) VisitListDraftPagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPages404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPages404ApplicationProblemPlusJSONResponse) VisitListDraftPagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPages422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPages422ApplicationProblemPlusJSONResponse) VisitListDraftPagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPages429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPages429ApplicationProblemPlusJSONResponse) VisitListDraftPagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPagesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response ListDraftPagesdefaultApplicationProblemPlusJSONResponse) VisitListDraftPagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	Body            *CreateDraftPageJSONRequestBody
+}
+
+type CreateDraftPageResponseObject interface {
+	VisitCreateDraftPageResponse(w http.ResponseWriter) error
+}
+
+type CreateDraftPage201ResponseHeaders struct {
+	ETag            string
+	Location        string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type CreateDraftPage201JSONResponse struct {
+	Body    DraftPage
+	Headers CreateDraftPage201ResponseHeaders
+}
+
+func (response CreateDraftPage201JSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("ETag", fmt.Sprint(response.Headers.ETag))
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPage400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPage400ApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPage401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPage401ApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPage403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPage403ApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPage404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPage404ApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPage409ApplicationProblemPlusJSONResponse struct {
+	AlreadyExistsApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPage409ApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPage415ApplicationProblemPlusJSONResponse struct {
+	UnsupportedMediaTypeApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPage415ApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Accept-Post", fmt.Sprint(response.Headers.AcceptPost))
+	w.WriteHeader(415)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPage422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPage422ApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPage429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPage429ApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagedefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response CreateDraftPagedefaultApplicationProblemPlusJSONResponse) VisitCreateDraftPageResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -1937,6 +3855,1827 @@ func (response UpdatePagedefaultApplicationProblemPlusJSONResponse) VisitUpdateP
 	return err
 }
 
+type ListPageBacklinksRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          ListPageBacklinksParams
+}
+
+type ListPageBacklinksResponseObject interface {
+	VisitListPageBacklinksResponse(w http.ResponseWriter) error
+}
+
+type ListPageBacklinks200ResponseHeaders struct {
+	Link            *string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type ListPageBacklinks200JSONResponse struct {
+	Body    PageList
+	Headers ListPageBacklinks200ResponseHeaders
+}
+
+func (response ListPageBacklinks200JSONResponse) VisitListPageBacklinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.Link != nil {
+		w.Header().Set("Link", fmt.Sprint(*response.Headers.Link))
+	}
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageBacklinks401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageBacklinks401ApplicationProblemPlusJSONResponse) VisitListPageBacklinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageBacklinks403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageBacklinks403ApplicationProblemPlusJSONResponse) VisitListPageBacklinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageBacklinks404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageBacklinks404ApplicationProblemPlusJSONResponse) VisitListPageBacklinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageBacklinks422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageBacklinks422ApplicationProblemPlusJSONResponse) VisitListPageBacklinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageBacklinks429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageBacklinks429ApplicationProblemPlusJSONResponse) VisitListPageBacklinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageBacklinksdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response ListPageBacklinksdefaultApplicationProblemPlusJSONResponse) VisitListPageBacklinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEditRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          CreatePageBodyEditParams
+	Body            *CreatePageBodyEditJSONRequestBody
+}
+
+type CreatePageBodyEditResponseObject interface {
+	VisitCreatePageBodyEditResponse(w http.ResponseWriter) error
+}
+
+type CreatePageBodyEdit200ResponseHeaders struct {
+	ContentLocation string
+	ETag            string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type CreatePageBodyEdit200JSONResponse struct {
+	Body    Page
+	Headers CreatePageBodyEdit200ResponseHeaders
+}
+
+func (response CreatePageBodyEdit200JSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Location", fmt.Sprint(response.Headers.ContentLocation))
+	w.Header().Set("ETag", fmt.Sprint(response.Headers.ETag))
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEdit400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePageBodyEdit400ApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEdit401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePageBodyEdit401ApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEdit403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePageBodyEdit403ApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEdit404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePageBodyEdit404ApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEdit412ApplicationProblemPlusJSONResponse struct {
+	PreconditionFailedApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePageBodyEdit412ApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(412)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEdit415ApplicationProblemPlusJSONResponse struct {
+	UnsupportedMediaTypeApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePageBodyEdit415ApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Accept-Post", fmt.Sprint(response.Headers.AcceptPost))
+	w.WriteHeader(415)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEdit422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePageBodyEdit422ApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEdit429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePageBodyEdit429ApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePageBodyEditdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response CreatePageBodyEditdefaultApplicationProblemPlusJSONResponse) VisitCreatePageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDraftPageRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          DeleteDraftPageParams
+}
+
+type DeleteDraftPageResponseObject interface {
+	VisitDeleteDraftPageResponse(w http.ResponseWriter) error
+}
+
+type DeleteDraftPage204ResponseHeaders struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type DeleteDraftPage204Response struct {
+	Headers DeleteDraftPage204ResponseHeaders
+}
+
+func (response DeleteDraftPage204Response) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteDraftPage401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDraftPage401ApplicationProblemPlusJSONResponse) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDraftPage403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDraftPage403ApplicationProblemPlusJSONResponse) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDraftPage404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDraftPage404ApplicationProblemPlusJSONResponse) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDraftPage412ApplicationProblemPlusJSONResponse struct {
+	PreconditionFailedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDraftPage412ApplicationProblemPlusJSONResponse) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(412)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDraftPage422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDraftPage422ApplicationProblemPlusJSONResponse) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDraftPage428ApplicationProblemPlusJSONResponse struct {
+	PreconditionRequiredApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDraftPage428ApplicationProblemPlusJSONResponse) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDraftPage429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDraftPage429ApplicationProblemPlusJSONResponse) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDraftPagedefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response DeleteDraftPagedefaultApplicationProblemPlusJSONResponse) VisitDeleteDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPageRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          GetDraftPageParams
+}
+
+type GetDraftPageResponseObject interface {
+	VisitGetDraftPageResponse(w http.ResponseWriter) error
+}
+
+type GetDraftPage200ResponseHeaders struct {
+	ETag            string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type GetDraftPage200JSONResponse struct {
+	Body    DraftPage
+	Headers GetDraftPage200ResponseHeaders
+}
+
+func (response GetDraftPage200JSONResponse) VisitGetDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("ETag", fmt.Sprint(response.Headers.ETag))
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPage304ResponseHeaders struct {
+	ETag            string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type GetDraftPage304Response struct {
+	Headers GetDraftPage304ResponseHeaders
+}
+
+func (response GetDraftPage304Response) VisitGetDraftPageResponse(w http.ResponseWriter) error {
+	w.Header().Set("ETag", fmt.Sprint(response.Headers.ETag))
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(304)
+	return nil
+}
+
+type GetDraftPage401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPage401ApplicationProblemPlusJSONResponse) VisitGetDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPage403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPage403ApplicationProblemPlusJSONResponse) VisitGetDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPage404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPage404ApplicationProblemPlusJSONResponse) VisitGetDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPage422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPage422ApplicationProblemPlusJSONResponse) VisitGetDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPage429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPage429ApplicationProblemPlusJSONResponse) VisitGetDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPagedefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response GetDraftPagedefaultApplicationProblemPlusJSONResponse) VisitGetDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPageRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          UpdateDraftPageParams
+	Body            *UpdateDraftPageApplicationMergePatchPlusJSONRequestBody
+}
+
+type UpdateDraftPageResponseObject interface {
+	VisitUpdateDraftPageResponse(w http.ResponseWriter) error
+}
+
+type UpdateDraftPage200ResponseHeaders struct {
+	ETag            string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type UpdateDraftPage200JSONResponse struct {
+	Body    DraftPage
+	Headers UpdateDraftPage200ResponseHeaders
+}
+
+func (response UpdateDraftPage200JSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("ETag", fmt.Sprint(response.Headers.ETag))
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage400ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage401ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage403ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage404ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage412ApplicationProblemPlusJSONResponse struct {
+	PreconditionFailedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage412ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(412)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage415ApplicationProblemPlusJSONResponse struct {
+	UnsupportedPatchMediaTypeApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage415ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Accept-Patch", fmt.Sprint(response.Headers.AcceptPatch))
+	w.WriteHeader(415)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage422ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage428ApplicationProblemPlusJSONResponse struct {
+	PreconditionRequiredApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage428ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPage429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateDraftPage429ApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateDraftPagedefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response UpdateDraftPagedefaultApplicationProblemPlusJSONResponse) VisitUpdateDraftPageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEditRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          CreateDraftPageBodyEditParams
+	Body            *CreateDraftPageBodyEditJSONRequestBody
+}
+
+type CreateDraftPageBodyEditResponseObject interface {
+	VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error
+}
+
+type CreateDraftPageBodyEdit200ResponseHeaders struct {
+	ContentLocation string
+	ETag            string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type CreateDraftPageBodyEdit200JSONResponse struct {
+	Body    DraftPage
+	Headers CreateDraftPageBodyEdit200ResponseHeaders
+}
+
+func (response CreateDraftPageBodyEdit200JSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Location", fmt.Sprint(response.Headers.ContentLocation))
+	w.Header().Set("ETag", fmt.Sprint(response.Headers.ETag))
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEdit400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPageBodyEdit400ApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEdit401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPageBodyEdit401ApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEdit403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPageBodyEdit403ApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEdit404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPageBodyEdit404ApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEdit412ApplicationProblemPlusJSONResponse struct {
+	PreconditionFailedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPageBodyEdit412ApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(412)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEdit415ApplicationProblemPlusJSONResponse struct {
+	UnsupportedMediaTypeApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPageBodyEdit415ApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Accept-Post", fmt.Sprint(response.Headers.AcceptPost))
+	w.WriteHeader(415)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEdit422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPageBodyEdit422ApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEdit429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPageBodyEdit429ApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPageBodyEditdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response CreateDraftPageBodyEditdefaultApplicationProblemPlusJSONResponse) VisitCreateDraftPageBodyEditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublicationRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          CreateDraftPagePublicationParams
+}
+
+type CreateDraftPagePublicationResponseObject interface {
+	VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error
+}
+
+type CreateDraftPagePublication200ResponseHeaders struct {
+	ContentLocation string
+	ETag            string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type CreateDraftPagePublication200JSONResponse struct {
+	Body    Page
+	Headers CreateDraftPagePublication200ResponseHeaders
+}
+
+func (response CreateDraftPagePublication200JSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Location", fmt.Sprint(response.Headers.ContentLocation))
+	w.Header().Set("ETag", fmt.Sprint(response.Headers.ETag))
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublication401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPagePublication401ApplicationProblemPlusJSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublication403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPagePublication403ApplicationProblemPlusJSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublication404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPagePublication404ApplicationProblemPlusJSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublication412ApplicationProblemPlusJSONResponse struct {
+	PreconditionFailedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPagePublication412ApplicationProblemPlusJSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(412)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublication422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPagePublication422ApplicationProblemPlusJSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublication428ApplicationProblemPlusJSONResponse struct {
+	PreconditionRequiredApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPagePublication428ApplicationProblemPlusJSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublication429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDraftPagePublication429ApplicationProblemPlusJSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDraftPagePublicationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response CreateDraftPagePublicationdefaultApplicationProblemPlusJSONResponse) VisitCreateDraftPagePublicationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPageRevisionsRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          ListDraftPageRevisionsParams
+}
+
+type ListDraftPageRevisionsResponseObject interface {
+	VisitListDraftPageRevisionsResponse(w http.ResponseWriter) error
+}
+
+type ListDraftPageRevisions200ResponseHeaders struct {
+	Link            *string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type ListDraftPageRevisions200JSONResponse struct {
+	Body    DraftPageRevisionList
+	Headers ListDraftPageRevisions200ResponseHeaders
+}
+
+func (response ListDraftPageRevisions200JSONResponse) VisitListDraftPageRevisionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.Link != nil {
+		w.Header().Set("Link", fmt.Sprint(*response.Headers.Link))
+	}
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPageRevisions401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPageRevisions401ApplicationProblemPlusJSONResponse) VisitListDraftPageRevisionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPageRevisions403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPageRevisions403ApplicationProblemPlusJSONResponse) VisitListDraftPageRevisionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPageRevisions404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPageRevisions404ApplicationProblemPlusJSONResponse) VisitListDraftPageRevisionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPageRevisions422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPageRevisions422ApplicationProblemPlusJSONResponse) VisitListDraftPageRevisionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPageRevisions429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ListDraftPageRevisions429ApplicationProblemPlusJSONResponse) VisitListDraftPageRevisionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDraftPageRevisionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response ListDraftPageRevisionsdefaultApplicationProblemPlusJSONResponse) VisitListDraftPageRevisionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPageRevisionRequestObject struct {
+	SpaceIdentifier     SpaceIdentifier     `json:"space_identifier"`
+	PageNumber          PageNumber          `json:"page_number"`
+	DraftPageRevisionId DraftPageRevisionID `json:"draft_page_revision_id"`
+}
+
+type GetDraftPageRevisionResponseObject interface {
+	VisitGetDraftPageRevisionResponse(w http.ResponseWriter) error
+}
+
+type GetDraftPageRevision200ResponseHeaders struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type GetDraftPageRevision200JSONResponse struct {
+	Body    DraftPageRevision
+	Headers GetDraftPageRevision200ResponseHeaders
+}
+
+func (response GetDraftPageRevision200JSONResponse) VisitGetDraftPageRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPageRevision401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPageRevision401ApplicationProblemPlusJSONResponse) VisitGetDraftPageRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPageRevision403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPageRevision403ApplicationProblemPlusJSONResponse) VisitGetDraftPageRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPageRevision404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPageRevision404ApplicationProblemPlusJSONResponse) VisitGetDraftPageRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPageRevision422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPageRevision422ApplicationProblemPlusJSONResponse) VisitGetDraftPageRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPageRevision429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response GetDraftPageRevision429ApplicationProblemPlusJSONResponse) VisitGetDraftPageRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDraftPageRevisiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response GetDraftPageRevisiondefaultApplicationProblemPlusJSONResponse) VisitGetDraftPageRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageLinksRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	PageNumber      PageNumber      `json:"page_number"`
+	Params          ListPageLinksParams
+}
+
+type ListPageLinksResponseObject interface {
+	VisitListPageLinksResponse(w http.ResponseWriter) error
+}
+
+type ListPageLinks200ResponseHeaders struct {
+	Link            *string
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type ListPageLinks200JSONResponse struct {
+	Body    PageList
+	Headers ListPageLinks200ResponseHeaders
+}
+
+func (response ListPageLinks200JSONResponse) VisitListPageLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.Link != nil {
+		w.Header().Set("Link", fmt.Sprint(*response.Headers.Link))
+	}
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageLinks401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageLinks401ApplicationProblemPlusJSONResponse) VisitListPageLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageLinks403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageLinks403ApplicationProblemPlusJSONResponse) VisitListPageLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageLinks404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageLinks404ApplicationProblemPlusJSONResponse) VisitListPageLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageLinks422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageLinks422ApplicationProblemPlusJSONResponse) VisitListPageLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageLinks429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ListPageLinks429ApplicationProblemPlusJSONResponse) VisitListPageLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPageLinksdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response ListPageLinksdefaultApplicationProblemPlusJSONResponse) VisitListPageLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentTokenRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+}
+
+type GetCurrentTokenResponseObject interface {
+	VisitGetCurrentTokenResponse(w http.ResponseWriter) error
+}
+
+type GetCurrentToken200ResponseHeaders struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type GetCurrentToken200JSONResponse struct {
+	Body    Token
+	Headers GetCurrentToken200ResponseHeaders
+}
+
+func (response GetCurrentToken200JSONResponse) VisitGetCurrentTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentToken401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetCurrentToken401ApplicationProblemPlusJSONResponse) VisitGetCurrentTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentToken404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetCurrentToken404ApplicationProblemPlusJSONResponse) VisitGetCurrentTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentToken429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response GetCurrentToken429ApplicationProblemPlusJSONResponse) VisitGetCurrentTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentTokendefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response GetCurrentTokendefaultApplicationProblemPlusJSONResponse) VisitGetCurrentTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListTopicsRequestObject struct {
 	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
 	Params          ListTopicsParams
@@ -2227,15 +5966,200 @@ func (response GetTopicdefaultApplicationProblemPlusJSONResponse) VisitGetTopicR
 	return err
 }
 
+type CreateWikilinkPreviewRequestObject struct {
+	SpaceIdentifier SpaceIdentifier `json:"space_identifier"`
+	Body            *CreateWikilinkPreviewJSONRequestBody
+}
+
+type CreateWikilinkPreviewResponseObject interface {
+	VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error
+}
+
+type CreateWikilinkPreview200ResponseHeaders struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+}
+
+type CreateWikilinkPreview200JSONResponse struct {
+	Body    WikilinkPreview
+	Headers CreateWikilinkPreview200ResponseHeaders
+}
+
+func (response CreateWikilinkPreview200JSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWikilinkPreview400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWikilinkPreview400ApplicationProblemPlusJSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWikilinkPreview401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWikilinkPreview401ApplicationProblemPlusJSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWikilinkPreview403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWikilinkPreview403ApplicationProblemPlusJSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("WWW-Authenticate", fmt.Sprint(response.Headers.WWWAuthenticate))
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWikilinkPreview404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWikilinkPreview404ApplicationProblemPlusJSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWikilinkPreview415ApplicationProblemPlusJSONResponse struct {
+	UnsupportedMediaTypeApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWikilinkPreview415ApplicationProblemPlusJSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Accept-Post", fmt.Sprint(response.Headers.AcceptPost))
+	w.WriteHeader(415)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWikilinkPreview422ApplicationProblemPlusJSONResponse struct {
+	ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWikilinkPreview422ApplicationProblemPlusJSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWikilinkPreview429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWikilinkPreview429ApplicationProblemPlusJSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RateLimit != nil {
+		w.Header().Set("RateLimit", fmt.Sprint(*response.Headers.RateLimit))
+	}
+	if response.Headers.RateLimitPolicy != nil {
+		w.Header().Set("RateLimit-Policy", fmt.Sprint(*response.Headers.RateLimitPolicy))
+	}
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWikilinkPreviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       ProblemDetails
+	StatusCode int
+}
+
+func (response CreateWikilinkPreviewdefaultApplicationProblemPlusJSONResponse) VisitCreateWikilinkPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// GetOpenAPIDescription OpenAPI記述を取得する
 	// (GET /openapi.yaml)
 	GetOpenAPIDescription(ctx context.Context, request GetOpenAPIDescriptionRequestObject) (GetOpenAPIDescriptionResponseObject, error)
-	// GetSpace トークンを束縛したスペースを取得する
+	// GetSpace トークンが属するスペースを取得する
 	// (GET /spaces/{space_identifier})
 	GetSpace(ctx context.Context, request GetSpaceRequestObject) (GetSpaceResponseObject, error)
-	// GetCurrentSpaceMember トークンの持ち主のメンバーを取得する
+	// GetAttachment 添付ファイルを取得する
+	// (GET /spaces/{space_identifier}/attachments/{attachment_id})
+	GetAttachment(ctx context.Context, request GetAttachmentRequestObject) (GetAttachmentResponseObject, error)
+	// ListDraftPages 下書きの一覧を取得する
+	// (GET /spaces/{space_identifier}/draft_pages)
+	ListDraftPages(ctx context.Context, request ListDraftPagesRequestObject) (ListDraftPagesResponseObject, error)
+	// CreateDraftPage 下書きを作成する
+	// (POST /spaces/{space_identifier}/draft_pages)
+	CreateDraftPage(ctx context.Context, request CreateDraftPageRequestObject) (CreateDraftPageResponseObject, error)
+	// GetCurrentSpaceMember トークンの持ち主のスペースメンバーを取得する
 	// (GET /spaces/{space_identifier}/members/me)
 	GetCurrentSpaceMember(ctx context.Context, request GetCurrentSpaceMemberRequestObject) (GetCurrentSpaceMemberResponseObject, error)
 	// ListPages ページの一覧を取得する
@@ -2250,12 +6174,48 @@ type StrictServerInterface interface {
 	// UpdatePage ページを更新する
 	// (PATCH /spaces/{space_identifier}/pages/{page_number})
 	UpdatePage(ctx context.Context, request UpdatePageRequestObject) (UpdatePageResponseObject, error)
+	// ListPageBacklinks ページのバックリンクの一覧を取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/backlinks)
+	ListPageBacklinks(ctx context.Context, request ListPageBacklinksRequestObject) (ListPageBacklinksResponseObject, error)
+	// CreatePageBodyEdit ページの本文を検索置換する
+	// (POST /spaces/{space_identifier}/pages/{page_number}/body_edits)
+	CreatePageBodyEdit(ctx context.Context, request CreatePageBodyEditRequestObject) (CreatePageBodyEditResponseObject, error)
+	// DeleteDraftPage 下書きを削除する
+	// (DELETE /spaces/{space_identifier}/pages/{page_number}/draft_page)
+	DeleteDraftPage(ctx context.Context, request DeleteDraftPageRequestObject) (DeleteDraftPageResponseObject, error)
+	// GetDraftPage 下書きを取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page)
+	GetDraftPage(ctx context.Context, request GetDraftPageRequestObject) (GetDraftPageResponseObject, error)
+	// UpdateDraftPage 下書きを更新する
+	// (PATCH /spaces/{space_identifier}/pages/{page_number}/draft_page)
+	UpdateDraftPage(ctx context.Context, request UpdateDraftPageRequestObject) (UpdateDraftPageResponseObject, error)
+	// CreateDraftPageBodyEdit 下書きの本文を検索置換する
+	// (POST /spaces/{space_identifier}/pages/{page_number}/draft_page/body_edits)
+	CreateDraftPageBodyEdit(ctx context.Context, request CreateDraftPageBodyEditRequestObject) (CreateDraftPageBodyEditResponseObject, error)
+	// CreateDraftPagePublication 下書きを公開する
+	// (POST /spaces/{space_identifier}/pages/{page_number}/draft_page/publication)
+	CreateDraftPagePublication(ctx context.Context, request CreateDraftPagePublicationRequestObject) (CreateDraftPagePublicationResponseObject, error)
+	// ListDraftPageRevisions 下書きの編集履歴を取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions)
+	ListDraftPageRevisions(ctx context.Context, request ListDraftPageRevisionsRequestObject) (ListDraftPageRevisionsResponseObject, error)
+	// GetDraftPageRevision 下書きのリビジョンを取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id})
+	GetDraftPageRevision(ctx context.Context, request GetDraftPageRevisionRequestObject) (GetDraftPageRevisionResponseObject, error)
+	// ListPageLinks ページのリンク先の一覧を取得する
+	// (GET /spaces/{space_identifier}/pages/{page_number}/links)
+	ListPageLinks(ctx context.Context, request ListPageLinksRequestObject) (ListPageLinksResponseObject, error)
+	// GetCurrentToken リクエストに使ったトークンの情報を取得する
+	// (GET /spaces/{space_identifier}/tokens/current)
+	GetCurrentToken(ctx context.Context, request GetCurrentTokenRequestObject) (GetCurrentTokenResponseObject, error)
 	// ListTopics トピックの一覧を取得する
 	// (GET /spaces/{space_identifier}/topics)
 	ListTopics(ctx context.Context, request ListTopicsRequestObject) (ListTopicsResponseObject, error)
 	// GetTopic トピックを取得する
 	// (GET /spaces/{space_identifier}/topics/{topic_number})
 	GetTopic(ctx context.Context, request GetTopicRequestObject) (GetTopicResponseObject, error)
+	// CreateWikilinkPreview 本文のWikiリンクのリンク先を確かめる
+	// (POST /spaces/{space_identifier}/wikilink_previews)
+	CreateWikilinkPreview(ctx context.Context, request CreateWikilinkPreviewRequestObject) (CreateWikilinkPreviewResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -2340,6 +6300,93 @@ func (sh *strictHandler) GetSpace(w http.ResponseWriter, r *http.Request, spaceI
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetSpaceResponseObject); ok {
 		if err := validResponse.VisitGetSpaceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAttachment operation middleware
+func (sh *strictHandler) GetAttachment(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, attachmentId AttachmentID) {
+	var request GetAttachmentRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.AttachmentId = attachmentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAttachment(ctx, request.(GetAttachmentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAttachment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAttachmentResponseObject); ok {
+		if err := validResponse.VisitGetAttachmentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListDraftPages operation middleware
+func (sh *strictHandler) ListDraftPages(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, params ListDraftPagesParams) {
+	var request ListDraftPagesRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDraftPages(ctx, request.(ListDraftPagesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDraftPages")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListDraftPagesResponseObject); ok {
+		if err := validResponse.VisitListDraftPagesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateDraftPage operation middleware
+func (sh *strictHandler) CreateDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier) {
+	var request CreateDraftPageRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+
+	var body CreateDraftPageJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateDraftPage(ctx, request.(CreateDraftPageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateDraftPage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateDraftPageResponseObject); ok {
+		if err := validResponse.VisitCreateDraftPageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -2496,6 +6543,333 @@ func (sh *strictHandler) UpdatePage(w http.ResponseWriter, r *http.Request, spac
 	}
 }
 
+// ListPageBacklinks operation middleware
+func (sh *strictHandler) ListPageBacklinks(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListPageBacklinksParams) {
+	var request ListPageBacklinksRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPageBacklinks(ctx, request.(ListPageBacklinksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPageBacklinks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPageBacklinksResponseObject); ok {
+		if err := validResponse.VisitListPageBacklinksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreatePageBodyEdit operation middleware
+func (sh *strictHandler) CreatePageBodyEdit(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreatePageBodyEditParams) {
+	var request CreatePageBodyEditRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	var body CreatePageBodyEditJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePageBodyEdit(ctx, request.(CreatePageBodyEditRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePageBodyEdit")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreatePageBodyEditResponseObject); ok {
+		if err := validResponse.VisitCreatePageBodyEditResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteDraftPage operation middleware
+func (sh *strictHandler) DeleteDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params DeleteDraftPageParams) {
+	var request DeleteDraftPageRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteDraftPage(ctx, request.(DeleteDraftPageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteDraftPage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteDraftPageResponseObject); ok {
+		if err := validResponse.VisitDeleteDraftPageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDraftPage operation middleware
+func (sh *strictHandler) GetDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params GetDraftPageParams) {
+	var request GetDraftPageRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDraftPage(ctx, request.(GetDraftPageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDraftPage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetDraftPageResponseObject); ok {
+		if err := validResponse.VisitGetDraftPageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateDraftPage operation middleware
+func (sh *strictHandler) UpdateDraftPage(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params UpdateDraftPageParams) {
+	var request UpdateDraftPageRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	var body UpdateDraftPageApplicationMergePatchPlusJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateDraftPage(ctx, request.(UpdateDraftPageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateDraftPage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateDraftPageResponseObject); ok {
+		if err := validResponse.VisitUpdateDraftPageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateDraftPageBodyEdit operation middleware
+func (sh *strictHandler) CreateDraftPageBodyEdit(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreateDraftPageBodyEditParams) {
+	var request CreateDraftPageBodyEditRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	var body CreateDraftPageBodyEditJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateDraftPageBodyEdit(ctx, request.(CreateDraftPageBodyEditRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateDraftPageBodyEdit")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateDraftPageBodyEditResponseObject); ok {
+		if err := validResponse.VisitCreateDraftPageBodyEditResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateDraftPagePublication operation middleware
+func (sh *strictHandler) CreateDraftPagePublication(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params CreateDraftPagePublicationParams) {
+	var request CreateDraftPagePublicationRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateDraftPagePublication(ctx, request.(CreateDraftPagePublicationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateDraftPagePublication")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateDraftPagePublicationResponseObject); ok {
+		if err := validResponse.VisitCreateDraftPagePublicationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListDraftPageRevisions operation middleware
+func (sh *strictHandler) ListDraftPageRevisions(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListDraftPageRevisionsParams) {
+	var request ListDraftPageRevisionsRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDraftPageRevisions(ctx, request.(ListDraftPageRevisionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDraftPageRevisions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListDraftPageRevisionsResponseObject); ok {
+		if err := validResponse.VisitListDraftPageRevisionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDraftPageRevision operation middleware
+func (sh *strictHandler) GetDraftPageRevision(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, draftPageRevisionId DraftPageRevisionID) {
+	var request GetDraftPageRevisionRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.DraftPageRevisionId = draftPageRevisionId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDraftPageRevision(ctx, request.(GetDraftPageRevisionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDraftPageRevision")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetDraftPageRevisionResponseObject); ok {
+		if err := validResponse.VisitGetDraftPageRevisionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPageLinks operation middleware
+func (sh *strictHandler) ListPageLinks(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, pageNumber PageNumber, params ListPageLinksParams) {
+	var request ListPageLinksRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+	request.PageNumber = pageNumber
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPageLinks(ctx, request.(ListPageLinksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPageLinks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPageLinksResponseObject); ok {
+		if err := validResponse.VisitListPageLinksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCurrentToken operation middleware
+func (sh *strictHandler) GetCurrentToken(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier) {
+	var request GetCurrentTokenRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCurrentToken(ctx, request.(GetCurrentTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCurrentToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCurrentTokenResponseObject); ok {
+		if err := validResponse.VisitGetCurrentTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListTopics operation middleware
 func (sh *strictHandler) ListTopics(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier, params ListTopicsParams) {
 	var request ListTopicsRequestObject
@@ -2550,120 +6924,320 @@ func (sh *strictHandler) GetTopic(w http.ResponseWriter, r *http.Request, spaceI
 	}
 }
 
+// CreateWikilinkPreview operation middleware
+func (sh *strictHandler) CreateWikilinkPreview(w http.ResponseWriter, r *http.Request, spaceIdentifier SpaceIdentifier) {
+	var request CreateWikilinkPreviewRequestObject
+
+	request.SpaceIdentifier = spaceIdentifier
+
+	var body CreateWikilinkPreviewJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateWikilinkPreview(ctx, request.(CreateWikilinkPreviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateWikilinkPreview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateWikilinkPreviewResponseObject); ok {
+		if err := validResponse.VisitCreateWikilinkPreviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
-	"RFtvGrd5hy4P/V8AAAD//w==",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

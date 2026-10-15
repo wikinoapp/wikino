@@ -208,6 +208,12 @@ func (b *DraftPageBuilderDB) WithTitle(title string) *DraftPageBuilderDB {
 	return b
 }
 
+// WithNilTitleはタイトルをnilに設定します
+func (b *DraftPageBuilderDB) WithNilTitle() *DraftPageBuilderDB {
+	b.title = nil
+	return b
+}
+
 // WithBodyは本文を設定します
 func (b *DraftPageBuilderDB) WithBody(body string) *DraftPageBuilderDB {
 	b.body = body

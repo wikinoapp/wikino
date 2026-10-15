@@ -32,6 +32,8 @@ func TestIsCookielessRequest(t *testing.T) {
 		{name: "APIリファレンス", method: http.MethodGet, path: "/api/reference/v1", want: true},
 		{name: "OAuthのトークン発行", method: http.MethodPost, path: "/oauth/token", want: true},
 		{name: "OAuthのトークン失効", method: http.MethodPost, path: "/oauth/revoke", want: true},
+		{name: "OAuthのデバイス認可の要求", method: http.MethodPost, path: "/oauth/device_authorization", want: true},
+		{name: "OAuthのユーザーコードの入力画面", method: http.MethodGet, path: "/oauth/device", want: false},
 		{name: "OAuthの同意画面", method: http.MethodGet, path: "/oauth/authorize", want: false},
 		{name: "OAuthのトークン発行に似たパス", method: http.MethodPost, path: "/oauth/token/extra", want: false},
 		{name: "認可サーバーのメタデータ", method: http.MethodGet, path: "/.well-known/oauth-authorization-server", want: true},
