@@ -1,0 +1,103 @@
+name: CLI E2E
+
+# 開発用のサーバーを起動し、ビルドしたCLI (cli/) で主要な流れを通す。
+# CLIのコマンドのテストはAPIをスタブで受けるため、サーバーの変更 (go/) がCLIを壊したことも
+# ここで検出する。PlaywrightのE2E (go-e2e-ci.yml) とは、要る準備 (シード・Node.js) が違うため分ける。
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "cli/**"
+      - "go/**"
+      - ".github/workflows/cli-e2e-ci.yml"
+  pull_request:
+    paths:
+      - "cli/**"
+      - "go/**"
+      - ".github/workflows/cli-e2e-ci.yml"
+
+env:
+  GO_VERSION: "1.26.4"
+
+jobs:
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      # シード (wikino seed) は開発環境でしか動かないため、サーバーも開発環境として起動する
+      APP_ENV: dev
+      DATABASE_URL: postgres://postgres@localhost:5432/wikino_dev?sslmode=disable
+      WIKINO_PORT: "4201"
+      WIKINO_DOMAIN: "localhost"
+      WIKINO_COOKIE_DOMAIN: "localhost"
+      WIKINO_SESSION_SECURE: "false"
+      WIKINO_SESSION_HTTPONLY: "true"
+      WIKINO_DISABLE_RATE_LIMIT: "true"
+      WIKINO_TURNSTILE_ENABLED: "false"
+
+    services:
+      postgresql:
+        image: postgres:18.1
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: wikino_dev
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup database
+        working-directory: go
+        run: make db-setup-dev
+
+      - name: Seed database
+        working-directory: go
+        run: |
+          cp seed-users.example.toml seed-users.toml
+          make seed
+
+      # templの生成物はコミットしているため、make buildのtempl-generateを通さずにビルドする
+      - name: Build Go server
+        working-directory: go
+        run: go build -o bin/wikino ./cmd/wikino
+
+      - name: Start Go server
+        working-directory: go
+        run: bin/wikino serve > /tmp/server.log 2>&1 &
+
+      - name: Wait for server to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:4201/health > /dev/null 2>&1; then
+              echo "Server is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start"
+          echo "--- Server logs ---"
+          cat /tmp/server.log
+          exit 1
+
+      - name: Run E2E tests
+        working-directory: cli
+        timeout-minutes: 10
+        run: make e2e
+
+      - name: Show server logs
+        if: ${{ failure() }}
+        run: cat /tmp/server.log
