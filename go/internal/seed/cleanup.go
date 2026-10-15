@@ -23,6 +23,7 @@ var cleanupTables = []string{
 	"oauth_access_tokens",
 	"oauth_applications",
 	"oauth_authorization_codes",
+	"oauth_device_authorizations",
 	"oauth_grants",
 	"oauth_refresh_tokens",
 	"page_attachment_references",

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -12,36 +13,40 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func newCreateOAuthAuthorizationUsecaseForTest(q *query.Queries) *CreateOAuthAuthorizationUsecase {
 	return NewCreateOAuthAuthorizationUsecase(
+		testutil.GetTestDB(), repository.NewOAuthGrantRepository(q),
 		oauthAuthorizationTestConfig,
 		repository.NewFeatureFlagRepository(q),
 		repository.NewOAuthApplicationRepository(q),
 		repository.NewSpaceRepository(q),
 		repository.NewSpaceMemberRepository(q),
 		repository.NewOAuthAuthorizationCodeRepository(q),
+		validator.NewOAuthAuthorizationCreateValidator(),
 	)
 }
 
 func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
-	t.Run("許可すると、許可に属する認可コードを発行し、そのダイジェストだけを保存する", func(t *testing.T) {
+	t.Run("許可すると、選んだスコープで許可に属する認可コードを発行し、そのダイジェストだけを保存する", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTx(t)
-		q := testutil.QueriesWithTx(tx)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-approve", model.SpaceRoleViewer, true)
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthAuthorizationFixtureDB(t, "coauth-approve", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 		params.RedirectURI = "http://127.0.0.1:53123/callback"
 
 		before := time.Now()
 		output, err := newCreateOAuthAuthorizationUsecaseForTest(q).Execute(context.Background(), CreateOAuthAuthorizationInput{
-			UserID:   f.userID,
-			Params:   params,
-			Approved: true,
+			UserID:        f.userID,
+			Params:        params,
+			Approved:      true,
+			GrantedScopes: []string{"topic:read"},
 		})
 		if err != nil {
 			t.Fatalf("Execute()のエラー = %v", err)
@@ -63,8 +68,8 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		if code.SpaceID != f.spaceID {
 			t.Errorf("code.SpaceID = %v、期待値 = %v", code.SpaceID, f.spaceID)
 		}
-		if want := []model.Scope{model.ScopeTopicRead, model.ScopePageWrite}; !slices.Equal(code.Scopes, want) {
-			t.Errorf("code.Scopes = %v、期待値 = %v", code.Scopes, want)
+		if want := []model.Scope{model.ScopeTopicRead}; !slices.Equal(code.Scopes, want) {
+			t.Errorf("code.Scopes = %v、期待値 = %v (要求のうち選んだスコープだけ)", code.Scopes, want)
 		}
 		if code.RedirectURI != params.RedirectURI {
 			t.Errorf("code.RedirectURI = %q、期待値 = %q", code.RedirectURI, params.RedirectURI)
@@ -81,52 +86,122 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 			t.Fatalf("FindByID()のエラー = %v", err)
 		}
 		if grant == nil || grant.SpaceMemberID != f.spaceMemberID {
-			t.Errorf("grant = %+v、期待値はログイン中のユーザーのメンバーの許可", grant)
+			t.Fatalf("grant = %+v、期待値はログイン中のユーザーのメンバーの許可", grant)
+		}
+		if want := []model.Scope{model.ScopeTopicRead}; !slices.Equal(grant.Scopes, want) {
+			t.Errorf("grant.Scopes = %v、期待値 = %v", grant.Scopes, want)
 		}
 	})
+
+	t.Run("再認可で選んだスコープに許可を置き換え、範囲を狭められる", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthAuthorizationFixtureDB(t, "coauth-narrow", model.SpaceRoleEditor, true)
+		uc := newCreateOAuthAuthorizationUsecaseForTest(q)
+
+		var grantID model.OAuthGrantID
+		for _, granted := range [][]string{{"topic:read", "page:write"}, {"page:write"}} {
+			output, err := uc.Execute(context.Background(), CreateOAuthAuthorizationInput{
+				UserID:        f.userID,
+				Params:        validOAuthAuthorizationParams(f.clientID),
+				Approved:      true,
+				GrantedScopes: granted,
+			})
+			if err != nil {
+				t.Fatalf("Execute()のエラー = %v", err)
+			}
+			code, err := repository.NewOAuthAuthorizationCodeRepository(q).FindByCodeDigest(context.Background(), auth.DigestOpaqueToken(output.Code))
+			if err != nil {
+				t.Fatalf("FindByCodeDigest()のエラー = %v", err)
+			}
+			grantID = code.OAuthGrantID
+		}
+
+		grant, err := repository.NewOAuthGrantRepository(q).FindByID(context.Background(), grantID, f.spaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		if want := []model.Scope{model.ScopePageWrite}; grant == nil || !slices.Equal(grant.Scopes, want) {
+			t.Errorf("grant = %+v、期待値 = スコープが %v の許可", grant, want)
+		}
+	})
+
+	for _, tt := range []struct {
+		name    string
+		granted []string
+	}{
+		{name: "スコープを1つも選ばずに許可すると、ValidationErrorを返す", granted: nil},
+		{name: "要求に無いスコープを送信すると、ValidationErrorを返す", granted: []string{"topic:read", "draft_page:read"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db := testutil.GetTestDB()
+			f := setupOAuthAuthorizationFixtureDB(t, "coauth-invalid-scopes-"+strconv.Itoa(len(tt.granted)), model.SpaceRoleViewer, true)
+
+			output, err := newCreateOAuthAuthorizationUsecaseForTest(query.New(db)).Execute(context.Background(), CreateOAuthAuthorizationInput{
+				UserID:        f.userID,
+				Params:        validOAuthAuthorizationParams(f.clientID),
+				Approved:      true,
+				GrantedScopes: tt.granted,
+			})
+			if output != nil {
+				t.Errorf("output = %+v、期待値 = nil", output)
+			}
+			if ve := model.AsValidationError(err); ve == nil || !ve.HasFieldError("granted_scopes") {
+				t.Errorf("エラー = %v、期待値 = granted_scopesのValidationError", err)
+			}
+			assertNoOAuthGrant(t, db, f)
+		})
+	}
 
 	t.Run("拒否するとaccess_deniedを返し、コードを発行しない", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-deny", model.SpaceRoleViewer, true)
+		db := testutil.GetTestDB()
+		f := setupOAuthAuthorizationFixtureDB(t, "coauth-deny", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 
-		_, err := newCreateOAuthAuthorizationUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), CreateOAuthAuthorizationInput{
+		_, err := newCreateOAuthAuthorizationUsecaseForTest(query.New(db)).Execute(context.Background(), CreateOAuthAuthorizationInput{
 			UserID:   f.userID,
 			Params:   params,
 			Approved: false,
 		})
 		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorAccessDenied, params)
-		assertNoOAuthGrant(t, tx, f)
+		assertNoOAuthGrant(t, db, f)
 	})
 
 	t.Run("メンバーでないユーザーが許可を送信するとaccess_deniedを返す", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-not-member", model.SpaceRoleViewer, true)
-		outsider := setupPATMember(t, tx, "coa-not-member-outsider", model.SpaceRoleViewer, true)
+		db := testutil.GetTestDB()
+		f := setupOAuthAuthorizationFixtureDB(t, "coauth-not-member", model.SpaceRoleViewer, true)
+		var outsider patMemberFixture
+		testutil.CommitFixture(t, func(tx *sql.Tx) {
+			outsider = setupPATMember(t, tx, "coauth-not-member-outsider", model.SpaceRoleViewer, true)
+		})
 		params := validOAuthAuthorizationParams(f.clientID)
 
-		_, err := newCreateOAuthAuthorizationUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), CreateOAuthAuthorizationInput{
+		_, err := newCreateOAuthAuthorizationUsecaseForTest(query.New(db)).Execute(context.Background(), CreateOAuthAuthorizationInput{
 			UserID:   outsider.userID,
 			Params:   params,
 			Approved: true,
 		})
 		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorAccessDenied, params)
-		assertNoOAuthGrant(t, tx, f)
+		assertNoOAuthGrant(t, db, f)
 	})
 
 	t.Run("送信された要求も表示と同じく検証する", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-invalid", model.SpaceRoleViewer, true)
+		db := testutil.GetTestDB()
+		f := setupOAuthAuthorizationFixtureDB(t, "coauth-invalid", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 		params.RedirectURI = "https://evil.example/callback"
 
-		_, err := newCreateOAuthAuthorizationUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), CreateOAuthAuthorizationInput{
+		_, err := newCreateOAuthAuthorizationUsecaseForTest(query.New(db)).Execute(context.Background(), CreateOAuthAuthorizationInput{
 			UserID:   f.userID,
 			Params:   params,
 			Approved: true,
@@ -134,16 +209,16 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		if oe := model.AsOAuthAuthorizationError(err); oe == nil || oe.IsRedirectable() {
 			t.Errorf("エラー = %v、期待値 = クライアントへ戻さない*model.OAuthAuthorizationError", err)
 		}
-		assertNoOAuthGrant(t, tx, f)
+		assertNoOAuthGrant(t, db, f)
 	})
 
 	t.Run("フィーチャーフラグが無効なら見つからないとして答える", func(t *testing.T) {
 		t.Parallel()
 
-		_, tx := testutil.SetupTx(t)
-		f := setupOAuthAuthorizationFixture(t, tx, "coa-noflag", model.SpaceRoleViewer, false)
+		db := testutil.GetTestDB()
+		f := setupOAuthAuthorizationFixtureDB(t, "coauth-noflag", model.SpaceRoleViewer, false)
 
-		_, err := newCreateOAuthAuthorizationUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), CreateOAuthAuthorizationInput{
+		_, err := newCreateOAuthAuthorizationUsecaseForTest(query.New(db)).Execute(context.Background(), CreateOAuthAuthorizationInput{
 			UserID:   f.userID,
 			Params:   validOAuthAuthorizationParams(f.clientID),
 			Approved: true,
@@ -152,16 +227,16 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		if ae == nil || ae.Code != model.AppErrCodeResourceNotFound {
 			t.Errorf("エラー = %v、期待値 = AppErrCodeResourceNotFound", err)
 		}
-		assertNoOAuthGrant(t, tx, f)
+		assertNoOAuthGrant(t, db, f)
 	})
 }
 
 // assertNoOAuthGrantは、フィクスチャのアプリに許可が作られていないことを確かめる
-func assertNoOAuthGrant(t *testing.T, tx *sql.Tx, f oauthAuthorizationFixture) {
+func assertNoOAuthGrant(t *testing.T, db *sql.DB, f oauthAuthorizationFixture) {
 	t.Helper()
 
 	var count int
-	err := tx.QueryRowContext(context.Background(),
+	err := db.QueryRowContext(context.Background(),
 		`SELECT count(*) FROM oauth_grants g
 		 INNER JOIN oauth_applications a ON a.id = g.oauth_application_id
 		 WHERE a.client_id = $1 AND g.space_id = $2`,
@@ -173,4 +248,11 @@ func assertNoOAuthGrant(t *testing.T, tx *sql.Tx, f oauthAuthorizationFixture) {
 	if count != 0 {
 		t.Errorf("許可の数 = %d、期待値 = 0", count)
 	}
+}
+
+func setupOAuthAuthorizationFixtureDB(t *testing.T, key string, role model.SpaceRole, flagEnabled bool) oauthAuthorizationFixture {
+	t.Helper()
+	var f oauthAuthorizationFixture
+	testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupOAuthAuthorizationFixture(t, tx, key, role, flagEnabled) })
+	return f
 }

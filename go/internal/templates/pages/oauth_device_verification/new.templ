@@ -1,0 +1,93 @@
+package oauth_device_verification
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// NewDataはユーザーコードの入力画面をレンダリングする元になるデータ。
+// UserCodeは入力欄に入れておく値で、`verification_uri_complete` で開いたときのコードか、
+// 受け付けなかった送信の入力。FormErrorsは受け付けなかった送信のエラー
+type NewData struct {
+	CSRFToken  string
+	UserCode   string
+	FormErrors *model.ValidationError
+}
+
+// Newは、ブラウザを開けない端末に表示されたユーザーコードを入力させる画面を表示します。
+templ New(data NewData) {
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="flex flex-col gap-2 px-4">
+			<h1 class="text-center text-2xl font-bold antialiased">
+				{ templates.T(ctx, "oauth_device_verification_new_heading") }
+			</h1>
+		</div>
+
+		@components.FormErrorSummary(data.FormErrors)
+
+		@components.ContentCard() {
+			<form action="/oauth/device" class="grid gap-6" method="POST">
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+				<div class="grid gap-2">
+					<label class="label" for={ userCodeField }>
+						{ templates.T(ctx, "oauth_device_verification_new_user_code_label") }
+					</label>
+					// コードは子音だけの8文字で、辞書の語でも利用者の情報でもないため、自動入力・
+					// 自動修正・スペルチェックを効かせず、大文字で入力しやすくします。
+					<input
+						autocapitalize="characters"
+						autocomplete="off"
+						autocorrect="off"
+						autofocus
+						class="input font-mono text-lg"
+						enterkeyhint="next"
+						id={ userCodeField }
+						name={ userCodeField }
+						required
+						spellcheck="false"
+						type="text"
+						value={ data.UserCode }
+						if hasUserCodeError(data.FormErrors) {
+							aria-invalid="true"
+							aria-describedby={ userCodeErrorID + " " + userCodeHintID }
+						} else {
+							aria-describedby={ userCodeHintID }
+						}
+					/>
+					<p class="text-muted-foreground text-sm" id={ userCodeHintID }>
+						{ templates.T(ctx, "oauth_device_verification_new_user_code_hint") }
+					</p>
+					if hasUserCodeError(data.FormErrors) {
+						<div id={ userCodeErrorID }>
+							for _, errorMsg := range data.FormErrors.GetFieldErrors(userCodeField) {
+								<p class="text-sm text-error">{ errorMsg }</p>
+							}
+						</div>
+					}
+				</div>
+
+				<div>
+					<button class="btn rounded-full" type="submit">
+						{ templates.T(ctx, "oauth_device_verification_new_submit_button") }
+					</button>
+				</div>
+			</form>
+		}
+	</div>
+}
+
+// userCodeFieldは、利用者が入力したユーザーコードを送るフォームの項目名
+const userCodeField = "user_code"
+
+// userCodeErrorIDは、ユーザーコードのエラーを収める要素のid
+const userCodeErrorID = userCodeField + "-error"
+
+// userCodeHintIDは、ユーザーコードの入力欄の説明の要素のid
+const userCodeHintID = userCodeField + "-hint"
+
+// hasUserCodeErrorは、受け付けなかった送信にユーザーコードのエラーがあるかを返します。
+func hasUserCodeError(formErrors *model.ValidationError) bool {
+	return formErrors != nil && formErrors.HasFieldError(userCodeField)
+}

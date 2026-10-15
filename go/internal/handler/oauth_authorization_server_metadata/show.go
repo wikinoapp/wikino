@@ -15,14 +15,16 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	appURL := h.cfg.AppURL()
 	metadata := Metadata{
 		// 認可レスポンスの `iss` (RFC 9207) と同じ値にする
-		Issuer:                                 appURL,
-		AuthorizationEndpoint:                  appURL + model.OAuthAuthorizationEndpointPath,
-		TokenEndpoint:                          appURL + model.OAuthTokenEndpointPath,
-		RevocationEndpoint:                     appURL + model.OAuthRevocationEndpointPath,
+		Issuer:                appURL,
+		AuthorizationEndpoint: appURL + model.OAuthAuthorizationEndpointPath,
+		TokenEndpoint:         appURL + model.OAuthTokenEndpointPath,
+		RevocationEndpoint:    appURL + model.OAuthRevocationEndpointPath,
+		// デバイス認可の要求のエンドポイント (RFC 8628 §4)
+		DeviceAuthorizationEndpoint:            appURL + model.OAuthDeviceAuthorizationEndpointPath,
 		ScopesSupported:                        model.ScopesToStrings(model.APITokenScopes),
 		ResponseTypesSupported:                 []string{model.OAuthResponseTypeCode},
 		ResponseModesSupported:                 []string{"query"},
-		GrantTypesSupported:                    []string{model.OAuthGrantTypeAuthorizationCode, model.OAuthGrantTypeRefreshToken},
+		GrantTypesSupported:                    []string{model.OAuthGrantTypeAuthorizationCode, model.OAuthGrantTypeRefreshToken, model.OAuthGrantTypeDeviceCode},
 		TokenEndpointAuthMethodsSupported:      model.OAuthClientAuthMethods,
 		RevocationEndpointAuthMethodsSupported: model.OAuthClientAuthMethods,
 		CodeChallengeMethodsSupported:          []string{model.OAuthCodeChallengeMethodS256},

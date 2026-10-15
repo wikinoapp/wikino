@@ -53,9 +53,6 @@ var codeChallengePattern = regexp.MustCompile(`^[A-Za-z0-9_-]{43}$`)
 // 要求は、攻撃者の指定した先へ利用者を送らないよう、クライアントへ戻さないエラー (RedirectURIが
 // 空の*model.OAuthAuthorizationError) にする。それ以外の不正は、リダイレクトURIへ付けて
 // クライアントへ戻すエラーにする。
-//
-// クライアントIDでアプリを引くクエリは `space_id` の規約の例外である。認可要求はスペースを
-// 特定する前の入口で、スペースはアプリ (公式クライアントでは `resource`) から決まるため。
 func resolveOAuthAuthorizationRequest(
 	ctx context.Context,
 	appURL string,
@@ -71,24 +68,12 @@ func resolveOAuthAuthorizationRequest(
 	if params.ClientID == "" || slices.Contains(params.DuplicatedParams, "client_id") {
 		return nil, invalidClient
 	}
-	app, err := oauthApplicationRepo.FindByClientID(ctx, params.ClientID)
+	app, appSpace, err := findOAuthClient(ctx, oauthApplicationRepo, spaceRepo, params.ClientID)
 	if err != nil {
-		return nil, fmt.Errorf("OAuthアプリの取得に失敗: %w", err)
+		return nil, err
 	}
 	if app == nil {
 		return nil, invalidClient
-	}
-
-	// スペースのアプリは、そのスペースが削除されていれば使えない
-	var appSpace *model.Space
-	if !app.IsOfficialClient() {
-		appSpace, err = spaceRepo.FindByID(ctx, *app.SpaceID)
-		if err != nil {
-			return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
-		}
-		if appSpace == nil {
-			return nil, invalidClient
-		}
 	}
 
 	// リダイレクトURIは登録が1つでも省略させない。照合の対象を常に要求に載せ、トークン要求で
@@ -137,23 +122,11 @@ func resolveOAuthAuthorizationRequest(
 	if slices.Contains(params.DuplicatedParams, "resource") {
 		return fail(model.OAuthAuthorizationErrorInvalidTarget)
 	}
-	space := appSpace
-	switch {
-	case params.Resource != "":
-		identifier, ok := model.ParseSpaceAPIResourceURL(appURL, params.Resource)
-		if !ok {
-			return fail(model.OAuthAuthorizationErrorInvalidTarget)
-		}
-		resourceSpace, err := spaceRepo.FindByIdentifier(ctx, identifier)
-		if err != nil {
-			return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
-		}
-		if resourceSpace == nil || !app.IsAvailableIn(resourceSpace.ID) {
-			return fail(model.OAuthAuthorizationErrorInvalidTarget)
-		}
-		space = resourceSpace
-	case app.IsOfficialClient():
-		// 公式クライアントはスペースに属さないため、`resource` が無ければ連携先を決められない
+	space, err := resolveOAuthTargetSpace(ctx, appURL, spaceRepo, app, appSpace, params.Resource)
+	if err != nil {
+		return nil, err
+	}
+	if space == nil {
 		return fail(model.OAuthAuthorizationErrorInvalidTarget)
 	}
 
@@ -165,6 +138,67 @@ func resolveOAuthAuthorizationRequest(
 		state:         params.State,
 		codeChallenge: params.CodeChallenge,
 	}, nil
+}
+
+// findOAuthClientは、クライアントIDでOAuthアプリを引き、アプリとそのスペースを返す。公式クライアントの
+// スペースはnilである。アプリが無い場合と、スペースのアプリでそのスペースが削除されている場合は、
+// 使えるアプリが無いとしてアプリにnilを返す。
+//
+// クライアントIDでアプリを引くクエリは `space_id` の規約の例外である。認可要求とデバイス認可の要求は
+// スペースを特定する前の入口で、スペースはアプリ (公式クライアントでは `resource`) から決まるため。
+func findOAuthClient(
+	ctx context.Context,
+	oauthApplicationRepo *repository.OAuthApplicationRepository,
+	spaceRepo *repository.SpaceRepository,
+	clientID string,
+) (*model.OAuthApplication, *model.Space, error) {
+	app, err := oauthApplicationRepo.FindByClientID(ctx, clientID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("OAuthアプリの取得に失敗: %w", err)
+	}
+	if app == nil || app.IsOfficialClient() {
+		return app, nil, nil
+	}
+
+	appSpace, err := spaceRepo.FindByID(ctx, *app.SpaceID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("スペースの取得に失敗: %w", err)
+	}
+	if appSpace == nil {
+		return nil, nil, nil
+	}
+	return app, appSpace, nil
+}
+
+// resolveOAuthTargetSpaceは、アプリappの連携先のスペースを、要求の `resource` (RFC 8707) と
+// アプリのスペースappSpaceから決める。`resource` があれば、形式が正しく、存在し、アプリを使える
+// スペースを指さなければならない。公式クライアントはスペースに属さないため `resource` を必須とし、
+// スペースのアプリでは省略するとアプリのスペースになる。連携先を決められない場合はnilを返し、
+// 呼び出し側は `invalid_target` として扱う。
+func resolveOAuthTargetSpace(
+	ctx context.Context,
+	appURL string,
+	spaceRepo *repository.SpaceRepository,
+	app *model.OAuthApplication,
+	appSpace *model.Space,
+	resource string,
+) (*model.Space, error) {
+	if resource == "" {
+		return appSpace, nil
+	}
+
+	identifier, ok := model.ParseSpaceAPIResourceURL(appURL, resource)
+	if !ok {
+		return nil, nil
+	}
+	space, err := spaceRepo.FindByIdentifier(ctx, identifier)
+	if err != nil {
+		return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
+	}
+	if space == nil || !app.IsAvailableIn(space.ID) {
+		return nil, nil
+	}
+	return space, nil
 }
 
 // parseOAuthScopesは空白区切りのスコープ (RFC 6749 §3.3) を解釈する。トークンに付与できる

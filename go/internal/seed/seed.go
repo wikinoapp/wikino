@@ -192,6 +192,9 @@ func (r *Runner) Run(ctx context.Context) error {
 	slog.InfoContext(ctx, "既存データをクリーンアップしました", "table_count", len(cleanupTables))
 
 	generators := []generator{
+		{name: "公式OAuthクライアント", run: func(ctx context.Context, _ *state) error {
+			return registerOfficialOAuthApplications(ctx, r.db)
+		}},
 		{name: "ユーザー", run: func(ctx context.Context, st *state) error {
 			users, err := generateUsers(ctx, r.db, r.out, roster)
 			if err != nil {

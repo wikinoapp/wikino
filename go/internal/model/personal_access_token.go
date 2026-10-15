@@ -13,7 +13,7 @@ const PersonalAccessTokenLastUsedAtUpdateInterval = 1 * time.Minute
 var PersonalAccessTokenExpirationDays = []int{7, 30, 90, 365}
 
 // PersonalAccessTokenは公開APIの個人アクセストークンのドメインモデル。トークンは1つの
-// スペースに束縛され、そのスペースのメンバーが持つ。
+// スペースに属し、そのスペースのスペースメンバーが持つ。
 //
 // トークンの値そのものは保持せず、TokenDigestで照合する。TokenLastCharsは一覧で
 // トークンを見分けるための、値の末尾の数文字である。

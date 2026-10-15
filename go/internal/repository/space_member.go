@@ -108,12 +108,18 @@ func (r *SpaceMemberRepository) Create(ctx context.Context, input CreateSpaceMem
 
 // toModelはquery.SpaceMemberをmodel.SpaceMemberに変換する
 func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMember {
+	var maxTopicRole *model.TopicRole
+	if row.MaxTopicRole.Valid {
+		role := model.TopicRole(row.MaxTopicRole.String)
+		maxTopicRole = &role
+	}
 	return &model.SpaceMember{
-		ID:       model.SpaceMemberID(row.ID),
-		SpaceID:  model.SpaceID(row.SpaceID),
-		UserID:   model.UserID(row.UserID),
-		Role:     model.SpaceRole(row.Role),
-		JoinedAt: row.JoinedAt,
-		Active:   row.Active,
+		ID:           model.SpaceMemberID(row.ID),
+		SpaceID:      model.SpaceID(row.SpaceID),
+		UserID:       model.UserID(row.UserID),
+		Role:         model.SpaceRole(row.Role),
+		MaxTopicRole: maxTopicRole,
+		JoinedAt:     row.JoinedAt,
+		Active:       row.Active,
 	}
 }

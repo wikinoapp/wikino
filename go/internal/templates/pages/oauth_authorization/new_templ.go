@@ -23,16 +23,18 @@ type HiddenField struct {
 //
 // NotMemberとNoPermissionのどちらかが真なら、ログイン中のユーザーは連携先のスペースで
 // アプリを許可できず、同意の代わりにその理由とクライアントへ戻るボタンを示す。
+// ScopeOptionsは要求されたスコープの選択肢で、FormErrorsは拒否された送信のエラー。
 type NewData struct {
 	CSRFToken       string
 	HiddenFields    []HiddenField
 	ApplicationName string
 	SpaceName       string
 	UserAtname      string
-	Scopes          []model.Scope
+	ScopeOptions    []components.APITokenScopeOption
 	RedirectHost    string
 	NotMember       bool
 	NoPermission    bool
+	FormErrors      *model.ValidationError
 }
 
 // Newは外部アプリからの認可要求を利用者に示し、許可するか拒否するかを選ばせる画面を表示します。
@@ -65,7 +67,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_denied_heading", map[string]any{"ApplicationName": data.ApplicationName}))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 37, Col: 122}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 39, Col: 122}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -75,7 +77,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_heading", map[string]any{"ApplicationName": data.ApplicationName}))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 39, Col: 115}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 41, Col: 115}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -105,7 +107,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 46, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 48, Col: 65}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
@@ -123,7 +125,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(field.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 48, Col: 43}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 50, Col: 43}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 				if templ_7745c5c3_Err != nil {
@@ -136,7 +138,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(field.Value)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 48, Col: 65}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 50, Col: 65}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 				if templ_7745c5c3_Err != nil {
@@ -154,7 +156,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_space_label"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 54, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 56, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -167,7 +169,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(data.SpaceName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 56, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 58, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -180,7 +182,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_user_label"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 60, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 62, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -193,7 +195,7 @@ func New(data NewData) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs("@" + data.UserAtname)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 62, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 64, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -211,7 +213,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_not_member"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 67, Col: 64}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 69, Col: 64}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -229,7 +231,7 @@ func New(data NewData) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_no_permission"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 69, Col: 67}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 71, Col: 67}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -240,140 +242,172 @@ func New(data NewData) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"grid gap-3\"><p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " <fieldset class=\"fieldset gap-3\"><legend class=\"label\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_scopes_label", map[string]any{"ApplicationName": data.ApplicationName}))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 72, Col: 124}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 76, Col: 122}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</p><ul class=\"grid gap-3\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</legend><p class=\"text-muted-foreground text-sm\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				for _, scope := range data.Scopes {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<li class=\"grid gap-1\"><span class=\"font-bold\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var15 string
-					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(components.APITokenScopeLabel(ctx, scope))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 76, Col: 76}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</span> <span class=\"text-sm text-muted-foreground\">")
+				var templ_7745c5c3_Var15 string
+				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_scopes_hint"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 79, Col: 64}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if hasScopesError(data.FormErrors) {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div id=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var16 string
-					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(components.APITokenScopeHint(ctx, scope))
+					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(scopesErrorID)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 77, Col: 95}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 82, Col: 30}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</span></li>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					for _, errorMsg := range data.FormErrors.GetFieldErrors(grantedScopesField) {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<p class=\"text-sm text-error\">")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var17 string
+						templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(errorMsg)
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 84, Col: 49}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</p>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</ul></div>")
+				templ_7745c5c3_Err = components.APITokenScopeCheckboxes(components.APITokenScopeCheckboxesData{
+					Name:      grantedScopesField,
+					Options:   data.ScopeOptions,
+					ErrorID:   scopesErrorIDIf(hasScopesError(data.FormErrors)),
+					Autofocus: hasScopesError(data.FormErrors),
+				}).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</fieldset>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<p class=\"text-sm text-muted-foreground\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<p class=\"text-sm text-muted-foreground\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if data.NotMember || data.NoPermission {
-				var templ_7745c5c3_Var17 string
-				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_back_notice", map[string]any{"RedirectHost": data.RedirectHost}))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 86, Col: 114}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
 				var templ_7745c5c3_Var18 string
-				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_redirect_notice", map[string]any{"RedirectHost": data.RedirectHost}))
+				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_back_notice", map[string]any{"RedirectHost": data.RedirectHost}))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 88, Col: 118}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 99, Col: 114}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</p><div class=\"flex flex-wrap gap-2\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if !data.NotMember && !data.NoPermission {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<button class=\"btn rounded-full\" name=\"decision\" type=\"submit\" value=\"approve\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
+			} else {
 				var templ_7745c5c3_Var19 string
-				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_approve"))
+				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_redirect_notice", map[string]any{"RedirectHost": data.RedirectHost}))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 95, Col: 60}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 101, Col: 118}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</button> <button class=\"btn rounded-full\" data-variant=\"outline\" name=\"decision\" type=\"submit\" value=\"deny\">")
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</p><div class=\"flex flex-wrap gap-2\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if !data.NotMember && !data.NoPermission {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<button class=\"btn rounded-full\" name=\"decision\" type=\"submit\" value=\"approve\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var20 string
-				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_deny"))
+				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_approve"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 98, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 108, Col: 60}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</button>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<button class=\"btn rounded-full\" data-variant=\"outline\" name=\"decision\" type=\"submit\" value=\"deny\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</button> <button class=\"btn rounded-full\" data-variant=\"outline\" name=\"decision\" type=\"submit\" value=\"deny\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var21 string
-				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_back_to_application"))
+				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_deny"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 102, Col: 72}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 111, Col: 57}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</button>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</button>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<button class=\"btn rounded-full\" data-variant=\"outline\" name=\"decision\" type=\"submit\" value=\"deny\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var22 string
+				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "oauth_authorization_new_back_to_application"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/oauth_authorization/new.templ`, Line: 115, Col: 72}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</button>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></form>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -383,12 +417,31 @@ func New(data NewData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		return nil
 	})
+}
+
+// grantedScopesFieldは、利用者が選んだ付与するスコープを送るフォームの項目名
+const grantedScopesField = "granted_scopes"
+
+// scopesErrorIDは、スコープの選択のエラーを収める要素のid
+const scopesErrorID = grantedScopesField + "-error"
+
+// hasScopesErrorは、拒否された送信にスコープの選択のエラーがあるかを返します。
+func hasScopesError(formErrors *model.ValidationError) bool {
+	return formErrors != nil && formErrors.HasFieldError(grantedScopesField)
+}
+
+// scopesErrorIDIfは、エラーがあればチェックボックスから参照するエラーの要素のidを返します。
+func scopesErrorIDIf(hasError bool) string {
+	if hasError {
+		return scopesErrorID
+	}
+	return ""
 }
 
 var _ = templruntime.GeneratedTemplate

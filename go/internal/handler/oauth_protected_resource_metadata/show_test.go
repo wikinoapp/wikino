@@ -64,7 +64,7 @@ func TestShow(t *testing.T) {
 		want := map[string]any{
 			"resource":                 "https://example.com/api/v1/spaces/oprm-show",
 			"authorization_servers":    []any{"https://example.com"},
-			"scopes_supported":         []any{"topic:read", "page:read", "page:write"},
+			"scopes_supported":         []any{"topic:read", "page:read", "page:write", "draft_page:read", "draft_page:write", "draft_page:delete", "attachment:read"},
 			"bearer_methods_supported": []any{"header"},
 			"resource_documentation":   "https://example.com/api/reference/v1",
 		}

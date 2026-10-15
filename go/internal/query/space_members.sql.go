@@ -15,7 +15,7 @@ import (
 const createSpaceMember = `-- name: CreateSpaceMember :one
 INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $5, $5)
-RETURNING id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role
+RETURNING id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role, max_topic_role
 `
 
 type CreateSpaceMemberParams struct {
@@ -46,12 +46,13 @@ func (q *Queries) CreateSpaceMember(ctx context.Context, arg CreateSpaceMemberPa
 		&i.UpdatedAt,
 		pq.Array(&i.Scopes),
 		&i.Role,
+		&i.MaxTopicRole,
 	)
 	return i, err
 }
 
 const findActiveSpaceMemberBySpaceAndUser = `-- name: FindActiveSpaceMemberBySpaceAndUser :one
-SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role, max_topic_role FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
 `
 
 type FindActiveSpaceMemberBySpaceAndUserParams struct {
@@ -73,12 +74,13 @@ func (q *Queries) FindActiveSpaceMemberBySpaceAndUser(ctx context.Context, arg F
 		&i.UpdatedAt,
 		pq.Array(&i.Scopes),
 		&i.Role,
+		&i.MaxTopicRole,
 	)
 	return i, err
 }
 
 const findSpaceMembersByIDs = `-- name: FindSpaceMembersByIDs :many
-SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role, max_topic_role FROM space_members WHERE id = ANY($1::uuid[]) AND space_id = $2
 `
 
 type FindSpaceMembersByIDsParams struct {
@@ -106,6 +108,7 @@ func (q *Queries) FindSpaceMembersByIDs(ctx context.Context, arg FindSpaceMember
 			&i.UpdatedAt,
 			pq.Array(&i.Scopes),
 			&i.Role,
+			&i.MaxTopicRole,
 		); err != nil {
 			return nil, err
 		}
@@ -121,7 +124,7 @@ func (q *Queries) FindSpaceMembersByIDs(ctx context.Context, arg FindSpaceMember
 }
 
 const listActiveSpaceMembersByUserAndSpaceIDs = `-- name: ListActiveSpaceMembersByUserAndSpaceIDs :many
-SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role FROM space_members WHERE user_id = $1 AND space_id = ANY($2::uuid[]) AND active = true
+SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role, max_topic_role FROM space_members WHERE user_id = $1 AND space_id = ANY($2::uuid[]) AND active = true
 `
 
 type ListActiveSpaceMembersByUserAndSpaceIDsParams struct {
@@ -150,6 +153,7 @@ func (q *Queries) ListActiveSpaceMembersByUserAndSpaceIDs(ctx context.Context, a
 			&i.UpdatedAt,
 			pq.Array(&i.Scopes),
 			&i.Role,
+			&i.MaxTopicRole,
 		); err != nil {
 			return nil, err
 		}

@@ -67,10 +67,12 @@ type CreateOAuthAuthorizationCodeWithGrantInput struct {
 	ExpiresAt          time.Time
 }
 
-// CreateWithGrantは、スペースメンバーのOAuthアプリへの許可を作成または拡張し、その許可に
-// 属する認可コードを作成する。失効していない許可が既にあれば、許可のスコープを今回のスコープ
-// との和に広げる。許可とコードを1つの文で作るため、同じアプリへの同時の同意でも許可は1つに
-// 保たれ、許可だけが作られてコードが無い状態も残らない。
+// CreateWithGrantは、スペースメンバーのOAuthアプリへの許可を作成または置き換え、その許可に
+// 属する認可コードを作成する。失効していない許可が既にあれば、許可のスコープを今回のスコープに
+// 置き換え、その範囲に収まらないスコープを持つ発行済みのトークンを失効させる。許可とコードを
+// 1つの文で作るため、同じアプリへの同時の同意でも許可は1つに保たれ、許可だけが作られてコードが
+// 無い状態も残らない。
+// トークン発行との競合も防ぐ場合は、同じTxの先行する文でOAuthGrantRepository.LockOrCreateを呼ぶ。
 func (r *OAuthAuthorizationCodeRepository) CreateWithGrant(ctx context.Context, input CreateOAuthAuthorizationCodeWithGrantInput) (*model.OAuthAuthorizationCode, error) {
 	row, err := r.q.CreateOAuthAuthorizationCodeWithGrant(ctx, query.CreateOAuthAuthorizationCodeWithGrantParams{
 		OauthApplicationID: string(input.OAuthApplicationID),

@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"regexp"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
@@ -20,53 +22,60 @@ import (
 // codeVerifierPatternはPKCEのcode_verifierの形式 (RFC 7636 §4.1)
 var codeVerifierPattern = regexp.MustCompile(`^[A-Za-z0-9._~-]{43,128}$`)
 
-// CreateOAuthTokenUsecaseは、トークン要求 (`POST /oauth/token`) に応じて、認可コードの交換か
-// リフレッシュトークンの更新でアクセストークンとリフレッシュトークンを発行する。
+// CreateOAuthTokenUsecaseは、トークン要求 (`POST /oauth/token`) に応じて、認可コードの交換・
+// リフレッシュトークンの更新・デバイスコードの交換でアクセストークンとリフレッシュトークンを発行する。
 //
-// 認可コード・リフレッシュトークンをダイジェストで引くクエリは `space_id` の規約の例外である。
-// トークン要求はスペースを特定する前の入口で、スペースはコードやトークンから決まるため。
+// 認可コード・リフレッシュトークン・デバイスコードをダイジェストで引くクエリは `space_id` の規約の
+// 例外である。トークン要求はスペースを特定する前の入口で、スペースはコードやトークンから決まるため。
 // 以降のアプリ・許可・持ち主の取得は、ここで得た `space_id` を条件に含める。
 type CreateOAuthTokenUsecase struct {
-	cfg                        *config.Config
-	oauthApplicationRepo       *repository.OAuthApplicationRepository
-	oauthGrantRepo             *repository.OAuthGrantRepository
-	oauthAuthorizationCodeRepo *repository.OAuthAuthorizationCodeRepository
-	oauthAccessTokenRepo       *repository.OAuthAccessTokenRepository
-	oauthRefreshTokenRepo      *repository.OAuthRefreshTokenRepository
-	owners                     *apiTokenOwnerFinder
+	db                           *sql.DB
+	cfg                          *config.Config
+	oauthApplicationRepo         *repository.OAuthApplicationRepository
+	oauthGrantRepo               *repository.OAuthGrantRepository
+	oauthAuthorizationCodeRepo   *repository.OAuthAuthorizationCodeRepository
+	oauthAccessTokenRepo         *repository.OAuthAccessTokenRepository
+	oauthRefreshTokenRepo        *repository.OAuthRefreshTokenRepository
+	oauthDeviceAuthorizationRepo *repository.OAuthDeviceAuthorizationRepository
+	owners                       *apiTokenOwnerFinder
 }
 
 // NewCreateOAuthTokenUsecaseはCreateOAuthTokenUsecaseを生成する
 func NewCreateOAuthTokenUsecase(
+	db *sql.DB,
 	cfg *config.Config,
 	oauthApplicationRepo *repository.OAuthApplicationRepository,
 	oauthGrantRepo *repository.OAuthGrantRepository,
 	oauthAuthorizationCodeRepo *repository.OAuthAuthorizationCodeRepository,
 	oauthAccessTokenRepo *repository.OAuthAccessTokenRepository,
 	oauthRefreshTokenRepo *repository.OAuthRefreshTokenRepository,
+	oauthDeviceAuthorizationRepo *repository.OAuthDeviceAuthorizationRepository,
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	userRepo *repository.UserRepository,
 	featureFlagRepo *repository.FeatureFlagRepository,
 ) *CreateOAuthTokenUsecase {
 	return &CreateOAuthTokenUsecase{
-		cfg:                        cfg,
-		oauthApplicationRepo:       oauthApplicationRepo,
-		oauthGrantRepo:             oauthGrantRepo,
-		oauthAuthorizationCodeRepo: oauthAuthorizationCodeRepo,
-		oauthAccessTokenRepo:       oauthAccessTokenRepo,
-		oauthRefreshTokenRepo:      oauthRefreshTokenRepo,
-		owners:                     newAPITokenOwnerFinder(spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo),
+		db:                           db,
+		cfg:                          cfg,
+		oauthApplicationRepo:         oauthApplicationRepo,
+		oauthGrantRepo:               oauthGrantRepo,
+		oauthAuthorizationCodeRepo:   oauthAuthorizationCodeRepo,
+		oauthAccessTokenRepo:         oauthAccessTokenRepo,
+		oauthRefreshTokenRepo:        oauthRefreshTokenRepo,
+		oauthDeviceAuthorizationRepo: oauthDeviceAuthorizationRepo,
+		owners:                       newAPITokenOwnerFinder(spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo),
 	}
 }
 
-// OAuthTokenParamsはトークン要求のパラメーター (RFC 6749 §4.1.3・§6、RFC 7636 §4.5、RFC 8707 §2)
+// OAuthTokenParamsはトークン要求のパラメーター (RFC 6749 §4.1.3・§6、RFC 7636 §4.5、RFC 8628 §3.4、RFC 8707 §2)
 type OAuthTokenParams struct {
 	GrantType    string
 	Code         string
 	RedirectURI  string
 	CodeVerifier string
 	RefreshToken string
+	DeviceCode   string
 	Scope        string
 	Resource     string
 
@@ -101,8 +110,9 @@ type oauthTokenIssuance struct {
 // Executeはトークン要求を処理してトークンを発行する。要求を受け付けられない場合は
 // *model.OAuthTokenErrorを返す。
 //
-// 使用済みの認可コード・リフレッシュトークンが再び提示された場合は、漏洩したものとして
-// 許可に属するアクセストークン・リフレッシュトークンをすべて失効させてから `invalid_grant` を返す。
+// 使用済みの認可コード・リフレッシュトークン・交換済みのデバイスコードが再び提示された場合は、
+// 漏洩したものとして許可に属するアクセストークン・リフレッシュトークンをすべて失効させてから
+// `invalid_grant` を返す。
 func (uc *CreateOAuthTokenUsecase) Execute(ctx context.Context, params OAuthTokenParams) (*CreateOAuthTokenOutput, error) {
 	if len(params.DuplicatedParams) > 0 {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidRequest)
@@ -113,6 +123,8 @@ func (uc *CreateOAuthTokenUsecase) Execute(ctx context.Context, params OAuthToke
 		return uc.exchangeAuthorizationCode(ctx, params)
 	case model.OAuthGrantTypeRefreshToken:
 		return uc.refresh(ctx, params)
+	case model.OAuthGrantTypeDeviceCode:
+		return uc.exchangeDeviceCode(ctx, params)
 	case "":
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidRequest)
 	default:
@@ -157,8 +169,10 @@ func (uc *CreateOAuthTokenUsecase) exchangeAuthorizationCode(ctx context.Context
 		return nil, uc.revokeReplayedGrant(ctx, grant)
 	}
 
+	// 再認可で許可を狭める前に発行したコードは、今の許可の範囲を超えるスコープを持ちうる。
+	// 許可を狭めたときに範囲外のトークンは失効させるため、そうしたトークンをコードから作り直させない
 	now := time.Now()
-	if code.IsExpired(now) || grant.IsRevoked() {
+	if code.IsExpired(now) || grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, code.Scopes) {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 	}
 
@@ -172,7 +186,7 @@ func (uc *CreateOAuthTokenUsecase) exchangeAuthorizationCode(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	exchanged, err := uc.oauthAuthorizationCodeRepo.Exchange(ctx, repository.ExchangeOAuthAuthorizationCodeInput{
+	exchanged, err := uc.exchangeCode(ctx, code, repository.ExchangeOAuthAuthorizationCodeInput{
 		ID:                    code.ID,
 		SpaceID:               code.SpaceID,
 		AccessTokenDigest:     auth.DigestOpaqueToken(issuance.accessToken),
@@ -248,7 +262,7 @@ func (uc *CreateOAuthTokenUsecase) refresh(ctx context.Context, params OAuthToke
 	if err != nil {
 		return nil, err
 	}
-	rotated, err := uc.oauthRefreshTokenRepo.Rotate(ctx, repository.RotateOAuthRefreshTokenInput{
+	rotated, err := uc.rotateToken(ctx, refreshToken, repository.RotateOAuthRefreshTokenInput{
 		ID:                   refreshToken.ID,
 		SpaceID:              refreshToken.SpaceID,
 		TokenDigest:          auth.DigestOpaqueToken(issuance.refreshToken),
@@ -269,13 +283,126 @@ func (uc *CreateOAuthTokenUsecase) refresh(ctx context.Context, params OAuthToke
 	return issuance.output(scopes), nil
 }
 
+// exchangeDeviceCodeは、利用者が許可したデバイスコードをトークンと交換する (RFC 8628 §3.4・§3.5)。
+// 許可待ちなら `authorization_pending` か `slow_down`、拒否されていれば `access_denied`、
+// 期限が切れていれば `expired_token` を返し、クライアントはそれに応じてポーリングを続けるか止める。
+//
+// 要求の `scope` は使わない。スコープはデバイス認可の要求と利用者の同意で決まっており、
+// クライアント (golang.org/x/oauth2など) はポーリングにも要求の時点のスコープを付けて送るため、
+// 利用者が同意画面で狭めた範囲と照合すると交換できなくなる
+func (uc *CreateOAuthTokenUsecase) exchangeDeviceCode(ctx context.Context, params OAuthTokenParams) (*CreateOAuthTokenOutput, error) {
+	// 1. データ取得と検証
+	if params.DeviceCode == "" || params.ClientID == "" {
+		return nil, oauthTokenError(model.OAuthTokenErrorInvalidRequest)
+	}
+
+	device, err := uc.oauthDeviceAuthorizationRepo.FindByDeviceCodeDigest(ctx, auth.DigestOpaqueToken(params.DeviceCode))
+	if err != nil {
+		return nil, fmt.Errorf("デバイス認可の要求の取得に失敗: %w", err)
+	}
+	if device == nil {
+		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
+	}
+
+	app, err := uc.authenticateApplication(ctx, params, device.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	if app.ID != device.OAuthApplicationID {
+		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
+	}
+
+	now := time.Now()
+	switch device.Status {
+	case model.OAuthDeviceAuthorizationStatusDenied:
+		return nil, oauthTokenError(model.OAuthTokenErrorAccessDenied)
+	case model.OAuthDeviceAuthorizationStatusExchanged:
+		// 交換済みのデバイスコードの再提示は、コードが漏れて別の誰かが先に交換したことを示す。
+		// デバイスコードは要求したクライアントしか知らないため、認可コードと同じく許可のトークンを失効させる
+		grant, err := uc.findGrant(ctx, app, *device.OAuthGrantID, device.SpaceID)
+		if err != nil {
+			return nil, err
+		}
+		return nil, uc.revokeReplayedGrant(ctx, grant)
+	}
+	if device.IsExpired(now) {
+		return nil, oauthTokenError(model.OAuthTokenErrorExpiredToken)
+	}
+	if device.Status == model.OAuthDeviceAuthorizationStatusPending {
+		return nil, uc.pollPendingDeviceAuthorization(ctx, device, now)
+	}
+
+	grant, err := uc.findGrant(ctx, app, *device.OAuthGrantID, device.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	// 許可した後に利用者が連携を解除したか、同じアプリを再認可して範囲を狭めた場合は、
+	// 今の許可の範囲を超えるトークンを作らない
+	if grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, device.Scopes) {
+		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
+	}
+
+	// 2. 認可チェック
+	if err := uc.checkGrantUsable(ctx, grant, params.Resource); err != nil {
+		return nil, err
+	}
+
+	// 3. 永続化
+	issuance, err := newOAuthTokenIssuance()
+	if err != nil {
+		return nil, err
+	}
+	exchanged, err := uc.exchangeDevice(ctx, device, repository.ExchangeOAuthDeviceAuthorizationInput{
+		ID:                    device.ID,
+		SpaceID:               device.SpaceID,
+		AccessTokenDigest:     auth.DigestOpaqueToken(issuance.accessToken),
+		AccessTokenExpiresAt:  now.Add(model.OAuthAccessTokenLifetime),
+		RefreshTokenDigest:    auth.DigestOpaqueToken(issuance.refreshToken),
+		RefreshTokenExpiresAt: now.Add(model.OAuthRefreshTokenLifetime),
+		Now:                   now,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("デバイスコードの交換に失敗: %w", err)
+	}
+	if exchanged == nil {
+		// 取得の後に同じデバイスコードが交換された。同時に届いた2つの要求の一方は漏れたコードである
+		return nil, uc.revokeReplayedGrant(ctx, grant)
+	}
+
+	return issuance.output(device.Scopes), nil
+}
+
+// pollPendingDeviceAuthorizationは、許可待ちの要求へのポーリングを記録し、前回のポーリングから
+// 間隔を空けずに届いていれば `slow_down` を、そうでなければ `authorization_pending` を返す。
+// 取得の後に利用者が許可・拒否した場合も `authorization_pending` を返し、次のポーリングで結果を伝える
+func (uc *CreateOAuthTokenUsecase) pollPendingDeviceAuthorization(ctx context.Context, device *model.OAuthDeviceAuthorization, now time.Time) error {
+	tooFast, err := uc.oauthDeviceAuthorizationRepo.RecordPoll(ctx, device.ID, device.SpaceID, model.OAuthDeviceAuthorizationSlowDownIncrement, now)
+	if err != nil {
+		return fmt.Errorf("デバイス認可の要求へのポーリングの記録に失敗: %w", err)
+	}
+	if tooFast {
+		return oauthTokenError(model.OAuthTokenErrorSlowDown)
+	}
+	return oauthTokenError(model.OAuthTokenErrorAuthorizationPending)
+}
+
 // authenticateClientは、クライアントを認証し (RFC 6749 §2.3.1)、認可コードやリフレッシュトークンが
 // 属する許可がそのクライアントのものであることを確かめて、許可を返す。
 //
-// アプリは、コードやトークンのスペースで使えるものに限って引く (スペースのアプリか公式クライアント)。
 // 認証できないクライアントには `invalid_client`、別のクライアントに発行されたコードやトークンには
 // `invalid_grant` を返す。
 func (uc *CreateOAuthTokenUsecase) authenticateClient(ctx context.Context, params OAuthTokenParams, grantID model.OAuthGrantID, spaceID model.SpaceID) (*model.OAuthGrant, error) {
+	app, err := uc.authenticateApplication(ctx, params, spaceID)
+	if err != nil {
+		return nil, err
+	}
+	return uc.findGrant(ctx, app, grantID, spaceID)
+}
+
+// authenticateApplicationは、クライアントを認証し (RFC 6749 §2.3.1)、アプリを返す。
+// アプリは、コードやトークンのスペースで使えるものに限って引く (スペースのアプリか公式クライアント)。
+// 認証できないクライアントには `invalid_client` を返す
+func (uc *CreateOAuthTokenUsecase) authenticateApplication(ctx context.Context, params OAuthTokenParams, spaceID model.SpaceID) (*model.OAuthApplication, error) {
 	app, err := uc.oauthApplicationRepo.FindByClientIDAndSpaceID(ctx, params.ClientID, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("OAuthアプリの取得に失敗: %w", err)
@@ -283,7 +410,12 @@ func (uc *CreateOAuthTokenUsecase) authenticateClient(ctx context.Context, param
 	if app == nil || !app.IsAvailableIn(spaceID) || !verifyOAuthClientSecret(app, params.ClientSecret, params.ClientSecretProvided) {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidClient)
 	}
+	return app, nil
+}
 
+// findGrantは、コードやトークンが属する許可を取得し、認証したクライアントのものであることを確かめる。
+// 別のクライアントの許可には `invalid_grant` を返す
+func (uc *CreateOAuthTokenUsecase) findGrant(ctx context.Context, app *model.OAuthApplication, grantID model.OAuthGrantID, spaceID model.SpaceID) (*model.OAuthGrant, error) {
 	grant, err := uc.oauthGrantRepo.FindByID(ctx, grantID, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("OAuthアプリの許可の取得に失敗: %w", err)
@@ -294,8 +426,8 @@ func (uc *CreateOAuthTokenUsecase) authenticateClient(ctx context.Context, param
 	return grant, nil
 }
 
-// checkGrantUsableは、許可の持ち主が束縛先のスペースで今もトークンを使えることと、要求の
-// `resource` が束縛先のスペースを指すことを確かめる。
+// checkGrantUsableは、許可の持ち主が許可の属するスペースで今もトークンを使えることと、要求の
+// `resource` が許可の属するスペースを指すことを確かめる。
 //
 // 持ち主の有効性はトークンを使うリクエストのたびにも確かめるが、使えないトークンを発行しない
 // よう、発行の時点でも確かめる。
@@ -309,8 +441,9 @@ func (uc *CreateOAuthTokenUsecase) checkGrantUsable(ctx context.Context, grant *
 	}
 
 	if resource != "" {
+		// 認可要求のスペースの検索 (citextの列) と揃え、識別子の大文字と小文字は区別しない
 		identifier, ok := model.ParseSpaceAPIResourceURL(uc.cfg.AppURL(), resource)
-		if !ok || identifier != owner.Space.Identifier {
+		if !ok || !strings.EqualFold(string(identifier), string(owner.Space.Identifier)) {
 			return oauthTokenError(model.OAuthTokenErrorInvalidTarget)
 		}
 	}
@@ -380,4 +513,95 @@ func verifyPKCES256(verifier, challenge string) bool {
 // oauthTokenErrorはトークン要求のエラーを返す
 func oauthTokenError(code model.OAuthTokenErrorCode) error {
 	return &model.OAuthTokenError{Code: code}
+}
+
+// exchangeCodeは、許可のロック後に最新のスコープを確かめ、認可コードを交換する。
+// 同意による縮小が先に終わった場合は、コードの再利用として扱わず拒否する
+func (uc *CreateOAuthTokenUsecase) exchangeCode(ctx context.Context, code *model.OAuthAuthorizationCode, input repository.ExchangeOAuthAuthorizationCodeInput) (*model.OAuthAuthorizationCode, error) {
+	tx, err := uc.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("トランザクション開始に失敗: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	grant, err := uc.oauthGrantRepo.WithTx(tx).LockByID(ctx, code.OAuthGrantID, code.SpaceID)
+	if err != nil {
+		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
+	}
+	if grant == nil || grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, code.Scopes) {
+		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
+	}
+	exchanged, err := uc.oauthAuthorizationCodeRepo.WithTx(tx).Exchange(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)
+	}
+	return exchanged, nil
+}
+
+// rotateTokenは、同意による縮小と同じ許可行を先にロックしてからトークンを更新する。
+// 縮小で失効したトークンの範囲を再び発行せず、範囲内の別端末のトークンは失効させない
+func (uc *CreateOAuthTokenUsecase) rotateToken(ctx context.Context, token *model.OAuthRefreshToken, input repository.RotateOAuthRefreshTokenInput) (*model.OAuthRefreshToken, error) {
+	tx, err := uc.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("トランザクション開始に失敗: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	grant, err := uc.oauthGrantRepo.WithTx(tx).LockByID(ctx, token.OAuthGrantID, token.SpaceID)
+	if err != nil {
+		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
+	}
+	if grant == nil || grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, token.Scopes) {
+		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
+	}
+	rotated, err := uc.oauthRefreshTokenRepo.WithTx(tx).Rotate(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)
+	}
+	return rotated, nil
+}
+
+// exchangeDeviceは、要求と許可をロックし、最新の状態・スコープ・期限を確かめてデバイスコードを交換する。
+// 認可コードの交換 (exchangeCode) と同じく、同意による縮小が先に終わった場合は拒否する。
+//
+// ロックは同意 (UpdateOAuthDeviceAuthorizationUsecase.approveWithGrant) と同じく要求 → 許可の順に取り、
+// デバイス認可の要求と許可を扱う処理どうしでロックの順序を1つに保つ
+func (uc *CreateOAuthTokenUsecase) exchangeDevice(ctx context.Context, device *model.OAuthDeviceAuthorization, input repository.ExchangeOAuthDeviceAuthorizationInput) (*model.OAuthDeviceAuthorization, error) {
+	tx, err := uc.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("トランザクション開始に失敗: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	deviceRepo := uc.oauthDeviceAuthorizationRepo.WithTx(tx)
+	locked, err := deviceRepo.LockByID(ctx, device.ID, device.SpaceID)
+	if err != nil {
+		return nil, fmt.Errorf("デバイス認可の要求のロックに失敗: %w", err)
+	}
+	if locked == nil || locked.Status != model.OAuthDeviceAuthorizationStatusApproved {
+		// 交換済みの再提示は、期限の前後にかかわらず呼び出し側で失効させる。
+		return nil, nil
+	}
+	grant, err := uc.oauthGrantRepo.WithTx(tx).LockByID(ctx, *device.OAuthGrantID, device.SpaceID)
+	if err != nil {
+		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
+	}
+	if grant == nil || grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, device.Scopes) {
+		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
+	}
+	// 要求と許可のどちらのロック待機中にも期限は進むため、両方の取得後に確認する。
+	if locked.IsExpired(time.Now()) {
+		return nil, oauthTokenError(model.OAuthTokenErrorExpiredToken)
+	}
+	exchanged, err := deviceRepo.Exchange(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)
+	}
+	return exchanged, nil
 }
