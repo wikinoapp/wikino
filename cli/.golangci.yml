@@ -1,0 +1,60 @@
+# golangci-lint v2の設定ファイル
+# https://golangci-lint.run/usage/configuration/
+#
+# サーバー (go/.golangci.yml) と同じリンターを使う。
+# サーバーのレイヤーの依存を決めるdepguardのルールはCLIに当てはまらないため持ち込まず、
+# CLIのパッケージの依存の向きのルールを持つ。
+
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  # e2eテスト (e2e/) はビルドタグで通常のテストから外しているため、タグを付けて検査に含める
+  build-tags:
+    - e2e
+
+linters:
+  enable:
+    - govet # Go標準静的解析
+    - staticcheck # 高度な静的解析
+    - gosec # セキュリティチェック
+    - errcheck # エラーチェック漏れ
+    - ineffassign # 無駄な代入
+    - unused # 未使用コード
+    - depguard # 依存関係のルール強制
+
+  exclusions:
+    rules:
+      # テストファイルではgosecとdepguardを無効化
+      - path: '(.+)_test\.go'
+        linters:
+          - gosec
+          - depguard
+    paths:
+      - bin/.*
+
+  settings:
+    gosec:
+      severity: medium
+      confidence: medium
+
+    depguard:
+      rules:
+        # APIのクライアント (SDK相当の層) は、将来のデスクトップクライアントなどでも使えるよう、
+        # CLIの他のパッケージ (コマンド・出力・翻訳・設定など) に依存しない。
+        # 後から足すCLIのパッケージにも効くよう、使ってよいものだけを並べる。
+        apiclient:
+          list-mode: strict
+          files:
+            - "**/internal/apiclient/**"
+            - "**/internal/apigen/**"
+            # 生成物を作る開発用のコマンドは、SDKの層の一部ではないため除く。
+            - "!**/internal/apigen/genoperations/**"
+          allow:
+            - $gostd
+            - github.com/wikinoapp/wikino/cli/internal/apigen
+            - github.com/oapi-codegen/runtime
+            - github.com/oapi-codegen/nullable
+            - github.com/google/uuid
+            - go.yaml.in/yaml/v3 # oapi-codegenが生成するYAMLの応答の解析の分岐がimportする (getOpenAPIDescriptionの200は生本文として返すため実行されない)
