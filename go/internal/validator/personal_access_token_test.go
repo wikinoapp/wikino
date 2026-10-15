@@ -42,6 +42,22 @@ func TestPersonalAccessTokenCreateValidator_Valid(t *testing.T) {
 			wantScopes:     []model.Scope{model.ScopeTopicRead, model.ScopePageRead, model.ScopePageWrite},
 			wantDays:       365,
 		},
+		{
+			name:           "下書きのスコープを付与できる",
+			tokenName:      "エージェント",
+			scopes:         []string{"draft_page:delete", "draft_page:write"},
+			expirationDays: "7",
+			wantScopes:     []model.Scope{model.ScopeDraftPageWrite, model.ScopeDraftPageDelete},
+			wantDays:       7,
+		},
+		{
+			name:           "添付ファイルの読み取りのスコープを付与できる",
+			tokenName:      "エージェント",
+			scopes:         []string{"attachment:read", "page:read"},
+			expirationDays: "30",
+			wantScopes:     []model.Scope{model.ScopePageRead, model.ScopeAttachmentRead},
+			wantDays:       30,
+		},
 	}
 
 	for _, tt := range tests {

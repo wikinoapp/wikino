@@ -18,7 +18,7 @@ import (
 //     した場合は他人向けのCookieが配られる)
 //   - 公開Web API: `Authorization: Bearer` のトークンで認証し、Cookieのセッションを使わない。
 //     ブラウザが自動で送るCookieを認証に使わないため、CSRFトークンの照合も要らない
-//   - OAuthのトークン・失効エンドポイントとメタデータ: Cookieのセッションを使わず、
+//   - OAuthのトークン・失効・デバイス認可の要求のエンドポイントとメタデータ: Cookieのセッションを使わず、
 //     クライアントがCSRFトークンを送れないため除外する
 var (
 	// AttachmentOGImagePathPatternは公開トピックのページから参照される添付ファイルのog:imageのパス。
@@ -32,9 +32,10 @@ var (
 	// APIPathPatternは公開Web APIのパス。バージョンに関わらず `/api/` 配下をすべて含める
 	APIPathPattern = regexp.MustCompile(`^/api/`)
 
-	// OAuthTokenPathPatternはCookieによるセッションを使わないOAuthのエンドポイント。
-	// 同意画面の`/oauth/authorize`はセッションを使うため含めない
-	OAuthTokenPathPattern = regexp.MustCompile(`^/oauth/(token|revoke)$`)
+	// OAuthTokenPathPatternはCookieによるセッションを使わないOAuthのエンドポイント
+	// (トークン・失効・デバイス認可の要求)。同意画面の`/oauth/authorize`とユーザーコードの入力画面の
+	// `/oauth/device`はセッションを使うため含めない
+	OAuthTokenPathPattern = regexp.MustCompile(`^/oauth/(token|revoke|device_authorization)$`)
 
 	// APIMetadataPathPatternはOAuthとAPIのメタデータのパス。
 	// リバースプロキシのGo振り分けと同じ範囲に限定する

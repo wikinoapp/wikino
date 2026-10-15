@@ -100,12 +100,14 @@ func setupHandler(t *testing.T, q *query.Queries) *oauth_token.Handler {
 
 	return oauth_token.NewHandler(
 		usecase.NewCreateOAuthTokenUsecase(
+			testutil.GetTestDB(),
 			&config.Config{Domain: "example.com"},
 			oauthApplicationRepo,
 			oauthGrantRepo,
 			repository.NewOAuthAuthorizationCodeRepository(q),
 			oauthAccessTokenRepo,
 			oauthRefreshTokenRepo,
+			repository.NewOAuthDeviceAuthorizationRepository(q),
 			repository.NewSpaceRepository(q),
 			repository.NewSpaceMemberRepository(q),
 			repository.NewUserRepository(q),
@@ -149,13 +151,13 @@ func assertJSONResponse(t *testing.T, rr *httptest.ResponseRecorder, wantStatus 
 func TestCreate_認可コードを交換してトークンレスポンスを返す(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	f := setupTokenFixture(t, tx, "oauth-token-create", false)
+	var f tokenFixture
+	testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupTokenFixture(t, tx, "oauth-token-create", false) })
 	form := f.codeForm()
 	form.Set("client_id", f.clientID)
 
 	rr := httptest.NewRecorder()
-	setupHandler(t, testutil.QueriesWithTx(tx)).Create(rr, newTokenRequest(form))
+	setupHandler(t, query.New(testutil.GetTestDB())).Create(rr, newTokenRequest(form))
 
 	body := assertJSONResponse(t, rr, http.StatusOK)
 	if token, _ := body["access_token"].(string); !strings.HasPrefix(token, string(auth.OAuthAccessTokenPrefix)) {
@@ -172,6 +174,54 @@ func TestCreate_認可コードを交換してトークンレスポンスを返�
 	}
 	if body["scope"] != "topic:read page:read" {
 		t.Errorf("scope = %v、期待値 = %q", body["scope"], "topic:read page:read")
+	}
+}
+
+func TestCreate_デバイスコードを交換してトークンレスポンスを返す(t *testing.T) {
+	t.Parallel()
+
+	var f tokenFixture
+	deviceCode := "oauth-token-device-code"
+	testutil.CommitFixture(t, func(tx *sql.Tx) {
+		f = setupTokenFixture(t, tx, "oauth-token-device", false)
+		var appID string
+		if err := tx.QueryRowContext(t.Context(), "SELECT id FROM oauth_applications WHERE client_id = $1", f.clientID).Scan(&appID); err != nil {
+			t.Fatalf("OAuthアプリの取得に失敗: %v", err)
+		}
+		testutil.NewOAuthDeviceAuthorizationBuilder(t, tx).
+			WithOAuthApplicationID(model.OAuthApplicationID(appID)).
+			WithSpaceID(f.spaceID).
+			WithOAuthGrantID(f.grantID).
+			WithStatus(model.OAuthDeviceAuthorizationStatusApproved).
+			WithScopes([]model.Scope{model.ScopePageRead}).
+			WithDeviceCodeDigest(auth.DigestOpaqueToken(deviceCode)).
+			WithUserCodeDigest("oauth-token-device-user-code").
+			Build()
+	})
+	form := url.Values{
+		"grant_type":  {"urn:ietf:params:oauth:grant-type:device_code"},
+		"device_code": {deviceCode},
+		"client_id":   {f.clientID},
+	}
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, query.New(testutil.GetTestDB())).Create(rr, newTokenRequest(form))
+
+	body := assertJSONResponse(t, rr, http.StatusOK)
+	if token, _ := body["access_token"].(string); !strings.HasPrefix(token, string(auth.OAuthAccessTokenPrefix)) {
+		t.Errorf("access_token = %v、接頭辞 %q を期待", body["access_token"], auth.OAuthAccessTokenPrefix)
+	}
+	if body["scope"] != "page:read" {
+		t.Errorf("scope = %v、期待値 = %q", body["scope"], "page:read")
+	}
+
+	// 交換済みのデバイスコードは400で拒否する
+	rr = httptest.NewRecorder()
+	setupHandler(t, query.New(testutil.GetTestDB())).Create(rr, newTokenRequest(form))
+
+	body = assertJSONResponse(t, rr, http.StatusBadRequest)
+	if body["error"] != "invalid_grant" {
+		t.Errorf("error = %v、期待値 = invalid_grant", body["error"])
 	}
 }
 
@@ -276,11 +326,11 @@ func TestCreate_クライアントの認証方式(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTx(t)
-			f := setupTokenFixture(t, tx, "oauth-token-client-"+string(rune('a'+i)), true)
+			var f tokenFixture
+			testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupTokenFixture(t, tx, "oauth-token-client-"+string(rune('a'+i)), true) })
 
 			rr := httptest.NewRecorder()
-			setupHandler(t, testutil.QueriesWithTx(tx)).Create(rr, tt.prepare(f.codeForm(), f))
+			setupHandler(t, query.New(testutil.GetTestDB())).Create(rr, tt.prepare(f.codeForm(), f))
 
 			body := assertJSONResponse(t, rr, tt.wantStatus)
 			if tt.wantError != "" && body["error"] != tt.wantError {
@@ -322,10 +372,10 @@ func TestCreate_Publicクライアントが空の資格情報を送ると拒否�
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, tx := testutil.SetupTx(t)
-			f := setupTokenFixture(t, tx, "oauth-token-empty-secret-"+string(rune('a'+i)), false)
+			var f tokenFixture
+			testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupTokenFixture(t, tx, "oauth-token-empty-secret-"+string(rune('a'+i)), false) })
 			rr := httptest.NewRecorder()
-			setupHandler(t, testutil.QueriesWithTx(tx)).Create(rr, tt.prepare(f.codeForm(), f.clientID))
+			setupHandler(t, query.New(testutil.GetTestDB())).Create(rr, tt.prepare(f.codeForm(), f.clientID))
 
 			body := assertJSONResponse(t, rr, http.StatusUnauthorized)
 			if body["error"] != "invalid_client" {
@@ -341,8 +391,8 @@ func TestCreate_Publicクライアントが空の資格情報を送ると拒否�
 func TestCreate_要求の誤りは400とエラーコードで返す(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	f := setupTokenFixture(t, tx, "oauth-token-error", false)
+	var f tokenFixture
+	testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupTokenFixture(t, tx, "oauth-token-error", false) })
 
 	tests := []struct {
 		name      string
@@ -360,6 +410,16 @@ func TestCreate_要求の誤りは400とエラーコードで返す(t *testing.T
 			wantError: "unsupported_grant_type",
 		},
 		{
+			name:      "device_codeの重複",
+			form:      url.Values{"grant_type": {"urn:ietf:params:oauth:grant-type:device_code"}, "device_code": {"a", "b"}, "client_id": {f.clientID}},
+			wantError: "invalid_request",
+		},
+		{
+			name:      "登録されていないデバイスコード",
+			form:      url.Values{"grant_type": {"urn:ietf:params:oauth:grant-type:device_code"}, "device_code": {"unknown"}, "client_id": {f.clientID}},
+			wantError: "invalid_grant",
+		},
+		{
 			name:      "登録されていない認可コード",
 			form:      url.Values{"grant_type": {"authorization_code"}, "code": {"unknown"}, "redirect_uri": {testRedirectURI}, "code_verifier": {testCodeVerifier}, "client_id": {f.clientID}},
 			wantError: "invalid_grant",
@@ -368,7 +428,7 @@ func TestCreate_要求の誤りは400とエラーコードで返す(t *testing.T
 
 	for _, tt := range tests {
 		rr := httptest.NewRecorder()
-		setupHandler(t, testutil.QueriesWithTx(tx)).Create(rr, newTokenRequest(tt.form))
+		setupHandler(t, query.New(testutil.GetTestDB())).Create(rr, newTokenRequest(tt.form))
 
 		body := assertJSONResponse(t, rr, http.StatusBadRequest)
 		if body["error"] != tt.wantError {
@@ -385,7 +445,7 @@ func TestCreate_要求の誤りは400とエラーコードで返す(t *testing.T
 		req := httptest.NewRequest(http.MethodPost, "/oauth/token?"+form.Encode(), nil)
 
 		rr := httptest.NewRecorder()
-		setupHandler(t, testutil.QueriesWithTx(tx)).Create(rr, req)
+		setupHandler(t, query.New(testutil.GetTestDB())).Create(rr, req)
 
 		body := assertJSONResponse(t, rr, http.StatusBadRequest)
 		if body["error"] != "invalid_request" {

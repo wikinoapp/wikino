@@ -1,9 +1,7 @@
 package personal_access_token
 
 import (
-	"slices"
 	"strconv"
-	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -18,13 +16,15 @@ const defaultExpirationDays = "30"
 //
 // Name・Scopes・ExpirationDaysは送信された値をフォームへ戻すためのもので、拒否された送信でも
 // 入力した内容が残るようにする。ExpirationDaysが空のときはdefaultExpirationDaysを選ぶ。
+// IneffectiveScopesは、利用者が今の権限では持たないため付与しても効かないスコープ。
 type NewData struct {
-	CSRFToken      string
-	Space          viewmodel.Space
-	FormErrors     *model.ValidationError
-	Name           string
-	Scopes         []string
-	ExpirationDays string
+	CSRFToken         string
+	Space             viewmodel.Space
+	FormErrors        *model.ValidationError
+	Name              string
+	Scopes            []string
+	ExpirationDays    string
+	IneffectiveScopes []model.Scope
 }
 
 // Newは個人アクセストークンの発行フォームを表示します。
@@ -82,33 +82,12 @@ templ New(data NewData) {
 								@components.RequiredBadge()
 							</legend>
 							@fieldErrors(data.FormErrors, "scopes")
-							for _, scope := range model.APITokenScopes {
-								<div class="flex flex-col gap-1">
-									<label class="label flex items-center gap-2 cursor-pointer" for={ scopeInputID(scope) }>
-										<input
-											class="input"
-											id={ scopeInputID(scope) }
-											name="scopes"
-											type="checkbox"
-											value={ string(scope) }
-											if data.FormErrors != nil && !data.FormErrors.HasFieldError("name") && data.FormErrors.HasFieldError("scopes") && scope == model.APITokenScopes[0] {
-												autofocus
-											}
-											if hasValue(data.Scopes, string(scope)) {
-												checked
-											}
-											if data.FormErrors != nil && data.FormErrors.HasFieldError("scopes") {
-												aria-invalid="true"
-												aria-describedby={ fieldErrorID("scopes") }
-											}
-										/>
-										{ components.APITokenScopeLabel(ctx, scope) }
-									</label>
-									<p class="text-muted-foreground pl-[25px] text-sm">
-										{ components.APITokenScopeHint(ctx, scope) }
-									</p>
-								</div>
-							}
+							@components.APITokenScopeCheckboxes(components.APITokenScopeCheckboxesData{
+								Name:      "scopes",
+								Options:   components.NewAPITokenScopeOptions(model.APITokenScopes, model.StringsToScopes(data.Scopes), data.IneffectiveScopes),
+								ErrorID:   scopesErrorID(data.FormErrors),
+								Autofocus: data.FormErrors != nil && !data.FormErrors.HasFieldError("name") && data.FormErrors.HasFieldError("scopes"),
+							})
 						</fieldset>
 
 						<div class="grid gap-2">
@@ -188,9 +167,12 @@ func fieldErrorID(field string) string {
 	return field + "-error"
 }
 
-// scopeInputIDはスコープのチェックボックスのidを返します。
-func scopeInputID(scope model.Scope) string {
-	return "scopes_" + strings.ReplaceAll(string(scope), ":", "_")
+// scopesErrorIDは、スコープの選択にエラーがあれば、そのエラーを収める要素のidを返します。
+func scopesErrorID(formErrors *model.ValidationError) string {
+	if formErrors != nil && formErrors.HasFieldError("scopes") {
+		return fieldErrorID("scopes")
+	}
+	return ""
 }
 
 // selectedExpirationDaysは有効期限の選択肢のうち選んでおく値を返します。
@@ -199,9 +181,4 @@ func selectedExpirationDays(value string) string {
 		return defaultExpirationDays
 	}
 	return value
-}
-
-// hasValueは送信された値の中にvalueがあるかを返します。
-func hasValue(values []string, value string) bool {
-	return slices.Contains(values, value)
 }

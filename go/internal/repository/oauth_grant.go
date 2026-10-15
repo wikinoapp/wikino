@@ -65,6 +65,20 @@ func (r *OAuthGrantRepository) FindByID(ctx context.Context, id model.OAuthGrant
 	return r.toModel(row), nil
 }
 
+// LockByIDは、トランザクションが終わるまで許可行をロックし、最新の状態を返す。
+// 許可の更新とトークンの発行を直列化するときに、WithTxで束縛したRepositoryから呼ぶ。
+// 見つからない場合は (nil, nil) を返す
+func (r *OAuthGrantRepository) LockByID(ctx context.Context, id model.OAuthGrantID, spaceID model.SpaceID) (*model.OAuthGrant, error) {
+	row, err := r.q.LockOAuthGrantByID(ctx, query.LockOAuthGrantByIDParams{ID: string(id), SpaceID: string(spaceID)})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindUnrevokedByApplicationAndSpaceMemberは、スペースメンバーがOAuthアプリに与えている
 // 失効していない許可を取得する。見つからない場合は (nil, nil) を返す
 func (r *OAuthGrantRepository) FindUnrevokedByApplicationAndSpaceMember(ctx context.Context, oauthApplicationID model.OAuthApplicationID, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) (*model.OAuthGrant, error) {
@@ -139,4 +153,17 @@ func (r *OAuthGrantRepository) toModel(row query.OauthGrant) *model.OAuthGrant {
 		CreatedAt:          row.CreatedAt,
 		UpdatedAt:          row.UpdatedAt,
 	}
+}
+
+// LockOrCreateは、初回なら許可を作成し、既存ならスコープを変えずにロックして返す。
+// WithTxで束縛したRepositoryから呼び、続く別の文で同意の範囲を反映する
+func (r *OAuthGrantRepository) LockOrCreate(ctx context.Context, input CreateOAuthGrantInput) (*model.OAuthGrant, error) {
+	row, err := r.q.LockOrCreateOAuthGrant(ctx, query.LockOrCreateOAuthGrantParams{
+		OauthApplicationID: string(input.OAuthApplicationID), SpaceID: string(input.SpaceID), SpaceMemberID: string(input.SpaceMemberID),
+		Scopes: model.ScopesToStrings(input.Scopes), Now: time.Now(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
 }

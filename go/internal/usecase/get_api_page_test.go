@@ -25,6 +25,8 @@ func TestGetAPIPageUsecase_Execute(t *testing.T) {
 		identifier  model.SpaceIdentifier
 		pageNumber  int32
 		wantFound   bool
+		// wantUnpublishedは返すページが未公開であることを表す
+		wantUnpublished bool
 	}{
 		{
 			name:        "公開トピックのページを返す",
@@ -62,10 +64,12 @@ func TestGetAPIPageUsecase_Execute(t *testing.T) {
 			wantFound:   true,
 		},
 		{
-			name:        "未公開のページは未存在",
-			memberRole:  apiTopicAdminMemberRole,
-			tokenScopes: readScopes,
-			pageNumber:  3,
+			name:            "未公開のページも返す",
+			memberRole:      apiTopicRegularMemberRole,
+			tokenScopes:     []model.Scope{model.ScopePageRead},
+			pageNumber:      3,
+			wantFound:       true,
+			wantUnpublished: true,
 		},
 		{
 			name:        "ゴミ箱のページはゴミ箱を開けるメンバーにも未存在",
@@ -92,7 +96,7 @@ func TestGetAPIPageUsecase_Execute(t *testing.T) {
 			pageNumber:  99,
 		},
 		{
-			name:        "束縛先と異なるスペースは未存在",
+			name:        "トークンが属さないスペースは未存在",
 			memberRole:  apiTopicAdminMemberRole,
 			tokenScopes: readScopes,
 			identifier:  "api-page-get-other",
@@ -133,6 +137,9 @@ func TestGetAPIPageUsecase_Execute(t *testing.T) {
 			}
 			if output.Page.Number != model.PageNumber(tt.pageNumber) {
 				t.Errorf("Number = %d、期待値 = %d", output.Page.Number, tt.pageNumber)
+			}
+			if got := !output.Page.IsPublished(); got != tt.wantUnpublished {
+				t.Errorf("未公開か = %v、期待値 = %v", got, tt.wantUnpublished)
 			}
 			if output.Topic.ID != output.Page.TopicID {
 				t.Errorf("Topic.ID = %s、期待値 = ページの所属トピック %s", output.Topic.ID, output.Page.TopicID)

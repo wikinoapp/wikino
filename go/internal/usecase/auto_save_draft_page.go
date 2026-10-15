@@ -72,7 +72,7 @@ func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveD
 	}
 
 	// 2. 認可チェック
-	if err := authorizePageUpdate(ctx, data); err != nil {
+	if err := authorizeDraftPageSave(ctx, data); err != nil {
 		return nil, err
 	}
 

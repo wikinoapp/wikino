@@ -127,6 +127,8 @@ func TestAuthenticateAPITokenUsecase_Execute_Success(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	opts := defaultAuthenticateAPITokenFixtureOptions()
+	// DBの日時はマイクロ秒に丸めて保存するため、保存した値と比べられるよう秒に揃える
+	opts.expiresAt = opts.expiresAt.Truncate(time.Second)
 	// page:writeはpage:readを含意し、トークンに付与できないスコープは落とす
 	opts.tokenScopes = []model.Scope{model.ScopePageWrite, model.ScopeSpaceAdmin}
 	f := setupAuthenticateAPITokenFixture(t, tx, opts)
@@ -150,6 +152,9 @@ func TestAuthenticateAPITokenUsecase_Execute_Success(t *testing.T) {
 	}
 	if principal.TokenKind != model.APITokenKindPersonalAccessToken {
 		t.Errorf("TokenKind = %s、期待値 = %s", principal.TokenKind, model.APITokenKindPersonalAccessToken)
+	}
+	if !principal.TokenExpiresAt.Equal(opts.expiresAt) {
+		t.Errorf("TokenExpiresAt = %v、期待値 = %v", principal.TokenExpiresAt, opts.expiresAt)
 	}
 	wantScopes := map[model.Scope]bool{
 		model.ScopePageWrite: true,
@@ -325,6 +330,8 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessToken(t *testing.T) {
 
 	_, tx := testutil.SetupTx(t)
 	opts := defaultOAuthAccessTokenAuthFixtureOptions()
+	// DBの日時はマイクロ秒に丸めて保存するため、保存した値と比べられるよう秒に揃える
+	opts.expiresAt = opts.expiresAt.Truncate(time.Second)
 	// page:writeはpage:readを含意し、トークンに付与できないスコープは落とす
 	opts.tokenScopes = []model.Scope{model.ScopePageWrite, model.ScopeSpaceAdmin}
 	f, token := setupOAuthAccessTokenAuthFixture(t, tx, "aat-oauth", opts)
@@ -348,6 +355,9 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessToken(t *testing.T) {
 	}
 	if principal.TokenKind != model.APITokenKindOAuthAccessToken {
 		t.Errorf("TokenKind = %s、期待値 = %s", principal.TokenKind, model.APITokenKindOAuthAccessToken)
+	}
+	if !principal.TokenExpiresAt.Equal(opts.expiresAt) {
+		t.Errorf("TokenExpiresAt = %v、期待値 = %v", principal.TokenExpiresAt, opts.expiresAt)
 	}
 	if !principal.HasScope(model.ScopePageWrite) || !principal.HasScope(model.ScopePageRead) || len(principal.Scopes) != 2 {
 		t.Errorf("Scopes = %v、期待値 = [page:write page:read]", principal.Scopes)

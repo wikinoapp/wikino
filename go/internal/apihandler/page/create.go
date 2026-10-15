@@ -11,11 +11,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// CreatePageはトークンを束縛したスペースにページを作成して公開する (POST /api/v1/spaces/{space_identifier}/pages)。
+// CreatePageはトークンが属するスペースにページを作成して公開する (POST /api/v1/spaces/{space_identifier}/pages)。
 // 作成したページを `Location` と、getPageと同じ `ETag` を付けて201で返す
 func (h *Handler) CreatePage(ctx context.Context, request apigen.CreatePageRequestObject) (apigen.CreatePageResponseObject, error) {
+	principal := middleware.APIPrincipalFromContext(ctx)
 	output, err := h.createAPIPageUC.Execute(ctx, usecase.CreateAPIPageInput{
-		Principal:       middleware.APIPrincipalFromContext(ctx),
+		Principal:       principal,
 		SpaceIdentifier: model.SpaceIdentifier(request.SpaceIdentifier),
 		TopicNumber:     request.Body.TopicNumber,
 		Title:           request.Body.Title,
@@ -25,7 +26,7 @@ func (h *Handler) CreatePage(ctx context.Context, request apigen.CreatePageReque
 		return nil, err
 	}
 
-	page, err := toAPIPage(output.Page, output.Topic)
+	page, err := ToAPIPage(h.appURL, principal.Space, output.Page, output.Topic)
 	if err != nil {
 		return nil, err
 	}
@@ -33,13 +34,13 @@ func (h *Handler) CreatePage(ctx context.Context, request apigen.CreatePageReque
 		Body: page,
 		Headers: apigen.CreatePage201ResponseHeaders{
 			ETag:     `"` + output.Page.ContentDigest() + `"`,
-			Location: pageLocation(request.SpaceIdentifier, output.Page.Number),
+			Location: Path(request.SpaceIdentifier, output.Page.Number),
 		},
 	}, nil
 }
 
-// pageLocationはページのAPIのURLを、パスから始まる相対参照で返す。
+// PathはページのAPIのURLを、パスから始まる相対参照で返す。
 // OpenAPI記述の `servers` (`/api/v1`) にgetPageのパスを続けたもの
-func pageLocation(spaceIdentifier string, number model.PageNumber) string {
+func Path(spaceIdentifier string, number model.PageNumber) string {
 	return fmt.Sprintf("/api/v1/spaces/%s/pages/%d", url.PathEscape(spaceIdentifier), number)
 }

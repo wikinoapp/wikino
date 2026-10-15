@@ -13,6 +13,7 @@ type GetPersonalAccessTokenNewUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
 	featureFlagRepo *repository.FeatureFlagRepository
+	topicMemberRepo *repository.TopicMemberRepository
 }
 
 // NewGetPersonalAccessTokenNewUsecaseはGetPersonalAccessTokenNewUsecaseを生成する
@@ -20,11 +21,13 @@ func NewGetPersonalAccessTokenNewUsecase(
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	featureFlagRepo *repository.FeatureFlagRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
 ) *GetPersonalAccessTokenNewUsecase {
 	return &GetPersonalAccessTokenNewUsecase{
 		spaceRepo:       spaceRepo,
 		spaceMemberRepo: spaceMemberRepo,
 		featureFlagRepo: featureFlagRepo,
+		topicMemberRepo: topicMemberRepo,
 	}
 }
 
@@ -37,9 +40,13 @@ type GetPersonalAccessTokenNewInput struct {
 // GetPersonalAccessTokenNewOutputは発行フォームの表示に必要なデータを保持する
 type GetPersonalAccessTokenNewOutput struct {
 	Space *model.Space
+
+	// IneffectiveScopesは、トークンに付与できるスコープのうちユーザーが今の権限では持たないもの。
+	// 付与してもトークンでは効かないため、発行フォームで注記を添える
+	IneffectiveScopes []model.Scope
 }
 
-// Executeはトークンを発行するスペースを解決する
+// Executeはトークンを発行するスペースと、今の権限では効かないスコープを解決する
 func (uc *GetPersonalAccessTokenNewUsecase) Execute(ctx context.Context, input GetPersonalAccessTokenNewInput) (*GetPersonalAccessTokenNewOutput, error) {
 	access, err := fetchPublicAPISettingsAccess(
 		ctx, uc.spaceRepo, uc.spaceMemberRepo, uc.featureFlagRepo, input.SpaceIdentifier, input.UserID,
@@ -49,5 +56,10 @@ func (uc *GetPersonalAccessTokenNewUsecase) Execute(ctx context.Context, input G
 		return nil, err
 	}
 
-	return &GetPersonalAccessTokenNewOutput{Space: access.space}, nil
+	ineffective, err := ineffectiveAPITokenScopes(ctx, uc.topicMemberRepo, access.spaceMember, model.APITokenScopes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetPersonalAccessTokenNewOutput{Space: access.space, IneffectiveScopes: ineffective}, nil
 }

@@ -38,6 +38,7 @@ func TestHandler_CreatePage(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	h := page.NewHandler(
+		"https://example.com",
 		usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
 		usecase.NewGetAPIPageUsecase(pageRepo, topicRepo, topicMemberRepo),
 		usecase.NewCreateAPIPageUsecase(

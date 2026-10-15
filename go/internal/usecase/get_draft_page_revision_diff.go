@@ -68,12 +68,12 @@ type GetDraftPageRevisionDiffOutput struct {
 
 // Executeは対象リビジョンと直前リビジョンを取得する。
 func (uc *GetDraftPageRevisionDiffUsecase) Execute(ctx context.Context, input GetDraftPageRevisionDiffInput) (*GetDraftPageRevisionDiffOutput, error) {
-	// 1. データ取得 + 2. 認可チェック (手動保存と同じ共通ヘルパーを使う)。
+	// 1. データ取得 + 2. 認可チェック (データ取得は手動保存と同じ共通ヘルパーを使う)。
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
 	if err != nil {
 		return nil, err
 	}
-	if err := authorizePageUpdate(ctx, data); err != nil {
+	if err := authorizeDraftPageShow(ctx, data); err != nil {
 		return nil, err
 	}
 

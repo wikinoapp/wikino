@@ -19,7 +19,9 @@ import (
 // page / draft_page行に永続化できるようにする。書き込みを行うため、トランザクションに
 // バインドしたpageリポジトリで構築し、そのトランザクション内で使う。
 type linkCreatingPageLocationResolver struct {
-	spaceMemberID  model.SpaceMemberID
+	spaceMemberID model.SpaceMemberID
+	// canCreateInはリンク先ページを作れるトピックかを返す。nilならすべてのトピックに作る
+	canCreateIn    func(topic *model.Topic) bool
 	topicRepo      *repository.TopicRepository
 	pageRepo       *repository.PageRepository
 	pageEditorRepo *repository.PageEditorRepository
@@ -31,17 +33,13 @@ type linkCreatingPageLocationResolver struct {
 
 // ResolveByKeysはWikiリンクキーをページ位置情報に解決し、存在しないページを自動作成する。
 func (r *linkCreatingPageLocationResolver) ResolveByKeys(ctx context.Context, keys []markup.WikilinkKey, spaceID model.SpaceID) ([]markup.PageLocation, error) {
-	topics, err := r.topicRepo.FindBySpaceAndNames(ctx, spaceID, uniqueTopicNames(keys))
+	targets, err := findWikilinkTargets(ctx, keys, spaceID, r.topicRepo, r.pageRepo)
 	if err != nil {
 		return nil, err
 	}
-	topicMap := make(map[string]*model.Topic, len(topics))
-	for _, t := range topics {
-		topicMap[t.Name] = t
-	}
 
 	linkedPageIDs, locations, err := resolveAndCreateLinkedPages(
-		ctx, keys, topicMap, spaceID, r.spaceMemberID, r.pageRepo, r.pageEditorRepo,
+		ctx, targets, spaceID, r.spaceMemberID, r.canCreateIn, r.pageRepo, r.pageEditorRepo,
 	)
 	if err != nil {
 		return nil, err
@@ -56,6 +54,10 @@ type resolveLinkedPageIDsInput struct {
 	CurrentTopicName string
 	SpaceID          model.SpaceID
 	SpaceMemberID    model.SpaceMemberID
+	// CanCreateLinkedPageInはリンク先ページを作れるトピックかを返す。nilならすべてのトピックに作る (Web画面)。
+	// 公開APIはトークンで見られないトピックにページを作らないよう、見られるかの判定を渡す
+	// (Wikiリンクのプレビューと同じ判定にし、プレビューと書き込みの結果を揃える)
+	CanCreateLinkedPageIn func(topic *model.Topic) bool
 }
 
 // resolveLinkedPageIDsは本文のWikiリンクが指すページIDを現れる順に返し、存在しないリンク先
@@ -77,6 +79,7 @@ func resolveLinkedPageIDs(
 
 	resolver := &linkCreatingPageLocationResolver{
 		spaceMemberID:  input.SpaceMemberID,
+		canCreateIn:    input.CanCreateLinkedPageIn,
 		topicRepo:      topicRepo,
 		pageRepo:       pageRepo,
 		pageEditorRepo: pageEditorRepo,
@@ -88,31 +91,63 @@ func resolveLinkedPageIDs(
 	return resolver.linkedPageIDs, nil
 }
 
-// resolveAndCreateLinkedPagesは事前に取得したWikiリンクキーとトピックMapを使い、リンク先ページを自動作成する
-func resolveAndCreateLinkedPages(
+// apiLinkedPageTopicFilterは、公開APIの書き込みでWikiリンク先のページを作れるトピックかを返す関数を作る。
+// トークンで見られないトピックにはページを作らない。見られないトピックの存在とページの有無を明かさないよう、
+// Wikiリンクのプレビューはそのトピックへのリンクを「トピックが無い」と示すため、書き込みもそれに揃える。
+// 既存のページへのリンクは、Web画面で保存したときと同じリンク一覧になるよう記録する
+func apiLinkedPageTopicFilter(
+	ctx context.Context,
+	topicRepo *repository.TopicRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
+	principal *model.APIPrincipal,
+) (func(topic *model.Topic) bool, error) {
+	access, err := fetchAPITopicAccess(ctx, topicRepo, topicMemberRepo, principal)
+	if err != nil {
+		return nil, fmt.Errorf("トピックの閲覧権限の取得に失敗: %w", err)
+	}
+	return access.canShowTopic, nil
+}
+
+// wikilinkTargetはWikiリンクが指すトピックと既存のページを、ページの作成を伴わずに解決した結果
+type wikilinkTarget struct {
+	key markup.WikilinkKey
+	// topicはリンク先のトピック (廃棄済みを除く)。トピックが無ければnil
+	topic *model.Topic
+	// pageはリンク先の既存のページ (廃棄済み・ゴミ箱のページを含む)。トピックかページが無ければnil
+	page *repository.LinkedPage
+}
+
+// findWikilinkTargetsはWikiリンクキーを重複を除いて現れる順に並べ、それぞれのリンク先のトピックと
+// 既存のページを解決する。書き込みを行わない読み取りの関数で、保存経路 (resolveAndCreateLinkedPages) と
+// Wikiリンクのプレビューが共有し、どのリンク先が既存のページになり、どれが作られるかの判定を揃える。
+// トピックとページはそれぞれ1クエリでまとめて取得する
+func findWikilinkTargets(
 	ctx context.Context,
 	keys []markup.WikilinkKey,
-	topicMap map[string]*model.Topic,
 	spaceID model.SpaceID,
-	spaceMemberID model.SpaceMemberID,
+	topicRepo *repository.TopicRepository,
 	pageRepo *repository.PageRepository,
-	pageEditorRepo *repository.PageEditorRepository,
-) ([]model.PageID, []markup.PageLocation, error) {
+) ([]wikilinkTarget, error) {
 	if len(keys) == 0 {
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	// 既存のリンク先ページを1クエリでまとめて引き、ループ内では作成が要るキーだけをDBに問い合わせる。
+	topics, err := topicRepo.FindBySpaceAndNames(ctx, spaceID, uniqueTopicNames(keys))
+	if err != nil {
+		return nil, err
+	}
+	topicMap := make(map[string]*model.Topic, len(topics))
+	for _, t := range topics {
+		topicMap[t.Name] = t
+	}
+
 	existingPages, err := findPagesByWikilinkKeys(ctx, pageRepo, keys, topicMap, spaceID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	now := time.Now()
-	var linkedPageIDs []model.PageID
-	var pageLocations []markup.PageLocation
-	seen := make(map[string]bool)
-
+	targets := make([]wikilinkTarget, 0, len(keys))
+	seen := make(map[string]bool, len(keys))
 	for _, key := range keys {
 		lookupKey := key.TopicName + "/" + key.PageTitle
 		if seen[lookupKey] {
@@ -120,15 +155,44 @@ func resolveAndCreateLinkedPages(
 		}
 		seen[lookupKey] = true
 
-		topic := topicMap[key.TopicName]
-		if topic == nil {
+		target := wikilinkTarget{key: key, topic: topicMap[key.TopicName]}
+		if target.topic != nil {
+			target.page = existingPages[repository.TopicPageTitle{TopicID: target.topic.ID, Title: key.PageTitle}]
+		}
+		targets = append(targets, target)
+	}
+
+	return targets, nil
+}
+
+// resolveAndCreateLinkedPagesはfindWikilinkTargetsで解決したリンク先のうち、ページが無いものを自動作成する。
+// トピックが無いリンク先と、canCreateInがfalseを返すトピックの存在しないページはリンクにしない
+func resolveAndCreateLinkedPages(
+	ctx context.Context,
+	targets []wikilinkTarget,
+	spaceID model.SpaceID,
+	spaceMemberID model.SpaceMemberID,
+	canCreateIn func(topic *model.Topic) bool,
+	pageRepo *repository.PageRepository,
+	pageEditorRepo *repository.PageEditorRepository,
+) ([]model.PageID, []markup.PageLocation, error) {
+	now := time.Now()
+	var linkedPageIDs []model.PageID
+	var pageLocations []markup.PageLocation
+
+	for _, target := range targets {
+		if target.topic == nil {
 			continue
 		}
 
-		page := existingPages[repository.TopicPageTitle{TopicID: topic.ID, Title: key.PageTitle}]
+		page := target.page
 		created := false
 		if page == nil {
-			createdPage, createdNow, err := findOrCreateLinkedPage(ctx, pageRepo, spaceID, topic.ID, key.PageTitle)
+			if canCreateIn != nil && !canCreateIn(target.topic) {
+				continue
+			}
+
+			createdPage, createdNow, err := findOrCreateLinkedPage(ctx, pageRepo, spaceID, target.topic.ID, target.key.PageTitle)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -143,7 +207,7 @@ func resolveAndCreateLinkedPages(
 
 		// Rails版と同様に、ページを新規作成した場合はpage_editorsレコードも作成する
 		if created {
-			_, err = pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
+			_, err := pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
 				SpaceID:            spaceID,
 				PageID:             page.ID,
 				SpaceMemberID:      spaceMemberID,
@@ -156,13 +220,13 @@ func resolveAndCreateLinkedPages(
 
 		linkedPageIDs = append(linkedPageIDs, page.ID)
 
-		pageTitle := key.PageTitle
+		pageTitle := target.key.PageTitle
 		if page.Title != nil {
 			pageTitle = *page.Title
 		}
 		pageLocations = append(pageLocations, markup.PageLocation{
-			Key:        key,
-			TopicName:  topic.Name,
+			Key:        target.key,
+			TopicName:  target.topic.Name,
 			PageID:     page.ID,
 			PageNumber: int(page.Number),
 			PageTitle:  pageTitle,

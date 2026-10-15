@@ -32,6 +32,19 @@ func TestGuestPolicy_CanShowTopic(t *testing.T) {
 	})
 }
 
+func TestGuestPolicy_CanShowAttachment(t *testing.T) {
+	t.Parallel()
+
+	p := NewGuestPolicy()
+
+	if !p.CanShowAttachment(true) {
+		t.Error("ゲストは参照するページがすべて公開トピックにある添付ファイルを閲覧可能であるべき")
+	}
+	if p.CanShowAttachment(false) {
+		t.Error("ゲストは公開でない添付ファイルを閲覧できないべき")
+	}
+}
+
 func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 	t.Parallel()
 
@@ -49,6 +62,8 @@ func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 		{"CanUpdatePage", p.CanUpdatePage()},
 		{"CanShowTrash", p.CanShowTrash()},
 		{"CanTrashPage", p.CanTrashPage()},
+		{"CanShowDraftPage", p.CanShowDraftPage()},
+		{"CanSaveDraftPage", p.CanSaveDraftPage()},
 		{"CanDeleteDraftPage", p.CanDeleteDraftPage()},
 		{"CanCreateSuggestion(public)", p.CanCreateSuggestion(publicTopic)},
 		{"CanApplySuggestion", p.CanApplySuggestion()},

@@ -25,3 +25,14 @@ UPDATE topic_members SET last_page_modified_at = $1, updated_at = $2 WHERE topic
 INSERT INTO topic_members (space_id, topic_id, space_member_id, joined_at, created_at, updated_at)
 VALUES (@space_id, @topic_id, @space_member_id, @now, @now, @now)
 RETURNING *;
+
+-- name: ListTopicMembersWithRoleBySpaceMember :many
+-- スペースメンバーがロールを付けられているトピックメンバーを、削除されていないトピックに限って
+-- 取得する。メンバーがスペース全体で持つ権限 (スペースのロールといずれかのトピックのロールの和) を
+-- 求めるために使う。
+SELECT tm.* FROM topic_members tm
+INNER JOIN topics t ON tm.topic_id = t.id AND tm.space_id = t.space_id
+WHERE tm.space_member_id = @space_member_id
+  AND tm.space_id = @space_id
+  AND tm.role IS NOT NULL
+  AND t.discarded_at IS NULL;

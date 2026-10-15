@@ -410,6 +410,55 @@ func TestMemberPolicy_CanTrashPage(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanShowDraftPage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		scopes []model.Scope
+		want   bool
+	}{
+		{name: "draft_page:readで参照可能", scopes: []model.Scope{model.ScopeDraftPageRead}, want: true},
+		{name: "draft_page:writeはdraft_page:readを含意するため参照可能", scopes: []model.Scope{model.ScopeDraftPageWrite}, want: true},
+		{name: "page:writeだけでは参照不可", scopes: []model.Scope{model.ScopePageWrite}, want: false},
+		{name: "draft_page:deleteだけでは参照不可", scopes: []model.Scope{model.ScopeDraftPageDelete}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := NewMemberPolicy(tt.scopes, nil).CanShowDraftPage(); got != tt.want {
+				t.Errorf("CanShowDraftPage() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMemberPolicy_CanSaveDraftPage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		spaceScopes []model.Scope
+		topicScopes []model.Scope
+		want        bool
+	}{
+		{name: "draft_page:writeで保存可能", spaceScopes: []model.Scope{model.ScopeDraftPageWrite}, want: true},
+		{name: "トピックスコープのdraft_page:writeでも保存可能", topicScopes: []model.Scope{model.ScopeDraftPageWrite}, want: true},
+		{name: "draft_page:readだけでは保存不可", spaceScopes: []model.Scope{model.ScopeDraftPageRead}, want: false},
+		{name: "page:writeだけでは保存不可", spaceScopes: []model.Scope{model.ScopePageWrite}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := NewMemberPolicy(tt.spaceScopes, tt.topicScopes).CanSaveDraftPage(); got != tt.want {
+				t.Errorf("CanSaveDraftPage() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMemberPolicy_CanDeleteDraftPage(t *testing.T) {
 	t.Parallel()
 
@@ -440,6 +489,70 @@ func TestMemberPolicy_CanDeleteDraftPage(t *testing.T) {
 
 		if p.CanDeleteDraftPage() {
 			t.Error("draft_page:writeだけでは削除できないべき (draft_page:deleteが必要)")
+		}
+	})
+}
+
+func TestMemberPolicy_CanShowAttachment(t *testing.T) {
+	t.Parallel()
+
+	t.Run("attachment:readがあれば参照するページが非公開トピックにあっても閲覧可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeAttachmentRead}, nil)
+
+		if !p.CanShowAttachment(false) {
+			t.Error("attachment:readを持つメンバーは添付ファイルを閲覧可能であるべき")
+		}
+	})
+
+	t.Run("attachment:writeはattachment:readを含意する", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopeAttachmentWrite}, nil)
+
+		if !p.CanShowAttachment(false) {
+			t.Error("attachment:writeを持つメンバーは添付ファイルを閲覧可能であるべき")
+		}
+	})
+
+	t.Run("attachment:readが無くても参照するページがすべて公開トピックにあれば閲覧可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageRead}, nil)
+
+		if !p.CanShowAttachment(true) {
+			t.Error("参照するページがすべて公開トピックにある添付ファイルは閲覧可能であるべき")
+		}
+	})
+
+	t.Run("attachment:readが無く非公開トピックのページから参照されていれば閲覧不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewMemberPolicy([]model.Scope{model.ScopePageRead, model.ScopeTopicRead}, nil)
+
+		if p.CanShowAttachment(false) {
+			t.Error("attachment:readを持たないメンバーは公開でない添付ファイルを閲覧できないべき")
+		}
+	})
+
+	t.Run("トークンがattachment:readを持たなければメンバーが持っていても閲覧不可", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewAPIMemberPolicy(model.SpaceRoleViewer.Scopes(), nil, []model.Scope{model.ScopePageRead, model.ScopeTopicRead})
+
+		if p.CanShowAttachment(false) {
+			t.Error("トークンが持たないattachment:readで添付ファイルを閲覧できるべきでない")
+		}
+	})
+
+	t.Run("トークンとメンバーの両方がattachment:readを持てば閲覧可能", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewAPIMemberPolicy(model.SpaceRoleEditor.Scopes(), nil, []model.Scope{model.ScopeAttachmentRead})
+
+		if !p.CanShowAttachment(false) {
+			t.Error("編集者のattachment:write (含意でattachment:read) とトークンのattachment:readの積で閲覧できるべき")
 		}
 	})
 }

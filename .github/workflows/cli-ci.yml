@@ -1,0 +1,104 @@
+name: CLI CI
+
+# CLI (cli/) はAPIのクライアントをgo/api/openapi.yamlから生成するため、
+# APIの記述の変更でも走らせ、APIの変更がCLIを壊したことを同じPRで検出する。
+# testdata/はサーバーとCLIのテストが共有するテストデータ。
+# goimports・koryluslint・oapi-codegenはgo/go.modで固定したバージョンを使うため、go/go.modの変更でも走らせる。
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "cli/**"
+      - "go/api/openapi.yaml"
+      - "go/go.mod"
+      - "testdata/**"
+      - ".github/workflows/cli-ci.yml"
+  pull_request:
+    paths:
+      - "cli/**"
+      - "go/api/openapi.yaml"
+      - "go/go.mod"
+      - "testdata/**"
+      - ".github/workflows/cli-ci.yml"
+
+env:
+  GO_VERSION: "1.26.4"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check goimports
+        run: make goimports-check
+
+      - name: Check go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: APIクライアントの生成物をチェック
+        run: make api-generate-check
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9.3.0
+        with:
+          version: v2.11.4
+          working-directory: cli
+          args: --config=.golangci.yml ./...
+
+      - name: 日本語テキストスタイルをチェック
+        run: make lint-style
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run tests
+        run: make test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build
+        run: make build
+
+      - name: Check binary exists
+        run: |
+          if [ ! -f bin/wikino ]; then
+            echo "ビルドに失敗しました: バイナリが見つかりません"
+            exit 1
+          fi

@@ -64,6 +64,24 @@ func (r *TopicMemberRepository) ListBySpaceMemberAndTopics(ctx context.Context, 
 	return topicMembers, nil
 }
 
+// ListWithRoleBySpaceMemberは、スペースメンバーがロールを付けられているトピックメンバーを、
+// 削除されていないトピックに限って取得する。メンバーがスペース全体で持つ権限を求めるときに使う
+func (r *TopicMemberRepository) ListWithRoleBySpaceMember(ctx context.Context, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) ([]*model.TopicMember, error) {
+	rows, err := r.q.ListTopicMembersWithRoleBySpaceMember(ctx, query.ListTopicMembersWithRoleBySpaceMemberParams{
+		SpaceMemberID: string(spaceMemberID),
+		SpaceID:       string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	topicMembers := make([]*model.TopicMember, len(rows))
+	for i, row := range rows {
+		topicMembers[i] = r.toModel(row)
+	}
+	return topicMembers, nil
+}
+
 // ListByUserAndTopicsは、ユーザーが指定したトピック群で持つトピックメンバーを1クエリで
 // 一括取得する (space_membersとJOINしてユーザーを解決する)。ホーム画面のように複数スペースに
 // またがるトピックの作成権限をまとめて判定する場面で、トピックごとの単発クエリ (N+1) を1回の

@@ -1,0 +1,12 @@
+# oapi-codegenの設定 (公開APIのクライアント)
+# https://github.com/oapi-codegen/oapi-codegen#usage
+#
+# サーバーと同じOpenAPI記述 (go/api/openapi.yaml) から、クライアントと型だけを生成する。
+# 出力先はMakefileの `-o` で渡す (生成はgo/のモジュールで固定したoapi-codegenで行うため)。
+package: apigen
+generate:
+  client: true
+  models: true
+output-options:
+  user-templates:
+    client-with-responses.tmpl: internal/apigen/templates/client-with-responses.tmpl

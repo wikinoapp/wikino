@@ -168,6 +168,80 @@ func (q *Queries) ListUnrevokedOAuthGrantsBySpaceMember(ctx context.Context, arg
 	return items, nil
 }
 
+const lockOAuthGrantByID = `-- name: LockOAuthGrantByID :one
+SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at FROM oauth_grants
+WHERE id = $1
+  AND space_id = $2
+FOR NO KEY UPDATE
+`
+
+type LockOAuthGrantByIDParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 許可の更新とトークンの発行を直列化する。待機後は最新のスコープを返す。
+// 外部キーの検査を妨げず、許可への更新どうしを排他にするためFOR NO KEY UPDATEを使う。
+func (q *Queries) LockOAuthGrantByID(ctx context.Context, arg LockOAuthGrantByIDParams) (OauthGrant, error) {
+	row := q.db.QueryRowContext(ctx, lockOAuthGrantByID, arg.ID, arg.SpaceID)
+	var i OauthGrant
+	err := row.Scan(
+		&i.ID,
+		&i.OauthApplicationID,
+		&i.SpaceID,
+		&i.SpaceMemberID,
+		pq.Array(&i.Scopes),
+		&i.RevokedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const lockOrCreateOAuthGrant = `-- name: LockOrCreateOAuthGrant :one
+INSERT INTO oauth_grants (
+    oauth_application_id, space_id, space_member_id, scopes, created_at, updated_at
+) VALUES (
+    $1, $2, $3, $4::text[], $5, $5
+)
+ON CONFLICT (oauth_application_id, space_member_id) WHERE revoked_at IS NULL
+DO UPDATE SET updated_at = oauth_grants.updated_at
+RETURNING id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at
+`
+
+type LockOrCreateOAuthGrantParams struct {
+	OauthApplicationID string    `json:"oauth_application_id"`
+	SpaceID            string    `json:"space_id"`
+	SpaceMemberID      string    `json:"space_member_id"`
+	Scopes             []string  `json:"scopes"`
+	Now                time.Time `json:"now"`
+}
+
+// 同意の範囲を反映する前に許可をロックする。初回の同意も一意制約で直列化し、
+// トークン発行を待った後の別の文で、範囲外のトークンを漏れなく失効させる。
+// 既存の許可のスコープ・更新日時は、この段階では変更しない。
+func (q *Queries) LockOrCreateOAuthGrant(ctx context.Context, arg LockOrCreateOAuthGrantParams) (OauthGrant, error) {
+	row := q.db.QueryRowContext(ctx, lockOrCreateOAuthGrant,
+		arg.OauthApplicationID,
+		arg.SpaceID,
+		arg.SpaceMemberID,
+		pq.Array(arg.Scopes),
+		arg.Now,
+	)
+	var i OauthGrant
+	err := row.Scan(
+		&i.ID,
+		&i.OauthApplicationID,
+		&i.SpaceID,
+		&i.SpaceMemberID,
+		pq.Array(&i.Scopes),
+		&i.RevokedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const revokeOAuthGrant = `-- name: RevokeOAuthGrant :one
 WITH revoked_grant AS (
     UPDATE oauth_grants

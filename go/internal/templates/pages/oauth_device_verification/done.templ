@@ -1,0 +1,37 @@
+package oauth_device_verification
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// DoneDataは、利用者が許可か拒否を選んだ後の画面をレンダリングする元になるデータ
+type DoneData struct {
+	ApplicationName string
+	Approved        bool
+}
+
+// Doneは、許可か拒否を受け付けたことと、端末に戻ればよいことを伝える画面を表示します。
+templ Done(data DoneData) {
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="flex flex-col gap-2 px-4">
+			<h1 class="text-center text-2xl font-bold antialiased">
+				if data.Approved {
+					{ templates.T(ctx, "oauth_device_verification_done_approved_heading") }
+				} else {
+					{ templates.T(ctx, "oauth_device_verification_done_denied_heading") }
+				}
+			</h1>
+		</div>
+
+		@components.ContentCard() {
+			<p>
+				if data.Approved {
+					{ templates.T(ctx, "oauth_device_verification_done_approved_message", map[string]any{"ApplicationName": data.ApplicationName}) }
+				} else {
+					{ templates.T(ctx, "oauth_device_verification_done_denied_message", map[string]any{"ApplicationName": data.ApplicationName}) }
+				}
+			</p>
+		}
+	</div>
+}

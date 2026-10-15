@@ -136,7 +136,21 @@ func TestHandler_ListTopics(t *testing.T) {
 		})
 	}
 
-	t.Run("束縛先と異なるスペースは未存在のエラーを返す", func(t *testing.T) {
+	t.Run("パスの識別子が大文字と小文字だけ違っても一覧を返す", func(t *testing.T) {
+		res, err := h.ListTopics(ctx, apigen.ListTopicsRequestObject{SpaceIdentifier: "Topic-Handler"})
+		if err != nil {
+			t.Fatalf("ListTopics() error = %v", err)
+		}
+		jsonRes, ok := res.(apigen.ListTopics200JSONResponse)
+		if !ok {
+			t.Fatalf("レスポンスの型 = %T、期待値 = ListTopics200JSONResponse", res)
+		}
+		if got := len(jsonRes.Body.Items); got != 3 {
+			t.Errorf("件数 = %d、期待値 = 3", got)
+		}
+	})
+
+	t.Run("トークンが属さないスペースは未存在のエラーを返す", func(t *testing.T) {
 		_, err := h.ListTopics(ctx, apigen.ListTopicsRequestObject{SpaceIdentifier: "other-space"})
 		if ae := model.AsAppError(err); ae == nil || ae.Code != model.AppErrCodeResourceNotFound {
 			t.Errorf("error = %v、期待値 = AppErrCodeResourceNotFound", err)

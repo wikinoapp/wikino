@@ -28,6 +28,10 @@ const OAuthRefreshTokenPrefix OpaqueTokenPrefix = "wkr_"
 // 数分で使い切られ、ログや漏洩時に種類を見分ける場面が無いため、接頭辞を付けない
 const OAuthAuthorizationCodePrefix OpaqueTokenPrefix = ""
 
+// OAuthDeviceCodePrefixはOAuthのデバイスコードの接頭辞。認可コードと同じく数分で使い切られ、
+// ログや漏洩時に種類を見分ける場面が無いため、接頭辞を付けない
+const OAuthDeviceCodePrefix OpaqueTokenPrefix = ""
+
 // opaqueTokenRandomBytesはopaqueトークンの本体にする乱数のバイト数
 const opaqueTokenRandomBytes = 32
 

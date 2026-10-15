@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
@@ -16,6 +17,108 @@ templ APITokenScopeBadges(scopes []model.Scope) {
 			</li>
 		}
 	</ul>
+}
+
+// APITokenScopeOptionは、付与するスコープを選ぶチェックボックスの1つ分
+type APITokenScopeOption struct {
+	Scope   model.Scope
+	Checked bool
+
+	// Ineffectiveは、利用者が今の権限ではこのスコープを持たないこと。トークンで効く範囲は
+	// メンバーの権限との積で決まるため、付与しても効かないことを注記する。チェックは外さず、
+	// 後から権限が広がったときに付け直さなくても効くようにする
+	Ineffective bool
+}
+
+// NewAPITokenScopeOptionsは、scopesを並べた選択肢を作る。checkedに含むスコープをチェックし、
+// ineffectiveに含むスコープに今の権限では効かないことを注記する
+func NewAPITokenScopeOptions(scopes, checked, ineffective []model.Scope) []APITokenScopeOption {
+	options := make([]APITokenScopeOption, len(scopes))
+	for i, scope := range scopes {
+		options[i] = APITokenScopeOption{
+			Scope:       scope,
+			Checked:     model.HasScope(checked, scope),
+			Ineffective: model.HasScope(ineffective, scope),
+		}
+	}
+	return options
+}
+
+// APITokenScopeCheckboxesDataは、付与するスコープを選ぶチェックボックスの並びのデータ
+type APITokenScopeCheckboxesData struct {
+	// Nameはチェックボックスのname属性。idの接頭辞にも使う
+	Name    string
+	Options []APITokenScopeOption
+
+	// ErrorIDは選択のエラーを収める要素のid。空でなければ、チェックボックスを不正な入力として
+	// 示し、エラーを読み上げられるようにする
+	ErrorID string
+
+	// Autofocusは、最初のチェックボックスにフォーカスを当てるか
+	Autofocus bool
+}
+
+// APITokenScopeCheckboxesは、付与するスコープをチェックボックスで並べます。個人アクセストークンの
+// 発行画面とOAuthの同意画面が使い、囲みのfieldsetと見出し・エラーの表示は呼び出し側が持ちます。
+templ APITokenScopeCheckboxes(data APITokenScopeCheckboxesData) {
+	for i, option := range data.Options {
+		<div class="flex flex-col gap-1">
+			<label class="label flex items-center gap-2 cursor-pointer" for={ apiTokenScopeInputID(data.Name, option.Scope) }>
+				<input
+					class="input"
+					id={ apiTokenScopeInputID(data.Name, option.Scope) }
+					name={ data.Name }
+					type="checkbox"
+					value={ string(option.Scope) }
+					if data.Autofocus && i == 0 {
+						autofocus
+					}
+					if option.Checked {
+						checked
+					}
+					if data.ErrorID != "" {
+						aria-invalid="true"
+					}
+					if describedBy := apiTokenScopeDescribedBy(data, option); describedBy != "" {
+						aria-describedby={ describedBy }
+					}
+				/>
+				{ APITokenScopeLabel(ctx, option.Scope) }
+			</label>
+			<p class="text-muted-foreground pl-[25px] text-sm">
+				{ APITokenScopeHint(ctx, option.Scope) }
+			</p>
+			if option.Ineffective {
+				<p class="text-muted-foreground pl-[25px] text-sm flex items-center gap-1" id={ apiTokenScopeNoteID(data.Name, option.Scope) }>
+					@templates.DecorativeIcon("warning-circle-regular", "fill-info size-4 shrink-0")
+					{ templates.T(ctx, "api_token_scope_ineffective_note") }
+				</p>
+			}
+		</div>
+	}
+}
+
+// apiTokenScopeDescribedByは、チェックボックスのaria-describedbyに並べるidを返します。
+// 選択のエラーと、今の権限では効かないことの注記を読み上げられるようにします。
+func apiTokenScopeDescribedBy(data APITokenScopeCheckboxesData, option APITokenScopeOption) string {
+	ids := make([]string, 0, 2)
+	if data.ErrorID != "" {
+		ids = append(ids, data.ErrorID)
+	}
+	if option.Ineffective {
+		ids = append(ids, apiTokenScopeNoteID(data.Name, option.Scope))
+	}
+	return strings.Join(ids, " ")
+}
+
+// apiTokenScopeNoteIDは、今の権限では効かないことの注記のidを返します。
+func apiTokenScopeNoteID(name string, scope model.Scope) string {
+	return apiTokenScopeInputID(name, scope) + "-note"
+}
+
+// apiTokenScopeInputIDはスコープのチェックボックスのidを返します。
+func apiTokenScopeInputID(name string, scope model.Scope) string {
+	return name + "_" + strings.ReplaceAll(string(scope), ":", "_")
 }
 
 // APITokenScopeLabelは公開APIのトークンのスコープの表示名を返します。個人アクセストークンの画面と
@@ -33,6 +136,14 @@ func APITokenScopeLabel(ctx context.Context, scope model.Scope) string {
 		return templates.T(ctx, "api_token_scope_page_read")
 	case model.ScopePageWrite:
 		return templates.T(ctx, "api_token_scope_page_write")
+	case model.ScopeDraftPageRead:
+		return templates.T(ctx, "api_token_scope_draft_page_read")
+	case model.ScopeDraftPageWrite:
+		return templates.T(ctx, "api_token_scope_draft_page_write")
+	case model.ScopeDraftPageDelete:
+		return templates.T(ctx, "api_token_scope_draft_page_delete")
+	case model.ScopeAttachmentRead:
+		return templates.T(ctx, "api_token_scope_attachment_read")
 	default:
 		return string(scope)
 	}
@@ -47,6 +158,14 @@ func APITokenScopeHint(ctx context.Context, scope model.Scope) string {
 		return templates.T(ctx, "api_token_scope_page_read_hint")
 	case model.ScopePageWrite:
 		return templates.T(ctx, "api_token_scope_page_write_hint")
+	case model.ScopeDraftPageRead:
+		return templates.T(ctx, "api_token_scope_draft_page_read_hint")
+	case model.ScopeDraftPageWrite:
+		return templates.T(ctx, "api_token_scope_draft_page_write_hint")
+	case model.ScopeDraftPageDelete:
+		return templates.T(ctx, "api_token_scope_draft_page_delete_hint")
+	case model.ScopeAttachmentRead:
+		return templates.T(ctx, "api_token_scope_attachment_read_hint")
 	default:
 		return ""
 	}

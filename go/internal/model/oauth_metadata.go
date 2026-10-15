@@ -14,6 +14,10 @@ const (
 	OAuthTokenEndpointPath = "/oauth/token"
 	// OAuthRevocationEndpointPathはトークンの失効のエンドポイント (RFC 7009) のパス
 	OAuthRevocationEndpointPath = "/oauth/revoke"
+	// OAuthDeviceAuthorizationEndpointPathはデバイス認可の要求のエンドポイント (RFC 8628 §3.1) のパス
+	OAuthDeviceAuthorizationEndpointPath = "/oauth/device_authorization"
+	// OAuthDeviceVerificationPathは、利用者がユーザーコードを入力する画面 (RFC 8628 §3.3) のパス
+	OAuthDeviceVerificationPath = "/oauth/device"
 )
 
 // メタデータのパス (RFC 8414・RFC 9728・RFC 9727)
@@ -47,6 +51,8 @@ const (
 	OAuthGrantTypeAuthorizationCode = "authorization_code"
 	// OAuthGrantTypeRefreshTokenはリフレッシュトークンで更新するグラント (RFC 6749 §6)
 	OAuthGrantTypeRefreshToken = "refresh_token"
+	// OAuthGrantTypeDeviceCodeは、利用者が許可したデバイスコードを交換するグラント (RFC 8628 §3.4)
+	OAuthGrantTypeDeviceCode = "urn:ietf:params:oauth:grant-type:device_code"
 	// OAuthCodeChallengeMethodS256はPKCEのcode_challenge_method。plainは受け付けない
 	OAuthCodeChallengeMethodS256 = "S256"
 )

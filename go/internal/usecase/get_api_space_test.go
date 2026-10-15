@@ -10,34 +10,43 @@ import (
 func TestGetAPISpaceUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
-	space := &model.Space{ID: "space-1", Identifier: "bound-space", Name: "束縛先のスペース"}
+	space := &model.Space{ID: "space-1", Identifier: "bound-space", Name: "トークンが属するスペース"}
 	principal := &model.APIPrincipal{
 		User:  &model.User{ID: "user-1"},
 		Space: space,
 	}
 
-	t.Run("束縛先のスペースを返す", func(t *testing.T) {
-		t.Parallel()
+	foundTests := []struct {
+		name       string
+		identifier model.SpaceIdentifier
+	}{
+		{name: "トークンが属するスペースを返す", identifier: "bound-space"},
+		// スペース識別子の列はcitextで、Web画面のスペースの検索も大文字と小文字を区別しない
+		{name: "識別子の大文字と小文字だけが違ってもトークンが属するスペースを返す", identifier: "Bound-Space"},
+	}
+	for _, tt := range foundTests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-		output, err := NewGetAPISpaceUsecase().Execute(context.Background(), GetAPISpaceInput{
-			Principal:       principal,
-			SpaceIdentifier: "bound-space",
+			output, err := NewGetAPISpaceUsecase().Execute(context.Background(), GetAPISpaceInput{
+				Principal:       principal,
+				SpaceIdentifier: tt.identifier,
+			})
+			if err != nil {
+				t.Fatalf("Execute() error = %v", err)
+			}
+			if output.Space != space {
+				t.Errorf("Space = %+v、期待値 = %+v", output.Space, space)
+			}
 		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-		if output.Space != space {
-			t.Errorf("Space = %+v、期待値 = %+v", output.Space, space)
-		}
-	})
+	}
 
 	notFoundTests := []struct {
 		name       string
 		principal  *model.APIPrincipal
 		identifier model.SpaceIdentifier
 	}{
-		{name: "束縛先と異なるスペースは未存在として扱う", principal: principal, identifier: "other-space"},
-		{name: "識別子の大文字小文字の違いも別のスペースとして扱う", principal: principal, identifier: "Bound-Space"},
+		{name: "トークンが属さないスペースは未存在として扱う", principal: principal, identifier: "other-space"},
 		{name: "主体が無い場合は未存在として扱う", principal: nil, identifier: "bound-space"},
 	}
 	for _, tt := range notFoundTests {

@@ -83,3 +83,26 @@ func SetupTx(t *testing.T) (*sql.DB, *sql.Tx) {
 
 	return testDB, tx
 }
+
+// CommitFixtureは、buildがトランザクション内で作成したテストデータをコミットします。
+// テスト対象が内部で開くトランザクションから前提データを参照させるときに使います。
+// SetupTxと異なりデータはロールバックされないため、テストごとに一意な識別子を使ってください。
+func CommitFixture(t *testing.T, build func(tx *sql.Tx)) {
+	t.Helper()
+
+	if testDB == nil {
+		t.Fatal("SetupTestMainが呼ばれていません。TestMain内でtestutil.SetupTestMain(m)を呼んでください")
+	}
+
+	tx, err := testDB.BeginTx(t.Context(), nil)
+	if err != nil {
+		t.Fatalf("トランザクション開始に失敗: %v", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	build(tx)
+
+	if err := tx.Commit(); err != nil {
+		t.Fatalf("テストデータのコミットに失敗: %v", err)
+	}
+}

@@ -20,11 +20,21 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apiattachment "github.com/wikinoapp/wikino/go/internal/apihandler/attachment"
 	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
+	apicurrenttoken "github.com/wikinoapp/wikino/go/internal/apihandler/current_token"
+	apidraftpage "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page"
+	apidraftpagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_body_edit"
+	apidraftpagepublication "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_publication"
+	apidraftpagerevision "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
+	apipagebacklink "github.com/wikinoapp/wikino/go/internal/apihandler/page_backlink"
+	apipagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/page_body_edit"
+	apipagelink "github.com/wikinoapp/wikino/go/internal/apihandler/page_link"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
+	apiwikilinkpreview "github.com/wikinoapp/wikino/go/internal/apihandler/wikilink_preview"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
@@ -45,6 +55,8 @@ import (
 	oauthapplicationclientsecrethandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_application_client_secret"
 	oauthauthorizationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_authorization"
 	"github.com/wikinoapp/wikino/go/internal/handler/oauth_authorization_server_metadata"
+	oauthdeviceauthorizationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_device_authorization"
+	oauthdeviceverificationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_device_verification"
 	oauthgranthandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_grant"
 	"github.com/wikinoapp/wikino/go/internal/handler/oauth_protected_resource_metadata"
 	oauthtokenhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_token"
@@ -177,6 +189,7 @@ func runServe() {
 	oauthGrantRepo := repository.NewOAuthGrantRepository(queries)
 	oauthAccessTokenRepo := repository.NewOAuthAccessTokenRepository(queries)
 	oauthRefreshTokenRepo := repository.NewOAuthRefreshTokenRepository(queries)
+	oauthDeviceAuthorizationRepo := repository.NewOAuthDeviceAuthorizationRepository(queries)
 	suggestionRepo := repository.NewSuggestionRepository(queries)
 	suggestionPageRepo := repository.NewSuggestionPageRepository(queries)
 	suggestionPageRevisionRepo := repository.NewSuggestionPageRevisionRepository(queries)
@@ -511,7 +524,7 @@ func runServe() {
 		getSpaceSettingsUC,
 	)
 	getPersonalAccessTokensUC := usecase.NewGetPersonalAccessTokensUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, personalAccessTokenRepo)
-	getPersonalAccessTokenNewUC := usecase.NewGetPersonalAccessTokenNewUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo)
+	getPersonalAccessTokenNewUC := usecase.NewGetPersonalAccessTokenNewUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, topicMemberRepo)
 	personalAccessTokenCreateValidator := validator.NewPersonalAccessTokenCreateValidator()
 	createPersonalAccessTokenUC := usecase.NewCreatePersonalAccessTokenUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, personalAccessTokenRepo, personalAccessTokenCreateValidator)
 	revokePersonalAccessTokenUC := usecase.NewRevokePersonalAccessTokenUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, personalAccessTokenRepo)
@@ -553,8 +566,16 @@ func runServe() {
 	)
 	oauthAuthorizationHandler := oauthauthorizationhandler.NewHandler(
 		cfg,
-		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo),
-		usecase.NewCreateOAuthAuthorizationUsecase(cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo, oauthAuthorizationCodeRepo),
+		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo, topicMemberRepo),
+		usecase.NewCreateOAuthAuthorizationUsecase(db, oauthGrantRepo, cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo, oauthAuthorizationCodeRepo, validator.NewOAuthAuthorizationCreateValidator()),
+	)
+	oauthDeviceVerificationValidator := validator.NewOAuthDeviceVerificationValidator(oauthDeviceAuthorizationRepo, oauthApplicationRepo, spaceRepo)
+	oauthDeviceVerificationHandler := oauthdeviceverificationhandler.NewHandler(
+		cfg,
+		rateLimiter,
+		usecase.NewGetOAuthDeviceVerificationNewUsecase(featureFlagRepo),
+		usecase.NewGetOAuthDeviceConsentUsecase(featureFlagRepo, spaceMemberRepo, topicMemberRepo, oauthDeviceVerificationValidator),
+		usecase.NewUpdateOAuthDeviceAuthorizationUsecase(db, featureFlagRepo, oauthDeviceAuthorizationRepo, oauthGrantRepo, spaceMemberRepo, oauthDeviceVerificationValidator, validator.NewOAuthAuthorizationCreateValidator()),
 	)
 	getTopicDetailUC := usecase.NewGetTopicDetailUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, pageRepo)
 	getTopicNewUC := usecase.NewGetTopicNewUsecase(spaceRepo, spaceMemberRepo)
@@ -701,12 +722,14 @@ func runServe() {
 	oauthRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.OAuthIPRateLimitPolicy(cfg.TrustedProxyCIDRs))
 	oauthTokenHandler := oauthtokenhandler.NewHandler(
 		usecase.NewCreateOAuthTokenUsecase(
+			db,
 			cfg,
 			oauthApplicationRepo,
 			oauthGrantRepo,
 			oauthAuthorizationCodeRepo,
 			oauthAccessTokenRepo,
 			oauthRefreshTokenRepo,
+			oauthDeviceAuthorizationRepo,
 			spaceRepo,
 			spaceMemberRepo,
 			userRepo,
@@ -714,20 +737,45 @@ func runServe() {
 		),
 		usecase.NewRevokeOAuthTokenUsecase(oauthApplicationRepo, oauthGrantRepo, oauthAccessTokenRepo, oauthRefreshTokenRepo),
 	)
+	oauthDeviceAuthorizationRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.OAuthDeviceAuthorizationIPRateLimitPolicy(cfg.TrustedProxyCIDRs))
+	oauthDeviceAuthorizationHandler := oauthdeviceauthorizationhandler.NewHandler(
+		usecase.NewCreateOAuthDeviceAuthorizationUsecase(cfg, oauthApplicationRepo, spaceRepo, oauthDeviceAuthorizationRepo),
+	)
 	apiServer := apihandler.NewServer(
+		apiattachment.NewHandler(usecase.NewGetAPIAttachmentUsecase(attachmentRepo, objectStorage)),
 		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler(
+			cfg.AppURL(),
+			usecase.NewListAPIDraftPagesUsecase(draftPageRepo, topicRepo, topicMemberRepo),
+			usecase.NewGetAPIDraftPageUsecase(pageRepo, draftPageRepo, topicRepo, topicMemberRepo),
+			usecase.NewCreateAPIDraftPageUsecase(db, spaceRepo, pageRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, validator.NewAPIDraftPageCreateValidator()),
+			usecase.NewUpdateAPIDraftPageUsecase(db, spaceRepo, pageRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo),
+			usecase.NewDeleteAPIDraftPageUsecase(db, pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),
+		),
+		apidraftpagebodyedit.NewHandler(cfg.AppURL(), usecase.NewCreateAPIDraftPageBodyEditUsecase(db, spaceRepo, pageRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo)),
+		apidraftpagepublication.NewHandler(cfg.AppURL(), usecase.NewCreateAPIDraftPagePublicationUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewAPIPageUpdateValidator(pageRepo))),
+		apidraftpagerevision.NewHandler(
+			usecase.NewListAPIDraftPageRevisionsUsecase(pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),
+			usecase.NewGetAPIDraftPageRevisionUsecase(pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),
+		),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(
+			cfg.AppURL(),
 			usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
 			usecase.NewGetAPIPageUsecase(pageRepo, topicRepo, topicMemberRepo),
 			usecase.NewCreateAPIPageUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewPageCreateValidator(pageRepo)),
 			usecase.NewUpdateAPIPageUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewAPIPageUpdateValidator(pageRepo)),
 		),
+		apipagebacklink.NewHandler(cfg.AppURL(), usecase.NewListAPIPageBacklinksUsecase(pageRepo, topicRepo, topicMemberRepo)),
+		apipagebodyedit.NewHandler(cfg.AppURL(), usecase.NewCreateAPIPageBodyEditUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewAPIPageUpdateValidator(pageRepo))),
+		apipagelink.NewHandler(cfg.AppURL(), usecase.NewListAPIPageLinksUsecase(pageRepo, topicRepo, topicMemberRepo)),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(
 			usecase.NewListAPITopicsUsecase(topicRepo, topicMemberRepo),
 			usecase.NewGetAPITopicUsecase(topicRepo, topicMemberRepo),
 		),
+		apiwikilinkpreview.NewHandler(cfg.AppURL(), usecase.NewGetAPIWikilinkPreviewUsecase(pageRepo, topicRepo, topicMemberRepo)),
 	)
 
 	r := chi.NewRouter()
@@ -815,6 +863,11 @@ func runServe() {
 	// 2つのエンドポイントはカウンターを共有する
 	r.With(oauthRateLimit.Middleware).Post(model.OAuthTokenEndpointPath, oauthTokenHandler.Create)
 	r.With(oauthRateLimit.Middleware).Post(model.OAuthRevocationEndpointPath, oauthTokenHandler.Delete)
+
+	// OAuthのデバイス認可の要求のエンドポイント (RFC 8628)。トークンエンドポイントと同じくCookieの
+	// セッションを使わずに呼ばれる。要求のたびに行を作るため、トークンエンドポイントとは別の
+	// カウンターでIPアドレス単位のレート制限を掛ける
+	r.With(oauthDeviceAuthorizationRateLimit.Middleware).Post(model.OAuthDeviceAuthorizationEndpointPath, oauthDeviceAuthorizationHandler.Create)
 
 	// OAuthとAPIのメタデータ (RFC 8414・RFC 9728・RFC 9727)。個人のデータを含まないため認証せず、
 	// フィーチャーフラグでも隠さない
@@ -1058,6 +1111,12 @@ func runServe() {
 		r.Get(model.OAuthAuthorizationEndpointPath, oauthAuthorizationHandler.New)
 		r.Head(model.OAuthAuthorizationEndpointPath, oauthAuthorizationHandler.New)
 		r.Post(model.OAuthAuthorizationEndpointPath, oauthAuthorizationHandler.Create)
+
+		// OAuthのデバイス認可のユーザーコードの入力と同意 (RFC 8628 §3.3)。認可エンドポイントと
+		// 同じく、未ログインの利用者はサインインを経てこの画面へ戻り、送信はCSRFトークンで保護する
+		r.Get(model.OAuthDeviceVerificationPath, oauthDeviceVerificationHandler.New)
+		r.Head(model.OAuthDeviceVerificationPath, oauthDeviceVerificationHandler.New)
+		r.Post(model.OAuthDeviceVerificationPath, oauthDeviceVerificationHandler.Create)
 
 		// スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
 		// ダウンロード。これらの画面のパンくずは上のスペース設定のトップへ戻る。

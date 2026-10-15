@@ -18,6 +18,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // testIssuerは認可レスポンスの `iss` に載る認可サーバーの識別子 (テストの設定のオリジン)
@@ -96,8 +97,8 @@ func setupHandler(t *testing.T, q *query.Queries) *oauthauthorizationhandler.Han
 
 	return oauthauthorizationhandler.NewHandler(
 		cfg,
-		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, appRepo, spaceRepo, spaceMemberRepo),
-		usecase.NewCreateOAuthAuthorizationUsecase(cfg, featureFlagRepo, appRepo, spaceRepo, spaceMemberRepo, repository.NewOAuthAuthorizationCodeRepository(q)),
+		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, appRepo, spaceRepo, spaceMemberRepo, repository.NewTopicMemberRepository(q)),
+		usecase.NewCreateOAuthAuthorizationUsecase(testutil.GetTestDB(), repository.NewOAuthGrantRepository(q), cfg, featureFlagRepo, appRepo, spaceRepo, spaceMemberRepo, repository.NewOAuthAuthorizationCodeRepository(q), validator.NewOAuthAuthorizationCreateValidator()),
 	)
 }
 
@@ -179,9 +180,10 @@ func assertRedirectToClient(t *testing.T, rr *httptest.ResponseRecorder, status 
 func TestRedirectToClient_登録URIの予約パラメーターを認可レスポンスで置き換える(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	f := setupAuthorizationFixture(t, tx, "oauthz-response-collision", model.SpaceRoleAdmin, true)
-	h := setupHandler(t, testutil.QueriesWithTx(tx))
+	var f authorizationFixture
+	testutil.CommitFixture(t, func(tx *sql.Tx) {
+		f = setupAuthorizationFixture(t, tx, "oauthz-response-collision", model.SpaceRoleAdmin, true)
+	})
 	params := validParams(f.clientID)
 	params.Set("redirect_uri", redirectURIWithReservedParams)
 
@@ -190,7 +192,9 @@ func TestRedirectToClient_登録URIの予約パラメーターを認可レスポ
 		approved[name] = append([]string(nil), values...)
 	}
 	approved.Set("decision", "approve")
+	approved["granted_scopes"] = []string{"page:read", "topic:read"}
 	rr := httptest.NewRecorder()
+	h := setupHandler(t, query.New(testutil.GetTestDB()))
 	h.Create(rr, newRequest(t, http.MethodPost, f.userID, approved))
 	query := assertRedirectToClient(t, rr, http.StatusSeeOther, map[string]string{"state": "xyz"})
 	if len(query["code"]) != 1 || query.Get("code") == "old" {

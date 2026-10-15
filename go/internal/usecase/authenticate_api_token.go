@@ -81,6 +81,7 @@ func (uc *AuthenticateAPITokenUsecase) authenticatePersonalAccessToken(ctx conte
 	}
 
 	principal.TokenKind = model.APITokenKindPersonalAccessToken
+	principal.TokenExpiresAt = pat.ExpiresAt
 	principal.Scopes = policy.ExpandAPITokenScopes(pat.Scopes)
 	return principal, nil
 }
@@ -113,11 +114,12 @@ func (uc *AuthenticateAPITokenUsecase) authenticateOAuthAccessToken(ctx context.
 	}
 
 	principal.TokenKind = model.APITokenKindOAuthAccessToken
+	principal.TokenExpiresAt = accessToken.ExpiresAt
 	principal.Scopes = policy.ExpandAPITokenScopes(accessToken.Scopes)
 	return principal, nil
 }
 
-// apiTokenOwnerFinderは、公開APIのトークンの束縛先のスペースと持ち主を取得する。トークンの照合と、
+// apiTokenOwnerFinderは、公開APIのトークンが属するスペースと持ち主を取得する。トークンの照合と、
 // OAuthのトークン要求で持ち主がトークンを使い続けてよいかを確かめるときに使う
 type apiTokenOwnerFinder struct {
 	spaceRepo       *repository.SpaceRepository
@@ -140,7 +142,7 @@ func newAPITokenOwnerFinder(
 	}
 }
 
-// findはトークンの束縛先のスペースと持ち主を、トークンの種類とスコープを除いた呼び出し主体として
+// findはトークンが属するスペースと持ち主を、トークンの種類とスコープを除いた呼び出し主体として
 // 返す。スペースが削除済み、持ち主がスペースの有効なメンバーでない、ユーザーが退会済み、
 // フィーチャーフラグが無効のいずれかであれば (nil, nil) を返す。トークンを使い続けるための
 // メンバー権限 (トークンの種類ごとに異なる) は呼び出し側が確かめる

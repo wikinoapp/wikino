@@ -18,6 +18,16 @@ WHERE id = ANY($1::uuid[])
   AND discarded_at IS NULL
 ORDER BY number;
 
+-- name: FindPageMetadataByIDs :many
+-- Wikiリンクのプレビューの応答と可視性判定に使う列だけを取得する。
+-- リンク先の本文サイズに転送量が比例しないよう、本文は取得しない。
+SELECT id, space_id, topic_id, number, title, published_at, trashed_at, discarded_at
+FROM pages
+WHERE id = ANY(@ids::uuid[])
+  AND space_id = @space_id
+  AND discarded_at IS NULL
+ORDER BY number;
+
 -- name: FindBacklinkedPagesByPageID :many
 -- linked_page_idsカラムに指定ページIDが含まれるページを取得する (同スペース・未廃棄のページのみ。バックリンク一覧表示用)
 SELECT * FROM pages
@@ -362,9 +372,23 @@ WHERE p.space_id = @space_id
   AND t.discarded_at IS NULL
 ORDER BY t.number, p.number;
 
--- name: ListPublishedPagesByModifiedAt :many
--- 公開APIのページ一覧。公開済み・未廃棄・未ゴミ箱で、閲覧者が開けるトピック (visible_topic_ids) の
--- ページを更新日時の新しい順に返す。この集合は呼び出し元がCanShowTopicの規則で解決する。
+-- name: ListPagesByModifiedAt :many
+-- 公開APIのページ一覧。未廃棄・未ゴミ箱で、対象のトピック (topic_ids) のページを更新日時の新しい順に返す。
+-- topic_idsは閲覧者が開けるトピック (visible_topic_ids) を呼び出し元がtopic_numberで絞ったもので、
+-- visible_topic_idsは呼び出し元がCanShowTopicの規則で解決する。
+-- include_published・include_unpublishedで公開済み・未公開のページを含めるかを選ぶ。
+-- 未公開ページは、SearchPageLocationsと同じく開けるトピックの公開ページか呼び出したメンバー自身の
+-- 下書きからリンクされているものだけを含める。リンク元はtopic_numberで絞らず、開けるトピック全体から探す。
+-- visible_topic_idsは廃棄済みのトピックを含まないため、リンク元ではトピックをJOINしない。
+-- リンク元の判定はSearchPageLocationsと違い、候補ごとの @> ではなく、リンク先のIDの集合を1度だけ作る
+-- 相関の無いINで書く。候補ごとの @> ではGINインデックスが選ばれず、未公開ページの数だけ
+-- リンク元を走査し直して遅くなるためである。
+-- titleを渡すとそのタイトルのページに絞る (citextの比較のため大文字小文字を区別しない)。
+-- keyword_patternsはキーワードごとのILIKEのパターンで、すべてのパターンについてタイトルか本文の
+-- どちらかに一致するページに絞る (AND検索)。空の配列なら絞らない。本文にはインデックスが無く、
+-- スペース・トピック・公開状態で絞った行を走査する。タイトルの無いページも本文で一致させるため、
+-- タイトルはCOALESCEで空文字列にする (NULLのままではNOT EXISTSの判定がNULLになり、一致しない
+-- ページまで含めてしまう)。
 -- modified_sinceを渡すとその日時以降に更新されたページに絞る。カーソル (after_modified_at,
 -- after_id) を渡すと、並び順でその位置より後ろのページだけを返す。更新日時が同じページも
 -- 主キーで順序を決めるため、取得中に更新が無ければ重複や読み飛ばしなく辿れる。
@@ -372,12 +396,84 @@ ORDER BY t.number, p.number;
 SELECT p.* FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
 WHERE p.space_id = @space_id
-  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY(@topic_ids::uuid[])
+  AND (
+    (@include_published::boolean IS TRUE AND p.published_at IS NOT NULL)
+    OR (
+      @include_unpublished::boolean IS TRUE
+      AND p.published_at IS NULL
+      AND (
+        p.id::varchar IN (
+          SELECT unnest(src.linked_page_ids) FROM pages src
+          WHERE src.space_id = @space_id
+            AND src.topic_id = ANY(@visible_topic_ids::uuid[])
+            AND src.published_at IS NOT NULL
+            AND src.discarded_at IS NULL
+            AND src.trashed_at IS NULL
+        )
+        OR p.id::varchar IN (
+          SELECT unnest(dp.linked_page_ids) FROM draft_pages dp
+          INNER JOIN pages dp_p ON dp.page_id = dp_p.id
+            AND dp_p.space_id = @space_id
+            AND dp_p.discarded_at IS NULL
+            AND dp_p.trashed_at IS NULL
+          WHERE dp.space_id = @space_id
+            AND dp.space_member_id = @space_member_id
+        )
+      )
+    )
+  )
+  AND (sqlc.narg('title')::text IS NULL OR p.title = sqlc.narg('title')::citext)
+  AND NOT EXISTS (
+    SELECT 1 FROM unnest(@keyword_patterns::text[]) AS kw(pattern)
+    WHERE NOT (COALESCE(p.title, '') ILIKE kw.pattern OR p.body ILIKE kw.pattern)
+  )
+  AND (sqlc.narg('modified_since')::timestamp IS NULL OR p.modified_at >= sqlc.narg('modified_since')::timestamp)
+  AND (
+    sqlc.narg('after_modified_at')::timestamp IS NULL
+    OR (p.modified_at, p.id) < (sqlc.narg('after_modified_at')::timestamp, sqlc.narg('after_id')::uuid)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT @row_limit;
+
+-- name: ListLinkedPagesByModifiedAt :many
+-- 公開APIのページのリンク一覧。リンク元のページの保存済みのlinked_page_ids (page_ids) が指すページを、
+-- 更新日時の新しい順にカーソル方式で返す。ゴミ箱・廃棄済みのページと廃棄済みのトピックのページを除き、
+-- 閲覧者が開けるトピック (visible_topic_ids) のページに絞る。この絞り込みはWeb画面のリンク一覧
+-- (FindLinkedPagesPaginated) と揃えてあり、未公開のページも含める。visible_topic_idsは呼び出し元が
+-- CanShowTopicの規則で解決する。カーソル (after_modified_at, after_id) の扱いはListPagesByModifiedAtと同じ。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.id = ANY(@page_ids::uuid[])
+  AND p.space_id = @space_id
   AND p.discarded_at IS NULL
   AND p.trashed_at IS NULL
   AND t.discarded_at IS NULL
   AND t.id = ANY(@visible_topic_ids::uuid[])
-  AND (sqlc.narg('modified_since')::timestamp IS NULL OR p.modified_at >= sqlc.narg('modified_since')::timestamp)
+  AND (
+    sqlc.narg('after_modified_at')::timestamp IS NULL
+    OR (p.modified_at, p.id) < (sqlc.narg('after_modified_at')::timestamp, sqlc.narg('after_id')::uuid)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT @row_limit;
+
+-- name: ListBacklinkedPagesByModifiedAt :many
+-- 公開APIのページのバックリンク一覧。保存済みのlinked_page_idsでpage_idのページにリンクしているページを、
+-- 更新日時の新しい順にカーソル方式で返す。ゴミ箱・廃棄済み・トピックの可視性の扱いは
+-- ListLinkedPagesByModifiedAtと同じで、Web画面のバックリンク一覧 (FindBacklinkedPagesPaginated) と揃えてある。
+-- リンク元の判定はWeb画面の `= ANY(linked_page_ids)` と同じ意味だが、linked_page_idsのGINインデックスを
+-- 使えるよう @> で書く。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.linked_page_ids @> ARRAY[@page_id::varchar]
+  AND p.space_id = @space_id
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY(@visible_topic_ids::uuid[])
   AND (
     sqlc.narg('after_modified_at')::timestamp IS NULL
     OR (p.modified_at, p.id) < (sqlc.narg('after_modified_at')::timestamp, sqlc.narg('after_id')::uuid)

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -100,6 +102,44 @@ func TestDraftPageRepository_FindByPageAndMember(t *testing.T) {
 		}
 		if draft != nil {
 			t.Errorf("FindByPageAndMember() = %v、期待値 = nil", draft)
+		}
+	})
+}
+
+func TestDraftPageRepository_FindByIDForUpdate(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).WithEmail("draft-lock@example.com").WithAtname("draftlock").Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("draft-lock-space").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("draft-lock-other-space").Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("General").Build()
+	pageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Test Page").Build()
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
+		WithSpaceID(spaceID).WithPageID(pageID).WithSpaceMemberID(spaceMemberID).WithTopicID(topicID).
+		WithTitle("Draft Title").WithBody("Draft body").Build()
+
+	t.Run("IDとスペースIDで下書きを取得できる", func(t *testing.T) {
+		draft, err := repo.FindByIDForUpdate(context.Background(), draftPageID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDForUpdate()のエラー = %v", err)
+		}
+		if draft == nil || draft.ID != draftPageID || draft.Title == nil || *draft.Title != "Draft Title" || draft.Body != "Draft body" {
+			t.Errorf("下書き = %+v、期待値 = 作成した下書き", draft)
+		}
+	})
+
+	t.Run("別のスペースのIDとしてはnilを返す", func(t *testing.T) {
+		draft, err := repo.FindByIDForUpdate(context.Background(), draftPageID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByIDForUpdate()のエラー = %v", err)
+		}
+		if draft != nil {
+			t.Errorf("下書き = %+v、期待値 = nil", draft)
 		}
 	})
 }
@@ -1457,6 +1497,107 @@ func TestDraftPageRepository_OnDeleteSetNull(t *testing.T) {
 		}
 		if draftCount != 1 {
 			t.Errorf("draft_pagesの件数 = %d、期待値 = 1 (下書きが削除されている)", draftCount)
+		}
+	})
+}
+
+func TestDraftPageRepository_ListByModifiedAt(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewDraftPageRepository(testutil.QueriesWithTx(tx))
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("draft-modified-at").Build()
+	newMember := func(atname string) model.SpaceMemberID {
+		userID := testutil.NewUserBuilder(t, tx).WithAtname(atname).WithEmail(atname + "@example.com").Build()
+		return testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+	}
+	memberID := newMember("draft_modified_at_owner")
+	otherMemberID := newMember("draft_modified_at_other")
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("トピック1").Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("トピック2").Build()
+
+	baseTime := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
+	// ページ2と3の下書きは更新日時が同じで、主キーで順序が決まる
+	drafts := []struct {
+		number     model.PageNumber
+		topicID    model.TopicID
+		memberID   model.SpaceMemberID
+		modifiedAt time.Time
+		modify     func(b *testutil.PageBuilder) *testutil.PageBuilder
+	}{
+		{number: 1, topicID: topicID, memberID: memberID, modifiedAt: baseTime},
+		{number: 2, topicID: topicID, memberID: memberID, modifiedAt: baseTime.Add(-time.Hour)},
+		{number: 3, topicID: topicID, memberID: memberID, modifiedAt: baseTime.Add(-time.Hour)},
+		{number: 4, topicID: topicID, memberID: memberID, modifiedAt: baseTime, modify: (*testutil.PageBuilder).WithTrashed},
+		{number: 5, topicID: topicID, memberID: memberID, modifiedAt: baseTime, modify: (*testutil.PageBuilder).WithDiscarded},
+		{number: 6, topicID: otherTopicID, memberID: memberID, modifiedAt: baseTime},
+		{number: 7, topicID: topicID, memberID: otherMemberID, modifiedAt: baseTime},
+	}
+	draftIDs := make(map[model.PageNumber]model.DraftPageID)
+	for _, d := range drafts {
+		b := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(d.topicID).WithNumber(d.number).WithTitle(fmt.Sprintf("ページ%d", d.number))
+		if d.modify != nil {
+			b = d.modify(b)
+		}
+		pageID := b.Build()
+		draftIDs[d.number] = testutil.NewDraftPageBuilder(t, tx).
+			WithSpaceID(spaceID).WithPageID(pageID).WithSpaceMemberID(d.memberID).WithTopicID(d.topicID).
+			WithTitle(fmt.Sprintf("下書き%d", d.number)).WithBody(fmt.Sprintf("本文%d", d.number)).
+			WithModifiedAt(d.modifiedAt).Build()
+	}
+	// 更新日時が同じ下書きはIDの大きい順に並ぶ
+	tied := []model.PageNumber{2, 3}
+	if draftIDs[2] < draftIDs[3] {
+		tied = []model.PageNumber{3, 2}
+	}
+
+	list := func(t *testing.T, input ListDraftPagesByModifiedAtInput) []model.PageNumber {
+		t.Helper()
+		got, err := repo.ListByModifiedAt(t.Context(), input)
+		if err != nil {
+			t.Fatalf("ListByModifiedAt()のエラー = %v", err)
+		}
+		numbers := make([]model.PageNumber, len(got))
+		for i, d := range got {
+			numbers[i] = d.Page.Number
+			if d.ID != draftIDs[d.Page.Number] || d.Body != fmt.Sprintf("本文%d", d.Page.Number) || d.Page.ID != d.PageID {
+				t.Errorf("下書き = %+v、期待値 = ページ%dの下書き", d, d.Page.Number)
+			}
+		}
+		return numbers
+	}
+
+	t.Run("メンバー自身の、ゴミ箱・廃棄済みでないページの、対象トピックの下書きを新しい順に返す", func(t *testing.T) {
+		got := list(t, ListDraftPagesByModifiedAtInput{SpaceID: spaceID, SpaceMemberID: memberID, TopicIDs: []model.TopicID{topicID}, Limit: 10})
+		if want := []model.PageNumber{1, tied[0], tied[1]}; !slices.Equal(got, want) {
+			t.Errorf("ページ番号 = %v、期待値 = %v", got, want)
+		}
+	})
+
+	t.Run("複数のトピックを対象にできる", func(t *testing.T) {
+		got := list(t, ListDraftPagesByModifiedAtInput{SpaceID: spaceID, SpaceMemberID: memberID, TopicIDs: []model.TopicID{topicID, otherTopicID}, Limit: 10})
+		if len(got) != 4 || !slices.Contains(got, 6) {
+			t.Errorf("ページ番号 = %v、期待値 = 1・2・3・6", got)
+		}
+	})
+
+	t.Run("カーソルの後ろから、更新日時が同じ下書きも重複なく返す", func(t *testing.T) {
+		after := baseTime.Add(-time.Hour)
+		afterID := draftIDs[tied[0]]
+		got := list(t, ListDraftPagesByModifiedAtInput{
+			SpaceID: spaceID, SpaceMemberID: memberID, TopicIDs: []model.TopicID{topicID},
+			AfterModifiedAt: &after, AfterID: &afterID, Limit: 10,
+		})
+		if want := []model.PageNumber{tied[1]}; !slices.Equal(got, want) {
+			t.Errorf("ページ番号 = %v、期待値 = %v", got, want)
+		}
+	})
+
+	t.Run("Limit件まで返す", func(t *testing.T) {
+		got := list(t, ListDraftPagesByModifiedAtInput{SpaceID: spaceID, SpaceMemberID: memberID, TopicIDs: []model.TopicID{topicID}, Limit: 1})
+		if want := []model.PageNumber{1}; !slices.Equal(got, want) {
+			t.Errorf("ページ番号 = %v、期待値 = %v", got, want)
 		}
 	})
 }

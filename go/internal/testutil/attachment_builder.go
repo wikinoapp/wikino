@@ -14,6 +14,7 @@ type AttachmentBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
+	blobKey       string
 	spaceID       string
 	spaceMemberID string
 	filename      string
@@ -57,6 +58,18 @@ func (b *AttachmentBuilder) WithContentType(contentType string) *AttachmentBuild
 	return b
 }
 
+// WithByteSizeはバイト数を設定します
+func (b *AttachmentBuilder) WithByteSize(byteSize int64) *AttachmentBuilder {
+	b.byteSize = byteSize
+	return b
+}
+
+// WithBlobKeyはオブジェクトのストレージキーを設定します。指定しない場合その値はビルダーが作ります
+func (b *AttachmentBuilder) WithBlobKey(blobKey string) *AttachmentBuilder {
+	b.blobKey = blobKey
+	return b
+}
+
 // Buildは添付ファイルを作成し、IDを返します
 func (b *AttachmentBuilder) Build() model.AttachmentID {
 	b.t.Helper()
@@ -70,6 +83,11 @@ func (b *AttachmentBuilder) Build() model.AttachmentID {
 
 	now := time.Now()
 
+	blobKey := b.blobKey
+	if blobKey == "" {
+		blobKey = "test-key-" + now.Format("20060102150405.000000000")
+	}
+
 	// active_storage_blobを作成
 	var blobID string
 	err := b.tx.QueryRowContext(
@@ -77,7 +95,7 @@ func (b *AttachmentBuilder) Build() model.AttachmentID {
 		`INSERT INTO active_storage_blobs (key, filename, content_type, service_name, byte_size, created_at)
 		 VALUES ($1, $2, $3, $4, $5, $6)
 		 RETURNING id`,
-		"test-key-"+now.Format("20060102150405.000000000"), b.filename, b.contentType, "local", b.byteSize, now,
+		blobKey, b.filename, b.contentType, "local", b.byteSize, now,
 	).Scan(&blobID)
 	if err != nil {
 		b.t.Fatalf("active_storage_blob作成に失敗: %v", err)

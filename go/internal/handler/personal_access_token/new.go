@@ -37,8 +37,9 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.renderNewForm(w, r, user, http.StatusOK, patpages.NewData{
-		CSRFToken: middleware.GetCSRFTokenFromContext(ctx),
-		Space:     viewmodel.NewSpace(output.Space),
+		CSRFToken:         middleware.GetCSRFTokenFromContext(ctx),
+		Space:             viewmodel.NewSpace(output.Space),
+		IneffectiveScopes: output.IneffectiveScopes,
 	})
 }
 

@@ -73,7 +73,7 @@ func setupHandler(t *testing.T, q *query.Queries) *pathandler.Handler {
 		&config.Config{Env: "test", Domain: "localhost"},
 		session.NewFlashManager("", false, true),
 		usecase.NewGetPersonalAccessTokensUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, patRepo),
-		usecase.NewGetPersonalAccessTokenNewUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo),
+		usecase.NewGetPersonalAccessTokenNewUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, repository.NewTopicMemberRepository(q)),
 		usecase.NewCreatePersonalAccessTokenUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, patRepo, validator.NewPersonalAccessTokenCreateValidator()),
 		usecase.NewRevokePersonalAccessTokenUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, patRepo),
 	)

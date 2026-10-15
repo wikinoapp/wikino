@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// GetTopicはトークンを束縛したスペースのトピックを返す (GET /api/v1/spaces/{space_identifier}/topics/{topic_number})
+// GetTopicはトークンが属するスペースのトピックを返す (GET /api/v1/spaces/{space_identifier}/topics/{topic_number})
 func (h *Handler) GetTopic(ctx context.Context, request apigen.GetTopicRequestObject) (apigen.GetTopicResponseObject, error) {
 	output, err := h.getAPITopicUC.Execute(ctx, usecase.GetAPITopicInput{
 		Principal:       middleware.APIPrincipalFromContext(ctx),

@@ -155,9 +155,9 @@ var ScopeDefinitions = []ScopeDefinition{
 	{Scope: ScopePageTrashWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopePageTrashRead}},
 	{Scope: ScopePageTrashDelete, LowestLevel: ScopeLevelTopic},
 	// 下書きページ
-	{Scope: ScopeDraftPageRead, LowestLevel: ScopeLevelTopic},
-	{Scope: ScopeDraftPageWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeDraftPageRead}},
-	{Scope: ScopeDraftPageDelete, LowestLevel: ScopeLevelTopic},
+	{Scope: ScopeDraftPageRead, LowestLevel: ScopeLevelTopic, APIToken: true},
+	{Scope: ScopeDraftPageWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeDraftPageRead}, APIToken: true},
+	{Scope: ScopeDraftPageDelete, LowestLevel: ScopeLevelTopic, APIToken: true},
 	// 編集提案
 	{Scope: ScopeSuggestionRead, LowestLevel: ScopeLevelTopic},
 	{Scope: ScopeSuggestionWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeSuggestionRead}},
@@ -170,8 +170,9 @@ var ScopeDefinitions = []ScopeDefinition{
 	{Scope: ScopeSpaceMemberRead, LowestLevel: ScopeLevelSpace},
 	{Scope: ScopeSpaceMemberWrite, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopeSpaceMemberRead}},
 	{Scope: ScopeSpaceMemberDelete, LowestLevel: ScopeLevelSpace},
-	// 添付ファイル (スペースに属し、判定でトピックを見ないため、スペースにだけ付けられる)
-	{Scope: ScopeAttachmentRead, LowestLevel: ScopeLevelSpace},
+	// 添付ファイル (スペースに属し、判定でトピックを見ないため、スペースにだけ付けられる)。
+	// 公開APIのトークンには取得のためのreadだけを付与できる (アップロード・削除のAPIは無い)
+	{Scope: ScopeAttachmentRead, LowestLevel: ScopeLevelSpace, APIToken: true},
 	{Scope: ScopeAttachmentWrite, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopeAttachmentRead}},
 	{Scope: ScopeAttachmentDelete, LowestLevel: ScopeLevelSpace},
 	// 個人アクセストークン
@@ -196,6 +197,16 @@ func HasScope(scopes []Scope, target Scope) bool {
 		}
 	}
 	return false
+}
+
+// HasAllScopesはtargetsのスコープがすべてscopesに含まれているかチェックする
+func HasAllScopes(scopes []Scope, targets []Scope) bool {
+	for _, target := range targets {
+		if !HasScope(scopes, target) {
+			return false
+		}
+	}
+	return true
 }
 
 // StringsToScopesは []stringを []Scopeに変換する

@@ -8,6 +8,7 @@ import (
 
 	"github.com/lib/pq"
 
+	dbmigration "github.com/wikinoapp/wikino/go/db"
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
@@ -117,5 +118,24 @@ func (b *OAuthApplicationBuilder) Build() model.OAuthApplicationID {
 		b.t.Fatalf("OAuthアプリ作成に失敗: %v", err)
 	}
 
+	return model.OAuthApplicationID(id)
+}
+
+// RegisterOfficialCLIOAuthApplicationは、公式CLIのOAuthクライアントを本番と同じマイグレーションの
+// SQLで登録し、IDを返します。client_idは一意なため、これを呼ぶテストどうしは、先に登録した
+// テストのトランザクションが終わるまで待たされます
+func RegisterOfficialCLIOAuthApplication(t *testing.T, tx *sql.Tx) model.OAuthApplicationID {
+	t.Helper()
+
+	ctx := context.Background()
+	if _, err := tx.ExecContext(ctx, dbmigration.OfficialCLIOAuthApplicationSQL()); err != nil {
+		t.Fatalf("公式CLIのOAuthクライアントの登録に失敗: %v", err)
+	}
+
+	// マイグレーションのclient_idがGoの定数とずれていれば、ここで見つからずに失敗する
+	var id string
+	if err := tx.QueryRowContext(ctx, "SELECT id FROM oauth_applications WHERE client_id = $1 AND space_id IS NULL", model.OfficialCLIClientID).Scan(&id); err != nil {
+		t.Fatalf("登録した公式CLIのOAuthクライアントの取得に失敗: %v", err)
+	}
 	return model.OAuthApplicationID(id)
 }

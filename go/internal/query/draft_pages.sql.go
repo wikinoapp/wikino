@@ -194,6 +194,40 @@ func (q *Queries) FindDraftPageByID(ctx context.Context, arg FindDraftPageByIDPa
 	return i, err
 }
 
+const findDraftPageByIDForUpdate = `-- name: FindDraftPageByIDForUpdate :one
+SELECT id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE id = $1 AND space_id = $2 FOR NO KEY UPDATE
+`
+
+type FindDraftPageByIDForUpdateParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// APIの更新・削除で、`If-Match` の照合から書き込みまでの間にWeb画面の保存などが割り込まないよう、
+// 下書きの行をトランザクションが終わるまでロックして取得する。
+// FOR UPDATEではなくFOR NO KEY UPDATEを使うのは、draft_pages(id) を参照するリビジョンの作成の
+// 外部キー検査を待たせないためである。UPDATEもFOR NO KEY UPDATEを取るため、同じ下書きの更新どうしは直列化される。
+func (q *Queries) FindDraftPageByIDForUpdate(ctx context.Context, arg FindDraftPageByIDForUpdateParams) (DraftPage, error) {
+	row := q.db.QueryRowContext(ctx, findDraftPageByIDForUpdate, arg.ID, arg.SpaceID)
+	var i DraftPage
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.PageID,
+		&i.SpaceMemberID,
+		&i.TopicID,
+		&i.Title,
+		&i.Body,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SuggestionPageID,
+		&i.FeaturedImageAttachmentID,
+	)
+	return i, err
+}
+
 const findDraftPageByPageAndMember = `-- name: FindDraftPageByPageAndMember :one
 SELECT id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id FROM draft_pages WHERE page_id = $1 AND space_member_id = $2 AND space_id = $3
 `

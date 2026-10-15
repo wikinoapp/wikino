@@ -14,6 +14,10 @@ const (
 	OAuthClientTypePublic OAuthClientType = 1
 )
 
+// OfficialCLIClientIDは公式CLIのクライアントID。CLIに埋め込んで配布するため変えない。
+// クライアント自体はマイグレーション (db/migrations) で登録する
+const OfficialCLIClientID = "wikino-cli"
+
 // OAuthClientTypesは登録フォームで選べるクライアントの種別で、フォームに並べる順である
 var OAuthClientTypes = []OAuthClientType{OAuthClientTypeConfidential, OAuthClientTypePublic}
 

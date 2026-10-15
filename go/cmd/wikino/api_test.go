@@ -18,11 +18,21 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apiattachment "github.com/wikinoapp/wikino/go/internal/apihandler/attachment"
 	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
+	apicurrenttoken "github.com/wikinoapp/wikino/go/internal/apihandler/current_token"
+	apidraftpage "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page"
+	apidraftpagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_body_edit"
+	apidraftpagepublication "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_publication"
+	apidraftpagerevision "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
+	apipagebacklink "github.com/wikinoapp/wikino/go/internal/apihandler/page_backlink"
+	apipagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/page_body_edit"
+	apipagelink "github.com/wikinoapp/wikino/go/internal/apihandler/page_link"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
+	apiwikilinkpreview "github.com/wikinoapp/wikino/go/internal/apihandler/wikilink_preview"
 	"github.com/wikinoapp/wikino/go/internal/apipagination"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
@@ -103,11 +113,21 @@ func TestAPIRouter(t *testing.T) {
 	t.Parallel()
 
 	handler := newTestAPIHandler(t, apihandler.NewServer(
+		apiattachment.NewHandler(nil),
 		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
+		apidraftpagebodyedit.NewHandler("https://example.com", nil),
+		apidraftpagepublication.NewHandler("https://example.com", nil),
+		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
-		apipage.NewHandler(usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
+		apipage.NewHandler("https://example.com", usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
+		apipagebacklink.NewHandler("https://example.com", nil),
+		apipagebodyedit.NewHandler("https://example.com", nil),
+		apipagelink.NewHandler("https://example.com", nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
+		apiwikilinkpreview.NewHandler("https://example.com", nil),
 	))
 
 	t.Run("OpenAPI記述をトークン無しで配信する", func(t *testing.T) {
@@ -229,11 +249,21 @@ func TestAPIRouter_BodyLimitProblems(t *testing.T) {
 
 	problems := apierror.NewWriter("https://example.com")
 	handler := middleware.APIResponseHeader(middleware.NewBodyLimit(problems)(newTestAPIHandler(t, apihandler.NewServer(
+		apiattachment.NewHandler(nil),
 		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
+		apidraftpagebodyedit.NewHandler("https://example.com", nil),
+		apidraftpagepublication.NewHandler("https://example.com", nil),
+		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
-		apipage.NewHandler(usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
+		apipage.NewHandler("https://example.com", usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
+		apipagebacklink.NewHandler("https://example.com", nil),
+		apipagebodyedit.NewHandler("https://example.com", nil),
+		apipagelink.NewHandler("https://example.com", nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
+		apiwikilinkpreview.NewHandler("https://example.com", nil),
 	))))
 
 	tests := []struct {
@@ -309,6 +339,62 @@ func (s errorServer) UpdatePage(context.Context, apigen.UpdatePageRequestObject)
 	return nil, s.err
 }
 
+func (s errorServer) ListPageLinks(context.Context, apigen.ListPageLinksRequestObject) (apigen.ListPageLinksResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) ListPageBacklinks(context.Context, apigen.ListPageBacklinksRequestObject) (apigen.ListPageBacklinksResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) CreatePageBodyEdit(context.Context, apigen.CreatePageBodyEditRequestObject) (apigen.CreatePageBodyEditResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) CreateWikilinkPreview(context.Context, apigen.CreateWikilinkPreviewRequestObject) (apigen.CreateWikilinkPreviewResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) ListDraftPages(context.Context, apigen.ListDraftPagesRequestObject) (apigen.ListDraftPagesResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) GetDraftPage(context.Context, apigen.GetDraftPageRequestObject) (apigen.GetDraftPageResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) CreateDraftPage(context.Context, apigen.CreateDraftPageRequestObject) (apigen.CreateDraftPageResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) UpdateDraftPage(context.Context, apigen.UpdateDraftPageRequestObject) (apigen.UpdateDraftPageResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) DeleteDraftPage(context.Context, apigen.DeleteDraftPageRequestObject) (apigen.DeleteDraftPageResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) CreateDraftPageBodyEdit(context.Context, apigen.CreateDraftPageBodyEditRequestObject) (apigen.CreateDraftPageBodyEditResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) CreateDraftPagePublication(context.Context, apigen.CreateDraftPagePublicationRequestObject) (apigen.CreateDraftPagePublicationResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) ListDraftPageRevisions(context.Context, apigen.ListDraftPageRevisionsRequestObject) (apigen.ListDraftPageRevisionsResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) GetDraftPageRevision(context.Context, apigen.GetDraftPageRevisionRequestObject) (apigen.GetDraftPageRevisionResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) GetAttachment(context.Context, apigen.GetAttachmentRequestObject) (apigen.GetAttachmentResponseObject, error) {
+	return nil, s.err
+}
+
 func (s errorServer) GetSpace(context.Context, apigen.GetSpaceRequestObject) (apigen.GetSpaceResponseObject, error) {
 	return nil, s.err
 }
@@ -322,6 +408,10 @@ func (s errorServer) GetTopic(context.Context, apigen.GetTopicRequestObject) (ap
 }
 
 func (s errorServer) GetCurrentSpaceMember(context.Context, apigen.GetCurrentSpaceMemberRequestObject) (apigen.GetCurrentSpaceMemberResponseObject, error) {
+	return nil, s.err
+}
+
+func (s errorServer) GetCurrentToken(context.Context, apigen.GetCurrentTokenRequestObject) (apigen.GetCurrentTokenResponseObject, error) {
 	return nil, s.err
 }
 

@@ -1391,6 +1391,18 @@ other = "The selection includes a scope that cannot be granted"
 description = "個人アクセストークンの有効期限不正エラー"
 other = "Please choose an expiration from the options"
 
+[validation_oauth_authorization_scopes_required]
+description = "同意画面で許可するスコープを1つも選ばなかったときのエラー"
+other = "Select at least one permission to allow"
+
+[validation_oauth_authorization_scopes_invalid]
+description = "同意画面で要求に無いスコープが送信されたときのエラー"
+other = "The selection includes a permission that was not requested"
+
+[validation_oauth_device_user_code_invalid]
+description = "デバイス認可で入力されたユーザーコードを受け付けないときのエラー (誤り・期限切れ・使用済みを区別しない)"
+other = "The code is incorrect or has expired. Check the code shown on your device"
+
 [validation_oauth_application_name_required]
 description = "OAuthアプリ名必須エラー"
 other = "Please enter a name"
@@ -2110,6 +2122,42 @@ other = "Create and update pages"
 description = "公開APIのトークンのスコープpage:writeの説明"
 other = "Create and update pages. Includes reading pages"
 
+[api_token_scope_draft_page_read]
+description = "公開APIのトークンのスコープdraft_page:readの表示名"
+other = "Read drafts"
+
+[api_token_scope_draft_page_read_hint]
+description = "公開APIのトークンのスコープdraft_page:readの説明"
+other = "View your own drafts and their revision history"
+
+[api_token_scope_draft_page_write]
+description = "公開APIのトークンのスコープdraft_page:writeの表示名"
+other = "Create and update drafts"
+
+[api_token_scope_draft_page_write_hint]
+description = "公開APIのトークンのスコープdraft_page:writeの説明"
+other = "Create and update your own drafts. Includes reading drafts. Publishing a draft also requires creating and updating pages"
+
+[api_token_scope_draft_page_delete]
+description = "公開APIのトークンのスコープdraft_page:deleteの表示名"
+other = "Delete drafts"
+
+[api_token_scope_draft_page_delete_hint]
+description = "公開APIのトークンのスコープdraft_page:deleteの説明"
+other = "Delete your own drafts along with their revision history"
+
+[api_token_scope_attachment_read]
+description = "公開APIのトークンのスコープattachment:readの表示名"
+other = "Read attachments"
+
+[api_token_scope_attachment_read_hint]
+description = "公開APIのトークンのスコープattachment:readの説明"
+other = "Get the details and contents of the space's attachments, including attachments referenced by pages in private topics"
+
+[api_token_scope_ineffective_note]
+description = "公開APIのトークンのスコープのうち、メンバーの今の権限では効かないものに添える注記"
+other = "Not effective with your current permissions"
+
 [personal_access_token_index_title]
 description = "個人アクセストークンの一覧のページタイトル"
 other = "Personal access tokens | {{.SpaceName}}"
@@ -2625,8 +2673,12 @@ description = "同意画面の許可するアカウントの見出し"
 other = "Account"
 
 [oauth_authorization_new_scopes_label]
-description = "同意画面の要求されたスコープの一覧の前置き"
-other = "If you allow, {{.ApplicationName}} will be able to:"
+description = "同意画面の要求されたスコープの選択肢の見出し"
+other = "Permissions to allow {{.ApplicationName}}"
+
+[oauth_authorization_new_scopes_hint]
+description = "同意画面のスコープの選択肢の説明"
+other = "Unchecked permissions will not be allowed"
 
 [oauth_authorization_new_not_member]
 description = "連携先のスペースのメンバーでないために許可できないことの説明"
@@ -2681,14 +2733,152 @@ description = "認可要求のリダイレクトURIが無い・登録と一致�
 other = "The app's redirect URI is missing or does not match the registered one"
 
 
+# OAuthのデバイス認可のユーザーコードの入力と同意の画面
+[oauth_device_verification_new_title]
+description = "デバイス認可のユーザーコードの入力画面のページタイトル"
+other = "Enter code | Wikino"
+
+[oauth_device_verification_new_heading]
+description = "デバイス認可のユーザーコードの入力画面の見出し"
+other = "Enter the code shown on your device"
+
+[oauth_device_verification_new_user_code_label]
+description = "デバイス認可のユーザーコードの入力欄のラベル"
+other = "Code"
+
+[oauth_device_verification_new_user_code_hint]
+description = "デバイス認可のユーザーコードの入力欄の説明"
+other = "For example: BCDF-GHJK (case and hyphen don't matter)"
+
+[oauth_device_verification_new_submit_button]
+description = "デバイス認可のユーザーコードの入力画面の送信ボタン"
+other = "Continue"
+
+[oauth_device_verification_consent_title]
+description = "デバイス認可の同意画面のページタイトル"
+other = "Sign in to {{.ApplicationName}} | Wikino"
+
+[oauth_device_verification_consent_heading]
+description = "デバイス認可の同意画面の見出し"
+other = "Allow {{.ApplicationName}} to access your account?"
+
+[oauth_device_verification_consent_denied_heading]
+description = "アプリを許可できない場合のデバイス認可の同意画面の見出し"
+other = "Unable to connect {{.ApplicationName}}"
+
+[oauth_device_verification_consent_phishing_notice]
+description = "デバイス認可の同意画面の、他人から渡されたコードを許可しないよう促す注意"
+other = "If you didn't start this sign-in yourself, deny it. Allowing a code someone else gave you lets them access Wikino with your account."
+
+[oauth_device_verification_consent_space_label]
+description = "デバイス認可の同意画面の連携先のスペースの見出し"
+other = "Space"
+
+[oauth_device_verification_consent_user_label]
+description = "デバイス認可の同意画面の許可するアカウントの見出し"
+other = "Account"
+
+[oauth_device_verification_consent_requested_at_label]
+description = "デバイス認可の同意画面の要求の開始日時の見出し"
+other = "Sign-in started at"
+
+[oauth_device_verification_consent_user_code_label]
+description = "デバイス認可の同意画面のユーザーコードの見出し"
+other = "Code"
+
+[oauth_device_verification_consent_scopes_label]
+description = "デバイス認可の同意画面の要求されたスコープの選択肢の見出し"
+other = "Permissions to allow {{.ApplicationName}}"
+
+[oauth_device_verification_consent_scopes_hint]
+description = "デバイス認可の同意画面のスコープの選択肢の説明"
+other = "Unchecked permissions will not be allowed"
+
+[oauth_device_verification_consent_not_member]
+description = "連携先のスペースのメンバーでないためにデバイス認可を許可できないことの説明"
+other = "You can't allow this app because you are not a member of this space"
+
+[oauth_device_verification_consent_no_permission]
+description = "OAuthアプリを許可する権限が無いためにデバイス認可を許可できないことの説明"
+other = "You don't have permission to allow apps in this space. Contact the space administrator"
+
+[oauth_device_verification_consent_approve]
+description = "デバイス認可の同意画面の許可するボタン"
+other = "Allow"
+
+[oauth_device_verification_consent_deny]
+description = "デバイス認可の同意画面の拒否するボタン"
+other = "Deny"
+
+[oauth_device_verification_consent_cancel]
+description = "アプリを許可できない場合のデバイス認可の同意画面のログインを中止するボタン"
+other = "Cancel sign-in"
+
+[oauth_device_verification_done_title]
+description = "デバイス認可で許可か拒否を選んだ後の画面のページタイトル"
+other = "Sign-in confirmation | Wikino"
+
+[oauth_device_verification_done_approved_heading]
+description = "デバイス認可を許可した後の画面の見出し"
+other = "Sign-in allowed"
+
+[oauth_device_verification_done_approved_message]
+description = "デバイス認可を許可した後の画面の説明"
+other = "Return to the device where you're using {{.ApplicationName}}. You can close this page."
+
+[oauth_device_verification_done_denied_heading]
+description = "デバイス認可を拒否した後の画面の見出し"
+other = "Sign-in denied"
+
+[oauth_device_verification_done_denied_message]
+description = "デバイス認可を拒否した後の画面の説明"
+other = "{{.ApplicationName}} has not been allowed access. You can close this page."
+
+
 # 公開APIのエラー
+[api_error_draft_page_already_exists]
+description = "公開APIの下書き作成で、ページにトークンの持ち主の下書きがすでにある場合の409のProblem Detailsのdetail"
+other = "You already have a draft for this page. Use getDraftPage to read the current draft."
+
+[api_error_draft_page_modified]
+description = "公開APIの下書きの更新・削除で、If-Matchの版の後に下書きが更新されていた場合の412のProblem Detailsのdetail"
+other = "The draft has been modified since the version in If-Match. Read the current draft with getDraftPage, apply your changes, and retry with the new ETag."
+
+[api_error_draft_page_target_required]
+description = "公開APIの下書き作成で、page_numberとtopic_numberのどちらも指定されていないか、両方が指定されている場合のエラー"
+other = "Specify either page_number or topic_number, but not both."
+
 [api_error_invalid_cursor]
 description = "公開APIの一覧で、カーソルが読めない場合のProblem Detailsのdetail"
 other = "The cursor is invalid. Pass the next_cursor from the previous page as is."
 
+[api_error_blank_page_query]
+description = "公開APIのページの一覧で、検索のキーワード (q) が空白だけの場合のProblem Detailsのdetail"
+other = "Specify at least one keyword. The query cannot consist only of whitespace."
+
+[api_error_too_many_page_query_keywords]
+description = "公開APIのページの一覧で、検索のキーワード (q) が多すぎる場合のProblem Detailsのdetail"
+other = "Specify at most {{.Max}} keywords."
+
+[api_error_body_edit_no_match]
+description = "公開APIの本文の検索置換で、編集のold_strに一致する箇所が本文に無い場合のエラー"
+other = "old_str does not match the body. If there are earlier edits, it is matched against the body after applying them. Read the current body with getPage and specify old_str exactly as written, including case, spaces, and line breaks."
+
+[api_error_body_edit_multiple_matches]
+description = "公開APIの本文の検索置換で、replace_allがfalseの編集のold_strに一致する箇所が本文に複数ある場合のエラー"
+other = "old_str matches {{.Count}} places in the body. Include surrounding text to match exactly one place, or set replace_all to true to replace all of them."
+
+[api_error_body_edit_too_large]
+description = "公開APIの本文の検索置換で、編集後の本文が最大バイト数を超える場合のエラー"
+other = "The body after each edit must not exceed {{.Max}} bytes. No edits are applied if any intermediate result exceeds the limit."
+
 [api_error_page_modified]
 description = "公開APIのページ更新で、If-Matchの版の後にページが更新されていた場合の412のProblem Detailsのdetail"
 other = "The page has been modified since the version in If-Match. Fetch the page again, apply your changes, and retry with the new ETag."
+
+[api_error_page_not_found]
+description = "公開APIの下書き作成で、指定したページが存在しないか見られない場合のエラー"
+other = "The page was not found."
 
 [api_error_page_title_taken]
 description = "公開APIのページ作成・更新で、トピック内に同じタイトルのページがある場合のエラー"

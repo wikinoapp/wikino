@@ -306,6 +306,7 @@ func TestFlashManager_Middleware_CookielessRequestsDoNotConsumeFlash(t *testing.
 		{name: "APIのPOST", method: http.MethodPost, path: "/api/v1/spaces/example/pages"},
 		{name: "OAuthのトークン発行", method: http.MethodPost, path: "/oauth/token"},
 		{name: "OAuthのトークン失効", method: http.MethodPost, path: "/oauth/revoke"},
+		{name: "OAuthのデバイス認可の要求", method: http.MethodPost, path: "/oauth/device_authorization"},
 		{name: "認可サーバーのメタデータ", method: http.MethodGet, path: "/.well-known/oauth-authorization-server"},
 		{name: "保護リソースのメタデータ", method: http.MethodGet, path: "/.well-known/oauth-protected-resource/api/v1/spaces/example"},
 		{name: "APIカタログ", method: http.MethodGet, path: "/.well-known/api-catalog"},

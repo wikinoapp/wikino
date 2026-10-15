@@ -165,7 +165,8 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// 公開Web API (`/api/` 配下)。Cookieを使わないパスとして定義を共有する (`session.APIPathPattern`)。
 	// Rails版にはAPIが無いため、ルートの無いパスもGoで受けてProblem Detailsの404・405を返す
 	{pattern: session.APIPathPattern},
-	// OAuth認可サーバー (`/oauth/authorize`・`/oauth/token`・`/oauth/revoke`)。Rails版には存在しない
+	// OAuth認可サーバー (`/oauth/authorize`・`/oauth/token`・`/oauth/revoke`・`/oauth/device_authorization`・`/oauth/device`)。
+	// Rails版には存在しない
 	{pattern: regexp.MustCompile(`^/oauth/`)},
 	// Cookieを使わないOAuthのエンドポイント。振り分けは上の `^/oauth/` に含まれるが、
 	// `session.CookielessPaths` と定義を共有していることをテストで確かめるために登録する

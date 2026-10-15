@@ -7,7 +7,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// ListAPITopicsUsecaseは、公開APIでトークンを束縛したスペースのトピックの一覧を取得するユースケース
+// ListAPITopicsUsecaseは、公開APIでトークンが属するスペースのトピックの一覧を取得するユースケース
 type ListAPITopicsUsecase struct {
 	topicRepo       *repository.TopicRepository
 	topicMemberRepo *repository.TopicMemberRepository
@@ -39,7 +39,7 @@ type ListAPITopicsOutput struct {
 	HasNext bool
 }
 
-// Executeはパスのスペースがトークンの束縛先であれば、閲覧者が開けるトピックをトピック番号の順に返す。
+// Executeはパスのスペースにトークンが属していれば、閲覧者が開けるトピックをトピック番号の順に返す。
 // 非公開トピックを開けるかは、メンバーのスコープとトークンのスコープの論理積で判定する。
 //
 // 閲覧者が開けるトピックの判定には、スペースのトピックと閲覧者のトピックメンバーをすべて取得する

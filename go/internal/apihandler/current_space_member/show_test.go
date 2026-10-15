@@ -60,7 +60,19 @@ func TestHandler_GetCurrentSpaceMember(t *testing.T) {
 		}
 	})
 
-	t.Run("束縛先と異なるスペースは未存在のエラーを返す", func(t *testing.T) {
+	t.Run("パスの識別子が大文字と小文字だけ違ってもメンバーを返す", func(t *testing.T) {
+		t.Parallel()
+
+		res, err := h.GetCurrentSpaceMember(ctx, apigen.GetCurrentSpaceMemberRequestObject{SpaceIdentifier: "ALICE-WIKI"})
+		if err != nil {
+			t.Fatalf("GetCurrentSpaceMember() error = %v", err)
+		}
+		if _, ok := res.(apigen.GetCurrentSpaceMember200JSONResponse); !ok {
+			t.Fatalf("レスポンスの型 = %T、期待値 = GetCurrentSpaceMember200JSONResponse", res)
+		}
+	})
+
+	t.Run("トークンが属さないスペースは未存在のエラーを返す", func(t *testing.T) {
 		t.Parallel()
 
 		res, err := h.GetCurrentSpaceMember(ctx, apigen.GetCurrentSpaceMemberRequestObject{SpaceIdentifier: "other-wiki"})
