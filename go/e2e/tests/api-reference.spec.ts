@@ -11,7 +11,9 @@ test("APIリファレンスがOpenAPI記述を読み込んで操作を描画す�
   const search = page.getByRole("textbox", { name: "Search" });
   await expect(search).toBeVisible();
   await search.fill("トークンの持ち主のスペースメンバーを取得する");
-  await expect(page.locator('[data-role="search:results"]')).toContainText("トークンの持ち主のスペースメンバーを取得する");
+  await expect(page.locator('[data-role="search:results"]')).toContainText(
+    "トークンの持ち主のスペースメンバーを取得する",
+  );
 });
 
 test("スクリプトを読み込めなくてもOpenAPI記述へ辿れること", async ({ page }) => {
