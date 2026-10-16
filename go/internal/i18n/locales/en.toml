@@ -2182,9 +2182,9 @@ other = "Personal access tokens | {{.SpaceName}}"
 description = "個人用アクセストークンの一覧の見出し"
 other = "Personal access tokens"
 
-[personal_access_token_index_description]
-description = "個人用アクセストークンの一覧のサブタイトル"
-other = "Tokens for calling the public API. A token issued in this space can only be used for this space."
+[personal_access_token_index_description_html]
+description = "個人用アクセストークンの一覧のサブタイトル (ヘルプページへのリンクを含む)"
+other = "Access tokens for calling the public API. An access token issued in this space can only be used for this space. See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">Personal access token help</a> for more information."
 
 [personal_access_token_index_breadcrumb_settings]
 description = "個人用アクセストークンの一覧のパンくずのスペース設定へのリンク"
@@ -2282,9 +2282,9 @@ other = "Generate a personal access token | {{.SpaceName}}"
 description = "個人用アクセストークンの発行フォームの見出し"
 other = "Generate a personal access token"
 
-[personal_access_token_new_description]
-description = "個人用アクセストークンの発行フォームのサブタイトル"
-other = "Generate a token for the public API of this space. A token can only do what both the selected scopes and your member permissions allow."
+[personal_access_token_new_description_html]
+description = "個人用アクセストークンの発行フォームのサブタイトル (ヘルプページへのリンクを含む)"
+other = "Generate an access token for the public API of this space. An access token can only do what both the selected scopes and your member permissions allow. See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">Personal access token help</a> for more information."
 
 [personal_access_token_new_breadcrumb_settings]
 description = "個人用アクセストークンの発行フォームのパンくずのスペース設定へのリンク"

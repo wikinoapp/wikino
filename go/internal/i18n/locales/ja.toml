@@ -2179,9 +2179,9 @@ other = "個人用アクセストークン | {{.SpaceName}}"
 description = "個人用アクセストークンの一覧の見出し"
 other = "個人用アクセストークン"
 
-[personal_access_token_index_description]
-description = "個人用アクセストークンの一覧のサブタイトル"
-other = "公開APIを呼び出すためのトークンです。このスペースで発行したトークンは、このスペースにだけ使えます。"
+[personal_access_token_index_description_html]
+description = "個人用アクセストークンの一覧のサブタイトル (ヘルプページへのリンクを含む)"
+other = "公開APIを呼び出すためのアクセストークンです。このスペースで発行したアクセストークンは、このスペースにだけ使えます。詳しくは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">個人用アクセストークンについてのヘルプ</a> をご覧ください。"
 
 [personal_access_token_index_breadcrumb_settings]
 description = "個人用アクセストークンの一覧のパンくずのスペース設定へのリンク"
@@ -2279,9 +2279,9 @@ other = "個人用アクセストークンの発行 | {{.SpaceName}}"
 description = "個人用アクセストークンの発行フォームの見出し"
 other = "個人用アクセストークンの発行"
 
-[personal_access_token_new_description]
-description = "個人用アクセストークンの発行フォームのサブタイトル"
-other = "このスペースの公開APIに使えるトークンを発行します。トークンでできることは、選んだスコープとあなたのメンバー権限の両方で許された操作に限られます。"
+[personal_access_token_new_description_html]
+description = "個人用アクセストークンの発行フォームのサブタイトル (ヘルプページへのリンクを含む)"
+other = "このスペースの公開APIに使えるアクセストークンを発行します。アクセストークンでできることは、選んだスコープとあなたのメンバー権限の両方で許された操作に限られます。詳しくは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">個人用アクセストークンについてのヘルプ</a> をご覧ください。"
 
 [personal_access_token_new_breadcrumb_settings]
 description = "個人用アクセストークンの発行フォームのパンくずのスペース設定へのリンク"

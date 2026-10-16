@@ -145,7 +145,7 @@ templ New(data NewData) {
 
 // newSubtitleは発行フォームのサブタイトルを表示します。
 templ newSubtitle() {
-	{ templates.T(ctx, "personal_access_token_new_description") }
+	@templ.Raw(templates.T(ctx, "personal_access_token_new_description_html"))
 }
 
 // fieldErrorsはフォームの1つの項目のエラーを表示します。項目が1つのaria-describedbyで

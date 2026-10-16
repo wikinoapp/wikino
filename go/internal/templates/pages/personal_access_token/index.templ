@@ -68,7 +68,7 @@ templ Index(data IndexData) {
 
 // indexSubtitleは一覧の画面のサブタイトルを表示します。
 templ indexSubtitle() {
-	{ templates.T(ctx, "personal_access_token_index_description") }
+	@templ.Raw(templates.T(ctx, "personal_access_token_index_description_html"))
 }
 
 // tokenItemは一覧の1件のトークンを表示します。トークンの値は表示できないため、見分けるための
