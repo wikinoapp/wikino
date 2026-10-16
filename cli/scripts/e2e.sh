@@ -2,7 +2,7 @@
 #
 # 開発用のサーバーに対して、ビルドしたCLIのe2eテスト (e2e/) を実行するスクリプト。
 #
-# シードのスペースの管理者の個人アクセストークンをデータベースに直接発行し、
+# シードのスペースの管理者の個人用アクセストークンをデータベースに直接発行し、
 # テストの後に失効させる。サーバーとシードは起動・投入済みであることを前提にする。
 # テストはページと下書きを新しく作るだけで、既存のデータを書き換えないため、
 # 手元の開発用のデータベースにも実行できる (作ったページは残る)。
@@ -23,7 +23,7 @@ E2E_TOKEN_ID=""
 
 cleanup() {
   if [ -n "$E2E_TOKEN_ID" ]; then
-    echo "==> 個人アクセストークンを失効"
+    echo "==> 個人用アクセストークンを失効"
     psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q <<SQL || true
 UPDATE personal_access_tokens SET revoked_at = now(), updated_at = now()
 WHERE id = '${E2E_TOKEN_ID}'
@@ -39,7 +39,7 @@ trap cleanup EXIT
 # トークンはコマンドの引数に載せず、標準入力のSQLと環境変数で渡す。
 token="wkp_$(head -c 32 /dev/urandom | base64 -w0 | tr '+/' '-_' | tr -d '=')"
 
-echo "==> ${E2E_SPACE} の @${E2E_ATNAME} の個人アクセストークンを発行"
+echo "==> ${E2E_SPACE} の @${E2E_ATNAME} の個人用アクセストークンを発行"
 E2E_TOKEN_ID=$(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -qAt <<SQL
 INSERT INTO personal_access_tokens (space_id, space_member_id, name, token_digest, token_last_chars, scopes, expires_at)
 SELECT s.id, sm.id, 'CLIのe2e', encode(sha256(convert_to('${token}', 'UTF8')), 'hex'), right('${token}', 4),

@@ -79,7 +79,7 @@ other = """
   # SSH先などで、別の端末のブラウザでコードを入力してログインする
   wikino auth login my-space --device
 
-  # 個人アクセストークンを標準入力から渡してログインする
+  # 個人用アクセストークンを標準入力から渡してログインする
   wikino auth login my-space --with-token < token.txt
 
   # 保存した資格情報とトークンのスコープを確かめる
@@ -114,7 +114,7 @@ SSHで接続しているとき、ディスプレイが無いとき、ブラウ�
 要求を絞るときは `--scopes` で指定します。
 OAuthのアクセストークンは、期限の少し前に、APIを呼ぶ前に自動で更新します。
 
-`--with-token` を付けると、スペース設定で発行した個人アクセストークンを標準入力から読みます。
+`--with-token` を付けると、スペース設定で発行した個人用アクセストークンを標準入力から読みます。
 
 どちらの方法でも、トークンがそのスペースで使えることをAPIで確かめてから保存し、確かめられなければ何も保存しません。
 ブラウザでログインしたときは、保存しなかったトークンをサーバーで失効させます。
@@ -135,7 +135,7 @@ other = """
   # 読み取りと下書きのスコープだけを要求する
   wikino auth login my-space --scopes page:read,draft_page:read,draft_page:write
 
-  # ファイルに保存した個人アクセストークンでログインする
+  # ファイルに保存した個人用アクセストークンでログインする
   wikino auth login my-space --with-token < token.txt
 
   # 開発環境のサーバーにログインする
@@ -163,7 +163,7 @@ other = """
   以前の保存先からの削除だけが失敗したときは、ログインを成功にして警告を出し、再ログインかログアウトで削除を再試行できます。"""
 [auth_login_with_token_flag]
 description = "auth loginの--with-tokenフラグの説明"
-other = "標準入力から個人アクセストークンを読む"
+other = "標準入力から個人用アクセストークンを読む"
 
 
 [auth_login_device_flag]
@@ -176,7 +176,7 @@ other = "要求するスコープ (カンマ区切り)。省略時はトーク�
 
 [auth_login_error_scopes_with_token]
 description = "auth loginで--with-tokenと--scopesを併用したときのメッセージ"
-other = "`--scopes` は `--with-token` と併用できません。個人アクセストークンのスコープは発行したときに決まっています。"
+other = "`--scopes` は `--with-token` と併用できません。個人用アクセストークンのスコープは発行したときに決まっています。"
 
 [auth_login_error_device_with_token]
 description = "auth loginで--with-tokenと--deviceを併用したときのメッセージ"
@@ -264,7 +264,7 @@ other = "接続先の認可サーバーはデバイス認可に対応してい�
 
 [auth_error_device_unsupported_hint]
 description = "認可サーバーがデバイス認可に対応しないときのヒント"
-other = "ブラウザを開けるコンピューターでログインするか、`--with-token` で個人アクセストークンを渡してください。"
+other = "ブラウザを開けるコンピューターでログインするか、`--with-token` で個人用アクセストークンを渡してください。"
 
 [auth_error_access_denied]
 description = "認可画面で拒否されたときのメッセージ"
@@ -318,7 +318,7 @@ other = """
 失効できなかったとき (接続先に届かないなど) も手元の資格情報は消し、標準エラーに警告を出します。
 そのときはWikinoの連携中のアプリの画面で連携を解除してください。
 
-個人アクセストークンはサーバーでは失効させません。
+個人用アクセストークンはサーバーでは失効させません。
 トークンを使えなくするには、スペース設定でトークンを削除してください。
 `WIKINO_TOKEN` のトークンは保存していないため、このコマンドの対象になりません。
 

@@ -32,7 +32,7 @@ func TestLogout(t *testing.T) {
 		t.Errorf("キーチェーンの項目の数 = %d、期待値 = 1", len(e.keyring.items))
 	}
 	if len(e.requests) != 2 {
-		// ログインの2回だけで、ログアウトはサーバーに要求を送らない (個人アクセストークンは失効させない)。
+		// ログインの2回だけで、ログアウトはサーバーに要求を送らない (個人用アクセストークンは失効させない)。
 		t.Errorf("要求の数 = %d、期待値 = 2", len(e.requests))
 	}
 

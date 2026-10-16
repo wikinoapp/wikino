@@ -9,7 +9,7 @@
 //
 //   - WIKINO_E2E_HOST: 開発用のサーバーのURL (http://localhost:4201など)
 //   - WIKINO_E2E_SPACE: シードのスペースの識別子
-//   - WIKINO_E2E_TOKEN: そのスペースの個人アクセストークン
+//   - WIKINO_E2E_TOKEN: そのスペースの個人用アクセストークン
 //
 // CLIの環境変数 (WIKINO_TOKENなど) を直接読まないのは、手元で本番のトークンを
 // 設定したままテストを走らせても、本番のスペースにページを作らないため。

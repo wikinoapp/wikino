@@ -65,7 +65,7 @@ func runLogin(f *cmdutil.Factory, cmd *cobra.Command, args []string, opts loginO
 	if config.ReadFlags(cmd.Flags()).Member != "" {
 		return cmdutil.NewUsageError(loc, cmd, loc.T("auth_login_error_member"))
 	}
-	// 個人アクセストークンのスコープは発行したときに決まっているため、要求するスコープを指定できない。
+	// 個人用アクセストークンのスコープは発行したときに決まっているため、要求するスコープを指定できない。
 	if opts.withToken && cmd.Flags().Changed("scopes") {
 		return cmdutil.NewUsageError(loc, cmd, loc.T("auth_login_error_scopes_with_token"))
 	}
