@@ -2141,7 +2141,7 @@ other = "下書きの削除"
 
 [api_token_scope_draft_page_delete_hint]
 description = "公開APIのトークンのスコープdraft_page:deleteの説明"
-other = "自分の下書きを編集履歴ごと削除できます"
+other = "自分の下書きを編集履歴ごと削除できます。下書きの読み取りも含みます"
 
 [api_token_scope_attachment_read]
 description = "公開APIのトークンのスコープattachment:readの表示名"

@@ -28,6 +28,7 @@ import (
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
 	apiwikilinkpreview "github.com/wikinoapp/wikino/go/internal/apihandler/wikilink_preview"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -51,7 +52,8 @@ func (a draftPageTestAuthenticator) Execute(_ context.Context, token string) (*m
 	case "wkp_page_write":
 		p.Scopes = []model.Scope{model.ScopePageRead, model.ScopePageWrite}
 	case "wkp_draft_page_delete":
-		p.Scopes = []model.Scope{model.ScopeDraftPageDelete}
+		// 含意の定義 (draft_page:delete → draft_page:read) を確かめるため、トークン認証と同じく展開する
+		p.Scopes = policy.ExpandAPITokenScopes([]model.Scope{model.ScopeDraftPageDelete})
 	case "wkp_draft_page_and_page_write":
 		p.Scopes = []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite, model.ScopePageRead, model.ScopePageWrite}
 	default:
@@ -629,8 +631,14 @@ func TestAPIRouter_DeleteDraftPage(t *testing.T) {
 		}
 	})
 
-	t.Run("下書きを削除して本文の無い204を返し、続く取得と削除は404", func(t *testing.T) {
-		rr := remove("wkp_draft_page_delete", currentDraftPageETag(t, r, target))
+	t.Run("draft_page:deleteだけのトークンで取得した版を使い、下書きを削除して本文の無い204を返し、続く取得と削除は404", func(t *testing.T) {
+		// draft_page:deleteはdraft_page:readを含意するため、If-Matchに送る版を同じトークンで取得できる
+		got := requestDraftPage(t, r, http.MethodGet, target, "wkp_draft_page_delete", "", "", "")
+		if got.Code != http.StatusOK {
+			t.Fatalf("取得のステータス = %d、期待値 = 200 (本文: %s)", got.Code, got.Body.String())
+		}
+
+		rr := remove("wkp_draft_page_delete", got.Header().Get("ETag"))
 		if rr.Code != http.StatusNoContent {
 			t.Fatalf("ステータス = %d、期待値 = 204 (本文: %s)", rr.Code, rr.Body.String())
 		}

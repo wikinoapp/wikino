@@ -694,21 +694,26 @@ func TestAPICurrentToken(t *testing.T) {
 	}
 
 	patExpiresAt := time.Now().UTC().Add(24 * time.Hour).Truncate(time.Second)
-	var pat string
-	testutil.CommitFixture(t, func(tx *sql.Tx) {
-		token, err := auth.GenerateOpaqueToken(auth.PersonalAccessTokenPrefix)
-		if err != nil {
-			t.Fatalf("個人用アクセストークンの生成に失敗: %v", err)
-		}
-		testutil.NewPersonalAccessTokenBuilder(t, tx).
-			WithSpaceID(f.spaceID).
-			WithSpaceMemberID(f.spaceMemberID).
-			WithTokenDigest(auth.DigestOpaqueToken(token)).
-			WithScopes([]model.Scope{model.ScopeDraftPageWrite}).
-			WithExpiresAt(patExpiresAt).
-			Build()
-		pat = token
-	})
+	createPAT := func(scopes []model.Scope) string {
+		var pat string
+		testutil.CommitFixture(t, func(tx *sql.Tx) {
+			token, err := auth.GenerateOpaqueToken(auth.PersonalAccessTokenPrefix)
+			if err != nil {
+				t.Fatalf("個人用アクセストークンの生成に失敗: %v", err)
+			}
+			testutil.NewPersonalAccessTokenBuilder(t, tx).
+				WithSpaceID(f.spaceID).
+				WithSpaceMemberID(f.spaceMemberID).
+				WithTokenDigest(auth.DigestOpaqueToken(token)).
+				WithScopes(scopes).
+				WithExpiresAt(patExpiresAt).
+				Build()
+			pat = token
+		})
+		return pat
+	}
+	pat := createPAT([]model.Scope{model.ScopeDraftPageWrite})
+	draftPageDeletePAT := createPAT([]model.Scope{model.ScopeDraftPageDelete})
 
 	path := "/api/v1/spaces/" + oauthFlowSpaceIdentifier(t) + "/tokens/current"
 
@@ -726,6 +731,17 @@ func TestAPICurrentToken(t *testing.T) {
 		}
 		if !body.ExpiresAt.Equal(patExpiresAt) {
 			t.Errorf("expires_at = %v、期待値 = %v", body.ExpiresAt, patExpiresAt)
+		}
+	})
+
+	t.Run("draft_page:deleteだけの個人用アクセストークンはdraft_page:readも返す", func(t *testing.T) {
+		status, body := getCurrentToken(t, srv, path, draftPageDeletePAT)
+		if status != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200", status)
+		}
+		// draft_page:deleteはdraft_page:readを含意する
+		if want := []string{"draft_page:read", "draft_page:delete"}; !slices.Equal(body.Scopes, want) {
+			t.Errorf("scopes = %v、期待値 = %v", body.Scopes, want)
 		}
 	})
 

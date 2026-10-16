@@ -1784,7 +1784,7 @@ components:
             page:write: ページを作成・更新する (`page:read` を含みます)
             draft_page:read: 自分の下書きと編集履歴を読む
             draft_page:write: 自分の下書きを作成・更新する (`draft_page:read` を含みます)。下書きを公開するには `page:write` も要ります
-            draft_page:delete: 自分の下書きを編集履歴ごと削除する
+            draft_page:delete: 自分の下書きを編集履歴ごと削除する (`draft_page:read` を含みます)
             attachment:read: スペースの添付ファイルを取得する。非公開トピックのページが参照する添付ファイルも含みます
     personalAccessToken:
       type: http

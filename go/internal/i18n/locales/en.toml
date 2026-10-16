@@ -2144,7 +2144,7 @@ other = "Delete drafts"
 
 [api_token_scope_draft_page_delete_hint]
 description = "公開APIのトークンのスコープdraft_page:deleteの説明"
-other = "Delete your own drafts along with their revision history"
+other = "Delete your own drafts along with their revision history. Includes reading drafts"
 
 [api_token_scope_attachment_read]
 description = "公開APIのトークンのスコープattachment:readの表示名"

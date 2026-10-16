@@ -24,7 +24,7 @@ func expandScopes(scopes []model.Scope) []model.Scope {
 	expanded := make([]model.Scope, 0, len(scopes)*2)
 	expanded = append(expanded, scopes...)
 
-	// リソース内の含意展開 (write → read、個人用アクセストークン・OAuthの連携・OAuthアプリはdelete → readも含む)
+	// リソース内の含意展開 (write → read、下書き・個人用アクセストークン・OAuthの連携・OAuthアプリはdelete → readも含む)
 	for _, s := range scopes {
 		if implied, ok := implications[s]; ok {
 			expanded = append(expanded, implied...)

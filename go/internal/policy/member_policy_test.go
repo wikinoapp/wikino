@@ -421,7 +421,7 @@ func TestMemberPolicy_CanShowDraftPage(t *testing.T) {
 		{name: "draft_page:readで参照可能", scopes: []model.Scope{model.ScopeDraftPageRead}, want: true},
 		{name: "draft_page:writeはdraft_page:readを含意するため参照可能", scopes: []model.Scope{model.ScopeDraftPageWrite}, want: true},
 		{name: "page:writeだけでは参照不可", scopes: []model.Scope{model.ScopePageWrite}, want: false},
-		{name: "draft_page:deleteだけでは参照不可", scopes: []model.Scope{model.ScopeDraftPageDelete}, want: false},
+		{name: "draft_page:deleteはdraft_page:readを含意するため参照可能", scopes: []model.Scope{model.ScopeDraftPageDelete}, want: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

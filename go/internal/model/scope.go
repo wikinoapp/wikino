@@ -157,7 +157,7 @@ var ScopeDefinitions = []ScopeDefinition{
 	// 下書きページ
 	{Scope: ScopeDraftPageRead, LowestLevel: ScopeLevelTopic, APIToken: true},
 	{Scope: ScopeDraftPageWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeDraftPageRead}, APIToken: true},
-	{Scope: ScopeDraftPageDelete, LowestLevel: ScopeLevelTopic, APIToken: true},
+	{Scope: ScopeDraftPageDelete, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeDraftPageRead}, APIToken: true},
 	// 編集提案
 	{Scope: ScopeSuggestionRead, LowestLevel: ScopeLevelTopic},
 	{Scope: ScopeSuggestionWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeSuggestionRead}},
