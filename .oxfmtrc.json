@@ -10,7 +10,9 @@
     {
       "files": ["go/**"],
       "options": {
-        "sortTailwindcss": {}
+        "sortTailwindcss": {
+          "stylesheet": "go/web/style.css"
+        }
       }
     }
   ],
