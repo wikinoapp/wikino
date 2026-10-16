@@ -555,7 +555,7 @@ Flags:
       --body text        Body text (Markdown) as a string
       --body-file path   Read the body from the file at path (`-` reads from standard input)
       --dry-run          Print the requests that would be sent without sending them
-      --title title      The draft's title. For an existing page, defaults to the page's current title
+      --title title      The draft's title. For an existing page, defaults to the page's current title. The page title rules (up to 200 characters, without `/`, `\`, `:`, or control characters, and without a leading or trailing space) are checked when publishing
       --topic number     The number of the topic to create a draft of a new page in. Cannot be combined with a page number
 
 Global Flags:
@@ -1061,7 +1061,7 @@ Flags:
       --force            Overwrite the latest version, fetched just before, without checking the version you read
       --if-match etag    Write only if the version is still the one you read (etag from the output of `get`)
       --md-file path     Write back a page file (path) written by --md, using the version and title in its frontmatter (`-` reads from standard input)
-      --title title      New title of the draft
+      --title title      New title of the draft. The page title rules (up to 200 characters, without `/`, `\`, `:`, or control characters, and without a leading or trailing space) are checked when publishing
 
 Global Flags:
       --fields number,title   Comma-separated fields to print (e.g. number,title; applied to each item in lists)
@@ -1234,7 +1234,7 @@ Flags:
       --body text        Body text (Markdown) as a string
       --body-file path   Read the body from the file at path (`-` reads from standard input)
       --dry-run          Print the requests that would be sent without sending them
-      --title title      Page title. Required
+      --title title      Page title. Required. Up to 200 characters, without `/`, `\`, `:`, or control characters, and without a leading or trailing space
       --topic number     Topic number to create the page in. Required
 
 Global Flags:
@@ -1264,7 +1264,7 @@ Errors:
   3  Not logged in, or the token is invalid or expired (401)
   4  The token lacks the page:write scope (403)
   5  You cannot create pages in the topic (404)
-  7  The title has characters that cannot be used, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).
+  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).
      For a duplicate, find the existing page with `wikino page list --topic <number> --title <title>` and use `wikino page update` to change its content
 
 === wikino page get --help
@@ -1585,7 +1585,7 @@ Flags:
       --force            Overwrite the latest version, fetched just before, without checking the version you read
       --if-match etag    Write only if the version is still the one you read (etag from the output of `get`)
       --md-file path     Write back a page file (path) written by --md, using the version and title in its frontmatter (`-` reads from standard input)
-      --title title      New title
+      --title title      New title. Up to 200 characters, without `/`, `\`, `:`, or control characters, and without a leading or trailing space
 
 Global Flags:
       --fields number,title   Comma-separated fields to print (e.g. number,title; applied to each item in lists)
@@ -1616,7 +1616,7 @@ Errors:
   5  The page does not exist, is in the trash, or cannot be updated (404). Check the number with `wikino page list`
   6  The page has been updated since you read it (412). Get the latest content and version with `wikino page get`, apply your changes, and update again.
      With `--md-file`, apply your changes to a file written again with `wikino page get --md`
-  7  The title has characters that cannot be used, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).
+  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).
      `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.
      Check the current body with `wikino page get --md` and send the whole `edits` again
 

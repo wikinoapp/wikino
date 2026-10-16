@@ -891,7 +891,7 @@
     },
     {
       "default": "",
-      "description": "下書きのタイトル (title)。既存のページで省くとページの今のタイトルになる",
+      "description": "下書きのタイトル (title)。既存のページで省くとページの今のタイトルになる。公開するときにページのタイトルの規則 (200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない) を確かめる",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -1645,7 +1645,7 @@
     },
     {
       "default": "",
-      "description": "下書きの新しいタイトル (title)",
+      "description": "下書きの新しいタイトル (title)。公開するときにページのタイトルの規則 (200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない) を確かめる",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -1907,7 +1907,7 @@
 {
   "args": [],
   "command": "wikino page create",
-  "errors": "  1  通信に失敗した、サーバーのエラー (5xx)。作成されている場合があるため、`wikino page list --topic <番号> --title <タイトル>` で確かめてから送り直してください\n  2  `--topic` か `--title` が無い、`--body` と `--body-file` のどちらも無いか両方ある、`--topic` が1以上の整数でない、\n     本文のファイルを読めないかUTF-8でない、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにpage:writeのスコープが無い (403)\n  5  トピックにページを作成できない (404)\n  7  タイトルに使えない文字がある、同じタイトルのページがトピックにある、トピックが無いか見られない (422)。\n     重複のときは `wikino page list --topic <番号> --title <タイトル>` で既存のページを探し、内容を変えるなら `wikino page update` を使ってください",
+  "errors": "  1  通信に失敗した、サーバーのエラー (5xx)。作成されている場合があるため、`wikino page list --topic <番号> --title <タイトル>` で確かめてから送り直してください\n  2  `--topic` か `--title` が無い、`--body` と `--body-file` のどちらも無いか両方ある、`--topic` が1以上の整数でない、\n     本文のファイルを読めないかUTF-8でない、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにpage:writeのスコープが無い (403)\n  5  トピックにページを作成できない (404)\n  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、トピックが無いか見られない (422)。\n     重複のときは `wikino page list --topic <番号> --title <タイトル>` で既存のページを探し、内容を変えるなら `wikino page update` を使ってください",
   "examples": "  # トピック3に「議事録」というページを作成する\n  wikino page create --topic 3 --title '議事録' --body '# 議事録'\n\n  # ファイルの内容を本文にしてページを作成する\n  wikino page create --topic 3 --title '議事録' --body-file minutes.md\n\n  # 標準入力から本文を読み、作成したページの番号と版だけを出す\n  cat minutes.md | wikino page create --topic 3 --title '議事録' --body-file - --fields number,etag\n\n  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)\n  wikino page create --topic 3 --title '議事録' --body-file minutes.md --dry-run",
   "flags": [
     {
@@ -1933,7 +1933,7 @@
     },
     {
       "default": "",
-      "description": "ページのタイトル (title)。必須",
+      "description": "ページのタイトル (title)。必須。200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -2408,7 +2408,7 @@
     }
   ],
   "command": "wikino page update",
-  "errors": "  2  ページ番号が1以上の整数でない、`--title`・`--body`・`--body-file`・`--md-file`・`--edits` のどれも無い、同時に指定できないフラグを併用した、\n     `--if-match` と `--force` のどちらも無いか両方ある (`--md-file`・`--edits` を除く)、`--if-match` が空か `*`、ファイルを読めないかUTF-8でない、\n     `--md-file` の `wikino_number` がページ番号と違うか `wikino_etag` が無い、`--edits` のJSONの形が違う、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにpage:writeのスコープが無い (403)\n  5  ページが無い、ゴミ箱にある、またはページを更新できない (404)。`wikino page list` で番号を確かめてください\n  6  読んだ後にページが更新されている (412)。`wikino page get` で最新の内容と版を取得し、変更を反映してから更新し直してください。\n     `--md-file` では、`wikino page get --md` で書き出し直したファイルに変更を反映してください\n  7  タイトルに使えない文字がある、同じタイトルのページがトピックにある、タイトルの無い未公開のページを `--title` 無しで更新した (422)。\n     `--edits` の `old_str` が今の本文に一致しないか、複数の箇所に一致した (422)。何番目の編集かをヒントに、一致の件数をメッセージに示します。\n     `wikino page get --md` で今の本文を確かめ、`edits` の全体を送り直してください",
+  "errors": "  2  ページ番号が1以上の整数でない、`--title`・`--body`・`--body-file`・`--md-file`・`--edits` のどれも無い、同時に指定できないフラグを併用した、\n     `--if-match` と `--force` のどちらも無いか両方ある (`--md-file`・`--edits` を除く)、`--if-match` が空か `*`、ファイルを読めないかUTF-8でない、\n     `--md-file` の `wikino_number` がページ番号と違うか `wikino_etag` が無い、`--edits` のJSONの形が違う、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにpage:writeのスコープが無い (403)\n  5  ページが無い、ゴミ箱にある、またはページを更新できない (404)。`wikino page list` で番号を確かめてください\n  6  読んだ後にページが更新されている (412)。`wikino page get` で最新の内容と版を取得し、変更を反映してから更新し直してください。\n     `--md-file` では、`wikino page get --md` で書き出し直したファイルに変更を反映してください\n  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、タイトルの無い未公開のページを `--title` 無しで更新した (422)。\n     `--edits` の `old_str` が今の本文に一致しないか、複数の箇所に一致した (422)。何番目の編集かをヒントに、一致の件数をメッセージに示します。\n     `wikino page get --md` で今の本文を確かめ、`edits` の全体を送り直してください",
   "examples": "  # ページ12の版を取得してから、本文をファイルの内容で更新する\n  wikino page get 12 --jq .etag\n  wikino page update 12 --body-file body.md --if-match '\"d41d8cd9\"'\n\n  # ページ12のタイトルだけを変える\n  wikino page update 12 --title '定例会議の議事録' --if-match '\"d41d8cd9\"'\n\n  # ページ12をファイルに書き出し、編集してから書き戻す\n  wikino page get 12 --md > page.md\n  wikino page update 12 --md-file page.md\n\n  # ページ12の本文の一部を検索置換する\n  echo '{\"edits\": [{\"old_str\": \"- [ ] 議事録を共有する\", \"new_str\": \"- [x] 議事録を共有する\"}]}' | wikino page update 12 --edits -\n\n  # 版を照合せず、最新の版に上書きする\n  wikino page update 12 --body-file body.md --force\n\n  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)\n  wikino page update 12 --body-file body.md --if-match '\"d41d8cd9\"' --dry-run",
   "flags": [
     {
@@ -2462,7 +2462,7 @@
     },
     {
       "default": "",
-      "description": "新しいタイトル (title)",
+      "description": "新しいタイトル (title)。200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない",
       "name": "title",
       "shorthand": "",
       "type": "string"

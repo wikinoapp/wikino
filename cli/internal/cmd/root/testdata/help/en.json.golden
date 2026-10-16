@@ -891,7 +891,7 @@
     },
     {
       "default": "",
-      "description": "The draft's title. For an existing page, defaults to the page's current title",
+      "description": "The draft's title. For an existing page, defaults to the page's current title. The page title rules (up to 200 characters, without `/`, `\\`, `:`, or control characters, and without a leading or trailing space) are checked when publishing",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -1645,7 +1645,7 @@
     },
     {
       "default": "",
-      "description": "New title of the draft",
+      "description": "New title of the draft. The page title rules (up to 200 characters, without `/`, `\\`, `:`, or control characters, and without a leading or trailing space) are checked when publishing",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -1907,7 +1907,7 @@
 {
   "args": [],
   "command": "wikino page create",
-  "errors": "  1  Network failure or server error (5xx). The page may have been created, so check with `wikino page list --topic <number> --title <title>` before sending again\n  2  `--topic` or `--title` is missing, neither or both of `--body` and `--body-file` are given, `--topic` is not a positive integer,\n     the body file cannot be read or is not UTF-8, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:write scope (403)\n  5  You cannot create pages in the topic (404)\n  7  The title has characters that cannot be used, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).\n     For a duplicate, find the existing page with `wikino page list --topic <number> --title <title>` and use `wikino page update` to change its content",
+  "errors": "  1  Network failure or server error (5xx). The page may have been created, so check with `wikino page list --topic <number> --title <title>` before sending again\n  2  `--topic` or `--title` is missing, neither or both of `--body` and `--body-file` are given, `--topic` is not a positive integer,\n     the body file cannot be read or is not UTF-8, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:write scope (403)\n  5  You cannot create pages in the topic (404)\n  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).\n     For a duplicate, find the existing page with `wikino page list --topic <number> --title <title>` and use `wikino page update` to change its content",
   "examples": "  # Create a page titled \"Minutes\" in topic 3\n  wikino page create --topic 3 --title 'Minutes' --body '# Minutes'\n\n  # Create a page with the content of a file as the body\n  wikino page create --topic 3 --title 'Minutes' --body-file minutes.md\n\n  # Read the body from standard input and print only the number and version of the created page\n  cat minutes.md | wikino page create --topic 3 --title 'Minutes' --body-file - --fields number,etag\n\n  # Check the request that would be sent and where the wikilinks in the body point (without sending it)\n  wikino page create --topic 3 --title 'Minutes' --body-file minutes.md --dry-run",
   "flags": [
     {
@@ -1933,7 +1933,7 @@
     },
     {
       "default": "",
-      "description": "Page title. Required",
+      "description": "Page title. Required. Up to 200 characters, without `/`, `\\`, `:`, or control characters, and without a leading or trailing space",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -2408,7 +2408,7 @@
     }
   ],
   "command": "wikino page update",
-  "errors": "  2  The page number is not a positive integer, none of `--title`, `--body`, `--body-file`, `--md-file`, and `--edits` is given, flags that cannot be combined are combined,\n     neither or both of `--if-match` and `--force` are given (except with `--md-file` and `--edits`), `--if-match` is empty or `*`, a file cannot be read or is not UTF-8,\n     `wikino_number` in `--md-file` differs from the page number or `wikino_etag` is missing, the JSON in `--edits` has the wrong shape, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:write scope (403)\n  5  The page does not exist, is in the trash, or cannot be updated (404). Check the number with `wikino page list`\n  6  The page has been updated since you read it (412). Get the latest content and version with `wikino page get`, apply your changes, and update again.\n     With `--md-file`, apply your changes to a file written again with `wikino page get --md`\n  7  The title has characters that cannot be used, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).\n     `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.\n     Check the current body with `wikino page get --md` and send the whole `edits` again",
+  "errors": "  2  The page number is not a positive integer, none of `--title`, `--body`, `--body-file`, `--md-file`, and `--edits` is given, flags that cannot be combined are combined,\n     neither or both of `--if-match` and `--force` are given (except with `--md-file` and `--edits`), `--if-match` is empty or `*`, a file cannot be read or is not UTF-8,\n     `wikino_number` in `--md-file` differs from the page number or `wikino_etag` is missing, the JSON in `--edits` has the wrong shape, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:write scope (403)\n  5  The page does not exist, is in the trash, or cannot be updated (404). Check the number with `wikino page list`\n  6  The page has been updated since you read it (412). Get the latest content and version with `wikino page get`, apply your changes, and update again.\n     With `--md-file`, apply your changes to a file written again with `wikino page get --md`\n  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).\n     `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.\n     Check the current body with `wikino page get --md` and send the whole `edits` again",
   "examples": "  # Get the version of page 12, then update its body with the content of a file\n  wikino page get 12 --jq .etag\n  wikino page update 12 --body-file body.md --if-match '\"d41d8cd9\"'\n\n  # Change only the title of page 12\n  wikino page update 12 --title 'Minutes of the weekly meeting' --if-match '\"d41d8cd9\"'\n\n  # Write page 12 to a file, edit it, and write it back\n  wikino page get 12 --md > page.md\n  wikino page update 12 --md-file page.md\n\n  # Find and replace part of the body of page 12\n  echo '{\"edits\": [{\"old_str\": \"- [ ] Share the minutes\", \"new_str\": \"- [x] Share the minutes\"}]}' | wikino page update 12 --edits -\n\n  # Overwrite the latest version without checking the version\n  wikino page update 12 --body-file body.md --force\n\n  # Check the request that would be sent and where the wikilinks in the body point (without sending it)\n  wikino page update 12 --body-file body.md --if-match '\"d41d8cd9\"' --dry-run",
   "flags": [
     {
@@ -2462,7 +2462,7 @@
     },
     {
       "default": "",
-      "description": "New title",
+      "description": "New title. Up to 200 characters, without `/`, `\\`, `:`, or control characters, and without a leading or trailing space",
       "name": "title",
       "shorthand": "",
       "type": "string"
