@@ -88,7 +88,7 @@ const (
 	ScopeAttachmentDelete Scope = "attachment:delete"
 )
 
-// 個人アクセストークン関連スコープ
+// 個人用アクセストークン関連スコープ
 const (
 	ScopePersonalAccessTokenRead   Scope = "personal_access_token:read"
 	ScopePersonalAccessTokenWrite  Scope = "personal_access_token:write"
@@ -175,7 +175,7 @@ var ScopeDefinitions = []ScopeDefinition{
 	{Scope: ScopeAttachmentRead, LowestLevel: ScopeLevelSpace, APIToken: true},
 	{Scope: ScopeAttachmentWrite, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopeAttachmentRead}},
 	{Scope: ScopeAttachmentDelete, LowestLevel: ScopeLevelSpace},
-	// 個人アクセストークン
+	// 個人用アクセストークン
 	{Scope: ScopePersonalAccessTokenRead, LowestLevel: ScopeLevelSpace},
 	{Scope: ScopePersonalAccessTokenWrite, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopePersonalAccessTokenRead}},
 	{Scope: ScopePersonalAccessTokenDelete, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopePersonalAccessTokenRead}},
@@ -227,7 +227,7 @@ func ScopesToStrings(scopes []Scope) []string {
 	return ss
 }
 
-// APITokenScopesは、公開APIのトークン (個人アクセストークン・OAuthのアクセストークン) に
+// APITokenScopesは、公開APIのトークン (個人用アクセストークン・OAuthのアクセストークン) に
 // 付与できるスコープ。管理系のスコープとトークン管理のスコープは含めない。トークンでトークンを
 // 発行できると、権限の範囲を利用者の意図より広げられるためである。ScopeDefinitionsの順に並ぶ
 var APITokenScopes = apiTokenScopes()

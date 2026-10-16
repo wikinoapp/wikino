@@ -15,7 +15,7 @@ import (
 // personalAccessTokenNameMaxLengthはトークン名の最大文字数
 const personalAccessTokenNameMaxLength = 50
 
-// PersonalAccessTokenCreateValidatorは個人アクセストークンの発行のバリデーションを行う
+// PersonalAccessTokenCreateValidatorは個人用アクセストークンの発行のバリデーションを行う
 type PersonalAccessTokenCreateValidator struct{}
 
 // NewPersonalAccessTokenCreateValidatorはPersonalAccessTokenCreateValidatorを生成する

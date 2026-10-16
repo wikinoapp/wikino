@@ -166,7 +166,7 @@ func TestShow_トークン管理の権限を持つ閲覧者はフラグが有効
 		}
 	}
 	if !strings.Contains(body, `href="/s/`+identifier+`/settings/personal_access_tokens"`) {
-		t.Error("レスポンスに個人アクセストークンへのリンクが含まれていない")
+		t.Error("レスポンスに個人用アクセストークンへのリンクが含まれていない")
 	}
 	if !strings.Contains(body, `href="/s/`+identifier+`/settings/oauth_grants"`) {
 		t.Error("レスポンスに連携中のアプリへのリンクが含まれていない")
@@ -176,7 +176,7 @@ func TestShow_トークン管理の権限を持つ閲覧者はフラグが有効
 	}
 }
 
-// フラグが無効なら、トークン管理のスコープを持っていても個人アクセストークン・連携中のアプリ・OAuthアプリの項目を出さない。
+// フラグが無効なら、トークン管理のスコープを持っていても個人用アクセストークン・連携中のアプリ・OAuthアプリの項目を出さない。
 func TestShow_フラグが無効なら公開APIの項目へのリンクを出さない(t *testing.T) {
 	t.Parallel()
 
@@ -193,7 +193,7 @@ func TestShow_フラグが無効なら公開APIの項目へのリンクを出さ
 		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
 	if strings.Contains(rr.Body.String(), "/settings/personal_access_tokens") {
-		t.Error("フラグが無効なメンバーのレスポンスに個人アクセストークンへのリンクが含まれている")
+		t.Error("フラグが無効なメンバーのレスポンスに個人用アクセストークンへのリンクが含まれている")
 	}
 	if strings.Contains(rr.Body.String(), "/settings/oauth_grants") {
 		t.Error("フラグが無効なメンバーのレスポンスに連携中のアプリへのリンクが含まれている")

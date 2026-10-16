@@ -17,7 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Createは個人アクセストークンを発行します (POST /s/{space_identifier}/settings/personal_access_tokens)。
+// Createは個人用アクセストークンを発行します (POST /s/{space_identifier}/settings/personal_access_tokens)。
 //
 // 発行に成功したら、リダイレクトせずにその応答でトークンの値を表示する。データベースには
 // ダイジェストしか残らないため、値を次のリクエストへ持ち越すにはCookieなどのクライアント側に
@@ -83,7 +83,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		h.handleError(w, r, err, "個人アクセストークンの発行に失敗")
+		h.handleError(w, r, err, "個人用アクセストークンの発行に失敗")
 		return
 	}
 

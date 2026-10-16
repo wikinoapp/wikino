@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// CreateDataは個人アクセストークンを発行した直後の画面をレンダリングする元になるデータ。
+// CreateDataは個人用アクセストークンを発行した直後の画面をレンダリングする元になるデータ。
 //
 // TokenValueはトークンの値そのもの。データベースにはダイジェストしか残らないため、値を
 // 示せるのはこの画面だけである。
@@ -23,7 +23,7 @@ type CreateData struct {
 	TokenValue string
 }
 
-// Createは個人アクセストークンを発行した直後の画面を表示します。
+// Createは個人用アクセストークンを発行した直後の画面を表示します。
 func Create(data CreateData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

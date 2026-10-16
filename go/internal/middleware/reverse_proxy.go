@@ -148,13 +148,13 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// Railsのformat拡張子や連続するスラッシュも含め、エクスポート配下はGoで処理する。
 	// 未対応のパスやメソッドはGoルーターが拒否し、多重実行防止を持たない旧処理へ転送しない。
 	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+exports([/.]|$)`)},
-	// 個人アクセストークンの画面 (/s/:identifier/settings/personal_access_tokens配下)。Rails版には
+	// 個人用アクセストークンの画面 (/s/:identifier/settings/personal_access_tokens配下)。Rails版には
 	// 存在しないため、エクスポートと同じく配下を全メソッドでGoへ渡し、未対応のものはGoルーターが拒否する。
 	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+personal_access_tokens([/.]|$)`)},
-	// OAuthアプリの画面 (/s/:identifier/settings/oauth_applications配下)。個人アクセストークンと同じく
+	// OAuthアプリの画面 (/s/:identifier/settings/oauth_applications配下)。個人用アクセストークンと同じく
 	// Rails版には存在しないため、配下を全メソッドでGoへ渡す。
 	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+oauth_applications([/.]|$)`)},
-	// 連携中のアプリの画面 (/s/:identifier/settings/oauth_grants配下)。個人アクセストークンと同じく
+	// 連携中のアプリの画面 (/s/:identifier/settings/oauth_grants配下)。個人用アクセストークンと同じく
 	// Rails版には存在しないため、配下を全メソッドでGoへ渡す。
 	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+oauth_grants([/.]|$)`)},
 	// og:image配信 (`/attachments/:id/og_image`・`/s/:space/pages/:number/og_image/:version.png`)。

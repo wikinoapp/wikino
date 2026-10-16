@@ -477,7 +477,7 @@ func TestAPIRequestValidator_ChecksTokenScopes(t *testing.T) {
 			wantStatus: http.StatusOK,
 		},
 		{
-			name:       "OAuthのアクセストークンは個人アクセストークンと並ぶ選択肢でも呼べる",
+			name:       "OAuthのアクセストークンは個人用アクセストークンと並ぶ選択肢でも呼べる",
 			method:     http.MethodGet,
 			target:     "/api/v1/pages",
 			principal:  oauthPrincipal(model.ScopePageRead),

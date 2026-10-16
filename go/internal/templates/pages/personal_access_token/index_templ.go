@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// IndexDataは個人アクセストークンの一覧の画面をレンダリングする元になるデータ。
+// IndexDataは個人用アクセストークンの一覧の画面をレンダリングする元になるデータ。
 //
 // Tokensは閲覧者自身の失効していないトークンで、期限切れのものも含む。CanCreateは
 // 新しいトークンを発行できるか (personal_access_token:write) を表し、偽なら発行へのリンクを
@@ -27,7 +27,7 @@ type IndexData struct {
 	CanDelete bool
 }
 
-// Indexは個人アクセストークンの一覧の画面を表示します。
+// Indexは個人用アクセストークンの一覧の画面を表示します。
 func Index(data IndexData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

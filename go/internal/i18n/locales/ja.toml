@@ -1364,31 +1364,31 @@ description = "トピック名重複エラー"
 other = "この名前は既に使用されています"
 
 [validation_personal_access_token_name_required]
-description = "個人アクセストークン名必須エラー"
+description = "個人用アクセストークン名必須エラー"
 other = "名前を入力してください"
 
 [validation_personal_access_token_name_too_long]
-description = "個人アクセストークン名文字数超過エラー"
+description = "個人用アクセストークン名文字数超過エラー"
 other = "名前は50文字以内で入力してください"
 
 [validation_personal_access_token_name_control_chars]
-description = "個人アクセストークン名制御文字エラー"
+description = "個人用アクセストークン名制御文字エラー"
 other = "名前に制御文字は使用できません"
 
 [validation_personal_access_token_name_invalid_format]
-description = "個人アクセストークン名不正フォーマットエラー"
+description = "個人用アクセストークン名不正フォーマットエラー"
 other = "名前の先頭・末尾にスペースは使用できません"
 
 [validation_personal_access_token_scopes_required]
-description = "個人アクセストークンのスコープ未選択エラー"
+description = "個人用アクセストークンのスコープ未選択エラー"
 other = "スコープを1つ以上選んでください"
 
 [validation_personal_access_token_scopes_invalid]
-description = "個人アクセストークンに付与できないスコープのエラー"
+description = "個人用アクセストークンに付与できないスコープのエラー"
 other = "選べないスコープが含まれています"
 
 [validation_personal_access_token_expiration_days_invalid]
-description = "個人アクセストークンの有効期限不正エラー"
+description = "個人用アクセストークンの有効期限不正エラー"
 other = "有効期限を選択肢から選んでください"
 
 [validation_oauth_authorization_scopes_required]
@@ -1579,8 +1579,8 @@ description = "スペース設定のトップのスペースの削除へのリ�
 other = "スペースの削除"
 
 [space_settings_personal_access_tokens]
-description = "スペース設定のトップの個人アクセストークンへのリンク"
-other = "個人アクセストークン"
+description = "スペース設定のトップの個人用アクセストークンへのリンク"
+other = "個人用アクセストークン"
 
 [space_settings_oauth_grants]
 description = "スペース設定のトップの連携中のアプリへのリンク"
@@ -2094,7 +2094,7 @@ other = "エクスポートを完了できませんでした<br>もう一度お�
 description = "エクスポート状態表示画面から再実行するリンク"
 other = "もう一度エクスポートする"
 
-# 個人アクセストークンの画面
+# 個人用アクセストークンの画面
 [api_token_scope_topic_read]
 description = "公開APIのトークンのスコープtopic:readの表示名"
 other = "トピックの読み取り"
@@ -2156,63 +2156,63 @@ description = "公開APIのトークンのスコープのうち、メンバー�
 other = "今の権限では効きません"
 
 [personal_access_token_index_title]
-description = "個人アクセストークンの一覧のページタイトル"
-other = "個人アクセストークン | {{.SpaceName}}"
+description = "個人用アクセストークンの一覧のページタイトル"
+other = "個人用アクセストークン | {{.SpaceName}}"
 
 [personal_access_token_index_heading]
-description = "個人アクセストークンの一覧の見出し"
-other = "個人アクセストークン"
+description = "個人用アクセストークンの一覧の見出し"
+other = "個人用アクセストークン"
 
 [personal_access_token_index_description]
-description = "個人アクセストークンの一覧のサブタイトル"
+description = "個人用アクセストークンの一覧のサブタイトル"
 other = "公開APIを呼び出すためのトークンです。このスペースで発行したトークンは、このスペースにだけ使えます。"
 
 [personal_access_token_index_breadcrumb_settings]
-description = "個人アクセストークンの一覧のパンくずのスペース設定へのリンク"
+description = "個人用アクセストークンの一覧のパンくずのスペース設定へのリンク"
 other = "設定"
 
 [personal_access_token_index_breadcrumb]
-description = "個人アクセストークンの一覧自身を指すパンくず項目 (現在項目)"
-other = "個人アクセストークン"
+description = "個人用アクセストークンの一覧自身を指すパンくず項目 (現在項目)"
+other = "個人用アクセストークン"
 
 [personal_access_token_index_new]
-description = "個人アクセストークンの一覧の発行フォームへのリンク"
+description = "個人用アクセストークンの一覧の発行フォームへのリンク"
 other = "トークンを発行する"
 
 [personal_access_token_index_empty]
-description = "個人アクセストークンの一覧でトークンが無いときの表示"
+description = "個人用アクセストークンの一覧でトークンが無いときの表示"
 other = "発行したトークンはありません"
 
 [personal_access_token_index_last_chars]
-description = "個人アクセストークンの一覧でトークンを見分けるための末尾の文字"
+description = "個人用アクセストークンの一覧でトークンを見分けるための末尾の文字"
 other = "…{{.LastChars}}"
 
 [personal_access_token_index_expired]
-description = "個人アクセストークンの一覧の期限切れのバッジ"
+description = "個人用アクセストークンの一覧の期限切れのバッジ"
 other = "期限切れ"
 
 [personal_access_token_index_expires_at]
-description = "個人アクセストークンの一覧の有効期限の項目名"
+description = "個人用アクセストークンの一覧の有効期限の項目名"
 other = "有効期限"
 
 [personal_access_token_index_last_used_at]
-description = "個人アクセストークンの一覧の最終使用日時の項目名"
+description = "個人用アクセストークンの一覧の最終使用日時の項目名"
 other = "最終使用"
 
 [personal_access_token_index_never_used]
-description = "個人アクセストークンの一覧で一度も使われていないことの表示"
+description = "個人用アクセストークンの一覧で一度も使われていないことの表示"
 other = "未使用"
 
 [personal_access_token_index_revoke]
-description = "個人アクセストークンの一覧の失効ボタン"
+description = "個人用アクセストークンの一覧の失効ボタン"
 other = "トークンを失効する"
 
 [personal_access_token_index_revoke_confirm]
-description = "個人アクセストークンの失効の確認ダイアログ"
+description = "個人用アクセストークンの失効の確認ダイアログ"
 other = "「{{.Name}}」を失効しますか？このトークンを使っているツールは、APIを呼び出せなくなります。"
 
 [flash_personal_access_token_revoked]
-description = "個人アクセストークンを失効したときのフラッシュメッセージ"
+description = "個人用アクセストークンを失効したときのフラッシュメッセージ"
 other = "「{{.Name}}」を失効しました"
 
 [oauth_grant_index_title]
@@ -2256,91 +2256,91 @@ description = "連携を解除したときのフラッシュメッセージ"
 other = "「{{.Name}}」との連携を解除しました"
 
 [personal_access_token_new_title]
-description = "個人アクセストークンの発行フォームのページタイトル"
+description = "個人用アクセストークンの発行フォームのページタイトル"
 other = "トークンの発行 | {{.SpaceName}}"
 
 [personal_access_token_new_heading]
-description = "個人アクセストークンの発行フォームの見出し"
+description = "個人用アクセストークンの発行フォームの見出し"
 other = "トークンの発行"
 
 [personal_access_token_new_description]
-description = "個人アクセストークンの発行フォームのサブタイトル"
+description = "個人用アクセストークンの発行フォームのサブタイトル"
 other = "このスペースの公開APIに使えるトークンを発行します。トークンでできることは、選んだスコープとあなたのメンバー権限の両方で許された操作に限られます。"
 
 [personal_access_token_new_breadcrumb_settings]
-description = "個人アクセストークンの発行フォームのパンくずのスペース設定へのリンク"
+description = "個人用アクセストークンの発行フォームのパンくずのスペース設定へのリンク"
 other = "設定"
 
 [personal_access_token_new_breadcrumb_index]
-description = "個人アクセストークンの発行フォームのパンくずの一覧へのリンク"
-other = "個人アクセストークン"
+description = "個人用アクセストークンの発行フォームのパンくずの一覧へのリンク"
+other = "個人用アクセストークン"
 
 [personal_access_token_new_breadcrumb]
-description = "個人アクセストークンの発行フォーム自身を指すパンくず項目 (現在項目)"
+description = "個人用アクセストークンの発行フォーム自身を指すパンくず項目 (現在項目)"
 other = "発行"
 
 [personal_access_token_new_name_label]
-description = "個人アクセストークンの発行フォームの名前のラベル"
+description = "個人用アクセストークンの発行フォームの名前のラベル"
 other = "名前"
 
 [personal_access_token_new_name_hint]
-description = "個人アクセストークンの発行フォームの名前の補足"
+description = "個人用アクセストークンの発行フォームの名前の補足"
 other = "用途が分かる名前を付けてください (例: 自宅のPCのCLI)"
 
 [personal_access_token_new_scopes_label]
-description = "個人アクセストークンの発行フォームのスコープのラベル"
+description = "個人用アクセストークンの発行フォームのスコープのラベル"
 other = "スコープ"
 
 [personal_access_token_new_expiration_days_label]
-description = "個人アクセストークンの発行フォームの有効期限のラベル"
+description = "個人用アクセストークンの発行フォームの有効期限のラベル"
 other = "有効期限"
 
 [personal_access_token_new_expiration_days_option]
-description = "個人アクセストークンの発行フォームの有効期限の選択肢"
+description = "個人用アクセストークンの発行フォームの有効期限の選択肢"
 other = "{{.Days}}日"
 
 [personal_access_token_new_submit_button]
-description = "個人アクセストークンの発行フォームの送信ボタン"
+description = "個人用アクセストークンの発行フォームの送信ボタン"
 other = "発行する"
 
 [personal_access_token_new_cancel]
-description = "個人アクセストークンの発行フォームのキャンセルリンク"
+description = "個人用アクセストークンの発行フォームのキャンセルリンク"
 other = "キャンセル"
 
 [personal_access_token_create_title]
-description = "個人アクセストークンを発行した直後の画面のページタイトル"
+description = "個人用アクセストークンを発行した直後の画面のページタイトル"
 other = "トークンを発行しました | {{.SpaceName}}"
 
 [personal_access_token_create_heading]
-description = "個人アクセストークンを発行した直後の画面の見出し"
+description = "個人用アクセストークンを発行した直後の画面の見出し"
 other = "トークンを発行しました"
 
 [personal_access_token_create_notice]
-description = "個人アクセストークンの値を1度だけ表示することの注意"
+description = "個人用アクセストークンの値を1度だけ表示することの注意"
 other = "トークンはこの画面でだけ表示します。この画面を離れると二度と表示できないため、今すぐコピーして安全な場所に保管してください。"
 
 [personal_access_token_create_token_label]
-description = "個人アクセストークンを発行した直後の画面のトークンの値のラベル"
+description = "個人用アクセストークンを発行した直後の画面のトークンの値のラベル"
 other = "トークン ({{.Name}})"
 
 [personal_access_token_create_expires_at]
-description = "個人アクセストークンを発行した直後の画面の有効期限の項目名"
+description = "個人用アクセストークンを発行した直後の画面の有効期限の項目名"
 other = "有効期限:"
 
 [personal_access_token_create_breadcrumb_settings]
-description = "個人アクセストークンを発行した直後の画面のパンくずのスペース設定へのリンク"
+description = "個人用アクセストークンを発行した直後の画面のパンくずのスペース設定へのリンク"
 other = "設定"
 
 [personal_access_token_create_breadcrumb_index]
-description = "個人アクセストークンを発行した直後の画面のパンくずの一覧へのリンク"
-other = "個人アクセストークン"
+description = "個人用アクセストークンを発行した直後の画面のパンくずの一覧へのリンク"
+other = "個人用アクセストークン"
 
 [personal_access_token_create_breadcrumb]
-description = "個人アクセストークンを発行した直後の画面自身を指すパンくず項目 (現在項目)"
+description = "個人用アクセストークンを発行した直後の画面自身を指すパンくず項目 (現在項目)"
 other = "発行"
 
 [personal_access_token_create_back]
-description = "個人アクセストークンを発行した直後の画面の一覧へ戻るリンク"
+description = "個人用アクセストークンを発行した直後の画面の一覧へ戻るリンク"
 other = "トークンの一覧に戻る"
 
 [oauth_application_client_type_confidential]

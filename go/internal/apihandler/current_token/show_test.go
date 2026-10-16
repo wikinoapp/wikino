@@ -38,7 +38,7 @@ func TestHandler_GetCurrentToken(t *testing.T) {
 		wantScopes []string
 	}{
 		{
-			name:       "個人アクセストークンの種類・スコープ・有効期限を返す",
+			name:       "個人用アクセストークンの種類・スコープ・有効期限を返す",
 			kind:       model.APITokenKindPersonalAccessToken,
 			scopes:     []model.Scope{model.ScopePageWrite, model.ScopePageRead},
 			expiresAt:  time.Date(2026, 12, 31, 15, 0, 0, 0, time.FixedZone("JST", 9*60*60)),

@@ -55,7 +55,7 @@ func TestIndex_自分のトークンの一覧を表示する(t *testing.T) {
 
 	body := rr.Body.String()
 	for _, want := range []string{
-		"<title>個人アクセストークン | トークンのスペース</title>",
+		"<title>個人用アクセストークン | トークンのスペース</title>",
 		"自宅のCLI",
 		"…abcd",
 		"トピックの読み取り",

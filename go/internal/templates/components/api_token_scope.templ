@@ -58,7 +58,7 @@ type APITokenScopeCheckboxesData struct {
 	Autofocus bool
 }
 
-// APITokenScopeCheckboxesは、付与するスコープをチェックボックスで並べます。個人アクセストークンの
+// APITokenScopeCheckboxesは、付与するスコープをチェックボックスで並べます。個人用アクセストークンの
 // 発行画面とOAuthの同意画面が使い、囲みのfieldsetと見出し・エラーの表示は呼び出し側が持ちます。
 templ APITokenScopeCheckboxes(data APITokenScopeCheckboxesData) {
 	for i, option := range data.Options {
@@ -121,7 +121,7 @@ func apiTokenScopeInputID(name string, scope model.Scope) string {
 	return name + "_" + strings.ReplaceAll(string(scope), ":", "_")
 }
 
-// APITokenScopeLabelは公開APIのトークンのスコープの表示名を返します。個人アクセストークンの画面と
+// APITokenScopeLabelは公開APIのトークンのスコープの表示名を返します。個人用アクセストークンの画面と
 // OAuthの同意画面が同じ表示名を使います。トークンに付与できるスコープ (model.APITokenScopes)
 // 以外が保存されていても画面が崩れないよう、表示名の無いスコープはスコープの文字列をそのまま
 // 返します。

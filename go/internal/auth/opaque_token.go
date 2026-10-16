@@ -11,14 +11,14 @@ import (
 // ように、値の先頭に付ける
 type OpaqueTokenPrefix string
 
-// PersonalAccessTokenPrefixは個人アクセストークンの接頭辞
+// PersonalAccessTokenPrefixは個人用アクセストークンの接頭辞
 const PersonalAccessTokenPrefix OpaqueTokenPrefix = "wkp_"
 
 // OAuthClientSecretPrefixはOAuthアプリのクライアントシークレットの接頭辞
 const OAuthClientSecretPrefix OpaqueTokenPrefix = "wks_"
 
 // OAuthAccessTokenPrefixはOAuthのアクセストークンの接頭辞。公開APIのトークン照合は、
-// この接頭辞で個人アクセストークンと見分ける
+// この接頭辞で個人用アクセストークンと見分ける
 const OAuthAccessTokenPrefix OpaqueTokenPrefix = "wka_"
 
 // OAuthRefreshTokenPrefixはOAuthのリフレッシュトークンの接頭辞

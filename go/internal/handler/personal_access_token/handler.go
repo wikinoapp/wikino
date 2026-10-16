@@ -1,4 +1,4 @@
-// Package personal_access_tokenは個人アクセストークンの画面のHTTPハンドラーを提供します。
+// Package personal_access_tokenは個人用アクセストークンの画面のHTTPハンドラーを提供します。
 package personal_access_token
 
 import (
@@ -19,7 +19,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Handlerは個人アクセストークンの一覧・発行・失効の画面を提供します。
+// Handlerは個人用アクセストークンの一覧・発行・失効の画面を提供します。
 type Handler struct {
 	cfg                         *config.Config
 	flashMgr                    *session.FlashManager
@@ -29,7 +29,7 @@ type Handler struct {
 	revokePersonalAccessTokenUC *usecase.RevokePersonalAccessTokenUsecase
 }
 
-// NewHandlerは個人アクセストークンのハンドラーを生成します。
+// NewHandlerは個人用アクセストークンのハンドラーを生成します。
 func NewHandler(
 	cfg *config.Config,
 	flashMgr *session.FlashManager,
@@ -48,7 +48,7 @@ func NewHandler(
 	}
 }
 
-// renderは個人アクセストークンの画面を、それらが共有するレイアウトへ描画する。どの画面も
+// renderは個人用アクセストークンの画面を、それらが共有するレイアウトへ描画する。どの画面も
 // スペース設定の下にあり、違うのはページ名・タイトル・パンくずの末尾・中身だけなので、ヘッダーと
 // スペース設定までの経路はここで一度だけ決める。
 //

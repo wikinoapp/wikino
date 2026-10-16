@@ -19,7 +19,7 @@ import (
 // defaultExpirationDaysは発行フォームを初めて開いたときに選んでおく有効期限の日数。
 const defaultExpirationDays = "30"
 
-// NewDataは個人アクセストークンの発行フォームをレンダリングする元になるデータ。
+// NewDataは個人用アクセストークンの発行フォームをレンダリングする元になるデータ。
 //
 // Name・Scopes・ExpirationDaysは送信された値をフォームへ戻すためのもので、拒否された送信でも
 // 入力した内容が残るようにする。ExpirationDaysが空のときはdefaultExpirationDaysを選ぶ。
@@ -34,7 +34,7 @@ type NewData struct {
 	IneffectiveScopes []model.Scope
 }
 
-// Newは個人アクセストークンの発行フォームを表示します。
+// Newは個人用アクセストークンの発行フォームを表示します。
 func New(data NewData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

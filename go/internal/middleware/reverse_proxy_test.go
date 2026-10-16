@@ -1209,26 +1209,26 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "個人アクセストークンの一覧 (GET)",
+			name:     "個人用アクセストークンの一覧 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/settings/personal_access_tokens",
 			expected: true,
 		},
 		{
-			name:     "個人アクセストークンの発行フォーム (GET)",
+			name:     "個人用アクセストークンの発行フォーム (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/settings/personal_access_tokens/new",
 			expected: true,
 		},
 		{
-			name:     "個人アクセストークンの発行 (POST)",
+			name:     "個人用アクセストークンの発行 (POST)",
 			method:   http.MethodPost,
 			path:     "/s/my-space/settings/personal_access_tokens",
 			expected: true,
 		},
 		{
 			// Rails版には無い画面のため、未対応のパスやメソッドもGoルーターで404にする。
-			name:     "個人アクセストークン配下の未対応のパスもGoルーターで拒否する",
+			name:     "個人用アクセストークン配下の未対応のパスもGoルーターで拒否する",
 			method:   http.MethodDelete,
 			path:     "/s/my-space/settings/personal_access_tokens/unknown",
 			expected: true,

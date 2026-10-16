@@ -30,7 +30,7 @@ var securitySchemeTokenKinds = map[string]model.APITokenKind{
 var errAPITokenMissing = errors.New("トークンがありません")
 
 // errAPITokenSchemeMismatchは、トークンの種類がsecuritySchemeと合わないことを表すエラー。
-// securityの別の選択肢 (個人アクセストークンとOAuthなど) が通れば、リクエストは受け付けられる
+// securityの別の選択肢 (個人用アクセストークンとOAuthなど) が通れば、リクエストは受け付けられる
 var errAPITokenSchemeMismatch = errors.New("トークンの種類がsecuritySchemeと合いません")
 
 // insufficientScopeErrorは、トークンがoperationの要るスコープを持たないことを表すエラー

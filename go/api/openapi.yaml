@@ -5,13 +5,13 @@ info:
   summary: Wikinoのスペースのデータを読み書きする
   description: |
     Wikinoの公開Web APIです。
-    APIを呼び出すには、スペース設定で発行する個人アクセストークンか、OAuth 2.0 (Authorization Code + PKCE) で取得したアクセストークンを `Authorization: Bearer` ヘッダーで送ります。
+    APIを呼び出すには、スペース設定で発行する個人用アクセストークンか、OAuth 2.0 (Authorization Code + PKCE) で取得したアクセストークンを `Authorization: Bearer` ヘッダーで送ります。
     どちらのトークンも1つのスペースに属しており、そのスペースに対する操作だけに使えます。
 
     エラーはRFC 9457のProblem Details (`application/problem+json`) で返します。
 
     トークンを使うリクエストには、トークンの持ち主のスペースメンバー単位で1時間あたり5000件のレート制限があります。
-    同じスペースのトークンは個人アクセストークンとOAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えます。
+    同じスペースのトークンは個人用アクセストークンとOAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えます。
     残量はIETFで標準化中の `RateLimit-Policy` / `RateLimit` ヘッダーで返します (例: `RateLimit-Policy: "space_member";q=5000;w=3600`、`RateLimit: "space_member";r=4999;t=1800`)。
     `q` は1時間あたりの上限、`w` は時間枠の秒数、`r` は残りの件数、`t` は時間枠が切り替わるまでの秒数です。
     上限を超えると429を返し、再試行できるまでの秒数を `Retry-After` ヘッダーで示します。
@@ -1784,7 +1784,7 @@ components:
       type: http
       scheme: bearer
       description: |
-        スペース設定で発行した個人アクセストークンです。
+        スペース設定で発行した個人用アクセストークンです。
         発行したスペースに属し、発行時に選んだスコープの範囲で使えます。
   parameters:
     SpaceIdentifier:
@@ -2054,7 +2054,7 @@ components:
             - personal_access_token
             - oauth_access_token
           description: |
-            トークンの種類です。`personal_access_token` はスペース設定で発行した個人アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+            トークンの種類です。`personal_access_token` はスペース設定で発行した個人用アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
         scopes:
           type: array
           description: |
@@ -2068,7 +2068,7 @@ components:
           description: |
             トークンの有効期限です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
             秒未満はマイクロ秒まで含み、末尾の0は省きます。
-            個人アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
+            個人用アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
             OAuthのアクセストークンは、期限が切れる前でもリフレッシュトークンで更新できます。
     Topic:
       type: object

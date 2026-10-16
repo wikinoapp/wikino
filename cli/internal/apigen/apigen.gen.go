@@ -418,11 +418,11 @@ type SpaceMember struct {
 type Token struct {
 	// ExpiresAt トークンの有効期限です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
 	// 秒未満はマイクロ秒まで含み、末尾の0は省きます。
-	// 個人アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
+	// 個人用アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
 	// OAuthのアクセストークンは、期限が切れる前でもリフレッシュトークンで更新できます。
 	ExpiresAt time.Time `json:"expires_at"`
 
-	// Kind トークンの種類です。`personal_access_token` はスペース設定で発行した個人アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+	// Kind トークンの種類です。`personal_access_token` はスペース設定で発行した個人用アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
 	Kind TokenKind `json:"kind"`
 
 	// Scopes トークンのスコープに含意を展開したものです。
@@ -430,7 +430,7 @@ type Token struct {
 	Scopes []string `json:"scopes"`
 }
 
-// TokenKind トークンの種類です。`personal_access_token` はスペース設定で発行した個人アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+// TokenKind トークンの種類です。`personal_access_token` はスペース設定で発行した個人用アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
 type TokenKind string
 
 // Topic トピックです。

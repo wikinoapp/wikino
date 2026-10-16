@@ -8,7 +8,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetPersonalAccessTokenNewUsecaseは、個人アクセストークンの発行フォームが表示するものを集める。
+// GetPersonalAccessTokenNewUsecaseは、個人用アクセストークンの発行フォームが表示するものを集める。
 type GetPersonalAccessTokenNewUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
