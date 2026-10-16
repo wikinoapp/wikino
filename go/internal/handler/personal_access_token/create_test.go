@@ -48,7 +48,15 @@ func TestCreate_発行したトークンの値をその応答でだけ表示す�
 	if match == nil {
 		t.Fatal("レスポンスにトークンの値が含まれていない")
 	}
-	for _, want := range []string{"トークン (自宅のCLI)", "トピックの読み取り", "ページの読み取り", "二度と表示できない"} {
+	for _, want := range []string{
+		"トークン (自宅のCLI)",
+		"トピックの読み取り",
+		"ページの読み取り",
+		"二度と表示できない",
+		// トークンの値は、選んでコピーできる欄とコピーボタンで示す
+		`data-copyable-input-value id="token_value"`,
+		`aria-label="トークン (自宅のCLI)をコピー"`,
+	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに%qが含まれていない", want)
 		}

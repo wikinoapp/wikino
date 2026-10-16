@@ -3,6 +3,7 @@ package oauth_application
 import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
 
 // clientTypeBadgeはクライアントの種別をバッジで表示します。
@@ -37,23 +38,13 @@ templ creatorName(name string) {
 	}
 }
 
-// clientIDFieldはクライアントIDを、選択してコピーしやすい読み取り専用の入力欄で表示します。
+// clientIDFieldはクライアントIDを、コピーするための値の欄で表示します。
 templ clientIDField(clientID string) {
-	<div class="grid gap-2">
-		<label class="label" for="client_id">
-			{ templates.T(ctx, "oauth_application_client_id_label") }
-		</label>
-		// 利用者がコピーするための欄で、送信はしない。
-		<input
-			autocomplete="off"
-			class="input font-mono"
-			id="client_id"
-			readonly
-			spellcheck="false"
-			type="text"
-			value={ clientID }
-		/>
-	</div>
+	@components.CopyableInput(components.CopyableInputData{
+		ID:    "client_id",
+		Label: templates.T(ctx, "oauth_application_client_id_label"),
+		Value: clientID,
+	})
 }
 
 // redirectURIListは登録したリダイレクトURIを並べます。

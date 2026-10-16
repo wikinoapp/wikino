@@ -118,6 +118,9 @@ func TestCreate_新しいシークレットをその応答でだけ表示する(
 	for _, want := range []string{
 		"<title>シークレットを再発行しました | 連携するWebアプリ | アプリのスペース</title>",
 		"二度と表示できない",
+		// シークレットは、選んでコピーできる欄とコピーボタンで示す
+		`data-copyable-input-value id="client_secret"`,
+		`aria-label="クライアントシークレットをコピー"`,
 		`href="/s/` + identifier + `/settings/oauth_applications/` + string(appID) + `"`,
 	} {
 		if !strings.Contains(body, want) {

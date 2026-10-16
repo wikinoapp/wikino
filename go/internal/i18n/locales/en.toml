@@ -13,6 +13,18 @@ other = "Wikino is a wiki application for sharing and organizing information onl
 description = "フラッシュメッセージの閉じるボタンのラベル"
 other = "Dismiss"
 
+[copyable_input_copy_button_label]
+description = "コピーするための値の欄の、コピーボタンのラベル"
+other = "Copy {{.Label}}"
+
+[copyable_input_copied]
+description = "コピーするための値の欄で、クリップボードへコピーできたときのメッセージ"
+other = "Copied {{.Label}} to the clipboard"
+
+[copyable_input_copy_failed]
+description = "コピーするための値の欄で、クリップボードへコピーできなかったときのメッセージ"
+other = "Couldn't copy. Select the value in the field and copy it instead"
+
 [dialog_close]
 description = "ダイアログの閉じるボタンのラベル"
 other = "Close"

@@ -191,6 +191,12 @@ export async function createTestPage(
   return { id: result.rows[0].id, number: result.rows[0].number };
 }
 
+// createTestFeatureFlagは、ユーザーに対してフィーチャーフラグを有効にする。
+// 名前はGo版のmodel.FeatureFlagNameの値 (go_public_apiなど)
+export async function createTestFeatureFlag(userId: string, name: string): Promise<void> {
+  await query(`INSERT INTO feature_flags (user_id, name, created_at) VALUES ($1, $2, NOW())`, [userId, name]);
+}
+
 export interface SharedTestData {
   user: TestUser;
   space: TestSpace;
