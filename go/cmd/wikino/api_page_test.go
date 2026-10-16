@@ -146,6 +146,9 @@ func TestAPIRouter_Pages(t *testing.T) {
 		if want := "https://example.com/s/api-http-pages/pages/1"; body.Items[0].Url != want {
 			t.Errorf("url = %q、期待値 = %q", body.Items[0].Url, want)
 		}
+		if body.Items[0].TopicName != "トピック" {
+			t.Errorf("topic_name = %q、期待値 = %q", body.Items[0].TopicName, "トピック")
+		}
 		// 省略した `status` は、リクエスト検証がOpenAPI記述の既定値で補ってから次のページのURLに引き継ぐ
 		wantLink := "<" + base + "?cursor=" + url.QueryEscape(*body.NextCursor) + `&limit=2&status=published>; rel="next"`
 		if got := first.Header().Get("Link"); got != wantLink {
@@ -245,8 +248,8 @@ func TestAPIRouter_Pages(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.Number != 2 || body.TopicNumber != 1 {
-			t.Errorf("ページ = %+v、期待値 = トピック1のページ2", body)
+		if body.Number != 2 || body.TopicNumber != 1 || body.TopicName != "トピック" {
+			t.Errorf("ページ = %+v、期待値 = トピック1「トピック」のページ2", body)
 		}
 		if want := "https://example.com/s/api-http-pages/pages/2"; body.Url != want {
 			t.Errorf("url = %q、期待値 = %q", body.Url, want)
@@ -296,6 +299,9 @@ func TestAPIRouter_Pages(t *testing.T) {
 			}
 			if want := fmt.Sprintf("https://example.com/s/api-http-pages/pages/%d", tt.want[0]); body.Items[0].Url != want {
 				t.Errorf("url = %q、期待値 = %q", body.Items[0].Url, want)
+			}
+			if body.Items[0].TopicName != "トピック" {
+				t.Errorf("topic_name = %q、期待値 = %q", body.Items[0].TopicName, "トピック")
 			}
 			wantLink := "<" + tt.target + "?cursor=" + url.QueryEscape(*body.NextCursor) + `&limit=1>; rel="next"`
 			if got := first.Header().Get("Link"); got != wantLink {
@@ -446,8 +452,8 @@ func TestAPIRouter_CreatePage(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.Number != 2 || body.TopicNumber != 1 || body.Title == nil || *body.Title != "新しいページ" {
-			t.Errorf("ページ = %+v、期待値 = トピック1のページ2「新しいページ」", body)
+		if body.Number != 2 || body.TopicNumber != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "新しいページ" {
+			t.Errorf("ページ = %+v、期待値 = トピック1「トピック」のページ2「新しいページ」", body)
 		}
 		if want := "https://example.com/s/api-http-page-create/pages/2"; body.Url != want {
 			t.Errorf("url = %q、期待値 = %q", body.Url, want)
@@ -626,8 +632,8 @@ func TestAPIRouter_UpdatePage(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.Number != 1 || body.Title == nil || *body.Title != "新しいタイトル" || body.Body != "新しい本文" {
-			t.Errorf("ページ = %+v、期待値 = 更新したページ1", body)
+		if body.Number != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "新しいタイトル" || body.Body != "新しい本文" {
+			t.Errorf("ページ = %+v、期待値 = トピック「トピック」の更新したページ1", body)
 		}
 		if want := "https://example.com/s/api-http-page-update/pages/1"; body.Url != want {
 			t.Errorf("url = %q、期待値 = %q", body.Url, want)
@@ -639,6 +645,42 @@ func TestAPIRouter_UpdatePage(t *testing.T) {
 
 		// 更新前のETagを前提にした更新は、先の更新と競合するため412になる
 		assertProblem(t, request("wkp_page_write", mergePatch, before, `{"body": "古い版を元にした本文"}`), http.StatusPreconditionFailed)
+	})
+
+	t.Run("トピック名を変えてもETagは変わらず、変える前のETagで更新できる", func(t *testing.T) {
+		before := currentETag(t)
+		if _, err := topicRepo.UpdateNameAndDescription(t.Context(), repository.UpdateTopicNameAndDescriptionInput{
+			ID: topicID, SpaceID: spaceID, Name: "改名したトピック",
+		}); err != nil {
+			t.Fatalf("トピック名を変えられない: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodGet, target, nil)
+		req.Header.Set("Authorization", "Bearer wkp_page_read")
+		got := httptest.NewRecorder()
+		r.ServeHTTP(got, req)
+		var page apigen.Page
+		if err := json.Unmarshal(got.Body.Bytes(), &page); err != nil {
+			t.Fatalf("本文を読めない: %v (本文: %s)", err, got.Body.String())
+		}
+		if page.TopicName != "改名したトピック" {
+			t.Errorf("topic_name = %q、期待値 = %q", page.TopicName, "改名したトピック")
+		}
+		if etag := got.Header().Get("ETag"); etag != before {
+			t.Errorf("ETag = %q、期待値 = トピック名を変える前と同じ %q", etag, before)
+		}
+
+		rr := request("wkp_page_write", mergePatch, before, `{"body": "改名後の本文"}`)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %s)", rr.Code, rr.Body.String())
+		}
+		var body apigen.Page
+		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+			t.Fatalf("本文を読めない: %v", err)
+		}
+		if body.TopicName != "改名したトピック" {
+			t.Errorf("topic_name = %q、期待値 = %q", body.TopicName, "改名したトピック")
+		}
 	})
 
 	t.Run("If-Matchが無ければ428", func(t *testing.T) {

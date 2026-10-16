@@ -508,7 +508,7 @@ paths:
 
         非公開トピックのページを読むには、トークンが `page:read` に加えて `topic:read` を持つ必要があります。
 
-        応答の `ETag` ヘッダーはページのタイトル・本文・所属トピック・更新日時・公開状態から計算します。
+        応答の `ETag` ヘッダーはページのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時・公開状態から計算します。
         前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
         304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 
@@ -1142,7 +1142,7 @@ paths:
 
         非公開トピックのページの下書きを読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
 
-        応答の `ETag` ヘッダーは下書きのタイトル・本文・所属トピック・更新日時から計算します。
+        応答の `ETag` ヘッダーは下書きのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時から計算します。
         前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
         304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 
@@ -1865,7 +1865,7 @@ components:
     ETag:
       description: |
         リソースの応答の内容から計算したエンティティタグです (例: `"3q2-7wEBYm8aHqhqcl7IJ4K_xGJmBGyBMs5-yHaI0Wk"`)。
-        応答が変われば値も変わります。
+        応答が変われば値も変わります。ただし、スキーマの説明で `ETag` の計算に含めないとした項目 (`url`・`topic_name` など) だけが変わった場合は変わりません。
       required: true
       schema:
         type: string
@@ -2128,6 +2128,7 @@ components:
         - id
         - number
         - topic_number
+        - topic_name
         - title
         - body
         - status
@@ -2146,6 +2147,11 @@ components:
           type: integer
           format: int32
           description: ページが属するトピックの番号です。
+        topic_name:
+          type: string
+          description: |
+            ページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+            ページの `ETag` の計算には含めません。トピック名を変えても `ETag` は変わらないため、`If-None-Match` で304を受け取ったときに手元に残している値は、変える前の名前のことがあります。
         title:
           type: [string, "null"]
           description: ページのタイトルです。タイトルの無いページでは `null` です。
@@ -2373,6 +2379,7 @@ components:
       required:
         - page_number
         - topic_number
+        - topic_name
         - title
         - body
         - modified_at
@@ -2386,6 +2393,11 @@ components:
           type: integer
           format: int32
           description: 下書きのページが属するトピックの番号です。
+        topic_name:
+          type: string
+          description: |
+            下書きのページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+            下書きの `ETag` の計算には含めません。トピック名を変えても `ETag` は変わらないため、`If-None-Match` で304を受け取ったときに手元に残している値は、変える前の名前のことがあります。
         title:
           type: [string, "null"]
           description: 下書きのタイトルです。タイトルの無い下書きでは `null` です。

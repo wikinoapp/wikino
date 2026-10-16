@@ -71,7 +71,7 @@ func TestHandler_CreateDraftPage(t *testing.T) {
 	if !ok {
 		t.Fatalf("レスポンスの型 = %T、期待値 = CreateDraftPage201JSONResponse", res)
 	}
-	if created.Body.PageNumber != 1 || created.Body.TopicNumber != 3 || created.Body.Title == nil || *created.Body.Title != "ページ" || created.Body.Body != "本文" {
+	if created.Body.PageNumber != 1 || created.Body.TopicNumber != 3 || created.Body.TopicName != "トピック3" || created.Body.Title == nil || *created.Body.Title != "ページ" || created.Body.Body != "本文" {
 		t.Errorf("下書き = %+v、期待値 = トピック3のページ1の今の内容", created.Body)
 	}
 	if want := "/api/v1/spaces/draft-create-handler/pages/1/draft_page"; created.Headers.Location != want {

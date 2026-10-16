@@ -126,7 +126,7 @@ func TestHandler_ListPages(t *testing.T) {
 			t.Fatalf("件数 = %d、期待値 = 3", len(res.Body.Items))
 		}
 		item := res.Body.Items[0]
-		if item.Id.String() == "" || item.TopicNumber != 1 || item.Title == nil || *item.Title != "ページ1" || item.Body != "本文1" {
+		if item.Id.String() == "" || item.TopicNumber != 1 || item.TopicName != "トピック1" || item.Title == nil || *item.Title != "ページ1" || item.Body != "本文1" {
 			t.Errorf("ページ = %+v", item)
 		}
 		if want := pageHandlerBaseTime.Add(-time.Hour); !item.ModifiedAt.Equal(want) || item.ModifiedAt.Location() != time.UTC {

@@ -56,6 +56,7 @@ func ToAPIPage(appURL string, space *model.Space, page *model.Page, topic *model
 		Id:          id,
 		Number:      int32(page.Number),
 		TopicNumber: topic.Number,
+		TopicName:   topic.Name,
 		Title:       page.Title,
 		Body:        page.Body,
 		Status:      toAPIPageStatus(page),

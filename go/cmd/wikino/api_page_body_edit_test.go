@@ -158,7 +158,7 @@ func TestAPIRouter_CreatePageBodyEdit(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.Number != 1 || body.Title == nil || *body.Title != "タイトル" || body.Body != "1つ目 二つ目 二つ目" {
+		if body.Number != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "タイトル" || body.Body != "1つ目 二つ目 二つ目" {
 			t.Errorf("ページ = %+v、期待値 = 本文を置換したページ1", body)
 		}
 		if want := "https://example.com/s/api-http-page-body-edit/pages/1"; body.Url != want {

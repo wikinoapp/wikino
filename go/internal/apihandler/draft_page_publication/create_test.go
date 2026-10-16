@@ -97,7 +97,7 @@ func TestHandler_CreateDraftPagePublication(t *testing.T) {
 		if !isOK {
 			t.Fatalf("応答の型 = %T、期待値 = CreateDraftPagePublication200JSONResponse", res)
 		}
-		if ok.Body.Number != 1 || ok.Body.TopicNumber != 1 || ok.Body.Title == nil || *ok.Body.Title != "公開するタイトル" || ok.Body.Body != "公開する本文" {
+		if ok.Body.Number != 1 || ok.Body.TopicNumber != 1 || ok.Body.TopicName != "トピック" || ok.Body.Title == nil || *ok.Body.Title != "公開するタイトル" || ok.Body.Body != "公開する本文" {
 			t.Errorf("ページ = %+v、期待値 = 下書きの内容で公開したページ1", ok.Body)
 		}
 		if got, want := ok.Headers.ContentLocation, "/api/v1/spaces/draft-publish-handler/pages/1"; got != want {

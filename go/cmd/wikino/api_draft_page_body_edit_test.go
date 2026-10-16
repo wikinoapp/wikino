@@ -68,7 +68,7 @@ func TestAPIRouter_CreateDraftPageBodyEdit(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.PageNumber != 1 || body.Title == nil || *body.Title != "下書き" || body.Body != "下書きの本文 本文 本文" {
+		if body.PageNumber != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "下書き" || body.Body != "下書きの本文 本文 本文" {
 			t.Errorf("下書き = %+v、期待値 = 本文を置換した下書き", body)
 		}
 		if want := "https://example.com/s/api-http-draft-body-edit/pages/1/edit"; body.Url != want {

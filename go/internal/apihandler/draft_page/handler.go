@@ -55,6 +55,7 @@ func ToAPIDraftPage(appURL string, space *model.Space, draft *model.DraftPage, t
 	return apigen.DraftPage{
 		PageNumber:  int32(draft.Page.Number),
 		TopicNumber: topic.Number,
+		TopicName:   topic.Name,
 		Title:       draft.Title,
 		Body:        draft.Body,
 		ModifiedAt:  draft.ModifiedAt.UTC(),
