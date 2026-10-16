@@ -172,7 +172,7 @@
     }
 
     & details > summary {
-      @apply link-primary-foreground gap-1;
+      @apply gap-1 link-primary-foreground;
     }
 
     & details > summary::before {
@@ -227,7 +227,7 @@
        柔らかさを足す役割にとどめる。カードと違い角丸は付けない。border-radiusは置換要素の中身を
        クリップするため、画像そのものの隅が削られてしまう。 */
     & img {
-      @apply ring-foreground/10 mx-auto block shadow-xs ring-1;
+      @apply mx-auto block shadow-xs ring-1 ring-foreground/10;
     }
 
     /* 画像を含むリンクをインラインブロックにして画像の幅に合わせる */
@@ -286,7 +286,7 @@
     }
 
     & pre {
-      @apply bg-card mb-4 overflow-auto rounded-lg border border-stone-300 p-4;
+      @apply mb-4 overflow-auto rounded-lg border border-stone-300 bg-card p-4;
     }
 
     & pre code {
@@ -324,7 +324,7 @@
     }
 
     & .wikino-markdown-table-scroll:focus-visible {
-      @apply outline-brand-600 outline-2 outline-offset-2;
+      @apply outline-2 outline-offset-2 outline-brand-600;
     }
 
     & table td {
@@ -332,7 +332,7 @@
     }
 
     & table th {
-      @apply bg-brand-600/5 border border-stone-300 p-2;
+      @apply border border-stone-300 bg-brand-600/5 p-2;
     }
 
     & ul {
@@ -359,11 +359,11 @@
   ============================================================================
 */
 .cm-editor {
-  @apply border-input max-h-[calc(100vh-400px)] rounded-md border bg-transparent px-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm;
+  @apply max-h-[calc(100vh-400px)] rounded-md border border-input bg-transparent px-2 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm;
 }
 
 .cm-editor.cm-focused {
-  @apply border-ring ring-ring/50 ring-[3px] outline-2 outline-gray-300 outline-solid;
+  @apply border-ring ring-[3px] ring-ring/50 outline-2 outline-gray-300 outline-solid;
 }
 
 .cm-editor .cm-gutters {
