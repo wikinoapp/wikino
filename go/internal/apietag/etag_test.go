@@ -19,7 +19,8 @@ func TestParseIfMatch(t *testing.T) {
 		{name: "1つのエンティティタグ", ifMatch: `"abc"`, wantDigests: []string{"abc"}},
 		{name: "カンマ区切りの複数のエンティティタグ", ifMatch: `"abc", "def"`, wantDigests: []string{"abc", "def"}},
 		{name: "*はどの版とも一致する", ifMatch: " * ", wantMatchAny: true},
-		{name: "弱いエンティティタグは除く", ifMatch: `W/"abc", "def"`, wantDigests: []string{"def"}},
+		{name: "弱いエンティティタグはW/を外したダイジェストで照合する", ifMatch: `W/"abc", "def"`, wantDigests: []string{"abc", "def"}},
+		{name: "W/の後ろが引用符で囲まれていなければ除く", ifMatch: `W/abc`, wantDigests: nil},
 		{name: "引用符の無いエンティティタグは除く", ifMatch: `abc`, wantDigests: nil},
 		{name: "空の値は何とも一致しない", ifMatch: "", wantDigests: nil},
 	}

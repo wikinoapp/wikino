@@ -109,6 +109,28 @@ func TestHandler_UpdateDraftPage(t *testing.T) {
 		}
 	})
 
+	t.Run("弱いエンティティタグでもダイジェストが違えば412", func(t *testing.T) {
+		weak := `W/"古い版"`
+		body := "古い版を元にした本文"
+		_, err := h.UpdateDraftPage(ctx, apigen.UpdateDraftPageRequestObject{
+			SpaceIdentifier: identifier,
+			PageNumber:      1,
+			Params:          apigen.UpdateDraftPageParams{IfMatch: &weak},
+			Body:            &apigen.DraftPagePatch{Body: &body},
+		})
+		if ae := model.AsAppError(err); ae == nil || ae.Code != model.AppErrCodePreconditionFailed {
+			t.Errorf("エラー = %v、期待値 = AppErrCodePreconditionFailed", err)
+		}
+	})
+
+	t.Run("弱いエンティティタグはW/を外したダイジェストで照合し、一致すれば更新する", func(t *testing.T) {
+		weak := "W/" + draftPageETag(t, h, ctx, identifier)
+		body := "弱いETagで更新した本文"
+		if res := update(t, &weak, apigen.DraftPagePatch{Body: &body}); res.Body.Body != body {
+			t.Errorf("本文 = %q、期待値 = %q", res.Body.Body, body)
+		}
+	})
+
 	t.Run("titleを省くとタイトルを変えず、取得と同じETagを返す", func(t *testing.T) {
 		etag := draftPageETag(t, h, ctx, identifier)
 		body := "新しい本文"

@@ -629,6 +629,7 @@ type GetPageParams struct {
 // UpdatePageParams defines parameters for UpdatePage.
 type UpdatePageParams struct {
 	// IfMatch 更新の前提にするページの `ETag` です。ページの今の `ETag` と一致する場合だけ更新します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると428を返します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -646,6 +647,7 @@ type ListPageBacklinksParams struct {
 // CreatePageBodyEditParams defines parameters for CreatePageBodyEdit.
 type CreatePageBodyEditParams struct {
 	// IfMatch 置換の前提にするページの `ETag` です。送った場合は、ページの今の `ETag` と一致する場合だけ置換します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると版を照合せず、今の本文に置換を適用します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -653,6 +655,7 @@ type CreatePageBodyEditParams struct {
 // DeleteDraftPageParams defines parameters for DeleteDraftPage.
 type DeleteDraftPageParams struct {
 	// IfMatch 削除の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ削除します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると428を返します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -666,6 +669,7 @@ type GetDraftPageParams struct {
 // UpdateDraftPageParams defines parameters for UpdateDraftPage.
 type UpdateDraftPageParams struct {
 	// IfMatch 更新の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ更新します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると428を返します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -673,6 +677,7 @@ type UpdateDraftPageParams struct {
 // CreateDraftPageBodyEditParams defines parameters for CreateDraftPageBodyEdit.
 type CreateDraftPageBodyEditParams struct {
 	// IfMatch 置換の前提にする下書きの `ETag` です。送った場合は、下書きの今の `ETag` と一致する場合だけ置換します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると版を照合せず、今の本文に置換を適用します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -680,6 +685,7 @@ type CreateDraftPageBodyEditParams struct {
 // CreateDraftPagePublicationParams defines parameters for CreateDraftPagePublication.
 type CreateDraftPagePublicationParams struct {
 	// IfMatch 公開の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ公開します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると428を返します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }

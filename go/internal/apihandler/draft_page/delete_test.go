@@ -23,8 +23,21 @@ func TestHandler_DeleteDraftPage(t *testing.T) {
 		}
 	})
 
-	t.Run("取得と同じETagなら削除して204を返す", func(t *testing.T) {
-		etag := draftPageETag(t, h, ctx, identifier)
+	t.Run("弱いエンティティタグでもダイジェストが違えば412", func(t *testing.T) {
+		weak := `W/"古い版"`
+		_, err := h.DeleteDraftPage(ctx, apigen.DeleteDraftPageRequestObject{
+			SpaceIdentifier: identifier,
+			PageNumber:      1,
+			Params:          apigen.DeleteDraftPageParams{IfMatch: &weak},
+		})
+		if ae := model.AsAppError(err); ae == nil || ae.Code != model.AppErrCodePreconditionFailed {
+			t.Errorf("エラー = %v、期待値 = AppErrCodePreconditionFailed", err)
+		}
+	})
+
+	// 強いETagで削除できることはcmd/wikinoのAPIのテストで確かめる
+	t.Run("取得と同じETagにW/が付いていても削除して204を返す", func(t *testing.T) {
+		etag := "W/" + draftPageETag(t, h, ctx, identifier)
 		res, err := h.DeleteDraftPage(ctx, apigen.DeleteDraftPageRequestObject{
 			SpaceIdentifier: identifier,
 			PageNumber:      1,
