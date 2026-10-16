@@ -20,7 +20,7 @@ import (
 const publishOperationID = "createDraftPagePublication"
 
 // publishFieldsは、`draft publish` の `--fields` で選べる項目。`page get` と同じく、APIのページの項目に応答のETagヘッダーの値を足す。
-var publishFields = []string{"id", "number", "title", "status", "topic_number", "modified_at", "url", "body", "etag"}
+var publishFields = []string{"id", "number", "title", "status", "topic_number", "topic_name", "modified_at", "url", "body", "etag"}
 
 // publishItemは、`draft publish` の出力。公開したページを `page get` と同じ形で出す。
 type publishItem struct {
@@ -255,6 +255,7 @@ func publishDetailFields(loc *i18n.Localizer, item publishItem) []output.Field {
 	return []output.Field{
 		{Label: loc.T("page_label_number"), Value: formatNumber(item.Number)},
 		{Label: loc.T("page_label_title"), Value: title},
+		{Label: loc.T("page_label_topic_name"), Value: item.TopicName},
 		{Label: loc.T("page_label_topic_number"), Value: formatNumber(item.TopicNumber)},
 		{Label: loc.T("page_label_status"), Value: status},
 		{Label: loc.T("page_label_modified_at"), Value: formatTime(item.ModifiedAt)},

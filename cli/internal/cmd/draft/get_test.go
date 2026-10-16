@@ -31,6 +31,7 @@ func TestGet_JSON(t *testing.T) {
 		"etag":         etag,
 		"page_number":  float64(12),
 		"topic_number": float64(3),
+		"topic_name":   "トピック3",
 		"url":          "https://wikino.example.com/s/team/pages/12/edit",
 		"body":         "# 議事録\n\n本文\n",
 		"title":        "議事録",

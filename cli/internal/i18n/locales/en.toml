@@ -719,6 +719,7 @@ other = """
     title         Title. null for a page without a title
     status        Publication status (published, unpublished)
     topic_number  Number of the topic the page belongs to
+    topic_name    Name of the topic the page belongs to. Use it in wiki links to pages in other topics (`[[Topic name/Title]]`)
     modified_at   When the content was last updated (RFC 3339)
     url           URL to open the page on the web. Use it to cite the page
     excerpt       Excerpt of the beginning of the body: the first 80 characters with line breaks collapsed into spaces,
@@ -993,9 +994,13 @@ other = "Number"
 description = "ページの表示の「タイトル」のラベル"
 other = "Title"
 
+[page_label_topic_name]
+description = "ページの表示の「トピック名」のラベル"
+other = "Topic"
+
 [page_label_topic_number]
 description = "ページの表示の「トピック番号」のラベル"
-other = "Topic"
+other = "Topic number"
 
 [page_label_status]
 description = "ページの表示の「公開状態」のラベル"
@@ -1325,6 +1330,7 @@ other = """
     page_number   The number of the draft's page. Pass it to `wikino draft get` and others
     title         The draft's title. null for drafts without a title
     topic_number  The number of the topic the draft's page belongs to
+    topic_name    The name of the topic the draft's page belongs to
     modified_at   When the draft's content was last modified (RFC 3339). Autosaves in the web UI also update it
     url           The URL of the edit screen of the draft's page in the web UI
     excerpt       An excerpt of the beginning of the body: the first 80 characters with newlines collapsed to spaces,
@@ -1407,9 +1413,13 @@ other = "Page number"
 description = "下書きの表示の「タイトル」のラベル"
 other = "Title"
 
+[draft_label_topic_name]
+description = "下書きの表示の「トピック名」のラベル"
+other = "Topic"
+
 [draft_label_topic_number]
 description = "下書きの表示の「トピック番号」のラベル"
-other = "Topic"
+other = "Topic number"
 
 [draft_label_modified_at]
 description = "下書きの表示の「更新日時」のラベル"

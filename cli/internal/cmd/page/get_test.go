@@ -34,10 +34,12 @@ func TestGet_JSON(t *testing.T) {
 	var got map[string]any
 	cmdtest.Decode(t, e.Stdout.String(), &got)
 	want := map[string]any{
-		"etag":  etag,
-		"url":   "https://wikino.example.com/s/team/pages/12",
-		"body":  "# 議事録\n\n本文\n",
-		"title": "議事録",
+		"etag":         etag,
+		"url":          "https://wikino.example.com/s/team/pages/12",
+		"body":         "# 議事録\n\n本文\n",
+		"title":        "議事録",
+		"topic_number": float64(3),
+		"topic_name":   "開発",
 	}
 	for key, value := range want {
 		if got[key] != value {
@@ -60,6 +62,25 @@ func TestGet_Human(t *testing.T) {
 	}
 
 	cmdtest.AssertGolden(t, "get", e.Stdout.String())
+}
+
+func TestGet_HumanTopicNameControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	// トピック名は他の利用者が付けた値で、端末を操作するエスケープシーケンスや改行を含みうる。
+	page := testPage(12, ptr("議事録"), "本文\n")
+	page["topic_name"] = "開\x1b[2J発\r\n偽の行"
+	e := newEnv(t)
+	handlePage(e, 12, page)
+
+	if err := e.RunTTY(NewCmdPage, "page", "get", "12"); err != nil {
+		t.Fatalf("エラーを期待しなかったが %v だった", err)
+	}
+
+	got := e.Stdout.String()
+	if strings.Contains(got, "\x1b") || !strings.Contains(got, "トピック:     開 [2J発  偽の行\n") {
+		t.Errorf("トピック名の制御文字が1行の値として無害化されていない: %q", got)
+	}
 }
 
 // pageFileCaseは、リポジトリ直下の共通のテストデータ (`testdata/wikino-file-format/page-files.json`) の1件。

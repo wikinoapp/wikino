@@ -100,6 +100,7 @@ func detailFields(loc *i18n.Localizer, item getItem) []output.Field {
 	return []output.Field{
 		{Label: loc.T("page_label_number"), Value: formatNumber(item.Number)},
 		{Label: loc.T("page_label_title"), Value: titleLabel(loc, item.Title)},
+		{Label: loc.T("page_label_topic_name"), Value: item.TopicName},
 		{Label: loc.T("page_label_topic_number"), Value: formatNumber(item.TopicNumber)},
 		{Label: loc.T("page_label_status"), Value: statusLabel(loc, item.Status)},
 		{Label: loc.T("page_label_modified_at"), Value: formatTime(item.ModifiedAt)},
