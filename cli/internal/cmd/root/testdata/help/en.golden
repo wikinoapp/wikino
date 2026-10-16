@@ -606,7 +606,7 @@ Show `changes` to the user, and run `confirm_command` as is after getting approv
 `confirm_command` contains the version fetched for the confirmation in `--if-match`.
 
 Deleting requires the draft_page:delete scope on the token.
-Reading the draft and its revisions for the confirmation and for `--force` also requires the draft_page:read scope.
+This scope also includes reading the draft and its revisions for the confirmation and for `--force`.
 Deleting drafts of pages in private topics also requires the topic:read scope.
 
 Usage:
@@ -649,7 +649,7 @@ Output:
 Errors:
   2  The page number is not a positive integer, neither or both of `--if-match` and `--force` are given, `--if-match` is empty or `*`, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
   3  Not logged in, or the token is invalid or expired (401)
-  4  The token lacks the draft_page:delete scope, or the draft_page:read scope for the confirmation or `--force` (403)
+  4  The token lacks the draft_page:delete scope (403)
   5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).
      If you get 5 when deleting again, the draft has already been deleted
   6  The draft has been updated since you read it (412). Check the current content with `wikino draft get`, and delete again with the new version if it is fine to delete
