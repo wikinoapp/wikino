@@ -292,7 +292,7 @@
     }
   ],
   "command": "wikino attachment get",
-  "errors": "  1  署名付きURLからの取得に失敗した (期限切れ・途中の切断を含む)。同じコマンドをもう一度実行してください。保存先に書き込めなかった (権限・空き容量など)\n  2  IDがUUIDでない、保存先のディレクトリが無い、保存先に既にファイルがある (`--clobber` で上書き)、`--output -` と `--json`・`--fields`・`--jq`・`--clobber` を併用した、`--fields` に未知の項目\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにattachment:readのスコープが無い (403)\n  5  添付ファイルが無い、または別のスペースの添付ファイル (404)。本文の `/attachments/{ID}` のIDとスペースを確かめてください",
+  "errors": "  1  署名付きURLからの取得に失敗した (期限切れ・途中の切断を含む)。同じコマンドをもう一度実行してください。保存先に書き込めなかった (権限・空き容量など)\n  2  IDがUUIDでない、保存先のディレクトリが無い、保存先に既にファイルがある (`--clobber` で上書き)、`--output -` と `--json`・`--fields`・`--jq`・`--clobber` を併用した、標準出力が端末のときに `--output -` を指定した、`--fields` に未知の項目\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにattachment:readのスコープが無い (403)\n  5  添付ファイルが無い、または別のスペースの添付ファイル (404)。本文の `/attachments/{ID}` のIDとスペースを確かめてください",
   "examples": "  # 添付ファイルをカレントディレクトリに元のファイル名で保存する\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef\n\n  # 本文の参照のパスのまま渡し、ディレクトリimages/に保存する\n  wikino attachment get /attachments/01234567-89ab-cdef-0123-456789abcdef -O images/\n\n  # ファイル名を指定して保存し、既存のファイルを上書きする\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O diagram.png --clobber\n\n  # 中身を標準出力に出す\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O - > diagram.png",
   "flags": [
     {

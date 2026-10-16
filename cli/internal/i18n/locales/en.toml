@@ -2111,7 +2111,7 @@ other = """
 description = "attachment getコマンドのヘルプの「エラー」の節"
 other = """
   1  Downloading from the signed URL failed (including expiry and interruption). Run the same command again. Or writing to the destination failed (permissions, disk space, and so on)
-  2  The ID is not a UUID, the destination directory does not exist, a file already exists at the destination (overwrite with `--clobber`), `--output -` is combined with `--json`, `--fields`, `--jq`, or `--clobber`, or `--fields` has an unknown field
+  2  The ID is not a UUID, the destination directory does not exist, a file already exists at the destination (overwrite with `--clobber`), `--output -` is combined with `--json`, `--fields`, `--jq`, or `--clobber`, `--output -` is given while standard output is a terminal, or `--fields` has an unknown field
   3  Not logged in, or the token is invalid or expired (401)
   4  The token lacks the attachment:read scope (403)
   5  The attachment does not exist or belongs to another space (404). Check the ID in `/attachments/{ID}` in the body and the space"""
@@ -2151,6 +2151,14 @@ other = "Could not write to the destination: {{.Path}} ({{.Detail}})"
 [attachment_get_error_write_hint]
 description = "attachment getで保存先に書き込めなかったときのヒント"
 other = "Check that you have permission to write to the destination and enough disk space, or set another destination with `--output`."
+
+[attachment_get_error_stdout_tty]
+description = "attachment get --output -を、標準出力が端末のときに指定したときのメッセージ"
+other = "Standard output is a terminal, so the attachment contents are not written (they may contain characters that control the terminal)"
+
+[attachment_get_error_stdout_tty_hint]
+description = "attachment get --output -を、標準出力が端末のときに指定したときのヒント"
+other = "Redirect standard output to a file or a pipe, or save to a file with `wikino attachment get <attachment_id> -O <path>`."
 
 [attachment_get_error_write_stdout]
 description = "attachment get --output -で中身を標準出力に書き込めなかったときのメッセージ。Detailは原因"

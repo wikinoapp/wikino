@@ -201,7 +201,7 @@ Output:
 
 Errors:
   1  Downloading from the signed URL failed (including expiry and interruption). Run the same command again. Or writing to the destination failed (permissions, disk space, and so on)
-  2  The ID is not a UUID, the destination directory does not exist, a file already exists at the destination (overwrite with `--clobber`), `--output -` is combined with `--json`, `--fields`, `--jq`, or `--clobber`, or `--fields` has an unknown field
+  2  The ID is not a UUID, the destination directory does not exist, a file already exists at the destination (overwrite with `--clobber`), `--output -` is combined with `--json`, `--fields`, `--jq`, or `--clobber`, `--output -` is given while standard output is a terminal, or `--fields` has an unknown field
   3  Not logged in, or the token is invalid or expired (401)
   4  The token lacks the attachment:read scope (403)
   5  The attachment does not exist or belongs to another space (404). Check the ID in `/attachments/{ID}` in the body and the space

@@ -2120,7 +2120,7 @@ other = """
 description = "attachment getコマンドのヘルプの「エラー」の節"
 other = """
   1  署名付きURLからの取得に失敗した (期限切れ・途中の切断を含む)。同じコマンドをもう一度実行してください。保存先に書き込めなかった (権限・空き容量など)
-  2  IDがUUIDでない、保存先のディレクトリが無い、保存先に既にファイルがある (`--clobber` で上書き)、`--output -` と `--json`・`--fields`・`--jq`・`--clobber` を併用した、`--fields` に未知の項目
+  2  IDがUUIDでない、保存先のディレクトリが無い、保存先に既にファイルがある (`--clobber` で上書き)、`--output -` と `--json`・`--fields`・`--jq`・`--clobber` を併用した、標準出力が端末のときに `--output -` を指定した、`--fields` に未知の項目
   3  ログインしていない、トークンが無効か期限切れ (401)
   4  トークンにattachment:readのスコープが無い (403)
   5  添付ファイルが無い、または別のスペースの添付ファイル (404)。本文の `/attachments/{ID}` のIDとスペースを確かめてください"""
@@ -2160,6 +2160,14 @@ other = "保存先に書き込めませんでした: {{.Path}} ({{.Detail}})"
 [attachment_get_error_write_hint]
 description = "attachment getで保存先に書き込めなかったときのヒント"
 other = "保存先に書き込む権限とディスクの空き容量を確かめるか、`--output` で別の保存先を指定してください。"
+
+[attachment_get_error_stdout_tty]
+description = "attachment get --output -を、標準出力が端末のときに指定したときのメッセージ"
+other = "標準出力が端末のため、添付ファイルの中身を書き出しません (端末を操作する文字を含みうるため)"
+
+[attachment_get_error_stdout_tty_hint]
+description = "attachment get --output -を、標準出力が端末のときに指定したときのヒント"
+other = "標準出力をファイルかパイプにリダイレクトするか、`wikino attachment get <attachment_id> -O <path>` でファイルに保存してください。"
 
 [attachment_get_error_write_stdout]
 description = "attachment get --output -で中身を標準出力に書き込めなかったときのメッセージ。Detailは原因"
