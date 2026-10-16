@@ -1,8 +1,6 @@
 package draft
 
 import (
-	"io"
-
 	"github.com/spf13/cobra"
 
 	"github.com/wikinoapp/wikino/cli/internal/cmdutil"
@@ -66,7 +64,7 @@ func runGet(f *cmdutil.Factory, cmd *cobra.Command, arg string, md bool) error {
 	switch {
 	case md:
 		// 下書きには公開状態が無いため、`wikino_status` は書かない。
-		_, err := io.WriteString(f.IOStreams.Out, pagefile.WithFrontmatter(item.Body, pagefile.Metadata{
+		return output.WriteText(f.IOStreams, pagefile.WithFrontmatter(item.Body, pagefile.Metadata{
 			Title:       item.Title,
 			Number:      &item.PageNumber,
 			ETag:        item.ETag,
@@ -74,7 +72,6 @@ func runGet(f *cmdutil.Factory, cmd *cobra.Command, arg string, md bool) error {
 			ModifiedAt:  &item.ModifiedAt,
 			URL:         item.Url,
 		}))
-		return err
 	case printer.IsJSON():
 		return printer.PrintItem(item)
 	default:

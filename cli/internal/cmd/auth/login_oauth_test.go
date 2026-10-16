@@ -245,7 +245,7 @@ func TestLogoutPersonalAccessTokenDoesNotRevoke(t *testing.T) {
 	}
 	for _, req := range e.requests {
 		if strings.HasPrefix(req.URL.Path, "/oauth/") || strings.HasPrefix(req.URL.Path, "/.well-known/") {
-			t.Errorf("個人アクセストークンのログアウトで認可サーバーに要求した: %s", req.URL.Path)
+			t.Errorf("個人用アクセストークンのログアウトで認可サーバーに要求した: %s", req.URL.Path)
 		}
 	}
 }

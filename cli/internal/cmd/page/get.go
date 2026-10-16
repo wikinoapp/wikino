@@ -1,7 +1,6 @@
 package page
 
 import (
-	"io"
 	"slices"
 
 	"github.com/spf13/cobra"
@@ -78,7 +77,7 @@ func runGet(f *cmdutil.Factory, cmd *cobra.Command, arg string, md bool) error {
 
 	switch {
 	case md:
-		_, err := io.WriteString(f.IOStreams.Out, pagefile.WithFrontmatter(item.Body, pagefile.Metadata{
+		return output.WriteText(f.IOStreams, pagefile.WithFrontmatter(item.Body, pagefile.Metadata{
 			Title:       item.Title,
 			Number:      &item.Number,
 			ETag:        item.ETag,
@@ -87,7 +86,6 @@ func runGet(f *cmdutil.Factory, cmd *cobra.Command, arg string, md bool) error {
 			ModifiedAt:  &item.ModifiedAt,
 			URL:         item.Url,
 		}))
-		return err
 	case printer.IsJSON():
 		return printer.PrintItem(item)
 	default:
@@ -100,6 +98,7 @@ func detailFields(loc *i18n.Localizer, item getItem) []output.Field {
 	return []output.Field{
 		{Label: loc.T("page_label_number"), Value: formatNumber(item.Number)},
 		{Label: loc.T("page_label_title"), Value: titleLabel(loc, item.Title)},
+		{Label: loc.T("page_label_topic_name"), Value: item.TopicName},
 		{Label: loc.T("page_label_topic_number"), Value: formatNumber(item.TopicNumber)},
 		{Label: loc.T("page_label_status"), Value: statusLabel(loc, item.Status)},
 		{Label: loc.T("page_label_modified_at"), Value: formatTime(item.ModifiedAt)},

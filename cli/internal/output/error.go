@@ -184,9 +184,9 @@ func WriteError(w io.Writer, err error, asJSON bool) error {
 	if !asJSON {
 		// メッセージには `--jq` のエラー文やAPIの応答など外部由来の値が入りうるため、
 		// 端末を操作する制御文字を空白に置き換える。JSONはエスケープされるため元の値のまま出す。
-		text := sanitizeLine(cliErr.Message) + "\n"
+		text := SanitizeLine(cliErr.Message) + "\n"
 		if cliErr.Hint != "" {
-			text += sanitizeLine(cliErr.Hint) + "\n"
+			text += SanitizeLine(cliErr.Hint) + "\n"
 		}
 		_, werr := io.WriteString(w, text)
 
@@ -210,11 +210,41 @@ func WriteError(w io.Writer, err error, asJSON bool) error {
 // encodeJSONはvをJSONにしてwに書く。indentなら字下げし、そうでなければ1行にする。
 // 本文やタイトルの "<" ">" "&" を < のような形にせず、そのまま読めるようにする。
 func encodeJSON(w io.Writer, v any, indent bool) error {
-	encoder := json.NewEncoder(w)
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
 	encoder.SetEscapeHTML(false)
 	if indent {
 		encoder.SetIndent("", "  ")
 	}
+	if err := encoder.Encode(v); err != nil {
+		return err
+	}
 
-	return encoder.Encode(v)
+	_, err := w.Write(escapeC1(buf.Bytes()))
+
+	return err
+}
+
+// escapeC1は、JSONの中のC1制御文字 (U+0080〜U+009F) を `\u0080` の形にエスケープする。
+// encoding/jsonはC1を生のバイトで書くが、端末によってはエスケープシーケンスの開始 (U+009BのCSIなど) と
+// 解釈される。エスケープしてもデコードした値は変わらない。
+//
+// encoding/jsonの出力は正しいUTF-8で、C1は必ず0xC2と0x80〜0x9Fの2バイトになる。
+// 0xC2は他の文字の途中に現れないため、バイト列のまま置き換えられる。
+func escapeC1(data []byte) []byte {
+	if !bytes.Contains(data, []byte{0xc2}) {
+		return data
+	}
+
+	escaped := make([]byte, 0, len(data))
+	for i := 0; i < len(data); i++ {
+		if data[i] == 0xc2 && i+1 < len(data) && data[i+1] >= 0x80 && data[i+1] <= 0x9f {
+			escaped = fmt.Appendf(escaped, `\u%04x`, data[i+1])
+			i++
+			continue
+		}
+		escaped = append(escaped, data[i])
+	}
+
+	return escaped
 }

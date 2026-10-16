@@ -513,13 +513,13 @@ func TestOAuthFlow_トークンの失効(t *testing.T) {
 	assertRetrieveError(t, err, "invalid_grant")
 }
 
-// newPersonalAccessTokenは、spaceMemberIDのメンバーの個人アクセストークンを作り、平文を返す
+// newPersonalAccessTokenは、spaceMemberIDのメンバーの個人用アクセストークンを作り、平文を返す
 func newPersonalAccessToken(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) string {
 	t.Helper()
 
 	token, err := auth.GenerateOpaqueToken(auth.PersonalAccessTokenPrefix)
 	if err != nil {
-		t.Fatalf("個人アクセストークンの生成に失敗: %v", err)
+		t.Fatalf("個人用アクセストークンの生成に失敗: %v", err)
 	}
 	testutil.NewPersonalAccessTokenBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -549,7 +549,7 @@ func getRateLimit(t *testing.T, srv *httptest.Server, path, accessToken string) 
 	return resp.Header.Get("RateLimit")
 }
 
-// TestAPIRateLimit_スペースのメンバー単位は、公開APIのレート制限が、同じスペースの個人アクセストークンと
+// TestAPIRateLimit_スペースのメンバー単位は、公開APIのレート制限が、同じスペースの個人用アクセストークンと
 // OAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えることを、実際のカウンターで確かめる
 func TestAPIRateLimit_スペースのメンバー単位(t *testing.T) {
 	t.Parallel()
@@ -576,7 +576,7 @@ func TestAPIRateLimit_スペースのメンバー単位(t *testing.T) {
 		t.Fatalf("認可コードの交換に失敗: %v", err)
 	}
 
-	// 編集者はトークンの発行の権限を持つため、同じメンバーで個人アクセストークンも使える
+	// 編集者はトークンの発行の権限を持つため、同じメンバーで個人用アクセストークンも使える
 	var pat, otherPAT string
 	testutil.CommitFixture(t, func(tx *sql.Tx) {
 		pat = newPersonalAccessToken(t, tx, f.spaceID, f.spaceMemberID)
@@ -599,8 +599,8 @@ func TestAPIRateLimit_スペースのメンバー単位(t *testing.T) {
 		token string
 		want  string
 	}{
-		{name: "個人アクセストークンでの1回目", path: oauthFlowCurrentSpaceMemberPath(t), token: pat, want: `"space_member";r=4999;`},
-		{name: "同じスペースのOAuthのトークンは個人アクセストークンと合わせて数える", path: oauthFlowCurrentSpaceMemberPath(t), token: oauthToken.AccessToken, want: `"space_member";r=4998;`},
+		{name: "個人用アクセストークンでの1回目", path: oauthFlowCurrentSpaceMemberPath(t), token: pat, want: `"space_member";r=4999;`},
+		{name: "同じスペースのOAuthのトークンは個人用アクセストークンと合わせて数える", path: oauthFlowCurrentSpaceMemberPath(t), token: oauthToken.AccessToken, want: `"space_member";r=4998;`},
 		{name: "同じ人でもスペースが違えば別に数える", path: otherSpacePath, token: otherPAT, want: `"space_member";r=4999;`},
 	}
 	for _, tt := range tests {
@@ -667,7 +667,7 @@ func getCurrentToken(t *testing.T, srv *httptest.Server, path, accessToken strin
 	return resp.StatusCode, body
 }
 
-// TestAPICurrentTokenは、個人アクセストークンとOAuthのアクセストークンのそれぞれで、トークン認証から
+// TestAPICurrentTokenは、個人用アクセストークンとOAuthのアクセストークンのそれぞれで、トークン認証から
 // `getCurrentToken` までを通し、保存したトークンの種類・スコープ・有効期限が返ることを確かめる
 func TestAPICurrentToken(t *testing.T) {
 	t.Parallel()
@@ -694,25 +694,30 @@ func TestAPICurrentToken(t *testing.T) {
 	}
 
 	patExpiresAt := time.Now().UTC().Add(24 * time.Hour).Truncate(time.Second)
-	var pat string
-	testutil.CommitFixture(t, func(tx *sql.Tx) {
-		token, err := auth.GenerateOpaqueToken(auth.PersonalAccessTokenPrefix)
-		if err != nil {
-			t.Fatalf("個人アクセストークンの生成に失敗: %v", err)
-		}
-		testutil.NewPersonalAccessTokenBuilder(t, tx).
-			WithSpaceID(f.spaceID).
-			WithSpaceMemberID(f.spaceMemberID).
-			WithTokenDigest(auth.DigestOpaqueToken(token)).
-			WithScopes([]model.Scope{model.ScopeDraftPageWrite}).
-			WithExpiresAt(patExpiresAt).
-			Build()
-		pat = token
-	})
+	createPAT := func(scopes []model.Scope) string {
+		var pat string
+		testutil.CommitFixture(t, func(tx *sql.Tx) {
+			token, err := auth.GenerateOpaqueToken(auth.PersonalAccessTokenPrefix)
+			if err != nil {
+				t.Fatalf("個人用アクセストークンの生成に失敗: %v", err)
+			}
+			testutil.NewPersonalAccessTokenBuilder(t, tx).
+				WithSpaceID(f.spaceID).
+				WithSpaceMemberID(f.spaceMemberID).
+				WithTokenDigest(auth.DigestOpaqueToken(token)).
+				WithScopes(scopes).
+				WithExpiresAt(patExpiresAt).
+				Build()
+			pat = token
+		})
+		return pat
+	}
+	pat := createPAT([]model.Scope{model.ScopeDraftPageWrite})
+	draftPageDeletePAT := createPAT([]model.Scope{model.ScopeDraftPageDelete})
 
 	path := "/api/v1/spaces/" + oauthFlowSpaceIdentifier(t) + "/tokens/current"
 
-	t.Run("個人アクセストークン", func(t *testing.T) {
+	t.Run("個人用アクセストークン", func(t *testing.T) {
 		status, body := getCurrentToken(t, srv, path, pat)
 		if status != http.StatusOK {
 			t.Fatalf("ステータス = %d、期待値 = 200", status)
@@ -726,6 +731,17 @@ func TestAPICurrentToken(t *testing.T) {
 		}
 		if !body.ExpiresAt.Equal(patExpiresAt) {
 			t.Errorf("expires_at = %v、期待値 = %v", body.ExpiresAt, patExpiresAt)
+		}
+	})
+
+	t.Run("draft_page:deleteだけの個人用アクセストークンはdraft_page:readも返す", func(t *testing.T) {
+		status, body := getCurrentToken(t, srv, path, draftPageDeletePAT)
+		if status != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200", status)
+		}
+		// draft_page:deleteはdraft_page:readを含意する
+		if want := []string{"draft_page:read", "draft_page:delete"}; !slices.Equal(body.Scopes, want) {
+			t.Errorf("scopes = %v、期待値 = %v", body.Scopes, want)
 		}
 	})
 

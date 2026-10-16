@@ -9,7 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// GetPersonalAccessTokensUsecaseは、個人アクセストークンの一覧の画面が表示するものを集める。
+// GetPersonalAccessTokensUsecaseは、個人用アクセストークンの一覧の画面が表示するものを集める。
 type GetPersonalAccessTokensUsecase struct {
 	spaceRepo               *repository.SpaceRepository
 	spaceMemberRepo         *repository.SpaceMemberRepository
@@ -52,7 +52,7 @@ type GetPersonalAccessTokensOutput struct {
 	CanDelete bool
 }
 
-// Executeはスペースと、閲覧者自身の個人アクセストークンの一覧を取得する。
+// Executeはスペースと、閲覧者自身の個人用アクセストークンの一覧を取得する。
 //
 // 一覧に出すのは閲覧者自身のトークンだけである。他のメンバーのトークンを管理者が一覧する
 // 機能は、メンバーを招待できるようになってから別のユースケースで扱う。
@@ -67,7 +67,7 @@ func (uc *GetPersonalAccessTokensUsecase) Execute(ctx context.Context, input Get
 
 	tokens, err := uc.personalAccessTokenRepo.ListUnrevokedBySpaceMember(ctx, access.space.ID, access.spaceMember.ID)
 	if err != nil {
-		return nil, fmt.Errorf("個人アクセストークンの一覧の取得に失敗: %w", err)
+		return nil, fmt.Errorf("個人用アクセストークンの一覧の取得に失敗: %w", err)
 	}
 
 	return &GetPersonalAccessTokensOutput{

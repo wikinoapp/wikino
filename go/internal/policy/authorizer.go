@@ -74,7 +74,7 @@ type Authorizer interface {
 	// スペース設定の既存の項目 (一般・エクスポート・添付ファイル・削除) はこの権限を持つメンバーにだけ出す。
 	CanUpdateSpace() bool
 
-	// 個人アクセストークン (所有者チェックパターン)
+	// 個人用アクセストークン (所有者チェックパターン)
 	// 一覧・失効の対象は自分のトークンに限る。所有者チェックはUseCase側で
 	// 「本人のトークンしか取得しない」ことで担保する。
 	CanShowPersonalAccessTokens() bool

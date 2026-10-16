@@ -51,7 +51,7 @@ func TestGetSpec(t *testing.T) {
 		}
 	})
 
-	t.Run("個人アクセストークンのスキームがBearer認証として定義されている", func(t *testing.T) {
+	t.Run("個人用アクセストークンのスキームがBearer認証として定義されている", func(t *testing.T) {
 		t.Parallel()
 
 		scheme, ok := spec.Components.SecuritySchemes["personalAccessToken"]

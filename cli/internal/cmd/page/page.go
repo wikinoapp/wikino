@@ -41,7 +41,7 @@ func NewCmdPage(f *cmdutil.Factory) *cobra.Command {
 }
 
 // pageFieldsは、APIのページの項目。
-var pageFields = []string{"id", "number", "title", "status", "topic_number", "modified_at", "url", "body"}
+var pageFields = []string{"id", "number", "title", "status", "topic_number", "topic_name", "modified_at", "url", "body"}
 
 func formatNumber(n int32) string {
 	return strconv.FormatInt(int64(n), 10)

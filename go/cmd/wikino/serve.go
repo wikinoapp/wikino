@@ -1059,7 +1059,7 @@ func runServe() {
 		r.Get("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 
-		// 個人アクセストークンの一覧・発行フォーム・発行・失効。Rails版には無い画面で、リバース
+		// 個人用アクセストークンの一覧・発行フォーム・発行・失効。Rails版には無い画面で、リバース
 		// プロキシは名前空間全体をGoへ渡してくる。サブルーターにするのはエクスポートと同じく、
 		// どのルートも受けないリクエストにchi既定の本文なし405ではなく404ページを返すため。
 		r.Route("/s/{space_identifier}/settings/personal_access_tokens", func(r chi.Router) {
@@ -1073,7 +1073,7 @@ func runServe() {
 			r.Delete("/{personal_access_token_id}", personalAccessTokenHandler.Delete)
 		})
 
-		// スペースのOAuthアプリの一覧・登録・詳細・編集・削除とシークレットの再発行。個人アクセストークンと同じく
+		// スペースのOAuthアプリの一覧・登録・詳細・編集・削除とシークレットの再発行。個人用アクセストークンと同じく
 		// Rails版には無い画面で、リバースプロキシは名前空間全体をGoへ渡してくるため、どのルートも
 		// 受けないリクエストには404ページを返す。
 		r.Route("/s/{space_identifier}/settings/oauth_applications", func(r chi.Router) {
@@ -1093,7 +1093,7 @@ func runServe() {
 			r.Post("/{oauth_application_id}/client_secret", oauthApplicationClientSecretHandler.Create)
 		})
 
-		// 自分が許可した連携中のアプリの一覧と解除。個人アクセストークンと同じくRails版には無い
+		// 自分が許可した連携中のアプリの一覧と解除。個人用アクセストークンと同じくRails版には無い
 		// 画面で、リバースプロキシは名前空間全体をGoへ渡してくるため、どのルートも受けない
 		// リクエストには404ページを返す。
 		r.Route("/s/{space_identifier}/settings/oauth_grants", func(r chi.Router) {

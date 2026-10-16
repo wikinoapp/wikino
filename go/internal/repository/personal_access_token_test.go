@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// personalAccessTokenFixtureはどの個人アクセストークンのテストでも必要になるスペースと
+// personalAccessTokenFixtureはどの個人用アクセストークンのテストでも必要になるスペースと
 // スペースメンバー
 type personalAccessTokenFixture struct {
 	spaceID       model.SpaceID

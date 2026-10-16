@@ -10,6 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	patpages "github.com/wikinoapp/wikino/go/internal/templates/pages/personal_access_token"
@@ -17,11 +18,12 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Createは個人アクセストークンを発行します (POST /s/{space_identifier}/settings/personal_access_tokens)。
+// Createは個人用アクセストークンを発行します (POST /s/{space_identifier}/settings/personal_access_tokens)。
 //
 // 発行に成功したら、リダイレクトせずにその応答でトークンの値を表示する。データベースには
 // ダイジェストしか残らないため、値を次のリクエストへ持ち越すにはCookieなどのクライアント側に
 // 値を置くことになる。値がブラウザに渡る経路をこの応答の本文1つに限り、キャッシュにも残さない。
+// 発行したことは、ほかの画面の完了と同じくフラッシュで伝える。
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -54,10 +56,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spaceVM := viewmodel.NewSpace(output.Space)
+	tokenVM := viewmodel.NewPersonalAccessToken(output.Token, time.Now())
+
+	r = r.WithContext(session.SetFlashToContext(ctx, &session.FlashMessage{
+		Type:    session.FlashSuccess,
+		Message: i18n.T(ctx, "flash_personal_access_token_created", map[string]any{"Name": tokenVM.Name}),
+	}))
 
 	content := patpages.Create(patpages.CreateData{
 		Space:      spaceVM,
-		Token:      viewmodel.NewPersonalAccessToken(output.Token, time.Now()),
+		Token:      tokenVM,
 		TokenValue: output.TokenValue,
 	})
 
@@ -83,7 +91,7 @@ func (h *Handler) handleCreateError(w http.ResponseWriter, r *http.Request, err 
 
 	ve := model.AsValidationError(err)
 	if ve == nil {
-		h.handleError(w, r, err, "個人アクセストークンの発行に失敗")
+		h.handleError(w, r, err, "個人用アクセストークンの発行に失敗")
 		return
 	}
 

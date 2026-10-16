@@ -9,7 +9,7 @@ import (
 type APITokenKind string
 
 const (
-	// APITokenKindPersonalAccessTokenは個人アクセストークン
+	// APITokenKindPersonalAccessTokenは個人用アクセストークン
 	APITokenKindPersonalAccessToken APITokenKind = "personal_access_token"
 	// APITokenKindOAuthAccessTokenはOAuthのアクセストークン
 	APITokenKindOAuthAccessToken APITokenKind = "oauth_access_token"

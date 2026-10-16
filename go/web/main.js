@@ -1,6 +1,8 @@
 import "basecoat-css/all";
 
+import { initializeAPITokenScopes } from "./api-token-scope";
 import { initializeAttachmentLoader } from "./attachment-loader";
+import { initializeCopyableInputs } from "./copyable-input";
 import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeDraftDeleteForms } from "./markdown-editor/draft-delete-handler";
@@ -30,6 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeZenMode();
   initializePlatform();
   initializeAttachmentLoader();
+  initializeAPITokenScopes();
+  initializeCopyableInputs();
   initializeMarkdownTables();
   initializeStickyHeader();
   setTimeZoneCookie();

@@ -13,6 +13,18 @@ other = "Wikino is a wiki application for sharing and organizing information onl
 description = "フラッシュメッセージの閉じるボタンのラベル"
 other = "Dismiss"
 
+[copyable_input_copy_button_label]
+description = "コピーするための値の欄の、コピーボタンのラベル"
+other = "Copy {{.Label}}"
+
+[copyable_input_copied]
+description = "コピーするための値の欄で、クリップボードへコピーできたときのメッセージ"
+other = "Copied {{.Label}} to the clipboard"
+
+[copyable_input_copy_failed]
+description = "コピーするための値の欄で、クリップボードへコピーできなかったときのメッセージ"
+other = "Couldn't copy. Select the value in the field and copy it instead"
+
 [dialog_close]
 description = "ダイアログの閉じるボタンのラベル"
 other = "Close"
@@ -1364,31 +1376,31 @@ description = "トピック名重複エラー"
 other = "This name has already been taken"
 
 [validation_personal_access_token_name_required]
-description = "個人アクセストークン名必須エラー"
+description = "個人用アクセストークン名必須エラー"
 other = "Please enter a name"
 
 [validation_personal_access_token_name_too_long]
-description = "個人アクセストークン名文字数超過エラー"
+description = "個人用アクセストークン名文字数超過エラー"
 other = "Name must be 50 characters or fewer"
 
 [validation_personal_access_token_name_control_chars]
-description = "個人アクセストークン名制御文字エラー"
+description = "個人用アクセストークン名制御文字エラー"
 other = "Name cannot contain control characters"
 
 [validation_personal_access_token_name_invalid_format]
-description = "個人アクセストークン名不正フォーマットエラー"
+description = "個人用アクセストークン名不正フォーマットエラー"
 other = "Name cannot start or end with a space"
 
 [validation_personal_access_token_scopes_required]
-description = "個人アクセストークンのスコープ未選択エラー"
+description = "個人用アクセストークンのスコープ未選択エラー"
 other = "Please select at least one scope"
 
 [validation_personal_access_token_scopes_invalid]
-description = "個人アクセストークンに付与できないスコープのエラー"
+description = "個人用アクセストークンに付与できないスコープのエラー"
 other = "The selection includes a scope that cannot be granted"
 
 [validation_personal_access_token_expiration_days_invalid]
-description = "個人アクセストークンの有効期限不正エラー"
+description = "個人用アクセストークンの有効期限不正エラー"
 other = "Please choose an expiration from the options"
 
 [validation_oauth_authorization_scopes_required]
@@ -1579,7 +1591,7 @@ description = "スペース設定のトップのスペースの削除へのリ�
 other = "Delete this space"
 
 [space_settings_personal_access_tokens]
-description = "スペース設定のトップの個人アクセストークンへのリンク"
+description = "スペース設定のトップの個人用アクセストークンへのリンク"
 other = "Personal access tokens"
 
 [space_settings_oauth_grants]
@@ -2097,7 +2109,7 @@ other = "The export could not be completed<br>Please try again"
 description = "エクスポート状態表示画面から再実行するリンク"
 other = "Export again"
 
-# 個人アクセストークンの画面
+# 個人用アクセストークンの画面
 [api_token_scope_topic_read]
 description = "公開APIのトークンのスコープtopic:readの表示名"
 other = "Read topics"
@@ -2144,7 +2156,7 @@ other = "Delete drafts"
 
 [api_token_scope_draft_page_delete_hint]
 description = "公開APIのトークンのスコープdraft_page:deleteの説明"
-other = "Delete your own drafts along with their revision history"
+other = "Delete your own drafts along with their revision history. Includes reading drafts"
 
 [api_token_scope_attachment_read]
 description = "公開APIのトークンのスコープattachment:readの表示名"
@@ -2158,64 +2170,68 @@ other = "Get the details and contents of the space's attachments, including atta
 description = "公開APIのトークンのスコープのうち、メンバーの今の権限では効かないものに添える注記"
 other = "Not effective with your current permissions"
 
+[api_token_scope_implied_note]
+description = "公開APIのトークンのスコープのうち、選んだほかのスコープに含まれるものに添える注記"
+other = "Included in \"{{.Scope}}\""
+
 [personal_access_token_index_title]
-description = "個人アクセストークンの一覧のページタイトル"
+description = "個人用アクセストークンの一覧のページタイトル"
 other = "Personal access tokens | {{.SpaceName}}"
 
 [personal_access_token_index_heading]
-description = "個人アクセストークンの一覧の見出し"
+description = "個人用アクセストークンの一覧の見出し"
 other = "Personal access tokens"
 
-[personal_access_token_index_description]
-description = "個人アクセストークンの一覧のサブタイトル"
-other = "Tokens for calling the public API. A token issued in this space can only be used for this space."
+[personal_access_token_index_description_html]
+description = "個人用アクセストークンの一覧のサブタイトル (ヘルプページへのリンクを含む)"
+other = "Access tokens for calling the public API. An access token issued in this space can only be used for this space. See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">Personal access token help</a> for more information."
 
 [personal_access_token_index_breadcrumb_settings]
-description = "個人アクセストークンの一覧のパンくずのスペース設定へのリンク"
+description = "個人用アクセストークンの一覧のパンくずのスペース設定へのリンク"
 other = "Settings"
 
 [personal_access_token_index_breadcrumb]
-description = "個人アクセストークンの一覧自身を指すパンくず項目 (現在項目)"
+description = "個人用アクセストークンの一覧自身を指すパンくず項目 (現在項目)"
 other = "Personal access tokens"
 
 [personal_access_token_index_new]
-description = "個人アクセストークンの一覧の発行フォームへのリンク"
+description = "個人用アクセストークンの一覧の発行フォームへのリンク"
 other = "Generate a new token"
 
 [personal_access_token_index_empty]
-description = "個人アクセストークンの一覧でトークンが無いときの表示"
+description = "個人用アクセストークンの一覧でトークンが無いときの表示"
 other = "You have not generated any tokens"
 
 [personal_access_token_index_last_chars]
-description = "個人アクセストークンの一覧でトークンを見分けるための末尾の文字"
+description = "個人用アクセストークンの一覧でトークンを見分けるための末尾の文字"
 other = "…{{.LastChars}}"
 
 [personal_access_token_index_expired]
-description = "個人アクセストークンの一覧の期限切れのバッジ"
+description = "個人用アクセストークンの一覧の期限切れのバッジ"
 other = "Expired"
 
 [personal_access_token_index_expires_at]
-description = "個人アクセストークンの一覧の有効期限の項目名"
+description = "個人用アクセストークンの一覧の有効期限の項目名"
 other = "Expires"
 
 [personal_access_token_index_last_used_at]
-description = "個人アクセストークンの一覧の最終使用日時の項目名"
+description = "個人用アクセストークンの一覧の最終使用日時の項目名"
 other = "Last used"
 
 [personal_access_token_index_never_used]
-description = "個人アクセストークンの一覧で一度も使われていないことの表示"
+description = "個人用アクセストークンの一覧で一度も使われていないことの表示"
 other = "Never used"
 
 [personal_access_token_index_revoke]
-description = "個人アクセストークンの一覧の失効ボタン"
+description = "個人用アクセストークンの一覧の失効ボタン"
 other = "Revoke token"
 
 [personal_access_token_index_revoke_confirm]
-description = "個人アクセストークンの失効の確認ダイアログ"
+description = "個人用アクセストークンの失効の確認ダイアログ"
 other = "Revoke \"{{.Name}}\"? Tools using this token will no longer be able to call the API."
 
 [flash_personal_access_token_revoked]
-description = "個人アクセストークンを失効したときのフラッシュメッセージ"
+description = "個人用アクセストークンを失効したときのフラッシュメッセージ"
 other = "Revoked \"{{.Name}}\""
 
 [oauth_grant_index_title]
@@ -2259,91 +2275,95 @@ description = "連携を解除したときのフラッシュメッセージ"
 other = "Revoked access for \"{{.Name}}\""
 
 [personal_access_token_new_title]
-description = "個人アクセストークンの発行フォームのページタイトル"
-other = "Generate a token | {{.SpaceName}}"
+description = "個人用アクセストークンの発行フォームのページタイトル"
+other = "Generate a personal access token | {{.SpaceName}}"
 
 [personal_access_token_new_heading]
-description = "個人アクセストークンの発行フォームの見出し"
-other = "Generate a token"
+description = "個人用アクセストークンの発行フォームの見出し"
+other = "Generate a personal access token"
 
-[personal_access_token_new_description]
-description = "個人アクセストークンの発行フォームのサブタイトル"
-other = "Generate a token for the public API of this space. A token can only do what both the selected scopes and your member permissions allow."
+[personal_access_token_new_description_html]
+description = "個人用アクセストークンの発行フォームのサブタイトル (ヘルプページへのリンクを含む)"
+other = "Generate an access token for the public API of this space. An access token can only do what both the selected scopes and your member permissions allow. See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">Personal access token help</a> for more information."
 
 [personal_access_token_new_breadcrumb_settings]
-description = "個人アクセストークンの発行フォームのパンくずのスペース設定へのリンク"
+description = "個人用アクセストークンの発行フォームのパンくずのスペース設定へのリンク"
 other = "Settings"
 
 [personal_access_token_new_breadcrumb_index]
-description = "個人アクセストークンの発行フォームのパンくずの一覧へのリンク"
+description = "個人用アクセストークンの発行フォームのパンくずの一覧へのリンク"
 other = "Personal access tokens"
 
 [personal_access_token_new_breadcrumb]
-description = "個人アクセストークンの発行フォーム自身を指すパンくず項目 (現在項目)"
+description = "個人用アクセストークンの発行フォーム自身を指すパンくず項目 (現在項目)"
 other = "Generate"
 
 [personal_access_token_new_name_label]
-description = "個人アクセストークンの発行フォームの名前のラベル"
+description = "個人用アクセストークンの発行フォームの名前のラベル"
 other = "Name"
 
 [personal_access_token_new_name_hint]
-description = "個人アクセストークンの発行フォームの名前の補足"
+description = "個人用アクセストークンの発行フォームの名前の補足"
 other = "Give it a name that tells you what it is for (e.g. CLI on my laptop)"
 
 [personal_access_token_new_scopes_label]
-description = "個人アクセストークンの発行フォームのスコープのラベル"
+description = "個人用アクセストークンの発行フォームのスコープのラベル"
 other = "Scopes"
 
 [personal_access_token_new_expiration_days_label]
-description = "個人アクセストークンの発行フォームの有効期限のラベル"
+description = "個人用アクセストークンの発行フォームの有効期限のラベル"
 other = "Expiration"
 
 [personal_access_token_new_expiration_days_option]
-description = "個人アクセストークンの発行フォームの有効期限の選択肢"
+description = "個人用アクセストークンの発行フォームの有効期限の選択肢"
 other = "{{.Days}} days"
 
 [personal_access_token_new_submit_button]
-description = "個人アクセストークンの発行フォームの送信ボタン"
+description = "個人用アクセストークンの発行フォームの送信ボタン"
 other = "Generate token"
 
 [personal_access_token_new_cancel]
-description = "個人アクセストークンの発行フォームのキャンセルリンク"
+description = "個人用アクセストークンの発行フォームのキャンセルリンク"
 other = "Cancel"
 
+[flash_personal_access_token_created]
+description = "個人用アクセストークンを発行したときのフラッシュメッセージ"
+other = "Generated \"{{.Name}}\""
+
 [personal_access_token_create_title]
-description = "個人アクセストークンを発行した直後の画面のページタイトル"
-other = "Token generated | {{.SpaceName}}"
+description = "個人用アクセストークンを発行した直後の画面のページタイトル"
+other = "Generate a personal access token | {{.SpaceName}}"
 
 [personal_access_token_create_heading]
-description = "個人アクセストークンを発行した直後の画面の見出し"
-other = "Token generated"
+description = "個人用アクセストークンを発行した直後の画面の見出し"
+other = "Generate a personal access token"
 
 [personal_access_token_create_notice]
-description = "個人アクセストークンの値を1度だけ表示することの注意"
+description = "個人用アクセストークンの値を1度だけ表示することの注意"
 other = "This is the only time the token is shown. You will not be able to see it again after leaving this page, so copy it now and keep it somewhere safe."
 
 [personal_access_token_create_token_label]
-description = "個人アクセストークンを発行した直後の画面のトークンの値のラベル"
+description = "個人用アクセストークンを発行した直後の画面のトークンの値のラベル"
 other = "Token for {{.Name}}"
 
 [personal_access_token_create_expires_at]
-description = "個人アクセストークンを発行した直後の画面の有効期限の項目名"
+description = "個人用アクセストークンを発行した直後の画面の有効期限の項目名"
 other = "Expires:"
 
 [personal_access_token_create_breadcrumb_settings]
-description = "個人アクセストークンを発行した直後の画面のパンくずのスペース設定へのリンク"
+description = "個人用アクセストークンを発行した直後の画面のパンくずのスペース設定へのリンク"
 other = "Settings"
 
 [personal_access_token_create_breadcrumb_index]
-description = "個人アクセストークンを発行した直後の画面のパンくずの一覧へのリンク"
+description = "個人用アクセストークンを発行した直後の画面のパンくずの一覧へのリンク"
 other = "Personal access tokens"
 
 [personal_access_token_create_breadcrumb]
-description = "個人アクセストークンを発行した直後の画面自身を指すパンくず項目 (現在項目)"
+description = "個人用アクセストークンを発行した直後の画面自身を指すパンくず項目 (現在項目)"
 other = "Generate"
 
 [personal_access_token_create_back]
-description = "個人アクセストークンを発行した直後の画面の一覧へ戻るリンク"
+description = "個人用アクセストークンを発行した直後の画面の一覧へ戻るリンク"
 other = "Back to tokens"
 
 [oauth_application_client_type_confidential]
@@ -2464,11 +2484,11 @@ other = "Registered \"{{.Name}}\""
 
 [oauth_application_create_title]
 description = "confidentialクライアントを登録した直後の画面のページタイトル"
-other = "App registered | {{.SpaceName}}"
+other = "Register an app | {{.SpaceName}}"
 
 [oauth_application_create_heading]
 description = "confidentialクライアントを登録した直後の画面の見出し"
-other = "App registered"
+other = "Register an app"
 
 [oauth_application_create_notice]
 description = "クライアントシークレットを1度だけ表示することの注意"

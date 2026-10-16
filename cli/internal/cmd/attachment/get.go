@@ -94,6 +94,13 @@ func runGet(f *cmdutil.Factory, cmd *cobra.Command, arg string, opts *getOptions
 		if err := validateStdoutFlags(loc, cmd); err != nil {
 			return err
 		}
+		// 添付ファイルの中身は他の利用者が上げたもので、端末を操作するエスケープシーケンスを含みうる。
+		// 中身を書き換えると保存したファイルが壊れるため、取り除かずに端末への書き出しを断る。
+		if f.IOStreams.IsStdoutTTY() {
+			usageErr := cmdutil.NewUsageError(loc, cmd, loc.T("attachment_get_error_stdout_tty"))
+			usageErr.Hint = loc.T("attachment_get_error_stdout_tty_hint")
+			return usageErr
+		}
 	} else if printer, err = output.NewPrinter(f.IOStreams, loc, cmd.Flags(), output.Spec{Fields: getFields}); err != nil {
 		return err
 	}

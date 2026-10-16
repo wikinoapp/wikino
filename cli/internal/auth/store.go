@@ -48,10 +48,10 @@ const keyringTimeout = 3 * time.Second
 const credentialsDirName = "credentials"
 
 // Secretは保存するトークン。
-// 個人アクセストークンはAccessTokenだけを持ち、OAuthのトークンはリフレッシュトークンと期限も持つ。
+// 個人用アクセストークンはAccessTokenだけを持ち、OAuthのトークンはリフレッシュトークンと期限も持つ。
 type Secret struct {
 	AccessToken string `json:"access_token"`
-	// RefreshTokenはOAuthのリフレッシュトークン。個人アクセストークンでは空。
+	// RefreshTokenはOAuthのリフレッシュトークン。個人用アクセストークンでは空。
 	RefreshToken string `json:"refresh_token,omitempty"`
 	// ExpiresAtはOAuthのアクセストークンの期限。
 	ExpiresAt time.Time `json:"expires_at,omitzero"`

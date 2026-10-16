@@ -135,11 +135,19 @@ func (f *FlashManager) Middleware(next http.Handler) http.Handler {
 
 		flash := f.GetFlash(w, r)
 		if flash != nil {
-			ctx := context.WithValue(r.Context(), flashContextKey{}, flash)
-			r = r.WithContext(ctx)
+			r = r.WithContext(SetFlashToContext(r.Context(), flash))
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// SetFlashToContextはフラッシュメッセージをcontextに格納します。
+//
+// 秘密の値を1度だけ示す画面のように、リダイレクトせずにPOSTの応答で描画する画面で使う。
+// Cookieに置いたフラッシュは次のリクエストで表示されるため、その応答自身にフラッシュを出すには
+// 描画の前にcontextへ入れる。
+func SetFlashToContext(ctx context.Context, flash *FlashMessage) context.Context {
+	return context.WithValue(ctx, flashContextKey{}, flash)
 }
 
 // FlashFromContextはcontextからフラッシュメッセージを取得します

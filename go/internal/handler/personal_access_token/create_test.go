@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -47,7 +48,20 @@ func TestCreate_発行したトークンの値をその応答でだけ表示す�
 	if match == nil {
 		t.Fatal("レスポンスにトークンの値が含まれていない")
 	}
-	for _, want := range []string{"トークン (自宅のCLI)", "トピックの読み取り", "ページの読み取り", "二度と表示できない"} {
+	for _, want := range []string{
+		"<title>個人用アクセストークンの発行 | トークンのスペース</title>",
+		">個人用アクセストークンの発行</h1>",
+		"トークン (自宅のCLI)",
+		"トピックの読み取り",
+		"ページの読み取り",
+		"二度と表示できない",
+		// トークンの値は、選んでコピーできる欄とコピーボタンで示す
+		`data-copyable-input-value id="token_value"`,
+		`aria-label="トークン (自宅のCLI)をコピー"`,
+		// 発行したことは、リダイレクトせずに描画するこの応答のトーストで伝える
+		`data-category="success"`,
+		"「自宅のCLI」を発行しました",
+	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
@@ -62,6 +76,43 @@ func TestCreate_発行したトークンの値をその応答でだけ表示す�
 	}
 	if token.SpaceMemberID != m.spaceMemberID || token.Name != "自宅のCLI" {
 		t.Errorf("保存されたトークン = %+v", token)
+	}
+}
+
+func TestCreate_選んだスコープに含まれるスコープを補って発行する(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	identifier := "pat-create-implied"
+	m := setupPATMember(t, tx, identifier, model.SpaceRoleEditor, true)
+
+	// 発行画面は、選んだdraft_page:writeに含まれるdraft_page:readを無効にして送信しない
+	form := url.Values{
+		"name":            {"エージェント"},
+		"scopes":          {"draft_page:write"},
+		"expiration_days": {"7"},
+	}
+	req := newRequest(t, http.MethodPost, "/s/"+identifier+"/settings/personal_access_tokens", identifier, m.userID, form)
+	rr := httptest.NewRecorder()
+	setupHandler(t, q).Create(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+	match := tokenValuePattern.FindStringSubmatch(rr.Body.String())
+	if match == nil {
+		t.Fatal("レスポンスにトークンの値が含まれていない")
+	}
+	token, err := repository.NewPersonalAccessTokenRepository(q).FindByTokenDigest(context.Background(), auth.DigestOpaqueToken(match[1]))
+	if err != nil {
+		t.Fatalf("FindByTokenDigest()のエラー = %v", err)
+	}
+	if token == nil {
+		t.Fatal("表示したトークンがデータベースに無い")
+	}
+	if want := []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite}; !slices.Equal(token.Scopes, want) {
+		t.Errorf("token.Scopes = %v、期待値 = %v", token.Scopes, want)
 	}
 }
 
@@ -104,6 +155,12 @@ func TestCreate_入力が不正なら422で送信内容を戻したフォーム�
 	}
 	if !regexp.MustCompile(`id="scopes_page_write"[^>]*checked`).MatchString(body) {
 		t.Error("送信したスコープのチェックが戻っていない")
+	}
+	if !regexp.MustCompile(`id="scopes_page_read"[^>]*checked[^>]*disabled`).MatchString(body) {
+		t.Error("送信したスコープに含まれるスコープが、選択済みかつ無効で描画されていない")
+	}
+	if !strings.Contains(body, "「ページの作成・更新」に含まれます") {
+		t.Error("送信したスコープに含まれることの注記が無い")
 	}
 
 	tokens, err := repository.NewPersonalAccessTokenRepository(q).ListUnrevokedBySpaceMember(context.Background(), m.spaceID, m.spaceMemberID)

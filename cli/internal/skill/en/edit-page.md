@@ -18,7 +18,7 @@ When the user wants to check the content before it is published, or the token on
 
 - For a wiki link, find the target page with `wikino page search` first, and write its title exactly
 - Do not add speculative links to pages that do not exist. A wiki link to a page that does not exist creates an unpublished page with that title
-- Point to a page in another topic with `[[Topic name/Title]]`
+- Point to a page in another topic with `[[Topic name/Title]]`. You do not need to look up the topic name with `wikino topic list`: `topic_name` in the output for the target page, such as from `wikino page search`, tells you
 
 Before writing, run the command with `--dry-run` and check `wikilinks` in the output.
 

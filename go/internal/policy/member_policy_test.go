@@ -157,7 +157,7 @@ func TestNewAPIMemberPolicy(t *testing.T) {
 			t.Error("管理者のロールのメンバーでもトークン経由でスペースを更新できるべきでない")
 		}
 		if p.CanCreatePersonalAccessToken() {
-			t.Error("管理者のロールのメンバーでもトークン経由で個人アクセストークンを発行できるべきでない")
+			t.Error("管理者のロールのメンバーでもトークン経由で個人用アクセストークンを発行できるべきでない")
 		}
 	})
 
@@ -421,7 +421,7 @@ func TestMemberPolicy_CanShowDraftPage(t *testing.T) {
 		{name: "draft_page:readで参照可能", scopes: []model.Scope{model.ScopeDraftPageRead}, want: true},
 		{name: "draft_page:writeはdraft_page:readを含意するため参照可能", scopes: []model.Scope{model.ScopeDraftPageWrite}, want: true},
 		{name: "page:writeだけでは参照不可", scopes: []model.Scope{model.ScopePageWrite}, want: false},
-		{name: "draft_page:deleteだけでは参照不可", scopes: []model.Scope{model.ScopeDraftPageDelete}, want: false},
+		{name: "draft_page:deleteはdraft_page:readを含意するため参照可能", scopes: []model.Scope{model.ScopeDraftPageDelete}, want: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1061,9 +1061,9 @@ func TestMemberPolicy_TokenManagement(t *testing.T) {
 		showPAT, createPAT, deletePAT                      bool
 		showOAuthGrant, createOAuthGrant, deleteOAuthGrant bool
 	}{
-		{name: "個人アクセストークンの閲覧", scopes: []model.Scope{model.ScopePersonalAccessTokenRead}, showPAT: true},
-		{name: "個人アクセストークンの発行", scopes: []model.Scope{model.ScopePersonalAccessTokenWrite}, showPAT: true, createPAT: true},
-		{name: "個人アクセストークンの失効", scopes: []model.Scope{model.ScopePersonalAccessTokenDelete}, showPAT: true, deletePAT: true},
+		{name: "個人用アクセストークンの閲覧", scopes: []model.Scope{model.ScopePersonalAccessTokenRead}, showPAT: true},
+		{name: "個人用アクセストークンの発行", scopes: []model.Scope{model.ScopePersonalAccessTokenWrite}, showPAT: true, createPAT: true},
+		{name: "個人用アクセストークンの失効", scopes: []model.Scope{model.ScopePersonalAccessTokenDelete}, showPAT: true, deletePAT: true},
 		{name: "OAuthの連携の閲覧", scopes: []model.Scope{model.ScopeOAuthGrantRead}, showOAuthGrant: true},
 		{name: "OAuthの連携の許可", scopes: []model.Scope{model.ScopeOAuthGrantWrite}, showOAuthGrant: true, createOAuthGrant: true},
 		{name: "OAuthの連携の解除", scopes: []model.Scope{model.ScopeOAuthGrantDelete}, showOAuthGrant: true, deleteOAuthGrant: true},

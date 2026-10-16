@@ -26,6 +26,15 @@ sha256sum --ignore-missing -c wikino_vX.Y.Z_checksums.txt
 shasum -a 256 --ignore-missing -c wikino_vX.Y.Z_checksums.txt
 ```
 
+アーカイブには、ビルドしたワークフローの来歴の証明を付けています。
+[GitHub CLI](https://cli.github.com/) の `gh attestation verify` で、このリポジトリの [CLI Release](../.github/workflows/cli-release.yml) のワークフローがビルドしたものであることを確かめられます。
+
+```sh
+gh attestation verify wikino_vX.Y.Z_linux_amd64.tar.gz \
+  --repo wikinoapp/wikino \
+  --signer-workflow wikinoapp/wikino/.github/workflows/cli-release.yml
+```
+
 アーカイブを展開し、中の `wikino` (Windowsでは `wikino.exe`) をPATHの通ったディレクトリに置きます。
 
 ```sh
@@ -61,7 +70,7 @@ wikino auth login my-space
 
 SSHで接続しているときなど、ブラウザを開けない環境ではデバイス認可に切り替わります。
 表示されたURLを手元の端末のブラウザで開き、コードを入力して許可してください。
-スペース設定で発行した個人アクセストークンでもログインできます。
+スペース設定で発行した個人用アクセストークンでもログインできます。
 方法ごとの詳しい手順とスコープの指定は `wikino auth login --help` を参照してください。
 
 ログインした資格情報は `wikino auth status` で確かめられます。

@@ -89,6 +89,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # 来歴の証明に使う (OIDCのトークンで署名の証明書を受け取り、証明をGitHubに保存する)。
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -101,6 +104,16 @@ jobs:
           version="${GITHUB_REF_NAME#cli/}"
           sha256sum -- *.tar.gz *.zip > "wikino_${version}_checksums.txt"
           cat "wikino_${version}_checksums.txt"
+
+      # 利用者が `gh attestation verify` で、このワークフローがビルドしたアーカイブだと確かめられるようにする。
+      # 証明を作れなかったときにリリースを出さないよう、リリースの作成より前に置く。
+      - name: 来歴の証明を付ける
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/wikino_*_checksums.txt
 
       # 接頭辞の無いアプリのタグを前の版として比べないよう、リリースノートは自動で生成しない。
       # バージョンにハイフンを含む (v1.0.0-rc.1など) ときはプレリリースにする。

@@ -42,7 +42,7 @@ func TestHandler_GetDraftPage(t *testing.T) {
 
 	t.Run("下書きとETagを返す", func(t *testing.T) {
 		res := get200(t, 2, nil)
-		if res.Body.PageNumber != 2 || res.Body.TopicNumber != 2 || res.Body.Title == nil || *res.Body.Title != "下書き2" || res.Body.Body != "下書きの本文2" {
+		if res.Body.PageNumber != 2 || res.Body.TopicNumber != 2 || res.Body.TopicName != "トピック2" || res.Body.Title == nil || *res.Body.Title != "下書き2" || res.Body.Body != "下書きの本文2" {
 			t.Errorf("下書き = %+v", res.Body)
 		}
 		if len(res.Headers.ETag) < 3 || res.Headers.ETag[0] != '"' || res.Headers.ETag[len(res.Headers.ETag)-1] != '"' {

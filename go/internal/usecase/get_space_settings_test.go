@@ -57,14 +57,14 @@ func TestGetSpaceSettingsUsecase_Execute(t *testing.T) {
 			want:        &SpaceSettingsItems{CanUpdateSpace: true, CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true, CanShowOAuthApplications: true},
 		},
 		{
-			name:        "編集者でフラグが有効なら個人アクセストークンと連携中のアプリの項目だけを開ける",
+			name:        "編集者でフラグが有効なら個人用アクセストークンと連携中のアプリの項目だけを開ける",
 			key:         "gsset-editor",
 			role:        model.SpaceRoleEditor,
 			flagEnabled: true,
 			want:        &SpaceSettingsItems{CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true},
 		},
 		{
-			name:        "閲覧者でフラグが有効なら個人アクセストークンと連携中のアプリの項目だけを開ける",
+			name:        "閲覧者でフラグが有効なら個人用アクセストークンと連携中のアプリの項目だけを開ける",
 			key:         "gsset-viewer",
 			role:        model.SpaceRoleViewer,
 			flagEnabled: true,

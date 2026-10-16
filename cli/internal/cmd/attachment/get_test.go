@@ -348,6 +348,23 @@ func TestGet_Stdout(t *testing.T) {
 		}
 	})
 
+	t.Run("標準出力が端末なら要求を送らずに使い方の誤りにする", func(t *testing.T) {
+		e := cmdtest.New(t)
+
+		err := e.RunTTY(NewCmdAttachment, "attachment", "get", attachmentID, "-O", "-")
+
+		cliErr := cmdtest.AssertCLIError(t, err, output.CodeUsage, output.ExitUsage)
+		if !strings.Contains(cliErr.Hint, "-O <path>") {
+			t.Errorf("ヒントにファイルへの保存の案内が無い: %q", cliErr.Hint)
+		}
+		if n := len(e.Requests()); n != 0 {
+			t.Errorf("要求を送らないことを期待したが %d件送った", n)
+		}
+		if got := e.Stdout.String(); got != "" {
+			t.Errorf("標準出力 = %q、期待値は空", got)
+		}
+	})
+
 	for _, flag := range []string{"--json", "--jq=.id", "--fields=id", "--clobber"} {
 		t.Run(flag+"とは併用できない", func(t *testing.T) {
 			e := cmdtest.New(t)

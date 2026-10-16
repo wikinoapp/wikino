@@ -245,6 +245,7 @@ func TestPublish_Yes(t *testing.T) {
 				"title":        "定例会議の議事録",
 				"status":       "published",
 				"topic_number": float64(3),
+				"topic_name":   "トピック3",
 				"modified_at":  "2026-10-01T09:00:00.123456Z",
 				"url":          "https://wikino.example.com/s/team/pages/12",
 				"body":         publishBody,

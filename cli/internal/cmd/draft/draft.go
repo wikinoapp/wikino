@@ -42,7 +42,7 @@ func NewCmdDraft(f *cmdutil.Factory) *cobra.Command {
 }
 
 // draftFieldsは、APIの下書きの項目。
-var draftFields = []string{"page_number", "title", "topic_number", "modified_at", "url", "body"}
+var draftFields = []string{"page_number", "title", "topic_number", "topic_name", "modified_at", "url", "body"}
 
 // getFieldsは、1件の下書きを出すコマンドの `--fields` で選べる項目。APIの下書きの項目に、応答のETagヘッダーの値を足す。
 var getFields = append(slices.Clone(draftFields), "etag")
@@ -77,6 +77,7 @@ func detailFields(loc *i18n.Localizer, item getItem) []output.Field {
 	return []output.Field{
 		{Label: loc.T("draft_label_page_number"), Value: formatNumber(item.PageNumber)},
 		{Label: loc.T("draft_label_title"), Value: titleLabel(loc, item.Title)},
+		{Label: loc.T("draft_label_topic_name"), Value: item.TopicName},
 		{Label: loc.T("draft_label_topic_number"), Value: formatNumber(item.TopicNumber)},
 		{Label: loc.T("draft_label_modified_at"), Value: formatTime(item.ModifiedAt)},
 		{Label: loc.T("draft_label_url"), Value: item.Url},

@@ -102,11 +102,11 @@ func TestExpandScopes(t *testing.T) {
 		assertScopes(t, result, []model.Scope{model.ScopeOAuthApplicationDelete, model.ScopeOAuthApplicationRead})
 	})
 
-	t.Run("draft_page:deleteは含意を持たない", func(t *testing.T) {
+	t.Run("draft_page:deleteはreadを含意する", func(t *testing.T) {
 		t.Parallel()
 
 		result := expandScopes([]model.Scope{model.ScopeDraftPageDelete})
-		assertScopes(t, result, []model.Scope{model.ScopeDraftPageDelete})
+		assertScopes(t, result, []model.Scope{model.ScopeDraftPageDelete, model.ScopeDraftPageRead})
 	})
 
 	t.Run("draft_page:writeはdraft_page:deleteを含意しない", func(t *testing.T) {
@@ -242,7 +242,7 @@ func TestExpandAPITokenScopes(t *testing.T) {
 		{name: "topic:read", input: []model.Scope{model.ScopeTopicRead}, expected: []model.Scope{model.ScopeTopicRead}},
 		{name: "page:writeはpage:readを含意する", input: []model.Scope{model.ScopePageWrite}, expected: []model.Scope{model.ScopePageWrite, model.ScopePageRead}},
 		{name: "draft_page:writeはdraft_page:readを含意する", input: []model.Scope{model.ScopeDraftPageWrite}, expected: []model.Scope{model.ScopeDraftPageWrite, model.ScopeDraftPageRead}},
-		{name: "draft_page:delete", input: []model.Scope{model.ScopeDraftPageDelete}, expected: []model.Scope{model.ScopeDraftPageDelete}},
+		{name: "draft_page:deleteはdraft_page:readを含意する", input: []model.Scope{model.ScopeDraftPageDelete}, expected: []model.Scope{model.ScopeDraftPageDelete, model.ScopeDraftPageRead}},
 		{name: "attachment:read", input: []model.Scope{model.ScopeAttachmentRead}, expected: []model.Scope{model.ScopeAttachmentRead}},
 		{name: "トークンに付与できないattachment:writeは落とし、含意のattachment:readも付けない", input: []model.Scope{model.ScopeAttachmentWrite}, expected: []model.Scope{}},
 		{

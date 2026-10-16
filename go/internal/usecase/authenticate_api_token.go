@@ -55,13 +55,13 @@ func (uc *AuthenticateAPITokenUsecase) Execute(ctx context.Context, token string
 	}
 }
 
-// authenticatePersonalAccessTokenは個人アクセストークンを照合する
+// authenticatePersonalAccessTokenは個人用アクセストークンを照合する
 func (uc *AuthenticateAPITokenUsecase) authenticatePersonalAccessToken(ctx context.Context, token string) (*model.APIPrincipal, error) {
 	now := time.Now()
 
 	pat, err := uc.personalAccessTokenRepo.FindByTokenDigest(ctx, auth.DigestOpaqueToken(token))
 	if err != nil {
-		return nil, fmt.Errorf("個人アクセストークンの取得に失敗: %w", err)
+		return nil, fmt.Errorf("個人用アクセストークンの取得に失敗: %w", err)
 	}
 	if pat == nil || !pat.IsActive(now) {
 		return nil, nil
@@ -77,7 +77,7 @@ func (uc *AuthenticateAPITokenUsecase) authenticatePersonalAccessToken(ctx conte
 
 	// 最終使用日時は利用状況の表示にだけ使うため、書き込みに失敗してもリクエストは止めない
 	if err := uc.personalAccessTokenRepo.UpdateLastUsedAt(ctx, pat.ID, pat.SpaceID, now); err != nil {
-		slog.ErrorContext(ctx, "個人アクセストークンの最終使用日時の更新に失敗しました", "error", err, "personal_access_token_id", pat.ID)
+		slog.ErrorContext(ctx, "個人用アクセストークンの最終使用日時の更新に失敗しました", "error", err, "personal_access_token_id", pat.ID)
 	}
 
 	principal.TokenKind = model.APITokenKindPersonalAccessToken

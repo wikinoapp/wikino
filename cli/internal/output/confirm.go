@@ -55,7 +55,7 @@ func Confirm(ios *iostreams.IOStreams, loc *i18n.Localizer, c Confirmation) erro
 
 	var prompt strings.Builder
 	for _, change := range c.Changes {
-		prompt.WriteString("- " + sanitizeLine(change) + "\n")
+		prompt.WriteString("- " + SanitizeLine(change) + "\n")
 	}
 	prompt.WriteString(loc.T("confirm_prompt") + " ")
 	if _, err := fmt.Fprint(ios.ErrOut, prompt.String()); err != nil {

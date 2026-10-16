@@ -28,6 +28,7 @@ import (
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
 	apiwikilinkpreview "github.com/wikinoapp/wikino/go/internal/apihandler/wikilink_preview"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -51,7 +52,8 @@ func (a draftPageTestAuthenticator) Execute(_ context.Context, token string) (*m
 	case "wkp_page_write":
 		p.Scopes = []model.Scope{model.ScopePageRead, model.ScopePageWrite}
 	case "wkp_draft_page_delete":
-		p.Scopes = []model.Scope{model.ScopeDraftPageDelete}
+		// 含意の定義 (draft_page:delete → draft_page:read) を確かめるため、トークン認証と同じく展開する
+		p.Scopes = policy.ExpandAPITokenScopes([]model.Scope{model.ScopeDraftPageDelete})
 	case "wkp_draft_page_and_page_write":
 		p.Scopes = []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite, model.ScopePageRead, model.ScopePageWrite}
 	default:
@@ -138,8 +140,8 @@ func TestAPIRouter_DraftPages(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if len(body.Items) != 1 || body.Items[0].PageNumber != 1 || body.NextCursor != nil {
-			t.Errorf("一覧 = %+v、期待値 = ページ1の下書きのみ", body)
+		if len(body.Items) != 1 || body.Items[0].PageNumber != 1 || body.Items[0].TopicName != "トピック" || body.NextCursor != nil {
+			t.Errorf("一覧 = %+v、期待値 = トピック「トピック」のページ1の下書きのみ", body)
 		}
 		if want := "https://example.com/s/api-http-drafts/pages/1/edit"; len(body.Items) == 1 && body.Items[0].Url != want {
 			t.Errorf("url = %q、期待値 = 編集画面の %q", body.Items[0].Url, want)
@@ -155,7 +157,7 @@ func TestAPIRouter_DraftPages(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &raw); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if raw["page_number"] != float64(1) || raw["topic_number"] != float64(1) || raw["title"] != "下書き1" || raw["modified_at"] != "2026-09-01T12:00:00Z" {
+		if raw["page_number"] != float64(1) || raw["topic_number"] != float64(1) || raw["topic_name"] != "トピック" || raw["title"] != "下書き1" || raw["modified_at"] != "2026-09-01T12:00:00Z" {
 			t.Errorf("下書き = %v", raw)
 		}
 		if want := "https://example.com/s/api-http-drafts/pages/1/edit"; raw["url"] != want {
@@ -302,8 +304,8 @@ func TestAPIRouter_CreateDraftPage(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.PageNumber != 1 || body.TopicNumber != 1 || body.Title == nil || *body.Title != "既存" || body.Body != "書き換えた本文" {
-			t.Errorf("下書き = %+v、期待値 = ページ1のタイトル「既存」と指定した本文", body)
+		if body.PageNumber != 1 || body.TopicNumber != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "既存" || body.Body != "書き換えた本文" {
+			t.Errorf("下書き = %+v、期待値 = トピック「トピック」のページ1のタイトル「既存」と指定した本文", body)
 		}
 		if want := "https://example.com/s/api-http-draft-create/pages/1/edit"; body.Url != want {
 			t.Errorf("url = %q、期待値 = 編集画面の %q", body.Url, want)
@@ -506,8 +508,8 @@ func TestAPIRouter_UpdateDraftPage(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.PageNumber != 1 || body.Title == nil || *body.Title != "新しいタイトル" || body.Body != "新しい本文" {
-			t.Errorf("下書き = %+v、期待値 = 更新したページ1の下書き", body)
+		if body.PageNumber != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "新しいタイトル" || body.Body != "新しい本文" {
+			t.Errorf("下書き = %+v、期待値 = トピック「トピック」の更新したページ1の下書き", body)
 		}
 		if want := "https://example.com/s/api-http-draft-update/pages/1/edit"; body.Url != want {
 			t.Errorf("url = %q、期待値 = 編集画面の %q", body.Url, want)
@@ -519,6 +521,40 @@ func TestAPIRouter_UpdateDraftPage(t *testing.T) {
 
 		// 更新前のETagを前提にした更新は、先の更新と競合するため412になる
 		assertProblem(t, update("wkp_draft_page_write", before, mergePatch, `{"body": "古い版を元にした本文"}`), http.StatusPreconditionFailed)
+	})
+
+	t.Run("トピック名を変えてもETagは変わらず、変える前のETagで更新できる", func(t *testing.T) {
+		before := currentDraftPageETag(t, r, target)
+		if _, err := testutil.GetTestDB().ExecContext(t.Context(),
+			"UPDATE topics SET name = $1 WHERE number = 1 AND space_id = (SELECT id FROM spaces WHERE identifier = $2)",
+			"改名したトピック", "api-http-draft-update",
+		); err != nil {
+			t.Fatalf("トピック名を変えられない: %v", err)
+		}
+
+		got := requestDraftPage(t, r, http.MethodGet, target, "wkp_draft_page_read", "", "", "")
+		var draft apigen.DraftPage
+		if err := json.Unmarshal(got.Body.Bytes(), &draft); err != nil {
+			t.Fatalf("本文を読めない: %v (本文: %s)", err, got.Body.String())
+		}
+		if draft.TopicName != "改名したトピック" {
+			t.Errorf("topic_name = %q、期待値 = %q", draft.TopicName, "改名したトピック")
+		}
+		if etag := got.Header().Get("ETag"); etag != before {
+			t.Errorf("ETag = %q、期待値 = トピック名を変える前と同じ %q", etag, before)
+		}
+
+		rr := update("wkp_draft_page_write", before, mergePatch, `{"title": "改名後のタイトル"}`)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %s)", rr.Code, rr.Body.String())
+		}
+		var body apigen.DraftPage
+		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+			t.Fatalf("本文を読めない: %v", err)
+		}
+		if body.TopicName != "改名したトピック" {
+			t.Errorf("topic_name = %q、期待値 = %q", body.TopicName, "改名したトピック")
+		}
 	})
 
 	t.Run("タイトルをnullにするとタイトルを外す", func(t *testing.T) {
@@ -595,8 +631,14 @@ func TestAPIRouter_DeleteDraftPage(t *testing.T) {
 		}
 	})
 
-	t.Run("下書きを削除して本文の無い204を返し、続く取得と削除は404", func(t *testing.T) {
-		rr := remove("wkp_draft_page_delete", currentDraftPageETag(t, r, target))
+	t.Run("draft_page:deleteだけのトークンで取得した版を使い、下書きを削除して本文の無い204を返し、続く取得と削除は404", func(t *testing.T) {
+		// draft_page:deleteはdraft_page:readを含意するため、If-Matchに送る版を同じトークンで取得できる
+		got := requestDraftPage(t, r, http.MethodGet, target, "wkp_draft_page_delete", "", "", "")
+		if got.Code != http.StatusOK {
+			t.Fatalf("取得のステータス = %d、期待値 = 200 (本文: %s)", got.Code, got.Body.String())
+		}
+
+		rr := remove("wkp_draft_page_delete", got.Header().Get("ETag"))
 		if rr.Code != http.StatusNoContent {
 			t.Fatalf("ステータス = %d、期待値 = 204 (本文: %s)", rr.Code, rr.Body.String())
 		}
@@ -672,7 +714,7 @@ func TestAPIRouter_CreateDraftPagePublication(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.Number != 1 || body.Title == nil || *body.Title != "公開するタイトル" || body.Body != "下書きの本文" || body.Status != apigen.PageStatusPublished {
+		if body.Number != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "公開するタイトル" || body.Body != "下書きの本文" || body.Status != apigen.PageStatusPublished {
 			t.Errorf("ページ = %+v、期待値 = 下書きの内容で公開したページ1", body)
 		}
 		// 公開の応答はページのため、編集画面ではなくページのURLを返す

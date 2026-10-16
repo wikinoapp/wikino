@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// RevokePersonalAccessTokenUsecaseは、スペースメンバー自身の個人アクセストークンを失効する。
+// RevokePersonalAccessTokenUsecaseは、スペースメンバー自身の個人用アクセストークンを失効する。
 type RevokePersonalAccessTokenUsecase struct {
 	spaceRepo               *repository.SpaceRepository
 	spaceMemberRepo         *repository.SpaceMemberRepository
@@ -46,7 +46,7 @@ type RevokePersonalAccessTokenOutput struct {
 	Token *model.PersonalAccessToken
 }
 
-// Executeは個人アクセストークンを失効する。
+// Executeは個人用アクセストークンを失効する。
 //
 // 失効できるのは閲覧者自身のトークンだけである。他のメンバーのトークンや、既に失効した
 // トークンは「見つからない」として答える。失効したトークンは一覧から消えるため、同じ
@@ -64,7 +64,7 @@ func (uc *RevokePersonalAccessTokenUsecase) Execute(ctx context.Context, input R
 	// 2. 永続化
 	token, err := uc.personalAccessTokenRepo.Revoke(ctx, input.PersonalAccessTokenID, access.space.ID, access.spaceMember.ID)
 	if err != nil {
-		return nil, fmt.Errorf("個人アクセストークンの失効に失敗: %w", err)
+		return nil, fmt.Errorf("個人用アクセストークンの失効に失敗: %w", err)
 	}
 	if token == nil {
 		return nil, &model.AppError{Code: model.AppErrCodeResourceNotFound, UserMsg: i18n.T(ctx, "error_not_found_message")}

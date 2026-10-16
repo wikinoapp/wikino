@@ -48,6 +48,9 @@ func TestList_JSON(t *testing.T) {
 	if first["url"] != "https://wikino.example.com/s/team/pages/12" || first["title"] != "議事録" {
 		t.Errorf("1件目 = %v", first)
 	}
+	if first["topic_name"] != "開発" {
+		t.Errorf("topic_name = %v、期待値 = 開発", first["topic_name"])
+	}
 	for _, key := range []string{"id", "number", "status", "topic_number", "modified_at"} {
 		if _, ok := first[key]; !ok {
 			t.Errorf("1件目に %s が無い: %v", key, first)
@@ -112,6 +115,24 @@ func TestList_FieldsBody(t *testing.T) {
 	}
 
 	want := `{"items":[{"body":"本文\n","number":12}],"next_cursor":null}` + "\n"
+	if got := e.Stdout.String(); got != want {
+		t.Errorf("標準出力 = %q、期待値 = %q", got, want)
+	}
+}
+
+func TestList_FieldsTopicName(t *testing.T) {
+	t.Parallel()
+
+	e := newEnv(t)
+	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
+		return listResponse([]map[string]any{testPage(12, ptr("議事録"), "本文\n")}, nil)
+	})
+
+	if err := e.Run(NewCmdPage, "page", "list", "--fields", "title,topic_name"); err != nil {
+		t.Fatalf("エラーを期待しなかったが %v だった", err)
+	}
+
+	want := `{"items":[{"title":"議事録","topic_name":"開発"}],"next_cursor":null}` + "\n"
 	if got := e.Stdout.String(); got != want {
 		t.Errorf("標準出力 = %q、期待値 = %q", got, want)
 	}
@@ -234,6 +255,27 @@ func TestList_Human(t *testing.T) {
 	cmdtest.AssertGolden(t, "list", e.Stdout.String())
 	if !strings.Contains(e.Stderr.String(), "--cursor cursor-2") {
 		t.Errorf("標準エラーに次のページの取り方が無い: %q", e.Stderr.String())
+	}
+}
+
+func TestList_HumanTopicNameControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	// トピック名は他の利用者が付けた値で、端末を操作するエスケープシーケンスや改行を含みうる。
+	e := newEnv(t)
+	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
+		page := testPage(12, ptr("議事録"), "")
+		page["topic_name"] = "開\x1b[2J発\n偽の行"
+		return listResponse([]map[string]any{page}, nil)
+	})
+
+	if err := e.RunTTY(NewCmdPage, "page", "list"); err != nil {
+		t.Fatalf("エラーを期待しなかったが %v だった", err)
+	}
+
+	got := e.Stdout.String()
+	if strings.Contains(got, "\x1b") || !strings.Contains(got, "開 [2J発 偽の行  3 ") {
+		t.Errorf("トピック名の制御文字が1行の値として無害化されていない: %q", got)
 	}
 }
 

@@ -70,7 +70,7 @@ templ New(data NewData) {
 				} else if data.NoPermission {
 					<p>{ templates.T(ctx, "oauth_authorization_new_no_permission") }</p>
 				} else {
-					// 選択肢のグループは個人アクセストークンの発行画面と同じく、basecoatの .fieldsetでまとめます。
+					// 選択肢のグループは個人用アクセストークンの発行画面と同じく、basecoatの .fieldsetでまとめます。
 					<fieldset class="fieldset gap-3">
 						<legend class="label">
 							{ templates.T(ctx, "oauth_authorization_new_scopes_label", map[string]any{"ApplicationName": data.ApplicationName}) }

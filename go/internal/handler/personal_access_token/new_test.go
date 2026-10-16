@@ -34,6 +34,9 @@ func TestNew_発行フォームを表示する(t *testing.T) {
 
 	body := rr.Body.String()
 	for _, want := range []string{
+		"<title>個人用アクセストークンの発行 | トークンのスペース</title>",
+		">個人用アクセストークンの発行</h1>",
+		`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino" target="_blank">個人用アクセストークンについてのヘルプ</a>`,
 		`action="/s/` + identifier + `/settings/personal_access_tokens"`,
 		`name="csrf_token"`,
 		`name="name"`,

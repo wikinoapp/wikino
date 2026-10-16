@@ -133,6 +133,50 @@ func TestAPI_NotJSON(t *testing.T) {
 	}
 }
 
+func TestAPI_ControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	// 応答はページの本文など他の利用者が書いた値を含み、端末を操作するエスケープシーケンスやCRを含みうる。
+	// JSONの文字列はC1制御文字 (U+009BのCSIなど) をエスケープせずに含められる。
+	const jsonBody = `{"body":"a` + "\u009b2J" + `b"}` + "\r\n"
+	const textBody = "a\x1b[2Jb\r\nc\rd\n"
+
+	tests := []struct {
+		name        string
+		contentType string
+		body        string
+		tty         bool
+		want        string
+	}{
+		{name: "パイプではJSONの応答を変えない", contentType: "application/json", body: jsonBody, want: jsonBody},
+		{name: "パイプではJSONでない応答を変えない", contentType: "text/plain", body: textBody, want: textBody},
+		{name: "TTYでは字下げしたJSONから制御文字を取り除く", contentType: "application/json", body: jsonBody, tty: true, want: "{\n  \"body\": \"a2Jb\"\n}\n"},
+		{name: "TTYではJSONでない応答から制御文字を取り除く", contentType: "text/plain", body: textBody, tty: true, want: "a[2Jb\ncd\n"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			e := cmdtest.New(t)
+			handleRecord(e, http.MethodGet, pagesPath, func() *http.Response {
+				return rawResponse(http.StatusOK, tt.contentType, tt.body)
+			})
+
+			run := e.Run
+			if tt.tty {
+				run = e.RunTTY
+			}
+			if err := run(NewCmdAPI, "api", "GET", "/spaces/team/pages"); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := e.Stdout.String(); got != tt.want {
+				t.Errorf("標準出力 = %q、期待値 = %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAPI_JQ(t *testing.T) {
 	t.Parallel()
 

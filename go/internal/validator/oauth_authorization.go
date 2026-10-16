@@ -2,7 +2,6 @@ package validator
 
 import (
 	"context"
-	"slices"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -24,7 +23,9 @@ type OAuthAuthorizationCreateValidatorInput struct {
 }
 
 // Validateは、送信されたスコープが要求の部分集合で、1つ以上あることを確かめ、付与するスコープを
-// RequestedScopesの順に重複を除いて返す。要求に無いスコープが1つでも含まれていれば送信全体を
+// RequestedScopesの順に重複を除いて返す。選んだスコープに含まれるスコープは、同意画面で選択済みかつ
+// 無効にして見せ、送信されないため補う。ただし要求に含まれるものに限り、アプリが求めていない
+// スコープは補わない。要求に無いスコープが1つでも含まれていれば送信全体を
 // 拒否する。同意画面には要求されたスコープしか出さないため、それ以外が届くのは改ざんされた
 // 送信だけであり、黙って取り除くと利用者の意図と違う許可を作ることになる。
 func (v *OAuthAuthorizationCreateValidator) Validate(ctx context.Context, input OAuthAuthorizationCreateValidatorInput) ([]model.Scope, error) {
@@ -42,11 +43,5 @@ func (v *OAuthAuthorizationCreateValidator) Validate(ctx context.Context, input 
 		}
 	}
 
-	scopes := make([]model.Scope, 0, len(input.RequestedScopes))
-	for _, scope := range input.RequestedScopes {
-		if slices.Contains(input.GrantedScopes, string(scope)) {
-			scopes = append(scopes, scope)
-		}
-	}
-	return scopes, nil
+	return model.WithImpliedScopes(model.StringsToScopes(input.GrantedScopes), input.RequestedScopes), nil
 }

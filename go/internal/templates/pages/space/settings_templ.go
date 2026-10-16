@@ -17,7 +17,7 @@ import (
 //
 // CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル・削除) を出すかを表す。
 // エクスポート以外のリンク先はRails版の画面のまま残る。
-// CanShowPersonalAccessTokensは個人アクセストークンの項目を、CanShowOAuthGrantsは連携中の
+// CanShowPersonalAccessTokensは個人用アクセストークンの項目を、CanShowOAuthGrantsは連携中の
 // アプリの項目を、CanShowOAuthApplicationsはOAuthアプリの項目を出すかを表す。
 type SettingsData struct {
 	Space                       viewmodel.Space

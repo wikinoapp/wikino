@@ -65,12 +65,25 @@ func TestHandler_CreateDraftPagePublication(t *testing.T) {
 		}
 	})
 
-	t.Run("下書きのETagなら公開し、ページのURLとETagを付けて200を返す", func(t *testing.T) {
+	t.Run("弱いエンティティタグでもダイジェストが違えば412", func(t *testing.T) {
+		weak := `W/"古い版"`
+		_, err := h.CreateDraftPagePublication(ctx, apigen.CreateDraftPagePublicationRequestObject{
+			SpaceIdentifier: identifier,
+			PageNumber:      1,
+			Params:          apigen.CreateDraftPagePublicationParams{IfMatch: &weak},
+		})
+		if ae := model.AsAppError(err); ae == nil || ae.Code != model.AppErrCodePreconditionFailed {
+			t.Errorf("エラー = %v、期待値 = AppErrCodePreconditionFailed", err)
+		}
+	})
+
+	// 強いETagで公開できることはcmd/wikinoのAPIのテストで確かめる
+	t.Run("下書きのETagにW/が付いていても公開し、ページのURLとETagを付けて200を返す", func(t *testing.T) {
 		draft, err := draftPageRepo.FindByID(ctx, draftID, spaceID)
 		if err != nil || draft == nil {
 			t.Fatalf("下書きの取得 = (%v, %v)、期待値 = 下書き", draft, err)
 		}
-		etag := `"` + draft.ContentDigest() + `"`
+		etag := `W/"` + draft.ContentDigest() + `"`
 
 		res, err := h.CreateDraftPagePublication(ctx, apigen.CreateDraftPagePublicationRequestObject{
 			SpaceIdentifier: identifier,
@@ -84,7 +97,7 @@ func TestHandler_CreateDraftPagePublication(t *testing.T) {
 		if !isOK {
 			t.Fatalf("応答の型 = %T、期待値 = CreateDraftPagePublication200JSONResponse", res)
 		}
-		if ok.Body.Number != 1 || ok.Body.TopicNumber != 1 || ok.Body.Title == nil || *ok.Body.Title != "公開するタイトル" || ok.Body.Body != "公開する本文" {
+		if ok.Body.Number != 1 || ok.Body.TopicNumber != 1 || ok.Body.TopicName != "トピック" || ok.Body.Title == nil || *ok.Body.Title != "公開するタイトル" || ok.Body.Body != "公開する本文" {
 			t.Errorf("ページ = %+v、期待値 = 下書きの内容で公開したページ1", ok.Body)
 		}
 		if got, want := ok.Headers.ContentLocation, "/api/v1/spaces/draft-publish-handler/pages/1"; got != want {

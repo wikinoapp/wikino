@@ -191,6 +191,10 @@ type DraftPage struct {
 	// Title 下書きのタイトルです。タイトルの無い下書きでは `null` です。
 	Title *string `json:"title"`
 
+	// TopicName 下書きのページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+	// 下書きの `ETag` の計算には含めません。トピック名を変えても `ETag` は変わらないため、`If-None-Match` で304を受け取ったときに手元に残している値は、変える前の名前のことがあります。
+	TopicName string `json:"topic_name"`
+
 	// TopicNumber 下書きのページが属するトピックの番号です。
 	TopicNumber int32 `json:"topic_number"`
 
@@ -318,6 +322,10 @@ type Page struct {
 	// Title ページのタイトルです。タイトルの無いページでは `null` です。
 	Title *string `json:"title"`
 
+	// TopicName ページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+	// ページの `ETag` の計算には含めません。トピック名を変えても `ETag` は変わらないため、`If-None-Match` で304を受け取ったときに手元に残している値は、変える前の名前のことがあります。
+	TopicName string `json:"topic_name"`
+
 	// TopicNumber ページが属するトピックの番号です。
 	TopicNumber int32 `json:"topic_number"`
 
@@ -418,11 +426,11 @@ type SpaceMember struct {
 type Token struct {
 	// ExpiresAt トークンの有効期限です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
 	// 秒未満はマイクロ秒まで含み、末尾の0は省きます。
-	// 個人アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
+	// 個人用アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
 	// OAuthのアクセストークンは、期限が切れる前でもリフレッシュトークンで更新できます。
 	ExpiresAt time.Time `json:"expires_at"`
 
-	// Kind トークンの種類です。`personal_access_token` はスペース設定で発行した個人アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+	// Kind トークンの種類です。`personal_access_token` はスペース設定で発行した個人用アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
 	Kind TokenKind `json:"kind"`
 
 	// Scopes トークンのスコープに含意を展開したものです。
@@ -430,7 +438,7 @@ type Token struct {
 	Scopes []string `json:"scopes"`
 }
 
-// TokenKind トークンの種類です。`personal_access_token` はスペース設定で発行した個人アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+// TokenKind トークンの種類です。`personal_access_token` はスペース設定で発行した個人用アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
 type TokenKind string
 
 // Topic トピックです。
@@ -629,6 +637,7 @@ type GetPageParams struct {
 // UpdatePageParams defines parameters for UpdatePage.
 type UpdatePageParams struct {
 	// IfMatch 更新の前提にするページの `ETag` です。ページの今の `ETag` と一致する場合だけ更新します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると428を返します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -646,6 +655,7 @@ type ListPageBacklinksParams struct {
 // CreatePageBodyEditParams defines parameters for CreatePageBodyEdit.
 type CreatePageBodyEditParams struct {
 	// IfMatch 置換の前提にするページの `ETag` です。送った場合は、ページの今の `ETag` と一致する場合だけ置換します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると版を照合せず、今の本文に置換を適用します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -653,6 +663,7 @@ type CreatePageBodyEditParams struct {
 // DeleteDraftPageParams defines parameters for DeleteDraftPage.
 type DeleteDraftPageParams struct {
 	// IfMatch 削除の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ削除します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると428を返します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -666,6 +677,7 @@ type GetDraftPageParams struct {
 // UpdateDraftPageParams defines parameters for UpdateDraftPage.
 type UpdateDraftPageParams struct {
 	// IfMatch 更新の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ更新します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると428を返します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -673,6 +685,7 @@ type UpdateDraftPageParams struct {
 // CreateDraftPageBodyEditParams defines parameters for CreateDraftPageBodyEdit.
 type CreateDraftPageBodyEditParams struct {
 	// IfMatch 置換の前提にする下書きの `ETag` です。送った場合は、下書きの今の `ETag` と一致する場合だけ置換します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると版を照合せず、今の本文に置換を適用します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -680,6 +693,7 @@ type CreateDraftPageBodyEditParams struct {
 // CreateDraftPagePublicationParams defines parameters for CreateDraftPagePublication.
 type CreateDraftPagePublicationParams struct {
 	// IfMatch 公開の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ公開します。
+	// 途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
 	// 省略すると428を返します。
 	IfMatch *string `json:"If-Match,omitempty"`
 }
@@ -1053,7 +1067,7 @@ type ClientInterface interface {
 	//
 	// 非公開トピックのページを読むには、トークンが `page:read` に加えて `topic:read` を持つ必要があります。
 	//
-	// 応答の `ETag` ヘッダーはページのタイトル・本文・所属トピック・更新日時・公開状態から計算します。
+	// 応答の `ETag` ヘッダーはページのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時・公開状態から計算します。
 	// 前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
 	// 304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 	//
@@ -1267,7 +1281,7 @@ type ClientInterface interface {
 	//
 	// 非公開トピックのページの下書きを読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
 	//
-	// 応答の `ETag` ヘッダーは下書きのタイトル・本文・所属トピック・更新日時から計算します。
+	// 応答の `ETag` ヘッダーは下書きのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時から計算します。
 	// 前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
 	// 304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 	//
@@ -1971,7 +1985,7 @@ func (c *Client) CreatePage(ctx context.Context, spaceIdentifier SpaceIdentifier
 //
 // 非公開トピックのページを読むには、トークンが `page:read` に加えて `topic:read` を持つ必要があります。
 //
-// 応答の `ETag` ヘッダーはページのタイトル・本文・所属トピック・更新日時・公開状態から計算します。
+// 応答の `ETag` ヘッダーはページのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時・公開状態から計算します。
 // 前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
 // 304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 //
@@ -2255,7 +2269,7 @@ func (c *Client) DeleteDraftPage(ctx context.Context, spaceIdentifier SpaceIdent
 //
 // 非公開トピックのページの下書きを読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
 //
-// 応答の `ETag` ヘッダーは下書きのタイトル・本文・所属トピック・更新日時から計算します。
+// 応答の `ETag` ヘッダーは下書きのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時から計算します。
 // 前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
 // 304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 //
@@ -4472,7 +4486,7 @@ type ClientWithResponsesInterface interface {
 	//
 	// 非公開トピックのページを読むには、トークンが `page:read` に加えて `topic:read` を持つ必要があります。
 	//
-	// 応答の `ETag` ヘッダーはページのタイトル・本文・所属トピック・更新日時・公開状態から計算します。
+	// 応答の `ETag` ヘッダーはページのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時・公開状態から計算します。
 	// 前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
 	// 304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 	//
@@ -4692,7 +4706,7 @@ type ClientWithResponsesInterface interface {
 	//
 	// 非公開トピックのページの下書きを読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
 	//
-	// 応答の `ETag` ヘッダーは下書きのタイトル・本文・所属トピック・更新日時から計算します。
+	// 応答の `ETag` ヘッダーは下書きのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時から計算します。
 	// 前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
 	// 304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 	//
@@ -8246,7 +8260,7 @@ func (c *ClientWithResponses) CreatePageWithResponse(ctx context.Context, spaceI
 //
 // 非公開トピックのページを読むには、トークンが `page:read` に加えて `topic:read` を持つ必要があります。
 //
-// 応答の `ETag` ヘッダーはページのタイトル・本文・所属トピック・更新日時・公開状態から計算します。
+// 応答の `ETag` ヘッダーはページのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時・公開状態から計算します。
 // 前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
 // 304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 //
@@ -8508,7 +8522,7 @@ func (c *ClientWithResponses) DeleteDraftPageWithResponse(ctx context.Context, s
 //
 // 非公開トピックのページの下書きを読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
 //
-// 応答の `ETag` ヘッダーは下書きのタイトル・本文・所属トピック・更新日時から計算します。
+// 応答の `ETag` ヘッダーは下書きのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時から計算します。
 // 前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
 // 304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 //

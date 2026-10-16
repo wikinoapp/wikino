@@ -67,7 +67,7 @@ func TestHandler_CreatePage(t *testing.T) {
 	if !ok {
 		t.Fatalf("レスポンスの型 = %T、期待値 = CreatePage201JSONResponse", res)
 	}
-	if created.Body.TopicNumber != 1 || created.Body.Title == nil || *created.Body.Title != "新しいページ" || created.Body.Body != "本文" {
+	if created.Body.TopicNumber != 1 || created.Body.TopicName != "トピック1" || created.Body.Title == nil || *created.Body.Title != "新しいページ" || created.Body.Body != "本文" {
 		t.Errorf("ページ = %+v、期待値 = トピック1の「新しいページ」", created.Body)
 	}
 	if want := "/api/v1/spaces/page-create-handler/pages/1"; created.Headers.Location != want {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -125,6 +126,41 @@ func TestCreate_許可すると選んだスコープで要求を許可済みに�
 		t.Fatalf("使用済みのコードのステータス = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
 	}
 	assertBodyContains(t, rr, "コードが正しくないか、有効期限が切れています")
+}
+
+func TestCreate_選んだスコープに含まれるスコープを補って許可する(t *testing.T) {
+	t.Parallel()
+
+	// フィクスチャの要求はpage:readとpage:writeを求める
+	f := setupDeviceFixture(t, "devverify-implied", model.SpaceRoleEditor, true)
+
+	// 同意画面は、選んだpage:writeに含まれるpage:readを無効にして送信しない
+	rr := httptest.NewRecorder()
+	setupHandler(t).Create(rr, newRequest(t, http.MethodPost, f.userID, "198.51.100.13", url.Values{
+		"user_code":      {auth.FormatOAuthUserCode(f.userCode)},
+		"decision":       {"approve"},
+		"granted_scopes": {"page:write"},
+	}))
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータス = %d、期待値 = %d。本文 = %s", rr.Code, http.StatusOK, rr.Body.String())
+	}
+	want := []model.Scope{model.ScopePageRead, model.ScopePageWrite}
+	d := findDeviceAuthorization(t, f)
+	if d.OAuthGrantID == nil {
+		t.Fatalf("要求 = %+v、許可を持つ許可済みの要求を期待", d)
+	}
+	// 要求のスコープが、デバイスコードの交換で返すトークン応答のscopeになる
+	if !slices.Equal(d.Scopes, want) {
+		t.Errorf("要求のスコープ = %v、期待値 = %v", d.Scopes, want)
+	}
+	grant, err := repository.NewOAuthGrantRepository(query.New(testutil.GetTestDB())).FindByID(context.Background(), *d.OAuthGrantID, f.spaceID)
+	if err != nil {
+		t.Fatalf("FindByID()のエラー = %v", err)
+	}
+	if grant == nil || !slices.Equal(grant.Scopes, want) {
+		t.Errorf("許可 = %+v、期待値のスコープ = %v", grant, want)
+	}
 }
 
 func TestCreate_拒否すると要求を拒否済みにする(t *testing.T) {

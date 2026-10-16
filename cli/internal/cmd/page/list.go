@@ -165,6 +165,7 @@ func printTable(printer *output.Printer, loc *i18n.Localizer, pages []apigen.Pag
 		rows = append(rows, []string{
 			formatNumber(p.Number),
 			titleLabel(loc, p.Title),
+			p.TopicName,
 			formatNumber(p.TopicNumber),
 			statusLabel(loc, p.Status),
 			formatTime(p.ModifiedAt),
@@ -174,6 +175,7 @@ func printTable(printer *output.Printer, loc *i18n.Localizer, pages []apigen.Pag
 	return printer.PrintTable([]string{
 		loc.T("page_label_number"),
 		loc.T("page_label_title"),
+		loc.T("page_label_topic_name"),
 		loc.T("page_label_topic_number"),
 		loc.T("page_label_status"),
 		loc.T("page_label_modified_at"),

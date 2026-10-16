@@ -1,5 +1,5 @@
 -- name: CreatePersonalAccessToken :one
--- 個人アクセストークンを作成する
+-- 個人用アクセストークンを作成する
 INSERT INTO personal_access_tokens (
     space_id,
     space_member_id,
@@ -23,7 +23,7 @@ INSERT INTO personal_access_tokens (
 ) RETURNING *;
 
 -- name: FindPersonalAccessTokenByTokenDigest :one
--- トークンダイジェストで個人アクセストークンを取得する。
+-- トークンダイジェストで個人用アクセストークンを取得する。
 -- space_idを条件に含めない例外のクエリである。トークン認証はスペースを特定する前の入口で、
 -- スペースはこのトークンから決まるためである。呼び出し側は、ここで得たspace_idを以降の
 -- クエリの条件に必ず含める。
@@ -41,7 +41,7 @@ WHERE id = @id
   AND (last_used_at IS NULL OR last_used_at < @stale_before::timestamptz);
 
 -- name: RevokePersonalAccessToken :one
--- メンバー自身の個人アクセストークンを失効する。対象が無いか既に失効している場合は
+-- メンバー自身の個人用アクセストークンを失効する。対象が無いか既に失効している場合は
 -- 行を返さない。
 UPDATE personal_access_tokens
 SET revoked_at = @now::timestamptz, updated_at = @now
@@ -52,7 +52,7 @@ WHERE id = @id
 RETURNING *;
 
 -- name: ListUnrevokedPersonalAccessTokensBySpaceMember :many
--- スペースメンバー自身の、失効していない個人アクセストークンを新しい順に取得する。
+-- スペースメンバー自身の、失効していない個人用アクセストークンを新しい順に取得する。
 -- 期限切れのトークンも含める。
 SELECT * FROM personal_access_tokens
 WHERE space_id = @space_id

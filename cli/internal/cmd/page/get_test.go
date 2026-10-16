@@ -34,10 +34,12 @@ func TestGet_JSON(t *testing.T) {
 	var got map[string]any
 	cmdtest.Decode(t, e.Stdout.String(), &got)
 	want := map[string]any{
-		"etag":  etag,
-		"url":   "https://wikino.example.com/s/team/pages/12",
-		"body":  "# 議事録\n\n本文\n",
-		"title": "議事録",
+		"etag":         etag,
+		"url":          "https://wikino.example.com/s/team/pages/12",
+		"body":         "# 議事録\n\n本文\n",
+		"title":        "議事録",
+		"topic_number": float64(3),
+		"topic_name":   "開発",
 	}
 	for key, value := range want {
 		if got[key] != value {
@@ -60,6 +62,25 @@ func TestGet_Human(t *testing.T) {
 	}
 
 	cmdtest.AssertGolden(t, "get", e.Stdout.String())
+}
+
+func TestGet_HumanTopicNameControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	// トピック名は他の利用者が付けた値で、端末を操作するエスケープシーケンスや改行を含みうる。
+	page := testPage(12, ptr("議事録"), "本文\n")
+	page["topic_name"] = "開\x1b[2J発\r\n偽の行"
+	e := newEnv(t)
+	handlePage(e, 12, page)
+
+	if err := e.RunTTY(NewCmdPage, "page", "get", "12"); err != nil {
+		t.Fatalf("エラーを期待しなかったが %v だった", err)
+	}
+
+	got := e.Stdout.String()
+	if strings.Contains(got, "\x1b") || !strings.Contains(got, "トピック:     開 [2J発  偽の行\n") {
+		t.Errorf("トピック名の制御文字が1行の値として無害化されていない: %q", got)
+	}
 }
 
 // pageFileCaseは、リポジトリ直下の共通のテストデータ (`testdata/wikino-file-format/page-files.json`) の1件。
@@ -98,17 +119,19 @@ func TestGet_MarkdownSharedTestdata(t *testing.T) {
 				return cmdtest.JSON(http.StatusOK, page, "ETag", page["etag"].(string))
 			})
 
-			// TTYでも非TTYでも同じページファイルを出す。
-			for _, run := range []func() error{
-				func() error { return e.Run(NewCmdPage, "page", "get", number, "--md") },
-				func() error { return e.RunTTY(NewCmdPage, "page", "get", number, "--md") },
-			} {
-				if err := run(); err != nil {
-					t.Fatalf("エラーを期待しなかったが %v だった", err)
-				}
-				if got := e.Stdout.String(); got != tt.Want {
-					t.Errorf("標準出力 = %q、期待値 = %q", got, tt.Want)
-				}
+			if err := e.Run(NewCmdPage, "page", "get", number, "--md"); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := e.Stdout.String(); got != tt.Want {
+				t.Errorf("標準出力 = %q、期待値 = %q", got, tt.Want)
+			}
+
+			// TTYでは、表示を上書きできるCRを取り除くため、CRLFの改行をLFにする。
+			if err := e.RunTTY(NewCmdPage, "page", "get", number, "--md"); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got, want := e.Stdout.String(), strings.ReplaceAll(tt.Want, "\r\n", "\n"); got != want {
+				t.Errorf("TTYの標準出力 = %q、期待値 = %q", got, want)
 			}
 		})
 	}
@@ -165,6 +188,42 @@ func TestGet_InvalidNumber(t *testing.T) {
 			err := e.Run(NewCmdPage, "page", "get", arg)
 			_ = cmdtest.AssertCLIError(t, err, output.CodeUsage, output.ExitUsage)
 			assertNoRequest(t, e)
+		})
+	}
+}
+
+func TestGet_MarkdownControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	// 本文は他の利用者が書いたもので、端末を操作するエスケープシーケンスやCRを含みうる。
+	const body = "a\x1b[2Jb\r\nc\rd\n"
+
+	tests := []struct {
+		name     string
+		tty      bool
+		wantBody string
+	}{
+		{name: "パイプでは本文を変えない", wantBody: body},
+		{name: "TTYでは制御文字を取り除く", tty: true, wantBody: "a[2Jb\ncd\n"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			e := newEnv(t)
+			handlePage(e, 12, testPage(12, ptr("議事録"), body))
+
+			run := e.Run
+			if tt.tty {
+				run = e.RunTTY
+			}
+			if err := run(NewCmdPage, "page", "get", "12", "--md"); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := e.Stdout.String(); !strings.HasSuffix(got, tt.wantBody) {
+				t.Errorf("標準出力 = %q、本文の期待値 = %q", got, tt.wantBody)
+			}
 		})
 	}
 }

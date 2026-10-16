@@ -2,10 +2,13 @@ package output
 
 import (
 	"bytes"
+	"io"
 	"strings"
 	"unicode"
 
 	"golang.org/x/text/width"
+
+	"github.com/wikinoapp/wikino/cli/internal/iostreams"
 )
 
 // 人間向けの表示で使うANSIのエスケープシーケンス。
@@ -74,14 +77,14 @@ func (p *Printer) PrintTable(headers []string, rows [][]string) error {
 func (p *Printer) PrintDetail(fields []Field, body string) error {
 	labelWidth := 0
 	for _, f := range fields {
-		labelWidth = max(labelWidth, displayWidth(sanitizeLine(f.Label)))
+		labelWidth = max(labelWidth, displayWidth(SanitizeLine(f.Label)))
 	}
 
 	var buf bytes.Buffer
 	for _, f := range fields {
-		label := sanitizeLine(f.Label)
+		label := SanitizeLine(f.Label)
 		padding := strings.Repeat(" ", labelWidth-displayWidth(label))
-		buf.WriteString(p.bold(label+":") + padding + " " + sanitizeLine(f.Value) + "\n")
+		buf.WriteString(p.bold(label+":") + padding + " " + SanitizeLine(f.Value) + "\n")
 	}
 
 	if body != "" {
@@ -104,19 +107,38 @@ func (p *Printer) bold(s string) string {
 	return ansiBold + s + ansiReset
 }
 
+// WriteTextは、ページの本文やAPIの応答のような外部由来の文字列を、そのまま標準出力に書く。
+// 標準出力がTTYのときだけ、人間向けの本文の表示と同じく改行とタブ以外の制御文字を取り除き、
+// CRLFをLFにする。パイプとファイルへの出力は、書き出したファイルの書き戻しや
+// ほかのコマンドへの受け渡しを壊さないよう、1バイトも変えない。
+func WriteText(ios *iostreams.IOStreams, s string) error {
+	_, err := io.WriteString(ios.Out, terminalText(ios, s))
+
+	return err
+}
+
+// terminalTextは、標準出力がTTYのときだけsの制御文字を取り除く。
+func terminalText(ios *iostreams.IOStreams, s string) string {
+	if !ios.IsStdoutTTY() {
+		return s
+	}
+
+	return sanitizeBody(s)
+}
+
 func sanitizeCells(cells []string) []string {
 	sanitized := make([]string, len(cells))
 	for i, cell := range cells {
-		sanitized[i] = sanitizeLine(cell)
+		sanitized[i] = SanitizeLine(cell)
 	}
 
 	return sanitized
 }
 
-// sanitizeLineは、1行に収める値の制御文字 (改行・タブ・エスケープなど) と双方向テキストの
+// SanitizeLineは、1行に収める値の制御文字 (改行・タブ・エスケープなど) と双方向テキストの
 // 制御文字を空白に置き換える。タイトルなどの値は他の利用者が書いたもので、端末を操作する
 // エスケープシーケンスや、表示上の文字の並びを入れ替えて確認の文言を偽装する文字を含みうる。
-func sanitizeLine(s string) string {
+func SanitizeLine(s string) string {
 	return strings.Map(func(r rune) rune {
 		if unicode.IsControl(r) || isBidiControl(r) {
 			return ' '

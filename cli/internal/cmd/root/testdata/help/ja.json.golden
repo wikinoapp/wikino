@@ -292,7 +292,7 @@
     }
   ],
   "command": "wikino attachment get",
-  "errors": "  1  署名付きURLからの取得に失敗した (期限切れ・途中の切断を含む)。同じコマンドをもう一度実行してください。保存先に書き込めなかった (権限・空き容量など)\n  2  IDがUUIDでない、保存先のディレクトリが無い、保存先に既にファイルがある (`--clobber` で上書き)、`--output -` と `--json`・`--fields`・`--jq`・`--clobber` を併用した、`--fields` に未知の項目\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにattachment:readのスコープが無い (403)\n  5  添付ファイルが無い、または別のスペースの添付ファイル (404)。本文の `/attachments/{ID}` のIDとスペースを確かめてください",
+  "errors": "  1  署名付きURLからの取得に失敗した (期限切れ・途中の切断を含む)。同じコマンドをもう一度実行してください。保存先に書き込めなかった (権限・空き容量など)\n  2  IDがUUIDでない、保存先のディレクトリが無い、保存先に既にファイルがある (`--clobber` で上書き)、`--output -` と `--json`・`--fields`・`--jq`・`--clobber` を併用した、標準出力が端末のときに `--output -` を指定した、`--fields` に未知の項目\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにattachment:readのスコープが無い (403)\n  5  添付ファイルが無い、または別のスペースの添付ファイル (404)。本文の `/attachments/{ID}` のIDとスペースを確かめてください",
   "examples": "  # 添付ファイルをカレントディレクトリに元のファイル名で保存する\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef\n\n  # 本文の参照のパスのまま渡し、ディレクトリimages/に保存する\n  wikino attachment get /attachments/01234567-89ab-cdef-0123-456789abcdef -O images/\n\n  # ファイル名を指定して保存し、既存のファイルを上書きする\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O diagram.png --clobber\n\n  # 中身を標準出力に出す\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O - > diagram.png",
   "flags": [
     {
@@ -373,7 +373,7 @@
   "args": [],
   "command": "wikino auth",
   "errors": "  サブコマンドが無いときと未知のサブコマンドは、使い方の誤り (終了コード2) で失敗します。",
-  "examples": "  # ブラウザで許可してログインする\n  wikino auth login my-space\n\n  # SSH先などで、別の端末のブラウザでコードを入力してログインする\n  wikino auth login my-space --device\n\n  # 個人アクセストークンを標準入力から渡してログインする\n  wikino auth login my-space --with-token < token.txt\n\n  # 保存した資格情報とトークンのスコープを確かめる\n  wikino auth status",
+  "examples": "  # ブラウザで許可してログインする\n  wikino auth login my-space\n\n  # SSH先などで、別の端末のブラウザでコードを入力してログインする\n  wikino auth login my-space --device\n\n  # 個人用アクセストークンを標準入力から渡してログインする\n  wikino auth login my-space --with-token < token.txt\n\n  # 保存した資格情報とトークンのスコープを確かめる\n  wikino auth status",
   "flags": [],
   "inherited_flags": [
     {
@@ -465,7 +465,7 @@
   ],
   "command": "wikino auth login",
   "errors": "  2  スペースの指定が無い、`--member` を指定した、`--scopes` が空か未知のスコープを含む、`--with-token` と `--scopes` か `--device` を併用した、標準入力のトークンが空か不正な形式\n  3  認可画面で拒否した (authorization_denied)、認可の応答が要求と一致しない・認可サーバーがエラーを返した・デバイス認可に対応しない (oauth_error)、トークンが無効か期限切れ (401)\n  5  トークンがそのスペースのものでない (404)。トークンを発行したスペースの識別子を指定してください\n  1  5分以内、またはデバイス認可のコードの期限までに許可されなかった (login_timeout)、認可サーバーの応答を読めない (response_error)、通信に失敗した、トークンか設定の保存、または保存の失敗後の復元に失敗した\n  APIの検証に失敗したときは何も保存しません。\n  以前の保存先からの削除だけが失敗したときは、ログインを成功にして警告を出し、再ログインかログアウトで削除を再試行できます。",
-  "examples": "  # ブラウザで許可してログインする\n  wikino auth login my-space\n\n  # SSH先などで、別の端末のブラウザでコードを入力してログインする\n  wikino auth login my-space --device\n\n  # 読み取りと下書きのスコープだけを要求する\n  wikino auth login my-space --scopes page:read,draft_page:read,draft_page:write\n\n  # ファイルに保存した個人アクセストークンでログインする\n  wikino auth login my-space --with-token < token.txt\n\n  # 開発環境のサーバーにログインする\n  wikino auth login my-space --host http://localhost:4000",
+  "examples": "  # ブラウザで許可してログインする\n  wikino auth login my-space\n\n  # SSH先などで、別の端末のブラウザでコードを入力してログインする\n  wikino auth login my-space --device\n\n  # 読み取りと下書きのスコープだけを要求する\n  wikino auth login my-space --scopes page:read,draft_page:read,draft_page:write\n\n  # ファイルに保存した個人用アクセストークンでログインする\n  wikino auth login my-space --with-token < token.txt\n\n  # 開発環境のサーバーにログインする\n  wikino auth login my-space --host http://localhost:4000",
   "flags": [
     {
       "default": "false",
@@ -483,7 +483,7 @@
     },
     {
       "default": "false",
-      "description": "標準入力から個人アクセストークンを読む",
+      "description": "標準入力から個人用アクセストークンを読む",
       "name": "with-token",
       "shorthand": "",
       "type": "bool"
@@ -540,7 +540,7 @@
       "type": "string"
     }
   ],
-  "long": "スペースにログインし、資格情報を保存します。\n\n既定では、ブラウザでWikinoの認可画面を開き、許可を受けてトークンを得ます (OAuth)。\n認可画面のURLは標準エラーにも出すため、ブラウザが開かないときはそのURLを開いてください。\n許可を待つのは5分までです。\n\nSSHで接続しているとき、ディスプレイが無いとき、ブラウザの起動やポートの待ち受けに失敗したときは、デバイス認可に切り替えます。\n`--device` を付けると、常にデバイス認可でログインします。\nデバイス認可では、確認用のURLとコードを標準エラーに出すため、手元の端末のブラウザでそのURLを開き、コードを入力して許可してください。\n許可を待つのは、コードの期限 (Wikinoでは10分) までです。\n\n要求するスコープの既定はトークンに付与できるすべてのスコープで、付与する範囲は認可画面で選べます。\n要求を絞るときは `--scopes` で指定します。\nOAuthのアクセストークンは、期限の少し前に、APIを呼ぶ前に自動で更新します。\n\n`--with-token` を付けると、スペース設定で発行した個人アクセストークンを標準入力から読みます。\n\nどちらの方法でも、トークンがそのスペースで使えることをAPIで確かめてから保存し、確かめられなければ何も保存しません。\nブラウザでログインしたときは、保存しなかったトークンをサーバーで失効させます。\nトークンの持ち主のメンバーはトークンから決まるため、`--member` は指定しません。\n\n既定の組が無ければ、ログインした組を既定にします。\nスペースに既定のメンバーが無ければ、ログインしたメンバーをそのスペースの既定にします。\n同じメンバーで再びログインすると、保存したトークンを置き換えます。",
+  "long": "スペースにログインし、資格情報を保存します。\n\n既定では、ブラウザでWikinoの認可画面を開き、許可を受けてトークンを得ます (OAuth)。\n認可画面のURLは標準エラーにも出すため、ブラウザが開かないときはそのURLを開いてください。\n許可を待つのは5分までです。\n\nSSHで接続しているとき、ディスプレイが無いとき、ブラウザの起動やポートの待ち受けに失敗したときは、デバイス認可に切り替えます。\n`--device` を付けると、常にデバイス認可でログインします。\nデバイス認可では、確認用のURLとコードを標準エラーに出すため、手元の端末のブラウザでそのURLを開き、コードを入力して許可してください。\n許可を待つのは、コードの期限 (Wikinoでは10分) までです。\n\n要求するスコープの既定はトークンに付与できるすべてのスコープで、付与する範囲は認可画面で選べます。\n要求を絞るときは `--scopes` で指定します。\nOAuthのアクセストークンは、期限の少し前に、APIを呼ぶ前に自動で更新します。\n\n`--with-token` を付けると、スペース設定で発行した個人用アクセストークンを標準入力から読みます。\n\nどちらの方法でも、トークンがそのスペースで使えることをAPIで確かめてから保存し、確かめられなければ何も保存しません。\nブラウザでログインしたときは、保存しなかったトークンをサーバーで失効させます。\nトークンの持ち主のメンバーはトークンから決まるため、`--member` は指定しません。\n\n既定の組が無ければ、ログインした組を既定にします。\nスペースに既定のメンバーが無ければ、ログインしたメンバーをそのスペースの既定にします。\n同じメンバーで再びログインすると、保存したトークンを置き換えます。",
   "output": "  ログインした資格情報を出します。\n    host           接続先のURL\n    space          スペースの識別子\n    member         メンバー (id・atname・name)\n    token_store    トークンの保存先 (keyring・file)\n    default        既定の組かどうか\n    space_default  そのスペースの既定のメンバーかどうか\n    scopes         ブラウザでログインしたときに付与されたスコープ (`--with-token` では出しません)\n  認可画面のURL、デバイス認可の確認用のURLとコード、キーチェーンを使えずファイルに保存したときの警告は、標準エラーに出します。",
   "short": "スペースにログインする",
   "subcommands": [],
@@ -611,7 +611,7 @@
       "type": "string"
     }
   ],
-  "long": "保存した資格情報 (トークンと設定の組) を消します。\n\n対象は、ほかのコマンドと同じ順で決めます。\n`<space>` は `--space` と同じ意味です。\n同じスペースに複数のメンバーの資格情報があるときは、`--member` で選びます。\n\nブラウザでログインした資格情報は、リフレッシュトークンをサーバーで失効させてから消します。\n失効できなかったとき (接続先に届かないなど) も手元の資格情報は消し、標準エラーに警告を出します。\nそのときはWikinoの連携中のアプリの画面で連携を解除してください。\n\n個人アクセストークンはサーバーでは失効させません。\nトークンを使えなくするには、スペース設定でトークンを削除してください。\n`WIKINO_TOKEN` のトークンは保存していないため、このコマンドの対象になりません。\n\n既定の組を消したときは、既定を外します。",
+  "long": "保存した資格情報 (トークンと設定の組) を消します。\n\n対象は、ほかのコマンドと同じ順で決めます。\n`<space>` は `--space` と同じ意味です。\n同じスペースに複数のメンバーの資格情報があるときは、`--member` で選びます。\n\nブラウザでログインした資格情報は、リフレッシュトークンをサーバーで失効させてから消します。\n失効できなかったとき (接続先に届かないなど) も手元の資格情報は消し、標準エラーに警告を出します。\nそのときはWikinoの連携中のアプリの画面で連携を解除してください。\n\n個人用アクセストークンはサーバーでは失効させません。\nトークンを使えなくするには、スペース設定でトークンを削除してください。\n`WIKINO_TOKEN` のトークンは保存していないため、このコマンドの対象になりません。\n\n既定の組を消したときは、既定を外します。",
   "output": "  消した資格情報を `wikino auth login` と同じ項目で出します。default・space_defaultは消す前の値です。",
   "short": "保存した資格情報を消す",
   "subcommands": [],
@@ -891,7 +891,7 @@
     },
     {
       "default": "",
-      "description": "下書きのタイトル (title)。既存のページで省くとページの今のタイトルになる",
+      "description": "下書きのタイトル (title)。既存のページで省くとページの今のタイトルになる。公開するときにページのタイトルの規則 (200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない) を確かめる",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -972,7 +972,7 @@
     }
   ],
   "command": "wikino draft delete",
-  "errors": "  2  ページ番号が1以上の整数でない、`--if-match` と `--force` のどちらも無いか両方ある、`--if-match` が空か `*`、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにdraft_page:deleteのスコープが無い、確認や `--force` でdraft_page:readのスコープが無い (403)\n  5  ページに自分の下書きが無い、ページが無いかゴミ箱にある、または見られない非公開トピックのページ (404)。\n     削除し直して5になった場合は、削除済みです\n  6  読んだ後に下書きが更新されている (412)。`wikino draft get` で今の内容を確かめ、削除してよければ新しい版で削除し直してください\n  9  `--yes` が無く、利用者の確認が必要。端末では確認を拒否した",
+  "errors": "  2  ページ番号が1以上の整数でない、`--if-match` と `--force` のどちらも無いか両方ある、`--if-match` が空か `*`、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにdraft_page:deleteのスコープが無い (403)\n  5  ページに自分の下書きが無い、ページが無いかゴミ箱にある、または見られない非公開トピックのページ (404)。\n     削除し直して5になった場合は、削除済みです\n  6  読んだ後に下書きが更新されている (412)。`wikino draft get` で今の内容を確かめ、削除してよければ新しい版で削除し直してください\n  9  `--yes` が無く、利用者の確認が必要。端末では確認を拒否した",
   "examples": "  # ページ12の下書きを読んで版を確かめてから、削除の確認を求める\n  wikino draft get 12 --md\n  wikino draft delete 12 --if-match '\"d41d8cd9\"'\n\n  # 利用者の承認を得た後に、確認を省いて削除する\n  wikino draft delete 12 --if-match '\"d41d8cd9\"' --yes\n\n  # 送る要求を確かめる (送らない)\n  wikino draft delete 12 --if-match '\"d41d8cd9\"' --dry-run",
   "flags": [
     {
@@ -1055,7 +1055,7 @@
       "type": "string"
     }
   ],
-  "long": "ページ番号で指定したページの自分の下書きを、編集履歴ごと削除します。\n削除した下書きと編集履歴は元に戻せません。\nページそのものは削除せず、公開済みのページの内容も変えません。\n\n削除には、読んだ版を `--if-match` で渡します。\n版は `wikino draft get` の出力の `etag` です。\n読んだ後に下書きが更新されていると (Web画面の自動保存を含みます)、削除せずに終了コード6で失敗します。\n`--force` を付けると版を照合せず、直前に取得した最新の版を削除します。\n\n取り消せない操作のため、`--yes` が無ければ削除の前に確認します。\n端末から実行したときは、削除する下書きと編集履歴の件数を示して尋ねます。\n端末でないとき (エージェントやスクリプトから実行したとき) は、削除の要求を送らずに、何が起きるか (`changes`) と承認後に実行するコマンド (`confirm_command`) を標準出力にJSONで出し、終了コード9で終えます。\n`changes` を利用者に見せ、承認を得てから `confirm_command` をそのまま実行してください。\n`confirm_command` には、確認のために取得した版が `--if-match` で入っています。\n\n削除するには、トークンにdraft_page:deleteのスコープが要ります。\n確認と `--force` のために下書きと編集履歴を読むには、draft_page:readのスコープも要ります。\n非公開トピックのページの下書きを削除するには、topic:readのスコープも要ります。",
+  "long": "ページ番号で指定したページの自分の下書きを、編集履歴ごと削除します。\n削除した下書きと編集履歴は元に戻せません。\nページそのものは削除せず、公開済みのページの内容も変えません。\n\n削除には、読んだ版を `--if-match` で渡します。\n版は `wikino draft get` の出力の `etag` です。\n読んだ後に下書きが更新されていると (Web画面の自動保存を含みます)、削除せずに終了コード6で失敗します。\n`--force` を付けると版を照合せず、直前に取得した最新の版を削除します。\n\n取り消せない操作のため、`--yes` が無ければ削除の前に確認します。\n端末から実行したときは、削除する下書きと編集履歴の件数を示して尋ねます。\n端末でないとき (エージェントやスクリプトから実行したとき) は、削除の要求を送らずに、何が起きるか (`changes`) と承認後に実行するコマンド (`confirm_command`) を標準出力にJSONで出し、終了コード9で終えます。\n`changes` を利用者に見せ、承認を得てから `confirm_command` をそのまま実行してください。\n`confirm_command` には、確認のために取得した版が `--if-match` で入っています。\n\n削除するには、トークンにdraft_page:deleteのスコープが要ります。\nこのスコープは、確認と `--force` のための下書きと編集履歴の読み取りも含みます。\n非公開トピックのページの下書きを削除するには、topic:readのスコープも要ります。",
   "output": "  削除したら、JSONでは `{\"page_number\": 12, \"deleted\": true}` を出します。\n  人間向けの表示では標準出力に何も出さず、完了の行を標準エラーに出します。\n  `--yes` が無く端末でないときは、削除せずに `{\"status\": \"confirmation_required\", \"changes\": [...], \"confirm_command\": \"...\"}` を出し、終了コード9で終えます。\n  `--dry-run` を付けると、削除の要求を送らずに `{\"dry_run\": true, \"requests\": [...]}` の形で送る要求を出します。確認は求めません。\n  `--force` を付けたときの下書きの取得 (読み取り) の要求は、`--dry-run` でも送ります。\n  `--dry-run` と `--fields` は併用できません。",
   "short": "下書きを削除する",
   "subcommands": [],
@@ -1222,7 +1222,7 @@
     }
   ],
   "long": "トークンの持ち主がスペースに持っている下書きを、更新日時の新しい順に出します。\nまだ公開していない新しいページの下書きも含みます。\nゴミ箱に入れたページの下書きは含みません。\n\n一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。\n本文を読むには `wikino draft get` を使います。\n一覧に本文が要るときは、`--fields` に `body` を含めます。\n\n既定ではAPIの既定の件数 (20件) の1ページだけを取得します。\n次のページがあるときは、取り方を標準エラーに出します。\n`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。\n\n非公開トピックのページの下書きは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。",
-  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、下書きごとに次の項目を出します。\n    page_number   下書きのページの番号。`wikino draft get` などに渡します\n    title         下書きのタイトル。タイトルの無い下書きではnull\n    topic_number  下書きのページが属するトピックの番号\n    modified_at   下書きの内容を最後に更新した日時 (RFC 3339)。Web画面の自動保存でも更新されます\n    url           Web画面で下書きのページの編集画面を開くURL\n    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n                  APIの応答には無く、CLIが本文から作る項目です\n    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  下書きが無いときは、空の一覧を終了コード0で返します。",
+  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、下書きごとに次の項目を出します。\n    page_number   下書きのページの番号。`wikino draft get` などに渡します\n    title         下書きのタイトル。タイトルの無い下書きではnull\n    topic_number  下書きのページが属するトピックの番号\n    topic_name    下書きのページが属するトピックの名前\n    modified_at   下書きの内容を最後に更新した日時 (RFC 3339)。Web画面の自動保存でも更新されます\n    url           Web画面で下書きのページの編集画面を開くURL\n    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n                  APIの応答には無く、CLIが本文から作る項目です\n    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  下書きが無いときは、空の一覧を終了コード0で返します。",
   "short": "下書きの一覧を出す",
   "subcommands": [],
   "usage": "wikino draft list [flags]"
@@ -1645,7 +1645,7 @@
     },
     {
       "default": "",
-      "description": "下書きの新しいタイトル (title)",
+      "description": "下書きの新しいタイトル (title)。公開するときにページのタイトルの規則 (200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない) を確かめる",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -1907,7 +1907,7 @@
 {
   "args": [],
   "command": "wikino page create",
-  "errors": "  1  通信に失敗した、サーバーのエラー (5xx)。作成されている場合があるため、`wikino page list --topic <番号> --title <タイトル>` で確かめてから送り直してください\n  2  `--topic` か `--title` が無い、`--body` と `--body-file` のどちらも無いか両方ある、`--topic` が1以上の整数でない、\n     本文のファイルを読めないかUTF-8でない、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにpage:writeのスコープが無い (403)\n  5  トピックにページを作成できない (404)\n  7  タイトルに使えない文字がある、同じタイトルのページがトピックにある、トピックが無いか見られない (422)。\n     重複のときは `wikino page list --topic <番号> --title <タイトル>` で既存のページを探し、内容を変えるなら `wikino page update` を使ってください",
+  "errors": "  1  通信に失敗した、サーバーのエラー (5xx)。作成されている場合があるため、`wikino page list --topic <番号> --title <タイトル>` で確かめてから送り直してください\n  2  `--topic` か `--title` が無い、`--body` と `--body-file` のどちらも無いか両方ある、`--topic` が1以上の整数でない、\n     本文のファイルを読めないかUTF-8でない、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにpage:writeのスコープが無い (403)\n  5  トピックにページを作成できない (404)\n  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、トピックが無いか見られない (422)。\n     重複のときは `wikino page list --topic <番号> --title <タイトル>` で既存のページを探し、内容を変えるなら `wikino page update` を使ってください",
   "examples": "  # トピック3に「議事録」というページを作成する\n  wikino page create --topic 3 --title '議事録' --body '# 議事録'\n\n  # ファイルの内容を本文にしてページを作成する\n  wikino page create --topic 3 --title '議事録' --body-file minutes.md\n\n  # 標準入力から本文を読み、作成したページの番号と版だけを出す\n  cat minutes.md | wikino page create --topic 3 --title '議事録' --body-file - --fields number,etag\n\n  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)\n  wikino page create --topic 3 --title '議事録' --body-file minutes.md --dry-run",
   "flags": [
     {
@@ -1933,7 +1933,7 @@
     },
     {
       "default": "",
-      "description": "ページのタイトル (title)。必須",
+      "description": "ページのタイトル (title)。必須。200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない",
       "name": "title",
       "shorthand": "",
       "type": "string"
@@ -2285,7 +2285,7 @@
     }
   ],
   "long": "スペースのページを、更新日時の新しい順に出します。\nゴミ箱に入れたページは含みません。\n\n既定では公開済みのページだけを出します。\n`--status unpublished` か `--status all` で、Wikiリンクで自動作成されたページなど、まだ公開していないページも出せます。\n未公開のページは、見られるトピックの公開済みページか、自分の下書きからWikiリンクで指しているものだけを含みます。\nリンクされていない未公開ページは含みません。\n\n一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。\n本文を読むには `wikino page get` を使います。\n一覧に本文が要るときは、`--fields` に `body` を含めます。\n\n既定ではAPIの既定の件数 (20件) の1ページだけを取得します。\n次のページがあるときは、取り方を標準エラーに出します。\n`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。\n\n非公開トピックのページは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。",
-  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、ページごとに次の項目を出します。\n    id            ページのID\n    number        ページ番号。`wikino page get` などに渡します\n    title         タイトル。タイトルの無いページではnull\n    status        公開状態 (published・unpublished)\n    topic_number  ページが属するトピックの番号\n    modified_at   内容を最後に更新した日時 (RFC 3339)\n    url           Web画面でページを開くURL。出典としてページを示すときに使います\n    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n                  APIの応答には無く、CLIが本文から作る項目です\n    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  該当するページが無いときは、空の一覧を終了コード0で返します。",
+  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、ページごとに次の項目を出します。\n    id            ページのID\n    number        ページ番号。`wikino page get` などに渡します\n    title         タイトル。タイトルの無いページではnull\n    status        公開状態 (published・unpublished)\n    topic_number  ページが属するトピックの番号\n    topic_name    ページが属するトピックの名前。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います\n    modified_at   内容を最後に更新した日時 (RFC 3339)\n    url           Web画面でページを開くURL。出典としてページを示すときに使います\n    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n                  APIの応答には無く、CLIが本文から作る項目です\n    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  該当するページが無いときは、空の一覧を終了コード0で返します。",
   "short": "ページの一覧を出す",
   "subcommands": [],
   "usage": "wikino page list [flags]"
@@ -2408,7 +2408,7 @@
     }
   ],
   "command": "wikino page update",
-  "errors": "  2  ページ番号が1以上の整数でない、`--title`・`--body`・`--body-file`・`--md-file`・`--edits` のどれも無い、同時に指定できないフラグを併用した、\n     `--if-match` と `--force` のどちらも無いか両方ある (`--md-file`・`--edits` を除く)、`--if-match` が空か `*`、ファイルを読めないかUTF-8でない、\n     `--md-file` の `wikino_number` がページ番号と違うか `wikino_etag` が無い、`--edits` のJSONの形が違う、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにpage:writeのスコープが無い (403)\n  5  ページが無い、ゴミ箱にある、またはページを更新できない (404)。`wikino page list` で番号を確かめてください\n  6  読んだ後にページが更新されている (412)。`wikino page get` で最新の内容と版を取得し、変更を反映してから更新し直してください。\n     `--md-file` では、`wikino page get --md` で書き出し直したファイルに変更を反映してください\n  7  タイトルに使えない文字がある、同じタイトルのページがトピックにある、タイトルの無い未公開のページを `--title` 無しで更新した (422)。\n     `--edits` の `old_str` が今の本文に一致しないか、複数の箇所に一致した (422)。何番目の編集かをヒントに、一致の件数をメッセージに示します。\n     `wikino page get --md` で今の本文を確かめ、`edits` の全体を送り直してください",
+  "errors": "  2  ページ番号が1以上の整数でない、`--title`・`--body`・`--body-file`・`--md-file`・`--edits` のどれも無い、同時に指定できないフラグを併用した、\n     `--if-match` と `--force` のどちらも無いか両方ある (`--md-file`・`--edits` を除く)、`--if-match` が空か `*`、ファイルを読めないかUTF-8でない、\n     `--md-file` の `wikino_number` がページ番号と違うか `wikino_etag` が無い、`--edits` のJSONの形が違う、`--fields` に未知の項目、`--dry-run` と `--fields` の併用\n  3  ログインしていない、トークンが無効か期限切れ (401)\n  4  トークンにpage:writeのスコープが無い (403)\n  5  ページが無い、ゴミ箱にある、またはページを更新できない (404)。`wikino page list` で番号を確かめてください\n  6  読んだ後にページが更新されている (412)。`wikino page get` で最新の内容と版を取得し、変更を反映してから更新し直してください。\n     `--md-file` では、`wikino page get --md` で書き出し直したファイルに変更を反映してください\n  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、タイトルの無い未公開のページを `--title` 無しで更新した (422)。\n     `--edits` の `old_str` が今の本文に一致しないか、複数の箇所に一致した (422)。何番目の編集かをヒントに、一致の件数をメッセージに示します。\n     `wikino page get --md` で今の本文を確かめ、`edits` の全体を送り直してください",
   "examples": "  # ページ12の版を取得してから、本文をファイルの内容で更新する\n  wikino page get 12 --jq .etag\n  wikino page update 12 --body-file body.md --if-match '\"d41d8cd9\"'\n\n  # ページ12のタイトルだけを変える\n  wikino page update 12 --title '定例会議の議事録' --if-match '\"d41d8cd9\"'\n\n  # ページ12をファイルに書き出し、編集してから書き戻す\n  wikino page get 12 --md > page.md\n  wikino page update 12 --md-file page.md\n\n  # ページ12の本文の一部を検索置換する\n  echo '{\"edits\": [{\"old_str\": \"- [ ] 議事録を共有する\", \"new_str\": \"- [x] 議事録を共有する\"}]}' | wikino page update 12 --edits -\n\n  # 版を照合せず、最新の版に上書きする\n  wikino page update 12 --body-file body.md --force\n\n  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)\n  wikino page update 12 --body-file body.md --if-match '\"d41d8cd9\"' --dry-run",
   "flags": [
     {
@@ -2462,7 +2462,7 @@
     },
     {
       "default": "",
-      "description": "新しいタイトル (title)",
+      "description": "新しいタイトル (title)。200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない",
       "name": "title",
       "shorthand": "",
       "type": "string"

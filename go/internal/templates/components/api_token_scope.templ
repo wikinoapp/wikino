@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -28,10 +29,35 @@ type APITokenScopeOption struct {
 	// メンバーの権限との積で決まるため、付与しても効かないことを注記する。チェックは外さず、
 	// 後から権限が広がったときに付け直さなくても効くようにする
 	Ineffective bool
+
+	// Impliesは、このスコープに含まれるスコープのうち、選択肢にあるもの
+	Implies []model.Scope
+
+	// ImpliedByは、このスコープを含むスコープのうち、選択肢にあるもの。並びは選択肢の順
+	ImpliedBy []APITokenScopeImplier
+}
+
+// APITokenScopeImplierは、ある選択肢のスコープを含む、ほかの選択肢のスコープ
+type APITokenScopeImplier struct {
+	Scope   model.Scope
+	Checked bool
+}
+
+// Impliedは、このスコープを含むスコープが選ばれているか。選ばれていれば、このスコープを選択済みかつ
+// 無効にして描画する。無効にしたチェックボックスは送信されないため、保存の前にバリデーターが
+// model.WithImpliedScopesで補う
+func (o APITokenScopeOption) Implied() bool {
+	for _, implier := range o.ImpliedBy {
+		if implier.Checked {
+			return true
+		}
+	}
+	return false
 }
 
 // NewAPITokenScopeOptionsは、scopesを並べた選択肢を作る。checkedに含むスコープをチェックし、
-// ineffectiveに含むスコープに今の権限では効かないことを注記する
+// ineffectiveに含むスコープに今の権限では効かないことを注記する。含意の関係は
+// model.ScopeDefinitionsから引き、選択肢にあるスコープどうしに限る
 func NewAPITokenScopeOptions(scopes, checked, ineffective []model.Scope) []APITokenScopeOption {
 	options := make([]APITokenScopeOption, len(scopes))
 	for i, scope := range scopes {
@@ -39,6 +65,19 @@ func NewAPITokenScopeOptions(scopes, checked, ineffective []model.Scope) []APITo
 			Scope:       scope,
 			Checked:     model.HasScope(checked, scope),
 			Ineffective: model.HasScope(ineffective, scope),
+		}
+	}
+	for i := range options {
+		for _, implied := range model.ImpliedScopes(options[i].Scope) {
+			j := slices.IndexFunc(options, func(o APITokenScopeOption) bool { return o.Scope == implied })
+			if j < 0 {
+				continue
+			}
+			options[i].Implies = append(options[i].Implies, implied)
+			options[j].ImpliedBy = append(options[j].ImpliedBy, APITokenScopeImplier{
+				Scope:   options[i].Scope,
+				Checked: options[i].Checked,
+			})
 		}
 	}
 	return options
@@ -58,23 +97,34 @@ type APITokenScopeCheckboxesData struct {
 	Autofocus bool
 }
 
-// APITokenScopeCheckboxesは、付与するスコープをチェックボックスで並べます。個人アクセストークンの
+// APITokenScopeCheckboxesは、付与するスコープをチェックボックスで並べます。個人用アクセストークンの
 // 発行画面とOAuthの同意画面が使い、囲みのfieldsetと見出し・エラーの表示は呼び出し側が持ちます。
+//
+// 選んだスコープに含まれるスコープは、選択済みかつ無効にして、どのスコープに含まれるかを注記します。
+// JSが無くても状態が分かるよう、ここで描画した状態を正とし、選択の変更への追従はweb/api-token-scope.tsが
+// data属性を手がかりに行います。
 templ APITokenScopeCheckboxes(data APITokenScopeCheckboxesData) {
 	for i, option := range data.Options {
 		<div class="flex flex-col gap-1">
 			<label class="label flex items-center gap-2 cursor-pointer" for={ apiTokenScopeInputID(data.Name, option.Scope) }>
 				<input
 					class="input"
+					data-api-token-scope
+					if len(option.Implies) > 0 {
+						data-api-token-scope-implies={ strings.Join(model.ScopesToStrings(option.Implies), " ") }
+					}
 					id={ apiTokenScopeInputID(data.Name, option.Scope) }
 					name={ data.Name }
 					type="checkbox"
 					value={ string(option.Scope) }
-					if data.Autofocus && i == 0 {
+					if data.Autofocus && i == apiTokenScopeAutofocusIndex(data.Options) {
 						autofocus
 					}
-					if option.Checked {
+					if option.Checked || option.Implied() {
 						checked
+					}
+					if option.Implied() {
+						disabled
 					}
 					if data.ErrorID != "" {
 						aria-invalid="true"
@@ -88,6 +138,19 @@ templ APITokenScopeCheckboxes(data APITokenScopeCheckboxesData) {
 			<p class="text-muted-foreground pl-[25px] text-sm">
 				{ APITokenScopeHint(ctx, option.Scope) }
 			</p>
+			for _, implier := range option.ImpliedBy {
+				<p
+					class="text-muted-foreground pl-[25px] text-sm flex items-center gap-1"
+					id={ apiTokenScopeImpliedNoteID(data.Name, option.Scope, implier.Scope) }
+					data-api-token-scope-implied-note={ string(implier.Scope) }
+					if !implier.Checked {
+						hidden
+					}
+				>
+					@templates.DecorativeIcon("check-circle-regular", "fill-info size-4 shrink-0")
+					{ templates.T(ctx, "api_token_scope_implied_note", map[string]any{"Scope": APITokenScopeLabel(ctx, implier.Scope)}) }
+				</p>
+			}
 			if option.Ineffective {
 				<p class="text-muted-foreground pl-[25px] text-sm flex items-center gap-1" id={ apiTokenScopeNoteID(data.Name, option.Scope) }>
 					@templates.DecorativeIcon("warning-circle-regular", "fill-info size-4 shrink-0")
@@ -99,16 +162,39 @@ templ APITokenScopeCheckboxes(data APITokenScopeCheckboxesData) {
 }
 
 // apiTokenScopeDescribedByは、チェックボックスのaria-describedbyに並べるidを返します。
-// 選択のエラーと、今の権限では効かないことの注記を読み上げられるようにします。
+// 選択のエラーと、今の権限では効かないことの注記、表示しているほかのスコープに含まれることの注記を
+// 読み上げられるようにします。隠した注記もaria-describedbyで参照すると読み上げられるため、
+// 表示している注記だけを並べます。
 func apiTokenScopeDescribedBy(data APITokenScopeCheckboxesData, option APITokenScopeOption) string {
-	ids := make([]string, 0, 2)
+	ids := make([]string, 0, 2+len(option.ImpliedBy))
 	if data.ErrorID != "" {
 		ids = append(ids, data.ErrorID)
 	}
 	if option.Ineffective {
 		ids = append(ids, apiTokenScopeNoteID(data.Name, option.Scope))
 	}
+	for _, implier := range option.ImpliedBy {
+		if implier.Checked {
+			ids = append(ids, apiTokenScopeImpliedNoteID(data.Name, option.Scope, implier.Scope))
+		}
+	}
 	return strings.Join(ids, " ")
+}
+
+// apiTokenScopeAutofocusIndexは、フォーカスを当てるチェックボックスの位置を返します。
+// 無効にしたチェックボックスにはフォーカスを当てられないため、最初の無効でないものを選びます。
+func apiTokenScopeAutofocusIndex(options []APITokenScopeOption) int {
+	for i, option := range options {
+		if !option.Implied() {
+			return i
+		}
+	}
+	return -1
+}
+
+// apiTokenScopeImpliedNoteIDは、scopeがimplierに含まれることの注記のidを返します。
+func apiTokenScopeImpliedNoteID(name string, scope, implier model.Scope) string {
+	return apiTokenScopeInputID(name, scope) + "-implied-by-" + strings.ReplaceAll(string(implier), ":", "_")
 }
 
 // apiTokenScopeNoteIDは、今の権限では効かないことの注記のidを返します。
@@ -121,7 +207,7 @@ func apiTokenScopeInputID(name string, scope model.Scope) string {
 	return name + "_" + strings.ReplaceAll(string(scope), ":", "_")
 }
 
-// APITokenScopeLabelは公開APIのトークンのスコープの表示名を返します。個人アクセストークンの画面と
+// APITokenScopeLabelは公開APIのトークンのスコープの表示名を返します。個人用アクセストークンの画面と
 // OAuthの同意画面が同じ表示名を使います。トークンに付与できるスコープ (model.APITokenScopes)
 // 以外が保存されていても画面が崩れないよう、表示名の無いスコープはスコープの文字列をそのまま
 // 返します。

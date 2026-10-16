@@ -98,6 +98,7 @@ func printTable(printer *output.Printer, loc *i18n.Localizer, drafts []apigen.Dr
 		rows = append(rows, []string{
 			formatNumber(d.PageNumber),
 			titleLabel(loc, d.Title),
+			d.TopicName,
 			formatNumber(d.TopicNumber),
 			formatTime(d.ModifiedAt),
 		})
@@ -106,6 +107,7 @@ func printTable(printer *output.Printer, loc *i18n.Localizer, drafts []apigen.Dr
 	return printer.PrintTable([]string{
 		loc.T("draft_label_page_number"),
 		loc.T("draft_label_title"),
+		loc.T("draft_label_topic_name"),
 		loc.T("draft_label_topic_number"),
 		loc.T("draft_label_modified_at"),
 	}, rows)

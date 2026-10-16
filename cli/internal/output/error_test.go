@@ -65,6 +65,12 @@ func TestWriteError(t *testing.T) {
 			want:   `{"error":{"code":"jq_failed","message":"error: a\u001b[2Jb","hint":"ヒント\n2行目"}}` + "\n",
 		},
 		{
+			name:   "JSONはC1制御文字もエスケープする",
+			err:    &Error{Code: CodeJQFailed, Message: "error: a\u009b2Jb", ExitCode: ExitError},
+			asJSON: true,
+			want:   `{"error":{"code":"jq_failed","message":"error: a\u009b2Jb"}}` + "\n",
+		},
+		{
 			name: "ヒントの無いエラーはメッセージだけを出す",
 			err:  errors.New("通信に失敗しました"),
 			want: "通信に失敗しました\n",

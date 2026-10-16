@@ -68,7 +68,7 @@ func TestAPIRouter_CreateDraftPageBodyEdit(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.PageNumber != 1 || body.Title == nil || *body.Title != "下書き" || body.Body != "下書きの本文 本文 本文" {
+		if body.PageNumber != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "下書き" || body.Body != "下書きの本文 本文 本文" {
 			t.Errorf("下書き = %+v、期待値 = 本文を置換した下書き", body)
 		}
 		if want := "https://example.com/s/api-http-draft-body-edit/pages/1/edit"; body.Url != want {
@@ -89,9 +89,20 @@ func TestAPIRouter_CreateDraftPageBodyEdit(t *testing.T) {
 		assertProblem(t, edit("wkp_draft_page_write", etag, `{"edits": [{"old_str": "したがき", "new_str": "x"}]}`), http.StatusPreconditionFailed)
 	})
 
-	t.Run("どのETagとも一致しないIf-Match (弱いETag) は、省略と区別して412", func(t *testing.T) {
+	t.Run("どのETagとも一致しないIf-Match (W/付き) は、省略と区別して412", func(t *testing.T) {
+		assertProblem(t, edit("wkp_draft_page_write", `W/"古い版"`, `{"edits": [{"old_str": "したがき", "new_str": "x"}]}`), http.StatusPreconditionFailed)
+	})
+
+	t.Run("今のETagにW/が付いていても置換する", func(t *testing.T) {
 		_, etag := currentDraft(t)
-		assertProblem(t, edit("wkp_draft_page_write", "W/"+etag, `{"edits": [{"old_str": "したがき", "new_str": "x"}]}`), http.StatusPreconditionFailed)
+		rr := edit("wkp_draft_page_write", "W/"+etag, `{"edits": [{"old_str": "したがき", "new_str": "下書き"}]}`)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %s)", rr.Code, rr.Body.String())
+		}
+		rr = edit("wkp_draft_page_write", "", `{"edits": [{"old_str": "下書き", "new_str": "したがき"}]}`)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("元に戻す置換のステータス = %d、期待値 = 200 (本文: %s)", rr.Code, rr.Body.String())
+		}
 	})
 
 	t.Run("一致しない編集は、何番目かを示して422にし、前の編集も適用しない", func(t *testing.T) {

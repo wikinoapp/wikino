@@ -201,7 +201,7 @@ Output:
 
 Errors:
   1  Downloading from the signed URL failed (including expiry and interruption). Run the same command again. Or writing to the destination failed (permissions, disk space, and so on)
-  2  The ID is not a UUID, the destination directory does not exist, a file already exists at the destination (overwrite with `--clobber`), `--output -` is combined with `--json`, `--fields`, `--jq`, or `--clobber`, or `--fields` has an unknown field
+  2  The ID is not a UUID, the destination directory does not exist, a file already exists at the destination (overwrite with `--clobber`), `--output -` is combined with `--json`, `--fields`, `--jq`, or `--clobber`, `--output -` is given while standard output is a terminal, or `--fields` has an unknown field
   3  Not logged in, or the token is invalid or expired (401)
   4  The token lacks the attachment:read scope (403)
   5  The attachment does not exist or belongs to another space (404). Check the ID in `/attachments/{ID}` in the body and the space
@@ -555,7 +555,7 @@ Flags:
       --body text        Body text (Markdown) as a string
       --body-file path   Read the body from the file at path (`-` reads from standard input)
       --dry-run          Print the requests that would be sent without sending them
-      --title title      The draft's title. For an existing page, defaults to the page's current title
+      --title title      The draft's title. For an existing page, defaults to the page's current title. The page title rules (up to 200 characters, without `/`, `\`, `:`, or control characters, and without a leading or trailing space) are checked when publishing
       --topic number     The number of the topic to create a draft of a new page in. Cannot be combined with a page number
 
 Global Flags:
@@ -606,7 +606,7 @@ Show `changes` to the user, and run `confirm_command` as is after getting approv
 `confirm_command` contains the version fetched for the confirmation in `--if-match`.
 
 Deleting requires the draft_page:delete scope on the token.
-Reading the draft and its revisions for the confirmation and for `--force` also requires the draft_page:read scope.
+This scope also includes reading the draft and its revisions for the confirmation and for `--force`.
 Deleting drafts of pages in private topics also requires the topic:read scope.
 
 Usage:
@@ -649,7 +649,7 @@ Output:
 Errors:
   2  The page number is not a positive integer, neither or both of `--if-match` and `--force` are given, `--if-match` is empty or `*`, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
   3  Not logged in, or the token is invalid or expired (401)
-  4  The token lacks the draft_page:delete scope, or the draft_page:read scope for the confirmation or `--force` (403)
+  4  The token lacks the draft_page:delete scope (403)
   5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).
      If you get 5 when deleting again, the draft has already been deleted
   6  The draft has been updated since you read it (412). Check the current content with `wikino draft get`, and delete again with the new version if it is fine to delete
@@ -754,6 +754,7 @@ Output:
     page_number   The number of the draft's page. Pass it to `wikino draft get` and others
     title         The draft's title. null for drafts without a title
     topic_number  The number of the topic the draft's page belongs to
+    topic_name    The name of the topic the draft's page belongs to
     modified_at   When the draft's content was last modified (RFC 3339). Autosaves in the web UI also update it
     url           The URL of the edit screen of the draft's page in the web UI
     excerpt       An excerpt of the beginning of the body: the first 80 characters with newlines collapsed to spaces,
@@ -1060,7 +1061,7 @@ Flags:
       --force            Overwrite the latest version, fetched just before, without checking the version you read
       --if-match etag    Write only if the version is still the one you read (etag from the output of `get`)
       --md-file path     Write back a page file (path) written by --md, using the version and title in its frontmatter (`-` reads from standard input)
-      --title title      New title of the draft
+      --title title      New title of the draft. The page title rules (up to 200 characters, without `/`, `\`, `:`, or control characters, and without a leading or trailing space) are checked when publishing
 
 Global Flags:
       --fields number,title   Comma-separated fields to print (e.g. number,title; applied to each item in lists)
@@ -1233,7 +1234,7 @@ Flags:
       --body text        Body text (Markdown) as a string
       --body-file path   Read the body from the file at path (`-` reads from standard input)
       --dry-run          Print the requests that would be sent without sending them
-      --title title      Page title. Required
+      --title title      Page title. Required. Up to 200 characters, without `/`, `\`, `:`, or control characters, and without a leading or trailing space
       --topic number     Topic number to create the page in. Required
 
 Global Flags:
@@ -1263,7 +1264,7 @@ Errors:
   3  Not logged in, or the token is invalid or expired (401)
   4  The token lacks the page:write scope (403)
   5  You cannot create pages in the topic (404)
-  7  The title has characters that cannot be used, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).
+  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).
      For a duplicate, find the existing page with `wikino page list --topic <number> --title <title>` and use `wikino page update` to change its content
 
 === wikino page get --help
@@ -1427,6 +1428,7 @@ Output:
     title         Title. null for a page without a title
     status        Publication status (published, unpublished)
     topic_number  Number of the topic the page belongs to
+    topic_name    Name of the topic the page belongs to. Use it in wiki links to pages in other topics (`[[Topic name/Title]]`)
     modified_at   When the content was last updated (RFC 3339)
     url           URL to open the page on the web. Use it to cite the page
     excerpt       Excerpt of the beginning of the body: the first 80 characters with line breaks collapsed into spaces,
@@ -1583,7 +1585,7 @@ Flags:
       --force            Overwrite the latest version, fetched just before, without checking the version you read
       --if-match etag    Write only if the version is still the one you read (etag from the output of `get`)
       --md-file path     Write back a page file (path) written by --md, using the version and title in its frontmatter (`-` reads from standard input)
-      --title title      New title
+      --title title      New title. Up to 200 characters, without `/`, `\`, `:`, or control characters, and without a leading or trailing space
 
 Global Flags:
       --fields number,title   Comma-separated fields to print (e.g. number,title; applied to each item in lists)
@@ -1614,7 +1616,7 @@ Errors:
   5  The page does not exist, is in the trash, or cannot be updated (404). Check the number with `wikino page list`
   6  The page has been updated since you read it (412). Get the latest content and version with `wikino page get`, apply your changes, and update again.
      With `--md-file`, apply your changes to a file written again with `wikino page get --md`
-  7  The title has characters that cannot be used, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).
+  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).
      `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.
      Check the current body with `wikino page get --md` and send the whole `edits` again
 

@@ -42,7 +42,7 @@ func TestHandler_GetPage(t *testing.T) {
 
 	t.Run("ページとETagを返す", func(t *testing.T) {
 		res := get200(t, 2, nil)
-		if res.Body.Number != 2 || res.Body.TopicNumber != 1 || res.Body.Title == nil || *res.Body.Title != "ページ2" || res.Body.Body != "本文2" {
+		if res.Body.Number != 2 || res.Body.TopicNumber != 1 || res.Body.TopicName != "トピック1" || res.Body.Title == nil || *res.Body.Title != "ページ2" || res.Body.Body != "本文2" {
 			t.Errorf("ページ = %+v", res.Body)
 		}
 		if res.Body.Status != apigen.PageStatusPublished {

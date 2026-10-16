@@ -30,7 +30,7 @@ type TokenSource interface {
 	Token(ctx context.Context) (string, error)
 }
 
-// StaticTokenは、常に同じトークンを返すTokenSource。個人アクセストークンに使う。
+// StaticTokenは、常に同じトークンを返すTokenSource。個人用アクセストークンに使う。
 type StaticToken string
 
 // TokenはトークンをそのままTokenSourceとして返す。

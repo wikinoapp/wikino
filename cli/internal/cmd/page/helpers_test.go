@@ -28,6 +28,7 @@ func testPage(number int32, title *string, body string) map[string]any {
 		"title":        title,
 		"status":       "published",
 		"topic_number": 3,
+		"topic_name":   "開発",
 		"modified_at":  "2026-10-01T09:00:00.123456Z",
 		"url":          fmt.Sprintf("https://wikino.example.com/s/team/pages/%d", number),
 		"body":         body,

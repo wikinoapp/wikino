@@ -49,6 +49,9 @@ func TestList_JSON(t *testing.T) {
 	if first["page_number"] != float64(12) || first["url"] != "https://wikino.example.com/s/team/pages/12/edit" {
 		t.Errorf("1件目 = %v", first)
 	}
+	if first["topic_name"] != "トピック3" {
+		t.Errorf("topic_name = %v、期待値 = トピック3", first["topic_name"])
+	}
 	for _, key := range []string{"title", "topic_number", "modified_at"} {
 		if _, ok := first[key]; !ok {
 			t.Errorf("1件目に %s が無い: %v", key, first)
@@ -121,6 +124,24 @@ func TestList_FieldsBody(t *testing.T) {
 	}
 
 	want := `{"items":[{"body":"本文\n","page_number":12}],"next_cursor":null}` + "\n"
+	if got := e.Stdout.String(); got != want {
+		t.Errorf("標準出力 = %q、期待値 = %q", got, want)
+	}
+}
+
+func TestList_FieldsTopicName(t *testing.T) {
+	t.Parallel()
+
+	e := newEnv(t)
+	e.Handle(http.MethodGet, draftPagesPath, func(req *http.Request) *http.Response {
+		return listResponse([]map[string]any{testDraft(12, ptr("議事録"), "本文\n")}, nil)
+	})
+
+	if err := e.Run(NewCmdDraft, "draft", "list", "--fields", "page_number,topic_name"); err != nil {
+		t.Fatalf("エラーを期待しなかったが %v だった", err)
+	}
+
+	want := `{"items":[{"page_number":12,"topic_name":"トピック3"}],"next_cursor":null}` + "\n"
 	if got := e.Stdout.String(); got != want {
 		t.Errorf("標準出力 = %q、期待値 = %q", got, want)
 	}

@@ -2,6 +2,8 @@ package output
 
 import (
 	"testing"
+
+	"github.com/wikinoapp/wikino/cli/internal/iostreams"
 )
 
 func TestPrinterPrintTable(t *testing.T) {
@@ -185,6 +187,44 @@ func TestDisplayWidth(t *testing.T) {
 
 			if got := displayWidth(tt.s); got != tt.want {
 				t.Errorf("displayWidth(%q) = %d、期待値 = %d", tt.s, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestWriteText(t *testing.T) {
+	t.Parallel()
+
+	// 0x9bは、UTF-8として読めないバイトのまま8ビットのCSIとして解釈されうる。
+	const text = "a\x1b[2Jb\r\nc\rd\u009b31m\x9b\te\n"
+
+	tests := []struct {
+		name      string
+		stdoutTTY bool
+		want      string
+	}{
+		{
+			name: "パイプでは1バイトも変えない",
+			want: text,
+		},
+		{
+			name:      "TTYでは改行とタブ以外の制御文字を取り除き、CRLFをLFにする",
+			stdoutTTY: true,
+			want:      "a[2Jb\ncd31m\ufffd\te\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ios, _, stdout, _ := iostreams.Test()
+			ios.SetStdoutTTY(tt.stdoutTTY)
+			if err := WriteText(ios, text); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := stdout.String(); got != tt.want {
+				t.Errorf("標準出力 = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}

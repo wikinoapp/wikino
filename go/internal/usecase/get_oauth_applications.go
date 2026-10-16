@@ -58,7 +58,7 @@ type GetOAuthApplicationsOutput struct {
 
 // Executeはスペースと、そのスペースのOAuthアプリの一覧を取得する。
 //
-// 個人アクセストークンと違い、閲覧者が作成したものに限らずスペースのアプリをすべて出す。
+// 個人用アクセストークンと違い、閲覧者が作成したものに限らずスペースのアプリをすべて出す。
 // アプリはスペースが持ち、oauth_application:*はスペースのアプリ全体を扱う権限であるため。
 func (uc *GetOAuthApplicationsUsecase) Execute(ctx context.Context, input GetOAuthApplicationsInput) (*GetOAuthApplicationsOutput, error) {
 	access, err := fetchPublicAPISettingsAccess(

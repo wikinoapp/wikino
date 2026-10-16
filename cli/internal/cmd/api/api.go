@@ -252,6 +252,7 @@ func confirmation(f *cmdutil.Factory, cmd *cobra.Command, opts *options, method 
 
 // printResponseは、成功の応答の本文をそのまま標準出力に出す。
 // JSONの応答は、`--jq` があれば適用し、TTYなら読みやすく字下げする。
+// TTYでは、応答に含まれうる端末を操作する制御文字を取り除く。
 func printResponse(f *cmdutil.Factory, cmd *cobra.Command, printer *output.Printer, resp *http.Response) error {
 	loc, ios := f.Localizer, f.IOStreams
 	contentType := resp.Header.Get("Content-Type")
@@ -259,7 +260,7 @@ func printResponse(f *cmdutil.Factory, cmd *cobra.Command, printer *output.Print
 	useJQ := cmd.Flags().Changed(output.FlagJQ)
 
 	// 手を加えずに出せる応答は、溜めずにそのまま流す。
-	if !useJQ && (!isJSON || !ios.IsStdoutTTY()) {
+	if !useJQ && !ios.IsStdoutTTY() {
 		if _, err := io.Copy(ios.Out, resp.Body); err != nil {
 			return readError(f, resp, err)
 		}
@@ -286,18 +287,21 @@ func printResponse(f *cmdutil.Factory, cmd *cobra.Command, printer *output.Print
 		return printer.PrintItem(json.RawMessage(body))
 	}
 
+	if !isJSON {
+		return output.WriteText(ios, string(body))
+	}
+
 	var buf bytes.Buffer
 	if err := json.Indent(&buf, body, "", "  "); err != nil {
-		// JSONとして読めない本文は、手を加えずに出す。
+		// JSONとして読めない本文は、字下げせずに出す。
 		buf.Reset()
 		buf.Write(body)
 	}
 	if !bytes.HasSuffix(buf.Bytes(), []byte("\n")) {
 		buf.WriteByte('\n')
 	}
-	_, err = buf.WriteTo(ios.Out)
 
-	return err
+	return output.WriteText(ios, buf.String())
 }
 
 // readErrorは、成功の応答の本文を読み切れなかったことを表すエラーを返す。要求は送っている。

@@ -5,13 +5,13 @@ info:
   summary: Wikinoのスペースのデータを読み書きする
   description: |
     Wikinoの公開Web APIです。
-    APIを呼び出すには、スペース設定で発行する個人アクセストークンか、OAuth 2.0 (Authorization Code + PKCE) で取得したアクセストークンを `Authorization: Bearer` ヘッダーで送ります。
+    APIを呼び出すには、スペース設定で発行する個人用アクセストークンか、OAuth 2.0 (Authorization Code + PKCE) で取得したアクセストークンを `Authorization: Bearer` ヘッダーで送ります。
     どちらのトークンも1つのスペースに属しており、そのスペースに対する操作だけに使えます。
 
     エラーはRFC 9457のProblem Details (`application/problem+json`) で返します。
 
     トークンを使うリクエストには、トークンの持ち主のスペースメンバー単位で1時間あたり5000件のレート制限があります。
-    同じスペースのトークンは個人アクセストークンとOAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えます。
+    同じスペースのトークンは個人用アクセストークンとOAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えます。
     残量はIETFで標準化中の `RateLimit-Policy` / `RateLimit` ヘッダーで返します (例: `RateLimit-Policy: "space_member";q=5000;w=3600`、`RateLimit: "space_member";r=4999;t=1800`)。
     `q` は1時間あたりの上限、`w` は時間枠の秒数、`r` は残りの件数、`t` は時間枠が切り替わるまでの秒数です。
     上限を超えると429を返し、再試行できるまでの秒数を `Retry-After` ヘッダーで示します。
@@ -508,7 +508,7 @@ paths:
 
         非公開トピックのページを読むには、トークンが `page:read` に加えて `topic:read` を持つ必要があります。
 
-        応答の `ETag` ヘッダーはページのタイトル・本文・所属トピック・更新日時・公開状態から計算します。
+        応答の `ETag` ヘッダーはページのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時・公開状態から計算します。
         前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
         304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 
@@ -619,6 +619,7 @@ paths:
           required: false
           description: |
             更新の前提にするページの `ETag` です。ページの今の `ETag` と一致する場合だけ更新します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
             省略すると428を返します。
           schema:
             type: string
@@ -856,6 +857,7 @@ paths:
           required: false
           description: |
             置換の前提にするページの `ETag` です。送った場合は、ページの今の `ETag` と一致する場合だけ置換します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
             省略すると版を照合せず、今の本文に置換を適用します。
           schema:
             type: string
@@ -1140,7 +1142,7 @@ paths:
 
         非公開トピックのページの下書きを読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
 
-        応答の `ETag` ヘッダーは下書きのタイトル・本文・所属トピック・更新日時から計算します。
+        応答の `ETag` ヘッダーは下書きのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時から計算します。
         前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
         304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
 
@@ -1251,6 +1253,7 @@ paths:
           required: false
           description: |
             更新の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ更新します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
             省略すると428を返します。
           schema:
             type: string
@@ -1334,6 +1337,7 @@ paths:
           required: false
           description: |
             削除の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ削除します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
             省略すると428を返します。
           schema:
             type: string
@@ -1418,6 +1422,7 @@ paths:
           required: false
           description: |
             置換の前提にする下書きの `ETag` です。送った場合は、下書きの今の `ETag` と一致する場合だけ置換します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
             省略すると版を照合せず、今の本文に置換を適用します。
           schema:
             type: string
@@ -1517,6 +1522,7 @@ paths:
           required: false
           description: |
             公開の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ公開します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
             省略すると428を返します。
           schema:
             type: string
@@ -1778,13 +1784,13 @@ components:
             page:write: ページを作成・更新する (`page:read` を含みます)
             draft_page:read: 自分の下書きと編集履歴を読む
             draft_page:write: 自分の下書きを作成・更新する (`draft_page:read` を含みます)。下書きを公開するには `page:write` も要ります
-            draft_page:delete: 自分の下書きを編集履歴ごと削除する
+            draft_page:delete: 自分の下書きを編集履歴ごと削除する (`draft_page:read` を含みます)
             attachment:read: スペースの添付ファイルを取得する。非公開トピックのページが参照する添付ファイルも含みます
     personalAccessToken:
       type: http
       scheme: bearer
       description: |
-        スペース設定で発行した個人アクセストークンです。
+        スペース設定で発行した個人用アクセストークンです。
         発行したスペースに属し、発行時に選んだスコープの範囲で使えます。
   parameters:
     SpaceIdentifier:
@@ -1859,7 +1865,7 @@ components:
     ETag:
       description: |
         リソースの応答の内容から計算したエンティティタグです (例: `"3q2-7wEBYm8aHqhqcl7IJ4K_xGJmBGyBMs5-yHaI0Wk"`)。
-        応答が変われば値も変わります。
+        応答が変われば値も変わります。ただし、スキーマの説明で `ETag` の計算に含めないとした項目 (`url`・`topic_name` など) だけが変わった場合は変わりません。
       required: true
       schema:
         type: string
@@ -2054,7 +2060,7 @@ components:
             - personal_access_token
             - oauth_access_token
           description: |
-            トークンの種類です。`personal_access_token` はスペース設定で発行した個人アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+            トークンの種類です。`personal_access_token` はスペース設定で発行した個人用アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
         scopes:
           type: array
           description: |
@@ -2068,7 +2074,7 @@ components:
           description: |
             トークンの有効期限です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
             秒未満はマイクロ秒まで含み、末尾の0は省きます。
-            個人アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
+            個人用アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
             OAuthのアクセストークンは、期限が切れる前でもリフレッシュトークンで更新できます。
     Topic:
       type: object
@@ -2122,6 +2128,7 @@ components:
         - id
         - number
         - topic_number
+        - topic_name
         - title
         - body
         - status
@@ -2140,6 +2147,11 @@ components:
           type: integer
           format: int32
           description: ページが属するトピックの番号です。
+        topic_name:
+          type: string
+          description: |
+            ページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+            ページの `ETag` の計算には含めません。トピック名を変えても `ETag` は変わらないため、`If-None-Match` で304を受け取ったときに手元に残している値は、変える前の名前のことがあります。
         title:
           type: [string, "null"]
           description: ページのタイトルです。タイトルの無いページでは `null` です。
@@ -2367,6 +2379,7 @@ components:
       required:
         - page_number
         - topic_number
+        - topic_name
         - title
         - body
         - modified_at
@@ -2380,6 +2393,11 @@ components:
           type: integer
           format: int32
           description: 下書きのページが属するトピックの番号です。
+        topic_name:
+          type: string
+          description: |
+            下書きのページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+            下書きの `ETag` の計算には含めません。トピック名を変えても `ETag` は変わらないため、`If-None-Match` で304を受け取ったときに手元に残している値は、変える前の名前のことがあります。
         title:
           type: [string, "null"]
           description: 下書きのタイトルです。タイトルの無い下書きでは `null` です。

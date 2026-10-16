@@ -2,6 +2,7 @@ package output
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -389,6 +390,117 @@ func TestPrinterJQHaltError(t *testing.T) {
 			}
 			if got := stdout.String(); got != "" {
 				t.Errorf("失敗したときは途中の結果も出さないことを期待したが、標準出力 = %q", got)
+			}
+		})
+	}
+}
+
+func TestPrinterJQStringControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	// 本文は他の利用者が書いたもので、端末を操作するエスケープシーケンスやCRを含みうる。
+	page := testPage{Number: 12, Body: "a\x1b[2Jb\r\nc\rd\u009b31m\te\n"}
+
+	tests := []struct {
+		name      string
+		stdoutTTY bool
+		want      string
+	}{
+		{
+			name: "パイプでは1バイトも変えない",
+			want: page.Body + "\n",
+		},
+		{
+			name:      "TTYでは改行とタブ以外の制御文字を取り除き、CRLFをLFにする",
+			stdoutTTY: true,
+			want:      "a[2Jb\ncd31m\te\n\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p, stdout, err := newTestPrinter(t, printerSetup{args: []string{"--jq", ".body"}, stdoutTTY: tt.stdoutTTY, spec: Spec{Fields: pageSpec.Fields}})
+			if err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if err := p.PrintItem(page); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := stdout.String(); got != tt.want {
+				t.Errorf("標準出力 = %q、期待値 = %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPrinterJSONEscapesC1(t *testing.T) {
+	t.Parallel()
+
+	title := "a\u0080b\u009b31mc\u009fd é"
+	page := testPage{Number: 12, Title: &title}
+
+	tests := []struct {
+		name  string
+		setup printerSetup
+		print func(p *Printer) error
+		want  string
+	}{
+		{
+			name:  "1件のJSON",
+			setup: printerSetup{args: []string{"--fields", "title"}, spec: pageSpec},
+			print: func(p *Printer) error { return p.PrintItem(page) },
+			want:  `{"title":"a\u0080b\u009b31mc\u009fd` + " é" + `"}` + "\n",
+		},
+		{
+			name:  "TTYで字下げしたJSON",
+			setup: printerSetup{args: []string{"--json"}, stdoutTTY: true, spec: Spec{Fields: []string{"title"}, Default: []string{"title"}}},
+			print: func(p *Printer) error { return p.PrintItem(page) },
+			want:  "{\n  \"title\": \"a\\u0080b\\u009b31mc\\u009fd é\"\n}\n",
+		},
+		{
+			name:  "JSON Lines",
+			setup: printerSetup{args: []string{"--fields", "title"}, spec: pageSpec},
+			print: func(p *Printer) error { return p.PrintLine(page) },
+			want:  `{"title":"a\u0080b\u009b31mc\u009fd` + " é" + `"}` + "\n",
+		},
+		{
+			name:  "--jqの文字列でない結果",
+			setup: printerSetup{args: []string{"--jq", "[.title]"}, spec: pageSpec},
+			print: func(p *Printer) error { return p.PrintItem(page) },
+			want:  `["a\u0080b\u009b31mc\u009fd` + " é" + `"]` + "\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p, stdout, err := newTestPrinter(t, tt.setup)
+			if err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if err := tt.print(p); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := stdout.String(); got != tt.want {
+				t.Errorf("標準出力 = %q、期待値 = %q", got, tt.want)
+			}
+
+			// エスケープしても、デコードした値は元のタイトルのまま変わらない。
+			var decoded any
+			if err := json.Unmarshal(stdout.Bytes(), &decoded); err != nil {
+				t.Fatalf("出力をJSONとして読めません: %v", err)
+			}
+			var got any
+			if list, ok := decoded.([]any); ok {
+				got = list[0]
+			} else {
+				got = decoded.(map[string]any)["title"]
+			}
+			if got != title {
+				t.Errorf("デコードしたタイトル = %q、期待値 = %q", got, title)
 			}
 		})
 	}

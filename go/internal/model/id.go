@@ -59,7 +59,7 @@ type FeatureFlagName string
 // ExportIDはスペースのエクスポートのID型
 type ExportID string
 
-// PersonalAccessTokenIDは個人アクセストークンのID型
+// PersonalAccessTokenIDは個人用アクセストークンのID型
 type PersonalAccessTokenID string
 
 // OAuthApplicationIDはOAuthアプリのID型
