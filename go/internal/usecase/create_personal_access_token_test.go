@@ -66,7 +66,8 @@ func TestCreatePersonalAccessTokenUsecase_Execute(t *testing.T) {
 	if stored.Name != "CLI" {
 		t.Errorf("Name = %q、期待値 = %q", stored.Name, "CLI")
 	}
-	if want := []model.Scope{model.ScopeTopicRead, model.ScopePageWrite}; !slices.Equal(stored.Scopes, want) {
+	// page:writeが含むpage:readを補い、model.APITokenScopesの順に並べる
+	if want := []model.Scope{model.ScopeTopicRead, model.ScopePageRead, model.ScopePageWrite}; !slices.Equal(stored.Scopes, want) {
 		t.Errorf("Scopes = %v、期待値 = %v", stored.Scopes, want)
 	}
 	if want := auth.OpaqueTokenLastChars(output.TokenValue); stored.TokenLastChars != want {

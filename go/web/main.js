@@ -1,5 +1,6 @@
 import "basecoat-css/all";
 
+import { initializeAPITokenScopes } from "./api-token-scope";
 import { initializeAttachmentLoader } from "./attachment-loader";
 import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
@@ -30,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeZenMode();
   initializePlatform();
   initializeAttachmentLoader();
+  initializeAPITokenScopes();
   initializeMarkdownTables();
   initializeStickyHeader();
   setTimeZoneCookie();

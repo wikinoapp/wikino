@@ -2155,6 +2155,10 @@ other = "スペースの添付ファイルのファイル名などの情報と�
 description = "公開APIのトークンのスコープのうち、メンバーの今の権限では効かないものに添える注記"
 other = "今の権限では効きません"
 
+[api_token_scope_implied_note]
+description = "公開APIのトークンのスコープのうち、選んだほかのスコープに含まれるものに添える注記"
+other = "「{{.Scope}}」に含まれます"
+
 [personal_access_token_index_title]
 description = "個人用アクセストークンの一覧のページタイトル"
 other = "個人用アクセストークン | {{.SpaceName}}"

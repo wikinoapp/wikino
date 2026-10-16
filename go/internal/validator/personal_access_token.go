@@ -33,7 +33,8 @@ type PersonalAccessTokenCreateValidatorInput struct {
 
 // PersonalAccessTokenCreateValidateOutputはバリデーション成功時の出力
 type PersonalAccessTokenCreateValidateOutput struct {
-	// Scopesはトークンに付与するスコープ。重複を除き、model.APITokenScopesの順に並べる
+	// Scopesはトークンに付与するスコープ。選んだスコープに含まれるスコープを補い、重複を除き、
+	// model.APITokenScopesの順に並べる
 	Scopes []model.Scope
 
 	// ExpirationDaysは有効期限の日数。model.PersonalAccessTokenExpirationDaysのいずれかになる
@@ -81,7 +82,8 @@ func validatePersonalAccessTokenName(ctx context.Context, ve *model.ValidationEr
 }
 
 // validatePersonalAccessTokenScopesは送信されたスコープを検証し、トークンに付与するスコープを
-// 返す。トークンに付与できるスコープ (model.APITokenScopes) 以外が1つでも含まれていれば、
+// 返す。選んだスコープに含まれるスコープは、画面で選択済みかつ無効にして見せ、送信されないため補う。
+// トークンに付与できるスコープ (model.APITokenScopes) 以外が1つでも含まれていれば、
 // 送信全体を拒否する。フォームには付与できるスコープしか出さないため、それ以外が届くのは
 // 改ざんされた送信だけであり、黙って取り除くと利用者の意図と違うトークンを発行することになる。
 func validatePersonalAccessTokenScopes(ctx context.Context, ve *model.ValidationError, values []string) []model.Scope {
@@ -97,13 +99,7 @@ func validatePersonalAccessTokenScopes(ctx context.Context, ve *model.Validation
 		}
 	}
 
-	scopes := make([]model.Scope, 0, len(model.APITokenScopes))
-	for _, scope := range model.APITokenScopes {
-		if slices.Contains(values, string(scope)) {
-			scopes = append(scopes, scope)
-		}
-	}
-	return scopes
+	return model.WithImpliedScopes(model.StringsToScopes(values), model.APITokenScopes)
 }
 
 // validatePersonalAccessTokenExpirationDaysは送信された有効期限を検証し、日数を返す。

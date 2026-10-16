@@ -168,3 +168,59 @@ func TestScopeDefinitions(t *testing.T) {
 		}
 	})
 }
+
+func TestWithImpliedScopes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		selected []model.Scope
+		options  []model.Scope
+		want     []model.Scope
+	}{
+		{
+			name:     "選んだスコープが含むスコープを補う",
+			selected: []model.Scope{model.ScopeDraftPageWrite},
+			options:  []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite},
+			want:     []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite},
+		},
+		{
+			// アプリが求めていないスコープや、画面に出していないスコープは足さない
+			name:     "選択肢に無いスコープは補わない",
+			selected: []model.Scope{model.ScopeDraftPageWrite},
+			options:  []model.Scope{model.ScopeTopicRead, model.ScopeDraftPageWrite},
+			want:     []model.Scope{model.ScopeDraftPageWrite},
+		},
+		{
+			// 下書きの公開に要るpage:writeのような、リソースをまたいで要るスコープは選ばせたままにする
+			name:     "別のリソースのスコープは補わない",
+			selected: []model.Scope{model.ScopeDraftPageDelete},
+			options:  model.APITokenScopes,
+			want:     []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageDelete},
+		},
+		{
+			name:     "選択肢の順に重複を除いて並べる",
+			selected: []model.Scope{model.ScopeDraftPageDelete, model.ScopePageWrite, model.ScopeDraftPageWrite, model.ScopePageWrite},
+			options:  model.APITokenScopes,
+			want: []model.Scope{
+				model.ScopePageRead, model.ScopePageWrite,
+				model.ScopeDraftPageRead, model.ScopeDraftPageWrite, model.ScopeDraftPageDelete,
+			},
+		},
+		{
+			name:     "選んだスコープが選択肢に無ければ返さない",
+			selected: []model.Scope{model.ScopeSpaceAdmin},
+			options:  model.APITokenScopes,
+			want:     []model.Scope{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := model.WithImpliedScopes(tt.selected, tt.options); !slices.Equal(got, tt.want) {
+				t.Errorf("WithImpliedScopes() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}

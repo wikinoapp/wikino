@@ -2158,6 +2158,10 @@ other = "Get the details and contents of the space's attachments, including atta
 description = "公開APIのトークンのスコープのうち、メンバーの今の権限では効かないものに添える注記"
 other = "Not effective with your current permissions"
 
+[api_token_scope_implied_note]
+description = "公開APIのトークンのスコープのうち、選んだほかのスコープに含まれるものに添える注記"
+other = "Included in \"{{.Scope}}\""
+
 [personal_access_token_index_title]
 description = "個人用アクセストークンの一覧のページタイトル"
 other = "Personal access tokens | {{.SpaceName}}"

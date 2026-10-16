@@ -22,12 +22,43 @@ func TestOAuthAuthorizationCreateValidator(t *testing.T) {
 
 		got, err := v.Validate(ctx, validator.OAuthAuthorizationCreateValidatorInput{
 			RequestedScopes: requested,
-			GrantedScopes:   []string{"page:write", "topic:read", "page:write"},
+			GrantedScopes:   []string{"page:read", "topic:read", "page:read"},
 		})
 		if err != nil {
 			t.Fatalf("Validate()のエラー = %v", err)
 		}
-		if want := []model.Scope{model.ScopeTopicRead, model.ScopePageWrite}; !slices.Equal(got, want) {
+		if want := []model.Scope{model.ScopeTopicRead, model.ScopePageRead}; !slices.Equal(got, want) {
+			t.Errorf("Validate() = %v、期待値 = %v", got, want)
+		}
+	})
+
+	t.Run("選んだスコープが含むスコープのうち、要求にあるものを補う", func(t *testing.T) {
+		t.Parallel()
+
+		// 同意画面は含まれるスコープを無効にして送信しないため、送られなくても補う
+		got, err := v.Validate(ctx, validator.OAuthAuthorizationCreateValidatorInput{
+			RequestedScopes: []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite},
+			GrantedScopes:   []string{"draft_page:write"},
+		})
+		if err != nil {
+			t.Fatalf("Validate()のエラー = %v", err)
+		}
+		if want := []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite}; !slices.Equal(got, want) {
+			t.Errorf("Validate() = %v、期待値 = %v", got, want)
+		}
+	})
+
+	t.Run("アプリが要求していないスコープは補わない", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := v.Validate(ctx, validator.OAuthAuthorizationCreateValidatorInput{
+			RequestedScopes: []model.Scope{model.ScopeTopicRead, model.ScopeDraftPageWrite},
+			GrantedScopes:   []string{"draft_page:write"},
+		})
+		if err != nil {
+			t.Fatalf("Validate()のエラー = %v", err)
+		}
+		if want := []model.Scope{model.ScopeDraftPageWrite}; !slices.Equal(got, want) {
 			t.Errorf("Validate() = %v、期待値 = %v", got, want)
 		}
 	})

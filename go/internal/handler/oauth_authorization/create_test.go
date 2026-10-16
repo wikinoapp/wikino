@@ -51,6 +51,37 @@ func TestCreate_許可すると選んだスコープの認可コードとstate�
 	}
 }
 
+func TestCreate_選んだスコープに含まれるスコープを補った認可コードを発行する(t *testing.T) {
+	t.Parallel()
+
+	q := query.New(testutil.GetTestDB())
+	var f authorizationFixture
+	testutil.CommitFixture(t, func(tx *sql.Tx) {
+		f = setupAuthorizationFixture(t, tx, "oauthz-create-implied", model.SpaceRoleAdmin, true)
+	})
+	params := validParams(f.clientID)
+	params.Set("scope", "draft_page:read draft_page:write")
+	params.Set("decision", "approve")
+	// 同意画面は、選んだdraft_page:writeに含まれるdraft_page:readを無効にして送信しない
+	params["granted_scopes"] = []string{"draft_page:write"}
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, q).Create(rr, newRequest(t, http.MethodPost, f.userID, params))
+
+	query := assertRedirectToClient(t, rr, http.StatusSeeOther, map[string]string{"state": "xyz"})
+	code, err := repository.NewOAuthAuthorizationCodeRepository(q).FindByCodeDigest(context.Background(), auth.DigestOpaqueToken(query.Get("code")))
+	if err != nil {
+		t.Fatalf("FindByCodeDigest()のエラー = %v", err)
+	}
+	if code == nil {
+		t.Fatal("認可コードが保存されていない")
+	}
+	// 認可コードのスコープが、許可とトークン応答のscopeになる
+	if want := []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite}; !slices.Equal(code.Scopes, want) {
+		t.Errorf("code.Scopes = %v、期待値 = %v", code.Scopes, want)
+	}
+}
+
 func TestCreate_選んだスコープが不正なら同意画面を422で再表示する(t *testing.T) {
 	t.Parallel()
 

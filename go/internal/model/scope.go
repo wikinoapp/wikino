@@ -1,5 +1,9 @@
 package model
 
+import (
+	"slices"
+)
+
 // Scopeはリソースに対する権限を表すドメイン型。
 // GitHub風の "resource:action" 形式で命名する。
 type Scope string
@@ -259,4 +263,30 @@ func SortAPITokenScopes(scopes []Scope) []Scope {
 		}
 	}
 	return sorted
+}
+
+// ImpliedScopesは、scopeが含むスコープ (ScopeDefinitionsのImplies) を返す
+func ImpliedScopes(scope Scope) []Scope {
+	for _, d := range ScopeDefinitions {
+		if d.Scope == scope {
+			return d.Implies
+		}
+	}
+	return nil
+}
+
+// WithImpliedScopesは、選択肢optionsのうち、selectedにあるものと、selectedのスコープが含むものを、
+// optionsの順に重複を除いて返す。スコープの選択画面は、選んだスコープに含まれるスコープを選択済みかつ
+// 無効にして見せ、無効にしたチェックボックスは送信されないため、保存の前にこれで補う。
+// 補うのは画面で選択済みに見えるもの (選択肢にあるもの) だけで、選択肢に無いスコープは足さない
+func WithImpliedScopes(selected, options []Scope) []Scope {
+	scopes := make([]Scope, 0, len(options))
+	for _, option := range options {
+		if HasScope(selected, option) || slices.ContainsFunc(selected, func(s Scope) bool {
+			return HasScope(ImpliedScopes(s), option)
+		}) {
+			scopes = append(scopes, option)
+		}
+	}
+	return scopes
 }
