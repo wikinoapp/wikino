@@ -2273,11 +2273,11 @@ other = "「{{.Name}}」との連携を解除しました"
 
 [personal_access_token_new_title]
 description = "個人用アクセストークンの発行フォームのページタイトル"
-other = "トークンの発行 | {{.SpaceName}}"
+other = "個人用アクセストークンの発行 | {{.SpaceName}}"
 
 [personal_access_token_new_heading]
 description = "個人用アクセストークンの発行フォームの見出し"
-other = "トークンの発行"
+other = "個人用アクセストークンの発行"
 
 [personal_access_token_new_description]
 description = "個人用アクセストークンの発行フォームのサブタイトル"
@@ -2323,13 +2323,17 @@ other = "発行する"
 description = "個人用アクセストークンの発行フォームのキャンセルリンク"
 other = "キャンセル"
 
+[flash_personal_access_token_created]
+description = "個人用アクセストークンを発行したときのフラッシュメッセージ"
+other = "「{{.Name}}」を発行しました"
+
 [personal_access_token_create_title]
 description = "個人用アクセストークンを発行した直後の画面のページタイトル"
-other = "トークンを発行しました | {{.SpaceName}}"
+other = "個人用アクセストークンの発行 | {{.SpaceName}}"
 
 [personal_access_token_create_heading]
 description = "個人用アクセストークンを発行した直後の画面の見出し"
-other = "トークンを発行しました"
+other = "個人用アクセストークンの発行"
 
 [personal_access_token_create_notice]
 description = "個人用アクセストークンの値を1度だけ表示することの注意"
@@ -2477,11 +2481,11 @@ other = "「{{.Name}}」を登録しました"
 
 [oauth_application_create_title]
 description = "confidentialクライアントを登録した直後の画面のページタイトル"
-other = "アプリを登録しました | {{.SpaceName}}"
+other = "アプリの登録 | {{.SpaceName}}"
 
 [oauth_application_create_heading]
 description = "confidentialクライアントを登録した直後の画面の見出し"
-other = "アプリを登録しました"
+other = "アプリの登録"
 
 [oauth_application_create_notice]
 description = "クライアントシークレットを1度だけ表示することの注意"

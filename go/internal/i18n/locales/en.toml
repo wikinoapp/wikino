@@ -2276,11 +2276,11 @@ other = "Revoked access for \"{{.Name}}\""
 
 [personal_access_token_new_title]
 description = "個人用アクセストークンの発行フォームのページタイトル"
-other = "Generate a token | {{.SpaceName}}"
+other = "Generate a personal access token | {{.SpaceName}}"
 
 [personal_access_token_new_heading]
 description = "個人用アクセストークンの発行フォームの見出し"
-other = "Generate a token"
+other = "Generate a personal access token"
 
 [personal_access_token_new_description]
 description = "個人用アクセストークンの発行フォームのサブタイトル"
@@ -2326,13 +2326,17 @@ other = "Generate token"
 description = "個人用アクセストークンの発行フォームのキャンセルリンク"
 other = "Cancel"
 
+[flash_personal_access_token_created]
+description = "個人用アクセストークンを発行したときのフラッシュメッセージ"
+other = "Generated \"{{.Name}}\""
+
 [personal_access_token_create_title]
 description = "個人用アクセストークンを発行した直後の画面のページタイトル"
-other = "Token generated | {{.SpaceName}}"
+other = "Generate a personal access token | {{.SpaceName}}"
 
 [personal_access_token_create_heading]
 description = "個人用アクセストークンを発行した直後の画面の見出し"
-other = "Token generated"
+other = "Generate a personal access token"
 
 [personal_access_token_create_notice]
 description = "個人用アクセストークンの値を1度だけ表示することの注意"
@@ -2480,11 +2484,11 @@ other = "Registered \"{{.Name}}\""
 
 [oauth_application_create_title]
 description = "confidentialクライアントを登録した直後の画面のページタイトル"
-other = "App registered | {{.SpaceName}}"
+other = "Register an app | {{.SpaceName}}"
 
 [oauth_application_create_heading]
 description = "confidentialクライアントを登録した直後の画面の見出し"
-other = "App registered"
+other = "Register an app"
 
 [oauth_application_create_notice]
 description = "クライアントシークレットを1度だけ表示することの注意"

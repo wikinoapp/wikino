@@ -49,6 +49,8 @@ func TestCreate_発行したトークンの値をその応答でだけ表示す�
 		t.Fatal("レスポンスにトークンの値が含まれていない")
 	}
 	for _, want := range []string{
+		"<title>個人用アクセストークンの発行 | トークンのスペース</title>",
+		">個人用アクセストークンの発行</h1>",
 		"トークン (自宅のCLI)",
 		"トピックの読み取り",
 		"ページの読み取り",
@@ -56,6 +58,9 @@ func TestCreate_発行したトークンの値をその応答でだけ表示す�
 		// トークンの値は、選んでコピーできる欄とコピーボタンで示す
 		`data-copyable-input-value id="token_value"`,
 		`aria-label="トークン (自宅のCLI)をコピー"`,
+		// 発行したことは、リダイレクトせずに描画するこの応答のトーストで伝える
+		`data-category="success"`,
+		"「自宅のCLI」を発行しました",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに%qが含まれていない", want)

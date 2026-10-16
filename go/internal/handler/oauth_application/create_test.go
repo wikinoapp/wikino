@@ -56,12 +56,17 @@ func TestCreate_confidentialクライアントのシークレットをその応�
 		t.Fatal("レスポンスにクライアントIDが含まれていない")
 	}
 	for _, want := range []string{
+		"<title>アプリの登録 | ",
+		">アプリの登録</h1>",
 		"二度と表示できない",
 		// クライアントIDとシークレットは、選んでコピーできる欄とコピーボタンで示す
 		`data-copyable-input-value id="client_id"`,
 		`aria-label="クライアントIDをコピー"`,
 		`data-copyable-input-value id="client_secret"`,
 		`aria-label="クライアントシークレットをコピー"`,
+		// 登録したことは、リダイレクトせずに描画するこの応答のトーストで伝える
+		`data-category="success"`,
+		"「連携するWebアプリ」を登録しました",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに%qが含まれていない", want)
