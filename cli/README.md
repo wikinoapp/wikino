@@ -26,6 +26,15 @@ sha256sum --ignore-missing -c wikino_vX.Y.Z_checksums.txt
 shasum -a 256 --ignore-missing -c wikino_vX.Y.Z_checksums.txt
 ```
 
+アーカイブには、ビルドしたワークフローの来歴の証明を付けています。
+[GitHub CLI](https://cli.github.com/) の `gh attestation verify` で、このリポジトリの [CLI Release](../.github/workflows/cli-release.yml) のワークフローがビルドしたものであることを確かめられます。
+
+```sh
+gh attestation verify wikino_vX.Y.Z_linux_amd64.tar.gz \
+  --repo wikinoapp/wikino \
+  --signer-workflow wikinoapp/wikino/.github/workflows/cli-release.yml
+```
+
 アーカイブを展開し、中の `wikino` (Windowsでは `wikino.exe`) をPATHの通ったディレクトリに置きます。
 
 ```sh
