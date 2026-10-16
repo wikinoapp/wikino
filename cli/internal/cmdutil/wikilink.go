@@ -111,6 +111,7 @@ func NewPageLinkNames(links []apigen.WikilinkPreviewLink) []string {
 }
 
 // printNewPageLinksは、作られるリンク先があれば、messageIDの文言で1行にまとめて標準エラーに出す。
+// トピック名とページのタイトルは他の利用者が書いた値のため、確認の文言と同じく1行の値として無害化する。
 func printNewPageLinks(ios *iostreams.IOStreams, loc *i18n.Localizer, links []apigen.WikilinkPreviewLink, messageID string) error {
 	names := NewPageLinkNames(links)
 	if len(names) == 0 {
@@ -119,7 +120,7 @@ func printNewPageLinks(ios *iostreams.IOStreams, loc *i18n.Localizer, links []ap
 
 	_, err := fmt.Fprintln(ios.ErrOut, loc.T(messageID, map[string]any{
 		"Count": strconv.Itoa(len(names)),
-		"Pages": strings.Join(names, ", "),
+		"Pages": output.SanitizeLine(strings.Join(names, ", ")),
 	}))
 	return err
 }

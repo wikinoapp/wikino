@@ -1,7 +1,6 @@
 package page
 
 import (
-	"io"
 	"slices"
 
 	"github.com/spf13/cobra"
@@ -78,7 +77,7 @@ func runGet(f *cmdutil.Factory, cmd *cobra.Command, arg string, md bool) error {
 
 	switch {
 	case md:
-		_, err := io.WriteString(f.IOStreams.Out, pagefile.WithFrontmatter(item.Body, pagefile.Metadata{
+		return output.WriteText(f.IOStreams, pagefile.WithFrontmatter(item.Body, pagefile.Metadata{
 			Title:       item.Title,
 			Number:      &item.Number,
 			ETag:        item.ETag,
@@ -87,7 +86,6 @@ func runGet(f *cmdutil.Factory, cmd *cobra.Command, arg string, md bool) error {
 			ModifiedAt:  &item.ModifiedAt,
 			URL:         item.Url,
 		}))
-		return err
 	case printer.IsJSON():
 		return printer.PrintItem(item)
 	default:

@@ -1,8 +1,6 @@
 package draft
 
 import (
-	"io"
-
 	"github.com/spf13/cobra"
 
 	"github.com/wikinoapp/wikino/cli/internal/cmdutil"
@@ -77,8 +75,7 @@ func runRevisionGet(f *cmdutil.Factory, cmd *cobra.Command, numberArg, idArg str
 		if revision.Title != nil {
 			body = pagefile.WithFrontmatter(body, pagefile.Metadata{Title: revision.Title})
 		}
-		_, err := io.WriteString(f.IOStreams.Out, body)
-		return err
+		return output.WriteText(f.IOStreams, body)
 	case printer.IsJSON():
 		return printer.PrintItem(revision)
 	default:

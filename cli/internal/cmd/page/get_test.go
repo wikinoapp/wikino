@@ -119,17 +119,19 @@ func TestGet_MarkdownSharedTestdata(t *testing.T) {
 				return cmdtest.JSON(http.StatusOK, page, "ETag", page["etag"].(string))
 			})
 
-			// TTYでも非TTYでも同じページファイルを出す。
-			for _, run := range []func() error{
-				func() error { return e.Run(NewCmdPage, "page", "get", number, "--md") },
-				func() error { return e.RunTTY(NewCmdPage, "page", "get", number, "--md") },
-			} {
-				if err := run(); err != nil {
-					t.Fatalf("エラーを期待しなかったが %v だった", err)
-				}
-				if got := e.Stdout.String(); got != tt.Want {
-					t.Errorf("標準出力 = %q、期待値 = %q", got, tt.Want)
-				}
+			if err := e.Run(NewCmdPage, "page", "get", number, "--md"); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := e.Stdout.String(); got != tt.Want {
+				t.Errorf("標準出力 = %q、期待値 = %q", got, tt.Want)
+			}
+
+			// TTYでは、表示を上書きできるCRを取り除くため、CRLFの改行をLFにする。
+			if err := e.RunTTY(NewCmdPage, "page", "get", number, "--md"); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got, want := e.Stdout.String(), strings.ReplaceAll(tt.Want, "\r\n", "\n"); got != want {
+				t.Errorf("TTYの標準出力 = %q、期待値 = %q", got, want)
 			}
 		})
 	}
@@ -186,6 +188,42 @@ func TestGet_InvalidNumber(t *testing.T) {
 			err := e.Run(NewCmdPage, "page", "get", arg)
 			_ = cmdtest.AssertCLIError(t, err, output.CodeUsage, output.ExitUsage)
 			assertNoRequest(t, e)
+		})
+	}
+}
+
+func TestGet_MarkdownControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	// 本文は他の利用者が書いたもので、端末を操作するエスケープシーケンスやCRを含みうる。
+	const body = "a\x1b[2Jb\r\nc\rd\n"
+
+	tests := []struct {
+		name     string
+		tty      bool
+		wantBody string
+	}{
+		{name: "パイプでは本文を変えない", wantBody: body},
+		{name: "TTYでは制御文字を取り除く", tty: true, wantBody: "a[2Jb\ncd\n"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			e := newEnv(t)
+			handlePage(e, 12, testPage(12, ptr("議事録"), body))
+
+			run := e.Run
+			if tt.tty {
+				run = e.RunTTY
+			}
+			if err := run(NewCmdPage, "page", "get", "12", "--md"); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := e.Stdout.String(); !strings.HasSuffix(got, tt.wantBody) {
+				t.Errorf("標準出力 = %q、本文の期待値 = %q", got, tt.wantBody)
+			}
 		})
 	}
 }

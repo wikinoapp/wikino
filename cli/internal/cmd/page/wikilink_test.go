@@ -150,6 +150,25 @@ func TestCreate_CreatedWikilinks(t *testing.T) {
 	})
 }
 
+func TestCreate_CreatedWikilinksControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	e := newEnv(t)
+	var sent sentRequest
+	handleCreate(t, e, &sent)
+	// リンク先のトピック名とタイトルは他の利用者が書いた値で、端末を操作する文字を含みうる。
+	link := previewLink("予算\x1b[2J案\r\u202e", "new_page")
+	link["topic_name"] = "開\n発"
+	handlePreview(t, e, link)
+
+	if err := e.Run(NewCmdPage, "page", "create", "--topic", "3", "--title", "メモ", "--body", "[[予算案]]\n"); err != nil {
+		t.Fatalf("エラーを期待しなかったが %v だった", err)
+	}
+	if want := "存在しないリンク先1件を、未公開のページとして作成した見込みです: 開 発/予算 [2J案  \n"; e.Stderr.String() != want {
+		t.Errorf("標準エラー = %q、期待値 = %q", e.Stderr.String(), want)
+	}
+}
+
 func TestCreate_WikilinkPreviewErrors(t *testing.T) {
 	t.Parallel()
 

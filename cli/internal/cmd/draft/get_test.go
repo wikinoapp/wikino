@@ -168,3 +168,56 @@ func TestGet_InvalidNumber(t *testing.T) {
 		})
 	}
 }
+
+func TestMarkdownControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	// 本文は他の利用者が書いたもので、端末を操作するエスケープシーケンスやCRを含みうる。
+	const body = "a\x1b[2Jb\r\nc\rd\n"
+
+	commands := []struct {
+		name   string
+		handle func(e *cmdtest.Env)
+		args   []string
+	}{
+		{
+			name:   "draft get",
+			handle: func(e *cmdtest.Env) { handleDraft(e, 12, testDraft(12, ptr("議事録"), body)) },
+			args:   []string{"draft", "get", "12", "--md"},
+		},
+		{
+			name:   "draft revision get",
+			handle: func(e *cmdtest.Env) { handleRevision(e, testRevision(1, ptr("議事録"), body)) },
+			args:   []string{"draft", "revision", "get", "12", revisionID, "--md"},
+		},
+	}
+
+	for _, c := range commands {
+		for _, tt := range []struct {
+			name     string
+			tty      bool
+			wantBody string
+		}{
+			{name: "パイプでは本文を変えない", wantBody: body},
+			{name: "TTYでは制御文字を取り除く", tty: true, wantBody: "a[2Jb\ncd\n"},
+		} {
+			t.Run(c.name+"/"+tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				e := newEnv(t)
+				c.handle(e)
+
+				run := e.Run
+				if tt.tty {
+					run = e.RunTTY
+				}
+				if err := run(NewCmdDraft, c.args...); err != nil {
+					t.Fatalf("エラーを期待しなかったが %v だった", err)
+				}
+				if got := e.Stdout.String(); !strings.HasSuffix(got, tt.wantBody) {
+					t.Errorf("標準出力 = %q、本文の期待値 = %q", got, tt.wantBody)
+				}
+			})
+		}
+	}
+}

@@ -183,7 +183,8 @@ func (p *Printer) write(value any, indent bool) error {
 }
 
 // runJQは `--jq` の結果を1つずつ書く。文字列はgh CLIと同じく引用符を付けずにそのまま書き、
-// 本文などをシェルの他のコマンドへ渡しやすくする。
+// 本文などをシェルの他のコマンドへ渡しやすくする。引用符の無い文字列は制御文字もエスケープされないため、
+// 標準出力がTTYのときだけ本文の表示と同じく取り除く。
 func (p *Printer) runJQ(w io.Writer, value any, indent bool) error {
 	iter := p.jq.Run(value)
 	for {
@@ -210,7 +211,7 @@ func (p *Printer) runJQ(w io.Writer, value any, indent bool) error {
 		}
 
 		if s, ok := v.(string); ok {
-			if _, err := io.WriteString(w, s+"\n"); err != nil {
+			if _, err := io.WriteString(w, terminalText(p.ios, s)+"\n"); err != nil {
 				return err
 			}
 			continue
