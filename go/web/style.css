@@ -172,7 +172,7 @@
     }
 
     & details > summary {
-      @apply gap-1 link-primary-foreground;
+      @apply link-primary-foreground gap-1;
     }
 
     & details > summary::before {
@@ -227,7 +227,7 @@
        柔らかさを足す役割にとどめる。カードと違い角丸は付けない。border-radiusは置換要素の中身を
        クリップするため、画像そのものの隅が削られてしまう。 */
     & img {
-      @apply mx-auto block shadow-xs ring-1 ring-foreground/10;
+      @apply ring-foreground/10 mx-auto block shadow-xs ring-1;
     }
 
     /* 画像を含むリンクをインラインブロックにして画像の幅に合わせる */
@@ -324,7 +324,7 @@
     }
 
     & .wikino-markdown-table-scroll:focus-visible {
-      @apply outline-2 outline-offset-2 outline-brand-600;
+      @apply outline-brand-600 outline-2 outline-offset-2;
     }
 
     & table td {
