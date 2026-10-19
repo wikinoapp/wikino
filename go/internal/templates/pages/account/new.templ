@@ -92,7 +92,6 @@ templ New(data NewPageData) {
 							name="atname"
 							pattern="[A-Za-z0-9_]+"
 							required
-							tabindex="1"
 							type="text"
 							value={ data.Atname }
 						/>
@@ -127,7 +126,6 @@ templ New(data NewPageData) {
 						minlength={ strconv.Itoa(auth.MinPasswordLength) }
 						name="password"
 						required
-						tabindex="2"
 						type="password"
 					/>
 					<p class="text-sm text-muted-foreground">
@@ -141,9 +139,11 @@ templ New(data NewPageData) {
 						}
 					}
 				</div>
+				<p class="text-sm text-muted-foreground">
+					@templ.Raw(templates.T(ctx, "account_new_terms_html"))
+				</p>
 				<button
 					class="btn rounded-full w-fit"
-					tabindex="3"
 					type="submit"
 				>
 					@templates.Icon("arrow-right-regular")
