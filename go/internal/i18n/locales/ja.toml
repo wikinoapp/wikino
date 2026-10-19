@@ -325,6 +325,10 @@ other = "パスワード"
 description = "アカウント作成画面のパスワード入力ヒント"
 other = "{{.MinLength}}文字以上で入力してください"
 
+[account_new_terms_html]
+description = "アカウント作成の送信ボタンの近くに置く、利用規約とプライバシーポリシーへの同意の表示 (各文書へのリンクを含む)"
+other = "<a class=\"link-inherit-foreground\" href=\"/terms\" target=\"_blank\">利用規約</a> と <a class=\"link-inherit-foreground\" href=\"/privacy\" target=\"_blank\">プライバシーポリシー</a> に同意のうえで、アカウントを作成してください"
+
 [account_new_submit_button]
 description = "アカウント作成の送信ボタンのラベル"
 other = "アカウントを作成"
