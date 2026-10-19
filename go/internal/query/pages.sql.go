@@ -612,6 +612,42 @@ func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPa
 	return items, nil
 }
 
+const findPageByIDForShare = `-- name: FindPageByIDForShare :one
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages WHERE id = $1 AND space_id = $2 FOR SHARE
+`
+
+type FindPageByIDForShareParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 下書きにページのトピックを書くまでの間にページの移動が割り込まないよう、ページの行を
+// トランザクションが終わるまで共有ロックして取得する。
+// 共有ロックどうしは競合しないため、同じページの下書きを複数のメンバーが同時に保存しても待たない。
+// 下書きに書くトピックを読むためだけに使うため、廃棄・ゴミ箱の状態では絞り込まない。
+func (q *Queries) FindPageByIDForShare(ctx context.Context, arg FindPageByIDForShareParams) (Page, error) {
+	row := q.db.QueryRowContext(ctx, findPageByIDForShare, arg.ID, arg.SpaceID)
+	var i Page
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.TopicID,
+		&i.Number,
+		&i.Title,
+		&i.Body,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.PublishedAt,
+		&i.TrashedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PinnedAt,
+		&i.DiscardedAt,
+		&i.FeaturedImageAttachmentID,
+	)
+	return i, err
+}
+
 const findPageByIDForUpdate = `-- name: FindPageByIDForUpdate :one
 SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages WHERE id = $1 AND space_id = $2 AND discarded_at IS NULL FOR NO KEY UPDATE
 `

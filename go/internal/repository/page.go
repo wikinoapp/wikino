@@ -58,6 +58,22 @@ func (r *PageRepository) FindByIDForUpdate(ctx context.Context, id model.PageID,
 	return r.toModel(row), nil
 }
 
+// FindByIDForShareはページを取得し、呼び出し元のトランザクションが終わるまでその行を共有ロックする
+// (廃棄・ゴミ箱のページも含む)。ページが存在しない場合はnilを返す
+func (r *PageRepository) FindByIDForShare(ctx context.Context, id model.PageID, spaceID model.SpaceID) (*model.Page, error) {
+	row, err := r.q.FindPageByIDForShare(ctx, query.FindPageByIDForShareParams{
+		ID:      string(id),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindPinnedByTopicはトピック内のピン留めページを取得する (公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート)
 func (r *PageRepository) FindPinnedByTopic(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) ([]*model.Page, error) {
 	rows, err := r.q.FindPinnedPagesByTopic(ctx, query.FindPinnedPagesByTopicParams{

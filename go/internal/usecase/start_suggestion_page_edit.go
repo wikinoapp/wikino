@@ -240,12 +240,17 @@ func (uc *StartSuggestionPageEditUsecase) startEdit(ctx context.Context, data *s
 	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 	now := time.Now()
 
+	topicID, err := lockTopicIDForDraftPage(ctx, uc.pageRepo.WithTx(tx), page.ID, data.space.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	if draft != nil {
 		// Force=true: 既存の下書きを編集提案の内容で上書き
 		_, err = draftPageRepo.Update(ctx, repository.UpdateDraftPageInput{
 			ID:                        draft.ID,
 			SpaceID:                   data.space.ID,
-			TopicID:                   page.TopicID,
+			TopicID:                   topicID,
 			Title:                     sp.Title,
 			Body:                      sp.Body,
 			LinkedPageIDs:             sp.LinkedPageIDs,
@@ -267,7 +272,7 @@ func (uc *StartSuggestionPageEditUsecase) startEdit(ctx context.Context, data *s
 			SpaceID:                   data.space.ID,
 			PageID:                    sp.PageID,
 			SpaceMemberID:             data.spaceMember.ID,
-			TopicID:                   page.TopicID,
+			TopicID:                   topicID,
 			SuggestionPageID:          &sp.ID,
 			Title:                     sp.Title,
 			Body:                      sp.Body,

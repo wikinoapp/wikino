@@ -328,10 +328,14 @@ func (uc *CreateAPIDraftPageUsecase) createDraftPageOnce(
 		return nil, fmt.Errorf("リンク先ページの解決に失敗しました: %w", err)
 	}
 
+	topicID, err := lockTopicIDForDraftPage(ctx, pageRepo, page.ID, spaceID)
+	if err != nil {
+		return nil, err
+	}
 	draft, err = draftPageRepo.Update(ctx, repository.UpdateDraftPageInput{
 		ID:                        draft.ID,
 		SpaceID:                   spaceID,
-		TopicID:                   page.TopicID,
+		TopicID:                   topicID,
 		Title:                     title,
 		Body:                      body,
 		LinkedPageIDs:             linkedPageIDs,

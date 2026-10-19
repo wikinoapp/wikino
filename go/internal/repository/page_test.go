@@ -2784,3 +2784,51 @@ func TestPageRepository_FindMetadataByIDs(t *testing.T) {
 		t.Errorf("空のIDの取得後のクエリ数 = %d、期待値 = 1 (追加のクエリ無し)", got)
 	}
 }
+
+func TestPageRepository_FindByIDForShare(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-share-lock-space").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-share-lock-other-space").Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("General").Build()
+	pageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Test Page").Build()
+
+	t.Run("IDとスペースIDでページを取得できる", func(t *testing.T) {
+		page, err := repo.FindByIDForShare(context.Background(), pageID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDForShare()のエラー = %v", err)
+		}
+		if page == nil || page.ID != pageID || page.TopicID != topicID {
+			t.Errorf("ページ = %+v、期待値 = 作成したページ", page)
+		}
+	})
+
+	t.Run("別のスペースのIDとしてはnilを返す", func(t *testing.T) {
+		page, err := repo.FindByIDForShare(context.Background(), pageID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByIDForShare()のエラー = %v", err)
+		}
+		if page != nil {
+			t.Errorf("ページ = %+v、期待値 = nil", page)
+		}
+	})
+
+	t.Run("ゴミ箱のページと廃棄されたページも取得できる", func(t *testing.T) {
+		trashedPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(2).WithTitle("Trashed Page").WithTrashed().Build()
+		discardedPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(3).WithTitle("Discarded Page").WithDiscarded().Build()
+
+		for _, id := range []model.PageID{trashedPageID, discardedPageID} {
+			page, err := repo.FindByIDForShare(context.Background(), id, spaceID)
+			if err != nil {
+				t.Fatalf("FindByIDForShare()のエラー = %v", err)
+			}
+			if page == nil || page.ID != id {
+				t.Errorf("ページ = %+v、期待値 = ID %sのページ", page, id)
+			}
+		}
+	})
+}

@@ -10,6 +10,13 @@ SELECT * FROM pages WHERE space_id = $1 AND number = $2 AND discarded_at IS NULL
 -- UPDATEもFOR NO KEY UPDATEを取るため、同じページの更新どうしは直列化される。
 SELECT * FROM pages WHERE id = @id AND space_id = @space_id AND discarded_at IS NULL FOR NO KEY UPDATE;
 
+-- name: FindPageByIDForShare :one
+-- 下書きにページのトピックを書くまでの間にページの移動が割り込まないよう、ページの行を
+-- トランザクションが終わるまで共有ロックして取得する。
+-- 共有ロックどうしは競合しないため、同じページの下書きを複数のメンバーが同時に保存しても待たない。
+-- 下書きに書くトピックを読むためだけに使うため、廃棄・ゴミ箱の状態では絞り込まない。
+SELECT * FROM pages WHERE id = @id AND space_id = @space_id FOR SHARE;
+
 -- name: FindPagesByIDs :many
 -- IDリストに含まれるページを取得する (同スペース・未廃棄のページのみ。リンク一覧表示用)
 SELECT * FROM pages
