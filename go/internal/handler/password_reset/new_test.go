@@ -81,6 +81,10 @@ func TestNew_Success(t *testing.T) {
 	if !strings.Contains(body, "cf-turnstile") {
 		t.Error("フォームにTurnstileのウィジェットが見つからない")
 	}
+
+	if !strings.Contains(body, `<link rel="preconnect" href="https://challenges.cloudflare.com">`) {
+		t.Error("レスポンスにTurnstileのオリジンへのpreconnectが見つからない")
+	}
 }
 
 func TestNew_I18n_Japanese(t *testing.T) {

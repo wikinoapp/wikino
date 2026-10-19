@@ -21,7 +21,15 @@ type PageMeta struct {
 	OGLocale               string          // og:localeの値 ("ja_JP", "en_US"など)
 	AssetVersion           string          // CSSやJSのバージョン (キャッシュバスティング用)
 	CurrentSpaceIdentifier SpaceIdentifier // 現在のスペース識別子。グローバルホットキーの検索URL (`/search?q=space:{identifier}`) をdefault.templで組み立てるために使用する。スペース外画面では空文字
+	// PreconnectOriginsはそのページが確実にリクエストする第三者オリジンの一覧。それぞれを
+	// <link rel="preconnect"> として出力し、リクエスト自体が見つかる前にブラウザが接続を
+	// 済ませられるようにする。宣言するのは実際にリクエストするページだけ。preconnectは
+	// それ自体がそのオリジンへの接続になり、利用者のIPアドレスを第三者に送るためである。
+	PreconnectOrigins []string
 }
+
+// turnstileOriginはcomponents.Turnstileがウィジェットのスクリプトを読み込むオリジン。
+const turnstileOrigin = "https://challenges.cloudflare.com"
 
 // twitter:cardの値。
 const (
@@ -70,4 +78,14 @@ func (p *PageMeta) SetTitle(ctx context.Context, titleKey string) {
 // スペース配下のページなど、" | Wikino" サフィックスが不要なページで使用します
 func (p *PageMeta) SetTitleWithoutSuffix(ctx context.Context, titleKey string, data ...map[string]any) {
 	p.Title = i18n.T(ctx, titleKey, data...)
+}
+
+// AddTurnstilePreconnectはTurnstileのウィジェットを描画するページで、そのオリジンを
+// preconnectの対象として宣言します。components.TurnstileはsiteKeyがあるときだけ
+// ウィジェットとスクリプトを描画するため、siteKeyが空ならヒントも出しません。
+func (p *PageMeta) AddTurnstilePreconnect(siteKey string) {
+	if siteKey == "" {
+		return
+	}
+	p.PreconnectOrigins = append(p.PreconnectOrigins, turnstileOrigin)
 }

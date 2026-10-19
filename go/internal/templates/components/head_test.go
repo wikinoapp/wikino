@@ -106,3 +106,30 @@ func TestHead_OGImageDimensions(t *testing.T) {
 		}
 	})
 }
+
+// preconnectはページが宣言したオリジンにだけ出す。ヒントそのものが第三者への接続になるため、
+// 宣言しないページ (Turnstileを使わない画面) には出さない。
+func TestHead_Preconnect(t *testing.T) {
+	t.Parallel()
+
+	t.Run("宣言したオリジンを出す", func(t *testing.T) {
+		t.Parallel()
+
+		html := renderHead(t, viewmodel.PageMeta{PreconnectOrigins: []string{"https://challenges.cloudflare.com"}})
+
+		want := `<link rel="preconnect" href="https://challenges.cloudflare.com">`
+		if !strings.Contains(html, want) {
+			t.Errorf("headに%qが含まれていない", want)
+		}
+	})
+
+	t.Run("宣言が無ければ出さない", func(t *testing.T) {
+		t.Parallel()
+
+		html := renderHead(t, viewmodel.PageMeta{})
+
+		if strings.Contains(html, `rel="preconnect"`) {
+			t.Error("headにpreconnectが含まれている")
+		}
+	})
+}

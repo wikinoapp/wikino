@@ -52,6 +52,10 @@ func TestNew(t *testing.T) {
 		t.Error("レスポンスにTurnstileのサイトキーが見つからない")
 	}
 
+	if !strings.Contains(body, `<link rel="preconnect" href="https://challenges.cloudflare.com">`) {
+		t.Error("レスポンスにTurnstileのオリジンへのpreconnectが見つからない")
+	}
+
 	if !strings.Contains(body, `name="back"`) {
 		t.Error("レスポンスにbackのhiddenフィールドが見つからない")
 	}

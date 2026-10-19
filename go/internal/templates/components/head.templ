@@ -50,7 +50,10 @@ templ Head(meta viewmodel.PageMeta) {
 	<link rel="icon" href="/static/images/favicon.ico" sizes="any"/>
 	<link rel="icon" href="/static/images/icon.svg" type="image/svg+xml"/>
 	<link rel="manifest" href="/manifest.json"/>
-	<link rel="preconnect" href="https://challenges.cloudflare.com"/> // Cloudflare Turnstile
+	// ヒントはページ側が宣言する。接続するオリジンを、そこへ実際にリクエストするページに限るため
+	for _, origin := range meta.PreconnectOrigins {
+		<link rel="preconnect" href={ origin }/>
+	}
 
 	<link rel="stylesheet" href={ "/static/css/style.css?v=" + meta.AssetVersion }/>
 

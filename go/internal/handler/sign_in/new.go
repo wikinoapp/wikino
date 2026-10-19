@@ -26,6 +26,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	// backパラメータはログイン後の遷移先を決めるだけなので正規URLには入れず、
 	// /sign_in?back=... はすべて同じアドレスに集約する。
 	meta.OGURL = h.cfg.AppURL() + string(templates.SignInPath())
+	meta.AddTurnstilePreconnect(h.cfg.TurnstileSiteKey)
 
 	// テンプレートをレンダリング
 	content := signinpages.New(signinpages.NewPageData{
