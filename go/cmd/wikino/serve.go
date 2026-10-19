@@ -213,7 +213,7 @@ func runServe() {
 	}
 
 	// Riverクライアントを初期化 (バックグラウンドジョブ用)
-	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter, worker.ExportDeps{
+	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter, emailConfirmationRepo, worker.ExportDeps{
 		ExportRepo:      exportRepo,
 		SpaceRepo:       spaceRepo,
 		SpaceMemberRepo: spaceMemberRepo,
