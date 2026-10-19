@@ -141,6 +141,7 @@ func (h *Handler) renderSignUpForm(w http.ResponseWriter, r *http.Request, ve *m
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
 	meta.SetTitle(ctx, "sign_up_new_title")
 	meta.OGURL = h.cfg.AppURL() + string(templates.SignUpPath())
+	meta.AddTurnstilePreconnect(h.cfg.TurnstileSiteKey)
 
 	content := signuppages.New(signuppages.NewPageData{
 		CSRFToken:        csrfToken,

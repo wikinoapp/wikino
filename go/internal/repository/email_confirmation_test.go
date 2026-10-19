@@ -226,6 +226,62 @@ func TestEmailConfirmationRepository_Succeed(t *testing.T) {
 	})
 }
 
+func TestEmailConfirmationRepository_DeleteStartedBefore(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewEmailConfirmationRepository(q)
+
+	// 他のテストが作る行を巻き込まないよう、どのテストも使わない過去の日時で作る
+	cutoff := time.Date(2000, 1, 2, 0, 0, 0, 0, time.UTC)
+	unsucceededID := testutil.NewEmailConfirmationBuilder(t, tx).
+		WithEmail("delete-unsucceeded@example.com").
+		WithCode("DSB001").
+		WithStartedAt(cutoff.Add(-time.Hour)).
+		Build()
+	succeededID := testutil.NewEmailConfirmationBuilder(t, tx).
+		WithEmail("delete-succeeded@example.com").
+		WithCode("DSB002").
+		WithStartedAt(cutoff.Add(-time.Hour)).
+		WithSucceededAt(cutoff.Add(-time.Hour + time.Minute)).
+		Build()
+	atCutoffID := testutil.NewEmailConfirmationBuilder(t, tx).
+		WithEmail("delete-at-cutoff@example.com").
+		WithCode("DSB003").
+		WithStartedAt(cutoff).
+		Build()
+
+	deletedCount, err := repo.DeleteStartedBefore(context.Background(), cutoff)
+	if err != nil {
+		t.Fatalf("DeleteStartedBefore()のエラー = %v", err)
+	}
+	if deletedCount != 2 {
+		t.Errorf("削除した件数 = %d、期待値 = 2", deletedCount)
+	}
+
+	tests := []struct {
+		name        string
+		id          string
+		wantDeleted bool
+	}{
+		{name: "cutoffより前に開始した未確認の行は削除される", id: unsucceededID, wantDeleted: true},
+		{name: "cutoffより前に開始した確認済みの行は削除される", id: succeededID, wantDeleted: true},
+		{name: "cutoffちょうどに開始した行は残る", id: atCutoffID, wantDeleted: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ec, err := repo.FindByID(context.Background(), tt.id)
+			if err != nil {
+				t.Fatalf("FindByID()のエラー = %v", err)
+			}
+			if deleted := ec == nil; deleted != tt.wantDeleted {
+				t.Errorf("削除されたか = %v、期待値 = %v", deleted, tt.wantDeleted)
+			}
+		})
+	}
+}
+
 func TestEmailConfirmation_IsExpired(t *testing.T) {
 	t.Parallel()
 

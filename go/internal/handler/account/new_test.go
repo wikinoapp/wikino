@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -100,6 +101,27 @@ func TestNew(t *testing.T) {
 	// 新規登録に戻るリンクが含まれているか確認
 	if !strings.Contains(body, `href="/sign_up"`) {
 		t.Error("レスポンスにサインアップへ戻るリンクが見つからない")
+	}
+
+	// 利用規約とプライバシーポリシーへの同意の表示が含まれているか確認
+	for _, want := range []string{
+		`href="/terms" target="_blank">利用規約</a>`,
+		`href="/privacy" target="_blank">プライバシーポリシー</a>`,
+		"に同意のうえで、アカウントを作成してください",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに規約への同意の表示の%qが見つからない", want)
+		}
+	}
+
+	// 同意の表示が作成ボタンより前にあり、フォーカス順をDOM順に任せているか確認
+	termsIndex := strings.Index(body, "に同意のうえで、アカウントを作成してください")
+	submitIndex := strings.Index(body, `type="submit"`)
+	if termsIndex == -1 || submitIndex == -1 || termsIndex > submitIndex {
+		t.Errorf("同意の表示の位置 = %d、作成ボタンの位置 = %d (同意の表示がボタンより前にあることを期待)", termsIndex, submitIndex)
+	}
+	if regexp.MustCompile(`tabindex="[1-9]`).MatchString(body) {
+		t.Error("レスポンスに正のtabindexが含まれている")
 	}
 
 	for _, notWant := range []string{`<link rel="canonical"`, `property="og:url"`} {
@@ -262,5 +284,16 @@ func TestNew_EnglishLocale(t *testing.T) {
 	// 英語の戻るリンクが含まれているか確認
 	if !strings.Contains(body, "Back to sign up") {
 		t.Error("レスポンスに英語の戻るリンクが見つからない")
+	}
+
+	// 英語の規約への同意の表示が含まれているか確認
+	for _, want := range []string{
+		`href="/terms" target="_blank">Terms of Service</a>`,
+		`href="/privacy" target="_blank">Privacy Policy</a>`,
+		"Please create an account after agreeing to the",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに英語の規約への同意の表示の%qが見つからない", want)
+		}
 	}
 }

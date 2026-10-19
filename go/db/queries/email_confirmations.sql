@@ -31,3 +31,8 @@ INSERT INTO email_confirmations (
 UPDATE email_confirmations
 SET succeeded_at = $2, updated_at = $3
 WHERE id = $1;
+
+-- name: DeleteEmailConfirmationsStartedBefore :execrows
+-- 指定された時刻より前に開始したメール確認情報を、確認の成否を問わず削除する
+DELETE FROM email_confirmations
+WHERE started_at < $1;
