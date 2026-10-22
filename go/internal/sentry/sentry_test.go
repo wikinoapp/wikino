@@ -327,7 +327,7 @@ func TestBeforeSend_FiltersTags(t *testing.T) {
 		expected map[string]string
 	}{
 		{
-			// sentryslogはslog属性をevent.Tagsに乗せるため、メール
+			// Sentryイベント用ハンドラーはslog属性をevent.Tagsに乗せるため、メール
 			// 送信失敗ログの "email" 属性はここに届く。
 			name: "emailタグをマスク",
 			tags: map[string]string{

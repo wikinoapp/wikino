@@ -48,7 +48,7 @@ var sensitiveQueryKeys = []string{
 }
 
 // マスクすべきタグのキー (トークン境界一致、小文字)。Sentryのタグには
-// sentryslog経由でslog属性がそのまま乗るため、構造化属性としてログに載せた
+// Sentryイベント用ハンドラー経由でslog属性がそのまま乗るため、構造化属性としてログに載せた
 // PII (例: メール送信失敗ログの "email" 属性) がマスクされないままSentryに
 // 届いてしまう。標準エラー出力側のログには元の値が残るため、デバッグは
 // そちらで行える。
@@ -98,15 +98,15 @@ func Init(cfg Config) error {
 
 // Sentryにイベントを送信する前にフィルタリングを行う。
 // クライアント切断や正常な中断由来のエラーは破棄し、リバースプロキシ経由の
-// 502ノイズは "source" タグで識別して捨てる。残りはセンシティブデータをマスクする。
+// 502ノイズはSourceAttrKeyのタグで識別して捨てる。残りはセンシティブデータをマスクする。
 func beforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 	if hint != nil && shouldDropError(hint.OriginalException) {
 		return nil
 	}
 
 	// リバースプロキシ経由で出された502由来のイベントは捨てる。Rails側の
-	// 障害はRailsのSentryプロジェクトで扱うべきため。sentryslogはslog
-	// 属性 "source" をevent.Tagsにそのまま乗せるので、タグ照合で判別できる。
+	// 障害はRailsのSentryプロジェクトで扱うべきため。Sentryイベント用ハンドラーはslog
+	// 属性SourceAttrKeyをevent.Tagsに乗せるので、タグ照合で判別できる。
 	if event.Tags[SourceAttrKey] == ReverseProxySource {
 		return nil
 	}
@@ -137,7 +137,7 @@ func shouldDropError(err error) bool {
 }
 
 // センシティブなタグ (メールアドレス等) をマスクする。下のリクエスト系
-// フィルタと異なり、sentryslogがslog属性をevent.Tagsに乗せて生成した
+// フィルタと異なり、Sentryイベント用ハンドラーがslog属性をevent.Tagsに乗せて生成した
 // イベントもカバーする。キー判定はボディ / クエリのフィルタと同じく
 // matchesSensitiveTokenKeyによるトークン境界一致で行う。
 func filterTags(event *sentry.Event) {
