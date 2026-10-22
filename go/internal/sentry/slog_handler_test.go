@@ -458,6 +458,24 @@ func TestSlogHandler_ErrorHintsAndMasking(t *testing.T) {
 	}
 }
 
+func TestSlogHandler_ErrorAttrsWithoutErrorValue(t *testing.T) {
+	t.Parallel()
+	hub, transport := newSlogTestHub(t)
+	ctx := sentry.SetHubOnContext(context.Background(), hub)
+	logger := slog.New(NewSlogHandler(newRecordingHandler()))
+	logger.ErrorContext(ctx, "失敗", "error", "文字列のエラー", "err", errors.New("一つ目"), "error", errors.New("二つ目"))
+	events := transport.Events()
+	if len(events) != 1 {
+		t.Fatalf("イベント件数 = %d、期待値 = 1", len(events))
+	}
+	if events[0].Tags["error"] != "文字列のエラー" {
+		t.Errorf("タグ[error] = %q、期待値 = %q", events[0].Tags["error"], "文字列のエラー")
+	}
+	if len(events[0].Exception) != 1 || events[0].Exception[0].Value != "一つ目" {
+		t.Errorf("例外 = %+v、期待値 = 一つ目のみ", events[0].Exception)
+	}
+}
+
 func TestSlogHandler_DisabledHub(t *testing.T) {
 	t.Parallel()
 	base := newRecordingHandler()
