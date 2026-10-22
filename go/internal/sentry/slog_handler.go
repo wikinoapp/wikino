@@ -2,8 +2,10 @@ package sentry
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
+	"github.com/getsentry/sentry-go"
 	sentryslog "github.com/getsentry/sentry-go/slog"
 )
 
@@ -22,20 +24,110 @@ const SourceAttrKey = "wikino_source"
 // イベントを破棄する。
 const ReverseProxySource = "reverse_proxy"
 
-// baseハンドラーをsentryslogハンドラーと合成して返す。slog.LevelError
-// とLevelFatalのレコードをSentryにイベントとして送信し、それ以外のレベルは
-// baseにだけ流す。Sentry Logs APIへの送信は明示的に無効化している (本連携は
-// エラー検出のみを担うため)。
+// baseハンドラーをSentryイベント用ハンドラーと合成して返す。
+// ErrorとFatalだけをイベント化し、Sentry Logs APIには送信しない。
 func NewSlogHandler(base slog.Handler) slog.Handler {
-	sentryHandler := sentryslog.Option{
-		// ErrorとFatalだけをSentryイベント化する。
-		EventLevel: []slog.Level{slog.LevelError, sentryslog.LevelFatal},
-		// 空 (非nil) のスライスを渡すことでSentry Logs APIへの送信を
-		// 無効化する。nilにするとパッケージ既定値 (全レベル送信) に
-		// フォールバックしてしまう。
-		LogLevel: []slog.Level{},
-	}.NewSentryHandler(context.Background())
-	return newMultiHandler(base, sentryHandler)
+	return newMultiHandler(base, &sentryEventHandler{})
+}
+
+type sentryEventAttr struct {
+	key       string
+	value     string
+	exception error
+}
+
+// 属性は追加時に解決して保持し、派生ハンドラー間で書き換えを共有しない。
+// グループはドット区切りのキーにし、beforeSendで末端の機密キーも判定できるようにする。
+type sentryEventHandler struct {
+	attrs  []sentryEventAttr
+	prefix string
+}
+
+func (h *sentryEventHandler) Enabled(_ context.Context, level slog.Level) bool {
+	return level == slog.LevelError || level == sentryslog.LevelFatal
+}
+
+func (h *sentryEventHandler) Handle(ctx context.Context, record slog.Record) error {
+	hub := sentry.GetHubFromContext(ctx)
+	if hub == nil {
+		hub = sentry.CurrentHub()
+	}
+	client := hub.Client()
+	if !client.IsEnabled() {
+		return nil
+	}
+
+	event := sentry.NewEvent()
+	event.Timestamp = record.Time.UTC()
+	event.Level = sentry.LevelError
+	if record.Level == sentryslog.LevelFatal {
+		event.Level = sentry.LevelFatal
+	}
+	event.Message = record.Message
+	event.Logger = "slog"
+
+	var originalErr error
+	addAttrs := func(attrs []sentryEventAttr) {
+		for _, attr := range attrs {
+			if attr.exception != nil {
+				if originalErr == nil {
+					originalErr = attr.exception
+				}
+				continue
+			}
+			event.Tags[attr.key] = attr.value
+		}
+	}
+	addAttrs(h.attrs)
+	record.Attrs(func(attr slog.Attr) bool {
+		addAttrs(flattenSlogAttr(h.prefix, attr))
+		return true
+	})
+	event.SetException(originalErr, client.Options().MaxErrorDepth)
+	hub.CaptureEventWithHint(event, &sentry.EventHint{Context: ctx, OriginalException: originalErr})
+	return nil
+}
+
+func (h *sentryEventHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	out := &sentryEventHandler{
+		attrs:  make([]sentryEventAttr, len(h.attrs), len(h.attrs)+len(attrs)),
+		prefix: h.prefix,
+	}
+	copy(out.attrs, h.attrs)
+	for _, attr := range attrs {
+		out.attrs = append(out.attrs, flattenSlogAttr(h.prefix, attr)...)
+	}
+	return out
+}
+
+func (h *sentryEventHandler) WithGroup(name string) slog.Handler {
+	if name == "" {
+		return h
+	}
+	return &sentryEventHandler{attrs: h.attrs, prefix: h.prefix + name + "."}
+}
+
+// 無名グループを展開し、error / errは例外情報としてタグから分離する。
+func flattenSlogAttr(prefix string, attr slog.Attr) []sentryEventAttr {
+	value := attr.Value.Resolve()
+	if value.Kind() == slog.KindGroup {
+		if attr.Key != "" {
+			prefix += attr.Key + "."
+		}
+		var attrs []sentryEventAttr
+		for _, child := range value.Group() {
+			attrs = append(attrs, flattenSlogAttr(prefix, child)...)
+		}
+		return attrs
+	}
+	if attr.Key == "" {
+		return nil
+	}
+	var exception error
+	if attr.Key == "error" || attr.Key == "err" {
+		exception, _ = value.Any().(error)
+	}
+	return []sentryEventAttr{{key: prefix + attr.Key, value: fmt.Sprint(value.Any()), exception: exception}}
 }
 
 // 1レコードを複数のslog.Handlerにファンアウトする。baseのテキスト
