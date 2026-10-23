@@ -6,7 +6,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// PersonalAccessTokenは個人アクセストークンの画面で表示するトークン。トークンの値そのものは
+// PersonalAccessTokenは個人用アクセストークンの画面で表示するトークン。トークンの値そのものは
 // 持たず、見分けるための末尾の数文字だけを持つ。
 type PersonalAccessToken struct {
 	ID             string

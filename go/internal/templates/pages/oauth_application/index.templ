@@ -22,20 +22,12 @@ templ Index(data IndexData) {
 	<div class="py-4">
 		<div class="max-w-2xl w-full mx-auto">
 			<div class="flex flex-col gap-4">
-				<div class="px-4 flex flex-col gap-4">
+				<div class="px-4">
 					@components.MainTitle(components.MainTitleData{
 						Title:    templates.T(ctx, "oauth_application_index_heading"),
 						Subtitle: indexSubtitle(),
+						Actions:  indexActions(data),
 					})
-					if data.CanCreate {
-						<a
-							href={ templ.SafeURL(string(templates.NewSpaceSettingsOAuthApplicationPath(data.Space.Identifier))) }
-							class="btn rounded-full w-fit"
-						>
-							@templates.Icon("plus-regular", "size-4")
-							{ templates.T(ctx, "oauth_application_index_new") }
-						</a>
-					}
 				</div>
 				if len(data.Applications) == 0 {
 					<div class="px-4">
@@ -63,6 +55,27 @@ templ Index(data IndexData) {
 // indexSubtitleは一覧の画面のサブタイトルを表示します。
 templ indexSubtitle() {
 	{ templates.T(ctx, "oauth_application_index_description") }
+}
+
+// indexActionsは一覧のタイトルの操作領域を返します。登録できない閲覧者には、空の操作領域が
+// 余白だけを取らないよう、操作領域ごと出しません。
+func indexActions(data IndexData) templ.Component {
+	if !data.CanCreate {
+		return nil
+	}
+	return newButton(data)
+}
+
+// newButtonはアプリを登録するフォームへのリンクを表示します。
+templ newButton(data IndexData) {
+	<a
+		href={ templ.SafeURL(string(templates.NewSpaceSettingsOAuthApplicationPath(data.Space.Identifier))) }
+		class="btn rounded-full"
+		data-size="sm"
+	>
+		@templates.Icon("plus-regular", "size-4")
+		{ templates.T(ctx, "oauth_application_index_new") }
+	</a>
 }
 
 // applicationItemは一覧の1件のアプリを表示します。名前から詳細の画面へ移れます。

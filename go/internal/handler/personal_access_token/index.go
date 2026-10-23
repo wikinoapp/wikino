@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Indexは自分の個人アクセストークンの一覧を表示します (GET /s/{space_identifier}/settings/personal_access_tokens)。
+// Indexは自分の個人用アクセストークンの一覧を表示します (GET /s/{space_identifier}/settings/personal_access_tokens)。
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -33,7 +33,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		UserID:          user.ID,
 	})
 	if err != nil {
-		h.handleError(w, r, err, "個人アクセストークンの一覧のデータの取得に失敗")
+		h.handleError(w, r, err, "個人用アクセストークンの一覧のデータの取得に失敗")
 		return
 	}
 

@@ -71,8 +71,20 @@ func (p *MemberPolicy) CanTrashPage() bool {
 	return p.effectiveScopes[model.ScopePageTrashWrite]
 }
 
+func (p *MemberPolicy) CanShowDraftPage() bool {
+	return p.effectiveScopes[model.ScopeDraftPageRead]
+}
+
+func (p *MemberPolicy) CanSaveDraftPage() bool {
+	return p.effectiveScopes[model.ScopeDraftPageWrite]
+}
+
 func (p *MemberPolicy) CanDeleteDraftPage() bool {
 	return p.effectiveScopes[model.ScopeDraftPageDelete]
+}
+
+func (p *MemberPolicy) CanShowAttachment(allReferencingPagesPublic bool) bool {
+	return p.effectiveScopes[model.ScopeAttachmentRead] || allReferencingPagesPublic
 }
 
 func (p *MemberPolicy) CanCreateSuggestion(topic *model.Topic) bool {

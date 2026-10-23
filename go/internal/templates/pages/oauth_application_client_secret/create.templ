@@ -39,21 +39,11 @@ templ Create(data CreateData) {
 
 				@components.ContentCard() {
 					<div class="grid gap-6">
-						<div class="grid gap-2">
-							<label class="label" for="client_secret">
-								{ templates.T(ctx, "oauth_application_client_secret_create_label") }
-							</label>
-							// 利用者がコピーするための欄で、送信はしない。値を選択しやすいよう入力欄に入れる。
-							<input
-								autocomplete="off"
-								class="input font-mono"
-								id="client_secret"
-								readonly
-								spellcheck="false"
-								type="text"
-								value={ data.ClientSecret }
-							/>
-						</div>
+						@components.CopyableInput(components.CopyableInputData{
+							ID:    "client_secret",
+							Label: templates.T(ctx, "oauth_application_client_secret_create_label"),
+							Value: data.ClientSecret,
+						})
 
 						<a
 							href={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationPath(data.Space.Identifier, data.Application.ID))) }

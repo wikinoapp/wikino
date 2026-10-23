@@ -119,7 +119,33 @@ func TestOAuthAuthorizationCodeRepository_CreateWithGrant(t *testing.T) {
 		t.Errorf("grant.Scopes = %v、期待値 = %v", grant.Scopes, want)
 	}
 
-	// 失効していない許可があれば、同じ許可のスコープを和に広げ、コードは今回のスコープだけを持つ
+	// 失効していない許可があれば、同じ許可のスコープを今回のスコープに置き換え、
+	// その範囲に収まらないスコープを持つトークンだけを失効させる
+	inRangeAccessTokenID := testutil.NewOAuthAccessTokenBuilder(t, tx).
+		WithOAuthGrantID(first.OAuthGrantID).
+		WithSpaceID(f.spaceID).
+		WithTokenDigest("code_with_grant_in_range_access_digest").
+		WithScopes([]model.Scope{model.ScopePageRead}).
+		Build()
+	outOfRangeAccessTokenID := testutil.NewOAuthAccessTokenBuilder(t, tx).
+		WithOAuthGrantID(first.OAuthGrantID).
+		WithSpaceID(f.spaceID).
+		WithTokenDigest("code_with_grant_out_of_range_access_digest").
+		WithScopes([]model.Scope{model.ScopeTopicRead}).
+		Build()
+	inRangeRefreshTokenID := testutil.NewOAuthRefreshTokenBuilder(t, tx).
+		WithOAuthGrantID(first.OAuthGrantID).
+		WithSpaceID(f.spaceID).
+		WithTokenDigest("code_with_grant_in_range_refresh_digest").
+		WithScopes([]model.Scope{model.ScopePageRead, model.ScopePageWrite}).
+		Build()
+	outOfRangeRefreshTokenID := testutil.NewOAuthRefreshTokenBuilder(t, tx).
+		WithOAuthGrantID(first.OAuthGrantID).
+		WithSpaceID(f.spaceID).
+		WithTokenDigest("code_with_grant_out_of_range_refresh_digest").
+		WithScopes([]model.Scope{model.ScopePageRead, model.ScopeTopicRead}).
+		Build()
+
 	input.CodeDigest = "code_with_grant_second_digest"
 	input.Scopes = []model.Scope{model.ScopePageRead, model.ScopePageWrite}
 	second, err := repo.CreateWithGrant(ctx, input)
@@ -136,8 +162,26 @@ func TestOAuthAuthorizationCodeRepository_CreateWithGrant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindByID()のエラー = %v", err)
 	}
-	if want := []model.Scope{model.ScopePageRead, model.ScopePageWrite, model.ScopeTopicRead}; !slices.Equal(grant.Scopes, want) {
-		t.Errorf("grant.Scopes = %v、期待値 = %v", grant.Scopes, want)
+	if !slices.Equal(grant.Scopes, input.Scopes) {
+		t.Errorf("grant.Scopes = %v、期待値 = %v (以前のtopic:readを残さない)", grant.Scopes, input.Scopes)
+	}
+	for _, tt := range []struct {
+		table       string
+		id          string
+		wantRevoked bool
+	}{
+		{table: "oauth_access_tokens", id: string(inRangeAccessTokenID), wantRevoked: false},
+		{table: "oauth_access_tokens", id: string(outOfRangeAccessTokenID), wantRevoked: true},
+		{table: "oauth_refresh_tokens", id: string(inRangeRefreshTokenID), wantRevoked: false},
+		{table: "oauth_refresh_tokens", id: string(outOfRangeRefreshTokenID), wantRevoked: true},
+	} {
+		var revoked bool
+		if err := tx.QueryRowContext(ctx, "SELECT revoked_at IS NOT NULL FROM "+tt.table+" WHERE id = $1", tt.id).Scan(&revoked); err != nil {
+			t.Fatalf("%sの取得に失敗: %v", tt.table, err)
+		}
+		if revoked != tt.wantRevoked {
+			t.Errorf("%s %sの失効 = %v、期待値 = %v", tt.table, tt.id, revoked, tt.wantRevoked)
+		}
 	}
 
 	// 許可が失効していれば、新しい許可を作る

@@ -31,6 +31,44 @@ func (q *Queries) ExistsAttachmentByIDAndSpace(ctx context.Context, arg ExistsAt
 	return exists, err
 }
 
+const findAttachmentBlobByIDAndSpace = `-- name: FindAttachmentBlobByIDAndSpace :one
+SELECT a.id, a.space_id, asb.filename, asb.content_type AS blob_content_type, asb.byte_size AS blob_byte_size, asb.key AS blob_key
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.id = $1 AND a.space_id = $2
+`
+
+type FindAttachmentBlobByIDAndSpaceParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+type FindAttachmentBlobByIDAndSpaceRow struct {
+	ID              string         `json:"id"`
+	SpaceID         string         `json:"space_id"`
+	Filename        string         `json:"filename"`
+	BlobContentType sql.NullString `json:"blob_content_type"`
+	BlobByteSize    int64          `json:"blob_byte_size"`
+	BlobKey         string         `json:"blob_key"`
+}
+
+// IDとスペースIDで添付ファイルを取得する (ファイル名に加えて、種類・バイト数・ストレージキーを含む)。
+// 公開APIの添付ファイルの取得が、メタデータの応答と署名付きURLの生成に使う
+func (q *Queries) FindAttachmentBlobByIDAndSpace(ctx context.Context, arg FindAttachmentBlobByIDAndSpaceParams) (FindAttachmentBlobByIDAndSpaceRow, error) {
+	row := q.db.QueryRowContext(ctx, findAttachmentBlobByIDAndSpace, arg.ID, arg.SpaceID)
+	var i FindAttachmentBlobByIDAndSpaceRow
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.Filename,
+		&i.BlobContentType,
+		&i.BlobByteSize,
+		&i.BlobKey,
+	)
+	return i, err
+}
+
 const findAttachmentByIDAndSpace = `-- name: FindAttachmentByIDAndSpace :one
 SELECT a.id, a.space_id, asb.filename
 FROM attachments a

@@ -47,7 +47,7 @@ type CreatePersonalAccessTokenParams struct {
 	Now            time.Time `json:"now"`
 }
 
-// 個人アクセストークンを作成する
+// 個人用アクセストークンを作成する
 func (q *Queries) CreatePersonalAccessToken(ctx context.Context, arg CreatePersonalAccessTokenParams) (PersonalAccessToken, error) {
 	row := q.db.QueryRowContext(ctx, createPersonalAccessToken,
 		arg.SpaceID,
@@ -81,7 +81,7 @@ const findPersonalAccessTokenByTokenDigest = `-- name: FindPersonalAccessTokenBy
 SELECT id, space_id, space_member_id, name, token_digest, token_last_chars, scopes, expires_at, last_used_at, revoked_at, created_at, updated_at FROM personal_access_tokens WHERE token_digest = $1
 `
 
-// トークンダイジェストで個人アクセストークンを取得する。
+// トークンダイジェストで個人用アクセストークンを取得する。
 // space_idを条件に含めない例外のクエリである。トークン認証はスペースを特定する前の入口で、
 // スペースはこのトークンから決まるためである。呼び出し側は、ここで得たspace_idを以降の
 // クエリの条件に必ず含める。
@@ -118,7 +118,7 @@ type ListUnrevokedPersonalAccessTokensBySpaceMemberParams struct {
 	SpaceMemberID string `json:"space_member_id"`
 }
 
-// スペースメンバー自身の、失効していない個人アクセストークンを新しい順に取得する。
+// スペースメンバー自身の、失効していない個人用アクセストークンを新しい順に取得する。
 // 期限切れのトークンも含める。
 func (q *Queries) ListUnrevokedPersonalAccessTokensBySpaceMember(ctx context.Context, arg ListUnrevokedPersonalAccessTokensBySpaceMemberParams) ([]PersonalAccessToken, error) {
 	rows, err := q.db.QueryContext(ctx, listUnrevokedPersonalAccessTokensBySpaceMember, arg.SpaceID, arg.SpaceMemberID)
@@ -173,7 +173,7 @@ type RevokePersonalAccessTokenParams struct {
 	SpaceMemberID string    `json:"space_member_id"`
 }
 
-// メンバー自身の個人アクセストークンを失効する。対象が無いか既に失効している場合は
+// メンバー自身の個人用アクセストークンを失効する。対象が無いか既に失効している場合は
 // 行を返さない。
 func (q *Queries) RevokePersonalAccessToken(ctx context.Context, arg RevokePersonalAccessTokenParams) (PersonalAccessToken, error) {
 	row := q.db.QueryRowContext(ctx, revokePersonalAccessToken,

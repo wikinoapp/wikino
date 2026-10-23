@@ -211,6 +211,14 @@ func (uc *GenerateExportFilesUsecase) buildAndUpload(ctx context.Context, export
 // planArchiveはスペースを読み、そのアーカイブの構成を決める。ページと、それらが参照する
 // 添付ファイルはそれぞれ1クエリで読むため、行数そのもの以上にページ数へ比例するコストは無い。
 func (uc *GenerateExportFilesUsecase) planArchive(ctx context.Context, spaceID model.SpaceID) (*exportArchive, error) {
+	space, err := uc.spaceRepo.FindByID(ctx, spaceID)
+	if err != nil {
+		return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
+	}
+	if space == nil {
+		return nil, fmt.Errorf("エクスポートするスペース %s がありません", spaceID)
+	}
+
 	topics, err := uc.topicRepo.ListActiveBySpace(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("トピック一覧の取得に失敗: %w", err)
@@ -231,7 +239,7 @@ func (uc *GenerateExportFilesUsecase) planArchive(ctx context.Context, spaceID m
 		return nil, fmt.Errorf("添付ファイル一覧の取得に失敗: %w", err)
 	}
 
-	return planExportArchive(topics, pages, pageAttachments), nil
+	return planExportArchive(uc.cfg.AppURL(), space, topics, pages, pageAttachments), nil
 }
 
 // writeArchiveは添付ファイルを取得し、ZIPを書き出す。取得は先に並列で行い、ZIPの書き出しは

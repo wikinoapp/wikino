@@ -55,13 +55,13 @@ func (uc *AuthenticateAPITokenUsecase) Execute(ctx context.Context, token string
 	}
 }
 
-// authenticatePersonalAccessTokenは個人アクセストークンを照合する
+// authenticatePersonalAccessTokenは個人用アクセストークンを照合する
 func (uc *AuthenticateAPITokenUsecase) authenticatePersonalAccessToken(ctx context.Context, token string) (*model.APIPrincipal, error) {
 	now := time.Now()
 
 	pat, err := uc.personalAccessTokenRepo.FindByTokenDigest(ctx, auth.DigestOpaqueToken(token))
 	if err != nil {
-		return nil, fmt.Errorf("個人アクセストークンの取得に失敗: %w", err)
+		return nil, fmt.Errorf("個人用アクセストークンの取得に失敗: %w", err)
 	}
 	if pat == nil || !pat.IsActive(now) {
 		return nil, nil
@@ -77,10 +77,11 @@ func (uc *AuthenticateAPITokenUsecase) authenticatePersonalAccessToken(ctx conte
 
 	// 最終使用日時は利用状況の表示にだけ使うため、書き込みに失敗してもリクエストは止めない
 	if err := uc.personalAccessTokenRepo.UpdateLastUsedAt(ctx, pat.ID, pat.SpaceID, now); err != nil {
-		slog.ErrorContext(ctx, "個人アクセストークンの最終使用日時の更新に失敗しました", "error", err, "personal_access_token_id", pat.ID)
+		slog.ErrorContext(ctx, "個人用アクセストークンの最終使用日時の更新に失敗しました", "error", err, "personal_access_token_id", pat.ID)
 	}
 
 	principal.TokenKind = model.APITokenKindPersonalAccessToken
+	principal.TokenExpiresAt = pat.ExpiresAt
 	principal.Scopes = policy.ExpandAPITokenScopes(pat.Scopes)
 	return principal, nil
 }
@@ -113,11 +114,12 @@ func (uc *AuthenticateAPITokenUsecase) authenticateOAuthAccessToken(ctx context.
 	}
 
 	principal.TokenKind = model.APITokenKindOAuthAccessToken
+	principal.TokenExpiresAt = accessToken.ExpiresAt
 	principal.Scopes = policy.ExpandAPITokenScopes(accessToken.Scopes)
 	return principal, nil
 }
 
-// apiTokenOwnerFinderは、公開APIのトークンの束縛先のスペースと持ち主を取得する。トークンの照合と、
+// apiTokenOwnerFinderは、公開APIのトークンが属するスペースと持ち主を取得する。トークンの照合と、
 // OAuthのトークン要求で持ち主がトークンを使い続けてよいかを確かめるときに使う
 type apiTokenOwnerFinder struct {
 	spaceRepo       *repository.SpaceRepository
@@ -140,7 +142,7 @@ func newAPITokenOwnerFinder(
 	}
 }
 
-// findはトークンの束縛先のスペースと持ち主を、トークンの種類とスコープを除いた呼び出し主体として
+// findはトークンが属するスペースと持ち主を、トークンの種類とスコープを除いた呼び出し主体として
 // 返す。スペースが削除済み、持ち主がスペースの有効なメンバーでない、ユーザーが退会済み、
 // フィーチャーフラグが無効のいずれかであれば (nil, nil) を返す。トークンを使い続けるための
 // メンバー権限 (トークンの種類ごとに異なる) は呼び出し側が確かめる

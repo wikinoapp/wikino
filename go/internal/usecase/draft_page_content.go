@@ -50,11 +50,15 @@ func saveDraftPageContent(
 		return nil, fmt.Errorf("リンク先ページの解決に失敗しました: %w", err)
 	}
 
-	// 3. DraftPageを更新
+	// 3. DraftPageを更新。トピックは作成時に書いた値ではなく、ロックして読んだページのトピックにする
+	topicID, err := lockTopicIDForDraftPage(ctx, pageRepo, input.PageID, input.SpaceID)
+	if err != nil {
+		return nil, err
+	}
 	updatedDraftPage, err := draftPageRepo.Update(ctx, repository.UpdateDraftPageInput{
 		ID:                        draftPage.ID,
 		SpaceID:                   input.SpaceID,
-		TopicID:                   input.TopicID,
+		TopicID:                   topicID,
 		Title:                     input.Title,
 		Body:                      input.Body,
 		LinkedPageIDs:             linkedPageIDs,
@@ -66,6 +70,22 @@ func saveDraftPageContent(
 	}
 
 	return updatedDraftPage, nil
+}
+
+// lockTopicIDForDraftPageは、下書きに書くトピックとしてページのトピックを返す。
+// 下書きのトピックはページのトピックに従い、ページの移動 (MovePageUsecase) が下書きごと書き換える。
+// トランザクションの外で読んだトピックを書くと、その後にコミットされた移動を古いトピックで上書きするため、
+// ページの行を共有ロックして読み、このトランザクションが終わるまで移動を待たせる。
+// 公開 (PublishPageUsecase) と同じく、リンク先ページを解決してからページをロックし、下書きを書く順にする
+func lockTopicIDForDraftPage(ctx context.Context, pageRepo *repository.PageRepository, pageID model.PageID, spaceID model.SpaceID) (model.TopicID, error) {
+	page, err := pageRepo.FindByIDForShare(ctx, pageID, spaceID)
+	if err != nil {
+		return "", fmt.Errorf("ページのロックに失敗しました: %w", err)
+	}
+	if page == nil {
+		return "", fmt.Errorf("下書きのページが見つかりません: page_id=%s", pageID)
+	}
+	return page.TopicID, nil
 }
 
 // findOrCreateDraftPageはDraftPageを取得するか、存在しなければ作成する。

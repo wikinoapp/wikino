@@ -16,11 +16,12 @@ type SpaceMemberBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	spaceID  string
-	userID   model.UserID
-	role     model.SpaceRole
-	joinedAt time.Time
-	active   bool
+	spaceID      string
+	userID       model.UserID
+	role         model.SpaceRole
+	maxTopicRole *model.TopicRole
+	joinedAt     time.Time
+	active       bool
 }
 
 // NewSpaceMemberBuilderはSpaceMemberBuilderを生成します
@@ -60,6 +61,12 @@ func (b *SpaceMemberBuilder) WithRole(role model.SpaceRole) *SpaceMemberBuilder 
 	return b
 }
 
+// WithMaxTopicRoleはトピックで付けたロールの上限を設定します
+func (b *SpaceMemberBuilder) WithMaxTopicRole(role model.TopicRole) *SpaceMemberBuilder {
+	b.maxTopicRole = &role
+	return b
+}
+
 // WithJoinedAtは参加日時を設定します
 func (b *SpaceMemberBuilder) WithJoinedAt(joinedAt time.Time) *SpaceMemberBuilder {
 	b.joinedAt = joinedAt
@@ -81,10 +88,10 @@ func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO space_members (space_id, user_id, role, max_topic_role, scopes, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), string(b.role), pq.Array(model.ScopesToStrings(b.role.RailsScopes())), b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), string(b.role), b.maxTopicRole, pq.Array(model.ScopesToStrings(b.role.RailsScopes())), b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
@@ -99,11 +106,12 @@ type SpaceMemberBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
 
-	spaceID  string
-	userID   model.UserID
-	role     model.SpaceRole
-	joinedAt time.Time
-	active   bool
+	spaceID      string
+	userID       model.UserID
+	role         model.SpaceRole
+	maxTopicRole *model.TopicRole
+	joinedAt     time.Time
+	active       bool
 }
 
 // NewSpaceMemberBuilderDBはSpaceMemberBuilderDBを生成します
@@ -137,6 +145,12 @@ func (b *SpaceMemberBuilderDB) WithRole(role model.SpaceRole) *SpaceMemberBuilde
 	return b
 }
 
+// WithMaxTopicRoleはトピックで付けたロールの上限を設定します
+func (b *SpaceMemberBuilderDB) WithMaxTopicRole(role model.TopicRole) *SpaceMemberBuilderDB {
+	b.maxTopicRole = &role
+	return b
+}
+
 // Buildはスペースメンバーを作成し、IDを返します
 func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 	b.t.Helper()
@@ -152,10 +166,10 @@ func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO space_members (space_id, user_id, role, max_topic_role, scopes, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), string(b.role), pq.Array(model.ScopesToStrings(b.role.RailsScopes())), b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), string(b.role), b.maxTopicRole, pq.Array(model.ScopesToStrings(b.role.RailsScopes())), b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)

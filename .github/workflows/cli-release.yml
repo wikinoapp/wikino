@@ -1,0 +1,136 @@
+name: CLI Release
+
+# CLI (cli/) を `cli/vX.Y.Z` のタグでビルドし、バイナリとチェックサムをGitHub Releasesに出す。
+# リポジトリには2022年のアプリのタグ (v0.7.0など) が残っているため、CLIのタグは接頭辞で区別する。
+on:
+  push:
+    tags:
+      - "cli/v*"
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: "1.26.4"
+
+jobs:
+  build:
+    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [darwin, linux, windows]
+        goarch: [amd64, arm64]
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      # `go install ...@vX.Y.Z` で入れたときと同じく、`wikino --version` は先頭の "v" 付きで出す。
+      - name: タグからバージョンを取り出す
+        run: |
+          if ! printf '%s' "$GITHUB_REF_NAME" | grep -Eq '^cli/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "タグは cli/vX.Y.Z の形にしてください: $GITHUB_REF_NAME"
+            exit 1
+          fi
+          echo "VERSION=${GITHUB_REF_NAME#cli/}" >> "$GITHUB_ENV"
+
+      # キーチェーンのライブラリ (zalando/go-keyring) はcgo無しで3つのOSのキーチェーンを使えるため、
+      # すべてのOSとアーキテクチャをLinuxからクロスビルドする。
+      - name: Build
+        env:
+          CGO_ENABLED: "0"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: make build VERSION="$VERSION"
+
+      - name: 埋め込んだバージョンを確かめる
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: |
+          got=$(bin/wikino --version)
+          if [ "$got" != "wikino version $VERSION" ]; then
+            echo "バージョンが埋め込まれていません: $got"
+            exit 1
+          fi
+
+      - name: アーカイブを作る
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          name="wikino_${VERSION}_${GOOS}_${GOARCH}"
+          mkdir -p "dist/$name"
+          cp ../LICENSE README.md "dist/$name/"
+          if [ "$GOOS" = "windows" ]; then
+            cp bin/wikino "dist/$name/wikino.exe"
+            (cd dist && zip -qr "$name.zip" "$name")
+          else
+            cp bin/wikino "dist/$name/wikino"
+            tar -C dist -czf "dist/$name.tar.gz" "$name"
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wikino_${{ matrix.goos }}_${{ matrix.goarch }}
+          path: |
+            cli/dist/*.tar.gz
+            cli/dist/*.zip
+          if-no-files-found: error
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # 来歴の証明に使う (OIDCのトークンで署名の証明書を受け取り、証明をGitHubに保存する)。
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: チェックサムを作る
+        working-directory: dist
+        run: |
+          version="${GITHUB_REF_NAME#cli/}"
+          sha256sum -- *.tar.gz *.zip > "wikino_${version}_checksums.txt"
+          cat "wikino_${version}_checksums.txt"
+
+      # 利用者が `gh attestation verify` で、このワークフローがビルドしたアーカイブだと確かめられるようにする。
+      # 証明を作れなかったときにリリースを出さないよう、リリースの作成より前に置く。
+      - name: 来歴の証明を付ける
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/wikino_*_checksums.txt
+
+      # 接頭辞の無いアプリのタグを前の版として比べないよう、リリースノートは自動で生成しない。
+      # バージョンにハイフンを含む (v1.0.0-rc.1など) ときはプレリリースにする。
+      - name: GitHub Releasesに出す
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version="${GITHUB_REF_NAME#cli/}"
+          prerelease=""
+          case "$version" in
+            *-*) prerelease="--prerelease" ;;
+          esac
+          gh release create "$GITHUB_REF_NAME" \
+            --title "Wikino CLI $version" \
+            --notes "インストールと使い方は [cli/README.md](https://github.com/$GH_REPO/blob/$GITHUB_REF_NAME/cli/README.md) を参照してください。" \
+            --verify-tag \
+            $prerelease \
+            -- *.tar.gz *.zip "wikino_${version}_checksums.txt"

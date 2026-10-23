@@ -13,7 +13,7 @@ import (
 )
 
 // topicSettingsGeneralFixtureは一般設定のUseCaseテストが対象にするスペース・メンバー・
-// トピック。queriesはフィクスチャを所有するトランザクションに束縛されている。
+// トピック。queriesはフィクスチャを所有するトランザクションの中で動く。
 type topicSettingsGeneralFixture struct {
 	queries    *query.Queries
 	identifier model.SpaceIdentifier

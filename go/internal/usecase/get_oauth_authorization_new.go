@@ -15,6 +15,7 @@ type GetOAuthAuthorizationNewUsecase struct {
 	oauthApplicationRepo *repository.OAuthApplicationRepository
 	spaceRepo            *repository.SpaceRepository
 	spaceMemberRepo      *repository.SpaceMemberRepository
+	topicMemberRepo      *repository.TopicMemberRepository
 }
 
 // NewGetOAuthAuthorizationNewUsecaseはGetOAuthAuthorizationNewUsecaseを生成する
@@ -24,6 +25,7 @@ func NewGetOAuthAuthorizationNewUsecase(
 	oauthApplicationRepo *repository.OAuthApplicationRepository,
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
 ) *GetOAuthAuthorizationNewUsecase {
 	return &GetOAuthAuthorizationNewUsecase{
 		cfg:                  cfg,
@@ -31,6 +33,7 @@ func NewGetOAuthAuthorizationNewUsecase(
 		oauthApplicationRepo: oauthApplicationRepo,
 		spaceRepo:            spaceRepo,
 		spaceMemberRepo:      spaceMemberRepo,
+		topicMemberRepo:      topicMemberRepo,
 	}
 }
 
@@ -46,6 +49,10 @@ type GetOAuthAuthorizationNewOutput struct {
 	Space       *model.Space
 	Scopes      []model.Scope
 	RedirectURI string
+
+	// IneffectiveScopesは、Scopesのうちログイン中のユーザーが今の権限では持たないもの。
+	// 付与してもトークンでは効かないため、同意画面で注記を添える
+	IneffectiveScopes []model.Scope
 
 	// DeniedReasonは、ログイン中のユーザーが連携先のスペースでアプリを許可できない理由。
 	// 空でなければ、同意画面の代わりに理由を示す
@@ -71,11 +78,20 @@ func (uc *GetOAuthAuthorizationNewUsecase) Execute(ctx context.Context, input Ge
 		return nil, err
 	}
 
-	return &GetOAuthAuthorizationNewOutput{
+	output := &GetOAuthAuthorizationNewOutput{
 		Application:  req.application,
 		Space:        req.space,
 		Scopes:       req.scopes,
 		RedirectURI:  req.redirectURI,
 		DeniedReason: decision.denied,
-	}, nil
+	}
+	if decision.denied != "" {
+		return output, nil
+	}
+
+	output.IneffectiveScopes, err = ineffectiveAPITokenScopes(ctx, uc.topicMemberRepo, decision.spaceMember, req.scopes)
+	if err != nil {
+		return nil, err
+	}
+	return output, nil
 }

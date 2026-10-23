@@ -17,12 +17,19 @@ func (p *GuestPolicy) CanShowTopic(topic *model.Topic) bool {
 	return topic.Visibility == model.TopicVisibilityPublic
 }
 
+// CanShowAttachmentはRails版と揃え、参照するページがすべて公開トピックにある添付ファイルだけを許可する
+func (p *GuestPolicy) CanShowAttachment(allReferencingPagesPublic bool) bool {
+	return allReferencingPagesPublic
+}
+
 func (p *GuestPolicy) CanUpdateTopic() bool                                { return false }
 func (p *GuestPolicy) CanUpdateTopicVisibility() bool                      { return false }
 func (p *GuestPolicy) CanCreatePage() bool                                 { return false }
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
 func (p *GuestPolicy) CanShowTrash() bool                                  { return false }
 func (p *GuestPolicy) CanTrashPage() bool                                  { return false }
+func (p *GuestPolicy) CanShowDraftPage() bool                              { return false }
+func (p *GuestPolicy) CanSaveDraftPage() bool                              { return false }
 func (p *GuestPolicy) CanDeleteDraftPage() bool                            { return false }
 func (p *GuestPolicy) CanCreateSuggestion(_ *model.Topic) bool             { return false }
 func (p *GuestPolicy) CanApplySuggestion() bool                            { return false }

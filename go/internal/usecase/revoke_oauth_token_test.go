@@ -137,7 +137,7 @@ func TestRevokeOAuthTokenUsecase_Execute_無効なトークンは何もせず成
 			},
 		},
 		{
-			name: "個人アクセストークンの形式",
+			name: "個人用アクセストークンの形式",
 			tokenOf: func(_ *testing.T, _ *sql.Tx, _ oauthTokenFixture) string {
 				return string(auth.PersonalAccessTokenPrefix) + "token"
 			},

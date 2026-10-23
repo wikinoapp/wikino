@@ -61,12 +61,13 @@ func TestCreatePersonalAccessTokenUsecase_Execute(t *testing.T) {
 		t.Error("トークンの値がそのまま保存されている")
 	}
 	if stored.SpaceID != f.spaceID || stored.SpaceMemberID != f.spaceMemberID {
-		t.Errorf("束縛先 = (%v, %v)、期待値 = (%v, %v)", stored.SpaceID, stored.SpaceMemberID, f.spaceID, f.spaceMemberID)
+		t.Errorf("スペース・スペースメンバー = (%v, %v)、期待値 = (%v, %v)", stored.SpaceID, stored.SpaceMemberID, f.spaceID, f.spaceMemberID)
 	}
 	if stored.Name != "CLI" {
 		t.Errorf("Name = %q、期待値 = %q", stored.Name, "CLI")
 	}
-	if want := []model.Scope{model.ScopeTopicRead, model.ScopePageWrite}; !slices.Equal(stored.Scopes, want) {
+	// page:writeが含むpage:readを補い、model.APITokenScopesの順に並べる
+	if want := []model.Scope{model.ScopeTopicRead, model.ScopePageRead, model.ScopePageWrite}; !slices.Equal(stored.Scopes, want) {
 		t.Errorf("Scopes = %v、期待値 = %v", stored.Scopes, want)
 	}
 	if want := auth.OpaqueTokenLastChars(output.TokenValue); stored.TokenLastChars != want {
@@ -75,6 +76,38 @@ func TestCreatePersonalAccessTokenUsecase_Execute(t *testing.T) {
 	wantExpiresAt := before.AddDate(0, 0, 90)
 	if stored.ExpiresAt.Before(wantExpiresAt) || stored.ExpiresAt.After(wantExpiresAt.Add(time.Minute)) {
 		t.Errorf("ExpiresAt = %v、期待値はおよそ%v", stored.ExpiresAt, wantExpiresAt)
+	}
+}
+
+func TestCreatePersonalAccessTokenUsecase_Execute_下書きのスコープ(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	f := setupPATMember(t, tx, "cpat-draft", model.SpaceRoleEditor, true)
+
+	// 下書きだけを許すトークン (ページを公開できないトークン) を発行できる
+	output, err := newCreatePersonalAccessTokenUsecaseForTest(q).Execute(context.Background(), CreatePersonalAccessTokenInput{
+		SpaceIdentifier: "cpat-draft",
+		UserID:          f.userID,
+		Name:            "エージェント",
+		Scopes:          []string{"draft_page:delete", "page:read", "draft_page:write", "draft_page:read"},
+		ExpirationDays:  "30",
+	})
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v", err)
+	}
+
+	stored, err := repository.NewPersonalAccessTokenRepository(q).FindByTokenDigest(context.Background(), auth.DigestOpaqueToken(output.TokenValue))
+	if err != nil {
+		t.Fatalf("FindByTokenDigest()のエラー = %v", err)
+	}
+	if stored == nil {
+		t.Fatal("発行したトークンが保存されていない")
+	}
+	want := []model.Scope{model.ScopePageRead, model.ScopeDraftPageRead, model.ScopeDraftPageWrite, model.ScopeDraftPageDelete}
+	if !slices.Equal(stored.Scopes, want) {
+		t.Errorf("Scopes = %v、期待値 = %v", stored.Scopes, want)
 	}
 }
 

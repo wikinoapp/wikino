@@ -6,11 +6,13 @@ import (
 	"net/url"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
 // Createは同意画面での利用者の決定を受け、クライアントへ303で戻します (POST /oauth/authorize)。
-// 許可なら認可コードを、拒否なら `error=access_denied` をリダイレクトURIに付ける。
+// 許可なら利用者が選んだスコープで認可コードを、拒否なら `error=access_denied` をリダイレクト
+// URIに付ける。選んだスコープが不正 (1つも無い・要求に無い) なら、同意画面を422で再表示する。
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -28,20 +30,28 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	params := parseOAuthAuthorizationParams(r.PostForm)
+	granted := r.PostForm["granted_scopes"]
 	output, err := h.createOAuthAuthorizationUC.Execute(ctx, usecase.CreateOAuthAuthorizationInput{
 		UserID: user.ID,
-		Params: parseOAuthAuthorizationParams(r.PostForm),
+		Params: params,
 		// 許可のボタン以外からの送信は、利用者が許可を選んだものとして扱わない
-		Approved: r.PostFormValue("decision") == "approve",
+		Approved:      r.PostFormValue("decision") == "approve",
+		GrantedScopes: granted,
 	})
 	if err != nil {
+		// 選んだスコープが受け付けられなければ、選び直せるよう同意画面を再表示する
+		if ve := model.AsValidationError(err); ve != nil {
+			h.renderNew(w, r, user, params, granted, ve)
+			return
+		}
 		h.handleError(w, r, err, http.StatusSeeOther)
 		return
 	}
 
-	params := url.Values{"code": {output.Code}}
+	response := url.Values{"code": {output.Code}}
 	if output.State != "" {
-		params.Set("state", output.State)
+		response.Set("state", output.State)
 	}
-	h.redirectToClient(w, r, output.RedirectURI, params, http.StatusSeeOther)
+	h.redirectToClient(w, r, output.RedirectURI, response, http.StatusSeeOther)
 }

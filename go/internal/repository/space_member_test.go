@@ -55,8 +55,35 @@ func TestSpaceMemberRepository_FindActiveBySpaceAndUser(t *testing.T) {
 		if member.Role != model.SpaceRoleAdmin {
 			t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.SpaceRoleAdmin)
 		}
+		if member.MaxTopicRole != nil {
+			t.Errorf("member.MaxTopicRole = %q、期待値 = nil", *member.MaxTopicRole)
+		}
 		if !member.Active {
 			t.Error("member.Active = false、期待値 = true")
+		}
+	})
+
+	t.Run("トピックで付けたロールの上限を読み込む", func(t *testing.T) {
+		limitedUserID := testutil.NewUserBuilder(t, tx).
+			WithEmail("limited@example.com").
+			WithAtname("limited").
+			Build()
+		testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithUserID(limitedUserID).
+			WithRole(model.SpaceRoleViewer).
+			WithMaxTopicRole(model.TopicRoleEditor).
+			Build()
+
+		member, err := repo.FindActiveBySpaceAndUser(context.Background(), spaceID, limitedUserID)
+		if err != nil {
+			t.Fatalf("FindActiveBySpaceAndUser()のエラー = %v", err)
+		}
+		if member == nil {
+			t.Fatal("FindActiveBySpaceAndUser()がnilを返した、期待値 = メンバー")
+		}
+		if member.MaxTopicRole == nil || *member.MaxTopicRole != model.TopicRoleEditor {
+			t.Errorf("member.MaxTopicRole = %v、期待値 = %q", member.MaxTopicRole, model.TopicRoleEditor)
 		}
 	})
 

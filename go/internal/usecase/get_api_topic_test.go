@@ -80,7 +80,7 @@ func TestGetAPITopicUsecase_Execute(t *testing.T) {
 			topicNumber: 99,
 		},
 		{
-			name:        "束縛先と異なるスペースは未存在",
+			name:        "トークンが属さないスペースは未存在",
 			memberRole:  apiTopicAdminMemberRole,
 			tokenScopes: []model.Scope{model.ScopeTopicRead},
 			identifier:  "api-topic-get-other",

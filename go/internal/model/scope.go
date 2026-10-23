@@ -1,5 +1,9 @@
 package model
 
+import (
+	"slices"
+)
+
 // Scopeはリソースに対する権限を表すドメイン型。
 // GitHub風の "resource:action" 形式で命名する。
 type Scope string
@@ -88,7 +92,7 @@ const (
 	ScopeAttachmentDelete Scope = "attachment:delete"
 )
 
-// 個人アクセストークン関連スコープ
+// 個人用アクセストークン関連スコープ
 const (
 	ScopePersonalAccessTokenRead   Scope = "personal_access_token:read"
 	ScopePersonalAccessTokenWrite  Scope = "personal_access_token:write"
@@ -155,9 +159,9 @@ var ScopeDefinitions = []ScopeDefinition{
 	{Scope: ScopePageTrashWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopePageTrashRead}},
 	{Scope: ScopePageTrashDelete, LowestLevel: ScopeLevelTopic},
 	// 下書きページ
-	{Scope: ScopeDraftPageRead, LowestLevel: ScopeLevelTopic},
-	{Scope: ScopeDraftPageWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeDraftPageRead}},
-	{Scope: ScopeDraftPageDelete, LowestLevel: ScopeLevelTopic},
+	{Scope: ScopeDraftPageRead, LowestLevel: ScopeLevelTopic, APIToken: true},
+	{Scope: ScopeDraftPageWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeDraftPageRead}, APIToken: true},
+	{Scope: ScopeDraftPageDelete, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeDraftPageRead}, APIToken: true},
 	// 編集提案
 	{Scope: ScopeSuggestionRead, LowestLevel: ScopeLevelTopic},
 	{Scope: ScopeSuggestionWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeSuggestionRead}},
@@ -170,11 +174,12 @@ var ScopeDefinitions = []ScopeDefinition{
 	{Scope: ScopeSpaceMemberRead, LowestLevel: ScopeLevelSpace},
 	{Scope: ScopeSpaceMemberWrite, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopeSpaceMemberRead}},
 	{Scope: ScopeSpaceMemberDelete, LowestLevel: ScopeLevelSpace},
-	// 添付ファイル (スペースに属し、判定でトピックを見ないため、スペースにだけ付けられる)
-	{Scope: ScopeAttachmentRead, LowestLevel: ScopeLevelSpace},
+	// 添付ファイル (スペースに属し、判定でトピックを見ないため、スペースにだけ付けられる)。
+	// 公開APIのトークンには取得のためのreadだけを付与できる (アップロード・削除のAPIは無い)
+	{Scope: ScopeAttachmentRead, LowestLevel: ScopeLevelSpace, APIToken: true},
 	{Scope: ScopeAttachmentWrite, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopeAttachmentRead}},
 	{Scope: ScopeAttachmentDelete, LowestLevel: ScopeLevelSpace},
-	// 個人アクセストークン
+	// 個人用アクセストークン
 	{Scope: ScopePersonalAccessTokenRead, LowestLevel: ScopeLevelSpace},
 	{Scope: ScopePersonalAccessTokenWrite, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopePersonalAccessTokenRead}},
 	{Scope: ScopePersonalAccessTokenDelete, LowestLevel: ScopeLevelSpace, Implies: []Scope{ScopePersonalAccessTokenRead}},
@@ -198,6 +203,16 @@ func HasScope(scopes []Scope, target Scope) bool {
 	return false
 }
 
+// HasAllScopesはtargetsのスコープがすべてscopesに含まれているかチェックする
+func HasAllScopes(scopes []Scope, targets []Scope) bool {
+	for _, target := range targets {
+		if !HasScope(scopes, target) {
+			return false
+		}
+	}
+	return true
+}
+
 // StringsToScopesは []stringを []Scopeに変換する
 func StringsToScopes(ss []string) []Scope {
 	scopes := make([]Scope, len(ss))
@@ -216,7 +231,7 @@ func ScopesToStrings(scopes []Scope) []string {
 	return ss
 }
 
-// APITokenScopesは、公開APIのトークン (個人アクセストークン・OAuthのアクセストークン) に
+// APITokenScopesは、公開APIのトークン (個人用アクセストークン・OAuthのアクセストークン) に
 // 付与できるスコープ。管理系のスコープとトークン管理のスコープは含めない。トークンでトークンを
 // 発行できると、権限の範囲を利用者の意図より広げられるためである。ScopeDefinitionsの順に並ぶ
 var APITokenScopes = apiTokenScopes()
@@ -248,4 +263,30 @@ func SortAPITokenScopes(scopes []Scope) []Scope {
 		}
 	}
 	return sorted
+}
+
+// ImpliedScopesは、scopeが含むスコープ (ScopeDefinitionsのImplies) を返す
+func ImpliedScopes(scope Scope) []Scope {
+	for _, d := range ScopeDefinitions {
+		if d.Scope == scope {
+			return d.Implies
+		}
+	}
+	return nil
+}
+
+// WithImpliedScopesは、選択肢optionsのうち、selectedにあるものと、selectedのスコープが含むものを、
+// optionsの順に重複を除いて返す。スコープの選択画面は、選んだスコープに含まれるスコープを選択済みかつ
+// 無効にして見せ、無効にしたチェックボックスは送信されないため、保存の前にこれで補う。
+// 補うのは画面で選択済みに見えるもの (選択肢にあるもの) だけで、選択肢に無いスコープは足さない
+func WithImpliedScopes(selected, options []Scope) []Scope {
+	scopes := make([]Scope, 0, len(options))
+	for _, option := range options {
+		if HasScope(selected, option) || slices.ContainsFunc(selected, func(s Scope) bool {
+			return HasScope(ImpliedScopes(s), option)
+		}) {
+			scopes = append(scopes, option)
+		}
+	}
+	return scopes
 }

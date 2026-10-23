@@ -59,7 +59,7 @@ func TestAPIResponseHeader(t *testing.T) {
 func TestAPIResponseHeader_OAuthのレート制限の429にもnoStoreを付ける(t *testing.T) {
 	t.Parallel()
 
-	for _, path := range []string{"/oauth/token", "/oauth/revoke"} {
+	for _, path := range []string{"/oauth/token", "/oauth/revoke", "/oauth/device_authorization"} {
 		for _, allowed := range []bool{true, false} {
 			limiter := &stubAPIRateLimiter{result: &ratelimit.CheckResult{
 				Allowed: allowed, Remaining: 0, ResetAt: time.Now().Add(time.Minute),

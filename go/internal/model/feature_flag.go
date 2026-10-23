@@ -7,7 +7,7 @@ import "time"
 // (FeatureFlagExampleは命名規則の例として残している未使用の定数)
 const (
 	FeatureFlagExample FeatureFlagName = "go_example"
-	// FeatureFlagPublicAPIは公開Web API (個人アクセストークン・OAuth連携・APIの呼び出し) を有効にする
+	// FeatureFlagPublicAPIは公開Web API (個人用アクセストークン・OAuth連携・APIの呼び出し) を有効にする
 	FeatureFlagPublicAPI FeatureFlagName = "go_public_api"
 )
 

@@ -7,10 +7,12 @@ on:
       - develop
     paths:
       - "go/**"
+      - "testdata/**"
       - ".github/workflows/go-ci.yml"
   pull_request:
     paths:
       - "go/**"
+      - "testdata/**"
       - ".github/workflows/go-ci.yml"
 
 env:

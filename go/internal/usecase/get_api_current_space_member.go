@@ -6,7 +6,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// GetAPICurrentSpaceMemberUsecaseは、公開APIでトークンの持ち主の、束縛先のスペースでのメンバーを取得するユースケース
+// GetAPICurrentSpaceMemberUsecaseは、公開APIでトークンが属するスペースでの、トークンの持ち主のスペースメンバーを取得するユースケース
 type GetAPICurrentSpaceMemberUsecase struct{}
 
 // NewGetAPICurrentSpaceMemberUsecaseはGetAPICurrentSpaceMemberUsecaseを生成する
@@ -27,7 +27,7 @@ type GetAPICurrentSpaceMemberOutput struct {
 	User        *model.User
 }
 
-// Executeはパスのスペースがトークンの束縛先であれば、トークンの持ち主のメンバーを返す。
+// Executeはパスのスペースにトークンが属していれば、トークンの持ち主のスペースメンバーを返す。
 // メンバーとユーザーはトークン認証の時点で有効なことを確かめてあるため、ここではDBを引かない
 func (uc *GetAPICurrentSpaceMemberUsecase) Execute(ctx context.Context, input GetAPICurrentSpaceMemberInput) (*GetAPICurrentSpaceMemberOutput, error) {
 	if _, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier); err != nil {

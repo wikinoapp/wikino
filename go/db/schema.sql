@@ -311,6 +311,30 @@ CREATE TABLE public.oauth_authorization_codes (
 
 
 --
+-- Name: oauth_device_authorizations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oauth_device_authorizations (
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
+    oauth_application_id uuid NOT NULL,
+    space_id uuid NOT NULL,
+    oauth_grant_id uuid,
+    device_code_digest character varying NOT NULL,
+    user_code_digest character varying NOT NULL,
+    scopes text[] DEFAULT '{}'::text[] NOT NULL,
+    status integer DEFAULT 0 NOT NULL,
+    interval_seconds integer NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    last_polled_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_oauth_device_authorizations_interval_seconds CHECK ((interval_seconds > 0)),
+    CONSTRAINT chk_oauth_device_authorizations_oauth_grant_id CHECK (((status = ANY (ARRAY[1, 3])) = (oauth_grant_id IS NOT NULL))),
+    CONSTRAINT chk_oauth_device_authorizations_status CHECK ((status = ANY (ARRAY[0, 1, 2, 3])))
+);
+
+
+--
 -- Name: oauth_grants; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -606,6 +630,8 @@ CREATE TABLE public.space_members (
     updated_at timestamp(6) without time zone NOT NULL,
     scopes text[] DEFAULT '{}'::text[] NOT NULL,
     role text NOT NULL,
+    max_topic_role text,
+    CONSTRAINT chk_space_members_max_topic_role CHECK ((max_topic_role = ANY (ARRAY['editor'::text, 'viewer'::text]))),
     CONSTRAINT chk_space_members_role CHECK ((role = ANY (ARRAY['admin'::text, 'editor'::text, 'viewer'::text])))
 );
 
@@ -928,6 +954,14 @@ ALTER TABLE ONLY public.oauth_applications
 
 ALTER TABLE ONLY public.oauth_authorization_codes
     ADD CONSTRAINT oauth_authorization_codes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: oauth_device_authorizations oauth_device_authorizations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_device_authorizations
+    ADD CONSTRAINT oauth_device_authorizations_pkey PRIMARY KEY (id);
 
 
 --
@@ -1273,6 +1307,41 @@ CREATE INDEX idx_oauth_authorization_codes_oauth_grant_id ON public.oauth_author
 --
 
 CREATE INDEX idx_oauth_authorization_codes_space_id ON public.oauth_authorization_codes USING btree (space_id);
+
+
+--
+-- Name: idx_oauth_device_authorizations_device_code_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_oauth_device_authorizations_device_code_digest ON public.oauth_device_authorizations USING btree (device_code_digest);
+
+
+--
+-- Name: idx_oauth_device_authorizations_oauth_application_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_device_authorizations_oauth_application_id ON public.oauth_device_authorizations USING btree (oauth_application_id);
+
+
+--
+-- Name: idx_oauth_device_authorizations_oauth_grant_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_device_authorizations_oauth_grant_id ON public.oauth_device_authorizations USING btree (oauth_grant_id);
+
+
+--
+-- Name: idx_oauth_device_authorizations_space_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_oauth_device_authorizations_space_id ON public.oauth_device_authorizations USING btree (space_id);
+
+
+--
+-- Name: idx_oauth_device_authorizations_user_code_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_oauth_device_authorizations_user_code_digest ON public.oauth_device_authorizations USING btree (user_code_digest);
 
 
 --
@@ -2356,6 +2425,30 @@ ALTER TABLE ONLY public.oauth_authorization_codes
 
 
 --
+-- Name: oauth_device_authorizations oauth_device_authorizations_oauth_application_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_device_authorizations
+    ADD CONSTRAINT oauth_device_authorizations_oauth_application_id_fkey FOREIGN KEY (oauth_application_id) REFERENCES public.oauth_applications(id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_device_authorizations oauth_device_authorizations_oauth_grant_id_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_device_authorizations
+    ADD CONSTRAINT oauth_device_authorizations_oauth_grant_id_space_id_fkey FOREIGN KEY (oauth_grant_id, space_id) REFERENCES public.oauth_grants(id, space_id) ON DELETE CASCADE;
+
+
+--
+-- Name: oauth_device_authorizations oauth_device_authorizations_space_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_device_authorizations
+    ADD CONSTRAINT oauth_device_authorizations_space_id_fkey FOREIGN KEY (space_id) REFERENCES public.spaces(id) ON DELETE CASCADE;
+
+
+--
 -- Name: oauth_grants oauth_grants_oauth_application_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2607,4 +2700,8 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260928010000'),
     ('20260930000000'),
     ('20260930104436'),
-    ('20260930164032');
+    ('20260930164032'),
+    ('20260930172817'),
+    ('20261012120000'),
+    ('20261012152709'),
+    ('20261019024554');

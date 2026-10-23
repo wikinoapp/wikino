@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -2708,4 +2709,126 @@ func TestPageRepository_SearchPageLocations_LinkedUnpublishedPages(t *testing.T)
 			}
 		})
 	}
+}
+
+func TestPageRepository_FindMetadataByIDs(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-metadata-space").Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithName("メタデータ").Build()
+	publishedAt := time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
+	body := strings.Repeat("大きい本文", 100000)
+	publishedID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).
+		WithNumber(1).WithTitle("公開済み").WithBody(body).WithPublishedAt(publishedAt).Build()
+	unpublishedID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).
+		WithNumber(2).WithNilTitle().WithUnpublished().Build()
+	trashedID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).
+		WithNumber(3).WithTitle("ゴミ箱").WithTrashed().Build()
+	discardedID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).
+		WithNumber(4).WithTitle("廃棄済み").WithDiscarded().Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-metadata-other").Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithName("別スペース").Build()
+	otherID := testutil.NewPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).Build()
+
+	counter := testutil.NewQueryCounter(tx)
+	repo := NewPageRepository(counter.Queries())
+	// 入力の順序と重複にかかわらず、同スペースの未廃棄ページだけを番号順で返す。
+	// 存在しないIDと別スペースのIDを一緒に渡しても結果に含めない
+	pages, err := repo.FindMetadataByIDs(t.Context(), []model.PageID{
+		otherID, discardedID, trashedID, unpublishedID, publishedID, publishedID,
+		model.PageID("00000000-0000-0000-0000-000000000000"),
+	}, spaceID)
+	if err != nil {
+		t.Fatalf("FindMetadataByIDs()のエラー = %v", err)
+	}
+	wantIDs := []model.PageID{publishedID, unpublishedID, trashedID}
+	if len(pages) != len(wantIDs) {
+		t.Fatalf("ページ数 = %d、期待値 = %d", len(pages), len(wantIDs))
+	}
+	for i, page := range pages {
+		if page.ID != wantIDs[i] || page.SpaceID != spaceID || page.TopicID != topicID || page.Number != model.PageNumber(i+1) {
+			t.Errorf("ページ[%d]の識別情報 = %+v、期待値のID = %s", i, page, wantIDs[i])
+		}
+		if page.Body != "" || !page.ModifiedAt.IsZero() || len(page.LinkedPageIDs) != 0 {
+			t.Errorf("ページ[%d]にプレビューで取得しない値が含まれている", i)
+		}
+		if page.DiscardedAt != nil {
+			t.Errorf("ページ[%d]に廃棄済みページが含まれている", i)
+		}
+	}
+	if pages[0].Title == nil || *pages[0].Title != "公開済み" || pages[0].PublishedAt == nil || !pages[0].PublishedAt.Equal(publishedAt) {
+		t.Errorf("公開済みページのメタデータ = %+v、期待値 = 設定したタイトルと公開日時", pages[0])
+	}
+	if pages[1].Title != nil || pages[1].PublishedAt != nil {
+		t.Errorf("未公開ページのメタデータ = %+v、期待値 = タイトルと公開日時がnil", pages[1])
+	}
+	if pages[2].Title == nil || *pages[2].Title != "ゴミ箱" || pages[2].TrashedAt == nil || pages[0].TrashedAt != nil || pages[1].TrashedAt != nil {
+		t.Error("ゴミ箱の日時かタイトルが正しく取得されていない")
+	}
+	if got := counter.CountContaining("FindPageMetadataByIDs"); got != 1 {
+		t.Errorf("メタデータ取得のクエリ数 = %d、期待値 = 1", got)
+	}
+	// モデルへの変換で本文を捨てるだけでは転送量を減らせないため、発行するSQLも確認する
+	if counter.CountContaining("body") != 0 || counter.CountContaining("SELECT *") != 0 {
+		t.Error("メタデータの取得SQLが不要な本文を取得している")
+	}
+
+	for _, ids := range [][]model.PageID{nil, {}} {
+		pages, err := repo.FindMetadataByIDs(t.Context(), ids, spaceID)
+		if err != nil || pages != nil {
+			t.Errorf("空のIDの取得結果 = %v、エラー = %v、期待値 = nil, nil", pages, err)
+		}
+	}
+	if got := counter.CountContaining("FindPageMetadataByIDs"); got != 1 {
+		t.Errorf("空のIDの取得後のクエリ数 = %d、期待値 = 1 (追加のクエリ無し)", got)
+	}
+}
+
+func TestPageRepository_FindByIDForShare(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-share-lock-space").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-share-lock-other-space").Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("General").Build()
+	pageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Test Page").Build()
+
+	t.Run("IDとスペースIDでページを取得できる", func(t *testing.T) {
+		page, err := repo.FindByIDForShare(context.Background(), pageID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByIDForShare()のエラー = %v", err)
+		}
+		if page == nil || page.ID != pageID || page.TopicID != topicID {
+			t.Errorf("ページ = %+v、期待値 = 作成したページ", page)
+		}
+	})
+
+	t.Run("別のスペースのIDとしてはnilを返す", func(t *testing.T) {
+		page, err := repo.FindByIDForShare(context.Background(), pageID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByIDForShare()のエラー = %v", err)
+		}
+		if page != nil {
+			t.Errorf("ページ = %+v、期待値 = nil", page)
+		}
+	})
+
+	t.Run("ゴミ箱のページと廃棄されたページも取得できる", func(t *testing.T) {
+		trashedPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(2).WithTitle("Trashed Page").WithTrashed().Build()
+		discardedPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(3).WithTitle("Discarded Page").WithDiscarded().Build()
+
+		for _, id := range []model.PageID{trashedPageID, discardedPageID} {
+			page, err := repo.FindByIDForShare(context.Background(), id, spaceID)
+			if err != nil {
+				t.Fatalf("FindByIDForShare()のエラー = %v", err)
+			}
+			if page == nil || page.ID != id {
+				t.Errorf("ページ = %+v、期待値 = ID %sのページ", page, id)
+			}
+		}
+	})
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
-// publicAPISettingsAccessは、公開APIのためのスペース設定の画面 (個人アクセストークン・
+// publicAPISettingsAccessは、公開APIのためのスペース設定の画面 (個人用アクセストークン・
 // OAuthアプリ) が扱うスペースと、それを操作するメンバーとその権限を表す。
 type publicAPISettingsAccess struct {
 	space       *model.Space
@@ -18,7 +18,7 @@ type publicAPISettingsAccess struct {
 	authorizer  policy.Authorizer
 }
 
-// fetchPublicAPISettingsAccessは、公開APIのためのスペース設定の画面 (個人アクセストークン・
+// fetchPublicAPISettingsAccessは、公開APIのためのスペース設定の画面 (個人用アクセストークン・
 // OAuthアプリ) が扱うスペースと、それを操作するユーザーのメンバーシップを解決し、allowedが
 // 許さないものとフィーチャーフラグが無効なものを拒否する。各画面の表示と、発行・登録などの
 // 操作そのものがここを通るため、誰を通すかについて別々の答えを出すことはない。

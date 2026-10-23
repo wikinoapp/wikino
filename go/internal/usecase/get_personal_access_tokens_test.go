@@ -14,7 +14,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
-// patMemberFixtureは個人アクセストークンのユースケースのテストで使う、スペースとそのメンバー
+// patMemberFixtureは個人用アクセストークンのユースケースのテストで使う、スペースとそのメンバー
 type patMemberFixture struct {
 	userID        model.UserID
 	spaceID       model.SpaceID

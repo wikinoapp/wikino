@@ -612,6 +612,42 @@ func (q *Queries) FindLinkedPagesPaginated(ctx context.Context, arg FindLinkedPa
 	return items, nil
 }
 
+const findPageByIDForShare = `-- name: FindPageByIDForShare :one
+SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages WHERE id = $1 AND space_id = $2 FOR SHARE
+`
+
+type FindPageByIDForShareParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 下書きにページのトピックを書くまでの間にページの移動が割り込まないよう、ページの行を
+// トランザクションが終わるまで共有ロックして取得する。
+// 共有ロックどうしは競合しないため、同じページの下書きを複数のメンバーが同時に保存しても待たない。
+// 下書きに書くトピックを読むためだけに使うため、廃棄・ゴミ箱の状態では絞り込まない。
+func (q *Queries) FindPageByIDForShare(ctx context.Context, arg FindPageByIDForShareParams) (Page, error) {
+	row := q.db.QueryRowContext(ctx, findPageByIDForShare, arg.ID, arg.SpaceID)
+	var i Page
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.TopicID,
+		&i.Number,
+		&i.Title,
+		&i.Body,
+		pq.Array(&i.LinkedPageIds),
+		&i.ModifiedAt,
+		&i.PublishedAt,
+		&i.TrashedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PinnedAt,
+		&i.DiscardedAt,
+		&i.FeaturedImageAttachmentID,
+	)
+	return i, err
+}
+
 const findPageByIDForUpdate = `-- name: FindPageByIDForUpdate :one
 SELECT id, space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, created_at, updated_at, pinned_at, discarded_at, featured_image_attachment_id FROM pages WHERE id = $1 AND space_id = $2 AND discarded_at IS NULL FOR NO KEY UPDATE
 `
@@ -717,6 +753,65 @@ func (q *Queries) FindPageByTopicAndTitle(ctx context.Context, arg FindPageByTop
 		&i.FeaturedImageAttachmentID,
 	)
 	return i, err
+}
+
+const findPageMetadataByIDs = `-- name: FindPageMetadataByIDs :many
+SELECT id, space_id, topic_id, number, title, published_at, trashed_at, discarded_at
+FROM pages
+WHERE id = ANY($1::uuid[])
+  AND space_id = $2
+  AND discarded_at IS NULL
+ORDER BY number
+`
+
+type FindPageMetadataByIDsParams struct {
+	Ids     []string `json:"ids"`
+	SpaceID string   `json:"space_id"`
+}
+
+type FindPageMetadataByIDsRow struct {
+	ID          string       `json:"id"`
+	SpaceID     string       `json:"space_id"`
+	TopicID     string       `json:"topic_id"`
+	Number      int32        `json:"number"`
+	Title       interface{}  `json:"title"`
+	PublishedAt sql.NullTime `json:"published_at"`
+	TrashedAt   sql.NullTime `json:"trashed_at"`
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+}
+
+// Wikiリンクのプレビューの応答と可視性判定に使う列だけを取得する。
+// リンク先の本文サイズに転送量が比例しないよう、本文は取得しない。
+func (q *Queries) FindPageMetadataByIDs(ctx context.Context, arg FindPageMetadataByIDsParams) ([]FindPageMetadataByIDsRow, error) {
+	rows, err := q.db.QueryContext(ctx, findPageMetadataByIDs, pq.Array(arg.Ids), arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FindPageMetadataByIDsRow{}
+	for rows.Next() {
+		var i FindPageMetadataByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.DiscardedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const findPagesByIDs = `-- name: FindPagesByIDs :many
@@ -1146,16 +1241,15 @@ func (q *Queries) ListActivePagesBySpace(ctx context.Context, spaceID string) ([
 	return items, nil
 }
 
-const listPublishedPagesByModifiedAt = `-- name: ListPublishedPagesByModifiedAt :many
+const listBacklinkedPagesByModifiedAt = `-- name: ListBacklinkedPagesByModifiedAt :many
 SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
-WHERE p.space_id = $1
-  AND p.published_at IS NOT NULL
+WHERE p.linked_page_ids @> ARRAY[$2::varchar]
+  AND p.space_id = $1
   AND p.discarded_at IS NULL
   AND p.trashed_at IS NULL
   AND t.discarded_at IS NULL
-  AND t.id = ANY($2::uuid[])
-  AND ($3::timestamp IS NULL OR p.modified_at >= $3::timestamp)
+  AND t.id = ANY($3::uuid[])
   AND (
     $4::timestamp IS NULL
     OR (p.modified_at, p.id) < ($4::timestamp, $5::uuid)
@@ -1164,25 +1258,236 @@ ORDER BY p.modified_at DESC, p.id DESC
 LIMIT $6
 `
 
-type ListPublishedPagesByModifiedAtParams struct {
+type ListBacklinkedPagesByModifiedAtParams struct {
 	SpaceID         string       `json:"space_id"`
+	PageID          string       `json:"page_id"`
 	VisibleTopicIds []string     `json:"visible_topic_ids"`
-	ModifiedSince   sql.NullTime `json:"modified_since"`
 	AfterModifiedAt sql.NullTime `json:"after_modified_at"`
 	AfterID         *string      `json:"after_id"`
 	RowLimit        int32        `json:"row_limit"`
 }
 
-// 公開APIのページ一覧。公開済み・未廃棄・未ゴミ箱で、閲覧者が開けるトピック (visible_topic_ids) の
-// ページを更新日時の新しい順に返す。この集合は呼び出し元がCanShowTopicの規則で解決する。
+// 公開APIのページのバックリンク一覧。保存済みのlinked_page_idsでpage_idのページにリンクしているページを、
+// 更新日時の新しい順にカーソル方式で返す。ゴミ箱・廃棄済み・トピックの可視性の扱いは
+// ListLinkedPagesByModifiedAtと同じで、Web画面のバックリンク一覧 (FindBacklinkedPagesPaginated) と揃えてある。
+// リンク元の判定はWeb画面の `= ANY(linked_page_ids)` と同じ意味だが、linked_page_idsのGINインデックスを
+// 使えるよう @> で書く。
+func (q *Queries) ListBacklinkedPagesByModifiedAt(ctx context.Context, arg ListBacklinkedPagesByModifiedAtParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, listBacklinkedPagesByModifiedAt,
+		arg.SpaceID,
+		arg.PageID,
+		pq.Array(arg.VisibleTopicIds),
+		arg.AfterModifiedAt,
+		arg.AfterID,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLinkedPagesByModifiedAt = `-- name: ListLinkedPagesByModifiedAt :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.id = ANY($2::uuid[])
+  AND p.space_id = $1
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY($3::uuid[])
+  AND (
+    $4::timestamp IS NULL
+    OR (p.modified_at, p.id) < ($4::timestamp, $5::uuid)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT $6
+`
+
+type ListLinkedPagesByModifiedAtParams struct {
+	SpaceID         string       `json:"space_id"`
+	PageIds         []string     `json:"page_ids"`
+	VisibleTopicIds []string     `json:"visible_topic_ids"`
+	AfterModifiedAt sql.NullTime `json:"after_modified_at"`
+	AfterID         *string      `json:"after_id"`
+	RowLimit        int32        `json:"row_limit"`
+}
+
+// 公開APIのページのリンク一覧。リンク元のページの保存済みのlinked_page_ids (page_ids) が指すページを、
+// 更新日時の新しい順にカーソル方式で返す。ゴミ箱・廃棄済みのページと廃棄済みのトピックのページを除き、
+// 閲覧者が開けるトピック (visible_topic_ids) のページに絞る。この絞り込みはWeb画面のリンク一覧
+// (FindLinkedPagesPaginated) と揃えてあり、未公開のページも含める。visible_topic_idsは呼び出し元が
+// CanShowTopicの規則で解決する。カーソル (after_modified_at, after_id) の扱いはListPagesByModifiedAtと同じ。
+func (q *Queries) ListLinkedPagesByModifiedAt(ctx context.Context, arg ListLinkedPagesByModifiedAtParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, listLinkedPagesByModifiedAt,
+		arg.SpaceID,
+		pq.Array(arg.PageIds),
+		pq.Array(arg.VisibleTopicIds),
+		arg.AfterModifiedAt,
+		arg.AfterID,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPagesByModifiedAt = `-- name: ListPagesByModifiedAt :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY($2::uuid[])
+  AND (
+    ($3::boolean IS TRUE AND p.published_at IS NOT NULL)
+    OR (
+      $4::boolean IS TRUE
+      AND p.published_at IS NULL
+      AND (
+        p.id::varchar IN (
+          SELECT unnest(src.linked_page_ids) FROM pages src
+          WHERE src.space_id = $1
+            AND src.topic_id = ANY($5::uuid[])
+            AND src.published_at IS NOT NULL
+            AND src.discarded_at IS NULL
+            AND src.trashed_at IS NULL
+        )
+        OR p.id::varchar IN (
+          SELECT unnest(dp.linked_page_ids) FROM draft_pages dp
+          INNER JOIN pages dp_p ON dp.page_id = dp_p.id
+            AND dp_p.space_id = $1
+            AND dp_p.discarded_at IS NULL
+            AND dp_p.trashed_at IS NULL
+          WHERE dp.space_id = $1
+            AND dp.space_member_id = $6
+        )
+      )
+    )
+  )
+  AND ($7::text IS NULL OR p.title = $7::citext)
+  AND NOT EXISTS (
+    SELECT 1 FROM unnest($8::text[]) AS kw(pattern)
+    WHERE NOT (COALESCE(p.title, '') ILIKE kw.pattern OR p.body ILIKE kw.pattern)
+  )
+  AND ($9::timestamp IS NULL OR p.modified_at >= $9::timestamp)
+  AND (
+    $10::timestamp IS NULL
+    OR (p.modified_at, p.id) < ($10::timestamp, $11::uuid)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT $12
+`
+
+type ListPagesByModifiedAtParams struct {
+	SpaceID            string         `json:"space_id"`
+	TopicIds           []string       `json:"topic_ids"`
+	IncludePublished   bool           `json:"include_published"`
+	IncludeUnpublished bool           `json:"include_unpublished"`
+	VisibleTopicIds    []string       `json:"visible_topic_ids"`
+	SpaceMemberID      string         `json:"space_member_id"`
+	Title              sql.NullString `json:"title"`
+	KeywordPatterns    []string       `json:"keyword_patterns"`
+	ModifiedSince      sql.NullTime   `json:"modified_since"`
+	AfterModifiedAt    sql.NullTime   `json:"after_modified_at"`
+	AfterID            *string        `json:"after_id"`
+	RowLimit           int32          `json:"row_limit"`
+}
+
+// 公開APIのページ一覧。未廃棄・未ゴミ箱で、対象のトピック (topic_ids) のページを更新日時の新しい順に返す。
+// topic_idsは閲覧者が開けるトピック (visible_topic_ids) を呼び出し元がtopic_numberで絞ったもので、
+// visible_topic_idsは呼び出し元がCanShowTopicの規則で解決する。
+// include_published・include_unpublishedで公開済み・未公開のページを含めるかを選ぶ。
+// 未公開ページは、SearchPageLocationsと同じく開けるトピックの公開ページか呼び出したメンバー自身の
+// 下書きからリンクされているものだけを含める。リンク元はtopic_numberで絞らず、開けるトピック全体から探す。
+// visible_topic_idsは廃棄済みのトピックを含まないため、リンク元ではトピックをJOINしない。
+// リンク元の判定はSearchPageLocationsと違い、候補ごとの @> ではなく、リンク先のIDの集合を1度だけ作る
+// 相関の無いINで書く。候補ごとの @> ではGINインデックスが選ばれず、未公開ページの数だけ
+// リンク元を走査し直して遅くなるためである。
+// titleを渡すとそのタイトルのページに絞る (citextの比較のため大文字小文字を区別しない)。
+// keyword_patternsはキーワードごとのILIKEのパターンで、すべてのパターンについてタイトルか本文の
+// どちらかに一致するページに絞る (AND検索)。空の配列なら絞らない。本文にはインデックスが無く、
+// スペース・トピック・公開状態で絞った行を走査する。タイトルの無いページも本文で一致させるため、
+// タイトルはCOALESCEで空文字列にする (NULLのままではNOT EXISTSの判定がNULLになり、一致しない
+// ページまで含めてしまう)。
 // modified_sinceを渡すとその日時以降に更新されたページに絞る。カーソル (after_modified_at,
 // after_id) を渡すと、並び順でその位置より後ろのページだけを返す。更新日時が同じページも
 // 主キーで順序を決めるため、取得中に更新が無ければ重複や読み飛ばしなく辿れる。
 // 並び順は (space_id, modified_at, id) のインデックスに合わせてある。
-func (q *Queries) ListPublishedPagesByModifiedAt(ctx context.Context, arg ListPublishedPagesByModifiedAtParams) ([]Page, error) {
-	rows, err := q.db.QueryContext(ctx, listPublishedPagesByModifiedAt,
+func (q *Queries) ListPagesByModifiedAt(ctx context.Context, arg ListPagesByModifiedAtParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, listPagesByModifiedAt,
 		arg.SpaceID,
+		pq.Array(arg.TopicIds),
+		arg.IncludePublished,
+		arg.IncludeUnpublished,
 		pq.Array(arg.VisibleTopicIds),
+		arg.SpaceMemberID,
+		arg.Title,
+		pq.Array(arg.KeywordPatterns),
 		arg.ModifiedSince,
 		arg.AfterModifiedAt,
 		arg.AfterID,

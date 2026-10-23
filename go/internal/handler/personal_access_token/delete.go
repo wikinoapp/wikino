@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Deleteは自分の個人アクセストークンを失効します (DELETE /s/{space_identifier}/settings/personal_access_tokens/{personal_access_token_id})。
+// Deleteは自分の個人用アクセストークンを失効します (DELETE /s/{space_identifier}/settings/personal_access_tokens/{personal_access_token_id})。
 //
 // トークンの行は消さずに失効日時を記録する。失効したトークンは一覧から消え、次のAPI
 // リクエストから受け付けられなくなる。
@@ -34,7 +34,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		PersonalAccessTokenID: model.PersonalAccessTokenID(chi.URLParam(r, "personal_access_token_id")),
 	})
 	if err != nil {
-		h.handleError(w, r, err, "個人アクセストークンの失効に失敗")
+		h.handleError(w, r, err, "個人用アクセストークンの失効に失敗")
 		return
 	}
 

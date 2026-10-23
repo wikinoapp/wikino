@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -20,16 +22,27 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apiattachment "github.com/wikinoapp/wikino/go/internal/apihandler/attachment"
 	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
+	apicurrenttoken "github.com/wikinoapp/wikino/go/internal/apihandler/current_token"
+	apidraftpage "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page"
+	apidraftpagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_body_edit"
+	apidraftpagepublication "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_publication"
+	apidraftpagerevision "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
+	apipagebacklink "github.com/wikinoapp/wikino/go/internal/apihandler/page_backlink"
+	apipagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/page_body_edit"
+	apipagelink "github.com/wikinoapp/wikino/go/internal/apihandler/page_link"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
+	apiwikilinkpreview "github.com/wikinoapp/wikino/go/internal/apihandler/wikilink_preview"
 	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_catalog"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
 	"github.com/wikinoapp/wikino/go/internal/handler/oauth_authorization_server_metadata"
+	oauthdeviceauthorizationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_device_authorization"
 	"github.com/wikinoapp/wikino/go/internal/handler/oauth_protected_resource_metadata"
 	oauthtokenhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_token"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
@@ -39,16 +52,26 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // oauthFlowTestRedirectURIは、ネイティブアプリがループバックで待ち受けるリダイレクトURI
 const oauthFlowTestRedirectURI = "http://127.0.0.1:53123/callback"
 
-// oauthFlowCurrentSpaceMemberPathは、トークンが使えるかを確かめるために呼ぶAPIのパス。
-// スペースは、setupOAuthFlowFixtureで作るトークンの束縛先
-const oauthFlowCurrentSpaceMemberPath = "/api/v1/spaces/oauth-flow/members/me"
+// oauthFlowSpaceIdentifierは、内部Txを使うHTTPフローのフィクスチャをテストごとに分離する識別子
+func oauthFlowSpaceIdentifier(t *testing.T) string {
+	t.Helper()
+	return fmt.Sprintf("oauth-flow-%x", sha256.Sum256([]byte(strings.Split(t.Name(), "/")[0])))[:25]
+}
 
-// newOAuthFlowTestServerは、serve.goと同じくトークンエンドポイント・メタデータ・公開APIを配線したサーバーを返す。
+// oauthFlowCurrentSpaceMemberPathは、フィクスチャのトークンが使えるかを確かめるAPIのパス
+func oauthFlowCurrentSpaceMemberPath(t *testing.T) string {
+	t.Helper()
+	return "/api/v1/spaces/" + oauthFlowSpaceIdentifier(t) + "/members/me"
+}
+
+// newOAuthFlowTestServerは、serve.goと同じくトークンエンドポイント・デバイス認可の要求のエンドポイント・
+// メタデータ・公開APIを配線したサーバーを返す。
 // メタデータは発見の流れで辿るGETだけを配線する (HEADのルートは配線しない)。
 // リポジトリはテストのトランザクションを使い、トークンの照合とレート制限も実物を使う
 func newOAuthFlowTestServer(t *testing.T, cfg *config.Config, q *query.Queries) *httptest.Server {
@@ -82,22 +105,35 @@ func newOAuthFlowTestServer(t *testing.T, cfg *config.Config, q *query.Queries) 
 		featureFlagRepo,
 	), problems)
 	server := apihandler.NewServer(
+		apiattachment.NewHandler(nil),
 		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
+		apidraftpagebodyedit.NewHandler("https://example.com", nil),
+		apidraftpagepublication.NewHandler("https://example.com", nil),
+		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
-		apipage.NewHandler(nil, nil, nil, nil),
+		apipage.NewHandler("https://example.com", nil, nil, nil, nil),
+		apipagebacklink.NewHandler("https://example.com", nil),
+		apipagebodyedit.NewHandler("https://example.com", nil),
+		apipagelink.NewHandler("https://example.com", nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(nil, nil),
+		apiwikilinkpreview.NewHandler("https://example.com", nil),
 	)
 	oauthApplicationRepo := repository.NewOAuthApplicationRepository(q)
 	oauthRefreshTokenRepo := repository.NewOAuthRefreshTokenRepository(q)
+	oauthDeviceAuthorizationRepo := repository.NewOAuthDeviceAuthorizationRepository(q)
 	tokenHandler := oauthtokenhandler.NewHandler(
 		usecase.NewCreateOAuthTokenUsecase(
+			testutil.GetTestDB(),
 			cfg,
 			oauthApplicationRepo,
 			oauthGrantRepo,
 			repository.NewOAuthAuthorizationCodeRepository(q),
 			oauthAccessTokenRepo,
 			oauthRefreshTokenRepo,
+			oauthDeviceAuthorizationRepo,
 			spaceRepo,
 			spaceMemberRepo,
 			userRepo,
@@ -113,6 +149,10 @@ func newOAuthFlowTestServer(t *testing.T, cfg *config.Config, q *query.Queries) 
 	oauthRateLimit := middleware.NewAPIRateLimit(limiter, problems, middleware.OAuthIPRateLimitPolicy(cfg.TrustedProxyCIDRs))
 	r.With(oauthRateLimit.Middleware).Post(model.OAuthTokenEndpointPath, tokenHandler.Create)
 	r.With(oauthRateLimit.Middleware).Post(model.OAuthRevocationEndpointPath, tokenHandler.Delete)
+	r.With(middleware.NewAPIRateLimit(limiter, problems, middleware.OAuthDeviceAuthorizationIPRateLimitPolicy(cfg.TrustedProxyCIDRs)).Middleware).
+		Post(model.OAuthDeviceAuthorizationEndpointPath, oauthdeviceauthorizationhandler.NewHandler(
+			usecase.NewCreateOAuthDeviceAuthorizationUsecase(cfg, oauthApplicationRepo, spaceRepo, oauthDeviceAuthorizationRepo),
+		).Create)
 	r.Get(model.OAuthAuthorizationServerMetadataPath, oauth_authorization_server_metadata.NewHandler(cfg).Show)
 	r.Get(spaceAPIResourceMetadataRoute, oauth_protected_resource_metadata.NewHandler(cfg, usecase.NewGetOAuthProtectedResourceMetadataUsecase(spaceRepo)).Show)
 	r.Get(model.APICatalogPath, api_catalog.NewHandler(cfg).Show)
@@ -122,7 +162,7 @@ func newOAuthFlowTestServer(t *testing.T, cfg *config.Config, q *query.Queries) 
 	return srv
 }
 
-// oauthFlowFixtureは、公式CLIのようなpublicクライアントと、それを許可するスペースのメンバー
+// oauthFlowFixtureは、マイグレーションで登録する公式CLIのクライアントと、それを許可するスペースのメンバー
 type oauthFlowFixture struct {
 	userID        model.UserID
 	spaceID       model.SpaceID
@@ -130,12 +170,20 @@ type oauthFlowFixture struct {
 	clientID      string
 }
 
-func setupOAuthFlowFixture(t *testing.T, tx *sql.Tx) oauthFlowFixture {
+func setupOAuthFlowFixture(t *testing.T) oauthFlowFixture {
+	t.Helper()
+
+	var f oauthFlowFixture
+	testutil.CommitFixture(t, func(tx *sql.Tx) { f = buildOAuthFlowFixture(t, tx) })
+	return f
+}
+
+func buildOAuthFlowFixture(t *testing.T, tx *sql.Tx) oauthFlowFixture {
 	t.Helper()
 
 	userID := testutil.NewUserBuilder(t, tx).
-		WithAtname("oauth_flow").WithEmail("oauth_flow@example.com").Build()
-	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("oauth-flow").Build()
+		WithAtname(strings.ReplaceAll(oauthFlowSpaceIdentifier(t), "-", "_")).WithEmail(oauthFlowSpaceIdentifier(t) + "@example.com").Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier(oauthFlowSpaceIdentifier(t)).Build()
 	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithUserID(userID).
@@ -143,29 +191,39 @@ func setupOAuthFlowFixture(t *testing.T, tx *sql.Tx) oauthFlowFixture {
 		Build()
 	testutil.NewFeatureFlagBuilder(t, tx).WithUserID(userID).WithName(string(model.FeatureFlagPublicAPI)).Build()
 
-	clientID := "oauth-flow-cli"
-	testutil.NewOAuthApplicationBuilder(t, tx).
-		AsOfficialClient().
-		WithName("Wikino CLI").
-		WithClientID(clientID).
-		WithRedirectURIs([]string{"http://127.0.0.1/callback"}).
-		Build()
+	appID := testutil.RegisterOfficialCLIOAuthApplication(t, tx)
+	// 本番と同じSQLで登録した後、フィクスチャをコミットする前にclient_idをテスト固有にする。
+	// 固定IDをDBに残すと、同じマイグレーションを使う他のパッケージの並行テストと衝突する。
+	clientID := oauthFlowSpaceIdentifier(t) + "-cli"
+	if _, err := tx.ExecContext(t.Context(), "UPDATE oauth_applications SET client_id = $1 WHERE id = $2", clientID, appID); err != nil {
+		t.Fatal(err)
+	}
 
 	return oauthFlowFixture{userID: userID, spaceID: spaceID, spaceMemberID: spaceMemberID, clientID: clientID}
 }
 
-// authorizeは、同意画面で許可したときと同じく認可コードを発行する。同意画面のHTTPの振る舞いは
-// 認可エンドポイントのハンドラーのテストで確かめるため、ここではユースケースを直接呼ぶ
+// authorizeは、同意画面で要求されたスコープをすべて選んで許可したときと同じく認可コードを発行する
 func authorize(t *testing.T, cfg *config.Config, q *query.Queries, f oauthFlowFixture, verifier string) string {
 	t.Helper()
 
+	return authorizeWithScopes(t, cfg, q, f, verifier, []string{"page:read", "topic:read"})
+}
+
+// authorizeWithScopesは、同意画面でgrantedのスコープを選んで許可したときと同じく認可コードを
+// 発行する。同意画面のHTTPの振る舞いは認可エンドポイントのハンドラーのテストで確かめるため、
+// ここではユースケースを直接呼ぶ
+func authorizeWithScopes(t *testing.T, cfg *config.Config, q *query.Queries, f oauthFlowFixture, verifier string, granted []string) string {
+	t.Helper()
+
 	output, err := usecase.NewCreateOAuthAuthorizationUsecase(
+		testutil.GetTestDB(), repository.NewOAuthGrantRepository(q),
 		cfg,
 		repository.NewFeatureFlagRepository(q),
 		repository.NewOAuthApplicationRepository(q),
 		repository.NewSpaceRepository(q),
 		repository.NewSpaceMemberRepository(q),
 		repository.NewOAuthAuthorizationCodeRepository(q),
+		validator.NewOAuthAuthorizationCreateValidator(),
 	).Execute(context.Background(), usecase.CreateOAuthAuthorizationInput{
 		UserID: f.userID,
 		Params: usecase.OAuthAuthorizationParams{
@@ -176,9 +234,10 @@ func authorize(t *testing.T, cfg *config.Config, q *query.Queries, f oauthFlowFi
 			State:               "xyz",
 			CodeChallenge:       oauth2.S256ChallengeFromVerifier(verifier),
 			CodeChallengeMethod: "S256",
-			Resource:            cfg.AppURL() + "/api/v1/spaces/oauth-flow",
+			Resource:            cfg.AppURL() + "/api/v1/spaces/" + oauthFlowSpaceIdentifier(t),
 		},
-		Approved: true,
+		Approved:      true,
+		GrantedScopes: granted,
 	})
 	if err != nil {
 		t.Fatalf("認可コードの発行に失敗: %v", err)
@@ -190,7 +249,7 @@ func authorize(t *testing.T, cfg *config.Config, q *query.Queries, f oauthFlowFi
 func getCurrentSpaceMemberStatus(t *testing.T, srv *httptest.Server, accessToken string) int {
 	t.Helper()
 
-	req, err := http.NewRequest(http.MethodGet, srv.URL+oauthFlowCurrentSpaceMemberPath, nil)
+	req, err := http.NewRequest(http.MethodGet, srv.URL+oauthFlowCurrentSpaceMemberPath(t), nil)
 	if err != nil {
 		t.Fatalf("リクエストの作成に失敗: %v", err)
 	}
@@ -221,9 +280,8 @@ func assertRetrieveError(t *testing.T, err error, errorCode string) {
 func TestOAuthFlow(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	f := setupOAuthFlowFixture(t, tx)
+	q := query.New(testutil.GetTestDB())
+	f := setupOAuthFlowFixture(t)
 	ctx := context.Background()
 
 	// 認可サーバーのURL (`iss`・`resource`) とテストサーバーのURLは一致しなくてよい
@@ -272,13 +330,13 @@ func TestOAuthFlow(t *testing.T) {
 	}
 
 	// APIの呼び出し
-	resp, err := conf.Client(ctx, token).Get(srv.URL + oauthFlowCurrentSpaceMemberPath)
+	resp, err := conf.Client(ctx, token).Get(srv.URL + oauthFlowCurrentSpaceMemberPath(t))
 	if err != nil {
 		t.Fatalf("APIの呼び出しに失敗: %v", err)
 	}
 	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("GET %sのステータス = %d、期待値 = 200", oauthFlowCurrentSpaceMemberPath, resp.StatusCode)
+		t.Fatalf("GET %sのステータス = %d、期待値 = 200", oauthFlowCurrentSpaceMemberPath(t), resp.StatusCode)
 	}
 
 	// 更新 (アクセストークンの期限が切れたものとしてTokenSourceに更新させる)
@@ -295,7 +353,7 @@ func TestOAuthFlow(t *testing.T) {
 	}
 
 	t.Run("アクセストークンの期限が切れると401", func(t *testing.T) {
-		if _, err := tx.ExecContext(ctx, "UPDATE oauth_access_tokens SET expires_at = NOW() - interval '1 second' WHERE token_digest = $1",
+		if _, err := testutil.GetTestDB().ExecContext(ctx, "UPDATE oauth_access_tokens SET expires_at = NOW() - interval '1 second' WHERE token_digest = $1",
 			auth.DigestOpaqueToken(token.AccessToken)); err != nil {
 			t.Fatalf("有効期限の更新に失敗: %v", err)
 		}
@@ -317,14 +375,100 @@ func TestOAuthFlow(t *testing.T) {
 	})
 }
 
+func TestOAuthFlow_同意画面で選んだスコープ(t *testing.T) {
+	t.Parallel()
+
+	q := query.New(testutil.GetTestDB())
+	f := setupOAuthFlowFixture(t)
+	ctx := context.Background()
+
+	cfg := &config.Config{Domain: "example.com"}
+	srv := newOAuthFlowTestServer(t, cfg, q)
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, srv.Client())
+	conf := &oauth2.Config{
+		ClientID:    f.clientID,
+		RedirectURL: oauthFlowTestRedirectURI,
+		Endpoint: oauth2.Endpoint{
+			TokenURL:  srv.URL + "/oauth/token",
+			AuthStyle: oauth2.AuthStyleInParams,
+		},
+	}
+
+	// 要求のうちtopic:readを外して許可すると、トークンの応答のscopeは付与した範囲だけになる
+	verifier := oauth2.GenerateVerifier()
+	token, err := conf.Exchange(ctx, authorizeWithScopes(t, cfg, q, f, verifier, []string{"page:read"}), oauth2.VerifierOption(verifier))
+	if err != nil {
+		t.Fatalf("認可コードの交換に失敗: %v", err)
+	}
+	if scope := token.Extra("scope"); scope != "page:read" {
+		t.Errorf("scope = %v、期待値 = %q", scope, "page:read")
+	}
+	if status := getCurrentSpaceMemberStatus(t, srv, token.AccessToken); status != http.StatusOK {
+		t.Errorf("page:readのトークンでのAPIのステータス = %d、期待値 = 200", status)
+	}
+
+	// 再認可でtopic:readだけに狭めると、範囲を超えるpage:readのトークンは失効する
+	verifier = oauth2.GenerateVerifier()
+	if _, err := conf.Exchange(ctx, authorizeWithScopes(t, cfg, q, f, verifier, []string{"topic:read"}), oauth2.VerifierOption(verifier)); err != nil {
+		t.Fatalf("再認可の認可コードの交換に失敗: %v", err)
+	}
+	if status := getCurrentSpaceMemberStatus(t, srv, token.AccessToken); status != http.StatusUnauthorized {
+		t.Errorf("許可を狭めた後の以前のトークンでのAPIのステータス = %d、期待値 = 401", status)
+	}
+	_, err = conf.TokenSource(ctx, &oauth2.Token{RefreshToken: token.RefreshToken}).Token()
+	assertRetrieveError(t, err, "invalid_grant")
+}
+
+// 公式CLIはスペースに属さないため、連携先のスペースを指す `resource` の無い認可要求は、
+// 認可コードを発行せずにinvalid_targetでクライアントへ戻す
+func TestOAuthFlow_resourceの無い認可要求(t *testing.T) {
+	t.Parallel()
+
+	q := query.New(testutil.GetTestDB())
+	f := setupOAuthFlowFixture(t)
+
+	output, err := usecase.NewCreateOAuthAuthorizationUsecase(
+		testutil.GetTestDB(), repository.NewOAuthGrantRepository(q),
+		&config.Config{Domain: "example.com"},
+		repository.NewFeatureFlagRepository(q),
+		repository.NewOAuthApplicationRepository(q),
+		repository.NewSpaceRepository(q),
+		repository.NewSpaceMemberRepository(q),
+		repository.NewOAuthAuthorizationCodeRepository(q),
+		validator.NewOAuthAuthorizationCreateValidator(),
+	).Execute(context.Background(), usecase.CreateOAuthAuthorizationInput{
+		UserID: f.userID,
+		Params: usecase.OAuthAuthorizationParams{
+			ClientID:            f.clientID,
+			RedirectURI:         oauthFlowTestRedirectURI,
+			ResponseType:        "code",
+			Scope:               "page:read",
+			State:               "xyz",
+			CodeChallenge:       oauth2.S256ChallengeFromVerifier(oauth2.GenerateVerifier()),
+			CodeChallengeMethod: "S256",
+		},
+		Approved:      true,
+		GrantedScopes: []string{"page:read"},
+	})
+	if output != nil {
+		t.Errorf("出力 = %+v、nilを期待", output)
+	}
+	var authErr *model.OAuthAuthorizationError
+	if !errors.As(err, &authErr) {
+		t.Fatalf("エラー = %v、OAuthAuthorizationErrorを期待", err)
+	}
+	if authErr.Code != model.OAuthAuthorizationErrorInvalidTarget || authErr.RedirectURI != oauthFlowTestRedirectURI {
+		t.Errorf("エラー = (%q, %q)、期待値 = (%q, %q)", authErr.Code, authErr.RedirectURI, model.OAuthAuthorizationErrorInvalidTarget, oauthFlowTestRedirectURI)
+	}
+}
+
 // CLIのログアウトのように、クライアントがリフレッシュトークンを失効させると、同じ許可の
 // アクセストークンでAPIを呼べなくなり、リフレッシュトークンでも更新できなくなる
 func TestOAuthFlow_トークンの失効(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	f := setupOAuthFlowFixture(t, tx)
+	q := query.New(testutil.GetTestDB())
+	f := setupOAuthFlowFixture(t)
 	ctx := context.Background()
 
 	cfg := &config.Config{Domain: "example.com"}
@@ -369,13 +513,13 @@ func TestOAuthFlow_トークンの失効(t *testing.T) {
 	assertRetrieveError(t, err, "invalid_grant")
 }
 
-// newPersonalAccessTokenは、spaceMemberIDのメンバーの個人アクセストークンを作り、平文を返す
+// newPersonalAccessTokenは、spaceMemberIDのメンバーの個人用アクセストークンを作り、平文を返す
 func newPersonalAccessToken(t *testing.T, tx *sql.Tx, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) string {
 	t.Helper()
 
 	token, err := auth.GenerateOpaqueToken(auth.PersonalAccessTokenPrefix)
 	if err != nil {
-		t.Fatalf("個人アクセストークンの生成に失敗: %v", err)
+		t.Fatalf("個人用アクセストークンの生成に失敗: %v", err)
 	}
 	testutil.NewPersonalAccessTokenBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -405,14 +549,13 @@ func getRateLimit(t *testing.T, srv *httptest.Server, path, accessToken string) 
 	return resp.Header.Get("RateLimit")
 }
 
-// TestAPIRateLimit_スペースのメンバー単位は、公開APIのレート制限が、同じスペースの個人アクセストークンと
+// TestAPIRateLimit_スペースのメンバー単位は、公開APIのレート制限が、同じスペースの個人用アクセストークンと
 // OAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えることを、実際のカウンターで確かめる
 func TestAPIRateLimit_スペースのメンバー単位(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	f := setupOAuthFlowFixture(t, tx)
+	q := query.New(testutil.GetTestDB())
+	f := setupOAuthFlowFixture(t)
 	ctx := context.Background()
 
 	cfg := &config.Config{Domain: "example.com"}
@@ -433,17 +576,20 @@ func TestAPIRateLimit_スペースのメンバー単位(t *testing.T) {
 		t.Fatalf("認可コードの交換に失敗: %v", err)
 	}
 
-	// 編集者はトークンの発行の権限を持つため、同じメンバーで個人アクセストークンも使える
-	pat := newPersonalAccessToken(t, tx, f.spaceID, f.spaceMemberID)
+	// 編集者はトークンの発行の権限を持つため、同じメンバーで個人用アクセストークンも使える
+	var pat, otherPAT string
+	testutil.CommitFixture(t, func(tx *sql.Tx) {
+		pat = newPersonalAccessToken(t, tx, f.spaceID, f.spaceMemberID)
 
-	// 同じ人が参加している、別のスペース
-	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("oauth-flow-other").Build()
-	otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
-		WithSpaceID(otherSpaceID).
-		WithUserID(f.userID).
-		WithRole(model.SpaceRoleEditor).
-		Build()
-	otherPAT := newPersonalAccessToken(t, tx, otherSpaceID, otherSpaceMemberID)
+		// 同じ人が参加している、別のスペース
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("oauth-flow-other").Build()
+		otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+			WithSpaceID(otherSpaceID).
+			WithUserID(f.userID).
+			WithRole(model.SpaceRoleEditor).
+			Build()
+		otherPAT = newPersonalAccessToken(t, tx, otherSpaceID, otherSpaceMemberID)
+	})
 	const otherSpacePath = "/api/v1/spaces/oauth-flow-other/members/me"
 
 	// `t` は時間枠が切り替わるまでの秒数で呼び出しの時刻によって変わるため、残量 `r` までを比べる
@@ -453,8 +599,8 @@ func TestAPIRateLimit_スペースのメンバー単位(t *testing.T) {
 		token string
 		want  string
 	}{
-		{name: "個人アクセストークンでの1回目", path: oauthFlowCurrentSpaceMemberPath, token: pat, want: `"space_member";r=4999;`},
-		{name: "同じスペースのOAuthのトークンは個人アクセストークンと合わせて数える", path: oauthFlowCurrentSpaceMemberPath, token: oauthToken.AccessToken, want: `"space_member";r=4998;`},
+		{name: "個人用アクセストークンでの1回目", path: oauthFlowCurrentSpaceMemberPath(t), token: pat, want: `"space_member";r=4999;`},
+		{name: "同じスペースのOAuthのトークンは個人用アクセストークンと合わせて数える", path: oauthFlowCurrentSpaceMemberPath(t), token: oauthToken.AccessToken, want: `"space_member";r=4998;`},
 		{name: "同じ人でもスペースが違えば別に数える", path: otherSpacePath, token: otherPAT, want: `"space_member";r=4999;`},
 	}
 	for _, tt := range tests {
@@ -497,22 +643,147 @@ func testServerPath(t *testing.T, cfg *config.Config, rawURL string) string {
 	return u.EscapedPath()
 }
 
+// getCurrentTokenは、トークンでpathの `getCurrentToken` を呼び、ステータスと本文を返す
+func getCurrentToken(t *testing.T, srv *httptest.Server, path, accessToken string) (int, apigen.Token) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, srv.URL+path, nil)
+	if err != nil {
+		t.Fatalf("リクエストの作成に失敗: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	resp, err := srv.Client().Do(req)
+	if err != nil {
+		t.Fatalf("APIの呼び出しに失敗: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	var body apigen.Token
+	if resp.StatusCode == http.StatusOK {
+		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+			t.Fatalf("本文を読めない: %v", err)
+		}
+	}
+	return resp.StatusCode, body
+}
+
+// TestAPICurrentTokenは、個人用アクセストークンとOAuthのアクセストークンのそれぞれで、トークン認証から
+// `getCurrentToken` までを通し、保存したトークンの種類・スコープ・有効期限が返ることを確かめる
+func TestAPICurrentToken(t *testing.T) {
+	t.Parallel()
+
+	q := query.New(testutil.GetTestDB())
+	f := setupOAuthFlowFixture(t)
+	ctx := context.Background()
+
+	cfg := &config.Config{Domain: "example.com"}
+	srv := newOAuthFlowTestServer(t, cfg, q)
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, srv.Client())
+	conf := &oauth2.Config{
+		ClientID:    f.clientID,
+		RedirectURL: oauthFlowTestRedirectURI,
+		Endpoint: oauth2.Endpoint{
+			TokenURL:  srv.URL + "/oauth/token",
+			AuthStyle: oauth2.AuthStyleInParams,
+		},
+	}
+	verifier := oauth2.GenerateVerifier()
+	oauthToken, err := conf.Exchange(ctx, authorizeWithScopes(t, cfg, q, f, verifier, []string{"page:read", "topic:read"}), oauth2.VerifierOption(verifier))
+	if err != nil {
+		t.Fatalf("認可コードの交換に失敗: %v", err)
+	}
+
+	patExpiresAt := time.Now().UTC().Add(24 * time.Hour).Truncate(time.Second)
+	createPAT := func(scopes []model.Scope) string {
+		var pat string
+		testutil.CommitFixture(t, func(tx *sql.Tx) {
+			token, err := auth.GenerateOpaqueToken(auth.PersonalAccessTokenPrefix)
+			if err != nil {
+				t.Fatalf("個人用アクセストークンの生成に失敗: %v", err)
+			}
+			testutil.NewPersonalAccessTokenBuilder(t, tx).
+				WithSpaceID(f.spaceID).
+				WithSpaceMemberID(f.spaceMemberID).
+				WithTokenDigest(auth.DigestOpaqueToken(token)).
+				WithScopes(scopes).
+				WithExpiresAt(patExpiresAt).
+				Build()
+			pat = token
+		})
+		return pat
+	}
+	pat := createPAT([]model.Scope{model.ScopeDraftPageWrite})
+	draftPageDeletePAT := createPAT([]model.Scope{model.ScopeDraftPageDelete})
+
+	path := "/api/v1/spaces/" + oauthFlowSpaceIdentifier(t) + "/tokens/current"
+
+	t.Run("個人用アクセストークン", func(t *testing.T) {
+		status, body := getCurrentToken(t, srv, path, pat)
+		if status != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200", status)
+		}
+		if body.Kind != apigen.PersonalAccessToken {
+			t.Errorf("kind = %q、期待値 = %q", body.Kind, apigen.PersonalAccessToken)
+		}
+		// draft_page:writeはdraft_page:readを含意する
+		if want := []string{"draft_page:read", "draft_page:write"}; !slices.Equal(body.Scopes, want) {
+			t.Errorf("scopes = %v、期待値 = %v", body.Scopes, want)
+		}
+		if !body.ExpiresAt.Equal(patExpiresAt) {
+			t.Errorf("expires_at = %v、期待値 = %v", body.ExpiresAt, patExpiresAt)
+		}
+	})
+
+	t.Run("draft_page:deleteだけの個人用アクセストークンはdraft_page:readも返す", func(t *testing.T) {
+		status, body := getCurrentToken(t, srv, path, draftPageDeletePAT)
+		if status != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200", status)
+		}
+		// draft_page:deleteはdraft_page:readを含意する
+		if want := []string{"draft_page:read", "draft_page:delete"}; !slices.Equal(body.Scopes, want) {
+			t.Errorf("scopes = %v、期待値 = %v", body.Scopes, want)
+		}
+	})
+
+	t.Run("OAuthのアクセストークン", func(t *testing.T) {
+		status, body := getCurrentToken(t, srv, path, oauthToken.AccessToken)
+		if status != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200", status)
+		}
+		if body.Kind != apigen.OauthAccessToken {
+			t.Errorf("kind = %q、期待値 = %q", body.Kind, apigen.OauthAccessToken)
+		}
+		if want := []string{"topic:read", "page:read"}; !slices.Equal(body.Scopes, want) {
+			t.Errorf("scopes = %v、期待値 = %v", body.Scopes, want)
+		}
+		// トークン応答の `expires_in` は秒単位のため、1秒の誤差を許す
+		if diff := body.ExpiresAt.Sub(oauthToken.Expiry).Abs(); diff > time.Second {
+			t.Errorf("expires_at = %v、期待値 = トークン応答の期限 (%v)", body.ExpiresAt, oauthToken.Expiry)
+		}
+	})
+
+	t.Run("トークンが属さないスペースは404", func(t *testing.T) {
+		if status, _ := getCurrentToken(t, srv, "/api/v1/spaces/oauth-flow-unknown/tokens/current", pat); status != http.StatusNotFound {
+			t.Errorf("ステータス = %d、期待値 = 404", status)
+		}
+	})
+}
+
 // TestOAuthFlow_メタデータからの発見は、クライアントが手書きの設定なしに、APIの401から保護リソースの
 // メタデータ (RFC 9728)・認可サーバーのメタデータ (RFC 8414) を辿り、そこに書かれた値だけで
 // 認可 → 交換 → APIの呼び出し → 失効を行えることを確かめる。メタデータの値と実際の挙動のずれを検出する
 func TestOAuthFlow_メタデータからの発見(t *testing.T) {
 	t.Parallel()
 
-	_, tx := testutil.SetupTx(t)
-	q := testutil.QueriesWithTx(tx)
-	f := setupOAuthFlowFixture(t, tx)
+	q := query.New(testutil.GetTestDB())
+	f := setupOAuthFlowFixture(t)
 	ctx := context.Background()
 
 	cfg := &config.Config{Domain: "example.com"}
 	srv := newOAuthFlowTestServer(t, cfg, q)
 
 	// 1. トークンなしでスペースのAPIを呼び、401の `resource_metadata` を得る
-	resp, err := srv.Client().Get(srv.URL + "/api/v1/spaces/oauth-flow")
+	resp, err := srv.Client().Get(srv.URL + "/api/v1/spaces/" + oauthFlowSpaceIdentifier(t))
 	if err != nil {
 		t.Fatalf("APIの呼び出しに失敗: %v", err)
 	}
@@ -535,7 +806,7 @@ func TestOAuthFlow_メタデータからの発見(t *testing.T) {
 		BearerMethodsSupported []string `json:"bearer_methods_supported"`
 	}
 	getDiscoveryJSON(t, cfg, srv, resourceMetadataURL, &resource)
-	if want := cfg.AppURL() + "/api/v1/spaces/oauth-flow"; resource.Resource != want {
+	if want := cfg.AppURL() + "/api/v1/spaces/" + oauthFlowSpaceIdentifier(t); resource.Resource != want {
 		t.Fatalf("resource = %q、期待値 = %q", resource.Resource, want)
 	}
 	if len(resource.AuthorizationServers) != 1 {
@@ -575,12 +846,14 @@ func TestOAuthFlow_メタデータからの発見(t *testing.T) {
 	// 4. メタデータの値で認可する。scopes_supportedのスコープはすべて要求でき、発行の `iss` はissuerと一致する
 	verifier := oauth2.GenerateVerifier()
 	authorization, err := usecase.NewCreateOAuthAuthorizationUsecase(
+		testutil.GetTestDB(), repository.NewOAuthGrantRepository(q),
 		cfg,
 		repository.NewFeatureFlagRepository(q),
 		repository.NewOAuthApplicationRepository(q),
 		repository.NewSpaceRepository(q),
 		repository.NewSpaceMemberRepository(q),
 		repository.NewOAuthAuthorizationCodeRepository(q),
+		validator.NewOAuthAuthorizationCreateValidator(),
 	).Execute(ctx, usecase.CreateOAuthAuthorizationInput{
 		UserID: f.userID,
 		Params: usecase.OAuthAuthorizationParams{
@@ -593,13 +866,14 @@ func TestOAuthFlow_メタデータからの発見(t *testing.T) {
 			CodeChallengeMethod: server.CodeChallengeMethodsSupported[0],
 			Resource:            resource.Resource,
 		},
-		Approved: true,
+		Approved:      true,
+		GrantedScopes: server.ScopesSupported,
 	})
 	if err != nil {
 		t.Fatalf("メタデータの値での認可に失敗: %v", err)
 	}
 
-	// 5. token_endpointで交換し、束縛したスペースのAPIを呼ぶ
+	// 5. token_endpointで交換し、トークンが属するスペースのAPIを呼ぶ
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, srv.Client())
 	conf := &oauth2.Config{
 		ClientID:    f.clientID,
@@ -617,7 +891,7 @@ func TestOAuthFlow_メタデータからの発見(t *testing.T) {
 		t.Errorf("scope = %v、期待値 = %q", scope, strings.Join(server.ScopesSupported, " "))
 	}
 	spaceStatus := func() int {
-		req, err := http.NewRequest(http.MethodGet, srv.URL+"/api/v1/spaces/oauth-flow", nil)
+		req, err := http.NewRequest(http.MethodGet, srv.URL+"/api/v1/spaces/"+oauthFlowSpaceIdentifier(t), nil)
 		if err != nil {
 			t.Fatalf("リクエストの作成に失敗: %v", err)
 		}

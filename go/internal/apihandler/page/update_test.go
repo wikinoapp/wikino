@@ -41,6 +41,7 @@ func TestHandler_UpdatePage(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	h := page.NewHandler(
+		"https://example.com",
 		usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
 		usecase.NewGetAPIPageUsecase(pageRepo, topicRepo, topicMemberRepo),
 		nil,
@@ -63,7 +64,7 @@ func TestHandler_UpdatePage(t *testing.T) {
 		t.Helper()
 		res, err := h.GetPage(ctx, apigen.GetPageRequestObject{SpaceIdentifier: "page-update-handler", PageNumber: 1})
 		if err != nil {
-			t.Fatalf("GetPage() error = %v", err)
+			t.Fatalf("GetPage()のエラー = %v", err)
 		}
 		fetched, ok := res.(apigen.GetPage200JSONResponse)
 		if !ok {
@@ -82,7 +83,7 @@ func TestHandler_UpdatePage(t *testing.T) {
 	assertPreconditionFailed := func(t *testing.T, err error) {
 		t.Helper()
 		if ae := model.AsAppError(err); ae == nil || ae.Code != model.AppErrCodePreconditionFailed {
-			t.Errorf("error = %v、期待値 = AppErrCodePreconditionFailed", err)
+			t.Errorf("エラー = %v、期待値 = AppErrCodePreconditionFailed", err)
 		}
 	}
 
@@ -90,14 +91,21 @@ func TestHandler_UpdatePage(t *testing.T) {
 
 	t.Run("If-Matchが無ければUseCaseを呼ばずにErrPreconditionRequiredを返す", func(t *testing.T) {
 		if _, err := update(nil, "新しい本文"); !errors.Is(err, apierror.ErrPreconditionRequired) {
-			t.Errorf("error = %v、期待値 = ErrPreconditionRequired", err)
+			t.Errorf("エラー = %v、期待値 = ErrPreconditionRequired", err)
 		}
 	})
 
-	t.Run("弱いエンティティタグは強い比較で一致しない", func(t *testing.T) {
-		weak := "W/" + getETag(t)
+	t.Run("弱いエンティティタグでもダイジェストが違えば一致しない", func(t *testing.T) {
+		weak := `W/"古い版"`
 		_, err := update(&weak, "新しい本文")
 		assertPreconditionFailed(t, err)
+	})
+
+	t.Run("弱いエンティティタグはW/を外したダイジェストで照合し、一致すれば更新する", func(t *testing.T) {
+		weak := "W/" + getETag(t)
+		if _, err := update(&weak, "弱いETagで更新した本文"); err != nil {
+			t.Fatalf("UpdatePage()のエラー = %v", err)
+		}
 	})
 
 	t.Run("引用符の無い値は一致しない", func(t *testing.T) {
@@ -111,7 +119,7 @@ func TestHandler_UpdatePage(t *testing.T) {
 		ifMatch := `"古い版", ` + getETag(t)
 		res, err := update(&ifMatch, "新しい本文")
 		if err != nil {
-			t.Fatalf("UpdatePage() error = %v", err)
+			t.Fatalf("UpdatePage()のエラー = %v", err)
 		}
 		updated, ok := res.(apigen.UpdatePage200JSONResponse)
 		if !ok {
@@ -128,7 +136,7 @@ func TestHandler_UpdatePage(t *testing.T) {
 	t.Run("`*` はページがあれば版を問わず更新する", func(t *testing.T) {
 		wildcard := " * "
 		if _, err := update(&wildcard, "もう一度更新した本文"); err != nil {
-			t.Fatalf("UpdatePage() error = %v", err)
+			t.Fatalf("UpdatePage()のエラー = %v", err)
 		}
 	})
 }

@@ -16,13 +16,20 @@ func TestAPIPrincipal_IsBoundTo(t *testing.T) {
 		want       bool
 	}{
 		{
-			name:       "束縛先のスペースならtrue",
+			name:       "トークンが属するスペースならtrue",
 			principal:  &model.APIPrincipal{Space: &model.Space{Identifier: "alice-wiki"}},
 			identifier: "alice-wiki",
 			want:       true,
 		},
 		{
-			name:       "束縛先と異なるスペースならfalse",
+			// スペース識別子の列はcitextで、Web画面の検索も大文字と小文字を区別しない
+			name:       "大文字と小文字だけが違う識別子ならtrue",
+			principal:  &model.APIPrincipal{Space: &model.Space{Identifier: "alice-wiki"}},
+			identifier: "Alice-WIKI",
+			want:       true,
+		},
+		{
+			name:       "トークンが属さないスペースならfalse",
 			principal:  &model.APIPrincipal{Space: &model.Space{Identifier: "alice-wiki"}},
 			identifier: "bob-wiki",
 			want:       false,

@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// GetSpaceはトークンを束縛したスペースを返す (GET /api/v1/spaces/{space_identifier})
+// GetSpaceはトークンが属するスペースを返す (GET /api/v1/spaces/{space_identifier})
 func (h *Handler) GetSpace(ctx context.Context, request apigen.GetSpaceRequestObject) (apigen.GetSpaceResponseObject, error) {
 	output, err := h.getAPISpaceUC.Execute(ctx, usecase.GetAPISpaceInput{
 		Principal:       middleware.APIPrincipalFromContext(ctx),

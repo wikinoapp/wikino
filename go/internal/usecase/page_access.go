@@ -6,6 +6,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -96,15 +97,22 @@ func fetchPageAccessDataAllowingGuest(ctx context.Context, repos pageAccessRepos
 
 // authorizePageUpdateはページ更新の認可チェックを行う
 func authorizePageUpdate(ctx context.Context, data *pageAccessData) error {
-	if data.spaceMember == nil {
-		return &model.AppError{
-			Code:    model.AppErrCodeForbidden,
-			UserMsg: i18n.T(ctx, "error_forbidden"),
-		}
-	}
+	return authorizePageAccess(ctx, data, policy.Authorizer.CanUpdatePage)
+}
 
-	authorizer := newAuthorizer(data.spaceMember, data.topicMember)
-	if !authorizer.CanUpdatePage() {
+// authorizeDraftPageShowは下書きの参照 (編集履歴の差分など) の認可チェックを行う
+func authorizeDraftPageShow(ctx context.Context, data *pageAccessData) error {
+	return authorizePageAccess(ctx, data, policy.Authorizer.CanShowDraftPage)
+}
+
+// authorizeDraftPageSaveは下書きの保存 (自動保存・手動保存・編集履歴からの復元) の認可チェックを行う
+func authorizeDraftPageSave(ctx context.Context, data *pageAccessData) error {
+	return authorizePageAccess(ctx, data, policy.Authorizer.CanSaveDraftPage)
+}
+
+// authorizePageAccessは、スペースメンバーであり、ページのトピックで判定を満たすかを確かめる
+func authorizePageAccess(ctx context.Context, data *pageAccessData, can func(policy.Authorizer) bool) error {
+	if data.spaceMember == nil || !can(newAuthorizer(data.spaceMember, data.topicMember)) {
 		return &model.AppError{
 			Code:    model.AppErrCodeForbidden,
 			UserMsg: i18n.T(ctx, "error_forbidden"),

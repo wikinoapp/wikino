@@ -11,14 +11,14 @@ import (
 // ように、値の先頭に付ける
 type OpaqueTokenPrefix string
 
-// PersonalAccessTokenPrefixは個人アクセストークンの接頭辞
+// PersonalAccessTokenPrefixは個人用アクセストークンの接頭辞
 const PersonalAccessTokenPrefix OpaqueTokenPrefix = "wkp_"
 
 // OAuthClientSecretPrefixはOAuthアプリのクライアントシークレットの接頭辞
 const OAuthClientSecretPrefix OpaqueTokenPrefix = "wks_"
 
 // OAuthAccessTokenPrefixはOAuthのアクセストークンの接頭辞。公開APIのトークン照合は、
-// この接頭辞で個人アクセストークンと見分ける
+// この接頭辞で個人用アクセストークンと見分ける
 const OAuthAccessTokenPrefix OpaqueTokenPrefix = "wka_"
 
 // OAuthRefreshTokenPrefixはOAuthのリフレッシュトークンの接頭辞
@@ -27,6 +27,10 @@ const OAuthRefreshTokenPrefix OpaqueTokenPrefix = "wkr_"
 // OAuthAuthorizationCodePrefixはOAuthの認可コードの接頭辞。コードはリダイレクトの直後に
 // 数分で使い切られ、ログや漏洩時に種類を見分ける場面が無いため、接頭辞を付けない
 const OAuthAuthorizationCodePrefix OpaqueTokenPrefix = ""
+
+// OAuthDeviceCodePrefixはOAuthのデバイスコードの接頭辞。認可コードと同じく数分で使い切られ、
+// ログや漏洩時に種類を見分ける場面が無いため、接頭辞を付けない
+const OAuthDeviceCodePrefix OpaqueTokenPrefix = ""
 
 // opaqueTokenRandomBytesはopaqueトークンの本体にする乱数のバイト数
 const opaqueTokenRandomBytes = 32

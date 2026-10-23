@@ -10,7 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
 
-// PersonalAccessTokenRepositoryは個人アクセストークンリポジトリ
+// PersonalAccessTokenRepositoryは個人用アクセストークンリポジトリ
 type PersonalAccessTokenRepository struct {
 	q *query.Queries
 }
@@ -25,7 +25,7 @@ func (r *PersonalAccessTokenRepository) WithTx(tx *sql.Tx) *PersonalAccessTokenR
 	return &PersonalAccessTokenRepository{q: r.q.WithTx(tx)}
 }
 
-// CreatePersonalAccessTokenInputは個人アクセストークン作成の入力パラメータ
+// CreatePersonalAccessTokenInputは個人用アクセストークン作成の入力パラメータ
 type CreatePersonalAccessTokenInput struct {
 	SpaceID        model.SpaceID
 	SpaceMemberID  model.SpaceMemberID
@@ -36,7 +36,7 @@ type CreatePersonalAccessTokenInput struct {
 	ExpiresAt      time.Time
 }
 
-// Createは個人アクセストークンを作成する
+// Createは個人用アクセストークンを作成する
 func (r *PersonalAccessTokenRepository) Create(ctx context.Context, input CreatePersonalAccessTokenInput) (*model.PersonalAccessToken, error) {
 	row, err := r.q.CreatePersonalAccessToken(ctx, query.CreatePersonalAccessTokenParams{
 		SpaceID:        string(input.SpaceID),
@@ -54,7 +54,7 @@ func (r *PersonalAccessTokenRepository) Create(ctx context.Context, input Create
 	return r.toModel(row), nil
 }
 
-// FindByTokenDigestはトークンダイジェストで個人アクセストークンを取得する。見つからない
+// FindByTokenDigestはトークンダイジェストで個人用アクセストークンを取得する。見つからない
 // 場合は (nil, nil) を返す。失効や期限切れのトークンも返すため、有効かどうかは呼び出し側が
 // 判定する。
 //
@@ -71,7 +71,7 @@ func (r *PersonalAccessTokenRepository) FindByTokenDigest(ctx context.Context, t
 	return r.toModel(row), nil
 }
 
-// ListUnrevokedBySpaceMemberは、スペースメンバー自身の失効していない個人アクセストークンを
+// ListUnrevokedBySpaceMemberは、スペースメンバー自身の失効していない個人用アクセストークンを
 // 新しい順に返す。期限切れのトークンも含めるため、有効かどうかは呼び出し側が判定する。
 func (r *PersonalAccessTokenRepository) ListUnrevokedBySpaceMember(ctx context.Context, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) ([]*model.PersonalAccessToken, error) {
 	rows, err := r.q.ListUnrevokedPersonalAccessTokensBySpaceMember(ctx, query.ListUnrevokedPersonalAccessTokensBySpaceMemberParams{
@@ -100,7 +100,7 @@ func (r *PersonalAccessTokenRepository) UpdateLastUsedAt(ctx context.Context, id
 	})
 }
 
-// Revokeはスペースメンバー自身の個人アクセストークンを失効する。対象が無いか既に失効して
+// Revokeはスペースメンバー自身の個人用アクセストークンを失効する。対象が無いか既に失効して
 // いる場合は (nil, nil) を返す。IDはURLからこのメソッドへ渡ってくるため、UUIDでない文字列は
 // データベースへ送らず「見つからない」として答える。
 func (r *PersonalAccessTokenRepository) Revoke(ctx context.Context, id model.PersonalAccessTokenID, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) (*model.PersonalAccessToken, error) {

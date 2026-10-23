@@ -12,6 +12,15 @@ INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = as
 INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
 WHERE a.id = $1 AND a.space_id = $2;
 
+-- name: FindAttachmentBlobByIDAndSpace :one
+-- IDとスペースIDで添付ファイルを取得する (ファイル名に加えて、種類・バイト数・ストレージキーを含む)。
+-- 公開APIの添付ファイルの取得が、メタデータの応答と署名付きURLの生成に使う
+SELECT a.id, a.space_id, asb.filename, asb.content_type AS blob_content_type, asb.byte_size AS blob_byte_size, asb.key AS blob_key
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.id = $1 AND a.space_id = $2;
+
 -- name: FindAttachmentsByIDsAndSpace :many
 -- IDリストとスペースIDで添付ファイルを一括取得する (バッチレンダリング用)
 SELECT a.id, a.space_id, asb.filename

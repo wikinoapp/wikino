@@ -16,16 +16,18 @@ type HiddenField struct {
 //
 // NotMemberとNoPermissionのどちらかが真なら、ログイン中のユーザーは連携先のスペースで
 // アプリを許可できず、同意の代わりにその理由とクライアントへ戻るボタンを示す。
+// ScopeOptionsは要求されたスコープの選択肢で、FormErrorsは拒否された送信のエラー。
 type NewData struct {
 	CSRFToken       string
 	HiddenFields    []HiddenField
 	ApplicationName string
 	SpaceName       string
 	UserAtname      string
-	Scopes          []model.Scope
+	ScopeOptions    []components.APITokenScopeOption
 	RedirectHost    string
 	NotMember       bool
 	NoPermission    bool
+	FormErrors      *model.ValidationError
 }
 
 // Newは外部アプリからの認可要求を利用者に示し、許可するか拒否するかを選ばせる画面を表示します。
@@ -68,17 +70,28 @@ templ New(data NewData) {
 				} else if data.NoPermission {
 					<p>{ templates.T(ctx, "oauth_authorization_new_no_permission") }</p>
 				} else {
-					<div class="grid gap-3">
-						<p>{ templates.T(ctx, "oauth_authorization_new_scopes_label", map[string]any{"ApplicationName": data.ApplicationName}) }</p>
-						<ul class="grid gap-3">
-							for _, scope := range data.Scopes {
-								<li class="grid gap-1">
-									<span class="font-bold">{ components.APITokenScopeLabel(ctx, scope) }</span>
-									<span class="text-sm text-muted-foreground">{ components.APITokenScopeHint(ctx, scope) }</span>
-								</li>
-							}
-						</ul>
-					</div>
+					// 選択肢のグループは個人用アクセストークンの発行画面と同じく、basecoatの .fieldsetでまとめます。
+					<fieldset class="fieldset gap-3">
+						<legend class="label">
+							{ templates.T(ctx, "oauth_authorization_new_scopes_label", map[string]any{"ApplicationName": data.ApplicationName}) }
+						</legend>
+						<p class="text-muted-foreground text-sm">
+							{ templates.T(ctx, "oauth_authorization_new_scopes_hint") }
+						</p>
+						if hasScopesError(data.FormErrors) {
+							<div id={ scopesErrorID }>
+								for _, errorMsg := range data.FormErrors.GetFieldErrors(grantedScopesField) {
+									<p class="text-sm text-error">{ errorMsg }</p>
+								}
+							</div>
+						}
+						@components.APITokenScopeCheckboxes(components.APITokenScopeCheckboxesData{
+							Name:      grantedScopesField,
+							Options:   data.ScopeOptions,
+							ErrorID:   scopesErrorIDIf(hasScopesError(data.FormErrors)),
+							Autofocus: hasScopesError(data.FormErrors),
+						})
+					</fieldset>
 				}
 
 				<p class="text-sm text-muted-foreground">
@@ -106,4 +119,23 @@ templ New(data NewData) {
 			</form>
 		}
 	</div>
+}
+
+// grantedScopesFieldは、利用者が選んだ付与するスコープを送るフォームの項目名
+const grantedScopesField = "granted_scopes"
+
+// scopesErrorIDは、スコープの選択のエラーを収める要素のid
+const scopesErrorID = grantedScopesField + "-error"
+
+// hasScopesErrorは、拒否された送信にスコープの選択のエラーがあるかを返します。
+func hasScopesError(formErrors *model.ValidationError) bool {
+	return formErrors != nil && formErrors.HasFieldError(grantedScopesField)
+}
+
+// scopesErrorIDIfは、エラーがあればチェックボックスから参照するエラーの要素のidを返します。
+func scopesErrorIDIf(hasError bool) string {
+	if hasError {
+		return scopesErrorID
+	}
+	return ""
 }

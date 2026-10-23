@@ -1,0 +1,2906 @@
+=== wikino --help --json
+{
+  "args": [],
+  "command": "wikino",
+  "errors": "  The exit code tells the kind of failure.\n  0    Success\n  1    Unexpected failure: network failure, server error (5xx), etc.\n  2    Usage error: invalid arguments or flags, unknown subcommand\n  3    Authentication failed: not logged in, invalid or expired token (401)\n  4    Permission denied: missing token scopes, etc. (403)\n  5    Not found (404)\n  6    Conflict: version mismatch (412) or missing (428), already exists (409)\n  7    Validation error (422)\n  8    Rate limited (429)\n  9    Confirmation required: an irreversible operation or publishing without `--yes`. Prints what will happen and the command to run after approval to stdout\n  130  Interrupted: Ctrl-C\n\n  When stderr is not a TTY or `--json` is given, errors are printed to stderr as single-line JSON.\n    {\"error\": {\"code\": \"usage_error\", \"message\": \"...\", \"hint\": \"...\", \"status\": 412}}\n  `hint` tells what to do next. `status` is the HTTP status of the API response and is omitted for errors not from the API.",
+  "examples": "  # Show the version\n  wikino --version",
+  "flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Show the version",
+      "name": "version",
+      "shorthand": "",
+      "type": "bool"
+    }
+  ],
+  "inherited_flags": [],
+  "long": "A command-line tool that reads and writes pages and drafts through the Wikino public API.",
+  "output": "  Prints human-readable output when stdout is a TTY, and JSON when it is not or when `--json` is given.\n  Selecting fields with `--fields` or giving `--jq` also prints JSON.\n  Only results go to stdout; progress and warnings go to stderr.",
+  "short": "Command-line tool for Wikino",
+  "subcommands": [
+    {
+      "command": "wikino api",
+      "name": "api",
+      "short": "Call the public API directly with authentication"
+    },
+    {
+      "command": "wikino attachment",
+      "name": "attachment",
+      "short": "Work with attachments"
+    },
+    {
+      "command": "wikino auth",
+      "name": "auth",
+      "short": "Manage login and credentials"
+    },
+    {
+      "command": "wikino draft",
+      "name": "draft",
+      "short": "Work with page drafts"
+    },
+    {
+      "command": "wikino page",
+      "name": "page",
+      "short": "Work with pages"
+    },
+    {
+      "command": "wikino skill",
+      "name": "skill",
+      "short": "Manage the skill for coding agents"
+    },
+    {
+      "command": "wikino topic",
+      "name": "topic",
+      "short": "Work with topics"
+    }
+  ],
+  "usage": "wikino <command>"
+}
+
+=== wikino api --help --json
+{
+  "args": [
+    {
+      "name": "method",
+      "required": true,
+      "variadic": false
+    },
+    {
+      "name": "path",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino api",
+  "errors": "  1  Server error (5xx) or network failure, or `--jq` on a non-JSON response\n  2  Unsupported method, a path that is not from `/api/v1` (a URL or one containing `..`), a malformed `--header` or an authentication header, `--fields`, `--input` on GET, an unreadable `--input` file, or `--input -` on an operation that needs confirmation\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks a required scope (403)\n  5  Nothing matches the path (404)\n  6  Conflict (409), version mismatch (412), or missing version (428). Pass `If-Match` with `--header`\n  7  Invalid body (400, 422)\n  8  Rate limited (429)\n  9  An operation that needs the user's confirmation (deleting or publishing a draft) without `--yes`",
+  "examples": "  # Get only 5 pages\n  wikino api GET '/spaces/{space}/pages?limit=5'\n\n  # Change the title of page 12 (the version is the etag of `wikino page get 12`)\n  echo '{\"title\": \"Weekly meeting\"}' | wikino api PATCH '/spaces/{space}/pages/12' --input - --header 'If-Match: \"d41d8cd9\"'\n\n  # Check the request without sending it\n  wikino api POST '/spaces/{space}/pages' --input page.json --dry-run\n\n  # Get the OpenAPI description\n  wikino api GET /openapi.yaml",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Print the requests that would be sent without sending them",
+      "name": "dry-run",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "[]",
+      "description": "Header (header) to add to the request, as \"Name: value\" (can be repeated)",
+      "name": "header",
+      "shorthand": "H",
+      "type": "stringArray"
+    },
+    {
+      "default": "",
+      "description": "File (file) to read the request body from (- for standard input)",
+      "name": "input",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Run without asking for the user's confirmation",
+      "name": "yes",
+      "shorthand": "",
+      "type": "bool"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Calls the public API (`/api/v1`) directly with the credentials you are logged in with.\nUse it for operations the CLI has no command for yet.\n\n<path> is a path from `/api/v1` and may include a query (e.g. /spaces/{space}/pages?limit=5).\n`{space}` in the path is replaced with the identifier of the space the command runs in (`--space`, `WIKINO_SPACE`, or the default space).\nURLs, paths starting with `/api/v1`, and paths containing `..` are rejected.\n\nUnless Content-Type is given with `--header`, the `--input` body is sent as JSON Merge Patch (`application/merge-patch+json`) for PATCH and as JSON otherwise.\nOperations that need the user's confirmation, such as irreversible operations and publishing, are not sent without `--yes`.\nWhen not on a TTY, it prints what will happen (`changes`) and the command to run after approval (`confirm_command`) as JSON, and exits with code 9.\nWith `--dry-run`, no requests are sent to the public API, including read requests, and the requests that would be sent are printed.\n\nCheck the operations and paths of the API in the OpenAPI description, available with `wikino api GET /openapi.yaml`.",
+  "output": "  Prints the body of a successful response as returned by the API (the CLI adds no fields).\n  JSON responses are indented on a TTY. With `--jq`, prints the result of applying it to the response JSON.\n  Prints nothing for responses without a body (such as 204).\n  With `--dry-run`, prints the requests that would be sent as {\"dry_run\": true, \"requests\": [{\"method\", \"url\", \"headers\", \"body\"}]}. The Authorization value is redacted.\n  Failed responses (4xx, 5xx) are printed to standard error as errors, as with other commands.",
+  "short": "Call the public API directly with authentication",
+  "subcommands": [],
+  "usage": "wikino api <method> <path> [flags]"
+}
+
+=== wikino attachment --help --json
+{
+  "args": [],
+  "command": "wikino attachment",
+  "errors": "  Missing and unknown subcommands fail as usage errors (exit code 2).",
+  "examples": "  # Save an attachment referenced by a body to the current directory with its original file name\n  wikino attachment get /attachments/01234567-89ab-cdef-0123-456789abcdef",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Works with the attachments of a space.\n\nPage bodies refer to attachments by the path `/attachments/{ID}` (e.g. `![diagram](/attachments/01234567-89ab-cdef-0123-456789abcdef)`).\nTo check a diagram or screenshot in a body, pass that ID to `wikino attachment get` and save the file locally.",
+  "output": "  See the help of each subcommand.",
+  "short": "Work with attachments",
+  "subcommands": [
+    {
+      "command": "wikino attachment get",
+      "name": "get",
+      "short": "Save an attachment"
+    }
+  ],
+  "usage": "wikino attachment <command>"
+}
+
+=== wikino attachment get --help --json
+{
+  "args": [
+    {
+      "name": "attachment_id",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino attachment get",
+  "errors": "  1  Downloading from the signed URL failed (including expiry and interruption). Run the same command again. Or writing to the destination failed (permissions, disk space, and so on)\n  2  The ID is not a UUID, the destination directory does not exist, a file already exists at the destination (overwrite with `--clobber`), `--output -` is combined with `--json`, `--fields`, `--jq`, or `--clobber`, `--output -` is given while standard output is a terminal, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the attachment:read scope (403)\n  5  The attachment does not exist or belongs to another space (404). Check the ID in `/attachments/{ID}` in the body and the space",
+  "examples": "  # Save an attachment to the current directory with its original file name\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef\n\n  # Pass the reference path from a body as is and save to the directory images/\n  wikino attachment get /attachments/01234567-89ab-cdef-0123-456789abcdef -O images/\n\n  # Save with a given file name, overwriting an existing file\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O diagram.png --clobber\n\n  # Print the contents to standard output\n  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O - > diagram.png",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Overwrite an existing file at the destination",
+      "name": "clobber",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Destination file or directory (path; - for standard output)",
+      "name": "output",
+      "shorthand": "O",
+      "type": "string"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Downloads the attachment with the given ID and saves it to a file.\nThe ID is the one in `/attachments/{ID}` in a body. You can also pass it with `/attachments/` left on.\n\nBy default, the file is saved to the current directory with its original file name.\nThe original file name is first cleaned into a name that points to a single file in the destination directory,\nfor example by removing path separators, control characters, and leading and trailing `.`.\n`--output` (`-O`) sets the destination file or directory, and `-` prints the contents to standard output.\nAn existing file is not overwritten and the command fails, unless `--clobber` is given.\n\nThe contents are downloaded from a short-lived signed URL returned by the API, without the token.",
+  "output": "  Prints the following fields of the saved file.\n    id            ID of the attachment\n    path          Path of the saved file\n    filename      Original file name at upload. The saved file uses the cleaned name\n    content_type  Type of the file (e.g. image/png). null if not recorded\n    byte_size     Number of bytes saved\n  With `--output -`, only the contents are printed to standard output, without these fields.",
+  "short": "Save an attachment",
+  "subcommands": [],
+  "usage": "wikino attachment get <attachment_id> [flags]"
+}
+
+=== wikino auth --help --json
+{
+  "args": [],
+  "command": "wikino auth",
+  "errors": "  A missing or unknown subcommand fails as a usage error (exit code 2).",
+  "examples": "  # Log in by approving in the browser\n  wikino auth login my-space\n\n  # Over SSH, log in by entering a code in a browser on another device\n  wikino auth login my-space --device\n\n  # Log in with a personal access token from stdin\n  wikino auth login my-space --with-token < token.txt\n\n  # Check saved credentials and token scopes\n  wikino auth status",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Log in to Wikino spaces and manage saved credentials.\n\nCredentials are saved per combination of host, space, and member.\nTokens are saved in the OS keychain, or in a 0600 file in the config directory (`$XDG_CONFIG_HOME/wikino/`, or `~/.config/wikino/` if unset) where the keychain is unavailable.\nSet `WIKINO_TOKEN_STORE=file` to always save to a file.\n\nCommands decide the host, space, and member in this order.\n  Host: `--host` → `WIKINO_HOST` → default host → https://wikino.app\n  Space: `--space` → `WIKINO_SPACE` → default space → the only space with credentials\n  Member: `--member` → `WIKINO_MEMBER` → the space's default member → the only member with credentials in the space\n\nA token in `WIKINO_TOKEN` takes precedence over saved credentials, and nothing is written to disk.\nIn that case, give the space with `--space` or `WIKINO_SPACE`, and do not give `--member` or `WIKINO_MEMBER`.",
+  "output": "  See the help of each subcommand.",
+  "short": "Manage login and credentials",
+  "subcommands": [
+    {
+      "command": "wikino auth login",
+      "name": "login",
+      "short": "Log in to a space"
+    },
+    {
+      "command": "wikino auth logout",
+      "name": "logout",
+      "short": "Remove saved credentials"
+    },
+    {
+      "command": "wikino auth status",
+      "name": "status",
+      "short": "Check credentials and tokens"
+    },
+    {
+      "command": "wikino auth switch",
+      "name": "switch",
+      "short": "Switch the default space and member"
+    }
+  ],
+  "usage": "wikino auth <command>"
+}
+
+=== wikino auth login --help --json
+{
+  "args": [
+    {
+      "name": "space",
+      "required": false,
+      "variadic": false
+    }
+  ],
+  "command": "wikino auth login",
+  "errors": "  2  No space is given, `--member` is given, `--scopes` is empty or has an unknown scope, `--with-token` is combined with `--scopes` or `--device`, or the token on stdin is empty or malformed\n  3  Approval was denied on the authorization page (authorization_denied), the authorization response did not match the request, the authorization server returned an error, or it does not support device authorization (oauth_error), or the token is invalid or expired (401)\n  5  The token does not belong to the space (404). Give the identifier of the space that issued the token\n  1  Approval did not happen within 5 minutes or before the device authorization code expired (login_timeout), the authorization server's response could not be read (response_error), the connection failed, or saving the token or configuration (or restoring after a failed save) failed\n  Nothing is saved if API validation fails.\n  If only removing the token from its previous store fails, login succeeds with a warning, and the removal can be retried with login or logout.",
+  "examples": "  # Log in by approving in the browser\n  wikino auth login my-space\n\n  # Over SSH, log in by entering a code in a browser on another device\n  wikino auth login my-space --device\n\n  # Request only the read and draft scopes\n  wikino auth login my-space --scopes page:read,draft_page:read,draft_page:write\n\n  # Log in with a personal access token saved in a file\n  wikino auth login my-space --with-token < token.txt\n\n  # Log in to a development server\n  wikino auth login my-space --host http://localhost:4000",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Log in with device authorization (approve by entering a code in a browser on another device)",
+      "name": "device",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "[]",
+      "description": "Scopes to request (comma-separated). Defaults to all scopes that can be granted to a token",
+      "name": "scopes",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Read a personal access token from stdin",
+      "name": "with-token",
+      "shorthand": "",
+      "type": "bool"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Log in to a space and save the credentials.\n\nBy default, Wikino's authorization page opens in the browser and a token is obtained after approval (OAuth).\nThe URL of the authorization page is also printed to stderr; open it if the browser does not open.\nApproval is awaited for up to 5 minutes.\n\nWhen connected over SSH, when there is no display, or when launching the browser or listening on a port fails, device authorization is used instead.\nWith `--device`, device authorization is always used.\nWith device authorization, a verification URL and a code are printed to stderr; open the URL in a browser on your own device, enter the code, and approve.\nApproval is awaited until the code expires (10 minutes on Wikino).\n\nBy default all scopes that can be granted to a token are requested, and the granted scopes can be chosen on the authorization page.\nTo request fewer scopes, give `--scopes`.\nOAuth access tokens are refreshed automatically shortly before they expire, before calling the API.\n\nWith `--with-token`, a personal access token issued in the space settings is read from stdin.\n\nEither way, the token is saved only after the API confirms it works in the space; nothing is saved otherwise.\nWhen logging in with the browser, a token that was not saved is revoked on the server.\nThe member is determined by the token, so do not give `--member`.\n\nIf there is no default yet, the logged-in combination becomes the default.\nIf the space has no default member yet, the logged-in member becomes the space's default.\nLogging in again as the same member replaces the saved token.",
+  "output": "  Prints the saved credentials.\n    host           Host URL\n    space          Space identifier\n    member         Member (id, atname, name)\n    token_store    Where the token is saved (keyring, file)\n    default        Whether this is the default combination\n    space_default  Whether this is the space's default member\n    scopes         Scopes granted when logging in with the browser (not printed with `--with-token`)\n  The authorization page URL, the device authorization's verification URL and code, and a warning when the keychain is unavailable and the token is saved to a file, are printed to stderr.",
+  "short": "Log in to a space",
+  "subcommands": [],
+  "usage": "wikino auth login [<space>] [flags]"
+}
+
+=== wikino auth logout --help --json
+{
+  "args": [
+    {
+      "name": "space",
+      "required": false,
+      "variadic": false
+    }
+  ],
+  "command": "wikino auth logout",
+  "errors": "  2  The space or member cannot be decided (candidates are shown in the hint)\n  3  There are no credentials for the given space or member\n  1  The token or configuration could not be removed. Credentials remain in the configuration so logout can be retried.",
+  "examples": "  # Remove the credentials for the space my-space\n  wikino auth logout my-space\n\n  # Remove the credentials for another member of the same space\n  wikino auth logout my-space --member bot",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Remove saved credentials (the token and the configured combination).\n\nThe target is decided in the same order as other commands.\n`<space>` means the same as `--space`.\nWhen the space has credentials for several members, choose one with `--member`.\n\nCredentials from a browser login are removed after their refresh token is revoked on the server.\nIf revocation fails (for example, the host is unreachable), the local credentials are still removed and a warning is printed to stderr.\nIn that case, disconnect the app on Wikino's connected apps page.\n\nPersonal access tokens are not revoked on the server.\nTo make a token unusable, delete it in the space settings.\nA token in `WIKINO_TOKEN` is not saved, so it is not a target of this command.\n\nRemoving the default combination clears the default.",
+  "output": "  Prints the removed credentials with the same fields as `wikino auth login`. default and space_default are the values before removal.",
+  "short": "Remove saved credentials",
+  "subcommands": [],
+  "usage": "wikino auth logout [<space>] [flags]"
+}
+
+=== wikino auth status --help --json
+{
+  "args": [],
+  "command": "wikino auth status",
+  "errors": "  2  With `WIKINO_TOKEN`, no space is given or `--member` is given\n  3  Not logged in, the saved token is missing, or the token is invalid or expired (401)\n  5  The token does not belong to the space (404)\n  If some credentials could not be checked, all items are printed and the command exits with the exit code of the first failed item.\n  The reason is in the item's `error`, not on stderr.",
+  "examples": "  # Check all saved credentials\n  wikino auth status\n\n  # Print only the token scopes for the space my-space\n  wikino auth status --space my-space --jq '.items[].token.scopes'",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "For each saved credential, fetch and print the host, space, member, and the token's kind, scopes, and expiry from the API.\n\nWith `--host`, `--space`, or `--member`, only matching credentials are printed.\nWhen a token is given in `WIKINO_TOKEN`, that token is checked instead of saved credentials (`--space` or `WIKINO_SPACE` is required).\n\nUse this before an operation to check that the token has the scopes it needs.\nWhether an operation is allowed also depends on the member's permissions, not only the scopes.",
+  "output": "  Prints `{\"items\": [...]}` with these fields per credential.\n    host, space, member, default, space_default  Same as `wikino auth login`\n    token_store  Where the token is saved (keyring, file, or env for `WIKINO_TOKEN`)\n    token        Token information (kind, scopes, expires_at). null when it could not be fetched\n    error        Why it could not be fetched (code, message, hint, status). Omitted on success",
+  "short": "Check credentials and tokens",
+  "subcommands": [],
+  "usage": "wikino auth status [flags]"
+}
+
+=== wikino auth switch --help --json
+{
+  "args": [
+    {
+      "name": "space",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino auth switch",
+  "errors": "  2  No `--member` is given and the space's default member cannot be decided (candidates are shown in the hint)\n  3  There are no credentials for the space or member",
+  "examples": "  # Switch the default space\n  wikino auth switch my-space\n\n  # Also switch the space's default member\n  wikino auth switch my-space --member bot",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Switch the default space to `<space>`.\nWith `--member`, also switch the space's default member.\n\nWithout `--member`, the space's default member is used.\nIf there is no default member and several have credentials, the command fails and asks for `--member`.\n\nThe default host becomes the host given by `--host` or `WIKINO_HOST` (the current default host if not given).",
+  "output": "  Prints the new default credentials with the same fields as `wikino auth login`.",
+  "short": "Switch the default space and member",
+  "subcommands": [],
+  "usage": "wikino auth switch <space> [flags]"
+}
+
+=== wikino draft --help --json
+{
+  "args": [],
+  "command": "wikino draft",
+  "errors": "  Fails as a usage error (exit code 2) when no subcommand or an unknown subcommand is given.",
+  "examples": "  # List your drafts\n  wikino draft list\n\n  # Create a draft of page 12\n  wikino draft create 12\n\n  # Read the draft of page 12 as Markdown in the Wikino file format\n  wikino draft get 12 --md",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Works with the drafts of pages owned by the token's owner.\n\nA draft is for rewriting a page without publishing it, and there is one per pair of page and member.\nDrafts are referred to by page number.\nYou cannot work with other members' drafts.",
+  "output": "  See the help of each subcommand.",
+  "short": "Work with page drafts",
+  "subcommands": [
+    {
+      "command": "wikino draft create",
+      "name": "create",
+      "short": "Create a draft"
+    },
+    {
+      "command": "wikino draft delete",
+      "name": "delete",
+      "short": "Delete a draft"
+    },
+    {
+      "command": "wikino draft get",
+      "name": "get",
+      "short": "Print the content of a draft"
+    },
+    {
+      "command": "wikino draft list",
+      "name": "list",
+      "short": "List drafts"
+    },
+    {
+      "command": "wikino draft publish",
+      "name": "publish",
+      "short": "Publish a draft"
+    },
+    {
+      "command": "wikino draft revision",
+      "name": "revision",
+      "short": "Work with draft revisions"
+    },
+    {
+      "command": "wikino draft update",
+      "name": "update",
+      "short": "Update a draft"
+    }
+  ],
+  "usage": "wikino draft <command>"
+}
+
+=== wikino draft create --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": false,
+      "variadic": false
+    }
+  ],
+  "command": "wikino draft create",
+  "errors": "  1  Network failure or server error (5xx). The draft may have been created.\n     Check with `wikino draft get <page_number>` for an existing page, or `wikino draft list` for a new page, before sending again\n  2  Neither or both of a page number and `--topic` are given, the page number or `--topic` is not a positive integer, both `--body` and `--body-file` are given,\n     the body file cannot be read or is not UTF-8, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the draft_page:write scope, lacks page:write for a new page, or lacks page:read for checking the linked pages of the body (403)\n  5  You cannot create drafts in the page or topic, or the page does not exist when checking the linked pages of the body (404)\n  6  The page already has a draft of yours (409). Read the current draft with `wikino draft get <page_number>` and update it with `wikino draft update <page_number>`\n  7  Invalid input such as the title, or the page or topic does not exist or cannot be seen (422). Fix the field shown in the error.\n     If the page or topic number is the problem, check it with `wikino page list` or `wikino topic list`",
+  "examples": "  # Create a draft of page 12 with its current content\n  wikino draft create 12\n\n  # Create a draft of page 12 with the content of a file as the body\n  wikino draft create 12 --body-file minutes.md\n\n  # Create a draft of a new page titled \"Minutes\" in topic 3, and print only the page number and version\n  wikino draft create --topic 3 --title 'Minutes' --body '# Minutes' --fields page_number,etag\n\n  # Check the request that would be sent and where the wikilinks in the body point (without sending it)\n  wikino draft create 12 --body-file minutes.md --dry-run",
+  "flags": [
+    {
+      "default": "",
+      "description": "Body text (Markdown) as a string",
+      "name": "body",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Read the body from the file at path (`-` reads from standard input)",
+      "name": "body-file",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print the requests that would be sent without sending them",
+      "name": "dry-run",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "The draft's title. For an existing page, defaults to the page's current title. The page title rules (up to 200 characters, without `/`, `\\`, `:`, or control characters, and without a leading or trailing space) are checked when publishing",
+      "name": "title",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "The number of the topic to create a draft of a new page in. Cannot be combined with a page number",
+      "name": "topic",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Creates a draft for rewriting a page without publishing it.\nOne revision of the draft's history is created at the same time.\n\nTo create a draft of an existing page, pass the page number as the argument.\nIf `--title` and the body are omitted, the page's current title and body become the draft.\nYou cannot create one when the page already has a draft of yours.\nRead the current draft with `wikino draft get` and update it with `wikino draft update`.\n\nTo create a draft of a new page, specify the topic with `--topic` instead of a page number.\nAs when creating one in the web UI, an unpublished page without a title or body is created, along with its draft.\nOmitting `--title` gives a draft without a title, and omitting the body gives a draft with an empty body.\n`page_number` in the output is the number of the new page.\n\nPass the body with `--body` or `--body-file`; `--body-file -` reads it from standard input.\nThe body is sent as given, including trailing newlines.\nTitle rules (such as no duplicates within a topic) are checked when the draft is published.\n\nWhen a wikilink in the body points to a page that does not exist, the linked page is created as an unpublished page.\nWhen a body is given, the command checks where the wikilinks in the body point before creating, and if any linked pages will be created, it lists them on standard error after creating.\nThe list is an estimate made just before creating; if other users create or delete pages in between, it can differ from the actual result.\nTo check for unintended linked pages beforehand, use `--dry-run`.\n\nCreating a draft of a new page is not idempotent.\nWhen the result is unknown (such as after a network failure), check whether it was created with `wikino draft list` before sending again.\n\nCreating a draft of a new page requires the page:write scope on the token in addition to draft_page:write.\nChecking the linked pages of the body requires the page:read scope.\nCreating a draft of a page in a private topic also requires the topic:read scope.",
+  "output": "  Prints the created draft with the same fields as `wikino draft get` (including `etag`).\n  To update it next, pass `etag` to `--if-match` of `wikino draft update`.\n  The human-readable output omits the body and prints a completion line to standard error.\n  If wikilinks in the body are estimated to have created linked pages, lists them on standard error, also with JSON output.\n  With `--dry-run`, prints the request that would be sent and where the wikilinks in the body point as `{\"dry_run\": true, \"requests\": [...], \"wikilinks\": [...]}` without sending the create request.\n  See the help of `wikino page create` for the fields of `wikilinks`.\n  The requests that fetch the existing page to check the linked pages and that check the linked pages (both reads) are sent even with `--dry-run`.\n  `--dry-run` cannot be combined with `--fields`.",
+  "short": "Create a draft",
+  "subcommands": [],
+  "usage": "wikino draft create [<page_number>] [flags]"
+}
+
+=== wikino draft delete --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino draft delete",
+  "errors": "  2  The page number is not a positive integer, neither or both of `--if-match` and `--force` are given, `--if-match` is empty or `*`, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the draft_page:delete scope (403)\n  5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).\n     If you get 5 when deleting again, the draft has already been deleted\n  6  The draft has been updated since you read it (412). Check the current content with `wikino draft get`, and delete again with the new version if it is fine to delete\n  9  Confirmation by the user is required because `--yes` is not given, or the confirmation was declined in a terminal",
+  "examples": "  # Read the draft of page 12 and check its version, then ask for confirmation to delete it\n  wikino draft get 12 --md\n  wikino draft delete 12 --if-match '\"d41d8cd9\"'\n\n  # Delete without asking, after getting the user's approval\n  wikino draft delete 12 --if-match '\"d41d8cd9\"' --yes\n\n  # Check the request (without sending)\n  wikino draft delete 12 --if-match '\"d41d8cd9\"' --dry-run",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Print the requests that would be sent without sending them",
+      "name": "dry-run",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "description": "Overwrite the latest version, fetched just before, without checking the version you read",
+      "name": "force",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Write only if the version is still the one you read (etag from the output of `get`)",
+      "name": "if-match",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Run without asking for the user's confirmation",
+      "name": "yes",
+      "shorthand": "",
+      "type": "bool"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Deletes your draft of the page with the given page number, together with its revisions.\nThe deleted draft and revisions cannot be restored.\nThe page itself is not deleted, and the content of the published page does not change.\n\nPass the version you read in `--if-match`.\nThe version is `etag` in the output of `wikino draft get`.\nIf the draft has been updated since you read it (including automatic saves in the web editor), the command fails with exit code 6 without deleting it.\nWith `--force`, the command does not check the version and deletes the latest version it has just fetched.\n\nBecause this cannot be undone, the command asks for confirmation before deleting unless `--yes` is given.\nWhen run from a terminal, it shows the draft and the number of revisions to delete and asks.\nOtherwise (when run from an agent or a script), it does not send the delete request; it prints what will happen (`changes`) and the command to run after approval (`confirm_command`) as JSON on standard output, and exits with code 9.\nShow `changes` to the user, and run `confirm_command` as is after getting approval.\n`confirm_command` contains the version fetched for the confirmation in `--if-match`.\n\nDeleting requires the draft_page:delete scope on the token.\nThis scope also includes reading the draft and its revisions for the confirmation and for `--force`.\nDeleting drafts of pages in private topics also requires the topic:read scope.",
+  "output": "  After deleting, prints `{\"page_number\": 12, \"deleted\": true}` as JSON.\n  The human-readable output prints nothing on standard output and prints a completion line to standard error.\n  Without `--yes` and outside a terminal, prints `{\"status\": \"confirmation_required\", \"changes\": [...], \"confirm_command\": \"...\"}` without deleting, and exits with code 9.\n  With `--dry-run`, prints the request as `{\"dry_run\": true, \"requests\": [...]}` without sending the delete request. It does not ask for confirmation.\n  Fetching the draft with `--force` (a read) is sent even with `--dry-run`.\n  `--dry-run` cannot be combined with `--fields`.",
+  "short": "Delete a draft",
+  "subcommands": [],
+  "usage": "wikino draft delete <page_number> [flags]"
+}
+
+=== wikino draft get --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino draft get",
+  "errors": "  2  The page number is not a positive integer, `--md` is combined with `--json`, `--fields`, or `--jq`, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the draft_page:read scope (403)\n  5  The page has no draft of yours, the page does not exist or is in the trash, or it is in a private topic you cannot see (404).\n     Check the numbers of pages with drafts with `wikino draft list`",
+  "examples": "  # Print the draft of page 12\n  wikino draft get 12\n\n  # Write the draft of page 12 to a file as Markdown in the Wikino file format\n  wikino draft get 12 --md > draft-12.md\n\n  # Print only the version (ETag) of the draft of page 12\n  wikino draft get 12 --jq .etag",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Print a page file in the Wikino file format (Markdown with frontmatter)",
+      "name": "md",
+      "shorthand": "",
+      "type": "bool"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Prints the token owner's draft of the page with the given page number, including its body.\n\nWith `--md`, prints it as a page file in the Wikino file format (Markdown with frontmatter).\nFor reading the body, `--md` is better because newlines and quotes are not escaped.\nFor a large draft, write it to a file with `--md` and read only the parts you need.\n\n`etag` in the output is the version of the draft.\nWhen updating the draft, pass the version you read to `--if-match`.\n\nReading a draft of a page in a private topic requires the topic:read scope on the token in addition to draft_page:read.",
+  "output": "  Prints the draft with the fields of `wikino draft list` (without excerpt, with body) plus the following.\n    etag  The version of the draft (the value of the ETag response header). Pass it to `--if-match` of commands that update the draft\n  With `--md`, prints a page file in the Wikino file format instead of JSON.\n  The frontmatter keys starting with `wikino_` hold the page number, title, version, topic number, modification time, and URL, followed by the body as is.\n  Drafts have no publication status, so `wikino_status` is not written.\n  When the body itself starts with frontmatter, the keys are added to that block.",
+  "short": "Print the content of a draft",
+  "subcommands": [],
+  "usage": "wikino draft get <page_number> [flags]"
+}
+
+=== wikino draft list --help --json
+{
+  "args": [],
+  "command": "wikino draft list",
+  "errors": "  2  `--limit` is less than 1, `--all` is combined with `--cursor`, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the draft_page:read scope (403)\n  7  The `--cursor` value is invalid (422). Remove `--cursor` and fetch again from the first page",
+  "examples": "  # List your drafts\n  wikino draft list\n\n  # Print only the numbers of pages that have drafts\n  wikino draft list --jq '.items[].page_number'\n\n  # Print all drafts with their bodies, one per line\n  wikino draft list --all --fields page_number,title,body",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Follow every page to fetch all items and print them as JSON Lines, one per line",
+      "name": "all",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Cursor (cursor) of the following page to fetch (next_cursor in the previous output)",
+      "name": "cursor",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "0",
+      "description": "Number of items per page (n. Defaults to 20; values over 100 are treated as 100)",
+      "name": "limit",
+      "shorthand": "",
+      "type": "int32"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Lists the drafts the token's owner has in the space, most recently modified first.\nDrafts of new pages that have not been published yet are included.\nDrafts of pages in the trash are not included.\n\nThe list does not include bodies; it includes an excerpt of the beginning of each body (`excerpt`) instead.\nTo read a body, use `wikino draft get`.\nWhen you need bodies in the list, include `body` in `--fields`.\n\nBy default, only one page of the API's default size (20 items) is fetched.\nWhen there is a next page, how to fetch it is printed to standard error.\nWith `--all`, all items are fetched and the output format changes to JSON Lines (see \"Output\").\n\nDrafts of pages in private topics are included only when the token has the topic:read scope and the member can see the topic.",
+  "output": "  Prints `{\"items\": [...], \"next_cursor\": ...}` with the following fields for each draft.\n    page_number   The number of the draft's page. Pass it to `wikino draft get` and others\n    title         The draft's title. null for drafts without a title\n    topic_number  The number of the topic the draft's page belongs to\n    topic_name    The name of the topic the draft's page belongs to\n    modified_at   When the draft's content was last modified (RFC 3339). Autosaves in the web UI also update it\n    url           The URL of the edit screen of the draft's page in the web UI\n    excerpt       An excerpt of the beginning of the body: the first 80 characters with newlines collapsed to spaces,\n                  ending with \"…\" when truncated. Not in the API response; the CLI makes it from the body\n    body          The body (Markdown). Not printed by default; printed only when included in `--fields`\n  `next_cursor` is the cursor of the next page, or null when there is no more.\n  With `--all`, prints JSON Lines with one item per line, without `next_cursor`.\n  When there are no drafts, returns an empty list with exit code 0.",
+  "short": "List drafts",
+  "subcommands": [],
+  "usage": "wikino draft list [flags]"
+}
+
+=== wikino draft publish --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino draft publish",
+  "errors": "  2  The page number is not a positive integer, neither or both of `--if-match` and `--force` are given, `--if-match` is empty or `*`, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the draft_page:write or page:write scope, or the member is not allowed to save drafts and publish pages (403)\n  5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).\n     If you get 5 when publishing again, the draft has already been published or deleted. Check the page with `wikino page get`\n  6  The draft has been updated since you read it (412). Check the current content with `wikino draft get`, and publish again with the new version if it is fine to publish\n  7  The draft has no title, the title has characters that cannot be used, or a page with the same title exists in the topic (422).\n     Fix the title of the draft with `wikino draft update --title` and publish again\n  9  Confirmation by the user is required because `--yes` is not given, or the confirmation was declined in a terminal",
+  "examples": "  # Read the draft of page 12 and check its version, then ask for confirmation to publish it\n  wikino draft get 12 --md\n  wikino draft publish 12 --if-match '\"d41d8cd9\"'\n\n  # Publish without asking, after getting the user's approval\n  wikino draft publish 12 --if-match '\"d41d8cd9\"' --yes\n\n  # Check the request and the targets of the wikilinks in the body (without sending)\n  wikino draft publish 12 --if-match '\"d41d8cd9\"' --dry-run",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Print the requests that would be sent without sending them",
+      "name": "dry-run",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "description": "Overwrite the latest version, fetched just before, without checking the version you read",
+      "name": "force",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Write only if the version is still the one you read (etag from the output of `get`)",
+      "name": "if-match",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Run without asking for the user's confirmation",
+      "name": "yes",
+      "shorthand": "",
+      "type": "bool"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Publishes the page with the given page number using the title and body of your draft, and prints the published page.\nPublishing deletes the draft together with its revisions, and adds one revision to the page's history.\nA page that has not been published yet becomes published.\nThe current content of the page is not checked, so the draft overwrites the page even if the page was updated after the draft was created.\n\nPass the version of the draft you read in `--if-match`.\nThe version is `etag` in the output of `wikino draft get`.\nIf the draft has been updated since you read it (including automatic saves in the web editor), the command fails with exit code 6 without publishing.\nWith `--force`, the command does not check the version and publishes the latest draft it has just fetched.\n\nBefore publishing, the command fetches the draft and checks the targets of the wikilinks in its body.\nIf a wikilink in the body points to a page that does not exist, the target is created as an unpublished page.\nIf any targets will be created, the command lists them on standard error after publishing.\nThe list is an estimate made just before publishing, and can differ from the actual result if other users create or delete pages in between.\n\nBecause this publishes a page, the command asks for confirmation before publishing unless `--yes` is given.\nThe confirmation shows the change of the title and the numbers of added and deleted lines of the body compared with the current page, the link targets that will be created, and that the draft will be deleted after publishing.\nWhen run from a terminal, it shows these and asks.\nOtherwise (when run from an agent or a script), it does not send the publish request; it prints what will happen (`changes`) and the command to run after approval (`confirm_command`) as JSON on standard output, and exits with code 9.\nShow `changes` to the user, and run `confirm_command` as is after getting approval.\n`confirm_command` contains the version fetched for the confirmation in `--if-match`.\nA draft without a title cannot be published, so the command fails with exit code 7 without asking for confirmation.\n\nPublishing requires the draft_page:write and page:write scopes on the token.\nPublishing drafts of pages in private topics also requires the topic:read scope.",
+  "output": "  Prints the published page with the same fields as `wikino page get` (including `etag`).\n  `etag` is the version of the page after publishing; pass it to `--if-match` to update the page next.\n  The human-readable output omits the body and prints a completion line to standard error.\n  If link targets were likely created by wikilinks in the body, they are listed on standard error, even with JSON output.\n  Without `--yes` and outside a terminal, prints `{\"status\": \"confirmation_required\", \"changes\": [...], \"confirm_command\": \"...\"}` without publishing, and exits with code 9.\n  With `--dry-run`, prints the request and the targets of the wikilinks in the body as `{\"dry_run\": true, \"requests\": [...], \"wikilinks\": [...]}` without sending the publish request. It does not ask for confirmation.\n  See the help of `wikino page update` for the fields of `wikilinks`.\n  Fetching the draft and checking the link targets (reads) are sent even with `--dry-run`.\n  `--dry-run` cannot be combined with `--fields`.",
+  "short": "Publish a draft",
+  "subcommands": [],
+  "usage": "wikino draft publish <page_number> [flags]"
+}
+
+=== wikino draft revision --help --json
+{
+  "args": [],
+  "command": "wikino draft revision",
+  "errors": "  A missing or unknown subcommand fails as a usage error (exit code 2).",
+  "examples": "  # List the revisions of the draft of page 12\n  wikino draft revision list 12\n\n  # Read the body of a revision as Markdown in the Wikino file format\n  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --md",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Works with the revisions of drafts owned by the token's owner.\n\nA revision is a record of the title and body of a draft at a point in time, and does not change after it is created.\nRevisions are created when a draft is created or updated, and when it is saved manually or restored in the web editor.\nAutomatic saves in the web editor do not create revisions, so the latest revision is not always the same as the current draft.\nPublishing or deleting a draft also deletes its revisions.",
+  "output": "  See the help of each subcommand.",
+  "short": "Work with draft revisions",
+  "subcommands": [
+    {
+      "command": "wikino draft revision get",
+      "name": "get",
+      "short": "Print a revision of a draft"
+    },
+    {
+      "command": "wikino draft revision list",
+      "name": "list",
+      "short": "List the revisions of a draft"
+    }
+  ],
+  "usage": "wikino draft revision <command>"
+}
+
+=== wikino draft revision get --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    },
+    {
+      "name": "revision_id",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino draft revision get",
+  "errors": "  2  The page number is not a positive integer, the revision ID is not a UUID, `--md` is combined with `--json`, `--fields`, or `--jq`, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the draft_page:read scope (403)\n  5  The revision does not exist, is not a revision of the draft of the page, or the draft was published or deleted and has no revisions (404).\n     Check the revision IDs with `wikino draft revision list`",
+  "examples": "  # Print a revision of the draft of page 12\n  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30\n\n  # Write the body of the revision to a file as Markdown in the Wikino file format\n  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --md > revision.md\n\n  # Print only the creation time of the revision\n  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --jq .created_at",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Print a page file in the Wikino file format (Markdown with frontmatter)",
+      "name": "md",
+      "shorthand": "",
+      "type": "bool"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Prints the revision of your draft with the given page number and revision ID, including its body.\nThe revision ID is `id` in the output of `wikino draft revision list`.\n\nWith `--md`, prints a page file in the Wikino file format (Markdown with frontmatter).\nTo read the body, `--md` is better because line breaks and quotes are not escaped.\n\nRevisions do not change after they are created, so they have no version (`etag`).\nTo bring the draft back to the content of a past revision, pass its body to `wikino draft update`.\nThe `--md` output has no `wikino_etag`, so it cannot be written back with `--md-file` as is.\n\nReading revisions of drafts of pages in private topics requires the topic:read scope in addition to draft_page:read on the token.",
+  "output": "  Prints the revision with the fields of `wikino draft revision list` (without excerpt, with body).\n  With `--md`, prints a page file in the Wikino file format instead of JSON.\n  The frontmatter has only `wikino_title`, followed by the body as is. For revisions without a title, no frontmatter is written.\n  When the body itself starts with frontmatter, the key is added to that block.",
+  "short": "Print a revision of a draft",
+  "subcommands": [],
+  "usage": "wikino draft revision get <page_number> <revision_id> [flags]"
+}
+
+=== wikino draft revision list --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino draft revision list",
+  "errors": "  2  The page number is not a positive integer, `--limit` is less than 1, `--all` is combined with `--cursor`, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the draft_page:read scope (403)\n  5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).\n     Check the numbers of pages with drafts with `wikino draft list`\n  7  The value of `--cursor` is invalid (422). Remove `--cursor` and fetch again from the first page",
+  "examples": "  # List the revisions of the draft of page 12\n  wikino draft revision list 12\n\n  # Print only the IDs and creation times of the revisions\n  wikino draft revision list 12 --fields id,created_at\n\n  # Print all revisions with their bodies, one per line\n  wikino draft revision list 12 --all --fields id,title,body",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Follow every page to fetch all items and print them as JSON Lines, one per line",
+      "name": "all",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Cursor (cursor) of the following page to fetch (next_cursor in the previous output)",
+      "name": "cursor",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "0",
+      "description": "Number of items per page (n. Defaults to 20; values over 100 are treated as 100)",
+      "name": "limit",
+      "shorthand": "",
+      "type": "int32"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Lists the revisions of your draft of the page with the given page number, newest first.\n\nThe list does not include the body; it includes an excerpt of the beginning of the body (`excerpt`) instead.\nUse `wikino draft revision get` to read the body.\nIf you need the body in the list, include `body` in `--fields`.\n\nBy default, the command fetches only one page with the API's default size (20 items).\nIf there is a next page, how to get it is printed on standard error.\nWith `--all`, the command fetches all items, and the output format changes to JSON Lines (see \"Output\").\n\nReading the revisions of drafts of pages in private topics requires the topic:read scope in addition to draft_page:read on the token.",
+  "output": "  Prints `{\"items\": [...], \"next_cursor\": ...}` with the following fields for each revision.\n    id          The ID of the revision. Pass it to `wikino draft revision get`\n    title       The title of the draft when the revision was created. null for drafts without a title\n    created_at  When the revision was created (RFC 3339)\n    excerpt     An excerpt of the beginning of the body: the first 80 characters with line breaks collapsed into spaces, followed by \"…\" when truncated\n                This field is not in the API response; the CLI creates it from the body\n    body        The body (Markdown). Not printed by default; printed only when included in `--fields`\n  `next_cursor` is the cursor of the next page, or null when there are no more items.\n  With `--all`, prints JSON Lines with one item per line, without `next_cursor`.\n  When there are no revisions, prints an empty list and exits with code 0.",
+  "short": "List the revisions of a draft",
+  "subcommands": [],
+  "usage": "wikino draft revision list <page_number> [flags]"
+}
+
+=== wikino draft update --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino draft update",
+  "errors": "  2  The page number is not a positive integer, none of `--title`, `--body`, `--body-file`, `--md-file`, and `--edits` is given, flags that cannot be combined are combined,\n     neither or both of `--if-match` and `--force` are given (except with `--md-file` and `--edits`), `--if-match` is empty or `*`, a file cannot be read or is not UTF-8,\n     `wikino_number` in `--md-file` differs from the page number or `wikino_etag` is missing, the JSON in `--edits` has the wrong shape, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the draft_page:write scope, or the page:read scope for checking the links in the body (403)\n  5  You have no draft of the page, the page does not exist or is in the trash, or the page is in a private topic you cannot see (404).\n     Check the number with `wikino draft list`, and create a draft with `wikino draft create` if there is none\n  6  The draft has been updated since you read it (412). Get the latest content and version with `wikino draft get`, apply your changes, and update again.\n     With `--md-file`, apply your changes to a file written again with `wikino draft get --md`\n  7  The input is invalid, such as a title or body that is too long (422).\n     `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.\n     Check the current body with `wikino draft get --md` and send the whole `edits` again",
+  "examples": "  # Get the version of the draft of page 12, then update its body with the content of a file\n  wikino draft get 12 --jq .etag\n  wikino draft update 12 --body-file body.md --if-match '\"d41d8cd9\"'\n\n  # Change only the title of the draft of page 12\n  wikino draft update 12 --title 'Meeting notes' --if-match '\"d41d8cd9\"'\n\n  # Write the draft of page 12 to a file, edit it, and write it back\n  wikino draft get 12 --md > draft.md\n  wikino draft update 12 --md-file draft.md\n\n  # Find and replace part of the body of the draft of page 12\n  echo '{\"edits\": [{\"old_str\": \"- [ ] Share the notes\", \"new_str\": \"- [x] Share the notes\"}]}' | wikino draft update 12 --edits -\n\n  # Check the request and where the wikilinks in the body point (without sending)\n  wikino draft update 12 --body-file body.md --if-match '\"d41d8cd9\"' --dry-run",
+  "flags": [
+    {
+      "default": "",
+      "description": "Body text (Markdown) as a string",
+      "name": "body",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Read the body from the file at path (`-` reads from standard input)",
+      "name": "body-file",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print the requests that would be sent without sending them",
+      "name": "dry-run",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Read find-and-replace edits as JSON (path) and replace part of the body (`-` reads from standard input)",
+      "name": "edits",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Overwrite the latest version, fetched just before, without checking the version you read",
+      "name": "force",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Write only if the version is still the one you read (etag from the output of `get`)",
+      "name": "if-match",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Write back a page file (path) written by --md, using the version and title in its frontmatter (`-` reads from standard input)",
+      "name": "md-file",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "New title of the draft. The page title rules (up to 200 characters, without `/`, `\\`, `:`, or control characters, and without a leading or trailing space) are checked when publishing",
+      "name": "title",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Updates the title and body of your draft of the page with the given page number.\nOnly the given fields are updated; the others are left unchanged.\nThe page is not published, and the content of the published page does not change.\nEach update also creates one draft revision (none if it is the same as the previous revision).\n\nChoose one of three ways to pass the body, depending on the size of the change.\n\n- `--body` or `--body-file`: pass the whole body, including the parts you do not change. `--body-file -` reads the body from standard input. The body is sent as given, including trailing newlines\n- `--md-file`: write back a page file written by `wikino draft get --md` and edited. The command uses `wikino_etag` in the frontmatter as the version and `wikino_title` as the title, and sends the rest, without the keys starting with `wikino_`, as the body\n- `--edits`: find and replace part of the body. Reads JSON shaped like `{\"edits\": [{\"old_str\": \"...\", \"new_str\": \"...\", \"replace_all\": false}]}` from a file or standard input (`-`)\n\n`--md-file` and `--edits` follow the same rules as in `wikino page update`.\nWith `--md-file`, a file whose `wikino_number` differs from the page number or that has no `wikino_etag` is rejected, and the title is unchanged if `wikino_title` is missing.\n`--edits` cannot change the title.\n\nPass the version you read in `--if-match`.\nThe version is `etag` in the output of `wikino draft get`.\nThe version also changes when the web editor saves automatically, so if the draft has been updated since you read it, the command fails with exit code 6 without overwriting it.\nWith `--force`, the command does not check the version and overwrites the latest version it has just fetched.\nThis can discard what is being written in the web editor, so use it only when it is fine to overwrite without reading.\nWith `--md-file`, the version is read from the file, so do not pass `--if-match` or `--force`.\nWith `--edits`, `--if-match` is optional.\n\nWhen a wikilink in the body points to a page that does not exist, the linked page is created as an unpublished page.\nBefore writing the body, the command checks where its wikilinks point (with `--edits`, it checks the links in each `new_str`), and if any linked pages will be created, lists them on standard error after the update.\nThe list is an estimate made just before the update and can differ from the actual result if other users create or delete pages in between.\nUse `--dry-run` to check for unintended linked pages first.\n\nTitle rules (such as no duplicate titles in a topic) are checked when the draft is published.\n\nChecking where the links in the body point requires the page:read scope on the token in addition to draft_page:write.\nUpdating drafts of pages in private topics also requires the topic:read scope.",
+  "output": "  Prints the updated draft with the same fields as `wikino draft get` (including `etag`).\n  `etag` is the version after the update; pass it to `--if-match` for the next update.\n  The human-readable output omits the body and prints a completion line to standard error.\n  If wikilinks in the body are expected to have created linked pages, lists them on standard error, even with JSON output.\n  With `--dry-run`, prints the request and where the wikilinks in the body point as `{\"dry_run\": true, \"requests\": [...], \"wikilinks\": [...]}` without sending the update.\n  See the help for `wikino page update` for the fields in `wikilinks`.\n  Fetching the draft when writing the body or with `--force`, and checking the links (both reads), are sent even with `--dry-run`.\n  `--dry-run` cannot be combined with `--fields`.",
+  "short": "Update a draft",
+  "subcommands": [],
+  "usage": "wikino draft update <page_number> [flags]"
+}
+
+=== wikino page --help --json
+{
+  "args": [],
+  "command": "wikino page",
+  "errors": "  Fails with a usage error (exit code 2) when no subcommand or an unknown subcommand is given.",
+  "examples": "  # List recently updated pages\n  wikino page list\n\n  # Search pages containing \"minutes\"\n  wikino page search minutes\n\n  # Read page 12 as Markdown in the Wikino file format\n  wikino page get 12 --md",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Works with the pages of a space.\n\nA page is identified by its page number, which is unique within the space.\nYou can find it in `number` of `wikino page list` or in the `/pages/{number}` part of the web URL.",
+  "output": "  See the help of each subcommand.",
+  "short": "Work with pages",
+  "subcommands": [
+    {
+      "command": "wikino page backlinks",
+      "name": "backlinks",
+      "short": "List the pages that link to a page"
+    },
+    {
+      "command": "wikino page create",
+      "name": "create",
+      "short": "Create a page"
+    },
+    {
+      "command": "wikino page get",
+      "name": "get",
+      "short": "Show a page"
+    },
+    {
+      "command": "wikino page links",
+      "name": "links",
+      "short": "List the pages a page links to"
+    },
+    {
+      "command": "wikino page list",
+      "name": "list",
+      "short": "List pages"
+    },
+    {
+      "command": "wikino page search",
+      "name": "search",
+      "short": "Search pages by keywords"
+    },
+    {
+      "command": "wikino page update",
+      "name": "update",
+      "short": "Update a page"
+    }
+  ],
+  "usage": "wikino page <command>"
+}
+
+=== wikino page backlinks --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino page backlinks",
+  "errors": "  2  The page number is not a positive integer, `--limit` is less than 1, `--all` is combined with `--cursor`,\n     or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:read scope (403)\n  5  The page does not exist, is in the trash, or is in a private topic you cannot see (404). Check the number with `wikino page list`\n  7  The `--cursor` value is invalid (422)",
+  "examples": "  # List the pages that link to page 12\n  wikino page backlinks 12\n\n  # Print every page linking to page 12, one per line\n  wikino page backlinks 12 --all --fields number,title,url",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Follow every page to fetch all items and print them as JSON Lines, one per line",
+      "name": "all",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Cursor (cursor) of the following page to fetch (next_cursor in the previous output)",
+      "name": "cursor",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "0",
+      "description": "Number of items per page (n. Defaults to 20; values over 100 are treated as 100)",
+      "name": "limit",
+      "shorthand": "",
+      "type": "int32"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Lists the pages that link to the specified page with wiki links, most recently updated first.\nThese are the same pages as the list of backlinks shown below the page on the web.\n\nOnly links in each page's published body count; links only in a draft are not included.\nPages in the trash and pages in private topics you cannot see are not included.\n\nTo find the pages this page links to instead, use `wikino page links`.\n\nThe output format and paging are the same as `wikino page list`.\nThe list does not include page bodies; it includes an excerpt of the beginning of the body (`excerpt`) instead.",
+  "output": "  Like `wikino page list`, prints `{\"items\": [...], \"next_cursor\": ...}`.\n  See the help of `wikino page list` for the fields of each page.\n  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.\n  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.\n  When no pages link to the page, returns an empty list with exit code 0.",
+  "short": "List the pages that link to a page",
+  "subcommands": [],
+  "usage": "wikino page backlinks <page_number> [flags]"
+}
+
+=== wikino page create --help --json
+{
+  "args": [],
+  "command": "wikino page create",
+  "errors": "  1  Network failure or server error (5xx). The page may have been created, so check with `wikino page list --topic <number> --title <title>` before sending again\n  2  `--topic` or `--title` is missing, neither or both of `--body` and `--body-file` are given, `--topic` is not a positive integer,\n     the body file cannot be read or is not UTF-8, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:write scope (403)\n  5  You cannot create pages in the topic (404)\n  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).\n     For a duplicate, find the existing page with `wikino page list --topic <number> --title <title>` and use `wikino page update` to change its content",
+  "examples": "  # Create a page titled \"Minutes\" in topic 3\n  wikino page create --topic 3 --title 'Minutes' --body '# Minutes'\n\n  # Create a page with the content of a file as the body\n  wikino page create --topic 3 --title 'Minutes' --body-file minutes.md\n\n  # Read the body from standard input and print only the number and version of the created page\n  cat minutes.md | wikino page create --topic 3 --title 'Minutes' --body-file - --fields number,etag\n\n  # Check the request that would be sent and where the wikilinks in the body point (without sending it)\n  wikino page create --topic 3 --title 'Minutes' --body-file minutes.md --dry-run",
+  "flags": [
+    {
+      "default": "",
+      "description": "Body text (Markdown) as a string",
+      "name": "body",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Read the body from the file at path (`-` reads from standard input)",
+      "name": "body-file",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print the requests that would be sent without sending them",
+      "name": "dry-run",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Page title. Required. Up to 200 characters, without `/`, `\\`, `:`, or control characters, and without a leading or trailing space",
+      "name": "title",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Topic number to create the page in. Required",
+      "name": "topic",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Creates and publishes a page with a title and a body in the topic with the given topic number.\n\nPass the body with either `--body` or `--body-file`.\nTo create an empty page, say so explicitly with `--body ''`.\n`--body-file -` reads the body from standard input.\nThe body is sent as given, including trailing newlines.\n\nIf an unpublished page with the same title and no body exists (such as a page created by a wikilink), the body is written to that page and it is published instead of creating a new page.\nIn that case, `number` in the output is the number of that page.\n\nWhen a wikilink in the body points to a page that does not exist, the linked page is created as an unpublished page.\nBefore creating, the command checks where the wikilinks in the body point, and if any linked pages will be created, it lists them on standard error after creating.\nThe list is an estimate made just before creating; if other users create or delete pages in between, it can differ from the actual result.\nTo check for unintended linked pages beforehand, use `--dry-run`.\n\nCreating a page is not idempotent.\nWhen the result is unknown (such as after a network failure), check whether the page was created with `wikino page list --topic <number> --title <title>` before sending again.\n\nTo change the content of an existing page, use `wikino page update`.\nCreating a page in a private topic requires the topic:read scope on the token in addition to page:write.",
+  "output": "  Prints the created page with the same fields as `wikino page get` (including `etag`).\n  To update it next, pass `etag` to `--if-match` of `wikino page update`.\n  The human-readable output omits the body and prints a completion line to standard error.\n  If wikilinks in the body are estimated to have created linked pages, lists them on standard error, also with JSON output.\n  With `--dry-run`, prints the request that would be sent and where the wikilinks in the body point as `{\"dry_run\": true, \"requests\": [...], \"wikilinks\": [...]}` without sending the create request.\n  Each element of `wikilinks` has the wikilink text (`text`), the name of the linked topic (`topic_name`), the page title (`page_title`), the resolution (`resolution`), and the existing page (`page`).\n  `resolution` is one of: an existing page (`existing_page`), a page that writing creates as unpublished (`new_page`), or a topic that does not exist or cannot be seen, so the text is not a link (`topic_not_found`).\n  The request that checks the linked pages (a read) is sent even with `--dry-run`.\n  `--dry-run` cannot be combined with `--fields`.",
+  "short": "Create a page",
+  "subcommands": [],
+  "usage": "wikino page create [flags]"
+}
+
+=== wikino page get --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino page get",
+  "errors": "  2  The page number is not a positive integer, `--md` is combined with `--json`, `--fields`, or `--jq`, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:read scope (403)\n  5  The page does not exist, is in the trash, or is in a private topic you cannot see (404). Check the number with `wikino page list`",
+  "examples": "  # Show page 12\n  wikino page get 12\n\n  # Write page 12 to a file as Markdown in the Wikino file format\n  wikino page get 12 --md > page-12.md\n\n  # Print only the version (ETag) of page 12\n  wikino page get 12 --jq .etag",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Print a page file in the Wikino file format (Markdown with frontmatter)",
+      "name": "md",
+      "shorthand": "",
+      "type": "bool"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Shows the page with the given page number, including its body.\nUnpublished pages are shown too.\n\nWith `--md`, prints a page file in the Wikino file format (Markdown with frontmatter).\n`--md` suits reading bodies because line breaks and quotes are not escaped.\nFor a large page, write it to a file with `--md` and read only the parts you need.\n\n`etag` in the output is the version of the page.\nWhen updating the page, pass the version you read to `--if-match`.",
+  "output": "  Prints the page with the fields of `wikino page list` (without excerpt, with body) plus the following.\n    etag  Version of the page (the ETag response header). Pass it to `--if-match` of update commands\n  With `--md`, prints a page file in the Wikino file format instead of JSON.\n  The frontmatter keys starting with `wikino_` hold the number, title, version, topic number, status, update time, and URL,\n  followed by the body as is. When the body itself starts with frontmatter, the keys are added to that block.",
+  "short": "Show a page",
+  "subcommands": [],
+  "usage": "wikino page get <page_number> [flags]"
+}
+
+=== wikino page links --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino page links",
+  "errors": "  2  The page number is not a positive integer, `--limit` is less than 1, `--all` is combined with `--cursor`,\n     or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:read scope (403)\n  5  The page does not exist, is in the trash, or is in a private topic you cannot see (404). Check the number with `wikino page list`\n  7  The `--cursor` value is invalid (422)",
+  "examples": "  # List the pages page 12 links to\n  wikino page links 12\n\n  # Print only the numbers of the pages page 12 links to\n  wikino page links 12 --jq '.items[].number'",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Follow every page to fetch all items and print them as JSON Lines, one per line",
+      "name": "all",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Cursor (cursor) of the following page to fetch (next_cursor in the previous output)",
+      "name": "cursor",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "0",
+      "description": "Number of items per page (n. Defaults to 20; values over 100 are treated as 100)",
+      "name": "limit",
+      "shorthand": "",
+      "type": "int32"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Lists the pages that the body of the specified page points to with wiki links, most recently updated first.\nThese are the same pages as the list of links shown below the page on the web.\n\nOnly links in the published body count; links only in a draft are not included.\nLink targets not yet published, such as pages created automatically by wiki links, are included with `status` set to `unpublished`.\nPages in the trash and pages in private topics you cannot see are not included.\n\nTo find the pages that link to this page instead, use `wikino page backlinks`.\n\nThe output format and paging are the same as `wikino page list`.\nThe list does not include page bodies; it includes an excerpt of the beginning of the body (`excerpt`) instead.",
+  "output": "  Like `wikino page list`, prints `{\"items\": [...], \"next_cursor\": ...}`.\n  See the help of `wikino page list` for the fields of each page.\n  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.\n  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.\n  When the page links to nothing, returns an empty list with exit code 0.",
+  "short": "List the pages a page links to",
+  "subcommands": [],
+  "usage": "wikino page links <page_number> [flags]"
+}
+
+=== wikino page list --help --json
+{
+  "args": [],
+  "command": "wikino page list",
+  "errors": "  2  `--topic` is not a positive integer, `--status` has an unknown value, `--modified-since` is not an RFC 3339 time,\n     `--limit` is less than 1, `--all` is combined with `--cursor`, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:read scope (403)\n  7  The `--cursor` value is invalid (422). Remove `--cursor` and fetch again from the first page",
+  "examples": "  # List recently updated pages\n  wikino page list\n\n  # List the pages of topic 3, including unpublished ones\n  wikino page list --topic 3 --status all\n\n  # Find the number of the page titled \"Minutes\" in topic 3\n  wikino page list --topic 3 --title Minutes --jq '.items[].number'\n\n  # Print pages updated since a time, with bodies, one per line\n  wikino page list --modified-since 2026-10-01T00:00:00Z --all --fields number,title,body",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Follow every page to fetch all items and print them as JSON Lines, one per line",
+      "name": "all",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Cursor (cursor) of the following page to fetch (next_cursor in the previous output)",
+      "name": "cursor",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "0",
+      "description": "Number of items per page (n. Defaults to 20; values over 100 are treated as 100)",
+      "name": "limit",
+      "shorthand": "",
+      "type": "int32"
+    },
+    {
+      "default": "",
+      "description": "Only pages updated at or after this time (time, RFC 3339)",
+      "name": "modified-since",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter by publication status (status: published, unpublished, or all. Defaults to published)",
+      "name": "status",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Only pages whose whole title matches (title, case-insensitive)",
+      "name": "title",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter by topic number (number)",
+      "name": "topic",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Lists the pages of the space, most recently updated first.\nPages in the trash are not included.\n\nBy default, lists only published pages.\nWith `--status unpublished` or `--status all`, also lists pages not yet published, such as pages created automatically by wiki links.\nUnpublished pages are included only when referenced by wiki links from published pages in topics you can see or from your own drafts.\nUnpublished pages without those links are not included.\n\nThe list does not include page bodies; it includes an excerpt of the beginning of the body (`excerpt`) instead.\nUse `wikino page get` to read a body.\nWhen you need bodies in the list, include `body` in `--fields`.\n\nBy default, fetches only one page with the API's default size (20).\nWhen there is a next page, prints how to fetch it to standard error.\nWith `--all`, fetches every item and the output becomes JSON Lines (see Output).\n\nPages in private topics are included only when the token has the topic:read scope and the member can see the topic.",
+  "output": "  Prints `{\"items\": [...], \"next_cursor\": ...}` with these fields per page.\n    id            Page ID\n    number        Page number. Pass it to `wikino page get` and other commands\n    title         Title. null for a page without a title\n    status        Publication status (published, unpublished)\n    topic_number  Number of the topic the page belongs to\n    topic_name    Name of the topic the page belongs to. Use it in wiki links to pages in other topics (`[[Topic name/Title]]`)\n    modified_at   When the content was last updated (RFC 3339)\n    url           URL to open the page on the web. Use it to cite the page\n    excerpt       Excerpt of the beginning of the body: the first 80 characters with line breaks collapsed into spaces,\n                  ending with \"…\" when truncated. Not part of the API response; the CLI builds it from the body\n    body          Body (Markdown). Omitted by default; printed only when included in `--fields`\n  `next_cursor` is the cursor of the next page, or null when there is none.\n  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.\n  When no pages match, returns an empty list with exit code 0.",
+  "short": "List pages",
+  "subcommands": [],
+  "usage": "wikino page list [flags]"
+}
+
+=== wikino page search --help --json
+{
+  "args": [
+    {
+      "name": "query",
+      "required": true,
+      "variadic": true
+    }
+  ],
+  "command": "wikino page search",
+  "errors": "  2  No keywords, `--topic` is not a positive integer, `--status` has an unknown value, `--limit` is less than 1,\n     `--all` is combined with `--cursor`, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:read scope (403)\n  7  There are 11 or more keywords, or the `--cursor` value is invalid (422)",
+  "examples": "  # Search pages containing \"minutes\"\n  wikino page search minutes\n\n  # Search pages in topic 3 containing both \"minutes\" and \"budget\"\n  wikino page search minutes budget --topic 3\n\n  # Search including unpublished pages, printing only numbers and titles\n  wikino page search 'weekly meeting' --status all --fields number,title",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Follow every page to fetch all items and print them as JSON Lines, one per line",
+      "name": "all",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Cursor (cursor) of the following page to fetch (next_cursor in the previous output)",
+      "name": "cursor",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "0",
+      "description": "Number of items per page (n. Defaults to 20; values over 100 are treated as 100)",
+      "name": "limit",
+      "shorthand": "",
+      "type": "int32"
+    },
+    {
+      "default": "",
+      "description": "Filter by publication status (status: published, unpublished, or all. Defaults to published)",
+      "name": "status",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter by topic number (number)",
+      "name": "topic",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Lists the pages whose title or body contains the keywords, most recently updated first.\nSearches only within the token's space.\nPages in the trash are not included.\n\nYou can quote the keywords as one argument or list them separated by spaces.\nMultiple keywords separated by whitespace (including full-width spaces) match only pages containing all of them (AND search).\nEach keyword may appear in either the title or the body.\nMatching is by substring and case-insensitive.\nYou can specify up to 10 keywords.\n\nBy default, searches only published pages.\nWith `--status all`, also searches pages not yet published.\n\nThe output format and paging are the same as `wikino page list`.\nThe list does not include page bodies; it includes an excerpt of the beginning of the body (`excerpt`) instead.\nUse `wikino page get` to read a body.\n\nPages in private topics are included only when the token has the topic:read scope and the member can see the topic.",
+  "output": "  Like `wikino page list`, prints `{\"items\": [...], \"next_cursor\": ...}`.\n  See the help of `wikino page list` for the fields of each page.\n  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.\n  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.\n  When no pages match, returns an empty list with exit code 0.\n  In human-readable output, prints a hint on loosening the search to standard error.",
+  "short": "Search pages by keywords",
+  "subcommands": [],
+  "usage": "wikino page search <query>... [flags]"
+}
+
+=== wikino page update --help --json
+{
+  "args": [
+    {
+      "name": "page_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino page update",
+  "errors": "  2  The page number is not a positive integer, none of `--title`, `--body`, `--body-file`, `--md-file`, and `--edits` is given, flags that cannot be combined are combined,\n     neither or both of `--if-match` and `--force` are given (except with `--md-file` and `--edits`), `--if-match` is empty or `*`, a file cannot be read or is not UTF-8,\n     `wikino_number` in `--md-file` differs from the page number or `wikino_etag` is missing, the JSON in `--edits` has the wrong shape, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the page:write scope (403)\n  5  The page does not exist, is in the trash, or cannot be updated (404). Check the number with `wikino page list`\n  6  The page has been updated since you read it (412). Get the latest content and version with `wikino page get`, apply your changes, and update again.\n     With `--md-file`, apply your changes to a file written again with `wikino page get --md`\n  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).\n     `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.\n     Check the current body with `wikino page get --md` and send the whole `edits` again",
+  "examples": "  # Get the version of page 12, then update its body with the content of a file\n  wikino page get 12 --jq .etag\n  wikino page update 12 --body-file body.md --if-match '\"d41d8cd9\"'\n\n  # Change only the title of page 12\n  wikino page update 12 --title 'Minutes of the weekly meeting' --if-match '\"d41d8cd9\"'\n\n  # Write page 12 to a file, edit it, and write it back\n  wikino page get 12 --md > page.md\n  wikino page update 12 --md-file page.md\n\n  # Find and replace part of the body of page 12\n  echo '{\"edits\": [{\"old_str\": \"- [ ] Share the minutes\", \"new_str\": \"- [x] Share the minutes\"}]}' | wikino page update 12 --edits -\n\n  # Overwrite the latest version without checking the version\n  wikino page update 12 --body-file body.md --force\n\n  # Check the request that would be sent and where the wikilinks in the body point (without sending it)\n  wikino page update 12 --body-file body.md --if-match '\"d41d8cd9\"' --dry-run",
+  "flags": [
+    {
+      "default": "",
+      "description": "Body text (Markdown) as a string",
+      "name": "body",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Read the body from the file at path (`-` reads from standard input)",
+      "name": "body-file",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print the requests that would be sent without sending them",
+      "name": "dry-run",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Read find-and-replace edits as JSON (path) and replace part of the body (`-` reads from standard input)",
+      "name": "edits",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Overwrite the latest version, fetched just before, without checking the version you read",
+      "name": "force",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Write only if the version is still the one you read (etag from the output of `get`)",
+      "name": "if-match",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Write back a page file (path) written by --md, using the version and title in its frontmatter (`-` reads from standard input)",
+      "name": "md-file",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "New title. Up to 200 characters, without `/`, `\\`, `:`, or control characters, and without a leading or trailing space",
+      "name": "title",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Updates the title and body of the page with the given page number.\nOnly the given fields are updated; the others are left unchanged.\n\nChoose one of three ways to pass the body, depending on the size of the change.\n\n- `--body` or `--body-file`: pass the whole body, including the parts you do not change. `--body-file -` reads the body from standard input. The body is sent as given, including trailing newlines\n- `--md-file`: write back a page file written by `wikino page get --md` and edited. The command uses `wikino_etag` in the frontmatter as the version and `wikino_title` as the title, and sends the rest, without the keys starting with `wikino_`, as the body\n- `--edits`: find and replace part of the body. Reads JSON shaped like `{\"edits\": [{\"old_str\": \"...\", \"new_str\": \"...\", \"replace_all\": false}]}` from a file or standard input (`-`)\n\nPassing a page file to `--body-file` makes the frontmatter part of the body.\nPass page files with `--md-file`.\n\nA page file for `--md-file` is read as follows.\nA file whose `wikino_number` differs from the page number argument, and a file without `wikino_etag`, are rejected.\nWithout `wikino_title`, the title is not changed.\nOther `wikino_` keys (status, modification time, URL, and so on) are read-only and ignored even if edited.\nThe body's own frontmatter (keys that do not start with `wikino_`) is kept as part of the body.\n\nEach edit in `--edits` replaces, in array order, the places matching `old_str` in the body after the earlier edits are applied with `new_str`.\n`old_str` must match the body exactly, including case, spaces, and line breaks.\nAn edit with `replace_all` set to `false` (the default) fails unless it matches exactly one place, and then no edit is applied.\n`--edits` cannot change the title.\n\nTo update, pass the version you read to `--if-match`.\nThe version is `etag` in the output of `wikino page get`.\nIf the page has been updated since you read it, the command fails with exit code 6 without overwriting.\nWith `--force`, the version is not checked and the latest version, fetched just before, is overwritten.\nThis can discard other people's changes, so use it only when overwriting without reading is acceptable.\nWith `--md-file`, the version is read from the file, so do not add `--if-match` or `--force`.\nWith `--edits`, `--if-match` can be omitted.\nThat `old_str` matches the current body itself confirms that the edit is based on the body you read.\nWith `--if-match`, the edits are applied only to the body of the version you read.\n\nWhen a wikilink in the body points to a page that does not exist, the linked page is created as an unpublished page.\nBefore writing the body, the command checks where its wikilinks point (with `--edits`, the wikilinks in each `new_str`), and if any linked pages will be created, it lists them on standard error after updating.\nThe list is an estimate made just before updating; if other users create or delete pages in between, it can differ from the actual result.\nTo check for unintended linked pages beforehand, use `--dry-run`.\n\nUpdating a page that is not yet published publishes it.\nIf the title and body are the same as now, nothing is updated and the current page is printed.\n\nUpdating a page in a private topic requires the topic:read scope on the token in addition to page:write.",
+  "output": "  Prints the updated page with the same fields as `wikino page get` (including `etag`).\n  `etag` is the version after the update; pass it to `--if-match` to update again.\n  The human-readable output omits the body and prints a completion line to standard error.\n  If wikilinks in the body are estimated to have created linked pages, lists them on standard error, also with JSON output.\n  With `--dry-run`, prints the request that would be sent and where the wikilinks in the body point as `{\"dry_run\": true, \"requests\": [...], \"wikilinks\": [...]}` without sending the update request.\n  Each element of `wikilinks` has the wikilink text (`text`), the name of the linked topic (`topic_name`), the page title (`page_title`), the resolution (`resolution`), and the existing page (`page`).\n  `resolution` is one of: an existing page (`existing_page`), a page that writing creates as unpublished (`new_page`), or a topic that does not exist or cannot be seen, so the text is not a link (`topic_not_found`).\n  The requests that fetch the page (when writing the body or with `--force`) and check the linked pages (reads) are sent even with `--dry-run`.\n  `--dry-run` cannot be combined with `--fields`.",
+  "short": "Update a page",
+  "subcommands": [],
+  "usage": "wikino page update <page_number> [flags]"
+}
+
+=== wikino skill --help --json
+{
+  "args": [],
+  "command": "wikino skill",
+  "errors": "  A missing or unknown subcommand fails as a usage error (exit code 2).",
+  "examples": "  # Install into Claude Code's user-level skills directory\n  wikino skill install",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Manage the skill for coding agents (such as Claude Code).\n\nThe skill describes Wikino's concepts and has a guide for each situation: finding and reading pages, writing pages, publishing drafts, and logging in.\nAgents read the skill to learn how to use this CLI and what to watch out for.\nThe skill is embedded in this CLI's binary, so the skill you install matches the version of the CLI.",
+  "output": "  See the help of each subcommand.",
+  "short": "Manage the skill for coding agents",
+  "subcommands": [
+    {
+      "command": "wikino skill install",
+      "name": "install",
+      "short": "Install the skill"
+    }
+  ],
+  "usage": "wikino skill <command>"
+}
+
+=== wikino skill install --help --json
+{
+  "args": [],
+  "command": "wikino skill install",
+  "errors": "  1  Could not write to the destination (permissions, disk space, etc.)\n  2  Arguments were given, the home directory could not be determined and `--dir` was not given, or `--fields` has an unknown field",
+  "examples": "  # Install into Claude Code's user-level skills directory\n  wikino skill install\n\n  # Install the Japanese skill\n  WIKINO_LANG=ja wikino skill install\n\n  # Install into another agent's skills directory\n  wikino skill install --dir ~/.agents/skills",
+  "flags": [
+    {
+      "default": "",
+      "description": "The skills directory (dir). The skill is written to wikino/ under it. Defaults to ~/.claude/skills",
+      "name": "dir",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Write the skill embedded in this CLI (SKILL.md and the guides) to `wikino/` under a skills directory.\n\nBy default, it is written to Claude Code's user-level skills directory (`$CLAUDE_CONFIG_DIR/skills/`, or `~/.claude/skills/` if unset).\nTo use it with another agent, give the directory that agent reads skills from with `--dir`.\nA repository's `.claude/skills/` holds the skills for developing that repository, so it is not the default.\n\nThe skill is written in the display language (`WIKINO_LANG`, `LC_ALL`, `LC_MESSAGES`, `LANG`), and in English for languages other than Japanese.\nSkill files already in `wikino/` are overwritten, and other files are kept.\nAfter updating the CLI, run this again to update the skill too.",
+  "output": "  Prints the following fields for the installed skill.\n    path   The directory of the installed skill (`wikino/` under `--dir`)\n    lang   The language of the installed skill (ja, en)\n    files  The names of the written files",
+  "short": "Install the skill",
+  "subcommands": [],
+  "usage": "wikino skill install [flags]"
+}
+
+=== wikino topic --help --json
+{
+  "args": [],
+  "command": "wikino topic",
+  "errors": "  Fails with a usage error (exit code 2) when no subcommand or an unknown subcommand is given.",
+  "examples": "  # List topics\n  wikino topic list\n\n  # Show topic 3\n  wikino topic get 3",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Works with the topics of a space.\n\nEvery page belongs to one topic.\nUse a topic number to filter pages with `wikino page list --topic`.",
+  "output": "  See the help of each subcommand.",
+  "short": "Work with topics",
+  "subcommands": [
+    {
+      "command": "wikino topic get",
+      "name": "get",
+      "short": "Show a topic"
+    },
+    {
+      "command": "wikino topic list",
+      "name": "list",
+      "short": "List topics"
+    }
+  ],
+  "usage": "wikino topic <command>"
+}
+
+=== wikino topic get --help --json
+{
+  "args": [
+    {
+      "name": "topic_number",
+      "required": true,
+      "variadic": false
+    }
+  ],
+  "command": "wikino topic get",
+  "errors": "  2  The topic number is not a positive integer, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the topic:read scope (403)\n  5  The topic does not exist or is a private topic you cannot see (404). Check the number with `wikino topic list`",
+  "examples": "  # Show topic 3\n  wikino topic get 3\n\n  # Print only the name of topic 3\n  wikino topic get 3 --jq .name",
+  "flags": [],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Shows the topic with the given topic number.",
+  "output": "  Prints the topic with the same fields as an item of `wikino topic list`.",
+  "short": "Show a topic",
+  "subcommands": [],
+  "usage": "wikino topic get <topic_number> [flags]"
+}
+
+=== wikino topic list --help --json
+{
+  "args": [],
+  "command": "wikino topic list",
+  "errors": "  2  `--limit` is less than 1, `--all` is combined with `--cursor`, or `--fields` has an unknown field\n  3  Not logged in, or the token is invalid or expired (401)\n  4  The token lacks the topic:read scope (403)\n  7  The `--cursor` value is invalid (422). Remove `--cursor` and fetch again from the first page",
+  "examples": "  # List topics\n  wikino topic list\n\n  # Print the number and name of every topic, one per line\n  wikino topic list --all --fields number,name",
+  "flags": [
+    {
+      "default": "false",
+      "description": "Follow every page to fetch all items and print them as JSON Lines, one per line",
+      "name": "all",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Cursor (cursor) of the following page to fetch (next_cursor in the previous output)",
+      "name": "cursor",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "0",
+      "description": "Number of items per page (n. Defaults to 20; values over 100 are treated as 100)",
+      "name": "limit",
+      "shorthand": "",
+      "type": "int32"
+    }
+  ],
+  "inherited_flags": [
+    {
+      "default": "[]",
+      "description": "Comma-separated fields to print (e.g. number,title; applied to each item in lists)",
+      "name": "fields",
+      "shorthand": "",
+      "type": "stringSlice"
+    },
+    {
+      "default": "false",
+      "description": "Show help (as JSON when combined with --json)",
+      "name": "help",
+      "shorthand": "h",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Host url (defaults to the default host, or https://wikino.app)",
+      "name": "host",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Filter results with a jq expr (applied after --fields)",
+      "name": "jq",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "false",
+      "description": "Print results as JSON even on a TTY",
+      "name": "json",
+      "shorthand": "",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "description": "Member atname (to choose when the space has credentials for several members)",
+      "name": "member",
+      "shorthand": "",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "description": "Space identifier (space)",
+      "name": "space",
+      "shorthand": "",
+      "type": "string"
+    }
+  ],
+  "long": "Lists the topics of the space in ascending order of topic number.\n\nBy default, fetches only one page with the API's default size (20).\nWhen there is a next page, prints how to fetch it to standard error.\nWith `--all`, fetches every item and the output becomes JSON Lines (see Output).\n\nPrivate topics are included only when the token has the topic:read scope and the member can see the topic.",
+  "output": "  Prints `{\"items\": [...], \"next_cursor\": ...}` with these fields per topic.\n    id           Topic ID\n    number       Topic number. Pass it to `wikino topic get` and `wikino page list --topic`\n    name         Topic name\n    description  Topic description. An empty string when not set\n    visibility   Visibility (public, private)\n  `next_cursor` is the cursor of the next page, or null when there is none.\n  With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.\n  When there are no topics, returns an empty list with exit code 0.",
+  "short": "List topics",
+  "subcommands": [],
+  "usage": "wikino topic list [flags]"
+}
+

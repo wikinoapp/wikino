@@ -87,6 +87,12 @@ func (r *EmailConfirmationRepository) Succeed(ctx context.Context, id string) er
 	})
 }
 
+// DeleteStartedBeforeは、cutoffより前に開始したメール確認情報を確認の成否を問わず削除し、
+// 削除した件数を返す
+func (r *EmailConfirmationRepository) DeleteStartedBefore(ctx context.Context, cutoff time.Time) (int64, error) {
+	return r.q.DeleteEmailConfirmationsStartedBefore(ctx, cutoff)
+}
+
 // toModelはquery.EmailConfirmationをmodel.EmailConfirmationに変換する
 func (r *EmailConfirmationRepository) toModel(row query.EmailConfirmation) *model.EmailConfirmation {
 	var succeededAt *time.Time

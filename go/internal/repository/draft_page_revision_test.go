@@ -332,6 +332,73 @@ func TestDraftPageRevisionRepository_ListByDraftPageID(t *testing.T) {
 	})
 }
 
+func TestDraftPageRevisionRepository_ListByCreatedAt(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRevisionRepository(q)
+
+	spaceID, spaceMemberID, draftPageID := setupDraftRevisionFixture(t, tx, "listcursor")
+
+	base := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
+	rev1 := insertDraftRevision(t, tx, draftPageID, spaceID, spaceMemberID, "rev1", base.Add(1*time.Second))
+	// 作成日時が同じリビジョンも、IDの大きい順に並べて読み飛ばさない
+	tieA := insertDraftRevision(t, tx, draftPageID, spaceID, spaceMemberID, "tieA", base.Add(2*time.Second))
+	tieB := insertDraftRevision(t, tx, draftPageID, spaceID, spaceMemberID, "tieB", base.Add(2*time.Second))
+	rev3 := insertDraftRevision(t, tx, draftPageID, spaceID, spaceMemberID, "rev3", base.Add(3*time.Second))
+	tieHigh, tieLow := tieA, tieB
+	if tieHigh.ID < tieLow.ID {
+		tieHigh, tieLow = tieLow, tieHigh
+	}
+	otherSpaceID, otherMemberID, otherDraftPageID := setupDraftRevisionFixture(t, tx, "listcursorother")
+	insertDraftRevision(t, tx, otherDraftPageID, otherSpaceID, otherMemberID, "other", base.Add(4*time.Second))
+
+	t.Run("カーソルで新しい順に辿れる", func(t *testing.T) {
+		var got []model.DraftPageRevisionID
+		input := ListDraftPageRevisionsByCreatedAtInput{DraftPageID: draftPageID, SpaceID: spaceID, Limit: 2}
+		for range 3 {
+			revisions, err := repo.ListByCreatedAt(context.Background(), input)
+			if err != nil {
+				t.Fatalf("ListByCreatedAt()のエラー = %v", err)
+			}
+			if len(revisions) == 0 {
+				break
+			}
+			for _, r := range revisions {
+				got = append(got, r.ID)
+			}
+			last := revisions[len(revisions)-1]
+			input.AfterCreatedAt = &last.CreatedAt
+			input.AfterID = &last.ID
+		}
+
+		want := []model.DraftPageRevisionID{rev3.ID, tieHigh.ID, tieLow.ID, rev1.ID}
+		if len(got) != len(want) {
+			t.Fatalf("取得したID = %v、期待値 = %v", got, want)
+		}
+		for i := range want {
+			if got[i] != want[i] {
+				t.Errorf("%d件目のID = %v、期待値 = %v", i, got[i], want[i])
+			}
+		}
+	})
+
+	t.Run("別スペースのスペースIDでは取得できない", func(t *testing.T) {
+		revisions, err := repo.ListByCreatedAt(context.Background(), ListDraftPageRevisionsByCreatedAtInput{
+			DraftPageID: draftPageID,
+			SpaceID:     otherSpaceID,
+			Limit:       20,
+		})
+		if err != nil {
+			t.Fatalf("ListByCreatedAt()のエラー = %v", err)
+		}
+		if len(revisions) != 0 {
+			t.Errorf("len(revisions) = %d、期待値 = 0", len(revisions))
+		}
+	})
+}
+
 func TestDraftPageRevisionRepository_FindByID(t *testing.T) {
 	t.Parallel()
 

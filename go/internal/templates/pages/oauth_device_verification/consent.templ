@@ -1,0 +1,152 @@
+package oauth_device_verification
+
+import (
+	"time"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// ConsentDataはデバイス認可の同意画面をレンダリングする元になるデータ。
+//
+// NotMemberとNoPermissionのどちらかが真なら、ログイン中のユーザーは連携先のスペースで
+// アプリを許可できず、同意の代わりにその理由とログインを中止するボタンを示す。
+// ScopeOptionsは要求されたスコープの選択肢で、FormErrorsは拒否された送信のエラー。
+type ConsentData struct {
+	CSRFToken       string
+	UserCode        string
+	ApplicationName string
+	SpaceName       string
+	UserAtname      string
+	RequestedAt     time.Time
+	ScopeOptions    []components.APITokenScopeOption
+	NotMember       bool
+	NoPermission    bool
+	FormErrors      *model.ValidationError
+}
+
+// Consentは、ユーザーコードで照合したデバイス認可の要求を利用者に示し、許可するか拒否するかを
+// 選ばせる画面を表示します。他人から渡されたコードを入力させてアカウントを使わせる手口
+// (RFC 8628 §5.4) に備え、自分で開始したログインかを確かめるよう促し、要求の開始日時を示します。
+templ Consent(data ConsentData) {
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="flex flex-col gap-2 px-4">
+			<h1 class="text-center text-2xl font-bold antialiased">
+				if data.NotMember || data.NoPermission {
+					{ templates.T(ctx, "oauth_device_verification_consent_denied_heading", map[string]any{"ApplicationName": data.ApplicationName}) }
+				} else {
+					{ templates.T(ctx, "oauth_device_verification_consent_heading", map[string]any{"ApplicationName": data.ApplicationName}) }
+				}
+			</h1>
+		</div>
+
+		<div class="px-4">
+			<div class="alert">
+				@templates.DecorativeIcon("warning-regular", "fill-warning")
+				<section>
+					{ templates.T(ctx, "oauth_device_verification_consent_phishing_notice") }
+				</section>
+			</div>
+		</div>
+
+		@components.ContentCard() {
+			<form action="/oauth/device" class="grid gap-6" method="POST">
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name={ userCodeField } value={ data.UserCode }/>
+
+				<dl class="grid gap-4">
+					<div class="grid gap-1">
+						<dt class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "oauth_device_verification_consent_space_label") }
+						</dt>
+						<dd class="font-bold">{ data.SpaceName }</dd>
+					</div>
+					<div class="grid gap-1">
+						<dt class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "oauth_device_verification_consent_user_label") }
+						</dt>
+						<dd>{ "@" + data.UserAtname }</dd>
+					</div>
+					<div class="grid gap-1">
+						<dt class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "oauth_device_verification_consent_requested_at_label") }
+						</dt>
+						<dd>
+							@components.AbsoluteTime(components.AbsoluteTimeData{Time: data.RequestedAt})
+						</dd>
+					</div>
+					<div class="grid gap-1">
+						<dt class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "oauth_device_verification_consent_user_code_label") }
+						</dt>
+						<dd class="font-mono">{ data.UserCode }</dd>
+					</div>
+				</dl>
+
+				if data.NotMember {
+					<p>{ templates.T(ctx, "oauth_device_verification_consent_not_member") }</p>
+				} else if data.NoPermission {
+					<p>{ templates.T(ctx, "oauth_device_verification_consent_no_permission") }</p>
+				} else {
+					// 選択肢のグループは認可の同意画面と同じく、basecoatの .fieldsetでまとめます。
+					<fieldset class="fieldset gap-3">
+						<legend class="label">
+							{ templates.T(ctx, "oauth_device_verification_consent_scopes_label", map[string]any{"ApplicationName": data.ApplicationName}) }
+						</legend>
+						<p class="text-muted-foreground text-sm">
+							{ templates.T(ctx, "oauth_device_verification_consent_scopes_hint") }
+						</p>
+						if hasScopesError(data.FormErrors) {
+							<div id={ scopesErrorID }>
+								for _, errorMsg := range data.FormErrors.GetFieldErrors(grantedScopesField) {
+									<p class="text-sm text-error">{ errorMsg }</p>
+								}
+							</div>
+						}
+						@components.APITokenScopeCheckboxes(components.APITokenScopeCheckboxesData{
+							Name:      grantedScopesField,
+							Options:   data.ScopeOptions,
+							ErrorID:   scopesErrorIDIf(hasScopesError(data.FormErrors)),
+							Autofocus: hasScopesError(data.FormErrors),
+						})
+					</fieldset>
+				}
+
+				<div class="flex flex-wrap gap-2">
+					if !data.NotMember && !data.NoPermission {
+						<button class="btn rounded-full" name="decision" type="submit" value="approve">
+							{ templates.T(ctx, "oauth_device_verification_consent_approve") }
+						</button>
+						<button class="btn rounded-full" data-variant="outline" name="decision" type="submit" value="deny">
+							{ templates.T(ctx, "oauth_device_verification_consent_deny") }
+						</button>
+					} else {
+						<button class="btn rounded-full" data-variant="outline" name="decision" type="submit" value="deny">
+							{ templates.T(ctx, "oauth_device_verification_consent_cancel") }
+						</button>
+					}
+				</div>
+			</form>
+		}
+	</div>
+}
+
+// grantedScopesFieldは、利用者が選んだ付与するスコープを送るフォームの項目名
+const grantedScopesField = "granted_scopes"
+
+// scopesErrorIDは、スコープの選択のエラーを収める要素のid
+const scopesErrorID = grantedScopesField + "-error"
+
+// hasScopesErrorは、拒否された送信にスコープの選択のエラーがあるかを返します。
+func hasScopesError(formErrors *model.ValidationError) bool {
+	return formErrors != nil && formErrors.HasFieldError(grantedScopesField)
+}
+
+// scopesErrorIDIfは、エラーがあればチェックボックスから参照するエラーの要素のidを返します。
+func scopesErrorIDIf(hasError bool) string {
+	if hasError {
+		return scopesErrorID
+	}
+	return ""
+}

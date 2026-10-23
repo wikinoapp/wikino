@@ -5,7 +5,9 @@ import (
 	"net/url"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/redirect"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	oauthauthorizationpages "github.com/wikinoapp/wikino/go/internal/templates/pages/oauth_authorization"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -30,12 +32,27 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	params := parseOAuthAuthorizationParams(values)
 	params.MalformedQuery = queryErr != nil
 
+	h.renderNew(w, r, user, params, nil, nil)
+}
+
+// renderNewは認可要求を検証し、同意画面を描画します。formErrorsがnilなら初めての表示として
+// 要求されたスコープをすべてチェックし、拒否された送信の再表示 (422) では利用者が選んだ
+// スコープ (granted) をチェックしたまま戻す。再表示は同意の送信から来るため、検証に失敗して
+// クライアントへ戻すときは送信への応答として303を使う
+func (h *Handler) renderNew(w http.ResponseWriter, r *http.Request, user *model.User, params usecase.OAuthAuthorizationParams, granted []string, formErrors *model.ValidationError) {
+	ctx := r.Context()
+
+	status, redirectStatus := http.StatusOK, http.StatusFound
+	if formErrors != nil {
+		status, redirectStatus = http.StatusUnprocessableEntity, http.StatusSeeOther
+	}
+
 	output, err := h.getOAuthAuthorizationNewUC.Execute(ctx, usecase.GetOAuthAuthorizationNewInput{
 		UserID: user.ID,
 		Params: params,
 	})
 	if err != nil {
-		h.handleError(w, r, err, http.StatusFound)
+		h.handleError(w, r, err, redirectStatus)
 		return
 	}
 
@@ -44,18 +61,25 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		redirectHost = u.Host
 	}
 
+	checked := output.Scopes
+	if formErrors != nil {
+		checked = model.StringsToScopes(granted)
+	}
+
 	content := oauthauthorizationpages.New(oauthauthorizationpages.NewData{
 		CSRFToken:       middleware.GetCSRFTokenFromContext(ctx),
 		HiddenFields:    hiddenFields(params),
 		ApplicationName: output.Application.Name,
 		SpaceName:       output.Space.Name,
 		UserAtname:      string(user.Atname),
-		Scopes:          output.Scopes,
+		ScopeOptions:    components.NewAPITokenScopeOptions(output.Scopes, checked, output.IneffectiveScopes),
 		RedirectHost:    redirectHost,
 		NotMember:       output.DeniedReason == usecase.OAuthAuthorizationDeniedNotMember,
 		NoPermission:    output.DeniedReason == usecase.OAuthAuthorizationDeniedNoPermission,
+		FormErrors:      formErrors,
 	})
 
+	w.WriteHeader(status)
 	h.render(w, r, "oauth_authorization_new_title", map[string]any{"ApplicationName": output.Application.Name}, content)
 }
 

@@ -133,6 +133,92 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 	})
 }
 
+func TestAttachmentRepository_FindBlobByIDAndSpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewAttachmentRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("attach-find-blob@example.com").
+		WithAtname("attachfindblob").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("attach-find-blob-space").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		WithFilename("diagram.svg").
+		WithContentType("image/svg+xml").
+		WithByteSize(2048).
+		WithBlobKey("attach-find-blob-key").
+		Build()
+
+	t.Run("ファイル名・種類・バイト数・ストレージキーを取得できる", func(t *testing.T) {
+		attachment, err := repo.FindBlobByIDAndSpace(context.Background(), attachmentID, spaceID)
+		if err != nil {
+			t.Fatalf("FindBlobByIDAndSpace()のエラー = %v", err)
+		}
+		if attachment == nil {
+			t.Fatal("FindBlobByIDAndSpace()がnilを返した、期待値 = 添付ファイル")
+		}
+		want := model.Attachment{
+			ID:          attachmentID,
+			SpaceID:     spaceID,
+			Filename:    "diagram.svg",
+			BlobKey:     "attach-find-blob-key",
+			ContentType: "image/svg+xml",
+			ByteSize:    2048,
+		}
+		if *attachment != want {
+			t.Errorf("FindBlobByIDAndSpace() = %+v、期待値 = %+v", *attachment, want)
+		}
+	})
+
+	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
+		attachment, err := repo.FindBlobByIDAndSpace(context.Background(), model.AttachmentID("00000000-0000-0000-0000-000000000000"), spaceID)
+		if err != nil {
+			t.Fatalf("FindBlobByIDAndSpace()のエラー = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindBlobByIDAndSpace() = %v、期待値 = nil", attachment)
+		}
+	})
+
+	t.Run("UUIDでないIDはnilを返す", func(t *testing.T) {
+		attachment, err := repo.FindBlobByIDAndSpace(context.Background(), model.AttachmentID("not-a-uuid"), spaceID)
+		if err != nil {
+			t.Fatalf("FindBlobByIDAndSpace()のエラー = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindBlobByIDAndSpace() = %v、期待値 = nil", attachment)
+		}
+	})
+
+	t.Run("異なるスペースIDはnilを返す", func(t *testing.T) {
+		otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+			WithIdentifier("attach-find-blob-other").
+			Build()
+
+		attachment, err := repo.FindBlobByIDAndSpace(context.Background(), attachmentID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindBlobByIDAndSpace()のエラー = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindBlobByIDAndSpace() = %v、期待値 = nil", attachment)
+		}
+	})
+}
+
 func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
 	t.Parallel()
 

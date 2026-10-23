@@ -869,7 +869,7 @@ func TestCSRFMiddleware_OAuthTokenPathsSkipVerification(t *testing.T) {
 	t.Parallel()
 
 	csrfMiddleware := middleware.NewCSRF(&config.Config{})
-	for _, path := range []string{"/oauth/token", "/oauth/revoke"} {
+	for _, path := range []string{"/oauth/token", "/oauth/revoke", "/oauth/device_authorization"} {
 		t.Run(path, func(t *testing.T) {
 			t.Parallel()
 			called := false

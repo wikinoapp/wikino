@@ -383,3 +383,51 @@ func TestOAuthGrantRepository_ListUnrevokedBySpaceMember(t *testing.T) {
 		t.Errorf("他のスペースを指定したときの件数 = %d、期待値 = 0", len(otherSpace))
 	}
 }
+
+func TestOAuthGrantRepository_LockOrCreate(t *testing.T) {
+	t.Parallel()
+	_, tx := testutil.SetupTx(t)
+	repo := NewOAuthGrantRepository(testutil.QueriesWithTx(tx))
+	f := setupOAuthFixture(t, tx, "grant-lock-create")
+	ctx := t.Context()
+	input := CreateOAuthGrantInput{OAuthApplicationID: f.oauthApplicationID, SpaceID: f.spaceID, SpaceMemberID: f.spaceMemberID, Scopes: []model.Scope{model.ScopePageWrite}}
+	first, err := repo.LockOrCreate(ctx, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(first.Scopes, input.Scopes) {
+		t.Errorf("初回の許可のスコープ = %v、期待値 = %v", first.Scopes, input.Scopes)
+	}
+	input.Scopes = []model.Scope{model.ScopeTopicRead}
+	locked, err := repo.LockOrCreate(ctx, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if locked.ID != first.ID || !slices.Equal(locked.Scopes, first.Scopes) || !locked.UpdatedAt.Equal(first.UpdatedAt) {
+		t.Errorf("ロック時に既存の許可が変わりました: ID=%s、スコープ=%v、更新日時=%s", locked.ID, locked.Scopes, locked.UpdatedAt)
+	}
+}
+
+func TestOAuthGrantRepository_LockByID(t *testing.T) {
+	t.Parallel()
+	_, tx := testutil.SetupTx(t)
+	repo := NewOAuthGrantRepository(testutil.QueriesWithTx(tx))
+	f := setupOAuthFixture(t, tx, "grant-lock-id")
+	id := f.buildGrant(t, tx)
+	ctx := t.Context()
+	locked, err := repo.LockByID(ctx, id, f.spaceID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if locked == nil || locked.ID != id {
+		t.Fatalf("ロックした許可 = %v、期待するID = %s", locked, id)
+	}
+	other := setupOAuthFixture(t, tx, "grant-lock-id-other")
+	locked, err = repo.LockByID(ctx, id, other.spaceID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if locked != nil {
+		t.Error("別のスペースの許可をロックできました")
+	}
+}

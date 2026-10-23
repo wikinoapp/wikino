@@ -22,6 +22,14 @@ SELECT * FROM oauth_grants
 WHERE id = @id
   AND space_id = @space_id;
 
+-- name: LockOAuthGrantByID :one
+-- 許可の更新とトークンの発行を直列化する。待機後は最新のスコープを返す。
+-- 外部キーの検査を妨げず、許可への更新どうしを排他にするためFOR NO KEY UPDATEを使う。
+SELECT * FROM oauth_grants
+WHERE id = @id
+  AND space_id = @space_id
+FOR NO KEY UPDATE;
+
 -- name: FindUnrevokedOAuthGrantByApplicationAndSpaceMember :one
 -- スペースメンバーがOAuthアプリに与えている、失効していない許可を取得する
 SELECT * FROM oauth_grants
@@ -67,3 +75,16 @@ revoked_refresh_tokens AS (
       AND oauth_refresh_tokens.revoked_at IS NULL
 )
 SELECT * FROM revoked_grant;
+
+-- name: LockOrCreateOAuthGrant :one
+-- 同意の範囲を反映する前に許可をロックする。初回の同意も一意制約で直列化し、
+-- トークン発行を待った後の別の文で、範囲外のトークンを漏れなく失効させる。
+-- 既存の許可のスコープ・更新日時は、この段階では変更しない。
+INSERT INTO oauth_grants (
+    oauth_application_id, space_id, space_member_id, scopes, created_at, updated_at
+) VALUES (
+    @oauth_application_id, @space_id, @space_member_id, @scopes::text[], @now, @now
+)
+ON CONFLICT (oauth_application_id, space_member_id) WHERE revoked_at IS NULL
+DO UPDATE SET updated_at = oauth_grants.updated_at
+RETURNING *;

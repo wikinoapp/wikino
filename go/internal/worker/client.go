@@ -13,6 +13,7 @@ import (
 	"github.com/riverqueue/river/rivertype"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/email"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ratelimit"
@@ -27,6 +28,20 @@ import (
 // うち最も長いのがエクスポートのワーカーのものなので、同じ定数から決める。両者を別々に選べるように
 // すると、Riverが起動を拒否する設定ができてしまう。
 const rescueStuckJobsAfter = model.ExportAttemptTimeout + time.Hour
+
+// rateLimitRetentionHoursは、レート制限の記録を残す時間。プライバシーポリシーに書く保持期間 (1日)
+// に合わせる。レート制限の窓がこれより長いと判定中の記録を消してしまうため、窓はこれより短く保つ。
+const rateLimitRetentionHours = 24
+
+// cleanupRateLimitsIntervalは、古いレート制限の記録を消すジョブを投入する間隔。
+const cleanupRateLimitsInterval = time.Hour
+
+// emailConfirmationRetentionHoursは、メール確認の記録を開始から残す時間。プライバシーポリシーに書く
+// 保持期間 (1日) に合わせる。確認コードの有効期限 (15分) より長く保ち、確認の途中の記録を消さない。
+const emailConfirmationRetentionHours = 24
+
+// cleanupEmailConfirmationsIntervalは、古いメール確認の記録を消すジョブを投入する間隔。
+const cleanupEmailConfirmationsInterval = time.Hour
 
 // ExportDepsは、エクスポートのワーカーが必要としながら自分では用意できないものを保持する。
 // リポジトリとオブジェクトストレージはHTTP側と共有するため、ここで作り直さず受け取る。メール
@@ -52,7 +67,7 @@ type Client struct {
 }
 
 // NewClientは新しいRiverクライアントを作成します
-func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, exportDeps ExportDeps) (*Client, error) {
+func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps) (*Client, error) {
 	// pgxpoolの作成
 	poolConfig, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -114,6 +129,10 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 	river.AddWorker(workers, NewCleanupRateLimitsWorker(cleanupRateLimitsUC))
 	slog.InfoContext(ctx, "CleanupRateLimitsWorkerを登録しました")
 
+	cleanupEmailConfirmationsUC := usecase.NewCleanupEmailConfirmationsUsecase(emailConfirmationRepo)
+	river.AddWorker(workers, NewCleanupEmailConfirmationsWorker(cleanupEmailConfirmationsUC))
+	slog.InfoContext(ctx, "CleanupEmailConfirmationsWorkerを登録しました")
+
 	// Riverクライアントの作成
 	// SentryミドルウェアはConfig.Middlewareに登録する。
 	// 将来riverのアップデートで削除される可能性のあるWorkerMiddleware
@@ -122,7 +141,8 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 10},
 		},
-		Workers: workers,
+		Workers:      workers,
+		PeriodicJobs: toPeriodicJobs(periodicJobSpecs()),
 
 		RescueStuckJobsAfter: rescueStuckJobsAfter,
 		Middleware: []rivertype.Middleware{
@@ -177,4 +197,51 @@ func newGenerateExportFilesUsecase(cfg *config.Config, deps ExportDeps, sender u
 		deps.ObjectStorage,
 		sender,
 	)
+}
+
+// periodicJobSpecは、定期的に投入するジョブ1件分の設定。river.PeriodicJobは投入する引数と間隔を
+// 非公開のフィールドに持つため、先にこの形で宣言してからriverの型へ変換する。何をどの間隔で投入
+// するかを、テストから確かめられるようにするためである。
+type periodicJobSpec struct {
+	// argsは、投入のたびに引数の型が宣言するInsertOptsを渡すため、InsertOptsを持つ型に限る。
+	args interface {
+		river.JobArgs
+		river.JobArgsWithInsertOpts
+	}
+	interval time.Duration
+}
+
+// periodicJobSpecsは、ワーカーのクライアントが定期的に投入するジョブを返す。ここに足すジョブの
+// ワーカーは、設定によらず登録されるものに限る。登録されていないワーカーのジョブを投入すると、
+// 誰も処理できないジョブが溜まり続けるためである。
+func periodicJobSpecs() []periodicJobSpec {
+	return []periodicJobSpec{
+		{
+			args:     dispatcher.CleanupRateLimitsArgs{RetentionHours: rateLimitRetentionHours},
+			interval: cleanupRateLimitsInterval,
+		},
+		{
+			args:     dispatcher.CleanupEmailConfirmationsArgs{RetentionHours: emailConfirmationRetentionHours},
+			interval: cleanupEmailConfirmationsInterval,
+		},
+	}
+}
+
+// toPeriodicJobsは、定期的に投入するジョブの設定をriverの定期ジョブへ変換する。
+//
+// どのジョブも、リーダーに選ばれたときに1件投入する (RunOnStart)。定期実行の予定はリーダーの
+// メモリにしか無いため、これが無いと、間隔より短い周期でデプロイが続く間は投入が先送りされ続ける。
+func toPeriodicJobs(specs []periodicJobSpec) []*river.PeriodicJob {
+	jobs := make([]*river.PeriodicJob, 0, len(specs))
+	for _, spec := range specs {
+		jobs = append(jobs, river.NewPeriodicJob(
+			river.PeriodicInterval(spec.interval),
+			func() (river.JobArgs, *river.InsertOpts) {
+				opts := spec.args.InsertOpts()
+				return spec.args, &opts
+			},
+			&river.PeriodicJobOpts{RunOnStart: true},
+		))
+	}
+	return jobs
 }

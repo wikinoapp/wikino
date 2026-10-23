@@ -176,12 +176,14 @@ func TestAPIRateLimitPolicy_Key(t *testing.T) {
 		wantKey   string
 		wantOK    bool
 	}{
-		{name: "メンバー単位の制限は個人アクセストークンの持ち主のメンバーで数える", policy: middleware.APISpaceMemberRateLimitPolicy, principal: pat, wantKey: "api:space_member:space-member-1", wantOK: true},
-		{name: "メンバー単位の制限は同じメンバーのOAuthのトークンを個人アクセストークンと合わせて数える", policy: middleware.APISpaceMemberRateLimitPolicy, principal: oauth, wantKey: "api:space_member:space-member-1", wantOK: true},
+		{name: "メンバー単位の制限は個人用アクセストークンの持ち主のメンバーで数える", policy: middleware.APISpaceMemberRateLimitPolicy, principal: pat, wantKey: "api:space_member:space-member-1", wantOK: true},
+		{name: "メンバー単位の制限は同じメンバーのOAuthのトークンを個人用アクセストークンと合わせて数える", policy: middleware.APISpaceMemberRateLimitPolicy, principal: oauth, wantKey: "api:space_member:space-member-1", wantOK: true},
 		{name: "メンバー単位の制限は同じユーザーでもスペースが違えば別に数える", policy: middleware.APISpaceMemberRateLimitPolicy, principal: otherSpace, wantKey: "api:space_member:space-member-2", wantOK: true},
 		{name: "メンバー単位の制限はトークンの無いリクエストを数えない", policy: middleware.APISpaceMemberRateLimitPolicy, wantOK: false},
 		{name: "OAuthのIPアドレス単位の制限は未信頼の転送ヘッダーを無視する", policy: middleware.OAuthIPRateLimitPolicy(nil), wantKey: "oauth:ip:192.0.2.1", wantOK: true},
 		{name: "OAuthのIPアドレス単位の制限は信頼済みプロキシを経由した送信元で数える", policy: middleware.OAuthIPRateLimitPolicy([]netip.Prefix{netip.MustParsePrefix("192.0.2.0/24")}), wantKey: "oauth:ip:203.0.113.1", wantOK: true},
+		{name: "デバイス認可の要求のIPアドレス単位の制限はトークンエンドポイントと別に数える", policy: middleware.OAuthDeviceAuthorizationIPRateLimitPolicy(nil), wantKey: "oauth:device_authorization:ip:192.0.2.1", wantOK: true},
+		{name: "デバイス認可の要求のIPアドレス単位の制限は信頼済みプロキシを経由した送信元で数える", policy: middleware.OAuthDeviceAuthorizationIPRateLimitPolicy([]netip.Prefix{netip.MustParsePrefix("192.0.2.0/24")}), wantKey: "oauth:device_authorization:ip:203.0.113.1", wantOK: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

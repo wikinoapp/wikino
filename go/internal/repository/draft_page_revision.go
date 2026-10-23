@@ -83,6 +83,44 @@ func (r *DraftPageRevisionRepository) ListByDraftPageID(ctx context.Context, dra
 	return revisions, nil
 }
 
+// ListDraftPageRevisionsByCreatedAtInputはListByCreatedAtの入力
+type ListDraftPageRevisionsByCreatedAtInput struct {
+	DraftPageID model.DraftPageID
+	SpaceID     model.SpaceID
+	// AfterCreatedAtとAfterIDは前のページの最後のリビジョンの位置。どちらもnilなら先頭から返す
+	AfterCreatedAt *time.Time
+	AfterID        *model.DraftPageRevisionID
+	Limit          int32
+}
+
+// ListByCreatedAtは下書きページのリビジョンを、ListByDraftPageIDと同じ (created_at, id) の
+// 新しい順にLimit件まで返す。カーソルを渡すと、その位置より後ろのリビジョンだけを返す
+func (r *DraftPageRevisionRepository) ListByCreatedAt(ctx context.Context, input ListDraftPageRevisionsByCreatedAtInput) ([]*model.DraftPageRevision, error) {
+	var afterCreatedAt sql.NullTime
+	var afterID *string
+	if input.AfterCreatedAt != nil && input.AfterID != nil {
+		afterCreatedAt = sql.NullTime{Time: *input.AfterCreatedAt, Valid: true}
+		id := string(*input.AfterID)
+		afterID = &id
+	}
+
+	rows, err := r.q.ListDraftPageRevisionsByCreatedAt(ctx, query.ListDraftPageRevisionsByCreatedAtParams{
+		DraftPageID:    string(input.DraftPageID),
+		SpaceID:        string(input.SpaceID),
+		AfterCreatedAt: afterCreatedAt,
+		AfterID:        afterID,
+		RowLimit:       input.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	revisions := make([]*model.DraftPageRevision, len(rows))
+	for i, row := range rows {
+		revisions[i] = r.toModel(row)
+	}
+	return revisions, nil
+}
+
 // IDで下書きページリビジョンを取得する (スペースIDでスコープ)。見つからない場合は (nil, nil) を返す。
 func (r *DraftPageRevisionRepository) FindByID(ctx context.Context, id model.DraftPageRevisionID, spaceID model.SpaceID) (*model.DraftPageRevision, error) {
 	row, err := r.q.FindDraftPageRevisionByID(ctx, query.FindDraftPageRevisionByIDParams{

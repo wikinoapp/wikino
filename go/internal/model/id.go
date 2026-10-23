@@ -59,7 +59,7 @@ type FeatureFlagName string
 // ExportIDはスペースのエクスポートのID型
 type ExportID string
 
-// PersonalAccessTokenIDは個人アクセストークンのID型
+// PersonalAccessTokenIDは個人用アクセストークンのID型
 type PersonalAccessTokenID string
 
 // OAuthApplicationIDはOAuthアプリのID型
@@ -76,6 +76,9 @@ type OAuthAccessTokenID string
 
 // OAuthRefreshTokenIDはOAuthのリフレッシュトークンのID型
 type OAuthRefreshTokenID string
+
+// OAuthDeviceAuthorizationIDはOAuthのデバイス認可の要求のID型
+type OAuthDeviceAuthorizationID string
 
 // SpaceIdentifierはスペース識別子の型
 type SpaceIdentifier string
@@ -160,6 +163,9 @@ func (id OAuthAccessTokenID) String() string { return string(id) }
 
 // StringはOAuthRefreshTokenIDを文字列に変換する
 func (id OAuthRefreshTokenID) String() string { return string(id) }
+
+// StringはOAuthDeviceAuthorizationIDを文字列に変換する
+func (id OAuthDeviceAuthorizationID) String() string { return string(id) }
 
 // StringはSpaceIdentifierを文字列に変換する
 func (s SpaceIdentifier) String() string { return string(s) }

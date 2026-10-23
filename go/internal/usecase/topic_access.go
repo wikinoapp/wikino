@@ -31,7 +31,7 @@ func fetchTopicAccess(ctx context.Context, repos pageAccessRepos, spaceID model.
 	})
 }
 
-// fetchAPITopicAccessは公開APIのトークンの主体について、束縛先のスペースのトピックと
+// fetchAPITopicAccessは公開APIのトークンの主体について、トークンが属するスペースのトピックと
 // 主体のトピックメンバーを解決する。判定はメンバーのスコープとトークンのスコープの論理積で行う。
 func fetchAPITopicAccess(ctx context.Context, topicRepo *repository.TopicRepository, topicMemberRepo *repository.TopicMemberRepository, principal *model.APIPrincipal) (*topicAccess, error) {
 	return loadTopicAccess(ctx, topicRepo, topicMemberRepo, principal.Space.ID, principal.SpaceMember, func(topicMember *model.TopicMember) policy.Authorizer {
@@ -126,6 +126,12 @@ func (a *topicAccess) canShowPage(pg *model.Page) bool {
 	return true
 }
 
+// canShowTopicは閲覧者が指定トピックを開けるかを返す。解決済みのトピックに無いトピック
+// (このトピックアクセスの取得より後に作られたトピックなど) は、トピックメンバーを持たないものとして判定する
+func (a *topicAccess) canShowTopic(topic *model.Topic) bool {
+	return a.authorizer(topic.ID).CanShowTopic(topic)
+}
+
 // authorizerは指定トピックにおける閲覧者のAuthorizerを返す。スペースのスコープと、その
 // トピックのトピックメンバーが持つスコープを統合する。CanUpdatePageのようにページの所属トピック
 // に依存する権限の判定に使う。
@@ -137,7 +143,7 @@ func (a *topicAccess) authorizer(topicID model.TopicID) policy.Authorizer {
 func (a *topicAccess) visibleTopics() []*model.Topic {
 	visible := make([]*model.Topic, 0, len(a.topics))
 	for _, topic := range a.topics {
-		if a.authorizer(topic.ID).CanShowTopic(topic) {
+		if a.canShowTopic(topic) {
 			visible = append(visible, topic)
 		}
 	}

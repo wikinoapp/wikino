@@ -42,6 +42,32 @@ func TestPersonalAccessTokenCreateValidator_Valid(t *testing.T) {
 			wantScopes:     []model.Scope{model.ScopeTopicRead, model.ScopePageRead, model.ScopePageWrite},
 			wantDays:       365,
 		},
+		{
+			// 含まれるスコープは画面で無効にして送信されないため、送られなくても補う
+			name:           "下書きのスコープを、含まれる読み取りを補って付与できる",
+			tokenName:      "エージェント",
+			scopes:         []string{"draft_page:delete", "draft_page:write"},
+			expirationDays: "7",
+			wantScopes:     []model.Scope{model.ScopeDraftPageRead, model.ScopeDraftPageWrite, model.ScopeDraftPageDelete},
+			wantDays:       7,
+		},
+		{
+			// 下書きの公開に要るpage:writeのように、リソースをまたいで要るスコープは補わない
+			name:           "選んだスコープが含むスコープだけを補う",
+			tokenName:      "エージェント",
+			scopes:         []string{"page:write"},
+			expirationDays: "30",
+			wantScopes:     []model.Scope{model.ScopePageRead, model.ScopePageWrite},
+			wantDays:       30,
+		},
+		{
+			name:           "添付ファイルの読み取りのスコープを付与できる",
+			tokenName:      "エージェント",
+			scopes:         []string{"attachment:read", "page:read"},
+			expirationDays: "30",
+			wantScopes:     []model.Scope{model.ScopePageRead, model.ScopeAttachmentRead},
+			wantDays:       30,
+		},
 	}
 
 	for _, tt := range tests {

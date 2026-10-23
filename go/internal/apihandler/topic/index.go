@@ -17,12 +17,12 @@ type topicCursor struct {
 	Number *int32 `json:"n"`
 }
 
-// ListTopicsはトークンを束縛したスペースのトピックの一覧を返す (GET /api/v1/spaces/{space_identifier}/topics)
+// ListTopicsはトークンが属するスペースのトピックの一覧を返す (GET /api/v1/spaces/{space_identifier}/topics)
 func (h *Handler) ListTopics(ctx context.Context, request apigen.ListTopicsRequestObject) (apigen.ListTopicsResponseObject, error) {
 	principal := middleware.APIPrincipalFromContext(ctx)
-	// カーソルはハンドラーで検証するため、その前に束縛先を確かめ、異なるスペースでは未存在として扱う。
+	// カーソルはハンドラーで検証するため、その前にトークンが属するスペースかを確かめ、属さないスペースでは未存在として扱う。
 	// スキーマで表せるパラメーターの違反 (`limit` など) は、ハンドラーより前のリクエスト検証が422を返す。
-	// UseCase側でも同じ束縛先を検証し、認可をHandlerだけに委ねない。
+	// UseCase側でも同じくトークンが属するスペースかを検証し、認可をHandlerだけに委ねない。
 	if !principal.IsBoundTo(model.SpaceIdentifier(request.SpaceIdentifier)) {
 		return nil, &model.AppError{
 			Code:    model.AppErrCodeResourceNotFound,

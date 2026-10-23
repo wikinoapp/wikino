@@ -236,16 +236,11 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 		return nil, fmt.Errorf("トピックメンバーの更新に失敗しました: %w", err)
 	}
 
-	// DraftPageRevisionとDraftPageを削除 (下書きが存在する場合のみ)
+	// DraftPageRevisionとDraftPageを削除 (下書きが存在する場合のみ)。
+	// 取得後に別の削除で下書きが消えていれば、削除するものが無いため公開だけを続ける
 	if draftPage != nil {
-		err = draftPageRevisionRepo.DeleteByDraftPageID(ctx, draftPage.ID, data.space.ID)
-		if err != nil {
-			return nil, fmt.Errorf("下書きページリビジョンの削除に失敗しました: %w", err)
-		}
-
-		err = draftPageRepo.Delete(ctx, draftPage.ID, data.space.ID)
-		if err != nil {
-			return nil, fmt.Errorf("下書きページの削除に失敗しました: %w", err)
+		if _, err := deleteDraftPageWithRevisions(ctx, draftPageRepo, draftPageRevisionRepo, draftPage.ID, data.space.ID, nil); err != nil {
+			return nil, err
 		}
 	}
 

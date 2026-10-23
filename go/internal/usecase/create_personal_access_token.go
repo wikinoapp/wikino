@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreatePersonalAccessTokenUsecaseは、スペースメンバーの個人アクセストークンを発行する。
+// CreatePersonalAccessTokenUsecaseは、スペースメンバーの個人用アクセストークンを発行する。
 type CreatePersonalAccessTokenUsecase struct {
 	spaceRepo               *repository.SpaceRepository
 	spaceMemberRepo         *repository.SpaceMemberRepository
@@ -58,7 +58,7 @@ type CreatePersonalAccessTokenOutput struct {
 	TokenValue string
 }
 
-// Executeは個人アクセストークンを発行する
+// Executeは個人用アクセストークンを発行する
 func (uc *CreatePersonalAccessTokenUsecase) Execute(ctx context.Context, input CreatePersonalAccessTokenInput) (*CreatePersonalAccessTokenOutput, error) {
 	// 1. データ取得と認可チェック
 	access, err := fetchPublicAPISettingsAccess(
@@ -95,7 +95,7 @@ func (uc *CreatePersonalAccessTokenUsecase) Execute(ctx context.Context, input C
 		ExpiresAt:      time.Now().AddDate(0, 0, validated.ExpirationDays),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("個人アクセストークンの作成に失敗: %w", err)
+		return nil, fmt.Errorf("個人用アクセストークンの作成に失敗: %w", err)
 	}
 
 	return &CreatePersonalAccessTokenOutput{

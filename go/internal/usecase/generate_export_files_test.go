@@ -225,8 +225,22 @@ func TestGenerateExportFilesUsecase_Execute(t *testing.T) {
 		if !ok {
 			t.Fatalf("エントリ%qがありません (entries: %v)", pagePath, entryNames(entries))
 		}
-		if !strings.HasPrefix(body, "---\nwikino_title: \"API | 設計\"\n---\n\n") {
-			t.Errorf("frontmatterが期待と異なります: %q", body)
+		page, err := repository.NewPageRepository(query.New(f.db)).FindBySpaceAndNumber(ctx, f.spaceID, 1)
+		if err != nil || page == nil {
+			t.Fatalf("ページの取得に失敗: page = %v, err = %v", page, err)
+		}
+		// 値は公開APIのページの応答 (`ETag` ヘッダーと `url`) と同じにする
+		wantFrontmatter := "---\n" +
+			"wikino_title: \"API | 設計\"\n" +
+			"wikino_number: 1\n" +
+			"wikino_etag: \"\\\"" + page.ContentDigest() + "\\\"\"\n" +
+			"wikino_topic_number: 1\n" +
+			"wikino_status: \"published\"\n" +
+			"wikino_modified_at: \"" + page.ModifiedAt.UTC().Format(time.RFC3339Nano) + "\"\n" +
+			"wikino_url: \"https://wikino.example.com/s/generate-export-archive/pages/1\"\n" +
+			"---\n\n"
+		if !strings.HasPrefix(body, wantFrontmatter) {
+			t.Errorf("frontmatter = %q、期待値 = %q", body, wantFrontmatter)
 		}
 		if !strings.Contains(body, "[[設計： メモ/用語.md]]") {
 			t.Errorf("Wikiリンクが書き換えられていません: %q", body)

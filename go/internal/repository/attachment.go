@@ -116,6 +116,33 @@ func (r *AttachmentRepository) FindByIDAndSpace(ctx context.Context, id model.At
 	return r.toModel(row), nil
 }
 
+// FindBlobByIDAndSpaceはIDとスペースIDで添付ファイルを取得する。ファイル名に加えて、
+// 種類・バイト数・ストレージキーをpopulateする。公開APIの添付ファイルの取得が、メタデータの
+// 応答と署名付きURLの生成に使う。閲覧の判定は行わないため、呼び出し側がPolicyで判定する
+func (r *AttachmentRepository) FindBlobByIDAndSpace(ctx context.Context, id model.AttachmentID, spaceID model.SpaceID) (*model.Attachment, error) {
+	if !uuidRegex.MatchString(string(id)) {
+		return nil, nil
+	}
+	row, err := r.q.FindAttachmentBlobByIDAndSpace(ctx, query.FindAttachmentBlobByIDAndSpaceParams{
+		ID:      string(id),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &model.Attachment{
+		ID:          model.AttachmentID(row.ID),
+		SpaceID:     model.SpaceID(row.SpaceID),
+		Filename:    row.Filename,
+		BlobKey:     row.BlobKey,
+		ContentType: row.BlobContentType.String,
+		ByteSize:    row.BlobByteSize,
+	}, nil
+}
+
 // toModelはクエリ結果をモデルに変換する
 func (r *AttachmentRepository) toModel(row query.FindAttachmentByIDAndSpaceRow) *model.Attachment {
 	return &model.Attachment{

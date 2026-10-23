@@ -2,6 +2,7 @@ package page
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,12 +22,12 @@ type pageCursor struct {
 	PageID     *model.PageID `json:"i"`
 }
 
-// ListPagesはトークンを束縛したスペースのページの一覧を返す (GET /api/v1/spaces/{space_identifier}/pages)
+// ListPagesはトークンが属するスペースのページの一覧を返す (GET /api/v1/spaces/{space_identifier}/pages)
 func (h *Handler) ListPages(ctx context.Context, request apigen.ListPagesRequestObject) (apigen.ListPagesResponseObject, error) {
 	principal := middleware.APIPrincipalFromContext(ctx)
-	// カーソルはハンドラーで検証するため、その前に束縛先を確かめ、異なるスペースでは未存在として扱う。
+	// カーソルはハンドラーで検証するため、その前にトークンが属するスペースかを確かめ、属さないスペースでは未存在として扱う。
 	// スキーマで表せるパラメーターの違反 (`limit` など) は、ハンドラーより前のリクエスト検証が422を返す。
-	// UseCase側でも同じ束縛先を検証し、認可をHandlerだけに委ねない。
+	// UseCase側でも同じくトークンが属するスペースかを検証し、認可をHandlerだけに委ねない。
 	if !principal.IsBoundTo(model.SpaceIdentifier(request.SpaceIdentifier)) {
 		return nil, &model.AppError{
 			Code:    model.AppErrCodeResourceNotFound,
@@ -34,7 +35,11 @@ func (h *Handler) ListPages(ctx context.Context, request apigen.ListPagesRequest
 		}
 	}
 
-	after, err := decodePageCursor(ctx, request.Params.Cursor)
+	after, err := DecodePageCursor(ctx, request.Params.Cursor)
+	if err != nil {
+		return nil, err
+	}
+	keywords, err := splitPageQuery(ctx, request.Params.Q)
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +48,9 @@ func (h *Handler) ListPages(ctx context.Context, request apigen.ListPagesRequest
 		Principal:       principal,
 		SpaceIdentifier: model.SpaceIdentifier(request.SpaceIdentifier),
 		TopicNumber:     request.Params.TopicNumber,
+		Status:          toUsecasePageStatusFilter(request.Params.Status),
+		Title:           request.Params.Title,
+		Keywords:        keywords,
 		ModifiedSince:   request.Params.ModifiedSince,
 		After:           after,
 		Limit:           apipagination.Limit(request.Params.Limit),
@@ -51,33 +59,87 @@ func (h *Handler) ListPages(ctx context.Context, request apigen.ListPagesRequest
 		return nil, err
 	}
 
-	items := make([]apigen.Page, len(output.Pages))
-	for i, page := range output.Pages {
-		items[i], err = toAPIPage(page, output.Topics[page.TopicID])
-		if err != nil {
-			return nil, err
-		}
+	body, link, err := ToAPIPageList(ctx, h.appURL, principal.Space, output.Pages, output.Topics, output.HasNext)
+	if err != nil {
+		return nil, err
 	}
-
-	res := apigen.ListPages200JSONResponse{Body: apigen.PageList{Items: items}}
-	if output.HasNext {
-		last := output.Pages[len(output.Pages)-1]
-		modifiedAt := last.ModifiedAt.UTC()
-		nextCursor, err := apipagination.EncodeCursor(pageCursor{ModifiedAt: &modifiedAt, PageID: &last.ID})
-		if err != nil {
-			return nil, err
-		}
-		res.Body.NextCursor = &nextCursor
-		if link := apipagination.NextLink(ctx, nextCursor); link != "" {
-			res.Headers.Link = &link
-		}
-	}
-	return res, nil
+	return apigen.ListPages200JSONResponse{Body: body, Headers: apigen.ListPages200ResponseHeaders{Link: link}}, nil
 }
 
-// decodePageCursorはリクエストのカーソルから、前のページの最後のページの位置を取り出す。
-// カーソルが無ければnilを返す
-func decodePageCursor(ctx context.Context, cursor *string) (*usecase.APIPageCursor, error) {
+// ToAPIPageListは更新日時の新しい順に並べたページを、APIのページの一覧と次のページを示す `Link` ヘッダーの値に変換する。
+// 次のページが無ければ `next_cursor` と `Link` ヘッダーの値をnilにする。
+// ページのリンク一覧・バックリンク一覧も同じ並び順とカーソルで返すため、それらのハンドラーからも使う。
+// appURLとspaceはToAPIPageに渡す
+func ToAPIPageList(ctx context.Context, appURL string, space *model.Space, pages []*model.Page, topics map[model.TopicID]*model.Topic, hasNext bool) (apigen.PageList, *string, error) {
+	items := make([]apigen.Page, len(pages))
+	for i, page := range pages {
+		var err error
+		items[i], err = ToAPIPage(appURL, space, page, topics[page.TopicID])
+		if err != nil {
+			return apigen.PageList{}, nil, err
+		}
+	}
+
+	list := apigen.PageList{Items: items}
+	if !hasNext {
+		return list, nil, nil
+	}
+	last := pages[len(pages)-1]
+	modifiedAt := last.ModifiedAt.UTC()
+	nextCursor, err := apipagination.EncodeCursor(pageCursor{ModifiedAt: &modifiedAt, PageID: &last.ID})
+	if err != nil {
+		return apigen.PageList{}, nil, err
+	}
+	list.NextCursor = &nextCursor
+	if link := apipagination.NextLink(ctx, nextCursor); link != "" {
+		return list, &link, nil
+	}
+	return list, nil, nil
+}
+
+// toUsecasePageStatusFilterは一覧の `status` パラメーターをユースケースの値に変換する。
+// 省略時は公開済みのページだけを返す。値の検証はハンドラーより前のリクエスト検証が行う
+func toUsecasePageStatusFilter(status *apigen.ListPagesParamsStatus) usecase.APIPageStatusFilter {
+	if status == nil {
+		return usecase.APIPageStatusFilterPublished
+	}
+	switch *status {
+	case apigen.ListPagesParamsStatusUnpublished:
+		return usecase.APIPageStatusFilterUnpublished
+	case apigen.ListPagesParamsStatusAll:
+		return usecase.APIPageStatusFilterAll
+	default:
+		return usecase.APIPageStatusFilterPublished
+	}
+}
+
+// maxPageQueryKeywordsは一覧の `q` に指定できるキーワードの数の上限。
+// 本文にはインデックスが無く、キーワードごとにスペースのページの本文を走査し直すため、数で費用の上限を決める
+const maxPageQueryKeywords = 10
+
+// splitPageQueryは一覧の `q` パラメーターを空白 (全角の空白を含む) で区切り、キーワードの一覧にする。
+// `q` が無ければnilを返す。空白だけの `q` は、絞り込みの無い一覧を返して指定の誤りに気付けなくなるため拒否する。
+// 空文字列と長さの上限はハンドラーより前のリクエスト検証が拒否する
+func splitPageQuery(ctx context.Context, q *string) ([]string, error) {
+	if q == nil {
+		return nil, nil
+	}
+	keywords := strings.Fields(*q)
+	if len(keywords) == 0 {
+		return nil, &apierror.ParameterError{Parameter: "q", Detail: i18n.T(ctx, "api_error_blank_page_query")}
+	}
+	if len(keywords) > maxPageQueryKeywords {
+		return nil, &apierror.ParameterError{
+			Parameter: "q",
+			Detail:    i18n.T(ctx, "api_error_too_many_page_query_keywords", map[string]any{"Max": maxPageQueryKeywords}),
+		}
+	}
+	return keywords, nil
+}
+
+// DecodePageCursorはリクエストのカーソルから、前のページの最後のページの位置を取り出す。
+// カーソルが無ければnilを返す。ページのリンク一覧・バックリンク一覧のハンドラーからも使う
+func DecodePageCursor(ctx context.Context, cursor *string) (*usecase.APIPageCursor, error) {
 	if cursor == nil {
 		return nil, nil
 	}

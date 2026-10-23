@@ -32,10 +32,22 @@ type Authorizer interface {
 	CanTrashPage() bool
 
 	// 下書きページ (所有者チェックパターン)
+	// 下書きの参照・保存はページの公開 (page:write) と分けてdraft_page:read / draft_page:writeで判定する。
+	// 下書きは書けるが公開はできないトークンを、エージェントに渡せるようにするためである。
+	CanShowDraftPage() bool
+	CanSaveDraftPage() bool
 	// CanDeleteDraftPageはdraft_page:deleteスコープを持つかどうかのみで判定する。
 	// 所有者チェックはUseCase側で「本人の下書きしか取得しない」ことで担保する。
 	// adminが他メンバーの下書きを操作する経路は将来別UseCaseで実装する想定。
 	CanDeleteDraftPage() bool
+
+	// 添付ファイル
+
+	// CanShowAttachmentはRails版のcan_view_attachment?と揃え、attachment:readスコープを持つか、
+	// 添付ファイルを参照するページがすべて公開トピックにある (allReferencingPagesPublic) かで判定する。
+	// attachment:readはスペースにしか付けられないスコープで、判定でトピックを見ない。
+	// そのため非公開トピックのページだけが参照する添付ファイルも、attachment:readがあれば閲覧できる。
+	CanShowAttachment(allReferencingPagesPublic bool) bool
 
 	// 編集提案
 	CanCreateSuggestion(topic *model.Topic) bool
@@ -62,7 +74,7 @@ type Authorizer interface {
 	// スペース設定の既存の項目 (一般・エクスポート・添付ファイル・削除) はこの権限を持つメンバーにだけ出す。
 	CanUpdateSpace() bool
 
-	// 個人アクセストークン (所有者チェックパターン)
+	// 個人用アクセストークン (所有者チェックパターン)
 	// 一覧・失効の対象は自分のトークンに限る。所有者チェックはUseCase側で
 	// 「本人のトークンしか取得しない」ことで担保する。
 	CanShowPersonalAccessTokens() bool

@@ -8,12 +8,12 @@ import (
 // たびに書き込まないよう、最終使用日時がこれより古いときだけ更新する
 const PersonalAccessTokenLastUsedAtUpdateInterval = 1 * time.Minute
 
-// PersonalAccessTokenExpirationDaysは個人アクセストークンの発行時に選べる有効期限の日数。
+// PersonalAccessTokenExpirationDaysは個人用アクセストークンの発行時に選べる有効期限の日数。
 // 漏洩したトークンが使われ続けないよう、期限なしは選べない
 var PersonalAccessTokenExpirationDays = []int{7, 30, 90, 365}
 
-// PersonalAccessTokenは公開APIの個人アクセストークンのドメインモデル。トークンは1つの
-// スペースに束縛され、そのスペースのメンバーが持つ。
+// PersonalAccessTokenは公開APIの個人用アクセストークンのドメインモデル。トークンは1つの
+// スペースに属し、そのスペースのスペースメンバーが持つ。
 //
 // トークンの値そのものは保持せず、TokenDigestで照合する。TokenLastCharsは一覧で
 // トークンを見分けるための、値の末尾の数文字である。

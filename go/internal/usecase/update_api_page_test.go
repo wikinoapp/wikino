@@ -295,7 +295,7 @@ func TestUpdateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
-			name:        "束縛先と異なるスペースは未存在",
+			name:        "トークンが属さないスペースは未存在",
 			memberRole:  apiTopicRegularMemberRole,
 			tokenScopes: writeScopes,
 			identifier:  "api-page-update-auth-other",
@@ -303,10 +303,10 @@ func TestUpdateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 			wantCode:    model.AppErrCodeResourceNotFound,
 		},
 		{
-			name:        "未公開のページは未存在",
+			name:        "トークンがtopic:readを持たなければ参加している非公開トピックの未公開のページは未存在",
 			memberRole:  apiTopicRegularMemberRole,
 			tokenScopes: writeScopes,
-			topicNumber: 1,
+			topicNumber: 2,
 			setup: func(t *testing.T, db *sql.DB, spaceID model.SpaceID, pageID model.PageID) {
 				execForTest(t, db, "UPDATE pages SET published_at = NULL WHERE id = $1 AND space_id = $2", pageID, spaceID)
 			},
@@ -368,6 +368,74 @@ func TestUpdateAPIPageUsecase_Execute_Authorization(t *testing.T) {
 	}
 }
 
+// TestUpdateAPIPageUsecase_Execute_TopicMemberScopeは、スペースのロールではpage:writeを持たないメンバーが、
+// トピックメンバーとして持つpage:writeで更新できるのはそのトピックのページだけであることを確かめる。
+// フィクスチャのメンバーはトピック2にだけトピック編集者として参加している
+func TestUpdateAPIPageUsecase_Execute_TopicMemberScope(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		tokenScopes []model.Scope
+		topicNumber int32
+		wantCode    model.AppErrorCode
+	}{
+		{
+			name:        "トピック編集者として参加しているトピックのページは更新できる",
+			tokenScopes: []model.Scope{model.ScopePageWrite, model.ScopeTopicRead},
+			topicNumber: 2,
+		},
+		{
+			name:        "参加していないトピックのページは更新できない",
+			tokenScopes: []model.Scope{model.ScopePageWrite, model.ScopeTopicRead},
+			topicNumber: 1,
+			wantCode:    model.AppErrCodeForbidden,
+		},
+		{
+			name:        "トークンがpage:writeを持たなければ、参加しているトピックのページも更新できない",
+			tokenScopes: []model.Scope{model.ScopePageRead, model.ScopeTopicRead},
+			topicNumber: 2,
+			wantCode:    model.AppErrCodeForbidden,
+		},
+	}
+
+	db := testutil.GetTestDB()
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := setupCreateAPIPageFixture(t, db, "api-page-update-topic-member-"+string(rune('a'+i)), model.SpaceRoleViewer)
+			pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[tt.topicNumber]).WithNumber(1).
+				WithTitle("タイトル").WithBody("本文").Build()
+
+			output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
+				Principal:       f.principal(model.SpaceRoleViewer, tt.tokenScopes),
+				SpaceIdentifier: f.space.Identifier,
+				PageNumber:      1,
+				IfMatchAny:      true,
+				Body:            strPtr("新しい本文"),
+			})
+
+			if tt.wantCode == 0 {
+				if err != nil {
+					t.Fatalf("Execute()のエラー = %v", err)
+				}
+				if output.Page.Body != "新しい本文" {
+					t.Errorf("本文 = %q、期待値 = 新しい本文", output.Page.Body)
+				}
+				return
+			}
+
+			if ae := model.AsAppError(err); ae == nil || ae.Code != tt.wantCode {
+				t.Errorf("エラー = %v、期待値 = AppErrorCode %d", err, tt.wantCode)
+			}
+			if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND body = $3", pageID, "本文"); n != 1 {
+				t.Error("ページが更新された")
+			}
+		})
+	}
+}
+
 func TestUpdateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 	t.Parallel()
 
@@ -420,6 +488,128 @@ func TestUpdateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 		}
 		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND discarded_at IS NOT NULL", linkedID); n != 1 {
 			t.Error("未公開のページが論理削除されていない")
+		}
+	})
+}
+
+// TestUpdateAPIPageUsecase_Execute_Unpublishedは、未公開のページを更新するとWeb画面の編集と同じく公開することを確かめる
+func TestUpdateAPIPageUsecase_Execute_Unpublished(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	memberRole := apiTopicRegularMemberRole
+	tokenScopes := []model.Scope{model.ScopePageWrite}
+
+	t.Run("未公開のページを更新すると公開する", func(t *testing.T) {
+		t.Parallel()
+
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-unpublished", memberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
+			WithTitle("リンク先").WithBody("").WithUnpublished().Build()
+		before := findPageForTest(t, db, f.space.ID, 1)
+		startedAt := time.Now()
+
+		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
+			Principal:       f.principal(memberRole, tokenScopes),
+			SpaceIdentifier: f.space.Identifier,
+			PageNumber:      1,
+			IfMatchDigests:  []string{before.ContentDigest()},
+			Body:            strPtr("本文"),
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+
+		page := output.Page
+		if page.ID != pageID || page.Number != 1 || page.Title == nil || *page.Title != "リンク先" || page.Body != "本文" {
+			t.Errorf("ページ = %+v、期待値 = 本文を書いたページ1", page)
+		}
+		if page.PublishedAt == nil || page.PublishedAt.Before(startedAt.Add(-time.Second)) {
+			t.Errorf("PublishedAt = %v、期待値 = 更新した日時", page.PublishedAt)
+		}
+		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND published_at IS NOT NULL", pageID); n != 1 {
+			t.Error("DBのページが公開されていない")
+		}
+		if n := countRows(t, db, "page_revisions", f.space.ID, "page_id = $2", pageID); n != 1 {
+			t.Errorf("リビジョンの数 = %d、期待値 = 1", n)
+		}
+	})
+
+	t.Run("タイトルと本文が今と同じでも公開する", func(t *testing.T) {
+		t.Parallel()
+
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-unpublished-same", memberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
+			WithTitle("タイトル").WithBody("本文").WithUnpublished().Build()
+		before := findPageForTest(t, db, f.space.ID, 1)
+
+		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
+			Principal:       f.principal(memberRole, tokenScopes),
+			SpaceIdentifier: f.space.Identifier,
+			PageNumber:      1,
+			IfMatchDigests:  []string{before.ContentDigest()},
+			Title:           strPtr("タイトル"),
+			Body:            strPtr("本文"),
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if !output.Page.IsPublished() {
+			t.Error("ページが公開されていない")
+		}
+		if output.Page.ContentDigest() == before.ContentDigest() {
+			t.Error("公開しても版が変わらない")
+		}
+		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND published_at IS NOT NULL", pageID); n != 1 {
+			t.Error("DBのページが公開されていない")
+		}
+	})
+
+	t.Run("タイトルの無い未公開のページは、titleを含めずに更新すると422", func(t *testing.T) {
+		t.Parallel()
+
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-unpublished-untitled", memberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
+			WithNilTitle().WithBody("").WithUnpublished().Build()
+
+		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
+			Principal:       f.principal(memberRole, tokenScopes),
+			SpaceIdentifier: f.space.Identifier,
+			PageNumber:      1,
+			IfMatchAny:      true,
+			Body:            strPtr("本文"),
+		})
+		if output != nil {
+			t.Errorf("output = %+v、期待値 = nil", output)
+		}
+		if ve := model.AsValidationError(err); ve == nil || !ve.HasFieldError("title") {
+			t.Errorf("error = %v、期待値 = titleのValidationError", err)
+		}
+		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND published_at IS NULL AND body = ''", pageID); n != 1 {
+			t.Error("ページが更新された")
+		}
+	})
+
+	t.Run("タイトルの無い未公開のページは、titleを含めれば公開する", func(t *testing.T) {
+		t.Parallel()
+
+		f := setupCreateAPIPageFixture(t, db, "api-page-update-unpublished-titled", memberRole)
+		testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).
+			WithNilTitle().WithBody("").WithUnpublished().Build()
+
+		output, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
+			Principal:       f.principal(memberRole, tokenScopes),
+			SpaceIdentifier: f.space.Identifier,
+			PageNumber:      1,
+			IfMatchAny:      true,
+			Title:           strPtr("新しいタイトル"),
+			Body:            strPtr("本文"),
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if !output.Page.IsPublished() || output.Page.Title == nil || *output.Page.Title != "新しいタイトル" {
+			t.Errorf("ページ = %+v、期待値 = タイトルを付けて公開したページ", output.Page)
 		}
 	})
 }

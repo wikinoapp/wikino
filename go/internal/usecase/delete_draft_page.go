@@ -89,7 +89,7 @@ func (uc *DeleteDraftPageUsecase) Execute(ctx context.Context, input DeleteDraft
 		}
 	}
 
-	// 4. 永続化 (トランザクション内でrevision → draftの順で削除)
+	// 4. 永続化 (下書きをロックしてから、revision → draftの順で削除)
 	return uc.deleteDraftPage(ctx, draftPage.ID, data.space.ID)
 }
 
@@ -112,13 +112,16 @@ func (uc *DeleteDraftPageUsecase) deleteDraftPage(ctx context.Context, draftPage
 		_ = tx.Rollback()
 	}()
 
-	// draft_page_revisionsのFK制約があるためリビジョンを先に削除する
-	if err := uc.draftPageRevisionRepo.WithTx(tx).DeleteByDraftPageID(ctx, draftPageID, spaceID); err != nil {
-		return fmt.Errorf("下書きリビジョンの削除に失敗しました: %w", err)
+	deleted, err := deleteDraftPageWithRevisions(ctx, uc.draftPageRepo.WithTx(tx), uc.draftPageRevisionRepo.WithTx(tx), draftPageID, spaceID, nil)
+	if err != nil {
+		return err
 	}
-
-	if err := uc.draftPageRepo.WithTx(tx).Delete(ctx, draftPageID, spaceID); err != nil {
-		return fmt.Errorf("下書きの削除に失敗しました: %w", err)
+	// 取得後に別の削除や公開が完了していた場合は、下書きが無い場合と同じく未存在を返す
+	if !deleted {
+		return &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

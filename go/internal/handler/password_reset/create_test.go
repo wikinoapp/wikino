@@ -248,6 +248,10 @@ func TestCreate_ValidationError(t *testing.T) {
 	if !strings.Contains(body, `action="/password/reset"`) {
 		t.Error("レスポンスにパスワードリセットのフォームが見つからない")
 	}
+
+	if !strings.Contains(body, `<link rel="preconnect" href="https://challenges.cloudflare.com">`) {
+		t.Error("レスポンスにTurnstileのオリジンへのpreconnectが見つからない")
+	}
 }
 
 func TestCreate_RateLimiting_IP(t *testing.T) {

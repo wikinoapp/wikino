@@ -15,7 +15,7 @@ type SpaceSettingsItems struct {
 	// CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル・削除) を出すかを表す (space:write)。
 	CanUpdateSpace bool
 
-	// CanShowPersonalAccessTokensは個人アクセストークンの項目を出すかを表す。
+	// CanShowPersonalAccessTokensは個人用アクセストークンの項目を出すかを表す。
 	// personal_access_token:readを持ち、公開APIのフィーチャーフラグが有効なときにtrueになる。
 	CanShowPersonalAccessTokens bool
 

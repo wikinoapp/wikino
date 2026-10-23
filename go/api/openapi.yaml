@@ -2,16 +2,16 @@ openapi: 3.1.1
 info:
   title: Wikino API
   version: 1.0.0
-  summary: WikinoのスペースのトピックとページをAPIで読み書きする
+  summary: Wikinoのスペースのデータを読み書きする
   description: |
     Wikinoの公開Web APIです。
-    APIを呼び出すには、スペース設定で発行する個人アクセストークンか、OAuth 2.0 (Authorization Code + PKCE) で取得したアクセストークンを `Authorization: Bearer` ヘッダーで送ります。
-    どちらのトークンも1つのスペースに束縛され、そのスペースに対する操作だけに使えます。
+    APIを呼び出すには、スペース設定で発行する個人用アクセストークンか、OAuth 2.0 (Authorization Code + PKCE) で取得したアクセストークンを `Authorization: Bearer` ヘッダーで送ります。
+    どちらのトークンも1つのスペースに属しており、そのスペースに対する操作だけに使えます。
 
     エラーはRFC 9457のProblem Details (`application/problem+json`) で返します。
 
-    トークンを使うリクエストには、トークンの持ち主のスペースのメンバー単位で1時間あたり5000件のレート制限があります。
-    同じスペースのトークンは個人アクセストークンとOAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えます。
+    トークンを使うリクエストには、トークンの持ち主のスペースメンバー単位で1時間あたり5000件のレート制限があります。
+    同じスペースのトークンは個人用アクセストークンとOAuthのアクセストークンを合わせて数え、同じ人でもスペースが違えば別に数えます。
     残量はIETFで標準化中の `RateLimit-Policy` / `RateLimit` ヘッダーで返します (例: `RateLimit-Policy: "space_member";q=5000;w=3600`、`RateLimit: "space_member";r=4999;t=1800`)。
     `q` は1時間あたりの上限、`w` は時間枠の秒数、`r` は残りの件数、`t` は時間枠が切り替わるまでの秒数です。
     上限を超えると429を返し、再試行できるまでの秒数を `Retry-After` ヘッダーで示します。
@@ -26,31 +26,56 @@ security:
   - personalAccessToken: []
 tags:
   - name: space
-    description: トークンを束縛したスペースの情報
+    description: トークンが属するスペースの情報
   - name: space_member
-    description: スペースのメンバー
+    description: スペースメンバー
+  - name: token
+    description: リクエストに使ったトークン
   - name: topic
     description: スペースのトピック
   - name: page
     description: スペースのページ
+  - name: page_body_edit
+    description: ページの本文の検索置換
+  - name: wikilink_preview
+    description: 本文のWikiリンクのリンク先の解決
+  - name: draft_page
+    description: トークンの持ち主のページの下書き
+  - name: draft_page_body_edit
+    description: トークンの持ち主のページの下書きの本文の検索置換
+  - name: draft_page_revision
+    description: トークンの持ち主のページの下書きの編集履歴
+  - name: draft_page_publication
+    description: トークンの持ち主のページの下書きの公開
+  - name: attachment
+    description: スペースの添付ファイル
   - name: openapi
     description: このAPIのOpenAPI記述
 paths:
   /spaces/{space_identifier}:
     get:
       operationId: getSpace
-      summary: トークンを束縛したスペースを取得する
+      summary: トークンが属するスペースを取得する
       description: |
-        トークンを束縛したスペースを返します。
-        どのスペースに束縛されたトークンかを確かめるための操作で、スコープは要りません。
-        束縛先と異なるスペースを指定すると404を返します。
+        トークンが属するスペースのID・識別子・名前を返します。
+
+        トークンがどのスペースのものかを確かめるときに使います。
+        スコープは要りません。
+
+        トークンが属さないスペースを指定すると404を返します。
+        404を受け取ったら、トークンを発行したスペースの識別子 (WebのURLの `/s/{space_identifier}` の部分) を指定し直してください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
       tags:
         - space
       parameters:
         - $ref: "#/components/parameters/SpaceIdentifier"
       responses:
         "200":
-          description: トークンを束縛したスペース
+          description: トークンが属するスペース
           headers:
             RateLimit-Policy:
               $ref: "#/components/headers/RateLimitPolicy"
@@ -71,18 +96,27 @@ paths:
   /spaces/{space_identifier}/members/me:
     get:
       operationId: getCurrentSpaceMember
-      summary: トークンの持ち主のメンバーを取得する
+      summary: トークンの持ち主のスペースメンバーを取得する
       description: |
-        トークンを束縛したスペースでの、トークンの持ち主のメンバーを返します。
-        誰のトークンかを確かめるための操作で、スコープは要りません。
-        束縛先と異なるスペースを指定すると404を返します。
+        トークンが属するスペースでの、トークンの持ち主のスペースメンバー (ID・アットネーム・表示名) を返します。
+
+        誰のトークンかを確かめるときに使います。
+        スコープは要りません。
+
+        トークンが属さないスペースを指定すると404を返します。
+        404を受け取ったら、トークンを発行したスペースの識別子 (WebのURLの `/s/{space_identifier}` の部分) を指定し直してください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
       tags:
         - space_member
       parameters:
         - $ref: "#/components/parameters/SpaceIdentifier"
       responses:
         "200":
-          description: トークンの持ち主のメンバー
+          description: トークンの持ち主のスペースメンバー
           headers:
             RateLimit-Policy:
               $ref: "#/components/headers/RateLimitPolicy"
@@ -100,17 +134,73 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
         default:
           $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/tokens/current:
+    get:
+      operationId: getCurrentToken
+      summary: リクエストに使ったトークンの情報を取得する
+      description: |
+        リクエストに使ったトークン自身の種類・スコープ・有効期限を返します。
+
+        操作の前に、トークンに必要なスコープが付いているかや、トークンの期限がいつ切れるかを確かめるときに使います。
+        スコープは要りません。
+
+        `scopes` は、トークンに付与したスコープに含意 (例: `page:write` は `page:read` を含む) を展開したものです。
+        実際に操作できるかは、トークンのスコープに加えてトークンの持ち主のスペースやトピックでの権限でも決まります。
+        `scopes` にあるスコープの操作でも、持ち主に権限が無ければ403や404を返します。
+
+        トークンの値やトークンの名前は返しません。
+
+        トークンが属さないスペースを指定すると404を返します。
+        404を受け取ったら、トークンを発行したスペースの識別子 (WebのURLの `/s/{space_identifier}` の部分) を指定し直してください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - token
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+      responses:
+        "200":
+          description: リクエストに使ったトークンの情報
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   /spaces/{space_identifier}/topics:
     get:
       operationId: listTopics
       summary: トピックの一覧を取得する
       description: |
-        トークンを束縛したスペースのトピックを、トピック番号の小さい順に返します。
+        トークンが属するスペースのトピックを、トピック番号の小さい順に返します。
+
+        ページを作成するトピック (`createPage` の `topic_number`) や、`listPages` で絞り込むトピックの番号を調べるときに使います。
+
         非公開トピックは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ含みます。
+        あるはずの非公開トピックが含まれない場合は、トークンに `topic:read` が付いているかを確かめてください。
 
         一覧はカーソル方式で分割して返します。
         続きがある場合は、本文の `next_cursor` と `Link` ヘッダー (`rel="next"`) で次のページを示します。
         続きが無い場合は `next_cursor` が `null` になり、`Link` ヘッダーは付きません。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
       tags:
         - topic
       security:
@@ -153,8 +243,20 @@ paths:
       operationId: getTopic
       summary: トピックを取得する
       description: |
-        トピック番号で指定したトピックを返します。
-        非公開トピックは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ返し、それ以外は404を返します。
+        トピック番号で指定したトピックの名前・説明・公開範囲を返します。
+
+        番号が分かっているトピックを確かめるときに使います。
+        番号が分からなければ `listTopics` で探します。
+
+        非公開トピックは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ返します。
+
+        トピックが存在しないか見られない場合は404を返します。
+        404を受け取ったら、`listTopics` で見られるトピックの番号を確かめてください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
       tags:
         - topic
       security:
@@ -194,16 +296,37 @@ paths:
       operationId: listPages
       summary: ページの一覧を取得する
       description: |
-        トークンを束縛したスペースの公開済みのページを、更新日時の新しい順に返します。
-        下書きのまま公開していないページと、ゴミ箱に入れたページは含みません。
-        非公開トピックのページは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ含みます。
+        トークンが属するスペースのページを、本文を含めて更新日時の新しい順に返します。
+        既定では公開済みのページだけを返し、`status` を指定するとWikiリンクで自動作成されたページなど、まだ公開していないページも返します。
+        ゴミ箱に入れたページは含みません。
+        未公開のページは、見られるトピックの公開済みのページか、トークンの持ち主の下書きからWikiリンクで指しているものだけを含みます。
+        リンクを消した後に残ったページや、Web画面で作成したまま公開していないページは含みません。
 
-        `topic_number` でトピックを、`modified_since` で更新日時を絞り込めます。
-        前回の取得以降に更新されたページだけを取得するには、前回の取得を始めた日時を `modified_since` に渡します。
+        目的に応じて次のように絞り込みます。
+
+        - トピックのページを読む: `topic_number` を指定します
+        - タイトルからページ番号を調べる: `topic_number` と `title` を指定します。タイトルはトピック内で重複しないため、見つかれば1件になります
+        - 本文のWikiリンク (`[[タイトル]]`) が指す未公開のページの番号を調べる: `topic_number`・`title`・`status=all` を組み合わせます
+        - 前回の取得以降に更新されたページだけを取得する: 前回の取得を始めた日時を `modified_since` に渡します
+        - 内容からページを探す: キーワードを `q` に渡します。他の絞り込みと組み合わせられます
+
+        `q` の検索はトークンが属するスペースの中だけを対象にし、タイトルと本文を探します。
+        一致度では並べ替えず、他の絞り込みと同じく更新日時の新しい順に返します。
+        よく一致するページが先頭に来るとは限らないため、多く見つかる場合はキーワードを足すか、`topic_number` で絞り込んでください。
+
+        番号が分かっている1件のページを読むには `getPage` を使います。
+
+        非公開トピックのページは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ含みます。
+        あるはずのページが含まれない場合は、トークンに `topic:read` が付いているかと、`status` の指定を確かめてください。
 
         一覧はカーソル方式で分割して返します。
         続きがある場合は、本文の `next_cursor` と `Link` ヘッダー (`rel="next"`) で次のページを示します。
         続きが無い場合は `next_cursor` が `null` になり、`Link` ヘッダーは付きません。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
       tags:
         - page
       security:
@@ -223,6 +346,39 @@ paths:
             type: integer
             format: int32
             minimum: 1
+        - name: status
+          in: query
+          required: false
+          description: |
+            返すページの公開状態です。`published` は公開済みのページだけ、`unpublished` はまだ公開していないページだけ、`all` は両方を返します。
+            省略すると `published` として扱います。
+          schema:
+            type: string
+            enum:
+              - published
+              - unpublished
+              - all
+            default: published
+        - name: title
+          in: query
+          required: false
+          description: |
+            このタイトルのページだけを返します。タイトル全体が一致するページだけを返し、大文字と小文字は区別しません。
+          schema:
+            type: string
+            minLength: 1
+        - name: q
+          in: query
+          required: false
+          description: |
+            このキーワードをタイトルか本文に含むページだけを返します。
+            空白 (全角の空白を含む) で区切った複数のキーワードは、すべてを含むページだけを返します (AND検索)。各キーワードはタイトルと本文のどちらに含まれていても構いません。
+            部分一致で探し、大文字と小文字は区別しません。`%`・`_` も1つの文字として探します。
+            キーワードは10個まで指定できます。空白だけの値と、11個以上のキーワードは422を返します。
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
         - name: modified_since
           in: query
           required: false
@@ -262,15 +418,32 @@ paths:
       operationId: createPage
       summary: ページを作成する
       description: |
-        トピック番号で指定したトピックにページを作成し、そのまま公開します。
-        非公開トピックにページを作成するには、トークンが `page:write` に加えて `topic:read` を持つ必要があります。
-        存在しないトピックや見られないトピックを指定すると、`topic_number` の問題として422を返します。
-        トピックは見られるがトークンの持ち主がページを作成できない場合は404を返します。
-
-        タイトルはトピック内で重複できません。同じタイトルのページがあれば422を返します。
-        本文のWikiリンクが存在しないページを指す場合は、Web画面での公開と同じく、リンク先のページを下書きの状態で作成します。
-
+        トピック番号で指定したトピックにページを作成してそのまま公開し、作成したページを返します。
         応答の `Location` ヘッダーは作成したページのURL、`ETag` ヘッダーは `getPage` と同じ値です。
+
+        同じタイトルの本文の無い未公開のページ (Wikiリンクで自動作成されたページなど) があれば、新しいページを作らずにそのページに本文を書いて公開します。
+        このとき応答の `number` はそのページが作成されたときの番号になり、そのページを指していたWikiリンクも公開したページへのリンクとして保たれます。
+        同じタイトルの本文の無い未公開のページがゴミ箱に入っている場合は、そのページを論理削除して新しいページを作ります。
+        本文のWikiリンクが存在しないページを指す場合は、Web画面での公開と同じく、リンク先のページを下書きの状態で作成します。
+        トークンで見られないトピック (トークンが `topic:read` を持たない場合の非公開トピックなど) には、リンク先のページを作成しません。
+        書き込む前にどのリンク先のページが作られるかは、`createWikilinkPreview` で確かめられます。
+
+        新しいページを作るときに使います。
+        既にあるページの内容を変えるには `updatePage` を使います。
+
+        非公開トピックにページを作成するには、トークンが `page:write` に加えて `topic:read` を持つ必要があります。
+
+        失敗したときは、次のように対処してください。
+
+        - 422 (`title`): タイトルに使えない文字があるか、同じタイトルのページがトピックにあります。`errors` の `detail` を確かめ、重複の場合は `listPages` に `topic_number` と `title` を指定して既存のページを探し、内容を変えるなら `updatePage` を使ってください
+        - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
+        - 404: トピックは見られますが、トークンの持ち主はそのトピックにページを作成できません
+        - 応答を受け取れず結果が分からない場合: このoperationは冪等ではありません。送り直す前に、`listPages` に `topic_number` と `title` を指定して作成済みかを確かめてください
+      x-wikino-operation:
+        read_only: false
+        irreversible: false
+        idempotent: false
+        confirmation_required: false
       tags:
         - page
       security:
@@ -327,12 +500,25 @@ paths:
       operationId: getPage
       summary: ページを取得する
       description: |
-        ページ番号で指定した公開済みのページを返します。
-        下書きのまま公開していないページ、ゴミ箱に入れたページ、見られない非公開トピックのページは404を返します。
+        ページ番号で指定したページを、本文を含めて返します。
+        Wikiリンクで自動作成されたページなど、まだ公開していないページも返し、応答の `status` が `unpublished` になります。
+
+        番号が分かっているページを読むときと、`updatePage` の前に今の `ETag` を受け取るときに使います。
+        番号が分からなければ、`listPages` の `title` で探します。
+
         非公開トピックのページを読むには、トークンが `page:read` に加えて `topic:read` を持つ必要があります。
 
-        応答の `ETag` ヘッダーはページのタイトル・本文・所属トピック・更新日時から計算します。
+        応答の `ETag` ヘッダーはページのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時・公開状態から計算します。
         前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
+        304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
+
+        ページが存在しない場合、ゴミ箱に入っている場合、見られない非公開トピックのページの場合は404を返します。
+        404を受け取ったら、`listPages` で見られるページの番号を確かめてください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
       tags:
         - page
       security:
@@ -388,19 +574,36 @@ paths:
       operationId: updatePage
       summary: ページを更新する
       description: |
-        ページ番号で指定した公開済みのページのタイトルと本文を、JSON Merge Patch (RFC 7396) で更新します。
+        ページ番号で指定したページのタイトルと本文を、JSON Merge Patch (RFC 7396) で更新し、更新したページを返します。
         リクエスト本文に含めた項目だけを更新し、含めなかった項目は変えません。
-        非公開トピックのページを更新するには、トークンが `page:write` に加えて `topic:read` を持つ必要があります。
-        ページが存在しない場合や、トークンの持ち主がページを更新できない場合は404を返します。
-
-        `If-Match` ヘッダーに `getPage` などで受け取った `ETag` を送ってください。
-        `If-Match` が無い場合は428を、ページがその後に更新されていて `ETag` が一致しない場合は412を返します。
-        412を受け取ったら、ページを取得し直して変更を反映してから、新しい `ETag` で更新し直してください。
-
-        タイトルはトピック内で重複できません。同じタイトルのページがあれば422を返します。
+        本文を含める場合は、変えない部分も含めた本文の全体を送ります。
+        まだ公開していないページ (`status` が `unpublished`) を更新すると、Web画面での編集と同じくそのページを公開します。
         本文のWikiリンクが存在しないページを指す場合は、Web画面での公開と同じく、リンク先のページを下書きの状態で作成します。
+        トークンで見られないトピック (トークンが `topic:read` を持たない場合の非公開トピックなど) には、リンク先のページを作成しません。
+        書き込む前にどのリンク先のページが作られるかは、`createWikilinkPreview` で確かめられます。
         トークンの持ち主がWeb画面で編集中の下書きは、更新しても削除しません。
-        タイトルと本文が今と同じ場合は何も更新せず、今のページを返します。
+        公開済みのページでタイトルと本文が今と同じ場合は何も更新せず、今のページを返します。
+
+        既にあるページのタイトルや本文を変えるときに使います。
+        新しいページを作るには `createPage` を使います。
+        更新の前に `getPage` でページを取得し、応答の `ETag` を `If-Match` ヘッダーで送ってください。
+        取得した具体的な `ETag` を指定し、1回目の更新で `ETag` が変わった場合、同じ要求を送り直すと412になります。
+        内容に変更が無い場合は `ETag` が変わらず、同じ要求を送り直しても200を返します。
+        `If-Match: *` はページが存在すれば版を問わず一致するため、古い版での上書きを防ぐには、取得した具体的な `ETag` を指定してください。
+
+        非公開トピックのページを更新するには、トークンが `page:write` に加えて `topic:read` を持つ必要があります。
+
+        失敗したときは、次のように対処してください。
+
+        - 428: `If-Match` ヘッダーがありません。`getPage` で `ETag` を受け取って送り直してください
+        - 412: 取得した後にページが更新されています。`getPage` で取得し直し、今の内容に変更を反映してから、新しい `ETag` で更新し直してください
+        - 422 (`title`): タイトルに使えない文字があるか、同じタイトルのページがトピックにあるか、タイトルの無い未公開のページを `title` を含めずに公開しようとしています。`errors` の `detail` を確かめてください
+        - 404: ページが存在しないか、ゴミ箱に入っているか、トークンの持ち主がページを更新できません
+      x-wikino-operation:
+        read_only: false
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
       tags:
         - page
       security:
@@ -416,6 +619,7 @@ paths:
           required: false
           description: |
             更新の前提にするページの `ETag` です。ページの今の `ETag` と一致する場合だけ更新します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
             省略すると428を返します。
           schema:
             type: string
@@ -460,11 +664,1094 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
         default:
           $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}/links:
+    get:
+      operationId: listPageLinks
+      summary: ページのリンク先の一覧を取得する
+      description: |
+        ページ番号で指定したページの本文がWikiリンクで指しているページを、本文を含めて更新日時の新しい順に返します。
+        Web画面のページの下に並ぶリンクの一覧と同じページを返します。
+
+        公開済みの本文のリンクだけを対象にし、下書きにだけあるリンクは含みません。
+        Wikiリンクで自動作成されたページなど、まだ公開していないリンク先も含み、応答の `status` が `unpublished` になります。
+        ページが自分自身にリンクしている場合は、そのページも含みます。
+        ゴミ箱に入れたページは含みません。
+
+        ページから関連するページを辿るときに使います。
+        逆向きに、このページにリンクしているページを調べるには `listPageBacklinks` を使います。
+
+        非公開トピックのページは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ含みます。
+        リンク先のページが見られないトピックにある場合は、一覧に含めません。
+
+        一覧はカーソル方式で分割して返します。
+        続きがある場合は、本文の `next_cursor` と `Link` ヘッダー (`rel="next"`) で次のページを示します。
+        続きが無い場合は `next_cursor` が `null` になり、`Link` ヘッダーは付きません。
+
+        ページが存在しない場合、ゴミ箱に入っている場合、見られない非公開トピックのページの場合は404を返します。
+        404を受け取ったら、`listPages` で見られるページの番号を確かめてください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - page
+      security:
+        - oauth2:
+            - page:read
+        - personalAccessToken:
+            - page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: リンク先のページの一覧
+          headers:
+            Link:
+              $ref: "#/components/headers/Link"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}/backlinks:
+    get:
+      operationId: listPageBacklinks
+      summary: ページのバックリンクの一覧を取得する
+      description: |
+        ページ番号で指定したページにWikiリンクでリンクしているページを、本文を含めて更新日時の新しい順に返します。
+        Web画面のページの下に並ぶバックリンクの一覧と同じページを返します。
+
+        各ページの公開済みの本文のリンクだけを対象にし、下書きにだけあるリンクは含みません。
+        ページが自分自身にリンクしている場合は、そのページも含みます。
+        ゴミ箱に入れたページは含みません。
+
+        あるページがどこから参照されているかを調べるときに使います。
+        逆向きに、このページがリンクしているページを調べるには `listPageLinks` を使います。
+
+        非公開トピックのページは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ含みます。
+        リンク元のページが見られないトピックにある場合は、一覧に含めません。
+
+        一覧はカーソル方式で分割して返します。
+        続きがある場合は、本文の `next_cursor` と `Link` ヘッダー (`rel="next"`) で次のページを示します。
+        続きが無い場合は `next_cursor` が `null` になり、`Link` ヘッダーは付きません。
+
+        ページが存在しない場合、ゴミ箱に入っている場合、見られない非公開トピックのページの場合は404を返します。
+        404を受け取ったら、`listPages` で見られるページの番号を確かめてください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - page
+      security:
+        - oauth2:
+            - page:read
+        - personalAccessToken:
+            - page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: バックリンクのページの一覧
+          headers:
+            Link:
+              $ref: "#/components/headers/Link"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}/body_edits:
+    post:
+      operationId: createPageBodyEdit
+      summary: ページの本文を検索置換する
+      description: |
+        ページ番号で指定したページの本文に、`edits` の編集を配列の順に適用し、更新したページを返します。
+        各編集は、前の編集を適用した後の本文で `old_str` に一致する箇所を `new_str` に置き換えます。
+        `old_str` は大文字小文字・空白も含めて完全に一致する必要があり、`replace_all` が `false` (既定) の編集は一致がちょうど1件でなければなりません。
+        1件でも適用できない編集があれば、どの編集も適用せずに422を返します。
+        各編集を適用した後の本文は、UTF-8で1,048,576バイト (1MiB) 以下である必要があります。途中の編集で上限を超える場合も、どの編集も適用せずに422を返します。
+        本文の改行コード (CRLF) は、`old_str`・`new_str` と同じLFとして照合し、更新した本文の改行コードはLFになります。
+        置換した後の本文は `updatePage` と同じく保存し、まだ公開していないページ (`status` が `unpublished`) は公開します。
+        本文のWikiリンクが存在しないページを指す場合は、リンク先のページを未公開の状態で作成します。
+        トークンで見られないトピック (トークンが `topic:read` を持たない場合の非公開トピックなど) には、リンク先のページを作成しません。
+        書き込む前にどのリンク先のページが作られるかは、`createWikilinkPreview` で確かめられます。
+        トークンの持ち主がWeb画面で編集中の下書きは、更新しても削除しません。
+        公開済みのページで置換しても本文が変わらない場合は何も更新せず、今のページを返します。
+        応答の `Content-Location` ヘッダーは更新したページのURL、`ETag` ヘッダーは `getPage` と同じ値です。
+
+        長いページの一部だけを書き換えるときに使います。本文の全体を送り直す `updatePage` と違い、変えない部分を送らずに済みます。
+        タイトルを変えるには `updatePage` を使います。
+        `old_str` を決めるには、本文を読む必要があります。`getPage` で今の本文を読み、置き換えたい箇所を、本文の中で1か所に決まる長さで `old_str` に指定してください。
+
+        `If-Match` ヘッダーは任意です。
+        `old_str` が今の本文に一致すること自体が、読んだ本文を前提にしていることの確かめになるため、省略しても他の人の変更を気付かずに上書きしません。
+        省略すると、`getPage` で読んだ後に関係のない箇所が更新されていても置換できます。
+        読んだ版のままの本文にだけ適用したい場合は、`getPage` の `ETag` を `If-Match` ヘッダーで送ってください。
+
+        非公開トピックのページを更新するには、トークンが `page:write` に加えて `topic:read` を持つ必要があります。
+
+        失敗したときは、次のように対処してください。
+
+        - 422 (`edits/{位置}/old_str`): その位置 (0始まり) の編集の `old_str` が、前の編集を適用した後の本文に一致しないか、`replace_all` が `false` なのに複数の箇所に一致します。`errors` の `detail` で一致の件数を確かめ、`getPage` で今の本文を読んで `old_str` を直してください。どの編集も適用していないため、直した後は `edits` の全体を送り直してください
+        - 422 (`edits/{位置}/new_str`): その編集後の本文が1,048,576バイトを超えます。どの編集も適用していません。各編集の途中結果も上限以下に収まるように、編集する内容を減らしてください
+        - 422 (`title`): タイトルの無い未公開のページです。`updatePage` で `title` を含めて更新してください
+        - 412: `If-Match` を送った場合に、読んだ後にページが更新されています。`getPage` で取得し直し、今の本文で `old_str` を確かめてから送り直してください
+        - 403: トークンが `page:write` を持たないか、トークンの持ち主にページの更新権限がありません
+        - 404: ページが存在しないか、ゴミ箱に入っているか、トークンの持ち主またはトークンが所属トピックを閲覧できません
+      x-wikino-operation:
+        read_only: false
+        irreversible: false
+        idempotent: false
+        confirmation_required: false
+      tags:
+        - page_body_edit
+      security:
+        - oauth2:
+            - page:write
+        - personalAccessToken:
+            - page:write
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - name: If-Match
+          in: header
+          required: false
+          description: |
+            置換の前提にするページの `ETag` です。送った場合は、ページの今の `ETag` と一致する場合だけ置換します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
+            省略すると版を照合せず、今の本文に置換を適用します。
+          schema:
+            type: string
+      requestBody:
+        description: 本文に順に適用する編集です。
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewBodyEdit"
+      responses:
+        "200":
+          description: 更新したページ
+          headers:
+            Content-Location:
+              description: "更新したページのURLです (例: `/api/v1/spaces/seed-wiki/pages/42`)。"
+              required: true
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Page"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/wikilink_previews:
+    post:
+      operationId: createWikilinkPreview
+      summary: 本文のWikiリンクのリンク先を確かめる
+      description: |
+        トピック番号と本文を受け取り、その本文をトピックのページや下書きに書き込んだときに、本文のWikiリンクがそれぞれどのページを指すかを返します。
+        ページや下書きは作成も更新もしません。
+        本文がURLに収まらないためPOSTで送りますが、何度送っても同じ結果になります。
+
+        ページの作成・更新・公開と下書きの作成・更新は、本文のWikiリンクが存在しないページを指すと、リンク先のページを未公開の状態で作成します。
+        書き込む前にこのoperationで、意図しないリンク先のページが作られないかを確かめてください。
+        Wikiリンクの解釈は書き込みと同じで、コードとして書いた `[[...]]` やエスケープした `[[...]]` はWikiリンクになりません。
+
+        各Wikiリンクの `resolution` は次のいずれかです。
+
+        - `existing_page`: リンク先のページが既にあります。書き込んでもページは作られません
+        - `new_page`: リンク先のページがありません。書き込むと、リンク先のトピックに未公開のページとして作られます
+        - `topic_not_found`: リンク先のトピックが無いか、トークンで見られません。リンクにならず、書き込んでもページは作られません
+
+        トークンで見られないトピック (トークンが `topic:read` を持たない場合の非公開トピックなど) へのリンクは、ページの有無にかかわらず `topic_not_found` になります。
+        書き込みでも、見られないトピックにはリンク先のページを作成しません。
+        トピックの名前を確かめるには `listTopics` を使います。
+
+        失敗したときは、次のように対処してください。
+
+        - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - wikilink_preview
+      security:
+        - oauth2:
+            - page:read
+        - personalAccessToken:
+            - page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+      requestBody:
+        description: 書き込む先のトピック番号と、書き込む本文です。
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewWikilinkPreview"
+      responses:
+        "200":
+          description: 本文のWikiリンクのリンク先
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WikilinkPreview"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/draft_pages:
+    get:
+      operationId: listDraftPages
+      summary: 下書きの一覧を取得する
+      description: |
+        トークンの持ち主がトークンの属するスペースに持っている下書きを、本文を含めて更新日時の新しい順に返します。
+        ほかのメンバーの下書きは含みません。
+        まだ公開していない新しいページの下書きも含みます。
+        ゴミ箱に入れたページの下書きは含みません。
+
+        書きかけの下書きを探すときに使います。
+        ページ番号が分かっている1件の下書きを読むには `getDraftPage` を使います。
+
+        非公開トピックのページの下書きは、トークンが `topic:read` を持ち、トークンの持ち主がそのトピックを見られる場合にだけ含みます。
+        あるはずの下書きが含まれない場合は、トークンに `topic:read` が付いているかを確かめてください。
+
+        一覧はカーソル方式で分割して返します。
+        続きがある場合は、本文の `next_cursor` と `Link` ヘッダー (`rel="next"`) で次のページを示します。
+        続きが無い場合は `next_cursor` が `null` になり、`Link` ヘッダーは付きません。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - draft_page
+      security:
+        - oauth2:
+            - draft_page:read
+        - personalAccessToken:
+            - draft_page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: 下書きの一覧
+          headers:
+            Link:
+              $ref: "#/components/headers/Link"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftPageList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post:
+      operationId: createDraftPage
+      summary: 下書きを作成する
+      description: |
+        トークンの持ち主の下書きを作成し、作成した下書きを返します。
+        本文には、既存のページの番号 `page_number` か、新しいページを作るトピックの番号 `topic_number` のどちらか一方を指定します。
+        既存のページでは、`title` と `body` を省くと、ページの今のタイトルと本文を使います。
+        新しいページでは、Web画面での作成と同じく、タイトルと本文の無い未公開のページを作り、その下書きを作ります。
+        新しいページで `title` を省くとタイトルの無い下書きに、`body` を省くと本文の空の下書きになります。
+        作成と同時に、下書きの編集履歴を1件作ります。
+        本文のWikiリンクが存在しないページを指す場合は、Web画面での下書きの保存と同じく、リンク先のページを未公開の状態で作成します。
+        トークンで見られないトピック (トークンが `topic:read` を持たない場合の非公開トピックなど) には、リンク先のページを作成しません。
+        書き込む前にどのリンク先のページが作られるかは、`createWikilinkPreview` で確かめられます。
+        応答の `Location` ヘッダーは作成した下書きのURL、`ETag` ヘッダーは `getDraftPage` と同じ値です。
+
+        ページを公開せずに書き換えるときに、最初に使います。
+        下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
+
+        新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
+        非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+
+        失敗したときは、次のように対処してください。
+
+        - 409: ページにトークンの持ち主の下書きがすでにあります。`type` は `/api/problems/already-exists` で終わるURIです。`getDraftPage` で今の下書きを読んでください
+        - 422 (`page_number`): ページが存在しないか、ゴミ箱に入っているか、見られません。`listPages` でページの番号を確かめてください
+        - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
+        - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
+        - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
+        - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+        - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
+      x-wikino-operation:
+        read_only: false
+        irreversible: false
+        idempotent: false
+        confirmation_required: false
+      tags:
+        - draft_page
+      security:
+        - oauth2:
+            - draft_page:write
+        - personalAccessToken:
+            - draft_page:write
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+      requestBody:
+        description: 下書きを作成するページ (既存のページの番号か、新しいページのトピックの番号) と、下書きのタイトル・本文です。
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewDraftPage"
+      responses:
+        "201":
+          description: 作成した下書き
+          headers:
+            Location:
+              description: "作成した下書きのURLです (例: `/api/v1/spaces/seed-wiki/pages/42/draft_page`)。"
+              required: true
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/AlreadyExists"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}/draft_page:
+    get:
+      operationId: getDraftPage
+      summary: 下書きを取得する
+      description: |
+        ページ番号で指定したページについて、トークンの持ち主の下書きを本文を含めて返します。
+        下書きはページとメンバーの組に1つで、ほかのメンバーの下書きは返しません。
+
+        書きかけの内容を読むときと、下書きを更新する前に今の `ETag` を受け取るときに使います。
+        番号が分からなければ、`listDraftPages` で探します。
+
+        非公開トピックのページの下書きを読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
+
+        応答の `ETag` ヘッダーは下書きのタイトル・本文・所属するトピック (トピック名は含めません)・更新日時から計算します。
+        前回の応答の `ETag` を `If-None-Match` ヘッダーで送ると、応答が変わっていない場合は本文の無い304を返します。
+        304を受け取ったら、手元に残している前回の応答をそのまま使ってください。
+
+        ページが存在しない場合、ページにトークンの持ち主の下書きが無い場合、ページがゴミ箱に入っている場合、見られない非公開トピックのページの場合は404を返します。
+        404を受け取ったら、`listDraftPages` で下書きのあるページの番号を確かめてください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - draft_page
+      security:
+        - oauth2:
+            - draft_page:read
+        - personalAccessToken:
+            - draft_page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - name: If-None-Match
+          in: header
+          required: false
+          description: 前回の応答の `ETag` です。下書きの応答が変わっていなければ304を返します。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 下書き
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftPage"
+        "304":
+          description: "`If-None-Match` の `ETag` と下書きの応答が一致したため、本文を返しません。"
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    patch:
+      operationId: updateDraftPage
+      summary: 下書きを更新する
+      description: |
+        ページ番号で指定したページについて、トークンの持ち主の下書きのタイトルと本文を、JSON Merge Patch (RFC 7396) で更新し、更新した下書きを返します。
+        リクエスト本文に含めた項目だけを更新し、含めなかった項目は変えません。
+        本文を含める場合は、変えない部分も含めた本文の全体を送ります。
+        `title` を `null` にすると、下書きのタイトルを外します。
+        ページは公開せず、公開済みのページの内容も変えません。
+        更新と同時に、Web画面での手動保存と同じく下書きの編集履歴を1件作ります。直前の編集履歴と同じ内容なら作りません。
+        本文のWikiリンクが存在しないページを指す場合は、Web画面での下書きの保存と同じく、リンク先のページを未公開の状態で作成します。
+        トークンで見られないトピック (トークンが `topic:read` を持たない場合の非公開トピックなど) には、リンク先のページを作成しません。
+        書き込む前にどのリンク先のページが作られるかは、`createWikilinkPreview` で確かめられます。
+        タイトルと本文が今の下書きと同じ場合は下書きを書き換えず、`ETag` も変わりません。
+
+        `createDraftPage` で作った下書きや、Web画面で書いている下書きを書き換えるときに使います。
+        下書きがまだ無いページでは `createDraftPage` を使います。
+        更新の前に `getDraftPage` で下書きを取得し、応答の `ETag` を `If-Match` ヘッダーで送ってください。
+        Web画面の自動保存でも `ETag` が変わるため、利用者がWeb画面で同じ下書きを編集している場合は412になります。
+        `If-Match: *` は下書きが存在すれば版を問わず一致するため、古い版での上書きを防ぐには、取得した具体的な `ETag` を指定してください。
+        下書きのタイトルのページのタイトルの規則 (トピック内で重複できないなど) は、下書きを公開するときに確かめます。
+
+        非公開トピックのページの下書きを更新するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+
+        失敗したときは、次のように対処してください。
+
+        - 428: `If-Match` ヘッダーがありません。`getDraftPage` で `ETag` を受け取って送り直してください
+        - 412: 取得した後に下書きが更新されています。`getDraftPage` で取得し直し、今の内容に変更を反映してから、新しい `ETag` で更新し直してください
+        - 404: ページが存在しないか、ページにトークンの持ち主の下書きが無いか、ページがゴミ箱に入っているか、トークンの持ち主が下書きを更新できません。下書きが無い場合は `createDraftPage` で作成してください
+      x-wikino-operation:
+        read_only: false
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - draft_page
+      security:
+        - oauth2:
+            - draft_page:write
+        - personalAccessToken:
+            - draft_page:write
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - name: If-Match
+          in: header
+          required: false
+          description: |
+            更新の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ更新します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
+            省略すると428を返します。
+          schema:
+            type: string
+      requestBody:
+        description: 更新する下書きの項目です。JSON Merge Patch (`application/merge-patch+json`) で送ります。
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/DraftPagePatch"
+      responses:
+        "200":
+          description: 更新した下書き
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedPatchMediaType"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    delete:
+      operationId: deleteDraftPage
+      summary: 下書きを削除する
+      description: |
+        ページ番号で指定したページについて、トークンの持ち主の下書きを編集履歴ごと削除します。
+        削除した下書きと編集履歴は元に戻せません。
+        ページそのものは削除せず、公開済みのページの内容も変えません。
+
+        書きかけの内容を破棄するときに使います。
+        削除の前に `getDraftPage` で下書きを取得して内容を確かめ、応答の `ETag` を `If-Match` ヘッダーで送ってください。
+        利用者がWeb画面で同じ下書きを編集している場合は412になり、確かめていない内容を削除しません。
+
+        非公開トピックのページの下書きを削除するには、トークンが `draft_page:delete` に加えて `topic:read` を持つ必要があります。
+
+        失敗したときは、次のように対処してください。
+
+        - 428: `If-Match` ヘッダーがありません。`getDraftPage` で内容と `ETag` を確かめてから送り直してください
+        - 412: 取得した後に下書きが更新されています。`getDraftPage` で今の内容を確かめ、削除してよければ新しい `ETag` で削除し直してください
+        - 404: ページが存在しないか、ページにトークンの持ち主の下書きが無いか、ページがゴミ箱に入っているか、トークンの持ち主が下書きを削除できません。削除し直して404になった場合は、削除済みです
+      x-wikino-operation:
+        read_only: false
+        irreversible: true
+        idempotent: true
+        confirmation_required: true
+      tags:
+        - draft_page
+      security:
+        - oauth2:
+            - draft_page:delete
+        - personalAccessToken:
+            - draft_page:delete
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - name: If-Match
+          in: header
+          required: false
+          description: |
+            削除の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ削除します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
+            省略すると428を返します。
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 下書きを削除しました。
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}/draft_page/body_edits:
+    post:
+      operationId: createDraftPageBodyEdit
+      summary: 下書きの本文を検索置換する
+      description: |
+        ページ番号で指定したページについて、トークンの持ち主の下書きの本文に、`edits` の編集を配列の順に適用し、更新した下書きを返します。
+        各編集は、前の編集を適用した後の本文で `old_str` に一致する箇所を `new_str` に置き換えます。
+        `old_str` は大文字小文字・空白も含めて完全に一致する必要があり、`replace_all` が `false` (既定) の編集は一致がちょうど1件でなければなりません。
+        1件でも適用できない編集があれば、どの編集も適用せずに422を返します。
+        各編集を適用した後の本文は、UTF-8で1,048,576バイト (1MiB) 以下である必要があります。途中の編集で上限を超える場合も、どの編集も適用せずに422を返します。
+        本文の改行コード (CRLF) は、`old_str`・`new_str` と同じLFとして照合し、更新した本文の改行コードはLFになります。
+        置換した後の本文は `updateDraftPage` と同じく保存し、Web画面での手動保存と同じく下書きの編集履歴を1件作ります。直前の編集履歴と同じ内容なら作りません。
+        ページは公開せず、公開済みのページの内容も変えません。
+        本文のWikiリンクが存在しないページを指す場合は、Web画面での下書きの保存と同じく、リンク先のページを未公開の状態で作成します。
+        トークンで見られないトピック (トークンが `topic:read` を持たない場合の非公開トピックなど) には、リンク先のページを作成しません。
+        書き込む前にどのリンク先のページが作られるかは、`createWikilinkPreview` で確かめられます。
+        置換しても本文が変わらない場合は下書きを書き換えず、`ETag` も変わりません。
+        応答の `Content-Location` ヘッダーは更新した下書きのURL、`ETag` ヘッダーは `getDraftPage` と同じ値です。
+
+        長い下書きの一部だけを書き換えるときに使います。本文の全体を送り直す `updateDraftPage` と違い、変えない部分を送らずに済みます。
+        タイトルを変えるには `updateDraftPage` を使います。下書きがまだ無いページでは `createDraftPage` で作成してください。
+        `old_str` を決めるには、本文を読む必要があります。`getDraftPage` で今の本文を読み、置き換えたい箇所を、本文の中で1か所に決まる長さで `old_str` に指定してください。
+
+        `If-Match` ヘッダーは任意です。
+        `old_str` が今の本文に一致すること自体が、読んだ本文を前提にしていることの確かめになるため、省略しても他の変更を気付かずに上書きしません。
+        省略すると、`getDraftPage` で読んだ後に関係のない箇所が更新されていても (利用者がWeb画面で同じ下書きを編集していても) 置換できます。
+        読んだ版のままの本文にだけ適用したい場合は、`getDraftPage` の `ETag` を `If-Match` ヘッダーで送ってください。
+
+        非公開トピックのページの下書きを更新するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+
+        失敗したときは、次のように対処してください。
+
+        - 422 (`edits/{位置}/old_str`): その位置 (0始まり) の編集の `old_str` が、前の編集を適用した後の本文に一致しないか、`replace_all` が `false` なのに複数の箇所に一致します。`errors` の `detail` で一致の件数を確かめ、`getDraftPage` で今の本文を読んで `old_str` を直してください。どの編集も適用していないため、直した後は `edits` の全体を送り直してください
+        - 422 (`edits/{位置}/new_str`): その編集後の本文が1,048,576バイトを超えます。どの編集も適用していません。各編集の途中結果も上限以下に収まるように、編集する内容を減らしてください
+        - 412: `If-Match` を送った場合に、読んだ後に下書きが更新されています。`getDraftPage` で取得し直し、今の本文で `old_str` を確かめてから送り直してください
+        - 403: トークンが `draft_page:write` を持たないか、トークンの持ち主に下書きの保存権限がありません
+        - 404: ページが存在しないか、ページにトークンの持ち主の下書きが無いか、ページがゴミ箱に入っているか、トークンの持ち主またはトークンが所属トピックを閲覧できません。下書きが無い場合は `createDraftPage` で作成してください
+      x-wikino-operation:
+        read_only: false
+        irreversible: false
+        idempotent: false
+        confirmation_required: false
+      tags:
+        - draft_page_body_edit
+      security:
+        - oauth2:
+            - draft_page:write
+        - personalAccessToken:
+            - draft_page:write
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - name: If-Match
+          in: header
+          required: false
+          description: |
+            置換の前提にする下書きの `ETag` です。送った場合は、下書きの今の `ETag` と一致する場合だけ置換します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
+            省略すると版を照合せず、今の本文に置換を適用します。
+          schema:
+            type: string
+      requestBody:
+        description: 本文に順に適用する編集です。
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewBodyEdit"
+      responses:
+        "200":
+          description: 更新した下書き
+          headers:
+            Content-Location:
+              description: "更新した下書きのURLです (例: `/api/v1/spaces/seed-wiki/pages/42/draft_page`)。"
+              required: true
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}/draft_page/publication:
+    post:
+      operationId: createDraftPagePublication
+      summary: 下書きを公開する
+      description: |
+        ページ番号で指定したページについて、トークンの持ち主の下書きのタイトルと本文でページを公開し、公開したページを返します。
+        公開すると、Web画面での公開と同じく、下書きを編集履歴ごと削除し、ページの編集履歴を1件作ります。
+        まだ公開していないページ (`status` が `unpublished`) は公開済みになります。
+        本文のWikiリンクが存在しないページを指す場合は、Web画面での公開と同じく、リンク先のページを未公開の状態で作成します。
+        トークンで見られないトピック (トークンが `topic:read` を持たない場合の非公開トピックなど) には、リンク先のページを作成しません。
+        書き込む前にどのリンク先のページが作られるかは、`createWikilinkPreview` で確かめられます。
+        リクエスト本文はありません。
+        応答の `Content-Location` ヘッダーは公開したページのURL、`ETag` ヘッダーは `getPage` と同じ値です。
+
+        `createDraftPage` や `updateDraftPage` で書いた下書きを、ページに反映するときに使います。
+        公開の前に `getDraftPage` で下書きを取得して内容を確かめ、応答の `ETag` を `If-Match` ヘッダーで送ってください。
+        利用者がWeb画面で同じ下書きを編集している場合は412になり、確かめていない内容を公開しません。
+        ページの今の内容とは照合しないため、下書きを作った後にページが更新されていても、下書きの内容で上書きします。
+        `If-Match: *` は下書きが存在すれば版を問わず一致するため、確かめた内容だけを公開するには、取得した具体的な `ETag` を指定してください。
+
+        下書きを公開するには、トークンが `draft_page:write` と `page:write` の両方を持つ必要があります。
+        非公開トピックのページの下書きを公開するには、トークンが `topic:read` も持つ必要があります。
+
+        失敗したときは、次のように対処してください。
+
+        - 428: `If-Match` ヘッダーがありません。`getDraftPage` で内容と `ETag` を確かめてから送り直してください
+        - 412: 取得した後に下書きが更新されています。`getDraftPage` で今の内容を確かめ、公開してよければ新しい `ETag` で公開し直してください
+        - 422 (`title`): 下書きにタイトルが無いか、タイトルに使えない文字があるか、同じタイトルのページがトピックにあります。`errors` の `detail` を確かめ、`updateDraftPage` で下書きのタイトルを直してから公開し直してください
+        - 403: トークンが `draft_page:write` と `page:write` の両方を持つか、トークンの持ち主に下書きを保存しページを公開する権限があるかを確かめてください
+        - 404: ページが存在しないか、ページにトークンの持ち主の下書きが無いか、ページがゴミ箱に入っているか、トークンの持ち主が所属トピックを閲覧できません。公開し直して404になった場合は、公開済みか下書きが削除されています。`getPage` でページを確かめてください
+      x-wikino-operation:
+        read_only: false
+        irreversible: false
+        idempotent: true
+        confirmation_required: true
+      tags:
+        - draft_page_publication
+      security:
+        - oauth2:
+            - draft_page:write
+            - page:write
+        - personalAccessToken:
+            - draft_page:write
+            - page:write
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - name: If-Match
+          in: header
+          required: false
+          description: |
+            公開の前提にする下書きの `ETag` です。下書きの今の `ETag` と一致する場合だけ公開します。
+            途中のプロキシが応答の `ETag` に `W/` を付けることがあります。`W/` の付いた値のまま送っても、付いていない値と同じに照合します。
+            省略すると428を返します。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 公開したページ
+          headers:
+            Content-Location:
+              description: "公開したページのURLです (例: `/api/v1/spaces/seed-wiki/pages/42`)。"
+              required: true
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Page"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions:
+    get:
+      operationId: listDraftPageRevisions
+      summary: 下書きの編集履歴を取得する
+      description: |
+        ページ番号で指定したページについて、トークンの持ち主の下書きの編集履歴 (リビジョン) を、本文を含めて作成日時の新しい順に返します。
+        リビジョンは下書きのある時点のタイトルと本文の記録で、下書きの作成・更新と、Web画面での手動保存や復元のときに作られます。
+        Web画面の自動保存ではリビジョンを作らないため、先頭のリビジョンが今の下書きと同じ内容とは限りません。
+        下書きを公開または削除すると、編集履歴も削除されます。
+
+        下書きを以前の内容と比べるときや、書き換える前の内容を探すときに使います。
+        1件のリビジョンを読むには `getDraftPageRevision` を、今の下書きを読むには `getDraftPage` を使います。
+
+        非公開トピックのページの下書きの編集履歴を読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
+
+        一覧はカーソル方式で分割して返します。
+        続きがある場合は、本文の `next_cursor` と `Link` ヘッダー (`rel="next"`) で次のページを示します。
+        続きが無い場合は `next_cursor` が `null` になり、`Link` ヘッダーは付きません。
+
+        ページが存在しない場合、ページにトークンの持ち主の下書きが無い場合、ページがゴミ箱に入っている場合、見られない非公開トピックのページの場合は404を返します。
+        404を受け取ったら、`listDraftPages` で下書きのあるページの番号を確かめてください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - draft_page_revision
+      security:
+        - oauth2:
+            - draft_page:read
+        - personalAccessToken:
+            - draft_page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: 下書きの編集履歴
+          headers:
+            Link:
+              $ref: "#/components/headers/Link"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftPageRevisionList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions/{draft_page_revision_id}:
+    get:
+      operationId: getDraftPageRevision
+      summary: 下書きのリビジョンを取得する
+      description: |
+        ページ番号とリビジョンのIDで指定した、トークンの持ち主の下書きのリビジョンを本文を含めて返します。
+
+        `listDraftPageRevisions` で見つけたリビジョンの内容を読むときに使います。
+        リビジョンのIDは `listDraftPageRevisions` の応答の `id` です。
+
+        非公開トピックのページの下書きのリビジョンを読むには、トークンが `draft_page:read` に加えて `topic:read` を持つ必要があります。
+
+        リビジョンがパスのページの下書きのものでない場合も404を返します。
+        404を受け取ったら、`listDraftPageRevisions` でそのページの下書きのリビジョンのIDを確かめてください。
+        下書きを公開または削除した後は、編集履歴も削除されているため404になります。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - draft_page_revision
+      security:
+        - oauth2:
+            - draft_page:read
+        - personalAccessToken:
+            - draft_page:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/DraftPageRevisionID"
+      responses:
+        "200":
+          description: 下書きのリビジョン
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftPageRevision"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /spaces/{space_identifier}/attachments/{attachment_id}:
+    get:
+      operationId: getAttachment
+      summary: 添付ファイルを取得する
+      description: |
+        IDで指定した添付ファイルのファイル名・種類・バイト数と、中身をダウンロードする署名付きURLを返します。
+
+        ページの本文に含まれる図やスクリーンショットなどの中身を確かめるときに使います。
+        本文は添付ファイルを `/attachments/{ID}` のパス (例: `![図](/attachments/01234567-89ab-cdef-0123-456789abcdef)`) で参照しており、`attachment_id` にはそのIDを渡します。
+
+        中身は応答の `download_url` に `GET` を送って取得します。
+        `download_url` はオブジェクトストレージの署名付きURLで、URL自体が取得の権限を持つため、`Authorization` ヘッダーのトークンを付けずに要求してください。
+        `download_url` は `download_url_expires_at` を過ぎると使えなくなります (発行から5分)。
+        期限が切れたら、このoperationを呼び直して新しいURLを受け取ってください。
+
+        `attachment:read` を持つトークンは、非公開トピックのページが参照する添付ファイルも取得できます。
+
+        別のスペースの添付ファイルや存在しない添付ファイルには404を返します。
+        404を受け取ったら、本文の `/attachments/{ID}` のIDと、トークンが属するスペースを確かめてください。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
+      tags:
+        - attachment
+      security:
+        - oauth2:
+            - attachment:read
+        - personalAccessToken:
+            - attachment:read
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/AttachmentID"
+      responses:
+        "200":
+          description: 添付ファイルの情報と署名付きURL
+          headers:
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attachment"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   /openapi.yaml:
     get:
       operationId: getOpenAPIDescription
       summary: OpenAPI記述を取得する
-      description: このAPIのOpenAPI記述をYAMLで返します。トークンは要りません。
+      description: |
+        このAPIのOpenAPI記述をYAMLで返します。
+
+        使えるoperation・パラメーター・応答の形を機械的に調べるときに使います。
+        トークンは要りません。
+      x-wikino-operation:
+        read_only: true
+        irreversible: false
+        idempotent: true
+        confirmation_required: false
       tags:
         - openapi
       security: []
@@ -483,8 +1770,8 @@ components:
       type: oauth2
       description: |
         OAuth 2.0のAuthorization Code + PKCE (S256) で取得したアクセストークンです。
-        トークンは、OAuthアプリを登録したスペースに束縛されます。
-        全スペース共通の公式クライアントは、認可要求の `resource` パラメーターでスペースのAPIのURL (例: `https://example.com/api/v1/spaces/{space_identifier}`) を指定し、そのスペースに束縛します。
+        トークンは、OAuthアプリを登録したスペースに属します。
+        全スペース共通の公式クライアントは、認可要求の `resource` パラメーターでスペースのAPIのURL (例: `https://example.com/api/v1/spaces/{space_identifier}`) を指定し、そのスペースに属するトークンを受け取ります。
         アクセストークンの有効期間は1時間で、リフレッシュトークンで更新できます。
       flows:
         authorizationCode:
@@ -495,12 +1782,16 @@ components:
             topic:read: トピックを読む。非公開トピックとそのページを読むにもこのスコープが要ります
             page:read: ページを読む
             page:write: ページを作成・更新する (`page:read` を含みます)
+            draft_page:read: 自分の下書きと編集履歴を読む
+            draft_page:write: 自分の下書きを作成・更新する (`draft_page:read` を含みます)。下書きを公開するには `page:write` も要ります
+            draft_page:delete: 自分の下書きを編集履歴ごと削除する (`draft_page:read` を含みます)
+            attachment:read: スペースの添付ファイルを取得する。非公開トピックのページが参照する添付ファイルも含みます
     personalAccessToken:
       type: http
       scheme: bearer
       description: |
-        スペース設定で発行した個人アクセストークンです。
-        発行したスペースに束縛され、発行時に選んだスコープの範囲で使えます。
+        スペース設定で発行した個人用アクセストークンです。
+        発行したスペースに属し、発行時に選んだスコープの範囲で使えます。
   parameters:
     SpaceIdentifier:
       name: space_identifier
@@ -527,6 +1818,24 @@ components:
         type: integer
         format: int32
         minimum: 1
+    DraftPageRevisionID:
+      name: draft_page_revision_id
+      in: path
+      required: true
+      description: 下書きのリビジョンのIDです。`listDraftPageRevisions` の応答の `id` と同じ値です。
+      schema:
+        type: string
+        format: uuid
+        pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    AttachmentID:
+      name: attachment_id
+      in: path
+      required: true
+      description: 添付ファイルのIDです。ページの本文で添付ファイルを参照するパス (`/attachments/{ID}`) のIDと同じ値です。
+      schema:
+        type: string
+        format: uuid
+        pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     Cursor:
       name: cursor
       in: query
@@ -555,8 +1864,8 @@ components:
         type: string
     ETag:
       description: |
-        ページのタイトル・本文・所属トピック・更新日時から計算したエンティティタグです (例: `"3q2-7wEBYm8aHqhqcl7IJ4K_xGJmBGyBMs5-yHaI0Wk"`)。
-        応答が変われば値も変わります。
+        リソースの応答の内容から計算したエンティティタグです (例: `"3q2-7wEBYm8aHqhqcl7IJ4K_xGJmBGyBMs5-yHaI0Wk"`)。
+        応答が変われば値も変わります。ただし、スキーマの説明で `ETag` の計算に含めないとした項目 (`url`・`topic_name` など) だけが変わった場合は変わりません。
       required: true
       schema:
         type: string
@@ -621,6 +1930,14 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
+    AlreadyExists:
+      description: |
+        作成しようとしたリソースがすでにあります。
+        `type` は `/api/problems/already-exists` で終わるURIで、`detail` で既にあるリソースを読む方法を示します。
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
     PreconditionFailed:
       description: |
         `If-Match` の `ETag` がリソースの今の `ETag` と一致しません。
@@ -660,7 +1977,7 @@ components:
     NotFound:
       description: |
         リソースが存在しないか、見る権限がありません。
-        トークンの束縛先と異なるスペースを指定した場合も404です。
+        トークンが属さないスペースを指定した場合も404です。
       content:
         application/problem+json:
           schema:
@@ -713,7 +2030,7 @@ components:
           description: スペースの名前です。
     SpaceMember:
       type: object
-      description: スペースのメンバーです。
+      description: スペースメンバーです。
       required:
         - id
         - atname
@@ -722,13 +2039,43 @@ components:
         id:
           type: string
           format: uuid
-          description: メンバーのIDです。同じ人でもスペースごとに異なります。
+          description: スペースメンバーのIDです。同じ人でもスペースごとに異なります。
         atname:
           type: string
           description: アットネーム (`@` の後に続く名前) です。
         name:
           type: string
           description: 表示名です。設定していない場合は空文字列です。
+    Token:
+      type: object
+      description: リクエストに使ったトークンの情報です。
+      required:
+        - kind
+        - scopes
+        - expires_at
+      properties:
+        kind:
+          type: string
+          enum:
+            - personal_access_token
+            - oauth_access_token
+          description: |
+            トークンの種類です。`personal_access_token` はスペース設定で発行した個人用アクセストークン、`oauth_access_token` はOAuth 2.0で取得したアクセストークンです。
+        scopes:
+          type: array
+          description: |
+            トークンのスコープに含意を展開したものです。
+            トークンに付与できるスコープ (`securitySchemes` の `oauth2` に並べたもの) の順に並びます。
+          items:
+            type: string
+        expires_at:
+          type: string
+          format: date-time
+          description: |
+            トークンの有効期限です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+            秒未満はマイクロ秒まで含み、末尾の0は省きます。
+            個人用アクセストークンは期限を過ぎると使えなくなるため、スペース設定で発行し直してください。
+            OAuthのアクセストークンは、期限が切れる前でもリフレッシュトークンで更新できます。
     Topic:
       type: object
       description: トピックです。
@@ -759,7 +2106,7 @@ components:
             - public
             - private
           description: |
-            トピックの公開範囲です。`public` は誰でも見られる公開トピック、`private` はトピックに参加しているメンバーなどだけが見られる非公開トピックです。
+            トピックの公開範囲です。`public` は誰でも見られる公開トピック、`private` はトピックメンバーなどだけが見られる非公開トピックです。
     TopicList:
       type: object
       description: トピックの一覧の1ページです。
@@ -781,9 +2128,12 @@ components:
         - id
         - number
         - topic_number
+        - topic_name
         - title
         - body
+        - status
         - modified_at
+        - url
       properties:
         id:
           type: string
@@ -797,18 +2147,39 @@ components:
           type: integer
           format: int32
           description: ページが属するトピックの番号です。
+        topic_name:
+          type: string
+          description: |
+            ページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+            ページの `ETag` の計算には含めません。トピック名を変えても `ETag` は変わらないため、`If-None-Match` で304を受け取ったときに手元に残している値は、変える前の名前のことがあります。
         title:
           type: [string, "null"]
           description: ページのタイトルです。タイトルの無いページでは `null` です。
         body:
           type: string
           description: ページの本文 (Markdown) です。
+        status:
+          type: string
+          enum:
+            - published
+            - unpublished
+          description: |
+            ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+            `updatePage` で未公開のページを更新すると `published` になります。
         modified_at:
           type: string
           format: date-time
           description: |
             ページの内容を最後に更新した日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
             秒未満はマイクロ秒まで含み、末尾の0は省きます。`modified_since` にそのまま渡せます。
+        url:
+          type: string
+          format: uri
+          description: |
+            Web画面でページを開くURLです (例: `https://example.com/s/my-space/pages/12`)。
+            利用者に出典としてページを示すときに使います。
+            URLはサーバーが決めるため、`number` などから組み立てずにこの値を使ってください。
+            ページの `ETag` の計算には含めません。
     NewPage:
       type: object
       description: 作成するページです。
@@ -861,6 +2232,335 @@ components:
             $ref: "#/components/schemas/Page"
         next_cursor:
           $ref: "#/components/schemas/NextCursor"
+    NewBodyEdit:
+      type: object
+      description: 本文に順に適用する編集です。
+      required:
+        - edits
+      additionalProperties: false
+      properties:
+        edits:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: 配列の順に、前の編集を適用した後の本文へ適用する編集です。
+          items:
+            $ref: "#/components/schemas/BodyEdit"
+    BodyEdit:
+      type: object
+      description: 本文の検索置換の1件の編集です。
+      required:
+        - old_str
+        - new_str
+      additionalProperties: false
+      properties:
+        old_str:
+          type: string
+          minLength: 1
+          description: 置き換える文字列です。大文字小文字・空白・改行も含めて、本文と完全に一致する必要があります。改行コードのCRLFはLFとして照合します。
+        new_str:
+          type: string
+          description: 置き換えた後の文字列です。空文字列にすると、一致した箇所を削除します。
+        replace_all:
+          type: boolean
+          default: false
+          description: |
+            `true` なら、`old_str` に一致する箇所をすべて置き換えます。
+            `false` なら、一致がちょうど1件の場合だけ置き換え、0件か複数件なら422を返します。
+    NewWikilinkPreview:
+      type: object
+      description: リンク先を確かめる本文です。
+      required:
+        - topic_number
+        - body
+      properties:
+        topic_number:
+          type: integer
+          format: int32
+          minimum: 1
+          description: |
+            本文を書き込むページのトピックの番号です。
+            トピックを書かないWikiリンク (`[[タイトル]]`) は、このトピックのページを指します。
+        body:
+          $ref: "#/components/schemas/PageBodyInput"
+    WikilinkPreview:
+      type: object
+      description: 本文のWikiリンクのリンク先です。
+      required:
+        - links
+      properties:
+        links:
+          type: array
+          description: |
+            本文のWikiリンクを、本文に現れる順に並べたものです。
+            同じトピックとタイトルを指すWikiリンクが複数ある場合は、最初の1つだけを含みます。
+          items:
+            $ref: "#/components/schemas/WikilinkPreviewLink"
+    WikilinkPreviewLink:
+      type: object
+      description: 本文の1つのWikiリンクのリンク先です。
+      required:
+        - text
+        - topic_name
+        - page_title
+        - resolution
+        - page
+      properties:
+        text:
+          type: string
+          description: "Wikiリンクの `[[` と `]]` の間に書かれた文字列です (前後の空白を除く。例: `トピック/タイトル`)。"
+        topic_name:
+          type: string
+          description: リンク先のトピックの名前です。トピックを書かないWikiリンクでは、`topic_number` のトピックの名前です。
+        page_title:
+          type: string
+          description: リンク先のページのタイトルです。Wikiリンクに書かれたとおりの表記です。
+        resolution:
+          type: string
+          enum:
+            - existing_page
+            - new_page
+            - topic_not_found
+          description: |
+            リンク先の解決の結果です。
+            `existing_page` はリンク先のページが既にあること、`new_page` は書き込むとリンク先のページが未公開の状態で作られること、`topic_not_found` はリンク先のトピックが無いか見られずリンクにならないことを表します。
+        page:
+          description: |
+            リンク先の既存のページです。`resolution` が `existing_page` のときに返します。
+            `existing_page` でも、ゴミ箱に入っているなどで `getPage` で開けないページでは `null` です。
+            `new_page` と `topic_not_found` では `null` です。
+          oneOf:
+            - $ref: "#/components/schemas/WikilinkPreviewPage"
+            - type: "null"
+    WikilinkPreviewPage:
+      type: object
+      description: Wikiリンクが指す既存のページです。
+      required:
+        - id
+        - number
+        - topic_number
+        - title
+        - status
+        - url
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ページのIDです。
+        number:
+          type: integer
+          format: int32
+          description: スペース内のページの番号です。パスの `page_number` に使います。
+        topic_number:
+          type: integer
+          format: int32
+          description: ページが属するトピックの番号です。
+        title:
+          type: [string, "null"]
+          description: ページのタイトルです。タイトルの無いページでは `null` です。
+        status:
+          type: string
+          enum:
+            - published
+            - unpublished
+          description: |
+            ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+        url:
+          type: string
+          format: uri
+          description: |
+            Web画面でページを開くURLです (例: `https://example.com/s/my-space/pages/12`)。
+            URLはサーバーが決めるため、`number` などから組み立てずにこの値を使ってください。
+    DraftPage:
+      type: object
+      description: |
+        トークンの持ち主のページの下書きです。
+        下書きはページとメンバーの組に1つで、ページ番号で指します。
+      required:
+        - page_number
+        - topic_number
+        - topic_name
+        - title
+        - body
+        - modified_at
+        - url
+      properties:
+        page_number:
+          type: integer
+          format: int32
+          description: 下書きのページの番号です。パスの `page_number` に使います。
+        topic_number:
+          type: integer
+          format: int32
+          description: 下書きのページが属するトピックの番号です。
+        topic_name:
+          type: string
+          description: |
+            下書きのページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+            下書きの `ETag` の計算には含めません。トピック名を変えても `ETag` は変わらないため、`If-None-Match` で304を受け取ったときに手元に残している値は、変える前の名前のことがあります。
+        title:
+          type: [string, "null"]
+          description: 下書きのタイトルです。タイトルの無い下書きでは `null` です。
+        body:
+          type: string
+          description: 下書きの本文 (Markdown) です。
+        modified_at:
+          type: string
+          format: date-time
+          description: |
+            下書きの内容を最後に更新した日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+            Web画面の自動保存でも更新されます。
+            秒未満はマイクロ秒まで含み、末尾の0は省きます。
+        url:
+          type: string
+          format: uri
+          description: |
+            Web画面で下書きのページの編集画面を開くURLです (例: `https://example.com/s/my-space/pages/12/edit`)。
+            利用者に下書きを確かめてもらうときに使います。
+            URLはサーバーが決めるため、`page_number` などから組み立てずにこの値を使ってください。
+            下書きの `ETag` の計算には含めません。
+    DraftPagePatch:
+      type: object
+      description: |
+        下書きの更新内容です (JSON Merge Patch)。含めた項目だけを更新します。
+        `title` だけは `null` にでき、下書きのタイトルを外します。定義していない項目を含めると422を返します。
+      additionalProperties: false
+      properties:
+        title:
+          type: [string, "null"]
+          minLength: 1
+          description: |
+            下書きのタイトルです。`null` にするとタイトルを外します。
+            ページのタイトルの規則 (トピック内で重複できないなど) は、下書きを公開するときに確かめます。
+          x-go-type: nullable.Nullable[string]
+          x-go-type-import:
+            path: github.com/oapi-codegen/nullable
+          x-go-type-skip-optional-pointer: true
+        body:
+          type: string
+          description: 下書きの新しい本文 (Markdown) です。変えない部分も含めた本文の全体を送ります。空文字列にもできます。
+    NewDraftPage:
+      type: object
+      description: |
+        作成する下書きです。
+        `page_number` と `topic_number` のどちらか一方を指定します。
+      properties:
+        page_number:
+          type: integer
+          format: int32
+          minimum: 1
+          description: 下書きを作成する既存のページの番号です。
+        topic_number:
+          type: integer
+          format: int32
+          minimum: 1
+          description: 新しいページを作成するトピックの番号です。
+        title:
+          type: string
+          minLength: 1
+          description: |
+            下書きのタイトルです。
+            ページのタイトルの規則 (トピック内で重複できないなど) は、下書きを公開するときに確かめます。
+        body:
+          type: string
+          description: 下書きの本文 (Markdown) です。空文字列にもできます。
+    DraftPageList:
+      type: object
+      description: 下書きの一覧の1ページです。
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          description: このページの下書きです。
+          items:
+            $ref: "#/components/schemas/DraftPage"
+        next_cursor:
+          $ref: "#/components/schemas/NextCursor"
+    DraftPageRevision:
+      type: object
+      description: |
+        トークンの持ち主の下書きのリビジョンです。
+        下書きのある時点のタイトルと本文の記録で、作成した後は変わりません。
+      required:
+        - id
+        - title
+        - body
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: リビジョンのIDです。パスの `draft_page_revision_id` に使います。
+        title:
+          type: [string, "null"]
+          description: リビジョンを作ったときの下書きのタイトルです。タイトルの無い下書きでは `null` です。
+        body:
+          type: string
+          description: リビジョンを作ったときの下書きの本文 (Markdown) です。
+        created_at:
+          type: string
+          format: date-time
+          description: |
+            リビジョンを作った日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+            秒未満はマイクロ秒まで含み、末尾の0は省きます。
+    DraftPageRevisionList:
+      type: object
+      description: 下書きの編集履歴の1ページです。
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          description: このページのリビジョンです。
+          items:
+            $ref: "#/components/schemas/DraftPageRevision"
+        next_cursor:
+          $ref: "#/components/schemas/NextCursor"
+    Attachment:
+      type: object
+      description: |
+        スペースの添付ファイルの情報と、中身をダウンロードする署名付きURLです。
+      required:
+        - id
+        - filename
+        - content_type
+        - byte_size
+        - download_url
+        - download_url_expires_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 添付ファイルのIDです。ページの本文の `/attachments/{ID}` のIDと同じ値です。
+        filename:
+          type: string
+          description: アップロードしたときのファイル名です。
+        content_type:
+          type: [string, "null"]
+          description: |
+            ファイルの種類 (メディアタイプ。例: `image/png`) です。
+            種類が記録されていないファイルでは `null` です。
+        byte_size:
+          type: integer
+          format: int64
+          description: ファイルのバイト数です。
+        download_url:
+          type: string
+          format: uri
+          description: |
+            中身をダウンロードする署名付きURLです。
+            `Authorization` ヘッダーのトークンを付けずに `GET` を送ってください。
+            URL自体が取得の権限を持つため、ログなどに残さないでください。
+        download_url_expires_at:
+          type: string
+          format: date-time
+          description: |
+            `download_url` の有効期限です (RFC 3339のUTC。例: `2026-09-01T12:34:56Z`)。
+            署名付きURLが実際に使えなくなる時刻より遅くならないよう、秒未満は含みません。
+            過ぎたら `getAttachment` を呼び直して新しいURLを受け取ってください。
     NextCursor:
       type: [string, "null"]
       description: 次のページを取得するカーソルです。`cursor` パラメーターに渡します。続きが無い場合は `null` です。

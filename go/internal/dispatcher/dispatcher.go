@@ -57,6 +57,19 @@ func (CleanupRateLimitsArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 3}
 }
 
+// CleanupEmailConfirmationsArgsは古いメール確認情報を削除するジョブの引数
+type CleanupEmailConfirmationsArgs struct {
+	RetentionHours int `json:"retention_hours"`
+}
+
+// Kindはジョブの種類を返す
+func (CleanupEmailConfirmationsArgs) Kind() string { return "cleanup_email_confirmations" }
+
+// InsertOptsはジョブのInsertオプションを返す
+func (CleanupEmailConfirmationsArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 3}
+}
+
 // --- Dispatcher ---
 
 // JobInserterはジョブをキューに追加するインターフェース

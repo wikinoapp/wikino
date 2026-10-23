@@ -11,7 +11,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// PersonalAccessTokenBuilderは個人アクセストークンテストデータのビルダー
+// PersonalAccessTokenBuilderは個人用アクセストークンテストデータのビルダー
 type PersonalAccessTokenBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
@@ -90,7 +90,7 @@ func (b *PersonalAccessTokenBuilder) WithRevokedAt(revokedAt time.Time) *Persona
 	return b
 }
 
-// Buildは個人アクセストークンを作成し、IDを返します
+// Buildは個人用アクセストークンを作成し、IDを返します
 func (b *PersonalAccessTokenBuilder) Build() model.PersonalAccessTokenID {
 	b.t.Helper()
 
@@ -111,7 +111,7 @@ func (b *PersonalAccessTokenBuilder) Build() model.PersonalAccessTokenID {
 		b.spaceID, b.spaceMemberID, b.name, b.tokenDigest, b.tokenLastChars, pq.Array(b.scopes), b.expiresAt, b.lastUsedAt, b.revokedAt, now,
 	).Scan(&id)
 	if err != nil {
-		b.t.Fatalf("個人アクセストークン作成に失敗: %v", err)
+		b.t.Fatalf("個人用アクセストークン作成に失敗: %v", err)
 	}
 
 	return model.PersonalAccessTokenID(id)

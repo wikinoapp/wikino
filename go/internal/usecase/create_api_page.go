@@ -13,7 +13,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// CreateAPIPageUsecaseは、公開APIでトークンを束縛したスペースにページを作成して公開するユースケース。
+// CreateAPIPageUsecaseは、公開APIでトークンが属するスペースにページを作成して公開するユースケース。
 // Web画面は空のページを作って編集画面へ送り、公開は別の操作 (PublishPageUsecase) で行うが、
 // APIは作成と公開を1つのトランザクションで行う
 type CreateAPIPageUsecase struct {
@@ -31,7 +31,7 @@ type CreateAPIPageUsecase struct {
 
 const createAPIPageRetryLimit = 3
 
-// errAPIPageReplacementChangedは、検証で置き換えの対象としたページが、論理削除の時点では
+// errAPIPageReplacementChangedは、検証で置き換えの対象としたページが、置き換えの時点では
 // 同じタイトルの空の未公開ページでなくなっていた (Web画面で公開されたなど) ことを表す
 var errAPIPageReplacementChanged = errors.New("置き換え対象のページが変更されました")
 
@@ -78,7 +78,7 @@ type CreateAPIPageOutput struct {
 	Topic *model.Topic
 }
 
-// Executeはトークンを束縛したスペースのトピックにページを作成し、公開する。
+// Executeはトークンが属するスペースのトピックにページを作成し、公開する。
 // 存在しないトピックと閲覧者が開けない非公開トピックは、存在を秘匿するため区別せず、
 // リクエスト本文の `topic_number` の問題として扱う。
 // トピックを開けるがページを作成できない場合は、メンバー権限の不足として未存在を返す
@@ -138,8 +138,8 @@ func (uc *CreateAPIPageUsecase) Execute(ctx context.Context, input CreateAPIPage
 // 検証からやり直す。APIの作成どうしはスペースのロックで直列化されるが、Web画面の作成・下書き保存は
 // ロックを取らずにページ (Wikiリンク先を含む) を作るため、それとの競合に備える。
 // 番号の競合は番号を取り直せば済み、Wikiリンク先のタイトルの競合は既存のページとして見つかる。
-// 作成するページ自身のタイトルの競合は、検証し直して重複 (422) か未公開ページの置き換えになる。
-// 置き換える未公開ページが検証後にWeb画面で公開された場合も、検証し直して重複 (422) になる
+// 作成するページ自身のタイトルの競合は、検証し直して重複 (422) か未公開ページの公開になる。
+// 公開する未公開ページが検証後にWeb画面で公開された場合も、検証し直して重複 (422) になる
 func (uc *CreateAPIPageUsecase) createPage(
 	ctx context.Context,
 	space *model.Space,
@@ -176,7 +176,8 @@ func (uc *CreateAPIPageUsecase) createPage(
 }
 
 // createPageOnceはページの作成・公開・リビジョンと編集者の記録を1つのトランザクションで行う。
-// 手順はPublishPageUsecaseの公開に揃え、下書きには触れない (作成したばかりのページに下書きは無い)
+// 手順はPublishPageUsecaseの公開に揃え、下書きには触れない。中身の無い未公開ページを公開する
+// ときも、そのページにある他のスペースメンバーの下書きは残す
 func (uc *CreateAPIPageUsecase) createPageOnce(
 	ctx context.Context,
 	space *model.Space,
@@ -191,6 +192,10 @@ func (uc *CreateAPIPageUsecase) createPageOnce(
 	featuredImageAttachmentID, err := extractFeaturedImageAttachmentID(ctx, input.Body, space.ID, uc.attachmentRepo)
 	if err != nil {
 		return nil, fmt.Errorf("アイキャッチ画像の抽出に失敗しました: %w", err)
+	}
+	canCreateLinkedPageIn, err := apiLinkedPageTopicFilter(ctx, uc.topicRepo, uc.topicMemberRepo, input.Principal)
+	if err != nil {
+		return nil, err
 	}
 
 	tx, err := uc.db.BeginTx(ctx, nil)
@@ -221,51 +226,49 @@ func (uc *CreateAPIPageUsecase) createPageOnce(
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
 
-	// 検証後にWeb画面で公開されていた場合は削除せず、検証からやり直す。
-	if unpublishedConflictingPageID != nil {
-		discarded, err := pageRepo.DiscardEmptyUnpublishedByID(ctx, *unpublishedConflictingPageID, space.ID, topic.ID, input.Title, now)
+	// 検証で見つけた同じタイトルの中身の無い未公開ページ (Wikiリンクで自動作成されたものなど) は、
+	// 新しく作らずにそのページへ本文を書いて公開する。リンク元のlinked_page_idsが指すページを
+	// 保ち、リンク一覧とバックリンクを切らないため
+	page, err := uc.takeOverEmptyUnpublishedPage(ctx, pageRepo, space, topic, input.Title, unpublishedConflictingPageID, now)
+	if err != nil {
+		return nil, err
+	}
+	if page == nil {
+		// Wikiリンクを解決する前に、タイトルを持つ未公開のページとして作る。
+		// 本文がこのページ自身へのWikiリンクを含むとき、リンクの解決が同じタイトルのページを
+		// 別に自動作成しないようにするため (Wikiリンクの自動作成と同じ形のページになる)
+		nextNumber, err := pageRepo.NextPageNumber(ctx, space.ID)
 		if err != nil {
-			return nil, fmt.Errorf("競合する未公開ページの論理削除に失敗しました: %w", err)
+			return nil, fmt.Errorf("次のページ番号の取得に失敗しました: %w", err)
 		}
-		if !discarded {
-			return nil, errAPIPageReplacementChanged
+		page, err = pageRepo.CreateLinkedPage(ctx, repository.CreateLinkedPageInput{
+			SpaceID: space.ID,
+			TopicID: topic.ID,
+			Number:  nextNumber,
+			Title:   input.Title,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("ページの作成に失敗しました: %w", err)
 		}
 	}
 
-	// Wikiリンクを解決する前に、タイトルを持つ未公開のページとして作る。
-	// 本文がこのページ自身へのWikiリンクを含むとき、リンクの解決が同じタイトルのページを
-	// 別に自動作成しないようにするため (Wikiリンクの自動作成と同じ形のページになる)
-	nextNumber, err := pageRepo.NextPageNumber(ctx, space.ID)
-	if err != nil {
-		return nil, fmt.Errorf("次のページ番号の取得に失敗しました: %w", err)
-	}
-	page, err := pageRepo.CreateLinkedPage(ctx, repository.CreateLinkedPageInput{
-		SpaceID: space.ID,
-		TopicID: topic.ID,
-		Number:  nextNumber,
-		Title:   input.Title,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("ページの作成に失敗しました: %w", err)
-	}
-
-	// 本文のWikiリンクが指すページを解決する。存在しないリンク先ページは自動作成される
+	// 本文のWikiリンクが指すページを解決する。存在しないリンク先ページは、トークンで見られるトピックにだけ自動作成される
 	linkedPageIDs, err := resolveLinkedPageIDs(ctx, resolveLinkedPageIDsInput{
-		Body:             input.Body,
-		CurrentTopicName: topic.Name,
-		SpaceID:          space.ID,
-		SpaceMemberID:    spaceMember.ID,
+		Body:                  input.Body,
+		CurrentTopicName:      topic.Name,
+		SpaceID:               space.ID,
+		SpaceMemberID:         spaceMember.ID,
+		CanCreateLinkedPageIn: canCreateLinkedPageIn,
 	}, uc.topicRepo.WithTx(tx), pageRepo, pageEditorRepo)
 	if err != nil {
 		return nil, fmt.Errorf("リンク先ページの解決に失敗しました: %w", err)
 	}
 
-	// 作成したばかりのページには添付ファイル参照が無いため、差分は追加だけになる
-	attachmentRefsToAdd, _, err := calculateAttachmentRefDiff(ctx, input.Body, page.ID, space.ID, uc.attachmentRepo, pageAttachmentRefRepo)
+	attachmentRefsToAdd, attachmentRefsToRemove, err := calculateAttachmentRefDiff(ctx, input.Body, page.ID, space.ID, uc.attachmentRepo, pageAttachmentRefRepo)
 	if err != nil {
 		return nil, fmt.Errorf("添付ファイル参照の差分計算に失敗しました: %w", err)
 	}
-	if err := applyAttachmentRefChanges(ctx, page.ID, space.ID, attachmentRefsToAdd, nil, pageAttachmentRefRepo); err != nil {
+	if err := applyAttachmentRefChanges(ctx, page.ID, space.ID, attachmentRefsToAdd, attachmentRefsToRemove, pageAttachmentRefRepo); err != nil {
 		return nil, fmt.Errorf("添付ファイル参照の同期に失敗しました: %w", err)
 	}
 
@@ -296,7 +299,7 @@ func (uc *CreateAPIPageUsecase) createPageOnce(
 		return nil, fmt.Errorf("ページリビジョンの作成に失敗しました: %w", err)
 	}
 
-	_, err = pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
+	pageEditor, err := pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
 		SpaceID:            space.ID,
 		PageID:             page.ID,
 		SpaceMemberID:      spaceMember.ID,
@@ -304,6 +307,15 @@ func (uc *CreateAPIPageUsecase) createPageOnce(
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページ編集者の追加に失敗しました: %w", err)
+	}
+
+	_, err = pageEditorRepo.UpdateLastPageModifiedAt(ctx, repository.UpdateLastPageModifiedAtInput{
+		ID:                 pageEditor.ID,
+		SpaceID:            space.ID,
+		LastPageModifiedAt: now,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ページ編集者の更新に失敗しました: %w", err)
 	}
 
 	err = topicMemberRepo.UpdateLastPageModifiedAt(ctx, space.ID, topic.ID, spaceMember.ID, now)
@@ -316,4 +328,52 @@ func (uc *CreateAPIPageUsecase) createPageOnce(
 	}
 
 	return publishedPage, nil
+}
+
+// takeOverEmptyUnpublishedPageは、検証で見つけた同じタイトルの中身の無い未公開ページを、
+// 行をロックしてから確かめ直して返す。並行する公開が終わるのを待ってから条件を見るため、
+// 検証の後にWeb画面で公開されていればerrAPIPageReplacementChangedを返して検証からやり直させる。
+// ゴミ箱に入っているページは、公開してもゴミ箱に入ったままで取得できないため、Web画面の公開と
+// 同じく論理削除し、nilを返して新しいページを作らせる
+func (uc *CreateAPIPageUsecase) takeOverEmptyUnpublishedPage(
+	ctx context.Context,
+	pageRepo *repository.PageRepository,
+	space *model.Space,
+	topic *model.Topic,
+	title string,
+	pageID *model.PageID,
+	now time.Time,
+) (*model.Page, error) {
+	if pageID == nil {
+		return nil, nil
+	}
+
+	page, err := pageRepo.FindByIDForUpdate(ctx, *pageID, space.ID)
+	if err != nil {
+		return nil, fmt.Errorf("同じタイトルの未公開ページの取得に失敗しました: %w", err)
+	}
+	if page == nil || page.TopicID != topic.ID || page.Title == nil ||
+		page.PublishedAt != nil || page.Body != "" {
+		return nil, errAPIPageReplacementChanged
+	}
+	// タイトルはDBのcitextの比較で引き直し、検証と同じく大文字・小文字を区別せずに同名かを確かめる
+	conflictingPage, err := pageRepo.FindByTopicAndTitle(ctx, topic.ID, title, space.ID)
+	if err != nil {
+		return nil, fmt.Errorf("ロック後のタイトルの確認に失敗しました: %w", err)
+	}
+	if conflictingPage == nil || conflictingPage.ID != page.ID {
+		return nil, errAPIPageReplacementChanged
+	}
+	if page.TrashedAt == nil {
+		return page, nil
+	}
+
+	discarded, err := pageRepo.DiscardEmptyUnpublishedByID(ctx, page.ID, space.ID, topic.ID, title, now)
+	if err != nil {
+		return nil, fmt.Errorf("ゴミ箱にある未公開ページの論理削除に失敗しました: %w", err)
+	}
+	if !discarded {
+		return nil, errAPIPageReplacementChanged
+	}
+	return nil, nil
 }

@@ -1,6 +1,7 @@
 package session_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -306,6 +307,7 @@ func TestFlashManager_Middleware_CookielessRequestsDoNotConsumeFlash(t *testing.
 		{name: "APIのPOST", method: http.MethodPost, path: "/api/v1/spaces/example/pages"},
 		{name: "OAuthのトークン発行", method: http.MethodPost, path: "/oauth/token"},
 		{name: "OAuthのトークン失効", method: http.MethodPost, path: "/oauth/revoke"},
+		{name: "OAuthのデバイス認可の要求", method: http.MethodPost, path: "/oauth/device_authorization"},
 		{name: "認可サーバーのメタデータ", method: http.MethodGet, path: "/.well-known/oauth-authorization-server"},
 		{name: "保護リソースのメタデータ", method: http.MethodGet, path: "/.well-known/oauth-protected-resource/api/v1/spaces/example"},
 		{name: "APIカタログ", method: http.MethodGet, path: "/.well-known/api-catalog"},
@@ -333,5 +335,22 @@ func TestFlashManager_Middleware_CookielessRequestsDoNotConsumeFlash(t *testing.
 				t.Errorf("Set-Cookieの有無 = %v、期待値 = %v", got, tt.wantCookie)
 			}
 		})
+	}
+}
+
+func TestSetFlashToContext(t *testing.T) {
+	t.Parallel()
+
+	ctx := session.SetFlashToContext(context.Background(), &session.FlashMessage{Type: session.FlashSuccess, Message: "発行しました"})
+
+	flash := session.FlashFromContext(ctx)
+	if flash == nil {
+		t.Fatal("contextにフラッシュが無い")
+	}
+	if flash.Type != session.FlashSuccess || flash.Message != "発行しました" {
+		t.Errorf("フラッシュ = %+v", flash)
+	}
+	if session.FlashFromContext(context.Background()) != nil {
+		t.Error("フラッシュを入れていないcontextからフラッシュが取り出せた")
 	}
 }

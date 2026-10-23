@@ -166,7 +166,7 @@ func TestRiverWorkerMiddleware_BindsHubToContext(t *testing.T) {
 	t.Parallel()
 
 	// ワーカーは多くの場合slog.ErrorContextで中間エラーをSentryに流す
-	// (sentryslog経由でctxのHubを使う)。本テストではinnerで
+	// (Sentryイベント用ハンドラー経由でctxのHubを使う)。本テストではinnerで
 	// hub.CaptureExceptionを直接呼び、ミドルウェアがctxにbindしたHubと
 	// 同じtransportにイベントが届くこと・ジョブタグが乗っていることを確認する。
 	parentHub, transport := newRiverTestHub(t)

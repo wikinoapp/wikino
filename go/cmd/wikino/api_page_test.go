@@ -14,11 +14,21 @@ import (
 	"github.com/wikinoapp/wikino/go/api"
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	"github.com/wikinoapp/wikino/go/internal/apihandler"
+	apiattachment "github.com/wikinoapp/wikino/go/internal/apihandler/attachment"
 	apicurrentspacemember "github.com/wikinoapp/wikino/go/internal/apihandler/current_space_member"
+	apicurrenttoken "github.com/wikinoapp/wikino/go/internal/apihandler/current_token"
+	apidraftpage "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page"
+	apidraftpagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_body_edit"
+	apidraftpagepublication "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_publication"
+	apidraftpagerevision "github.com/wikinoapp/wikino/go/internal/apihandler/draft_page_revision"
 	"github.com/wikinoapp/wikino/go/internal/apihandler/openapi_description"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
+	apipagebacklink "github.com/wikinoapp/wikino/go/internal/apihandler/page_backlink"
+	apipagebodyedit "github.com/wikinoapp/wikino/go/internal/apihandler/page_body_edit"
+	apipagelink "github.com/wikinoapp/wikino/go/internal/apihandler/page_link"
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
+	apiwikilinkpreview "github.com/wikinoapp/wikino/go/internal/apihandler/wikilink_preview"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -59,12 +69,17 @@ func TestAPIRouter_Pages(t *testing.T) {
 		WithSpaceID(spaceID).WithUserID(userID).Build()
 	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("トピック").Build()
 	baseTime := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
-	for number := int32(1); number <= 3; number++ {
-		testutil.NewPageBuilder(t, tx).
+	// 番号の小さいページが大きいページすべてにリンクする (1は2・3に、2は3にリンクする)。
+	// リンク先のIDを先に決めるため、番号の大きいページから作る
+	var linkedPageIDs []model.PageID
+	for number := int32(3); number >= 1; number-- {
+		pageID := testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(model.PageNumber(number)).
 			WithTitle(fmt.Sprintf("ページ%d", number)).
+			WithLinkedPageIDs(linkedPageIDs).
 			WithModifiedAt(baseTime.Add(-time.Duration(number) * time.Hour)).
 			Build()
+		linkedPageIDs = append([]model.PageID{pageID}, linkedPageIDs...)
 	}
 
 	principal := &model.APIPrincipal{
@@ -78,16 +93,27 @@ func TestAPIRouter_Pages(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	server := apihandler.NewServer(
+		apiattachment.NewHandler(nil),
 		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
+		apidraftpagebodyedit.NewHandler("https://example.com", nil),
+		apidraftpagepublication.NewHandler("https://example.com", nil),
+		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(
+			"https://example.com",
 			usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
 			usecase.NewGetAPIPageUsecase(pageRepo, topicRepo, topicMemberRepo),
 			nil,
 			nil,
 		),
+		apipagebacklink.NewHandler("https://example.com", usecase.NewListAPIPageBacklinksUsecase(pageRepo, topicRepo, topicMemberRepo)),
+		apipagebodyedit.NewHandler("https://example.com", nil),
+		apipagelink.NewHandler("https://example.com", usecase.NewListAPIPageLinksUsecase(pageRepo, topicRepo, topicMemberRepo)),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
+		apiwikilinkpreview.NewHandler("https://example.com", nil),
 	)
 	r := newTestAPIHandlerWith(t, server, pageTestAuthenticator{principal: principal}, topicTestRateLimiter{})
 
@@ -117,7 +143,14 @@ func TestAPIRouter_Pages(t *testing.T) {
 		if len(body.Items) != 2 || body.Items[0].Number != 1 || body.Items[1].Number != 2 || body.NextCursor == nil {
 			t.Fatalf("一覧 = %+v、期待値 = 1・2と次のカーソル", body)
 		}
-		wantLink := "<" + base + "?cursor=" + url.QueryEscape(*body.NextCursor) + `&limit=2>; rel="next"`
+		if want := "https://example.com/s/api-http-pages/pages/1"; body.Items[0].Url != want {
+			t.Errorf("url = %q、期待値 = %q", body.Items[0].Url, want)
+		}
+		if body.Items[0].TopicName != "トピック" {
+			t.Errorf("topic_name = %q、期待値 = %q", body.Items[0].TopicName, "トピック")
+		}
+		// 省略した `status` は、リクエスト検証がOpenAPI記述の既定値で補ってから次のページのURLに引き継ぐ
+		wantLink := "<" + base + "?cursor=" + url.QueryEscape(*body.NextCursor) + `&limit=2&status=published>; rel="next"`
 		if got := first.Header().Get("Link"); got != wantLink {
 			t.Errorf("Link = %q、期待値 = %q", got, wantLink)
 		}
@@ -130,6 +163,33 @@ func TestAPIRouter_Pages(t *testing.T) {
 		}
 		if len(body.Items) != 1 || body.Items[0].Number != 3 || body.NextCursor != nil || second.Header().Get("Link") != "" {
 			t.Errorf("次ページ = %+v、Link = %q、期待値 = 3のみ・続きなし", body, second.Header().Get("Link"))
+		}
+	})
+
+	t.Run("qで絞り込み、次のページのURLにqを引き継ぐ", func(t *testing.T) {
+		q := "ページ\u3000ジ"
+		first := request(base+"?limit=1&q="+url.QueryEscape(q), "wkp_page_read", nil)
+		if first.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %s)", first.Code, first.Body.String())
+		}
+		var body apigen.PageList
+		if err := json.Unmarshal(first.Body.Bytes(), &body); err != nil {
+			t.Fatalf("本文を読めない: %v", err)
+		}
+		if len(body.Items) != 1 || body.Items[0].Number != 1 || body.NextCursor == nil {
+			t.Fatalf("一覧 = %+v、期待値 = 1と次のカーソル", body)
+		}
+		wantLink := "<" + base + "?cursor=" + url.QueryEscape(*body.NextCursor) + "&limit=1&q=" + url.QueryEscape(q) + `&status=published>; rel="next"`
+		if got := first.Header().Get("Link"); got != wantLink {
+			t.Errorf("Link = %q、期待値 = %q", got, wantLink)
+		}
+
+		rr := request(base+"?q="+url.QueryEscape("ページ2"), "wkp_page_read", nil)
+		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+			t.Fatalf("本文を読めない: %v (本文: %s)", err, rr.Body.String())
+		}
+		if len(body.Items) != 1 || body.Items[0].Number != 2 {
+			t.Errorf("一覧 = %+v、期待値 = 2のみ", body.Items)
 		}
 	})
 
@@ -167,6 +227,12 @@ func TestAPIRouter_Pages(t *testing.T) {
 		base + "?modified_since=yesterday",
 		base + "?topic_number=0",
 		base + "?cursor=invalid!",
+		base + "?status=draft",
+		base + "?title=",
+		base + "?q=",
+		base + "?q=" + url.QueryEscape(" \u3000"),
+		base + "?q=" + strings.Repeat("a", 201),
+		base + "?q=" + url.QueryEscape(strings.Repeat("a ", 11)),
 	} {
 		t.Run("不正なクエリは422: "+target, func(t *testing.T) {
 			assertProblem(t, request(target, "wkp_page_read", nil), http.StatusUnprocessableEntity)
@@ -182,8 +248,11 @@ func TestAPIRouter_Pages(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.Number != 2 || body.TopicNumber != 1 {
-			t.Errorf("ページ = %+v、期待値 = トピック1のページ2", body)
+		if body.Number != 2 || body.TopicNumber != 1 || body.TopicName != "トピック" {
+			t.Errorf("ページ = %+v、期待値 = トピック1「トピック」のページ2", body)
+		}
+		if want := "https://example.com/s/api-http-pages/pages/2"; body.Url != want {
+			t.Errorf("url = %q、期待値 = %q", body.Url, want)
 		}
 		etag := rr.Header().Get("ETag")
 		if etag == "" {
@@ -207,7 +276,64 @@ func TestAPIRouter_Pages(t *testing.T) {
 		}
 	})
 
-	for _, target := range []string{base, base + "/2"} {
+	linkTests := []struct {
+		name   string
+		target string
+		want   []int32
+	}{
+		{name: "リンク先の一覧をLinkで辿れる", target: base + "/1/links", want: []int32{2, 3}},
+		{name: "バックリンクの一覧をLinkで辿れる", target: base + "/3/backlinks", want: []int32{1, 2}},
+	}
+	for _, tt := range linkTests {
+		t.Run(tt.name, func(t *testing.T) {
+			first := request(tt.target+"?limit=1", "wkp_page_read", nil)
+			if first.Code != http.StatusOK {
+				t.Fatalf("ステータス = %d、期待値 = 200 (本文: %s)", first.Code, first.Body.String())
+			}
+			var body apigen.PageList
+			if err := json.Unmarshal(first.Body.Bytes(), &body); err != nil {
+				t.Fatalf("本文を読めない: %v", err)
+			}
+			if len(body.Items) != 1 || body.Items[0].Number != tt.want[0] || body.NextCursor == nil {
+				t.Fatalf("一覧 = %+v、期待値 = %dと次のカーソル", body, tt.want[0])
+			}
+			if want := fmt.Sprintf("https://example.com/s/api-http-pages/pages/%d", tt.want[0]); body.Items[0].Url != want {
+				t.Errorf("url = %q、期待値 = %q", body.Items[0].Url, want)
+			}
+			if body.Items[0].TopicName != "トピック" {
+				t.Errorf("topic_name = %q、期待値 = %q", body.Items[0].TopicName, "トピック")
+			}
+			wantLink := "<" + tt.target + "?cursor=" + url.QueryEscape(*body.NextCursor) + `&limit=1>; rel="next"`
+			if got := first.Header().Get("Link"); got != wantLink {
+				t.Errorf("Link = %q、期待値 = %q", got, wantLink)
+			}
+
+			second := request(tt.target+"?limit=1&cursor="+url.QueryEscape(*body.NextCursor), "wkp_page_read", nil)
+			if second.Code != http.StatusOK {
+				t.Fatalf("次ページのステータス = %d、期待値 = 200 (本文: %s)", second.Code, second.Body.String())
+			}
+			if err := json.Unmarshal(second.Body.Bytes(), &body); err != nil {
+				t.Fatalf("次ページの本文を読めない: %v", err)
+			}
+			if len(body.Items) != 1 || body.Items[0].Number != tt.want[1] || body.Items[0].Status != apigen.PageStatusPublished || body.NextCursor != nil || second.Header().Get("Link") != "" {
+				t.Errorf("次ページ = %+v (Link: %q)、期待値 = 公開済みの%dだけで続き無し", body, second.Header().Get("Link"), tt.want[1])
+			}
+		})
+	}
+
+	for _, target := range []string{base + "/1/links?cursor=invalid!", base + "/1/backlinks?limit=0"} {
+		t.Run("リンク一覧の不正なクエリは422: "+target, func(t *testing.T) {
+			assertProblem(t, request(target, "wkp_page_read", nil), http.StatusUnprocessableEntity)
+		})
+	}
+
+	for _, target := range []string{base + "/99/links", base + "/99/backlinks"} {
+		t.Run("存在しないページのリンク一覧は404: "+target, func(t *testing.T) {
+			assertProblem(t, request(target, "wkp_page_read", nil), http.StatusNotFound)
+		})
+	}
+
+	for _, target := range []string{base, base + "/2", base + "/1/links", base + "/1/backlinks"} {
 		t.Run("page:readの無いトークンは403: "+target, func(t *testing.T) {
 			rr := request(target, "wkp_topic_read", nil)
 			assertProblem(t, rr, http.StatusForbidden)
@@ -221,7 +347,7 @@ func TestAPIRouter_Pages(t *testing.T) {
 		assertProblem(t, request(base+"/99", "wkp_page_read", nil), http.StatusNotFound)
 	})
 
-	t.Run("束縛先が違えば404", func(t *testing.T) {
+	t.Run("トークンが属さないスペースなら404", func(t *testing.T) {
 		assertProblem(t, request("/api/v1/spaces/other-space/pages/1", "wkp_page_read", nil), http.StatusNotFound)
 		assertProblem(t, request("/api/v1/spaces/other-space/pages?cursor=invalid!", "wkp_page_read", nil), http.StatusNotFound)
 	})
@@ -251,9 +377,16 @@ func TestAPIRouter_CreatePage(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	server := apihandler.NewServer(
+		apiattachment.NewHandler(nil),
 		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
+		apidraftpagebodyedit.NewHandler("https://example.com", nil),
+		apidraftpagepublication.NewHandler("https://example.com", nil),
+		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(
+			"https://example.com",
 			usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
 			usecase.NewGetAPIPageUsecase(pageRepo, topicRepo, topicMemberRepo),
 			usecase.NewCreateAPIPageUsecase(
@@ -270,8 +403,12 @@ func TestAPIRouter_CreatePage(t *testing.T) {
 			),
 			nil,
 		),
+		apipagebacklink.NewHandler("https://example.com", nil),
+		apipagebodyedit.NewHandler("https://example.com", nil),
+		apipagelink.NewHandler("https://example.com", nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
+		apiwikilinkpreview.NewHandler("https://example.com", nil),
 	)
 	r := newTestAPIHandlerWith(t, server, pageTestAuthenticator{principal: principal}, topicTestRateLimiter{})
 
@@ -315,8 +452,11 @@ func TestAPIRouter_CreatePage(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.Number != 2 || body.TopicNumber != 1 || body.Title == nil || *body.Title != "新しいページ" {
-			t.Errorf("ページ = %+v、期待値 = トピック1のページ2「新しいページ」", body)
+		if body.Number != 2 || body.TopicNumber != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "新しいページ" {
+			t.Errorf("ページ = %+v、期待値 = トピック1「トピック」のページ2「新しいページ」", body)
+		}
+		if want := "https://example.com/s/api-http-page-create/pages/2"; body.Url != want {
+			t.Errorf("url = %q、期待値 = %q", body.Url, want)
 		}
 		location := rr.Header().Get("Location")
 		if want := target + "/2"; location != want {
@@ -400,9 +540,16 @@ func TestAPIRouter_UpdatePage(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	server := apihandler.NewServer(
+		apiattachment.NewHandler(nil),
 		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
+		apidraftpagebodyedit.NewHandler("https://example.com", nil),
+		apidraftpagepublication.NewHandler("https://example.com", nil),
+		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
 		apipage.NewHandler(
+			"https://example.com",
 			usecase.NewListAPIPagesUsecase(pageRepo, topicRepo, topicMemberRepo),
 			usecase.NewGetAPIPageUsecase(pageRepo, topicRepo, topicMemberRepo),
 			nil,
@@ -419,8 +566,12 @@ func TestAPIRouter_UpdatePage(t *testing.T) {
 				validator.NewAPIPageUpdateValidator(pageRepo),
 			),
 		),
+		apipagebacklink.NewHandler("https://example.com", nil),
+		apipagebodyedit.NewHandler("https://example.com", nil),
+		apipagelink.NewHandler("https://example.com", nil),
 		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
 		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
+		apiwikilinkpreview.NewHandler("https://example.com", nil),
 	)
 	r := newTestAPIHandlerWith(t, server, pageTestAuthenticator{principal: principal}, topicTestRateLimiter{})
 
@@ -481,8 +632,11 @@ func TestAPIRouter_UpdatePage(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 			t.Fatalf("本文を読めない: %v", err)
 		}
-		if body.Number != 1 || body.Title == nil || *body.Title != "新しいタイトル" || body.Body != "新しい本文" {
-			t.Errorf("ページ = %+v、期待値 = 更新したページ1", body)
+		if body.Number != 1 || body.TopicName != "トピック" || body.Title == nil || *body.Title != "新しいタイトル" || body.Body != "新しい本文" {
+			t.Errorf("ページ = %+v、期待値 = トピック「トピック」の更新したページ1", body)
+		}
+		if want := "https://example.com/s/api-http-page-update/pages/1"; body.Url != want {
+			t.Errorf("url = %q、期待値 = %q", body.Url, want)
 		}
 		etag := rr.Header().Get("ETag")
 		if etag == before || etag != currentETag(t) {
@@ -491,6 +645,42 @@ func TestAPIRouter_UpdatePage(t *testing.T) {
 
 		// 更新前のETagを前提にした更新は、先の更新と競合するため412になる
 		assertProblem(t, request("wkp_page_write", mergePatch, before, `{"body": "古い版を元にした本文"}`), http.StatusPreconditionFailed)
+	})
+
+	t.Run("トピック名を変えてもETagは変わらず、変える前のETagで更新できる", func(t *testing.T) {
+		before := currentETag(t)
+		if _, err := topicRepo.UpdateNameAndDescription(t.Context(), repository.UpdateTopicNameAndDescriptionInput{
+			ID: topicID, SpaceID: spaceID, Name: "改名したトピック",
+		}); err != nil {
+			t.Fatalf("トピック名を変えられない: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodGet, target, nil)
+		req.Header.Set("Authorization", "Bearer wkp_page_read")
+		got := httptest.NewRecorder()
+		r.ServeHTTP(got, req)
+		var page apigen.Page
+		if err := json.Unmarshal(got.Body.Bytes(), &page); err != nil {
+			t.Fatalf("本文を読めない: %v (本文: %s)", err, got.Body.String())
+		}
+		if page.TopicName != "改名したトピック" {
+			t.Errorf("topic_name = %q、期待値 = %q", page.TopicName, "改名したトピック")
+		}
+		if etag := got.Header().Get("ETag"); etag != before {
+			t.Errorf("ETag = %q、期待値 = トピック名を変える前と同じ %q", etag, before)
+		}
+
+		rr := request("wkp_page_write", mergePatch, before, `{"body": "改名後の本文"}`)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %s)", rr.Code, rr.Body.String())
+		}
+		var body apigen.Page
+		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+			t.Fatalf("本文を読めない: %v", err)
+		}
+		if body.TopicName != "改名したトピック" {
+			t.Errorf("topic_name = %q、期待値 = %q", body.TopicName, "改名したトピック")
+		}
 	})
 
 	t.Run("If-Matchが無ければ428", func(t *testing.T) {

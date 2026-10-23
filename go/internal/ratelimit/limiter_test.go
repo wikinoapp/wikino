@@ -365,3 +365,24 @@ func TestOAuthIPKey(t *testing.T) {
 		t.Errorf("OAuthIPKey() = %q、期待値 = %q", got, want)
 	}
 }
+
+func TestOAuthDeviceAuthorizationIPKey(t *testing.T) {
+	t.Parallel()
+
+	got := OAuthDeviceAuthorizationIPKey("192.168.1.1")
+	want := "oauth:device_authorization:ip:192.168.1.1"
+	if got != want {
+		t.Errorf("OAuthDeviceAuthorizationIPKey() = %q、期待値 = %q", got, want)
+	}
+}
+
+func TestOAuthDeviceVerificationKeys(t *testing.T) {
+	t.Parallel()
+
+	if got, want := OAuthDeviceVerificationUserKey("user-1"), "oauth:device_verification:user:user-1"; got != want {
+		t.Errorf("OAuthDeviceVerificationUserKey() = %q、期待値 = %q", got, want)
+	}
+	if got, want := OAuthDeviceVerificationIPKey("192.168.1.1"), "oauth:device_verification:ip:192.168.1.1"; got != want {
+		t.Errorf("OAuthDeviceVerificationIPKey() = %q、期待値 = %q", got, want)
+	}
+}

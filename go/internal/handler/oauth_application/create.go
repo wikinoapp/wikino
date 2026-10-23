@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	oauthapppages "github.com/wikinoapp/wikino/go/internal/templates/pages/oauth_application"
@@ -21,7 +22,8 @@ import (
 // confidentialクライアントは、リダイレクトせずにその応答でクライアントシークレットを表示する。
 // データベースにはダイジェストしか残らないため、値を次のリクエストへ持ち越すにはCookieなどの
 // クライアント側に値を置くことになる。値がブラウザに渡る経路をこの応答の本文1つに限り、
-// キャッシュにも残さない (個人アクセストークンの発行と同じ)。
+// キャッシュにも残さない。登録したことは、リダイレクトする場合と同じくフラッシュで伝える
+// (個人用アクセストークンの発行と同じ)。
 //
 // publicクライアントは示す秘密の値が無いため、詳細の画面へ303でリダイレクトする。再読み込みで
 // 送信し直して2つ目のアプリを登録してしまうことを避けるためである。
@@ -64,6 +66,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, string(templates.SpaceSettingsOAuthApplicationPath(spaceVM.Identifier, appVM.ID)), http.StatusSeeOther)
 		return
 	}
+
+	r = r.WithContext(session.SetFlashToContext(ctx, &session.FlashMessage{
+		Type:    session.FlashSuccess,
+		Message: i18n.T(ctx, "flash_oauth_application_created", map[string]any{"Name": appVM.Name}),
+	}))
 
 	content := oauthapppages.Create(oauthapppages.CreateData{
 		Space:        spaceVM,

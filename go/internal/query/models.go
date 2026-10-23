@@ -203,6 +203,22 @@ type OauthAuthorizationCode struct {
 	UpdatedAt     time.Time    `json:"updated_at"`
 }
 
+type OauthDeviceAuthorization struct {
+	ID                 string       `json:"id"`
+	OauthApplicationID string       `json:"oauth_application_id"`
+	SpaceID            string       `json:"space_id"`
+	OauthGrantID       *string      `json:"oauth_grant_id"`
+	DeviceCodeDigest   string       `json:"device_code_digest"`
+	UserCodeDigest     string       `json:"user_code_digest"`
+	Scopes             []string     `json:"scopes"`
+	Status             int32        `json:"status"`
+	IntervalSeconds    int32        `json:"interval_seconds"`
+	ExpiresAt          time.Time    `json:"expires_at"`
+	LastPolledAt       sql.NullTime `json:"last_polled_at"`
+	CreatedAt          time.Time    `json:"created_at"`
+	UpdatedAt          time.Time    `json:"updated_at"`
+}
+
 type OauthGrant struct {
 	ID                 string       `json:"id"`
 	OauthApplicationID string       `json:"oauth_application_id"`
@@ -374,15 +390,16 @@ type Space struct {
 }
 
 type SpaceMember struct {
-	ID        string    `json:"id"`
-	SpaceID   string    `json:"space_id"`
-	UserID    string    `json:"user_id"`
-	JoinedAt  time.Time `json:"joined_at"`
-	Active    bool      `json:"active"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Scopes    []string  `json:"scopes"`
-	Role      string    `json:"role"`
+	ID           string         `json:"id"`
+	SpaceID      string         `json:"space_id"`
+	UserID       string         `json:"user_id"`
+	JoinedAt     time.Time      `json:"joined_at"`
+	Active       bool           `json:"active"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	Scopes       []string       `json:"scopes"`
+	Role         string         `json:"role"`
+	MaxTopicRole sql.NullString `json:"max_topic_role"`
 }
 
 type Suggestion struct {

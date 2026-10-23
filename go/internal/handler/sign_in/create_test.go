@@ -167,6 +167,10 @@ func TestCreate_InvalidEmail(t *testing.T) {
 	if !strings.Contains(body, `action="/sign_in"`) {
 		t.Error("レスポンスにログインフォームが見つからない")
 	}
+
+	if !strings.Contains(body, `<link rel="preconnect" href="https://challenges.cloudflare.com">`) {
+		t.Error("レスポンスにTurnstileのオリジンへのpreconnectが見つからない")
+	}
 }
 
 func TestCreate_WrongPassword(t *testing.T) {

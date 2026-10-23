@@ -63,6 +63,7 @@ func newGetOAuthAuthorizationNewUsecaseForTest(q *query.Queries) *GetOAuthAuthor
 		repository.NewOAuthApplicationRepository(q),
 		repository.NewSpaceRepository(q),
 		repository.NewSpaceMemberRepository(q),
+		repository.NewTopicMemberRepository(q),
 	)
 }
 
@@ -94,6 +95,40 @@ func TestGetOAuthAuthorizationNewUsecase_Execute(t *testing.T) {
 		}
 		if output.DeniedReason != "" {
 			t.Errorf("DeniedReason = %q、期待値 = 空", output.DeniedReason)
+		}
+	})
+
+	t.Run("スペースのロールでもトピックのロールでも持たないスコープを、今の権限では効かないものとして返す", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		q := testutil.QueriesWithTx(tx)
+		viewer := setupOAuthAuthorizationFixture(t, tx, "goan-ineffective", model.SpaceRoleViewer, true)
+
+		output, err := newGetOAuthAuthorizationNewUsecaseForTest(q).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: viewer.userID,
+			Params: validOAuthAuthorizationParams(viewer.clientID),
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if want := []model.Scope{model.ScopePageWrite}; !slices.Equal(output.IneffectiveScopes, want) {
+			t.Errorf("IneffectiveScopes = %v、期待値 = %v (スペース閲覧者はpage:writeを持たない)", output.IneffectiveScopes, want)
+		}
+
+		// トピック編集者のロールがあれば、スペースのロールが閲覧者でもpage:writeは効く
+		topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(viewer.spaceID).WithNumber(1).Build()
+		testutil.NewTopicMemberBuilder(t, tx).WithSpaceID(viewer.spaceID).WithTopicID(topicID).WithSpaceMemberID(viewer.spaceMemberID).WithRole(model.TopicRoleEditor).Build()
+
+		output, err = newGetOAuthAuthorizationNewUsecaseForTest(q).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: viewer.userID,
+			Params: validOAuthAuthorizationParams(viewer.clientID),
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if len(output.IneffectiveScopes) != 0 {
+			t.Errorf("IneffectiveScopes = %v、期待値 = 空", output.IneffectiveScopes)
 		}
 	})
 

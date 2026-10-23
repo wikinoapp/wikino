@@ -7,6 +7,8 @@ package components
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
@@ -48,7 +50,7 @@ func APITokenScopeBadges(scopes []model.Scope) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(APITokenScopeLabel(ctx, scope))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 15, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 17, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -67,7 +69,414 @@ func APITokenScopeBadges(scopes []model.Scope) templ.Component {
 	})
 }
 
-// APITokenScopeLabelは公開APIのトークンのスコープの表示名を返します。個人アクセストークンの画面と
+// APITokenScopeOptionは、付与するスコープを選ぶチェックボックスの1つ分
+type APITokenScopeOption struct {
+	Scope   model.Scope
+	Checked bool
+
+	// Ineffectiveは、利用者が今の権限ではこのスコープを持たないこと。トークンで効く範囲は
+	// メンバーの権限との積で決まるため、付与しても効かないことを注記する。チェックは外さず、
+	// 後から権限が広がったときに付け直さなくても効くようにする
+	Ineffective bool
+
+	// Impliesは、このスコープに含まれるスコープのうち、選択肢にあるもの
+	Implies []model.Scope
+
+	// ImpliedByは、このスコープを含むスコープのうち、選択肢にあるもの。並びは選択肢の順
+	ImpliedBy []APITokenScopeImplier
+}
+
+// APITokenScopeImplierは、ある選択肢のスコープを含む、ほかの選択肢のスコープ
+type APITokenScopeImplier struct {
+	Scope   model.Scope
+	Checked bool
+}
+
+// Impliedは、このスコープを含むスコープが選ばれているか。選ばれていれば、このスコープを選択済みかつ
+// 無効にして描画する。無効にしたチェックボックスは送信されないため、保存の前にバリデーターが
+// model.WithImpliedScopesで補う
+func (o APITokenScopeOption) Implied() bool {
+	for _, implier := range o.ImpliedBy {
+		if implier.Checked {
+			return true
+		}
+	}
+	return false
+}
+
+// NewAPITokenScopeOptionsは、scopesを並べた選択肢を作る。checkedに含むスコープをチェックし、
+// ineffectiveに含むスコープに今の権限では効かないことを注記する。含意の関係は
+// model.ScopeDefinitionsから引き、選択肢にあるスコープどうしに限る
+func NewAPITokenScopeOptions(scopes, checked, ineffective []model.Scope) []APITokenScopeOption {
+	options := make([]APITokenScopeOption, len(scopes))
+	for i, scope := range scopes {
+		options[i] = APITokenScopeOption{
+			Scope:       scope,
+			Checked:     model.HasScope(checked, scope),
+			Ineffective: model.HasScope(ineffective, scope),
+		}
+	}
+	for i := range options {
+		for _, implied := range model.ImpliedScopes(options[i].Scope) {
+			j := slices.IndexFunc(options, func(o APITokenScopeOption) bool { return o.Scope == implied })
+			if j < 0 {
+				continue
+			}
+			options[i].Implies = append(options[i].Implies, implied)
+			options[j].ImpliedBy = append(options[j].ImpliedBy, APITokenScopeImplier{
+				Scope:   options[i].Scope,
+				Checked: options[i].Checked,
+			})
+		}
+	}
+	return options
+}
+
+// APITokenScopeCheckboxesDataは、付与するスコープを選ぶチェックボックスの並びのデータ
+type APITokenScopeCheckboxesData struct {
+	// Nameはチェックボックスのname属性。idの接頭辞にも使う
+	Name    string
+	Options []APITokenScopeOption
+
+	// ErrorIDは選択のエラーを収める要素のid。空でなければ、チェックボックスを不正な入力として
+	// 示し、エラーを読み上げられるようにする
+	ErrorID string
+
+	// Autofocusは、最初のチェックボックスにフォーカスを当てるか
+	Autofocus bool
+}
+
+// APITokenScopeCheckboxesは、付与するスコープをチェックボックスで並べます。個人用アクセストークンの
+// 発行画面とOAuthの同意画面が使い、囲みのfieldsetと見出し・エラーの表示は呼び出し側が持ちます。
+//
+// 選んだスコープに含まれるスコープは、選択済みかつ無効にして、どのスコープに含まれるかを注記します。
+// JSが無くても状態が分かるよう、ここで描画した状態を正とし、選択の変更への追従はweb/api-token-scope.tsが
+// data属性を手がかりに行います。
+func APITokenScopeCheckboxes(data APITokenScopeCheckboxesData) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		for i, option := range data.Options {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"flex flex-col gap-1\"><label class=\"label flex items-center gap-2 cursor-pointer\" for=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(apiTokenScopeInputID(data.Name, option.Scope))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 109, Col: 114}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><input class=\"input\" data-api-token-scope")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(option.Implies) > 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " data-api-token-scope-implies=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var5 string
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(strings.Join(model.ScopesToStrings(option.Implies), " "))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 114, Col: 93}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(apiTokenScopeInputID(data.Name, option.Scope))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 116, Col: 55}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" name=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Name)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 117, Col: 21}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" type=\"checkbox\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(option.Scope))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 119, Col: 33}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if data.Autofocus && i == apiTokenScopeAutofocusIndex(data.Options) {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " autofocus")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if option.Checked || option.Implied() {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " checked")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if option.Implied() {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " disabled")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if data.ErrorID != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " aria-invalid=\"true\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if describedBy := apiTokenScopeDescribedBy(data, option); describedBy != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " aria-describedby=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var9 string
+				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(describedBy)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 133, Col: 36}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(APITokenScopeLabel(ctx, option.Scope))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 136, Col: 43}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</label><p class=\"text-muted-foreground pl-[25px] text-sm\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(APITokenScopeHint(ctx, option.Scope))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 139, Col: 42}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, implier := range option.ImpliedBy {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<p class=\"text-muted-foreground pl-[25px] text-sm flex items-center gap-1\" id=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var12 string
+				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(apiTokenScopeImpliedNoteID(data.Name, option.Scope, implier.Scope))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 144, Col: 76}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" data-api-token-scope-implied-note=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var13 string
+				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(implier.Scope))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 145, Col: 62}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if !implier.Checked {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " hidden")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, ">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templates.DecorativeIcon("check-circle-regular", "fill-info size-4 shrink-0").Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var14 string
+				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "api_token_scope_implied_note", map[string]any{"Scope": APITokenScopeLabel(ctx, implier.Scope)}))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 151, Col: 120}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if option.Ineffective {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<p class=\"text-muted-foreground pl-[25px] text-sm flex items-center gap-1\" id=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var15 string
+				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(apiTokenScopeNoteID(data.Name, option.Scope))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 155, Col: 128}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templates.DecorativeIcon("warning-circle-regular", "fill-info size-4 shrink-0").Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var16 string
+				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "api_token_scope_ineffective_note"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/api_token_scope.templ`, Line: 157, Col: 59}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		return nil
+	})
+}
+
+// apiTokenScopeDescribedByは、チェックボックスのaria-describedbyに並べるidを返します。
+// 選択のエラーと、今の権限では効かないことの注記、表示しているほかのスコープに含まれることの注記を
+// 読み上げられるようにします。隠した注記もaria-describedbyで参照すると読み上げられるため、
+// 表示している注記だけを並べます。
+func apiTokenScopeDescribedBy(data APITokenScopeCheckboxesData, option APITokenScopeOption) string {
+	ids := make([]string, 0, 2+len(option.ImpliedBy))
+	if data.ErrorID != "" {
+		ids = append(ids, data.ErrorID)
+	}
+	if option.Ineffective {
+		ids = append(ids, apiTokenScopeNoteID(data.Name, option.Scope))
+	}
+	for _, implier := range option.ImpliedBy {
+		if implier.Checked {
+			ids = append(ids, apiTokenScopeImpliedNoteID(data.Name, option.Scope, implier.Scope))
+		}
+	}
+	return strings.Join(ids, " ")
+}
+
+// apiTokenScopeAutofocusIndexは、フォーカスを当てるチェックボックスの位置を返します。
+// 無効にしたチェックボックスにはフォーカスを当てられないため、最初の無効でないものを選びます。
+func apiTokenScopeAutofocusIndex(options []APITokenScopeOption) int {
+	for i, option := range options {
+		if !option.Implied() {
+			return i
+		}
+	}
+	return -1
+}
+
+// apiTokenScopeImpliedNoteIDは、scopeがimplierに含まれることの注記のidを返します。
+func apiTokenScopeImpliedNoteID(name string, scope, implier model.Scope) string {
+	return apiTokenScopeInputID(name, scope) + "-implied-by-" + strings.ReplaceAll(string(implier), ":", "_")
+}
+
+// apiTokenScopeNoteIDは、今の権限では効かないことの注記のidを返します。
+func apiTokenScopeNoteID(name string, scope model.Scope) string {
+	return apiTokenScopeInputID(name, scope) + "-note"
+}
+
+// apiTokenScopeInputIDはスコープのチェックボックスのidを返します。
+func apiTokenScopeInputID(name string, scope model.Scope) string {
+	return name + "_" + strings.ReplaceAll(string(scope), ":", "_")
+}
+
+// APITokenScopeLabelは公開APIのトークンのスコープの表示名を返します。個人用アクセストークンの画面と
 // OAuthの同意画面が同じ表示名を使います。トークンに付与できるスコープ (model.APITokenScopes)
 // 以外が保存されていても画面が崩れないよう、表示名の無いスコープはスコープの文字列をそのまま
 // 返します。
@@ -82,6 +491,14 @@ func APITokenScopeLabel(ctx context.Context, scope model.Scope) string {
 		return templates.T(ctx, "api_token_scope_page_read")
 	case model.ScopePageWrite:
 		return templates.T(ctx, "api_token_scope_page_write")
+	case model.ScopeDraftPageRead:
+		return templates.T(ctx, "api_token_scope_draft_page_read")
+	case model.ScopeDraftPageWrite:
+		return templates.T(ctx, "api_token_scope_draft_page_write")
+	case model.ScopeDraftPageDelete:
+		return templates.T(ctx, "api_token_scope_draft_page_delete")
+	case model.ScopeAttachmentRead:
+		return templates.T(ctx, "api_token_scope_attachment_read")
 	default:
 		return string(scope)
 	}
@@ -96,6 +513,14 @@ func APITokenScopeHint(ctx context.Context, scope model.Scope) string {
 		return templates.T(ctx, "api_token_scope_page_read_hint")
 	case model.ScopePageWrite:
 		return templates.T(ctx, "api_token_scope_page_write_hint")
+	case model.ScopeDraftPageRead:
+		return templates.T(ctx, "api_token_scope_draft_page_read_hint")
+	case model.ScopeDraftPageWrite:
+		return templates.T(ctx, "api_token_scope_draft_page_write_hint")
+	case model.ScopeDraftPageDelete:
+		return templates.T(ctx, "api_token_scope_draft_page_delete_hint")
+	case model.ScopeAttachmentRead:
+		return templates.T(ctx, "api_token_scope_attachment_read_hint")
 	default:
 		return ""
 	}

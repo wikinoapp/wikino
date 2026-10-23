@@ -1,0 +1,3002 @@
+# 日本語翻訳ファイル (正本)
+#
+# キーの分類はサーバーの翻訳ファイルと同じ考え方で、ページ名の代わりにコマンドの名前で区切る。
+# - {コマンド}_*: 特定のコマンドのヘルプ (例: root_*はwikinoのルートコマンド)
+# - help_*: すべてのコマンドのヘルプで共通の見出しやフラグ
+# - usage_error_*: 使い方の誤り (終了コード2) のメッセージとヒント
+# - exit_code_*: 終了コードの表に載せる、各終了コードの意味
+# - error_*: 使い方の誤り以外の、複数のコマンドで共通のエラーのメッセージとヒント
+# - list_*: 一覧を返すコマンドに共通の、標準エラーへの案内
+# - confirm_*: 取り消せない操作・公開の前の確認
+# - dry_run_*: `--dry-run` で要求を送らなかったことの案内
+# - wikilink_*: 本文を書き込む前のWikiリンクのリンク先の確認と、作られるリンク先の案内
+# - command_table_*: スキル (SKILL.md) に載せる、コマンド定義から生成するコマンドの一覧表
+
+# ルートコマンド
+[root_short]
+description = "ルートコマンドの短い説明"
+other = "Wikinoのコマンドラインツール"
+
+[root_long]
+description = "ルートコマンドの説明"
+other = "Wikinoの公開APIを呼んで、ページや下書きを読み書きするコマンドラインツールです。"
+
+[root_example]
+description = "ルートコマンドの使用例"
+other = """
+  # バージョンを表示する
+  wikino --version"""
+
+[root_version_flag]
+description = "--versionフラグの説明"
+other = "バージョンを表示する"
+
+[root_output]
+description = "ルートコマンドのヘルプの「出力」の節。すべてのコマンドに共通の出力の規則"
+other = """
+  標準出力がTTYなら人間向けの表示を、TTYでないか `--json` を付けたときはJSONを出します。
+  `--fields` で項目を選んだときと、`--jq` を付けたときもJSONを出します。
+  標準出力には結果だけを出し、進捗や警告は標準エラーに出します。"""
+
+[root_errors]
+description = "ルートコマンドのヘルプの「エラー」の節。ExitCodesは終了コードの表"
+other = """
+  終了コードで失敗の種類を区別します。
+{{.ExitCodes}}
+
+  標準エラーがTTYでないか `--json` を付けたときは、エラーを標準エラーに1行のJSONで出します。
+    {"error": {"code": "usage_error", "message": "...", "hint": "...", "status": 412}}
+  `hint` は次に何をするかを表します。`status` はAPIの応答のHTTPステータスで、APIに由来しないエラーでは省きます。"""
+
+# authコマンド
+[auth_short]
+description = "authコマンドの短い説明"
+other = "ログインと資格情報を扱う"
+
+[auth_long]
+description = "authコマンドの説明"
+other = """
+Wikinoのスペースへのログインと、保存した資格情報を扱います。
+
+資格情報は、接続先・スペース・メンバーの組ごとに保存します。
+トークンはOSのキーチェーンに保存し、使えない環境では設定のディレクトリ (`$XDG_CONFIG_HOME/wikino/`、未設定なら `~/.config/wikino/`) の0600のファイルに保存します。
+`WIKINO_TOKEN_STORE=file` でファイルへの保存を強制できます。
+
+コマンドを実行するときは、次の順で接続先・スペース・メンバーを決めます。
+  接続先: `--host` → `WIKINO_HOST` → 既定の接続先 → https://wikino.app
+  スペース: `--space` → `WIKINO_SPACE` → 既定のスペース → 資格情報のあるスペースが1つならそれ
+  メンバー: `--member` → `WIKINO_MEMBER` → そのスペースの既定のメンバー → そのスペースの資格情報が1つならそれ
+
+`WIKINO_TOKEN` にトークンを渡すと、保存した資格情報より優先して使い、ディスクに何も書きません。
+そのときは `--space` か `WIKINO_SPACE` でスペースを指定し、`--member` と `WIKINO_MEMBER` は指定しません。"""
+
+[auth_example]
+description = "authコマンドの使用例"
+other = """
+  # ブラウザで許可してログインする
+  wikino auth login my-space
+
+  # SSH先などで、別の端末のブラウザでコードを入力してログインする
+  wikino auth login my-space --device
+
+  # 個人用アクセストークンを標準入力から渡してログインする
+  wikino auth login my-space --with-token < token.txt
+
+  # 保存した資格情報とトークンのスコープを確かめる
+  wikino auth status"""
+[auth_output]
+description = "authコマンドのヘルプの「出力」の節"
+other = "  各サブコマンドのヘルプを参照してください。"
+
+[auth_errors]
+description = "authコマンドのヘルプの「エラー」の節"
+other = "  サブコマンドが無いときと未知のサブコマンドは、使い方の誤り (終了コード2) で失敗します。"
+
+[auth_login_short]
+description = "auth loginコマンドの短い説明"
+other = "スペースにログインする"
+
+[auth_login_long]
+description = "auth loginコマンドの説明"
+other = """
+スペースにログインし、資格情報を保存します。
+
+既定では、ブラウザでWikinoの認可画面を開き、許可を受けてトークンを得ます (OAuth)。
+認可画面のURLは標準エラーにも出すため、ブラウザが開かないときはそのURLを開いてください。
+許可を待つのは5分までです。
+
+SSHで接続しているとき、ディスプレイが無いとき、ブラウザの起動やポートの待ち受けに失敗したときは、デバイス認可に切り替えます。
+`--device` を付けると、常にデバイス認可でログインします。
+デバイス認可では、確認用のURLとコードを標準エラーに出すため、手元の端末のブラウザでそのURLを開き、コードを入力して許可してください。
+許可を待つのは、コードの期限 (Wikinoでは10分) までです。
+
+要求するスコープの既定はトークンに付与できるすべてのスコープで、付与する範囲は認可画面で選べます。
+要求を絞るときは `--scopes` で指定します。
+OAuthのアクセストークンは、期限の少し前に、APIを呼ぶ前に自動で更新します。
+
+`--with-token` を付けると、スペース設定で発行した個人用アクセストークンを標準入力から読みます。
+
+どちらの方法でも、トークンがそのスペースで使えることをAPIで確かめてから保存し、確かめられなければ何も保存しません。
+ブラウザでログインしたときは、保存しなかったトークンをサーバーで失効させます。
+トークンの持ち主のメンバーはトークンから決まるため、`--member` は指定しません。
+
+既定の組が無ければ、ログインした組を既定にします。
+スペースに既定のメンバーが無ければ、ログインしたメンバーをそのスペースの既定にします。
+同じメンバーで再びログインすると、保存したトークンを置き換えます。"""
+[auth_login_example]
+description = "auth loginコマンドの使用例"
+other = """
+  # ブラウザで許可してログインする
+  wikino auth login my-space
+
+  # SSH先などで、別の端末のブラウザでコードを入力してログインする
+  wikino auth login my-space --device
+
+  # 読み取りと下書きのスコープだけを要求する
+  wikino auth login my-space --scopes page:read,draft_page:read,draft_page:write
+
+  # ファイルに保存した個人用アクセストークンでログインする
+  wikino auth login my-space --with-token < token.txt
+
+  # 開発環境のサーバーにログインする
+  wikino auth login my-space --host http://localhost:4000"""
+[auth_login_output]
+description = "auth loginコマンドのヘルプの「出力」の節"
+other = """
+  ログインした資格情報を出します。
+    host           接続先のURL
+    space          スペースの識別子
+    member         メンバー (id・atname・name)
+    token_store    トークンの保存先 (keyring・file)
+    default        既定の組かどうか
+    space_default  そのスペースの既定のメンバーかどうか
+    scopes         ブラウザでログインしたときに付与されたスコープ (`--with-token` では出しません)
+  認可画面のURL、デバイス認可の確認用のURLとコード、キーチェーンを使えずファイルに保存したときの警告は、標準エラーに出します。"""
+[auth_login_errors]
+description = "auth loginコマンドのヘルプの「エラー」の節"
+other = """
+  2  スペースの指定が無い、`--member` を指定した、`--scopes` が空か未知のスコープを含む、`--with-token` と `--scopes` か `--device` を併用した、標準入力のトークンが空か不正な形式
+  3  認可画面で拒否した (authorization_denied)、認可の応答が要求と一致しない・認可サーバーがエラーを返した・デバイス認可に対応しない (oauth_error)、トークンが無効か期限切れ (401)
+  5  トークンがそのスペースのものでない (404)。トークンを発行したスペースの識別子を指定してください
+  1  5分以内、またはデバイス認可のコードの期限までに許可されなかった (login_timeout)、認可サーバーの応答を読めない (response_error)、通信に失敗した、トークンか設定の保存、または保存の失敗後の復元に失敗した
+  APIの検証に失敗したときは何も保存しません。
+  以前の保存先からの削除だけが失敗したときは、ログインを成功にして警告を出し、再ログインかログアウトで削除を再試行できます。"""
+[auth_login_with_token_flag]
+description = "auth loginの--with-tokenフラグの説明"
+other = "標準入力から個人用アクセストークンを読む"
+
+
+[auth_login_device_flag]
+description = "auth loginの--deviceフラグの説明"
+other = "デバイス認可でログインする (別の端末のブラウザでコードを入力して許可する)"
+
+[auth_login_scopes_flag]
+description = "auth loginの--scopesフラグの説明"
+other = "要求するスコープ (カンマ区切り)。省略時はトークンに付与できるすべてのスコープ"
+
+[auth_login_error_scopes_with_token]
+description = "auth loginで--with-tokenと--scopesを併用したときのメッセージ"
+other = "`--scopes` は `--with-token` と併用できません。個人用アクセストークンのスコープは発行したときに決まっています。"
+
+[auth_login_error_device_with_token]
+description = "auth loginで--with-tokenと--deviceを併用したときのメッセージ"
+other = "`--device` は `--with-token` と併用できません。"
+
+[auth_login_error_unknown_scope]
+description = "auth loginの--scopesに未知のスコープを指定したときのメッセージ。Scopeは指定した値、Scopesは選べるスコープ"
+other = "スコープ {{.Scope}} はありません。選べるスコープ: {{.Scopes}}"
+
+[auth_login_error_scopes_empty]
+description = "auth loginの--scopesが空のときのメッセージ"
+other = "`--scopes` にスコープを1つ以上指定してください。"
+
+[auth_login_open_browser]
+description = "auth loginで認可画面のURLを示す文言。URLは認可画面のURL"
+other = "ブラウザでWikinoの認可画面を開きました。許可してください。ブラウザに表示されないときは、次のURLをこのコンピューターのブラウザで開いてください:\n  {{.URL}}"
+
+[auth_login_device_fallback]
+description = "auth loginでループバックを使えずデバイス認可に切り替えるときの文言"
+other = "この環境ではブラウザから認可の応答を受け取れないため、デバイス認可でログインします。"
+
+[auth_login_device_code]
+description = "auth loginのデバイス認可で確認用のURLとコードを示す文言。URLは確認用のURL、UserCodeはユーザーコード、Minutesは期限までの分数"
+other = "手元の端末のブラウザで次のURLを開き、コード {{.UserCode}} を入力して許可してください ({{.Minutes}}分以内):\n  {{.URL}}"
+
+[auth_login_device_code_complete]
+description = "auth loginのデバイス認可でコードを入力済みの確認用のURLを示す文言。URLはコードを含む確認用のURL"
+other = "コードを入力済みのURL:\n  {{.URL}}"
+
+[auth_login_page_success]
+description = "auth loginで許可の後にブラウザへ表示する文言"
+other = "認可の応答を受け取りました。このウィンドウを閉じて、ターミナルでログインの結果を確認してください。"
+
+[auth_login_page_failure]
+description = "auth loginで認可の応答を受け付けなかったときにブラウザへ表示する文言"
+other = "ログインできませんでした。ターミナルのメッセージを確かめてください。"
+[auth_login_error_member]
+description = "auth loginで--memberを指定したときのメッセージ"
+other = "`auth login` では `--member` を指定できません。メンバーはトークンから決まります。"
+
+[auth_login_error_space_required]
+description = "auth loginでスペースの指定が無いときのメッセージ"
+other = "ログインするスペースを指定してください。"
+
+[auth_login_error_token_empty]
+description = "auth loginで標準入力のトークンが空のときのメッセージ"
+other = "標準入力からトークンを読めませんでした。"
+
+[auth_login_error_token_invalid]
+description = "auth loginで標準入力のトークンの形式が誤っているときのメッセージ"
+other = "標準入力のトークンの形式が正しくありません。トークンだけを1行で渡してください。"
+
+[auth_login_error_unauthorized_hint]
+description = "auth loginでトークンの検証が401になったときのヒント"
+other = "トークンが正しいか、期限が切れていないかを確かめてください。スペース設定で発行し直せます。"
+
+[auth_login_error_not_found_hint]
+description = "auth loginでトークンの検証が404になったときのヒント"
+other = "トークンを発行したスペースの識別子 (WebのURLの `/s/{識別子}` の部分) を指定してください。"
+
+
+[auth_error_oauth_retry_hint]
+description = "OAuthのログインに失敗したとき・ログインの期限が切れたときのヒント。Spaceはスペースの識別子"
+other = "`wikino auth login {{.Space}}` でもう一度ログインしてください。"
+
+[auth_error_state_mismatch]
+description = "認可の応答のstateが要求と一致しないときのメッセージ"
+other = "認可の応答がこのログインの要求と一致しないため、ログインを中止しました。"
+
+[auth_error_issuer_mismatch]
+description = "認可の応答のissが認可サーバーと一致しないときのメッセージ"
+other = "認可の応答が接続先の認可サーバーのものではないため、ログインを中止しました。"
+
+[auth_error_login_timeout]
+description = "ブラウザでの許可を待つ時間が過ぎたときのメッセージ"
+other = "ブラウザでの許可を待つ時間 (5分) が過ぎました。"
+
+[auth_error_device_expired]
+description = "デバイス認可で許可される前にコードの期限が切れたときのメッセージ"
+other = "許可される前に、デバイス認可のコードの期限が切れました。"
+
+[auth_error_device_unsupported]
+description = "認可サーバーがデバイス認可に対応しないときのメッセージ"
+other = "接続先の認可サーバーはデバイス認可に対応していません。"
+
+[auth_error_device_unsupported_hint]
+description = "認可サーバーがデバイス認可に対応しないときのヒント"
+other = "ブラウザを開けるコンピューターでログインするか、`--with-token` で個人用アクセストークンを渡してください。"
+
+[auth_error_access_denied]
+description = "認可画面で拒否されたときのメッセージ"
+other = "認可画面で許可されませんでした。"
+
+[auth_error_oauth]
+description = "認可サーバーがエラーを返したときのメッセージ。Codeはエラーコード"
+other = "認可サーバーがエラー ({{.Code}}) を返しました。"
+
+[auth_error_oauth_response]
+description = "認可サーバーの応答を読めないときのメッセージ"
+other = "認可サーバーの応答を読めませんでした。"
+
+[auth_error_oauth_response_hint]
+description = "認可サーバーの応答を読めないときのヒント"
+other = "接続先 (`--host`・`WIKINO_HOST`) がWikinoのサーバーかを確かめてください。"
+
+[auth_error_refresh_rejected]
+description = "リフレッシュトークンが拒否されたときのメッセージ。Spaceはスペースの識別子、Memberはメンバーのアットネーム"
+other = "スペース {{.Space}} のメンバー {{.Member}} のログインの期限が切れたか、連携が解除されました。"
+
+[auth_error_refresh_lock]
+description = "トークンの更新のロックを待つ間に中止したときのメッセージ"
+other = "トークンの更新を待つ間に中止しました。"
+
+[auth_error_refresh_lock_hint]
+description = "トークンの更新のロックを待つ間に中止したときのヒント"
+other = "同じ資格情報を使うほかの `wikino` が終わってから、もう一度実行してください。"
+
+[auth_warning_refresh_save_failed]
+description = "更新したトークンを保存できなかったときの警告。Spaceはスペースの識別子"
+other = "警告: 更新したトークンを保存できませんでした。次の実行では `wikino auth login {{.Space}}` でログインし直す必要があります。"
+
+[auth_warning_revoke_failed]
+description = "ログアウトでリフレッシュトークンを失効させられなかったときの警告。Spaceはスペースの識別子"
+other = "警告: サーバーでトークンを失効させられませんでした。手元の資格情報は消しました。スペース {{.Space}} の連携中のアプリの画面で連携を解除してください。"
+[auth_logout_short]
+description = "auth logoutコマンドの短い説明"
+other = "保存した資格情報を消す"
+
+[auth_logout_long]
+description = "auth logoutコマンドの説明"
+other = """
+保存した資格情報 (トークンと設定の組) を消します。
+
+対象は、ほかのコマンドと同じ順で決めます。
+`<space>` は `--space` と同じ意味です。
+同じスペースに複数のメンバーの資格情報があるときは、`--member` で選びます。
+
+ブラウザでログインした資格情報は、リフレッシュトークンをサーバーで失効させてから消します。
+失効できなかったとき (接続先に届かないなど) も手元の資格情報は消し、標準エラーに警告を出します。
+そのときはWikinoの連携中のアプリの画面で連携を解除してください。
+
+個人用アクセストークンはサーバーでは失効させません。
+トークンを使えなくするには、スペース設定でトークンを削除してください。
+`WIKINO_TOKEN` のトークンは保存していないため、このコマンドの対象になりません。
+
+既定の組を消したときは、既定を外します。"""
+[auth_logout_example]
+description = "auth logoutコマンドの使用例"
+other = """
+  # スペースmy-spaceの資格情報を消す
+  wikino auth logout my-space
+
+  # 同じスペースの別のメンバーの資格情報を消す
+  wikino auth logout my-space --member bot"""
+
+[auth_logout_output]
+description = "auth logoutコマンドのヘルプの「出力」の節"
+other = "  消した資格情報を `wikino auth login` と同じ項目で出します。default・space_defaultは消す前の値です。"
+
+[auth_logout_errors]
+description = "auth logoutコマンドのヘルプの「エラー」の節"
+other = """
+  2  スペースやメンバーが決まらない (候補をヒントに出します)
+  3  指定したスペース・メンバーの資格情報が無い
+  1  トークンや設定を削除できない。資格情報を設定に残し、ログアウトを再試行できます。"""
+
+[auth_status_short]
+description = "auth statusコマンドの短い説明"
+other = "資格情報とトークンを確かめる"
+
+[auth_status_long]
+description = "auth statusコマンドの説明"
+other = """
+保存した資格情報ごとに、接続先・スペース・メンバーと、トークンの種類・スコープ・有効期限をAPIから取得して出します。
+
+`--host`・`--space`・`--member` を指定すると、一致する資格情報だけを出します。
+`WIKINO_TOKEN` にトークンを渡しているときは、保存した資格情報の代わりにそのトークンを確かめます (`--space` か `WIKINO_SPACE` が要ります)。
+
+操作の前に、トークンに必要なスコープが付いているかを確かめるときに使います。
+実際に操作できるかは、スコープに加えてメンバーの権限でも決まります。"""
+
+[auth_status_example]
+description = "auth statusコマンドの使用例"
+other = """
+  # 保存したすべての資格情報を確かめる
+  wikino auth status
+
+  # スペースmy-spaceのトークンのスコープだけを出す
+  wikino auth status --space my-space --jq '.items[].token.scopes'"""
+
+[auth_status_output]
+description = "auth statusコマンドのヘルプの「出力」の節"
+other = """
+  `{"items": [...]}` の形で、資格情報ごとに次の項目を出します。
+    host・space・member・default・space_default  `wikino auth login` と同じ
+    token_store  トークンの保存先 (keyring・file。`WIKINO_TOKEN` のときはenv)
+    token        トークンの情報 (kind・scopes・expires_at)。取得できなかったときはnull
+    error        取得できなかった理由 (code・message・hint・status)。取得できたときは省きます"""
+
+[auth_status_errors]
+description = "auth statusコマンドのヘルプの「エラー」の節"
+other = """
+  2  `WIKINO_TOKEN` を使うときにスペースの指定が無い、`--member` を指定した
+  3  ログインしていない、保存したトークンが見つからない、トークンが無効か期限切れ (401)
+  5  トークンがそのスペースのものでない (404)
+  確かめられなかった資格情報があるときは、すべての項目を出したうえで、最初に失敗した項目の終了コードで終えます。
+  その理由は項目の `error` に出し、標準エラーには出しません。"""
+
+[auth_switch_short]
+description = "auth switchコマンドの短い説明"
+other = "既定のスペースとメンバーを切り替える"
+
+[auth_switch_long]
+description = "auth switchコマンドの説明"
+other = """
+既定のスペースを `<space>` に切り替えます。
+`--member` を指定すると、そのスペースの既定のメンバーも切り替えます。
+
+`--member` を指定しないときは、そのスペースの既定のメンバーを使います。
+既定のメンバーが無く資格情報が複数あるときは、`--member` を求めて失敗します。
+
+既定の接続先は、`--host` か `WIKINO_HOST` で指定した接続先 (指定しなければ今の既定の接続先) にします。"""
+
+[auth_switch_example]
+description = "auth switchコマンドの使用例"
+other = """
+  # 既定のスペースを切り替える
+  wikino auth switch my-space
+
+  # スペースの既定のメンバーも切り替える
+  wikino auth switch my-space --member bot"""
+
+[auth_switch_output]
+description = "auth switchコマンドのヘルプの「出力」の節"
+other = "  既定にした資格情報を `wikino auth login` と同じ項目で出します。"
+
+[auth_switch_errors]
+description = "auth switchコマンドのヘルプの「エラー」の節"
+other = """
+  2  `--member` が無く、スペースの既定のメンバーが決まらない (候補をヒントに出します)
+  3  そのスペース・メンバーの資格情報が無い"""
+
+[auth_label_host]
+description = "authコマンドの人間向けの表示のラベル: 接続先"
+other = "接続先"
+
+[auth_label_space]
+description = "authコマンドの人間向けの表示のラベル: スペース"
+other = "スペース"
+
+[auth_label_member]
+description = "authコマンドの人間向けの表示のラベル: メンバー"
+other = "メンバー"
+
+[auth_label_token_store]
+description = "authコマンドの人間向けの表示のラベル: トークンの保存先"
+other = "トークンの保存先"
+
+[auth_label_default]
+description = "authコマンドの人間向けの表示のラベル: 既定かどうか"
+other = "既定"
+
+[auth_label_token_kind]
+description = "authコマンドの人間向けの表示のラベル: トークンの種類"
+other = "トークンの種類"
+
+[auth_label_scopes]
+description = "authコマンドの人間向けの表示のラベル: スコープ"
+other = "スコープ"
+
+[auth_label_expires_at]
+description = "authコマンドの人間向けの表示のラベル: 有効期限"
+other = "有効期限"
+
+[auth_label_error]
+description = "authコマンドの人間向けの表示のラベル: 取得できなかった理由"
+other = "エラー"
+
+[auth_value_store_keyring]
+description = "トークンの保存先の表示: キーチェーン"
+other = "キーチェーン"
+
+[auth_value_store_file]
+description = "トークンの保存先の表示: ファイル"
+other = "ファイル"
+
+[auth_value_store_env]
+description = "トークンの保存先の表示: 環境変数"
+other = "環境変数 (WIKINO_TOKEN)"
+
+[auth_value_default]
+description = "既定の表示: 既定の組"
+other = "既定の組"
+
+[auth_value_space_default]
+description = "既定の表示: スペースの既定のメンバー"
+other = "スペースの既定のメンバー"
+
+[auth_value_not_default]
+description = "既定の表示: 既定でない"
+other = "なし"
+
+[auth_warning_keyring_unavailable]
+description = "キーチェーンを使えずトークンをファイルに保存したときの警告。Pathは保存したファイル"
+other = "警告: キーチェーンを使えないため、トークンをファイル ({{.Path}}) に保存しました。"
+
+[auth_warning_loose_permissions]
+description = "設定のディレクトリ・トークンのディレクトリ・トークンのファイルのパーミッションが緩いときの警告。Pathはパス、Permは今のパーミッション、Modeは勧めるパーミッション"
+other = "警告: {{.Path}} を本人以外が読み書きできます (パーミッション {{.Perm}})。`chmod {{.Mode}} {{.Path}}` で制限してください。"
+
+[auth_warning_cleanup_failed]
+description = "再ログインで新しい資格情報は保存したが、以前の保存先からトークンを削除できなかったときの警告"
+other = "警告: ログインしましたが、以前の保存先からトークンを削除できませんでした。削除先は設定に残しています。保存先を利用できる状態にしてから、再ログインかログアウトで削除を再試行してください。"
+
+[auth_error_backup]
+description = "既存トークンを退避できないときのメッセージ"
+other = "既存のトークンを読み取れないため、上書きを中止しました。"
+
+[auth_error_backup_hint]
+description = "既存トークンを退避できないときのヒント"
+other = "トークンの保存先を利用できる状態にしてから、ログインを再試行してください。"
+
+[auth_error_rollback]
+description = "設定保存失敗後にトークンの復元や削除も失敗したときのメッセージ"
+other = "資格情報の保存に失敗し、トークンの復元または削除にも失敗しました。"
+
+[auth_error_rollback_hint]
+description = "トークンの復元や削除が失敗したときのヒント"
+other = "保存先を利用できる状態にしてから、ログインを再試行してください。不要なPATはスペース設定で削除できます。"
+
+[auth_error_cleanup]
+description = "保存したトークンを削除できないときのメッセージ"
+other = "保存したトークンの削除に失敗しました。削除を再試行するため、資格情報を設定に残しています。"
+
+[auth_error_cleanup_hint]
+description = "保存したトークンを削除できないときのヒント"
+other = "保存先を利用できる状態にしてから、同じ資格情報で `wikino auth logout` またはログインを再試行してください。"
+
+# topicコマンド
+[topic_short]
+description = "topicコマンドの短い説明"
+other = "トピックを扱う"
+
+[topic_long]
+description = "topicコマンドの説明"
+other = """
+スペースのトピックを扱います。
+
+ページはいずれか1つのトピックに属します。
+トピックの番号は、`wikino page list --topic` での絞り込みに使います。"""
+
+[topic_example]
+description = "topicコマンドの使用例"
+other = """
+  # トピックの一覧を出す
+  wikino topic list
+
+  # トピック3の詳細を出す
+  wikino topic get 3"""
+
+[topic_output]
+description = "topicコマンドのヘルプの「出力」の節"
+other = "  各サブコマンドのヘルプを参照してください。"
+
+[topic_errors]
+description = "topicコマンドのヘルプの「エラー」の節"
+other = "  サブコマンドが無いときと未知のサブコマンドは、使い方の誤り (終了コード2) で失敗します。"
+
+[topic_list_short]
+description = "topic listコマンドの短い説明"
+other = "トピックの一覧を出す"
+
+[topic_list_long]
+description = "topic listコマンドの説明"
+other = """
+スペースのトピックを、トピック番号の小さい順に出します。
+
+既定ではAPIの既定の件数 (20件) の1ページだけを取得します。
+次のページがあるときは、取り方を標準エラーに出します。
+`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。
+
+非公開トピックは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。"""
+
+[topic_list_example]
+description = "topic listコマンドの使用例"
+other = """
+  # トピックの一覧を出す
+  wikino topic list
+
+  # すべてのトピックの番号と名前を1行1件で出す
+  wikino topic list --all --fields number,name"""
+
+[topic_list_output]
+description = "topic listコマンドのヘルプの「出力」の節"
+other = """
+  `{"items": [...], "next_cursor": ...}` の形で、トピックごとに次の項目を出します。
+    id           トピックのID
+    number       トピック番号。`wikino topic get` と `wikino page list --topic` に渡します
+    name         トピックの名前
+    description  トピックの説明。設定していなければ空文字列
+    visibility   公開範囲 (public・private)
+  `next_cursor` は次のページのカーソルで、続きが無ければnullです。
+  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。
+  トピックが無いときは、空の一覧を終了コード0で返します。"""
+
+[topic_list_errors]
+description = "topic listコマンドのヘルプの「エラー」の節"
+other = """
+  2  `--limit` が1未満、`--all` と `--cursor` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにtopic:readのスコープが無い (403)
+  7  `--cursor` の値が不正 (422)。`--cursor` を外して最初のページから取得し直してください"""
+
+[topic_get_short]
+description = "topic getコマンドの短い説明"
+other = "トピックの詳細を出す"
+
+[topic_get_long]
+description = "topic getコマンドの説明"
+other = """
+トピック番号で指定したトピックを出します。"""
+
+[topic_get_example]
+description = "topic getコマンドの使用例"
+other = """
+  # トピック3の詳細を出す
+  wikino topic get 3
+
+  # トピック3の名前だけを出す
+  wikino topic get 3 --jq .name"""
+
+[topic_get_output]
+description = "topic getコマンドのヘルプの「出力」の節"
+other = """
+  トピックを `wikino topic list` の1件と同じ項目で出します。"""
+
+[topic_get_errors]
+description = "topic getコマンドのヘルプの「エラー」の節"
+other = """
+  2  トピック番号が1以上の整数でない、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにtopic:readのスコープが無い (403)
+  5  トピックが無い、または見られない非公開トピック (404)。`wikino topic list` で番号を確かめてください"""
+
+[topic_get_error_not_found_hint]
+description = "topic getでトピックが見つからないときのヒント"
+other = "`wikino topic list` で見られるトピックの番号を確かめてください。非公開トピックを見るには、トークンにtopic:readのスコープが要ります。"
+
+[topic_label_number]
+description = "トピックの表示の「番号」のラベル"
+other = "番号"
+
+[topic_label_name]
+description = "トピックの表示の「名前」のラベル"
+other = "名前"
+
+[topic_label_visibility]
+description = "トピックの表示の「公開範囲」のラベル"
+other = "公開範囲"
+
+[topic_label_description]
+description = "トピックの表示の「説明」のラベル"
+other = "説明"
+
+[topic_value_public]
+description = "トピックの公開範囲の値: 公開"
+other = "公開"
+
+[topic_value_private]
+description = "トピックの公開範囲の値: 非公開"
+other = "非公開"
+
+# pageコマンド
+[page_short]
+description = "pageコマンドの短い説明"
+other = "ページを扱う"
+
+[page_long]
+description = "pageコマンドの説明"
+other = """
+スペースのページを扱います。
+
+ページはスペースの中で一意なページ番号で指します。
+ページ番号は `wikino page list` の `number` や、Web画面のURLの `/pages/{番号}` の部分で分かります。"""
+
+[page_example]
+description = "pageコマンドの使用例"
+other = """
+  # 最近更新されたページの一覧を出す
+  wikino page list
+
+  # 「議事録」を含むページを検索する
+  wikino page search '議事録'
+
+  # ページ12をWikinoファイル形式のMarkdownで読む
+  wikino page get 12 --md"""
+
+[page_output]
+description = "pageコマンドのヘルプの「出力」の節"
+other = "  各サブコマンドのヘルプを参照してください。"
+
+[page_errors]
+description = "pageコマンドのヘルプの「エラー」の節"
+other = "  サブコマンドが無いときと未知のサブコマンドは、使い方の誤り (終了コード2) で失敗します。"
+
+[page_list_short]
+description = "page listコマンドの短い説明"
+other = "ページの一覧を出す"
+
+[page_list_long]
+description = "page listコマンドの説明"
+other = """
+スペースのページを、更新日時の新しい順に出します。
+ゴミ箱に入れたページは含みません。
+
+既定では公開済みのページだけを出します。
+`--status unpublished` か `--status all` で、Wikiリンクで自動作成されたページなど、まだ公開していないページも出せます。
+未公開のページは、見られるトピックの公開済みページか、自分の下書きからWikiリンクで指しているものだけを含みます。
+リンクされていない未公開ページは含みません。
+
+一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。
+本文を読むには `wikino page get` を使います。
+一覧に本文が要るときは、`--fields` に `body` を含めます。
+
+既定ではAPIの既定の件数 (20件) の1ページだけを取得します。
+次のページがあるときは、取り方を標準エラーに出します。
+`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。
+
+非公開トピックのページは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。"""
+
+[page_list_example]
+description = "page listコマンドの使用例"
+other = """
+  # 最近更新されたページの一覧を出す
+  wikino page list
+
+  # トピック3のページを、未公開のページも含めて出す
+  wikino page list --topic 3 --status all
+
+  # トピック3の「議事録」というタイトルのページの番号を調べる
+  wikino page list --topic 3 --title '議事録' --jq '.items[].number'
+
+  # 指定した日時以降に更新されたページを、本文を含めて1行1件で出す
+  wikino page list --modified-since 2026-10-01T00:00:00Z --all --fields number,title,body"""
+
+[page_list_output]
+description = "page listコマンドのヘルプの「出力」の節"
+other = """
+  `{"items": [...], "next_cursor": ...}` の形で、ページごとに次の項目を出します。
+    id            ページのID
+    number        ページ番号。`wikino page get` などに渡します
+    title         タイトル。タイトルの無いページではnull
+    status        公開状態 (published・unpublished)
+    topic_number  ページが属するトピックの番号
+    topic_name    ページが属するトピックの名前。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います
+    modified_at   内容を最後に更新した日時 (RFC 3339)
+    url           Web画面でページを開くURL。出典としてページを示すときに使います
+    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます
+                  APIの応答には無く、CLIが本文から作る項目です
+    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します
+  `next_cursor` は次のページのカーソルで、続きが無ければnullです。
+  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。
+  該当するページが無いときは、空の一覧を終了コード0で返します。"""
+
+[page_list_errors]
+description = "page listコマンドのヘルプの「エラー」の節"
+other = """
+  2  `--topic` が1以上の整数でない、`--status` が未知の値、`--modified-since` がRFC 3339の日時でない、`--limit` が1未満、
+     `--all` と `--cursor` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにpage:readのスコープが無い (403)
+  7  `--cursor` の値が不正 (422)。`--cursor` を外して最初のページから取得し直してください"""
+
+[page_list_topic_flag]
+description = "page listの--topicフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "トピック番号 (`number`) で絞り込む"
+
+[page_list_status_flag]
+description = "page listの--statusフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "公開状態 (`status`) で絞り込む (published・unpublished・all。省略時はpublished)"
+
+[page_list_title_flag]
+description = "page listの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "タイトル (`title`) 全体が一致するページだけを出す (大文字と小文字は区別しない)"
+
+[page_list_modified_since_flag]
+description = "page listの--modified-sinceフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "この日時 (`time`。RFC 3339) 以降に更新されたページだけを出す"
+
+[page_error_invalid_status]
+description = "page list・page searchの--statusの値が未知のときのメッセージ。Valueは指定された値"
+other = "`--status` の値を受け付けられません: \"{{.Value}}\" (published・unpublished・allのいずれかを指定してください)"
+
+[page_list_error_invalid_modified_since]
+description = "page listの--modified-sinceの値を日時として読めないときのメッセージ。Valueは指定された値"
+other = "`--modified-since` の値をRFC 3339の日時として読めません: \"{{.Value}}\" (例: 2026-10-01T09:00:00Z)"
+
+[page_search_short]
+description = "page searchコマンドの短い説明"
+other = "ページをキーワードで検索する"
+
+[page_search_long]
+description = "page searchコマンドの説明"
+other = """
+キーワードをタイトルか本文に含むページを、更新日時の新しい順に出します。
+検索の対象はトークンのスペースの中だけです。
+ゴミ箱に入れたページは含みません。
+
+キーワードは引用符で1つにまとめても、空白で区切って並べても構いません。
+空白 (全角の空白を含む) で区切った複数のキーワードは、すべてを含むページだけを出します (AND検索)。
+各キーワードはタイトルと本文のどちらに含まれていても構いません。
+部分一致で探し、大文字と小文字は区別しません。
+キーワードは10個まで指定できます。
+
+既定では公開済みのページだけを検索します。
+`--status all` で、まだ公開していないページも検索します。
+
+出力の形とページ送りは `wikino page list` と同じです。
+一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。
+本文を読むには `wikino page get` を使います。
+
+非公開トピックのページは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。"""
+
+[page_search_example]
+description = "page searchコマンドの使用例"
+other = """
+  # 「議事録」を含むページを検索する
+  wikino page search '議事録'
+
+  # 「議事録」と「予算」の両方を含むページを、トピック3から検索する
+  wikino page search '議事録' '予算' --topic 3
+
+  # 未公開のページも含めて検索し、番号とタイトルだけを出す
+  wikino page search '定例会議' --status all --fields number,title"""
+
+[page_search_output]
+description = "page searchコマンドのヘルプの「出力」の節"
+other = """
+  `wikino page list` と同じく、`{"items": [...], "next_cursor": ...}` の形で出します。
+  各ページの項目は `wikino page list` のヘルプを参照してください。
+  `excerpt` はAPIの応答には無く、CLIが本文から作る項目です。`body` は `--fields` に含めたときだけ出します。
+  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。
+  該当するページが無いときは、空の一覧を終了コード0で返します。
+  人間向けの表示では、標準エラーに検索の条件を緩めるヒントを出します。"""
+
+[page_search_errors]
+description = "page searchコマンドのヘルプの「エラー」の節"
+other = """
+  2  キーワードが無い、`--topic` が1以上の整数でない、`--status` が未知の値、`--limit` が1未満、
+     `--all` と `--cursor` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにpage:readのスコープが無い (403)
+  7  キーワードが11個以上ある、`--cursor` の値が不正 (422)"""
+
+[page_search_topic_flag]
+description = "page searchの--topicフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "トピック番号 (`number`) で絞り込む"
+
+[page_search_status_flag]
+description = "page searchの--statusフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "公開状態 (`status`) で絞り込む (published・unpublished・all。省略時はpublished)"
+
+[page_search_error_query_required]
+description = "page searchでキーワードが無いとき (引数が無いか空白だけのとき) のメッセージ"
+other = "検索のキーワードを指定してください。"
+
+[page_search_empty_hint]
+description = "page searchの人間向けの表示で、該当するページが無いときに標準エラーに出すヒント"
+other = "キーワードを減らすか、`--topic` を外すか、`--status all` を付けて検索し直してください。"
+
+[page_links_short]
+description = "page linksコマンドの短い説明"
+other = "ページのリンク先の一覧を出す"
+
+[page_links_long]
+description = "page linksコマンドの説明"
+other = """
+ページ番号で指定したページの本文がWikiリンクで指しているページを、更新日時の新しい順に出します。
+Web画面のページの下に並ぶリンクの一覧と同じページを出します。
+
+公開済みの本文のリンクだけを対象にし、下書きにだけあるリンクは含みません。
+Wikiリンクで自動作成されたページなど、まだ公開していないリンク先も含み、`status` が `unpublished` になります。
+ゴミ箱に入れたページと、見られない非公開トピックのページは含みません。
+
+逆向きに、このページにリンクしているページを調べるには `wikino page backlinks` を使います。
+
+出力の形とページ送りは `wikino page list` と同じです。
+一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。"""
+
+[page_links_example]
+description = "page linksコマンドの使用例"
+other = """
+  # ページ12のリンク先の一覧を出す
+  wikino page links 12
+
+  # ページ12のリンク先の番号だけを出す
+  wikino page links 12 --jq '.items[].number'"""
+
+[page_links_output]
+description = "page linksコマンドのヘルプの「出力」の節"
+other = """
+  `wikino page list` と同じく、`{"items": [...], "next_cursor": ...}` の形で出します。
+  各ページの項目は `wikino page list` のヘルプを参照してください。
+  `excerpt` はAPIの応答には無く、CLIが本文から作る項目です。`body` は `--fields` に含めたときだけ出します。
+  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。
+  リンク先が無いときは、空の一覧を終了コード0で返します。"""
+
+[page_links_errors]
+description = "page linksコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--limit` が1未満、`--all` と `--cursor` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにpage:readのスコープが無い (403)
+  5  ページが無い、ゴミ箱にある、または見られない非公開トピックのページ (404)。`wikino page list` で番号を確かめてください
+  7  `--cursor` の値が不正 (422)"""
+
+[page_links_empty_hint]
+description = "page linksの人間向けの表示で、リンク先が無いときに標準エラーに出すヒント"
+other = "公開済みの本文のWikiリンクだけが対象です。下書きにだけあるリンクは含みません。"
+
+[page_backlinks_short]
+description = "page backlinksコマンドの短い説明"
+other = "ページのバックリンクの一覧を出す"
+
+[page_backlinks_long]
+description = "page backlinksコマンドの説明"
+other = """
+ページ番号で指定したページにWikiリンクでリンクしているページを、更新日時の新しい順に出します。
+Web画面のページの下に並ぶバックリンクの一覧と同じページを出します。
+
+各ページの公開済みの本文のリンクだけを対象にし、下書きにだけあるリンクは含みません。
+ゴミ箱に入れたページと、見られない非公開トピックのページは含みません。
+
+逆向きに、このページがリンクしているページを調べるには `wikino page links` を使います。
+
+出力の形とページ送りは `wikino page list` と同じです。
+一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。"""
+
+[page_backlinks_example]
+description = "page backlinksコマンドの使用例"
+other = """
+  # ページ12のバックリンクの一覧を出す
+  wikino page backlinks 12
+
+  # ページ12にリンクしているページを、全件1行1件で出す
+  wikino page backlinks 12 --all --fields number,title,url"""
+
+[page_backlinks_output]
+description = "page backlinksコマンドのヘルプの「出力」の節"
+other = """
+  `wikino page list` と同じく、`{"items": [...], "next_cursor": ...}` の形で出します。
+  各ページの項目は `wikino page list` のヘルプを参照してください。
+  `excerpt` はAPIの応答には無く、CLIが本文から作る項目です。`body` は `--fields` に含めたときだけ出します。
+  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。
+  バックリンクが無いときは、空の一覧を終了コード0で返します。"""
+
+[page_backlinks_errors]
+description = "page backlinksコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--limit` が1未満、`--all` と `--cursor` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにpage:readのスコープが無い (403)
+  5  ページが無い、ゴミ箱にある、または見られない非公開トピックのページ (404)。`wikino page list` で番号を確かめてください
+  7  `--cursor` の値が不正 (422)"""
+
+[page_backlinks_empty_hint]
+description = "page backlinksの人間向けの表示で、バックリンクが無いときに標準エラーに出すヒント"
+other = "公開済みの本文のWikiリンクだけが対象です。下書きにだけあるリンクは含みません。"
+
+[page_get_short]
+description = "page getコマンドの短い説明"
+other = "ページの内容を出す"
+
+[page_get_long]
+description = "page getコマンドの説明"
+other = """
+ページ番号で指定したページを、本文を含めて出します。
+まだ公開していないページも出します。
+
+`--md` を付けると、Wikinoファイル形式のページファイル (frontmatter付きのMarkdown) で出します。
+本文を読むときは、改行や引用符がエスケープされない `--md` が向いています。
+大きなページは、`--md` でファイルに書き出してから必要な部分だけを読んでください。
+
+出力の `etag` はページの版です。
+ページを更新するときは、読んだ版を `--if-match` に渡します。"""
+
+[page_get_example]
+description = "page getコマンドの使用例"
+other = """
+  # ページ12を出す
+  wikino page get 12
+
+  # ページ12をWikinoファイル形式のMarkdownでファイルに書き出す
+  wikino page get 12 --md > page-12.md
+
+  # ページ12の版 (ETag) だけを出す
+  wikino page get 12 --jq .etag"""
+
+[page_get_output]
+description = "page getコマンドのヘルプの「出力」の節"
+other = """
+  ページを `wikino page list` の項目 (excerptを除き、bodyを含む) に次の項目を加えて出します。
+    etag  ページの版 (応答のETagヘッダーの値)。更新のコマンドの `--if-match` に渡します
+  `--md` を付けると、JSONの代わりにWikinoファイル形式のページファイルを出します。
+  frontmatterの `wikino_` で始まるキーに番号・タイトル・版・トピック番号・公開状態・更新日時・URLを書き、続けて本文をそのまま出します。
+  本文自体がfrontmatterで始まるときは、そのブロックにキーを足します。"""
+
+[page_get_errors]
+description = "page getコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--md` と `--json`・`--fields`・`--jq` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにpage:readのスコープが無い (403)
+  5  ページが無い、ゴミ箱にある、または見られない非公開トピックのページ (404)。`wikino page list` で番号を確かめてください"""
+
+[page_error_not_found_hint]
+description = "ページ番号で指すコマンド (page get・page links・page backlinks) でページが見つからないときのヒント"
+other = "`wikino page list` で見られるページの番号を確かめてください。非公開トピックのページを見るには、トークンにtopic:readのスコープが要ります。"
+
+[page_label_number]
+description = "ページの表示の「番号」のラベル"
+other = "番号"
+
+[page_label_title]
+description = "ページの表示の「タイトル」のラベル"
+other = "タイトル"
+
+[page_label_topic_name]
+description = "ページの表示の「トピック名」のラベル"
+other = "トピック"
+
+[page_label_topic_number]
+description = "ページの表示の「トピック番号」のラベル"
+other = "トピック番号"
+
+[page_label_status]
+description = "ページの表示の「公開状態」のラベル"
+other = "公開状態"
+
+[page_label_modified_at]
+description = "ページの表示の「更新日時」のラベル"
+other = "更新日時"
+
+[page_label_url]
+description = "ページの表示の「URL」のラベル"
+other = "URL"
+
+[page_label_etag]
+description = "ページの表示の「版 (ETag)」のラベル"
+other = "ETag"
+
+[page_value_untitled]
+description = "タイトルの無いページの、人間向けの表示"
+other = "(タイトルなし)"
+
+[page_value_published]
+description = "ページの公開状態の値: 公開済み"
+other = "公開済み"
+
+[page_value_unpublished]
+description = "ページの公開状態の値: 未公開"
+other = "未公開"
+
+[page_create_short]
+description = "page createコマンドの短い説明"
+other = "ページを作成する"
+
+[page_create_long]
+description = "page createコマンドの説明"
+other = """
+トピック番号で指定したトピックに、タイトルと本文でページを作成して公開します。
+
+本文は `--body` か `--body-file` のどちらかで渡します。
+空のページを作るときも `--body ''` と明示します。
+`--body-file -` で標準入力から読みます。
+本文は渡したとおりに送り、末尾の改行も削りません。
+
+同じタイトルで本文の無い未公開のページ (Wikiリンクで自動作成されたページなど) があれば、新しいページを作らずにそのページに本文を書いて公開します。
+このとき出力の `number` はそのページの番号です。
+
+本文のWikiリンクが存在しないページを指すと、リンク先を未公開のページとして作成します。
+作成の前に本文のWikiリンクのリンク先を確かめ、作成されるリンク先があれば、作成の後に標準エラーへ一覧を出します。
+この一覧は作成の直前の見込みで、その間に他の利用者がページを作成・削除すると実際の結果とずれることがあります。
+意図しないリンク先が無いかは、`--dry-run` で先に確かめられます。
+
+ページの作成は冪等ではありません。
+結果が分からないとき (通信の失敗など) は、送り直す前に `wikino page list --topic <番号> --title <タイトル>` で作成済みかを確かめてください。
+
+既にあるページの内容を変えるには `wikino page update` を使います。
+非公開トピックにページを作成するには、トークンにpage:writeに加えてtopic:readのスコープが要ります。"""
+
+[page_create_example]
+description = "page createコマンドの使用例"
+other = """
+  # トピック3に「議事録」というページを作成する
+  wikino page create --topic 3 --title '議事録' --body '# 議事録'
+
+  # ファイルの内容を本文にしてページを作成する
+  wikino page create --topic 3 --title '議事録' --body-file minutes.md
+
+  # 標準入力から本文を読み、作成したページの番号と版だけを出す
+  cat minutes.md | wikino page create --topic 3 --title '議事録' --body-file - --fields number,etag
+
+  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)
+  wikino page create --topic 3 --title '議事録' --body-file minutes.md --dry-run"""
+
+[page_create_output]
+description = "page createコマンドのヘルプの「出力」の節"
+other = """
+  作成したページを、`wikino page get` と同じ項目 (`etag` を含む) で出します。
+  続けて更新するときは、`etag` を `wikino page update` の `--if-match` に渡します。
+  人間向けの表示では本文を出さず、完了の行を標準エラーに出します。
+  本文のWikiリンクで作成した見込みのリンク先があれば、JSONの出力でも標準エラーに一覧を出します。
+  `--dry-run` を付けると、作成の要求を送らずに `{"dry_run": true, "requests": [...], "wikilinks": [...]}` の形で送る要求と本文のWikiリンクのリンク先を出します。
+  `wikilinks` の各要素は、Wikiリンクの文字列 (`text`)・リンク先のトピックの名前 (`topic_name`)・ページのタイトル (`page_title`)・解決の結果 (`resolution`)・既存のページ (`page`) を持ちます。
+  `resolution` は、既存のページ (`existing_page`)・書き込むと未公開のページとして作られる (`new_page`)・トピックが無いか見られずリンクにならない (`topic_not_found`) のいずれかです。
+  リンク先の確認 (読み取り) の要求は、`--dry-run` でも送ります。
+  `--dry-run` と `--fields` は併用できません。"""
+
+[page_create_errors]
+description = "page createコマンドのヘルプの「エラー」の節"
+other = """
+  1  通信に失敗した、サーバーのエラー (5xx)。作成されている場合があるため、`wikino page list --topic <番号> --title <タイトル>` で確かめてから送り直してください
+  2  `--topic` か `--title` が無い、`--body` と `--body-file` のどちらも無いか両方ある、`--topic` が1以上の整数でない、
+     本文のファイルを読めないかUTF-8でない、`--fields` に未知の項目、`--dry-run` と `--fields` の併用
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにpage:writeのスコープが無い (403)
+  5  トピックにページを作成できない (404)
+  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、トピックが無いか見られない (422)。
+     重複のときは `wikino page list --topic <番号> --title <タイトル>` で既存のページを探し、内容を変えるなら `wikino page update` を使ってください"""
+
+[page_create_topic_flag]
+description = "page createの--topicフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "ページを作成するトピックの番号 (`number`)。必須"
+
+[page_create_title_flag]
+description = "page createの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "ページのタイトル (`title`)。必須。200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない"
+
+[page_create_error_body_required]
+description = "page createで本文が指定されていないときのメッセージ"
+other = "本文を `--body` か `--body-file` で指定してください。空のページを作るときは `--body ''` を指定します。"
+
+[page_create_error_not_found_hint]
+description = "page createでトピックにページを作成できない (404) ときのヒント。Topicはトピック番号"
+other = "トークンの持ち主はトピック{{.Topic}}にページを作成できません。Web画面でトピックに参加しているかを確かめてください。"
+
+[page_create_error_validation_failed_hint]
+description = "page createの入力が検証で拒否された (422) ときのヒント。ListCommandは同じタイトルのページを探すコマンド"
+other = "メッセージに示した項目を直して実行し直してください。同じタイトルのページがあるときは `{{.ListCommand}}` で既存のページを探し、内容を変えるなら `wikino page update` を使ってください。トピックが無いときは `wikino topic list` で番号を確かめてください。"
+
+[page_create_error_unknown_result_hint]
+description = "page createで通信の失敗やサーバーのエラーにより作成されたか分からないときのヒント。ListCommandは作成済みかを確かめるコマンド"
+other = "ページが作成されたかは分かりません。作成は冪等でないため、送り直す前に `{{.ListCommand}}` で作成済みかを確かめてください。"
+
+[page_create_done]
+description = "page createの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "ページ{{.Number}}を作成しました。"
+
+[page_update_short]
+description = "page updateコマンドの短い説明"
+other = "ページを更新する"
+
+[page_update_long]
+description = "page updateコマンドの説明"
+other = """
+ページ番号で指定したページのタイトルと本文を更新します。
+指定した項目だけを更新し、指定しなかった項目は変えません。
+
+本文は、変更の大きさで次の3つの渡し方から選びます。
+
+- `--body` か `--body-file`: 変えない部分も含めた本文の全体を渡します。`--body-file -` で標準入力から読みます。本文は渡したとおりに送り、末尾の改行も削りません
+- `--md-file`: `wikino page get --md` で書き出して編集したページファイルを書き戻します。frontmatterの `wikino_etag` を版に、`wikino_title` をタイトルに使い、`wikino_` で始まるキーを取り除いた残りを本文として送ります
+- `--edits`: 本文の一部だけを検索置換します。`{"edits": [{"old_str": "...", "new_str": "...", "replace_all": false}]}` の形のJSONを、ファイルか標準入力 (`-`) から読みます
+
+`--body-file` にページファイルを渡すと、frontmatterも本文になります。
+ページファイルは `--md-file` で渡してください。
+
+`--md-file` のページファイルは次のように読みます。
+`wikino_number` が引数のページ番号と違うファイルと、`wikino_etag` の無いファイルは受け付けません。
+`wikino_title` が無ければタイトルを変えません。
+他の `wikino_` のキー (公開状態・更新日時・URLなど) は読み取り専用で、書き換えても無視します。
+本文自身のfrontmatter (`wikino_` で始まらないキー) は、本文の一部として残します。
+
+`--edits` の各編集は、配列の順に、前の編集を適用した後の本文で `old_str` に一致する箇所を `new_str` に置き換えます。
+`old_str` は大文字小文字・空白・改行も含めて本文と完全に一致する必要があります。
+`replace_all` が `false` (既定) の編集は一致がちょうど1件でなければ失敗し、どの編集も適用しません。
+`--edits` ではタイトルを変えられません。
+
+更新には、読んだ版を `--if-match` で渡します。
+版は `wikino page get` の出力の `etag` です。
+読んだ後にページが更新されていると、上書きせずに終了コード6で失敗します。
+`--force` を付けると版を照合せず、直前に取得した最新の版に上書きします。
+他の人の変更を消しうるため、内容を読まずに上書きしてよいときだけ使ってください。
+`--md-file` では版をファイルから読むため、`--if-match` と `--force` を付けません。
+`--edits` では `--if-match` を省けます。
+`old_str` が今の本文に一致すること自体が、読んだ本文を前提にしていることの確かめになるためです。
+`--if-match` を付けると、読んだ版のままの本文にだけ適用します。
+
+本文のWikiリンクが存在しないページを指すと、リンク先を未公開のページとして作成します。
+本文を書き込む前にWikiリンクのリンク先を確かめ (`--edits` では各 `new_str` のリンク先を確かめます)、作成されるリンク先があれば、更新の後に標準エラーへ一覧を出します。
+この一覧は更新の直前の見込みで、その間に他の利用者がページを作成・削除すると実際の結果とずれることがあります。
+意図しないリンク先が無いかは、`--dry-run` で先に確かめられます。
+
+まだ公開していないページを更新すると、そのページを公開します。
+タイトルと本文が今と同じ場合は何も更新せず、今のページを出します。
+
+非公開トピックのページを更新するには、トークンにpage:writeに加えてtopic:readのスコープが要ります。"""
+
+[page_update_example]
+description = "page updateコマンドの使用例"
+other = """
+  # ページ12の版を取得してから、本文をファイルの内容で更新する
+  wikino page get 12 --jq .etag
+  wikino page update 12 --body-file body.md --if-match '"d41d8cd9"'
+
+  # ページ12のタイトルだけを変える
+  wikino page update 12 --title '定例会議の議事録' --if-match '"d41d8cd9"'
+
+  # ページ12をファイルに書き出し、編集してから書き戻す
+  wikino page get 12 --md > page.md
+  wikino page update 12 --md-file page.md
+
+  # ページ12の本文の一部を検索置換する
+  echo '{"edits": [{"old_str": "- [ ] 議事録を共有する", "new_str": "- [x] 議事録を共有する"}]}' | wikino page update 12 --edits -
+
+  # 版を照合せず、最新の版に上書きする
+  wikino page update 12 --body-file body.md --force
+
+  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)
+  wikino page update 12 --body-file body.md --if-match '"d41d8cd9"' --dry-run"""
+
+[page_update_output]
+description = "page updateコマンドのヘルプの「出力」の節"
+other = """
+  更新したページを、`wikino page get` と同じ項目 (`etag` を含む) で出します。
+  `etag` は更新後の版で、続けて更新するときは `--if-match` に渡します。
+  人間向けの表示では本文を出さず、完了の行を標準エラーに出します。
+  本文のWikiリンクで作成した見込みのリンク先があれば、JSONの出力でも標準エラーに一覧を出します。
+  `--dry-run` を付けると、更新の要求を送らずに `{"dry_run": true, "requests": [...], "wikilinks": [...]}` の形で送る要求と本文のWikiリンクのリンク先を出します。
+  `wikilinks` の各要素は、Wikiリンクの文字列 (`text`)・リンク先のトピックの名前 (`topic_name`)・ページのタイトル (`page_title`)・解決の結果 (`resolution`)・既存のページ (`page`) を持ちます。
+  `resolution` は、既存のページ (`existing_page`)・書き込むと未公開のページとして作られる (`new_page`)・トピックが無いか見られずリンクにならない (`topic_not_found`) のいずれかです。
+  本文を書き込むときと `--force` を付けたときのページの取得と、リンク先の確認 (読み取り) の要求は、`--dry-run` でも送ります。
+  `--dry-run` と `--fields` は併用できません。"""
+
+[page_update_errors]
+description = "page updateコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--title`・`--body`・`--body-file`・`--md-file`・`--edits` のどれも無い、同時に指定できないフラグを併用した、
+     `--if-match` と `--force` のどちらも無いか両方ある (`--md-file`・`--edits` を除く)、`--if-match` が空か `*`、ファイルを読めないかUTF-8でない、
+     `--md-file` の `wikino_number` がページ番号と違うか `wikino_etag` が無い、`--edits` のJSONの形が違う、`--fields` に未知の項目、`--dry-run` と `--fields` の併用
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにpage:writeのスコープが無い (403)
+  5  ページが無い、ゴミ箱にある、またはページを更新できない (404)。`wikino page list` で番号を確かめてください
+  6  読んだ後にページが更新されている (412)。`wikino page get` で最新の内容と版を取得し、変更を反映してから更新し直してください。
+     `--md-file` では、`wikino page get --md` で書き出し直したファイルに変更を反映してください
+  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、タイトルの無い未公開のページを `--title` 無しで更新した (422)。
+     `--edits` の `old_str` が今の本文に一致しないか、複数の箇所に一致した (422)。何番目の編集かをヒントに、一致の件数をメッセージに示します。
+     `wikino page get --md` で今の本文を確かめ、`edits` の全体を送り直してください"""
+
+[page_update_title_flag]
+description = "page updateの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "新しいタイトル (`title`)。200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない"
+
+[page_update_error_nothing_to_update]
+description = "page updateで更新する項目が指定されていないときのメッセージ"
+other = "更新する項目を `--title`・`--body`・`--body-file`・`--md-file`・`--edits` のどれかで指定してください。"
+
+[page_update_error_precondition_failed_hint]
+description = "page updateで読んだ後にページが更新されていた (412) ときのヒント。Commandは最新の版を取得するコマンド"
+other = "`{{.Command}}` で最新の内容と版 (`etag`) を取得し、変更を今の内容に反映してから、新しい版を `--if-match` に渡して更新し直してください。"
+
+[page_update_error_md_file_precondition_failed_hint]
+description = "page update --md-fileで読んだ後にページが更新されていた (412) ときのヒント。Commandはページファイルを書き出すコマンド"
+other = "読んだ後にページが更新されています。`{{.Command}} > page.md` で最新の内容を書き出し直し、変更を反映してから `--md-file` で書き戻してください。"
+
+[page_update_error_validation_failed_hint]
+description = "page updateの入力が検証で拒否された (422) ときのヒント"
+other = "メッセージに示した項目を直して実行し直してください。同じタイトルのページは `wikino page list --title <タイトル>` で探せます。タイトルの無い未公開のページは `--title` を付けて更新してください。"
+
+[page_update_error_edits_precondition_failed_hint]
+description = "page update --editsで--if-matchの版の後にページが更新されていた (412) ときのヒント。Commandは今の本文と版を取得するコマンド"
+other = "`--if-match` の版の後にページが更新されています。`{{.Command}}` で今の本文と版を取得し、`old_str` が今の本文に一致するかを確かめてから送り直してください。"
+
+[page_update_done]
+description = "page updateの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "ページ{{.Number}}を更新しました。"
+
+# draftコマンド
+
+[draft_short]
+description = "draftコマンドの短い説明"
+other = "ページの下書きを扱う"
+
+[draft_long]
+description = "draftコマンドの説明"
+other = """
+トークンの持ち主のページの下書きを扱います。
+
+下書きは、ページを公開せずに書き換えるためのもので、ページとメンバーの組に1つあります。
+下書きはページ番号で指します。
+ほかのメンバーの下書きは扱えません。"""
+
+[draft_example]
+description = "draftコマンドの使用例"
+other = """
+  # 自分の下書きの一覧を出す
+  wikino draft list
+
+  # ページ12の下書きを作成する
+  wikino draft create 12
+
+  # ページ12の下書きをWikinoファイル形式のMarkdownで読む
+  wikino draft get 12 --md"""
+
+[draft_output]
+description = "draftコマンドのヘルプの「出力」の節"
+other = "  各サブコマンドのヘルプを参照してください。"
+
+[draft_errors]
+description = "draftコマンドのヘルプの「エラー」の節"
+other = "  サブコマンドが無いときと未知のサブコマンドは、使い方の誤り (終了コード2) で失敗します。"
+
+[draft_list_short]
+description = "draft listコマンドの短い説明"
+other = "下書きの一覧を出す"
+
+[draft_list_long]
+description = "draft listコマンドの説明"
+other = """
+トークンの持ち主がスペースに持っている下書きを、更新日時の新しい順に出します。
+まだ公開していない新しいページの下書きも含みます。
+ゴミ箱に入れたページの下書きは含みません。
+
+一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。
+本文を読むには `wikino draft get` を使います。
+一覧に本文が要るときは、`--fields` に `body` を含めます。
+
+既定ではAPIの既定の件数 (20件) の1ページだけを取得します。
+次のページがあるときは、取り方を標準エラーに出します。
+`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。
+
+非公開トピックのページの下書きは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。"""
+
+[draft_list_example]
+description = "draft listコマンドの使用例"
+other = """
+  # 自分の下書きの一覧を出す
+  wikino draft list
+
+  # 下書きのあるページの番号だけを出す
+  wikino draft list --jq '.items[].page_number'
+
+  # すべての下書きを、本文を含めて1行1件で出す
+  wikino draft list --all --fields page_number,title,body"""
+
+[draft_list_output]
+description = "draft listコマンドのヘルプの「出力」の節"
+other = """
+  `{"items": [...], "next_cursor": ...}` の形で、下書きごとに次の項目を出します。
+    page_number   下書きのページの番号。`wikino draft get` などに渡します
+    title         下書きのタイトル。タイトルの無い下書きではnull
+    topic_number  下書きのページが属するトピックの番号
+    topic_name    下書きのページが属するトピックの名前
+    modified_at   下書きの内容を最後に更新した日時 (RFC 3339)。Web画面の自動保存でも更新されます
+    url           Web画面で下書きのページの編集画面を開くURL
+    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます
+                  APIの応答には無く、CLIが本文から作る項目です
+    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します
+  `next_cursor` は次のページのカーソルで、続きが無ければnullです。
+  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。
+  下書きが無いときは、空の一覧を終了コード0で返します。"""
+
+[draft_list_errors]
+description = "draft listコマンドのヘルプの「エラー」の節"
+other = """
+  2  `--limit` が1未満、`--all` と `--cursor` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにdraft_page:readのスコープが無い (403)
+  7  `--cursor` の値が不正 (422)。`--cursor` を外して最初のページから取得し直してください"""
+
+[draft_list_empty_hint]
+description = "draft listの人間向けの表示で、下書きが無いときに標準エラーに出すヒント"
+other = "あるはずの下書きが無いときは、非公開トピックのページの下書きを見るためのtopic:readのスコープがトークンにあるかを `wikino auth status` で確かめてください。"
+
+[draft_get_short]
+description = "draft getコマンドの短い説明"
+other = "下書きの内容を出す"
+
+[draft_get_long]
+description = "draft getコマンドの説明"
+other = """
+ページ番号で指定したページについて、トークンの持ち主の下書きを本文を含めて出します。
+
+`--md` を付けると、Wikinoファイル形式のページファイル (frontmatter付きのMarkdown) で出します。
+本文を読むときは、改行や引用符がエスケープされない `--md` が向いています。
+大きな下書きは、`--md` でファイルに書き出してから必要な部分だけを読んでください。
+
+出力の `etag` は下書きの版です。
+下書きを更新するときは、読んだ版を `--if-match` に渡します。
+
+非公開トピックのページの下書きを読むには、トークンにdraft_page:readに加えてtopic:readのスコープが要ります。"""
+
+[draft_get_example]
+description = "draft getコマンドの使用例"
+other = """
+  # ページ12の下書きを出す
+  wikino draft get 12
+
+  # ページ12の下書きをWikinoファイル形式のMarkdownでファイルに書き出す
+  wikino draft get 12 --md > draft-12.md
+
+  # ページ12の下書きの版 (ETag) だけを出す
+  wikino draft get 12 --jq .etag"""
+
+[draft_get_output]
+description = "draft getコマンドのヘルプの「出力」の節"
+other = """
+  下書きを `wikino draft list` の項目 (excerptを除き、bodyを含む) に次の項目を加えて出します。
+    etag  下書きの版 (応答のETagヘッダーの値)。下書きを更新するコマンドの `--if-match` に渡します
+  `--md` を付けると、JSONの代わりにWikinoファイル形式のページファイルを出します。
+  frontmatterの `wikino_` で始まるキーにページ番号・タイトル・版・トピック番号・更新日時・URLを書き、続けて本文をそのまま出します。
+  下書きには公開状態が無いため、`wikino_status` は書きません。
+  本文自体がfrontmatterで始まるときは、そのブロックにキーを足します。"""
+
+[draft_get_errors]
+description = "draft getコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--md` と `--json`・`--fields`・`--jq` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにdraft_page:readのスコープが無い (403)
+  5  ページに自分の下書きが無い、ページが無いかゴミ箱にある、または見られない非公開トピックのページ (404)。
+     `wikino draft list` で下書きのあるページの番号を確かめてください"""
+
+[draft_error_not_found_hint]
+description = "ページ番号で下書きを指すコマンドで下書きが見つからないときのヒント"
+other = "`wikino draft list` で下書きのあるページの番号を確かめてください。下書きが無ければ `wikino draft create` で作成します。非公開トピックのページの下書きを見るには、トークンにtopic:readのスコープが要ります。"
+
+[draft_label_page_number]
+description = "下書きの表示の「ページ番号」のラベル"
+other = "ページ番号"
+
+[draft_label_title]
+description = "下書きの表示の「タイトル」のラベル"
+other = "タイトル"
+
+[draft_label_topic_name]
+description = "下書きの表示の「トピック名」のラベル"
+other = "トピック"
+
+[draft_label_topic_number]
+description = "下書きの表示の「トピック番号」のラベル"
+other = "トピック番号"
+
+[draft_label_modified_at]
+description = "下書きの表示の「更新日時」のラベル"
+other = "更新日時"
+
+[draft_label_url]
+description = "下書きの表示の「URL」のラベル"
+other = "URL"
+
+[draft_label_etag]
+description = "下書きの表示の「版 (ETag)」のラベル"
+other = "ETag"
+
+[draft_label_revision_id]
+description = "下書きのリビジョンの表示の「リビジョンID」のラベル"
+other = "リビジョンID"
+
+[draft_label_created_at]
+description = "下書きのリビジョンの表示の「作成日時」のラベル"
+other = "作成日時"
+
+[draft_value_untitled]
+description = "タイトルの無い下書きの、人間向けの表示"
+other = "(タイトルなし)"
+
+[draft_create_short]
+description = "draft createコマンドの短い説明"
+other = "下書きを作成する"
+
+[draft_create_long]
+description = "draft createコマンドの説明"
+other = """
+ページを公開せずに書き換えるための下書きを作成します。
+作成と同時に、下書きの編集履歴を1件作ります。
+
+既存のページの下書きは、ページ番号を引数に渡して作成します。
+`--title` と本文を省くと、ページの今のタイトルと本文を下書きにします。
+ページに自分の下書きが既にあるときは作成できません。
+`wikino draft get` で今の下書きを読み、`wikino draft update` で更新してください。
+
+新しいページの下書きは、ページ番号の代わりに `--topic` でトピックを指定して作成します。
+Web画面での作成と同じく、タイトルと本文の無い未公開のページを作り、その下書きを作ります。
+`--title` を省くとタイトルの無い下書きに、本文を省くと本文の空の下書きになります。
+出力の `page_number` が新しいページの番号です。
+
+本文は `--body` か `--body-file` で渡し、`--body-file -` で標準入力から読みます。
+本文は渡したとおりに送り、末尾の改行も削りません。
+タイトルの規則 (トピック内で重複できないなど) は、下書きを公開するときに確かめます。
+
+本文のWikiリンクが存在しないページを指すと、リンク先を未公開のページとして作成します。
+本文を渡したときは、作成の前に本文のWikiリンクのリンク先を確かめ、作成されるリンク先があれば、作成の後に標準エラーへ一覧を出します。
+この一覧は作成の直前の見込みで、その間に他の利用者がページを作成・削除すると実際の結果とずれることがあります。
+意図しないリンク先が無いかは、`--dry-run` で先に確かめられます。
+
+新しいページの下書きの作成は冪等ではありません。
+結果が分からないとき (通信の失敗など) は、送り直す前に `wikino draft list` で作成済みかを確かめてください。
+
+新しいページの下書きを作成するには、トークンにdraft_page:writeに加えてpage:writeのスコープが要ります。
+本文のリンク先を確かめるには、page:readのスコープが要ります。
+非公開トピックのページの下書きを作成するには、topic:readのスコープも要ります。"""
+
+[draft_create_example]
+description = "draft createコマンドの使用例"
+other = """
+  # ページ12の今の内容で下書きを作成する
+  wikino draft create 12
+
+  # ページ12の下書きを、ファイルの内容を本文にして作成する
+  wikino draft create 12 --body-file minutes.md
+
+  # トピック3に「議事録」という新しいページの下書きを作成し、ページ番号と版だけを出す
+  wikino draft create --topic 3 --title '議事録' --body '# 議事録' --fields page_number,etag
+
+  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)
+  wikino draft create 12 --body-file minutes.md --dry-run"""
+
+[draft_create_output]
+description = "draft createコマンドのヘルプの「出力」の節"
+other = """
+  作成した下書きを、`wikino draft get` と同じ項目 (`etag` を含む) で出します。
+  続けて更新するときは、`etag` を `wikino draft update` の `--if-match` に渡します。
+  人間向けの表示では本文を出さず、完了の行を標準エラーに出します。
+  本文のWikiリンクで作成した見込みのリンク先があれば、JSONの出力でも標準エラーに一覧を出します。
+  `--dry-run` を付けると、作成の要求を送らずに `{"dry_run": true, "requests": [...], "wikilinks": [...]}` の形で送る要求と本文のWikiリンクのリンク先を出します。
+  `wikilinks` の項目は `wikino page create` のヘルプを参照してください。
+  既存のページのリンク先の確認に要るページの取得と、リンク先の確認 (どちらも読み取り) の要求は、`--dry-run` でも送ります。
+  `--dry-run` と `--fields` は併用できません。"""
+
+[draft_create_errors]
+description = "draft createコマンドのヘルプの「エラー」の節"
+other = """
+  1  通信に失敗した、サーバーのエラー (5xx)。作成されている場合があります。
+     既存のページでは `wikino draft get <ページ番号>` で、新しいページでは `wikino draft list` で確かめてから送り直してください
+  2  ページ番号と `--topic` のどちらも無いか両方ある、ページ番号か `--topic` が1以上の整数でない、`--body` と `--body-file` の両方がある、
+     本文のファイルを読めないかUTF-8でない、`--fields` に未知の項目、`--dry-run` と `--fields` の併用
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにdraft_page:writeのスコープが無い、新しいページでpage:writeのスコープが無い、本文のリンク先の確認でpage:readのスコープが無い (403)
+  5  ページやトピックに下書きを作成できない、本文のリンク先の確認でページが無い (404)
+  6  ページに自分の下書きが既にある (409)。`wikino draft get <ページ番号>` で今の下書きを読み、`wikino draft update <ページ番号>` で更新してください
+  7  タイトルなどの入力が不正、またはページかトピックが無いか見られない (422)。エラーに示された項目を修正してください。
+     ページかトピックの番号に問題があるときは、`wikino page list` か `wikino topic list` で番号を確かめてください"""
+
+[draft_create_topic_flag]
+description = "draft createの--topicフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "新しいページの下書きを作成するトピックの番号 (`number`)。ページ番号とは同時に指定できない"
+
+[draft_create_title_flag]
+description = "draft createの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "下書きのタイトル (`title`)。既存のページで省くとページの今のタイトルになる。公開するときにページのタイトルの規則 (200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない) を確かめる"
+
+[draft_create_error_page_and_topic]
+description = "draft createでページ番号と--topicを両方指定したときのメッセージ"
+other = "ページ番号と `--topic` は同時に指定できません。既存のページの下書きはページ番号を、新しいページの下書きは `--topic` を指定してください。"
+
+[draft_create_error_target_required]
+description = "draft createでページ番号も--topicも指定していないときのメッセージ"
+other = "既存のページの下書きはページ番号を、新しいページの下書きは `--topic` を指定してください。"
+
+[draft_create_error_page_not_found_hint]
+description = "draft createで既存のページが無いか見られない (ページの取得の404・作成の422) ときのヒント"
+other = "`wikino page list` でページの番号を確かめてください。非公開トピックのページを見るには、トークンにtopic:readのスコープが要ります。"
+
+[draft_create_error_page_forbidden_hint]
+description = "draft createで既存のページに下書きを作成できない (404) ときのヒント。Numberはページ番号"
+other = "トークンの持ち主はページ{{.Number}}に下書きを作成できません。Web画面でページのトピックに参加しているかを確かめてください。"
+
+[draft_create_error_conflict_hint]
+description = "draft createで下書きが既にある (409) ときのヒント。GetCommandは下書きを取得するコマンド、UpdateCommandは下書きを更新するコマンド"
+other = "`{{.GetCommand}}` で今の下書きを読み、`{{.UpdateCommand}}` で更新してください。"
+
+[draft_create_error_page_unknown_result_hint]
+description = "draft createで既存のページの下書きが作成されたか分からないときのヒント。GetCommandは下書きを取得するコマンド"
+other = "下書きが作成されたかは分かりません。`{{.GetCommand}}` で確かめてください。送り直して下書きが既にあるエラー (409) になれば、作成済みです。"
+
+[draft_create_error_topic_not_found_hint]
+description = "draft createでトピックに新しいページの下書きを作成できない (404) ときのヒント。Topicはトピック番号"
+other = "トークンの持ち主はトピック{{.Topic}}に新しいページを作成できません。トークンにpage:writeのスコープがあるか、Web画面でトピックに参加しているかを確かめてください。"
+
+[draft_create_error_topic_validation_failed_hint]
+description = "draft createで新しいページのトピックが検証で拒否された (422) ときのヒント"
+other = "`wikino topic list` でトピックの番号を確かめてください。"
+
+[draft_create_error_topic_unknown_result_hint]
+description = "draft createで新しいページの下書きが作成されたか分からないときのヒント"
+other = "下書きが作成されたかは分かりません。新しいページの下書きの作成は冪等でないため、送り直す前に `wikino draft list` で作成済みかを確かめてください。"
+
+[draft_create_done]
+description = "draft createの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "ページ{{.Number}}の下書きを作成しました。"
+
+[draft_update_short]
+description = "draft updateコマンドの短い説明"
+other = "下書きを更新する"
+
+[draft_update_long]
+description = "draft updateコマンドの説明"
+other = """
+ページ番号で指定したページの自分の下書きのタイトルと本文を更新します。
+指定した項目だけを更新し、指定しなかった項目は変えません。
+ページは公開せず、公開済みのページの内容も変えません。
+更新と同時に、下書きの編集履歴を1件作ります (直前の編集履歴と同じ内容なら作りません)。
+
+本文は、変更の大きさで次の3つの渡し方から選びます。
+
+- `--body` か `--body-file`: 変えない部分も含めた本文の全体を渡します。`--body-file -` で標準入力から読みます。本文は渡したとおりに送り、末尾の改行も削りません
+- `--md-file`: `wikino draft get --md` で書き出して編集したページファイルを書き戻します。frontmatterの `wikino_etag` を版に、`wikino_title` をタイトルに使い、`wikino_` で始まるキーを取り除いた残りを本文として送ります
+- `--edits`: 本文の一部だけを検索置換します。`{"edits": [{"old_str": "...", "new_str": "...", "replace_all": false}]}` の形のJSONを、ファイルか標準入力 (`-`) から読みます
+
+`--md-file` と `--edits` の規則は `wikino page update` と同じです。
+`--md-file` では、`wikino_number` が引数のページ番号と違うファイルと、`wikino_etag` の無いファイルを受け付けず、`wikino_title` が無ければタイトルを変えません。
+`--edits` ではタイトルを変えられません。
+
+更新には、読んだ版を `--if-match` で渡します。
+版は `wikino draft get` の出力の `etag` です。
+Web画面の自動保存でも版が変わるため、読んだ後に下書きが更新されていると、上書きせずに終了コード6で失敗します。
+`--force` を付けると版を照合せず、直前に取得した最新の版に上書きします。
+Web画面で書いている内容を消しうるため、内容を読まずに上書きしてよいときだけ使ってください。
+`--md-file` では版をファイルから読むため、`--if-match` と `--force` を付けません。
+`--edits` では `--if-match` を省けます。
+
+本文のWikiリンクが存在しないページを指すと、リンク先を未公開のページとして作成します。
+本文を書き込む前にWikiリンクのリンク先を確かめ (`--edits` では各 `new_str` のリンク先を確かめます)、作成されるリンク先があれば、更新の後に標準エラーへ一覧を出します。
+この一覧は更新の直前の見込みで、その間に他の利用者がページを作成・削除すると実際の結果とずれることがあります。
+意図しないリンク先が無いかは、`--dry-run` で先に確かめられます。
+
+タイトルの規則 (トピック内で重複できないなど) は、下書きを公開するときに確かめます。
+
+本文のリンク先を確かめるには、トークンにdraft_page:writeに加えてpage:readのスコープが要ります。
+非公開トピックのページの下書きを更新するには、topic:readのスコープも要ります。"""
+
+[draft_update_example]
+description = "draft updateコマンドの使用例"
+other = """
+  # ページ12の下書きの版を取得してから、本文をファイルの内容で更新する
+  wikino draft get 12 --jq .etag
+  wikino draft update 12 --body-file body.md --if-match '"d41d8cd9"'
+
+  # ページ12の下書きのタイトルだけを変える
+  wikino draft update 12 --title '定例会議の議事録' --if-match '"d41d8cd9"'
+
+  # ページ12の下書きをファイルに書き出し、編集してから書き戻す
+  wikino draft get 12 --md > draft.md
+  wikino draft update 12 --md-file draft.md
+
+  # ページ12の下書きの本文の一部を検索置換する
+  echo '{"edits": [{"old_str": "- [ ] 議事録を共有する", "new_str": "- [x] 議事録を共有する"}]}' | wikino draft update 12 --edits -
+
+  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)
+  wikino draft update 12 --body-file body.md --if-match '"d41d8cd9"' --dry-run"""
+
+[draft_update_output]
+description = "draft updateコマンドのヘルプの「出力」の節"
+other = """
+  更新した下書きを、`wikino draft get` と同じ項目 (`etag` を含む) で出します。
+  `etag` は更新後の版で、続けて更新するときは `--if-match` に渡します。
+  人間向けの表示では本文を出さず、完了の行を標準エラーに出します。
+  本文のWikiリンクで作成した見込みのリンク先があれば、JSONの出力でも標準エラーに一覧を出します。
+  `--dry-run` を付けると、更新の要求を送らずに `{"dry_run": true, "requests": [...], "wikilinks": [...]}` の形で送る要求と本文のWikiリンクのリンク先を出します。
+  `wikilinks` の項目は `wikino page update` のヘルプを参照してください。
+  本文を書き込むときと `--force` を付けたときの下書きの取得と、リンク先の確認 (読み取り) の要求は、`--dry-run` でも送ります。
+  `--dry-run` と `--fields` は併用できません。"""
+
+[draft_update_errors]
+description = "draft updateコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--title`・`--body`・`--body-file`・`--md-file`・`--edits` のどれも無い、同時に指定できないフラグを併用した、
+     `--if-match` と `--force` のどちらも無いか両方ある (`--md-file`・`--edits` を除く)、`--if-match` が空か `*`、ファイルを読めないかUTF-8でない、
+     `--md-file` の `wikino_number` がページ番号と違うか `wikino_etag` が無い、`--edits` のJSONの形が違う、`--fields` に未知の項目、`--dry-run` と `--fields` の併用
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにdraft_page:writeのスコープが無い、本文のリンク先の確認でpage:readのスコープが無い (403)
+  5  ページに自分の下書きが無い、ページが無いかゴミ箱にある、または見られない非公開トピックのページ (404)。
+     `wikino draft list` で番号を確かめ、下書きが無ければ `wikino draft create` で作成してください
+  6  読んだ後に下書きが更新されている (412)。`wikino draft get` で最新の内容と版を取得し、変更を反映してから更新し直してください。
+     `--md-file` では、`wikino draft get --md` で書き出し直したファイルに変更を反映してください
+  7  タイトルや本文が長すぎるなど入力が不正 (422)。
+     `--edits` の `old_str` が今の本文に一致しないか、複数の箇所に一致した (422)。何番目の編集かをヒントに、一致の件数をメッセージに示します。
+     `wikino draft get --md` で今の本文を確かめ、`edits` の全体を送り直してください"""
+
+[draft_update_title_flag]
+description = "draft updateの--titleフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "下書きの新しいタイトル (`title`)。公開するときにページのタイトルの規則 (200文字まで。`/`・`\\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けない) を確かめる"
+
+[draft_update_error_nothing_to_update]
+description = "draft updateで更新する項目が指定されていないときのメッセージ"
+other = "更新する項目を `--title`・`--body`・`--body-file`・`--md-file`・`--edits` のどれかで指定してください。"
+
+[draft_update_error_precondition_failed_hint]
+description = "draft updateで読んだ後に下書きが更新されていた (412) ときのヒント。Commandは最新の版を取得するコマンド"
+other = "`{{.Command}}` で最新の内容と版 (`etag`) を取得し、変更を今の内容に反映してから、新しい版を `--if-match` に渡して更新し直してください。Web画面の自動保存でも版が変わります。"
+
+[draft_update_error_md_file_precondition_failed_hint]
+description = "draft update --md-fileで読んだ後に下書きが更新されていた (412) ときのヒント。Commandはページファイルを書き出すコマンド"
+other = "読んだ後に下書きが更新されています。`{{.Command}} > draft.md` で最新の内容を書き出し直し、変更を反映してから `--md-file` で書き戻してください。"
+
+[draft_update_error_edits_precondition_failed_hint]
+description = "draft update --editsで--if-matchの版の後に下書きが更新されていた (412) ときのヒント。Commandは今の本文と版を取得するコマンド"
+other = "`--if-match` の版の後に下書きが更新されています。`{{.Command}}` で今の本文と版を取得し、`old_str` が今の本文に一致するかを確かめてから送り直してください。"
+
+[draft_update_error_validation_failed_hint]
+description = "draft updateの入力が検証で拒否された (422) ときのヒント"
+other = "メッセージに示した項目を直して実行し直してください。"
+
+[draft_update_done]
+description = "draft updateの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "ページ{{.Number}}の下書きを更新しました。"
+
+[draft_delete_short]
+description = "draft deleteコマンドの短い説明"
+other = "下書きを削除する"
+
+[draft_delete_long]
+description = "draft deleteコマンドの説明"
+other = """
+ページ番号で指定したページの自分の下書きを、編集履歴ごと削除します。
+削除した下書きと編集履歴は元に戻せません。
+ページそのものは削除せず、公開済みのページの内容も変えません。
+
+削除には、読んだ版を `--if-match` で渡します。
+版は `wikino draft get` の出力の `etag` です。
+読んだ後に下書きが更新されていると (Web画面の自動保存を含みます)、削除せずに終了コード6で失敗します。
+`--force` を付けると版を照合せず、直前に取得した最新の版を削除します。
+
+取り消せない操作のため、`--yes` が無ければ削除の前に確認します。
+端末から実行したときは、削除する下書きと編集履歴の件数を示して尋ねます。
+端末でないとき (エージェントやスクリプトから実行したとき) は、削除の要求を送らずに、何が起きるか (`changes`) と承認後に実行するコマンド (`confirm_command`) を標準出力にJSONで出し、終了コード9で終えます。
+`changes` を利用者に見せ、承認を得てから `confirm_command` をそのまま実行してください。
+`confirm_command` には、確認のために取得した版が `--if-match` で入っています。
+
+削除するには、トークンにdraft_page:deleteのスコープが要ります。
+このスコープは、確認と `--force` のための下書きと編集履歴の読み取りも含みます。
+非公開トピックのページの下書きを削除するには、topic:readのスコープも要ります。"""
+
+[draft_delete_example]
+description = "draft deleteコマンドの使用例"
+other = """
+  # ページ12の下書きを読んで版を確かめてから、削除の確認を求める
+  wikino draft get 12 --md
+  wikino draft delete 12 --if-match '"d41d8cd9"'
+
+  # 利用者の承認を得た後に、確認を省いて削除する
+  wikino draft delete 12 --if-match '"d41d8cd9"' --yes
+
+  # 送る要求を確かめる (送らない)
+  wikino draft delete 12 --if-match '"d41d8cd9"' --dry-run"""
+
+[draft_delete_output]
+description = "draft deleteコマンドのヘルプの「出力」の節"
+other = """
+  削除したら、JSONでは `{"page_number": 12, "deleted": true}` を出します。
+  人間向けの表示では標準出力に何も出さず、完了の行を標準エラーに出します。
+  `--yes` が無く端末でないときは、削除せずに `{"status": "confirmation_required", "changes": [...], "confirm_command": "..."}` を出し、終了コード9で終えます。
+  `--dry-run` を付けると、削除の要求を送らずに `{"dry_run": true, "requests": [...]}` の形で送る要求を出します。確認は求めません。
+  `--force` を付けたときの下書きの取得 (読み取り) の要求は、`--dry-run` でも送ります。
+  `--dry-run` と `--fields` は併用できません。"""
+
+[draft_delete_errors]
+description = "draft deleteコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--if-match` と `--force` のどちらも無いか両方ある、`--if-match` が空か `*`、`--fields` に未知の項目、`--dry-run` と `--fields` の併用
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにdraft_page:deleteのスコープが無い (403)
+  5  ページに自分の下書きが無い、ページが無いかゴミ箱にある、または見られない非公開トピックのページ (404)。
+     削除し直して5になった場合は、削除済みです
+  6  読んだ後に下書きが更新されている (412)。`wikino draft get` で今の内容を確かめ、削除してよければ新しい版で削除し直してください
+  9  `--yes` が無く、利用者の確認が必要。端末では確認を拒否した"""
+
+[draft_delete_error_version_changed]
+description = "draft deleteの確認の前に、--if-matchの版の後に下書きが更新されていたことが分かったときのメッセージ"
+other = "`--if-match` の版の後に下書きが更新されています。削除の要求は送っていません。"
+
+[draft_delete_error_precondition_failed_hint]
+description = "draft deleteで読んだ後に下書きが更新されていた (412) ときのヒント。Commandは今の内容と版を取得するコマンド"
+other = "`{{.Command}}` で今の内容と版 (`etag`) を確かめ、削除してよければ新しい版を `--if-match` に渡して削除し直してください。Web画面の自動保存でも版が変わります。"
+
+[draft_delete_error_not_found_hint]
+description = "draft deleteで下書きが見つからない (404) ときのヒント"
+other = "`wikino draft list` で下書きのあるページの番号を確かめてください。削除し直してこのエラーになった場合は、削除済みです。"
+
+[draft_delete_confirm_change_draft]
+description = "draft deleteの確認で示す、削除する下書き。Numberはページ番号、Titleは下書きのタイトル、ModifiedAtは下書きの更新日時"
+other = "ページ{{.Number}}「{{.Title}}」の自分の下書き (更新日時: {{.ModifiedAt}}) を削除します"
+
+[draft_delete_confirm_change_revisions]
+description = "draft deleteの確認で示す、一緒に削除する編集履歴の件数。Countは件数"
+other = "下書きの編集履歴{{.Count}}件も削除します。削除した下書きと編集履歴は元に戻せません"
+
+[draft_delete_confirm_change_page_unchanged]
+description = "draft deleteの確認で示す、ページそのものは変わらないこと"
+other = "ページそのものと公開済みの内容は変わりません"
+
+[draft_delete_done]
+description = "draft deleteの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "ページ{{.Number}}の下書きを削除しました。"
+
+[draft_publish_short]
+description = "draft publishコマンドの短い説明"
+other = "下書きを公開する"
+
+[draft_publish_long]
+description = "draft publishコマンドの説明"
+other = """
+ページ番号で指定したページについて、自分の下書きのタイトルと本文でページを公開し、公開したページを出します。
+公開すると、下書きを編集履歴ごと削除し、ページの編集履歴を1件作ります。
+まだ公開していないページは公開済みになります。
+ページの今の内容とは照合しないため、下書きを作った後にページが更新されていても、下書きの内容で上書きします。
+
+公開には、読んだ下書きの版を `--if-match` で渡します。
+版は `wikino draft get` の出力の `etag` です。
+読んだ後に下書きが更新されていると (Web画面の自動保存を含みます)、公開せずに終了コード6で失敗します。
+`--force` を付けると版を照合せず、直前に取得した最新の下書きを公開します。
+
+公開の前に下書きを取得し、本文のWikiリンクのリンク先を確かめます。
+本文のWikiリンクが存在しないページを指すと、リンク先を未公開のページとして作成します。
+作成されるリンク先があれば、公開の後に標準エラーへ一覧を出します。
+この一覧は公開の直前の見込みで、その間に他の利用者がページを作成・削除すると実際の結果とずれることがあります。
+
+ページを公開する操作のため、`--yes` が無ければ公開の前に確認します。
+確認では、今のページと比べたタイトルの変更と本文の増減の行数、作成されるリンク先、公開後に下書きが削除されることを示します。
+端末から実行したときは、これらを示して尋ねます。
+端末でないとき (エージェントやスクリプトから実行したとき) は、公開の要求を送らずに、何が起きるか (`changes`) と承認後に実行するコマンド (`confirm_command`) を標準出力にJSONで出し、終了コード9で終えます。
+`changes` を利用者に見せ、承認を得てから `confirm_command` をそのまま実行してください。
+`confirm_command` には、確認のために取得した版が `--if-match` で入っています。
+タイトルの無い下書きは公開できないため、確認を求めずに終了コード7で失敗します。
+
+公開するには、トークンにdraft_page:writeとpage:writeのスコープが要ります。
+非公開トピックのページの下書きを公開するには、topic:readのスコープも要ります。"""
+
+[draft_publish_example]
+description = "draft publishコマンドの使用例"
+other = """
+  # ページ12の下書きを読んで版を確かめてから、公開の確認を求める
+  wikino draft get 12 --md
+  wikino draft publish 12 --if-match '"d41d8cd9"'
+
+  # 利用者の承認を得た後に、確認を省いて公開する
+  wikino draft publish 12 --if-match '"d41d8cd9"' --yes
+
+  # 送る要求と、本文のWikiリンクのリンク先を確かめる (送らない)
+  wikino draft publish 12 --if-match '"d41d8cd9"' --dry-run"""
+
+[draft_publish_output]
+description = "draft publishコマンドのヘルプの「出力」の節"
+other = """
+  公開したページを、`wikino page get` と同じ項目 (`etag` を含む) で出します。
+  `etag` は公開後のページの版で、続けてページを更新するときは `--if-match` に渡します。
+  人間向けの表示では本文を出さず、完了の行を標準エラーに出します。
+  本文のWikiリンクで作成した見込みのリンク先があれば、JSONの出力でも標準エラーに一覧を出します。
+  `--yes` が無く端末でないときは、公開せずに `{"status": "confirmation_required", "changes": [...], "confirm_command": "..."}` を出し、終了コード9で終えます。
+  `--dry-run` を付けると、公開の要求を送らずに `{"dry_run": true, "requests": [...], "wikilinks": [...]}` の形で送る要求と本文のWikiリンクのリンク先を出します。確認は求めません。
+  `wikilinks` の項目は `wikino page update` のヘルプを参照してください。
+  下書きの取得とリンク先の確認 (読み取り) の要求は、`--dry-run` でも送ります。
+  `--dry-run` と `--fields` は併用できません。"""
+
+[draft_publish_errors]
+description = "draft publishコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--if-match` と `--force` のどちらも無いか両方ある、`--if-match` が空か `*`、`--fields` に未知の項目、`--dry-run` と `--fields` の併用
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにdraft_page:writeかpage:writeのスコープが無い、またはメンバーに下書きを保存しページを公開する権限が無い (403)
+  5  ページに自分の下書きが無い、ページが無いかゴミ箱にある、または見られない非公開トピックのページ (404)。
+     公開し直して5になった場合は、公開済みか下書きが削除されています。`wikino page get` でページを確かめてください
+  6  読んだ後に下書きが更新されている (412)。`wikino draft get` で今の内容を確かめ、公開してよければ新しい版で公開し直してください
+  7  下書きにタイトルが無い、タイトルに使えない文字がある、または同じタイトルのページがトピックにある (422)。
+     `wikino draft update --title` で下書きのタイトルを直してから公開し直してください
+  9  `--yes` が無く、利用者の確認が必要。端末では確認を拒否した"""
+
+[draft_publish_error_version_changed]
+description = "draft publishで公開の前に、--if-matchの版の後に下書きが更新されていたことが分かったときのメッセージ"
+other = "`--if-match` の版の後に下書きが更新されています。公開の要求は送っていません。"
+
+[draft_publish_error_precondition_failed_hint]
+description = "draft publishで読んだ後に下書きが更新されていた (412) ときのヒント。Commandは今の内容と版を取得するコマンド"
+other = "`{{.Command}}` で今の内容と版 (`etag`) を確かめ、公開してよければ新しい版を `--if-match` に渡して公開し直してください。Web画面の自動保存でも版が変わります。"
+
+[draft_publish_error_not_found_hint]
+description = "draft publishで下書きが見つからない (404) ときのヒント。Commandはページを取得するコマンド"
+other = "`wikino draft list` で下書きのあるページの番号を確かめてください。公開し直してこのエラーになった場合は、公開済みか下書きが削除されています。`{{.Command}}` でページを確かめてください。"
+
+[draft_publish_error_untitled]
+description = "draft publishの確認の前に、下書きにタイトルが無いことが分かったときのメッセージ"
+other = "下書きにタイトルが無いため公開できません。公開の要求は送っていません。"
+
+[draft_publish_error_validation_failed_hint]
+description = "draft publishで下書きのタイトルが検証で拒否された (422) ときのヒント。Commandは下書きのタイトルを直すコマンドの例"
+other = "`{{.Command}}` で下書きのタイトルを直してから、新しい版で公開し直してください。"
+
+[draft_publish_confirm_change_publish]
+description = "draft publishの確認で示す、公開する内容。Numberはページ番号、Titleは下書きのタイトル、TitleChangeはタイトルの変更の有無、Added・Deletedは本文で足す・消す行数"
+other = "下書きの内容でページ{{.Number}}「{{.Title}}」を公開します ({{.TitleChange}}、本文 +{{.Added}}行 -{{.Deleted}}行)"
+
+[draft_publish_confirm_title_unchanged]
+description = "draft publishの確認で示す、タイトルを変えないこと"
+other = "タイトルの変更なし"
+
+[draft_publish_confirm_title_changed]
+description = "draft publishの確認で示す、タイトルを変えること。Oldは今のページのタイトル"
+other = "タイトルを「{{.Old}}」から変更"
+
+[draft_publish_confirm_change_unpublished]
+description = "draft publishの確認で示す、まだ公開していないページが公開済みになること。Numberはページ番号"
+other = "ページ{{.Number}}はまだ公開していないページで、公開済みになります"
+
+[draft_publish_confirm_change_new_pages]
+description = "draft publishの確認で示す、本文のWikiリンクで作成されるリンク先。Countは件数、Pagesは「トピック名/ページのタイトル」の一覧"
+other = "存在しないリンク先{{.Count}}件を未公開のページとして作成します: {{.Pages}}"
+
+[draft_publish_confirm_change_draft_deleted]
+description = "draft publishの確認で示す、公開後に下書きと編集履歴が削除されること"
+other = "公開後、この下書きと下書きの編集履歴は削除されます"
+
+[draft_publish_done]
+description = "draft publishの人間向けの表示で、標準エラーに出す完了の行。Numberはページ番号"
+other = "ページ{{.Number}}を下書きの内容で公開しました。"
+
+[draft_revision_short]
+description = "draft revisionコマンドの短い説明"
+other = "下書きの編集履歴を扱う"
+
+[draft_revision_long]
+description = "draft revisionコマンドの説明"
+other = """
+トークンの持ち主の下書きの編集履歴 (リビジョン) を扱います。
+
+リビジョンは下書きのある時点のタイトルと本文の記録で、作成した後は変わりません。
+下書きの作成・更新と、Web画面での手動保存や復元のときに作られます。
+Web画面の自動保存ではリビジョンを作らないため、最新のリビジョンが今の下書きと同じ内容とは限りません。
+下書きを公開または削除すると、編集履歴も削除されます。"""
+
+[draft_revision_example]
+description = "draft revisionコマンドの使用例"
+other = """
+  # ページ12の下書きの編集履歴を出す
+  wikino draft revision list 12
+
+  # リビジョンの本文をWikinoファイル形式のMarkdownで読む
+  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --md"""
+
+[draft_revision_output]
+description = "draft revisionコマンドのヘルプの「出力」の節"
+other = "  各サブコマンドのヘルプを参照してください。"
+
+[draft_revision_errors]
+description = "draft revisionコマンドのヘルプの「エラー」の節"
+other = "  サブコマンドが無いときと未知のサブコマンドは、使い方の誤り (終了コード2) で失敗します。"
+
+[draft_revision_list_short]
+description = "draft revision listコマンドの短い説明"
+other = "下書きの編集履歴の一覧を出す"
+
+[draft_revision_list_long]
+description = "draft revision listコマンドの説明"
+other = """
+ページ番号で指定したページについて、自分の下書きの編集履歴 (リビジョン) を作成日時の新しい順に出します。
+
+一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。
+本文を読むには `wikino draft revision get` を使います。
+一覧に本文が要るときは、`--fields` に `body` を含めます。
+
+既定ではAPIの既定の件数 (20件) の1ページだけを取得します。
+次のページがあるときは、取り方を標準エラーに出します。
+`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。
+
+非公開トピックのページの下書きの編集履歴を読むには、トークンにdraft_page:readに加えてtopic:readのスコープが要ります。"""
+
+[draft_revision_list_example]
+description = "draft revision listコマンドの使用例"
+other = """
+  # ページ12の下書きの編集履歴を出す
+  wikino draft revision list 12
+
+  # リビジョンのIDと作成日時だけを出す
+  wikino draft revision list 12 --fields id,created_at
+
+  # すべてのリビジョンを、本文を含めて1行1件で出す
+  wikino draft revision list 12 --all --fields id,title,body"""
+
+[draft_revision_list_output]
+description = "draft revision listコマンドのヘルプの「出力」の節"
+other = """
+  `{"items": [...], "next_cursor": ...}` の形で、リビジョンごとに次の項目を出します。
+    id          リビジョンのID。`wikino draft revision get` に渡します
+    title       リビジョンを作ったときの下書きのタイトル。タイトルの無い下書きではnull
+    created_at  リビジョンを作った日時 (RFC 3339)
+    excerpt     本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます
+                APIの応答には無く、CLIが本文から作る項目です
+    body        本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します
+  `next_cursor` は次のページのカーソルで、続きが無ければnullです。
+  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。
+  リビジョンが無いときは、空の一覧を終了コード0で返します。"""
+
+[draft_revision_list_errors]
+description = "draft revision listコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、`--limit` が1未満、`--all` と `--cursor` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにdraft_page:readのスコープが無い (403)
+  5  ページに自分の下書きが無い、ページが無いかゴミ箱にある、または見られない非公開トピックのページ (404)。
+     `wikino draft list` で下書きのあるページの番号を確かめてください
+  7  `--cursor` の値が不正 (422)。`--cursor` を外して最初のページから取得し直してください"""
+
+[draft_revision_list_empty_hint]
+description = "draft revision listの人間向けの表示で、リビジョンが無いときに標準エラーに出すヒント"
+other = "Web画面の自動保存ではリビジョンを作りません。今の下書きは `wikino draft get` で読めます。"
+
+[draft_revision_get_short]
+description = "draft revision getコマンドの短い説明"
+other = "下書きのリビジョンの内容を出す"
+
+[draft_revision_get_long]
+description = "draft revision getコマンドの説明"
+other = """
+ページ番号とリビジョンのIDで指定した、自分の下書きのリビジョンを本文を含めて出します。
+リビジョンのIDは `wikino draft revision list` の出力の `id` です。
+
+`--md` を付けると、Wikinoファイル形式のページファイル (frontmatter付きのMarkdown) で出します。
+本文を読むときは、改行や引用符がエスケープされない `--md` が向いています。
+
+リビジョンは作成した後に変わらないため、版 (`etag`) を持ちません。
+過去のリビジョンの内容に下書きを戻すには、本文を `wikino draft update` に渡します。
+`--md` の出力には `wikino_etag` が無いため、そのまま `--md-file` では書き戻せません。
+
+非公開トピックのページの下書きのリビジョンを読むには、トークンにdraft_page:readに加えてtopic:readのスコープが要ります。"""
+
+[draft_revision_get_example]
+description = "draft revision getコマンドの使用例"
+other = """
+  # ページ12の下書きのリビジョンを出す
+  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30
+
+  # リビジョンの本文をWikinoファイル形式のMarkdownでファイルに書き出す
+  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --md > revision.md
+
+  # リビジョンの作成日時だけを出す
+  wikino draft revision get 12 0b9d3a52-6f0e-4c1a-9d7e-2f4b8c1e5a30 --jq .created_at"""
+
+[draft_revision_get_output]
+description = "draft revision getコマンドのヘルプの「出力」の節"
+other = """
+  リビジョンを `wikino draft revision list` の項目 (excerptを除き、bodyを含む) で出します。
+  `--md` を付けると、JSONの代わりにWikinoファイル形式のページファイルを出します。
+  frontmatterには `wikino_title` だけを書き、続けて本文をそのまま出します。タイトルの無いリビジョンではfrontmatterを書きません。
+  本文自体がfrontmatterで始まるときは、そのブロックにキーを足します。"""
+
+[draft_revision_get_errors]
+description = "draft revision getコマンドのヘルプの「エラー」の節"
+other = """
+  2  ページ番号が1以上の整数でない、リビジョンのIDがUUIDでない、`--md` と `--json`・`--fields`・`--jq` を併用した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにdraft_page:readのスコープが無い (403)
+  5  リビジョンが無いか、そのページの下書きのリビジョンでない、または下書きが公開・削除されて編集履歴が無い (404)。
+     `wikino draft revision list` でリビジョンのIDを確かめてください"""
+
+[draft_revision_get_error_not_found_hint]
+description = "draft revision getでリビジョンが見つからない (404) ときのヒント。Commandは編集履歴の一覧を出すコマンド"
+other = "`{{.Command}}` でリビジョンのIDを確かめてください。下書きを公開または削除すると、編集履歴も削除されます。"
+
+# attachmentコマンド
+[attachment_short]
+description = "attachmentコマンドの短い説明"
+other = "添付ファイルを扱う"
+
+[attachment_long]
+description = "attachmentコマンドの説明"
+other = """
+スペースの添付ファイルを扱います。
+
+ページの本文は、添付ファイルを `/attachments/{ID}` のパスで参照します (例: `![図](/attachments/01234567-89ab-cdef-0123-456789abcdef)`)。
+本文の図やスクリーンショットの中身を確かめるときは、そのIDを `wikino attachment get` に渡して手元に保存します。"""
+
+[attachment_example]
+description = "attachmentコマンドの使用例"
+other = """
+  # 本文が参照する添付ファイルを、カレントディレクトリに元のファイル名で保存する
+  wikino attachment get /attachments/01234567-89ab-cdef-0123-456789abcdef"""
+
+[attachment_output]
+description = "attachmentコマンドのヘルプの「出力」の節"
+other = "  各サブコマンドのヘルプを参照してください。"
+
+[attachment_errors]
+description = "attachmentコマンドのヘルプの「エラー」の節"
+other = "  サブコマンドが無いときと未知のサブコマンドは、使い方の誤り (終了コード2) で失敗します。"
+
+[attachment_get_short]
+description = "attachment getコマンドの短い説明"
+other = "添付ファイルを保存する"
+
+[attachment_get_long]
+description = "attachment getコマンドの説明"
+other = """
+IDで指定した添付ファイルの中身を取得し、ファイルに保存します。
+IDは、本文の `/attachments/{ID}` のIDです。`/attachments/` を付けたままでも渡せます。
+
+既定では、カレントディレクトリに元のファイル名で保存します。
+元のファイル名は、パスの区切り・制御文字・先頭と末尾の `.` を取り除くなど、保存先のディレクトリの中の1つのファイルを指す名前に整えてから使います。
+`--output` (`-O`) で保存先のファイルかディレクトリを指定でき、`-` を渡すと中身を標準出力に出します。
+既存のファイルは上書きせずに失敗し、`--clobber` を付けたときだけ上書きします。
+
+中身は、APIが返す短命の署名付きURLから、トークンを付けずに取得します。"""
+
+[attachment_get_example]
+description = "attachment getコマンドの使用例"
+other = """
+  # 添付ファイルをカレントディレクトリに元のファイル名で保存する
+  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef
+
+  # 本文の参照のパスのまま渡し、ディレクトリimages/に保存する
+  wikino attachment get /attachments/01234567-89ab-cdef-0123-456789abcdef -O images/
+
+  # ファイル名を指定して保存し、既存のファイルを上書きする
+  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O diagram.png --clobber
+
+  # 中身を標準出力に出す
+  wikino attachment get 01234567-89ab-cdef-0123-456789abcdef -O - > diagram.png"""
+
+[attachment_get_output]
+description = "attachment getコマンドのヘルプの「出力」の節"
+other = """
+  保存したファイルについて、次の項目を出します。
+    id            添付ファイルのID
+    path          保存したファイルのパス
+    filename      アップロードしたときの元のファイル名。保存先の名前には整えた名前を使います
+    content_type  ファイルの種類 (例: image/png)。記録されていなければnull
+    byte_size     保存したバイト数
+  `--output -` のときは、中身だけを標準出力に出し、これらの項目は出しません。"""
+
+[attachment_get_errors]
+description = "attachment getコマンドのヘルプの「エラー」の節"
+other = """
+  1  署名付きURLからの取得に失敗した (期限切れ・途中の切断を含む)。同じコマンドをもう一度実行してください。保存先に書き込めなかった (権限・空き容量など)
+  2  IDがUUIDでない、保存先のディレクトリが無い、保存先に既にファイルがある (`--clobber` で上書き)、`--output -` と `--json`・`--fields`・`--jq`・`--clobber` を併用した、標準出力が端末のときに `--output -` を指定した、`--fields` に未知の項目
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンにattachment:readのスコープが無い (403)
+  5  添付ファイルが無い、または別のスペースの添付ファイル (404)。本文の `/attachments/{ID}` のIDとスペースを確かめてください"""
+
+[attachment_get_output_flag]
+description = "attachment get --outputフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "保存先のファイルかディレクトリ (`path`。- で標準出力)"
+
+[attachment_get_clobber_flag]
+description = "attachment get --clobberフラグの説明"
+other = "保存先の既存のファイルを上書きする"
+
+[attachment_get_error_not_found_hint]
+description = "attachment getで添付ファイルが見つからないときのヒント"
+other = "本文の `/attachments/{ID}` のIDと、`--space` のスペースが添付ファイルのあるスペースかを確かめてください。"
+
+[attachment_get_error_file_exists]
+description = "attachment getで保存先に既にファイルがあるときのメッセージ。Pathは保存先のパス"
+other = "保存先に既にファイルがあります: {{.Path}}"
+
+[attachment_get_error_file_exists_hint]
+description = "attachment getで保存先に既にファイルがあるときのヒント"
+other = "上書きするには `--clobber` を付けてください。別の場所に保存するには、`--output` で保存先を指定してください。"
+
+[attachment_get_error_no_directory]
+description = "attachment getで保存先のディレクトリが無いときのメッセージ。Pathは保存先のディレクトリ"
+other = "保存先のディレクトリがありません: {{.Path}}"
+
+[attachment_get_error_no_directory_hint]
+description = "attachment getで保存先のディレクトリが無いときのヒント"
+other = "ディレクトリを作ってから実行し直すか、`--output` で既存のディレクトリかファイルのパスを指定してください。"
+
+[attachment_get_error_write]
+description = "attachment getで保存先に書き込めなかったときのメッセージ。Pathは保存先のパス、Detailは原因"
+other = "保存先に書き込めませんでした: {{.Path}} ({{.Detail}})"
+
+[attachment_get_error_write_hint]
+description = "attachment getで保存先に書き込めなかったときのヒント"
+other = "保存先に書き込む権限とディスクの空き容量を確かめるか、`--output` で別の保存先を指定してください。"
+
+[attachment_get_error_stdout_tty]
+description = "attachment get --output -を、標準出力が端末のときに指定したときのメッセージ"
+other = "標準出力が端末のため、添付ファイルの中身を書き出しません (端末を操作する文字を含みうるため)"
+
+[attachment_get_error_stdout_tty_hint]
+description = "attachment get --output -を、標準出力が端末のときに指定したときのヒント"
+other = "標準出力をファイルかパイプにリダイレクトするか、`wikino attachment get <attachment_id> -O <path>` でファイルに保存してください。"
+
+[attachment_get_error_write_stdout]
+description = "attachment get --output -で中身を標準出力に書き込めなかったときのメッセージ。Detailは原因"
+other = "中身を標準出力に書き込めませんでした ({{.Detail}})"
+
+[attachment_label_path]
+description = "添付ファイルの表示の「保存先」のラベル"
+other = "保存先"
+
+[attachment_label_filename]
+description = "添付ファイルの表示の「ファイル名」のラベル"
+other = "ファイル名"
+
+[attachment_label_content_type]
+description = "添付ファイルの表示の「種類」のラベル"
+other = "種類"
+
+[attachment_label_byte_size]
+description = "添付ファイルの表示の「バイト数」のラベル"
+other = "バイト数"
+
+[attachment_value_unknown_content_type]
+description = "添付ファイルの表示で、種類が記録されていないときの値"
+other = "(不明)"
+
+# apiコマンド
+[api_short]
+description = "apiコマンドの短い説明"
+other = "公開APIを認証付きで直接呼ぶ"
+
+[api_long]
+description = "apiコマンドの説明"
+other = """
+公開API (`/api/v1`) を、ログイン中の資格情報で直接呼びます。
+CLIにまだコマンドの無い操作に使います。
+
+<path> は `/api/v1` からのパスで、クエリを含められます (例: /spaces/{space}/pages?limit=5)。
+パスの `{space}` は、コマンドを実行するスペース (`--space`・`WIKINO_SPACE`・既定のスペース) の識別子に置き換えます。
+URL・`/api/v1` から始まるパス・`..` を含むパスは受け付けません。
+
+`--input` の本文は、`--header` でContent-Typeを指定しなければ、PATCHではJSON Merge Patch (`application/merge-patch+json`)、それ以外ではJSONとして送ります。
+取り消せない操作や公開など、利用者の確認が要る操作は、`--yes` が無ければ送りません。
+非TTYでは、何が起きるか (`changes`) と承認後に実行するコマンド (`confirm_command`) をJSONで出し、終了コード9で終えます。
+`--dry-run` を付けると、公開APIへの要求は読み取りの要求も含めて送らずに、送る要求を出します。
+
+APIの操作とパスは、`wikino api GET /openapi.yaml` で取得できるOpenAPI記述で確かめられます。"""
+
+[api_example]
+description = "apiコマンドの使用例"
+other = """
+  # ページの一覧を5件だけ取得する
+  wikino api GET '/spaces/{space}/pages?limit=5'
+
+  # ページ12のタイトルを変える (版は `wikino page get 12` のetag)
+  echo '{"title": "定例会議"}' | wikino api PATCH '/spaces/{space}/pages/12' --input - --header 'If-Match: "d41d8cd9"'
+
+  # 送る要求を、送らずに確かめる
+  wikino api POST '/spaces/{space}/pages' --input page.json --dry-run
+
+  # OpenAPI記述を取得する
+  wikino api GET /openapi.yaml"""
+
+[api_output]
+description = "apiコマンドのヘルプの「出力」の節"
+other = """
+  成功の応答の本文を、APIが返した形のまま出します (CLIが加える項目はありません)。
+  JSONの応答は、TTYでは字下げして出します。`--jq` を付けると、応答のJSONに適用した結果を出します。
+  本文の無い応答 (204など) では何も出しません。
+  `--dry-run` では、送る要求を {"dry_run": true, "requests": [{"method", "url", "headers", "body"}]} の形で出します。Authorizationの値は伏せます。
+  失敗の応答 (4xx・5xx) は、ほかのコマンドと同じく標準エラーにエラーとして出します。"""
+
+[api_errors]
+description = "apiコマンドのヘルプの「エラー」の節"
+other = """
+  1  サーバーのエラー (5xx)・通信の失敗、JSONでない応答に `--jq` を付けた
+  2  使えないメソッド、`/api/v1` からのパスでない (URL・`..` を含む)、`--header` の誤りや認証のヘッダーの指定、`--fields` の指定、GETに `--input`、`--input` のファイルを読めない、確認が要る操作に `--input -`
+  3  ログインしていない、トークンが無効か期限切れ (401)
+  4  トークンのスコープが足りない (403)
+  5  パスに当たるものが無い (404)
+  6  競合 (409)、版の不一致 (412)、版の欠落 (428)。`If-Match` は `--header` で渡してください
+  7  本文の誤り (400・422)
+  8  レート制限 (429)
+  9  利用者の確認が要る操作 (下書きの削除・公開) に `--yes` が無い"""
+
+[api_input_flag]
+description = "api --inputフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "要求の本文を読むファイル (`file`。- で標準入力)"
+
+[api_header_flag]
+description = "api --headerフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "要求に足すヘッダー (`header`。\"名前: 値\" の形で、繰り返し指定できる)"
+
+[api_error_invalid_method]
+description = "apiに使えないHTTPメソッドを指定したときのメッセージ。Valueは指定された値、Methodsは使えるメソッドの一覧"
+other = "HTTPメソッドを受け付けられません: \"{{.Value}}\" ({{.Methods}} のいずれかを指定してください)"
+
+[api_error_invalid_header]
+description = "apiの--headerの値を読めないときのメッセージ。Positionは何番目の--headerか (1始まり)。秘密を含みうるため入力の値は表示しない"
+other = "{{.Position}}番目の `--header` の値を受け付けられません (\"名前: 値\" の形で、値に改行などの制御文字を含めないでください)"
+
+[api_error_forbidden_header]
+description = "apiの--headerで認証のヘッダーなどを指定したときのメッセージ。Nameはヘッダーの名前"
+other = "`--header` では{{.Name}}ヘッダーを指定できません。"
+
+[api_error_forbidden_header_hint]
+description = "apiの--headerで認証のヘッダーなどを指定したときのヒント"
+other = "認証のヘッダーはCLIが付けます。トークンは `wikino auth login` か環境変数 `WIKINO_TOKEN` で、接続先は `--host` で指定してください。"
+
+[api_error_fields_unsupported]
+description = "apiに--fieldsを指定したときのメッセージ"
+other = "`wikino api` では `--fields` を使えません。応答を絞り込むには `--jq` を使ってください。"
+
+[api_error_input_with_get]
+description = "apiのGETの要求に--inputを指定したときのメッセージ"
+other = "GETの要求には `--input` の本文を付けられません。"
+
+[api_error_stdin_with_confirmation]
+description = "利用者の確認が要る操作に--input -を指定したときのメッセージ。Operationはoperationの名前"
+other = "利用者の確認が要る操作 ({{.Operation}}) では `--input -` を使えません。本文をファイルに書き出し、`--input` にそのパスを渡してください。"
+
+[api_error_read_input]
+description = "apiの--inputの本文を読めないときのメッセージ。Pathは指定された値、Detailは理由"
+other = "`--input` の本文を読めません ({{.Path}}): {{.Detail}}"
+
+[api_error_jq_not_json]
+description = "JSONでない応答に--jqを指定したときのメッセージ。ContentTypeは応答のContent-Type"
+other = "応答がJSONではないため、`--jq` を適用できません (Content-Type: {{.ContentType}})。"
+
+[api_confirm_change_request]
+description = "apiの確認で示す、送る要求。Methodはメソッド、Pathはパス、Operationはoperationの名前"
+other = "{{.Method}} {{.Path}} を送ります ({{.Operation}})"
+
+[api_confirm_change_irreversible]
+description = "apiの確認で示す、取り消せない操作であること"
+other = "この操作は取り消せません"
+
+# skillコマンド
+[skill_short]
+description = "skillコマンドの短い説明"
+other = "コーディングエージェント向けのスキルを扱う"
+
+[skill_long]
+description = "skillコマンドの説明"
+other = """
+コーディングエージェント (Claude Codeなど) 向けのスキルを扱います。
+
+スキルは、Wikinoの概念と、ページを探して読む・書く・下書きを公開する・ログインする場面ごとの手順書をまとめたものです。
+エージェントはスキルを読んで、このCLIの使い方と注意点を知ります。
+スキルはこのCLIのバイナリに埋め込んでいるため、CLIと同じ版のスキルを書き出せます。"""
+
+[skill_example]
+description = "skillコマンドの使用例"
+other = """
+  # Claude Codeのユーザー単位のスキルのディレクトリに書き出す
+  wikino skill install"""
+
+[skill_output]
+description = "skillコマンドのヘルプの「出力」の節"
+other = "  各サブコマンドのヘルプを参照してください。"
+
+[skill_errors]
+description = "skillコマンドのヘルプの「エラー」の節"
+other = "  サブコマンドが無いときと未知のサブコマンドは、使い方の誤り (終了コード2) で失敗します。"
+
+[skill_install_short]
+description = "skill installコマンドの短い説明"
+other = "スキルを書き出す"
+
+[skill_install_long]
+description = "skill installコマンドの説明"
+other = """
+このCLIに埋め込んだスキル (SKILL.mdと手順書) を、スキルを置くディレクトリの下の `wikino/` に書き出します。
+
+既定の書き出し先は、Claude Codeのユーザー単位のスキルのディレクトリ (`$CLAUDE_CONFIG_DIR/skills/`、未設定なら `~/.claude/skills/`) です。
+ほかのエージェントで使うときは、`--dir` でそのエージェントがスキルを読むディレクトリを指定します。
+リポジトリの `.claude/skills/` はそのリポジトリの開発用のスキルを置く場所のため、既定にしていません。
+
+スキルは表示言語 (`WIKINO_LANG`・`LC_ALL`・`LC_MESSAGES`・`LANG`) で書き出し、日本語以外は英語にします。
+`wikino/` に既にあるスキルのファイルは上書きし、ほかのファイルは残します。
+CLIを更新したときは、もう一度実行してスキルも更新してください。"""
+
+[skill_install_example]
+description = "skill installコマンドの使用例"
+other = """
+  # Claude Codeのユーザー単位のスキルのディレクトリに書き出す
+  wikino skill install
+
+  # 英語のスキルを書き出す
+  WIKINO_LANG=en wikino skill install
+
+  # 別のエージェントのスキルのディレクトリに書き出す
+  wikino skill install --dir ~/.agents/skills"""
+
+[skill_install_output]
+description = "skill installコマンドのヘルプの「出力」の節"
+other = """
+  書き出したスキルについて、次の項目を出します。
+    path   書き出したスキルのディレクトリ (`--dir` の下の `wikino/`)
+    lang   書き出したスキルの言語 (ja・en)
+    files  書き出したファイルの名前"""
+
+[skill_install_errors]
+description = "skill installコマンドのヘルプの「エラー」の節"
+other = """
+  1  書き出し先に書き込めなかった (権限・空き容量など)
+  2  引数がある、ホームディレクトリが決まらず `--dir` も無い、`--fields` に未知の項目"""
+
+[skill_install_dir_flag]
+description = "skill install --dirフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "スキルを置くディレクトリ (`dir`。この下のwikino/に書き出す。省略時は ~/.claude/skills)"
+
+[skill_install_error_no_home]
+description = "skill installで既定の書き出し先を決めるホームディレクトリが分からないときのメッセージ。Detailは原因"
+other = "既定の書き出し先を決められません ({{.Detail}})。"
+
+[skill_install_error_no_home_hint]
+description = "skill installで既定の書き出し先を決めるホームディレクトリが分からないときのヒント"
+other = "`--dir` でスキルを置くディレクトリを指定してください。"
+
+[skill_install_error_write]
+description = "skill installで書き出し先に書き込めなかったときのメッセージ。Pathは書き出し先のパス、Detailは原因"
+other = "スキルを書き出せませんでした: {{.Path}} ({{.Detail}})"
+
+[skill_install_error_write_hint]
+description = "skill installで書き出し先に書き込めなかったときのヒント"
+other = "書き出し先に書き込む権限とディスクの空き容量を確かめるか、`--dir` で別の書き出し先を指定してください。"
+
+[skill_label_path]
+description = "スキルの表示の「書き出し先」のラベル"
+other = "書き出し先"
+
+[skill_label_lang]
+description = "スキルの表示の「言語」のラベル"
+other = "言語"
+
+[skill_label_files]
+description = "スキルの表示の「ファイル」のラベル"
+other = "ファイル"
+
+# ヘルプの共通の要素
+[help_flag]
+description = "--helpフラグの説明"
+other = "ヘルプを表示する (--jsonと併せるとJSONで出す)"
+
+[help_heading_usage]
+description = "ヘルプの「使い方」の見出し"
+other = "使い方"
+
+[help_heading_aliases]
+description = "ヘルプの「別名」の見出し"
+other = "別名"
+
+[help_heading_examples]
+description = "ヘルプの「例」の見出し"
+other = "例"
+
+[help_heading_commands]
+description = "ヘルプの「コマンド」の見出し"
+other = "コマンド"
+
+[help_heading_flags]
+description = "ヘルプの「フラグ」の見出し"
+other = "フラグ"
+
+[help_heading_global_flags]
+description = "ヘルプの、すべてのコマンドに共通のフラグの見出し"
+other = "共通のフラグ"
+
+[help_heading_output]
+description = "ヘルプの「出力」の見出し"
+other = "出力"
+
+[help_heading_errors]
+description = "ヘルプの「エラー」の見出し"
+other = "エラー"
+
+[help_more_information]
+description = "サブコマンドのヘルプの見方の案内。Commandはヘルプを見るコマンドの形"
+other = "各コマンドの使い方は `{{.Command}} --help` で確認できます。"
+
+[help_json_flag]
+description = "--jsonフラグの説明"
+other = "TTYでも結果をJSONで出す"
+
+[help_fields_flag]
+description = "--fieldsフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "出す項目をカンマ区切りで選ぶ (例: `number,title`。一覧では各要素に適用する)"
+
+[help_jq_flag]
+description = "--jqフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "jqの式 (`expr`) で結果を絞り込む (--fieldsの後に適用する)"
+
+[help_host_flag]
+description = "--hostフラグの説明"
+other = "接続先 (`url`。省略時は既定の接続先、無ければ https://wikino.app)"
+
+[help_space_flag]
+description = "--spaceフラグの説明"
+other = "スペースの識別子 (`space`)"
+
+[help_member_flag]
+description = "--memberフラグの説明"
+other = "メンバーのアットネーム (`atname`。同じスペースに複数のメンバーの資格情報があるときに選ぶ)"
+
+[help_limit_flag]
+description = "一覧の--limitフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "1ページの件数 (`n`。省略時は20件、100を超える値は100件)"
+
+[help_cursor_flag]
+description = "一覧の--cursorフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "続きのページを取得するカーソル (`cursor`。前のページの出力のnext_cursorの値)"
+
+[help_all_flag]
+description = "一覧の--allフラグの説明"
+other = "すべてのページを辿って全件を取得し、1行1件のJSON Linesで出す"
+
+[help_md_flag]
+description = "--mdフラグの説明"
+other = "Wikinoファイル形式のページファイル (frontmatter付きのMarkdown) で出す"
+
+[help_dry_run_flag]
+description = "--dry-runフラグの説明"
+other = "要求を送らずに、送る要求を出す"
+
+[help_yes_flag]
+description = "--yesフラグの説明"
+other = "利用者の確認を省いて実行する"
+
+[help_body_flag]
+description = "--bodyフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "本文 (`text`。Markdown) を文字列で渡す"
+
+[help_body_file_flag]
+description = "--body-fileフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "本文をファイル (`path`) から読む (`-` で標準入力から読む)"
+
+[help_if_match_flag]
+description = "--if-matchフラグの説明。バッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "読んだ版 (`etag`。`get` の出力の同名の項目) を前提に書き込む"
+
+[help_force_flag]
+description = "--forceフラグの説明"
+other = "読んだ版を照合せず、直前に取得した最新の版に上書きする"
+
+[help_md_file_flag]
+description = "--md-fileフラグの説明。最初にバッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "--mdで書き出したページファイル (`path`) を書き戻す。frontmatterの版とタイトルを使う (`-` で標準入力から読む)"
+
+[help_edits_flag]
+description = "--editsフラグの説明。最初にバッククォートで囲んだ語はヘルプで値の名前として表示される"
+other = "検索置換の編集のJSON (`path`) を読み、本文の一部を置き換える (`-` で標準入力から読む)"
+
+# 使い方の誤り
+[usage_error_unknown_subcommand]
+description = "未知のサブコマンドが指定されたときのメッセージ。Nameは指定されたサブコマンド"
+other = "不明なサブコマンドです: \"{{.Name}}\""
+
+[usage_error_subcommand_required]
+description = "サブコマンドが指定されていないときのメッセージ"
+other = "サブコマンドを指定してください。"
+
+[usage_error_invalid_flag]
+description = "分類できないフラグの解析エラーのメッセージ"
+other = "フラグの指定が誤っています。"
+
+[usage_error_hint]
+description = "使い方の誤りのときに、ヘルプの確認を案内するヒント。Commandはヘルプを見るコマンド"
+other = "`{{.Command}} --help` で使い方を確認してください。"
+
+[usage_error_unknown_flag]
+description = "未知のフラグのメッセージ。Flagは指定されたフラグ"
+other = "不明なフラグです: {{.Flag}}"
+
+[usage_error_unknown_shorthand]
+description = "未知の短縮フラグのメッセージ。Flagは短縮フラグ、Groupは未知の短縮フラグから後ろの組"
+other = "不明な短縮フラグです: {{.Flag}} ({{.Group}})"
+
+[usage_error_flag_value_required]
+description = "フラグの値が無いときのメッセージ。Flagは指定されたフラグ"
+other = "フラグに値を指定してください: {{.Flag}}"
+
+[usage_error_flag_invalid_value]
+description = "フラグの値が不正なときのメッセージ。Flagはフラグ、Valueは指定値、Typeは型"
+other = "フラグ{{.Flag}}の値が不正です: \"{{.Value}}\" (型: {{.Type}})"
+
+[usage_error_flag_invalid_syntax]
+description = "フラグの構文が不正なときのメッセージ。Flagは指定されたフラグ"
+other = "フラグの書式が不正です: {{.Flag}}"
+
+[usage_error_unknown_field]
+description = "--fieldsに未知の項目名が指定されたときのメッセージ。Fieldは指定された項目名"
+other = "不明な項目です: \"{{.Field}}\""
+
+[usage_error_unknown_field_hint]
+description = "--fieldsに未知の項目名が指定されたときのヒント。Fieldsは選べる項目のカンマ区切り"
+other = "選べる項目: {{.Fields}}"
+
+[usage_error_invalid_jq]
+description = "--jqの式を解釈できないときのメッセージ。Detailはjqの処理系の説明"
+other = "--jqの式を解釈できません: {{.Detail}}"
+
+[usage_error_invalid_jq_hint]
+description = "--jqの式を解釈できないときのヒント"
+other = "式を直してから実行し直してください。要求はまだ送っていません。"
+
+[usage_error_invalid_value]
+description = "パスに埋め込む値や接続先を受け付けられないときのメッセージ。Nameは値の名前、Valueは値、Reasonは理由"
+other = "{{.Name}}の値を受け付けられません: \"{{.Value}}\" ({{.Reason}})"
+
+[usage_error_invalid_value_empty]
+description = "値を受け付けられない理由: 空"
+other = "値が空です"
+
+[usage_error_invalid_value_control_character]
+description = "値を受け付けられない理由: 制御文字"
+other = "改行やタブなどの制御文字を含んでいます"
+
+[usage_error_invalid_value_dot_segment]
+description = "値を受け付けられない理由: パスの階層を移る `..`"
+other = "`..` を含んでいます"
+
+[usage_error_invalid_value_reserved_character]
+description = "値を受け付けられない理由: URLで意味を持つ文字"
+other = "`/`・`\\`・`?`・`#`・`%` を含んでいます。URLやクエリを付けず、エンコードしていない値だけを渡してください"
+
+[usage_error_invalid_value_format]
+description = "値を受け付けられない理由: 形式の誤り"
+other = "形式が誤っています。番号は1以上の整数、IDはハイフン区切りのUUID、スペースの識別子は半角英数字とハイフンです"
+
+[usage_error_invalid_value_insecure_scheme]
+description = "値を受け付けられない理由: 接続先がHTTPSでない"
+other = "接続先はHTTPSにしてください。HTTPはループバック (127.0.0.1・localhost) の接続先にだけ使えます"
+
+[usage_error_invalid_value_not_api_path]
+description = "値を受け付けられない理由: `/api/v1` からのパスでない"
+other = "`/api/v1` からのパス (例: /spaces/{space}/pages) として読めません。URL・`/api/v1` から始まるパス・`#`・`\\`・誤った `%` のエンコードは使えません"
+
+[usage_error_invalid_value_hint]
+description = "値を受け付けられないときのヒント"
+other = "値を直してから実行し直してください。要求はまだ送っていません。"
+
+[usage_error_arg_count]
+description = "位置引数の数が違うときのメッセージ。Wantは求める数、Gotは指定された数"
+other = "引数の数が違います (求める数: {{.Want}}、指定: {{.Got}})"
+
+[usage_error_too_many_args]
+description = "位置引数が多すぎるときのメッセージ。Maxは上限、Gotは指定された数"
+other = "引数が多すぎます (上限: {{.Max}}、指定: {{.Got}})"
+
+[usage_error_env_token_with_member]
+description = "WIKINO_TOKENとメンバーの指定を併用したときのメッセージ"
+other = "`WIKINO_TOKEN` を使うときは `--member` と `WIKINO_MEMBER` を指定できません。"
+
+[usage_error_env_token_with_member_hint]
+description = "WIKINO_TOKENとメンバーの指定を併用したときのヒント"
+other = "メンバーはトークンから決まります。`--member` と `WIKINO_MEMBER` を外すか、保存した資格情報を使うなら `WIKINO_TOKEN` を外してください。"
+
+[usage_error_env_token_without_space]
+description = "WIKINO_TOKENを使うときにスペースの指定が無いときのメッセージ"
+other = "`WIKINO_TOKEN` を使うときはスペースの指定が要ります。"
+
+[usage_error_env_token_without_space_hint]
+description = "WIKINO_TOKENを使うときにスペースの指定が無いときのヒント"
+other = "`--space` か `WIKINO_SPACE` に、トークンを発行したスペースの識別子 (WebのURLの `/s/{識別子}` の部分) を指定してください。"
+
+[usage_error_invalid_token_store]
+description = "WIKINO_TOKEN_STOREの値を受け付けられないときのメッセージ。Valueは値"
+other = "`WIKINO_TOKEN_STORE` の値を受け付けられません: \"{{.Value}}\""
+
+[usage_error_invalid_token_store_hint]
+description = "WIKINO_TOKEN_STOREの値を受け付けられないときのヒント"
+other = "`file` (ファイルに保存する) か `keyring` (キーチェーンに保存し、使えなければファイルに保存する) を指定するか、外してください。"
+
+[usage_error_space_ambiguous]
+description = "スペースを決められないときのメッセージ"
+other = "スペースを決められません。複数のスペースに資格情報があり、既定のスペースがありません。"
+
+[usage_error_space_ambiguous_hint]
+description = "スペースを決められないときのヒント。Spacesは資格情報のあるスペース"
+other = "`--space` でスペースを指定するか、`wikino auth switch <space>` で既定のスペースを決めてください。資格情報のあるスペース: {{.Spaces}}"
+
+[usage_error_member_ambiguous]
+description = "メンバーを決められないときのメッセージ。Spaceはスペースの識別子"
+other = "スペース {{.Space}} のメンバーを決められません。複数のメンバーに資格情報があり、既定のメンバーがありません。"
+
+[usage_error_member_ambiguous_hint]
+description = "メンバーを決められないときのヒント。Spaceはスペースの識別子、Membersは資格情報のあるメンバー"
+other = "`--member` でメンバーを指定するか、`wikino auth switch {{.Space}} --member <member>` で既定のメンバーを決めてください。資格情報のあるメンバー: {{.Members}}"
+
+[usage_error_space_conflict]
+description = "引数のスペースと--spaceが違うときのメッセージ"
+other = "引数のスペースと `--space` が違います。どちらか一方で指定してください。"
+
+[usage_error_invalid_limit]
+description = "--limitの値が1未満のときのメッセージ。Valueは指定された値"
+other = "`--limit` には1以上の整数を指定してください (指定: {{.Value}})"
+
+[usage_error_flags_exclusive]
+description = "同時に指定できないフラグを指定したときのメッセージ。Flagsはフラグをカンマ区切りで並べたもの"
+other = "次のフラグは同時に指定できません: {{.Flags}}"
+
+[usage_error_dry_run_fields_hint]
+description = "--dry-runと--fieldsを併用したときのヒント"
+other = "送る要求を確認するには、`--fields` を外して `--dry-run` を実行し直してください。"
+
+[usage_error_flag_required]
+description = "必須のフラグが無いときのメッセージ。Flagはフラグ"
+other = "フラグを指定してください: {{.Flag}}"
+
+[usage_error_input_read_file]
+description = "--body-file・--md-file・--editsのファイル (または標準入力) を読めないときのメッセージ。Pathは指定された値、Detailは原因"
+other = "ファイルを読めません: {{.Path}} ({{.Detail}})"
+
+[usage_error_input_invalid_utf8]
+description = "--body-file・--md-file・--editsのファイル (または標準入力) がUTF-8として正しくないときのメッセージ。Pathは指定された値"
+other = "ファイルがUTF-8のテキストではありません: {{.Path}}"
+
+[usage_error_body_invalid_utf8]
+description = "本文がUTF-8として正しくないときのメッセージ"
+other = "本文がUTF-8のテキストではありません。"
+
+[usage_error_if_match_required]
+description = "書き込みのコマンドで--if-matchも--forceも無いときのメッセージ"
+other = "`--if-match` で読んだ版 (ETag) を指定してください。"
+
+[usage_error_if_match_required_hint]
+description = "読んだ版が要るときのヒント。Commandは版を取得するコマンド"
+other = "`{{.Command}}` で内容と版 (`etag`) を取得し、内容を確かめてから `--if-match` に渡してください。読まずに最新の版へ上書きしてよいときだけ `--force` を付けます。"
+
+[usage_error_if_match_invalid]
+description = "--if-match (またはページファイルのwikino_etag) の値が空か制御文字を含むときのメッセージ。Nameはフラグかキーの名前"
+other = "`{{.Name}}` の値が空か、制御文字を含んでいます。"
+
+[usage_error_if_match_wildcard]
+description = "--if-match (またはページファイルのwikino_etag) に*を指定したときのメッセージ。Nameはフラグかキーの名前"
+other = "`{{.Name}}` に `*` は指定できません。版を問わず一致し、読んだ版の照合にならないためです。"
+
+[usage_error_md_file_hint]
+description = "--md-fileのファイルを受け付けないときのヒント。Commandはページファイルを書き出すコマンド"
+other = "`{{.Command}} > page.md` で書き出したページファイルを編集し、frontmatterの `wikino_number` と `wikino_etag` を残したまま渡してください。"
+
+[usage_error_md_file_etag_required]
+description = "--md-fileのfrontmatterにwikino_etagが無いときのメッセージ"
+other = "`--md-file` のfrontmatterに `wikino_etag` がありません。読んだ版の無いファイルは書き戻せません。"
+
+[usage_error_md_file_number_mismatch]
+description = "--md-fileのwikino_numberが引数のページ番号と違うときのメッセージ。FileNumberはファイルの番号、Numberは引数の番号"
+other = "`--md-file` の `wikino_number` ({{.FileNumber}}) が、書き戻す先のページ番号 ({{.Number}}) と違います。"
+
+[usage_error_md_file_invalid_value]
+description = "--md-fileのfrontmatterのWikinoのキーの値の形が違うときのメッセージ。Keyはキーの名前"
+other = "`--md-file` のfrontmatterの `{{.Key}}` の値の形が違います。"
+
+[usage_error_md_file_unremovable_keys]
+description = "--md-fileの本文自身のfrontmatterからwikino_のキーを取り除けないときのメッセージ"
+other = "`--md-file` のfrontmatterから `wikino_` のキーを取り除くと、他のプロパティが変わります (エイリアスで値を共有しているなど)。"
+
+[usage_error_edits_invalid]
+description = "--editsのJSONを受け付けないときのメッセージ。Detailは原因"
+other = "`--edits` のJSONを受け付けられません: {{.Detail}}"
+
+[usage_error_edits_invalid_hint]
+description = "--editsのJSONを受け付けないときのヒント"
+other = "`{\"edits\": [{\"old_str\": \"置き換える文字列\", \"new_str\": \"置き換えた後の文字列\"}]}` の形のJSONを渡してください。`replace_all` は任意です。"
+
+[usage_error_edits_trailing_data]
+description = "--editsのJSONの後に余分なデータがあるときの原因"
+other = "JSONの後に余分なデータがあります"
+
+[usage_error_edits_empty]
+description = "--editsのeditsが無いか空のときの原因"
+other = "`edits` に1件以上の編集を指定してください"
+
+[usage_error_edits_missing]
+description = "--editsの編集に必須の項目が無いときの原因。Indexは編集の位置 (0始まり)、Keyは項目の名前"
+other = "`edits[{{.Index}}]` に `{{.Key}}` がありません"
+
+[usage_error_edits_empty_old_str]
+description = "--editsの編集のold_strが空のときの原因。Indexは編集の位置 (0始まり)"
+other = "`edits[{{.Index}}].old_str` が空です"
+
+# 終了コードの表
+[exit_code_ok]
+description = "終了コード0の意味"
+other = "成功"
+
+[exit_code_error]
+description = "終了コード1の意味"
+other = "想定外の失敗: 通信の失敗、サーバーのエラー (5xx) など"
+
+[exit_code_usage]
+description = "終了コード2の意味"
+other = "使い方の誤り: 引数・フラグの誤り、未知のサブコマンド"
+
+[exit_code_auth]
+description = "終了コード3の意味"
+other = "認証の失敗: 未ログイン、トークンの無効・期限切れ (401)"
+
+[exit_code_forbidden]
+description = "終了コード4の意味"
+other = "権限の不足: トークンのスコープ不足など (403)"
+
+[exit_code_not_found]
+description = "終了コード5の意味"
+other = "対象が無い (404)"
+
+[exit_code_conflict]
+description = "終了コード6の意味"
+other = "競合: 版の不一致 (412)・欠落 (428)、既に存在する (409)"
+
+[exit_code_validation]
+description = "終了コード7の意味"
+other = "入力の検証エラー (422)"
+
+[exit_code_rate_limited]
+description = "終了コード8の意味"
+other = "レート制限 (429)"
+
+[exit_code_confirmation_required]
+description = "終了コード9の意味"
+other = "確認が必要: `--yes` の無い取り消せない操作・公開。何が起きるかと承認後に実行するコマンドを標準出力に出す"
+
+[exit_code_interrupted]
+description = "終了コード130の意味"
+other = "中断: Ctrl-C"
+
+# 共通のエラー
+[error_jq_failed]
+description = "--jqの式を結果に適用できなかったときのメッセージ。Detailはjqの処理系の説明"
+other = "--jqの式を結果に適用できません: {{.Detail}}"
+
+[error_jq_failed_hint]
+description = "--jqの式を結果に適用できなかったときのヒント"
+other = "コマンド自体は完了しています。同じコマンドを再実行せず、読み取りのコマンドで結果を確かめてください。"
+
+[error_confirmation_declined]
+description = "対話の確認で承認されなかったときのメッセージ"
+other = "操作を中止しました。"
+
+[error_network]
+description = "APIに要求を送れなかったとき (接続・タイムアウトの失敗) のメッセージ。Detailは原因"
+other = "接続先に要求を送れませんでした: {{.Detail}}"
+
+[error_network_hint]
+description = "APIに要求を送れなかったときのヒント"
+other = "接続先 (`--host`) とネットワークを確かめてください。書き込みのコマンドは反映されている場合があるため、実行し直す前に読み取りのコマンドで確かめてください。"
+
+[error_insecure_redirect]
+description = "HTTPSでもループバックのHTTPでもないリダイレクト先を辿らなかったときのメッセージ"
+other = "接続先がHTTPSでもループバックのHTTPでもないURLへリダイレクトしたため、接続を中止しました。最初の接続先には要求を送っています。"
+
+[error_download_network]
+description = "署名付きURLへの通信に失敗したときの安全なメッセージ"
+other = "署名付きURLへの通信に失敗したため、中身を取得できませんでした。"
+
+[error_download_failed]
+description = "署名付きURLから添付ファイルの中身を取得できなかったときのメッセージ。Statusは応答のHTTPステータス"
+other = "署名付きURLから中身を取得できませんでした (HTTP {{.Status}})。"
+
+[error_download_failed_hint]
+description = "署名付きURLから添付ファイルの中身を取得できなかったときのヒント"
+other = "署名付きURLは発行から数分で使えなくなります。同じコマンドをもう一度実行すると、新しい署名付きURLで取得し直します。"
+
+[error_insecure_download_url]
+description = "APIが返した署名付きURLがHTTPSでもループバックのHTTPでもないときのメッセージ"
+other = "APIが返した署名付きURLがHTTPSでもループバックのHTTPでもないため、取得を中止しました。"
+
+[error_insecure_download_redirect]
+description = "署名付きURLがHTTPSでもループバックのHTTPでもないURLへリダイレクトしたため、辿らなかったときのメッセージ"
+other = "署名付きURLがHTTPSでもループバックのHTTPでもないURLへリダイレクトしたため、取得を中止しました。"
+
+[error_insecure_download_url_hint]
+description = "APIが返した署名付きURLか、そのリダイレクト先がHTTPSでもループバックのHTTPでもないときのヒント"
+other = "接続先 (`--host`) が意図したWikinoのサーバーかを確かめてください。"
+
+[error_api_status]
+description = "APIのエラーの応答に説明が無いときのメッセージ。StatusはHTTPステータス"
+other = "APIがエラーを返しました (HTTP {{.Status}})"
+
+[error_api_bad_request_hint]
+description = "APIが400を返したときのヒント"
+other = "リクエスト本文をJSONとして読めません。渡した本文を確かめてください。"
+
+[error_api_unauthorized_hint]
+description = "APIが401を返したときのヒント"
+other = "`wikino auth login` でログインし直してください。`WIKINO_TOKEN` を使っている場合は、トークンが有効期限内で、指定したスペースのものかを確かめてください。"
+
+[error_api_forbidden_hint]
+description = "APIが403を返し、要るスコープが分からないときのヒント"
+other = "`wikino auth status` でトークンのスコープを確かめてください。"
+
+[error_api_forbidden_scope_hint]
+description = "APIが403を返したときのヒント。Scopesは操作に要るスコープ (空白区切り)"
+other = "この操作にはスコープ {{.Scopes}} が要ります。そのスコープを付けて `wikino auth login` でログインし直すか、そのスコープを持つトークンを使ってください。"
+
+[error_api_not_found_hint]
+description = "APIが404を返したときのヒント"
+other = "番号やIDと、スペース (`--space`) を確かめてください。"
+
+[error_api_conflict_hint]
+description = "APIが409を返したときのヒント"
+other = "既にあるものを `get` で確かめてから、更新のコマンドを使ってください。"
+
+[error_api_precondition_failed_hint]
+description = "APIが412を返したときのヒント"
+other = "読んだ後に更新されています。`get` で最新の内容とETagを取得し、内容を確かめてから `--if-match` に渡して実行し直してください。"
+
+[error_api_precondition_required_hint]
+description = "APIが428を返したときのヒント"
+other = "`get` で内容とETagを取得し、`--if-match` に渡してください。"
+
+[error_api_validation_failed_hint]
+description = "APIが422を返したときのヒント"
+other = "入力を直してから実行し直してください。"
+
+[error_api_rate_limited_hint]
+description = "APIが429を返し、再試行までの時間が分からないときのヒント"
+other = "しばらく待ってから実行し直してください。"
+
+[error_api_rate_limited_retry_after_hint]
+description = "APIが429を返したときのヒント。Secondsは再試行できるまでの秒数"
+other = "{{.Seconds}}秒待ってから実行し直してください。"
+
+[error_api_server_error_hint]
+description = "APIが5xxを返したときのヒント"
+other = "時間をおいて実行し直してください。書き込みのコマンドは反映されている場合があるため、実行し直す前に読み取りのコマンドで確かめてください。"
+
+[error_api_error_hint]
+description = "APIが分類していないエラーを返したときのヒント"
+other = "`--help` で使い方を確かめてください。"
+
+[error_not_logged_in]
+description = "接続先のどのスペースにもログインしていないときのメッセージ。Hostは接続先"
+other = "{{.Host}} にログインしていません。"
+
+[error_not_logged_in_hint]
+description = "接続先のどのスペースにもログインしていないときのヒント"
+other = "`wikino auth login <space>` でログインするか、`WIKINO_TOKEN` と `WIKINO_SPACE` でトークンとスペースを渡してください。"
+[error_space_not_logged_in]
+description = "スペースにログインしていないときのメッセージ。Hostは接続先、Spaceはスペースの識別子"
+other = "{{.Host}} のスペース {{.Space}} にログインしていません。"
+
+[error_space_not_logged_in_hint]
+description = "スペースにログインしていないとき・保存したトークンが無いときのヒント。Spaceはスペースの識別子"
+other = "`wikino auth login {{.Space}}` でログインしてください。保存した資格情報は `wikino auth status` で確かめられます。"
+[error_member_not_logged_in]
+description = "指定したメンバーの資格情報が無いときのメッセージ。Spaceはスペースの識別子、Memberは指定したメンバー"
+other = "スペース {{.Space}} のメンバー {{.Member}} の資格情報がありません。"
+
+[error_member_not_logged_in_hint]
+description = "指定したメンバーの資格情報が無いときのヒント。Spaceはスペースの識別子、Membersは資格情報のあるメンバー"
+other = "資格情報のあるメンバー: {{.Members}}。ほかのメンバーで使うには、そのメンバーで `wikino auth login {{.Space}}` を実行してください。"
+[error_token_not_found]
+description = "保存したトークンが見つからないときのメッセージ。Spaceはスペースの識別子、Memberはメンバーのアットネーム"
+other = "スペース {{.Space}} のメンバー {{.Member}} のトークンが見つかりません。"
+
+[error_keyring_read]
+description = "キーチェーンからトークンを読み取れないときのメッセージ"
+other = "キーチェーンからトークンを読み取れませんでした。"
+
+[error_keyring_read_hint]
+description = "キーチェーンからトークンを読み取れないときのヒント"
+other = "キーチェーンのロックを解除するなど、利用できる状態にしてから実行し直してください。"
+
+[error_config_invalid]
+description = "設定ファイルを解析できないときのメッセージ。Pathは設定ファイルのパス"
+other = "設定ファイル {{.Path}} を読み取れません。"
+
+[error_config_invalid_hint]
+description = "設定ファイルを解析できないときのヒント。Pathは設定ファイルのパス"
+other = "{{.Path}} のTOMLの書式を直してから、実行し直してください。"
+
+# 一覧の案内
+[list_empty]
+description = "人間向けの表示で、一覧に該当するものが無いときに標準エラーに出す案内"
+other = "該当するものはありません。"
+
+[list_next_page]
+description = "一覧に次のページがあるときに標準エラーに出す案内。Cursorは次のページのカーソル"
+other = "続きがあります。同じコマンドに `--cursor {{.Cursor}}` を付けると次のページを、`--all` を付けると全件を取得できます。"
+
+# 確認
+[confirm_prompt]
+description = "取り消せない操作・公開の前に、続けるかを尋ねるプロンプト"
+other = "実行しますか? [y/N]:"
+
+[error_response]
+description = "送信済みの要求の応答を読み取り・解析できなかったときのメッセージ"
+other = "APIの応答を読み取り、解析できませんでした。"
+
+[error_response_hint]
+description = "送信済みの要求の応答を読み取り・解析できなかったときのヒント"
+other = "要求は送信済みです。書き込みが反映されている場合があるため、同じコマンドを実行し直す前に読み取りのコマンドで結果を確かめてください。"
+
+[error_edits_old_str_hint]
+description = "検索置換で編集のold_strが本文に1件だけ一致しない (422) ときのヒント。Ordinalは何番目 (1始まり)、Indexは位置 (0始まり)、Commandは今の本文を確かめるコマンド"
+other = "{{.Ordinal}}番目の編集 (`edits[{{.Index}}]`) の `old_str` が、前の編集を適用した後の本文に1件だけ一致しません。どの編集も適用していません。`{{.Command}}` で今の本文を確かめて `old_str` を直し、`edits` の全体を送り直してください。一致する箇所をすべて置き換えるなら `replace_all` を `true` にします。"
+
+[error_edits_new_str_hint]
+description = "検索置換で編集を適用すると本文が上限を超える (422) ときのヒント。Ordinalは何番目 (1始まり)、Indexは位置 (0始まり)"
+other = "{{.Ordinal}}番目の編集 (`edits[{{.Index}}]`) を適用すると、本文が上限 (1MiB) を超えます。どの編集も適用していません。編集する内容を減らして、`edits` の全体を送り直してください。"
+
+# --dry-run
+[dry_run_not_sent]
+description = "--dry-runで要求を送らなかったことを標準エラーに出す案内"
+other = "`--dry-run` のため、要求を送っていません。"
+
+# Wikiリンクのリンク先の確認
+[wikilink_preview_error]
+description = "本文を書き込む前のWikiリンクのリンク先の確認に失敗したときのメッセージ。MessageはAPIのエラーのメッセージ"
+other = "本文のWikiリンクのリンク先を確かめられなかったため、書き込みの要求を送っていません: {{.Message}}"
+
+[wikilink_preview_error_validation_failed_hint]
+description = "Wikiリンクのリンク先の確認でトピックが無いか見られない (422) ときのヒント。Topicはトピック番号"
+other = "トピック{{.Topic}}が無いか見られません。`wikino topic list` でトピックの番号を確かめてください。"
+
+[wikilink_will_create]
+description = "--dry-runで、書き込むと作られるリンク先を標準エラーに出す案内。Countは件数、Pagesは「トピック名/タイトル」をカンマ区切りで並べたもの"
+other = "書き込むと、存在しないリンク先{{.Count}}件を未公開のページとして作成します: {{.Pages}}"
+
+[wikilink_created]
+description = "書き込みの後に、作られた見込みのリンク先を標準エラーに出す案内。Countは件数、Pagesは「トピック名/タイトル」をカンマ区切りで並べたもの"
+other = "存在しないリンク先{{.Count}}件を、未公開のページとして作成した見込みです: {{.Pages}}"
+
+# スキル (SKILL.md) のコマンドの一覧表
+[command_table_heading_command]
+description = "コマンドの一覧表の「コマンド」の列の見出し"
+other = "コマンド"
+
+[command_table_heading_description]
+description = "コマンドの一覧表の「説明」の列の見出し"
+other = "説明"

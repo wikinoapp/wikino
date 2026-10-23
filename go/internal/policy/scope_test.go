@@ -102,11 +102,11 @@ func TestExpandScopes(t *testing.T) {
 		assertScopes(t, result, []model.Scope{model.ScopeOAuthApplicationDelete, model.ScopeOAuthApplicationRead})
 	})
 
-	t.Run("draft_page:deleteは含意を持たない", func(t *testing.T) {
+	t.Run("draft_page:deleteはreadを含意する", func(t *testing.T) {
 		t.Parallel()
 
 		result := expandScopes([]model.Scope{model.ScopeDraftPageDelete})
-		assertScopes(t, result, []model.Scope{model.ScopeDraftPageDelete})
+		assertScopes(t, result, []model.Scope{model.ScopeDraftPageDelete, model.ScopeDraftPageRead})
 	})
 
 	t.Run("draft_page:writeはdraft_page:deleteを含意しない", func(t *testing.T) {
@@ -241,6 +241,10 @@ func TestExpandAPITokenScopes(t *testing.T) {
 		{name: "スコープなし", input: nil, expected: []model.Scope{}},
 		{name: "topic:read", input: []model.Scope{model.ScopeTopicRead}, expected: []model.Scope{model.ScopeTopicRead}},
 		{name: "page:writeはpage:readを含意する", input: []model.Scope{model.ScopePageWrite}, expected: []model.Scope{model.ScopePageWrite, model.ScopePageRead}},
+		{name: "draft_page:writeはdraft_page:readを含意する", input: []model.Scope{model.ScopeDraftPageWrite}, expected: []model.Scope{model.ScopeDraftPageWrite, model.ScopeDraftPageRead}},
+		{name: "draft_page:deleteはdraft_page:readを含意する", input: []model.Scope{model.ScopeDraftPageDelete}, expected: []model.Scope{model.ScopeDraftPageDelete, model.ScopeDraftPageRead}},
+		{name: "attachment:read", input: []model.Scope{model.ScopeAttachmentRead}, expected: []model.Scope{model.ScopeAttachmentRead}},
+		{name: "トークンに付与できないattachment:writeは落とし、含意のattachment:readも付けない", input: []model.Scope{model.ScopeAttachmentWrite}, expected: []model.Scope{}},
 		{
 			name:     "トークンに付与できないスコープは落とす",
 			input:    []model.Scope{model.ScopePageRead, model.ScopeTopicWrite, model.ScopePersonalAccessTokenWrite, model.ScopeOAuthApplicationWrite},
@@ -262,6 +266,94 @@ func TestExpandAPITokenScopes(t *testing.T) {
 			t.Parallel()
 
 			assertScopes(t, ExpandAPITokenScopes(tt.input), tt.expected)
+		})
+	}
+}
+
+func TestTopicRoleScopes(t *testing.T) {
+	t.Parallel()
+
+	t.Run("トピックメンバーでなければnil", func(t *testing.T) {
+		t.Parallel()
+
+		spaceMember := &model.SpaceMember{Role: model.SpaceRoleViewer, MaxTopicRole: new(model.TopicRoleViewer)}
+		if got := TopicRoleScopes(spaceMember, nil); got != nil {
+			t.Errorf("TopicRoleScopes() = %v、期待値 = nil", got)
+		}
+	})
+
+	t.Run("上限が無ければトピックのロールのスコープをそのまま返す", func(t *testing.T) {
+		t.Parallel()
+
+		for _, spaceMember := range []*model.SpaceMember{{Role: model.SpaceRoleViewer}, nil} {
+			got := TopicRoleScopes(spaceMember, &model.TopicMember{Role: model.TopicRoleAdmin})
+			assertScopes(t, got, model.TopicRoleAdmin.Scopes())
+		}
+	})
+
+	tests := []struct {
+		name      string
+		topicRole model.TopicRole
+		maxRole   model.TopicRole
+		expected  model.TopicRole
+	}{
+		{name: "上限がトピック編集者なら、トピック管理者を付けてもトピック編集者のスコープだけが効く", topicRole: model.TopicRoleAdmin, maxRole: model.TopicRoleEditor, expected: model.TopicRoleEditor},
+		{name: "上限がトピック閲覧者なら、トピック管理者を付けてもトピック閲覧者のスコープだけが効く", topicRole: model.TopicRoleAdmin, maxRole: model.TopicRoleViewer, expected: model.TopicRoleViewer},
+		{name: "上限がトピック閲覧者なら、トピック編集者を付けてもトピック閲覧者のスコープだけが効く", topicRole: model.TopicRoleEditor, maxRole: model.TopicRoleViewer, expected: model.TopicRoleViewer},
+		// トピック編集者はpage:readを持たずpage:writeを持つため、上限の側を展開しないとトピック閲覧者のpage:readが落ちる
+		{name: "上限の含意を展開してから積を取る", topicRole: model.TopicRoleViewer, maxRole: model.TopicRoleEditor, expected: model.TopicRoleViewer},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			spaceMember := &model.SpaceMember{Role: model.SpaceRoleViewer, MaxTopicRole: new(tt.maxRole)}
+			got := TopicRoleScopes(spaceMember, &model.TopicMember{Role: tt.topicRole})
+			assertScopes(t, got, expandScopes(tt.expected.Scopes()))
+		})
+	}
+}
+
+func TestHeldAPITokenScopes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		spaceMember  *model.SpaceMember
+		topicMembers []*model.TopicMember
+		expected     []model.Scope
+	}{
+		{
+			name:        "スペース編集者はトークンに付与できるすべてのスコープを持つ",
+			spaceMember: &model.SpaceMember{Role: model.SpaceRoleEditor},
+			expected:    model.APITokenScopes,
+		},
+		{
+			name:        "スペース閲覧者は読み取りのスコープだけを持つ",
+			spaceMember: &model.SpaceMember{Role: model.SpaceRoleViewer},
+			expected:    []model.Scope{model.ScopeTopicRead, model.ScopePageRead, model.ScopeAttachmentRead},
+		},
+		{
+			name:         "スペース閲覧者でも、トピック編集者のロールがあればそのスコープを持つ",
+			spaceMember:  &model.SpaceMember{Role: model.SpaceRoleViewer},
+			topicMembers: []*model.TopicMember{{Role: model.TopicRoleViewer}, {Role: model.TopicRoleEditor}},
+			expected:     model.APITokenScopes,
+		},
+		{
+			name:         "トピックのロールの上限で削られたスコープは持たない",
+			spaceMember:  &model.SpaceMember{Role: model.SpaceRoleViewer, MaxTopicRole: new(model.TopicRoleViewer)},
+			topicMembers: []*model.TopicMember{{Role: model.TopicRoleEditor}},
+			expected:     []model.Scope{model.ScopeTopicRead, model.ScopePageRead, model.ScopeAttachmentRead},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := HeldAPITokenScopes(tt.spaceMember, tt.topicMembers)
+			if !slices.Equal(got, tt.expected) {
+				t.Errorf("HeldAPITokenScopes() = %v、期待値 = %v", got, tt.expected)
+			}
 		})
 	}
 }

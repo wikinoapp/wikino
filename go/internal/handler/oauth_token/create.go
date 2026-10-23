@@ -8,8 +8,9 @@ import (
 )
 
 // Createはトークン要求を処理し、アクセストークンとリフレッシュトークンを発行する
-// (POST /oauth/token)。認可コードの交換 (`authorization_code`) とリフレッシュトークンによる
-// 更新 (`refresh_token`) を受け付ける。
+// (POST /oauth/token)。認可コードの交換 (`authorization_code`)、リフレッシュトークンによる
+// 更新 (`refresh_token`)、デバイスコードの交換 (`urn:ietf:params:oauth:grant-type:device_code`) を
+// 受け付ける。
 //
 // Cookieのセッションを使わず、クライアントはCSRFトークンを送れないため、CSRFの検証から除外している。
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {

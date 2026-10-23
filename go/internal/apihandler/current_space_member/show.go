@@ -12,7 +12,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
-// GetCurrentSpaceMemberはトークンの持ち主の、束縛先のスペースでのメンバーを返す (GET /api/v1/spaces/{space_identifier}/members/me)
+// GetCurrentSpaceMemberはトークンが属するスペースでの、トークンの持ち主のスペースメンバーを返す (GET /api/v1/spaces/{space_identifier}/members/me)
 func (h *Handler) GetCurrentSpaceMember(ctx context.Context, request apigen.GetCurrentSpaceMemberRequestObject) (apigen.GetCurrentSpaceMemberResponseObject, error) {
 	output, err := h.getAPICurrentSpaceMemberUC.Execute(ctx, usecase.GetAPICurrentSpaceMemberInput{
 		Principal:       middleware.APIPrincipalFromContext(ctx),

@@ -12,7 +12,7 @@ import (
 // Workerが最終的に返したエラーをSentryイベントとして捕捉するriverの
 // WorkerMiddlewareを返す。各ジョブはCloneしたHubの上で動くため、ジョブ単位の
 // タグ (job.kind / job.attempt) が他ジョブに漏れることはない。また、Cloneした
-// Hubをctxにbindするので、ジョブ内のslog.ErrorContext (sentryslog経由)
+// Hubをctxにbindするので、ジョブ内のslog.ErrorContext (Sentryイベント用ハンドラー経由)
 // も同じスコープにイベントを乗せる。
 //
 // shouldDropErrorに該当するエラー (context.Canceled / http.ErrAbortHandler)

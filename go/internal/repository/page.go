@@ -58,6 +58,22 @@ func (r *PageRepository) FindByIDForUpdate(ctx context.Context, id model.PageID,
 	return r.toModel(row), nil
 }
 
+// FindByIDForShareはページを取得し、呼び出し元のトランザクションが終わるまでその行を共有ロックする
+// (廃棄・ゴミ箱のページも含む)。ページが存在しない場合はnilを返す
+func (r *PageRepository) FindByIDForShare(ctx context.Context, id model.PageID, spaceID model.SpaceID) (*model.Page, error) {
+	row, err := r.q.FindPageByIDForShare(ctx, query.FindPageByIDForShareParams{
+		ID:      string(id),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindPinnedByTopicはトピック内のピン留めページを取得する (公開済み・未廃棄・未ゴミ箱のページのみ、pinned_at DESCでソート)
 func (r *PageRepository) FindPinnedByTopic(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) ([]*model.Page, error) {
 	rows, err := r.q.FindPinnedPagesByTopic(ctx, query.FindPinnedPagesByTopicParams{
@@ -353,6 +369,38 @@ func (r *PageRepository) FindByIDs(ctx context.Context, ids []model.PageID, spac
 		return nil, err
 	}
 	return r.toModels(rows), nil
+}
+
+// FindMetadataByIDsは同スペースの未廃棄ページを、Wikiリンクのプレビューに必要な列だけで一括取得する。
+// 未公開・ゴミ箱のページも含む。返すPageにはID・スペースID・トピックID・番号・タイトルと
+// 公開・ゴミ箱・廃棄の日時だけを設定し、本文などの取得しないフィールドはゼロ値になる
+func (r *PageRepository) FindMetadataByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) ([]*model.Page, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	rows, err := r.q.FindPageMetadataByIDs(ctx, query.FindPageMetadataByIDsParams{
+		Ids:     model.PageIDsToStrings(ids),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	pages := make([]*model.Page, 0, len(rows))
+	for _, row := range rows {
+		pages = append(pages, r.toModel(query.Page{
+			ID:          row.ID,
+			SpaceID:     row.SpaceID,
+			TopicID:     row.TopicID,
+			Number:      row.Number,
+			Title:       row.Title,
+			PublishedAt: row.PublishedAt,
+			TrashedAt:   row.TrashedAt,
+			DiscardedAt: row.DiscardedAt,
+		}))
+	}
+	return pages, nil
 }
 
 // FindBacklinkedByPageIDはlinked_page_idsに指定ページIDが含まれるページを取得する (同スペース・公開済み・未廃棄のページのみ)
@@ -749,11 +797,23 @@ func (r *PageRepository) ListActiveBySpace(ctx context.Context, spaceID model.Sp
 	return r.toModels(rows), nil
 }
 
-// ListPublishedByModifiedAtInputはListPublishedByModifiedAtの入力
-type ListPublishedByModifiedAtInput struct {
+// ListByModifiedAtInputはListByModifiedAtの入力
+type ListByModifiedAtInput struct {
 	SpaceID model.SpaceID
-	// VisibleTopicIDsは閲覧者が開けるトピック。このトピックのページだけを返す
+	// TopicIDsはこのトピックのページだけを返す。VisibleTopicIDsに含まれるトピックに限る
+	TopicIDs []model.TopicID
+	// VisibleTopicIDsは閲覧者が開けるトピック。未公開のページのリンク元を探す範囲になる
 	VisibleTopicIDs []model.TopicID
+	// SpaceMemberIDは閲覧者のメンバー。このメンバーの下書きからリンクされた未公開のページも返す
+	SpaceMemberID model.SpaceMemberID
+	// IncludePublishedとIncludeUnpublishedは、公開済みのページと未公開のページを含めるかどうか
+	IncludePublished   bool
+	IncludeUnpublished bool
+	// Titleはこのタイトルのページに絞る (大文字小文字を区別しない)。nilなら絞らない
+	Title *string
+	// Keywordsはすべてのキーワードをタイトルか本文に含むページに絞る (大文字小文字を区別しない部分一致)。
+	// LIKEの特殊文字も1つの文字として探す。空なら絞らない
+	Keywords []string
 	// ModifiedSinceはこの日時以降に更新されたページに絞る。nilなら絞らない
 	ModifiedSince *time.Time
 	// AfterModifiedAtとAfterIDは前のページの最後のページの位置。どちらもnilなら先頭から返す
@@ -762,26 +822,67 @@ type ListPublishedByModifiedAtInput struct {
 	Limit           int32
 }
 
-// ListPublishedByModifiedAtは、公開済み・未廃棄・未ゴミ箱で閲覧者が開けるトピックのページを、
+// ListByModifiedAtは、未廃棄・未ゴミ箱で閲覧者が開けるトピックのページを、
 // 更新日時の新しい順 (同じ日時ならIDの大きい順) にLimit件まで返す。
+// 未公開のページは、開けるトピックの公開ページかSpaceMemberIDのメンバー自身の下書きからリンクされているものだけを含める。
 // pages.modified_atはタイムゾーンを持たずUTCで保存しているため、日時はUTCに直して渡す
-func (r *PageRepository) ListPublishedByModifiedAt(ctx context.Context, input ListPublishedByModifiedAtInput) ([]*model.Page, error) {
+func (r *PageRepository) ListByModifiedAt(ctx context.Context, input ListByModifiedAtInput) ([]*model.Page, error) {
+	var title sql.NullString
+	if input.Title != nil {
+		title = sql.NullString{String: *input.Title, Valid: true}
+	}
+	keywordPatterns := make([]string, len(input.Keywords))
+	for i, keyword := range input.Keywords {
+		keywordPatterns[i] = fmt.Sprintf("%%%s%%", escapeLikePattern(keyword))
+	}
 	var modifiedSince sql.NullTime
 	if input.ModifiedSince != nil {
 		modifiedSince = sql.NullTime{Time: input.ModifiedSince.UTC(), Valid: true}
 	}
-	var afterModifiedAt sql.NullTime
-	var afterID *string
-	if input.AfterModifiedAt != nil && input.AfterID != nil {
-		afterModifiedAt = sql.NullTime{Time: input.AfterModifiedAt.UTC(), Valid: true}
-		id := string(*input.AfterID)
-		afterID = &id
-	}
+	afterModifiedAt, afterID := pageCursorParams(input.AfterModifiedAt, input.AfterID)
 
-	rows, err := r.q.ListPublishedPagesByModifiedAt(ctx, query.ListPublishedPagesByModifiedAtParams{
+	rows, err := r.q.ListPagesByModifiedAt(ctx, query.ListPagesByModifiedAtParams{
+		SpaceID:            string(input.SpaceID),
+		TopicIds:           model.TopicIDsToStrings(input.TopicIDs),
+		IncludePublished:   input.IncludePublished,
+		IncludeUnpublished: input.IncludeUnpublished,
+		VisibleTopicIds:    model.TopicIDsToStrings(input.VisibleTopicIDs),
+		SpaceMemberID:      string(input.SpaceMemberID),
+		Title:              title,
+		KeywordPatterns:    keywordPatterns,
+		ModifiedSince:      modifiedSince,
+		AfterModifiedAt:    afterModifiedAt,
+		AfterID:            afterID,
+		RowLimit:           input.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
+// ListLinkedByModifiedAtInputはListLinkedByModifiedAtの入力
+type ListLinkedByModifiedAtInput struct {
+	SpaceID model.SpaceID
+	// PageIDsはリンク元のページの保存済みのリンク先 (linked_page_ids)
+	PageIDs []model.PageID
+	// VisibleTopicIDsは閲覧者が開けるトピック。このトピックのページだけを返す
+	VisibleTopicIDs []model.TopicID
+	// AfterModifiedAtとAfterIDは前のページの最後のページの位置。どちらもnilなら先頭から返す
+	AfterModifiedAt *time.Time
+	AfterID         *model.PageID
+	Limit           int32
+}
+
+// ListLinkedByModifiedAtは、PageIDsのページのうち未廃棄・未ゴミ箱で閲覧者が開けるトピックのものを、
+// 更新日時の新しい順 (同じ日時ならIDの大きい順) にLimit件まで返す。未公開のページも含める。
+// 絞り込みはWeb画面のリンク一覧 (FindLinkedPagesPaginated) と同じ
+func (r *PageRepository) ListLinkedByModifiedAt(ctx context.Context, input ListLinkedByModifiedAtInput) ([]*model.Page, error) {
+	afterModifiedAt, afterID := pageCursorParams(input.AfterModifiedAt, input.AfterID)
+	rows, err := r.q.ListLinkedPagesByModifiedAt(ctx, query.ListLinkedPagesByModifiedAtParams{
 		SpaceID:         string(input.SpaceID),
+		PageIds:         model.PageIDsToStrings(input.PageIDs),
 		VisibleTopicIds: model.TopicIDsToStrings(input.VisibleTopicIDs),
-		ModifiedSince:   modifiedSince,
 		AfterModifiedAt: afterModifiedAt,
 		AfterID:         afterID,
 		RowLimit:        input.Limit,
@@ -790,4 +891,47 @@ func (r *PageRepository) ListPublishedByModifiedAt(ctx context.Context, input Li
 		return nil, err
 	}
 	return r.toModels(rows), nil
+}
+
+// ListBacklinkedByModifiedAtInputはListBacklinkedByModifiedAtの入力
+type ListBacklinkedByModifiedAtInput struct {
+	SpaceID model.SpaceID
+	// PageIDはリンク先のページ。保存済みの本文でこのページにリンクしているページを返す
+	PageID model.PageID
+	// VisibleTopicIDsは閲覧者が開けるトピック。このトピックのページだけを返す
+	VisibleTopicIDs []model.TopicID
+	// AfterModifiedAtとAfterIDは前のページの最後のページの位置。どちらもnilなら先頭から返す
+	AfterModifiedAt *time.Time
+	AfterID         *model.PageID
+	Limit           int32
+}
+
+// ListBacklinkedByModifiedAtは、保存済みの本文でPageIDのページにリンクしているページのうち、
+// 未廃棄・未ゴミ箱で閲覧者が開けるトピックのものを、更新日時の新しい順 (同じ日時ならIDの大きい順) に
+// Limit件まで返す。絞り込みはWeb画面のバックリンク一覧 (FindBacklinkedPagesPaginated) と同じ
+func (r *PageRepository) ListBacklinkedByModifiedAt(ctx context.Context, input ListBacklinkedByModifiedAtInput) ([]*model.Page, error) {
+	afterModifiedAt, afterID := pageCursorParams(input.AfterModifiedAt, input.AfterID)
+	rows, err := r.q.ListBacklinkedPagesByModifiedAt(ctx, query.ListBacklinkedPagesByModifiedAtParams{
+		SpaceID:         string(input.SpaceID),
+		PageID:          string(input.PageID),
+		VisibleTopicIds: model.TopicIDsToStrings(input.VisibleTopicIDs),
+		AfterModifiedAt: afterModifiedAt,
+		AfterID:         afterID,
+		RowLimit:        input.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
+// pageCursorParamsは更新日時の新しい順の一覧のカーソルを、クエリのパラメーターに変換する。
+// pages.modified_atはタイムゾーンを持たずUTCで保存しているため、日時はUTCに直す。
+// どちらかがnilなら先頭から返すよう、どちらも空にする
+func pageCursorParams(modifiedAt *time.Time, id *model.PageID) (sql.NullTime, *string) {
+	if modifiedAt == nil || id == nil {
+		return sql.NullTime{}, nil
+	}
+	s := string(*id)
+	return sql.NullTime{Time: modifiedAt.UTC(), Valid: true}, &s
 }

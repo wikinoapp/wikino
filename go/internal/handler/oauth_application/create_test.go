@@ -55,8 +55,22 @@ func TestCreate_confidentialクライアントのシークレットをその応�
 	if clientID == nil {
 		t.Fatal("レスポンスにクライアントIDが含まれていない")
 	}
-	if !strings.Contains(body, "二度と表示できない") {
-		t.Error("レスポンスにシークレットを1度だけ表示することの注意が含まれていない")
+	for _, want := range []string{
+		"<title>アプリの登録 | ",
+		">アプリの登録</h1>",
+		"二度と表示できない",
+		// クライアントIDとシークレットは、選んでコピーできる欄とコピーボタンで示す
+		`data-copyable-input-value id="client_id"`,
+		`aria-label="クライアントIDをコピー"`,
+		`data-copyable-input-value id="client_secret"`,
+		`aria-label="クライアントシークレットをコピー"`,
+		// 登録したことは、リダイレクトせずに描画するこの応答のトーストで伝える
+		`data-category="success"`,
+		"「連携するWebアプリ」を登録しました",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに%qが含まれていない", want)
+		}
 	}
 
 	app, err := repository.NewOAuthApplicationRepository(q).FindByClientIDAndSpaceID(context.Background(), clientID[1], m.spaceID)

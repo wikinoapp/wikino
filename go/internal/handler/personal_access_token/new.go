@@ -15,7 +15,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Newは個人アクセストークンの発行フォームを表示します (GET /s/{space_identifier}/settings/personal_access_tokens/new)。
+// Newは個人用アクセストークンの発行フォームを表示します (GET /s/{space_identifier}/settings/personal_access_tokens/new)。
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -32,13 +32,14 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		UserID:          user.ID,
 	})
 	if err != nil {
-		h.handleError(w, r, err, "個人アクセストークンの発行フォームのデータの取得に失敗")
+		h.handleError(w, r, err, "個人用アクセストークンの発行フォームのデータの取得に失敗")
 		return
 	}
 
 	h.renderNewForm(w, r, user, http.StatusOK, patpages.NewData{
-		CSRFToken: middleware.GetCSRFTokenFromContext(ctx),
-		Space:     viewmodel.NewSpace(output.Space),
+		CSRFToken:         middleware.GetCSRFTokenFromContext(ctx),
+		Space:             viewmodel.NewSpace(output.Space),
+		IneffectiveScopes: output.IneffectiveScopes,
 	})
 }
 

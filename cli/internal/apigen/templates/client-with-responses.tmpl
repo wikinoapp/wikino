@@ -1,0 +1,239 @@
+{{/*
+SPDX-License-Identifier: Apache-2.0
+元テンプレート: oapi-codegen v2.8.0のpkg/codegen/templates/client-with-responses.tmpl。
+応答の解析失敗をResponseErrorに包み、OpenAPI記述はYAMLの生本文として返す。
+*/}}
+// ClientWithResponsesは、応答の本文を型付きで返すクライアント。
+type ClientWithResponses struct {
+    ClientInterface
+}
+
+// NewClientWithResponsesは、応答の解析を行うクライアントを作る。
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+    client, err := NewClient(server, opts...)
+    if err != nil {
+        return nil, err
+    }
+    return &ClientWithResponses{client}, nil
+}
+
+{{$clientTypeName := opts.OutputOptions.ClientTypeName -}}
+
+// WithBaseURLは、接続先の基底のURLを上書きする。
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *{{ $clientTypeName }}) error {
+		newBaseURL, err := url.Parse(baseURL)
+		if err != nil {
+			return err
+		}
+		c.Server = newBaseURL.String()
+		return nil
+	}
+}
+
+// ClientWithResponsesInterfaceは、応答の解析を行うクライアントのインターフェース。
+type ClientWithResponsesInterface interface {
+{{range . -}}
+{{$hasParams := .RequiresParamObject -}}
+{{$pathParams := .PathParams -}}
+{{$opid := .OperationId -}}
+{{$parent := . }}
+{{$opidSuffix := ""}}
+{{- if .HasBody -}}
+{{- $opidSuffix = "WithBody" -}}
+{{- end -}}
+{{$deprecationComment := .DeprecationComment -}}
+    {{ if .HasBody }}
+        {{ .GenerateFunctionComment $opid "WithBodyWithResponse" true }}
+    {{ else }}
+        {{ .GenerateFunctionComment $opid "WithResponse" true }}
+    {{ end -}}
+    {{with $deprecationComment}}//
+    {{.}}
+    {{end -}}{{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
+{{range .Bodies}}
+    {{if .IsSupportedByClient -}}
+        {{ .GenerateFunctionComment $opid $parent (printf "%sWithResponse" .Suffix) true }}
+        {{with $deprecationComment}}//
+        {{.}}
+        {{end -}}{{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
+    {{end -}}
+{{end}}{{/* range .Bodies */}}
+{{end}}{{/* range . $opid := .OperationId */}}
+}
+
+{{range .}}{{$opid := .OperationId}}{{$op := .}}
+{{$responseTypeDefinitions := getResponseTypeDefinitions .}}
+{{$headerResponses := responsesWithHeaders .Responses}}
+{{- range $headerResponses}}
+// {{genResponseTypeName $opid | ucFirst}}{{.StatusCode | ucFirst}}Headersは、HTTP {{.StatusCode}}の応答ヘッダー。
+type {{genResponseTypeName $opid | ucFirst}}{{.StatusCode | ucFirst}}Headers struct {
+    {{range .Headers -}}
+        {{with .DeprecationComment}}{{.}}
+        {{end -}}{{.GoName}} {{.GoTypeDef}}
+    {{end -}}
+}
+{{end}}
+type {{genResponseTypeName $opid | ucFirst}} struct {
+    Body         []byte
+	HTTPResponse *http.Response
+    {{- range $responseTypeDefinitions}}
+    // {{.TypeName}}は、HTTP {{ .ResponseName }}の `{{ .ContentTypeName }}` の応答。
+    {{.TypeName}} *{{.Schema.TypeDecl}}
+    {{- end}}
+    {{- range $headerResponses}}
+    // Headers{{.StatusCode | ucFirst}}は、HTTP {{.StatusCode}}の解析済みの応答ヘッダー。
+    Headers{{.StatusCode | ucFirst}} *{{genResponseTypeName $opid | ucFirst}}{{.StatusCode | ucFirst}}Headers
+    {{- end}}
+}
+
+{{ if not opts.OutputOptions.SkipResponseBodyGetters }}
+{{- range $responseTypeDefinitions}}
+  // Get{{.TypeName}}は、HTTP {{ .ResponseName }}の `{{ .ContentTypeName }}` の応答を返す。
+  func (r {{genResponseTypeName $opid | ucFirst}}) Get{{.TypeName}}() *{{.Schema.TypeDecl}} {
+      return r.{{.TypeName}}
+  }
+{{- end}}
+
+// GetBodyは、応答の生本文を返す。
+func (r {{genResponseTypeName $opid | ucFirst}}) GetBody() []byte {
+    return r.Body
+}
+{{end}}
+
+// Statusは、HTTPの応答のステータスを返す。
+func (r {{genResponseTypeName $opid | ucFirst}}) Status() string {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.Status
+    }
+    return http.StatusText(0)
+}
+
+// StatusCodeは、HTTPの応答のステータスコードを返す。
+func (r {{genResponseTypeName $opid | ucFirst}}) StatusCode() int {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.StatusCode
+    }
+    return 0
+}
+
+{{ if opts.OutputOptions.ClientResponseBytesFunction }}
+// Bytesは、応答の生本文を返す。
+func (r {{genResponseTypeName $opid | ucFirst}}) Bytes() []byte {
+    return r.Body
+}
+{{end}}
+
+{{ if not opts.OutputOptions.SkipClientResponseContentType }}
+// ContentTypeは、応答のContent-Typeを返す。
+func (r {{genResponseTypeName $opid | ucFirst}}) ContentType() string {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.Header.Get("Content-Type")
+    }
+    return ""
+}
+{{end}}
+
+{{end}}
+
+
+{{range .}}
+{{$opid := .OperationId -}}
+{{$parent := . }}
+{{$opidSuffix := ""}}
+{{- if .HasBody -}}
+{{- $opidSuffix = "WithBody" -}}
+{{- end -}}
+{{$deprecationComment := .DeprecationComment -}}
+{{/* 応答を解析するクライアントのメソッドを生成する */}}
+
+{{ if .HasBody }}
+    {{ .GenerateFunctionComment $opid "WithBodyWithResponse" true }}
+{{ else }}
+    {{ .GenerateFunctionComment $opid "WithResponse" true }}
+{{ end -}}
+{{with $deprecationComment}}//
+{{.}}
+{{end -}}func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error){
+    rsp, err := c.{{$opid}}{{if .HasBody}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasBody}}, contentType, body{{end}}, reqEditors...)
+    if err != nil {
+        return nil, err
+    }
+    return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
+}
+
+{{$hasParams := .RequiresParamObject -}}
+{{$pathParams := .PathParams -}}
+{{$bodyRequired := .BodyRequired -}}
+{{range .Bodies}}
+{{if .IsSupportedByClient -}}
+{{ .GenerateFunctionComment $opid $parent (printf "%sWithResponse" .Suffix) true }}
+{{with $deprecationComment}}{{.}}
+{{end -}}func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error) {
+    rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body, reqEditors...)
+    if err != nil {
+        return nil, err
+    }
+    return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
+}
+{{end}}
+{{end}}
+
+{{end}}{{/* operations */}}
+
+{{/* 応答を解析する関数を生成する */}}
+{{range .}}{{$opid := .OperationId}}
+
+// Parse{{genResponseTypeName $opid | ucFirst}}は、{{$opid}}のHTTPの応答を解析する。
+func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (response *{{genResponseTypeName $opid}}, err error) {
+    defer func() {
+        if err != nil {
+            err = &ResponseError{StatusCode: rsp.StatusCode, Err: err}
+        }
+    }()
+    bodyBytes, err := io.ReadAll(rsp.Body)
+    defer func() { _ = rsp.Body.Close() }()
+    if err != nil {
+        return nil, err
+    }
+
+    response = {{genResponsePayload $opid}}
+
+    {{if eq $opid "GetOpenAPIDescription"}}
+    if rsp.StatusCode == http.StatusOK && strings.Contains(rsp.Header.Get("Content-Type"), "yaml") {
+        description := string(bodyBytes)
+        response.YAML200 = &description
+        return response, nil
+    }
+    {{end}}
+    {{genResponseUnmarshal .}}
+    {{/* ヘッダーが無ければゼロ値を保ち、存在する値を解釈できなければエラーにする */}}
+    {{$headerResponses := responsesWithHeaders .Responses}}
+    {{- if $headerResponses}}
+    switch {
+    {{- range $headerResponses}}
+    case {{getConditionOfResponseName "rsp.StatusCode" .StatusCode}}:
+        var headers {{genResponseTypeName $opid | ucFirst}}{{.StatusCode | ucFirst}}Headers
+        {{- range .Headers}}
+        if values := rsp.Header.Values({{.Name | toGoString}}); len(values) > 0 {
+            var value {{.Schema.TypeDecl}}
+            if err := runtime.BindStyledParameterWithOptions("simple", {{.Name | toGoString}}, values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"}); err != nil {
+                return nil, err
+            }
+            {{- if .IsNullable}}
+            headers.{{.GoName}}.Set(value)
+            {{- else if .IsOptional}}
+            headers.{{.GoName}} = &value
+            {{- else}}
+            headers.{{.GoName}} = value
+            {{- end}}
+        }
+        {{- end}}
+        response.Headers{{.StatusCode | ucFirst}} = &headers
+    {{- end}}
+    }
+    {{- end}}
+
+    return response, nil
+}
+{{end}}{{/* range . $opid := .OperationId */}}

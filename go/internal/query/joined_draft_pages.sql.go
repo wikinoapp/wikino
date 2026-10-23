@@ -7,8 +7,108 @@ package query
 
 import (
 	"context"
+	"database/sql"
 	"time"
+
+	"github.com/lib/pq"
 )
+
+const listDraftPagesByModifiedAt = `-- name: ListDraftPagesByModifiedAt :many
+SELECT
+  dp.id, dp.space_id, dp.page_id, dp.space_member_id, dp.topic_id, dp.title, dp.body, dp.linked_page_ids, dp.modified_at, dp.created_at, dp.updated_at, dp.suggestion_page_id, dp.featured_image_attachment_id,
+  p.number AS page_number
+FROM draft_pages dp
+INNER JOIN pages p ON dp.page_id = p.id AND p.space_id = $1
+WHERE dp.space_id = $1
+  AND dp.space_member_id = $2
+  AND dp.topic_id = ANY($3::uuid[])
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND (
+    $4::timestamp IS NULL
+    OR (dp.modified_at, dp.id) < ($4::timestamp, $5::uuid)
+  )
+ORDER BY dp.modified_at DESC, dp.id DESC
+LIMIT $6
+`
+
+type ListDraftPagesByModifiedAtParams struct {
+	SpaceID         string       `json:"space_id"`
+	SpaceMemberID   string       `json:"space_member_id"`
+	TopicIds        []string     `json:"topic_ids"`
+	AfterModifiedAt sql.NullTime `json:"after_modified_at"`
+	AfterID         *string      `json:"after_id"`
+	RowLimit        int32        `json:"row_limit"`
+}
+
+type ListDraftPagesByModifiedAtRow struct {
+	ID                        string      `json:"id"`
+	SpaceID                   string      `json:"space_id"`
+	PageID                    string      `json:"page_id"`
+	SpaceMemberID             string      `json:"space_member_id"`
+	TopicID                   string      `json:"topic_id"`
+	Title                     interface{} `json:"title"`
+	Body                      string      `json:"body"`
+	LinkedPageIds             []string    `json:"linked_page_ids"`
+	ModifiedAt                time.Time   `json:"modified_at"`
+	CreatedAt                 time.Time   `json:"created_at"`
+	UpdatedAt                 time.Time   `json:"updated_at"`
+	SuggestionPageID          *string     `json:"suggestion_page_id"`
+	FeaturedImageAttachmentID *string     `json:"featured_image_attachment_id"`
+	PageNumber                int32       `json:"page_number"`
+}
+
+// 公開APIの下書き一覧。スペースメンバー自身の下書きのうち、ページが未廃棄・未ゴミ箱で、
+// 対象のトピック (topic_ids) に属するものを更新日時の新しい順に返す。
+// topic_idsは呼び出し元が、閲覧者が開けて下書きを読めるトピックに解決したもので、廃棄済みのトピックを含まない。
+// トピックはWeb画面の下書き一覧と同じく下書きの所属トピックで絞る (ページを移動すると下書きの所属トピックも移る)。
+// カーソル (after_modified_at, after_id) を渡すと、並び順でその位置より後ろの下書きだけを返す。
+// 更新日時が同じ下書きも主キーで順序を決めるため、取得中に更新が無ければ重複や読み飛ばしなく辿れる。
+// メンバーの下書きは (space_member_id, page_id) のインデックスで引き、並べ替えはその件数の中で行う。
+func (q *Queries) ListDraftPagesByModifiedAt(ctx context.Context, arg ListDraftPagesByModifiedAtParams) ([]ListDraftPagesByModifiedAtRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDraftPagesByModifiedAt,
+		arg.SpaceID,
+		arg.SpaceMemberID,
+		pq.Array(arg.TopicIds),
+		arg.AfterModifiedAt,
+		arg.AfterID,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDraftPagesByModifiedAtRow{}
+	for rows.Next() {
+		var i ListDraftPagesByModifiedAtRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.PageID,
+			&i.SpaceMemberID,
+			&i.TopicID,
+			&i.Title,
+			&i.Body,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SuggestionPageID,
+			&i.FeaturedImageAttachmentID,
+			&i.PageNumber,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const listDraftPagesBySpaceMember = `-- name: ListDraftPagesBySpaceMember :many
 SELECT

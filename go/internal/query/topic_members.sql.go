@@ -175,6 +175,57 @@ func (q *Queries) ListTopicMembersByUserAndTopics(ctx context.Context, arg ListT
 	return items, nil
 }
 
+const listTopicMembersWithRoleBySpaceMember = `-- name: ListTopicMembersWithRoleBySpaceMember :many
+SELECT tm.id, tm.space_id, tm.topic_id, tm.space_member_id, tm.joined_at, tm.last_page_modified_at, tm.created_at, tm.updated_at, tm.scopes, tm.role FROM topic_members tm
+INNER JOIN topics t ON tm.topic_id = t.id AND tm.space_id = t.space_id
+WHERE tm.space_member_id = $1
+  AND tm.space_id = $2
+  AND tm.role IS NOT NULL
+  AND t.discarded_at IS NULL
+`
+
+type ListTopicMembersWithRoleBySpaceMemberParams struct {
+	SpaceMemberID string `json:"space_member_id"`
+	SpaceID       string `json:"space_id"`
+}
+
+// スペースメンバーがロールを付けられているトピックメンバーを、削除されていないトピックに限って
+// 取得する。メンバーがスペース全体で持つ権限 (スペースのロールといずれかのトピックのロールの和) を
+// 求めるために使う。
+func (q *Queries) ListTopicMembersWithRoleBySpaceMember(ctx context.Context, arg ListTopicMembersWithRoleBySpaceMemberParams) ([]TopicMember, error) {
+	rows, err := q.db.QueryContext(ctx, listTopicMembersWithRoleBySpaceMember, arg.SpaceMemberID, arg.SpaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []TopicMember{}
+	for rows.Next() {
+		var i TopicMember
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.SpaceMemberID,
+			&i.JoinedAt,
+			&i.LastPageModifiedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			pq.Array(&i.Scopes),
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateTopicMemberLastPageModifiedAt = `-- name: UpdateTopicMemberLastPageModifiedAt :exec
 UPDATE topic_members SET last_page_modified_at = $1, updated_at = $2 WHERE topic_id = $3 AND space_member_id = $4 AND space_id = $5
 `

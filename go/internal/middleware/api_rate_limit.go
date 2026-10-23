@@ -32,7 +32,7 @@ type APIRateLimitPolicy struct {
 }
 
 // APISpaceMemberRateLimitPolicyは、トークンで認証した公開APIのリクエストに掛ける、トークンの持ち主の
-// スペースのメンバー単位のレート制限。同じスペースのトークンは個人アクセストークンとOAuthのアクセス
+// スペースのメンバー単位のレート制限。同じスペースのトークンは個人用アクセストークンとOAuthのアクセス
 // トークンを合わせて数え、スペースが違えば別に数える。ユーザー単位で数えると、あるスペースのトークンで
 // 受け取る残量や429から、同じ人がほかのスペースでAPIを使った量が分かってしまうため。
 // 呼び出し主体をコンテキストから読むため、APITokenAuthの後に掛ける。トークンの無いリクエストは
@@ -60,6 +60,21 @@ func OAuthIPRateLimitPolicy(trustedProxies []netip.Prefix) APIRateLimitPolicy {
 		Window: time.Minute,
 		Key: func(r *http.Request) (string, bool) {
 			return ratelimit.OAuthIPKey(clientip.GetTrustedClientIP(r, trustedProxies)), true
+		},
+	}
+}
+
+// OAuthDeviceAuthorizationIPRateLimitPolicyは、OAuthのデバイス認可の要求のエンドポイントに掛ける
+// IPアドレス単位のレート制限。クライアントの認証より前に数える。要求のたびに10分間有効な行を作るため、
+// 行を大量に作られないよう、ログインのたびに1回だけ呼ぶ使い方に合わせてトークンエンドポイントより
+// 少なく割り当てる。同じIPアドレスの利用者が何人かで同時にログインしても足りる量にしている
+func OAuthDeviceAuthorizationIPRateLimitPolicy(trustedProxies []netip.Prefix) APIRateLimitPolicy {
+	return APIRateLimitPolicy{
+		Name:   "ip",
+		Limit:  20,
+		Window: 10 * time.Minute,
+		Key: func(r *http.Request) (string, bool) {
+			return ratelimit.OAuthDeviceAuthorizationIPKey(clientip.GetTrustedClientIP(r, trustedProxies)), true
 		},
 	}
 }

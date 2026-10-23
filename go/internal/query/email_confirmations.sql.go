@@ -57,6 +57,20 @@ func (q *Queries) CreateEmailConfirmation(ctx context.Context, arg CreateEmailCo
 	return i, err
 }
 
+const deleteEmailConfirmationsStartedBefore = `-- name: DeleteEmailConfirmationsStartedBefore :execrows
+DELETE FROM email_confirmations
+WHERE started_at < $1
+`
+
+// 指定された時刻より前に開始したメール確認情報を、確認の成否を問わず削除する
+func (q *Queries) DeleteEmailConfirmationsStartedBefore(ctx context.Context, startedAt time.Time) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteEmailConfirmationsStartedBefore, startedAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const getActiveEmailConfirmationByEmailAndEvent = `-- name: GetActiveEmailConfirmationByEmailAndEvent :one
 SELECT id, email, event, code, started_at, succeeded_at, created_at, updated_at FROM email_confirmations
 WHERE email = $1

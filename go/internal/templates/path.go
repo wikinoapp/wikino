@@ -95,18 +95,18 @@ func SpaceSettingsExportDownloadPath(spaceIdentifier viewmodel.SpaceIdentifier, 
 	return SpaceSettingsExportPath(spaceIdentifier, exportID) + "/download"
 }
 
-// SpaceSettingsPersonalAccessTokensPathは個人アクセストークンの一覧のパスを生成します。
+// SpaceSettingsPersonalAccessTokensPathは個人用アクセストークンの一覧のパスを生成します。
 // トークンの発行も、このパスへの送信で行います。
 func SpaceSettingsPersonalAccessTokensPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return SpaceSettingsPath(spaceIdentifier) + "/personal_access_tokens"
 }
 
-// NewSpaceSettingsPersonalAccessTokenPathは個人アクセストークンの発行フォームのパスを生成します。
+// NewSpaceSettingsPersonalAccessTokenPathは個人用アクセストークンの発行フォームのパスを生成します。
 func NewSpaceSettingsPersonalAccessTokenPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return SpaceSettingsPersonalAccessTokensPath(spaceIdentifier) + "/new"
 }
 
-// SpaceSettingsPersonalAccessTokenPathは個人アクセストークン1件のパスを生成します。
+// SpaceSettingsPersonalAccessTokenPathは個人用アクセストークン1件のパスを生成します。
 // トークンの失効は、このパスへのDELETEで行います。
 func SpaceSettingsPersonalAccessTokenPath(spaceIdentifier viewmodel.SpaceIdentifier, tokenID string) Path {
 	return SpaceSettingsPersonalAccessTokensPath(spaceIdentifier) + Path("/"+url.PathEscape(tokenID))

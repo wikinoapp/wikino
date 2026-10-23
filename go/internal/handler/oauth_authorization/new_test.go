@@ -35,6 +35,9 @@ func TestNew_同意画面にアプリ名と連携先のスペースとスコー�
 		"client.example",
 		`name="decision" type="submit" value="approve"`,
 		`name="decision" type="submit" value="deny"`,
+		// 要求されたスコープは、既定ですべてチェックしたチェックボックスで並べる
+		`name="granted_scopes" type="checkbox" value="topic:read" checked`,
+		`name="granted_scopes" type="checkbox" value="page:read" checked`,
 		// 同意の送信へ認可要求を引き継ぐ
 		`name="client_id" value="oauthz-new-client"`,
 		`name="code_challenge" value="` + testCodeChallenge + `"`,
@@ -46,6 +49,99 @@ func TestNew_同意画面にアプリ名と連携先のスペースとスコー�
 	}
 	if strings.Contains(body, "ページの作成・更新") {
 		t.Error("要求していないスコープの説明が含まれている")
+	}
+	if strings.Contains(body, "今の権限では効きません") {
+		t.Error("管理者の同意画面に、今の権限では効かないことの注記が含まれている")
+	}
+}
+
+func TestNew_今の権限では効かないスコープにだけ注記を添えてチェックは外さない(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	f := setupAuthorizationFixture(t, tx, "oauthz-new-ineffective", model.SpaceRoleViewer, true)
+	params := validParams(f.clientID)
+	params.Set("scope", "page:read page:write")
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, testutil.QueriesWithTx(tx)).New(rr, newRequest(t, http.MethodGet, f.userID, params))
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+	body := rr.Body.String()
+	if n := strings.Count(body, "今の権限では効きません"); n != 1 {
+		t.Fatalf("注記の数 = %d、期待値 = 1 (スペース閲覧者が持たないpage:writeだけ)", n)
+	}
+	// 注記はpage:writeの選択肢の中にあり、page:readの選択肢には無い
+	pageWrite := body[strings.Index(body, `value="page:write"`):]
+	if !strings.Contains(pageWrite, "今の権限では効きません") {
+		t.Error("page:writeの選択肢に注記が無い")
+	}
+	if !strings.Contains(body, `name="granted_scopes" type="checkbox" value="page:write" checked`) {
+		t.Error("今の権限では効かないスコープのチェックが外れている")
+	}
+	// 注記をチェックボックスに関連付け、読み上げられるようにする
+	if !strings.Contains(body, `aria-describedby="granted_scopes_page_write-note"`) || !strings.Contains(body, `id="granted_scopes_page_write-note"`) {
+		t.Error("注記がpage:writeのチェックボックスにaria-describedbyで関連付けられていない")
+	}
+}
+
+func TestNew_下書きのスコープの説明を示す(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	f := setupAuthorizationFixture(t, tx, "oauthz-new-draft", model.SpaceRoleEditor, true)
+	params := validParams(f.clientID)
+	params.Set("scope", "draft_page:read draft_page:write draft_page:delete")
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, testutil.QueriesWithTx(tx)).New(rr, newRequest(t, http.MethodGet, f.userID, params))
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{"下書きの読み取り", "下書きの作成・更新", "下書きの削除"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("本文に%qが含まれていない", want)
+		}
+	}
+	for _, notWant := range []string{"draft_page:read", "draft_page:write", "draft_page:delete"} {
+		if strings.Contains(body, ">"+notWant+"<") {
+			t.Errorf("表示名の代わりにスコープの文字列%qが表示されている", notWant)
+		}
+	}
+}
+
+func TestNew_添付ファイルの読み取りのスコープの説明を示す(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	f := setupAuthorizationFixture(t, tx, "oauthz-new-attachment", model.SpaceRoleViewer, true)
+	params := validParams(f.clientID)
+	params.Set("scope", "page:read attachment:read")
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, testutil.QueriesWithTx(tx)).New(rr, newRequest(t, http.MethodGet, f.userID, params))
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{"添付ファイルの読み取り", "非公開トピックのページが参照する添付ファイルも含みます"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("本文に%qが含まれていない", want)
+		}
+	}
+	if strings.Contains(body, ">attachment:read<") {
+		t.Error("表示名の代わりにスコープの文字列attachment:readが表示されている")
+	}
+	// スペース閲覧者はattachment:readを持つため、今の権限では効かないことの注記を添えない
+	if strings.Contains(body, "今の権限では効きません") {
+		t.Error("閲覧者が持つattachment:readに、今の権限では効かないことの注記が添えられている")
 	}
 }
 

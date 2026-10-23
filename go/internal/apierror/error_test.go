@@ -342,6 +342,20 @@ func TestWriter_WriteError(t *testing.T) {
 			},
 		},
 		{
+			name: "`/` で区切ったフィールド名は、入れ子の項目を指すJSON Pointerにする",
+			err: func() error {
+				ve := model.NewValidationError()
+				ve.AddField("edits/2/old_str", "一致する箇所がありません")
+				return ve
+			}(),
+			wantStatus: http.StatusUnprocessableEntity,
+			wantType:   "https://example.com/api/problems/validation-failed",
+			wantDetail: nil,
+			wantErrors: []any{
+				map[string]any{"detail": "一致する箇所がありません", "pointer": "#/edits/2/old_str", "parameter": nil},
+			},
+		},
+		{
 			name:       "ラップされたValidationErrorも422",
 			err:        errors.Join(errors.New("外側"), ve),
 			wantStatus: http.StatusUnprocessableEntity,
@@ -375,6 +389,13 @@ func TestWriter_WriteError(t *testing.T) {
 			wantStatus: http.StatusConflict,
 			wantType:   "about:blank",
 			wantDetail: "処理中です",
+		},
+		{
+			name:       "既存は409で問題タイプをalready-existsにし、UserMsgをdetailにする",
+			err:        &model.AppError{Code: model.AppErrCodeAlreadyExists, UserMsg: "下書きがすでにあります"},
+			wantStatus: http.StatusConflict,
+			wantType:   "https://example.com/api/problems/already-exists",
+			wantDetail: "下書きがすでにあります",
 		},
 		{
 			name:       "前提の不一致は412でUserMsgをdetailにする",

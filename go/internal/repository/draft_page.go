@@ -40,6 +40,22 @@ func (r *DraftPageRepository) FindByID(ctx context.Context, id model.DraftPageID
 	return r.toModel(row), nil
 }
 
+// FindByIDForUpdateは下書きを取得し、呼び出し元のトランザクションが終わるまでその行をロックする。
+// 下書きが存在しない場合はnilを返す
+func (r *DraftPageRepository) FindByIDForUpdate(ctx context.Context, id model.DraftPageID, spaceID model.SpaceID) (*model.DraftPage, error) {
+	row, err := r.q.FindDraftPageByIDForUpdate(ctx, query.FindDraftPageByIDForUpdateParams{
+		ID:      string(id),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindByPageAndMemberはページIDとスペースメンバーIDで下書きを取得する
 func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID model.PageID, spaceMemberID model.SpaceMemberID, spaceID model.SpaceID) (*model.DraftPage, error) {
 	row, err := r.q.FindDraftPageByPageAndMember(ctx, query.FindDraftPageByPageAndMemberParams{
@@ -248,6 +264,66 @@ func (r *DraftPageRepository) ListBySpaceMember(ctx context.Context, spaceMember
 		return nil, err
 	}
 	return r.toDraftPagesFromSpaceMemberRows(rows), nil
+}
+
+// ListDraftPagesByModifiedAtInputはListByModifiedAtの入力
+type ListDraftPagesByModifiedAtInput struct {
+	SpaceID       model.SpaceID
+	SpaceMemberID model.SpaceMemberID
+	// TopicIDsはこのトピックに属する下書きだけを返す
+	TopicIDs []model.TopicID
+	// AfterModifiedAtとAfterIDは前のページの最後の下書きの位置。どちらもnilなら先頭から返す
+	AfterModifiedAt *time.Time
+	AfterID         *model.DraftPageID
+	Limit           int32
+}
+
+// ListByModifiedAtは、スペースメンバー自身の下書きのうちページが未廃棄・未ゴミ箱でTopicIDsのトピックに
+// 属するものを、更新日時の新しい順 (同じ日時ならIDの大きい順) にLimit件まで返す。
+// 各下書きのPageにはページのIDと番号だけを入れる。
+// draft_pages.modified_atはタイムゾーンを持たずUTCで保存しているため、日時はUTCに直して渡す
+func (r *DraftPageRepository) ListByModifiedAt(ctx context.Context, input ListDraftPagesByModifiedAtInput) ([]*model.DraftPage, error) {
+	var afterModifiedAt sql.NullTime
+	var afterID *string
+	if input.AfterModifiedAt != nil && input.AfterID != nil {
+		afterModifiedAt = sql.NullTime{Time: input.AfterModifiedAt.UTC(), Valid: true}
+		id := string(*input.AfterID)
+		afterID = &id
+	}
+
+	rows, err := r.q.ListDraftPagesByModifiedAt(ctx, query.ListDraftPagesByModifiedAtParams{
+		SpaceID:         string(input.SpaceID),
+		SpaceMemberID:   string(input.SpaceMemberID),
+		TopicIds:        model.TopicIDsToStrings(input.TopicIDs),
+		AfterModifiedAt: afterModifiedAt,
+		AfterID:         afterID,
+		RowLimit:        input.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	drafts := make([]*model.DraftPage, len(rows))
+	for i, row := range rows {
+		draft := r.toModel(query.DraftPage{
+			ID:                        row.ID,
+			SpaceID:                   row.SpaceID,
+			PageID:                    row.PageID,
+			SpaceMemberID:             row.SpaceMemberID,
+			TopicID:                   row.TopicID,
+			Title:                     row.Title,
+			Body:                      row.Body,
+			LinkedPageIds:             row.LinkedPageIds,
+			ModifiedAt:                row.ModifiedAt,
+			CreatedAt:                 row.CreatedAt,
+			UpdatedAt:                 row.UpdatedAt,
+			SuggestionPageID:          row.SuggestionPageID,
+			FeaturedImageAttachmentID: row.FeaturedImageAttachmentID,
+		})
+		draft.Page = &model.Page{ID: draft.PageID, Number: model.PageNumber(row.PageNumber)}
+		drafts[i] = draft
+	}
+	return drafts, nil
 }
 
 // ListByUserForIndexはユーザーの下書きページ一覧を取得する (下書き一覧画面用)
