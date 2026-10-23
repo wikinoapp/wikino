@@ -146,7 +146,8 @@ func (uc *CreateAPIDraftPageUsecase) Execute(ctx context.Context, input CreateAP
 }
 
 // resolveTargetは下書きを作る先のページかトピックを取得し、下書きの作成を認可する。
-// 新しいページの下書きは空のページを作るため、ページの作成 (page:write) も求める
+// 新しいページの下書きで作るのは本文の無い未公開のページで、内容が見えるようになるのは
+// page:writeを持つ人が公開したときだけのため、既存のページと同じく下書きの保存の権限だけを求める
 func (uc *CreateAPIDraftPageUsecase) resolveTarget(
 	ctx context.Context,
 	space *model.Space,
@@ -192,7 +193,7 @@ func (uc *CreateAPIDraftPageUsecase) resolveTarget(
 		ve.AddField(field, i18n.T(ctx, message))
 		return nil, ve
 	}
-	if !authorizer.CanSaveDraftPage() || (target.page == nil && !authorizer.CanCreatePage()) {
+	if !authorizer.CanSaveDraftPage() {
 		return nil, &model.AppError{
 			Code:    model.AppErrCodeForbidden,
 			UserMsg: i18n.T(ctx, "error_forbidden"),

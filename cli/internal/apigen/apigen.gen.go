@@ -902,8 +902,8 @@ type ClientInterface interface {
 	// ページを公開せずに書き換えるときに、最初に使います。
 	// 下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
 	//
-	// 新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
-	// 非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+	// 非公開トピックのページの下書きを作成するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+	// 新しいページの下書きは `page:write` が無くても作成できますが、公開するには `page:write` が要ります。
 	//
 	// 失敗したときは、次のように対処してください。
 	//
@@ -912,7 +912,7 @@ type ClientInterface interface {
 	// - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
 	// - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
 	// - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
-	// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+	// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません
 	// - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
 	//
 	// Takes any type of body and a specified content type.
@@ -936,8 +936,8 @@ type ClientInterface interface {
 	// ページを公開せずに書き換えるときに、最初に使います。
 	// 下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
 	//
-	// 新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
-	// 非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+	// 非公開トピックのページの下書きを作成するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+	// 新しいページの下書きは `page:write` が無くても作成できますが、公開するには `page:write` が要ります。
 	//
 	// 失敗したときは、次のように対処してください。
 	//
@@ -946,7 +946,7 @@ type ClientInterface interface {
 	// - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
 	// - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
 	// - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
-	// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+	// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません
 	// - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
 	//
 	// Takes a body of the `application/json` content type.
@@ -1760,8 +1760,8 @@ func (c *Client) ListDraftPages(ctx context.Context, spaceIdentifier SpaceIdenti
 // ページを公開せずに書き換えるときに、最初に使います。
 // 下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
 //
-// 新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
-// 非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+// 非公開トピックのページの下書きを作成するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+// 新しいページの下書きは `page:write` が無くても作成できますが、公開するには `page:write` が要ります。
 //
 // 失敗したときは、次のように対処してください。
 //
@@ -1770,7 +1770,7 @@ func (c *Client) ListDraftPages(ctx context.Context, spaceIdentifier SpaceIdenti
 // - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
 // - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
 // - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
-// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません
 // - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
 //
 // Takes any type of body and a specified content type.
@@ -1804,8 +1804,8 @@ func (c *Client) CreateDraftPageWithBody(ctx context.Context, spaceIdentifier Sp
 // ページを公開せずに書き換えるときに、最初に使います。
 // 下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
 //
-// 新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
-// 非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+// 非公開トピックのページの下書きを作成するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+// 新しいページの下書きは `page:write` が無くても作成できますが、公開するには `page:write` が要ります。
 //
 // 失敗したときは、次のように対処してください。
 //
@@ -1814,7 +1814,7 @@ func (c *Client) CreateDraftPageWithBody(ctx context.Context, spaceIdentifier Sp
 // - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
 // - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
 // - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
-// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません
 // - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
 //
 // Takes a body of the `application/json` content type.
@@ -4317,8 +4317,8 @@ type ClientWithResponsesInterface interface {
 	// ページを公開せずに書き換えるときに、最初に使います。
 	// 下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
 	//
-	// 新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
-	// 非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+	// 非公開トピックのページの下書きを作成するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+	// 新しいページの下書きは `page:write` が無くても作成できますが、公開するには `page:write` が要ります。
 	//
 	// 失敗したときは、次のように対処してください。
 	//
@@ -4327,7 +4327,7 @@ type ClientWithResponsesInterface interface {
 	// - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
 	// - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
 	// - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
-	// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+	// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません
 	// - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -4351,8 +4351,8 @@ type ClientWithResponsesInterface interface {
 	// ページを公開せずに書き換えるときに、最初に使います。
 	// 下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
 	//
-	// 新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
-	// 非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+	// 非公開トピックのページの下書きを作成するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+	// 新しいページの下書きは `page:write` が無くても作成できますが、公開するには `page:write` が要ります。
 	//
 	// 失敗したときは、次のように対処してください。
 	//
@@ -4361,7 +4361,7 @@ type ClientWithResponsesInterface interface {
 	// - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
 	// - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
 	// - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
-	// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+	// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません
 	// - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
@@ -8055,8 +8055,8 @@ func (c *ClientWithResponses) ListDraftPagesWithResponse(ctx context.Context, sp
 // ページを公開せずに書き換えるときに、最初に使います。
 // 下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
 //
-// 新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
-// 非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+// 非公開トピックのページの下書きを作成するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+// 新しいページの下書きは `page:write` が無くても作成できますが、公開するには `page:write` が要ります。
 //
 // 失敗したときは、次のように対処してください。
 //
@@ -8065,7 +8065,7 @@ func (c *ClientWithResponses) ListDraftPagesWithResponse(ctx context.Context, sp
 // - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
 // - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
 // - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
-// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません
 // - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -8095,8 +8095,8 @@ func (c *ClientWithResponses) CreateDraftPageWithBodyWithResponse(ctx context.Co
 // ページを公開せずに書き換えるときに、最初に使います。
 // 下書きがすでにあるページでは、`getDraftPage` で今の下書きを読みます。
 //
-// 新しいページの下書きを作成するには、トークンが `draft_page:write` に加えて `page:write` を持つ必要があります。
-// 非公開トピックのページの下書きを作成するには、トークンが `topic:read` も持つ必要があります。
+// 非公開トピックのページの下書きを作成するには、トークンが `draft_page:write` に加えて `topic:read` を持つ必要があります。
+// 新しいページの下書きは `page:write` が無くても作成できますが、公開するには `page:write` が要ります。
 //
 // 失敗したときは、次のように対処してください。
 //
@@ -8105,7 +8105,7 @@ func (c *ClientWithResponses) CreateDraftPageWithBodyWithResponse(ctx context.Co
 // - 422 (`topic_number`): トピックが存在しないか見られません。`listTopics` でトピックの番号を確かめてください
 // - 422 (`pointer` が `null`): `page_number` と `topic_number` のどちらも指定していません。どちらか一方を指定してください
 // - 422 (`page_number` と `topic_number` の両方): どちらか一方だけを指定してください
-// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません。新しいページでは、トークンに `page:write` があるかも確かめてください
+// - 404: ページやトピックは見られますが、トークンの持ち主はそこに下書きを作成できません
 // - 応答を受け取れず結果が分からない場合: 既存のページでは、送り直して409になれば作成済みです。新しいページではこのoperationは冪等ではないため、送り直す前に `listDraftPages` で作成済みかを確かめてください
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).

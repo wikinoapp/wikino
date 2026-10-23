@@ -61,6 +61,6 @@ Read it again, tell the user what it now contains, and ask for confirmation agai
 
 ## Use a token that only has draft permissions
 
-A token without the page write scope (page:write) cannot create or update pages, publish drafts, or create drafts of new pages.
-It can create and update drafts of existing pages.
+A token without the page write scope (page:write) cannot create or update pages or publish drafts.
+It can create and update drafts of both existing and new pages.
 In this setup, after writing a draft, show the user the draft's URL (the `url` in the output) and have them check and publish it in the web UI.

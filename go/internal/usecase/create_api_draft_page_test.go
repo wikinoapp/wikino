@@ -33,11 +33,8 @@ func ptr[T any](v T) *T {
 	return &v
 }
 
-// draftPageWriteScopesは既存のページの下書きを作れるトークンのスコープ
+// draftPageWriteScopesは下書きを作れるトークンのスコープ
 var draftPageWriteScopes = []model.Scope{model.ScopeDraftPageWrite}
-
-// newPageDraftScopesは新しいページの下書きも作れるトークンのスコープ
-var newPageDraftScopes = []model.Scope{model.ScopeDraftPageWrite, model.ScopePageWrite}
 
 func TestCreateAPIDraftPageUsecase_Execute_ExistingPage(t *testing.T) {
 	t.Parallel()
@@ -110,7 +107,7 @@ func TestCreateAPIDraftPageUsecase_Execute_NewPage(t *testing.T) {
 	t.Run("タイトルと本文を指定して作る", func(t *testing.T) {
 		body := "[[既存]] [[まだ無いページ]]"
 		output, err := newCreateAPIDraftPageUC(db).Execute(t.Context(), CreateAPIDraftPageInput{
-			Principal:       f.principal(memberRole, newPageDraftScopes),
+			Principal:       f.principal(memberRole, draftPageWriteScopes),
 			SpaceIdentifier: f.space.Identifier,
 			TopicNumber:     ptr(int32(1)),
 			Title:           ptr("新しいページ"),
@@ -148,7 +145,7 @@ func TestCreateAPIDraftPageUsecase_Execute_NewPage(t *testing.T) {
 
 	t.Run("タイトルと本文を省くとタイトルの無い空の下書きを作る", func(t *testing.T) {
 		output, err := newCreateAPIDraftPageUC(db).Execute(t.Context(), CreateAPIDraftPageInput{
-			Principal:       f.principal(memberRole, newPageDraftScopes),
+			Principal:       f.principal(memberRole, draftPageWriteScopes),
 			SpaceIdentifier: f.space.Identifier,
 			TopicNumber:     ptr(int32(1)),
 		})
@@ -231,12 +228,12 @@ func TestCreateAPIDraftPageUsecase_Execute_Validation(t *testing.T) {
 		// wantFieldsは問題のフィールド (空ならフォーム全体の問題)
 		wantFields []string
 	}{
-		{name: "ページとトピックの両方を指定すると両方の問題", tokenScopes: newPageDraftScopes, pageNumber: ptr(int32(1)), topicNumber: ptr(int32(1)), wantFields: []string{"page_number", "topic_number"}},
-		{name: "どちらも指定しなければ全体の問題", tokenScopes: newPageDraftScopes},
+		{name: "ページとトピックの両方を指定すると両方の問題", tokenScopes: draftPageWriteScopes, pageNumber: ptr(int32(1)), topicNumber: ptr(int32(1)), wantFields: []string{"page_number", "topic_number"}},
+		{name: "どちらも指定しなければ全体の問題", tokenScopes: draftPageWriteScopes},
 		{name: "存在しないページはpage_numberの問題", tokenScopes: draftPageWriteScopes, pageNumber: ptr(int32(99)), wantFields: []string{"page_number"}},
 		{name: "ゴミ箱のページはpage_numberの問題", tokenScopes: draftPageWriteScopes, pageNumber: ptr(int32(2)), wantFields: []string{"page_number"}},
 		{name: "トークンがtopic:readを持たなければ非公開トピックのページはpage_numberの問題", tokenScopes: draftPageWriteScopes, pageNumber: ptr(int32(3)), wantFields: []string{"page_number"}},
-		{name: "存在しないトピックはtopic_numberの問題", tokenScopes: newPageDraftScopes, topicNumber: ptr(int32(99)), wantFields: []string{"topic_number"}},
+		{name: "存在しないトピックはtopic_numberの問題", tokenScopes: draftPageWriteScopes, topicNumber: ptr(int32(99)), wantFields: []string{"topic_number"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -292,11 +289,10 @@ func TestCreateAPIDraftPageUsecase_Execute_Authorization(t *testing.T) {
 			pageNumber:  ptr(int32(1)),
 		},
 		{
-			name:        "draft_page:writeだけのトークンでは新しいページの下書きを作れない",
+			name:        "draft_page:writeだけのトークンで新しいページの下書きを作れる",
 			memberRole:  apiTopicRegularMemberRole,
 			tokenScopes: draftPageWriteScopes,
 			topicNumber: ptr(int32(1)),
-			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
 			name:        "page:writeだけのトークンでは既存のページの下書きを作れない",
@@ -306,28 +302,36 @@ func TestCreateAPIDraftPageUsecase_Execute_Authorization(t *testing.T) {
 			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
-			name:        "page:writeとdraft_page:writeのトークンで新しいページの下書きを作れる",
+			name:        "page:writeだけのトークンでは新しいページの下書きを作れない",
 			memberRole:  apiTopicRegularMemberRole,
-			tokenScopes: newPageDraftScopes,
+			tokenScopes: []model.Scope{model.ScopePageWrite},
 			topicNumber: ptr(int32(1)),
+			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
 			name:        "トークンがtopic:readを持てば非公開トピックに新しいページの下書きを作れる",
 			memberRole:  apiTopicRegularMemberRole,
-			tokenScopes: append([]model.Scope{model.ScopeTopicRead}, newPageDraftScopes...),
+			tokenScopes: append([]model.Scope{model.ScopeTopicRead}, draftPageWriteScopes...),
 			topicNumber: ptr(int32(2)),
 		},
 		{
 			name:        "メンバーが閲覧者なら、トークンが持っていても作れない",
 			memberRole:  model.SpaceRoleViewer,
-			tokenScopes: newPageDraftScopes,
+			tokenScopes: draftPageWriteScopes,
 			pageNumber:  ptr(int32(1)),
+			wantCode:    model.AppErrCodeForbidden,
+		},
+		{
+			name:        "メンバーが閲覧者なら、トークンが持っていても新しいページの下書きを作れない",
+			memberRole:  model.SpaceRoleViewer,
+			tokenScopes: draftPageWriteScopes,
+			topicNumber: ptr(int32(1)),
 			wantCode:    model.AppErrCodeForbidden,
 		},
 		{
 			name:        "トークンが属さないスペースは未存在",
 			memberRole:  apiTopicRegularMemberRole,
-			tokenScopes: newPageDraftScopes,
+			tokenScopes: draftPageWriteScopes,
 			identifier:  "api-draft-create-auth-other",
 			pageNumber:  ptr(int32(1)),
 			wantCode:    model.AppErrCodeResourceNotFound,
