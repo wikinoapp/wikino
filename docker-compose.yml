@@ -9,6 +9,7 @@ services:
     volumes:
       - .:/workspace
       - op-config:/home/developer/.config/op
+      - wikino-cli-config:/home/developer/.config/wikino
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/go/.cache/go-build
       - app-gems-data:/mise/installs/ruby/3.4.4/lib/ruby/gems/3.4.0
@@ -23,6 +24,7 @@ services:
       - OP_SERVICE_ACCOUNT_TOKEN=${OP_SERVICE_ACCOUNT_TOKEN:-}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN:-}
+      - WIKINO_TOKEN_STORE=file # コンテナではキーチェーンを使えないため、wikino-cli-configに保存する
 
   caddy:
     image: caddy:2-alpine
@@ -65,3 +67,4 @@ volumes:
   go-mod-cache:
   op-config:
   postgresql18-data:
+  wikino-cli-config:
