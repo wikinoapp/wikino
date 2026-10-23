@@ -1477,7 +1477,7 @@ To check for unintended linked pages beforehand, use `--dry-run`.
 Creating a draft of a new page is not idempotent.
 When the result is unknown (such as after a network failure), check whether it was created with `wikino draft list` before sending again.
 
-Creating a draft of a new page requires the page:write scope on the token in addition to draft_page:write.
+Creating a draft requires the draft_page:write scope on the token. Drafts of new pages can also be created without the page:write scope.
 Checking the linked pages of the body requires the page:read scope.
 Creating a draft of a page in a private topic also requires the topic:read scope."""
 
@@ -1516,7 +1516,7 @@ other = """
   2  Neither or both of a page number and `--topic` are given, the page number or `--topic` is not a positive integer, both `--body` and `--body-file` are given,
      the body file cannot be read or is not UTF-8, `--fields` has an unknown field, or `--dry-run` is combined with `--fields`
   3  Not logged in, or the token is invalid or expired (401)
-  4  The token lacks the draft_page:write scope, lacks page:write for a new page, or lacks page:read for checking the linked pages of the body (403)
+  4  The token lacks the draft_page:write scope, or lacks page:read for checking the linked pages of the body (403)
   5  You cannot create drafts in the page or topic, or the page does not exist when checking the linked pages of the body (404)
   6  The page already has a draft of yours (409). Read the current draft with `wikino draft get <page_number>` and update it with `wikino draft update <page_number>`
   7  Invalid input such as the title, or the page or topic does not exist or cannot be seen (422). Fix the field shown in the error.
@@ -1556,7 +1556,7 @@ other = "It is unknown whether the draft was created. Check with `{{.GetCommand}
 
 [draft_create_error_topic_not_found_hint]
 description = "draft createでトピックに新しいページの下書きを作成できない (404) ときのヒント。Topicはトピック番号"
-other = "The token's owner cannot create a new page in topic {{.Topic}}. Check that the token has the page:write scope and that you have joined the topic in the web UI."
+other = "The token's owner cannot create a new page in topic {{.Topic}}. Check that you have joined the topic in the web UI."
 
 [draft_create_error_topic_validation_failed_hint]
 description = "draft createで新しいページのトピックが検証で拒否された (422) ときのヒント"
