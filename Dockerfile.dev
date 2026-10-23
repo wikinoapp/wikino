@@ -133,8 +133,8 @@ RUN GOLANGCI_LINT_DIR="golangci-lint-${GOLANGCI_LINT_VERSION#v}-linux-amd64" && 
 # 表示言語は既定で英語になるため、日本語を指定する。
 ENV WIKINO_TOKEN_STORE=file
 ENV WIKINO_LANG=ja
-ARG WIKINO_CLI_VERSION=v1.0.0
-ARG WIKINO_CLI_SHA256=3f2eb1bfd5990f7c5a00b9cc56a16664eca0307dd6fdbbd17d6a2e864c17a8ca
+ARG WIKINO_CLI_VERSION=v1.1.0
+ARG WIKINO_CLI_SHA256=31c44c63661fd491582d8d0297f8377c66e58eff47c63ce8d809544c90b8719f
 RUN WIKINO_CLI_DIR="wikino_${WIKINO_CLI_VERSION}_linux_amd64" && \
     curl -fsSL -o /tmp/wikino.tar.gz "https://github.com/wikinoapp/wikino/releases/download/cli/${WIKINO_CLI_VERSION}/${WIKINO_CLI_DIR}.tar.gz" && \
     echo "${WIKINO_CLI_SHA256}  /tmp/wikino.tar.gz" | sha256sum -c - && \
