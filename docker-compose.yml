@@ -24,7 +24,6 @@ services:
       - OP_SERVICE_ACCOUNT_TOKEN=${OP_SERVICE_ACCOUNT_TOKEN:-}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN:-}
-      - WIKINO_TOKEN_STORE=file # コンテナではキーチェーンを使えないため、wikino-cli-configに保存する
 
   caddy:
     image: caddy:2-alpine
