@@ -127,6 +127,22 @@ RUN GOLANGCI_LINT_DIR="golangci-lint-${GOLANGCI_LINT_VERSION#v}-linux-amd64" && 
     chmod +x /usr/local/bin/golangci-lint && \
     rm -rf "/tmp/golangci-lint.tar.gz" "/tmp/${GOLANGCI_LINT_DIR}"
 
+# --- Wikino CLI ---
+#
+# コンテナではキーチェーンを使えないため、トークンは設定ディレクトリのファイルに保存する。
+# 表示言語は既定で英語になるため、日本語を指定する。
+ENV WIKINO_TOKEN_STORE=file
+ENV WIKINO_LANG=ja
+ARG WIKINO_CLI_VERSION=v1.0.0
+ARG WIKINO_CLI_SHA256=3f2eb1bfd5990f7c5a00b9cc56a16664eca0307dd6fdbbd17d6a2e864c17a8ca
+RUN WIKINO_CLI_DIR="wikino_${WIKINO_CLI_VERSION}_linux_amd64" && \
+    curl -fsSL -o /tmp/wikino.tar.gz "https://github.com/wikinoapp/wikino/releases/download/cli/${WIKINO_CLI_VERSION}/${WIKINO_CLI_DIR}.tar.gz" && \
+    echo "${WIKINO_CLI_SHA256}  /tmp/wikino.tar.gz" | sha256sum -c - && \
+    tar -xzf /tmp/wikino.tar.gz -C /tmp && \
+    mv "/tmp/${WIKINO_CLI_DIR}/wikino" /usr/local/bin/wikino && \
+    chmod +x /usr/local/bin/wikino && \
+    rm -rf "/tmp/wikino.tar.gz" "/tmp/${WIKINO_CLI_DIR}"
+
 # --- GitHub CLI ---
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -165,17 +181,19 @@ RUN mkdir -p /go/.cache/go-build /go/pkg && \
 # --- miseのデータディレクトリの権限設定 ---
 RUN chown -R ${USER_ID}:${GROUP_ID} /mise
 
-# --- 1Password CLI設定ディレクトリ ---
+# --- 1Password CLI・Wikino CLIの設定ディレクトリ ---
 #
-# 名前付きボリュームop-configをここにマウントする。Dockerがイメージ側の
-# 所有権を引き継ぐのはボリュームが空で新規作成されたときだけのため、`op` が設定を
-# 書き込めるよう開発者ユーザー所有のディレクトリを事前に用意しておく。
+# 名前付きボリュームop-config・wikino-cli-configをここにマウントする。Dockerが
+# イメージ側の所有権を引き継ぐのはボリュームが空で新規作成されたときだけのため、
+# `op`・`wikino` が設定を書き込めるよう開発者ユーザー所有のディレクトリを事前に
+# 用意しておく。
 #
 # このディレクトリを用意する前に作られたボリュームはroot所有のままで、
 # イメージを再ビルドしても変わらない。削除 (docker volume rm) して空の状態から
 # 作り直すことで所有権が反映される。
 RUN install -d -o ${USER_ID} -g ${GROUP_ID} /home/${USERNAME}/.config && \
-    install -d -o ${USER_ID} -g ${GROUP_ID} -m 0700 /home/${USERNAME}/.config/op
+    install -d -o ${USER_ID} -g ${GROUP_ID} -m 0700 /home/${USERNAME}/.config/op && \
+    install -d -o ${USER_ID} -g ${GROUP_ID} -m 0700 /home/${USERNAME}/.config/wikino
 
 WORKDIR /workspace
 USER ${USERNAME}
