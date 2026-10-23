@@ -334,8 +334,8 @@ func TestAPIRouter_CreateDraftPage(t *testing.T) {
 		}
 	})
 
-	t.Run("新しいページの下書きを作成する", func(t *testing.T) {
-		rr := request("wkp_draft_page_and_page_write", `{"topic_number": 1, "title": "新しいページ"}`)
+	t.Run("draft_page:writeだけのトークンで新しいページの下書きを作成する", func(t *testing.T) {
+		rr := request("wkp_draft_page_write", `{"topic_number": 1, "title": "新しいページ"}`)
 		if rr.Code != http.StatusCreated {
 			t.Fatalf("ステータス = %d、期待値 = 201 (本文: %s)", rr.Code, rr.Body.String())
 		}
@@ -349,10 +349,6 @@ func TestAPIRouter_CreateDraftPage(t *testing.T) {
 		if want := "https://example.com/s/api-http-draft-create/pages/2/edit"; body.Url != want {
 			t.Errorf("url = %q、期待値 = 編集画面の %q", body.Url, want)
 		}
-	})
-
-	t.Run("page:writeの無いトークンでは新しいページの下書きは404", func(t *testing.T) {
-		assertProblem(t, request("wkp_draft_page_write", `{"topic_number": 1}`), http.StatusNotFound)
 	})
 
 	t.Run("draft_page:writeの無いトークンは403", func(t *testing.T) {
