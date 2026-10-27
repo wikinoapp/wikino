@@ -1,5 +1,5 @@
 -- name: CreateOAuthDeviceAuthorization :one
--- デバイス認可の要求を許可待ちで作成する
+-- デバイス認可の要求を許可待ちで作成する。端末名 (@device_name) は送られなかったときNULLを渡す
 INSERT INTO oauth_device_authorizations (
     oauth_application_id,
     space_id,
@@ -7,6 +7,7 @@ INSERT INTO oauth_device_authorizations (
     user_code_digest,
     scopes,
     interval_seconds,
+    device_name,
     expires_at,
     created_at,
     updated_at
@@ -17,6 +18,7 @@ INSERT INTO oauth_device_authorizations (
     @user_code_digest,
     @scopes::text[],
     @interval_seconds,
+    sqlc.narg(device_name),
     @expires_at,
     @now,
     @now
@@ -70,57 +72,44 @@ WHERE id = @id
 RETURNING *;
 
 -- name: ApproveOAuthDeviceAuthorizationWithGrant :one
--- 利用者の許可に応じて、スペースメンバーのOAuthアプリへの許可を作成または置き換え、デバイス
--- 認可の要求を許可済みにして許可を結び付ける。許可の置き換えと、許可の外に出たスコープを持つ
--- トークンの失効は、認可コードの発行 (CreateOAuthAuthorizationCodeWithGrant) と同じである。
+-- 利用者の許可に応じて、スペースメンバーのOAuthアプリへの許可を新しく作り、デバイス認可の要求を
+-- 許可済みにして許可を結び付ける。許可は認可コードの発行 (CreateOAuthAuthorizationCodeWithGrant)
+-- と同じく要求ごとに作り、同じアプリ・メンバーの既存の許可には触れない。
 -- 要求のスコープは利用者が選んだ範囲に置き換え、デバイスコードの交換で発行するトークンの
--- スコープにする。同じTxの先行する文で、要求をLockPendingOAuthDeviceAuthorizationで、許可を
--- LockOrCreateOAuthGrantでロックしておく。
-WITH upserted_grant AS (
+-- スコープにする。同じTxの先行する文で、要求をLockPendingOAuthDeviceAuthorizationでロックしておく。
+-- 許可の端末名は、要求で受け取った端末名を写す。
+-- 要求が許可待ちでなければ許可を作らず、更新する行も無く、文全体が行を返さない。
+WITH created_grant AS (
     INSERT INTO oauth_grants (
         oauth_application_id,
         space_id,
         space_member_id,
         scopes,
+        device_name,
         created_at,
         updated_at
-    ) VALUES (
+    )
+    SELECT
         @oauth_application_id,
         @space_id,
         @space_member_id,
         @scopes::text[],
+        oauth_device_authorizations.device_name,
         @now,
         @now
-    )
-    ON CONFLICT (oauth_application_id, space_member_id) WHERE revoked_at IS NULL
-    DO UPDATE SET
-        scopes = EXCLUDED.scopes,
-        updated_at = EXCLUDED.updated_at
+    FROM oauth_device_authorizations
+    WHERE oauth_device_authorizations.id = @id
+      AND oauth_device_authorizations.space_id = @space_id
+      AND oauth_device_authorizations.status = 0
     RETURNING id
-),
-revoked_access_tokens AS (
-    UPDATE oauth_access_tokens
-    SET revoked_at = @now::timestamptz, updated_at = @now
-    WHERE oauth_access_tokens.oauth_grant_id IN (SELECT upserted_grant.id FROM upserted_grant)
-      AND oauth_access_tokens.space_id = @space_id
-      AND oauth_access_tokens.revoked_at IS NULL
-      AND NOT (oauth_access_tokens.scopes <@ @scopes::text[])
-),
-revoked_refresh_tokens AS (
-    UPDATE oauth_refresh_tokens
-    SET revoked_at = @now::timestamptz, updated_at = @now
-    WHERE oauth_refresh_tokens.oauth_grant_id IN (SELECT upserted_grant.id FROM upserted_grant)
-      AND oauth_refresh_tokens.space_id = @space_id
-      AND oauth_refresh_tokens.revoked_at IS NULL
-      AND NOT (oauth_refresh_tokens.scopes <@ @scopes::text[])
 )
 UPDATE oauth_device_authorizations
 SET
     status = 1,
-    oauth_grant_id = upserted_grant.id,
+    oauth_grant_id = created_grant.id,
     scopes = @scopes::text[],
     updated_at = @now
-FROM upserted_grant
+FROM created_grant
 WHERE oauth_device_authorizations.id = @id
   AND oauth_device_authorizations.space_id = @space_id
   AND oauth_device_authorizations.status = 0

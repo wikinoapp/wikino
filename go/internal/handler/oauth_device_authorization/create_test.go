@@ -97,9 +97,10 @@ func TestCreate_デバイスコードとユーザーコードを返す(t *testin
 
 	rr := httptest.NewRecorder()
 	setupHandler(t, tx).Create(rr, newDeviceAuthorizationRequest("/oauth/device_authorization", url.Values{
-		"client_id": {f.clientID},
-		"scope":     {"page:read"},
-		"resource":  {model.SpaceAPIResourceURL(testConfig.AppURL(), f.identifier)},
+		"client_id":   {f.clientID},
+		"scope":       {"page:read"},
+		"resource":    {model.SpaceAPIResourceURL(testConfig.AppURL(), f.identifier)},
+		"device_name": {"my-laptop"},
 	}))
 
 	body := assertJSONResponse(t, rr, http.StatusOK)
@@ -131,6 +132,9 @@ func TestCreate_デバイスコードとユーザーコードを返す(t *testin
 	}
 	if stored == nil {
 		t.Fatal("返したデバイスコードのダイジェストで要求が見つからない")
+	}
+	if stored.DeviceName == nil || *stored.DeviceName != "my-laptop" {
+		t.Errorf("DeviceName = %v、期待値 = %q", stored.DeviceName, "my-laptop")
 	}
 }
 
@@ -191,6 +195,27 @@ func TestCreate_受け付けない要求(t *testing.T) {
 			name: "パラメーターの重複",
 			request: func() *http.Request {
 				return newDeviceAuthorizationRequest("/oauth/device_authorization", url.Values{"client_id": {f.clientID}, "scope": {"page:read", "topic:read"}})
+			},
+			wantStatus: http.StatusBadRequest,
+			wantError:  "invalid_request",
+		},
+		{
+			name: "device_nameの重複",
+			request: func() *http.Request {
+				return newDeviceAuthorizationRequest("/oauth/device_authorization", url.Values{"client_id": {f.clientID}, "scope": {"page:read"}, "device_name": {"a", "b"}})
+			},
+			wantStatus: http.StatusBadRequest,
+			wantError:  "invalid_request",
+		},
+		{
+			name: "device_nameが不正UTF-8",
+			request: func() *http.Request {
+				return newDeviceAuthorizationRequest("/oauth/device_authorization", url.Values{
+					"client_id":   {f.clientID},
+					"scope":       {"page:read"},
+					"resource":    {testConfig.AppURL() + "/api/v1/spaces/" + string(f.identifier)},
+					"device_name": {"\xff"},
+				})
 			},
 			wantStatus: http.StatusBadRequest,
 			wantError:  "invalid_request",

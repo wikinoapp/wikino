@@ -106,68 +106,6 @@ func TestOAuthAccessTokenRepository_FindByTokenDigest(t *testing.T) {
 	})
 }
 
-func TestOAuthAccessTokenRepository_RevokeByOAuthGrant(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	repo := NewOAuthAccessTokenRepository(testutil.QueriesWithTx(tx))
-	ctx := context.Background()
-
-	f := setupOAuthFixture(t, tx, "access-revoke")
-	other := setupOAuthFixture(t, tx, "access-revoke-other")
-	grantID := f.buildGrant(t, tx)
-	otherGrantID := other.buildGrant(t, tx)
-
-	revokedAt := time.Now().Add(-time.Hour).Truncate(time.Microsecond)
-	now := time.Now().Truncate(time.Microsecond)
-	newToken := func(grantID model.OAuthGrantID, spaceID model.SpaceID, digest string) {
-		testutil.NewOAuthAccessTokenBuilder(t, tx).
-			WithOAuthGrantID(grantID).
-			WithSpaceID(spaceID).
-			WithTokenDigest(digest).
-			Build()
-	}
-	newToken(grantID, f.spaceID, "access_revoke_a_digest")
-	newToken(grantID, f.spaceID, "access_revoke_b_digest")
-	newToken(otherGrantID, other.spaceID, "access_revoke_other_digest")
-	testutil.NewOAuthAccessTokenBuilder(t, tx).
-		WithOAuthGrantID(grantID).
-		WithSpaceID(f.spaceID).
-		WithTokenDigest("access_revoke_revoked_digest").
-		WithRevokedAt(revokedAt).
-		Build()
-
-	// 許可と違うスペースを指定したら失効しない。失効していれば、後の確認で失効日時がnowではなくなる
-	if err := repo.RevokeByOAuthGrant(ctx, grantID, other.spaceID, now.Add(-time.Minute)); err != nil {
-		t.Fatalf("他のスペースを指定したRevokeByOAuthGrant()のエラー = %v", err)
-	}
-	if err := repo.RevokeByOAuthGrant(ctx, grantID, f.spaceID, now); err != nil {
-		t.Fatalf("RevokeByOAuthGrant()のエラー = %v", err)
-	}
-
-	tests := []struct {
-		digest        string
-		wantRevokedAt *time.Time
-	}{
-		{digest: "access_revoke_a_digest", wantRevokedAt: &now},
-		{digest: "access_revoke_b_digest", wantRevokedAt: &now},
-		{digest: "access_revoke_revoked_digest", wantRevokedAt: &revokedAt},
-		{digest: "access_revoke_other_digest"},
-	}
-	for _, tt := range tests {
-		token, err := repo.FindByTokenDigest(ctx, tt.digest)
-		if err != nil {
-			t.Fatalf("%s: FindByTokenDigest()のエラー = %v", tt.digest, err)
-		}
-		switch {
-		case tt.wantRevokedAt == nil && token.RevokedAt != nil:
-			t.Errorf("%s: token.RevokedAt = %v、期待値 = nil", tt.digest, token.RevokedAt)
-		case tt.wantRevokedAt != nil && (token.RevokedAt == nil || !token.RevokedAt.Equal(*tt.wantRevokedAt)):
-			t.Errorf("%s: token.RevokedAt = %v、期待値 = %v", tt.digest, token.RevokedAt, *tt.wantRevokedAt)
-		}
-	}
-}
-
 func TestOAuthAccessTokenRepository_Revoke(t *testing.T) {
 	t.Parallel()
 

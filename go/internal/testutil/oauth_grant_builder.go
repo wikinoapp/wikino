@@ -20,6 +20,7 @@ type OAuthGrantBuilder struct {
 	spaceID            string
 	spaceMemberID      string
 	scopes             []string
+	lastUsedAt         *time.Time
 	revokedAt          *time.Time
 }
 
@@ -57,6 +58,12 @@ func (b *OAuthGrantBuilder) WithScopes(scopes []model.Scope) *OAuthGrantBuilder 
 	return b
 }
 
+// WithLastUsedAtは最終利用日時を設定します
+func (b *OAuthGrantBuilder) WithLastUsedAt(lastUsedAt time.Time) *OAuthGrantBuilder {
+	b.lastUsedAt = &lastUsedAt
+	return b
+}
+
 // WithRevokedAtは失効日時を設定します
 func (b *OAuthGrantBuilder) WithRevokedAt(revokedAt time.Time) *OAuthGrantBuilder {
 	b.revokedAt = &revokedAt
@@ -81,10 +88,10 @@ func (b *OAuthGrantBuilder) Build() model.OAuthGrantID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO oauth_grants (oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $6)
+		`INSERT INTO oauth_grants (oauth_application_id, space_id, space_member_id, scopes, last_used_at, revoked_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
 		 RETURNING id`,
-		b.oauthApplicationID, b.spaceID, b.spaceMemberID, pq.Array(b.scopes), b.revokedAt, now,
+		b.oauthApplicationID, b.spaceID, b.spaceMemberID, pq.Array(b.scopes), b.lastUsedAt, b.revokedAt, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("OAuthアプリの許可作成に失敗: %v", err)

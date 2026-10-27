@@ -727,7 +727,6 @@ func runServe() {
 			oauthApplicationRepo,
 			oauthGrantRepo,
 			oauthAuthorizationCodeRepo,
-			oauthAccessTokenRepo,
 			oauthRefreshTokenRepo,
 			oauthDeviceAuthorizationRepo,
 			spaceRepo,

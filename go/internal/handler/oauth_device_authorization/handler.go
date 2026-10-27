@@ -32,6 +32,7 @@ var deviceAuthorizationParamNames = []string{
 	"client_secret",
 	"scope",
 	"resource",
+	"device_name",
 }
 
 // deviceAuthorizationResponseはデバイス認可の応答 (RFC 8628 §3.2)
@@ -70,6 +71,7 @@ func parseDeviceAuthorizationParams(r *http.Request) (params usecase.OAuthDevice
 		ClientID:            form.Get("client_id"),
 		Scope:               form.Get("scope"),
 		Resource:            form.Get("resource"),
+		DeviceName:          form.Get("device_name"),
 		ClientAuthenticated: form.Get("client_secret") != "",
 		DuplicatedParams:    duplicated,
 	}

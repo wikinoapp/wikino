@@ -26,6 +26,7 @@ type OAuthDeviceAuthorizationBuilder struct {
 	interval           time.Duration
 	expiresAt          time.Time
 	lastPolledAt       *time.Time
+	deviceName         *string
 }
 
 // NewOAuthDeviceAuthorizationBuilderはOAuthDeviceAuthorizationBuilderを生成します
@@ -106,6 +107,12 @@ func (b *OAuthDeviceAuthorizationBuilder) WithExpiresAt(expiresAt time.Time) *OA
 	return b
 }
 
+// WithDeviceNameは要求で受け取った端末名を設定します
+func (b *OAuthDeviceAuthorizationBuilder) WithDeviceName(deviceName string) *OAuthDeviceAuthorizationBuilder {
+	b.deviceName = &deviceName
+	return b
+}
+
 // WithLastPolledAtは最後のポーリングの日時を設定します
 func (b *OAuthDeviceAuthorizationBuilder) WithLastPolledAt(lastPolledAt time.Time) *OAuthDeviceAuthorizationBuilder {
 	b.lastPolledAt = &lastPolledAt
@@ -129,11 +136,11 @@ func (b *OAuthDeviceAuthorizationBuilder) Build() model.OAuthDeviceAuthorization
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO oauth_device_authorizations (oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
+		`INSERT INTO oauth_device_authorizations (oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, device_name, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
 		 RETURNING id`,
 		b.oauthApplicationID, b.spaceID, b.oauthGrantID, b.deviceCodeDigest, b.userCodeDigest, pq.Array(b.scopes),
-		int32(b.status), intervalSeconds, b.expiresAt, b.lastPolledAt, now,
+		int32(b.status), intervalSeconds, b.expiresAt, b.lastPolledAt, b.deviceName, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("デバイス認可の要求の作成に失敗: %v", err)

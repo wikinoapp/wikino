@@ -97,21 +97,36 @@ func (q *Queries) FindOAuthRefreshTokenByTokenDigest(ctx context.Context, tokenD
 }
 
 const revokeOAuthRefreshToken = `-- name: RevokeOAuthRefreshToken :exec
-WITH revoked AS (
-    UPDATE oauth_refresh_tokens
-    SET revoked_at = $1::timestamptz, updated_at = $1
+WITH target AS (
+    SELECT oauth_refresh_tokens.oauth_grant_id
+    FROM oauth_refresh_tokens
     WHERE oauth_refresh_tokens.id = $3
       AND oauth_refresh_tokens.space_id = $2
       AND oauth_refresh_tokens.used_at IS NULL
       AND oauth_refresh_tokens.revoked_at IS NULL
       AND oauth_refresh_tokens.expires_at > $1::timestamptz
-    RETURNING oauth_refresh_tokens.oauth_grant_id
+),
+revoked_grant AS (
+    UPDATE oauth_grants
+    SET
+        revoked_at = COALESCE(oauth_grants.revoked_at, $1::timestamptz),
+        updated_at = CASE WHEN oauth_grants.revoked_at IS NULL THEN $1 ELSE oauth_grants.updated_at END
+    WHERE oauth_grants.id IN (SELECT target.oauth_grant_id FROM target)
+      AND oauth_grants.space_id = $2
+    RETURNING oauth_grants.id
+),
+revoked_access_tokens AS (
+    UPDATE oauth_access_tokens
+    SET revoked_at = $1::timestamptz, updated_at = $1
+    WHERE oauth_access_tokens.oauth_grant_id IN (SELECT revoked_grant.id FROM revoked_grant)
+      AND oauth_access_tokens.space_id = $2
+      AND oauth_access_tokens.revoked_at IS NULL
 )
-UPDATE oauth_access_tokens
+UPDATE oauth_refresh_tokens
 SET revoked_at = $1::timestamptz, updated_at = $1
-WHERE oauth_access_tokens.oauth_grant_id IN (SELECT revoked.oauth_grant_id FROM revoked)
-  AND oauth_access_tokens.space_id = $2
-  AND oauth_access_tokens.revoked_at IS NULL
+WHERE oauth_refresh_tokens.oauth_grant_id IN (SELECT revoked_grant.id FROM revoked_grant)
+  AND oauth_refresh_tokens.space_id = $2
+  AND oauth_refresh_tokens.revoked_at IS NULL
 `
 
 type RevokeOAuthRefreshTokenParams struct {
@@ -120,33 +135,16 @@ type RevokeOAuthRefreshTokenParams struct {
 	ID      string    `json:"id"`
 }
 
-// リフレッシュトークンを1つ失効し、同じ許可のアクセストークンをすべて失効する (RFC 7009 §2.1)。
-// 同じ許可のほかのリフレッシュトークン (同じアプリを別の端末で使っているもの) は失効しない。
-// アクセストークンはどのリフレッシュトークンから発行したかを持たないため、許可の単位で失効する。
-// ほかの端末はリフレッシュトークンで新しいアクセストークンを得られる。
-// 元のトークンが使用済み・失効済み・期限切れなら何も変えない
+// リフレッシュトークンの失効 (ログアウト) に応じて、トークンが属する許可と、許可に属する
+// アクセストークン・リフレッシュトークンをすべて失効する (RFC 7009 §2.1)。許可は認可ごとに作るため、
+// 失効は同じアプリのほかの端末の許可に及ばない。1文で行うため、許可だけが失効してトークンが
+// 使える状態は途中にも残らない。元のトークンが使用済み・失効済み・期限切れなら何も変えない。
+// 許可の更新結果をトークンの失効で参照し、発行側と同じく許可 → トークンの順にロックする。
+// 既に失効した許可もIDを返し、残っているトークンを失効するが、許可の失効日時・更新日時は変えない。
+// 発行が許可の行をロックしている間に待たされると、待つ間に発行されたトークンはこの文の
+// スナップショットに無く失効しないが、許可が失効しているため照合とリフレッシュで拒まれる
 func (q *Queries) RevokeOAuthRefreshToken(ctx context.Context, arg RevokeOAuthRefreshTokenParams) error {
 	_, err := q.db.ExecContext(ctx, revokeOAuthRefreshToken, arg.Now, arg.SpaceID, arg.ID)
-	return err
-}
-
-const revokeOAuthRefreshTokensByOAuthGrant = `-- name: RevokeOAuthRefreshTokensByOAuthGrant :exec
-UPDATE oauth_refresh_tokens
-SET revoked_at = $1::timestamptz, updated_at = $1
-WHERE oauth_grant_id = $2
-  AND space_id = $3
-  AND revoked_at IS NULL
-`
-
-type RevokeOAuthRefreshTokensByOAuthGrantParams struct {
-	Now          time.Time `json:"now"`
-	OauthGrantID string    `json:"oauth_grant_id"`
-	SpaceID      string    `json:"space_id"`
-}
-
-// 許可に属する失効していないリフレッシュトークンをすべて失効する
-func (q *Queries) RevokeOAuthRefreshTokensByOAuthGrant(ctx context.Context, arg RevokeOAuthRefreshTokensByOAuthGrantParams) error {
-	_, err := q.db.ExecContext(ctx, revokeOAuthRefreshTokensByOAuthGrant, arg.Now, arg.OauthGrantID, arg.SpaceID)
 	return err
 }
 

@@ -95,6 +95,7 @@ func hiddenFields(params usecase.OAuthAuthorizationParams) []oauthauthorizationp
 		{Name: "code_challenge", Value: params.CodeChallenge},
 		{Name: "code_challenge_method", Value: params.CodeChallengeMethod},
 		{Name: "resource", Value: params.Resource},
+		{Name: "device_name", Value: params.DeviceName},
 	}
 
 	fields := make([]oauthauthorizationpages.HiddenField, 0, len(values))

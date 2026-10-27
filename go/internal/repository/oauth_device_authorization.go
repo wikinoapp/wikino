@@ -34,10 +34,17 @@ type CreateOAuthDeviceAuthorizationInput struct {
 	Scopes             []model.Scope
 	Interval           time.Duration
 	ExpiresAt          time.Time
+
+	// DeviceNameは要求で受け取った端末名。nilなら保存しない
+	DeviceName *string
 }
 
 // Createはデバイス認可の要求を許可待ちで作成する
 func (r *OAuthDeviceAuthorizationRepository) Create(ctx context.Context, input CreateOAuthDeviceAuthorizationInput) (*model.OAuthDeviceAuthorization, error) {
+	var deviceName sql.NullString
+	if input.DeviceName != nil {
+		deviceName = sql.NullString{String: *input.DeviceName, Valid: true}
+	}
 	row, err := r.q.CreateOAuthDeviceAuthorization(ctx, query.CreateOAuthDeviceAuthorizationParams{
 		OauthApplicationID: string(input.OAuthApplicationID),
 		SpaceID:            string(input.SpaceID),
@@ -46,6 +53,7 @@ func (r *OAuthDeviceAuthorizationRepository) Create(ctx context.Context, input C
 		Scopes:             model.ScopesToStrings(input.Scopes),
 		// #nosec G115 -- ポーリングの間隔は数秒から数十秒で、int32に収まる。
 		IntervalSeconds: int32(input.Interval / time.Second),
+		DeviceName:      deviceName,
 		ExpiresAt:       input.ExpiresAt,
 		Now:             time.Now(),
 	})
@@ -153,12 +161,12 @@ type ApproveOAuthDeviceAuthorizationWithGrantInput struct {
 	Scopes             []model.Scope
 }
 
-// ApproveWithGrantは、スペースメンバーのOAuthアプリへの許可を作成または選んだ範囲に置き換え、
-// 許可待ちの要求を許可済みにして許可を結び付ける。許可の外に出たスコープを持つトークンは
-// 失効させる。要求が許可待ちでなければ何も変えず (nil, nil) を返す。
+// ApproveWithGrantは、スペースメンバーのOAuthアプリへの許可を選んだ範囲で新しく作り、
+// 許可待ちの要求を許可済みにして許可を結び付ける。同じアプリ・メンバーの既存の許可には触れない。
+// 要求が許可待ちでなければ要求を変えず (nil, nil) を返す。このとき作った許可も残さないよう、
+// 呼び出し側はトランザクションをロールバックする。
 //
-// 同じトランザクションで、先にLockPendingで要求を、OAuthGrantRepository.LockOrCreateで許可を
-// ロックしておく
+// 同じトランザクションで、先にLockPendingで要求をロックしておく
 func (r *OAuthDeviceAuthorizationRepository) ApproveWithGrant(ctx context.Context, input ApproveOAuthDeviceAuthorizationWithGrantInput) (*model.OAuthDeviceAuthorization, error) {
 	row, err := r.q.ApproveOAuthDeviceAuthorizationWithGrant(ctx, query.ApproveOAuthDeviceAuthorizationWithGrantParams{
 		ID:                 string(input.ID),
@@ -243,6 +251,10 @@ func (r *OAuthDeviceAuthorizationRepository) toModel(row query.OauthDeviceAuthor
 	if row.LastPolledAt.Valid {
 		lastPolledAt = &row.LastPolledAt.Time
 	}
+	var deviceName *string
+	if row.DeviceName.Valid {
+		deviceName = &row.DeviceName.String
+	}
 	return &model.OAuthDeviceAuthorization{
 		ID:                 model.OAuthDeviceAuthorizationID(row.ID),
 		OAuthApplicationID: model.OAuthApplicationID(row.OauthApplicationID),
@@ -251,6 +263,7 @@ func (r *OAuthDeviceAuthorizationRepository) toModel(row query.OauthDeviceAuthor
 		DeviceCodeDigest:   row.DeviceCodeDigest,
 		UserCodeDigest:     row.UserCodeDigest,
 		Scopes:             model.StringsToScopes(row.Scopes),
+		DeviceName:         deviceName,
 		Status:             model.OAuthDeviceAuthorizationStatus(row.Status),
 		Interval:           time.Duration(row.IntervalSeconds) * time.Second,
 		ExpiresAt:          row.ExpiresAt,

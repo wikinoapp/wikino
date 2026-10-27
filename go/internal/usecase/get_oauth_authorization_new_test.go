@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -309,6 +310,9 @@ func TestGetOAuthAuthorizationNewUsecase_Execute_クライアントへ戻すエ�
 		{name: "resourceが存在しないスペースを指す", key: "goan-res-missing", modify: func(p *OAuthAuthorizationParams) {
 			p.Resource = "https://example.com/api/v1/spaces/no-such-space"
 		}, wantCode: model.OAuthAuthorizationErrorInvalidTarget},
+		{name: "device_nameが100文字を超える", key: "goan-device-long", modify: func(p *OAuthAuthorizationParams) { p.DeviceName = strings.Repeat("a", 101) }, wantCode: model.OAuthAuthorizationErrorInvalidRequest},
+		{name: "device_nameに制御文字がある", key: "goan-device-control", modify: func(p *OAuthAuthorizationParams) { p.DeviceName = "my\tlaptop" }, wantCode: model.OAuthAuthorizationErrorInvalidRequest},
+		{name: "device_nameが重複している", key: "goan-device-dup", modify: func(p *OAuthAuthorizationParams) { p.DuplicatedParams = []string{"device_name"} }, wantCode: model.OAuthAuthorizationErrorInvalidRequest},
 		{name: "resourceが重複している", key: "goan-res-dup", modify: func(p *OAuthAuthorizationParams) { p.DuplicatedParams = []string{"resource"} }, wantCode: model.OAuthAuthorizationErrorInvalidTarget},
 	}
 

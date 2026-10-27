@@ -64,8 +64,8 @@ type OAuthTokenRevocationParams struct {
 // クライアントが失効を確かめる目的は、トークンがもう使えないことにあるためである。
 //
 // アクセストークンを失効したときは、そのトークンだけを失効させる。リフレッシュトークンを
-// 失効したときは、そのトークンと同じ許可のアクセストークンをすべて失効させる。許可そのものと、
-// 同じ許可のほかのリフレッシュトークン (同じアプリを別の端末で使っているもの) は残す。
+// 失効したとき (ログアウト) は、その許可と許可に属するトークンをすべて失効させる。許可は認可ごとに
+// 作るため、同じアプリを別の端末で使っている許可は残る。
 func (uc *RevokeOAuthTokenUsecase) Execute(ctx context.Context, params OAuthTokenRevocationParams) error {
 	if len(params.DuplicatedParams) > 0 || params.Token == "" || params.ClientID == "" {
 		return oauthTokenError(model.OAuthTokenErrorInvalidRequest)

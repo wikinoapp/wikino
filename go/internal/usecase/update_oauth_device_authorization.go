@@ -70,7 +70,7 @@ type UpdateOAuthDeviceAuthorizationOutput struct {
 	DeniedReason OAuthAuthorizationDeniedReason
 }
 
-// Executeは、許可なら利用者が選んだスコープで許可を作成または置き換え、要求を許可済みにする。
+// Executeは、許可なら利用者が選んだスコープで許可を新しく作り、要求を許可済みにする。
 // 拒否なら要求を拒否済みにする。ユーザーコードを受け付けない場合と、選んだスコープが不正な場合は
 // *model.ValidationErrorを、フィーチャーフラグが無効なら*model.AppErrorを返す
 func (uc *UpdateOAuthDeviceAuthorizationUsecase) Execute(ctx context.Context, input UpdateOAuthDeviceAuthorizationInput) (*UpdateOAuthDeviceAuthorizationOutput, error) {
@@ -133,10 +133,11 @@ func (uc *UpdateOAuthDeviceAuthorizationUsecase) Execute(ctx context.Context, in
 	return &UpdateOAuthDeviceAuthorizationOutput{Application: v.Application, Approved: true}, nil
 }
 
-// approveWithGrantは、要求と許可のロックを取得してから、許可を選んだ範囲に置き換えて要求を許可済みに
-// する。要求のロック取得後に許可待ちでなければ、または要求・許可のロック取得後に期限切れなら、
-// 変更をロールバックしてnilを返す。許可のロックと失効を別の文にするのは、待機中に発行されたトークンも
-// 失効の対象にするため (認可コードの発行と同じ)
+// approveWithGrantは、要求のロックを取得し、同じアプリ・メンバーの許可を上限に収まるよう押し出してから、
+// 選んだ範囲で許可を作って要求を許可済みにする。
+// 要求のロックは、同じ要求への同時の許可・拒否とデバイスコードの交換を直列化する。ロック取得後に
+// 許可待ちでなければ、または要求のロック・許可の作成の待機中に期限が切れたら、
+// 変更をロールバックしてnilを返す
 func (uc *UpdateOAuthDeviceAuthorizationUsecase) approveWithGrant(ctx context.Context, input repository.ApproveOAuthDeviceAuthorizationWithGrantInput) (*model.OAuthDeviceAuthorization, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -149,22 +150,23 @@ func (uc *UpdateOAuthDeviceAuthorizationUsecase) approveWithGrant(ctx context.Co
 	if err != nil {
 		return nil, fmt.Errorf("デバイス認可の要求のロックに失敗: %w", err)
 	}
-	if pending == nil || pending.IsExpired(time.Now()) {
+	now := time.Now()
+	if pending == nil || pending.IsExpired(now) {
 		return nil, nil
 	}
-	if _, err := uc.oauthGrantRepo.WithTx(tx).LockOrCreate(ctx, repository.CreateOAuthGrantInput{
-		OAuthApplicationID: input.OAuthApplicationID, SpaceID: input.SpaceID, SpaceMemberID: input.SpaceMemberID, Scopes: input.Scopes,
+	if err := uc.oauthGrantRepo.WithTx(tx).Evict(ctx, repository.EvictInput{
+		OAuthApplicationID: input.OAuthApplicationID, SpaceID: input.SpaceID, SpaceMemberID: input.SpaceMemberID, Now: now,
 	}); err != nil {
-		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
-	}
-	// 許可のロック待機中にも期限は進むため、更新前に再確認する。
-	// 初回のLockOrCreateが許可を作っていても、期限切れならTxごとロールバックする。
-	if pending.IsExpired(time.Now()) {
-		return nil, nil
+		return nil, fmt.Errorf("OAuthアプリの許可の押し出しに失敗: %w", err)
 	}
 	approved, err := deviceAuthorizationRepo.ApproveWithGrant(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("デバイス認可の要求の許可に失敗: %w", err)
+	}
+	// 許可の作成も外部キーの検査で待機しうるため、コミット前に期限を確かめ直す。
+	// 期限切れなら要求の更新と許可の作成をどちらもロールバックする。
+	if approved == nil || approved.IsExpired(time.Now()) {
+		return nil, nil
 	}
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)

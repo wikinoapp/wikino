@@ -204,30 +204,33 @@ type OauthAuthorizationCode struct {
 }
 
 type OauthDeviceAuthorization struct {
-	ID                 string       `json:"id"`
-	OauthApplicationID string       `json:"oauth_application_id"`
-	SpaceID            string       `json:"space_id"`
-	OauthGrantID       *string      `json:"oauth_grant_id"`
-	DeviceCodeDigest   string       `json:"device_code_digest"`
-	UserCodeDigest     string       `json:"user_code_digest"`
-	Scopes             []string     `json:"scopes"`
-	Status             int32        `json:"status"`
-	IntervalSeconds    int32        `json:"interval_seconds"`
-	ExpiresAt          time.Time    `json:"expires_at"`
-	LastPolledAt       sql.NullTime `json:"last_polled_at"`
-	CreatedAt          time.Time    `json:"created_at"`
-	UpdatedAt          time.Time    `json:"updated_at"`
+	ID                 string         `json:"id"`
+	OauthApplicationID string         `json:"oauth_application_id"`
+	SpaceID            string         `json:"space_id"`
+	OauthGrantID       *string        `json:"oauth_grant_id"`
+	DeviceCodeDigest   string         `json:"device_code_digest"`
+	UserCodeDigest     string         `json:"user_code_digest"`
+	Scopes             []string       `json:"scopes"`
+	Status             int32          `json:"status"`
+	IntervalSeconds    int32          `json:"interval_seconds"`
+	ExpiresAt          time.Time      `json:"expires_at"`
+	LastPolledAt       sql.NullTime   `json:"last_polled_at"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeviceName         sql.NullString `json:"device_name"`
 }
 
 type OauthGrant struct {
-	ID                 string       `json:"id"`
-	OauthApplicationID string       `json:"oauth_application_id"`
-	SpaceID            string       `json:"space_id"`
-	SpaceMemberID      string       `json:"space_member_id"`
-	Scopes             []string     `json:"scopes"`
-	RevokedAt          sql.NullTime `json:"revoked_at"`
-	CreatedAt          time.Time    `json:"created_at"`
-	UpdatedAt          time.Time    `json:"updated_at"`
+	ID                 string         `json:"id"`
+	OauthApplicationID string         `json:"oauth_application_id"`
+	SpaceID            string         `json:"space_id"`
+	SpaceMemberID      string         `json:"space_member_id"`
+	Scopes             []string       `json:"scopes"`
+	RevokedAt          sql.NullTime   `json:"revoked_at"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	LastUsedAt         sql.NullTime   `json:"last_used_at"`
+	DeviceName         sql.NullString `json:"device_name"`
 }
 
 type OauthRefreshToken struct {

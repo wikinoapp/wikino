@@ -14,55 +14,41 @@ import (
 )
 
 const approveOAuthDeviceAuthorizationWithGrant = `-- name: ApproveOAuthDeviceAuthorizationWithGrant :one
-WITH upserted_grant AS (
+WITH created_grant AS (
     INSERT INTO oauth_grants (
         oauth_application_id,
         space_id,
         space_member_id,
         scopes,
+        device_name,
         created_at,
         updated_at
-    ) VALUES (
+    )
+    SELECT
         $5,
         $4,
         $6,
         $1::text[],
+        oauth_device_authorizations.device_name,
         $2,
         $2
-    )
-    ON CONFLICT (oauth_application_id, space_member_id) WHERE revoked_at IS NULL
-    DO UPDATE SET
-        scopes = EXCLUDED.scopes,
-        updated_at = EXCLUDED.updated_at
+    FROM oauth_device_authorizations
+    WHERE oauth_device_authorizations.id = $3
+      AND oauth_device_authorizations.space_id = $4
+      AND oauth_device_authorizations.status = 0
     RETURNING id
-),
-revoked_access_tokens AS (
-    UPDATE oauth_access_tokens
-    SET revoked_at = $2::timestamptz, updated_at = $2
-    WHERE oauth_access_tokens.oauth_grant_id IN (SELECT upserted_grant.id FROM upserted_grant)
-      AND oauth_access_tokens.space_id = $4
-      AND oauth_access_tokens.revoked_at IS NULL
-      AND NOT (oauth_access_tokens.scopes <@ $1::text[])
-),
-revoked_refresh_tokens AS (
-    UPDATE oauth_refresh_tokens
-    SET revoked_at = $2::timestamptz, updated_at = $2
-    WHERE oauth_refresh_tokens.oauth_grant_id IN (SELECT upserted_grant.id FROM upserted_grant)
-      AND oauth_refresh_tokens.space_id = $4
-      AND oauth_refresh_tokens.revoked_at IS NULL
-      AND NOT (oauth_refresh_tokens.scopes <@ $1::text[])
 )
 UPDATE oauth_device_authorizations
 SET
     status = 1,
-    oauth_grant_id = upserted_grant.id,
+    oauth_grant_id = created_grant.id,
     scopes = $1::text[],
     updated_at = $2
-FROM upserted_grant
+FROM created_grant
 WHERE oauth_device_authorizations.id = $3
   AND oauth_device_authorizations.space_id = $4
   AND oauth_device_authorizations.status = 0
-RETURNING oauth_device_authorizations.id, oauth_device_authorizations.oauth_application_id, oauth_device_authorizations.space_id, oauth_device_authorizations.oauth_grant_id, oauth_device_authorizations.device_code_digest, oauth_device_authorizations.user_code_digest, oauth_device_authorizations.scopes, oauth_device_authorizations.status, oauth_device_authorizations.interval_seconds, oauth_device_authorizations.expires_at, oauth_device_authorizations.last_polled_at, oauth_device_authorizations.created_at, oauth_device_authorizations.updated_at
+RETURNING oauth_device_authorizations.id, oauth_device_authorizations.oauth_application_id, oauth_device_authorizations.space_id, oauth_device_authorizations.oauth_grant_id, oauth_device_authorizations.device_code_digest, oauth_device_authorizations.user_code_digest, oauth_device_authorizations.scopes, oauth_device_authorizations.status, oauth_device_authorizations.interval_seconds, oauth_device_authorizations.expires_at, oauth_device_authorizations.last_polled_at, oauth_device_authorizations.created_at, oauth_device_authorizations.updated_at, oauth_device_authorizations.device_name
 `
 
 type ApproveOAuthDeviceAuthorizationWithGrantParams struct {
@@ -74,12 +60,13 @@ type ApproveOAuthDeviceAuthorizationWithGrantParams struct {
 	SpaceMemberID      string    `json:"space_member_id"`
 }
 
-// 利用者の許可に応じて、スペースメンバーのOAuthアプリへの許可を作成または置き換え、デバイス
-// 認可の要求を許可済みにして許可を結び付ける。許可の置き換えと、許可の外に出たスコープを持つ
-// トークンの失効は、認可コードの発行 (CreateOAuthAuthorizationCodeWithGrant) と同じである。
+// 利用者の許可に応じて、スペースメンバーのOAuthアプリへの許可を新しく作り、デバイス認可の要求を
+// 許可済みにして許可を結び付ける。許可は認可コードの発行 (CreateOAuthAuthorizationCodeWithGrant)
+// と同じく要求ごとに作り、同じアプリ・メンバーの既存の許可には触れない。
 // 要求のスコープは利用者が選んだ範囲に置き換え、デバイスコードの交換で発行するトークンの
-// スコープにする。同じTxの先行する文で、要求をLockPendingOAuthDeviceAuthorizationで、許可を
-// LockOrCreateOAuthGrantでロックしておく。
+// スコープにする。同じTxの先行する文で、要求をLockPendingOAuthDeviceAuthorizationでロックしておく。
+// 許可の端末名は、要求で受け取った端末名を写す。
+// 要求が許可待ちでなければ許可を作らず、更新する行も無く、文全体が行を返さない。
 func (q *Queries) ApproveOAuthDeviceAuthorizationWithGrant(ctx context.Context, arg ApproveOAuthDeviceAuthorizationWithGrantParams) (OauthDeviceAuthorization, error) {
 	row := q.db.QueryRowContext(ctx, approveOAuthDeviceAuthorizationWithGrant,
 		pq.Array(arg.Scopes),
@@ -104,6 +91,7 @@ func (q *Queries) ApproveOAuthDeviceAuthorizationWithGrant(ctx context.Context, 
 		&i.LastPolledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
@@ -116,6 +104,7 @@ INSERT INTO oauth_device_authorizations (
     user_code_digest,
     scopes,
     interval_seconds,
+    device_name,
     expires_at,
     created_at,
     updated_at
@@ -128,22 +117,24 @@ INSERT INTO oauth_device_authorizations (
     $6,
     $7,
     $8,
-    $8
-) RETURNING id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at
+    $9,
+    $9
+) RETURNING id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at, device_name
 `
 
 type CreateOAuthDeviceAuthorizationParams struct {
-	OauthApplicationID string    `json:"oauth_application_id"`
-	SpaceID            string    `json:"space_id"`
-	DeviceCodeDigest   string    `json:"device_code_digest"`
-	UserCodeDigest     string    `json:"user_code_digest"`
-	Scopes             []string  `json:"scopes"`
-	IntervalSeconds    int32     `json:"interval_seconds"`
-	ExpiresAt          time.Time `json:"expires_at"`
-	Now                time.Time `json:"now"`
+	OauthApplicationID string         `json:"oauth_application_id"`
+	SpaceID            string         `json:"space_id"`
+	DeviceCodeDigest   string         `json:"device_code_digest"`
+	UserCodeDigest     string         `json:"user_code_digest"`
+	Scopes             []string       `json:"scopes"`
+	IntervalSeconds    int32          `json:"interval_seconds"`
+	DeviceName         sql.NullString `json:"device_name"`
+	ExpiresAt          time.Time      `json:"expires_at"`
+	Now                time.Time      `json:"now"`
 }
 
-// デバイス認可の要求を許可待ちで作成する
+// デバイス認可の要求を許可待ちで作成する。端末名 (@device_name) は送られなかったときNULLを渡す
 func (q *Queries) CreateOAuthDeviceAuthorization(ctx context.Context, arg CreateOAuthDeviceAuthorizationParams) (OauthDeviceAuthorization, error) {
 	row := q.db.QueryRowContext(ctx, createOAuthDeviceAuthorization,
 		arg.OauthApplicationID,
@@ -152,6 +143,7 @@ func (q *Queries) CreateOAuthDeviceAuthorization(ctx context.Context, arg Create
 		arg.UserCodeDigest,
 		pq.Array(arg.Scopes),
 		arg.IntervalSeconds,
+		arg.DeviceName,
 		arg.ExpiresAt,
 		arg.Now,
 	)
@@ -170,6 +162,7 @@ func (q *Queries) CreateOAuthDeviceAuthorization(ctx context.Context, arg Create
 		&i.LastPolledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
@@ -181,7 +174,7 @@ WHERE id = $2
   AND space_id = $3
   AND status = 0
   AND expires_at > $1::timestamptz
-RETURNING id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at
+RETURNING id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at, device_name
 `
 
 type DenyOAuthDeviceAuthorizationParams struct {
@@ -211,6 +204,7 @@ func (q *Queries) DenyOAuthDeviceAuthorization(ctx context.Context, arg DenyOAut
 		&i.LastPolledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
@@ -222,7 +216,7 @@ WITH consumed AS (
     WHERE oauth_device_authorizations.id = $2
       AND oauth_device_authorizations.space_id = $3
       AND oauth_device_authorizations.status = 1
-    RETURNING oauth_device_authorizations.id, oauth_device_authorizations.oauth_application_id, oauth_device_authorizations.space_id, oauth_device_authorizations.oauth_grant_id, oauth_device_authorizations.device_code_digest, oauth_device_authorizations.user_code_digest, oauth_device_authorizations.scopes, oauth_device_authorizations.status, oauth_device_authorizations.interval_seconds, oauth_device_authorizations.expires_at, oauth_device_authorizations.last_polled_at, oauth_device_authorizations.created_at, oauth_device_authorizations.updated_at
+    RETURNING oauth_device_authorizations.id, oauth_device_authorizations.oauth_application_id, oauth_device_authorizations.space_id, oauth_device_authorizations.oauth_grant_id, oauth_device_authorizations.device_code_digest, oauth_device_authorizations.user_code_digest, oauth_device_authorizations.scopes, oauth_device_authorizations.status, oauth_device_authorizations.interval_seconds, oauth_device_authorizations.expires_at, oauth_device_authorizations.last_polled_at, oauth_device_authorizations.created_at, oauth_device_authorizations.updated_at, oauth_device_authorizations.device_name
 ),
 created_access_token AS (
     INSERT INTO oauth_access_tokens (
@@ -264,7 +258,7 @@ created_refresh_token AS (
         $1
     FROM consumed
 )
-SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at FROM consumed
+SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at, device_name FROM consumed
 `
 
 type ExchangeOAuthDeviceAuthorizationParams struct {
@@ -278,19 +272,20 @@ type ExchangeOAuthDeviceAuthorizationParams struct {
 }
 
 type ExchangeOAuthDeviceAuthorizationRow struct {
-	ID                 string       `json:"id"`
-	OauthApplicationID string       `json:"oauth_application_id"`
-	SpaceID            string       `json:"space_id"`
-	OauthGrantID       *string      `json:"oauth_grant_id"`
-	DeviceCodeDigest   string       `json:"device_code_digest"`
-	UserCodeDigest     string       `json:"user_code_digest"`
-	Scopes             []string     `json:"scopes"`
-	Status             int32        `json:"status"`
-	IntervalSeconds    int32        `json:"interval_seconds"`
-	ExpiresAt          time.Time    `json:"expires_at"`
-	LastPolledAt       sql.NullTime `json:"last_polled_at"`
-	CreatedAt          time.Time    `json:"created_at"`
-	UpdatedAt          time.Time    `json:"updated_at"`
+	ID                 string         `json:"id"`
+	OauthApplicationID string         `json:"oauth_application_id"`
+	SpaceID            string         `json:"space_id"`
+	OauthGrantID       *string        `json:"oauth_grant_id"`
+	DeviceCodeDigest   string         `json:"device_code_digest"`
+	UserCodeDigest     string         `json:"user_code_digest"`
+	Scopes             []string       `json:"scopes"`
+	Status             int32          `json:"status"`
+	IntervalSeconds    int32          `json:"interval_seconds"`
+	ExpiresAt          time.Time      `json:"expires_at"`
+	LastPolledAt       sql.NullTime   `json:"last_polled_at"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeviceName         sql.NullString `json:"device_name"`
 }
 
 // 許可済みのデバイス認可の要求を交換済みにし、要求の許可・スコープでアクセストークンと
@@ -323,12 +318,13 @@ func (q *Queries) ExchangeOAuthDeviceAuthorization(ctx context.Context, arg Exch
 		&i.LastPolledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
 
 const findOAuthDeviceAuthorizationByDeviceCodeDigest = `-- name: FindOAuthDeviceAuthorizationByDeviceCodeDigest :one
-SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at FROM oauth_device_authorizations WHERE device_code_digest = $1
+SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at, device_name FROM oauth_device_authorizations WHERE device_code_digest = $1
 `
 
 // デバイスコードのダイジェストでデバイス認可の要求を取得する。
@@ -352,12 +348,13 @@ func (q *Queries) FindOAuthDeviceAuthorizationByDeviceCodeDigest(ctx context.Con
 		&i.LastPolledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
 
 const findOAuthDeviceAuthorizationByUserCodeDigest = `-- name: FindOAuthDeviceAuthorizationByUserCodeDigest :one
-SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at FROM oauth_device_authorizations WHERE user_code_digest = $1
+SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at, device_name FROM oauth_device_authorizations WHERE user_code_digest = $1
 `
 
 // ユーザーコードのダイジェストでデバイス認可の要求を取得する。
@@ -381,12 +378,13 @@ func (q *Queries) FindOAuthDeviceAuthorizationByUserCodeDigest(ctx context.Conte
 		&i.LastPolledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
 
 const lockOAuthDeviceAuthorizationByID = `-- name: LockOAuthDeviceAuthorizationByID :one
-SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at FROM oauth_device_authorizations
+SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at, device_name FROM oauth_device_authorizations
 WHERE id = $1
   AND space_id = $2
 FOR UPDATE
@@ -416,12 +414,13 @@ func (q *Queries) LockOAuthDeviceAuthorizationByID(ctx context.Context, arg Lock
 		&i.LastPolledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
 
 const lockPendingOAuthDeviceAuthorization = `-- name: LockPendingOAuthDeviceAuthorization :one
-SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at FROM oauth_device_authorizations
+SELECT id, oauth_application_id, space_id, oauth_grant_id, device_code_digest, user_code_digest, scopes, status, interval_seconds, expires_at, last_polled_at, created_at, updated_at, device_name FROM oauth_device_authorizations
 WHERE id = $1
   AND space_id = $2
   AND status = 0
@@ -456,6 +455,7 @@ func (q *Queries) LockPendingOAuthDeviceAuthorization(ctx context.Context, arg L
 		&i.LastPolledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }

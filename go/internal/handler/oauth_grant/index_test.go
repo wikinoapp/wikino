@@ -30,6 +30,11 @@ func TestIndex_自分が許可した連携の一覧を表示する(t *testing.T)
 		WithOAuthApplicationID(revokedAppID).WithSpaceID(m.spaceID).WithSpaceMemberID(m.spaceMemberID).
 		WithRevokedAt(time.Now()).Build()
 	m.buildGrant(t, tx, otherMemberID, "他人の連携", "grant-index-other", []model.Scope{model.ScopePageRead})
+	// 認可コードを交換しなかった許可は、有効なリフレッシュトークンが無いため出ない
+	unexchangedAppID := testutil.NewOAuthApplicationBuilder(t, tx).
+		WithSpaceID(m.spaceID).WithName("交換しなかったアプリ").WithClientID("grant-index-unexchanged").Build()
+	testutil.NewOAuthGrantBuilder(t, tx).
+		WithOAuthApplicationID(unexchangedAppID).WithSpaceID(m.spaceID).WithSpaceMemberID(m.spaceMemberID).Build()
 
 	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_grants", identifier, m.userID)
 	rr := httptest.NewRecorder()
@@ -47,17 +52,21 @@ func TestIndex_自分が許可した連携の一覧を表示する(t *testing.T)
 		"<title>連携中のアプリ | 連携のスペース</title>",
 		"自宅のCLI",
 		"許可した日時",
+		"最終利用",
+		"未使用",
 		`action="/s/` + identifier + `/settings/oauth_grants/` + string(grantID) + `"`,
 		`name="_method" value="DELETE"`,
 		"連携を解除する",
-		// 同じ文言の解除ボタンを見分けられるよう、ボタンの名前にアプリ名を連ねる
-		`aria-labelledby="oauth-grant-` + string(grantID) + `-revoke-label oauth-grant-` + string(grantID) + `-name"`,
+		// 同じ文言の解除ボタンを見分けられるよう、ボタンの名前にアプリ名と、端末名が無ければ連携した日時を連ねる
+		`aria-labelledby="oauth-grant-` + string(grantID) + `-revoke-label oauth-grant-` + string(grantID) + `-name oauth-grant-` + string(grantID) + `-created-at"`,
+		`id="oauth-grant-` + string(grantID) + `-created-at"`,
+		"に許可した「自宅のCLI」との連携を解除しますか？",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに%qが含まれていない", want)
 		}
 	}
-	for _, notWant := range []string{"解除したアプリ", "他人の連携"} {
+	for _, notWant := range []string{"解除したアプリ", "他人の連携", "交換しなかったアプリ"} {
 		if strings.Contains(body, notWant) {
 			t.Errorf("レスポンスに%qが含まれている", notWant)
 		}
@@ -67,6 +76,67 @@ func TestIndex_自分が許可した連携の一覧を表示する(t *testing.T)
 	pageRead := strings.Index(body, "ページの読み取り")
 	if topicRead == -1 || pageRead == -1 || topicRead > pageRead {
 		t.Errorf("スコープの位置 (トピックの読み取り = %d、ページの読み取り = %d)、APITokenScopesの順を期待", topicRead, pageRead)
+	}
+}
+
+func TestIndex_端末名がある連携は端末名で見分けられるようにする(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	identifier := "grant-index-device"
+	m := setupGrantMember(t, tx, identifier, model.SpaceRoleAdmin, true)
+	grantID := m.buildGrant(t, tx, m.spaceMemberID, "Wikino CLI", "grant-index-device-cli", []model.Scope{model.ScopePageRead})
+	if _, err := tx.ExecContext(t.Context(), "UPDATE oauth_grants SET device_name = $1 WHERE id = $2 AND space_id = $3", "my-laptop", string(grantID), string(m.spaceID)); err != nil {
+		t.Fatalf("端末名の設定に失敗: %v", err)
+	}
+
+	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_grants", identifier, m.userID)
+	rr := httptest.NewRecorder()
+	setupHandler(t, q).Index(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	for _, want := range []string{
+		`id="oauth-grant-` + string(grantID) + `-device-name"`,
+		">my-laptop</span>",
+		`aria-labelledby="oauth-grant-` + string(grantID) + `-revoke-label oauth-grant-` + string(grantID) + `-name oauth-grant-` + string(grantID) + `-device-name"`,
+		"「Wikino CLI」の「my-laptop」との連携を解除しますか？",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに%qが含まれていない", want)
+		}
+	}
+}
+
+func TestIndex_最終利用日時がある連携は日時を表示する(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	identifier := "grant-index-last-used"
+	m := setupGrantMember(t, tx, identifier, model.SpaceRoleAdmin, true)
+	grantID := m.buildGrant(t, tx, m.spaceMemberID, "利用したCLI", "grant-index-last-used-cli", []model.Scope{model.ScopePageRead})
+	lastUsedAt := time.Now().UTC().Add(-7 * time.Minute).Truncate(time.Second)
+	if _, err := tx.ExecContext(t.Context(), "UPDATE oauth_grants SET last_used_at = $1 WHERE id = $2 AND space_id = $3", lastUsedAt, string(grantID), string(m.spaceID)); err != nil {
+		t.Fatalf("最終利用日時の設定に失敗: %v", err)
+	}
+
+	req := newRequest(t, http.MethodGet, "/s/"+identifier+"/settings/oauth_grants", identifier, m.userID)
+	rr := httptest.NewRecorder()
+	setupHandler(t, q).Index(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+
+	body := rr.Body.String()
+	if want := `<time datetime="` + lastUsedAt.Format(time.RFC3339) + `"`; !strings.Contains(body, want) {
+		t.Errorf("レスポンスに最終利用日時の%qが含まれていない", want)
+	}
+	if strings.Contains(body, "未使用") {
+		t.Error("最終利用日時がある連携に未使用と表示されている")
 	}
 }
 
