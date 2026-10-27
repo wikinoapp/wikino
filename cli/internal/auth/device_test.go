@@ -76,8 +76,8 @@ func TestLoginWithDevice(t *testing.T) {
 
 	request := server.deviceForms[0]
 	if request.Get("client_id") != ClientID || request.Get("scope") != "page:read draft_page:read" ||
-		request.Get("resource") != "https://wikino.app/api/v1/spaces/team" {
-		t.Errorf("デバイス認可の要求 = %v", request)
+		request.Get("resource") != "https://wikino.app/api/v1/spaces/team" || request.Has("device_name") {
+		t.Errorf("デバイス認可の要求 = %v (端末名が無ければdevice_nameを付けない)", request)
 	}
 	if len(server.forms) != 4 {
 		t.Fatalf("ポーリングの回数 = %d、期待値 = 4", len(server.forms))

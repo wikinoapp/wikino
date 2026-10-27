@@ -187,6 +187,8 @@ type AuthorizationRequest struct {
 	State       string
 	PKCE        PKCE
 	Resource    string
+	// DeviceNameは連携の一覧で端末を見分けるための端末名 (Wikino独自の `device_name`)。空なら送らない。
+	DeviceName string
 }
 
 // AuthorizationURLは、ブラウザで開く認可要求のURLを返す。
@@ -200,6 +202,9 @@ func (m *Metadata) AuthorizationURL(r AuthorizationRequest) string {
 		"code_challenge":        {r.PKCE.Challenge},
 		"code_challenge_method": {codeChallengeMethod},
 		"resource":              {r.Resource},
+	}
+	if r.DeviceName != "" {
+		query.Set("device_name", r.DeviceName)
 	}
 
 	separator := "?"

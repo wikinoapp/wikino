@@ -99,11 +99,5 @@ func revokeToken(f *cmdutil.Factory, ctx context.Context, store *auth.Store, cre
 		return true
 	}
 
-	client := f.OAuthClient(cred.Host)
-	metadata, err := client.FetchMetadata(ctx)
-	if err == nil {
-		err = client.Revoke(ctx, metadata, secret.RefreshToken)
-	}
-
-	return err == nil
+	return revokeRefreshToken(f, ctx, cred.Host, secret.RefreshToken)
 }
