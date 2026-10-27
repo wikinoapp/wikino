@@ -814,7 +814,7 @@ func runServe() {
 	r.Use(middleware.MethodOverride)
 
 	// 共通ミドルウェア
-	r.Use(chimiddleware.Logger)
+	r.Use(middleware.NewAccessLog(slog.Default()))
 	r.Use(chimiddleware.RequestID)
 	// クライアントIPはinternal/clientip (CF-Connecting-IP優先) で都度解決するため、
 	// chiのIPミドルウェアは意図的に登録しない。chiのRealIPはIP spoofing
