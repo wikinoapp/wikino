@@ -89,11 +89,13 @@ func (uc *AuthenticateAPITokenUsecase) authenticatePersonalAccessToken(ctx conte
 // authenticateOAuthAccessTokenはOAuthのアクセストークンを照合する。許可が失効していれば
 // (連携の解除・アプリの削除) 受け付けない
 func (uc *AuthenticateAPITokenUsecase) authenticateOAuthAccessToken(ctx context.Context, token string) (*model.APIPrincipal, error) {
+	now := time.Now()
+
 	accessToken, err := uc.oauthAccessTokenRepo.FindByTokenDigest(ctx, auth.DigestOpaqueToken(token))
 	if err != nil {
 		return nil, fmt.Errorf("OAuthのアクセストークンの取得に失敗: %w", err)
 	}
-	if accessToken == nil || !accessToken.IsActive(time.Now()) {
+	if accessToken == nil || !accessToken.IsActive(now) {
 		return nil, nil
 	}
 
@@ -111,6 +113,11 @@ func (uc *AuthenticateAPITokenUsecase) authenticateOAuthAccessToken(ctx context.
 	}
 	if principal == nil || !policy.NewMemberPolicy(principal.SpaceMember.Role.Scopes(), nil).CanCreateOAuthGrant() {
 		return nil, nil
+	}
+
+	// 最終利用日時は連携の一覧で端末を見分けるためにだけ使うため、書き込みに失敗してもリクエストは止めない
+	if err := uc.oauthGrantRepo.UpdateLastUsedAt(ctx, grant.ID, grant.SpaceID, now); err != nil {
+		slog.ErrorContext(ctx, "OAuthアプリの許可の最終利用日時の更新に失敗しました", "error", err, "oauth_grant_id", grant.ID)
 	}
 
 	principal.TokenKind = model.APITokenKindOAuthAccessToken

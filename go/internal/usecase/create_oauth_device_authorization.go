@@ -9,6 +9,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // oauthUserCodeUniqueIndexはユーザーコードのダイジェストの一意制約の名前
@@ -55,6 +56,10 @@ type OAuthDeviceAuthorizationParams struct {
 	ClientID string
 	Scope    string
 	Resource string
+
+	// DeviceNameは独自のパラメーター `device_name` の値で、利用者が許可したときに許可へ写す。
+	// 同意画面には出さない (他人の端末から送られた値で利用者を誤認させうるため。RFC 8628 §5.4)
+	DeviceName string
 
 	// ClientAuthenticatedは、クライアントが `Authorization` ヘッダーか `client_secret` で認証を
 	// 試みたことを表す。publicクライアントは認証しないため、試みた要求は拒否する
@@ -107,6 +112,11 @@ func (uc *CreateOAuthDeviceAuthorizationUsecase) Execute(ctx context.Context, pa
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidScope)
 	}
 
+	deviceName, ok := validator.ParseOAuthDeviceName(params.DeviceName)
+	if !ok {
+		return nil, oauthTokenError(model.OAuthTokenErrorInvalidRequest)
+	}
+
 	space, err := resolveOAuthTargetSpace(ctx, uc.cfg.AppURL(), uc.spaceRepo, app, appSpace, params.Resource)
 	if err != nil {
 		return nil, err
@@ -116,7 +126,7 @@ func (uc *CreateOAuthDeviceAuthorizationUsecase) Execute(ctx context.Context, pa
 	}
 
 	// 2. 永続化
-	return uc.createDeviceAuthorization(ctx, app, space, scopes)
+	return uc.createDeviceAuthorization(ctx, app, space, scopes, deviceName)
 }
 
 // createDeviceAuthorizationは、デバイスコードとユーザーコードを生成し、許可待ちの要求を作る。
@@ -126,6 +136,7 @@ func (uc *CreateOAuthDeviceAuthorizationUsecase) createDeviceAuthorization(
 	app *model.OAuthApplication,
 	space *model.Space,
 	scopes []model.Scope,
+	deviceName *string,
 ) (*CreateOAuthDeviceAuthorizationOutput, error) {
 	deviceCode, err := auth.GenerateOpaqueToken(auth.OAuthDeviceCodePrefix)
 	if err != nil {
@@ -146,6 +157,7 @@ func (uc *CreateOAuthDeviceAuthorizationUsecase) createDeviceAuthorization(
 			Scopes:             scopes,
 			Interval:           model.OAuthDeviceAuthorizationInterval,
 			ExpiresAt:          time.Now().Add(model.OAuthDeviceAuthorizationLifetime),
+			DeviceName:         deviceName,
 		})
 		if isUniqueViolationOn(err, oauthUserCodeUniqueIndex) {
 			continue

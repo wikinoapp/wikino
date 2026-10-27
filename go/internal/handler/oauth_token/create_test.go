@@ -105,7 +105,6 @@ func setupHandler(t *testing.T, q *query.Queries) *oauth_token.Handler {
 			oauthApplicationRepo,
 			oauthGrantRepo,
 			repository.NewOAuthAuthorizationCodeRepository(q),
-			oauthAccessTokenRepo,
 			oauthRefreshTokenRepo,
 			repository.NewOAuthDeviceAuthorizationRepository(q),
 			repository.NewSpaceRepository(q),

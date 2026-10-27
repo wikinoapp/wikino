@@ -44,6 +44,8 @@ type DeviceOptions struct {
 	Space string
 	// Scopesは要求するスコープ。
 	Scopes []string
+	// DeviceNameはデバイス認可の要求に付ける端末名。空なら付けない。
+	DeviceName string
 	// Showは、確認用のURLとユーザーコードを利用者に示す。
 	Show func(device *DeviceAuthorization)
 	// Nowは現在の時刻を返す。nilならtime.Now。
@@ -70,7 +72,7 @@ func (c *OAuthClient) LoginWithDevice(ctx context.Context, metadata *Metadata, o
 	}
 	resource := ResourceURL(c.Host, opts.Space)
 
-	device, err := c.requestDeviceAuthorization(ctx, metadata, opts.Scopes, resource)
+	device, err := c.requestDeviceAuthorization(ctx, metadata, opts.Scopes, resource, opts.DeviceName)
 	if err != nil {
 		return nil, err
 	}
@@ -120,12 +122,16 @@ func (c *OAuthClient) LoginWithDevice(ctx context.Context, metadata *Metadata, o
 // requestDeviceAuthorizationは、デバイス認可を要求し (RFC 8628 §3.1)、応答を検証する。
 // 確認用のURLは利用者に開かせるため、接続先と同じオリジンにあることを確かめ、
 // ユーザーコードは端末に出すため、制御文字を含まないことを確かめる。
-func (c *OAuthClient) requestDeviceAuthorization(ctx context.Context, metadata *Metadata, scopes []string, resource string) (*DeviceAuthorization, error) {
-	resp, err := c.postForm(ctx, metadata.DeviceAuthorizationEndpoint, url.Values{
+func (c *OAuthClient) requestDeviceAuthorization(ctx context.Context, metadata *Metadata, scopes []string, resource, deviceName string) (*DeviceAuthorization, error) {
+	form := url.Values{
 		"client_id": {ClientID},
 		"scope":     {strings.Join(scopes, " ")},
 		"resource":  {resource},
-	})
+	}
+	if deviceName != "" {
+		form.Set("device_name", deviceName)
+	}
+	resp, err := c.postForm(ctx, metadata.DeviceAuthorizationEndpoint, form)
 	if err != nil {
 		return nil, err
 	}

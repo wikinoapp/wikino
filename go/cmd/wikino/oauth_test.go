@@ -131,7 +131,6 @@ func newOAuthFlowTestServer(t *testing.T, cfg *config.Config, q *query.Queries) 
 			oauthApplicationRepo,
 			oauthGrantRepo,
 			repository.NewOAuthAuthorizationCodeRepository(q),
-			oauthAccessTokenRepo,
 			oauthRefreshTokenRepo,
 			oauthDeviceAuthorizationRepo,
 			spaceRepo,
@@ -362,7 +361,7 @@ func TestOAuthFlow(t *testing.T) {
 		}
 	})
 
-	t.Run("使用済みのリフレッシュトークンの再提示で、許可のトークンがすべて失効する", func(t *testing.T) {
+	t.Run("使用済みのリフレッシュトークンの再提示で、許可と許可のトークンがすべて失効する", func(t *testing.T) {
 		replayed := &oauth2.Token{RefreshToken: token.RefreshToken, Expiry: time.Now().Add(-time.Minute)}
 		_, err := conf.TokenSource(ctx, replayed).Token()
 		assertRetrieveError(t, err, "invalid_grant")
@@ -407,16 +406,25 @@ func TestOAuthFlow_同意画面で選んだスコープ(t *testing.T) {
 		t.Errorf("page:readのトークンでのAPIのステータス = %d、期待値 = 200", status)
 	}
 
-	// 再認可でtopic:readだけに狭めると、範囲を超えるpage:readのトークンは失効する
+	// 別の端末がtopic:readだけで再認可しても、別の許可になり、以前のトークンには影響しない
 	verifier = oauth2.GenerateVerifier()
-	if _, err := conf.Exchange(ctx, authorizeWithScopes(t, cfg, q, f, verifier, []string{"topic:read"}), oauth2.VerifierOption(verifier)); err != nil {
+	narrowed, err := conf.Exchange(ctx, authorizeWithScopes(t, cfg, q, f, verifier, []string{"topic:read"}), oauth2.VerifierOption(verifier))
+	if err != nil {
 		t.Fatalf("再認可の認可コードの交換に失敗: %v", err)
 	}
-	if status := getCurrentSpaceMemberStatus(t, srv, token.AccessToken); status != http.StatusUnauthorized {
-		t.Errorf("許可を狭めた後の以前のトークンでのAPIのステータス = %d、期待値 = 401", status)
+	if scope := narrowed.Extra("scope"); scope != "topic:read" {
+		t.Errorf("再認可のscope = %v、期待値 = %q", scope, "topic:read")
 	}
-	_, err = conf.TokenSource(ctx, &oauth2.Token{RefreshToken: token.RefreshToken}).Token()
-	assertRetrieveError(t, err, "invalid_grant")
+	if status := getCurrentSpaceMemberStatus(t, srv, token.AccessToken); status != http.StatusOK {
+		t.Errorf("再認可の後の以前のトークンでのAPIのステータス = %d、期待値 = 200", status)
+	}
+	refreshed, err := conf.TokenSource(ctx, &oauth2.Token{RefreshToken: token.RefreshToken}).Token()
+	if err != nil {
+		t.Fatalf("再認可の後の以前のリフレッシュトークンでのリフレッシュに失敗: %v", err)
+	}
+	if scope := refreshed.Extra("scope"); scope != "page:read" {
+		t.Errorf("リフレッシュのscope = %v、期待値 = %q", scope, "page:read")
+	}
 }
 
 // 公式CLIはスペースに属さないため、連携先のスペースを指す `resource` の無い認可要求は、
@@ -463,7 +471,8 @@ func TestOAuthFlow_resourceの無い認可要求(t *testing.T) {
 }
 
 // CLIのログアウトのように、クライアントがリフレッシュトークンを失効させると、同じ許可の
-// アクセストークンでAPIを呼べなくなり、リフレッシュトークンでも更新できなくなる
+// アクセストークンでAPIを呼べなくなり、リフレッシュトークンでも更新できなくなる。
+// 同じアプリに別の端末からログインした許可は、ログアウトの影響を受けない
 func TestOAuthFlow_トークンの失効(t *testing.T) {
 	t.Parallel()
 
@@ -492,6 +501,11 @@ func TestOAuthFlow_トークンの失効(t *testing.T) {
 	if status := getCurrentSpaceMemberStatus(t, srv, token.AccessToken); status != http.StatusOK {
 		t.Fatalf("失効前のステータス = %d、期待値 = 200", status)
 	}
+	verifier = oauth2.GenerateVerifier()
+	another, err := conf.Exchange(ctx, authorize(t, cfg, q, f, verifier), oauth2.VerifierOption(verifier))
+	if err != nil {
+		t.Fatalf("別の端末の認可コードの交換に失敗: %v", err)
+	}
 
 	resp, err := srv.Client().PostForm(srv.URL+"/oauth/revoke", url.Values{
 		"token":           {token.RefreshToken},
@@ -511,6 +525,13 @@ func TestOAuthFlow_トークンの失効(t *testing.T) {
 	}
 	_, err = conf.TokenSource(ctx, &oauth2.Token{RefreshToken: token.RefreshToken, Expiry: time.Now().Add(-time.Minute)}).Token()
 	assertRetrieveError(t, err, "invalid_grant")
+
+	if status := getCurrentSpaceMemberStatus(t, srv, another.AccessToken); status != http.StatusOK {
+		t.Errorf("別の端末のアクセストークンでのステータス = %d、期待値 = 200", status)
+	}
+	if _, err := conf.TokenSource(ctx, &oauth2.Token{RefreshToken: another.RefreshToken, Expiry: time.Now().Add(-time.Minute)}).Token(); err != nil {
+		t.Errorf("別の端末のリフレッシュトークンでの更新に失敗: %v", err)
+	}
 }
 
 // newPersonalAccessTokenは、spaceMemberIDのメンバーの個人用アクセストークンを作り、平文を返す

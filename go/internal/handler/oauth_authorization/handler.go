@@ -47,6 +47,7 @@ var oauthAuthorizationParamNames = []string{
 	"code_challenge",
 	"code_challenge_method",
 	"resource",
+	"device_name",
 }
 
 // parseOAuthAuthorizationParamsは、クエリかフォームの値から認可要求のパラメーターを取り出す。
@@ -68,6 +69,7 @@ func parseOAuthAuthorizationParams(values url.Values) usecase.OAuthAuthorization
 		CodeChallenge:       values.Get("code_challenge"),
 		CodeChallengeMethod: values.Get("code_challenge_method"),
 		Resource:            values.Get("resource"),
+		DeviceName:          values.Get("device_name"),
 		DuplicatedParams:    duplicated,
 	}
 }

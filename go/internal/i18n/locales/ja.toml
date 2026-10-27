@@ -2263,13 +2263,25 @@ other = "連携中のアプリはありません"
 description = "連携中のアプリの一覧の許可した日時の項目名"
 other = "許可した日時"
 
+[oauth_grant_index_last_used_at]
+description = "連携中のアプリの一覧の最終利用日時の項目名"
+other = "最終利用"
+
+[oauth_grant_index_never_used]
+description = "連携中のアプリの一覧で、連携がまだ使われていないことの表示"
+other = "未使用"
+
 [oauth_grant_index_revoke]
 description = "連携中のアプリの一覧の解除ボタン"
 other = "連携を解除する"
 
 [oauth_grant_index_revoke_confirm]
-description = "連携の解除の確認ダイアログ"
-other = "「{{.Name}}」との連携を解除しますか？このアプリは、このスペースのAPIを呼び出せなくなります。"
+description = "連携の解除の確認ダイアログ (端末名が無い連携。連携した日時で示す)"
+other = "{{.CreatedAt}}に許可した「{{.Name}}」との連携を解除しますか？この連携のアプリは、このスペースのAPIを呼び出せなくなります。"
+
+[oauth_grant_index_revoke_confirm_with_device_name]
+description = "連携の解除の確認ダイアログ (端末名がある連携)"
+other = "「{{.Name}}」の「{{.DeviceName}}」との連携を解除しますか？この端末のアプリは、このスペースのAPIを呼び出せなくなります。"
 
 [flash_oauth_grant_revoked]
 description = "連携を解除したときのフラッシュメッセージ"

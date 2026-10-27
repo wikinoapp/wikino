@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -41,6 +42,13 @@ func TestGetOAuthGrantsUsecase_Execute(t *testing.T) {
 			WithOAuthApplicationID(spaceAppID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).Build()
 		newer := testutil.NewOAuthGrantBuilder(t, tx).
 			WithOAuthApplicationID(officialAppID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).Build()
+		for i, id := range []model.OAuthGrantID{older, newer} {
+			testutil.NewOAuthRefreshTokenBuilder(t, tx).WithOAuthGrantID(id).WithSpaceID(f.spaceID).
+				WithTokenDigest(fmt.Sprintf("gog-list-refresh-%d", i)).Build()
+		}
+		// 有効なリフレッシュトークンを持たない許可 (交換されなかったもの) は出ない
+		testutil.NewOAuthGrantBuilder(t, tx).
+			WithOAuthApplicationID(spaceAppID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).Build()
 		// 失効した許可と、他のメンバーの許可は出ない
 		testutil.NewOAuthGrantBuilder(t, tx).
 			WithOAuthApplicationID(spaceAppID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).

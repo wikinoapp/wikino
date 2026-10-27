@@ -106,18 +106,9 @@ func (r *OAuthRefreshTokenRepository) Rotate(ctx context.Context, input RotateOA
 	return r.toModel(row), nil
 }
 
-// RevokeByOAuthGrantは許可に属する失効していないリフレッシュトークンをすべて失効する
-func (r *OAuthRefreshTokenRepository) RevokeByOAuthGrant(ctx context.Context, oauthGrantID model.OAuthGrantID, spaceID model.SpaceID, now time.Time) error {
-	return r.q.RevokeOAuthRefreshTokensByOAuthGrant(ctx, query.RevokeOAuthRefreshTokensByOAuthGrantParams{
-		Now:          now,
-		OauthGrantID: string(oauthGrantID),
-		SpaceID:      string(spaceID),
-	})
-}
-
-// Revokeは、リフレッシュトークンを1つ失効し、同じ許可のアクセストークンをすべて失効する
-// (RFC 7009 §2.1)。同じ許可のほかのリフレッシュトークンは失効しない。元のトークンが使用済み・
-// 失効済み・期限切れなら何も変えない
+// Revokeは、リフレッシュトークンが属する許可と、許可に属するアクセストークン・リフレッシュ
+// トークンをすべて1文で失効する (RFC 7009 §2.1)。元のトークンが使用済み・失効済み・期限切れなら
+// 何も変えない
 func (r *OAuthRefreshTokenRepository) Revoke(ctx context.Context, id model.OAuthRefreshTokenID, spaceID model.SpaceID, now time.Time) error {
 	return r.q.RevokeOAuthRefreshToken(ctx, query.RevokeOAuthRefreshTokenParams{
 		Now:     now,

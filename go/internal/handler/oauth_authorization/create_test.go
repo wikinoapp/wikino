@@ -189,6 +189,28 @@ func TestCreate_リダイレクトURIが不正ならクライアントへ戻さ�
 	}
 }
 
+func TestCreate_端末名が不正UTF8なら入力エラーでクライアントへ戻す(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	f := setupAuthorizationFixture(t, tx, "oauthz-create-device-utf8", model.SpaceRoleAdmin, true)
+	params := validParams(f.clientID)
+	params.Set("device_name", "\xff")
+	params.Set("decision", "approve")
+	params["granted_scopes"] = []string{"page:read"}
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, testutil.QueriesWithTx(tx)).Create(rr, newRequest(t, http.MethodPost, f.userID, params))
+	assertResponseHeaders(t, rr)
+	query := assertRedirectToClient(t, rr, http.StatusSeeOther, map[string]string{
+		"error": "invalid_request",
+		"state": "xyz",
+	})
+	if query.Has("code") {
+		t.Error("不正な端末名の要求に認可コードが付いている")
+	}
+}
+
 func TestCreate_未ログインならサインインへ送る(t *testing.T) {
 	t.Parallel()
 

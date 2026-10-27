@@ -57,15 +57,19 @@ func setupGrantMember(t *testing.T, tx *sql.Tx, identifier string, role model.Sp
 	return grantMember{userID: userID, spaceID: spaceID, spaceMemberID: spaceMemberID}
 }
 
-// buildGrantは、メンバーspaceMemberIDがスペースのアプリappNameに与えた許可を作る
+// buildGrantは、メンバーspaceMemberIDがスペースのアプリappNameに与えた許可と、連携の一覧に出す
+// ための有効なリフレッシュトークンを作る
 func (m grantMember) buildGrant(t *testing.T, tx *sql.Tx, spaceMemberID model.SpaceMemberID, appName, clientID string, scopes []model.Scope) model.OAuthGrantID {
 	t.Helper()
 
 	appID := testutil.NewOAuthApplicationBuilder(t, tx).
 		WithSpaceID(m.spaceID).WithName(appName).WithClientID(clientID).Build()
-	return testutil.NewOAuthGrantBuilder(t, tx).
+	grantID := testutil.NewOAuthGrantBuilder(t, tx).
 		WithOAuthApplicationID(appID).WithSpaceID(m.spaceID).WithSpaceMemberID(spaceMemberID).
 		WithScopes(scopes).Build()
+	testutil.NewOAuthRefreshTokenBuilder(t, tx).
+		WithOAuthGrantID(grantID).WithSpaceID(m.spaceID).WithScopes(scopes).WithTokenDigest(clientID + "-refresh").Build()
+	return grantID
 }
 
 // setupHandlerは渡したクエリを使うハンドラーを組み立てる。

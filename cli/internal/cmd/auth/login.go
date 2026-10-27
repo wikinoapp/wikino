@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"runtime"
 	"slices"
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 
@@ -24,13 +26,17 @@ import (
 // maxTokenBytesは、標準入力から読むトークンの上限。誤って大きなファイルを渡したときに読み続けない。
 const maxTokenBytes = 4096
 
+// maxDeviceNameRunesは、認可サーバーが受け付ける端末名の最大文字数。
+const maxDeviceNameRunes = 100
+
 // loginFieldsは `auth login` の `--fields` で選べる項目。OAuthでログインしたときは付与されたスコープも出す。
 var loginFields = append(append([]string{}, credentialFields...), "scopes")
 
 type loginOptions struct {
-	withToken bool
-	device    bool
-	scopes    []string
+	withToken  bool
+	device     bool
+	scopes     []string
+	deviceName string
 }
 
 func newCmdLogin(f *cmdutil.Factory) *cobra.Command {
@@ -54,6 +60,7 @@ func newCmdLogin(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().BoolVar(&opts.withToken, "with-token", false, loc.T("auth_login_with_token_flag"))
 	cmd.Flags().StringSliceVar(&opts.scopes, "scopes", nil, loc.T("auth_login_scopes_flag"))
 	cmd.Flags().BoolVar(&opts.device, "device", false, loc.T("auth_login_device_flag"))
+	cmd.Flags().StringVar(&opts.deviceName, "device-name", "", loc.T("auth_login_device_name_flag"))
 
 	return cmd
 }
@@ -71,6 +78,17 @@ func runLogin(f *cmdutil.Factory, cmd *cobra.Command, args []string, opts loginO
 	}
 	if opts.withToken && opts.device {
 		return cmdutil.NewUsageError(loc, cmd, loc.T("auth_login_error_device_with_token"))
+	}
+	// 個人用アクセストークンはサーバーの連携に端末を記録しないため、端末名を送る先が無い。
+	if opts.withToken && cmd.Flags().Changed("device-name") {
+		return cmdutil.NewUsageError(loc, cmd, loc.T("auth_login_error_device_name_with_token"))
+	}
+	if !opts.withToken {
+		deviceName, err := resolveDeviceName(f, cmd, opts.deviceName)
+		if err != nil {
+			return err
+		}
+		opts.deviceName = deviceName
 	}
 
 	space, err := spaceArg(f, cmd, args)
@@ -143,20 +161,30 @@ func runLogin(f *cmdutil.Factory, cmd *cobra.Command, args []string, opts loginO
 		MemberAtname: member.Atname,
 	}
 	var result credentialResult
+	var replaced auth.Secret
 	if err := withLockedConfig(cmd.Context(), f, dir, func(latest *config.Config) error {
 		// 同じ資格情報のリフレッシュが、保存し直したトークンを古いトークンで上書きしないようにする。
 		return auth.WithCredentialLock(cmd.Context(), dir, &cred, func() error {
-			saved, err := saveLogin(f, dir, latest, cred, secret)
+			saved, previous, err := saveLogin(f, dir, latest, cred, secret)
 			if err != nil {
 				return err
 			}
 			result = newCredentialResult(latest, saved, member)
+			replaced = previous
 			return nil
 		})
 	}); err != nil {
 		return fail(err)
 	}
 	result.Scopes = secret.Scopes
+
+	// 置き換えたトークンは手元から消えて使えなくなるため、サーバーの連携も解除する。
+	// 連携は認可ごとに作られるため、残すと使われない連携が上限に達するまでたまる。
+	if replaced.IsOAuth() && replaced.RefreshToken != secret.RefreshToken {
+		if !revokeRefreshToken(f, cmd.Context(), host, replaced.RefreshToken) {
+			_, _ = fmt.Fprintln(f.IOStreams.ErrOut, loc.T("auth_warning_relogin_revoke_failed", map[string]any{"Space": space}))
+		}
+	}
 
 	return printCredential(printer, loc, result)
 }
@@ -198,6 +226,7 @@ func loginWithOAuth(f *cmdutil.Factory, cmd *cobra.Command, host, space string, 
 		token, err = client.LoginWithLoopback(ctx, metadata, auth.LoopbackOptions{
 			Space:       space,
 			Scopes:      scopes,
+			DeviceName:  opts.deviceName,
 			Open:        func(authorizationURL string) error { return openAuthorizationURL(f, authorizationURL) },
 			SuccessPage: loc.T("auth_login_page_success"),
 			FailurePage: loc.T("auth_login_page_failure"),
@@ -211,11 +240,12 @@ func loginWithOAuth(f *cmdutil.Factory, cmd *cobra.Command, host, space string, 
 	}
 	if useDevice {
 		token, err = client.LoginWithDevice(ctx, metadata, auth.DeviceOptions{
-			Space:  space,
-			Scopes: scopes,
-			Show:   func(device *auth.DeviceAuthorization) { showDeviceAuthorization(f, device) },
-			Now:    now,
-			Sleep:  f.Sleep,
+			Space:      space,
+			Scopes:     scopes,
+			DeviceName: opts.deviceName,
+			Show:       func(device *auth.DeviceAuthorization) { showDeviceAuthorization(f, device) },
+			Now:        now,
+			Sleep:      f.Sleep,
 		})
 	}
 	if err != nil {
@@ -225,6 +255,40 @@ func loginWithOAuth(f *cmdutil.Factory, cmd *cobra.Command, host, space string, 
 	discard := func() { _ = client.Revoke(ctx, metadata, token.RefreshToken) }
 
 	return auth.NewSecret(token, now()), discard, nil
+}
+
+// resolveDeviceNameは、認可要求に付ける端末名を決める。連携中のアプリの画面で端末を見分けるために送る。
+// `--device-name` があればその値を、無ければホスト名を使う。ホスト名を得られないか、送れない形なら送らない。
+// `--device-name` の値は利用者が明示したものなので、不正UTF-8・空・長すぎる・制御文字を含むときは使い方の誤りにする。
+func resolveDeviceName(f *cmdutil.Factory, cmd *cobra.Command, value string) (string, error) {
+	loc := f.Localizer
+	if cmd.Flags().Changed("device-name") {
+		if !utf8.ValidString(value) {
+			return "", cmdutil.NewUsageError(loc, cmd, loc.T("auth_login_error_device_name_invalid", map[string]any{"Max": maxDeviceNameRunes}))
+		}
+		name := strings.TrimSpace(value)
+		if name == "" || utf8.RuneCountInString(name) > maxDeviceNameRunes || strings.ContainsFunc(name, unicode.IsControl) {
+			return "", cmdutil.NewUsageError(loc, cmd, loc.T("auth_login_error_device_name_invalid", map[string]any{"Max": maxDeviceNameRunes}))
+		}
+		return name, nil
+	}
+
+	hostname := os.Hostname
+	if f.Hostname != nil {
+		hostname = f.Hostname
+	}
+	name, err := hostname()
+	if err != nil || !utf8.ValidString(name) {
+		return "", nil
+	}
+	if runes := []rune(name); len(runes) > maxDeviceNameRunes {
+		name = string(runes[:maxDeviceNameRunes])
+	}
+	name = strings.TrimSpace(name)
+	if strings.ContainsFunc(name, unicode.IsControl) {
+		return "", nil
+	}
+	return name, nil
 }
 
 // requestedScopesは、`--scopes` の値を認可サーバーが扱うスコープと照合する。
@@ -293,7 +357,8 @@ func showDeviceAuthorization(f *cmdutil.Factory, device *auth.DeviceAuthorizatio
 
 // saveLoginは、ロック内で既存トークンを退避し、トークンと設定を更新する。
 // 設定の保存に失敗した場合は既存の保存先を復元し、削除できない旧保存先は設定に残す。
-func saveLogin(f *cmdutil.Factory, dir string, cfg *config.Config, cred config.Credential, secret auth.Secret) (*config.Credential, error) {
+// 保存できたときは、置き換えた既存トークン (無ければ空のSecret) も返す。
+func saveLogin(f *cmdutil.Factory, dir string, cfg *config.Config, cred config.Credential, secret auth.Secret) (*config.Credential, auth.Secret, error) {
 	store := f.TokenStore(dir)
 	var previous *config.Credential
 	var backup auth.Secret
@@ -311,7 +376,7 @@ func saveLogin(f *cmdutil.Factory, dir string, cfg *config.Config, cred config.C
 			var cliErr *output.Error
 			// 保存済みのトークンが無い場合は、新しいトークンでログインし直せるようにする。
 			if !errors.As(err, &cliErr) || cliErr.Code != output.CodeNotLoggedIn {
-				return nil, authStorageError(f, "auth_error_backup", err)
+				return nil, auth.Secret{}, authStorageError(f, "auth_error_backup", err)
 			}
 		}
 	}
@@ -322,10 +387,10 @@ func saveLogin(f *cmdutil.Factory, dir string, cfg *config.Config, cred config.C
 			// 保存に失敗しても、時間切れのキーチェーン操作は完了する可能性がある。
 			cred.Store = auth.StoreKeyring
 			if rollbackErr := rollbackLogin(store, previous, backup, cred); rollbackErr != nil {
-				return nil, authStorageError(f, "auth_error_rollback", errors.Join(err, rollbackErr))
+				return nil, auth.Secret{}, authStorageError(f, "auth_error_rollback", errors.Join(err, rollbackErr))
 			}
 		}
-		return nil, err
+		return nil, auth.Secret{}, err
 	}
 	if previous != nil && cred.CleanupStore == "" {
 		cred.CleanupStore = previous.CleanupStore
@@ -341,9 +406,9 @@ func saveLogin(f *cmdutil.Factory, dir string, cfg *config.Config, cred config.C
 	if err := cfg.Save(dir); err != nil {
 		rollbackErr := rollbackLogin(store, previous, backup, cred)
 		if rollbackErr != nil {
-			return nil, authStorageError(f, "auth_error_rollback", errors.Join(err, rollbackErr))
+			return nil, auth.Secret{}, authStorageError(f, "auth_error_rollback", errors.Join(err, rollbackErr))
 		}
-		return nil, err
+		return nil, auth.Secret{}, err
 	}
 	for _, saved := range cfg.FindCredentials(cred.Host, cred.Space) {
 		if saved.MemberID != cred.MemberID {
@@ -354,15 +419,15 @@ func saveLogin(f *cmdutil.Factory, dir string, cfg *config.Config, cred config.C
 			// 削除先は設定に残っており、次の再ログインかログアウトで再試行する。
 			if err := store.Cleanup(saved); err != nil {
 				_, _ = fmt.Fprintln(f.IOStreams.ErrOut, f.Localizer.T("auth_warning_cleanup_failed"))
-				return saved, nil
+				return saved, backup, nil
 			}
 			if err := cfg.Save(dir); err != nil {
-				return nil, err
+				return nil, auth.Secret{}, err
 			}
 		}
-		return saved, nil
+		return saved, backup, nil
 	}
-	return nil, errors.New("保存した資格情報が見つかりません")
+	return nil, auth.Secret{}, errors.New("保存した資格情報が見つかりません")
 }
 
 // rollbackLoginは、新しい保存先だけを取り除き、元の保存先へ退避したトークンを戻す。

@@ -17,8 +17,10 @@ func TestNew_同意画面にアプリ名と連携先のスペースとスコー�
 	_, tx := testutil.SetupTx(t)
 	f := setupAuthorizationFixture(t, tx, "oauthz-new", model.SpaceRoleAdmin, true)
 
+	params := validParams(f.clientID)
+	params.Set("device_name", "my-laptop")
 	rr := httptest.NewRecorder()
-	setupHandler(t, testutil.QueriesWithTx(tx)).New(rr, newRequest(t, http.MethodGet, f.userID, validParams(f.clientID)))
+	setupHandler(t, testutil.QueriesWithTx(tx)).New(rr, newRequest(t, http.MethodGet, f.userID, params))
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusOK)
@@ -26,7 +28,12 @@ func TestNew_同意画面にアプリ名と連携先のスペースとスコー�
 	assertResponseHeaders(t, rr)
 
 	body := rr.Body.String()
+	// 端末名はクライアントが申告した値のため、同意画面には出さず、同意の送信へ引き継ぐだけにする
+	if got := strings.Count(body, "my-laptop"); got != 1 {
+		t.Errorf("本文の端末名の出現 = %d回、期待値 = 1回 (引き継ぐhiddenの値だけ)", got)
+	}
 	for _, want := range []string{
+		`name="device_name" value="my-laptop"`,
 		"連携するCLIにアクセスを許可しますか？",
 		"連携先のスペース",
 		"@authorizing_user",
@@ -312,6 +319,24 @@ func TestNew_その他の不正はエラーをリダイレクトURIに付けて�
 			identifier: "oauthz-new-admin-scope",
 			modify:     func(p url.Values) { p.Set("scope", "space:admin") },
 			wantError:  "invalid_scope",
+		},
+		{
+			name:       "device_nameに制御文字がある",
+			identifier: "oauthz-new-device-control",
+			modify:     func(p url.Values) { p.Set("device_name", "my\nlaptop") },
+			wantError:  "invalid_request",
+		},
+		{
+			name:       "device_nameが重複している",
+			identifier: "oauthz-new-device-dup",
+			modify:     func(p url.Values) { p["device_name"] = []string{"a", "b"} },
+			wantError:  "invalid_request",
+		},
+		{
+			name:       "device_nameが不正UTF-8",
+			identifier: "oauthz-new-device-utf8",
+			modify:     func(p url.Values) { p.Set("device_name", "\xff") },
+			wantError:  "invalid_request",
 		},
 		{
 			name:       "resourceが別のスペースを指す",

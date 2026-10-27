@@ -98,8 +98,9 @@ func TestCreateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 
 		before := time.Now()
 		output, err := newCreateOAuthDeviceAuthorizationUsecaseForTest(q).Execute(ctx, OAuthDeviceAuthorizationParams{
-			ClientID: f.clientID,
-			Scope:    "page:write topic:read",
+			ClientID:   f.clientID,
+			Scope:      "page:write topic:read",
+			DeviceName: "my-laptop",
 		})
 		if err != nil {
 			t.Fatalf("Execute()のエラー = %v", err)
@@ -147,6 +148,9 @@ func TestCreateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 		}
 		if stored.Interval != 5*time.Second {
 			t.Errorf("Interval = %v、期待値 = %v", stored.Interval, 5*time.Second)
+		}
+		if stored.DeviceName == nil || *stored.DeviceName != "my-laptop" {
+			t.Errorf("DeviceName = %v、期待値 = %q", stored.DeviceName, "my-laptop")
 		}
 		if stored.ExpiresAt.Before(before.Add(10*time.Minute)) || stored.ExpiresAt.After(time.Now().Add(10*time.Minute)) {
 			t.Errorf("ExpiresAt = %v、期待値は要求から10分後", stored.ExpiresAt)
@@ -238,6 +242,16 @@ func TestCreateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 			{
 				name:   "パラメーターの重複",
 				params: OAuthDeviceAuthorizationParams{ClientID: space.clientID, Scope: "page:read", DuplicatedParams: []string{"scope"}},
+				want:   model.OAuthTokenErrorInvalidRequest,
+			},
+			{
+				name:   "100文字を超える `device_name`",
+				params: OAuthDeviceAuthorizationParams{ClientID: space.clientID, Scope: "page:read", DeviceName: strings.Repeat("a", 101)},
+				want:   model.OAuthTokenErrorInvalidRequest,
+			},
+			{
+				name:   "制御文字を含む `device_name`",
+				params: OAuthDeviceAuthorizationParams{ClientID: space.clientID, Scope: "page:read", DeviceName: "my\nlaptop"},
 				want:   model.OAuthTokenErrorInvalidRequest,
 			},
 			{

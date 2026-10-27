@@ -66,15 +66,6 @@ func (r *OAuthAccessTokenRepository) FindByTokenDigest(ctx context.Context, toke
 	return r.toModel(row), nil
 }
 
-// RevokeByOAuthGrantは許可に属する失効していないアクセストークンをすべて失効する
-func (r *OAuthAccessTokenRepository) RevokeByOAuthGrant(ctx context.Context, oauthGrantID model.OAuthGrantID, spaceID model.SpaceID, now time.Time) error {
-	return r.q.RevokeOAuthAccessTokensByOAuthGrant(ctx, query.RevokeOAuthAccessTokensByOAuthGrantParams{
-		Now:          now,
-		OauthGrantID: string(oauthGrantID),
-		SpaceID:      string(spaceID),
-	})
-}
-
 // Revokeはアクセストークンを1つ失効する。既に失効しているものは変えない
 func (r *OAuthAccessTokenRepository) Revoke(ctx context.Context, id model.OAuthAccessTokenID, spaceID model.SpaceID, now time.Time) error {
 	return r.q.RevokeOAuthAccessToken(ctx, query.RevokeOAuthAccessTokenParams{

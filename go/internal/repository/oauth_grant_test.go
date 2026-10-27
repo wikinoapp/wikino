@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -131,14 +132,19 @@ func TestOAuthGrantRepository_Create(t *testing.T) {
 		t.Errorf("失効した許可があるときのCreate()のエラー = %v", err)
 	}
 
-	// 失効していない許可が既にあれば一意制約に違反する (トランザクションが中断するため最後に確かめる)
-	_, err = repo.Create(ctx, CreateOAuthGrantInput{
+	// 許可は認可ごとに作るため、失効していない許可があっても同じアプリ・メンバーに別の許可を作れる
+	another, err := repo.Create(ctx, CreateOAuthGrantInput{
 		OAuthApplicationID: f.oauthApplicationID,
 		SpaceID:            f.spaceID,
 		SpaceMemberID:      f.spaceMemberID,
-		Scopes:             scopes,
+		Scopes:             []model.Scope{model.ScopePageRead},
 	})
-	assertConstraintViolation(t, err, "unique_violation", "idx_oauth_grants_unrevoked_application_member")
+	if err != nil {
+		t.Fatalf("失効していない許可があるときのCreate()のエラー = %v", err)
+	}
+	if another.ID == grant.ID {
+		t.Errorf("another.ID = %v、既存の許可とは別の許可を期待", another.ID)
+	}
 }
 
 func TestOAuthGrantRepository_Create_OtherSpaceMember(t *testing.T) {
@@ -185,44 +191,6 @@ func TestOAuthGrantRepository_FindByID(t *testing.T) {
 	if grant != nil {
 		t.Errorf("他のスペースを指定したFindByID() = %v、期待値 = nil", grant)
 	}
-}
-
-func TestOAuthGrantRepository_FindUnrevokedByApplicationAndSpaceMember(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	repo := NewOAuthGrantRepository(testutil.QueriesWithTx(tx))
-	ctx := context.Background()
-
-	f := setupOAuthFixture(t, tx, "grant-unrevoked")
-	testutil.NewOAuthGrantBuilder(t, tx).
-		WithOAuthApplicationID(f.oauthApplicationID).
-		WithSpaceID(f.spaceID).
-		WithSpaceMemberID(f.spaceMemberID).
-		WithRevokedAt(time.Now()).
-		Build()
-
-	t.Run("失効した許可しか無ければnilを返す", func(t *testing.T) {
-		grant, err := repo.FindUnrevokedByApplicationAndSpaceMember(ctx, f.oauthApplicationID, f.spaceID, f.spaceMemberID)
-		if err != nil {
-			t.Fatalf("FindUnrevokedByApplicationAndSpaceMember()のエラー = %v", err)
-		}
-		if grant != nil {
-			t.Errorf("FindUnrevokedByApplicationAndSpaceMember() = %v、期待値 = nil", grant)
-		}
-	})
-
-	t.Run("失効していない許可を返す", func(t *testing.T) {
-		id := f.buildGrant(t, tx)
-
-		grant, err := repo.FindUnrevokedByApplicationAndSpaceMember(ctx, f.oauthApplicationID, f.spaceID, f.spaceMemberID)
-		if err != nil {
-			t.Fatalf("FindUnrevokedByApplicationAndSpaceMember()のエラー = %v", err)
-		}
-		if grant == nil || grant.ID != id {
-			t.Errorf("FindUnrevokedByApplicationAndSpaceMember() = %v、期待値 = ID %v の許可", grant, id)
-		}
-	})
 }
 
 func TestOAuthGrantRepository_Revoke(t *testing.T) {
@@ -352,11 +320,8 @@ func TestOAuthGrantRepository_ListUnrevokedBySpaceMember(t *testing.T) {
 	other := setupOAuthFixture(t, tx, "grant-list-other")
 
 	older := f.buildGrant(t, tx)
-	// 同じアプリ・メンバーに有効な許可は1つに限るため、2件目は別のアプリの許可にする
-	secondAppID := testutil.NewOAuthApplicationBuilder(t, tx).
-		WithSpaceID(f.spaceID).WithClientID("oauth-grant-list-second-client").Build()
 	newer := testutil.NewOAuthGrantBuilder(t, tx).
-		WithOAuthApplicationID(secondAppID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).Build()
+		WithOAuthApplicationID(f.oauthApplicationID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).Build()
 	testutil.NewOAuthGrantBuilder(t, tx).
 		WithOAuthApplicationID(f.oauthApplicationID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).
 		WithRevokedAt(time.Now()).Build()
@@ -384,27 +349,265 @@ func TestOAuthGrantRepository_ListUnrevokedBySpaceMember(t *testing.T) {
 	}
 }
 
-func TestOAuthGrantRepository_LockOrCreate(t *testing.T) {
+func TestOAuthGrantRepository_ListUsableBySpaceMember(t *testing.T) {
 	t.Parallel()
+
 	_, tx := testutil.SetupTx(t)
 	repo := NewOAuthGrantRepository(testutil.QueriesWithTx(tx))
-	f := setupOAuthFixture(t, tx, "grant-lock-create")
-	ctx := t.Context()
-	input := CreateOAuthGrantInput{OAuthApplicationID: f.oauthApplicationID, SpaceID: f.spaceID, SpaceMemberID: f.spaceMemberID, Scopes: []model.Scope{model.ScopePageWrite}}
-	first, err := repo.LockOrCreate(ctx, input)
+	ctx := context.Background()
+	now := time.Now()
+	past := now.Add(-time.Hour)
+
+	f := setupOAuthFixture(t, tx, "grant-usable")
+	other := setupOAuthFixture(t, tx, "grant-usable-other")
+	build := func(name string, refresh func(b *testutil.OAuthRefreshTokenBuilder)) model.OAuthGrantID {
+		id := f.buildGrant(t, tx)
+		if refresh != nil {
+			b := testutil.NewOAuthRefreshTokenBuilder(t, tx).
+				WithOAuthGrantID(id).WithSpaceID(f.spaceID).WithTokenDigest("grant_usable_" + name)
+			refresh(b)
+			b.Build()
+		}
+		return id
+	}
+
+	older := build("older", func(*testutil.OAuthRefreshTokenBuilder) {})
+	// 使用済みのトークン (ローテーション前のもの) があっても、有効なトークンが1つあれば出す
+	newer := build("newer_used", func(b *testutil.OAuthRefreshTokenBuilder) { b.WithUsedAt(past) })
+	testutil.NewOAuthRefreshTokenBuilder(t, tx).
+		WithOAuthGrantID(newer).WithSpaceID(f.spaceID).WithTokenDigest("grant_usable_newer").Build()
+	build("unexchanged", nil)
+	build("used", func(b *testutil.OAuthRefreshTokenBuilder) { b.WithUsedAt(past) })
+	build("revoked", func(b *testutil.OAuthRefreshTokenBuilder) { b.WithRevokedAt(past) })
+	build("expired", func(b *testutil.OAuthRefreshTokenBuilder) { b.WithExpiresAt(past) })
+	revokedGrant := testutil.NewOAuthGrantBuilder(t, tx).
+		WithOAuthApplicationID(f.oauthApplicationID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).
+		WithRevokedAt(now).Build()
+	testutil.NewOAuthRefreshTokenBuilder(t, tx).
+		WithOAuthGrantID(revokedGrant).WithSpaceID(f.spaceID).WithTokenDigest("grant_usable_revoked_grant").Build()
+
+	grants, err := repo.ListUsableBySpaceMember(ctx, f.spaceID, f.spaceMemberID, now)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("ListUsableBySpaceMember()のエラー = %v", err)
 	}
-	if !slices.Equal(first.Scopes, input.Scopes) {
-		t.Errorf("初回の許可のスコープ = %v、期待値 = %v", first.Scopes, input.Scopes)
+	gotIDs := make([]model.OAuthGrantID, len(grants))
+	for i, g := range grants {
+		gotIDs[i] = g.ID
 	}
-	input.Scopes = []model.Scope{model.ScopeTopicRead}
-	locked, err := repo.LockOrCreate(ctx, input)
+	if want := []model.OAuthGrantID{newer, older}; !slices.Equal(gotIDs, want) {
+		t.Errorf("許可のID = %v、期待値 = %v (有効なリフレッシュトークンを持つ失効していない許可だけ)", gotIDs, want)
+	}
+
+	otherSpace, err := repo.ListUsableBySpaceMember(ctx, other.spaceID, f.spaceMemberID, now)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("他のスペースを指定したListUsableBySpaceMember()のエラー = %v", err)
 	}
-	if locked.ID != first.ID || !slices.Equal(locked.Scopes, first.Scopes) || !locked.UpdatedAt.Equal(first.UpdatedAt) {
-		t.Errorf("ロック時に既存の許可が変わりました: ID=%s、スコープ=%v、更新日時=%s", locked.ID, locked.Scopes, locked.UpdatedAt)
+	if len(otherSpace) != 0 {
+		t.Errorf("他のスペースを指定したときの件数 = %d、期待値 = 0", len(otherSpace))
+	}
+}
+
+func TestOAuthGrantRepository_LastUsedAt(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewOAuthGrantRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	now := time.Now().Truncate(time.Microsecond)
+	recent := now.Add(-model.OAuthGrantLastUsedAtUpdateInterval / 2)
+	stale := now.Add(-2 * model.OAuthGrantLastUsedAtUpdateInterval)
+
+	f := setupOAuthFixture(t, tx, "grant-last-used")
+	build := func(lastUsedAt *time.Time, revoked bool) model.OAuthGrantID {
+		b := testutil.NewOAuthGrantBuilder(t, tx).
+			WithOAuthApplicationID(f.oauthApplicationID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID)
+		if lastUsedAt != nil {
+			b = b.WithLastUsedAt(*lastUsedAt)
+		}
+		if revoked {
+			b = b.WithRevokedAt(stale)
+		}
+		return b.Build()
+	}
+
+	tests := []struct {
+		name       string
+		lastUsedAt *time.Time
+		revoked    bool
+		// setは、間隔を問わないSetLastUsedAtで更新するか (偽ならUpdateLastUsedAt)
+		set  bool
+		want *time.Time
+	}{
+		{name: "照合: まだ使われていなければ更新する", want: &now},
+		{name: "照合: 間隔が過ぎていれば更新する", lastUsedAt: &stale, want: &now},
+		{name: "照合: 間隔が過ぎていなければ更新しない", lastUsedAt: &recent, want: &recent},
+		{name: "発行: 間隔が過ぎていなくても更新する", lastUsedAt: &recent, set: true, want: &now},
+		{name: "失効した許可は更新しない", revoked: true, set: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			id := build(tt.lastUsedAt, tt.revoked)
+			update := repo.UpdateLastUsedAt
+			if tt.set {
+				update = repo.SetLastUsedAt
+			}
+			if err := update(ctx, id, f.spaceID, now); err != nil {
+				t.Fatalf("最終利用日時の更新のエラー = %v", err)
+			}
+			grant, err := repo.FindByID(ctx, id, f.spaceID)
+			if err != nil {
+				t.Fatalf("FindByID()のエラー = %v", err)
+			}
+			if (grant.LastUsedAt == nil) != (tt.want == nil) || (tt.want != nil && !grant.LastUsedAt.Equal(*tt.want)) {
+				t.Errorf("LastUsedAt = %v、期待値 = %v", grant.LastUsedAt, tt.want)
+			}
+		})
+	}
+}
+
+func TestOAuthGrantRepository_Evict(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now().Truncate(time.Microsecond)
+	// grantStateは押し出しの前の許可の状態。lastUsedAgoが0なら未使用で、createdAgoだけ前に作る
+	type grantState struct {
+		name        string
+		createdAgo  time.Duration
+		lastUsedAgo time.Duration
+	}
+	recentlyUsed := func(n int) []grantState {
+		states := make([]grantState, n)
+		for i := range states {
+			states[i] = grantState{name: fmt.Sprintf("recent%d", i), createdAgo: time.Hour, lastUsedAgo: time.Duration(i+1) * time.Second}
+		}
+		return states
+	}
+
+	tests := []struct {
+		name   string
+		grants []grantState
+		// wantEvictedは押し出される許可の名前
+		wantEvicted []string
+	}{
+		{
+			name:        "上限より少なければ押し出さない",
+			grants:      recentlyUsed(model.OAuthGrantMaxPerApplicationMember - 1),
+			wantEvicted: nil,
+		},
+		{
+			name: "交換されないまま猶予を過ぎた許可を、最終利用が古い許可より先に押し出す",
+			grants: append([]grantState{
+				{name: "stale_unused", createdAgo: 2 * model.OAuthGrantEvictionGracePeriod},
+				{name: "oldest_used", createdAgo: 2 * time.Hour, lastUsedAgo: time.Hour},
+				{name: "fresh_unused", createdAgo: time.Second},
+			}, recentlyUsed(model.OAuthGrantMaxPerApplicationMember-3)...),
+			wantEvicted: []string{"stale_unused"},
+		},
+		{
+			name: "交換されないまま猶予を過ぎた許可が無ければ、最終利用が最も古い許可を押し出す",
+			grants: append([]grantState{
+				{name: "oldest_used", createdAgo: 2 * time.Hour, lastUsedAgo: time.Hour},
+				{name: "fresh_unused", createdAgo: time.Second},
+			}, recentlyUsed(model.OAuthGrantMaxPerApplicationMember-2)...),
+			wantEvicted: []string{"oldest_used"},
+		},
+		{
+			name: "ほかに無ければ、猶予の中の未使用の許可を古いものから押し出す",
+			grants: func() []grantState {
+				states := make([]grantState, model.OAuthGrantMaxPerApplicationMember)
+				for i := range states {
+					states[i] = grantState{name: fmt.Sprintf("fresh%d", i), createdAgo: time.Duration(i+1) * time.Second}
+				}
+				return states
+			}(),
+			wantEvicted: []string{fmt.Sprintf("fresh%d", model.OAuthGrantMaxPerApplicationMember-1)},
+		},
+		{
+			name: "同時の作成で上限を超えていれば、上限より1件少なくなるまで押し出す",
+			grants: append([]grantState{
+				{name: "oldest_used", createdAgo: 2 * time.Hour, lastUsedAgo: 3 * time.Hour},
+				{name: "older_used", createdAgo: 2 * time.Hour, lastUsedAgo: 2 * time.Hour},
+			}, recentlyUsed(model.OAuthGrantMaxPerApplicationMember)...),
+			wantEvicted: []string{"oldest_used", "older_used", fmt.Sprintf("recent%d", model.OAuthGrantMaxPerApplicationMember-1)},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			repo := NewOAuthGrantRepository(testutil.QueriesWithTx(tx))
+			ctx := context.Background()
+			suffix := fmt.Sprintf("grant-evict-%d", i)
+			f := setupOAuthFixture(t, tx, suffix)
+
+			ids := make(map[string]model.OAuthGrantID, len(tt.grants))
+			for _, g := range tt.grants {
+				id := f.buildGrant(t, tx)
+				var lastUsedAt *time.Time
+				if g.lastUsedAgo > 0 {
+					v := now.Add(-g.lastUsedAgo)
+					lastUsedAt = &v
+				}
+				if _, err := tx.ExecContext(ctx, "UPDATE oauth_grants SET created_at = $1, last_used_at = $2 WHERE id = $3 AND space_id = $4",
+					now.Add(-g.createdAgo), lastUsedAt, string(id), string(f.spaceID)); err != nil {
+					t.Fatalf("許可の日時の設定に失敗: %v", err)
+				}
+				testutil.NewOAuthRefreshTokenBuilder(t, tx).
+					WithOAuthGrantID(id).WithSpaceID(f.spaceID).WithTokenDigest(suffix + "_" + g.name + "_refresh").Build()
+				testutil.NewOAuthAccessTokenBuilder(t, tx).
+					WithOAuthGrantID(id).WithSpaceID(f.spaceID).WithTokenDigest(suffix + "_" + g.name + "_access").Build()
+				ids[g.name] = id
+			}
+			// 同じメンバーのほかのアプリの許可は、数えず押し出さない
+			otherAppID := testutil.NewOAuthApplicationBuilder(t, tx).
+				WithSpaceID(f.spaceID).WithClientID(suffix + "-other-client").Build()
+			otherGrantID := testutil.NewOAuthGrantBuilder(t, tx).
+				WithOAuthApplicationID(otherAppID).WithSpaceID(f.spaceID).WithSpaceMemberID(f.spaceMemberID).Build()
+
+			if err := repo.Evict(ctx, EvictInput{
+				OAuthApplicationID: f.oauthApplicationID, SpaceID: f.spaceID, SpaceMemberID: f.spaceMemberID, Now: now,
+			}); err != nil {
+				t.Fatalf("Evict()のエラー = %v", err)
+			}
+
+			var evicted []string
+			for _, g := range tt.grants {
+				grant, err := repo.FindByID(ctx, ids[g.name], f.spaceID)
+				if err != nil {
+					t.Fatalf("FindByID()のエラー = %v", err)
+				}
+				var tokensRevoked int
+				if err := tx.QueryRowContext(ctx, `SELECT
+					(SELECT count(*) FROM oauth_access_tokens WHERE oauth_grant_id = $1 AND space_id = $2 AND revoked_at IS NOT NULL) +
+					(SELECT count(*) FROM oauth_refresh_tokens WHERE oauth_grant_id = $1 AND space_id = $2 AND revoked_at IS NOT NULL)`,
+					string(grant.ID), string(f.spaceID)).Scan(&tokensRevoked); err != nil {
+					t.Fatalf("トークンの失効の取得に失敗: %v", err)
+				}
+				if grant.IsRevoked() {
+					evicted = append(evicted, g.name)
+					if tokensRevoked != 2 {
+						t.Errorf("押し出した許可%sの失効したトークン = %d件、期待値 = 2件", g.name, tokensRevoked)
+					}
+				} else if tokensRevoked != 0 {
+					t.Errorf("押し出していない許可%sのトークンが%d件失効した", g.name, tokensRevoked)
+				}
+			}
+			slices.Sort(evicted)
+			want := slices.Clone(tt.wantEvicted)
+			slices.Sort(want)
+			if !slices.Equal(evicted, want) {
+				t.Errorf("押し出した許可 = %v、期待値 = %v", evicted, want)
+			}
+			other, err := repo.FindByID(ctx, otherGrantID, f.spaceID)
+			if err != nil {
+				t.Fatalf("FindByID()のエラー = %v", err)
+			}
+			if other.IsRevoked() {
+				t.Error("ほかのアプリの許可を押し出した")
+			}
+		})
 	}
 }
 

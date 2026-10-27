@@ -20,6 +20,7 @@ func TestOAuthDeviceAuthorizationRepository_Create(t *testing.T) {
 	f := setupOAuthFixture(t, tx, "device-create")
 	expiresAt := time.Now().Add(model.OAuthDeviceAuthorizationLifetime).Truncate(time.Microsecond)
 	scopes := []model.Scope{model.ScopePageRead, model.ScopePageWrite}
+	deviceName := "my-laptop"
 
 	d, err := repo.Create(ctx, CreateOAuthDeviceAuthorizationInput{
 		OAuthApplicationID: f.oauthApplicationID,
@@ -29,9 +30,13 @@ func TestOAuthDeviceAuthorizationRepository_Create(t *testing.T) {
 		Scopes:             scopes,
 		Interval:           5 * time.Second,
 		ExpiresAt:          expiresAt,
+		DeviceName:         &deviceName,
 	})
 	if err != nil {
 		t.Fatalf("Create()のエラー = %v", err)
+	}
+	if d.DeviceName == nil || *d.DeviceName != deviceName {
+		t.Errorf("d.DeviceName = %v、期待値 = %q", d.DeviceName, deviceName)
 	}
 	if d.ID == "" {
 		t.Error("d.IDが空")
@@ -301,6 +306,7 @@ func TestOAuthDeviceAuthorizationRepository_ApproveWithGrant(t *testing.T) {
 			WithScopes([]model.Scope{model.ScopePageRead, model.ScopePageWrite, model.ScopeTopicRead}).
 			WithDeviceCodeDigest("device_approve_" + name + "_device").
 			WithUserCodeDigest("device_approve_" + name + "_user").
+			WithDeviceName("device-" + name).
 			Build()
 	}
 	input := ApproveOAuthDeviceAuthorizationWithGrantInput{
@@ -311,7 +317,7 @@ func TestOAuthDeviceAuthorizationRepository_ApproveWithGrant(t *testing.T) {
 		Scopes:             []model.Scope{model.ScopeTopicRead},
 	}
 
-	// 許可が無ければ作り、要求を許可済みにして選んだスコープに置き換える
+	// 許可を作り、要求を許可済みにして選んだスコープに置き換える
 	first, err := repo.ApproveWithGrant(ctx, input)
 	if err != nil {
 		t.Fatalf("ApproveWithGrant()のエラー = %v", err)
@@ -330,8 +336,16 @@ func TestOAuthDeviceAuthorizationRepository_ApproveWithGrant(t *testing.T) {
 	if grant == nil || grant.OAuthApplicationID != f.oauthApplicationID || grant.SpaceMemberID != f.spaceMemberID {
 		t.Fatalf("grant = %+v、フィクスチャのアプリ・メンバーの許可を期待", grant)
 	}
+	// 要求で受け取った端末名を許可へ写す
+	if grant.DeviceName == nil || *grant.DeviceName != "device-first" {
+		t.Errorf("grant.DeviceName = %v、期待値 = %q", grant.DeviceName, "device-first")
+	}
 
-	// 許可済みの要求はもう一度は許可できない
+	// 許可済みの要求はもう一度は許可できない。許可も作らない
+	var grantCount int
+	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM oauth_grants WHERE oauth_application_id = $1 AND space_id = $2", string(f.oauthApplicationID), string(f.spaceID)).Scan(&grantCount); err != nil {
+		t.Fatalf("許可の件数の取得に失敗: %v", err)
+	}
 	again, err := repo.ApproveWithGrant(ctx, input)
 	if err != nil {
 		t.Fatalf("ApproveWithGrant()のエラー = %v", err)
@@ -339,18 +353,20 @@ func TestOAuthDeviceAuthorizationRepository_ApproveWithGrant(t *testing.T) {
 	if again != nil {
 		t.Errorf("2回目の許可の結果 = %+v、期待値 = nil", again)
 	}
+	var grantCountAfter int
+	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM oauth_grants WHERE oauth_application_id = $1 AND space_id = $2", string(f.oauthApplicationID), string(f.spaceID)).Scan(&grantCountAfter); err != nil {
+		t.Fatalf("許可の件数の取得に失敗: %v", err)
+	}
+	if grantCountAfter != grantCount {
+		t.Errorf("許可済みの要求への許可で許可が作られた (件数 %d → %d)", grantCount, grantCountAfter)
+	}
 
-	// 既存の許可があれば同じ許可のスコープを置き換え、範囲に収まらないトークンだけを失効させる
-	inRangeAccessTokenID := testutil.NewOAuthAccessTokenBuilder(t, tx).
+	// 失効していない許可があっても、要求ごとに別の許可を作る。既存の許可のスコープとトークンは、
+	// 今回のスコープに収まらなくても変えない
+	refreshTokenID := testutil.NewOAuthRefreshTokenBuilder(t, tx).
 		WithOAuthGrantID(grantID).
 		WithSpaceID(f.spaceID).
-		WithTokenDigest("device_approve_in_range_access_digest").
-		WithScopes([]model.Scope{model.ScopePageRead}).
-		Build()
-	outOfRangeRefreshTokenID := testutil.NewOAuthRefreshTokenBuilder(t, tx).
-		WithOAuthGrantID(grantID).
-		WithSpaceID(f.spaceID).
-		WithTokenDigest("device_approve_out_of_range_refresh_digest").
+		WithTokenDigest("device_approve_refresh_digest").
 		WithScopes([]model.Scope{model.ScopeTopicRead}).
 		Build()
 
@@ -360,31 +376,29 @@ func TestOAuthDeviceAuthorizationRepository_ApproveWithGrant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ApproveWithGrant()のエラー = %v", err)
 	}
-	if second == nil || second.OAuthGrantID == nil || *second.OAuthGrantID != grantID {
-		t.Fatalf("要求 = %+v、既存の許可 %vを結び付けることを期待", second, grantID)
+	if second == nil || second.OAuthGrantID == nil || *second.OAuthGrantID == grantID {
+		t.Fatalf("要求 = %+v、既存の許可 %vとは別の許可を結び付けることを期待", second, grantID)
 	}
-	grant, err = grantRepo.FindByID(ctx, grantID, f.spaceID)
+	grant, err = grantRepo.FindByID(ctx, *second.OAuthGrantID, f.spaceID)
 	if err != nil {
 		t.Fatalf("FindByID()のエラー = %v", err)
 	}
-	if !slices.Equal(grant.Scopes, input.Scopes) {
-		t.Errorf("grant.Scopes = %v、期待値 = %v", grant.Scopes, input.Scopes)
+	if grant == nil || !slices.Equal(grant.Scopes, input.Scopes) {
+		t.Errorf("grant = %+v、期待値 = スコープが %v の許可", grant, input.Scopes)
 	}
-	for _, tt := range []struct {
-		table       string
-		id          string
-		wantRevoked bool
-	}{
-		{table: "oauth_access_tokens", id: string(inRangeAccessTokenID), wantRevoked: false},
-		{table: "oauth_refresh_tokens", id: string(outOfRangeRefreshTokenID), wantRevoked: true},
-	} {
-		var revoked bool
-		if err := tx.QueryRowContext(ctx, "SELECT revoked_at IS NOT NULL FROM "+tt.table+" WHERE id = $1", tt.id).Scan(&revoked); err != nil {
-			t.Fatalf("%sの取得に失敗: %v", tt.table, err)
-		}
-		if revoked != tt.wantRevoked {
-			t.Errorf("%s %sの失効 = %v、期待値 = %v", tt.table, tt.id, revoked, tt.wantRevoked)
-		}
+	firstGrant, err := grantRepo.FindByID(ctx, grantID, f.spaceID)
+	if err != nil {
+		t.Fatalf("FindByID()のエラー = %v", err)
+	}
+	if want := []model.Scope{model.ScopeTopicRead}; firstGrant == nil || firstGrant.IsRevoked() || !slices.Equal(firstGrant.Scopes, want) {
+		t.Errorf("既存の許可 = %+v、期待値 = 失効しておらずスコープが %v のまま", firstGrant, want)
+	}
+	var revoked bool
+	if err := tx.QueryRowContext(ctx, "SELECT revoked_at IS NOT NULL FROM oauth_refresh_tokens WHERE id = $1", string(refreshTokenID)).Scan(&revoked); err != nil {
+		t.Fatalf("oauth_refresh_tokensの取得に失敗: %v", err)
+	}
+	if revoked {
+		t.Error("既存の許可のリフレッシュトークンが失効した")
 	}
 }
 

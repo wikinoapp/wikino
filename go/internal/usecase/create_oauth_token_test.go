@@ -141,7 +141,6 @@ func newCreateOAuthTokenUsecaseForTest(q *query.Queries) *CreateOAuthTokenUsecas
 		repository.NewOAuthApplicationRepository(q),
 		repository.NewOAuthGrantRepository(q),
 		repository.NewOAuthAuthorizationCodeRepository(q),
-		repository.NewOAuthAccessTokenRepository(q),
 		repository.NewOAuthRefreshTokenRepository(q),
 		repository.NewOAuthDeviceAuthorizationRepository(q),
 		repository.NewSpaceRepository(q),
@@ -203,12 +202,31 @@ func assertIssuedTokens(t *testing.T, q *query.Queries, f oauthTokenFixture, out
 	if refreshToken == nil || refreshToken.OAuthGrantID != f.grantID || !refreshToken.IsActive(time.Now()) {
 		t.Fatalf("リフレッシュトークン = %+v、許可 %v の有効なトークンを期待", refreshToken, f.grantID)
 	}
+
+	// 発行と同じトランザクションで、許可の最終利用日時を発行の時刻にする
+	grant, err := repository.NewOAuthGrantRepository(q).FindByID(ctx, f.grantID, f.spaceID)
+	if err != nil {
+		t.Fatalf("許可の取得に失敗: %v", err)
+	}
+	if grant.LastUsedAt == nil || !grant.LastUsedAt.Equal(accessToken.CreatedAt) {
+		t.Errorf("許可のLastUsedAt = %v、期待値 = %v (発行の時刻)", grant.LastUsedAt, accessToken.CreatedAt)
+	}
 }
 
-// assertGrantTokensRevokedは、許可に属するアクセストークンとリフレッシュトークンがすべて失効していることを確かめる
-func assertGrantTokensRevoked(t *testing.T, tx *sql.Tx, grantID model.OAuthGrantID) {
+// assertGrantRevokedWithTokensは、許可と、許可に属するアクセストークン・リフレッシュトークンが
+// すべて失効していることを確かめる
+func assertGrantRevokedWithTokens(t *testing.T, tx *sql.Tx, grantID model.OAuthGrantID) {
 	t.Helper()
 
+	var grantRevoked bool
+	if err := tx.QueryRowContext(context.Background(),
+		"SELECT revoked_at IS NOT NULL FROM oauth_grants WHERE id = $1", string(grantID),
+	).Scan(&grantRevoked); err != nil {
+		t.Fatalf("許可の取得に失敗: %v", err)
+	}
+	if !grantRevoked {
+		t.Error("許可が失効していない")
+	}
 	for _, table := range []string{"oauth_access_tokens", "oauth_refresh_tokens"} {
 		var active int
 		if err := tx.QueryRowContext(context.Background(),
@@ -297,7 +315,7 @@ func TestCreateOAuthTokenUsecase_Execute_AuthorizationCode(t *testing.T) {
 		assertIssuedTokens(t, q, f, output, []model.Scope{model.ScopeTopicRead, model.ScopePageWrite})
 	})
 
-	t.Run("使用済みのコードの再提示は拒否し、許可のトークンをすべて失効させる", func(t *testing.T) {
+	t.Run("使用済みのコードの再提示は拒否し、許可と許可のトークンをすべて失効させる", func(t *testing.T) {
 		t.Parallel()
 
 		db := testutil.GetTestDB()
@@ -315,7 +333,7 @@ func TestCreateOAuthTokenUsecase_Execute_AuthorizationCode(t *testing.T) {
 
 		output, err := uc.Execute(context.Background(), f.codeParams(code))
 		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
-		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantTokensRevoked(t, tx, f.grantID) })
+		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
 
 		principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(context.Background(), first.AccessToken)
 		if err != nil {
@@ -500,7 +518,7 @@ func TestCreateOAuthTokenUsecase_Execute_AuthorizationCode(t *testing.T) {
 			wantCode: model.OAuthTokenErrorInvalidGrant,
 		},
 		{
-			// 再認可で許可を狭める前に発行したコードを、狭めた後に交換する
+			// 許可のスコープは作成後に変わらないが、不変条件の確認として範囲を超えるコードを拒否する
 			name: "コードのスコープが今の許可の範囲を超える",
 			setup: func(t *testing.T, tx *sql.Tx, f oauthTokenFixture) {
 				if _, err := tx.ExecContext(context.Background(), "UPDATE oauth_grants SET scopes = '{topic:read}' WHERE id = $1", string(f.grantID)); err != nil {
@@ -632,7 +650,7 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 		assertIssuedTokens(t, q, f, output, []model.Scope{model.ScopeTopicRead, model.ScopePageWrite})
 	})
 
-	t.Run("使用済みのリフレッシュトークンの再提示は拒否し、許可のトークンをすべて失効させる", func(t *testing.T) {
+	t.Run("使用済みのリフレッシュトークンの再提示は拒否し、許可と許可のトークンをすべて失効させる", func(t *testing.T) {
 		t.Parallel()
 
 		db := testutil.GetTestDB()
@@ -640,6 +658,13 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 		f := setupOAuthTokenFixtureDB(t, "cot-refresh-replay", oauthTokenFixtureOptions{})
 		token := f.buildRefreshTokenDB(t, "cot-refresh-replay", nil)
 		uc := newCreateOAuthTokenUsecaseForTest(q)
+		// 同じアプリ・メンバーの別の許可 (別の端末のログイン) は、再提示の影響を受けない
+		another := f
+		testutil.CommitFixture(t, func(tx *sql.Tx) {
+			another.grantID = testutil.NewOAuthGrantBuilder(t, tx).WithOAuthApplicationID(f.appID).WithSpaceID(f.spaceID).
+				WithSpaceMemberID(f.spaceMemberID).WithScopes([]model.Scope{model.ScopeTopicRead, model.ScopePageWrite}).Build()
+		})
+		anotherToken := another.buildRefreshTokenDB(t, "cot-refresh-replay-another", nil)
 
 		rotated, err := uc.Execute(context.Background(), f.refreshParams(token))
 		if err != nil {
@@ -648,11 +673,15 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 
 		output, err := uc.Execute(context.Background(), f.refreshParams(token))
 		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
-		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantTokensRevoked(t, tx, f.grantID) })
+		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
 
 		// ローテーションで正規のクライアントが得たトークンも失効している
 		output, err = uc.Execute(context.Background(), f.refreshParams(rotated.RefreshToken))
 		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
+
+		if _, err := uc.Execute(context.Background(), another.refreshParams(anotherToken)); err != nil {
+			t.Errorf("別の許可のリフレッシュトークンでのExecute()のエラー = %v", err)
+		}
 	})
 
 	t.Run("別のクライアントは使用済みのリフレッシュトークンを送ってもトークンを失効させられない", func(t *testing.T) {
@@ -927,7 +956,7 @@ func TestCreateOAuthTokenUsecase_Execute_DeviceCode(t *testing.T) {
 		}
 	})
 
-	t.Run("交換済みのデバイスコードの再提示は拒否し、許可のトークンをすべて失効させる", func(t *testing.T) {
+	t.Run("交換済みのデバイスコードの再提示は拒否し、許可と許可のトークンをすべて失効させる", func(t *testing.T) {
 		t.Parallel()
 
 		db := testutil.GetTestDB()
@@ -943,7 +972,7 @@ func TestCreateOAuthTokenUsecase_Execute_DeviceCode(t *testing.T) {
 
 		output, err := uc.Execute(context.Background(), f.deviceCodeParams(deviceCode))
 		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
-		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantTokensRevoked(t, tx, f.grantID) })
+		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
 
 		principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(context.Background(), first.AccessToken)
 		if err != nil {
@@ -954,7 +983,7 @@ func TestCreateOAuthTokenUsecase_Execute_DeviceCode(t *testing.T) {
 		}
 	})
 
-	t.Run("交換済みのデバイスコードは期限が切れた後の再提示でも拒否し、許可のトークンをすべて失効させる", func(t *testing.T) {
+	t.Run("交換済みのデバイスコードは期限が切れた後の再提示でも拒否し、許可と許可のトークンをすべて失効させる", func(t *testing.T) {
 		t.Parallel()
 
 		db := testutil.GetTestDB()
@@ -973,7 +1002,7 @@ func TestCreateOAuthTokenUsecase_Execute_DeviceCode(t *testing.T) {
 
 		output, err := newCreateOAuthTokenUsecaseForTest(q).Execute(context.Background(), f.deviceCodeParams(deviceCode))
 		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
-		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantTokensRevoked(t, tx, f.grantID) })
+		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
 	})
 
 	tests := []struct {
@@ -1059,7 +1088,7 @@ func TestCreateOAuthTokenUsecase_Execute_DeviceCode(t *testing.T) {
 			wantCode: model.OAuthTokenErrorInvalidGrant,
 		},
 		{
-			// 許可した後に同じアプリを再認可して範囲を狭めた
+			// 許可のスコープは作成後に変わらないが、不変条件の確認として範囲を超える要求を拒否する
 			name: "要求のスコープが今の許可の範囲を超える",
 			setup: func(t *testing.T, tx *sql.Tx, f oauthTokenFixture) {
 				if _, err := tx.ExecContext(context.Background(), "UPDATE oauth_grants SET scopes = '{topic:read}' WHERE id = $1", string(f.grantID)); err != nil {

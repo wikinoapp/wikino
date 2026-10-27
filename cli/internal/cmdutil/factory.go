@@ -34,6 +34,8 @@ type Factory struct {
 	Now func() time.Time
 	// Sleepは、ctxが終わらない限りdだけ待つ。nilなら実際に待つ。デバイス認可のポーリングの間隔をテストで差し替える。
 	Sleep func(ctx context.Context, d time.Duration) error
+	// Hostnameは端末のホスト名を返す。nilならos.Hostname。ログインで送る端末名の既定をテストで差し替える。
+	Hostname func() (string, error)
 }
 
 // ConfigDirは設定のディレクトリを返す。

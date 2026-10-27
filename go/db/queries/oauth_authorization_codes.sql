@@ -90,21 +90,18 @@ created_refresh_token AS (
 SELECT * FROM consumed;
 
 -- name: CreateOAuthAuthorizationCodeWithGrant :one
--- 同意に応じて、スペースメンバーのOAuthアプリへの許可を作成または置き換え、その許可に属する
--- 認可コードを作成する。失効していない許可が既にあれば、許可のスコープを今回の同意で選ばれた
--- 範囲に置き換える (利用者が同意画面で外したスコープを許可に残さないため)。
--- 置き換えで許可の外に出たスコープを持つアクセストークン・リフレッシュトークンは失効させる。
--- 新しい範囲に収まるトークン (同じアプリを別の端末で使っているものなど) は使い続けられる。
--- 1つの文で行うため、同じアプリへの同時の同意でも許可は1つに保たれ、許可だけが作られて
--- コードが無い状態も残らない。トークン発行との競合を防ぐため、同じTxの先行する文で
--- LockOrCreateOAuthGrantを実行し、ロック待機後のスナップショットでトークンを失効させる。
+-- 同意に応じて、スペースメンバーのOAuthアプリへの許可を新しく作り、その許可に属する認可コードを
+-- 作成する。許可は同意ごとに作り、同じアプリ・メンバーの既存の許可 (別の端末のログインなど) には
+-- 触れない。1つの文で行うため、許可だけが作られてコードが無い状態は残らない。
 -- 許可のスコープの保存順は保証しない。表示するときはmodel.APITokenScopesの順に並べ直す。
-WITH upserted_grant AS (
+-- 端末名 (@device_name) は認可要求で送られたもので、送られなかったときはNULLを渡す。
+WITH created_grant AS (
     INSERT INTO oauth_grants (
         oauth_application_id,
         space_id,
         space_member_id,
         scopes,
+        device_name,
         created_at,
         updated_at
     ) VALUES (
@@ -112,30 +109,11 @@ WITH upserted_grant AS (
         @space_id,
         @space_member_id,
         @scopes::text[],
+        sqlc.narg(device_name),
         @now,
         @now
     )
-    ON CONFLICT (oauth_application_id, space_member_id) WHERE revoked_at IS NULL
-    DO UPDATE SET
-        scopes = EXCLUDED.scopes,
-        updated_at = EXCLUDED.updated_at
     RETURNING id, space_id
-),
-revoked_access_tokens AS (
-    UPDATE oauth_access_tokens
-    SET revoked_at = @now::timestamptz, updated_at = @now
-    WHERE oauth_access_tokens.oauth_grant_id IN (SELECT upserted_grant.id FROM upserted_grant)
-      AND oauth_access_tokens.space_id = @space_id
-      AND oauth_access_tokens.revoked_at IS NULL
-      AND NOT (oauth_access_tokens.scopes <@ @scopes::text[])
-),
-revoked_refresh_tokens AS (
-    UPDATE oauth_refresh_tokens
-    SET revoked_at = @now::timestamptz, updated_at = @now
-    WHERE oauth_refresh_tokens.oauth_grant_id IN (SELECT upserted_grant.id FROM upserted_grant)
-      AND oauth_refresh_tokens.space_id = @space_id
-      AND oauth_refresh_tokens.revoked_at IS NULL
-      AND NOT (oauth_refresh_tokens.scopes <@ @scopes::text[])
 )
 INSERT INTO oauth_authorization_codes (
     oauth_grant_id,
@@ -149,8 +127,8 @@ INSERT INTO oauth_authorization_codes (
     updated_at
 )
 SELECT
-    upserted_grant.id,
-    upserted_grant.space_id,
+    created_grant.id,
+    created_grant.space_id,
     @code_digest,
     @scopes::text[],
     @redirect_uri,
@@ -158,5 +136,5 @@ SELECT
     @expires_at,
     @now,
     @now
-FROM upserted_grant
+FROM created_grant
 RETURNING *;

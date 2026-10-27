@@ -37,6 +37,8 @@ type LoopbackOptions struct {
 	Space string
 	// Scopesは要求するスコープ。
 	Scopes []string
+	// DeviceNameは認可要求に付ける端末名。空なら付けない。
+	DeviceName string
 	// Openは、認可要求のURLをブラウザで開き、利用者に示す。ブラウザを開けなければエラーを返す。
 	Open func(authorizationURL string) error
 	// SuccessPageとFailurePageは、認可の応答を受けた後にブラウザへ表示する文言。
@@ -78,6 +80,7 @@ func (c *OAuthClient) LoginWithLoopback(ctx context.Context, metadata *Metadata,
 		State:       state,
 		PKCE:        pkce,
 		Resource:    resource,
+		DeviceName:  opts.DeviceName,
 	})); err != nil {
 		return nil, fmt.Errorf("%w: ブラウザを開けません: %w", ErrLoopbackUnavailable, err)
 	}

@@ -170,3 +170,15 @@ func loadConfig(f *cmdutil.Factory) (string, *config.Config, error) {
 func withLockedConfig(ctx context.Context, f *cmdutil.Factory, dir string, fn func(*config.Config) error) error {
 	return config.ConvertError(f.Localizer, config.WithLocked(ctx, dir, fn))
 }
+
+// revokeRefreshTokenは、リフレッシュトークンを認可サーバーで失効させ、失効を確かめられたかを返す。
+// ログアウトと、ログインし直して置き換えたトークンの失効で使う。
+func revokeRefreshToken(f *cmdutil.Factory, ctx context.Context, host, refreshToken string) bool {
+	client := f.OAuthClient(host)
+	metadata, err := client.FetchMetadata(ctx)
+	if err == nil {
+		err = client.Revoke(ctx, metadata, refreshToken)
+	}
+
+	return err == nil
+}

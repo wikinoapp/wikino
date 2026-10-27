@@ -1,6 +1,8 @@
 package oauth_grant
 
 import (
+	"context"
+
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -60,33 +62,50 @@ templ indexSubtitle() {
 }
 
 // grantItemは一覧の1件の連携を表示します。
+//
+// 同じアプリの連携は端末ごとに並ぶため、アプリ名の隣に端末名を出して見分けられるようにする。
+// 端末名はクライアントが申告した値で、送られなかった連携では出さない。
 templ grantItem(grant viewmodel.OAuthGrant) {
-	<span id={ grantNameID(grant) } class="font-bold [overflow-wrap:anywhere]">{ grant.ApplicationName }</span>
+	<div class="flex flex-wrap items-baseline gap-x-2">
+		<span id={ grantNameID(grant) } class="font-bold [overflow-wrap:anywhere]">{ grant.ApplicationName }</span>
+		if grant.DeviceName != "" {
+			<span id={ deviceNameID(grant) } class="text-sm text-muted-foreground [overflow-wrap:anywhere]">{ grant.DeviceName }</span>
+		}
+	</div>
 	@components.APITokenScopeBadges(grant.Scopes)
 	<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm text-muted-foreground">
 		<dt>{ templates.T(ctx, "oauth_grant_index_created_at") }</dt>
-		<dd>
+		<dd id={ createdAtID(grant) }>
 			@components.AbsoluteTime(components.AbsoluteTimeData{Time: grant.CreatedAt})
+		</dd>
+		<dt>{ templates.T(ctx, "oauth_grant_index_last_used_at") }</dt>
+		<dd>
+			if grant.LastUsedAt != nil {
+				@components.RelativeTime(components.RelativeTimeData{Time: *grant.LastUsedAt})
+			} else {
+				{ templates.T(ctx, "oauth_grant_index_never_used") }
+			}
 		</dd>
 	</dl>
 }
 
 // revokeFormは連携を解除するボタンを表示します。解除は取り消せないため、送信の前に確認します。
 //
-// 一覧には連携ごとに同じ文言のボタンが並ぶため、ボタンの名前にアプリ名を連ねる。
-// スクリーンリーダーでボタンだけを取り出したときに、どのアプリのボタンか区別できるように
-// するためである。見えている文言を名前の先頭に置き、音声操作でもその文言で指定できるようにする。
+// 一覧には連携ごとに同じ文言のボタンが並ぶため、ボタンの名前にアプリ名と端末名 (無ければ連携した
+// 日時) を連ねる。同じアプリの連携が端末ごとに並んでも、スクリーンリーダーでボタンだけを取り出したときに
+// どの連携のボタンか区別できるようにするためである。見えている文言を名前の先頭に置き、音声操作でも
+// その文言で指定できるようにする。確認の文言にも同じく端末名か連携した日時を含める。
 templ revokeForm(csrfToken string, spaceIdentifier viewmodel.SpaceIdentifier, grant viewmodel.OAuthGrant) {
 	<form
 		action={ templ.SafeURL(string(templates.SpaceSettingsOAuthGrantPath(spaceIdentifier, grant.ID))) }
-		data-confirm={ templates.T(ctx, "oauth_grant_index_revoke_confirm", map[string]any{"Name": grant.ApplicationName}) }
+		data-confirm={ revokeConfirm(ctx, grant) }
 		hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
 		method="POST"
 	>
 		<input type="hidden" name="_method" value="DELETE"/>
 		<input type="hidden" name="csrf_token" value={ csrfToken }/>
 		<button
-			aria-labelledby={ revokeLabelID(grant) + " " + grantNameID(grant) }
+			aria-labelledby={ revokeLabelID(grant) + " " + grantNameID(grant) + " " + grantDistinctionID(grant) }
 			class="btn h-fit p-0 text-error"
 			data-variant="link"
 			data-size="sm"
@@ -101,6 +120,33 @@ templ revokeForm(csrfToken string, spaceIdentifier viewmodel.SpaceIdentifier, gr
 // grantNameIDは一覧の1件の連携のアプリ名を収める要素のidを返します。
 func grantNameID(grant viewmodel.OAuthGrant) string {
 	return "oauth-grant-" + grant.ID + "-name"
+}
+
+// deviceNameIDは一覧の1件の連携の端末名を収める要素のidを返します。
+func deviceNameID(grant viewmodel.OAuthGrant) string {
+	return "oauth-grant-" + grant.ID + "-device-name"
+}
+
+// createdAtIDは一覧の1件の連携の連携した日時を収める要素のidを返します。
+func createdAtID(grant viewmodel.OAuthGrant) string {
+	return "oauth-grant-" + grant.ID + "-created-at"
+}
+
+// grantDistinctionIDは、同じアプリの連携どうしを見分ける要素 (端末名、無ければ連携した日時) のidを返します。
+func grantDistinctionID(grant viewmodel.OAuthGrant) string {
+	if grant.DeviceName != "" {
+		return deviceNameID(grant)
+	}
+	return createdAtID(grant)
+}
+
+// revokeConfirmは連携の解除の確認の文言を返します。端末名があれば端末名で、無ければ連携した日時で
+// どの連携かを示します。
+func revokeConfirm(ctx context.Context, grant viewmodel.OAuthGrant) string {
+	if grant.DeviceName != "" {
+		return templates.T(ctx, "oauth_grant_index_revoke_confirm_with_device_name", map[string]any{"Name": grant.ApplicationName, "DeviceName": grant.DeviceName})
+	}
+	return templates.T(ctx, "oauth_grant_index_revoke_confirm", map[string]any{"Name": grant.ApplicationName, "CreatedAt": templates.FormatDateTime(ctx, grant.CreatedAt)})
 }
 
 // revokeLabelIDは連携を解除するボタンの文言を収める要素のidを返します。

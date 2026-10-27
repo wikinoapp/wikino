@@ -106,12 +106,99 @@ func TestRevokeOAuthTokenUsecase_Execute_リフレッシュトークン(t *testi
 		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
-	// 送られたリフレッシュトークンと同じ許可のアクセストークンを失効させ、別の端末の
-	// リフレッシュトークンと許可は残す
+	// 送られたリフレッシュトークンの許可と、許可に属するトークンをすべて失効させる
 	assertRefreshTokenRevoked(t, q, target, true)
 	assertAccessTokenRevoked(t, q, access, true)
-	assertRefreshTokenRevoked(t, q, sibling, false)
-	assertGrantRevoked(t, q, f, false)
+	assertRefreshTokenRevoked(t, q, sibling, true)
+	assertGrantRevoked(t, q, f, true)
+}
+
+// 発行が許可行をロックした後にログアウトが到着しても、互いに同じ順序でロックする。
+// 待機中に発行されたトークンも、ログアウト後には許可の失効により使えないことを確かめる。
+func TestRevokeOAuthTokenUsecase_Execute_リフレッシュとの同時実行(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+	key := "rot-refresh-concurrent"
+	f := setupOAuthTokenFixtureDB(t, key, oauthTokenFixtureOptions{})
+	value := f.buildRefreshTokenDB(t, key, nil)
+	refreshRepo := repository.NewOAuthRefreshTokenRepository(q)
+	token, err := refreshRepo.FindByTokenDigest(ctx, auth.DigestOpaqueToken(value))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// リフレッシュのrotateTokenと同じく、許可を先にロックする。
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	var issuingPID int
+	if err := tx.QueryRowContext(ctx, "SELECT pg_backend_pid()").Scan(&issuingPID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repository.NewOAuthGrantRepository(q).WithTx(tx).LockByID(ctx, f.grantID, f.spaceID); err != nil {
+		t.Fatal(err)
+	}
+	revoked := make(chan error, 1)
+	go func() {
+		revoked <- newRevokeOAuthTokenUsecaseForTest(q).Execute(ctx, OAuthTokenRevocationParams{Token: value, ClientID: f.clientID})
+	}()
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		var blocked bool
+		if err := db.QueryRowContext(ctx, `SELECT EXISTS (
+    SELECT 1 FROM pg_stat_activity WHERE datname = current_database()
+      AND $1 = ANY(pg_blocking_pids(pid)) AND query LIKE '%RevokeOAuthRefreshToken%'
+  )`, issuingPID).Scan(&blocked); err != nil {
+			t.Fatal(err)
+		}
+		if blocked {
+			break
+		}
+		select {
+		case err := <-revoked:
+			t.Fatalf("許可のロックを待つ前に失効が終了: %v", err)
+		case <-ctx.Done():
+			t.Fatalf("失効のロック待機を確認できない: %v", ctx.Err())
+		case <-ticker.C:
+		}
+	}
+
+	now := time.Now()
+	accessValue := string(auth.OAuthAccessTokenPrefix) + key + "-issued"
+	refreshValue := string(auth.OAuthRefreshTokenPrefix) + key + "-issued"
+	rotated, err := refreshRepo.WithTx(tx).Rotate(ctx, repository.RotateOAuthRefreshTokenInput{
+		ID: token.ID, SpaceID: f.spaceID, TokenDigest: auth.DigestOpaqueToken(refreshValue), ExpiresAt: now.Add(time.Hour),
+		AccessTokenDigest: auth.DigestOpaqueToken(accessValue), AccessTokenScopes: token.Scopes, AccessTokenExpiresAt: now.Add(time.Hour), Now: now,
+	})
+	if err != nil || rotated == nil {
+		t.Fatalf("ログアウト待機中のRotate() = %+v、エラー = %v、トークンの発行成功を期待", rotated, err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err := <-revoked:
+		if err != nil {
+			t.Fatalf("発行後のログアウトに失敗: %v", err)
+		}
+	case <-ctx.Done():
+		t.Fatalf("ログアウトが完了しない: %v", ctx.Err())
+	}
+
+	assertGrantRevoked(t, q, f, true)
+	principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(ctx, accessValue)
+	if err != nil || principal != nil {
+		t.Errorf("ログアウト後のアクセストークンの照合 = %+v、エラー = %v、拒否を期待", principal, err)
+	}
+	output, err := newCreateOAuthTokenUsecaseForTest(q).Execute(ctx, f.refreshParams(refreshValue))
+	assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
 }
 
 func TestRevokeOAuthTokenUsecase_Execute_無効なトークンは何もせず成功する(t *testing.T) {
@@ -316,13 +403,13 @@ func TestRevokeOAuthTokenUsecase_Execute_公式クライアント(t *testing.T) 
 	}
 	assertAccessTokenRevoked(t, q, spaceAppAccess, false)
 
-	// 自分の許可のリフレッシュトークンは失効でき、同じ許可のアクセストークンも失効する
+	// 自分の許可のリフレッシュトークンは失効でき、許可と同じ許可のアクセストークンも失効する
 	if err := uc.Execute(ctx, OAuthTokenRevocationParams{Token: refresh, ClientID: official.clientID}); err != nil {
 		t.Fatalf("公式クライアントのリフレッシュトークンの失効のエラー = %v、成功を期待", err)
 	}
 	assertRefreshTokenRevoked(t, q, refresh, true)
 	assertAccessTokenRevoked(t, q, access, true)
-	assertGrantRevoked(t, q, official, false)
+	assertGrantRevoked(t, q, official, true)
 }
 
 func TestRevokeOAuthTokenUsecase_Execute_confidentialクライアントのシークレットの誤り(t *testing.T) {
