@@ -120,9 +120,13 @@ OAuthのアクセストークンは、期限の少し前に、APIを呼ぶ前に
 ブラウザでログインしたときは、保存しなかったトークンをサーバーで失効させます。
 トークンの持ち主のメンバーはトークンから決まるため、`--member` は指定しません。
 
+ブラウザでログインするときは、連携中のアプリの画面で端末を見分けられるよう、端末名をサーバーに送ります。
+端末名は `--device-name` で指定し、省略するとホスト名 (100文字まで) を送ります。
+
 既定の組が無ければ、ログインした組を既定にします。
 スペースに既定のメンバーが無ければ、ログインしたメンバーをそのスペースの既定にします。
-同じメンバーで再びログインすると、保存したトークンを置き換えます。"""
+同じメンバーで再びログインすると、保存したトークンを置き換え、置き換えたOAuthのトークンをサーバーで失効させます。
+失効させられなかったときは、ログインを成功にして警告を出します。"""
 [auth_login_example]
 description = "auth loginコマンドの使用例"
 other = """
@@ -134,6 +138,9 @@ other = """
 
   # 読み取りと下書きのスコープだけを要求する
   wikino auth login my-space --scopes page:read,draft_page:read,draft_page:write
+
+  # 連携中のアプリの画面で見分ける端末名を付けてログインする
+  wikino auth login my-space --device-name work-laptop
 
   # ファイルに保存した個人用アクセストークンでログインする
   wikino auth login my-space --with-token < token.txt
@@ -155,12 +162,13 @@ other = """
 [auth_login_errors]
 description = "auth loginコマンドのヘルプの「エラー」の節"
 other = """
-  2  スペースの指定が無い、`--member` を指定した、`--scopes` が空か未知のスコープを含む、`--with-token` と `--scopes` か `--device` を併用した、標準入力のトークンが空か不正な形式
+  2  スペースの指定が無い、`--member` を指定した、`--scopes` が空か未知のスコープを含む、`--with-token` と `--scopes` か `--device` か `--device-name` を併用した、`--device-name` が空か100文字を超えるか制御文字か不正なUTF-8を含む、標準入力のトークンが空か不正な形式
   3  認可画面で拒否した (authorization_denied)、認可の応答が要求と一致しない・認可サーバーがエラーを返した・デバイス認可に対応しない (oauth_error)、トークンが無効か期限切れ (401)
   5  トークンがそのスペースのものでない (404)。トークンを発行したスペースの識別子を指定してください
   1  5分以内、またはデバイス認可のコードの期限までに許可されなかった (login_timeout)、認可サーバーの応答を読めない (response_error)、通信に失敗した、トークンか設定の保存、または保存の失敗後の復元に失敗した
   APIの検証に失敗したときは何も保存しません。
-  以前の保存先からの削除だけが失敗したときは、ログインを成功にして警告を出し、再ログインかログアウトで削除を再試行できます。"""
+  以前の保存先からの削除だけが失敗したときは、ログインを成功にして警告を出し、再ログインかログアウトで削除を再試行できます。
+  置き換えたトークンのサーバーでの失効だけが失敗したときも、ログインを成功にして警告を出します。連携中のアプリの画面で古い連携を解除してください。"""
 [auth_login_with_token_flag]
 description = "auth loginの--with-tokenフラグの説明"
 other = "標準入力から個人用アクセストークンを読む"
@@ -173,6 +181,18 @@ other = "デバイス認可でログインする (別の端末のブラウザで
 [auth_login_scopes_flag]
 description = "auth loginの--scopesフラグの説明"
 other = "要求するスコープ (カンマ区切り)。省略時はトークンに付与できるすべてのスコープ"
+
+[auth_login_device_name_flag]
+description = "auth loginの--device-nameフラグの説明"
+other = "連携中のアプリの画面で端末を見分けるための端末名 (100文字まで)。省略時はホスト名"
+
+[auth_login_error_device_name_with_token]
+description = "auth loginで--with-tokenと--device-nameを併用したときのメッセージ"
+other = "`--device-name` は `--with-token` と併用できません。個人用アクセストークンには端末名を記録しません。"
+
+[auth_login_error_device_name_invalid]
+description = "auth loginの--device-nameが空・長すぎる・制御文字か不正なUTF-8を含むときのメッセージ。Maxは最大文字数"
+other = "`--device-name` には、{{.Max}}文字までの制御文字を含まない端末名を指定してください。"
 
 [auth_login_error_scopes_with_token]
 description = "auth loginで--with-tokenと--scopesを併用したときのメッセージ"
@@ -297,6 +317,10 @@ other = "同じ資格情報を使うほかの `wikino` が終わってから、�
 [auth_warning_refresh_save_failed]
 description = "更新したトークンを保存できなかったときの警告。Spaceはスペースの識別子"
 other = "警告: 更新したトークンを保存できませんでした。次の実行では `wikino auth login {{.Space}}` でログインし直す必要があります。"
+
+[auth_warning_relogin_revoke_failed]
+description = "ログインし直したときに置き換えたトークンを失効させられなかったときの警告。Spaceはスペースの識別子"
+other = "警告: 置き換えた以前のトークンをサーバーで失効させられませんでした。新しい資格情報は保存しました。スペース {{.Space}} の連携中のアプリの画面で古い連携を解除してください。"
 
 [auth_warning_revoke_failed]
 description = "ログアウトでリフレッシュトークンを失効させられなかったときの警告。Spaceはスペースの識別子"
