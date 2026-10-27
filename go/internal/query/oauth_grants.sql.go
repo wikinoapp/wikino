@@ -28,7 +28,7 @@ INSERT INTO oauth_grants (
     $4::text[],
     $5,
     $5
-) RETURNING id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at
+) RETURNING id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at, last_used_at, device_name
 `
 
 type CreateOAuthGrantParams struct {
@@ -58,12 +58,88 @@ func (q *Queries) CreateOAuthGrant(ctx context.Context, arg CreateOAuthGrantPara
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastUsedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
 
+const evictOAuthGrants = `-- name: EvictOAuthGrants :exec
+WITH unrevoked AS (
+    SELECT oauth_grants.id, oauth_grants.last_used_at, oauth_grants.created_at
+    FROM oauth_grants
+    WHERE oauth_grants.oauth_application_id = $3
+      AND oauth_grants.space_id = $2
+      AND oauth_grants.space_member_id = $4
+      AND oauth_grants.revoked_at IS NULL
+),
+victims AS (
+    SELECT unrevoked.id
+    FROM unrevoked
+    ORDER BY
+        CASE
+            WHEN unrevoked.last_used_at IS NULL AND unrevoked.created_at < $5::timestamptz THEN 0
+            WHEN unrevoked.last_used_at IS NOT NULL THEN 1
+            ELSE 2
+        END,
+        COALESCE(unrevoked.last_used_at, unrevoked.created_at),
+        unrevoked.id
+    LIMIT (SELECT GREATEST(count(*) + 1 - $6::bigint, 0) FROM unrevoked)
+),
+evicted_grants AS (
+    UPDATE oauth_grants
+    SET revoked_at = $1::timestamptz, updated_at = $1
+    WHERE oauth_grants.id IN (SELECT victims.id FROM victims)
+      AND oauth_grants.space_id = $2
+      AND oauth_grants.revoked_at IS NULL
+    RETURNING oauth_grants.id
+),
+evicted_access_tokens AS (
+    UPDATE oauth_access_tokens
+    SET revoked_at = $1::timestamptz, updated_at = $1
+    WHERE oauth_access_tokens.oauth_grant_id IN (SELECT evicted_grants.id FROM evicted_grants)
+      AND oauth_access_tokens.space_id = $2
+      AND oauth_access_tokens.revoked_at IS NULL
+)
+UPDATE oauth_refresh_tokens
+SET revoked_at = $1::timestamptz, updated_at = $1
+WHERE oauth_refresh_tokens.oauth_grant_id IN (SELECT evicted_grants.id FROM evicted_grants)
+  AND oauth_refresh_tokens.space_id = $2
+  AND oauth_refresh_tokens.revoked_at IS NULL
+`
+
+type EvictOAuthGrantsParams struct {
+	Now                time.Time `json:"now"`
+	SpaceID            string    `json:"space_id"`
+	OauthApplicationID string    `json:"oauth_application_id"`
+	SpaceMemberID      string    `json:"space_member_id"`
+	GraceBefore        time.Time `json:"grace_before"`
+	MaxGrants          int64     `json:"max_grants"`
+}
+
+// 同じアプリ・メンバーに許可を1つ作る前に、失効していない許可が@max_grants - 1件以下になるまで、
+// 使われていないものから順に許可と、許可に属するアクセストークン・リフレッシュトークンを失効する。
+// 押し出す順は次のとおりで、同じ順位の中では古いものから選ぶ。
+//  1. まだ使われておらず (last_used_atがNULL)、@grace_beforeより前に作ったもの (交換されなかった同意)
+//  2. 最終利用日時が最も古いもの
+//  3. まだ使われていない、@grace_before以降に作ったもの (ログインの途中の同意)
+//
+// 同時の作成は直列化しないため、一時的に上限を超えうるが、次の作成で押し出す。
+// 失効は1文で行い、許可だけが失効してトークンが使える状態は途中にも残らない
+func (q *Queries) EvictOAuthGrants(ctx context.Context, arg EvictOAuthGrantsParams) error {
+	_, err := q.db.ExecContext(ctx, evictOAuthGrants,
+		arg.Now,
+		arg.SpaceID,
+		arg.OauthApplicationID,
+		arg.SpaceMemberID,
+		arg.GraceBefore,
+		arg.MaxGrants,
+	)
+	return err
+}
+
 const findOAuthGrantByID = `-- name: FindOAuthGrantByID :one
-SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at FROM oauth_grants
+SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at, last_used_at, device_name FROM oauth_grants
 WHERE id = $1
   AND space_id = $2
 `
@@ -86,43 +162,14 @@ func (q *Queries) FindOAuthGrantByID(ctx context.Context, arg FindOAuthGrantByID
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const findUnrevokedOAuthGrantByApplicationAndSpaceMember = `-- name: FindUnrevokedOAuthGrantByApplicationAndSpaceMember :one
-SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at FROM oauth_grants
-WHERE oauth_application_id = $1
-  AND space_id = $2
-  AND space_member_id = $3
-  AND revoked_at IS NULL
-`
-
-type FindUnrevokedOAuthGrantByApplicationAndSpaceMemberParams struct {
-	OauthApplicationID string `json:"oauth_application_id"`
-	SpaceID            string `json:"space_id"`
-	SpaceMemberID      string `json:"space_member_id"`
-}
-
-// スペースメンバーがOAuthアプリに与えている、失効していない許可を取得する
-func (q *Queries) FindUnrevokedOAuthGrantByApplicationAndSpaceMember(ctx context.Context, arg FindUnrevokedOAuthGrantByApplicationAndSpaceMemberParams) (OauthGrant, error) {
-	row := q.db.QueryRowContext(ctx, findUnrevokedOAuthGrantByApplicationAndSpaceMember, arg.OauthApplicationID, arg.SpaceID, arg.SpaceMemberID)
-	var i OauthGrant
-	err := row.Scan(
-		&i.ID,
-		&i.OauthApplicationID,
-		&i.SpaceID,
-		&i.SpaceMemberID,
-		pq.Array(&i.Scopes),
-		&i.RevokedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.LastUsedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
 
 const listUnrevokedOAuthGrantsBySpaceMember = `-- name: ListUnrevokedOAuthGrantsBySpaceMember :many
-SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at FROM oauth_grants
+SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at, last_used_at, device_name FROM oauth_grants
 WHERE space_id = $1
   AND space_member_id = $2
   AND revoked_at IS NULL
@@ -154,6 +201,67 @@ func (q *Queries) ListUnrevokedOAuthGrantsBySpaceMember(ctx context.Context, arg
 			&i.RevokedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LastUsedAt,
+			&i.DeviceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsableOAuthGrantsBySpaceMember = `-- name: ListUsableOAuthGrantsBySpaceMember :many
+SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at, last_used_at, device_name FROM oauth_grants
+WHERE oauth_grants.space_id = $1
+  AND oauth_grants.space_member_id = $2
+  AND oauth_grants.revoked_at IS NULL
+  AND EXISTS (
+      SELECT 1 FROM oauth_refresh_tokens
+      WHERE oauth_refresh_tokens.oauth_grant_id = oauth_grants.id
+        AND oauth_refresh_tokens.space_id = $1
+        AND oauth_refresh_tokens.used_at IS NULL
+        AND oauth_refresh_tokens.revoked_at IS NULL
+        AND oauth_refresh_tokens.expires_at > $3::timestamptz
+  )
+ORDER BY oauth_grants.created_at DESC, oauth_grants.id DESC
+`
+
+type ListUsableOAuthGrantsBySpaceMemberParams struct {
+	SpaceID       string    `json:"space_id"`
+	SpaceMemberID string    `json:"space_member_id"`
+	Now           time.Time `json:"now"`
+}
+
+// スペースメンバーが与えている失効していない許可のうち、有効なリフレッシュトークン (未使用・未失効・
+// 期限内) を持つものを新しい順に取得する。連携の一覧に出す許可で、交換されなかった許可や、
+// リフレッシュトークンの期限が切れた許可は、もう使えないため出さない
+func (q *Queries) ListUsableOAuthGrantsBySpaceMember(ctx context.Context, arg ListUsableOAuthGrantsBySpaceMemberParams) ([]OauthGrant, error) {
+	rows, err := q.db.QueryContext(ctx, listUsableOAuthGrantsBySpaceMember, arg.SpaceID, arg.SpaceMemberID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []OauthGrant{}
+	for rows.Next() {
+		var i OauthGrant
+		if err := rows.Scan(
+			&i.ID,
+			&i.OauthApplicationID,
+			&i.SpaceID,
+			&i.SpaceMemberID,
+			pq.Array(&i.Scopes),
+			&i.RevokedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.LastUsedAt,
+			&i.DeviceName,
 		); err != nil {
 			return nil, err
 		}
@@ -169,7 +277,7 @@ func (q *Queries) ListUnrevokedOAuthGrantsBySpaceMember(ctx context.Context, arg
 }
 
 const lockOAuthGrantByID = `-- name: LockOAuthGrantByID :one
-SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at FROM oauth_grants
+SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at, last_used_at, device_name FROM oauth_grants
 WHERE id = $1
   AND space_id = $2
 FOR NO KEY UPDATE
@@ -180,7 +288,7 @@ type LockOAuthGrantByIDParams struct {
 	SpaceID string `json:"space_id"`
 }
 
-// 許可の更新とトークンの発行を直列化する。待機後は最新のスコープを返す。
+// 許可の失効とトークンの発行を直列化する。待機後は最新の状態 (失効の有無) を返す。
 // 外部キーの検査を妨げず、許可への更新どうしを排他にするためFOR NO KEY UPDATEを使う。
 func (q *Queries) LockOAuthGrantByID(ctx context.Context, arg LockOAuthGrantByIDParams) (OauthGrant, error) {
 	row := q.db.QueryRowContext(ctx, lockOAuthGrantByID, arg.ID, arg.SpaceID)
@@ -194,50 +302,8 @@ func (q *Queries) LockOAuthGrantByID(ctx context.Context, arg LockOAuthGrantByID
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const lockOrCreateOAuthGrant = `-- name: LockOrCreateOAuthGrant :one
-INSERT INTO oauth_grants (
-    oauth_application_id, space_id, space_member_id, scopes, created_at, updated_at
-) VALUES (
-    $1, $2, $3, $4::text[], $5, $5
-)
-ON CONFLICT (oauth_application_id, space_member_id) WHERE revoked_at IS NULL
-DO UPDATE SET updated_at = oauth_grants.updated_at
-RETURNING id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at
-`
-
-type LockOrCreateOAuthGrantParams struct {
-	OauthApplicationID string    `json:"oauth_application_id"`
-	SpaceID            string    `json:"space_id"`
-	SpaceMemberID      string    `json:"space_member_id"`
-	Scopes             []string  `json:"scopes"`
-	Now                time.Time `json:"now"`
-}
-
-// 同意の範囲を反映する前に許可をロックする。初回の同意も一意制約で直列化し、
-// トークン発行を待った後の別の文で、範囲外のトークンを漏れなく失効させる。
-// 既存の許可のスコープ・更新日時は、この段階では変更しない。
-func (q *Queries) LockOrCreateOAuthGrant(ctx context.Context, arg LockOrCreateOAuthGrantParams) (OauthGrant, error) {
-	row := q.db.QueryRowContext(ctx, lockOrCreateOAuthGrant,
-		arg.OauthApplicationID,
-		arg.SpaceID,
-		arg.SpaceMemberID,
-		pq.Array(arg.Scopes),
-		arg.Now,
-	)
-	var i OauthGrant
-	err := row.Scan(
-		&i.ID,
-		&i.OauthApplicationID,
-		&i.SpaceID,
-		&i.SpaceMemberID,
-		pq.Array(&i.Scopes),
-		&i.RevokedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.LastUsedAt,
+		&i.DeviceName,
 	)
 	return i, err
 }
@@ -250,7 +316,7 @@ WITH revoked_grant AS (
       AND oauth_grants.space_id = $3
       AND oauth_grants.space_member_id = $4
       AND oauth_grants.revoked_at IS NULL
-    RETURNING oauth_grants.id, oauth_grants.oauth_application_id, oauth_grants.space_id, oauth_grants.space_member_id, oauth_grants.scopes, oauth_grants.revoked_at, oauth_grants.created_at, oauth_grants.updated_at
+    RETURNING oauth_grants.id, oauth_grants.oauth_application_id, oauth_grants.space_id, oauth_grants.space_member_id, oauth_grants.scopes, oauth_grants.revoked_at, oauth_grants.created_at, oauth_grants.updated_at, oauth_grants.last_used_at, oauth_grants.device_name
 ),
 revoked_access_tokens AS (
     UPDATE oauth_access_tokens
@@ -266,7 +332,7 @@ revoked_refresh_tokens AS (
       AND oauth_refresh_tokens.space_id = $3
       AND oauth_refresh_tokens.revoked_at IS NULL
 )
-SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at FROM revoked_grant
+SELECT id, oauth_application_id, space_id, space_member_id, scopes, revoked_at, created_at, updated_at, last_used_at, device_name FROM revoked_grant
 `
 
 type RevokeOAuthGrantParams struct {
@@ -277,14 +343,16 @@ type RevokeOAuthGrantParams struct {
 }
 
 type RevokeOAuthGrantRow struct {
-	ID                 string       `json:"id"`
-	OauthApplicationID string       `json:"oauth_application_id"`
-	SpaceID            string       `json:"space_id"`
-	SpaceMemberID      string       `json:"space_member_id"`
-	Scopes             []string     `json:"scopes"`
-	RevokedAt          sql.NullTime `json:"revoked_at"`
-	CreatedAt          time.Time    `json:"created_at"`
-	UpdatedAt          time.Time    `json:"updated_at"`
+	ID                 string         `json:"id"`
+	OauthApplicationID string         `json:"oauth_application_id"`
+	SpaceID            string         `json:"space_id"`
+	SpaceMemberID      string         `json:"space_member_id"`
+	Scopes             []string       `json:"scopes"`
+	RevokedAt          sql.NullTime   `json:"revoked_at"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	LastUsedAt         sql.NullTime   `json:"last_used_at"`
+	DeviceName         sql.NullString `json:"device_name"`
 }
 
 // スペースメンバー自身のOAuthアプリの許可と、許可に属するアクセストークン・リフレッシュトークンを
@@ -307,6 +375,37 @@ func (q *Queries) RevokeOAuthGrant(ctx context.Context, arg RevokeOAuthGrantPara
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastUsedAt,
+		&i.DeviceName,
 	)
 	return i, err
+}
+
+const updateOAuthGrantLastUsedAt = `-- name: UpdateOAuthGrantLastUsedAt :exec
+UPDATE oauth_grants
+SET last_used_at = $1::timestamptz
+WHERE id = $2
+  AND space_id = $3
+  AND revoked_at IS NULL
+  AND (last_used_at IS NULL OR last_used_at < $4::timestamptz)
+`
+
+type UpdateOAuthGrantLastUsedAtParams struct {
+	Now         time.Time `json:"now"`
+	ID          string    `json:"id"`
+	SpaceID     string    `json:"space_id"`
+	StaleBefore time.Time `json:"stale_before"`
+}
+
+// 許可の最終利用日時をnowにする。最終利用日時がstale_beforeより古い (またはまだ無い) ときだけ
+// 更新し、アクセストークンの照合のたびに書き込まないようにする。利用者による変更ではないため、
+// updated_atは更新しない
+func (q *Queries) UpdateOAuthGrantLastUsedAt(ctx context.Context, arg UpdateOAuthGrantLastUsedAtParams) error {
+	_, err := q.db.ExecContext(ctx, updateOAuthGrantLastUsedAt,
+		arg.Now,
+		arg.ID,
+		arg.SpaceID,
+		arg.StaleBefore,
+	)
+	return err
 }

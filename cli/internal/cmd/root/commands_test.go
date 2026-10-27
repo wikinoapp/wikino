@@ -279,8 +279,6 @@ func TestExtractCommandReferences(t *testing.T) {
 func TestResolveCommandReference(t *testing.T) {
 	t.Parallel()
 
-	root := newTestRoot(t, i18n.LangJa)
-
 	tests := []struct {
 		ref     string
 		wantErr bool
@@ -306,6 +304,9 @@ func TestResolveCommandReference(t *testing.T) {
 		t.Run(tt.ref, func(t *testing.T) {
 			t.Parallel()
 
+			// ルートはサブテストごとに組み立てる。cobraはCommandsやInheritedFlagsの初回の呼び出しで
+			// コマンドの状態を書き換えるため、同じルートを並行に辿るとデータ競合になる。
+			root := newTestRoot(t, i18n.LangJa)
 			if err := resolveCommandReference(root, tt.ref); (err != "") != tt.wantErr {
 				t.Errorf("resolveCommandReference(%q) = %q、誤りを期待したか = %v", tt.ref, err, tt.wantErr)
 			}

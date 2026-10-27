@@ -25,14 +25,6 @@ INSERT INTO oauth_access_tokens (
 -- クエリの条件に必ず含める。
 SELECT * FROM oauth_access_tokens WHERE token_digest = @token_digest;
 
--- name: RevokeOAuthAccessTokensByOAuthGrant :exec
--- 許可に属する失効していないアクセストークンをすべて失効する
-UPDATE oauth_access_tokens
-SET revoked_at = @now::timestamptz, updated_at = @now
-WHERE oauth_grant_id = @oauth_grant_id
-  AND space_id = @space_id
-  AND revoked_at IS NULL;
-
 -- name: RevokeOAuthAccessToken :exec
 -- アクセストークンを1つ失効する (RFC 7009)。既に失効しているものは変えない
 UPDATE oauth_access_tokens

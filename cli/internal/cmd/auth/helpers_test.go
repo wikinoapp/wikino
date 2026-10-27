@@ -110,6 +110,8 @@ type testEnv struct {
 	now     time.Time
 	// waitsは、デバイス認可のポーリングで待った時間。実際には待たない。
 	waits []time.Duration
+	// hostnameは端末のホスト名を返す。nilなら "test-host" を返す。
+	hostname func() (string, error)
 
 	ios    *iostreams.IOStreams
 	stdin  *bytes.Buffer
@@ -191,6 +193,12 @@ func (e *testEnv) factory() *cmdutil.Factory {
 		Sleep: func(_ context.Context, d time.Duration) error {
 			e.waits = append(e.waits, d)
 			return nil
+		},
+		Hostname: func() (string, error) {
+			if e.hostname != nil {
+				return e.hostname()
+			}
+			return "test-host", nil
 		},
 	}
 	if e.keyring != nil {

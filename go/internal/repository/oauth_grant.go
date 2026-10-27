@@ -79,21 +79,66 @@ func (r *OAuthGrantRepository) LockByID(ctx context.Context, id model.OAuthGrant
 	return r.toModel(row), nil
 }
 
-// FindUnrevokedByApplicationAndSpaceMemberは、スペースメンバーがOAuthアプリに与えている
-// 失効していない許可を取得する。見つからない場合は (nil, nil) を返す
-func (r *OAuthGrantRepository) FindUnrevokedByApplicationAndSpaceMember(ctx context.Context, oauthApplicationID model.OAuthApplicationID, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID) (*model.OAuthGrant, error) {
-	row, err := r.q.FindUnrevokedOAuthGrantByApplicationAndSpaceMember(ctx, query.FindUnrevokedOAuthGrantByApplicationAndSpaceMemberParams{
-		OauthApplicationID: string(oauthApplicationID),
-		SpaceID:            string(spaceID),
-		SpaceMemberID:      string(spaceMemberID),
+// ListUsableBySpaceMemberは、スペースメンバーが与えている失効していない許可のうち、有効な
+// リフレッシュトークンを持つものを新しい順に取得する
+func (r *OAuthGrantRepository) ListUsableBySpaceMember(ctx context.Context, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, now time.Time) ([]*model.OAuthGrant, error) {
+	rows, err := r.q.ListUsableOAuthGrantsBySpaceMember(ctx, query.ListUsableOAuthGrantsBySpaceMemberParams{
+		SpaceID:       string(spaceID),
+		SpaceMemberID: string(spaceMemberID),
+		Now:           now,
 	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
 		return nil, err
 	}
-	return r.toModel(row), nil
+	grants := make([]*model.OAuthGrant, len(rows))
+	for i, row := range rows {
+		grants[i] = r.toModel(row)
+	}
+	return grants, nil
+}
+
+// SetLastUsedAtは、失効していない許可の最終利用日時をnowにする。トークンの発行に使い、
+// 発行と同じトランザクションのRepository (WithTx) から呼ぶ
+func (r *OAuthGrantRepository) SetLastUsedAt(ctx context.Context, id model.OAuthGrantID, spaceID model.SpaceID, now time.Time) error {
+	return r.q.UpdateOAuthGrantLastUsedAt(ctx, query.UpdateOAuthGrantLastUsedAtParams{
+		Now:         now,
+		ID:          string(id),
+		SpaceID:     string(spaceID),
+		StaleBefore: now,
+	})
+}
+
+// UpdateLastUsedAtは、失効していない許可の最終利用日時をnowにする。アクセストークンの照合に使う。
+// 最終利用日時がmodel.OAuthGrantLastUsedAtUpdateIntervalより新しい場合は書き込まない
+func (r *OAuthGrantRepository) UpdateLastUsedAt(ctx context.Context, id model.OAuthGrantID, spaceID model.SpaceID, now time.Time) error {
+	return r.q.UpdateOAuthGrantLastUsedAt(ctx, query.UpdateOAuthGrantLastUsedAtParams{
+		Now:         now,
+		ID:          string(id),
+		SpaceID:     string(spaceID),
+		StaleBefore: now.Add(-model.OAuthGrantLastUsedAtUpdateInterval),
+	})
+}
+
+// EvictInputは、許可を作る前の押し出しの入力パラメータ
+type EvictInput struct {
+	OAuthApplicationID model.OAuthApplicationID
+	SpaceID            model.SpaceID
+	SpaceMemberID      model.SpaceMemberID
+	Now                time.Time
+}
+
+// Evictは、同じアプリ・メンバーに許可を1つ作れるよう、失効していない許可が
+// model.OAuthGrantMaxPerApplicationMember - 1件以下になるまで、使われていないものから順に許可と
+// 許可に属するトークンを失効する。許可の作成と同じトランザクションのRepository (WithTx) から呼ぶ
+func (r *OAuthGrantRepository) Evict(ctx context.Context, input EvictInput) error {
+	return r.q.EvictOAuthGrants(ctx, query.EvictOAuthGrantsParams{
+		Now:                input.Now,
+		SpaceID:            string(input.SpaceID),
+		OauthApplicationID: string(input.OAuthApplicationID),
+		SpaceMemberID:      string(input.SpaceMemberID),
+		GraceBefore:        input.Now.Add(-model.OAuthGrantEvictionGracePeriod),
+		MaxGrants:          model.OAuthGrantMaxPerApplicationMember,
+	})
 }
 
 // ListUnrevokedBySpaceMemberは、スペースメンバーが与えている失効していない許可を新しい順に取得する
@@ -139,6 +184,14 @@ func (r *OAuthGrantRepository) Revoke(ctx context.Context, id model.OAuthGrantID
 
 // toModelはquery.OauthGrantをmodel.OAuthGrantに変換する
 func (r *OAuthGrantRepository) toModel(row query.OauthGrant) *model.OAuthGrant {
+	var deviceName *string
+	if row.DeviceName.Valid {
+		deviceName = &row.DeviceName.String
+	}
+	var lastUsedAt *time.Time
+	if row.LastUsedAt.Valid {
+		lastUsedAt = &row.LastUsedAt.Time
+	}
 	var revokedAt *time.Time
 	if row.RevokedAt.Valid {
 		revokedAt = &row.RevokedAt.Time
@@ -149,21 +202,10 @@ func (r *OAuthGrantRepository) toModel(row query.OauthGrant) *model.OAuthGrant {
 		SpaceID:            model.SpaceID(row.SpaceID),
 		SpaceMemberID:      model.SpaceMemberID(row.SpaceMemberID),
 		Scopes:             model.StringsToScopes(row.Scopes),
+		DeviceName:         deviceName,
+		LastUsedAt:         lastUsedAt,
 		RevokedAt:          revokedAt,
 		CreatedAt:          row.CreatedAt,
 		UpdatedAt:          row.UpdatedAt,
 	}
-}
-
-// LockOrCreateは、初回なら許可を作成し、既存ならスコープを変えずにロックして返す。
-// WithTxで束縛したRepositoryから呼び、続く別の文で同意の範囲を反映する
-func (r *OAuthGrantRepository) LockOrCreate(ctx context.Context, input CreateOAuthGrantInput) (*model.OAuthGrant, error) {
-	row, err := r.q.LockOrCreateOAuthGrant(ctx, query.LockOrCreateOAuthGrantParams{
-		OauthApplicationID: string(input.OAuthApplicationID), SpaceID: string(input.SpaceID), SpaceMemberID: string(input.SpaceMemberID),
-		Scopes: model.ScopesToStrings(input.Scopes), Now: time.Now(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return r.toModel(row), nil
 }

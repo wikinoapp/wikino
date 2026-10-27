@@ -55,7 +55,7 @@ func TestLoginRestoresOnConfigSaveFailure(t *testing.T) {
 				if err := os.Mkdir(cfgPath, 0700); err != nil {
 					return err
 				}
-				_, err := saveLogin(f, dir, cfg, cred, tokenauth.Secret{AccessToken: "replacement-secret"})
+				_, _, err := saveLogin(f, dir, cfg, cred, tokenauth.Secret{AccessToken: "replacement-secret"})
 				return err
 			})
 			if err == nil {
@@ -120,7 +120,7 @@ func TestLoginReportsRestoreFailure(t *testing.T) {
 		if err := os.Mkdir(cfgPath, 0700); err != nil {
 			return err
 		}
-		_, err := saveLogin(f, dir, cfg, cred, tokenauth.Secret{AccessToken: "replacement-secret"})
+		_, _, err := saveLogin(f, dir, cfg, cred, tokenauth.Secret{AccessToken: "replacement-secret"})
 		return err
 	})
 	cliErr := assertCLIError(t, err, output.CodeUnexpected, output.ExitError)
@@ -273,7 +273,7 @@ func TestLoginRestoresKeyringAfterFailedStoreSwitch(t *testing.T) {
 		if err := os.Mkdir(cfgPath, 0700); err != nil {
 			return err
 		}
-		_, err := saveLogin(f, dir, cfg, old, tokenauth.Secret{AccessToken: "replacement-secret"})
+		_, _, err := saveLogin(f, dir, cfg, old, tokenauth.Secret{AccessToken: "replacement-secret"})
 		return err
 	})
 	if err == nil {
@@ -376,7 +376,7 @@ func TestLoginRollbackKeepsUntouchedPreviousToken(t *testing.T) {
 		if err := os.Mkdir(cfgPath, 0700); err != nil {
 			return err
 		}
-		_, err := saveLogin(f, dir, cfg, old, tokenauth.Secret{AccessToken: "replacement-secret"})
+		_, _, err := saveLogin(f, dir, cfg, old, tokenauth.Secret{AccessToken: "replacement-secret"})
 		return err
 	})
 	if err == nil {

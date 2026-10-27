@@ -328,6 +328,7 @@ CREATE TABLE public.oauth_device_authorizations (
     last_polled_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    device_name character varying,
     CONSTRAINT chk_oauth_device_authorizations_interval_seconds CHECK ((interval_seconds > 0)),
     CONSTRAINT chk_oauth_device_authorizations_oauth_grant_id CHECK (((status = ANY (ARRAY[1, 3])) = (oauth_grant_id IS NOT NULL))),
     CONSTRAINT chk_oauth_device_authorizations_status CHECK ((status = ANY (ARRAY[0, 1, 2, 3])))
@@ -346,7 +347,9 @@ CREATE TABLE public.oauth_grants (
     scopes text[] DEFAULT '{}'::text[] NOT NULL,
     revoked_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_used_at timestamp with time zone,
+    device_name character varying
 );
 
 
@@ -1369,7 +1372,7 @@ CREATE INDEX idx_oauth_grants_space_member_id ON public.oauth_grants USING btree
 -- Name: idx_oauth_grants_unrevoked_application_member; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_oauth_grants_unrevoked_application_member ON public.oauth_grants USING btree (oauth_application_id, space_member_id) WHERE (revoked_at IS NULL);
+CREATE INDEX idx_oauth_grants_unrevoked_application_member ON public.oauth_grants USING btree (oauth_application_id, space_member_id) WHERE (revoked_at IS NULL);
 
 
 --
@@ -2704,4 +2707,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260930172817'),
     ('20261012120000'),
     ('20261012152709'),
-    ('20261019024554');
+    ('20261019024554'),
+    ('20261027031750'),
+    ('20261027042006'),
+    ('20261027045849');

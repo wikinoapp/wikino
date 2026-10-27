@@ -9,6 +9,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
@@ -362,6 +363,86 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessToken(t *testing.T) {
 	if !principal.HasScope(model.ScopePageWrite) || !principal.HasScope(model.ScopePageRead) || len(principal.Scopes) != 2 {
 		t.Errorf("Scopes = %v、期待値 = [page:write page:read]", principal.Scopes)
 	}
+	if lastUsedAt := findOAuthGrantLastUsedAt(t, tx, token); !lastUsedAt.Valid {
+		t.Error("許可のlast_used_at = NULL、照合での更新を期待")
+	}
+}
+
+func TestAuthenticateAPITokenUsecase_Execute_OAuthの最終利用日時の更新に失敗しても認証を続ける(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+	var fixture authenticateAPITokenFixture
+	var tokenValue string
+	testutil.CommitFixture(t, func(tx *sql.Tx) {
+		fixture, tokenValue = setupOAuthAccessTokenAuthFixture(t, tx, "aat-oauth-update-fail", defaultOAuthAccessTokenAuthFixtureOptions())
+	})
+	token, err := repository.NewOAuthAccessTokenRepository(q).FindByTokenDigest(ctx, auth.DigestOpaqueToken(tokenValue))
+	if err != nil || token == nil {
+		t.Fatalf("アクセストークンの取得結果 = %+v、エラー = %v", token, err)
+	}
+
+	locker, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = locker.Rollback() }()
+	grantRepo := repository.NewOAuthGrantRepository(q)
+	if _, err := grantRepo.WithTx(locker).LockByID(ctx, token.OAuthGrantID, token.SpaceID); err != nil {
+		t.Fatal(err)
+	}
+
+	// 許可の行ロックでUPDATEだけを失敗させる。接続の設定は共有プールへ戻す前に復元する。
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close() }()
+	var originalLockTimeout string
+	if err := conn.QueryRowContext(ctx, "SHOW lock_timeout").Scan(&originalLockTimeout); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := conn.ExecContext(ctx, "SET lock_timeout = '25ms'"); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		resetCtx, resetCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer resetCancel()
+		if _, err := conn.ExecContext(resetCtx, "SELECT set_config('lock_timeout', $1, false)", originalLockTimeout); err != nil {
+			t.Errorf("lock_timeoutの復元に失敗: %v", err)
+		}
+	}()
+
+	principal, err := newAuthenticateAPITokenUCForOAuthTest(query.New(conn)).Execute(ctx, tokenValue)
+	if err != nil || principal == nil {
+		t.Fatalf("更新失敗時の照合結果 = %+v、エラー = %v、認証成功を期待", principal, err)
+	}
+	if principal.User.ID != fixture.userID {
+		t.Errorf("User.ID = %s、期待値 = %s", principal.User.ID, fixture.userID)
+	}
+	grant, err := grantRepo.FindByID(ctx, token.OAuthGrantID, token.SpaceID)
+	if err != nil || grant == nil {
+		t.Fatalf("許可の取得結果 = %+v、エラー = %v", grant, err)
+	}
+	if grant.LastUsedAt != nil {
+		t.Errorf("LastUsedAt = %v、更新が失敗してNULLのままであることを期待", grant.LastUsedAt)
+	}
+}
+
+// findOAuthGrantLastUsedAtは、アクセストークンtokenが属する許可の最終利用日時を返す
+func findOAuthGrantLastUsedAt(t *testing.T, tx *sql.Tx, token string) sql.NullTime {
+	t.Helper()
+
+	var lastUsedAt sql.NullTime
+	if err := tx.QueryRowContext(context.Background(), `SELECT g.last_used_at FROM oauth_grants g
+		INNER JOIN oauth_access_tokens a ON a.oauth_grant_id = g.id AND a.space_id = g.space_id
+		WHERE a.token_digest = $1`, auth.DigestOpaqueToken(token)).Scan(&lastUsedAt); err != nil {
+		t.Fatalf("許可の最終利用日時の取得に失敗: %v", err)
+	}
+	return lastUsedAt
 }
 
 func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessTokenRejected(t *testing.T) {
@@ -410,7 +491,8 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessTokenRejected(t *testing
 			if tt.modify != nil {
 				tt.modify(&opts)
 			}
-			_, token := setupOAuthAccessTokenAuthFixture(t, tx, "aat-oauth-reject-"+string(rune('a'+i)), opts)
+			_, fixtureToken := setupOAuthAccessTokenAuthFixture(t, tx, "aat-oauth-reject-"+string(rune('a'+i)), opts)
+			token := fixtureToken
 			if tt.token != nil {
 				token = tt.token(token)
 			}
@@ -421,6 +503,10 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessTokenRejected(t *testing
 			}
 			if principal != nil {
 				t.Errorf("principal = %+v、nilを期待", principal)
+			}
+			// 受け付けないトークンでは、許可の最終利用日時を更新しない
+			if lastUsedAt := findOAuthGrantLastUsedAt(t, tx, fixtureToken); lastUsedAt.Valid {
+				t.Errorf("許可のlast_used_at = %v、受け付けないトークンでは更新しないことを期待", lastUsedAt.Time)
 			}
 		})
 	}

@@ -110,23 +110,3 @@ func (q *Queries) RevokeOAuthAccessToken(ctx context.Context, arg RevokeOAuthAcc
 	_, err := q.db.ExecContext(ctx, revokeOAuthAccessToken, arg.Now, arg.ID, arg.SpaceID)
 	return err
 }
-
-const revokeOAuthAccessTokensByOAuthGrant = `-- name: RevokeOAuthAccessTokensByOAuthGrant :exec
-UPDATE oauth_access_tokens
-SET revoked_at = $1::timestamptz, updated_at = $1
-WHERE oauth_grant_id = $2
-  AND space_id = $3
-  AND revoked_at IS NULL
-`
-
-type RevokeOAuthAccessTokensByOAuthGrantParams struct {
-	Now          time.Time `json:"now"`
-	OauthGrantID string    `json:"oauth_grant_id"`
-	SpaceID      string    `json:"space_id"`
-}
-
-// 許可に属する失効していないアクセストークンをすべて失効する
-func (q *Queries) RevokeOAuthAccessTokensByOAuthGrant(ctx context.Context, arg RevokeOAuthAccessTokensByOAuthGrantParams) error {
-	_, err := q.db.ExecContext(ctx, revokeOAuthAccessTokensByOAuthGrant, arg.Now, arg.OauthGrantID, arg.SpaceID)
-	return err
-}

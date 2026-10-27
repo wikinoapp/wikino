@@ -11,9 +11,15 @@ type OAuthGrant struct {
 	ID              string
 	ApplicationName string
 
+	// DeviceNameはクライアントが申告した端末名。送られなかった連携では空
+	DeviceName string
+
 	// Scopesは許可のスコープで、model.APITokenScopesの順に並ぶ
 	Scopes    []model.Scope
 	CreatedAt time.Time
+
+	// LastUsedAtは最終利用日時。nilはまだ使われていないことを表す
+	LastUsedAt *time.Time
 }
 
 // NewOAuthGrantsは許可のスライスからOAuthGrantのスライスを生成する。アプリの名前はapps
@@ -28,11 +34,17 @@ func NewOAuthGrants(grants []*model.OAuthGrant, apps map[model.OAuthApplicationI
 		if !ok {
 			continue
 		}
+		deviceName := ""
+		if grant.DeviceName != nil {
+			deviceName = *grant.DeviceName
+		}
 		vms = append(vms, OAuthGrant{
 			ID:              string(grant.ID),
 			ApplicationName: app.Name,
+			DeviceName:      deviceName,
 			Scopes:          model.SortAPITokenScopes(grant.Scopes),
 			CreatedAt:       grant.CreatedAt,
+			LastUsedAt:      grant.LastUsedAt,
 		})
 	}
 	return vms

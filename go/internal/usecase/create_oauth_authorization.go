@@ -16,8 +16,8 @@ import (
 // CreateOAuthAuthorizationUsecaseは、同意画面での利用者の決定を受け、許可なら認可コードを発行する。
 type CreateOAuthAuthorizationUsecase struct {
 	db                         *sql.DB
-	cfg                        *config.Config
 	oauthGrantRepo             *repository.OAuthGrantRepository
+	cfg                        *config.Config
 	featureFlagRepo            *repository.FeatureFlagRepository
 	oauthApplicationRepo       *repository.OAuthApplicationRepository
 	spaceRepo                  *repository.SpaceRepository
@@ -70,8 +70,10 @@ type CreateOAuthAuthorizationOutput struct {
 	Code string
 }
 
-// Executeは、許可なら利用者が選んだスコープで許可を作成または置き換え、認可コードを発行して
-// 返す。拒否した場合と、送信の時点でユーザーが連携先のスペースでアプリを許可できない場合は、
+// Executeは、許可なら利用者が選んだスコープで許可を新しく作り、認可コードを発行して返す。
+// 同じアプリ・メンバーの既存の許可 (別の端末のログインなど) は、上限を超える分を使われていない
+// ものから押し出すほかは変えない。拒否した場合と、
+// 送信の時点でユーザーが連携先のスペースでアプリを許可できない場合は、
 // access_deniedの*model.OAuthAuthorizationErrorを返す。選んだスコープが不正なら
 // *model.ValidationErrorを返す。要求が不正な場合とフィーチャーフラグが無効な場合は
 // GetOAuthAuthorizationNewUsecaseと同じ
@@ -120,7 +122,8 @@ func (uc *CreateOAuthAuthorizationUsecase) Execute(ctx context.Context, input Cr
 		return nil, fmt.Errorf("認可コードの生成に失敗: %w", err)
 	}
 
-	_, err = uc.createCodeWithGrant(ctx, repository.CreateOAuthAuthorizationCodeWithGrantInput{
+	now := time.Now()
+	_, err = uc.createCodeWithGrant(ctx, now, repository.CreateOAuthAuthorizationCodeWithGrantInput{
 		OAuthApplicationID: req.application.ID,
 		SpaceID:            req.space.ID,
 		SpaceMemberID:      decision.spaceMember.ID,
@@ -128,10 +131,11 @@ func (uc *CreateOAuthAuthorizationUsecase) Execute(ctx context.Context, input Cr
 		Scopes:             scopes,
 		RedirectURI:        req.redirectURI,
 		CodeChallenge:      req.codeChallenge,
-		ExpiresAt:          time.Now().Add(model.OAuthAuthorizationCodeLifetime),
+		ExpiresAt:          now.Add(model.OAuthAuthorizationCodeLifetime),
+		DeviceName:         req.deviceName,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("認可コードの作成に失敗: %w", err)
+		return nil, err
 	}
 
 	return &CreateOAuthAuthorizationOutput{
@@ -141,22 +145,23 @@ func (uc *CreateOAuthAuthorizationUsecase) Execute(ctx context.Context, input Cr
 	}, nil
 }
 
-// createCodeWithGrantは、許可のロックを取得してから同意の範囲へ置き換える。
-// ロックと失効を別の文にすることで、ロック待機中に発行されたトークンも失効の対象にする
-func (uc *CreateOAuthAuthorizationUsecase) createCodeWithGrant(ctx context.Context, input repository.CreateOAuthAuthorizationCodeWithGrantInput) (*model.OAuthAuthorizationCode, error) {
+// createCodeWithGrantは、同じアプリ・メンバーの許可を上限に収まるよう押し出してから、許可と認可コードを
+// 作る。押し出しと作成を1つのトランザクションにまとめ、押し出しだけが残る状態を作らない
+func (uc *CreateOAuthAuthorizationUsecase) createCodeWithGrant(ctx context.Context, now time.Time, input repository.CreateOAuthAuthorizationCodeWithGrantInput) (*model.OAuthAuthorizationCode, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクション開始に失敗: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
-	if _, err := uc.oauthGrantRepo.WithTx(tx).LockOrCreate(ctx, repository.CreateOAuthGrantInput{
-		OAuthApplicationID: input.OAuthApplicationID, SpaceID: input.SpaceID, SpaceMemberID: input.SpaceMemberID, Scopes: input.Scopes,
+
+	if err := uc.oauthGrantRepo.WithTx(tx).Evict(ctx, repository.EvictInput{
+		OAuthApplicationID: input.OAuthApplicationID, SpaceID: input.SpaceID, SpaceMemberID: input.SpaceMemberID, Now: now,
 	}); err != nil {
-		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
+		return nil, fmt.Errorf("OAuthアプリの許可の押し出しに失敗: %w", err)
 	}
 	code, err := uc.oauthAuthorizationCodeRepo.WithTx(tx).CreateWithGrant(ctx, input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("認可コードの作成に失敗: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)

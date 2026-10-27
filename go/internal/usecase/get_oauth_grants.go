@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/policy"
@@ -45,7 +46,8 @@ type GetOAuthGrantsInput struct {
 type GetOAuthGrantsOutput struct {
 	Space *model.Space
 
-	// Grantsは閲覧者自身の失効していない許可で、新しい順に並ぶ
+	// Grantsは閲覧者自身の失効していない許可のうち、有効なリフレッシュトークンを持つもの (使える
+	// 連携) で、新しい順に並ぶ
 	Grants []*model.OAuthGrant
 
 	// Applicationsは許可したアプリ。削除されたアプリは含まない (削除したアプリの許可は
@@ -69,7 +71,7 @@ func (uc *GetOAuthGrantsUsecase) Execute(ctx context.Context, input GetOAuthGran
 		return nil, err
 	}
 
-	grants, err := uc.oauthGrantRepo.ListUnrevokedBySpaceMember(ctx, access.space.ID, access.spaceMember.ID)
+	grants, err := uc.oauthGrantRepo.ListUsableBySpaceMember(ctx, access.space.ID, access.spaceMember.ID, time.Now())
 	if err != nil {
 		return nil, fmt.Errorf("OAuthアプリの許可の一覧の取得に失敗: %w", err)
 	}

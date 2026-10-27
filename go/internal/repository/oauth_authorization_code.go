@@ -54,8 +54,8 @@ func (r *OAuthAuthorizationCodeRepository) Create(ctx context.Context, input Cre
 	return r.toModel(row), nil
 }
 
-// CreateOAuthAuthorizationCodeWithGrantInputは、許可の作成または拡張と認可コードの作成の
-// 入力パラメータ。Scopesは今回の同意で認めたスコープで、コードはこの範囲だけを持つ
+// CreateOAuthAuthorizationCodeWithGrantInputは、許可と認可コードの作成の入力パラメータ。
+// Scopesは今回の同意で認めたスコープで、コードはこの範囲だけを持つ
 type CreateOAuthAuthorizationCodeWithGrantInput struct {
 	OAuthApplicationID model.OAuthApplicationID
 	SpaceID            model.SpaceID
@@ -65,15 +65,19 @@ type CreateOAuthAuthorizationCodeWithGrantInput struct {
 	RedirectURI        string
 	CodeChallenge      string
 	ExpiresAt          time.Time
+
+	// DeviceNameは認可要求で受け取った端末名で、許可に保存する。nilなら保存しない
+	DeviceName *string
 }
 
-// CreateWithGrantは、スペースメンバーのOAuthアプリへの許可を作成または置き換え、その許可に
-// 属する認可コードを作成する。失効していない許可が既にあれば、許可のスコープを今回のスコープに
-// 置き換え、その範囲に収まらないスコープを持つ発行済みのトークンを失効させる。許可とコードを
-// 1つの文で作るため、同じアプリへの同時の同意でも許可は1つに保たれ、許可だけが作られてコードが
-// 無い状態も残らない。
-// トークン発行との競合も防ぐ場合は、同じTxの先行する文でOAuthGrantRepository.LockOrCreateを呼ぶ。
+// CreateWithGrantは、スペースメンバーのOAuthアプリへの許可を新しく作り、その許可に属する
+// 認可コードを作成する。同じアプリ・メンバーの既存の許可には触れない。許可とコードを1つの文で
+// 作るため、許可だけが作られてコードが無い状態は残らない。
 func (r *OAuthAuthorizationCodeRepository) CreateWithGrant(ctx context.Context, input CreateOAuthAuthorizationCodeWithGrantInput) (*model.OAuthAuthorizationCode, error) {
+	var deviceName sql.NullString
+	if input.DeviceName != nil {
+		deviceName = sql.NullString{String: *input.DeviceName, Valid: true}
+	}
 	row, err := r.q.CreateOAuthAuthorizationCodeWithGrant(ctx, query.CreateOAuthAuthorizationCodeWithGrantParams{
 		OauthApplicationID: string(input.OAuthApplicationID),
 		SpaceID:            string(input.SpaceID),
@@ -83,6 +87,7 @@ func (r *OAuthAuthorizationCodeRepository) CreateWithGrant(ctx context.Context, 
 		RedirectUri:        input.RedirectURI,
 		CodeChallenge:      input.CodeChallenge,
 		ExpiresAt:          input.ExpiresAt,
+		DeviceName:         deviceName,
 		Now:                time.Now(),
 	})
 	if err != nil {

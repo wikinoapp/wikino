@@ -272,74 +272,6 @@ func TestOAuthRefreshTokenRepository_Rotate(t *testing.T) {
 	})
 }
 
-func TestOAuthRefreshTokenRepository_RevokeByOAuthGrant(t *testing.T) {
-	t.Parallel()
-
-	_, tx := testutil.SetupTx(t)
-	repo := NewOAuthRefreshTokenRepository(testutil.QueriesWithTx(tx))
-	ctx := context.Background()
-
-	f := setupOAuthFixture(t, tx, "refresh-revoke")
-	other := setupOAuthFixture(t, tx, "refresh-revoke-other")
-	grantID := f.buildGrant(t, tx)
-	otherGrantID := other.buildGrant(t, tx)
-
-	revokedAt := time.Now().Add(-time.Hour).Truncate(time.Microsecond)
-	now := time.Now().Truncate(time.Microsecond)
-	testutil.NewOAuthRefreshTokenBuilder(t, tx).
-		WithOAuthGrantID(grantID).
-		WithSpaceID(f.spaceID).
-		WithTokenDigest("refresh_revoke_active_digest").
-		Build()
-	testutil.NewOAuthRefreshTokenBuilder(t, tx).
-		WithOAuthGrantID(grantID).
-		WithSpaceID(f.spaceID).
-		WithTokenDigest("refresh_revoke_used_digest").
-		WithUsedAt(revokedAt).
-		Build()
-	testutil.NewOAuthRefreshTokenBuilder(t, tx).
-		WithOAuthGrantID(grantID).
-		WithSpaceID(f.spaceID).
-		WithTokenDigest("refresh_revoke_revoked_digest").
-		WithRevokedAt(revokedAt).
-		Build()
-	testutil.NewOAuthRefreshTokenBuilder(t, tx).
-		WithOAuthGrantID(otherGrantID).
-		WithSpaceID(other.spaceID).
-		WithTokenDigest("refresh_revoke_other_digest").
-		Build()
-
-	// 許可と違うスペースを指定したら失効しない。失効していれば、後の確認で失効日時がnowではなくなる
-	if err := repo.RevokeByOAuthGrant(ctx, grantID, other.spaceID, now.Add(-time.Minute)); err != nil {
-		t.Fatalf("他のスペースを指定したRevokeByOAuthGrant()のエラー = %v", err)
-	}
-	if err := repo.RevokeByOAuthGrant(ctx, grantID, f.spaceID, now); err != nil {
-		t.Fatalf("RevokeByOAuthGrant()のエラー = %v", err)
-	}
-
-	tests := []struct {
-		digest        string
-		wantRevokedAt *time.Time
-	}{
-		{digest: "refresh_revoke_active_digest", wantRevokedAt: &now},
-		{digest: "refresh_revoke_used_digest", wantRevokedAt: &now},
-		{digest: "refresh_revoke_revoked_digest", wantRevokedAt: &revokedAt},
-		{digest: "refresh_revoke_other_digest"},
-	}
-	for _, tt := range tests {
-		token, err := repo.FindByTokenDigest(ctx, tt.digest)
-		if err != nil {
-			t.Fatalf("%s: FindByTokenDigest()のエラー = %v", tt.digest, err)
-		}
-		switch {
-		case tt.wantRevokedAt == nil && token.RevokedAt != nil:
-			t.Errorf("%s: token.RevokedAt = %v、期待値 = nil", tt.digest, token.RevokedAt)
-		case tt.wantRevokedAt != nil && (token.RevokedAt == nil || !token.RevokedAt.Equal(*tt.wantRevokedAt)):
-			t.Errorf("%s: token.RevokedAt = %v、期待値 = %v", tt.digest, token.RevokedAt, *tt.wantRevokedAt)
-		}
-	}
-}
-
 func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 	t.Parallel()
 
@@ -350,10 +282,11 @@ func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 		// buildは失効を求めるリフレッシュトークンの状態を設定する
 		build func(b *testutil.OAuthRefreshTokenBuilder) *testutil.OAuthRefreshTokenBuilder
 		// otherSpaceが真なら、トークンと違うスペースを指定する
-		otherSpace bool
-		wantRevoke bool
+		otherSpace   bool
+		grantRevoked bool
+		wantRevoke   bool
 	}{
-		{name: "有効なトークンを失効し同じ許可のアクセストークンも失効する", build: func(b *testutil.OAuthRefreshTokenBuilder) *testutil.OAuthRefreshTokenBuilder { return b }, wantRevoke: true},
+		{name: "有効なトークンを失効し、許可と許可に属するトークンもすべて失効する", build: func(b *testutil.OAuthRefreshTokenBuilder) *testutil.OAuthRefreshTokenBuilder { return b }, wantRevoke: true},
 		{name: "使用済みのトークンは変えない", build: func(b *testutil.OAuthRefreshTokenBuilder) *testutil.OAuthRefreshTokenBuilder {
 			return b.WithUsedAt(past)
 		}},
@@ -364,6 +297,7 @@ func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 			return b.WithRevokedAt(past)
 		}},
 		{name: "違うスペースを指定したら変えない", build: func(b *testutil.OAuthRefreshTokenBuilder) *testutil.OAuthRefreshTokenBuilder { return b }, otherSpace: true},
+		{name: "失効済みの許可に残る有効なトークンも失効し、許可の日時は変えない", build: func(b *testutil.OAuthRefreshTokenBuilder) *testutil.OAuthRefreshTokenBuilder { return b }, grantRevoked: true, wantRevoke: true},
 	}
 
 	for i, tt := range tests {
@@ -374,6 +308,7 @@ func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 			q := testutil.QueriesWithTx(tx)
 			repo := NewOAuthRefreshTokenRepository(q)
 			accessRepo := NewOAuthAccessTokenRepository(q)
+			grantRepo := NewOAuthGrantRepository(q)
 			ctx := context.Background()
 
 			suffix := fmt.Sprintf("refresh-revoke-one-%d", i)
@@ -381,6 +316,11 @@ func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 			other := setupOAuthFixture(t, tx, suffix+"-other")
 			grantID := f.buildGrant(t, tx)
 			now := time.Now().Truncate(time.Microsecond)
+			if tt.grantRevoked {
+				if _, err := tx.ExecContext(ctx, "UPDATE oauth_grants SET revoked_at = $1, updated_at = $1 WHERE id = $2 AND space_id = $3", past, string(grantID), string(f.spaceID)); err != nil {
+					t.Fatalf("許可の失効状態の設定に失敗: %v", err)
+				}
+			}
 
 			targetID := tt.build(testutil.NewOAuthRefreshTokenBuilder(t, tx).
 				WithOAuthGrantID(grantID).WithSpaceID(f.spaceID).WithTokenDigest(suffix + "_target")).Build()
@@ -388,9 +328,12 @@ func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 				WithOAuthGrantID(grantID).WithSpaceID(f.spaceID).WithTokenDigest(suffix + "_sibling").Build()
 			testutil.NewOAuthAccessTokenBuilder(t, tx).
 				WithOAuthGrantID(grantID).WithSpaceID(f.spaceID).WithTokenDigest(suffix + "_access").Build()
-			otherGrantID := other.buildGrant(t, tx)
+			// 同じアプリ・メンバーの別の許可 (別の端末のログイン) のトークン
+			anotherGrantID := f.buildGrant(t, tx)
+			testutil.NewOAuthRefreshTokenBuilder(t, tx).
+				WithOAuthGrantID(anotherGrantID).WithSpaceID(f.spaceID).WithTokenDigest(suffix + "_another_refresh").Build()
 			testutil.NewOAuthAccessTokenBuilder(t, tx).
-				WithOAuthGrantID(otherGrantID).WithSpaceID(other.spaceID).WithTokenDigest(suffix + "_other_access").Build()
+				WithOAuthGrantID(anotherGrantID).WithSpaceID(f.spaceID).WithTokenDigest(suffix + "_another_access").Build()
 
 			spaceID := f.spaceID
 			if tt.otherSpace {
@@ -407,6 +350,16 @@ func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 			if revoked := target.RevokedAt != nil && target.RevokedAt.Equal(now); revoked != tt.wantRevoke {
 				t.Errorf("失効を求めたトークンのRevokedAt = %v、nowで失効することの期待値 = %v", target.RevokedAt, tt.wantRevoke)
 			}
+			grant, err := grantRepo.FindByID(ctx, grantID, f.spaceID)
+			if err != nil {
+				t.Fatalf("FindByID()のエラー = %v", err)
+			}
+			if grant.IsRevoked() != tt.wantRevoke {
+				t.Errorf("トークンの許可のIsRevoked() = %v、期待値 = %v", grant.IsRevoked(), tt.wantRevoke)
+			}
+			if tt.grantRevoked && (grant.RevokedAt == nil || !grant.RevokedAt.Equal(past) || !grant.UpdatedAt.Equal(past)) {
+				t.Errorf("失効済みの許可の日時が変わった: revoked_at = %v、updated_at = %v、期待値 = %v", grant.RevokedAt, grant.UpdatedAt, past)
+			}
 			access, err := accessRepo.FindByTokenDigest(ctx, suffix+"_access")
 			if err != nil {
 				t.Fatalf("FindByTokenDigest()のエラー = %v", err)
@@ -414,21 +367,32 @@ func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 			if access.IsRevoked() != tt.wantRevoke {
 				t.Errorf("同じ許可のアクセストークンのIsRevoked() = %v、期待値 = %v", access.IsRevoked(), tt.wantRevoke)
 			}
-
-			// 同じ許可のほかのリフレッシュトークン (別の端末のもの) と、ほかの許可のアクセストークンは失効しない
 			sibling, err := repo.FindByTokenDigest(ctx, suffix+"_sibling")
 			if err != nil {
 				t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 			}
-			if sibling.IsRevoked() {
-				t.Error("同じ許可のほかのリフレッシュトークンが失効した")
+			if sibling.IsRevoked() != tt.wantRevoke {
+				t.Errorf("同じ許可のほかのリフレッシュトークンのIsRevoked() = %v、期待値 = %v", sibling.IsRevoked(), tt.wantRevoke)
 			}
-			otherAccess, err := accessRepo.FindByTokenDigest(ctx, suffix+"_other_access")
+
+			// 同じアプリ・メンバーの別の許可とそのトークンは失効しない
+			anotherGrant, err := grantRepo.FindByID(ctx, anotherGrantID, f.spaceID)
+			if err != nil {
+				t.Fatalf("FindByID()のエラー = %v", err)
+			}
+			if anotherGrant.IsRevoked() {
+				t.Error("同じアプリ・メンバーの別の許可が失効した")
+			}
+			anotherRefresh, err := repo.FindByTokenDigest(ctx, suffix+"_another_refresh")
 			if err != nil {
 				t.Fatalf("FindByTokenDigest()のエラー = %v", err)
 			}
-			if otherAccess.IsRevoked() {
-				t.Error("ほかの許可のアクセストークンが失効した")
+			anotherAccess, err := accessRepo.FindByTokenDigest(ctx, suffix+"_another_access")
+			if err != nil {
+				t.Fatalf("FindByTokenDigest()のエラー = %v", err)
+			}
+			if anotherRefresh.IsRevoked() || anotherAccess.IsRevoked() {
+				t.Error("同じアプリ・メンバーの別の許可のトークンが失効した")
 			}
 		})
 	}

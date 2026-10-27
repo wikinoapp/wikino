@@ -34,7 +34,6 @@ type CreateOAuthTokenUsecase struct {
 	oauthApplicationRepo         *repository.OAuthApplicationRepository
 	oauthGrantRepo               *repository.OAuthGrantRepository
 	oauthAuthorizationCodeRepo   *repository.OAuthAuthorizationCodeRepository
-	oauthAccessTokenRepo         *repository.OAuthAccessTokenRepository
 	oauthRefreshTokenRepo        *repository.OAuthRefreshTokenRepository
 	oauthDeviceAuthorizationRepo *repository.OAuthDeviceAuthorizationRepository
 	owners                       *apiTokenOwnerFinder
@@ -47,7 +46,6 @@ func NewCreateOAuthTokenUsecase(
 	oauthApplicationRepo *repository.OAuthApplicationRepository,
 	oauthGrantRepo *repository.OAuthGrantRepository,
 	oauthAuthorizationCodeRepo *repository.OAuthAuthorizationCodeRepository,
-	oauthAccessTokenRepo *repository.OAuthAccessTokenRepository,
 	oauthRefreshTokenRepo *repository.OAuthRefreshTokenRepository,
 	oauthDeviceAuthorizationRepo *repository.OAuthDeviceAuthorizationRepository,
 	spaceRepo *repository.SpaceRepository,
@@ -61,7 +59,6 @@ func NewCreateOAuthTokenUsecase(
 		oauthApplicationRepo:         oauthApplicationRepo,
 		oauthGrantRepo:               oauthGrantRepo,
 		oauthAuthorizationCodeRepo:   oauthAuthorizationCodeRepo,
-		oauthAccessTokenRepo:         oauthAccessTokenRepo,
 		oauthRefreshTokenRepo:        oauthRefreshTokenRepo,
 		oauthDeviceAuthorizationRepo: oauthDeviceAuthorizationRepo,
 		owners:                       newAPITokenOwnerFinder(spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo),
@@ -169,8 +166,8 @@ func (uc *CreateOAuthTokenUsecase) exchangeAuthorizationCode(ctx context.Context
 		return nil, uc.revokeReplayedGrant(ctx, grant)
 	}
 
-	// 再認可で許可を狭める前に発行したコードは、今の許可の範囲を超えるスコープを持ちうる。
-	// 許可を狭めたときに範囲外のトークンは失効させるため、そうしたトークンをコードから作り直させない
+	// 許可のスコープは作成後に変わらず、コードは許可の範囲で作る。範囲を超えるトークンを発行しないよう、
+	// 不変条件として発行の前にも確かめる
 	now := time.Now()
 	if code.IsExpired(now) || grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, code.Scopes) {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
@@ -336,8 +333,8 @@ func (uc *CreateOAuthTokenUsecase) exchangeDeviceCode(ctx context.Context, param
 	if err != nil {
 		return nil, err
 	}
-	// 許可した後に利用者が連携を解除したか、同じアプリを再認可して範囲を狭めた場合は、
-	// 今の許可の範囲を超えるトークンを作らない
+	// 許可した後に利用者が連携を解除した場合はトークンを作らない。スコープが許可の範囲に収まることも、
+	// 認可コードの交換と同じく不変条件として確かめる
 	if grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, device.Scopes) {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 	}
@@ -450,17 +447,13 @@ func (uc *CreateOAuthTokenUsecase) checkGrantUsable(ctx context.Context, grant *
 	return nil
 }
 
-// revokeReplayedGrantは、使用済みの認可コードやリフレッシュトークンが再び提示された許可の
-// アクセストークンとリフレッシュトークンをすべて失効させ、invalid_grantを返す。
-// 許可そのものは失効させず、利用者は再び認可すれば連携を続けられる
+// revokeReplayedGrantは、使用済みの認可コード・リフレッシュトークン・デバイスコードが再び提示された
+// 許可と、許可に属するアクセストークン・リフレッシュトークンをすべて失効させ、invalid_grantを返す。
+// 許可は認可ごとに作るため、失効は同じアプリのほかの端末の許可に及ばない。利用者が再び認可すると
+// 新しい許可ができるため、失効させた許可を残す使い道は無い
 func (uc *CreateOAuthTokenUsecase) revokeReplayedGrant(ctx context.Context, grant *model.OAuthGrant) error {
-	now := time.Now()
-	// 長く使えるリフレッシュトークンを先に失効させる
-	if err := uc.oauthRefreshTokenRepo.RevokeByOAuthGrant(ctx, grant.ID, grant.SpaceID, now); err != nil {
-		return fmt.Errorf("リフレッシュトークンの失効に失敗: %w", err)
-	}
-	if err := uc.oauthAccessTokenRepo.RevokeByOAuthGrant(ctx, grant.ID, grant.SpaceID, now); err != nil {
-		return fmt.Errorf("アクセストークンの失効に失敗: %w", err)
+	if _, err := uc.oauthGrantRepo.Revoke(ctx, grant.ID, grant.SpaceID, grant.SpaceMemberID); err != nil {
+		return fmt.Errorf("OAuthアプリの許可の失効に失敗: %w", err)
 	}
 	return oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 }
@@ -515,15 +508,16 @@ func oauthTokenError(code model.OAuthTokenErrorCode) error {
 	return &model.OAuthTokenError{Code: code}
 }
 
-// exchangeCodeは、許可のロック後に最新のスコープを確かめ、認可コードを交換する。
-// 同意による縮小が先に終わった場合は、コードの再利用として扱わず拒否する
+// exchangeCodeは、許可のロック後に許可が失効していないことを確かめ、認可コードを交換する。
+// ロックで許可の失効と直列化し、失効が先に終わった場合は、コードの再利用として扱わず拒否する
 func (uc *CreateOAuthTokenUsecase) exchangeCode(ctx context.Context, code *model.OAuthAuthorizationCode, input repository.ExchangeOAuthAuthorizationCodeInput) (*model.OAuthAuthorizationCode, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクション開始に失敗: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
-	grant, err := uc.oauthGrantRepo.WithTx(tx).LockByID(ctx, code.OAuthGrantID, code.SpaceID)
+	grantRepo := uc.oauthGrantRepo.WithTx(tx)
+	grant, err := grantRepo.LockByID(ctx, code.OAuthGrantID, code.SpaceID)
 	if err != nil {
 		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
 	}
@@ -534,21 +528,27 @@ func (uc *CreateOAuthTokenUsecase) exchangeCode(ctx context.Context, code *model
 	if err != nil {
 		return nil, err
 	}
+	if exchanged != nil {
+		if err := grantRepo.SetLastUsedAt(ctx, grant.ID, grant.SpaceID, input.Now); err != nil {
+			return nil, fmt.Errorf("OAuthアプリの許可の最終利用日時の更新に失敗: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)
 	}
 	return exchanged, nil
 }
 
-// rotateTokenは、同意による縮小と同じ許可行を先にロックしてからトークンを更新する。
-// 縮小で失効したトークンの範囲を再び発行せず、範囲内の別端末のトークンは失効させない
+// rotateTokenは、許可の行を先にロックしてからトークンを更新する。
+// ロックで許可の失効と直列化し、失効した許可のトークンを再び発行しない
 func (uc *CreateOAuthTokenUsecase) rotateToken(ctx context.Context, token *model.OAuthRefreshToken, input repository.RotateOAuthRefreshTokenInput) (*model.OAuthRefreshToken, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクション開始に失敗: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
-	grant, err := uc.oauthGrantRepo.WithTx(tx).LockByID(ctx, token.OAuthGrantID, token.SpaceID)
+	grantRepo := uc.oauthGrantRepo.WithTx(tx)
+	grant, err := grantRepo.LockByID(ctx, token.OAuthGrantID, token.SpaceID)
 	if err != nil {
 		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
 	}
@@ -559,6 +559,11 @@ func (uc *CreateOAuthTokenUsecase) rotateToken(ctx context.Context, token *model
 	if err != nil {
 		return nil, err
 	}
+	if rotated != nil {
+		if err := grantRepo.SetLastUsedAt(ctx, grant.ID, grant.SpaceID, input.Now); err != nil {
+			return nil, fmt.Errorf("OAuthアプリの許可の最終利用日時の更新に失敗: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)
 	}
@@ -566,10 +571,10 @@ func (uc *CreateOAuthTokenUsecase) rotateToken(ctx context.Context, token *model
 }
 
 // exchangeDeviceは、要求と許可をロックし、最新の状態・スコープ・期限を確かめてデバイスコードを交換する。
-// 認可コードの交換 (exchangeCode) と同じく、同意による縮小が先に終わった場合は拒否する。
+// 認可コードの交換 (exchangeCode) と同じく、許可の失効が先に終わった場合は拒否する。
 //
-// ロックは同意 (UpdateOAuthDeviceAuthorizationUsecase.approveWithGrant) と同じく要求 → 許可の順に取り、
-// デバイス認可の要求と許可を扱う処理どうしでロックの順序を1つに保つ
+// ロックは要求 → 許可の順に取る。同意 (UpdateOAuthDeviceAuthorizationUsecase.approveWithGrant) も
+// 要求を先にロックするため、同じ要求への許可と交換は要求のロックで直列化される
 func (uc *CreateOAuthTokenUsecase) exchangeDevice(ctx context.Context, device *model.OAuthDeviceAuthorization, input repository.ExchangeOAuthDeviceAuthorizationInput) (*model.OAuthDeviceAuthorization, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -585,7 +590,8 @@ func (uc *CreateOAuthTokenUsecase) exchangeDevice(ctx context.Context, device *m
 		// 交換済みの再提示は、期限の前後にかかわらず呼び出し側で失効させる。
 		return nil, nil
 	}
-	grant, err := uc.oauthGrantRepo.WithTx(tx).LockByID(ctx, *device.OAuthGrantID, device.SpaceID)
+	grantRepo := uc.oauthGrantRepo.WithTx(tx)
+	grant, err := grantRepo.LockByID(ctx, *device.OAuthGrantID, device.SpaceID)
 	if err != nil {
 		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
 	}
@@ -599,6 +605,11 @@ func (uc *CreateOAuthTokenUsecase) exchangeDevice(ctx context.Context, device *m
 	exchanged, err := deviceRepo.Exchange(ctx, input)
 	if err != nil {
 		return nil, err
+	}
+	if exchanged != nil {
+		if err := grantRepo.SetLastUsedAt(ctx, grant.ID, grant.SpaceID, input.Now); err != nil {
+			return nil, fmt.Errorf("OAuthアプリの許可の最終利用日時の更新に失敗: %w", err)
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)

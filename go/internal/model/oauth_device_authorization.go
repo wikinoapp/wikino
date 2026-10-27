@@ -44,12 +44,16 @@ type OAuthDeviceAuthorization struct {
 	DeviceCodeDigest   string
 	UserCodeDigest     string
 	Scopes             []Scope
-	Status             OAuthDeviceAuthorizationStatus
-	Interval           time.Duration
-	ExpiresAt          time.Time
-	LastPolledAt       *time.Time
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+
+	// DeviceNameは要求で受け取った、クライアントが申告した端末名。nilは送られなかったことを表す。
+	// 利用者が許可したときに許可へ写す
+	DeviceName   *string
+	Status       OAuthDeviceAuthorizationStatus
+	Interval     time.Duration
+	ExpiresAt    time.Time
+	LastPolledAt *time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // IsExpiredは要求の有効期限が切れているかを返す

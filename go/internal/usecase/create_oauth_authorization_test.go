@@ -29,6 +29,48 @@ func newCreateOAuthAuthorizationUsecaseForTest(q *query.Queries) *CreateOAuthAut
 	)
 }
 
+// buildUsedOAuthGrantsDBは、アプリappIDへのメンバーの失効していない許可をn件、最終利用日時の古い順に
+// 作ってコミットし、IDを古い順に返す
+func buildUsedOAuthGrantsDB(t *testing.T, appID model.OAuthApplicationID, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, n int) []model.OAuthGrantID {
+	t.Helper()
+
+	ids := make([]model.OAuthGrantID, n)
+	testutil.CommitFixture(t, func(tx *sql.Tx) {
+		for i := range ids {
+			ids[i] = testutil.NewOAuthGrantBuilder(t, tx).
+				WithOAuthApplicationID(appID).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).
+				WithLastUsedAt(time.Now().Add(-time.Duration(n-i) * time.Hour)).Build()
+		}
+	})
+	return ids
+}
+
+// assertOAuthGrantsAfterEvictionは、上限まで許可があるところに1件作った後、既存の許可existing
+// (最終利用日時の古い順) のうち先頭だけが押し出され、失効していない許可が上限の件数に収まっていることを
+// 確かめる
+func assertOAuthGrantsAfterEviction(t *testing.T, q *query.Queries, spaceID model.SpaceID, spaceMemberID model.SpaceMemberID, existing []model.OAuthGrantID) {
+	t.Helper()
+
+	ctx := context.Background()
+	grantRepo := repository.NewOAuthGrantRepository(q)
+	for i, id := range existing {
+		grant, err := grantRepo.FindByID(ctx, id, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		if want := i == 0; grant.IsRevoked() != want {
+			t.Errorf("%d番目に古い許可のIsRevoked() = %v、期待値 = %v", i+1, grant.IsRevoked(), want)
+		}
+	}
+	grants, err := grantRepo.ListUnrevokedBySpaceMember(ctx, spaceID, spaceMemberID)
+	if err != nil {
+		t.Fatalf("ListUnrevokedBySpaceMember()のエラー = %v", err)
+	}
+	if len(grants) != model.OAuthGrantMaxPerApplicationMember {
+		t.Errorf("失効していない許可の件数 = %d、期待値 = %d", len(grants), model.OAuthGrantMaxPerApplicationMember)
+	}
+}
+
 func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 	t.Parallel()
 
@@ -40,6 +82,7 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		f := setupOAuthAuthorizationFixtureDB(t, "coauth-approve", model.SpaceRoleViewer, true)
 		params := validOAuthAuthorizationParams(f.clientID)
 		params.RedirectURI = "http://127.0.0.1:53123/callback"
+		params.DeviceName = " my-laptop "
 
 		before := time.Now()
 		output, err := newCreateOAuthAuthorizationUsecaseForTest(q).Execute(context.Background(), CreateOAuthAuthorizationInput{
@@ -91,17 +134,45 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		if want := []model.Scope{model.ScopeTopicRead}; !slices.Equal(grant.Scopes, want) {
 			t.Errorf("grant.Scopes = %v、期待値 = %v", grant.Scopes, want)
 		}
+		// 認可要求の端末名は、前後の空白を除いて許可に保存する
+		if grant.DeviceName == nil || *grant.DeviceName != "my-laptop" {
+			t.Errorf("grant.DeviceName = %v、期待値 = %q", grant.DeviceName, "my-laptop")
+		}
 	})
 
-	t.Run("再認可で選んだスコープに許可を置き換え、範囲を狭められる", func(t *testing.T) {
+	t.Run("同じアプリ・メンバーの許可が上限に達していれば、最終利用が最も古い許可を押し出してから作る", func(t *testing.T) {
 		t.Parallel()
 
 		db := testutil.GetTestDB()
 		q := query.New(db)
-		f := setupOAuthAuthorizationFixtureDB(t, "coauth-narrow", model.SpaceRoleEditor, true)
-		uc := newCreateOAuthAuthorizationUsecaseForTest(q)
+		f := setupOAuthAuthorizationFixtureDB(t, "coauth-evict", model.SpaceRoleEditor, true)
+		app, err := repository.NewOAuthApplicationRepository(q).FindByClientID(context.Background(), f.clientID)
+		if err != nil || app == nil {
+			t.Fatalf("FindByClientID() = (%v, %v)、アプリを期待", app, err)
+		}
+		existing := buildUsedOAuthGrantsDB(t, app.ID, f.spaceID, f.spaceMemberID, model.OAuthGrantMaxPerApplicationMember)
 
-		var grantID model.OAuthGrantID
+		if _, err := newCreateOAuthAuthorizationUsecaseForTest(q).Execute(context.Background(), CreateOAuthAuthorizationInput{
+			UserID:        f.userID,
+			Params:        validOAuthAuthorizationParams(f.clientID),
+			Approved:      true,
+			GrantedScopes: []string{"page:write"},
+		}); err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		assertOAuthGrantsAfterEviction(t, q, f.spaceID, f.spaceMemberID, existing)
+	})
+
+	t.Run("再認可すると既存の許可を変えずに、選んだスコープで別の許可を作る", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthAuthorizationFixtureDB(t, "coauth-another", model.SpaceRoleEditor, true)
+		uc := newCreateOAuthAuthorizationUsecaseForTest(q)
+		grantRepo := repository.NewOAuthGrantRepository(q)
+
+		var grantIDs []model.OAuthGrantID
 		for _, granted := range [][]string{{"topic:read", "page:write"}, {"page:write"}} {
 			output, err := uc.Execute(context.Background(), CreateOAuthAuthorizationInput{
 				UserID:        f.userID,
@@ -116,15 +187,20 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 			if err != nil {
 				t.Fatalf("FindByCodeDigest()のエラー = %v", err)
 			}
-			grantID = code.OAuthGrantID
+			grantIDs = append(grantIDs, code.OAuthGrantID)
+		}
+		if grantIDs[0] == grantIDs[1] {
+			t.Fatalf("許可のID = %v、再認可で別の許可を作ることを期待", grantIDs)
 		}
 
-		grant, err := repository.NewOAuthGrantRepository(q).FindByID(context.Background(), grantID, f.spaceID)
-		if err != nil {
-			t.Fatalf("FindByID()のエラー = %v", err)
-		}
-		if want := []model.Scope{model.ScopePageWrite}; grant == nil || !slices.Equal(grant.Scopes, want) {
-			t.Errorf("grant = %+v、期待値 = スコープが %v の許可", grant, want)
+		for i, want := range [][]model.Scope{{model.ScopeTopicRead, model.ScopePageWrite}, {model.ScopePageWrite}} {
+			grant, err := grantRepo.FindByID(context.Background(), grantIDs[i], f.spaceID)
+			if err != nil {
+				t.Fatalf("FindByID()のエラー = %v", err)
+			}
+			if grant == nil || grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, want) || len(grant.Scopes) != len(want) {
+				t.Errorf("%d件目の許可 = %+v、期待値 = 失効しておらずスコープが %v の許可", i+1, grant, want)
+			}
 		}
 	})
 

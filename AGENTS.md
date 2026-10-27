@@ -17,7 +17,7 @@ WikinoはWikiアプリケーションです。
 ├── go/                  # Go版の実装 (段階的に機能を移行中)
 ├── rails/               # Rails版の実装 (既存の本番システム)
 ├── caddy/               # リバースプロキシ設定
-├── docs/                # Wikino固有のドキュメント (ADR、作業計画書など)
+├── docs/                # Wikino固有のドキュメント (レビューなど。ADRと作業計画書はWikinoで管理)
 ├── testdata/            # サブプロジェクトをまたいで共有するテストデータ (Wikinoファイル形式など)
 ├── .github/             # 共通のCI/CD設定
 ├── Dockerfile.dev       # 統合開発コンテナのDockerfile
@@ -168,7 +168,7 @@ Wikinoではフィーチャーブランチではなく **フィーチャーフ�
 
 なぜその設計になっているかを理解するにはまずADRを、現在どう動くかを理解するにはコードとテストを参照してください。
 
-- [docs/README.md](./docs/README.md) - ドキュメントガイド。ADRは `docs/private/adr/` に置いています
+- [docs/README.md](./docs/README.md) - ドキュメントガイド。ADRと作業計画書はWikinoで管理しています
 
 ## 言語・文章ルール
 

@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -49,7 +48,9 @@ func TestUpdateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 	t.Run("許可すると、選んだスコープで許可を作り、要求を許可済みにして許可を結び付ける", func(t *testing.T) {
 		t.Parallel()
 
-		f := setupOAuthDeviceVerificationFixture(t, "devupdate-approve", model.SpaceRoleEditor, true, nil)
+		f := setupOAuthDeviceVerificationFixture(t, "devupdate-approve", model.SpaceRoleEditor, true, func(b *testutil.OAuthDeviceAuthorizationBuilder) {
+			b.WithDeviceName("my-laptop")
+		})
 		output, err := newUpdateOAuthDeviceAuthorizationUsecaseForTest(q).Execute(context.Background(), UpdateOAuthDeviceAuthorizationInput{
 			UserID:        f.userID,
 			UserCode:      f.userCode,
@@ -80,6 +81,10 @@ func TestUpdateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 		if want := []model.Scope{model.ScopePageRead}; !slices.Equal(grant.Scopes, want) {
 			t.Errorf("許可のスコープ = %v、期待値 = %v", grant.Scopes, want)
 		}
+		// 要求で受け取った端末名を許可へ写す
+		if grant.DeviceName == nil || *grant.DeviceName != "my-laptop" {
+			t.Errorf("許可の端末名 = %v、期待値 = %q", grant.DeviceName, "my-laptop")
+		}
 
 		// 許可済みのコードは使用済みとして、もう受け付けない
 		_, err = newUpdateOAuthDeviceAuthorizationUsecaseForTest(q).Execute(context.Background(), UpdateOAuthDeviceAuthorizationInput{
@@ -89,6 +94,23 @@ func TestUpdateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 			GrantedScopes: []string{"page:read"},
 		})
 		assertInvalidOAuthDeviceUserCode(t, err)
+	})
+
+	t.Run("同じアプリ・メンバーの許可が上限に達していれば、最終利用が最も古い許可を押し出してから作る", func(t *testing.T) {
+		t.Parallel()
+
+		f := setupOAuthDeviceVerificationFixture(t, "devupdate-evict", model.SpaceRoleEditor, true, nil)
+		existing := buildUsedOAuthGrantsDB(t, f.applicationID, f.spaceID, f.spaceMemberID, model.OAuthGrantMaxPerApplicationMember)
+
+		if _, err := newUpdateOAuthDeviceAuthorizationUsecaseForTest(q).Execute(context.Background(), UpdateOAuthDeviceAuthorizationInput{
+			UserID:        f.userID,
+			UserCode:      f.userCode,
+			Approved:      true,
+			GrantedScopes: []string{"page:read"},
+		}); err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		assertOAuthGrantsAfterEviction(t, q, f.spaceID, f.spaceMemberID, existing)
 	})
 
 	t.Run("拒否すると、許可を作らず要求を拒否済みにする", func(t *testing.T) {
@@ -185,44 +207,38 @@ func TestUpdateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 	})
 }
 
-// 要求・許可のロック待ちを観測してから期限を過ぎさせ、取得後の再検証とロールバックを確かめる。
+// 要求のロックと許可の作成の待機を観測してから期限を過ぎさせ、変更が残らないことを確かめる。
+// 同じアプリ・メンバーの既存の許可とトークンも変えない。
 func TestUpdateOAuthDeviceAuthorizationUsecase_ExpiryDuringLock(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name          string
-		table         string
-		queryName     string
-		existingGrant bool
+		name      string
+		key       string
+		table     string
+		queryName string
 	}{
-		{name: "要求のロック待機", table: "oauth_device_authorizations", queryName: "LockPendingOAuthDeviceAuthorization"},
-		{name: "既存の許可のロック待機", table: "oauth_grants", queryName: "LockOrCreateOAuthGrant", existingGrant: true},
-		{name: "初回の許可作成の外部キー検証待機", table: "space_members", queryName: "LockOrCreateOAuthGrant"},
+		{name: "要求のロック待機", key: "devupdate-expiry-request", table: "oauth_device_authorizations", queryName: "LockPendingOAuthDeviceAuthorization"},
+		{name: "許可作成の外部キー検査待機", key: "devupdate-expiry-grant-fk", table: "space_members", queryName: "ApproveOAuthDeviceAuthorizationWithGrant"},
 	}
-	for index, tt := range tests {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			db := testutil.GetTestDB()
 			q := query.New(db)
 			ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
 			defer cancel()
-			key := fmt.Sprintf("devupdate-expiry-lock-%d", index)
+			key := tt.key
 			f := setupOAuthDeviceVerificationFixture(t, key, model.SpaceRoleEditor, true, nil)
 			grantRepo := repository.NewOAuthGrantRepository(q)
-			lockID := string(f.deviceAuthorizationID)
 			originalScopes := []model.Scope{model.ScopePageRead, model.ScopePageWrite}
-			if tt.existingGrant {
-				grant, err := grantRepo.Create(ctx, repository.CreateOAuthGrantInput{OAuthApplicationID: f.applicationID, SpaceID: f.spaceID, SpaceMemberID: f.spaceMemberID, Scopes: originalScopes})
-				if err != nil {
-					t.Fatal(err)
-				}
-				lockID = string(grant.ID)
-				testutil.CommitFixture(t, func(tx *sql.Tx) {
-					testutil.NewOAuthAccessTokenBuilder(t, tx).WithOAuthGrantID(grant.ID).WithSpaceID(f.spaceID).WithScopes(originalScopes).WithTokenDigest(key + "-access").Build()
-					testutil.NewOAuthRefreshTokenBuilder(t, tx).WithOAuthGrantID(grant.ID).WithSpaceID(f.spaceID).WithScopes(originalScopes).WithTokenDigest(key + "-refresh").Build()
-				})
-			} else if tt.table == "space_members" {
-				lockID = string(f.spaceMemberID)
+			existing, err := grantRepo.Create(ctx, repository.CreateOAuthGrantInput{OAuthApplicationID: f.applicationID, SpaceID: f.spaceID, SpaceMemberID: f.spaceMemberID, Scopes: originalScopes})
+			if err != nil {
+				t.Fatal(err)
 			}
+			testutil.CommitFixture(t, func(tx *sql.Tx) {
+				testutil.NewOAuthAccessTokenBuilder(t, tx).WithOAuthGrantID(existing.ID).WithSpaceID(f.spaceID).WithScopes(originalScopes).WithTokenDigest(key + "-access").Build()
+				testutil.NewOAuthRefreshTokenBuilder(t, tx).WithOAuthGrantID(existing.ID).WithSpaceID(f.spaceID).WithScopes(originalScopes).WithTokenDigest(key + "-refresh").Build()
+			})
 			expiresAt := time.Now().Add(5 * time.Second)
 			if _, err := db.ExecContext(ctx, "UPDATE oauth_device_authorizations SET expires_at = $1 WHERE id = $2 AND space_id = $3", expiresAt, string(f.deviceAuthorizationID), string(f.spaceID)); err != nil {
 				t.Fatal(err)
@@ -236,12 +252,12 @@ func TestUpdateOAuthDeviceAuthorizationUsecase_ExpiryDuringLock(t *testing.T) {
 			if err := tx.QueryRowContext(ctx, "SELECT pg_backend_pid()").Scan(&blockingPID); err != nil {
 				t.Fatal(err)
 			}
-			// 表名は固定したテストケースだけから取り、ユーザー入力は使わない。
-			lock := "FOR UPDATE"
-			if tt.existingGrant {
-				lock = "FOR NO KEY UPDATE"
+			lockID := string(f.deviceAuthorizationID)
+			if tt.table == "space_members" {
+				lockID = string(f.spaceMemberID)
 			}
-			if _, err := tx.ExecContext(ctx, "SELECT id FROM "+tt.table+" WHERE id = $1 AND space_id = $2 "+lock, lockID, string(f.spaceID)); err != nil {
+			// 表名は固定したテストケースだけから取り、ユーザー入力は使わない。
+			if _, err := tx.ExecContext(ctx, "SELECT id FROM "+tt.table+" WHERE id = $1 AND space_id = $2 FOR UPDATE", lockID, string(f.spaceID)); err != nil {
 				t.Fatal(err)
 			}
 			done := make(chan error, 1)
@@ -254,9 +270,9 @@ func TestUpdateOAuthDeviceAuthorizationUsecase_ExpiryDuringLock(t *testing.T) {
 			for {
 				var blocked bool
 				if err := db.QueryRowContext(ctx, `SELECT EXISTS (
-     SELECT 1 FROM pg_stat_activity WHERE datname = current_database()
-      AND $1 = ANY(pg_blocking_pids(pid)) AND query LIKE '%' || $2 || '%'
-    )`, blockingPID, tt.queryName).Scan(&blocked); err != nil {
+		     SELECT 1 FROM pg_stat_activity WHERE datname = current_database()
+		      AND $1 = ANY(pg_blocking_pids(pid)) AND query LIKE '%' || $2 || '%'
+		    )`, blockingPID, tt.queryName).Scan(&blocked); err != nil {
 					t.Fatal(err)
 				}
 				if blocked {
@@ -290,18 +306,12 @@ func TestUpdateOAuthDeviceAuthorizationUsecase_ExpiryDuringLock(t *testing.T) {
 			if device.Status != model.OAuthDeviceAuthorizationStatusPending || device.OAuthGrantID != nil || !slices.Equal(device.Scopes, originalScopes) {
 				t.Errorf("期限切れの要求が変更された: %+v", device)
 			}
-			grant, err := grantRepo.FindUnrevokedByApplicationAndSpaceMember(ctx, f.applicationID, f.spaceID, f.spaceMemberID)
+			grants, err := grantRepo.ListUnrevokedBySpaceMember(ctx, f.spaceID, f.spaceMemberID)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !tt.existingGrant {
-				if grant != nil {
-					t.Errorf("期限切れなのに許可が作成された: %+v", grant)
-				}
-				return
-			}
-			if grant == nil || !slices.Equal(grant.Scopes, originalScopes) {
-				t.Fatalf("既存の許可が変更された: %+v", grant)
+			if len(grants) != 1 || grants[0].ID != existing.ID || !slices.Equal(grants[0].Scopes, originalScopes) {
+				t.Fatalf("失効していない許可 = %+v、期待値 = 変更されていない既存の許可 %vだけ", grants, existing.ID)
 			}
 			access, err := repository.NewOAuthAccessTokenRepository(q).FindByTokenDigest(ctx, key+"-access")
 			if err != nil {

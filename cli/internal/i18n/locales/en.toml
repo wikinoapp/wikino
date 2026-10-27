@@ -108,9 +108,13 @@ Either way, the token is saved only after the API confirms it works in the space
 When logging in with the browser, a token that was not saved is revoked on the server.
 The member is determined by the token, so do not give `--member`.
 
+When logging in with the browser, a device name is sent to the server so the device can be told apart on the connected apps page.
+Give it with `--device-name`; by default the host name (up to 100 characters) is sent.
+
 If there is no default yet, the logged-in combination becomes the default.
 If the space has no default member yet, the logged-in member becomes the space's default.
-Logging in again as the same member replaces the saved token."""
+Logging in again as the same member replaces the saved token and revokes the replaced OAuth token on the server.
+If revoking fails, login succeeds with a warning."""
 [auth_login_example]
 description = "auth loginコマンドの使用例"
 other = """
@@ -122,6 +126,9 @@ other = """
 
   # Request only the read and draft scopes
   wikino auth login my-space --scopes page:read,draft_page:read,draft_page:write
+
+  # Log in with a device name to tell this device apart on the connected apps page
+  wikino auth login my-space --device-name work-laptop
 
   # Log in with a personal access token saved in a file
   wikino auth login my-space --with-token < token.txt
@@ -143,12 +150,13 @@ other = """
 [auth_login_errors]
 description = "auth loginコマンドのヘルプの「エラー」の節"
 other = """
-  2  No space is given, `--member` is given, `--scopes` is empty or has an unknown scope, `--with-token` is combined with `--scopes` or `--device`, or the token on stdin is empty or malformed
+  2  No space is given, `--member` is given, `--scopes` is empty or has an unknown scope, `--with-token` is combined with `--scopes`, `--device`, or `--device-name`, `--device-name` is empty, longer than 100 characters, or has control characters or invalid UTF-8, or the token on stdin is empty or malformed
   3  Approval was denied on the authorization page (authorization_denied), the authorization response did not match the request, the authorization server returned an error, or it does not support device authorization (oauth_error), or the token is invalid or expired (401)
   5  The token does not belong to the space (404). Give the identifier of the space that issued the token
   1  Approval did not happen within 5 minutes or before the device authorization code expired (login_timeout), the authorization server's response could not be read (response_error), the connection failed, or saving the token or configuration (or restoring after a failed save) failed
   Nothing is saved if API validation fails.
-  If only removing the token from its previous store fails, login succeeds with a warning, and the removal can be retried with login or logout."""
+  If only removing the token from its previous store fails, login succeeds with a warning, and the removal can be retried with login or logout.
+  If only revoking the replaced token on the server fails, login also succeeds with a warning. Disconnect the old connection on the connected apps page."""
 [auth_login_with_token_flag]
 description = "auth loginの--with-tokenフラグの説明"
 other = "Read a personal access token from stdin"
@@ -161,6 +169,18 @@ other = "Log in with device authorization (approve by entering a code in a brows
 [auth_login_scopes_flag]
 description = "auth loginの--scopesフラグの説明"
 other = "Scopes to request (comma-separated). Defaults to all scopes that can be granted to a token"
+
+[auth_login_device_name_flag]
+description = "auth loginの--device-nameフラグの説明"
+other = "Device name to tell this device apart on the connected apps page (up to 100 characters). Defaults to the host name"
+
+[auth_login_error_device_name_with_token]
+description = "auth loginで--with-tokenと--device-nameを併用したときのメッセージ"
+other = "`--device-name` cannot be combined with `--with-token`. Personal access tokens do not record a device name."
+
+[auth_login_error_device_name_invalid]
+description = "auth loginの--device-nameが空・長すぎる・制御文字か不正なUTF-8を含むときのメッセージ。Maxは最大文字数"
+other = "Give `--device-name` a device name of up to {{.Max}} characters without control characters."
 
 [auth_login_error_scopes_with_token]
 description = "auth loginで--with-tokenと--scopesを併用したときのメッセージ"
@@ -285,6 +305,10 @@ other = "Run again after other `wikino` processes using the same credentials hav
 [auth_warning_refresh_save_failed]
 description = "更新したトークンを保存できなかったときの警告。Spaceはスペースの識別子"
 other = "Warning: could not save the refreshed token. The next run will require logging in again with `wikino auth login {{.Space}}`."
+
+[auth_warning_relogin_revoke_failed]
+description = "ログインし直したときに置き換えたトークンを失効させられなかったときの警告。Spaceはスペースの識別子"
+other = "Warning: could not revoke the replaced token on the server. The new credentials were saved. Disconnect the old connection on the connected apps page of space {{.Space}}."
 
 [auth_warning_revoke_failed]
 description = "ログアウトでリフレッシュトークンを失効させられなかったときの警告。Spaceはスペースの識別子"

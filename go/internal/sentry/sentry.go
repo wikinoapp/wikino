@@ -29,6 +29,8 @@ var sensitiveHeaders = []string{
 	"authorization",
 	"cookie",
 	"x-csrf-token",
+	// 同一オリジンのRefererには、端末名を含む認可URLが入る。
+	"referer",
 }
 
 // マスクすべきリクエストボディのキー (トークン境界一致、小文字)。
@@ -39,12 +41,18 @@ var sensitiveBodyKeys = []string{
 	"token",
 	"secret",
 	"code",
+	// device_nameと、認可URLを引き継ぐログインフォームのbackをマスクする。
+	"device",
+	"back",
 }
 
 // マスクすべきクエリパラメータのキー (トークン境界一致、小文字)。
 var sensitiveQueryKeys = []string{
 	"token",
 	"key",
+	// backの値全体を隠すことで、内側の認可URLにあるdevice_nameも隠す。
+	"device",
+	"back",
 }
 
 // マスクすべきタグのキー (トークン境界一致、小文字)。Sentryのタグには
@@ -57,6 +65,7 @@ var sensitiveTagKeys = []string{
 	"password",
 	"secret",
 	"token",
+	"device",
 }
 
 // メッセージレベルでSentry送信をスキップするパターン (正規表現)。
@@ -75,14 +84,15 @@ func Init(cfg Config) error {
 	}
 
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:              cfg.DSN,
-		Environment:      cfg.Environment,
-		Release:          cfg.Release,
-		TracesSampleRate: cfg.TracesSampleRate,
-		EnableTracing:    true,
-		Debug:            cfg.Debug,
-		BeforeSend:       beforeSend,
-		IgnoreErrors:     ignoredErrorPatterns,
+		Dsn:                   cfg.DSN,
+		Environment:           cfg.Environment,
+		Release:               cfg.Release,
+		TracesSampleRate:      cfg.TracesSampleRate,
+		EnableTracing:         true,
+		Debug:                 cfg.Debug,
+		BeforeSend:            beforeSend,
+		BeforeSendTransaction: beforeSendTransaction,
+		IgnoreErrors:          ignoredErrorPatterns,
 	})
 	if err != nil {
 		return err
@@ -111,6 +121,18 @@ func beforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 		return nil
 	}
 
+	filterSensitiveData(event)
+	return event
+}
+
+// beforeSendTransactionはエラー用のBeforeSendを通らないトランザクションもマスクする。
+func beforeSendTransaction(event *sentry.Event, _ *sentry.EventHint) *sentry.Event {
+	filterSensitiveData(event)
+	return event
+}
+
+// filterSensitiveDataはエラー・トランザクションに共通するセンシティブ情報をマスクする。
+func filterSensitiveData(event *sentry.Event) {
 	filterTags(event)
 
 	if event.Request != nil {
@@ -118,7 +140,6 @@ func beforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 		filterRequestData(event.Request)
 		filterQueryString(event.Request)
 	}
-	return event
 }
 
 // クライアント切断・runtime中断由来のエラーかを判定する。

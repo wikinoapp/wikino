@@ -324,6 +324,32 @@ func TestAuthorizationURL(t *testing.T) {
 	}
 }
 
+func TestAuthorizationURLDeviceName(t *testing.T) {
+	t.Parallel()
+
+	metadata := &Metadata{AuthorizationEndpoint: testIssuer + "/oauth/authorize"}
+	for _, tt := range []struct {
+		name       string
+		deviceName string
+	}{
+		{name: "端末名があれば付ける", deviceName: "work laptop"},
+		{name: "端末名が空なら付けない", deviceName: ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := metadata.AuthorizationURL(AuthorizationRequest{Scopes: []string{"page:read"}, DeviceName: tt.deviceName})
+			u, err := url.Parse(got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if q := u.Query(); q.Get("device_name") != tt.deviceName || q.Has("device_name") != (tt.deviceName != "") {
+				t.Errorf("認可要求のURL = %s、device_name = %q を期待", got, tt.deviceName)
+			}
+		})
+	}
+}
+
 func TestRefreshAndRevokeRequests(t *testing.T) {
 	t.Parallel()
 

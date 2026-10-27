@@ -10,6 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // OAuthAuthorizationParamsはOAuthの認可要求のパラメーター (RFC 6749 §4.1.1、RFC 7636 §4.3、
@@ -23,6 +24,9 @@ type OAuthAuthorizationParams struct {
 	CodeChallenge       string
 	CodeChallengeMethod string
 	Resource            string
+	// DeviceNameは独自のパラメーター `device_name` の値で、連携の一覧で端末を見分けるために許可へ
+	// 保存する。OAuthに端末名を渡す標準のパラメーターは無い。同意画面には出さない
+	DeviceName string
 	// MalformedQueryはGETのクエリに不正なエスケープなどがあることを表す。
 	// クライアントとリダイレクトURIを確かめた後に `invalid_request` として返す
 	MalformedQuery bool
@@ -41,6 +45,9 @@ type oauthAuthorizationRequest struct {
 	scopes        []model.Scope
 	state         string
 	codeChallenge string
+
+	// deviceNameは検証を通った端末名。送られなかったときはnil
+	deviceName *string
 }
 
 // codeChallengePatternはS256のcode_challengeの形式。SHA-256の32バイトをbase64url (パディング
@@ -118,6 +125,11 @@ func resolveOAuthAuthorizationRequest(
 		return fail(model.OAuthAuthorizationErrorInvalidScope)
 	}
 
+	deviceName, ok := validator.ParseOAuthDeviceName(params.DeviceName)
+	if !ok {
+		return fail(model.OAuthAuthorizationErrorInvalidRequest)
+	}
+
 	// 3. 連携先のスペース
 	if slices.Contains(params.DuplicatedParams, "resource") {
 		return fail(model.OAuthAuthorizationErrorInvalidTarget)
@@ -137,6 +149,7 @@ func resolveOAuthAuthorizationRequest(
 		scopes:        scopes,
 		state:         params.State,
 		codeChallenge: params.CodeChallenge,
+		deviceName:    deviceName,
 	}, nil
 }
 
