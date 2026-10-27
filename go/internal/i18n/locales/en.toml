@@ -2266,13 +2266,25 @@ other = "You have not authorized any apps"
 description = "連携中のアプリの一覧の許可した日時の項目名"
 other = "Authorized"
 
+[oauth_grant_index_last_used_at]
+description = "連携中のアプリの一覧の最終利用日時の項目名"
+other = "Last used"
+
+[oauth_grant_index_never_used]
+description = "連携中のアプリの一覧で、連携がまだ使われていないことの表示"
+other = "Never used"
+
 [oauth_grant_index_revoke]
 description = "連携中のアプリの一覧の解除ボタン"
 other = "Revoke access"
 
 [oauth_grant_index_revoke_confirm]
-description = "連携の解除の確認ダイアログ"
-other = "Revoke access for \"{{.Name}}\"? This app will no longer be able to call the API for this space."
+description = "連携の解除の確認ダイアログ (端末名が無い連携。連携した日時で示す)"
+other = "Revoke access for \"{{.Name}}\" authorized on {{.CreatedAt}}? The app using this access will no longer be able to call the API for this space."
+
+[oauth_grant_index_revoke_confirm_with_device_name]
+description = "連携の解除の確認ダイアログ (端末名がある連携)"
+other = "Revoke access for \"{{.Name}}\" on \"{{.DeviceName}}\"? The app on this device will no longer be able to call the API for this space."
 
 [flash_oauth_grant_revoked]
 description = "連携を解除したときのフラッシュメッセージ"
