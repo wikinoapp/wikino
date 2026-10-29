@@ -6,6 +6,7 @@ INSERT INTO oauth_refresh_tokens (
     space_id,
     token_digest,
     scopes,
+    audience,
     expires_at,
     created_at,
     updated_at
@@ -14,6 +15,7 @@ INSERT INTO oauth_refresh_tokens (
     @space_id,
     @token_digest,
     @scopes::text[],
+    @audience,
     @expires_at,
     @now,
     @now
@@ -27,8 +29,8 @@ INSERT INTO oauth_refresh_tokens (
 SELECT * FROM oauth_refresh_tokens WHERE token_digest = @token_digest;
 
 -- name: RotateOAuthRefreshToken :one
--- リフレッシュトークンを使用済みにし、同じ許可・スコープの新しいリフレッシュトークンと、
--- 同じ許可のアクセストークンを作成して、新しいリフレッシュトークンを返す。1つの文で判定と
+-- リフレッシュトークンを使用済みにし、同じ許可・スコープ・宛先の新しいリフレッシュトークンと、
+-- 同じ許可・宛先のアクセストークンを作成して、新しいリフレッシュトークンを返す。1つの文で判定と
 -- 更新を行うため、同じトークンの同時の更新でも新しいトークンを返すのは1回だけである。
 -- 元のトークンが使用済み・失効済み・期限切れなら何もせず行を返さない。
 --
@@ -44,7 +46,7 @@ WITH used AS (
       AND oauth_refresh_tokens.used_at IS NULL
       AND oauth_refresh_tokens.revoked_at IS NULL
       AND oauth_refresh_tokens.expires_at > @now::timestamptz
-    RETURNING oauth_refresh_tokens.id, oauth_refresh_tokens.oauth_grant_id, oauth_refresh_tokens.space_id, oauth_refresh_tokens.scopes
+    RETURNING oauth_refresh_tokens.id, oauth_refresh_tokens.oauth_grant_id, oauth_refresh_tokens.space_id, oauth_refresh_tokens.scopes, oauth_refresh_tokens.audience
 ),
 created_access_token AS (
     INSERT INTO oauth_access_tokens (
@@ -52,6 +54,7 @@ created_access_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -61,6 +64,7 @@ created_access_token AS (
         used.space_id,
         @access_token_digest,
         @access_token_scopes::text[],
+        used.audience,
         @access_token_expires_at,
         @now,
         @now
@@ -71,6 +75,7 @@ INSERT INTO oauth_refresh_tokens (
     space_id,
     token_digest,
     scopes,
+    audience,
     previous_refresh_token_id,
     expires_at,
     created_at,
@@ -81,6 +86,7 @@ SELECT
     used.space_id,
     @token_digest,
     used.scopes,
+    used.audience,
     used.id,
     @expires_at,
     @now,

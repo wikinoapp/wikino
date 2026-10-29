@@ -47,6 +47,7 @@ var oauthAuthorizationParamNames = []string{
 	"code_challenge",
 	"code_challenge_method",
 	"resource",
+	"space_identifier",
 	"device_name",
 }
 
@@ -69,6 +70,7 @@ func parseOAuthAuthorizationParams(values url.Values) usecase.OAuthAuthorization
 		CodeChallenge:       values.Get("code_challenge"),
 		CodeChallengeMethod: values.Get("code_challenge_method"),
 		Resource:            values.Get("resource"),
+		SpaceIdentifier:     values.Get("space_identifier"),
 		DeviceName:          values.Get("device_name"),
 		DuplicatedParams:    duplicated,
 	}

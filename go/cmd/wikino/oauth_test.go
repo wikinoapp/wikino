@@ -223,6 +223,7 @@ func authorizeWithScopes(t *testing.T, cfg *config.Config, q *query.Queries, f o
 		repository.NewSpaceMemberRepository(q),
 		repository.NewOAuthAuthorizationCodeRepository(q),
 		validator.NewOAuthAuthorizationCreateValidator(),
+		testutil.NewCIMDStub(nil).Fetcher(),
 	).Execute(context.Background(), usecase.CreateOAuthAuthorizationInput{
 		UserID: f.userID,
 		Params: usecase.OAuthAuthorizationParams{
@@ -444,6 +445,7 @@ func TestOAuthFlow_resourceの無い認可要求(t *testing.T) {
 		repository.NewSpaceMemberRepository(q),
 		repository.NewOAuthAuthorizationCodeRepository(q),
 		validator.NewOAuthAuthorizationCreateValidator(),
+		testutil.NewCIMDStub(nil).Fetcher(),
 	).Execute(context.Background(), usecase.CreateOAuthAuthorizationInput{
 		UserID: f.userID,
 		Params: usecase.OAuthAuthorizationParams{
@@ -875,6 +877,7 @@ func TestOAuthFlow_メタデータからの発見(t *testing.T) {
 		repository.NewSpaceMemberRepository(q),
 		repository.NewOAuthAuthorizationCodeRepository(q),
 		validator.NewOAuthAuthorizationCreateValidator(),
+		testutil.NewCIMDStub(nil).Fetcher(),
 	).Execute(ctx, usecase.CreateOAuthAuthorizationInput{
 		UserID: f.userID,
 		Params: usecase.OAuthAuthorizationParams{

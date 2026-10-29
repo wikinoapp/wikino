@@ -5,6 +5,7 @@ INSERT INTO oauth_access_tokens (
     space_id,
     token_digest,
     scopes,
+    audience,
     expires_at,
     created_at,
     updated_at
@@ -13,6 +14,7 @@ INSERT INTO oauth_access_tokens (
     @space_id,
     @token_digest,
     @scopes::text[],
+    @audience,
     @expires_at,
     @now,
     @now

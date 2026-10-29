@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/wikinoapp/wikino/go/internal/cimd"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -24,6 +25,10 @@ type OAuthAuthorizationParams struct {
 	CodeChallenge       string
 	CodeChallengeMethod string
 	Resource            string
+	// SpaceIdentifierは独自のパラメーター `space_identifier` の値で、MCPサーバーを宛先にした、スペースに
+	// 属さないクライアント (公式クライアント・CIMDのクライアント) の要求で、利用者が同意画面の前の段で
+	// 選んだ連携するスペースを表す。クライアントは送らず、同意画面が要求に付けて引き継ぐ
+	SpaceIdentifier string
 	// DeviceNameは独自のパラメーター `device_name` の値で、連携の一覧で端末を見分けるために許可へ
 	// 保存する。OAuthに端末名を渡す標準のパラメーターは無い。同意画面には出さない
 	DeviceName string
@@ -37,10 +42,16 @@ type OAuthAuthorizationParams struct {
 }
 
 // oauthAuthorizationRequestは、検証を通った認可要求。連携先のスペースは、アプリのスペースか、
-// 公式クライアントでは `resource` が指すスペースに決まっている
+// スペースに属さないクライアントでは `resource` が指すスペース (公開API宛て) か利用者が選んだスペース
+// (MCPサーバー宛て) に決まる。spaceがnilなら、利用者がまだスペースを選んでいない
 type oauthAuthorizationRequest struct {
-	application   *model.OAuthApplication
-	space         *model.Space
+	application *model.OAuthApplication
+	space       *model.Space
+	audience    model.OAuthAudience
+
+	// spaceSelectedは、連携先のスペースを利用者が選んだ (`space_identifier` で決まった) か
+	spaceSelected bool
+
 	redirectURI   string
 	scopes        []model.Scope
 	state         string
@@ -54,19 +65,35 @@ type oauthAuthorizationRequest struct {
 // なし) で表すと43文字になる (RFC 7636 §4.2)
 var codeChallengePattern = regexp.MustCompile(`^[A-Za-z0-9_-]{43}$`)
 
-// resolveOAuthAuthorizationRequestは認可要求を検証し、連携先のスペースを決める。
+// oauthAuthorizationRequestResolverは、認可要求の検証に使う依存をまとめたもの。同意画面の表示と
+// 同意の送信のUseCaseが共有する
+type oauthAuthorizationRequestResolver struct {
+	appURL               string
+	featureFlagRepo      *repository.FeatureFlagRepository
+	oauthApplicationRepo *repository.OAuthApplicationRepository
+	spaceRepo            *repository.SpaceRepository
+	cimdFetcher          *cimd.Fetcher
+}
+
+// resolveは、ユーザーuserIDが送った認可要求を検証し、連携先のスペースを決める。
 //
 // エラーの返し方はRFC 6749 §4.1.2.1に従う。クライアントIDかリダイレクトURIを確かめられない
 // 要求は、攻撃者の指定した先へ利用者を送らないよう、クライアントへ戻さないエラー (RedirectURIが
 // 空の*model.OAuthAuthorizationError) にする。それ以外の不正は、リダイレクトURIへ付けて
 // クライアントへ戻すエラーにする。
-func resolveOAuthAuthorizationRequest(
-	ctx context.Context,
-	appURL string,
-	oauthApplicationRepo *repository.OAuthApplicationRepository,
-	spaceRepo *repository.SpaceRepository,
-	params OAuthAuthorizationParams,
-) (*oauthAuthorizationRequest, error) {
+//
+// ユーザーに要求の宛先のフィーチャーフラグ (公開APIかMCPサーバー) が無効な場合と、CIMDのクライアントの
+// 要求でMCPサーバーのフラグが無効な場合は、公開前の同意画面の存在を知らせないよう、クライアントを
+// 確かめる前に*model.AppError (見つからない) を返す。
+//
+// MCPサーバーを宛先にした、スペースに属さないクライアントの要求で、利用者がまだスペースを選んで
+// いなければ、spaceがnilの要求を返す。
+func (r *oauthAuthorizationRequestResolver) resolve(ctx context.Context, userID model.UserID, params OAuthAuthorizationParams) (*oauthAuthorizationRequest, error) {
+	audience := model.OAuthAudienceForResource(r.appURL, params.Resource)
+	if err := checkFeatureFlagEnabled(ctx, r.featureFlagRepo, userID, audienceFeatureFlag(audience)); err != nil {
+		return nil, err
+	}
+
 	// 1. クライアントとリダイレクトURI (失敗してもクライアントへ戻さない)
 	invalidClient := &model.OAuthAuthorizationError{
 		Code:    model.OAuthAuthorizationErrorInvalidRequest,
@@ -75,7 +102,14 @@ func resolveOAuthAuthorizationRequest(
 	if params.ClientID == "" || slices.Contains(params.DuplicatedParams, "client_id") {
 		return nil, invalidClient
 	}
-	app, appSpace, err := findOAuthClient(ctx, oauthApplicationRepo, spaceRepo, params.ClientID)
+	var app *model.OAuthApplication
+	var appSpace *model.Space
+	var err error
+	if cimd.IsClientIDMetadataDocumentURL(params.ClientID) {
+		app, err = findClientIDMetadataDocumentClient(ctx, r.featureFlagRepo, r.oauthApplicationRepo, r.cimdFetcher, userID, params.ClientID)
+	} else {
+		app, appSpace, err = findOAuthClient(ctx, r.oauthApplicationRepo, r.spaceRepo, params.ClientID)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -134,17 +168,38 @@ func resolveOAuthAuthorizationRequest(
 	if slices.Contains(params.DuplicatedParams, "resource") {
 		return fail(model.OAuthAuthorizationErrorInvalidTarget)
 	}
-	space, err := resolveOAuthTargetSpace(ctx, appURL, spaceRepo, app, appSpace, params.Resource)
-	if err != nil {
-		return nil, err
+	// スペースを選ぶのは、スペースに属さないクライアントがMCPサーバーを宛先にしたときだけ
+	selectsSpace := audience == model.OAuthAudienceMCPServer && app.SpaceID == nil
+	if params.SpaceIdentifier != "" && !selectsSpace {
+		return fail(model.OAuthAuthorizationErrorInvalidRequest)
 	}
-	if space == nil {
-		return fail(model.OAuthAuthorizationErrorInvalidTarget)
+	var space *model.Space
+	switch {
+	case audience == model.OAuthAudienceMCPServer && !selectsSpace:
+		space = appSpace
+	case selectsSpace && params.SpaceIdentifier != "":
+		space, err = r.spaceRepo.FindByIdentifier(ctx, model.SpaceIdentifier(params.SpaceIdentifier))
+		if err != nil {
+			return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
+		}
+		if space == nil {
+			return fail(model.OAuthAuthorizationErrorInvalidTarget)
+		}
+	case !selectsSpace:
+		space, err = resolveOAuthTargetSpace(ctx, r.appURL, r.spaceRepo, app, appSpace, params.Resource)
+		if err != nil {
+			return nil, err
+		}
+		if space == nil {
+			return fail(model.OAuthAuthorizationErrorInvalidTarget)
+		}
 	}
 
 	return &oauthAuthorizationRequest{
 		application:   app,
 		space:         space,
+		audience:      audience,
+		spaceSelected: selectsSpace && space != nil,
 		redirectURI:   params.RedirectURI,
 		scopes:        scopes,
 		state:         params.State,
@@ -153,9 +208,11 @@ func resolveOAuthAuthorizationRequest(
 	}, nil
 }
 
-// findOAuthClientは、クライアントIDでOAuthアプリを引き、アプリとそのスペースを返す。公式クライアントの
-// スペースはnilである。アプリが無い場合と、スペースのアプリでそのスペースが削除されている場合は、
-// 使えるアプリが無いとしてアプリにnilを返す。
+// findOAuthClientは、クライアントIDでOAuthアプリを引き、アプリとそのスペースを返す。スペースに属さない
+// アプリ (公式クライアント・CIMDのクライアント) のスペースはnilである。アプリが無い場合と、スペースの
+// アプリでそのスペースが削除されている場合は、使えるアプリが無いとしてアプリにnilを返す。
+// CIMDのクライアントは文書を取得し直さずにキャッシュの行を返すため、認可要求では使わず、
+// findClientIDMetadataDocumentClientを使う。
 //
 // クライアントIDでアプリを引くクエリは `space_id` の規約の例外である。認可要求とデバイス認可の要求は
 // スペースを特定する前の入口で、スペースはアプリ (公式クライアントでは `resource`) から決まるため。
@@ -169,7 +226,7 @@ func findOAuthClient(
 	if err != nil {
 		return nil, nil, fmt.Errorf("OAuthアプリの取得に失敗: %w", err)
 	}
-	if app == nil || app.IsOfficialClient() {
+	if app == nil || app.SpaceID == nil {
 		return app, nil, nil
 	}
 
@@ -275,7 +332,13 @@ func decideOAuthAuthorization(
 // checkPublicAPIEnabledは、ユーザーuserIDに公開APIのフィーチャーフラグが有効でなければ
 // 「見つからない」として答える。公開前の同意画面の存在を知らせないためである
 func checkPublicAPIEnabled(ctx context.Context, featureFlagRepo *repository.FeatureFlagRepository, userID model.UserID) error {
-	enabled, err := featureFlagRepo.IsEnabled(ctx, userID, model.FeatureFlagPublicAPI)
+	return checkFeatureFlagEnabled(ctx, featureFlagRepo, userID, model.FeatureFlagPublicAPI)
+}
+
+// checkFeatureFlagEnabledは、ユーザーuserIDにフィーチャーフラグflagが有効でなければ
+// 「見つからない」として答える
+func checkFeatureFlagEnabled(ctx context.Context, featureFlagRepo *repository.FeatureFlagRepository, userID model.UserID, flag model.FeatureFlagName) error {
+	enabled, err := featureFlagRepo.IsEnabled(ctx, userID, flag)
 	if err != nil {
 		return fmt.Errorf("フィーチャーフラグの判定に失敗: %w", err)
 	}

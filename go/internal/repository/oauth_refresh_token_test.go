@@ -28,6 +28,7 @@ func TestOAuthRefreshTokenRepository_Create(t *testing.T) {
 		SpaceID:      f.spaceID,
 		TokenDigest:  "refresh_create_digest",
 		Scopes:       scopes,
+		Audience:     model.OAuthAudienceMCPServer,
 		ExpiresAt:    expiresAt,
 	})
 	if err != nil {
@@ -44,6 +45,9 @@ func TestOAuthRefreshTokenRepository_Create(t *testing.T) {
 	}
 	if token.TokenDigest != "refresh_create_digest" {
 		t.Errorf("token.TokenDigest = %q、期待値 = %q", token.TokenDigest, "refresh_create_digest")
+	}
+	if token.Audience != model.OAuthAudienceMCPServer {
+		t.Errorf("token.Audience = %v、期待値 = %v", token.Audience, model.OAuthAudienceMCPServer)
 	}
 	if !slices.Equal(token.Scopes, scopes) {
 		t.Errorf("token.Scopes = %v、期待値 = %v", token.Scopes, scopes)
@@ -149,6 +153,25 @@ func TestOAuthRefreshTokenRepository_Rotate(t *testing.T) {
 			WithTokenDigest(digest).
 			WithScopes(scopes)
 	}
+
+	t.Run("元のトークンの宛先を新しいトークンとアクセストークンに引き継ぐ", func(t *testing.T) {
+		id := newToken("refresh_rotate_mcp_digest").WithAudience(model.OAuthAudienceMCPServer).Build()
+
+		rotated, err := repo.Rotate(ctx, rotateInput(id, f.spaceID, "refresh_rotate_mcp_new_digest"))
+		if err != nil {
+			t.Fatalf("Rotate()のエラー = %v", err)
+		}
+		if rotated == nil || rotated.Audience != model.OAuthAudienceMCPServer {
+			t.Fatalf("Rotate() = %+v、期待値 = MCPサーバー宛てのトークン", rotated)
+		}
+		accessToken, err := accessTokenRepo.FindByTokenDigest(ctx, "refresh_rotate_mcp_new_digest_access")
+		if err != nil || accessToken == nil {
+			t.Fatalf("アクセストークンの取得結果 = %+v、エラー = %v", accessToken, err)
+		}
+		if accessToken.Audience != model.OAuthAudienceMCPServer {
+			t.Errorf("アクセストークンのAudience = %v、期待値 = %v", accessToken.Audience, model.OAuthAudienceMCPServer)
+		}
+	})
 
 	t.Run("使用済みにして同じ許可・スコープの新しいトークンを返す", func(t *testing.T) {
 		id := newToken("refresh_rotate_digest").Build()

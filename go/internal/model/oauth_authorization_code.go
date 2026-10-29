@@ -9,7 +9,7 @@ import (
 //
 // コードの値そのものは保持せず、CodeDigestで照合する。PKCEはS256だけを受け付けるため、
 // CodeChallengeはS256で計算した値である。RedirectURIは、トークン要求で一致を確かめる
-// ための認可要求のリダイレクトURIである。
+// ための認可要求のリダイレクトURIである。Audienceは、交換で発行するトークンに引き継ぐ宛先である。
 type OAuthAuthorizationCode struct {
 	ID            OAuthAuthorizationCodeID
 	OAuthGrantID  OAuthGrantID
@@ -18,6 +18,7 @@ type OAuthAuthorizationCode struct {
 	Scopes        []Scope
 	RedirectURI   string
 	CodeChallenge string
+	Audience      OAuthAudience
 	ExpiresAt     time.Time
 	UsedAt        *time.Time
 	CreatedAt     time.Time

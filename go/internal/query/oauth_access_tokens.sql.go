@@ -18,6 +18,7 @@ INSERT INTO oauth_access_tokens (
     space_id,
     token_digest,
     scopes,
+    audience,
     expires_at,
     created_at,
     updated_at
@@ -28,8 +29,9 @@ INSERT INTO oauth_access_tokens (
     $4::text[],
     $5,
     $6,
-    $6
-) RETURNING id, oauth_grant_id, space_id, token_digest, scopes, expires_at, revoked_at, created_at, updated_at
+    $7,
+    $7
+) RETURNING id, oauth_grant_id, space_id, token_digest, scopes, expires_at, revoked_at, created_at, updated_at, audience
 `
 
 type CreateOAuthAccessTokenParams struct {
@@ -37,6 +39,7 @@ type CreateOAuthAccessTokenParams struct {
 	SpaceID      string    `json:"space_id"`
 	TokenDigest  string    `json:"token_digest"`
 	Scopes       []string  `json:"scopes"`
+	Audience     int32     `json:"audience"`
 	ExpiresAt    time.Time `json:"expires_at"`
 	Now          time.Time `json:"now"`
 }
@@ -48,6 +51,7 @@ func (q *Queries) CreateOAuthAccessToken(ctx context.Context, arg CreateOAuthAcc
 		arg.SpaceID,
 		arg.TokenDigest,
 		pq.Array(arg.Scopes),
+		arg.Audience,
 		arg.ExpiresAt,
 		arg.Now,
 	)
@@ -62,12 +66,13 @@ func (q *Queries) CreateOAuthAccessToken(ctx context.Context, arg CreateOAuthAcc
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }
 
 const findOAuthAccessTokenByTokenDigest = `-- name: FindOAuthAccessTokenByTokenDigest :one
-SELECT id, oauth_grant_id, space_id, token_digest, scopes, expires_at, revoked_at, created_at, updated_at FROM oauth_access_tokens WHERE token_digest = $1
+SELECT id, oauth_grant_id, space_id, token_digest, scopes, expires_at, revoked_at, created_at, updated_at, audience FROM oauth_access_tokens WHERE token_digest = $1
 `
 
 // トークンダイジェストでOAuthのアクセストークンを取得する。
@@ -87,6 +92,7 @@ func (q *Queries) FindOAuthAccessTokenByTokenDigest(ctx context.Context, tokenDi
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }

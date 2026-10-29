@@ -27,6 +27,7 @@ func TestOAuthAccessTokenRepository_Create(t *testing.T) {
 		SpaceID:      f.spaceID,
 		TokenDigest:  "access_create_digest",
 		Scopes:       scopes,
+		Audience:     model.OAuthAudienceMCPServer,
 		ExpiresAt:    expiresAt,
 	})
 	if err != nil {
@@ -43,6 +44,9 @@ func TestOAuthAccessTokenRepository_Create(t *testing.T) {
 	}
 	if token.TokenDigest != "access_create_digest" {
 		t.Errorf("token.TokenDigest = %q、期待値 = %q", token.TokenDigest, "access_create_digest")
+	}
+	if token.Audience != model.OAuthAudienceMCPServer {
+		t.Errorf("token.Audience = %v、期待値 = %v", token.Audience, model.OAuthAudienceMCPServer)
 	}
 	if !slices.Equal(token.Scopes, scopes) {
 		t.Errorf("token.Scopes = %v、期待値 = %v", token.Scopes, scopes)

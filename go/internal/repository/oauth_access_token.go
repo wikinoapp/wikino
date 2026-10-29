@@ -31,6 +31,7 @@ type CreateOAuthAccessTokenInput struct {
 	SpaceID      model.SpaceID
 	TokenDigest  string
 	Scopes       []model.Scope
+	Audience     model.OAuthAudience
 	ExpiresAt    time.Time
 }
 
@@ -41,6 +42,7 @@ func (r *OAuthAccessTokenRepository) Create(ctx context.Context, input CreateOAu
 		SpaceID:      string(input.SpaceID),
 		TokenDigest:  input.TokenDigest,
 		Scopes:       model.ScopesToStrings(input.Scopes),
+		Audience:     int32(input.Audience),
 		ExpiresAt:    input.ExpiresAt,
 		Now:          time.Now(),
 	})
@@ -87,6 +89,7 @@ func (r *OAuthAccessTokenRepository) toModel(row query.OauthAccessToken) *model.
 		SpaceID:      model.SpaceID(row.SpaceID),
 		TokenDigest:  row.TokenDigest,
 		Scopes:       model.StringsToScopes(row.Scopes),
+		Audience:     model.OAuthAudience(row.Audience),
 		ExpiresAt:    row.ExpiresAt,
 		RevokedAt:    revokedAt,
 		CreatedAt:    row.CreatedAt,

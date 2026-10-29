@@ -30,6 +30,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		CodeChallengeMethodsSupported:          []string{model.OAuthCodeChallengeMethodS256},
 		// 認可レスポンスに `iss` を付ける (RFC 9207 §3)
 		AuthorizationResponseIssParameterSupported: true,
+		// 許可リストのホストのClient ID Metadata Document (CIMD) のクライアントを受け付ける
+		// (draft-ietf-oauth-client-id-metadata-document §5)。許可リストの外のクライアントは同意画面で断る
+		ClientIDMetadataDocumentSupported: true,
 		// 開発者向けのドキュメント。OAuthの流れとスコープはAPIリファレンスで説明する
 		ServiceDocumentation: appURL + model.APIReferencePath,
 	}

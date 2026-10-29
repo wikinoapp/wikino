@@ -64,10 +64,16 @@ templ indexSubtitle() {
 // grantItemは一覧の1件の連携を表示します。
 //
 // 同じアプリの連携は端末ごとに並ぶため、アプリ名の隣に端末名を出して見分けられるようにする。
-// 端末名はクライアントが申告した値で、送られなかった連携では出さない。
+// 端末名はクライアントが申告した値で、送られなかった連携では出さない。CIMDのクライアントは名前を
+// 自分で名乗るため、クライアントIDのホスト名を添える。
 templ grantItem(grant viewmodel.OAuthGrant) {
 	<div class="flex flex-wrap items-baseline gap-x-2">
 		<span id={ grantNameID(grant) } class="font-bold [overflow-wrap:anywhere]">{ grant.ApplicationName }</span>
+		if grant.ApplicationHost != "" {
+			<span class="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+				{ templates.T(ctx, "oauth_grant_index_application_host", map[string]any{"Host": grant.ApplicationHost}) }
+			</span>
+		}
 		if grant.DeviceName != "" {
 			<span id={ deviceNameID(grant) } class="text-sm text-muted-foreground [overflow-wrap:anywhere]">{ grant.DeviceName }</span>
 		}

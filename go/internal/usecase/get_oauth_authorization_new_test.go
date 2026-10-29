@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wikinoapp/wikino/go/internal/cimd"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -58,6 +59,11 @@ func validOAuthAuthorizationParams(clientID string) OAuthAuthorizationParams {
 }
 
 func newGetOAuthAuthorizationNewUsecaseForTest(q *query.Queries) *GetOAuthAuthorizationNewUsecase {
+	return newGetOAuthAuthorizationNewUsecaseWithCIMD(q, testutil.NewCIMDStub(nil).Fetcher())
+}
+
+// newGetOAuthAuthorizationNewUsecaseWithCIMDは、CIMDの文書をfetcherで取得するユースケースを返す
+func newGetOAuthAuthorizationNewUsecaseWithCIMD(q *query.Queries, fetcher *cimd.Fetcher) *GetOAuthAuthorizationNewUsecase {
 	return NewGetOAuthAuthorizationNewUsecase(
 		oauthAuthorizationTestConfig,
 		repository.NewFeatureFlagRepository(q),
@@ -65,6 +71,7 @@ func newGetOAuthAuthorizationNewUsecaseForTest(q *query.Queries) *GetOAuthAuthor
 		repository.NewSpaceRepository(q),
 		repository.NewSpaceMemberRepository(q),
 		repository.NewTopicMemberRepository(q),
+		fetcher,
 	)
 }
 
@@ -387,4 +394,270 @@ func assertRedirectableOAuthAuthorizationError(t *testing.T, err error, wantCode
 	if oe.State != params.State {
 		t.Errorf("State = %q、期待値 = %q", oe.State, params.State)
 	}
+}
+
+// mcpAuthorizationFixtureは、MCPサーバーを宛先にした認可要求のテストの、公式クライアントと、複数の
+// スペースのメンバーのユーザー
+type mcpAuthorizationFixture struct {
+	userID      model.UserID
+	spaceIDs    []model.SpaceID
+	identifiers []model.SpaceIdentifier
+	clientID    string
+}
+
+// setupMCPAuthorizationFixtureは、MCPサーバーのフラグだけを持つユーザーを、keyに番号を付けた識別子の
+// スペースspaces個に編集者として参加させ、公式クライアントを作る
+func setupMCPAuthorizationFixture(t *testing.T, tx *sql.Tx, key string, spaces int) mcpAuthorizationFixture {
+	t.Helper()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail(key + "@example.com").
+		WithAtname(strings.ReplaceAll(key, "-", "_")).
+		Build()
+	testutil.NewFeatureFlagBuilder(t, tx).WithUserID(userID).WithName(string(model.FeatureFlagRemoteMCPServer)).Build()
+
+	f := mcpAuthorizationFixture{userID: userID, clientID: key + "-official"}
+	for i := range spaces {
+		identifier := key + "-" + string(rune('a'+i))
+		spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier(identifier).Build()
+		testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).WithRole(model.SpaceRoleEditor).Build()
+		f.spaceIDs = append(f.spaceIDs, spaceID)
+		f.identifiers = append(f.identifiers, model.SpaceIdentifier(identifier))
+	}
+	testutil.NewOAuthApplicationBuilder(t, tx).
+		AsOfficialClient().
+		WithClientID(f.clientID).
+		WithRedirectURIs([]string{"https://example.com/callback"}).
+		Build()
+	return f
+}
+
+// mcpOAuthAuthorizationParamsは、clientIDのアプリのMCPサーバーを宛先にした、検証を通る認可要求のパラメーターを返す
+func mcpOAuthAuthorizationParams(clientID string) OAuthAuthorizationParams {
+	params := validOAuthAuthorizationParams(clientID)
+	params.Resource = model.MCPServerResourceURL(oauthAuthorizationTestConfig.AppURL())
+	return params
+}
+
+func TestGetOAuthAuthorizationNewUsecase_Execute_MCPServer(t *testing.T) {
+	t.Parallel()
+
+	t.Run("スペースに属さないクライアントは、スペースを選ぶ前ならメンバーであるスペースを選択肢として返す", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupMCPAuthorizationFixture(t, tx, "goan-mcp-options", 2)
+		// メンバーでないスペースは選択肢に出さない
+		testutil.NewSpaceBuilder(t, tx).WithIdentifier("goan-mcp-options-other").Build()
+
+		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: f.userID,
+			Params: mcpOAuthAuthorizationParams(f.clientID),
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if !output.NeedsSpaceSelection() {
+			t.Fatalf("Space = %+v、スペースを選ぶ段を期待", output.Space)
+		}
+		got := make([]model.SpaceID, len(output.SpaceOptions))
+		for i, option := range output.SpaceOptions {
+			got[i] = option.Space.ID
+			if option.DeniedReason != "" {
+				t.Errorf("%sのDeniedReason = %q、期待値 = 空", option.Space.ID, option.DeniedReason)
+			}
+		}
+		slices.Sort(got)
+		want := slices.Sorted(slices.Values(f.spaceIDs))
+		if !slices.Equal(got, want) {
+			t.Errorf("選択肢のスペース = %v、期待値 = %v", got, want)
+		}
+	})
+
+	t.Run("メンバーであるスペースが無ければ、選択肢の無い選ぶ段を返す", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupMCPAuthorizationFixture(t, tx, "goan-mcp-none", 0)
+
+		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: f.userID,
+			Params: mcpOAuthAuthorizationParams(f.clientID),
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if !output.NeedsSpaceSelection() || len(output.SpaceOptions) != 0 {
+			t.Errorf("Space = %+v、SpaceOptions = %+v、期待値 = 選択肢の無い選ぶ段", output.Space, output.SpaceOptions)
+		}
+	})
+
+	t.Run("選べるスペースが1つなら、選ぶ段を省いてそのスペースの同意画面の内容を返す", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupMCPAuthorizationFixture(t, tx, "goan-mcp-single", 1)
+
+		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: f.userID,
+			Params: mcpOAuthAuthorizationParams(f.clientID),
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if output.NeedsSpaceSelection() || output.Space.ID != f.spaceIDs[0] || !output.SpaceSelected {
+			t.Errorf("Space = %+v、SpaceSelected = %v、期待値 = 選んだものとしてスペース %v", output.Space, output.SpaceSelected, f.spaceIDs[0])
+		}
+	})
+
+	t.Run("選んだスペースの同意画面の内容を返す", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupMCPAuthorizationFixture(t, tx, "goan-mcp-selected", 2)
+		params := mcpOAuthAuthorizationParams(f.clientID)
+		params.SpaceIdentifier = string(f.identifiers[1])
+
+		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: f.userID,
+			Params: params,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if output.Space == nil || output.Space.ID != f.spaceIDs[1] || !output.SpaceSelected {
+			t.Errorf("Space = %+v、SpaceSelected = %v、期待値 = 選んだスペース %v", output.Space, output.SpaceSelected, f.spaceIDs[1])
+		}
+		if output.DeniedReason != "" {
+			t.Errorf("DeniedReason = %q、期待値 = 空", output.DeniedReason)
+		}
+	})
+
+	t.Run("選んだスペースのメンバーでなければ、その理由を返す", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupMCPAuthorizationFixture(t, tx, "goan-mcp-notmember", 2)
+		testutil.NewSpaceBuilder(t, tx).WithIdentifier("goan-mcp-notmember-other").Build()
+		params := mcpOAuthAuthorizationParams(f.clientID)
+		params.SpaceIdentifier = "goan-mcp-notmember-other"
+
+		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: f.userID,
+			Params: params,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if output.DeniedReason != OAuthAuthorizationDeniedNotMember {
+			t.Errorf("DeniedReason = %q、期待値 = %q", output.DeniedReason, OAuthAuthorizationDeniedNotMember)
+		}
+	})
+
+	t.Run("スペースのアプリは、選ぶ段を挟まずアプリのスペースに連携する", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-mcp-space-app", model.SpaceRoleViewer, false)
+		testutil.NewFeatureFlagBuilder(t, tx).WithUserID(f.userID).WithName(string(model.FeatureFlagRemoteMCPServer)).Build()
+
+		output, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: f.userID,
+			Params: mcpOAuthAuthorizationParams(f.clientID),
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if output.Space == nil || output.Space.ID != f.spaceID || output.SpaceSelected {
+			t.Errorf("Space = %+v、SpaceSelected = %v、期待値 = アプリのスペース %v", output.Space, output.SpaceSelected, f.spaceID)
+		}
+	})
+
+	t.Run("MCPサーバーのフラグが無効なら、公開APIのフラグがあっても見つからないとして答える", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-mcp-noflag", model.SpaceRoleViewer, true)
+
+		_, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: f.userID,
+			Params: mcpOAuthAuthorizationParams(f.clientID),
+		})
+		ae := model.AsAppError(err)
+		if ae == nil || ae.Code != model.AppErrCodeResourceNotFound {
+			t.Errorf("エラー = %v、期待値 = AppErrCodeResourceNotFound", err)
+		}
+	})
+
+	t.Run("公開APIを宛先にした要求は、MCPサーバーのフラグだけでは見つからないとして答える", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupMCPAuthorizationFixture(t, tx, "goan-mcp-public", 1)
+		params := validOAuthAuthorizationParams(f.clientID)
+		params.Resource = model.SpaceAPIResourceURL(oauthAuthorizationTestConfig.AppURL(), f.identifiers[0])
+
+		_, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{
+			UserID: f.userID,
+			Params: params,
+		})
+		ae := model.AsAppError(err)
+		if ae == nil || ae.Code != model.AppErrCodeResourceNotFound {
+			t.Errorf("エラー = %v、期待値 = AppErrCodeResourceNotFound", err)
+		}
+	})
+}
+
+func TestGetOAuthAuthorizationNewUsecase_Execute_MCPServerのクライアントへ戻すエラー(t *testing.T) {
+	t.Parallel()
+
+	t.Run("選んだスペースが存在しない", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupMCPAuthorizationFixture(t, tx, "goan-mcp-missing", 2)
+		params := mcpOAuthAuthorizationParams(f.clientID)
+		params.SpaceIdentifier = "goan-mcp-no-such-space"
+
+		_, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{UserID: f.userID, Params: params})
+		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorInvalidTarget, params)
+	})
+
+	t.Run("スペースのアプリでspace_identifierがある", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-mcp-space-app-select", model.SpaceRoleViewer, false)
+		testutil.NewFeatureFlagBuilder(t, tx).WithUserID(f.userID).WithName(string(model.FeatureFlagRemoteMCPServer)).Build()
+		params := mcpOAuthAuthorizationParams(f.clientID)
+		params.SpaceIdentifier = "goan-mcp-space-app-select"
+
+		_, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{UserID: f.userID, Params: params})
+		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorInvalidRequest, params)
+	})
+
+	t.Run("公開APIを宛先にした要求でspace_identifierがある", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupOAuthAuthorizationFixture(t, tx, "goan-public-select", model.SpaceRoleViewer, true)
+		params := validOAuthAuthorizationParams(f.clientID)
+		params.SpaceIdentifier = "goan-public-select"
+
+		_, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{UserID: f.userID, Params: params})
+		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorInvalidRequest, params)
+	})
+
+	t.Run("space_identifierが重複している", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		f := setupMCPAuthorizationFixture(t, tx, "goan-mcp-dup", 2)
+		params := mcpOAuthAuthorizationParams(f.clientID)
+		params.SpaceIdentifier = string(f.identifiers[0])
+		params.DuplicatedParams = []string{"space_identifier"}
+
+		_, err := newGetOAuthAuthorizationNewUsecaseForTest(testutil.QueriesWithTx(tx)).Execute(context.Background(), GetOAuthAuthorizationNewInput{UserID: f.userID, Params: params})
+		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorInvalidRequest, params)
+	})
 }

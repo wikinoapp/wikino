@@ -20,6 +20,7 @@ type OAuthAuthorizationCodeBuilder struct {
 	spaceID       string
 	codeDigest    string
 	scopes        []string
+	audience      model.OAuthAudience
 	redirectURI   string
 	codeChallenge string
 	expiresAt     time.Time
@@ -77,6 +78,12 @@ func (b *OAuthAuthorizationCodeBuilder) WithCodeChallenge(codeChallenge string) 
 	return b
 }
 
+// WithAudienceは、交換で発行するトークンに引き継ぐ宛先を設定します。既定は公開API宛てです
+func (b *OAuthAuthorizationCodeBuilder) WithAudience(audience model.OAuthAudience) *OAuthAuthorizationCodeBuilder {
+	b.audience = audience
+	return b
+}
+
 // WithExpiresAtは有効期限を設定します
 func (b *OAuthAuthorizationCodeBuilder) WithExpiresAt(expiresAt time.Time) *OAuthAuthorizationCodeBuilder {
 	b.expiresAt = expiresAt
@@ -104,10 +111,10 @@ func (b *OAuthAuthorizationCodeBuilder) Build() model.OAuthAuthorizationCodeID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO oauth_authorization_codes (oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
+		`INSERT INTO oauth_authorization_codes (oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, audience, expires_at, used_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)
 		 RETURNING id`,
-		b.oauthGrantID, b.spaceID, b.codeDigest, pq.Array(b.scopes), b.redirectURI, b.codeChallenge, b.expiresAt, b.usedAt, now,
+		b.oauthGrantID, b.spaceID, b.codeDigest, pq.Array(b.scopes), b.redirectURI, b.codeChallenge, int32(b.audience), b.expiresAt, b.usedAt, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("認可コード作成に失敗: %v", err)

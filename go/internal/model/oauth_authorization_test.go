@@ -15,6 +15,7 @@ func TestOAuthApplication_AcceptsRedirectURI(t *testing.T) {
 			"https://example.com/callback",
 			"http://127.0.0.1/callback",
 			"http://[::1]:8080/callback?app=cli",
+			"http://localhost/oauth/callback",
 		},
 	}
 
@@ -32,7 +33,9 @@ func TestOAuthApplication_AcceptsRedirectURI(t *testing.T) {
 		{name: "ループバックでもパスが違えば一致しない", uri: "http://127.0.0.1:53123/other", want: false},
 		{name: "ループバックでもクエリが違えば一致しない", uri: "http://[::1]:53123/callback", want: false},
 		{name: "ループバックでも登録と違うアドレスは一致しない", uri: "http://[::1]:53123/callback", want: false},
-		{name: "localhostはループバックとして扱わない", uri: "http://localhost:53123/callback", want: false},
+		{name: "localhostもポート番号を除いて一致すればよい", uri: "http://localhost:53123/oauth/callback", want: true},
+		{name: "登録が127.0.0.1ならlocalhostとは一致しない", uri: "http://localhost:53123/callback", want: false},
+		{name: "登録がlocalhostなら127.0.0.1とは一致しない", uri: "http://127.0.0.1:53123/oauth/callback", want: false},
 		{name: "ループバックでもフラグメントを含めば一致しない", uri: "http://127.0.0.1:53123/callback#x", want: false},
 		{name: "ループバックでもユーザー情報を含めば一致しない", uri: "http://user@127.0.0.1:53123/callback", want: false},
 		{name: "空文字は一致しない", uri: "", want: false},
@@ -117,6 +120,56 @@ func TestParseSpaceAPIResourceURL(t *testing.T) {
 			got, ok := model.ParseSpaceAPIResourceURL(appURL, tt.resource)
 			if ok != tt.wantOK || got != tt.want {
 				t.Errorf("ParseSpaceAPIResourceURL(%q) = (%q, %v)、期待値 = (%q, %v)", tt.resource, got, ok, tt.want, tt.wantOK)
+			}
+		})
+	}
+}
+
+func TestOAuthAudienceForResource(t *testing.T) {
+	t.Parallel()
+
+	appURL := "https://example.com"
+	tests := []struct {
+		name     string
+		resource string
+		want     model.OAuthAudience
+	}{
+		{name: "MCPサーバーのURL", resource: "https://example.com/mcp", want: model.OAuthAudienceMCPServer},
+		{name: "スペースのAPIのURL", resource: "https://example.com/api/v1/spaces/foo", want: model.OAuthAudiencePublicAPI},
+		{name: "省略", resource: "", want: model.OAuthAudiencePublicAPI},
+		{name: "末尾にスラッシュを付けたMCPサーバーのURL", resource: "https://example.com/mcp/", want: model.OAuthAudiencePublicAPI},
+		{name: "別のオリジンのMCPサーバーのURL", resource: "https://evil.example/mcp", want: model.OAuthAudiencePublicAPI},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := model.OAuthAudienceForResource(appURL, tt.resource); got != tt.want {
+				t.Errorf("OAuthAudienceForResource(%q) = %v、期待値 = %v", tt.resource, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOAuthApplication_HasOnlyLoopbackRedirectURIs(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		redirectURIs []string
+		want         bool
+	}{
+		{name: "ループバックだけ", redirectURIs: []string{"http://localhost/callback", "http://127.0.0.1/callback"}, want: true},
+		{name: "HTTPSのURIを含む", redirectURIs: []string{"http://localhost/callback", "https://claude.ai/callback"}, want: false},
+		{name: "リダイレクトURIが無い", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			app := &model.OAuthApplication{RedirectURIs: tt.redirectURIs}
+			if got := app.HasOnlyLoopbackRedirectURIs(); got != tt.want {
+				t.Errorf("HasOnlyLoopbackRedirectURIs() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}

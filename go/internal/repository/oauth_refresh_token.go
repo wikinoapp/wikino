@@ -31,6 +31,7 @@ type CreateOAuthRefreshTokenInput struct {
 	SpaceID      model.SpaceID
 	TokenDigest  string
 	Scopes       []model.Scope
+	Audience     model.OAuthAudience
 	ExpiresAt    time.Time
 }
 
@@ -42,6 +43,7 @@ func (r *OAuthRefreshTokenRepository) Create(ctx context.Context, input CreateOA
 		SpaceID:      string(input.SpaceID),
 		TokenDigest:  input.TokenDigest,
 		Scopes:       model.ScopesToStrings(input.Scopes),
+		Audience:     int32(input.Audience),
 		ExpiresAt:    input.ExpiresAt,
 		Now:          time.Now(),
 	})
@@ -138,6 +140,7 @@ func (r *OAuthRefreshTokenRepository) toModel(row query.OauthRefreshToken) *mode
 		SpaceID:                model.SpaceID(row.SpaceID),
 		TokenDigest:            row.TokenDigest,
 		Scopes:                 model.StringsToScopes(row.Scopes),
+		Audience:               model.OAuthAudience(row.Audience),
 		PreviousRefreshTokenID: previousRefreshTokenID,
 		ExpiresAt:              row.ExpiresAt,
 		UsedAt:                 usedAt,

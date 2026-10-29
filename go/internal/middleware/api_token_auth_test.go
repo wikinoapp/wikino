@@ -12,15 +12,18 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
-// stubAPITokenAuthenticatorは、tokensに登録したトークンだけを受け付けるトークンの照合
+// stubAPITokenAuthenticatorは、tokensに登録したトークンを公開API宛てとして照合したときだけ受け付けるトークンの照合
 type stubAPITokenAuthenticator struct {
 	tokens map[string]*model.APIPrincipal
 	err    error
 }
 
-func (s stubAPITokenAuthenticator) Execute(_ context.Context, token string) (*model.APIPrincipal, error) {
+func (s stubAPITokenAuthenticator) Execute(_ context.Context, token string, audience model.OAuthAudience) (*model.APIPrincipal, error) {
 	if s.err != nil {
 		return nil, s.err
+	}
+	if audience != model.OAuthAudiencePublicAPI {
+		return nil, nil
 	}
 	return s.tokens[token], nil
 }

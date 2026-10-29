@@ -34,7 +34,7 @@ func TestRevokeOAuthGrantUsecase_Execute(t *testing.T) {
 	f, token := setupOAuthAccessTokenAuthFixture(t, tx, "rog-revoke", opts)
 	authenticateUC := newAuthenticateAPITokenUC(tx)
 
-	principal, err := authenticateUC.Execute(ctx, token)
+	principal, err := authenticateUC.Execute(ctx, token, model.OAuthAudiencePublicAPI)
 	if err != nil || principal == nil {
 		t.Fatalf("解除前のExecute() = (%v, %v)、トークンを受け付けることを期待", principal, err)
 	}
@@ -62,7 +62,7 @@ func TestRevokeOAuthGrantUsecase_Execute(t *testing.T) {
 		t.Errorf("Application = %+v、許可したアプリを期待", output.Application)
 	}
 
-	principal, err = authenticateUC.Execute(ctx, token)
+	principal, err = authenticateUC.Execute(ctx, token, model.OAuthAudiencePublicAPI)
 	if err != nil {
 		t.Fatalf("解除後のExecute()のエラー = %v", err)
 	}

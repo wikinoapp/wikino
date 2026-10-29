@@ -22,6 +22,40 @@ INSERT INTO oauth_applications (
     @now
 ) RETURNING *;
 
+-- name: UpsertClientIDMetadataDocumentOAuthApplication :one
+-- CIMDのクライアント (スペースに属さないpublicクライアント) を、取得した文書の名前・リダイレクトURIと
+-- キャッシュの期限で作成し、既にあれば更新する。space_idを条件に含めない例外のクエリである。
+-- CIMDのクライアントはスペースに属さず、client_idは全体で一意なためである。
+-- 同じclient_idの登録したクライアントがあれば何も変えず行を返さない (CIMDの文書で登録した
+-- クライアントを書き換えない)
+INSERT INTO oauth_applications (
+    name,
+    client_id,
+    client_type,
+    redirect_uris,
+    registration_method,
+    metadata_expires_at,
+    created_at,
+    updated_at
+) VALUES (
+    @name,
+    @client_id,
+    1,
+    @redirect_uris::text[],
+    1,
+    @metadata_expires_at,
+    @now,
+    @now
+)
+ON CONFLICT (client_id) DO UPDATE
+SET name = EXCLUDED.name,
+    redirect_uris = EXCLUDED.redirect_uris,
+    metadata_expires_at = EXCLUDED.metadata_expires_at,
+    updated_at = EXCLUDED.updated_at,
+    version = oauth_applications.version + 1
+WHERE oauth_applications.registration_method = 1
+RETURNING *;
+
 -- name: FindOAuthApplicationByClientID :one
 -- クライアントIDで削除されていないOAuthアプリを取得する。
 -- space_idを条件に含めない例外のクエリである。認可要求はスペースを特定する前の入口で、

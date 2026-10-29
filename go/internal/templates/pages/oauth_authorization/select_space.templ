@@ -1,0 +1,149 @@
+package oauth_authorization
+
+import (
+	"strconv"
+
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// SpaceOptionは、連携するスペースを選ぶ段に示すスペース。Selectableが偽なら、利用者は連携を許可する
+// 権限を持たず、理由を添えて選べないように示す
+type SpaceOption struct {
+	Identifier string
+	Name       string
+	Selectable bool
+}
+
+// SelectSpaceDataは、連携するスペースを選ぶ段をレンダリングする元になるデータ。
+//
+// HiddenFieldsは認可要求のパラメーターで、選んだスペースを `space_identifier` に付けて認可エンドポイントへ
+// GETで送り直し、同意画面へ進む。ClientHostはCIMDのクライアントのクライアントIDのホスト名 (それ以外は空)。
+type SelectSpaceData struct {
+	CSRFToken       string
+	HiddenFields    []HiddenField
+	ApplicationName string
+	ClientHost      string
+	UserAtname      string
+	Spaces          []SpaceOption
+	RedirectHost    string
+}
+
+// SelectSpaceは、MCPサーバーと連携するスペースを、同意の前に利用者に選ばせる画面を表示します。
+templ SelectSpace(data SelectSpaceData) {
+	<div class="max-w-lg w-full flex flex-col gap-6">
+		<div class="flex flex-col gap-2 px-4">
+			<h1 class="text-center text-2xl font-bold antialiased">
+				{ templates.T(ctx, "oauth_authorization_select_space_heading", map[string]any{"ApplicationName": data.ApplicationName}) }
+			</h1>
+			if data.ClientHost != "" {
+				<p class="text-center text-sm text-muted-foreground">
+					{ templates.T(ctx, "oauth_authorization_select_space_client_host", map[string]any{"ClientHost": data.ClientHost}) }
+				</p>
+			}
+		</div>
+
+		@components.ContentCard() {
+			<div class="grid gap-6">
+				<dl class="grid gap-1">
+					<dt class="text-sm text-muted-foreground">
+						{ templates.T(ctx, "oauth_authorization_select_space_user_label") }
+					</dt>
+					<dd>{ "@" + data.UserAtname }</dd>
+				</dl>
+
+				if hasSelectableSpace(data.Spaces) {
+					<form action="/oauth/authorize" class="grid gap-6" id={ selectSpaceFormID } method="GET">
+						for _, field := range data.HiddenFields {
+							<input type="hidden" name={ field.Name } value={ field.Value }/>
+						}
+						// 選択肢のグループはOAuthアプリの登録画面と同じく、basecoatの .fieldsetでまとめます。
+						<fieldset class="fieldset gap-3">
+							<legend class="label">
+								{ templates.T(ctx, "oauth_authorization_select_space_label") }
+							</legend>
+							for i, space := range data.Spaces {
+								<div class="flex flex-col gap-1">
+									<label class="label flex items-center gap-2 cursor-pointer" for={ spaceOptionInputID(i) }>
+										<input
+											class="input"
+											id={ spaceOptionInputID(i) }
+											name="space_identifier"
+											required
+											type="radio"
+											value={ space.Identifier }
+											if !space.Selectable {
+												disabled
+												aria-describedby={ spaceOptionHintID(i) }
+											}
+										/>
+										{ space.Name }
+									</label>
+									if !space.Selectable {
+										<p id={ spaceOptionHintID(i) } class="text-muted-foreground pl-[25px] text-sm">
+											{ templates.T(ctx, "oauth_authorization_select_space_no_permission") }
+										</p>
+									}
+								</div>
+							}
+						</fieldset>
+					</form>
+				} else if len(data.Spaces) == 0 {
+					<p>{ templates.T(ctx, "oauth_authorization_select_space_empty") }</p>
+				} else {
+					<p>{ templates.T(ctx, "oauth_authorization_select_space_none_selectable") }</p>
+					<ul class="grid gap-1 list-disc pl-5">
+						for _, space := range data.Spaces {
+							<li>{ space.Name }</li>
+						}
+					</ul>
+				}
+
+				<p class="text-sm text-muted-foreground">
+					{ templates.T(ctx, "oauth_authorization_select_space_back_notice", map[string]any{"RedirectHost": data.RedirectHost}) }
+				</p>
+
+				// 選ぶのをやめるときは、同意画面の拒否と同じくクライアントへ `access_denied` で戻す。
+				// 次へのボタンはスペースを選ぶフォームに属させ、拒否のフォームと並べて置く
+				<form action="/oauth/authorize" class="flex flex-wrap gap-2" method="POST">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					for _, field := range data.HiddenFields {
+						<input type="hidden" name={ field.Name } value={ field.Value }/>
+					}
+					if hasSelectableSpace(data.Spaces) {
+						<button class="btn rounded-full" form={ selectSpaceFormID } type="submit">
+							{ templates.T(ctx, "oauth_authorization_select_space_submit_button") }
+						</button>
+					}
+					<button class="btn rounded-full" data-variant="outline" name="decision" type="submit" value="deny">
+						{ templates.T(ctx, "oauth_authorization_select_space_back_to_application") }
+					</button>
+				</form>
+			</div>
+		}
+	</div>
+}
+
+// selectSpaceFormIDは、スペースを選ぶフォームのid。次へのボタンを拒否のフォームと並べて置くため、
+// ボタンからform属性で参照する
+const selectSpaceFormID = "select-space-form"
+
+// hasSelectableSpaceは、利用者が選べるスペースがあるかを返します。
+func hasSelectableSpace(spaces []SpaceOption) bool {
+	for _, space := range spaces {
+		if space.Selectable {
+			return true
+		}
+	}
+	return false
+}
+
+// spaceOptionInputIDは、i番目のスペースの選択肢のid
+func spaceOptionInputID(i int) string {
+	return "space-option-" + strconv.Itoa(i)
+}
+
+// spaceOptionHintIDは、i番目のスペースを選べない理由の要素のid
+func spaceOptionHintID(i int) string {
+	return spaceOptionInputID(i) + "-hint"
+}

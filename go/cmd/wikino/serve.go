@@ -35,6 +35,7 @@ import (
 	apispace "github.com/wikinoapp/wikino/go/internal/apihandler/space"
 	apitopic "github.com/wikinoapp/wikino/go/internal/apihandler/topic"
 	apiwikilinkpreview "github.com/wikinoapp/wikino/go/internal/apihandler/wikilink_preview"
+	"github.com/wikinoapp/wikino/go/internal/cimd"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/dispatcher"
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
@@ -564,10 +565,12 @@ func runServe() {
 		usecase.NewGetOAuthGrantsUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthGrantRepo, oauthApplicationRepo),
 		usecase.NewRevokeOAuthGrantUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, oauthGrantRepo, oauthApplicationRepo),
 	)
+	// CIMDの文書の取得のタイムアウトとリダイレクトの扱いはFetcherが決める
+	cimdFetcher := cimd.NewFetcher(&http.Client{})
 	oauthAuthorizationHandler := oauthauthorizationhandler.NewHandler(
 		cfg,
-		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo, topicMemberRepo),
-		usecase.NewCreateOAuthAuthorizationUsecase(db, oauthGrantRepo, cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo, oauthAuthorizationCodeRepo, validator.NewOAuthAuthorizationCreateValidator()),
+		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo, topicMemberRepo, cimdFetcher),
+		usecase.NewCreateOAuthAuthorizationUsecase(db, oauthGrantRepo, cfg, featureFlagRepo, oauthApplicationRepo, spaceRepo, spaceMemberRepo, oauthAuthorizationCodeRepo, validator.NewOAuthAuthorizationCreateValidator(), cimdFetcher),
 	)
 	oauthDeviceVerificationValidator := validator.NewOAuthDeviceVerificationValidator(oauthDeviceAuthorizationRepo, oauthApplicationRepo, spaceRepo)
 	oauthDeviceVerificationHandler := oauthdeviceverificationhandler.NewHandler(

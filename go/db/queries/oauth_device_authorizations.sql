@@ -156,7 +156,7 @@ RETURNING judged.too_fast::boolean AS too_fast;
 -- リフレッシュトークンを作成して、交換済みにした要求を返す。認可コードの交換
 -- (ExchangeOAuthAuthorizationCode) と同じく、1つの文で判定と更新を行うため、同じデバイスコードの
 -- 同時の交換でもトークンを作るのは1回だけである。許可済みでなければ何もせず行を返さない。
--- 有効期限は呼び出し側が交換の前に確かめる
+-- 有効期限は呼び出し側が交換の前に確かめる。トークンの宛先 (@audience) は呼び出し側が決める
 WITH consumed AS (
     UPDATE oauth_device_authorizations
     SET status = 3, updated_at = @now
@@ -171,6 +171,7 @@ created_access_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -180,6 +181,7 @@ created_access_token AS (
         consumed.space_id,
         @access_token_digest,
         consumed.scopes,
+        @audience::integer,
         @access_token_expires_at,
         @now,
         @now
@@ -191,6 +193,7 @@ created_refresh_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -200,6 +203,7 @@ created_refresh_token AS (
         consumed.space_id,
         @refresh_token_digest,
         consumed.scopes,
+        @audience::integer,
         @refresh_token_expires_at,
         @now,
         @now
