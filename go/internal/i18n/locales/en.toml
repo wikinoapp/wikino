@@ -2286,6 +2286,10 @@ other = "Revoke access for \"{{.Name}}\" authorized on {{.CreatedAt}}? The app u
 description = "連携の解除の確認ダイアログ (端末名がある連携)"
 other = "Revoke access for \"{{.Name}}\" on \"{{.DeviceName}}\"? The app on this device will no longer be able to call the API for this space."
 
+[oauth_grant_index_application_host]
+description = "連携中のアプリの一覧の、CIMDのクライアントのクライアントIDのホスト名"
+other = "Provided by {{.Host}}"
+
 [flash_oauth_grant_revoked]
 description = "連携を解除したときのフラッシュメッセージ"
 other = "Revoked access for \"{{.Name}}\""
@@ -2744,6 +2748,62 @@ other = "Deny"
 description = "アプリを許可できない場合の同意画面のアプリへ戻るボタン"
 other = "Back to app"
 
+[oauth_authorization_new_client_host]
+description = "同意画面の、CIMDのクライアントのクライアントIDのホスト名の表示"
+other = "An app provided by {{.ClientHost}}"
+
+[oauth_authorization_new_redirect_host_label]
+description = "同意画面の、選択後に移動する先のホスト名の見出し"
+other = "Redirects to"
+
+[oauth_authorization_new_loopback_warning]
+description = "同意画面の、リダイレクトURIがループバックだけのCIMDのクライアントへの警告"
+other = "{{.ApplicationName}} is an app that runs on this computer. Don't allow it unless you started this connection yourself."
+
+[oauth_authorization_select_space_title]
+description = "連携するスペースを選ぶ画面のページタイトル"
+other = "Connect {{.ApplicationName}} | Wikino"
+
+[oauth_authorization_select_space_heading]
+description = "連携するスペースを選ぶ画面の見出し"
+other = "Choose a space to connect with {{.ApplicationName}}"
+
+[oauth_authorization_select_space_client_host]
+description = "連携するスペースを選ぶ画面の、CIMDのクライアントのクライアントIDのホスト名の表示"
+other = "An app provided by {{.ClientHost}}"
+
+[oauth_authorization_select_space_user_label]
+description = "連携するスペースを選ぶ画面のアカウントの見出し"
+other = "Account"
+
+[oauth_authorization_select_space_label]
+description = "連携するスペースを選ぶ画面のスペースの選択肢の見出し"
+other = "Space to connect"
+
+[oauth_authorization_select_space_no_permission]
+description = "連携するスペースを選ぶ画面の、連携を許可する権限が無いスペースの説明"
+other = "You don't have permission to allow apps in this space"
+
+[oauth_authorization_select_space_empty]
+description = "連携するスペースを選ぶ画面で、メンバーであるスペースが無いときの説明"
+other = "There are no spaces you can connect. Join a space, then connect again."
+
+[oauth_authorization_select_space_none_selectable]
+description = "連携するスペースを選ぶ画面で、どのスペースでも連携を許可する権限が無いときの説明"
+other = "You don't have permission to allow apps in any of the following spaces. Contact the space administrator."
+
+[oauth_authorization_select_space_back_notice]
+description = "連携するスペースを選ぶ画面の、アプリへ戻ると移動する先の説明"
+other = "You will be redirected to {{.RedirectHost}} when you go back to the application."
+
+[oauth_authorization_select_space_submit_button]
+description = "連携するスペースを選ぶ画面の次へ進むボタン"
+other = "Next"
+
+[oauth_authorization_select_space_back_to_application]
+description = "連携するスペースを選ぶ画面のアプリへ戻るボタン"
+other = "Back to app"
+
 [oauth_authorization_invalid_request_title]
 description = "クライアントへ戻せない認可要求のエラー画面のページタイトル"
 other = "Invalid authorization request | Wikino"
@@ -2937,3 +2997,49 @@ other = "Reference for the Wikino public Web API V1, covering endpoints, scopes,
 [api_reference_fallback]
 description = "公開APIのリファレンスで、OpenAPI記述へのリンクの前に出す案内"
 other = "Read the OpenAPI description directly: "
+
+
+# MCPのツールの呼び出し
+[validation_mcp_arguments_object]
+description = "MCPのツールの引数がJSONのオブジェクトでない場合のエラー"
+other = "Arguments must be a JSON object"
+
+[validation_mcp_argument_unknown]
+description = "MCPのツールに定義していない引数を指定した場合のエラー"
+other = "Argument {{.Name}} is not defined for this tool"
+
+[validation_mcp_argument_required]
+description = "MCPのツールのパスの引数が無い場合のエラー"
+other = "Argument {{.Name}} is missing"
+
+[validation_mcp_argument_name]
+description = "MCPのツールの引数の値のエラーに添える引数名"
+other = "Argument {{.Name}}"
+
+[validation_mcp_argument_single_value]
+description = "MCPのツールのパスの引数の値が1つでない場合のエラー"
+other = "Specify a single value for argument {{.Name}}"
+
+[validation_mcp_array_item_scalar]
+description = "MCPのツールのパス・クエリ・ヘッダーの引数の配列に、文字列・数値・真偽値以外の要素がある場合のエラー"
+other = "Array items must be strings, numbers, or booleans"
+
+[validation_mcp_argument_scalar]
+description = "MCPのツールのパス・クエリ・ヘッダーの引数の値を文字列にできない場合のエラー"
+other = "Specify a string, number, or boolean"
+
+[mcp_call_body_error]
+description = "MCPのツールの引数から公開APIのリクエスト本文を組み立てられない場合のエラー"
+other = "Could not build the request body"
+
+[mcp_call_request_error]
+description = "MCPのツールの引数から公開APIへの要求を組み立てられない場合のエラー"
+other = "Could not build the public API request"
+
+[mcp_call_success]
+description = "MCPのツールで本文の無い成功の応答を受け取った場合の案内"
+other = "Succeeded (status {{.Status}})"
+
+[mcp_call_status]
+description = "MCPのツールのエラーの内容の前に添えるHTTPステータス"
+other = "Status {{.Status}}"
