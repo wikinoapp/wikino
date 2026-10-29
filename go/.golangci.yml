@@ -706,6 +706,15 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "RateLimitはPresentation層に依存できません。"
 
+        # cimd層のルール: CIMDの文書を取得するInfrastructure層のアダプタ
+        # 標準ライブラリだけに依存し、HTTPクライアントは外から受け取る
+        cimd-layer:
+          list-mode: strict
+          files:
+            - "**/internal/cimd/*.go"
+          allow:
+            - $gostd
+
         # auth層のルール: 横断的な技術ユーティリティ (Domain/Infrastructure層)
         # 標準ライブラリ・外部ライブラリのみに依存し、プロジェクト内部パッケージには依存しない
         auth-layer:
