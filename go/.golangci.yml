@@ -155,6 +155,33 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal/templates
               desc: "APIのHandlerはTemplatesに依存できません。JSONで応答してください。"
 
+        # MCPサーバー層のルール: Presentation層。ツールの定義はOpenAPI記述 (apigen) から作り、ツールの実行は
+        # 公開APIのハンドラーへ委譲するため、データアクセス・認可・検証の層には直接依存しない
+        mcpserver-layer:
+          list-mode: strict
+          files:
+            - "**/internal/mcpserver/**"
+          allow:
+            - $gostd
+            - github.com/modelcontextprotocol/go-sdk
+            - github.com/getkin/kin-openapi
+            - github.com/wikinoapp/wikino/go/internal/apigen
+            - github.com/wikinoapp/wikino/go/internal/middleware
+            - github.com/wikinoapp/wikino/go/internal/usecase
+            - github.com/wikinoapp/wikino/go/internal/model
+            - github.com/wikinoapp/wikino/go/internal/config
+            - github.com/wikinoapp/wikino/go/internal/i18n
+
+        # MCPサーバーに依存する側のルール: MCPサーバーはエントリーポイント (cmd) から組み立てるだけにし、
+        # 既存のパッケージから依存させない
+        mcpserver-dependents:
+          files:
+            - "**/internal/**"
+            - "!**/internal/mcpserver/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal/mcpserver
+              desc: "MCPサーバーのパッケージには、エントリーポイント (cmd) からだけ依存できます。"
+
         # APIエラーヘルパー層のルール: 他の層へ依存せず、Problem Detailsを書き込む
         # UseCaseが返すエラー (*model.ValidationError・*model.AppError) を変換するため、modelへの依存は許可
         apierror-layer:

@@ -52,6 +52,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
+	"github.com/wikinoapp/wikino/go/internal/handler/mcp_protected_resource_metadata"
 	oauthapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_application"
 	oauthapplicationclientsecrethandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_application_client_secret"
 	oauthauthorizationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_authorization"
@@ -94,6 +95,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/image"
+	"github.com/wikinoapp/wikino/go/internal/mcpserver"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/ogcard"
@@ -721,6 +723,7 @@ func runServe() {
 	}
 	authenticateAPITokenUC := usecase.NewAuthenticateAPITokenUsecase(personalAccessTokenRepo, oauthAccessTokenRepo, oauthGrantRepo, spaceRepo, spaceMemberRepo, userRepo, featureFlagRepo)
 	apiTokenAuth := middleware.NewAPITokenAuth(authenticateAPITokenUC, apiProblems)
+	mcpProtectedResourceMetadataHandler := mcp_protected_resource_metadata.NewHandler(cfg)
 	apiRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.APISpaceMemberRateLimitPolicy)
 	oauthRateLimit := middleware.NewAPIRateLimit(rateLimiter, apiProblems, middleware.OAuthIPRateLimitPolicy(cfg.TrustedProxyCIDRs))
 	oauthTokenHandler := oauthtokenhandler.NewHandler(
@@ -779,6 +782,15 @@ func runServe() {
 		),
 		apiwikilinkpreview.NewHandler(cfg.AppURL(), usecase.NewGetAPIWikilinkPreviewUsecase(pageRepo, topicRepo, topicMemberRepo)),
 	)
+
+	// リモートMCPサーバー。ツールの呼び出しは、公開APIのルーターからトークンの照合を外したハンドラーへ委譲する
+	mcpServer, err := mcpserver.NewServer(cfg, authenticateAPITokenUC, api.OpenAPIDescription,
+		newAuthenticatedAPIHandler(apiServer, apiProblems, apiRateLimit, apiRequestValidator),
+		usecase.NewGetAPIAttachmentContentUsecase(attachmentRepo, objectStorage))
+	if err != nil {
+		slog.Error("リモートMCPサーバーの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
 
 	r := chi.NewRouter()
 
@@ -857,7 +869,12 @@ func runServe() {
 
 	// 公開Web API。`Authorization: Bearer` のトークンで認証し、Cookieのセッションを使わないため、
 	// セッションで認証するミドルウェア (SetUserなど) を掛けたグループには入れない
-	r.Mount(apiMountPath, newAPIRouter(apiServer, apiReferenceHandler.Show, apiProblems, apiTokenAuth, apiRateLimit, apiRequestValidator))
+	r.Mount(apiMountPath, newAPIRouter(apiServer, apiReferenceHandler.Show, apiProblems, apiTokenAuth.Middleware, apiRateLimit, apiRequestValidator))
+
+	// リモートMCPサーバー。公開Web APIと同じく `Authorization: Bearer` のトークンで認証するため、
+	// セッションで認証するミドルウェアを掛けたグループには入れない (CSRFの検証からも除外している)。
+	// 全メソッドを渡し、POST以外はハンドラーが405にする
+	r.Handle(model.MCPServerPath, mcpServer.Handler())
 
 	// OAuthのトークンエンドポイントとトークンの失効のエンドポイント。クライアントはCookieの
 	// セッションを使わずに呼ぶため、セッションで認証するミドルウェアを掛けたグループには入れない
@@ -877,6 +894,8 @@ func runServe() {
 	r.Head(model.OAuthAuthorizationServerMetadataPath, oauthAuthorizationServerMetadataHandler.Show)
 	r.Get(spaceAPIResourceMetadataRoute, oauthProtectedResourceMetadataHandler.Show)
 	r.Head(spaceAPIResourceMetadataRoute, oauthProtectedResourceMetadataHandler.Show)
+	r.Get(model.MCPServerResourceMetadataPath, mcpProtectedResourceMetadataHandler.Show)
+	r.Head(model.MCPServerResourceMetadataPath, mcpProtectedResourceMetadataHandler.Show)
 	r.Get(model.APICatalogPath, apiCatalogHandler.Show)
 	r.Head(model.APICatalogPath, apiCatalogHandler.Show)
 

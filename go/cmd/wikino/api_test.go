@@ -78,7 +78,7 @@ func newTestAPIHandlerWith(t *testing.T, server apigen.StrictServerInterface, au
 
 	r := chi.NewRouter()
 	reference := api_reference.NewHandler(&config.Config{Domain: "example.com"})
-	r.Mount(apiMountPath, newAPIRouter(server, reference.Show, problems, tokenAuth, rateLimit, validator))
+	r.Mount(apiMountPath, newAPIRouter(server, reference.Show, problems, tokenAuth.Middleware, rateLimit, validator))
 	return r
 }
 

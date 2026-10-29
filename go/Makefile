@@ -271,6 +271,14 @@ sqlc-diff: ## 生成コードがクエリ・スキーマと同期しているか
 	@echo "🔍 sqlc生成コードの同期をチェック中..."
 	@go tool sqlc diff
 
+# CLIはサーバーと別のGoモジュールのため、サーバーからCLIのファイルを埋め込めない。CLIのスキルの
+# 「Wikinoについて」の節を、HTMLのコメント (とその後ろの空行) と末尾の空行を除いてサーバーのモジュールへ写す。
+# 元とずれていないかはinternal/mcpserverのテストで確かめる
+.PHONY: mcp-instructions-generate
+mcp-instructions-generate: ## リモートMCPサーバーのinstructionsをCLIのスキルから写す
+	awk '/^## /{p=($$0=="## Wikinoについて")} !p{next} /^<!--/{skip=1;next} skip&&/^$$/{skip=0;next} {skip=0} /^$$/{blank++;next} {while(blank>0){print "";blank--} print}' \
+		../cli/internal/skill/ja/SKILL.md > internal/mcpserver/instructions.md
+
 # 公開APIのOpenAPI記述 (api/openapi.yaml) を正本として、サーバーのインターフェースと
 # 型をinternal/apigenに生成する。生成物はコミットし、CIで再生成の差分が無いことを
 # 確かめる。

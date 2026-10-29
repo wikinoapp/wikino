@@ -174,6 +174,8 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// OAuthとAPIのメタデータ (RFC 8414・RFC 9728・RFC 9727)。Rails版には存在しない。
 	// 他の用途の `/.well-known/` を取り込まないよう、使う名前だけに限定する
 	{pattern: session.APIMetadataPathPattern},
+	// リモートMCPサーバー (`/mcp`)。Rails版には存在しない。POST以外のメソッドもGoで受けて405を返す
+	{pattern: session.MCPServerPathPattern},
 }
 
 // NewReverseProxyMiddlewareは新しいReverseProxyMiddlewareを作成

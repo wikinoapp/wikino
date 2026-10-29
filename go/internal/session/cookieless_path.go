@@ -20,6 +20,8 @@ import (
 //     ブラウザが自動で送るCookieを認証に使わないため、CSRFトークンの照合も要らない
 //   - OAuthのトークン・失効・デバイス認可の要求のエンドポイントとメタデータ: Cookieのセッションを使わず、
 //     クライアントがCSRFトークンを送れないため除外する
+//   - リモートMCPサーバー: 公開Web APIと同じく `Authorization: Bearer` のトークンで認証する。ブラウザからの
+//     別オリジンの要求は、ハンドラーがhttp.CrossOriginProtectionで拒む
 var (
 	// AttachmentOGImagePathPatternは公開トピックのページから参照される添付ファイルのog:imageのパス。
 	// /attachments/:id (ダウンロードURL) は対象外にするため、og_image末尾でパスを限定する
@@ -40,6 +42,9 @@ var (
 	// APIMetadataPathPatternはOAuthとAPIのメタデータのパス。
 	// リバースプロキシのGo振り分けと同じ範囲に限定する
 	APIMetadataPathPattern = regexp.MustCompile(`^/\.well-known/(oauth-authorization-server|oauth-protected-resource(/.*)?|api-catalog)$`)
+
+	// MCPServerPathPatternはリモートMCPサーバーのエンドポイントのパス (model.MCPServerPath)
+	MCPServerPathPattern = regexp.MustCompile(`^/mcp$`)
 )
 
 // CookielessPathはCookieを使わないリクエストのパスとメソッドの組
@@ -56,6 +61,7 @@ var CookielessPaths = []CookielessPath{
 	{Pattern: APIPathPattern},
 	{Pattern: OAuthTokenPathPattern},
 	{Pattern: APIMetadataPathPattern},
+	{Pattern: MCPServerPathPattern},
 }
 
 // IsCookielessRequestはmethodとpathのリクエストがCookieを使わないかを返す

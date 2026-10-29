@@ -143,7 +143,7 @@ func newOAuthFlowTestServer(t *testing.T, cfg *config.Config, q *query.Queries) 
 
 	r := chi.NewRouter()
 	r.Use(middleware.APIResponseHeader)
-	r.Mount(apiMountPath, newAPIRouter(server, api_reference.NewHandler(cfg).Show, problems, tokenAuth,
+	r.Mount(apiMountPath, newAPIRouter(server, api_reference.NewHandler(cfg).Show, problems, tokenAuth.Middleware,
 		middleware.NewAPIRateLimit(limiter, problems, middleware.APISpaceMemberRateLimitPolicy), validator))
 	oauthRateLimit := middleware.NewAPIRateLimit(limiter, problems, middleware.OAuthIPRateLimitPolicy(cfg.TrustedProxyCIDRs))
 	r.With(oauthRateLimit.Middleware).Post(model.OAuthTokenEndpointPath, tokenHandler.Create)

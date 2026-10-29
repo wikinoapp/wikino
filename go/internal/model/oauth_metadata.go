@@ -68,6 +68,15 @@ func SpaceAPIResourceMetadataURL(appURL string, identifier SpaceIdentifier) stri
 	return appURL + oauthProtectedResourceMetadataPath + spaceAPIResourcePath + url.PathEscape(string(identifier))
 }
 
+// MCPServerResourceMetadataPathは、リモートMCPサーバー (MCPServerResourceURL) の保護リソースのメタデータのパス
+const MCPServerResourceMetadataPath = oauthProtectedResourceMetadataPath + MCPServerPath
+
+// MCPServerResourceMetadataURLは、リモートMCPサーバーの保護リソースのメタデータのURLを返す。
+// well-knownの名前をオリジンとリソースのパスの間に挟む (RFC 9728 §3.1)
+func MCPServerResourceMetadataURL(appURL string) string {
+	return appURL + MCPServerResourceMetadataPath
+}
+
 // SpaceIdentifierFromAPIPathは、公開APIのリクエストのパス (エスケープされた形) がスペース配下の
 // API (`/api/v1/spaces/{space_identifier}` とその下) を指していれば、スペースの識別子を返す
 func SpaceIdentifierFromAPIPath(escapedPath string) (SpaceIdentifier, bool) {
