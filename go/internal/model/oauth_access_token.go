@@ -18,6 +18,7 @@ type OAuthAccessToken struct {
 	SpaceID      SpaceID
 	TokenDigest  string
 	Scopes       []Scope
+	Audience     OAuthAudience
 	ExpiresAt    time.Time
 	RevokedAt    *time.Time
 	CreatedAt    time.Time

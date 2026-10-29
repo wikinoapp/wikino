@@ -33,6 +33,7 @@ type CreateOAuthAuthorizationCodeInput struct {
 	Scopes        []model.Scope
 	RedirectURI   string
 	CodeChallenge string
+	Audience      model.OAuthAudience
 	ExpiresAt     time.Time
 }
 
@@ -45,6 +46,7 @@ func (r *OAuthAuthorizationCodeRepository) Create(ctx context.Context, input Cre
 		Scopes:        model.ScopesToStrings(input.Scopes),
 		RedirectUri:   input.RedirectURI,
 		CodeChallenge: input.CodeChallenge,
+		Audience:      int32(input.Audience),
 		ExpiresAt:     input.ExpiresAt,
 		Now:           time.Now(),
 	})
@@ -64,6 +66,7 @@ type CreateOAuthAuthorizationCodeWithGrantInput struct {
 	Scopes             []model.Scope
 	RedirectURI        string
 	CodeChallenge      string
+	Audience           model.OAuthAudience
 	ExpiresAt          time.Time
 
 	// DeviceNameは認可要求で受け取った端末名で、許可に保存する。nilなら保存しない
@@ -86,6 +89,7 @@ func (r *OAuthAuthorizationCodeRepository) CreateWithGrant(ctx context.Context, 
 		Scopes:             model.ScopesToStrings(input.Scopes),
 		RedirectUri:        input.RedirectURI,
 		CodeChallenge:      input.CodeChallenge,
+		Audience:           int32(input.Audience),
 		ExpiresAt:          input.ExpiresAt,
 		DeviceName:         deviceName,
 		Now:                time.Now(),
@@ -114,7 +118,7 @@ func (r *OAuthAuthorizationCodeRepository) FindByCodeDigest(ctx context.Context,
 }
 
 // ExchangeOAuthAuthorizationCodeInputは認可コードの交換の入力パラメータ。
-// アクセストークンとリフレッシュトークンは、コードの許可・スコープで作る
+// アクセストークンとリフレッシュトークンは、コードの許可・スコープ・宛先で作る
 type ExchangeOAuthAuthorizationCodeInput struct {
 	ID                    model.OAuthAuthorizationCodeID
 	SpaceID               model.SpaceID
@@ -125,7 +129,7 @@ type ExchangeOAuthAuthorizationCodeInput struct {
 	Now                   time.Time
 }
 
-// Exchangeは未使用の認可コードを使用済みにし、コードの許可・スコープでアクセストークンと
+// Exchangeは未使用の認可コードを使用済みにし、コードの許可・スコープ・宛先でアクセストークンと
 // リフレッシュトークンを作成して、使用済みにしたコードを返す。判定と更新を1つの文で行うため、
 // 同じコードの同時の交換でもトークンを作るのは1回だけである。見つからないか既に使用済みの
 // 場合は何もせず (nil, nil) を返す。有効期限・リダイレクトURI・PKCEは呼び出し側が交換の前に
@@ -163,6 +167,7 @@ func (r *OAuthAuthorizationCodeRepository) toModel(row query.OauthAuthorizationC
 		Scopes:        model.StringsToScopes(row.Scopes),
 		RedirectURI:   row.RedirectUri,
 		CodeChallenge: row.CodeChallenge,
+		Audience:      model.OAuthAudience(row.Audience),
 		ExpiresAt:     row.ExpiresAt,
 		UsedAt:        usedAt,
 		CreatedAt:     row.CreatedAt,

@@ -115,7 +115,7 @@ func TestOAuthGrantIndependence(t *testing.T) {
 				t.Fatalf("失効していない許可の件数 = %d、期待値 = 2 (既存の許可と再認可の許可)", len(grants))
 			}
 
-			principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(ctx, accessValue)
+			principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(ctx, accessValue, model.OAuthAudiencePublicAPI)
 			if err != nil {
 				t.Fatal(err)
 			}

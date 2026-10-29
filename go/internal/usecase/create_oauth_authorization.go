@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
+	"github.com/wikinoapp/wikino/go/internal/cimd"
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -17,13 +18,10 @@ import (
 type CreateOAuthAuthorizationUsecase struct {
 	db                         *sql.DB
 	oauthGrantRepo             *repository.OAuthGrantRepository
-	cfg                        *config.Config
-	featureFlagRepo            *repository.FeatureFlagRepository
-	oauthApplicationRepo       *repository.OAuthApplicationRepository
-	spaceRepo                  *repository.SpaceRepository
 	spaceMemberRepo            *repository.SpaceMemberRepository
 	oauthAuthorizationCodeRepo *repository.OAuthAuthorizationCodeRepository
 	createValidator            *validator.OAuthAuthorizationCreateValidator
+	requests                   *oauthAuthorizationRequestResolver
 }
 
 // NewCreateOAuthAuthorizationUsecaseはCreateOAuthAuthorizationUsecaseを生成する
@@ -37,17 +35,21 @@ func NewCreateOAuthAuthorizationUsecase(
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	oauthAuthorizationCodeRepo *repository.OAuthAuthorizationCodeRepository,
 	createValidator *validator.OAuthAuthorizationCreateValidator,
+	cimdFetcher *cimd.Fetcher,
 ) *CreateOAuthAuthorizationUsecase {
 	return &CreateOAuthAuthorizationUsecase{
 		db:                         db,
 		oauthGrantRepo:             oauthGrantRepo,
-		cfg:                        cfg,
-		featureFlagRepo:            featureFlagRepo,
-		oauthApplicationRepo:       oauthApplicationRepo,
-		spaceRepo:                  spaceRepo,
 		spaceMemberRepo:            spaceMemberRepo,
 		oauthAuthorizationCodeRepo: oauthAuthorizationCodeRepo,
 		createValidator:            createValidator,
+		requests: &oauthAuthorizationRequestResolver{
+			appURL:               cfg.AppURL(),
+			featureFlagRepo:      featureFlagRepo,
+			oauthApplicationRepo: oauthApplicationRepo,
+			spaceRepo:            spaceRepo,
+			cimdFetcher:          cimdFetcher,
+		},
 	}
 }
 
@@ -79,11 +81,7 @@ type CreateOAuthAuthorizationOutput struct {
 // GetOAuthAuthorizationNewUsecaseと同じ
 func (uc *CreateOAuthAuthorizationUsecase) Execute(ctx context.Context, input CreateOAuthAuthorizationInput) (*CreateOAuthAuthorizationOutput, error) {
 	// 1. データ取得と検証
-	if err := checkPublicAPIEnabled(ctx, uc.featureFlagRepo, input.UserID); err != nil {
-		return nil, err
-	}
-
-	req, err := resolveOAuthAuthorizationRequest(ctx, uc.cfg.AppURL(), uc.oauthApplicationRepo, uc.spaceRepo, input.Params)
+	req, err := uc.requests.resolve(ctx, input.UserID, input.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +93,15 @@ func (uc *CreateOAuthAuthorizationUsecase) Execute(ctx context.Context, input Cr
 	}
 	if !input.Approved {
 		return nil, accessDenied
+	}
+	// 同意画面は、利用者が選んだスペースを `space_identifier` に付けて送る。付いていない送信は同意画面から
+	// 来たものではないため受け付けない
+	if req.space == nil {
+		return nil, &model.OAuthAuthorizationError{
+			Code:        model.OAuthAuthorizationErrorInvalidRequest,
+			RedirectURI: req.redirectURI,
+			State:       req.state,
+		}
 	}
 
 	// 2. 認可チェック。同意画面を出した後にメンバーから外されたり権限を失ったりしていないかを、
@@ -131,6 +138,7 @@ func (uc *CreateOAuthAuthorizationUsecase) Execute(ctx context.Context, input Cr
 		Scopes:             scopes,
 		RedirectURI:        req.redirectURI,
 		CodeChallenge:      req.codeChallenge,
+		Audience:           req.audience,
 		ExpiresAt:          now.Add(model.OAuthAuthorizationCodeLifetime),
 		DeviceName:         req.deviceName,
 	})

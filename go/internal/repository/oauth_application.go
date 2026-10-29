@@ -60,6 +60,34 @@ func (r *OAuthApplicationRepository) Create(ctx context.Context, input CreateOAu
 	return r.toModel(row), nil
 }
 
+// UpsertClientIDMetadataDocumentInputは、CIMDのクライアントの作成・更新の入力パラメータ。
+// NameとRedirectURIsは取得した文書の値で、MetadataExpiresAtは文書のキャッシュの期限
+type UpsertClientIDMetadataDocumentInput struct {
+	ClientID          string
+	Name              string
+	RedirectURIs      []string
+	MetadataExpiresAt time.Time
+}
+
+// UpsertClientIDMetadataDocumentは、CIMDのクライアントを取得した文書で作成し、既にあれば更新する。
+// 同じクライアントIDの登録したクライアントがあれば、何も変えずに (nil, nil) を返す
+func (r *OAuthApplicationRepository) UpsertClientIDMetadataDocument(ctx context.Context, input UpsertClientIDMetadataDocumentInput) (*model.OAuthApplication, error) {
+	row, err := r.q.UpsertClientIDMetadataDocumentOAuthApplication(ctx, query.UpsertClientIDMetadataDocumentOAuthApplicationParams{
+		Name:              input.Name,
+		ClientID:          input.ClientID,
+		RedirectUris:      input.RedirectURIs,
+		MetadataExpiresAt: sql.NullTime{Time: input.MetadataExpiresAt, Valid: true},
+		Now:               time.Now(),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // FindByClientIDはクライアントIDで削除されていないOAuthアプリを取得する。見つからない
 // 場合は (nil, nil) を返す。
 //
@@ -249,6 +277,10 @@ func (r *OAuthApplicationRepository) toModel(row query.OauthApplication) *model.
 	if row.ClientSecretDigest.Valid {
 		clientSecretDigest = &row.ClientSecretDigest.String
 	}
+	var metadataExpiresAt *time.Time
+	if row.MetadataExpiresAt.Valid {
+		metadataExpiresAt = &row.MetadataExpiresAt.Time
+	}
 	var discardedAt *time.Time
 	if row.DiscardedAt.Valid {
 		discardedAt = &row.DiscardedAt.Time
@@ -263,6 +295,8 @@ func (r *OAuthApplicationRepository) toModel(row query.OauthApplication) *model.
 		ClientSecretDigest:   clientSecretDigest,
 		ClientType:           model.OAuthClientType(row.ClientType),
 		RedirectURIs:         row.RedirectUris,
+		RegistrationMethod:   model.OAuthRegistrationMethod(row.RegistrationMethod),
+		MetadataExpiresAt:    metadataExpiresAt,
 		DiscardedAt:          discardedAt,
 		CreatedAt:            row.CreatedAt,
 		UpdatedAt:            row.UpdatedAt,

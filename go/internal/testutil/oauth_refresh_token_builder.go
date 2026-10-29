@@ -20,6 +20,7 @@ type OAuthRefreshTokenBuilder struct {
 	spaceID      string
 	tokenDigest  string
 	scopes       []string
+	audience     model.OAuthAudience
 	expiresAt    time.Time
 	usedAt       *time.Time
 	revokedAt    *time.Time
@@ -62,6 +63,12 @@ func (b *OAuthRefreshTokenBuilder) WithScopes(scopes []model.Scope) *OAuthRefres
 	return b
 }
 
+// WithAudienceはトークンの宛先を設定します。既定は公開API宛てです
+func (b *OAuthRefreshTokenBuilder) WithAudience(audience model.OAuthAudience) *OAuthRefreshTokenBuilder {
+	b.audience = audience
+	return b
+}
+
 // WithExpiresAtは有効期限を設定します
 func (b *OAuthRefreshTokenBuilder) WithExpiresAt(expiresAt time.Time) *OAuthRefreshTokenBuilder {
 	b.expiresAt = expiresAt
@@ -95,10 +102,10 @@ func (b *OAuthRefreshTokenBuilder) Build() model.OAuthRefreshTokenID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO oauth_refresh_tokens (oauth_grant_id, space_id, token_digest, scopes, expires_at, used_at, revoked_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+		`INSERT INTO oauth_refresh_tokens (oauth_grant_id, space_id, token_digest, scopes, audience, expires_at, used_at, revoked_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
 		 RETURNING id`,
-		b.oauthGrantID, b.spaceID, b.tokenDigest, pq.Array(b.scopes), b.expiresAt, b.usedAt, b.revokedAt, now,
+		b.oauthGrantID, b.spaceID, b.tokenDigest, pq.Array(b.scopes), int32(b.audience), b.expiresAt, b.usedAt, b.revokedAt, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("リフレッシュトークン作成に失敗: %v", err)

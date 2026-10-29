@@ -174,7 +174,7 @@ func (uc *CreateOAuthTokenUsecase) exchangeAuthorizationCode(ctx context.Context
 	}
 
 	// 2. 認可チェック
-	if err := uc.checkGrantUsable(ctx, grant, params.Resource); err != nil {
+	if err := uc.checkGrantUsable(ctx, grant, code.Audience, params.Resource); err != nil {
 		return nil, err
 	}
 
@@ -250,7 +250,7 @@ func (uc *CreateOAuthTokenUsecase) refresh(ctx context.Context, params OAuthToke
 	}
 
 	// 2. 認可チェック
-	if err := uc.checkGrantUsable(ctx, grant, params.Resource); err != nil {
+	if err := uc.checkGrantUsable(ctx, grant, refreshToken.Audience, params.Resource); err != nil {
 		return nil, err
 	}
 
@@ -339,8 +339,8 @@ func (uc *CreateOAuthTokenUsecase) exchangeDeviceCode(ctx context.Context, param
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 	}
 
-	// 2. 認可チェック
-	if err := uc.checkGrantUsable(ctx, grant, params.Resource); err != nil {
+	// 2. 認可チェック。デバイス認可は公式CLIが公開APIを呼ぶためのもので、トークンは公開API宛てにする
+	if err := uc.checkGrantUsable(ctx, grant, model.OAuthAudiencePublicAPI, params.Resource); err != nil {
 		return nil, err
 	}
 
@@ -356,6 +356,7 @@ func (uc *CreateOAuthTokenUsecase) exchangeDeviceCode(ctx context.Context, param
 		AccessTokenExpiresAt:  now.Add(model.OAuthAccessTokenLifetime),
 		RefreshTokenDigest:    auth.DigestOpaqueToken(issuance.refreshToken),
 		RefreshTokenExpiresAt: now.Add(model.OAuthRefreshTokenLifetime),
+		Audience:              model.OAuthAudiencePublicAPI,
 		Now:                   now,
 	})
 	if err != nil {
@@ -423,13 +424,13 @@ func (uc *CreateOAuthTokenUsecase) findGrant(ctx context.Context, app *model.OAu
 	return grant, nil
 }
 
-// checkGrantUsableは、許可の持ち主が許可の属するスペースで今もトークンを使えることと、要求の
-// `resource` が許可の属するスペースを指すことを確かめる。
+// checkGrantUsableは、許可の持ち主が許可の属するスペースで今も発行するトークンの宛先を使えることと、
+// 要求の `resource` が発行するトークンの宛先 (公開API宛てなら許可の属するスペース) を指すことを確かめる。
 //
 // 持ち主の有効性はトークンを使うリクエストのたびにも確かめるが、使えないトークンを発行しない
 // よう、発行の時点でも確かめる。
-func (uc *CreateOAuthTokenUsecase) checkGrantUsable(ctx context.Context, grant *model.OAuthGrant, resource string) error {
-	owner, err := uc.owners.find(ctx, grant.SpaceID, grant.SpaceMemberID)
+func (uc *CreateOAuthTokenUsecase) checkGrantUsable(ctx context.Context, grant *model.OAuthGrant, audience model.OAuthAudience, resource string) error {
+	owner, err := uc.owners.find(ctx, grant.SpaceID, grant.SpaceMemberID, audience)
 	if err != nil {
 		return err
 	}
@@ -437,7 +438,15 @@ func (uc *CreateOAuthTokenUsecase) checkGrantUsable(ctx context.Context, grant *
 		return oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 	}
 
-	if resource != "" {
+	if resource == "" {
+		return nil
+	}
+	// `resource` は発行するトークンの宛先と一致しなければならない。MCPサーバー宛てのトークンは許可の
+	// スペースだけで使え、`resource` はスペースを含まないため宛先だけを確かめる
+	if model.OAuthAudienceForResource(uc.cfg.AppURL(), resource) != audience {
+		return oauthTokenError(model.OAuthTokenErrorInvalidTarget)
+	}
+	if audience == model.OAuthAudiencePublicAPI {
 		// 認可要求のスペースの検索 (citextの列) と揃え、識別子の大文字と小文字は区別しない
 		identifier, ok := model.ParseSpaceAPIResourceURL(uc.cfg.AppURL(), resource)
 		if !ok || !strings.EqualFold(string(identifier), string(owner.Space.Identifier)) {

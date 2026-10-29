@@ -172,6 +172,7 @@ type OauthAccessToken struct {
 	RevokedAt    sql.NullTime `json:"revoked_at"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
+	Audience     int32        `json:"audience"`
 }
 
 type OauthApplication struct {
@@ -187,6 +188,8 @@ type OauthApplication struct {
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`
 	Version              int64          `json:"version"`
+	RegistrationMethod   int32          `json:"registration_method"`
+	MetadataExpiresAt    sql.NullTime   `json:"metadata_expires_at"`
 }
 
 type OauthAuthorizationCode struct {
@@ -201,6 +204,7 @@ type OauthAuthorizationCode struct {
 	UsedAt        sql.NullTime `json:"used_at"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
+	Audience      int32        `json:"audience"`
 }
 
 type OauthDeviceAuthorization struct {
@@ -245,6 +249,7 @@ type OauthRefreshToken struct {
 	RevokedAt              sql.NullTime `json:"revoked_at"`
 	CreatedAt              time.Time    `json:"created_at"`
 	UpdatedAt              time.Time    `json:"updated_at"`
+	Audience               int32        `json:"audience"`
 }
 
 type Page struct {

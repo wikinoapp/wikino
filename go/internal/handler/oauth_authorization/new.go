@@ -61,6 +61,16 @@ func (h *Handler) renderNew(w http.ResponseWriter, r *http.Request, user *model.
 		redirectHost = u.Host
 	}
 
+	if output.NeedsSpaceSelection() {
+		h.renderSelectSpace(w, r, user, params, output, redirectHost)
+		return
+	}
+
+	// 利用者が選んだスペースは、同意の送信でも同じ検証を通すよう要求に付けて引き継ぐ
+	if output.SpaceSelected {
+		params.SpaceIdentifier = string(output.Space.Identifier)
+	}
+
 	checked := output.Scopes
 	if formErrors != nil {
 		checked = model.StringsToScopes(granted)
@@ -70,6 +80,8 @@ func (h *Handler) renderNew(w http.ResponseWriter, r *http.Request, user *model.
 		CSRFToken:       middleware.GetCSRFTokenFromContext(ctx),
 		HiddenFields:    hiddenFields(params),
 		ApplicationName: output.Application.Name,
+		ClientHost:      output.Application.ClientIDHost(),
+		LoopbackOnly:    output.Application.IsClientIDMetadataDocument() && output.Application.HasOnlyLoopbackRedirectURIs(),
 		SpaceName:       output.Space.Name,
 		UserAtname:      string(user.Atname),
 		ScopeOptions:    components.NewAPITokenScopeOptions(output.Scopes, checked, output.IneffectiveScopes),
@@ -81,6 +93,32 @@ func (h *Handler) renderNew(w http.ResponseWriter, r *http.Request, user *model.
 
 	w.WriteHeader(status)
 	h.render(w, r, "oauth_authorization_new_title", map[string]any{"ApplicationName": output.Application.Name}, content)
+}
+
+// renderSelectSpaceは、同意の前に連携するスペースを選ぶ段を描画します。選ぶとスペースを
+// `space_identifier` に付けて認可要求を送り直し、同意画面へ進む
+func (h *Handler) renderSelectSpace(w http.ResponseWriter, r *http.Request, user *model.User, params usecase.OAuthAuthorizationParams, output *usecase.GetOAuthAuthorizationNewOutput, redirectHost string) {
+	ctx := r.Context()
+
+	spaces := make([]oauthauthorizationpages.SpaceOption, len(output.SpaceOptions))
+	for i, option := range output.SpaceOptions {
+		spaces[i] = oauthauthorizationpages.SpaceOption{
+			Identifier: string(option.Space.Identifier),
+			Name:       option.Space.Name,
+			Selectable: option.DeniedReason == "",
+		}
+	}
+
+	content := oauthauthorizationpages.SelectSpace(oauthauthorizationpages.SelectSpaceData{
+		CSRFToken:       middleware.GetCSRFTokenFromContext(ctx),
+		HiddenFields:    hiddenFields(params),
+		ApplicationName: output.Application.Name,
+		ClientHost:      output.Application.ClientIDHost(),
+		UserAtname:      string(user.Atname),
+		Spaces:          spaces,
+		RedirectHost:    redirectHost,
+	})
+	h.render(w, r, "oauth_authorization_select_space_title", map[string]any{"ApplicationName": output.Application.Name}, content)
 }
 
 // hiddenFieldsは、同意の送信に引き継ぐ認可要求のパラメーターを並べる。送信を受けたときも
@@ -95,6 +133,7 @@ func hiddenFields(params usecase.OAuthAuthorizationParams) []oauthauthorizationp
 		{Name: "code_challenge", Value: params.CodeChallenge},
 		{Name: "code_challenge_method", Value: params.CodeChallengeMethod},
 		{Name: "resource", Value: params.Resource},
+		{Name: "space_identifier", Value: params.SpaceIdentifier},
 		{Name: "device_name", Value: params.DeviceName},
 	}
 

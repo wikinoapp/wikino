@@ -38,6 +38,25 @@ func ParseSpaceAPIResourceURL(appURL string, resource string) (SpaceIdentifier, 
 	return SpaceIdentifier(identifier), true
 }
 
+// MCPServerPathはリモートMCPサーバーのエンドポイントのパス
+const MCPServerPath = "/mcp"
+
+// MCPServerResourceURLは、OAuthのトークンの宛先 (RFC 8707の `resource`) としてリモートMCPサーバーを
+// 表すURLを返す。appURLはWikinoのオリジン (例: `https://example.com`)
+func MCPServerResourceURL(appURL string) string {
+	return appURL + MCPServerPath
+}
+
+// OAuthAudienceForResourceは、要求の `resource` が指すトークンの宛先を返す。MCPServerResourceURLと
+// 文字列で一致すればMCPサーバー宛て、それ以外 (スペースのAPIのURL・省略・不正な値) は公開API宛てとする。
+// 公開API宛ての `resource` の形が正しいかは、呼び出し側がParseSpaceAPIResourceURLで確かめる
+func OAuthAudienceForResource(appURL string, resource string) OAuthAudience {
+	if resource == MCPServerResourceURL(appURL) {
+		return OAuthAudienceMCPServer
+	}
+	return OAuthAudiencePublicAPI
+}
+
 // OAuthAuthorizationErrorCodeは、認可要求の失敗をクライアントへ伝えるエラーコード
 // (RFC 6749 §4.1.2.1、RFC 8707 §2)
 type OAuthAuthorizationErrorCode string
@@ -91,9 +110,11 @@ func AsOAuthAuthorizationError(err error) *OAuthAuthorizationError {
 
 // AcceptsRedirectURIは、認可要求のリダイレクトURIuriが登録したものと一致するかを返す。
 //
-// 照合は文字列の完全一致で行い、正規化しない。ループバックのIPアドレス (127.0.0.1・[::1]) の
+// 照合は文字列の完全一致で行い、正規化しない。ループバック (127.0.0.1・[::1]・localhost) の
 // HTTPのURIだけは、ポート番号を除いて一致すればよい。ネイティブアプリはリダイレクトを受ける
 // ポートを起動のたびにOSから割り当てるため、登録の時点では決められない (RFC 8252 §7.3)。
+// localhostは、ポートの無い `http://localhost/callback` を宣言してポートを付けて送るCIMDの
+// クライアント (Claude Code) があるため受け付ける。ホスト名は一致させ、IPアドレスとは照合しない。
 func (a *OAuthApplication) AcceptsRedirectURI(uri string) bool {
 	for _, registered := range a.RedirectURIs {
 		if registered == uri {
@@ -119,7 +140,21 @@ func (a *OAuthApplication) AcceptsRedirectURI(uri string) bool {
 	return false
 }
 
-// parseLoopbackRedirectURIは、uriがループバックのIPアドレスを指すHTTPのリダイレクトURIなら
+// HasOnlyLoopbackRedirectURIsは、アプリのリダイレクトURIがすべてループバックのHTTPのURIであるかを返す。
+// ループバックのポートでどのプロセスが待ち受けているかは確かめられないため、同意画面で警告に使う
+func (a *OAuthApplication) HasOnlyLoopbackRedirectURIs() bool {
+	if len(a.RedirectURIs) == 0 {
+		return false
+	}
+	for _, uri := range a.RedirectURIs {
+		if _, ok := parseLoopbackRedirectURI(uri); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// parseLoopbackRedirectURIは、uriがループバックを指すHTTPのリダイレクトURIなら
 // 解析した結果を返す。ユーザー情報・フラグメントを含むものはリダイレクトURIとして扱わない
 func parseLoopbackRedirectURI(uri string) (*url.URL, bool) {
 	u, err := url.Parse(uri)
@@ -129,7 +164,7 @@ func parseLoopbackRedirectURI(uri string) (*url.URL, bool) {
 	if u.Scheme != "http" || u.User != nil || u.Fragment != "" || u.RawFragment != "" {
 		return nil, false
 	}
-	if host := u.Hostname(); host != "127.0.0.1" && host != "::1" {
+	if host := u.Hostname(); host != "127.0.0.1" && host != "::1" && host != "localhost" {
 		return nil, false
 	}
 	return u, true

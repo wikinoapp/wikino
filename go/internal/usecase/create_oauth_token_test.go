@@ -213,6 +213,35 @@ func assertIssuedTokens(t *testing.T, q *query.Queries, f oauthTokenFixture, out
 	}
 }
 
+// assertIssuedTokenAudienceは、発行したアクセストークンとリフレッシュトークンの宛先がwantであることを確かめる
+func assertIssuedTokenAudience(t *testing.T, q *query.Queries, output *CreateOAuthTokenOutput, want model.OAuthAudience) {
+	t.Helper()
+
+	ctx := context.Background()
+	accessToken, err := repository.NewOAuthAccessTokenRepository(q).FindByTokenDigest(ctx, auth.DigestOpaqueToken(output.AccessToken))
+	if err != nil || accessToken == nil {
+		t.Fatalf("アクセストークンの取得結果 = %+v、エラー = %v", accessToken, err)
+	}
+	if accessToken.Audience != want {
+		t.Errorf("アクセストークンのAudience = %v、期待値 = %v", accessToken.Audience, want)
+	}
+	refreshToken, err := repository.NewOAuthRefreshTokenRepository(q).FindByTokenDigest(ctx, auth.DigestOpaqueToken(output.RefreshToken))
+	if err != nil || refreshToken == nil {
+		t.Fatalf("リフレッシュトークンの取得結果 = %+v、エラー = %v", refreshToken, err)
+	}
+	if refreshToken.Audience != want {
+		t.Errorf("リフレッシュトークンのAudience = %v、期待値 = %v", refreshToken.Audience, want)
+	}
+}
+
+// enableRemoteMCPServerFlagDBは、fのメンバーのユーザーにMCPサーバーのフラグを有効にしてコミットする
+func (f oauthTokenFixture) enableRemoteMCPServerFlagDB(t *testing.T) {
+	t.Helper()
+	testutil.CommitFixture(t, func(tx *sql.Tx) {
+		testutil.NewFeatureFlagBuilder(t, tx).WithUserID(f.userID).WithName(string(model.FeatureFlagRemoteMCPServer)).Build()
+	})
+}
+
 // assertGrantRevokedWithTokensは、許可と、許可に属するアクセストークン・リフレッシュトークンが
 // すべて失効していることを確かめる
 func assertGrantRevokedWithTokens(t *testing.T, tx *sql.Tx, grantID model.OAuthGrantID) {
@@ -256,6 +285,7 @@ func TestCreateOAuthTokenUsecase_Execute_AuthorizationCode(t *testing.T) {
 			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		assertIssuedTokens(t, q, f, output, []model.Scope{model.ScopeTopicRead, model.ScopePageWrite})
+		assertIssuedTokenAudience(t, q, output, model.OAuthAudiencePublicAPI)
 
 		stored, err := repository.NewOAuthAuthorizationCodeRepository(q).FindByCodeDigest(context.Background(), auth.DigestOpaqueToken(code))
 		if err != nil {
@@ -264,6 +294,36 @@ func TestCreateOAuthTokenUsecase_Execute_AuthorizationCode(t *testing.T) {
 		if !stored.IsUsed() {
 			t.Error("交換した認可コードのIsUsed() = false、期待値 = true")
 		}
+	})
+
+	t.Run("MCPサーバー宛てのコードは、MCPサーバーのフラグを持つ持ち主にMCPサーバー宛てのトークンを発行する", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-code-mcp", oauthTokenFixtureOptions{})
+		f.enableRemoteMCPServerFlagDB(t)
+		code := f.buildCodeDB(t, func(b *testutil.OAuthAuthorizationCodeBuilder) { b.WithAudience(model.OAuthAudienceMCPServer) })
+
+		output, err := newCreateOAuthTokenUsecaseForTest(q).Execute(context.Background(), f.codeParams(code))
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		assertIssuedTokens(t, q, f, output, []model.Scope{model.ScopeTopicRead, model.ScopePageWrite})
+		assertIssuedTokenAudience(t, q, output, model.OAuthAudienceMCPServer)
+	})
+
+	t.Run("MCPサーバー宛てのコードは、MCPサーバーのフラグが無い持ち主ならinvalid_grantを返す", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		// 公開APIのフラグだけを持つ
+		f := setupOAuthTokenFixtureDB(t, "cot-code-mcp-noflag", oauthTokenFixtureOptions{})
+		code := f.buildCodeDB(t, func(b *testutil.OAuthAuthorizationCodeBuilder) { b.WithAudience(model.OAuthAudienceMCPServer) })
+
+		output, err := newCreateOAuthTokenUsecaseForTest(q).Execute(context.Background(), f.codeParams(code))
+		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
 	})
 
 	t.Run("confidentialクライアントはシークレットで認証する", func(t *testing.T) {
@@ -335,7 +395,7 @@ func TestCreateOAuthTokenUsecase_Execute_AuthorizationCode(t *testing.T) {
 		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
 		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
 
-		principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(context.Background(), first.AccessToken)
+		principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(context.Background(), first.AccessToken, model.OAuthAudiencePublicAPI)
 		if err != nil {
 			t.Fatalf("トークン照合のエラー = %v", err)
 		}
@@ -581,6 +641,35 @@ func TestCreateOAuthTokenUsecase_Execute_AuthorizationCode(t *testing.T) {
 func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 	t.Parallel()
 
+	t.Run("MCPサーバー宛てのリフレッシュトークンは、MCPサーバー宛てのトークンにローテーションする", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-refresh-mcp", oauthTokenFixtureOptions{})
+		f.enableRemoteMCPServerFlagDB(t)
+		token := f.buildRefreshTokenDB(t, "cot-refresh-mcp", func(b *testutil.OAuthRefreshTokenBuilder) { b.WithAudience(model.OAuthAudienceMCPServer) })
+
+		output, err := newCreateOAuthTokenUsecaseForTest(q).Execute(context.Background(), f.refreshParams(token))
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		assertIssuedTokens(t, q, f, output, []model.Scope{model.ScopeTopicRead, model.ScopePageWrite})
+		assertIssuedTokenAudience(t, q, output, model.OAuthAudienceMCPServer)
+	})
+
+	t.Run("MCPサーバー宛てのリフレッシュトークンは、MCPサーバーのフラグが無い持ち主ならinvalid_grantを返す", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-refresh-mcp-noflag", oauthTokenFixtureOptions{})
+		token := f.buildRefreshTokenDB(t, "cot-refresh-mcp-noflag", func(b *testutil.OAuthRefreshTokenBuilder) { b.WithAudience(model.OAuthAudienceMCPServer) })
+
+		output, err := newCreateOAuthTokenUsecaseForTest(q).Execute(context.Background(), f.refreshParams(token))
+		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
+	})
+
 	t.Run("リフレッシュトークンをローテーションし、新しいアクセストークンを発行する", func(t *testing.T) {
 		t.Parallel()
 
@@ -603,6 +692,8 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 		if !previous.IsUsed() {
 			t.Error("元のリフレッシュトークンのIsUsed() = false、期待値 = true")
 		}
+
+		assertIssuedTokenAudience(t, q, output, model.OAuthAudiencePublicAPI)
 
 		// ローテーションで得たトークンで続けて更新できる
 		if _, err := uc.Execute(context.Background(), f.refreshParams(output.RefreshToken)); err != nil {
@@ -915,6 +1006,7 @@ func TestCreateOAuthTokenUsecase_Execute_DeviceCode(t *testing.T) {
 			t.Fatalf("Execute()のエラー = %v", err)
 		}
 		assertIssuedTokens(t, q, f, output, []model.Scope{model.ScopeTopicRead, model.ScopePageWrite})
+		assertIssuedTokenAudience(t, q, output, model.OAuthAudiencePublicAPI)
 
 		if d := findDeviceAuthorization(t, q, deviceCode); d.Status != model.OAuthDeviceAuthorizationStatusExchanged {
 			t.Errorf("Status = %v、期待値 = 交換済み", d.Status)
@@ -974,7 +1066,7 @@ func TestCreateOAuthTokenUsecase_Execute_DeviceCode(t *testing.T) {
 		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
 		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
 
-		principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(context.Background(), first.AccessToken)
+		principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(context.Background(), first.AccessToken, model.OAuthAudiencePublicAPI)
 		if err != nil {
 			t.Fatalf("トークン照合のエラー = %v", err)
 		}
@@ -1252,6 +1344,79 @@ func TestCreateOAuthTokenUsecase_DeviceCodeExpiryDuringLock(t *testing.T) {
 					t.Errorf("%s: 件数=%d、既存の未失効トークン=%d、期待値はともに1", token.table, count, unchanged)
 				}
 			}
+		})
+	}
+}
+
+func TestCreateOAuthTokenUsecase_Execute_MCPServerResource(t *testing.T) {
+	t.Parallel()
+
+	mcpResource := model.MCPServerResourceURL(oauthAuthorizationTestConfig.AppURL())
+
+	t.Run("MCPサーバー宛てのコードは、MCPサーバーのresourceで交換できる", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-mcp-resource", oauthTokenFixtureOptions{})
+		f.enableRemoteMCPServerFlagDB(t)
+		params := f.codeParams(f.buildCodeDB(t, func(b *testutil.OAuthAuthorizationCodeBuilder) { b.WithAudience(model.OAuthAudienceMCPServer) }))
+		params.Resource = mcpResource
+
+		output, err := newCreateOAuthTokenUsecaseForTest(q).Execute(context.Background(), params)
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		assertIssuedTokenAudience(t, q, output, model.OAuthAudienceMCPServer)
+	})
+
+	t.Run("MCPサーバー宛てのリフレッシュトークンは、MCPサーバーのresourceで更新できる", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-mcp-resource-refresh", oauthTokenFixtureOptions{})
+		f.enableRemoteMCPServerFlagDB(t)
+		params := f.refreshParams(f.buildRefreshTokenDB(t, "cot-mcp-resource-refresh", func(b *testutil.OAuthRefreshTokenBuilder) { b.WithAudience(model.OAuthAudienceMCPServer) }))
+		params.Resource = mcpResource
+
+		output, err := newCreateOAuthTokenUsecaseForTest(q).Execute(context.Background(), params)
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		assertIssuedTokenAudience(t, q, output, model.OAuthAudienceMCPServer)
+	})
+
+	tests := []struct {
+		name     string
+		key      string
+		audience model.OAuthAudience
+		refresh  bool
+		// resourceは識別子keyのスペースのAPIのURLを受け取り、要求の `resource` を返す
+		resource func(spaceResource string) string
+	}{
+		{name: "公開API宛てのコードをMCPサーバーのresourceで交換する", key: "cot-mcp-target-a", audience: model.OAuthAudiencePublicAPI, resource: func(string) string { return mcpResource }},
+		{name: "MCPサーバー宛てのコードをスペースのresourceで交換する", key: "cot-mcp-target-b", audience: model.OAuthAudienceMCPServer, resource: func(r string) string { return r }},
+		{name: "公開API宛てのリフレッシュトークンをMCPサーバーのresourceで更新する", key: "cot-mcp-target-c", audience: model.OAuthAudiencePublicAPI, refresh: true, resource: func(string) string { return mcpResource }},
+		{name: "MCPサーバー宛てのリフレッシュトークンをスペースのresourceで更新する", key: "cot-mcp-target-d", audience: model.OAuthAudienceMCPServer, refresh: true, resource: func(r string) string { return r }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name+"とinvalid_targetを返す", func(t *testing.T) {
+			t.Parallel()
+
+			db := testutil.GetTestDB()
+			f := setupOAuthTokenFixtureDB(t, tt.key, oauthTokenFixtureOptions{})
+			f.enableRemoteMCPServerFlagDB(t)
+			var params OAuthTokenParams
+			if tt.refresh {
+				params = f.refreshParams(f.buildRefreshTokenDB(t, tt.key, func(b *testutil.OAuthRefreshTokenBuilder) { b.WithAudience(tt.audience) }))
+			} else {
+				params = f.codeParams(f.buildCodeDB(t, func(b *testutil.OAuthAuthorizationCodeBuilder) { b.WithAudience(tt.audience) }))
+			}
+			params.Resource = tt.resource(model.SpaceAPIResourceURL(oauthAuthorizationTestConfig.AppURL(), f.identifier))
+
+			output, err := newCreateOAuthTokenUsecaseForTest(query.New(db)).Execute(context.Background(), params)
+			assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidTarget)
 		})
 	}
 }

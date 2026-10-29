@@ -175,6 +175,90 @@ func TestOAuthApplicationRepository_CreatedSpaceMemberDeleted(t *testing.T) {
 	}
 }
 
+func TestOAuthApplicationRepository_UpsertClientIDMetadataDocument(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewOAuthApplicationRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	clientID := "https://claude.ai/oauth/repo-upsert"
+	expiresAt := time.Now().Add(time.Hour).Truncate(time.Microsecond)
+
+	created, err := repo.UpsertClientIDMetadataDocument(ctx, UpsertClientIDMetadataDocumentInput{
+		ClientID:          clientID,
+		Name:              "Claude",
+		RedirectURIs:      []string{"https://claude.ai/api/mcp/auth_callback"},
+		MetadataExpiresAt: expiresAt,
+	})
+	if err != nil {
+		t.Fatalf("UpsertClientIDMetadataDocument()のエラー = %v", err)
+	}
+	if created == nil || created.ClientID != clientID || created.Name != "Claude" {
+		t.Fatalf("作成したアプリ = %+v、期待値 = 名前がClaudeのアプリ", created)
+	}
+	if !created.IsClientIDMetadataDocument() || created.SpaceID != nil || created.ClientType != model.OAuthClientTypePublic || created.ClientSecretDigest != nil {
+		t.Errorf("作成したアプリ = %+v、スペースに属さずシークレットの無いpublicなCIMDのクライアントを期待", created)
+	}
+	if created.MetadataExpiresAt == nil || !created.MetadataExpiresAt.Equal(expiresAt) {
+		t.Errorf("MetadataExpiresAt = %v、期待値 = %v", created.MetadataExpiresAt, expiresAt)
+	}
+
+	// 同じクライアントIDなら、同じ行を文書の値で更新する
+	laterExpiresAt := expiresAt.Add(time.Hour)
+	updated, err := repo.UpsertClientIDMetadataDocument(ctx, UpsertClientIDMetadataDocumentInput{
+		ClientID:          clientID,
+		Name:              "Claude (更新)",
+		RedirectURIs:      []string{"https://claude.ai/new_callback"},
+		MetadataExpiresAt: laterExpiresAt,
+	})
+	if err != nil {
+		t.Fatalf("2回目のUpsertClientIDMetadataDocument()のエラー = %v", err)
+	}
+	if updated == nil || updated.ID != created.ID || updated.Name != "Claude (更新)" || updated.Version != created.Version+1 {
+		t.Fatalf("更新したアプリ = %+v、期待値 = ID %v の名前と版を更新したアプリ", updated, created.ID)
+	}
+	if !slices.Equal(updated.RedirectURIs, []string{"https://claude.ai/new_callback"}) {
+		t.Errorf("RedirectURIs = %v、期待値 = [https://claude.ai/new_callback]", updated.RedirectURIs)
+	}
+	if updated.MetadataExpiresAt == nil || !updated.MetadataExpiresAt.Equal(laterExpiresAt) {
+		t.Errorf("MetadataExpiresAt = %v、期待値 = %v", updated.MetadataExpiresAt, laterExpiresAt)
+	}
+
+	// 同じクライアントIDの登録したクライアントは書き換えない
+	officialID := testutil.NewOAuthApplicationBuilder(t, tx).
+		AsOfficialClient().
+		WithClientID("https://claude.ai/oauth/repo-upsert-registered").
+		Build()
+	conflicted, err := repo.UpsertClientIDMetadataDocument(ctx, UpsertClientIDMetadataDocumentInput{
+		ClientID:          "https://claude.ai/oauth/repo-upsert-registered",
+		Name:              "Evil",
+		RedirectURIs:      []string{"https://claude.ai/evil"},
+		MetadataExpiresAt: expiresAt,
+	})
+	if err != nil {
+		t.Fatalf("登録したクライアントへのUpsertClientIDMetadataDocument()のエラー = %v", err)
+	}
+	if conflicted != nil {
+		t.Errorf("UpsertClientIDMetadataDocument() = %+v、期待値 = nil", conflicted)
+	}
+	official, err := repo.FindByClientID(ctx, "https://claude.ai/oauth/repo-upsert-registered")
+	if err != nil || official == nil || official.ID != officialID || official.Name == "Evil" || official.IsClientIDMetadataDocument() {
+		t.Errorf("登録したクライアント = %+v、エラー = %v、書き換えられていないことを期待", official, err)
+	}
+}
+
+func TestOAuthApplicationRepository_ClientIDMetadataDocumentConstraint(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	f := setupOAuthFixture(t, tx, "app-cimd-constraint")
+
+	// CIMDのクライアントはスペースに属さない
+	_, err := tx.ExecContext(context.Background(),
+		`UPDATE oauth_applications SET registration_method = 1 WHERE id = $1`, string(f.oauthApplicationID))
+	assertConstraintViolation(t, err, "check_violation", "chk_oauth_applications_client_id_metadata_document")
+}
+
 func TestOAuthApplicationRepository_FindByClientID(t *testing.T) {
 	t.Parallel()
 

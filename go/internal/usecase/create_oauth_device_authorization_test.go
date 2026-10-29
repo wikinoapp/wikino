@@ -228,6 +228,15 @@ func TestCreateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 		official := setupOAuthDeviceFixture(t, tx, "codev-reject-official", true, false)
 		confidential := setupOAuthDeviceFixture(t, tx, "codev-reject-conf", false, true)
 		other := setupOAuthDeviceFixture(t, tx, "codev-reject-other", false, false)
+		cimdClientID := "https://claude.ai/oauth/codev-reject-cimd"
+		if _, err := repository.NewOAuthApplicationRepository(testutil.QueriesWithTx(tx)).UpsertClientIDMetadataDocument(context.Background(), repository.UpsertClientIDMetadataDocumentInput{
+			ClientID:          cimdClientID,
+			Name:              "Claude",
+			RedirectURIs:      []string{"https://claude.ai/api/mcp/auth_callback"},
+			MetadataExpiresAt: time.Now().Add(time.Hour),
+		}); err != nil {
+			t.Fatalf("CIMDのクライアントの作成に失敗: %v", err)
+		}
 
 		tests := []struct {
 			name   string
@@ -257,6 +266,11 @@ func TestCreateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 			{
 				name:   "登録の無いclient_id",
 				params: OAuthDeviceAuthorizationParams{ClientID: "codev-unknown-client", Scope: "page:read"},
+				want:   model.OAuthTokenErrorInvalidClient,
+			},
+			{
+				name:   "CIMDのクライアント",
+				params: OAuthDeviceAuthorizationParams{ClientID: cimdClientID, Scope: "page:read", Resource: official.resource()},
 				want:   model.OAuthTokenErrorInvalidClient,
 			},
 			{
@@ -297,6 +311,11 @@ func TestCreateOAuthDeviceAuthorizationUsecase_Execute(t *testing.T) {
 			{
 				name:   "存在しないスペースを指す `resource`",
 				params: OAuthDeviceAuthorizationParams{ClientID: official.clientID, Scope: "page:read", Resource: model.SpaceAPIResourceURL(oauthAuthorizationTestConfig.AppURL(), "codev-missing")},
+				want:   model.OAuthTokenErrorInvalidTarget,
+			},
+			{
+				name:   "MCPサーバーを指す `resource`",
+				params: OAuthDeviceAuthorizationParams{ClientID: official.clientID, Scope: "page:read", Resource: model.MCPServerResourceURL(oauthAuthorizationTestConfig.AppURL())},
 				want:   model.OAuthTokenErrorInvalidTarget,
 			},
 			{

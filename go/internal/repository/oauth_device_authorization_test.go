@@ -527,6 +527,7 @@ func TestOAuthDeviceAuthorizationRepository_Exchange(t *testing.T) {
 		AccessTokenExpiresAt:  now.Add(time.Hour),
 		RefreshTokenDigest:    "device_exchange_refresh_digest",
 		RefreshTokenExpiresAt: now.Add(24 * time.Hour),
+		Audience:              model.OAuthAudienceMCPServer,
 		Now:                   now,
 	}
 
@@ -538,7 +539,7 @@ func TestOAuthDeviceAuthorizationRepository_Exchange(t *testing.T) {
 		t.Fatalf("要求 = %+v、交換済みを期待", exchanged)
 	}
 
-	// 要求の許可・スコープでトークンを作る
+	// 要求の許可・スコープと、入力の宛先でトークンを作る
 	for _, tt := range []struct {
 		table  string
 		digest string
@@ -548,12 +549,13 @@ func TestOAuthDeviceAuthorizationRepository_Exchange(t *testing.T) {
 	} {
 		var gotGrantID string
 		var gotScopes []byte
-		if err := tx.QueryRowContext(ctx, "SELECT oauth_grant_id, scopes FROM "+tt.table+" WHERE token_digest = $1 AND space_id = $2", tt.digest, string(f.spaceID)).
-			Scan(&gotGrantID, &gotScopes); err != nil {
+		var gotAudience int32
+		if err := tx.QueryRowContext(ctx, "SELECT oauth_grant_id, scopes, audience FROM "+tt.table+" WHERE token_digest = $1 AND space_id = $2", tt.digest, string(f.spaceID)).
+			Scan(&gotGrantID, &gotScopes, &gotAudience); err != nil {
 			t.Fatalf("%sの取得に失敗: %v", tt.table, err)
 		}
-		if gotGrantID != string(grantID) || string(gotScopes) != "{page:read}" {
-			t.Errorf("%s = (%s, %s)、期待値 = (%s, {page:read})", tt.table, gotGrantID, gotScopes, grantID)
+		if gotGrantID != string(grantID) || string(gotScopes) != "{page:read}" || model.OAuthAudience(gotAudience) != input.Audience {
+			t.Errorf("%s = (%s, %s, %d)、期待値 = (%s, {page:read}, %d)", tt.table, gotGrantID, gotScopes, gotAudience, grantID, input.Audience)
 		}
 	}
 

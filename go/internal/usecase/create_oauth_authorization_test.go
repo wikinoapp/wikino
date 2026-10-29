@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
+	"github.com/wikinoapp/wikino/go/internal/cimd"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -17,6 +18,11 @@ import (
 )
 
 func newCreateOAuthAuthorizationUsecaseForTest(q *query.Queries) *CreateOAuthAuthorizationUsecase {
+	return newCreateOAuthAuthorizationUsecaseWithCIMD(q, testutil.NewCIMDStub(nil).Fetcher())
+}
+
+// newCreateOAuthAuthorizationUsecaseWithCIMDは、CIMDの文書をfetcherで取得するユースケースを返す
+func newCreateOAuthAuthorizationUsecaseWithCIMD(q *query.Queries, fetcher *cimd.Fetcher) *CreateOAuthAuthorizationUsecase {
 	return NewCreateOAuthAuthorizationUsecase(
 		testutil.GetTestDB(), repository.NewOAuthGrantRepository(q),
 		oauthAuthorizationTestConfig,
@@ -26,6 +32,7 @@ func newCreateOAuthAuthorizationUsecaseForTest(q *query.Queries) *CreateOAuthAut
 		repository.NewSpaceMemberRepository(q),
 		repository.NewOAuthAuthorizationCodeRepository(q),
 		validator.NewOAuthAuthorizationCreateValidator(),
+		fetcher,
 	)
 }
 
@@ -119,6 +126,9 @@ func TestCreateOAuthAuthorizationUsecase_Execute(t *testing.T) {
 		}
 		if code.CodeChallenge != params.CodeChallenge {
 			t.Errorf("code.CodeChallenge = %q、期待値 = %q", code.CodeChallenge, params.CodeChallenge)
+		}
+		if code.Audience != model.OAuthAudiencePublicAPI {
+			t.Errorf("code.Audience = %v、期待値 = %v", code.Audience, model.OAuthAudiencePublicAPI)
 		}
 		if lifetime := code.ExpiresAt.Sub(before); lifetime < model.OAuthAuthorizationCodeLifetime || lifetime > model.OAuthAuthorizationCodeLifetime+time.Minute {
 			t.Errorf("code.ExpiresAt = %v、期待値は発行の%v後", code.ExpiresAt, model.OAuthAuthorizationCodeLifetime)
@@ -331,4 +341,74 @@ func setupOAuthAuthorizationFixtureDB(t *testing.T, key string, role model.Space
 	var f oauthAuthorizationFixture
 	testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupOAuthAuthorizationFixture(t, tx, key, role, flagEnabled) })
 	return f
+}
+
+func TestCreateOAuthAuthorizationUsecase_Execute_MCPServer(t *testing.T) {
+	t.Parallel()
+
+	t.Run("選んだスペースに、MCPサーバー宛ての認可コードを発行する", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		var f mcpAuthorizationFixture
+		testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupMCPAuthorizationFixture(t, tx, "coauth-mcp", 2) })
+		params := mcpOAuthAuthorizationParams(f.clientID)
+		params.SpaceIdentifier = string(f.identifiers[1])
+
+		output, err := newCreateOAuthAuthorizationUsecaseForTest(q).Execute(context.Background(), CreateOAuthAuthorizationInput{
+			UserID:        f.userID,
+			Params:        params,
+			Approved:      true,
+			GrantedScopes: []string{"topic:read"},
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		code, err := repository.NewOAuthAuthorizationCodeRepository(q).FindByCodeDigest(context.Background(), auth.DigestOpaqueToken(output.Code))
+		if err != nil || code == nil {
+			t.Fatalf("認可コードの取得結果 = %+v、エラー = %v", code, err)
+		}
+		if code.Audience != model.OAuthAudienceMCPServer {
+			t.Errorf("code.Audience = %v、期待値 = %v", code.Audience, model.OAuthAudienceMCPServer)
+		}
+		if code.SpaceID != f.spaceIDs[1] {
+			t.Errorf("code.SpaceID = %v、期待値 = %v (選んだスペース)", code.SpaceID, f.spaceIDs[1])
+		}
+	})
+
+	t.Run("スペースを選んでいない許可の送信はinvalid_requestを返す", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		var f mcpAuthorizationFixture
+		testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupMCPAuthorizationFixture(t, tx, "coauth-mcp-unselected", 2) })
+		params := mcpOAuthAuthorizationParams(f.clientID)
+
+		output, err := newCreateOAuthAuthorizationUsecaseForTest(query.New(db)).Execute(context.Background(), CreateOAuthAuthorizationInput{
+			UserID:        f.userID,
+			Params:        params,
+			Approved:      true,
+			GrantedScopes: []string{"topic:read"},
+		})
+		if output != nil {
+			t.Errorf("output = %+v、期待値 = nil", output)
+		}
+		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorInvalidRequest, params)
+	})
+
+	t.Run("スペースを選ぶ段で拒否するとaccess_deniedを返す", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		var f mcpAuthorizationFixture
+		testutil.CommitFixture(t, func(tx *sql.Tx) { f = setupMCPAuthorizationFixture(t, tx, "coauth-mcp-deny", 2) })
+		params := mcpOAuthAuthorizationParams(f.clientID)
+
+		_, err := newCreateOAuthAuthorizationUsecaseForTest(query.New(db)).Execute(context.Background(), CreateOAuthAuthorizationInput{
+			UserID: f.userID,
+			Params: params,
+		})
+		assertRedirectableOAuthAuthorizationError(t, err, model.OAuthAuthorizationErrorAccessDenied, params)
+	})
 }

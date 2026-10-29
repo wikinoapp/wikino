@@ -48,6 +48,7 @@ func TestShow(t *testing.T) {
 		"revocation_endpoint_auth_methods_supported":     []any{"client_secret_basic", "client_secret_post", "none"},
 		"code_challenge_methods_supported":               []any{"S256"},
 		"authorization_response_iss_parameter_supported": true,
+		"client_id_metadata_document_supported":          true,
 		"service_documentation":                          "https://example.com/api/reference/v1",
 	}
 	if !reflect.DeepEqual(got, want) {

@@ -12,13 +12,14 @@ const OAuthRefreshTokenLifetime = 90 * 24 * time.Hour
 // 使うたびにローテーションする。PreviousRefreshTokenIDはローテーション前のトークンを指す。
 //
 // トークンの値そのものは保持せず、TokenDigestで照合する。Scopesは更新で発行する
-// アクセストークンのスコープである。
+// アクセストークンのスコープ、Audienceは更新で発行するアクセストークンと次のリフレッシュトークンの宛先である。
 type OAuthRefreshToken struct {
 	ID                     OAuthRefreshTokenID
 	OAuthGrantID           OAuthGrantID
 	SpaceID                SpaceID
 	TokenDigest            string
 	Scopes                 []Scope
+	Audience               OAuthAudience
 	PreviousRefreshTokenID *OAuthRefreshTokenID
 	ExpiresAt              time.Time
 	UsedAt                 *time.Time

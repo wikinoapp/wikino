@@ -1,6 +1,7 @@
 package model
 
 import (
+	"net/url"
 	"time"
 )
 
@@ -12,6 +13,17 @@ const (
 	OAuthClientTypeConfidential OAuthClientType = 0
 	// OAuthClientTypePublicはシークレットを保管できないクライアント (CLI・デスクトップなど)
 	OAuthClientTypePublic OAuthClientType = 1
+)
+
+// OAuthRegistrationMethodはOAuthアプリのクライアントの登録の方式
+type OAuthRegistrationMethod int32
+
+const (
+	// OAuthRegistrationMethodRegisteredは、Wikinoに登録したクライアント (スペースのアプリ・公式クライアント)
+	OAuthRegistrationMethodRegistered OAuthRegistrationMethod = 0
+	// OAuthRegistrationMethodClientIDMetadataDocumentは、Client ID Metadata Document (CIMD) のクライアント。
+	// `client_id` はクライアントが公開するHTTPSのURLで、認可要求のときにそこから取得した文書でアプリを作成・更新する
+	OAuthRegistrationMethodClientIDMetadataDocument OAuthRegistrationMethod = 1
 )
 
 // OfficialCLIClientIDは公式CLIのクライアントID。CLIに埋め込んで配布するため変えない。
@@ -35,8 +47,11 @@ func (t OAuthClientType) String() string {
 
 // OAuthApplicationはOAuthアプリのドメインモデル。アプリはスペースが持ち、登録した
 // スペースでだけ使える。SpaceIDがnilのアプリは、全スペース共通のWikinoの公式クライアント
-// (CLI・デスクトップ) である。CreatedSpaceMemberIDは作成したメンバーで、そのメンバーが
-// いなくなるとnilになる。
+// (CLI・デスクトップ) か、CIMDのクライアントである。CreatedSpaceMemberIDは作成したメンバーで、
+// そのメンバーがいなくなるとnilになる。
+//
+// CIMDのクライアントは、取得した文書の `client_name` をName、`redirect_uris` をRedirectURIsに持ち、
+// MetadataExpiresAtまで文書をキャッシュする。登録したクライアントのMetadataExpiresAtはnilである。
 //
 // クライアントシークレットの値そのものは保持せず、ClientSecretDigestで照合する。
 // publicクライアントはシークレットを持たず、ClientSecretDigestはnilである。
@@ -50,6 +65,8 @@ type OAuthApplication struct {
 	ClientSecretDigest   *string
 	ClientType           OAuthClientType
 	RedirectURIs         []string
+	RegistrationMethod   OAuthRegistrationMethod
+	MetadataExpiresAt    *time.Time
 	DiscardedAt          *time.Time
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
@@ -62,11 +79,35 @@ func (a *OAuthApplication) IsConfidential() bool {
 
 // IsOfficialClientは、スペースに属さない全スペース共通の公式クライアントであるかを返す
 func (a *OAuthApplication) IsOfficialClient() bool {
-	return a.SpaceID == nil
+	return a.SpaceID == nil && a.RegistrationMethod == OAuthRegistrationMethodRegistered
+}
+
+// IsClientIDMetadataDocumentは、CIMDのクライアントであるかを返す
+func (a *OAuthApplication) IsClientIDMetadataDocument() bool {
+	return a.RegistrationMethod == OAuthRegistrationMethodClientIDMetadataDocument
+}
+
+// ClientIDHostは、CIMDのクライアントのクライアントID (URL) のホスト名を返す。同意画面と連携の一覧で、
+// 文書から取った名前に添えてクライアントの出どころを示すために使う。CIMDのクライアントでなければ空を返す
+func (a *OAuthApplication) ClientIDHost() string {
+	if !a.IsClientIDMetadataDocument() {
+		return ""
+	}
+	u, err := url.Parse(a.ClientID)
+	if err != nil {
+		return ""
+	}
+	return u.Hostname()
+}
+
+// IsMetadataFreshは、CIMDの文書のキャッシュがnowの時点で期限内であるかを返す
+func (a *OAuthApplication) IsMetadataFresh(now time.Time) bool {
+	return a.MetadataExpiresAt != nil && now.Before(*a.MetadataExpiresAt)
 }
 
 // IsAvailableInは、アプリをスペースspaceIDとの連携に使えるかを返す。スペースのアプリは
-// 登録したスペースでだけ、公式クライアントはどのスペースでも使える
+// 登録したスペースでだけ、スペースに属さないアプリ (公式クライアント・CIMDのクライアント) は
+// どのスペースでも使える
 func (a *OAuthApplication) IsAvailableIn(spaceID SpaceID) bool {
-	return a.IsOfficialClient() || *a.SpaceID == spaceID
+	return a.SpaceID == nil || *a.SpaceID == spaceID
 }

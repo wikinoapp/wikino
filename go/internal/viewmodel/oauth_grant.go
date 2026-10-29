@@ -11,6 +11,10 @@ type OAuthGrant struct {
 	ID              string
 	ApplicationName string
 
+	// ApplicationHostは、CIMDのクライアントのクライアントIDのホスト名。アプリの名前はクライアントが
+	// 文書で名乗ったものなので、出どころを添える。CIMDのクライアントでなければ空
+	ApplicationHost string
+
 	// DeviceNameはクライアントが申告した端末名。送られなかった連携では空
 	DeviceName string
 
@@ -41,6 +45,7 @@ func NewOAuthGrants(grants []*model.OAuthGrant, apps map[model.OAuthApplicationI
 		vms = append(vms, OAuthGrant{
 			ID:              string(grant.ID),
 			ApplicationName: app.Name,
+			ApplicationHost: app.ClientIDHost(),
 			DeviceName:      deviceName,
 			Scopes:          model.SortAPITokenScopes(grant.Scopes),
 			CreatedAt:       grant.CreatedAt,

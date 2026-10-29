@@ -2283,6 +2283,10 @@ other = "{{.CreatedAt}}に許可した「{{.Name}}」との連携を解除しま
 description = "連携の解除の確認ダイアログ (端末名がある連携)"
 other = "「{{.Name}}」の「{{.DeviceName}}」との連携を解除しますか？この端末のアプリは、このスペースのAPIを呼び出せなくなります。"
 
+[oauth_grant_index_application_host]
+description = "連携中のアプリの一覧の、CIMDのクライアントのクライアントIDのホスト名"
+other = "{{.Host}}が提供"
+
 [flash_oauth_grant_revoked]
 description = "連携を解除したときのフラッシュメッセージ"
 other = "「{{.Name}}」との連携を解除しました"
@@ -2741,6 +2745,62 @@ other = "拒否する"
 description = "アプリを許可できない場合の同意画面のアプリへ戻るボタン"
 other = "アプリに戻る"
 
+[oauth_authorization_new_client_host]
+description = "同意画面の、CIMDのクライアントのクライアントIDのホスト名の表示"
+other = "{{.ClientHost}}が提供するアプリです"
+
+[oauth_authorization_new_redirect_host_label]
+description = "同意画面の、選択後に移動する先のホスト名の見出し"
+other = "移動先"
+
+[oauth_authorization_new_loopback_warning]
+description = "同意画面の、リダイレクトURIがループバックだけのCIMDのクライアントへの警告"
+other = "{{.ApplicationName}}はこのコンピューターで動くアプリです。自分で始めた連携でなければ許可しないでください"
+
+[oauth_authorization_select_space_title]
+description = "連携するスペースを選ぶ画面のページタイトル"
+other = "{{.ApplicationName}}との連携 | Wikino"
+
+[oauth_authorization_select_space_heading]
+description = "連携するスペースを選ぶ画面の見出し"
+other = "{{.ApplicationName}}と連携するスペースを選んでください"
+
+[oauth_authorization_select_space_client_host]
+description = "連携するスペースを選ぶ画面の、CIMDのクライアントのクライアントIDのホスト名の表示"
+other = "{{.ClientHost}}が提供するアプリです"
+
+[oauth_authorization_select_space_user_label]
+description = "連携するスペースを選ぶ画面のアカウントの見出し"
+other = "アカウント"
+
+[oauth_authorization_select_space_label]
+description = "連携するスペースを選ぶ画面のスペースの選択肢の見出し"
+other = "連携するスペース"
+
+[oauth_authorization_select_space_no_permission]
+description = "連携するスペースを選ぶ画面の、連携を許可する権限が無いスペースの説明"
+other = "このスペースでアプリとの連携を許可する権限がありません"
+
+[oauth_authorization_select_space_empty]
+description = "連携するスペースを選ぶ画面で、メンバーであるスペースが無いときの説明"
+other = "連携できるスペースがありません。スペースに参加してから、もう一度連携してください"
+
+[oauth_authorization_select_space_none_selectable]
+description = "連携するスペースを選ぶ画面で、どのスペースでも連携を許可する権限が無いときの説明"
+other = "次のスペースのどれでも、アプリとの連携を許可する権限がありません。スペースの管理者に問い合わせてください"
+
+[oauth_authorization_select_space_back_notice]
+description = "連携するスペースを選ぶ画面の、アプリへ戻ると移動する先の説明"
+other = "アプリに戻ると{{.RedirectHost}}に移動します"
+
+[oauth_authorization_select_space_submit_button]
+description = "連携するスペースを選ぶ画面の次へ進むボタン"
+other = "次へ"
+
+[oauth_authorization_select_space_back_to_application]
+description = "連携するスペースを選ぶ画面のアプリへ戻るボタン"
+other = "アプリに戻る"
+
 [oauth_authorization_invalid_request_title]
 description = "クライアントへ戻せない認可要求のエラー画面のページタイトル"
 other = "連携の要求が不正です | Wikino"
@@ -2934,3 +2994,49 @@ other = "Wikinoの公開Web API V1のリファレンスです。エンドポイ�
 [api_reference_fallback]
 description = "公開APIのリファレンスで、OpenAPI記述へのリンクの前に出す案内"
 other = "OpenAPI記述を直接読む: "
+
+
+# MCPのツールの呼び出し
+[validation_mcp_arguments_object]
+description = "MCPのツールの引数がJSONのオブジェクトでない場合のエラー"
+other = "引数がJSONのオブジェクトではありません"
+
+[validation_mcp_argument_unknown]
+description = "MCPのツールに定義していない引数を指定した場合のエラー"
+other = "引数{{.Name}}はこのツールに定義していません"
+
+[validation_mcp_argument_required]
+description = "MCPのツールのパスの引数が無い場合のエラー"
+other = "引数{{.Name}}がありません"
+
+[validation_mcp_argument_name]
+description = "MCPのツールの引数の値のエラーに添える引数名"
+other = "引数{{.Name}}"
+
+[validation_mcp_argument_single_value]
+description = "MCPのツールのパスの引数の値が1つでない場合のエラー"
+other = "引数{{.Name}}には1つの値を指定してください"
+
+[validation_mcp_array_item_scalar]
+description = "MCPのツールのパス・クエリ・ヘッダーの引数の配列に、文字列・数値・真偽値以外の要素がある場合のエラー"
+other = "配列の要素には文字列・数値・真偽値を指定してください"
+
+[validation_mcp_argument_scalar]
+description = "MCPのツールのパス・クエリ・ヘッダーの引数の値を文字列にできない場合のエラー"
+other = "文字列・数値・真偽値を指定してください"
+
+[mcp_call_body_error]
+description = "MCPのツールの引数から公開APIのリクエスト本文を組み立てられない場合のエラー"
+other = "リクエスト本文を組み立てられません"
+
+[mcp_call_request_error]
+description = "MCPのツールの引数から公開APIへの要求を組み立てられない場合のエラー"
+other = "公開APIへの要求を組み立てられません"
+
+[mcp_call_success]
+description = "MCPのツールで本文の無い成功の応答を受け取った場合の案内"
+other = "成功しました (ステータス {{.Status}})"
+
+[mcp_call_status]
+description = "MCPのツールのエラーの内容の前に添えるHTTPステータス"
+other = "ステータス {{.Status}}"

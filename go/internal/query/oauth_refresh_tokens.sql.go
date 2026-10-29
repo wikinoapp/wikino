@@ -18,6 +18,7 @@ INSERT INTO oauth_refresh_tokens (
     space_id,
     token_digest,
     scopes,
+    audience,
     expires_at,
     created_at,
     updated_at
@@ -28,8 +29,9 @@ INSERT INTO oauth_refresh_tokens (
     $4::text[],
     $5,
     $6,
-    $6
-) RETURNING id, oauth_grant_id, space_id, token_digest, scopes, previous_refresh_token_id, expires_at, used_at, revoked_at, created_at, updated_at
+    $7,
+    $7
+) RETURNING id, oauth_grant_id, space_id, token_digest, scopes, previous_refresh_token_id, expires_at, used_at, revoked_at, created_at, updated_at, audience
 `
 
 type CreateOAuthRefreshTokenParams struct {
@@ -37,6 +39,7 @@ type CreateOAuthRefreshTokenParams struct {
 	SpaceID      string    `json:"space_id"`
 	TokenDigest  string    `json:"token_digest"`
 	Scopes       []string  `json:"scopes"`
+	Audience     int32     `json:"audience"`
 	ExpiresAt    time.Time `json:"expires_at"`
 	Now          time.Time `json:"now"`
 }
@@ -49,6 +52,7 @@ func (q *Queries) CreateOAuthRefreshToken(ctx context.Context, arg CreateOAuthRe
 		arg.SpaceID,
 		arg.TokenDigest,
 		pq.Array(arg.Scopes),
+		arg.Audience,
 		arg.ExpiresAt,
 		arg.Now,
 	)
@@ -65,12 +69,13 @@ func (q *Queries) CreateOAuthRefreshToken(ctx context.Context, arg CreateOAuthRe
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }
 
 const findOAuthRefreshTokenByTokenDigest = `-- name: FindOAuthRefreshTokenByTokenDigest :one
-SELECT id, oauth_grant_id, space_id, token_digest, scopes, previous_refresh_token_id, expires_at, used_at, revoked_at, created_at, updated_at FROM oauth_refresh_tokens WHERE token_digest = $1
+SELECT id, oauth_grant_id, space_id, token_digest, scopes, previous_refresh_token_id, expires_at, used_at, revoked_at, created_at, updated_at, audience FROM oauth_refresh_tokens WHERE token_digest = $1
 `
 
 // トークンダイジェストでOAuthのリフレッシュトークンを取得する。
@@ -92,6 +97,7 @@ func (q *Queries) FindOAuthRefreshTokenByTokenDigest(ctx context.Context, tokenD
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }
@@ -157,7 +163,7 @@ WITH used AS (
       AND oauth_refresh_tokens.used_at IS NULL
       AND oauth_refresh_tokens.revoked_at IS NULL
       AND oauth_refresh_tokens.expires_at > $3::timestamptz
-    RETURNING oauth_refresh_tokens.id, oauth_refresh_tokens.oauth_grant_id, oauth_refresh_tokens.space_id, oauth_refresh_tokens.scopes
+    RETURNING oauth_refresh_tokens.id, oauth_refresh_tokens.oauth_grant_id, oauth_refresh_tokens.space_id, oauth_refresh_tokens.scopes, oauth_refresh_tokens.audience
 ),
 created_access_token AS (
     INSERT INTO oauth_access_tokens (
@@ -165,6 +171,7 @@ created_access_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -174,6 +181,7 @@ created_access_token AS (
         used.space_id,
         $6,
         $7::text[],
+        used.audience,
         $8,
         $3,
         $3
@@ -184,6 +192,7 @@ INSERT INTO oauth_refresh_tokens (
     space_id,
     token_digest,
     scopes,
+    audience,
     previous_refresh_token_id,
     expires_at,
     created_at,
@@ -194,12 +203,13 @@ SELECT
     used.space_id,
     $1,
     used.scopes,
+    used.audience,
     used.id,
     $2,
     $3,
     $3
 FROM used
-RETURNING id, oauth_grant_id, space_id, token_digest, scopes, previous_refresh_token_id, expires_at, used_at, revoked_at, created_at, updated_at
+RETURNING id, oauth_grant_id, space_id, token_digest, scopes, previous_refresh_token_id, expires_at, used_at, revoked_at, created_at, updated_at, audience
 `
 
 type RotateOAuthRefreshTokenParams struct {
@@ -213,8 +223,8 @@ type RotateOAuthRefreshTokenParams struct {
 	AccessTokenExpiresAt time.Time `json:"access_token_expires_at"`
 }
 
-// リフレッシュトークンを使用済みにし、同じ許可・スコープの新しいリフレッシュトークンと、
-// 同じ許可のアクセストークンを作成して、新しいリフレッシュトークンを返す。1つの文で判定と
+// リフレッシュトークンを使用済みにし、同じ許可・スコープ・宛先の新しいリフレッシュトークンと、
+// 同じ許可・宛先のアクセストークンを作成して、新しいリフレッシュトークンを返す。1つの文で判定と
 // 更新を行うため、同じトークンの同時の更新でも新しいトークンを返すのは1回だけである。
 // 元のトークンが使用済み・失効済み・期限切れなら何もせず行を返さない。
 //
@@ -246,6 +256,7 @@ func (q *Queries) RotateOAuthRefreshToken(ctx context.Context, arg RotateOAuthRe
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }

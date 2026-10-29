@@ -34,7 +34,7 @@ func TestRevokeOAuthGrantUsecase_Execute(t *testing.T) {
 	f, token := setupOAuthAccessTokenAuthFixture(t, tx, "rog-revoke", opts)
 	authenticateUC := newAuthenticateAPITokenUC(tx)
 
-	principal, err := authenticateUC.Execute(ctx, token)
+	principal, err := authenticateUC.Execute(ctx, token, model.OAuthAudiencePublicAPI)
 	if err != nil || principal == nil {
 		t.Fatalf("解除前のExecute() = (%v, %v)、トークンを受け付けることを期待", principal, err)
 	}
@@ -62,7 +62,7 @@ func TestRevokeOAuthGrantUsecase_Execute(t *testing.T) {
 		t.Errorf("Application = %+v、許可したアプリを期待", output.Application)
 	}
 
-	principal, err = authenticateUC.Execute(ctx, token)
+	principal, err = authenticateUC.Execute(ctx, token, model.OAuthAudiencePublicAPI)
 	if err != nil {
 		t.Fatalf("解除後のExecute()のエラー = %v", err)
 	}
@@ -75,6 +75,81 @@ func TestRevokeOAuthGrantUsecase_Execute(t *testing.T) {
 	}
 	if !refreshToken.IsRevoked() {
 		t.Error("リフレッシュトークンが失効していない")
+	}
+}
+
+func TestRevokeOAuthGrantUsecase_Execute_MCPServer(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		key           string
+		publicEnabled bool
+	}{
+		{name: "MCPサーバーだけが有効", key: "rog-mcp-only"},
+		{name: "公開APIとMCPサーバーの両方が有効", key: "rog-mcp-both", publicEnabled: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			q := testutil.QueriesWithTx(tx)
+			ctx := context.Background()
+			f, token := setupOAuthAccessTokenAuthFixture(t, tx, tt.key, mcpOAuthAccessTokenAuthFixtureOptions())
+			if tt.publicEnabled {
+				testutil.NewFeatureFlagBuilder(t, tx).
+					WithUserID(f.userID).
+					WithName(string(model.FeatureFlagPublicAPI)).
+					Build()
+			}
+			authenticateUC := newAuthenticateAPITokenUC(tx)
+			principal, err := authenticateUC.Execute(ctx, token, model.OAuthAudienceMCPServer)
+			if err != nil || principal == nil {
+				t.Fatalf("解除前のトークンの照合 = %+v、エラー = %v、認証成功を期待", principal, err)
+			}
+
+			grants, err := repository.NewOAuthGrantRepository(q).ListUnrevokedBySpaceMember(ctx, f.spaceID, f.spaceMemberID)
+			if err != nil || len(grants) != 1 {
+				t.Fatalf("解除前の許可 = %+v、エラー = %v、1件を期待", grants, err)
+			}
+			grantID := grants[0].ID
+			refreshDigest := tt.key + "-refresh"
+			testutil.NewOAuthRefreshTokenBuilder(t, tx).
+				WithOAuthGrantID(grantID).WithSpaceID(f.spaceID).
+				WithAudience(model.OAuthAudienceMCPServer).WithTokenDigest(refreshDigest).Build()
+
+			listed, err := newGetOAuthGrantsUsecaseForTest(q).Execute(ctx, GetOAuthGrantsInput{
+				SpaceIdentifier: model.SpaceIdentifier(tt.key), UserID: f.userID,
+			})
+			if err != nil {
+				t.Fatalf("連携一覧のエラー = %v", err)
+			}
+			if len(listed.Grants) != 1 || listed.Grants[0].ID != grantID || !listed.CanDelete {
+				t.Fatalf("連携一覧 = %+v、期待値 = 自分の許可1件で解除可能", listed)
+			}
+
+			output, err := newRevokeOAuthGrantUsecaseForTest(q).Execute(ctx, RevokeOAuthGrantInput{
+				SpaceIdentifier: model.SpaceIdentifier(tt.key), UserID: f.userID, OAuthGrantID: grantID,
+			})
+			if err != nil {
+				t.Fatalf("連携解除のエラー = %v", err)
+			}
+			if output.Grant.ID != grantID || !output.Grant.IsRevoked() {
+				t.Errorf("解除した許可 = %+v、期待値 = 失効した許可 %v", output.Grant, grantID)
+			}
+			principal, err = authenticateUC.Execute(ctx, token, model.OAuthAudienceMCPServer)
+			if err != nil || principal != nil {
+				t.Errorf("解除後のトークンの照合 = %+v、エラー = %v、拒否を期待", principal, err)
+			}
+			refresh, err := repository.NewOAuthRefreshTokenRepository(q).FindByTokenDigest(ctx, refreshDigest)
+			if err != nil || refresh == nil {
+				t.Fatalf("解除後のリフレッシュトークン = %+v、エラー = %v", refresh, err)
+			}
+			if !refresh.IsRevoked() {
+				t.Error("解除後のリフレッシュトークンが失効していない")
+			}
+		})
 	}
 }
 

@@ -20,6 +20,7 @@ type OAuthAccessTokenBuilder struct {
 	spaceID      string
 	tokenDigest  string
 	scopes       []string
+	audience     model.OAuthAudience
 	expiresAt    time.Time
 	revokedAt    *time.Time
 }
@@ -61,6 +62,12 @@ func (b *OAuthAccessTokenBuilder) WithScopes(scopes []model.Scope) *OAuthAccessT
 	return b
 }
 
+// WithAudienceはトークンの宛先を設定します。既定は公開API宛てです
+func (b *OAuthAccessTokenBuilder) WithAudience(audience model.OAuthAudience) *OAuthAccessTokenBuilder {
+	b.audience = audience
+	return b
+}
+
 // WithExpiresAtは有効期限を設定します
 func (b *OAuthAccessTokenBuilder) WithExpiresAt(expiresAt time.Time) *OAuthAccessTokenBuilder {
 	b.expiresAt = expiresAt
@@ -88,10 +95,10 @@ func (b *OAuthAccessTokenBuilder) Build() model.OAuthAccessTokenID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO oauth_access_tokens (oauth_grant_id, space_id, token_digest, scopes, expires_at, revoked_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+		`INSERT INTO oauth_access_tokens (oauth_grant_id, space_id, token_digest, scopes, audience, expires_at, revoked_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
 		 RETURNING id`,
-		b.oauthGrantID, b.spaceID, b.tokenDigest, pq.Array(b.scopes), b.expiresAt, b.revokedAt, now,
+		b.oauthGrantID, b.spaceID, b.tokenDigest, pq.Array(b.scopes), int32(b.audience), b.expiresAt, b.revokedAt, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("アクセストークン作成に失敗: %v", err)
