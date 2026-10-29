@@ -20,7 +20,7 @@ type SpaceSettingsItems struct {
 	CanShowPersonalAccessTokens bool
 
 	// CanShowOAuthGrantsは連携中のアプリの項目を出すかを表す。
-	// oauth_grant:readを持ち、公開APIのフィーチャーフラグが有効なときにtrueになる。
+	// oauth_grant:readを持ち、公開APIかMCPサーバーのフィーチャーフラグが有効なときにtrueになる。
 	CanShowOAuthGrants bool
 
 	// CanShowOAuthApplicationsはOAuthアプリの項目を出すかを表す。
@@ -37,7 +37,7 @@ func (i SpaceSettingsItems) CanShow() bool {
 // メンバーでない (spaceMemberがnil) 場合は、どの項目も開けない。
 //
 // フィーチャーフラグは、トークン管理かOAuthアプリのスコープを持つメンバーのときだけ引く。
-// フラグが効くのは公開APIの項目だけで、既存の項目はフラグにかかわらず出すためである。
+// 既存の項目はフラグにかかわらず出し、連携中のアプリの項目は公開APIとMCPのどちらの利用者にも出す。
 func resolveSpaceSettingsItems(
 	ctx context.Context,
 	featureFlagRepo *repository.FeatureFlagRepository,
@@ -57,13 +57,22 @@ func resolveSpaceSettingsItems(
 		return items, nil
 	}
 
-	enabled, err := featureFlagRepo.IsEnabled(ctx, spaceMember.UserID, model.FeatureFlagPublicAPI)
+	publicAPIEnabled, err := featureFlagRepo.IsEnabled(ctx, spaceMember.UserID, model.FeatureFlagPublicAPI)
 	if err != nil {
 		return SpaceSettingsItems{}, fmt.Errorf("フィーチャーフラグの判定に失敗: %w", err)
 	}
-	items.CanShowPersonalAccessTokens = enabled && canShowPAT
-	items.CanShowOAuthGrants = enabled && canShowOAuthGrants
-	items.CanShowOAuthApplications = enabled && canShowOAuthApplications
+	items.CanShowPersonalAccessTokens = publicAPIEnabled && canShowPAT
+	items.CanShowOAuthApplications = publicAPIEnabled && canShowOAuthApplications
+	if canShowOAuthGrants {
+		grantsEnabled := publicAPIEnabled
+		if !grantsEnabled {
+			grantsEnabled, err = featureFlagRepo.IsEnabled(ctx, spaceMember.UserID, model.FeatureFlagRemoteMCPServer)
+			if err != nil {
+				return SpaceSettingsItems{}, fmt.Errorf("フィーチャーフラグの判定に失敗: %w", err)
+			}
+		}
+		items.CanShowOAuthGrants = grantsEnabled
+	}
 
 	return items, nil
 }

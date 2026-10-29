@@ -63,7 +63,7 @@ type GetOAuthGrantsOutput struct {
 // 一覧に出すのは閲覧者自身の許可だけである。他のメンバーの連携を管理者が一覧する機能は、
 // メンバーを招待できるようになってから別のユースケースで扱う。
 func (uc *GetOAuthGrantsUsecase) Execute(ctx context.Context, input GetOAuthGrantsInput) (*GetOAuthGrantsOutput, error) {
-	access, err := fetchPublicAPISettingsAccess(
+	access, err := fetchOAuthGrantSettingsAccess(
 		ctx, uc.spaceRepo, uc.spaceMemberRepo, uc.featureFlagRepo, input.SpaceIdentifier, input.UserID,
 		policy.Authorizer.CanShowOAuthGrants,
 	)
