@@ -386,6 +386,7 @@ paths:
           schema:
             type: string
             format: date-time
+        - $ref: "#/components/parameters/ListInclude"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -704,6 +705,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/SpaceIdentifier"
         - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/ListInclude"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -771,6 +773,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/SpaceIdentifier"
         - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/ListInclude"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -1013,6 +1016,7 @@ paths:
             - draft_page:read
       parameters:
         - $ref: "#/components/parameters/SpaceIdentifier"
+        - $ref: "#/components/parameters/ListInclude"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -1597,6 +1601,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/SpaceIdentifier"
         - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/ListInclude"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -1836,6 +1841,17 @@ components:
         type: string
         format: uuid
         pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    ListInclude:
+      name: include
+      in: query
+      required: false
+      description: |
+        一覧の各項目に含める項目です。`include=body` のように指定します。
+        `body` を指定すると、各項目に本文 (`body`) を必ず含めます。
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/ListIncludeField"
     Cursor:
       name: cursor
       in: query
@@ -2159,13 +2175,7 @@ components:
           type: string
           description: ページの本文 (Markdown) です。
         status:
-          type: string
-          enum:
-            - published
-            - unpublished
-          description: |
-            ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
-            `updatePage` で未公開のページを更新すると `published` になります。
+          $ref: "#/components/schemas/PageStatus"
         modified_at:
           type: string
           format: date-time
@@ -2229,9 +2239,82 @@ components:
           type: array
           description: このページのページです。
           items:
-            $ref: "#/components/schemas/Page"
+            $ref: "#/components/schemas/PageListItem"
         next_cursor:
           $ref: "#/components/schemas/NextCursor"
+    PageListItem:
+      type: object
+      description: ページの一覧の1件のページです。
+      required:
+        - id
+        - number
+        - topic_number
+        - topic_name
+        - title
+        - excerpt
+        - status
+        - modified_at
+        - url
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ページのIDです。
+        number:
+          type: integer
+          format: int32
+          description: スペース内のページの番号です。パスの `page_number` に使います。
+        topic_number:
+          type: integer
+          format: int32
+          description: ページが属するトピックの番号です。
+        topic_name:
+          type: string
+          description: |
+            ページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+        title:
+          type: [string, "null"]
+          description: ページのタイトルです。タイトルの無いページでは `null` です。
+        excerpt:
+          type: string
+          description: |
+            ページの本文の冒頭の抜粋です。
+            改行を含む連続した空白を1つの空白に詰め、先頭から80文字までにしたものです。切り詰めたときは末尾に `…` を付けます。
+            本文が空のときは空文字列です。
+        body:
+          type: string
+          description: |
+            ページの本文 (Markdown) です。
+            `include` に `body` を指定すると必ず含めます。
+        status:
+          $ref: "#/components/schemas/PageStatus"
+        modified_at:
+          type: string
+          format: date-time
+          description: |
+            ページの内容を最後に更新した日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+            秒未満はマイクロ秒まで含み、末尾の0は省きます。`modified_since` にそのまま渡せます。
+        url:
+          type: string
+          format: uri
+          description: |
+            Web画面でページを開くURLです (例: `https://example.com/s/my-space/pages/12`)。
+            利用者に出典としてページを示すときに使います。
+            URLはサーバーが決めるため、`number` などから組み立てずにこの値を使ってください。
+    PageStatus:
+      type: string
+      enum:
+        - published
+        - unpublished
+      description: |
+        ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+        `updatePage` で未公開のページを更新すると `published` になります。
+    ListIncludeField:
+      type: string
+      enum:
+        - body
+      description: |
+        一覧の各項目に含める項目の名前です。`body` は本文です。
     NewBodyEdit:
       type: object
       description: 本文に順に適用する編集です。
@@ -2475,9 +2558,61 @@ components:
           type: array
           description: このページの下書きです。
           items:
-            $ref: "#/components/schemas/DraftPage"
+            $ref: "#/components/schemas/DraftPageListItem"
         next_cursor:
           $ref: "#/components/schemas/NextCursor"
+    DraftPageListItem:
+      type: object
+      description: 下書きの一覧の1件の下書きです。
+      required:
+        - page_number
+        - topic_number
+        - topic_name
+        - title
+        - excerpt
+        - modified_at
+        - url
+      properties:
+        page_number:
+          type: integer
+          format: int32
+          description: 下書きのページの番号です。パスの `page_number` に使います。
+        topic_number:
+          type: integer
+          format: int32
+          description: 下書きのページが属するトピックの番号です。
+        topic_name:
+          type: string
+          description: |
+            下書きのページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+        title:
+          type: [string, "null"]
+          description: 下書きのタイトルです。タイトルの無い下書きでは `null` です。
+        excerpt:
+          type: string
+          description: |
+            下書きの本文の冒頭の抜粋です。
+            改行を含む連続した空白を1つの空白に詰め、先頭から80文字までにしたものです。切り詰めたときは末尾に `…` を付けます。
+            本文が空のときは空文字列です。
+        body:
+          type: string
+          description: |
+            下書きの本文 (Markdown) です。
+            `include` に `body` を指定すると必ず含めます。
+        modified_at:
+          type: string
+          format: date-time
+          description: |
+            下書きの内容を最後に更新した日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+            Web画面の自動保存でも更新されます。
+            秒未満はマイクロ秒まで含み、末尾の0は省きます。
+        url:
+          type: string
+          format: uri
+          description: |
+            Web画面で下書きのページの編集画面を開くURLです (例: `https://example.com/s/my-space/pages/12/edit`)。
+            利用者に下書きを確かめてもらうときに使います。
+            URLはサーバーが決めるため、`page_number` などから組み立てずにこの値を使ってください。
     DraftPageRevision:
       type: object
       description: |
@@ -2516,9 +2651,42 @@ components:
           type: array
           description: このページのリビジョンです。
           items:
-            $ref: "#/components/schemas/DraftPageRevision"
+            $ref: "#/components/schemas/DraftPageRevisionListItem"
         next_cursor:
           $ref: "#/components/schemas/NextCursor"
+    DraftPageRevisionListItem:
+      type: object
+      description: 下書きの編集履歴の1件のリビジョンです。
+      required:
+        - id
+        - title
+        - excerpt
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: リビジョンのIDです。パスの `draft_page_revision_id` に使います。
+        title:
+          type: [string, "null"]
+          description: リビジョンを作ったときの下書きのタイトルです。タイトルの無い下書きでは `null` です。
+        excerpt:
+          type: string
+          description: |
+            リビジョンの本文の冒頭の抜粋です。
+            改行を含む連続した空白を1つの空白に詰め、先頭から80文字までにしたものです。切り詰めたときは末尾に `…` を付けます。
+            本文が空のときは空文字列です。
+        body:
+          type: string
+          description: |
+            リビジョンを作ったときの下書きの本文 (Markdown) です。
+            `include` に `body` を指定すると必ず含めます。
+        created_at:
+          type: string
+          format: date-time
+          description: |
+            リビジョンを作った日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+            秒未満はマイクロ秒まで含み、末尾の0は省きます。
     Attachment:
       type: object
       description: |

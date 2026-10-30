@@ -132,7 +132,7 @@ func TestHandler_ListDraftPages(t *testing.T) {
 
 	t.Run("下書きの項目を返す", func(t *testing.T) {
 		item := listDraftPages(t, h, ctx, apigen.ListDraftPagesParams{}).Body.Items[0]
-		if item.PageNumber != 1 || item.TopicNumber != 2 || item.TopicName != "トピック2" || item.Title == nil || *item.Title != "下書き1" || item.Body != "下書きの本文1" {
+		if item.PageNumber != 1 || item.TopicNumber != 2 || item.TopicName != "トピック2" || item.Title == nil || *item.Title != "下書き1" || item.Excerpt != "下書きの本文1" || item.Body == nil || *item.Body != "下書きの本文1" {
 			t.Errorf("下書き = %+v", item)
 		}
 		if want := draftPageHandlerBaseTime.Add(-time.Hour); !item.ModifiedAt.Equal(want) || item.ModifiedAt.Location() != time.UTC {

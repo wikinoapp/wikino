@@ -166,6 +166,28 @@ func TestAPIRouter_Pages(t *testing.T) {
 		}
 	})
 
+	t.Run("includeにbodyを指定でき、次のページのURLに引き継ぐ", func(t *testing.T) {
+		rr := request(base+"?limit=2&include=body", "wkp_page_read", nil)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %s)", rr.Code, rr.Body.String())
+		}
+		var body apigen.PageList
+		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+			t.Fatalf("本文を読めない: %v", err)
+		}
+		if len(body.Items) != 2 || body.Items[0].Body == nil || body.Items[0].Excerpt != *body.Items[0].Body || body.NextCursor == nil {
+			t.Fatalf("一覧 = %+v、期待値 = 本文と抜粋を含む2件と次のカーソル", body)
+		}
+		wantLink := "<" + base + "?cursor=" + url.QueryEscape(*body.NextCursor) + `&include=body&limit=2&status=published>; rel="next"`
+		if got := rr.Header().Get("Link"); got != wantLink {
+			t.Errorf("Link = %q、期待値 = %q", got, wantLink)
+		}
+	})
+
+	t.Run("includeの未知の値は422", func(t *testing.T) {
+		assertProblem(t, request(base+"?include=title", "wkp_page_read", nil), http.StatusUnprocessableEntity)
+	})
+
 	t.Run("qで絞り込み、次のページのURLにqを引き継ぐ", func(t *testing.T) {
 		q := "ページ\u3000ジ"
 		first := request(base+"?limit=1&q="+url.QueryEscape(q), "wkp_page_read", nil)

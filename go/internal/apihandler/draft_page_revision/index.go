@@ -50,9 +50,9 @@ func (h *Handler) ListDraftPageRevisions(ctx context.Context, request apigen.Lis
 		return nil, err
 	}
 
-	items := make([]apigen.DraftPageRevision, len(output.Revisions))
+	items := make([]apigen.DraftPageRevisionListItem, len(output.Revisions))
 	for i, revision := range output.Revisions {
-		items[i], err = toAPIDraftPageRevision(revision)
+		items[i], err = toAPIDraftPageRevisionListItem(revision)
 		if err != nil {
 			return nil, err
 		}
@@ -72,6 +72,22 @@ func (h *Handler) ListDraftPageRevisions(ctx context.Context, request apigen.Lis
 		}
 	}
 	return res, nil
+}
+
+// toAPIDraftPageRevisionListItemは下書きのリビジョンを、APIの編集履歴の一覧の項目に変換する。
+// 本文の抜粋はここで本文から作る
+func toAPIDraftPageRevisionListItem(revision *model.DraftPageRevision) (apigen.DraftPageRevisionListItem, error) {
+	r, err := toAPIDraftPageRevision(revision)
+	if err != nil {
+		return apigen.DraftPageRevisionListItem{}, err
+	}
+	return apigen.DraftPageRevisionListItem{
+		Id:        r.Id,
+		Title:     r.Title,
+		Excerpt:   model.BodyExcerpt(revision.Body),
+		Body:      &r.Body,
+		CreatedAt: r.CreatedAt,
+	}, nil
 }
 
 // decodeDraftPageRevisionCursorはリクエストのカーソルから、前のページの最後のリビジョンの位置を取り出す。

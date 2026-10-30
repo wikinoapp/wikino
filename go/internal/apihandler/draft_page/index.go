@@ -49,9 +49,9 @@ func (h *Handler) ListDraftPages(ctx context.Context, request apigen.ListDraftPa
 		return nil, err
 	}
 
-	items := make([]apigen.DraftPage, len(output.DraftPages))
+	items := make([]apigen.DraftPageListItem, len(output.DraftPages))
 	for i, draft := range output.DraftPages {
-		items[i], err = ToAPIDraftPage(h.appURL, principal.Space, draft, output.Topics[draft.TopicID])
+		items[i], err = toAPIDraftPageListItem(h.appURL, principal.Space, draft, output.Topics[draft.TopicID])
 		if err != nil {
 			return nil, err
 		}
@@ -71,6 +71,25 @@ func (h *Handler) ListDraftPages(ctx context.Context, request apigen.ListDraftPa
 		}
 	}
 	return res, nil
+}
+
+// toAPIDraftPageListItemは下書きと所属トピックを、APIの下書きの一覧の項目に変換する。
+// 本文の抜粋はここで本文から作る
+func toAPIDraftPageListItem(appURL string, space *model.Space, draft *model.DraftPage, topic *model.Topic) (apigen.DraftPageListItem, error) {
+	d, err := ToAPIDraftPage(appURL, space, draft, topic)
+	if err != nil {
+		return apigen.DraftPageListItem{}, err
+	}
+	return apigen.DraftPageListItem{
+		PageNumber:  d.PageNumber,
+		TopicNumber: d.TopicNumber,
+		TopicName:   d.TopicName,
+		Title:       d.Title,
+		Excerpt:     model.BodyExcerpt(draft.Body),
+		Body:        &d.Body,
+		ModifiedAt:  d.ModifiedAt,
+		Url:         d.Url,
+	}, nil
 }
 
 // decodeDraftPageCursorはリクエストのカーソルから、前のページの最後の下書きの位置を取り出す。

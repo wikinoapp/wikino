@@ -71,10 +71,10 @@ func (h *Handler) ListPages(ctx context.Context, request apigen.ListPagesRequest
 // ページのリンク一覧・バックリンク一覧も同じ並び順とカーソルで返すため、それらのハンドラーからも使う。
 // appURLとspaceはToAPIPageに渡す
 func ToAPIPageList(ctx context.Context, appURL string, space *model.Space, pages []*model.Page, topics map[model.TopicID]*model.Topic, hasNext bool) (apigen.PageList, *string, error) {
-	items := make([]apigen.Page, len(pages))
+	items := make([]apigen.PageListItem, len(pages))
 	for i, page := range pages {
 		var err error
-		items[i], err = ToAPIPage(appURL, space, page, topics[page.TopicID])
+		items[i], err = toAPIPageListItem(appURL, space, page, topics[page.TopicID])
 		if err != nil {
 			return apigen.PageList{}, nil, err
 		}
@@ -95,6 +95,27 @@ func ToAPIPageList(ctx context.Context, appURL string, space *model.Space, pages
 		return list, &link, nil
 	}
 	return list, nil, nil
+}
+
+// toAPIPageListItemはページと所属トピックを、APIのページの一覧の項目に変換する。
+// 本文の抜粋はここで本文から作る
+func toAPIPageListItem(appURL string, space *model.Space, page *model.Page, topic *model.Topic) (apigen.PageListItem, error) {
+	p, err := ToAPIPage(appURL, space, page, topic)
+	if err != nil {
+		return apigen.PageListItem{}, err
+	}
+	return apigen.PageListItem{
+		Id:          p.Id,
+		Number:      p.Number,
+		TopicNumber: p.TopicNumber,
+		TopicName:   p.TopicName,
+		Title:       p.Title,
+		Excerpt:     model.BodyExcerpt(page.Body),
+		Body:        &p.Body,
+		Status:      p.Status,
+		ModifiedAt:  p.ModifiedAt,
+		Url:         p.Url,
+	}, nil
 }
 
 // toUsecasePageStatusFilterは一覧の `status` パラメーターをユースケースの値に変換する。

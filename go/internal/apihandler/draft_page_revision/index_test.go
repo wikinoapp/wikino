@@ -141,7 +141,7 @@ func TestHandler_ListDraftPageRevisions(t *testing.T) {
 			t.Fatalf("len(items) = %d、期待値 = 3", len(items))
 		}
 		newest := items[0]
-		if newest.Title == nil || *newest.Title != "リビジョン2" || newest.Body != "本文2" {
+		if newest.Title == nil || *newest.Title != "リビジョン2" || newest.Excerpt != "本文2" || newest.Body == nil || *newest.Body != "本文2" {
 			t.Errorf("リビジョン = %+v、期待値 = リビジョン2", newest)
 		}
 		if want := revisionHandlerBaseTime.Add(2 * time.Minute); !newest.CreatedAt.Equal(want) || newest.CreatedAt.Location() != time.UTC {
