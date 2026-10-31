@@ -767,7 +767,7 @@ Output:
     modified_at   When the draft's content was last modified (RFC 3339). Autosaves in the web UI also update it
     url           The URL of the edit screen of the draft's page in the web UI
     excerpt       An excerpt of the beginning of the body: the first 80 characters with newlines collapsed to spaces,
-                  ending with "…" when truncated. Not in the API response; the CLI makes it from the body
+                  ending with "…" when truncated
     body          The body (Markdown). Not printed by default; printed only when included in `--fields`
   `next_cursor` is the cursor of the next page, or null when there is no more.
   With `--all`, prints JSON Lines with one item per line, without `next_cursor`.
@@ -993,7 +993,6 @@ Output:
     title       The title of the draft when the revision was created. null for drafts without a title
     created_at  When the revision was created (RFC 3339)
     excerpt     An excerpt of the beginning of the body: the first 80 characters with line breaks collapsed into spaces, followed by "…" when truncated
-                This field is not in the API response; the CLI creates it from the body
     body        The body (Markdown). Not printed by default; printed only when included in `--fields`
   `next_cursor` is the cursor of the next page, or null when there are no more items.
   With `--all`, prints JSON Lines with one item per line, without `next_cursor`.
@@ -1189,7 +1188,7 @@ Global Flags:
 Output:
   Like `wikino page list`, prints `{"items": [...], "next_cursor": ...}`.
   See the help of `wikino page list` for the fields of each page.
-  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.
+  `body` is printed only when included in `--fields`.
   With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
   When no pages link to the page, returns an empty list with exit code 0.
 
@@ -1365,7 +1364,7 @@ Global Flags:
 Output:
   Like `wikino page list`, prints `{"items": [...], "next_cursor": ...}`.
   See the help of `wikino page list` for the fields of each page.
-  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.
+  `body` is printed only when included in `--fields`.
   With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
   When the page links to nothing, returns an empty list with exit code 0.
 
@@ -1441,7 +1440,7 @@ Output:
     modified_at   When the content was last updated (RFC 3339)
     url           URL to open the page on the web. Use it to cite the page
     excerpt       Excerpt of the beginning of the body: the first 80 characters with line breaks collapsed into spaces,
-                  ending with "…" when truncated. Not part of the API response; the CLI builds it from the body
+                  ending with "…" when truncated
     body          Body (Markdown). Omitted by default; printed only when included in `--fields`
   `next_cursor` is the cursor of the next page, or null when there is none.
   With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
@@ -1506,7 +1505,7 @@ Global Flags:
 Output:
   Like `wikino page list`, prints `{"items": [...], "next_cursor": ...}`.
   See the help of `wikino page list` for the fields of each page.
-  `excerpt` is not part of the API response; the CLI builds it from the body. `body` is printed only when included in `--fields`.
+  `body` is printed only when included in `--fields`.
   With `--all`, prints JSON Lines where each line is one item, without `next_cursor`.
   When no pages match, returns an empty list with exit code 0.
   In human-readable output, prints a hint on loosening the search to standard error.
