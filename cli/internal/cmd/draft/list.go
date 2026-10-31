@@ -12,22 +12,12 @@ import (
 	"github.com/wikinoapp/wikino/cli/internal/output"
 )
 
-// excerptLengthは、一覧に出す本文の抜粋の文字数。ページの一覧 (`page list`) と揃える。
-const excerptLength = 80
-
-// listFieldsは、下書きの一覧の `--fields` で選べる項目。APIの下書きの項目に、CLIが加える抜粋 (excerpt) を足す。
+// listFieldsは、下書きの一覧の `--fields` で選べる項目。下書きの項目に、本文の冒頭の抜粋 (excerpt) を足す。
 var listFields = append(slices.Clone(draftFields), "excerpt")
 
 // listDefaultFieldsは、下書きの一覧で既定で出す項目。本文 (body) は `--fields` で選んだときだけ出す。
 // エージェントが一覧を見るたびに、各下書きの本文がコンテキストに入るのを避けるためである。
 var listDefaultFields = slices.DeleteFunc(slices.Clone(listFields), func(name string) bool { return name == "body" })
-
-// listItemは、下書きの一覧の1件の出力。
-type listItem struct {
-	apigen.DraftPage
-	// Excerptは本文の冒頭の抜粋。APIの応答には無く、CLIが本文から作る。
-	Excerpt string `json:"excerpt"`
-}
 
 func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	loc := f.Localizer
@@ -68,11 +58,14 @@ func runList(f *cmdutil.Factory, cmd *cobra.Command, pageFlags *cmdutil.ListFlag
 		return err
 	}
 
-	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.DraftPage]{
-		Fetch: func(ctx context.Context, cursor *string) ([]apigen.DraftPage, *string, error) {
+	include := cmdutil.ListInclude(printer)
+
+	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.DraftPageListItem]{
+		Fetch: func(ctx context.Context, cursor *string) ([]apigen.DraftPageListItem, *string, error) {
 			resp, err := client.ListDraftPagesWithResponse(ctx, space, &apigen.ListDraftPagesParams{
-				Cursor: cursor,
-				Limit:  pageFlags.LimitParam(),
+				Include: include,
+				Cursor:  cursor,
+				Limit:   pageFlags.LimitParam(),
 			})
 			if err != nil {
 				return nil, nil, err
@@ -82,17 +75,15 @@ func runList(f *cmdutil.Factory, cmd *cobra.Command, pageFlags *cmdutil.ListFlag
 			}
 			return resp.JSON200.Items, resp.JSON200.NextCursor, nil
 		},
-		Item: func(d apigen.DraftPage) any {
-			return listItem{DraftPage: d, Excerpt: output.Excerpt(d.Body, excerptLength)}
-		},
-		Table: func(drafts []apigen.DraftPage) error {
+		Item: func(d apigen.DraftPageListItem) any { return d },
+		Table: func(drafts []apigen.DraftPageListItem) error {
 			return printTable(printer, loc, drafts)
 		},
 		EmptyHint: loc.T("draft_list_empty_hint"),
 	})
 }
 
-func printTable(printer *output.Printer, loc *i18n.Localizer, drafts []apigen.DraftPage) error {
+func printTable(printer *output.Printer, loc *i18n.Localizer, drafts []apigen.DraftPageListItem) error {
 	rows := make([][]string, 0, len(drafts))
 	for _, d := range drafts {
 		rows = append(rows, []string{

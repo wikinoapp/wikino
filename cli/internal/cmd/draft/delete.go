@@ -193,7 +193,7 @@ const revisionPageLimit int32 = 100
 // countRevisionsは、ページnumberの下書きの編集履歴の件数を、`next_cursor` を辿って数える。
 func countRevisions(ctx context.Context, loc *i18n.Localizer, client *apiclient.Client, space string, number int32) (int, error) {
 	limit := revisionPageLimit
-	fetch := func(ctx context.Context, cursor *string) ([]apigen.DraftPageRevision, *string, error) {
+	fetch := func(ctx context.Context, cursor *string) ([]apigen.DraftPageRevisionListItem, *string, error) {
 		resp, err := client.ListDraftPageRevisionsWithResponse(ctx, space, number, &apigen.ListDraftPageRevisionsParams{
 			Cursor: cursor,
 			Limit:  &limit,

@@ -505,3 +505,32 @@ func TestPrinterJSONEscapesC1(t *testing.T) {
 		})
 	}
 }
+
+func TestPrinterSelects(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		setup printerSetup
+		want  bool
+	}{
+		{name: "既定の項目に無い項目は出さない", setup: printerSetup{spec: pageSpec}, want: false},
+		{name: "--fieldsに含めた項目は出す", setup: printerSetup{args: []string{"--fields", "number,body"}, spec: pageSpec}, want: true},
+		{name: "--fieldsに含めない項目は出さない", setup: printerSetup{args: []string{"--fields", "number"}, spec: pageSpec}, want: false},
+		{name: "既定の項目が無ければすべての項目を出す", setup: printerSetup{spec: Spec{Fields: pageSpec.Fields}}, want: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p, _, err := newTestPrinter(t, tt.setup)
+			if err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+			if got := p.Selects("body"); got != tt.want {
+				t.Errorf("Selects(\"body\") = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}

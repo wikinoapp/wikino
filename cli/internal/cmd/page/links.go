@@ -28,8 +28,12 @@ func newCmdLinks(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		return runLinkList(f, cmd, args[0], pageFlags, loc.T("page_links_empty_hint"),
-			func(ctx context.Context, client *apiclient.Client, space string, number int32, cursor *string, limit *int32) (*apigen.PageList, int, error) {
-				resp, err := client.ListPageLinksWithResponse(ctx, space, number, &apigen.ListPageLinksParams{Cursor: cursor, Limit: limit})
+			func(ctx context.Context, client *apiclient.Client, space string, number int32, params linkListParams) (*apigen.PageList, int, error) {
+				resp, err := client.ListPageLinksWithResponse(ctx, space, number, &apigen.ListPageLinksParams{
+					Include: params.include,
+					Cursor:  params.cursor,
+					Limit:   params.limit,
+				})
 				if err != nil {
 					return nil, 0, err
 				}
@@ -40,8 +44,15 @@ func newCmdLinks(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
+// linkListParamsは、ページを起点にした一覧の1ページを取得するときに要求に載せる値。
+type linkListParams struct {
+	include *apigen.ListInclude
+	cursor  *string
+	limit   *int32
+}
+
 // fetchLinkListは、ページを起点にした一覧 (リンク先・バックリンク) の1ページを取得する。
-type fetchLinkList func(ctx context.Context, client *apiclient.Client, space string, number int32, cursor *string, limit *int32) (*apigen.PageList, int, error)
+type fetchLinkList func(ctx context.Context, client *apiclient.Client, space string, number int32, params linkListParams) (*apigen.PageList, int, error)
 
 // runLinkListは、`page links` と `page backlinks` の共通の処理。
 // 2つは呼ぶAPIだけが違い、引数・ページ送り・出力の項目を `page list` と揃える。
@@ -67,10 +78,11 @@ func runLinkList(f *cmdutil.Factory, cmd *cobra.Command, arg string, pageFlags *
 	}
 
 	limit := pageFlags.LimitParam()
+	include := cmdutil.ListInclude(printer)
 
-	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.Page]{
-		Fetch: func(ctx context.Context, cursor *string) ([]apigen.Page, *string, error) {
-			list, status, err := fetch(ctx, client, space, number, cursor, limit)
+	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.PageListItem]{
+		Fetch: func(ctx context.Context, cursor *string) ([]apigen.PageListItem, *string, error) {
+			list, status, err := fetch(ctx, client, space, number, linkListParams{include: include, cursor: cursor, limit: limit})
 			if err != nil {
 				return nil, nil, err
 			}
@@ -79,8 +91,8 @@ func runLinkList(f *cmdutil.Factory, cmd *cobra.Command, arg string, pageFlags *
 			}
 			return list.Items, list.NextCursor, nil
 		},
-		Item: func(p apigen.Page) any { return newListItem(p) },
-		Table: func(pages []apigen.Page) error {
+		Item: func(p apigen.PageListItem) any { return p },
+		Table: func(pages []apigen.PageListItem) error {
 			return printTable(printer, loc, pages)
 		},
 		EmptyHint:    emptyHint,

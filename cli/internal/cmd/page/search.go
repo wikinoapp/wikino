@@ -61,14 +61,15 @@ func runSearch(f *cmdutil.Factory, cmd *cobra.Command, args []string, flags *sea
 	if err != nil {
 		return err
 	}
+	params.Include = cmdutil.ListInclude(printer)
 
 	client, space, err := f.APIClient(cmd)
 	if err != nil {
 		return err
 	}
 
-	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.Page]{
-		Fetch: func(ctx context.Context, cursor *string) ([]apigen.Page, *string, error) {
+	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.PageListItem]{
+		Fetch: func(ctx context.Context, cursor *string) ([]apigen.PageListItem, *string, error) {
 			p := params
 			p.Cursor = cursor
 			resp, err := client.ListPagesWithResponse(ctx, space, &p)
@@ -80,8 +81,8 @@ func runSearch(f *cmdutil.Factory, cmd *cobra.Command, args []string, flags *sea
 			}
 			return resp.JSON200.Items, resp.JSON200.NextCursor, nil
 		},
-		Item: func(p apigen.Page) any { return newListItem(p) },
-		Table: func(pages []apigen.Page) error {
+		Item: func(p apigen.PageListItem) any { return p },
+		Table: func(pages []apigen.PageListItem) error {
 			return printTable(printer, loc, pages)
 		},
 		EmptyHint: loc.T("page_search_empty_hint"),

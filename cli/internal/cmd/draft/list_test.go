@@ -25,8 +25,8 @@ func TestList_JSON(t *testing.T) {
 	e := newEnv(t)
 	e.Handle(http.MethodGet, draftPagesPath, func(req *http.Request) *http.Response {
 		return listResponse([]map[string]any{
-			testDraft(12, ptr("議事録"), longBody),
-			testDraft(30, nil, ""),
+			withExcerpt(testDraft(12, ptr("議事録"), longBody), "# 議事録 あいうえお…"),
+			withExcerpt(testDraft(30, nil, ""), ""),
 		}, ptr("cursor-2"))
 	})
 
@@ -43,8 +43,8 @@ func TestList_JSON(t *testing.T) {
 	if _, ok := first["body"]; ok {
 		t.Errorf("一覧の既定の出力に本文が含まれる: %v", first)
 	}
-	if excerpt, _ := first["excerpt"].(string); !strings.HasPrefix(excerpt, "# 議事録 あいうえお") || !strings.HasSuffix(excerpt, "…") {
-		t.Errorf("excerpt = %q", first["excerpt"])
+	if first["excerpt"] != "# 議事録 あいうえお…" {
+		t.Errorf("excerpt = %q、期待値 = APIの抜粋", first["excerpt"])
 	}
 	if first["page_number"] != float64(12) || first["url"] != "https://wikino.example.com/s/team/pages/12/edit" {
 		t.Errorf("1件目 = %v", first)
@@ -66,6 +66,8 @@ func TestList_JSON(t *testing.T) {
 	if !strings.Contains(e.Stderr.String(), "--cursor cursor-2") {
 		t.Errorf("標準エラーに次のページの取り方が無い: %q", e.Stderr.String())
 	}
+	// 本文を出さないため、APIに本文を求めない。
+	e.AssertQuery(t, "include")
 }
 
 func TestList_Human(t *testing.T) {
@@ -127,6 +129,7 @@ func TestList_FieldsBody(t *testing.T) {
 	if got := e.Stdout.String(); got != want {
 		t.Errorf("標準出力 = %q、期待値 = %q", got, want)
 	}
+	e.AssertQuery(t, "include", "body")
 }
 
 func TestList_FieldsTopicName(t *testing.T) {

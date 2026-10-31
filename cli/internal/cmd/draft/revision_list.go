@@ -12,18 +12,11 @@ import (
 	"github.com/wikinoapp/wikino/cli/internal/output"
 )
 
-// revisionListFieldsは、編集履歴の一覧の `--fields` で選べる項目。APIのリビジョンの項目に、CLIが加える抜粋 (excerpt) を足す。
+// revisionListFieldsは、編集履歴の一覧の `--fields` で選べる項目。リビジョンの項目に、本文の冒頭の抜粋 (excerpt) を足す。
 var revisionListFields = append(slices.Clone(revisionFields), "excerpt")
 
 // revisionListDefaultFieldsは、編集履歴の一覧で既定で出す項目。本文 (body) は `--fields` で選んだときだけ出す。
 var revisionListDefaultFields = slices.DeleteFunc(slices.Clone(revisionListFields), func(name string) bool { return name == "body" })
-
-// revisionListItemは、編集履歴の一覧の1件の出力。
-type revisionListItem struct {
-	apigen.DraftPageRevision
-	// Excerptは本文の冒頭の抜粋。APIの応答には無く、CLIが本文から作る。
-	Excerpt string `json:"excerpt"`
-}
 
 func newCmdRevisionList(f *cmdutil.Factory) *cobra.Command {
 	loc := f.Localizer
@@ -68,11 +61,14 @@ func runRevisionList(f *cmdutil.Factory, cmd *cobra.Command, pageFlags *cmdutil.
 		return err
 	}
 
-	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.DraftPageRevision]{
-		Fetch: func(ctx context.Context, cursor *string) ([]apigen.DraftPageRevision, *string, error) {
+	include := cmdutil.ListInclude(printer)
+
+	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.DraftPageRevisionListItem]{
+		Fetch: func(ctx context.Context, cursor *string) ([]apigen.DraftPageRevisionListItem, *string, error) {
 			resp, err := client.ListDraftPageRevisionsWithResponse(ctx, space, number, &apigen.ListDraftPageRevisionsParams{
-				Cursor: cursor,
-				Limit:  pageFlags.LimitParam(),
+				Include: include,
+				Cursor:  cursor,
+				Limit:   pageFlags.LimitParam(),
 			})
 			if err != nil {
 				return nil, nil, err
@@ -82,10 +78,8 @@ func runRevisionList(f *cmdutil.Factory, cmd *cobra.Command, pageFlags *cmdutil.
 			}
 			return resp.JSON200.Items, resp.JSON200.NextCursor, nil
 		},
-		Item: func(r apigen.DraftPageRevision) any {
-			return revisionListItem{DraftPageRevision: r, Excerpt: output.Excerpt(r.Body, excerptLength)}
-		},
-		Table: func(revisions []apigen.DraftPageRevision) error {
+		Item: func(r apigen.DraftPageRevisionListItem) any { return r },
+		Table: func(revisions []apigen.DraftPageRevisionListItem) error {
 			return printRevisionTable(printer, loc, revisions)
 		},
 		EmptyHint:    loc.T("draft_revision_list_empty_hint"),
@@ -93,7 +87,7 @@ func runRevisionList(f *cmdutil.Factory, cmd *cobra.Command, pageFlags *cmdutil.
 	})
 }
 
-func printRevisionTable(printer *output.Printer, loc *i18n.Localizer, revisions []apigen.DraftPageRevision) error {
+func printRevisionTable(printer *output.Printer, loc *i18n.Localizer, revisions []apigen.DraftPageRevisionListItem) error {
 	rows := make([][]string, 0, len(revisions))
 	for _, r := range revisions {
 		rows = append(rows, []string{

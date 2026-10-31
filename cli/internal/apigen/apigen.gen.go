@@ -21,6 +21,21 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for ListIncludeField.
+const (
+	Body ListIncludeField = "body"
+)
+
+// Valid indicates whether the value is a known member of the ListIncludeField enum.
+func (e ListIncludeField) Valid() bool {
+	switch e {
+	case Body:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PageStatus.
 const (
 	PageStatusPublished   PageStatus = "published"
@@ -208,10 +223,44 @@ type DraftPage struct {
 // DraftPageList 下書きの一覧の1ページです。
 type DraftPageList struct {
 	// Items このページの下書きです。
-	Items []DraftPage `json:"items"`
+	Items []DraftPageListItem `json:"items"`
 
 	// NextCursor 次のページを取得するカーソルです。`cursor` パラメーターに渡します。続きが無い場合は `null` です。
 	NextCursor *NextCursor `json:"next_cursor"`
+}
+
+// DraftPageListItem 下書きの一覧の1件の下書きです。
+type DraftPageListItem struct {
+	// Body 下書きの本文 (Markdown) です。
+	// `include` に `body` を指定すると必ず含めます。
+	Body *string `json:"body,omitempty"`
+
+	// Excerpt 下書きの本文の冒頭の抜粋です。
+	// 改行を含む連続した空白を1つの空白に詰め、先頭から80文字までにしたものです。切り詰めたときは末尾に `…` を付けます。
+	// 本文が空のときは空文字列です。
+	Excerpt string `json:"excerpt"`
+
+	// ModifiedAt 下書きの内容を最後に更新した日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+	// Web画面の自動保存でも更新されます。
+	// 秒未満はマイクロ秒まで含み、末尾の0は省きます。
+	ModifiedAt time.Time `json:"modified_at"`
+
+	// PageNumber 下書きのページの番号です。パスの `page_number` に使います。
+	PageNumber int32 `json:"page_number"`
+
+	// Title 下書きのタイトルです。タイトルの無い下書きでは `null` です。
+	Title *string `json:"title"`
+
+	// TopicName 下書きのページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+	TopicName string `json:"topic_name"`
+
+	// TopicNumber 下書きのページが属するトピックの番号です。
+	TopicNumber int32 `json:"topic_number"`
+
+	// Url Web画面で下書きのページの編集画面を開くURLです (例: `https://example.com/s/my-space/pages/12/edit`)。
+	// 利用者に下書きを確かめてもらうときに使います。
+	// URLはサーバーが決めるため、`page_number` などから組み立てずにこの値を使ってください。
+	Url string `json:"url"`
 }
 
 // DraftPagePatch 下書きの更新内容です (JSON Merge Patch)。含めた項目だけを更新します。
@@ -245,11 +294,36 @@ type DraftPageRevision struct {
 // DraftPageRevisionList 下書きの編集履歴の1ページです。
 type DraftPageRevisionList struct {
 	// Items このページのリビジョンです。
-	Items []DraftPageRevision `json:"items"`
+	Items []DraftPageRevisionListItem `json:"items"`
 
 	// NextCursor 次のページを取得するカーソルです。`cursor` パラメーターに渡します。続きが無い場合は `null` です。
 	NextCursor *NextCursor `json:"next_cursor"`
 }
+
+// DraftPageRevisionListItem 下書きの編集履歴の1件のリビジョンです。
+type DraftPageRevisionListItem struct {
+	// Body リビジョンを作ったときの下書きの本文 (Markdown) です。
+	// `include` に `body` を指定すると必ず含めます。
+	Body *string `json:"body,omitempty"`
+
+	// CreatedAt リビジョンを作った日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+	// 秒未満はマイクロ秒まで含み、末尾の0は省きます。
+	CreatedAt time.Time `json:"created_at"`
+
+	// Excerpt リビジョンの本文の冒頭の抜粋です。
+	// 改行を含む連続した空白を1つの空白に詰め、先頭から80文字までにしたものです。切り詰めたときは末尾に `…` を付けます。
+	// 本文が空のときは空文字列です。
+	Excerpt string `json:"excerpt"`
+
+	// Id リビジョンのIDです。パスの `draft_page_revision_id` に使います。
+	Id openapi_types.UUID `json:"id"`
+
+	// Title リビジョンを作ったときの下書きのタイトルです。タイトルの無い下書きでは `null` です。
+	Title *string `json:"title"`
+}
+
+// ListIncludeField 一覧の各項目に含める項目の名前です。`body` は本文です。
+type ListIncludeField string
 
 // NewBodyEdit 本文に順に適用する編集です。
 type NewBodyEdit struct {
@@ -336,20 +410,56 @@ type Page struct {
 	Url string `json:"url"`
 }
 
-// PageStatus ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
-// `updatePage` で未公開のページを更新すると `published` になります。
-type PageStatus string
-
 // PageBodyInput ページの本文 (Markdown) です。空文字列にもできます。
 type PageBodyInput = string
 
 // PageList ページの一覧の1ページです。
 type PageList struct {
 	// Items このページのページです。
-	Items []Page `json:"items"`
+	Items []PageListItem `json:"items"`
 
 	// NextCursor 次のページを取得するカーソルです。`cursor` パラメーターに渡します。続きが無い場合は `null` です。
 	NextCursor *NextCursor `json:"next_cursor"`
+}
+
+// PageListItem ページの一覧の1件のページです。
+type PageListItem struct {
+	// Body ページの本文 (Markdown) です。
+	// `include` に `body` を指定すると必ず含めます。
+	Body *string `json:"body,omitempty"`
+
+	// Excerpt ページの本文の冒頭の抜粋です。
+	// 改行を含む連続した空白を1つの空白に詰め、先頭から80文字までにしたものです。切り詰めたときは末尾に `…` を付けます。
+	// 本文が空のときは空文字列です。
+	Excerpt string `json:"excerpt"`
+
+	// Id ページのIDです。
+	Id openapi_types.UUID `json:"id"`
+
+	// ModifiedAt ページの内容を最後に更新した日時です (RFC 3339のUTC。例: `2026-09-01T12:34:56.123456Z`)。
+	// 秒未満はマイクロ秒まで含み、末尾の0は省きます。`modified_since` にそのまま渡せます。
+	ModifiedAt time.Time `json:"modified_at"`
+
+	// Number スペース内のページの番号です。パスの `page_number` に使います。
+	Number int32 `json:"number"`
+
+	// Status ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+	// `updatePage` で未公開のページを更新すると `published` になります。
+	Status PageStatus `json:"status"`
+
+	// Title ページのタイトルです。タイトルの無いページでは `null` です。
+	Title *string `json:"title"`
+
+	// TopicName ページが属するトピックの名前です。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います。
+	TopicName string `json:"topic_name"`
+
+	// TopicNumber ページが属するトピックの番号です。
+	TopicNumber int32 `json:"topic_number"`
+
+	// Url Web画面でページを開くURLです (例: `https://example.com/s/my-space/pages/12`)。
+	// 利用者に出典としてページを示すときに使います。
+	// URLはサーバーが決めるため、`number` などから組み立てずにこの値を使ってください。
+	Url string `json:"url"`
 }
 
 // PagePatch ページの更新内容です (JSON Merge Patch)。含めた項目だけを更新します。
@@ -362,6 +472,10 @@ type PagePatch struct {
 	// `/`・`\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けません。
 	Title *PageTitleInput `json:"title,omitempty"`
 }
+
+// PageStatus ページの公開状態です。`published` は公開済みのページ、`unpublished` はWikiリンクで自動作成されたページなど、まだ公開していないページです。
+// `updatePage` で未公開のページを更新すると `published` になります。
+type PageStatus string
 
 // PageTitleInput ページのタイトルです。トピック内で重複できません。
 // `/`・`\`・`:`・制御文字は使えず、先頭と末尾にスペースを置けません。
@@ -540,6 +654,9 @@ type DraftPageRevisionID = openapi_types.UUID
 // Limit defines model for Limit.
 type Limit = int32
 
+// ListInclude defines model for ListInclude.
+type ListInclude = []ListIncludeField
+
 // PageNumber defines model for PageNumber.
 type PageNumber = int32
 
@@ -587,6 +704,10 @@ type ValidationFailed = ProblemDetails
 
 // ListDraftPagesParams defines parameters for ListDraftPages.
 type ListDraftPagesParams struct {
+	// Include 一覧の各項目に含める項目です。`include=body` のように指定します。
+	// `body` を指定すると、各項目に本文 (`body`) を必ず含めます。
+	Include *ListInclude `form:"include,omitempty" json:"include,omitempty"`
+
 	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
 	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
 	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
@@ -617,6 +738,10 @@ type ListPagesParams struct {
 	// ModifiedSince この日時 (RFC 3339) 以降に更新されたページだけを返します。指定した日時ちょうどに更新されたページも含みます。
 	ModifiedSince *time.Time `form:"modified_since,omitempty" json:"modified_since,omitempty"`
 
+	// Include 一覧の各項目に含める項目です。`include=body` のように指定します。
+	// `body` を指定すると、各項目に本文 (`body`) を必ず含めます。
+	Include *ListInclude `form:"include,omitempty" json:"include,omitempty"`
+
 	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
 	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
 	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
@@ -644,6 +769,10 @@ type UpdatePageParams struct {
 
 // ListPageBacklinksParams defines parameters for ListPageBacklinks.
 type ListPageBacklinksParams struct {
+	// Include 一覧の各項目に含める項目です。`include=body` のように指定します。
+	// `body` を指定すると、各項目に本文 (`body`) を必ず含めます。
+	Include *ListInclude `form:"include,omitempty" json:"include,omitempty"`
+
 	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
 	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
 	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
@@ -700,6 +829,10 @@ type CreateDraftPagePublicationParams struct {
 
 // ListDraftPageRevisionsParams defines parameters for ListDraftPageRevisions.
 type ListDraftPageRevisionsParams struct {
+	// Include 一覧の各項目に含める項目です。`include=body` のように指定します。
+	// `body` を指定すると、各項目に本文 (`body`) を必ず含めます。
+	Include *ListInclude `form:"include,omitempty" json:"include,omitempty"`
+
 	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
 	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
 	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
@@ -710,6 +843,10 @@ type ListDraftPageRevisionsParams struct {
 
 // ListPageLinksParams defines parameters for ListPageLinks.
 type ListPageLinksParams struct {
+	// Include 一覧の各項目に含める項目です。`include=body` のように指定します。
+	// `body` を指定すると、各項目に本文 (`body`) を必ず含めます。
+	Include *ListInclude `form:"include,omitempty" json:"include,omitempty"`
+
 	// Cursor 続きのページを取得するためのカーソルです。前のページの応答の `next_cursor` をそのまま渡します。
 	// 中身の形式は公開しておらず、予告なく変わることがあります。省略すると最初のページを返します。
 	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
@@ -2905,6 +3042,18 @@ func NewListDraftPagesRequest(server string, spaceIdentifier SpaceIdentifier, pa
 		// per the OpenAPI spec (e.g. "color=blue,black,brown").
 		var rawQueryFragments []string
 
+		if params.Include != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "include", *params.Include, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if params.Cursor != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
@@ -3110,6 +3259,18 @@ func NewListPagesRequest(server string, spaceIdentifier SpaceIdentifier, params 
 		if params.ModifiedSince != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "modified_since", *params.ModifiedSince, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Include != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "include", *params.Include, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -3370,6 +3531,18 @@ func NewListPageBacklinksRequest(server string, spaceIdentifier SpaceIdentifier,
 		// styled parameters, preserving literal commas as delimiters
 		// per the OpenAPI spec (e.g. "color=blue,black,brown").
 		var rawQueryFragments []string
+
+		if params.Include != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "include", *params.Include, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
 
 		if params.Cursor != nil {
 
@@ -3826,6 +3999,18 @@ func NewListDraftPageRevisionsRequest(server string, spaceIdentifier SpaceIdenti
 		// per the OpenAPI spec (e.g. "color=blue,black,brown").
 		var rawQueryFragments []string
 
+		if params.Include != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "include", *params.Include, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if params.Cursor != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
@@ -3953,6 +4138,18 @@ func NewListPageLinksRequest(server string, spaceIdentifier SpaceIdentifier, pag
 		// styled parameters, preserving literal commas as delimiters
 		// per the OpenAPI spec (e.g. "color=blue,black,brown").
 		var rawQueryFragments []string
+
+		if params.Include != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "include", *params.Include, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
 
 		if params.Cursor != nil {
 
