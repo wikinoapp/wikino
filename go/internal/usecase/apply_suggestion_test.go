@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -31,7 +32,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 	suggestionApplyValidator := validator.NewSuggestionApplyValidator(pageUpdateValidator)
 	uc := NewApplySuggestionUsecase(
-		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		db, spaceRepo, spaceMemberRepo, repository.NewTopicRepository(q), topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
 		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
 		suggestionApplyValidator,
@@ -161,7 +162,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: SuggestionPageのLinkedPageIDsとFeaturedImageAttachmentIDがPageに反映される", func(t *testing.T) {
+	t.Run("正常系: 本文のWikiリンクとアイキャッチ画像がPageに反映される", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -220,7 +221,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageID(pageID).
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("提案タイトル").
-			WithBody("提案本文").
+			WithBody("提案本文 [[Linked Page]]").
 			WithLinkedPageIDs([]model.PageID{linkedPageID}).
 			WithFeaturedImageAttachmentID(featuredAttachmentID).
 			Build()
@@ -935,6 +936,71 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		}
 		if appliedPages[0].Title == nil || *appliedPages[0].Title != "Target Title" {
 			t.Errorf("Page.Title = %v、期待値 = %q", appliedPages[0].Title, "Target Title")
+		}
+	})
+
+	t.Run("正常系: 論理削除した同タイトルのページへのリンクを、反映したページへ付け替える", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).WithIdentifier("apply-suggestion-reassign-link").Build()
+		userID := testutil.NewUserBuilderDB(t, db).WithEmail("apply-suggestion-reassign-link@example.com").WithAtname("applysuggestionreassignlink").Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(spaceID).WithUserID(userID).WithRole(model.SpaceRoleEditor).Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).WithSpaceID(spaceID).WithName("General").Build()
+		testutil.NewTopicMemberBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithSpaceMemberID(spaceMemberID).Build()
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Original Title").Build()
+
+		// 反映する編集提案を番号1にするため、フィクスチャの編集提案より先に作る
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).WithStatus(model.SuggestionStatusOpen).Build()
+		f := setupLinkReassignFixture(t, db, "apply-suggestion-reassign-link", spaceID, topicID, spaceMemberID, "New Title", 2)
+		// 反映するページのリンクの記録も、置き換える前の未公開のページを指している
+		testutil.NewSuggestionPageBuilderDB(t, db).WithSpaceID(spaceID).WithSuggestionID(suggestionID).WithPageID(pageID).
+			WithTitle("New Title").WithBody("[[New Title]]").WithLinkedPageIDs([]model.PageID{f.unpublishedPageID}).Build()
+
+		if _, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-suggestion-reassign-link",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		}); err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+
+		applied, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
+		if err != nil || len(applied) != 1 {
+			t.Fatalf("反映したページの取得に失敗: %v", err)
+		}
+		if want := []model.PageID{pageID}; !slices.Equal(applied[0].LinkedPageIDs, want) {
+			t.Errorf("反映したページのLinkedPageIDs = %v、期待値 = %v", applied[0].LinkedPageIDs, want)
+		}
+		f.assertReassigned(t, db, pageID)
+	})
+
+	t.Run("異常系: 削除したトピックのページを含む編集提案はResourceNotFoundエラーが返る", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).WithIdentifier("apply-suggestion-discarded-topic").Build()
+		userID := testutil.NewUserBuilderDB(t, db).WithEmail("apply-suggestion-discarded-topic@example.com").WithAtname("applysuggestiondiscardedtopic").Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(spaceID).WithUserID(userID).WithRole(model.SpaceRoleEditor).Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).WithSpaceID(spaceID).WithName("General").Build()
+		testutil.NewTopicMemberBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithSpaceMemberID(spaceMemberID).Build()
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("ページ").WithBody("公開済みの本文").Build()
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).WithStatus(model.SuggestionStatusOpen).Build()
+		testutil.NewSuggestionPageBuilderDB(t, db).WithSpaceID(spaceID).WithSuggestionID(suggestionID).
+			WithPageID(pageID).WithTitle("ページ").WithBody("提案本文").Build()
+		// 論理削除したトピックのページは、ページの削除が済むまで残る
+		execForTest(t, db, "UPDATE topics SET discarded_at = now() WHERE id = $1 AND space_id = $2", topicID, spaceID)
+
+		_, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-suggestion-discarded-topic",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		})
+		if ae := model.AsAppError(err); ae == nil || ae.Code != model.AppErrCodeResourceNotFound {
+			t.Fatalf("Execute()のエラー = %v、期待値 = AppErrCodeResourceNotFound", err)
+		}
+		if body := findPageForTest(t, db, spaceID, 1).Body; body != "公開済みの本文" {
+			t.Errorf("本文 = %q、期待値 = 公開済みの本文", body)
 		}
 	})
 

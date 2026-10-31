@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -21,6 +22,7 @@ type PublishPageUsecase struct {
 	pageEditorRepo        *repository.PageEditorRepository
 	draftPageRepo         *repository.DraftPageRepository
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -38,6 +40,7 @@ func NewPublishPageUsecase(
 	pageEditorRepo *repository.PageEditorRepository,
 	draftPageRepo *repository.DraftPageRepository,
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -53,6 +56,7 @@ func NewPublishPageUsecase(
 		pageEditorRepo:        pageEditorRepo,
 		draftPageRepo:         draftPageRepo,
 		draftPageRevisionRepo: draftPageRevisionRepo,
+		suggestionPageRepo:    suggestionPageRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -79,6 +83,13 @@ type PublishPageOutput struct {
 
 // Executeはページを公開する
 func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInput) (*PublishPageOutput, error) {
+	return retryOnDeadlock(ctx, func() (*PublishPageOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *PublishPageUsecase) executeOnce(ctx context.Context, input PublishPageInput) (*PublishPageOutput, error) {
 	// 1. データ取得
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
 	if err != nil {
@@ -142,6 +153,20 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 		_ = tx.Rollback()
 	}()
 
+	// 未公開のページを置き換える公開・反映は、スペースをロックしたままリンクを付け替える。
+	// 同じロックでそのコミットを待ってからWikiリンクを解決し、論理削除したページのIDを記録しないようにする。
+	// ページの行より先にロックし、ロックの順序をAPIの書き込みと揃える
+	locked, err := uc.spaceRepo.WithTx(tx).LockByID(ctx, data.space.ID)
+	if err != nil {
+		return nil, fmt.Errorf("スペースのロックに失敗しました: %w", err)
+	}
+	if !locked {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
 	pageRepo := uc.pageRepo.WithTx(tx)
 	pageRevisionRepo := uc.pageRevisionRepo.WithTx(tx)
 	pageEditorRepo := uc.pageEditorRepo.WithTx(tx)
@@ -196,6 +221,12 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページの更新に失敗しました: %w", err)
+	}
+
+	if unpublishedConflictingPageID != nil {
+		if err := reassignLinkedPageIDs(ctx, data.space.ID, *unpublishedConflictingPageID, data.page.ID, pageRepo, draftPageRepo, uc.suggestionPageRepo.WithTx(tx)); err != nil {
+			return nil, err
+		}
 	}
 
 	// PageRevisionを作成 (スナップショット)

@@ -233,6 +233,12 @@ func (b *PageBuilderDB) WithBody(body string) *PageBuilderDB {
 	return b
 }
 
+// WithLinkedPageIDsはリンク先ページIDを設定します
+func (b *PageBuilderDB) WithLinkedPageIDs(ids []model.PageID) *PageBuilderDB {
+	b.linkedPageIDs = model.PageIDsToStrings(ids)
+	return b
+}
+
 // WithPublishedAtは公開日時を設定します
 func (b *PageBuilderDB) WithPublishedAt(publishedAt time.Time) *PageBuilderDB {
 	b.publishedAt = &publishedAt

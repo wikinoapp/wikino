@@ -22,6 +22,8 @@ type CreateAPIPageUsecase struct {
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
+	draftPageRepo         *repository.DraftPageRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -42,6 +44,8 @@ func NewCreateAPIPageUsecase(
 	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
 	pageEditorRepo *repository.PageEditorRepository,
+	draftPageRepo *repository.DraftPageRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -54,6 +58,8 @@ func NewCreateAPIPageUsecase(
 		pageRepo:              pageRepo,
 		pageRevisionRepo:      pageRevisionRepo,
 		pageEditorRepo:        pageEditorRepo,
+		draftPageRepo:         draftPageRepo,
+		suggestionPageRepo:    suggestionPageRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -83,6 +89,13 @@ type CreateAPIPageOutput struct {
 // リクエスト本文の `topic_number` の問題として扱う。
 // トピックを開けるがページを作成できない場合は、メンバー権限の不足として未存在を返す
 func (uc *CreateAPIPageUsecase) Execute(ctx context.Context, input CreateAPIPageInput) (*CreateAPIPageOutput, error) {
+	return retryOnDeadlock(ctx, func() (*CreateAPIPageOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *CreateAPIPageUsecase) executeOnce(ctx context.Context, input CreateAPIPageInput) (*CreateAPIPageOutput, error) {
 	// 1. データ取得
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {
@@ -229,7 +242,7 @@ func (uc *CreateAPIPageUsecase) createPageOnce(
 	// 検証で見つけた同じタイトルの中身の無い未公開ページ (Wikiリンクで自動作成されたものなど) は、
 	// 新しく作らずにそのページへ本文を書いて公開する。リンク元のlinked_page_idsが指すページを
 	// 保ち、リンク一覧とバックリンクを切らないため
-	page, err := uc.takeOverEmptyUnpublishedPage(ctx, pageRepo, space, topic, input.Title, unpublishedConflictingPageID, now)
+	page, discardedPageID, err := uc.takeOverEmptyUnpublishedPage(ctx, pageRepo, space, topic, input.Title, unpublishedConflictingPageID, now)
 	if err != nil {
 		return nil, err
 	}
@@ -288,6 +301,12 @@ func (uc *CreateAPIPageUsecase) createPageOnce(
 		return nil, fmt.Errorf("ページの公開に失敗しました: %w", err)
 	}
 
+	if discardedPageID != nil {
+		if err := reassignLinkedPageIDs(ctx, space.ID, *discardedPageID, page.ID, pageRepo, uc.draftPageRepo.WithTx(tx), uc.suggestionPageRepo.WithTx(tx)); err != nil {
+			return nil, err
+		}
+	}
+
 	_, err = pageRevisionRepo.Create(ctx, repository.CreatePageRevisionInput{
 		SpaceID:       space.ID,
 		SpaceMemberID: spaceMember.ID,
@@ -334,7 +353,7 @@ func (uc *CreateAPIPageUsecase) createPageOnce(
 // 行をロックしてから確かめ直して返す。並行する公開が終わるのを待ってから条件を見るため、
 // 検証の後にWeb画面で公開されていればerrAPIPageReplacementChangedを返して検証からやり直させる。
 // ゴミ箱に入っているページは、公開してもゴミ箱に入ったままで取得できないため、Web画面の公開と
-// 同じく論理削除し、nilを返して新しいページを作らせる
+// 同じく論理削除し、ページの代わりに論理削除したページのIDを返して新しいページを作らせる
 func (uc *CreateAPIPageUsecase) takeOverEmptyUnpublishedPage(
 	ctx context.Context,
 	pageRepo *repository.PageRepository,
@@ -343,37 +362,37 @@ func (uc *CreateAPIPageUsecase) takeOverEmptyUnpublishedPage(
 	title string,
 	pageID *model.PageID,
 	now time.Time,
-) (*model.Page, error) {
+) (*model.Page, *model.PageID, error) {
 	if pageID == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	page, err := pageRepo.FindByIDForUpdate(ctx, *pageID, space.ID)
 	if err != nil {
-		return nil, fmt.Errorf("同じタイトルの未公開ページの取得に失敗しました: %w", err)
+		return nil, nil, fmt.Errorf("同じタイトルの未公開ページの取得に失敗しました: %w", err)
 	}
 	if page == nil || page.TopicID != topic.ID || page.Title == nil ||
 		page.PublishedAt != nil || page.Body != "" {
-		return nil, errAPIPageReplacementChanged
+		return nil, nil, errAPIPageReplacementChanged
 	}
 	// タイトルはDBのcitextの比較で引き直し、検証と同じく大文字・小文字を区別せずに同名かを確かめる
 	conflictingPage, err := pageRepo.FindByTopicAndTitle(ctx, topic.ID, title, space.ID)
 	if err != nil {
-		return nil, fmt.Errorf("ロック後のタイトルの確認に失敗しました: %w", err)
+		return nil, nil, fmt.Errorf("ロック後のタイトルの確認に失敗しました: %w", err)
 	}
 	if conflictingPage == nil || conflictingPage.ID != page.ID {
-		return nil, errAPIPageReplacementChanged
+		return nil, nil, errAPIPageReplacementChanged
 	}
 	if page.TrashedAt == nil {
-		return page, nil
+		return page, nil, nil
 	}
 
 	discarded, err := pageRepo.DiscardEmptyUnpublishedByID(ctx, page.ID, space.ID, topic.ID, title, now)
 	if err != nil {
-		return nil, fmt.Errorf("ゴミ箱にある未公開ページの論理削除に失敗しました: %w", err)
+		return nil, nil, fmt.Errorf("ゴミ箱にある未公開ページの論理削除に失敗しました: %w", err)
 	}
 	if !discarded {
-		return nil, errAPIPageReplacementChanged
+		return nil, nil, errAPIPageReplacementChanged
 	}
-	return nil, nil
+	return nil, &page.ID, nil
 }

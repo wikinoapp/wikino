@@ -99,6 +99,7 @@ func setupHandlerWithDB(t *testing.T, db *sql.DB, queries *query.Queries) *page.
 		pageEditorRepo,
 		draftPageRepo,
 		draftPageRevisionRepo,
+		suggestionPageRepo,
 		topicRepo,
 		topicMemberRepo,
 		attachmentRepo,

@@ -28,6 +28,8 @@ func newCreateAPIPageUC(db *sql.DB) *CreateAPIPageUsecase {
 		pageRepo,
 		repository.NewPageRevisionRepository(q),
 		repository.NewPageEditorRepository(q),
+		repository.NewDraftPageRepository(q),
+		repository.NewSuggestionPageRepository(q),
 		repository.NewTopicRepository(q),
 		repository.NewTopicMemberRepository(q),
 		repository.NewAttachmentRepository(q),
@@ -499,6 +501,36 @@ func TestCreateAPIPageUsecase_Execute_TitleConflict(t *testing.T) {
 			t.Error("ゴミ箱の未公開のページが論理削除されていない")
 		}
 	})
+}
+
+// TestCreateAPIPageUsecase_Execute_ReassignsLinksToReplacedPageは、ゴミ箱にある未公開のページを論理削除して
+// 新しいページを作るときに、そのページを指していたリンクの記録を、新しいページへ付け替えることを確かめる
+func TestCreateAPIPageUsecase_Execute_ReassignsLinksToReplacedPage(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	memberRole := apiTopicRegularMemberRole
+	fixture := setupCreateAPIPageFixture(t, db, "api-page-create-reassign-link", memberRole)
+	f := setupLinkReassignFixture(t, db, "api-page-create-reassign-link", fixture.space.ID, fixture.topicIDs[1], fixture.spaceMemberID, "リンク先", 1)
+	if _, err := db.ExecContext(t.Context(), "UPDATE pages SET trashed_at = now() WHERE id = $1 AND space_id = $2", f.unpublishedPageID, fixture.space.ID); err != nil {
+		t.Fatalf("ページをゴミ箱に入れる: %v", err)
+	}
+
+	output, err := newCreateAPIPageUC(db).Execute(t.Context(), CreateAPIPageInput{
+		Principal:       fixture.principal(memberRole, []model.Scope{model.ScopePageWrite}),
+		SpaceIdentifier: fixture.space.Identifier,
+		TopicNumber:     1,
+		Title:           "リンク先",
+		Body:            "本文",
+	})
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v", err)
+	}
+	if output.Page.ID == f.unpublishedPageID {
+		t.Fatalf("ページ = %+v、期待値 = 新しく作ったページ", output.Page)
+	}
+
+	f.assertReassigned(t, db, output.Page.ID)
 }
 
 // TestCreateAPIPageUsecase_ExecuteWithCaseInsensitiveTitleは、検証とロック後の同名判定が

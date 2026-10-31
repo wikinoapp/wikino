@@ -36,7 +36,7 @@ func TestPublishPageUsecase_ReferenceDefinitionInsideHiddenContent(t *testing.T)
 				attachmentRepo := repository.NewAttachmentRepository(q)
 				refRepo := repository.NewPageAttachmentReferenceRepository(q)
 				uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo,
-					pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo,
+					pageEditorRepo, draftPageRepo, draftPageRevisionRepo, repository.NewSuggestionPageRepository(q), topicRepo, topicMemberRepo,
 					attachmentRepo, refRepo, validator.NewPageUpdateValidator(pageRepo))
 
 				identifier := fmt.Sprintf("pub-ref-%s-%t", element, existing)

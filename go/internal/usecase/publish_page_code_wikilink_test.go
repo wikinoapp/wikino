@@ -31,7 +31,7 @@ func TestPublishPageUsecase_Execute_CodeWikilinkCreatesNoPage(t *testing.T) {
 	attachmentRepo := repository.NewAttachmentRepository(q)
 	refRepo := repository.NewPageAttachmentReferenceRepository(q)
 	uc := NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo,
-		pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo,
+		pageEditorRepo, draftPageRepo, draftPageRevisionRepo, repository.NewSuggestionPageRepository(q), topicRepo, topicMemberRepo,
 		attachmentRepo, refRepo, validator.NewPageUpdateValidator(pageRepo))
 
 	spaceID := testutil.NewSpaceBuilderDB(t, db).WithIdentifier("publish-code-wikilink").Build()

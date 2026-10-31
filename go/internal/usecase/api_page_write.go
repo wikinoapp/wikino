@@ -19,6 +19,8 @@ type apiPageWriteRepos struct {
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
+	draftPageRepo         *repository.DraftPageRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -170,6 +172,12 @@ func writeAPIPage(ctx context.Context, db *sql.DB, repos apiPageWriteRepos, inpu
 		return nil, fmt.Errorf("ページの更新に失敗しました: %w", err)
 	}
 
+	if input.unpublishedConflictingPageID != nil {
+		if err := reassignLinkedPageIDs(ctx, input.space.ID, *input.unpublishedConflictingPageID, input.page.ID, pageRepo, repos.draftPageRepo.WithTx(tx), repos.suggestionPageRepo.WithTx(tx)); err != nil {
+			return nil, err
+		}
+	}
+
 	_, err = pageRevisionRepo.Create(ctx, repository.CreatePageRevisionInput{
 		SpaceID:       input.space.ID,
 		SpaceMemberID: input.spaceMember.ID,
@@ -225,7 +233,7 @@ const updateAPIPageRetryLimit = 3
 var errAPIPageChanged = errors.New("更新対象のページが変更されました")
 
 // retryAPIPageUpdateはページの更新 (update) を、ページが検証の後に変わっていた場合と、同時に作られた
-// ページと一意制約で競合した場合に、ページの取得からやり直す。Web画面の公開・下書き保存はスペースを
+// ページと一意制約で競合した場合に、ページの取得からやり直す。Web画面の作成・下書き保存はスペースを
 // ロックせずにページ (Wikiリンク先を含む) を作るため、CreateAPIPageUsecaseと同じく競合に備える
 func retryAPIPageUpdate(update func() (*UpdateAPIPageOutput, error)) (*UpdateAPIPageOutput, error) {
 	var lastErr error
