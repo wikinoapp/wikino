@@ -2,6 +2,7 @@ package page_link
 
 import (
 	"context"
+	"slices"
 
 	"github.com/wikinoapp/wikino/go/internal/apigen"
 	apipage "github.com/wikinoapp/wikino/go/internal/apihandler/page"
@@ -41,7 +42,7 @@ func (h *Handler) ListPageLinks(ctx context.Context, request apigen.ListPageLink
 		return nil, err
 	}
 
-	body, link, err := apipage.ToAPIPageList(ctx, h.appURL, principal.Space, output.Pages, output.Topics, output.HasNext)
+	body, link, err := apipage.ToAPIPageList(ctx, h.appURL, principal.Space, output.Pages, output.Topics, request.Params.Include != nil && slices.Contains(*request.Params.Include, apigen.Body), output.HasNext)
 	if err != nil {
 		return nil, err
 	}

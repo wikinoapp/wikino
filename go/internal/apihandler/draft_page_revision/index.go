@@ -2,6 +2,7 @@ package draft_page_revision
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -50,9 +51,10 @@ func (h *Handler) ListDraftPageRevisions(ctx context.Context, request apigen.Lis
 		return nil, err
 	}
 
+	includeBody := request.Params.Include != nil && slices.Contains(*request.Params.Include, apigen.Body)
 	items := make([]apigen.DraftPageRevisionListItem, len(output.Revisions))
 	for i, revision := range output.Revisions {
-		items[i], err = toAPIDraftPageRevisionListItem(revision)
+		items[i], err = toAPIDraftPageRevisionListItem(revision, includeBody)
 		if err != nil {
 			return nil, err
 		}
@@ -75,19 +77,22 @@ func (h *Handler) ListDraftPageRevisions(ctx context.Context, request apigen.Lis
 }
 
 // toAPIDraftPageRevisionListItemは下書きのリビジョンを、APIの編集履歴の一覧の項目に変換する。
-// 本文の抜粋はここで本文から作る
-func toAPIDraftPageRevisionListItem(revision *model.DraftPageRevision) (apigen.DraftPageRevisionListItem, error) {
+// 本文の抜粋はここで本文から作り、本文はincludeBodyがtrueのときだけ入れる
+func toAPIDraftPageRevisionListItem(revision *model.DraftPageRevision, includeBody bool) (apigen.DraftPageRevisionListItem, error) {
 	r, err := toAPIDraftPageRevision(revision)
 	if err != nil {
 		return apigen.DraftPageRevisionListItem{}, err
 	}
-	return apigen.DraftPageRevisionListItem{
+	item := apigen.DraftPageRevisionListItem{
 		Id:        r.Id,
 		Title:     r.Title,
 		Excerpt:   model.BodyExcerpt(revision.Body),
-		Body:      &r.Body,
 		CreatedAt: r.CreatedAt,
-	}, nil
+	}
+	if includeBody {
+		item.Body = &r.Body
+	}
+	return item, nil
 }
 
 // decodeDraftPageRevisionCursorはリクエストのカーソルから、前のページの最後のリビジョンの位置を取り出す。

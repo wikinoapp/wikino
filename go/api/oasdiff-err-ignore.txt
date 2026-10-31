@@ -6,6 +6,7 @@
 GET /user api path removed without deprecation
 
 # 一覧の応答の大きさを本文の長さによらず抑えるため、一覧の項目を一覧専用のスキーマに分け、本文を必須でなくした。
+# あわせて一覧の既定では本文を返さず、includeにbodyを指定したときだけ返すようにした。応答のスキーマは変わらないため、oasdiffはこの変更を報告しない。
 GET /spaces/{space_identifier}/pages the response property `items/items/body` became optional for the status `200`
 GET /spaces/{space_identifier}/pages/{page_number}/links the response property `items/items/body` became optional for the status `200`
 GET /spaces/{space_identifier}/pages/{page_number}/backlinks the response property `items/items/body` became optional for the status `200`

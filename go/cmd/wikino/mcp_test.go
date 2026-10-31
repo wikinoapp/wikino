@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -69,7 +70,13 @@ func newMCPTestHandler(t *testing.T, q *query.Queries) http.Handler {
 		apidraftpagepublication.NewHandler("https://example.com", nil),
 		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
-		apipage.NewHandler("https://example.com", nil, nil, nil, nil),
+		apipage.NewHandler(
+			"https://example.com",
+			usecase.NewListAPIPagesUsecase(repository.NewPageRepository(q), repository.NewTopicRepository(q), repository.NewTopicMemberRepository(q)),
+			nil,
+			nil,
+			nil,
+		),
 		apipagebacklink.NewHandler("https://example.com", nil),
 		apipagebodyedit.NewHandler("https://example.com", nil),
 		apipagelink.NewHandler("https://example.com", nil),
@@ -216,4 +223,46 @@ func TestMCPServer_ツールの呼び出しを公開APIのハンドラーに委�
 			t.Errorf("本文 = %s、未知のツールとしてのエラーを期待", rr.Body.String())
 		}
 	})
+}
+
+func TestMCPServer_一覧のツールはincludeにbodyを渡したときだけ本文を返す(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	handler := newMCPTestHandler(t, q)
+	token := setupMCPToolFixture(t, tx, "mcp-tool-list")
+	space, err := repository.NewSpaceRepository(q).FindByIdentifier(context.Background(), "mcp-tool-list")
+	if err != nil || space == nil {
+		t.Fatalf("スペースの取得の結果 = (%v, %v)、期待値 = フィクスチャのスペース", space, err)
+	}
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(space.ID).WithNumber(1).Build()
+	testutil.NewPageBuilder(t, tx).WithSpaceID(space.ID).WithTopicID(topicID).WithNumber(1).WithTitle("ページ").WithBody("# 見出し\n\n本文").Build()
+
+	tests := []struct {
+		name      string
+		arguments string
+		wantBody  any
+	}{
+		{name: "既定では本文を返さない", arguments: `{}`, wantBody: nil},
+		{name: "includeにbodyを渡すと本文を返す", arguments: `{"include":["body"]}`, wantBody: "# 見出し\n\n本文"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := callMCPTool(t, handler, token, "listPages", tt.arguments)
+
+			if result["isError"] == true {
+				t.Fatalf("isError = true、成功を期待 (結果 = %v)", result)
+			}
+			structured, _ := result["structuredContent"].(map[string]any)
+			items, _ := structured["items"].([]any)
+			if len(items) != 1 {
+				t.Fatalf("items = %v、期待値 = 1件", structured["items"])
+			}
+			item, _ := items[0].(map[string]any)
+			if item["excerpt"] != "# 見出し 本文" || item["body"] != tt.wantBody {
+				t.Errorf("項目 = %v、期待値 = 抜粋 %q・本文 %v", item, "# 見出し 本文", tt.wantBody)
+			}
+		})
+	}
 }
