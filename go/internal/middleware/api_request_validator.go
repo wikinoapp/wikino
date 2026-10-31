@@ -228,18 +228,16 @@ func leafSchemaErrors(err error) []*openapi3.SchemaError {
 
 // jsonSchemaErrorReasonPatternは、JSON Schema 2020-12の検証器のエラーをkin-openapiが変換したSchemaErrorの理由。
 // 例: `error at "/title": at '/title': minLength: got 0, want 1`
-// 変換後のSchemaErrorはJSONPointer() で位置を返さないため、理由の `at '...'` から位置を取り出す
-var jsonSchemaErrorReasonPattern = regexp.MustCompile(`(?s)^(?:error at "[^"]*": )?at '([^']*)': (.*)$`)
+// 位置はSchemaError.JSONPointer() で取得し、理由からは位置の接頭辞を取り除く
+var jsonSchemaErrorReasonPattern = regexp.MustCompile(`(?s)^(?:error at "[^"]*": )?at '[^']*': (.*)$`)
 
 // schemaErrorLocationはSchemaErrorの位置 (URIフラグメント形式のJSON Pointer) と、位置を除いた説明を返す
 func schemaErrorLocation(schemaErr *openapi3.SchemaError) (string, string) {
-	if tokens := schemaErr.JSONPointer(); len(tokens) > 0 {
-		return apierror.JSONPointer(tokens...), schemaErr.Reason
-	}
+	detail := schemaErr.Reason
 	if m := jsonSchemaErrorReasonPattern.FindStringSubmatch(schemaErr.Reason); m != nil {
-		return "#" + m[1], m[2]
+		detail = m[1]
 	}
-	return apierror.JSONPointer(), schemaErr.Reason
+	return apierror.JSONPointer(schemaErr.JSONPointer()...), detail
 }
 
 func derefOrEmpty(s *string) string {
