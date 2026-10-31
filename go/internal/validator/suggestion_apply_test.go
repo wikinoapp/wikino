@@ -2,6 +2,7 @@ package validator_test
 
 import (
 	"context"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -107,8 +108,8 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 		if out == nil {
 			t.Fatal("出力がnil")
 		}
-		if len(out.ConflictingPageIDs) != 0 {
-			t.Errorf("ConflictingPageIDs = %v、期待値 = 空", out.ConflictingPageIDs)
+		if len(out.PageReplacements) != 0 {
+			t.Errorf("PageReplacements = %v、期待値 = 空", out.PageReplacements)
 		}
 	})
 
@@ -127,12 +128,12 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 		if out == nil {
 			t.Fatal("出力がnil")
 		}
-		if len(out.ConflictingPageIDs) != 0 {
-			t.Errorf("ConflictingPageIDs = %v、期待値 = 空", out.ConflictingPageIDs)
+		if len(out.PageReplacements) != 0 {
+			t.Errorf("PageReplacements = %v、期待値 = 空", out.PageReplacements)
 		}
 	})
 
-	t.Run("未公開かつ本文が空のページと競合 → 論理削除リストに含まれる", func(t *testing.T) {
+	t.Run("未公開かつ本文が空のページと競合 → 置き換えの組に含まれる", func(t *testing.T) {
 		unpublishedID := testutil.NewPageBuilder(t, tx).
 			WithSpaceID(spaceID).
 			WithTopicID(topicID).
@@ -156,8 +157,9 @@ func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 		if out == nil {
 			t.Fatal("出力がnil")
 		}
-		if len(out.ConflictingPageIDs) != 1 || out.ConflictingPageIDs[0] != unpublishedID {
-			t.Errorf("ConflictingPageIDs = %v、期待値 = [%v]", out.ConflictingPageIDs, unpublishedID)
+		want := []validator.SuggestionApplyPageReplacement{{ConflictingPageID: unpublishedID, PageID: targetPageID}}
+		if !reflect.DeepEqual(out.PageReplacements, want) {
+			t.Errorf("PageReplacements = %v、期待値 = %v", out.PageReplacements, want)
 		}
 	})
 
@@ -335,8 +337,8 @@ func TestSuggestionApplyValidator_NilTitleSkipped(t *testing.T) {
 	if out == nil {
 		t.Fatal("出力がnil")
 	}
-	if len(out.ConflictingPageIDs) != 0 {
-		t.Errorf("ConflictingPageIDs = %v、期待値 = 空", out.ConflictingPageIDs)
+	if len(out.PageReplacements) != 0 {
+		t.Errorf("PageReplacements = %v、期待値 = 空", out.PageReplacements)
 	}
 }
 

@@ -20,6 +20,8 @@ type CreateAPIPageBodyEditUsecase struct {
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
+	draftPageRepo         *repository.DraftPageRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -34,6 +36,8 @@ func NewCreateAPIPageBodyEditUsecase(
 	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
 	pageEditorRepo *repository.PageEditorRepository,
+	draftPageRepo *repository.DraftPageRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -46,6 +50,8 @@ func NewCreateAPIPageBodyEditUsecase(
 		pageRepo:              pageRepo,
 		pageRevisionRepo:      pageRevisionRepo,
 		pageEditorRepo:        pageEditorRepo,
+		draftPageRepo:         draftPageRepo,
+		suggestionPageRepo:    suggestionPageRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -76,6 +82,13 @@ type CreateAPIPageBodyEditInput struct {
 // 編集を1件でも適用できなければ、どの編集も適用せずに、最初に失敗した編集についての
 // *model.ValidationErrorを返す
 func (uc *CreateAPIPageBodyEditUsecase) Execute(ctx context.Context, input CreateAPIPageBodyEditInput) (*UpdateAPIPageOutput, error) {
+	return retryOnDeadlock(ctx, func() (*UpdateAPIPageOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *CreateAPIPageBodyEditUsecase) executeOnce(ctx context.Context, input CreateAPIPageBodyEditInput) (*UpdateAPIPageOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {
 		return nil, err
@@ -140,6 +153,8 @@ func (uc *CreateAPIPageBodyEditUsecase) apiPageWriteRepos() apiPageWriteRepos {
 		pageRepo:              uc.pageRepo,
 		pageRevisionRepo:      uc.pageRevisionRepo,
 		pageEditorRepo:        uc.pageEditorRepo,
+		draftPageRepo:         uc.draftPageRepo,
+		suggestionPageRepo:    uc.suggestionPageRepo,
 		topicRepo:             uc.topicRepo,
 		topicMemberRepo:       uc.topicMemberRepo,
 		attachmentRepo:        uc.attachmentRepo,

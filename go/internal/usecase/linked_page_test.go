@@ -2,10 +2,14 @@ package usecase
 
 import (
 	"context"
+	"database/sql"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/markup"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
@@ -312,5 +316,121 @@ func TestPageLocationResolvers_ResolveByKeys_PreservesDatabaseTitleMatching(t *t
 				}
 			})
 		}
+	}
+}
+
+// linkReassignFixtureは、置き換えで論理削除される未公開のページを、置き換える前から指している
+// リンク元 (公開済みのページ・ほかのメンバーの下書き・編集提案のページ) をまとめたフィクスチャ
+type linkReassignFixture struct {
+	spaceID model.SpaceID
+	// unpublishedPageIDは置き換えで論理削除される、本文の無い未公開のページ
+	unpublishedPageID  model.PageID
+	sourcePageID       model.PageID
+	sourcePageDigest   string
+	otherMemberDraftID model.DraftPageID
+	draftDigest        string
+	suggestionPageID   model.SuggestionPageID
+}
+
+// setupLinkReassignFixtureは、トピックにtitleの本文の無い未公開のページと、そのページを指すリンク元を
+// テストDBへ直接コミットして作る。ページ番号はfirstNumberから2つ使う。
+// identifierは、ほかのメンバーのアットネームに使うため並行テスト間で一意にする
+func setupLinkReassignFixture(
+	t *testing.T,
+	db *sql.DB,
+	identifier string,
+	spaceID model.SpaceID,
+	topicID model.TopicID,
+	spaceMemberID model.SpaceMemberID,
+	title string,
+	firstNumber model.PageNumber,
+) linkReassignFixture {
+	t.Helper()
+
+	unpublishedPageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(firstNumber).
+		WithTitle(title).WithBody("").WithUnpublished().Build()
+	// リンク先より先に公開したページ。リンクの記録は置き換えられる前の未公開のページを指している
+	sourcePageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(firstNumber + 1).
+		WithTitle(title + "のリンク元").WithBody("[[" + title + "]]").WithLinkedPageIDs([]model.PageID{unpublishedPageID}).Build()
+
+	atname := strings.ReplaceAll(identifier, "-", "_") + "_other"
+	otherUserID := testutil.NewUserBuilderDB(t, db).WithAtname(atname).WithEmail(atname + "@example.com").Build()
+	otherSpaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(spaceID).WithUserID(otherUserID).Build()
+	otherMemberDraftID := testutil.NewDraftPageBuilderDB(t, db).WithSpaceID(spaceID).WithPageID(sourcePageID).
+		WithSpaceMemberID(otherSpaceMemberID).WithTopicID(topicID).WithBody("[[" + title + "]] 下書き").
+		WithLinkedPageIDs([]model.PageID{unpublishedPageID}).Build()
+
+	suggestionID := testutil.NewSuggestionBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+		WithCreatedSpaceMemberID(spaceMemberID).WithTitle(title + "への提案").Build()
+	suggestionPageID := testutil.NewSuggestionPageBuilderDB(t, db).WithSpaceID(spaceID).WithSuggestionID(suggestionID).
+		WithPageID(sourcePageID).WithBody("[[" + title + "]] 提案").WithLinkedPageIDs([]model.PageID{unpublishedPageID}).Build()
+
+	q := query.New(db)
+	pages, err := repository.NewPageRepository(q).FindByIDs(t.Context(), []model.PageID{sourcePageID}, spaceID)
+	if err != nil || len(pages) != 1 {
+		t.Fatalf("リンク元のページの取得に失敗: %v", err)
+	}
+	draft, err := repository.NewDraftPageRepository(q).FindByID(t.Context(), otherMemberDraftID, spaceID)
+	if err != nil || draft == nil {
+		t.Fatalf("下書きの取得に失敗: %v", err)
+	}
+
+	return linkReassignFixture{
+		spaceID:            spaceID,
+		unpublishedPageID:  unpublishedPageID,
+		sourcePageID:       sourcePageID,
+		sourcePageDigest:   pages[0].ContentDigest(),
+		otherMemberDraftID: otherMemberDraftID,
+		draftDigest:        draft.ContentDigest(),
+		suggestionPageID:   suggestionPageID,
+	}
+}
+
+// assertReassignedは、リンク元のリンクの記録が置き換えたページを指し、置き換えたページのバックリンクに
+// リンク元のページが並び、リンク元のページと下書きの版 (本文・更新日時を含む) が変わっていないことを確かめる
+func (f linkReassignFixture) assertReassigned(t *testing.T, db *sql.DB, replacementPageID model.PageID) {
+	t.Helper()
+
+	ctx := t.Context()
+	q := query.New(db)
+	pageRepo := repository.NewPageRepository(q)
+	want := []model.PageID{replacementPageID}
+
+	pages, err := pageRepo.FindByIDs(ctx, []model.PageID{f.sourcePageID}, f.spaceID)
+	if err != nil || len(pages) != 1 {
+		t.Fatalf("リンク元のページの取得に失敗: %v", err)
+	}
+	if !slices.Equal(pages[0].LinkedPageIDs, want) {
+		t.Errorf("リンク元のページのLinkedPageIDs = %v、期待値 = %v", pages[0].LinkedPageIDs, want)
+	}
+	if got := pages[0].ContentDigest(); got != f.sourcePageDigest {
+		t.Errorf("リンク元のページの版 = %q、期待値 = %q (変わらない)", got, f.sourcePageDigest)
+	}
+
+	backlinks, err := pageRepo.FindBacklinkedByPageID(ctx, replacementPageID, f.spaceID)
+	if err != nil {
+		t.Fatalf("FindBacklinkedByPageID()のエラー = %v", err)
+	}
+	if !slices.ContainsFunc(backlinks, func(p *model.Page) bool { return p.ID == f.sourcePageID }) {
+		t.Errorf("置き換えたページのバックリンク = %v、リンク元のページ %v を含むことを期待", backlinks, f.sourcePageID)
+	}
+
+	draft, err := repository.NewDraftPageRepository(q).FindByID(ctx, f.otherMemberDraftID, f.spaceID)
+	if err != nil || draft == nil {
+		t.Fatalf("下書きの取得に失敗: %v", err)
+	}
+	if !slices.Equal(draft.LinkedPageIDs, want) {
+		t.Errorf("ほかのメンバーの下書きのLinkedPageIDs = %v、期待値 = %v", draft.LinkedPageIDs, want)
+	}
+	if got := draft.ContentDigest(); got != f.draftDigest {
+		t.Errorf("下書きの版 = %q、期待値 = %q (変わらない)", got, f.draftDigest)
+	}
+
+	sp, err := repository.NewSuggestionPageRepository(q).FindByID(ctx, f.suggestionPageID, f.spaceID)
+	if err != nil || sp == nil {
+		t.Fatalf("編集提案のページの取得に失敗: %v", err)
+	}
+	if !slices.Equal(sp.LinkedPageIDs, want) {
+		t.Errorf("編集提案のページのLinkedPageIDs = %v、期待値 = %v", sp.LinkedPageIDs, want)
 	}
 }

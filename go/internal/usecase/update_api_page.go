@@ -20,6 +20,8 @@ type UpdateAPIPageUsecase struct {
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
+	draftPageRepo         *repository.DraftPageRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -34,6 +36,8 @@ func NewUpdateAPIPageUsecase(
 	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
 	pageEditorRepo *repository.PageEditorRepository,
+	draftPageRepo *repository.DraftPageRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -46,6 +50,8 @@ func NewUpdateAPIPageUsecase(
 		pageRepo:              pageRepo,
 		pageRevisionRepo:      pageRevisionRepo,
 		pageEditorRepo:        pageEditorRepo,
+		draftPageRepo:         draftPageRepo,
+		suggestionPageRepo:    suggestionPageRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -84,6 +90,13 @@ type UpdateAPIPageOutput struct {
 // 今の版が前提の版と一致しなければ、AppErrCodePreconditionFailedのエラーを返す。
 // 公開済みのページでタイトルと本文が今と同じ場合は、何も書き込まずに今のページを返す
 func (uc *UpdateAPIPageUsecase) Execute(ctx context.Context, input UpdateAPIPageInput) (*UpdateAPIPageOutput, error) {
+	return retryOnDeadlock(ctx, func() (*UpdateAPIPageOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *UpdateAPIPageUsecase) executeOnce(ctx context.Context, input UpdateAPIPageInput) (*UpdateAPIPageOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {
 		return nil, err
@@ -142,6 +155,8 @@ func (uc *UpdateAPIPageUsecase) apiPageWriteRepos() apiPageWriteRepos {
 		pageRepo:              uc.pageRepo,
 		pageRevisionRepo:      uc.pageRevisionRepo,
 		pageEditorRepo:        uc.pageEditorRepo,
+		draftPageRepo:         uc.draftPageRepo,
+		suggestionPageRepo:    uc.suggestionPageRepo,
 		topicRepo:             uc.topicRepo,
 		topicMemberRepo:       uc.topicMemberRepo,
 		attachmentRepo:        uc.attachmentRepo,

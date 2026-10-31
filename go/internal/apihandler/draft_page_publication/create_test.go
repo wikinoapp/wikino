@@ -50,6 +50,7 @@ func TestHandler_CreateDraftPagePublication(t *testing.T) {
 		repository.NewPageEditorRepository(q),
 		draftPageRepo,
 		repository.NewDraftPageRevisionRepository(q),
+		repository.NewSuggestionPageRepository(q),
 		repository.NewTopicRepository(q),
 		repository.NewTopicMemberRepository(q),
 		repository.NewAttachmentRepository(q),

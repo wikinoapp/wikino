@@ -91,6 +91,31 @@ func resolveLinkedPageIDs(
 	return resolver.linkedPageIDs, nil
 }
 
+// reassignLinkedPageIDsは、未公開のページを論理削除して同じタイトルのページで置き換えたときに、
+// スペースのページ・下書き・編集提案のページのリンクの記録で、論理削除したページへのリンクを
+// 置き換えたページへ付け替える。リンク元を保存し直さなくても、リンクとバックリンクに並ぶようにするため。
+// 同じトランザクションで書いたリンクの記録も付け替えるよう、トランザクションでのページの書き込みの後に呼ぶ
+func reassignLinkedPageIDs(
+	ctx context.Context,
+	spaceID model.SpaceID,
+	discardedPageID model.PageID,
+	replacementPageID model.PageID,
+	pageRepo *repository.PageRepository,
+	draftPageRepo *repository.DraftPageRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
+) error {
+	if err := pageRepo.ReassignLinkedPageID(ctx, spaceID, discardedPageID, replacementPageID); err != nil {
+		return fmt.Errorf("ページのリンクの付け替えに失敗しました: %w", err)
+	}
+	if err := draftPageRepo.ReassignLinkedPageID(ctx, spaceID, discardedPageID, replacementPageID); err != nil {
+		return fmt.Errorf("下書きのリンクの付け替えに失敗しました: %w", err)
+	}
+	if err := suggestionPageRepo.ReassignLinkedPageID(ctx, spaceID, discardedPageID, replacementPageID); err != nil {
+		return fmt.Errorf("編集提案のページのリンクの付け替えに失敗しました: %w", err)
+	}
+	return nil
+}
+
 // apiLinkedPageTopicFilterは、公開APIの書き込みでWikiリンク先のページを作れるトピックかを返す関数を作る。
 // トークンで見られないトピックにはページを作らない。見られないトピックの存在とページの有無を明かさないよう、
 // Wikiリンクのプレビューはそのトピックへのリンクを「トピックが無い」と示すため、書き込みもそれに揃える。

@@ -17,6 +17,7 @@ type ApplySuggestionUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
 	spaceMemberRepo       *repository.SpaceMemberRepository
+	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	suggestionRepo        *repository.SuggestionRepository
 	suggestionPageRepo    *repository.SuggestionPageRepository
@@ -34,6 +35,7 @@ func NewApplySuggestionUsecase(
 	db *sql.DB,
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
+	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	suggestionRepo *repository.SuggestionRepository,
 	suggestionPageRepo *repository.SuggestionPageRepository,
@@ -49,6 +51,7 @@ func NewApplySuggestionUsecase(
 		db:                    db,
 		spaceRepo:             spaceRepo,
 		spaceMemberRepo:       spaceMemberRepo,
+		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		suggestionRepo:        suggestionRepo,
 		suggestionPageRepo:    suggestionPageRepo,
@@ -76,6 +79,13 @@ type ApplySuggestionOutput struct {
 
 // Executeは編集提案をトピックに反映する
 func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySuggestionInput) (*ApplySuggestionOutput, error) {
+	return retryOnDeadlock(ctx, func() (*ApplySuggestionOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *ApplySuggestionUsecase) executeOnce(ctx context.Context, input ApplySuggestionInput) (*ApplySuggestionOutput, error) {
 	// 1. データ取得
 	data, err := uc.fetchData(ctx, input)
 	if err != nil {
@@ -106,7 +116,7 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 	}
 
 	// 5. 永続化 (トランザクション)
-	return uc.applySuggestion(ctx, data, validateOutput.ConflictingPageIDs)
+	return uc.applySuggestion(ctx, data, validateOutput.PageReplacements)
 }
 
 // buildApplyValidatorEntriesはSuggestionPageとPageのペアからValidator入力を構築する
@@ -135,6 +145,7 @@ type applySuggestionData struct {
 	suggestion      *model.Suggestion
 	suggestionPages []*model.SuggestionPage
 	pages           []*model.Page
+	topicMap        map[model.TopicID]*model.Topic
 }
 
 func (uc *ApplySuggestionUsecase) fetchData(ctx context.Context, input ApplySuggestionInput) (*applySuggestionData, error) {
@@ -187,6 +198,22 @@ func (uc *ApplySuggestionUsecase) fetchData(ctx context.Context, input ApplySugg
 	if err != nil {
 		return nil, fmt.Errorf("ページの取得に失敗: %w", err)
 	}
+	topics, err := uc.topicRepo.FindByIDsAndSpace(ctx, collectTopicIDsFromPages(pages), space.ID)
+	if err != nil {
+		return nil, fmt.Errorf("トピックの取得に失敗: %w", err)
+	}
+	topicMap := make(map[model.TopicID]*model.Topic, len(topics))
+	for _, topic := range topics {
+		topicMap[topic.ID] = topic
+	}
+	for _, page := range pages {
+		if topicMap[page.TopicID] == nil {
+			return nil, &model.AppError{
+				Code:    model.AppErrCodeResourceNotFound,
+				UserMsg: i18n.T(ctx, "error_not_found_message"),
+			}
+		}
+	}
 
 	return &applySuggestionData{
 		space:           space,
@@ -195,6 +222,7 @@ func (uc *ApplySuggestionUsecase) fetchData(ctx context.Context, input ApplySugg
 		suggestion:      suggestion,
 		suggestionPages: suggestionPages,
 		pages:           pages,
+		topicMap:        topicMap,
 	}, nil
 }
 
@@ -235,7 +263,7 @@ func (uc *ApplySuggestionUsecase) checkStatus(ctx context.Context, suggestion *m
 	return nil
 }
 
-func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *applySuggestionData, conflictingPageIDs []model.PageID) (*ApplySuggestionOutput, error) {
+func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *applySuggestionData, pageReplacements []validator.SuggestionApplyPageReplacement) (*ApplySuggestionOutput, error) {
 	now := time.Now()
 	spaceID := data.space.ID
 
@@ -247,6 +275,21 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 		_ = tx.Rollback()
 	}()
 
+	// 未公開のページを置き換える公開・反映は、スペースをロックしたままリンクを付け替える。
+	// 同じロックでそのコミットを待ってから、本文のWikiリンクを解決する。
+	// 置き換え中に作られた提案の記録には古いIDが残りうるため、本文から解決し直す。
+	// ページの行より先にロックし、ロックの順序をAPIの書き込みと揃える
+	locked, err := uc.spaceRepo.WithTx(tx).LockByID(ctx, spaceID)
+	if err != nil {
+		return nil, fmt.Errorf("スペースのロックに失敗しました: %w", err)
+	}
+	if !locked {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
 	suggestionRepo := uc.suggestionRepo.WithTx(tx)
 	pageRepo := uc.pageRepo.WithTx(tx)
 	pageRevisionRepo := uc.pageRevisionRepo.WithTx(tx)
@@ -255,10 +298,36 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	attachmentRepo := uc.attachmentRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
 
+	currentPages, err := uc.suggestionPageRepo.WithTx(tx).ListBySuggestionID(ctx, data.suggestion.ID, spaceID)
+	if err != nil {
+		return nil, fmt.Errorf("編集提案の再取得に失敗しました: %w", err)
+	}
+	currentByID := make(map[model.SuggestionPageID]*model.SuggestionPage, len(currentPages))
+	for _, sp := range currentPages {
+		currentByID[sp.ID] = sp
+	}
+	for _, sp := range data.suggestionPages {
+		current := currentByID[sp.ID]
+		// 本文やタイトルが変わっていれば、検証していない内容を反映しない。
+		// リンクの付け替えはUpdatedAtを変えないため、競合として扱わない
+		if current == nil || !current.UpdatedAt.Equal(sp.UpdatedAt) {
+			return nil, &model.AppError{
+				Code:    model.AppErrCodeConflict,
+				UserMsg: i18n.T(ctx, "error_suggestion_conflict_during_apply"),
+			}
+		}
+	}
+
 	// 競合する未公開ページを論理削除
 	// トランザクション開始後にページの状態が変わっている可能性があるため、
 	// 論理削除直前に再取得し「未公開かつ本文が空」条件を再確認する (TOCTOU対策)。
-	if len(conflictingPageIDs) > 0 {
+	// 論理削除したページへのリンクは、ページの書き込みの後に置き換えたページへ付け替える
+	var discardedReplacements []validator.SuggestionApplyPageReplacement
+	if len(pageReplacements) > 0 {
+		conflictingPageIDs := make([]model.PageID, len(pageReplacements))
+		for i, r := range pageReplacements {
+			conflictingPageIDs[i] = r.ConflictingPageID
+		}
 		conflictPages, err := pageRepo.FindByIDs(ctx, conflictingPageIDs, spaceID)
 		if err != nil {
 			return nil, fmt.Errorf("競合ページの再取得に失敗しました: %w", err)
@@ -269,7 +338,8 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 			conflictPageMap[cp.ID] = cp
 		}
 
-		for _, conflictID := range conflictingPageIDs {
+		for _, replacement := range pageReplacements {
+			conflictID := replacement.ConflictingPageID
 			conflictPage, ok := conflictPageMap[conflictID]
 			if !ok {
 				continue
@@ -283,6 +353,7 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 			if err := pageRepo.DiscardByID(ctx, conflictID, spaceID, now); err != nil {
 				return nil, fmt.Errorf("競合する未公開ページの論理削除に失敗しました: %w", err)
 			}
+			discardedReplacements = append(discardedReplacements, replacement)
 		}
 	}
 
@@ -292,11 +363,42 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 		pageMap[p.ID] = p
 	}
 
-	// 各SuggestionPageの内容をPageに反映
+	// すべてのタイトルを、Wikiリンクの解決より先に反映する。
+	// 自分自身や同じ編集提案で改名するページへのリンクが、別の未公開ページを自動作成しないようにするため。
+	// 取得からスペースのロックまでの間に改名されていることがあるため、取得したタイトルと同じでも書く
 	for _, sp := range data.suggestionPages {
 		page := pageMap[sp.PageID]
 		if page == nil {
 			return nil, fmt.Errorf("ページが見つかりません: %s", sp.PageID)
+		}
+		_, err = pageRepo.Update(ctx, repository.UpdatePageInput{
+			ID:                        page.ID,
+			SpaceID:                   spaceID,
+			TopicID:                   page.TopicID,
+			Title:                     sp.Title,
+			Body:                      page.Body,
+			LinkedPageIDs:             page.LinkedPageIDs,
+			FeaturedImageAttachmentID: page.FeaturedImageAttachmentID,
+			ModifiedAt:                page.ModifiedAt,
+			PublishedAt:               page.PublishedAt,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("ページのタイトルの更新に失敗しました: %w", err)
+		}
+	}
+
+	// 各本文は、全ページのタイトルを反映したトランザクションの状態で解決する。
+	// 保存済みのリンクの記録には、下書きの同時保存などで論理削除したページのIDが残りうる
+	for _, sp := range data.suggestionPages {
+		page := pageMap[sp.PageID]
+		linkedPageIDs, err := resolveLinkedPageIDs(ctx, resolveLinkedPageIDsInput{
+			Body:             sp.Body,
+			CurrentTopicName: data.topicMap[page.TopicID].Name,
+			SpaceID:          spaceID,
+			SpaceMemberID:    data.spaceMember.ID,
+		}, uc.topicRepo.WithTx(tx), pageRepo, pageEditorRepo)
+		if err != nil {
+			return nil, fmt.Errorf("リンク先ページの解決に失敗しました: %w", err)
 		}
 
 		// Pageを更新
@@ -306,7 +408,7 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 			TopicID:                   page.TopicID,
 			Title:                     sp.Title,
 			Body:                      sp.Body,
-			LinkedPageIDs:             sp.LinkedPageIDs,
+			LinkedPageIDs:             linkedPageIDs,
 			FeaturedImageAttachmentID: sp.FeaturedImageAttachmentID,
 			ModifiedAt:                now,
 			PublishedAt:               &now,
@@ -363,6 +465,14 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 		}
 	}
 
+	draftPageRepo := uc.draftPageRepo.WithTx(tx)
+	suggestionPageRepo := uc.suggestionPageRepo.WithTx(tx)
+	for _, replacement := range discardedReplacements {
+		if err := reassignLinkedPageIDs(ctx, spaceID, replacement.ConflictingPageID, replacement.PageID, pageRepo, draftPageRepo, suggestionPageRepo); err != nil {
+			return nil, err
+		}
+	}
+
 	// 編集提案のステータスを「反映済み」に変更
 	updatedSuggestion, err := suggestionRepo.UpdateStatus(ctx, repository.UpdateStatusInput{
 		ID:        data.suggestion.ID,
@@ -375,7 +485,6 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	}
 
 	// 下書きのsuggestion_page_idをクリアして再利用可能にする
-	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 	if err := draftPageRepo.ClearSuggestionPageIDsBySuggestionID(ctx, data.suggestion.ID, spaceID); err != nil {
 		return nil, fmt.Errorf("下書きのsuggestion_page_idクリアに失敗しました: %w", err)
 	}

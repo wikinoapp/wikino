@@ -23,6 +23,7 @@ type CreateAPIDraftPagePublicationUsecase struct {
 	pageEditorRepo        *repository.PageEditorRepository
 	draftPageRepo         *repository.DraftPageRepository
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -41,6 +42,7 @@ func NewCreateAPIDraftPagePublicationUsecase(
 	pageEditorRepo *repository.PageEditorRepository,
 	draftPageRepo *repository.DraftPageRepository,
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -55,6 +57,7 @@ func NewCreateAPIDraftPagePublicationUsecase(
 		pageEditorRepo:        pageEditorRepo,
 		draftPageRepo:         draftPageRepo,
 		draftPageRevisionRepo: draftPageRevisionRepo,
+		suggestionPageRepo:    suggestionPageRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -89,13 +92,20 @@ type CreateAPIDraftPagePublicationOutput struct {
 // AppErrCodeForbiddenのエラーを返す。今の版が前提の版と一致しなければ、AppErrCodePreconditionFailedのエラーを返す。
 // タイトルの無い下書きや、ページのタイトルの規則に合わない下書きは公開せず、ValidationErrorを返す
 func (uc *CreateAPIDraftPagePublicationUsecase) Execute(ctx context.Context, input CreateAPIDraftPagePublicationInput) (*CreateAPIDraftPagePublicationOutput, error) {
+	return retryOnDeadlock(ctx, func() (*CreateAPIDraftPagePublicationOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *CreateAPIDraftPagePublicationUsecase) executeOnce(ctx context.Context, input CreateAPIDraftPagePublicationInput) (*CreateAPIDraftPagePublicationOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {
 		return nil, err
 	}
 
 	// 照合・検証の後に下書きやページが変わっていた場合と、同時に作られたページと一意制約で競合した場合は、
-	// 下書きの取得からやり直す。Web画面の公開・下書き保存はスペースをロックせずにページ
+	// 下書きの取得からやり直す。Web画面の作成・下書き保存はスペースをロックせずにページ
 	// (Wikiリンク先を含む) を作るため、UpdateAPIPageUsecaseと同じく競合に備える
 	var lastErr error
 	for attempt := 0; attempt < createAPIDraftPagePublicationRetryLimit; attempt++ {
@@ -215,6 +225,8 @@ func (uc *CreateAPIDraftPagePublicationUsecase) apiPageWriteRepos() apiPageWrite
 		pageRepo:              uc.pageRepo,
 		pageRevisionRepo:      uc.pageRevisionRepo,
 		pageEditorRepo:        uc.pageEditorRepo,
+		draftPageRepo:         uc.draftPageRepo,
+		suggestionPageRepo:    uc.suggestionPageRepo,
 		topicRepo:             uc.topicRepo,
 		topicMemberRepo:       uc.topicMemberRepo,
 		attachmentRepo:        uc.attachmentRepo,
