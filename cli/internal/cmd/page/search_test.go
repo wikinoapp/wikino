@@ -89,7 +89,7 @@ func TestSearch_JSON(t *testing.T) {
 
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
-		return listResponse([]map[string]any{testPage(12, ptr("議事録"), "# 議事録\n\n予算の確認\n")}, ptr("cursor-2"))
+		return listResponse([]map[string]any{testListPage(12, ptr("議事録"), "# 議事録\n\n予算の確認\n", "# 議事録 予算の確認")}, ptr("cursor-2"))
 	})
 
 	if err := e.Run(NewCmdPage, "page", "search", "予算"); err != nil {
@@ -114,6 +114,8 @@ func TestSearch_JSON(t *testing.T) {
 	if !strings.Contains(e.Stderr.String(), "--cursor cursor-2") {
 		t.Errorf("標準エラーに次のページの取り方が無い: %q", e.Stderr.String())
 	}
+	// 本文を出さないため、APIに本文を求めない。
+	e.AssertQuery(t, "include")
 }
 
 func TestSearch_Human(t *testing.T) {
@@ -121,7 +123,7 @@ func TestSearch_Human(t *testing.T) {
 
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
-		return listResponse([]map[string]any{testPage(12, ptr("議事録"), longBody), testPage(7, ptr("予算案"), "")}, nil)
+		return listResponse([]map[string]any{testListPage(12, ptr("議事録"), longBody, longExcerpt), testListPage(7, ptr("予算案"), "", "")}, nil)
 	})
 
 	if err := e.RunTTY(NewCmdPage, "page", "search", "議事録"); err != nil {

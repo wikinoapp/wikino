@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -252,5 +254,55 @@ func TestHandler_トークンのスコープで呼べるツールだけをtools_
 	}
 	if resp.Result.CacheScope != "private" {
 		t.Errorf("cacheScope = %q、期待値 = private", resp.Result.CacheScope)
+	}
+}
+
+// handlerTransportは、要求をネットワークに出さずにhandlerへ渡し、トークンtokenを付けるHTTPのトランスポート
+type handlerTransport struct {
+	handler http.Handler
+	token   string
+}
+
+func (t handlerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("Authorization", "Bearer "+t.token)
+	rr := httptest.NewRecorder()
+	t.handler.ServeHTTP(rr, req)
+	return rr.Result(), nil
+}
+
+func TestHandler_ステートレスで送れない通知をcapabilitiesで告知しない(t *testing.T) {
+	t.Parallel()
+
+	// 2026-07-28版は `server/discover`、2025-11-25版は `initialize` でcapabilitiesを受け取る
+	for _, version := range []string{"2026-07-28", "2025-11-25"} {
+		t.Run(version, func(t *testing.T) {
+			t.Parallel()
+
+			server := newTestServer(t, stubAuthenticator{}, http.NotFoundHandler())
+			client := mcp.NewClient(&mcp.Implementation{Name: "test", Version: "1.0.0"}, nil)
+			session, err := client.Connect(context.Background(), &mcp.StreamableClientTransport{
+				Endpoint:             "https://example.com/mcp",
+				HTTPClient:           &http.Client{Transport: handlerTransport{handler: i18n.Middleware(server.Handler()), token: testMCPToken}},
+				MaxRetries:           -1,
+				DisableStandaloneSSE: true,
+			}, &mcp.ClientSessionOptions{ProtocolVersion: version})
+			if err != nil {
+				t.Fatalf("Connect()のエラー = %v", err)
+			}
+			t.Cleanup(func() { _ = session.Close() })
+
+			result := session.InitializeResult()
+			if result.ProtocolVersion != version {
+				t.Errorf("プロトコルの版 = %q、期待値 = %q", result.ProtocolVersion, version)
+			}
+			got, err := json.Marshal(result.Capabilities)
+			if err != nil {
+				t.Fatalf("capabilitiesをJSONにできない: %v", err)
+			}
+			if want := `{"tools":{}}`; string(got) != want {
+				t.Errorf("capabilities = %s、期待値 = %s", got, want)
+			}
+		})
 	}
 }

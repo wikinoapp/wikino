@@ -120,6 +120,9 @@ func (s *Server) newMCPServer(r *http.Request) *mcp.Server {
 		Version: s.cfg.GitRev,
 	}, &mcp.ServerOptions{
 		Instructions: instructions,
+		// ステートレスのサーバーは要求への応答のほかにメッセージを送れないため、ツールの一覧の変更の通知を告知しない。
+		// 指定しないと、SDKは `logging` と `tools.listChanged` を告知する
+		Capabilities: &mcp.ServerCapabilities{Tools: &mcp.ToolCapabilities{}},
 		// `tools/list` などの結果はトークンごとに変わるため、共有のキャッシュに載せさせない。
 		// SDKの既定は `public` である
 		SetCacheable: func(_ context.Context, _ mcp.Request, c *mcp.Cacheable) {

@@ -118,7 +118,7 @@ func TestNewOperationTools_OpenAPI記述からツールの項目を決める(t *
 		if tool.tool.Title != op.Summary || tool.tool.Description != op.Description {
 			t.Errorf("タイトル・説明 = (%q, %q)、期待値 = operationのsummary・description", tool.tool.Title, tool.tool.Description)
 		}
-		if want := []string{"cursor", "limit", "modified_since", "q", "status", "title", "topic_number"}; !slices.Equal(schemaProperties(t, tool.tool.InputSchema), want) {
+		if want := []string{"cursor", "include", "limit", "modified_since", "q", "status", "title", "topic_number"}; !slices.Equal(schemaProperties(t, tool.tool.InputSchema), want) {
 			t.Errorf("入力のプロパティ = %v、期待値 = %v", schemaProperties(t, tool.tool.InputSchema), want)
 		}
 		a := tool.tool.Annotations

@@ -141,14 +141,21 @@ func TestHandler_ListDraftPageRevisions(t *testing.T) {
 			t.Fatalf("len(items) = %d、期待値 = 3", len(items))
 		}
 		newest := items[0]
-		if newest.Title == nil || *newest.Title != "リビジョン2" || newest.Body != "本文2" {
-			t.Errorf("リビジョン = %+v、期待値 = リビジョン2", newest)
+		if newest.Title == nil || *newest.Title != "リビジョン2" || newest.Excerpt != "本文2" || newest.Body != nil {
+			t.Errorf("リビジョン = %+v、期待値 = 抜粋を含み本文を含まないリビジョン2", newest)
 		}
 		if want := revisionHandlerBaseTime.Add(2 * time.Minute); !newest.CreatedAt.Equal(want) || newest.CreatedAt.Location() != time.UTC {
 			t.Errorf("CreatedAt = %s、期待値 = UTCの%s", newest.CreatedAt, want)
 		}
 		if oldest := items[2]; oldest.Title != nil {
 			t.Errorf("空のタイトルのリビジョンのTitle = %q、期待値 = nil", *oldest.Title)
+		}
+	})
+
+	t.Run("includeにbodyを指定すると本文を返す", func(t *testing.T) {
+		newest := listDraftPageRevisions(t, h, ctx, apigen.ListDraftPageRevisionsParams{Include: &apigen.ListInclude{apigen.Body}}).Body.Items[0]
+		if newest.Body == nil || *newest.Body != "本文2" {
+			t.Errorf("リビジョン = %+v、期待値 = 本文を含むリビジョン2", newest)
 		}
 	})
 

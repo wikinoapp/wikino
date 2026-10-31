@@ -2,6 +2,7 @@ package page
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"time"
 
@@ -59,7 +60,7 @@ func (h *Handler) ListPages(ctx context.Context, request apigen.ListPagesRequest
 		return nil, err
 	}
 
-	body, link, err := ToAPIPageList(ctx, h.appURL, principal.Space, output.Pages, output.Topics, output.HasNext)
+	body, link, err := ToAPIPageList(ctx, h.appURL, principal.Space, output.Pages, output.Topics, request.Params.Include != nil && slices.Contains(*request.Params.Include, apigen.Body), output.HasNext)
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +70,12 @@ func (h *Handler) ListPages(ctx context.Context, request apigen.ListPagesRequest
 // ToAPIPageListは更新日時の新しい順に並べたページを、APIのページの一覧と次のページを示す `Link` ヘッダーの値に変換する。
 // 次のページが無ければ `next_cursor` と `Link` ヘッダーの値をnilにする。
 // ページのリンク一覧・バックリンク一覧も同じ並び順とカーソルで返すため、それらのハンドラーからも使う。
-// appURLとspaceはToAPIPageに渡す
-func ToAPIPageList(ctx context.Context, appURL string, space *model.Space, pages []*model.Page, topics map[model.TopicID]*model.Topic, hasNext bool) (apigen.PageList, *string, error) {
-	items := make([]apigen.Page, len(pages))
+// appURLとspaceはToAPIPageに渡す。includeBodyがfalseなら、各項目に本文を入れない
+func ToAPIPageList(ctx context.Context, appURL string, space *model.Space, pages []*model.Page, topics map[model.TopicID]*model.Topic, includeBody bool, hasNext bool) (apigen.PageList, *string, error) {
+	items := make([]apigen.PageListItem, len(pages))
 	for i, page := range pages {
 		var err error
-		items[i], err = ToAPIPage(appURL, space, page, topics[page.TopicID])
+		items[i], err = toAPIPageListItem(appURL, space, page, topics[page.TopicID], includeBody)
 		if err != nil {
 			return apigen.PageList{}, nil, err
 		}
@@ -95,6 +96,30 @@ func ToAPIPageList(ctx context.Context, appURL string, space *model.Space, pages
 		return list, &link, nil
 	}
 	return list, nil, nil
+}
+
+// toAPIPageListItemはページと所属トピックを、APIのページの一覧の項目に変換する。
+// 本文の抜粋はここで本文から作り、本文はincludeBodyがtrueのときだけ入れる
+func toAPIPageListItem(appURL string, space *model.Space, page *model.Page, topic *model.Topic, includeBody bool) (apigen.PageListItem, error) {
+	p, err := ToAPIPage(appURL, space, page, topic)
+	if err != nil {
+		return apigen.PageListItem{}, err
+	}
+	item := apigen.PageListItem{
+		Id:          p.Id,
+		Number:      p.Number,
+		TopicNumber: p.TopicNumber,
+		TopicName:   p.TopicName,
+		Title:       p.Title,
+		Excerpt:     model.BodyExcerpt(page.Body),
+		Status:      p.Status,
+		ModifiedAt:  p.ModifiedAt,
+		Url:         p.Url,
+	}
+	if includeBody {
+		item.Body = &p.Body
+	}
+	return item, nil
 }
 
 // toUsecasePageStatusFilterは一覧の `status` パラメーターをユースケースの値に変換する。

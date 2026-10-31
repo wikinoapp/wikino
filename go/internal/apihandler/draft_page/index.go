@@ -2,6 +2,7 @@ package draft_page
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,9 +50,10 @@ func (h *Handler) ListDraftPages(ctx context.Context, request apigen.ListDraftPa
 		return nil, err
 	}
 
-	items := make([]apigen.DraftPage, len(output.DraftPages))
+	includeBody := request.Params.Include != nil && slices.Contains(*request.Params.Include, apigen.Body)
+	items := make([]apigen.DraftPageListItem, len(output.DraftPages))
 	for i, draft := range output.DraftPages {
-		items[i], err = ToAPIDraftPage(h.appURL, principal.Space, draft, output.Topics[draft.TopicID])
+		items[i], err = toAPIDraftPageListItem(h.appURL, principal.Space, draft, output.Topics[draft.TopicID], includeBody)
 		if err != nil {
 			return nil, err
 		}
@@ -71,6 +73,28 @@ func (h *Handler) ListDraftPages(ctx context.Context, request apigen.ListDraftPa
 		}
 	}
 	return res, nil
+}
+
+// toAPIDraftPageListItemは下書きと所属トピックを、APIの下書きの一覧の項目に変換する。
+// 本文の抜粋はここで本文から作り、本文はincludeBodyがtrueのときだけ入れる
+func toAPIDraftPageListItem(appURL string, space *model.Space, draft *model.DraftPage, topic *model.Topic, includeBody bool) (apigen.DraftPageListItem, error) {
+	d, err := ToAPIDraftPage(appURL, space, draft, topic)
+	if err != nil {
+		return apigen.DraftPageListItem{}, err
+	}
+	item := apigen.DraftPageListItem{
+		PageNumber:  d.PageNumber,
+		TopicNumber: d.TopicNumber,
+		TopicName:   d.TopicName,
+		Title:       d.Title,
+		Excerpt:     model.BodyExcerpt(draft.Body),
+		ModifiedAt:  d.ModifiedAt,
+		Url:         d.Url,
+	}
+	if includeBody {
+		item.Body = &d.Body
+	}
+	return item, nil
 }
 
 // decodeDraftPageCursorはリクエストのカーソルから、前のページの最後の下書きの位置を取り出す。

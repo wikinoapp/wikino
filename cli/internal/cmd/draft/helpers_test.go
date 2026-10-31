@@ -40,6 +40,13 @@ func testDraft(number int32, title *string, body string) map[string]any {
 	}
 }
 
+// withExcerptは、APIの一覧の応答の1件として、itemにAPIが本文から作る抜粋 (excerpt) を加える。
+func withExcerpt(item map[string]any, excerpt string) map[string]any {
+	item["excerpt"] = excerpt
+
+	return item
+}
+
 // testPageは、APIのページの応答の1件を返す。下書きを作る既存のページの取得に使う。
 func testPage(number, topic int32) map[string]any {
 	return map[string]any{

@@ -1229,7 +1229,7 @@
     }
   ],
   "long": "トークンの持ち主がスペースに持っている下書きを、更新日時の新しい順に出します。\nまだ公開していない新しいページの下書きも含みます。\nゴミ箱に入れたページの下書きは含みません。\n\n一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。\n本文を読むには `wikino draft get` を使います。\n一覧に本文が要るときは、`--fields` に `body` を含めます。\n\n既定ではAPIの既定の件数 (20件) の1ページだけを取得します。\n次のページがあるときは、取り方を標準エラーに出します。\n`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。\n\n非公開トピックのページの下書きは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。",
-  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、下書きごとに次の項目を出します。\n    page_number   下書きのページの番号。`wikino draft get` などに渡します\n    title         下書きのタイトル。タイトルの無い下書きではnull\n    topic_number  下書きのページが属するトピックの番号\n    topic_name    下書きのページが属するトピックの名前\n    modified_at   下書きの内容を最後に更新した日時 (RFC 3339)。Web画面の自動保存でも更新されます\n    url           Web画面で下書きのページの編集画面を開くURL\n    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n                  APIの応答には無く、CLIが本文から作る項目です\n    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  下書きが無いときは、空の一覧を終了コード0で返します。",
+  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、下書きごとに次の項目を出します。\n    page_number   下書きのページの番号。`wikino draft get` などに渡します\n    title         下書きのタイトル。タイトルの無い下書きではnull\n    topic_number  下書きのページが属するトピックの番号\n    topic_name    下書きのページが属するトピックの名前\n    modified_at   下書きの内容を最後に更新した日時 (RFC 3339)。Web画面の自動保存でも更新されます\n    url           Web画面で下書きのページの編集画面を開くURL\n    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  下書きが無いときは、空の一覧を終了コード0で返します。",
   "short": "下書きの一覧を出す",
   "subcommands": [],
   "usage": "wikino draft list [flags]"
@@ -1582,7 +1582,7 @@
     }
   ],
   "long": "ページ番号で指定したページについて、自分の下書きの編集履歴 (リビジョン) を作成日時の新しい順に出します。\n\n一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。\n本文を読むには `wikino draft revision get` を使います。\n一覧に本文が要るときは、`--fields` に `body` を含めます。\n\n既定ではAPIの既定の件数 (20件) の1ページだけを取得します。\n次のページがあるときは、取り方を標準エラーに出します。\n`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。\n\n非公開トピックのページの下書きの編集履歴を読むには、トークンにdraft_page:readに加えてtopic:readのスコープが要ります。",
-  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、リビジョンごとに次の項目を出します。\n    id          リビジョンのID。`wikino draft revision get` に渡します\n    title       リビジョンを作ったときの下書きのタイトル。タイトルの無い下書きではnull\n    created_at  リビジョンを作った日時 (RFC 3339)\n    excerpt     本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n                APIの応答には無く、CLIが本文から作る項目です\n    body        本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  リビジョンが無いときは、空の一覧を終了コード0で返します。",
+  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、リビジョンごとに次の項目を出します。\n    id          リビジョンのID。`wikino draft revision get` に渡します\n    title       リビジョンを作ったときの下書きのタイトル。タイトルの無い下書きではnull\n    created_at  リビジョンを作った日時 (RFC 3339)\n    excerpt     本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n    body        本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  リビジョンが無いときは、空の一覧を終了コード0で返します。",
   "short": "下書きの編集履歴の一覧を出す",
   "subcommands": [],
   "usage": "wikino draft revision list <page_number> [flags]"
@@ -1904,7 +1904,7 @@
     }
   ],
   "long": "ページ番号で指定したページにWikiリンクでリンクしているページを、更新日時の新しい順に出します。\nWeb画面のページの下に並ぶバックリンクの一覧と同じページを出します。\n\n各ページの公開済みの本文のリンクだけを対象にし、下書きにだけあるリンクは含みません。\nゴミ箱に入れたページと、見られない非公開トピックのページは含みません。\n\n逆向きに、このページがリンクしているページを調べるには `wikino page links` を使います。\n\n出力の形とページ送りは `wikino page list` と同じです。\n一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。",
-  "output": "  `wikino page list` と同じく、`{\"items\": [...], \"next_cursor\": ...}` の形で出します。\n  各ページの項目は `wikino page list` のヘルプを参照してください。\n  `excerpt` はAPIの応答には無く、CLIが本文から作る項目です。`body` は `--fields` に含めたときだけ出します。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  バックリンクが無いときは、空の一覧を終了コード0で返します。",
+  "output": "  `wikino page list` と同じく、`{\"items\": [...], \"next_cursor\": ...}` の形で出します。\n  各ページの項目は `wikino page list` のヘルプを参照してください。\n  `body` は `--fields` に含めたときだけ出します。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  バックリンクが無いときは、空の一覧を終了コード0で返します。",
   "short": "ページのバックリンクの一覧を出す",
   "subcommands": [],
   "usage": "wikino page backlinks <page_number> [flags]"
@@ -2177,7 +2177,7 @@
     }
   ],
   "long": "ページ番号で指定したページの本文がWikiリンクで指しているページを、更新日時の新しい順に出します。\nWeb画面のページの下に並ぶリンクの一覧と同じページを出します。\n\n公開済みの本文のリンクだけを対象にし、下書きにだけあるリンクは含みません。\nWikiリンクで自動作成されたページなど、まだ公開していないリンク先も含み、`status` が `unpublished` になります。\nゴミ箱に入れたページと、見られない非公開トピックのページは含みません。\n\n逆向きに、このページにリンクしているページを調べるには `wikino page backlinks` を使います。\n\n出力の形とページ送りは `wikino page list` と同じです。\n一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。",
-  "output": "  `wikino page list` と同じく、`{\"items\": [...], \"next_cursor\": ...}` の形で出します。\n  各ページの項目は `wikino page list` のヘルプを参照してください。\n  `excerpt` はAPIの応答には無く、CLIが本文から作る項目です。`body` は `--fields` に含めたときだけ出します。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  リンク先が無いときは、空の一覧を終了コード0で返します。",
+  "output": "  `wikino page list` と同じく、`{\"items\": [...], \"next_cursor\": ...}` の形で出します。\n  各ページの項目は `wikino page list` のヘルプを参照してください。\n  `body` は `--fields` に含めたときだけ出します。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  リンク先が無いときは、空の一覧を終了コード0で返します。",
   "short": "ページのリンク先の一覧を出す",
   "subcommands": [],
   "usage": "wikino page links <page_number> [flags]"
@@ -2292,7 +2292,7 @@
     }
   ],
   "long": "スペースのページを、更新日時の新しい順に出します。\nゴミ箱に入れたページは含みません。\n\n既定では公開済みのページだけを出します。\n`--status unpublished` か `--status all` で、Wikiリンクで自動作成されたページなど、まだ公開していないページも出せます。\n未公開のページは、見られるトピックの公開済みページか、自分の下書きからWikiリンクで指しているものだけを含みます。\nリンクされていない未公開ページは含みません。\n\n一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。\n本文を読むには `wikino page get` を使います。\n一覧に本文が要るときは、`--fields` に `body` を含めます。\n\n既定ではAPIの既定の件数 (20件) の1ページだけを取得します。\n次のページがあるときは、取り方を標準エラーに出します。\n`--all` を付けると全件を取得し、出力の形がJSON Linesに変わります (「出力」を参照)。\n\n非公開トピックのページは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。",
-  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、ページごとに次の項目を出します。\n    id            ページのID\n    number        ページ番号。`wikino page get` などに渡します\n    title         タイトル。タイトルの無いページではnull\n    status        公開状態 (published・unpublished)\n    topic_number  ページが属するトピックの番号\n    topic_name    ページが属するトピックの名前。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います\n    modified_at   内容を最後に更新した日時 (RFC 3339)\n    url           Web画面でページを開くURL。出典としてページを示すときに使います\n    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n                  APIの応答には無く、CLIが本文から作る項目です\n    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  該当するページが無いときは、空の一覧を終了コード0で返します。",
+  "output": "  `{\"items\": [...], \"next_cursor\": ...}` の形で、ページごとに次の項目を出します。\n    id            ページのID\n    number        ページ番号。`wikino page get` などに渡します\n    title         タイトル。タイトルの無いページではnull\n    status        公開状態 (published・unpublished)\n    topic_number  ページが属するトピックの番号\n    topic_name    ページが属するトピックの名前。別のトピックのページへのWikiリンク (`[[トピック名/タイトル]]`) に使います\n    modified_at   内容を最後に更新した日時 (RFC 3339)\n    url           Web画面でページを開くURL。出典としてページを示すときに使います\n    excerpt       本文の冒頭の抜粋。改行を空白に詰めた先頭の80文字で、切り詰めたときは末尾に「…」を付けます\n    body          本文 (Markdown)。既定では出さず、`--fields` に含めたときだけ出します\n  `next_cursor` は次のページのカーソルで、続きが無ければnullです。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  該当するページが無いときは、空の一覧を終了コード0で返します。",
   "short": "ページの一覧を出す",
   "subcommands": [],
   "usage": "wikino page list [flags]"
@@ -2399,7 +2399,7 @@
     }
   ],
   "long": "キーワードをタイトルか本文に含むページを、更新日時の新しい順に出します。\n検索の対象はトークンのスペースの中だけです。\nゴミ箱に入れたページは含みません。\n\nキーワードは引用符で1つにまとめても、空白で区切って並べても構いません。\n空白 (全角の空白を含む) で区切った複数のキーワードは、すべてを含むページだけを出します (AND検索)。\n各キーワードはタイトルと本文のどちらに含まれていても構いません。\n部分一致で探し、大文字と小文字は区別しません。\nキーワードは10個まで指定できます。\n\n既定では公開済みのページだけを検索します。\n`--status all` で、まだ公開していないページも検索します。\n\n出力の形とページ送りは `wikino page list` と同じです。\n一覧には本文を出さず、本文の冒頭の抜粋 (`excerpt`) を出します。\n本文を読むには `wikino page get` を使います。\n\n非公開トピックのページは、トークンにtopic:readのスコープがあり、メンバーがそのトピックを見られる場合にだけ含みます。",
-  "output": "  `wikino page list` と同じく、`{\"items\": [...], \"next_cursor\": ...}` の形で出します。\n  各ページの項目は `wikino page list` のヘルプを参照してください。\n  `excerpt` はAPIの応答には無く、CLIが本文から作る項目です。`body` は `--fields` に含めたときだけ出します。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  該当するページが無いときは、空の一覧を終了コード0で返します。\n  人間向けの表示では、標準エラーに検索の条件を緩めるヒントを出します。",
+  "output": "  `wikino page list` と同じく、`{\"items\": [...], \"next_cursor\": ...}` の形で出します。\n  各ページの項目は `wikino page list` のヘルプを参照してください。\n  `body` は `--fields` に含めたときだけ出します。\n  `--all` を付けると、itemsの1件を1行のJSONとするJSON Linesで出し、`next_cursor` は出しません。\n  該当するページが無いときは、空の一覧を終了コード0で返します。\n  人間向けの表示では、標準エラーに検索の条件を緩めるヒントを出します。",
   "short": "ページをキーワードで検索する",
   "subcommands": [],
   "usage": "wikino page search <query>... [flags]"

@@ -126,11 +126,20 @@ func TestHandler_ListPages(t *testing.T) {
 			t.Fatalf("件数 = %d、期待値 = 3", len(res.Body.Items))
 		}
 		item := res.Body.Items[0]
-		if item.Id.String() == "" || item.TopicNumber != 1 || item.TopicName != "トピック1" || item.Title == nil || *item.Title != "ページ1" || item.Body != "本文1" {
-			t.Errorf("ページ = %+v", item)
+		if item.Id.String() == "" || item.TopicNumber != 1 || item.TopicName != "トピック1" || item.Title == nil || *item.Title != "ページ1" || item.Excerpt != "本文1" || item.Body != nil {
+			t.Errorf("ページ = %+v、期待値 = 抜粋を含み本文を含まない", item)
 		}
 		if want := pageHandlerBaseTime.Add(-time.Hour); !item.ModifiedAt.Equal(want) || item.ModifiedAt.Location() != time.UTC {
 			t.Errorf("modified_at = %v、期待値 = UTCの %v", item.ModifiedAt, want)
+		}
+	})
+
+	t.Run("includeにbodyを指定すると本文を返す", func(t *testing.T) {
+		res := listPages(t, h, ctx, apigen.ListPagesParams{Include: &apigen.ListInclude{apigen.Body}})
+		for _, item := range res.Body.Items {
+			if item.Body == nil || *item.Body != item.Excerpt {
+				t.Errorf("ページ = %+v、期待値 = 抜粋と同じ本文を含む", item)
+			}
 		}
 	})
 

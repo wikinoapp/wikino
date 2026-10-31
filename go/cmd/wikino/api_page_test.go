@@ -149,6 +149,9 @@ func TestAPIRouter_Pages(t *testing.T) {
 		if body.Items[0].TopicName != "トピック" {
 			t.Errorf("topic_name = %q、期待値 = %q", body.Items[0].TopicName, "トピック")
 		}
+		if body.Items[0].Body != nil || body.Items[0].Excerpt == "" {
+			t.Errorf("1件目 = %+v、期待値 = 抜粋を含み本文を含まない", body.Items[0])
+		}
 		// 省略した `status` は、リクエスト検証がOpenAPI記述の既定値で補ってから次のページのURLに引き継ぐ
 		wantLink := "<" + base + "?cursor=" + url.QueryEscape(*body.NextCursor) + `&limit=2&status=published>; rel="next"`
 		if got := first.Header().Get("Link"); got != wantLink {
@@ -164,6 +167,28 @@ func TestAPIRouter_Pages(t *testing.T) {
 		if len(body.Items) != 1 || body.Items[0].Number != 3 || body.NextCursor != nil || second.Header().Get("Link") != "" {
 			t.Errorf("次ページ = %+v、Link = %q、期待値 = 3のみ・続きなし", body, second.Header().Get("Link"))
 		}
+	})
+
+	t.Run("includeにbodyを指定でき、次のページのURLに引き継ぐ", func(t *testing.T) {
+		rr := request(base+"?limit=2&include=body", "wkp_page_read", nil)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %s)", rr.Code, rr.Body.String())
+		}
+		var body apigen.PageList
+		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+			t.Fatalf("本文を読めない: %v", err)
+		}
+		if len(body.Items) != 2 || body.Items[0].Body == nil || body.Items[0].Excerpt != *body.Items[0].Body || body.NextCursor == nil {
+			t.Fatalf("一覧 = %+v、期待値 = 本文と抜粋を含む2件と次のカーソル", body)
+		}
+		wantLink := "<" + base + "?cursor=" + url.QueryEscape(*body.NextCursor) + `&include=body&limit=2&status=published>; rel="next"`
+		if got := rr.Header().Get("Link"); got != wantLink {
+			t.Errorf("Link = %q、期待値 = %q", got, wantLink)
+		}
+	})
+
+	t.Run("includeの未知の値は422", func(t *testing.T) {
+		assertProblem(t, request(base+"?include=title", "wkp_page_read", nil), http.StatusUnprocessableEntity)
 	})
 
 	t.Run("qで絞り込み、次のページのURLにqを引き継ぐ", func(t *testing.T) {
@@ -284,6 +309,29 @@ func TestAPIRouter_Pages(t *testing.T) {
 		{name: "リンク先の一覧をLinkで辿れる", target: base + "/1/links", want: []int32{2, 3}},
 		{name: "バックリンクの一覧をLinkで辿れる", target: base + "/3/backlinks", want: []int32{1, 2}},
 	}
+	for _, target := range []string{base + "/1/links", base + "/3/backlinks"} {
+		t.Run("リンク一覧はincludeにbodyを指定したときだけ本文を返す: "+target, func(t *testing.T) {
+			for _, tc := range []struct {
+				query    string
+				wantBody bool
+			}{{query: "", wantBody: false}, {query: "?include=body", wantBody: true}} {
+				rr := request(target+tc.query, "wkp_page_read", nil)
+				if rr.Code != http.StatusOK {
+					t.Fatalf("%sのステータス = %d、期待値 = 200 (本文: %s)", tc.query, rr.Code, rr.Body.String())
+				}
+				var body apigen.PageList
+				if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+					t.Fatalf("本文を読めない: %v", err)
+				}
+				for _, item := range body.Items {
+					if (item.Body != nil) != tc.wantBody {
+						t.Errorf("%qの項目 = %+v、本文を含むことの期待値 = %v", tc.query, item, tc.wantBody)
+					}
+				}
+			}
+		})
+	}
+
 	for _, tt := range linkTests {
 		t.Run(tt.name, func(t *testing.T) {
 			first := request(tt.target+"?limit=1", "wkp_page_read", nil)

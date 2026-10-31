@@ -13,27 +13,12 @@ import (
 	"github.com/wikinoapp/wikino/cli/internal/output"
 )
 
-// excerptLengthは、一覧に出す本文の抜粋の文字数。
-// タイトルだけでは分からないページの中身を見分けられ、20件並べてもコンテキストを圧迫しない長さにする。
-const excerptLength = 80
-
-// listFieldsは、ページの一覧の `--fields` で選べる項目。APIのページの項目に、CLIが加える抜粋 (excerpt) を足す。
+// listFieldsは、ページの一覧の `--fields` で選べる項目。ページの項目に、本文の冒頭の抜粋 (excerpt) を足す。
 var listFields = append(slices.Clone(pageFields), "excerpt")
 
 // listDefaultFieldsは、ページの一覧で既定で出す項目。本文 (body) は `--fields` で選んだときだけ出す。
 // エージェントが一覧を見るたびに、各ページの本文がコンテキストに入るのを避けるためである。
 var listDefaultFields = slices.DeleteFunc(slices.Clone(listFields), func(name string) bool { return name == "body" })
-
-// listItemは、ページの一覧の1件の出力。
-type listItem struct {
-	apigen.Page
-	// Excerptは本文の冒頭の抜粋。APIの応答には無く、CLIが本文から作る。
-	Excerpt string `json:"excerpt"`
-}
-
-func newListItem(p apigen.Page) listItem {
-	return listItem{Page: p, Excerpt: output.Excerpt(p.Body, excerptLength)}
-}
 
 // listFlagsは `page list` の絞り込みのフラグの値。
 type listFlags struct {
@@ -87,14 +72,15 @@ func runList(f *cmdutil.Factory, cmd *cobra.Command, flags *listFlags, pageFlags
 	if err != nil {
 		return err
 	}
+	params.Include = cmdutil.ListInclude(printer)
 
 	client, space, err := f.APIClient(cmd)
 	if err != nil {
 		return err
 	}
 
-	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.Page]{
-		Fetch: func(ctx context.Context, cursor *string) ([]apigen.Page, *string, error) {
+	return cmdutil.RunList(cmd.Context(), f, printer, pageFlags, cmdutil.List[apigen.PageListItem]{
+		Fetch: func(ctx context.Context, cursor *string) ([]apigen.PageListItem, *string, error) {
 			p := params
 			p.Cursor = cursor
 			resp, err := client.ListPagesWithResponse(ctx, space, &p)
@@ -106,8 +92,8 @@ func runList(f *cmdutil.Factory, cmd *cobra.Command, flags *listFlags, pageFlags
 			}
 			return resp.JSON200.Items, resp.JSON200.NextCursor, nil
 		},
-		Item: func(p apigen.Page) any { return newListItem(p) },
-		Table: func(pages []apigen.Page) error {
+		Item: func(p apigen.PageListItem) any { return p },
+		Table: func(pages []apigen.PageListItem) error {
 			return printTable(printer, loc, pages)
 		},
 	})
@@ -159,7 +145,7 @@ func parseStatus(loc *i18n.Localizer, cmd *cobra.Command, value string) (apigen.
 	}
 }
 
-func printTable(printer *output.Printer, loc *i18n.Localizer, pages []apigen.Page) error {
+func printTable(printer *output.Printer, loc *i18n.Localizer, pages []apigen.PageListItem) error {
 	rows := make([][]string, 0, len(pages))
 	for _, p := range pages {
 		rows = append(rows, []string{
