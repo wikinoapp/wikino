@@ -975,6 +975,35 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		f.assertReassigned(t, db, pageID)
 	})
 
+	t.Run("異常系: 削除したトピックのページを含む編集提案はResourceNotFoundエラーが返る", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).WithIdentifier("apply-suggestion-discarded-topic").Build()
+		userID := testutil.NewUserBuilderDB(t, db).WithEmail("apply-suggestion-discarded-topic@example.com").WithAtname("applysuggestiondiscardedtopic").Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(spaceID).WithUserID(userID).WithRole(model.SpaceRoleEditor).Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).WithSpaceID(spaceID).WithName("General").Build()
+		testutil.NewTopicMemberBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithSpaceMemberID(spaceMemberID).Build()
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("ページ").WithBody("公開済みの本文").Build()
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).WithStatus(model.SuggestionStatusOpen).Build()
+		testutil.NewSuggestionPageBuilderDB(t, db).WithSpaceID(spaceID).WithSuggestionID(suggestionID).
+			WithPageID(pageID).WithTitle("ページ").WithBody("提案本文").Build()
+		// 論理削除したトピックのページは、ページの削除が済むまで残る
+		execForTest(t, db, "UPDATE topics SET discarded_at = now() WHERE id = $1 AND space_id = $2", topicID, spaceID)
+
+		_, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-suggestion-discarded-topic",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		})
+		if ae := model.AsAppError(err); ae == nil || ae.Code != model.AppErrCodeResourceNotFound {
+			t.Fatalf("Execute()のエラー = %v、期待値 = AppErrCodeResourceNotFound", err)
+		}
+		if body := findPageForTest(t, db, spaceID, 1).Body; body != "公開済みの本文" {
+			t.Errorf("本文 = %q、期待値 = 公開済みの本文", body)
+		}
+	})
+
 	t.Run("バリデーションエラー: 公開済みページと衝突する編集提案はValidationErrorを返す", func(t *testing.T) {
 		t.Parallel()
 
