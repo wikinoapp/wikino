@@ -92,6 +92,13 @@ type CreateAPIDraftPagePublicationOutput struct {
 // AppErrCodeForbiddenのエラーを返す。今の版が前提の版と一致しなければ、AppErrCodePreconditionFailedのエラーを返す。
 // タイトルの無い下書きや、ページのタイトルの規則に合わない下書きは公開せず、ValidationErrorを返す
 func (uc *CreateAPIDraftPagePublicationUsecase) Execute(ctx context.Context, input CreateAPIDraftPagePublicationInput) (*CreateAPIDraftPagePublicationOutput, error) {
+	return retryOnDeadlock(ctx, func() (*CreateAPIDraftPagePublicationOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *CreateAPIDraftPagePublicationUsecase) executeOnce(ctx context.Context, input CreateAPIDraftPagePublicationInput) (*CreateAPIDraftPagePublicationOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {
 		return nil, err

@@ -82,6 +82,13 @@ type PublishPageOutput struct {
 
 // Executeはページを公開する
 func (uc *PublishPageUsecase) Execute(ctx context.Context, input PublishPageInput) (*PublishPageOutput, error) {
+	return retryOnDeadlock(ctx, func() (*PublishPageOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *PublishPageUsecase) executeOnce(ctx context.Context, input PublishPageInput) (*PublishPageOutput, error) {
 	// 1. データ取得
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
 	if err != nil {
@@ -152,6 +159,12 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 	draftPageRevisionRepo := uc.draftPageRevisionRepo.WithTx(tx)
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
+
+	// 再試行の開始時に、先行する公開がこのページのリンクを付け替えていることがある。
+	// その書き込みを待つ前にWikiリンクを解決すると、古いページのIDを書き戻してしまう
+	if err := pageRepo.LockByIDs(ctx, []model.PageID{data.page.ID}, data.space.ID); err != nil {
+		return nil, fmt.Errorf("公開対象のページのロックに失敗しました: %w", err)
+	}
 
 	// 本文HTMLはページ詳細画面が表示時にレンダリングするため、公開では保存しない。
 	// リンク一覧が読むlinked_page_idsのために、本文のWikiリンクが指すページだけを解決する。

@@ -89,6 +89,13 @@ type CreateAPIPageOutput struct {
 // リクエスト本文の `topic_number` の問題として扱う。
 // トピックを開けるがページを作成できない場合は、メンバー権限の不足として未存在を返す
 func (uc *CreateAPIPageUsecase) Execute(ctx context.Context, input CreateAPIPageInput) (*CreateAPIPageOutput, error) {
+	return retryOnDeadlock(ctx, func() (*CreateAPIPageOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *CreateAPIPageUsecase) executeOnce(ctx context.Context, input CreateAPIPageInput) (*CreateAPIPageOutput, error) {
 	// 1. データ取得
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {

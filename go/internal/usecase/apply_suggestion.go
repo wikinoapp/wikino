@@ -76,6 +76,13 @@ type ApplySuggestionOutput struct {
 
 // Executeは編集提案をトピックに反映する
 func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySuggestionInput) (*ApplySuggestionOutput, error) {
+	return retryOnDeadlock(ctx, func() (*ApplySuggestionOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *ApplySuggestionUsecase) executeOnce(ctx context.Context, input ApplySuggestionInput) (*ApplySuggestionOutput, error) {
 	// 1. データ取得
 	data, err := uc.fetchData(ctx, input)
 	if err != nil {
@@ -254,6 +261,36 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
 	attachmentRepo := uc.attachmentRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
+
+	// 並行する公開がページと編集提案のリンクを付け替えていれば、そのコミットを待つ。
+	// 取得済みのリンクの記録を反映すると、先行する付け替えを古いIDで上書きしてしまう
+	pageIDs := make([]model.PageID, len(data.pages))
+	for i, page := range data.pages {
+		pageIDs[i] = page.ID
+	}
+	if err := pageRepo.LockByIDs(ctx, pageIDs, spaceID); err != nil {
+		return nil, fmt.Errorf("反映先のページのロックに失敗しました: %w", err)
+	}
+	currentPages, err := uc.suggestionPageRepo.WithTx(tx).ListBySuggestionID(ctx, data.suggestion.ID, spaceID)
+	if err != nil {
+		return nil, fmt.Errorf("編集提案のリンクの再取得に失敗しました: %w", err)
+	}
+	currentByID := make(map[model.SuggestionPageID]*model.SuggestionPage, len(currentPages))
+	for _, sp := range currentPages {
+		currentByID[sp.ID] = sp
+	}
+	for _, sp := range data.suggestionPages {
+		current := currentByID[sp.ID]
+		// 本文やタイトルも変わっていれば、検証していない内容を反映しない。
+		// リンクの付け替えはUpdatedAtを変えないため、その場合だけ記録を引き継げる
+		if current == nil || !current.UpdatedAt.Equal(sp.UpdatedAt) {
+			return nil, &model.AppError{
+				Code:    model.AppErrCodeConflict,
+				UserMsg: i18n.T(ctx, "error_suggestion_conflict_during_apply"),
+			}
+		}
+		sp.LinkedPageIDs = current.LinkedPageIDs
+	}
 
 	// 競合する未公開ページを論理削除
 	// トランザクション開始後にページの状態が変わっている可能性があるため、

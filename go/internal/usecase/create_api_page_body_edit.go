@@ -82,6 +82,13 @@ type CreateAPIPageBodyEditInput struct {
 // 編集を1件でも適用できなければ、どの編集も適用せずに、最初に失敗した編集についての
 // *model.ValidationErrorを返す
 func (uc *CreateAPIPageBodyEditUsecase) Execute(ctx context.Context, input CreateAPIPageBodyEditInput) (*UpdateAPIPageOutput, error) {
+	return retryOnDeadlock(ctx, func() (*UpdateAPIPageOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *CreateAPIPageBodyEditUsecase) executeOnce(ctx context.Context, input CreateAPIPageBodyEditInput) (*UpdateAPIPageOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {
 		return nil, err

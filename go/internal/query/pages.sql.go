@@ -1530,6 +1530,25 @@ func (q *Queries) ListPagesByModifiedAt(ctx context.Context, arg ListPagesByModi
 	return items, nil
 }
 
+const lockPagesByIDs = `-- name: LockPagesByIDs :exec
+SELECT id FROM pages
+WHERE id = ANY($1::uuid[]) AND space_id = $2 AND discarded_at IS NULL
+ORDER BY id
+FOR NO KEY UPDATE
+`
+
+type LockPagesByIDsParams struct {
+	Ids     []string `json:"ids"`
+	SpaceID string   `json:"space_id"`
+}
+
+// 公開対象を先にロックし、並行するリンクの付け替えが終わってからリンクの記録を読む。
+// 複数ページの編集提案でも同じ順でロックできるよう、ID順に一括で取得する。
+func (q *Queries) LockPagesByIDs(ctx context.Context, arg LockPagesByIDsParams) error {
+	_, err := q.db.ExecContext(ctx, lockPagesByIDs, pq.Array(arg.Ids), arg.SpaceID)
+	return err
+}
+
 const movePageToTopic = `-- name: MovePageToTopic :one
 UPDATE pages
 SET topic_id = $2, updated_at = NOW()

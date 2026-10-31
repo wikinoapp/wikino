@@ -90,6 +90,13 @@ type UpdateAPIPageOutput struct {
 // 今の版が前提の版と一致しなければ、AppErrCodePreconditionFailedのエラーを返す。
 // 公開済みのページでタイトルと本文が今と同じ場合は、何も書き込まずに今のページを返す
 func (uc *UpdateAPIPageUsecase) Execute(ctx context.Context, input UpdateAPIPageInput) (*UpdateAPIPageOutput, error) {
+	return retryOnDeadlock(ctx, func() (*UpdateAPIPageOutput, error) {
+		return uc.executeOnce(ctx, input)
+	})
+}
+
+// executeOnceは取得・認可・検証から永続化までを1回実行する
+func (uc *UpdateAPIPageUsecase) executeOnce(ctx context.Context, input UpdateAPIPageInput) (*UpdateAPIPageOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {
 		return nil, err
