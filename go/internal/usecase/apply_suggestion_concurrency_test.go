@@ -104,6 +104,40 @@ func TestApplySuggestion_CreationDuringReplacement(t *testing.T) {
 	}
 }
 
+// 取得からスペースのロックまでの間に反映先のページが改名されても、編集提案のタイトルを書いてからリンクを解決し、
+// 元のタイトルへのリンクで同じタイトルのページを自動作成しない
+func TestApplySuggestion_RenamedBeforeLock(t *testing.T) {
+	t.Parallel()
+	db := testutil.GetTestDB()
+	f := setupCreateAPIPageFixture(t, db, "apply-renamed-before-lock-"+uuid.NewString()[:8], model.SpaceRoleEditor)
+	spaceID, topicID := f.space.ID, f.topicIDs[1]
+	testutil.NewTopicMemberBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+		WithSpaceMemberID(f.spaceMemberID).WithRole(model.TopicRoleEditor).Build()
+	pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).
+		WithTitle("ページ").WithBody("公開済みの本文").Build()
+	suggestionID := testutil.NewSuggestionBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+		WithCreatedSpaceMemberID(f.spaceMemberID).WithStatus(model.SuggestionStatusOpen).Build()
+	testutil.NewSuggestionPageBuilderDB(t, db).WithSpaceID(spaceID).WithSuggestionID(suggestionID).WithPageID(pageID).
+		WithTitle("ページ").WithBody("目次: [[ページ]]").WithLinkedPageIDs([]model.PageID{pageID}).Build()
+	uc := newConcurrentApplySuggestionUC(db)
+	data, err := uc.fetchData(t.Context(), ApplySuggestionInput{SpaceIdentifier: f.space.Identifier, SuggestionNumber: 1, UserID: f.userID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	execForTest(t, db, "UPDATE pages SET title = '改名したページ' WHERE id = $1 AND space_id = $2", pageID, spaceID)
+	if _, err := uc.applySuggestion(t.Context(), data, nil); err != nil {
+		t.Fatalf("反映のエラー = %v", err)
+	}
+
+	page := findPageForTest(t, db, spaceID, 1)
+	if derefOr(page.Title, "") != "ページ" || !slices.Equal(page.LinkedPageIDs, []model.PageID{pageID}) {
+		t.Errorf("反映後のタイトルとリンク = %q / %v、期待値 = ページ / [%v]", derefOr(page.Title, ""), page.LinkedPageIDs, pageID)
+	}
+	if n := countRows(t, db, "pages", spaceID, "discarded_at IS NULL"); n != 1 {
+		t.Errorf("未廃棄のページ数 = %d、期待値 = 1 (同じタイトルのページを作らない)", n)
+	}
+}
+
 // 同じ提案で変えるすべてのタイトルを解決に使い、自分自身とほかの反映対象へのリンクを保つ
 func TestApplySuggestion_ResolveLinksAfterRenamingAllPages(t *testing.T) {
 	t.Parallel()

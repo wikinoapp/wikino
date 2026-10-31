@@ -364,14 +364,12 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	}
 
 	// すべてのタイトルを、Wikiリンクの解決より先に反映する。
-	// 自分自身や同じ編集提案で改名するページへのリンクが、別の未公開ページを自動作成しないようにするため
+	// 自分自身や同じ編集提案で改名するページへのリンクが、別の未公開ページを自動作成しないようにするため。
+	// 取得からスペースのロックまでの間に改名されていることがあるため、取得したタイトルと同じでも書く
 	for _, sp := range data.suggestionPages {
 		page := pageMap[sp.PageID]
 		if page == nil {
 			return nil, fmt.Errorf("ページが見つかりません: %s", sp.PageID)
-		}
-		if derefOr(sp.Title, "") == derefOr(page.Title, "") {
-			continue
 		}
 		_, err = pageRepo.Update(ctx, repository.UpdatePageInput{
 			ID:                        page.ID,
