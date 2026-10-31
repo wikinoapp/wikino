@@ -46,8 +46,8 @@ import (
 )
 
 // newMCPTestHandlerは、serve.goと同じく、トークンの照合を外した公開APIのハンドラーへツールの呼び出しを
-// 委譲するMCPサーバーのハンドラーを組み立てる。公開APIのハンドラーは、DBを使わずに呼び出し主体から
-// 答えるもの (getSpace・getCurrentToken) だけを本物にする
+// 委譲するMCPサーバーのハンドラーを組み立てる。公開APIへの委譲を確かめるため、
+// テストで呼ぶ操作には本物のUseCaseを渡す
 func newMCPTestHandler(t *testing.T, q *query.Queries) http.Handler {
 	t.Helper()
 
