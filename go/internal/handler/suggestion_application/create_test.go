@@ -62,7 +62,7 @@ func setupHandler(t *testing.T, queries *query.Queries, db *sql.DB) *suggestiona
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 	suggestionApplyValidator := validator.NewSuggestionApplyValidator(pageUpdateValidator)
 	applySuggestionUC := usecase.NewApplySuggestionUsecase(
-		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		db, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
 		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
 		suggestionApplyValidator,

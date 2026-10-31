@@ -32,7 +32,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 	suggestionApplyValidator := validator.NewSuggestionApplyValidator(pageUpdateValidator)
 	uc := NewApplySuggestionUsecase(
-		db, spaceRepo, spaceMemberRepo, topicMemberRepo,
+		db, spaceRepo, spaceMemberRepo, repository.NewTopicRepository(q), topicMemberRepo,
 		suggestionRepo, suggestionPageRepo, pageRepo, pageRevisionRepo,
 		pageEditorRepo, attachmentRepo, pageAttachmentRefRepo, draftPageRepo,
 		suggestionApplyValidator,
@@ -162,7 +162,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("正常系: SuggestionPageのLinkedPageIDsとFeaturedImageAttachmentIDがPageに反映される", func(t *testing.T) {
+	t.Run("正常系: 本文のWikiリンクとアイキャッチ画像がPageに反映される", func(t *testing.T) {
 		t.Parallel()
 
 		spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -221,7 +221,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 			WithPageID(pageID).
 			WithPageRevisionID(pageRevisionID).
 			WithTitle("提案タイトル").
-			WithBody("提案本文").
+			WithBody("提案本文 [[Linked Page]]").
 			WithLinkedPageIDs([]model.PageID{linkedPageID}).
 			WithFeaturedImageAttachmentID(featuredAttachmentID).
 			Build()

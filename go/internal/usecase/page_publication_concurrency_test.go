@@ -281,7 +281,7 @@ func TestApplySuggestion_ContentChangedBeforeLock(t *testing.T) {
 
 func newConcurrentApplySuggestionUC(db *sql.DB) *ApplySuggestionUsecase {
 	q := query.New(db)
-	return NewApplySuggestionUsecase(db, repository.NewSpaceRepository(q), repository.NewSpaceMemberRepository(q),
+	return NewApplySuggestionUsecase(db, repository.NewSpaceRepository(q), repository.NewSpaceMemberRepository(q), repository.NewTopicRepository(q),
 		repository.NewTopicMemberRepository(q), repository.NewSuggestionRepository(q), repository.NewSuggestionPageRepository(q),
 		repository.NewPageRepository(q), repository.NewPageRevisionRepository(q), repository.NewPageEditorRepository(q),
 		repository.NewAttachmentRepository(q), repository.NewPageAttachmentReferenceRepository(q), repository.NewDraftPageRepository(q),
