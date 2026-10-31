@@ -29,9 +29,9 @@ func TestLinks_JSON(t *testing.T) {
 
 			e := newEnv(t)
 			e.Handle(http.MethodGet, c.path, func(req *http.Request) *http.Response {
-				unpublished := testPage(5, ptr("定例会議"), "")
+				unpublished := testListPage(5, ptr("定例会議"), "", "")
 				unpublished["status"] = "unpublished"
-				return listResponse([]map[string]any{testPage(7, ptr("予算案"), "予算の\n確認"), unpublished}, ptr("cursor-2"))
+				return listResponse([]map[string]any{testListPage(7, ptr("予算案"), "予算の\n確認", "予算の 確認"), unpublished}, ptr("cursor-2"))
 			})
 
 			if err := e.Run(NewCmdPage, "page", c.name, "12", "--limit", "2"); err != nil {
@@ -62,6 +62,8 @@ func TestLinks_JSON(t *testing.T) {
 			if q := e.Requests()[0].URL.Query(); q.Get("limit") != "2" || q.Has("cursor") {
 				t.Errorf("要求のクエリ = %v", q)
 			}
+			// 本文を出さないため、APIに本文を求めない。
+			e.AssertQuery(t, "include")
 		})
 	}
 }
@@ -75,9 +77,9 @@ func TestLinks_Human(t *testing.T) {
 
 			e := newEnv(t)
 			e.Handle(http.MethodGet, c.path, func(req *http.Request) *http.Response {
-				unpublished := testPage(5, nil, "")
+				unpublished := testListPage(5, nil, "", "")
 				unpublished["status"] = "unpublished"
-				return listResponse([]map[string]any{testPage(7, ptr("予算案"), longBody), unpublished}, nil)
+				return listResponse([]map[string]any{testListPage(7, ptr("予算案"), longBody, longExcerpt), unpublished}, nil)
 			})
 
 			if err := e.RunTTY(NewCmdPage, "page", c.name, "12"); err != nil {
@@ -102,9 +104,9 @@ func TestLinks_All(t *testing.T) {
 			e := newEnv(t)
 			e.Handle(http.MethodGet, c.path, func(req *http.Request) *http.Response {
 				if req.URL.Query().Get("cursor") == "cursor-2" {
-					return listResponse([]map[string]any{testPage(3, ptr("3件目"), "本文")}, nil)
+					return listResponse([]map[string]any{testListPage(3, ptr("3件目"), "本文", "本文")}, nil)
 				}
-				return listResponse([]map[string]any{testPage(1, ptr("1件目"), "本文"), testPage(2, ptr("2件目"), "本文")}, ptr("cursor-2"))
+				return listResponse([]map[string]any{testListPage(1, ptr("1件目"), "本文", "本文"), testListPage(2, ptr("2件目"), "本文", "本文")}, ptr("cursor-2"))
 			})
 
 			if err := e.Run(NewCmdPage, "page", c.name, "12", "--all", "--fields", "number,title"); err != nil {
@@ -122,6 +124,31 @@ func TestLinks_All(t *testing.T) {
 			if len(e.Requests()) != 2 {
 				t.Errorf("要求の数 = %d、期待値 = 2", len(e.Requests()))
 			}
+		})
+	}
+}
+
+func TestLinks_FieldsBody(t *testing.T) {
+	t.Parallel()
+
+	for _, c := range linkCommands {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+
+			e := newEnv(t)
+			e.Handle(http.MethodGet, c.path, func(req *http.Request) *http.Response {
+				return listResponse([]map[string]any{testListPage(7, ptr("予算案"), "本文\n", "本文")}, nil)
+			})
+
+			if err := e.Run(NewCmdPage, "page", c.name, "12", "--fields", "number,body"); err != nil {
+				t.Fatalf("エラーを期待しなかったが %v だった", err)
+			}
+
+			want := `{"items":[{"body":"本文\n","number":7}],"next_cursor":null}` + "\n"
+			if got := e.Stdout.String(); got != want {
+				t.Errorf("標準出力 = %q、期待値 = %q", got, want)
+			}
+			e.AssertQuery(t, "include", "body")
 		})
 	}
 }

@@ -108,6 +108,12 @@ func (p *Printer) IsJSON() bool {
 	return p.json
 }
 
+// Selectsは、JSONで出す項目にnameが含まれるかを返す。
+// 一覧のコマンドが、本文を出すときだけAPIに本文を求めるために使う。
+func (p *Printer) Selects(name string) bool {
+	return p.fields == nil || slices.Contains(p.fields, name)
+}
+
 // PrintItemは1件の結果をJSONで出す。`--fields` はその項目に、`--jq` はその値に適用する。
 func (p *Printer) PrintItem(v any) error {
 	value, err := toJSONValue(v)

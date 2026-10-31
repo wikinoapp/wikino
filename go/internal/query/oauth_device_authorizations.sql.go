@@ -224,6 +224,7 @@ created_access_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -233,7 +234,8 @@ created_access_token AS (
         consumed.space_id,
         $4,
         consumed.scopes,
-        $5,
+        $5::integer,
+        $6,
         $1,
         $1
     FROM consumed
@@ -244,6 +246,7 @@ created_refresh_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -251,9 +254,10 @@ created_refresh_token AS (
     SELECT
         consumed.oauth_grant_id,
         consumed.space_id,
-        $6,
-        consumed.scopes,
         $7,
+        consumed.scopes,
+        $5::integer,
+        $8,
         $1,
         $1
     FROM consumed
@@ -266,6 +270,7 @@ type ExchangeOAuthDeviceAuthorizationParams struct {
 	ID                    string    `json:"id"`
 	SpaceID               string    `json:"space_id"`
 	AccessTokenDigest     string    `json:"access_token_digest"`
+	Audience              int32     `json:"audience"`
 	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
 	RefreshTokenDigest    string    `json:"refresh_token_digest"`
 	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
@@ -292,13 +297,14 @@ type ExchangeOAuthDeviceAuthorizationRow struct {
 // リフレッシュトークンを作成して、交換済みにした要求を返す。認可コードの交換
 // (ExchangeOAuthAuthorizationCode) と同じく、1つの文で判定と更新を行うため、同じデバイスコードの
 // 同時の交換でもトークンを作るのは1回だけである。許可済みでなければ何もせず行を返さない。
-// 有効期限は呼び出し側が交換の前に確かめる
+// 有効期限は呼び出し側が交換の前に確かめる。トークンの宛先 (@audience) は呼び出し側が決める
 func (q *Queries) ExchangeOAuthDeviceAuthorization(ctx context.Context, arg ExchangeOAuthDeviceAuthorizationParams) (ExchangeOAuthDeviceAuthorizationRow, error) {
 	row := q.db.QueryRowContext(ctx, exchangeOAuthDeviceAuthorization,
 		arg.Now,
 		arg.ID,
 		arg.SpaceID,
 		arg.AccessTokenDigest,
+		arg.Audience,
 		arg.AccessTokenExpiresAt,
 		arg.RefreshTokenDigest,
 		arg.RefreshTokenExpiresAt,

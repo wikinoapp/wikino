@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/wikinoapp/wikino/cli/internal/apiclient"
+	"github.com/wikinoapp/wikino/cli/internal/apigen"
 	"github.com/wikinoapp/wikino/cli/internal/apiutil"
 	"github.com/wikinoapp/wikino/cli/internal/i18n"
 	"github.com/wikinoapp/wikino/cli/internal/output"
@@ -70,11 +71,21 @@ func (l *ListFlags) CursorParam() *string {
 	return &l.Cursor
 }
 
+// ListIncludeは、一覧の要求に載せる `include` を返す。本文 (body) を出すときだけ本文を求め、出さないならnilを返す。
+// 本文を求めると応答が本文の長さに比例して大きくなるため、出さない本文は受け取らない。
+func ListInclude(printer *output.Printer) *apigen.ListInclude {
+	if !printer.Selects("body") {
+		return nil
+	}
+
+	return &apigen.ListInclude{apigen.Body}
+}
+
 // Listは、一覧を返すコマンドの取得と表示の方法。
 type List[T any] struct {
 	// Fetchは、cursorのページを取得する。件数や絞り込みはコマンドの側で載せる。
 	Fetch apiclient.PageFetcher[T]
-	// Itemは、APIの1件をJSONで出す1件にする。一覧で本文を省いて抜粋を加えるなどに使う。
+	// Itemは、APIの1件をJSONで出す1件にする。
 	Item func(T) any
 	// Tableは、人間向けの表示で1ページ分を表にして出す。itemsは1件以上ある。
 	Table func(items []T) error

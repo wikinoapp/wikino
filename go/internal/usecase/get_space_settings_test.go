@@ -40,6 +40,7 @@ func TestGetSpaceSettingsUsecase_Execute(t *testing.T) {
 		key         string
 		role        model.SpaceRole
 		flagEnabled bool
+		mcpEnabled  bool
 		want        *SpaceSettingsItems
 		wantErrCode model.AppErrorCode
 	}{
@@ -54,6 +55,35 @@ func TestGetSpaceSettingsUsecase_Execute(t *testing.T) {
 			key:         "gsset-admin-flag",
 			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
+			want:        &SpaceSettingsItems{CanUpdateSpace: true, CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true, CanShowOAuthApplications: true},
+		},
+		{
+			name:       "管理者でMCPサーバーだけが有効なら既存の項目と連携中のアプリだけを開ける",
+			key:        "gsset-admin-mcp",
+			role:       model.SpaceRoleAdmin,
+			mcpEnabled: true,
+			want:       &SpaceSettingsItems{CanUpdateSpace: true, CanShowOAuthGrants: true},
+		},
+		{
+			name:       "編集者でMCPサーバーだけが有効なら連携中のアプリだけを開ける",
+			key:        "gsset-editor-mcp",
+			role:       model.SpaceRoleEditor,
+			mcpEnabled: true,
+			want:       &SpaceSettingsItems{CanShowOAuthGrants: true},
+		},
+		{
+			name:       "閲覧者でMCPサーバーだけが有効なら連携中のアプリだけを開ける",
+			key:        "gsset-viewer-mcp",
+			role:       model.SpaceRoleViewer,
+			mcpEnabled: true,
+			want:       &SpaceSettingsItems{CanShowOAuthGrants: true},
+		},
+		{
+			name:        "公開APIとMCPサーバーの両方が有効ならすべての管理の項目を開ける",
+			key:         "gsset-admin-both",
+			role:        model.SpaceRoleAdmin,
+			flagEnabled: true,
+			mcpEnabled:  true,
 			want:        &SpaceSettingsItems{CanUpdateSpace: true, CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true, CanShowOAuthApplications: true},
 		},
 		{
@@ -103,6 +133,12 @@ func TestGetSpaceSettingsUsecase_Execute(t *testing.T) {
 				testutil.NewFeatureFlagBuilder(t, tx).
 					WithUserID(userID).
 					WithName(string(model.FeatureFlagPublicAPI)).
+					Build()
+			}
+			if tt.mcpEnabled {
+				testutil.NewFeatureFlagBuilder(t, tx).
+					WithUserID(userID).
+					WithName(string(model.FeatureFlagRemoteMCPServer)).
 					Build()
 			}
 

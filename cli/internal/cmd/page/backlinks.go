@@ -27,8 +27,12 @@ func newCmdBacklinks(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		return runLinkList(f, cmd, args[0], pageFlags, loc.T("page_backlinks_empty_hint"),
-			func(ctx context.Context, client *apiclient.Client, space string, number int32, cursor *string, limit *int32) (*apigen.PageList, int, error) {
-				resp, err := client.ListPageBacklinksWithResponse(ctx, space, number, &apigen.ListPageBacklinksParams{Cursor: cursor, Limit: limit})
+			func(ctx context.Context, client *apiclient.Client, space string, number int32, params linkListParams) (*apigen.PageList, int, error) {
+				resp, err := client.ListPageBacklinksWithResponse(ctx, space, number, &apigen.ListPageBacklinksParams{
+					Include: params.include,
+					Cursor:  params.cursor,
+					Limit:   params.limit,
+				})
 				if err != nil {
 					return nil, 0, err
 				}

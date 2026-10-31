@@ -17,10 +17,17 @@ type HiddenField struct {
 // NotMemberとNoPermissionのどちらかが真なら、ログイン中のユーザーは連携先のスペースで
 // アプリを許可できず、同意の代わりにその理由とクライアントへ戻るボタンを示す。
 // ScopeOptionsは要求されたスコープの選択肢で、FormErrorsは拒否された送信のエラー。
+//
+// ClientHostはCIMDのクライアントのクライアントIDのホスト名 (それ以外は空)。アプリの名前はクライアントが
+// 文書で名乗ったものなので、出どころを示す。LoopbackOnlyは、CIMDのクライアントのリダイレクトURIが
+// ループバックだけであることを表す。ループバックのポートで待ち受けるのが正規のアプリかは確かめられないため、
+// 利用者が自分で始めた連携であることを確かめるよう警告する。
 type NewData struct {
 	CSRFToken       string
 	HiddenFields    []HiddenField
 	ApplicationName string
+	ClientHost      string
+	LoopbackOnly    bool
 	SpaceName       string
 	UserAtname      string
 	ScopeOptions    []components.APITokenScopeOption
@@ -41,6 +48,11 @@ templ New(data NewData) {
 					{ templates.T(ctx, "oauth_authorization_new_heading", map[string]any{"ApplicationName": data.ApplicationName}) }
 				}
 			</h1>
+			if data.ClientHost != "" {
+				<p class="text-center text-sm text-muted-foreground">
+					{ templates.T(ctx, "oauth_authorization_new_client_host", map[string]any{"ClientHost": data.ClientHost}) }
+				</p>
+			}
 		</div>
 
 		@components.ContentCard() {
@@ -63,7 +75,22 @@ templ New(data NewData) {
 						</dt>
 						<dd>{ "@" + data.UserAtname }</dd>
 					</div>
+					<div class="grid gap-1">
+						<dt class="text-sm text-muted-foreground">
+							{ templates.T(ctx, "oauth_authorization_new_redirect_host_label") }
+						</dt>
+						<dd class="[overflow-wrap:anywhere]">{ data.RedirectHost }</dd>
+					</div>
 				</dl>
+
+				if data.LoopbackOnly && !data.NotMember && !data.NoPermission {
+					<div class="alert">
+						@templates.DecorativeIcon("warning-regular", "fill-warning")
+						<section>
+							{ templates.T(ctx, "oauth_authorization_new_loopback_warning", map[string]any{"ApplicationName": data.ApplicationName}) }
+						</section>
+					</div>
+				}
 
 				if data.NotMember {
 					<p>{ templates.T(ctx, "oauth_authorization_new_not_member") }</p>

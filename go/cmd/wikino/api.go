@@ -34,8 +34,10 @@ var allowCandidateMethods = []string{
 
 // newAPIRouterは公開Web API (`/api` 配下) のルーターを作成する。
 // ルートの不一致・メソッドの不一致・生成コードでのリクエストの読み取りの失敗・ハンドラーのエラーを
-// すべてProblem Detailsで返す
-func newAPIRouter(server apigen.StrictServerInterface, reference http.HandlerFunc, problems *apierror.Writer, tokenAuth *middleware.APITokenAuth, rateLimit *middleware.APIRateLimit, requestValidator *middleware.APIRequestValidator) *chi.Mux {
+// すべてProblem Detailsで返す。tokenAuthは呼び出し主体をコンテキストに入れるミドルウェアで、
+// 公開APIではトークンの照合 (middleware.APITokenAuth)、MCPサーバーからの呼び出しでは何もしないもの
+// (newAuthenticatedAPIHandler) を渡す
+func newAPIRouter(server apigen.StrictServerInterface, reference http.HandlerFunc, problems *apierror.Writer, tokenAuth func(http.Handler) http.Handler, rateLimit *middleware.APIRateLimit, requestValidator *middleware.APIRequestValidator) *chi.Mux {
 	r := chi.NewRouter()
 
 	// サブルーター (`/v1`) はマウント時にこのNotFound・MethodNotAllowedを引き継ぐため、Routeより前に設定する
@@ -51,7 +53,7 @@ func newAPIRouter(server apigen.StrictServerInterface, reference http.HandlerFun
 
 	r.Route("/v1", func(r chi.Router) {
 		// リクエスト検証はoperationのsecurityをトークン認証で得た主体と照合するため、トークン認証の後に掛ける
-		r.Use(tokenAuth.Middleware)
+		r.Use(tokenAuth)
 		// レート制限はトークン認証で得た主体のスペースのメンバー単位で数えるため、トークン認証の後に掛ける
 		r.Use(rateLimit.Middleware)
 		r.Use(requestValidator.Middleware)
@@ -72,6 +74,23 @@ func newAPIRouter(server apigen.StrictServerInterface, reference http.HandlerFun
 	})
 
 	return r
+}
+
+// newAuthenticatedAPIHandlerは、照合済みの呼び出し主体をコンテキストに持つ要求を受ける公開APIの
+// ハンドラーを返す。MCPサーバーがツールの呼び出しをプロセス内で委譲するために使い、公開APIとトークンの
+// 照合だけが違う (リクエストの検証・レート制限・生成コードのハンドラーは共有する)。
+// パスは公開APIと同じ `/api/v1/...` で受け、人間向けのAPIリファレンスは提供しない
+func newAuthenticatedAPIHandler(server apigen.StrictServerInterface, problems *apierror.Writer, rateLimit *middleware.APIRateLimit, requestValidator *middleware.APIRequestValidator) http.Handler {
+	passThrough := func(next http.Handler) http.Handler { return next }
+	r := chi.NewRouter()
+	r.Mount(apiMountPath, newAPIRouter(server, problems.NotFound, problems, passThrough, rateLimit, requestValidator))
+
+	// ツールの呼び出しの要求のコンテキストには、`/mcp` を受けた全体のルーターのルートの情報が残っている。
+	// chiはコンテキストにルートの情報があるとサブルーターとして振る舞い、残ったパスでルートを探すため、
+	// 外してからこのルーターへ渡す
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, nil)))
+	})
 }
 
 // withRequestURLは、一覧のハンドラーが次のページの `Link` ヘッダーを組み立てられるよう、

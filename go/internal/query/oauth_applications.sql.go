@@ -34,7 +34,7 @@ INSERT INTO oauth_applications (
     $7::text[],
     $8,
     $8
-) RETURNING id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version
+) RETURNING id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at
 `
 
 type CreateOAuthApplicationParams struct {
@@ -74,6 +74,8 @@ func (q *Queries) CreateOAuthApplication(ctx context.Context, arg CreateOAuthApp
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Version,
+		&i.RegistrationMethod,
+		&i.MetadataExpiresAt,
 	)
 	return i, err
 }
@@ -85,7 +87,7 @@ WITH discarded AS (
     WHERE oauth_applications.id = $2
       AND oauth_applications.space_id = $3::uuid
       AND oauth_applications.discarded_at IS NULL
-    RETURNING oauth_applications.id, oauth_applications.space_id, oauth_applications.created_space_member_id, oauth_applications.name, oauth_applications.client_id, oauth_applications.client_secret_digest, oauth_applications.client_type, oauth_applications.redirect_uris, oauth_applications.discarded_at, oauth_applications.created_at, oauth_applications.updated_at, oauth_applications.version
+    RETURNING oauth_applications.id, oauth_applications.space_id, oauth_applications.created_space_member_id, oauth_applications.name, oauth_applications.client_id, oauth_applications.client_secret_digest, oauth_applications.client_type, oauth_applications.redirect_uris, oauth_applications.discarded_at, oauth_applications.created_at, oauth_applications.updated_at, oauth_applications.version, oauth_applications.registration_method, oauth_applications.metadata_expires_at
 ),
 target_grants AS (
     SELECT oauth_grants.id
@@ -114,7 +116,7 @@ revoked_refresh_tokens AS (
       AND oauth_refresh_tokens.space_id = $3::uuid
       AND oauth_refresh_tokens.revoked_at IS NULL
 )
-SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version FROM discarded
+SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at FROM discarded
 `
 
 type DiscardOAuthApplicationParams struct {
@@ -136,6 +138,8 @@ type DiscardOAuthApplicationRow struct {
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`
 	Version              int64          `json:"version"`
+	RegistrationMethod   int32          `json:"registration_method"`
+	MetadataExpiresAt    sql.NullTime   `json:"metadata_expires_at"`
 }
 
 // スペースの削除されていないOAuthアプリを削除し、そのアプリの許可と、許可に属するアクセス
@@ -161,12 +165,14 @@ func (q *Queries) DiscardOAuthApplication(ctx context.Context, arg DiscardOAuthA
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Version,
+		&i.RegistrationMethod,
+		&i.MetadataExpiresAt,
 	)
 	return i, err
 }
 
 const findOAuthApplicationByClientID = `-- name: FindOAuthApplicationByClientID :one
-SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version FROM oauth_applications
+SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at FROM oauth_applications
 WHERE client_id = $1
   AND discarded_at IS NULL
 `
@@ -194,12 +200,14 @@ func (q *Queries) FindOAuthApplicationByClientID(ctx context.Context, clientID s
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Version,
+		&i.RegistrationMethod,
+		&i.MetadataExpiresAt,
 	)
 	return i, err
 }
 
 const findOAuthApplicationByClientIDAndSpaceID = `-- name: FindOAuthApplicationByClientIDAndSpaceID :one
-SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version FROM oauth_applications
+SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at FROM oauth_applications
 WHERE client_id = $1
   AND (space_id = $2::uuid OR space_id IS NULL)
   AND discarded_at IS NULL
@@ -228,12 +236,14 @@ func (q *Queries) FindOAuthApplicationByClientIDAndSpaceID(ctx context.Context, 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Version,
+		&i.RegistrationMethod,
+		&i.MetadataExpiresAt,
 	)
 	return i, err
 }
 
 const findOAuthApplicationByIDAndSpaceID = `-- name: FindOAuthApplicationByIDAndSpaceID :one
-SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version FROM oauth_applications
+SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at FROM oauth_applications
 WHERE id = $1
   AND space_id = $2::uuid
   AND discarded_at IS NULL
@@ -262,12 +272,14 @@ func (q *Queries) FindOAuthApplicationByIDAndSpaceID(ctx context.Context, arg Fi
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Version,
+		&i.RegistrationMethod,
+		&i.MetadataExpiresAt,
 	)
 	return i, err
 }
 
 const listOAuthApplicationsAvailableInSpaceByIDs = `-- name: ListOAuthApplicationsAvailableInSpaceByIDs :many
-SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version FROM oauth_applications
+SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at FROM oauth_applications
 WHERE id = ANY($1::uuid[])
   AND (space_id = $2::uuid OR space_id IS NULL)
   AND discarded_at IS NULL
@@ -303,6 +315,8 @@ func (q *Queries) ListOAuthApplicationsAvailableInSpaceByIDs(ctx context.Context
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Version,
+			&i.RegistrationMethod,
+			&i.MetadataExpiresAt,
 		); err != nil {
 			return nil, err
 		}
@@ -318,7 +332,7 @@ func (q *Queries) ListOAuthApplicationsAvailableInSpaceByIDs(ctx context.Context
 }
 
 const listOAuthApplicationsBySpace = `-- name: ListOAuthApplicationsBySpace :many
-SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version FROM oauth_applications
+SELECT id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at FROM oauth_applications
 WHERE space_id = $1::uuid
   AND discarded_at IS NULL
 ORDER BY created_at DESC, id DESC
@@ -347,6 +361,8 @@ func (q *Queries) ListOAuthApplicationsBySpace(ctx context.Context, spaceID stri
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Version,
+			&i.RegistrationMethod,
+			&i.MetadataExpiresAt,
 		); err != nil {
 			return nil, err
 		}
@@ -371,7 +387,7 @@ WHERE id = $4
   AND space_id = $5::uuid
   AND version = $6
   AND discarded_at IS NULL
-RETURNING id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version
+RETURNING id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at
 `
 
 type UpdateOAuthApplicationParams struct {
@@ -409,6 +425,8 @@ func (q *Queries) UpdateOAuthApplication(ctx context.Context, arg UpdateOAuthApp
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Version,
+		&i.RegistrationMethod,
+		&i.MetadataExpiresAt,
 	)
 	return i, err
 }
@@ -421,7 +439,7 @@ WHERE id = $3
   AND space_id = $4::uuid
   AND client_type = 0
   AND discarded_at IS NULL
-RETURNING id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version
+RETURNING id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at
 `
 
 type UpdateOAuthApplicationClientSecretDigestParams struct {
@@ -455,6 +473,79 @@ func (q *Queries) UpdateOAuthApplicationClientSecretDigest(ctx context.Context, 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Version,
+		&i.RegistrationMethod,
+		&i.MetadataExpiresAt,
+	)
+	return i, err
+}
+
+const upsertClientIDMetadataDocumentOAuthApplication = `-- name: UpsertClientIDMetadataDocumentOAuthApplication :one
+INSERT INTO oauth_applications (
+    name,
+    client_id,
+    client_type,
+    redirect_uris,
+    registration_method,
+    metadata_expires_at,
+    created_at,
+    updated_at
+) VALUES (
+    $1,
+    $2,
+    1,
+    $3::text[],
+    1,
+    $4,
+    $5,
+    $5
+)
+ON CONFLICT (client_id) DO UPDATE
+SET name = EXCLUDED.name,
+    redirect_uris = EXCLUDED.redirect_uris,
+    metadata_expires_at = EXCLUDED.metadata_expires_at,
+    updated_at = EXCLUDED.updated_at,
+    version = oauth_applications.version + 1
+WHERE oauth_applications.registration_method = 1
+RETURNING id, space_id, created_space_member_id, name, client_id, client_secret_digest, client_type, redirect_uris, discarded_at, created_at, updated_at, version, registration_method, metadata_expires_at
+`
+
+type UpsertClientIDMetadataDocumentOAuthApplicationParams struct {
+	Name              string       `json:"name"`
+	ClientID          string       `json:"client_id"`
+	RedirectUris      []string     `json:"redirect_uris"`
+	MetadataExpiresAt sql.NullTime `json:"metadata_expires_at"`
+	Now               time.Time    `json:"now"`
+}
+
+// CIMDのクライアント (スペースに属さないpublicクライアント) を、取得した文書の名前・リダイレクトURIと
+// キャッシュの期限で作成し、既にあれば更新する。space_idを条件に含めない例外のクエリである。
+// CIMDのクライアントはスペースに属さず、client_idは全体で一意なためである。
+// 同じclient_idの登録したクライアントがあれば何も変えず行を返さない (CIMDの文書で登録した
+// クライアントを書き換えない)
+func (q *Queries) UpsertClientIDMetadataDocumentOAuthApplication(ctx context.Context, arg UpsertClientIDMetadataDocumentOAuthApplicationParams) (OauthApplication, error) {
+	row := q.db.QueryRowContext(ctx, upsertClientIDMetadataDocumentOAuthApplication,
+		arg.Name,
+		arg.ClientID,
+		pq.Array(arg.RedirectUris),
+		arg.MetadataExpiresAt,
+		arg.Now,
+	)
+	var i OauthApplication
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.CreatedSpaceMemberID,
+		&i.Name,
+		&i.ClientID,
+		&i.ClientSecretDigest,
+		&i.ClientType,
+		pq.Array(&i.RedirectUris),
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Version,
+		&i.RegistrationMethod,
+		&i.MetadataExpiresAt,
 	)
 	return i, err
 }

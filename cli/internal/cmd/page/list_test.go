@@ -9,8 +9,11 @@ import (
 	"github.com/wikinoapp/wikino/cli/internal/output"
 )
 
-// longBodyは、抜粋で切り詰められる長さの本文。マルチバイト文字の途中で切らないことも確かめる。
+// longBodyは、一覧の既定の出力には出さない長い本文。
 var longBody = "# 議事録\n\n" + strings.Repeat("あいうえお", 20)
+
+// longExcerptは、APIがlongBodyから作る抜粋。
+var longExcerpt = "# 議事録 " + strings.Repeat("あいうえお", 20)[:len("あ")*74] + "…"
 
 type listOutput struct {
 	Items      []map[string]any `json:"items"`
@@ -23,8 +26,8 @@ func TestList_JSON(t *testing.T) {
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
 		return listResponse([]map[string]any{
-			testPage(12, ptr("議事録"), longBody),
-			testPage(5, nil, "短い本文\n"),
+			testListPage(12, ptr("議事録"), longBody, longExcerpt),
+			testListPage(5, nil, "短い本文\n", "短い本文"),
 		}, ptr("cursor-2"))
 	})
 
@@ -41,9 +44,8 @@ func TestList_JSON(t *testing.T) {
 	if _, ok := first["body"]; ok {
 		t.Errorf("一覧の既定の出力に本文が含まれる: %v", first)
 	}
-	wantExcerpt := "# 議事録 " + strings.Repeat("あいうえお", 20)[:len("あ")*74] + "…"
-	if first["excerpt"] != wantExcerpt {
-		t.Errorf("excerpt = %q、期待値 = %q", first["excerpt"], wantExcerpt)
+	if first["excerpt"] != longExcerpt {
+		t.Errorf("excerpt = %q、期待値 = %q", first["excerpt"], longExcerpt)
 	}
 	if first["url"] != "https://wikino.example.com/s/team/pages/12" || first["title"] != "議事録" {
 		t.Errorf("1件目 = %v", first)
@@ -65,6 +67,8 @@ func TestList_JSON(t *testing.T) {
 	if !strings.Contains(e.Stderr.String(), "--cursor cursor-2") {
 		t.Errorf("標準エラーに次のページの取り方が無い: %q", e.Stderr.String())
 	}
+	// 本文を出さないため、APIに本文を求めない。
+	e.AssertQuery(t, "include")
 }
 
 func TestList_Params(t *testing.T) {
@@ -107,7 +111,7 @@ func TestList_FieldsBody(t *testing.T) {
 
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
-		return listResponse([]map[string]any{testPage(12, ptr("議事録"), "本文\n")}, nil)
+		return listResponse([]map[string]any{testListPage(12, ptr("議事録"), "本文\n", "本文")}, nil)
 	})
 
 	if err := e.Run(NewCmdPage, "page", "list", "--fields", "number,body"); err != nil {
@@ -118,6 +122,7 @@ func TestList_FieldsBody(t *testing.T) {
 	if got := e.Stdout.String(); got != want {
 		t.Errorf("標準出力 = %q、期待値 = %q", got, want)
 	}
+	e.AssertQuery(t, "include", "body")
 }
 
 func TestList_FieldsTopicName(t *testing.T) {
@@ -125,7 +130,7 @@ func TestList_FieldsTopicName(t *testing.T) {
 
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
-		return listResponse([]map[string]any{testPage(12, ptr("議事録"), "本文\n")}, nil)
+		return listResponse([]map[string]any{testListPage(12, ptr("議事録"), "本文\n", "本文")}, nil)
 	})
 
 	if err := e.Run(NewCmdPage, "page", "list", "--fields", "title,topic_name"); err != nil {
@@ -186,11 +191,11 @@ func TestList_All(t *testing.T) {
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
 		if req.URL.Query().Get("cursor") == "cursor-2" {
-			return listResponse([]map[string]any{testPage(3, ptr("3件目"), "本文")}, nil)
+			return listResponse([]map[string]any{testListPage(3, ptr("3件目"), "本文", "本文")}, nil)
 		}
 		return listResponse([]map[string]any{
-			testPage(1, ptr("1件目"), "本文"),
-			testPage(2, ptr("2件目"), "本文"),
+			testListPage(1, ptr("1件目"), "本文", "本文"),
+			testListPage(2, ptr("2件目"), "本文", "本文"),
 		}, ptr("cursor-2"))
 	})
 
@@ -225,7 +230,7 @@ func TestList_AllOnTTY(t *testing.T) {
 
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
-		return listResponse([]map[string]any{testPage(1, ptr("1件目"), "本文")}, nil)
+		return listResponse([]map[string]any{testListPage(1, ptr("1件目"), "本文", "本文")}, nil)
 	})
 
 	if err := e.RunTTY(NewCmdPage, "page", "list", "--all"); err != nil {
@@ -243,9 +248,9 @@ func TestList_Human(t *testing.T) {
 
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
-		unpublished := testPage(5, nil, "")
+		unpublished := testListPage(5, nil, "", "")
 		unpublished["status"] = "unpublished"
-		return listResponse([]map[string]any{testPage(12, ptr("議事録"), longBody), unpublished}, ptr("cursor-2"))
+		return listResponse([]map[string]any{testListPage(12, ptr("議事録"), longBody, longExcerpt), unpublished}, ptr("cursor-2"))
 	})
 
 	if err := e.RunTTY(NewCmdPage, "page", "list"); err != nil {
@@ -264,7 +269,7 @@ func TestList_HumanTopicNameControlCharacters(t *testing.T) {
 	// トピック名は他の利用者が付けた値で、端末を操作するエスケープシーケンスや改行を含みうる。
 	e := newEnv(t)
 	e.Handle(http.MethodGet, pagesPath, func(req *http.Request) *http.Response {
-		page := testPage(12, ptr("議事録"), "")
+		page := testListPage(12, ptr("議事録"), "", "")
 		page["topic_name"] = "開\x1b[2J発\n偽の行"
 		return listResponse([]map[string]any{page}, nil)
 	})

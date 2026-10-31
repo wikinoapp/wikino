@@ -59,7 +59,7 @@ type RevokeOAuthGrantOutput struct {
 // 解除は存在しないものへの操作と区別できない。
 func (uc *RevokeOAuthGrantUsecase) Execute(ctx context.Context, input RevokeOAuthGrantInput) (*RevokeOAuthGrantOutput, error) {
 	// 1. データ取得と認可チェック
-	access, err := fetchPublicAPISettingsAccess(
+	access, err := fetchOAuthGrantSettingsAccess(
 		ctx, uc.spaceRepo, uc.spaceMemberRepo, uc.featureFlagRepo, input.SpaceIdentifier, input.UserID,
 		policy.Authorizer.CanDeleteOAuthGrant,
 	)

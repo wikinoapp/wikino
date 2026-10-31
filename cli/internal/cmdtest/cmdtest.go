@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -91,6 +92,22 @@ func (e *Env) Requests() []*http.Request {
 	defer e.mu.Unlock()
 
 	return append([]*http.Request(nil), e.requests...)
+}
+
+// AssertQueryは、送ったすべての要求で、クエリのkeyの値がwantであることを確かめる。
+// wantを渡さなければ、keyを載せていないことを確かめる。
+func (e *Env) AssertQuery(t *testing.T, key string, want ...string) {
+	t.Helper()
+
+	requests := e.Requests()
+	if len(requests) == 0 {
+		t.Fatal("要求を送ったことを期待したが、1件も送っていない")
+	}
+	for _, req := range requests {
+		if got := req.URL.Query()[key]; !slices.Equal(got, want) {
+			t.Errorf("%s のクエリの %s = %q、期待値 = %q", req.URL.Path, key, got, want)
+		}
+	}
 }
 
 // Runは、標準入出力をTTYでない状態にしてargsでコマンドを実行する。

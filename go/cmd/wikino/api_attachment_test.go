@@ -38,7 +38,7 @@ type attachmentTestAuthenticator struct {
 	principal *model.APIPrincipal
 }
 
-func (a attachmentTestAuthenticator) Execute(_ context.Context, token string) (*model.APIPrincipal, error) {
+func (a attachmentTestAuthenticator) Execute(_ context.Context, token string, _ model.OAuthAudience) (*model.APIPrincipal, error) {
 	p := *a.principal
 	switch token {
 	case "wkp_attachment_read":

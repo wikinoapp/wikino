@@ -45,7 +45,7 @@ func TestRevisionList_JSON(t *testing.T) {
 	longBody := "# 議事録\n\n" + strings.Repeat("あいうえお", 20)
 	e := newEnv(t)
 	handleRevisionPages(t, e, map[string]revisionPage{
-		"": {items: []map[string]any{testRevision(1, ptr("議事録"), longBody), testRevision(2, nil, "")}, next: ptr("cursor-2")},
+		"": {items: []map[string]any{withExcerpt(testRevision(1, ptr("議事録"), longBody), "# 議事録 あいうえお…"), withExcerpt(testRevision(2, nil, ""), "")}, next: ptr("cursor-2")},
 	})
 
 	if err := e.Run(NewCmdDraft, "draft", "revision", "list", "12"); err != nil {
@@ -61,8 +61,8 @@ func TestRevisionList_JSON(t *testing.T) {
 	if _, ok := first["body"]; ok {
 		t.Errorf("一覧の既定の出力に本文が含まれる: %v", first)
 	}
-	if excerpt, _ := first["excerpt"].(string); !strings.HasPrefix(excerpt, "# 議事録 あいうえお") || !strings.HasSuffix(excerpt, "…") {
-		t.Errorf("excerpt = %q", first["excerpt"])
+	if first["excerpt"] != "# 議事録 あいうえお…" {
+		t.Errorf("excerpt = %q、期待値 = APIの抜粋", first["excerpt"])
 	}
 	if first["id"] != "00000000-0000-0000-0000-000000000001" || first["title"] != "議事録" || first["created_at"] != "2026-10-01T09:00:00.123456Z" {
 		t.Errorf("1件目 = %v", first)
@@ -76,6 +76,8 @@ func TestRevisionList_JSON(t *testing.T) {
 	if !strings.Contains(e.Stderr.String(), "--cursor cursor-2") {
 		t.Errorf("標準エラーに次のページの取り方が無い: %q", e.Stderr.String())
 	}
+	// 本文を出さないため、APIに本文を求めない。
+	e.AssertQuery(t, "include")
 }
 
 func TestRevisionList_Paging(t *testing.T) {
@@ -123,6 +125,8 @@ func TestRevisionList_Paging(t *testing.T) {
 		if strings.Join(lines, "\n") != strings.Join(want, "\n") {
 			t.Errorf("出力 = %q、期待値 = %q", lines, want)
 		}
+		// 本文を出すため、辿るすべてのページでAPIに本文を求める。
+		e.AssertQuery(t, "include", "body")
 	})
 }
 

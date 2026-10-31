@@ -35,6 +35,14 @@ func testPage(number int32, title *string, body string) map[string]any {
 	}
 }
 
+// testListPageは、APIのページの一覧の応答の1件を返す。excerptはAPIが本文から作る抜粋。
+func testListPage(number int32, title *string, body, excerpt string) map[string]any {
+	page := testPage(number, title, body)
+	page["excerpt"] = excerpt
+
+	return page
+}
+
 func newEnv(t *testing.T) *cmdtest.Env {
 	t.Helper()
 

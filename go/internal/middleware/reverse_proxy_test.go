@@ -1355,6 +1355,18 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "MCPサーバーの保護リソースのメタデータ",
+			method:   http.MethodGet,
+			path:     "/.well-known/oauth-protected-resource/mcp",
+			expected: true,
+		},
+		{
+			name:     "MCPサーバー",
+			method:   http.MethodPost,
+			path:     "/mcp",
+			expected: true,
+		},
+		{
 			name:     "使わない名前のwell-knownはマッチしない",
 			method:   http.MethodGet,
 			path:     "/.well-known/security.txt",

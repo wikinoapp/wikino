@@ -21,6 +21,8 @@ type authenticateAPITokenFixture struct {
 	spaceMemberID model.SpaceMemberID
 	tokenID       model.PersonalAccessTokenID
 	token         string
+	// oauthApplicationIDは、OAuthのアクセストークンのフィクスチャで許可を与えたアプリのID
+	oauthApplicationID model.OAuthApplicationID
 }
 
 // authenticateAPITokenFixtureOptionsはフィクスチャの既定値 (フラグ有効・有効なメンバー・
@@ -134,7 +136,7 @@ func TestAuthenticateAPITokenUsecase_Execute_Success(t *testing.T) {
 	opts.tokenScopes = []model.Scope{model.ScopePageWrite, model.ScopeSpaceAdmin}
 	f := setupAuthenticateAPITokenFixture(t, tx, opts)
 
-	principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), f.token)
+	principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), f.token, model.OAuthAudiencePublicAPI)
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v", err)
 	}
@@ -153,6 +155,9 @@ func TestAuthenticateAPITokenUsecase_Execute_Success(t *testing.T) {
 	}
 	if principal.TokenKind != model.APITokenKindPersonalAccessToken {
 		t.Errorf("TokenKind = %s、期待値 = %s", principal.TokenKind, model.APITokenKindPersonalAccessToken)
+	}
+	if principal.OAuthApplicationID != nil {
+		t.Errorf("OAuthApplicationID = %v、個人用アクセストークンではnilを期待", *principal.OAuthApplicationID)
 	}
 	if !principal.TokenExpiresAt.Equal(opts.expiresAt) {
 		t.Errorf("TokenExpiresAt = %v、期待値 = %v", principal.TokenExpiresAt, opts.expiresAt)
@@ -235,7 +240,7 @@ func TestAuthenticateAPITokenUsecase_Execute_Rejected(t *testing.T) {
 				token = tt.token(f)
 			}
 
-			principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), token)
+			principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), token, model.OAuthAudiencePublicAPI)
 			if err != nil {
 				t.Fatalf("Execute()のエラー = %v", err)
 			}
@@ -259,6 +264,9 @@ type oauthAccessTokenAuthFixtureOptions struct {
 	grantRevokedAt *time.Time
 	expiresAt      time.Time
 	revokedAt      *time.Time
+	// audienceはトークンの宛先、flagNameは持ち主に有効にするフィーチャーフラグ
+	audience model.OAuthAudience
+	flagName model.FeatureFlagName
 }
 
 func defaultOAuthAccessTokenAuthFixtureOptions() oauthAccessTokenAuthFixtureOptions {
@@ -267,7 +275,18 @@ func defaultOAuthAccessTokenAuthFixtureOptions() oauthAccessTokenAuthFixtureOpti
 		memberActive: true,
 		tokenScopes:  []model.Scope{model.ScopePageRead},
 		expiresAt:    time.Now().Add(time.Hour),
+		audience:     model.OAuthAudiencePublicAPI,
+		flagName:     model.FeatureFlagPublicAPI,
 	}
+}
+
+// mcpOAuthAccessTokenAuthFixtureOptionsは、MCPサーバーのフラグを有効にした持ち主のMCPサーバー宛ての
+// トークンを作るフィクスチャの設定を返す
+func mcpOAuthAccessTokenAuthFixtureOptions() oauthAccessTokenAuthFixtureOptions {
+	opts := defaultOAuthAccessTokenAuthFixtureOptions()
+	opts.audience = model.OAuthAudienceMCPServer
+	opts.flagName = model.FeatureFlagRemoteMCPServer
+	return opts
 }
 
 // setupOAuthAccessTokenAuthFixtureは、スペースのOAuthアプリの許可に属するアクセストークンを作り、
@@ -290,7 +309,7 @@ func setupOAuthAccessTokenAuthFixture(t *testing.T, tx *sql.Tx, key string, opts
 	if !opts.flagDisabled {
 		testutil.NewFeatureFlagBuilder(t, tx).
 			WithUserID(userID).
-			WithName(string(model.FeatureFlagPublicAPI)).
+			WithName(string(opts.flagName)).
 			Build()
 	}
 
@@ -313,6 +332,7 @@ func setupOAuthAccessTokenAuthFixture(t *testing.T, tx *sql.Tx, key string, opts
 		WithSpaceID(spaceID).
 		WithTokenDigest(auth.DigestOpaqueToken(token)).
 		WithScopes(opts.tokenScopes).
+		WithAudience(opts.audience).
 		WithExpiresAt(opts.expiresAt)
 	if opts.revokedAt != nil {
 		tokenBuilder = tokenBuilder.WithRevokedAt(*opts.revokedAt)
@@ -320,9 +340,10 @@ func setupOAuthAccessTokenAuthFixture(t *testing.T, tx *sql.Tx, key string, opts
 	tokenBuilder.Build()
 
 	return authenticateAPITokenFixture{
-		userID:        userID,
-		spaceID:       spaceID,
-		spaceMemberID: spaceMemberID,
+		userID:             userID,
+		spaceID:            spaceID,
+		spaceMemberID:      spaceMemberID,
+		oauthApplicationID: appID,
 	}, token
 }
 
@@ -337,7 +358,7 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessToken(t *testing.T) {
 	opts.tokenScopes = []model.Scope{model.ScopePageWrite, model.ScopeSpaceAdmin}
 	f, token := setupOAuthAccessTokenAuthFixture(t, tx, "aat-oauth", opts)
 
-	principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), token)
+	principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), token, model.OAuthAudiencePublicAPI)
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v", err)
 	}
@@ -356,6 +377,9 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessToken(t *testing.T) {
 	}
 	if principal.TokenKind != model.APITokenKindOAuthAccessToken {
 		t.Errorf("TokenKind = %s、期待値 = %s", principal.TokenKind, model.APITokenKindOAuthAccessToken)
+	}
+	if principal.OAuthApplicationID == nil || *principal.OAuthApplicationID != f.oauthApplicationID {
+		t.Errorf("OAuthApplicationID = %v、期待値 = %v", principal.OAuthApplicationID, f.oauthApplicationID)
 	}
 	if !principal.TokenExpiresAt.Equal(opts.expiresAt) {
 		t.Errorf("TokenExpiresAt = %v、期待値 = %v", principal.TokenExpiresAt, opts.expiresAt)
@@ -416,7 +440,7 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthの最終利用日時の更新
 		}
 	}()
 
-	principal, err := newAuthenticateAPITokenUCForOAuthTest(query.New(conn)).Execute(ctx, tokenValue)
+	principal, err := newAuthenticateAPITokenUCForOAuthTest(query.New(conn)).Execute(ctx, tokenValue, model.OAuthAudiencePublicAPI)
 	if err != nil || principal == nil {
 		t.Fatalf("更新失敗時の照合結果 = %+v、エラー = %v、認証成功を期待", principal, err)
 	}
@@ -480,6 +504,10 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessTokenRejected(t *testing
 			name:   "持ち主のフィーチャーフラグが無効",
 			modify: func(opts *oauthAccessTokenAuthFixtureOptions) { opts.flagDisabled = true },
 		},
+		{
+			name:   "MCPサーバー宛てのトークン",
+			modify: func(opts *oauthAccessTokenAuthFixtureOptions) { *opts = mcpOAuthAccessTokenAuthFixtureOptions() },
+		},
 	}
 
 	for i, tt := range tests {
@@ -497,7 +525,7 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessTokenRejected(t *testing
 				token = tt.token(token)
 			}
 
-			principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), token)
+			principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), token, model.OAuthAudiencePublicAPI)
 			if err != nil {
 				t.Fatalf("Execute()のエラー = %v", err)
 			}
@@ -509,5 +537,91 @@ func TestAuthenticateAPITokenUsecase_Execute_OAuthAccessTokenRejected(t *testing
 				t.Errorf("許可のlast_used_at = %v、受け付けないトークンでは更新しないことを期待", lastUsedAt.Time)
 			}
 		})
+	}
+}
+
+func TestAuthenticateAPITokenUsecase_Execute_MCPServer(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	f, token := setupOAuthAccessTokenAuthFixture(t, tx, "aat-mcp", mcpOAuthAccessTokenAuthFixtureOptions())
+
+	principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), token, model.OAuthAudienceMCPServer)
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v", err)
+	}
+	if principal == nil {
+		t.Fatal("principal = nil、主体を期待")
+	}
+	if principal.SpaceMember.ID != f.spaceMemberID {
+		t.Errorf("SpaceMember.ID = %s、期待値 = %s", principal.SpaceMember.ID, f.spaceMemberID)
+	}
+	if principal.TokenKind != model.APITokenKindOAuthAccessToken {
+		t.Errorf("TokenKind = %s、期待値 = %s", principal.TokenKind, model.APITokenKindOAuthAccessToken)
+	}
+}
+
+func TestAuthenticateAPITokenUsecase_Execute_MCPServerRejected(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		opts func() oauthAccessTokenAuthFixtureOptions
+	}{
+		{
+			name: "公開API宛てのトークン",
+			opts: func() oauthAccessTokenAuthFixtureOptions {
+				opts := defaultOAuthAccessTokenAuthFixtureOptions()
+				opts.flagName = model.FeatureFlagRemoteMCPServer
+				return opts
+			},
+		},
+		{
+			name: "持ち主のMCPサーバーのフラグが無効 (公開APIのフラグだけが有効)",
+			opts: func() oauthAccessTokenAuthFixtureOptions {
+				opts := mcpOAuthAccessTokenAuthFixtureOptions()
+				opts.flagName = model.FeatureFlagPublicAPI
+				return opts
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			_, token := setupOAuthAccessTokenAuthFixture(t, tx, "aat-mcp-reject-"+string(rune('a'+i)), tt.opts())
+
+			principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), token, model.OAuthAudienceMCPServer)
+			if err != nil {
+				t.Fatalf("Execute()のエラー = %v", err)
+			}
+			if principal != nil {
+				t.Errorf("principal = %+v、nilを期待", principal)
+			}
+		})
+	}
+}
+
+func TestAuthenticateAPITokenUsecase_Execute_MCPServerRejectsPersonalAccessToken(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	f := setupAuthenticateAPITokenFixture(t, tx, defaultAuthenticateAPITokenFixtureOptions())
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithUserID(f.userID).
+		WithName(string(model.FeatureFlagRemoteMCPServer)).
+		Build()
+
+	principal, err := newAuthenticateAPITokenUC(tx).Execute(context.Background(), f.token, model.OAuthAudienceMCPServer)
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v", err)
+	}
+	if principal != nil {
+		t.Errorf("principal = %+v、nilを期待", principal)
+	}
+	if lastUsedAt := findPersonalAccessTokenLastUsedAt(t, tx, f.tokenID); lastUsedAt.Valid {
+		t.Errorf("last_used_at = %v、受け付けないトークンでは更新しないことを期待", lastUsedAt.Time)
 	}
 }

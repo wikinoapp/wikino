@@ -51,7 +51,7 @@ func newTestAPIHandler(t *testing.T, server apigen.StrictServerInterface) http.H
 
 // testAPIAuthenticatorはnewTestAPIHandlerWithに渡すトークンの照合 (middlewareのNewAPITokenAuthが受け取るもの)
 type testAPIAuthenticator interface {
-	Execute(ctx context.Context, token string) (*model.APIPrincipal, error)
+	Execute(ctx context.Context, token string, audience model.OAuthAudience) (*model.APIPrincipal, error)
 }
 
 // testAPIRateLimiterはnewTestAPIHandlerWithに渡すレート制限 (middlewareのNewAPIRateLimitが受け取るもの)
@@ -78,7 +78,7 @@ func newTestAPIHandlerWith(t *testing.T, server apigen.StrictServerInterface, au
 
 	r := chi.NewRouter()
 	reference := api_reference.NewHandler(&config.Config{Domain: "example.com"})
-	r.Mount(apiMountPath, newAPIRouter(server, reference.Show, problems, tokenAuth, rateLimit, validator))
+	r.Mount(apiMountPath, newAPIRouter(server, reference.Show, problems, tokenAuth.Middleware, rateLimit, validator))
 	return r
 }
 
@@ -90,7 +90,7 @@ const testRateLimitedAPIToken = "wkp_rate_limited"
 // トークン認証の振る舞いはmiddlewareとusecaseのテストで確かめるため、ここではルーターの構成だけを確かめる
 type testAPITokenAuthenticator struct{}
 
-func (testAPITokenAuthenticator) Execute(_ context.Context, token string) (*model.APIPrincipal, error) {
+func (testAPITokenAuthenticator) Execute(_ context.Context, token string, _ model.OAuthAudience) (*model.APIPrincipal, error) {
 	if token != testRateLimitedAPIToken {
 		return nil, nil
 	}

@@ -1,5 +1,5 @@
 -- name: CreateOAuthAuthorizationCode :one
--- 認可コードを作成する
+-- 認可コードを作成する。@audienceは交換で発行するトークンに引き継ぐ宛先である
 INSERT INTO oauth_authorization_codes (
     oauth_grant_id,
     space_id,
@@ -7,6 +7,7 @@ INSERT INTO oauth_authorization_codes (
     scopes,
     redirect_uri,
     code_challenge,
+    audience,
     expires_at,
     created_at,
     updated_at
@@ -17,6 +18,7 @@ INSERT INTO oauth_authorization_codes (
     @scopes::text[],
     @redirect_uri,
     @code_challenge,
+    @audience,
     @expires_at,
     @now,
     @now
@@ -30,7 +32,7 @@ INSERT INTO oauth_authorization_codes (
 SELECT * FROM oauth_authorization_codes WHERE code_digest = @code_digest;
 
 -- name: ExchangeOAuthAuthorizationCode :one
--- 未使用の認可コードを使用済みにし、コードの許可・スコープでアクセストークンとリフレッシュ
+-- 未使用の認可コードを使用済みにし、コードの許可・スコープ・宛先でアクセストークンとリフレッシュ
 -- トークンを作成して、使用済みにしたコードを返す。1つの文で判定と更新を行うため、同じコードの
 -- 同時の交換でもトークンを作るのは1回だけである。既に使用済みなら何もせず行を返さない。
 -- 有効期限・リダイレクトURI・PKCEは呼び出し側が交換の前に確かめる。
@@ -53,6 +55,7 @@ created_access_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -62,6 +65,7 @@ created_access_token AS (
         consumed.space_id,
         @access_token_digest,
         consumed.scopes,
+        consumed.audience,
         @access_token_expires_at,
         @now,
         @now
@@ -73,6 +77,7 @@ created_refresh_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -82,6 +87,7 @@ created_refresh_token AS (
         consumed.space_id,
         @refresh_token_digest,
         consumed.scopes,
+        consumed.audience,
         @refresh_token_expires_at,
         @now,
         @now
@@ -95,6 +101,7 @@ SELECT * FROM consumed;
 -- 触れない。1つの文で行うため、許可だけが作られてコードが無い状態は残らない。
 -- 許可のスコープの保存順は保証しない。表示するときはmodel.APITokenScopesの順に並べ直す。
 -- 端末名 (@device_name) は認可要求で送られたもので、送られなかったときはNULLを渡す。
+-- @audienceは、交換で発行するトークンに引き継ぐ宛先である。
 WITH created_grant AS (
     INSERT INTO oauth_grants (
         oauth_application_id,
@@ -122,6 +129,7 @@ INSERT INTO oauth_authorization_codes (
     scopes,
     redirect_uri,
     code_challenge,
+    audience,
     expires_at,
     created_at,
     updated_at
@@ -133,6 +141,7 @@ SELECT
     @scopes::text[],
     @redirect_uri,
     @code_challenge,
+    @audience,
     @expires_at,
     @now,
     @now

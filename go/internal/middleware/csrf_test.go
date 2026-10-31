@@ -765,6 +765,7 @@ func TestCSRFMiddleware_TokenlessPaths(t *testing.T) {
 		{name: "認可サーバーのメタデータにはCookieを付けない", method: http.MethodGet, path: "/.well-known/oauth-authorization-server", wantCookie: false},
 		{name: "保護リソースのメタデータにはCookieを付けない", method: http.MethodGet, path: "/.well-known/oauth-protected-resource/api/v1/spaces/example", wantCookie: false},
 		{name: "APIカタログにはCookieを付けない", method: http.MethodGet, path: "/.well-known/api-catalog", wantCookie: false},
+		{name: "MCPサーバーにはCookieを付けない", method: http.MethodGet, path: "/mcp", wantCookie: false},
 		{name: "OAuthの同意画面にはCookieを付ける", method: http.MethodGet, path: "/oauth/authorize", wantCookie: true},
 	}
 

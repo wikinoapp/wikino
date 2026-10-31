@@ -57,7 +57,7 @@ func TestRevokePersonalAccessTokenUsecase_Execute_失効したトークンは次
 	f := setupAuthenticateAPITokenFixture(t, tx, opts)
 	authenticateUC := newAuthenticateAPITokenUC(tx)
 
-	principal, err := authenticateUC.Execute(context.Background(), f.token)
+	principal, err := authenticateUC.Execute(context.Background(), f.token, model.OAuthAudiencePublicAPI)
 	if err != nil {
 		t.Fatalf("失効前のExecute()のエラー = %v", err)
 	}
@@ -77,7 +77,7 @@ func TestRevokePersonalAccessTokenUsecase_Execute_失効したトークンは次
 		t.Fatalf("失効のExecute()のエラー = %v", err)
 	}
 
-	principal, err = authenticateUC.Execute(context.Background(), f.token)
+	principal, err = authenticateUC.Execute(context.Background(), f.token, model.OAuthAudiencePublicAPI)
 	if err != nil {
 		t.Fatalf("失効後のExecute()のエラー = %v", err)
 	}

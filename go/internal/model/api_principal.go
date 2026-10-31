@@ -22,6 +22,9 @@ type APIPrincipal struct {
 	Space       *Space
 	SpaceMember *SpaceMember
 	TokenKind   APITokenKind
+	// OAuthApplicationIDは、OAuthのアクセストークンを発行したOAuthアプリ (クライアント) のID。
+	// 個人用アクセストークンではnil
+	OAuthApplicationID *OAuthApplicationID
 	// TokenExpiresAtはトークンの有効期限
 	TokenExpiresAt time.Time
 	// Scopesはトークンのスコープを含意展開したもの。トークンに付与できるスコープ

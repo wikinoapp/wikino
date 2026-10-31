@@ -206,7 +206,7 @@ func (r *OAuthDeviceAuthorizationRepository) RecordPoll(ctx context.Context, id 
 }
 
 // ExchangeOAuthDeviceAuthorizationInputは、デバイスコードの交換の入力パラメータ。
-// アクセストークンとリフレッシュトークンは、要求の許可・スコープで作る
+// アクセストークンとリフレッシュトークンは、要求の許可・スコープとAudienceの宛先で作る
 type ExchangeOAuthDeviceAuthorizationInput struct {
 	ID                    model.OAuthDeviceAuthorizationID
 	SpaceID               model.SpaceID
@@ -214,6 +214,7 @@ type ExchangeOAuthDeviceAuthorizationInput struct {
 	AccessTokenExpiresAt  time.Time
 	RefreshTokenDigest    string
 	RefreshTokenExpiresAt time.Time
+	Audience              model.OAuthAudience
 	Now                   time.Time
 }
 
@@ -230,6 +231,7 @@ func (r *OAuthDeviceAuthorizationRepository) Exchange(ctx context.Context, input
 		AccessTokenExpiresAt:  input.AccessTokenExpiresAt,
 		RefreshTokenDigest:    input.RefreshTokenDigest,
 		RefreshTokenExpiresAt: input.RefreshTokenExpiresAt,
+		Audience:              int32(input.Audience),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

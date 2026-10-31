@@ -15,16 +15,16 @@ const (
 	apiPrincipalContextKey contextKey = "api_principal"
 )
 
-// apiTokenAuthenticatorは公開APIのトークンを照合するインターフェース。
+// apiTokenAuthenticatorは、宛先 (audience) を指定してトークンを照合するインターフェース。
 // usecase.AuthenticateAPITokenUsecaseがこのインターフェースを満たす。
 // トークンを受け付けられない場合は (nil, nil) を返す
 type apiTokenAuthenticator interface {
-	Execute(ctx context.Context, token string) (*model.APIPrincipal, error)
+	Execute(ctx context.Context, token string, audience model.OAuthAudience) (*model.APIPrincipal, error)
 }
 
-// APITokenAuthは `Authorization: Bearer` のトークンを照合し、呼び出し主体をコンテキストに入れるミドルウェア。
-// トークンの無いリクエストはそのまま通し、トークンが要るかどうかはAPIRequestValidatorが
-// operationのsecurityで判定する
+// APITokenAuthは `Authorization: Bearer` のトークンを公開API宛てとして照合し、呼び出し主体を
+// コンテキストに入れるミドルウェア。トークンの無いリクエストはそのまま通し、トークンが要るか
+// どうかはAPIRequestValidatorがoperationのsecurityで判定する
 type APITokenAuth struct {
 	authenticator apiTokenAuthenticator
 	problems      *apierror.Writer
@@ -55,7 +55,7 @@ func (a *APITokenAuth) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		principal, err := a.authenticator.Execute(r.Context(), token)
+		principal, err := a.authenticator.Execute(r.Context(), token, model.OAuthAudiencePublicAPI)
 		if err != nil {
 			slog.ErrorContext(r.Context(), "APIのトークンの照合に失敗しました", "error", err)
 			a.problems.InternalServerError(w, r)

@@ -40,7 +40,7 @@ type topicTestAuthenticator struct {
 	principal *model.APIPrincipal
 }
 
-func (a topicTestAuthenticator) Execute(_ context.Context, token string) (*model.APIPrincipal, error) {
+func (a topicTestAuthenticator) Execute(_ context.Context, token string, _ model.OAuthAudience) (*model.APIPrincipal, error) {
 	p := *a.principal
 	switch token {
 	case "wkp_topic_read":

@@ -193,7 +193,7 @@ func TestRevokeOAuthTokenUsecase_Execute_リフレッシュとの同時実行(t 
 	}
 
 	assertGrantRevoked(t, q, f, true)
-	principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(ctx, accessValue)
+	principal, err := newAuthenticateAPITokenUCForOAuthTest(q).Execute(ctx, accessValue, model.OAuthAudiencePublicAPI)
 	if err != nil || principal != nil {
 		t.Errorf("ログアウト後のアクセストークンの照合 = %+v、エラー = %v、拒否を期待", principal, err)
 	}

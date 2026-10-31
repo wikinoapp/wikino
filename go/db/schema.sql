@@ -265,7 +265,9 @@ CREATE TABLE public.oauth_access_tokens (
     expires_at timestamp with time zone NOT NULL,
     revoked_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    audience integer DEFAULT 0 NOT NULL,
+    CONSTRAINT chk_oauth_access_tokens_audience CHECK ((audience = ANY (ARRAY[0, 1])))
 );
 
 
@@ -286,8 +288,12 @@ CREATE TABLE public.oauth_applications (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     version bigint DEFAULT 1 NOT NULL,
+    registration_method integer DEFAULT 0 NOT NULL,
+    metadata_expires_at timestamp with time zone,
+    CONSTRAINT chk_oauth_applications_client_id_metadata_document CHECK (((registration_method = 0) OR ((space_id IS NULL) AND (client_type = 1) AND (client_secret_digest IS NULL)))),
     CONSTRAINT chk_oauth_applications_client_secret_digest CHECK (((client_type = 0) = (client_secret_digest IS NOT NULL))),
-    CONSTRAINT chk_oauth_applications_client_type CHECK ((client_type = ANY (ARRAY[0, 1])))
+    CONSTRAINT chk_oauth_applications_client_type CHECK ((client_type = ANY (ARRAY[0, 1]))),
+    CONSTRAINT chk_oauth_applications_registration_method CHECK ((registration_method = ANY (ARRAY[0, 1])))
 );
 
 
@@ -306,7 +312,9 @@ CREATE TABLE public.oauth_authorization_codes (
     expires_at timestamp with time zone NOT NULL,
     used_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    audience integer DEFAULT 0 NOT NULL,
+    CONSTRAINT chk_oauth_authorization_codes_audience CHECK ((audience = ANY (ARRAY[0, 1])))
 );
 
 
@@ -368,7 +376,9 @@ CREATE TABLE public.oauth_refresh_tokens (
     used_at timestamp with time zone,
     revoked_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    audience integer DEFAULT 0 NOT NULL,
+    CONSTRAINT chk_oauth_refresh_tokens_audience CHECK ((audience = ANY (ARRAY[0, 1])))
 );
 
 
@@ -2710,4 +2720,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261019024554'),
     ('20261027031750'),
     ('20261027042006'),
-    ('20261027045849');
+    ('20261027045849'),
+    ('20261028163426'),
+    ('20261028165252'),
+    ('20261031045408');

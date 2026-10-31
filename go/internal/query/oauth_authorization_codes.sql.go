@@ -21,6 +21,7 @@ INSERT INTO oauth_authorization_codes (
     scopes,
     redirect_uri,
     code_challenge,
+    audience,
     expires_at,
     created_at,
     updated_at
@@ -33,8 +34,9 @@ INSERT INTO oauth_authorization_codes (
     $6,
     $7,
     $8,
-    $8
-) RETURNING id, oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at
+    $9,
+    $9
+) RETURNING id, oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at, audience
 `
 
 type CreateOAuthAuthorizationCodeParams struct {
@@ -44,11 +46,12 @@ type CreateOAuthAuthorizationCodeParams struct {
 	Scopes        []string  `json:"scopes"`
 	RedirectUri   string    `json:"redirect_uri"`
 	CodeChallenge string    `json:"code_challenge"`
+	Audience      int32     `json:"audience"`
 	ExpiresAt     time.Time `json:"expires_at"`
 	Now           time.Time `json:"now"`
 }
 
-// 認可コードを作成する
+// 認可コードを作成する。@audienceは交換で発行するトークンに引き継ぐ宛先である
 func (q *Queries) CreateOAuthAuthorizationCode(ctx context.Context, arg CreateOAuthAuthorizationCodeParams) (OauthAuthorizationCode, error) {
 	row := q.db.QueryRowContext(ctx, createOAuthAuthorizationCode,
 		arg.OauthGrantID,
@@ -57,6 +60,7 @@ func (q *Queries) CreateOAuthAuthorizationCode(ctx context.Context, arg CreateOA
 		pq.Array(arg.Scopes),
 		arg.RedirectUri,
 		arg.CodeChallenge,
+		arg.Audience,
 		arg.ExpiresAt,
 		arg.Now,
 	)
@@ -73,6 +77,7 @@ func (q *Queries) CreateOAuthAuthorizationCode(ctx context.Context, arg CreateOA
 		&i.UsedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }
@@ -88,13 +93,13 @@ WITH created_grant AS (
         created_at,
         updated_at
     ) VALUES (
-        $7,
         $8,
         $9,
-        $2::text[],
         $10,
-        $6,
-        $6
+        $2::text[],
+        $11,
+        $7,
+        $7
     )
     RETURNING id, space_id
 )
@@ -105,6 +110,7 @@ INSERT INTO oauth_authorization_codes (
     scopes,
     redirect_uri,
     code_challenge,
+    audience,
     expires_at,
     created_at,
     updated_at
@@ -118,9 +124,10 @@ SELECT
     $4,
     $5,
     $6,
-    $6
+    $7,
+    $7
 FROM created_grant
-RETURNING id, oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at
+RETURNING id, oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at, audience
 `
 
 type CreateOAuthAuthorizationCodeWithGrantParams struct {
@@ -128,6 +135,7 @@ type CreateOAuthAuthorizationCodeWithGrantParams struct {
 	Scopes             []string       `json:"scopes"`
 	RedirectUri        string         `json:"redirect_uri"`
 	CodeChallenge      string         `json:"code_challenge"`
+	Audience           int32          `json:"audience"`
 	ExpiresAt          time.Time      `json:"expires_at"`
 	Now                time.Time      `json:"now"`
 	OauthApplicationID string         `json:"oauth_application_id"`
@@ -141,12 +149,14 @@ type CreateOAuthAuthorizationCodeWithGrantParams struct {
 // 触れない。1つの文で行うため、許可だけが作られてコードが無い状態は残らない。
 // 許可のスコープの保存順は保証しない。表示するときはmodel.APITokenScopesの順に並べ直す。
 // 端末名 (@device_name) は認可要求で送られたもので、送られなかったときはNULLを渡す。
+// @audienceは、交換で発行するトークンに引き継ぐ宛先である。
 func (q *Queries) CreateOAuthAuthorizationCodeWithGrant(ctx context.Context, arg CreateOAuthAuthorizationCodeWithGrantParams) (OauthAuthorizationCode, error) {
 	row := q.db.QueryRowContext(ctx, createOAuthAuthorizationCodeWithGrant,
 		arg.CodeDigest,
 		pq.Array(arg.Scopes),
 		arg.RedirectUri,
 		arg.CodeChallenge,
+		arg.Audience,
 		arg.ExpiresAt,
 		arg.Now,
 		arg.OauthApplicationID,
@@ -167,6 +177,7 @@ func (q *Queries) CreateOAuthAuthorizationCodeWithGrant(ctx context.Context, arg
 		&i.UsedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }
@@ -178,7 +189,7 @@ WITH consumed AS (
     WHERE oauth_authorization_codes.id = $2
       AND oauth_authorization_codes.space_id = $3
       AND oauth_authorization_codes.used_at IS NULL
-    RETURNING oauth_authorization_codes.id, oauth_authorization_codes.oauth_grant_id, oauth_authorization_codes.space_id, oauth_authorization_codes.code_digest, oauth_authorization_codes.scopes, oauth_authorization_codes.redirect_uri, oauth_authorization_codes.code_challenge, oauth_authorization_codes.expires_at, oauth_authorization_codes.used_at, oauth_authorization_codes.created_at, oauth_authorization_codes.updated_at
+    RETURNING oauth_authorization_codes.id, oauth_authorization_codes.oauth_grant_id, oauth_authorization_codes.space_id, oauth_authorization_codes.code_digest, oauth_authorization_codes.scopes, oauth_authorization_codes.redirect_uri, oauth_authorization_codes.code_challenge, oauth_authorization_codes.expires_at, oauth_authorization_codes.used_at, oauth_authorization_codes.created_at, oauth_authorization_codes.updated_at, oauth_authorization_codes.audience
 ),
 created_access_token AS (
     INSERT INTO oauth_access_tokens (
@@ -186,6 +197,7 @@ created_access_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -195,6 +207,7 @@ created_access_token AS (
         consumed.space_id,
         $4,
         consumed.scopes,
+        consumed.audience,
         $5,
         $1,
         $1
@@ -206,6 +219,7 @@ created_refresh_token AS (
         space_id,
         token_digest,
         scopes,
+        audience,
         expires_at,
         created_at,
         updated_at
@@ -215,12 +229,13 @@ created_refresh_token AS (
         consumed.space_id,
         $6,
         consumed.scopes,
+        consumed.audience,
         $7,
         $1,
         $1
     FROM consumed
 )
-SELECT id, oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at FROM consumed
+SELECT id, oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at, audience FROM consumed
 `
 
 type ExchangeOAuthAuthorizationCodeParams struct {
@@ -245,9 +260,10 @@ type ExchangeOAuthAuthorizationCodeRow struct {
 	UsedAt        sql.NullTime `json:"used_at"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
+	Audience      int32        `json:"audience"`
 }
 
-// 未使用の認可コードを使用済みにし、コードの許可・スコープでアクセストークンとリフレッシュ
+// 未使用の認可コードを使用済みにし、コードの許可・スコープ・宛先でアクセストークンとリフレッシュ
 // トークンを作成して、使用済みにしたコードを返す。1つの文で判定と更新を行うため、同じコードの
 // 同時の交換でもトークンを作るのは1回だけである。既に使用済みなら何もせず行を返さない。
 // 有効期限・リダイレクトURI・PKCEは呼び出し側が交換の前に確かめる。
@@ -279,12 +295,13 @@ func (q *Queries) ExchangeOAuthAuthorizationCode(ctx context.Context, arg Exchan
 		&i.UsedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }
 
 const findOAuthAuthorizationCodeByCodeDigest = `-- name: FindOAuthAuthorizationCodeByCodeDigest :one
-SELECT id, oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at FROM oauth_authorization_codes WHERE code_digest = $1
+SELECT id, oauth_grant_id, space_id, code_digest, scopes, redirect_uri, code_challenge, expires_at, used_at, created_at, updated_at, audience FROM oauth_authorization_codes WHERE code_digest = $1
 `
 
 // コードダイジェストで認可コードを取得する。
@@ -306,6 +323,7 @@ func (q *Queries) FindOAuthAuthorizationCodeByCodeDigest(ctx context.Context, co
 		&i.UsedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Audience,
 	)
 	return i, err
 }

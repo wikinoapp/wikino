@@ -95,7 +95,9 @@ func (uc *CreateOAuthDeviceAuthorizationUsecase) Execute(ctx context.Context, pa
 	if err != nil {
 		return nil, err
 	}
-	if app == nil {
+	// CIMDのクライアントは、利用者が認可要求で同意画面を開いたときに文書を取得して確かめる。
+	// デバイス認可の要求では文書を確かめられないため受け付けない
+	if app == nil || app.IsClientIDMetadataDocument() {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidClient)
 	}
 	if app.IsConfidential() {

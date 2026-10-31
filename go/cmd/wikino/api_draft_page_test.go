@@ -41,7 +41,7 @@ type draftPageTestAuthenticator struct {
 	principal *model.APIPrincipal
 }
 
-func (a draftPageTestAuthenticator) Execute(_ context.Context, token string) (*model.APIPrincipal, error) {
+func (a draftPageTestAuthenticator) Execute(_ context.Context, token string, _ model.OAuthAudience) (*model.APIPrincipal, error) {
 	p := *a.principal
 	switch token {
 	case "wkp_draft_page_read":

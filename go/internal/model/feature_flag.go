@@ -9,6 +9,8 @@ const (
 	FeatureFlagExample FeatureFlagName = "go_example"
 	// FeatureFlagPublicAPIは公開Web API (個人用アクセストークン・OAuth連携・APIの呼び出し) を有効にする
 	FeatureFlagPublicAPI FeatureFlagName = "go_public_api"
+	// FeatureFlagRemoteMCPServerはリモートMCPサーバー (MCPクライアントとの連携・ツールの呼び出し) を有効にする
+	FeatureFlagRemoteMCPServer FeatureFlagName = "go_remote_mcp_server"
 )
 
 // AllFeatureFlagNamesは上で定義した全フラグの一覧。Goは定数グループの
@@ -17,6 +19,7 @@ const (
 var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagExample,
 	FeatureFlagPublicAPI,
+	FeatureFlagRemoteMCPServer,
 }
 
 // FeatureFlagはフィーチャーフラグのドメインモデル

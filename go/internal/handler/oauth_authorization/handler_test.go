@@ -97,8 +97,8 @@ func setupHandler(t *testing.T, q *query.Queries) *oauthauthorizationhandler.Han
 
 	return oauthauthorizationhandler.NewHandler(
 		cfg,
-		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, appRepo, spaceRepo, spaceMemberRepo, repository.NewTopicMemberRepository(q)),
-		usecase.NewCreateOAuthAuthorizationUsecase(testutil.GetTestDB(), repository.NewOAuthGrantRepository(q), cfg, featureFlagRepo, appRepo, spaceRepo, spaceMemberRepo, repository.NewOAuthAuthorizationCodeRepository(q), validator.NewOAuthAuthorizationCreateValidator()),
+		usecase.NewGetOAuthAuthorizationNewUsecase(cfg, featureFlagRepo, appRepo, spaceRepo, spaceMemberRepo, repository.NewTopicMemberRepository(q), testutil.NewCIMDStub(nil).Fetcher()),
+		usecase.NewCreateOAuthAuthorizationUsecase(testutil.GetTestDB(), repository.NewOAuthGrantRepository(q), cfg, featureFlagRepo, appRepo, spaceRepo, spaceMemberRepo, repository.NewOAuthAuthorizationCodeRepository(q), validator.NewOAuthAuthorizationCreateValidator(), testutil.NewCIMDStub(nil).Fetcher()),
 	)
 }
 

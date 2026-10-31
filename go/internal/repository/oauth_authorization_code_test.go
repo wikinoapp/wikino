@@ -95,6 +95,7 @@ func TestOAuthAuthorizationCodeRepository_CreateWithGrant(t *testing.T) {
 		Scopes:             []model.Scope{model.ScopeTopicRead},
 		RedirectURI:        "http://127.0.0.1:8080/callback",
 		CodeChallenge:      "code_with_grant_challenge",
+		Audience:           model.OAuthAudienceMCPServer,
 		ExpiresAt:          expiresAt,
 		DeviceName:         &deviceName,
 	}
@@ -107,7 +108,7 @@ func TestOAuthAuthorizationCodeRepository_CreateWithGrant(t *testing.T) {
 	if first.SpaceID != f.spaceID {
 		t.Errorf("first.SpaceID = %v、期待値 = %v", first.SpaceID, f.spaceID)
 	}
-	if first.RedirectURI != input.RedirectURI || first.CodeChallenge != input.CodeChallenge || !first.ExpiresAt.Equal(expiresAt) {
+	if first.RedirectURI != input.RedirectURI || first.CodeChallenge != input.CodeChallenge || first.Audience != input.Audience || !first.ExpiresAt.Equal(expiresAt) {
 		t.Errorf("first = %+v、入力と一致しない", first)
 	}
 	grant, err := grantRepo.FindByID(ctx, first.OAuthGrantID, f.spaceID)
@@ -320,6 +321,33 @@ func TestOAuthAuthorizationCodeRepository_Exchange(t *testing.T) {
 			t.Errorf("使用済みのコードに対するExchange() = %v、期待値 = nil", again)
 		}
 		assertNoOAuthTokens(t, accessTokenRepo, refreshTokenRepo, "again")
+	})
+
+	t.Run("コードの宛先をトークンに引き継ぐ", func(t *testing.T) {
+		id := newCode("code_exchange_mcp_digest").WithAudience(model.OAuthAudienceMCPServer).Build()
+
+		code, err := exchange(id, f.spaceID, "mcp")
+		if err != nil {
+			t.Fatalf("Exchange()のエラー = %v", err)
+		}
+		if code == nil || code.Audience != model.OAuthAudienceMCPServer {
+			t.Fatalf("Exchange() = %+v、期待値 = MCPサーバー宛てのコード", code)
+		}
+
+		accessToken, err := accessTokenRepo.FindByTokenDigest(ctx, "code_exchange_access_mcp")
+		if err != nil || accessToken == nil {
+			t.Fatalf("アクセストークンの取得結果 = %+v、エラー = %v", accessToken, err)
+		}
+		if accessToken.Audience != model.OAuthAudienceMCPServer {
+			t.Errorf("アクセストークンのAudience = %v、期待値 = %v", accessToken.Audience, model.OAuthAudienceMCPServer)
+		}
+		refreshToken, err := refreshTokenRepo.FindByTokenDigest(ctx, "code_exchange_refresh_mcp")
+		if err != nil || refreshToken == nil {
+			t.Fatalf("リフレッシュトークンの取得結果 = %+v、エラー = %v", refreshToken, err)
+		}
+		if refreshToken.Audience != model.OAuthAudienceMCPServer {
+			t.Errorf("リフレッシュトークンのAudience = %v、期待値 = %v", refreshToken.Audience, model.OAuthAudienceMCPServer)
+		}
 	})
 
 	t.Run("交換しない場合はnilを返しトークンを作らない", func(t *testing.T) {
