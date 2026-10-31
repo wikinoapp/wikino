@@ -1601,3 +1601,78 @@ func TestDraftPageRepository_ListByModifiedAt(t *testing.T) {
 		}
 	})
 }
+
+func TestDraftPageRepository_ReassignLinkedPageID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewDraftPageRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).WithEmail("draft-reassign-link@example.com").WithAtname("draftreassignlink").Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("draft-reassign-link").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("draft-reassign-link-other").Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+	otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(otherSpaceID).WithUserID(userID).Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("General").Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("General").Build()
+
+	oldID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Old").WithUnpublished().Build()
+	newID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(2).WithTitle("New").Build()
+	otherID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(3).WithTitle("Other").Build()
+	orderedPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(4).WithTitle("Ordered").Build()
+	duplicatePageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(5).WithTitle("Duplicate").Build()
+	otherSpacePageID := testutil.NewPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).WithNumber(1).WithTitle("Other Space").Build()
+
+	modifiedAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	orderedDraftID := testutil.NewDraftPageBuilder(t, tx).WithSpaceID(spaceID).WithPageID(orderedPageID).WithSpaceMemberID(spaceMemberID).WithTopicID(topicID).
+		WithBody("[[Old]]").WithModifiedAt(modifiedAt).WithLinkedPageIDs([]model.PageID{otherID, oldID, otherID}).Build()
+	duplicateDraftID := testutil.NewDraftPageBuilder(t, tx).WithSpaceID(spaceID).WithPageID(duplicatePageID).WithSpaceMemberID(spaceMemberID).WithTopicID(topicID).
+		WithLinkedPageIDs([]model.PageID{newID, oldID}).Build()
+	otherSpaceDraftID := testutil.NewDraftPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithPageID(otherSpacePageID).WithSpaceMemberID(otherSpaceMemberID).WithTopicID(otherTopicID).
+		WithLinkedPageIDs([]model.PageID{oldID}).Build()
+
+	if err := repo.ReassignLinkedPageID(ctx, spaceID, oldID, newID); err != nil {
+		t.Fatalf("ReassignLinkedPageID()のエラー = %v", err)
+	}
+
+	t.Run("順序を保って付け替え、本文と更新日時を変えない", func(t *testing.T) {
+		d, err := repo.FindByID(ctx, orderedDraftID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		want := []model.PageID{otherID, newID, otherID}
+		if !slices.Equal(d.LinkedPageIDs, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", d.LinkedPageIDs, want)
+		}
+		if d.Body != "[[Old]]" {
+			t.Errorf("Body = %q、期待値 = %q", d.Body, "[[Old]]")
+		}
+		if !d.ModifiedAt.Equal(modifiedAt) {
+			t.Errorf("ModifiedAt = %v、期待値 = %v", d.ModifiedAt, modifiedAt)
+		}
+	})
+
+	t.Run("付け替え先がすでにあれば重複させない", func(t *testing.T) {
+		d, err := repo.FindByID(ctx, duplicateDraftID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		want := []model.PageID{newID}
+		if !slices.Equal(d.LinkedPageIDs, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", d.LinkedPageIDs, want)
+		}
+	})
+
+	t.Run("別のスペースの下書きを変えない", func(t *testing.T) {
+		d, err := repo.FindByID(ctx, otherSpaceDraftID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		want := []model.PageID{oldID}
+		if !slices.Equal(d.LinkedPageIDs, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", d.LinkedPageIDs, want)
+		}
+	})
+}

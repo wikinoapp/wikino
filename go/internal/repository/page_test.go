@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -2829,6 +2830,77 @@ func TestPageRepository_FindByIDForShare(t *testing.T) {
 			if page == nil || page.ID != id {
 				t.Errorf("ページ = %+v、期待値 = ID %sのページ", page, id)
 			}
+		}
+	})
+}
+
+func TestPageRepository_ReassignLinkedPageID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+	ctx := context.Background()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-reassign-link").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-reassign-link-other").Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("General").Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("General").Build()
+
+	oldID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Old").WithUnpublished().Build()
+	newID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(2).WithTitle("New").Build()
+	otherID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(3).WithTitle("Other").Build()
+
+	modifiedAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	orderedSourceID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(4).WithTitle("Ordered").
+		WithBody("[[Old]]").WithModifiedAt(modifiedAt).WithLinkedPageIDs([]model.PageID{otherID, oldID, otherID}).Build()
+	duplicateSourceID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(5).WithTitle("Duplicate").
+		WithLinkedPageIDs([]model.PageID{newID, oldID}).Build()
+	otherSpaceSourceID := testutil.NewPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).WithNumber(1).WithTitle("Other Space").
+		WithLinkedPageIDs([]model.PageID{oldID}).Build()
+
+	if err := repo.ReassignLinkedPageID(ctx, spaceID, oldID, newID); err != nil {
+		t.Fatalf("ReassignLinkedPageID()のエラー = %v", err)
+	}
+
+	pages, err := repo.FindByIDs(ctx, []model.PageID{orderedSourceID, duplicateSourceID}, spaceID)
+	if err != nil {
+		t.Fatalf("FindByIDs()のエラー = %v", err)
+	}
+	pageByID := make(map[model.PageID]*model.Page, len(pages))
+	for _, p := range pages {
+		pageByID[p.ID] = p
+	}
+
+	t.Run("順序を保って付け替え、本文と更新日時を変えない", func(t *testing.T) {
+		p := pageByID[orderedSourceID]
+		want := []model.PageID{otherID, newID, otherID}
+		if !slices.Equal(p.LinkedPageIDs, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", p.LinkedPageIDs, want)
+		}
+		if p.Body != "[[Old]]" {
+			t.Errorf("Body = %q、期待値 = %q", p.Body, "[[Old]]")
+		}
+		if !p.ModifiedAt.Equal(modifiedAt) {
+			t.Errorf("ModifiedAt = %v、期待値 = %v", p.ModifiedAt, modifiedAt)
+		}
+	})
+
+	t.Run("付け替え先がすでにあれば重複させない", func(t *testing.T) {
+		want := []model.PageID{newID}
+		if got := pageByID[duplicateSourceID].LinkedPageIDs; !slices.Equal(got, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", got, want)
+		}
+	})
+
+	t.Run("別のスペースのページを変えない", func(t *testing.T) {
+		otherPages, err := repo.FindByIDs(ctx, []model.PageID{otherSpaceSourceID}, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByIDs()のエラー = %v", err)
+		}
+		want := []model.PageID{oldID}
+		if got := otherPages[0].LinkedPageIDs; !slices.Equal(got, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", got, want)
 		}
 	})
 }

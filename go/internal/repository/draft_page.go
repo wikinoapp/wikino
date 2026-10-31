@@ -25,6 +25,16 @@ func (r *DraftPageRepository) WithTx(tx *sql.Tx) *DraftPageRepository {
 	return &DraftPageRepository{q: r.q.WithTx(tx)}
 }
 
+// ReassignLinkedPageIDは、スペースの下書き (ほかのメンバーの下書きを含む)のリンクの記録で、oldPageIDのページへのリンクを
+// newPageIDのページへ付け替える。本文と更新日時は変えない
+func (r *DraftPageRepository) ReassignLinkedPageID(ctx context.Context, spaceID model.SpaceID, oldPageID, newPageID model.PageID) error {
+	return r.q.ReassignDraftPageLinkedPageID(ctx, query.ReassignDraftPageLinkedPageIDParams{
+		SpaceID:   string(spaceID),
+		OldPageID: string(oldPageID),
+		NewPageID: string(newPageID),
+	})
+}
+
 // FindByIDはIDで下書きを取得する (スペースIDでスコープ)
 func (r *DraftPageRepository) FindByID(ctx context.Context, id model.DraftPageID, spaceID model.SpaceID) (*model.DraftPage, error) {
 	row, err := r.q.FindDraftPageByID(ctx, query.FindDraftPageByIDParams{

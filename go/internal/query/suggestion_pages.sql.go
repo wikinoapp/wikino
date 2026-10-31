@@ -175,6 +175,30 @@ func (q *Queries) ListSuggestionPagesBySuggestionID(ctx context.Context, arg Lis
 	return items, nil
 }
 
+const reassignSuggestionPageLinkedPageID = `-- name: ReassignSuggestionPageLinkedPageID :exec
+UPDATE suggestion_pages
+SET linked_page_ids = CASE
+    WHEN linked_page_ids @> ARRAY[$1::varchar] THEN array_remove(linked_page_ids, $2::varchar)
+    ELSE array_replace(linked_page_ids, $2::varchar, $1::varchar)
+  END
+WHERE space_id = $3
+  AND linked_page_ids @> ARRAY[$2::varchar]
+`
+
+type ReassignSuggestionPageLinkedPageIDParams struct {
+	NewPageID string `json:"new_page_id"`
+	OldPageID string `json:"old_page_id"`
+	SpaceID   string `json:"space_id"`
+}
+
+// 編集提案のページのリンクの記録で、old_page_idのページへのリンクをnew_page_idのページへ付け替える
+// 配列の順序を保ち、付け替え先がすでに含まれる行では付け替え元を取り除くだけにして重複させない。
+// 本文とupdated_atは変えない (版と並び順を変えないため)
+func (q *Queries) ReassignSuggestionPageLinkedPageID(ctx context.Context, arg ReassignSuggestionPageLinkedPageIDParams) error {
+	_, err := q.db.ExecContext(ctx, reassignSuggestionPageLinkedPageID, arg.NewPageID, arg.OldPageID, arg.SpaceID)
+	return err
+}
+
 const updateSuggestionPageContent = `-- name: UpdateSuggestionPageContent :one
 UPDATE suggestion_pages
 SET title = $2, body = $3, linked_page_ids = $4, featured_image_attachment_id = $5, updated_at = $6

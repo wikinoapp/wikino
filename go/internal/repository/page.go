@@ -27,6 +27,16 @@ func (r *PageRepository) WithTx(tx *sql.Tx) *PageRepository {
 	return &PageRepository{q: r.q.WithTx(tx)}
 }
 
+// ReassignLinkedPageIDは、スペースのページのリンクの記録で、oldPageIDのページへのリンクを
+// newPageIDのページへ付け替える。本文と更新日時は変えない
+func (r *PageRepository) ReassignLinkedPageID(ctx context.Context, spaceID model.SpaceID, oldPageID, newPageID model.PageID) error {
+	return r.q.ReassignPageLinkedPageID(ctx, query.ReassignPageLinkedPageIDParams{
+		SpaceID:   string(spaceID),
+		OldPageID: string(oldPageID),
+		NewPageID: string(newPageID),
+	})
+}
+
 // FindBySpaceAndNumberはスペースIDとページ番号でページを取得する (廃棄されていないページのみ)
 func (r *PageRepository) FindBySpaceAndNumber(ctx context.Context, spaceID model.SpaceID, number model.PageNumber) (*model.Page, error) {
 	row, err := r.q.FindPageBySpaceAndNumber(ctx, query.FindPageBySpaceAndNumberParams{

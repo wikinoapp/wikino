@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -929,6 +930,88 @@ func TestSuggestionPageRepository_OnDeleteContract(t *testing.T) {
 		}
 		if !featuredImageIsNull {
 			t.Error("添付ファイルの削除後もsuggestion_pages.featured_image_attachment_idがNULLになっていない")
+		}
+	})
+}
+
+func TestSuggestionPageRepository_ReassignLinkedPageID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewSuggestionPageRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).WithEmail("sp-reassign-link@example.com").WithAtname("sp_reassign_link").Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("sp-reassign-link").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("sp-reassign-link-other").Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+	otherSpaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(otherSpaceID).WithUserID(userID).Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("General").Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("General").Build()
+
+	oldID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Old").WithUnpublished().Build()
+	newID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(2).WithTitle("New").Build()
+	otherID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(3).WithTitle("Other").Build()
+	orderedPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(4).WithTitle("Ordered").Build()
+	duplicatePageID := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(5).WithTitle("Duplicate").Build()
+	otherSpacePageID := testutil.NewPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).WithNumber(1).WithTitle("Other Space").Build()
+
+	suggestionID := testutil.NewSuggestionBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithCreatedSpaceMemberID(spaceMemberID).WithTitle("提案").Build()
+	otherSuggestionID := testutil.NewSuggestionBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).WithCreatedSpaceMemberID(otherSpaceMemberID).WithTitle("提案").Build()
+
+	orderedSPID := testutil.NewSuggestionPageBuilder(t, tx).WithSpaceID(spaceID).WithSuggestionID(suggestionID).WithPageID(orderedPageID).
+		WithBody("[[Old]]").WithLinkedPageIDs([]model.PageID{otherID, oldID, otherID}).Build()
+	duplicateSPID := testutil.NewSuggestionPageBuilder(t, tx).WithSpaceID(spaceID).WithSuggestionID(suggestionID).WithPageID(duplicatePageID).
+		WithLinkedPageIDs([]model.PageID{newID, oldID}).Build()
+	otherSpaceSPID := testutil.NewSuggestionPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithSuggestionID(otherSuggestionID).WithPageID(otherSpacePageID).
+		WithLinkedPageIDs([]model.PageID{oldID}).Build()
+
+	before, err := repo.FindByID(ctx, orderedSPID, spaceID)
+	if err != nil {
+		t.Fatalf("FindByID()のエラー = %v", err)
+	}
+
+	if err := repo.ReassignLinkedPageID(ctx, spaceID, oldID, newID); err != nil {
+		t.Fatalf("ReassignLinkedPageID()のエラー = %v", err)
+	}
+
+	t.Run("順序を保って付け替え、本文と更新日時を変えない", func(t *testing.T) {
+		sp, err := repo.FindByID(ctx, orderedSPID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		want := []model.PageID{otherID, newID, otherID}
+		if !slices.Equal(sp.LinkedPageIDs, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", sp.LinkedPageIDs, want)
+		}
+		if sp.Body != "[[Old]]" {
+			t.Errorf("Body = %q、期待値 = %q", sp.Body, "[[Old]]")
+		}
+		if !sp.UpdatedAt.Equal(before.UpdatedAt) {
+			t.Errorf("UpdatedAt = %v、期待値 = %v", sp.UpdatedAt, before.UpdatedAt)
+		}
+	})
+
+	t.Run("付け替え先がすでにあれば重複させない", func(t *testing.T) {
+		sp, err := repo.FindByID(ctx, duplicateSPID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		want := []model.PageID{newID}
+		if !slices.Equal(sp.LinkedPageIDs, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", sp.LinkedPageIDs, want)
+		}
+	})
+
+	t.Run("別のスペースの編集提案のページを変えない", func(t *testing.T) {
+		sp, err := repo.FindByID(ctx, otherSpaceSPID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		want := []model.PageID{oldID}
+		if !slices.Equal(sp.LinkedPageIDs, want) {
+			t.Errorf("LinkedPageIDs = %v、期待値 = %v", sp.LinkedPageIDs, want)
 		}
 	})
 }

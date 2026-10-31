@@ -25,6 +25,16 @@ func (r *SuggestionPageRepository) WithTx(tx *sql.Tx) *SuggestionPageRepository 
 	return &SuggestionPageRepository{q: r.q.WithTx(tx)}
 }
 
+// ReassignLinkedPageIDは、スペースの編集提案のページのリンクの記録で、oldPageIDのページへのリンクを
+// newPageIDのページへ付け替える。本文と更新日時は変えない
+func (r *SuggestionPageRepository) ReassignLinkedPageID(ctx context.Context, spaceID model.SpaceID, oldPageID, newPageID model.PageID) error {
+	return r.q.ReassignSuggestionPageLinkedPageID(ctx, query.ReassignSuggestionPageLinkedPageIDParams{
+		SpaceID:   string(spaceID),
+		OldPageID: string(oldPageID),
+		NewPageID: string(newPageID),
+	})
+}
+
 // CreateSuggestionPageInputは編集提案ページ作成の入力パラメータ
 type CreateSuggestionPageInput struct {
 	SpaceID                   model.SpaceID

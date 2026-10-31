@@ -487,3 +487,15 @@ WHERE p.linked_page_ids @> ARRAY[@page_id::varchar]
   )
 ORDER BY p.modified_at DESC, p.id DESC
 LIMIT @row_limit;
+
+-- name: ReassignPageLinkedPageID :exec
+-- ページのリンクの記録で、old_page_idのページへのリンクをnew_page_idのページへ付け替える
+-- 配列の順序を保ち、付け替え先がすでに含まれる行では付け替え元を取り除くだけにして重複させない。
+-- 本文とmodified_at・updated_atは変えない (版と並び順を変えないため)
+UPDATE pages
+SET linked_page_ids = CASE
+    WHEN linked_page_ids @> ARRAY[@new_page_id::varchar] THEN array_remove(linked_page_ids, @old_page_id::varchar)
+    ELSE array_replace(linked_page_ids, @old_page_id::varchar, @new_page_id::varchar)
+  END
+WHERE space_id = @space_id
+  AND linked_page_ids @> ARRAY[@old_page_id::varchar];

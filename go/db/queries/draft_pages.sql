@@ -87,3 +87,15 @@ WHERE dp.space_member_id = $1
   AND dp.suggestion_page_id IS NULL
   AND p.discarded_at IS NULL
 ORDER BY dp.modified_at DESC;
+
+-- name: ReassignDraftPageLinkedPageID :exec
+-- 下書きのリンクの記録で、old_page_idのページへのリンクをnew_page_idのページへ付け替える (ほかのメンバーの下書きを含む)
+-- 配列の順序を保ち、付け替え先がすでに含まれる行では付け替え元を取り除くだけにして重複させない。
+-- 本文とmodified_at・updated_atは変えない (版と並び順を変えないため)
+UPDATE draft_pages
+SET linked_page_ids = CASE
+    WHEN linked_page_ids @> ARRAY[@new_page_id::varchar] THEN array_remove(linked_page_ids, @old_page_id::varchar)
+    ELSE array_replace(linked_page_ids, @old_page_id::varchar, @new_page_id::varchar)
+  END
+WHERE space_id = @space_id
+  AND linked_page_ids @> ARRAY[@old_page_id::varchar];
