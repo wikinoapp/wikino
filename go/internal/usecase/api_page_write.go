@@ -233,7 +233,7 @@ const updateAPIPageRetryLimit = 3
 var errAPIPageChanged = errors.New("更新対象のページが変更されました")
 
 // retryAPIPageUpdateはページの更新 (update) を、ページが検証の後に変わっていた場合と、同時に作られた
-// ページと一意制約で競合した場合に、ページの取得からやり直す。Web画面の公開・下書き保存はスペースを
+// ページと一意制約で競合した場合に、ページの取得からやり直す。Web画面の作成・下書き保存はスペースを
 // ロックせずにページ (Wikiリンク先を含む) を作るため、CreateAPIPageUsecaseと同じく競合に備える
 func retryAPIPageUpdate(update func() (*UpdateAPIPageOutput, error)) (*UpdateAPIPageOutput, error) {
 	var lastErr error

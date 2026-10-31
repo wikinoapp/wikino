@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -152,6 +153,20 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 		_ = tx.Rollback()
 	}()
 
+	// 未公開のページを置き換える公開・反映は、スペースをロックしたままリンクを付け替える。
+	// 同じロックでそのコミットを待ってからWikiリンクを解決し、論理削除したページのIDを記録しないようにする。
+	// ページの行より先にロックし、ロックの順序をAPIの書き込みと揃える
+	locked, err := uc.spaceRepo.WithTx(tx).LockByID(ctx, data.space.ID)
+	if err != nil {
+		return nil, fmt.Errorf("スペースのロックに失敗しました: %w", err)
+	}
+	if !locked {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
 	pageRepo := uc.pageRepo.WithTx(tx)
 	pageRevisionRepo := uc.pageRevisionRepo.WithTx(tx)
 	pageEditorRepo := uc.pageEditorRepo.WithTx(tx)
@@ -159,12 +174,6 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 	draftPageRevisionRepo := uc.draftPageRevisionRepo.WithTx(tx)
 	topicMemberRepo := uc.topicMemberRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
-
-	// 再試行の開始時に、先行する公開がこのページのリンクを付け替えていることがある。
-	// その書き込みを待つ前にWikiリンクを解決すると、古いページのIDを書き戻してしまう
-	if err := pageRepo.LockByIDs(ctx, []model.PageID{data.page.ID}, data.space.ID); err != nil {
-		return nil, fmt.Errorf("公開対象のページのロックに失敗しました: %w", err)
-	}
 
 	// 本文HTMLはページ詳細画面が表示時にレンダリングするため、公開では保存しない。
 	// リンク一覧が読むlinked_page_idsのために、本文のWikiリンクが指すページだけを解決する。

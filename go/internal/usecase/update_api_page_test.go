@@ -668,8 +668,9 @@ func TestUpdateAPIPageUsecase_ExecuteConcurrently(t *testing.T) {
 	}
 }
 
-// TestUpdateAPIPageUsecase_ExecuteWithWebPublishは、前提の照合の後にWeb画面の公開が割り込んでも、
-// ページの行のロックで更新を待たせ、公開された内容を上書きせずに前提の不一致にすることを確かめる
+// TestUpdateAPIPageUsecase_ExecuteWithWebPublishは、前提の照合の後にページの行が書き換えられても、
+// ページの行のロックで更新を待たせ、書き換えた内容を上書きせずに前提の不一致にすることを確かめる。
+// Web画面の公開はスペースのロックでも待たせるため、ページの行のロックだけで待つことを確かめるようスペースはロックしない
 func TestUpdateAPIPageUsecase_ExecuteWithWebPublish(t *testing.T) {
 	t.Parallel()
 
@@ -680,7 +681,7 @@ func TestUpdateAPIPageUsecase_ExecuteWithWebPublish(t *testing.T) {
 		WithTitle("タイトル").WithBody("本文").Build()
 	digest := findPageForTest(t, db, f.space.ID, 1).ContentDigest()
 
-	// Web画面の公開は、スペースをロックせずにページの行を書き換える
+	// スペースはロックせず、ページの行だけを書き換えたままにする
 	webTx, webPID := beginWebTx(t, db)
 	if _, err := webTx.ExecContext(t.Context(), "UPDATE pages SET body = $1, modified_at = now() WHERE id = $2 AND space_id = $3", "Web画面で公開した本文", pageID, f.space.ID); err != nil {
 		t.Fatalf("Web側の更新: %v", err)

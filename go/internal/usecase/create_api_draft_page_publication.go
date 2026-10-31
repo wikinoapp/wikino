@@ -105,7 +105,7 @@ func (uc *CreateAPIDraftPagePublicationUsecase) executeOnce(ctx context.Context,
 	}
 
 	// 照合・検証の後に下書きやページが変わっていた場合と、同時に作られたページと一意制約で競合した場合は、
-	// 下書きの取得からやり直す。Web画面の公開・下書き保存はスペースをロックせずにページ
+	// 下書きの取得からやり直す。Web画面の作成・下書き保存はスペースをロックせずにページ
 	// (Wikiリンク先を含む) を作るため、UpdateAPIPageUsecaseと同じく競合に備える
 	var lastErr error
 	for attempt := 0; attempt < createAPIDraftPagePublicationRetryLimit; attempt++ {

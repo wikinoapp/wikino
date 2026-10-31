@@ -254,6 +254,21 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 		_ = tx.Rollback()
 	}()
 
+	// 未公開のページを置き換える公開・反映は、スペースをロックしたままリンクを付け替える。
+	// 同じロックでそのコミットを待ってから編集提案のリンクの記録を読み直す。取得済みの記録を反映すると、
+	// 取得後に付け替えた記録を論理削除したページのIDで上書きしてしまう。
+	// ページの行より先にロックし、ロックの順序をAPIの書き込みと揃える
+	locked, err := uc.spaceRepo.WithTx(tx).LockByID(ctx, spaceID)
+	if err != nil {
+		return nil, fmt.Errorf("スペースのロックに失敗しました: %w", err)
+	}
+	if !locked {
+		return nil, &model.AppError{
+			Code:    model.AppErrCodeResourceNotFound,
+			UserMsg: i18n.T(ctx, "error_not_found_message"),
+		}
+	}
+
 	suggestionRepo := uc.suggestionRepo.WithTx(tx)
 	pageRepo := uc.pageRepo.WithTx(tx)
 	pageRevisionRepo := uc.pageRevisionRepo.WithTx(tx)
@@ -262,15 +277,6 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	attachmentRepo := uc.attachmentRepo.WithTx(tx)
 	pageAttachmentRefRepo := uc.pageAttachmentRefRepo.WithTx(tx)
 
-	// 並行する公開がページと編集提案のリンクを付け替えていれば、そのコミットを待つ。
-	// 取得済みのリンクの記録を反映すると、先行する付け替えを古いIDで上書きしてしまう
-	pageIDs := make([]model.PageID, len(data.pages))
-	for i, page := range data.pages {
-		pageIDs[i] = page.ID
-	}
-	if err := pageRepo.LockByIDs(ctx, pageIDs, spaceID); err != nil {
-		return nil, fmt.Errorf("反映先のページのロックに失敗しました: %w", err)
-	}
 	currentPages, err := uc.suggestionPageRepo.WithTx(tx).ListBySuggestionID(ctx, data.suggestion.ID, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("編集提案のリンクの再取得に失敗しました: %w", err)

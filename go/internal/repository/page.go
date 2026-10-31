@@ -381,15 +381,6 @@ func (r *PageRepository) FindByIDs(ctx context.Context, ids []model.PageID, spac
 	return r.toModels(rows), nil
 }
 
-// LockByIDsは、同じスペースの未廃棄ページをID順に一括でロックする。
-// 公開対象への並行する書き込みを待ってからリンクの記録を読むため、トランザクション内で使う
-func (r *PageRepository) LockByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) error {
-	return r.q.LockPagesByIDs(ctx, query.LockPagesByIDsParams{
-		Ids:     model.PageIDsToStrings(ids),
-		SpaceID: string(spaceID),
-	})
-}
-
 // FindMetadataByIDsは同スペースの未廃棄ページを、Wikiリンクのプレビューに必要な列だけで一括取得する。
 // 未公開・ゴミ箱のページも含む。返すPageにはID・スペースID・トピックID・番号・タイトルと
 // 公開・ゴミ箱・廃棄の日時だけを設定し、本文などの取得しないフィールドはゼロ値になる

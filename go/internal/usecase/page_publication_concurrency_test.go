@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -16,8 +17,9 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
-// 共通のリンク元をロックし、両方の公開が自身のページを更新してから付け替えへ進むようにする。
-// ロックを解放すると付け替えとページの更新の間でデッドロックが起こるが、公開全体の再試行で回復する
+// 未公開のページを置き換える公開どうしは、スペースのロックで直列化される。
+// 共通のリンク元をロックして先にスペースをロックした公開を付け替えで止め、もう一方がスペースのロックを待つことを確かめる。
+// ロックを解放すると順に公開され、互いへのリンクとリンク元の記録が置き換えたページを指す
 func TestPagePublication_ConcurrentReplacements(t *testing.T) {
 	t.Parallel()
 
@@ -118,7 +120,7 @@ func TestPagePublication_ConcurrentReplacements(t *testing.T) {
 				id, err := second(ctx)
 				results <- concurrentPublicationResult{id, err}
 			}()
-			waitForPublicationsBlocked(t, ctx, db, blockerPID, results)
+			waitForPublicationsBlocked(t, ctx, db, blockerPID, results, "ReassignPageLinkedPageID", "LockSpaceByID")
 			if err := blocker.Rollback(); err != nil {
 				t.Fatalf("リンク元のロック解除: %v", err)
 			}
@@ -169,6 +171,88 @@ type concurrentPublicationResult struct {
 	err    error
 }
 
+// 置き換えがリンクを付け替えてからコミットするまでの間に、論理削除するページへのリンクを新しく足して
+// 公開・反映しても、スペースのロックで置き換えのコミットを待ち、置き換えたページへのリンクとして記録する
+func TestPagePublication_NewLinkDuringReplacement(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		kind string
+		name string
+	}{
+		{kind: "web", name: "Web画面の公開"},
+		{kind: "suggestion", name: "編集提案の反映"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db := testutil.GetTestDB()
+			f := setupCreateAPIPageFixture(t, db, "publish-new-link-"+tt.kind+"-"+uuid.NewString()[:8], model.SpaceRoleEditor)
+			spaceID, topicID := f.space.ID, f.topicIDs[1]
+			testutil.NewTopicMemberBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+				WithSpaceMemberID(f.spaceMemberID).WithRole(model.TopicRoleEditor).Build()
+			oldX := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).
+				WithTitle("X").WithBody("").WithUnpublished().Build()
+			pageX := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(2).
+				WithTitle("元のX").WithBody("本文").Build()
+			// この行をロックし、置き換えを付け替えの途中で待たせる
+			sourceID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(3).
+				WithTitle("リンク元").WithBody("[[X]]").WithLinkedPageIDs([]model.PageID{oldX}).Build()
+			pageP := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(4).
+				WithTitle("P").WithBody("").Build()
+			publish := newConcurrentPublishPageUC(db)
+			addLink := func(ctx context.Context) error {
+				_, err := publish.Execute(ctx, PublishPageInput{
+					SpaceIdentifier: f.space.Identifier, PageNumber: 4, UserID: f.userID, Title: "P", Body: "[[X]]",
+				})
+				return err
+			}
+			if tt.kind == "suggestion" {
+				suggestionID := testutil.NewSuggestionBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+					WithCreatedSpaceMemberID(f.spaceMemberID).WithStatus(model.SuggestionStatusOpen).Build()
+				testutil.NewSuggestionPageBuilderDB(t, db).WithSpaceID(spaceID).WithSuggestionID(suggestionID).WithPageID(pageP).
+					WithTitle("P").WithBody("[[X]]").WithLinkedPageIDs([]model.PageID{oldX}).Build()
+				uc := newConcurrentApplySuggestionUC(db)
+				addLink = func(ctx context.Context) error {
+					_, err := uc.Execute(ctx, ApplySuggestionInput{SpaceIdentifier: f.space.Identifier, SuggestionNumber: 1, UserID: f.userID})
+					return err
+				}
+			}
+
+			ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+			defer cancel()
+			blocker, blockerPID := beginWebTx(t, db)
+			if _, err := blocker.ExecContext(ctx, "SELECT id FROM pages WHERE id = $1 AND space_id = $2 FOR NO KEY UPDATE", sourceID, spaceID); err != nil {
+				t.Fatalf("リンク元のロック: %v", err)
+			}
+			results := make(chan concurrentPublicationResult, 2)
+			go func() {
+				_, err := publish.Execute(ctx, PublishPageInput{
+					SpaceIdentifier: f.space.Identifier, PageNumber: 2, UserID: f.userID, Title: "X", Body: "本文",
+				})
+				results <- concurrentPublicationResult{pageX, err}
+			}()
+			waitForPublicationsBlocked(t, ctx, db, blockerPID, results, "ReassignPageLinkedPageID")
+			go func() {
+				results <- concurrentPublicationResult{pageP, addLink(ctx)}
+			}()
+			waitForPublicationsBlocked(t, ctx, db, blockerPID, results, "ReassignPageLinkedPageID", "LockSpaceByID")
+			if err := blocker.Rollback(); err != nil {
+				t.Fatalf("リンク元のロック解除: %v", err)
+			}
+			for range 2 {
+				if result := <-results; result.err != nil {
+					t.Fatalf("公開のエラー = %v、期待値 = nil", result.err)
+				}
+			}
+
+			if got := findPageForTest(t, db, spaceID, 4).LinkedPageIDs; !slices.Equal(got, []model.PageID{pageX}) {
+				t.Errorf("足したリンクの記録 = %v、期待値 = [%v] (置き換えたページ)", got, pageX)
+			}
+		})
+	}
+}
+
 // リンクだけを読み直す際に、取得後に本文が変わった編集提案を未検証のまま反映しない
 func TestApplySuggestion_ContentChangedBeforeLock(t *testing.T) {
 	t.Parallel()
@@ -214,30 +298,32 @@ func newConcurrentPublishPageUC(db *sql.DB) *PublishPageUsecase {
 		validator.NewPageUpdateValidator(pageRepo))
 }
 
-// 付け替えのUPDATEが共通のリンク元のロックに並ぶまで待つ。
-// 後続は先行の行ロック待ちに並ぶこともあるため、待機している接続を再帰的に辿る
-func waitForPublicationsBlocked(t *testing.T, ctx context.Context, db *sql.DB, blockerPID int, results <-chan concurrentPublicationResult) {
+// blockerPIDのロックを待つ接続のうちに、queriesの名前のクエリを実行しているものがそれぞれ揃うまで待つ。
+// 後続は先行のロック待ちに並ぶため、待機している接続を再帰的に辿る
+func waitForPublicationsBlocked(t *testing.T, ctx context.Context, db *sql.DB, blockerPID int, results <-chan concurrentPublicationResult, queries ...string) {
 	t.Helper()
 	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
 	for {
-		var n int
+		var blocked bool
 		err := db.QueryRowContext(ctx, `WITH RECURSIVE blocked(pid) AS (
             SELECT pid FROM pg_stat_activity WHERE datname = current_database() AND $1 = ANY(pg_blocking_pids(pid))
             UNION
             SELECT a.pid FROM pg_stat_activity a JOIN blocked b ON b.pid = ANY(pg_blocking_pids(a.pid)) WHERE a.datname = current_database()
-        ) SELECT count(*) FROM pg_stat_activity JOIN blocked USING (pid) WHERE query LIKE '%ReassignPageLinkedPageID%'`, blockerPID).Scan(&n)
+        ) SELECT bool_and(EXISTS (
+            SELECT 1 FROM pg_stat_activity JOIN blocked USING (pid) WHERE query LIKE '%' || name || '%'
+        )) FROM unnest($2::text[]) AS name`, blockerPID, pq.Array(queries)).Scan(&blocked)
 		if err != nil {
 			t.Fatalf("公開のロック待ちの確認: %v", err)
 		}
-		if n == 2 {
+		if blocked {
 			return
 		}
 		select {
 		case result := <-results:
 			t.Fatalf("競合前に公開が終了: %v", result.err)
 		case <-ctx.Done():
-			t.Fatalf("両方の公開が付け替えのロックを待ちませんでした: %v", ctx.Err())
+			t.Fatalf("公開が %v でロックを待ちませんでした: %v", queries, ctx.Err())
 		case <-ticker.C:
 		}
 	}

@@ -10,14 +10,6 @@ SELECT * FROM pages WHERE space_id = $1 AND number = $2 AND discarded_at IS NULL
 -- UPDATEもFOR NO KEY UPDATEを取るため、同じページの更新どうしは直列化される。
 SELECT * FROM pages WHERE id = @id AND space_id = @space_id AND discarded_at IS NULL FOR NO KEY UPDATE;
 
--- name: LockPagesByIDs :exec
--- 公開対象を先にロックし、並行するリンクの付け替えが終わってからリンクの記録を読む。
--- 複数ページの編集提案でも同じ順でロックできるよう、ID順に一括で取得する。
-SELECT id FROM pages
-WHERE id = ANY(@ids::uuid[]) AND space_id = @space_id AND discarded_at IS NULL
-ORDER BY id
-FOR NO KEY UPDATE;
-
 -- name: FindPageByIDForShare :one
 -- 下書きにページのトピックを書くまでの間にページの移動が割り込まないよう、ページの行を
 -- トランザクションが終わるまで共有ロックして取得する。
