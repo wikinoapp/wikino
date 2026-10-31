@@ -19,6 +19,8 @@ type apiPageWriteRepos struct {
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
+	draftPageRepo         *repository.DraftPageRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -168,6 +170,12 @@ func writeAPIPage(ctx context.Context, db *sql.DB, repos apiPageWriteRepos, inpu
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページの更新に失敗しました: %w", err)
+	}
+
+	if input.unpublishedConflictingPageID != nil {
+		if err := reassignLinkedPageIDs(ctx, input.space.ID, *input.unpublishedConflictingPageID, input.page.ID, pageRepo, repos.draftPageRepo.WithTx(tx), repos.suggestionPageRepo.WithTx(tx)); err != nil {
+			return nil, err
+		}
 	}
 
 	_, err = pageRevisionRepo.Create(ctx, repository.CreatePageRevisionInput{

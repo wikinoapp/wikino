@@ -36,18 +36,25 @@ type SuggestionApplyValidatorEntry struct {
 
 // SuggestionApplyValidateOutputはバリデーション成功時の出力
 type SuggestionApplyValidateOutput struct {
-	// ConflictingPageIDsは反映前に論理削除すべき競合ページのID一覧
-	ConflictingPageIDs []model.PageID
+	// PageReplacementsは反映前に論理削除すべき競合ページと、そのタイトルを取るページの組の一覧
+	PageReplacements []SuggestionApplyPageReplacement
+}
+
+// SuggestionApplyPageReplacementは、編集提案の反映で論理削除する競合ページと、
+// そのタイトルを取る (競合ページを置き換える) ページの組
+type SuggestionApplyPageReplacement struct {
+	ConflictingPageID model.PageID
+	PageID            model.PageID
 }
 
 // Validateは各エントリに対してPageUpdateValidatorを呼び出し、
-// 成功時は論理削除対象のIDを返し、違反がある場合は *model.SuggestionApplyErrorを返す。
+// 成功時は論理削除する競合ページと置き換えるページの組を返し、違反がある場合は *model.SuggestionApplyErrorを返す。
 func (v *SuggestionApplyValidator) Validate(
 	ctx context.Context,
 	input SuggestionApplyValidatorInput,
 ) (*SuggestionApplyValidateOutput, error) {
 	applyErr := &model.SuggestionApplyError{PageErrors: make([]model.SuggestionApplyPageError, 0)}
-	conflictingPageIDs := make([]model.PageID, 0)
+	pageReplacements := make([]SuggestionApplyPageReplacement, 0)
 
 	for _, entry := range input.Entries {
 		if entry.Title == nil {
@@ -71,7 +78,10 @@ func (v *SuggestionApplyValidator) Validate(
 		}
 
 		if conflictID != nil {
-			conflictingPageIDs = append(conflictingPageIDs, *conflictID)
+			pageReplacements = append(pageReplacements, SuggestionApplyPageReplacement{
+				ConflictingPageID: *conflictID,
+				PageID:            entry.PageID,
+			})
 		}
 	}
 
@@ -80,7 +90,7 @@ func (v *SuggestionApplyValidator) Validate(
 	}
 
 	return &SuggestionApplyValidateOutput{
-		ConflictingPageIDs: conflictingPageIDs,
+		PageReplacements: pageReplacements,
 	}, nil
 }
 

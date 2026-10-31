@@ -438,7 +438,7 @@ func newDraftPageWriteTestRouter(t *testing.T, identifier string) http.Handler {
 			db, spaceRepo, pageRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, repository.NewAttachmentRepository(q),
 		)),
 		apidraftpagepublication.NewHandler("https://example.com", usecase.NewCreateAPIDraftPagePublicationUsecase(
-			db, spaceRepo, pageRepo, repository.NewPageRevisionRepository(q), pageEditorRepo, draftPageRepo, draftPageRevisionRepo,
+			db, spaceRepo, pageRepo, repository.NewPageRevisionRepository(q), pageEditorRepo, draftPageRepo, draftPageRevisionRepo, repository.NewSuggestionPageRepository(q),
 			topicRepo, topicMemberRepo, repository.NewAttachmentRepository(q), repository.NewPageAttachmentReferenceRepository(q),
 			validator.NewAPIPageUpdateValidator(pageRepo),
 		)),

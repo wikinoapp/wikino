@@ -21,6 +21,7 @@ type PublishPageUsecase struct {
 	pageEditorRepo        *repository.PageEditorRepository
 	draftPageRepo         *repository.DraftPageRepository
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -38,6 +39,7 @@ func NewPublishPageUsecase(
 	pageEditorRepo *repository.PageEditorRepository,
 	draftPageRepo *repository.DraftPageRepository,
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -53,6 +55,7 @@ func NewPublishPageUsecase(
 		pageEditorRepo:        pageEditorRepo,
 		draftPageRepo:         draftPageRepo,
 		draftPageRevisionRepo: draftPageRevisionRepo,
+		suggestionPageRepo:    suggestionPageRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -196,6 +199,12 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ページの更新に失敗しました: %w", err)
+	}
+
+	if unpublishedConflictingPageID != nil {
+		if err := reassignLinkedPageIDs(ctx, data.space.ID, *unpublishedConflictingPageID, data.page.ID, pageRepo, draftPageRepo, uc.suggestionPageRepo.WithTx(tx)); err != nil {
+			return nil, err
+		}
 	}
 
 	// PageRevisionを作成 (スナップショット)

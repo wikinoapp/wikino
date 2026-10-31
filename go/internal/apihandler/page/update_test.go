@@ -51,6 +51,8 @@ func TestHandler_UpdatePage(t *testing.T) {
 			pageRepo,
 			repository.NewPageRevisionRepository(q),
 			repository.NewPageEditorRepository(q),
+			repository.NewDraftPageRepository(q),
+			repository.NewSuggestionPageRepository(q),
 			topicRepo,
 			topicMemberRepo,
 			repository.NewAttachmentRepository(q),

@@ -47,6 +47,8 @@ func TestHandler_CreatePage(t *testing.T) {
 			pageRepo,
 			repository.NewPageRevisionRepository(q),
 			repository.NewPageEditorRepository(q),
+			repository.NewDraftPageRepository(q),
+			repository.NewSuggestionPageRepository(q),
 			topicRepo,
 			topicMemberRepo,
 			repository.NewAttachmentRepository(q),

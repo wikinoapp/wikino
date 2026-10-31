@@ -106,7 +106,7 @@ func (uc *ApplySuggestionUsecase) Execute(ctx context.Context, input ApplySugges
 	}
 
 	// 5. 永続化 (トランザクション)
-	return uc.applySuggestion(ctx, data, validateOutput.ConflictingPageIDs)
+	return uc.applySuggestion(ctx, data, validateOutput.PageReplacements)
 }
 
 // buildApplyValidatorEntriesはSuggestionPageとPageのペアからValidator入力を構築する
@@ -235,7 +235,7 @@ func (uc *ApplySuggestionUsecase) checkStatus(ctx context.Context, suggestion *m
 	return nil
 }
 
-func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *applySuggestionData, conflictingPageIDs []model.PageID) (*ApplySuggestionOutput, error) {
+func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *applySuggestionData, pageReplacements []validator.SuggestionApplyPageReplacement) (*ApplySuggestionOutput, error) {
 	now := time.Now()
 	spaceID := data.space.ID
 
@@ -258,7 +258,13 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	// 競合する未公開ページを論理削除
 	// トランザクション開始後にページの状態が変わっている可能性があるため、
 	// 論理削除直前に再取得し「未公開かつ本文が空」条件を再確認する (TOCTOU対策)。
-	if len(conflictingPageIDs) > 0 {
+	// 論理削除したページへのリンクは、ページの書き込みの後に置き換えたページへ付け替える
+	var discardedReplacements []validator.SuggestionApplyPageReplacement
+	if len(pageReplacements) > 0 {
+		conflictingPageIDs := make([]model.PageID, len(pageReplacements))
+		for i, r := range pageReplacements {
+			conflictingPageIDs[i] = r.ConflictingPageID
+		}
 		conflictPages, err := pageRepo.FindByIDs(ctx, conflictingPageIDs, spaceID)
 		if err != nil {
 			return nil, fmt.Errorf("競合ページの再取得に失敗しました: %w", err)
@@ -269,7 +275,8 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 			conflictPageMap[cp.ID] = cp
 		}
 
-		for _, conflictID := range conflictingPageIDs {
+		for _, replacement := range pageReplacements {
+			conflictID := replacement.ConflictingPageID
 			conflictPage, ok := conflictPageMap[conflictID]
 			if !ok {
 				continue
@@ -283,6 +290,7 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 			if err := pageRepo.DiscardByID(ctx, conflictID, spaceID, now); err != nil {
 				return nil, fmt.Errorf("競合する未公開ページの論理削除に失敗しました: %w", err)
 			}
+			discardedReplacements = append(discardedReplacements, replacement)
 		}
 	}
 
@@ -363,6 +371,14 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 		}
 	}
 
+	draftPageRepo := uc.draftPageRepo.WithTx(tx)
+	suggestionPageRepo := uc.suggestionPageRepo.WithTx(tx)
+	for _, replacement := range discardedReplacements {
+		if err := reassignLinkedPageIDs(ctx, spaceID, replacement.ConflictingPageID, replacement.PageID, pageRepo, draftPageRepo, suggestionPageRepo); err != nil {
+			return nil, err
+		}
+	}
+
 	// 編集提案のステータスを「反映済み」に変更
 	updatedSuggestion, err := suggestionRepo.UpdateStatus(ctx, repository.UpdateStatusInput{
 		ID:        data.suggestion.ID,
@@ -375,7 +391,6 @@ func (uc *ApplySuggestionUsecase) applySuggestion(ctx context.Context, data *app
 	}
 
 	// 下書きのsuggestion_page_idをクリアして再利用可能にする
-	draftPageRepo := uc.draftPageRepo.WithTx(tx)
 	if err := draftPageRepo.ClearSuggestionPageIDsBySuggestionID(ctx, data.suggestion.ID, spaceID); err != nil {
 		return nil, fmt.Errorf("下書きのsuggestion_page_idクリアに失敗しました: %w", err)
 	}

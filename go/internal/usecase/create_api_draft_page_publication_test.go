@@ -26,6 +26,7 @@ func newCreateAPIDraftPagePublicationUC(db *sql.DB) *CreateAPIDraftPagePublicati
 		repository.NewPageEditorRepository(q),
 		repository.NewDraftPageRepository(q),
 		repository.NewDraftPageRevisionRepository(q),
+		repository.NewSuggestionPageRepository(q),
 		repository.NewTopicRepository(q),
 		repository.NewTopicMemberRepository(q),
 		repository.NewAttachmentRepository(q),
@@ -385,4 +386,33 @@ func TestCreateAPIDraftPagePublicationUsecase_Execute_ConcurrentDraftChange(t *t
 			}
 		})
 	}
+}
+
+// TestCreateAPIDraftPagePublicationUsecase_Execute_ReassignsLinksToReplacedPageは、新しいページの下書きを公開して、
+// 同じタイトルでWikiリンクから作られた未公開のページを置き換えるときに、そのページを指していたリンクの記録を、
+// 公開したページへ付け替えることを確かめる
+func TestCreateAPIDraftPagePublicationUsecase_Execute_ReassignsLinksToReplacedPage(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	memberRole := apiTopicRegularMemberRole
+	fixture := setupCreateAPIPageFixture(t, db, "api-draft-publish-reassign-link", memberRole)
+	// 新しいページの下書きは、公開するまでページにタイトルが付かない
+	pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(fixture.space.ID).WithTopicID(fixture.topicIDs[1]).WithNumber(1).
+		WithNilTitle().WithBody("").WithUnpublished().Build()
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(fixture.space.ID).WithPageID(pageID).WithSpaceMemberID(fixture.spaceMemberID).WithTopicID(fixture.topicIDs[1]).
+		WithTitle("新しいページ").WithBody("下書きの本文").Build()
+	f := setupLinkReassignFixture(t, db, "api-draft-publish-reassign-link", fixture.space.ID, fixture.topicIDs[1], fixture.spaceMemberID, "新しいページ", 2)
+
+	if _, err := newCreateAPIDraftPagePublicationUC(db).Execute(t.Context(), CreateAPIDraftPagePublicationInput{
+		Principal:       fixture.principal(memberRole, draftPagePublishScopes),
+		SpaceIdentifier: fixture.space.Identifier,
+		PageNumber:      1,
+		IfMatchDigests:  []string{draftPageDigest(t, db, draftID, fixture.space.ID)},
+	}); err != nil {
+		t.Fatalf("Execute()のエラー = %v", err)
+	}
+
+	f.assertReassigned(t, db, pageID)
 }

@@ -23,6 +23,8 @@ func newCreateAPIPageBodyEditUC(db *sql.DB) *CreateAPIPageBodyEditUsecase {
 		pageRepo,
 		repository.NewPageRevisionRepository(q),
 		repository.NewPageEditorRepository(q),
+		repository.NewDraftPageRepository(q),
+		repository.NewSuggestionPageRepository(q),
 		repository.NewTopicRepository(q),
 		repository.NewTopicMemberRepository(q),
 		repository.NewAttachmentRepository(q),

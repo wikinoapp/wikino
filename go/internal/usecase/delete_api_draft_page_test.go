@@ -246,7 +246,8 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebPublish(t *testing.T) {
 			pageRepo := repository.NewPageRepository(q)
 			publishUC := NewPublishPageUsecase(db, repository.NewSpaceRepository(q), repository.NewSpaceMemberRepository(q), pageRepo,
 				repository.NewPageRevisionRepository(q), repository.NewPageEditorRepository(q), repository.NewDraftPageRepository(q),
-				repository.NewDraftPageRevisionRepository(q), repository.NewTopicRepository(q), repository.NewTopicMemberRepository(q),
+				repository.NewDraftPageRevisionRepository(q),
+				repository.NewSuggestionPageRepository(q), repository.NewTopicRepository(q), repository.NewTopicMemberRepository(q),
 				repository.NewAttachmentRepository(q), repository.NewPageAttachmentReferenceRepository(q), validator.NewPageUpdateValidator(pageRepo))
 			publish := func() error {
 				_, err := publishUC.Execute(ctx, PublishPageInput{

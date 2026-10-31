@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -936,6 +937,42 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		if appliedPages[0].Title == nil || *appliedPages[0].Title != "Target Title" {
 			t.Errorf("Page.Title = %v、期待値 = %q", appliedPages[0].Title, "Target Title")
 		}
+	})
+
+	t.Run("正常系: 論理削除した同タイトルのページへのリンクを、反映したページへ付け替える", func(t *testing.T) {
+		t.Parallel()
+
+		spaceID := testutil.NewSpaceBuilderDB(t, db).WithIdentifier("apply-suggestion-reassign-link").Build()
+		userID := testutil.NewUserBuilderDB(t, db).WithEmail("apply-suggestion-reassign-link@example.com").WithAtname("applysuggestionreassignlink").Build()
+		spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(spaceID).WithUserID(userID).WithRole(model.SpaceRoleEditor).Build()
+		topicID := testutil.NewTopicBuilderDB(t, db).WithSpaceID(spaceID).WithName("General").Build()
+		testutil.NewTopicMemberBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithSpaceMemberID(spaceMemberID).Build()
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Original Title").Build()
+
+		// 反映する編集提案を番号1にするため、フィクスチャの編集提案より先に作る
+		suggestionID := testutil.NewSuggestionBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).
+			WithCreatedSpaceMemberID(spaceMemberID).WithStatus(model.SuggestionStatusOpen).Build()
+		f := setupLinkReassignFixture(t, db, "apply-suggestion-reassign-link", spaceID, topicID, spaceMemberID, "New Title", 2)
+		// 反映するページのリンクの記録も、置き換える前の未公開のページを指している
+		testutil.NewSuggestionPageBuilderDB(t, db).WithSpaceID(spaceID).WithSuggestionID(suggestionID).WithPageID(pageID).
+			WithTitle("New Title").WithBody("[[New Title]]").WithLinkedPageIDs([]model.PageID{f.unpublishedPageID}).Build()
+
+		if _, err := uc.Execute(context.Background(), ApplySuggestionInput{
+			SpaceIdentifier:  "apply-suggestion-reassign-link",
+			SuggestionNumber: 1,
+			UserID:           userID,
+		}); err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+
+		applied, err := pageRepo.FindByIDs(context.Background(), []model.PageID{pageID}, spaceID)
+		if err != nil || len(applied) != 1 {
+			t.Fatalf("反映したページの取得に失敗: %v", err)
+		}
+		if want := []model.PageID{pageID}; !slices.Equal(applied[0].LinkedPageIDs, want) {
+			t.Errorf("反映したページのLinkedPageIDs = %v、期待値 = %v", applied[0].LinkedPageIDs, want)
+		}
+		f.assertReassigned(t, db, pageID)
 	})
 
 	t.Run("バリデーションエラー: 公開済みページと衝突する編集提案はValidationErrorを返す", func(t *testing.T) {

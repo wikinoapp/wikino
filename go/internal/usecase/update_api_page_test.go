@@ -25,6 +25,8 @@ func newUpdateAPIPageUC(db *sql.DB) *UpdateAPIPageUsecase {
 		pageRepo,
 		repository.NewPageRevisionRepository(q),
 		repository.NewPageEditorRepository(q),
+		repository.NewDraftPageRepository(q),
+		repository.NewSuggestionPageRepository(q),
 		repository.NewTopicRepository(q),
 		repository.NewTopicMemberRepository(q),
 		repository.NewAttachmentRepository(q),
@@ -725,4 +727,30 @@ func execForTest(t *testing.T, db *sql.DB, sqlText string, args ...any) {
 	if _, err := db.ExecContext(t.Context(), sqlText, args...); err != nil {
 		t.Fatalf("SQLの実行に失敗: %v", err)
 	}
+}
+
+// TestUpdateAPIPageUsecase_Execute_ReassignsLinksToReplacedPageは、タイトルの変更で未公開のページを置き換えるときに、
+// そのページを指していたリンクの記録を、更新したページへ付け替えることを確かめる
+func TestUpdateAPIPageUsecase_Execute_ReassignsLinksToReplacedPage(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	memberRole := apiTopicRegularMemberRole
+	fixture := setupCreateAPIPageFixture(t, db, "api-page-update-reassign-link", memberRole)
+	pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(fixture.space.ID).WithTopicID(fixture.topicIDs[1]).WithNumber(1).
+		WithTitle("元のタイトル").WithBody("本文").Build()
+	f := setupLinkReassignFixture(t, db, "api-page-update-reassign-link", fixture.space.ID, fixture.topicIDs[1], fixture.spaceMemberID, "新しいタイトル", 2)
+	before := findPageForTest(t, db, fixture.space.ID, 1)
+
+	if _, err := newUpdateAPIPageUC(db).Execute(t.Context(), UpdateAPIPageInput{
+		Principal:       fixture.principal(memberRole, []model.Scope{model.ScopePageWrite}),
+		SpaceIdentifier: fixture.space.Identifier,
+		PageNumber:      1,
+		IfMatchDigests:  []string{before.ContentDigest()},
+		Title:           strPtr("新しいタイトル"),
+	}); err != nil {
+		t.Fatalf("Execute()のエラー = %v", err)
+	}
+
+	f.assertReassigned(t, db, pageID)
 }

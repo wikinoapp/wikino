@@ -20,6 +20,8 @@ type UpdateAPIPageUsecase struct {
 	pageRepo              *repository.PageRepository
 	pageRevisionRepo      *repository.PageRevisionRepository
 	pageEditorRepo        *repository.PageEditorRepository
+	draftPageRepo         *repository.DraftPageRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -34,6 +36,8 @@ func NewUpdateAPIPageUsecase(
 	pageRepo *repository.PageRepository,
 	pageRevisionRepo *repository.PageRevisionRepository,
 	pageEditorRepo *repository.PageEditorRepository,
+	draftPageRepo *repository.DraftPageRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -46,6 +50,8 @@ func NewUpdateAPIPageUsecase(
 		pageRepo:              pageRepo,
 		pageRevisionRepo:      pageRevisionRepo,
 		pageEditorRepo:        pageEditorRepo,
+		draftPageRepo:         draftPageRepo,
+		suggestionPageRepo:    suggestionPageRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -142,6 +148,8 @@ func (uc *UpdateAPIPageUsecase) apiPageWriteRepos() apiPageWriteRepos {
 		pageRepo:              uc.pageRepo,
 		pageRevisionRepo:      uc.pageRevisionRepo,
 		pageEditorRepo:        uc.pageEditorRepo,
+		draftPageRepo:         uc.draftPageRepo,
+		suggestionPageRepo:    uc.suggestionPageRepo,
 		topicRepo:             uc.topicRepo,
 		topicMemberRepo:       uc.topicMemberRepo,
 		attachmentRepo:        uc.attachmentRepo,

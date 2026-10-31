@@ -23,6 +23,7 @@ type CreateAPIDraftPagePublicationUsecase struct {
 	pageEditorRepo        *repository.PageEditorRepository
 	draftPageRepo         *repository.DraftPageRepository
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository
+	suggestionPageRepo    *repository.SuggestionPageRepository
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
@@ -41,6 +42,7 @@ func NewCreateAPIDraftPagePublicationUsecase(
 	pageEditorRepo *repository.PageEditorRepository,
 	draftPageRepo *repository.DraftPageRepository,
 	draftPageRevisionRepo *repository.DraftPageRevisionRepository,
+	suggestionPageRepo *repository.SuggestionPageRepository,
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
@@ -55,6 +57,7 @@ func NewCreateAPIDraftPagePublicationUsecase(
 		pageEditorRepo:        pageEditorRepo,
 		draftPageRepo:         draftPageRepo,
 		draftPageRevisionRepo: draftPageRevisionRepo,
+		suggestionPageRepo:    suggestionPageRepo,
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
@@ -215,6 +218,8 @@ func (uc *CreateAPIDraftPagePublicationUsecase) apiPageWriteRepos() apiPageWrite
 		pageRepo:              uc.pageRepo,
 		pageRevisionRepo:      uc.pageRevisionRepo,
 		pageEditorRepo:        uc.pageEditorRepo,
+		draftPageRepo:         uc.draftPageRepo,
+		suggestionPageRepo:    uc.suggestionPageRepo,
 		topicRepo:             uc.topicRepo,
 		topicMemberRepo:       uc.topicMemberRepo,
 		attachmentRepo:        uc.attachmentRepo,
