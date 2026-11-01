@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -206,6 +207,31 @@ func TestCreate_スコープを1つも選ばなければ同意画面を422で再
 	}
 	if d := findDeviceAuthorization(t, f); d.Status != model.OAuthDeviceAuthorizationStatusPending {
 		t.Errorf("要求の状態 = %v、期待値は許可待ちのまま", d.Status)
+	}
+}
+
+func TestCreate_再表示で含まれるスコープには含むスコープを外したときに選択済みへ戻す状態を描画する(t *testing.T) {
+	t.Parallel()
+
+	f := setupDeviceFixture(t, "devverify-restore", model.SpaceRoleEditor, true)
+
+	// 同意画面は、選んだpage:writeに含まれるpage:readを無効にして送信しない
+	rr := httptest.NewRecorder()
+	setupHandler(t).Create(rr, newRequest(t, http.MethodPost, f.userID, "198.51.100.60", url.Values{
+		"user_code":      {f.userCode},
+		"decision":       {"approve"},
+		"granted_scopes": {"page:write", "topic:read"},
+	}))
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
+	}
+	assertResponseHeaders(t, rr)
+	read := regexp.MustCompile(`<input[^>]*id="granted_scopes_page_read"[^>]*>`).FindString(rr.Body.String())
+	for _, want := range []string{" checked", " disabled", `data-api-token-scope-checked-before-implied="true"`} {
+		if !strings.Contains(read, want) {
+			t.Errorf("page:readのチェックボックスに%qが無い: %s", want, read)
+		}
 	}
 }
 
