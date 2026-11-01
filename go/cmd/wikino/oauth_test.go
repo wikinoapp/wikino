@@ -363,8 +363,8 @@ func TestOAuthFlow(t *testing.T) {
 	})
 
 	t.Run("猶予を過ぎた使用済みのリフレッシュトークンの再提示で、許可と許可のトークンがすべて失効する", func(t *testing.T) {
-		if _, err := testutil.GetTestDB().ExecContext(ctx, "UPDATE oauth_refresh_tokens SET used_at = $1 WHERE token_digest = $2",
-			time.Now().Add(-model.OAuthRefreshTokenReuseInterval-time.Second), auth.DigestOpaqueToken(token.RefreshToken)); err != nil {
+		if _, err := testutil.GetTestDB().ExecContext(ctx, "UPDATE oauth_refresh_tokens SET used_at = $1 WHERE token_digest = $2 AND space_id = $3",
+			time.Now().Add(-model.OAuthRefreshTokenReuseInterval-time.Second), auth.DigestOpaqueToken(token.RefreshToken), string(f.spaceID)); err != nil {
 			t.Fatalf("使用日時の更新に失敗: %v", err)
 		}
 		replayed := &oauth2.Token{RefreshToken: token.RefreshToken, Expiry: time.Now().Add(-time.Minute)}

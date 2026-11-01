@@ -589,9 +589,10 @@ func (uc *CreateOAuthTokenUsecase) rotateToken(ctx context.Context, token *model
 		return nil, false, err
 	}
 	if rotated == nil {
+		// 許可のロック待機中にも猶予は進むため、発行し直す直前の時刻で判定する。
 		rotated, err = refreshTokenRepo.Reissue(ctx, repository.ReissueOAuthRefreshTokenInput{
 			RotateOAuthRefreshTokenInput: input,
-			ReuseAllowedAfter:            input.Now.Add(-model.OAuthRefreshTokenReuseInterval),
+			ReuseAllowedAfter:            time.Now().Add(-model.OAuthRefreshTokenReuseInterval),
 		})
 		if err != nil {
 			return nil, false, err

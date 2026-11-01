@@ -337,7 +337,7 @@ func TestOAuthRefreshTokenRepository_Reissue(t *testing.T) {
 			modifySuccessor(b)
 		}
 		successor := b.Build()
-		if _, err := tx.ExecContext(ctx, "UPDATE oauth_refresh_tokens SET previous_refresh_token_id = $1 WHERE id = $2", string(used), string(successor)); err != nil {
+		if _, err := tx.ExecContext(ctx, "UPDATE oauth_refresh_tokens SET previous_refresh_token_id = $1 WHERE id = $2 AND space_id = $3", string(used), string(successor), string(f.spaceID)); err != nil {
 			t.Fatalf("後継のトークンの設定に失敗: %v", err)
 		}
 		return used, successor
