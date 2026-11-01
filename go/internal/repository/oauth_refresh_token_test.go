@@ -400,7 +400,7 @@ func TestOAuthRefreshTokenRepository_Reissue(t *testing.T) {
 			modifySuccessor func(b *testutil.OAuthRefreshTokenBuilder)
 			spaceID         model.SpaceID
 		}{
-			{name: "猶予を過ぎて使われたトークン", usedAt: reuseAllowedAfter, spaceID: f.spaceID},
+			{name: "使われてから猶予が過ぎたトークン", usedAt: reuseAllowedAfter, spaceID: f.spaceID},
 			{name: "後継が使用済み", usedAt: now, modifySuccessor: func(b *testutil.OAuthRefreshTokenBuilder) { b.WithUsedAt(now) }, spaceID: f.spaceID},
 			{name: "後継が失効済み", usedAt: now, modifySuccessor: func(b *testutil.OAuthRefreshTokenBuilder) { b.WithRevokedAt(now) }, spaceID: f.spaceID},
 			{name: "他のスペースを指定した", usedAt: now, spaceID: other.spaceID},

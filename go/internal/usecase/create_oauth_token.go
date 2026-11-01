@@ -277,7 +277,7 @@ func (uc *CreateOAuthTokenUsecase) refresh(ctx context.Context, params OAuthToke
 		return nil, fmt.Errorf("リフレッシュトークンのローテーションに失敗: %w", err)
 	}
 	if rotated == nil {
-		// 猶予を過ぎて使われていたか、後継のトークンが既に使われていた。再送ではなく漏れたトークンである
+		// 使われてから猶予が過ぎていたか、後継のトークンが既に使われていた。再送ではなく漏れたトークンである
 		return nil, uc.revokeReplayedGrant(ctx, grant)
 	}
 	if reissued {
