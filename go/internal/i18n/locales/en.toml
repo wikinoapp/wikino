@@ -327,7 +327,7 @@ other = "Must be at least {{.MinLength}} characters"
 
 [account_new_terms_html]
 description = "アカウント作成の送信ボタンの近くに置く、利用規約とプライバシーポリシーへの同意の表示 (各文書へのリンクを含む)"
-other = "Please create an account after agreeing to the <a class=\"link-inherit-foreground\" href=\"/terms\" target=\"_blank\">Terms of Service</a> and <a class=\"link-inherit-foreground\" href=\"/privacy\" target=\"_blank\">Privacy Policy</a>."
+other = "Please create an account after agreeing to the <a class=\"link-inherit-foreground\" href=\"{{.TermsPath}}\" target=\"_blank\">Terms of Service</a> and <a class=\"link-inherit-foreground\" href=\"{{.PrivacyPath}}\" target=\"_blank\">Privacy Policy</a>."
 
 [account_new_submit_button]
 description = "アカウント作成の送信ボタンのラベル"

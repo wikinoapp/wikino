@@ -51,6 +51,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/export_download"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
+	"github.com/wikinoapp/wikino/go/internal/handler/legal_document"
 	"github.com/wikinoapp/wikino/go/internal/handler/manifest"
 	"github.com/wikinoapp/wikino/go/internal/handler/mcp_protected_resource_metadata"
 	oauthapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/oauth_application"
@@ -95,6 +96,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/image"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/mcpserver"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -308,6 +310,7 @@ func runServe() {
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
 	manifestHandler := manifest.NewHandler(cfg)
+	legalDocumentHandler := legal_document.NewHandler()
 	oauthAuthorizationServerMetadataHandler := oauth_authorization_server_metadata.NewHandler(cfg)
 	oauthProtectedResourceMetadataHandler := oauth_protected_resource_metadata.NewHandler(cfg, usecase.NewGetOAuthProtectedResourceMetadataUsecase(spaceRepo))
 	apiCatalogHandler := api_catalog.NewHandler(cfg)
@@ -866,6 +869,12 @@ func runServe() {
 
 	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
+
+	// 法的文書の固定URL (認証不要)。本文のWikinoのページへ転送する
+	for _, path := range legaldoc.Paths() {
+		r.Get(path, legalDocumentHandler.Show)
+		r.Head(path, legalDocumentHandler.Show)
+	}
 
 	// 公開Web API。`Authorization: Bearer` のトークンで認証し、Cookieのセッションを使わないため、
 	// セッションで認証するミドルウェア (SetUserなど) を掛けたグループには入れない

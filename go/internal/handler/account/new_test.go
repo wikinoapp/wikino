@@ -105,8 +105,8 @@ func TestNew(t *testing.T) {
 
 	// 利用規約とプライバシーポリシーへの同意の表示が含まれているか確認
 	for _, want := range []string{
-		`href="/terms" target="_blank">利用規約</a>`,
-		`href="/privacy" target="_blank">プライバシーポリシー</a>`,
+		`href="/s/wikino/pages/41" target="_blank">利用規約</a>`,
+		`href="/s/wikino/pages/42" target="_blank">プライバシーポリシー</a>`,
 		"に同意のうえで、アカウントを作成してください",
 	} {
 		if !strings.Contains(body, want) {
@@ -288,8 +288,8 @@ func TestNew_EnglishLocale(t *testing.T) {
 
 	// 英語の規約への同意の表示が含まれているか確認
 	for _, want := range []string{
-		`href="/terms" target="_blank">Terms of Service</a>`,
-		`href="/privacy" target="_blank">Privacy Policy</a>`,
+		`href="/s/wikino/pages/325" target="_blank">Terms of Service</a>`,
+		`href="/s/wikino/pages/328" target="_blank">Privacy Policy</a>`,
 		"Please create an account after agreeing to the",
 	} {
 		if !strings.Contains(body, want) {

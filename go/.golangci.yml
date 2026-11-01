@@ -742,6 +742,15 @@ linters:
           allow:
             - $gostd
 
+        # 法的文書の表は、画面・転送・機械向けの記述のどこからでも引けるよう、アプリケーション内の
+        # ほかのパッケージに依存しないleafに保つ
+        legaldoc-layer:
+          files:
+            - "**/internal/legaldoc/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal
+              desc: "legaldocはアプリケーション内の他のパッケージに依存できません。"
+
         # auth層のルール: 横断的な技術ユーティリティ (Domain/Infrastructure層)
         # 標準ライブラリ・外部ライブラリのみに依存し、プロジェクト内部パッケージには依存しない
         auth-layer:
