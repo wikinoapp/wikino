@@ -108,8 +108,8 @@ type oauthTokenIssuance struct {
 // Executeはトークン要求を処理してトークンを発行する。要求を受け付けられない場合は
 // *model.OAuthTokenErrorを返す。
 //
-// 使用済みの認可コード・リフレッシュトークン・交換済みのデバイスコードが再び提示された場合は、
-// 漏洩したものとして許可に属するアクセストークン・リフレッシュトークンをすべて失効させてから
+// 使用済みの認可コード・リフレッシュトークン、失効したリフレッシュトークン、交換済みのデバイスコードが
+// 再び提示された場合は、漏洩したものとして許可に属するアクセストークン・リフレッシュトークンをすべて失効させてから
 // `invalid_grant` を返す。ただし、使われてから猶予の間のリフレッシュトークンは、後継のトークンが
 // まだ使われていなければ更新の再送として扱い、新しいトークンを発行する。
 func (uc *CreateOAuthTokenUsecase) Execute(ctx context.Context, params OAuthTokenParams) (*CreateOAuthTokenOutput, error) {
@@ -228,12 +228,15 @@ func (uc *CreateOAuthTokenUsecase) refresh(ctx context.Context, params OAuthToke
 	// ローテーション済みのトークンの再提示は、トークンが漏れたことを示す (RFC 9700 §4.14.2)。
 	// ただし使われてから猶予の間は、更新の応答を通信の失敗で受け取れなかったクライアントの再送とみなし、
 	// 永続化で後継のトークンがまだ使われていないことを確かめて発行し直す。猶予の間は再利用の検知が
-	// 効かないが、後継が使われた後の再提示は猶予の間でも漏洩として扱う
+	// 効かないが、後継が使われた後の再提示は猶予の間でも漏洩として扱う。
+	// 失効したトークンの提示も、無効にしたトークンの提示として同じく扱う。発行し直しで失効させた後継が
+	// 提示されたなら、猶予の間の元のトークンの再提示は再送ではなく、漏れたトークンによるものだった
+	// おそれがある。許可ごと失効したトークンでは、許可は既に失効している
 	now := time.Now()
-	if refreshToken.IsUsed() && !refreshToken.IsInReuseInterval(now) {
+	if refreshToken.IsRevoked() || (refreshToken.IsUsed() && !refreshToken.IsInReuseInterval(now)) {
 		return nil, uc.revokeReplayedGrant(ctx, grant)
 	}
-	if refreshToken.IsRevoked() || refreshToken.IsExpired(now) || grant.IsRevoked() {
+	if refreshToken.IsExpired(now) || grant.IsRevoked() {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 	}
 

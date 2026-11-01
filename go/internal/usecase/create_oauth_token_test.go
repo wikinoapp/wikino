@@ -825,12 +825,39 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 			}
 		})
 
-		// 失効させた後継の提示は許可を失効させずに拒否し、再送で得たトークンで続けて更新できる
-		output, err := uc.Execute(context.Background(), f.refreshParams(lost.RefreshToken))
-		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
+		// 再送で得たトークンで続けて更新できる
 		if _, err := uc.Execute(context.Background(), f.refreshParams(retried.RefreshToken)); err != nil {
 			t.Fatalf("再送で得たトークンでのExecute()のエラー = %v", err)
 		}
+	})
+
+	t.Run("発行し直しで失効させた後継のリフレッシュトークンの提示は、許可と許可のトークンをすべて失効させる", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-refresh-reuse-revoked-successor", oauthTokenFixtureOptions{})
+		token := f.buildRefreshTokenDB(t, "cot-refresh-reuse-revoked-successor", nil)
+		uc := newCreateOAuthTokenUsecaseForTest(q)
+
+		// 正規のクライアントが更新して後継 (first) を受け取った後に、漏れた元のトークンが猶予の間に
+		// 再提示され、firstを失効させて新しいトークン (reissued) が発行される
+		first, err := uc.Execute(context.Background(), f.refreshParams(token))
+		if err != nil {
+			t.Fatalf("1回目のExecute()のエラー = %v", err)
+		}
+		reissued, err := uc.Execute(context.Background(), f.refreshParams(token))
+		if err != nil {
+			t.Fatalf("猶予の間の再提示のExecute()のエラー = %v", err)
+		}
+
+		// 失効させたfirstの提示は無効にしたトークンの提示であり、再提示が漏れたトークンによるものだったと分かる
+		output, err := uc.Execute(context.Background(), f.refreshParams(first.RefreshToken))
+		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
+		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
+
+		output, err = uc.Execute(context.Background(), f.refreshParams(reissued.RefreshToken))
+		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
 	})
 
 	t.Run("後継のリフレッシュトークンが使われた後の再提示は、猶予の間でも許可と許可のトークンをすべて失効させる", func(t *testing.T) {
