@@ -94,6 +94,76 @@ SELECT
 FROM used
 RETURNING *;
 
+-- name: ReissueOAuthRefreshToken :one
+-- 使用済みのリフレッシュトークンが猶予の間に再提示されたとき (更新の応答を受け取れなかった
+-- クライアントの再送)、元のトークンのローテーションで発行した後継のリフレッシュトークンを失効させ、
+-- 元のトークンの後継として新しいリフレッシュトークンとアクセストークンを作成して、新しいリフレッシュ
+-- トークンを返す。後継を失効させてから作り直すため、有効なリフレッシュトークンの連なりは1本に保たれる。
+--
+-- 元のトークンが猶予を過ぎて使われた (reuse_allowed_after以前に使われた)・失効している場合と、
+-- 後継が使用済み・失効済み (クライアントが後継を受け取って使った後の再提示) の場合は、何もせず
+-- 行を返さない。判定と更新を1つの文で行うため、後継の更新と同時に届いても、後継が使われた後に
+-- 発行し直すことは無い
+WITH replaced AS (
+    UPDATE oauth_refresh_tokens AS successor
+    SET revoked_at = @now::timestamptz, updated_at = @now
+    FROM oauth_refresh_tokens AS used_token
+    WHERE used_token.id = @id
+      AND used_token.space_id = @space_id
+      AND used_token.used_at > @reuse_allowed_after::timestamptz
+      AND used_token.revoked_at IS NULL
+      AND successor.previous_refresh_token_id = used_token.id
+      AND successor.space_id = @space_id
+      AND successor.used_at IS NULL
+      AND successor.revoked_at IS NULL
+    RETURNING used_token.id, used_token.oauth_grant_id, used_token.space_id, used_token.scopes, used_token.audience
+),
+created_access_token AS (
+    INSERT INTO oauth_access_tokens (
+        oauth_grant_id,
+        space_id,
+        token_digest,
+        scopes,
+        audience,
+        expires_at,
+        created_at,
+        updated_at
+    )
+    SELECT
+        replaced.oauth_grant_id,
+        replaced.space_id,
+        @access_token_digest,
+        @access_token_scopes::text[],
+        replaced.audience,
+        @access_token_expires_at,
+        @now,
+        @now
+    FROM replaced
+)
+INSERT INTO oauth_refresh_tokens (
+    oauth_grant_id,
+    space_id,
+    token_digest,
+    scopes,
+    audience,
+    previous_refresh_token_id,
+    expires_at,
+    created_at,
+    updated_at
+)
+SELECT
+    replaced.oauth_grant_id,
+    replaced.space_id,
+    @token_digest,
+    replaced.scopes,
+    replaced.audience,
+    replaced.id,
+    @expires_at,
+    @now,
+    @now
+FROM replaced
+RETURNING *;
+
 -- name: RevokeOAuthRefreshToken :exec
 -- リフレッシュトークンの失効 (ログアウト) に応じて、トークンが属する許可と、許可に属する
 -- アクセストークン・リフレッシュトークンをすべて失効する (RFC 7009 §2.1)。許可は認可ごとに作るため、

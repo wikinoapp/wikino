@@ -295,6 +295,145 @@ func TestOAuthRefreshTokenRepository_Rotate(t *testing.T) {
 	})
 }
 
+func TestOAuthRefreshTokenRepository_Reissue(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewOAuthRefreshTokenRepository(q)
+	accessTokenRepo := NewOAuthAccessTokenRepository(q)
+	ctx := context.Background()
+
+	f := setupOAuthFixture(t, tx, "refresh-reissue")
+	other := setupOAuthFixture(t, tx, "refresh-reissue-other")
+	grantID := f.buildGrant(t, tx)
+	scopes := []model.Scope{model.ScopePageRead, model.ScopeTopicRead}
+	now := time.Now().Truncate(time.Microsecond)
+	reuseAllowedAfter := now.Add(-30 * time.Second)
+
+	reissueInput := func(id model.OAuthRefreshTokenID, spaceID model.SpaceID, digest string) ReissueOAuthRefreshTokenInput {
+		return ReissueOAuthRefreshTokenInput{
+			RotateOAuthRefreshTokenInput: RotateOAuthRefreshTokenInput{
+				ID:                   id,
+				SpaceID:              spaceID,
+				TokenDigest:          digest,
+				ExpiresAt:            now.Add(90 * 24 * time.Hour),
+				AccessTokenDigest:    digest + "_access",
+				AccessTokenScopes:    []model.Scope{model.ScopePageRead},
+				AccessTokenExpiresAt: now.Add(time.Hour),
+				Now:                  now,
+			},
+			ReuseAllowedAfter: reuseAllowedAfter,
+		}
+	}
+
+	// usedAtに使われた元のトークンと、そのローテーションで発行した後継のトークンを作る
+	buildPair := func(key string, usedAt time.Time, modifySuccessor func(b *testutil.OAuthRefreshTokenBuilder)) (model.OAuthRefreshTokenID, model.OAuthRefreshTokenID) {
+		used := testutil.NewOAuthRefreshTokenBuilder(t, tx).WithOAuthGrantID(grantID).WithSpaceID(f.spaceID).
+			WithTokenDigest("refresh_reissue_" + key + "_used_digest").WithScopes(scopes).WithAudience(model.OAuthAudienceMCPServer).WithUsedAt(usedAt).Build()
+		b := testutil.NewOAuthRefreshTokenBuilder(t, tx).WithOAuthGrantID(grantID).WithSpaceID(f.spaceID).
+			WithTokenDigest("refresh_reissue_" + key + "_successor_digest").WithScopes(scopes)
+		if modifySuccessor != nil {
+			modifySuccessor(b)
+		}
+		successor := b.Build()
+		if _, err := tx.ExecContext(ctx, "UPDATE oauth_refresh_tokens SET previous_refresh_token_id = $1 WHERE id = $2", string(used), string(successor)); err != nil {
+			t.Fatalf("後継のトークンの設定に失敗: %v", err)
+		}
+		return used, successor
+	}
+
+	t.Run("後継のトークンを失効させ、元のトークンの後継として新しいトークンとアクセストークンを作る", func(t *testing.T) {
+		used, successor := buildPair("ok", now.Add(-10*time.Second), nil)
+
+		reissued, err := repo.Reissue(ctx, reissueInput(used, f.spaceID, "refresh_reissue_ok_new_digest"))
+		if err != nil {
+			t.Fatalf("Reissue()のエラー = %v", err)
+		}
+		if reissued == nil {
+			t.Fatal("Reissue()がnilを返した")
+		}
+		if reissued.PreviousRefreshTokenID == nil || *reissued.PreviousRefreshTokenID != used {
+			t.Errorf("reissued.PreviousRefreshTokenID = %v、期待値 = %v", reissued.PreviousRefreshTokenID, used)
+		}
+		if !slices.Equal(reissued.Scopes, scopes) || reissued.Audience != model.OAuthAudienceMCPServer {
+			t.Errorf("reissuedのScopes・Audience = (%v, %v)、期待値 = (%v, %v)", reissued.Scopes, reissued.Audience, scopes, model.OAuthAudienceMCPServer)
+		}
+		if !reissued.IsActive(now) {
+			t.Error("reissued.IsActive() = false、期待値 = true")
+		}
+
+		previous, err := repo.FindByTokenDigest(ctx, "refresh_reissue_ok_successor_digest")
+		if err != nil {
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
+		}
+		if previous.ID != successor || previous.RevokedAt == nil || !previous.RevokedAt.Equal(now) {
+			t.Errorf("後継のトークンのRevokedAt = %v、期待値 = %v", previous.RevokedAt, now)
+		}
+
+		accessToken, err := accessTokenRepo.FindByTokenDigest(ctx, "refresh_reissue_ok_new_digest_access")
+		if err != nil || accessToken == nil {
+			t.Fatalf("アクセストークンの取得結果 = %+v、エラー = %v", accessToken, err)
+		}
+		if !slices.Equal(accessToken.Scopes, []model.Scope{model.ScopePageRead}) || accessToken.Audience != model.OAuthAudienceMCPServer {
+			t.Errorf("アクセストークンのScopes・Audience = (%v, %v)", accessToken.Scopes, accessToken.Audience)
+		}
+
+		// 発行し直したトークンが新しい後継になり、続けて再提示されても連なりは1本に保たれる
+		again, err := repo.Reissue(ctx, reissueInput(used, f.spaceID, "refresh_reissue_ok_again_digest"))
+		if err != nil || again == nil {
+			t.Fatalf("2回目のReissue() = %v、エラー = %v", again, err)
+		}
+		first, err := repo.FindByTokenDigest(ctx, "refresh_reissue_ok_new_digest")
+		if err != nil {
+			t.Fatalf("FindByTokenDigest()のエラー = %v", err)
+		}
+		if !first.IsRevoked() {
+			t.Error("1回目に発行し直したトークンが失効していない")
+		}
+	})
+
+	t.Run("発行し直さない場合はnilを返しトークンに触れない", func(t *testing.T) {
+		tests := []struct {
+			name            string
+			usedAt          time.Time
+			modifySuccessor func(b *testutil.OAuthRefreshTokenBuilder)
+			spaceID         model.SpaceID
+		}{
+			{name: "猶予を過ぎて使われたトークン", usedAt: reuseAllowedAfter, spaceID: f.spaceID},
+			{name: "後継が使用済み", usedAt: now, modifySuccessor: func(b *testutil.OAuthRefreshTokenBuilder) { b.WithUsedAt(now) }, spaceID: f.spaceID},
+			{name: "後継が失効済み", usedAt: now, modifySuccessor: func(b *testutil.OAuthRefreshTokenBuilder) { b.WithRevokedAt(now) }, spaceID: f.spaceID},
+			{name: "他のスペースを指定した", usedAt: now, spaceID: other.spaceID},
+		}
+		for i, tt := range tests {
+			key := "rejected_" + string(rune('a'+i))
+			used, successor := buildPair(key, tt.usedAt, tt.modifySuccessor)
+			digest := "refresh_reissue_" + key + "_new_digest"
+
+			reissued, err := repo.Reissue(ctx, reissueInput(used, tt.spaceID, digest))
+			if err != nil {
+				t.Fatalf("%s: Reissue()のエラー = %v", tt.name, err)
+			}
+			if reissued != nil {
+				t.Errorf("%s: Reissue() = %v、期待値 = nil", tt.name, reissued)
+			}
+			if created, err := repo.FindByTokenDigest(ctx, digest); err != nil || created != nil {
+				t.Errorf("%s: 新しいトークン = %v、エラー = %v、期待値 = nil", tt.name, created, err)
+			}
+			if accessToken, err := accessTokenRepo.FindByTokenDigest(ctx, digest+"_access"); err != nil || accessToken != nil {
+				t.Errorf("%s: アクセストークン = %v、エラー = %v、期待値 = nil", tt.name, accessToken, err)
+			}
+			stored, err := repo.FindByTokenDigest(ctx, "refresh_reissue_"+key+"_successor_digest")
+			if err != nil {
+				t.Fatalf("%s: FindByTokenDigest()のエラー = %v", tt.name, err)
+			}
+			if stored.ID != successor || (tt.modifySuccessor == nil && stored.IsRevoked()) {
+				t.Errorf("%s: 後継のトークンが失効した", tt.name)
+			}
+		}
+	})
+}
+
 func TestOAuthRefreshTokenRepository_Revoke(t *testing.T) {
 	t.Parallel()
 

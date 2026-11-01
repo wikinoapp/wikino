@@ -102,6 +102,119 @@ func (q *Queries) FindOAuthRefreshTokenByTokenDigest(ctx context.Context, tokenD
 	return i, err
 }
 
+const reissueOAuthRefreshToken = `-- name: ReissueOAuthRefreshToken :one
+WITH replaced AS (
+    UPDATE oauth_refresh_tokens AS successor
+    SET revoked_at = $3::timestamptz, updated_at = $3
+    FROM oauth_refresh_tokens AS used_token
+    WHERE used_token.id = $4
+      AND used_token.space_id = $5
+      AND used_token.used_at > $6::timestamptz
+      AND used_token.revoked_at IS NULL
+      AND successor.previous_refresh_token_id = used_token.id
+      AND successor.space_id = $5
+      AND successor.used_at IS NULL
+      AND successor.revoked_at IS NULL
+    RETURNING used_token.id, used_token.oauth_grant_id, used_token.space_id, used_token.scopes, used_token.audience
+),
+created_access_token AS (
+    INSERT INTO oauth_access_tokens (
+        oauth_grant_id,
+        space_id,
+        token_digest,
+        scopes,
+        audience,
+        expires_at,
+        created_at,
+        updated_at
+    )
+    SELECT
+        replaced.oauth_grant_id,
+        replaced.space_id,
+        $7,
+        $8::text[],
+        replaced.audience,
+        $9,
+        $3,
+        $3
+    FROM replaced
+)
+INSERT INTO oauth_refresh_tokens (
+    oauth_grant_id,
+    space_id,
+    token_digest,
+    scopes,
+    audience,
+    previous_refresh_token_id,
+    expires_at,
+    created_at,
+    updated_at
+)
+SELECT
+    replaced.oauth_grant_id,
+    replaced.space_id,
+    $1,
+    replaced.scopes,
+    replaced.audience,
+    replaced.id,
+    $2,
+    $3,
+    $3
+FROM replaced
+RETURNING id, oauth_grant_id, space_id, token_digest, scopes, previous_refresh_token_id, expires_at, used_at, revoked_at, created_at, updated_at, audience
+`
+
+type ReissueOAuthRefreshTokenParams struct {
+	TokenDigest          string    `json:"token_digest"`
+	ExpiresAt            time.Time `json:"expires_at"`
+	Now                  time.Time `json:"now"`
+	ID                   string    `json:"id"`
+	SpaceID              string    `json:"space_id"`
+	ReuseAllowedAfter    time.Time `json:"reuse_allowed_after"`
+	AccessTokenDigest    string    `json:"access_token_digest"`
+	AccessTokenScopes    []string  `json:"access_token_scopes"`
+	AccessTokenExpiresAt time.Time `json:"access_token_expires_at"`
+}
+
+// 使用済みのリフレッシュトークンが猶予の間に再提示されたとき (更新の応答を受け取れなかった
+// クライアントの再送)、元のトークンのローテーションで発行した後継のリフレッシュトークンを失効させ、
+// 元のトークンの後継として新しいリフレッシュトークンとアクセストークンを作成して、新しいリフレッシュ
+// トークンを返す。後継を失効させてから作り直すため、有効なリフレッシュトークンの連なりは1本に保たれる。
+//
+// 元のトークンが猶予を過ぎて使われた (reuse_allowed_after以前に使われた)・失効している場合と、
+// 後継が使用済み・失効済み (クライアントが後継を受け取って使った後の再提示) の場合は、何もせず
+// 行を返さない。判定と更新を1つの文で行うため、後継の更新と同時に届いても、後継が使われた後に
+// 発行し直すことは無い
+func (q *Queries) ReissueOAuthRefreshToken(ctx context.Context, arg ReissueOAuthRefreshTokenParams) (OauthRefreshToken, error) {
+	row := q.db.QueryRowContext(ctx, reissueOAuthRefreshToken,
+		arg.TokenDigest,
+		arg.ExpiresAt,
+		arg.Now,
+		arg.ID,
+		arg.SpaceID,
+		arg.ReuseAllowedAfter,
+		arg.AccessTokenDigest,
+		pq.Array(arg.AccessTokenScopes),
+		arg.AccessTokenExpiresAt,
+	)
+	var i OauthRefreshToken
+	err := row.Scan(
+		&i.ID,
+		&i.OauthGrantID,
+		&i.SpaceID,
+		&i.TokenDigest,
+		pq.Array(&i.Scopes),
+		&i.PreviousRefreshTokenID,
+		&i.ExpiresAt,
+		&i.UsedAt,
+		&i.RevokedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Audience,
+	)
+	return i, err
+}
+
 const revokeOAuthRefreshToken = `-- name: RevokeOAuthRefreshToken :exec
 WITH target AS (
     SELECT oauth_refresh_tokens.oauth_grant_id
