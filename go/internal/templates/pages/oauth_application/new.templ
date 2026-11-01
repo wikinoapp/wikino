@@ -2,6 +2,7 @@ package oauth_application
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
@@ -86,6 +87,12 @@ templ New(data NewData) {
 								</div>
 							}
 						</fieldset>
+
+						<p class="text-sm text-muted-foreground">
+							@templ.Raw(templates.T(ctx, "oauth_application_new_api_terms_html", map[string]any{
+								"APITermsPath": legaldoc.PagePath(legaldoc.KeyAPITerms, templates.Locale(ctx)),
+							}))
+						</p>
 
 						<div class="flex justify-between gap-2">
 							<button type="submit" class="btn rounded-full w-fit">

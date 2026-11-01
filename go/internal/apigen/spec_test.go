@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/apigen"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 )
 
 // 生成コードに埋め込んだOpenAPI記述を、リクエスト検証などで読み込めることを確かめる
@@ -27,6 +28,14 @@ func TestGetSpec(t *testing.T) {
 	if err := spec.Validate(context.Background()); err != nil {
 		t.Errorf("Validate()のエラー = %v", err)
 	}
+
+	t.Run("termsOfServiceが本番のAPI利用規約の固定URLを指す", func(t *testing.T) {
+		t.Parallel()
+
+		if want := "https://wikino.app" + legaldoc.Path(legaldoc.KeyAPITerms); spec.Info.TermsOfService != want {
+			t.Errorf("info.termsOfService = %q、期待値 = %q", spec.Info.TermsOfService, want)
+		}
+	})
 
 	t.Run("トークンに付与できるスコープがOAuthのスキームに定義されている", func(t *testing.T) {
 		t.Parallel()

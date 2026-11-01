@@ -37,6 +37,8 @@ func TestShow(t *testing.T) {
 		"authorization_servers":    []any{"https://example.com"},
 		"scopes_supported":         []any{"topic:read", "page:read", "page:write", "draft_page:read", "draft_page:write", "draft_page:delete", "attachment:read"},
 		"bearer_methods_supported": []any{"header"},
+		"resource_policy_uri":      "https://example.com/terms/api",
+		"resource_tos_uri":         "https://example.com/terms/api",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("本文 = %v、期待値 = %v", got, want)

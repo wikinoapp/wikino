@@ -3,6 +3,8 @@ info:
   title: Wikino API
   version: 1.0.0
   summary: Wikinoのスペースのデータを読み書きする
+  # 本文のページは本番にしか無いため、配信しているホストではなく本番の固定URLを書く
+  termsOfService: https://wikino.app/terms/api
   description: |
     Wikinoの公開Web APIです。
     APIを呼び出すには、スペース設定で発行する個人用アクセストークンか、OAuth 2.0 (Authorization Code + PKCE) で取得したアクセストークンを `Authorization: Bearer` ヘッダーで送ります。

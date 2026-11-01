@@ -81,3 +81,25 @@ func TestPagePath_一覧表に無い文書ならpanicする(t *testing.T) {
 	}()
 	PagePath(Key("unknown"), LangJa)
 }
+
+func TestPath(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		key  Key
+		want string
+	}{
+		{key: KeyTerms, want: "/terms"},
+		{key: KeyAPITerms, want: "/terms/api"},
+		{key: KeyPrivacyPolicy, want: "/privacy"},
+	}
+	for _, tt := range tests {
+		t.Run(string(tt.key), func(t *testing.T) {
+			t.Parallel()
+
+			if got := Path(tt.key); got != tt.want {
+				t.Errorf("Path(%q) = %q、期待値 = %q", tt.key, got, tt.want)
+			}
+		})
+	}
+}

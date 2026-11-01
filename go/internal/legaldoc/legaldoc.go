@@ -62,6 +62,16 @@ func Paths() []string {
 	return paths
 }
 
+// Pathは文書の正本 (日本語版) の固定URLのパスを返す。OpenAPI記述やOAuthのメタデータのように、
+// 読み手の表示言語が分からない機械向けの記述に使う。一覧表に無い文書はプログラムの誤りのためpanicする
+func Path(key Key) string {
+	doc, ok := localizedVersion(key, LangJa)
+	if !ok {
+		panic("legaldoc: 一覧表に無い文書です: " + string(key))
+	}
+	return doc.Path
+}
+
 // localizedVersionは、表示言語localeで読む文書の言語版を返す。日本語なら日本語版、
 // それ以外は英語版を返す。一覧表に無い文書ではfalseを返す
 func localizedVersion(key Key, locale string) (Document, bool) {
