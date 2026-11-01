@@ -149,6 +149,31 @@ func TestCreate_選んだスコープが不正なら同意画面を422で再表�
 	}
 }
 
+func TestCreate_再表示で含まれるスコープには含むスコープを外したときに選択済みへ戻す状態を描画する(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	f := setupAuthorizationFixture(t, tx, "oauthz-create-invalid-implied", model.SpaceRoleAdmin, true)
+	params := validParams(f.clientID)
+	params.Set("scope", "draft_page:read draft_page:write")
+	params.Set("decision", "approve")
+	// 同意画面は、選んだdraft_page:writeに含まれるdraft_page:readを無効にして送信しない
+	params["granted_scopes"] = []string{"draft_page:write", "page:write"}
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, testutil.QueriesWithTx(tx)).Create(rr, newRequest(t, http.MethodPost, f.userID, params))
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
+	}
+	read := regexp.MustCompile(`<input[^>]*id="granted_scopes_draft_page_read"[^>]*>`).FindString(rr.Body.String())
+	for _, want := range []string{" checked", " disabled", `data-api-token-scope-checked-before-implied="true"`} {
+		if !strings.Contains(read, want) {
+			t.Errorf("draft_page:readのチェックボックスに%qが無い: %s", want, read)
+		}
+	}
+}
+
 func TestCreate_拒否するとaccess_deniedを付けて303でクライアントへ戻す(t *testing.T) {
 	t.Parallel()
 

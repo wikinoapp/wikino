@@ -8,6 +8,7 @@ interface Option {
   impliedBy?: string[];
   checked?: boolean;
   disabled?: boolean;
+  checkedBeforeImplied?: boolean;
   describedBy?: string;
   shownNotes?: string[];
 }
@@ -45,6 +46,7 @@ function optionMarkup(option: Option): string {
           ${option.implies ? `data-api-token-scope-implies="${option.implies.join(" ")}"` : ""}
           ${option.checked ? "checked" : ""}
           ${option.disabled ? "disabled" : ""}
+          ${option.checkedBeforeImplied === undefined ? "" : `data-api-token-scope-checked-before-implied="${option.checkedBeforeImplied}"`}
           ${option.describedBy ? `aria-describedby="${option.describedBy}"` : ""}
         />
         ${option.scope}
@@ -145,10 +147,50 @@ describe("initializeAPITokenScopes", () => {
     expect(read.disabled).toBe(false);
   });
 
-  it("サーバーが含まれる状態で描画したスコープは、含むスコープを外すと選んでいない状態に戻す", () => {
+  it("同意画面の描画から含むスコープを外すと、含まれるスコープを選択済みに戻す", () => {
+    // 同意画面は要求されたスコープをすべて選択済みで描画し、含まれるスコープは選択済みに戻す状態を渡す。
+    render({
+      read: {
+        checked: true,
+        disabled: true,
+        checkedBeforeImplied: true,
+        shownNotes: [DRAFT_PAGE_WRITE, DRAFT_PAGE_DELETE],
+      },
+      write: { checked: true },
+      del: { checked: true },
+    });
+
+    toggle(DRAFT_PAGE_WRITE);
+    toggle(DRAFT_PAGE_DELETE);
+
+    const read = checkbox(DRAFT_PAGE_READ);
+    expect(read.checked).toBe(true);
+    expect(read.disabled).toBe(false);
+    expect(note(DRAFT_PAGE_READ, DRAFT_PAGE_WRITE).hidden).toBe(true);
+    expect(note(DRAFT_PAGE_READ, DRAFT_PAGE_DELETE).hidden).toBe(true);
+    expect(read.hasAttribute("data-api-token-scope-checked-before-implied")).toBe(false);
+  });
+
+  it("サーバーが渡した状態に戻したあとは、含まれる前に利用者が選んでいた状態に戻す", () => {
+    render({
+      read: { checked: true, disabled: true, checkedBeforeImplied: true, shownNotes: [DRAFT_PAGE_WRITE] },
+      write: { checked: true },
+    });
+
+    toggle(DRAFT_PAGE_WRITE);
+    toggle(DRAFT_PAGE_READ);
+    toggle(DRAFT_PAGE_WRITE);
+    toggle(DRAFT_PAGE_WRITE);
+
+    const read = checkbox(DRAFT_PAGE_READ);
+    expect(read.checked).toBe(false);
+    expect(read.disabled).toBe(false);
+  });
+
+  it("サーバーが含まれる状態で描画したスコープは、戻す状態が選んでいないなら選んでいない状態に戻す", () => {
     const describedBy = `scopes-error ${noteID(DRAFT_PAGE_READ, DRAFT_PAGE_WRITE)}`;
     render({
-      read: { checked: true, disabled: true, describedBy, shownNotes: [DRAFT_PAGE_WRITE] },
+      read: { checked: true, disabled: true, checkedBeforeImplied: false, describedBy, shownNotes: [DRAFT_PAGE_WRITE] },
       write: { checked: true },
     });
 

@@ -3,6 +3,7 @@ package components
 import (
 	"context"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -22,7 +23,10 @@ templ APITokenScopeBadges(scopes []model.Scope) {
 
 // APITokenScopeOptionは、付与するスコープを選ぶチェックボックスの1つ分
 type APITokenScopeOption struct {
-	Scope   model.Scope
+	Scope model.Scope
+
+	// Checkedは、このスコープを含むスコープが選ばれていなければチェックするか。含まれて無効にして
+	// 描画するときは、含むスコープを外したときに戻す状態としてJSへ渡す
 	Checked bool
 
 	// Ineffectiveは、利用者が今の権限ではこのスコープを持たないこと。トークンで効く範囲は
@@ -102,7 +106,9 @@ type APITokenScopeCheckboxesData struct {
 //
 // 選んだスコープに含まれるスコープは、選択済みかつ無効にして、どのスコープに含まれるかを注記します。
 // JSが無くても状態が分かるよう、ここで描画した状態を正とし、選択の変更への追従はweb/api-token-scope.tsが
-// data属性を手がかりに行います。
+// data属性を手がかりに行います。含まれて無効にしたチェックボックスは、含むスコープを外したときに戻す
+// 状態 (APITokenScopeOption.Checked) をdata属性で渡します。無効なチェックボックスは送信されず、JSは
+// 描画される前に選ばれていたかを知りようがないためです。
 templ APITokenScopeCheckboxes(data APITokenScopeCheckboxesData) {
 	for i, option := range data.Options {
 		<div class="flex flex-col gap-1">
@@ -125,6 +131,7 @@ templ APITokenScopeCheckboxes(data APITokenScopeCheckboxesData) {
 					}
 					if option.Implied() {
 						disabled
+						data-api-token-scope-checked-before-implied={ strconv.FormatBool(option.Checked) }
 					}
 					if data.ErrorID != "" {
 						aria-invalid="true"

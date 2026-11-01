@@ -73,7 +73,9 @@ func (h *Handler) renderNew(w http.ResponseWriter, r *http.Request, user *model.
 
 	checked := output.Scopes
 	if formErrors != nil {
-		checked = model.StringsToScopes(granted)
+		// 選んだスコープに含まれるスコープは無効で送信されないため補う。含むスコープを外したときに、
+		// 要求されたスコープの既定 (選択済み) へ戻すためである
+		checked = model.WithImpliedScopes(model.StringsToScopes(granted), output.Scopes)
 	}
 
 	content := oauthauthorizationpages.New(oauthauthorizationpages.NewData{
