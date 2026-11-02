@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -117,17 +118,44 @@ func setupShowFixture(t *testing.T, tx *sql.Tx, queries *query.Queries, prefix s
 	}
 }
 
-// newShowRequestはフィクスチャとリビジョンIDに対するShowリクエストを作成する。
+// newShowRequestはフィクスチャのページ (番号1) とリビジョンIDに対するShowリクエストを作成する。
 func newShowRequest(t *testing.T, spaceIdentifier string, revisionID string, userID model.UserID) *http.Request {
 	t.Helper()
 
-	req := newGetRequestWithChiParams(t, "/s/"+spaceIdentifier+"/pages/1/draft_page_revisions/"+revisionID, map[string]string{
+	return newShowRequestForPage(t, spaceIdentifier, "1", revisionID, userID)
+}
+
+// newShowRequestForPageはページ番号とリビジョンIDに対するShowリクエストを作成する。
+func newShowRequestForPage(t *testing.T, spaceIdentifier string, pageNumber string, revisionID string, userID model.UserID) *http.Request {
+	t.Helper()
+
+	req := newGetRequestWithChiParams(t, "/s/"+spaceIdentifier+"/pages/"+pageNumber+"/draft_page_revisions/"+revisionID, map[string]string{
 		"space_identifier":       spaceIdentifier,
-		"page_number":            "1",
+		"page_number":            pageNumber,
 		"draft_page_revision_id": revisionID,
 	})
 	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
 	return req.WithContext(ctx)
+}
+
+// insertedLinesは描画された差分から、追加行として描画された行の本文を返す。
+// 追加行は背景色のクラスでだけ他の行と見分けられるため、そのクラスを持つ行を探し、
+// 行の最後のセル (本文) の中身を取り出す。
+func insertedLines(t *testing.T, body string) []string {
+	t.Helper()
+
+	var lines []string
+	for _, row := range strings.Split(body, "<tr")[1:] {
+		if !strings.HasPrefix(row, ` class="bg-green-50`) {
+			continue
+		}
+		row, _, _ = strings.Cut(row, "</tr>")
+		cell := row[strings.LastIndex(row, "<td"):]
+		_, content, _ := strings.Cut(cell, ">")
+		content, _, _ = strings.Cut(content, "</td>")
+		lines = append(lines, content)
+	}
+	return lines
 }
 
 func TestShow_NotLoggedIn(t *testing.T) {
@@ -215,7 +243,7 @@ func TestShow_Success(t *testing.T) {
 	}
 }
 
-func TestShow_OldestRevisionShowsFullAddition(t *testing.T) {
+func TestShow_OldestRevisionWithoutBaseShowsFullAddition(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -234,6 +262,7 @@ func TestShow_OldestRevisionShowsFullAddition(t *testing.T) {
 	}
 
 	body := rr.Body.String()
+	// フィクスチャの下書きは起点を記録する前からある下書きと同じく起点が分からないため、
 	// 最古のリビジョンは空の内容と比較され、本文全体が追加として表示されること。
 	if !strings.Contains(body, "line one") {
 		t.Errorf("レスポンスに%qが含まれていない", "line one")
@@ -247,6 +276,69 @@ func TestShow_OldestRevisionShowsFullAddition(t *testing.T) {
 	restoreAction := `action="/s/dpr-show-oldest-space/pages/1/draft_page_revisions/` + string(fixture.revision1.ID) + `/restore"`
 	if !strings.Contains(body, restoreAction) {
 		t.Errorf("レスポンスに復元フォームの送信先%qが含まれていない", restoreAction)
+	}
+}
+
+func TestShow_OldestRevisionComparesWithBase(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	fixture := setupShowFixture(t, tx, queries, "dpr-show-base")
+	handler := setupHandler(t, queries)
+
+	// フィクスチャの下書きは起点を持たないため、同じスペースの別のページに起点のある下書きを作る。
+	basePageID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(fixture.spaceID).
+		WithTopicID(fixture.topicID).
+		WithNumber(2).
+		WithTitle("Base Page").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	baseTitle := "Base Page"
+	draft, err := repository.NewDraftPageRepository(queries).Create(context.Background(), repository.CreateDraftPageInput{
+		SpaceID:       fixture.spaceID,
+		PageID:        basePageID,
+		SpaceMemberID: fixture.spaceMemberID,
+		TopicID:       fixture.topicID,
+		Title:         &baseTitle,
+		Body:          "line one\nline two\n",
+		BaseTitle:     &baseTitle,
+		BaseBody:      "line one\n",
+	})
+	if err != nil {
+		t.Fatalf("Create() (下書き) のエラー = %v", err)
+	}
+	revision, err := repository.NewDraftPageRevisionRepository(queries).Create(context.Background(), repository.CreateDraftPageRevisionInput{
+		DraftPageID:   draft.ID,
+		SpaceID:       fixture.spaceID,
+		SpaceMemberID: fixture.spaceMemberID,
+		Title:         baseTitle,
+		Body:          "line one\nline two\n",
+	})
+	if err != nil {
+		t.Fatalf("Create() (リビジョン) のエラー = %v", err)
+	}
+
+	req := newShowRequestForPage(t, "dpr-show-base-space", "2", string(revision.ID), fixture.userID)
+
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %v、期待値 = %v (本文: %s)", rr.Code, http.StatusOK, rr.Body.String())
+	}
+
+	body := rr.Body.String()
+	// 最古のリビジョンは下書きの起点と比較され、起点から足した行だけが追加として表示されること。
+	inserted := insertedLines(t, body)
+	if len(inserted) != 1 || inserted[0] != "line two" {
+		t.Errorf("追加として描画された行 = %q、期待値 = [%q]", inserted, "line two")
+	}
+	// タイトルは起点から変えていないため、タイトルの変更は表示されないこと。
+	if titleChange := i18n.T(req.Context(), "page_edit_revision_diff_title_change"); strings.Contains(body, titleChange) {
+		t.Errorf("レスポンスにタイトルの変更 (%q) が含まれている", titleChange)
 	}
 }
 

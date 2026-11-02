@@ -117,6 +117,8 @@ func (uc *AutoSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAcc
 		Body:                      input.Body,
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		CurrentTopicName:          data.topic.Name,
+		BaseTitle:                 data.page.Title,
+		BaseBody:                  data.page.Body,
 	}
 
 	draftPage, err := saveDraftPageContent(ctx, contentInput, now,

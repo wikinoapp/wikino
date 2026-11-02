@@ -74,6 +74,11 @@ func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
 	if output.DraftPage.Body != "Hello, world!" {
 		t.Errorf("Body = %q、期待値 = %q", output.DraftPage.Body, "Hello, world!")
 	}
+	// 下書きを作るときに、ページの今の内容を起点として記録する
+	wantBase := model.DraftPageContent{Title: "Test Page", Body: "Test body"}
+	if got := output.DraftPage.BaseContent(); got == nil || *got != wantBase {
+		t.Errorf("起点 = %+v、期待値 = %+v", got, wantBase)
+	}
 	if output.ModifiedAt.IsZero() {
 		t.Error("ModifiedAtがゼロ値")
 	}
@@ -154,6 +159,11 @@ func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
 	}
 	if output2.DraftPage.Body != "更新本文" {
 		t.Errorf("Body = %q、期待値 = %q", output2.DraftPage.Body, "更新本文")
+	}
+	// 起点は下書きを作った後の保存で書き換えない
+	wantBase := model.DraftPageContent{Title: "Test Page", Body: "Test body"}
+	if got := output2.DraftPage.BaseContent(); got == nil || *got != wantBase {
+		t.Errorf("起点 = %+v、期待値 = %+v", got, wantBase)
 	}
 }
 

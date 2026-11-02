@@ -174,6 +174,8 @@ func generateDemoDrafts(
 			member:     owner,
 			page:       page,
 			title:      &title,
+			baseTitle:  &title,
+			baseBody:   page.body,
 			bodies:     draft.bodies,
 			modifiedAt: modifiedAt,
 			savedAt:    savedAt,
@@ -201,5 +203,5 @@ func findDemoPage(ctx context.Context, writer *pageWriter, topic *seededTopic, t
 		return nil, fmt.Errorf("デモ下書きの対象とする公開済みのデモページ %sが無い", title)
 	}
 
-	return &seededPage{id: page.ID, number: page.Number, title: title}, nil
+	return &seededPage{id: page.ID, number: page.Number, title: title, body: page.Body}, nil
 }

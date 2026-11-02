@@ -254,6 +254,12 @@ func TestGenerateSuggestionsShowcaseStates(t *testing.T) {
 	if drafts[0].body != editedPages[0].body {
 		t.Errorf("編集中の下書きが、提案されている本文を持っていない")
 	}
+	if drafts[0].baseTitle == nil || editedPages[0].title == nil || *drafts[0].baseTitle != *editedPages[0].title {
+		t.Errorf("編集中の下書きの起点のタイトル = %v、期待値 = %v", drafts[0].baseTitle, editedPages[0].title)
+	}
+	if drafts[0].baseBody == nil || *drafts[0].baseBody != editedPages[0].body {
+		t.Errorf("編集中の下書きの起点の本文 = %v、期待値 = %q", drafts[0].baseBody, editedPages[0].body)
+	}
 	if got := readDraftSuggestionPageID(ctx, t, tx, spaces.wiki.id, drafts[0].id); got == nil || *got != editedPages[0].id {
 		t.Errorf("編集中の下書きが、提案ページに紐づいていない")
 	}

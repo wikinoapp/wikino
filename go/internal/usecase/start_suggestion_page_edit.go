@@ -276,6 +276,8 @@ func (uc *StartSuggestionPageEditUsecase) startEdit(ctx context.Context, data *s
 			SuggestionPageID:          &sp.ID,
 			Title:                     sp.Title,
 			Body:                      sp.Body,
+			BaseTitle:                 sp.Title,
+			BaseBody:                  sp.Body,
 			LinkedPageIDs:             sp.LinkedPageIDs,
 			FeaturedImageAttachmentID: sp.FeaturedImageAttachmentID,
 			ModifiedAt:                now,

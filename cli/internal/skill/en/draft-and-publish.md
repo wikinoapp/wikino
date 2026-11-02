@@ -30,7 +30,7 @@ In that case, read it again and reapply your change; if it keeps happening, ask 
 
 ## Check the revision history
 
-`wikino draft revision list <page number>` lists the records of each creation and update of the draft, newest first.
+`wikino draft revision list <page number>` lists the records of each creation and update of the draft that changed its content, newest first.
 To go back to past content, pass the body read with `wikino draft revision get <page number> <revision ID> --md` to `wikino draft update`.
 The `--md` output of a revision has no version, so it cannot be passed to `--md-file` as is.
 

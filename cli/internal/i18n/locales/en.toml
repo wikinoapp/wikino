@@ -1477,7 +1477,7 @@ other = "Create a draft"
 description = "draft createコマンドの説明"
 other = """
 Creates a draft for rewriting a page without publishing it.
-One revision of the draft's history is created at the same time.
+If the draft's title and body differ from the page's current content, one draft revision is created at the same time (none if they are the same as the page's current content).
 
 To create a draft of an existing page, pass the page number as the argument.
 If `--title` and the body are omitted, the page's current title and body become the draft.
@@ -1604,7 +1604,7 @@ other = """
 Updates the title and body of your draft of the page with the given page number.
 Only the given fields are updated; the others are left unchanged.
 The page is not published, and the content of the published page does not change.
-Each update also creates one draft revision (none if it is the same as the previous revision).
+Each update also creates one draft revision (none if it is the same as the previous revision; when there is no revision yet, it is compared with the content at the time the draft was created).
 
 Choose one of three ways to pass the body, depending on the size of the change.
 

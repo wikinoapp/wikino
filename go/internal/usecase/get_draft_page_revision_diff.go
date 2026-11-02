@@ -10,7 +10,7 @@ import (
 )
 
 // GetDraftPageRevisionDiffUsecaseはページ編集画面のリビジョン差分モーダル用データを取得する。
-// 対象リビジョンと、その直前のリビジョン (差分の比較対象) を返す。差分の計算自体は
+// 対象リビジョンと、その直前のリビジョンと下書き (起点を持つ) を返す。差分の計算自体は
 // プレゼンテーション層 (viewmodel) で行う。
 type GetDraftPageRevisionDiffUsecase struct {
 	spaceRepo             *repository.SpaceRepository
@@ -53,11 +53,13 @@ type GetDraftPageRevisionDiffInput struct {
 
 // GetDraftPageRevisionDiffOutputはリビジョン差分取得の出力。
 type GetDraftPageRevisionDiffOutput struct {
+	// DraftPageはRevisionが属する下書き。Revisionが最古のときは、下書きの起点を差分の比較対象にする。
+	DraftPage *model.DraftPage
+
 	// Revisionは編集履歴カラムで選択されたリビジョン。
 	Revision *model.DraftPageRevision
 
-	// PreviousRevisionはRevisionの直前のリビジョン (差分の比較対象)。Revisionが最古の
-	// 場合はnilとなり、差分は全文追加として表示する。
+	// PreviousRevisionはRevisionの直前のリビジョン。Revisionが最古の場合はnilとなる。
 	PreviousRevision *model.DraftPageRevision
 
 	// IsCurrentはRevisionが下書きの最新リビジョン (編集履歴で「現在」バッジが付くもの)
@@ -66,7 +68,7 @@ type GetDraftPageRevisionDiffOutput struct {
 	IsCurrent bool
 }
 
-// Executeは対象リビジョンと直前リビジョンを取得する。
+// Executeは対象リビジョンと直前リビジョンと下書きを取得する。
 func (uc *GetDraftPageRevisionDiffUsecase) Execute(ctx context.Context, input GetDraftPageRevisionDiffInput) (*GetDraftPageRevisionDiffOutput, error) {
 	// 1. データ取得 + 2. 認可チェック (データ取得は手動保存と同じ共通ヘルパーを使う)。
 	data, err := fetchPageAccessData(ctx, uc.pageAccessRepos(), input.SpaceIdentifier, input.PageNumber, input.UserID)
@@ -117,6 +119,7 @@ func (uc *GetDraftPageRevisionDiffUsecase) Execute(ctx context.Context, input Ge
 	isCurrent := len(latest) > 0 && latest[0].ID == revision.ID
 
 	return &GetDraftPageRevisionDiffOutput{
+		DraftPage:        draftPage,
 		Revision:         revision,
 		PreviousRevision: previous,
 		IsCurrent:        isCurrent,

@@ -64,17 +64,22 @@ func TestGenerateDemoDrafts(t *testing.T) {
 			draftID     string
 			memberID    string
 			body        string
+			pageBody    string
+			baseTitle   *string
+			baseBody    *string
 			linked      []string
 			modifiedAt  time.Time
 		)
 		err := tx.QueryRowContext(
 			ctx,
-			`SELECT p.id, p.pinned_at, p.published_at, d.id, d.space_member_id, d.body, d.linked_page_ids, d.modified_at
+			`SELECT p.id, p.pinned_at, p.published_at, d.id, d.space_member_id, d.body, d.linked_page_ids, d.modified_at,
+                    p.body, d.base_title, d.base_body
              FROM draft_pages d
              INNER JOIN pages p ON p.id = d.page_id AND p.space_id = d.space_id
              WHERE d.space_id = $1 AND p.title = $2`,
 			string(spaces.demo.id), draft.pageTitle,
-		).Scan(&pageID, &pinnedAt, &publishedAt, &draftID, &memberID, &body, pq.Array(&linked), &modifiedAt)
+		).Scan(&pageID, &pinnedAt, &publishedAt, &draftID, &memberID, &body, pq.Array(&linked), &modifiedAt,
+			&pageBody, &baseTitle, &baseBody)
 		if err != nil {
 			t.Fatalf("ページ%sの下書きの取得に失敗: %v", draft.pageTitle, err)
 		}
@@ -84,6 +89,9 @@ func TestGenerateDemoDrafts(t *testing.T) {
 		}
 		if body != draft.bodies[len(draft.bodies)-1] {
 			t.Errorf("ページ%sの下書きが最後の保存の本文を持っていない", draft.pageTitle)
+		}
+		if baseTitle == nil || *baseTitle != draft.pageTitle || baseBody == nil || *baseBody != pageBody {
+			t.Errorf("ページ%sの下書きの起点 = (%v, %v)、期待値 = (%q, %q)", draft.pageTitle, baseTitle, baseBody, draft.pageTitle, pageBody)
 		}
 		if len(linked) == 0 {
 			t.Errorf("ページ%sの下書きの本文のWikiリンクが1つも解決していない", draft.pageTitle)

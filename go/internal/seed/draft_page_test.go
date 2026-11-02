@@ -55,6 +55,9 @@ func TestGenerateDraftPages(t *testing.T) {
 		if page := readPageBehindDraft(ctx, t, tx, spaces.wiki.id, draft.pageID); page.published {
 			t.Errorf("%sのページが未公開であることを期待したが公開済みだった", draftLabelOf(draft))
 		}
+		if draft.baseTitle != nil || draft.baseBody == nil || *draft.baseBody != "" {
+			t.Errorf("%sの起点 = (%v, %v)、期待値 = タイトルが無く本文が空", draftLabelOf(draft), draft.baseTitle, draft.baseBody)
+		}
 		if draft.topicID != topics.notes.id {
 			t.Errorf("%sが「ノート」に置かれていない", draftLabelOf(draft))
 		}
@@ -88,6 +91,9 @@ func TestGenerateDraftPages(t *testing.T) {
 		}
 		if draft.body == page.body {
 			t.Errorf("%sの本文が、公開されているページの本文と同じだった", draftLabelOf(draft))
+		}
+		if draft.baseTitle == nil || *draft.baseTitle != *page.title || draft.baseBody == nil || *draft.baseBody != page.body {
+			t.Errorf("%sの起点 = (%v, %v)、期待値 = (%q, %q)", draftLabelOf(draft), draft.baseTitle, draft.baseBody, *page.title, page.body)
 		}
 	}
 
@@ -400,6 +406,8 @@ type draftPageRow struct {
 	topicID    model.TopicID
 	title      *string
 	body       string
+	baseTitle  *string
+	baseBody   *string
 	modifiedAt time.Time
 }
 
@@ -421,7 +429,7 @@ func listDraftPages(
 
 	rows, err := tx.QueryContext(
 		ctx,
-		`SELECT id, page_id, topic_id, title, body, modified_at
+		`SELECT id, page_id, topic_id, title, body, base_title, base_body, modified_at
          FROM draft_pages
          WHERE space_id = $1 AND space_member_id = $2
          ORDER BY modified_at DESC`,
@@ -443,7 +451,7 @@ func listDraftPages(
 			topicID string
 		)
 		if err := rows.Scan(
-			&id, &pageID, &topicID, &draft.title, &draft.body, &draft.modifiedAt,
+			&id, &pageID, &topicID, &draft.title, &draft.body, &draft.baseTitle, &draft.baseBody, &draft.modifiedAt,
 		); err != nil {
 			t.Fatalf("下書きの読み取りに失敗: %v", err)
 		}

@@ -201,7 +201,9 @@ CREATE TABLE public.draft_pages (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     suggestion_page_id uuid,
-    featured_image_attachment_id uuid
+    featured_image_attachment_id uuid,
+    base_title public.citext,
+    base_body public.citext
 );
 
 
@@ -2723,4 +2725,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261027045849'),
     ('20261028163426'),
     ('20261028165252'),
-    ('20261031045408');
+    ('20261031045408'),
+    ('20261102172144');

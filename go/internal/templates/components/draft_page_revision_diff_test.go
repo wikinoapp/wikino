@@ -28,7 +28,7 @@ func newTestRevisionDiff(t *testing.T, oldTitle, newTitle, oldBody, newBody stri
 		Body:      newBody,
 		CreatedAt: createdAt,
 	}
-	return viewmodel.NewDraftPageRevisionDiff(revision, previous)
+	return viewmodel.NewDraftPageRevisionDiff(&model.DraftPage{}, revision, previous)
 }
 
 // renderRevisionDiffはDraftPageRevisionDiffコンポーネントを文字列にレンダリングする。

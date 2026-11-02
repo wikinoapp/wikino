@@ -10,8 +10,9 @@ import (
 )
 
 // UpdateAPIDraftPageUsecaseは、公開APIでページについてトークンの持ち主の下書きを更新するユースケース。
-// Web画面の手動保存 (ManualSaveDraftPageUsecase) と同じく、下書きを書き換えて最新のリビジョンと異なる内容なら
-// リビジョンを作る。加えて、更新の前提にした版 (`If-Match`) を今の版と照合してから更新する
+// Web画面の手動保存 (ManualSaveDraftPageUsecase) と同じく、下書きを書き換えて直前の状態
+// (最新のリビジョン、無ければ下書きの起点) と異なる内容ならリビジョンを作る。
+// 加えて、更新の前提にした版 (`If-Match`) を今の版と照合してから更新する
 type UpdateAPIDraftPageUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
@@ -79,7 +80,8 @@ type UpdateAPIDraftPageOutput struct {
 // 取得 (GetAPIDraftPageUsecase) と同じく、他のメンバーの下書き・ゴミ箱のページの下書き・閲覧者が開けない
 // 非公開トピックの下書きは未存在として扱い、下書きを保存できない場合も存在を秘匿して未存在を返す。
 // 今の版が前提の版と一致しなければ、AppErrCodePreconditionFailedのエラーを返す。
-// タイトルと本文が今と同じ場合は下書きを書き換えず (版を変えず)、最新のリビジョンと異なる場合だけリビジョンを作る
+// タイトルと本文が今と同じ場合は下書きを書き換えず (版を変えず)、
+// 直前の状態 (最新のリビジョン、無ければ下書きの起点) と異なる場合だけリビジョンを作る
 func (uc *UpdateAPIDraftPageUsecase) Execute(ctx context.Context, input UpdateAPIDraftPageInput) (*UpdateAPIDraftPageOutput, error) {
 	space, err := resolveAPISpace(ctx, input.Principal, input.SpaceIdentifier)
 	if err != nil {

@@ -123,9 +123,64 @@ func TestGetDraftPageRevisionDiffUsecase_Execute(t *testing.T) {
 		if output.PreviousRevision != nil {
 			t.Errorf("PreviousRevision = %+v、期待値 = nil", output.PreviousRevision)
 		}
+		// 起点を記録する前からある下書きでは、起点が分からない
+		if output.DraftPage == nil || output.DraftPage.ID != draftPageID {
+			t.Fatalf("DraftPage = %+v、期待値 = ID %s", output.DraftPage, draftPageID)
+		}
+		if output.DraftPage.BaseContent() != nil {
+			t.Errorf("DraftPage.BaseContent() = %+v、期待値 = nil", output.DraftPage.BaseContent())
+		}
 		// rev1はrev2より古いため現在のリビジョンではない。
 		if output.IsCurrent {
 			t.Error("IsCurrent = true、期待値 = false (最新でないリビジョン)")
+		}
+	})
+
+	t.Run("下書きの起点を返す", func(t *testing.T) {
+		basePageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("起点のあるページ").
+			WithLinkedPageIDs([]model.PageID{}).
+			Build()
+		baseTitle := "起点のあるページ"
+		draft, err := draftPageRepo.Create(ctx, repository.CreateDraftPageInput{
+			SpaceID:       spaceID,
+			PageID:        basePageID,
+			SpaceMemberID: spaceMemberID,
+			TopicID:       topicID,
+			Title:         &baseTitle,
+			Body:          "line one\nline two\n",
+			BaseTitle:     &baseTitle,
+			BaseBody:      "line one\n",
+		})
+		if err != nil {
+			t.Fatalf("Create() (下書き) のエラー = %v", err)
+		}
+		revision, err := draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
+			DraftPageID:   draft.ID,
+			SpaceID:       spaceID,
+			SpaceMemberID: spaceMemberID,
+			Title:         baseTitle,
+			Body:          "line one\nline two\n",
+		})
+		if err != nil {
+			t.Fatalf("Create() (リビジョン) のエラー = %v", err)
+		}
+
+		output, err := uc.Execute(ctx, GetDraftPageRevisionDiffInput{
+			SpaceIdentifier: "gdprd-space",
+			PageNumber:      2,
+			RevisionID:      revision.ID,
+			UserID:          ownerID,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		want := model.DraftPageContent{Title: "起点のあるページ", Body: "line one\n"}
+		if got := output.DraftPage.PrecedingContent(output.PreviousRevision); got == nil || *got != want {
+			t.Errorf("直前の状態 = %+v、期待値 = %+v", got, want)
 		}
 	})
 
