@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
@@ -111,6 +112,14 @@ templ Consent(data ConsentData) {
 							Autofocus: hasScopesError(data.FormErrors),
 						})
 					</fieldset>
+				}
+
+				if !data.NotMember && !data.NoPermission {
+					<p class="text-sm text-muted-foreground">
+						@templ.Raw(templates.T(ctx, "oauth_device_verification_consent_api_terms_html", map[string]any{
+							"APITermsPath": legaldoc.PagePath(legaldoc.KeyAPITerms, templates.Locale(ctx)),
+						}))
+					</p>
 				}
 
 				<div class="flex flex-wrap gap-2">

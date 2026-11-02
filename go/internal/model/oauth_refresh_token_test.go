@@ -34,3 +34,31 @@ func TestOAuthRefreshToken_IsActive(t *testing.T) {
 		})
 	}
 }
+
+func TestOAuthRefreshToken_IsInReuseInterval(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	recent := now.Add(-OAuthRefreshTokenReuseInterval + time.Second)
+	boundary := now.Add(-OAuthRefreshTokenReuseInterval)
+
+	tests := []struct {
+		name   string
+		usedAt *time.Time
+		want   bool
+	}{
+		{name: "未使用なら猶予の間ではない", usedAt: nil, want: false},
+		{name: "使われてから猶予が過ぎていなければ猶予の間", usedAt: &recent, want: true},
+		{name: "使われてからちょうど猶予が過ぎたら猶予の間ではない", usedAt: &boundary, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			token := &OAuthRefreshToken{UsedAt: tt.usedAt}
+			if got := token.IsInReuseInterval(now); got != tt.want {
+				t.Errorf("IsInReuseInterval() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}

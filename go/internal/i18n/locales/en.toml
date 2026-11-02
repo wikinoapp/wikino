@@ -327,7 +327,7 @@ other = "Must be at least {{.MinLength}} characters"
 
 [account_new_terms_html]
 description = "アカウント作成の送信ボタンの近くに置く、利用規約とプライバシーポリシーへの同意の表示 (各文書へのリンクを含む)"
-other = "Please create an account after agreeing to the <a class=\"link-inherit-foreground\" href=\"/terms\" target=\"_blank\">Terms of Service</a> and <a class=\"link-inherit-foreground\" href=\"/privacy\" target=\"_blank\">Privacy Policy</a>."
+other = "Please create an account after agreeing to the <a class=\"link-inherit-foreground\" href=\"{{.TermsPath}}\" target=\"_blank\">Terms of Service</a> and <a class=\"link-inherit-foreground\" href=\"{{.PrivacyPath}}\" target=\"_blank\">Privacy Policy</a>."
 
 [account_new_submit_button]
 description = "アカウント作成の送信ボタンのラベル"
@@ -2188,7 +2188,7 @@ other = "Personal access tokens"
 
 [personal_access_token_index_description_html]
 description = "個人用アクセストークンの一覧のサブタイトル (ヘルプページへのリンクを含む)"
-other = "Access tokens for calling the public API. An access token issued in this space can only be used for this space. See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">Personal access token help</a> for more information."
+other = "Access tokens for calling the public API. An access token issued in this space can only be used for this space. See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/334\" target=\"_blank\">Personal access token help</a> for more information."
 
 [personal_access_token_index_breadcrumb_settings]
 description = "個人用アクセストークンの一覧のパンくずのスペース設定へのリンク"
@@ -2304,7 +2304,7 @@ other = "Generate a personal access token"
 
 [personal_access_token_new_description_html]
 description = "個人用アクセストークンの発行フォームのサブタイトル (ヘルプページへのリンクを含む)"
-other = "Generate an access token for the public API of this space. An access token can only do what both the selected scopes and your member permissions allow. See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">Personal access token help</a> for more information."
+other = "Generate an access token for the public API of this space. An access token can only do what both the selected scopes and your member permissions allow. See <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/334\" target=\"_blank\">Personal access token help</a> for more information."
 
 [personal_access_token_new_breadcrumb_settings]
 description = "個人用アクセストークンの発行フォームのパンくずのスペース設定へのリンク"
@@ -2337,6 +2337,10 @@ other = "Expiration"
 [personal_access_token_new_expiration_days_option]
 description = "個人用アクセストークンの発行フォームの有効期限の選択肢"
 other = "{{.Days}} days"
+
+[personal_access_token_new_api_terms_html]
+description = "個人用アクセストークンの発行の送信ボタンの近くに置く、API利用規約への同意の表示 (API利用規約へのリンクを含む)"
+other = "Please issue an access token after agreeing to the <a class=\"link-inherit-foreground\" href=\"{{.APITermsPath}}\" target=\"_blank\">API Terms of Use</a>."
 
 [personal_access_token_new_submit_button]
 description = "個人用アクセストークンの発行フォームの送信ボタン"
@@ -2489,6 +2493,10 @@ other = "An app running on a server that can keep a client secret safe. A secret
 [oauth_application_new_client_type_public_hint]
 description = "OAuthアプリの登録フォームのpublicの補足"
 other = "An app running on the user's device that cannot keep a secret. No secret is issued; authorization relies on PKCE alone."
+
+[oauth_application_new_api_terms_html]
+description = "OAuthアプリの登録の送信ボタンの近くに置く、API利用規約への同意の表示 (API利用規約へのリンクを含む)"
+other = "Please register the app after agreeing to the <a class=\"link-inherit-foreground\" href=\"{{.APITermsPath}}\" target=\"_blank\">API Terms of Use</a>."
 
 [oauth_application_new_submit_button]
 description = "OAuthアプリの登録フォームの送信ボタン"
@@ -2736,6 +2744,10 @@ other = "You will be redirected to {{.RedirectHost}}."
 description = "アプリを許可できない場合の同意画面の、アプリへ戻ると移動する先の説明"
 other = "You will be redirected to {{.RedirectHost}} when you go back to the application."
 
+[oauth_authorization_new_api_terms_html]
+description = "認可コードの同意画面の許可ボタンの近くに置く、許可したアプリによるAPIの利用にAPI利用規約が適用される旨の表示 (API利用規約へのリンクを含む)"
+other = "Use of the public API by the app you allow is subject to the <a class=\"link-inherit-foreground\" href=\"{{.APITermsPath}}\" target=\"_blank\">API Terms of Use</a>."
+
 [oauth_authorization_new_approve]
 description = "同意画面の許可するボタン"
 other = "Allow"
@@ -2897,6 +2909,10 @@ other = "You can't allow this app because you are not a member of this space"
 [oauth_device_verification_consent_no_permission]
 description = "OAuthアプリを許可する権限が無いためにデバイス認可を許可できないことの説明"
 other = "You don't have permission to allow apps in this space. Contact the space administrator"
+
+[oauth_device_verification_consent_api_terms_html]
+description = "デバイス認可の同意画面の許可ボタンの近くに置く、許可したアプリによるAPIの利用にAPI利用規約が適用される旨の表示 (API利用規約へのリンクを含む)"
+other = "Use of the public API by the app you allow is subject to the <a class=\"link-inherit-foreground\" href=\"{{.APITermsPath}}\" target=\"_blank\">API Terms of Use</a>."
 
 [oauth_device_verification_consent_approve]
 description = "デバイス認可の同意画面の許可するボタン"

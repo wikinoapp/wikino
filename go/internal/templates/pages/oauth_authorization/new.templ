@@ -2,6 +2,7 @@ package oauth_authorization
 
 import (
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
@@ -128,6 +129,14 @@ templ New(data NewData) {
 						{ templates.T(ctx, "oauth_authorization_new_redirect_notice", map[string]any{"RedirectHost": data.RedirectHost}) }
 					}
 				</p>
+
+				if !data.NotMember && !data.NoPermission {
+					<p class="text-sm text-muted-foreground">
+						@templ.Raw(templates.T(ctx, "oauth_authorization_new_api_terms_html", map[string]any{
+							"APITermsPath": legaldoc.PagePath(legaldoc.KeyAPITerms, templates.Locale(ctx)),
+						}))
+					</p>
+				}
 
 				<div class="flex flex-wrap gap-2">
 					if !data.NotMember && !data.NoPermission {

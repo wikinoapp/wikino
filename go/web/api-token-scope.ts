@@ -1,15 +1,15 @@
 // 公開APIのトークンのスコープを選ぶチェックボックス (components/api_token_scope.templ) に振る舞いを付ける。
 //
 // 書き込み・削除のスコープは同じリソースの読み取りを含む。含むスコープを選んだら、含まれるスコープを
-// 選択済みにして無効にし、どのスコープに含まれるかの注記を出す。外したら利用者が選んでいた状態に戻す。
-// 初めの状態はサーバーが描画するため、ここでは選択の変更に追従するだけにする。含む関係はサーバーが
-// data属性で渡し、ここでは表を持たない。
+// 選択済みにして無効にし、どのスコープに含まれるかの注記を出す。外したら含まれる前の状態に戻す。
+// 初めの状態はサーバーが描画するため、ここでは選択の変更に追従するだけにする。含む関係と、サーバーが
+// 含まれる状態で描画したチェックボックスの戻す状態はサーバーがdata属性で渡し、ここでは表を持たない。
 
 const CHECKBOX_SELECTOR = "input[type=checkbox][data-api-token-scope]";
 const IMPLIED_NOTE_SELECTOR = "[data-api-token-scope-implied-note]";
 
-// 含まれて無効にする前に利用者が選んでいた状態。サーバーが無効にして描画したものは記録が無く、
-// 外したときは選んでいない状態に戻す (無効なチェックボックスは送信されず、選んでいたかが分からないため)。
+// 含まれて無効にする前に利用者が選んでいた状態。サーバーが無効にして描画したものはここに記録が無いため、
+// サーバーがdata属性で渡した戻す状態を使う。
 const checkedBeforeImplied = new WeakMap<HTMLInputElement, boolean>();
 
 let listening = false;
@@ -55,6 +55,10 @@ function update(checkboxes: HTMLInputElement[]): void {
   }
 }
 
+function checkedBeforeImpliedByServer(checkbox: HTMLInputElement): boolean {
+  return checkbox.dataset.apiTokenScopeCheckedBeforeImplied === "true";
+}
+
 function impliesOf(checkbox: HTMLInputElement): string[] {
   return (checkbox.dataset.apiTokenScopeImplies ?? "").split(" ").filter((scope) => scope !== "");
 }
@@ -66,9 +70,11 @@ function applyImplied(checkbox: HTMLInputElement, impliers: Set<string>): void {
     checkbox.checked = true;
     checkbox.disabled = true;
   } else if (!implied && checkbox.disabled) {
-    checkbox.checked = checkedBeforeImplied.get(checkbox) ?? false;
+    checkbox.checked = checkedBeforeImplied.get(checkbox) ?? checkedBeforeImpliedByServer(checkbox);
     checkbox.disabled = false;
     checkedBeforeImplied.delete(checkbox);
+    // サーバーが渡した状態は描画したときのものなので、一度戻したら使わない。
+    delete checkbox.dataset.apiTokenScopeCheckedBeforeImplied;
   }
 
   updateNotes(checkbox, impliers);

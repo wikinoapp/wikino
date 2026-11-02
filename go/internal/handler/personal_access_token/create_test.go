@@ -159,6 +159,11 @@ func TestCreate_入力が不正なら422で送信内容を戻したフォーム�
 	if !regexp.MustCompile(`id="scopes_page_read"[^>]*checked[^>]*disabled`).MatchString(body) {
 		t.Error("送信したスコープに含まれるスコープが、選択済みかつ無効で描画されていない")
 	}
+	// 無効にしたチェックボックスは送信されず、含まれる前に選ばれていたかが分からないため、
+	// 含むスコープを外したときは発行画面の既定 (選んでいない状態) に戻す
+	if !regexp.MustCompile(`id="scopes_page_read"[^>]*data-api-token-scope-checked-before-implied="false"`).MatchString(body) {
+		t.Error("送信したスコープに含まれるスコープに、選んでいない状態へ戻す状態が描画されていない")
+	}
 	if !strings.Contains(body, "「ページの作成・更新」に含まれます") {
 		t.Error("送信したスコープに含まれることの注記が無い")
 	}

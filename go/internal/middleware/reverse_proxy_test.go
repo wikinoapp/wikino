@@ -48,6 +48,26 @@ func TestReverseProxyMiddleware_isGoHandledPath(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "利用規約の固定URL",
+			path:     "/terms",
+			expected: true,
+		},
+		{
+			name:     "API利用規約の英語版の固定URL",
+			path:     "/en/terms/api",
+			expected: true,
+		},
+		{
+			name:     "プライバシーポリシーの英語版の固定URL",
+			path:     "/en/privacy",
+			expected: true,
+		},
+		{
+			name:     "法的文書の固定URLの下のパスはRails版 (完全一致で振り分ける)",
+			path:     "/privacy/foo",
+			expected: false,
+		},
+		{
 			name:     "ログインページ",
 			path:     "/sign_in",
 			expected: true,

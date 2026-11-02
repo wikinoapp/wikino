@@ -1,6 +1,7 @@
 package components
 
 import (
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 )
 
@@ -13,8 +14,9 @@ templ Footer() {
 			"
 	>
 		<ul class="flex items-center justify-center gap-4 basis-full md:basis-auto">
-			@footerLink("/terms", "footer_terms")
-			@footerLink("/privacy", "footer_privacy")
+			// 転送を挟まないよう、固定URLではなく本文のページを表示言語に応じて直接指す
+			@footerLink(legaldoc.PagePath(legaldoc.KeyTerms, templates.Locale(ctx)), "footer_terms")
+			@footerLink(legaldoc.PagePath(legaldoc.KeyPrivacyPolicy, templates.Locale(ctx)), "footer_privacy")
 		</ul>
 
 		<div class="order-last md:order-first">

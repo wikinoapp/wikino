@@ -13,6 +13,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/clientip"
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
@@ -57,11 +58,11 @@ type ReverseProxyMiddleware struct {
 var (
 	// 完全一致でチェックするパス
 	// "/" をプレフィックス一致に追加すると全パスがマッチしてしまうため、完全一致で処理する
-	goHandledExactPaths = []string{
+	goHandledExactPaths = append([]string{
 		"/",              // トップページ
 		"/home",          // ホーム画面
 		"/manifest.json", // Web App Manifest
-	}
+	}, legaldoc.Paths()...) // 法的文書の固定URL
 
 	// プレフィックス一致でチェックするパス
 	goHandledPrefixPaths = []string{

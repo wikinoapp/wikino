@@ -33,4 +33,6 @@ type Metadata struct {
 	AuthorizationResponseIssParameterSupported bool     `json:"authorization_response_iss_parameter_supported"`
 	ClientIDMetadataDocumentSupported          bool     `json:"client_id_metadata_document_supported"`
 	ServiceDocumentation                       string   `json:"service_documentation"`
+	OPPolicyURI                                string   `json:"op_policy_uri"`
+	OPTOSURI                                   string   `json:"op_tos_uri"`
 }

@@ -57,7 +57,7 @@ func TestIndex_自分のトークンの一覧を表示する(t *testing.T) {
 	for _, want := range []string{
 		"<title>個人用アクセストークン | トークンのスペース</title>",
 		// 説明文からヘルプページへ移れる
-		`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino" target="_blank">個人用アクセストークンについてのヘルプ</a>`,
+		`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino/pages/334" target="_blank">個人用アクセストークンについてのヘルプ</a>`,
 		"自宅のCLI",
 		"…abcd",
 		"トピックの読み取り",
