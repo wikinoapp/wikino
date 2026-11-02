@@ -158,6 +158,8 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		Body:                      input.Body,
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		CurrentTopicName:          data.topic.Name,
+		BaseTitle:                 data.page.Title,
+		BaseBody:                  data.page.Body,
 	}
 
 	// DraftPageのfind_or_create・Wikiリンクの解決・更新

@@ -306,6 +306,8 @@ func (uc *CreateAPIDraftPageUsecase) createDraftPageOnce(
 		TopicID:                   page.TopicID,
 		Title:                     title,
 		Body:                      body,
+		BaseTitle:                 page.Title,
+		BaseBody:                  page.Body,
 		LinkedPageIDs:             nil,
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		ModifiedAt:                now,

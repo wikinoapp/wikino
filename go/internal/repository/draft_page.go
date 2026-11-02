@@ -84,13 +84,16 @@ func (r *DraftPageRepository) FindByPageAndMember(ctx context.Context, pageID mo
 
 // CreateDraftPageInputは下書き作成の入力パラメータ
 type CreateDraftPageInput struct {
-	SpaceID                   model.SpaceID
-	PageID                    model.PageID
-	SpaceMemberID             model.SpaceMemberID
-	TopicID                   model.TopicID
-	SuggestionPageID          *model.SuggestionPageID
-	Title                     *string
-	Body                      string
+	SpaceID          model.SpaceID
+	PageID           model.PageID
+	SpaceMemberID    model.SpaceMemberID
+	TopicID          model.TopicID
+	SuggestionPageID *model.SuggestionPageID
+	Title            *string
+	Body             string
+	// BaseTitleとBaseBodyは下書きの起点。作った後に書き換えないため、作るときに書く
+	BaseTitle                 *string
+	BaseBody                  string
 	LinkedPageIDs             []model.PageID
 	FeaturedImageAttachmentID *model.AttachmentID
 	ModifiedAt                time.Time
@@ -141,6 +144,8 @@ func (input CreateDraftPageInput) toParams(now time.Time) query.CreateDraftPageP
 		SuggestionPageID:          suggestionPageID,
 		Title:                     input.Title,
 		Body:                      input.Body,
+		BaseTitle:                 input.BaseTitle,
+		BaseBody:                  input.BaseBody,
 		LinkedPageIds:             model.PageIDsToStrings(input.LinkedPageIDs),
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		ModifiedAt:                input.ModifiedAt,
@@ -323,6 +328,8 @@ func (r *DraftPageRepository) ListByModifiedAt(ctx context.Context, input ListDr
 			TopicID:                   row.TopicID,
 			Title:                     row.Title,
 			Body:                      row.Body,
+			BaseTitle:                 row.BaseTitle,
+			BaseBody:                  row.BaseBody,
 			LinkedPageIds:             row.LinkedPageIds,
 			ModifiedAt:                row.ModifiedAt,
 			CreatedAt:                 row.CreatedAt,
@@ -587,10 +594,24 @@ func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
 		SuggestionPageID:          suggestionPageID,
 		Title:                     title,
 		Body:                      row.Body,
+		BaseTitle:                 nullableCitextToString(row.BaseTitle),
+		BaseBody:                  nullableCitextToString(row.BaseBody),
 		LinkedPageIDs:             model.StringsToPageIDs(row.LinkedPageIds),
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		ModifiedAt:                row.ModifiedAt,
 		CreatedAt:                 row.CreatedAt,
 		UpdatedAt:                 row.UpdatedAt,
 	}
+}
+
+// nullableCitextToStringは、sqlcが型を決められずinterface{}で返すNULL可のcitextの列を*stringに変換する
+func nullableCitextToString(v any) *string {
+	switch v := v.(type) {
+	case string:
+		return &v
+	case []byte:
+		s := string(v)
+		return &s
+	}
+	return nil
 }

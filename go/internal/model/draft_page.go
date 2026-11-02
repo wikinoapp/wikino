@@ -9,14 +9,19 @@ import (
 
 // DraftPageはページの下書きのドメインモデル
 type DraftPage struct {
-	ID                        DraftPageID
-	SpaceID                   SpaceID
-	PageID                    PageID
-	SpaceMemberID             SpaceMemberID
-	TopicID                   TopicID
-	SuggestionPageID          *SuggestionPageID
-	Title                     *string
-	Body                      string
+	ID               DraftPageID
+	SpaceID          SpaceID
+	PageID           PageID
+	SpaceMemberID    SpaceMemberID
+	TopicID          TopicID
+	SuggestionPageID *SuggestionPageID
+	Title            *string
+	Body             string
+	// BaseTitleとBaseBodyは下書きを書き始めた時点のタイトルと本文 (起点)。
+	// BaseBodyがnilの下書きは起点が分からない。BaseBodyがあってBaseTitleがnilの下書きは、
+	// タイトルの無いページから書き始めたものである
+	BaseTitle                 *string
+	BaseBody                  *string
 	LinkedPageIDs             []PageID
 	FeaturedImageAttachmentID *AttachmentID
 	ModifiedAt                time.Time
@@ -38,4 +43,34 @@ func (d *DraftPage) ContentDigest() string {
 	b, _ := json.Marshal([]any{d.TopicID, d.Title, d.Body, d.ModifiedAt.UTC()})
 	sum := sha256.Sum256(b)
 	return base64.RawURLEncoding.EncodeToString(sum[:])
+}
+
+// DraftPageContentは下書きのある時点のタイトルと本文。
+// タイトルの無い状態は、リビジョンと同じく空のタイトルで表す
+type DraftPageContent struct {
+	Title string
+	Body  string
+}
+
+// BaseContentは下書きの起点を返す。起点が分からない下書きではnilを返す
+func (d *DraftPage) BaseContent() *DraftPageContent {
+	if d.BaseBody == nil {
+		return nil
+	}
+	var title string
+	if d.BaseTitle != nil {
+		title = *d.BaseTitle
+	}
+	return &DraftPageContent{Title: title, Body: *d.BaseBody}
+}
+
+// PrecedingContentは、previousの次に作るリビジョン (previousがnilなら最古のリビジョン) から見た
+// 直前の状態を返す。直前のリビジョンがあればその内容、無ければ下書きの起点を返す。
+// 起点も分からなければ直前の状態は無く、nilを返す。
+// 差分の比較対象とリビジョンを作るかの判定が同じ定義を使うよう、決め方をここに置く
+func (d *DraftPage) PrecedingContent(previous *DraftPageRevision) *DraftPageContent {
+	if previous != nil {
+		return &DraftPageContent{Title: previous.Title, Body: previous.Body}
+	}
+	return d.BaseContent()
 }

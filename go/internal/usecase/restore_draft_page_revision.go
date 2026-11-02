@@ -156,6 +156,8 @@ func (uc *RestoreDraftPageRevisionUsecase) restore(ctx context.Context, data *pa
 		Body:                      revision.Body,
 		FeaturedImageAttachmentID: featuredImageAttachmentID,
 		CurrentTopicName:          data.topic.Name,
+		BaseTitle:                 data.page.Title,
+		BaseBody:                  data.page.Body,
 	}
 
 	draftPage, err := saveDraftPageContent(ctx, contentInput, now,

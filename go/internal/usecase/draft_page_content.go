@@ -19,6 +19,10 @@ type saveDraftPageContentInput struct {
 	Body                      string
 	FeaturedImageAttachmentID *model.AttachmentID
 	CurrentTopicName          string
+	// BaseTitleとBaseBodyは、下書きが無く作るときに起点として書くタイトルと本文。
+	// 呼び出し元がすでに読んでいるページの内容を渡す
+	BaseTitle *string
+	BaseBody  string
 }
 
 // saveDraftPageContentはDraftPageのfind_or_create・Wikiリンクの解決・更新を行う共通ロジック
@@ -113,6 +117,8 @@ func findOrCreateDraftPage(
 		TopicID:       input.TopicID,
 		Title:         input.Title,
 		Body:          "",
+		BaseTitle:     input.BaseTitle,
+		BaseBody:      input.BaseBody,
 		LinkedPageIDs: nil,
 		ModifiedAt:    now,
 	})

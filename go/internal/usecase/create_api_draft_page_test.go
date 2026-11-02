@@ -53,10 +53,12 @@ func TestCreateAPIDraftPageUsecase_Execute_ExistingPage(t *testing.T) {
 		body       *string
 		wantTitle  string
 		wantBody   string
+		// wantBaseは起点。渡した内容ではなく、ページの今の内容になる
+		wantBase model.DraftPageContent
 	}{
-		{name: "タイトルと本文を省くとページの今の内容で作る", pageNumber: 1, wantTitle: "ページ", wantBody: "ページの本文"},
-		{name: "本文だけを指定するとタイトルはページの今のタイトルになる", pageNumber: 2, body: ptr("新しい本文"), wantTitle: "ページ2", wantBody: "新しい本文"},
-		{name: "タイトルと本文を指定するとその内容で作る", pageNumber: 3, title: ptr("新しいタイトル"), body: ptr(""), wantTitle: "新しいタイトル", wantBody: ""},
+		{name: "タイトルと本文を省くとページの今の内容で作る", pageNumber: 1, wantTitle: "ページ", wantBody: "ページの本文", wantBase: model.DraftPageContent{Title: "ページ", Body: "ページの本文"}},
+		{name: "本文だけを指定するとタイトルはページの今のタイトルになる", pageNumber: 2, body: ptr("新しい本文"), wantTitle: "ページ2", wantBody: "新しい本文", wantBase: model.DraftPageContent{Title: "ページ2", Body: "ページ2の本文"}},
+		{name: "タイトルと本文を指定するとその内容で作る", pageNumber: 3, title: ptr("新しいタイトル"), body: ptr(""), wantTitle: "新しいタイトル", wantBody: "", wantBase: model.DraftPageContent{Title: "ページ3", Body: "ページ3の本文"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -74,6 +76,9 @@ func TestCreateAPIDraftPageUsecase_Execute_ExistingPage(t *testing.T) {
 			draft := output.DraftPage
 			if draft.Title == nil || *draft.Title != tt.wantTitle || draft.Body != tt.wantBody {
 				t.Errorf("下書き = (%v, %q)、期待値 = (%q, %q)", draft.Title, draft.Body, tt.wantTitle, tt.wantBody)
+			}
+			if got := draft.BaseContent(); got == nil || *got != tt.wantBase {
+				t.Errorf("起点 = %+v、期待値 = %+v", got, tt.wantBase)
 			}
 			if draft.SpaceMemberID != f.spaceMemberID || draft.TopicID != f.topicIDs[1] {
 				t.Errorf("下書きの持ち主・トピック = (%s, %s)、期待値 = (%s, %s)", draft.SpaceMemberID, draft.TopicID, f.spaceMemberID, f.topicIDs[1])
@@ -120,6 +125,11 @@ func TestCreateAPIDraftPageUsecase_Execute_NewPage(t *testing.T) {
 		draft := output.DraftPage
 		if draft.Title == nil || *draft.Title != "新しいページ" || draft.Body != body {
 			t.Errorf("下書き = (%v, %q)、期待値 = (\"新しいページ\", %q)", draft.Title, draft.Body, body)
+		}
+
+		// 起点は作った空のページの内容で、タイトルが無く本文が空
+		if draft.BaseTitle != nil || draft.BaseBody == nil || *draft.BaseBody != "" {
+			t.Errorf("起点 = (%v, %v)、期待値 = タイトルが無く本文が空", draft.BaseTitle, draft.BaseBody)
 		}
 
 		// Web画面の作成と同じく、タイトルの無い空の未公開のページを作り、作成者を編集者にする

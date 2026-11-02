@@ -96,6 +96,11 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 		if draft.Body != "提案本文" {
 			t.Errorf("DraftPage.Body = %q、期待値 = %q", draft.Body, "提案本文")
 		}
+		// 起点は編集提案の内容 (ページの内容ではない)
+		want := model.DraftPageContent{Title: "提案タイトル", Body: "提案本文"}
+		if got := draft.BaseContent(); got == nil || *got != want {
+			t.Errorf("DraftPage.BaseContent() = %+v、期待値 = %+v", got, want)
+		}
 	})
 
 	t.Run("正常系: 同じ編集提案ページにリンク済みの下書きがある場合はそのままリダイレクト", func(t *testing.T) {
@@ -300,6 +305,10 @@ func TestStartSuggestionPageEditUsecase_Execute(t *testing.T) {
 		}
 		if draft.Body != "提案の本文" {
 			t.Errorf("DraftPage.Body = %q、期待値 = %q", draft.Body, "提案の本文")
+		}
+		// 既存の下書きを上書きしても、起点は変えない (ビルダーで作った下書きは起点が分からない)
+		if got := draft.BaseContent(); got != nil {
+			t.Errorf("DraftPage.BaseContent() = %+v、期待値 = nil", got)
 		}
 	})
 

@@ -149,6 +149,11 @@ func TestManualSaveDraftPageUsecase_Execute_WithoutDraftPage(t *testing.T) {
 	if output.DraftPageRevision.Body != "新規下書き本文" {
 		t.Errorf("Body = %q、期待値 = %q", output.DraftPageRevision.Body, "新規下書き本文")
 	}
+	// 下書きを作るときに、ページの今の内容を起点として記録する
+	wantBase := model.DraftPageContent{Title: "Test Page", Body: "Test body"}
+	if got := output.DraftPage.BaseContent(); got == nil || *got != wantBase {
+		t.Errorf("起点 = %+v、期待値 = %+v", got, wantBase)
+	}
 }
 
 // TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevisionは、タイトル・本文が

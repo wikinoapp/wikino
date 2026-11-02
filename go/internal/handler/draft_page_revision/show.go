@@ -61,7 +61,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 差分はUseCaseが返した2つのリビジョンからビューモデル層で計算する。
-	diff := viewmodel.NewDraftPageRevisionDiff(output.Revision, output.PreviousRevision)
+	diff := viewmodel.NewDraftPageRevisionDiff(output.DraftPage, output.Revision, output.PreviousRevision)
 
 	// フラグメントはインラインの復元フォームを含むため、復元URLとCSRFトークンを渡す。
 	restoreURL := string(templates.PageDraftPageRevisionRestorePath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(pageNumber), string(output.Revision.ID)))

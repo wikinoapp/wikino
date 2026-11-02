@@ -15,7 +15,7 @@ import (
 
 const listDraftPagesByModifiedAt = `-- name: ListDraftPagesByModifiedAt :many
 SELECT
-  dp.id, dp.space_id, dp.page_id, dp.space_member_id, dp.topic_id, dp.title, dp.body, dp.linked_page_ids, dp.modified_at, dp.created_at, dp.updated_at, dp.suggestion_page_id, dp.featured_image_attachment_id,
+  dp.id, dp.space_id, dp.page_id, dp.space_member_id, dp.topic_id, dp.title, dp.body, dp.linked_page_ids, dp.modified_at, dp.created_at, dp.updated_at, dp.suggestion_page_id, dp.featured_image_attachment_id, dp.base_title, dp.base_body,
   p.number AS page_number
 FROM draft_pages dp
 INNER JOIN pages p ON dp.page_id = p.id AND p.space_id = $1
@@ -55,6 +55,8 @@ type ListDraftPagesByModifiedAtRow struct {
 	UpdatedAt                 time.Time   `json:"updated_at"`
 	SuggestionPageID          *string     `json:"suggestion_page_id"`
 	FeaturedImageAttachmentID *string     `json:"featured_image_attachment_id"`
+	BaseTitle                 interface{} `json:"base_title"`
+	BaseBody                  interface{} `json:"base_body"`
 	PageNumber                int32       `json:"page_number"`
 }
 
@@ -95,6 +97,8 @@ func (q *Queries) ListDraftPagesByModifiedAt(ctx context.Context, arg ListDraftP
 			&i.UpdatedAt,
 			&i.SuggestionPageID,
 			&i.FeaturedImageAttachmentID,
+			&i.BaseTitle,
+			&i.BaseBody,
 			&i.PageNumber,
 		); err != nil {
 			return nil, err
