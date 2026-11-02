@@ -30,7 +30,7 @@ require (
 	github.com/riverqueue/river/rivertype v0.50.0
 	github.com/rivo/uniseg v0.4.7
 	github.com/sergi/go-diff v1.4.0
-	github.com/yuin/goldmark v1.8.6
+	github.com/yuin/goldmark v1.8.7
 	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/crypto v0.58.0
 	golang.org/x/image v0.47.0
