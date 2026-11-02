@@ -562,17 +562,6 @@ func (r *DraftPageRepository) toDraftPagesFromMemberTopicRows(rows []query.ListD
 
 // toModelはquery.DraftPageをmodel.DraftPageに変換する
 func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
-	var title *string
-	if row.Title != nil {
-		switch v := row.Title.(type) {
-		case string:
-			title = &v
-		case []byte:
-			s := string(v)
-			title = &s
-		}
-	}
-
 	var suggestionPageID *model.SuggestionPageID
 	if row.SuggestionPageID != nil {
 		id := model.SuggestionPageID(*row.SuggestionPageID)
@@ -592,7 +581,7 @@ func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
 		SpaceMemberID:             model.SpaceMemberID(row.SpaceMemberID),
 		TopicID:                   model.TopicID(row.TopicID),
 		SuggestionPageID:          suggestionPageID,
-		Title:                     title,
+		Title:                     nullableCitextToString(row.Title),
 		Body:                      row.Body,
 		BaseTitle:                 nullableCitextToString(row.BaseTitle),
 		BaseBody:                  nullableCitextToString(row.BaseBody),
