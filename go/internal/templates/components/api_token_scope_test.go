@@ -176,3 +176,45 @@ func TestAPITokenScopeCheckboxes_無効にしたチェックボックスには�
 		t.Error("最初の無効でないチェックボックスにautofocusが付いていない")
 	}
 }
+
+func TestAPITokenScopeCheckboxes_含まれて無効にしたチェックボックスに含むスコープを外したときに戻す状態を描画する(t *testing.T) {
+	t.Parallel()
+
+	const attr = "data-api-token-scope-checked-before-implied"
+	tests := []struct {
+		name    string
+		checked []model.Scope
+		want    string
+	}{
+		{
+			// OAuthの同意画面は、要求されたスコープをすべてチェックして描画する
+			name:    "含まれるスコープもチェックしていれば選択済みに戻す",
+			checked: []model.Scope{model.ScopePageRead, model.ScopePageWrite},
+			want:    attr + `="true"`,
+		},
+		{
+			// 個人用アクセストークンの再表示は、送信されたスコープ (無効にしたものを含まない) をチェックする
+			name:    "含むスコープだけをチェックしていれば選んでいない状態に戻す",
+			checked: []model.Scope{model.ScopePageWrite},
+			want:    attr + `="false"`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			html := renderAPITokenScopeCheckboxes(t, components.APITokenScopeCheckboxesData{
+				Name:    "granted_scopes",
+				Options: components.NewAPITokenScopeOptions([]model.Scope{model.ScopePageRead, model.ScopePageWrite}, tt.checked, nil),
+			})
+
+			if read := inputTag(t, html, "granted_scopes_page_read"); !strings.Contains(read, tt.want) {
+				t.Errorf("page:readのチェックボックスに%qが無い: %s", tt.want, read)
+			}
+			// 含まれていないチェックボックスは描画した状態がそのまま利用者の選択のため、戻す状態を渡さない
+			if write := inputTag(t, html, "granted_scopes_page_write"); strings.Contains(write, attr) {
+				t.Errorf("含まれていないチェックボックスに戻す状態がある: %s", write)
+			}
+		})
+	}
+}

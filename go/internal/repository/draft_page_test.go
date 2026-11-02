@@ -83,6 +83,10 @@ func TestDraftPageRepository_FindByPageAndMember(t *testing.T) {
 		if draft.Body != "Draft body" {
 			t.Errorf("draft.Body = %v、期待値 = 'Draft body'", draft.Body)
 		}
+		// 起点の列がNULLの下書きは、起点が分からないものとして読む
+		if draft.BaseTitle != nil || draft.BaseBody != nil {
+			t.Errorf("draft.BaseTitle/BaseBody = %v/%v、期待値 = nil/nil", draft.BaseTitle, draft.BaseBody)
+		}
 	})
 
 	t.Run("存在しないページIDはnilを返す", func(t *testing.T) {
@@ -181,6 +185,7 @@ func TestDraftPageRepository_Create(t *testing.T) {
 	t.Run("下書きを作成できる", func(t *testing.T) {
 		now := time.Now()
 		title := "New Draft"
+		baseTitle := "Test Page"
 		draft, err := repo.Create(context.Background(), CreateDraftPageInput{
 			SpaceID:       spaceID,
 			PageID:        pageID,
@@ -188,6 +193,8 @@ func TestDraftPageRepository_Create(t *testing.T) {
 			TopicID:       topicID,
 			Title:         &title,
 			Body:          "draft body",
+			BaseTitle:     &baseTitle,
+			BaseBody:      "page body",
 			LinkedPageIDs: []model.PageID{},
 			ModifiedAt:    now,
 		})
@@ -215,6 +222,20 @@ func TestDraftPageRepository_Create(t *testing.T) {
 		if draft.Body != "draft body" {
 			t.Errorf("draft.Body = %v、期待値 = 'draft body'", draft.Body)
 		}
+		if draft.BaseTitle == nil || *draft.BaseTitle != "Test Page" {
+			t.Errorf("draft.BaseTitle = %v、期待値 = 'Test Page'", draft.BaseTitle)
+		}
+		if draft.BaseBody == nil || *draft.BaseBody != "page body" {
+			t.Errorf("draft.BaseBody = %v、期待値 = 'page body'", draft.BaseBody)
+		}
+
+		found, err := repo.FindByID(context.Background(), draft.ID, spaceID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		if found.BaseTitle == nil || *found.BaseTitle != "Test Page" || found.BaseBody == nil || *found.BaseBody != "page body" {
+			t.Errorf("読み直した起点 = %v/%v、期待値 = 'Test Page'/'page body'", found.BaseTitle, found.BaseBody)
+		}
 	})
 
 	t.Run("タイトルがnilの下書きを作成できる", func(t *testing.T) {
@@ -241,6 +262,13 @@ func TestDraftPageRepository_Create(t *testing.T) {
 		}
 		if draft.Title != nil {
 			t.Errorf("draft.Title = %v、期待値 = nil", draft.Title)
+		}
+		// 起点のタイトルを渡さなければNULLになり、起点の本文は空文字として記録される
+		if draft.BaseTitle != nil {
+			t.Errorf("draft.BaseTitle = %v、期待値 = nil", draft.BaseTitle)
+		}
+		if draft.BaseBody == nil || *draft.BaseBody != "" {
+			t.Errorf("draft.BaseBody = %v、期待値 = 空文字", draft.BaseBody)
 		}
 	})
 }

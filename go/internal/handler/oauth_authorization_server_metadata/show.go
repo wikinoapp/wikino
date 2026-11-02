@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
@@ -35,6 +36,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		ClientIDMetadataDocumentSupported: true,
 		// 開発者向けのドキュメント。OAuthの流れとスコープはAPIリファレンスで説明する
 		ServiceDocumentation: appURL + model.APIReferencePath,
+		// どちらもクライアントを登録する開発者に向けた項目で、クライアントが得たデータの使い方の
+		// 要件 (op_policy_uri) と利用規約 (op_tos_uri) を、どちらもAPI利用規約が定める
+		OPPolicyURI: appURL + legaldoc.Path(legaldoc.KeyAPITerms),
+		OPTOSURI:    appURL + legaldoc.Path(legaldoc.KeyAPITerms),
 	}
 
 	header := w.Header()

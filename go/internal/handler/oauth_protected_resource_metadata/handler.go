@@ -29,4 +29,6 @@ type Metadata struct {
 	ScopesSupported        []string `json:"scopes_supported"`
 	BearerMethodsSupported []string `json:"bearer_methods_supported"`
 	ResourceDocumentation  string   `json:"resource_documentation"`
+	ResourcePolicyURI      string   `json:"resource_policy_uri"`
+	ResourceTOSURI         string   `json:"resource_tos_uri"`
 }

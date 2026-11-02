@@ -741,7 +741,7 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 		assertIssuedTokens(t, q, f, output, []model.Scope{model.ScopeTopicRead, model.ScopePageWrite})
 	})
 
-	t.Run("使用済みのリフレッシュトークンの再提示は拒否し、許可と許可のトークンをすべて失効させる", func(t *testing.T) {
+	t.Run("猶予を過ぎた使用済みのリフレッシュトークンの再提示は拒否し、許可と許可のトークンをすべて失効させる", func(t *testing.T) {
 		t.Parallel()
 
 		db := testutil.GetTestDB()
@@ -761,6 +761,7 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 		if err != nil {
 			t.Fatalf("1回目のExecute()のエラー = %v", err)
 		}
+		moveRefreshTokenUsedAtBeyondReuseInterval(t, token, f.spaceID)
 
 		output, err := uc.Execute(context.Background(), f.refreshParams(token))
 		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
@@ -772,6 +773,141 @@ func TestCreateOAuthTokenUsecase_Execute_RefreshToken(t *testing.T) {
 
 		if _, err := uc.Execute(context.Background(), another.refreshParams(anotherToken)); err != nil {
 			t.Errorf("別の許可のリフレッシュトークンでのExecute()のエラー = %v", err)
+		}
+	})
+
+	t.Run("猶予の間の使用済みのリフレッシュトークンの再提示では、後継を失効させて新しいトークンを発行する", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-refresh-reuse", oauthTokenFixtureOptions{})
+		token := f.buildRefreshTokenDB(t, "cot-refresh-reuse", nil)
+		uc := newCreateOAuthTokenUsecaseForTest(q)
+
+		// 1回目の応答 (lost) をクライアントは受け取れなかったものとして、同じトークンを再送する
+		lost, err := uc.Execute(context.Background(), f.refreshParams(token))
+		if err != nil {
+			t.Fatalf("1回目のExecute()のエラー = %v", err)
+		}
+		params := f.refreshParams(token)
+		params.Scope = "topic:read"
+		retried, err := uc.Execute(context.Background(), params)
+		if err != nil {
+			t.Fatalf("再送のExecute()のエラー = %v", err)
+		}
+		// 再送でもスコープを狭めた要求に応じる
+		assertIssuedTokens(t, q, f, retried, []model.Scope{model.ScopeTopicRead})
+
+		refreshTokenRepo := repository.NewOAuthRefreshTokenRepository(q)
+		lostToken, err := refreshTokenRepo.FindByTokenDigest(context.Background(), auth.DigestOpaqueToken(lost.RefreshToken))
+		if err != nil {
+			t.Fatalf("リフレッシュトークンの取得に失敗: %v", err)
+		}
+		if !lostToken.IsRevoked() {
+			t.Error("1回目に発行した後継のリフレッシュトークンが失効していない")
+		}
+		retriedToken, err := refreshTokenRepo.FindByTokenDigest(context.Background(), auth.DigestOpaqueToken(retried.RefreshToken))
+		if err != nil {
+			t.Fatalf("リフレッシュトークンの取得に失敗: %v", err)
+		}
+		// 再送で発行したトークンは、失効させた後継と同じく元のトークンの後継になる
+		if retriedToken.PreviousRefreshTokenID == nil || lostToken.PreviousRefreshTokenID == nil || *retriedToken.PreviousRefreshTokenID != *lostToken.PreviousRefreshTokenID {
+			t.Errorf("再送で発行したトークンのPreviousRefreshTokenID = %v、期待値 = %v", retriedToken.PreviousRefreshTokenID, lostToken.PreviousRefreshTokenID)
+		}
+		testutil.CommitFixture(t, func(tx *sql.Tx) {
+			var revokedAt sql.NullTime
+			if err := tx.QueryRowContext(context.Background(), "SELECT revoked_at FROM oauth_grants WHERE id = $1 AND space_id = $2", string(f.grantID), string(f.spaceID)).Scan(&revokedAt); err != nil {
+				t.Fatalf("許可の取得に失敗: %v", err)
+			}
+			if revokedAt.Valid {
+				t.Error("猶予の間の再提示で許可が失効した")
+			}
+		})
+
+		// 再送で得たトークンで続けて更新できる
+		if _, err := uc.Execute(context.Background(), f.refreshParams(retried.RefreshToken)); err != nil {
+			t.Fatalf("再送で得たトークンでのExecute()のエラー = %v", err)
+		}
+	})
+
+	t.Run("発行し直しで失効させた後継のリフレッシュトークンの提示は、許可と許可のトークンをすべて失効させる", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-refresh-reuse-revoked-successor", oauthTokenFixtureOptions{})
+		token := f.buildRefreshTokenDB(t, "cot-refresh-reuse-revoked-successor", nil)
+		uc := newCreateOAuthTokenUsecaseForTest(q)
+
+		// 正規のクライアントが更新して後継 (first) を受け取った後に、漏れた元のトークンが猶予の間に
+		// 再提示され、firstを失効させて新しいトークン (reissued) が発行される
+		first, err := uc.Execute(context.Background(), f.refreshParams(token))
+		if err != nil {
+			t.Fatalf("1回目のExecute()のエラー = %v", err)
+		}
+		reissued, err := uc.Execute(context.Background(), f.refreshParams(token))
+		if err != nil {
+			t.Fatalf("猶予の間の再提示のExecute()のエラー = %v", err)
+		}
+
+		// 失効させたfirstの提示は無効にしたトークンの提示であり、再提示が漏れたトークンによるものだったと分かる
+		output, err := uc.Execute(context.Background(), f.refreshParams(first.RefreshToken))
+		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
+		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
+
+		output, err = uc.Execute(context.Background(), f.refreshParams(reissued.RefreshToken))
+		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
+	})
+
+	t.Run("後継のリフレッシュトークンが使われた後の再提示は、猶予の間でも許可と許可のトークンをすべて失効させる", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-refresh-reuse-after-successor", oauthTokenFixtureOptions{})
+		token := f.buildRefreshTokenDB(t, "cot-refresh-reuse-after-successor", nil)
+		uc := newCreateOAuthTokenUsecaseForTest(q)
+
+		rotated, err := uc.Execute(context.Background(), f.refreshParams(token))
+		if err != nil {
+			t.Fatalf("1回目のExecute()のエラー = %v", err)
+		}
+		// クライアントは後継を受け取って使っており、元のトークンの再提示は再送ではない
+		if _, err := uc.Execute(context.Background(), f.refreshParams(rotated.RefreshToken)); err != nil {
+			t.Fatalf("後継のトークンでのExecute()のエラー = %v", err)
+		}
+
+		output, err := uc.Execute(context.Background(), f.refreshParams(token))
+		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
+		testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
+	})
+
+	t.Run("別のクライアントは猶予の間の使用済みのリフレッシュトークンを送っても新しいトークンを得られない", func(t *testing.T) {
+		t.Parallel()
+
+		db := testutil.GetTestDB()
+		q := query.New(db)
+		f := setupOAuthTokenFixtureDB(t, "cot-refresh-reuse-other", oauthTokenFixtureOptions{})
+		token := f.buildRefreshTokenDB(t, "cot-refresh-reuse-other", nil)
+		testutil.CommitFixture(t, func(tx *sql.Tx) {
+			testutil.NewOAuthApplicationBuilder(t, tx).WithSpaceID(f.spaceID).WithClientID("cot-refresh-reuse-other-attacker").Build()
+		})
+		uc := newCreateOAuthTokenUsecaseForTest(q)
+
+		rotated, err := uc.Execute(context.Background(), f.refreshParams(token))
+		if err != nil {
+			t.Fatalf("1回目のExecute()のエラー = %v", err)
+		}
+		params := f.refreshParams(token)
+		params.ClientID = "cot-refresh-reuse-other-attacker"
+
+		output, err := uc.Execute(context.Background(), params)
+		assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidGrant)
+
+		// 元のクライアントの後継のトークンは失効させず、そのまま使える
+		if _, err := uc.Execute(context.Background(), f.refreshParams(rotated.RefreshToken)); err != nil {
+			t.Errorf("後継のトークンでのExecute()のエラー = %v", err)
 		}
 	})
 
@@ -1238,6 +1374,87 @@ func TestCreateOAuthTokenUsecase_Execute_DeviceCode(t *testing.T) {
 	}
 }
 
+func TestCreateOAuthTokenUsecase_RefreshTokenReuseIntervalDuringLock(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+	f := setupOAuthTokenFixtureDB(t, "cot-refresh-reuse-lock", oauthTokenFixtureOptions{})
+	token := f.buildRefreshTokenDB(t, "cot-refresh-reuse-lock", nil)
+	uc := newCreateOAuthTokenUsecaseForTest(q)
+	if _, err := uc.Execute(ctx, f.refreshParams(token)); err != nil {
+		t.Fatalf("1回目のExecute()のエラー = %v", err)
+	}
+
+	// 猶予が残っている間にロック待機へ進み、待機中に満了させる。
+	reuseExpiresAt := time.Now().Add(5 * time.Second)
+	usedAt := reuseExpiresAt.Add(-model.OAuthRefreshTokenReuseInterval)
+	if _, err := db.ExecContext(ctx, "UPDATE oauth_refresh_tokens SET used_at = $1 WHERE token_digest = $2 AND space_id = $3", usedAt, auth.DigestOpaqueToken(token), string(f.spaceID)); err != nil {
+		t.Fatalf("リフレッシュトークンの使用日時の更新に失敗: %v", err)
+	}
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatalf("トランザクション開始に失敗: %v", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	var blockingPID int
+	if err := tx.QueryRowContext(ctx, "SELECT pg_backend_pid()").Scan(&blockingPID); err != nil {
+		t.Fatalf("バックエンドPIDの取得に失敗: %v", err)
+	}
+	if _, err := repository.NewOAuthGrantRepository(q).WithTx(tx).LockByID(ctx, f.grantID, f.spaceID); err != nil {
+		t.Fatalf("許可のロックに失敗: %v", err)
+	}
+	type result struct {
+		output *CreateOAuthTokenOutput
+		err    error
+	}
+	done := make(chan result, 1)
+	go func() {
+		output, err := uc.Execute(ctx, f.refreshParams(token))
+		done <- result{output, err}
+	}()
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		var blocked bool
+		if err := db.QueryRowContext(ctx, `SELECT EXISTS (
+    SELECT 1 FROM pg_stat_activity WHERE datname = current_database()
+      AND $1 = ANY(pg_blocking_pids(pid)) AND query LIKE '%LockOAuthGrantByID%'
+  )`, blockingPID).Scan(&blocked); err != nil {
+			t.Fatalf("ロック待機の取得に失敗: %v", err)
+		}
+		if blocked {
+			break
+		}
+		select {
+		case r := <-done:
+			t.Fatalf("ロック待機前に処理が終了: %v", r.err)
+		case <-ctx.Done():
+			t.Fatalf("ロック待機を確認できない: %v", ctx.Err())
+		case <-ticker.C:
+		}
+	}
+	timer := time.NewTimer(time.Until(reuseExpiresAt) + 10*time.Millisecond)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+	case <-ctx.Done():
+		t.Fatalf("猶予の満了まで待機できない: %v", ctx.Err())
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatalf("ロックの解放に失敗: %v", err)
+	}
+	select {
+	case r := <-done:
+		assertOAuthTokenError(t, r.output, r.err, model.OAuthTokenErrorInvalidGrant)
+	case <-ctx.Done():
+		t.Fatalf("再提示の処理が完了しない: %v", ctx.Err())
+	}
+	testutil.CommitFixture(t, func(tx *sql.Tx) { assertGrantRevokedWithTokens(t, tx, f.grantID) })
+}
+
 // 要求・許可のロック待機後に期限切れを拒否し、要求と既存のトークンを変更しないことを確かめる。
 func TestCreateOAuthTokenUsecase_DeviceCodeExpiryDuringLock(t *testing.T) {
 	t.Parallel()
@@ -1418,5 +1635,16 @@ func TestCreateOAuthTokenUsecase_Execute_MCPServerResource(t *testing.T) {
 			output, err := newCreateOAuthTokenUsecaseForTest(query.New(db)).Execute(context.Background(), params)
 			assertOAuthTokenError(t, output, err, model.OAuthTokenErrorInvalidTarget)
 		})
+	}
+}
+
+// moveRefreshTokenUsedAtBeyondReuseIntervalは、リフレッシュトークンが使われた日時を猶予より前にずらす
+func moveRefreshTokenUsedAtBeyondReuseInterval(t *testing.T, token string, spaceID model.SpaceID) {
+	t.Helper()
+
+	usedAt := time.Now().Add(-model.OAuthRefreshTokenReuseInterval - time.Second)
+	if _, err := testutil.GetTestDB().ExecContext(context.Background(), "UPDATE oauth_refresh_tokens SET used_at = $1 WHERE token_digest = $2 AND space_id = $3",
+		usedAt, auth.DigestOpaqueToken(token), string(spaceID)); err != nil {
+		t.Fatalf("リフレッシュトークンの使用日時の更新に失敗: %v", err)
 	}
 }

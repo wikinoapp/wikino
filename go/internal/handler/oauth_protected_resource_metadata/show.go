@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/httperror"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -40,6 +41,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		ScopesSupported:      model.ScopesToStrings(model.APITokenScopes),
 		// アクセストークンはクエリパラメーターや本文では受け付けず、`Authorization` ヘッダーだけで受け付ける
 		BearerMethodsSupported: []string{"header"},
+		// 保護リソースが提供するデータのクライアントによる使い方の要件 (resource_policy_uri) と
+		// 利用規約 (resource_tos_uri) を、どちらもAPI利用規約が定める
+		ResourcePolicyURI: appURL + legaldoc.Path(legaldoc.KeyAPITerms),
+		ResourceTOSURI:    appURL + legaldoc.Path(legaldoc.KeyAPITerms),
 		// スペースごとに内容は変わらないため、APIリファレンスを指す
 		ResourceDocumentation: appURL + model.APIReferencePath,
 	}

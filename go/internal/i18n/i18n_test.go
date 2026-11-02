@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 )
 
 func TestT_BasicTranslation(t *testing.T) {
@@ -417,5 +419,36 @@ func TestT_TwoFactorAuthTranslations(t *testing.T) {
 				t.Errorf("T() = %v、期待値 = %v", got, tt.wantEn)
 			}
 		})
+	}
+}
+
+func TestT_API利用規約の表示は表示言語の版の本文のページを指す(t *testing.T) {
+	t.Parallel()
+
+	keys := []string{
+		"personal_access_token_new_api_terms_html",
+		"oauth_application_new_api_terms_html",
+		"oauth_authorization_new_api_terms_html",
+		"oauth_device_verification_consent_api_terms_html",
+	}
+	tests := []struct {
+		locale   string
+		wantLink string
+	}{
+		{locale: i18n.LangJa, wantLink: `href="/s/wikino/pages/323" target="_blank">API利用規約</a>`},
+		{locale: i18n.LangEn, wantLink: `href="/s/wikino/pages/326" target="_blank">API Terms of Use</a>`},
+	}
+	for _, tt := range tests {
+		for _, key := range keys {
+			t.Run(tt.locale+"/"+key, func(t *testing.T) {
+				t.Parallel()
+
+				ctx := i18n.SetLocale(context.Background(), tt.locale)
+				got := i18n.T(ctx, key, map[string]any{"APITermsPath": legaldoc.PagePath(legaldoc.KeyAPITerms, tt.locale)})
+				if !strings.Contains(got, tt.wantLink) {
+					t.Errorf("T(%q) = %q、期待値は%qを含む", key, got, tt.wantLink)
+				}
+			})
+		}
 	}
 }

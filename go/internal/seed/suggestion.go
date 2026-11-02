@@ -310,7 +310,7 @@ func collectSuggestionTargets(
 		}
 
 		targets = append(targets, suggestionTarget{
-			page: &seededPage{id: model.PageID(id), number: model.PageNumber(number), title: title},
+			page: &seededPage{id: model.PageID(id), number: model.PageNumber(number), title: title, body: body},
 			body: body,
 		})
 	}
@@ -572,6 +572,8 @@ func (w *suggestionWriter) startEdit(ctx context.Context, input createSuggestion
 		SuggestionPageID: &page.id,
 		Title:            &page.title,
 		Body:             page.body,
+		BaseTitle:        &page.title,
+		BaseBody:         page.body,
 		LinkedPageIDs:    page.linkedPageIDs,
 		ModifiedAt:       w.draftStamps.next(),
 	}); err != nil {

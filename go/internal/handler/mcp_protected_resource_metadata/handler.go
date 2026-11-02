@@ -23,4 +23,6 @@ type Metadata struct {
 	AuthorizationServers   []string `json:"authorization_servers"`
 	ScopesSupported        []string `json:"scopes_supported"`
 	BearerMethodsSupported []string `json:"bearer_methods_supported"`
+	ResourcePolicyURI      string   `json:"resource_policy_uri"`
+	ResourceTOSURI         string   `json:"resource_tos_uri"`
 }

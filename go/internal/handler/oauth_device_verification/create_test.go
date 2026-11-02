@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -62,6 +63,8 @@ func TestCreate_コードを照合して同意画面を表示する(t *testing.T
 		"今の権限では効きません",
 		`name="decision" type="submit" value="approve"`,
 		`name="decision" type="submit" value="deny"`,
+		// 許可のボタンの近くで、表示言語の版のAPI利用規約を示す
+		"許可したアプリによる公開APIの利用には、<a class=\"link-inherit-foreground\" "+`href="/s/wikino/pages/323" target="_blank">API利用規約</a>`,
 	)
 	if d := findDeviceAuthorization(t, f); d.Status != model.OAuthDeviceAuthorizationStatusPending {
 		t.Errorf("要求の状態 = %v、期待値は表示だけでは許可待ちのまま", d.Status)
@@ -209,6 +212,31 @@ func TestCreate_スコープを1つも選ばなければ同意画面を422で再
 	}
 }
 
+func TestCreate_再表示で含まれるスコープには含むスコープを外したときに選択済みへ戻す状態を描画する(t *testing.T) {
+	t.Parallel()
+
+	f := setupDeviceFixture(t, "devverify-restore", model.SpaceRoleEditor, true)
+
+	// 同意画面は、選んだpage:writeに含まれるpage:readを無効にして送信しない
+	rr := httptest.NewRecorder()
+	setupHandler(t).Create(rr, newRequest(t, http.MethodPost, f.userID, "198.51.100.60", url.Values{
+		"user_code":      {f.userCode},
+		"decision":       {"approve"},
+		"granted_scopes": {"page:write", "topic:read"},
+	}))
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("ステータス = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
+	}
+	assertResponseHeaders(t, rr)
+	read := regexp.MustCompile(`<input[^>]*id="granted_scopes_page_read"[^>]*>`).FindString(rr.Body.String())
+	for _, want := range []string{" checked", " disabled", `data-api-token-scope-checked-before-implied="true"`} {
+		if !strings.Contains(read, want) {
+			t.Errorf("page:readのチェックボックスに%qが無い: %s", want, read)
+		}
+	}
+}
+
 func TestCreate_メンバーでなければ理由を示し許可を受け付けない(t *testing.T) {
 	t.Parallel()
 
@@ -224,6 +252,9 @@ func TestCreate_メンバーでなければ理由を示し許可を受け付け�
 	assertBodyContains(t, rr, "連携するCLIと連携できません", "このスペースのメンバーではないため", "ログインを中止する")
 	if strings.Contains(rr.Body.String(), `value="approve"`) {
 		t.Error("許可できない利用者に許可のボタンが出ている")
+	}
+	if strings.Contains(rr.Body.String(), "API利用規約") {
+		t.Error("許可できない利用者にAPI利用規約の表示が出ている")
 	}
 
 	// 改ざんした送信で許可しようとしても受け付けず、理由を示す画面を出し直す

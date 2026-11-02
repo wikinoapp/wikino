@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"slices"
 	"strings"
@@ -107,9 +108,10 @@ type oauthTokenIssuance struct {
 // Executeはトークン要求を処理してトークンを発行する。要求を受け付けられない場合は
 // *model.OAuthTokenErrorを返す。
 //
-// 使用済みの認可コード・リフレッシュトークン・交換済みのデバイスコードが再び提示された場合は、
-// 漏洩したものとして許可に属するアクセストークン・リフレッシュトークンをすべて失効させてから
-// `invalid_grant` を返す。
+// 使用済みの認可コード・リフレッシュトークン、失効したリフレッシュトークン、交換済みのデバイスコードが
+// 再び提示された場合は、漏洩したものとして許可に属するアクセストークン・リフレッシュトークンをすべて失効させてから
+// `invalid_grant` を返す。ただし、使われてから猶予の間のリフレッシュトークンは、後継のトークンが
+// まだ使われていなければ更新の再送として扱い、新しいトークンを発行する。
 func (uc *CreateOAuthTokenUsecase) Execute(ctx context.Context, params OAuthTokenParams) (*CreateOAuthTokenOutput, error) {
 	if len(params.DuplicatedParams) > 0 {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidRequest)
@@ -223,13 +225,18 @@ func (uc *CreateOAuthTokenUsecase) refresh(ctx context.Context, params OAuthToke
 		return nil, err
 	}
 
-	// ローテーション済みのトークンの再提示は、トークンが漏れたことを示す (RFC 9700 §4.14.2)
-	if refreshToken.IsUsed() {
+	// ローテーション済みのトークンの再提示は、トークンが漏れたことを示す (RFC 9700 §4.14.2)。
+	// ただし使われてから猶予の間は、更新の応答を通信の失敗で受け取れなかったクライアントの再送とみなし、
+	// 永続化で後継のトークンがまだ使われていないことを確かめて発行し直す。猶予の間は再利用の検知が
+	// 効かないが、後継が使われた後の再提示は猶予の間でも漏洩として扱う。
+	// 失効したトークンの提示も、無効にしたトークンの提示として同じく扱う。発行し直しで失効させた後継が
+	// 提示されたなら、猶予の間の元のトークンの再提示は再送ではなく、漏れたトークンによるものだった
+	// おそれがある。許可ごと失効したトークンでは、許可は既に失効している
+	now := time.Now()
+	if refreshToken.IsRevoked() || (refreshToken.IsUsed() && !refreshToken.IsInReuseInterval(now)) {
 		return nil, uc.revokeReplayedGrant(ctx, grant)
 	}
-
-	now := time.Now()
-	if !refreshToken.IsActive(now) || grant.IsRevoked() {
+	if refreshToken.IsExpired(now) || grant.IsRevoked() {
 		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 	}
 
@@ -259,7 +266,7 @@ func (uc *CreateOAuthTokenUsecase) refresh(ctx context.Context, params OAuthToke
 	if err != nil {
 		return nil, err
 	}
-	rotated, err := uc.rotateToken(ctx, refreshToken, repository.RotateOAuthRefreshTokenInput{
+	rotated, reissued, err := uc.rotateToken(ctx, refreshToken, repository.RotateOAuthRefreshTokenInput{
 		ID:                   refreshToken.ID,
 		SpaceID:              refreshToken.SpaceID,
 		TokenDigest:          auth.DigestOpaqueToken(issuance.refreshToken),
@@ -273,8 +280,18 @@ func (uc *CreateOAuthTokenUsecase) refresh(ctx context.Context, params OAuthToke
 		return nil, fmt.Errorf("リフレッシュトークンのローテーションに失敗: %w", err)
 	}
 	if rotated == nil {
-		// 取得の後に同じトークンがローテーションされた。同時に届いた2つの要求の一方は漏れたトークンである
+		// 使われてから猶予が過ぎていたか、後継のトークンが既に使われていた。再送ではなく漏れたトークンである
 		return nil, uc.revokeReplayedGrant(ctx, grant)
+	}
+	if reissued {
+		// 猶予の間の再提示は、漏れたトークンの悪用と見分けられるよう記録する
+		slog.WarnContext(ctx, "使用済みのリフレッシュトークンが猶予の間に再提示されたため、後継のトークンを失効させて発行し直しました",
+			"oauth_grant_id", grant.ID,
+			"oauth_application_id", grant.OAuthApplicationID,
+			"space_id", grant.SpaceID,
+			"oauth_refresh_token_id", refreshToken.ID,
+			"reissued_oauth_refresh_token_id", rotated.ID,
+		)
 	}
 
 	return issuance.output(scopes), nil
@@ -549,34 +566,51 @@ func (uc *CreateOAuthTokenUsecase) exchangeCode(ctx context.Context, code *model
 }
 
 // rotateTokenは、許可の行を先にロックしてからトークンを更新する。
-// ロックで許可の失効と直列化し、失効した許可のトークンを再び発行しない
-func (uc *CreateOAuthTokenUsecase) rotateToken(ctx context.Context, token *model.OAuthRefreshToken, input repository.RotateOAuthRefreshTokenInput) (*model.OAuthRefreshToken, error) {
+// ロックで許可の失効と直列化し、失効した許可のトークンを再び発行しない。
+//
+// トークンが使用済みでローテーションできなければ、使われてから猶予の間に限り、後継のトークンを
+// 失効させて発行し直し、reissuedにtrueを返す。取得の時点で未使用だったトークンも試すのは、
+// 同じトークンでの更新の再送が1回目の要求と同時に届き、ロックを待つ間に1回目が使用済みにした
+// 場合も、再送として扱うためである
+func (uc *CreateOAuthTokenUsecase) rotateToken(ctx context.Context, token *model.OAuthRefreshToken, input repository.RotateOAuthRefreshTokenInput) (rotated *model.OAuthRefreshToken, reissued bool, err error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("トランザクション開始に失敗: %w", err)
+		return nil, false, fmt.Errorf("トランザクション開始に失敗: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
 	grantRepo := uc.oauthGrantRepo.WithTx(tx)
 	grant, err := grantRepo.LockByID(ctx, token.OAuthGrantID, token.SpaceID)
 	if err != nil {
-		return nil, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
+		return nil, false, fmt.Errorf("OAuthアプリの許可のロックに失敗: %w", err)
 	}
 	if grant == nil || grant.IsRevoked() || !model.HasAllScopes(grant.Scopes, token.Scopes) {
-		return nil, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
+		return nil, false, oauthTokenError(model.OAuthTokenErrorInvalidGrant)
 	}
-	rotated, err := uc.oauthRefreshTokenRepo.WithTx(tx).Rotate(ctx, input)
+	refreshTokenRepo := uc.oauthRefreshTokenRepo.WithTx(tx)
+	rotated, err = refreshTokenRepo.Rotate(ctx, input)
 	if err != nil {
-		return nil, err
+		return nil, false, err
+	}
+	if rotated == nil {
+		// 許可のロック待機中にも猶予は進むため、発行し直す直前の時刻で判定する。
+		rotated, err = refreshTokenRepo.Reissue(ctx, repository.ReissueOAuthRefreshTokenInput{
+			RotateOAuthRefreshTokenInput: input,
+			ReuseAllowedAfter:            time.Now().Add(-model.OAuthRefreshTokenReuseInterval),
+		})
+		if err != nil {
+			return nil, false, err
+		}
+		reissued = rotated != nil
 	}
 	if rotated != nil {
 		if err := grantRepo.SetLastUsedAt(ctx, grant.ID, grant.SpaceID, input.Now); err != nil {
-			return nil, fmt.Errorf("OAuthアプリの許可の最終利用日時の更新に失敗: %w", err)
+			return nil, false, fmt.Errorf("OAuthアプリの許可の最終利用日時の更新に失敗: %w", err)
 		}
 	}
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("トランザクションのコミットに失敗: %w", err)
+		return nil, false, fmt.Errorf("トランザクションのコミットに失敗: %w", err)
 	}
-	return rotated, nil
+	return rotated, reissued, nil
 }
 
 // exchangeDeviceは、要求と許可をロックし、最新の状態・スコープ・期限を確かめてデバイスコードを交換する。

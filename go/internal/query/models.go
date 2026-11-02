@@ -119,6 +119,8 @@ type DraftPage struct {
 	UpdatedAt                 time.Time   `json:"updated_at"`
 	SuggestionPageID          *string     `json:"suggestion_page_id"`
 	FeaturedImageAttachmentID *string     `json:"featured_image_attachment_id"`
+	BaseTitle                 interface{} `json:"base_title"`
+	BaseBody                  interface{} `json:"base_body"`
 }
 
 type DraftPageRevision struct {

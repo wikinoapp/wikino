@@ -114,7 +114,7 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 			CreatedAt: createdAt,
 		}
 
-		diff := viewmodel.NewDraftPageRevisionDiff(revision, previous)
+		diff := viewmodel.NewDraftPageRevisionDiff(&model.DraftPage{}, revision, previous)
 
 		if !diff.HasTitleChange {
 			t.Error("HasTitleChangeがfalse")
@@ -148,7 +148,88 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 		}
 	})
 
-	t.Run("直前リビジョンがない場合は全文追加になる", func(t *testing.T) {
+	t.Run("最古のリビジョンは下書きの起点と比べる", func(t *testing.T) {
+		t.Parallel()
+
+		baseTitle := "Base Title"
+		baseBody := "line one\n"
+		draftPage := &model.DraftPage{BaseTitle: &baseTitle, BaseBody: &baseBody}
+		revision := &model.DraftPageRevision{
+			Title:     "Base Title",
+			Body:      "line one\nline two\n",
+			CreatedAt: createdAt,
+		}
+
+		diff := viewmodel.NewDraftPageRevisionDiff(draftPage, revision, nil)
+
+		if diff.HasTitleChange {
+			t.Error("HasTitleChangeがtrue")
+		}
+		var inserts []string
+		for _, block := range diff.BodyBlocks {
+			for _, line := range block.Lines {
+				switch line.Type {
+				case viewmodel.DiffLineInsert:
+					inserts = append(inserts, line.Content)
+				case viewmodel.DiffLineDelete:
+					t.Errorf("予期しない削除行: %q", line.Content)
+				}
+			}
+		}
+		if len(inserts) != 1 || inserts[0] != "line two" {
+			t.Errorf("追加行 = %q、期待値 = [\"line two\"]", inserts)
+		}
+	})
+
+	t.Run("起点のタイトルが無い下書きは空のタイトルと比べる", func(t *testing.T) {
+		t.Parallel()
+
+		baseBody := ""
+		draftPage := &model.DraftPage{BaseBody: &baseBody}
+		revision := &model.DraftPageRevision{
+			Title:     "New Title",
+			Body:      "line one\n",
+			CreatedAt: createdAt,
+		}
+
+		diff := viewmodel.NewDraftPageRevisionDiff(draftPage, revision, nil)
+
+		if !diff.HasTitleChange || diff.OldTitle != "" {
+			t.Errorf("HasTitleChange/OldTitle = %v/%q、期待値 = true/空", diff.HasTitleChange, diff.OldTitle)
+		}
+		if len(diff.BodyBlocks) == 0 {
+			t.Error("BodyBlocksが空")
+		}
+	})
+
+	t.Run("直前リビジョンがあれば起点ではなく直前リビジョンと比べる", func(t *testing.T) {
+		t.Parallel()
+
+		baseTitle := "Base Title"
+		baseBody := "base\n"
+		draftPage := &model.DraftPage{BaseTitle: &baseTitle, BaseBody: &baseBody}
+		previous := &model.DraftPageRevision{
+			Title:     "Same Title",
+			Body:      "same body\n",
+			CreatedAt: createdAt.Add(-time.Minute),
+		}
+		revision := &model.DraftPageRevision{
+			Title:     "Same Title",
+			Body:      "same body\n",
+			CreatedAt: createdAt,
+		}
+
+		diff := viewmodel.NewDraftPageRevisionDiff(draftPage, revision, previous)
+
+		if diff.HasTitleChange {
+			t.Error("HasTitleChangeがtrue")
+		}
+		if len(diff.BodyBlocks) != 0 {
+			t.Errorf("BodyBlocks = %v、期待値 = 空", diff.BodyBlocks)
+		}
+	})
+
+	t.Run("起点が分からない下書きの最古のリビジョンは全文追加になる", func(t *testing.T) {
 		t.Parallel()
 
 		revision := &model.DraftPageRevision{
@@ -157,7 +238,7 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 			CreatedAt: createdAt,
 		}
 
-		diff := viewmodel.NewDraftPageRevisionDiff(revision, nil)
+		diff := viewmodel.NewDraftPageRevisionDiff(&model.DraftPage{}, revision, nil)
 
 		if !diff.HasTitleChange {
 			t.Error("HasTitleChangeがfalse (空から空以外への変更)")
@@ -194,7 +275,7 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 			CreatedAt: createdAt,
 		}
 
-		diff := viewmodel.NewDraftPageRevisionDiff(revision, previous)
+		diff := viewmodel.NewDraftPageRevisionDiff(&model.DraftPage{}, revision, previous)
 
 		if diff.HasTitleChange {
 			t.Error("HasTitleChangeがtrue")

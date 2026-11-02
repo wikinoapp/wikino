@@ -162,7 +162,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # 共有パス (PLAYWRIGHT_BROWSERS_PATH) に入れ、テストを実行するdeveloperユーザーに
 # chownする。~/.cache/ms-playwrightはマウントされたボリュームではないため、
 # ブラウザをイメージに焼き込むとコンテナ再作成のたびの再ダウンロードを避けられる。
-ARG PLAYWRIGHT_VERSION=1.58.2
+ARG PLAYWRIGHT_VERSION=1.64.1
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \

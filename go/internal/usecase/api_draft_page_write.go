@@ -71,7 +71,7 @@ type saveAPIDraftPageContentInput struct {
 }
 
 // saveAPIDraftPageContentは、Web画面の手動保存と同じく、下書きの更新とリビジョンの作成を1つのトランザクションで行う。
-// タイトルと本文が今と同じ場合は下書きを書き換えず (版を変えず)、最新のリビジョンと異なる場合だけリビジョンを作る。
+// タイトルと本文が今と同じ場合は下書きを書き換えず (版を変えず)、直前の状態と異なる場合だけリビジョンを作る。
 // 照合に使った下書き (input.access.draft) がロックした時点で変わっていれば、errAPIDraftPageChangedを返す
 func saveAPIDraftPageContent(
 	ctx context.Context,
@@ -169,15 +169,19 @@ func saveAPIDraftPageContent(
 		}
 	}
 
-	// 手動保存と同じく、最新のリビジョンと同じ内容ならリビジョンを作らない。
+	// 手動保存と同じく、直前の状態 (最新のリビジョン、無ければ下書きの起点) と同じ内容ならリビジョンを作らない。
 	// タイトルの無い下書きのリビジョンは空のタイトルで記録する
 	draftPageRevisionRepo := repos.draftPageRevisionRepo.WithTx(tx)
 	latest, err := draftPageRevisionRepo.ListByDraftPageID(ctx, current.ID, space.ID, 1)
 	if err != nil {
 		return nil, fmt.Errorf("最新リビジョンの取得に失敗しました: %w", err)
 	}
+	var latestRevision *model.DraftPageRevision
+	if len(latest) > 0 {
+		latestRevision = latest[0]
+	}
 	revisionTitle := derefOr(title, "")
-	if len(latest) == 0 || latest[0].Title != revisionTitle || latest[0].Body != body {
+	if draft.NeedsRevision(latestRevision, model.DraftPageContent{Title: revisionTitle, Body: body}) {
 		_, err = draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
 			DraftPageID:   current.ID,
 			SpaceID:       space.ID,

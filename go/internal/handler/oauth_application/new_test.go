@@ -90,6 +90,11 @@ func TestNew_登録フォームを表示する(t *testing.T) {
 			t.Errorf("補足の要素 (%s) が無い", tc.hintID)
 		}
 	}
+
+	// 送信ボタンの近くで、表示言語の版のAPI利用規約を示す
+	if !strings.Contains(body, `href="/s/wikino/pages/323" target="_blank">API利用規約</a>`+" に同意のうえで、アプリを登録してください") {
+		t.Error("API利用規約への同意の表示が含まれていない")
+	}
 }
 
 func TestNew_登録の権限が無ければ404が返る(t *testing.T) {

@@ -327,7 +327,7 @@ other = "{{.MinLength}}文字以上で入力してください"
 
 [account_new_terms_html]
 description = "アカウント作成の送信ボタンの近くに置く、利用規約とプライバシーポリシーへの同意の表示 (各文書へのリンクを含む)"
-other = "<a class=\"link-inherit-foreground\" href=\"/terms\" target=\"_blank\">利用規約</a> と <a class=\"link-inherit-foreground\" href=\"/privacy\" target=\"_blank\">プライバシーポリシー</a> に同意のうえで、アカウントを作成してください"
+other = "<a class=\"link-inherit-foreground\" href=\"{{.TermsPath}}\" target=\"_blank\">利用規約</a> と <a class=\"link-inherit-foreground\" href=\"{{.PrivacyPath}}\" target=\"_blank\">プライバシーポリシー</a> に同意のうえで、アカウントを作成してください"
 
 [account_new_submit_button]
 description = "アカウント作成の送信ボタンのラベル"
@@ -2185,7 +2185,7 @@ other = "個人用アクセストークン"
 
 [personal_access_token_index_description_html]
 description = "個人用アクセストークンの一覧のサブタイトル (ヘルプページへのリンクを含む)"
-other = "公開APIを呼び出すためのアクセストークンです。このスペースで発行したアクセストークンは、このスペースにだけ使えます。詳しくは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">個人用アクセストークンについてのヘルプ</a> をご覧ください。"
+other = "公開APIを呼び出すためのアクセストークンです。このスペースで発行したアクセストークンは、このスペースにだけ使えます。詳しくは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/334\" target=\"_blank\">個人用アクセストークンについてのヘルプ</a> をご覧ください。"
 
 [personal_access_token_index_breadcrumb_settings]
 description = "個人用アクセストークンの一覧のパンくずのスペース設定へのリンク"
@@ -2301,7 +2301,7 @@ other = "個人用アクセストークンの発行"
 
 [personal_access_token_new_description_html]
 description = "個人用アクセストークンの発行フォームのサブタイトル (ヘルプページへのリンクを含む)"
-other = "このスペースの公開APIに使えるアクセストークンを発行します。アクセストークンでできることは、選んだスコープとあなたのメンバー権限の両方で許された操作に限られます。詳しくは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino\" target=\"_blank\">個人用アクセストークンについてのヘルプ</a> をご覧ください。"
+other = "このスペースの公開APIに使えるアクセストークンを発行します。アクセストークンでできることは、選んだスコープとあなたのメンバー権限の両方で許された操作に限られます。詳しくは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/334\" target=\"_blank\">個人用アクセストークンについてのヘルプ</a> をご覧ください。"
 
 [personal_access_token_new_breadcrumb_settings]
 description = "個人用アクセストークンの発行フォームのパンくずのスペース設定へのリンク"
@@ -2334,6 +2334,10 @@ other = "有効期限"
 [personal_access_token_new_expiration_days_option]
 description = "個人用アクセストークンの発行フォームの有効期限の選択肢"
 other = "{{.Days}}日"
+
+[personal_access_token_new_api_terms_html]
+description = "個人用アクセストークンの発行の送信ボタンの近くに置く、API利用規約への同意の表示 (API利用規約へのリンクを含む)"
+other = "<a class=\"link-inherit-foreground\" href=\"{{.APITermsPath}}\" target=\"_blank\">API利用規約</a> に同意のうえで、アクセストークンを発行してください"
 
 [personal_access_token_new_submit_button]
 description = "個人用アクセストークンの発行フォームの送信ボタン"
@@ -2486,6 +2490,10 @@ other = "クライアントシークレットを安全に保管できるサー�
 [oauth_application_new_client_type_public_hint]
 description = "OAuthアプリの登録フォームのpublicの補足"
 other = "利用者の端末で動き、シークレットを保管できないアプリです。シークレットを発行せず、PKCEだけで認可します。"
+
+[oauth_application_new_api_terms_html]
+description = "OAuthアプリの登録の送信ボタンの近くに置く、API利用規約への同意の表示 (API利用規約へのリンクを含む)"
+other = "<a class=\"link-inherit-foreground\" href=\"{{.APITermsPath}}\" target=\"_blank\">API利用規約</a> に同意のうえで、アプリを登録してください"
 
 [oauth_application_new_submit_button]
 description = "OAuthアプリの登録フォームの送信ボタン"
@@ -2733,6 +2741,10 @@ other = "許可または拒否すると{{.RedirectHost}}に移動します"
 description = "アプリを許可できない場合の同意画面の、アプリへ戻ると移動する先の説明"
 other = "アプリに戻ると{{.RedirectHost}}に移動します"
 
+[oauth_authorization_new_api_terms_html]
+description = "認可コードの同意画面の許可ボタンの近くに置く、許可したアプリによるAPIの利用にAPI利用規約が適用される旨の表示 (API利用規約へのリンクを含む)"
+other = "許可したアプリによる公開APIの利用には、<a class=\"link-inherit-foreground\" href=\"{{.APITermsPath}}\" target=\"_blank\">API利用規約</a> が適用されます"
+
 [oauth_authorization_new_approve]
 description = "同意画面の許可するボタン"
 other = "許可する"
@@ -2894,6 +2906,10 @@ other = "このスペースのメンバーではないため、アプリとの�
 [oauth_device_verification_consent_no_permission]
 description = "OAuthアプリを許可する権限が無いためにデバイス認可を許可できないことの説明"
 other = "このスペースでアプリとの連携を許可する権限がありません。スペースの管理者に問い合わせてください"
+
+[oauth_device_verification_consent_api_terms_html]
+description = "デバイス認可の同意画面の許可ボタンの近くに置く、許可したアプリによるAPIの利用にAPI利用規約が適用される旨の表示 (API利用規約へのリンクを含む)"
+other = "許可したアプリによる公開APIの利用には、<a class=\"link-inherit-foreground\" href=\"{{.APITermsPath}}\" target=\"_blank\">API利用規約</a> が適用されます"
 
 [oauth_device_verification_consent_approve]
 description = "デバイス認可の同意画面の許可するボタン"

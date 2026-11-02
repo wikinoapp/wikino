@@ -50,6 +50,8 @@ func TestShow(t *testing.T) {
 		"authorization_response_iss_parameter_supported": true,
 		"client_id_metadata_document_supported":          true,
 		"service_documentation":                          "https://example.com/api/reference/v1",
+		"op_policy_uri":                                  "https://example.com/terms/api",
+		"op_tos_uri":                                     "https://example.com/terms/api",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("本文 = %v、期待値 = %v", got, want)

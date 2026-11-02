@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/wikinoapp/wikino/go/internal/auth"
+	"github.com/wikinoapp/wikino/go/internal/legaldoc"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -140,7 +141,10 @@ templ New(data NewPageData) {
 					}
 				</div>
 				<p class="text-sm text-muted-foreground">
-					@templ.Raw(templates.T(ctx, "account_new_terms_html"))
+					@templ.Raw(templates.T(ctx, "account_new_terms_html", map[string]any{
+						"TermsPath":   legaldoc.PagePath(legaldoc.KeyTerms, templates.Locale(ctx)),
+						"PrivacyPath": legaldoc.PagePath(legaldoc.KeyPrivacyPolicy, templates.Locale(ctx)),
+					}))
 				</p>
 				<button
 					class="btn rounded-full w-fit"

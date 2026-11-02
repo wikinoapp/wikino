@@ -228,6 +228,8 @@ func (uc *CreatePageUsecase) createPage(ctx context.Context, data *createPageAcc
 			Body:                      input.Body,
 			FeaturedImageAttachmentID: featuredImageAttachmentID,
 			CurrentTopicName:          data.topic.Name,
+			BaseTitle:                 page.Title,
+			BaseBody:                  page.Body,
 		}, now,
 			draftPageRepo,
 			pageRepo,

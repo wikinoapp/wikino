@@ -15,10 +15,12 @@ import (
 
 // seededPageは作成したページ1件。numberはページのURLを組み立てる元に
 // なり、idは後続の生成器がWikiリンクの向き先として使う。
+// 本文は下書きの起点へ渡すために保持する。
 type seededPage struct {
 	id     model.PageID
 	number model.PageNumber
 	title  string
+	body   string
 }
 
 // pageWriterは1つのスペースにページを作成する。関数ではなく値にして
@@ -119,7 +121,7 @@ func (w *pageWriter) createPage(ctx context.Context, input createPageInput) (*se
 		return nil, fmt.Errorf("ページ %sの編集者の登録に失敗: %w", input.title, err)
 	}
 
-	return &seededPage{id: pageID, number: number, title: input.title}, nil
+	return &seededPage{id: pageID, number: number, title: input.title, body: input.body}, nil
 }
 
 // ensureTopicInSpaceは、別のスペースに属するトピックを拒否する。

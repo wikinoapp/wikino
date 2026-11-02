@@ -259,7 +259,7 @@ func listDraftTargetPages(
 ) ([]draftTarget, error) {
 	rows, err := dbtx.QueryContext(
 		ctx,
-		`SELECT id, number, title
+		`SELECT id, number, title, body
          FROM pages
          WHERE space_id = $1
            AND topic_id = $2
@@ -284,12 +284,13 @@ func listDraftTargetPages(
 			id     string
 			number int32
 			title  *string
+			body   string
 		)
-		if err := rows.Scan(&id, &number, &title); err != nil {
+		if err := rows.Scan(&id, &number, &title, &body); err != nil {
 			return nil, fmt.Errorf("トピック %sの公開済みページの読み取りに失敗: %w", topic.name, err)
 		}
 
-		page := &seededPage{id: model.PageID(id), number: model.PageNumber(number)}
+		page := &seededPage{id: model.PageID(id), number: model.PageNumber(number), body: body}
 		if title != nil {
 			page.title = *title
 		}
@@ -368,6 +369,8 @@ func (w *draftWriter) createPublishedPageDraft(
 		member:     member,
 		page:       target.page,
 		title:      &title,
+		baseTitle:  &title,
+		baseBody:   target.page.body,
 		bodies:     draftRevisionBodies(publishedPageDraftIntro(target.page.title), ordinaryDraftRevisions),
 		modifiedAt: modifiedAt,
 	})
@@ -379,6 +382,9 @@ type createDraftInput struct {
 	member *seededSpaceMember
 	page   *seededPage
 	title  *string
+	// 起点には下書きの内容ではなく、書き始める前のページの内容を渡す。
+	baseTitle *string
+	baseBody  string
 	// bodiesは各保存が書いた本文を、古い保存から順に持つ。下書きは最後の保存が
 	// 書いたものを保持し、編集履歴はそのすべてを保持する。
 	bodies     []string
@@ -443,6 +449,8 @@ func (w *draftWriter) createDraft(ctx context.Context, input createDraftInput) e
 		TopicID:       input.topic.id,
 		Title:         input.title,
 		Body:          input.bodies[last],
+		BaseTitle:     input.baseTitle,
+		BaseBody:      input.baseBody,
 		LinkedPageIDs: linkedPageIDs,
 		ModifiedAt:    input.modifiedAt,
 	})

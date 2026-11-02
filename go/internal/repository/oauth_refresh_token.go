@@ -108,6 +108,38 @@ func (r *OAuthRefreshTokenRepository) Rotate(ctx context.Context, input RotateOA
 	return r.toModel(row), nil
 }
 
+// ReissueOAuthRefreshTokenInputは、猶予の間に再提示された使用済みのリフレッシュトークンから
+// 発行し直す入力パラメータ。ReuseAllowedAfterより後に使われたトークンだけを発行し直す
+type ReissueOAuthRefreshTokenInput struct {
+	RotateOAuthRefreshTokenInput
+	ReuseAllowedAfter time.Time
+}
+
+// Reissueは、使用済みのリフレッシュトークンのローテーションで発行した後継のリフレッシュトークンを
+// 失効させ、元のトークンの後継として新しいリフレッシュトークンとアクセストークンを作成して、新しい
+// リフレッシュトークンを返す。元のトークンがReuseAllowedAfterより前に使われた・失効している場合と、
+// 後継が使用済み・失効済みの場合は何もせず (nil, nil) を返す。判定と更新を1つの文で行う
+func (r *OAuthRefreshTokenRepository) Reissue(ctx context.Context, input ReissueOAuthRefreshTokenInput) (*model.OAuthRefreshToken, error) {
+	row, err := r.q.ReissueOAuthRefreshToken(ctx, query.ReissueOAuthRefreshTokenParams{
+		TokenDigest:          input.TokenDigest,
+		ExpiresAt:            input.ExpiresAt,
+		Now:                  input.Now,
+		ID:                   string(input.ID),
+		SpaceID:              string(input.SpaceID),
+		ReuseAllowedAfter:    input.ReuseAllowedAfter,
+		AccessTokenDigest:    input.AccessTokenDigest,
+		AccessTokenScopes:    model.ScopesToStrings(input.AccessTokenScopes),
+		AccessTokenExpiresAt: input.AccessTokenExpiresAt,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // Revokeは、リフレッシュトークンが属する許可と、許可に属するアクセストークン・リフレッシュ
 // トークンをすべて1文で失効する (RFC 7009 §2.1)。元のトークンが使用済み・失効済み・期限切れなら
 // 何も変えない

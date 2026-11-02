@@ -16,10 +16,13 @@ on:
       - "go/db/schema.sql"
       - ".github/workflows/rails-ci.yml"
 
+# Rubyを使うジョブは、ランナーのOSを固定する。
+# ruby/setup-rubyは新しいランナーイメージ向けに各系列の最新のパッチ版しかビルドしないため、
+# ubuntu-latestのままでは、イメージが切り替わったときにGemfileで固定したRubyを入れられなくなる。
 jobs:
   zeitwerk:
     name: Zeitwerk
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: rails
@@ -39,7 +42,7 @@ jobs:
 
   standard:
     name: Standard
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: rails
@@ -55,7 +58,7 @@ jobs:
 
   erb_lint:
     name: ERB Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: rails
@@ -94,7 +97,7 @@ jobs:
 
   rspec:
     name: RSpec
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: rails

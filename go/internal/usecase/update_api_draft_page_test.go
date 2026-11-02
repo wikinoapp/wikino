@@ -301,3 +301,66 @@ func TestUpdateAPIDraftPageUsecase_Execute_ConcurrentWebSave(t *testing.T) {
 		t.Errorf("共有リンク先のページの数 = %d、期待値 = 1", n)
 	}
 }
+
+// TestUpdateAPIDraftPageUsecase_Execute_RevisionAgainstBaseは、リビジョンの無い下書きの更新で、
+// 書き始めた時点の内容 (起点) と比べてリビジョンを作るかを決めることを検証する。
+func TestUpdateAPIDraftPageUsecase_Execute_RevisionAgainstBase(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	memberRole := apiTopicRegularMemberRole
+	f := setupCreateAPIPageFixture(t, db, "api-draft-update-base", memberRole)
+	testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(1).WithTitle("ページ").WithBody("ページの本文").Build()
+
+	// タイトルと本文を省いて作ると、ページの今の内容を起点にした、リビジョンの無い下書きになる
+	created, err := newCreateAPIDraftPageUC(db).Execute(t.Context(), CreateAPIDraftPageInput{
+		Principal:       f.principal(memberRole, draftPageWriteScopes),
+		SpaceIdentifier: f.space.Identifier,
+		PageNumber:      ptr(int32(1)),
+	})
+	if err != nil {
+		t.Fatalf("下書きの作成のエラー = %v", err)
+	}
+	draftID := created.DraftPage.ID
+
+	uc := newUpdateAPIDraftPageUC(db)
+	update := func(t *testing.T, body string) {
+		t.Helper()
+		_, err := uc.Execute(t.Context(), UpdateAPIDraftPageInput{
+			Principal:       f.principal(memberRole, draftPageWriteScopes),
+			SpaceIdentifier: f.space.Identifier,
+			PageNumber:      1,
+			IfMatchDigests:  []string{draftPageDigest(t, db, draftID, f.space.ID)},
+			Body:            &body,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+	}
+	countRevisions := func(t *testing.T) int {
+		t.Helper()
+		return countRows(t, db, "draft_page_revisions", f.space.ID, "draft_page_id = $2", draftID)
+	}
+
+	// サブテストは同じ下書きを順に更新するため、並列にしない。
+	t.Run("起点と同じ内容ならリビジョンを作らない", func(t *testing.T) {
+		update(t, "ページの本文")
+		if n := countRevisions(t); n != 0 {
+			t.Errorf("リビジョンの数 = %d、期待値 = 0", n)
+		}
+	})
+
+	t.Run("起点から変えるとリビジョンを作る", func(t *testing.T) {
+		update(t, "ページの本文\n足した行")
+		if n := countRevisions(t); n != 1 {
+			t.Errorf("リビジョンの数 = %d、期待値 = 1", n)
+		}
+	})
+
+	t.Run("起点の内容に戻すと、直前のリビジョンと違うためリビジョンを作る", func(t *testing.T) {
+		update(t, "ページの本文")
+		if n := countRevisions(t); n != 2 {
+			t.Errorf("リビジョンの数 = %d、期待値 = 2", n)
+		}
+	})
+}

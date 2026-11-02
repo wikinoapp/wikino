@@ -42,6 +42,8 @@ func TestNew_同意画面にアプリ名と連携先のスペースとスコー�
 		"client.example",
 		`name="decision" type="submit" value="approve"`,
 		`name="decision" type="submit" value="deny"`,
+		// 許可のボタンの近くで、表示言語の版のAPI利用規約を示す
+		"許可したアプリによる公開APIの利用には、<a class=\"link-inherit-foreground\" " + `href="/s/wikino/pages/323" target="_blank">API利用規約</a>`,
 		// 要求されたスコープは、既定ですべてチェックしたチェックボックスで並べる
 		`name="granted_scopes" type="checkbox" value="topic:read" checked`,
 		`name="granted_scopes" type="checkbox" value="page:read" checked`,
@@ -230,6 +232,10 @@ func TestNew_許可できないユーザーには理由とクライアントへ�
 			}
 			if strings.Contains(body, "許可または拒否すると") {
 				t.Error("許可と拒否を選ぶときの移動先の案内が含まれている")
+			}
+			// 許可できない画面では、API利用規約を示さない
+			if strings.Contains(body, "API利用規約") {
+				t.Error("許可できない画面にAPI利用規約の表示が含まれている")
 			}
 		})
 	}

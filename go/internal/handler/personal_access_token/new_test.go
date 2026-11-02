@@ -36,7 +36,7 @@ func TestNew_発行フォームを表示する(t *testing.T) {
 	for _, want := range []string{
 		"<title>個人用アクセストークンの発行 | トークンのスペース</title>",
 		">個人用アクセストークンの発行</h1>",
-		`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino" target="_blank">個人用アクセストークンについてのヘルプ</a>`,
+		`<a class="link-inherit-foreground" href="https://wikino.app/s/wikino/pages/334" target="_blank">個人用アクセストークンについてのヘルプ</a>`,
 		`action="/s/` + identifier + `/settings/personal_access_tokens"`,
 		`name="csrf_token"`,
 		`name="name"`,
@@ -90,6 +90,11 @@ func TestNew_発行フォームを表示する(t *testing.T) {
 	crumb := breadcrumb(t, body)
 	if !strings.Contains(crumb, `href="/s/`+identifier+`/settings/personal_access_tokens"`) {
 		t.Error("パンくずに一覧へのリンクが含まれていない")
+	}
+
+	// 送信ボタンの近くで、表示言語の版のAPI利用規約を示す
+	if !strings.Contains(body, `href="/s/wikino/pages/323" target="_blank">API利用規約</a>`+" に同意のうえで、アクセストークンを発行してください") {
+		t.Error("API利用規約への同意の表示が含まれていない")
 	}
 }
 
