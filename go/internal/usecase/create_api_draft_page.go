@@ -14,7 +14,7 @@ import (
 
 // CreateAPIDraftPageUsecaseは、公開APIでトークンの持ち主の下書きを作成するユースケース。
 // 既存のページの下書きと、新しいページ (Web画面の作成と同じく空の未公開のページ) の下書きを作る。
-// 作成はWeb画面の手動保存と同じく、下書きの編集履歴 (リビジョン) を伴う
+// 作成はWeb画面の手動保存と同じく、ページの内容と違うタイトル・本文で作ったときだけ下書きの編集履歴 (リビジョン) を伴う
 type CreateAPIDraftPageUsecase struct {
 	db                    *sql.DB
 	spaceRepo             *repository.SpaceRepository
@@ -349,20 +349,23 @@ func (uc *CreateAPIDraftPageUsecase) createDraftPageOnce(
 		return nil, fmt.Errorf("下書きの更新に失敗しました: %w", err)
 	}
 
-	// 手動保存と同じく、タイトルの無い下書きのリビジョンは空のタイトルで記録する
+	// 手動保存と同じく、直前の状態 (作ったばかりの下書きでは起点) と同じ内容ならリビジョンを作らない。
+	// タイトルの無い下書きのリビジョンは空のタイトルで記録する
 	revisionTitle := ""
 	if title != nil {
 		revisionTitle = *title
 	}
-	_, err = uc.draftPageRevisionRepo.WithTx(tx).Create(ctx, repository.CreateDraftPageRevisionInput{
-		DraftPageID:   draft.ID,
-		SpaceID:       spaceID,
-		SpaceMemberID: spaceMemberID,
-		Title:         revisionTitle,
-		Body:          body,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("下書きページリビジョンの作成に失敗しました: %w", err)
+	if draft.NeedsRevision(nil, model.DraftPageContent{Title: revisionTitle, Body: body}) {
+		_, err = uc.draftPageRevisionRepo.WithTx(tx).Create(ctx, repository.CreateDraftPageRevisionInput{
+			DraftPageID:   draft.ID,
+			SpaceID:       spaceID,
+			SpaceMemberID: spaceMemberID,
+			Title:         revisionTitle,
+			Body:          body,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("下書きページリビジョンの作成に失敗しました: %w", err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

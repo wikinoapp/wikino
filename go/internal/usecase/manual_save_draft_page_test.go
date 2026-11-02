@@ -250,3 +250,139 @@ func TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevision(t *testing.T) 
 		t.Errorf("リビジョンの件数 = %d、期待値 = 2", count)
 	}
 }
+
+// TestManualSaveDraftPageUsecase_Execute_SkipRevisionSameAsBaseは、リビジョンの無い下書きで、
+// 書き始めた時点の内容 (起点) と同じ保存ではリビジョンを作らないこと、起点から変えた保存では作ることを検証する。
+// 起点が分からない下書きでは、リビジョンの無いときの保存でリビジョンを作る。
+func TestManualSaveDraftPageUsecase_Execute_SkipRevisionSameAsBase(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	uc := newManualSaveUC(db)
+	revisionRepo := repository.NewDraftPageRevisionRepository(query.New(db))
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("manual-save-base").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("manual-save-base@example.com").
+		WithAtname("manualsavebase").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Base Page").
+		WithBody("元の本文").
+		Build()
+	legacyPageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Legacy Page").
+		WithBody("元の本文").
+		Build()
+	// 起点を記録する前からある下書き (起点の列がNULL)
+	testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(legacyPageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Legacy Page").
+		WithBody("元の本文").
+		Build()
+
+	countRevisions := func(t *testing.T, draftPage *model.DraftPage) int64 {
+		t.Helper()
+		count, err := revisionRepo.CountByDraftPageID(context.Background(), draftPage.ID, draftPage.SpaceID)
+		if err != nil {
+			t.Fatalf("CountByDraftPageID()のエラー = %v、期待値 = nil", err)
+		}
+		return count
+	}
+
+	title := "Base Page"
+	input := ManualSaveDraftPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("manual-save-base"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           &title,
+		Body:            "元の本文",
+	}
+
+	// 下書きの無いページを、ページの今の内容のまま保存する: 下書きは作るが、リビジョンは作らない。
+	first, err := uc.Execute(context.Background(), input)
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
+	}
+	if first.DraftPageRevision != nil {
+		t.Error("起点と同じ内容の保存でリビジョンが作成された")
+	}
+	if first.DraftPage == nil {
+		t.Fatal("DraftPageがnil")
+	}
+	if n := countRevisions(t, first.DraftPage); n != 0 {
+		t.Errorf("リビジョンの件数 = %d、期待値 = 0", n)
+	}
+
+	// リビジョンの無い下書きを、起点と同じ内容でもう一度保存する: リビジョンは作らない。
+	second, err := uc.Execute(context.Background(), input)
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
+	}
+	if second.DraftPageRevision != nil {
+		t.Error("リビジョンの無い下書きを起点と同じ内容で保存したのにリビジョンが作成された")
+	}
+
+	// 起点から変えて保存する: リビジョンを作る。
+	changedInput := input
+	changedInput.Body = "元の本文\n足した行"
+	third, err := uc.Execute(context.Background(), changedInput)
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
+	}
+	if third.DraftPageRevision == nil {
+		t.Fatal("起点から変えて保存したのにリビジョンが作成されていない")
+	}
+
+	// 起点の内容に戻して保存する: 直前のリビジョンとは違うため、リビジョンを作る。
+	fourth, err := uc.Execute(context.Background(), input)
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
+	}
+	if fourth.DraftPageRevision == nil {
+		t.Fatal("直前のリビジョンと違う内容で保存したのにリビジョンが作成されていない")
+	}
+	if n := countRevisions(t, fourth.DraftPage); n != 2 {
+		t.Errorf("リビジョンの件数 = %d、期待値 = 2", n)
+	}
+
+	// 起点が分からない下書きは、リビジョンの無いときの保存でリビジョンを作る。
+	legacyTitle := "Legacy Page"
+	legacy, err := uc.Execute(context.Background(), ManualSaveDraftPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("manual-save-base"),
+		PageNumber:      2,
+		UserID:          userID,
+		Title:           &legacyTitle,
+		Body:            "元の本文",
+	})
+	if err != nil {
+		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
+	}
+	if legacy.DraftPageRevision == nil {
+		t.Error("起点が分からない下書きの保存でリビジョンが作成されていない")
+	}
+}

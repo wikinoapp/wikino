@@ -65,7 +65,7 @@ type ManualSaveDraftPageOutput struct {
 	DraftPage *model.DraftPage
 
 	// DraftPageRevisionはこの保存で作成されたリビジョン。送信されたタイトル・本文が
-	// 下書きの最新リビジョンと同一でリビジョン作成をスキップした場合はnilになる
+	// 直前の状態 (最新のリビジョン、無ければ下書きの起点) と同一でリビジョン作成をスキップした場合はnilになる
 	// (保存自体は成功として扱う)。
 	DraftPageRevision *model.DraftPageRevision
 	TopicNumber       int32
@@ -98,23 +98,28 @@ func (uc *ManualSaveDraftPageUsecase) pageAccessRepos() pageAccessRepos {
 	}
 }
 
-// isSameAsLatestRevisionは送信されたタイトル・本文が下書きの最新リビジョンと同一かどうかを
-// 返す。下書きがまだ存在しない場合は重複するリビジョンも存在しないためfalseを返す。
-func (uc *ManualSaveDraftPageUsecase) isSameAsLatestRevision(ctx context.Context, data *pageAccessData, title, body string) (bool, error) {
+// needsRevisionは、送信されたタイトル・本文でリビジョンを作るべきかを返す。
+// 直前の状態 (最新のリビジョン、無ければ下書きの起点) と同じ内容なら作らない。
+// 下書きがまだ無いときは、この保存で作る下書きの起点 (saveDraftPageContentに渡すページの今の内容) と比べる
+func (uc *ManualSaveDraftPageUsecase) needsRevision(ctx context.Context, data *pageAccessData, content model.DraftPageContent) (bool, error) {
 	draftPage, err := uc.draftPageRepo.FindByPageAndMember(ctx, data.page.ID, data.spaceMember.ID, data.space.ID)
 	if err != nil {
 		return false, fmt.Errorf("下書きページの取得に失敗しました: %w", err)
 	}
 	if draftPage == nil {
-		return false, nil
+		return (&model.DraftPage{BaseTitle: data.page.Title, BaseBody: &data.page.Body}).NeedsRevision(nil, content), nil
 	}
 
 	latest, err := uc.draftPageRevisionRepo.ListByDraftPageID(ctx, draftPage.ID, data.space.ID, 1)
 	if err != nil {
 		return false, fmt.Errorf("最新リビジョンの取得に失敗しました: %w", err)
 	}
+	var latestRevision *model.DraftPageRevision
+	if len(latest) > 0 {
+		latestRevision = latest[0]
+	}
 
-	return len(latest) > 0 && latest[0].Title == title && latest[0].Body == body, nil
+	return draftPage.NeedsRevision(latestRevision, content), nil
 }
 
 func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAccessData, input ManualSaveDraftPageInput) (*ManualSaveDraftPageOutput, error) {
@@ -132,9 +137,9 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		title = *input.Title
 	}
 
-	// こちらもトランザクション前: リビジョン作成をスキップするか判定する。スキップしないと
-	// 同一内容の連続保存 (cmd+sの連打など) で重複リビジョンが積み上がってしまう。
-	skipRevision, err := uc.isSameAsLatestRevision(ctx, data, title, input.Body)
+	// こちらもトランザクション前: リビジョンを作るか判定する。直前の状態と比べないと、
+	// 同一内容の連続保存 (cmd+sの連打など) や書き始めた内容のままの保存で、変化の無いリビジョンが積み上がってしまう。
+	createRevision, err := uc.needsRevision(ctx, data, model.DraftPageContent{Title: title, Body: input.Body})
 	if err != nil {
 		return nil, err
 	}
@@ -173,9 +178,9 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		return nil, err
 	}
 
-	// この保存が最新リビジョンと同一内容の場合を除き、リビジョンを作成する。
+	// この保存が直前の状態と同一内容の場合を除き、リビジョンを作成する。
 	var revision *model.DraftPageRevision
-	if !skipRevision {
+	if createRevision {
 		revision, err = draftPageRevisionRepo.Create(ctx, repository.CreateDraftPageRevisionInput{
 			DraftPageID:   draftPage.ID,
 			SpaceID:       data.space.ID,

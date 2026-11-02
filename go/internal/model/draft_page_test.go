@@ -164,3 +164,69 @@ func TestDraftPage_PrecedingContent(t *testing.T) {
 		})
 	}
 }
+
+func TestDraftPage_NeedsRevision(t *testing.T) {
+	t.Parallel()
+
+	baseTitle := "起点のタイトル"
+	baseBody := "起点の本文"
+	latest := &model.DraftPageRevision{Title: "最新のタイトル", Body: "最新の本文"}
+
+	tests := []struct {
+		name    string
+		draft   model.DraftPage
+		latest  *model.DraftPageRevision
+		content model.DraftPageContent
+		want    bool
+	}{
+		{
+			name:    "最新のリビジョンと同じ内容なら作らない",
+			draft:   model.DraftPage{BaseTitle: &baseTitle, BaseBody: &baseBody},
+			latest:  latest,
+			content: model.DraftPageContent{Title: "最新のタイトル", Body: "最新の本文"},
+			want:    false,
+		},
+		{
+			name:    "最新のリビジョンと本文が違えば作る",
+			draft:   model.DraftPage{BaseTitle: &baseTitle, BaseBody: &baseBody},
+			latest:  latest,
+			content: model.DraftPageContent{Title: "最新のタイトル", Body: "別の本文"},
+			want:    true,
+		},
+		{
+			name:    "最新のリビジョンがあれば起点と同じ内容でも作る",
+			draft:   model.DraftPage{BaseTitle: &baseTitle, BaseBody: &baseBody},
+			latest:  latest,
+			content: model.DraftPageContent{Title: "起点のタイトル", Body: "起点の本文"},
+			want:    true,
+		},
+		{
+			name:    "リビジョンが無く起点と同じ内容なら作らない",
+			draft:   model.DraftPage{BaseTitle: &baseTitle, BaseBody: &baseBody},
+			content: model.DraftPageContent{Title: "起点のタイトル", Body: "起点の本文"},
+			want:    false,
+		},
+		{
+			name:    "リビジョンが無く起点とタイトルが違えば作る",
+			draft:   model.DraftPage{BaseTitle: &baseTitle, BaseBody: &baseBody},
+			content: model.DraftPageContent{Title: "別のタイトル", Body: "起点の本文"},
+			want:    true,
+		},
+		{
+			name:    "起点が分からずリビジョンも無ければ作る",
+			draft:   model.DraftPage{},
+			content: model.DraftPageContent{Title: "", Body: ""},
+			want:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.draft.NeedsRevision(tt.latest, tt.content); got != tt.want {
+				t.Errorf("NeedsRevision() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}

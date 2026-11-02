@@ -55,10 +55,12 @@ func TestCreateAPIDraftPageUsecase_Execute_ExistingPage(t *testing.T) {
 		wantBody   string
 		// wantBaseは起点。渡した内容ではなく、ページの今の内容になる
 		wantBase model.DraftPageContent
+		// wantRevisionsは下書きと同じ内容のリビジョンの数。起点と同じ内容ならリビジョンを作らない
+		wantRevisions int
 	}{
-		{name: "タイトルと本文を省くとページの今の内容で作る", pageNumber: 1, wantTitle: "ページ", wantBody: "ページの本文", wantBase: model.DraftPageContent{Title: "ページ", Body: "ページの本文"}},
-		{name: "本文だけを指定するとタイトルはページの今のタイトルになる", pageNumber: 2, body: ptr("新しい本文"), wantTitle: "ページ2", wantBody: "新しい本文", wantBase: model.DraftPageContent{Title: "ページ2", Body: "ページ2の本文"}},
-		{name: "タイトルと本文を指定するとその内容で作る", pageNumber: 3, title: ptr("新しいタイトル"), body: ptr(""), wantTitle: "新しいタイトル", wantBody: "", wantBase: model.DraftPageContent{Title: "ページ3", Body: "ページ3の本文"}},
+		{name: "タイトルと本文を省くとページの今の内容で作り、リビジョンを作らない", pageNumber: 1, wantTitle: "ページ", wantBody: "ページの本文", wantBase: model.DraftPageContent{Title: "ページ", Body: "ページの本文"}, wantRevisions: 0},
+		{name: "本文だけを指定するとタイトルはページの今のタイトルになる", pageNumber: 2, body: ptr("新しい本文"), wantTitle: "ページ2", wantBody: "新しい本文", wantBase: model.DraftPageContent{Title: "ページ2", Body: "ページ2の本文"}, wantRevisions: 1},
+		{name: "タイトルと本文を指定するとその内容で作る", pageNumber: 3, title: ptr("新しいタイトル"), body: ptr(""), wantTitle: "新しいタイトル", wantBody: "", wantBase: model.DraftPageContent{Title: "ページ3", Body: "ページ3の本文"}, wantRevisions: 1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -89,8 +91,11 @@ func TestCreateAPIDraftPageUsecase_Execute_ExistingPage(t *testing.T) {
 			if output.Topic.ID != f.topicIDs[1] {
 				t.Errorf("Topic.ID = %s、期待値 = %s", output.Topic.ID, f.topicIDs[1])
 			}
-			if n := countRows(t, db, "draft_page_revisions", f.space.ID, "draft_page_id = $2 AND title = $3 AND body = $4", draft.ID, tt.wantTitle, tt.wantBody); n != 1 {
-				t.Errorf("下書きと同じ内容のリビジョンの数 = %d、期待値 = 1", n)
+			if n := countRows(t, db, "draft_page_revisions", f.space.ID, "draft_page_id = $2", draft.ID); n != tt.wantRevisions {
+				t.Errorf("リビジョンの数 = %d、期待値 = %d", n, tt.wantRevisions)
+			}
+			if n := countRows(t, db, "draft_page_revisions", f.space.ID, "draft_page_id = $2 AND title = $3 AND body = $4", draft.ID, tt.wantTitle, tt.wantBody); n != tt.wantRevisions {
+				t.Errorf("下書きと同じ内容のリビジョンの数 = %d、期待値 = %d", n, tt.wantRevisions)
 			}
 		})
 	}
@@ -167,9 +172,9 @@ func TestCreateAPIDraftPageUsecase_Execute_NewPage(t *testing.T) {
 		if draft.Title != nil || draft.Body != "" {
 			t.Errorf("下書き = (%v, %q)、期待値 = タイトルの無い空の下書き", draft.Title, draft.Body)
 		}
-		// 手動保存と同じく、タイトルの無い下書きのリビジョンは空のタイトルで記録する
-		if n := countRows(t, db, "draft_page_revisions", f.space.ID, "draft_page_id = $2 AND title = '' AND body = ''", draft.ID); n != 1 {
-			t.Errorf("リビジョンの数 = %d、期待値 = 1", n)
+		// 起点 (作った空のページ) と同じ内容のため、リビジョンを作らない
+		if n := countRows(t, db, "draft_page_revisions", f.space.ID, "draft_page_id = $2", draft.ID); n != 0 {
+			t.Errorf("リビジョンの数 = %d、期待値 = 0", n)
 		}
 	})
 }

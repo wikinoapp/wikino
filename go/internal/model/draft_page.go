@@ -74,3 +74,11 @@ func (d *DraftPage) PrecedingContent(previous *DraftPageRevision) *DraftPageCont
 	}
 	return d.BaseContent()
 }
+
+// NeedsRevisionは、latestの次にcontentのリビジョンを作るべきかを返す。latestは下書きの最新のリビジョンで、
+// 無ければnilを渡す。直前の状態 (PrecedingContent) と同じ内容ならリビジョンを作らない。
+// 直前の状態が無い (起点が分からず、リビジョンも無い) 下書きでは作る
+func (d *DraftPage) NeedsRevision(latest *DraftPageRevision, content DraftPageContent) bool {
+	preceding := d.PrecedingContent(latest)
+	return preceding == nil || *preceding != content
+}
