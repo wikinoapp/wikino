@@ -30,7 +30,7 @@
 
 ## 編集履歴を確かめる
 
-`wikino draft revision list <ページ番号>` で、下書きの作成・更新ごとの記録を新しい順に出す。
+`wikino draft revision list <ページ番号>` で、下書きの作成・更新で内容が変わったときの記録を新しい順に出す。
 過去の内容に戻すときは、`wikino draft revision get <ページ番号> <リビジョンのID> --md` で読んだ本文を、`wikino draft update` に渡す。
 リビジョンの `--md` の出力には版が無いため、そのままでは `--md-file` に渡せない。
 
