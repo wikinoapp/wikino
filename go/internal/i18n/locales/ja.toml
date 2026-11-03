@@ -1620,7 +1620,7 @@ other = "前へ"
 description = "ページネーションの次のページへのリンク"
 other = "次へ"
 
-# 404エラーページ
+# 413エラーページ
 [error_content_too_large_title]
 description = "送った内容が大きすぎるときのエラーページのタイトル"
 other = "送った内容が大きすぎます | Wikino"
@@ -1637,6 +1637,7 @@ other = "一度に送れる大きさは{{.Max}}までです。ブラウザの戻
 description = "送った内容が大きすぎるときのエラーページのトップページリンク"
 other = "トップページに戻る"
 
+# 404エラーページ
 [error_not_found_title]
 description = "404エラーページのタイトル"
 other = "ページが見つかりませんでした | Wikino"
