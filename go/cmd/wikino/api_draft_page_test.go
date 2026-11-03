@@ -369,6 +369,7 @@ func TestAPIRouter_CreateDraftPage(t *testing.T) {
 		{name: "存在しないページは422", body: `{"page_number": 99}`, wantPointers: []string{"#/page_number"}},
 		{name: "存在しないトピックは422", body: `{"topic_number": 99}`, wantPointers: []string{"#/topic_number"}},
 		{name: "空のタイトルは422", body: `{"page_number": 1, "title": ""}`, wantPointers: []string{"#/title"}},
+		{name: "本文が上限を超えれば422", body: `{"topic_number": 1, "body": ` + tooLongBodyJSON + `}`, wantPointers: []string{"#/body"}},
 	}
 	for _, tt := range pointerTests {
 		t.Run(tt.name, func(t *testing.T) {
