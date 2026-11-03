@@ -3,6 +3,7 @@ package validator
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
@@ -103,9 +104,16 @@ func (v *SuggestionApplyValidator) Validate(
 
 // collectPageErrorsはPageUpdateValidatorが返したValidationErrorのフィールドエラーを、
 // 構造化されたPageErrorsに変換してapplyErrに追加する。
+// 1ページに複数のフィールドのエラーがあっても表示の順が要求ごとに変わらないよう、フィールド名の順に並べる。
 func (v *SuggestionApplyValidator) collectPageErrors(applyErr *model.SuggestionApplyError, inner *model.ValidationError, pageTitle string) {
-	for _, msgs := range inner.Fields {
-		for _, msg := range msgs {
+	fields := make([]string, 0, len(inner.Fields))
+	for field := range inner.Fields {
+		fields = append(fields, field)
+	}
+	slices.Sort(fields)
+
+	for _, field := range fields {
+		for _, msg := range inner.Fields[field] {
 			applyErr.PageErrors = append(applyErr.PageErrors, model.SuggestionApplyPageError{
 				PageTitle: pageTitle,
 				Message:   msg,
