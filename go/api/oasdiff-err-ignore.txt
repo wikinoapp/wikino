@@ -12,3 +12,11 @@ GET /spaces/{space_identifier}/pages/{page_number}/links the response property `
 GET /spaces/{space_identifier}/pages/{page_number}/backlinks the response property `items/items/body` became optional for the status `200`
 GET /spaces/{space_identifier}/draft_pages the response property `items/items/body` became optional for the status `200`
 GET /spaces/{space_identifier}/pages/{page_number}/draft_page_revisions the response property `items/items/body` became optional for the status `200`
+
+# Web画面とAPIで同じ本文の上限を確かめるため、本文の入力を50万字 (Unicodeのコードポイント数) 以下に制限する。
+# この上限を足す5件だけを許可し、別の上限値や他のフィールドの入力制限は引き続き検出する。
+POST /spaces/{space_identifier}/draft_pages the `body` request property's maxLength was set to `500000`
+POST /spaces/{space_identifier}/pages the `body` request property's maxLength was set to `500000`
+PATCH /spaces/{space_identifier}/pages/{page_number} the `body` request property's maxLength was set to `500000`
+PATCH /spaces/{space_identifier}/pages/{page_number}/draft_page the `body` request property's maxLength was set to `500000`
+POST /spaces/{space_identifier}/wikilink_previews the `body` request property's maxLength was set to `500000`
