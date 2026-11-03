@@ -27,6 +27,7 @@ import { FileUploadHandler } from "./file-upload-handler";
 import { insertNewlineAndContinueList } from "./list-continuation";
 import { clickManualSaveButton, handleManualSaveShortcut } from "./manual-save-handler";
 import { pasteHandler } from "./paste-handler";
+import { clearSaveError, showSaveError } from "./save-status";
 import { handleSubmitShortcut } from "./submit-handler";
 import { handleTab, handleShiftTab } from "./tab-handler";
 import { wikilinkCompletions } from "./wikilink-completions";
@@ -54,6 +55,8 @@ interface EditorConfig {
   topicNumber: string;
   titleInput: HTMLInputElement;
   spaceIdentifier: string;
+  describedBy: string;
+  invalid: boolean;
 }
 
 function createEditor(config: EditorConfig): EditorView {
@@ -82,6 +85,10 @@ function createEditor(config: EditorConfig): EditorView {
       // ラベルの有無ではなくidの有無で判定する。aria-labelledbyはidを参照する属性なので、
       // id以外のセレクタで拾ったラベルだとエディタに空の参照が残ってしまう。
       ...(config.label?.id ? [EditorView.contentAttributes.of({ "aria-labelledby": config.label.id })] : []),
+      // 本文のエラー (公開の失敗・保存の失敗) をエディタの説明として読み上げさせる。入力面が
+      // CodeMirrorのcontenteditableで、エラーの要素をフォーム部品に関連付けられないため。
+      ...(config.describedBy ? [EditorView.contentAttributes.of({ "aria-describedby": config.describedBy })] : []),
+      ...(config.invalid ? [EditorView.contentAttributes.of({ "aria-invalid": "true" })] : []),
       keymap.of([
         { key: "Enter", run: insertNewlineAndContinueList },
         { key: "Tab", run: handleTab },
@@ -170,10 +177,15 @@ async function saveAsDraft(config: EditorConfig): Promise<void> {
     });
 
     if (response.ok) {
+      clearSaveError();
       window.dispatchEvent(new CustomEvent("draft-autosaved"));
+      return;
     }
+
+    // 本文が上限を超えたときは、書き続けても保存されないことを知らせる
+    showSaveError("autosave", response.status, await response.text());
   } catch {
-    // 自動保存の失敗は静かに無視する
+    // 通信の失敗は次の入力で保存し直せるため、表示を変えない
   }
 }
 
@@ -202,6 +214,8 @@ export function initializeEditors(): void {
     const csrfToken = container.dataset.markdownEditorCsrfToken || "";
     const topicNumber = container.dataset.markdownEditorTopicNumber || "";
     const spaceIdentifier = container.dataset.markdownEditorSpaceIdentifier || "";
+    const describedBy = container.dataset.markdownEditorDescribedby || "";
+    const invalid = container.dataset.markdownEditorInvalid === "true";
 
     const view = createEditor({
       container,
@@ -214,6 +228,8 @@ export function initializeEditors(): void {
       topicNumber,
       titleInput,
       spaceIdentifier,
+      describedBy,
+      invalid,
     });
 
     // 可視ラベルには関連付けられるフォーム部品が無い。入力面が `for` では指せない

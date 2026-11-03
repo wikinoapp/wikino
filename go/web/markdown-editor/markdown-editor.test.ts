@@ -94,6 +94,30 @@ describe("initializeEditors", () => {
     expect(textbox).not.toBeNull();
     expect(textbox?.hasAttribute("aria-labelledby")).toBe(false);
   });
+
+  it("本文のエラーを説明する要素をCodeMirrorのテキストボックスに関連付ける", () => {
+    const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
+    container?.setAttribute("data-markdown-editor-describedby", "page-body-error page-draft-save-error");
+    container?.setAttribute("data-markdown-editor-invalid", "true");
+
+    initializeEditors();
+
+    const textbox = document.querySelector<HTMLElement>('.cm-content[role="textbox"]');
+
+    expect(textbox?.getAttribute("aria-describedby")).toBe("page-body-error page-draft-save-error");
+    expect(textbox?.getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("本文のエラーが無ければaria-invalidを付けない", () => {
+    const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
+    container?.setAttribute("data-markdown-editor-invalid", "false");
+
+    initializeEditors();
+
+    const textbox = document.querySelector<HTMLElement>('.cm-content[role="textbox"]');
+
+    expect(textbox?.hasAttribute("aria-invalid")).toBe(false);
+  });
 });
 
 describe("stopAutosave", () => {
@@ -209,5 +233,91 @@ describe("stopAutosave", () => {
     rejectFetch(new Error("network error"));
 
     await expect(stopping).resolves.toBeUndefined();
+  });
+});
+
+// pages/page/edit.templの保存の表示を写す
+function saveStatusMarkup(): string {
+  return `
+    <div
+      data-draft-save-status
+      data-autosave-failed-message="自動保存できませんでした。"
+      data-save-draft-failed-message="下書きを保存できませんでした。"
+      data-body-too-large-message="本文が長すぎます。本文は500,000文字以内にしてください。"
+    >
+      <div id="page-draft-saved-at">自動保存: 12:00</div>
+      <p id="page-draft-save-error" role="status" data-draft-save-error></p>
+    </div>
+  `;
+}
+
+describe("自動保存の失敗の表示", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    document.body.innerHTML = editorMarkup() + saveStatusMarkup();
+    document
+      .querySelector("[data-markdown-editor]")
+      ?.setAttribute("data-markdown-editor-draft-save-url", "/s/test-space/pages/1/draft_page");
+    initializeEditors();
+  });
+
+  afterEach(() => {
+    const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
+    container?._editorView?.destroy();
+    document.body.innerHTML = "";
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  function typeIntoEditor(text: string): void {
+    const view = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]")?._editorView;
+    view?.dispatch({ changes: { from: 0, insert: text } });
+  }
+
+  function errorText(): string {
+    return document.querySelector("[data-draft-save-error]")?.textContent ?? "";
+  }
+
+  async function autosave(response: Response): Promise<void> {
+    fetchMock.mockResolvedValueOnce(response);
+    typeIntoEditor("a");
+    await vi.advanceTimersByTimeAsync(1000);
+  }
+
+  it("422で失敗したら、返った文面を自動保存の表示の位置に出す", async () => {
+    await autosave(new Response("本文は500,000文字以内で入力してください (現在500,001文字)", { status: 422 }));
+
+    expect(errorText()).toBe("自動保存できませんでした。 本文は500,000文字以内で入力してください (現在500,001文字)");
+  });
+
+  it("413で失敗したら、本文が長すぎる旨を出す", async () => {
+    await autosave(new Response("<!doctype html><title>Content Too Large</title>", { status: 413 }));
+
+    expect(errorText()).toBe("自動保存できませんでした。 本文が長すぎます。本文は500,000文字以内にしてください。");
+  });
+
+  it("保存できたらエラーを消し、保存時刻の再取得を始める", async () => {
+    const autosaved = vi.fn();
+    window.addEventListener("draft-autosaved", autosaved);
+
+    await autosave(new Response("本文が長すぎます", { status: 422 }));
+    expect(autosaved).not.toHaveBeenCalled();
+
+    await autosave(new Response(null, { status: 204 }));
+
+    expect(errorText()).toBe("");
+    expect(autosaved).toHaveBeenCalledTimes(1);
+    window.removeEventListener("draft-autosaved", autosaved);
+  });
+
+  it("利用者が直せない失敗では表示を変えない", async () => {
+    await autosave(new Response("Internal Server Error", { status: 500 }));
+
+    expect(errorText()).toBe("");
   });
 });

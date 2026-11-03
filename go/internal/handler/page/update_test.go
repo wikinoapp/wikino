@@ -476,10 +476,21 @@ func TestUpdate_ValidationError_BodyTooLong(t *testing.T) {
 		t.Errorf("レスポンスに %qが含まれていない", want)
 	}
 
+	// 本文の入力面はCodeMirrorのため、エラーはエディタの説明として関連付ける
+	for _, want := range []string{
+		`<div id="page-body-error" class="grid gap-2"><p class="text-sm text-error">` + want,
+		`data-markdown-editor-describedby="page-body-error page-draft-save-error"`,
+		`data-markdown-editor-invalid="true"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない", want)
+		}
+	}
+
 	// 再描画した編集画面の下書き保存は、編集画面を表示したときと同じ手動保存の送り先を指す
 	for _, want := range []string{
 		`hx-patch="/s/page-body-too-long/pages/1/draft_page_revision"`,
-		`formaction="/s/page-body-too-long/pages/1/draft_page_revision?redirect_to=suggestion_new"`,
+		`hx-patch="/s/page-body-too-long/pages/1/draft_page_revision?redirect_to=suggestion_new"`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに %qが含まれていない", want)

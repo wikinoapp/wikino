@@ -237,8 +237,8 @@ func TestEdit(t *testing.T) {
 	if !strings.Contains(body, `enctype="multipart/form-data"`) {
 		t.Error("公開のフォームがmultipartで送る設定になっていない")
 	}
-	if got := strings.Count(body, `hx-encoding="multipart/form-data"`); got != 2 {
-		t.Errorf("multipartで送るhtmxの要素の数 = %d、期待値 = 2 (プレビューと下書き保存)", got)
+	if got := strings.Count(body, `hx-encoding="multipart/form-data"`); got != 3 {
+		t.Errorf("multipartで送るhtmxの要素の数 = %d、期待値 = 3 (プレビュー・下書き保存・下書き保存して編集提案を作成)", got)
 	}
 
 	// defaultレイアウトのコンテンツラッパーが、md未満で固定ナビに最下部コンテンツが隠れない
@@ -734,8 +734,16 @@ func TestEdit_RevisionColumn(t *testing.T) {
 	if !strings.Contains(body, `hx-patch="/s/revcol-space/pages/1/draft_page_revision"`) {
 		t.Error("下書き保存ボタンのhx-patch属性が見つからない")
 	}
-	if !strings.Contains(body, `formaction="/s/revcol-space/pages/1/draft_page_revision?redirect_to=suggestion_new"`) {
-		t.Error("下書き保存して編集提案を作成するボタンのformaction属性が見つからない")
+	// 「下書き保存して編集提案を作成」も、保存に失敗したときに編集画面に留まるようhtmxで送る
+	if !strings.Contains(body, `hx-patch="/s/revcol-space/pages/1/draft_page_revision?redirect_to=suggestion_new"`) {
+		t.Error("下書き保存して編集提案を作成するボタンのhx-patch属性が見つからない")
+	}
+	if strings.Contains(body, `formaction=`) {
+		t.Error("下書き保存して編集提案を作成するボタンがフォームの送信のままになっている")
+	}
+	// 失敗をスクリプトが知らせるため、本文を送る保存のボタンには目印を付ける
+	if got := strings.Count(body, `data-draft-save-button`); got != 2 {
+		t.Errorf("目印の付いた保存のボタンの数 = %d、期待値 = 2 (下書き保存・下書き保存して編集提案を作成)", got)
 	}
 
 	// リビジョンが存在するときは空状態テキストが表示されないこと
@@ -1538,6 +1546,22 @@ func TestEdit_ActionRowLayout(t *testing.T) {
 	}
 	if !strings.Contains(body, `<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap">`) {
 		t.Error("レスポンスにwhitespace-nowrap付きの保存日時の表示が見つからない")
+	}
+
+	// 保存に失敗したあいだは、保存日時の代わりにエラーを出す。文面はスクリプトがdata属性から読む
+	for _, want := range []string{
+		`data-autosave-failed-message="自動保存できませんでした。"`,
+		`data-save-draft-failed-message="下書きを保存できませんでした。"`,
+		`data-body-too-large-message="本文が長すぎます。本文は500,000文字以内にしてください。"`,
+		`<p id="page-draft-save-error" class="text-xs text-error text-right" role="status" data-draft-save-error></p>`,
+		`[&:has([data-draft-save-error]:not(:empty))_#page-draft-saved-at]:hidden`,
+		// 本文のエラーが無いときも、保存の失敗はエディタの説明として関連付ける
+		`data-markdown-editor-describedby="page-draft-save-error"`,
+		`data-markdown-editor-invalid="false"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない", want)
+		}
 	}
 	if strings.Contains(body, "flex-row-reverse") {
 		t.Error("操作行で保存日時とキャンセルの順序が反転している (flex-row-reverseがある)")

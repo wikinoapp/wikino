@@ -26,6 +26,11 @@ func Locale(ctx context.Context) string {
 	return i18n.GetLocale(ctx)
 }
 
+// FormatNumberは数を現在のロケールの桁区切りで書く
+func FormatNumber(ctx context.Context, n int) string {
+	return i18n.FormatNumber(ctx, n)
+}
+
 // Derefはポインタを参照外しする (ジェネリック対応)
 func Deref[T any](v *T) T {
 	if v != nil {
