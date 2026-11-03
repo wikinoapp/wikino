@@ -170,7 +170,6 @@ func (h *Handler) renderEditWithErrors(
 		LinkList:         linkResult.LinkList,
 		BacklinkList:     linkResult.BacklinkList,
 		RelatedPageState: linkState,
-		ManualSaveURL:    string(templates.PageDraftPagePath(spaceIdentVM, int32(output.Page.Number))),
 		// 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
 		DraftPages: viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
 		ZenMode:    zenModeFromRequest(r),

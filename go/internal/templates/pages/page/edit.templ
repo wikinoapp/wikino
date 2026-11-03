@@ -58,11 +58,9 @@ type EditPageData struct {
 	Topic                   viewmodel.Topic
 	LinkList                viewmodel.LinkList
 	BacklinkList            viewmodel.BacklinkList
-	ManualSaveURL           string
 	SuggestionNumber        int32
 	SuggestionURL           string
 	SuggestionShowURL       string
-	CreateSuggestionSaveURL string
 
 	// RelatedPageStateは3つの関連ページ一覧のページネーション状態。各htmxリクエストが含める
 	// 共有要素として画面が1つ保持する。どちらかの一覧ではなく画面に属する値のため、LinkListや
@@ -84,6 +82,17 @@ type EditPageData struct {
 // IsSuggestionModeは編集提案モードかどうかを返します
 func (d EditPageData) IsSuggestionMode() bool {
 	return d.SuggestionNumber > 0
+}
+
+// ManualSaveURLは「下書き保存」の送り先を返します。
+// 編集画面を描画するどの経路 (表示・公開のバリデーションエラーによる再描画) でも同じ送り先になるよう、スペースとページから組み立てます
+func (d EditPageData) ManualSaveURL() string {
+	return string(templates.PageDraftPageRevisionPath(d.Space.Identifier, d.Page.Number))
+}
+
+// CreateSuggestionSaveURLは「下書き保存して編集提案を作成」の送り先を返します
+func (d EditPageData) CreateSuggestionSaveURL() string {
+	return d.ManualSaveURL() + "?redirect_to=suggestion_new"
 }
 
 // Editはページ編集画面のコンテンツを表示します
@@ -381,7 +390,7 @@ templ Edit(data EditPageData) {
 														class="btn rounded-l-full w-fit border-r-0"
 														data-variant="secondary"
 														type="button"
-														hx-patch={ data.ManualSaveURL }
+														hx-patch={ data.ManualSaveURL() }
 														hx-include="#page_title, #page_body, #page-edit-csrf-token"
 														hx-swap="none"
 														hx-disable="this"
@@ -407,7 +416,7 @@ templ Edit(data EditPageData) {
 																<div role="menuitem">
 																	<button
 																		type="submit"
-																		formaction={ string(templ.SafeURL(data.CreateSuggestionSaveURL)) }
+																		formaction={ string(templ.SafeURL(data.CreateSuggestionSaveURL())) }
 																		class="flex gap-2 items-center w-full"
 																	>
 																		@templates.Icon("git-pull-request-regular", "size-[18px]")
@@ -425,7 +434,7 @@ templ Edit(data EditPageData) {
 													class="btn rounded-full w-fit"
 													data-variant="secondary"
 													type="button"
-													hx-patch={ data.ManualSaveURL }
+													hx-patch={ data.ManualSaveURL() }
 													hx-include="#page_title, #page_body, #page-edit-csrf-token"
 													hx-swap="none"
 													hx-disable="this"

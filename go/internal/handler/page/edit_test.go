@@ -725,6 +725,9 @@ func TestEdit_RevisionColumn(t *testing.T) {
 	if !strings.Contains(body, `hx-patch="/s/revcol-space/pages/1/draft_page_revision"`) {
 		t.Error("下書き保存ボタンのhx-patch属性が見つからない")
 	}
+	if !strings.Contains(body, `formaction="/s/revcol-space/pages/1/draft_page_revision?redirect_to=suggestion_new"`) {
+		t.Error("下書き保存して編集提案を作成するボタンのformaction属性が見つからない")
+	}
 
 	// リビジョンが存在するときは空状態テキストが表示されないこと
 	if strings.Contains(body, "下書きを保存すると、ここに編集履歴が表示されます") {

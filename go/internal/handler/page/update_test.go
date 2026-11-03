@@ -470,8 +470,19 @@ func TestUpdate_ValidationError_BodyTooLong(t *testing.T) {
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
+	body := rr.Body.String()
 	want := "本文は500000文字以内で入力してください (現在500001文字)"
-	if !strings.Contains(rr.Body.String(), want) {
+	if !strings.Contains(body, want) {
 		t.Errorf("レスポンスに %qが含まれていない", want)
+	}
+
+	// 再描画した編集画面の下書き保存は、編集画面を表示したときと同じ手動保存の送り先を指す
+	for _, want := range []string{
+		`hx-patch="/s/page-body-too-long/pages/1/draft_page_revision"`,
+		`formaction="/s/page-body-too-long/pages/1/draft_page_revision?redirect_to=suggestion_new"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない", want)
+		}
 	}
 }
