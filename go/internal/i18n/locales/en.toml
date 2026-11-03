@@ -2989,8 +2989,8 @@ description = "公開APIの本文の検索置換で、replace_allがfalseの編�
 other = "old_str matches {{.Count}} places in the body. Include surrounding text to match exactly one place, or set replace_all to true to replace all of them."
 
 [api_error_body_edit_too_large]
-description = "公開APIの本文の検索置換で、編集後の本文が最大バイト数を超える場合のエラー"
-other = "The body after each edit must not exceed {{.Max}} bytes. No edits are applied if any intermediate result exceeds the limit."
+description = "公開APIの本文の検索置換で、編集後の本文が最大文字数を超える場合のエラー"
+other = "The body after each edit must not exceed {{.Max}} characters. No edits are applied if any intermediate result exceeds the limit."
 
 [api_error_page_modified]
 description = "公開APIのページ更新で、If-Matchの版の後にページが更新されていた場合の412のProblem Detailsのdetail"

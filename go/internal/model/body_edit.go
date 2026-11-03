@@ -1,6 +1,9 @@
 package model
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 // BodyEditは本文の検索置換の1件の編集を表す
 type BodyEdit struct {
@@ -13,10 +16,6 @@ type BodyEdit struct {
 	ReplaceAll bool
 }
 
-// BodyEditMaxBodyBytesは検索置換で各編集を適用した後の本文の最大バイト数。
-// 小さな入力から本文を増幅してメモリを枯渇させないよう、途中の結果にも上限を設ける
-const BodyEditMaxBodyBytes = 1 << 20
-
 // BodyEditFailureは、本文の検索置換の編集を適用できなかったことを表す
 type BodyEditFailure struct {
 	// Indexは適用できなかった編集の位置 (0始まり)
@@ -24,7 +23,7 @@ type BodyEditFailure struct {
 	// MatchCountは、その編集を適用する時点の本文で `OldStr` に一致した箇所の数。
 	// サイズ超過の場合は、一致した箇所の数をそのまま保持する
 	MatchCount int
-	// SizeExceededは編集後の本文がBodyEditMaxBodyBytesを超えるかを表す
+	// SizeExceededは編集後の本文がPageBodyMaxLengthを超えるかを表す
 	SizeExceeded bool
 }
 
@@ -35,7 +34,8 @@ type BodyEditFailure struct {
 //
 // 改行コードの違いで一致しなくならないよう、本文と編集の改行コード (CRLF) をLFに揃えてから照合する。
 // そのため、適用後の本文の改行コードはLFになる。
-// 各編集後の本文がBodyEditMaxBodyBytesを超える場合は、置換する前に失敗を返す
+// 各編集後の本文の文字数 (Unicodeのコードポイント数) がPageBodyMaxLengthを超える場合は、置換する前に失敗を返す。
+// 小さな入力から本文を増幅してメモリを枯渇させないよう、最後の結果だけでなく途中の結果にも上限を掛ける
 func ApplyBodyEdits(body string, edits []BodyEdit) (string, *BodyEditFailure) {
 	result := normalizeNewlines(body)
 	for i, edit := range edits {
@@ -50,10 +50,10 @@ func ApplyBodyEdits(body string, edits []BodyEdit) (string, *BodyEditFailure) {
 		if count == 0 || (count > 1 && !edit.ReplaceAll) {
 			return "", &BodyEditFailure{Index: i, MatchCount: count}
 		}
-		// 一致部分の総バイト数は本文以下なので、この積と減算はオーバーフローしない。
+		// 一致部分の総文字数は本文以下なので、この積と減算はオーバーフローしない。
 		// 追加部分は乗算せず除算で比較し、巨大な置換結果を確保する前に拒否する
-		remainingBytes := len(result) - count*len(oldStr)
-		if remainingBytes > BodyEditMaxBodyBytes || len(newStr) > (BodyEditMaxBodyBytes-remainingBytes)/count {
+		remainingLength := utf8.RuneCountInString(result) - count*utf8.RuneCountInString(oldStr)
+		if remainingLength > PageBodyMaxLength || utf8.RuneCountInString(newStr) > (PageBodyMaxLength-remainingLength)/count {
 			return "", &BodyEditFailure{Index: i, MatchCount: count, SizeExceeded: true}
 		}
 		result = strings.ReplaceAll(result, oldStr, newStr)
