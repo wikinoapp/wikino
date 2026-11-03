@@ -3,8 +3,10 @@ package usecase
 import (
 	"context"
 	"slices"
+	"strings"
 	"testing"
 
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -1001,6 +1003,122 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 		}
 		if body := findPageForTest(t, db, spaceID, 1).Body; body != "公開済みの本文" {
 			t.Errorf("本文 = %q、期待値 = 公開済みの本文", body)
+		}
+	})
+
+	t.Run("バリデーションエラー: 本文が上限を超える編集提案は反映されない", func(t *testing.T) {
+		t.Parallel()
+
+		title := "提案タイトル"
+		tests := []struct {
+			name   string
+			suffix string
+			title  *string
+		}{
+			{name: "タイトルがある", suffix: "title", title: &title},
+			{name: "タイトルがNULL", suffix: "nil", title: nil},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
+				identifier := "apply-sug-body-too-long-" + tt.suffix
+
+				spaceID := testutil.NewSpaceBuilderDB(t, db).
+					WithIdentifier(identifier).
+					Build()
+				userID := testutil.NewUserBuilderDB(t, db).
+					WithEmail(identifier + "@example.com").
+					WithAtname("applytoolong" + tt.suffix).
+					Build()
+				spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+					WithSpaceID(spaceID).
+					WithUserID(userID).
+					Build()
+				topicID := testutil.NewTopicBuilderDB(t, db).
+					WithSpaceID(spaceID).
+					Build()
+				testutil.NewTopicMemberBuilderDB(t, db).
+					WithSpaceID(spaceID).
+					WithTopicID(topicID).
+					WithSpaceMemberID(spaceMemberID).
+					Build()
+				pageID := testutil.NewPageBuilderDB(t, db).
+					WithSpaceID(spaceID).
+					WithTopicID(topicID).
+					WithNumber(1).
+					WithTitle("公開済みタイトル").
+					WithBody("公開済みの本文").
+					Build()
+				pageRevisionID := testutil.NewPageRevisionBuilderDB(t, db).
+					WithSpaceID(spaceID).
+					WithSpaceMemberID(spaceMemberID).
+					WithPageID(pageID).
+					Build()
+				suggestionID := testutil.NewSuggestionBuilderDB(t, db).
+					WithSpaceID(spaceID).
+					WithTopicID(topicID).
+					WithCreatedSpaceMemberID(spaceMemberID).
+					WithStatus(model.SuggestionStatusOpen).
+					Build()
+				_, err := suggestionPageRepo.Create(ctx, repository.CreateSuggestionPageInput{
+					SpaceID:        spaceID,
+					SuggestionID:   suggestionID,
+					PageID:         pageID,
+					PageRevisionID: &pageRevisionID,
+					Title:          tt.title,
+					Body:           strings.Repeat("あ", model.PageBodyMaxLength+1),
+				})
+				if err != nil {
+					t.Fatalf("編集提案ページの作成に失敗: %v", err)
+				}
+
+				_, err = uc.Execute(ctx, ApplySuggestionInput{
+					SpaceIdentifier:  model.SpaceIdentifier(identifier),
+					SuggestionNumber: 1,
+					UserID:           userID,
+				})
+				ae := model.AsSuggestionApplyError(err)
+				if ae == nil {
+					t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
+				}
+				if len(ae.PageErrors) != 1 {
+					t.Fatalf("ページのエラーの件数 = %d、期待値 = 1: %v", len(ae.PageErrors), ae.PageErrors)
+				}
+				want := "本文は500000文字以内で入力してください (現在500001文字)"
+				if got := ae.PageErrors[0].Message; got != want {
+					t.Errorf("エラーメッセージ = %q、期待値 = %q", got, want)
+				}
+
+				page := findPageForTest(t, db, spaceID, 1)
+				if page.Body != "公開済みの本文" {
+					t.Error("上限を超える編集提案で公開済み本文が変更された")
+				}
+				if page.Title == nil || *page.Title != "公開済みタイトル" {
+					t.Error("上限を超える編集提案で公開済みタイトルが変更された")
+				}
+				suggestion, err := suggestionRepo.FindByID(ctx, suggestionID, spaceID)
+				if err != nil {
+					t.Fatalf("編集提案の取得に失敗: %v", err)
+				}
+				if suggestion == nil {
+					t.Fatal("編集提案が見つからない")
+				}
+				if suggestion.Status != model.SuggestionStatusOpen {
+					t.Errorf("編集提案の状態 = %d、期待値 = %d", suggestion.Status, model.SuggestionStatusOpen)
+				}
+				if suggestion.AppliedAt != nil {
+					t.Error("上限を超える編集提案に反映日時が記録された")
+				}
+				latestRevision, err := pageRevisionRepo.FindLatestByPageID(ctx, pageID, spaceID)
+				if err != nil {
+					t.Fatalf("最新リビジョンの取得に失敗: %v", err)
+				}
+				if latestRevision == nil || latestRevision.ID != pageRevisionID {
+					t.Error("上限を超える編集提案でページの編集履歴が変更された")
+				}
+			})
 		}
 	})
 
