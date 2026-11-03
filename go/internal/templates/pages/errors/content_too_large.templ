@@ -71,3 +71,16 @@ templ ContentTooLargePage(maxSize string) {
 		</body>
 	</html>
 }
+
+// ContentTooLargeFragmentは、htmxの要求で送った内容が大きすぎるとき (413) に、差し替え先へ出す断片。
+// htmx 4は4xxの応答も差し替えるため、完全なHTMLドキュメントを返すと差し替え先に文書が入れ子で入る。
+// 利用者は差し替え先のある画面に留まるため、前の画面へ戻る案内は含めない。
+// maxSizeは一度に送れる大きさを表示用に整えた文字列 (例: "8MB")
+templ ContentTooLargeFragment(maxSize string) {
+	<div class="alert" role="alert">
+		@templates.DecorativeIcon("warning-circle-regular", "fill-info")
+		<span>
+			{ templates.T(ctx, "error_content_too_large_fragment_message", map[string]any{"Max": maxSize}) }
+		</span>
+	</div>
+}

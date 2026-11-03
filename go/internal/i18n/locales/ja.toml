@@ -1637,6 +1637,10 @@ other = "一度に送れる大きさは{{.Max}}までです。ブラウザの戻
 description = "送った内容が大きすぎるときのエラーページのトップページリンク"
 other = "トップページに戻る"
 
+[error_content_too_large_fragment_message]
+description = "htmxの要求で送った内容が大きすぎるときに、差し替え先に出すメッセージ。Maxは一度に送れる大きさ (例: 8MB)"
+other = "一度に送れる大きさは{{.Max}}までです。送る内容を減らしてください。"
+
 # 404エラーページ
 [error_not_found_title]
 description = "404エラーページのタイトル"

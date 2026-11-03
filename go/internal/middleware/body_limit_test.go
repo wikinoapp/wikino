@@ -265,6 +265,38 @@ func TestBodyLimit_OverLimitPageInEnglish(t *testing.T) {
 	}
 }
 
+// TestBodyLimit_OverLimitFragmentForHTMXは、htmxの要求には完全なHTMLドキュメントではなく
+// 差し替え先に入れる断片を返し、前の画面へ戻る案内を含めないことを確かめる
+func TestBodyLimit_OverLimitFragmentForHTMX(t *testing.T) {
+	t.Parallel()
+
+	handler := BodyLimit(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader("dummy"))
+	req.ContentLength = DefaultMaxBodyBytes + 1
+	req.Header.Set("Accept-Language", "ja")
+	req.Header.Set("HX-Request", "true")
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusRequestEntityTooLarge {
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusRequestEntityTooLarge)
+	}
+	body := rr.Body.String()
+	for _, want := range []string{`role="alert"`, "一度に送れる大きさは8MBまでです。送る内容を減らしてください。"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない: body=%.200q", want, body)
+		}
+	}
+	for _, unwanted := range []string{"<html", "<main", "戻るボタン"} {
+		if strings.Contains(body, unwanted) {
+			t.Errorf("レスポンスに %qが含まれている: body=%.200q", unwanted, body)
+		}
+	}
+}
+
 // TestBodyLimit_APIUnreadableBodyは、APIのパスで本文を読めないときに、利用者の言語の説明で400を返すことを確かめる
 func TestBodyLimit_APIUnreadableBody(t *testing.T) {
 	t.Parallel()

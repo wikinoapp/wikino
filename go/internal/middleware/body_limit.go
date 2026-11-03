@@ -106,8 +106,14 @@ func writeBodyLimitError(w http.ResponseWriter, r *http.Request, problems *apier
 	if status == http.StatusRequestEntityTooLarge {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(status)
+		maxSize := fmt.Sprintf("%dMB", DefaultMaxBodyBytes>>20)
 		// テンプレートのレンダリングエラーはレスポンス書き込み後なので無視
-		_ = errpages.ContentTooLargePage(fmt.Sprintf("%dMB", DefaultMaxBodyBytes>>20)).Render(r.Context(), w)
+		if r.Header.Get("HX-Request") == "true" {
+			// htmxの要求には断片を返し、htmx 4が差し替え先へ文書を入れ子で入れることを防ぐ
+			_ = errpages.ContentTooLargeFragment(maxSize).Render(r.Context(), w)
+			return
+		}
+		_ = errpages.ContentTooLargePage(maxSize).Render(r.Context(), w)
 	} else {
 		http.Error(w, "Bad Request", status)
 	}
