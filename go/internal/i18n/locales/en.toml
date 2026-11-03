@@ -836,6 +836,18 @@ other = "This is as far as the editor loads this list."
 description = "上限に達した関連ページ一覧を編集画面で1ページずつ継続するリンクテキスト"
 other = "Continue one page at a time"
 
+[page_edit_autosave_failed]
+description = "自動保存に失敗したときに、自動保存の表示の位置に出すエラーの冒頭"
+other = "Couldn't save automatically."
+
+[page_edit_save_draft_failed]
+description = "下書き保存に失敗したときに、自動保存の表示の位置に出すエラーの冒頭"
+other = "Couldn't save the draft."
+
+[page_edit_body_too_large]
+description = "送った内容が送るときの上限を超えて保存できなかったときの理由"
+other = "The body is too long. Keep it within {{.Max}} characters."
+
 [page_edit_save_draft_button]
 description = "下書き保存ボタンのラベル"
 other = "Save Draft"
@@ -909,6 +921,10 @@ other = "Please enter a title"
 [validation_page_title_too_long]
 description = "ページタイトル文字数超過エラー"
 other = "Title must be 200 characters or less"
+
+[validation_page_body_too_long]
+description = "ページ本文文字数超過エラー (上限と今の文字数を示す)"
+other = "Body must be {{.Max}} characters or less (currently {{.Count}})"
 
 [validation_page_title_invalid_chars]
 description = "ページタイトル禁止文字エラー"
@@ -1616,6 +1632,27 @@ other = "Prev"
 description = "ページネーションの次のページへのリンク"
 other = "Next"
 
+# 413エラーページ
+[error_content_too_large_title]
+description = "送った内容が大きすぎるときのエラーページのタイトル"
+other = "Content too large | Wikino"
+
+[error_content_too_large_heading]
+description = "送った内容が大きすぎるときのエラーページの見出し"
+other = "The content you sent is too large"
+
+[error_content_too_large_message]
+description = "送った内容が大きすぎるときのエラーページのメッセージ。Maxは一度に送れる大きさ (例: 8MB)"
+other = "You can send up to {{.Max}} at a time. Go back to the previous page with the browser's back button and reduce what you send."
+
+[error_content_too_large_back_to_top]
+description = "送った内容が大きすぎるときのエラーページのトップページリンク"
+other = "Back to top page"
+
+[error_content_too_large_fragment_message]
+description = "htmxの要求で送った内容が大きすぎるときに、差し替え先に出すメッセージ。Maxは一度に送れる大きさ (例: 8MB)"
+other = "You can send up to {{.Max}} at a time. Reduce what you send."
+
 # 404 error page
 [error_not_found_title]
 description = "404エラーページのタイトル"
@@ -1914,6 +1951,10 @@ other = "Failed to apply suggestion"
 [suggestion_apply_page_error]
 description = "編集提案反映バリデーションエラーのページ名プレフィックス ({{.PageTitle}} はtempl側の自動エスケープ後に挿入される)"
 other = "Page \"{{.PageTitle}}\": "
+
+[suggestion_apply_page_error_untitled]
+description = "編集提案反映バリデーションエラーで、タイトルの無いページを示す名前"
+other = "Untitled"
 
 [error_suggestion_conflict_during_apply]
 description = "編集提案反映中に競合ページの状態が変わった場合のエラー"
@@ -2980,9 +3021,13 @@ other = "old_str does not match the body. If there are earlier edits, it is matc
 description = "公開APIの本文の検索置換で、replace_allがfalseの編集のold_strに一致する箇所が本文に複数ある場合のエラー"
 other = "old_str matches {{.Count}} places in the body. Include surrounding text to match exactly one place, or set replace_all to true to replace all of them."
 
+[api_error_request_body_unreadable]
+description = "公開APIでリクエスト本文を読み取れないときのエラー"
+other = "The request body could not be read."
+
 [api_error_body_edit_too_large]
-description = "公開APIの本文の検索置換で、編集後の本文が最大バイト数を超える場合のエラー"
-other = "The body after each edit must not exceed {{.Max}} bytes. No edits are applied if any intermediate result exceeds the limit."
+description = "公開APIの本文の検索置換で、編集後の本文が最大文字数を超える場合のエラー"
+other = "The body after each edit must not exceed {{.Max}} characters. No edits are applied if any intermediate result exceeds the limit."
 
 [api_error_page_modified]
 description = "公開APIのページ更新で、If-Matchの版の後にページが更新されていた場合の412のProblem Detailsのdetail"

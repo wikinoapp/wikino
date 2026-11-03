@@ -104,6 +104,7 @@ func (uc *PublishPageUsecase) executeOnce(ctx context.Context, input PublishPage
 	// 3. バリデーション
 	unpublishedConflictingPageID, err := uc.updateValidator.Validate(ctx, validator.PageUpdateValidatorInput{
 		Title:           input.Title,
+		Body:            input.Body,
 		PageID:          data.page.ID,
 		TopicID:         data.page.TopicID,
 		SpaceID:         data.space.ID,

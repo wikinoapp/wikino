@@ -229,9 +229,9 @@ func TestAPIRouter_CreatePageBodyEdit(t *testing.T) {
 			t.Fatalf("リクエストのバイト数 = %d、期待値 = 1MiB未満", len(body))
 		}
 		rr := request("wkp_page_write", "", string(body))
-		detail := assertFieldProblem(t, rr, "#/edits/19/new_str")
-		if !strings.Contains(detail, "1048576") {
-			t.Errorf("detail = %q、期待値 = 上限のバイト数を含む", detail)
+		detail := assertFieldProblem(t, rr, "#/edits/18/new_str")
+		if !strings.Contains(detail, "500,000") {
+			t.Errorf("detail = %q、期待値 = 上限の文字数を含む", detail)
 		}
 		after, afterETag := currentPage(t)
 		if after.Body != before.Body || afterETag != etag {

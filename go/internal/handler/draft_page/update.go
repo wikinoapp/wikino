@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -53,6 +54,12 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		Body:            body,
 	})
 	if err != nil {
+		if ve := model.AsValidationError(err); ve != nil {
+			// 保存できなかった理由を、利用者に示せる文面で応答の本文に入れる
+			http.Error(w, strings.Join(ve.GetFieldErrors("body"), "\n"), http.StatusUnprocessableEntity)
+			return
+		}
+
 		if ae := model.AsAppError(err); ae != nil {
 			switch ae.Code {
 			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:

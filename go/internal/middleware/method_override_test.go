@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"bytes"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -172,5 +174,45 @@ func TestMethodOverride_SkipsAPIPath(t *testing.T) {
 	}
 	if receivedBody != form.Encode() {
 		t.Errorf("本文 = %q、期待値 = %q", receivedBody, form.Encode())
+	}
+}
+
+// multipart/form-dataで送ったフォームでも_methodを読み、後段のミドルウェアとハンドラーが
+// ほかの項目 (CSRFトークンなど) をr.FormValueで読めることを確かめる
+func TestMethodOverride_MultipartForm(t *testing.T) {
+	t.Parallel()
+
+	var receivedMethod, receivedToken, receivedBody string
+	handler := MethodOverride(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedMethod = r.Method
+		receivedToken = r.FormValue("csrf_token")
+		receivedBody = r.FormValue("body")
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	for key, value := range map[string]string{"_method": "PATCH", "csrf_token": "token", "body": "本文"} {
+		if err := mw.WriteField(key, value); err != nil {
+			t.Fatalf("フォームの項目の書き込みに失敗: %v", err)
+		}
+	}
+	if err := mw.Close(); err != nil {
+		t.Fatalf("フォームの書き込みに失敗: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/test", &buf)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if receivedMethod != http.MethodPatch {
+		t.Errorf("メソッド = %q、期待値 = %q", receivedMethod, http.MethodPatch)
+	}
+	if receivedToken != "token" {
+		t.Errorf("csrf_token = %q、期待値 = %q", receivedToken, "token")
+	}
+	if receivedBody != "本文" {
+		t.Errorf("body = %q、期待値 = %q", receivedBody, "本文")
 	}
 }

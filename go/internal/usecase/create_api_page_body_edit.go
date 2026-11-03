@@ -177,7 +177,7 @@ func bodyEditFailureError(ctx context.Context, failure *model.BodyEditFailure) *
 	switch {
 	case failure.SizeExceeded:
 		ve.AddField(fmt.Sprintf("edits/%d/new_str", failure.Index),
-			i18n.T(ctx, "api_error_body_edit_too_large", map[string]any{"Max": model.BodyEditMaxBodyBytes}))
+			i18n.T(ctx, "api_error_body_edit_too_large", map[string]any{"Max": i18n.FormatNumber(ctx, model.PageBodyMaxLength)}))
 	case failure.MatchCount > 1:
 		ve.AddField(fmt.Sprintf("edits/%d/old_str", failure.Index),
 			i18n.T(ctx, "api_error_body_edit_multiple_matches", map[string]any{"Count": failure.MatchCount}))

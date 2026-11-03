@@ -412,3 +412,88 @@ type readCloser struct {
 }
 
 func (rc *readCloser) Close() error { return nil }
+
+func TestUpdate_ValidationError_BodyTooLong(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("page-body-too-long@example.com").
+		WithAtname("pagebodytoolong").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-body-too-long").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	form := url.Values{}
+	form.Set("title", "Test Page")
+	form.Set("body", strings.Repeat("a", model.PageBodyMaxLength+1))
+
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/page-body-too-long/pages/1", map[string]string{
+		"space_identifier": "page-body-too-long",
+		"page_number":      "1",
+	})
+	req.Body = toReadCloser(form.Encode())
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Update(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+	body := rr.Body.String()
+	want := "本文は500,000文字以内で入力してください (現在500,001文字)"
+	if !strings.Contains(body, want) {
+		t.Errorf("レスポンスに %qが含まれていない", want)
+	}
+
+	// 本文の入力面はCodeMirrorのため、エラーはエディタの説明として関連付ける
+	for _, want := range []string{
+		`<div id="page-body-error" class="grid gap-2"><p class="text-sm text-error">` + want,
+		`data-markdown-editor-describedby="page-body-error page-draft-save-error"`,
+		`data-markdown-editor-invalid="true"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない", want)
+		}
+	}
+
+	// 再描画した編集画面の下書き保存は、編集画面を表示したときと同じ手動保存の送り先を指す
+	for _, want := range []string{
+		`hx-patch="/s/page-body-too-long/pages/1/draft_page_revision"`,
+		`hx-patch="/s/page-body-too-long/pages/1/draft_page_revision?redirect_to=suggestion_new"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない", want)
+		}
+	}
+}

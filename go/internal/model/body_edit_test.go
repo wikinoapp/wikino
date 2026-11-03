@@ -3,6 +3,7 @@ package model_test
 import (
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
@@ -146,7 +147,7 @@ func TestApplyBodyEdits(t *testing.T) {
 
 func TestApplyBodyEdits_BodySize(t *testing.T) {
 	t.Parallel()
-	limit := model.BodyEditMaxBodyBytes
+	limit := model.PageBodyMaxLength
 	doubling := make([]model.BodyEdit, 21)
 	for i := range doubling {
 		doubling[i] = model.BodyEdit{OldStr: "a", NewStr: "aa", ReplaceAll: true}
@@ -155,18 +156,19 @@ func TestApplyBodyEdits_BodySize(t *testing.T) {
 		name        string
 		body        string
 		edits       []model.BodyEdit
-		wantBytes   int
+		wantLength  int
 		wantFailure *model.BodyEditFailure
 	}{
-		{name: "上限ちょうどなら適用する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("b", limit)}}, wantBytes: limit},
-		{name: "上限より1バイト少なければ適用する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("b", limit-1)}}, wantBytes: limit - 1},
+		{name: "上限ちょうどなら適用する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("b", limit)}}, wantLength: limit},
+		{name: "上限より1字少なければ適用する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("b", limit-1)}}, wantLength: limit - 1},
 		{name: "残す本文を含めて上限を超えれば拒否する", body: "ab", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("c", limit)}}, wantFailure: &model.BodyEditFailure{Index: 0, MatchCount: 1, SizeExceeded: true}},
-		{name: "文字数ではなくUTF-8のバイト数で制限する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("あ", limit/3+1)}}, wantFailure: &model.BodyEditFailure{Index: 0, MatchCount: 1, SizeExceeded: true}},
-		{name: "改行コードをLFに揃えた後のバイト数で判定する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("\r\n", limit)}}, wantBytes: limit},
-		{name: "連続した倍増を途中で拒否する", body: "a", edits: doubling, wantFailure: &model.BodyEditFailure{Index: 20, MatchCount: limit, SizeExceeded: true}},
+		{name: "UTF-8のバイト数ではなく文字数で制限する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("あ", limit)}}, wantLength: limit},
+		{name: "多バイト文字でも上限を1字超えれば拒否する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("あ", limit+1)}}, wantFailure: &model.BodyEditFailure{Index: 0, MatchCount: 1, SizeExceeded: true}},
+		{name: "改行コードをLFに揃えた後の文字数で判定する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("\r\n", limit)}}, wantLength: limit},
+		{name: "連続した倍増を途中で拒否する", body: "a", edits: doubling, wantFailure: &model.BodyEditFailure{Index: 18, MatchCount: 1 << 18, SizeExceeded: true}},
 		{name: "後の編集で小さくなる場合も途中の上限超過を拒否する", body: "a", edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("b", limit+1)}, {OldStr: "b", NewStr: "", ReplaceAll: true}}, wantFailure: &model.BodyEditFailure{Index: 0, MatchCount: 1, SizeExceeded: true}},
 		{name: "巨大な置換結果を乗算や確保の前に拒否する", body: strings.Repeat("a", limit), edits: []model.BodyEdit{{OldStr: "a", NewStr: strings.Repeat("b", limit), ReplaceAll: true}}, wantFailure: &model.BodyEditFailure{Index: 0, MatchCount: limit, SizeExceeded: true}},
-		{name: "既存の大きい本文も上限以下に縮めれば適用する", body: strings.Repeat("a", limit+1), edits: []model.BodyEdit{{OldStr: "a", NewStr: "", ReplaceAll: true}}, wantBytes: 0},
+		{name: "既存の大きい本文も上限以下に縮めれば適用する", body: strings.Repeat("a", limit+1), edits: []model.BodyEdit{{OldStr: "a", NewStr: "", ReplaceAll: true}}, wantLength: 0},
 		{name: "一致部分を削除しても残る本文が上限を超えれば拒否する", body: "a" + strings.Repeat("b", limit+1), edits: []model.BodyEdit{{OldStr: "a", NewStr: ""}}, wantFailure: &model.BodyEditFailure{Index: 0, MatchCount: 1, SizeExceeded: true}},
 	}
 	for _, tt := range tests {
@@ -178,15 +180,15 @@ func TestApplyBodyEdits_BodySize(t *testing.T) {
 					t.Errorf("failure = %+v、期待値 = %+v", failure, tt.wantFailure)
 				}
 				if body != "" {
-					t.Errorf("本文のバイト数 = %d、期待値 = 0 (失敗時は結果を返さない)", len(body))
+					t.Errorf("本文の文字数 = %d、期待値 = 0 (失敗時は結果を返さない)", utf8.RuneCountInString(body))
 				}
 				return
 			}
 			if failure != nil {
 				t.Fatalf("failure = %+v、期待値 = nil", failure)
 			}
-			if len(body) != tt.wantBytes {
-				t.Errorf("本文のバイト数 = %d、期待値 = %d", len(body), tt.wantBytes)
+			if got := utf8.RuneCountInString(body); got != tt.wantLength {
+				t.Errorf("本文の文字数 = %d、期待値 = %d", got, tt.wantLength)
 			}
 		})
 	}

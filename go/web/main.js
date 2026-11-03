@@ -7,6 +7,7 @@ import { initializeDrawers } from "./drawer";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeDraftDeleteForms } from "./markdown-editor/draft-delete-handler";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
+import { initializeSaveStatus } from "./markdown-editor/save-status";
 import { initializeMarkdownTables } from "./markdown-table";
 import { initializePlatform } from "./platform";
 import { initializeStickyHeader } from "./sticky-header";
@@ -27,6 +28,7 @@ function setTimeZoneCookie() {
 document.addEventListener("DOMContentLoaded", () => {
   initializeEditors();
   initializeDraftDeleteForms();
+  initializeSaveStatus();
   initializeGlobalHotkey();
   initializeDrawers();
   initializeZenMode();

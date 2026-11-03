@@ -24,16 +24,16 @@ func MethodOverride(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// POSTリクエストのみ処理
 		if r.Method == http.MethodPost && !session.IsAPIPath(r.URL.Path) {
-			// フォームデータから_methodパラメータを取得
-			if err := r.ParseForm(); err == nil {
-				method := r.PostFormValue("_method")
-				if method != "" {
-					// サポートされているメソッドのみ許可
-					method = strings.ToUpper(method)
-					switch method {
-					case http.MethodPut, http.MethodPatch, http.MethodDelete:
-						r.Method = method
-					}
+			// フォームデータから_methodパラメータを取得する。
+			// PostFormValueはURLエンコードとmultipart/form-dataのどちらの本文も解析してr.Formに入れるため、
+			// 後段のCSRFミドルウェアとハンドラーもr.FormValueでmultipartの項目を読める
+			method := r.PostFormValue("_method")
+			if method != "" {
+				// サポートされているメソッドのみ許可
+				method = strings.ToUpper(method)
+				switch method {
+				case http.MethodPut, http.MethodPatch, http.MethodDelete:
+					r.Method = method
 				}
 			}
 		}

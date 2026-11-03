@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+// PageBodyMaxLengthはページ本文の上限の文字数 (Unicodeのコードポイント数)。
+// Web画面とAPIのどちらから書き込む本文にも同じ上限を掛ける
+const PageBodyMaxLength = 500000
+
 // Pageはページのドメインモデル
 type Page struct {
 	ID                        PageID

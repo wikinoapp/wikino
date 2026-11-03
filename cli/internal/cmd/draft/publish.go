@@ -150,7 +150,7 @@ func runPublish(f *cmdutil.Factory, cmd *cobra.Command, flags *publishFlags, arg
 			output.CodeNotFound:             loc.T("draft_publish_error_not_found_hint", map[string]any{"Command": output.JoinCommand([]string{"wikino", "page", "get", formatNumber(number)})}),
 			output.CodePreconditionFailed:   loc.T("draft_publish_error_precondition_failed_hint", map[string]any{"Command": getCommand}),
 			output.CodePreconditionRequired: loc.T("usage_error_if_match_required_hint", map[string]any{"Command": getCommand}),
-			output.CodeValidationFailed:     loc.T("draft_publish_error_validation_failed_hint", map[string]any{"Command": titleCommand(number)}),
+			output.CodeValidationFailed:     publishValidationHint(loc, err, number),
 		})
 	}
 	if pub.JSON200 == nil || pub.Headers200 == nil {
@@ -177,6 +177,25 @@ func runPublish(f *cmdutil.Factory, cmd *cobra.Command, flags *publishFlags, arg
 // titleCommandは、下書きのタイトルを直すコマンドの例を返す。版は利用者が取得し直すため、値の名前で示す。
 func titleCommand(number int32) string {
 	return output.JoinCommand([]string{"wikino", "draft", "update", formatNumber(number), "--" + cmdutil.FlagTitle, "<title>", "--" + cmdutil.FlagIfMatch, "<etag>"})
+}
+
+// publishValidationHintは、公開が検証で拒否された (422) ときのヒントを返す。
+// 本文が上限を超えたときにタイトルを直すよう案内しないよう、問題の箇所が本文のときは本文を減らすヒントにする。
+func publishValidationHint(loc *i18n.Localizer, err error, number int32) string {
+	var apiErr *apiclient.Error
+	if errors.As(err, &apiErr) {
+		for _, field := range apiErr.FieldErrors {
+			if field.Pointer == "#/body" || field.Pointer == "/body" {
+				return loc.T("draft_publish_error_body_too_long_hint", map[string]any{"Command": bodyEditsCommand(number)})
+			}
+		}
+	}
+	return loc.T("draft_publish_error_validation_failed_hint", map[string]any{"Command": titleCommand(number)})
+}
+
+// bodyEditsCommandは、下書きの本文を検索置換で減らすコマンドの例を返す。編集のファイルは利用者が用意するため、値の名前で示す。
+func bodyEditsCommand(number int32) string {
+	return output.JoinCommand([]string{"wikino", "draft", "update", formatNumber(number), "--" + cmdutil.FlagEdits, "<path>"})
 }
 
 // publishConfirmationは、下書きの公開の前に利用者へ示す確認の内容を返す。

@@ -1128,7 +1128,7 @@ other = """
   3  ログインしていない、トークンが無効か期限切れ (401)
   4  トークンにpage:writeのスコープが無い (403)
   5  トピックにページを作成できない (404)
-  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、トピックが無いか見られない (422)。
+  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、トピックが無いか見られない、本文が長すぎる (422)。
      重複のときは `wikino page list --topic <番号> --title <タイトル>` で既存のページを探し、内容を変えるなら `wikino page update` を使ってください"""
 
 [page_create_topic_flag]
@@ -1256,7 +1256,7 @@ other = """
   5  ページが無い、ゴミ箱にある、またはページを更新できない (404)。`wikino page list` で番号を確かめてください
   6  読んだ後にページが更新されている (412)。`wikino page get` で最新の内容と版を取得し、変更を反映してから更新し直してください。
      `--md-file` では、`wikino page get --md` で書き出し直したファイルに変更を反映してください
-  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、タイトルの無い未公開のページを `--title` 無しで更新した (422)。
+  7  タイトルが `--title` の規則に合わない、同じタイトルのページがトピックにある、タイトルの無い未公開のページを `--title` 無しで更新した、本文が長すぎる (422)。
      `--edits` の `old_str` が今の本文に一致しないか、複数の箇所に一致した (422)。何番目の編集かをヒントに、一致の件数をメッセージに示します。
      `wikino page get --md` で今の本文を確かめ、`edits` の全体を送り直してください"""
 
@@ -1875,7 +1875,8 @@ other = """
      公開し直して5になった場合は、公開済みか下書きが削除されています。`wikino page get` でページを確かめてください
   6  読んだ後に下書きが更新されている (412)。`wikino draft get` で今の内容を確かめ、公開してよければ新しい版で公開し直してください
   7  下書きにタイトルが無い、タイトルに使えない文字がある、または同じタイトルのページがトピックにある (422)。
-     `wikino draft update --title` で下書きのタイトルを直してから公開し直してください
+     `wikino draft update --title` で下書きのタイトルを直してから公開し直してください。
+     下書きの本文が長すぎる (422)。`wikino draft update --edits` などで下書きの本文を減らしてから公開し直してください
   9  `--yes` が無く、利用者の確認が必要。端末では確認を拒否した"""
 
 [draft_publish_error_version_changed]
@@ -1897,6 +1898,10 @@ other = "下書きにタイトルが無いため公開できません。公開�
 [draft_publish_error_validation_failed_hint]
 description = "draft publishで下書きのタイトルが検証で拒否された (422) ときのヒント。Commandは下書きのタイトルを直すコマンドの例"
 other = "`{{.Command}}` で下書きのタイトルを直してから、新しい版で公開し直してください。"
+
+[draft_publish_error_body_too_long_hint]
+description = "draft publishで下書きの本文が上限を超えて拒否された (422) ときのヒント。Commandは下書きの本文を検索置換で減らすコマンドの例"
+other = "`{{.Command}}` などで下書きの本文を減らしてから、新しい版で公開し直してください。"
 
 [draft_publish_confirm_change_publish]
 description = "draft publishの確認で示す、公開する内容。Numberはページ番号、Titleは下書きのタイトル、TitleChangeはタイトルの変更の有無、Added・Deletedは本文で足す・消す行数"
@@ -2989,7 +2994,7 @@ other = "{{.Ordinal}}番目の編集 (`edits[{{.Index}}]`) の `old_str` が、�
 
 [error_edits_new_str_hint]
 description = "検索置換で編集を適用すると本文が上限を超える (422) ときのヒント。Ordinalは何番目 (1始まり)、Indexは位置 (0始まり)"
-other = "{{.Ordinal}}番目の編集 (`edits[{{.Index}}]`) を適用すると、本文が上限 (1MiB) を超えます。どの編集も適用していません。編集する内容を減らして、`edits` の全体を送り直してください。"
+other = "{{.Ordinal}}番目の編集 (`edits[{{.Index}}]`) を適用すると、本文が上限 (500,000文字) を超えます。どの編集も適用していません。編集する内容を減らして、`edits` の全体を送り直してください。"
 
 # --dry-run
 [dry_run_not_sent]

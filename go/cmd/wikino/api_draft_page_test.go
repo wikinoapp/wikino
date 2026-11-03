@@ -369,6 +369,7 @@ func TestAPIRouter_CreateDraftPage(t *testing.T) {
 		{name: "存在しないページは422", body: `{"page_number": 99}`, wantPointers: []string{"#/page_number"}},
 		{name: "存在しないトピックは422", body: `{"topic_number": 99}`, wantPointers: []string{"#/topic_number"}},
 		{name: "空のタイトルは422", body: `{"page_number": 1, "title": ""}`, wantPointers: []string{"#/title"}},
+		{name: "本文が上限を超えれば422", body: `{"topic_number": 1, "body": ` + tooLongBodyJSON + `}`, wantPointers: []string{"#/body"}},
 	}
 	for _, tt := range pointerTests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -441,6 +442,7 @@ func newDraftPageWriteTestRouter(t *testing.T, identifier string) http.Handler {
 			db, spaceRepo, pageRepo, repository.NewPageRevisionRepository(q), pageEditorRepo, draftPageRepo, draftPageRevisionRepo, repository.NewSuggestionPageRepository(q),
 			topicRepo, topicMemberRepo, repository.NewAttachmentRepository(q), repository.NewPageAttachmentReferenceRepository(q),
 			validator.NewAPIPageUpdateValidator(pageRepo),
+			validator.NewAPIDraftPagePublicationCreateValidator(),
 		)),
 		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
@@ -593,6 +595,36 @@ func TestAPIRouter_UpdateDraftPage(t *testing.T) {
 
 	t.Run("定義していない項目を含む更新は422", func(t *testing.T) {
 		assertProblem(t, update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, `{"topic_number": 2}`), http.StatusUnprocessableEntity)
+	})
+
+	t.Run("本文の上限はUTF-8のバイト数ではなく文字数で数える", func(t *testing.T) {
+		// 1字2バイトの文字で上限ちょうどの本文は、バイト数では上限を超えるが文字数では超えない
+		body := strings.Repeat("é", model.PageBodyMaxLength)
+		rr := update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, `{"body": "`+body+`"}`)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %.200s)", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("上限ちょうどの非BMP文字をASCIIエスケープしたJSONでも保存できる", func(t *testing.T) {
+		body := `{"body":"` + strings.Repeat(`\ud83d\ude00`, model.PageBodyMaxLength) + `"}`
+		rr := update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, body)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %.200s)", rr.Code, rr.Body.String())
+		}
+		var saved struct {
+			Body string `json:"body"`
+		}
+		if err := json.Unmarshal(rr.Body.Bytes(), &saved); err != nil {
+			t.Fatalf("保存結果を読めない: %v", err)
+		}
+		if saved.Body != strings.Repeat("😀", model.PageBodyMaxLength) {
+			t.Error("保存結果の本文が、送った50万字の絵文字と異なる")
+		}
+	})
+
+	t.Run("本文が上限を超えれば422", func(t *testing.T) {
+		assertBodyTooLongProblem(t, update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, `{"body": `+tooLongBodyJSON+`}`))
 	})
 
 	t.Run("下書きの無いページは404", func(t *testing.T) {

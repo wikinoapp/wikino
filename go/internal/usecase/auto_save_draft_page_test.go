@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/markup"
@@ -9,6 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
@@ -24,7 +26,7 @@ func TestAutoSaveDraftPageUsecase_Execute_NewDraftPage(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, validator.NewDraftPageSaveValidator())
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -97,7 +99,7 @@ func TestAutoSaveDraftPageUsecase_Execute_ExistingDraftPage(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, validator.NewDraftPageSaveValidator())
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -180,7 +182,7 @@ func TestAutoSaveDraftPageUsecase_Execute_EmptyBody(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, validator.NewDraftPageSaveValidator())
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -238,7 +240,7 @@ func TestAutoSaveDraftPageUsecase_Execute_WithWikilinks(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, validator.NewDraftPageSaveValidator())
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -300,7 +302,7 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkExistingPage(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, validator.NewDraftPageSaveValidator())
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -373,7 +375,7 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, validator.NewDraftPageSaveValidator())
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -452,7 +454,7 @@ func TestAutoSaveDraftPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 	topicRepo := repository.NewTopicRepository(q)
 	topicMemberRepo := repository.NewTopicMemberRepository(q)
 	attachmentRepo := repository.NewAttachmentRepository(q)
-	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	uc := NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, validator.NewDraftPageSaveValidator())
 
 	// テストデータを作成
 	spaceID := testutil.NewSpaceBuilderDB(t, db).
@@ -533,5 +535,67 @@ func TestUniqueTopicNames(t *testing.T) {
 	}
 	if names[1] != "Tech" {
 		t.Errorf("names[1] = %q、期待値 = %q", names[1], "Tech")
+	}
+}
+
+func TestAutoSaveDraftPageUsecase_Execute_BodyTooLong(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	uc := NewAutoSaveDraftPageUsecase(db, repository.NewSpaceRepository(q), repository.NewSpaceMemberRepository(q),
+		repository.NewDraftPageRepository(q), repository.NewPageRepository(q), repository.NewPageEditorRepository(q),
+		repository.NewTopicRepository(q), repository.NewTopicMemberRepository(q), repository.NewAttachmentRepository(q),
+		validator.NewDraftPageSaveValidator())
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("auto-save-too-long").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("auto-save-too-long@example.com").
+		WithAtname("autosavetoolong").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		WithBody("元の本文").
+		Build()
+
+	_, err := uc.Execute(context.Background(), AutoSaveDraftPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("auto-save-too-long"),
+		PageNumber:      1,
+		UserID:          userID,
+		Body:            strings.Repeat("a", model.PageBodyMaxLength+1),
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+	}
+	if !ve.HasFieldError("body") {
+		t.Error("bodyのフィールドエラーが無い")
+	}
+
+	draftPage, err := repository.NewDraftPageRepository(query.New(db)).FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
+	if err != nil {
+		t.Fatalf("下書きの取得のエラー = %v", err)
+	}
+	if draftPage != nil {
+		t.Error("本文が上限を超えたのに下書きが保存された")
 	}
 }

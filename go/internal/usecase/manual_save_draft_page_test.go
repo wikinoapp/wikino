@@ -3,12 +3,14 @@ package usecase
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func newManualSaveUC(db *sql.DB) *ManualSaveDraftPageUsecase {
@@ -24,6 +26,7 @@ func newManualSaveUC(db *sql.DB) *ManualSaveDraftPageUsecase {
 		repository.NewTopicRepository(q),
 		repository.NewTopicMemberRepository(q),
 		repository.NewAttachmentRepository(q),
+		validator.NewDraftPageSaveValidator(),
 	)
 }
 
@@ -384,5 +387,63 @@ func TestManualSaveDraftPageUsecase_Execute_SkipRevisionSameAsBase(t *testing.T)
 	}
 	if legacy.DraftPageRevision == nil {
 		t.Error("起点が分からない下書きの保存でリビジョンが作成されていない")
+	}
+}
+
+func TestManualSaveDraftPageUsecase_Execute_BodyTooLong(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	uc := newManualSaveUC(db)
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("manual-save-too-long").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("manual-save-too-long@example.com").
+		WithAtname("manualsavetoolong").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		WithBody("元の本文").
+		Build()
+
+	_, err := uc.Execute(context.Background(), ManualSaveDraftPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("manual-save-too-long"),
+		PageNumber:      1,
+		UserID:          userID,
+		Body:            strings.Repeat("a", model.PageBodyMaxLength+1),
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+	}
+	if !ve.HasFieldError("body") {
+		t.Error("bodyのフィールドエラーが無い")
+	}
+
+	draftPage, err := repository.NewDraftPageRepository(query.New(db)).FindByPageAndMember(context.Background(), pageID, spaceMemberID, spaceID)
+	if err != nil {
+		t.Fatalf("下書きの取得のエラー = %v", err)
+	}
+	if draftPage != nil {
+		t.Error("本文が上限を超えたのに下書きが保存された")
 	}
 }

@@ -64,6 +64,96 @@ func TestSuggestionApplyValidator_FormatValidation(t *testing.T) {
 	}
 }
 
+func TestSuggestionApplyValidator_BodyLength(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+
+	// 本文の違反があればDBを読まずに返るため、nilのpageRepoを使用
+	v := validator.NewSuggestionApplyValidator(validator.NewPageUpdateValidator(nil))
+
+	title := "タイトル"
+	tests := []struct {
+		name  string
+		title *string
+	}{
+		{name: "タイトルのあるページの本文が上限を超える", title: &title},
+		{name: "タイトルの無いページの本文が上限を超える", title: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := v.Validate(ctx, validator.SuggestionApplyValidatorInput{
+				SpaceID:         model.SpaceID("test-space-id"),
+				SpaceIdentifier: model.SpaceIdentifier("test-space"),
+				Entries: []validator.SuggestionApplyValidatorEntry{
+					{
+						PageID:  model.PageID("test-page-id"),
+						TopicID: model.TopicID("test-topic-id"),
+						Title:   tt.title,
+						Body:    strings.Repeat("a", model.PageBodyMaxLength+1),
+					},
+				},
+			})
+
+			ae := model.AsSuggestionApplyError(err)
+			if ae == nil {
+				t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
+			}
+			if len(ae.PageErrors) != 1 {
+				t.Fatalf("ページのエラーの件数 = %d、期待値 = 1: %v", len(ae.PageErrors), ae.PageErrors)
+			}
+			if !strings.Contains(ae.PageErrors[0].Message, "500,000文字以内") {
+				t.Errorf("エラーのメッセージ = %q、本文の上限を含むことを期待", ae.PageErrors[0].Message)
+			}
+		})
+	}
+}
+
+func TestSuggestionApplyValidator_PageErrorsOrder(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+
+	// 形式の違反があればDBを読まずに返るため、nilのpageRepoを使用
+	v := validator.NewSuggestionApplyValidator(validator.NewPageUpdateValidator(nil))
+
+	emptyTitle := ""
+	input := validator.SuggestionApplyValidatorInput{
+		SpaceID:         model.SpaceID("test-space-id"),
+		SpaceIdentifier: model.SpaceIdentifier("test-space"),
+		Entries: []validator.SuggestionApplyValidatorEntry{
+			{
+				PageID:  model.PageID("test-page-id"),
+				TopicID: model.TopicID("test-topic-id"),
+				Title:   &emptyTitle,
+				Body:    strings.Repeat("a", model.PageBodyMaxLength+1),
+			},
+		},
+	}
+
+	// フィールドのエラーはmapに入っているため、何度呼んでも同じ順 (フィールド名の順) になることを確かめる
+	for range 20 {
+		_, err := v.Validate(ctx, input)
+
+		ae := model.AsSuggestionApplyError(err)
+		if ae == nil {
+			t.Fatalf("SuggestionApplyErrorを期待したが、%Tだった: %v", err, err)
+		}
+		if len(ae.PageErrors) != 2 {
+			t.Fatalf("ページのエラーの件数 = %d、期待値 = 2: %v", len(ae.PageErrors), ae.PageErrors)
+		}
+		if !strings.HasPrefix(ae.PageErrors[0].Message, "本文は") {
+			t.Errorf("1件目のエラーのメッセージ = %q、本文のエラーを期待", ae.PageErrors[0].Message)
+		}
+		if got, want := ae.PageErrors[1].Message, "タイトルを入力してください"; got != want {
+			t.Errorf("2件目のエラーのメッセージ = %q、期待値 = %q", got, want)
+		}
+	}
+}
+
 func TestSuggestionApplyValidator_Uniqueness(t *testing.T) {
 	t.Parallel()
 

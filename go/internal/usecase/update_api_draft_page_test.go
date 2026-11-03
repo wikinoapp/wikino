@@ -10,6 +10,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/query"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 func newUpdateAPIDraftPageUC(db *sql.DB) *UpdateAPIDraftPageUsecase {
@@ -128,7 +129,8 @@ func TestUpdateAPIDraftPageUsecase_Execute(t *testing.T) {
 		q := query.New(db)
 		autoSave := NewAutoSaveDraftPageUsecase(db, repository.NewSpaceRepository(q), repository.NewSpaceMemberRepository(q),
 			repository.NewDraftPageRepository(q), repository.NewPageRepository(q), repository.NewPageEditorRepository(q),
-			repository.NewTopicRepository(q), repository.NewTopicMemberRepository(q), repository.NewAttachmentRepository(q))
+			repository.NewTopicRepository(q), repository.NewTopicMemberRepository(q), repository.NewAttachmentRepository(q),
+			validator.NewDraftPageSaveValidator())
 		if _, err := autoSave.Execute(t.Context(), AutoSaveDraftPageInput{
 			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID, Title: ptr("Webのタイトル"), Body: "Webの本文",
 		}); err != nil {

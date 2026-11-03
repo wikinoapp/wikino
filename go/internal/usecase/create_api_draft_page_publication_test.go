@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,6 +33,7 @@ func newCreateAPIDraftPagePublicationUC(db *sql.DB) *CreateAPIDraftPagePublicati
 		repository.NewAttachmentRepository(q),
 		repository.NewPageAttachmentReferenceRepository(q),
 		validator.NewAPIPageUpdateValidator(pageRepo),
+		validator.NewAPIDraftPagePublicationCreateValidator(),
 	)
 }
 
@@ -166,13 +168,20 @@ func TestCreateAPIDraftPagePublicationUsecase_Execute_Validation(t *testing.T) {
 		WithSpaceID(f.space.ID).WithPageID(duplicatePageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[1]).
 		WithTitle("重複").WithBody("重複するタイトルの下書き").Build()
 	testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(3).WithTitle("重複").Build()
+	// 本文の上限は保存のときにも確かめるが、上限が決まる前に保存した下書きを公開するときにも確かめる
+	longBodyPageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[1]).WithNumber(4).WithTitle("長い本文").Build()
+	testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(f.space.ID).WithPageID(longBodyPageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[1]).
+		WithTitle("長い本文").WithBody(strings.Repeat("a", model.PageBodyMaxLength+1)).Build()
 
 	tests := []struct {
 		name       string
 		pageNumber int32
+		wantField  string
 	}{
-		{name: "タイトルの無い下書きは422", pageNumber: 1},
-		{name: "トピック内の他のページと同じタイトルの下書きは422", pageNumber: 2},
+		{name: "タイトルの無い下書きは422", pageNumber: 1, wantField: "title"},
+		{name: "トピック内の他のページと同じタイトルの下書きは422", pageNumber: 2, wantField: "title"},
+		{name: "本文が上限を超える下書きは422", pageNumber: 4, wantField: "body"},
 	}
 	// 下書きが残ることを全ケースの後に確かめるため、サブテストを並列にしない。
 	for _, tt := range tests {
@@ -186,14 +195,14 @@ func TestCreateAPIDraftPagePublicationUsecase_Execute_Validation(t *testing.T) {
 			if output != nil {
 				t.Errorf("output = %+v、期待値 = nil", output)
 			}
-			if ve := model.AsValidationError(err); ve == nil || !ve.HasFieldError("title") {
-				t.Errorf("エラー = %v、期待値 = titleのValidationError", err)
+			if ve := model.AsValidationError(err); ve == nil || !ve.HasFieldError(tt.wantField) {
+				t.Errorf("エラー = %v、期待値 = %sのValidationError", err, tt.wantField)
 			}
 		})
 	}
 
-	if n := countRows(t, db, "draft_pages", f.space.ID, ""); n != 2 {
-		t.Errorf("残った下書きの数 = %d、期待値 = 2", n)
+	if n := countRows(t, db, "draft_pages", f.space.ID, ""); n != 3 {
+		t.Errorf("残った下書きの数 = %d、期待値 = 3", n)
 	}
 }
 

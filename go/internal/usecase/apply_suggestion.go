@@ -132,6 +132,7 @@ func buildApplyValidatorEntries(suggestionPages []*model.SuggestionPage, pages [
 			PageID:  sp.PageID,
 			TopicID: topicIDByPageID[sp.PageID],
 			Title:   sp.Title,
+			Body:    sp.Body,
 		})
 	}
 	return entries
