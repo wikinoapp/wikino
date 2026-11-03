@@ -25,8 +25,8 @@ func MethodOverride(next http.Handler) http.Handler {
 		// POSTリクエストのみ処理
 		if r.Method == http.MethodPost && !session.IsAPIPath(r.URL.Path) {
 			// フォームデータから_methodパラメータを取得する。
-			// multipart/form-dataの本文も読めるよう、ParseFormではなくPostFormValueに解析を任せる
-			// (ParseFormはmultipartの本文を読まずにPostFormを空で埋め、後から解析されなくなる)
+			// PostFormValueはURLエンコードとmultipart/form-dataのどちらの本文も解析してr.Formに入れるため、
+			// 後段のCSRFミドルウェアとハンドラーもr.FormValueでmultipartの項目を読める
 			method := r.PostFormValue("_method")
 			if method != "" {
 				// サポートされているメソッドのみ許可
