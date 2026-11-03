@@ -836,6 +836,18 @@ other = "編集画面で読み込めるのはここまでです"
 description = "上限に達した関連ページ一覧を編集画面で1ページずつ継続するリンクテキスト"
 other = "1ページずつ続きを見る"
 
+[page_edit_autosave_failed]
+description = "自動保存に失敗したときに、自動保存の表示の位置に出すエラーの冒頭"
+other = "自動保存できませんでした。"
+
+[page_edit_save_draft_failed]
+description = "下書き保存に失敗したときに、自動保存の表示の位置に出すエラーの冒頭"
+other = "下書きを保存できませんでした。"
+
+[page_edit_body_too_large]
+description = "送った内容が送るときの上限を超えて保存できなかったときの理由"
+other = "本文が長すぎます。本文は{{.Max}}文字以内にしてください。"
+
 [page_edit_save_draft_button]
 description = "下書き保存ボタンのラベル"
 other = "下書き保存"

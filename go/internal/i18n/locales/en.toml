@@ -836,6 +836,18 @@ other = "This is as far as the editor loads this list."
 description = "上限に達した関連ページ一覧を編集画面で1ページずつ継続するリンクテキスト"
 other = "Continue one page at a time"
 
+[page_edit_autosave_failed]
+description = "自動保存に失敗したときに、自動保存の表示の位置に出すエラーの冒頭"
+other = "Couldn't save automatically."
+
+[page_edit_save_draft_failed]
+description = "下書き保存に失敗したときに、自動保存の表示の位置に出すエラーの冒頭"
+other = "Couldn't save the draft."
+
+[page_edit_body_too_large]
+description = "送った内容が送るときの上限を超えて保存できなかったときの理由"
+other = "The body is too long. Keep it within {{.Max}} characters."
+
 [page_edit_save_draft_button]
 description = "下書き保存ボタンのラベル"
 other = "Save Draft"
