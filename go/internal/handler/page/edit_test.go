@@ -232,6 +232,15 @@ func TestEdit(t *testing.T) {
 		t.Error("レスポンスにPATCHのメソッドオーバーライドが見つからない")
 	}
 
+	// 本文を送る公開のフォームと、同じ本文を送るプレビュー・下書き保存は、URLエンコードより小さい
+	// multipartで送る
+	if !strings.Contains(body, `enctype="multipart/form-data"`) {
+		t.Error("公開のフォームがmultipartで送る設定になっていない")
+	}
+	if got := strings.Count(body, `hx-encoding="multipart/form-data"`); got != 2 {
+		t.Errorf("multipartで送るhtmxの要素の数 = %d、期待値 = 2 (プレビューと下書き保存)", got)
+	}
+
 	// defaultレイアウトのコンテンツラッパーが、md未満で固定ナビに最下部コンテンツが隠れない
 	// よう下部ナビの高さ + 下端safe-area分の下部余白を確保していること (PWAスタンドアロン表示で
 	// ナビをホームインジケータの上へ押し上げても足りるようにする)。下部バーが描画されなくなる幅と

@@ -180,6 +180,8 @@ templ Edit(data EditPageData) {
 							@components.FormErrorSummary(data.FormErrors)
 
 							@components.ContentCard() {
+								// 本文をURLエンコードで送ると1字が最大12バイトになり、上限の文字数の本文が
+								// 送るときの大きさの上限を超えるため、UTF-8のまま送るmultipartにする
 								<form
 									if data.IsSuggestionMode() {
 										action={ templ.SafeURL(data.SuggestionURL) }
@@ -187,6 +189,7 @@ templ Edit(data EditPageData) {
 										action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
 									}
 									class="grid gap-6"
+									enctype="multipart/form-data"
 									hx-on:submit="disableSubmitButtons(this)"
 									method="POST"
 								>
@@ -241,6 +244,7 @@ templ Edit(data EditPageData) {
 												tabindex="-1"
 												hx-post={ string(templates.PagePreviewPath(data.Space.Identifier, data.Page.Number)) }
 												hx-vals={ `{"_method": ""}` }
+												hx-encoding="multipart/form-data"
 												hx-target="#page-edit-preview-content"
 												hx-swap="innerHTML"
 												hx-indicator="#page-edit-preview-loading"
@@ -392,6 +396,7 @@ templ Edit(data EditPageData) {
 														type="button"
 														hx-patch={ data.ManualSaveURL() }
 														hx-include="#page_title, #page_body, #page-edit-csrf-token"
+														hx-encoding="multipart/form-data"
 														hx-swap="none"
 														hx-disable="this"
 													>
@@ -436,6 +441,7 @@ templ Edit(data EditPageData) {
 													type="button"
 													hx-patch={ data.ManualSaveURL() }
 													hx-include="#page_title, #page_body, #page-edit-csrf-token"
+													hx-encoding="multipart/form-data"
 													hx-swap="none"
 													hx-disable="this"
 												>
