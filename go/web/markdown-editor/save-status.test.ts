@@ -30,8 +30,11 @@ function errorText(): string {
 interface RequestContext {
   request: { body: FormData | null };
   response?: { status: number };
+  hx?: { redirect?: string };
   text?: string;
 }
+
+const SUGGESTION_NEW_PATH = "/s/test-space/topics/1/suggestions/new";
 
 function formData(): FormData {
   const data = new FormData();
@@ -49,8 +52,16 @@ function beginRequest(elementId = "save-draft", data: FormData | null = formData
   return ctx;
 }
 
-function finishRequest(ctx: RequestContext, status: number, text: string, elementId = "save-draft"): Event {
+// redirectは、応答のHX-Redirectとしてhtmxがctx.hxに入れる移動先
+function finishRequest(
+  ctx: RequestContext,
+  status: number,
+  text: string,
+  elementId = "save-draft",
+  redirect?: string,
+): Event {
   ctx.response = { status };
+  ctx.hx = redirect ? { redirect } : {};
   ctx.text = text;
   const event = new CustomEvent("htmx:after:request", { bubbles: true, cancelable: true, detail: { ctx } });
   document.getElementById(elementId)?.dispatchEvent(event);
@@ -192,9 +203,31 @@ describe("initializeSaveStatus", () => {
     const old = beginRequest();
     (document.querySelector("#page_title") as HTMLInputElement).value = "New title";
 
-    const event = finishRequest(old, 204, "");
+    const event = finishRequest(old, 204, "", "save-draft", SUGGESTION_NEW_PATH);
 
     expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("送信後にタイトルだけを変えても、下書き保存の成功でエラーを消し、保存時刻を差し替える", () => {
+    dispatchAfterRequest("save-draft", 422, "本文が長すぎます");
+    const request = beginRequest();
+    (document.querySelector("#page_title") as HTMLInputElement).value = "New title";
+
+    const event = finishRequest(request, 200, '<div id="page-draft-saved-at" hx-swap-oob="outerHTML">saved</div>');
+
+    expect(errorText()).toBe("");
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it("同じ内容の保存があとから始まっても、先の手動保存の成功で画面遷移を止めない", () => {
+    const container = document.querySelector<HTMLElement>("[data-markdown-editor]")!;
+    const manual = beginRequest();
+    // debounceのあとに始まった、同じ内容の自動保存
+    beginDraftSave(container, formData());
+
+    const event = finishRequest(manual, 204, "", "save-draft", SUGGESTION_NEW_PATH);
+
+    expect(event.defaultPrevented).toBe(false);
   });
 
   it("キューで待っていた手動保存は、組み立て済みの送信内容で照合する", () => {

@@ -16,14 +16,16 @@ const EDITOR_SELECTOR = "[data-markdown-editor]";
 // components/load_more_navigation.goのdraftPageRefreshTriggerIDと同期する。
 const REFRESH_TRIGGER_ID = "page-draft-refresh-trigger";
 
-// DraftSaveRequestは送信した本文・タイトルと要求の識別子を兼ねる。画面の要素ごとに最新の
-// 要求を保持し、自動保存と手動保存のどちらが後に始まったかも同じ基準で判定する。
+// DraftSaveRequestは、保存の要求で送ったタイトルと本文。応答を画面に反映するかは、送った内容と
+// 今の入力を比べて決める。内容が同じ要求どうしは検証の結果も同じになるため、自動保存と手動保存の
+// どちらが後に始まったかは問わない。
 interface DraftSaveRequest {
   container: HTMLElement;
   title: string;
   body: string;
 }
 
+// 保存時刻の再取得を直前の保存の要求にひも付けるため、画面の要素ごとに最後に送った要求を持つ。
 const latestRequests = new WeakMap<HTMLElement, DraftSaveRequest>();
 const htmxRequests = new WeakMap<HtmxRequestContext, DraftSaveRequest>();
 
@@ -39,20 +41,24 @@ export function beginDraftSave(container: HTMLElement, data: FormData | URLSearc
   return request;
 }
 
-// isCurrentDraftSaveは最新の要求が現在の入力内容を対象としているかを返す。次の自動保存が
-// debounceで待っているあいだの入力も、送信した本文・タイトルとの比較で検出する。
+// isCurrentDraftSaveは、要求で送った本文が今の本文と同じかを返す。保存の成否とエラーの表示は
+// 本文だけで決まるため、タイトルは比べない。タイトルの入力では自動保存が始まらないため、
+// タイトルを変えたあとに届いた応答が、表示を直す最後の応答になることがある。次の自動保存が
+// debounceで待っているあいだの入力も、送った本文との比較で検出する。
 export function isCurrentDraftSave(request: DraftSaveRequest): boolean {
   const { container } = request;
-  const titleSelector = container.dataset.markdownEditorTitle;
-  const bodySelector = container.dataset.markdownEditorTextarea;
-  const title = titleSelector ? document.querySelector<HTMLInputElement>(titleSelector) : null;
-  const body = bodySelector ? document.querySelector<HTMLTextAreaElement>(bodySelector) : null;
-  return (
-    container.isConnected &&
-    latestRequests.get(container) === request &&
-    title?.value === request.title &&
-    body?.value === request.body
-  );
+  const body = findInput<HTMLTextAreaElement>(container.dataset.markdownEditorTextarea);
+  return container.isConnected && body?.value === request.body;
+}
+
+// matchesCurrentTitleは、要求で送ったタイトルが今のタイトルと同じかを返す。
+function matchesCurrentTitle(request: DraftSaveRequest): boolean {
+  const title = findInput<HTMLInputElement>(request.container.dataset.markdownEditorTitle);
+  return title?.value === request.title;
+}
+
+function findInput<T extends HTMLElement>(selector: string | undefined): T | null {
+  return selector ? document.querySelector<T>(selector) : null;
 }
 
 // showSaveErrorは、保存の応答が利用者の直せる失敗 (本文が上限を超えた) のときにエラーを出し、
@@ -101,9 +107,11 @@ export function initializeSaveStatus(): void {
   document.addEventListener("htmx:after:request", handleAfterRequest);
 }
 
+// hxは応答のHX-* ヘッダーで、htmxがHX-Redirectの移動先をredirectに入れる。
 interface HtmxRequestContext {
   request?: { body?: FormData | URLSearchParams | null };
   response?: { status: number };
+  hx?: { redirect?: string };
   text?: string;
 }
 
@@ -141,6 +149,11 @@ function handleAfterRequest(event: Event): void {
 
   if (status >= 200 && status < 300) {
     clearSaveError();
+    // 編集提案の作成画面へは、送ったタイトルで保存した下書きを持って移る。送ったあとにタイトルを
+    // 変えていたら、変えたタイトルを失わないよう移らずに留まる。
+    if (ctx?.hx?.redirect && !matchesCurrentTitle(request)) {
+      event.preventDefault();
+    }
     return;
   }
   showSaveError("manual", status, ctx?.text ?? "");

@@ -310,12 +310,15 @@ describe("自動保存の失敗の表示", () => {
     const body = new FormData();
     body.set("title", document.querySelector<HTMLInputElement>("#page_title")!.value);
     body.set("body", document.querySelector<HTMLTextAreaElement>("#page_body")!.value);
-    const ctx = { request: { body }, response: { status: 0 }, text: "" };
+    const ctx: { request: { body: FormData }; response: { status: number }; hx: { redirect?: string }; text: string } =
+      { request: { body }, response: { status: 0 }, hx: {}, text: "" };
     document
       .getElementById("save-draft")!
       .dispatchEvent(new CustomEvent("htmx:before:request", { bubbles: true, cancelable: true, detail: { ctx } }));
-    return (status: number, text: string): Event => {
+    // redirectは、応答のHX-Redirectとしてhtmxがctx.hxに入れる移動先
+    return (status: number, text: string, redirect?: string): Event => {
       ctx.response.status = status;
+      ctx.hx.redirect = redirect;
       ctx.text = text;
       const event = new CustomEvent("htmx:after:request", { bubbles: true, cancelable: true, detail: { ctx } });
       document.getElementById("save-draft")!.dispatchEvent(event);
@@ -503,5 +506,41 @@ describe("自動保存の失敗の表示", () => {
     expect(document.getElementById("page-body-error")).toBeNull();
     expect(textbox().hasAttribute("aria-invalid")).toBe(false);
     expect(textbox().getAttribute("aria-describedby")).toBe("page-draft-save-error");
+  });
+
+  it("本文を直した自動保存の送信中にタイトルだけを変えても、保存できたらエラーとARIA状態を戻す", async () => {
+    await autosave(new Response("本文が長すぎます", { status: 422 }));
+    const resolveFixed = await pendingAutosave();
+    // タイトルの入力では自動保存が始まらないため、この応答のあとに表示を直す応答は来ない
+    document.querySelector<HTMLInputElement>("#page_title")!.value = "New title";
+
+    resolveFixed(new Response(null, { status: 204 }));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(errorText()).toBe("");
+    expect(textbox().hasAttribute("aria-invalid")).toBe(false);
+    expect(autosaved).toHaveBeenCalledTimes(1);
+  });
+
+  it("入力の直後に押した手動保存は、同じ内容の自動保存があとから始まっても編集提案の作成画面へ移る", async () => {
+    typeIntoEditor("a");
+    const finishManual = beginManualSave();
+    fetchMock.mockReturnValueOnce(new Promise<Response>(() => {}));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const event = finishManual(204, "", "/s/test-space/topics/1/suggestions/new");
+
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it("手動保存の送信後にタイトルを変えたら、編集提案の作成画面へ移らない", () => {
+    const finishManual = beginManualSave();
+    document.querySelector<HTMLInputElement>("#page_title")!.value = "New title";
+
+    const event = finishManual(204, "", "/s/test-space/topics/1/suggestions/new");
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(errorText()).toBe("");
   });
 });
