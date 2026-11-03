@@ -421,6 +421,45 @@ func TestPublish_APIErrors(t *testing.T) {
 	}
 }
 
+func TestPublish_ValidationHintByPointer(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		pointer     string
+		wantHint    string
+		notWantHint string
+	}{
+		{name: "本文が長すぎる", pointer: "#/body", wantHint: "`wikino draft update 12 --edits '<path>'`", notWantHint: "--title"},
+		{name: "タイトルの問題", pointer: "#/title", wantHint: "`wikino draft update 12 --title '<title>' --if-match '<etag>'`", notWantHint: "--edits"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			e := newEnv(t)
+			handlePublishDraft(e, ptr("議事録"), etag)
+			handlePreview(t, e)
+			e.Handle(http.MethodPost, publicationPath, func(req *http.Request) *http.Response {
+				return cmdtest.JSON(http.StatusUnprocessableEntity, map[string]any{
+					"detail": "入力が不正です。",
+					"errors": []map[string]any{{"pointer": tt.pointer, "detail": "公開できません。"}},
+				})
+			})
+
+			err := e.Run(NewCmdDraft, "draft", "publish", "12", "--if-match", etag, "--yes")
+			cliErr := cmdtest.AssertCLIError(t, err, output.CodeValidationFailed, output.ExitValidation)
+			if !strings.Contains(cliErr.Hint, tt.wantHint) {
+				t.Errorf("ヒント %q に %q が無い", cliErr.Hint, tt.wantHint)
+			}
+			if strings.Contains(cliErr.Hint, tt.notWantHint) {
+				t.Errorf("ヒント %q に %q を含めない", cliErr.Hint, tt.notWantHint)
+			}
+		})
+	}
+}
+
 func TestPublish_DraftNotFound(t *testing.T) {
 	t.Parallel()
 

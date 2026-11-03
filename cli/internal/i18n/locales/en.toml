@@ -1119,7 +1119,7 @@ other = """
   3  Not logged in, or the token is invalid or expired (401)
   4  The token lacks the page:write scope (403)
   5  You cannot create pages in the topic (404)
-  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or the topic does not exist or cannot be seen (422).
+  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, the topic does not exist or cannot be seen, or the body is too long (422).
      For a duplicate, find the existing page with `wikino page list --topic <number> --title <title>` and use `wikino page update` to change its content"""
 
 [page_create_topic_flag]
@@ -1247,7 +1247,7 @@ other = """
   5  The page does not exist, is in the trash, or cannot be updated (404). Check the number with `wikino page list`
   6  The page has been updated since you read it (412). Get the latest content and version with `wikino page get`, apply your changes, and update again.
      With `--md-file`, apply your changes to a file written again with `wikino page get --md`
-  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, or an untitled unpublished page was updated without `--title` (422).
+  7  The title does not follow the rules in `--title`, a page with the same title exists in the topic, an untitled unpublished page was updated without `--title`, or the body is too long (422).
      `old_str` in `--edits` does not match the current body or matches more than one place (422). The hint shows which edit, and the message shows the number of matches.
      Check the current body with `wikino page get --md` and send the whole `edits` again"""
 
@@ -1867,7 +1867,8 @@ other = """
      If you get 5 when publishing again, the draft has already been published or deleted. Check the page with `wikino page get`
   6  The draft has been updated since you read it (412). Check the current content with `wikino draft get`, and publish again with the new version if it is fine to publish
   7  The draft has no title, the title has characters that cannot be used, or a page with the same title exists in the topic (422).
-     Fix the title of the draft with `wikino draft update --title` and publish again
+     Fix the title of the draft with `wikino draft update --title` and publish again.
+     The body of the draft is too long (422). Reduce the body of the draft with `wikino draft update --edits` or a similar command and publish again
   9  Confirmation by the user is required because `--yes` is not given, or the confirmation was declined in a terminal"""
 
 [draft_publish_error_version_changed]
@@ -1889,6 +1890,10 @@ other = "The draft cannot be published because it has no title. The publish requ
 [draft_publish_error_validation_failed_hint]
 description = "draft publishで下書きのタイトルが検証で拒否された (422) ときのヒント。Commandは下書きのタイトルを直すコマンドの例"
 other = "Fix the title of the draft with `{{.Command}}`, then publish again with the new version."
+
+[draft_publish_error_body_too_long_hint]
+description = "draft publishで下書きの本文が上限を超えて拒否された (422) ときのヒント。Commandは下書きの本文を検索置換で減らすコマンドの例"
+other = "Reduce the body of the draft with `{{.Command}}` or a similar command, then publish again with the new version."
 
 [draft_publish_confirm_change_publish]
 description = "draft publishの確認で示す、公開する内容。Numberはページ番号、Titleは下書きのタイトル、TitleChangeはタイトルの変更の有無、Added・Deletedは本文で足す・消す行数"
