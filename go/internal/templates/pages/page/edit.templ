@@ -494,7 +494,7 @@ templ Edit(data EditPageData) {
 												data-draft-save-status
 												data-autosave-failed-message={ templates.T(ctx, "page_edit_autosave_failed") }
 												data-save-draft-failed-message={ templates.T(ctx, "page_edit_save_draft_failed") }
-												data-body-too-large-message={ templates.T(ctx, "page_edit_body_too_large", map[string]any{"Max": templates.FormatNumber(ctx, model.PageBodyMaxLength)}) }
+												data-body-too-large-message={ templates.T(ctx, "page_edit_body_too_large", map[string]any{"Max": templates.FormatNumber(ctx, viewmodel.PageBodyMaxLength)}) }
 											>
 												<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap"></div>
 												<p id={ draftSaveErrorID } class="text-xs text-error text-right" role="status" data-draft-save-error></p>

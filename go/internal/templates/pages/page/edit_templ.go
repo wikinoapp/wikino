@@ -969,9 +969,9 @@ func Edit(data EditPageData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var49 string
-			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "page_edit_body_too_large", map[string]any{"Max": templates.FormatNumber(ctx, model.PageBodyMaxLength)}))
+			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.ResolveAttributeValue(templates.T(ctx, "page_edit_body_too_large", map[string]any{"Max": templates.FormatNumber(ctx, viewmodel.PageBodyMaxLength)}))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 497, Col: 163}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/page/edit.templ`, Line: 497, Col: 167}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var49)
 			if templ_7745c5c3_Err != nil {

@@ -10,6 +10,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
+// PageBodyMaxLengthはページ本文の上限の文字数です。
+// テンプレートはModelに直接依存できないため、上限の値をViewModelから渡します
+const PageBodyMaxLength = model.PageBodyMaxLength
+
 // Pageはテンプレートで表示するページ情報です
 type Page struct {
 	Title        string
