@@ -606,6 +606,23 @@ func TestAPIRouter_UpdateDraftPage(t *testing.T) {
 		}
 	})
 
+	t.Run("上限ちょうどの非BMP文字をASCIIエスケープしたJSONでも保存できる", func(t *testing.T) {
+		body := `{"body":"` + strings.Repeat(`\ud83d\ude00`, model.PageBodyMaxLength) + `"}`
+		rr := update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, body)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %.200s)", rr.Code, rr.Body.String())
+		}
+		var saved struct {
+			Body string `json:"body"`
+		}
+		if err := json.Unmarshal(rr.Body.Bytes(), &saved); err != nil {
+			t.Fatalf("保存結果を読めない: %v", err)
+		}
+		if saved.Body != strings.Repeat("😀", model.PageBodyMaxLength) {
+			t.Error("保存結果の本文が、送った50万字の絵文字と異なる")
+		}
+	})
+
 	t.Run("本文が上限を超えれば422", func(t *testing.T) {
 		assertBodyTooLongProblem(t, update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, `{"body": `+tooLongBodyJSON+`}`))
 	})

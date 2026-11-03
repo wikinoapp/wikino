@@ -14,13 +14,13 @@ import (
 	errpages "github.com/wikinoapp/wikino/go/internal/templates/pages/errors"
 )
 
-// DefaultMaxBodyBytesはリクエストボディのデフォルトサイズ上限 (4 MiB)。
+// DefaultMaxBodyBytesはリクエストボディのデフォルトサイズ上限 (8 MiB)。
 // 上限の文字数 (model.PageBodyMaxLength) のページ本文が、どの送り方でもこの上限で弾かれず、
 // 必ずアプリのバリデーションに届く大きさにする。
-// multipartではUTF-8のまま送るため1字が最大4バイト、JSONでは制御文字や `<`・`>`・`&` が
-// `\u00XX` の6バイトになりうるため、50万字で最大3MBになる。
+// multipartではUTF-8のまま送るため1字が最大4バイト、JSONでは非BMP文字をASCIIエスケープすると
+// サロゲートペア (12バイト) になりうるため、50万字で最大6MBになる。
 // そのうえで、意図的な大容量送信によるメモリ枯渇を防ぐ。
-const DefaultMaxBodyBytes = 4 << 20
+const DefaultMaxBodyBytes = 8 << 20
 
 // BodyLimitはリクエストボディのサイズを [DefaultMaxBodyBytes] に制限するミドルウェア。
 // 上限を超過したリクエストには413 Payload Too Largeを返す。

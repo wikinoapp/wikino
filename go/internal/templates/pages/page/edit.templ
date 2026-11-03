@@ -180,8 +180,8 @@ templ Edit(data EditPageData) {
 							@components.FormErrorSummary(data.FormErrors)
 
 							@components.ContentCard() {
-								// 本文をURLエンコードで送ると1字が最大12バイトになり、上限の文字数の本文が
-								// 送るときの大きさの上限を超えるため、UTF-8のまま送るmultipartにする
+								// 本文をURLエンコードで送るとUTF-8よりリクエストが大きくなるため、
+								// UTF-8のまま送るmultipartにする
 								<form
 									if data.IsSuggestionMode() {
 										action={ templ.SafeURL(data.SuggestionURL) }

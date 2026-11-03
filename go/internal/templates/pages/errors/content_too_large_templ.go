@@ -13,7 +13,7 @@ import (
 
 // ContentTooLargePageは、送った内容が大きすぎるとき (413) のエラーページを表示するテンプレート。
 // 本文を読む前の段階で返すため、セッションやDBを使わず、外部依存のない完全なHTMLドキュメントとして生成する。
-// maxSizeは一度に送れる大きさを表示用に整えた文字列 (例: "4MB")
+// maxSizeは一度に送れる大きさを表示用に整えた文字列 (例: "8MB")
 func ContentTooLargePage(maxSize string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

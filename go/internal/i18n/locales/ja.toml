@@ -1630,7 +1630,7 @@ description = "送った内容が大きすぎるときのエラーページの�
 other = "送った内容が大きすぎます"
 
 [error_content_too_large_message]
-description = "送った内容が大きすぎるときのエラーページのメッセージ。Maxは一度に送れる大きさ (例: 4MB)"
+description = "送った内容が大きすぎるときのエラーページのメッセージ。Maxは一度に送れる大きさ (例: 8MB)"
 other = "一度に送れる大きさは{{.Max}}までです。ブラウザの戻るボタンで前の画面に戻り、送る内容を減らしてください。"
 
 [error_content_too_large_back_to_top]

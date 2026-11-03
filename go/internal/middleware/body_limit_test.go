@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -79,7 +80,7 @@ func TestBodyLimit_OverLimitReturns413(t *testing.T) {
 	if rr.Code != http.StatusRequestEntityTooLarge {
 		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusRequestEntityTooLarge)
 	}
-	if !strings.Contains(rr.Body.String(), "一度に送れる大きさは4MBまでです") {
+	if !strings.Contains(rr.Body.String(), "一度に送れる大きさは8MBまでです") {
 		t.Errorf("レスポンスボディに上限の案内が含まれない: body=%.200q", rr.Body.String())
 	}
 	if called {
@@ -111,7 +112,7 @@ func TestBodyLimit_ContentLengthOverLimitRejectsEarly(t *testing.T) {
 	if rr.Code != http.StatusRequestEntityTooLarge {
 		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusRequestEntityTooLarge)
 	}
-	if !strings.Contains(rr.Body.String(), "一度に送れる大きさは4MBまでです") {
+	if !strings.Contains(rr.Body.String(), "一度に送れる大きさは8MBまでです") {
 		t.Errorf("レスポンスボディに上限の案内が含まれない: body=%.200q", rr.Body.String())
 	}
 	if called {
@@ -186,20 +187,54 @@ func TestBodyLimit_DownstreamCanReadFormValue(t *testing.T) {
 func TestBodyLimit_FitsPageBodyMaxLength(t *testing.T) {
 	t.Parallel()
 
-	// JSONでは制御文字や `<`・`>`・`&` が `\u00XX` (6バイト) になり、これが1字あたり最大の大きさになる。
+	// JSONでは非BMP文字をASCIIエスケープするとサロゲートペア (12バイト) になる。
 	// multipart (1字最大4バイト) はこれより小さい。タイトル (200字) やほかの項目の分として64KiBを見込む
-	worst := model.PageBodyMaxLength*6 + 64<<10
+	worst := model.PageBodyMaxLength*12 + 64<<10
 	if DefaultMaxBodyBytes < worst {
 		t.Errorf("DefaultMaxBodyBytes = %d、期待値 = %d以上", DefaultMaxBodyBytes, worst)
 	}
 
-	// 1字あたり最大の大きさになる文字だけで書いた本文を、実際にJSONにして確かめる
+	// GoのJSONエンコーダーがエスケープする文字だけで書いた本文も上限に収まることを確かめる
 	encoded, err := json.Marshal(map[string]string{"body": strings.Repeat("<", model.PageBodyMaxLength)})
 	if err != nil {
 		t.Fatalf("JSONへの変換に失敗: %v", err)
 	}
 	if len(encoded) > DefaultMaxBodyBytes {
 		t.Errorf("上限の文字数の本文のJSONのバイト数 = %d、期待値 = %d以下", len(encoded), DefaultMaxBodyBytes)
+	}
+
+	// すべての非ASCII文字をエスケープするJSONエンコーダーの送り方でも、本文を下流で読めることを確かめる
+	escaped := `{"body":"` + strings.Repeat(`\ud83d\ude00`, model.PageBodyMaxLength) + `"}`
+	tests := []struct {
+		name          string
+		contentLength int64
+	}{
+		{name: "サロゲートペアのJSONでContent-Lengthが既知", contentLength: int64(len(escaped))},
+		{name: "サロゲートペアのJSONでContent-Lengthが不明", contentLength: -1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := NewBodyLimit(apierror.NewWriter("https://example.com"))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var payload struct {
+					Body string `json:"body"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+					t.Fatalf("下流ハンドラーでJSONを読めない: %v", err)
+				}
+				if got := utf8.RuneCountInString(payload.Body); got != model.PageBodyMaxLength {
+					t.Errorf("下流ハンドラーで読んだ本文の文字数 = %d、期待値 = %d", got, model.PageBodyMaxLength)
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/test", strings.NewReader(escaped))
+			req.ContentLength = tt.contentLength
+			req.Header.Set("Content-Type", "application/json")
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+			if rr.Code != http.StatusOK {
+				t.Errorf("ステータスコード = %d、期待値 = %d (本文: %.200s)", rr.Code, http.StatusOK, rr.Body.String())
+			}
+		})
 	}
 }
 
@@ -223,7 +258,7 @@ func TestBodyLimit_OverLimitPageInEnglish(t *testing.T) {
 		t.Errorf("Content-Type = %q、期待値 = text/html; charset=utf-8", got)
 	}
 	body := rr.Body.String()
-	for _, want := range []string{`<html lang="en">`, "You can send up to 4MB at a time."} {
+	for _, want := range []string{`<html lang="en">`, "You can send up to 8MB at a time."} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに %qが含まれていない", want)
 		}
