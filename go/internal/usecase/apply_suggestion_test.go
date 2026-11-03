@@ -1086,7 +1086,7 @@ func TestApplySuggestionUsecase_Execute(t *testing.T) {
 				if len(ae.PageErrors) != 1 {
 					t.Fatalf("ページのエラーの件数 = %d、期待値 = 1: %v", len(ae.PageErrors), ae.PageErrors)
 				}
-				want := "本文は500000文字以内で入力してください (現在500001文字)"
+				want := "本文は500,000文字以内で入力してください (現在500,001文字)"
 				if got := ae.PageErrors[0].Message; got != want {
 					t.Errorf("エラーメッセージ = %q、期待値 = %q", got, want)
 				}

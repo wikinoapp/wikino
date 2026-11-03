@@ -105,10 +105,28 @@ func TestDraftPageSaveValidator_Validate(t *testing.T) {
 			if ve == nil {
 				t.Fatalf("ValidationErrorを期待したが、%vだった", err)
 			}
-			want := "本文は500000文字以内で入力してください (現在500001文字)"
+			want := "本文は500,000文字以内で入力してください (現在500,001文字)"
 			if got := ve.GetFieldErrors("body"); len(got) != 1 || got[0] != want {
 				t.Errorf("bodyのフィールドエラー = %q、期待値 = [%q]", got, want)
 			}
 		})
+	}
+}
+
+func TestDraftPageSaveValidator_Validate_EnglishMessage(t *testing.T) {
+	t.Parallel()
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangEn)
+	v := validator.NewDraftPageSaveValidator()
+
+	err := v.Validate(ctx, validator.DraftPageSaveValidatorInput{Body: strings.Repeat("a", model.PageBodyMaxLength+1)})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+	}
+	want := "Body must be 500,000 characters or less (currently 500,001)"
+	if got := ve.GetFieldErrors("body"); len(got) != 1 || got[0] != want {
+		t.Errorf("bodyのフィールドエラー = %q、期待値 = [%q]", got, want)
 	}
 }

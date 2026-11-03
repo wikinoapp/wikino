@@ -510,7 +510,7 @@ func TestUpdate_BodyTooLong(t *testing.T) {
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
-	want := "本文は500000文字以内で入力してください (現在500001文字)"
+	want := "本文は500,000文字以内で入力してください (現在500,001文字)"
 	if got := strings.TrimSpace(rr.Body.String()); got != want {
 		t.Errorf("レスポンスの本文 = %q、期待値 = %q", got, want)
 	}

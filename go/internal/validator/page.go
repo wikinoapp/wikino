@@ -218,7 +218,7 @@ func validatePageBodyLength(ctx context.Context, ve *model.ValidationError, body
 	}
 
 	ve.AddField("body", i18n.T(ctx, "validation_page_body_too_long", map[string]any{
-		"Max":   model.PageBodyMaxLength,
-		"Count": count,
+		"Max":   i18n.FormatNumber(ctx, model.PageBodyMaxLength),
+		"Count": i18n.FormatNumber(ctx, count),
 	}))
 }

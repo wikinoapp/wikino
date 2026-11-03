@@ -471,7 +471,7 @@ func TestUpdate_ValidationError_BodyTooLong(t *testing.T) {
 		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
 	}
 	body := rr.Body.String()
-	want := "本文は500000文字以内で入力してください (現在500001文字)"
+	want := "本文は500,000文字以内で入力してください (現在500,001文字)"
 	if !strings.Contains(body, want) {
 		t.Errorf("レスポンスに %qが含まれていない", want)
 	}

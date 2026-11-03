@@ -104,7 +104,7 @@ func TestSuggestionApplyValidator_BodyLength(t *testing.T) {
 			if len(ae.PageErrors) != 1 {
 				t.Fatalf("ページのエラーの件数 = %d、期待値 = 1: %v", len(ae.PageErrors), ae.PageErrors)
 			}
-			if !strings.Contains(ae.PageErrors[0].Message, "500000文字以内") {
+			if !strings.Contains(ae.PageErrors[0].Message, "500,000文字以内") {
 				t.Errorf("エラーのメッセージ = %q、本文の上限を含むことを期待", ae.PageErrors[0].Message)
 			}
 		})
