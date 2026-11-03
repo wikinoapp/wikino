@@ -373,6 +373,80 @@ func TestUpdate_RedirectToSuggestionNew(t *testing.T) {
 	}
 }
 
+// TestUpdate_HTMXRedirectToSuggestionNewは、htmxで送った「下書き保存して編集提案を作成」が
+// 保存に成功したときに、編集提案の作成画面への移動をHX-Redirectで伝えることを検証する。
+func TestUpdate_HTMXRedirectToSuggestionNew(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("dpr-hx-suggest-redir@example.com").
+		WithAtname("dprhxsuggestredir").
+		Build()
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("dpr-hx-suggest-redir-sp").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	pageID := testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithPageID(pageID).
+		WithSpaceMemberID(spaceMemberID).
+		WithTopicID(topicID).
+		WithTitle("Draft Title").
+		WithBody("Draft body").
+		Build()
+
+	handler := newTestHandler(db, q)
+
+	formData := url.Values{}
+	formData.Set("title", "Draft Title")
+	formData.Set("body", "Draft body")
+	req := newRequestWithChiParams(t, "/s/dpr-hx-suggest-redir-sp/pages/1/draft_page_revision?redirect_to=suggestion_new", map[string]string{
+		"space_identifier": "dpr-hx-suggest-redir-sp",
+		"page_number":      "1",
+	}, formData)
+
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
+	req = req.WithContext(ctx)
+
+	req.Header.Set("HX-Request", "true")
+
+	rr := httptest.NewRecorder()
+	handler.Update(rr, req)
+
+	// fetchはリダイレクトを追ってしまうため、移動先はHX-Redirectで伝える
+	if rr.Code != http.StatusNoContent {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNoContent)
+	}
+
+	location := rr.Header().Get("HX-Redirect")
+	expectedLocation := fmt.Sprintf("/s/dpr-hx-suggest-redir-sp/topics/1/suggestions/new?draft_page_ids=%s", string(draftPageID))
+	if location != expectedLocation {
+		t.Errorf("HX-Redirect = %v、期待値 = %v", location, expectedLocation)
+	}
+}
+
 // TestUpdate_HTMXRequestはhtmxからの手動保存が画面遷移なしで応答することを検証する。
 // リダイレクトの代わりに、保存時刻表示と編集履歴カラム2箇所を更新するOOBスワップ
 // フラグメントが返る。

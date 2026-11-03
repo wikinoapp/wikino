@@ -88,6 +88,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 			string(templates.SuggestionNewPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), saveOutput.TopicNumber)),
 			string(saveOutput.DraftPage.ID),
 		)
+		// 編集画面の「下書き保存して編集提案を作成」はhtmxで送り、保存に失敗したときは編集画面に留まる。
+		// fetchはリダイレクトを追ってしまうため、htmxには移動先をHX-Redirectで伝える
+		if r.Header.Get("HX-Request") == "true" {
+			w.Header().Set("HX-Redirect", suggestionNewPath)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		http.Redirect(w, r, suggestionNewPath, http.StatusSeeOther)
 		return
 	}
