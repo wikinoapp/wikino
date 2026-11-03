@@ -9,7 +9,7 @@ import {
   foldKeymap,
 } from "@codemirror/language";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { EditorState } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import {
   keymap,
   highlightSpecialChars,
@@ -27,7 +27,7 @@ import { FileUploadHandler } from "./file-upload-handler";
 import { insertNewlineAndContinueList } from "./list-continuation";
 import { clickManualSaveButton, handleManualSaveShortcut } from "./manual-save-handler";
 import { pasteHandler } from "./paste-handler";
-import { clearSaveError, showSaveError } from "./save-status";
+import { beginDraftSave, clearSaveError, isCurrentDraftSave, showSaveError } from "./save-status";
 import { handleSubmitShortcut } from "./submit-handler";
 import { handleTab, handleShiftTab } from "./tab-handler";
 import { wikilinkCompletions } from "./wikilink-completions";
@@ -62,6 +62,14 @@ interface EditorConfig {
 function createEditor(config: EditorConfig): EditorView {
   const autosave: AutosaveState = { debounceTimer: null, stopped: false, inFlight: new Set() };
   autosaveStates.add(autosave);
+  const validationAttributes = new Compartment();
+  let describedBy = config.describedBy;
+  let invalid = config.invalid;
+  const bodyAttributes = () =>
+    EditorView.contentAttributes.of({
+      ...(describedBy ? { "aria-describedby": describedBy } : {}),
+      ...(invalid ? { "aria-invalid": "true" } : {}),
+    });
 
   const state = EditorState.create({
     doc: config.body,
@@ -87,8 +95,7 @@ function createEditor(config: EditorConfig): EditorView {
       ...(config.label?.id ? [EditorView.contentAttributes.of({ "aria-labelledby": config.label.id })] : []),
       // 本文のエラー (公開の失敗・保存の失敗) をエディタの説明として読み上げさせる。入力面が
       // CodeMirrorのcontenteditableで、エラーの要素をフォーム部品に関連付けられないため。
-      ...(config.describedBy ? [EditorView.contentAttributes.of({ "aria-describedby": config.describedBy })] : []),
-      ...(config.invalid ? [EditorView.contentAttributes.of({ "aria-invalid": "true" })] : []),
+      validationAttributes.of(bodyAttributes()),
       keymap.of([
         { key: "Enter", run: insertNewlineAndContinueList },
         { key: "Tab", run: handleTab },
@@ -105,7 +112,12 @@ function createEditor(config: EditorConfig): EditorView {
       fileDropHandler,
       // エディタを破棄したら自動保存の状態も手放し、以降のstopAutosaveが破棄済みのエディタの
       // 保存を待たないようにする
-      ViewPlugin.define(() => ({ destroy: () => autosaveStates.delete(autosave) })),
+      ViewPlugin.define(() => ({
+        destroy: () => {
+          autosaveStates.delete(autosave);
+          config.container.removeEventListener("draft-save-validation", handleValidationChange);
+        },
+      })),
       EditorView.domEventHandlers({
         paste: (event, view) => pasteHandler(view, event),
       }),
@@ -138,6 +150,23 @@ function createEditor(config: EditorConfig): EditorView {
     parent: config.container,
   });
 
+  // 公開時のエラーも、修正した本文を保存できたら解消する。属性を直接書き換えると
+  // CodeMirrorの再描画で戻るため、Compartmentで入力面の属性を差し替える。
+  function handleValidationChange(event: Event): void {
+    const nextInvalid = (event as CustomEvent<{ invalid: boolean }>).detail.invalid;
+    if (!nextInvalid) {
+      document.getElementById("page-body-error")?.remove();
+      describedBy = describedBy
+        .split(/\s+/)
+        .filter((id) => id !== "page-body-error")
+        .join(" ");
+    }
+    if (invalid === nextInvalid && nextInvalid) return;
+    invalid = nextInvalid;
+    view.dispatch({ effects: validationAttributes.reconfigure(bodyAttributes()) });
+  }
+  config.container.addEventListener("draft-save-validation", handleValidationChange);
+
   if (config.autofocus) {
     view.focus();
   }
@@ -169,6 +198,7 @@ async function saveAsDraft(config: EditorConfig): Promise<void> {
   formData.append("pages_edit_form[title]", config.titleInput.value);
   formData.append("pages_edit_form[body]", config.textarea.value);
   formData.append("csrf_token", config.csrfToken);
+  const request = beginDraftSave(config.container, formData);
 
   try {
     const response = await fetch(config.draftSaveUrl, {
@@ -177,13 +207,15 @@ async function saveAsDraft(config: EditorConfig): Promise<void> {
     });
 
     if (response.ok) {
+      if (!isCurrentDraftSave(request)) return;
       clearSaveError();
       window.dispatchEvent(new CustomEvent("draft-autosaved"));
       return;
     }
 
     // 本文が上限を超えたときは、書き続けても保存されないことを知らせる
-    showSaveError("autosave", response.status, await response.text());
+    const text = await response.text();
+    if (isCurrentDraftSave(request)) showSaveError("autosave", response.status, text);
   } catch {
     // 通信の失敗は次の入力で保存し直せるため、表示を変えない
   }

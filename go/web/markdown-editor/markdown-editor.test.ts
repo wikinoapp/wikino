@@ -1,7 +1,8 @@
 import { EditorView } from "codemirror";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { initializeEditors, stopAutosave } from "./markdown-editor";
+import { initializeSaveStatus } from "./save-status";
 
 interface MarkdownEditorContainer extends HTMLElement {
   _editorView?: EditorView;
@@ -22,7 +23,7 @@ function editorMarkup(): string {
       data-markdown-editor-body="Page body"
       data-markdown-editor-space-identifier="test-space"
     ></div>
-    <textarea id="page_body"></textarea>
+    <textarea id="page_body">Page body</textarea>
   `;
 }
 
@@ -239,6 +240,7 @@ describe("stopAutosave", () => {
 // pages/page/edit.templの保存の表示を写す
 function saveStatusMarkup(): string {
   return `
+    <button type="button" id="save-draft" data-draft-save-button>Save draft</button>
     <div
       data-draft-save-status
       data-autosave-failed-message="自動保存できませんでした。"
@@ -253,22 +255,31 @@ function saveStatusMarkup(): string {
 
 describe("自動保存の失敗の表示", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
+  let autosaved = vi.fn<() => void>();
+
+  beforeAll(() => initializeSaveStatus());
 
   beforeEach(() => {
     vi.useFakeTimers();
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    autosaved = vi.fn();
+    window.addEventListener("draft-autosaved", autosaved);
 
     document.body.innerHTML = editorMarkup() + saveStatusMarkup();
     document
       .querySelector("[data-markdown-editor]")
       ?.setAttribute("data-markdown-editor-draft-save-url", "/s/test-space/pages/1/draft_page");
+    document
+      .querySelector("[data-markdown-editor]")
+      ?.setAttribute("data-markdown-editor-describedby", "page-draft-save-error");
     initializeEditors();
   });
 
   afterEach(() => {
     const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
     container?._editorView?.destroy();
+    window.removeEventListener("draft-autosaved", autosaved);
     document.body.innerHTML = "";
     vi.unstubAllGlobals();
     vi.useRealTimers();
@@ -281,6 +292,44 @@ describe("自動保存の失敗の表示", () => {
 
   function errorText(): string {
     return document.querySelector("[data-draft-save-error]")?.textContent ?? "";
+  }
+
+  function textbox(): HTMLElement {
+    return document.querySelector<HTMLElement>('.cm-content[role="textbox"]')!;
+  }
+
+  async function pendingAutosave(): Promise<(response: Response) => void> {
+    const { promise, resolve } = Promise.withResolvers<Response>();
+    fetchMock.mockReturnValueOnce(promise);
+    typeIntoEditor("a");
+    await vi.advanceTimersByTimeAsync(1000);
+    return resolve;
+  }
+
+  function beginManualSave() {
+    const body = new FormData();
+    body.set("title", document.querySelector<HTMLInputElement>("#page_title")!.value);
+    body.set("body", document.querySelector<HTMLTextAreaElement>("#page_body")!.value);
+    const ctx = { request: { body }, response: { status: 0 }, text: "" };
+    document
+      .getElementById("save-draft")!
+      .dispatchEvent(new CustomEvent("htmx:before:request", { bubbles: true, cancelable: true, detail: { ctx } }));
+    return (status: number, text: string): Event => {
+      ctx.response.status = status;
+      ctx.text = text;
+      const event = new CustomEvent("htmx:after:request", { bubbles: true, cancelable: true, detail: { ctx } });
+      document.getElementById("save-draft")!.dispatchEvent(event);
+      return event;
+    };
+  }
+
+  function initializeWithPublishError(): void {
+    const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]")!;
+    container._editorView?.destroy();
+    container.dataset.markdownEditorInvalid = "true";
+    container.dataset.markdownEditorDescribedby = "page-body-error page-draft-save-error";
+    document.body.insertAdjacentHTML("beforeend", '<div id="page-body-error">本文が長すぎます</div>');
+    initializeEditors();
   }
 
   async function autosave(response: Response): Promise<void> {
@@ -302,9 +351,6 @@ describe("自動保存の失敗の表示", () => {
   });
 
   it("保存できたらエラーを消し、保存時刻の再取得を始める", async () => {
-    const autosaved = vi.fn();
-    window.addEventListener("draft-autosaved", autosaved);
-
     await autosave(new Response("本文が長すぎます", { status: 422 }));
     expect(autosaved).not.toHaveBeenCalled();
 
@@ -312,12 +358,150 @@ describe("自動保存の失敗の表示", () => {
 
     expect(errorText()).toBe("");
     expect(autosaved).toHaveBeenCalledTimes(1);
-    window.removeEventListener("draft-autosaved", autosaved);
   });
 
   it("利用者が直せない失敗では表示を変えない", async () => {
     await autosave(new Response("Internal Server Error", { status: 500 }));
 
     expect(errorText()).toBe("");
+  });
+
+  it("新しい自動保存の失敗を、遅れて届いた古い成功が消さない", async () => {
+    const resolveOld = await pendingAutosave();
+    await autosave(new Response("新しい本文が長すぎます", { status: 422 }));
+
+    resolveOld(new Response(null, { status: 204 }));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(errorText()).toContain("新しい本文が長すぎます");
+    expect(textbox().getAttribute("aria-invalid")).toBe("true");
+    expect(autosaved).not.toHaveBeenCalled();
+  });
+
+  it("新しい自動保存の成功後に、古い失敗を出さない", async () => {
+    const resolveOld = await pendingAutosave();
+    await autosave(new Response(null, { status: 204 }));
+
+    resolveOld(new Response("古い本文が長すぎます", { status: 422 }));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(errorText()).toBe("");
+    expect(textbox().hasAttribute("aria-invalid")).toBe(false);
+    expect(autosaved).toHaveBeenCalledTimes(1);
+  });
+
+  it("次の自動保存の送信前でも、入力後に届いた古い成功を表示しない", async () => {
+    const resolveOld = await pendingAutosave();
+    typeIntoEditor("b");
+
+    resolveOld(new Response(null, { status: 204 }));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(autosaved).not.toHaveBeenCalled();
+  });
+
+  it("エラー本文の読み込み中に新しい保存が終わっても、古い失敗を出さない", async () => {
+    const text = Promise.withResolvers<string>();
+    const response = new Response("", { status: 422 });
+    vi.spyOn(response, "text").mockReturnValue(text.promise);
+    await autosave(response);
+    await autosave(new Response(null, { status: 204 }));
+
+    text.resolve("古い本文が長すぎます");
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(errorText()).toBe("");
+    expect(autosaved).toHaveBeenCalledTimes(1);
+  });
+
+  it("手動保存の失敗後に、古い自動保存の成功で表示を戻さない", async () => {
+    const resolveOld = await pendingAutosave();
+    typeIntoEditor("b");
+    beginManualSave()(422, "新しい本文が長すぎます");
+
+    resolveOld(new Response(null, { status: 204 }));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(errorText()).toContain("下書きを保存できませんでした。");
+    expect(textbox().getAttribute("aria-invalid")).toBe("true");
+    expect(autosaved).not.toHaveBeenCalled();
+  });
+
+  it("自動保存の失敗後に、古い手動保存の成功による差し替えを止める", async () => {
+    const finishOld = beginManualSave();
+    await autosave(new Response("新しい本文が長すぎます", { status: 422 }));
+
+    const event = finishOld(200, "old saved time");
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(errorText()).toContain("自動保存できませんでした。");
+    expect(textbox().getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("手動保存の成功後に、古い自動保存の失敗を表示しない", async () => {
+    const resolveOld = await pendingAutosave();
+    typeIntoEditor("b");
+    beginManualSave()(204, "");
+
+    resolveOld(new Response("古い本文が長すぎます", { status: 422 }));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(errorText()).toBe("");
+    expect(textbox().hasAttribute("aria-invalid")).toBe(false);
+  });
+
+  it("自動保存の成功後に、古い手動保存の失敗を表示しない", async () => {
+    const finishOld = beginManualSave();
+    await autosave(new Response(null, { status: 204 }));
+
+    const event = finishOld(422, "古い本文が長すぎます");
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(errorText()).toBe("");
+    expect(textbox().hasAttribute("aria-invalid")).toBe(false);
+  });
+
+  it.each([422, 413])("自動保存の%dで本文をinvalidにし、修正後の保存成功で解除する", async (status) => {
+    await autosave(new Response("本文が長すぎます", { status }));
+    expect(textbox().getAttribute("aria-invalid")).toBe("true");
+    expect(textbox().getAttribute("aria-describedby")).toBe("page-draft-save-error");
+
+    await autosave(new Response(null, { status: 204 }));
+
+    expect(textbox().hasAttribute("aria-invalid")).toBe(false);
+    expect(textbox().getAttribute("aria-describedby")).toBe("page-draft-save-error");
+  });
+
+  it.each([422, 413])("手動保存の%dで本文をinvalidにし、修正後の保存成功で解除する", (status) => {
+    beginManualSave()(status, "本文が長すぎます");
+    expect(textbox().getAttribute("aria-invalid")).toBe("true");
+
+    typeIntoEditor("a");
+    beginManualSave()(204, "");
+
+    expect(textbox().hasAttribute("aria-invalid")).toBe(false);
+    expect(errorText()).toBe("");
+  });
+
+  it("公開エラーの本文を修正して自動保存できたら、古い文面とARIA状態を解除する", async () => {
+    initializeWithPublishError();
+    expect(textbox().getAttribute("aria-invalid")).toBe("true");
+
+    await autosave(new Response(null, { status: 204 }));
+
+    expect(document.getElementById("page-body-error")).toBeNull();
+    expect(textbox().hasAttribute("aria-invalid")).toBe(false);
+    expect(textbox().getAttribute("aria-describedby")).toBe("page-draft-save-error");
+  });
+
+  it("公開エラーの本文を修正して手動保存できたら、古い文面とARIA状態を解除する", () => {
+    initializeWithPublishError();
+    typeIntoEditor("a");
+
+    beginManualSave()(204, "");
+
+    expect(document.getElementById("page-body-error")).toBeNull();
+    expect(textbox().hasAttribute("aria-invalid")).toBe(false);
+    expect(textbox().getAttribute("aria-describedby")).toBe("page-draft-save-error");
   });
 });
