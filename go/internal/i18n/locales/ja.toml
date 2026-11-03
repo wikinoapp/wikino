@@ -1621,6 +1621,22 @@ description = "ページネーションの次のページへのリンク"
 other = "次へ"
 
 # 404エラーページ
+[error_content_too_large_title]
+description = "送った内容が大きすぎるときのエラーページのタイトル"
+other = "送った内容が大きすぎます | Wikino"
+
+[error_content_too_large_heading]
+description = "送った内容が大きすぎるときのエラーページの見出し"
+other = "送った内容が大きすぎます"
+
+[error_content_too_large_message]
+description = "送った内容が大きすぎるときのエラーページのメッセージ。Maxは一度に送れる大きさ (例: 4MB)"
+other = "一度に送れる大きさは{{.Max}}までです。ブラウザの戻るボタンで前の画面に戻り、送る内容を減らしてください。"
+
+[error_content_too_large_back_to_top]
+description = "送った内容が大きすぎるときのエラーページのトップページリンク"
+other = "トップページに戻る"
+
 [error_not_found_title]
 description = "404エラーページのタイトル"
 other = "ページが見つかりませんでした | Wikino"
@@ -2984,6 +3000,10 @@ other = "old_strに一致する箇所が本文にありません。前の編集�
 [api_error_body_edit_multiple_matches]
 description = "公開APIの本文の検索置換で、replace_allがfalseの編集のold_strに一致する箇所が本文に複数ある場合のエラー"
 other = "old_strに一致する箇所が本文に{{.Count}}件あります。前後の文字列を含めて1件に絞るか、すべて置き換える場合はreplace_allをtrueにしてください"
+
+[api_error_request_body_unreadable]
+description = "公開APIでリクエスト本文を読み取れないときのエラー"
+other = "リクエスト本文を読み取れません"
 
 [api_error_body_edit_too_large]
 description = "公開APIの本文の検索置換で、編集後の本文が最大文字数を超える場合のエラー"

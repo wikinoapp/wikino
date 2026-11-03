@@ -3,18 +3,24 @@ package middleware
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/apierror"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	errpages "github.com/wikinoapp/wikino/go/internal/templates/pages/errors"
 )
 
-// DefaultMaxBodyBytesはリクエストボディのデフォルトサイズ上限 (1 MiB)。
-// 既知のテキスト入力フォーム (コメント・ページ本文など) を余裕を持ってカバーしつつ、
-// 意図的な大容量送信によるメモリ枯渇を防ぐために設定している。
-const DefaultMaxBodyBytes = 1 << 20
+// DefaultMaxBodyBytesはリクエストボディのデフォルトサイズ上限 (4 MiB)。
+// 上限の文字数 (model.PageBodyMaxLength) のページ本文が、どの送り方でもこの上限で弾かれず、
+// 必ずアプリのバリデーションに届く大きさにする。
+// multipartではUTF-8のまま送るため1字が最大4バイト、JSONでは制御文字や `<`・`>`・`&` が
+// `\u00XX` の6バイトになりうるため、50万字で最大3MBになる。
+// そのうえで、意図的な大容量送信によるメモリ枯渇を防ぐ。
+const DefaultMaxBodyBytes = 4 << 20
 
 // BodyLimitはリクエストボディのサイズを [DefaultMaxBodyBytes] に制限するミドルウェア。
 // 上限を超過したリクエストには413 Payload Too Largeを返す。
@@ -85,16 +91,23 @@ func NewBodyLimit(problems *apierror.Writer) func(http.Handler) http.Handler {
 }
 
 func writeBodyLimitError(w http.ResponseWriter, r *http.Request, problems *apierror.Writer, status int) {
+	// このミドルウェアは本文を読む前に置くため、言語を決めるミドルウェアより前で動く。
+	// 応答の文言を利用者の言語にするため、ここで言語を決める
+	r = r.WithContext(i18n.SetLocale(r.Context(), i18n.DetectLanguage(r)))
+
 	if problems != nil && session.IsAPIPath(r.URL.Path) {
 		if status == http.StatusRequestEntityTooLarge {
 			problems.ContentTooLarge(w, r)
 		} else {
-			problems.BadRequest(w, r, "リクエスト本文を読み取れません")
+			problems.BadRequest(w, r, i18n.T(r.Context(), "api_error_request_body_unreadable"))
 		}
 		return
 	}
 	if status == http.StatusRequestEntityTooLarge {
-		http.Error(w, "Request Entity Too Large", status)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(status)
+		// テンプレートのレンダリングエラーはレスポンス書き込み後なので無視
+		_ = errpages.ContentTooLargePage(fmt.Sprintf("%dMB", DefaultMaxBodyBytes>>20)).Render(r.Context(), w)
 	} else {
 		http.Error(w, "Bad Request", status)
 	}
