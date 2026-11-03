@@ -763,7 +763,7 @@ func runServe() {
 			usecase.NewDeleteAPIDraftPageUsecase(db, pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),
 		),
 		apidraftpagebodyedit.NewHandler(cfg.AppURL(), usecase.NewCreateAPIDraftPageBodyEditUsecase(db, spaceRepo, pageRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo)),
-		apidraftpagepublication.NewHandler(cfg.AppURL(), usecase.NewCreateAPIDraftPagePublicationUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, suggestionPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewAPIPageUpdateValidator(pageRepo))),
+		apidraftpagepublication.NewHandler(cfg.AppURL(), usecase.NewCreateAPIDraftPagePublicationUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, suggestionPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewAPIPageUpdateValidator(pageRepo), validator.NewAPIDraftPagePublicationValidator())),
 		apidraftpagerevision.NewHandler(
 			usecase.NewListAPIDraftPageRevisionsUsecase(pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),
 			usecase.NewGetAPIDraftPageRevisionUsecase(pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),

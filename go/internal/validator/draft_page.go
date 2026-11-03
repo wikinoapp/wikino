@@ -69,3 +69,30 @@ func (v *DraftPageSaveValidator) Validate(ctx context.Context, input DraftPageSa
 	}
 	return nil
 }
+
+// APIDraftPagePublicationValidatorは公開APIでの下書きの公開で、公開する下書きの本文のバリデーションを行う。
+// 公開する本文はリクエストに含まれず、保存済みの下書きから読むため、OpenAPI記述のスキーマでは確かめられない。
+// 上限が決まる前に保存した下書きや、上限を確かめない経路で保存した下書きを、上限を超えたまま公開しないようにする
+type APIDraftPagePublicationValidator struct{}
+
+// NewAPIDraftPagePublicationValidatorはAPIDraftPagePublicationValidatorを生成する
+func NewAPIDraftPagePublicationValidator() *APIDraftPagePublicationValidator {
+	return &APIDraftPagePublicationValidator{}
+}
+
+// APIDraftPagePublicationValidatorInputはバリデーションの入力パラメータ
+type APIDraftPagePublicationValidatorInput struct {
+	Body string
+}
+
+// Validateはバリデーションを行う
+func (v *APIDraftPagePublicationValidator) Validate(ctx context.Context, input APIDraftPagePublicationValidatorInput) error {
+	ve := model.NewValidationError()
+
+	validatePageBodyLength(ctx, ve, input.Body)
+
+	if ve.HasErrors() {
+		return ve
+	}
+	return nil
+}
