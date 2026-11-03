@@ -42,3 +42,30 @@ func (v *APIDraftPageCreateValidator) Validate(ctx context.Context, input APIDra
 	}
 	return nil
 }
+
+// DraftPageSaveValidatorはWeb画面での下書きの保存 (自動保存と手動保存) のバリデーションを行う
+type DraftPageSaveValidator struct{}
+
+// NewDraftPageSaveValidatorはDraftPageSaveValidatorを生成する
+func NewDraftPageSaveValidator() *DraftPageSaveValidator {
+	return &DraftPageSaveValidator{}
+}
+
+// DraftPageSaveValidatorInputはバリデーションの入力パラメータ
+type DraftPageSaveValidatorInput struct {
+	Body string
+}
+
+// Validateはバリデーションを行う。
+// 下書きは書きかけの状態を保存するため、タイトルの形式は確かめず、公開するときに確かめる。
+// 本文の上限は、上限を超えた下書きを公開できないまま溜め込まないよう、保存するときに確かめる
+func (v *DraftPageSaveValidator) Validate(ctx context.Context, input DraftPageSaveValidatorInput) error {
+	ve := model.NewValidationError()
+
+	validatePageBodyLength(ctx, ve, input.Body)
+
+	if ve.HasErrors() {
+		return ve
+	}
+	return nil
+}

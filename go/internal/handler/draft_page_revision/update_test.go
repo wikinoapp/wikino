@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -20,6 +21,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // newTestHandlerは依存するユースケース一式をqueriesに結線したハンドラーを生成します。
@@ -48,6 +50,7 @@ func newTestHandler(db *sql.DB, queries *query.Queries) *draft_page_revision.Han
 			topicRepo,
 			topicMemberRepo,
 			attachmentRepo,
+			validator.NewDraftPageSaveValidator(),
 		),
 		usecase.NewGetDraftPageRevisionDiffUsecase(
 			spaceRepo,
@@ -451,5 +454,64 @@ func TestUpdate_HTMXRequest(t *testing.T) {
 		if !strings.Contains(body, expected) {
 			t.Errorf("レスポンスに%qが含まれていない", expected)
 		}
+	}
+}
+
+func TestUpdate_BodyTooLong(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("dpr-body-too-long@example.com").
+		WithAtname("dprbodytoolong").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("dpr-body-too-long").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	formData := url.Values{}
+	formData.Set("title", "Test Page")
+	formData.Set("body", strings.Repeat("a", model.PageBodyMaxLength+1))
+	req := newRequestWithChiParams(t, "/s/dpr-body-too-long/pages/1/draft_page_revision", map[string]string{
+		"space_identifier": "dpr-body-too-long",
+		"page_number":      "1",
+	}, formData)
+	req.Header.Set("HX-Request", "true")
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Update(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+	want := "本文は500000文字以内で入力してください (現在500001文字)"
+	if got := strings.TrimSpace(rr.Body.String()); got != want {
+		t.Errorf("レスポンスの本文 = %q、期待値 = %q", got, want)
 	}
 }

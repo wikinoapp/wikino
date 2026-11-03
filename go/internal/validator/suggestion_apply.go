@@ -30,8 +30,10 @@ type SuggestionApplyValidatorInput struct {
 type SuggestionApplyValidatorEntry struct {
 	PageID  model.PageID
 	TopicID model.TopicID
-	// TitleはSuggestionPage.Title。NULLの場合はチェック対象外
+	// TitleはSuggestionPage.Title。NULLの場合はタイトルのチェックを行わない
 	Title *string
+	// BodyはSuggestionPage.Body
+	Body string
 }
 
 // SuggestionApplyValidateOutputはバリデーション成功時の出力
@@ -58,11 +60,16 @@ func (v *SuggestionApplyValidator) Validate(
 
 	for _, entry := range input.Entries {
 		if entry.Title == nil {
+			// タイトルを持たないページも、本文は反映するため上限を確かめる
+			ve := model.NewValidationError()
+			validatePageBodyLength(ctx, ve, entry.Body)
+			v.collectPageErrors(applyErr, ve, "")
 			continue
 		}
 
 		conflictID, err := v.pageUpdateValidator.Validate(ctx, PageUpdateValidatorInput{
 			Title:           *entry.Title,
+			Body:            entry.Body,
 			PageID:          entry.PageID,
 			TopicID:         entry.TopicID,
 			SpaceID:         input.SpaceID,

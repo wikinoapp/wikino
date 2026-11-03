@@ -41,6 +41,7 @@ func NewPageUpdateValidator(pageRepo *repository.PageRepository) *PageUpdateVali
 // PageUpdateValidatorInputはバリデーションの入力パラメータ
 type PageUpdateValidatorInput struct {
 	Title           string
+	Body            string
 	PageID          model.PageID
 	TopicID         model.TopicID
 	SpaceID         model.SpaceID
@@ -52,7 +53,9 @@ type PageUpdateValidatorInput struct {
 func (v *PageUpdateValidator) Validate(ctx context.Context, input PageUpdateValidatorInput) (*model.PageID, error) {
 	ve := model.NewValidationError()
 
-	if !validatePageTitleFormat(ctx, ve, input.Title) {
+	validatePageTitleFormat(ctx, ve, input.Title)
+	validatePageBodyLength(ctx, ve, input.Body)
+	if ve.HasErrors() {
 		return nil, ve
 	}
 
@@ -205,4 +208,17 @@ func validatePageTitleFormat(ctx context.Context, ve *model.ValidationError, tit
 	}
 
 	return !ve.HasErrors()
+}
+
+// validatePageBodyLengthはページ本文の文字数が上限以内かを検証し、超えていればveに加える
+func validatePageBodyLength(ctx context.Context, ve *model.ValidationError, body string) {
+	count := utf8.RuneCountInString(body)
+	if count <= model.PageBodyMaxLength {
+		return
+	}
+
+	ve.AddField("body", i18n.T(ctx, "validation_page_body_too_long", map[string]any{
+		"Max":   model.PageBodyMaxLength,
+		"Count": count,
+	}))
 }

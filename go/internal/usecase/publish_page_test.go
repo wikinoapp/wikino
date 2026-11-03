@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -1077,5 +1078,70 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 
 	if previewOutput.BodyHTML != showOutput.BodyHTML {
 		t.Errorf("プレビューのBodyHTMLが公開後の表示と異なる:\nプレビュー: %q\n公開後の表示: %q", previewOutput.BodyHTML, showOutput.BodyHTML)
+	}
+}
+
+func TestPublishPageUsecase_Execute_BodyTooLong(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	pageRepo := repository.NewPageRepository(q)
+	uc := NewPublishPageUsecase(db, repository.NewSpaceRepository(q), repository.NewSpaceMemberRepository(q), pageRepo,
+		repository.NewPageRevisionRepository(q), repository.NewPageEditorRepository(q), repository.NewDraftPageRepository(q),
+		repository.NewDraftPageRevisionRepository(q), repository.NewSuggestionPageRepository(q), repository.NewTopicRepository(q),
+		repository.NewTopicMemberRepository(q), repository.NewAttachmentRepository(q), repository.NewPageAttachmentReferenceRepository(q),
+		validator.NewPageUpdateValidator(pageRepo))
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-too-long").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-too-long@example.com").
+		WithAtname("publishtoolong").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		WithBody("元の本文").
+		Build()
+
+	_, err := uc.Execute(context.Background(), PublishPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("publish-too-long"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Test Page",
+		Body:            strings.Repeat("a", model.PageBodyMaxLength+1),
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+	}
+	if !ve.HasFieldError("body") {
+		t.Error("bodyのフィールドエラーが無い")
+	}
+
+	page, err := pageRepo.FindBySpaceAndNumber(context.Background(), spaceID, 1)
+	if err != nil {
+		t.Fatalf("ページの取得のエラー = %v", err)
+	}
+	if page.Body != "元の本文" {
+		t.Errorf("Body = %q、期待値 = %q (本文が上限を超えたのに公開された)", page.Body, "元の本文")
 	}
 }

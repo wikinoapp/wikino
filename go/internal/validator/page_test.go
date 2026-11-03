@@ -58,6 +58,48 @@ func TestPageUpdateValidator_FormatValidation(t *testing.T) {
 	}
 }
 
+func TestPageUpdateValidator_BodyLength(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+
+	// 形式の違反があればDBを読まずに返るため、nilのpageRepoを使用
+	v := validator.NewPageUpdateValidator(nil)
+
+	tests := []struct {
+		name       string
+		title      string
+		wantFields []string
+	}{
+		{name: "本文が上限を超えるとbodyのエラーになる", title: "タイトル", wantFields: []string{"body"}},
+		{name: "タイトルと本文の両方に違反があれば両方のエラーになる", title: "", wantFields: []string{"title", "body"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := v.Validate(ctx, validator.PageUpdateValidatorInput{
+				Title:           tt.title,
+				Body:            strings.Repeat("a", model.PageBodyMaxLength+1),
+				PageID:          "test-page-id",
+				TopicID:         "test-topic-id",
+				SpaceID:         "test-space-id",
+				SpaceIdentifier: "test-space",
+			})
+
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+			}
+			for _, field := range tt.wantFields {
+				if !ve.HasFieldError(field) {
+					t.Errorf("%sのフィールドエラーが無い", field)
+				}
+			}
+		})
+	}
+}
+
 // TestPageUpdateValidator_AllowedTitleCharactersはバリデーターが通すタイトルを扱う。
 // これらはDBを読む一意性チェックまで進むため、本テストは実際のDBに対して実行する。
 func TestPageUpdateValidator_AllowedTitleCharacters(t *testing.T) {

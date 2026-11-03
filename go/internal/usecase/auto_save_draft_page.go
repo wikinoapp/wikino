@@ -8,6 +8,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // AutoSaveDraftPageUsecaseは下書きページの自動保存ユースケース
@@ -21,6 +22,7 @@ type AutoSaveDraftPageUsecase struct {
 	topicRepo       *repository.TopicRepository
 	topicMemberRepo *repository.TopicMemberRepository
 	attachmentRepo  *repository.AttachmentRepository
+	saveValidator   *validator.DraftPageSaveValidator
 }
 
 // NewAutoSaveDraftPageUsecaseはAutoSaveDraftPageUsecaseを生成する
@@ -34,6 +36,7 @@ func NewAutoSaveDraftPageUsecase(
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
+	saveValidator *validator.DraftPageSaveValidator,
 ) *AutoSaveDraftPageUsecase {
 	return &AutoSaveDraftPageUsecase{
 		db:              db,
@@ -45,6 +48,7 @@ func NewAutoSaveDraftPageUsecase(
 		topicRepo:       topicRepo,
 		topicMemberRepo: topicMemberRepo,
 		attachmentRepo:  attachmentRepo,
+		saveValidator:   saveValidator,
 	}
 }
 
@@ -76,7 +80,14 @@ func (uc *AutoSaveDraftPageUsecase) Execute(ctx context.Context, input AutoSaveD
 		return nil, err
 	}
 
-	// 3. 永続化
+	// 3. バリデーション
+	if err := uc.saveValidator.Validate(ctx, validator.DraftPageSaveValidatorInput{
+		Body: input.Body,
+	}); err != nil {
+		return nil, err
+	}
+
+	// 4. 永続化
 	return uc.saveDraft(ctx, data, input)
 }
 
