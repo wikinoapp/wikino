@@ -45,9 +45,9 @@ func SuggestionApplyError(data *viewmodel.SuggestionApplyError) templ.Component 
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var2 string
-				templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_apply_page_error", map[string]any{"PageTitle": pageErr.PageTitle}))
+				templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "suggestion_apply_page_error", map[string]any{"PageTitle": pageErr.DisplayPageTitle(ctx)}))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/suggestion_apply_error.templ`, Line: 16, Col: 104}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/components/suggestion_apply_error.templ`, Line: 16, Col: 116}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 				if templ_7745c5c3_Err != nil {

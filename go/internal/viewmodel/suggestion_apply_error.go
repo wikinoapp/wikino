@@ -1,6 +1,11 @@
 package viewmodel
 
-import "github.com/wikinoapp/wikino/go/internal/model"
+import (
+	"context"
+
+	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/model"
+)
 
 // SuggestionApplyErrorは編集提案反映時のバリデーションエラーをテンプレート向けに表したものです
 type SuggestionApplyError struct {
@@ -13,6 +18,15 @@ type SuggestionApplyPageError struct {
 	PageTitle string
 	// MessageはHTMLを含む可能性がある翻訳済みメッセージ。テンプレート側で @templ.Rawで展開する
 	Message string
+}
+
+// DisplayPageTitleはエラーの前に示すページ名を返す。
+// タイトルの無いページは、ほかの画面と同じくローカライズされた「無題」で示す
+func (e SuggestionApplyPageError) DisplayPageTitle(ctx context.Context) string {
+	if e.PageTitle != "" {
+		return e.PageTitle
+	}
+	return i18n.T(ctx, "suggestion_apply_page_error_untitled")
 }
 
 // NewSuggestionApplyErrorはmodel.SuggestionApplyErrorからViewModelを生成します

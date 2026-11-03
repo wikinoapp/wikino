@@ -1919,6 +1919,10 @@ other = "Failed to apply suggestion"
 description = "編集提案反映バリデーションエラーのページ名プレフィックス ({{.PageTitle}} はtempl側の自動エスケープ後に挿入される)"
 other = "Page \"{{.PageTitle}}\": "
 
+[suggestion_apply_page_error_untitled]
+description = "編集提案反映バリデーションエラーで、タイトルの無いページを示す名前"
+other = "Untitled"
+
 [error_suggestion_conflict_during_apply]
 description = "編集提案反映中に競合ページの状態が変わった場合のエラー"
 other = "Page state changed during apply. Please try again."
