@@ -563,6 +563,10 @@ func TestAPIRouter_CreatePage(t *testing.T) {
 	t.Run("存在しないトピックは422", func(t *testing.T) {
 		assertFieldProblem(t, request("wkp_page_write", "application/json", `{"topic_number": 99, "title": "迷子", "body": "本文"}`), "#/topic_number")
 	})
+
+	t.Run("本文が上限を超えれば422", func(t *testing.T) {
+		assertBodyTooLongProblem(t, request("wkp_page_write", "application/json", `{"topic_number": 1, "title": "長い本文", "body": `+tooLongBodyJSON+`}`))
+	})
 }
 
 func TestAPIRouter_UpdatePage(t *testing.T) {

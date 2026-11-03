@@ -132,6 +132,10 @@ func TestAPIRouter_CreateWikilinkPreview(t *testing.T) {
 		assertProblem(t, request(target, "wkp_page_read", `{"topic_number": 1}`), http.StatusUnprocessableEntity)
 	})
 
+	t.Run("本文が上限を超えれば422", func(t *testing.T) {
+		assertBodyTooLongProblem(t, request(target, "wkp_page_read", `{"topic_number": 1, "body": `+tooLongBodyJSON+`}`))
+	})
+
 	t.Run("page:readの無いトークンは403", func(t *testing.T) {
 		assertProblem(t, request(target, "wkp_topic_read", `{"topic_number": 1, "body": ""}`), http.StatusForbidden)
 	})

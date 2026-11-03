@@ -441,6 +441,7 @@ func newDraftPageWriteTestRouter(t *testing.T, identifier string) http.Handler {
 			db, spaceRepo, pageRepo, repository.NewPageRevisionRepository(q), pageEditorRepo, draftPageRepo, draftPageRevisionRepo, repository.NewSuggestionPageRepository(q),
 			topicRepo, topicMemberRepo, repository.NewAttachmentRepository(q), repository.NewPageAttachmentReferenceRepository(q),
 			validator.NewAPIPageUpdateValidator(pageRepo),
+			validator.NewAPIDraftPagePublicationValidator(),
 		)),
 		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),
@@ -593,6 +594,19 @@ func TestAPIRouter_UpdateDraftPage(t *testing.T) {
 
 	t.Run("定義していない項目を含む更新は422", func(t *testing.T) {
 		assertProblem(t, update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, `{"topic_number": 2}`), http.StatusUnprocessableEntity)
+	})
+
+	t.Run("本文の上限はUTF-8のバイト数ではなく文字数で数える", func(t *testing.T) {
+		// 1字2バイトの文字で上限ちょうどの本文は、バイト数では上限を超えるが文字数では超えない
+		body := strings.Repeat("é", model.PageBodyMaxLength)
+		rr := update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, `{"body": "`+body+`"}`)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("ステータス = %d、期待値 = 200 (本文: %.200s)", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("本文が上限を超えれば422", func(t *testing.T) {
+		assertBodyTooLongProblem(t, update("wkp_draft_page_write", currentDraftPageETag(t, r, target), mergePatch, `{"body": `+tooLongBodyJSON+`}`))
 	})
 
 	t.Run("下書きの無いページは404", func(t *testing.T) {
