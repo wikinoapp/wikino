@@ -2982,7 +2982,7 @@ other = "`old_str` of edit {{.Ordinal}} (`edits[{{.Index}}]`) does not match exa
 
 [error_edits_new_str_hint]
 description = "検索置換で編集を適用すると本文が上限を超える (422) ときのヒント。Ordinalは何番目 (1始まり)、Indexは位置 (0始まり)"
-other = "Applying edit {{.Ordinal}} (`edits[{{.Index}}]`) makes the body exceed the limit (1 MiB). No edit was applied. Reduce the edits and send the whole `edits` again."
+other = "Applying edit {{.Ordinal}} (`edits[{{.Index}}]`) makes the body exceed the limit (500,000 characters). No edit was applied. Reduce the edits and send the whole `edits` again."
 
 # --dry-run
 [dry_run_not_sent]

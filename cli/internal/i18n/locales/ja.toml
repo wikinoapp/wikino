@@ -2989,7 +2989,7 @@ other = "{{.Ordinal}}番目の編集 (`edits[{{.Index}}]`) の `old_str` が、�
 
 [error_edits_new_str_hint]
 description = "検索置換で編集を適用すると本文が上限を超える (422) ときのヒント。Ordinalは何番目 (1始まり)、Indexは位置 (0始まり)"
-other = "{{.Ordinal}}番目の編集 (`edits[{{.Index}}]`) を適用すると、本文が上限 (1MiB) を超えます。どの編集も適用していません。編集する内容を減らして、`edits` の全体を送り直してください。"
+other = "{{.Ordinal}}番目の編集 (`edits[{{.Index}}]`) を適用すると、本文が上限 (500,000文字) を超えます。どの編集も適用していません。編集する内容を減らして、`edits` の全体を送り直してください。"
 
 # --dry-run
 [dry_run_not_sent]
