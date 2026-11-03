@@ -441,7 +441,7 @@ func newDraftPageWriteTestRouter(t *testing.T, identifier string) http.Handler {
 			db, spaceRepo, pageRepo, repository.NewPageRevisionRepository(q), pageEditorRepo, draftPageRepo, draftPageRevisionRepo, repository.NewSuggestionPageRepository(q),
 			topicRepo, topicMemberRepo, repository.NewAttachmentRepository(q), repository.NewPageAttachmentReferenceRepository(q),
 			validator.NewAPIPageUpdateValidator(pageRepo),
-			validator.NewAPIDraftPagePublicationValidator(),
+			validator.NewAPIDraftPagePublicationCreateValidator(),
 		)),
 		apidraftpagerevision.NewHandler(nil, nil),
 		openapi_description.NewHandler(api.OpenAPIDescription),

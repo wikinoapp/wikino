@@ -33,7 +33,7 @@ func newCreateAPIDraftPagePublicationUC(db *sql.DB) *CreateAPIDraftPagePublicati
 		repository.NewAttachmentRepository(q),
 		repository.NewPageAttachmentReferenceRepository(q),
 		validator.NewAPIPageUpdateValidator(pageRepo),
-		validator.NewAPIDraftPagePublicationValidator(),
+		validator.NewAPIDraftPagePublicationCreateValidator(),
 	)
 }
 

@@ -29,7 +29,7 @@ type CreateAPIDraftPagePublicationUsecase struct {
 	attachmentRepo        *repository.AttachmentRepository
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository
 	updateValidator       *validator.APIPageUpdateValidator
-	publicationValidator  *validator.APIDraftPagePublicationValidator
+	publicationValidator  *validator.APIDraftPagePublicationCreateValidator
 }
 
 const createAPIDraftPagePublicationRetryLimit = 3
@@ -49,7 +49,7 @@ func NewCreateAPIDraftPagePublicationUsecase(
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
 	updateValidator *validator.APIPageUpdateValidator,
-	publicationValidator *validator.APIDraftPagePublicationValidator,
+	publicationValidator *validator.APIDraftPagePublicationCreateValidator,
 ) *CreateAPIDraftPagePublicationUsecase {
 	return &CreateAPIDraftPagePublicationUsecase{
 		db:                    db,
@@ -178,7 +178,7 @@ func (uc *CreateAPIDraftPagePublicationUsecase) publishOnce(ctx context.Context,
 			return nil, err
 		}
 	}
-	if err := uc.publicationValidator.Validate(ctx, validator.APIDraftPagePublicationValidatorInput{
+	if err := uc.publicationValidator.Validate(ctx, validator.APIDraftPagePublicationCreateValidatorInput{
 		Body: draft.Body,
 	}); err != nil {
 		return nil, err
