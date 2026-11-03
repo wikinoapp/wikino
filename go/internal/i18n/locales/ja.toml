@@ -910,6 +910,10 @@ other = "タイトルを入力してください"
 description = "ページタイトル文字数超過エラー"
 other = "タイトルは200文字以内で入力してください"
 
+[validation_page_body_too_long]
+description = "ページ本文文字数超過エラー (上限と今の文字数を示す)"
+other = "本文は{{.Max}}文字以内で入力してください (現在{{.Count}}文字)"
+
 [validation_page_title_invalid_chars]
 description = "ページタイトル禁止文字エラー"
 other = "タイトルに / \\ : は使用できません"

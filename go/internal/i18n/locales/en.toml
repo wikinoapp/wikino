@@ -910,6 +910,10 @@ other = "Please enter a title"
 description = "ページタイトル文字数超過エラー"
 other = "Title must be 200 characters or less"
 
+[validation_page_body_too_long]
+description = "ページ本文文字数超過エラー (上限と今の文字数を示す)"
+other = "Body must be {{.Max}} characters or less (currently {{.Count}})"
+
 [validation_page_title_invalid_chars]
 description = "ページタイトル禁止文字エラー"
 other = "Title cannot contain / \\ :"
