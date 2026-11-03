@@ -313,6 +313,11 @@ templ Edit(data EditPageData) {
 													name="body"
 													data-markdown-editor-target="textarea"
 												>{ data.Page.Body }</textarea>
+												if data.FormErrors != nil && data.FormErrors.HasFieldError("body") {
+													for _, errorMsg := range data.FormErrors.GetFieldErrors("body") {
+														<p class="text-sm text-error">{ errorMsg }</p>
+													}
+												}
 											</div>
 										</div>
 

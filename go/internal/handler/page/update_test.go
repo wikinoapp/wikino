@@ -412,3 +412,66 @@ type readCloser struct {
 }
 
 func (rc *readCloser) Close() error { return nil }
+
+func TestUpdate_ValidationError_BodyTooLong(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("page-body-too-long@example.com").
+		WithAtname("pagebodytoolong").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-body-too-long").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		Build()
+	testutil.NewTopicMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	form := url.Values{}
+	form.Set("title", "Test Page")
+	form.Set("body", strings.Repeat("a", model.PageBodyMaxLength+1))
+
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/page-body-too-long/pages/1", map[string]string{
+		"space_identifier": "page-body-too-long",
+		"page_number":      "1",
+	})
+	req.Body = toReadCloser(form.Encode())
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handler.Update(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+	want := "本文は500000文字以内で入力してください (現在500001文字)"
+	if !strings.Contains(rr.Body.String(), want) {
+		t.Errorf("レスポンスに %qが含まれていない", want)
+	}
+}
