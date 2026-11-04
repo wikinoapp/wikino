@@ -15,6 +15,7 @@ import (
 // draftPageSaveResultは、別のゴルーチンで実行した下書きの取得・作成・保存の結果
 type draftPageSaveResult struct {
 	draftPage *model.DraftPage
+	created   bool
 	err       error
 }
 
@@ -76,13 +77,13 @@ func TestFindOrCreateDraftPage_ConcurrentCreate(t *testing.T) {
 	// 未コミットの下書きは見えないため作成に進み、他のトランザクションの終了を待つ
 	resultCh := make(chan draftPageSaveResult, 1)
 	go func() {
-		draftPage, err := findOrCreateDraftPage(t.Context(), txDraftPageRepo, saveDraftPageContentInput{
+		draftPage, created, err := findOrCreateDraftPage(t.Context(), txDraftPageRepo, saveDraftPageContentInput{
 			SpaceID:       spaceID,
 			PageID:        pageID,
 			SpaceMemberID: spaceMemberID,
 			TopicID:       topicID,
 		}, time.Now())
-		resultCh <- draftPageSaveResult{draftPage: draftPage, err: err}
+		resultCh <- draftPageSaveResult{draftPage: draftPage, created: created, err: err}
 	}()
 
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
@@ -99,6 +100,10 @@ func TestFindOrCreateDraftPage_ConcurrentCreate(t *testing.T) {
 	}
 	if result.draftPage == nil || result.draftPage.ID != otherDraftPageID {
 		t.Fatalf("findOrCreateDraftPage() = %+v、期待値 = ID %v の下書き", result.draftPage, otherDraftPageID)
+	}
+	// 他のトランザクションが作った下書きは、このトランザクションで作ったものとして扱わない
+	if result.created {
+		t.Error("created = true、期待値 = false")
 	}
 
 	// 競合の後もトランザクションは中断されておらず、続けて下書きを更新してコミットできる

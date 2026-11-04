@@ -84,6 +84,17 @@ type EditPageData struct {
 	// ZenModeはクッキーから読み取ったZenモードの初期状態。サーバー側で初期クラスを描画する
 	// ことで、初回描画後にクライアントで切り替えた場合に起きるレイアウトのちらつきを防ぐ。
 	ZenMode bool
+
+	// PublishConflictは、公開の前提にした下書きの版が今の版と食い違ったときに設定する。
+	// 設定されていれば、競合の知らせを表示した状態で描画する。
+	PublishConflict *PublishConflict
+}
+
+// PublishConflictは、公開が下書きの版の競合で断られたことを表します
+type PublishConflict struct {
+	// CurrentDraftPageDigestは下書きの今の版。下書きが無ければ空文字列。
+	// 利用者が「このまま上書きする」を選んだときに、公開し直す前提の版にする
+	CurrentDraftPageDigest string
 }
 
 // HasBodyErrorは公開で本文のエラーが返ったかどうかを返します
@@ -200,6 +211,39 @@ templ Edit(data EditPageData) {
 
 							@components.FormErrorSummary(data.FormErrors)
 
+							// 保存の前提にした下書きの版の後に、下書きが別の場所 (API・別のタブ) で更新されたことを
+							// 知らせる。競合を受けたスクリプト (web/markdown-editor/draft-conflict.ts) が表示する。
+							// 隠したまま描画しておき、表示したときにrole="alert" で読み上げさせる。
+							// 公開が競合して再表示したときは、表示した状態で描画し、上書きを選んだら公開し直させる。
+							// 読み込んだときから表示している知らせは読み上げられないことがあるため、スクリプトが
+							// フォーカスを移せるようにする。
+							<div
+								class="px-4"
+								data-draft-conflict
+								data-draft-conflict-publish?={ data.PublishConflict != nil }
+								data-reload-confirm={ templates.T(ctx, "page_edit_draft_conflict_reload_confirm") }
+								data-reload-url={ string(templates.PageEditPath(data.Space.Identifier, data.Page.Number)) }
+								hidden?={ data.PublishConflict == nil }
+								if data.PublishConflict != nil {
+									tabindex="-1"
+								}
+							>
+								<div class="alert" data-variant="destructive" role="alert">
+									@templates.Icon("warning-circle-regular")
+									<h2>{ templates.T(ctx, "page_edit_draft_conflict_heading") }</h2>
+									<section>{ templates.T(ctx, "page_edit_draft_conflict_message") }</section>
+									// ボタンをメッセージと同じ列に置き、下の行で折り返して選択肢を読みやすくする。
+									<div class="col-start-2 mt-2 flex flex-wrap gap-2">
+										<button type="button" class="btn rounded-full" data-variant="outline" data-size="sm" data-draft-conflict-reload>
+											{ templates.T(ctx, "page_edit_draft_conflict_reload_button") }
+										</button>
+										<button type="button" class="btn rounded-full" data-variant="destructive" data-size="sm" data-draft-conflict-overwrite>
+											{ templates.T(ctx, "page_edit_draft_conflict_overwrite_button") }
+										</button>
+									</div>
+								</div>
+							</div>
+
 							@components.ContentCard() {
 								// 本文をURLエンコードで送るとUTF-8よりリクエストが大きくなるため、
 								// UTF-8のまま送るmultipartにする
@@ -217,6 +261,10 @@ templ Edit(data EditPageData) {
 									<input type="hidden" id="page-edit-csrf-token" name="csrf_token" value={ data.CSRFToken }/>
 									<input type="hidden" name="page_number" value={ fmt.Sprintf("%d", data.Page.Number) }/>
 									<input type="hidden" name="_method" value="PATCH"/>
+									if !data.IsSuggestionMode() {
+										// 公開の前提にした下書きの版。エディターが保存のたびに書き換える
+										<input type="hidden" name="draft_page_digest" value={ data.Page.DraftPageDigest } data-draft-page-digest-field/>
+									}
 									// タブで囲むのは編集対象のフィールドのみ。下のボタン行はタブパネルの外に置き、
 									// プレビュー表示中も表示されるようにする。
 									//
@@ -337,6 +385,10 @@ templ Edit(data EditPageData) {
 													data-markdown-editor-body={ data.Page.Body }
 													data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
 													data-markdown-editor-draft-save-url={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
+													data-markdown-editor-draft-page-digest={ data.Page.DraftPageDigest }
+													if data.PublishConflict != nil {
+														data-markdown-editor-draft-conflict-digest={ data.PublishConflict.CurrentDraftPageDigest }
+													}
 													data-markdown-editor-csrf-token={ data.CSRFToken }
 													data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
 													data-markdown-editor-space-identifier={ data.Space.Identifier.String() }

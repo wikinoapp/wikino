@@ -73,6 +73,9 @@ type PublishPageInput struct {
 	// Titleはバリデーション前の必須フィールド (空文字列の場合はバリデーションエラー)
 	Title string
 	Body  string
+	// DraftPageDigestは、編集画面が公開の前提にした下書きの版 (開いたときか直前の保存の応答で受け取った版)。
+	// 空文字列は下書きが無いことを前提にした公開を表す
+	DraftPageDigest string
 }
 
 // PublishPageOutputはページ公開の出力パラメータ
@@ -114,17 +117,8 @@ func (uc *PublishPageUsecase) executeOnce(ctx context.Context, input PublishPage
 		return nil, err
 	}
 
-	// 4. 追加データ取得 (下書きページ)
-	var draftPage *model.DraftPage
-	if data.spaceMember != nil {
-		draftPage, err = uc.draftPageRepo.FindByPageAndMember(ctx, data.page.ID, data.spaceMember.ID, data.space.ID)
-		if err != nil {
-			return nil, fmt.Errorf("下書きページの取得に失敗: %w", err)
-		}
-	}
-
-	// 5. ビジネスロジック (トランザクション前)
-	return uc.publishPage(ctx, data, draftPage, input, unpublishedConflictingPageID)
+	// 4. ビジネスロジック (トランザクション前)
+	return uc.publishPage(ctx, data, input, unpublishedConflictingPageID)
 }
 
 func (uc *PublishPageUsecase) pageAccessRepos() pageAccessRepos {
@@ -137,7 +131,7 @@ func (uc *PublishPageUsecase) pageAccessRepos() pageAccessRepos {
 	}
 }
 
-func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessData, draftPage *model.DraftPage, input PublishPageInput, unpublishedConflictingPageID *model.PageID) (*PublishPageOutput, error) {
+func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessData, input PublishPageInput, unpublishedConflictingPageID *model.PageID) (*PublishPageOutput, error) {
 	now := time.Now()
 
 	// トランザクション前: ページ公開に必要な事前計算データを取得
@@ -268,8 +262,15 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 		return nil, fmt.Errorf("トピックメンバーの更新に失敗しました: %w", err)
 	}
 
-	// DraftPageRevisionとDraftPageを削除 (下書きが存在する場合のみ)。
-	// 取得後に別の削除で下書きが消えていれば、削除するものが無いため公開だけを続ける
+	// 公開の前提にした下書きの版を照合する。ページの行を更新して排他ロックを持ってから下書きの行をロックするのは、
+	// ページを共有ロックしてから下書きをロックする保存のトランザクションと同じ順にして、循環待ちにならないようにするため。
+	// 一致しなければ、ページの更新を含めてロールバックし、別の場所の変更を古い画面の内容で上書きしない
+	draftPage, err := lockDraftPageForPublish(ctx, draftPageRepo, data, input.DraftPageDigest)
+	if err != nil {
+		return nil, err
+	}
+
+	// DraftPageRevisionとDraftPageを削除 (下書きが存在する場合のみ)
 	if draftPage != nil {
 		if _, err := deleteDraftPageWithRevisions(ctx, draftPageRepo, draftPageRevisionRepo, draftPage.ID, data.space.ID, nil); err != nil {
 			return nil, err
@@ -284,6 +285,40 @@ func (uc *PublishPageUsecase) publishPage(ctx context.Context, data *pageAccessD
 		Page:        updatedPage,
 		PublishedAt: now,
 	}, nil
+}
+
+// lockDraftPageForPublishは、公開するメンバーの下書きをロックして、公開の前提にした版と照合する。
+// 一致すれば、ロックした下書き (下書きが無い前提で一致したときはnil) を返す。
+// 下書きがある前提で下書きが消えていた (別の場所で公開・削除された) ときも、前提が崩れているため競合にする
+func lockDraftPageForPublish(
+	ctx context.Context,
+	draftPageRepo *repository.DraftPageRepository,
+	data *pageAccessData,
+	expectedDigest string,
+) (*model.DraftPage, error) {
+	found, err := draftPageRepo.FindByPageAndMember(ctx, data.page.ID, data.spaceMember.ID, data.space.ID)
+	if err != nil {
+		return nil, fmt.Errorf("下書きページの取得に失敗しました: %w", err)
+	}
+
+	var locked *model.DraftPage
+	if found != nil {
+		locked, err = draftPageRepo.FindByIDForUpdate(ctx, found.ID, data.space.ID)
+		if err != nil {
+			return nil, fmt.Errorf("下書きのロックに失敗しました: %w", err)
+		}
+	}
+
+	if locked == nil {
+		if expectedDigest == "" {
+			return nil, nil
+		}
+		return nil, draftPageConflictError(ctx, "")
+	}
+	if locked.ContentDigest() != expectedDigest {
+		return nil, draftPageConflictError(ctx, locked.ContentDigest())
+	}
+	return locked, nil
 }
 
 // publishDataはページ公開の事前計算データ

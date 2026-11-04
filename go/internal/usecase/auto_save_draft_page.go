@@ -59,6 +59,9 @@ type AutoSaveDraftPageInput struct {
 	UserID          model.UserID
 	Title           *string
 	Body            string
+	// DraftPageDigestは、編集画面が保存の前提にした下書きの版 (開いたときか直前の保存の応答で受け取った版)。
+	// 空文字列は下書きが無いことを前提にした保存を表す
+	DraftPageDigest string
 }
 
 // AutoSaveDraftPageOutputは下書き自動保存の出力パラメータ
@@ -130,6 +133,7 @@ func (uc *AutoSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageAcc
 		CurrentTopicName:          data.topic.Name,
 		BaseTitle:                 data.page.Title,
 		BaseBody:                  data.page.Body,
+		ExpectedDraftPageDigest:   &input.DraftPageDigest,
 	}
 
 	draftPage, err := saveDraftPageContent(ctx, contentInput, now,

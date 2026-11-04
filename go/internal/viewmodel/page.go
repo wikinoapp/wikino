@@ -20,6 +20,9 @@ type Page struct {
 	Body         string
 	Number       int32
 	ShowingDraft bool
+	// DraftPageDigestは編集画面を開いたときの下書きの版 (`DraftPage.ContentDigest()`)。
+	// 下書きが無ければ空文字列で、エディターは保存のたびに前提の版として送る
+	DraftPageDigest string
 }
 
 // NewPageForEditは編集画面用のPageを生成します。
@@ -31,10 +34,11 @@ func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 			title = *draftPage.Title
 		}
 		return Page{
-			Title:        title,
-			Body:         draftPage.Body,
-			Number:       int32(pg.Number),
-			ShowingDraft: true,
+			Title:           title,
+			Body:            draftPage.Body,
+			Number:          int32(pg.Number),
+			ShowingDraft:    true,
+			DraftPageDigest: draftPage.ContentDigest(),
 		}
 	}
 
@@ -49,12 +53,14 @@ func NewPageForEdit(pg *model.Page, draftPage *model.DraftPage) Page {
 	}
 }
 
-// NewPageFromFormInputはバリデーションエラー時にフォームの入力値を保持したPageを生成します
-func NewPageFromFormInput(title string, body string, number model.PageNumber) Page {
+// NewPageFromFormInputはバリデーションエラー時にフォームの入力値を保持したPageを生成します。
+// draftPageDigestは、再表示した編集画面が次の保存の前提にする下書きの版です
+func NewPageFromFormInput(title string, body string, number model.PageNumber, draftPageDigest string) Page {
 	return Page{
-		Title:  title,
-		Body:   body,
-		Number: int32(number),
+		Title:           title,
+		Body:            body,
+		Number:          int32(number),
+		DraftPageDigest: draftPageDigest,
 	}
 }
 

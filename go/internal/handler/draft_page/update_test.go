@@ -171,8 +171,9 @@ func TestUpdate_SpaceNotFound(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[title]": {"Test"},
-		"pages_edit_form[body]":  {"body"},
+		"pages_edit_form[title]":             {"Test"},
+		"pages_edit_form[draft_page_digest]": {""},
+		"pages_edit_form[body]":              {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/nonexistent/pages/1/draft_page", map[string]string{
 		"space_identifier": "nonexistent",
@@ -214,8 +215,9 @@ func TestUpdate_NotSpaceMember(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[title]": {"Test"},
-		"pages_edit_form[body]":  {"body"},
+		"pages_edit_form[title]":             {"Test"},
+		"pages_edit_form[draft_page_digest]": {""},
+		"pages_edit_form[body]":              {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/dp-private-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-private-space",
@@ -253,8 +255,9 @@ func TestUpdate_PageNotFound(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[title]": {"Test"},
-		"pages_edit_form[body]":  {"body"},
+		"pages_edit_form[title]":             {"Test"},
+		"pages_edit_form[draft_page_digest]": {""},
+		"pages_edit_form[body]":              {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/dp-page-missing/pages/999/draft_page", map[string]string{
 		"space_identifier": "dp-page-missing",
@@ -306,8 +309,9 @@ func TestUpdate_PermissionDenied(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[title]": {"Test"},
-		"pages_edit_form[body]":  {"body"},
+		"pages_edit_form[title]":             {"Test"},
+		"pages_edit_form[draft_page_digest]": {""},
+		"pages_edit_form[body]":              {"body"},
 	}
 	req := newRequestWithChiParams(t, "/s/dp-policy-space/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-policy-space",
@@ -384,8 +388,9 @@ func TestUpdate_BodyTooLong(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	formData := url.Values{
-		"pages_edit_form[title]": {"Test Page"},
-		"pages_edit_form[body]":  {strings.Repeat("a", model.PageBodyMaxLength+1)},
+		"pages_edit_form[title]":             {"Test Page"},
+		"pages_edit_form[draft_page_digest]": {""},
+		"pages_edit_form[body]":              {strings.Repeat("a", model.PageBodyMaxLength+1)},
 	}
 	req := newRequestWithChiParams(t, "/s/dp-body-too-long/pages/1/draft_page", map[string]string{
 		"space_identifier": "dp-body-too-long",
@@ -404,5 +409,184 @@ func TestUpdate_BodyTooLong(t *testing.T) {
 	want := "本文は500,000文字以内で入力してください (現在500,001文字)"
 	if got := strings.TrimSpace(rr.Body.String()); got != want {
 		t.Errorf("レスポンスの本文 = %q、期待値 = %q", got, want)
+	}
+}
+
+// draftPageDigestFixtureは、版の照合を確かめるための下書きを持つメンバーとスペース
+type draftPageDigestFixture struct {
+	userID      model.UserID
+	spaceID     model.SpaceID
+	draftPageID model.DraftPageID
+}
+
+// setupDraftPageDigestFixtureは、UseCaseが自前でトランザクションを管理するため、データをテストDBへ直接コミットして作る
+func setupDraftPageDigestFixture(t *testing.T, identifier string) draftPageDigestFixture {
+	t.Helper()
+
+	db := testutil.GetTestDB()
+	atname := strings.ReplaceAll(identifier, "-", "")
+	userID := testutil.NewUserBuilderDB(t, db).WithEmail(identifier + "@example.com").WithAtname(atname).Build()
+	spaceID := testutil.NewSpaceBuilderDB(t, db).WithIdentifier(identifier).Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(spaceID).WithUserID(userID).Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).WithSpaceID(spaceID).WithNumber(1).WithName("General").Build()
+	testutil.NewTopicMemberBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithSpaceMemberID(spaceMemberID).Build()
+	pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Test Page").Build()
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).WithPageID(pageID).WithSpaceMemberID(spaceMemberID).WithTopicID(topicID).
+		WithTitle("Draft Title").WithBody("Draft body").Build()
+
+	return draftPageDigestFixture{userID: userID, spaceID: spaceID, draftPageID: draftPageID}
+}
+
+// currentDigestは下書きの今の版を返す
+func (f draftPageDigestFixture) currentDigest(t *testing.T) string {
+	t.Helper()
+
+	draftPage, err := repository.NewDraftPageRepository(query.New(testutil.GetTestDB())).FindByID(t.Context(), f.draftPageID, f.spaceID)
+	if err != nil || draftPage == nil {
+		t.Fatalf("下書きの取得 = (%v, %v)、期待値 = 下書き", draftPage, err)
+	}
+	return draftPage.ContentDigest()
+}
+
+func TestUpdate_DraftPageDigest(t *testing.T) {
+	t.Parallel()
+
+	f := setupDraftPageDigestFixture(t, "dp-digest-match")
+	formData := url.Values{
+		"pages_edit_form[title]":             {"Draft Title"},
+		"pages_edit_form[body]":              {"Saved body"},
+		"pages_edit_form[draft_page_digest]": {f.currentDigest(t)},
+	}
+	req := newRequestWithChiParams(t, "/s/dp-digest-match/pages/1/draft_page", map[string]string{
+		"space_identifier": "dp-digest-match",
+		"page_number":      "1",
+	}, formData)
+	req = req.WithContext(middleware.SetUserToContext(req.Context(), &model.User{ID: f.userID}))
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, query.New(testutil.GetTestDB())).Update(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNoContent)
+	}
+	if got, want := rr.Header().Get("ETag"), `"`+f.currentDigest(t)+`"`; got != want {
+		t.Errorf("ETag = %q、期待値 = 保存後の今の版 %q", got, want)
+	}
+}
+
+// TestUpdate_DraftPageDigestMissingは、前提の版の分からない保存を、別の場所の変更を上書きしうるため断り、
+// 編集画面が保存の失敗として表示できる422と文面を返すことを確かめる
+func TestUpdate_DraftPageDigestMissing(t *testing.T) {
+	t.Parallel()
+
+	f := setupDraftPageDigestFixture(t, "dp-digest-missing")
+	before := f.currentDigest(t)
+	formData := url.Values{
+		"pages_edit_form[title]": {"Draft Title"},
+		"pages_edit_form[body]":  {"Saved body"},
+	}
+	req := newRequestWithChiParams(t, "/s/dp-digest-missing/pages/1/draft_page", map[string]string{
+		"space_identifier": "dp-digest-missing",
+		"page_number":      "1",
+	}, formData)
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: f.userID})
+	req = req.WithContext(i18n.SetLocale(ctx, i18n.LangJa))
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, query.New(testutil.GetTestDB())).Update(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+	want := "この画面は古くなっています。書いた内容を控えてから、ページを再読み込みしてください。"
+	if got := strings.TrimSpace(rr.Body.String()); got != want {
+		t.Errorf("レスポンスの本文 = %q、期待値 = %q", got, want)
+	}
+	if got := f.currentDigest(t); got != before {
+		t.Errorf("断った保存の後の版 = %q、期待値 = 保存前の版 %q", got, before)
+	}
+}
+
+func TestUpdate_DraftPageDigestConflict(t *testing.T) {
+	t.Parallel()
+
+	f := setupDraftPageDigestFixture(t, "dp-digest-conflict")
+	staleDigest := f.currentDigest(t)
+	if _, err := testutil.GetTestDB().ExecContext(t.Context(),
+		"UPDATE draft_pages SET body = 'API body', modified_at = modified_at + interval '1 second' WHERE id = $1 AND space_id = $2",
+		f.draftPageID, f.spaceID); err != nil {
+		t.Fatalf("下書きの更新: %v", err)
+	}
+	currentDigest := f.currentDigest(t)
+
+	formData := url.Values{
+		"pages_edit_form[title]":             {"Draft Title"},
+		"pages_edit_form[body]":              {"Saved body"},
+		"pages_edit_form[draft_page_digest]": {staleDigest},
+	}
+	req := newRequestWithChiParams(t, "/s/dp-digest-conflict/pages/1/draft_page", map[string]string{
+		"space_identifier": "dp-digest-conflict",
+		"page_number":      "1",
+	}, formData)
+	ctx := middleware.SetUserToContext(req.Context(), &model.User{ID: f.userID})
+	req = req.WithContext(i18n.SetLocale(ctx, i18n.LangJa))
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, query.New(testutil.GetTestDB())).Update(rr, req)
+
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusConflict)
+	}
+	if got, want := rr.Header().Get("ETag"), `"`+currentDigest+`"`; got != want {
+		t.Errorf("ETag = %q、期待値 = 今の版 %q", got, want)
+	}
+	if got, want := strings.TrimSpace(rr.Body.String()), "下書きは、編集画面を開いたあとに別の場所で更新されています"; got != want {
+		t.Errorf("レスポンスの本文 = %q、期待値 = %q", got, want)
+	}
+	if got := f.currentDigest(t); got != currentDigest {
+		t.Errorf("競合した保存の後の版 = %q、期待値 = 保存前の版 %q", got, currentDigest)
+	}
+}
+
+// TestUpdate_DeletedDraftPageDigestConflictは、下書きが削除された場合も、
+// 下書きが無いことを示す空の版をETagで返し、古い内容で作り直さないことを確かめる
+func TestUpdate_DeletedDraftPageDigestConflict(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	f := setupDraftPageDigestFixture(t, "dp-digest-deleted")
+	staleDigest := f.currentDigest(t)
+	draftPageRepo := repository.NewDraftPageRepository(query.New(db))
+	if err := draftPageRepo.Delete(t.Context(), f.draftPageID, f.spaceID); err != nil {
+		t.Fatalf("下書きの削除: %v", err)
+	}
+
+	formData := url.Values{
+		"pages_edit_form[title]":             {"Draft Title"},
+		"pages_edit_form[body]":              {"Saved body"},
+		"pages_edit_form[draft_page_digest]": {staleDigest},
+	}
+	req := newRequestWithChiParams(t, "/s/dp-digest-deleted/pages/1/draft_page", map[string]string{
+		"space_identifier": "dp-digest-deleted",
+		"page_number":      "1",
+	}, formData)
+	req = req.WithContext(middleware.SetUserToContext(req.Context(), &model.User{ID: f.userID}))
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, query.New(db)).Update(rr, req)
+
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusConflict)
+	}
+	if got := rr.Header().Get("ETag"); got != `""` {
+		t.Errorf("ETag = %q、期待値 = 引用符で囲んだ空の版", got)
+	}
+	var count int
+	if err := db.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM draft_pages WHERE space_id = $1", f.spaceID).Scan(&count); err != nil {
+		t.Fatalf("下書きの件数取得: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("削除後の下書きの数 = %d、期待値 = 0", count)
 	}
 }

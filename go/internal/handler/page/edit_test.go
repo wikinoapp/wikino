@@ -426,7 +426,7 @@ func TestEdit_WithDraftPage(t *testing.T) {
 		Build()
 
 	// DraftPageを作成
-	testutil.NewDraftPageBuilder(t, tx).
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -434,6 +434,10 @@ func TestEdit_WithDraftPage(t *testing.T) {
 		WithTitle("Draft Title").
 		WithBody("Draft body content").
 		Build()
+	draftPage, err := repository.NewDraftPageRepository(queries).FindByID(t.Context(), draftPageID, spaceID)
+	if err != nil || draftPage == nil {
+		t.Fatalf("下書きの取得 = (%v, %v)、期待値 = 下書き", draftPage, err)
+	}
 
 	handler := setupHandler(t, queries)
 
@@ -488,6 +492,20 @@ func TestEdit_WithDraftPage(t *testing.T) {
 	}
 	if !strings.Contains(body, `<input type="hidden" name="_method" value="DELETE">`) {
 		t.Error("削除フォームに_method=DELETEが無い")
+	}
+
+	// エディターが保存の前提にする、開いたときの下書きの版を埋め込み、公開のフォームも同じ版を前提にする
+	for _, want := range []string{
+		`data-markdown-editor-draft-page-digest="` + draftPage.ContentDigest() + `"`,
+		`name="draft_page_digest" value="` + draftPage.ContentDigest() + `"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない", want)
+		}
+	}
+	// 開いたときは競合していないため、知らせを隠して描画する
+	if strings.Contains(body, "data-draft-conflict-publish") || strings.Contains(body, "data-markdown-editor-draft-conflict-digest") {
+		t.Error("開いた編集画面に公開の競合の印が含まれている")
 	}
 }
 
@@ -1558,6 +1576,8 @@ func TestEdit_ActionRowLayout(t *testing.T) {
 		// 本文のエラーが無いときも、保存の失敗はエディタの説明として関連付ける
 		`data-markdown-editor-describedby="page-draft-save-error"`,
 		`data-markdown-editor-invalid="false"`,
+		// 下書きが無いときは、下書きが無いことを前提にした空の版を埋め込む
+		`data-markdown-editor-draft-page-digest=""`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに %qが含まれていない", want)

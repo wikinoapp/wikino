@@ -133,6 +133,7 @@ func TestUpdateAPIDraftPageUsecase_Execute(t *testing.T) {
 			validator.NewDraftPageSaveValidator())
 		if _, err := autoSave.Execute(t.Context(), AutoSaveDraftPageInput{
 			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID, Title: ptr("Webのタイトル"), Body: "Webの本文",
+			DraftPageDigest: before,
 		}); err != nil {
 			t.Fatalf("自動保存のエラー = %v", err)
 		}
