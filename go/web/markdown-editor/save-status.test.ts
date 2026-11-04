@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { beginDraftSave, clearSaveError, initializeSaveStatus, showSaveError } from "./save-status";
+import { beginDraftSave, beginHtmxDraftSave, clearSaveError, initializeSaveStatus, showSaveError } from "./save-status";
 
 // pages/page/edit.templの保存の表示と、下書き保存のボタンを写す
 function statusMarkup(): string {
@@ -44,11 +44,15 @@ function formData(): FormData {
 }
 
 // alpha8と同じctxを要求の開始から応答まで使い、after:requestの取り消しも観測する。
+// 下書き保存のボタンの要求は、draft-version.tsが送る直前に記録する。ここでは渡した内容をそのまま記録する。
 function beginRequest(elementId = "save-draft", data: FormData | null = formData()): RequestContext {
   const ctx: RequestContext = { request: { body: data } };
-  document
-    .getElementById(elementId)
-    ?.dispatchEvent(new CustomEvent("htmx:before:request", { bubbles: true, cancelable: true, detail: { ctx } }));
+  const source = document.getElementById(elementId);
+  source?.dispatchEvent(new CustomEvent("htmx:before:request", { bubbles: true, cancelable: true, detail: { ctx } }));
+  const container = document.querySelector<HTMLElement>("[data-markdown-editor]");
+  if (source?.hasAttribute("data-draft-save-button") && container && data) {
+    beginHtmxDraftSave(ctx, container, data);
+  }
   return ctx;
 }
 

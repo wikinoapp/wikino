@@ -27,10 +27,10 @@ interface DraftSaveRequest {
 
 // 保存時刻の再取得を直前の保存の要求にひも付けるため、画面の要素ごとに最後に送った要求を持つ。
 const latestRequests = new WeakMap<HTMLElement, DraftSaveRequest>();
-const htmxRequests = new WeakMap<HtmxRequestContext, DraftSaveRequest>();
+const htmxRequests = new WeakMap<object, DraftSaveRequest>();
 
-// beginDraftSaveは実際に送る値を記録する。手動保存はhtmxが組み立てたFormDataを渡し、
-// キューで待った要求でも、送信時点の画面の値を保存したものと誤認しないようにする。
+// beginDraftSaveは実際に送る値を記録する。応答を待つあいだの入力の変化を検出できるよう、
+// 要求で送るタイトルと本文を文字列として保持する。
 export function beginDraftSave(container: HTMLElement, data: FormData | URLSearchParams): DraftSaveRequest {
   const request = {
     container,
@@ -39,6 +39,12 @@ export function beginDraftSave(container: HTMLElement, data: FormData | URLSearc
   };
   latestRequests.set(container, request);
   return request;
+}
+
+// beginHtmxDraftSaveは、下書き保存のボタンがhtmxで送る要求の内容を記録し、その要求の応答と結び付ける。
+// draft-version.tsが、順番待ちのあとに入力と前提の版を入れ、送る直前に呼ぶ。
+export function beginHtmxDraftSave(ctx: object, container: HTMLElement, data: FormData | URLSearchParams): void {
+  htmxRequests.set(ctx, beginDraftSave(container, data));
 }
 
 // isCurrentDraftSaveは、要求で送った本文が今の本文と同じかを返す。保存の成否とエラーの表示は
@@ -109,26 +115,21 @@ export function initializeSaveStatus(): void {
 
 // hxは応答のHX-* ヘッダーで、htmxがHX-Redirectの移動先をredirectに入れる。
 interface HtmxRequestContext {
-  request?: { body?: FormData | URLSearchParams | null };
   response?: { status: number };
   hx?: { redirect?: string };
   text?: string;
 }
 
+// 自動保存後の保存時刻の再取得 (GET) も元の保存要求にひも付け、遅い再取得が保存時刻を巻き戻すのを防ぐ。
 function handleBeforeRequest(event: Event): void {
   const source = event.target;
-  if (!(source instanceof Element)) return;
+  if (!(source instanceof Element) || source.id !== REFRESH_TRIGGER_ID) return;
   const ctx = (event as CustomEvent<{ ctx?: HtmxRequestContext }>).detail?.ctx;
   const container = document.querySelector<HTMLElement>(EDITOR_SELECTOR);
   if (!ctx || !container) return;
 
-  if (source.hasAttribute(SAVE_BUTTON_ATTRIBUTE) && ctx.request?.body) {
-    htmxRequests.set(ctx, beginDraftSave(container, ctx.request.body));
-  } else if (source.id === REFRESH_TRIGGER_ID) {
-    // 自動保存後のGETも元の保存要求にひも付け、遅い再取得が保存時刻を巻き戻すのを防ぐ。
-    const request = latestRequests.get(container);
-    if (request) htmxRequests.set(ctx, request);
-  }
+  const request = latestRequests.get(container);
+  if (request) htmxRequests.set(ctx, request);
 }
 
 function handleAfterRequest(event: Event): void {
