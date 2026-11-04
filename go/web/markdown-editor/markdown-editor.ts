@@ -27,6 +27,13 @@ import { FileUploadHandler } from "./file-upload-handler";
 import { insertNewlineAndContinueList } from "./list-continuation";
 import { clickManualSaveButton, handleManualSaveShortcut } from "./manual-save-handler";
 import { pasteHandler } from "./paste-handler";
+import {
+  DRAFT_SAVE_CONFLICT_EVENT,
+  acceptConflictDigest,
+  isDraftConflicted,
+  registerDraftVersion,
+  sendDraftSave,
+} from "./draft-version";
 import { beginDraftSave, clearSaveError, isCurrentDraftSave, showSaveError } from "./save-status";
 import { handleSubmitShortcut } from "./submit-handler";
 import { handleTab, handleShiftTab } from "./tab-handler";
@@ -36,10 +43,15 @@ const AUTOSAVE_DEBOUNCE_MS = 500;
 
 // AutosaveStateはエディタ1つ分の自動保存の状態。下書きの削除前に自動保存を止め、送信中の
 // 保存の完了を待てるようにするため、停止フラグと送信中の保存を保持する。
+// pausedは保存が競合して自動保存を休んでいるあいだtrueになり、利用者が上書きを選ぶと戻る。
 interface AutosaveState {
   debounceTimer: ReturnType<typeof setTimeout> | null;
   stopped: boolean;
+  paused: boolean;
   inFlight: Set<Promise<void>>;
+  saveNow: () => void;
+  container: HTMLElement;
+  view: EditorView | null;
 }
 
 const autosaveStates = new Set<AutosaveState>();
@@ -53,6 +65,9 @@ interface EditorConfig {
   draftSaveUrl: string;
   csrfToken: string;
   topicNumber: string;
+  draftPageDigest: string;
+  // 公開が競合して再表示したときの今の版。競合していなければnull
+  draftConflictDigest: string | null;
   titleInput: HTMLInputElement;
   spaceIdentifier: string;
   describedBy: string;
@@ -60,8 +75,25 @@ interface EditorConfig {
 }
 
 function createEditor(config: EditorConfig): EditorView {
-  const autosave: AutosaveState = { debounceTimer: null, stopped: false, inFlight: new Set() };
+  const autosave: AutosaveState = {
+    debounceTimer: null,
+    stopped: false,
+    // 公開が競合して再表示した画面では、利用者が選ぶまで自動保存を休む
+    paused: config.draftConflictDigest !== null,
+    inFlight: new Set(),
+    saveNow: () => {
+      const saving = saveAsDraft(config, autosave);
+      autosave.inFlight.add(saving);
+      void saving.then(
+        () => autosave.inFlight.delete(saving),
+        () => autosave.inFlight.delete(saving),
+      );
+    },
+    container: config.container,
+    view: null,
+  };
   autosaveStates.add(autosave);
+  registerDraftVersion(config.container, config.draftPageDigest, config.draftConflictDigest);
   const validationAttributes = new Compartment();
   let describedBy = config.describedBy;
   let invalid = config.invalid;
@@ -116,6 +148,7 @@ function createEditor(config: EditorConfig): EditorView {
         destroy: () => {
           autosaveStates.delete(autosave);
           config.container.removeEventListener("draft-save-validation", handleValidationChange);
+          config.container.removeEventListener(DRAFT_SAVE_CONFLICT_EVENT, pauseAutosave);
         },
       })),
       EditorView.domEventHandlers({
@@ -126,19 +159,14 @@ function createEditor(config: EditorConfig): EditorView {
           config.textarea.value = update.state.doc.toString();
           config.textarea.dispatchEvent(new Event("input"));
 
-          if (autosave.stopped) return;
+          if (autosave.stopped || autosave.paused) return;
 
           if (autosave.debounceTimer) {
             clearTimeout(autosave.debounceTimer);
           }
           autosave.debounceTimer = setTimeout(() => {
             autosave.debounceTimer = null;
-            const saving = saveAsDraft(config);
-            autosave.inFlight.add(saving);
-            void saving.then(
-              () => autosave.inFlight.delete(saving),
-              () => autosave.inFlight.delete(saving),
-            );
+            autosave.saveNow();
           }, AUTOSAVE_DEBOUNCE_MS);
         }
       }),
@@ -149,6 +177,18 @@ function createEditor(config: EditorConfig): EditorView {
     state,
     parent: config.container,
   });
+  autosave.view = view;
+
+  // 下書きが別の場所で更新されていたら、利用者が選ぶまで自動保存を休む。古い版を前提にした保存は
+  // 送っても競合するだけで、待っている入力は画面に残る。
+  function pauseAutosave(): void {
+    autosave.paused = true;
+    if (autosave.debounceTimer) {
+      clearTimeout(autosave.debounceTimer);
+      autosave.debounceTimer = null;
+    }
+  }
+  config.container.addEventListener(DRAFT_SAVE_CONFLICT_EVENT, pauseAutosave);
 
   // 公開時のエラーも、修正した本文を保存できたら解消する。属性を直接書き換えると
   // CodeMirrorの再描画で戻るため、Compartmentで入力面の属性を差し替える。
@@ -190,21 +230,43 @@ export function stopAutosave(): Promise<void> {
   return Promise.allSettled(pending).then(() => undefined);
 }
 
-async function saveAsDraft(config: EditorConfig): Promise<void> {
+// overwriteConflictedDraftは、保存が競合したエディタで、競合で受け取った今の版を前提にして画面の
+// 内容をすぐに保存し、自動保存を再開する。利用者が「このまま上書きする」を選んだときに呼ぶ。
+// 選んだボタンは知らせと一緒に隠れるため、入力を続けられるようエディタにフォーカスを戻す。
+export function overwriteConflictedDraft(): void {
+  autosaveStates.forEach((autosave) => {
+    if (!isDraftConflicted(autosave.container)) return;
+    acceptConflictDigest(autosave.container);
+    autosave.paused = false;
+    autosave.saveNow();
+    autosave.view?.focus();
+  });
+}
+
+async function saveAsDraft(config: EditorConfig, autosave: AutosaveState): Promise<void> {
   if (!config.draftSaveUrl) return;
 
-  const formData = new FormData();
-  formData.append("pages_edit_form[topic_number]", config.topicNumber);
-  formData.append("pages_edit_form[title]", config.titleInput.value);
-  formData.append("pages_edit_form[body]", config.textarea.value);
-  formData.append("csrf_token", config.csrfToken);
-  const request = beginDraftSave(config.container, formData);
-
+  // 送るときに記録する。送らなかったときはnullのまま
+  let request = null as ReturnType<typeof beginDraftSave> | null;
   try {
-    const response = await fetch(config.draftSaveUrl, {
-      method: "PATCH",
-      body: formData,
+    // 前の保存を待ってから、その時点の入力と前提の版で送る
+    const response = await sendDraftSave(config.container, async (digest) => {
+      // 待っているあいだに止めた・競合した保存は送らない。競合した版を前提にしても上書きできない
+      if (autosave.stopped || autosave.paused) return null;
+
+      const formData = new FormData();
+      formData.append("pages_edit_form[topic_number]", config.topicNumber);
+      formData.append("pages_edit_form[title]", config.titleInput.value);
+      formData.append("pages_edit_form[body]", config.textarea.value);
+      formData.append("pages_edit_form[draft_page_digest]", digest);
+      formData.append("csrf_token", config.csrfToken);
+      request = beginDraftSave(config.container, formData);
+      return fetch(config.draftSaveUrl, {
+        method: "PATCH",
+        body: formData,
+      });
     });
+    if (!response || !request) return;
 
     if (response.ok) {
       if (!isCurrentDraftSave(request)) return;
@@ -245,6 +307,8 @@ export function initializeEditors(): void {
     const draftSaveUrl = container.dataset.markdownEditorDraftSaveUrl || "";
     const csrfToken = container.dataset.markdownEditorCsrfToken || "";
     const topicNumber = container.dataset.markdownEditorTopicNumber || "";
+    const draftPageDigest = container.dataset.markdownEditorDraftPageDigest || "";
+    const draftConflictDigest = container.dataset.markdownEditorDraftConflictDigest ?? null;
     const spaceIdentifier = container.dataset.markdownEditorSpaceIdentifier || "";
     const describedBy = container.dataset.markdownEditorDescribedby || "";
     const invalid = container.dataset.markdownEditorInvalid === "true";
@@ -258,6 +322,8 @@ export function initializeEditors(): void {
       draftSaveUrl,
       csrfToken,
       topicNumber,
+      draftPageDigest,
+      draftConflictDigest,
       titleInput,
       spaceIdentifier,
       describedBy,

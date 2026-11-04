@@ -214,7 +214,7 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebDelete(t *testing.T) {
 }
 
 // Web画面の公開とAPIの削除の双方を先行させ、どちらも下書き → 編集履歴の順にロックして循環待ちにならないことを確かめる。
-// 公開が先行すれば後続の削除は404になり、削除が先行すれば後続の公開は消えた下書きの削除を飛ばして成功する
+// 公開が先行すれば後続の削除は404になり、削除が先行すれば後続の公開は前提にした下書きが消えたため競合になる
 func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebPublish(t *testing.T) {
 	t.Parallel()
 
@@ -233,6 +233,7 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebPublish(t *testing.T) {
 				WithSpaceID(f.space.ID).WithPageID(pageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[1]).Build()
 			testutil.NewDraftPageRevisionBuilderDB(t, db).
 				WithDraftPageID(draftID).WithSpaceID(f.space.ID).WithSpaceMemberID(f.spaceMemberID).Build()
+			digest := draftPageDigest(t, db, draftID, f.space.ID)
 
 			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 			defer cancel()
@@ -252,6 +253,7 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebPublish(t *testing.T) {
 			publish := func() error {
 				_, err := publishUC.Execute(ctx, PublishPageInput{
 					SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID, Title: "公開したタイトル", Body: "公開した本文",
+					DraftPageDigest: digest,
 				})
 				return err
 			}
@@ -280,15 +282,20 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebPublish(t *testing.T) {
 			if !publishFirst {
 				publishErr, deleteErr = deleteErr, publishErr
 			}
-			if publishErr != nil {
-				t.Fatalf("公開のエラー = %v、期待値 = nil", publishErr)
-			}
+			wantPublished := 0
 			if publishFirst {
+				if publishErr != nil {
+					t.Fatalf("先行する公開のエラー = %v、期待値 = nil", publishErr)
+				}
 				if model.AsAppError(deleteErr) == nil || model.AsAppError(deleteErr).Code != model.AppErrCodeResourceNotFound {
 					t.Fatalf("後続の削除のエラー = %v、期待値 = AppErrCodeResourceNotFound", deleteErr)
 				}
-			} else if deleteErr != nil {
-				t.Fatalf("先行する削除のエラー = %v、期待値 = nil", deleteErr)
+				wantPublished = 1
+			} else {
+				if deleteErr != nil {
+					t.Fatalf("先行する削除のエラー = %v、期待値 = nil", deleteErr)
+				}
+				assertDraftPageConflict(t, publishErr, "")
 			}
 			if n := countRows(t, db, "draft_pages", f.space.ID, "id = $2", draftID); n != 0 {
 				t.Errorf("残った下書きの数 = %d、期待値 = 0", n)
@@ -296,8 +303,8 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebPublish(t *testing.T) {
 			if n := countRows(t, db, "draft_page_revisions", f.space.ID, "draft_page_id = $2", draftID); n != 0 {
 				t.Errorf("残った編集履歴の数 = %d、期待値 = 0", n)
 			}
-			if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND title = $3", pageID, "公開したタイトル"); n != 1 {
-				t.Errorf("公開したタイトルのページの数 = %d、期待値 = 1", n)
+			if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND title = $3", pageID, "公開したタイトル"); n != wantPublished {
+				t.Errorf("公開したタイトルのページの数 = %d、期待値 = %d", n, wantPublished)
 			}
 		})
 	}

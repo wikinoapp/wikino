@@ -215,6 +215,8 @@ func TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevision(t *testing.T) 
 	}
 
 	// 2回目の保存 (同一内容): リビジョン作成はスキップされ、保存自体は成功する。
+	// 編集画面は、直前の保存の応答で受け取った版を前提にして次を保存する
+	input.DraftPageDigest = first.DraftPage.ContentDigest()
 	second, err := uc.Execute(context.Background(), input)
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -237,6 +239,7 @@ func TestManualSaveDraftPageUsecase_Execute_SkipDuplicateRevision(t *testing.T) 
 	// 3回目の保存 (内容変更): 新しいリビジョンが作成される。
 	changedInput := input
 	changedInput.Body = "変更後の本文"
+	changedInput.DraftPageDigest = second.DraftPage.ContentDigest()
 	third, err := uc.Execute(context.Background(), changedInput)
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -299,7 +302,7 @@ func TestManualSaveDraftPageUsecase_Execute_SkipRevisionSameAsBase(t *testing.T)
 		WithBody("元の本文").
 		Build()
 	// 起点を記録する前からある下書き (起点の列がNULL)
-	testutil.NewDraftPageBuilderDB(t, db).
+	legacyDraftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(legacyPageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -342,6 +345,8 @@ func TestManualSaveDraftPageUsecase_Execute_SkipRevisionSameAsBase(t *testing.T)
 	}
 
 	// リビジョンの無い下書きを、起点と同じ内容でもう一度保存する: リビジョンは作らない。
+	// 編集画面は、直前の保存の応答で受け取った版を前提にして次を保存する
+	input.DraftPageDigest = first.DraftPage.ContentDigest()
 	second, err := uc.Execute(context.Background(), input)
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -353,6 +358,7 @@ func TestManualSaveDraftPageUsecase_Execute_SkipRevisionSameAsBase(t *testing.T)
 	// 起点から変えて保存する: リビジョンを作る。
 	changedInput := input
 	changedInput.Body = "元の本文\n足した行"
+	changedInput.DraftPageDigest = second.DraftPage.ContentDigest()
 	third, err := uc.Execute(context.Background(), changedInput)
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -362,6 +368,7 @@ func TestManualSaveDraftPageUsecase_Execute_SkipRevisionSameAsBase(t *testing.T)
 	}
 
 	// 起点の内容に戻して保存する: 直前のリビジョンとは違うため、リビジョンを作る。
+	input.DraftPageDigest = third.DraftPage.ContentDigest()
 	fourth, err := uc.Execute(context.Background(), input)
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -381,6 +388,7 @@ func TestManualSaveDraftPageUsecase_Execute_SkipRevisionSameAsBase(t *testing.T)
 		UserID:          userID,
 		Title:           &legacyTitle,
 		Body:            "元の本文",
+		DraftPageDigest: draftPageDigest(t, db, legacyDraftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -446,4 +454,60 @@ func TestManualSaveDraftPageUsecase_Execute_BodyTooLong(t *testing.T) {
 	if draftPage != nil {
 		t.Error("本文が上限を超えたのに下書きが保存された")
 	}
+}
+
+// TestManualSaveDraftPageUsecase_Execute_DraftPageDigestは、手動保存も編集画面が前提にした下書きの版を照合し、
+// 食い違うときは下書きもリビジョンも書かないことを確かめる
+func TestManualSaveDraftPageUsecase_Execute_DraftPageDigest(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+
+	t.Run("前提の版が今の版と一致すれば、保存してリビジョンを作る", func(t *testing.T) {
+		t.Parallel()
+		f := setupCreateAPIPageFixture(t, db, "manual-save-digest-match", apiTopicRegularMemberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[2]).WithNumber(1).WithTitle("ページ").Build()
+		draftID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(f.space.ID).WithPageID(pageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[2]).
+			WithTitle("下書き").WithBody("下書きの本文").Build()
+		digest := draftPageDigest(t, db, draftID, f.space.ID)
+
+		output, err := newManualSaveUC(db).Execute(t.Context(), ManualSaveDraftPageInput{
+			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID,
+			Title: ptr("下書き"), Body: "画面の本文", DraftPageDigest: digest,
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if output.DraftPageRevision == nil {
+			t.Error("リビジョン = nil、期待値 = 作成したリビジョン")
+		}
+		if got := draftPageDigest(t, db, draftID, f.space.ID); got != output.DraftPage.ContentDigest() {
+			t.Errorf("返した版 = %q、期待値 = 保存後の今の版 %q", output.DraftPage.ContentDigest(), got)
+		}
+	})
+
+	t.Run("前提の版の後に下書きが変わっていれば、保存もリビジョンの作成もせずに競合を返す", func(t *testing.T) {
+		t.Parallel()
+		f := setupCreateAPIPageFixture(t, db, "manual-save-digest-mismatch", apiTopicRegularMemberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[2]).WithNumber(1).WithTitle("ページ").Build()
+		draftID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(f.space.ID).WithPageID(pageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[2]).
+			WithTitle("下書き").WithBody("下書きの本文").Build()
+		staleDigest := draftPageDigest(t, db, draftID, f.space.ID)
+		execForTest(t, db, "UPDATE draft_pages SET body = 'APIの本文', modified_at = modified_at + interval '1 second' WHERE id = $1 AND space_id = $2", draftID, f.space.ID)
+		currentDigest := draftPageDigest(t, db, draftID, f.space.ID)
+
+		_, err := newManualSaveUC(db).Execute(t.Context(), ManualSaveDraftPageInput{
+			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID,
+			Title: ptr("下書き"), Body: "画面の本文", DraftPageDigest: staleDigest,
+		})
+		assertDraftPageConflict(t, err, currentDigest)
+		if n := countRows(t, db, "draft_pages", f.space.ID, "id = $2 AND body = 'APIの本文'", draftID); n != 1 {
+			t.Errorf("APIの本文を保った下書きの数 = %d、期待値 = 1", n)
+		}
+		if n := countRows(t, db, "draft_page_revisions", f.space.ID, "draft_page_id = $2", draftID); n != 0 {
+			t.Errorf("リビジョンの数 = %d、期待値 = 0", n)
+		}
+	})
 }

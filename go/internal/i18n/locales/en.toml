@@ -844,6 +844,26 @@ other = "Couldn't save automatically."
 description = "下書き保存に失敗したときに、自動保存の表示の位置に出すエラーの冒頭"
 other = "Couldn't save the draft."
 
+[page_edit_draft_conflict_heading]
+description = "編集画面で下書きの競合を知らせる見出し"
+other = "The draft was updated elsewhere"
+
+[page_edit_draft_conflict_message]
+description = "編集画面で下書きの競合を知らせる説明"
+other = "The draft was updated through the API or in another tab after you opened this page. Autosave is paused so that those changes are not overwritten."
+
+[page_edit_draft_conflict_reload_button]
+description = "下書きの競合で最新の内容を読み込むボタン"
+other = "Load the latest version"
+
+[page_edit_draft_conflict_overwrite_button]
+description = "下書きの競合で画面の内容で上書きするボタン"
+other = "Overwrite with this content"
+
+[page_edit_draft_conflict_reload_confirm]
+description = "下書きの競合で最新の内容を読み込む前の確認"
+other = "Your unsaved changes on this page will be discarded. Load the latest version?"
+
 [page_edit_body_too_large]
 description = "送った内容が送るときの上限を超えて保存できなかったときの理由"
 other = "The body is too long. Keep it within {{.Max}} characters."
@@ -942,6 +962,10 @@ other = "Title cannot start or end with a space"
 description = "ページタイトル重複エラー (HTML含む)"
 other = "has already existed. <a class=\"underline\" href=\"%s\">Edit the existing page</a>"
 
+[validation_draft_page_digest_missing]
+description = "編集画面の自動保存・下書き保存で、保存の前提にした下書きの版を送らない編集画面からの保存を断るときのエラー"
+other = "This page is out of date. Copy what you have written, then reload the page."
+
 # Page publish success
 [flash_page_saved]
 description = "ページ保存成功メッセージ"
@@ -1005,6 +1029,10 @@ other = "Cancel"
 [error_suggestion_page_update_conflict]
 description = "編集提案ページ更新時の競合エラー"
 other = "Could not update the suggestion because the draft was not found."
+
+[error_draft_page_modified]
+description = "編集画面の自動保存・下書き保存・公開で、画面を開いたあとに下書きが別の場所で更新されていた場合の競合エラー"
+other = "The draft has been updated elsewhere since you opened the editor."
 
 # Page move
 [page_move_title]

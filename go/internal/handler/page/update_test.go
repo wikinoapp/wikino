@@ -10,6 +10,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/query"
+	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
 
@@ -62,6 +64,7 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	form := url.Values{}
 	form.Set("title", "")
 	form.Set("body", "Updated body")
+	form.Set("draft_page_digest", "submitted-digest")
 	form.Set("csrf_token", "test-csrf-token")
 
 	req := newRequestWithChiParams(t, http.MethodPost, "/s/update-space/pages/1", map[string]string{
@@ -106,6 +109,20 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 	// 本文の入力値が保持されていること
 	if !strings.Contains(body, "Updated body") {
 		t.Error("レスポンスで本文の値が保持されていない")
+	}
+
+	// 公開は下書きを変えずに失敗したため、再表示した画面も送信された版を前提にし続けること
+	for _, want := range []string{
+		`name="draft_page_digest" value="submitted-digest"`,
+		`data-markdown-editor-draft-page-digest="submitted-digest"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに%qが含まれていない", want)
+		}
+	}
+	// バリデーションエラーでは競合の知らせを出さないこと
+	if strings.Contains(body, "data-draft-conflict-publish") || strings.Contains(body, "data-markdown-editor-draft-conflict-digest") {
+		t.Error("バリデーションエラーの再表示に公開の競合の印が含まれている")
 	}
 
 	breadcrumb := pageEditBreadcrumb(t, body)
@@ -189,6 +206,7 @@ func TestUpdate_ValidationError_InvalidChars(t *testing.T) {
 	form := url.Values{}
 	form.Set("title", "foo/bar")
 	form.Set("body", "body content")
+	form.Set("draft_page_digest", "")
 
 	req := newRequestWithChiParams(t, http.MethodPost, "/s/invalid-space/pages/1", map[string]string{
 		"space_identifier": "invalid-space",
@@ -264,6 +282,7 @@ func TestUpdate_ValidationError_DuplicateTitle(t *testing.T) {
 	form := url.Values{}
 	form.Set("title", "Existing Title")
 	form.Set("body", "body2")
+	form.Set("draft_page_digest", "")
 
 	req := newRequestWithChiParams(t, http.MethodPost, "/s/dup-space/pages/2", map[string]string{
 		"space_identifier": "dup-space",
@@ -303,6 +322,7 @@ func TestUpdate_NotLoggedIn(t *testing.T) {
 	form := url.Values{}
 	form.Set("title", "New Title")
 	form.Set("body", "New body")
+	form.Set("draft_page_digest", "")
 
 	req := newRequestWithChiParams(t, http.MethodPost, "/s/my-space/pages/1", map[string]string{
 		"space_identifier": "my-space",
@@ -341,6 +361,7 @@ func TestUpdate_SpaceNotFound(t *testing.T) {
 	form := url.Values{}
 	form.Set("title", "New Title")
 	form.Set("body", "New body")
+	form.Set("draft_page_digest", "")
 
 	req := newRequestWithChiParams(t, http.MethodPost, "/s/nonexistent/pages/1", map[string]string{
 		"space_identifier": "nonexistent",
@@ -383,6 +404,7 @@ func TestUpdate_PageNotFound(t *testing.T) {
 	form := url.Values{}
 	form.Set("title", "New Title")
 	form.Set("body", "New body")
+	form.Set("draft_page_digest", "")
 
 	req := newRequestWithChiParams(t, http.MethodPost, "/s/nopg-space/pages/999", map[string]string{
 		"space_identifier": "nopg-space",
@@ -451,6 +473,7 @@ func TestUpdate_ValidationError_BodyTooLong(t *testing.T) {
 	form := url.Values{}
 	form.Set("title", "Test Page")
 	form.Set("body", strings.Repeat("a", model.PageBodyMaxLength+1))
+	form.Set("draft_page_digest", "")
 
 	req := newRequestWithChiParams(t, http.MethodPost, "/s/page-body-too-long/pages/1", map[string]string{
 		"space_identifier": "page-body-too-long",
@@ -495,5 +518,192 @@ func TestUpdate_ValidationError_BodyTooLong(t *testing.T) {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに %qが含まれていない", want)
 		}
+	}
+}
+
+// publishDigestFixtureは、公開の版の照合を確かめるための下書きを持つメンバーとスペース。
+// 公開のUseCaseは自前でトランザクションを管理するため、データをテストDBへ直接コミットして作る
+type publishDigestFixture struct {
+	identifier  string
+	userID      model.UserID
+	spaceID     model.SpaceID
+	pageID      model.PageID
+	draftPageID model.DraftPageID
+}
+
+func setupPublishDigestFixture(t *testing.T, identifier string) publishDigestFixture {
+	t.Helper()
+
+	db := testutil.GetTestDB()
+	atname := strings.ReplaceAll(identifier, "-", "")
+	userID := testutil.NewUserBuilderDB(t, db).WithEmail(identifier + "@example.com").WithAtname(atname).Build()
+	spaceID := testutil.NewSpaceBuilderDB(t, db).WithIdentifier(identifier).Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).WithSpaceID(spaceID).WithUserID(userID).Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).WithSpaceID(spaceID).WithNumber(1).WithName("General").Build()
+	testutil.NewTopicMemberBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithSpaceMemberID(spaceMemberID).Build()
+	pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Test Page").Build()
+	draftPageID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(spaceID).WithPageID(pageID).WithSpaceMemberID(spaceMemberID).WithTopicID(topicID).
+		WithTitle("Draft Title").WithBody("Draft body").Build()
+
+	return publishDigestFixture{identifier: identifier, userID: userID, spaceID: spaceID, pageID: pageID, draftPageID: draftPageID}
+}
+
+// currentDigestは下書きの今の版を返す
+func (f publishDigestFixture) currentDigest(t *testing.T) string {
+	t.Helper()
+
+	draftPage, err := repository.NewDraftPageRepository(query.New(testutil.GetTestDB())).FindByID(t.Context(), f.draftPageID, f.spaceID)
+	if err != nil || draftPage == nil {
+		t.Fatalf("下書きの取得 = (%v, %v)、期待値 = 下書き", draftPage, err)
+	}
+	return draftPage.ContentDigest()
+}
+
+// publishはuserIDのメンバーとしてformを公開のフォームから送り、記録したレスポンスを返す
+func (f publishDigestFixture) publish(t *testing.T, userID model.UserID, form url.Values) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := newRequestWithChiParams(t, http.MethodPost, "/s/"+f.identifier+"/pages/1", map[string]string{
+		"space_identifier": f.identifier,
+		"page_number":      "1",
+	})
+	req.Body = toReadCloser(form.Encode())
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = middleware.SetUserToContext(ctx, &model.User{ID: userID})
+	ctx = i18n.SetLocale(ctx, i18n.LangJa)
+	req = req.WithContext(ctx)
+
+	db := testutil.GetTestDB()
+	rr := httptest.NewRecorder()
+	setupHandlerWithDB(t, db, query.New(db)).Update(rr, req)
+	return rr
+}
+
+// countPublishedTitleは、ページのタイトルがtitleになっている (公開された) 数を返す
+func (f publishDigestFixture) countPublishedTitle(t *testing.T, title string) int {
+	t.Helper()
+
+	var n int
+	if err := testutil.GetTestDB().QueryRowContext(t.Context(),
+		"SELECT COUNT(*) FROM pages WHERE id = $1 AND space_id = $2 AND title = $3", f.pageID, f.spaceID, title).Scan(&n); err != nil {
+		t.Fatalf("ページの数の取得: %v", err)
+	}
+	return n
+}
+
+func TestUpdate_DraftPageDigest(t *testing.T) {
+	t.Parallel()
+
+	f := setupPublishDigestFixture(t, "page-update-digest-match")
+	rr := f.publish(t, f.userID, url.Values{
+		"title":             {"Published Title"},
+		"body":              {"Published body"},
+		"draft_page_digest": {f.currentDigest(t)},
+	})
+
+	if rr.Code != http.StatusSeeOther {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusSeeOther)
+	}
+	if n := f.countPublishedTitle(t, "Published Title"); n != 1 {
+		t.Errorf("公開したタイトルのページの数 = %d、期待値 = 1", n)
+	}
+}
+
+// TestUpdate_DraftPageDigestConflictは、公開の前提にした版の後に下書きが変わっていれば公開せず、
+// 送信されたタイトルと本文を残した編集画面を、競合の知らせを出した状態で409で返すことを確かめる
+func TestUpdate_DraftPageDigestConflict(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		identifier string
+		// digestsは送る版の項目。nilなら項目を送らない
+		digests func(staleDigest string) []string
+		// wantFormDigestは再表示した公開のフォームが持つ前提の版
+		wantFormDigest func(staleDigest string) string
+	}{
+		{
+			name:           "前提の版の後に下書きが別の場所で更新されていた",
+			identifier:     "page-update-digest-conflict",
+			digests:        func(stale string) []string { return []string{stale} },
+			wantFormDigest: func(stale string) string { return stale },
+		},
+		{
+			name:           "版の項目を送らない (版を持たない古い編集画面からの) 公開",
+			identifier:     "page-update-digest-missing",
+			digests:        func(string) []string { return nil },
+			wantFormDigest: func(string) string { return "" },
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := setupPublishDigestFixture(t, tt.identifier)
+			staleDigest := f.currentDigest(t)
+			if _, err := testutil.GetTestDB().ExecContext(t.Context(),
+				"UPDATE draft_pages SET body = 'API body', modified_at = modified_at + interval '1 second' WHERE id = $1 AND space_id = $2",
+				f.draftPageID, f.spaceID); err != nil {
+				t.Fatalf("下書きの更新: %v", err)
+			}
+			currentDigest := f.currentDigest(t)
+
+			form := url.Values{"title": {"Published Title"}, "body": {"Screen body"}}
+			if digests := tt.digests(staleDigest); digests != nil {
+				form["draft_page_digest"] = digests
+			}
+			rr := f.publish(t, f.userID, form)
+
+			if rr.Code != http.StatusConflict {
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusConflict)
+			}
+			body := rr.Body.String()
+			for _, want := range []string{
+				// 送信されたタイトルと本文を画面に残す
+				`value="Published Title"`,
+				`data-markdown-editor-body="Screen body"`,
+				// 知らせを表示した状態で描画し、上書きを選んだら公開し直させる
+				`data-draft-conflict data-draft-conflict-publish data-reload-confirm=`,
+				`data-reload-url="/s/` + tt.identifier + `/pages/1/edit"`,
+				"下書きが別の場所で更新されています",
+				// エディターは送信された版を前提にしたまま、今の版を競合の版として持つ
+				`name="draft_page_digest" value="` + tt.wantFormDigest(staleDigest) + `"`,
+				`data-markdown-editor-draft-page-digest="` + tt.wantFormDigest(staleDigest) + `"`,
+				`data-markdown-editor-draft-conflict-digest="` + currentDigest + `"`,
+			} {
+				if !strings.Contains(body, want) {
+					t.Errorf("レスポンスに%qが含まれていない", want)
+				}
+			}
+			_, conflictTag, _ := strings.Cut(body, "data-draft-conflict data-draft-conflict-publish ")
+			conflictTag, _, _ = strings.Cut(conflictTag, ">")
+			if strings.Contains(conflictTag, " hidden") {
+				t.Error("公開の競合の知らせが隠れている")
+			}
+			if n := f.countPublishedTitle(t, "Published Title"); n != 0 {
+				t.Errorf("公開したタイトルのページの数 = %d、期待値 = 0", n)
+			}
+			if got := f.currentDigest(t); got != currentDigest {
+				t.Errorf("競合した公開の後の版 = %q、期待値 = 公開前の版 %q", got, currentDigest)
+			}
+		})
+	}
+}
+
+// TestUpdate_DraftPageDigestMissing_NotEditorは、版の項目を送らない公開でも、ページを編集できない利用者には
+// 編集画面を再表示せず404を返すことを確かめる
+func TestUpdate_DraftPageDigestMissing_NotEditor(t *testing.T) {
+	t.Parallel()
+
+	f := setupPublishDigestFixture(t, "page-update-digest-not-editor")
+	outsiderID := testutil.NewUserBuilderDB(t, testutil.GetTestDB()).
+		WithEmail("page-update-digest-outsider@example.com").WithAtname("pageupdatedigestoutsider").Build()
+
+	rr := f.publish(t, outsiderID, url.Values{"title": {"Published Title"}, "body": {"Screen body"}})
+
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusNotFound)
 	}
 }

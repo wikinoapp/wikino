@@ -95,6 +95,15 @@ func TestNewPageForEdit(t *testing.T) {
 			if got.Number != tt.wantNum {
 				t.Errorf("Number = %d、期待値 = %d", got.Number, tt.wantNum)
 			}
+
+			// 下書きがあれば開いたときの下書きの版を、無ければ空の版を持つ
+			var wantDigest string
+			if tt.draftPage != nil {
+				wantDigest = tt.draftPage.ContentDigest()
+			}
+			if got.DraftPageDigest != wantDigest {
+				t.Errorf("DraftPageDigest = %q、期待値 = %q", got.DraftPageDigest, wantDigest)
+			}
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package draft_page_revision
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -44,6 +45,14 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	body := r.FormValue("body")
 
+	// 編集画面が保存の前提にした下書きの版。前提の分からない保存は、別の場所の変更を上書きしうるため受け付けない。
+	// 版を送らない編集画面でも保存の失敗として文面を表示できるよう、422と再読み込みを促す文面で断る
+	draftPageDigests, ok := r.Form["draft_page_digest"]
+	if !ok || len(draftPageDigests) == 0 {
+		http.Error(w, i18n.T(ctx, "validation_draft_page_digest_missing"), http.StatusUnprocessableEntity)
+		return
+	}
+
 	// タイトルのポインタ変換
 	var titlePtr *string
 	if title != "" {
@@ -57,6 +66,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		UserID:          user.ID,
 		Title:           titlePtr,
 		Body:            body,
+		DraftPageDigest: draftPageDigests[0],
 	})
 	if err != nil {
 		if ve := model.AsValidationError(err); ve != nil {
@@ -69,6 +79,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 			switch ae.Code {
 			case model.AppErrCodeResourceNotFound, model.AppErrCodeForbidden:
 				httperror.NotFound(w, r)
+			case model.AppErrCodeConflict:
+				// 下書きが別の場所で更新されていた。編集画面が今の版を前提に上書きし直せるよう、今の版を添える
+				var conflict *usecase.DraftPageConflict
+				if errors.As(err, &conflict) {
+					w.Header().Set("ETag", draftPageETag(conflict.CurrentDigest))
+				}
+				http.Error(w, ae.UserMsg, http.StatusConflict)
 			default:
 				slog.ErrorContext(ctx, ae.LogString())
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -80,6 +97,9 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	// 編集画面が次の保存の前提にする、保存後の下書きの版
+	w.Header().Set("ETag", draftPageETag(saveOutput.DraftPage.ContentDigest()))
 
 	// リダイレクト先を決定
 	redirectTo := r.URL.Query().Get("redirect_to")
@@ -108,6 +128,11 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_draft_page_saved"))
 	http.Redirect(w, r, "/drafts", http.StatusSeeOther)
+}
+
+// draftPageETagは下書きの版を、引用符で囲んだ強いエンティティタグにする
+func draftPageETag(digest string) string {
+	return `"` + digest + `"`
 }
 
 // renderUpdateFragmentは手動保存後のOOBスワップフラグメントをレンダリングします。

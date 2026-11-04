@@ -62,6 +62,9 @@ type ManualSaveDraftPageInput struct {
 	UserID          model.UserID
 	Title           *string
 	Body            string
+	// DraftPageDigestは、編集画面が保存の前提にした下書きの版 (開いたときか直前の保存の応答で受け取った版)。
+	// 空文字列は下書きが無いことを前提にした保存を表す
+	DraftPageDigest string
 }
 
 // ManualSaveDraftPageOutputは下書きページの手動保存の出力パラメータ
@@ -176,6 +179,7 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		CurrentTopicName:          data.topic.Name,
 		BaseTitle:                 data.page.Title,
 		BaseBody:                  data.page.Body,
+		ExpectedDraftPageDigest:   &input.DraftPageDigest,
 	}
 
 	// DraftPageのfind_or_create・Wikiリンクの解決・更新

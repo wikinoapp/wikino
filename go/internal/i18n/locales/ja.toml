@@ -844,6 +844,26 @@ other = "自動保存できませんでした。"
 description = "下書き保存に失敗したときに、自動保存の表示の位置に出すエラーの冒頭"
 other = "下書きを保存できませんでした。"
 
+[page_edit_draft_conflict_heading]
+description = "編集画面で下書きの競合を知らせる見出し"
+other = "下書きが別の場所で更新されています"
+
+[page_edit_draft_conflict_message]
+description = "編集画面で下書きの競合を知らせる説明"
+other = "この画面を開いたあとに、APIや別のタブで下書きが更新されました。上書きしないよう自動保存を止めています。"
+
+[page_edit_draft_conflict_reload_button]
+description = "下書きの競合で最新の内容を読み込むボタン"
+other = "最新の内容を読み込む"
+
+[page_edit_draft_conflict_overwrite_button]
+description = "下書きの競合で画面の内容で上書きするボタン"
+other = "このまま上書きする"
+
+[page_edit_draft_conflict_reload_confirm]
+description = "下書きの競合で最新の内容を読み込む前の確認"
+other = "この画面の保存していない変更は破棄されます。最新の内容を読み込みますか？"
+
 [page_edit_body_too_large]
 description = "送った内容が送るときの上限を超えて保存できなかったときの理由"
 other = "本文が長すぎます。本文は{{.Max}}文字以内にしてください。"
@@ -942,6 +962,10 @@ other = "タイトルの先頭・末尾にスペースは使用できません"
 description = "ページタイトル重複エラー (HTML含む)"
 other = "は既に存在しています。<a class=\"underline\" href=\"%s\">既存のページを編集</a>"
 
+[validation_draft_page_digest_missing]
+description = "編集画面の自動保存・下書き保存で、保存の前提にした下書きの版を送らない編集画面からの保存を断るときのエラー"
+other = "この画面は古くなっています。書いた内容を控えてから、ページを再読み込みしてください。"
+
 # ページ公開成功
 [flash_page_saved]
 description = "ページ保存成功メッセージ"
@@ -1005,6 +1029,10 @@ other = "キャンセル"
 [error_suggestion_page_update_conflict]
 description = "編集提案ページ更新時の競合エラー"
 other = "下書きが見つからないため、編集提案を更新できませんでした"
+
+[error_draft_page_modified]
+description = "編集画面の自動保存・下書き保存・公開で、画面を開いたあとに下書きが別の場所で更新されていた場合の競合エラー"
+other = "下書きは、編集画面を開いたあとに別の場所で更新されています"
 
 # ページ移動
 [page_move_title]
