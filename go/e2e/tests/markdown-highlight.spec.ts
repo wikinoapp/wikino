@@ -25,6 +25,7 @@ const BODY_MARKDOWN = [
 ].join("\n");
 
 let editPath: string;
+let pagePath: string;
 let spaceIdentifier: string;
 let topicId: string;
 let spaceId: string;
@@ -40,7 +41,8 @@ test.beforeAll(async () => {
     title: "Markdown Highlight Page",
     body: BODY_MARKDOWN,
   });
-  editPath = `/s/${shared.space.identifier}/pages/${page_.number}/edit`;
+  pagePath = `/s/${shared.space.identifier}/pages/${page_.number}`;
+  editPath = `${pagePath}/edit`;
 });
 
 test.describe("エディタのMarkdownの色付け", () => {
@@ -110,13 +112,36 @@ test.describe("エディタのMarkdownの色付け", () => {
     const destinationColor = await colorOf(".wikino-md-link-destination.wikino-md-url");
 
     expect(await colorOf(".wikino-md-heading.wikino-md-mark")).toBe(headingColor);
-    expect(await colorOf(".wikino-md-strong:not(.wikino-md-mark)")).toBe(linkColor);
-    expect(await colorOf(".wikino-md-strong.wikino-md-mark")).toBe(linkColor);
+    const strongColor = await colorOf(".wikino-md-strong:not(.wikino-md-mark)");
+    expect(await colorOf(".wikino-md-strong.wikino-md-mark")).toBe(strongColor);
+    expect(strongColor).not.toBe(linkColor);
     expect(await colorOf(".wikino-md-link.wikino-md-mark:not(.wikino-md-link-destination)")).toBe(linkColor);
     expect(await colorOf(".wikino-md-wikilink.wikino-md-mark")).toBe(linkColor);
     // リンクの `(...)` は、括弧も含めてテキストの側と別の色にする
     expect(destinationColor).not.toBe(linkColor);
     expect(await colorOf(".wikino-md-link-destination.wikino-md-mark")).toBe(destinationColor);
+  });
+
+  test("リンクがページ詳細画面の本文のリンクと同じ色で、コードと違う色になること", async ({ page }) => {
+    await page.goto(pagePath);
+    const bodyLink = page.locator('.wikino-markdown a[href="https://wikino.app"]');
+    await expect(bodyLink).toBeVisible();
+    const bodyLinkColor = await bodyLink.evaluate((el) => getComputedStyle(el).color);
+
+    await page.goto(editPath);
+    const content = page.locator(".cm-content");
+    await expect(content).toBeVisible();
+
+    const colorOf = (selector: string) =>
+      content
+        .locator(selector)
+        .first()
+        .evaluate((el) => getComputedStyle(el).color);
+    const linkColor = await colorOf(".wikino-md-link:not(.wikino-md-mark):not(.wikino-md-link-destination)");
+
+    expect(linkColor).toBe(bodyLinkColor);
+    expect(await colorOf(".wikino-md-wikilink:not(.wikino-md-mark)")).toBe(bodyLinkColor);
+    expect(await colorOf(".wikino-md-code")).not.toBe(linkColor);
   });
 
   test("表の見出し行が、本文の行と同じ色になること", async ({ page }) => {
