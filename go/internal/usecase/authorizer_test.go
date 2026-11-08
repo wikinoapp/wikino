@@ -18,6 +18,8 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 		updateVisibility bool
 		createPage       bool
 		trashPage        bool
+		pinPage          bool
+		unpinPage        bool
 		applySuggestion  bool
 		createSuggestion bool
 		updateSpace      bool
@@ -38,7 +40,7 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 			name:      "管理者はすべての操作ができる",
 			spaceRole: model.SpaceRoleAdmin,
 			want: want{
-				showPrivateTopic: true, createTopic: true, updateVisibility: true, createPage: true, trashPage: true,
+				showPrivateTopic: true, createTopic: true, updateVisibility: true, createPage: true, trashPage: true, pinPage: true, unpinPage: true,
 				applySuggestion: true, createSuggestion: true, updateSpace: true, createPAT: true, showOAuthApps: true,
 				createComment: true, deleteDraft: true,
 			},
@@ -47,7 +49,7 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 			name:      "編集者はトピックとページを書けるが、公開範囲とスペースの設定は変えられない",
 			spaceRole: model.SpaceRoleEditor,
 			want: want{
-				showPrivateTopic: true, createTopic: true, createPage: true, trashPage: true,
+				showPrivateTopic: true, createTopic: true, createPage: true, trashPage: true, pinPage: true, unpinPage: true,
 				applySuggestion: true, createSuggestion: true, createPAT: true,
 				createComment: true, deleteDraft: true,
 			},
@@ -64,7 +66,7 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 			spaceRole: model.SpaceRoleViewer,
 			topicRole: model.TopicRoleEditor,
 			want: want{
-				showPrivateTopic: true, createPage: true, trashPage: true, applySuggestion: true,
+				showPrivateTopic: true, createPage: true, trashPage: true, pinPage: true, unpinPage: true, applySuggestion: true,
 				createSuggestion: true, createPAT: true, createComment: true, deleteDraft: true,
 			},
 		},
@@ -73,7 +75,7 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 			spaceRole: model.SpaceRoleEditor,
 			topicRole: model.TopicRoleAdmin,
 			want: want{
-				showPrivateTopic: true, createTopic: true, updateVisibility: true, createPage: true, trashPage: true,
+				showPrivateTopic: true, createTopic: true, updateVisibility: true, createPage: true, trashPage: true, pinPage: true, unpinPage: true,
 				applySuggestion: true, createSuggestion: true, createPAT: true,
 				createComment: true, deleteDraft: true,
 			},
@@ -93,7 +95,7 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 			topicRole:    model.TopicRoleAdmin,
 			maxTopicRole: model.TopicRoleEditor,
 			want: want{
-				showPrivateTopic: true, createTopic: true, createPage: true, trashPage: true,
+				showPrivateTopic: true, createTopic: true, createPage: true, trashPage: true, pinPage: true, unpinPage: true,
 				applySuggestion: true, createSuggestion: true, createPAT: true,
 				createComment: true, deleteDraft: true,
 			},
@@ -104,7 +106,7 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 			topicRole:    model.TopicRoleViewer,
 			maxTopicRole: model.TopicRoleViewer,
 			want: want{
-				showPrivateTopic: true, createTopic: true, updateVisibility: true, createPage: true, trashPage: true,
+				showPrivateTopic: true, createTopic: true, updateVisibility: true, createPage: true, trashPage: true, pinPage: true, unpinPage: true,
 				applySuggestion: true, createSuggestion: true, updateSpace: true, createPAT: true, showOAuthApps: true,
 				createComment: true, deleteDraft: true,
 			},
@@ -131,6 +133,8 @@ func TestNewAuthorizer_Roles(t *testing.T) {
 				updateVisibility: a.CanUpdateTopicVisibility(),
 				createPage:       a.CanCreatePage(),
 				trashPage:        a.CanTrashPage(),
+				pinPage:          a.CanPinPage(),
+				unpinPage:        a.CanUnpinPage(),
 				applySuggestion:  a.CanApplySuggestion(),
 				createSuggestion: a.CanCreateSuggestion(privateTopic),
 				updateSpace:      a.CanUpdateSpace(),
