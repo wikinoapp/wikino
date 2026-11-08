@@ -265,7 +265,7 @@ class PageRecord < ApplicationRecord
     return markdown_match[1] if markdown_match
 
     # 2. HTML img要素をチェック: <img src="/attachments/attachment_id" ...>
-    img_match = first_line.match(%r{<img[^>]+src=[\"']/attachments/([^\"']+)[\"'][^>]*>}i)
+    img_match = first_line.match(%r{<img[^>]+src=["']/attachments/([^"']+)["'][^>]*>}i)
     return img_match[1] if img_match
 
     nil
