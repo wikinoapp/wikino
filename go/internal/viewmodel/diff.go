@@ -41,19 +41,57 @@ func (b DiffBlock) HasChanges() bool {
 	return false
 }
 
-// ComputeDiffBlocksは2つのテキストの差分を計算し、DiffBlockのスライスとして返します。
-// contextLinesは変更箇所の前後に表示するコンテキスト行数です。
-func ComputeDiffBlocks(oldText, newText string, contextLines int) []DiffBlock {
-	// 改行コードを正規化する。ブラウザのフォーム送信では\r\nが使われることがあり、
-	// DB内の既存データと改行コードが異なると同じ行内容でも差分として検出される。
+// bodyDiffContextLinesは本文の差分で変更箇所の前後に表示するコンテキスト行数です。
+const bodyDiffContextLines = 3
+
+// DiffSourcesMaxBytesは差分に新旧の本文を埋める上限 (新旧の本文のUTF-8のバイト数の合計) です。
+// 本文は記法の色付けのためにブラウザへ送り、ブラウザで解析し直す。上限を超える本文を埋めると、
+// 応答が大きくなり、モーダルの表示が受信と解析を待つことになるため、埋めずに色の無い差分にする。
+// 上限では、ブラウザでの解析と色付けが100ms未満に収まる。
+const DiffSourcesMaxBytes = 100_000
+
+// DiffSourcesは差分の計算に使った、改行を正規化した後の新旧の本文です。差分の各行の行番号は
+// この本文の行を指すため、ブラウザはこの本文を解析して各行に記法の色を当てる。
+type DiffSources struct {
+	Old string `json:"old"`
+	New string `json:"new"`
+}
+
+// BodyDiffはページ本文の差分です。Sourcesは記法の色付けに使う新旧の本文で、変更が無いときと
+// 本文が大きすぎるときはnilになります。
+type BodyDiff struct {
+	Blocks  []DiffBlock
+	Sources *DiffSources
+}
+
+// NewBodyDiffはページ本文の新旧の差分を計算します。
+func NewBodyDiff(oldText, newText string) BodyDiff {
 	oldText = normalizeNewlines(oldText)
 	newText = normalizeNewlines(newText)
 
+	diff := BodyDiff{Blocks: computeNormalizedDiffBlocks(oldText, newText, bodyDiffContextLines)}
+	if len(diff.Blocks) > 0 && len(oldText)+len(newText) <= DiffSourcesMaxBytes {
+		diff.Sources = &DiffSources{Old: oldText, New: newText}
+	}
+
+	return diff
+}
+
+// ComputeDiffBlocksは2つのテキストの差分を計算し、DiffBlockのスライスとして返します。
+// contextLinesは変更箇所の前後に表示するコンテキスト行数です。
+func ComputeDiffBlocks(oldText, newText string, contextLines int) []DiffBlock {
+	return computeNormalizedDiffBlocks(normalizeNewlines(oldText), normalizeNewlines(newText), contextLines)
+}
+
+// computeNormalizedDiffBlocksは改行を正規化した2つのテキストの差分を計算します。
+func computeNormalizedDiffBlocks(oldText, newText string, contextLines int) []DiffBlock {
 	dmp := diffmatchpatch.New()
 	a, b, c := dmp.DiffLinesToChars(oldText, newText)
 	diffs := dmp.DiffMain(a, b, false)
-	diffs = dmp.DiffCharsToLines(diffs, c)
+	// 整理は行を置き換えた文字の上で行い、編集の位置を行の単位でだけ動かす。差分の断片を行の境目に揃え、
+	// 各行の行番号が新旧の本文の行を指すようにするためである。
 	diffs = dmp.DiffCleanupSemantic(diffs)
+	diffs = dmp.DiffCharsToLines(diffs, c)
 
 	lines := buildDiffLines(diffs)
 	if len(lines) == 0 {
@@ -63,7 +101,9 @@ func ComputeDiffBlocks(oldText, newText string, contextLines int) []DiffBlock {
 	return groupIntoBlocks(lines, contextLines)
 }
 
-// normalizeNewlinesは改行コードを\nに統一し、末尾に改行がなければ追加します
+// normalizeNewlinesは改行コードを\nに統一し、末尾に改行がなければ追加します。
+// ブラウザのフォーム送信では\r\nが使われることがあり、DB内の既存データと改行コードが異なると
+// 同じ行内容でも差分として検出されるためです。
 func normalizeNewlines(text string) string {
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	text = strings.ReplaceAll(text, "\r", "\n")
@@ -80,12 +120,12 @@ func buildDiffLines(diffs []diffmatchpatch.Diff) []DiffLine {
 	newNum := 1
 
 	for _, d := range diffs {
-		// 末尾の改行を除去して行に分割
-		text := strings.TrimSuffix(d.Text, "\n")
-		if text == "" {
+		if d.Text == "" {
 			continue
 		}
 
+		// 末尾の改行を除去して行に分割する。改行1つだけの断片も空行1行なので、行番号を進める。
+		text := strings.TrimSuffix(d.Text, "\n")
 		splitLines := strings.Split(text, "\n")
 
 		switch d.Type {

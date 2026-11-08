@@ -27,6 +27,16 @@
   /* 周囲の文章の色をそのまま受け取るリンク。見出し下のサブタイトルのように、それ自体が
      色を持つ文章の中へ置くヘルプリンク向け。 */
   --app-link-inherit-foreground: currentcolor;
+  /*
+    Markdownの記法の色。Solarized Lightのアクセントの色 (base01・orange・blue・violet・cyan) の色相と彩度を保ち、
+    エディタと差分の行の背景 (bg-background・bg-red-50・bg-green-50) でコントラスト比4.5:1以上になるまで
+    HSLの明度を下げている。base01は元の値 (#586e75) のままで届く。
+  */
+  --app-md-mark: oklch(0.523 0.0283 219.14); /* base01 #586e75 */
+  --app-md-heading: oklch(0.5562 0.1646 39.69); /* orange #cb4b16 → #bf4715 */
+  --app-md-link: oklch(0.5394 0.1203 244.66); /* blue #268bd2 → #2074af */
+  --app-md-link-destination: oklch(0.55 0.1379 278.44); /* violet #6c71c4 → #6166c0 */
+  --app-md-code: oklch(0.5297 0.0829 187.38); /* cyan #2aa198 → #207b74 */
   --app-success: var(--color-green-600);
   --app-success-foreground: var(--color-white);
   --app-error: var(--color-red-600);
@@ -124,6 +134,12 @@
   --color-link-primary-foreground: var(--app-link-primary-foreground);
   --color-link-muted-foreground: var(--app-link-muted-foreground);
   --color-link-inherit-foreground: var(--app-link-inherit-foreground);
+
+  --color-md-mark: var(--app-md-mark);
+  --color-md-heading: var(--app-md-heading);
+  --color-md-link: var(--app-md-link);
+  --color-md-link-destination: var(--app-md-link-destination);
+  --color-md-code: var(--app-md-code);
 
   --color-error-foreground: var(--app-error-foreground);
   --color-error: var(--app-error);
@@ -426,8 +442,9 @@
   @apply bg-card;
 }
 
+/* 行番号と本文の境界線の間を空け、行番号が境界線に接しないようにする */
 .cm-editor .cm-lineNumbers {
-  @apply bg-card;
+  @apply bg-card pr-2.5;
 }
 
 .cm-editor .cm-content {
@@ -440,4 +457,53 @@
 */
 .cm-editor .cm-scroller {
   @apply font-editor leading-relaxed;
+}
+
+/*
+  ============================================================================
+  Markdownの記法の色付け
+  ============================================================================
+*/
+/*
+  エディタと差分の本文で共有する (web/markdown-highlight/markdown-highlighter.tsがクラス名を付ける)。
+  色は、エディタの背景と差分の行の背景 (bg-background・bg-red-50・bg-green-50) のいずれでもコントラスト比4.5:1以上にする。
+  記号の色を最初に書き、見出し・太字・リンク・URLの中の記号を、その記法の色にする。強調・取り消し線・コード・引用の
+  記号は記号の色のままにする。太字はリンクと同じblueにする。
+  引用の色は最後に書き、引用の中は記法を問わず引用の色にする。
+*/
+.wikino-md-mark {
+  @apply text-md-mark;
+}
+
+.wikino-md-heading {
+  @apply text-md-heading;
+}
+
+.wikino-md-strong {
+  @apply font-bold text-md-link;
+}
+
+.wikino-md-emphasis {
+  @apply italic;
+}
+
+.wikino-md-strikethrough {
+  @apply line-through;
+}
+
+.wikino-md-link,
+.wikino-md-url {
+  @apply text-md-link;
+}
+
+.wikino-md-link-destination {
+  @apply text-md-link-destination;
+}
+
+.wikino-md-code {
+  @apply text-md-code;
+}
+
+.wikino-md-quote {
+  @apply text-md-mark;
 }

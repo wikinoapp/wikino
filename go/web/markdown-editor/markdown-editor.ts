@@ -1,13 +1,6 @@
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import {
-  defaultHighlightStyle,
-  syntaxHighlighting,
-  indentOnInput,
-  bracketMatching,
-  foldGutter,
-  foldKeymap,
-} from "@codemirror/language";
+import { syntaxHighlighting, indentOnInput, bracketMatching } from "@codemirror/language";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { Compartment, EditorState } from "@codemirror/state";
 import {
@@ -21,6 +14,9 @@ import {
   lineNumbers,
 } from "@codemirror/view";
 import { EditorView } from "codemirror";
+
+import { markdownHighlighter } from "../markdown-highlight/markdown-highlighter";
+import { markdownLanguage } from "../markdown-highlight/markdown-language";
 
 import { fileDropHandler } from "./file-drop-handler";
 import { FileUploadHandler } from "./file-upload-handler";
@@ -109,12 +105,14 @@ function createEditor(config: EditorConfig): EditorView {
       lineNumbers(),
       highlightSpecialChars(),
       history(),
-      foldGutter(),
       drawSelection(),
       dropCursor(),
       EditorState.allowMultipleSelections.of(true),
       indentOnInput(),
-      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      // 言語は記法の色付けのために足す。言語が持つ折りたたみの範囲 (段落・コードブロックなど) は使わず、
+      // 折りたたみの印と操作は置かない。
+      markdownLanguage,
+      syntaxHighlighting(markdownHighlighter),
       bracketMatching(),
       closeBrackets(),
       autocompletion({ override: [wikilinkCompletions(config.spaceIdentifier)] }),
@@ -138,7 +136,6 @@ function createEditor(config: EditorConfig): EditorView {
         ...defaultKeymap,
         ...searchKeymap,
         ...historyKeymap,
-        ...foldKeymap,
         ...completionKeymap,
       ]),
       fileDropHandler,
