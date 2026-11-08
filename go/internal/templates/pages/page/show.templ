@@ -168,6 +168,8 @@ templ showPageActions(data ShowData) {
 						</a>
 					</div>
 				}
+				// Basecoatのドロップダウンは、キーボードで選んだ項目に対してrole="menuitem"を持つ要素自身の
+				// click()を呼ぶ。送信ボタンにroleを付け、Enter・Spaceでもフォームが送信されるようにする。
 				if data.showsPinAction() {
 					// すぐに戻せる操作のため、確認のダイアログは出さない。
 					<form
