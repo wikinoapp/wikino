@@ -64,7 +64,6 @@ func TestAPIRateLimit_Middleware(t *testing.T) {
 				Allowed:   true,
 				Count:     1,
 				Remaining: 99,
-				ResetAt:   time.Now().Add(30 * time.Second),
 			}},
 			wantInput:     &ratelimit.CheckInput{Key: "api:space_member:space-member-1", Limit: 100, Window: time.Minute},
 			wantStatus:    http.StatusOK,
@@ -78,7 +77,6 @@ func TestAPIRateLimit_Middleware(t *testing.T) {
 				Allowed:   false,
 				Count:     101,
 				Remaining: 0,
-				ResetAt:   time.Now().Add(30 * time.Second),
 			}},
 			wantInput:      &ratelimit.CheckInput{Key: "api:space_member:space-member-1", Limit: 100, Window: time.Minute},
 			wantStatus:     http.StatusTooManyRequests,
@@ -108,6 +106,9 @@ func TestAPIRateLimit_Middleware(t *testing.T) {
 				req = req.WithContext(middleware.SetAPIPrincipalToContext(req.Context(), tt.principal))
 			}
 			rr := httptest.NewRecorder()
+			if tt.limiter.result != nil {
+				tt.limiter.result.ResetAt = time.Now().Add(30 * time.Second)
+			}
 			middleware.NewAPIRateLimit(tt.limiter, apierror.NewWriter("https://example.com"), policy).Middleware(next).ServeHTTP(rr, req)
 
 			if rr.Code != tt.wantStatus {

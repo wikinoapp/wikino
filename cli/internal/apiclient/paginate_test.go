@@ -75,7 +75,10 @@ func TestAll_StopsEarly(t *testing.T) {
 		"c2": {items: []int{3}, next: nil},
 	}, &calls)
 
-	for item := range All(context.Background(), fetch) {
+	for item, err := range All(context.Background(), fetch) {
+		if err != nil {
+			t.Fatalf("エラーが返りました: %v", err)
+		}
 		if item == 1 {
 			break
 		}
