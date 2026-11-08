@@ -332,6 +332,23 @@ SET trashed_at = @trashed_at,
 WHERE id = @id
   AND space_id = @space_id;
 
+-- name: PinPageByID :exec
+-- ページにピンを打つ。打ってあるページの日時は変えず、送り直しても一覧の並び順が変わらないようにする。
+-- modified_atはトピックの一覧の並び順とページの版に使うため変えず、状態の変更としてupdated_atだけを更新する。
+UPDATE pages
+SET pinned_at = COALESCE(pinned_at, @pinned_at::timestamp),
+    updated_at = @updated_at
+WHERE id = @id
+  AND space_id = @space_id;
+
+-- name: UnpinPageByID :exec
+-- ページのピンを外す。PinPageByIDと同じくmodified_atは変えない。
+UPDATE pages
+SET pinned_at = NULL,
+    updated_at = @updated_at
+WHERE id = @id
+  AND space_id = @space_id;
+
 -- name: DiscardPageByID :exec
 -- 指定ページを論理削除する (タイトルをIDに変更し、discarded_atを設定する)
 UPDATE pages
