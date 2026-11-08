@@ -1567,6 +1567,33 @@ func (q *Queries) MovePageToTopic(ctx context.Context, arg MovePageToTopicParams
 	return i, err
 }
 
+const pinPageByID = `-- name: PinPageByID :exec
+UPDATE pages
+SET pinned_at = COALESCE(pinned_at, $1::timestamp),
+    updated_at = $2
+WHERE id = $3
+  AND space_id = $4
+`
+
+type PinPageByIDParams struct {
+	PinnedAt  time.Time `json:"pinned_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ID        string    `json:"id"`
+	SpaceID   string    `json:"space_id"`
+}
+
+// ページにピンを打つ。打ってあるページの日時は変えず、送り直しても一覧の並び順が変わらないようにする。
+// modified_atはトピックの一覧の並び順とページの版に使うため変えず、状態の変更としてupdated_atだけを更新する。
+func (q *Queries) PinPageByID(ctx context.Context, arg PinPageByIDParams) error {
+	_, err := q.db.ExecContext(ctx, pinPageByID,
+		arg.PinnedAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SpaceID,
+	)
+	return err
+}
+
 const reassignPageLinkedPageID = `-- name: ReassignPageLinkedPageID :exec
 UPDATE pages
 SET linked_page_ids = CASE
@@ -1704,6 +1731,26 @@ func (q *Queries) TrashPageByID(ctx context.Context, arg TrashPageByIDParams) er
 		arg.ID,
 		arg.SpaceID,
 	)
+	return err
+}
+
+const unpinPageByID = `-- name: UnpinPageByID :exec
+UPDATE pages
+SET pinned_at = NULL,
+    updated_at = $1
+WHERE id = $2
+  AND space_id = $3
+`
+
+type UnpinPageByIDParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	ID        string    `json:"id"`
+	SpaceID   string    `json:"space_id"`
+}
+
+// ページのピンを外す。PinPageByIDと同じくmodified_atは変えない。
+func (q *Queries) UnpinPageByID(ctx context.Context, arg UnpinPageByIDParams) error {
+	_, err := q.db.ExecContext(ctx, unpinPageByID, arg.UpdatedAt, arg.ID, arg.SpaceID)
 	return err
 }
 

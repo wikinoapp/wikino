@@ -31,6 +31,14 @@ type Authorizer interface {
 	// よい編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
 	CanTrashPage() bool
 
+	// ページのピン留め
+
+	// CanPinPageはpage_pin:writeスコープで、CanUnpinPageはpage_pin:deleteスコープで判定する。
+	// ピン留めはトピックの一覧での見せ方を変える操作で、ページの内容を書く権限 (page:write) とは
+	// 別の境界として扱う。ピンの状態はpage:readで見えるため、読み取りのスコープは持たない。
+	CanPinPage() bool
+	CanUnpinPage() bool
+
 	// 下書きページ (所有者チェックパターン)
 	// 下書きの参照・保存はページの公開 (page:write) と分けてdraft_page:read / draft_page:writeで判定する。
 	// 下書きは書けるが公開はできないトークンを、エージェントに渡せるようにするためである。

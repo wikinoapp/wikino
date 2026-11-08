@@ -501,6 +501,25 @@ func (r *PageRepository) TrashByID(ctx context.Context, pageID model.PageID, spa
 	})
 }
 
+// PinByIDはページにピンを打つ。打ってあるページのpinned_atは変えない
+func (r *PageRepository) PinByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, pinnedAt time.Time) error {
+	return r.q.PinPageByID(ctx, query.PinPageByIDParams{
+		ID:        string(pageID),
+		SpaceID:   string(spaceID),
+		PinnedAt:  pinnedAt,
+		UpdatedAt: pinnedAt,
+	})
+}
+
+// UnpinByIDはページのピンを外す
+func (r *PageRepository) UnpinByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, updatedAt time.Time) error {
+	return r.q.UnpinPageByID(ctx, query.UnpinPageByIDParams{
+		ID:        string(pageID),
+		SpaceID:   string(spaceID),
+		UpdatedAt: updatedAt,
+	})
+}
+
 // DiscardByIDは指定ページを論理削除する (タイトルをIDに変更し、discarded_atを設定する)
 func (r *PageRepository) DiscardByID(ctx context.Context, pageID model.PageID, spaceID model.SpaceID, discardedAt time.Time) error {
 	return r.q.DiscardPageByID(ctx, query.DiscardPageByIDParams{

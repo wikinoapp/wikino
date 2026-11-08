@@ -163,11 +163,11 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		CanEdit: output.CanUpdatePage,
 	})
 
-	// page_trash:writeを持つ閲覧者のときだけトークンを取得する。既にゴミ箱にあるページでは
-	// ShowDataにトークンを渡すが、ゴミ箱フォームとhidden inputは描画しない。ゲストを含む
-	// page_trash:writeを持たない閲覧者には空文字を渡すため、そのHTMLにはトークンが載らない。
+	// ドロップダウンのフォーム (ゴミ箱・ピン留め) を送れる閲覧者のときだけトークンを取得する。
+	// 項目を出さないページでもShowDataにトークンを渡すが、フォームとhidden inputは描画しない。
+	// ゲストを含むどの権限も持たない閲覧者には空文字を渡すため、そのHTMLにはトークンが載らない。
 	var csrfToken string
-	if output.CanTrashPage {
+	if output.CanTrashPage || output.CanPinPage || output.CanUnpinPage {
 		csrfToken = middleware.GetCSRFTokenFromContext(ctx)
 	}
 
@@ -177,6 +177,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		IsTrashed:     output.IsTrashed,
 		CanUpdatePage: output.CanUpdatePage,
 		CanTrashPage:  output.CanTrashPage,
+		CanPinPage:    output.CanPinPage,
+		CanUnpinPage:  output.CanUnpinPage,
 		CSRFToken:     csrfToken,
 		LinkList:      linkData.LinkList,
 		BacklinkList:  linkData.BacklinkList,

@@ -1698,6 +1698,189 @@ func TestPageRepository_TrashByID(t *testing.T) {
 	})
 }
 
+func TestPageRepository_PinByID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-pin-space").
+		Build()
+
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-pin-other-space").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	modifiedAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
+	findPage := func(t *testing.T, number model.PageNumber) *model.Page {
+		t.Helper()
+
+		page, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, number)
+		if err != nil {
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
+		}
+		if page == nil {
+			t.Fatal("FindBySpaceAndNumber()がnilを返した、期待値 = ページ")
+		}
+		return page
+	}
+
+	t.Run("ピンを打つとpinned_atとupdated_atが記録され、modified_atは変わらない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Pin Target").
+			WithModifiedAt(modifiedAt).
+			Build()
+
+		pinnedAt := time.Now().Truncate(time.Microsecond)
+		if err := repo.PinByID(context.Background(), pageID, spaceID, pinnedAt); err != nil {
+			t.Fatalf("PinByID()のエラー = %v", err)
+		}
+
+		page := findPage(t, 1)
+		if page.PinnedAt == nil || !page.PinnedAt.Equal(pinnedAt) {
+			t.Errorf("page.PinnedAt = %v、期待値 = %v", page.PinnedAt, pinnedAt)
+		}
+		if !page.UpdatedAt.Equal(pinnedAt) {
+			t.Errorf("page.UpdatedAt = %v、期待値 = %v", page.UpdatedAt, pinnedAt)
+		}
+		if !page.ModifiedAt.Equal(modifiedAt) {
+			t.Errorf("page.ModifiedAt = %v、期待値 = %v (ピン留めで変えないべき)", page.ModifiedAt, modifiedAt)
+		}
+	})
+
+	t.Run("ピンを打ってあるページに打ち直してもpinned_atは変わらない", func(t *testing.T) {
+		firstPinnedAt := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Already Pinned").
+			WithPinnedAt(firstPinnedAt).
+			Build()
+
+		if err := repo.PinByID(context.Background(), pageID, spaceID, time.Now()); err != nil {
+			t.Fatalf("PinByID()のエラー = %v", err)
+		}
+
+		page := findPage(t, 2)
+		if page.PinnedAt == nil || !page.PinnedAt.Equal(firstPinnedAt) {
+			t.Errorf("page.PinnedAt = %v、期待値 = %v (打ち直しで変えないべき)", page.PinnedAt, firstPinnedAt)
+		}
+	})
+
+	t.Run("別スペースを指定した場合は更新されない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(3).
+			WithTitle("Other Space Scope").
+			Build()
+
+		if err := repo.PinByID(context.Background(), pageID, otherSpaceID, time.Now()); err != nil {
+			t.Fatalf("PinByID()のエラー = %v", err)
+		}
+
+		if page := findPage(t, 3); page.PinnedAt != nil {
+			t.Errorf("page.PinnedAt = %v、期待値 = nil (別スペースの指定で更新されている)", page.PinnedAt)
+		}
+	})
+}
+
+func TestPageRepository_UnpinByID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-unpin-space").
+		Build()
+
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-unpin-other-space").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	modifiedAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	pinnedAt := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
+
+	findPage := func(t *testing.T, number model.PageNumber) *model.Page {
+		t.Helper()
+
+		page, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, number)
+		if err != nil {
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
+		}
+		if page == nil {
+			t.Fatal("FindBySpaceAndNumber()がnilを返した、期待値 = ページ")
+		}
+		return page
+	}
+
+	t.Run("ピンを外すとpinned_atが消え、modified_atは変わらない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Unpin Target").
+			WithModifiedAt(modifiedAt).
+			WithPinnedAt(pinnedAt).
+			Build()
+
+		updatedAt := time.Now().Truncate(time.Microsecond)
+		if err := repo.UnpinByID(context.Background(), pageID, spaceID, updatedAt); err != nil {
+			t.Fatalf("UnpinByID()のエラー = %v", err)
+		}
+
+		page := findPage(t, 1)
+		if page.PinnedAt != nil {
+			t.Errorf("page.PinnedAt = %v、期待値 = nil", page.PinnedAt)
+		}
+		if !page.UpdatedAt.Equal(updatedAt) {
+			t.Errorf("page.UpdatedAt = %v、期待値 = %v", page.UpdatedAt, updatedAt)
+		}
+		if !page.ModifiedAt.Equal(modifiedAt) {
+			t.Errorf("page.ModifiedAt = %v、期待値 = %v (ピン留めで変えないべき)", page.ModifiedAt, modifiedAt)
+		}
+	})
+
+	t.Run("別スペースを指定した場合は更新されない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Other Space Scope").
+			WithPinnedAt(pinnedAt).
+			Build()
+
+		if err := repo.UnpinByID(context.Background(), pageID, otherSpaceID, time.Now()); err != nil {
+			t.Fatalf("UnpinByID()のエラー = %v", err)
+		}
+
+		if page := findPage(t, 2); page.PinnedAt == nil {
+			t.Error("page.PinnedAt = nil、期待値 = 元の日時 (別スペースの指定で更新されている)")
+		}
+	})
+}
+
 func TestPageRepository_DiscardEmptyUnpublishedByID(t *testing.T) {
 	t.Parallel()
 

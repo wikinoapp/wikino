@@ -99,6 +99,11 @@ type GetPageShowOutput struct {
 	// 書き換えてよいメンバーというだけでは項目は出ない (Authorizer.CanTrashPageを参照)。
 	CanTrashPage bool
 
+	// CanPinPageとCanUnpinPageは閲覧者がこのページにピンを打てるか・外せるかを表し、
+	// 操作ドロップダウンのピン留めの項目の出し分けに使う。
+	CanPinPage   bool
+	CanUnpinPage bool
+
 	// FeaturedImageAttachmentはog:imageメタタグの組み立てに使うページのアイキャッチ画像の
 	// 添付ファイル。アイキャッチ画像を持たない場合や、Repositoryが添付ファイルを解決できない場合は
 	// nil。populateされるのはID / SpaceID / Filenameのみ
@@ -176,6 +181,8 @@ func (uc *GetPageShowUsecase) Execute(ctx context.Context, input GetPageShowInpu
 		IsPublic:                policy.NewGuestPolicy().CanShowTopic(data.topic) && !isTrashed,
 		CanUpdatePage:           authorizer.CanUpdatePage(),
 		CanTrashPage:            authorizer.CanTrashPage(),
+		CanPinPage:              authorizer.CanPinPage(),
+		CanUnpinPage:            authorizer.CanUnpinPage(),
 		FeaturedImageAttachment: featuredImageAttachment,
 		LinkedPages:             links.linkedPages,
 		LinkedTotalCount:        links.linkedTotalCount,

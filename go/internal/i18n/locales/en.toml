@@ -925,6 +925,14 @@ other = "Page actions"
 description = "ページ表示画面のドロップダウンメニュー: ページを別のトピックへ移動する"
 other = "Move"
 
+[page_show_page_actions_pin]
+description = "ページ表示画面のドロップダウンメニュー: ページをピン留めする"
+other = "Pin"
+
+[page_show_page_actions_unpin]
+description = "ページ表示画面のドロップダウンメニュー: ページのピン留めを外す"
+other = "Unpin"
+
 [page_show_page_actions_trash]
 description = "ページ表示画面のドロップダウンメニュー: ページをゴミ箱に入れる"
 other = "Move to Trash"
@@ -984,6 +992,15 @@ other = "Restored the draft to the selected version."
 [flash_page_moved_to_trash]
 description = "ページのゴミ箱への移動成功メッセージ"
 other = "Page moved to trash."
+
+# ページのピン留め
+[flash_page_pinned]
+description = "ページのピン留め成功メッセージ"
+other = "Page pinned."
+
+[flash_page_unpinned]
+description = "ページのピン留めの解除成功メッセージ"
+other = "Page unpinned."
 
 # Suggestion page update success
 [flash_suggestion_page_updated]
