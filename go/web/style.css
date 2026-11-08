@@ -87,6 +87,27 @@
 }
 
 @theme {
+  /*
+    欧文書体 → 和文書体の順に名指しする。英数字は欧文書体で描き、和文はmacOS / iOSでヒラギノ角ゴ、
+    WindowsでBIZ UDPゴシック (無ければメイリオ)、AndroidとLinuxでsans-serif (Noto Sans CJKなど) になる。
+    system-uiを並べないのは、Windowsの日本語環境で和文が細く詰まったYu Gothic UIになるため。
+    和文書体を名指しするのは、英語環境の端末で漢字が中国語の書体で描かれないようにするため。
+  */
+  --font-sans:
+    "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /*
+    エディタの書体。英数字はBasecoatの--font-mono (本文のコードの等幅書体) の並びで描き、Markdownの表や
+    インデントの桁を揃える。和文は--font-sansと同じ和文書体で描く。総称のmonospaceを和文書体より前に
+    置くと、和文にブラウザの既定の等幅書体が使われうるため、和文書体のあとに置く。
+    CSSの変数から並びの一部だけを取り出せないため、2つの並びの書体名をここに並べ直している。
+  */
+  --font-editor:
+    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, monospace, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
   --color-brand-50: var(--app-brand-50);
   --color-brand-100: var(--app-brand-100);
   --color-brand-200: var(--app-brand-200);
@@ -152,8 +173,13 @@
     .wikino-markdown
     ============================================================================
   */
+  /*
+    本文の文字サイズは本文自身が持ち、本文の中の要素はここから継承する。置かれた場所 (ページ詳細画面の
+    article・プレビューのタブパネル) の文字サイズに左右されると、プレビューのタブパネルが付けるtext-smを
+    段落だけが継承し、箇条書きと文字サイズが食い違う。
+  */
   .wikino-markdown {
-    @apply break-words;
+    @apply text-base break-words;
 
     & > :first-child {
       @apply mt-0;
@@ -164,11 +190,15 @@
     }
 
     & blockquote {
-      @apply border-l-4 border-stone-300 pr-4 pl-4 text-base/8 text-stone-600;
+      @apply border-l-4 border-stone-300 pr-4 pl-4 text-base/7 text-stone-600;
     }
 
+    /*
+      背景の高さを本文でいちばん詰まった行の高さ (テーブルのセルの24px) に収め、複数行に折り返したときに
+      上下の行の背景と重ならないようにする。折り返したコードのそれぞれの行にも左右の余白と角丸を付ける。
+    */
     & code {
-      @apply inline rounded-sm bg-stone-950/6 px-2 py-1 font-mono text-sm/normal;
+      @apply inline rounded-sm bg-stone-950/6 box-decoration-clone px-2 py-0.5 font-mono text-sm/normal;
     }
 
     & details > summary {
@@ -269,6 +299,7 @@
       @apply hidden;
     }
 
+    /* 項目の間を折り返した行の間より空け、項目の中の折り返しと次の項目を見分けられるようにする */
     & li {
       @apply mt-2;
     }
@@ -278,11 +309,11 @@
     }
 
     & ol {
-      @apply mb-4 list-decimal pl-6 text-base/normal;
+      @apply mb-4 list-decimal pl-6 leading-7;
     }
 
     & p {
-      @apply mb-4 leading-8;
+      @apply mb-4 leading-7;
     }
 
     & pre {
@@ -297,9 +328,8 @@
       画面幅より広いテーブルをテーブル自身の中でスクロールさせ、ページ全体が横スクロール
       しないようにする。スクロールコンテナは祖先に最小幅を伝えないため、フレックス項目の祖先
       (レイアウトの本文カラムやページ表示画面のarticle) がビューポートより広く押し広げられる
-      こともない。既存ページはページ公開時に生成・保存された本文HTMLを持つため、修正は
-      マークアップパイプラインではなくスタイル側に置く。パイプラインに置くと、以後保存された
-      ページにしか届かない。
+      こともない。スクロールはスタイル側で扱い、マークアップのパイプラインが作る本文のHTMLには
+      ラッパーを足さない。足すと、見た目のためにサニタイズのポリシーで通す要素と属性が増える。
 
       display: blockを併せて指定するのはoverflowを効かせるため。テーブルボックスに対する
       overflowは無視される。スクリプトが使える環境ではmarkdown-table.tsがスクロールを
@@ -327,16 +357,42 @@
       @apply outline-2 outline-offset-2 outline-brand-600;
     }
 
+    /*
+      表の自動レイアウトは列の幅の合計がコンテナに収まるまで各列を縮めるため、狭い画面では長い文の列が
+      数文字ごとに折り返す。狭い画面に限ってセルに最小幅を付け、収まらない列は横スクロールで読ませる。
+      広い画面に付けないのは、短い値が並ぶ列の多いテーブルまで横スクロールになるため。
+    */
     & table td {
-      @apply border border-stone-300 px-2 py-1;
+      @apply border border-stone-300 px-2 py-1 max-sm:min-w-[8em];
     }
 
     & table th {
-      @apply border border-stone-300 bg-brand-600/5 p-2;
+      @apply border border-stone-300 bg-brand-600/5 p-2 max-sm:min-w-[8em];
     }
 
     & ul {
-      @apply mb-4 list-disc pl-6 text-base/normal;
+      @apply mb-4 list-disc pl-6 leading-7;
+    }
+
+    /*
+      タスク記法の項目は、チェックボックスを点の位置に置いて点を消す。項目の間に空行を入れた箇条書きでは
+      チェックボックスが項目の最初の段落の中に入るため、両方の形を見分ける。項目ごとに判定するため、
+      タスクの項目と通常の項目が同じリストに混ざってもそれぞれ正しく表示される。
+      チェックボックスを絶対配置にして行から外すことで、折り返した行の先頭が通常の項目の本文の先頭に揃う。
+      大きさと上端の位置は、28pxの行の高さの中で上下の中央に来るように決めている。
+      チェックボックスの配置も:has()の判定の下に置き、:has()に対応していないブラウザでは点の後ろに
+      チェックボックスが重ならずに並ぶようにする。
+    */
+    & li:has(> input[type="checkbox"]:first-child, > p:first-child > input[type="checkbox"]:first-child) {
+      @apply relative list-none;
+    }
+
+    & li:has(> input[type="checkbox"]:first-child) > input[type="checkbox"]:first-child,
+    &
+      li:has(> p:first-child > input[type="checkbox"]:first-child)
+      > p:first-child
+      > input[type="checkbox"]:first-child {
+      @apply absolute top-1.5 -left-6 m-0 size-4;
     }
   }
 }
@@ -376,4 +432,12 @@
 
 .cm-editor .cm-content {
   @apply py-2;
+}
+
+/*
+  CodeMirrorの既定のテーマが付ける総称のmonospaceを、英数字の等幅書体と本文の和文書体の並びにする。
+  行の高さは単位の無い倍率にし、画面幅で切り替わる文字サイズ (text-base・md:text-sm) に追従させる。
+*/
+.cm-editor .cm-scroller {
+  @apply font-editor leading-relaxed;
 }
