@@ -651,6 +651,9 @@ func TestUpdate_DraftPageDigestMatch(t *testing.T) {
 	if got, want := rr.Header().Get("ETag"), `"`+draftPageDigest(t, db, draftPageID, spaceID)+`"`; got != want {
 		t.Errorf("ETag = %q、期待値 = 保存後の今の版 %q", got, want)
 	}
+	if got := rr.Header().Get("Cache-Control"); got != "no-transform" {
+		t.Errorf("Cache-Control = %q、期待値 = %q", got, "no-transform")
+	}
 }
 
 func TestUpdate_DraftPageDigestConflict(t *testing.T) {
@@ -686,6 +689,9 @@ func TestUpdate_DraftPageDigestConflict(t *testing.T) {
 	}
 	if got, want := rr.Header().Get("ETag"), `"`+currentDigest+`"`; got != want {
 		t.Errorf("ETag = %q、期待値 = 今の版 %q", got, want)
+	}
+	if got := rr.Header().Get("Cache-Control"); got != "no-transform" {
+		t.Errorf("Cache-Control = %q、期待値 = %q", got, "no-transform")
 	}
 	if got, want := strings.TrimSpace(rr.Body.String()), "下書きは、編集画面を開いたあとに別の場所で更新されています"; got != want {
 		t.Errorf("レスポンスの本文 = %q、期待値 = %q", got, want)
