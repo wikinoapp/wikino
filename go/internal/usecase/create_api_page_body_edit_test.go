@@ -478,7 +478,7 @@ func TestCreateAPIPageBodyEditUsecase_Execute_BodySize(t *testing.T) {
 				PageNumber:      1,
 				Edits: []model.BodyEdit{
 					{OldStr: "a", NewStr: "[[作らないページ]]"},
-					{OldStr: "[[作らないページ]]", NewStr: strings.Repeat("b", model.BodyEditMaxBodyBytes+1)},
+					{OldStr: "[[作らないページ]]", NewStr: strings.Repeat("b", model.PageBodyMaxLength+1)},
 					{OldStr: "b", NewStr: "", ReplaceAll: true},
 				},
 			})
@@ -490,8 +490,8 @@ func TestCreateAPIPageBodyEditUsecase_Execute_BodySize(t *testing.T) {
 			if len(ve.Fields) != 1 || len(messages) != 1 {
 				t.Fatalf("Fields = %v、期待値 = edits/1/new_strのエラー1件", ve.Fields)
 			}
-			if !strings.Contains(messages[0], "1048576") || (i == 0 && !strings.Contains(messages[0], "バイト")) || (i == 1 && !strings.Contains(messages[0], "bytes")) {
-				t.Errorf("メッセージ = %q、期待値 = ロケールに応じた最大バイト数の案内", messages[0])
+			if !strings.Contains(messages[0], "500,000") || (i == 0 && !strings.Contains(messages[0], "文字")) || (i == 1 && !strings.Contains(messages[0], "characters")) {
+				t.Errorf("メッセージ = %q、期待値 = ロケールに応じた最大文字数の案内", messages[0])
 			}
 			if output != nil {
 				t.Errorf("output = %+v、期待値 = nil", output)

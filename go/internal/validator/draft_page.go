@@ -42,3 +42,57 @@ func (v *APIDraftPageCreateValidator) Validate(ctx context.Context, input APIDra
 	}
 	return nil
 }
+
+// DraftPageSaveValidatorはWeb画面での下書きの保存 (自動保存と手動保存) のバリデーションを行う
+type DraftPageSaveValidator struct{}
+
+// NewDraftPageSaveValidatorはDraftPageSaveValidatorを生成する
+func NewDraftPageSaveValidator() *DraftPageSaveValidator {
+	return &DraftPageSaveValidator{}
+}
+
+// DraftPageSaveValidatorInputはバリデーションの入力パラメータ
+type DraftPageSaveValidatorInput struct {
+	Body string
+}
+
+// Validateはバリデーションを行う。
+// 下書きは書きかけの状態を保存するため、タイトルの形式は確かめず、公開するときに確かめる。
+// 本文の上限は、上限を超えた下書きを公開できないまま溜め込まないよう、保存するときに確かめる
+func (v *DraftPageSaveValidator) Validate(ctx context.Context, input DraftPageSaveValidatorInput) error {
+	ve := model.NewValidationError()
+
+	validatePageBodyLength(ctx, ve, input.Body)
+
+	if ve.HasErrors() {
+		return ve
+	}
+	return nil
+}
+
+// APIDraftPagePublicationCreateValidatorは公開APIでの下書きの公開で、公開する下書きの本文のバリデーションを行う。
+// 公開する本文はリクエストに含まれず、保存済みの下書きから読むため、OpenAPI記述のスキーマでは確かめられない。
+// 上限が決まる前に保存した下書きや、上限を確かめない経路で保存した下書きを、上限を超えたまま公開しないようにする
+type APIDraftPagePublicationCreateValidator struct{}
+
+// NewAPIDraftPagePublicationCreateValidatorはAPIDraftPagePublicationCreateValidatorを生成する
+func NewAPIDraftPagePublicationCreateValidator() *APIDraftPagePublicationCreateValidator {
+	return &APIDraftPagePublicationCreateValidator{}
+}
+
+// APIDraftPagePublicationCreateValidatorInputはバリデーションの入力パラメータ
+type APIDraftPagePublicationCreateValidatorInput struct {
+	Body string
+}
+
+// Validateはバリデーションを行う
+func (v *APIDraftPagePublicationCreateValidator) Validate(ctx context.Context, input APIDraftPagePublicationCreateValidatorInput) error {
+	ve := model.NewValidationError()
+
+	validatePageBodyLength(ctx, ve, input.Body)
+
+	if ve.HasErrors() {
+		return ve
+	}
+	return nil
+}

@@ -35,6 +35,13 @@ const pageRevisionListDrawerID = "page-revision-list-drawer"
 // 両者を同期させること。
 const saveDraftButtonID = "page-edit-save-draft-button"
 
+// pageBodyErrorIDは、公開で返った本文のエラーを包む要素のid。本文の入力面はCodeMirrorの
+// contenteditableでフォーム部品に関連付けられないため、エディタがaria-describedbyで参照する。
+const pageBodyErrorID = "page-body-error"
+
+// draftSaveErrorIDは、自動保存・下書き保存の失敗を出す要素のid。エディタがaria-describedbyで参照する。
+const draftSaveErrorID = "page-draft-save-error"
+
 // revisionDiffLoadingIDは差分モーダル内のローディングインジケーターの要素id。
 const revisionDiffLoadingID = "page-edit-revision-diff-loading"
 
@@ -58,11 +65,9 @@ type EditPageData struct {
 	Topic                   viewmodel.Topic
 	LinkList                viewmodel.LinkList
 	BacklinkList            viewmodel.BacklinkList
-	ManualSaveURL           string
 	SuggestionNumber        int32
 	SuggestionURL           string
 	SuggestionShowURL       string
-	CreateSuggestionSaveURL string
 
 	// RelatedPageStateは3つの関連ページ一覧のページネーション状態。各htmxリクエストが含める
 	// 共有要素として画面が1つ保持する。どちらかの一覧ではなく画面に属する値のため、LinkListや
@@ -79,11 +84,47 @@ type EditPageData struct {
 	// ZenModeはクッキーから読み取ったZenモードの初期状態。サーバー側で初期クラスを描画する
 	// ことで、初回描画後にクライアントで切り替えた場合に起きるレイアウトのちらつきを防ぐ。
 	ZenMode bool
+
+	// PublishConflictは、公開の前提にした下書きの版が今の版と食い違ったときに設定する。
+	// 設定されていれば、競合の知らせを表示した状態で描画する。
+	PublishConflict *PublishConflict
+}
+
+// PublishConflictは、公開が下書きの版の競合で断られたことを表します
+type PublishConflict struct {
+	// CurrentDraftPageDigestは下書きの今の版。下書きが無ければ空文字列。
+	// 利用者が「このまま上書きする」を選んだときに、公開し直す前提の版にする
+	CurrentDraftPageDigest string
+}
+
+// HasBodyErrorは公開で本文のエラーが返ったかどうかを返します
+func (d EditPageData) HasBodyError() bool {
+	return d.FormErrors != nil && d.FormErrors.HasFieldError("body")
+}
+
+// bodyDescribedByは本文のエディタを説明する要素のidを返します。
+// 保存の失敗を出す要素は常にあり、空のあいだは何も読み上げられません
+func (d EditPageData) bodyDescribedBy() string {
+	if d.HasBodyError() {
+		return pageBodyErrorID + " " + draftSaveErrorID
+	}
+	return draftSaveErrorID
 }
 
 // IsSuggestionModeは編集提案モードかどうかを返します
 func (d EditPageData) IsSuggestionMode() bool {
 	return d.SuggestionNumber > 0
+}
+
+// ManualSaveURLは「下書き保存」の送り先を返します。
+// 編集画面を描画するどの経路 (表示・公開のバリデーションエラーによる再描画) でも同じ送り先になるよう、スペースとページから組み立てます
+func (d EditPageData) ManualSaveURL() string {
+	return string(templates.PageDraftPageRevisionPath(d.Space.Identifier, d.Page.Number))
+}
+
+// CreateSuggestionSaveURLは「下書き保存して編集提案を作成」の送り先を返します
+func (d EditPageData) CreateSuggestionSaveURL() string {
+	return d.ManualSaveURL() + "?redirect_to=suggestion_new"
 }
 
 // Editはページ編集画面のコンテンツを表示します
@@ -170,7 +211,42 @@ templ Edit(data EditPageData) {
 
 							@components.FormErrorSummary(data.FormErrors)
 
+							// 保存の前提にした下書きの版の後に、下書きが別の場所 (API・別のタブ) で更新されたことを
+							// 知らせる。競合を受けたスクリプト (web/markdown-editor/draft-conflict.ts) が表示する。
+							// 隠したまま描画しておき、表示したときにrole="alert" で読み上げさせる。
+							// 公開が競合して再表示したときは、表示した状態で描画し、上書きを選んだら公開し直させる。
+							// 読み込んだときから表示している知らせは読み上げられないことがあるため、スクリプトが
+							// フォーカスを移せるようにする。
+							<div
+								class="px-4"
+								data-draft-conflict
+								data-draft-conflict-publish?={ data.PublishConflict != nil }
+								data-reload-confirm={ templates.T(ctx, "page_edit_draft_conflict_reload_confirm") }
+								data-reload-url={ string(templates.PageEditPath(data.Space.Identifier, data.Page.Number)) }
+								hidden?={ data.PublishConflict == nil }
+								if data.PublishConflict != nil {
+									tabindex="-1"
+								}
+							>
+								<div class="alert" data-variant="destructive" role="alert">
+									@templates.Icon("warning-circle-regular")
+									<h2>{ templates.T(ctx, "page_edit_draft_conflict_heading") }</h2>
+									<section>{ templates.T(ctx, "page_edit_draft_conflict_message") }</section>
+									// ボタンをメッセージと同じ列に置き、下の行で折り返して選択肢を読みやすくする。
+									<div class="col-start-2 mt-2 flex flex-wrap gap-2">
+										<button type="button" class="btn rounded-full" data-variant="outline" data-size="sm" data-draft-conflict-reload>
+											{ templates.T(ctx, "page_edit_draft_conflict_reload_button") }
+										</button>
+										<button type="button" class="btn rounded-full" data-variant="destructive" data-size="sm" data-draft-conflict-overwrite>
+											{ templates.T(ctx, "page_edit_draft_conflict_overwrite_button") }
+										</button>
+									</div>
+								</div>
+							</div>
+
 							@components.ContentCard() {
+								// 本文をURLエンコードで送るとUTF-8よりリクエストが大きくなるため、
+								// UTF-8のまま送るmultipartにする
 								<form
 									if data.IsSuggestionMode() {
 										action={ templ.SafeURL(data.SuggestionURL) }
@@ -178,12 +254,17 @@ templ Edit(data EditPageData) {
 										action={ templ.SafeURL(string(templates.PagePath(data.Space.Identifier, viewmodel.PageNumber(data.Page.Number)))) }
 									}
 									class="grid gap-6"
+									enctype="multipart/form-data"
 									hx-on:submit="disableSubmitButtons(this)"
 									method="POST"
 								>
 									<input type="hidden" id="page-edit-csrf-token" name="csrf_token" value={ data.CSRFToken }/>
 									<input type="hidden" name="page_number" value={ fmt.Sprintf("%d", data.Page.Number) }/>
 									<input type="hidden" name="_method" value="PATCH"/>
+									if !data.IsSuggestionMode() {
+										// 公開の前提にした下書きの版。エディターが保存のたびに書き換える
+										<input type="hidden" name="draft_page_digest" value={ data.Page.DraftPageDigest } data-draft-page-digest-field/>
+									}
 									// タブで囲むのは編集対象のフィールドのみ。下のボタン行はタブパネルの外に置き、
 									// プレビュー表示中も表示されるようにする。
 									//
@@ -232,6 +313,7 @@ templ Edit(data EditPageData) {
 												tabindex="-1"
 												hx-post={ string(templates.PagePreviewPath(data.Space.Identifier, data.Page.Number)) }
 												hx-vals={ `{"_method": ""}` }
+												hx-encoding="multipart/form-data"
 												hx-target="#page-edit-preview-content"
 												hx-swap="innerHTML"
 												hx-indicator="#page-edit-preview-loading"
@@ -303,9 +385,15 @@ templ Edit(data EditPageData) {
 													data-markdown-editor-body={ data.Page.Body }
 													data-markdown-editor-autofocus={ fmt.Sprintf("%t", !data.Page.AutofocusTitle()) }
 													data-markdown-editor-draft-save-url={ string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) }
+													data-markdown-editor-draft-page-digest={ data.Page.DraftPageDigest }
+													if data.PublishConflict != nil {
+														data-markdown-editor-draft-conflict-digest={ data.PublishConflict.CurrentDraftPageDigest }
+													}
 													data-markdown-editor-csrf-token={ data.CSRFToken }
 													data-markdown-editor-topic-number={ fmt.Sprintf("%d", data.Topic.Number) }
 													data-markdown-editor-space-identifier={ data.Space.Identifier.String() }
+													data-markdown-editor-describedby={ data.bodyDescribedBy() }
+													data-markdown-editor-invalid={ fmt.Sprintf("%t", data.HasBodyError()) }
 												></div>
 												<textarea
 													class="hidden"
@@ -313,6 +401,13 @@ templ Edit(data EditPageData) {
 													name="body"
 													data-markdown-editor-target="textarea"
 												>{ data.Page.Body }</textarea>
+												if data.HasBodyError() {
+													<div id={ pageBodyErrorID } class="grid gap-2">
+														for _, errorMsg := range data.FormErrors.GetFieldErrors("body") {
+															<p class="text-sm text-error">{ errorMsg }</p>
+														}
+													</div>
+												}
 											</div>
 										</div>
 
@@ -376,8 +471,10 @@ templ Edit(data EditPageData) {
 														class="btn rounded-l-full w-fit border-r-0"
 														data-variant="secondary"
 														type="button"
-														hx-patch={ data.ManualSaveURL }
+														hx-patch={ data.ManualSaveURL() }
 														hx-include="#page_title, #page_body, #page-edit-csrf-token"
+														data-draft-save-button
+														hx-encoding="multipart/form-data"
 														hx-swap="none"
 														hx-disable="this"
 													>
@@ -400,9 +497,17 @@ templ Edit(data EditPageData) {
 														<div id="save-draft-dropdown-popover" data-popover aria-hidden="true" class="min-w-64" data-align="end">
 															<div role="menu" id="save-draft-dropdown-menu" aria-labelledby="save-draft-dropdown-trigger">
 																<div role="menuitem">
+																	// 保存してから編集提案の作成画面へ移る。保存に失敗したときに編集画面から
+																	// 離れないよう、フォームの送信ではなくhtmxで送り、成功したらサーバーが
+																	// HX-Redirectで移動先を伝える。
 																	<button
-																		type="submit"
-																		formaction={ string(templ.SafeURL(data.CreateSuggestionSaveURL)) }
+																		type="button"
+																		hx-patch={ data.CreateSuggestionSaveURL() }
+																		hx-include="#page_title, #page_body, #page-edit-csrf-token"
+																		hx-encoding="multipart/form-data"
+																		hx-swap="none"
+																		hx-disable="this"
+																		data-draft-save-button
 																		class="flex gap-2 items-center w-full"
 																	>
 																		@templates.Icon("git-pull-request-regular", "size-[18px]")
@@ -420,8 +525,10 @@ templ Edit(data EditPageData) {
 													class="btn rounded-full w-fit"
 													data-variant="secondary"
 													type="button"
-													hx-patch={ data.ManualSaveURL }
+													hx-patch={ data.ManualSaveURL() }
 													hx-include="#page_title, #page_body, #page-edit-csrf-token"
+													data-draft-save-button
+													hx-encoding="multipart/form-data"
 													hx-swap="none"
 													hx-disable="this"
 												>
@@ -431,7 +538,19 @@ templ Edit(data EditPageData) {
 											}
 										</div>
 										<div class="flex items-center justify-end gap-2 min-[1152px]:flex-1 min-[1152px]:justify-between">
-											<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap"></div>
+											// 保存に失敗したあいだは、保存時刻の代わりにエラーを出す。保存時刻の表示は保存のたびに
+											// OOBスワップで差し替わるため、隠すのは親のCSSで行う。エラーの文面はスクリプト
+											// (web/markdown-editor/save-status.ts) がこの要素のdata属性から読む。
+											<div
+												class="min-w-0 [&:has([data-draft-save-error]:not(:empty))_#page-draft-saved-at]:hidden"
+												data-draft-save-status
+												data-autosave-failed-message={ templates.T(ctx, "page_edit_autosave_failed") }
+												data-save-draft-failed-message={ templates.T(ctx, "page_edit_save_draft_failed") }
+												data-body-too-large-message={ templates.T(ctx, "page_edit_body_too_large", map[string]any{"Max": templates.FormatNumber(ctx, viewmodel.PageBodyMaxLength)}) }
+											>
+												<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap"></div>
+												<p id={ draftSaveErrorID } class="text-xs text-error text-right" role="status" data-draft-save-error></p>
+											</div>
 											<a
 												class="btn rounded-full w-fit"
 												data-variant="outline"

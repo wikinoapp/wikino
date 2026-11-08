@@ -125,12 +125,15 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 		if !diff.CreatedAt.Equal(createdAt) {
 			t.Errorf("CreatedAt = %v、期待値 = %v", diff.CreatedAt, createdAt)
 		}
-		if len(diff.BodyBlocks) == 0 {
-			t.Fatal("BodyBlocksが空")
+		if len(diff.Body.Blocks) == 0 {
+			t.Fatal("Body.Blocksが空")
+		}
+		if diff.Body.Sources == nil || diff.Body.Sources.Old != "line one\n" || diff.Body.Sources.New != "line one\nline two\n" {
+			t.Errorf("Body.Sources = %+v、期待値 = 新旧の本文", diff.Body.Sources)
 		}
 		// 追加された行のみが挿入行として現れること。
 		var inserts int
-		for _, block := range diff.BodyBlocks {
+		for _, block := range diff.Body.Blocks {
 			for _, line := range block.Lines {
 				if line.Type == viewmodel.DiffLineInsert {
 					inserts++
@@ -166,7 +169,7 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 			t.Error("HasTitleChangeがtrue")
 		}
 		var inserts []string
-		for _, block := range diff.BodyBlocks {
+		for _, block := range diff.Body.Blocks {
 			for _, line := range block.Lines {
 				switch line.Type {
 				case viewmodel.DiffLineInsert:
@@ -197,8 +200,8 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 		if !diff.HasTitleChange || diff.OldTitle != "" {
 			t.Errorf("HasTitleChange/OldTitle = %v/%q、期待値 = true/空", diff.HasTitleChange, diff.OldTitle)
 		}
-		if len(diff.BodyBlocks) == 0 {
-			t.Error("BodyBlocksが空")
+		if len(diff.Body.Blocks) == 0 {
+			t.Error("Body.Blocksが空")
 		}
 	})
 
@@ -224,8 +227,8 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 		if diff.HasTitleChange {
 			t.Error("HasTitleChangeがtrue")
 		}
-		if len(diff.BodyBlocks) != 0 {
-			t.Errorf("BodyBlocks = %v、期待値 = 空", diff.BodyBlocks)
+		if len(diff.Body.Blocks) != 0 {
+			t.Errorf("Body.Blocks = %v、期待値 = 空", diff.Body.Blocks)
 		}
 	})
 
@@ -247,7 +250,7 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 			t.Errorf("OldTitle = %q、期待値 = 空", diff.OldTitle)
 		}
 		var inserts, others int
-		for _, block := range diff.BodyBlocks {
+		for _, block := range diff.Body.Blocks {
 			for _, line := range block.Lines {
 				if line.Type == viewmodel.DiffLineInsert {
 					inserts++
@@ -280,8 +283,8 @@ func TestNewDraftPageRevisionDiff(t *testing.T) {
 		if diff.HasTitleChange {
 			t.Error("HasTitleChangeがtrue")
 		}
-		if len(diff.BodyBlocks) != 0 {
-			t.Errorf("BodyBlocks = %v、期待値 = 空", diff.BodyBlocks)
+		if len(diff.Body.Blocks) != 0 {
+			t.Errorf("Body.Blocks = %v、期待値 = 空", diff.Body.Blocks)
 		}
 	})
 }

@@ -232,6 +232,15 @@ func TestEdit(t *testing.T) {
 		t.Error("レスポンスにPATCHのメソッドオーバーライドが見つからない")
 	}
 
+	// 本文を送る公開のフォームと、同じ本文を送るプレビュー・下書き保存は、URLエンコードより小さい
+	// multipartで送る
+	if !strings.Contains(body, `enctype="multipart/form-data"`) {
+		t.Error("公開のフォームがmultipartで送る設定になっていない")
+	}
+	if got := strings.Count(body, `hx-encoding="multipart/form-data"`); got != 3 {
+		t.Errorf("multipartで送るhtmxの要素の数 = %d、期待値 = 3 (プレビュー・下書き保存・下書き保存して編集提案を作成)", got)
+	}
+
 	// defaultレイアウトのコンテンツラッパーが、md未満で固定ナビに最下部コンテンツが隠れない
 	// よう下部ナビの高さ + 下端safe-area分の下部余白を確保していること (PWAスタンドアロン表示で
 	// ナビをホームインジケータの上へ押し上げても足りるようにする)。下部バーが描画されなくなる幅と
@@ -417,7 +426,7 @@ func TestEdit_WithDraftPage(t *testing.T) {
 		Build()
 
 	// DraftPageを作成
-	testutil.NewDraftPageBuilder(t, tx).
+	draftPageID := testutil.NewDraftPageBuilder(t, tx).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -425,6 +434,10 @@ func TestEdit_WithDraftPage(t *testing.T) {
 		WithTitle("Draft Title").
 		WithBody("Draft body content").
 		Build()
+	draftPage, err := repository.NewDraftPageRepository(queries).FindByID(t.Context(), draftPageID, spaceID)
+	if err != nil || draftPage == nil {
+		t.Fatalf("下書きの取得 = (%v, %v)、期待値 = 下書き", draftPage, err)
+	}
 
 	handler := setupHandler(t, queries)
 
@@ -479,6 +492,20 @@ func TestEdit_WithDraftPage(t *testing.T) {
 	}
 	if !strings.Contains(body, `<input type="hidden" name="_method" value="DELETE">`) {
 		t.Error("削除フォームに_method=DELETEが無い")
+	}
+
+	// エディターが保存の前提にする、開いたときの下書きの版を埋め込み、公開のフォームも同じ版を前提にする
+	for _, want := range []string{
+		`data-markdown-editor-draft-page-digest="` + draftPage.ContentDigest() + `"`,
+		`name="draft_page_digest" value="` + draftPage.ContentDigest() + `"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない", want)
+		}
+	}
+	// 開いたときは競合していないため、知らせを隠して描画する
+	if strings.Contains(body, "data-draft-conflict-publish") || strings.Contains(body, "data-markdown-editor-draft-conflict-digest") {
+		t.Error("開いた編集画面に公開の競合の印が含まれている")
 	}
 }
 
@@ -724,6 +751,17 @@ func TestEdit_RevisionColumn(t *testing.T) {
 	}
 	if !strings.Contains(body, `hx-patch="/s/revcol-space/pages/1/draft_page_revision"`) {
 		t.Error("下書き保存ボタンのhx-patch属性が見つからない")
+	}
+	// 「下書き保存して編集提案を作成」も、保存に失敗したときに編集画面に留まるようhtmxで送る
+	if !strings.Contains(body, `hx-patch="/s/revcol-space/pages/1/draft_page_revision?redirect_to=suggestion_new"`) {
+		t.Error("下書き保存して編集提案を作成するボタンのhx-patch属性が見つからない")
+	}
+	if strings.Contains(body, `formaction=`) {
+		t.Error("下書き保存して編集提案を作成するボタンがフォームの送信のままになっている")
+	}
+	// 失敗をスクリプトが知らせるため、本文を送る保存のボタンには目印を付ける
+	if got := strings.Count(body, `data-draft-save-button`); got != 2 {
+		t.Errorf("目印の付いた保存のボタンの数 = %d、期待値 = 2 (下書き保存・下書き保存して編集提案を作成)", got)
 	}
 
 	// リビジョンが存在するときは空状態テキストが表示されないこと
@@ -1526,6 +1564,24 @@ func TestEdit_ActionRowLayout(t *testing.T) {
 	}
 	if !strings.Contains(body, `<div id="page-draft-saved-at" class="text-xs text-muted-foreground whitespace-nowrap">`) {
 		t.Error("レスポンスにwhitespace-nowrap付きの保存日時の表示が見つからない")
+	}
+
+	// 保存に失敗したあいだは、保存日時の代わりにエラーを出す。文面はスクリプトがdata属性から読む
+	for _, want := range []string{
+		`data-autosave-failed-message="自動保存できませんでした。"`,
+		`data-save-draft-failed-message="下書きを保存できませんでした。"`,
+		`data-body-too-large-message="本文が長すぎます。本文は500,000文字以内にしてください。"`,
+		`<p id="page-draft-save-error" class="text-xs text-error text-right" role="status" data-draft-save-error></p>`,
+		`[&:has([data-draft-save-error]:not(:empty))_#page-draft-saved-at]:hidden`,
+		// 本文のエラーが無いときも、保存の失敗はエディタの説明として関連付ける
+		`data-markdown-editor-describedby="page-draft-save-error"`,
+		`data-markdown-editor-invalid="false"`,
+		// 下書きが無いときは、下書きが無いことを前提にした空の版を埋め込む
+		`data-markdown-editor-draft-page-digest=""`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("レスポンスに %qが含まれていない", want)
+		}
 	}
 	if strings.Contains(body, "flex-row-reverse") {
 		t.Error("操作行で保存日時とキャンセルの順序が反転している (flex-row-reverseがある)")

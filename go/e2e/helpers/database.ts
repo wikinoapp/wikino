@@ -237,6 +237,9 @@ export async function cleanupTestData(userIds: string[]): Promise<void> {
       `DELETE FROM page_attachment_references WHERE page_id IN (SELECT id FROM pages WHERE space_id = ANY($1))`,
       [spaceIds],
     );
+    // 公開したページの編集履歴と編集者
+    await query(`DELETE FROM page_revisions WHERE space_id = ANY($1)`, [spaceIds]);
+    await query(`DELETE FROM page_editors WHERE space_id = ANY($1)`, [spaceIds]);
     await query(`DELETE FROM pages WHERE space_id = ANY($1)`, [spaceIds]);
     await query(`DELETE FROM topic_members WHERE space_id = ANY($1)`, [spaceIds]);
     await query(`DELETE FROM topics WHERE space_id = ANY($1)`, [spaceIds]);

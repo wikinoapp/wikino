@@ -479,3 +479,24 @@ func assertProblem(t *testing.T, rr *httptest.ResponseRecorder, wantStatus int) 
 		t.Errorf("status = %d、期待値 = %d", problem.Status, wantStatus)
 	}
 }
+
+// tooLongBodyJSONは、本文の上限を1字超える本文をJSONの文字列にしたもの
+var tooLongBodyJSON = `"` + strings.Repeat("a", model.PageBodyMaxLength+1) + `"`
+
+// assertBodyTooLongProblemは、本文が上限を超えたリクエストを、本文の位置を示す1件の問題の422にしたことを確かめる
+func assertBodyTooLongProblem(t *testing.T, rr *httptest.ResponseRecorder) {
+	t.Helper()
+
+	assertProblem(t, rr, http.StatusUnprocessableEntity)
+	var problem struct {
+		Errors []struct {
+			Pointer *string `json:"pointer"`
+		} `json:"errors"`
+	}
+	if err := json.Unmarshal(rr.Body.Bytes(), &problem); err != nil {
+		t.Fatalf("本文を読めない: %v", err)
+	}
+	if len(problem.Errors) != 1 || problem.Errors[0].Pointer == nil || *problem.Errors[0].Pointer != "#/body" {
+		t.Errorf("errors = %.200s、期待値 = pointerが #/body の問題1件", rr.Body.String())
+	}
+}

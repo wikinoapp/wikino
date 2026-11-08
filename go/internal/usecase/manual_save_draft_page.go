@@ -8,6 +8,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/validator"
 )
 
 // ManualSaveDraftPageUsecaseは下書きページの手動保存ユースケース
@@ -22,6 +23,7 @@ type ManualSaveDraftPageUsecase struct {
 	topicRepo             *repository.TopicRepository
 	topicMemberRepo       *repository.TopicMemberRepository
 	attachmentRepo        *repository.AttachmentRepository
+	saveValidator         *validator.DraftPageSaveValidator
 }
 
 // NewManualSaveDraftPageUsecaseはManualSaveDraftPageUsecaseを生成する
@@ -36,6 +38,7 @@ func NewManualSaveDraftPageUsecase(
 	topicRepo *repository.TopicRepository,
 	topicMemberRepo *repository.TopicMemberRepository,
 	attachmentRepo *repository.AttachmentRepository,
+	saveValidator *validator.DraftPageSaveValidator,
 ) *ManualSaveDraftPageUsecase {
 	return &ManualSaveDraftPageUsecase{
 		db:                    db,
@@ -48,6 +51,7 @@ func NewManualSaveDraftPageUsecase(
 		topicRepo:             topicRepo,
 		topicMemberRepo:       topicMemberRepo,
 		attachmentRepo:        attachmentRepo,
+		saveValidator:         saveValidator,
 	}
 }
 
@@ -58,6 +62,9 @@ type ManualSaveDraftPageInput struct {
 	UserID          model.UserID
 	Title           *string
 	Body            string
+	// DraftPageDigestは、編集画面が保存の前提にした下書きの版 (開いたときか直前の保存の応答で受け取った版)。
+	// 空文字列は下書きが無いことを前提にした保存を表す
+	DraftPageDigest string
 }
 
 // ManualSaveDraftPageOutputは下書きページの手動保存の出力パラメータ
@@ -84,7 +91,14 @@ func (uc *ManualSaveDraftPageUsecase) Execute(ctx context.Context, input ManualS
 		return nil, err
 	}
 
-	// 3. 永続化
+	// 3. バリデーション
+	if err := uc.saveValidator.Validate(ctx, validator.DraftPageSaveValidatorInput{
+		Body: input.Body,
+	}); err != nil {
+		return nil, err
+	}
+
+	// 4. 永続化
 	return uc.saveDraft(ctx, data, input)
 }
 
@@ -165,6 +179,7 @@ func (uc *ManualSaveDraftPageUsecase) saveDraft(ctx context.Context, data *pageA
 		CurrentTopicName:          data.topic.Name,
 		BaseTitle:                 data.page.Title,
 		BaseBody:                  data.page.Body,
+		ExpectedDraftPageDigest:   &input.DraftPageDigest,
 	}
 
 	// DraftPageのfind_or_create・Wikiリンクの解決・更新

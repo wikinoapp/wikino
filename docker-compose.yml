@@ -12,7 +12,7 @@ services:
       - wikino-cli-config:/home/developer/.config/wikino
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/go/.cache/go-build
-      - app-gems-data:/mise/installs/ruby/3.4.4/lib/ruby/gems/3.4.0
+      - app-gems-ruby-4.0.9-data:/mise/installs/ruby/4.0.9/lib/ruby/gems/4.0.0
     ports:
       - "4200:8080" # Go
       - "4201:3000" # Rails
@@ -61,7 +61,7 @@ services:
       - IMGPROXY_USE_S3=${WIKINO_IMGPROXY_USE_S3:-}
 
 volumes:
-  app-gems-data:
+  app-gems-ruby-4.0.9-data:
   go-build-cache:
   go-mod-cache:
   op-config:

@@ -13,7 +13,7 @@ templ SuggestionApplyError(data *viewmodel.SuggestionApplyError) {
 				<section class="flex flex-col gap-1">
 					for _, pageErr := range data.PageErrors {
 						<p>
-							{ templates.T(ctx, "suggestion_apply_page_error", map[string]any{"PageTitle": pageErr.PageTitle}) }
+							{ templates.T(ctx, "suggestion_apply_page_error", map[string]any{"PageTitle": pageErr.DisplayPageTitle(ctx)}) }
 							@templ.Raw(pageErr.Message)
 						</p>
 					}

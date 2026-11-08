@@ -1,0 +1,85 @@
+package errors
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// ContentTooLargePageは、送った内容が大きすぎるとき (413) のエラーページを表示するテンプレート。
+// 本文を読む前の段階で返すため、セッションやDBを使わず、外部依存のない完全なHTMLドキュメントとして生成する。
+// maxSizeは一度に送れる大きさを表示用に整えた文字列 (例: "8MB")
+templ ContentTooLargePage(maxSize string) {
+	<!DOCTYPE html>
+	<html lang={ templates.Locale(ctx) }>
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="initial-scale=1, width=device-width"/>
+			<meta name="robots" content="noindex, nofollow"/>
+			<title>{ templates.T(ctx, "error_content_too_large_title") }</title>
+			<style>
+				body {
+					font-family:
+						"Helvetica Neue",
+						Arial,
+						"Hiragino Kaku Gothic ProN",
+						"Hiragino Sans",
+						"BIZ UDPGothic",
+						Meiryo,
+						sans-serif,
+						"Apple Color Emoji",
+						"Segoe UI Emoji",
+						"Segoe UI Symbol",
+						"Noto Color Emoji";
+				}
+
+				h1 {
+					font-size: 24px;
+					margin-bottom: 10px;
+				}
+
+				a {
+					color: #7c3aed;
+				}
+
+				.container {
+					align-items: center;
+					display: flex;
+					justify-content: center;
+					min-height: 100dvh;
+				}
+
+				.wrapper {
+					max-width: 480px;
+					padding: 0 16px;
+					text-align: center;
+				}
+
+				.message {
+					font-size: 14px;
+					margin-bottom: 20px;
+				}
+			</style>
+		</head>
+		<body>
+			<main class="container">
+				<div class="wrapper">
+					<h1>{ templates.T(ctx, "error_content_too_large_heading") }</h1>
+					<p class="message">
+						{ templates.T(ctx, "error_content_too_large_message", map[string]any{"Max": maxSize}) }
+					</p>
+					<a href="/">{ templates.T(ctx, "error_content_too_large_back_to_top") }</a>
+				</div>
+			</main>
+		</body>
+	</html>
+}
+
+// ContentTooLargeFragmentは、htmxの要求で送った内容が大きすぎるとき (413) に、差し替え先へ出す断片。
+// htmx 4は4xxの応答も差し替えるため、完全なHTMLドキュメントを返すと差し替え先に文書が入れ子で入る。
+// 利用者は差し替え先のある画面に留まるため、前の画面へ戻る案内は含めない。
+// maxSizeは一度に送れる大きさを表示用に整えた文字列 (例: "8MB")
+templ ContentTooLargeFragment(maxSize string) {
+	<div class="alert" role="alert">
+		@templates.DecorativeIcon("warning-circle-regular", "fill-info")
+		<span>
+			{ templates.T(ctx, "error_content_too_large_fragment_message", map[string]any{"Max": maxSize}) }
+		</span>
+	</div>
+}

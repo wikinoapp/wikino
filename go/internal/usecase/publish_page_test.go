@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -59,7 +61,7 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Test Page").
 		Build()
-	testutil.NewDraftPageBuilderDB(t, db).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -74,6 +76,7 @@ func TestPublishPageUsecase_Execute(t *testing.T) {
 		UserID:          userID,
 		Title:           "Updated Title",
 		Body:            "Updated body",
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -144,7 +147,7 @@ func TestPublishPageUsecase_Execute_WithWikilinks(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Test Page").
 		Build()
-	testutil.NewDraftPageBuilderDB(t, db).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -159,6 +162,7 @@ func TestPublishPageUsecase_Execute_WithWikilinks(t *testing.T) {
 		UserID:          userID,
 		Title:           "Wikilink Publish Test",
 		Body:            "See [[リンク先ページ]]",
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -304,7 +308,7 @@ func TestPublishPageUsecase_Execute_ExistingLinkedPage(t *testing.T) {
 		WithTitle("既存ページ").
 		Build()
 
-	testutil.NewDraftPageBuilderDB(t, db).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -319,6 +323,7 @@ func TestPublishPageUsecase_Execute_ExistingLinkedPage(t *testing.T) {
 		UserID:          userID,
 		Title:           "Existing Link Test",
 		Body:            "See [[既存ページ]]",
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -379,7 +384,7 @@ func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
 		WithNumber(1).
 		WithTitle("Test Page").
 		Build()
-	testutil.NewDraftPageBuilderDB(t, db).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -394,6 +399,7 @@ func TestPublishPageUsecase_Execute_WikilinkCreatesPageEditor(t *testing.T) {
 		UserID:          userID,
 		Title:           "Editor Publish Test",
 		Body:            "See [[公開時自動作成ページ]]",
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -478,7 +484,7 @@ func TestPublishPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 		WithDiscarded().
 		Build()
 
-	testutil.NewDraftPageBuilderDB(t, db).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -493,6 +499,7 @@ func TestPublishPageUsecase_Execute_WikilinkDiscardedPage(t *testing.T) {
 		UserID:          userID,
 		Title:           "Discarded Link Test",
 		Body:            "See [[廃棄済みページ]]",
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -563,7 +570,7 @@ func TestPublishPageUsecase_Execute_WithAttachments(t *testing.T) {
 		Build()
 
 	body := fmt.Sprintf("![image](/attachments/%s)", attachmentID)
-	testutil.NewDraftPageBuilderDB(t, db).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -578,6 +585,7 @@ func TestPublishPageUsecase_Execute_WithAttachments(t *testing.T) {
 		UserID:          userID,
 		Title:           "Attachment Test",
 		Body:            body,
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -652,7 +660,7 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 
 	// 1行目がテキストのみの本文 (アイキャッチ画像なし)
 	body := "This is plain text\nSome more content"
-	testutil.NewDraftPageBuilderDB(t, db).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -667,6 +675,7 @@ func TestPublishPageUsecase_Execute_NoFeaturedImage(t *testing.T) {
 		UserID:          userID,
 		Title:           "No Featured Image",
 		Body:            body,
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -955,6 +964,7 @@ func TestPublishPageUsecase_Execute_WithDraftPageRevisions(t *testing.T) {
 		UserID:          userID,
 		Title:           "Draft With Revisions",
 		Body:            "Draft body with revisions",
+		DraftPageDigest: draftPageDigest(t, db, draftPageID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v、期待値 = nil", err)
@@ -1030,7 +1040,7 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 		Build()
 
 	body := fmt.Sprintf("See [[リンク先ページ]]\n\n![image](/attachments/%s)", attachmentID)
-	testutil.NewDraftPageBuilderDB(t, db).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
 		WithSpaceID(spaceID).
 		WithPageID(pageID).
 		WithSpaceMemberID(spaceMemberID).
@@ -1045,6 +1055,7 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 		UserID:          userID,
 		Title:           "Eq Test",
 		Body:            body,
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	}); err != nil {
 		t.Fatalf("公開のExecute()のエラー = %v", err)
 	}
@@ -1077,5 +1088,250 @@ func TestPublishPageUsecase_Execute_SharesPreviewRenderPath(t *testing.T) {
 
 	if previewOutput.BodyHTML != showOutput.BodyHTML {
 		t.Errorf("プレビューのBodyHTMLが公開後の表示と異なる:\nプレビュー: %q\n公開後の表示: %q", previewOutput.BodyHTML, showOutput.BodyHTML)
+	}
+}
+
+func TestPublishPageUsecase_Execute_BodyTooLong(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	q := query.New(db)
+	pageRepo := repository.NewPageRepository(q)
+	uc := NewPublishPageUsecase(db, repository.NewSpaceRepository(q), repository.NewSpaceMemberRepository(q), pageRepo,
+		repository.NewPageRevisionRepository(q), repository.NewPageEditorRepository(q), repository.NewDraftPageRepository(q),
+		repository.NewDraftPageRevisionRepository(q), repository.NewSuggestionPageRepository(q), repository.NewTopicRepository(q),
+		repository.NewTopicMemberRepository(q), repository.NewAttachmentRepository(q), repository.NewPageAttachmentReferenceRepository(q),
+		validator.NewPageUpdateValidator(pageRepo))
+
+	spaceID := testutil.NewSpaceBuilderDB(t, db).
+		WithIdentifier("publish-too-long").
+		Build()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("publish-too-long@example.com").
+		WithAtname("publishtoolong").
+		Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+	topicID := testutil.NewTopicBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithName("General").
+		Build()
+	testutil.NewTopicMemberBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithSpaceMemberID(spaceMemberID).
+		Build()
+	testutil.NewPageBuilderDB(t, db).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Test Page").
+		WithBody("元の本文").
+		Build()
+
+	_, err := uc.Execute(context.Background(), PublishPageInput{
+		SpaceIdentifier: model.SpaceIdentifier("publish-too-long"),
+		PageNumber:      1,
+		UserID:          userID,
+		Title:           "Test Page",
+		Body:            strings.Repeat("a", model.PageBodyMaxLength+1),
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+	}
+	if !ve.HasFieldError("body") {
+		t.Error("bodyのフィールドエラーが無い")
+	}
+
+	page, err := pageRepo.FindBySpaceAndNumber(context.Background(), spaceID, 1)
+	if err != nil {
+		t.Fatalf("ページの取得のエラー = %v", err)
+	}
+	if page.Body != "元の本文" {
+		t.Errorf("Body = %q、期待値 = %q (本文が上限を超えたのに公開された)", page.Body, "元の本文")
+	}
+}
+
+// TestPublishPageUsecase_Execute_DraftPageDigestは、編集画面が前提にした下書きの版と今の版を照合し、
+// 食い違うときはページを公開せず、下書きも消さないことを確かめる
+func TestPublishPageUsecase_Execute_DraftPageDigest(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+
+	t.Run("前提の版が今の版と一致すれば公開し、下書きを消す", func(t *testing.T) {
+		t.Parallel()
+		f := setupCreateAPIPageFixture(t, db, "publish-digest-match", apiTopicRegularMemberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[2]).WithNumber(1).WithTitle("ページ").Build()
+		draftID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(f.space.ID).WithPageID(pageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[2]).
+			WithTitle("下書き").WithBody("下書きの本文").Build()
+
+		_, err := newConcurrentPublishPageUC(db).Execute(t.Context(), PublishPageInput{
+			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID,
+			Title: "公開したタイトル", Body: "画面の本文", DraftPageDigest: draftPageDigest(t, db, draftID, f.space.ID),
+		})
+		if err != nil {
+			t.Fatalf("Execute()のエラー = %v", err)
+		}
+		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND title = '公開したタイトル'", pageID); n != 1 {
+			t.Errorf("公開したタイトルのページの数 = %d、期待値 = 1", n)
+		}
+		if n := countRows(t, db, "draft_pages", f.space.ID, "id = $2", draftID); n != 0 {
+			t.Errorf("公開後の下書きの数 = %d、期待値 = 0", n)
+		}
+	})
+
+	t.Run("前提の版の後に下書きが変わっていれば公開せず、今の版を添えて競合を返す", func(t *testing.T) {
+		t.Parallel()
+		f := setupCreateAPIPageFixture(t, db, "publish-digest-mismatch", apiTopicRegularMemberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[2]).WithNumber(1).WithTitle("ページ").Build()
+		draftID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(f.space.ID).WithPageID(pageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[2]).
+			WithTitle("下書き").WithBody("下書きの本文").Build()
+		staleDigest := draftPageDigest(t, db, draftID, f.space.ID)
+		execForTest(t, db, "UPDATE draft_pages SET body = 'APIの本文', modified_at = modified_at + interval '1 second' WHERE id = $1 AND space_id = $2", draftID, f.space.ID)
+		currentDigest := draftPageDigest(t, db, draftID, f.space.ID)
+
+		_, err := newConcurrentPublishPageUC(db).Execute(t.Context(), PublishPageInput{
+			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID,
+			Title: "公開したタイトル", Body: "[[競合で作られないリンク先]]", DraftPageDigest: staleDigest,
+		})
+		assertDraftPageConflict(t, err, currentDigest)
+		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND title = '公開したタイトル'", pageID); n != 0 {
+			t.Errorf("公開したタイトルのページの数 = %d、期待値 = 0", n)
+		}
+		if n := countRows(t, db, "draft_pages", f.space.ID, "id = $2 AND body = 'APIの本文'", draftID); n != 1 {
+			t.Errorf("APIの本文を保った下書きの数 = %d、期待値 = 1", n)
+		}
+		// 競合した公開は、リンク先ページの自動作成もロールバックする
+		if n := countRows(t, db, "pages", f.space.ID, "title = '競合で作られないリンク先'"); n != 0 {
+			t.Errorf("リンク先のページの数 = %d、期待値 = 0", n)
+		}
+	})
+
+	t.Run("下書きが無い前提の公開で下書きがあれば公開せず、今の版を添えて競合を返す", func(t *testing.T) {
+		t.Parallel()
+		f := setupCreateAPIPageFixture(t, db, "publish-digest-unexpected-draft", apiTopicRegularMemberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[2]).WithNumber(1).WithTitle("ページ").Build()
+		draftID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(f.space.ID).WithPageID(pageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[2]).
+			WithTitle("下書き").WithBody("APIで作った下書き").Build()
+
+		_, err := newConcurrentPublishPageUC(db).Execute(t.Context(), PublishPageInput{
+			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID,
+			Title: "公開したタイトル", Body: "画面の本文", DraftPageDigest: "",
+		})
+		assertDraftPageConflict(t, err, draftPageDigest(t, db, draftID, f.space.ID))
+		if n := countRows(t, db, "draft_pages", f.space.ID, "id = $2 AND body = 'APIで作った下書き'", draftID); n != 1 {
+			t.Errorf("APIの本文を保った下書きの数 = %d、期待値 = 1", n)
+		}
+		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND title = '公開したタイトル'", pageID); n != 0 {
+			t.Errorf("公開したタイトルのページの数 = %d、期待値 = 0", n)
+		}
+	})
+
+	t.Run("下書きがある前提の公開で下書きが消えていれば公開せず、空の版を添えて競合を返す", func(t *testing.T) {
+		t.Parallel()
+		f := setupCreateAPIPageFixture(t, db, "publish-digest-draft-gone", apiTopicRegularMemberRole)
+		pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[2]).WithNumber(1).WithTitle("ページ").Build()
+		draftID := testutil.NewDraftPageBuilderDB(t, db).
+			WithSpaceID(f.space.ID).WithPageID(pageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[2]).
+			WithTitle("下書き").WithBody("下書きの本文").Build()
+		staleDigest := draftPageDigest(t, db, draftID, f.space.ID)
+		execForTest(t, db, "DELETE FROM draft_pages WHERE id = $1 AND space_id = $2", draftID, f.space.ID)
+
+		_, err := newConcurrentPublishPageUC(db).Execute(t.Context(), PublishPageInput{
+			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID,
+			Title: "公開したタイトル", Body: "画面の本文", DraftPageDigest: staleDigest,
+		})
+		assertDraftPageConflict(t, err, "")
+		if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND title = '公開したタイトル'", pageID); n != 0 {
+			t.Errorf("公開したタイトルのページの数 = %d、期待値 = 0", n)
+		}
+	})
+}
+
+// TestPublishPageUsecase_Execute_DraftPageChangedAfterCheckは、公開が下書きの行をロックしてから版を照合し、
+// ロックを待っている間にコミットされた別の場所の更新も競合として扱うことを確かめる
+func TestPublishPageUsecase_Execute_DraftPageChangedAfterCheck(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	f := setupCreateAPIPageFixture(t, db, "publish-digest-interleave", apiTopicRegularMemberRole)
+	pageID := testutil.NewPageBuilderDB(t, db).WithSpaceID(f.space.ID).WithTopicID(f.topicIDs[2]).WithNumber(1).WithTitle("ページ").Build()
+	draftID := testutil.NewDraftPageBuilderDB(t, db).
+		WithSpaceID(f.space.ID).WithPageID(pageID).WithSpaceMemberID(f.spaceMemberID).WithTopicID(f.topicIDs[2]).
+		WithTitle("下書き").WithBody("下書きの本文").Build()
+	digest := draftPageDigest(t, db, draftID, f.space.ID)
+
+	// 別の場所 (API) の更新が、下書きの行をロックしたままにする
+	apiTx, apiPID := beginWebTx(t, db)
+	apiDraftPageRepo := repository.NewDraftPageRepository(query.New(db).WithTx(apiTx))
+	if _, err := apiDraftPageRepo.FindByIDForUpdate(t.Context(), draftID, f.space.ID); err != nil {
+		t.Fatalf("API側の下書きのロック: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	results := make(chan error, 1)
+	go func() {
+		_, err := newConcurrentPublishPageUC(db).Execute(ctx, PublishPageInput{
+			SpaceIdentifier: f.space.Identifier, PageNumber: 1, UserID: f.userID,
+			Title: "公開したタイトル", Body: "画面の本文", DraftPageDigest: digest,
+		})
+		results <- err
+	}()
+
+	// 公開が下書きの行のロックを待つまで、API側の更新を進めない
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for blocked := false; !blocked; {
+		err := db.QueryRowContext(ctx, `SELECT EXISTS (
+			SELECT 1 FROM pg_stat_activity
+			WHERE datname = current_database()
+			  AND $1 = ANY(pg_blocking_pids(pid))
+			  AND query LIKE '%FindDraftPageByIDForUpdate%'
+		)`, apiPID).Scan(&blocked)
+		if err != nil {
+			t.Fatalf("公開のロック待ちの確認: %v", err)
+		}
+		if blocked {
+			break
+		}
+		select {
+		case err := <-results:
+			t.Fatalf("API側の更新の前に公開が終了: %v", err)
+		case <-ctx.Done():
+			t.Fatalf("公開が下書きの行のロックを待たなかった: %v", ctx.Err())
+		case <-ticker.C:
+		}
+	}
+
+	if _, err := apiDraftPageRepo.Update(ctx, repository.UpdateDraftPageInput{
+		ID: draftID, SpaceID: f.space.ID, TopicID: f.topicIDs[2], Title: ptr("下書き"), Body: "APIの本文", ModifiedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("API側の下書きの更新: %v", err)
+	}
+	if err := apiTx.Commit(); err != nil {
+		t.Fatalf("API側のコミット: %v", err)
+	}
+
+	var err error
+	select {
+	case err = <-results:
+	case <-ctx.Done():
+		t.Fatalf("API側のコミット後も公開が終了しなかった: %v", ctx.Err())
+	}
+	assertDraftPageConflict(t, err, draftPageDigest(t, db, draftID, f.space.ID))
+	if n := countRows(t, db, "draft_pages", f.space.ID, "id = $2 AND body = 'APIの本文'", draftID); n != 1 {
+		t.Errorf("APIの本文を保った下書きの数 = %d、期待値 = 1", n)
+	}
+	if n := countRows(t, db, "pages", f.space.ID, "id = $2 AND title = '公開したタイトル'", pageID); n != 0 {
+		t.Errorf("公開したタイトルのページの数 = %d、期待値 = 0", n)
 	}
 }

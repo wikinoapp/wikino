@@ -63,12 +63,13 @@ func TestPublishPageUsecase_ReferenceDefinitionInsideHiddenContent(t *testing.T)
 					t.Fatalf("CreateBatch()のエラー = %v", err)
 				}
 				body := fmt.Sprintf("[visible][r]\n\nx <%s>\n\n[r]: /attachments/%s\n\n</%s>", element, attachmentID, element)
-				testutil.NewDraftPageBuilderDB(t, db).WithSpaceID(spaceID).WithPageID(pageID).
+				draftID := testutil.NewDraftPageBuilderDB(t, db).WithSpaceID(spaceID).WithPageID(pageID).
 					WithSpaceMemberID(memberID).WithTopicID(topicID).WithTitle("References").WithBody(body).Build()
 
 				if _, err := uc.Execute(ctx, PublishPageInput{
 					SpaceIdentifier: model.SpaceIdentifier(identifier), PageNumber: 1, UserID: userID,
 					Title: "References", Body: body,
+					DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 				}); err != nil {
 					t.Fatalf("Execute()のエラー = %v", err)
 				}

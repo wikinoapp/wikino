@@ -8,8 +8,8 @@
 # [Ja] `Sentry::ErrorEvent` / `Sentry::RequestInterface` の軽量ダブル。
 # Struct を採用することで Ruby 3.5 で警告対象になる ostruct への依存を避け、
 # SDK の初期化に依存せずフィルタの挙動だけを検証できるようにしている。
-SentrySpecEventDouble = Struct.new(:request, keyword_init: true)
-SentrySpecRequestDouble = Struct.new(:data, keyword_init: true)
+SentrySpecEventDouble = Struct.new(:request)
+SentrySpecRequestDouble = Struct.new(:data)
 
 RSpec.describe "config/initializers/sentry.rb" do # rubocop:disable RSpec/DescribeClass
   let(:config) { Sentry.configuration }

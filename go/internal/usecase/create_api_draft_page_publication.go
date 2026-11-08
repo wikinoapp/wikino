@@ -29,6 +29,7 @@ type CreateAPIDraftPagePublicationUsecase struct {
 	attachmentRepo        *repository.AttachmentRepository
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository
 	updateValidator       *validator.APIPageUpdateValidator
+	publicationValidator  *validator.APIDraftPagePublicationCreateValidator
 }
 
 const createAPIDraftPagePublicationRetryLimit = 3
@@ -48,6 +49,7 @@ func NewCreateAPIDraftPagePublicationUsecase(
 	attachmentRepo *repository.AttachmentRepository,
 	pageAttachmentRefRepo *repository.PageAttachmentReferenceRepository,
 	updateValidator *validator.APIPageUpdateValidator,
+	publicationValidator *validator.APIDraftPagePublicationCreateValidator,
 ) *CreateAPIDraftPagePublicationUsecase {
 	return &CreateAPIDraftPagePublicationUsecase{
 		db:                    db,
@@ -63,6 +65,7 @@ func NewCreateAPIDraftPagePublicationUsecase(
 		attachmentRepo:        attachmentRepo,
 		pageAttachmentRefRepo: pageAttachmentRefRepo,
 		updateValidator:       updateValidator,
+		publicationValidator:  publicationValidator,
 	}
 }
 
@@ -174,6 +177,11 @@ func (uc *CreateAPIDraftPagePublicationUsecase) publishOnce(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
+	}
+	if err := uc.publicationValidator.Validate(ctx, validator.APIDraftPagePublicationCreateValidatorInput{
+		Body: draft.Body,
+	}); err != nil {
+		return nil, err
 	}
 
 	// 4. ビジネスロジックと永続化

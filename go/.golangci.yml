@@ -57,8 +57,17 @@ linters:
       #   gosec G120は関数単位のヒューリスティックで検出するため、ミドルウェアでラップしても
       #   ハンドラー内のr.FormValue / r.ParseFormは検出対象として残る。25+ 箇所に個別nolintを
       #   散在させるより、ここで一括除外する方が管理コストが低く、保護している構造を明示できる。
+      # G124: http.CookieのSecure・HttpOnly・SameSiteが定数でない・無効の指摘。
+      #   Secureは開発環境 (HTTP) で無効にするため設定 (WIKINO_SESSION_SECUREなど) から渡している。
+      #   HttpOnlyを無効にしているのは、JavaScriptから読むフラッシュメッセージとCSRFトークンのCookieだけである。
+      # G710: http.Redirectの遷移先がリクエスト由来の値を含むという、テイント解析による指摘。
+      #   遷移先はtemplatesのパスのヘルパーで組み立てた自サイトのパスか、
+      #   redirect.GetSafeRedirectURLで自サイトのパスに限ったbackパラメータだけである。
+      #   どちらもgosecからは安全な値と判別できず、ほぼすべてのリダイレクトが検出対象になる。
       excludes:
         - G120
+        - G124
+        - G710
       # セキュリティの重要度 (low, medium, high)
       severity: medium
       confidence: medium

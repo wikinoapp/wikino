@@ -102,7 +102,8 @@ function showToast(message: string, category: ToastCategory): void {
   const toaster = findOrCreateToaster();
   if (typeof toaster.toast !== "function") return;
 
-  const toast = toaster.toast({ category, description: escapeHTML(message) });
+  // Basecoatがdescriptionをテキストとしてエスケープして差し込むため、文言はそのまま渡す。
+  const toast = toaster.toast({ category, description: message });
 
   // 読み上げはステータス領域が受け持つため、トーストのロールを外して二重に読み上げさせない。
   toast.removeAttribute("role");
@@ -124,11 +125,4 @@ function findOrCreateToaster(): Toaster {
   basecoat?.init("toaster");
 
   return toaster as Toaster;
-}
-
-// Basecoatはdescriptionをそのままマークアップとして差し込むため、文言をエスケープして渡す。
-function escapeHTML(text: string): string {
-  const element = document.createElement("span");
-  element.textContent = text;
-  return element.innerHTML;
 }

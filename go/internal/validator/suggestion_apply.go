@@ -3,6 +3,7 @@ package validator
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
@@ -30,8 +31,10 @@ type SuggestionApplyValidatorInput struct {
 type SuggestionApplyValidatorEntry struct {
 	PageID  model.PageID
 	TopicID model.TopicID
-	// TitleはSuggestionPage.Title。NULLの場合はチェック対象外
+	// TitleはSuggestionPage.Title。NULLの場合はタイトルのチェックを行わない
 	Title *string
+	// BodyはSuggestionPage.Body
+	Body string
 }
 
 // SuggestionApplyValidateOutputはバリデーション成功時の出力
@@ -58,11 +61,16 @@ func (v *SuggestionApplyValidator) Validate(
 
 	for _, entry := range input.Entries {
 		if entry.Title == nil {
+			// タイトルを持たないページも、本文は反映するため上限を確かめる
+			ve := model.NewValidationError()
+			validatePageBodyLength(ctx, ve, entry.Body)
+			v.collectPageErrors(applyErr, ve, "")
 			continue
 		}
 
 		conflictID, err := v.pageUpdateValidator.Validate(ctx, PageUpdateValidatorInput{
 			Title:           *entry.Title,
+			Body:            entry.Body,
 			PageID:          entry.PageID,
 			TopicID:         entry.TopicID,
 			SpaceID:         input.SpaceID,
@@ -96,9 +104,16 @@ func (v *SuggestionApplyValidator) Validate(
 
 // collectPageErrorsはPageUpdateValidatorが返したValidationErrorのフィールドエラーを、
 // 構造化されたPageErrorsに変換してapplyErrに追加する。
+// 1ページに複数のフィールドのエラーがあっても表示の順が要求ごとに変わらないよう、フィールド名の順に並べる。
 func (v *SuggestionApplyValidator) collectPageErrors(applyErr *model.SuggestionApplyError, inner *model.ValidationError, pageTitle string) {
-	for _, msgs := range inner.Fields {
-		for _, msg := range msgs {
+	fields := make([]string, 0, len(inner.Fields))
+	for field := range inner.Fields {
+		fields = append(fields, field)
+	}
+	slices.Sort(fields)
+
+	for _, field := range fields {
+		for _, msg := range inner.Fields[field] {
 			applyErr.PageErrors = append(applyErr.PageErrors, model.SuggestionApplyPageError{
 				PageTitle: pageTitle,
 				Message:   msg,

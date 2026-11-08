@@ -46,12 +46,13 @@ func TestPublishPageUsecase_Execute_CodeWikilinkCreatesNoPage(t *testing.T) {
 
 	body := "See [[テキストのリンク先]]\n\n```\n[[ブロックのリンク先]]\n```\n\n" +
 		"Write `[[インラインのリンク先]]` and <code>[[HTMLのリンク先]]</code>"
-	testutil.NewDraftPageBuilderDB(t, db).WithSpaceID(spaceID).WithPageID(pageID).
+	draftID := testutil.NewDraftPageBuilderDB(t, db).WithSpaceID(spaceID).WithPageID(pageID).
 		WithSpaceMemberID(memberID).WithTopicID(topicID).WithTitle("Code Wikilink").WithBody(body).Build()
 
 	output, err := uc.Execute(ctx, PublishPageInput{
 		SpaceIdentifier: model.SpaceIdentifier("publish-code-wikilink"), PageNumber: 1, UserID: userID,
 		Title: "Code Wikilink", Body: body,
+		DraftPageDigest: draftPageDigest(t, db, draftID, spaceID),
 	})
 	if err != nil {
 		t.Fatalf("Execute()のエラー = %v", err)

@@ -34,13 +34,13 @@ func NewDraftPageRevisions(revisions []*model.DraftPageRevision, totalCount int6
 }
 
 // DraftPageRevisionDiffはページ編集画面のリビジョン差分モーダル用ビューモデル。
-// 選択されたリビジョンを直前の状態と比較し、タイトルは新旧のペア、本文は差分ブロックで表す。
+// 選択されたリビジョンを直前の状態と比較し、タイトルは新旧のペア、本文は差分で表す。
 type DraftPageRevisionDiff struct {
 	CreatedAt      time.Time
 	OldTitle       string
 	NewTitle       string
 	HasTitleChange bool
-	BodyBlocks     []DiffBlock
+	Body           BodyDiff
 }
 
 // NewDraftPageRevisionDiffは選択されたリビジョンと直前の状態の差分を生成する。
@@ -59,6 +59,6 @@ func NewDraftPageRevisionDiff(draftPage *model.DraftPage, revision, previous *mo
 		OldTitle:       oldTitle,
 		NewTitle:       revision.Title,
 		HasTitleChange: oldTitle != revision.Title,
-		BodyBlocks:     ComputeDiffBlocks(oldBody, revision.Body, 3),
+		Body:           NewBodyDiff(oldBody, revision.Body),
 	}
 }

@@ -56,6 +56,7 @@ func TestHandler_CreateDraftPagePublication(t *testing.T) {
 		repository.NewAttachmentRepository(q),
 		repository.NewPageAttachmentReferenceRepository(q),
 		validator.NewAPIPageUpdateValidator(pageRepo),
+		validator.NewAPIDraftPagePublicationCreateValidator(),
 	))
 
 	// サブテストは同じ下書きを公開するため、並列にしない。

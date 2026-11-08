@@ -143,18 +143,14 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM
 
-	manualSaveURL := string(templates.PageDraftPageRevisionPath(spaceIdentVM, int32(output.Page.Number)))
-
 	editData := pagepages.EditPageData{
-		CSRFToken:               csrfToken,
-		Page:                    pageVM,
-		Space:                   spaceVM,
-		Topic:                   topicVM,
-		LinkList:                linkResult.LinkList,
-		BacklinkList:            linkResult.BacklinkList,
-		RelatedPageState:        linkState,
-		ManualSaveURL:           manualSaveURL,
-		CreateSuggestionSaveURL: manualSaveURL + "?redirect_to=suggestion_new",
+		CSRFToken:        csrfToken,
+		Page:             pageVM,
+		Space:            spaceVM,
+		Topic:            topicVM,
+		LinkList:         linkResult.LinkList,
+		BacklinkList:     linkResult.BacklinkList,
+		RelatedPageState: linkState,
 		// 編集画面は同一スペース内のため、各下書きカードのスペースラベルを省く。
 		DraftPages:     viewmodel.NewCardLinkDraftPagesWithoutSpace(output.DraftPages),
 		DraftRevisions: viewmodel.NewDraftPageRevisions(output.DraftPageRevisions, output.DraftPageRevisionTotalCount),

@@ -265,8 +265,9 @@ func runServe() {
 	passwordUpdateValidator := validator.NewPasswordUpdateValidator(passwordResetTokenRepo)
 	updatePasswordResetUC := usecase.NewUpdatePasswordResetUsecase(db, passwordResetTokenRepo, userPasswordRepo, passwordUpdateValidator)
 	draftPageRevisionRepo := repository.NewDraftPageRevisionRepository(queries)
-	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
-	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo)
+	draftPageSaveValidator := validator.NewDraftPageSaveValidator()
+	autoSaveDraftPageUC := usecase.NewAutoSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, draftPageSaveValidator)
+	manualSaveDraftPageUC := usecase.NewManualSaveDraftPageUsecase(db, spaceRepo, spaceMemberRepo, draftPageRepo, draftPageRevisionRepo, pageRepo, pageEditorRepo, topicRepo, topicMemberRepo, attachmentRepo, draftPageSaveValidator)
 	pageUpdateValidator := validator.NewPageUpdateValidator(pageRepo)
 	publishPageUC := usecase.NewPublishPageUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, suggestionPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, pageUpdateValidator)
 	pageMoveCreateValidator := validator.NewPageMoveCreateValidator(pageRepo, topicRepo, topicMemberRepo, suggestionPageRepo)
@@ -762,7 +763,7 @@ func runServe() {
 			usecase.NewDeleteAPIDraftPageUsecase(db, pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),
 		),
 		apidraftpagebodyedit.NewHandler(cfg.AppURL(), usecase.NewCreateAPIDraftPageBodyEditUsecase(db, spaceRepo, pageRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo, attachmentRepo)),
-		apidraftpagepublication.NewHandler(cfg.AppURL(), usecase.NewCreateAPIDraftPagePublicationUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, suggestionPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewAPIPageUpdateValidator(pageRepo))),
+		apidraftpagepublication.NewHandler(cfg.AppURL(), usecase.NewCreateAPIDraftPagePublicationUsecase(db, spaceRepo, pageRepo, pageRevisionRepo, pageEditorRepo, draftPageRepo, draftPageRevisionRepo, suggestionPageRepo, topicRepo, topicMemberRepo, attachmentRepo, pageAttachmentRefRepo, validator.NewAPIPageUpdateValidator(pageRepo), validator.NewAPIDraftPagePublicationCreateValidator())),
 		apidraftpagerevision.NewHandler(
 			usecase.NewListAPIDraftPageRevisionsUsecase(pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),
 			usecase.NewGetAPIDraftPageRevisionUsecase(pageRepo, draftPageRepo, draftPageRevisionRepo, topicRepo, topicMemberRepo),

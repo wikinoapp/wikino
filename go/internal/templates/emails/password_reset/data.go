@@ -1,3 +1,4 @@
+// Package password_resetはパスワードリセットメールのテンプレートを提供します
 package password_reset
 
 // Dataはパスワードリセットメールテンプレートのデータ
