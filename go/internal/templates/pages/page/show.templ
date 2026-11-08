@@ -51,9 +51,7 @@ templ Show(data ShowData) {
 							@trashedAlert(data.Space.Identifier)
 						</div>
 					}
-
 					@showHeader(data)
-
 					if data.Page.BodyHTML != "" {
 						// 本文HTMLはUseCaseが表示時にサニタイズ済みのため、ここでは生のまま展開する。
 						<div class="wikino-markdown mt-6" data-markdown-table-label={ templates.T(ctx, "markdown_table_scroll_label") }>
@@ -61,7 +59,6 @@ templ Show(data ShowData) {
 						</div>
 					}
 				</article>
-
 				@showFooter(data)
 			</div>
 		</div>
@@ -122,7 +119,6 @@ templ showHeader(data ShowData) {
 			<h1 class="text-3xl text-primary font-bold antialiased group-data-stuck:text-sm group-data-stuck:line-clamp-1">
 				{ data.Page.DisplayTitle(ctx) }
 			</h1>
-
 			if data.showsPageActions() {
 				<div class="flex w-full flex-none items-center justify-end gap-2 md:w-auto">
 					@showActions(data)
@@ -173,36 +169,32 @@ templ showPageActions(data ShowData) {
 					</div>
 				}
 				if data.showsPinAction() {
-					<div role="menuitem">
-						// すぐに戻せる操作のため、確認のダイアログは出さない。
-						<form
-							action={ templ.SafeURL(string(templates.PagePinPath(data.Space.Identifier, data.Page.Number))) }
-							class="w-full"
-							method="POST"
-						>
-							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-							<button class="flex gap-2 items-center cursor-pointer w-full" type="submit">
-								@templates.DecorativeIcon("push-pin-regular", "size-[18px]")
-								{ templates.T(ctx, "page_show_page_actions_pin") }
-							</button>
-						</form>
-					</div>
+					// すぐに戻せる操作のため、確認のダイアログは出さない。
+					<form
+						action={ templ.SafeURL(string(templates.PagePinPath(data.Space.Identifier, data.Page.Number))) }
+						class="w-full"
+						method="POST"
+					>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<button class="flex gap-2 items-center cursor-pointer w-full" role="menuitem" type="submit">
+							@templates.DecorativeIcon("push-pin-regular", "size-[18px]")
+							{ templates.T(ctx, "page_show_page_actions_pin") }
+						</button>
+					</form>
 				}
 				if data.showsUnpinAction() {
-					<div role="menuitem">
-						<form
-							action={ templ.SafeURL(string(templates.PagePinPath(data.Space.Identifier, data.Page.Number))) }
-							class="w-full"
-							method="POST"
-						>
-							<input type="hidden" name="_method" value="DELETE"/>
-							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-							<button class="flex gap-2 items-center cursor-pointer w-full" type="submit">
-								@templates.DecorativeIcon("push-pin-slash-regular", "size-[18px]")
-								{ templates.T(ctx, "page_show_page_actions_unpin") }
-							</button>
-						</form>
-					</div>
+					<form
+						action={ templ.SafeURL(string(templates.PagePinPath(data.Space.Identifier, data.Page.Number))) }
+						class="w-full"
+						method="POST"
+					>
+						<input type="hidden" name="_method" value="DELETE"/>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<button class="flex gap-2 items-center cursor-pointer w-full" role="menuitem" type="submit">
+							@templates.DecorativeIcon("push-pin-slash-regular", "size-[18px]")
+							{ templates.T(ctx, "page_show_page_actions_unpin") }
+						</button>
+					</form>
 				}
 				if data.showsTrashAction() {
 					<div role="menuitem">
@@ -270,7 +262,6 @@ templ trashedAlert(spaceIdentifier viewmodel.SpaceIdentifier) {
 		// アラートは :is(h2, ..., strong, [data-title]) で見出しを装飾するため見た目は変わらない。
 		<strong>
 			{ templates.T(ctx, "page_show_trashed_alert") }
-
 			<a href={ templ.SafeURL(string(templates.TrashPath(spaceIdentifier))) } class="underline">
 				{ templates.T(ctx, "page_show_view_trash_link") }
 			</a>
