@@ -170,8 +170,9 @@ describe("initializeCopyableInputs", () => {
     expect(selectedText(input())).toBe(VALUE);
   });
 
-  // 文言はBasecoatがマークアップとして差し込むため、エスケープして渡す。
-  it("トーストの文言をエスケープして渡す", async () => {
+  // 文言はBasecoatがテキストとしてエスケープするため、エスケープせずに渡す。二重にエスケープすると
+  // `&` などが `&amp;` のまま表示される。
+  it("トーストの文言をエスケープせずに渡す", async () => {
     stubClipboard(async () => {});
     const toast = stubToaster();
     button().dataset.successMessage = "<b>コピー</b>&";
@@ -179,7 +180,7 @@ describe("initializeCopyableInputs", () => {
     button().click();
     await vi.runAllTimersAsync();
 
-    expect(toast).toHaveBeenCalledWith({ category: "success", description: "&lt;b&gt;コピー&lt;/b&gt;&amp;" });
+    expect(toast).toHaveBeenCalledWith({ category: "success", description: "<b>コピー</b>&" });
   });
 
   // フラッシュメッセージが無い画面には `#toaster` が描画されないため、作ってBasecoatに初期化させる。

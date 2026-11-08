@@ -148,7 +148,7 @@ type SuggestionPageDiff struct {
 	OldTitle         string
 	NewTitle         string
 	HasTitleChange   bool
-	BodyBlocks       []DiffBlock
+	Body             BodyDiff
 }
 
 // NewSuggestionPageDiffsInputはNewSuggestionPageDiffsの入力パラメータです
@@ -191,7 +191,7 @@ func NewSuggestionPageDiffs(input NewSuggestionPageDiffsInput) []SuggestionPageD
 			OldTitle:         oldTitle,
 			NewTitle:         newTitle,
 			HasTitleChange:   oldTitle != newTitle,
-			BodyBlocks:       ComputeDiffBlocks(oldBody, sp.Body, 3),
+			Body:             NewBodyDiff(oldBody, sp.Body),
 		}
 	}
 	return diffs

@@ -20,6 +20,10 @@ import (
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	// 保存の応答のETagは編集画面が次の保存と公開の前提にする版のため、前段の中継が応答を加工してETagを消さないよう、
+	// 加工を禁じる。保存の失敗を含むすべての応答に付ける
+	w.Header().Set("Cache-Control", "no-transform")
+
 	// 認証済みユーザーを取得
 	user := middleware.UserFromContext(ctx)
 	if user == nil {

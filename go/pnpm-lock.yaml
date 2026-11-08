@@ -32,6 +32,9 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.5
         version: 1.2.5
+      '@lezer/markdown':
+        specifier: ^1.7.2
+        version: 1.7.2
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
@@ -67,8 +70,8 @@ importers:
         specifier: ^3.0.5
         version: 3.0.5
       basecoat-css:
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.1.0
+        version: 1.1.0
       concurrently:
         specifier: ^10.0.6
         version: 10.0.6
@@ -322,9 +325,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
-
-  '@lezer/common@1.5.2':
-    resolution: {integrity: sha512-sxQE460fPZyU3sdc8lafxiPwJHBzZRy/udNFynGQky1SePYBdhkBl1kOagA9uT3pxR8K09bOrmTUqA9wb/PjSQ==}
 
   '@lezer/common@1.5.3':
     resolution: {integrity: sha512-H0iErY4e43LpXbYDyBci5W4v/RwTgGV3YzYOlJPiGZ8RY8w51kVE+xLn1tg3Z6UmSfyETvtsUK3r7YsgDQEI7Q==}
@@ -852,8 +852,8 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  basecoat-css@1.0.2:
-    resolution: {integrity: sha512-C6I5rr7HziIAoBYNGPO5U6HaU/6FuF3iVp++IgoEqqJ836is3XoRty6l1ibXqxnoIRZNnOAYDMX8QxVC+58zhw==}
+  basecoat-css@1.1.0:
+    resolution: {integrity: sha512-qQ25lbkdXiBQd8uBd4juOX1y2ut+Ww4Aaa7EwO9Is/jd143Ze/eRULQdJmiwAwzKKqkxtvg9YTJg79xXz2nLeg==}
 
   brace-expansion@2.1.7:
     resolution: {integrity: sha512-uZbew1NqdmPDTMJ8ah1y+b+9QEJrfkXFk3RcTQw3X0jW/xRUvFKsg1CfQdSYGdTbXZWExtU3J3ccxtnfw1Fi0g==}
@@ -1746,7 +1746,7 @@ snapshots:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.2
+      '@lezer/common': 1.5.3
 
   '@codemirror/lang-css@6.3.1':
     dependencies:
@@ -1785,7 +1785,7 @@ snapshots:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.2
+      '@lezer/common': 1.5.3
       '@lezer/markdown': 1.7.2
 
   '@codemirror/language@6.13.1':
@@ -1949,8 +1949,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
-
-  '@lezer/common@1.5.2': {}
 
   '@lezer/common@1.5.3': {}
 
@@ -2327,7 +2325,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  basecoat-css@1.0.2: {}
+  basecoat-css@1.1.0: {}
 
   brace-expansion@2.1.7:
     dependencies:

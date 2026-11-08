@@ -1,3 +1,4 @@
+// Package componentsは複数の画面で共有するUIコンポーネントのテンプレートを提供します
 package components
 
 import (

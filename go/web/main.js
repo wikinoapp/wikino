@@ -9,6 +9,7 @@ import { initializeDraftConflict } from "./markdown-editor/draft-conflict";
 import { initializeDraftDeleteForms } from "./markdown-editor/draft-delete-handler";
 import { initializeDraftVersion } from "./markdown-editor/draft-version";
 import { initializeEditors } from "./markdown-editor/markdown-editor";
+import { initializeMarkdownDiffs } from "./markdown-highlight/markdown-diff";
 import { initializePublishForms } from "./markdown-editor/publish-handler";
 import { initializeSaveStatus } from "./markdown-editor/save-status";
 import { initializeMarkdownTables } from "./markdown-table";
@@ -43,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeAPITokenScopes();
   initializeCopyableInputs();
   initializeMarkdownTables();
+  initializeMarkdownDiffs();
   initializeStickyHeader();
   setTimeZoneCookie();
 });

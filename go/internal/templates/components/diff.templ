@@ -12,8 +12,14 @@ import (
 // 名前で、複数の差分が同じ画面に並ぶときに、各ブロックのキャプションでページを区別するために使います。
 type DiffViewData struct {
 	PageTitle string
-	Blocks    []viewmodel.DiffBlock
+	Diff      viewmodel.BodyDiff
 }
+
+// diffSourceOld / diffSourceNewは、本文のセルの行がどちらの本文の行かを表す (data-markdown-diff-source)。
+// ブラウザ (web/markdown-highlight/markdown-diff.ts) はこの値で、埋めた新旧の本文のどちらを読むかを決める。
+const diffSourceOld = "old"
+
+const diffSourceNew = "new"
 
 // diffCaptionPageTitleは差分が属するページを言い表す。タイトルが無い場合は他の画面と同じ
 // 「無題」の表記へ落とし、タイトルの無いページの呼び方を揃える。ページは公開されるまでタイトルを
@@ -27,15 +33,20 @@ func diffCaptionPageTitle(ctx context.Context, pageTitle string) string {
 }
 
 // DiffViewはページ本文の差分を、変更のまとまりごとに1つのテーブルとして表示します。
+// 新旧の本文を持つときは、ブラウザが記法の色を当てられるよう、まとまりの要素の中に本文を埋めて
+// 目印 (data-markdown-diff) を付ける。編集提案の画面には複数のページの差分が並ぶため、idは使わない。
 templ DiffView(data DiffViewData) {
-	<div class="flex flex-col gap-4">
-		if len(data.Blocks) == 0 {
+	<div class="flex flex-col gap-4" data-markdown-diff?={ data.Diff.Sources != nil }>
+		if data.Diff.Sources != nil {
+			@templ.JSONScript("", data.Diff.Sources)
+		}
+		if len(data.Diff.Blocks) == 0 {
 			<p class="text-sm text-muted-foreground italic">
 				{ templates.T(ctx, "diff_no_changes") }
 			</p>
 		} else {
-			for i, block := range data.Blocks {
-				@diffBlock(data.PageTitle, block, i+1, len(data.Blocks))
+			for i, block := range data.Diff.Blocks {
+				@diffBlock(data.PageTitle, block, i+1, len(data.Diff.Blocks))
 			}
 		}
 	</div>
@@ -69,7 +80,9 @@ templ diffBlock(pageTitle string, block viewmodel.DiffBlock, position int, total
 	</div>
 }
 
-// diffLineは差分の1行を表示します
+// diffLineは差分の1行を表示します。本文のセルには、その行が旧・新のどちらの本文の何行目かを持たせる。
+// 削除の行は旧の本文にだけ、追加と変更なしの行は新の本文にある。
+// 本文の文字は、記法の色が背景の色と混ざらないよう、追加・削除の行でも通常の色にする。
 templ diffLine(line viewmodel.DiffLine) {
 	switch line.Type {
 		case viewmodel.DiffLineEqual:
@@ -83,7 +96,7 @@ templ diffLine(line viewmodel.DiffLine) {
 				<td class="select-none w-[1%] px-1 py-0 text-center text-muted-foreground/50 align-top">
 					{ " " }
 				</td>
-				<td class="px-2 py-0 whitespace-pre-wrap break-all">
+				<td class="px-2 py-0 whitespace-pre-wrap break-all" data-markdown-diff-source={ diffSourceNew } data-markdown-diff-line={ fmt.Sprintf("%d", line.NewNumber) }>
 					{ line.Content }
 				</td>
 			</tr>
@@ -97,7 +110,7 @@ templ diffLine(line viewmodel.DiffLine) {
 				<td class="select-none w-[1%] px-1 py-0 text-center text-red-500 font-bold align-top">
 					{ "-" }
 				</td>
-				<td class="px-2 py-0 whitespace-pre-wrap break-all text-red-700 dark:text-red-300">
+				<td class="px-2 py-0 whitespace-pre-wrap break-all" data-markdown-diff-source={ diffSourceOld } data-markdown-diff-line={ fmt.Sprintf("%d", line.OldNumber) }>
 					{ line.Content }
 				</td>
 			</tr>
@@ -111,7 +124,7 @@ templ diffLine(line viewmodel.DiffLine) {
 				<td class="select-none w-[1%] px-1 py-0 text-center text-green-500 font-bold align-top">
 					{ "+" }
 				</td>
-				<td class="px-2 py-0 whitespace-pre-wrap break-all text-green-700 dark:text-green-300">
+				<td class="px-2 py-0 whitespace-pre-wrap break-all" data-markdown-diff-source={ diffSourceNew } data-markdown-diff-line={ fmt.Sprintf("%d", line.NewNumber) }>
 					{ line.Content }
 				</td>
 			</tr>

@@ -60,7 +60,7 @@ templ DraftPageRevisionDiff(data DraftPageRevisionDiffData) {
 			</div>
 		}
 
-		@DiffView(DiffViewData{PageTitle: data.Diff.NewTitle, Blocks: data.Diff.BodyBlocks})
+		@DiffView(DiffViewData{PageTitle: data.Diff.NewTitle, Diff: data.Diff.Body})
 
 		// 「このバージョンに戻す」: クリックでボタン領域がインライン確認に置き換わる
 		// (2重モーダルにしない)。確定は通常のPOST送信で、エディタが復元後の内容で再読み込み

@@ -236,3 +236,29 @@ func TestDraftPageForSuggestionNew_DisplayTitle(t *testing.T) {
 		}
 	})
 }
+
+func TestNewSuggestionPageDiffs(t *testing.T) {
+	t.Parallel()
+
+	t.Run("ベースリビジョンと編集提案の本文の差分に、正規化後の新旧の本文を持たせる", func(t *testing.T) {
+		t.Parallel()
+
+		sp := &model.SuggestionPage{ID: "sp-1", PageID: "page-1", Body: "line one\r\nline two"}
+		diffs := viewmodel.NewSuggestionPageDiffs(viewmodel.NewSuggestionPageDiffsInput{
+			SuggestionPages: []*model.SuggestionPage{sp},
+			BaseRevisions:   map[model.SuggestionPageID]*model.PageRevision{"sp-1": {Title: "タイトル", Body: "line one\n"}},
+			Pages:           []*model.Page{{ID: "page-1", Number: 3}},
+		})
+
+		if len(diffs) != 1 {
+			t.Fatalf("len(diffs) = %d、期待値 = 1", len(diffs))
+		}
+		body := diffs[0].Body
+		if len(body.Blocks) == 0 {
+			t.Fatal("Body.Blocksが空")
+		}
+		if body.Sources == nil || body.Sources.Old != "line one\n" || body.Sources.New != "line one\nline two\n" {
+			t.Errorf("Body.Sources = %+v、期待値 = 正規化後の新旧の本文", body.Sources)
+		}
+	})
+}
