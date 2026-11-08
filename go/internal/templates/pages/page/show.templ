@@ -24,9 +24,14 @@ type ShowData struct {
 	// 権限に従わせず2つの項目を独立に出し分ける。
 	CanTrashPage bool
 
-	// CSRFTokenはゴミ箱フォームのPOSTを認証する。page_trash:writeを持たない閲覧者では空になる。
-	// フォームとhidden inputはshowsTrashActionがtrueのときだけ描画するため、既にゴミ箱にある
-	// ページでも、このフィールドに値があってもHTMLにはトークンが載らない。
+	// CanPinPageとCanUnpinPageは閲覧者がこのページにピンを打てるか・外せるかを表し、操作
+	// ドロップダウンのピン留めの項目の出し分けに使う。
+	CanPinPage   bool
+	CanUnpinPage bool
+
+	// CSRFTokenはゴミ箱とピン留めのフォームの送信を認証する。どちらの権限も持たない閲覧者では空になる。
+	// フォームとhidden inputは各項目を出すときだけ描画するため、項目を出さないページでは、
+	// このフィールドに値があってもHTMLにはトークンが載らない。
 	CSRFToken string
 
 	// LinkListとBacklinkListは本文の下に描画する一覧。各一覧は選択された範囲を保持し、htmxは
@@ -75,7 +80,19 @@ func (d ShowData) showsTrashAction() bool {
 // 全体の出し分けも兼ねる。領域にはドロップダウンの隣に編集ボタンが載るが、編集権限があれば
 // ドロップダウンにも移動項目が入るため、ドロップダウンが空なら領域も空になる。
 func (d ShowData) showsPageActions() bool {
-	return d.CanUpdatePage || d.showsTrashAction()
+	return d.CanUpdatePage || d.showsTrashAction() || d.showsPinAction() || d.showsUnpinAction()
+}
+
+// showsPinActionは操作ドロップダウンにピンを打つ項目を出すかを表す。公開前のページとゴミ箱の
+// ページは一覧に出ないため、ピンを打っても並ばない項目は出さない。
+func (d ShowData) showsPinAction() bool {
+	return d.CanPinPage && d.Page.IsPublished && !d.IsTrashed && !d.Page.IsPinned
+}
+
+// showsUnpinActionは操作ドロップダウンにピンを外す項目を出すかを表す。ゴミ箱のページでも
+// ピンの状態を取り除けるよう、ゴミ箱の状態では落とさない。
+func (d ShowData) showsUnpinAction() bool {
+	return d.CanUnpinPage && d.Page.IsPinned
 }
 
 // showHeaderはページタイトルと操作領域を、スクロールで通り過ぎると画面上端に固定されるヘッダーに
@@ -153,6 +170,38 @@ templ showPageActions(data ShowData) {
 							@templates.DecorativeIcon("arrow-right-regular", "size-[18px]")
 							{ templates.T(ctx, "page_show_page_actions_move") }
 						</a>
+					</div>
+				}
+				if data.showsPinAction() {
+					<div role="menuitem">
+						// すぐに戻せる操作のため、確認のダイアログは出さない。
+						<form
+							action={ templ.SafeURL(string(templates.PagePinPath(data.Space.Identifier, data.Page.Number))) }
+							class="w-full"
+							method="POST"
+						>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<button class="flex gap-2 items-center cursor-pointer w-full" type="submit">
+								@templates.DecorativeIcon("push-pin-regular", "size-[18px]")
+								{ templates.T(ctx, "page_show_page_actions_pin") }
+							</button>
+						</form>
+					</div>
+				}
+				if data.showsUnpinAction() {
+					<div role="menuitem">
+						<form
+							action={ templ.SafeURL(string(templates.PagePinPath(data.Space.Identifier, data.Page.Number))) }
+							class="w-full"
+							method="POST"
+						>
+							<input type="hidden" name="_method" value="DELETE"/>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<button class="flex gap-2 items-center cursor-pointer w-full" type="submit">
+								@templates.DecorativeIcon("push-pin-slash-regular", "size-[18px]")
+								{ templates.T(ctx, "page_show_page_actions_unpin") }
+							</button>
+						</form>
 					</div>
 				}
 				if data.showsTrashAction() {

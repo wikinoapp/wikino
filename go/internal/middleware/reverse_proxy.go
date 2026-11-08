@@ -143,6 +143,9 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// みなので、上のプレビューパターンに揃えてメソッドを限定する。スペース単位のゴミ箱画面
 	// (/s/:identifier/trash) はパスが異なり、Rails版のまま残る。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`), methods: []string{http.MethodPost}},
+	// ページにピンを打つ・外す操作。プロキシはMethod Overrideより前に振り分けるため、外す要求
+	// (DELETE) もPOSTとして届く。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/pin$`), methods: []string{http.MethodPost}},
 	// スペース設定のトップ (GET・HEAD /s/:identifier/settings)。一般・添付ファイル・削除など
 	// 設定の残りは従来どおりRails版へ届く。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/settings$`), methods: []string{http.MethodGet, http.MethodHead}},

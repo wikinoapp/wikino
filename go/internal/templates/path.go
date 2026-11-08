@@ -316,6 +316,11 @@ func PageTrashPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) 
 	return Path(fmt.Sprintf("/s/%s/pages/%d/trash", spaceIdentifier, pageNumber))
 }
 
+// PagePinPathはページにピンを打つ (POST)・外す (DELETE) パスを生成します。
+func PagePinPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/pin", spaceIdentifier, pageNumber))
+}
+
 // AttachmentOGImagePathは添付ファイルのog:image配信エンドポイントのパスを生成します。
 // エンドポイントはリクエストのたびに参照元ページが公開かを再評価するため、このパスを載せたHTMLの
 // キャッシュ寿命を超えても無効化されません。

@@ -76,6 +76,10 @@ type PageForShow struct {
 	BodyHTML string
 	Number   int32
 
+	// IsPublishedとIsPinnedは、操作ドロップダウンのピン留めの項目の出し分けに使う。
+	IsPublished bool
+	IsPinned    bool
+
 	// ogImageAttachmentIDはog:imageタグが指してよいアイキャッチ画像の添付ファイル。ページが
 	// アイキャッチ画像を持たない場合や、その画像をプレビューとして出してはいけない場合は空になる
 	// (NewPageForShowを参照)。
@@ -102,6 +106,8 @@ func NewPageForShow(pg *model.Page, bodyHTML string, featuredImageAttachment *mo
 		title:               title,
 		BodyHTML:            bodyHTML,
 		Number:              int32(pg.Number),
+		IsPublished:         pg.IsPublished(),
+		IsPinned:            pg.PinnedAt != nil,
 		ogImageAttachmentID: attachmentID,
 		// カバー画像を出せない公開ページ (カバー画像が無い、またはGIF) はカード画像で補う。
 		// タイトルの無いページはカードに描く見出しが無く、カード画像のエンドポイントも404を返すため、

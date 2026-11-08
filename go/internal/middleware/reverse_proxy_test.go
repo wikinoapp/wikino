@@ -989,6 +989,13 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
+			// 外す要求もMethod Overrideの前はPOSTとして届く。
+			name:     "ピン留め (POST)",
+			method:   http.MethodPost,
+			path:     "/s/my-space/pages/1/pin",
+			expected: true,
+		},
+		{
 			name:     "og:imageエンドポイント (GET)",
 			method:   http.MethodGet,
 			path:     "/attachments/01HXYZ123/og_image",
@@ -1039,6 +1046,12 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "ゴミ箱へ入れる (GET) はPOST限定パターンにマッチしない",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/trash",
+			expected: false,
+		},
+		{
+			name:     "ピン留め (GET) はPOST限定パターンにマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/pages/1/pin",
 			expected: false,
 		},
 		{

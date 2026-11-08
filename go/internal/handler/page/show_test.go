@@ -143,6 +143,35 @@ func TestShow(t *testing.T) {
 		WithLinkedPageIDs([]model.PageID{}).
 		Build()
 
+	// ピン留めの項目の出し分けに使うページ。ピンを打った公開ページ、ピンを打ったままゴミ箱に入れた
+	// ページ、公開前のページ (一覧に出ないためピンを打つ項目を出さない)。
+	pinnedAt := time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC)
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(20).
+		WithTitle("Pinned Page Title").
+		WithLinkedPageIDs([]model.PageID{}).
+		WithPinnedAt(pinnedAt).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(21).
+		WithTitle("Pinned Trashed Page Title").
+		WithLinkedPageIDs([]model.PageID{}).
+		WithPinnedAt(pinnedAt).
+		WithTrashed().
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(22).
+		WithTitle("Unpublished Page Title").
+		WithLinkedPageIDs([]model.PageID{}).
+		WithUnpublished().
+		Build()
+
 	// og:imageタグの元になる2つのアイキャッチ画像。タグが指す静止画と、タグが対象外とするGIF。
 	coverAttachmentID := testutil.NewAttachmentBuilder(t, tx).
 		WithSpaceID(spaceID).
@@ -432,6 +461,68 @@ func TestShow(t *testing.T) {
 				// 失われる追加の高さは隣接するspacerが処理する。
 				"min-h-[var(--app-sticky-header-height)]",
 			},
+		},
+		{
+			name:       "ピンの無い公開ページにはピン留めする項目が出て、外す項目は出ない",
+			pageNumber: "1",
+			userID:     &editorUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`action="/s/page-show-space/pages/1/pin"`,
+				"ピン留めする",
+			},
+			wantNotContains: []string{
+				"ピン留めを外す",
+				`name="_method" value="DELETE"`,
+			},
+		},
+		{
+			name:       "ピンを打った公開ページには外す項目が出て、ピン留めする項目は出ない",
+			pageNumber: "20",
+			userID:     &editorUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`action="/s/page-show-space/pages/20/pin"`,
+				`name="_method" value="DELETE"`,
+				"ピン留めを外す",
+				fmt.Sprintf(`name="csrf_token" value="%s"`, showCSRFToken),
+			},
+			wantNotContains: []string{"ピン留めする"},
+		},
+		{
+			// ゴミ箱のページでもピンの状態を取り除けるよう、外す項目は残す。
+			name:       "ピンを打ったゴミ箱のページには外す項目だけが出る",
+			pageNumber: "21",
+			userID:     &trashUserID,
+			wantStatus: http.StatusOK,
+			wantContains: []string{
+				`action="/s/page-show-space/pages/21/pin"`,
+				"ピン留めを外す",
+			},
+			wantNotContains: []string{"ピン留めする"},
+		},
+		{
+			// ゴミ箱のページは一覧に出ないため、ピンを打つ項目を出さない。
+			name:            "ピンの無いゴミ箱のページにはピン留めの項目が出ない",
+			pageNumber:      "3",
+			userID:          &trashUserID,
+			wantStatus:      http.StatusOK,
+			wantNotContains: []string{"/s/page-show-space/pages/3/pin"},
+		},
+		{
+			// 公開前のページは一覧に出ないため、ピンを打つ項目を出さない。
+			name:            "公開前のページにはピン留めの項目が出ない",
+			pageNumber:      "22",
+			userID:          &editorUserID,
+			wantStatus:      http.StatusOK,
+			wantNotContains: []string{"/s/page-show-space/pages/22/pin"},
+		},
+		{
+			name:            "閲覧者にはピンを打ったページでもピン留めの項目が出ない",
+			pageNumber:      "20",
+			userID:          &readerUserID,
+			wantStatus:      http.StatusOK,
+			wantNotContains: []string{"/s/page-show-space/pages/20/pin", showCSRFToken},
 		},
 		{
 			// 操作領域は、タイトルが何行に折り返しても同じ位置に出るよう見出し行の上端に置き、

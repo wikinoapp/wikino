@@ -70,6 +70,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/page_location"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_move"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_og_image"
+	"github.com/wikinoapp/wikino/go/internal/handler/page_pin"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_preview"
 	"github.com/wikinoapp/wikino/go/internal/handler/page_trash"
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
@@ -516,6 +517,13 @@ func runServe() {
 	pageTrashHandler := page_trash.NewHandler(
 		flashMgr,
 		trashPageUC,
+	)
+	pinPageUC := usecase.NewPinPageUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	unpinPageUC := usecase.NewUnpinPageUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	pagePinHandler := page_pin.NewHandler(
+		flashMgr,
+		pinPageUC,
+		unpinPageUC,
 	)
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, featureFlagRepo)
 	createSpaceUC := usecase.NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
@@ -1052,6 +1060,10 @@ func runServe() {
 		// ページをゴミ箱へ入れる操作。ゴミ箱画面そのものはRails版のまま残り、同じ
 		// pages.trashed_atカラムを見てページを復元する。
 		r.Post("/s/{space_identifier}/pages/{page_number}/trash", pageTrashHandler.Create)
+
+		// ページのピン留め
+		r.Post("/s/{space_identifier}/pages/{page_number}/pin", pagePinHandler.Create)
+		r.Delete("/s/{space_identifier}/pages/{page_number}/pin", pagePinHandler.Delete)
 
 		// 編集提案作成・編集
 		r.Get("/s/{space_identifier}/topics/{topic_number}/suggestions/new", suggestionHandler.New)
