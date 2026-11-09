@@ -1,0 +1,56 @@
+package components
+
+import "github.com/wikinoapp/wikino/go/internal/templates"
+
+// feedHelpURLはヘルプ「RSSフィード」のURL。ヘルプは日本語だけのため、表示言語によらず同じページへリンクする。
+const feedHelpURL = "https://wikino.app/s/wikino/pages/355"
+
+// FeedPopoverDataはRSSフィードのボタンとポップオーバーに渡すデータ。
+type FeedPopoverData struct {
+	// URLはフィードの絶対URL。RSSリーダーに登録してもらう値のため、パスではなく絶対URLにする
+	URL string
+	// PublicTopicsOnlyは、スペースのフィードのように、載るページが公開トピックのものに限られることを
+	// 書き添えるかを表す
+	PublicTopicsOnly bool
+}
+
+// FeedPopoverは、RSSフィードのURLをコピーするためのボタンとポップオーバーを描画する。
+// 開閉 (Escで閉じてボタンへフォーカスを戻すことを含む) はBasecoatのpopoverが担う。
+// 1つの画面に1つだけ置く前提で、idを固定している。
+//
+// ポップオーバーはボタンではなく、呼び出し側が操作の並びに付けたrelativeの要素に右端を揃える。
+// 狭い画面ではボタンの右にほかの操作が並ぶため、ボタンに揃えると、ポップオーバーが画面の左へはみ出す。
+// 操作の並びの右端は画面の余白の位置にあるため、そこに揃えれば幅いっぱいまで使ってもはみ出さない。
+templ FeedPopover(data FeedPopoverData) {
+	<div id="feed-popover" class="popover static">
+		<button
+			type="button"
+			id="feed-popover-trigger"
+			aria-expanded="false"
+			aria-controls="feed-popover-popover"
+			aria-label={ templates.T(ctx, "feed_popover_button_label") }
+			class="btn border-primary rounded-full"
+			data-variant="outline"
+			data-size="icon-sm"
+		>
+			@templates.DecorativeIcon("rss-regular")
+		</button>
+		<div id="feed-popover-popover" data-popover aria-hidden="true" class="w-80 max-w-[calc(100vw-2rem)]" data-align="end">
+			<div class="grid gap-3">
+				<p class="text-sm">{ templates.T(ctx, "feed_popover_description") }</p>
+				@CopyableInput(CopyableInputData{
+					ID:    "feed-popover-url",
+					Label: templates.T(ctx, "feed_popover_url_label"),
+					Value: data.URL,
+				})
+				if data.PublicTopicsOnly {
+					<p class="text-sm text-muted-foreground">{ templates.T(ctx, "feed_popover_public_topics_only") }</p>
+				}
+				// gridの項目は既定で行の幅いっぱいに広がり、リンクの右の空白まで押せてしまうため、幅を文字に収める
+				<a href={ templ.SafeURL(feedHelpURL) } class="link-foreground text-sm justify-self-start" target="_blank">
+					{ templates.T(ctx, "feed_popover_help_link") }
+				</a>
+			</div>
+		</div>
+	</div>
+}
