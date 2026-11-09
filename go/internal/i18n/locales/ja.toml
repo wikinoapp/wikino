@@ -1630,10 +1630,6 @@ other = "新規ページ"
 description = "スペース詳細画面のオプションメニューを開くボタンのaria-label"
 other = "スペースのオプション"
 
-[space_show_options_rss_feed]
-description = "スペース詳細画面のオプションメニューのRSSフィードリンク"
-other = "RSSフィード"
-
 [space_show_options_new_topic]
 description = "スペース詳細画面のオプションメニューの新規トピックリンク"
 other = "新規トピック"
