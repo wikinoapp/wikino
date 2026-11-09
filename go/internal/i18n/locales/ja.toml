@@ -25,6 +25,26 @@ other = "{{.Label}}をコピーしました"
 description = "コピーするための値の欄で、クリップボードへコピーできなかったときのメッセージ"
 other = "コピーできませんでした。入力欄の値を選んでコピーしてください"
 
+[feed_popover_button_label]
+description = "RSSフィードのボタンとポップオーバーの、ボタンのアクセシブルな名前"
+other = "RSSフィード"
+
+[feed_popover_description]
+description = "RSSフィードのポップオーバーの説明"
+other = "RSSリーダーにこのURLを登録すると、新しく公開されたページを受け取れます"
+
+[feed_popover_url_label]
+description = "RSSフィードのポップオーバーの、URLの欄のラベル"
+other = "RSSフィードのURL"
+
+[feed_popover_public_topics_only]
+description = "RSSフィードのポップオーバーで、スペースのフィードに載る範囲の補足"
+other = "公開トピックのページだけを配信します"
+
+[feed_popover_help_link]
+description = "RSSフィードのポップオーバーの、ヘルプへのリンク"
+other = "RSSフィードについて"
+
 [dialog_close]
 description = "ダイアログの閉じるボタンのラベル"
 other = "閉じる"
