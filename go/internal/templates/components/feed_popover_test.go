@@ -69,7 +69,7 @@ func TestFeedPopover(t *testing.T) {
 				// ヘルプは日本語だけのため、表示言語によらず同じページへリンクする
 				`href="https://wikino.app/s/wikino/pages/355"`,
 				// gridの中でリンクが行の幅いっぱいに広がらず、文字の部分だけを押せる
-				`class="link text-sm justify-self-start"`,
+				`class="link-foreground text-sm justify-self-start"`,
 			}, tt.wants...)
 			for _, want := range wants {
 				if !strings.Contains(html, want) {
