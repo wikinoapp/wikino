@@ -161,6 +161,11 @@ func TopicPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Pat
 	return Path(fmt.Sprintf("/s/%s/topics/%d", spaceIdentifier, topicNumber))
 }
 
+// TopicAtomPathはトピックのRSS (Atom) フィードのパスを生成します。
+func TopicAtomPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d/atom", spaceIdentifier, topicNumber))
+}
+
 // TopicSettingsPathはトピック設定のパスを生成します
 func TopicSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/settings", spaceIdentifier, topicNumber))

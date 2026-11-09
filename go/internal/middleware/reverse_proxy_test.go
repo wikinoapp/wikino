@@ -1026,6 +1026,30 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			path:     "/s/my-space/pages/1/og_image/old-version.png",
 			expected: true,
 		},
+		{
+			name:     "スペースのフィード (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/atom",
+			expected: true,
+		},
+		{
+			name:     "スペースのフィード (HEAD)",
+			method:   http.MethodHead,
+			path:     "/s/my-space/atom",
+			expected: true,
+		},
+		{
+			name:     "トピックのフィード (GET)",
+			method:   http.MethodGet,
+			path:     "/s/my-space/topics/1/atom",
+			expected: true,
+		},
+		{
+			name:     "トピックのフィード (HEAD)",
+			method:   http.MethodHead,
+			path:     "/s/my-space/topics/1/atom",
+			expected: true,
+		},
 
 		// Rails版に転送するパス
 		{
@@ -1098,6 +1122,24 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			name:     "下書きリビジョン復元 (GET) はPOSTのみフィルタによりマッチしない",
 			method:   http.MethodGet,
 			path:     "/s/my-space/pages/1/draft_page_revisions/01HXYZ123/restore",
+			expected: false,
+		},
+		{
+			name:     "スペースのフィード (POST) はGET・HEADのフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/atom",
+			expected: false,
+		},
+		{
+			name:     "トピックのフィード (POST) はGET・HEADのフィルタによりマッチしない",
+			method:   http.MethodPost,
+			path:     "/s/my-space/topics/1/atom",
+			expected: false,
+		},
+		{
+			name:     "スペースのフィードの末尾に余分なセグメントがあるとマッチしない",
+			method:   http.MethodGet,
+			path:     "/s/my-space/atom/extra",
 			expected: false,
 		},
 		{

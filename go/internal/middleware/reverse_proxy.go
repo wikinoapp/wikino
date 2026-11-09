@@ -166,6 +166,8 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// /attachments/:id (ダウンロードURL) はRailsが提供するため、og_image末尾でパスを限定している
 	{pattern: session.AttachmentOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	{pattern: session.PageOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
+	// フィード (`/s/:space/atom`・`/s/:space/topics/:number/atom`)。パスの定義はCSRFトークンとフラッシュの除外と共有する (`session.FeedPathPattern`)
+	{pattern: session.FeedPathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	// 公開Web API (`/api/` 配下)。Cookieを使わないパスとして定義を共有する (`session.APIPathPattern`)。
 	// Rails版にはAPIが無いため、ルートの無いパスもGoで受けてProblem Detailsの404・405を返す
 	{pattern: session.APIPathPattern},

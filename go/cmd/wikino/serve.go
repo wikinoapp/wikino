@@ -81,6 +81,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	spacehandler "github.com/wikinoapp/wikino/go/internal/handler/space"
+	"github.com/wikinoapp/wikino/go/internal/handler/space_feed"
 	spacesettingshandler "github.com/wikinoapp/wikino/go/internal/handler/space_settings"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	suggestionapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_application"
@@ -91,6 +92,7 @@ import (
 	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
+	"github.com/wikinoapp/wikino/go/internal/handler/topic_feed"
 	topicsettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings_general"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
@@ -330,6 +332,10 @@ func runServe() {
 	}
 	getPageOgImageUC := usecase.NewGetPageOgImageUsecase(spaceRepo, pageRepo, topicRepo)
 	pageOgImageHandler := page_og_image.NewHandler(ogCardRenderer, getPageOgImageUC)
+	getSpaceFeedUC := usecase.NewGetSpaceFeedUsecase(cfg, spaceRepo, pageRepo, topicRepo, attachmentRepo)
+	spaceFeedHandler := space_feed.NewHandler(cfg, getSpaceFeedUC)
+	getTopicFeedUC := usecase.NewGetTopicFeedUsecase(cfg, spaceRepo, pageRepo, topicRepo, attachmentRepo)
+	topicFeedHandler := topic_feed.NewHandler(cfg, getTopicFeedUC)
 	signInHandler := sign_in.NewHandler(
 		cfg,
 		sessionMgr,
@@ -923,6 +929,13 @@ func runServe() {
 	r.Head("/attachments/{attachment_id}/og_image", attachmentOgImageHandler.Show)
 	r.Get("/s/{space_identifier}/pages/{page_number}/og_image/{version}.png", pageOgImageHandler.Show)
 	r.Head("/s/{space_identifier}/pages/{page_number}/og_image/{version}.png", pageOgImageHandler.Show)
+
+	// フィード (認証不要、公開トピックのページだけを載せる)。フィードリーダーはログインの状態を
+	// 持たずに取得するため、閲覧者によって内容を変えないようSetUserを通さない
+	r.Get("/s/{space_identifier}/atom", spaceFeedHandler.Show)
+	r.Head("/s/{space_identifier}/atom", spaceFeedHandler.Show)
+	r.Get("/s/{space_identifier}/topics/{topic_number}/atom", topicFeedHandler.Show)
+	r.Head("/s/{space_identifier}/topics/{topic_number}/atom", topicFeedHandler.Show)
 
 	// トップページ (ログイン状態に応じてハンドラー内でリダイレクト)
 	r.Group(func(r chi.Router) {
