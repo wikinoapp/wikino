@@ -71,6 +71,14 @@ func (p *MemberPolicy) CanTrashPage() bool {
 	return p.effectiveScopes[model.ScopePageTrashWrite]
 }
 
+func (p *MemberPolicy) CanPinPage() bool {
+	return p.effectiveScopes[model.ScopePagePinWrite]
+}
+
+func (p *MemberPolicy) CanUnpinPage() bool {
+	return p.effectiveScopes[model.ScopePagePinDelete]
+}
+
 func (p *MemberPolicy) CanShowDraftPage() bool {
 	return p.effectiveScopes[model.ScopeDraftPageRead]
 }

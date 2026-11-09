@@ -25,6 +25,26 @@ other = "{{.Label}}をコピーしました"
 description = "コピーするための値の欄で、クリップボードへコピーできなかったときのメッセージ"
 other = "コピーできませんでした。入力欄の値を選んでコピーしてください"
 
+[feed_popover_button_label]
+description = "RSSフィードのボタンとポップオーバーの、ボタンのアクセシブルな名前"
+other = "RSSフィード"
+
+[feed_popover_description]
+description = "RSSフィードのポップオーバーの説明"
+other = "RSSリーダーにこのURLを登録すると、新しく公開されたページを受け取れます"
+
+[feed_popover_url_label]
+description = "RSSフィードのポップオーバーの、URLの欄のラベル"
+other = "RSSフィードのURL"
+
+[feed_popover_public_topics_only]
+description = "RSSフィードのポップオーバーで、スペースのフィードに載る範囲の補足"
+other = "公開トピックのページだけを配信します"
+
+[feed_popover_help_link]
+description = "RSSフィードのポップオーバーの、ヘルプへのリンク"
+other = "RSSフィードについて"
+
 [dialog_close]
 description = "ダイアログの閉じるボタンのラベル"
 other = "閉じる"
@@ -925,6 +945,14 @@ other = "ページのアクション"
 description = "ページ表示画面のドロップダウンメニュー: ページを別のトピックへ移動する"
 other = "移動する"
 
+[page_show_page_actions_pin]
+description = "ページ表示画面のドロップダウンメニュー: ページをピン留めする"
+other = "ピン留めする"
+
+[page_show_page_actions_unpin]
+description = "ページ表示画面のドロップダウンメニュー: ページのピン留めを外す"
+other = "ピン留めを外す"
+
 [page_show_page_actions_trash]
 description = "ページ表示画面のドロップダウンメニュー: ページをゴミ箱に入れる"
 other = "ゴミ箱に入れる"
@@ -984,6 +1012,15 @@ other = "下書きを選択したバージョンに戻しました"
 [flash_page_moved_to_trash]
 description = "ページのゴミ箱への移動成功メッセージ"
 other = "ページをゴミ箱に移動しました"
+
+# ページのピン留め
+[flash_page_pinned]
+description = "ページのピン留め成功メッセージ"
+other = "ページをピン留めしました"
+
+[flash_page_unpinned]
+description = "ページのピン留めの解除成功メッセージ"
+other = "ページのピン留めを外しました"
 
 # 編集提案ページ更新成功
 [flash_suggestion_page_updated]
@@ -1592,10 +1629,6 @@ other = "新規ページ"
 [space_show_options_aria_label]
 description = "スペース詳細画面のオプションメニューを開くボタンのaria-label"
 other = "スペースのオプション"
-
-[space_show_options_rss_feed]
-description = "スペース詳細画面のオプションメニューのRSSフィードリンク"
-other = "RSSフィード"
 
 [space_show_options_new_topic]
 description = "スペース詳細画面のオプションメニューの新規トピックリンク"

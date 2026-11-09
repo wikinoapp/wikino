@@ -410,6 +410,66 @@ func TestMemberPolicy_CanTrashPage(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanPinPage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		spaceScopes []model.Scope
+		topicScopes []model.Scope
+		want        bool
+	}{
+		{name: "page_pin:writeで打てる", spaceScopes: []model.Scope{model.ScopePagePinWrite}, want: true},
+		{name: "トピックスコープのpage_pin:writeでも打てる", topicScopes: []model.Scope{model.ScopePagePinWrite}, want: true},
+		{name: "管理者のロールで打てる", spaceScopes: model.SpaceRoleAdmin.Scopes(), want: true},
+		{name: "page:writeだけでは打てない", spaceScopes: []model.Scope{model.ScopePageWrite}, want: false},
+		{name: "page_pin:deleteだけでは打てない", spaceScopes: []model.Scope{model.ScopePagePinDelete}, want: false},
+		{name: "閲覧者のロールでは打てない", spaceScopes: model.SpaceRoleViewer.Scopes(), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewMemberPolicy(tt.spaceScopes, tt.topicScopes)
+
+			if got := p.CanPinPage(); got != tt.want {
+				t.Errorf("CanPinPage() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMemberPolicy_CanUnpinPage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		spaceScopes []model.Scope
+		topicScopes []model.Scope
+		want        bool
+	}{
+		{name: "page_pin:deleteで外せる", spaceScopes: []model.Scope{model.ScopePagePinDelete}, want: true},
+		{name: "トピックスコープのpage_pin:deleteでも外せる", topicScopes: []model.Scope{model.ScopePagePinDelete}, want: true},
+		{name: "管理者のロールで外せる", spaceScopes: model.SpaceRoleAdmin.Scopes(), want: true},
+		{name: "page:writeだけでは外せない", spaceScopes: []model.Scope{model.ScopePageWrite}, want: false},
+		{name: "page_pin:writeだけでは外せない", spaceScopes: []model.Scope{model.ScopePagePinWrite}, want: false},
+		{name: "閲覧者のロールでは外せない", spaceScopes: model.SpaceRoleViewer.Scopes(), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewMemberPolicy(tt.spaceScopes, tt.topicScopes)
+
+			if got := p.CanUnpinPage(); got != tt.want {
+				t.Errorf("CanUnpinPage() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMemberPolicy_CanShowDraftPage(t *testing.T) {
 	t.Parallel()
 

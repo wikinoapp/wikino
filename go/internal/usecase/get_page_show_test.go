@@ -419,6 +419,9 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		if output.CanTrashPage {
 			t.Error("ゲストなのにCanTrashPageがtrue")
 		}
+		if output.CanPinPage || output.CanUnpinPage {
+			t.Errorf("CanPinPage = %v、CanUnpinPage = %v、期待値 = どちらもfalse (ゲスト)", output.CanPinPage, output.CanUnpinPage)
+		}
 		if output.FeaturedImageAttachment != nil {
 			t.Error("アイキャッチ画像の無いページなのにFeaturedImageAttachmentがnilではない")
 		}
@@ -508,32 +511,36 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		}
 	})
 
-	// ヘッダーの操作ドロップダウンは編集とゴミ箱を別々のスコープで出し分けるため、2つのフラグ
-	// をロールごとに固定する。
-	t.Run("正常系: CanUpdatePageとCanTrashPageはロールのスコープで決まる", func(t *testing.T) {
+	// ヘッダーの操作ドロップダウンは編集・ゴミ箱・ピン留めを別々のスコープで出し分けるため、
+	// それぞれのフラグをロールごとに固定する。
+	t.Run("正常系: CanUpdatePage・CanTrashPage・CanPinPage・CanUnpinPageはロールのスコープで決まる", func(t *testing.T) {
 		tests := []struct {
 			name              string
 			userID            model.UserID
 			wantCanUpdatePage bool
 			wantCanTrashPage  bool
+			wantCanPinPage    bool
 		}{
 			{
 				name:              "管理者のオーナーは両方できる",
 				userID:            ownerID,
 				wantCanUpdatePage: true,
 				wantCanTrashPage:  true,
+				wantCanPinPage:    true,
 			},
 			{
 				name:              "編集者は両方できる",
 				userID:            editorMemberID,
 				wantCanUpdatePage: true,
 				wantCanTrashPage:  true,
+				wantCanPinPage:    true,
 			},
 			{
 				name:              "閲覧者はどちらもできない",
 				userID:            viewerMemberID,
 				wantCanUpdatePage: false,
 				wantCanTrashPage:  false,
+				wantCanPinPage:    false,
 			},
 		}
 
@@ -559,6 +566,13 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 				}
 				if output.CanTrashPage != tt.wantCanTrashPage {
 					t.Errorf("CanTrashPage = %v、期待値 = %v", output.CanTrashPage, tt.wantCanTrashPage)
+				}
+				// 今のロールではピンを打つ権限と外す権限を同じロールが持つ。
+				if output.CanPinPage != tt.wantCanPinPage {
+					t.Errorf("CanPinPage = %v、期待値 = %v", output.CanPinPage, tt.wantCanPinPage)
+				}
+				if output.CanUnpinPage != tt.wantCanPinPage {
+					t.Errorf("CanUnpinPage = %v、期待値 = %v", output.CanUnpinPage, tt.wantCanPinPage)
 				}
 			})
 		}

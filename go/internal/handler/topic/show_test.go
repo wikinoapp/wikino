@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -1023,5 +1025,177 @@ func TestShow_非公開トピックの説明文の行に非公開ラベルが出
 	body := rr.Body.String()
 	if got := visibilityLabelText(t, body); got != "非公開" {
 		t.Errorf("非公開トピックのラベル = %q、期待値 = 「非公開」", got)
+	}
+}
+
+// feedLinkPatternは <head> でフィードを告知するlink要素に一致する
+var feedLinkPattern = regexp.MustCompile(`<link rel="alternate" type="application/atom\+xml" title="([^"]*)" href="([^"]*)">`)
+
+// feedLinksは本文が告知するフィードを、出現順に「title href」の形で返す
+func feedLinks(body string) []string {
+	var links []string
+	for _, m := range feedLinkPattern.FindAllStringSubmatch(body, -1) {
+		links = append(links, m[1]+" "+m[2])
+	}
+	return links
+}
+
+// feedButtonURLはRSSフィードのポップオーバーがコピーさせるURLを返す。ボタンが無ければ空文字を返す
+func feedButtonURL(body string) string {
+	if !strings.Contains(body, `id="feed-popover-trigger"`) {
+		return ""
+	}
+	m := feedButtonURLPattern.FindStringSubmatch(body)
+	if m == nil {
+		return ""
+	}
+	return m[1]
+}
+
+var feedButtonURLPattern = regexp.MustCompile(`id="feed-popover-url"[^>]*value="([^"]*)"`)
+
+func TestShow_FeedDiscoveryByTopicVisibility(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	memberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-feed-member@example.com").
+		WithAtname("tsfeedmember").
+		Build()
+	outsiderID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-feed-outsider@example.com").
+		WithAtname("tsfeedoutsider").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-feed").
+		WithName("Feed Space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(memberID).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開トピック").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("非公開トピック").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	member := &model.User{ID: memberID, Atname: "tsfeedmember"}
+	outsider := &model.User{ID: outsiderID, Atname: "tsfeedoutsider"}
+	publicFeeds := []string{
+		"公開トピック | Feed Space | Wikino https://localhost/s/ts-feed/topics/1/atom",
+		"Feed Space | Wikino https://localhost/s/ts-feed/atom",
+	}
+	spaceFeedOnly := []string{"Feed Space | Wikino https://localhost/s/ts-feed/atom"}
+
+	topicFeedURL := "https://localhost/s/ts-feed/topics/1/atom"
+
+	tests := []struct {
+		name          string
+		topicNumber   string
+		user          *model.User
+		want          []string
+		wantButtonURL string
+	}{
+		{name: "公開トピックを未ログインで開くとトピック・スペースの順に告知する", topicNumber: "1", user: nil, want: publicFeeds, wantButtonURL: topicFeedURL},
+		{name: "公開トピックをスペースの外の人が開くとトピック・スペースの順に告知する", topicNumber: "1", user: outsider, want: publicFeeds, wantButtonURL: topicFeedURL},
+		{name: "公開トピックをメンバーが開くとトピック・スペースの順に告知する", topicNumber: "1", user: member, want: publicFeeds, wantButtonURL: topicFeedURL},
+		{name: "非公開トピックをメンバーが開くとスペースのフィードだけを告知し、ボタンを出さない", topicNumber: "2", user: member, want: spaceFeedOnly, wantButtonURL: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newShowRequest(t, "/s/ts-feed/topics/"+tt.topicNumber, map[string]string{
+				"space_identifier": "ts-feed",
+				"topic_number":     tt.topicNumber,
+			})
+			if tt.user != nil {
+				req = req.WithContext(middleware.SetUserToContext(req.Context(), tt.user))
+			}
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+			}
+			body := rr.Body.String()
+			if got := feedLinks(body); !slices.Equal(got, tt.want) {
+				t.Errorf("告知するフィード = %q、期待値 = %q", got, tt.want)
+			}
+			if got := feedButtonURL(body); got != tt.wantButtonURL {
+				t.Errorf("RSSフィードのボタンのURL = %q、期待値 = %q", got, tt.wantButtonURL)
+			}
+			if strings.Contains(body, "公開トピックのページだけを配信します") {
+				t.Error("トピックのフィードのポップオーバーに、スペースのフィード向けの補足が含まれている")
+			}
+		})
+	}
+}
+
+func TestShow_ActionsOrderNewPageFeedOptions(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	memberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-actorder@example.com").
+		WithAtname("tsactorder").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-actorder").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(memberID).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-actorder/topics/1", map[string]string{
+		"space_identifier": "ts-actorder",
+		"topic_number":     "1",
+	})
+	req = req.WithContext(middleware.SetUserToContext(req.Context(), &model.User{ID: memberID, Atname: "tsactorder"}))
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	}
+	body := rr.Body.String()
+
+	// 丸いボタン (RSSフィード・三点メニュー) を「新規ページ」の右にまとめる
+	markers := []string{
+		`href="/s/ts-actorder/topics/1/pages/new"`,
+		`id="feed-popover-trigger"`,
+		`id="topic-options-dropdown-trigger"`,
+	}
+	prev := -1
+	for _, marker := range markers {
+		idx := strings.Index(body, marker)
+		if idx == -1 {
+			t.Fatalf("出力に%qが含まれていない", marker)
+		}
+		if idx < prev {
+			t.Errorf("%qが前の操作より前に出ている。期待する順序 = %q", marker, markers)
+		}
+		prev = idx
 	}
 }

@@ -143,6 +143,9 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// みなので、上のプレビューパターンに揃えてメソッドを限定する。スペース単位のゴミ箱画面
 	// (/s/:identifier/trash) はパスが異なり、Rails版のまま残る。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`), methods: []string{http.MethodPost}},
+	// ページにピンを打つ・外す操作。プロキシはMethod Overrideより前に振り分けるため、外す要求
+	// (DELETE) もPOSTとして届く。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/pin$`), methods: []string{http.MethodPost}},
 	// スペース設定のトップ (GET・HEAD /s/:identifier/settings)。一般・添付ファイル・削除など
 	// 設定の残りは従来どおりRails版へ届く。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/settings$`), methods: []string{http.MethodGet, http.MethodHead}},
@@ -163,6 +166,8 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// /attachments/:id (ダウンロードURL) はRailsが提供するため、og_image末尾でパスを限定している
 	{pattern: session.AttachmentOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	{pattern: session.PageOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
+	// フィード (`/s/:space/atom`・`/s/:space/topics/:number/atom`)。パスの定義はCSRFトークンとフラッシュの除外と共有する (`session.FeedPathPattern`)
+	{pattern: session.FeedPathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	// 公開Web API (`/api/` 配下)。Cookieを使わないパスとして定義を共有する (`session.APIPathPattern`)。
 	// Rails版にはAPIが無いため、ルートの無いパスもGoで受けてProblem Detailsの404・405を返す
 	{pattern: session.APIPathPattern},

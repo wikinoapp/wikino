@@ -161,6 +161,11 @@ func TopicPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Pat
 	return Path(fmt.Sprintf("/s/%s/topics/%d", spaceIdentifier, topicNumber))
 }
 
+// TopicAtomPathはトピックのRSS (Atom) フィードのパスを生成します。
+func TopicAtomPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/topics/%d/atom", spaceIdentifier, topicNumber))
+}
+
 // TopicSettingsPathはトピック設定のパスを生成します
 func TopicSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/%d/settings", spaceIdentifier, topicNumber))
@@ -314,6 +319,11 @@ func PageMovePath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) P
 // POST先で、スペースのゴミ箱画面はTrashPathです。
 func PageTrashPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) Path {
 	return Path(fmt.Sprintf("/s/%s/pages/%d/trash", spaceIdentifier, pageNumber))
+}
+
+// PagePinPathはページにピンを打つ (POST)・外す (DELETE) パスを生成します。
+func PagePinPath(spaceIdentifier viewmodel.SpaceIdentifier, pageNumber int32) Path {
+	return Path(fmt.Sprintf("/s/%s/pages/%d/pin", spaceIdentifier, pageNumber))
 }
 
 // AttachmentOGImagePathは添付ファイルのog:image配信エンドポイントのパスを生成します。

@@ -1698,6 +1698,189 @@ func TestPageRepository_TrashByID(t *testing.T) {
 	})
 }
 
+func TestPageRepository_PinByID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-pin-space").
+		Build()
+
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-pin-other-space").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	modifiedAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
+	findPage := func(t *testing.T, number model.PageNumber) *model.Page {
+		t.Helper()
+
+		page, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, number)
+		if err != nil {
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
+		}
+		if page == nil {
+			t.Fatal("FindBySpaceAndNumber()がnilを返した、期待値 = ページ")
+		}
+		return page
+	}
+
+	t.Run("ピンを打つとpinned_atとupdated_atが記録され、modified_atは変わらない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Pin Target").
+			WithModifiedAt(modifiedAt).
+			Build()
+
+		pinnedAt := time.Now().Truncate(time.Microsecond)
+		if err := repo.PinByID(context.Background(), pageID, spaceID, pinnedAt); err != nil {
+			t.Fatalf("PinByID()のエラー = %v", err)
+		}
+
+		page := findPage(t, 1)
+		if page.PinnedAt == nil || !page.PinnedAt.Equal(pinnedAt) {
+			t.Errorf("page.PinnedAt = %v、期待値 = %v", page.PinnedAt, pinnedAt)
+		}
+		if !page.UpdatedAt.Equal(pinnedAt) {
+			t.Errorf("page.UpdatedAt = %v、期待値 = %v", page.UpdatedAt, pinnedAt)
+		}
+		if !page.ModifiedAt.Equal(modifiedAt) {
+			t.Errorf("page.ModifiedAt = %v、期待値 = %v (ピン留めで変えないべき)", page.ModifiedAt, modifiedAt)
+		}
+	})
+
+	t.Run("ピンを打ってあるページに打ち直してもpinned_atは変わらない", func(t *testing.T) {
+		firstPinnedAt := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Already Pinned").
+			WithPinnedAt(firstPinnedAt).
+			Build()
+
+		if err := repo.PinByID(context.Background(), pageID, spaceID, time.Now()); err != nil {
+			t.Fatalf("PinByID()のエラー = %v", err)
+		}
+
+		page := findPage(t, 2)
+		if page.PinnedAt == nil || !page.PinnedAt.Equal(firstPinnedAt) {
+			t.Errorf("page.PinnedAt = %v、期待値 = %v (打ち直しで変えないべき)", page.PinnedAt, firstPinnedAt)
+		}
+	})
+
+	t.Run("別スペースを指定した場合は更新されない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(3).
+			WithTitle("Other Space Scope").
+			Build()
+
+		if err := repo.PinByID(context.Background(), pageID, otherSpaceID, time.Now()); err != nil {
+			t.Fatalf("PinByID()のエラー = %v", err)
+		}
+
+		if page := findPage(t, 3); page.PinnedAt != nil {
+			t.Errorf("page.PinnedAt = %v、期待値 = nil (別スペースの指定で更新されている)", page.PinnedAt)
+		}
+	})
+}
+
+func TestPageRepository_UnpinByID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-unpin-space").
+		Build()
+
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-unpin-other-space").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("General").
+		Build()
+
+	modifiedAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	pinnedAt := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
+
+	findPage := func(t *testing.T, number model.PageNumber) *model.Page {
+		t.Helper()
+
+		page, err := repo.FindBySpaceAndNumber(context.Background(), spaceID, number)
+		if err != nil {
+			t.Fatalf("FindBySpaceAndNumber()のエラー = %v", err)
+		}
+		if page == nil {
+			t.Fatal("FindBySpaceAndNumber()がnilを返した、期待値 = ページ")
+		}
+		return page
+	}
+
+	t.Run("ピンを外すとpinned_atが消え、modified_atは変わらない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(1).
+			WithTitle("Unpin Target").
+			WithModifiedAt(modifiedAt).
+			WithPinnedAt(pinnedAt).
+			Build()
+
+		updatedAt := time.Now().Truncate(time.Microsecond)
+		if err := repo.UnpinByID(context.Background(), pageID, spaceID, updatedAt); err != nil {
+			t.Fatalf("UnpinByID()のエラー = %v", err)
+		}
+
+		page := findPage(t, 1)
+		if page.PinnedAt != nil {
+			t.Errorf("page.PinnedAt = %v、期待値 = nil", page.PinnedAt)
+		}
+		if !page.UpdatedAt.Equal(updatedAt) {
+			t.Errorf("page.UpdatedAt = %v、期待値 = %v", page.UpdatedAt, updatedAt)
+		}
+		if !page.ModifiedAt.Equal(modifiedAt) {
+			t.Errorf("page.ModifiedAt = %v、期待値 = %v (ピン留めで変えないべき)", page.ModifiedAt, modifiedAt)
+		}
+	})
+
+	t.Run("別スペースを指定した場合は更新されない", func(t *testing.T) {
+		pageID := testutil.NewPageBuilder(t, tx).
+			WithSpaceID(spaceID).
+			WithTopicID(topicID).
+			WithNumber(2).
+			WithTitle("Other Space Scope").
+			WithPinnedAt(pinnedAt).
+			Build()
+
+		if err := repo.UnpinByID(context.Background(), pageID, otherSpaceID, time.Now()); err != nil {
+			t.Fatalf("UnpinByID()のエラー = %v", err)
+		}
+
+		if page := findPage(t, 2); page.PinnedAt == nil {
+			t.Error("page.PinnedAt = nil、期待値 = 元の日時 (別スペースの指定で更新されている)")
+		}
+	})
+}
+
 func TestPageRepository_DiscardEmptyUnpublishedByID(t *testing.T) {
 	t.Parallel()
 
@@ -2901,6 +3084,313 @@ func TestPageRepository_ReassignLinkedPageID(t *testing.T) {
 		want := []model.PageID{oldID}
 		if got := otherPages[0].LinkedPageIDs; !slices.Equal(got, want) {
 			t.Errorf("LinkedPageIDs = %v、期待値 = %v", got, want)
+		}
+	})
+}
+
+func TestPageRepository_FindRecentPublishedBySpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-recent-published-space").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-recent-published-other").
+		Build()
+
+	publicTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+	privateTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Private").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(3).
+		WithName("Discarded").
+		WithDiscarded().
+		Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Public").
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// 公開日時の新しい順に並ぶことを確かめるため、作成の順と公開の順をずらす。
+	oldID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(1).
+		WithTitle("Old").
+		WithPublishedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+	newestID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(2).
+		WithTitle("Newest").
+		WithPublishedAt(baseTime.Add(3 * time.Hour)).
+		Build()
+	middleID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(3).
+		WithTitle("Middle").
+		WithPublishedAt(baseTime.Add(2 * time.Hour)).
+		Build()
+
+	// 公開日時が同じページは、IDの降順に並ぶ (フィードのETagが取得ごとに揺れないようにするため)。
+	// IDの生成のしかたに頼らず、作ったIDを比べて期待する順を決める。UUIDの大小はバイト列の比較で、
+	// 小文字の16進表記の文字列の比較と同じ順になる。
+	tieID1 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(9).
+		WithTitle("Tie 1").
+		WithPublishedAt(baseTime).
+		Build()
+	tieID2 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(10).
+		WithTitle("Tie 2").
+		WithPublishedAt(baseTime).
+		Build()
+	tieHigherID, tieLowerID := tieID1, tieID2
+	if tieHigherID < tieLowerID {
+		tieHigherID, tieLowerID = tieLowerID, tieHigherID
+	}
+
+	// 以下は載せないページ。どれも公開日時を最も新しくし、並び順で紛れ込まないことを確かめる。
+	excludedTime := baseTime.Add(10 * time.Hour)
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(privateTopicID).
+		WithNumber(4).
+		WithTitle("Private").
+		WithPublishedAt(excludedTime).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(discardedTopicID).
+		WithNumber(5).
+		WithTitle("In Discarded Topic").
+		WithPublishedAt(excludedTime).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(6).
+		WithTitle("Unpublished").
+		WithUnpublished().
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(7).
+		WithTitle("Discarded").
+		WithPublishedAt(excludedTime).
+		WithDiscarded().
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(8).
+		WithTitle("Trashed").
+		WithPublishedAt(excludedTime).
+		WithTrashed().
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithTopicID(otherTopicID).
+		WithNumber(1).
+		WithTitle("Other Space").
+		WithPublishedAt(excludedTime).
+		Build()
+
+	t.Run("公開トピックのアクティブなページだけを公開日時の新しい順 (同じ公開日時はIDの降順) に返す", func(t *testing.T) {
+		pages, err := repo.FindRecentPublishedBySpace(context.Background(), spaceID, 15)
+		if err != nil {
+			t.Fatalf("FindRecentPublishedBySpace()のエラー = %v", err)
+		}
+		want := []model.PageID{newestID, middleID, oldID, tieHigherID, tieLowerID}
+		if len(pages) != len(want) {
+			t.Fatalf("len(pages) = %d、期待値 = %d", len(pages), len(want))
+		}
+		for i, id := range want {
+			if pages[i].ID != id {
+				t.Errorf("pages[%d].ID = %v、期待値 = %v", i, pages[i].ID, id)
+			}
+		}
+	})
+
+	t.Run("件数をlimitまでに絞る", func(t *testing.T) {
+		pages, err := repo.FindRecentPublishedBySpace(context.Background(), spaceID, 2)
+		if err != nil {
+			t.Fatalf("FindRecentPublishedBySpace()のエラー = %v", err)
+		}
+		if len(pages) != 2 {
+			t.Fatalf("len(pages) = %d、期待値 = 2", len(pages))
+		}
+		if pages[0].ID != newestID || pages[1].ID != middleID {
+			t.Errorf("pages = [%v, %v]、期待値 = [%v, %v]", pages[0].ID, pages[1].ID, newestID, middleID)
+		}
+	})
+}
+
+func TestPageRepository_FindRecentPublishedByTopic(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewPageRepository(q)
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-recent-topic-space").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-recent-topic-other").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("Target").
+		Build()
+	siblingTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("Sibling").
+		Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithNumber(1).
+		WithName("Target").
+		Build()
+
+	baseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	oldID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(1).
+		WithTitle("Old").
+		WithPublishedAt(baseTime.Add(1 * time.Hour)).
+		Build()
+	newestID := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(2).
+		WithTitle("Newest").
+		WithPublishedAt(baseTime.Add(3 * time.Hour)).
+		Build()
+
+	// 公開日時が同じページは、IDの降順に並ぶ (フィードのETagが取得ごとに揺れないようにするため)。
+	// UUIDの大小はバイト列の比較で、小文字の16進表記の文字列の比較と同じ順になる。
+	tieID1 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(3).
+		WithTitle("Tie 1").
+		WithPublishedAt(baseTime).
+		Build()
+	tieID2 := testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(4).
+		WithTitle("Tie 2").
+		WithPublishedAt(baseTime).
+		Build()
+	tieHigherID, tieLowerID := tieID1, tieID2
+	if tieHigherID < tieLowerID {
+		tieHigherID, tieLowerID = tieLowerID, tieHigherID
+	}
+
+	// 以下は載せないページ。どれも公開日時を最も新しくし、並び順で紛れ込まないことを確かめる。
+	excludedTime := baseTime.Add(10 * time.Hour)
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(siblingTopicID).
+		WithNumber(5).
+		WithTitle("Sibling Topic").
+		WithPublishedAt(excludedTime).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(6).
+		WithTitle("Unpublished").
+		WithUnpublished().
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(7).
+		WithTitle("Discarded").
+		WithPublishedAt(excludedTime).
+		WithDiscarded().
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(topicID).
+		WithNumber(8).
+		WithTitle("Trashed").
+		WithPublishedAt(excludedTime).
+		WithTrashed().
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(otherSpaceID).
+		WithTopicID(otherTopicID).
+		WithNumber(1).
+		WithTitle("Other Space").
+		WithPublishedAt(excludedTime).
+		Build()
+
+	t.Run("トピックのアクティブなページだけを公開日時の新しい順 (同じ公開日時はIDの降順) に返す", func(t *testing.T) {
+		pages, err := repo.FindRecentPublishedByTopic(context.Background(), spaceID, topicID, 15)
+		if err != nil {
+			t.Fatalf("FindRecentPublishedByTopic()のエラー = %v", err)
+		}
+		want := []model.PageID{newestID, oldID, tieHigherID, tieLowerID}
+		if len(pages) != len(want) {
+			t.Fatalf("len(pages) = %d、期待値 = %d", len(pages), len(want))
+		}
+		for i, id := range want {
+			if pages[i].ID != id {
+				t.Errorf("pages[%d].ID = %v、期待値 = %v", i, pages[i].ID, id)
+			}
+		}
+	})
+
+	t.Run("件数をlimitまでに絞る", func(t *testing.T) {
+		pages, err := repo.FindRecentPublishedByTopic(context.Background(), spaceID, topicID, 1)
+		if err != nil {
+			t.Fatalf("FindRecentPublishedByTopic()のエラー = %v", err)
+		}
+		if len(pages) != 1 || pages[0].ID != newestID {
+			t.Errorf("pages = %v、期待値 = [%v]", pages, newestID)
+		}
+	})
+
+	t.Run("別のスペースのIDを渡すとトピックのページを返さない", func(t *testing.T) {
+		pages, err := repo.FindRecentPublishedByTopic(context.Background(), otherSpaceID, topicID, 15)
+		if err != nil {
+			t.Fatalf("FindRecentPublishedByTopic()のエラー = %v", err)
+		}
+		if len(pages) != 0 {
+			t.Errorf("len(pages) = %d、期待値 = 0", len(pages))
 		}
 	})
 }

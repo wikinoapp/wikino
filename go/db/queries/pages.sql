@@ -290,6 +290,36 @@ WHERE p.space_id = @space_id
   AND (@public_only::boolean IS FALSE OR t.visibility = 0)
 ORDER BY p.pinned_at DESC, p.id DESC;
 
+-- name: FindRecentPublishedPagesBySpace :many
+-- スペースの公開トピックのアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) を、
+-- 新しく公開された順 (published_at DESC, id DESC) にrow_limit件返す。スペースのフィードに載せる。
+-- 公開範囲とトピックの未廃棄の判定はFindPinnedPagesBySpaceのpublic_onlyと同じJOINで行う。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.visibility = 0
+ORDER BY p.published_at DESC, p.id DESC
+LIMIT @row_limit;
+
+-- name: FindRecentPublishedPagesByTopic :many
+-- トピックのアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) を、新しく公開された順
+-- (published_at DESC, id DESC) にrow_limit件返す。トピックのフィードに載せる。トピックの公開範囲は
+-- 呼び出し元のUseCaseが確かめる。JOINはFindRecentPublishedPagesBySpaceと同じくt.space_idでもスコープする。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
+  AND p.topic_id = @topic_id
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+ORDER BY p.published_at DESC, p.id DESC
+LIMIT @row_limit;
+
 -- name: FindRegularPagesBySpacePaginated :many
 -- スペース内の通常ページ (ピン留めなし) をオフセットページネーションで取得する。
 -- 並び順はmodified_at DESC, id DESC。アクティブ判定とpublic_onlyの扱いは
@@ -328,6 +358,23 @@ WHERE p.space_id = @space_id
 -- 既にゴミ箱に入ったページに対して実行した場合は両方の時刻が更新されるだけになる。
 UPDATE pages
 SET trashed_at = @trashed_at,
+    updated_at = @updated_at
+WHERE id = @id
+  AND space_id = @space_id;
+
+-- name: PinPageByID :exec
+-- ページにピンを打つ。打ってあるページの日時は変えず、送り直しても一覧の並び順が変わらないようにする。
+-- modified_atはトピックの一覧の並び順とページの版に使うため変えず、状態の変更としてupdated_atだけを更新する。
+UPDATE pages
+SET pinned_at = COALESCE(pinned_at, @pinned_at::timestamp),
+    updated_at = @updated_at
+WHERE id = @id
+  AND space_id = @space_id;
+
+-- name: UnpinPageByID :exec
+-- ページのピンを外す。PinPageByIDと同じくmodified_atは変えない。
+UPDATE pages
+SET pinned_at = NULL,
     updated_at = @updated_at
 WHERE id = @id
   AND space_id = @space_id;

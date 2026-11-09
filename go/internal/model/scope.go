@@ -43,6 +43,12 @@ const (
 	ScopePageTrashDelete Scope = "page_trash:delete"
 )
 
+// ページのピン留め関連スコープ
+const (
+	ScopePagePinWrite  Scope = "page_pin:write"
+	ScopePagePinDelete Scope = "page_pin:delete"
+)
+
 // 下書きページ関連スコープ
 const (
 	ScopeDraftPageRead   Scope = "draft_page:read"
@@ -158,6 +164,9 @@ var ScopeDefinitions = []ScopeDefinition{
 	{Scope: ScopePageTrashRead, LowestLevel: ScopeLevelTopic},
 	{Scope: ScopePageTrashWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopePageTrashRead}},
 	{Scope: ScopePageTrashDelete, LowestLevel: ScopeLevelTopic},
+	// ページのピン留め (ピンの状態はpage:readで見えるため、readを持たない)
+	{Scope: ScopePagePinWrite, LowestLevel: ScopeLevelTopic},
+	{Scope: ScopePagePinDelete, LowestLevel: ScopeLevelTopic},
 	// 下書きページ
 	{Scope: ScopeDraftPageRead, LowestLevel: ScopeLevelTopic, APIToken: true},
 	{Scope: ScopeDraftPageWrite, LowestLevel: ScopeLevelTopic, Implies: []Scope{ScopeDraftPageRead}, APIToken: true},

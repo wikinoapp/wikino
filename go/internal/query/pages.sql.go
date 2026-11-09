@@ -1042,6 +1042,127 @@ func (q *Queries) FindPinnedPagesByTopic(ctx context.Context, arg FindPinnedPage
 	return items, nil
 }
 
+const findRecentPublishedPagesBySpace = `-- name: FindRecentPublishedPagesBySpace :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.visibility = 0
+ORDER BY p.published_at DESC, p.id DESC
+LIMIT $2
+`
+
+type FindRecentPublishedPagesBySpaceParams struct {
+	SpaceID  string `json:"space_id"`
+	RowLimit int32  `json:"row_limit"`
+}
+
+// スペースの公開トピックのアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) を、
+// 新しく公開された順 (published_at DESC, id DESC) にrow_limit件返す。スペースのフィードに載せる。
+// 公開範囲とトピックの未廃棄の判定はFindPinnedPagesBySpaceのpublic_onlyと同じJOINで行う。
+func (q *Queries) FindRecentPublishedPagesBySpace(ctx context.Context, arg FindRecentPublishedPagesBySpaceParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, findRecentPublishedPagesBySpace, arg.SpaceID, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findRecentPublishedPagesByTopic = `-- name: FindRecentPublishedPagesByTopic :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.topic_id = $2
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+ORDER BY p.published_at DESC, p.id DESC
+LIMIT $3
+`
+
+type FindRecentPublishedPagesByTopicParams struct {
+	SpaceID  string `json:"space_id"`
+	TopicID  string `json:"topic_id"`
+	RowLimit int32  `json:"row_limit"`
+}
+
+// トピックのアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) を、新しく公開された順
+// (published_at DESC, id DESC) にrow_limit件返す。トピックのフィードに載せる。トピックの公開範囲は
+// 呼び出し元のUseCaseが確かめる。JOINはFindRecentPublishedPagesBySpaceと同じくt.space_idでもスコープする。
+func (q *Queries) FindRecentPublishedPagesByTopic(ctx context.Context, arg FindRecentPublishedPagesByTopicParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, findRecentPublishedPagesByTopic, arg.SpaceID, arg.TopicID, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findRegularPagesBySpacePaginated = `-- name: FindRegularPagesBySpacePaginated :many
 SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
 INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
@@ -1567,6 +1688,33 @@ func (q *Queries) MovePageToTopic(ctx context.Context, arg MovePageToTopicParams
 	return i, err
 }
 
+const pinPageByID = `-- name: PinPageByID :exec
+UPDATE pages
+SET pinned_at = COALESCE(pinned_at, $1::timestamp),
+    updated_at = $2
+WHERE id = $3
+  AND space_id = $4
+`
+
+type PinPageByIDParams struct {
+	PinnedAt  time.Time `json:"pinned_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ID        string    `json:"id"`
+	SpaceID   string    `json:"space_id"`
+}
+
+// ページにピンを打つ。打ってあるページの日時は変えず、送り直しても一覧の並び順が変わらないようにする。
+// modified_atはトピックの一覧の並び順とページの版に使うため変えず、状態の変更としてupdated_atだけを更新する。
+func (q *Queries) PinPageByID(ctx context.Context, arg PinPageByIDParams) error {
+	_, err := q.db.ExecContext(ctx, pinPageByID,
+		arg.PinnedAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SpaceID,
+	)
+	return err
+}
+
 const reassignPageLinkedPageID = `-- name: ReassignPageLinkedPageID :exec
 UPDATE pages
 SET linked_page_ids = CASE
@@ -1704,6 +1852,26 @@ func (q *Queries) TrashPageByID(ctx context.Context, arg TrashPageByIDParams) er
 		arg.ID,
 		arg.SpaceID,
 	)
+	return err
+}
+
+const unpinPageByID = `-- name: UnpinPageByID :exec
+UPDATE pages
+SET pinned_at = NULL,
+    updated_at = $1
+WHERE id = $2
+  AND space_id = $3
+`
+
+type UnpinPageByIDParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	ID        string    `json:"id"`
+	SpaceID   string    `json:"space_id"`
+}
+
+// ページのピンを外す。PinPageByIDと同じくmodified_atは変えない。
+func (q *Queries) UnpinPageByID(ctx context.Context, arg UnpinPageByIDParams) error {
+	_, err := q.db.ExecContext(ctx, unpinPageByID, arg.UpdatedAt, arg.ID, arg.SpaceID)
 	return err
 }
 
