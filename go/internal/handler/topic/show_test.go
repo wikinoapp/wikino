@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -1023,5 +1025,96 @@ func TestShow_非公開トピックの説明文の行に非公開ラベルが出
 	body := rr.Body.String()
 	if got := visibilityLabelText(t, body); got != "非公開" {
 		t.Errorf("非公開トピックのラベル = %q、期待値 = 「非公開」", got)
+	}
+}
+
+// feedLinkPatternは <head> でフィードを告知するlink要素に一致する
+var feedLinkPattern = regexp.MustCompile(`<link rel="alternate" type="application/atom\+xml" title="([^"]*)" href="([^"]*)">`)
+
+// feedLinksは本文が告知するフィードを、出現順に「title href」の形で返す
+func feedLinks(body string) []string {
+	var links []string
+	for _, m := range feedLinkPattern.FindAllStringSubmatch(body, -1) {
+		links = append(links, m[1]+" "+m[2])
+	}
+	return links
+}
+
+func TestShow_FeedDiscoveryByTopicVisibility(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	memberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-feed-member@example.com").
+		WithAtname("tsfeedmember").
+		Build()
+	outsiderID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-feed-outsider@example.com").
+		WithAtname("tsfeedoutsider").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-feed").
+		WithName("Feed Space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(memberID).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開トピック").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("非公開トピック").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	member := &model.User{ID: memberID, Atname: "tsfeedmember"}
+	outsider := &model.User{ID: outsiderID, Atname: "tsfeedoutsider"}
+	publicFeeds := []string{
+		"公開トピック | Feed Space | Wikino https://localhost/s/ts-feed/topics/1/atom",
+		"Feed Space | Wikino https://localhost/s/ts-feed/atom",
+	}
+	spaceFeedOnly := []string{"Feed Space | Wikino https://localhost/s/ts-feed/atom"}
+
+	tests := []struct {
+		name        string
+		topicNumber string
+		user        *model.User
+		want        []string
+	}{
+		{name: "公開トピックを未ログインで開くとトピック・スペースの順に告知する", topicNumber: "1", user: nil, want: publicFeeds},
+		{name: "公開トピックをスペースの外の人が開くとトピック・スペースの順に告知する", topicNumber: "1", user: outsider, want: publicFeeds},
+		{name: "公開トピックをメンバーが開くとトピック・スペースの順に告知する", topicNumber: "1", user: member, want: publicFeeds},
+		{name: "非公開トピックをメンバーが開くとスペースのフィードだけを告知する", topicNumber: "2", user: member, want: spaceFeedOnly},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newShowRequest(t, "/s/ts-feed/topics/"+tt.topicNumber, map[string]string{
+				"space_identifier": "ts-feed",
+				"topic_number":     tt.topicNumber,
+			})
+			if tt.user != nil {
+				req = req.WithContext(middleware.SetUserToContext(req.Context(), tt.user))
+			}
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+			}
+			if got := feedLinks(rr.Body.String()); !slices.Equal(got, tt.want) {
+				t.Errorf("告知するフィード = %q、期待値 = %q", got, tt.want)
+			}
+		})
 	}
 }

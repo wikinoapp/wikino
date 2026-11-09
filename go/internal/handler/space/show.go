@@ -97,6 +97,9 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	})
 	meta.OGURL = h.cfg.AppURL() + string(templates.PaginatedPath(templates.SpacePath(spaceIdentVM), currentPage))
 	meta.CurrentSpaceIdentifier = spaceIdentVM
+	meta.Feeds = []viewmodel.FeedLink{
+		viewmodel.NewSpaceFeedLink(h.cfg, output.Space, string(templates.AtomPath(spaceIdentVM))),
+	}
 
 	showData := spacepages.ShowData{
 		Space:          spaceVM,

@@ -131,6 +131,11 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	// ページ表示画面は唯一の本文ページのため、サイト共通のwebsiteではなくarticleを宣言する。
 	meta.OGType = "article"
 	meta.CurrentSpaceIdentifier = spaceIdentVM
+	// トピック画面と同じく、トピックのフィードはゲストに見せてよいページの画面でだけ告知する
+	if output.IsPublic {
+		meta.Feeds = append(meta.Feeds, viewmodel.NewTopicFeedLink(h.cfg, output.Topic, output.Space, string(templates.TopicAtomPath(spaceIdentVM, topicVM.Number))))
+	}
+	meta.Feeds = append(meta.Feeds, viewmodel.NewSpaceFeedLink(h.cfg, output.Space, string(templates.AtomPath(spaceIdentVM))))
 
 	breadcrumbHeader := pageBreadcrumbHeaderData(ctx, spaceVM, topicVM, showBreadcrumbMaxWidthClass, signedIn)
 	breadcrumbHeader.Items = append(breadcrumbHeader.Items, components.BreadcrumbItem{

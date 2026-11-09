@@ -65,12 +65,23 @@ type AtomFeedSource struct {
 
 // NewSpaceAtomFeedはスペースのフィードを組み立てる
 func NewSpaceAtomFeed(cfg *config.Config, src AtomFeedSource) AtomFeed {
-	return newAtomFeed(cfg, src.Space.Name+" | Wikino", src)
+	return newAtomFeed(cfg, SpaceFeedTitle(src.Space), src)
 }
 
 // NewTopicAtomFeedはトピックのフィードを組み立てる。src.Spaceはトピックの属するスペースを渡す
 func NewTopicAtomFeed(cfg *config.Config, topic *model.Topic, src AtomFeedSource) AtomFeed {
-	return newAtomFeed(cfg, topic.Name+" | "+src.Space.Name+" | Wikino", src)
+	return newAtomFeed(cfg, TopicFeedTitle(topic, src.Space), src)
+}
+
+// SpaceFeedTitleはスペースのフィードのタイトル。フィードの `<title>` と、画面の `<head>` で告知するときの
+// `title` 属性の両方に使い、リーダーの選択画面と購読後の名前を揃える
+func SpaceFeedTitle(space *model.Space) string {
+	return space.Name + " | Wikino"
+}
+
+// TopicFeedTitleはトピックのフィードのタイトル。使い道はSpaceFeedTitleと同じ
+func TopicFeedTitle(topic *model.Topic, space *model.Space) string {
+	return topic.Name + " | " + space.Name + " | Wikino"
 }
 
 func newAtomFeed(cfg *config.Config, title string, src AtomFeedSource) AtomFeed {
@@ -125,4 +136,14 @@ func newAtomEntry(appURL string, space *model.Space, pg *model.Page, contentHTML
 // atomTimeは日時をUTCのRFC 3339の形式にする
 func atomTime(t time.Time) string {
 	return t.UTC().Format(time.RFC3339)
+}
+
+// NewSpaceFeedLinkはスペースのフィードを告知するFeedLinkを作る。feedPathはフィードのパス
+func NewSpaceFeedLink(cfg *config.Config, space *model.Space, feedPath string) FeedLink {
+	return FeedLink{Title: SpaceFeedTitle(space), URL: cfg.AppURL() + feedPath}
+}
+
+// NewTopicFeedLinkはトピックのフィードを告知するFeedLinkを作る。feedPathはフィードのパス
+func NewTopicFeedLink(cfg *config.Config, topic *model.Topic, space *model.Space, feedPath string) FeedLink {
+	return FeedLink{Title: TopicFeedTitle(topic, space), URL: cfg.AppURL() + feedPath}
 }

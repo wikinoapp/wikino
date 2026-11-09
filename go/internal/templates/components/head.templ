@@ -47,6 +47,10 @@ templ Head(meta viewmodel.PageMeta) {
 	if meta.OGURL != "" {
 		<link rel="canonical" href={ meta.OGURL }/>
 	}
+	// フィードは公開範囲に応じて画面ごとに選ぶ。どの画面でも、告知するのは誰が取得しても同じ内容を返すフィードだけである
+	for _, feed := range meta.Feeds {
+		<link rel="alternate" type="application/atom+xml" title={ feed.Title } href={ feed.URL }/>
+	}
 	<link rel="icon" href="/static/images/favicon.ico" sizes="any"/>
 	<link rel="icon" href="/static/images/icon.svg" type="image/svg+xml"/>
 	<link rel="manifest" href="/manifest.json"/>

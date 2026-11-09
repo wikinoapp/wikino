@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -884,6 +886,73 @@ func TestShow_BreadcrumbMarksCurrentSpace(t *testing.T) {
 				if !strings.Contains(body, want) {
 					t.Errorf("レスポンスに%qが含まれていない", want)
 				}
+			}
+		})
+	}
+}
+
+// feedLinkPatternは <head> でフィードを告知するlink要素に一致する
+var feedLinkPattern = regexp.MustCompile(`<link rel="alternate" type="application/atom\+xml" title="([^"]*)" href="([^"]*)">`)
+
+// feedLinksは本文が告知するフィードを、出現順に「title href」の形で返す
+func feedLinks(body string) []string {
+	var links []string
+	for _, m := range feedLinkPattern.FindAllStringSubmatch(body, -1) {
+		links = append(links, m[1]+" "+m[2])
+	}
+	return links
+}
+
+func TestShow_FeedDiscoveryForAllViewers(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	memberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ss-feed-member@example.com").
+		WithAtname("ssfeedmember").
+		Build()
+	outsiderID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ss-feed-outsider@example.com").
+		WithAtname("ssfeedoutsider").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ss-feed").
+		WithName("Feed Space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(memberID).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	tests := []struct {
+		name string
+		user *model.User
+	}{
+		{name: "未ログイン", user: nil},
+		{name: "スペースの外の人", user: &model.User{ID: outsiderID, Atname: "ssfeedoutsider"}},
+		{name: "メンバー", user: &model.User{ID: memberID, Atname: "ssfeedmember"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newShowRequest(t, "/s/ss-feed", map[string]string{"space_identifier": "ss-feed"})
+			if tt.user != nil {
+				req = req.WithContext(middleware.SetUserToContext(req.Context(), tt.user))
+			}
+			rr := httptest.NewRecorder()
+			handler.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+			}
+			got := feedLinks(rr.Body.String())
+			want := []string{"Feed Space | Wikino https://localhost/s/ss-feed/atom"}
+			if !slices.Equal(got, want) {
+				t.Errorf("告知するフィード = %q、期待値 = %q", got, want)
 			}
 		})
 	}

@@ -114,6 +114,12 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	})
 	meta.OGURL = h.cfg.AppURL() + string(templates.PaginatedPath(templates.TopicPath(spaceIdentVM, topicVM.Number), currentPage))
 	meta.CurrentSpaceIdentifier = spaceIdentVM
+	// フィードの中身は閲覧者によらず同じため、告知するかはトピックの公開範囲だけで決める。
+	// 非公開トピックのフィードは誰が取得しても404になるため、スペースのフィードだけを告知する
+	if topicVM.IsPublic {
+		meta.Feeds = append(meta.Feeds, viewmodel.NewTopicFeedLink(h.cfg, output.Topic, output.Space, string(templates.TopicAtomPath(spaceIdentVM, topicVM.Number))))
+	}
+	meta.Feeds = append(meta.Feeds, viewmodel.NewSpaceFeedLink(h.cfg, output.Space, string(templates.AtomPath(spaceIdentVM))))
 
 	// テンプレートをレンダリング
 	content := topicpages.Show(topicpages.ShowData{

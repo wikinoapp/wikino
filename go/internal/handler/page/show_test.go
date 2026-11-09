@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1245,6 +1247,123 @@ func TestShow_HeadingLevels(t *testing.T) {
 			}
 			if !strings.Contains(body, "Heading Page Title") {
 				t.Error("レスポンスにページタイトルが含まれていない")
+			}
+		})
+	}
+}
+
+// feedLinkPatternは <head> でフィードを告知するlink要素に一致する
+var feedLinkPattern = regexp.MustCompile(`<link rel="alternate" type="application/atom\+xml" title="([^"]*)" href="([^"]*)">`)
+
+// feedLinksは本文が告知するフィードを、出現順に「title href」の形で返す
+func feedLinks(body string) []string {
+	var links []string
+	for _, m := range feedLinkPattern.FindAllStringSubmatch(body, -1) {
+		links = append(links, m[1]+" "+m[2])
+	}
+	return links
+}
+
+func TestShow_FeedDiscoveryByTopicVisibility(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	memberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("page-feed-member@example.com").
+		WithAtname("pagefeedmember").
+		Build()
+	outsiderID := testutil.NewUserBuilder(t, tx).
+		WithEmail("page-feed-outsider@example.com").
+		WithAtname("pagefeedoutsider").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-feed").
+		WithName("Feed Space").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(memberID).
+		Build()
+	publicTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithName("公開トピック").
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+	privateTopicID := testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(2).
+		WithName("非公開トピック").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(1).
+		WithTitle("公開ページ").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(privateTopicID).
+		WithNumber(2).
+		WithTitle("非公開ページ").
+		WithLinkedPageIDs([]model.PageID{}).
+		Build()
+	testutil.NewPageBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithTopicID(publicTopicID).
+		WithNumber(3).
+		WithTitle("ゴミ箱のページ").
+		WithLinkedPageIDs([]model.PageID{}).
+		WithTrashed().
+		Build()
+
+	h := setupHandler(t, queries)
+
+	publicFeeds := []string{
+		"公開トピック | Feed Space | Wikino https://localhost/s/page-feed/topics/1/atom",
+		"Feed Space | Wikino https://localhost/s/page-feed/atom",
+	}
+	spaceFeedOnly := []string{"Feed Space | Wikino https://localhost/s/page-feed/atom"}
+
+	tests := []struct {
+		name       string
+		pageNumber string
+		userID     *model.UserID
+		want       []string
+	}{
+		{name: "公開トピックのページを未ログインで開くとトピック・スペースの順に告知する", pageNumber: "1", userID: nil, want: publicFeeds},
+		{name: "公開トピックのページをスペースの外の人が開くとトピック・スペースの順に告知する", pageNumber: "1", userID: &outsiderID, want: publicFeeds},
+		{name: "公開トピックのページをメンバーが開くとトピック・スペースの順に告知する", pageNumber: "1", userID: &memberID, want: publicFeeds},
+		{name: "非公開トピックのページをメンバーが開くとスペースのフィードだけを告知する", pageNumber: "2", userID: &memberID, want: spaceFeedOnly},
+		// ゴミ箱のページはゲストに見せないページのため、トピックのフィードを告知しない
+		{name: "ゴミ箱のページをメンバーが開くとスペースのフィードだけを告知する", pageNumber: "3", userID: &memberID, want: spaceFeedOnly},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newRequestWithChiParams(t, http.MethodGet, "/s/page-feed/pages/"+tt.pageNumber, map[string]string{
+				"space_identifier": "page-feed",
+				"page_number":      tt.pageNumber,
+			})
+			ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
+			ctx = middleware.SetCSRFTokenToContext(ctx, showCSRFToken)
+			if tt.userID != nil {
+				ctx = middleware.SetUserToContext(ctx, &model.User{ID: *tt.userID})
+			}
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+			h.Show(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+			}
+			if got := feedLinks(rr.Body.String()); !slices.Equal(got, tt.want) {
+				t.Errorf("告知するフィード = %q、期待値 = %q", got, tt.want)
 			}
 		})
 	}

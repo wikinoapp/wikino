@@ -26,6 +26,16 @@ type PageMeta struct {
 	// 済ませられるようにする。宣言するのは実際にリクエストするページだけ。preconnectは
 	// それ自体がそのオリジンへの接続になり、利用者のIPアドレスを第三者に送るためである。
 	PreconnectOrigins []string
+	// Feedsは、画面に関係するフィードの一覧。それぞれを <link rel="alternate" type="application/atom+xml"> として
+	// 並べた順に出力し、画面のURLを貼るだけでフィードリーダーが見つけられるようにする (autodiscovery)。
+	// リーダーは先頭のフィードを選ぶことが多いため、画面に最も近いフィードを先に並べる
+	Feeds []FeedLink
+}
+
+// FeedLinkは画面の <head> で告知するフィード
+type FeedLink struct {
+	Title string // フィードの <title> と同じ文字列
+	URL   string // フィードの絶対URL
 }
 
 // turnstileOriginはcomponents.Turnstileがウィジェットのスクリプトを読み込むオリジン。
