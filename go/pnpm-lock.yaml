@@ -33,8 +33,8 @@ importers:
         specifier: ^1.2.5
         version: 1.2.5
       '@lezer/markdown':
-        specifier: ^1.7.2
-        version: 1.7.2
+        specifier: ^1.8.1
+        version: 1.8.1
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
@@ -332,6 +332,9 @@ packages:
   '@lezer/common@1.5.3':
     resolution: {integrity: sha512-H0iErY4e43LpXbYDyBci5W4v/RwTgGV3YzYOlJPiGZ8RY8w51kVE+xLn1tg3Z6UmSfyETvtsUK3r7YsgDQEI7Q==}
 
+  '@lezer/common@1.5.5':
+    resolution: {integrity: sha512-Pw7PVCndruF1pb3ebCxpSVpkMHSDjwRCLcTRw+RizUKco5QbWylwq2g4lnG/RYN7yTTQDXE9F77MwtkAyphrjg==}
+
   '@lezer/css@1.3.6':
     resolution: {integrity: sha512-YJE78Wcg+zX8f10hiHWQ4Az48Qr/c13eId0VtRQYLBpxHDmDeSrXIlkbl+fJGW42rWC/uoUco9mhBZeVWP/A1g==}
 
@@ -347,8 +350,8 @@ packages:
   '@lezer/lr@1.4.11':
     resolution: {integrity: sha512-UwgZcl1R66H2hDzBrA7kWyYmX6s8p5TQ+e/t7CuvgCtBEPxbEPaHYHu+pJBvTvDotEJpuQkJjbXuHiw5Cixxgw==}
 
-  '@lezer/markdown@1.7.2':
-    resolution: {integrity: sha512-iTkYvoVcKt3WkeL7qUDyXHONZEwLio4wj8KTNi2dnjQEXBZKMV63BpQrPqfsM+OkvuRbiSTAcycYAsQzLhRNoQ==}
+  '@lezer/markdown@1.8.1':
+    resolution: {integrity: sha512-M5YmEcKWO4mJ45Y1hECwqyu8cLv25EiXOK554PVOvDOWOP0olwelHHQUWr9sjF+d1bENVhy0nfJ8E57XZUTiXg==}
 
   '@marijn/find-cluster-break@1.0.4':
     resolution: {integrity: sha512-Wy0V7+SGUjnF9/TkiM1hKVDPj7jKXduPNboMVtHTA8dySMURWqfg/JZ9E2Sq8JgSJmkl7k7Qe9FLeMSrSraWmQ==}
@@ -1763,7 +1766,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/css': 1.3.6
 
   '@codemirror/lang-html@6.4.12':
@@ -1785,7 +1788,7 @@ snapshots:
       '@codemirror/lint': 6.9.7
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/javascript': 1.5.4
 
   '@codemirror/lang-markdown@6.5.2':
@@ -1796,7 +1799,7 @@ snapshots:
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
       '@lezer/common': 1.5.3
-      '@lezer/markdown': 1.7.2
+      '@lezer/markdown': 1.8.1
 
   '@codemirror/language@6.13.1':
     dependencies:
@@ -1962,9 +1965,11 @@ snapshots:
 
   '@lezer/common@1.5.3': {}
 
+  '@lezer/common@1.5.5': {}
+
   '@lezer/css@1.3.6':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.11
 
@@ -1974,13 +1979,13 @@ snapshots:
 
   '@lezer/html@1.3.13':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.11
 
   '@lezer/javascript@1.5.4':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
       '@lezer/lr': 1.4.11
 
@@ -1988,9 +1993,9 @@ snapshots:
     dependencies:
       '@lezer/common': 1.5.3
 
-  '@lezer/markdown@1.7.2':
+  '@lezer/markdown@1.8.1':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
 
   '@marijn/find-cluster-break@1.0.4': {}
