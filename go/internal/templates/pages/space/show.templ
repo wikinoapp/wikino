@@ -30,6 +30,15 @@ type ShowData struct {
 	// CanShowSettingsはオプションメニューにスペース設定へのリンクを出すかを表す。
 	// 設定のトップを開けるメンバーにだけ出す。
 	CanShowSettings bool
+
+	// FeedURLはスペースのフィードの絶対URL
+	FeedURL string
+}
+
+// hasOptionsはオプションメニューに出す項目が1つでもあるかを表す。項目が無い閲覧者 (未ログインの人と
+// スペースの外の人) には、開いても空のメニューを出さない。
+func (d ShowData) hasOptions() bool {
+	return d.JoinedSpace || d.CanShowSettings
 }
 
 // paginationPathはスペース詳細画面のオフセットページネーション用パスを生成します。
@@ -77,10 +86,25 @@ templ Show(data ShowData) {
 	</div>
 }
 
-// showActionsはページヘッダーに表示するスペースオプションのドロップダウンを表示します。
-// RSSフィードリンクは常に表示し、トピック / ゴミ箱リンクはスペースメンバーにのみ、設定リンクは
-// スペース設定のトップを開けるメンバーにのみ表示します。
+// showActionsはページヘッダーにRSSフィードのボタンとスペースオプションのドロップダウンを表示します。
+// RSSフィードのボタンは誰にでも出す。スペースのフィードは公開トピックのページだけを載せ、閲覧者によらず
+// 同じ内容になるためである。
 templ showActions(data ShowData) {
+	// relativeはRSSフィードのポップオーバーを操作の並びの右端に揃えるため (components.FeedPopoverを参照)
+	<div class="relative flex items-center gap-2">
+		@components.FeedPopover(components.FeedPopoverData{
+			URL:              data.FeedURL,
+			PublicTopicsOnly: true,
+		})
+		if data.hasOptions() {
+			@showOptions(data)
+		}
+	</div>
+}
+
+// showOptionsはスペースオプションのドロップダウンを表示します。
+// トピック / ゴミ箱リンクはスペースメンバーにのみ、設定リンクはスペース設定のトップを開けるメンバーにのみ表示します。
+templ showOptions(data ShowData) {
 	<div id="space-options-dropdown" class="dropdown-menu">
 		<button
 			type="button"
@@ -97,16 +121,6 @@ templ showActions(data ShowData) {
 		</button>
 		<div id="space-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
 			<div role="menu" id="space-options-dropdown-menu" aria-labelledby="space-options-dropdown-trigger">
-				<div role="menuitem">
-					<a
-						class="flex gap-2 items-center w-full"
-						href={ templ.SafeURL(string(templates.AtomPath(data.Space.Identifier))) }
-						target="_blank"
-					>
-						@templates.Icon("rss-regular", "size-[18px]")
-						{ templates.T(ctx, "space_show_options_rss_feed") }
-					</a>
-				</div>
 				if data.JoinedSpace {
 					<div role="menuitem">
 						<a

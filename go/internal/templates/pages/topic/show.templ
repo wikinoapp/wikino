@@ -15,6 +15,8 @@ type ShowData struct {
 	PinnedPages []viewmodel.CardLinkPage
 	Pages       []viewmodel.CardLinkPage
 	Pagination  viewmodel.Pagination
+	// FeedURLはトピックのフィードの絶対URL。非公開トピックはフィードを持たないため空にする
+	FeedURL string
 }
 
 // paginationPathはページネーション用のパスを生成します
@@ -130,50 +132,57 @@ templ showSubtitle(topic viewmodel.TopicForShow) {
 	}
 }
 
-// showActionsはトピック詳細画面のアクションボタンを表示します
+// showActionsはトピック詳細画面のアクションボタンを表示します。
+// RSSフィードのボタンはトピックのフィードがあるとき (公開トピック) だけ出す。
 templ showActions(data ShowData) {
-	if data.Topic.CanCreatePage {
-		<a
-			href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
-			class="btn rounded-full"
-			data-size="sm"
-		>
-			@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
-			{ templates.T(ctx, "topic_show_new_page") }
-		</a>
-	}
-
-	if data.Topic.CanUpdate {
-		<div id="topic-options-dropdown" class="dropdown-menu">
-			<button
-				type="button"
-				id="topic-options-dropdown-trigger"
-				aria-haspopup="menu"
-				aria-controls="topic-options-dropdown-menu"
-				aria-expanded="false"
-				aria-label={ templates.T(ctx, "topic_show_options_aria_label") }
-				class="btn border-primary rounded-full"
-				data-variant="outline"
-				data-size="icon-sm"
+	// relativeはRSSフィードのポップオーバーを操作の並びの右端に揃えるため (components.FeedPopoverを参照)
+	<div class="relative flex items-center gap-2">
+		if data.Topic.CanCreatePage {
+			<a
+				href={ templ.SafeURL(string(templates.NewPagePath(data.Space.Identifier, data.Topic.Number))) }
+				class="btn rounded-full"
+				data-size="sm"
 			>
-				@templates.DecorativeIcon("dots-three-regular")
-			</button>
+				@templates.Icon("pencil-simple-line-regular", "size-[18px] fill-primary-foreground")
+				{ templates.T(ctx, "topic_show_new_page") }
+			</a>
+		}
+		// 丸いボタン (RSSフィード・三点メニュー) は右にまとめ、スペース画面の並びと揃える
+		if data.FeedURL != "" {
+			@components.FeedPopover(components.FeedPopoverData{URL: data.FeedURL})
+		}
+		if data.Topic.CanUpdate {
+			<div id="topic-options-dropdown" class="dropdown-menu">
+				<button
+					type="button"
+					id="topic-options-dropdown-trigger"
+					aria-haspopup="menu"
+					aria-controls="topic-options-dropdown-menu"
+					aria-expanded="false"
+					aria-label={ templates.T(ctx, "topic_show_options_aria_label") }
+					class="btn border-primary rounded-full"
+					data-variant="outline"
+					data-size="icon-sm"
+				>
+					@templates.DecorativeIcon("dots-three-regular")
+				</button>
 
-			<div id="topic-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
-				<div role="menu" id="topic-options-dropdown-menu" aria-labelledby="topic-options-dropdown-trigger">
-					<div role="menuitem">
-						<a
-							class="flex gap-2 items-center w-full"
-							href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier, data.Topic.Number))) }
-						>
-							@templates.Icon("gear-regular", "size-[18px]")
-							{ templates.T(ctx, "topic_show_settings") }
-						</a>
+				<div id="topic-options-dropdown-popover" data-popover aria-hidden="true" class="min-w-56" data-align="end">
+					<div role="menu" id="topic-options-dropdown-menu" aria-labelledby="topic-options-dropdown-trigger">
+						<div role="menuitem">
+							<a
+								class="flex gap-2 items-center w-full"
+								href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier, data.Topic.Number))) }
+							>
+								@templates.Icon("gear-regular", "size-[18px]")
+								{ templates.T(ctx, "topic_show_settings") }
+							</a>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-	}
+		}
+	</div>
 }
 
 // showEmptyStateはトピック詳細画面の空状態を表示します

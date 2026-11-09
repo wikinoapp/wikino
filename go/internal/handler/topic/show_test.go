@@ -1040,6 +1040,20 @@ func feedLinks(body string) []string {
 	return links
 }
 
+// feedButtonURLはRSSフィードのポップオーバーがコピーさせるURLを返す。ボタンが無ければ空文字を返す
+func feedButtonURL(body string) string {
+	if !strings.Contains(body, `id="feed-popover-trigger"`) {
+		return ""
+	}
+	m := feedButtonURLPattern.FindStringSubmatch(body)
+	if m == nil {
+		return ""
+	}
+	return m[1]
+}
+
+var feedButtonURLPattern = regexp.MustCompile(`id="feed-popover-url"[^>]*value="([^"]*)"`)
+
 func TestShow_FeedDiscoveryByTopicVisibility(t *testing.T) {
 	t.Parallel()
 
@@ -1085,16 +1099,19 @@ func TestShow_FeedDiscoveryByTopicVisibility(t *testing.T) {
 	}
 	spaceFeedOnly := []string{"Feed Space | Wikino https://localhost/s/ts-feed/atom"}
 
+	topicFeedURL := "https://localhost/s/ts-feed/topics/1/atom"
+
 	tests := []struct {
-		name        string
-		topicNumber string
-		user        *model.User
-		want        []string
+		name          string
+		topicNumber   string
+		user          *model.User
+		want          []string
+		wantButtonURL string
 	}{
-		{name: "公開トピックを未ログインで開くとトピック・スペースの順に告知する", topicNumber: "1", user: nil, want: publicFeeds},
-		{name: "公開トピックをスペースの外の人が開くとトピック・スペースの順に告知する", topicNumber: "1", user: outsider, want: publicFeeds},
-		{name: "公開トピックをメンバーが開くとトピック・スペースの順に告知する", topicNumber: "1", user: member, want: publicFeeds},
-		{name: "非公開トピックをメンバーが開くとスペースのフィードだけを告知する", topicNumber: "2", user: member, want: spaceFeedOnly},
+		{name: "公開トピックを未ログインで開くとトピック・スペースの順に告知する", topicNumber: "1", user: nil, want: publicFeeds, wantButtonURL: topicFeedURL},
+		{name: "公開トピックをスペースの外の人が開くとトピック・スペースの順に告知する", topicNumber: "1", user: outsider, want: publicFeeds, wantButtonURL: topicFeedURL},
+		{name: "公開トピックをメンバーが開くとトピック・スペースの順に告知する", topicNumber: "1", user: member, want: publicFeeds, wantButtonURL: topicFeedURL},
+		{name: "非公開トピックをメンバーが開くとスペースのフィードだけを告知し、ボタンを出さない", topicNumber: "2", user: member, want: spaceFeedOnly, wantButtonURL: ""},
 	}
 
 	for _, tt := range tests {
@@ -1112,9 +1129,73 @@ func TestShow_FeedDiscoveryByTopicVisibility(t *testing.T) {
 			if rr.Code != http.StatusOK {
 				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
-			if got := feedLinks(rr.Body.String()); !slices.Equal(got, tt.want) {
+			body := rr.Body.String()
+			if got := feedLinks(body); !slices.Equal(got, tt.want) {
 				t.Errorf("告知するフィード = %q、期待値 = %q", got, tt.want)
 			}
+			if got := feedButtonURL(body); got != tt.wantButtonURL {
+				t.Errorf("RSSフィードのボタンのURL = %q、期待値 = %q", got, tt.wantButtonURL)
+			}
+			if strings.Contains(body, "公開トピックのページだけを配信します") {
+				t.Error("トピックのフィードのポップオーバーに、スペースのフィード向けの補足が含まれている")
+			}
 		})
+	}
+}
+
+func TestShow_ActionsOrderNewPageFeedOptions(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	memberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("ts-actorder@example.com").
+		WithAtname("tsactorder").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("ts-actorder").
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(memberID).
+		Build()
+	testutil.NewTopicBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithNumber(1).
+		WithVisibility(int32(model.TopicVisibilityPublic)).
+		Build()
+
+	handler := setupHandler(t, queries)
+
+	req := newShowRequest(t, "/s/ts-actorder/topics/1", map[string]string{
+		"space_identifier": "ts-actorder",
+		"topic_number":     "1",
+	})
+	req = req.WithContext(middleware.SetUserToContext(req.Context(), &model.User{ID: memberID, Atname: "tsactorder"}))
+	rr := httptest.NewRecorder()
+	handler.Show(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	}
+	body := rr.Body.String()
+
+	// 丸いボタン (RSSフィード・三点メニュー) を「新規ページ」の右にまとめる
+	markers := []string{
+		`href="/s/ts-actorder/topics/1/pages/new"`,
+		`id="feed-popover-trigger"`,
+		`id="topic-options-dropdown-trigger"`,
+	}
+	prev := -1
+	for _, marker := range markers {
+		idx := strings.Index(body, marker)
+		if idx == -1 {
+			t.Fatalf("出力に%qが含まれていない", marker)
+		}
+		if idx < prev {
+			t.Errorf("%qが前の操作より前に出ている。期待する順序 = %q", marker, markers)
+		}
+		prev = idx
 	}
 }

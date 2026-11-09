@@ -388,9 +388,8 @@ func TestShow_メンバーにスペースオプションメニューが全て表
 	}
 
 	body := rr.Body.String()
-	// オプションメニューにはRSSフィードと、メンバー限定のトピック / ゴミ箱 / 設定リンクが表示される。
+	// オプションメニューには、メンバー限定のトピック / ゴミ箱 / 設定リンクが表示される。
 	for _, want := range []string{
-		"/s/ss-options/atom",
 		"/s/ss-options/topics/new",
 		"/s/ss-options/trash",
 		"/s/ss-options/settings",
@@ -487,7 +486,8 @@ func TestShow_トークン管理の権限を持つ閲覧者にはフラグが有
 	}
 }
 
-func TestShow_ゲストにはオプションメニューのRSSのみ表示される(t *testing.T) {
+// オプションメニューの項目はどれもメンバー向けのため、ゲストには開いても空のメニューを出さない。
+func TestShow_GuestCannotSeeOptionsMenu(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -511,9 +511,8 @@ func TestShow_ゲストにはオプションメニューのRSSのみ表示され
 	}
 
 	body := rr.Body.String()
-	// ゲストにはRSSフィードリンクのみが見え、メンバー限定リンクは表示されない。
-	if !strings.Contains(body, "/s/ss-guest-options/atom") {
-		t.Error("ゲストのレスポンスにRSSフィードのリンクが含まれていない")
+	if strings.Contains(body, `id="space-options-dropdown"`) {
+		t.Error("ゲストのレスポンスにオプションメニューが含まれている")
 	}
 	if strings.Contains(body, "/s/ss-guest-options/trash") {
 		t.Error("ゲストのレスポンスにゴミ箱のリンクが含まれている")
@@ -903,6 +902,20 @@ func feedLinks(body string) []string {
 	return links
 }
 
+// feedButtonURLはRSSフィードのポップオーバーがコピーさせるURLを返す。ボタンが無ければ空文字を返す
+func feedButtonURL(body string) string {
+	if !strings.Contains(body, `id="feed-popover-trigger"`) {
+		return ""
+	}
+	m := feedButtonURLPattern.FindStringSubmatch(body)
+	if m == nil {
+		return ""
+	}
+	return m[1]
+}
+
+var feedButtonURLPattern = regexp.MustCompile(`id="feed-popover-url"[^>]*value="([^"]*)"`)
+
 func TestShow_FeedDiscoveryForAllViewers(t *testing.T) {
 	t.Parallel()
 
@@ -929,12 +942,13 @@ func TestShow_FeedDiscoveryForAllViewers(t *testing.T) {
 	handler := setupHandler(t, queries)
 
 	tests := []struct {
-		name string
-		user *model.User
+		name        string
+		user        *model.User
+		wantOptions bool
 	}{
-		{name: "未ログイン", user: nil},
-		{name: "スペースの外の人", user: &model.User{ID: outsiderID, Atname: "ssfeedoutsider"}},
-		{name: "メンバー", user: &model.User{ID: memberID, Atname: "ssfeedmember"}},
+		{name: "未ログイン", user: nil, wantOptions: false},
+		{name: "スペースの外の人", user: &model.User{ID: outsiderID, Atname: "ssfeedoutsider"}, wantOptions: false},
+		{name: "メンバー", user: &model.User{ID: memberID, Atname: "ssfeedmember"}, wantOptions: true},
 	}
 
 	for _, tt := range tests {
@@ -949,10 +963,20 @@ func TestShow_FeedDiscoveryForAllViewers(t *testing.T) {
 			if rr.Code != http.StatusOK {
 				t.Fatalf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
 			}
-			got := feedLinks(rr.Body.String())
+			body := rr.Body.String()
+			got := feedLinks(body)
 			want := []string{"Feed Space | Wikino https://localhost/s/ss-feed/atom"}
 			if !slices.Equal(got, want) {
 				t.Errorf("告知するフィード = %q、期待値 = %q", got, want)
+			}
+			if got, want := feedButtonURL(body), "https://localhost/s/ss-feed/atom"; got != want {
+				t.Errorf("RSSフィードのボタンのURL = %q、期待値 = %q", got, want)
+			}
+			if !strings.Contains(body, "公開トピックのページだけを配信します") {
+				t.Error("スペースのフィードのポップオーバーに公開トピックだけを配信する旨が含まれていない")
+			}
+			if got := strings.Contains(body, `id="space-options-dropdown"`); got != tt.wantOptions {
+				t.Errorf("オプションメニューの有無 = %v、期待値 = %v", got, tt.wantOptions)
 			}
 		})
 	}

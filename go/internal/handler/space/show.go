@@ -97,9 +97,8 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	})
 	meta.OGURL = h.cfg.AppURL() + string(templates.PaginatedPath(templates.SpacePath(spaceIdentVM), currentPage))
 	meta.CurrentSpaceIdentifier = spaceIdentVM
-	meta.Feeds = []viewmodel.FeedLink{
-		viewmodel.NewSpaceFeedLink(h.cfg, output.Space, string(templates.AtomPath(spaceIdentVM))),
-	}
+	spaceFeed := viewmodel.NewSpaceFeedLink(h.cfg, output.Space, string(templates.AtomPath(spaceIdentVM)))
+	meta.Feeds = []viewmodel.FeedLink{spaceFeed}
 
 	showData := spacepages.ShowData{
 		Space:          spaceVM,
@@ -111,6 +110,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		CanCreateTopic: output.CanCreateTopic,
 
 		CanShowSettings: output.CanShowSpaceSettings,
+		FeedURL:         spaceFeed.URL,
 	}
 	content := spacepages.Show(showData)
 
