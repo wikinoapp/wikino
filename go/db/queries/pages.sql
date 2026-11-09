@@ -290,6 +290,36 @@ WHERE p.space_id = @space_id
   AND (@public_only::boolean IS FALSE OR t.visibility = 0)
 ORDER BY p.pinned_at DESC, p.id DESC;
 
+-- name: FindRecentPublishedPagesBySpace :many
+-- スペースの公開トピックのアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) を、
+-- 新しく公開された順 (published_at DESC, id DESC) にrow_limit件返す。スペースのフィードに載せる。
+-- 公開範囲とトピックの未廃棄の判定はFindPinnedPagesBySpaceのpublic_onlyと同じJOINで行う。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.visibility = 0
+ORDER BY p.published_at DESC, p.id DESC
+LIMIT @row_limit;
+
+-- name: FindRecentPublishedPagesByTopic :many
+-- トピックのアクティブなページ (公開済み・未廃棄・未ゴミ箱・トピック未廃棄) を、新しく公開された順
+-- (published_at DESC, id DESC) にrow_limit件返す。トピックのフィードに載せる。トピックの公開範囲は
+-- 呼び出し元のUseCaseが確かめる。JOINはFindRecentPublishedPagesBySpaceと同じくt.space_idでもスコープする。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
+  AND p.topic_id = @topic_id
+  AND p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+ORDER BY p.published_at DESC, p.id DESC
+LIMIT @row_limit;
+
 -- name: FindRegularPagesBySpacePaginated :many
 -- スペース内の通常ページ (ピン留めなし) をオフセットページネーションで取得する。
 -- 並び順はmodified_at DESC, id DESC。アクティブ判定とpublic_onlyの扱いは
