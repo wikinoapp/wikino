@@ -137,6 +137,34 @@ func (r *PageRepository) FindPinnedBySpace(ctx context.Context, spaceID model.Sp
 	return r.toModels(rows), nil
 }
 
+// FindRecentPublishedBySpaceはスペースの公開トピックのアクティブなページを、新しく公開された順
+// (published_at DESC, id DESC) にlimit件返す。スペースのフィードに載せるページの取得に使う。
+func (r *PageRepository) FindRecentPublishedBySpace(ctx context.Context, spaceID model.SpaceID, limit int32) ([]*model.Page, error) {
+	rows, err := r.q.FindRecentPublishedPagesBySpace(ctx, query.FindRecentPublishedPagesBySpaceParams{
+		SpaceID:  string(spaceID),
+		RowLimit: limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
+// FindRecentPublishedByTopicはトピックのアクティブなページを、新しく公開された順
+// (published_at DESC, id DESC) にlimit件返す。トピックのフィードに載せるページの取得に使う。
+// トピックの公開範囲は確かめないため、呼び出し元が確かめる。
+func (r *PageRepository) FindRecentPublishedByTopic(ctx context.Context, spaceID model.SpaceID, topicID model.TopicID, limit int32) ([]*model.Page, error) {
+	rows, err := r.q.FindRecentPublishedPagesByTopic(ctx, query.FindRecentPublishedPagesByTopicParams{
+		SpaceID:  string(spaceID),
+		TopicID:  string(topicID),
+		RowLimit: limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModels(rows), nil
+}
+
 // FindRegularBySpacePaginatedはスペース内の通常ページ (ピン留めなし) をオフセット
 // ページネーションで取得する。並び順はmodified_at DESC, id DESC。publicOnlyがtrueのときは
 // 公開トピックのページのみを返す (非メンバー閲覧者向け)。

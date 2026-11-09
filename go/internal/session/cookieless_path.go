@@ -20,6 +20,8 @@ import (
 //     ブラウザが自動で送るCookieを認証に使わないため、CSRFトークンの照合も要らない
 //   - OAuthのトークン・失効・デバイス認可の要求のエンドポイントとメタデータ: Cookieのセッションを使わず、
 //     クライアントがCSRFトークンを送れないため除外する
+//   - フィード: フィードリーダーはCookieを返さず、誰が取得しても同じ内容を返すため、セッションを使わず
+//     `Set-Cookie` も付けない (キャッシュされうる応答に他人向けのCookieを載せない)
 //   - リモートMCPサーバー: 公開Web APIと同じく `Authorization: Bearer` のトークンで認証する。ブラウザからの
 //     別オリジンの要求は、ハンドラーがhttp.CrossOriginProtectionで拒む
 var (
@@ -30,6 +32,10 @@ var (
 	// PageOGImagePathPatternはカバー画像の無い公開ページのカード画像のパス。
 	// バージョンが古いURLもGoで受けて正規URLへ転送するため、バージョン部分は形式を限定しない
 	PageOGImagePathPattern = regexp.MustCompile(`^/s/[^/]+/pages/\d+/og_image/[^/]+\.png$`)
+
+	// FeedPathPatternはスペースのフィード (`/s/:space/atom`) とトピックのフィード
+	// (`/s/:space/topics/:number/atom`) のパス
+	FeedPathPattern = regexp.MustCompile(`^/s/[^/]+(/topics/\d+)?/atom$`)
 
 	// APIPathPatternは公開Web APIのパス。バージョンに関わらず `/api/` 配下をすべて含める
 	APIPathPattern = regexp.MustCompile(`^/api/`)
@@ -58,6 +64,7 @@ type CookielessPath struct {
 var CookielessPaths = []CookielessPath{
 	{Pattern: AttachmentOGImagePathPattern, Methods: []string{http.MethodGet, http.MethodHead}},
 	{Pattern: PageOGImagePathPattern, Methods: []string{http.MethodGet, http.MethodHead}},
+	{Pattern: FeedPathPattern, Methods: []string{http.MethodGet, http.MethodHead}},
 	{Pattern: APIPathPattern},
 	{Pattern: OAuthTokenPathPattern},
 	{Pattern: APIMetadataPathPattern},

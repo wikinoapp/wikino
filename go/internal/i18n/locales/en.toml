@@ -25,6 +25,26 @@ other = "Copied {{.Label}} to the clipboard"
 description = "コピーするための値の欄で、クリップボードへコピーできなかったときのメッセージ"
 other = "Couldn't copy. Select the value in the field and copy it instead"
 
+[feed_popover_button_label]
+description = "RSSフィードのボタンとポップオーバーの、ボタンのアクセシブルな名前"
+other = "RSS feed"
+
+[feed_popover_description]
+description = "RSSフィードのポップオーバーの説明"
+other = "Add this URL to your RSS reader to receive newly published pages"
+
+[feed_popover_url_label]
+description = "RSSフィードのポップオーバーの、URLの欄のラベル"
+other = "RSS feed URL"
+
+[feed_popover_public_topics_only]
+description = "RSSフィードのポップオーバーで、スペースのフィードに載る範囲の補足"
+other = "Only pages in public topics are included"
+
+[feed_popover_help_link]
+description = "RSSフィードのポップオーバーの、ヘルプへのリンク"
+other = "About RSS feeds"
+
 [dialog_close]
 description = "ダイアログの閉じるボタンのラベル"
 other = "Close"
@@ -1609,10 +1629,6 @@ other = "New page"
 [space_show_options_aria_label]
 description = "スペース詳細画面のオプションメニューを開くボタンのaria-label"
 other = "Space options"
-
-[space_show_options_rss_feed]
-description = "スペース詳細画面のオプションメニューのRSSフィードリンク"
-other = "RSS feed"
 
 [space_show_options_new_topic]
 description = "スペース詳細画面のオプションメニューの新規トピックリンク"
