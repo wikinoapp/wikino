@@ -30,6 +30,31 @@ type PageMeta struct {
 	// 並べた順に出力し、画面のURLを貼るだけでフィードリーダーが見つけられるようにする (autodiscovery)。
 	// リーダーは先頭のフィードを選ぶことが多いため、画面に最も近いフィードを先に並べる
 	Feeds []FeedLink
+	// FeatureScriptは、画面がmain.jsのあとに読み込む機能のエントリ。ゼロ値のときは読み込まない。
+	// 機能のエントリは同じモジュールを含みうるため、1つの画面で読むのは1つまでにする
+	FeatureScript FeatureScript
+}
+
+// FeatureScriptは、main.jsとは別にバンドルした機能のエントリ (web/<名前>.js)。
+// 名前を外から作れないようにして、存在しないファイルを指せないようにしている
+type FeatureScript struct {
+	name string
+}
+
+// 機能のエントリ。web/ のエントリとpackage.jsonのbuild:jsに対応する
+var (
+	// FeatureScriptEditorは、ページの編集画面のエディタとZenモード・編集履歴の差分の色付け
+	FeatureScriptEditor = FeatureScript{name: "editor"}
+	// FeatureScriptMarkdownDiffは、差分の色付け
+	FeatureScriptMarkdownDiff = FeatureScript{name: "markdown-diff"}
+)
+
+// Pathはエントリの配信パスを返す。ゼロ値のときは空文字列を返す
+func (s FeatureScript) Path() string {
+	if s.name == "" {
+		return ""
+	}
+	return "/static/js/" + s.name + ".js"
 }
 
 // FeedLinkは画面の <head> で告知するフィード

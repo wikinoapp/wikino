@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "build:css": "tailwindcss -i web/style.css -o static/css/style.css --minify",
-    "build:js": "esbuild web/main.js web/api-reference.js --bundle --outdir=static/js --minify",
+    "build:js": "esbuild web/main.js web/editor.js web/markdown-diff.js web/api-reference.js --bundle --outdir=static/js --minify",
     "build": "pnpm build:css && pnpm build:js",
     "watch:css": "tailwindcss -i web/style.css -o static/css/style.css --watch",
-    "watch:js": "esbuild web/main.js web/api-reference.js --bundle --outdir=static/js --watch",
+    "watch:js": "esbuild web/main.js web/editor.js web/markdown-diff.js web/api-reference.js --bundle --outdir=static/js --watch",
     "watch": "concurrently \"pnpm:watch:css\" \"pnpm:watch:js\"",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

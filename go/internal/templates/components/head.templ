@@ -72,4 +72,9 @@ templ Head(meta viewmodel.PageMeta) {
 	//     })();
 	// </script>
 	<script type="module" src={ "/static/js/main.js?v=" + meta.AssetVersion }></script>
+	// 機能のエントリは、その機能を使う画面だけが宣言する。モジュールのスクリプトは書いた順に実行されるため、
+	// main.jsの初期化のあとに動く
+	if path := meta.FeatureScript.Path(); path != "" {
+		<script type="module" src={ path + "?v=" + meta.AssetVersion }></script>
+	}
 }

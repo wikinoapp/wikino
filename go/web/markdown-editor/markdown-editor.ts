@@ -293,7 +293,7 @@ export function initializeEditors(): void {
     if (!titleInput) return;
 
     // ラベルはエディタのアクセシブルネームを供給するだけなので、セレクタが無い / 解決できない
-    // ときは名前の無いエディタに退化させ、エディタ (とmain.jsがこの後に初期化するもの) までは
+    // ときは名前の無いエディタに退化させ、エディタ (とeditor.jsがこの後に初期化するもの) までは
     // 巻き込まない。空文字列のセレクタではquerySelectorが例外を投げるため、検索結果ではなく
     // 文字列側でガードする。
     const labelSelector = container.dataset.markdownEditorLabel || "";
