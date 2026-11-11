@@ -40,7 +40,7 @@ templ Reset(data ResetPageData) {
 			<form
 				action="/password/reset"
 				class="grid gap-6"
-				hx-on:submit="disableSubmitButtons(this)"
+				data-disable-on-submit
 				method="POST"
 			>
 				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>

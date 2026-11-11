@@ -83,14 +83,15 @@ templ diffBlock(pageTitle string, block viewmodel.DiffBlock, position int, total
 // diffLineは差分の1行を表示します。本文のセルには、その行が旧・新のどちらの本文の何行目かを持たせる。
 // 削除の行は旧の本文にだけ、追加と変更なしの行は新の本文にある。
 // 本文の文字は、記法の色が背景の色と混ざらないよう、追加・削除の行でも通常の色にする。
+// 記号は行番号より目立たせる。ダークでは、行番号がカード内でも読める明るさを保ち、記号をさらに明るくする。
 templ diffLine(line viewmodel.DiffLine) {
 	switch line.Type {
 		case viewmodel.DiffLineEqual:
 			<tr class="bg-background">
-				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-border">
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 dark:text-muted-foreground align-top border-r border-border">
 					{ fmt.Sprintf("%d", line.OldNumber) }
 				</td>
-				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-border">
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 dark:text-muted-foreground align-top border-r border-border">
 					{ fmt.Sprintf("%d", line.NewNumber) }
 				</td>
 				<td class="select-none w-[1%] px-1 py-0 text-center text-muted-foreground/50 align-top">
@@ -107,7 +108,7 @@ templ diffLine(line viewmodel.DiffLine) {
 				</td>
 				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-red-200 dark:border-red-900">
 				</td>
-				<td class="select-none w-[1%] px-1 py-0 text-center text-red-500 font-bold align-top">
+				<td class="select-none w-[1%] px-1 py-0 text-center text-red-500 dark:text-red-300 font-bold align-top">
 					{ "-" }
 				</td>
 				<td class="px-2 py-0 whitespace-pre-wrap break-all" data-markdown-diff-source={ diffSourceOld } data-markdown-diff-line={ fmt.Sprintf("%d", line.OldNumber) }>
@@ -118,10 +119,10 @@ templ diffLine(line viewmodel.DiffLine) {
 			<tr class="bg-green-50 dark:bg-green-950/30">
 				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-muted-foreground/50 align-top border-r border-green-200 dark:border-green-900">
 				</td>
-				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-green-400 align-top border-r border-green-200 dark:border-green-900">
+				<td class="select-none w-[1%] min-w-10 px-2 py-0 text-right text-green-400 dark:text-green-500 align-top border-r border-green-200 dark:border-green-900">
 					{ fmt.Sprintf("%d", line.NewNumber) }
 				</td>
-				<td class="select-none w-[1%] px-1 py-0 text-center text-green-500 font-bold align-top">
+				<td class="select-none w-[1%] px-1 py-0 text-center text-green-500 dark:text-green-400 font-bold align-top">
 					{ "+" }
 				</td>
 				<td class="px-2 py-0 whitespace-pre-wrap break-all" data-markdown-diff-source={ diffSourceNew } data-markdown-diff-line={ fmt.Sprintf("%d", line.NewNumber) }>

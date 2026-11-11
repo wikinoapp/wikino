@@ -250,7 +250,7 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 				// 無い項目になるのを防ぐ。
 				if i > 0 {
 					<li class="leading-none" aria-hidden="true">
-						@templates.DecorativeIcon("caret-right-regular", "size-3.5 fill-gray-500")
+						@templates.DecorativeIcon("caret-right-regular", "size-3.5 fill-gray-500 dark:fill-gray-400")
 					</li>
 				}
 				// このgapは下のリンク項目の内側のgapと揃える。アイコンとラベルの間隔は、
@@ -266,7 +266,7 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 					if item.Path != "" && !item.IsCurrent {
 						if item.Label == "" && item.IconName != "" {
 							<a class="hover:text-foreground transition-colors inline-flex items-center" href={ templ.SafeURL(item.Path) } aria-label={ item.AriaLabel }>
-								@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
+								@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600 dark:fill-gray-300")
 							</a>
 						} else {
 							<a
@@ -277,14 +277,14 @@ templ breadcrumbNav(items []BreadcrumbItem) {
 								}
 							>
 								if item.IconName != "" {
-									@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
+									@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600 dark:fill-gray-300")
 								}
 								<span class={ breadcrumbLabelClass }>{ item.Label }</span>
 							</a>
 						}
 					} else {
 						if item.IconName != "" {
-							@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600")
+							@templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600 dark:fill-gray-300")
 						}
 						if item.Label != "" {
 							<span

@@ -164,7 +164,7 @@ templ Edit(data EditPageData) {
 						// 実際の幅に委ねる。見出しはアラートの直接の子でなくなりBasecoatの見出しスタイルが
 						// 当たらないため、font-mediumを直接付ける。
 										//
-										// 確認はフォーム自身のsubmitイベントで走らせる。確認後の送信はdata-draft-delete-form
+										// 確認はdata-confirmを見てフォームのsubmitイベントで走らせる (web/form-submit.ts)。確認後の送信はdata-draft-delete-form
 										// を見るスクリプト (web/markdown-editor/draft-delete-handler.ts) が引き取り、自動保存を
 										// 止めて送信中の保存を待ってから送る。削除した下書きが自動保存で作り直されないようにするため。
 										<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -175,7 +175,6 @@ templ Edit(data EditPageData) {
 												action={ templ.SafeURL(string(templates.PageDraftPagePath(data.Space.Identifier, data.Page.Number)) + "?redirect_to=page") }
 												data-draft-delete-form
 												data-confirm={ templates.T(ctx, "draft_page_delete_confirm") }
-												hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
 												method="POST"
 											>
 												<input type="hidden" name="_method" value="DELETE"/>
@@ -255,7 +254,7 @@ templ Edit(data EditPageData) {
 									}
 									class="grid gap-6"
 									enctype="multipart/form-data"
-									hx-on:submit="disableSubmitButtons(this)"
+									data-disable-on-submit
 									method="POST"
 								>
 									<input type="hidden" id="page-edit-csrf-token" name="csrf_token" value={ data.CSRFToken }/>
@@ -626,7 +625,7 @@ templ draftPageColumn(data EditPageData) {
 				href={ templ.SafeURL(string(templates.DraftsPath())) }
 			>
 				{ templates.T(ctx, "page_edit_draft_pages_view_all_link") }
-				@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
+				@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500 dark:group-hover:fill-brand-200")
 			</a>
 		</div>
 		if len(data.DraftPages) == 0 {

@@ -872,6 +872,8 @@ func runServe() {
 	r.Use(middleware.SentryTransaction)
 
 	r.Use(i18n.Middleware)
+	// ダークモードのフラグの判定は、ページ全体を描画するとき (viewmodel.DefaultPageMeta) に初めて行う
+	r.Use(middleware.DarkMode(featureFlagRepo))
 	r.Use(csrfMiddleware.Middleware)
 	r.Use(flashMgr.Middleware)
 

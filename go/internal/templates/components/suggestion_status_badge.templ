@@ -9,7 +9,7 @@ import (
 templ SuggestionStatusBadge(status model.SuggestionStatus) {
 	switch status {
 		case model.SuggestionStatusDraft:
-			<span class="badge bg-muted font-bold">
+			<span class="badge bg-muted font-bold dark:text-muted-foreground">
 				@templates.Icon("file-dashed-regular", "size-5")
 				{ templates.T(ctx, "suggestion_show_status_draft") }
 			</span>
@@ -19,7 +19,7 @@ templ SuggestionStatusBadge(status model.SuggestionStatus) {
 				{ templates.T(ctx, "suggestion_show_status_open") }
 			</span>
 		case model.SuggestionStatusApplied:
-			<span class="badge bg-violet-500 font-bold">
+			<span class="badge bg-violet-500 font-bold dark:text-black">
 				@templates.Icon("check-circle-regular", "size-5")
 				{ templates.T(ctx, "suggestion_show_status_applied") }
 			</span>

@@ -95,6 +95,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	})
 	meta.OGURL = h.cfg.AppURL() + string(templates.SuggestionChangesPath(spaceIdentVM, suggestionVM.Number))
 	meta.CurrentSpaceIdentifier = spaceIdentVM
+	meta.FeatureScript = viewmodel.FeatureScriptMarkdownDiff
 
 	// 編集権限を判定 (スペースメンバーかつオープンステータス)
 	canEditSuggestionPages := output.SpaceMember != nil && output.Suggestion.Status == model.SuggestionStatusOpen

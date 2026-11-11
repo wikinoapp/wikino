@@ -86,7 +86,7 @@ templ Show(data ShowPageData) {
 									href={ templ.SafeURL(string(templates.DraftsPath())) }
 								>
 									{ templates.T(ctx, "home_draft_pages_view_all_link") }
-									@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
+									@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500 dark:group-hover:fill-brand-200")
 								</a>
 							}
 						</div>
@@ -119,7 +119,7 @@ templ newSpaceButton() {
 
 // spaceCardは参加中スペースのカードを表示します
 templ spaceCard(space viewmodel.Space) {
-	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600">
+	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600 dark:hover:ring-brand-400">
 		<div class="h-full">
 			<a
 				class="h-full"

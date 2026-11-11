@@ -31,12 +31,12 @@ func CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceId
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"group card relative overflow-visible min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"group card relative overflow-visible min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600 dark:hover:ring-brand-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if page.Pinned {
-			templ_7745c5c3_Err = templates.Icon("push-pin-filled", "size-[18px] -right-1 -top-1 absolute fill-amber-800").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templates.Icon("push-pin-filled", "size-[18px] -right-1 -top-1 absolute fill-amber-800 dark:fill-amber-400").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -116,11 +116,11 @@ func CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceId
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templates.Icon(page.Topic.IconName, "flex-none size-3 fill-gray-500").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templates.Icon(page.Topic.IconName, "flex-none size-3 fill-gray-500 dark:fill-gray-300").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<span class=\"text-xs text-stone-500 line-clamp-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<span class=\"text-xs text-stone-500 line-clamp-1 dark:text-stone-300\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

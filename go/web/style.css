@@ -31,6 +31,8 @@
     Markdownの記法の色。Solarized Lightのアクセントの色 (base01・orange・blue・violet・green) の色相と彩度を保ち、
     エディタと差分の行の背景 (bg-background・bg-red-50・bg-green-50) でコントラスト比4.5:1以上になるまで
     HSLの明度を下げている。base01は元の値 (#586e75) のままで届く。
+    ダークの値 (`.dark`) は、同じ色の色相と彩度を保ち、ダークのエディタと差分の行の背景 (bg-background・bg-cardと、
+    それぞれに重ねたdark:bg-red-950/30・dark:bg-green-950/30) のいずれでも4.5:1以上になるまでHSLの明度を上げている。
     リンクとURLは、画面をまたいで同じ色がリンクを意味するよう、本文のリンクの色 (link-primary-foreground) を使う。
   */
   --app-md-mark: oklch(0.523 0.0283 219.14); /* base01 #586e75 */
@@ -72,7 +74,81 @@
   --border: var(--color-stone-300);
   --input: var(--color-stone-300);
 
+  /* htmlにdarkクラスが付いていないときにフォーム部品だけがダークになる食い違いを防ぐため、ライトを明示する */
+  color-scheme: light;
   text-autospace: normal;
+}
+
+/*
+  ダークモード。<head> のスクリプトが、ダークモードのフラグが有効でOSの配色がダークの閲覧者のhtmlに
+  darkクラスを付ける。Basecoatの `.dark` は `:root` と詳細度が同じで後に書いたものが勝つため、`:root` で上書きした
+  変数をダークにするには `:root` より後に書く。
+*/
+.dark {
+  /*
+    背景と面は、brand-950と同じ色相のまま彩度を落とした、青緑がかったグレーにする。
+    青緑はリンク・補助の文字・入力欄の枠線・フォーカスに残し、画面全体が青緑に寄らないようにする。
+    背景より手前の面 (カード・ポップオーバー・サイドバー) は背景より少し明るくし、ホバーや補助のボタンの面と枠線はもう1段明るくする。
+  */
+  --app-dark-background: oklch(0.21 0.012 210.24); /* #121a1b */
+  --app-dark-surface: oklch(0.255 0.013 210.24); /* #1c2526 */
+  --app-dark-subtle: oklch(0.31 0.015 210.24); /* #283335 */
+  /*
+    primaryの2色を入れ替える。背景 (--background) と文字 (--foreground) は `:root` でこの2色を参照しているため連動する。
+    コントラスト比は、文字が4.5:1以上、入力欄の枠線とフォーカスリングが3:1以上になるよう、背景・手前の面・
+    ホバーなどの面で確かめている。
+  */
+  --app-primary: oklch(0.9729 0.0076 61.45);
+  --app-primary-foreground: var(--app-dark-background);
+  --app-secondary: var(--app-dark-subtle);
+  --app-muted: var(--app-dark-subtle);
+  --app-muted-foreground: var(--app-brand-300);
+  /* 背景付きのリンクとhover時の85%の不透明度を含め、カードの上でも4.5:1以上にする */
+  --app-link-primary-foreground: oklch(0.9 0.0836 210.24);
+  --app-md-mark: oklch(0.7108 0.0251 216.82); /* base01 #586e75 → #91a6ac */
+  --app-md-heading: oklch(0.7285 0.1372 42.66); /* orange #cb4b16 → #ee885e */
+  --app-md-strong: oklch(0.7102 0.1122 241.14); /* blue #268bd2 → #5baae1 */
+  --app-md-link-destination: oklch(0.7199 0.0814 280.97); /* violet #6c71c4 → #9b9fd7 */
+  --app-md-code: oklch(0.7057 0.165 118.45); /* green #859900 → #97ad00 */
+  /*
+    状態の色は、暗い背景の上でも目立つ400の色にし、文字を黒にする。エラーの色だけは文字 (text-error) にも使うため、
+    カードの上でも4.5:1以上になるred-300にする
+  */
+  --app-success: var(--color-green-400);
+  --app-success-foreground: var(--color-black);
+  --app-error: var(--color-red-300);
+  --app-error-foreground: var(--color-black);
+  --app-warning: var(--color-yellow-400);
+  --app-warning-foreground: var(--color-black);
+  --app-info: var(--color-blue-400);
+  --app-info-foreground: var(--color-black);
+
+  /* Basecoatの変数上書き (Basecoatの `.dark` が無彩色を入れる変数) */
+  --card: var(--app-dark-surface);
+  --card-foreground: var(--app-primary);
+  --popover: var(--app-dark-surface);
+  --popover-foreground: var(--app-primary);
+  --accent: var(--app-dark-subtle);
+  --accent-foreground: var(--app-primary);
+  /* エラーの文字にも使うため、カードの上でも4.5:1以上になるred-300にする */
+  --destructive: var(--color-red-300);
+  --border: var(--app-dark-subtle);
+  --input: var(--app-brand-500);
+  --ring: var(--app-brand-400);
+  --sidebar: var(--app-dark-surface);
+  --sidebar-foreground: var(--app-primary);
+  --sidebar-primary: var(--app-primary);
+  --sidebar-primary-foreground: var(--app-primary-foreground);
+  --sidebar-accent: var(--app-dark-subtle);
+  --sidebar-accent-foreground: var(--app-primary);
+  --sidebar-border: var(--app-dark-subtle);
+  --sidebar-ring: var(--app-brand-400);
+  /* セレクトとチェックボックスのアイコン。data URLの中では変数を参照できないため、--muted-foreground (brand-300) の値を直接書く */
+  --chevron-down-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="oklch(0.7918 0.0779 196.73)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>');
+  --chevron-down-icon-50: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="oklch(0.7918 0.0779 196.73 / 0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>');
+  --check-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="oklch(0.7918 0.0779 196.73)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5"/></svg>');
+
+  color-scheme: dark;
 }
 
 /*
@@ -186,6 +262,20 @@
 
 @layer components {
   /*
+    red-300の文字とのコントラスト比を4.5:1以上にするため、ダークでは薄い背景にする。
+    フォーカスの枠線は、ボタンの面とのコントラスト比を3:1以上にするため不透明にする
+  */
+  .btn[data-variant="destructive"] {
+    @apply dark:bg-destructive/5 dark:hover:bg-destructive/10 dark:focus-visible:border-destructive;
+  }
+
+  /* 半透明の入力欄の背景でも矢印が3:1以上になるよう、ダークでは不透明なアイコンを使う */
+  .field > select,
+  select.select {
+    @apply dark:bg-[image:var(--chevron-down-icon)];
+  }
+
+  /*
     ============================================================================
     .wikino-markdown
     ============================================================================
@@ -207,7 +297,7 @@
     }
 
     & blockquote {
-      @apply border-l-4 border-stone-300 pr-4 pl-4 text-base/7 text-stone-600;
+      @apply border-l-4 border-border pr-4 pl-4 text-base/7 text-stone-600 dark:text-stone-300;
     }
 
     /*
@@ -215,7 +305,7 @@
       上下の行の背景と重ならないようにする。折り返したコードのそれぞれの行にも左右の余白と角丸を付ける。
     */
     & code {
-      @apply inline rounded-sm bg-stone-950/6 box-decoration-clone px-2 py-0.5 font-mono text-sm/normal;
+      @apply inline rounded-sm bg-stone-950/6 box-decoration-clone px-2 py-0.5 font-mono text-sm/normal dark:bg-stone-50/10;
     }
 
     & details > summary {
@@ -266,7 +356,7 @@
     }
 
     & hr {
-      @apply my-6 border-stone-300;
+      @apply my-6 border-border;
     }
 
     /* 本文の画像にカードと同じ境界を与える。これが無いと、画像自身の背景色がappの背景色に
@@ -306,7 +396,7 @@
     & img + br + em,
     & video + br + em,
     & a.wikino-attachment-image-link + br + em {
-      @apply mt-2 mb-4 block text-center text-sm text-stone-600 italic;
+      @apply mt-2 mb-4 block text-center text-sm text-stone-600 italic dark:text-stone-300;
     }
 
     /* キャプション前のbr要素を非表示にして高さを取らないようにする */
@@ -334,11 +424,12 @@
     }
 
     & pre {
-      @apply mb-4 overflow-auto rounded-lg border border-stone-300 bg-card p-4;
+      @apply mb-4 overflow-auto rounded-lg border border-border bg-card p-4;
     }
 
+    /* インラインのコードのダークの背景 (dark:bg-stone-50/10) はhtml.darkを含むぶん詳細度が高いため、ダークでも打ち消す */
     & pre code {
-      @apply block overflow-visible rounded-none bg-transparent p-0;
+      @apply block overflow-visible rounded-none bg-transparent p-0 dark:bg-transparent;
     }
 
     /*
@@ -371,7 +462,7 @@
     }
 
     & .wikino-markdown-table-scroll:focus-visible {
-      @apply outline-2 outline-offset-2 outline-brand-600;
+      @apply outline-2 outline-offset-2 outline-brand-600 dark:outline-brand-400;
     }
 
     /*
@@ -380,11 +471,11 @@
       広い画面に付けないのは、短い値が並ぶ列の多いテーブルまで横スクロールになるため。
     */
     & table td {
-      @apply border border-stone-300 px-2 py-1 max-sm:min-w-[8em];
+      @apply border border-border px-2 py-1 max-sm:min-w-[8em];
     }
 
     & table th {
-      @apply border border-stone-300 bg-brand-600/5 p-2 max-sm:min-w-[8em];
+      @apply border border-border bg-brand-600/5 p-2 max-sm:min-w-[8em] dark:bg-brand-400/10;
     }
 
     & ul {
@@ -436,11 +527,12 @@
 }
 
 .cm-editor.cm-focused {
-  @apply border-ring ring-[3px] ring-ring/50 outline-2 outline-gray-300 outline-solid;
+  @apply border-ring ring-[3px] ring-ring/50 outline-2 outline-gray-300 outline-solid dark:outline-brand-700;
 }
 
+/* ダークのテーマは行番号と本文の間に線を引かないため、ライトと同じく線で分ける */
 .cm-editor .cm-gutters {
-  @apply bg-card;
+  @apply bg-card dark:border-r dark:border-border;
 }
 
 /* 行番号と本文の境界線の間を空け、行番号が境界線に接しないようにする */
@@ -450,6 +542,76 @@
 
 .cm-editor .cm-content {
   @apply py-2;
+}
+
+/*
+  ダークのテーマ (EditorView.darkTheme) が付ける無彩色と原色を、ブランドの色にする。
+  選択範囲・検索の一致・選択と同じ語の背景は、記法の文字とのコントラスト比も4.5:1以上になる暗い色にする。
+  背景を暗くしても範囲と状態が分かるよう、明るい輪郭を付ける。
+  検索の一致はライトと同じ黄色と橙色の色相にする。
+  CodeMirrorはテーマの規則をエディタ固有のクラスを重ねたセレクタで書くため、選択範囲はその構造と同じセレクタにして上書きする。
+*/
+.cm-editor .cm-selectionLayer .cm-selectionBackground {
+  @apply dark:bg-background dark:outline-1 dark:-outline-offset-1 dark:outline-brand-500;
+}
+
+.cm-editor.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground {
+  @apply dark:bg-background dark:outline-brand-400;
+}
+
+.cm-editor .cm-searchMatch {
+  @apply dark:bg-yellow-950 dark:outline-1 dark:-outline-offset-1 dark:outline-yellow-500;
+}
+
+.cm-editor .cm-searchMatch-selected {
+  @apply dark:bg-orange-950 dark:outline-orange-400;
+}
+
+.cm-editor .cm-selectionMatch {
+  @apply dark:bg-green-950 dark:outline-1 dark:-outline-offset-1 dark:outline-green-500;
+}
+
+/* 検索の一致の中にある選択と同じ語は、ライトと同じく検索の一致の色だけで見せる */
+.cm-editor .cm-searchMatch .cm-selectionMatch {
+  @apply dark:bg-transparent dark:outline-none;
+}
+
+.cm-editor .cm-dropCursor {
+  @apply dark:border-l-foreground;
+}
+
+/*
+  ダークのテーマは補完の候補と検索パネルに枠線を引かない。
+  補完の候補はカードと同じ色の面になるため、アプリのほかのポップオーバーと同じ輪郭と影で境を示す。
+  検索パネルは、ライトと同じく本文との境に線を引く。
+*/
+.cm-editor .cm-panels,
+.cm-editor .cm-tooltip {
+  @apply dark:bg-popover dark:text-popover-foreground;
+}
+
+.cm-editor .cm-tooltip {
+  @apply dark:shadow-md dark:ring-1 dark:ring-foreground/10;
+}
+
+.cm-editor .cm-panels-top {
+  @apply dark:border-b dark:border-border;
+}
+
+.cm-editor .cm-panels-bottom {
+  @apply dark:border-t dark:border-border;
+}
+
+.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  @apply dark:bg-brand-700 dark:text-foreground;
+}
+
+.cm-editor .cm-panel .cm-textfield {
+  @apply dark:border-input;
+}
+
+.cm-editor .cm-panel .cm-button {
+  @apply dark:border-input dark:bg-secondary dark:bg-none;
 }
 
 /*
