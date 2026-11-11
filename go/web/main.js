@@ -4,6 +4,7 @@ import { initializeAPITokenScopes } from "./api-token-scope";
 import { initializeAttachmentLoader } from "./attachment-loader";
 import { initializeCopyableInputs } from "./copyable-input";
 import { initializeDrawers } from "./drawer";
+import { initializeFormSubmit } from "./form-submit";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeDraftConflict } from "./markdown-editor/draft-conflict";
 import { initializeDraftDeleteForms } from "./markdown-editor/draft-delete-handler";
@@ -17,10 +18,6 @@ import { initializePlatform } from "./platform";
 import { initializeStickyHeader } from "./sticky-header";
 import { initializeZenMode } from "./zen-mode";
 
-window.disableSubmitButtons = function (form) {
-  form.querySelectorAll("button[type=submit]").forEach((b) => (b.disabled = true));
-};
-
 function setTimeZoneCookie() {
   if (document.cookie.includes("wikino_time_zone=")) return;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -30,6 +27,7 @@ function setTimeZoneCookie() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initializeFormSubmit();
   initializeEditors();
   initializeDraftDeleteForms();
   initializeSaveStatus();

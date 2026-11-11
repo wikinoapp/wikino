@@ -42,7 +42,7 @@ describe("initializeDraftDeleteForms", () => {
   function submit(form: HTMLFormElement, cancelled = false): SubmitEvent {
     const event = new SubmitEvent("submit", { bubbles: true, cancelable: true });
     if (cancelled) {
-      // 確認ダイアログでキャンセルされたとき、フォーム自身のhx-on:submitが送信を止める
+      // 確認ダイアログでキャンセルされたとき、form-submit.tsがこのハンドラーより先に送信を止める
       form.addEventListener("submit", (e) => e.preventDefault(), { once: true });
     }
     form.dispatchEvent(event);

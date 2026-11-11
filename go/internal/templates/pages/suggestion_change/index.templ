@@ -159,7 +159,6 @@ templ suggestionPageDiff(editData pageDiffEditData, pd viewmodel.SuggestionPageD
 					<form
 						action={ templ.SafeURL(string(templates.SuggestionPagePath(editData.SpaceIdentifier, editData.SuggestionNumber, pd.SuggestionPageID))) }
 						data-confirm={ templates.T(ctx, "suggestion_change_remove_page_confirm") }
-						hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
 						method="POST"
 					>
 						<input type="hidden" name="_method" value="DELETE"/>
