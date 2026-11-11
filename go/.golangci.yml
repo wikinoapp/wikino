@@ -818,6 +818,8 @@ linters:
               desc: "authはRateLimitに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/redirect
               desc: "authはRedirectに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/darkmode
+              desc: "authはDarkModeに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/timezone
               desc: "authはTimezoneに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/turnstile

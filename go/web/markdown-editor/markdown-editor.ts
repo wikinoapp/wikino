@@ -120,6 +120,9 @@ function createEditor(config: EditorConfig): EditorView {
       crosshairCursor(),
       highlightSelectionMatches(),
       EditorView.lineWrapping,
+      // ページの配色 (htmlのdarkクラス) に合わせ、CodeMirrorの既定のテーマ (選択範囲・カーソル・検索の
+      // パネル・補完の候補) をダーク用に切り替える。darkクラスは描画の前に決まり、ページを開いている間は変わらない。
+      EditorView.darkTheme.of(document.documentElement.classList.contains("dark")),
       // ラベルの有無ではなくidの有無で判定する。aria-labelledbyはidを参照する属性なので、
       // id以外のセレクタで拾ったラベルだとエディタに空の参照が残ってしまう。
       ...(config.label?.id ? [EditorView.contentAttributes.of({ "aria-labelledby": config.label.id })] : []),

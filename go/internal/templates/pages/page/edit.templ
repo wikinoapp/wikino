@@ -625,7 +625,7 @@ templ draftPageColumn(data EditPageData) {
 				href={ templ.SafeURL(string(templates.DraftsPath())) }
 			>
 				{ templates.T(ctx, "page_edit_draft_pages_view_all_link") }
-				@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500")
+				@templates.Icon("caret-right-regular", "size-4 fill-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:fill-stone-500 dark:group-hover:fill-brand-200")
 			</a>
 		</div>
 		if len(data.DraftPages) == 0 {

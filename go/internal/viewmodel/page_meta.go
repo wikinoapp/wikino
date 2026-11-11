@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/darkmode"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 )
 
@@ -33,6 +34,9 @@ type PageMeta struct {
 	// FeatureScriptは、画面がmain.jsのあとに読み込む機能のエントリ。ゼロ値のときは読み込まない。
 	// 機能のエントリは同じモジュールを含みうるため、1つの画面で読むのは1つまでにする
 	FeatureScript FeatureScript
+	// DarkModeEnabledは、閲覧者にダークモードのフィーチャーフラグが有効かどうか。
+	// trueのときだけ、OSの配色がダークならダークで表示するための宣言とスクリプトを <head> に出す
+	DarkModeEnabled bool
 }
 
 // FeatureScriptは、main.jsとは別にバンドルした機能のエントリ (web/<名前>.js)。
@@ -97,9 +101,10 @@ func DefaultPageMeta(ctx context.Context, cfg *config.Config) PageMeta {
 		OGImage:     ogImageURL,
 		// 既定のOGP画像はサイト共通のロゴのため、Xでは小さなサムネイルで出す。ページ固有の
 		// 画像を出す画面だけが大きなカード (summary_large_image) に上書きする。
-		TwitterCard:  TwitterCardSummary,
-		OGLocale:     localeToOGLocale(locale),
-		AssetVersion: cfg.GetAssetVersion(),
+		TwitterCard:     TwitterCardSummary,
+		OGLocale:        localeToOGLocale(locale),
+		AssetVersion:    cfg.GetAssetVersion(),
+		DarkModeEnabled: darkmode.IsEnabled(ctx),
 	}
 }
 
