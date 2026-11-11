@@ -24,12 +24,10 @@ test-results/
 tmp/
 
 # フロントエンドのビルド成果物 (builderステージの `pnpm build` で再生成)。
-# .gitkeepは空ディレクトリを保持するために残し、static/js/vendor/は
-# コミット済みのベンダーJSでビルド生成物ではないため残す。
+# .gitkeepは空ディレクトリを保持するために残す。
 static/css/*
 !static/css/.gitkeep
 static/js/*
-!static/js/vendor/
 web/dist
 
 # コミット済みのtempl生成Goファイル。builderステージで

@@ -1,4 +1,7 @@
 import "basecoat-css/all";
+// htmxを読み込むのはこのエントリだけにする。機能のエントリ (editor.jsなど) からも読み込むと、
+// 1つの画面でhtmxが2つ動くため、それらのエントリはhtmxのAPIが要るときにwindow.htmxを使う
+import "htmx.org";
 
 import { initializeAPITokenScopes } from "./api-token-scope";
 import { initializeAttachmentLoader } from "./attachment-loader";

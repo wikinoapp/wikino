@@ -133,3 +133,20 @@ func TestHead_Preconnect(t *testing.T) {
 		}
 	})
 }
+
+// htmxはmain.jsに同梱するため、headで別のファイルとして読み込まない。別に読み込むと、main.jsの
+// htmxと合わせて1つの画面でhtmxが2つ動く。
+func TestHead_DoesNotLoadVendorHTMX(t *testing.T) {
+	t.Parallel()
+
+	html := renderHead(t, viewmodel.PageMeta{AssetVersion: "abc123"})
+
+	for _, notWant := range []string{"/static/js/vendor/", "htmx"} {
+		if strings.Contains(html, notWant) {
+			t.Errorf("headに%qが含まれている", notWant)
+		}
+	}
+	if !strings.Contains(html, `<script type="module" src="/static/js/main.js?v=abc123"></script>`) {
+		t.Error("headにhtmxを同梱したmain.jsを読み込むscriptが含まれていない")
+	}
+}
