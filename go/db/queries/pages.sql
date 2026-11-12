@@ -616,6 +616,34 @@ ORDER BY id
 LIMIT @row_limit
 FOR UPDATE;
 
+-- name: SearchPagesByTitle :many
+-- 検索の画面の結果。公開トピックのページ (すべてのスペース) と、member_topic_idsのトピックの
+-- ページを、タイトルがすべてのキーワードを含むものに絞って、更新日時の新しい順に返す。
+-- member_topic_idsは、参加しているスペースで閲覧者が開けるトピックとして呼び出し元が解決したもの。
+-- すべてのスペースをまたぐためspace_idでは絞れず、トピックとスペースの状態をJOINで確かめる。
+-- space_identifiersを渡すと、そのスペースのページに絞る。空の配列なら絞らない。
+-- title_patternsはキーワードごとのILIKEのパターン。タイトルの無いページは一致させない。
+-- 本文やリンクIDを取得せず、カードの表示と公開状態・並び順に使うメタデータだけを返す。
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.modified_at, p.published_at,
+       p.pinned_at, p.featured_image_attachment_id
+FROM pages p
+INNER JOIN topics t ON t.id = p.topic_id AND t.space_id = p.space_id
+INNER JOIN spaces s ON s.id = p.space_id
+WHERE p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND s.discarded_at IS NULL
+  AND (t.visibility = 0 OR t.id = ANY(@member_topic_ids::uuid[]))
+  AND (cardinality(@space_identifiers::text[]) = 0 OR s.identifier = ANY(@space_identifiers::citext[]))
+  AND p.title IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM unnest(@title_patterns::text[]) AS kw(pattern)
+    WHERE NOT (p.title ILIKE kw.pattern)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT @row_limit;
+
 -- name: DeletePagesByIDs :execrows
 -- ページを物理削除する。ページの関連レコードは先に消しておく。
 DELETE FROM pages WHERE space_id = @space_id AND id = ANY(@ids::uuid[]);

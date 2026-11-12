@@ -1108,3 +1108,44 @@ func TestTopicRepository_UpdateNameAndDescription(t *testing.T) {
 		})
 	}
 }
+
+func TestTopicRepository_ListWithSpacesByPages(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("topic-with-spaces").WithName("スペースA").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("topic-with-spaces-other").WithName("スペースB").Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("トピックA").Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(2).WithName("トピックB").Build()
+
+	pages := []*model.Page{
+		{SpaceID: spaceID, TopicID: topicID},
+		{SpaceID: spaceID, TopicID: topicID},
+		{SpaceID: otherSpaceID, TopicID: otherTopicID},
+	}
+	topics, err := repo.ListWithSpacesByPages(context.Background(), pages)
+	if err != nil {
+		t.Fatalf("ListWithSpacesByPages()のエラー = %v", err)
+	}
+
+	byID := make(map[model.TopicID]*model.Topic, len(topics))
+	for _, topic := range topics {
+		byID[topic.ID] = topic
+	}
+	if len(byID) != 2 {
+		t.Fatalf("トピックの数 = %d、期待値 = 2", len(byID))
+	}
+	if got := byID[topicID]; got.Name != "トピックA" || got.Space.Identifier != "topic-with-spaces" || got.Space.Name != "スペースA" {
+		t.Errorf("トピックA = %+v (スペース %+v)", got, got.Space)
+	}
+	if got := byID[otherTopicID]; got.Number != 2 || got.Space.ID != otherSpaceID || got.Space.Name != "スペースB" {
+		t.Errorf("トピックB = %+v (スペース %+v)", got, got.Space)
+	}
+
+	empty, err := repo.ListWithSpacesByPages(context.Background(), nil)
+	if err != nil || len(empty) != 0 {
+		t.Errorf("ページが空のとき = (%v, %v)、0件を期待", empty, err)
+	}
+}

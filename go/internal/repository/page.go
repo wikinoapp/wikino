@@ -824,6 +824,60 @@ type PageLocation struct {
 	PageTitle string
 }
 
+// SearchByTitleInputはタイトルでのページの検索の条件。
+type SearchByTitleInput struct {
+	// Keywordsは、タイトルにすべてを含むページに絞るキーワード (大文字と小文字を区別しない)
+	Keywords []string
+	// MemberTopicIDsは、公開トピックに加えて結果に含める、閲覧者が開けるトピック
+	MemberTopicIDs []model.TopicID
+	// SpaceIdentifiersを渡すと、そのスペースのページに絞る
+	SpaceIdentifiers []model.SpaceIdentifier
+	Limit            int32
+}
+
+// SearchByTitleは、公開トピックのページとMemberTopicIDsのトピックのページから、タイトルにすべての
+// キーワードを含む公開済みのページを、更新日時の新しい順に返す。本文やリンクIDは取得せず、
+// カードの表示と公開状態・並び順に使うメタデータだけを設定する。キーワードが無ければ、クエリを発行せずに0件を返す。
+func (r *PageRepository) SearchByTitle(ctx context.Context, input SearchByTitleInput) ([]*model.Page, error) {
+	if len(input.Keywords) == 0 {
+		return []*model.Page{}, nil
+	}
+
+	patterns := make([]string, len(input.Keywords))
+	for i, keyword := range input.Keywords {
+		patterns[i] = fmt.Sprintf("%%%s%%", escapeLikePattern(keyword))
+	}
+	spaceIdentifiers := make([]string, len(input.SpaceIdentifiers))
+	for i, identifier := range input.SpaceIdentifiers {
+		spaceIdentifiers[i] = string(identifier)
+	}
+
+	rows, err := r.q.SearchPagesByTitle(ctx, query.SearchPagesByTitleParams{
+		MemberTopicIds:   model.TopicIDsToStrings(input.MemberTopicIDs),
+		SpaceIdentifiers: spaceIdentifiers,
+		TitlePatterns:    patterns,
+		RowLimit:         input.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	pages := make([]*model.Page, len(rows))
+	for i, row := range rows {
+		pages[i] = r.toModel(query.Page{
+			ID:                        row.ID,
+			SpaceID:                   row.SpaceID,
+			TopicID:                   row.TopicID,
+			Number:                    row.Number,
+			Title:                     row.Title,
+			ModifiedAt:                row.ModifiedAt,
+			PublishedAt:               row.PublishedAt,
+			PinnedAt:                  row.PinnedAt,
+			FeaturedImageAttachmentID: row.FeaturedImageAttachmentID,
+		})
+	}
+	return pages, nil
+}
+
 // escapeLikePatternはPostgreSQLのLIKE特殊文字 (\, %, _) をエスケープする
 func escapeLikePattern(s string) string {
 	s = strings.ReplaceAll(s, `\`, `\\`)

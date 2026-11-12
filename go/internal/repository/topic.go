@@ -298,6 +298,45 @@ func (r *TopicRepository) DeleteDiscarded(ctx context.Context, topicID model.Top
 	return n > 0, nil
 }
 
+// ListWithSpacesByPagesは、ページが属するトピックを、スペースの識別子と名前を添えて返す。
+// 検索の結果のように複数のスペースにまたがるページに、トピックとスペースの名前を添えるために使う。
+func (r *TopicRepository) ListWithSpacesByPages(ctx context.Context, pages []*model.Page) ([]*model.Topic, error) {
+	if len(pages) == 0 {
+		return []*model.Topic{}, nil
+	}
+
+	topicIDs := make([]model.TopicID, 0, len(pages))
+	spaceIDs := make([]model.SpaceID, 0, len(pages))
+	for _, pg := range pages {
+		topicIDs = append(topicIDs, pg.TopicID)
+		spaceIDs = append(spaceIDs, pg.SpaceID)
+	}
+
+	rows, err := r.q.ListTopicsWithSpacesByIDs(ctx, query.ListTopicsWithSpacesByIDsParams{
+		TopicIds: model.TopicIDsToStrings(topicIDs),
+		SpaceIds: model.SpaceIDsToStrings(spaceIDs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	topics := make([]*model.Topic, len(rows))
+	for i, row := range rows {
+		topics[i] = &model.Topic{
+			ID:         model.TopicID(row.TopicID),
+			Number:     row.TopicNumber,
+			Name:       row.TopicName,
+			Visibility: model.TopicVisibility(row.TopicVisibility),
+			Space: &model.Space{
+				ID:         model.SpaceID(row.SpaceID),
+				Identifier: model.SpaceIdentifier(row.SpaceIdentifier),
+				Name:       row.SpaceName,
+			},
+		}
+	}
+	return topics, nil
+}
+
 // toModelはquery.Topicをmodel.Topicに変換する
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	var discardedAt *time.Time

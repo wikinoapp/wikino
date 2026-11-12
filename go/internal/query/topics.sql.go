@@ -446,6 +446,63 @@ func (q *Queries) ListTopicsJoinedBySpaceMember(ctx context.Context, arg ListTop
 	return items, nil
 }
 
+const listTopicsWithSpacesByIDs = `-- name: ListTopicsWithSpacesByIDs :many
+SELECT t.id AS topic_id, t.number AS topic_number, t.name AS topic_name, t.visibility AS topic_visibility,
+       s.id AS space_id, s.identifier AS space_identifier, s.name AS space_name
+FROM topics t
+INNER JOIN spaces s ON s.id = t.space_id
+WHERE t.id = ANY($1::uuid[])
+  AND t.space_id = ANY($2::uuid[])
+`
+
+type ListTopicsWithSpacesByIDsParams struct {
+	TopicIds []string `json:"topic_ids"`
+	SpaceIds []string `json:"space_ids"`
+}
+
+type ListTopicsWithSpacesByIDsRow struct {
+	TopicID         string `json:"topic_id"`
+	TopicNumber     int32  `json:"topic_number"`
+	TopicName       string `json:"topic_name"`
+	TopicVisibility int32  `json:"topic_visibility"`
+	SpaceID         string `json:"space_id"`
+	SpaceIdentifier string `json:"space_identifier"`
+	SpaceName       string `json:"space_name"`
+}
+
+// トピックとそのスペースの識別子・名前を返す。スペースをまたぐ一覧 (検索の結果) のページに、
+// トピックとスペースの名前を添えるために使う。space_idsにはトピックのスペースを並べて渡す。
+func (q *Queries) ListTopicsWithSpacesByIDs(ctx context.Context, arg ListTopicsWithSpacesByIDsParams) ([]ListTopicsWithSpacesByIDsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTopicsWithSpacesByIDs, pq.Array(arg.TopicIds), pq.Array(arg.SpaceIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListTopicsWithSpacesByIDsRow{}
+	for rows.Next() {
+		var i ListTopicsWithSpacesByIDsRow
+		if err := rows.Scan(
+			&i.TopicID,
+			&i.TopicNumber,
+			&i.TopicName,
+			&i.TopicVisibility,
+			&i.SpaceID,
+			&i.SpaceIdentifier,
+			&i.SpaceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockDiscardedTopic = `-- name: LockDiscardedTopic :one
 SELECT id FROM topics
 WHERE id = $1 AND space_id = $2 AND discarded_at IS NOT NULL

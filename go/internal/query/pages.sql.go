@@ -2085,6 +2085,92 @@ func (q *Queries) SearchPageLocations(ctx context.Context, arg SearchPageLocatio
 	return items, nil
 }
 
+const searchPagesByTitle = `-- name: SearchPagesByTitle :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.modified_at, p.published_at,
+       p.pinned_at, p.featured_image_attachment_id
+FROM pages p
+INNER JOIN topics t ON t.id = p.topic_id AND t.space_id = p.space_id
+INNER JOIN spaces s ON s.id = p.space_id
+WHERE p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND s.discarded_at IS NULL
+  AND (t.visibility = 0 OR t.id = ANY($1::uuid[]))
+  AND (cardinality($2::text[]) = 0 OR s.identifier = ANY($2::citext[]))
+  AND p.title IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM unnest($3::text[]) AS kw(pattern)
+    WHERE NOT (p.title ILIKE kw.pattern)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT $4
+`
+
+type SearchPagesByTitleParams struct {
+	MemberTopicIds   []string `json:"member_topic_ids"`
+	SpaceIdentifiers []string `json:"space_identifiers"`
+	TitlePatterns    []string `json:"title_patterns"`
+	RowLimit         int32    `json:"row_limit"`
+}
+
+type SearchPagesByTitleRow struct {
+	ID                        string       `json:"id"`
+	SpaceID                   string       `json:"space_id"`
+	TopicID                   string       `json:"topic_id"`
+	Number                    int32        `json:"number"`
+	Title                     interface{}  `json:"title"`
+	ModifiedAt                time.Time    `json:"modified_at"`
+	PublishedAt               sql.NullTime `json:"published_at"`
+	PinnedAt                  sql.NullTime `json:"pinned_at"`
+	FeaturedImageAttachmentID *string      `json:"featured_image_attachment_id"`
+}
+
+// 検索の画面の結果。公開トピックのページ (すべてのスペース) と、member_topic_idsのトピックの
+// ページを、タイトルがすべてのキーワードを含むものに絞って、更新日時の新しい順に返す。
+// member_topic_idsは、参加しているスペースで閲覧者が開けるトピックとして呼び出し元が解決したもの。
+// すべてのスペースをまたぐためspace_idでは絞れず、トピックとスペースの状態をJOINで確かめる。
+// space_identifiersを渡すと、そのスペースのページに絞る。空の配列なら絞らない。
+// title_patternsはキーワードごとのILIKEのパターン。タイトルの無いページは一致させない。
+// 本文やリンクIDを取得せず、カードの表示と公開状態・並び順に使うメタデータだけを返す。
+func (q *Queries) SearchPagesByTitle(ctx context.Context, arg SearchPagesByTitleParams) ([]SearchPagesByTitleRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchPagesByTitle,
+		pq.Array(arg.MemberTopicIds),
+		pq.Array(arg.SpaceIdentifiers),
+		pq.Array(arg.TitlePatterns),
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SearchPagesByTitleRow{}
+	for rows.Next() {
+		var i SearchPagesByTitleRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.PinnedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const trashPageByID = `-- name: TrashPageByID :exec
 UPDATE pages
 SET trashed_at = $1,

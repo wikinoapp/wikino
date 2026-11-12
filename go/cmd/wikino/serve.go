@@ -77,6 +77,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	personalaccesstokenhandler "github.com/wikinoapp/wikino/go/internal/handler/personal_access_token"
+	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
@@ -642,6 +643,11 @@ func runServe() {
 		cfg,
 		getTrashShowUC,
 	)
+	getSearchShowUC := usecase.NewGetSearchShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, validator.NewSearchShowValidator())
+	searchHandler := searchhandler.NewHandler(
+		cfg,
+		getSearchShowUC,
+	)
 	restorePagesUC := usecase.NewRestorePagesUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, validator.NewBulkRestoredPageCreateValidator(pageRepo))
 	bulkRestoredPageHandler := bulkrestoredpagehandler.NewHandler(
 		flashMgr,
@@ -1086,6 +1092,11 @@ func runServe() {
 		// ここへ振り分け、それ以外はRails版が処理する。
 		r.Get("/s/{space_identifier}/trash", trashHandler.Show)
 		r.Head("/s/{space_identifier}/trash", trashHandler.Show)
+
+		// 検索の画面。リバースプロキシはgo_searchが有効な閲覧者のリクエストだけをここへ振り分け、
+		// それ以外はRails版が処理する。
+		r.Get("/search", searchHandler.Show)
+		r.Head("/search", searchHandler.Show)
 
 		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせ、ゴミ箱の一覧と同じく
 		// go_trashが有効な閲覧者のリクエストだけがここへ振り分けられる。

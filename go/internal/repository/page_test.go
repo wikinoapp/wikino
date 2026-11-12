@@ -3591,3 +3591,141 @@ func TestPageRepository_ListTrashedBefore(t *testing.T) {
 		}
 	})
 }
+
+func TestPageRepository_SearchByTitle(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	// 検索はすべてのスペースをまたぐため、他のテストのページに一致しないキーワードを使う
+	const keyword = "検索リポジトリ"
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-search-title").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-search-title-other").Build()
+	discardedSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-search-title-discarded").WithDiscarded().Build()
+
+	publicTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).Build()
+	privateTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("Private").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).Build()
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(3).WithName("Discarded").
+		WithVisibility(int32(model.TopicVisibilityPublic)).WithDiscarded().Build()
+	otherPublicTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("Other").
+		WithVisibility(int32(model.TopicVisibilityPublic)).Build()
+	discardedSpaceTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(discardedSpaceID).WithNumber(1).WithName("Gone").
+		WithVisibility(int32(model.TopicVisibilityPublic)).Build()
+	userID := testutil.NewUserBuilder(t, tx).WithEmail("page-search-title@example.com").WithAtname("page_search_title").Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
+
+	base := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	newPage := func(space model.SpaceID, topic model.TopicID, number model.PageNumber, title string, hoursAgo int) *testutil.PageBuilder {
+		return testutil.NewPageBuilder(t, tx).WithSpaceID(space).WithTopicID(topic).WithNumber(number).
+			WithTitle(title).WithModifiedAt(base.Add(-time.Duration(hoursAgo) * time.Hour))
+	}
+
+	publicOlder := newPage(spaceID, publicTopicID, 2, keyword+" 日報 古い", 2).Build()
+	pinnedAt := base.Add(-30 * time.Minute)
+	publicNewer := newPage(spaceID, publicTopicID, 1, keyword+" 日報 Daily", 1).
+		WithBody("検索カードでは表示しない本文").WithLinkedPageIDs([]model.PageID{publicOlder}).
+		WithPublishedAt(base).WithPinnedAt(pinnedAt).WithFeaturedImageAttachmentID(attachmentID).Build()
+	private := newPage(spaceID, privateTopicID, 3, keyword+" 日報 非公開", 3).Build()
+	otherSpace := newPage(otherSpaceID, otherPublicTopicID, 1, keyword+" 日報 別のスペース", 4).Build()
+	newPage(spaceID, publicTopicID, 4, keyword+" メモ", 5).Build()
+	newPage(spaceID, publicTopicID, 5, keyword+" 日報 ゴミ箱", 6).WithTrashedAt(base).Build()
+	newPage(spaceID, publicTopicID, 6, keyword+" 日報 廃棄", 7).WithDiscarded().Build()
+	newPage(spaceID, publicTopicID, 7, keyword+" 日報 未公開", 8).WithUnpublished().Build()
+	newPage(spaceID, discardedTopicID, 8, keyword+" 日報 廃棄したトピック", 9).Build()
+	newPage(discardedSpaceID, discardedSpaceTopicID, 1, keyword+" 日報 廃棄したスペース", 10).Build()
+	underscore := newPage(spaceID, publicTopicID, 9, keyword+" 100%_達成", 11).Build()
+
+	search := func(t *testing.T, input SearchByTitleInput) []model.PageID {
+		t.Helper()
+		if input.Limit == 0 {
+			input.Limit = 25
+		}
+		pages, err := repo.SearchByTitle(ctx, input)
+		if err != nil {
+			t.Fatalf("SearchByTitle()のエラー = %v", err)
+		}
+		ids := make([]model.PageID, len(pages))
+		for i, pg := range pages {
+			ids[i] = pg.ID
+		}
+		return ids
+	}
+
+	tests := []struct {
+		name  string
+		input SearchByTitleInput
+		want  []model.PageID
+	}{
+		{
+			name:  "公開トピックのページを、すべてのキーワードを含むものに絞って新しい順に返す",
+			input: SearchByTitleInput{Keywords: []string{keyword, "日報"}},
+			want:  []model.PageID{publicNewer, publicOlder, otherSpace},
+		},
+		{
+			name:  "大文字と小文字を区別しない",
+			input: SearchByTitleInput{Keywords: []string{keyword, "dAILY"}},
+			want:  []model.PageID{publicNewer},
+		},
+		{
+			name:  "開けるトピックとして渡した非公開トピックのページを含める",
+			input: SearchByTitleInput{Keywords: []string{keyword, "日報"}, MemberTopicIDs: []model.TopicID{privateTopicID}},
+			want:  []model.PageID{publicNewer, publicOlder, private, otherSpace},
+		},
+		{
+			name:  "スペースを指定すると、そのスペースのページに絞る",
+			input: SearchByTitleInput{Keywords: []string{keyword, "日報"}, SpaceIdentifiers: []model.SpaceIdentifier{"PAGE-SEARCH-TITLE-OTHER"}},
+			want:  []model.PageID{otherSpace},
+		},
+		{
+			name:  "上限の件数まで返す",
+			input: SearchByTitleInput{Keywords: []string{keyword, "日報"}, Limit: 2},
+			want:  []model.PageID{publicNewer, publicOlder},
+		},
+		{
+			name:  "LIKEの特殊文字は文字として扱う",
+			input: SearchByTitleInput{Keywords: []string{keyword, "%_"}},
+			want:  []model.PageID{underscore},
+		},
+		{
+			name:  "キーワードが無ければ0件",
+			input: SearchByTitleInput{},
+			want:  []model.PageID{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := search(t, tt.input); !slices.Equal(got, tt.want) {
+				t.Errorf("ページ = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+
+	t.Run("本文を取得せずカードと公開状態のメタデータを返す", func(t *testing.T) {
+		pages, err := repo.SearchByTitle(ctx, SearchByTitleInput{Keywords: []string{keyword, "Daily"}, Limit: 25})
+		if err != nil {
+			t.Fatalf("SearchByTitle()のエラー = %v", err)
+		}
+		if len(pages) != 1 {
+			t.Fatalf("ページの件数 = %d、期待値 = 1", len(pages))
+		}
+		pg := pages[0]
+		if pg.ID != publicNewer || pg.SpaceID != spaceID || pg.TopicID != publicTopicID || pg.Number != 1 || pg.Title == nil || *pg.Title != keyword+" 日報 Daily" {
+			t.Errorf("カードの識別子とタイトルが保持されていない: %+v", pg)
+		}
+		if pg.PinnedAt == nil || !pg.PinnedAt.Equal(pinnedAt) || pg.FeaturedImageAttachmentID == nil || *pg.FeaturedImageAttachmentID != attachmentID {
+			t.Errorf("ピン留めと代表画像が保持されていない: %+v", pg)
+		}
+		if pg.PublishedAt == nil || !pg.PublishedAt.Equal(base) || !pg.ModifiedAt.Equal(base.Add(-time.Hour)) {
+			t.Errorf("公開状態と更新日時が保持されていない: %+v", pg)
+		}
+		if pg.Body != "" || len(pg.LinkedPageIDs) != 0 {
+			t.Error("メタデータの検索で本文かリンクIDが返された")
+		}
+	})
+}

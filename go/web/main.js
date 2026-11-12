@@ -11,6 +11,7 @@ import { initializeFormSubmit } from "./form-submit";
 import { initializeGlobalHotkey } from "./global-hotkey";
 import { initializeMarkdownTables } from "./markdown-table";
 import { initializePlatform } from "./platform";
+import { initializeSearchQuery } from "./search-query";
 import { initializeStickyHeader } from "./sticky-header";
 
 function setTimeZoneCookie() {
@@ -31,5 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeCopyableInputs();
   initializeMarkdownTables();
   initializeStickyHeader();
+  initializeSearchQuery();
   setTimeZoneCookie();
 });

@@ -69,6 +69,12 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		flag:    model.FeatureFlagTrash,
 		methods: []string{http.MethodPost},
 	},
+	// 検索の画面 (GET・HEAD /search)。
+	{
+		pattern: regexp.MustCompile(`^/search$`),
+		flag:    model.FeatureFlagSearch,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
 }
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア
