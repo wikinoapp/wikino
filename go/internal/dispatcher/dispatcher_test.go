@@ -150,3 +150,34 @@ func TestCleanupRateLimitsArgs_Kind(t *testing.T) {
 		t.Errorf("Kind() = %s、期待値 = cleanup_rate_limits", got)
 	}
 }
+
+func TestEnqueueDeleteTopic(t *testing.T) {
+	t.Parallel()
+
+	mock := &mockJobInserter{}
+	d := NewDispatcher(mock)
+
+	if err := d.EnqueueDeleteTopic(context.Background(), "space-id", "topic-id"); err != nil {
+		t.Fatalf("EnqueueDeleteTopic()のエラー = %v", err)
+	}
+
+	args, ok := mock.args.(DeleteTopicArgs)
+	if !ok {
+		t.Fatalf("argsの型がDeleteTopicArgsではありません: %T", mock.args)
+	}
+	if args.SpaceID != "space-id" {
+		t.Errorf("SpaceID = %s、期待値 = space-id", args.SpaceID)
+	}
+	if args.TopicID != "topic-id" {
+		t.Errorf("TopicID = %s、期待値 = topic-id", args.TopicID)
+	}
+	if args.Kind() != "delete_topic" {
+		t.Errorf("Kind() = %s、期待値 = delete_topic", args.Kind())
+	}
+	if mock.opts == nil {
+		t.Fatal("InsertOptsがnilです")
+	}
+	if mock.opts.MaxAttempts != 5 {
+		t.Errorf("MaxAttempts = %d、期待値 = 5", mock.opts.MaxAttempts)
+	}
+}

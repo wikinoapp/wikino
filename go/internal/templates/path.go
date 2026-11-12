@@ -177,6 +177,16 @@ func TopicSettingsGeneralPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNu
 	return TopicSettingsPath(spaceIdentifier, topicNumber) + "/general"
 }
 
+// TopicSettingsDeletionPathはトピックを削除する処理のパスを生成します。削除の確認画面はこのパスへ送信します。
+func TopicSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return TopicSettingsPath(spaceIdentifier, topicNumber) + "/deletion"
+}
+
+// NewTopicSettingsDeletionPathはトピックを削除する確認画面のパスを生成します。
+func NewTopicSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return TopicSettingsDeletionPath(spaceIdentifier, topicNumber) + "/new"
+}
+
 // NewTopicPathは新規トピック作成フォームのパスを生成します。
 func NewTopicPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/new", spaceIdentifier))

@@ -14,6 +14,9 @@ type Authorizer interface {
 	// 非公開トピックを公開すると内容がスペースの外へ出るため、トピックの名前や説明を
 	// 変えられるtopic:writeとは分けている。
 	CanUpdateTopicVisibility() bool
+	// CanDeleteTopicはtopic:deleteスコープで判定する。トピックの削除はページごと消して
+	// 元に戻せないため、トピックの名前や説明を変えられるtopic:writeとは分けている。
+	CanDeleteTopic() bool
 
 	// ページ
 	CanCreatePage() bool

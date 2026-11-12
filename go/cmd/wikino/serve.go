@@ -92,7 +92,9 @@ import (
 	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
+	topicdeletionhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_deletion"
 	"github.com/wikinoapp/wikino/go/internal/handler/topic_feed"
+	topicsettingshandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings"
 	topicsettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings_general"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
@@ -230,6 +232,15 @@ func runServe() {
 		PageRepo:        pageRepo,
 		AttachmentRepo:  attachmentRepo,
 		ObjectStorage:   objectStorage,
+	}, worker.DeletionDeps{
+		DB:                          db,
+		TopicRepo:                   topicRepo,
+		TopicMemberRepo:             topicMemberRepo,
+		PageRepo:                    pageRepo,
+		DraftPageRepo:               draftPageRepo,
+		PageEditorRepo:              pageEditorRepo,
+		PageRevisionRepo:            pageRevisionRepo,
+		PageAttachmentReferenceRepo: pageAttachmentRefRepo,
 	})
 	if err != nil {
 		slog.Error("Riverクライアントの初期化に失敗しました", "error", err)
@@ -610,6 +621,19 @@ func runServe() {
 		getTopicDetailUC,
 		getTopicNewUC,
 		createTopicUC,
+	)
+	getTopicSettingsUC := usecase.NewGetTopicSettingsUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
+	topicSettingsHandler := topicsettingshandler.NewHandler(
+		cfg,
+		getTopicSettingsUC,
+	)
+	getTopicDeletionNewUC := usecase.NewGetTopicDeletionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
+	discardTopicUC := usecase.NewDiscardTopicUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, jobDispatcher, validator.NewTopicDeletionCreateValidator())
+	topicDeletionHandler := topicdeletionhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getTopicDeletionNewUC,
+		discardTopicUC,
 	)
 	getTopicSettingsGeneralUC := usecase.NewGetTopicSettingsGeneralUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
 	topicUpdateValidator := validator.NewTopicUpdateValidator(topicRepo)
@@ -1035,8 +1059,18 @@ func runServe() {
 		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
 
-		// トピックの一般設定。画面と保存処理。トピック設定の残りはRails版のままで、この画面
-		// のパンくずはそこへ戻る。
+		// トピックの設定のトップ。リバースプロキシはgo_topic_settingsが有効な閲覧者のリクエスト
+		// だけをここへ振り分け、それ以外はRails版が処理する。
+		r.Get("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
+		r.Head("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
+
+		// トピックの削除。確認画面と削除処理。パスはRails版に合わせ、設定のトップと同じく
+		// go_topic_settingsが有効な閲覧者のリクエストだけがここへ振り分けられる。
+		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
+		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
+		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
+
+		// トピックの一般設定。画面と保存処理。
 		//
 		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
 		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。併記しないと、GETに200を

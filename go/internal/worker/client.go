@@ -3,6 +3,7 @@ package worker
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"time"
 
@@ -60,6 +61,19 @@ type ExportDeps struct {
 	ObjectStorage   storage.ObjectStorage
 }
 
+// DeletionDepsは、論理削除したレコードを物理削除するワーカーが使うものを保持する。
+// データベースとリポジトリはHTTP側と共有するため、ここで作り直さず受け取る。
+type DeletionDeps struct {
+	DB                          *sql.DB
+	TopicRepo                   *repository.TopicRepository
+	TopicMemberRepo             *repository.TopicMemberRepository
+	PageRepo                    *repository.PageRepository
+	DraftPageRepo               *repository.DraftPageRepository
+	PageEditorRepo              *repository.PageEditorRepository
+	PageRevisionRepo            *repository.PageRevisionRepository
+	PageAttachmentReferenceRepo *repository.PageAttachmentReferenceRepository
+}
+
 // ClientはRiverクライアントのラッパー
 type Client struct {
 	riverClient *river.Client[pgx.Tx]
@@ -67,7 +81,7 @@ type Client struct {
 }
 
 // NewClientは新しいRiverクライアントを作成します
-func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps) (*Client, error) {
+func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps, deletionDeps DeletionDeps) (*Client, error) {
 	// pgxpoolの作成
 	poolConfig, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -132,6 +146,19 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 	cleanupEmailConfirmationsUC := usecase.NewCleanupEmailConfirmationsUsecase(emailConfirmationRepo)
 	river.AddWorker(workers, NewCleanupEmailConfirmationsWorker(cleanupEmailConfirmationsUC))
 	slog.InfoContext(ctx, "CleanupEmailConfirmationsWorkerを登録しました")
+
+	// トピックの物理削除のワーカーはデータベースだけで動くため、設定によらず登録する。
+	river.AddWorker(workers, NewDeleteTopicWorker(usecase.NewDeleteTopicUsecase(
+		deletionDeps.DB,
+		deletionDeps.TopicRepo,
+		deletionDeps.TopicMemberRepo,
+		deletionDeps.PageRepo,
+		deletionDeps.DraftPageRepo,
+		deletionDeps.PageEditorRepo,
+		deletionDeps.PageRevisionRepo,
+		deletionDeps.PageAttachmentReferenceRepo,
+	)))
+	slog.InfoContext(ctx, "DeleteTopicWorkerを登録しました")
 
 	// Riverクライアントの作成
 	// SentryミドルウェアはConfig.Middlewareに登録する。

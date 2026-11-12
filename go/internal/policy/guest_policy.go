@@ -24,6 +24,7 @@ func (p *GuestPolicy) CanShowAttachment(allReferencingPagesPublic bool) bool {
 
 func (p *GuestPolicy) CanUpdateTopic() bool                                { return false }
 func (p *GuestPolicy) CanUpdateTopicVisibility() bool                      { return false }
+func (p *GuestPolicy) CanDeleteTopic() bool                                { return false }
 func (p *GuestPolicy) CanCreatePage() bool                                 { return false }
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
 func (p *GuestPolicy) CanShowTrash() bool                                  { return false }

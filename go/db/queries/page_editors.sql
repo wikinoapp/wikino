@@ -14,3 +14,7 @@ UPDATE page_editors
 SET last_page_modified_at = $2, updated_at = $3
 WHERE id = $1 AND space_id = $4
 RETURNING *;
+
+-- name: DeletePageEditorsByPageIDs :exec
+-- ページの編集者を物理削除する。
+DELETE FROM page_editors WHERE space_id = @space_id AND page_id = ANY(@page_ids::uuid[]);

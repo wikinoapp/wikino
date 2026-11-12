@@ -546,3 +546,15 @@ SET linked_page_ids = CASE
   END
 WHERE space_id = @space_id
   AND linked_page_ids @> ARRAY[@old_page_id::varchar];
+
+-- name: ListPageIDsByTopicForUpdate :many
+-- トピックのすべてのページ (未公開・ゴミ箱・廃棄済みを含む) をロックし、IDを返す。
+-- ページ移動のコミットを待ってから所属を確かめ、関連レコードの削除が終わるまで移動を待たせる。
+SELECT id FROM pages
+WHERE space_id = @space_id AND topic_id = @topic_id
+ORDER BY id
+FOR UPDATE;
+
+-- name: DeletePagesByIDs :execrows
+-- ページを物理削除する。ページの関連レコードは先に消しておく。
+DELETE FROM pages WHERE space_id = @space_id AND id = ANY(@ids::uuid[]);

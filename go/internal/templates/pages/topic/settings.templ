@@ -1,0 +1,49 @@
+package topic
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// SettingsDataはトピックの設定のトップをレンダリングする元になるデータ。
+//
+// CanUpdateTopicは一般設定の項目を、CanDeleteTopicはトピックの削除の項目を出すかを表す。
+type SettingsData struct {
+	Space          viewmodel.Space
+	Topic          viewmodel.Topic
+	CanUpdateTopic bool
+	CanDeleteTopic bool
+}
+
+// Settingsはトピックの設定のトップのコンテンツを表示します。
+templ Settings(data SettingsData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "topic_settings_heading"),
+					})
+				</div>
+				@components.ContentCard() {
+					<div class="flex flex-col gap-3">
+						if data.CanUpdateTopic {
+							@settingsLink(templates.TopicSettingsGeneralPath(data.Space.Identifier, data.Topic.Number), "topic_settings_general")
+						}
+						if data.CanDeleteTopic {
+							@settingsLink(templates.NewTopicSettingsDeletionPath(data.Space.Identifier, data.Topic.Number), "topic_settings_deletion")
+						}
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// settingsLinkはトピックの設定の各項目へのリンクを表示します。
+templ settingsLink(path templates.Path, labelKey string) {
+	<a class="underline underline-offset-4 w-fit" href={ templ.SafeURL(string(path)) }>
+		{ templates.T(ctx, labelKey) }
+	</a>
+}

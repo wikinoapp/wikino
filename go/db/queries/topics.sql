@@ -81,3 +81,27 @@ UPDATE topics
 SET name = @name, description = @description, updated_at = @now
 WHERE id = @id AND space_id = @space_id
 RETURNING *;
+
+-- name: DiscardTopic :execrows
+-- トピックを論理削除する。既に論理削除したトピックは対象にしない。
+UPDATE topics
+SET discarded_at = @discarded_at, updated_at = @discarded_at
+WHERE id = @id AND space_id = @space_id AND discarded_at IS NULL;
+
+-- name: UndiscardTopic :exec
+-- 論理削除を取り消す。@discarded_atと同じ時刻に論理削除したトピックだけを対象にし、
+-- 別の削除の操作で論理削除し直したトピックを戻さない。
+UPDATE topics
+SET discarded_at = NULL, updated_at = @updated_at
+WHERE id = @id AND space_id = @space_id AND discarded_at = @discarded_at;
+
+-- name: LockDiscardedTopic :one
+-- 論理削除したトピックを、物理削除が終わるまでロックする。
+SELECT id FROM topics
+WHERE id = @id AND space_id = @space_id AND discarded_at IS NOT NULL
+FOR UPDATE;
+
+-- name: DeleteDiscardedTopic :execrows
+-- 論理削除したトピックを物理削除する。論理削除していないトピックは対象にしない。
+DELETE FROM topics
+WHERE id = @id AND space_id = @space_id AND discarded_at IS NOT NULL;

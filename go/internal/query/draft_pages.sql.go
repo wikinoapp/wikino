@@ -175,6 +175,21 @@ func (q *Queries) DeleteDraftPage(ctx context.Context, arg DeleteDraftPageParams
 	return err
 }
 
+const deleteDraftPagesByPageIDs = `-- name: DeleteDraftPagesByPageIDs :exec
+DELETE FROM draft_pages WHERE space_id = $1 AND page_id = ANY($2::uuid[])
+`
+
+type DeleteDraftPagesByPageIDsParams struct {
+	SpaceID string   `json:"space_id"`
+	PageIds []string `json:"page_ids"`
+}
+
+// ページの下書きを物理削除する。下書きのリビジョンは外部キーのON DELETE CASCADEで消える。
+func (q *Queries) DeleteDraftPagesByPageIDs(ctx context.Context, arg DeleteDraftPagesByPageIDsParams) error {
+	_, err := q.db.ExecContext(ctx, deleteDraftPagesByPageIDs, arg.SpaceID, pq.Array(arg.PageIds))
+	return err
+}
+
 const findDraftPageByID = `-- name: FindDraftPageByID :one
 SELECT id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id, base_title, base_body FROM draft_pages WHERE id = $1 AND space_id = $2
 `
@@ -415,6 +430,29 @@ type ReassignDraftPageLinkedPageIDParams struct {
 // 本文とmodified_at・updated_atは変えない (版と並び順を変えないため)
 func (q *Queries) ReassignDraftPageLinkedPageID(ctx context.Context, arg ReassignDraftPageLinkedPageIDParams) error {
 	_, err := q.db.ExecContext(ctx, reassignDraftPageLinkedPageID, arg.NewPageID, arg.OldPageID, arg.SpaceID)
+	return err
+}
+
+const syncDraftPageTopicsFromPages = `-- name: SyncDraftPageTopicsFromPages :exec
+UPDATE draft_pages dp
+SET topic_id = p.topic_id
+FROM pages p
+WHERE dp.space_id = $1
+  AND dp.topic_id = $2
+  AND p.space_id = $1
+  AND p.id = dp.page_id
+  AND p.topic_id <> dp.topic_id
+`
+
+type SyncDraftPageTopicsFromPagesParams struct {
+	SpaceID string `json:"space_id"`
+	TopicID string `json:"topic_id"`
+}
+
+// 指定トピックを指す下書きの所属を、ページの現在の所属にそろえる。
+// 下書きの本文・履歴・更新日時を保ったまま、削除するトピックへの古い参照を外す。
+func (q *Queries) SyncDraftPageTopicsFromPages(ctx context.Context, arg SyncDraftPageTopicsFromPagesParams) error {
+	_, err := q.db.ExecContext(ctx, syncDraftPageTopicsFromPages, arg.SpaceID, arg.TopicID)
 	return err
 }
 

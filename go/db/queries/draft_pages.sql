@@ -99,3 +99,19 @@ SET linked_page_ids = CASE
   END
 WHERE space_id = @space_id
   AND linked_page_ids @> ARRAY[@old_page_id::varchar];
+
+-- name: DeleteDraftPagesByPageIDs :exec
+-- ページの下書きを物理削除する。下書きのリビジョンは外部キーのON DELETE CASCADEで消える。
+DELETE FROM draft_pages WHERE space_id = @space_id AND page_id = ANY(@page_ids::uuid[]);
+
+-- name: SyncDraftPageTopicsFromPages :exec
+-- 指定トピックを指す下書きの所属を、ページの現在の所属にそろえる。
+-- 下書きの本文・履歴・更新日時を保ったまま、削除するトピックへの古い参照を外す。
+UPDATE draft_pages dp
+SET topic_id = p.topic_id
+FROM pages p
+WHERE dp.space_id = @space_id
+  AND dp.topic_id = @topic_id
+  AND p.space_id = @space_id
+  AND p.id = dp.page_id
+  AND p.topic_id <> dp.topic_id;

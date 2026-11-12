@@ -136,3 +136,26 @@ func (d *Dispatcher) EnqueueGenerateExportFiles(ctx context.Context, exportID, s
 	_, err := d.client.Insert(ctx, args, &opts)
 	return err
 }
+
+// DeleteTopicArgsは論理削除したトピックを、関連レコードとともに物理削除するジョブの引数。
+// 削除は同じトピックに何度試しても結果が変わらないため、再試行してよい。
+type DeleteTopicArgs struct {
+	SpaceID string `json:"space_id"`
+	TopicID string `json:"topic_id"`
+}
+
+// Kindはジョブの種類を返す。
+func (DeleteTopicArgs) Kind() string { return "delete_topic" }
+
+// InsertOptsはジョブのInsertオプションを返す。
+func (DeleteTopicArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 5}
+}
+
+// EnqueueDeleteTopicはトピックの物理削除のジョブをキューに追加する。
+func (d *Dispatcher) EnqueueDeleteTopic(ctx context.Context, spaceID, topicID string) error {
+	args := DeleteTopicArgs{SpaceID: spaceID, TopicID: topicID}
+	opts := args.InsertOpts()
+	_, err := d.client.Insert(ctx, args, &opts)
+	return err
+}

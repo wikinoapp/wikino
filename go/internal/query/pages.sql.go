@@ -243,6 +243,24 @@ func (q *Queries) CreateUnpublishedPage(ctx context.Context, arg CreateUnpublish
 	return i, err
 }
 
+const deletePagesByIDs = `-- name: DeletePagesByIDs :execrows
+DELETE FROM pages WHERE space_id = $1 AND id = ANY($2::uuid[])
+`
+
+type DeletePagesByIDsParams struct {
+	SpaceID string   `json:"space_id"`
+	Ids     []string `json:"ids"`
+}
+
+// ページを物理削除する。ページの関連レコードは先に消しておく。
+func (q *Queries) DeletePagesByIDs(ctx context.Context, arg DeletePagesByIDsParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deletePagesByIDs, arg.SpaceID, pq.Array(arg.Ids))
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const discardEmptyUnpublishedPageByID = `-- name: DiscardEmptyUnpublishedPageByID :one
 UPDATE pages
 SET title = id::varchar,
@@ -1506,6 +1524,43 @@ func (q *Queries) ListLinkedPagesByModifiedAt(ctx context.Context, arg ListLinke
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPageIDsByTopicForUpdate = `-- name: ListPageIDsByTopicForUpdate :many
+SELECT id FROM pages
+WHERE space_id = $1 AND topic_id = $2
+ORDER BY id
+FOR UPDATE
+`
+
+type ListPageIDsByTopicForUpdateParams struct {
+	SpaceID string `json:"space_id"`
+	TopicID string `json:"topic_id"`
+}
+
+// トピックのすべてのページ (未公開・ゴミ箱・廃棄済みを含む) をロックし、IDを返す。
+// ページ移動のコミットを待ってから所属を確かめ、関連レコードの削除が終わるまで移動を待たせる。
+func (q *Queries) ListPageIDsByTopicForUpdate(ctx context.Context, arg ListPageIDsByTopicForUpdateParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listPageIDsByTopicForUpdate, arg.SpaceID, arg.TopicID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

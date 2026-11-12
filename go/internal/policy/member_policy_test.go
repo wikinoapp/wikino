@@ -989,6 +989,35 @@ func TestMemberPolicy_CanUpdateTopicVisibility(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanDeleteTopic(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		spaceScopes []model.Scope
+		topicScopes []model.Scope
+		want        bool
+	}{
+		{name: "スペースのtopic:deleteで削除可能", spaceScopes: []model.Scope{model.ScopeTopicDelete}, want: true},
+		{name: "トピックメンバーのtopic:deleteで削除可能", topicScopes: []model.Scope{model.ScopeTopicDelete}, want: true},
+		{name: "トピックの管理者のロールで削除可能", topicScopes: model.TopicRoleAdmin.Scopes(), want: true},
+		{name: "topic:writeだけでは削除不可", spaceScopes: []model.Scope{model.ScopeTopicWrite}, want: false},
+		{name: "スペースの編集者のロールでは削除不可", spaceScopes: model.SpaceRoleEditor.Scopes(), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewMemberPolicy(tt.spaceScopes, tt.topicScopes)
+
+			if got := p.CanDeleteTopic(); got != tt.want {
+				t.Errorf("CanDeleteTopic() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestMemberPolicy_AuthorizerはMemberPolicyがAuthorizerインターフェースを満たすことを検証する
 func TestMemberPolicy_Authorizer(t *testing.T) {
 	t.Parallel()

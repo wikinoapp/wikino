@@ -339,6 +339,30 @@ func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages 
 	return result, nil
 }
 
+// ListIDsByTopicForUpdateはトピックのすべてのページをロックし、IDを返す。
+// 関連レコードを消す間にページが移動しないよう、WithTxでトランザクションに参加させて呼ぶ。
+func (r *PageRepository) ListIDsByTopicForUpdate(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) ([]model.PageID, error) {
+	ids, err := r.q.ListPageIDsByTopicForUpdate(ctx, query.ListPageIDsByTopicForUpdateParams{
+		SpaceID: string(spaceID),
+		TopicID: string(topicID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return model.StringsToPageIDs(ids), nil
+}
+
+// DeleteByIDsはページを物理削除し、削除した件数を返す。ページの関連レコードは先に消しておく。
+func (r *PageRepository) DeleteByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	return r.q.DeletePagesByIDs(ctx, query.DeletePagesByIDsParams{
+		SpaceID: string(spaceID),
+		Ids:     model.PageIDsToStrings(ids),
+	})
+}
+
 // toModelFromTargetRowはFindBacklinkedPagesForTargetsRowをmodel.Pageに変換する
 func (r *PageRepository) toModelFromTargetRow(row query.FindBacklinkedPagesForTargetsRow) *model.Page {
 	var title *string

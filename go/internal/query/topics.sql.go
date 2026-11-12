@@ -7,6 +7,7 @@ package query
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/lib/pq"
@@ -50,6 +51,46 @@ func (q *Queries) CreateTopic(ctx context.Context, arg CreateTopicParams) (Topic
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteDiscardedTopic = `-- name: DeleteDiscardedTopic :execrows
+DELETE FROM topics
+WHERE id = $1 AND space_id = $2 AND discarded_at IS NOT NULL
+`
+
+type DeleteDiscardedTopicParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 論理削除したトピックを物理削除する。論理削除していないトピックは対象にしない。
+func (q *Queries) DeleteDiscardedTopic(ctx context.Context, arg DeleteDiscardedTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteDiscardedTopic, arg.ID, arg.SpaceID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const discardTopic = `-- name: DiscardTopic :execrows
+UPDATE topics
+SET discarded_at = $1, updated_at = $1
+WHERE id = $2 AND space_id = $3 AND discarded_at IS NULL
+`
+
+type DiscardTopicParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	ID          string       `json:"id"`
+	SpaceID     string       `json:"space_id"`
+}
+
+// トピックを論理削除する。既に論理削除したトピックは対象にしない。
+func (q *Queries) DiscardTopic(ctx context.Context, arg DiscardTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, discardTopic, arg.DiscardedAt, arg.ID, arg.SpaceID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const existsTopicBySpaceAndName = `-- name: ExistsTopicBySpaceAndName :one
@@ -403,6 +444,50 @@ func (q *Queries) ListTopicsJoinedBySpaceMember(ctx context.Context, arg ListTop
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockDiscardedTopic = `-- name: LockDiscardedTopic :one
+SELECT id FROM topics
+WHERE id = $1 AND space_id = $2 AND discarded_at IS NOT NULL
+FOR UPDATE
+`
+
+type LockDiscardedTopicParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 論理削除したトピックを、物理削除が終わるまでロックする。
+func (q *Queries) LockDiscardedTopic(ctx context.Context, arg LockDiscardedTopicParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockDiscardedTopic, arg.ID, arg.SpaceID)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
+const undiscardTopic = `-- name: UndiscardTopic :exec
+UPDATE topics
+SET discarded_at = NULL, updated_at = $1
+WHERE id = $2 AND space_id = $3 AND discarded_at = $4
+`
+
+type UndiscardTopicParams struct {
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	SpaceID     string       `json:"space_id"`
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+}
+
+// 論理削除を取り消す。@discarded_atと同じ時刻に論理削除したトピックだけを対象にし、
+// 別の削除の操作で論理削除し直したトピックを戻さない。
+func (q *Queries) UndiscardTopic(ctx context.Context, arg UndiscardTopicParams) error {
+	_, err := q.db.ExecContext(ctx, undiscardTopic,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SpaceID,
+		arg.DiscardedAt,
+	)
+	return err
 }
 
 const updateTopic = `-- name: UpdateTopic :one
