@@ -49,9 +49,14 @@ func AtomPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/atom", spaceIdentifier))
 }
 
-// TrashPathはスペースのゴミ箱のパスを生成します (現状はRails版にプロキシされる)。
+// TrashPathはスペースのゴミ箱のパスを生成します。
 func TrashPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/trash", spaceIdentifier))
+}
+
+// BulkRestoredPagesPathは、ゴミ箱で選んだページをまとめて復元するパスを生成します。
+func BulkRestoredPagesPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/bulk_restored_pages", spaceIdentifier))
 }
 
 // SpaceSettingsPathはスペース設定のトップのパスを生成します。
@@ -175,6 +180,16 @@ func TopicSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber in
 // 保存します。
 func TopicSettingsGeneralPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
 	return TopicSettingsPath(spaceIdentifier, topicNumber) + "/general"
+}
+
+// TopicSettingsDeletionPathはトピックを削除する処理のパスを生成します。削除の確認画面はこのパスへ送信します。
+func TopicSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return TopicSettingsPath(spaceIdentifier, topicNumber) + "/deletion"
+}
+
+// NewTopicSettingsDeletionPathはトピックを削除する確認画面のパスを生成します。
+func NewTopicSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return TopicSettingsDeletionPath(spaceIdentifier, topicNumber) + "/new"
 }
 
 // NewTopicPathは新規トピック作成フォームのパスを生成します。

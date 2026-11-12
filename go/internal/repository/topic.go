@@ -246,6 +246,97 @@ func (r *TopicRepository) UpdateNameAndDescription(ctx context.Context, input Up
 	return r.toModel(row), nil
 }
 
+// Discardはトピックを論理削除し、論理削除したかを返す。既に論理削除したトピックと、
+// 見つからないトピックではfalseを返す。
+func (r *TopicRepository) Discard(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID, discardedAt time.Time) (bool, error) {
+	n, err := r.q.DiscardTopic(ctx, query.DiscardTopicParams{
+		ID:          string(topicID),
+		SpaceID:     string(spaceID),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+	})
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
+// Undiscardは、discardedAtに論理削除したトピックの論理削除を取り消す。
+func (r *TopicRepository) Undiscard(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID, discardedAt time.Time, updatedAt time.Time) error {
+	return r.q.UndiscardTopic(ctx, query.UndiscardTopicParams{
+		ID:          string(topicID),
+		SpaceID:     string(spaceID),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+		UpdatedAt:   updatedAt,
+	})
+}
+
+// LockDiscardedは論理削除したトピックをロックし、ロックできたかを返す。論理削除していない
+// トピックと、見つからないトピックではfalseを返す。
+func (r *TopicRepository) LockDiscarded(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) (bool, error) {
+	_, err := r.q.LockDiscardedTopic(ctx, query.LockDiscardedTopicParams{
+		ID:      string(topicID),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// DeleteDiscardedは論理削除したトピックを物理削除し、削除したかを返す。
+func (r *TopicRepository) DeleteDiscarded(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) (bool, error) {
+	n, err := r.q.DeleteDiscardedTopic(ctx, query.DeleteDiscardedTopicParams{
+		ID:      string(topicID),
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
+// ListWithSpacesByPagesは、ページが属するトピックを、スペースの識別子と名前を添えて返す。
+// 検索の結果のように複数のスペースにまたがるページに、トピックとスペースの名前を添えるために使う。
+func (r *TopicRepository) ListWithSpacesByPages(ctx context.Context, pages []*model.Page) ([]*model.Topic, error) {
+	if len(pages) == 0 {
+		return []*model.Topic{}, nil
+	}
+
+	topicIDs := make([]model.TopicID, 0, len(pages))
+	spaceIDs := make([]model.SpaceID, 0, len(pages))
+	for _, pg := range pages {
+		topicIDs = append(topicIDs, pg.TopicID)
+		spaceIDs = append(spaceIDs, pg.SpaceID)
+	}
+
+	rows, err := r.q.ListTopicsWithSpacesByIDs(ctx, query.ListTopicsWithSpacesByIDsParams{
+		TopicIds: model.TopicIDsToStrings(topicIDs),
+		SpaceIds: model.SpaceIDsToStrings(spaceIDs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	topics := make([]*model.Topic, len(rows))
+	for i, row := range rows {
+		topics[i] = &model.Topic{
+			ID:         model.TopicID(row.TopicID),
+			Number:     row.TopicNumber,
+			Name:       row.TopicName,
+			Visibility: model.TopicVisibility(row.TopicVisibility),
+			Space: &model.Space{
+				ID:         model.SpaceID(row.SpaceID),
+				Identifier: model.SpaceIdentifier(row.SpaceIdentifier),
+				Name:       row.SpaceName,
+			},
+		}
+	}
+	return topics, nil
+}
+
 // toModelはquery.Topicをmodel.Topicに変換する
 func (r *TopicRepository) toModel(row query.Topic) *model.Topic {
 	var discardedAt *time.Time

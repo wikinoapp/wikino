@@ -138,6 +138,14 @@ func (r *TopicMemberRepository) Create(ctx context.Context, input CreateTopicMem
 	return r.toModel(row), nil
 }
 
+// DeleteByTopicはトピックのメンバーを物理削除する。
+func (r *TopicMemberRepository) DeleteByTopic(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) error {
+	return r.q.DeleteTopicMembersByTopic(ctx, query.DeleteTopicMembersByTopicParams{
+		SpaceID: string(spaceID),
+		TopicID: string(topicID),
+	})
+}
+
 // toModelはquery.TopicMemberをmodel.TopicMemberに変換する
 func (r *TopicMemberRepository) toModel(row query.TopicMember) *model.TopicMember {
 	var lastPageModifiedAt *time.Time

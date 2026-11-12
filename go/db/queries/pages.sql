@@ -26,8 +26,8 @@ WHERE id = ANY($1::uuid[])
 ORDER BY number;
 
 -- name: FindPageMetadataByIDs :many
--- Wikiリンクのプレビューの応答と可視性判定に使う列だけを取得する。
--- リンク先の本文サイズに転送量が比例しないよう、本文は取得しない。
+-- 本文を除いた列 (ID・スペース・トピック・番号・タイトルと、公開・ゴミ箱・廃棄の日時) だけを取得する。
+-- ページの本文サイズに転送量が比例しないよう、本文は取得しない。
 SELECT id, space_id, topic_id, number, title, published_at, trashed_at, discarded_at
 FROM pages
 WHERE id = ANY(@ids::uuid[])
@@ -351,6 +351,45 @@ WHERE p.space_id = @space_id
   AND t.discarded_at IS NULL
   AND (@public_only::boolean IS FALSE OR t.visibility = 0);
 
+-- name: ListRestorablePagesPaginated :many
+-- ゴミ箱の一覧。ゴミ箱に入れた日時がtrashed_since以降のページを、ゴミ箱に入れた日時の新しい順に
+-- オフセットページネーションで返す。topic_idsは、閲覧者が開けてゴミ箱を見られるトピックとして
+-- 呼び出し元が解決したもの。廃棄済みのページと、廃棄済みのトピックのページは含めない。
+SELECT p.* FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
+  AND p.trashed_at >= @trashed_since::timestamptz
+  AND p.discarded_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY(@topic_ids::uuid[])
+ORDER BY p.trashed_at DESC, p.id DESC
+LIMIT @row_limit
+OFFSET @row_offset;
+
+-- name: CountRestorablePages :one
+-- ゴミ箱の一覧の総件数を返す。条件はListRestorablePagesPaginatedと揃える。
+SELECT COUNT(*)
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = @space_id
+WHERE p.space_id = @space_id
+  AND p.trashed_at >= @trashed_since::timestamptz
+  AND p.discarded_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY(@topic_ids::uuid[]);
+
+-- name: RestorePagesFromTrash :execrows
+-- ページをまとめてゴミ箱から戻す。検証後の先行復元も成功として数え、既復元の更新日時は保つ。
+-- topic_idsは閲覧者が復元できるトピックとして呼び出し元が解決したもので、それ以外のトピックへ
+-- 移ったページは戻さない。成功した件数を呼び出し元が選んだ件数と比べ、1件でも復元できなければ
+-- トランザクションごと取り消す。
+UPDATE pages
+SET trashed_at = NULL,
+    updated_at = CASE WHEN trashed_at IS NOT NULL THEN @updated_at::timestamptz ELSE updated_at END
+WHERE space_id = @space_id
+  AND id = ANY(@ids::uuid[])
+  AND topic_id = ANY(@topic_ids::uuid[])
+  AND discarded_at IS NULL;
+
 -- name: TrashPageByID :exec
 -- trashed_atを打刻してページをゴミ箱へ入れる。これはUI上のゴミ箱で、バッチ処理が使う
 -- discarded_atの論理削除とは区別する。ゴミ箱に入ったページはタイトルと本文を保持したままで、
@@ -546,3 +585,65 @@ SET linked_page_ids = CASE
   END
 WHERE space_id = @space_id
   AND linked_page_ids @> ARRAY[@old_page_id::varchar];
+
+-- name: ListPageIDsByTopicForUpdate :many
+-- トピックのすべてのページ (未公開・ゴミ箱・廃棄済みを含む) をロックし、IDを返す。
+-- ページ移動のコミットを待ってから所属を確かめ、関連レコードの削除が終わるまで移動を待たせる。
+SELECT id FROM pages
+WHERE space_id = @space_id AND topic_id = @topic_id
+ORDER BY id
+FOR UPDATE;
+
+-- name: ListSpaceIDsWithTrashedPagesBefore :many
+-- ゴミ箱に入れた日時がtrashed_beforeより前のページ (保持期間を過ぎたページ) があるスペースを返す。
+-- 定期的な物理削除はスペースごとに処理するため、まず対象のスペースを引く。
+SELECT s.id FROM spaces s
+WHERE EXISTS (
+  SELECT 1 FROM pages p
+  WHERE p.space_id = s.id
+    AND p.trashed_at < @trashed_before::timestamptz
+)
+ORDER BY s.id;
+
+-- name: ListTrashedPageIDsBeforeForUpdate :many
+-- スペースの、ゴミ箱に入れた日時がtrashed_beforeより前のページを、最大row_limit件ロックしてIDを返す。
+-- トピックの物理削除と同じID順にロックし、同じページを消す処理どうしの循環待ちを防ぐ。
+-- ロックを待つ間にゴミ箱から戻されたページは、条件を満たさなくなるため返さない。
+SELECT id FROM pages
+WHERE space_id = @space_id
+  AND trashed_at < @trashed_before::timestamptz
+ORDER BY id
+LIMIT @row_limit
+FOR UPDATE;
+
+-- name: SearchPagesByTitle :many
+-- 検索の画面の結果。公開トピックのページ (すべてのスペース) と、member_topic_idsのトピックの
+-- ページを、タイトルがすべてのキーワードを含むものに絞って、更新日時の新しい順に返す。
+-- member_topic_idsは、参加しているスペースで閲覧者が開けるトピックとして呼び出し元が解決したもの。
+-- すべてのスペースをまたぐためspace_idでは絞れず、トピックとスペースの状態をJOINで確かめる。
+-- space_identifiersを渡すと、そのスペースのページに絞る。空の配列なら絞らない。
+-- title_patternsはキーワードごとのILIKEのパターン。タイトルの無いページは一致させない。
+-- 本文やリンクIDを取得せず、カードの表示と公開状態・並び順に使うメタデータだけを返す。
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.modified_at, p.published_at,
+       p.pinned_at, p.featured_image_attachment_id
+FROM pages p
+INNER JOIN topics t ON t.id = p.topic_id AND t.space_id = p.space_id
+INNER JOIN spaces s ON s.id = p.space_id
+WHERE p.published_at IS NOT NULL
+  AND p.discarded_at IS NULL
+  AND p.trashed_at IS NULL
+  AND t.discarded_at IS NULL
+  AND s.discarded_at IS NULL
+  AND (t.visibility = 0 OR t.id = ANY(@member_topic_ids::uuid[]))
+  AND (cardinality(@space_identifiers::text[]) = 0 OR s.identifier = ANY(@space_identifiers::citext[]))
+  AND p.title IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM unnest(@title_patterns::text[]) AS kw(pattern)
+    WHERE NOT (p.title ILIKE kw.pattern)
+  )
+ORDER BY p.modified_at DESC, p.id DESC
+LIMIT @row_limit;
+
+-- name: DeletePagesByIDs :execrows
+-- ページを物理削除する。ページの関連レコードは先に消しておく。
+DELETE FROM pages WHERE space_id = @space_id AND id = ANY(@ids::uuid[]);

@@ -14,6 +14,9 @@ type Authorizer interface {
 	// 非公開トピックを公開すると内容がスペースの外へ出るため、トピックの名前や説明を
 	// 変えられるtopic:writeとは分けている。
 	CanUpdateTopicVisibility() bool
+	// CanDeleteTopicはtopic:deleteスコープで判定する。トピックの削除はページごと消して
+	// 元に戻せないため、トピックの名前や説明を変えられるtopic:writeとは分けている。
+	CanDeleteTopic() bool
 
 	// ページ
 	CanCreatePage() bool
@@ -30,6 +33,9 @@ type Authorizer interface {
 	// 覗く操作もpage_trash:readの含意によって許可する。page:writeでは意図的に足りないものとする。ページを書き換えて
 	// よい編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
 	CanTrashPage() bool
+
+	// CanRestorePageはpage_trash:deleteスコープで判定し、ゴミ箱からページを戻す操作を許可する。
+	CanRestorePage() bool
 
 	// ページのピン留め
 

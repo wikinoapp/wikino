@@ -120,6 +120,12 @@ func (b *PageBuilder) WithTrashed() *PageBuilder {
 	return b
 }
 
+// WithTrashedAtは指定した日時にゴミ箱へ入れた状態に設定します
+func (b *PageBuilder) WithTrashedAt(trashedAt time.Time) *PageBuilder {
+	b.trashedAt = &trashedAt
+	return b
+}
+
 // WithDiscardedは廃棄済み状態に設定します
 func (b *PageBuilder) WithDiscarded() *PageBuilder {
 	now := time.Now()
@@ -177,6 +183,7 @@ type PageBuilderDB struct {
 	linkedPageIDs []string
 	modifiedAt    time.Time
 	publishedAt   *time.Time
+	trashedAt     *time.Time
 	discardedAt   *time.Time
 }
 
@@ -258,6 +265,12 @@ func (b *PageBuilderDB) WithDiscarded() *PageBuilderDB {
 	return b
 }
 
+// WithTrashedAtは指定した日時にゴミ箱へ入れた状態に設定します
+func (b *PageBuilderDB) WithTrashedAt(trashedAt time.Time) *PageBuilderDB {
+	b.trashedAt = &trashedAt
+	return b
+}
+
 // Buildはページを作成し、IDを返します
 func (b *PageBuilderDB) Build() model.PageID {
 	b.t.Helper()
@@ -273,11 +286,11 @@ func (b *PageBuilderDB) Build() model.PageID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, discarded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		`INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, discarded_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		 RETURNING id`,
 		b.spaceID, b.topicID, int32(b.number), b.title, b.body,
-		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.discardedAt, now, now,
+		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.trashedAt, b.discardedAt, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページ作成に失敗: %v", err)

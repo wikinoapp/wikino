@@ -207,6 +207,10 @@ type CardLinkPage struct {
 	Pinned       bool
 	CardImageURL string
 	CanEdit      bool
+
+	// SpaceNameを入れると、トピック名の前にスペース名を出す。スペースをまたぐ一覧 (検索の結果) で、
+	// どのスペースのページかを示すために使う
+	SpaceName string
 }
 
 // NewCardLinkPageはmodel.Pageとトピック情報からカード用のビューモデルを生成します

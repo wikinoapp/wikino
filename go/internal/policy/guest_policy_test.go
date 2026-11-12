@@ -58,10 +58,12 @@ func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 	}{
 		{"CanUpdateTopic", p.CanUpdateTopic()},
 		{"CanUpdateTopicVisibility", p.CanUpdateTopicVisibility()},
+		{"CanDeleteTopic", p.CanDeleteTopic()},
 		{"CanCreatePage", p.CanCreatePage()},
 		{"CanUpdatePage", p.CanUpdatePage()},
 		{"CanShowTrash", p.CanShowTrash()},
 		{"CanTrashPage", p.CanTrashPage()},
+		{"CanRestorePage", p.CanRestorePage()},
 		{"CanPinPage", p.CanPinPage()},
 		{"CanUnpinPage", p.CanUnpinPage()},
 		{"CanShowDraftPage", p.CanShowDraftPage()},

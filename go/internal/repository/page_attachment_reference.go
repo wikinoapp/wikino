@@ -71,6 +71,17 @@ func (r *PageAttachmentReferenceRepository) DeleteByPageAndAttachmentIDs(ctx con
 	})
 }
 
+// DeleteByPageIDsはページの添付ファイル参照を物理削除する。添付ファイル自体は削除しない。
+func (r *PageAttachmentReferenceRepository) DeleteByPageIDs(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID) error {
+	if len(pageIDs) == 0 {
+		return nil
+	}
+	return r.q.DeletePageAttachmentReferencesByPageIDs(ctx, query.DeletePageAttachmentReferencesByPageIDsParams{
+		SpaceID: string(spaceID),
+		PageIds: model.PageIDsToStrings(pageIDs),
+	})
+}
+
 // toModelはquery.PageAttachmentReferenceをmodel.PageAttachmentReferenceに変換する
 func (r *PageAttachmentReferenceRepository) toModel(row query.PageAttachmentReference) *model.PageAttachmentReference {
 	return &model.PageAttachmentReference{
