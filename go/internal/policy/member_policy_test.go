@@ -1223,3 +1223,32 @@ func TestMemberPolicy_OAuthApplication(t *testing.T) {
 		})
 	}
 }
+
+func TestMemberPolicy_CanRestorePage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		spaceScopes []model.Scope
+		topicScopes []model.Scope
+		want        bool
+	}{
+		{name: "スペースのpage_trash:deleteで復元可能", spaceScopes: []model.Scope{model.ScopePageTrashDelete}, want: true},
+		{name: "トピックメンバーのpage_trash:deleteで復元可能", topicScopes: []model.Scope{model.ScopePageTrashDelete}, want: true},
+		{name: "トピックの編集者のロールで復元可能", topicScopes: model.TopicRoleEditor.Scopes(), want: true},
+		{name: "page_trash:writeだけでは復元不可", spaceScopes: []model.Scope{model.ScopePageTrashWrite}, want: false},
+		{name: "スペースの閲覧者のロールでは復元不可", spaceScopes: model.SpaceRoleViewer.Scopes(), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewMemberPolicy(tt.spaceScopes, tt.topicScopes)
+
+			if got := p.CanRestorePage(); got != tt.want {
+				t.Errorf("CanRestorePage() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -49,9 +49,14 @@ func AtomPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/atom", spaceIdentifier))
 }
 
-// TrashPathはスペースのゴミ箱のパスを生成します (現状はRails版にプロキシされる)。
+// TrashPathはスペースのゴミ箱のパスを生成します。
 func TrashPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/trash", spaceIdentifier))
+}
+
+// BulkRestoredPagesPathは、ゴミ箱で選んだページをまとめて復元するパスを生成します。
+func BulkRestoredPagesPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/bulk_restored_pages", spaceIdentifier))
 }
 
 // SpaceSettingsPathはスペース設定のトップのパスを生成します。

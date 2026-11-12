@@ -57,6 +57,18 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		flag:    model.FeatureFlagTopicSettings,
 		methods: []string{http.MethodPost},
 	},
+	// スペースのゴミ箱の一覧 (GET・HEAD /s/:identifier/trash) と一括復元 (POST
+	// /s/:identifier/bulk_restored_pages)。パスはRails版と同じ。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/trash$`),
+		flag:    model.FeatureFlagTrash,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/bulk_restored_pages$`),
+		flag:    model.FeatureFlagTrash,
+		methods: []string{http.MethodPost},
+	},
 }
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア

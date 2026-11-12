@@ -195,6 +195,31 @@ func (q *Queries) CountRegularPagesByTopic(ctx context.Context, arg CountRegular
 	return count, err
 }
 
+const countRestorablePages = `-- name: CountRestorablePages :one
+SELECT COUNT(*)
+FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.trashed_at >= $2::timestamptz
+  AND p.discarded_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY($3::uuid[])
+`
+
+type CountRestorablePagesParams struct {
+	SpaceID      string    `json:"space_id"`
+	TrashedSince time.Time `json:"trashed_since"`
+	TopicIds     []string  `json:"topic_ids"`
+}
+
+// ゴミ箱の一覧の総件数を返す。条件はListRestorablePagesPaginatedと揃える。
+func (q *Queries) CountRestorablePages(ctx context.Context, arg CountRestorablePagesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRestorablePages, arg.SpaceID, arg.TrashedSince, pq.Array(arg.TopicIds))
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUnpublishedPage = `-- name: CreateUnpublishedPage :one
 INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, '', '{}', $5, NULL, $5, $5)
@@ -798,8 +823,8 @@ type FindPageMetadataByIDsRow struct {
 	DiscardedAt sql.NullTime `json:"discarded_at"`
 }
 
-// Wikiリンクのプレビューの応答と可視性判定に使う列だけを取得する。
-// リンク先の本文サイズに転送量が比例しないよう、本文は取得しない。
+// 本文を除いた列 (ID・スペース・トピック・番号・タイトルと、公開・ゴミ箱・廃棄の日時) だけを取得する。
+// ページの本文サイズに転送量が比例しないよう、本文は取得しない。
 func (q *Queries) FindPageMetadataByIDs(ctx context.Context, arg FindPageMetadataByIDsParams) ([]FindPageMetadataByIDsRow, error) {
 	rows, err := q.db.QueryContext(ctx, findPageMetadataByIDs, pq.Array(arg.Ids), arg.SpaceID)
 	if err != nil {
@@ -1706,6 +1731,151 @@ func (q *Queries) ListPagesByModifiedAt(ctx context.Context, arg ListPagesByModi
 	return items, nil
 }
 
+const listRestorablePagesPaginated = `-- name: ListRestorablePagesPaginated :many
+SELECT p.id, p.space_id, p.topic_id, p.number, p.title, p.body, p.linked_page_ids, p.modified_at, p.published_at, p.trashed_at, p.created_at, p.updated_at, p.pinned_at, p.discarded_at, p.featured_image_attachment_id FROM pages p
+INNER JOIN topics t ON p.topic_id = t.id AND t.space_id = $1
+WHERE p.space_id = $1
+  AND p.trashed_at >= $2::timestamptz
+  AND p.discarded_at IS NULL
+  AND t.discarded_at IS NULL
+  AND t.id = ANY($3::uuid[])
+ORDER BY p.trashed_at DESC, p.id DESC
+LIMIT $5
+OFFSET $4
+`
+
+type ListRestorablePagesPaginatedParams struct {
+	SpaceID      string    `json:"space_id"`
+	TrashedSince time.Time `json:"trashed_since"`
+	TopicIds     []string  `json:"topic_ids"`
+	RowOffset    int32     `json:"row_offset"`
+	RowLimit     int32     `json:"row_limit"`
+}
+
+// ゴミ箱の一覧。ゴミ箱に入れた日時がtrashed_since以降のページを、ゴミ箱に入れた日時の新しい順に
+// オフセットページネーションで返す。topic_idsは、閲覧者が開けてゴミ箱を見られるトピックとして
+// 呼び出し元が解決したもの。廃棄済みのページと、廃棄済みのトピックのページは含めない。
+func (q *Queries) ListRestorablePagesPaginated(ctx context.Context, arg ListRestorablePagesPaginatedParams) ([]Page, error) {
+	rows, err := q.db.QueryContext(ctx, listRestorablePagesPaginated,
+		arg.SpaceID,
+		arg.TrashedSince,
+		pq.Array(arg.TopicIds),
+		arg.RowOffset,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Page{}
+	for rows.Next() {
+		var i Page
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.TopicID,
+			&i.Number,
+			&i.Title,
+			&i.Body,
+			pq.Array(&i.LinkedPageIds),
+			&i.ModifiedAt,
+			&i.PublishedAt,
+			&i.TrashedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PinnedAt,
+			&i.DiscardedAt,
+			&i.FeaturedImageAttachmentID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSpaceIDsWithTrashedPagesBefore = `-- name: ListSpaceIDsWithTrashedPagesBefore :many
+SELECT s.id FROM spaces s
+WHERE EXISTS (
+  SELECT 1 FROM pages p
+  WHERE p.space_id = s.id
+    AND p.trashed_at < $1::timestamptz
+)
+ORDER BY s.id
+`
+
+// ゴミ箱に入れた日時がtrashed_beforeより前のページ (保持期間を過ぎたページ) があるスペースを返す。
+// 定期的な物理削除はスペースごとに処理するため、まず対象のスペースを引く。
+func (q *Queries) ListSpaceIDsWithTrashedPagesBefore(ctx context.Context, trashedBefore time.Time) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listSpaceIDsWithTrashedPagesBefore, trashedBefore)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTrashedPageIDsBeforeForUpdate = `-- name: ListTrashedPageIDsBeforeForUpdate :many
+SELECT id FROM pages
+WHERE space_id = $1
+  AND trashed_at < $2::timestamptz
+ORDER BY id
+LIMIT $3
+FOR UPDATE
+`
+
+type ListTrashedPageIDsBeforeForUpdateParams struct {
+	SpaceID       string    `json:"space_id"`
+	TrashedBefore time.Time `json:"trashed_before"`
+	RowLimit      int32     `json:"row_limit"`
+}
+
+// スペースの、ゴミ箱に入れた日時がtrashed_beforeより前のページを、最大row_limit件ロックしてIDを返す。
+// トピックの物理削除と同じID順にロックし、同じページを消す処理どうしの循環待ちを防ぐ。
+// ロックを待つ間にゴミ箱から戻されたページは、条件を満たさなくなるため返さない。
+func (q *Queries) ListTrashedPageIDsBeforeForUpdate(ctx context.Context, arg ListTrashedPageIDsBeforeForUpdateParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listTrashedPageIDsBeforeForUpdate, arg.SpaceID, arg.TrashedBefore, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const movePageToTopic = `-- name: MovePageToTopic :one
 UPDATE pages
 SET topic_id = $2, updated_at = NOW()
@@ -1792,6 +1962,40 @@ type ReassignPageLinkedPageIDParams struct {
 func (q *Queries) ReassignPageLinkedPageID(ctx context.Context, arg ReassignPageLinkedPageIDParams) error {
 	_, err := q.db.ExecContext(ctx, reassignPageLinkedPageID, arg.NewPageID, arg.OldPageID, arg.SpaceID)
 	return err
+}
+
+const restorePagesFromTrash = `-- name: RestorePagesFromTrash :execrows
+UPDATE pages
+SET trashed_at = NULL,
+    updated_at = CASE WHEN trashed_at IS NOT NULL THEN $1::timestamptz ELSE updated_at END
+WHERE space_id = $2
+  AND id = ANY($3::uuid[])
+  AND topic_id = ANY($4::uuid[])
+  AND discarded_at IS NULL
+`
+
+type RestorePagesFromTrashParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	SpaceID   string    `json:"space_id"`
+	Ids       []string  `json:"ids"`
+	TopicIds  []string  `json:"topic_ids"`
+}
+
+// ページをまとめてゴミ箱から戻す。検証後の先行復元も成功として数え、既復元の更新日時は保つ。
+// topic_idsは閲覧者が復元できるトピックとして呼び出し元が解決したもので、それ以外のトピックへ
+// 移ったページは戻さない。成功した件数を呼び出し元が選んだ件数と比べ、1件でも復元できなければ
+// トランザクションごと取り消す。
+func (q *Queries) RestorePagesFromTrash(ctx context.Context, arg RestorePagesFromTrashParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, restorePagesFromTrash,
+		arg.UpdatedAt,
+		arg.SpaceID,
+		pq.Array(arg.Ids),
+		pq.Array(arg.TopicIds),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const searchPageLocations = `-- name: SearchPageLocations :many

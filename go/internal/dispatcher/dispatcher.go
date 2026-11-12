@@ -70,6 +70,18 @@ func (CleanupEmailConfirmationsArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 3}
 }
 
+// DeleteTrashedPagesArgsは、ゴミ箱に入れて保持期間を過ぎたページを物理削除する定期ジョブの引数。
+// 対象は実行した時点で決まり、何度試しても結果が変わらないため、再試行してよい。
+type DeleteTrashedPagesArgs struct{}
+
+// Kindはジョブの種類を返す。
+func (DeleteTrashedPagesArgs) Kind() string { return "delete_trashed_pages" }
+
+// InsertOptsはジョブのInsertオプションを返す。
+func (DeleteTrashedPagesArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 3}
+}
+
 // --- Dispatcher ---
 
 // JobInserterはジョブをキューに追加するインターフェース

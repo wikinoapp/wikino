@@ -181,3 +181,15 @@ func TestEnqueueDeleteTopic(t *testing.T) {
 		t.Errorf("MaxAttempts = %d、期待値 = 5", mock.opts.MaxAttempts)
 	}
 }
+
+func TestDeleteTrashedPagesArgs(t *testing.T) {
+	t.Parallel()
+
+	args := DeleteTrashedPagesArgs{}
+	if got := args.Kind(); got != "delete_trashed_pages" {
+		t.Errorf("Kind() = %s、期待値 = delete_trashed_pages", got)
+	}
+	if got := args.InsertOpts().MaxAttempts; got != 3 {
+		t.Errorf("MaxAttempts = %d、期待値 = 3", got)
+	}
+}

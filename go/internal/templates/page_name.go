@@ -20,6 +20,7 @@ const (
 	PageNameTopicSettings                      PageName = "topic_settings"
 	PageNameTopicSettingsGeneral               PageName = "topic_settings_general"
 	PageNameTopicDeletionNew                   PageName = "topic_deletion_new"
+	PageNameTrashShow                          PageName = "trash_show"
 	PageNameSuggestionIndex                    PageName = "suggestion_index"
 	PageNameSuggestionShow                     PageName = "suggestion_show"
 	PageNameSuggestionNew                      PageName = "suggestion_new"

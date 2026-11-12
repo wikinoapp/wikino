@@ -29,6 +29,7 @@ func (p *GuestPolicy) CanCreatePage() bool                                 { ret
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
 func (p *GuestPolicy) CanShowTrash() bool                                  { return false }
 func (p *GuestPolicy) CanTrashPage() bool                                  { return false }
+func (p *GuestPolicy) CanRestorePage() bool                                { return false }
 func (p *GuestPolicy) CanPinPage() bool                                    { return false }
 func (p *GuestPolicy) CanUnpinPage() bool                                  { return false }
 func (p *GuestPolicy) CanShowDraftPage() bool                              { return false }

@@ -574,6 +574,42 @@ func TestFeatureFlaggedPatterns_TopicSettings(t *testing.T) {
 	}
 }
 
+func TestFeatureFlaggedPatterns_Trash(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		want   model.FeatureFlagName
+	}{
+		{name: "ゴミ箱の一覧のGET", method: http.MethodGet, path: "/s/my-space/trash", want: model.FeatureFlagTrash},
+		{name: "ゴミ箱の一覧のHEAD", method: http.MethodHead, path: "/s/my-space/trash", want: model.FeatureFlagTrash},
+		{name: "ゴミ箱の一覧へのPOSTはフラグの対象外", method: http.MethodPost, path: "/s/my-space/trash", want: ""},
+		{name: "ゴミ箱の下のパスはフラグの対象外", method: http.MethodGet, path: "/s/my-space/trash/1", want: ""},
+		{name: "一括復元のPOST", method: http.MethodPost, path: "/s/my-space/bulk_restored_pages", want: model.FeatureFlagTrash},
+		{name: "一括復元へのGETはフラグの対象外", method: http.MethodGet, path: "/s/my-space/bulk_restored_pages", want: ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+
+			if m.isGoHandledByRegex(req) {
+				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
+			}
+			if got := m.getFeatureFlagForRequest(req); got != tc.want {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	// グローバル変数featureFlaggedPatternsを変更するためt.Parallel() は使用しない
 

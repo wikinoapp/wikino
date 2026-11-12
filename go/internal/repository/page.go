@@ -194,6 +194,41 @@ func (r *PageRepository) FindRegularBySpacePaginated(ctx context.Context, spaceI
 	}, nil
 }
 
+// FindRestorablePaginatedはゴミ箱の一覧のページを、ゴミ箱に入れた日時の新しい順にオフセット
+// ページネーションで取得する。trashedSince以降にゴミ箱に入れたページのうち、topicIDsのトピックの
+// ものだけを返す。topicIDsが空なら、クエリを発行せずに0件を返す。
+func (r *PageRepository) FindRestorablePaginated(ctx context.Context, spaceID model.SpaceID, topicIDs []model.TopicID, trashedSince time.Time, page int32, limit int32) (*PaginatedPages, error) {
+	if len(topicIDs) == 0 {
+		return &PaginatedPages{Pages: []*model.Page{}}, nil
+	}
+
+	topicIDStrings := model.TopicIDsToStrings(topicIDs)
+	totalCount, err := r.q.CountRestorablePages(ctx, query.CountRestorablePagesParams{
+		SpaceID:      string(spaceID),
+		TrashedSince: trashedSince,
+		TopicIds:     topicIDStrings,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.q.ListRestorablePagesPaginated(ctx, query.ListRestorablePagesPaginatedParams{
+		SpaceID:      string(spaceID),
+		TrashedSince: trashedSince,
+		TopicIds:     topicIDStrings,
+		RowLimit:     limit,
+		RowOffset:    (page - 1) * limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PaginatedPages{
+		Pages:      r.toModels(rows),
+		TotalCount: totalCount,
+	}, nil
+}
+
 // FindLinkedPagesPaginatedはページからのリンク先ページをオフセットページネーションで
 // 取得する。呼び出し元が解決済みのoffsetとlimitを渡す。ゴミ箱に入ったページと廃棄済み
 // トピックのページは除外し、閲覧者が開けるトピックのページに絞る (TopicVisibilityを参照)。
@@ -352,6 +387,33 @@ func (r *PageRepository) ListIDsByTopicForUpdate(ctx context.Context, topicID mo
 	return model.StringsToPageIDs(ids), nil
 }
 
+// ListSpaceIDsWithTrashedBeforeは、ゴミ箱に入れた日時がtrashedBeforeより前のページがあるスペースを返す。
+func (r *PageRepository) ListSpaceIDsWithTrashedBefore(ctx context.Context, trashedBefore time.Time) ([]model.SpaceID, error) {
+	ids, err := r.q.ListSpaceIDsWithTrashedPagesBefore(ctx, trashedBefore)
+	if err != nil {
+		return nil, err
+	}
+	spaceIDs := make([]model.SpaceID, len(ids))
+	for i, id := range ids {
+		spaceIDs[i] = model.SpaceID(id)
+	}
+	return spaceIDs, nil
+}
+
+// ListTrashedIDsBeforeForUpdateは、スペースの、ゴミ箱に入れた日時がtrashedBeforeより前のページを、
+// ID順に最大limit件ロックしてIDを返す。
+func (r *PageRepository) ListTrashedIDsBeforeForUpdate(ctx context.Context, spaceID model.SpaceID, trashedBefore time.Time, limit int32) ([]model.PageID, error) {
+	ids, err := r.q.ListTrashedPageIDsBeforeForUpdate(ctx, query.ListTrashedPageIDsBeforeForUpdateParams{
+		SpaceID:       string(spaceID),
+		TrashedBefore: trashedBefore,
+		RowLimit:      limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return model.StringsToPageIDs(ids), nil
+}
+
 // DeleteByIDsはページを物理削除し、削除した件数を返す。ページの関連レコードは先に消しておく。
 func (r *PageRepository) DeleteByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) (int64, error) {
 	if len(ids) == 0 {
@@ -433,9 +495,10 @@ func (r *PageRepository) FindByIDs(ctx context.Context, ids []model.PageID, spac
 	return r.toModels(rows), nil
 }
 
-// FindMetadataByIDsは同スペースの未廃棄ページを、Wikiリンクのプレビューに必要な列だけで一括取得する。
+// FindMetadataByIDsは同スペースの未廃棄ページを、本文を除いた列だけで一括取得する。
 // 未公開・ゴミ箱のページも含む。返すPageにはID・スペースID・トピックID・番号・タイトルと
-// 公開・ゴミ箱・廃棄の日時だけを設定し、本文などの取得しないフィールドはゼロ値になる
+// 公開・ゴミ箱・廃棄の日時だけを設定し、本文などの取得しないフィールドはゼロ値になる。
+// ページの本文サイズに転送量が比例しないよう、本文は取得しない
 func (r *PageRepository) FindMetadataByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) ([]*model.Page, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -539,6 +602,20 @@ func (r *PageRepository) MoveTopic(ctx context.Context, input MoveTopicInput) (*
 		return nil, err
 	}
 	return r.toModel(row), nil
+}
+
+// RestoreFromTrashはtopicIDsのトピックのページをゴミ箱から戻し、既復元も含め成功した件数を返す。
+// 既復元のページの更新日時は保つ。idsが空なら、クエリを発行せずに0を返す。
+func (r *PageRepository) RestoreFromTrash(ctx context.Context, ids []model.PageID, topicIDs []model.TopicID, spaceID model.SpaceID, updatedAt time.Time) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	return r.q.RestorePagesFromTrash(ctx, query.RestorePagesFromTrashParams{
+		UpdatedAt: updatedAt,
+		SpaceID:   string(spaceID),
+		Ids:       model.PageIDsToStrings(ids),
+		TopicIds:  model.TopicIDsToStrings(topicIDs),
+	})
 }
 
 // TrashByIDは渡された時刻をtrashed_atに打刻してページをゴミ箱へ入れる。

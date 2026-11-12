@@ -44,6 +44,10 @@ const emailConfirmationRetentionHours = 24
 // cleanupEmailConfirmationsIntervalは、古いメール確認の記録を消すジョブを投入する間隔。
 const cleanupEmailConfirmationsInterval = time.Hour
 
+// deleteTrashedPagesIntervalは、ゴミ箱に入れて保持期間を過ぎたページを物理削除するジョブを投入する
+// 間隔。Rails版のcronと同じく1日に1回にする。
+const deleteTrashedPagesInterval = 24 * time.Hour
+
 // ExportDepsは、エクスポートのワーカーが必要としながら自分では用意できないものを保持する。
 // リポジトリとオブジェクトストレージはHTTP側と共有するため、ここで作り直さず受け取る。メール
 // 送信とUseCaseはワーカーだけのものなのでNewClientの中に留める。
@@ -160,6 +164,18 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 	)))
 	slog.InfoContext(ctx, "DeleteTopicWorkerを登録しました")
 
+	// ゴミ箱の物理削除のワーカーもデータベースだけで動くため、設定によらず登録する。
+	// 定期ジョブとして投入するため、登録を条件付きにしてはいけない (periodicJobSpecsを参照)。
+	river.AddWorker(workers, NewDeleteTrashedPagesWorker(usecase.NewDeleteTrashedPagesUsecase(
+		deletionDeps.DB,
+		deletionDeps.PageRepo,
+		deletionDeps.DraftPageRepo,
+		deletionDeps.PageEditorRepo,
+		deletionDeps.PageRevisionRepo,
+		deletionDeps.PageAttachmentReferenceRepo,
+	)))
+	slog.InfoContext(ctx, "DeleteTrashedPagesWorkerを登録しました")
+
 	// Riverクライアントの作成
 	// SentryミドルウェアはConfig.Middlewareに登録する。
 	// 将来riverのアップデートで削除される可能性のあるWorkerMiddleware
@@ -250,6 +266,10 @@ func periodicJobSpecs() []periodicJobSpec {
 		{
 			args:     dispatcher.CleanupEmailConfirmationsArgs{RetentionHours: emailConfirmationRetentionHours},
 			interval: cleanupEmailConfirmationsInterval,
+		},
+		{
+			args:     dispatcher.DeleteTrashedPagesArgs{},
+			interval: deleteTrashedPagesInterval,
 		},
 	}
 }

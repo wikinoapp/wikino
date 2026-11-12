@@ -42,6 +42,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/api_catalog"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
+	bulkrestoredpagehandler "github.com/wikinoapp/wikino/go/internal/handler/bulk_restored_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
@@ -96,6 +97,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/topic_feed"
 	topicsettingshandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings"
 	topicsettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings_general"
+	trashhandler "github.com/wikinoapp/wikino/go/internal/handler/trash"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/httperror"
@@ -635,6 +637,16 @@ func runServe() {
 		getTopicDeletionNewUC,
 		discardTopicUC,
 	)
+	getTrashShowUC := usecase.NewGetTrashShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	trashHandler := trashhandler.NewHandler(
+		cfg,
+		getTrashShowUC,
+	)
+	restorePagesUC := usecase.NewRestorePagesUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, validator.NewBulkRestoredPageCreateValidator(pageRepo))
+	bulkRestoredPageHandler := bulkrestoredpagehandler.NewHandler(
+		flashMgr,
+		restorePagesUC,
+	)
 	getTopicSettingsGeneralUC := usecase.NewGetTopicSettingsGeneralUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
 	topicUpdateValidator := validator.NewTopicUpdateValidator(topicRepo)
 	updateTopicUC := usecase.NewUpdateTopicUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, topicUpdateValidator)
@@ -1069,6 +1081,15 @@ func runServe() {
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
+
+		// スペースのゴミ箱の一覧。リバースプロキシはgo_trashが有効な閲覧者のリクエストだけを
+		// ここへ振り分け、それ以外はRails版が処理する。
+		r.Get("/s/{space_identifier}/trash", trashHandler.Show)
+		r.Head("/s/{space_identifier}/trash", trashHandler.Show)
+
+		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせ、ゴミ箱の一覧と同じく
+		// go_trashが有効な閲覧者のリクエストだけがここへ振り分けられる。
+		r.Post("/s/{space_identifier}/bulk_restored_pages", bulkRestoredPageHandler.Create)
 
 		// トピックの一般設定。画面と保存処理。
 		//

@@ -75,6 +75,10 @@ func (p *MemberPolicy) CanTrashPage() bool {
 	return p.effectiveScopes[model.ScopePageTrashWrite]
 }
 
+func (p *MemberPolicy) CanRestorePage() bool {
+	return p.effectiveScopes[model.ScopePageTrashDelete]
+}
+
 func (p *MemberPolicy) CanPinPage() bool {
 	return p.effectiveScopes[model.ScopePagePinWrite]
 }

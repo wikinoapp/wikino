@@ -34,6 +34,9 @@ type Authorizer interface {
 	// よい編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
 	CanTrashPage() bool
 
+	// CanRestorePageはpage_trash:deleteスコープで判定し、ゴミ箱からページを戻す操作を許可する。
+	CanRestorePage() bool
+
 	// ページのピン留め
 
 	// CanPinPageはpage_pin:writeスコープで、CanUnpinPageはpage_pin:deleteスコープで判定する。
