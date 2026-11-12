@@ -82,6 +82,17 @@ func (r *PageRevisionRepository) FindLatestByPageID(ctx context.Context, pageID 
 	return r.toModel(row), nil
 }
 
+// DeleteByPageIDsはページのリビジョンを物理削除する。
+func (r *PageRevisionRepository) DeleteByPageIDs(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID) error {
+	if len(pageIDs) == 0 {
+		return nil
+	}
+	return r.q.DeletePageRevisionsByPageIDs(ctx, query.DeletePageRevisionsByPageIDsParams{
+		SpaceID: string(spaceID),
+		PageIds: model.PageIDsToStrings(pageIDs),
+	})
+}
+
 // toModelはquery.PageRevisionをmodel.PageRevisionに変換する
 func (r *PageRevisionRepository) toModel(row query.PageRevision) *model.PageRevision {
 	return &model.PageRevision{

@@ -70,6 +70,26 @@ func (q *Queries) DeletePageAttachmentReferencesByPageAndAttachmentIDs(ctx conte
 	return err
 }
 
+const deletePageAttachmentReferencesByPageIDs = `-- name: DeletePageAttachmentReferencesByPageIDs :exec
+DELETE FROM page_attachment_references par
+USING pages p
+WHERE par.page_id = p.id
+  AND p.space_id = $1
+  AND par.page_id = ANY($2::uuid[])
+`
+
+type DeletePageAttachmentReferencesByPageIDsParams struct {
+	SpaceID string   `json:"space_id"`
+	PageIds []string `json:"page_ids"`
+}
+
+// ページの添付ファイル参照を物理削除する (スペースIDでスコープ)。添付ファイル自体は
+// スペースに属するため削除しない。
+func (q *Queries) DeletePageAttachmentReferencesByPageIDs(ctx context.Context, arg DeletePageAttachmentReferencesByPageIDsParams) error {
+	_, err := q.db.ExecContext(ctx, deletePageAttachmentReferencesByPageIDs, arg.SpaceID, pq.Array(arg.PageIds))
+	return err
+}
+
 const listPageAttachmentReferencesByPageID = `-- name: ListPageAttachmentReferencesByPageID :many
 SELECT par.id, par.attachment_id, par.page_id, par.created_at, par.updated_at FROM page_attachment_references par
 INNER JOIN pages p ON par.page_id = p.id

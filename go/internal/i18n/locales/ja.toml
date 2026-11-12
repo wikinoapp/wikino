@@ -1436,6 +1436,10 @@ other = "名前を入力してください"
 description = "スペース名文字数超過エラー"
 other = "名前は30文字以内で入力してください"
 
+[validation_topic_deletion_name_mismatch]
+description = "トピックの削除の確認で入力したトピック名が削除するトピックの名前と一致しないエラー"
+other = "トピック名が間違っています"
+
 [validation_topic_name_required]
 description = "トピック名必須エラー"
 other = "名前を入力してください"
@@ -1563,6 +1567,76 @@ other = "トピックを作成しました"
 [flash_topic_updated]
 description = "トピック更新成功時のフラッシュメッセージ"
 other = "トピックを更新しました"
+
+[flash_topic_deleted]
+description = "トピック削除成功時のフラッシュメッセージ"
+other = "トピックを削除しました"
+
+# トピックの削除の確認画面
+[topic_deletion_new_title]
+description = "トピックの削除の確認画面のページタイトル"
+other = "トピックの削除 | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_deletion_new_heading]
+description = "トピックの削除の確認画面の見出し"
+other = "トピックの削除"
+
+[topic_deletion_new_breadcrumb_settings]
+description = "トピックの削除の確認画面のパンくずに出すトピックの設定のラベル"
+other = "設定"
+
+[topic_deletion_new_breadcrumb]
+description = "トピックの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "トピックの削除"
+
+[topic_deletion_new_description]
+description = "トピックの削除の確認画面の説明"
+other = "トピックを削除しますか？削除する前に以下の内容をご確認ください。"
+
+[topic_deletion_new_warning_pages]
+description = "トピックの削除の確認画面の注意 (ページも消える)"
+other = "トピックを削除すると、そのトピックに含まれるページもすべて削除されます"
+
+[topic_deletion_new_warning_irreversible]
+description = "トピックの削除の確認画面の注意 (元に戻せない)"
+other = "削除されたトピックやそのトピックに含まれるページの復元はできません"
+
+[topic_deletion_new_topic_name_label]
+description = "トピックの削除の確認画面のトピック名の入力欄のラベル"
+other = "トピック名"
+
+[topic_deletion_new_topic_name_hint]
+description = "トピックの削除の確認画面のトピック名の入力欄の説明"
+other = "トピックを削除する場合は、トピック名 ({{.TopicName}}) を入力してください"
+
+[topic_deletion_new_submit_button]
+description = "トピックの削除の確認画面の送信ボタン"
+other = "削除する"
+
+[topic_deletion_new_cancel]
+description = "トピックの削除の確認画面のキャンセルリンク"
+other = "キャンセル"
+
+# トピックの設定のトップ
+[topic_settings_title]
+description = "トピックの設定のトップのページタイトル"
+other = "設定 | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_settings_heading]
+description = "トピックの設定のトップの見出し"
+other = "設定"
+
+[topic_settings_breadcrumb]
+description = "トピックの設定のトップ自身を指すパンくず項目 (現在項目)"
+other = "設定"
+
+[topic_settings_general]
+description = "トピックの設定のトップの一般設定へのリンク"
+other = "基本情報"
+
+[topic_settings_deletion]
+description = "トピックの設定のトップのトピックの削除へのリンク"
+other = "トピックの削除"
 
 # トピックの一般設定
 [topic_settings_general_title]
@@ -3162,3 +3236,123 @@ other = "成功しました (ステータス {{.Status}})"
 [mcp_call_status]
 description = "MCPのツールのエラーの内容の前に添えるHTTPステータス"
 other = "ステータス {{.Status}}"
+
+[trash_show_title]
+description = "ゴミ箱の一覧のページタイトル"
+other = "ゴミ箱 | {{.SpaceName}}"
+
+[trash_show_paginated_title]
+description = "ページ送りしたゴミ箱の一覧のページタイトル"
+other = "ゴミ箱 ({{.PageNumber}} ページ目) | {{.SpaceName}}"
+
+[trash_show_breadcrumb]
+description = "ゴミ箱の一覧のパンくずの現在地"
+other = "ゴミ箱"
+
+[trash_show_heading]
+description = "ゴミ箱の一覧の見出し"
+other = "ゴミ箱"
+
+[trash_show_description]
+description = "ゴミ箱の一覧の説明"
+other = "ゴミ箱に入れたページを表示しています"
+
+[trash_show_retention_description]
+description = "ゴミ箱の一覧の、復元できる期間の説明"
+other = "30日以上経過したページは自動的に削除されます。それ以内であれば復元可能です"
+
+[trash_show_empty]
+description = "ゴミ箱の一覧にページが無いときのメッセージ"
+other = "ゴミ箱は空です"
+
+[trash_show_restore_button]
+description = "ゴミ箱の一覧で選んだページを復元するボタン"
+other = "復元する"
+
+[trash_show_table_caption]
+description = "ゴミ箱の一覧の表のキャプション (スクリーンリーダー向け)"
+other = "{{.SpaceName}}のゴミ箱に入れたページ"
+
+[trash_show_column_select]
+description = "ゴミ箱の一覧の、選択のチェックボックスの列の見出し (スクリーンリーダー向け)"
+other = "選択"
+
+[trash_show_column_title]
+description = "ゴミ箱の一覧のページの列の見出し"
+other = "ページ"
+
+[trash_show_column_trashed_at]
+description = "ゴミ箱の一覧の、ゴミ箱に入れた日時の列の見出し"
+other = "ゴミ箱に入れた日時"
+
+[trash_show_select_page]
+description = "ゴミ箱の一覧の各行のチェックボックスのラベル (スクリーンリーダー向け)"
+other = "「{{.Title}}」を選択"
+
+[trash_show_untitled]
+description = "ゴミ箱の一覧でタイトルの無いページの表示"
+other = "無題"
+
+[validation_bulk_restored_page_ids_required]
+description = "ゴミ箱でページを選ばずに復元しようとしたときのエラー"
+other = "復元するページを選んでください"
+
+[validation_bulk_restored_page_ids_not_restorable]
+description = "ゴミ箱で選んだページに、復元できないページが含まれていたときのエラー"
+other = "復元できないページが含まれているため、どのページも復元しませんでした"
+
+[flash_pages_restored]
+description = "ゴミ箱からページを復元したときのフラッシュメッセージ"
+other = "ページを復元しました"
+
+[validation_search_query_too_short]
+description = "検索のキーワードが短すぎるときのエラー"
+other = "検索キーワードは{{.Count}}文字以上で入力してください"
+
+[validation_search_query_too_long]
+description = "検索のキーワードが長すぎるときのエラー"
+other = "検索キーワードは{{.Count}}文字以内で入力してください"
+
+[validation_search_query_invalid_characters]
+description = "検索のキーワードに使えない文字が含まれるときのエラー"
+other = "検索キーワードに不正な文字が含まれています"
+
+[search_show_title]
+description = "検索の画面のページタイトル"
+other = "検索"
+
+[search_show_heading]
+description = "検索の画面の見出し"
+other = "検索"
+
+[search_show_description]
+description = "検索の画面の説明"
+other = "ページタイトルをキーワードで検索することができます。"
+
+[search_show_help_link]
+description = "検索の画面から、検索の使い方のヘルプへのリンク"
+other = "検索の使い方"
+
+[search_show_query_label]
+description = "検索の画面のキーワードの欄のラベル (スクリーンリーダー向け)"
+other = "検索キーワード"
+
+[search_show_query_placeholder]
+description = "検索の画面のキーワードの欄のプレースホルダー"
+other = "キーワードを入力してください"
+
+[search_show_submit_button]
+description = "検索の画面の検索ボタン"
+other = "検索"
+
+[search_show_results_heading]
+description = "検索の画面の結果の見出し (スクリーンリーダー向け)"
+other = "検索結果"
+
+[search_show_no_results]
+description = "検索の画面で結果が無いときのメッセージ"
+other = "検索結果が見つかりませんでした"
+
+[search_show_breadcrumb]
+description = "検索の画面のパンくずの現在地"
+other = "検索"

@@ -70,6 +70,18 @@ func (CleanupEmailConfirmationsArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 3}
 }
 
+// DeleteTrashedPagesArgsは、ゴミ箱に入れて保持期間を過ぎたページを物理削除する定期ジョブの引数。
+// 対象は実行した時点で決まり、何度試しても結果が変わらないため、再試行してよい。
+type DeleteTrashedPagesArgs struct{}
+
+// Kindはジョブの種類を返す。
+func (DeleteTrashedPagesArgs) Kind() string { return "delete_trashed_pages" }
+
+// InsertOptsはジョブのInsertオプションを返す。
+func (DeleteTrashedPagesArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 3}
+}
+
 // --- Dispatcher ---
 
 // JobInserterはジョブをキューに追加するインターフェース
@@ -132,6 +144,29 @@ func (GenerateExportFilesArgs) InsertOpts() river.InsertOpts {
 // EnqueueGenerateExportFilesはエクスポートファイル生成ジョブをキューに追加する。
 func (d *Dispatcher) EnqueueGenerateExportFiles(ctx context.Context, exportID, spaceID string) error {
 	args := GenerateExportFilesArgs{ExportID: exportID, SpaceID: spaceID}
+	opts := args.InsertOpts()
+	_, err := d.client.Insert(ctx, args, &opts)
+	return err
+}
+
+// DeleteTopicArgsは論理削除したトピックを、関連レコードとともに物理削除するジョブの引数。
+// 削除は同じトピックに何度試しても結果が変わらないため、再試行してよい。
+type DeleteTopicArgs struct {
+	SpaceID string `json:"space_id"`
+	TopicID string `json:"topic_id"`
+}
+
+// Kindはジョブの種類を返す。
+func (DeleteTopicArgs) Kind() string { return "delete_topic" }
+
+// InsertOptsはジョブのInsertオプションを返す。
+func (DeleteTopicArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 5}
+}
+
+// EnqueueDeleteTopicはトピックの物理削除のジョブをキューに追加する。
+func (d *Dispatcher) EnqueueDeleteTopic(ctx context.Context, spaceID, topicID string) error {
+	args := DeleteTopicArgs{SpaceID: spaceID, TopicID: topicID}
 	opts := args.InsertOpts()
 	_, err := d.client.Insert(ctx, args, &opts)
 	return err

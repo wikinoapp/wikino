@@ -3,6 +3,7 @@ package worker
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"time"
 
@@ -43,6 +44,10 @@ const emailConfirmationRetentionHours = 24
 // cleanupEmailConfirmationsIntervalは、古いメール確認の記録を消すジョブを投入する間隔。
 const cleanupEmailConfirmationsInterval = time.Hour
 
+// deleteTrashedPagesIntervalは、ゴミ箱に入れて保持期間を過ぎたページを物理削除するジョブを投入する
+// 間隔。Rails版のcronと同じく1日に1回にする。
+const deleteTrashedPagesInterval = 24 * time.Hour
+
 // ExportDepsは、エクスポートのワーカーが必要としながら自分では用意できないものを保持する。
 // リポジトリとオブジェクトストレージはHTTP側と共有するため、ここで作り直さず受け取る。メール
 // 送信とUseCaseはワーカーだけのものなのでNewClientの中に留める。
@@ -60,6 +65,19 @@ type ExportDeps struct {
 	ObjectStorage   storage.ObjectStorage
 }
 
+// DeletionDepsは、論理削除したレコードを物理削除するワーカーが使うものを保持する。
+// データベースとリポジトリはHTTP側と共有するため、ここで作り直さず受け取る。
+type DeletionDeps struct {
+	DB                          *sql.DB
+	TopicRepo                   *repository.TopicRepository
+	TopicMemberRepo             *repository.TopicMemberRepository
+	PageRepo                    *repository.PageRepository
+	DraftPageRepo               *repository.DraftPageRepository
+	PageEditorRepo              *repository.PageEditorRepository
+	PageRevisionRepo            *repository.PageRevisionRepository
+	PageAttachmentReferenceRepo *repository.PageAttachmentReferenceRepository
+}
+
 // ClientはRiverクライアントのラッパー
 type Client struct {
 	riverClient *river.Client[pgx.Tx]
@@ -67,7 +85,7 @@ type Client struct {
 }
 
 // NewClientは新しいRiverクライアントを作成します
-func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps) (*Client, error) {
+func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps, deletionDeps DeletionDeps) (*Client, error) {
 	// pgxpoolの作成
 	poolConfig, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -132,6 +150,31 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 	cleanupEmailConfirmationsUC := usecase.NewCleanupEmailConfirmationsUsecase(emailConfirmationRepo)
 	river.AddWorker(workers, NewCleanupEmailConfirmationsWorker(cleanupEmailConfirmationsUC))
 	slog.InfoContext(ctx, "CleanupEmailConfirmationsWorkerを登録しました")
+
+	// トピックの物理削除のワーカーはデータベースだけで動くため、設定によらず登録する。
+	river.AddWorker(workers, NewDeleteTopicWorker(usecase.NewDeleteTopicUsecase(
+		deletionDeps.DB,
+		deletionDeps.TopicRepo,
+		deletionDeps.TopicMemberRepo,
+		deletionDeps.PageRepo,
+		deletionDeps.DraftPageRepo,
+		deletionDeps.PageEditorRepo,
+		deletionDeps.PageRevisionRepo,
+		deletionDeps.PageAttachmentReferenceRepo,
+	)))
+	slog.InfoContext(ctx, "DeleteTopicWorkerを登録しました")
+
+	// ゴミ箱の物理削除のワーカーもデータベースだけで動くため、設定によらず登録する。
+	// 定期ジョブとして投入するため、登録を条件付きにしてはいけない (periodicJobSpecsを参照)。
+	river.AddWorker(workers, NewDeleteTrashedPagesWorker(usecase.NewDeleteTrashedPagesUsecase(
+		deletionDeps.DB,
+		deletionDeps.PageRepo,
+		deletionDeps.DraftPageRepo,
+		deletionDeps.PageEditorRepo,
+		deletionDeps.PageRevisionRepo,
+		deletionDeps.PageAttachmentReferenceRepo,
+	)))
+	slog.InfoContext(ctx, "DeleteTrashedPagesWorkerを登録しました")
 
 	// Riverクライアントの作成
 	// SentryミドルウェアはConfig.Middlewareに登録する。
@@ -223,6 +266,10 @@ func periodicJobSpecs() []periodicJobSpec {
 		{
 			args:     dispatcher.CleanupEmailConfirmationsArgs{RetentionHours: emailConfirmationRetentionHours},
 			interval: cleanupEmailConfirmationsInterval,
+		},
+		{
+			args:     dispatcher.DeleteTrashedPagesArgs{},
+			interval: deleteTrashedPagesInterval,
 		},
 	}
 }

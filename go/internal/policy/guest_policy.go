@@ -24,10 +24,12 @@ func (p *GuestPolicy) CanShowAttachment(allReferencingPagesPublic bool) bool {
 
 func (p *GuestPolicy) CanUpdateTopic() bool                                { return false }
 func (p *GuestPolicy) CanUpdateTopicVisibility() bool                      { return false }
+func (p *GuestPolicy) CanDeleteTopic() bool                                { return false }
 func (p *GuestPolicy) CanCreatePage() bool                                 { return false }
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
 func (p *GuestPolicy) CanShowTrash() bool                                  { return false }
 func (p *GuestPolicy) CanTrashPage() bool                                  { return false }
+func (p *GuestPolicy) CanRestorePage() bool                                { return false }
 func (p *GuestPolicy) CanPinPage() bool                                    { return false }
 func (p *GuestPolicy) CanUnpinPage() bool                                  { return false }
 func (p *GuestPolicy) CanShowDraftPage() bool                              { return false }

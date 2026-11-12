@@ -105,7 +105,6 @@ templ revokeForm(csrfToken string, spaceIdentifier viewmodel.SpaceIdentifier, gr
 	<form
 		action={ templ.SafeURL(string(templates.SpaceSettingsOAuthGrantPath(spaceIdentifier, grant.ID))) }
 		data-confirm={ revokeConfirm(ctx, grant) }
-		hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
 		method="POST"
 	>
 		<input type="hidden" name="_method" value="DELETE"/>

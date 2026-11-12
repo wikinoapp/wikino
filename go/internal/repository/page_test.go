@@ -3394,3 +3394,338 @@ func TestPageRepository_FindRecentPublishedByTopic(t *testing.T) {
 		}
 	})
 }
+
+func TestPageRepository_FindRestorablePaginated(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-restorable-space").
+		Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("page-restorable-other").
+		Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("Target").Build()
+	excludedTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("Excluded").Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("Other").Build()
+
+	since := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	newPage := func(space model.SpaceID, topic model.TopicID, number model.PageNumber, title string, trashedAt *time.Time) model.PageID {
+		b := testutil.NewPageBuilder(t, tx).WithSpaceID(space).WithTopicID(topic).WithNumber(number).WithTitle(title)
+		if trashedAt != nil {
+			b = b.WithTrashedAt(*trashedAt)
+		}
+		return b.Build()
+	}
+	at := func(d time.Duration) *time.Time {
+		v := since.Add(d)
+		return &v
+	}
+
+	olderID := newPage(spaceID, topicID, 1, "Older", at(time.Hour))
+	newerID := newPage(spaceID, topicID, 2, "Newer", at(2*time.Hour))
+	boundaryID := newPage(spaceID, topicID, 3, "Boundary", at(0))
+	newPage(spaceID, topicID, 4, "Expired", at(-time.Second))
+	newPage(spaceID, topicID, 5, "Not trashed", nil)
+	newPage(spaceID, excludedTopicID, 6, "Excluded topic", at(time.Hour))
+	newPage(otherSpaceID, otherTopicID, 1, "Other space", at(time.Hour))
+
+	t.Run("期間内のページを、ゴミ箱に入れた日時の新しい順に返す", func(t *testing.T) {
+		result, err := repo.FindRestorablePaginated(context.Background(), spaceID, []model.TopicID{topicID, otherTopicID}, since, 1, 10)
+		if err != nil {
+			t.Fatalf("FindRestorablePaginated()のエラー = %v", err)
+		}
+
+		want := []model.PageID{newerID, olderID, boundaryID}
+		if len(result.Pages) != len(want) {
+			t.Fatalf("件数 = %d、期待値 = %d", len(result.Pages), len(want))
+		}
+		for i, id := range want {
+			if result.Pages[i].ID != id {
+				t.Errorf("%d件目 = %v、期待値 = %v", i, result.Pages[i].ID, id)
+			}
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d、期待値 = 3", result.TotalCount)
+		}
+	})
+
+	t.Run("オフセットでページ送りする", func(t *testing.T) {
+		result, err := repo.FindRestorablePaginated(context.Background(), spaceID, []model.TopicID{topicID}, since, 2, 2)
+		if err != nil {
+			t.Fatalf("FindRestorablePaginated()のエラー = %v", err)
+		}
+
+		if len(result.Pages) != 1 || result.Pages[0].ID != boundaryID {
+			t.Errorf("2ページ目 = %v、期待値 = [%v]", result.Pages, boundaryID)
+		}
+		if result.TotalCount != 3 {
+			t.Errorf("TotalCount = %d、期待値 = 3", result.TotalCount)
+		}
+	})
+
+	t.Run("トピックが空なら0件を返す", func(t *testing.T) {
+		result, err := repo.FindRestorablePaginated(context.Background(), spaceID, nil, since, 1, 10)
+		if err != nil {
+			t.Fatalf("FindRestorablePaginated()のエラー = %v", err)
+		}
+		if len(result.Pages) != 0 || result.TotalCount != 0 {
+			t.Errorf("結果 = %+v、0件を期待", result)
+		}
+	})
+}
+
+func TestPageRepository_RestoreFromTrash(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-restore-from-trash").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-restore-from-trash-other").Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("Target").Build()
+	excludedTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("Excluded").Build()
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("Other").Build()
+
+	trashedAt := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	trashed := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(1).WithTitle("Trashed").WithTrashedAt(trashedAt).Build()
+	excluded := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(excludedTopicID).WithNumber(2).WithTrashedAt(trashedAt).Build()
+	otherSpace := testutil.NewPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).WithNumber(1).WithTrashedAt(trashedAt).Build()
+
+	updatedAt := time.Date(2025, 2, 1, 0, 0, 0, 0, time.UTC)
+	restored, err := repo.RestoreFromTrash(ctx, []model.PageID{trashed, excluded, otherSpace}, []model.TopicID{topicID, otherTopicID}, spaceID, updatedAt)
+	if err != nil {
+		t.Fatalf("RestoreFromTrash()のエラー = %v", err)
+	}
+	if restored != 1 {
+		t.Errorf("戻した件数 = %d、期待値 = 1", restored)
+	}
+
+	pages, err := repo.FindMetadataByIDs(ctx, []model.PageID{trashed, excluded}, spaceID)
+	if err != nil {
+		t.Fatalf("FindMetadataByIDs()のエラー = %v", err)
+	}
+	for _, pg := range pages {
+		switch pg.ID {
+		case trashed:
+			if pg.TrashedAt != nil {
+				t.Error("指定したトピックのページがゴミ箱に残っている")
+			}
+		case excluded:
+			if pg.TrashedAt == nil {
+				t.Error("指定していないトピックのページがゴミ箱から戻った")
+			}
+		}
+	}
+	otherPages, err := repo.FindMetadataByIDs(ctx, []model.PageID{otherSpace}, otherSpaceID)
+	if err != nil {
+		t.Fatalf("FindMetadataByIDs()のエラー = %v", err)
+	}
+	if len(otherPages) != 1 || otherPages[0].TrashedAt == nil {
+		t.Error("別のスペースのページがゴミ箱から戻った")
+	}
+
+	if n, err := repo.RestoreFromTrash(ctx, nil, []model.TopicID{topicID}, spaceID, updatedAt); err != nil || n != 0 {
+		t.Errorf("IDが空のとき = (%d, %v)、期待値 = (0, nil)", n, err)
+	}
+}
+
+func TestPageRepository_ListTrashedBefore(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	// 他のテストのページと混ざらないよう、ゴミ箱に入れた日時を古い年にする
+	before := time.Date(1970, 6, 1, 0, 0, 0, 0, time.UTC)
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-trashed-before").Build()
+	freshSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-trashed-before-fresh").Build()
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("Expired").Build()
+	freshTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(freshSpaceID).WithNumber(1).WithName("Fresh").Build()
+
+	newPage := func(space model.SpaceID, topic model.TopicID, number model.PageNumber, trashedAt time.Time) model.PageID {
+		return testutil.NewPageBuilder(t, tx).WithSpaceID(space).WithTopicID(topic).WithNumber(number).
+			WithTitle(fmt.Sprintf("Page %d", number)).WithTrashedAt(trashedAt).Build()
+	}
+	expiredIDs := []model.PageID{
+		newPage(spaceID, topicID, 1, before.Add(-time.Hour)),
+		newPage(spaceID, topicID, 2, before.Add(-2*time.Hour)),
+	}
+	slices.Sort(expiredIDs)
+	newPage(spaceID, topicID, 3, before)
+	newPage(freshSpaceID, freshTopicID, 1, before.Add(time.Hour))
+
+	t.Run("保持期間を過ぎたページがあるスペースだけを返す", func(t *testing.T) {
+		spaceIDs, err := repo.ListSpaceIDsWithTrashedBefore(ctx, before)
+		if err != nil {
+			t.Fatalf("ListSpaceIDsWithTrashedBefore()のエラー = %v", err)
+		}
+		if !slices.Contains(spaceIDs, spaceID) {
+			t.Errorf("スペース = %v、%vを含むことを期待", spaceIDs, spaceID)
+		}
+		if slices.Contains(spaceIDs, freshSpaceID) {
+			t.Errorf("スペース = %v、%vを含まないことを期待", spaceIDs, freshSpaceID)
+		}
+	})
+
+	t.Run("保持期間を過ぎたページをID順に上限まで返す", func(t *testing.T) {
+		ids, err := repo.ListTrashedIDsBeforeForUpdate(ctx, spaceID, before, 1)
+		if err != nil {
+			t.Fatalf("ListTrashedIDsBeforeForUpdate()のエラー = %v", err)
+		}
+		if len(ids) != 1 || ids[0] != expiredIDs[0] {
+			t.Errorf("ID = %v、期待値 = [%v]", ids, expiredIDs[0])
+		}
+
+		ids, err = repo.ListTrashedIDsBeforeForUpdate(ctx, spaceID, before, 10)
+		if err != nil {
+			t.Fatalf("ListTrashedIDsBeforeForUpdate()のエラー = %v", err)
+		}
+		if !slices.Equal(ids, expiredIDs) {
+			t.Errorf("ID = %v、期待値 = %v", ids, expiredIDs)
+		}
+	})
+}
+
+func TestPageRepository_SearchByTitle(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewPageRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	// 検索はすべてのスペースをまたぐため、他のテストのページに一致しないキーワードを使う
+	const keyword = "検索リポジトリ"
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-search-title").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-search-title-other").Build()
+	discardedSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("page-search-title-discarded").WithDiscarded().Build()
+
+	publicTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("Public").
+		WithVisibility(int32(model.TopicVisibilityPublic)).Build()
+	privateTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("Private").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).Build()
+	discardedTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(3).WithName("Discarded").
+		WithVisibility(int32(model.TopicVisibilityPublic)).WithDiscarded().Build()
+	otherPublicTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("Other").
+		WithVisibility(int32(model.TopicVisibilityPublic)).Build()
+	discardedSpaceTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(discardedSpaceID).WithNumber(1).WithName("Gone").
+		WithVisibility(int32(model.TopicVisibilityPublic)).Build()
+	userID := testutil.NewUserBuilder(t, tx).WithEmail("page-search-title@example.com").WithAtname("page_search_title").Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).Build()
+
+	base := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	newPage := func(space model.SpaceID, topic model.TopicID, number model.PageNumber, title string, hoursAgo int) *testutil.PageBuilder {
+		return testutil.NewPageBuilder(t, tx).WithSpaceID(space).WithTopicID(topic).WithNumber(number).
+			WithTitle(title).WithModifiedAt(base.Add(-time.Duration(hoursAgo) * time.Hour))
+	}
+
+	publicOlder := newPage(spaceID, publicTopicID, 2, keyword+" 日報 古い", 2).Build()
+	pinnedAt := base.Add(-30 * time.Minute)
+	publicNewer := newPage(spaceID, publicTopicID, 1, keyword+" 日報 Daily", 1).
+		WithBody("検索カードでは表示しない本文").WithLinkedPageIDs([]model.PageID{publicOlder}).
+		WithPublishedAt(base).WithPinnedAt(pinnedAt).WithFeaturedImageAttachmentID(attachmentID).Build()
+	private := newPage(spaceID, privateTopicID, 3, keyword+" 日報 非公開", 3).Build()
+	otherSpace := newPage(otherSpaceID, otherPublicTopicID, 1, keyword+" 日報 別のスペース", 4).Build()
+	newPage(spaceID, publicTopicID, 4, keyword+" メモ", 5).Build()
+	newPage(spaceID, publicTopicID, 5, keyword+" 日報 ゴミ箱", 6).WithTrashedAt(base).Build()
+	newPage(spaceID, publicTopicID, 6, keyword+" 日報 廃棄", 7).WithDiscarded().Build()
+	newPage(spaceID, publicTopicID, 7, keyword+" 日報 未公開", 8).WithUnpublished().Build()
+	newPage(spaceID, discardedTopicID, 8, keyword+" 日報 廃棄したトピック", 9).Build()
+	newPage(discardedSpaceID, discardedSpaceTopicID, 1, keyword+" 日報 廃棄したスペース", 10).Build()
+	underscore := newPage(spaceID, publicTopicID, 9, keyword+" 100%_達成", 11).Build()
+
+	search := func(t *testing.T, input SearchByTitleInput) []model.PageID {
+		t.Helper()
+		if input.Limit == 0 {
+			input.Limit = 25
+		}
+		pages, err := repo.SearchByTitle(ctx, input)
+		if err != nil {
+			t.Fatalf("SearchByTitle()のエラー = %v", err)
+		}
+		ids := make([]model.PageID, len(pages))
+		for i, pg := range pages {
+			ids[i] = pg.ID
+		}
+		return ids
+	}
+
+	tests := []struct {
+		name  string
+		input SearchByTitleInput
+		want  []model.PageID
+	}{
+		{
+			name:  "公開トピックのページを、すべてのキーワードを含むものに絞って新しい順に返す",
+			input: SearchByTitleInput{Keywords: []string{keyword, "日報"}},
+			want:  []model.PageID{publicNewer, publicOlder, otherSpace},
+		},
+		{
+			name:  "大文字と小文字を区別しない",
+			input: SearchByTitleInput{Keywords: []string{keyword, "dAILY"}},
+			want:  []model.PageID{publicNewer},
+		},
+		{
+			name:  "開けるトピックとして渡した非公開トピックのページを含める",
+			input: SearchByTitleInput{Keywords: []string{keyword, "日報"}, MemberTopicIDs: []model.TopicID{privateTopicID}},
+			want:  []model.PageID{publicNewer, publicOlder, private, otherSpace},
+		},
+		{
+			name:  "スペースを指定すると、そのスペースのページに絞る",
+			input: SearchByTitleInput{Keywords: []string{keyword, "日報"}, SpaceIdentifiers: []model.SpaceIdentifier{"PAGE-SEARCH-TITLE-OTHER"}},
+			want:  []model.PageID{otherSpace},
+		},
+		{
+			name:  "上限の件数まで返す",
+			input: SearchByTitleInput{Keywords: []string{keyword, "日報"}, Limit: 2},
+			want:  []model.PageID{publicNewer, publicOlder},
+		},
+		{
+			name:  "LIKEの特殊文字は文字として扱う",
+			input: SearchByTitleInput{Keywords: []string{keyword, "%_"}},
+			want:  []model.PageID{underscore},
+		},
+		{
+			name:  "キーワードが無ければ0件",
+			input: SearchByTitleInput{},
+			want:  []model.PageID{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := search(t, tt.input); !slices.Equal(got, tt.want) {
+				t.Errorf("ページ = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+
+	t.Run("本文を取得せずカードと公開状態のメタデータを返す", func(t *testing.T) {
+		pages, err := repo.SearchByTitle(ctx, SearchByTitleInput{Keywords: []string{keyword, "Daily"}, Limit: 25})
+		if err != nil {
+			t.Fatalf("SearchByTitle()のエラー = %v", err)
+		}
+		if len(pages) != 1 {
+			t.Fatalf("ページの件数 = %d、期待値 = 1", len(pages))
+		}
+		pg := pages[0]
+		if pg.ID != publicNewer || pg.SpaceID != spaceID || pg.TopicID != publicTopicID || pg.Number != 1 || pg.Title == nil || *pg.Title != keyword+" 日報 Daily" {
+			t.Errorf("カードの識別子とタイトルが保持されていない: %+v", pg)
+		}
+		if pg.PinnedAt == nil || !pg.PinnedAt.Equal(pinnedAt) || pg.FeaturedImageAttachmentID == nil || *pg.FeaturedImageAttachmentID != attachmentID {
+			t.Errorf("ピン留めと代表画像が保持されていない: %+v", pg)
+		}
+		if pg.PublishedAt == nil || !pg.PublishedAt.Equal(base) || !pg.ModifiedAt.Equal(base.Add(-time.Hour)) {
+			t.Errorf("公開状態と更新日時が保持されていない: %+v", pg)
+		}
+		if pg.Body != "" || len(pg.LinkedPageIDs) != 0 {
+			t.Error("メタデータの検索で本文かリンクIDが返された")
+		}
+	})
+}

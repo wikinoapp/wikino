@@ -8,6 +8,8 @@ package query
 import (
 	"context"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 const createPageEditor = `-- name: CreatePageEditor :one
@@ -46,6 +48,21 @@ func (q *Queries) CreatePageEditor(ctx context.Context, arg CreatePageEditorPara
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deletePageEditorsByPageIDs = `-- name: DeletePageEditorsByPageIDs :exec
+DELETE FROM page_editors WHERE space_id = $1 AND page_id = ANY($2::uuid[])
+`
+
+type DeletePageEditorsByPageIDsParams struct {
+	SpaceID string   `json:"space_id"`
+	PageIds []string `json:"page_ids"`
+}
+
+// ページの編集者を物理削除する。
+func (q *Queries) DeletePageEditorsByPageIDs(ctx context.Context, arg DeletePageEditorsByPageIDsParams) error {
+	_, err := q.db.ExecContext(ctx, deletePageEditorsByPageIDs, arg.SpaceID, pq.Array(arg.PageIds))
+	return err
 }
 
 const findPageEditorByPageAndSpaceMember = `-- name: FindPageEditorByPageAndSpaceMember :one

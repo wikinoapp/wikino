@@ -11,3 +11,8 @@ SELECT * FROM page_revisions WHERE page_id = $1 AND space_id = $2 ORDER BY creat
 -- name: FindPageRevisionByID :one
 -- ページリビジョンをIDで取得する (スペースIDでスコープ)
 SELECT * FROM page_revisions WHERE id = $1 AND space_id = $2;
+
+-- name: DeletePageRevisionsByPageIDs :exec
+-- ページのリビジョンを物理削除する。リビジョンを指す編集提案のページの参照は
+-- 外部キーのON DELETE SET NULLで外れる。
+DELETE FROM page_revisions WHERE space_id = @space_id AND page_id = ANY(@page_ids::uuid[]);

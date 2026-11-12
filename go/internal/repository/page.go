@@ -194,6 +194,41 @@ func (r *PageRepository) FindRegularBySpacePaginated(ctx context.Context, spaceI
 	}, nil
 }
 
+// FindRestorablePaginatedはゴミ箱の一覧のページを、ゴミ箱に入れた日時の新しい順にオフセット
+// ページネーションで取得する。trashedSince以降にゴミ箱に入れたページのうち、topicIDsのトピックの
+// ものだけを返す。topicIDsが空なら、クエリを発行せずに0件を返す。
+func (r *PageRepository) FindRestorablePaginated(ctx context.Context, spaceID model.SpaceID, topicIDs []model.TopicID, trashedSince time.Time, page int32, limit int32) (*PaginatedPages, error) {
+	if len(topicIDs) == 0 {
+		return &PaginatedPages{Pages: []*model.Page{}}, nil
+	}
+
+	topicIDStrings := model.TopicIDsToStrings(topicIDs)
+	totalCount, err := r.q.CountRestorablePages(ctx, query.CountRestorablePagesParams{
+		SpaceID:      string(spaceID),
+		TrashedSince: trashedSince,
+		TopicIds:     topicIDStrings,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.q.ListRestorablePagesPaginated(ctx, query.ListRestorablePagesPaginatedParams{
+		SpaceID:      string(spaceID),
+		TrashedSince: trashedSince,
+		TopicIds:     topicIDStrings,
+		RowLimit:     limit,
+		RowOffset:    (page - 1) * limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PaginatedPages{
+		Pages:      r.toModels(rows),
+		TotalCount: totalCount,
+	}, nil
+}
+
 // FindLinkedPagesPaginatedはページからのリンク先ページをオフセットページネーションで
 // 取得する。呼び出し元が解決済みのoffsetとlimitを渡す。ゴミ箱に入ったページと廃棄済み
 // トピックのページは除外し、閲覧者が開けるトピックのページに絞る (TopicVisibilityを参照)。
@@ -339,6 +374,57 @@ func (r *PageRepository) FindBacklinksForPages(ctx context.Context, targetPages 
 	return result, nil
 }
 
+// ListIDsByTopicForUpdateはトピックのすべてのページをロックし、IDを返す。
+// 関連レコードを消す間にページが移動しないよう、WithTxでトランザクションに参加させて呼ぶ。
+func (r *PageRepository) ListIDsByTopicForUpdate(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) ([]model.PageID, error) {
+	ids, err := r.q.ListPageIDsByTopicForUpdate(ctx, query.ListPageIDsByTopicForUpdateParams{
+		SpaceID: string(spaceID),
+		TopicID: string(topicID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return model.StringsToPageIDs(ids), nil
+}
+
+// ListSpaceIDsWithTrashedBeforeは、ゴミ箱に入れた日時がtrashedBeforeより前のページがあるスペースを返す。
+func (r *PageRepository) ListSpaceIDsWithTrashedBefore(ctx context.Context, trashedBefore time.Time) ([]model.SpaceID, error) {
+	ids, err := r.q.ListSpaceIDsWithTrashedPagesBefore(ctx, trashedBefore)
+	if err != nil {
+		return nil, err
+	}
+	spaceIDs := make([]model.SpaceID, len(ids))
+	for i, id := range ids {
+		spaceIDs[i] = model.SpaceID(id)
+	}
+	return spaceIDs, nil
+}
+
+// ListTrashedIDsBeforeForUpdateは、スペースの、ゴミ箱に入れた日時がtrashedBeforeより前のページを、
+// ID順に最大limit件ロックしてIDを返す。
+func (r *PageRepository) ListTrashedIDsBeforeForUpdate(ctx context.Context, spaceID model.SpaceID, trashedBefore time.Time, limit int32) ([]model.PageID, error) {
+	ids, err := r.q.ListTrashedPageIDsBeforeForUpdate(ctx, query.ListTrashedPageIDsBeforeForUpdateParams{
+		SpaceID:       string(spaceID),
+		TrashedBefore: trashedBefore,
+		RowLimit:      limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return model.StringsToPageIDs(ids), nil
+}
+
+// DeleteByIDsはページを物理削除し、削除した件数を返す。ページの関連レコードは先に消しておく。
+func (r *PageRepository) DeleteByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	return r.q.DeletePagesByIDs(ctx, query.DeletePagesByIDsParams{
+		SpaceID: string(spaceID),
+		Ids:     model.PageIDsToStrings(ids),
+	})
+}
+
 // toModelFromTargetRowはFindBacklinkedPagesForTargetsRowをmodel.Pageに変換する
 func (r *PageRepository) toModelFromTargetRow(row query.FindBacklinkedPagesForTargetsRow) *model.Page {
 	var title *string
@@ -409,9 +495,10 @@ func (r *PageRepository) FindByIDs(ctx context.Context, ids []model.PageID, spac
 	return r.toModels(rows), nil
 }
 
-// FindMetadataByIDsは同スペースの未廃棄ページを、Wikiリンクのプレビューに必要な列だけで一括取得する。
+// FindMetadataByIDsは同スペースの未廃棄ページを、本文を除いた列だけで一括取得する。
 // 未公開・ゴミ箱のページも含む。返すPageにはID・スペースID・トピックID・番号・タイトルと
-// 公開・ゴミ箱・廃棄の日時だけを設定し、本文などの取得しないフィールドはゼロ値になる
+// 公開・ゴミ箱・廃棄の日時だけを設定し、本文などの取得しないフィールドはゼロ値になる。
+// ページの本文サイズに転送量が比例しないよう、本文は取得しない
 func (r *PageRepository) FindMetadataByIDs(ctx context.Context, ids []model.PageID, spaceID model.SpaceID) ([]*model.Page, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -515,6 +602,20 @@ func (r *PageRepository) MoveTopic(ctx context.Context, input MoveTopicInput) (*
 		return nil, err
 	}
 	return r.toModel(row), nil
+}
+
+// RestoreFromTrashはtopicIDsのトピックのページをゴミ箱から戻し、既復元も含め成功した件数を返す。
+// 既復元のページの更新日時は保つ。idsが空なら、クエリを発行せずに0を返す。
+func (r *PageRepository) RestoreFromTrash(ctx context.Context, ids []model.PageID, topicIDs []model.TopicID, spaceID model.SpaceID, updatedAt time.Time) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	return r.q.RestorePagesFromTrash(ctx, query.RestorePagesFromTrashParams{
+		UpdatedAt: updatedAt,
+		SpaceID:   string(spaceID),
+		Ids:       model.PageIDsToStrings(ids),
+		TopicIds:  model.TopicIDsToStrings(topicIDs),
+	})
 }
 
 // TrashByIDは渡された時刻をtrashed_atに打刻してページをゴミ箱へ入れる。
@@ -721,6 +822,60 @@ func (r *PageRepository) CreateBlankPage(ctx context.Context, input CreateBlankP
 type PageLocation struct {
 	TopicName string
 	PageTitle string
+}
+
+// SearchByTitleInputはタイトルでのページの検索の条件。
+type SearchByTitleInput struct {
+	// Keywordsは、タイトルにすべてを含むページに絞るキーワード (大文字と小文字を区別しない)
+	Keywords []string
+	// MemberTopicIDsは、公開トピックに加えて結果に含める、閲覧者が開けるトピック
+	MemberTopicIDs []model.TopicID
+	// SpaceIdentifiersを渡すと、そのスペースのページに絞る
+	SpaceIdentifiers []model.SpaceIdentifier
+	Limit            int32
+}
+
+// SearchByTitleは、公開トピックのページとMemberTopicIDsのトピックのページから、タイトルにすべての
+// キーワードを含む公開済みのページを、更新日時の新しい順に返す。本文やリンクIDは取得せず、
+// カードの表示と公開状態・並び順に使うメタデータだけを設定する。キーワードが無ければ、クエリを発行せずに0件を返す。
+func (r *PageRepository) SearchByTitle(ctx context.Context, input SearchByTitleInput) ([]*model.Page, error) {
+	if len(input.Keywords) == 0 {
+		return []*model.Page{}, nil
+	}
+
+	patterns := make([]string, len(input.Keywords))
+	for i, keyword := range input.Keywords {
+		patterns[i] = fmt.Sprintf("%%%s%%", escapeLikePattern(keyword))
+	}
+	spaceIdentifiers := make([]string, len(input.SpaceIdentifiers))
+	for i, identifier := range input.SpaceIdentifiers {
+		spaceIdentifiers[i] = string(identifier)
+	}
+
+	rows, err := r.q.SearchPagesByTitle(ctx, query.SearchPagesByTitleParams{
+		MemberTopicIds:   model.TopicIDsToStrings(input.MemberTopicIDs),
+		SpaceIdentifiers: spaceIdentifiers,
+		TitlePatterns:    patterns,
+		RowLimit:         input.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	pages := make([]*model.Page, len(rows))
+	for i, row := range rows {
+		pages[i] = r.toModel(query.Page{
+			ID:                        row.ID,
+			SpaceID:                   row.SpaceID,
+			TopicID:                   row.TopicID,
+			Number:                    row.Number,
+			Title:                     row.Title,
+			ModifiedAt:                row.ModifiedAt,
+			PublishedAt:               row.PublishedAt,
+			PinnedAt:                  row.PinnedAt,
+			FeaturedImageAttachmentID: row.FeaturedImageAttachmentID,
+		})
+	}
+	return pages, nil
 }
 
 // escapeLikePatternはPostgreSQLのLIKE特殊文字 (\, %, _) をエスケープする

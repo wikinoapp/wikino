@@ -1436,6 +1436,10 @@ other = "Please enter a name"
 description = "スペース名文字数超過エラー"
 other = "Name must be 30 characters or less"
 
+[validation_topic_deletion_name_mismatch]
+description = "トピックの削除の確認で入力したトピック名が削除するトピックの名前と一致しないエラー"
+other = "Topic name is incorrect"
+
 [validation_topic_name_required]
 description = "トピック名必須エラー"
 other = "Please enter a name"
@@ -1563,6 +1567,76 @@ other = "Topic created."
 [flash_topic_updated]
 description = "トピック更新成功時のフラッシュメッセージ"
 other = "Topic updated."
+
+[flash_topic_deleted]
+description = "トピック削除成功時のフラッシュメッセージ"
+other = "Topic deleted."
+
+# トピックの削除の確認画面
+[topic_deletion_new_title]
+description = "トピックの削除の確認画面のページタイトル"
+other = "Delete this topic | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_deletion_new_heading]
+description = "トピックの削除の確認画面の見出し"
+other = "Delete this topic"
+
+[topic_deletion_new_breadcrumb_settings]
+description = "トピックの削除の確認画面のパンくずに出すトピックの設定のラベル"
+other = "Settings"
+
+[topic_deletion_new_breadcrumb]
+description = "トピックの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "Delete this topic"
+
+[topic_deletion_new_description]
+description = "トピックの削除の確認画面の説明"
+other = "Delete topic? Please confirm the following before deleting."
+
+[topic_deletion_new_warning_pages]
+description = "トピックの削除の確認画面の注意 (ページも消える)"
+other = "Deleting a topic will delete all pages in it."
+
+[topic_deletion_new_warning_irreversible]
+description = "トピックの削除の確認画面の注意 (元に戻せない)"
+other = "Deleted topics and pages in them cannot be restored."
+
+[topic_deletion_new_topic_name_label]
+description = "トピックの削除の確認画面のトピック名の入力欄のラベル"
+other = "Topic name"
+
+[topic_deletion_new_topic_name_hint]
+description = "トピックの削除の確認画面のトピック名の入力欄の説明"
+other = "To delete a topic, please enter the topic name ({{.TopicName}}) below."
+
+[topic_deletion_new_submit_button]
+description = "トピックの削除の確認画面の送信ボタン"
+other = "Delete"
+
+[topic_deletion_new_cancel]
+description = "トピックの削除の確認画面のキャンセルリンク"
+other = "Cancel"
+
+# トピックの設定のトップ
+[topic_settings_title]
+description = "トピックの設定のトップのページタイトル"
+other = "Settings | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_settings_heading]
+description = "トピックの設定のトップの見出し"
+other = "Settings"
+
+[topic_settings_breadcrumb]
+description = "トピックの設定のトップ自身を指すパンくず項目 (現在項目)"
+other = "Settings"
+
+[topic_settings_general]
+description = "トピックの設定のトップの一般設定へのリンク"
+other = "General"
+
+[topic_settings_deletion]
+description = "トピックの設定のトップのトピックの削除へのリンク"
+other = "Delete this topic"
 
 # Topic general settings
 [topic_settings_general_title]
@@ -3165,3 +3239,123 @@ other = "Succeeded (status {{.Status}})"
 [mcp_call_status]
 description = "MCPのツールのエラーの内容の前に添えるHTTPステータス"
 other = "Status {{.Status}}"
+
+[trash_show_title]
+description = "ゴミ箱の一覧のページタイトル"
+other = "Trash | {{.SpaceName}}"
+
+[trash_show_paginated_title]
+description = "ページ送りしたゴミ箱の一覧のページタイトル"
+other = "Trash (Page {{.PageNumber}}) | {{.SpaceName}}"
+
+[trash_show_breadcrumb]
+description = "ゴミ箱の一覧のパンくずの現在地"
+other = "Trash"
+
+[trash_show_heading]
+description = "ゴミ箱の一覧の見出し"
+other = "Trash"
+
+[trash_show_description]
+description = "ゴミ箱の一覧の説明"
+other = "Pages in the trash are displayed here."
+
+[trash_show_retention_description]
+description = "ゴミ箱の一覧の、復元できる期間の説明"
+other = "Pages older than 30 days are automatically deleted. They can be restored within that time."
+
+[trash_show_empty]
+description = "ゴミ箱の一覧にページが無いときのメッセージ"
+other = "Trash is empty."
+
+[trash_show_restore_button]
+description = "ゴミ箱の一覧で選んだページを復元するボタン"
+other = "Restore"
+
+[trash_show_table_caption]
+description = "ゴミ箱の一覧の表のキャプション (スクリーンリーダー向け)"
+other = "Pages in the trash of {{.SpaceName}}"
+
+[trash_show_column_select]
+description = "ゴミ箱の一覧の、選択のチェックボックスの列の見出し (スクリーンリーダー向け)"
+other = "Select"
+
+[trash_show_column_title]
+description = "ゴミ箱の一覧のページの列の見出し"
+other = "Page"
+
+[trash_show_column_trashed_at]
+description = "ゴミ箱の一覧の、ゴミ箱に入れた日時の列の見出し"
+other = "Moved to trash"
+
+[trash_show_select_page]
+description = "ゴミ箱の一覧の各行のチェックボックスのラベル (スクリーンリーダー向け)"
+other = "Select \"{{.Title}}\""
+
+[trash_show_untitled]
+description = "ゴミ箱の一覧でタイトルの無いページの表示"
+other = "Untitled"
+
+[validation_bulk_restored_page_ids_required]
+description = "ゴミ箱でページを選ばずに復元しようとしたときのエラー"
+other = "Select the pages to restore."
+
+[validation_bulk_restored_page_ids_not_restorable]
+description = "ゴミ箱で選んだページに、復元できないページが含まれていたときのエラー"
+other = "No pages were restored because the selection contains pages you cannot restore."
+
+[flash_pages_restored]
+description = "ゴミ箱からページを復元したときのフラッシュメッセージ"
+other = "Pages have been restored."
+
+[validation_search_query_too_short]
+description = "検索のキーワードが短すぎるときのエラー"
+other = "Search keyword must be at least {{.Count}} characters."
+
+[validation_search_query_too_long]
+description = "検索のキーワードが長すぎるときのエラー"
+other = "Search keyword must be no more than {{.Count}} characters."
+
+[validation_search_query_invalid_characters]
+description = "検索のキーワードに使えない文字が含まれるときのエラー"
+other = "Search keyword contains invalid characters."
+
+[search_show_title]
+description = "検索の画面のページタイトル"
+other = "Search"
+
+[search_show_heading]
+description = "検索の画面の見出し"
+other = "Search"
+
+[search_show_description]
+description = "検索の画面の説明"
+other = "You can search for page titles by keyword."
+
+[search_show_help_link]
+description = "検索の画面から、検索の使い方のヘルプへのリンク"
+other = "Search help"
+
+[search_show_query_label]
+description = "検索の画面のキーワードの欄のラベル (スクリーンリーダー向け)"
+other = "Search keyword"
+
+[search_show_query_placeholder]
+description = "検索の画面のキーワードの欄のプレースホルダー"
+other = "Enter keywords"
+
+[search_show_submit_button]
+description = "検索の画面の検索ボタン"
+other = "Search"
+
+[search_show_results_heading]
+description = "検索の画面の結果の見出し (スクリーンリーダー向け)"
+other = "Search results"
+
+[search_show_no_results]
+description = "検索の画面で結果が無いときのメッセージ"
+other = "No search results found"
+
+[search_show_breadcrumb]
+description = "検索の画面のパンくずの現在地"
+other = "Search"

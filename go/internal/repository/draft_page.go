@@ -560,6 +560,26 @@ func (r *DraftPageRepository) toDraftPagesFromMemberTopicRows(rows []query.ListD
 	return drafts
 }
 
+// DeleteByPageIDsはページの下書きを物理削除する。
+func (r *DraftPageRepository) DeleteByPageIDs(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID) error {
+	if len(pageIDs) == 0 {
+		return nil
+	}
+	return r.q.DeleteDraftPagesByPageIDs(ctx, query.DeleteDraftPagesByPageIDsParams{
+		SpaceID: string(spaceID),
+		PageIds: model.PageIDsToStrings(pageIDs),
+	})
+}
+
+// SyncTopicsFromPagesは指定トピックを指す下書きの所属を、ページの現在の所属にそろえる。
+// 本文・履歴・更新日時は変更しない。
+func (r *DraftPageRepository) SyncTopicsFromPages(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) error {
+	return r.q.SyncDraftPageTopicsFromPages(ctx, query.SyncDraftPageTopicsFromPagesParams{
+		SpaceID: string(spaceID),
+		TopicID: string(topicID),
+	})
+}
+
 // toModelはquery.DraftPageをmodel.DraftPageに変換する
 func (r *DraftPageRepository) toModel(row query.DraftPage) *model.DraftPage {
 	var suggestionPageID *model.SuggestionPageID

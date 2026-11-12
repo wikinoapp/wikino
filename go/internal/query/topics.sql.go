@@ -7,6 +7,7 @@ package query
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/lib/pq"
@@ -50,6 +51,46 @@ func (q *Queries) CreateTopic(ctx context.Context, arg CreateTopicParams) (Topic
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteDiscardedTopic = `-- name: DeleteDiscardedTopic :execrows
+DELETE FROM topics
+WHERE id = $1 AND space_id = $2 AND discarded_at IS NOT NULL
+`
+
+type DeleteDiscardedTopicParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 論理削除したトピックを物理削除する。論理削除していないトピックは対象にしない。
+func (q *Queries) DeleteDiscardedTopic(ctx context.Context, arg DeleteDiscardedTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteDiscardedTopic, arg.ID, arg.SpaceID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const discardTopic = `-- name: DiscardTopic :execrows
+UPDATE topics
+SET discarded_at = $1, updated_at = $1
+WHERE id = $2 AND space_id = $3 AND discarded_at IS NULL
+`
+
+type DiscardTopicParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	ID          string       `json:"id"`
+	SpaceID     string       `json:"space_id"`
+}
+
+// トピックを論理削除する。既に論理削除したトピックは対象にしない。
+func (q *Queries) DiscardTopic(ctx context.Context, arg DiscardTopicParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, discardTopic, arg.DiscardedAt, arg.ID, arg.SpaceID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const existsTopicBySpaceAndName = `-- name: ExistsTopicBySpaceAndName :one
@@ -403,6 +444,107 @@ func (q *Queries) ListTopicsJoinedBySpaceMember(ctx context.Context, arg ListTop
 		return nil, err
 	}
 	return items, nil
+}
+
+const listTopicsWithSpacesByIDs = `-- name: ListTopicsWithSpacesByIDs :many
+SELECT t.id AS topic_id, t.number AS topic_number, t.name AS topic_name, t.visibility AS topic_visibility,
+       s.id AS space_id, s.identifier AS space_identifier, s.name AS space_name
+FROM topics t
+INNER JOIN spaces s ON s.id = t.space_id
+WHERE t.id = ANY($1::uuid[])
+  AND t.space_id = ANY($2::uuid[])
+`
+
+type ListTopicsWithSpacesByIDsParams struct {
+	TopicIds []string `json:"topic_ids"`
+	SpaceIds []string `json:"space_ids"`
+}
+
+type ListTopicsWithSpacesByIDsRow struct {
+	TopicID         string `json:"topic_id"`
+	TopicNumber     int32  `json:"topic_number"`
+	TopicName       string `json:"topic_name"`
+	TopicVisibility int32  `json:"topic_visibility"`
+	SpaceID         string `json:"space_id"`
+	SpaceIdentifier string `json:"space_identifier"`
+	SpaceName       string `json:"space_name"`
+}
+
+// トピックとそのスペースの識別子・名前を返す。スペースをまたぐ一覧 (検索の結果) のページに、
+// トピックとスペースの名前を添えるために使う。space_idsにはトピックのスペースを並べて渡す。
+func (q *Queries) ListTopicsWithSpacesByIDs(ctx context.Context, arg ListTopicsWithSpacesByIDsParams) ([]ListTopicsWithSpacesByIDsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTopicsWithSpacesByIDs, pq.Array(arg.TopicIds), pq.Array(arg.SpaceIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListTopicsWithSpacesByIDsRow{}
+	for rows.Next() {
+		var i ListTopicsWithSpacesByIDsRow
+		if err := rows.Scan(
+			&i.TopicID,
+			&i.TopicNumber,
+			&i.TopicName,
+			&i.TopicVisibility,
+			&i.SpaceID,
+			&i.SpaceIdentifier,
+			&i.SpaceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const lockDiscardedTopic = `-- name: LockDiscardedTopic :one
+SELECT id FROM topics
+WHERE id = $1 AND space_id = $2 AND discarded_at IS NOT NULL
+FOR UPDATE
+`
+
+type LockDiscardedTopicParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+// 論理削除したトピックを、物理削除が終わるまでロックする。
+func (q *Queries) LockDiscardedTopic(ctx context.Context, arg LockDiscardedTopicParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockDiscardedTopic, arg.ID, arg.SpaceID)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
+const undiscardTopic = `-- name: UndiscardTopic :exec
+UPDATE topics
+SET discarded_at = NULL, updated_at = $1
+WHERE id = $2 AND space_id = $3 AND discarded_at = $4
+`
+
+type UndiscardTopicParams struct {
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	SpaceID     string       `json:"space_id"`
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+}
+
+// 論理削除を取り消す。@discarded_atと同じ時刻に論理削除したトピックだけを対象にし、
+// 別の削除の操作で論理削除し直したトピックを戻さない。
+func (q *Queries) UndiscardTopic(ctx context.Context, arg UndiscardTopicParams) error {
+	_, err := q.db.ExecContext(ctx, undiscardTopic,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SpaceID,
+		arg.DiscardedAt,
+	)
+	return err
 }
 
 const updateTopic = `-- name: UpdateTopic :one

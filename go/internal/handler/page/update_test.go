@@ -101,6 +101,11 @@ func TestUpdate_ValidationError_EmptyTitle(t *testing.T) {
 		t.Error("再描画したレスポンスにトピック名を含む文書のタイトルが見つからない")
 	}
 
+	// 再表示したエディタも動くよう、編集画面と同じくeditor.jsを読むこと
+	if !strings.Contains(body, `<script type="module" src="/static/js/editor.js?v=`) {
+		t.Error("再描画したレスポンスにeditor.jsを読み込むscriptが見つからない")
+	}
+
 	// 編集フォームが再表示されること
 	if !strings.Contains(body, `name="title"`) {
 		t.Error("レスポンスにタイトルの入力欄が見つからない")

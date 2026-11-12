@@ -51,6 +51,21 @@ func (q *Queries) CreateTopicMember(ctx context.Context, arg CreateTopicMemberPa
 	return i, err
 }
 
+const deleteTopicMembersByTopic = `-- name: DeleteTopicMembersByTopic :exec
+DELETE FROM topic_members WHERE space_id = $1 AND topic_id = $2
+`
+
+type DeleteTopicMembersByTopicParams struct {
+	SpaceID string `json:"space_id"`
+	TopicID string `json:"topic_id"`
+}
+
+// トピックのメンバーを物理削除する。
+func (q *Queries) DeleteTopicMembersByTopic(ctx context.Context, arg DeleteTopicMembersByTopicParams) error {
+	_, err := q.db.ExecContext(ctx, deleteTopicMembersByTopic, arg.SpaceID, arg.TopicID)
+	return err
+}
+
 const findTopicMemberBySpaceMemberAndTopic = `-- name: FindTopicMemberBySpaceMemberAndTopic :one
 SELECT id, space_id, topic_id, space_member_id, joined_at, last_page_modified_at, created_at, updated_at, scopes, role FROM topic_members WHERE space_member_id = $1 AND topic_id = $2 AND space_id = $3
 `

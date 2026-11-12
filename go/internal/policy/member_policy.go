@@ -55,6 +55,10 @@ func (p *MemberPolicy) CanUpdateTopicVisibility() bool {
 	return p.effectiveScopes[model.ScopeTopicVisibilityWrite]
 }
 
+func (p *MemberPolicy) CanDeleteTopic() bool {
+	return p.effectiveScopes[model.ScopeTopicDelete]
+}
+
 func (p *MemberPolicy) CanCreatePage() bool {
 	return p.effectiveScopes[model.ScopePageWrite]
 }
@@ -69,6 +73,10 @@ func (p *MemberPolicy) CanShowTrash() bool {
 
 func (p *MemberPolicy) CanTrashPage() bool {
 	return p.effectiveScopes[model.ScopePageTrashWrite]
+}
+
+func (p *MemberPolicy) CanRestorePage() bool {
+	return p.effectiveScopes[model.ScopePageTrashDelete]
 }
 
 func (p *MemberPolicy) CanPinPage() bool {

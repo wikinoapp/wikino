@@ -68,8 +68,7 @@ func requestTarget(w http.ResponseWriter, r *http.Request) (model.SpaceIdentifie
 }
 
 // renderは一般設定画面を、トピックの他の画面と共有するレイアウトへ描画します。パンくずは
-// トピックの設定 (その画面はRails版のまま残ります) を通り、この画面自身の非リンクな現在項目で
-// 締めます。
+// トピックの設定のトップを通り、この画面自身の非リンクな現在項目で締めます。
 func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.User, data topicpages.SettingsGeneralData) {
 	ctx := r.Context()
 

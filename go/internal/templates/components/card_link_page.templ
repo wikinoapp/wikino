@@ -7,9 +7,9 @@ import (
 
 // CardLinkPageはリンク一覧・バックリンク一覧で使用するページカードを表示します
 templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceIdentifier) {
-	<div class="group card relative overflow-visible min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600">
+	<div class="group card relative overflow-visible min-h-[96px] transition p-0 duration-200 ease-in-out hover:ring-brand-600 dark:hover:ring-brand-400">
 		if page.Pinned {
-			@templates.Icon("push-pin-filled", "size-[18px] -right-1 -top-1 absolute fill-amber-800")
+			@templates.Icon("push-pin-filled", "size-[18px] -right-1 -top-1 absolute fill-amber-800 dark:fill-amber-400")
 		}
 
 		if page.CanEdit {
@@ -34,20 +34,26 @@ templ CardLinkPage(page viewmodel.CardLinkPage, spaceIdentifier viewmodel.SpaceI
 		<div class="flex h-full">
 			<a
 				href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier, viewmodel.PageNumber(page.Number)))) }
-				class="flex w-full h-full px-3 py-2"
+				class="flex min-w-0 w-full h-full px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-muted-foreground"
 			>
-				<div class="flex justify-between w-full h-full gap-2">
-					<div class="flex flex-1 flex-col gap-1">
+				<div class="flex min-w-0 justify-between w-full h-full gap-2">
+					<div class="flex min-w-0 flex-1 flex-col gap-1">
 						if page.Topic != nil {
 							<div class="flex items-center gap-0.5">
-								@templates.Icon(page.Topic.IconName, "flex-none size-3 fill-gray-500")
-								<span class="text-xs text-stone-500 line-clamp-1">
+								if page.SpaceName != "" {
+									<span class="text-xs text-stone-500 line-clamp-1 dark:text-stone-300">
+										{ page.SpaceName }
+									</span>
+									<span class="text-xs text-stone-500 mx-0.5 dark:text-stone-300" aria-hidden="true">/</span>
+								}
+								@templates.Icon(page.Topic.IconName, "flex-none size-3 fill-gray-500 dark:fill-gray-300")
+								<span class="text-xs text-stone-500 line-clamp-1 dark:text-stone-300">
 									{ page.Topic.Name }
 								</span>
 							</div>
 						}
 
-						<div class="line-clamp-3 text-sm font-bold">
+						<div class="line-clamp-3 text-sm font-bold wrap-anywhere">
 							if page.Title != "" {
 								{ page.Title }
 							} else {

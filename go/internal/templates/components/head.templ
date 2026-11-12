@@ -16,6 +16,14 @@ templ Head(meta viewmodel.PageMeta) {
 
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 
+	// ダークモードのフラグが有効な閲覧者にだけ、両方の配色に対応することを宣言する。ブラウザはスタイルシートより前に
+	// 読んだ宣言でフォーム部品・スクロールバーの配色を決め、theme-colorでアドレスバーをそれぞれの背景の色に揃える
+	if meta.DarkModeEnabled {
+		<meta name="color-scheme" content="light dark"/>
+		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf5f1"/>
+		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121a1b"/>
+	}
+
 	// iOSのSafariで「ホームに追加」した時にフルスクリーン表示にする
 	<meta name="apple-mobile-web-app-capable" content="yes"/>
 
@@ -61,16 +69,22 @@ templ Head(meta viewmodel.PageMeta) {
 
 	<link rel="stylesheet" href={ "/static/css/style.css?v=" + meta.AssetVersion }/>
 
-	<script defer src="/static/js/vendor/htmx-4.0.0-alpha8.min.js"></script>
-	// TODO: ダークモード対応時に以下のスクリプトを有効化する
-	// <script>
-	//     (() => {
-	//         try {
-	//             if (matchMedia("(prefers-color-scheme: dark)").matches) {
-	//                 document.documentElement.classList.add("dark");
-	//             }
-	//         } catch (_) {}
-	//     })();
-	// </script>
+	// bodyの解析前に <head> でインラインに実行し、ライトで一度描画してから切り替わることが無いようにする
+	if meta.DarkModeEnabled {
+		<script>
+			(() => {
+				try {
+					if (matchMedia("(prefers-color-scheme: dark)").matches) {
+						document.documentElement.classList.add("dark");
+					}
+				} catch (_) {}
+			})();
+		</script>
+	}
 	<script type="module" src={ "/static/js/main.js?v=" + meta.AssetVersion }></script>
+	// 機能のエントリは、その機能を使う画面だけが宣言する。モジュールのスクリプトは書いた順に実行されるため、
+	// main.jsの初期化のあとに動く
+	if path := meta.FeatureScript.Path(); path != "" {
+		<script type="module" src={ path + "?v=" + meta.AssetVersion }></script>
+	}
 }
