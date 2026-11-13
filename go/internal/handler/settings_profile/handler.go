@@ -39,7 +39,7 @@ func NewHandler(
 
 // renderはプロフィールの編集画面を描画します。パンくずは設定のトップを通り、この画面自身の
 // 非リンクな現在項目で締めます。
-func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.User, data settingspages.ProfileData) {
+func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.User, status int, data settingspages.ProfileData) {
 	ctx := r.Context()
 
 	meta := viewmodel.DefaultPageMeta(ctx, h.cfg)
@@ -71,6 +71,8 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.Use
 
 	// 設定の画面はログインした本人のための画面のため、検索エンジンにインデックスさせない
 	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
 
 	if err := layouts.Default(layoutData, settingspages.Profile(data)).Render(ctx, w); err != nil {
 		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)

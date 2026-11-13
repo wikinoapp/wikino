@@ -38,8 +38,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := h.updateProfileUC.Execute(ctx, input); err != nil {
 		if ve := model.AsValidationError(err); ve != nil {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			h.render(w, r, user, settingspages.ProfileData{
+			h.render(w, r, user, http.StatusUnprocessableEntity, settingspages.ProfileData{
 				CSRFToken:   middleware.GetCSRFTokenFromContext(ctx),
 				FormErrors:  ve,
 				Atname:      input.Atname,

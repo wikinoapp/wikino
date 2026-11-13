@@ -17,7 +17,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.render(w, r, user, settingspages.ProfileData{
+	h.render(w, r, user, http.StatusOK, settingspages.ProfileData{
 		CSRFToken:   middleware.GetCSRFTokenFromContext(ctx),
 		Atname:      user.Atname,
 		Name:        user.Name,

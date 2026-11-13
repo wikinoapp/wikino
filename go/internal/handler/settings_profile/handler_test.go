@@ -78,7 +78,7 @@ func TestShow_保存されている値をフォームに表示する(t *testing.
 	if rr.Code != http.StatusOK {
 		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
 	}
-	if got := rr.Header().Get("X-Robots-Tag"); got != "noindex" {
+	if got := rr.Result().Header.Get("X-Robots-Tag"); got != "noindex" {
 		t.Errorf("X-Robots-Tag = %q、期待値 = %q", got, "noindex")
 	}
 
@@ -146,6 +146,9 @@ func TestUpdate_入力が不正なら422でフォームを再描画する(t *tes
 
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
+	}
+	if got := rr.Result().Header.Get("X-Robots-Tag"); got != "noindex" {
+		t.Errorf("X-Robots-Tag = %q、期待値 = %q", got, "noindex")
 	}
 
 	body := rr.Body.String()

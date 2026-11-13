@@ -56,12 +56,13 @@ templ Profile(data ProfileData) {
 								@components.RequiredBadge()
 							</label>
 							// アットネームはURLに使う英数字のため、モバイルの自動大文字化とスペルチェックを止める
+							// 通常時の枠線をライトでも見分けられるようにし、エラーとフォーカス中はBasecoatの色を使う
 							<input
 								autocapitalize="off"
 								if firstErrorField(data.FormErrors) == "atname" {
 									autofocus
 								}
-								class="input"
+								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
 								id="atname"
 								name="atname"
 								required
@@ -89,7 +90,7 @@ templ Profile(data ProfileData) {
 								if firstErrorField(data.FormErrors) == "name" {
 									autofocus
 								}
-								class="input"
+								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
 								id="name"
 								name="name"
 								type="text"
@@ -114,7 +115,7 @@ templ Profile(data ProfileData) {
 								if firstErrorField(data.FormErrors) == "description" {
 									autofocus
 								}
-								class="input"
+								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
 								id="description"
 								name="description"
 								type="text"
