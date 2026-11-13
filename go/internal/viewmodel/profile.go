@@ -1,6 +1,10 @@
 package viewmodel
 
-import "github.com/wikinoapp/wikino/go/internal/model"
+import (
+	"strings"
+
+	"github.com/wikinoapp/wikino/go/internal/model"
+)
 
 // Profileはプロフィールの画面に表示するユーザーの情報です
 type Profile struct {
@@ -9,12 +13,21 @@ type Profile struct {
 	Description string
 }
 
-// NewProfileはユーザーのモデルからProfileを生成します
+// NewProfileは空白だけの名前と自己紹介を未設定にしたProfileを生成します。
 func NewProfile(user *model.User) Profile {
+	name := user.Name
+	if strings.TrimSpace(name) == "" {
+		name = ""
+	}
+	description := user.Description
+	if strings.TrimSpace(description) == "" {
+		description = ""
+	}
+
 	return Profile{
 		Atname:      user.Atname,
-		Name:        user.Name,
-		Description: user.Description,
+		Name:        name,
+		Description: description,
 	}
 }
 

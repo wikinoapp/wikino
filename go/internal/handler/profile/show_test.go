@@ -3,6 +3,8 @@ package profile_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"html"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -186,6 +188,52 @@ func TestShow_名前が空ならアットネームを見出しにする(t *testi
 	body := rr.Body.String()
 	if !strings.Contains(body, "<title>@profile_no_name | Wikino</title>") {
 		t.Error("タイトルがアットネームになっていない")
+	}
+}
+
+func TestShow_空白だけの名前と自己紹介を未設定として表示する(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name  string
+		value string
+	}{
+		{name: "半角スペース", value: " "},
+		{name: "タブ", value: "\t"},
+		{name: "全角スペース", value: "　"},
+	}
+	for i, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			atname := fmt.Sprintf("profile_blank_%d", i)
+			user := profileUser(t, tx, atname, tc.value)
+			if _, err := tx.ExecContext(context.Background(), "UPDATE users SET description = $1 WHERE id = $2", tc.value, string(user.ID)); err != nil {
+				t.Fatalf("自己紹介の設定に失敗: %v", err)
+			}
+
+			req := newProfileRequest(t, atname, nil)
+			rr := httptest.NewRecorder()
+			setupHandler(t, tx).Show(rr, req)
+			if rr.Code != http.StatusOK {
+				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+			}
+
+			body := rr.Body.String()
+			for _, want := range []string{
+				"<title>@" + atname + " | Wikino</title>",
+				">@" + atname + "</h1>",
+				`<meta name="description" content="` + html.EscapeString(i18n.T(req.Context(), "default_description")) + `">`,
+			} {
+				if !strings.Contains(body, want) {
+					t.Errorf("レスポンスに %q が含まれていない", want)
+				}
+			}
+			if strings.Contains(body, `<p class="wrap-anywhere">`) {
+				t.Error("空白だけの自己紹介の段落が表示されている")
+			}
+		})
 	}
 }
 
