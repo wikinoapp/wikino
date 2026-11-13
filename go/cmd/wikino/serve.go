@@ -1077,29 +1077,24 @@ func runServe() {
 		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
 
-		// トピックの設定のトップ。リバースプロキシはgo_topic_settingsが有効な閲覧者のリクエスト
-		// だけをここへ振り分け、それ以外はRails版が処理する。
+		// トピックの設定のトップ。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
 
-		// トピックの削除。確認画面と削除処理。パスはRails版に合わせ、設定のトップと同じく
-		// go_topic_settingsが有効な閲覧者のリクエストだけがここへ振り分けられる。
+		// トピックの削除。確認画面と削除処理。パスはRails版に合わせる。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
 
-		// スペースのゴミ箱の一覧。リバースプロキシはgo_trashが有効な閲覧者のリクエストだけを
-		// ここへ振り分け、それ以外はRails版が処理する。
+		// スペースのゴミ箱の一覧。
 		r.Get("/s/{space_identifier}/trash", trashHandler.Show)
 		r.Head("/s/{space_identifier}/trash", trashHandler.Show)
 
-		// 検索の画面。リバースプロキシはgo_searchが有効な閲覧者のリクエストだけをここへ振り分け、
-		// それ以外はRails版が処理する。
+		// 検索の画面。
 		r.Get("/search", searchHandler.Show)
 		r.Head("/search", searchHandler.Show)
 
-		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせ、ゴミ箱の一覧と同じく
-		// go_trashが有効な閲覧者のリクエストだけがここへ振り分けられる。
+		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせる。
 		r.Post("/s/{space_identifier}/bulk_restored_pages", bulkRestoredPageHandler.Create)
 
 		// トピックの一般設定。画面と保存処理。

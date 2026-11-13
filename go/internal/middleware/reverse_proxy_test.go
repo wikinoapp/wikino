@@ -532,113 +532,70 @@ func TestReverseProxyMiddleware_getFeatureFlagForRequest(t *testing.T) {
 	}
 }
 
-// TestFeatureFlaggedPatterns_TopicSettingsは、トピックの設定のトップと削除がgo_topic_settingsで
-// 振り分けられ、Goルートが応答しないメソッドがフラグにかかわらずRails版へ届くことを、登録済みの
-// パターンで確かめる。
-func TestFeatureFlaggedPatterns_TopicSettings(t *testing.T) {
-	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+// TestReverseProxyMiddleware_Middleware_TopicSettingsTrashSearchは、トピックの設定・ゴミ箱・検索が
+// フィーチャーフラグを持たない閲覧者のリクエストでもGo版で処理され、Goルートが応答しないメソッドと
+// パスはRails版へ届くことを確かめる。
+func TestReverseProxyMiddleware_Middleware_TopicSettingsTrashSearch(t *testing.T) {
+	t.Parallel()
 
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+	// サブテストを並行に走らせるため、deferではなくサブテストの終了後に閉じる
+	t.Cleanup(railsServer.Close)
+
+	// フラグを判定するリポジトリを渡さず、どの閲覧者もフラグを持たない状態にする
+	m, err := NewReverseProxyMiddleware(railsServer.URL, &config.Config{Domain: "wikino.app"}, nil)
 	if err != nil {
 		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
 	}
+	h := m.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
 
 	testCases := []struct {
 		name   string
 		method string
 		path   string
-		want   model.FeatureFlagName
+		wantGo bool
 	}{
-		{name: "設定のトップのGET", method: http.MethodGet, path: "/s/my-space/topics/1/settings", want: model.FeatureFlagTopicSettings},
-		{name: "設定のトップのHEAD", method: http.MethodHead, path: "/s/my-space/topics/1/settings", want: model.FeatureFlagTopicSettings},
-		{name: "設定のトップへのPOSTはフラグの対象外", method: http.MethodPost, path: "/s/my-space/topics/1/settings", want: ""},
-		{name: "トピックの削除の確認画面のGET", method: http.MethodGet, path: "/s/my-space/topics/1/settings/deletion/new", want: model.FeatureFlagTopicSettings},
-		{name: "トピックの削除の確認画面のHEAD", method: http.MethodHead, path: "/s/my-space/topics/1/settings/deletion/new", want: model.FeatureFlagTopicSettings},
-		{name: "トピックの削除の処理のPOST", method: http.MethodPost, path: "/s/my-space/topics/1/settings/deletion", want: model.FeatureFlagTopicSettings},
-		{name: "トピックの削除の処理へのGETはフラグの対象外", method: http.MethodGet, path: "/s/my-space/topics/1/settings/deletion", want: ""},
-		{name: "トピックの削除の確認画面へのPOSTはフラグの対象外", method: http.MethodPost, path: "/s/my-space/topics/1/settings/deletion/new", want: ""},
-		{name: "数値でないトピック番号はフラグの対象外", method: http.MethodGet, path: "/s/my-space/topics/abc/settings", want: ""},
+		{name: "トピックの設定のトップのGET", method: http.MethodGet, path: "/s/my-space/topics/1/settings", wantGo: true},
+		{name: "トピックの設定のトップのHEAD", method: http.MethodHead, path: "/s/my-space/topics/1/settings", wantGo: true},
+		{name: "トピックの設定のトップへのPOSTはRails版へ届く", method: http.MethodPost, path: "/s/my-space/topics/1/settings", wantGo: false},
+		{name: "トピックの削除の確認画面のGET", method: http.MethodGet, path: "/s/my-space/topics/1/settings/deletion/new", wantGo: true},
+		{name: "トピックの削除の確認画面のHEAD", method: http.MethodHead, path: "/s/my-space/topics/1/settings/deletion/new", wantGo: true},
+		{name: "トピックの削除の確認画面へのPOSTはRails版へ届く", method: http.MethodPost, path: "/s/my-space/topics/1/settings/deletion/new", wantGo: false},
+		{name: "トピックの削除の処理のPOST", method: http.MethodPost, path: "/s/my-space/topics/1/settings/deletion", wantGo: true},
+		{name: "トピックの削除の処理へのGETはRails版へ届く", method: http.MethodGet, path: "/s/my-space/topics/1/settings/deletion", wantGo: false},
+		{name: "数値でないトピック番号の設定はRails版へ届く", method: http.MethodGet, path: "/s/my-space/topics/abc/settings", wantGo: false},
+		{name: "ゴミ箱の一覧のGET", method: http.MethodGet, path: "/s/my-space/trash", wantGo: true},
+		{name: "ゴミ箱の一覧のHEAD", method: http.MethodHead, path: "/s/my-space/trash", wantGo: true},
+		{name: "ゴミ箱の一覧へのPOSTはRails版へ届く", method: http.MethodPost, path: "/s/my-space/trash", wantGo: false},
+		{name: "ゴミ箱の下のパスはRails版へ届く", method: http.MethodGet, path: "/s/my-space/trash/1", wantGo: false},
+		{name: "一括復元のPOST", method: http.MethodPost, path: "/s/my-space/bulk_restored_pages", wantGo: true},
+		{name: "一括復元へのGETはRails版へ届く", method: http.MethodGet, path: "/s/my-space/bulk_restored_pages", wantGo: false},
+		{name: "検索のGET", method: http.MethodGet, path: "/search?q=wiki", wantGo: true},
+		{name: "検索のHEAD", method: http.MethodHead, path: "/search", wantGo: true},
+		{name: "検索へのPOSTはRails版へ届く", method: http.MethodPost, path: "/search", wantGo: false},
+		{name: "検索の下のパスはRails版へ届く", method: http.MethodGet, path: "/search/pages", wantGo: false},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
+			t.Parallel()
 
-			if m.isGoHandledByRegex(req) {
-				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, httptest.NewRequest(tc.method, tc.path, nil))
+
+			gotGo := rr.Header().Get("X-Go-Handled") == "true"
+			gotRails := rr.Header().Get("X-Rails-Handled") == "true"
+			if tc.wantGo && (!gotGo || gotRails) {
+				t.Errorf("%s %qがGo版で処理されなかった (Go = %v、Rails = %v)", tc.method, tc.path, gotGo, gotRails)
 			}
-			if got := m.getFeatureFlagForRequest(req); got != tc.want {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
-			}
-		})
-	}
-}
-
-func TestFeatureFlaggedPatterns_Trash(t *testing.T) {
-	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
-	}
-
-	testCases := []struct {
-		name   string
-		method string
-		path   string
-		want   model.FeatureFlagName
-	}{
-		{name: "ゴミ箱の一覧のGET", method: http.MethodGet, path: "/s/my-space/trash", want: model.FeatureFlagTrash},
-		{name: "ゴミ箱の一覧のHEAD", method: http.MethodHead, path: "/s/my-space/trash", want: model.FeatureFlagTrash},
-		{name: "ゴミ箱の一覧へのPOSTはフラグの対象外", method: http.MethodPost, path: "/s/my-space/trash", want: ""},
-		{name: "ゴミ箱の下のパスはフラグの対象外", method: http.MethodGet, path: "/s/my-space/trash/1", want: ""},
-		{name: "一括復元のPOST", method: http.MethodPost, path: "/s/my-space/bulk_restored_pages", want: model.FeatureFlagTrash},
-		{name: "一括復元へのGETはフラグの対象外", method: http.MethodGet, path: "/s/my-space/bulk_restored_pages", want: ""},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-
-			if m.isGoHandledByRegex(req) {
-				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
-			}
-			if got := m.getFeatureFlagForRequest(req); got != tc.want {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
-			}
-		})
-	}
-}
-
-func TestFeatureFlaggedPatterns_Search(t *testing.T) {
-	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
-	}
-
-	testCases := []struct {
-		name   string
-		method string
-		path   string
-		want   model.FeatureFlagName
-	}{
-		{name: "検索のGET", method: http.MethodGet, path: "/search?q=wiki", want: model.FeatureFlagSearch},
-		{name: "検索のHEAD", method: http.MethodHead, path: "/search", want: model.FeatureFlagSearch},
-		{name: "検索へのPOSTはフラグの対象外", method: http.MethodPost, path: "/search", want: ""},
-		{name: "検索の下のパスはフラグの対象外", method: http.MethodGet, path: "/search/pages", want: ""},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-
-			if m.isGoHandledByRegex(req) {
-				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
-			}
-			if got := m.getFeatureFlagForRequest(req); got != tc.want {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			if !tc.wantGo && (gotGo || !gotRails) {
+				t.Errorf("%s %qがRails版へ届かなかった (Go = %v、Rails = %v)", tc.method, tc.path, gotGo, gotRails)
 			}
 		})
 	}
@@ -980,16 +937,16 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "トピック設定のトップはGo版で処理しない",
+			name:     "トピックの設定のトップ (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/topics/1/settings",
-			expected: false,
+			expected: true,
 		},
 		{
-			name:     "トピック削除フォームはGo版で処理しない",
+			name:     "トピックの削除の確認画面 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/topics/1/settings/deletion/new",
-			expected: false,
+			expected: true,
 		},
 		{
 			name:     "ページ新規作成の入口 (GET)",
@@ -1199,12 +1156,10 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			expected: false,
 		},
 		{
-			// スペース単位のゴミ箱画面 (/s/:identifier/trash) はRails版のまま残るため、
-			// ページ単位の本パターンが拾ってはいけない。
-			name:     "スペースのゴミ箱画面はマッチしない",
+			name:     "スペースのゴミ箱の一覧 (GET)",
 			method:   http.MethodGet,
 			path:     "/s/my-space/trash",
-			expected: false,
+			expected: true,
 		},
 		{
 			name:     "ページ番号が数字でないパスはマッチしない",

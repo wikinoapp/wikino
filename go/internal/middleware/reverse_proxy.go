@@ -38,44 +38,7 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{
-	// トピックの設定のトップ (GET・HEAD /s/:identifier/topics/:number/settings)。
-	{
-		pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings$`),
-		flag:    model.FeatureFlagTopicSettings,
-		methods: []string{http.MethodGet, http.MethodHead},
-	},
-	// トピックの削除の確認画面 (GET・HEAD .../settings/deletion/new) と削除処理 (POST
-	// .../settings/deletion)。パスはRails版と同じで、Goルートが応答するメソッドに限定する。
-	{
-		pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/deletion/new$`),
-		flag:    model.FeatureFlagTopicSettings,
-		methods: []string{http.MethodGet, http.MethodHead},
-	},
-	{
-		pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/deletion$`),
-		flag:    model.FeatureFlagTopicSettings,
-		methods: []string{http.MethodPost},
-	},
-	// スペースのゴミ箱の一覧 (GET・HEAD /s/:identifier/trash) と一括復元 (POST
-	// /s/:identifier/bulk_restored_pages)。パスはRails版と同じ。
-	{
-		pattern: regexp.MustCompile(`^/s/[^/]+/trash$`),
-		flag:    model.FeatureFlagTrash,
-		methods: []string{http.MethodGet, http.MethodHead},
-	},
-	{
-		pattern: regexp.MustCompile(`^/s/[^/]+/bulk_restored_pages$`),
-		flag:    model.FeatureFlagTrash,
-		methods: []string{http.MethodPost},
-	},
-	// 検索の画面 (GET・HEAD /search)。
-	{
-		pattern: regexp.MustCompile(`^/search$`),
-		flag:    model.FeatureFlagSearch,
-		methods: []string{http.MethodGet, http.MethodHead},
-	},
-}
+var featureFlaggedPatterns = []featureFlaggedPattern{}
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -145,9 +108,14 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
+	// トピックの設定のトップ (GET・HEAD /s/:identifier/topics/:number/settings)。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings$`), methods: []string{http.MethodGet, http.MethodHead}},
 	// トピックの一般設定。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
-	// パンくずが戻る設定のトップは、featureFlaggedPatternsのgo_topic_settingsで振り分ける。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/general$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
+	// トピックの削除の確認画面 (GET・HEAD .../settings/deletion/new) と削除処理 (POST
+	// .../settings/deletion)。パスはRails版と同じで、Goルートが応答するメソッドに限定する。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/deletion/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/deletion$`), methods: []string{http.MethodPost}},
 	// ページ新規作成の入口 (GET /s/:identifier/topics/:number/pages/new)。ページを作成して
 	// 編集画面へリダイレクトする。GoルートはGETのみなのでメソッドを限定し、他のメソッドは
 	// 従来どおりRails版へ届くようにする。
@@ -177,9 +145,12 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`)},
 	// ページをゴミ箱へ入れる操作 (POST /s/:identifier/pages/:number/trash)。GoルートはPOSTの
-	// みなので、上のプレビューパターンに揃えてメソッドを限定する。スペース単位のゴミ箱画面
-	// (/s/:identifier/trash) はパスが異なり、Rails版のまま残る。
+	// みなので、上のプレビューパターンに揃えてメソッドを限定する。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`), methods: []string{http.MethodPost}},
+	// スペースのゴミ箱の一覧 (GET・HEAD /s/:identifier/trash) と一括復元 (POST
+	// /s/:identifier/bulk_restored_pages)。パスはRails版と同じ。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/trash$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/bulk_restored_pages$`), methods: []string{http.MethodPost}},
 	// ページにピンを打つ・外す操作。プロキシはMethod Overrideより前に振り分けるため、外す要求
 	// (DELETE) もPOSTとして届く。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/pin$`), methods: []string{http.MethodPost}},
@@ -211,6 +182,8 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// OAuth認可サーバー (`/oauth/authorize`・`/oauth/token`・`/oauth/revoke`・`/oauth/device_authorization`・`/oauth/device`)。
 	// Rails版には存在しない
 	{pattern: regexp.MustCompile(`^/oauth/`)},
+	// 検索の画面 (GET・HEAD /search)。
+	{pattern: regexp.MustCompile(`^/search$`), methods: []string{http.MethodGet, http.MethodHead}},
 	// Cookieを使わないOAuthのエンドポイント。振り分けは上の `^/oauth/` に含まれるが、
 	// `session.CookielessPaths` と定義を共有していることをテストで確かめるために登録する
 	{pattern: session.OAuthTokenPathPattern},
