@@ -1,0 +1,30 @@
+package components
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// CardLinkSpaceはホーム画面とプロフィールの「参加中のスペース」で共有する、スペースへの
+// リンクカードを表示する。
+templ CardLinkSpace(space viewmodel.Space) {
+	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600 dark:hover:ring-brand-400">
+		<div class="h-full">
+			<a
+				class="h-full"
+				href={ templ.SafeURL(string(templates.SpacePath(space.Identifier))) }
+			>
+				<div class="flex items-center gap-2 px-3 py-2 h-full">
+					@SpaceIcon(SpaceIconData{
+						Space: space,
+						Size:  SpaceIconSizeMd,
+					})
+
+					<div class="line-clamp-2 text-sm font-bold">
+						{ space.Name }
+					</div>
+				</div>
+			</a>
+		</div>
+	</div>
+}

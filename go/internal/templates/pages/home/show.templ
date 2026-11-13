@@ -50,7 +50,7 @@ templ Show(data ShowPageData) {
 						} else {
 							<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
 								for _, space := range data.ActiveSpaces {
-									@spaceCard(space)
+									@components.CardLinkSpace(space)
 								}
 							</div>
 						}
@@ -115,27 +115,4 @@ templ newSpaceButton() {
 		@templates.Icon("plus-regular", "size-4 fill-primary-foreground")
 		{ templates.T(ctx, "home_new_space_button") }
 	</a>
-}
-
-// spaceCardは参加中スペースのカードを表示します
-templ spaceCard(space viewmodel.Space) {
-	<div class="card min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600 dark:hover:ring-brand-400">
-		<div class="h-full">
-			<a
-				class="h-full"
-				href={ templ.SafeURL(string(templates.SpacePath(space.Identifier))) }
-			>
-				<div class="flex items-center gap-2 px-3 py-2 h-full">
-					@components.SpaceIcon(components.SpaceIconData{
-						Space: space,
-						Size:  components.SpaceIconSizeMd,
-					})
-
-					<div class="line-clamp-2 text-sm font-bold">
-						{ space.Name }
-					</div>
-				</div>
-			</a>
-		</div>
-	</div>
 }
