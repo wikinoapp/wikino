@@ -39,8 +39,8 @@ type featureFlaggedPattern struct {
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
 var featureFlaggedPatterns = []featureFlaggedPattern{
-	// プロフィール (GET・HEAD /@:atname)。末尾の "$" により、/@:atname/... のRails版のパスは
-	// 巻き込まない。
+	// プロフィール (GET・HEAD /@:atname)。末尾の "$" により、Go版にルートの無い /@:atname/... は
+	// フラグにかかわらずRails版へ送る。
 	{
 		pattern: regexp.MustCompile(`^/@[^/]+$`),
 		flag:    model.FeatureFlagProfile,
