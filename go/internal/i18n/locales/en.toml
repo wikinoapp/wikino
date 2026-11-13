@@ -3383,3 +3383,99 @@ other = "Joined spaces"
 [profile_show_no_joined_spaces_html]
 description = "プロフィールの参加中のスペースが0件のときのメッセージ (HTMLを含む)"
 other = "No joined spaces."
+
+[validation_atname_reserved]
+description = "アットネームが予約語のときのエラー"
+other = "This atname is not available"
+
+[validation_user_name_too_long]
+description = "ユーザーの名前の文字数超過エラー"
+other = "Name must be 30 characters or less"
+
+[validation_user_description_too_long]
+description = "ユーザーの自己紹介の文字数超過エラー"
+other = "Description must be 150 characters or less"
+
+[flash_profile_updated]
+description = "プロフィールの編集を保存したときのフラッシュメッセージ"
+other = "Profile updated."
+
+[settings_show_title]
+description = "ユーザー設定のトップのページタイトル"
+other = "Settings"
+
+[settings_show_heading]
+description = "ユーザー設定のトップの見出し"
+other = "Settings"
+
+[settings_show_profile_link]
+description = "ユーザー設定のトップの、プロフィールの編集へのリンク"
+other = "Profile settings"
+
+[settings_show_email_link]
+description = "ユーザー設定のトップの、メールアドレスの変更へのリンク"
+other = "Change email"
+
+[settings_show_two_factor_auth_link]
+description = "ユーザー設定のトップの、二要素認証の設定へのリンク"
+other = "Two-factor authentication"
+
+[settings_show_account_deletion_link]
+description = "ユーザー設定のトップの、アカウントの削除へのリンク"
+other = "Delete account"
+
+[settings_show_sign_out_button]
+description = "ユーザー設定のトップのログアウトのボタン"
+other = "Sign out"
+
+[settings_show_sign_out_confirm]
+description = "ユーザー設定のトップでログアウトする前の確認"
+other = "Are you sure you want to sign out?"
+
+[settings_profile_show_title]
+description = "プロフィールの編集のページタイトル"
+other = "Profile settings"
+
+[settings_profile_show_heading]
+description = "プロフィールの編集の見出し"
+other = "Profile settings"
+
+[settings_profile_show_breadcrumb_settings]
+description = "プロフィールの編集のパンくずの、設定のトップへの項目"
+other = "Settings"
+
+[settings_profile_show_breadcrumb]
+description = "プロフィールの編集のパンくずの現在地"
+other = "Profile settings"
+
+[settings_profile_show_atname_label]
+description = "プロフィールの編集のアットネームのラベル"
+other = "Atname"
+
+[settings_profile_show_atname_hint]
+description = "プロフィールの編集のアットネームの補足"
+other = "This identifier is used in the URL of the profile. Up to 20 characters; only alphanumeric characters and underscores can be used."
+
+[settings_profile_show_name_label]
+description = "プロフィールの編集の名前のラベル"
+other = "Name"
+
+[settings_profile_show_name_hint]
+description = "プロフィールの編集の名前の補足"
+other = "30 characters or less."
+
+[settings_profile_show_description_label]
+description = "プロフィールの編集の自己紹介のラベル"
+other = "Description"
+
+[settings_profile_show_description_hint]
+description = "プロフィールの編集の自己紹介の補足"
+other = "150 characters or less."
+
+[settings_profile_show_submit_button]
+description = "プロフィールの編集の保存ボタン"
+other = "Save"
+
+[settings_profile_show_cancel]
+description = "プロフィールの編集の、設定のトップへ戻るリンク"
+other = "Cancel"

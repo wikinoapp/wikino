@@ -392,6 +392,7 @@ func TestIsValidAtname(t *testing.T) {
 		{name: "ハイフンを含む", atname: "seed-user1", want: false},
 		{name: "空白を含む", atname: "seed user1", want: false},
 		{name: "日本語を含む", atname: "シードユーザー", want: false},
+		{name: "予約語", atname: "admin", want: false},
 	}
 
 	for _, tt := range tests {
@@ -402,5 +403,54 @@ func TestIsValidAtname(t *testing.T) {
 				t.Errorf("IsValidAtname(%q) = %vであることを期待したが%vだった", tt.atname, tt.want, got)
 			}
 		})
+	}
+}
+
+func TestAccountCreateValidator_Validate_ReservedAtname(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	v := validator.NewAccountCreateValidator(repository.NewUserRepository(testutil.QueriesWithTx(tx)))
+
+	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
+	err := v.Validate(ctx, validator.AccountCreateValidatorInput{
+		Atname:   "admin",
+		Password: "password123",
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("ValidationErrorを期待したが、nilだった")
+	}
+	if got := ve.GetFieldErrors("atname"); len(got) != 1 || got[0] != "このアットネームは使用できません" {
+		t.Errorf("atnameのエラー = %q、期待値 = %q", got, []string{"このアットネームは使用できません"})
+	}
+}
+
+func TestAccountCreateValidator_Validate_削除済みのユーザーのアットネームは使えない(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	discardedID := testutil.NewUserBuilder(t, tx).
+		WithEmail("account-discarded@example.com").
+		WithAtname("account_discarded").
+		Build()
+	if _, err := tx.ExecContext(t.Context(), "UPDATE users SET discarded_at = NOW() WHERE id = $1", string(discardedID)); err != nil {
+		t.Fatalf("ユーザーの削除に失敗: %v", err)
+	}
+	v := validator.NewAccountCreateValidator(repository.NewUserRepository(testutil.QueriesWithTx(tx)))
+
+	ctx := i18n.SetLocale(t.Context(), i18n.LangJa)
+	err := v.Validate(ctx, validator.AccountCreateValidatorInput{
+		Atname:   "account_discarded",
+		Password: "password123",
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatal("ValidationErrorを期待したが、nilだった")
+	}
+	if !ve.HasFieldError("atname") {
+		t.Error("atnameのフィールドエラーが無い")
 	}
 }

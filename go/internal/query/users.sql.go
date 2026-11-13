@@ -70,6 +70,36 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const existsOtherUserByAtname = `-- name: ExistsOtherUserByAtname :one
+SELECT EXISTS (SELECT 1 FROM users WHERE atname = $1 AND id <> $2)
+`
+
+type ExistsOtherUserByAtnameParams struct {
+	Atname string `json:"atname"`
+	UserID string `json:"user_id"`
+}
+
+// 指定したユーザー以外に、アットネームを使っているユーザーがいるかを返す (削除済みのユーザーも数える)
+func (q *Queries) ExistsOtherUserByAtname(ctx context.Context, arg ExistsOtherUserByAtnameParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsOtherUserByAtname, arg.Atname, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const existsUserByAtname = `-- name: ExistsUserByAtname :one
+SELECT EXISTS (SELECT 1 FROM users WHERE atname = $1)
+`
+
+// アットネームを使っているユーザーがいるかを返す。一意インデックスは削除済みのユーザーも
+// 含むため、削除済みのユーザーも数える
+func (q *Queries) ExistsUserByAtname(ctx context.Context, atname string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsUserByAtname, atname)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const findUsersByIDs = `-- name: FindUsersByIDs :many
 SELECT id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at FROM users WHERE id = ANY($1::uuid[])
 `
@@ -165,6 +195,47 @@ SELECT id, email, atname, name, description, locale, time_zone, joined_at, disca
 // ユーザーをIDで取得する
 func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Atname,
+		&i.Name,
+		&i.Description,
+		&i.Locale,
+		&i.TimeZone,
+		&i.JoinedAt,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserProfile = `-- name: UpdateUserProfile :one
+UPDATE users
+SET atname = $1, name = $2, description = $3, updated_at = $4
+WHERE id = $5 AND discarded_at IS NULL
+RETURNING id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at
+`
+
+type UpdateUserProfileParams struct {
+	Atname      string    `json:"atname"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Now         time.Time `json:"now"`
+	ID          string    `json:"id"`
+}
+
+// ユーザーのアットネーム・名前・自己紹介を更新する (削除されていないユーザーのみ)
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserProfile,
+		arg.Atname,
+		arg.Name,
+		arg.Description,
+		arg.Now,
+		arg.ID,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,

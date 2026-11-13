@@ -109,6 +109,46 @@ func (r *UserRepository) Create(ctx context.Context, input CreateUserInput) (*mo
 	return r.toModel(row), nil
 }
 
+// ExistsByAtnameはアットネームを使っているユーザーがいるかを返す。excludeIDを渡すと、その
+// ユーザーを数えない。アットネームの一意インデックスは削除済みのユーザーも含むため、削除済みの
+// ユーザーも数える。
+func (r *UserRepository) ExistsByAtname(ctx context.Context, atname string, excludeID *model.UserID) (bool, error) {
+	if excludeID == nil {
+		return r.q.ExistsUserByAtname(ctx, atname)
+	}
+	return r.q.ExistsOtherUserByAtname(ctx, query.ExistsOtherUserByAtnameParams{
+		Atname: atname,
+		UserID: string(*excludeID),
+	})
+}
+
+// UpdateProfileInputはプロフィールの更新の入力パラメータ
+type UpdateProfileInput struct {
+	ID          model.UserID
+	Atname      string
+	Name        string
+	Description string
+}
+
+// UpdateProfileはユーザーのアットネーム・名前・自己紹介を更新する。削除されたユーザーは
+// 更新せず、(nil, nil) を返す。
+func (r *UserRepository) UpdateProfile(ctx context.Context, input UpdateProfileInput) (*model.User, error) {
+	row, err := r.q.UpdateUserProfile(ctx, query.UpdateUserProfileParams{
+		Atname:      input.Atname,
+		Name:        input.Name,
+		Description: input.Description,
+		Now:         time.Now(),
+		ID:          string(input.ID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModelはquery.Userをmodel.Userに変換する
 func (r *UserRepository) toModel(row query.User) *model.User {
 	var discardedAt *time.Time

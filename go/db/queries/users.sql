@@ -29,3 +29,19 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9
 ) RETURNING *;
+
+-- name: ExistsUserByAtname :one
+-- アットネームを使っているユーザーがいるかを返す。一意インデックスは削除済みのユーザーも
+-- 含むため、削除済みのユーザーも数える
+SELECT EXISTS (SELECT 1 FROM users WHERE atname = $1);
+
+-- name: ExistsOtherUserByAtname :one
+-- 指定したユーザー以外に、アットネームを使っているユーザーがいるかを返す (削除済みのユーザーも数える)
+SELECT EXISTS (SELECT 1 FROM users WHERE atname = @atname AND id <> @user_id);
+
+-- name: UpdateUserProfile :one
+-- ユーザーのアットネーム・名前・自己紹介を更新する (削除されていないユーザーのみ)
+UPDATE users
+SET atname = @atname, name = @name, description = @description, updated_at = @now
+WHERE id = @id AND discarded_at IS NULL
+RETURNING *;
