@@ -272,6 +272,26 @@ func SettingsProfilePath() Path {
 	return Path("/settings/profile")
 }
 
+// SettingsEmailPathはメールアドレスの変更のパスを生成します
+func SettingsEmailPath() Path {
+	return Path("/settings/email")
+}
+
+// SettingsTwoFactorAuthPathは二要素認証の設定のパスを生成します
+func SettingsTwoFactorAuthPath() Path {
+	return Path("/settings/two_factor_auth")
+}
+
+// NewSettingsAccountDeletionPathはアカウントの削除の確認画面のパスを生成します
+func NewSettingsAccountDeletionPath() Path {
+	return Path("/settings/account/deletion/new")
+}
+
+// UserSessionPathはログイン中のセッション (ログアウトの送信先) のパスを生成します
+func UserSessionPath() Path {
+	return Path("/user_session")
+}
+
 // SignInPathはサインインのパスを生成します
 func SignInPath() Path {
 	return Path("/sign_in")

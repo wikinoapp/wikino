@@ -79,6 +79,8 @@ import (
 	personalaccesstokenhandler "github.com/wikinoapp/wikino/go/internal/handler/personal_access_token"
 	"github.com/wikinoapp/wikino/go/internal/handler/profile"
 	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
+	settingshandler "github.com/wikinoapp/wikino/go/internal/handler/settings"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_profile"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
@@ -470,6 +472,14 @@ func runServe() {
 	profileHandler := profile.NewHandler(
 		cfg,
 		getProfileShowUC,
+	)
+	settingsHandler := settingshandler.NewHandler(cfg)
+	profileUpdateValidator := validator.NewProfileUpdateValidator(userRepo)
+	updateProfileUC := usecase.NewUpdateProfileUsecase(profileUpdateValidator, userRepo)
+	settingsProfileHandler := settings_profile.NewHandler(
+		cfg,
+		flashMgr,
+		updateProfileUC,
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
@@ -1098,6 +1108,16 @@ func runServe() {
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
+
+		// ユーザー設定のトップとプロフィールの編集。リバースプロキシはgo_user_settingsが有効な
+		// 閲覧者のリクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		//
+		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
+		r.Get("/settings", settingsHandler.Show)
+		r.Head("/settings", settingsHandler.Show)
+		r.Get("/settings/profile", settingsProfileHandler.Show)
+		r.Head("/settings/profile", settingsProfileHandler.Show)
+		r.Patch("/settings/profile", settingsProfileHandler.Update)
 
 		// スペースのゴミ箱の一覧。
 		r.Get("/s/{space_identifier}/trash", trashHandler.Show)

@@ -46,6 +46,18 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		flag:    model.FeatureFlagProfile,
 		methods: []string{http.MethodGet, http.MethodHead},
 	},
+	// ユーザー設定のトップ (GET・HEAD /settings)。
+	{
+		pattern: regexp.MustCompile(`^/settings$`),
+		flag:    model.FeatureFlagUserSettings,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	// プロフィールの編集。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
+	{
+		pattern: regexp.MustCompile(`^/settings/profile$`),
+		flag:    model.FeatureFlagUserSettings,
+		methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch},
+	},
 }
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア

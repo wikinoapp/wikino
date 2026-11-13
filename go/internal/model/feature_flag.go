@@ -15,6 +15,8 @@ const (
 	FeatureFlagDarkMode FeatureFlagName = "go_dark_mode"
 	// FeatureFlagProfileはプロフィール (/@{atname}) をGo版で処理する
 	FeatureFlagProfile FeatureFlagName = "go_profile"
+	// FeatureFlagUserSettingsはユーザー設定のトップとプロフィールの編集をGo版で処理する
+	FeatureFlagUserSettings FeatureFlagName = "go_user_settings"
 )
 
 // AllFeatureFlagNamesは上で定義した全フラグの一覧。Goは定数グループの
@@ -26,6 +28,7 @@ var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagRemoteMCPServer,
 	FeatureFlagDarkMode,
 	FeatureFlagProfile,
+	FeatureFlagUserSettings,
 }
 
 // FeatureFlagはフィーチャーフラグのドメインモデル

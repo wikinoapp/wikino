@@ -638,6 +638,50 @@ func TestFeatureFlaggedPatterns_Profile(t *testing.T) {
 	}
 }
 
+// TestFeatureFlaggedPatterns_UserSettingsは、ユーザー設定のトップとプロフィールの編集が
+// go_user_settingsで振り分けられ、Go版が受けない設定のパスとメソッドがフラグにかかわらずRails版へ
+// 届くことを、登録済みのパターンで確かめる。
+func TestFeatureFlaggedPatterns_UserSettings(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		want   model.FeatureFlagName
+	}{
+		{name: "設定のトップのGET", method: http.MethodGet, path: "/settings", want: model.FeatureFlagUserSettings},
+		{name: "設定のトップのHEAD", method: http.MethodHead, path: "/settings", want: model.FeatureFlagUserSettings},
+		{name: "設定のトップへのPOSTはフラグの対象外", method: http.MethodPost, path: "/settings", want: ""},
+		{name: "プロフィールの編集のGET", method: http.MethodGet, path: "/settings/profile", want: model.FeatureFlagUserSettings},
+		{name: "プロフィールの編集のHEAD", method: http.MethodHead, path: "/settings/profile", want: model.FeatureFlagUserSettings},
+		{name: "プロフィールの保存のPATCH", method: http.MethodPatch, path: "/settings/profile", want: model.FeatureFlagUserSettings},
+		{name: "プロフィールの保存 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/profile", want: model.FeatureFlagUserSettings},
+		{name: "プロフィールの編集へのDELETEはフラグの対象外", method: http.MethodDelete, path: "/settings/profile", want: ""},
+		{name: "メールアドレスの変更はこのフラグの対象外", method: http.MethodGet, path: "/settings/email", want: ""},
+		{name: "二要素認証の設定はこのフラグの対象外", method: http.MethodGet, path: "/settings/two_factor_auth", want: ""},
+		{name: "アカウントの削除はこのフラグの対象外", method: http.MethodGet, path: "/settings/account/deletion/new", want: ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+
+			if m.isGoHandledByRegex(req) {
+				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
+			}
+			if got := m.getFeatureFlagForRequest(req); got != tc.want {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	// グローバル変数featureFlaggedPatternsを変更するためt.Parallel() は使用しない
 
