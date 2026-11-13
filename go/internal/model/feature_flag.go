@@ -13,6 +13,8 @@ const (
 	FeatureFlagRemoteMCPServer FeatureFlagName = "go_remote_mcp_server"
 	// FeatureFlagDarkModeはGo版の画面のダークモード (OSの配色がダークの閲覧者への暗い配色) を有効にする
 	FeatureFlagDarkMode FeatureFlagName = "go_dark_mode"
+	// FeatureFlagProfileはプロフィール (/@{atname}) をGo版で処理する
+	FeatureFlagProfile FeatureFlagName = "go_profile"
 )
 
 // AllFeatureFlagNamesは上で定義した全フラグの一覧。Goは定数グループの
@@ -23,6 +25,7 @@ var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagPublicAPI,
 	FeatureFlagRemoteMCPServer,
 	FeatureFlagDarkMode,
+	FeatureFlagProfile,
 }
 
 // FeatureFlagはフィーチャーフラグのドメインモデル

@@ -77,6 +77,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	personalaccesstokenhandler "github.com/wikinoapp/wikino/go/internal/handler/personal_access_token"
+	"github.com/wikinoapp/wikino/go/internal/handler/profile"
 	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
@@ -464,6 +465,11 @@ func runServe() {
 	homeHandler := home.NewHandler(
 		cfg,
 		getHomeShowUC,
+	)
+	getProfileShowUC := usecase.NewGetProfileShowUsecase(userRepo, spaceRepo)
+	profileHandler := profile.NewHandler(
+		cfg,
+		getProfileShowUC,
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
@@ -991,6 +997,13 @@ func runServe() {
 		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
+
+		// プロフィール (未ログインでも閲覧可能)。リバースプロキシはgo_profileが有効な閲覧者の
+		// リクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		//
+		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
+		r.Get("/@{atname}", profileHandler.Show)
+		r.Head("/@{atname}", profileHandler.Show)
 
 		// スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
 		r.Get("/s/{space_identifier}", spaceHandler.Show)

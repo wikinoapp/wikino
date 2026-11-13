@@ -3356,3 +3356,27 @@ other = "検索結果が見つかりませんでした"
 [search_show_breadcrumb]
 description = "検索の画面のパンくずの現在地"
 other = "検索"
+
+[profile_show_title]
+description = "プロフィールのページタイトル (名前があるとき)"
+other = "{{.Name}} (@{{.Atname}}) | Wikino"
+
+[profile_show_title_without_name]
+description = "プロフィールのページタイトル (名前が空のとき)"
+other = "@{{.Atname}} | Wikino"
+
+[profile_show_edit_button]
+description = "プロフィールの、プロフィールの編集へのリンク (本人にだけ出す)"
+other = "プロフィール編集"
+
+[profile_show_settings_button]
+description = "プロフィールの、設定へのリンク (本人にだけ出す)"
+other = "設定"
+
+[profile_show_joined_spaces_heading]
+description = "プロフィールの「参加中のスペース」見出し"
+other = "参加中のスペース"
+
+[profile_show_no_joined_spaces_html]
+description = "プロフィールの参加中のスペースが0件のときのメッセージ (HTMLを含む)"
+other = "参加中のスペースは<br class=\"block sm:hidden\">ありません"

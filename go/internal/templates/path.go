@@ -262,6 +262,16 @@ func ProfilePath(atname string) Path {
 	return Path("/@" + atname)
 }
 
+// SettingsPathはユーザー設定のトップのパスを生成します
+func SettingsPath() Path {
+	return Path("/settings")
+}
+
+// SettingsProfilePathはプロフィールの編集のパスを生成します
+func SettingsProfilePath() Path {
+	return Path("/settings/profile")
+}
+
 // SignInPathはサインインのパスを生成します
 func SignInPath() Path {
 	return Path("/sign_in")

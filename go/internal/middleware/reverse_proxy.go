@@ -38,7 +38,15 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{}
+var featureFlaggedPatterns = []featureFlaggedPattern{
+	// プロフィール (GET・HEAD /@:atname)。末尾の "$" により、/@:atname/... のRails版のパスは
+	// 巻き込まない。
+	{
+		pattern: regexp.MustCompile(`^/@[^/]+$`),
+		flag:    model.FeatureFlagProfile,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+}
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
