@@ -32,7 +32,18 @@ templ TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) {
 					</p>
 				</div>
 
-				@components.FormErrorSummary(data.FormErrors)
+				if data.FormErrors != nil && len(data.FormErrors.Global) > 0 {
+					<div
+						aria-labelledby="regenerate-recovery-codes-errors"
+						autofocus
+						class="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						tabindex="-1"
+					>
+						<div id="regenerate-recovery-codes-errors">
+							@components.FormErrorSummary(data.FormErrors)
+						</div>
+					</div>
+				}
 
 				@components.ContentCard() {
 					<div class="grid gap-6">
@@ -81,7 +92,7 @@ templ TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) {
 								</label>
 								<input
 									autocomplete="current-password"
-									if hasFieldError(data.FormErrors, "password") {
+								if hasFieldError(data.FormErrors, "password") && len(data.FormErrors.Global) == 0 {
 										autofocus
 									}
 									class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"

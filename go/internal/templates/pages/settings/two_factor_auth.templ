@@ -45,7 +45,18 @@ templ TwoFactorAuth(data TwoFactorAuthData) {
 					</p>
 				</div>
 
-				@components.FormErrorSummary(data.FormErrors)
+				if data.FormErrors != nil && len(data.FormErrors.Global) > 0 {
+					<div
+						aria-labelledby="disable-two-factor-auth-errors"
+						autofocus
+						class="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						tabindex="-1"
+					>
+						<div id="disable-two-factor-auth-errors">
+							@components.FormErrorSummary(data.FormErrors)
+						</div>
+					</div>
+				}
 
 				@components.ContentCard() {
 					if data.Enabled {
@@ -94,7 +105,7 @@ templ TwoFactorAuth(data TwoFactorAuthData) {
 									</label>
 									<input
 										autocomplete="current-password"
-										if hasFieldError(data.FormErrors, "password") {
+									if hasFieldError(data.FormErrors, "password") && len(data.FormErrors.Global) == 0 {
 											autofocus
 										}
 										class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
@@ -114,7 +125,11 @@ templ TwoFactorAuth(data TwoFactorAuthData) {
 								</div>
 
 								<div>
-									<button type="submit" class="btn rounded-full w-fit" data-variant="destructive">
+									<button
+										type="submit"
+										class="btn rounded-full w-fit text-red-800 focus-visible:border-red-800 focus-visible:ring-red-800 dark:text-destructive dark:focus-visible:border-destructive dark:focus-visible:ring-destructive"
+										data-variant="destructive"
+									>
 										{ templates.T(ctx, "settings_two_factor_auth_show_disable_button") }
 									</button>
 								</div>
