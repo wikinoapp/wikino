@@ -3568,3 +3568,139 @@ other = "メールアドレスを変更する"
 [settings_email_confirmation_edit_back]
 description = "確認コードの入力から、メールアドレスの変更へ戻るリンク"
 other = "メールアドレスを入力し直す"
+
+[validation_totp_code_incorrect]
+description = "認証アプリのコードが一致しないときのエラー"
+other = "認証コードが正しくありません"
+
+[flash_two_factor_auth_enabled]
+description = "二要素認証を有効にしたときのフラッシュメッセージ"
+other = "二要素認証を有効にしました"
+
+[flash_two_factor_auth_already_enabled]
+description = "二要素認証が既に有効なのに登録の画面を開いたときのフラッシュメッセージ"
+other = "二要素認証はすでに有効になっています"
+
+[flash_two_factor_auth_not_pending]
+description = "有効にしようとした時点で登録の途中の設定が無かったときのフラッシュメッセージ"
+other = "二要素認証の設定が見つかりませんでした。今の状態を確かめてください"
+
+[settings_two_factor_auth_show_title]
+description = "二要素認証の設定のページタイトル"
+other = "二要素認証の設定"
+
+[settings_two_factor_auth_show_heading]
+description = "二要素認証の設定の見出し"
+other = "二要素認証の設定"
+
+[settings_two_factor_auth_show_breadcrumb_settings]
+description = "二要素認証の設定のパンくずの設定のトップ"
+other = "設定"
+
+[settings_two_factor_auth_show_breadcrumb]
+description = "二要素認証の設定のパンくずの現在のページ"
+other = "二要素認証"
+
+[settings_two_factor_auth_show_description]
+description = "二要素認証の設定の見出しの下の説明"
+other = "ログインするときに、パスワードに加えて認証アプリのコードを求めます。"
+
+[settings_two_factor_auth_show_help_link]
+description = "二要素認証の設定からヘルプへのリンク"
+other = "詳しく見る"
+
+[settings_two_factor_auth_show_status_enabled]
+description = "二要素認証が有効なときの状態"
+other = "二要素認証は有効です"
+
+[settings_two_factor_auth_show_status_disabled]
+description = "二要素認証が無効なときの状態"
+other = "二要素認証は未設定です"
+
+[settings_two_factor_auth_show_enabled_at]
+description = "二要素認証を有効にした日時"
+other = "{{.Time}}に有効化"
+
+[settings_two_factor_auth_show_recovery_codes]
+description = "二要素認証の設定からリカバリーコードの画面へのリンク"
+other = "リカバリーコードを表示"
+
+[settings_two_factor_auth_show_enable]
+description = "二要素認証の設定から登録の画面へのリンク"
+other = "二要素認証を有効にする"
+
+[settings_two_factor_auth_show_back]
+description = "二要素認証の設定から設定のトップへ戻るリンク"
+other = "設定に戻る"
+
+[settings_two_factor_auth_new_title]
+description = "二要素認証の登録のページタイトル"
+other = "二要素認証を有効にする"
+
+[settings_two_factor_auth_new_heading]
+description = "二要素認証の登録の見出し"
+other = "二要素認証を有効にする"
+
+[settings_two_factor_auth_new_breadcrumb_settings]
+description = "二要素認証の登録のパンくずの設定のトップ"
+other = "設定"
+
+[settings_two_factor_auth_new_breadcrumb_two_factor_auth]
+description = "二要素認証の登録のパンくずの二要素認証の設定"
+other = "二要素認証"
+
+[settings_two_factor_auth_new_breadcrumb]
+description = "二要素認証の登録のパンくずの現在のページ"
+other = "有効にする"
+
+[settings_two_factor_auth_new_description]
+description = "二要素認証の登録の見出しの下の説明"
+other = "認証アプリにWikinoを登録し、表示されたコードを入力すると有効になります。"
+
+[settings_two_factor_auth_new_help_link]
+description = "二要素認証の登録からヘルプへのリンク"
+other = "詳しく見る"
+
+[settings_two_factor_auth_new_step_install]
+description = "二要素認証の登録の手順1"
+other = "1. スマートフォンに認証アプリ (Google Authenticator、Authyなど) をインストールします"
+
+[settings_two_factor_auth_new_step_scan]
+description = "二要素認証の登録の手順2"
+other = "2. 認証アプリで下のQRコードを読み取ります"
+
+[settings_two_factor_auth_new_qr_code_label]
+description = "二要素認証の登録のQRコードの代替テキスト"
+other = "認証アプリに登録するQRコード"
+
+[settings_two_factor_auth_new_manual_entry]
+description = "二要素認証の登録の秘密鍵を手で入力するときの案内"
+other = "QRコードが使えない場合は、以下のコードを手動で入力してください"
+
+[settings_two_factor_auth_new_step_enter]
+description = "二要素認証の登録の手順3"
+other = "3. ログイン時に入力するパスワードと、認証アプリに表示される6桁のコードを下に入力します"
+
+[settings_two_factor_auth_new_password_label]
+description = "二要素認証の登録のパスワードのラベル"
+other = "現在のパスワード"
+
+[settings_two_factor_auth_new_password_hint]
+description = "二要素認証の登録のパスワードの補足"
+other = "本人であることを確かめるために入力してください"
+
+[settings_two_factor_auth_new_totp_code_label]
+description = "二要素認証の登録の認証コードのラベル"
+other = "認証コード"
+
+[settings_two_factor_auth_new_totp_code_hint]
+description = "二要素認証の登録の認証コードの補足"
+other = "認証アプリに表示される6桁の数字です"
+
+[settings_two_factor_auth_new_submit_button]
+description = "二要素認証の登録の送信ボタン"
+other = "二要素認証を有効にする"
+
+[settings_two_factor_auth_new_cancel]
+description = "二要素認証の登録から設定の画面へ戻るリンク"
+other = "キャンセル"

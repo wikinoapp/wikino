@@ -3571,3 +3571,139 @@ other = "Change email"
 [settings_email_confirmation_edit_back]
 description = "確認コードの入力から、メールアドレスの変更へ戻るリンク"
 other = "Enter a different email"
+
+[validation_totp_code_incorrect]
+description = "認証アプリのコードが一致しないときのエラー"
+other = "Authentication code is incorrect"
+
+[flash_two_factor_auth_enabled]
+description = "二要素認証を有効にしたときのフラッシュメッセージ"
+other = "Two-factor authentication has been enabled."
+
+[flash_two_factor_auth_already_enabled]
+description = "二要素認証が既に有効なのに登録の画面を開いたときのフラッシュメッセージ"
+other = "Two-factor authentication is already enabled."
+
+[flash_two_factor_auth_not_pending]
+description = "有効にしようとした時点で登録の途中の設定が無かったときのフラッシュメッセージ"
+other = "Two-factor authentication setup was not found. Please check the current status."
+
+[settings_two_factor_auth_show_title]
+description = "二要素認証の設定のページタイトル"
+other = "Two-factor authentication settings"
+
+[settings_two_factor_auth_show_heading]
+description = "二要素認証の設定の見出し"
+other = "Two-factor authentication settings"
+
+[settings_two_factor_auth_show_breadcrumb_settings]
+description = "二要素認証の設定のパンくずの設定のトップ"
+other = "Settings"
+
+[settings_two_factor_auth_show_breadcrumb]
+description = "二要素認証の設定のパンくずの現在のページ"
+other = "Two-factor authentication"
+
+[settings_two_factor_auth_show_description]
+description = "二要素認証の設定の見出しの下の説明"
+other = "When you log in, you will be asked for a code from your authenticator app in addition to your password."
+
+[settings_two_factor_auth_show_help_link]
+description = "二要素認証の設定からヘルプへのリンク"
+other = "Learn more"
+
+[settings_two_factor_auth_show_status_enabled]
+description = "二要素認証が有効なときの状態"
+other = "Two-factor authentication is enabled"
+
+[settings_two_factor_auth_show_status_disabled]
+description = "二要素認証が無効なときの状態"
+other = "Two-factor authentication is not enabled"
+
+[settings_two_factor_auth_show_enabled_at]
+description = "二要素認証を有効にした日時"
+other = "Enabled on {{.Time}}"
+
+[settings_two_factor_auth_show_recovery_codes]
+description = "二要素認証の設定からリカバリーコードの画面へのリンク"
+other = "View recovery codes"
+
+[settings_two_factor_auth_show_enable]
+description = "二要素認証の設定から登録の画面へのリンク"
+other = "Enable two-factor authentication"
+
+[settings_two_factor_auth_show_back]
+description = "二要素認証の設定から設定のトップへ戻るリンク"
+other = "Back to settings"
+
+[settings_two_factor_auth_new_title]
+description = "二要素認証の登録のページタイトル"
+other = "Enable two-factor authentication"
+
+[settings_two_factor_auth_new_heading]
+description = "二要素認証の登録の見出し"
+other = "Enable two-factor authentication"
+
+[settings_two_factor_auth_new_breadcrumb_settings]
+description = "二要素認証の登録のパンくずの設定のトップ"
+other = "Settings"
+
+[settings_two_factor_auth_new_breadcrumb_two_factor_auth]
+description = "二要素認証の登録のパンくずの二要素認証の設定"
+other = "Two-factor authentication"
+
+[settings_two_factor_auth_new_breadcrumb]
+description = "二要素認証の登録のパンくずの現在のページ"
+other = "Enable"
+
+[settings_two_factor_auth_new_description]
+description = "二要素認証の登録の見出しの下の説明"
+other = "Register Wikino in your authenticator app and enter the code it shows to enable two-factor authentication."
+
+[settings_two_factor_auth_new_help_link]
+description = "二要素認証の登録からヘルプへのリンク"
+other = "Learn more"
+
+[settings_two_factor_auth_new_step_install]
+description = "二要素認証の登録の手順1"
+other = "1. Install an authenticator app (Google Authenticator, Authy, etc.) on your smartphone."
+
+[settings_two_factor_auth_new_step_scan]
+description = "二要素認証の登録の手順2"
+other = "2. Scan the QR code below with the app."
+
+[settings_two_factor_auth_new_qr_code_label]
+description = "二要素認証の登録のQRコードの代替テキスト"
+other = "QR code to register in your authenticator app"
+
+[settings_two_factor_auth_new_manual_entry]
+description = "二要素認証の登録の秘密鍵を手で入力するときの案内"
+other = "If you cannot use the QR code, please enter this code manually."
+
+[settings_two_factor_auth_new_step_enter]
+description = "二要素認証の登録の手順3"
+other = "3. Enter the password you use to log in and the 6-digit code displayed in the app below."
+
+[settings_two_factor_auth_new_password_label]
+description = "二要素認証の登録のパスワードのラベル"
+other = "Current password"
+
+[settings_two_factor_auth_new_password_hint]
+description = "二要素認証の登録のパスワードの補足"
+other = "Enter it to confirm that it's you"
+
+[settings_two_factor_auth_new_totp_code_label]
+description = "二要素認証の登録の認証コードのラベル"
+other = "Authentication code"
+
+[settings_two_factor_auth_new_totp_code_hint]
+description = "二要素認証の登録の認証コードの補足"
+other = "The 6-digit number shown in your authenticator app."
+
+[settings_two_factor_auth_new_submit_button]
+description = "二要素認証の登録の送信ボタン"
+other = "Enable two-factor authentication"
+
+[settings_two_factor_auth_new_cancel]
+description = "二要素認証の登録から設定の画面へ戻るリンク"
+other = "Cancel"
