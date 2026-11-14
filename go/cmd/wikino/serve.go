@@ -83,6 +83,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_email"
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_profile"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_two_factor_auth"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
@@ -499,6 +500,16 @@ func runServe() {
 		sessionMgr,
 		flashMgr,
 		updateEmailUC,
+	)
+	settingsTwoFactorAuthCreateValidator := validator.NewSettingsTwoFactorAuthCreateValidator(userPasswordRepo)
+	settingsTwoFactorAuthHandler := settings_two_factor_auth.NewHandler(
+		cfg,
+		flashMgr,
+		rateLimiter,
+		usecase.NewGetTwoFactorAuthSettingsUsecase(userTwoFactorAuthRepo),
+		usecase.NewPrepareTwoFactorAuthUsecase(userTwoFactorAuthRepo),
+		usecase.NewGetPendingTwoFactorAuthUsecase(userTwoFactorAuthRepo),
+		usecase.NewEnableTwoFactorAuthUsecase(settingsTwoFactorAuthCreateValidator, userTwoFactorAuthRepo),
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
@@ -1143,6 +1154,14 @@ func runServe() {
 		r.Get("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
 		r.Head("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
 		r.Patch("/settings/email/confirmation", settingsEmailConfirmationHandler.Update)
+
+		// 二要素認証の設定の画面・認証アプリへの登録・有効化。リバースプロキシは
+		// go_two_factor_auth_settingsが有効な閲覧者のリクエストだけをここへ振り分ける。
+		// 登録の画面は開くたびに秘密鍵を作り直すため、HEADを登録しない。
+		r.Get("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
+		r.Head("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
+		r.Post("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Create)
+		r.Get("/settings/two_factor_auth/new", settingsTwoFactorAuthHandler.New)
 
 		// スペースのゴミ箱の一覧。
 		r.Get("/s/{space_identifier}/trash", trashHandler.Show)

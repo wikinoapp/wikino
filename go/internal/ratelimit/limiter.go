@@ -156,3 +156,9 @@ func OAuthDeviceVerificationIPKey(ip string) string {
 func SettingsEmailUserKey(userID string) string {
 	return fmt.Sprintf("settings_email:user:%s", userID)
 }
+
+// SettingsTwoFactorAuthEnableUserKeyは、二要素認証を有効にする試行 (現在のパスワードと認証アプリの
+// コードの照合) をユーザー単位で制限するキーを生成する
+func SettingsTwoFactorAuthEnableUserKey(userID string) string {
+	return fmt.Sprintf("settings_two_factor_auth:enable:user:%s", userID)
+}

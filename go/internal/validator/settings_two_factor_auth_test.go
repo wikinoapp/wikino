@@ -1,0 +1,84 @@
+package validator_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/pquerna/otp/totp"
+
+	"github.com/wikinoapp/wikino/go/internal/i18n"
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/testutil"
+	"github.com/wikinoapp/wikino/go/internal/validator"
+)
+
+const settingsTwoFactorAuthSecret = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"
+
+func TestSettingsTwoFactorAuthCreateValidator_Validate(t *testing.T) {
+	t.Parallel()
+
+	code, err := totp.GenerateCode(settingsTwoFactorAuthSecret, time.Now())
+	if err != nil {
+		t.Fatalf("コードの生成に失敗: %v", err)
+	}
+	wrongCode := "000000"
+	if code == wrongCode {
+		wrongCode = "111111"
+	}
+
+	testCases := []struct {
+		name       string
+		password   string
+		totpCode   string
+		wantFields []string
+	}{
+		{name: "正しいパスワードとコード", password: settingsEmailPassword, totpCode: code},
+		{name: "パスワードが空", password: "", totpCode: code, wantFields: []string{"password"}},
+		{name: "コードが空", password: settingsEmailPassword, totpCode: "", wantFields: []string{"totp_code"}},
+		{name: "コードが6桁の数字でない", password: settingsEmailPassword, totpCode: "12ab56", wantFields: []string{"totp_code"}},
+		{name: "パスワードが違う", password: "wrong-password", totpCode: code, wantFields: []string{"password"}},
+		{name: "コードが違う", password: settingsEmailPassword, totpCode: wrongCode, wantFields: []string{"totp_code"}},
+		{name: "パスワードとコードの両方が違う", password: "wrong-password", totpCode: wrongCode, wantFields: []string{"password", "totp_code"}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			q := testutil.QueriesWithTx(tx)
+			userID := settingsEmailUser(t, tx, "settings_2fa_create")
+
+			v := validator.NewSettingsTwoFactorAuthCreateValidator(repository.NewUserPasswordRepository(q))
+			ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+			err := v.Validate(ctx, validator.SettingsTwoFactorAuthCreateValidatorInput{
+				UserID:   userID,
+				Password: tc.password,
+				TOTPCode: tc.totpCode,
+				Secret:   settingsTwoFactorAuthSecret,
+			})
+
+			if len(tc.wantFields) == 0 {
+				if err != nil {
+					t.Fatalf("Validate()のエラー = %v", err)
+				}
+				return
+			}
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatalf("エラー = %v、ValidationErrorを期待", err)
+			}
+			for _, field := range []string{"password", "totp_code"} {
+				want := false
+				for _, f := range tc.wantFields {
+					want = want || f == field
+				}
+				if got := ve.HasFieldError(field); got != want {
+					t.Errorf("%qのフィールドエラーがあるか = %v、期待値 = %v (%v)", field, got, want, ve.Fields)
+				}
+			}
+		})
+	}
+}

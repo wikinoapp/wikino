@@ -675,8 +675,47 @@ func TestFeatureFlaggedPatterns_UserSettings(t *testing.T) {
 		{name: "メールアドレスの変更の確定 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/email/confirmation", want: model.FeatureFlagUserSettings},
 		{name: "メールアドレスの変更の確定へのGETはフラグの対象外", method: http.MethodGet, path: "/settings/email/confirmation", want: ""},
 		{name: "新規登録の確認コードはこのフラグの対象外", method: http.MethodGet, path: "/email_confirmation/edit", want: ""},
-		{name: "二要素認証の設定はこのフラグの対象外", method: http.MethodGet, path: "/settings/two_factor_auth", want: ""},
+		{name: "二要素認証の設定は別のフラグで振り分ける", method: http.MethodGet, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
 		{name: "アカウントの削除はこのフラグの対象外", method: http.MethodGet, path: "/settings/account/deletion/new", want: ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+
+			if m.isGoHandledByRegex(req) {
+				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
+			}
+			if got := m.getFeatureFlagForRequest(req); got != tc.want {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestFeatureFlaggedPatterns_TwoFactorAuthSettings(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		want   model.FeatureFlagName
+	}{
+		{name: "設定の画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
+		{name: "設定の画面のHEAD", method: http.MethodHead, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
+		{name: "有効にする処理のPOST", method: http.MethodPost, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
+		{name: "無効にする処理のDELETEはまだ対象外", method: http.MethodDelete, path: "/settings/two_factor_auth", want: ""},
+		{name: "登録の画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth/new", want: model.FeatureFlagTwoFactorAuthSettings},
+		{name: "登録の画面のHEADは秘密鍵を差し替えないよう対象外", method: http.MethodHead, path: "/settings/two_factor_auth/new", want: ""},
+		{name: "登録の画面へのPOSTは対象外", method: http.MethodPost, path: "/settings/two_factor_auth/new", want: ""},
+		{name: "リカバリーコードはまだ対象外", method: http.MethodGet, path: "/settings/two_factor_auth/recovery_codes", want: ""},
+		{name: "ログインの二要素認証は対象外", method: http.MethodGet, path: "/sign_in/two_factor/new", want: ""},
 	}
 
 	for _, tc := range testCases {

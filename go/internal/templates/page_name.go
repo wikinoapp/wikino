@@ -12,6 +12,8 @@ const (
 	PageNameSettingsProfile                    PageName = "settings_profile"
 	PageNameSettingsEmail                      PageName = "settings_email"
 	PageNameSettingsEmailConfirmation          PageName = "settings_email_confirmation"
+	PageNameSettingsTwoFactorAuth              PageName = "settings_two_factor_auth"
+	PageNameSettingsTwoFactorAuthNew           PageName = "settings_two_factor_auth_new"
 	PageNamePageShow                           PageName = "page_show"
 	PageNamePageEdit                           PageName = "page_edit"
 	PageNamePageMove                           PageName = "page_move"

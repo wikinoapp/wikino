@@ -292,6 +292,16 @@ func SettingsTwoFactorAuthPath() Path {
 	return Path("/settings/two_factor_auth")
 }
 
+// NewSettingsTwoFactorAuthPathは、二要素認証を有効にするため認証アプリへ登録する画面のパスを生成します
+func NewSettingsTwoFactorAuthPath() Path {
+	return SettingsTwoFactorAuthPath() + "/new"
+}
+
+// SettingsTwoFactorAuthRecoveryCodesPathは二要素認証のリカバリーコードの画面のパスを生成します
+func SettingsTwoFactorAuthRecoveryCodesPath() Path {
+	return SettingsTwoFactorAuthPath() + "/recovery_codes"
+}
+
 // NewSettingsAccountDeletionPathはアカウントの削除の確認画面のパスを生成します
 func NewSettingsAccountDeletionPath() Path {
 	return Path("/settings/account/deletion/new")

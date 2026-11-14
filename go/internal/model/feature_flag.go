@@ -17,6 +17,8 @@ const (
 	FeatureFlagProfile FeatureFlagName = "go_profile"
 	// FeatureFlagUserSettingsはユーザー設定のトップ・プロフィールの編集・メールアドレスの変更をGo版で処理する
 	FeatureFlagUserSettings FeatureFlagName = "go_user_settings"
+	// FeatureFlagTwoFactorAuthSettingsは二要素認証の設定 (/settings/two_factor_authとその配下) をGo版で処理する
+	FeatureFlagTwoFactorAuthSettings FeatureFlagName = "go_two_factor_auth_settings"
 )
 
 // AllFeatureFlagNamesは上で定義した全フラグの一覧。Goは定数グループの
@@ -29,6 +31,7 @@ var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagDarkMode,
 	FeatureFlagProfile,
 	FeatureFlagUserSettings,
+	FeatureFlagTwoFactorAuthSettings,
 }
 
 // FeatureFlagはフィーチャーフラグのドメインモデル
