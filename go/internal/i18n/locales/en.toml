@@ -3707,3 +3707,103 @@ other = "Enable two-factor authentication"
 [settings_two_factor_auth_new_cancel]
 description = "二要素認証の登録から設定の画面へ戻るリンク"
 other = "Cancel"
+
+[flash_two_factor_auth_disabled]
+description = "二要素認証を無効にしたときのフラッシュメッセージ"
+other = "Two-factor authentication has been disabled."
+
+[flash_two_factor_auth_recovery_codes_regenerated]
+description = "リカバリーコードを作り直したときのフラッシュメッセージ"
+other = "Recovery codes have been regenerated."
+
+[flash_two_factor_auth_not_enabled]
+description = "二要素認証が有効でないのに無効化やリカバリーコードを操作したときのフラッシュメッセージ"
+other = "Two-factor authentication is not enabled."
+
+[settings_two_factor_auth_show_disable_heading]
+description = "二要素認証の設定の無効にするフォームの見出し"
+other = "Disable two-factor authentication"
+
+[settings_two_factor_auth_show_disable_confirm]
+description = "二要素認証を無効にする前の確認"
+other = "Are you sure you want to disable two-factor authentication?"
+
+[settings_two_factor_auth_show_password_label]
+description = "二要素認証を無効にするフォームのパスワードのラベル"
+other = "Current password"
+
+[settings_two_factor_auth_show_password_hint]
+description = "二要素認証を無効にするフォームのパスワードの補足"
+other = "Enter it to confirm that it's you"
+
+[settings_two_factor_auth_show_disable_button]
+description = "二要素認証を無効にするボタン"
+other = "Disable two-factor authentication"
+
+[settings_two_factor_auth_recovery_code_index_title]
+description = "リカバリーコードのページタイトル"
+other = "Recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_heading]
+description = "リカバリーコードの見出し"
+other = "Recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb_settings]
+description = "リカバリーコードのパンくずの設定のトップ"
+other = "Settings"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb_two_factor_auth]
+description = "リカバリーコードのパンくずの二要素認証の設定"
+other = "Two-factor authentication"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb]
+description = "リカバリーコードのパンくずの現在のページ"
+other = "Recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_description]
+description = "リカバリーコードの見出しの下の説明"
+other = "If you lose access to your authenticator app, you can log in with a recovery code instead of an authentication code. Each code can only be used once."
+
+[settings_two_factor_auth_recovery_code_index_list_label]
+description = "リカバリーコードの一覧の名前"
+other = "Recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_empty]
+description = "リカバリーコードを使い切ったときの案内"
+other = "You have no recovery codes left. Regenerate them with the form below."
+
+[settings_two_factor_auth_recovery_code_index_save_title]
+description = "リカバリーコードを保存する案内の見出し"
+other = "Please save these recovery codes in a safe place."
+
+[settings_two_factor_auth_recovery_code_index_save_description]
+description = "リカバリーコードを保存する案内"
+other = "These codes are the last means of accessing your account if you lose your authenticator app. If you lose these codes, you will completely lose access to your account."
+
+[settings_two_factor_auth_recovery_code_index_regenerate_heading]
+description = "リカバリーコードを作り直すフォームの見出し"
+other = "Regenerate recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_regenerate_warning]
+description = "リカバリーコードを作り直すときの注意"
+other = "Regenerating recovery codes will invalidate all existing codes."
+
+[settings_two_factor_auth_recovery_code_index_regenerate_confirm]
+description = "リカバリーコードを作り直す前の確認"
+other = "Are you sure you want to regenerate recovery codes? All existing codes will be invalidated."
+
+[settings_two_factor_auth_recovery_code_index_password_label]
+description = "リカバリーコードを作り直すフォームのパスワードのラベル"
+other = "Current password"
+
+[settings_two_factor_auth_recovery_code_index_password_hint]
+description = "リカバリーコードを作り直すフォームのパスワードの補足"
+other = "Enter it to confirm that it's you"
+
+[settings_two_factor_auth_recovery_code_index_regenerate_button]
+description = "リカバリーコードを作り直すボタン"
+other = "Regenerate recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_back]
+description = "リカバリーコードから二要素認証の設定へ戻るリンク"
+other = "Back to two-factor authentication settings"
