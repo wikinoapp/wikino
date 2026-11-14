@@ -68,7 +68,7 @@ templ Email(data EmailData) {
 								if focusField(data.FormErrors, emailFields, "new_email") {
 									autofocus
 								}
-								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
+								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
 								id="new_email"
 								name="new_email"
 								required
@@ -96,7 +96,7 @@ templ Email(data EmailData) {
 								if focusField(data.FormErrors, emailFields, "password") {
 									autofocus
 								}
-								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
+								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
 								id="password"
 								name="password"
 								required

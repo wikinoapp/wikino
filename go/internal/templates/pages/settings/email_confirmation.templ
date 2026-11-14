@@ -26,7 +26,7 @@ templ EmailConfirmation(data EmailConfirmationData) {
 					@components.MainTitle(components.MainTitleData{
 						Title: templates.T(ctx, "settings_email_confirmation_edit_heading"),
 					})
-					<p class="text-sm text-muted-foreground">
+					<p class="text-sm text-stone-600 dark:text-stone-300">
 						{ templates.T(ctx, "settings_email_confirmation_edit_description") }
 					</p>
 				</div>
@@ -53,7 +53,7 @@ templ EmailConfirmation(data EmailConfirmationData) {
 								autocapitalize="characters"
 								autocomplete="one-time-code"
 								autofocus
-								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
+								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
 								id="code"
 								maxlength="6"
 								name="code"
