@@ -47,6 +47,16 @@ func (q *Queries) CreateUserPassword(ctx context.Context, arg CreateUserPassword
 	return i, err
 }
 
+const deleteUserPasswordByUserID = `-- name: DeleteUserPasswordByUserID :exec
+DELETE FROM user_passwords WHERE user_id = $1
+`
+
+// ユーザーのパスワードを削除する
+func (q *Queries) DeleteUserPasswordByUserID(ctx context.Context, userID string) error {
+	_, err := q.db.ExecContext(ctx, deleteUserPasswordByUserID, userID)
+	return err
+}
+
 const getUserPasswordByUserID = `-- name: GetUserPasswordByUserID :one
 SELECT id, user_id, password_digest, created_at, updated_at FROM user_passwords WHERE user_id = $1
 `

@@ -117,6 +117,11 @@ func (r *UserTwoFactorAuthRepository) RegenerateRecoveryCodes(ctx context.Contex
 	return rows > 0, nil
 }
 
+// DeleteByUserIDはユーザーの二要素認証設定を削除する
+func (r *UserTwoFactorAuthRepository) DeleteByUserID(ctx context.Context, userID model.UserID) error {
+	return r.q.DeleteUserTwoFactorAuthByUserID(ctx, string(userID))
+}
+
 // toModelはquery.UserTwoFactorAuthをmodel.UserTwoFactorAuthに変換する
 func (r *UserTwoFactorAuthRepository) toModel(row query.UserTwoFactorAuth) *model.UserTwoFactorAuth {
 	var enabledAt *time.Time

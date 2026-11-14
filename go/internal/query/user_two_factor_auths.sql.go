@@ -12,6 +12,16 @@ import (
 	"github.com/lib/pq"
 )
 
+const deleteUserTwoFactorAuthByUserID = `-- name: DeleteUserTwoFactorAuthByUserID :exec
+DELETE FROM user_two_factor_auths WHERE user_id = $1
+`
+
+// ユーザーの二要素認証設定を削除する
+func (q *Queries) DeleteUserTwoFactorAuthByUserID(ctx context.Context, userID string) error {
+	_, err := q.db.ExecContext(ctx, deleteUserTwoFactorAuthByUserID, userID)
+	return err
+}
+
 const disableUserTwoFactorAuth = `-- name: DisableUserTwoFactorAuth :execrows
 UPDATE user_two_factor_auths
 SET enabled = false, enabled_at = NULL, recovery_codes = '{}', updated_at = $1

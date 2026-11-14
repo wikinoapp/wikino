@@ -384,3 +384,30 @@ func TestUserTwoFactorAuthRepository_RegenerateRecoveryCodes(t *testing.T) {
 		}
 	})
 }
+
+func TestUserTwoFactorAuthRepository_DeleteByUserID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewUserTwoFactorAuthRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-2fa-delete@example.com").
+		WithAtname("repo_2fa_delete").
+		BuildWithTwoFactorAuth("JBSWY3DPEHPK3PXP", true)
+	otherID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-2fa-keep@example.com").
+		WithAtname("repo_2fa_keep").
+		BuildWithTwoFactorAuth("JBSWY3DPEHPK3PXP", true)
+
+	if err := repo.DeleteByUserID(ctx, userID); err != nil {
+		t.Fatalf("DeleteByUserID()のエラー = %v", err)
+	}
+
+	if a, err := repo.FindByUserID(ctx, userID); err != nil || a != nil {
+		t.Errorf("FindByUserID() = %v, %v、期待値 = nil, nil", a, err)
+	}
+	if a, err := repo.FindByUserID(ctx, otherID); err != nil || a == nil {
+		t.Errorf("ほかのユーザーのFindByUserID() = %v, %v、設定が残ることを期待", a, err)
+	}
+}

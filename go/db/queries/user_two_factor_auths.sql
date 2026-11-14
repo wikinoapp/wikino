@@ -40,3 +40,7 @@ WHERE user_id = @user_id AND enabled = true;
 UPDATE user_two_factor_auths
 SET recovery_codes = @recovery_codes, updated_at = @now
 WHERE user_id = @user_id AND enabled = true;
+
+-- name: DeleteUserTwoFactorAuthByUserID :exec
+-- ユーザーの二要素認証設定を削除する
+DELETE FROM user_two_factor_auths WHERE user_id = @user_id;

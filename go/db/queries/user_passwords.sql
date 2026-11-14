@@ -20,3 +20,7 @@ SET
     password_digest = $2,
     updated_at = $3
 WHERE user_id = $1;
+
+-- name: DeleteUserPasswordByUserID :exec
+-- ユーザーのパスワードを削除する
+DELETE FROM user_passwords WHERE user_id = @user_id;

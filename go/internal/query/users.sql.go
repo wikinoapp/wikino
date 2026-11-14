@@ -7,6 +7,7 @@ package query
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/lib/pq"
@@ -68,6 +69,40 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteDiscardedUser = `-- name: DeleteDiscardedUser :execrows
+DELETE FROM users
+WHERE id = $1 AND discarded_at IS NOT NULL
+`
+
+// 論理削除したユーザーを物理削除する。論理削除していないユーザーは対象にしない。
+func (q *Queries) DeleteDiscardedUser(ctx context.Context, id string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteDiscardedUser, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const discardUser = `-- name: DiscardUser :execrows
+UPDATE users
+SET discarded_at = $1, updated_at = $1
+WHERE id = $2 AND discarded_at IS NULL
+`
+
+type DiscardUserParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	ID          string       `json:"id"`
+}
+
+// ユーザーを論理削除する。既に論理削除したユーザーは対象にしない。
+func (q *Queries) DiscardUser(ctx context.Context, arg DiscardUserParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, discardUser, arg.DiscardedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const existsOtherUserByAtname = `-- name: ExistsOtherUserByAtname :one
@@ -223,6 +258,39 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const lockDiscardedUser = `-- name: LockDiscardedUser :one
+SELECT id FROM users
+WHERE id = $1 AND discarded_at IS NOT NULL
+FOR UPDATE
+`
+
+// 論理削除したユーザーを、物理削除が終わるまでロックする。
+func (q *Queries) LockDiscardedUser(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockDiscardedUser, id)
+	var id_2 string
+	err := row.Scan(&id_2)
+	return id_2, err
+}
+
+const undiscardUser = `-- name: UndiscardUser :exec
+UPDATE users
+SET discarded_at = NULL, updated_at = $1
+WHERE id = $2 AND discarded_at = $3
+`
+
+type UndiscardUserParams struct {
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+}
+
+// 論理削除を取り消す。@discarded_atと同じ時刻に論理削除したユーザーだけを対象にし、
+// 別の削除の操作で論理削除し直したユーザーを戻さない。
+func (q *Queries) UndiscardUser(ctx context.Context, arg UndiscardUserParams) error {
+	_, err := q.db.ExecContext(ctx, undiscardUser, arg.UpdatedAt, arg.ID, arg.DiscardedAt)
+	return err
 }
 
 const updateUserEmail = `-- name: UpdateUserEmail :one

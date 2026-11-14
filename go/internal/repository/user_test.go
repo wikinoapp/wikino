@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -321,4 +322,101 @@ func TestUserRepository_UpdateEmail(t *testing.T) {
 			t.Errorf("UpdateEmail() = %+v、期待値 = nil", user)
 		}
 	})
+}
+
+func TestUserRepository_DiscardとUndiscard(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewUserRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-discard-user@example.com").
+		WithAtname("repo_discard_user").
+		Build()
+	discardedAt := time.Now().Truncate(time.Microsecond)
+
+	discarded, err := repo.Discard(ctx, userID, discardedAt)
+	if err != nil {
+		t.Fatalf("Discard()のエラー = %v", err)
+	}
+	if !discarded {
+		t.Fatal("Discard() = false、期待値 = true")
+	}
+	// 論理削除したユーザーはメールアドレスで引けなくなる (ログインできない)
+	if u, err := repo.FindByEmail(ctx, "repo-discard-user@example.com"); err != nil || u != nil {
+		t.Errorf("FindByEmail() = %v, %v、期待値 = nil, nil", u, err)
+	}
+
+	again, err := repo.Discard(ctx, userID, discardedAt.Add(time.Second))
+	if err != nil {
+		t.Fatalf("2回目のDiscard()のエラー = %v", err)
+	}
+	if again {
+		t.Error("論理削除したユーザーへのDiscard() = true、期待値 = false")
+	}
+
+	// 別の時刻を渡しても、その時刻の論理削除ではないため取り消さない
+	if err := repo.Undiscard(ctx, userID, discardedAt.Add(time.Second), time.Now()); err != nil {
+		t.Fatalf("Undiscard()のエラー = %v", err)
+	}
+	if u, _ := repo.FindByEmail(ctx, "repo-discard-user@example.com"); u != nil {
+		t.Error("別の時刻を渡したUndiscard()で論理削除が取り消された")
+	}
+
+	if err := repo.Undiscard(ctx, userID, discardedAt, time.Now()); err != nil {
+		t.Fatalf("Undiscard()のエラー = %v", err)
+	}
+	if u, err := repo.FindByEmail(ctx, "repo-discard-user@example.com"); err != nil || u == nil {
+		t.Errorf("Undiscard()のあとのFindByEmail() = %v, %v、ユーザーを期待", u, err)
+	}
+}
+
+func TestUserRepository_LockDiscardedとDeleteDiscarded(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewUserRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-delete-user@example.com").
+		WithAtname("repo_delete_user").
+		Build()
+
+	// 論理削除していないユーザーはロックも削除もしない
+	locked, err := repo.LockDiscarded(ctx, userID)
+	if err != nil {
+		t.Fatalf("LockDiscarded()のエラー = %v", err)
+	}
+	if locked {
+		t.Error("論理削除していないユーザーのLockDiscarded() = true、期待値 = false")
+	}
+	deleted, err := repo.DeleteDiscarded(ctx, userID)
+	if err != nil {
+		t.Fatalf("DeleteDiscarded()のエラー = %v", err)
+	}
+	if deleted {
+		t.Error("論理削除していないユーザーのDeleteDiscarded() = true、期待値 = false")
+	}
+
+	if _, err := repo.Discard(ctx, userID, time.Now()); err != nil {
+		t.Fatalf("Discard()のエラー = %v", err)
+	}
+	locked, err = repo.LockDiscarded(ctx, userID)
+	if err != nil {
+		t.Fatalf("LockDiscarded()のエラー = %v", err)
+	}
+	if !locked {
+		t.Error("論理削除したユーザーのLockDiscarded() = false、期待値 = true")
+	}
+	deleted, err = repo.DeleteDiscarded(ctx, userID)
+	if err != nil {
+		t.Fatalf("DeleteDiscarded()のエラー = %v", err)
+	}
+	if !deleted {
+		t.Error("論理削除したユーザーのDeleteDiscarded() = false、期待値 = true")
+	}
+	if u, err := repo.FindByID(ctx, userID); err != nil || u != nil {
+		t.Errorf("物理削除したユーザーのFindByID() = %v, %v、期待値 = nil, nil", u, err)
+	}
 }

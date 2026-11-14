@@ -57,3 +57,27 @@ UPDATE users
 SET email = @email, updated_at = @now
 WHERE id = @id AND discarded_at IS NULL
 RETURNING *;
+
+-- name: DiscardUser :execrows
+-- ユーザーを論理削除する。既に論理削除したユーザーは対象にしない。
+UPDATE users
+SET discarded_at = @discarded_at, updated_at = @discarded_at
+WHERE id = @id AND discarded_at IS NULL;
+
+-- name: UndiscardUser :exec
+-- 論理削除を取り消す。@discarded_atと同じ時刻に論理削除したユーザーだけを対象にし、
+-- 別の削除の操作で論理削除し直したユーザーを戻さない。
+UPDATE users
+SET discarded_at = NULL, updated_at = @updated_at
+WHERE id = @id AND discarded_at = @discarded_at;
+
+-- name: LockDiscardedUser :one
+-- 論理削除したユーザーを、物理削除が終わるまでロックする。
+SELECT id FROM users
+WHERE id = @id AND discarded_at IS NOT NULL
+FOR UPDATE;
+
+-- name: DeleteDiscardedUser :execrows
+-- 論理削除したユーザーを物理削除する。論理削除していないユーザーは対象にしない。
+DELETE FROM users
+WHERE id = @id AND discarded_at IS NOT NULL;

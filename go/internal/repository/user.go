@@ -172,6 +172,48 @@ func (r *UserRepository) UpdateEmail(ctx context.Context, id model.UserID, email
 	return r.toModel(row), nil
 }
 
+// Discardはユーザーを論理削除し、論理削除したかを返す。既に論理削除したユーザーではfalseを返す。
+func (r *UserRepository) Discard(ctx context.Context, id model.UserID, discardedAt time.Time) (bool, error) {
+	n, err := r.q.DiscardUser(ctx, query.DiscardUserParams{
+		ID:          string(id),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+	})
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
+// Undiscardは、discardedAtに論理削除したユーザーの論理削除を取り消す。
+func (r *UserRepository) Undiscard(ctx context.Context, id model.UserID, discardedAt time.Time, updatedAt time.Time) error {
+	return r.q.UndiscardUser(ctx, query.UndiscardUserParams{
+		ID:          string(id),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+		UpdatedAt:   updatedAt,
+	})
+}
+
+// LockDiscardedは論理削除したユーザーをロックし、ロックできたかを返す。論理削除していない
+// ユーザーと、見つからないユーザーではfalseを返す。
+func (r *UserRepository) LockDiscarded(ctx context.Context, id model.UserID) (bool, error) {
+	if _, err := r.q.LockDiscardedUser(ctx, string(id)); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// DeleteDiscardedは論理削除したユーザーを物理削除し、削除したかを返す。
+func (r *UserRepository) DeleteDiscarded(ctx context.Context, id model.UserID) (bool, error) {
+	n, err := r.q.DeleteDiscardedUser(ctx, string(id))
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
 // toModelはquery.Userをmodel.Userに変換する
 func (r *UserRepository) toModel(row query.User) *model.User {
 	var discardedAt *time.Time
