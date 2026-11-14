@@ -58,6 +58,24 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		flag:    model.FeatureFlagUserSettings,
 		methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch},
 	},
+	// メールアドレスの変更。画面 (GET・HEAD) と確認コードを送る処理 (PATCH。Method Override変換前はPOST)。
+	{
+		pattern: regexp.MustCompile(`^/settings/email$`),
+		flag:    model.FeatureFlagUserSettings,
+		methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch},
+	},
+	// メールアドレスの変更の確認コードを入力する画面 (GET・HEAD)。
+	{
+		pattern: regexp.MustCompile(`^/settings/email/confirmation/edit$`),
+		flag:    model.FeatureFlagUserSettings,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	// メールアドレスの変更を確定する処理 (PATCH。Method Override変換前はPOST)。
+	{
+		pattern: regexp.MustCompile(`^/settings/email/confirmation$`),
+		flag:    model.FeatureFlagUserSettings,
+		methods: []string{http.MethodPatch},
+	},
 }
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア

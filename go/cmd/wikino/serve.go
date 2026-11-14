@@ -80,6 +80,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/profile"
 	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
 	settingshandler "github.com/wikinoapp/wikino/go/internal/handler/settings"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_email"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_profile"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
@@ -480,6 +482,23 @@ func runServe() {
 		cfg,
 		flashMgr,
 		updateProfileUC,
+	)
+	settingsEmailUpdateValidator := validator.NewSettingsEmailUpdateValidator(userRepo, userPasswordRepo)
+	createEmailUpdateConfirmationUC := usecase.NewCreateEmailUpdateConfirmationUsecase(settingsEmailUpdateValidator, createEmailConfirmationUC)
+	settingsEmailHandler := settings_email.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		createEmailUpdateConfirmationUC,
+		rateLimiter,
+	)
+	settingsEmailConfirmationUpdateValidator := validator.NewSettingsEmailConfirmationUpdateValidator(emailConfirmationRepo, userRepo)
+	updateEmailUC := usecase.NewUpdateEmailUsecase(db, settingsEmailConfirmationUpdateValidator, emailConfirmationRepo, userRepo)
+	settingsEmailConfirmationHandler := settings_email_confirmation.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		updateEmailUC,
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
@@ -1109,8 +1128,8 @@ func runServe() {
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
 
-		// ユーザー設定のトップとプロフィールの編集。リバースプロキシはgo_user_settingsが有効な
-		// 閲覧者のリクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		// ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更。リバースプロキシは
+		// go_user_settingsが有効な閲覧者のリクエストだけをここへ振り分け、それ以外はRails版が処理する。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
 		r.Get("/settings", settingsHandler.Show)
@@ -1118,6 +1137,12 @@ func runServe() {
 		r.Get("/settings/profile", settingsProfileHandler.Show)
 		r.Head("/settings/profile", settingsProfileHandler.Show)
 		r.Patch("/settings/profile", settingsProfileHandler.Update)
+		r.Get("/settings/email", settingsEmailHandler.Show)
+		r.Head("/settings/email", settingsEmailHandler.Show)
+		r.Patch("/settings/email", settingsEmailHandler.Update)
+		r.Get("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
+		r.Head("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
+		r.Patch("/settings/email/confirmation", settingsEmailConfirmationHandler.Update)
 
 		// スペースのゴミ箱の一覧。
 		r.Get("/s/{space_identifier}/trash", trashHandler.Show)

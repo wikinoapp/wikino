@@ -59,7 +59,7 @@ templ Profile(data ProfileData) {
 							// 通常時の枠線をライトでも見分けられるようにし、エラーとフォーカス中はBasecoatの色を使う
 							<input
 								autocapitalize="off"
-								if firstErrorField(data.FormErrors) == "atname" {
+								if firstErrorField(data.FormErrors, profileFields) == "atname" {
 									autofocus
 								}
 								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
@@ -87,7 +87,7 @@ templ Profile(data ProfileData) {
 							})
 							<input
 								autocomplete="name"
-								if firstErrorField(data.FormErrors) == "name" {
+								if firstErrorField(data.FormErrors, profileFields) == "name" {
 									autofocus
 								}
 								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
@@ -112,7 +112,7 @@ templ Profile(data ProfileData) {
 								Label: templates.T(ctx, "settings_profile_show_description_label"),
 							})
 							<input
-								if firstErrorField(data.FormErrors) == "description" {
+								if firstErrorField(data.FormErrors, profileFields) == "description" {
 									autofocus
 								}
 								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input"
@@ -155,9 +155,10 @@ templ Profile(data ProfileData) {
 // profileFieldsはフォームの項目を画面の上からの順に並べたもの
 var profileFields = []string{"atname", "name", "description"}
 
-// firstErrorFieldは画面の上から見て最初に誤りのある項目を返します。誤りが無ければ空を返します。
-func firstErrorField(formErrors *model.ValidationError) string {
-	for _, field := range profileFields {
+// firstErrorFieldは、画面の上からの順に並べた項目のうち、最初に誤りのある項目を返します。
+// 誤りが無ければ空を返します。
+func firstErrorField(formErrors *model.ValidationError, fields []string) string {
+	for _, field := range fields {
 		if hasFieldError(formErrors, field) {
 			return field
 		}

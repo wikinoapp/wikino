@@ -15,7 +15,7 @@ const (
 	FeatureFlagDarkMode FeatureFlagName = "go_dark_mode"
 	// FeatureFlagProfileはプロフィール (/@{atname}) をGo版で処理する
 	FeatureFlagProfile FeatureFlagName = "go_profile"
-	// FeatureFlagUserSettingsはユーザー設定のトップとプロフィールの編集をGo版で処理する
+	// FeatureFlagUserSettingsはユーザー設定のトップ・プロフィールの編集・メールアドレスの変更をGo版で処理する
 	FeatureFlagUserSettings FeatureFlagName = "go_user_settings"
 )
 

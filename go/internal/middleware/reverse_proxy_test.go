@@ -638,7 +638,7 @@ func TestFeatureFlaggedPatterns_Profile(t *testing.T) {
 	}
 }
 
-// TestFeatureFlaggedPatterns_UserSettingsは、ユーザー設定のトップとプロフィールの編集が
+// TestFeatureFlaggedPatterns_UserSettingsは、ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更が
 // go_user_settingsで振り分けられ、Go版が受けない設定のパスとメソッドがフラグにかかわらずRails版へ
 // 届くことを、登録済みのパターンで確かめる。
 func TestFeatureFlaggedPatterns_UserSettings(t *testing.T) {
@@ -663,7 +663,18 @@ func TestFeatureFlaggedPatterns_UserSettings(t *testing.T) {
 		{name: "プロフィールの保存のPATCH", method: http.MethodPatch, path: "/settings/profile", want: model.FeatureFlagUserSettings},
 		{name: "プロフィールの保存 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/profile", want: model.FeatureFlagUserSettings},
 		{name: "プロフィールの編集へのDELETEはフラグの対象外", method: http.MethodDelete, path: "/settings/profile", want: ""},
-		{name: "メールアドレスの変更はこのフラグの対象外", method: http.MethodGet, path: "/settings/email", want: ""},
+		{name: "メールアドレスの変更のGET", method: http.MethodGet, path: "/settings/email", want: model.FeatureFlagUserSettings},
+		{name: "メールアドレスの変更のHEAD", method: http.MethodHead, path: "/settings/email", want: model.FeatureFlagUserSettings},
+		{name: "確認コードの送信のPATCH", method: http.MethodPatch, path: "/settings/email", want: model.FeatureFlagUserSettings},
+		{name: "確認コードの送信 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/email", want: model.FeatureFlagUserSettings},
+		{name: "メールアドレスの変更へのDELETEはフラグの対象外", method: http.MethodDelete, path: "/settings/email", want: ""},
+		{name: "確認コードの入力のGET", method: http.MethodGet, path: "/settings/email/confirmation/edit", want: model.FeatureFlagUserSettings},
+		{name: "確認コードの入力のHEAD", method: http.MethodHead, path: "/settings/email/confirmation/edit", want: model.FeatureFlagUserSettings},
+		{name: "確認コードの入力へのPOSTはフラグの対象外", method: http.MethodPost, path: "/settings/email/confirmation/edit", want: ""},
+		{name: "メールアドレスの変更の確定のPATCH", method: http.MethodPatch, path: "/settings/email/confirmation", want: model.FeatureFlagUserSettings},
+		{name: "メールアドレスの変更の確定 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/email/confirmation", want: model.FeatureFlagUserSettings},
+		{name: "メールアドレスの変更の確定へのGETはフラグの対象外", method: http.MethodGet, path: "/settings/email/confirmation", want: ""},
+		{name: "新規登録の確認コードはこのフラグの対象外", method: http.MethodGet, path: "/email_confirmation/edit", want: ""},
 		{name: "二要素認証の設定はこのフラグの対象外", method: http.MethodGet, path: "/settings/two_factor_auth", want: ""},
 		{name: "アカウントの削除はこのフラグの対象外", method: http.MethodGet, path: "/settings/account/deletion/new", want: ""},
 	}

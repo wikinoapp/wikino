@@ -131,7 +131,7 @@ func Profile(data ProfileData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if firstErrorField(data.FormErrors) == "atname" {
+			if firstErrorField(data.FormErrors, profileFields) == "atname" {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " autofocus")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -222,7 +222,7 @@ func Profile(data ProfileData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if firstErrorField(data.FormErrors) == "name" {
+			if firstErrorField(data.FormErrors, profileFields) == "name" {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " autofocus")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -313,7 +313,7 @@ func Profile(data ProfileData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if firstErrorField(data.FormErrors) == "description" {
+			if firstErrorField(data.FormErrors, profileFields) == "description" {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " autofocus")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -457,9 +457,10 @@ func Profile(data ProfileData) templ.Component {
 // profileFieldsはフォームの項目を画面の上からの順に並べたもの
 var profileFields = []string{"atname", "name", "description"}
 
-// firstErrorFieldは画面の上から見て最初に誤りのある項目を返します。誤りが無ければ空を返します。
-func firstErrorField(formErrors *model.ValidationError) string {
-	for _, field := range profileFields {
+// firstErrorFieldは、画面の上からの順に並べた項目のうち、最初に誤りのある項目を返します。
+// 誤りが無ければ空を返します。
+func firstErrorField(formErrors *model.ValidationError, fields []string) string {
+	for _, field := range fields {
 		if hasFieldError(formErrors, field) {
 			return field
 		}
@@ -506,7 +507,7 @@ func fieldErrors(formErrors *model.ValidationError, field string) templ.Componen
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templruntime.NewAttributeExpression(fieldErrorID(field)).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/profile.templ`, Line: 184, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/profile.templ`, Line: 185, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
 			if templ_7745c5c3_Err != nil {
@@ -524,7 +525,7 @@ func fieldErrors(formErrors *model.ValidationError, field string) templ.Componen
 				var templ_7745c5c3_Var23 string
 				templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(errorMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/profile.templ`, Line: 187, Col: 15}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/profile.templ`, Line: 188, Col: 15}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 				if templ_7745c5c3_Err != nil {

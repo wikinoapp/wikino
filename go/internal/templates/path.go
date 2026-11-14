@@ -277,6 +277,16 @@ func SettingsEmailPath() Path {
 	return Path("/settings/email")
 }
 
+// SettingsEmailConfirmationPathは、メールアドレスの変更の確認コードの送信先のパスを生成します
+func SettingsEmailConfirmationPath() Path {
+	return Path("/settings/email/confirmation")
+}
+
+// EditSettingsEmailConfirmationPathは、メールアドレスの変更の確認コードを入力する画面のパスを生成します
+func EditSettingsEmailConfirmationPath() Path {
+	return Path("/settings/email/confirmation/edit")
+}
+
 // SettingsTwoFactorAuthPathは二要素認証の設定のパスを生成します
 func SettingsTwoFactorAuthPath() Path {
 	return Path("/settings/two_factor_auth")

@@ -10,6 +10,8 @@ const (
 	PageNameProfile                            PageName = "profile"
 	PageNameSettings                           PageName = "settings"
 	PageNameSettingsProfile                    PageName = "settings_profile"
+	PageNameSettingsEmail                      PageName = "settings_email"
+	PageNameSettingsEmailConfirmation          PageName = "settings_email_confirmation"
 	PageNamePageShow                           PageName = "page_show"
 	PageNamePageEdit                           PageName = "page_edit"
 	PageNamePageMove                           PageName = "page_move"

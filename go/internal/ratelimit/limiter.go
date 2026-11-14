@@ -150,3 +150,9 @@ func OAuthDeviceVerificationUserKey(userID string) string {
 func OAuthDeviceVerificationIPKey(ip string) string {
 	return fmt.Sprintf("oauth:device_verification:ip:%s", ip)
 }
+
+// SettingsEmailUserKeyは、メールアドレスの変更で確認コードを送る試行 (現在のパスワードの照合を
+// 含む) をユーザー単位で制限するキーを生成する
+func SettingsEmailUserKey(userID string) string {
+	return fmt.Sprintf("settings_email:user:%s", userID)
+}
