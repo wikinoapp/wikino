@@ -162,3 +162,9 @@ func SettingsEmailUserKey(userID string) string {
 func SettingsTwoFactorAuthEnableUserKey(userID string) string {
 	return fmt.Sprintf("settings_two_factor_auth:enable:user:%s", userID)
 }
+
+// SettingsTwoFactorAuthPasswordUserKeyは、二要素認証の無効化とリカバリーコードの再生成で現在の
+// パスワードを照合する試行を、ユーザー単位でまとめて制限するキーを生成する
+func SettingsTwoFactorAuthPasswordUserKey(userID string) string {
+	return fmt.Sprintf("settings_two_factor_auth:password:user:%s", userID)
+}

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/model"
 	settingspages "github.com/wikinoapp/wikino/go/internal/templates/pages/settings"
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
@@ -26,8 +27,16 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.render(w, r, user, http.StatusOK, showPage, settingspages.TwoFactorAuth(settingspages.TwoFactorAuthData{
-		Enabled:   output.Enabled,
-		EnabledAt: output.EnabledAt,
+	h.renderShow(w, r, user, http.StatusOK, output, nil)
+}
+
+// renderShowは二要素認証の設定の画面を指定したステータスで描画します。
+// 表示 (200) と、無効にするフォームのパスワードを受け付けなかったときの描き直し (422) で共有します。
+func (h *Handler) renderShow(w http.ResponseWriter, r *http.Request, user *model.User, status int, settings *usecase.GetTwoFactorAuthSettingsOutput, formErrors *model.ValidationError) {
+	h.render(w, r, user, status, showPage, settingspages.TwoFactorAuth(settingspages.TwoFactorAuthData{
+		CSRFToken:  middleware.GetCSRFTokenFromContext(r.Context()),
+		FormErrors: formErrors,
+		Enabled:    settings.Enabled,
+		EnabledAt:  settings.EnabledAt,
 	}))
 }

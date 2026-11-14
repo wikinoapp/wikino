@@ -1,4 +1,4 @@
-// Package settings_two_factor_authは二要素認証の設定の画面と、認証アプリへの登録・有効化のHTTPハンドラーを提供します
+// Package settings_two_factor_authは二要素認証の設定の画面と、認証アプリへの登録・有効化・無効化のHTTPハンドラーを提供します
 package settings_two_factor_auth
 
 import (
@@ -21,7 +21,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// Handlerは二要素認証の設定の画面と、認証アプリへの登録・有効化の処理を提供します
+// Handlerは二要素認証の設定の画面と、認証アプリへの登録・有効化・無効化の処理を提供します
 type Handler struct {
 	cfg                        *config.Config
 	flashMgr                   *session.FlashManager
@@ -30,6 +30,7 @@ type Handler struct {
 	prepareTwoFactorAuthUC     *usecase.PrepareTwoFactorAuthUsecase
 	getPendingTwoFactorAuthUC  *usecase.GetPendingTwoFactorAuthUsecase
 	enableTwoFactorAuthUC      *usecase.EnableTwoFactorAuthUsecase
+	disableTwoFactorAuthUC     *usecase.DisableTwoFactorAuthUsecase
 }
 
 // NewHandlerは二要素認証の設定のハンドラーを生成します
@@ -41,6 +42,7 @@ func NewHandler(
 	prepareTwoFactorAuthUC *usecase.PrepareTwoFactorAuthUsecase,
 	getPendingTwoFactorAuthUC *usecase.GetPendingTwoFactorAuthUsecase,
 	enableTwoFactorAuthUC *usecase.EnableTwoFactorAuthUsecase,
+	disableTwoFactorAuthUC *usecase.DisableTwoFactorAuthUsecase,
 ) *Handler {
 	return &Handler{
 		cfg:                        cfg,
@@ -50,6 +52,7 @@ func NewHandler(
 		prepareTwoFactorAuthUC:     prepareTwoFactorAuthUC,
 		getPendingTwoFactorAuthUC:  getPendingTwoFactorAuthUC,
 		enableTwoFactorAuthUC:      enableTwoFactorAuthUC,
+		disableTwoFactorAuthUC:     disableTwoFactorAuthUC,
 	}
 }
 

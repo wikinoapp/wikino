@@ -710,11 +710,14 @@ func TestFeatureFlaggedPatterns_TwoFactorAuthSettings(t *testing.T) {
 		{name: "設定の画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
 		{name: "設定の画面のHEAD", method: http.MethodHead, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
 		{name: "有効にする処理のPOST", method: http.MethodPost, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "無効にする処理のDELETEはまだ対象外", method: http.MethodDelete, path: "/settings/two_factor_auth", want: ""},
+		{name: "無効にする処理のDELETE", method: http.MethodDelete, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
 		{name: "登録の画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth/new", want: model.FeatureFlagTwoFactorAuthSettings},
 		{name: "登録の画面のHEADも秘密鍵を差し替えないGo版で受ける", method: http.MethodHead, path: "/settings/two_factor_auth/new", want: model.FeatureFlagTwoFactorAuthSettings},
 		{name: "登録の画面へのPOSTは対象外", method: http.MethodPost, path: "/settings/two_factor_auth/new", want: ""},
-		{name: "リカバリーコードはまだ対象外", method: http.MethodGet, path: "/settings/two_factor_auth/recovery_codes", want: ""},
+		{name: "リカバリーコードの画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth/recovery_codes", want: model.FeatureFlagTwoFactorAuthSettings},
+		{name: "リカバリーコードの画面のHEAD", method: http.MethodHead, path: "/settings/two_factor_auth/recovery_codes", want: model.FeatureFlagTwoFactorAuthSettings},
+		{name: "リカバリーコードを作り直す処理のPOST", method: http.MethodPost, path: "/settings/two_factor_auth/recovery_codes", want: model.FeatureFlagTwoFactorAuthSettings},
+		{name: "リカバリーコードへのDELETEは対象外", method: http.MethodDelete, path: "/settings/two_factor_auth/recovery_codes", want: ""},
 		{name: "ログインの二要素認証は対象外", method: http.MethodGet, path: "/sign_in/two_factor/new", want: ""},
 	}
 

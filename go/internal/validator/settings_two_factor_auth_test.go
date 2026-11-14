@@ -90,3 +90,77 @@ func TestSettingsTwoFactorAuthCreateValidator_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestSettingsTwoFactorAuthDeleteValidator_Validate(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		password  string
+		wantError bool
+	}{
+		{name: "正しいパスワード", password: settingsEmailPassword},
+		{name: "パスワードが空", password: "", wantError: true},
+		{name: "パスワードが違う", password: "wrong-password", wantError: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			userID := settingsEmailUser(t, tx, "settings_2fa_delete")
+
+			v := validator.NewSettingsTwoFactorAuthDeleteValidator(repository.NewUserPasswordRepository(testutil.QueriesWithTx(tx)))
+			ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+			err := v.Validate(ctx, validator.SettingsTwoFactorAuthDeleteValidatorInput{UserID: userID, Password: tc.password})
+
+			assertPasswordValidation(t, err, tc.wantError)
+		})
+	}
+}
+
+func TestSettingsTwoFactorAuthRecoveryCodeCreateValidator_Validate(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		password  string
+		wantError bool
+	}{
+		{name: "正しいパスワード", password: settingsEmailPassword},
+		{name: "パスワードが空", password: "", wantError: true},
+		{name: "パスワードが違う", password: "wrong-password", wantError: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			userID := settingsEmailUser(t, tx, "settings_2fa_regenerate")
+
+			v := validator.NewSettingsTwoFactorAuthRecoveryCodeCreateValidator(repository.NewUserPasswordRepository(testutil.QueriesWithTx(tx)))
+			ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+			err := v.Validate(ctx, validator.SettingsTwoFactorAuthRecoveryCodeCreateValidatorInput{UserID: userID, Password: tc.password})
+
+			assertPasswordValidation(t, err, tc.wantError)
+		})
+	}
+}
+
+// assertPasswordValidationは、wantErrorならpasswordの項目のValidationErrorを、そうでなければnilを期待する
+func assertPasswordValidation(t *testing.T, err error, wantError bool) {
+	t.Helper()
+
+	if !wantError {
+		if err != nil {
+			t.Fatalf("Validate()のエラー = %v", err)
+		}
+		return
+	}
+	ve := model.AsValidationError(err)
+	if ve == nil || !ve.HasFieldError("password") {
+		t.Fatalf("エラー = %v、passwordのValidationErrorを期待", err)
+	}
+}

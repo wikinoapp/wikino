@@ -56,6 +56,10 @@ func setupHandler(t *testing.T, tx *sql.Tx) *testSetup {
 				validator.NewSettingsTwoFactorAuthCreateValidator(repository.NewUserPasswordRepository(queries)),
 				repo,
 			),
+			usecase.NewDisableTwoFactorAuthUsecase(
+				validator.NewSettingsTwoFactorAuthDeleteValidator(repository.NewUserPasswordRepository(queries)),
+				repo,
+			),
 		),
 		repo: repo,
 	}
@@ -196,6 +200,9 @@ func TestShow_有効なら状態とリカバリーコードへのリンクを出
 		"二要素認証は有効です",
 		"に有効化",
 		`href="/settings/two_factor_auth/recovery_codes"`,
+		`value="DELETE"`,
+		`data-confirm="二要素認証を無効にしてもよろしいですか？"`,
+		`autocomplete="current-password"`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("レスポンスに %q が含まれていない", want)

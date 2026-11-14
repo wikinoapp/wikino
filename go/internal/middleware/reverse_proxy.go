@@ -76,11 +76,11 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		flag:    model.FeatureFlagUserSettings,
 		methods: []string{http.MethodPatch},
 	},
-	// 二要素認証の設定の画面 (GET・HEAD) と、有効にする処理 (POST)。
+	// 二要素認証の設定の画面 (GET・HEAD)、有効にする処理 (POST)、無効にする処理 (DELETE。Method Override変換前はPOST)。
 	{
 		pattern: regexp.MustCompile(`^/settings/two_factor_auth$`),
 		flag:    model.FeatureFlagTwoFactorAuthSettings,
-		methods: []string{http.MethodGet, http.MethodHead, http.MethodPost},
+		methods: []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodDelete},
 	},
 	// 二要素認証を有効にするため、認証アプリへ登録する画面 (GET・HEAD)。
 	// HEADもGo版で受け、Rails版のGET用の処理に転送されて秘密鍵が差し替わることを防ぐ。
@@ -88,6 +88,12 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		pattern: regexp.MustCompile(`^/settings/two_factor_auth/new$`),
 		flag:    model.FeatureFlagTwoFactorAuthSettings,
 		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	// 二要素認証のリカバリーコードの画面 (GET・HEAD) と、作り直す処理 (POST)。
+	{
+		pattern: regexp.MustCompile(`^/settings/two_factor_auth/recovery_codes$`),
+		flag:    model.FeatureFlagTwoFactorAuthSettings,
+		methods: []string{http.MethodGet, http.MethodHead, http.MethodPost},
 	},
 }
 

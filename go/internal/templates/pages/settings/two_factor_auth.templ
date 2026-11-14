@@ -3,6 +3,7 @@ package settings
 import (
 	"time"
 
+	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
 )
@@ -10,16 +11,24 @@ import (
 // twoFactorAuthHelpURLはヘルプ「二要素認証を設定する」のURL。ヘルプは日本語だけのため、表示言語によらず同じページへリンクする。
 const twoFactorAuthHelpURL = "https://wikino.app/s/wikino/pages/55"
 
-// TwoFactorAuthDataは二要素認証の設定の画面をレンダリングする元になるデータ
+// disableTwoFactorAuthPasswordHintIDは、二要素認証を無効にするフォームのパスワードの補足を収める要素のid
+const disableTwoFactorAuthPasswordHintID = "disable-two-factor-auth-password-hint"
+
+// TwoFactorAuthDataは二要素認証の設定の画面をレンダリングする元になるデータ。
+//
+// FormErrorsは、無効にするフォームのパスワードを受け付けなかったときの誤り。パスワードは送り返さない。
 type TwoFactorAuthData struct {
-	Enabled bool
+	CSRFToken  string
+	FormErrors *model.ValidationError
+	Enabled    bool
 	// EnabledAtは有効にした日時。有効でないとき、またはRails版で日時を残していないときはnil
 	EnabledAt *time.Time
 }
 
 // TwoFactorAuthは二要素認証の設定の画面のコンテンツを表示します。
 //
-// 有効なときは有効にした日時とリカバリーコードへのリンクを、無効なときは有効にする画面への入口を出します。
+// 有効なときは有効にした日時・リカバリーコードへのリンク・無効にするフォームを、
+// 無効なときは有効にする画面への入口を出します。
 templ TwoFactorAuth(data TwoFactorAuthData) {
 	<div class="py-4">
 		<div class="max-w-2xl w-full mx-auto">
@@ -35,6 +44,8 @@ templ TwoFactorAuth(data TwoFactorAuthData) {
 						</a>
 					</p>
 				</div>
+
+				@components.FormErrorSummary(data.FormErrors)
 
 				@components.ContentCard() {
 					if data.Enabled {
@@ -59,6 +70,55 @@ templ TwoFactorAuth(data TwoFactorAuthData) {
 									{ templates.T(ctx, "settings_two_factor_auth_show_recovery_codes") }
 								</a>
 							</div>
+
+							<hr class="border-stone-300 dark:border-stone-600"/>
+
+							<form
+								action={ templ.SafeURL(string(templates.SettingsTwoFactorAuthPath())) }
+								class="grid gap-6"
+								data-confirm={ templates.T(ctx, "settings_two_factor_auth_show_disable_confirm") }
+								data-disable-on-submit
+								method="POST"
+							>
+								<input type="hidden" name="_method" value="DELETE"/>
+								<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+								<h2 class="text-lg font-semibold">
+									{ templates.T(ctx, "settings_two_factor_auth_show_disable_heading") }
+								</h2>
+
+								<div class="grid gap-2">
+									<label class="label" for="password">
+										{ templates.T(ctx, "settings_two_factor_auth_show_password_label") }
+										@components.RequiredBadge()
+									</label>
+									<input
+										autocomplete="current-password"
+										if hasFieldError(data.FormErrors, "password") {
+											autofocus
+										}
+										class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
+										id="password"
+										name="password"
+										required
+										type="password"
+										aria-describedby={ describedBy(data.FormErrors, "password", disableTwoFactorAuthPasswordHintID) }
+										if hasFieldError(data.FormErrors, "password") {
+											aria-invalid="true"
+										}
+									/>
+									<p id={ disableTwoFactorAuthPasswordHintID } class="text-sm text-stone-600 dark:text-stone-300">
+										{ templates.T(ctx, "settings_two_factor_auth_show_password_hint") }
+									</p>
+									@fieldErrors(data.FormErrors, "password")
+								</div>
+
+								<div>
+									<button type="submit" class="btn rounded-full w-fit" data-variant="destructive">
+										{ templates.T(ctx, "settings_two_factor_auth_show_disable_button") }
+									</button>
+								</div>
+							</form>
 						</div>
 					} else {
 						<div class="grid gap-6">

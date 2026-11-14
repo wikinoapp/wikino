@@ -1,0 +1,123 @@
+package settings
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// regenerateRecoveryCodesPasswordHintIDは、リカバリーコードを作り直すフォームのパスワードの補足を収める要素のid
+const regenerateRecoveryCodesPasswordHintID = "regenerate-recovery-codes-password-hint"
+
+// TwoFactorAuthRecoveryCodesDataは二要素認証のリカバリーコードの画面をレンダリングする元になるデータ。
+//
+// FormErrorsは、作り直すフォームのパスワードを受け付けなかったときの誤り。パスワードは送り返さない。
+type TwoFactorAuthRecoveryCodesData struct {
+	CSRFToken     string
+	FormErrors    *model.ValidationError
+	RecoveryCodes []string
+}
+
+// TwoFactorAuthRecoveryCodesは、残っているリカバリーコードと、作り直すフォームを表示します。
+templ TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4 flex flex-col gap-2">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "settings_two_factor_auth_recovery_code_index_heading"),
+					})
+					<p class="text-sm text-stone-600 dark:text-stone-300">
+						{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_description") }
+					</p>
+				</div>
+
+				@components.FormErrorSummary(data.FormErrors)
+
+				@components.ContentCard() {
+					<div class="grid gap-6">
+						if len(data.RecoveryCodes) > 0 {
+							<ul class="grid grid-cols-2 gap-2" aria-label={ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_list_label") }>
+								for _, code := range data.RecoveryCodes {
+									<li><code class="font-mono">{ code }</code></li>
+								}
+							</ul>
+						} else {
+							<p>{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_empty") }</p>
+						}
+
+						<div class="alert">
+							@templates.DecorativeIcon("warning-regular", "fill-warning")
+							<h2>{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_save_title") }</h2>
+							<section>
+								{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_save_description") }
+							</section>
+						</div>
+
+						<hr class="border-stone-300 dark:border-stone-600"/>
+
+						<form
+							action={ templ.SafeURL(string(templates.SettingsTwoFactorAuthRecoveryCodesPath())) }
+							class="grid gap-6"
+							data-confirm={ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_regenerate_confirm") }
+							data-disable-on-submit
+							method="POST"
+						>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+							<div class="grid gap-2">
+								<h2 class="text-lg font-semibold">
+									{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_regenerate_heading") }
+								</h2>
+								<p class="text-sm text-stone-600 dark:text-stone-300">
+									{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_regenerate_warning") }
+								</p>
+							</div>
+
+							<div class="grid gap-2">
+								<label class="label" for="password">
+									{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_password_label") }
+									@components.RequiredBadge()
+								</label>
+								<input
+									autocomplete="current-password"
+									if hasFieldError(data.FormErrors, "password") {
+										autofocus
+									}
+									class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
+									id="password"
+									name="password"
+									required
+									type="password"
+									aria-describedby={ describedBy(data.FormErrors, "password", regenerateRecoveryCodesPasswordHintID) }
+									if hasFieldError(data.FormErrors, "password") {
+										aria-invalid="true"
+									}
+								/>
+								<p id={ regenerateRecoveryCodesPasswordHintID } class="text-sm text-stone-600 dark:text-stone-300">
+									{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_password_hint") }
+								</p>
+								@fieldErrors(data.FormErrors, "password")
+							</div>
+
+							<div class="flex justify-between gap-2">
+								<button type="submit" class="btn rounded-full w-fit">
+									@templates.Icon("arrow-counter-clockwise-regular")
+									{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_regenerate_button") }
+								</button>
+
+								<a
+									href={ templ.SafeURL(string(templates.SettingsTwoFactorAuthPath())) }
+									class="btn rounded-full w-fit"
+									data-variant="outline"
+								>
+									{ templates.T(ctx, "settings_two_factor_auth_recovery_code_index_back") }
+								</a>
+							</div>
+						</form>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

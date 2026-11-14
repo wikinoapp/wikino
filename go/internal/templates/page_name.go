@@ -14,6 +14,7 @@ const (
 	PageNameSettingsEmailConfirmation          PageName = "settings_email_confirmation"
 	PageNameSettingsTwoFactorAuth              PageName = "settings_two_factor_auth"
 	PageNameSettingsTwoFactorAuthNew           PageName = "settings_two_factor_auth_new"
+	PageNameSettingsTwoFactorAuthRecoveryCodes PageName = "settings_two_factor_auth_recovery_codes"
 	PageNamePageShow                           PageName = "page_show"
 	PageNamePageEdit                           PageName = "page_edit"
 	PageNamePageMove                           PageName = "page_move"

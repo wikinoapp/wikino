@@ -63,3 +63,67 @@ func (v *SettingsTwoFactorAuthCreateValidator) Validate(ctx context.Context, inp
 
 	return nil
 }
+
+// SettingsTwoFactorAuthDeleteValidatorは、二要素認証を無効にするときの現在のパスワードを検証する
+type SettingsTwoFactorAuthDeleteValidator struct {
+	userPasswordRepo *repository.UserPasswordRepository
+}
+
+// NewSettingsTwoFactorAuthDeleteValidatorはSettingsTwoFactorAuthDeleteValidatorを生成する
+func NewSettingsTwoFactorAuthDeleteValidator(userPasswordRepo *repository.UserPasswordRepository) *SettingsTwoFactorAuthDeleteValidator {
+	return &SettingsTwoFactorAuthDeleteValidator{userPasswordRepo: userPasswordRepo}
+}
+
+// SettingsTwoFactorAuthDeleteValidatorInputはバリデーションの入力パラメータ
+type SettingsTwoFactorAuthDeleteValidatorInput struct {
+	UserID   model.UserID
+	Password string
+}
+
+// Validateは現在のパスワードを確かめる
+func (v *SettingsTwoFactorAuthDeleteValidator) Validate(ctx context.Context, input SettingsTwoFactorAuthDeleteValidatorInput) error {
+	return validateCurrentPassword(ctx, v.userPasswordRepo, input.UserID, input.Password)
+}
+
+// SettingsTwoFactorAuthRecoveryCodeCreateValidatorは、リカバリーコードを作り直すときの現在のパスワードを検証する
+type SettingsTwoFactorAuthRecoveryCodeCreateValidator struct {
+	userPasswordRepo *repository.UserPasswordRepository
+}
+
+// NewSettingsTwoFactorAuthRecoveryCodeCreateValidatorはSettingsTwoFactorAuthRecoveryCodeCreateValidatorを生成する
+func NewSettingsTwoFactorAuthRecoveryCodeCreateValidator(userPasswordRepo *repository.UserPasswordRepository) *SettingsTwoFactorAuthRecoveryCodeCreateValidator {
+	return &SettingsTwoFactorAuthRecoveryCodeCreateValidator{userPasswordRepo: userPasswordRepo}
+}
+
+// SettingsTwoFactorAuthRecoveryCodeCreateValidatorInputはバリデーションの入力パラメータ
+type SettingsTwoFactorAuthRecoveryCodeCreateValidatorInput struct {
+	UserID   model.UserID
+	Password string
+}
+
+// Validateは現在のパスワードを確かめる
+func (v *SettingsTwoFactorAuthRecoveryCodeCreateValidator) Validate(ctx context.Context, input SettingsTwoFactorAuthRecoveryCodeCreateValidatorInput) error {
+	return validateCurrentPassword(ctx, v.userPasswordRepo, input.UserID, input.Password)
+}
+
+// validateCurrentPasswordは、passwordがユーザーの現在のパスワードかを確かめ、
+// 空か誤りならpasswordの項目のValidationErrorを返す
+func validateCurrentPassword(ctx context.Context, userPasswordRepo *repository.UserPasswordRepository, userID model.UserID, password string) error {
+	ve := model.NewValidationError()
+
+	if password == "" {
+		ve.AddField("password", i18n.T(ctx, "validation_required"))
+		return ve
+	}
+
+	userPassword, err := userPasswordRepo.FindByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if userPassword == nil || !auth.VerifyPassword(userPassword.PasswordDigest, password) {
+		ve.AddField("password", i18n.T(ctx, "validation_current_password_invalid"))
+		return ve
+	}
+
+	return nil
+}

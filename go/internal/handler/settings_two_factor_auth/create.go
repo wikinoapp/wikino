@@ -18,6 +18,10 @@ const (
 	// ユーザー単位で5回/15分。6桁のコードと現在のパスワードの総当たりを防ぐため、通った試行も含めて数える
 	rateLimitEnableLimit  = 5
 	rateLimitEnableWindow = 15 * time.Minute
+
+	// ユーザー単位で5回/15分。無効化とリカバリーコードの再生成で、現在のパスワードの総当たりを防ぐ
+	rateLimitPasswordLimit  = 5
+	rateLimitPasswordWindow = 15 * time.Minute
 )
 
 // Createは現在のパスワードと認証アプリのコードを照合して二要素認証を有効にし、
