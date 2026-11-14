@@ -5,8 +5,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/pquerna/otp/totp"
-
+	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -62,13 +61,8 @@ func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input Sig
 		}
 	}
 
-	// TOTPコードを検証
-	// Rails版と同様に前後15秒のドリフトを許容
-	valid := totp.Validate(input.TOTPCode, twoFactorAuth.Secret)
-	if !valid {
-		// ドリフトを考慮した検証
-		valid = validateWithDrift(input.TOTPCode, twoFactorAuth.Secret, 15)
-	}
+	// 二要素認証の有効化と同じ許容幅で照合する
+	valid := auth.ValidateTOTPCode(input.TOTPCode, twoFactorAuth.Secret, time.Now())
 
 	if !valid {
 		ve.AddGlobal(i18n.T(ctx, "sign_in_two_factor_invalid_code"))
@@ -77,35 +71,4 @@ func (v *SignInTwoFactorCreateValidator) Validate(ctx context.Context, input Sig
 
 	// 検証成功
 	return nil
-}
-
-// validateWithDriftは前後のタイムステップも考慮してTOTPコードを検証する
-func validateWithDrift(code, secret string, driftSeconds int) bool {
-	now := time.Now()
-
-	// 現在時刻で検証
-	if totp.Validate(code, secret) {
-		return true
-	}
-
-	// 前のタイムステップで検証
-	opts := totp.ValidateOpts{
-		Period:    30,
-		Skew:      1,
-		Digits:    6,
-		Algorithm: 0, // SHA1 (デフォルト)
-	}
-
-	// 前後のタイムステップで検証
-	pastTime := now.Add(-time.Duration(driftSeconds) * time.Second)
-	if valid, _ := totp.ValidateCustom(code, secret, pastTime, opts); valid {
-		return true
-	}
-
-	futureTime := now.Add(time.Duration(driftSeconds) * time.Second)
-	if valid, _ := totp.ValidateCustom(code, secret, futureTime, opts); valid {
-		return true
-	}
-
-	return false
 }
