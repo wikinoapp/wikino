@@ -54,6 +54,7 @@ func (r *EmailConfirmationRepository) FindActiveByEmailAndEvent(ctx context.Cont
 
 // CreateEmailConfirmationInputはメール確認情報作成の入力パラメータ
 type CreateEmailConfirmationInput struct {
+	UserID    *model.UserID
 	Email     string
 	Event     model.EmailConfirmationEvent
 	Code      string
@@ -63,7 +64,13 @@ type CreateEmailConfirmationInput struct {
 // Createは新しいメール確認情報を作成する
 func (r *EmailConfirmationRepository) Create(ctx context.Context, input CreateEmailConfirmationInput) (*model.EmailConfirmation, error) {
 	now := time.Now()
+	var userID *string
+	if input.UserID != nil {
+		id := string(*input.UserID)
+		userID = &id
+	}
 	row, err := r.q.CreateEmailConfirmation(ctx, query.CreateEmailConfirmationParams{
+		UserID:    userID,
 		Email:     input.Email,
 		Event:     int32(input.Event),
 		Code:      input.Code,
@@ -71,6 +78,28 @@ func (r *EmailConfirmationRepository) Create(ctx context.Context, input CreateEm
 		CreatedAt: now,
 		UpdatedAt: now,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// ConsumeEmailUpdateは、開始ユーザーとコードが一致する期限内の確認を一度だけ完了する。
+// 条件を満たさない場合はnilを返す。メールアドレスの更新と同じトランザクションで呼ぶ。
+func (r *EmailConfirmationRepository) ConsumeEmailUpdate(ctx context.Context, id string, userID model.UserID, code string) (*model.EmailConfirmation, error) {
+	now := time.Now()
+	ownerID := string(userID)
+	row, err := r.q.ConsumeEmailUpdateConfirmation(ctx, query.ConsumeEmailUpdateConfirmationParams{
+		ID:          id,
+		UserID:      &ownerID,
+		Code:        code,
+		SucceededAt: sql.NullTime{Time: now, Valid: true},
+		UpdatedAt:   now,
+		ValidAfter:  now.Add(-15 * time.Minute),
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +124,18 @@ func (r *EmailConfirmationRepository) DeleteStartedBefore(ctx context.Context, c
 
 // toModelはquery.EmailConfirmationをmodel.EmailConfirmationに変換する
 func (r *EmailConfirmationRepository) toModel(row query.EmailConfirmation) *model.EmailConfirmation {
+	var userID *model.UserID
+	if row.UserID != nil {
+		id := model.UserID(*row.UserID)
+		userID = &id
+	}
 	var succeededAt *time.Time
 	if row.SucceededAt.Valid {
 		succeededAt = &row.SucceededAt.Time
 	}
 	return &model.EmailConfirmation{
 		ID:          row.ID,
+		UserID:      userID,
 		Email:       row.Email,
 		Event:       model.EmailConfirmationEvent(row.Event),
 		Code:        row.Code,

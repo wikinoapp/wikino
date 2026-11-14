@@ -53,6 +53,7 @@ type UpdateEmailOutput struct {
 // Executeは確認コードを検証し、確認の完了とメールアドレスの更新を1つのトランザクションで行う
 func (uc *UpdateEmailUsecase) Execute(ctx context.Context, input UpdateEmailInput) (*UpdateEmailOutput, error) {
 	confirmation, err := uc.updateValidator.Validate(ctx, validator.SettingsEmailConfirmationUpdateValidatorInput{
+		UserID:              input.UserID,
 		EmailConfirmationID: input.EmailConfirmationID,
 		Code:                input.Code,
 	})
@@ -60,21 +61,28 @@ func (uc *UpdateEmailUsecase) Execute(ctx context.Context, input UpdateEmailInpu
 		return nil, err
 	}
 
-	return uc.updateEmail(ctx, input.UserID, confirmation)
+	return uc.updateEmail(ctx, input, confirmation.ID)
 }
 
-func (uc *UpdateEmailUsecase) updateEmail(ctx context.Context, userID model.UserID, confirmation *model.EmailConfirmation) (*UpdateEmailOutput, error) {
+func (uc *UpdateEmailUsecase) updateEmail(ctx context.Context, input UpdateEmailInput, confirmationID string) (*UpdateEmailOutput, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("トランザクションの開始に失敗: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	if err := uc.emailConfirmationRepo.WithTx(tx).Succeed(ctx, confirmation.ID); err != nil {
+	// 検証後の並行リクエストも考慮し、現在の状態で条件を満たす確認だけを消費する。
+	confirmation, err := uc.emailConfirmationRepo.WithTx(tx).ConsumeEmailUpdate(ctx, confirmationID, input.UserID, input.Code)
+	if err != nil {
 		return nil, fmt.Errorf("メール確認の完了状態の更新に失敗: %w", err)
 	}
+	if confirmation == nil {
+		ve := model.NewValidationError()
+		ve.AddGlobal(i18n.T(ctx, "validation_confirmation_not_found"))
+		return nil, ve
+	}
 
-	user, err := uc.userRepo.WithTx(tx).UpdateEmail(ctx, userID, confirmation.Email)
+	user, err := uc.userRepo.WithTx(tx).UpdateEmail(ctx, input.UserID, confirmation.Email)
 	if err != nil {
 		// 検証の後に同じメールアドレスのユーザーが作られた場合は、検証で見つけたときと同じく
 		// フォームのエラーとして返す
@@ -89,7 +97,7 @@ func (uc *UpdateEmailUsecase) updateEmail(ctx context.Context, userID model.User
 		return nil, &model.AppError{
 			Code:     model.AppErrCodeResourceNotFound,
 			UserMsg:  i18n.T(ctx, "error_not_found_message"),
-			Internal: fmt.Errorf("削除済みのユーザー%sのメールアドレスは更新できない", userID),
+			Internal: fmt.Errorf("削除済みのユーザー%sのメールアドレスは更新できない", input.UserID),
 		}
 	}
 

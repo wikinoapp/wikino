@@ -19,6 +19,7 @@ const (
 // EmailConfirmationはメール確認のドメインモデル
 type EmailConfirmation struct {
 	ID          string
+	UserID      *UserID
 	Email       string
 	Event       EmailConfirmationEvent
 	Code        string

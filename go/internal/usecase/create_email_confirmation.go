@@ -41,6 +41,7 @@ func NewCreateEmailConfirmationUsecase(
 
 // CreateEmailConfirmationInputはメール確認コード送信の入力パラメータ
 type CreateEmailConfirmationInput struct {
+	UserID *model.UserID
 	Email  string
 	Event  model.EmailConfirmationEvent
 	Locale string
@@ -53,6 +54,9 @@ type CreateEmailConfirmationOutput struct {
 
 // Executeはメール確認コードを生成してメール送信ジョブをエンキューする
 func (uc *CreateEmailConfirmationUsecase) Execute(ctx context.Context, input CreateEmailConfirmationInput) (*CreateEmailConfirmationOutput, error) {
+	if input.Event == model.EmailConfirmationEventEmailUpdate && input.UserID == nil {
+		return nil, fmt.Errorf("メールアドレス変更の確認には開始ユーザーが必要です")
+	}
 	// 1. バリデーション
 	if err := uc.createValidator.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
 		Email: input.Email,
@@ -70,6 +74,7 @@ func (uc *CreateEmailConfirmationUsecase) Execute(ctx context.Context, input Cre
 	// メール確認情報をDBに保存
 	now := time.Now()
 	confirmation, err := uc.emailConfirmationRepo.Create(ctx, repository.CreateEmailConfirmationInput{
+		UserID:    input.UserID,
 		Email:     input.Email,
 		Event:     input.Event,
 		Code:      code,

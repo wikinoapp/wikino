@@ -73,6 +73,9 @@ func TestCreateEmailUpdateConfirmationUsecase_Execute_確認コードを送る(t
 	if confirmation.Event != model.EmailConfirmationEventEmailUpdate {
 		t.Errorf("Event = %d、期待値 = %d", confirmation.Event, model.EmailConfirmationEventEmailUpdate)
 	}
+	if confirmation.UserID == nil || *confirmation.UserID != userID {
+		t.Errorf("開始ユーザー = %v、期待値 = %s", confirmation.UserID, userID)
+	}
 	if !mock.called {
 		t.Error("メールの送信のジョブが投入されていない")
 	}

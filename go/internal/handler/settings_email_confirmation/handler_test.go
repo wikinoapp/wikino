@@ -79,6 +79,7 @@ func confirmationUser(t *testing.T, db *sql.DB, atname, newEmail, code string, e
 	userID := testutil.NewUserBuilderDB(t, db).WithEmail(email).WithAtname(atname).Build()
 	confirmationID := testutil.NewEmailConfirmationBuilderDB(t, db).
 		WithEmail(newEmail).
+		WithUserID(userID).
 		WithEvent(event).
 		WithCode(code).
 		WithStartedAt(time.Now()).
@@ -95,6 +96,25 @@ func findUserEmail(t *testing.T, db *sql.DB, userID model.UserID) string {
 		t.Fatalf("メールアドレスの取得に失敗: %v", err)
 	}
 	return email
+}
+
+func TestUpdate_不正な確認IDを検証エラーにする(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	user, _ := confirmationUser(t, db, "sec_bad_cookie", "sec-bad-cookie-new@example.com", "SE0091", model.EmailConfirmationEventEmailUpdate)
+	rr := httptest.NewRecorder()
+	setupHandler(t, db).Update(rr, newConfirmationRequest(t, http.MethodPatch, "/settings/email/confirmation", user, "invalid-id", url.Values{"code": {"SE0091"}}))
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
+	}
+	if !strings.Contains(rr.Body.String(), "確認情報が見つかりません") {
+		t.Error("無効な確認であることが表示されていない")
+	}
+	if got := findUserEmail(t, db, user.ID); got != user.Email {
+		t.Errorf("Email = %q、変更前 = %q", got, user.Email)
+	}
 }
 
 func TestEdit_確認コードの入力欄を表示する(t *testing.T) {

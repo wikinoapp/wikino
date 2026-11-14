@@ -50,6 +50,7 @@ func (uc *CreateEmailUpdateConfirmationUsecase) Execute(ctx context.Context, inp
 	}
 
 	output, err := uc.createEmailConfirmationUC.Execute(ctx, CreateEmailConfirmationInput{
+		UserID: &input.UserID,
 		Email:  input.NewEmail,
 		Event:  model.EmailConfirmationEventEmailUpdate,
 		Locale: input.Locale,

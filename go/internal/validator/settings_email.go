@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -96,6 +98,7 @@ func NewSettingsEmailConfirmationUpdateValidator(
 
 // SettingsEmailConfirmationUpdateValidatorInputはバリデーションの入力パラメータ
 type SettingsEmailConfirmationUpdateValidatorInput struct {
+	UserID              model.UserID
 	EmailConfirmationID string
 	Code                string
 }
@@ -113,12 +116,18 @@ func (v *SettingsEmailConfirmationUpdateValidator) Validate(ctx context.Context,
 		return nil, ve
 	}
 
-	confirmation, err := v.emailConfirmationRepo.FindByID(ctx, input.EmailConfirmationID)
+	confirmationID, err := uuid.Parse(input.EmailConfirmationID)
+	if err != nil {
+		ve.AddGlobal(i18n.T(ctx, "validation_confirmation_not_found"))
+		return nil, ve
+	}
+	confirmation, err := v.emailConfirmationRepo.FindByID(ctx, confirmationID.String())
 	if err != nil {
 		return nil, err
 	}
 	// 新規登録やパスワードリセットの確認では、メールアドレスを変更させない
-	if confirmation == nil || confirmation.Event != model.EmailConfirmationEventEmailUpdate {
+	if confirmation == nil || confirmation.Event != model.EmailConfirmationEventEmailUpdate ||
+		confirmation.UserID == nil || *confirmation.UserID != input.UserID {
 		ve.AddGlobal(i18n.T(ctx, "validation_confirmation_not_found"))
 		return nil, ve
 	}

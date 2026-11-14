@@ -142,6 +142,7 @@ type EmailConfirmation struct {
 	SucceededAt sql.NullTime `json:"succeeded_at"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
+	UserID      *string      `json:"user_id"`
 }
 
 type Export struct {

@@ -106,7 +106,14 @@ func TestSettingsEmailConfirmationUpdateValidator_Validate(t *testing.T) {
 		code        string
 		wantField   string
 		wantGlobal  bool
+		ownerless   bool
+		otherUser   bool
+		invalidID   bool
 	}{
+		{name: "所有者のない既存の確認", event: model.EmailConfirmationEventEmailUpdate, code: "ABC123", ownerless: true, wantGlobal: true},
+		{name: "別のユーザーの確認", event: model.EmailConfirmationEventEmailUpdate, code: "ABC123", otherUser: true, wantGlobal: true},
+		{name: "不正な確認ID", event: model.EmailConfirmationEventEmailUpdate, code: "ABC123", invalidID: true, wantGlobal: true},
+		{name: "パスワードリセットの確認では確定できない", event: model.EmailConfirmationEventPasswordReset, code: "ABC123", wantGlobal: true},
 		{name: "正しい確認コード", event: model.EmailConfirmationEventEmailUpdate, code: "ABC123"},
 		{name: "大文字小文字を区別しない", event: model.EmailConfirmationEventEmailUpdate, code: "abc123"},
 		{name: "確認コードが空", event: model.EmailConfirmationEventEmailUpdate, code: "", wantField: "code"},
@@ -129,6 +136,8 @@ func TestSettingsEmailConfirmationUpdateValidator_Validate(t *testing.T) {
 				WithAtname("settings_confirm_taken").
 				Build()
 
+			userID := testutil.NewUserBuilder(t, tx).WithAtname("settings_confirm_self").WithEmail("settings-confirm-self@example.com").Build()
+
 			email := tc.email
 			if email == "" {
 				email = "settings-confirm-new@example.com"
@@ -142,14 +151,24 @@ func TestSettingsEmailConfirmationUpdateValidator_Validate(t *testing.T) {
 				WithEvent(tc.event).
 				WithCode("ABC123").
 				WithStartedAt(startedAt)
+			if !tc.ownerless {
+				builder = builder.WithUserID(userID)
+			}
 			if tc.succeededAt != nil {
 				builder = builder.WithSucceededAt(*tc.succeededAt)
 			}
 			confirmationID := builder.Build()
+			if tc.otherUser {
+				userID = testutil.NewUserBuilder(t, tx).WithAtname("settings_confirm_b").WithEmail("settings-confirm-b@example.com").Build()
+			}
+			if tc.invalidID {
+				confirmationID = "invalid-id"
+			}
 
 			v := validator.NewSettingsEmailConfirmationUpdateValidator(repository.NewEmailConfirmationRepository(q), repository.NewUserRepository(q))
 			ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
 			confirmation, err := v.Validate(ctx, validator.SettingsEmailConfirmationUpdateValidatorInput{
+				UserID:              userID,
 				EmailConfirmationID: confirmationID,
 				Code:                tc.code,
 			})
