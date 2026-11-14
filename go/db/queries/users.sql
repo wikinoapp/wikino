@@ -45,3 +45,15 @@ UPDATE users
 SET atname = @atname, name = @name, description = @description, updated_at = @now
 WHERE id = @id AND discarded_at IS NULL
 RETURNING *;
+
+-- name: ExistsUserByEmail :one
+-- メールアドレスを使っているユーザーがいるかを返す。一意インデックスは削除済みのユーザーも
+-- 含むため、削除済みのユーザーも数える
+SELECT EXISTS (SELECT 1 FROM users WHERE email = $1);
+
+-- name: UpdateUserEmail :one
+-- ユーザーのメールアドレスを更新する (削除されていないユーザーのみ)
+UPDATE users
+SET email = @email, updated_at = @now
+WHERE id = @id AND discarded_at IS NULL
+RETURNING *;

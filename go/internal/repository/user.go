@@ -149,6 +149,29 @@ func (r *UserRepository) UpdateProfile(ctx context.Context, input UpdateProfileI
 	return r.toModel(row), nil
 }
 
+// ExistsByEmailはメールアドレスを使っているユーザーがいるかを返す。メールアドレスの一意
+// インデックスは削除済みのユーザーも含むため、削除済みのユーザーも数える。
+func (r *UserRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	return r.q.ExistsUserByEmail(ctx, email)
+}
+
+// UpdateEmailはユーザーのメールアドレスを更新する。削除されたユーザーは更新せず、(nil, nil) を
+// 返す。
+func (r *UserRepository) UpdateEmail(ctx context.Context, id model.UserID, email string) (*model.User, error) {
+	row, err := r.q.UpdateUserEmail(ctx, query.UpdateUserEmailParams{
+		Email: email,
+		Now:   time.Now(),
+		ID:    string(id),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
 // toModelはquery.Userをmodel.Userに変換する
 func (r *UserRepository) toModel(row query.User) *model.User {
 	var discardedAt *time.Time

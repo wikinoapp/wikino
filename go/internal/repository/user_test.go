@@ -243,3 +243,82 @@ func TestUserRepository_UpdateProfile(t *testing.T) {
 		}
 	})
 }
+
+func TestUserRepository_ExistsByEmail(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewUserRepository(testutil.QueriesWithTx(tx))
+
+	testutil.NewUserBuilder(t, tx).
+		WithEmail("exists-by-email@example.com").
+		WithAtname("exists_by_email").
+		Build()
+	discardedID := testutil.NewUserBuilder(t, tx).
+		WithEmail("exists-by-email-discarded@example.com").
+		WithAtname("exists_email_disc").
+		Build()
+	if _, err := tx.ExecContext(context.Background(), "UPDATE users SET discarded_at = NOW() WHERE id = $1", string(discardedID)); err != nil {
+		t.Fatalf("ユーザーの削除に失敗: %v", err)
+	}
+
+	tests := []struct {
+		name  string
+		email string
+		want  bool
+	}{
+		{name: "使われているメールアドレス", email: "exists-by-email@example.com", want: true},
+		{name: "削除済みのユーザーのメールアドレスも使われているとみなす", email: "exists-by-email-discarded@example.com", want: true},
+		{name: "使われていないメールアドレス", email: "exists-by-email-unused@example.com", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repo.ExistsByEmail(context.Background(), tt.email)
+			if err != nil {
+				t.Fatalf("ExistsByEmail()のエラー = %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("ExistsByEmail(%q) = %v、期待値 = %v", tt.email, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUserRepository_UpdateEmail(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewUserRepository(testutil.QueriesWithTx(tx))
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("update-email@example.com").
+		WithAtname("update_email").
+		Build()
+
+	t.Run("メールアドレスを更新する", func(t *testing.T) {
+		user, err := repo.UpdateEmail(context.Background(), userID, "updated-email@example.com")
+		if err != nil {
+			t.Fatalf("UpdateEmail()のエラー = %v", err)
+		}
+		if user == nil {
+			t.Fatal("UpdateEmail()がnilを返した、期待値 = ユーザー")
+		}
+		if user.Email != "updated-email@example.com" {
+			t.Errorf("Email = %q、期待値 = %q", user.Email, "updated-email@example.com")
+		}
+	})
+
+	t.Run("削除済みのユーザーは更新せずnilを返す", func(t *testing.T) {
+		if _, err := tx.ExecContext(context.Background(), "UPDATE users SET discarded_at = NOW() WHERE id = $1", string(userID)); err != nil {
+			t.Fatalf("ユーザーの削除に失敗: %v", err)
+		}
+		user, err := repo.UpdateEmail(context.Background(), userID, "after-discard@example.com")
+		if err != nil {
+			t.Fatalf("UpdateEmail()のエラー = %v", err)
+		}
+		if user != nil {
+			t.Errorf("UpdateEmail() = %+v、期待値 = nil", user)
+		}
+	})
+}

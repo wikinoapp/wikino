@@ -100,6 +100,19 @@ func (q *Queries) ExistsUserByAtname(ctx context.Context, atname string) (bool, 
 	return exists, err
 }
 
+const existsUserByEmail = `-- name: ExistsUserByEmail :one
+SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)
+`
+
+// メールアドレスを使っているユーザーがいるかを返す。一意インデックスは削除済みのユーザーも
+// 含むため、削除済みのユーザーも数える
+func (q *Queries) ExistsUserByEmail(ctx context.Context, email string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsUserByEmail, email)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const findUsersByIDs = `-- name: FindUsersByIDs :many
 SELECT id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at FROM users WHERE id = ANY($1::uuid[])
 `
@@ -195,6 +208,39 @@ SELECT id, email, atname, name, description, locale, time_zone, joined_at, disca
 // ユーザーをIDで取得する
 func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Atname,
+		&i.Name,
+		&i.Description,
+		&i.Locale,
+		&i.TimeZone,
+		&i.JoinedAt,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserEmail = `-- name: UpdateUserEmail :one
+UPDATE users
+SET email = $1, updated_at = $2
+WHERE id = $3 AND discarded_at IS NULL
+RETURNING id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at
+`
+
+type UpdateUserEmailParams struct {
+	Email string    `json:"email"`
+	Now   time.Time `json:"now"`
+	ID    string    `json:"id"`
+}
+
+// ユーザーのメールアドレスを更新する (削除されていないユーザーのみ)
+func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserEmail, arg.Email, arg.Now, arg.ID)
 	var i User
 	err := row.Scan(
 		&i.ID,
