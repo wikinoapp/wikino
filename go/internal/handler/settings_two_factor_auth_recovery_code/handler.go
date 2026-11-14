@@ -94,7 +94,7 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.Use
 }
 
 // renderCodesは、今のリカバリーコードを読み直して画面を描画します。
-// 二要素認証が有効でなくなっていたときは、設定の画面へ送ります。
+// 二要素認証が有効でなくなっていたときは、設定の画面へ送ります (HEADではフラッシュを設定しません)。
 func (h *Handler) renderCodes(w http.ResponseWriter, r *http.Request, user *model.User, status int, formErrors *model.ValidationError) {
 	ctx := r.Context()
 
@@ -105,7 +105,10 @@ func (h *Handler) renderCodes(w http.ResponseWriter, r *http.Request, user *mode
 		return
 	}
 	if !output.Enabled {
-		h.flashMgr.SetWarning(w, i18n.T(ctx, "flash_two_factor_auth_not_enabled"))
+		// HEADは状態を変えないため、フラッシュを設定せずに今の状態の画面へ送るだけにする
+		if r.Method != http.MethodHead {
+			h.flashMgr.SetWarning(w, i18n.T(ctx, "flash_two_factor_auth_not_enabled"))
+		}
 		http.Redirect(w, r, string(templates.SettingsTwoFactorAuthPath()), http.StatusSeeOther)
 		return
 	}

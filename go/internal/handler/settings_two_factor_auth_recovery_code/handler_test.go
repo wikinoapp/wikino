@@ -170,6 +170,27 @@ func TestIndex_有効でなければ設定の画面へ送る(t *testing.T) {
 	if rr.Code != http.StatusSeeOther || rr.Header().Get("Location") != "/settings/two_factor_auth" {
 		t.Errorf("ステータスコード = %d、Location = %q、設定の画面へのリダイレクトを期待", rr.Code, rr.Header().Get("Location"))
 	}
+	if len(rr.Header().Values("Set-Cookie")) == 0 {
+		t.Error("有効でないことをフラッシュで知らせていない")
+	}
+}
+
+func TestIndex_HEADは有効でなくてもフラッシュを設定しない(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	user := newUser(t, tx, "settings_2fa_codes_head_off", false, nil)
+
+	rr := httptest.NewRecorder()
+	setupHandler(t, tx).handler.Index(rr, newRequest(t, http.MethodHead, user, nil))
+
+	if rr.Code != http.StatusSeeOther || rr.Header().Get("Location") != "/settings/two_factor_auth" {
+		t.Errorf("ステータスコード = %d、Location = %q、設定の画面へのリダイレクトを期待", rr.Code, rr.Header().Get("Location"))
+	}
+	// 本文を読まないHEADでフラッシュを設定すると、次に開いた画面に覚えの無い警告が出る
+	if got := rr.Header().Values("Set-Cookie"); len(got) != 0 {
+		t.Errorf("Set-Cookie = %v、HEADではフラッシュを設定しないことを期待", got)
+	}
 }
 
 func TestIndex_ログインしていなければログインの画面へ送る(t *testing.T) {
