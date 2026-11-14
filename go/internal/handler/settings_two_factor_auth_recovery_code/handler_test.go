@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -93,6 +94,20 @@ func newUser(t *testing.T, tx *sql.Tx, atname string, enabled bool, recoveryCode
 	}
 
 	return &model.User{ID: userID, Atname: atname, Email: email}
+}
+
+// autofocusPatternは、autofocusを持つ要素の開始タグに一致する。誤りを示して描き直したときに
+// どこへフォーカスするかを確かめるために使う。
+var autofocusPattern = regexp.MustCompile(`<[a-z]+\b[^>]*\bautofocus\b[^>]*>`)
+
+// assertFocusは、autofocusを持つ要素が1つだけで、その開始タグにwantを含むことを確かめる。
+// 2つあるとブラウザは最初の要素にだけフォーカスし、無いと誤りへフォーカスが移らない。
+func assertFocus(t *testing.T, body, want string) {
+	t.Helper()
+
+	if focused := autofocusPattern.FindAllString(body, -1); len(focused) != 1 || !strings.Contains(focused[0], want) {
+		t.Errorf("フォーカス先 = %v、%qを含む要素1つだけを期待", focused, want)
+	}
 }
 
 func TestIndex_有効ならリカバリーコードと作り直すフォームを出す(t *testing.T) {
@@ -212,6 +227,8 @@ func TestCreate_パスワードを誤ったら今のコードのまま描き直�
 			t.Errorf("レスポンスに %q が含まれていない", want)
 		}
 	}
+	// 誤りがパスワードの欄だけのときは、その欄へフォーカスを移す
+	assertFocus(t, body, `id="password"`)
 	current, err := setup.repo.FindByUserID(context.Background(), user.ID)
 	if err != nil || current == nil || len(current.RecoveryCodes) != 1 || current.RecoveryCodes[0] != "keepcode" {
 		t.Errorf("設定 = %+v、リカバリーコードが変わらないことを期待 (エラー = %v)", current, err)
@@ -252,6 +269,8 @@ func TestCreate_試行が多すぎたら照合せずに描き直す(t *testing.T
 	if rr.Code != http.StatusUnprocessableEntity || !strings.Contains(rr.Body.String(), "リクエストが多すぎます") {
 		t.Fatalf("ステータスコード = %d、レート制限のエラーを期待", rr.Code)
 	}
+	// 項目に結び付かない誤りは、エラーの要約を包むフォーカスできる要素へフォーカスを移す
+	assertFocus(t, rr.Body.String(), `tabindex="-1"`)
 	current, err := setup.repo.FindByUserID(context.Background(), user.ID)
 	if err != nil || current == nil || len(current.RecoveryCodes) != 1 {
 		t.Errorf("設定 = %+v、リカバリーコードが変わらないことを期待 (エラー = %v)", current, err)

@@ -64,6 +64,8 @@ func TestDelete_パスワードを誤ったら有効なまま描き直す(t *tes
 			t.Errorf("レスポンスに %q が含まれていない", want)
 		}
 	}
+	// 誤りがパスワードの欄だけのときは、その欄へフォーカスを移す
+	assertFocus(t, body, `id="password"`)
 	current, err := setup.repo.FindByUserID(context.Background(), user.ID)
 	if err != nil || current == nil || !current.Enabled {
 		t.Errorf("設定 = %+v、有効なままを期待 (エラー = %v)", current, err)
@@ -108,6 +110,8 @@ func TestDelete_試行が多すぎたら照合せずに描き直す(t *testing.T
 	if !strings.Contains(rr.Body.String(), "リクエストが多すぎます") {
 		t.Error("レート制限のエラーが表示されていない")
 	}
+	// 項目に結び付かない誤りは、エラーの要約を包むフォーカスできる要素へフォーカスを移す
+	assertFocus(t, rr.Body.String(), `tabindex="-1"`)
 	current, err := setup.repo.FindByUserID(context.Background(), user.ID)
 	if err != nil || current == nil || !current.Enabled {
 		t.Errorf("設定 = %+v、有効なままを期待 (エラー = %v)", current, err)

@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -138,6 +139,20 @@ func assertSettingsHeaders(t *testing.T, rr *httptest.ResponseRecorder) {
 	}
 	if got := rr.Header().Get("Cache-Control"); got != "private, no-store" {
 		t.Errorf("Cache-Control = %q、期待値 = %q", got, "private, no-store")
+	}
+}
+
+// autofocusPatternは、autofocusを持つ要素の開始タグに一致する。誤りを示して描き直したときに
+// どこへフォーカスするかを確かめるために使う。
+var autofocusPattern = regexp.MustCompile(`<[a-z]+\b[^>]*\bautofocus\b[^>]*>`)
+
+// assertFocusは、autofocusを持つ要素が1つだけで、その開始タグにwantを含むことを確かめる。
+// 2つあるとブラウザは最初の要素にだけフォーカスし、無いと誤りへフォーカスが移らない。
+func assertFocus(t *testing.T, body, want string) {
+	t.Helper()
+
+	if focused := autofocusPattern.FindAllString(body, -1); len(focused) != 1 || !strings.Contains(focused[0], want) {
+		t.Errorf("フォーカス先 = %v、%qを含む要素1つだけを期待", focused, want)
 	}
 }
 
