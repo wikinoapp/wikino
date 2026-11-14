@@ -1157,11 +1157,12 @@ func runServe() {
 
 		// 二要素認証の設定の画面・認証アプリへの登録・有効化。リバースプロキシは
 		// go_two_factor_auth_settingsが有効な閲覧者のリクエストだけをここへ振り分ける。
-		// 登録の画面は開くたびに秘密鍵を作り直すため、HEADを登録しない。
+		// 登録の画面のHEADは、秘密鍵を作り直さない専用の処理に渡す。
 		r.Get("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
 		r.Head("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
 		r.Post("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Create)
 		r.Get("/settings/two_factor_auth/new", settingsTwoFactorAuthHandler.New)
+		r.Head("/settings/two_factor_auth/new", settingsTwoFactorAuthHandler.HeadNew)
 
 		// スペースのゴミ箱の一覧。
 		r.Get("/s/{space_identifier}/trash", trashHandler.Show)

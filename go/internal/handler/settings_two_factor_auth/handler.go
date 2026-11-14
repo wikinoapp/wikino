@@ -117,17 +117,21 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.Use
 		},
 	}
 
-	// 設定の画面はログインした本人のための画面のため、検索エンジンにインデックスさせない
-	w.Header().Set("X-Robots-Tag", "noindex")
-	// 登録の画面は秘密鍵を含むため、戻る操作や共用の端末で読み返されないようキャッシュに残させない
-	w.Header().Set("Cache-Control", "private, no-store")
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	setResponseHeaders(w)
 	w.WriteHeader(status)
 
 	if err := layouts.Default(layoutData, content).Render(ctx, w); err != nil {
 		slog.ErrorContext(ctx, "テンプレートのレンダリングに失敗", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
+}
+
+// setResponseHeadersは、設定の画面を検索やキャッシュに残さないヘッダーを設定する。
+// 本文を返す応答とHEADで、秘密鍵を扱うページのキャッシュ方針を揃える。
+func setResponseHeaders(w http.ResponseWriter) {
+	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Header().Set("Cache-Control", "private, no-store")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 }
 
 // renderNewは、秘密鍵のQRコードを作り、認証アプリへ登録する画面を指定したステータスで描画します。

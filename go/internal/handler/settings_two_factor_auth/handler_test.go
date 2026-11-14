@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -271,6 +272,72 @@ func TestNew_有効なら秘密鍵を差し替えずに設定の画面へ送る(
 	current, err := setup.repo.FindByUserID(context.Background(), user.ID)
 	if err != nil || current == nil || current.Secret != testSecret || !current.Enabled {
 		t.Errorf("設定 = %+v、有効な設定がそのまま残ることを期待", current)
+	}
+}
+
+func TestHeadNew_設定を作成も変更もしない(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name       string
+		atname     string
+		secret     string
+		enabled    bool
+		wantStatus int
+	}{
+		{name: "設定が無い", atname: "head_2fa_none", wantStatus: http.StatusOK},
+		{name: "登録の途中", atname: "head_2fa_pending", secret: testSecret, wantStatus: http.StatusOK},
+		{name: "既に有効", atname: "head_2fa_enabled", secret: testSecret, enabled: true, wantStatus: http.StatusFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			user := newUser(t, tx, tc.atname, tc.secret, tc.enabled)
+			setup := setupHandler(t, tx)
+			before, err := setup.repo.FindByUserID(t.Context(), user.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rr := httptest.NewRecorder()
+			setup.handler.HeadNew(rr, newRequest(t, http.MethodHead, "/settings/two_factor_auth/new", user, nil))
+			if rr.Code != tc.wantStatus {
+				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, tc.wantStatus)
+			}
+			assertSettingsHeaders(t, rr)
+			if got := rr.Header().Get("Content-Type"); got != "text/html; charset=utf-8" {
+				t.Errorf("Content-Type = %q、期待値 = text/html; charset=utf-8", got)
+			}
+			if rr.Body.Len() != 0 {
+				t.Error("HEADの応答に本文がある")
+			}
+			if tc.enabled && rr.Header().Get("Location") != "/settings/two_factor_auth" {
+				t.Errorf("Location = %q、設定の画面へのリダイレクトを期待", rr.Header().Get("Location"))
+			}
+
+			after, err := setup.repo.FindByUserID(t.Context(), user.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(before, after) {
+				t.Errorf("HEADで設定が変わった: 変更前 = %+v、変更後 = %+v", before, after)
+			}
+		})
+	}
+}
+
+func TestHeadNew_ログインしていなければログインの画面へ送る(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	rr := httptest.NewRecorder()
+	setupHandler(t, tx).handler.HeadNew(rr, newRequest(t, http.MethodHead, "/settings/two_factor_auth/new", nil, nil))
+	if rr.Code != http.StatusFound || rr.Header().Get("Location") != "/sign_in" {
+		t.Errorf("ステータスコード = %d、Location = %q、ログインの画面へのリダイレクトを期待", rr.Code, rr.Header().Get("Location"))
+	}
+	if rr.Body.Len() != 0 {
+		t.Error("HEADの応答に本文がある")
 	}
 }
 

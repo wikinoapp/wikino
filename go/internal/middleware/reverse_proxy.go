@@ -82,12 +82,12 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		flag:    model.FeatureFlagTwoFactorAuthSettings,
 		methods: []string{http.MethodGet, http.MethodHead, http.MethodPost},
 	},
-	// 二要素認証を有効にするため、認証アプリへ登録する画面 (GET)。開くたびに秘密鍵を作り直すため、
-	// 本文を読まないHEADでは秘密鍵を差し替えないよう、Go版では受けない。
+	// 二要素認証を有効にするため、認証アプリへ登録する画面 (GET・HEAD)。
+	// HEADもGo版で受け、Rails版のGET用の処理に転送されて秘密鍵が差し替わることを防ぐ。
 	{
 		pattern: regexp.MustCompile(`^/settings/two_factor_auth/new$`),
 		flag:    model.FeatureFlagTwoFactorAuthSettings,
-		methods: []string{http.MethodGet},
+		methods: []string{http.MethodGet, http.MethodHead},
 	},
 }
 

@@ -38,3 +38,28 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 
 	h.renderNew(w, r, user, http.StatusOK, output.Setup, middleware.GetCSRFTokenFromContext(ctx), nil)
 }
+
+// HeadNewは登録の画面のヘッダーだけを返します (HEAD /settings/two_factor_auth/new)。
+// GETと同じ準備の処理を呼ぶと、表示中の秘密鍵が使えなくなるため、有効かどうかだけを読み取ります。
+func (h *Handler) HeadNew(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user := middleware.UserFromContext(ctx)
+	if user == nil {
+		http.Redirect(w, r, "/sign_in", http.StatusFound)
+		return
+	}
+
+	output, err := h.getTwoFactorAuthSettingsUC.Execute(ctx, usecase.GetTwoFactorAuthSettingsInput{UserID: user.ID})
+	if err != nil {
+		slog.ErrorContext(ctx, "二要素認証の設定の取得に失敗", "error", err, "user_id", user.ID)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	setResponseHeaders(w)
+	if output.Enabled {
+		http.Redirect(w, r, string(templates.SettingsTwoFactorAuthPath()), http.StatusFound)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
