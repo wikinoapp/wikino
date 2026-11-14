@@ -366,14 +366,14 @@ func TwoFactorAuthNew(data TwoFactorAuthNewData) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, " class=\"input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive\" id=\"totp_code\" inputmode=\"numeric\" maxlength=\"6\" name=\"totp_code\" required spellcheck=\"false\" type=\"text\" aria-describedby=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, " class=\"input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive\" id=\"totp_code\" inputmode=\"numeric\" name=\"totp_code\" required spellcheck=\"false\" type=\"text\" aria-describedby=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templruntime.NewAttributeExpression(describedBy(data.FormErrors, "totp_code", totpCodeHintID)).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 133, Col: 85}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 132, Col: 85}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var21)
 			if templ_7745c5c3_Err != nil {
@@ -396,7 +396,7 @@ func TwoFactorAuthNew(data TwoFactorAuthNewData) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templruntime.NewAttributeExpression(totpCodeHintID).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 138, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 137, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
 			if templ_7745c5c3_Err != nil {
@@ -409,7 +409,7 @@ func TwoFactorAuthNew(data TwoFactorAuthNewData) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_new_totp_code_hint"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 139, Col: 74}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 138, Col: 74}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -438,7 +438,7 @@ func TwoFactorAuthNew(data TwoFactorAuthNewData) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_new_submit_button"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 147, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 146, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -451,7 +451,7 @@ func TwoFactorAuthNew(data TwoFactorAuthNewData) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templ.SafeURL(string(templates.SettingsTwoFactorAuthPath()))).ResolveURL(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 151, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 150, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
 			if templ_7745c5c3_Err != nil {
@@ -464,7 +464,7 @@ func TwoFactorAuthNew(data TwoFactorAuthNewData) templ.Component {
 			var templ_7745c5c3_Var26 string
 			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_new_cancel"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 155, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_new.templ`, Line: 154, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {

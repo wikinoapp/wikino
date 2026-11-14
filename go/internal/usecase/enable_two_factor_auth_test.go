@@ -72,11 +72,12 @@ func TestEnableTwoFactorAuthUsecase_Execute_有効にしてログインでコー
 	}
 
 	uc, repo := newEnableTwoFactorAuthUsecaseForTest(tx)
+	code := currentTOTPCode(t, prepared.Setup.Secret)
 	if err := uc.Execute(ctx, EnableTwoFactorAuthInput{
 		UserID:   userID,
 		Password: twoFactorAuthTestPassword,
 		// 貼り付けで混じった空白は取り除く
-		TOTPCode: " " + currentTOTPCode(t, prepared.Setup.Secret) + " ",
+		TOTPCode: " " + code[:3] + " " + code[3:] + " ",
 	}); err != nil {
 		t.Fatalf("Execute()のエラー = %v", err)
 	}
