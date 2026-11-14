@@ -3586,7 +3586,7 @@ other = "Two-factor authentication is already enabled."
 
 [flash_two_factor_auth_not_pending]
 description = "有効にしようとした時点で登録の途中の設定が無かったときのフラッシュメッセージ"
-other = "Two-factor authentication setup was not found. Please check the current status."
+other = "Your two-factor authentication settings have changed. Please check your current settings."
 
 [settings_two_factor_auth_show_title]
 description = "二要素認証の設定のページタイトル"

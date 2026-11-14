@@ -3583,7 +3583,7 @@ other = "二要素認証はすでに有効になっています"
 
 [flash_two_factor_auth_not_pending]
 description = "有効にしようとした時点で登録の途中の設定が無かったときのフラッシュメッセージ"
-other = "二要素認証の設定が見つかりませんでした。今の状態を確かめてください"
+other = "二要素認証の設定が変わっていました。今の設定を確かめてください"
 
 [settings_two_factor_auth_show_title]
 description = "二要素認証の設定のページタイトル"
