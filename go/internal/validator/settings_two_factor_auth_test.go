@@ -7,6 +7,7 @@ import (
 
 	"github.com/pquerna/otp/totp"
 
+	"github.com/wikinoapp/wikino/go/internal/auth"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
@@ -23,9 +24,16 @@ func TestSettingsTwoFactorAuthCreateValidator_Validate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("コードの生成に失敗: %v", err)
 	}
-	wrongCode := "000000"
-	if code == wrongCode {
-		wrongCode = "111111"
+	// 現在のコードだけでなく、許容する前後のタイムステップでも通らない値を使う。
+	wrongCode := ""
+	for _, candidate := range []string{"000000", "111111", "222222", "333333", "444444"} {
+		if !auth.ValidateTOTPCode(candidate, settingsTwoFactorAuthSecret, time.Now()) {
+			wrongCode = candidate
+			break
+		}
+	}
+	if wrongCode == "" {
+		t.Fatal("誤りのコードを用意できなかった")
 	}
 
 	testCases := []struct {
