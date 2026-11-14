@@ -72,7 +72,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			return templ_7745c5c3_Err
 		}
 		if data.FormErrors != nil && len(data.FormErrors.Global) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div aria-labelledby=\"regenerate-recovery-codes-errors\" autofocus class=\"rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary\" tabindex=\"-1\"><div id=\"regenerate-recovery-codes-errors\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div autofocus class=\"rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary\" tabindex=\"-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -80,7 +80,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -109,7 +109,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_list_label")).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 51, Col: 130}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 48, Col: 130}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 				if templ_7745c5c3_Err != nil {
@@ -127,7 +127,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(code)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 53, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 50, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -150,7 +150,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_empty"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 57, Col: 82}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 54, Col: 82}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -176,7 +176,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_save_title"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 62, Col: 88}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 59, Col: 88}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -189,7 +189,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_save_description"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 64, Col: 91}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 61, Col: 91}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -202,7 +202,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templ.SafeURL(string(templates.SettingsTwoFactorAuthRecoveryCodesPath()))).ResolveURL(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 71, Col: 89}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 68, Col: 89}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 			if templ_7745c5c3_Err != nil {
@@ -215,7 +215,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_regenerate_confirm")).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 73, Col: 105}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 70, Col: 105}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 			if templ_7745c5c3_Err != nil {
@@ -228,7 +228,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templruntime.NewAttributeExpression(data.CSRFToken).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 77, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 74, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 			if templ_7745c5c3_Err != nil {
@@ -241,7 +241,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_regenerate_heading"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 81, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 78, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -254,7 +254,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_regenerate_warning"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 84, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 81, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -267,7 +267,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_password_label"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 90, Col: 90}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 87, Col: 90}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -294,7 +294,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templruntime.NewAttributeExpression(describedBy(data.FormErrors, "password", regenerateRecoveryCodesPasswordHintID)).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 103, Col: 107}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 100, Col: 107}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 			if templ_7745c5c3_Err != nil {
@@ -317,7 +317,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templruntime.NewAttributeExpression(regenerateRecoveryCodesPasswordHintID).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 108, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 105, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 			if templ_7745c5c3_Err != nil {
@@ -330,7 +330,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_password_hint"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 109, Col: 89}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 106, Col: 89}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -359,7 +359,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_regenerate_button"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 117, Col: 93}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 114, Col: 93}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -372,7 +372,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templ.SafeURL(string(templates.SettingsTwoFactorAuthPath()))).ResolveURL(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 121, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 118, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 			if templ_7745c5c3_Err != nil {
@@ -385,7 +385,7 @@ func TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) templ.Compo
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "settings_two_factor_auth_recovery_code_index_back"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 125, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/settings/two_factor_auth_recovery_codes.templ`, Line: 122, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {

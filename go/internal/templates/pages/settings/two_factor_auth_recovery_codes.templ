@@ -34,14 +34,11 @@ templ TwoFactorAuthRecoveryCodes(data TwoFactorAuthRecoveryCodesData) {
 
 				if data.FormErrors != nil && len(data.FormErrors.Global) > 0 {
 					<div
-						aria-labelledby="regenerate-recovery-codes-errors"
 						autofocus
 						class="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 						tabindex="-1"
 					>
-						<div id="regenerate-recovery-codes-errors">
-							@components.FormErrorSummary(data.FormErrors)
-						</div>
+						@components.FormErrorSummary(data.FormErrors)
 					</div>
 				}
 
