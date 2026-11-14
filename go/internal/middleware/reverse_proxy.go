@@ -95,6 +95,17 @@ var featureFlaggedPatterns = []featureFlaggedPattern{
 		flag:    model.FeatureFlagTwoFactorAuthSettings,
 		methods: []string{http.MethodGet, http.MethodHead, http.MethodPost},
 	},
+	// アカウントの削除の確認画面 (GET・HEAD) と、削除する処理 (POST)。
+	{
+		pattern: regexp.MustCompile(`^/settings/account/deletion/new$`),
+		flag:    model.FeatureFlagAccountDeletion,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	{
+		pattern: regexp.MustCompile(`^/settings/account/deletion$`),
+		flag:    model.FeatureFlagAccountDeletion,
+		methods: []string{http.MethodPost},
+	},
 }
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア

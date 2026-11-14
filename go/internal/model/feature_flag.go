@@ -19,6 +19,8 @@ const (
 	FeatureFlagUserSettings FeatureFlagName = "go_user_settings"
 	// FeatureFlagTwoFactorAuthSettingsは二要素認証の設定 (/settings/two_factor_authとその配下) をGo版で処理する
 	FeatureFlagTwoFactorAuthSettings FeatureFlagName = "go_two_factor_auth_settings"
+	// FeatureFlagAccountDeletionはアカウントの削除 (/settings/account/deletionとその確認画面) をGo版で処理する
+	FeatureFlagAccountDeletion FeatureFlagName = "go_account_deletion"
 )
 
 // AllFeatureFlagNamesは上で定義した全フラグの一覧。Goは定数グループの
@@ -32,6 +34,7 @@ var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagProfile,
 	FeatureFlagUserSettings,
 	FeatureFlagTwoFactorAuthSettings,
+	FeatureFlagAccountDeletion,
 }
 
 // FeatureFlagはフィーチャーフラグのドメインモデル

@@ -80,6 +80,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/profile"
 	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
 	settingshandler "github.com/wikinoapp/wikino/go/internal/handler/settings"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_account_deletion"
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_email"
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_email_confirmation"
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_profile"
@@ -251,6 +252,11 @@ func runServe() {
 		PageEditorRepo:              pageEditorRepo,
 		PageRevisionRepo:            pageRevisionRepo,
 		PageAttachmentReferenceRepo: pageAttachmentRefRepo,
+		UserRepo:                    userRepo,
+		UserSessionRepo:             userSessionRepo,
+		UserPasswordRepo:            userPasswordRepo,
+		UserTwoFactorAuthRepo:       userTwoFactorAuthRepo,
+		SpaceMemberRepo:             spaceMemberRepo,
 	})
 	if err != nil {
 		slog.Error("Riverクライアントの初期化に失敗しました", "error", err)
@@ -519,6 +525,13 @@ func runServe() {
 		rateLimiter,
 		usecase.NewGetTwoFactorAuthRecoveryCodesUsecase(userTwoFactorAuthRepo),
 		usecase.NewRegenerateTwoFactorAuthRecoveryCodesUsecase(validator.NewSettingsTwoFactorAuthRecoveryCodeCreateValidator(userPasswordRepo), userTwoFactorAuthRepo),
+	)
+	settingsAccountDeletionHandler := settings_account_deletion.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		usecase.NewGetAccountDeletionNewUsecase(spaceRepo),
+		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, jobDispatcher, validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
@@ -1176,6 +1189,12 @@ func runServe() {
 		r.Get("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Index)
 		r.Head("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Index)
 		r.Post("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Create)
+
+		// アカウントの削除の確認画面と削除。リバースプロキシはgo_account_deletionが有効な閲覧者の
+		// リクエストだけをここへ振り分ける。
+		r.Get("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
+		r.Head("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
+		r.Post("/settings/account/deletion", settingsAccountDeletionHandler.Create)
 
 		// スペースのゴミ箱の一覧。
 		r.Get("/s/{space_identifier}/trash", trashHandler.Show)

@@ -302,9 +302,14 @@ func SettingsTwoFactorAuthRecoveryCodesPath() Path {
 	return SettingsTwoFactorAuthPath() + "/recovery_codes"
 }
 
+// SettingsAccountDeletionPathはアカウントの削除 (確認画面の送信先) のパスを生成します
+func SettingsAccountDeletionPath() Path {
+	return Path("/settings/account/deletion")
+}
+
 // NewSettingsAccountDeletionPathはアカウントの削除の確認画面のパスを生成します
 func NewSettingsAccountDeletionPath() Path {
-	return Path("/settings/account/deletion/new")
+	return SettingsAccountDeletionPath() + "/new"
 }
 
 // UserSessionPathはログイン中のセッション (ログアウトの送信先) のパスを生成します

@@ -676,7 +676,7 @@ func TestFeatureFlaggedPatterns_UserSettings(t *testing.T) {
 		{name: "メールアドレスの変更の確定へのGETはフラグの対象外", method: http.MethodGet, path: "/settings/email/confirmation", want: ""},
 		{name: "新規登録の確認コードはこのフラグの対象外", method: http.MethodGet, path: "/email_confirmation/edit", want: ""},
 		{name: "二要素認証の設定は別のフラグで振り分ける", method: http.MethodGet, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "アカウントの削除はこのフラグの対象外", method: http.MethodGet, path: "/settings/account/deletion/new", want: ""},
+		{name: "アカウントの削除は別のフラグで振り分ける", method: http.MethodGet, path: "/settings/account/deletion/new", want: model.FeatureFlagAccountDeletion},
 	}
 
 	for _, tc := range testCases {
@@ -719,6 +719,42 @@ func TestFeatureFlaggedPatterns_TwoFactorAuthSettings(t *testing.T) {
 		{name: "リカバリーコードを作り直す処理のPOST", method: http.MethodPost, path: "/settings/two_factor_auth/recovery_codes", want: model.FeatureFlagTwoFactorAuthSettings},
 		{name: "リカバリーコードへのDELETEは対象外", method: http.MethodDelete, path: "/settings/two_factor_auth/recovery_codes", want: ""},
 		{name: "ログインの二要素認証は対象外", method: http.MethodGet, path: "/sign_in/two_factor/new", want: ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+
+			if m.isGoHandledByRegex(req) {
+				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
+			}
+			if got := m.getFeatureFlagForRequest(req); got != tc.want {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestFeatureFlaggedPatterns_AccountDeletion(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		want   model.FeatureFlagName
+	}{
+		{name: "確認画面のGET", method: http.MethodGet, path: "/settings/account/deletion/new", want: model.FeatureFlagAccountDeletion},
+		{name: "確認画面のHEAD", method: http.MethodHead, path: "/settings/account/deletion/new", want: model.FeatureFlagAccountDeletion},
+		{name: "削除する処理のPOST", method: http.MethodPost, path: "/settings/account/deletion", want: model.FeatureFlagAccountDeletion},
+		{name: "確認画面へのPOSTは対象外", method: http.MethodPost, path: "/settings/account/deletion/new", want: ""},
+		{name: "削除の送信先へのGETは対象外", method: http.MethodGet, path: "/settings/account/deletion", want: ""},
+		{name: "削除の送信先へのDELETEは対象外", method: http.MethodDelete, path: "/settings/account/deletion", want: ""},
 	}
 
 	for _, tc := range testCases {

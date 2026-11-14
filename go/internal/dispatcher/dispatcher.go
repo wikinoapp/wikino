@@ -171,3 +171,25 @@ func (d *Dispatcher) EnqueueDeleteTopic(ctx context.Context, spaceID, topicID st
 	_, err := d.client.Insert(ctx, args, &opts)
 	return err
 }
+
+// DeleteAccountArgsは論理削除したユーザーを、関連レコードとともに物理削除するジョブの引数。
+// 削除は同じユーザーに何度試しても結果が変わらないため、再試行してよい。
+type DeleteAccountArgs struct {
+	UserID string `json:"user_id"`
+}
+
+// Kindはジョブの種類を返す。
+func (DeleteAccountArgs) Kind() string { return "delete_account" }
+
+// InsertOptsはジョブのInsertオプションを返す。
+func (DeleteAccountArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 5}
+}
+
+// EnqueueDeleteAccountはアカウントの物理削除のジョブをキューに追加する。
+func (d *Dispatcher) EnqueueDeleteAccount(ctx context.Context, userID string) error {
+	args := DeleteAccountArgs{UserID: userID}
+	opts := args.InsertOpts()
+	_, err := d.client.Insert(ctx, args, &opts)
+	return err
+}

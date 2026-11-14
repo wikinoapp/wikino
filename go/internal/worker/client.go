@@ -76,6 +76,11 @@ type DeletionDeps struct {
 	PageEditorRepo              *repository.PageEditorRepository
 	PageRevisionRepo            *repository.PageRevisionRepository
 	PageAttachmentReferenceRepo *repository.PageAttachmentReferenceRepository
+	UserRepo                    *repository.UserRepository
+	UserSessionRepo             *repository.UserSessionRepository
+	UserPasswordRepo            *repository.UserPasswordRepository
+	UserTwoFactorAuthRepo       *repository.UserTwoFactorAuthRepository
+	SpaceMemberRepo             *repository.SpaceMemberRepository
 }
 
 // ClientはRiverクライアントのラッパー
@@ -163,6 +168,17 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 		deletionDeps.PageAttachmentReferenceRepo,
 	)))
 	slog.InfoContext(ctx, "DeleteTopicWorkerを登録しました")
+
+	// アカウントの物理削除のワーカーもデータベースだけで動くため、設定によらず登録する。
+	river.AddWorker(workers, NewDeleteAccountWorker(usecase.NewDeleteAccountUsecase(
+		deletionDeps.DB,
+		deletionDeps.UserRepo,
+		deletionDeps.UserSessionRepo,
+		deletionDeps.UserPasswordRepo,
+		deletionDeps.UserTwoFactorAuthRepo,
+		deletionDeps.SpaceMemberRepo,
+	)))
+	slog.InfoContext(ctx, "DeleteAccountWorkerを登録しました")
 
 	// ゴミ箱の物理削除のワーカーもデータベースだけで動くため、設定によらず登録する。
 	// 定期ジョブとして投入するため、登録を条件付きにしてはいけない (periodicJobSpecsを参照)。
