@@ -58,6 +58,38 @@ func (r *UserTwoFactorAuthRepository) UpdateRecoveryCodes(ctx context.Context, u
 	})
 }
 
+// UpsertPendingは、登録の途中の二要素認証設定を新しい秘密鍵で作るか書き換え、保存した設定を返す。
+// 既に有効な設定は書き換えず、(nil, nil) を返す。
+func (r *UserTwoFactorAuthRepository) UpsertPending(ctx context.Context, userID model.UserID, secret string) (*model.UserTwoFactorAuth, error) {
+	row, err := r.q.UpsertPendingUserTwoFactorAuth(ctx, query.UpsertPendingUserTwoFactorAuthParams{
+		UserID: string(userID),
+		Secret: secret,
+		Now:    time.Now(),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// Enableは、秘密鍵がsecretのままの登録の途中の設定を有効にし、リカバリーコードを保存する。
+// 対象の設定が無い (秘密鍵が差し替わった・既に有効になった) ときはfalseを返す。
+func (r *UserTwoFactorAuthRepository) Enable(ctx context.Context, userID model.UserID, secret string, recoveryCodes []string) (bool, error) {
+	rows, err := r.q.EnableUserTwoFactorAuth(ctx, query.EnableUserTwoFactorAuthParams{
+		Now:           time.Now(),
+		RecoveryCodes: recoveryCodes,
+		UserID:        string(userID),
+		Secret:        secret,
+	})
+	if err != nil {
+		return false, err
+	}
+	return rows > 0, nil
+}
+
 // toModelはquery.UserTwoFactorAuthをmodel.UserTwoFactorAuthに変換する
 func (r *UserTwoFactorAuthRepository) toModel(row query.UserTwoFactorAuth) *model.UserTwoFactorAuth {
 	var enabledAt *time.Time

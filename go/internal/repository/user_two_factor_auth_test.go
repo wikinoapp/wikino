@@ -129,3 +129,150 @@ func TestUserTwoFactorAuthRepository_UpdateRecoveryCodes(t *testing.T) {
 		}
 	})
 }
+
+func TestUserTwoFactorAuthRepository_UpsertPending(t *testing.T) {
+	t.Parallel()
+
+	t.Run("設定の無いユーザーには登録の途中の設定を作る", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		repo := NewUserTwoFactorAuthRepository(testutil.QueriesWithTx(tx))
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("repo-2fa-upsert-new@example.com").
+			WithAtname("repo_2fa_upsert_new").
+			Build()
+
+		pending, err := repo.UpsertPending(context.Background(), userID, "JBSWY3DPEHPK3PXP")
+		if err != nil {
+			t.Fatalf("UpsertPending()のエラー = %v", err)
+		}
+		if pending == nil || pending.Secret != "JBSWY3DPEHPK3PXP" || pending.Enabled || pending.EnabledAt != nil || len(pending.RecoveryCodes) != 0 {
+			t.Errorf("設定 = %+v、新しい秘密鍵の無効な設定を期待", pending)
+		}
+	})
+
+	t.Run("登録の途中の設定は秘密鍵を差し替えてリカバリーコードを空にする", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		repo := NewUserTwoFactorAuthRepository(testutil.QueriesWithTx(tx))
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("repo-2fa-upsert-pending@example.com").
+			WithAtname("repo_2fa_upsert_pend").
+			BuildWithTwoFactorAuthAndRecoveryCodes("OLDSECRETOLDSECR", false, []string{"abcd1234"})
+
+		pending, err := repo.UpsertPending(context.Background(), userID, "NEWSECRETNEWSECR")
+		if err != nil {
+			t.Fatalf("UpsertPending()のエラー = %v", err)
+		}
+		if pending == nil || pending.Secret != "NEWSECRETNEWSECR" || len(pending.RecoveryCodes) != 0 {
+			t.Errorf("設定 = %+v、新しい秘密鍵でリカバリーコードの無い設定を期待", pending)
+		}
+	})
+
+	t.Run("有効な設定は書き換えずにnilを返す", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		repo := NewUserTwoFactorAuthRepository(testutil.QueriesWithTx(tx))
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("repo-2fa-upsert-enabled@example.com").
+			WithAtname("repo_2fa_upsert_enab").
+			BuildWithTwoFactorAuthAndRecoveryCodes("ENABLEDSECRETABC", true, []string{"abcd1234"})
+
+		pending, err := repo.UpsertPending(context.Background(), userID, "NEWSECRETNEWSECR")
+		if err != nil {
+			t.Fatalf("UpsertPending()のエラー = %v", err)
+		}
+		if pending != nil {
+			t.Errorf("設定 = %+v、nilを期待", pending)
+		}
+
+		current, err := repo.FindByUserID(context.Background(), userID)
+		if err != nil || current == nil {
+			t.Fatalf("設定の取得に失敗: 設定 = %v、エラー = %v", current, err)
+		}
+		if current.Secret != "ENABLEDSECRETABC" || !current.Enabled || len(current.RecoveryCodes) != 1 {
+			t.Errorf("設定 = %+v、有効な設定がそのまま残ることを期待", current)
+		}
+	})
+}
+
+func TestUserTwoFactorAuthRepository_Enable(t *testing.T) {
+	t.Parallel()
+
+	t.Run("照合した秘密鍵の登録の途中の設定を有効にする", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		repo := NewUserTwoFactorAuthRepository(testutil.QueriesWithTx(tx))
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("repo-2fa-enable@example.com").
+			WithAtname("repo_2fa_enable").
+			BuildWithTwoFactorAuth("PENDINGSECRETABC", false)
+
+		codes := []string{"abcd1234", "efgh5678"}
+		enabled, err := repo.Enable(context.Background(), userID, "PENDINGSECRETABC", codes)
+		if err != nil {
+			t.Fatalf("Enable()のエラー = %v", err)
+		}
+		if !enabled {
+			t.Fatal("Enable() = false、trueを期待")
+		}
+
+		current, err := repo.FindByUserID(context.Background(), userID)
+		if err != nil || current == nil {
+			t.Fatalf("設定の取得に失敗: 設定 = %v、エラー = %v", current, err)
+		}
+		if !current.Enabled || current.EnabledAt == nil || len(current.RecoveryCodes) != 2 || current.RecoveryCodes[0] != "abcd1234" {
+			t.Errorf("設定 = %+v、有効でリカバリーコードを持つ設定を期待", current)
+		}
+	})
+
+	t.Run("秘密鍵が差し替わっていたら有効にしない", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		repo := NewUserTwoFactorAuthRepository(testutil.QueriesWithTx(tx))
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("repo-2fa-enable-replaced@example.com").
+			WithAtname("repo_2fa_enable_repl").
+			BuildWithTwoFactorAuth("REPLACEDSECRETAB", false)
+
+		enabled, err := repo.Enable(context.Background(), userID, "PENDINGSECRETABC", []string{"abcd1234"})
+		if err != nil {
+			t.Fatalf("Enable()のエラー = %v", err)
+		}
+		if enabled {
+			t.Error("Enable() = true、falseを期待")
+		}
+	})
+
+	t.Run("既に有効な設定は書き換えない", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		repo := NewUserTwoFactorAuthRepository(testutil.QueriesWithTx(tx))
+		userID := testutil.NewUserBuilder(t, tx).
+			WithEmail("repo-2fa-enable-enabled@example.com").
+			WithAtname("repo_2fa_enable_enab").
+			BuildWithTwoFactorAuthAndRecoveryCodes("ENABLEDSECRETABC", true, []string{"keep1234"})
+
+		enabled, err := repo.Enable(context.Background(), userID, "ENABLEDSECRETABC", []string{"abcd1234"})
+		if err != nil {
+			t.Fatalf("Enable()のエラー = %v", err)
+		}
+		if enabled {
+			t.Error("Enable() = true、falseを期待")
+		}
+
+		current, err := repo.FindByUserID(context.Background(), userID)
+		if err != nil || current == nil {
+			t.Fatalf("設定の取得に失敗: 設定 = %v、エラー = %v", current, err)
+		}
+		if len(current.RecoveryCodes) != 1 || current.RecoveryCodes[0] != "keep1234" {
+			t.Errorf("リカバリーコード = %v、書き換わらないことを期待", current.RecoveryCodes)
+		}
+	})
+}
