@@ -90,6 +90,33 @@ func (r *UserTwoFactorAuthRepository) Enable(ctx context.Context, userID model.U
 	return rows > 0, nil
 }
 
+// Disableは有効な二要素認証設定を無効にし、リカバリーコードを空にする。
+// 有効な設定が無い (既に無効になった) ときはfalseを返す。
+func (r *UserTwoFactorAuthRepository) Disable(ctx context.Context, userID model.UserID) (bool, error) {
+	rows, err := r.q.DisableUserTwoFactorAuth(ctx, query.DisableUserTwoFactorAuthParams{
+		Now:    time.Now(),
+		UserID: string(userID),
+	})
+	if err != nil {
+		return false, err
+	}
+	return rows > 0, nil
+}
+
+// RegenerateRecoveryCodesは有効な二要素認証設定のリカバリーコードを置き換える。
+// 有効な設定が無い (無効になった) ときはfalseを返す。
+func (r *UserTwoFactorAuthRepository) RegenerateRecoveryCodes(ctx context.Context, userID model.UserID, recoveryCodes []string) (bool, error) {
+	rows, err := r.q.RegenerateUserTwoFactorAuthRecoveryCodes(ctx, query.RegenerateUserTwoFactorAuthRecoveryCodesParams{
+		RecoveryCodes: recoveryCodes,
+		Now:           time.Now(),
+		UserID:        string(userID),
+	})
+	if err != nil {
+		return false, err
+	}
+	return rows > 0, nil
+}
+
 // toModelはquery.UserTwoFactorAuthをmodel.UserTwoFactorAuthに変換する
 func (r *UserTwoFactorAuthRepository) toModel(row query.UserTwoFactorAuth) *model.UserTwoFactorAuth {
 	var enabledAt *time.Time
