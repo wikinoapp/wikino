@@ -254,6 +254,10 @@ func TestNew_新しい秘密鍵とQRコードを出す(t *testing.T) {
 			t.Errorf("レスポンスに %q が含まれていない", want)
 		}
 	}
+	// 空白を含むコードを貼り付けたときに、ブラウザが末尾の数字を切り詰めないようにする
+	if strings.Contains(body, "maxlength") {
+		t.Error("認証コードの欄にmaxlengthがあり、空白付きのコードの貼り付けで末尾が切り詰められる")
+	}
 }
 
 func TestNew_有効なら秘密鍵を差し替えずに設定の画面へ送る(t *testing.T) {
