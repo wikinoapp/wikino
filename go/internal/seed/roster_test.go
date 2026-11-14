@@ -210,12 +210,17 @@ func TestLoadUserRosterRejectsInvalidRoster(t *testing.T) {
 			// ことがあるため。
 			name: "atnameに使えない文字があるとき",
 			body: strings.Replace(validRoster, `atname = "seeduser1"`, `atname = "seed-user1"`, 1),
-			want: `atname "seed-user1"に使える文字は半角英数字とアンダースコアだけで、20文字以内である必要があります`,
+			want: `atname "seed-user1"に使える文字は半角英数字とアンダースコアだけで、20文字以内で、予約語 (admin など) ではない必要があります`,
 		},
 		{
 			name: "atnameが長すぎるとき",
 			body: strings.Replace(validRoster, `atname = "seeduser1"`, `atname = "123456789012345678901"`, 1),
-			want: `atname "123456789012345678901"に使える文字は半角英数字とアンダースコアだけで、20文字以内である必要があります`,
+			want: `atname "123456789012345678901"に使える文字は半角英数字とアンダースコアだけで、20文字以内で、予約語 (admin など) ではない必要があります`,
+		},
+		{
+			name: "atnameが予約語のとき",
+			body: strings.Replace(validRoster, `atname = "seeduser1"`, `atname = "admin"`, 1),
+			want: `atname "admin"に使える文字は半角英数字とアンダースコアだけで、20文字以内で、予約語 (admin など) ではない必要があります`,
 		},
 		{
 			name: "役割が重複しているとき",
