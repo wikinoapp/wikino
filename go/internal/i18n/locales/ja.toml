@@ -3804,3 +3804,79 @@ other = "リカバリーコードを再生成する"
 [settings_two_factor_auth_recovery_code_index_back]
 description = "リカバリーコードから二要素認証の設定へ戻るリンク"
 other = "二要素認証の設定に戻る"
+
+[validation_account_deletion_atname_mismatch]
+description = "アカウントの削除の確認で入力したアットネームが本人のものと一致しないエラー"
+other = "アットネームが間違っています"
+
+[validation_account_deletion_has_active_spaces]
+description = "参加しているスペースがあるためアカウントを削除できないエラー"
+other = "参加しているスペースがあるため、アカウントを削除できません"
+
+[flash_account_deleted]
+description = "アカウントを削除したときのフラッシュメッセージ"
+other = "アカウントを削除しました"
+
+[settings_account_deletion_new_title]
+description = "アカウントの削除の確認画面のページタイトル"
+other = "アカウントの削除"
+
+[settings_account_deletion_new_heading]
+description = "アカウントの削除の確認画面の見出し"
+other = "アカウントの削除"
+
+[settings_account_deletion_new_breadcrumb_settings]
+description = "アカウントの削除の確認画面のパンくずに出す設定のラベル"
+other = "設定"
+
+[settings_account_deletion_new_breadcrumb]
+description = "アカウントの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "アカウントの削除"
+
+[settings_account_deletion_new_description]
+description = "アカウントの削除の確認画面の説明"
+other = "アカウントを削除しますか？削除する前に以下の内容をご確認ください。"
+
+[settings_account_deletion_new_warning_irreversible]
+description = "アカウントの削除の確認画面の注意 (元に戻せない)"
+other = "削除されたアカウント情報の復元はできません"
+
+[settings_account_deletion_new_warning_atname]
+description = "アカウントの削除の確認画面の注意 (アットネームが使えるようになる)"
+other = "アットネームは他のユーザーが使用できるようになります"
+
+[settings_account_deletion_new_atname_label]
+description = "アカウントの削除の確認画面のアットネームの入力欄のラベル"
+other = "アットネーム"
+
+[settings_account_deletion_new_atname_hint]
+description = "アカウントの削除の確認画面のアットネームの入力欄の説明"
+other = "アカウントを削除する場合は、アットネーム ({{.Atname}}) を入力してください"
+
+[settings_account_deletion_new_confirm]
+description = "アカウントの削除の確認画面で送信する前の確認"
+other = "アカウントを削除します。この操作は取り消せません。よろしいですか？"
+
+[settings_account_deletion_new_submit_button]
+description = "アカウントの削除の確認画面の送信ボタン"
+other = "アカウントを削除する"
+
+[settings_account_deletion_new_cancel]
+description = "アカウントの削除の確認画面から設定へ戻るキャンセルリンク"
+other = "キャンセル"
+
+[settings_account_deletion_new_cannot_delete_heading]
+description = "参加しているスペースがあり削除できないときの見出し"
+other = "このアカウントは削除できません"
+
+[settings_account_deletion_new_cannot_delete_description]
+description = "参加しているスペースがあり削除できないときの説明"
+other = "アカウントを削除するには、スペースに参加していない必要があります。参加している以下のスペースを削除してから、アカウントを削除してください。"
+
+[settings_account_deletion_new_spaces_label]
+description = "削除できないときに出す参加しているスペースの一覧のラベル"
+other = "参加しているスペース"
+
+[settings_account_deletion_new_back]
+description = "削除できないときに設定へ戻るリンク"
+other = "設定に戻る"
