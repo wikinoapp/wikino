@@ -3479,3 +3479,95 @@ other = "Save"
 [settings_profile_show_cancel]
 description = "プロフィールの編集の、設定のトップへ戻るリンク"
 other = "Cancel"
+
+[validation_current_password_invalid]
+description = "現在のパスワードが違うときのエラー"
+other = "The password is incorrect"
+
+[flash_email_updated]
+description = "メールアドレスを変更したときのフラッシュメッセージ"
+other = "Your email has been changed"
+
+[settings_email_show_title]
+description = "メールアドレスの変更のページタイトル"
+other = "Change email"
+
+[settings_email_show_heading]
+description = "メールアドレスの変更の見出し"
+other = "Change email"
+
+[settings_email_show_breadcrumb_settings]
+description = "メールアドレスの変更のパンくずの、設定のトップへの項目"
+other = "Settings"
+
+[settings_email_show_breadcrumb]
+description = "メールアドレスの変更のパンくずの現在地"
+other = "Change email"
+
+[settings_email_show_current_email_label]
+description = "メールアドレスの変更の現在のメールアドレスのラベル"
+other = "Current email"
+
+[settings_email_show_new_email_label]
+description = "メールアドレスの変更の新しいメールアドレスのラベル"
+other = "New email"
+
+[settings_email_show_new_email_hint]
+description = "メールアドレスの変更の新しいメールアドレスの補足"
+other = "We'll send a confirmation code to this address"
+
+[settings_email_show_password_label]
+description = "メールアドレスの変更の現在のパスワードのラベル"
+other = "Current password"
+
+[settings_email_show_password_hint]
+description = "メールアドレスの変更の現在のパスワードの補足"
+other = "Enter it to confirm that it's you"
+
+[settings_email_show_submit_button]
+description = "メールアドレスの変更の確認コードの送信ボタン"
+other = "Send confirmation code"
+
+[settings_email_show_cancel]
+description = "メールアドレスの変更の、設定のトップへ戻るリンク"
+other = "Cancel"
+
+[settings_email_confirmation_edit_title]
+description = "メールアドレスの変更の確認コードの入力のページタイトル"
+other = "Enter confirmation code"
+
+[settings_email_confirmation_edit_heading]
+description = "メールアドレスの変更の確認コードの入力の見出し"
+other = "Enter confirmation code"
+
+[settings_email_confirmation_edit_breadcrumb_settings]
+description = "メールアドレスの変更の確認コードの入力のパンくずの、設定のトップへの項目"
+other = "Settings"
+
+[settings_email_confirmation_edit_breadcrumb_email]
+description = "メールアドレスの変更の確認コードの入力のパンくずの、メールアドレスの変更への項目"
+other = "Change email"
+
+[settings_email_confirmation_edit_breadcrumb]
+description = "メールアドレスの変更の確認コードの入力のパンくずの現在地"
+other = "Enter confirmation code"
+
+[settings_email_confirmation_edit_description]
+description = "メールアドレスの変更の確認コードの入力の案内文"
+other = "Enter the confirmation code we sent to your new email. The code expires in 15 minutes"
+
+[settings_email_confirmation_edit_code_label]
+description = "メールアドレスの変更の確認コードのラベル"
+other = "Confirmation code"
+
+[settings_email_confirmation_edit_code_hint]
+description = "メールアドレスの変更の確認コードの補足"
+other = "Enter the 6-character code"
+
+[settings_email_confirmation_edit_submit_button]
+description = "メールアドレスの変更の確定ボタン"
+other = "Change email"
+
+[settings_email_confirmation_edit_back]
+description = "確認コードの入力から、メールアドレスの変更へ戻るリンク"
+other = "Enter a different email"
