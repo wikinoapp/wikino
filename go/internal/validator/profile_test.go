@@ -51,7 +51,7 @@ func TestProfileUpdateValidator_Validate(t *testing.T) {
 		{name: "ほかのユーザーのアットネーム", atname: "profile_update_other", wantField: "atname", wantMessage: "このアットネームは既に使用されています"},
 		{name: "削除済みのユーザーのアットネーム", atname: "profile_update_gone", wantField: "atname", wantMessage: "このアットネームは既に使用されています"},
 		{name: "名前の長さ", atname: "profile_update_self", userName: strings.Repeat("あ", validator.UserNameMaxLength+1), wantField: "name", wantMessage: "名前は30文字以内で入力してください"},
-		{name: "自己紹介の長さ", atname: "profile_update_self", description: strings.Repeat("あ", validator.UserDescriptionMaxLength+1), wantField: "description", wantMessage: "自己紹介は150文字以内で入力してください"},
+		{name: "自己紹介の長さ", atname: "profile_update_self", description: strings.Repeat("あ", validator.UserDescriptionMaxLength+1), wantField: "description", wantMessage: "説明は150文字以内で入力してください"},
 	}
 
 	for _, tt := range tests {

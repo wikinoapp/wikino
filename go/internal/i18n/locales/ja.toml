@@ -3391,7 +3391,7 @@ other = "名前は30文字以内で入力してください"
 
 [validation_user_description_too_long]
 description = "ユーザーの自己紹介の文字数超過エラー"
-other = "自己紹介は150文字以内で入力してください"
+other = "説明は150文字以内で入力してください"
 
 [flash_profile_updated]
 description = "プロフィールの編集を保存したときのフラッシュメッセージ"
@@ -3471,7 +3471,7 @@ other = "150文字まで入力できます"
 
 [settings_profile_show_submit_button]
 description = "プロフィールの編集の保存ボタン"
-other = "保存"
+other = "保存する"
 
 [settings_profile_show_cancel]
 description = "プロフィールの編集の、設定のトップへ戻るリンク"
