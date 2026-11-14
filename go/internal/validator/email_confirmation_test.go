@@ -158,7 +158,7 @@ func TestEmailConfirmationCreateValidator_Validate_EmailUpdate_ExistingEmail(t *
 	v := validator.NewEmailConfirmationCreateValidator(userRepo)
 
 	// 既存ユーザーを作成
-	_ = testutil.NewUserBuilder(t, tx).
+	userID := testutil.NewUserBuilder(t, tx).
 		WithEmail("updateuser@example.com").
 		WithAtname("updateuser").
 		Build()
@@ -166,12 +166,34 @@ func TestEmailConfirmationCreateValidator_Validate_EmailUpdate_ExistingEmail(t *
 	ctx := i18n.SetLocale(context.Background(), "ja")
 	// 既存メールアドレスでemail_updateイベント → 成功 (重複チェックをスキップ)
 	err := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
-		Email: "updateuser@example.com",
-		Event: model.EmailConfirmationEventEmailUpdate,
+		UserID: &userID,
+		Email:  "updateuser@example.com",
+		Event:  model.EmailConfirmationEventEmailUpdate,
 	})
 
 	if err != nil {
 		t.Fatalf("Validate()のエラー = %v、期待値 = nil", err)
+	}
+}
+
+func TestEmailConfirmationCreateValidator_Validate_EmailUpdate_開始ユーザーが無いと検証エラーにする(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	v := validator.NewEmailConfirmationCreateValidator(repository.NewUserRepository(testutil.QueriesWithTx(tx)))
+
+	ctx := i18n.SetLocale(context.Background(), "ja")
+	err := v.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
+		Email: "update-without-owner@example.com",
+		Event: model.EmailConfirmationEventEmailUpdate,
+	})
+
+	ve := model.AsValidationError(err)
+	if ve == nil {
+		t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+	}
+	if len(ve.Global) != 1 || ve.Global[0] != "無効なイベントタイプです" {
+		t.Errorf("グローバルエラー = %q、期待値 = [無効なイベントタイプです]", ve.Global)
 	}
 }
 
