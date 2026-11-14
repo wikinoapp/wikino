@@ -251,7 +251,7 @@ description = "メールアドレス重複エラー"
 other = "このメールアドレスは既に登録されています"
 
 [validation_invalid_event]
-description = "Turnstileなどで無効なイベントが検知された場合のエラー"
+description = "確認コードの送信で、受け付けないイベントが指定された場合のエラー"
 other = "無効なイベントタイプです"
 
 [validation_bot_detected]
