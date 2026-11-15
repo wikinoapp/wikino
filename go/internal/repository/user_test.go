@@ -372,6 +372,37 @@ func TestUserRepository_DiscardとUndiscard(t *testing.T) {
 	}
 }
 
+func TestUserRepository_LockActive(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewUserRepository(testutil.QueriesWithTx(tx))
+	ctx := t.Context()
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-lock-active@example.com").
+		WithAtname("repo_lock_active").
+		Build()
+
+	locked, err := repo.LockActive(ctx, userID)
+	if err != nil || !locked {
+		t.Fatalf("有効なユーザーのLockActive() = %v, %v、期待値 = true, nil", locked, err)
+	}
+	if _, err := repo.Discard(ctx, userID, time.Now()); err != nil {
+		t.Fatalf("Discard()のエラー = %v", err)
+	}
+	locked, err = repo.LockActive(ctx, userID)
+	if err != nil || locked {
+		t.Fatalf("論理削除したユーザーのLockActive() = %v, %v、期待値 = false, nil", locked, err)
+	}
+	if _, err := repo.DeleteDiscarded(ctx, userID); err != nil {
+		t.Fatalf("DeleteDiscarded()のエラー = %v", err)
+	}
+	locked, err = repo.LockActive(ctx, userID)
+	if err != nil || locked {
+		t.Errorf("物理削除したユーザーのLockActive() = %v, %v、期待値 = false, nil", locked, err)
+	}
+}
+
 func TestUserRepository_LockDiscardedとDeleteDiscarded(t *testing.T) {
 	t.Parallel()
 

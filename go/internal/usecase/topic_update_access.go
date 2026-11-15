@@ -116,7 +116,7 @@ func forbiddenError(ctx context.Context) error {
 	}
 }
 
-// notFoundErrorはトピック設定が、求められたものに手が届かないときに返すエラーを組み立てる。
+// notFoundErrorは、求められたものに手が届かないときに返すエラーを組み立てる。
 func notFoundError(ctx context.Context) error {
 	return &model.AppError{
 		Code:    model.AppErrCodeResourceNotFound,

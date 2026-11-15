@@ -193,6 +193,19 @@ func (r *UserRepository) Undiscard(ctx context.Context, id model.UserID, discard
 	})
 }
 
+// LockActiveは論理削除していないユーザーをロックし、ロックできたかを返す。
+// スペースの作成・参加とアカウントの論理削除のトランザクションで共有する。
+// 削除済みまたは見つからないユーザーではfalseを返す。
+func (r *UserRepository) LockActive(ctx context.Context, id model.UserID) (bool, error) {
+	if _, err := r.q.LockActiveUser(ctx, string(id)); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 // LockDiscardedは論理削除したユーザーをロックし、ロックできたかを返す。論理削除していない
 // ユーザーと、見つからないユーザーではfalseを返す。
 func (r *UserRepository) LockDiscarded(ctx context.Context, id model.UserID) (bool, error) {

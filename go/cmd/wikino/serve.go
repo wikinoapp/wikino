@@ -531,7 +531,7 @@ func runServe() {
 		sessionMgr,
 		flashMgr,
 		usecase.NewGetAccountDeletionNewUsecase(spaceRepo),
-		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, jobDispatcher, validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
+		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, spaceRepo, jobDispatcher, validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
 	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
@@ -614,7 +614,7 @@ func runServe() {
 		unpinPageUC,
 	)
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, featureFlagRepo)
-	createSpaceUC := usecase.NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
+	createSpaceUC := usecase.NewCreateSpaceUsecase(db, userRepo, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
 		flashMgr,

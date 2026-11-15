@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/dispatcher"
+	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/validator"
@@ -24,6 +25,7 @@ type DiscardAccountUsecase struct {
 	db              *sql.DB
 	userRepo        *repository.UserRepository
 	userSessionRepo *repository.UserSessionRepository
+	spaceRepo       *repository.SpaceRepository
 	dispatcher      *dispatcher.Dispatcher
 	validator       *validator.SettingsAccountDeletionCreateValidator
 }
@@ -33,6 +35,7 @@ func NewDiscardAccountUsecase(
 	db *sql.DB,
 	userRepo *repository.UserRepository,
 	userSessionRepo *repository.UserSessionRepository,
+	spaceRepo *repository.SpaceRepository,
 	d *dispatcher.Dispatcher,
 	v *validator.SettingsAccountDeletionCreateValidator,
 ) *DiscardAccountUsecase {
@@ -40,6 +43,7 @@ func NewDiscardAccountUsecase(
 		db:              db,
 		userRepo:        userRepo,
 		userSessionRepo: userSessionRepo,
+		spaceRepo:       spaceRepo,
 		dispatcher:      d,
 		validator:       v,
 	}
@@ -69,9 +73,8 @@ func (uc *DiscardAccountUsecase) Execute(ctx context.Context, input DiscardAccou
 		return err
 	}
 	if !discarded {
-		// 確認してから論理削除するまでの間に、別のリクエストが同じアカウントを削除した。
-		// 物理削除のジョブはそのリクエストが投入しているため、ここでは投入しない。
-		return nil
+		// 先行要求がジョブを投入する前に失敗して復元される場合もあるため、成功とは扱わない。
+		return notFoundError(ctx)
 	}
 
 	if err := uc.dispatcher.EnqueueDeleteAccount(ctx, string(input.User.ID)); err != nil {
@@ -83,7 +86,7 @@ func (uc *DiscardAccountUsecase) Execute(ctx context.Context, input DiscardAccou
 }
 
 // discardは、ユーザーの論理削除と全セッションの削除を1つのトランザクションで行い、論理削除したかを返す。
-// 既に論理削除したユーザーでも、残っているセッションは消す。
+// スペースの作成と同じユーザー行をロックしてから参加状態を確かめ直す。
 func (uc *DiscardAccountUsecase) discard(ctx context.Context, userID model.UserID, discardedAt time.Time) (bool, error) {
 	tx, err := uc.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -91,7 +94,27 @@ func (uc *DiscardAccountUsecase) discard(ctx context.Context, userID model.UserI
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	discarded, err := uc.userRepo.WithTx(tx).Discard(ctx, userID, discardedAt)
+	userRepo := uc.userRepo.WithTx(tx)
+	locked, err := userRepo.LockActive(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("ユーザーのロックに失敗: %w", err)
+	}
+	if !locked {
+		return false, nil
+	}
+
+	// ロック前の検証のあとにスペースが作られていても、セッションを消さずに拒否する。
+	spaces, err := uc.spaceRepo.WithTx(tx).ListActiveByUser(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("参加しているスペースの再確認に失敗: %w", err)
+	}
+	if len(spaces) > 0 {
+		ve := model.NewValidationError()
+		ve.AddGlobal(i18n.T(ctx, "validation_account_deletion_has_active_spaces"))
+		return false, ve
+	}
+
+	discarded, err := userRepo.Discard(ctx, userID, discardedAt)
 	if err != nil {
 		return false, fmt.Errorf("ユーザーの論理削除に失敗: %w", err)
 	}

@@ -24,6 +24,7 @@ func newDiscardAccountUsecase(db *sql.DB, inserter dispatcher.JobInserter) *Disc
 		db,
 		repository.NewUserRepository(queries),
 		repository.NewUserSessionRepository(queries),
+		repository.NewSpaceRepository(queries),
 		dispatcher.NewDispatcher(inserter),
 		validator.NewSettingsAccountDeletionCreateValidator(repository.NewSpaceRepository(queries)),
 	)

@@ -260,6 +260,21 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	return i, err
 }
 
+const lockActiveUser = `-- name: LockActiveUser :one
+SELECT id FROM users
+WHERE id = $1 AND discarded_at IS NULL
+FOR UPDATE
+`
+
+// スペース作成・参加とアカウントの論理削除を直列化する。
+// 待機中に論理削除されたユーザーはロック対象にしない。
+func (q *Queries) LockActiveUser(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockActiveUser, id)
+	var id_2 string
+	err := row.Scan(&id_2)
+	return id_2, err
+}
+
 const lockDiscardedUser = `-- name: LockDiscardedUser :one
 SELECT id FROM users
 WHERE id = $1 AND discarded_at IS NOT NULL

@@ -77,6 +77,13 @@ SELECT id FROM users
 WHERE id = @id AND discarded_at IS NOT NULL
 FOR UPDATE;
 
+-- name: LockActiveUser :one
+-- スペース作成・参加とアカウントの論理削除を直列化する。
+-- 待機中に論理削除されたユーザーはロック対象にしない。
+SELECT id FROM users
+WHERE id = @id AND discarded_at IS NULL
+FOR UPDATE;
+
 -- name: DeleteDiscardedUser :execrows
 -- 論理削除したユーザーを物理削除する。論理削除していないユーザーは対象にしない。
 DELETE FROM users

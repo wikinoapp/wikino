@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/wikinoapp/wikino/go/internal/httperror"
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -36,6 +37,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		if ve := model.AsValidationError(err); ve != nil {
 			h.renderForm(w, r, user, http.StatusUnprocessableEntity, atname, ve)
+			return
+		}
+		if ae := model.AsAppError(err); ae != nil && ae.Code == model.AppErrCodeResourceNotFound {
+			httperror.NotFound(w, r)
 			return
 		}
 		slog.ErrorContext(ctx, "アカウントの削除に失敗", "error", err, "user_id", user.ID)

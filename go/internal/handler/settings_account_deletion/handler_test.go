@@ -56,7 +56,7 @@ func setupHandler(t *testing.T, db *sql.DB, inserter dispatcher.JobInserter) *se
 		session.NewManager(userRepo, userSessionRepo, cfg),
 		session.NewFlashManager("", false, true),
 		usecase.NewGetAccountDeletionNewUsecase(spaceRepo),
-		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, dispatcher.NewDispatcher(inserter), validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
+		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, spaceRepo, dispatcher.NewDispatcher(inserter), validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
 	)
 }
 
@@ -261,6 +261,38 @@ func TestCreate_削除できなければ確認画面を描き直す(t *testing.T
 				t.Errorf("投入したジョブ = %d件、期待値 = 0件", len(inserter.args))
 			}
 		})
+	}
+}
+
+func TestCreate_二重送信は成功を知らせない(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	user := newUser(t, db, "create-duplicate", "")
+	inserter := &recordingJobInserter{}
+	h := setupHandler(t, db, inserter)
+	form := url.Values{"atname": {user.Atname}}
+	first := httptest.NewRecorder()
+	h.Create(first, newRequest(t, http.MethodPost, createPath, user, form))
+	if first.Code != http.StatusSeeOther {
+		t.Fatalf("先行要求のステータスコード = %d、期待値 = %d", first.Code, http.StatusSeeOther)
+	}
+
+	rr := httptest.NewRecorder()
+	h.Create(rr, newRequest(t, http.MethodPost, createPath, user, form))
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("二重送信のステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
+	}
+	if got := rr.Header().Get("Location"); got != "" {
+		t.Errorf("二重送信のLocation = %q、リダイレクトを期待しない", got)
+	}
+	for _, cookie := range rr.Result().Cookies() {
+		if cookie.Name == session.FlashCookieName {
+			t.Error("二重送信に成功のフラッシュが設定された")
+		}
+	}
+	if len(inserter.args) != 1 {
+		t.Errorf("投入したジョブ = %d件、期待値 = 1件", len(inserter.args))
 	}
 }
 
