@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -110,6 +111,20 @@ func isDiscarded(t *testing.T, db *sql.DB, userID model.UserID) bool {
 		t.Fatalf("ユーザーの取得に失敗: %v", err)
 	}
 	return discarded
+}
+
+// autofocusPatternは、autofocusを持つ要素の開始タグに一致する。誤りを示して描き直したときに
+// どこへフォーカスするかを確かめるために使う。
+var autofocusPattern = regexp.MustCompile(`<[a-z]+\b[^>]*\bautofocus\b[^>]*>`)
+
+// assertFocusは、autofocusを持つ要素が1つだけで、その開始タグにwantを含むことを確かめる。
+// 2つあるとブラウザは最初の要素にだけフォーカスし、無いと誤りへフォーカスが移らない。
+func assertFocus(t *testing.T, body, want string) {
+	t.Helper()
+
+	if focused := autofocusPattern.FindAllString(body, -1); len(focused) != 1 || !strings.Contains(focused[0], want) {
+		t.Errorf("フォーカス先 = %v、%qを含む要素1つだけを期待", focused, want)
+	}
 }
 
 func TestNew_ログインしていなければログインの画面へ送る(t *testing.T) {
@@ -232,15 +247,18 @@ func TestCreate_削除できなければ確認画面を描き直す(t *testing.T
 
 	db := testutil.GetTestDB()
 
+	// 誤りがアットネームの欄だけのときはその欄へ、項目に結び付かない誤りのときは
+	// エラーの要約を包むフォーカスできる要素へ、フォーカスを移す
 	tests := []struct {
-		name     string
-		suffix   string
-		space    string
-		atname   string
-		wantText string
+		name      string
+		suffix    string
+		space     string
+		atname    string
+		wantText  string
+		wantFocus string
 	}{
-		{name: "アットネームが一致しない", suffix: "create-mismatch", atname: "someone_else", wantText: "アットネームが間違っています"},
-		{name: "参加しているスペースがある", suffix: "create-blocked", space: "account-deletion-create-blocked", wantText: "参加しているスペースがあるため、アカウントを削除できません"},
+		{name: "アットネームが一致しない", suffix: "create-mismatch", atname: "someone_else", wantText: "アットネームが間違っています", wantFocus: `id="atname"`},
+		{name: "参加しているスペースがある", suffix: "create-blocked", space: "account-deletion-create-blocked", wantText: "参加しているスペースがあるため、アカウントを削除できません", wantFocus: `tabindex="-1"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -263,6 +281,7 @@ func TestCreate_削除できなければ確認画面を描き直す(t *testing.T
 			if !strings.Contains(rr.Body.String(), tt.wantText) {
 				t.Errorf("レスポンスに %qが含まれていない", tt.wantText)
 			}
+			assertFocus(t, rr.Body.String(), tt.wantFocus)
 			if isDiscarded(t, db, user.ID) {
 				t.Error("削除できないのにユーザーが論理削除された")
 			}
