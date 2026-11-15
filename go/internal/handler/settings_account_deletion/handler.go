@@ -98,6 +98,7 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.Use
 
 	// 設定の画面はログインした本人のための画面のため、検索エンジンにインデックスさせない
 	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Header().Set("Cache-Control", "private, no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
 

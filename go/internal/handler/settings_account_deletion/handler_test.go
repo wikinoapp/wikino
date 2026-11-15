@@ -141,6 +141,9 @@ func TestNew_参加しているスペースが無ければ削除のフォーム�
 	if got := rr.Header().Get("X-Robots-Tag"); got != "noindex" {
 		t.Errorf("X-Robots-Tag = %q、期待値 = noindex", got)
 	}
+	if got := rr.Header().Get("Cache-Control"); got != "private, no-store" {
+		t.Errorf("Cache-Control = %q、期待値 = private, no-store", got)
+	}
 	body := rr.Body.String()
 	for _, want := range []string{
 		`action="/settings/account/deletion"`,
@@ -166,6 +169,9 @@ func TestNew_参加しているスペースがあれば削除できない理由�
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+	if got := rr.Header().Get("Cache-Control"); got != "private, no-store" {
+		t.Errorf("Cache-Control = %q、期待値 = private, no-store", got)
 	}
 	body := rr.Body.String()
 	for _, want := range []string{"このアカウントは削除できません", `href="/s/account-deletion-new-blocked"`, "参加中のスペース new-blocked"} {
@@ -250,6 +256,9 @@ func TestCreate_削除できなければ確認画面を描き直す(t *testing.T
 
 			if rr.Code != http.StatusUnprocessableEntity {
 				t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusUnprocessableEntity)
+			}
+			if got := rr.Header().Get("Cache-Control"); got != "private, no-store" {
+				t.Errorf("Cache-Control = %q、期待値 = private, no-store", got)
 			}
 			if !strings.Contains(rr.Body.String(), tt.wantText) {
 				t.Errorf("レスポンスに %qが含まれていない", tt.wantText)
