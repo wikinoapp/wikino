@@ -41,6 +41,7 @@ func NewCreateEmailConfirmationUsecase(
 
 // CreateEmailConfirmationInputはメール確認コード送信の入力パラメータ
 type CreateEmailConfirmationInput struct {
+	UserID *model.UserID
 	Email  string
 	Event  model.EmailConfirmationEvent
 	Locale string
@@ -55,8 +56,9 @@ type CreateEmailConfirmationOutput struct {
 func (uc *CreateEmailConfirmationUsecase) Execute(ctx context.Context, input CreateEmailConfirmationInput) (*CreateEmailConfirmationOutput, error) {
 	// 1. バリデーション
 	if err := uc.createValidator.Validate(ctx, validator.EmailConfirmationCreateValidatorInput{
-		Email: input.Email,
-		Event: input.Event,
+		UserID: input.UserID,
+		Email:  input.Email,
+		Event:  input.Event,
 	}); err != nil {
 		return nil, err
 	}
@@ -70,6 +72,7 @@ func (uc *CreateEmailConfirmationUsecase) Execute(ctx context.Context, input Cre
 	// メール確認情報をDBに保存
 	now := time.Now()
 	confirmation, err := uc.emailConfirmationRepo.Create(ctx, repository.CreateEmailConfirmationInput{
+		UserID:    input.UserID,
 		Email:     input.Email,
 		Event:     input.Event,
 		Code:      code,

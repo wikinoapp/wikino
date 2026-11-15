@@ -1,0 +1,57 @@
+package settings
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// ShowDataはユーザー設定のトップをレンダリングする元になるデータ。
+type ShowData struct {
+	CSRFToken string
+}
+
+// Showはユーザー設定のトップのコンテンツを表示します。各設定へのリンクとログアウトのボタンを
+// 置きます。
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "settings_show_heading"),
+					})
+				</div>
+				@components.ContentCard() {
+					<div class="flex flex-col gap-6">
+						<div class="flex flex-col gap-3">
+							@settingsLink(templates.SettingsProfilePath(), "settings_show_profile_link")
+							@settingsLink(templates.SettingsEmailPath(), "settings_show_email_link")
+							@settingsLink(templates.SettingsTwoFactorAuthPath(), "settings_show_two_factor_auth_link")
+							@settingsLink(templates.NewSettingsAccountDeletionPath(), "settings_show_account_deletion_link")
+						</div>
+						// ログアウトはセッションを消す操作のため、送信の前に確認する
+						<form
+							action={ templ.SafeURL(string(templates.UserSessionPath())) }
+							class="text-center"
+							data-confirm={ templates.T(ctx, "settings_show_sign_out_confirm") }
+							method="POST"
+						>
+							<input type="hidden" name="_method" value="DELETE"/>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<button type="submit" class="underline underline-offset-4 cursor-pointer">
+								{ templates.T(ctx, "settings_show_sign_out_button") }
+							</button>
+						</form>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// settingsLinkはユーザー設定の各項目へのリンクを表示します。
+templ settingsLink(path templates.Path, labelKey string) {
+	<a class="underline underline-offset-4 w-fit" href={ templ.SafeURL(string(path)) }>
+		{ templates.T(ctx, labelKey) }
+	</a>
+}

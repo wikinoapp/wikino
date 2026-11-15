@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
@@ -61,6 +62,36 @@ func TestCreate_スペースを作成してスペースの画面へリダイレ�
 	}
 	if member.Role != model.SpaceRoleAdmin {
 		t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.SpaceRoleAdmin)
+	}
+}
+
+func TestCreate_削除済みの作成者には404を返す(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.GetTestDB()
+	userID := testutil.NewUserBuilderDB(t, db).
+		WithEmail("space-create-discarded@example.com").
+		WithAtname("space_create_discarded").
+		Build()
+	if _, err := repository.NewUserRepository(query.New(db)).Discard(t.Context(), userID, time.Now()); err != nil {
+		t.Fatalf("ユーザーの論理削除に失敗: %v", err)
+	}
+	const identifier = "space-discarded-user"
+	rr := httptest.NewRecorder()
+	setupCreateHandler(t, db).Create(rr, newSpaceFormRequest(t, http.MethodPost, "/spaces", userID, map[string]string{
+		"identifier": identifier,
+		"name":       "作成されないスペース",
+	}))
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotFound)
+	}
+	if space := findSpace(t, db, identifier); space != nil {
+		t.Error("削除済みのユーザーのスペースが作成された")
+	}
+	for _, cookie := range rr.Result().Cookies() {
+		if cookie.Name == session.FlashCookieName {
+			t.Error("作成できなかったのに成功のフラッシュが設定された")
+		}
 	}
 }
 

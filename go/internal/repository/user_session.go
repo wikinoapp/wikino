@@ -86,6 +86,11 @@ func (r *UserSessionRepository) DeleteByToken(ctx context.Context, token string)
 	return r.q.DeleteUserSessionByToken(ctx, token)
 }
 
+// DeleteByUserIDはユーザーのセッションをすべて削除する
+func (r *UserSessionRepository) DeleteByUserID(ctx context.Context, userID model.UserID) error {
+	return r.q.DeleteUserSessionsByUserID(ctx, string(userID))
+}
+
 // toModelはquery.UserSessionをmodel.UserSessionに変換する
 func (r *UserSessionRepository) toModel(row query.UserSession) *model.UserSession {
 	return &model.UserSession{

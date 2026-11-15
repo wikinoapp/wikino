@@ -238,3 +238,35 @@ func TestUserSessionRepository_DeleteByToken(t *testing.T) {
 		}
 	})
 }
+
+func TestUserSessionRepository_DeleteByUserID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewUserSessionRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-sessions-owner@example.com").
+		WithAtname("repo_sessions_owner").
+		Build()
+	otherID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-sessions-other@example.com").
+		WithAtname("repo_sessions_other").
+		Build()
+	token1 := testutil.NewSessionBuilder(t, tx).WithUserID(userID).WithToken("repo-sessions-owner-1").BuildAndGetToken()
+	token2 := testutil.NewSessionBuilder(t, tx).WithUserID(userID).WithToken("repo-sessions-owner-2").BuildAndGetToken()
+	otherToken := testutil.NewSessionBuilder(t, tx).WithUserID(otherID).WithToken("repo-sessions-other").BuildAndGetToken()
+
+	if err := repo.DeleteByUserID(ctx, userID); err != nil {
+		t.Fatalf("DeleteByUserID()のエラー = %v", err)
+	}
+
+	for _, token := range []string{token1, token2} {
+		if s, err := repo.FindByToken(ctx, token); err != nil || s != nil {
+			t.Errorf("FindByToken(%q) = %v, %v、期待値 = nil, nil", token, s, err)
+		}
+	}
+	if s, err := repo.FindByToken(ctx, otherToken); err != nil || s == nil {
+		t.Errorf("ほかのユーザーのFindByToken() = %v, %v、セッションが残ることを期待", s, err)
+	}
+}

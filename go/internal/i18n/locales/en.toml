@@ -251,7 +251,7 @@ description = "メールアドレス重複エラー"
 other = "This email address is already registered"
 
 [validation_invalid_event]
-description = "Turnstileなどで無効なイベントが検知された場合のエラー"
+description = "確認コードの送信で、受け付けないイベントが指定された場合のエラー"
 other = "Invalid event type"
 
 [validation_bot_detected]
@@ -3359,3 +3359,527 @@ other = "No search results found"
 [search_show_breadcrumb]
 description = "検索の画面のパンくずの現在地"
 other = "Search"
+
+[profile_show_title]
+description = "プロフィールのページタイトル (名前があるとき)"
+other = "{{.Name}} (@{{.Atname}}) | Wikino"
+
+[profile_show_title_without_name]
+description = "プロフィールのページタイトル (名前が空のとき)"
+other = "@{{.Atname}} | Wikino"
+
+[profile_show_edit_button]
+description = "プロフィールの、プロフィールの編集へのリンク (本人にだけ出す)"
+other = "Edit profile"
+
+[profile_show_settings_button]
+description = "プロフィールの、設定へのリンク (本人にだけ出す)"
+other = "Settings"
+
+[profile_show_joined_spaces_heading]
+description = "プロフィールの「参加中のスペース」見出し"
+other = "Joined spaces"
+
+[profile_show_no_joined_spaces_html]
+description = "プロフィールの参加中のスペースが0件のときのメッセージ (HTMLを含む)"
+other = "No joined spaces."
+
+[validation_atname_reserved]
+description = "アットネームが予約語のときのエラー"
+other = "This atname is not available"
+
+[validation_user_name_too_long]
+description = "ユーザーの名前の文字数超過エラー"
+other = "Name must be 30 characters or less"
+
+[validation_user_description_too_long]
+description = "ユーザーの自己紹介の文字数超過エラー"
+other = "Description must be 150 characters or less"
+
+[flash_profile_updated]
+description = "プロフィールの編集を保存したときのフラッシュメッセージ"
+other = "Profile updated."
+
+[settings_show_title]
+description = "ユーザー設定のトップのページタイトル"
+other = "Settings"
+
+[settings_show_heading]
+description = "ユーザー設定のトップの見出し"
+other = "Settings"
+
+[settings_show_profile_link]
+description = "ユーザー設定のトップの、プロフィールの編集へのリンク"
+other = "Profile settings"
+
+[settings_show_email_link]
+description = "ユーザー設定のトップの、メールアドレスの変更へのリンク"
+other = "Change email"
+
+[settings_show_two_factor_auth_link]
+description = "ユーザー設定のトップの、二要素認証の設定へのリンク"
+other = "Two-factor authentication"
+
+[settings_show_account_deletion_link]
+description = "ユーザー設定のトップの、アカウントの削除へのリンク"
+other = "Delete account"
+
+[settings_show_sign_out_button]
+description = "ユーザー設定のトップのログアウトのボタン"
+other = "Sign out"
+
+[settings_show_sign_out_confirm]
+description = "ユーザー設定のトップでログアウトする前の確認"
+other = "Are you sure you want to sign out?"
+
+[settings_profile_show_title]
+description = "プロフィールの編集のページタイトル"
+other = "Profile settings"
+
+[settings_profile_show_heading]
+description = "プロフィールの編集の見出し"
+other = "Profile settings"
+
+[settings_profile_show_breadcrumb_settings]
+description = "プロフィールの編集のパンくずの、設定のトップへの項目"
+other = "Settings"
+
+[settings_profile_show_breadcrumb]
+description = "プロフィールの編集のパンくずの現在地"
+other = "Profile settings"
+
+[settings_profile_show_atname_label]
+description = "プロフィールの編集のアットネームのラベル"
+other = "Atname"
+
+[settings_profile_show_atname_hint]
+description = "プロフィールの編集のアットネームの補足"
+other = "This identifier is used in the URL of the profile. Up to 20 characters; only alphanumeric characters and underscores can be used."
+
+[settings_profile_show_name_label]
+description = "プロフィールの編集の名前のラベル"
+other = "Name"
+
+[settings_profile_show_name_hint]
+description = "プロフィールの編集の名前の補足"
+other = "30 characters or less."
+
+[settings_profile_show_description_label]
+description = "プロフィールの編集の自己紹介のラベル"
+other = "Description"
+
+[settings_profile_show_description_hint]
+description = "プロフィールの編集の自己紹介の補足"
+other = "150 characters or less."
+
+[settings_profile_show_submit_button]
+description = "プロフィールの編集の保存ボタン"
+other = "Save"
+
+[settings_profile_show_cancel]
+description = "プロフィールの編集の、設定のトップへ戻るリンク"
+other = "Cancel"
+
+[validation_current_password_invalid]
+description = "現在のパスワードが違うときのエラー"
+other = "The password is incorrect"
+
+[flash_email_updated]
+description = "メールアドレスを変更したときのフラッシュメッセージ"
+other = "Your email has been changed"
+
+[settings_email_show_title]
+description = "メールアドレスの変更のページタイトル"
+other = "Change email"
+
+[settings_email_show_heading]
+description = "メールアドレスの変更の見出し"
+other = "Change email"
+
+[settings_email_show_breadcrumb_settings]
+description = "メールアドレスの変更のパンくずの、設定のトップへの項目"
+other = "Settings"
+
+[settings_email_show_breadcrumb]
+description = "メールアドレスの変更のパンくずの現在地"
+other = "Change email"
+
+[settings_email_show_current_email_label]
+description = "メールアドレスの変更の現在のメールアドレスのラベル"
+other = "Current email"
+
+[settings_email_show_new_email_label]
+description = "メールアドレスの変更の新しいメールアドレスのラベル"
+other = "New email"
+
+[settings_email_show_new_email_hint]
+description = "メールアドレスの変更の新しいメールアドレスの補足"
+other = "We'll send a confirmation code to this address"
+
+[settings_email_show_password_label]
+description = "メールアドレスの変更の現在のパスワードのラベル"
+other = "Current password"
+
+[settings_email_show_password_hint]
+description = "メールアドレスの変更の現在のパスワードの補足"
+other = "Enter it to confirm that it's you"
+
+[settings_email_show_submit_button]
+description = "メールアドレスの変更の確認コードの送信ボタン"
+other = "Send confirmation code"
+
+[settings_email_show_cancel]
+description = "メールアドレスの変更の、設定のトップへ戻るリンク"
+other = "Cancel"
+
+[settings_email_confirmation_edit_title]
+description = "メールアドレスの変更の確認コードの入力のページタイトル"
+other = "Enter confirmation code"
+
+[settings_email_confirmation_edit_heading]
+description = "メールアドレスの変更の確認コードの入力の見出し"
+other = "Enter confirmation code"
+
+[settings_email_confirmation_edit_breadcrumb_settings]
+description = "メールアドレスの変更の確認コードの入力のパンくずの、設定のトップへの項目"
+other = "Settings"
+
+[settings_email_confirmation_edit_breadcrumb_email]
+description = "メールアドレスの変更の確認コードの入力のパンくずの、メールアドレスの変更への項目"
+other = "Change email"
+
+[settings_email_confirmation_edit_breadcrumb]
+description = "メールアドレスの変更の確認コードの入力のパンくずの現在地"
+other = "Enter confirmation code"
+
+[settings_email_confirmation_edit_description]
+description = "メールアドレスの変更の確認コードの入力の案内文"
+other = "Enter the confirmation code we sent to your new email. The code expires in 15 minutes"
+
+[settings_email_confirmation_edit_code_label]
+description = "メールアドレスの変更の確認コードのラベル"
+other = "Confirmation code"
+
+[settings_email_confirmation_edit_code_hint]
+description = "メールアドレスの変更の確認コードの補足"
+other = "Enter the 6-character code"
+
+[settings_email_confirmation_edit_submit_button]
+description = "メールアドレスの変更の確定ボタン"
+other = "Change email"
+
+[settings_email_confirmation_edit_back]
+description = "確認コードの入力から、メールアドレスの変更へ戻るリンク"
+other = "Enter a different email"
+
+[validation_totp_code_incorrect]
+description = "認証アプリのコードが一致しないときのエラー"
+other = "Authentication code is incorrect"
+
+[flash_two_factor_auth_enabled]
+description = "二要素認証を有効にしたときのフラッシュメッセージ"
+other = "Two-factor authentication has been enabled."
+
+[flash_two_factor_auth_already_enabled]
+description = "二要素認証が既に有効なのに登録の画面を開いたときのフラッシュメッセージ"
+other = "Two-factor authentication is already enabled."
+
+[flash_two_factor_auth_not_pending]
+description = "有効にしようとした時点で登録の途中の設定が無かったときのフラッシュメッセージ"
+other = "Your two-factor authentication settings have changed. Please check your current settings."
+
+[settings_two_factor_auth_show_title]
+description = "二要素認証の設定のページタイトル"
+other = "Two-factor authentication settings"
+
+[settings_two_factor_auth_show_heading]
+description = "二要素認証の設定の見出し"
+other = "Two-factor authentication settings"
+
+[settings_two_factor_auth_show_breadcrumb_settings]
+description = "二要素認証の設定のパンくずの設定のトップ"
+other = "Settings"
+
+[settings_two_factor_auth_show_breadcrumb]
+description = "二要素認証の設定のパンくずの現在のページ"
+other = "Two-factor authentication"
+
+[settings_two_factor_auth_show_description]
+description = "二要素認証の設定の見出しの下の説明"
+other = "When you log in, you will be asked for a code from your authenticator app in addition to your password."
+
+[settings_two_factor_auth_show_help_link]
+description = "二要素認証の設定からヘルプへのリンク"
+other = "Learn more"
+
+[settings_two_factor_auth_show_status_enabled]
+description = "二要素認証が有効なときの状態"
+other = "Two-factor authentication is enabled"
+
+[settings_two_factor_auth_show_status_disabled]
+description = "二要素認証が無効なときの状態"
+other = "Two-factor authentication is not enabled"
+
+[settings_two_factor_auth_show_enabled_at]
+description = "二要素認証を有効にした日時"
+other = "Enabled on {{.Time}}"
+
+[settings_two_factor_auth_show_recovery_codes]
+description = "二要素認証の設定からリカバリーコードの画面へのリンク"
+other = "View recovery codes"
+
+[settings_two_factor_auth_show_enable]
+description = "二要素認証の設定から登録の画面へのリンク"
+other = "Enable two-factor authentication"
+
+[settings_two_factor_auth_show_back]
+description = "二要素認証の設定から設定のトップへ戻るリンク"
+other = "Back to settings"
+
+[settings_two_factor_auth_new_title]
+description = "二要素認証の登録のページタイトル"
+other = "Enable two-factor authentication"
+
+[settings_two_factor_auth_new_heading]
+description = "二要素認証の登録の見出し"
+other = "Enable two-factor authentication"
+
+[settings_two_factor_auth_new_breadcrumb_settings]
+description = "二要素認証の登録のパンくずの設定のトップ"
+other = "Settings"
+
+[settings_two_factor_auth_new_breadcrumb_two_factor_auth]
+description = "二要素認証の登録のパンくずの二要素認証の設定"
+other = "Two-factor authentication"
+
+[settings_two_factor_auth_new_breadcrumb]
+description = "二要素認証の登録のパンくずの現在のページ"
+other = "Enable"
+
+[settings_two_factor_auth_new_description]
+description = "二要素認証の登録の見出しの下の説明"
+other = "Register Wikino in your authenticator app and enter the code it shows to enable two-factor authentication."
+
+[settings_two_factor_auth_new_help_link]
+description = "二要素認証の登録からヘルプへのリンク"
+other = "Learn more"
+
+[settings_two_factor_auth_new_step_install]
+description = "二要素認証の登録の手順1"
+other = "1. Install an authenticator app (Google Authenticator, Authy, etc.) on your smartphone."
+
+[settings_two_factor_auth_new_step_scan]
+description = "二要素認証の登録の手順2"
+other = "2. Scan the QR code below with the app."
+
+[settings_two_factor_auth_new_qr_code_label]
+description = "二要素認証の登録のQRコードの代替テキスト"
+other = "QR code to register in your authenticator app"
+
+[settings_two_factor_auth_new_manual_entry]
+description = "二要素認証の登録の秘密鍵を手で入力するときの案内"
+other = "If you cannot use the QR code, please enter this code manually."
+
+[settings_two_factor_auth_new_step_enter]
+description = "二要素認証の登録の手順3"
+other = "3. Enter the password you use to log in and the 6-digit code displayed in the app below."
+
+[settings_two_factor_auth_new_password_label]
+description = "二要素認証の登録のパスワードのラベル"
+other = "Current password"
+
+[settings_two_factor_auth_new_password_hint]
+description = "二要素認証の登録のパスワードの補足"
+other = "Enter it to confirm that it's you"
+
+[settings_two_factor_auth_new_totp_code_label]
+description = "二要素認証の登録の認証コードのラベル"
+other = "Authentication code"
+
+[settings_two_factor_auth_new_totp_code_hint]
+description = "二要素認証の登録の認証コードの補足"
+other = "The 6-digit number shown in your authenticator app."
+
+[settings_two_factor_auth_new_submit_button]
+description = "二要素認証の登録の送信ボタン"
+other = "Enable two-factor authentication"
+
+[settings_two_factor_auth_new_cancel]
+description = "二要素認証の登録から設定の画面へ戻るリンク"
+other = "Cancel"
+
+[flash_two_factor_auth_disabled]
+description = "二要素認証を無効にしたときのフラッシュメッセージ"
+other = "Two-factor authentication has been disabled."
+
+[flash_two_factor_auth_recovery_codes_regenerated]
+description = "リカバリーコードを作り直したときのフラッシュメッセージ"
+other = "Recovery codes have been regenerated."
+
+[flash_two_factor_auth_not_enabled]
+description = "二要素認証が有効でないのに無効化やリカバリーコードを操作したときのフラッシュメッセージ"
+other = "Two-factor authentication is not enabled."
+
+[settings_two_factor_auth_show_disable_heading]
+description = "二要素認証の設定の無効にするフォームの見出し"
+other = "Disable two-factor authentication"
+
+[settings_two_factor_auth_show_disable_confirm]
+description = "二要素認証を無効にする前の確認"
+other = "Are you sure you want to disable two-factor authentication?"
+
+[settings_two_factor_auth_show_password_label]
+description = "二要素認証を無効にするフォームのパスワードのラベル"
+other = "Current password"
+
+[settings_two_factor_auth_show_password_hint]
+description = "二要素認証を無効にするフォームのパスワードの補足"
+other = "Enter it to confirm that it's you"
+
+[settings_two_factor_auth_show_disable_button]
+description = "二要素認証を無効にするボタン"
+other = "Disable two-factor authentication"
+
+[settings_two_factor_auth_recovery_code_index_title]
+description = "リカバリーコードのページタイトル"
+other = "Recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_heading]
+description = "リカバリーコードの見出し"
+other = "Recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb_settings]
+description = "リカバリーコードのパンくずの設定のトップ"
+other = "Settings"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb_two_factor_auth]
+description = "リカバリーコードのパンくずの二要素認証の設定"
+other = "Two-factor authentication"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb]
+description = "リカバリーコードのパンくずの現在のページ"
+other = "Recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_description]
+description = "リカバリーコードの見出しの下の説明"
+other = "If you lose access to your authenticator app, you can log in with a recovery code instead of an authentication code. Each code can only be used once."
+
+[settings_two_factor_auth_recovery_code_index_list_label]
+description = "リカバリーコードの一覧の名前"
+other = "Recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_empty]
+description = "リカバリーコードを使い切ったときの案内"
+other = "You have no recovery codes left. Regenerate them with the form below."
+
+[settings_two_factor_auth_recovery_code_index_save_title]
+description = "リカバリーコードを保存する案内の見出し"
+other = "Please save these recovery codes in a safe place."
+
+[settings_two_factor_auth_recovery_code_index_save_description]
+description = "リカバリーコードを保存する案内"
+other = "These codes are the last means of accessing your account if you lose your authenticator app. If you lose these codes, you will completely lose access to your account."
+
+[settings_two_factor_auth_recovery_code_index_regenerate_heading]
+description = "リカバリーコードを作り直すフォームの見出し"
+other = "Regenerate recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_regenerate_warning]
+description = "リカバリーコードを作り直すときの注意"
+other = "Regenerating recovery codes will invalidate all existing codes."
+
+[settings_two_factor_auth_recovery_code_index_regenerate_confirm]
+description = "リカバリーコードを作り直す前の確認"
+other = "Are you sure you want to regenerate recovery codes? All existing codes will be invalidated."
+
+[settings_two_factor_auth_recovery_code_index_password_label]
+description = "リカバリーコードを作り直すフォームのパスワードのラベル"
+other = "Current password"
+
+[settings_two_factor_auth_recovery_code_index_password_hint]
+description = "リカバリーコードを作り直すフォームのパスワードの補足"
+other = "Enter it to confirm that it's you"
+
+[settings_two_factor_auth_recovery_code_index_regenerate_button]
+description = "リカバリーコードを作り直すボタン"
+other = "Regenerate recovery codes"
+
+[settings_two_factor_auth_recovery_code_index_back]
+description = "リカバリーコードから二要素認証の設定へ戻るリンク"
+other = "Back to two-factor authentication settings"
+
+[validation_account_deletion_atname_mismatch]
+description = "アカウントの削除の確認で入力したアットネームが本人のものと一致しないエラー"
+other = "Atname is incorrect."
+
+[validation_account_deletion_has_active_spaces]
+description = "参加しているスペースがあるためアカウントを削除できないエラー"
+other = "You cannot delete your account while you are a member of a space."
+
+[flash_account_deleted]
+description = "アカウントを削除したときのフラッシュメッセージ"
+other = "Account deleted."
+
+[settings_account_deletion_new_title]
+description = "アカウントの削除の確認画面のページタイトル"
+other = "Delete account"
+
+[settings_account_deletion_new_heading]
+description = "アカウントの削除の確認画面の見出し"
+other = "Delete account"
+
+[settings_account_deletion_new_breadcrumb_settings]
+description = "アカウントの削除の確認画面のパンくずに出す設定のラベル"
+other = "Settings"
+
+[settings_account_deletion_new_breadcrumb]
+description = "アカウントの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "Delete account"
+
+[settings_account_deletion_new_description]
+description = "アカウントの削除の確認画面の説明"
+other = "Are you sure you want to delete your account? Please review the following before deleting it."
+
+[settings_account_deletion_new_warning_irreversible]
+description = "アカウントの削除の確認画面の注意 (元に戻せない)"
+other = "Deleted account information cannot be restored."
+
+[settings_account_deletion_new_warning_atname]
+description = "アカウントの削除の確認画面の注意 (アットネームが使えるようになる)"
+other = "The atname will be available to other users."
+
+[settings_account_deletion_new_atname_label]
+description = "アカウントの削除の確認画面のアットネームの入力欄のラベル"
+other = "Atname"
+
+[settings_account_deletion_new_atname_hint]
+description = "アカウントの削除の確認画面のアットネームの入力欄の説明"
+other = "To delete your account, enter your atname ({{.Atname}})."
+
+[settings_account_deletion_new_confirm]
+description = "アカウントの削除の確認画面で送信する前の確認"
+other = "Your account will be deleted. This cannot be undone. Are you sure?"
+
+[settings_account_deletion_new_submit_button]
+description = "アカウントの削除の確認画面の送信ボタン"
+other = "Delete account"
+
+[settings_account_deletion_new_cancel]
+description = "アカウントの削除の確認画面から設定へ戻るキャンセルリンク"
+other = "Cancel"
+
+[settings_account_deletion_new_cannot_delete_heading]
+description = "参加しているスペースがあり削除できないときの見出し"
+other = "This account cannot be deleted"
+
+[settings_account_deletion_new_cannot_delete_description]
+description = "参加しているスペースがあり削除できないときの説明"
+other = "To delete your account, you must not be a member of any spaces. Please delete the following spaces first."
+
+[settings_account_deletion_new_spaces_label]
+description = "削除できないときに出す参加しているスペースの一覧のラベル"
+other = "Spaces you are a member of"
+
+[settings_account_deletion_new_back]
+description = "削除できないときに設定へ戻るリンク"
+other = "Back to settings"

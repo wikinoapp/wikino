@@ -68,6 +68,11 @@ func (r *UserPasswordRepository) UpdatePasswordDigest(ctx context.Context, userI
 	})
 }
 
+// DeleteByUserIDはユーザーのパスワードを削除する
+func (r *UserPasswordRepository) DeleteByUserID(ctx context.Context, userID model.UserID) error {
+	return r.q.DeleteUserPasswordByUserID(ctx, string(userID))
+}
+
 // toModelはquery.UserPasswordをmodel.UserPasswordに変換する
 func (r *UserPasswordRepository) toModel(row query.UserPassword) *model.UserPassword {
 	return &model.UserPassword{

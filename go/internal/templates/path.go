@@ -262,6 +262,61 @@ func ProfilePath(atname string) Path {
 	return Path("/@" + atname)
 }
 
+// SettingsPathはユーザー設定のトップのパスを生成します
+func SettingsPath() Path {
+	return Path("/settings")
+}
+
+// SettingsProfilePathはプロフィールの編集のパスを生成します
+func SettingsProfilePath() Path {
+	return Path("/settings/profile")
+}
+
+// SettingsEmailPathはメールアドレスの変更のパスを生成します
+func SettingsEmailPath() Path {
+	return Path("/settings/email")
+}
+
+// SettingsEmailConfirmationPathは、メールアドレスの変更の確認コードの送信先のパスを生成します
+func SettingsEmailConfirmationPath() Path {
+	return Path("/settings/email/confirmation")
+}
+
+// EditSettingsEmailConfirmationPathは、メールアドレスの変更の確認コードを入力する画面のパスを生成します
+func EditSettingsEmailConfirmationPath() Path {
+	return Path("/settings/email/confirmation/edit")
+}
+
+// SettingsTwoFactorAuthPathは二要素認証の設定のパスを生成します
+func SettingsTwoFactorAuthPath() Path {
+	return Path("/settings/two_factor_auth")
+}
+
+// NewSettingsTwoFactorAuthPathは、二要素認証を有効にするため認証アプリへ登録する画面のパスを生成します
+func NewSettingsTwoFactorAuthPath() Path {
+	return SettingsTwoFactorAuthPath() + "/new"
+}
+
+// SettingsTwoFactorAuthRecoveryCodesPathは二要素認証のリカバリーコードの画面のパスを生成します
+func SettingsTwoFactorAuthRecoveryCodesPath() Path {
+	return SettingsTwoFactorAuthPath() + "/recovery_codes"
+}
+
+// SettingsAccountDeletionPathはアカウントの削除 (確認画面の送信先) のパスを生成します
+func SettingsAccountDeletionPath() Path {
+	return Path("/settings/account/deletion")
+}
+
+// NewSettingsAccountDeletionPathはアカウントの削除の確認画面のパスを生成します
+func NewSettingsAccountDeletionPath() Path {
+	return SettingsAccountDeletionPath() + "/new"
+}
+
+// UserSessionPathはログイン中のセッション (ログアウトの送信先) のパスを生成します
+func UserSessionPath() Path {
+	return Path("/user_session")
+}
+
 // SignInPathはサインインのパスを生成します
 func SignInPath() Path {
 	return Path("/sign_in")

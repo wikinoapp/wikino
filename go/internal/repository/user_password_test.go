@@ -83,3 +83,31 @@ func TestUserPasswordRepository_UpdatePasswordDigest(t *testing.T) {
 		}
 	})
 }
+
+func TestUserPasswordRepository_DeleteByUserID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewUserPasswordRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	digest := "$2a$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-password-delete@example.com").
+		WithAtname("repo_password_delete").
+		BuildWithPassword(digest)
+	otherID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-password-keep@example.com").
+		WithAtname("repo_password_keep").
+		BuildWithPassword(digest)
+
+	if err := repo.DeleteByUserID(ctx, userID); err != nil {
+		t.Fatalf("DeleteByUserID()のエラー = %v", err)
+	}
+
+	if p, err := repo.FindByUserID(ctx, userID); err != nil || p != nil {
+		t.Errorf("FindByUserID() = %v, %v、期待値 = nil, nil", p, err)
+	}
+	if p, err := repo.FindByUserID(ctx, otherID); err != nil || p == nil {
+		t.Errorf("ほかのユーザーのFindByUserID() = %v, %v、パスワードが残ることを期待", p, err)
+	}
+}

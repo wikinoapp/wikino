@@ -63,7 +63,7 @@ func setupCreateHandler(t *testing.T, db *sql.DB) *spacehandler.Handler {
 		cfg,
 		session.NewFlashManager("", false, true),
 		nil,
-		usecase.NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo)),
+		usecase.NewCreateSpaceUsecase(db, repository.NewUserRepository(queries), spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo)),
 	)
 }
 

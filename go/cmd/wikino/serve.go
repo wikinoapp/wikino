@@ -77,7 +77,15 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	personalaccesstokenhandler "github.com/wikinoapp/wikino/go/internal/handler/personal_access_token"
+	"github.com/wikinoapp/wikino/go/internal/handler/profile"
 	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
+	settingshandler "github.com/wikinoapp/wikino/go/internal/handler/settings"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_account_deletion"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_email"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_email_confirmation"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_profile"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_two_factor_auth"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_two_factor_auth_recovery_code"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
@@ -244,6 +252,11 @@ func runServe() {
 		PageEditorRepo:              pageEditorRepo,
 		PageRevisionRepo:            pageRevisionRepo,
 		PageAttachmentReferenceRepo: pageAttachmentRefRepo,
+		UserRepo:                    userRepo,
+		UserSessionRepo:             userSessionRepo,
+		UserPasswordRepo:            userPasswordRepo,
+		UserTwoFactorAuthRepo:       userTwoFactorAuthRepo,
+		SpaceMemberRepo:             spaceMemberRepo,
 	})
 	if err != nil {
 		slog.Error("Riverクライアントの初期化に失敗しました", "error", err)
@@ -465,6 +478,61 @@ func runServe() {
 		cfg,
 		getHomeShowUC,
 	)
+	getProfileShowUC := usecase.NewGetProfileShowUsecase(userRepo, spaceRepo)
+	profileHandler := profile.NewHandler(
+		cfg,
+		getProfileShowUC,
+	)
+	settingsHandler := settingshandler.NewHandler(cfg)
+	profileUpdateValidator := validator.NewProfileUpdateValidator(userRepo)
+	updateProfileUC := usecase.NewUpdateProfileUsecase(profileUpdateValidator, userRepo)
+	settingsProfileHandler := settings_profile.NewHandler(
+		cfg,
+		flashMgr,
+		updateProfileUC,
+	)
+	settingsEmailUpdateValidator := validator.NewSettingsEmailUpdateValidator(userRepo, userPasswordRepo)
+	createEmailUpdateConfirmationUC := usecase.NewCreateEmailUpdateConfirmationUsecase(settingsEmailUpdateValidator, createEmailConfirmationUC)
+	settingsEmailHandler := settings_email.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		createEmailUpdateConfirmationUC,
+		rateLimiter,
+	)
+	settingsEmailConfirmationUpdateValidator := validator.NewSettingsEmailConfirmationUpdateValidator(emailConfirmationRepo, userRepo)
+	updateEmailUC := usecase.NewUpdateEmailUsecase(db, settingsEmailConfirmationUpdateValidator, emailConfirmationRepo, userRepo)
+	settingsEmailConfirmationHandler := settings_email_confirmation.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		updateEmailUC,
+	)
+	settingsTwoFactorAuthCreateValidator := validator.NewSettingsTwoFactorAuthCreateValidator(userPasswordRepo)
+	settingsTwoFactorAuthHandler := settings_two_factor_auth.NewHandler(
+		cfg,
+		flashMgr,
+		rateLimiter,
+		usecase.NewGetTwoFactorAuthSettingsUsecase(userTwoFactorAuthRepo),
+		usecase.NewPrepareTwoFactorAuthUsecase(userTwoFactorAuthRepo),
+		usecase.NewGetPendingTwoFactorAuthUsecase(userTwoFactorAuthRepo),
+		usecase.NewEnableTwoFactorAuthUsecase(settingsTwoFactorAuthCreateValidator, userTwoFactorAuthRepo),
+		usecase.NewDisableTwoFactorAuthUsecase(validator.NewSettingsTwoFactorAuthDeleteValidator(userPasswordRepo), userTwoFactorAuthRepo),
+	)
+	settingsTwoFactorAuthRecoveryCodeHandler := settings_two_factor_auth_recovery_code.NewHandler(
+		cfg,
+		flashMgr,
+		rateLimiter,
+		usecase.NewGetTwoFactorAuthRecoveryCodesUsecase(userTwoFactorAuthRepo),
+		usecase.NewRegenerateTwoFactorAuthRecoveryCodesUsecase(validator.NewSettingsTwoFactorAuthRecoveryCodeCreateValidator(userPasswordRepo), userTwoFactorAuthRepo),
+	)
+	settingsAccountDeletionHandler := settings_account_deletion.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		usecase.NewGetAccountDeletionNewUsecase(spaceRepo),
+		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, spaceRepo, jobDispatcher, validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
+	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
 		spaceRepo,
@@ -546,7 +614,7 @@ func runServe() {
 		unpinPageUC,
 	)
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, featureFlagRepo)
-	createSpaceUC := usecase.NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
+	createSpaceUC := usecase.NewCreateSpaceUsecase(db, userRepo, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
 		flashMgr,
@@ -992,6 +1060,13 @@ func runServe() {
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
 
+		// プロフィール (未ログインでも閲覧可能)。リバースプロキシはgo_profileが有効な閲覧者の
+		// リクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		//
+		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
+		r.Get("/@{atname}", profileHandler.Show)
+		r.Head("/@{atname}", profileHandler.Show)
+
 		// スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
 		r.Get("/s/{space_identifier}", spaceHandler.Show)
 
@@ -1077,29 +1152,59 @@ func runServe() {
 		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
 
-		// トピックの設定のトップ。リバースプロキシはgo_topic_settingsが有効な閲覧者のリクエスト
-		// だけをここへ振り分け、それ以外はRails版が処理する。
+		// トピックの設定のトップ。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
 
-		// トピックの削除。確認画面と削除処理。パスはRails版に合わせ、設定のトップと同じく
-		// go_topic_settingsが有効な閲覧者のリクエストだけがここへ振り分けられる。
+		// トピックの削除。確認画面と削除処理。パスはRails版に合わせる。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
 
-		// スペースのゴミ箱の一覧。リバースプロキシはgo_trashが有効な閲覧者のリクエストだけを
-		// ここへ振り分け、それ以外はRails版が処理する。
+		// ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更。リバースプロキシは
+		// go_user_settingsが有効な閲覧者のリクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		//
+		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
+		r.Get("/settings", settingsHandler.Show)
+		r.Head("/settings", settingsHandler.Show)
+		r.Get("/settings/profile", settingsProfileHandler.Show)
+		r.Head("/settings/profile", settingsProfileHandler.Show)
+		r.Patch("/settings/profile", settingsProfileHandler.Update)
+		r.Get("/settings/email", settingsEmailHandler.Show)
+		r.Head("/settings/email", settingsEmailHandler.Show)
+		r.Patch("/settings/email", settingsEmailHandler.Update)
+		r.Get("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
+		r.Head("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
+		r.Patch("/settings/email/confirmation", settingsEmailConfirmationHandler.Update)
+
+		// 二要素認証の設定の画面・認証アプリへの登録・有効化・無効化とリカバリーコード。リバースプロキシは
+		// go_two_factor_auth_settingsが有効な閲覧者のリクエストだけをここへ振り分ける。
+		// 登録の画面のHEADは、秘密鍵を作り直さない専用の処理に渡す。
+		r.Get("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
+		r.Head("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
+		r.Post("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Create)
+		r.Delete("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Delete)
+		r.Get("/settings/two_factor_auth/new", settingsTwoFactorAuthHandler.New)
+		r.Head("/settings/two_factor_auth/new", settingsTwoFactorAuthHandler.HeadNew)
+		r.Get("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Index)
+		r.Head("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Index)
+		r.Post("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Create)
+
+		// アカウントの削除の確認画面と削除。リバースプロキシはgo_account_deletionが有効な閲覧者の
+		// リクエストだけをここへ振り分ける。
+		r.Get("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
+		r.Head("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
+		r.Post("/settings/account/deletion", settingsAccountDeletionHandler.Create)
+
+		// スペースのゴミ箱の一覧。
 		r.Get("/s/{space_identifier}/trash", trashHandler.Show)
 		r.Head("/s/{space_identifier}/trash", trashHandler.Show)
 
-		// 検索の画面。リバースプロキシはgo_searchが有効な閲覧者のリクエストだけをここへ振り分け、
-		// それ以外はRails版が処理する。
+		// 検索の画面。
 		r.Get("/search", searchHandler.Show)
 		r.Head("/search", searchHandler.Show)
 
-		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせ、ゴミ箱の一覧と同じく
-		// go_trashが有効な閲覧者のリクエストだけがここへ振り分けられる。
+		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせる。
 		r.Post("/s/{space_identifier}/bulk_restored_pages", bulkRestoredPageHandler.Create)
 
 		// トピックの一般設定。画面と保存処理。

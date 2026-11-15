@@ -1,0 +1,76 @@
+package profile
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowPageDataはプロフィールの画面に渡すデータ構造体です。
+type ShowPageData struct {
+	Profile      viewmodel.Profile
+	JoinedSpaces []viewmodel.Space
+
+	// CanEditProfileは、本人が開いたときにプロフィールの編集と設定へのリンクを出すかを表す
+	CanEditProfile bool
+}
+
+// Showはプロフィールの画面のコンテンツを表示します。
+templ Show(data ShowPageData) {
+	<div class="py-4">
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-6">
+				<div class="flex flex-col gap-6 px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:    data.Profile.Title(),
+						Subtitle: components.SubtitleText(data.Profile.Subtitle()),
+						Actions:  showActions(data),
+					})
+
+					if data.Profile.Description != "" {
+						<p class="wrap-anywhere">{ data.Profile.Description }</p>
+					}
+				</div>
+
+				<div class="flex flex-col gap-4 px-4">
+					<h2 class="font-bold antialiased">
+						{ templates.T(ctx, "profile_show_joined_spaces_heading") }
+					</h2>
+
+					if len(data.JoinedSpaces) == 0 {
+						@components.EmptyState(components.EmptyStateData{
+							IconName: "file-regular",
+							Message:  templates.T(ctx, "profile_show_no_joined_spaces_html"),
+						})
+					} else {
+						<div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+							for _, space := range data.JoinedSpaces {
+								@components.CardLinkSpace(space)
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// showActionsは本人にだけ、プロフィールの編集と設定へのリンクを返します。本人でなければnilを返し、
+// MainTitleの操作領域を出さないようにします。
+func showActions(data ShowPageData) templ.Component {
+	if !data.CanEditProfile {
+		return nil
+	}
+	return showOwnerActions()
+}
+
+templ showOwnerActions() {
+	<a class="btn rounded-full" data-size="sm" href={ templ.SafeURL(string(templates.SettingsProfilePath())) }>
+		@templates.DecorativeIcon("pencil-simple-line-regular", "size-4 fill-primary-foreground")
+		{ templates.T(ctx, "profile_show_edit_button") }
+	</a>
+	<a class="btn border-primary rounded-full" data-variant="outline" data-size="sm" href={ templ.SafeURL(string(templates.SettingsPath())) }>
+		@templates.DecorativeIcon("gear-regular", "size-4")
+		{ templates.T(ctx, "profile_show_settings_button") }
+	</a>
+}

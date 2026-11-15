@@ -21,14 +21,21 @@ func NewEmailConfirmationCreateValidator(userRepo *repository.UserRepository) *E
 
 // EmailConfirmationCreateValidatorInputはバリデーションの入力パラメータ
 type EmailConfirmationCreateValidatorInput struct {
-	Email string
-	Event model.EmailConfirmationEvent
+	UserID *model.UserID
+	Email  string
+	Event  model.EmailConfirmationEvent
 }
 
 // Validateはバリデーションを行う
 func (v *EmailConfirmationCreateValidator) Validate(ctx context.Context, input EmailConfirmationCreateValidatorInput) error {
 	// 1. 形式バリデーション
 	ve := model.NewValidationError()
+
+	// メールアドレスの変更の確認は、開始したユーザーだけが確定できるため、開始ユーザーを必須にする。
+	// 新規登録の送信先はイベントをフォームの値から決めるため、書き換えた送信もここで拒否する。
+	if input.Event == model.EmailConfirmationEventEmailUpdate && input.UserID == nil {
+		ve.AddGlobal(i18n.T(ctx, "validation_invalid_event"))
+	}
 
 	if input.Email == "" {
 		ve.AddField("email", i18n.T(ctx, "validation_required"))

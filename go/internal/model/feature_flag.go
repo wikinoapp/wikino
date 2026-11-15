@@ -13,12 +13,14 @@ const (
 	FeatureFlagRemoteMCPServer FeatureFlagName = "go_remote_mcp_server"
 	// FeatureFlagDarkModeはGo版の画面のダークモード (OSの配色がダークの閲覧者への暗い配色) を有効にする
 	FeatureFlagDarkMode FeatureFlagName = "go_dark_mode"
-	// FeatureFlagTopicSettingsはトピックの設定 (設定のトップ・トピックの削除) をGo版で処理する
-	FeatureFlagTopicSettings FeatureFlagName = "go_topic_settings"
-	// FeatureFlagTrashはゴミ箱 (ゴミ箱の一覧・一括復元) をGo版で処理する
-	FeatureFlagTrash FeatureFlagName = "go_trash"
-	// FeatureFlagSearchは検索の画面をGo版で処理する
-	FeatureFlagSearch FeatureFlagName = "go_search"
+	// FeatureFlagProfileはプロフィール (/@{atname}) をGo版で処理する
+	FeatureFlagProfile FeatureFlagName = "go_profile"
+	// FeatureFlagUserSettingsはユーザー設定のトップ・プロフィールの編集・メールアドレスの変更をGo版で処理する
+	FeatureFlagUserSettings FeatureFlagName = "go_user_settings"
+	// FeatureFlagTwoFactorAuthSettingsは二要素認証の設定 (/settings/two_factor_authとその配下) をGo版で処理する
+	FeatureFlagTwoFactorAuthSettings FeatureFlagName = "go_two_factor_auth_settings"
+	// FeatureFlagAccountDeletionはアカウントの削除 (/settings/account/deletionとその確認画面) をGo版で処理する
+	FeatureFlagAccountDeletion FeatureFlagName = "go_account_deletion"
 )
 
 // AllFeatureFlagNamesは上で定義した全フラグの一覧。Goは定数グループの
@@ -29,9 +31,10 @@ var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagPublicAPI,
 	FeatureFlagRemoteMCPServer,
 	FeatureFlagDarkMode,
-	FeatureFlagTopicSettings,
-	FeatureFlagTrash,
-	FeatureFlagSearch,
+	FeatureFlagProfile,
+	FeatureFlagUserSettings,
+	FeatureFlagTwoFactorAuthSettings,
+	FeatureFlagAccountDeletion,
 }
 
 // FeatureFlagはフィーチャーフラグのドメインモデル

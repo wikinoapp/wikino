@@ -219,7 +219,8 @@ CREATE TABLE public.email_confirmations (
     started_at timestamp without time zone NOT NULL,
     succeeded_at timestamp without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    user_id uuid
 );
 
 
@@ -1717,6 +1718,13 @@ CREATE INDEX index_email_confirmations_on_started_at ON public.email_confirmatio
 
 
 --
+-- Name: index_email_confirmations_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_email_confirmations_on_user_id ON public.email_confirmations USING btree (user_id);
+
+
+--
 -- Name: index_exports_on_queued_by_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2133,6 +2141,14 @@ ALTER TABLE ONLY public.feature_flags
 
 ALTER TABLE ONLY public.draft_pages
     ADD CONSTRAINT fk_draft_pages_featured_image_attachment_id FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id) ON DELETE SET NULL;
+
+
+--
+-- Name: email_confirmations fk_email_confirmations_user_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_confirmations
+    ADD CONSTRAINT fk_email_confirmations_user_id FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -2726,4 +2742,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261028163426'),
     ('20261028165252'),
     ('20261031045408'),
-    ('20261102172144');
+    ('20261102172144'),
+    ('20261114111000'),
+    ('20261114111001'),
+    ('20261114111002');
