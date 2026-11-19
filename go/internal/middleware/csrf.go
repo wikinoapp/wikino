@@ -13,11 +13,15 @@ import (
 // CSRFCookieNameはCSRFトークンを保存するクッキー名
 const CSRFCookieName = "wikino_csrf_token"
 
-// csrfSkipPathsはCSRF検証をスキップするパス
-// Rails版のページからのリクエストはRails独自のCSRFトークンを使用しているため、
-// Go版のCSRF検証を適用できない
+// csrfSkipPathsはCSRF検証をスキップするパス。スキップする理由はパスごとに異なる
 var csrfSkipPaths = []string{
-	"/user_session", // Rails版からのログアウトリクエスト対応
+	// Rails版からのログアウトリクエスト対応。Rails版のページからのリクエストはRails独自の
+	// CSRFトークンを使用しているため、Go版のCSRF検証を適用できない
+	"/user_session",
+	// 署名付きURLの一括取得。状態を変えない読み取りで、応答は別のオリジンからは読めず、
+	// 返すのは呼び出した本人が見られる添付ファイルのURLだけのため、守るものが無い。
+	// ゲストも開くページ表示画面はCSRFトークンを埋め込まないため、検証するとそこで画像が出なくなる
+	"/attachments/signed_urls",
 }
 
 // csrfTokenContextKeyはコンテキストにCSRFトークンを保存するためのキー

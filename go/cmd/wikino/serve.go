@@ -41,7 +41,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_catalog"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment_presign"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment_signed_url"
 	bulkrestoredpagehandler "github.com/wikinoapp/wikino/go/internal/handler/bulk_restored_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
@@ -350,6 +353,12 @@ func runServe() {
 	oauthProtectedResourceMetadataHandler := oauth_protected_resource_metadata.NewHandler(cfg, usecase.NewGetOAuthProtectedResourceMetadataUsecase(spaceRepo))
 	apiCatalogHandler := api_catalog.NewHandler(cfg)
 	apiReferenceHandler := api_reference.NewHandler(cfg)
+
+	attachmentHandler := attachment.NewHandler(usecase.NewGetAttachmentUsecase(attachmentRepo, spaceMemberRepo, objectStorage))
+	attachmentSignedURLHandler := attachment_signed_url.NewHandler(usecase.NewGetAttachmentSignedURLsUsecase(attachmentRepo, spaceMemberRepo, objectStorage))
+	attachmentPresignHandler := attachment_presign.NewHandler(usecase.NewCreateAttachmentPresignUsecase(
+		db, spaceRepo, spaceMemberRepo, attachmentRepo, validator.NewAttachmentPresignCreateValidator(), jobDispatcher, objectStorage,
+	))
 
 	getAttachmentOgImageUC := usecase.NewGetAttachmentOgImageUsecase(attachmentRepo)
 	attachmentOgImageHandler := attachment_og_image.NewHandler(ogImageBuilder, getAttachmentOgImageUC)
@@ -1069,6 +1078,18 @@ func runServe() {
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
 		r.Get("/@{atname}", profileHandler.Show)
 		r.Head("/@{atname}", profileHandler.Show)
+
+		// 添付ファイルの表示 (未ログインでも、公開トピックのページだけが参照する添付ファイルは見られる)。
+		// リバースプロキシはgo_attachment_deliveryが有効な閲覧者のリクエストだけをここへ振り分け、
+		// それ以外はRails版が処理する。
+		r.Get("/attachments/{attachment_id}", attachmentHandler.Show)
+		r.Head("/attachments/{attachment_id}", attachmentHandler.Show)
+		// 本文に添付ファイルを表示するための署名付きURLの一括取得。リバースプロキシはgo_attachment_deliveryが
+		// 有効な閲覧者のリクエストだけをここへ振り分ける。CSRF検証の対象から外している (csrfSkipPathsを参照)。
+		r.Post("/attachments/signed_urls", attachmentSignedURLHandler.Create)
+		// 添付ファイルのアップロードの事前署名。リバースプロキシはgo_attachment_uploadが有効な閲覧者のリクエストだけを
+		// ここへ振り分ける。fetchで呼ばれるため、ログインしていないときはサインインへ送らず、ハンドラーが401を返す。
+		r.Post("/s/{space_identifier}/attachments/presign", attachmentPresignHandler.Create)
 
 		// スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
 		r.Get("/s/{space_identifier}", spaceHandler.Show)

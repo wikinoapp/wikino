@@ -38,7 +38,28 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{}
+var featureFlaggedPatterns = []featureFlaggedPattern{
+	// 添付ファイルの表示 (GET・HEAD /attachments/:id)。末尾の "$" により、/attachments/:id/og_image
+	// (常にGo版) にはマッチさせない。
+	{
+		pattern: regexp.MustCompile(`^/attachments/[^/]+$`),
+		flag:    model.FeatureFlagAttachmentDelivery,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	// 本文に添付ファイルを表示するための署名付きURLの一括取得 (POST /attachments/signed_urls)。
+	{
+		pattern: regexp.MustCompile(`^/attachments/signed_urls$`),
+		flag:    model.FeatureFlagAttachmentDelivery,
+		methods: []string{http.MethodPost},
+	},
+	// 添付ファイルのアップロードの事前署名 (POST /s/:space_identifier/attachments/presign)。
+	// アップロード (POST /s/:space_identifier/attachments) は対象にせず、Rails版が処理する。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/attachments/presign$`),
+		flag:    model.FeatureFlagAttachmentUpload,
+		methods: []string{http.MethodPost},
+	},
+}
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -171,7 +192,7 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+oauth_grants([/.]|$)`)},
 	// og:image配信 (`/attachments/:id/og_image`・`/s/:space/pages/:number/og_image/:version.png`)。
 	// パスの定義はCSRFトークンとフラッシュの除外と共有する (`session.OGImagePathPatterns`)。
-	// /attachments/:id (ダウンロードURL) はRailsが提供するため、og_image末尾でパスを限定している
+	// /attachments/:id (ダウンロードURL) はgo_attachment_deliveryで振り分けるため、og_image末尾でパスを限定している
 	{pattern: session.AttachmentOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	{pattern: session.PageOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	// フィード (`/s/:space/atom`・`/s/:space/topics/:number/atom`)。パスの定義はCSRFトークンとフラッシュの除外と共有する (`session.FeedPathPattern`)

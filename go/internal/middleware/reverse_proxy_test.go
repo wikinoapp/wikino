@@ -702,6 +702,129 @@ func TestReverseProxyMiddleware_Middleware_ProfileAndUserSettings(t *testing.T) 
 	}
 }
 
+// TestFeatureFlaggedPatterns_AttachmentDeliveryは、添付ファイルの表示がgo_attachment_deliveryで、事前署名が
+// go_attachment_uploadで振り分けられ、og:imageの振り分け (常にGo版) とGoルートが応答しないメソッドが変わらないことを、
+// 登録済みのパターンで確かめる。
+func TestFeatureFlaggedPatterns_AttachmentDelivery(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+
+	const id = "0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6"
+	testCases := []struct {
+		name     string
+		method   string
+		path     string
+		wantFlag model.FeatureFlagName
+		// wantAlwaysGoは、フラグによらずGo版で処理するパスかどうか
+		wantAlwaysGo bool
+	}{
+		{name: "添付ファイルの表示のGET", method: http.MethodGet, path: "/attachments/" + id, wantFlag: model.FeatureFlagAttachmentDelivery},
+		{name: "添付ファイルの表示のHEAD", method: http.MethodHead, path: "/attachments/" + id, wantFlag: model.FeatureFlagAttachmentDelivery},
+		{name: "添付ファイルの表示へのPOSTはフラグの対象外", method: http.MethodPost, path: "/attachments/" + id, wantFlag: ""},
+		{name: "添付ファイルの表示へのDELETEはフラグの対象外", method: http.MethodDelete, path: "/attachments/" + id, wantFlag: ""},
+		{name: "og:imageのGETは常にGo版", method: http.MethodGet, path: "/attachments/" + id + "/og_image", wantFlag: "", wantAlwaysGo: true},
+		{name: "og:imageのHEADは常にGo版", method: http.MethodHead, path: "/attachments/" + id + "/og_image", wantFlag: "", wantAlwaysGo: true},
+		{name: "添付ファイルの下のほかのパスはフラグの対象外", method: http.MethodGet, path: "/attachments/" + id + "/other", wantFlag: ""},
+		{name: "添付ファイルの一覧のパスはフラグの対象外", method: http.MethodGet, path: "/attachments", wantFlag: ""},
+		{name: "署名付きURLの一括取得のPOST", method: http.MethodPost, path: "/attachments/signed_urls", wantFlag: model.FeatureFlagAttachmentDelivery},
+		{name: "署名付きURLの一括取得のパスへのGETは表示と同じフラグで振り分ける", method: http.MethodGet, path: "/attachments/signed_urls", wantFlag: model.FeatureFlagAttachmentDelivery},
+		{name: "署名付きURLの一括取得のパスの下はフラグの対象外", method: http.MethodPost, path: "/attachments/signed_urls/extra", wantFlag: ""},
+		{name: "事前署名のPOST", method: http.MethodPost, path: "/s/space/attachments/presign", wantFlag: model.FeatureFlagAttachmentUpload},
+		{name: "事前署名のパスへのGETはフラグの対象外", method: http.MethodGet, path: "/s/space/attachments/presign", wantFlag: ""},
+		{name: "アップロードのPOSTはフラグの対象外", method: http.MethodPost, path: "/s/space/attachments", wantFlag: ""},
+		{name: "事前署名のパスの下はフラグの対象外", method: http.MethodPost, path: "/s/space/attachments/presign/extra", wantFlag: ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+
+			if got := m.isGoHandledByRegex(req); got != tc.wantAlwaysGo {
+				t.Errorf("isGoHandledByRegex(%s %q) = %v、期待値 = %v", tc.method, tc.path, got, tc.wantAlwaysGo)
+			}
+			if got := m.getFeatureFlagForRequest(req); got != tc.wantFlag {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.wantFlag)
+			}
+		})
+	}
+}
+
+// TestReverseProxyMiddleware_Middleware_AttachmentDeliveryは、添付ファイルの表示と事前署名がそれぞれのフラグの有効な閲覧者だけ
+// Go版で処理され、フラグを持たない閲覧者はRails版へ届くことを、登録済みのパターンとデータベースのフラグで確かめる。
+func TestReverseProxyMiddleware_Middleware_AttachmentDelivery(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	_, tx := testutil.SetupTx(t)
+
+	const enabledDevice = "attachment-delivery-enabled-device"
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithDeviceToken(enabledDevice).
+		WithName(string(model.FeatureFlagAttachmentDelivery)).
+		Build()
+	const uploadEnabledDevice = "attachment-upload-enabled-device"
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithDeviceToken(uploadEnabledDevice).
+		WithName(string(model.FeatureFlagAttachmentUpload)).
+		Build()
+
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer railsServer.Close()
+
+	featureFlagRepo := repository.NewFeatureFlagRepository(query.New(testutil.GetTestDB())).WithTx(tx)
+	m, err := NewReverseProxyMiddleware(railsServer.URL, &config.Config{Domain: "wikino.app"}, featureFlagRepo)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+	h := m.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	testCases := []struct {
+		name        string
+		method      string
+		path        string
+		deviceToken string
+		wantGo      bool
+	}{
+		{name: "フラグが有効なデバイスの表示はGo版で処理される", method: http.MethodGet, path: "/attachments/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6", deviceToken: enabledDevice, wantGo: true},
+		{name: "フラグを持たないデバイスの表示はRails版へ届く", method: http.MethodGet, path: "/attachments/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6", deviceToken: "attachment-delivery-other-device", wantGo: false},
+		{name: "デバイスのCookieが無ければ表示はRails版へ届く", method: http.MethodGet, path: "/attachments/0198f3a0-1b2c-7d3e-8f40-a1b2c3d4e5f6", wantGo: false},
+		{name: "フラグが有効なデバイスの一括取得はGo版で処理される", method: http.MethodPost, path: "/attachments/signed_urls", deviceToken: enabledDevice, wantGo: true},
+		{name: "フラグを持たないデバイスの一括取得はRails版へ届く", method: http.MethodPost, path: "/attachments/signed_urls", deviceToken: "attachment-delivery-other-device", wantGo: false},
+		{name: "フラグが有効なデバイスの事前署名はGo版で処理される", method: http.MethodPost, path: "/s/space/attachments/presign", deviceToken: uploadEnabledDevice, wantGo: true},
+		{name: "表示のフラグだけが有効なデバイスの事前署名はRails版へ届く", method: http.MethodPost, path: "/s/space/attachments/presign", deviceToken: enabledDevice, wantGo: false},
+		{name: "フラグを持たないデバイスの事前署名はRails版へ届く", method: http.MethodPost, path: "/s/space/attachments/presign", deviceToken: "attachment-delivery-other-device", wantGo: false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			if tc.deviceToken != "" {
+				req.AddCookie(&http.Cookie{Name: DeviceTokenCookieName, Value: tc.deviceToken})
+			}
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+
+			gotGo := rr.Header().Get("X-Go-Handled") == "true"
+			gotRails := rr.Header().Get("X-Rails-Handled") == "true"
+			if tc.wantGo && (!gotGo || gotRails) {
+				t.Errorf("Go版で処理されなかった (Go = %v、Rails = %v)", gotGo, gotRails)
+			}
+			if !tc.wantGo && (gotGo || !gotRails) {
+				t.Errorf("Rails版へ届かなかった (Go = %v、Rails = %v)", gotGo, gotRails)
+			}
+		})
+	}
+}
+
 func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	// グローバル変数featureFlaggedPatternsを変更するためt.Parallel() は使用しない
 
@@ -1884,4 +2007,3 @@ func TestGoHandledRegexPatterns_IncludeCookielessPaths(t *testing.T) {
 		})
 	}
 }
-
