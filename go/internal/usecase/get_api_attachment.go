@@ -62,7 +62,7 @@ func (uc *GetAPIAttachmentUsecase) Execute(ctx context.Context, input GetAPIAtta
 	// 有効期限は署名より前の時刻から求め、秒未満を切り捨てる。署名付きURLが実際に使えなくなるより
 	// 後の時刻をクライアントに伝えないようにするためである
 	expiresAt := time.Now().UTC().Truncate(time.Second).Add(model.AttachmentDownloadExpiration)
-	url, err := uc.objectStorage.PresignedGetURL(ctx, attachment.BlobKey, model.AttachmentDownloadExpiration)
+	url, err := uc.objectStorage.PresignedGetURL(ctx, attachment.BlobKey, model.AttachmentDownloadExpiration, storage.PresignedGetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("添付ファイルのダウンロードURLの生成に失敗: %w", err)
 	}
