@@ -1060,8 +1060,7 @@ func runServe() {
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
 
-		// プロフィール (未ログインでも閲覧可能)。リバースプロキシはgo_profileが有効な閲覧者の
-		// リクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		// プロフィール (未ログインでも閲覧可能)。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
 		r.Get("/@{atname}", profileHandler.Show)
@@ -1161,8 +1160,7 @@ func runServe() {
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
 
-		// ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更。リバースプロキシは
-		// go_user_settingsが有効な閲覧者のリクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		// ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
 		r.Get("/settings", settingsHandler.Show)
@@ -1177,8 +1175,7 @@ func runServe() {
 		r.Head("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
 		r.Patch("/settings/email/confirmation", settingsEmailConfirmationHandler.Update)
 
-		// 二要素認証の設定の画面・認証アプリへの登録・有効化・無効化とリカバリーコード。リバースプロキシは
-		// go_two_factor_auth_settingsが有効な閲覧者のリクエストだけをここへ振り分ける。
+		// 二要素認証の設定の画面・認証アプリへの登録・有効化・無効化とリカバリーコード。
 		// 登録の画面のHEADは、秘密鍵を作り直さない専用の処理に渡す。
 		r.Get("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
 		r.Head("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
@@ -1190,8 +1187,7 @@ func runServe() {
 		r.Head("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Index)
 		r.Post("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Create)
 
-		// アカウントの削除の確認画面と削除。リバースプロキシはgo_account_deletionが有効な閲覧者の
-		// リクエストだけをここへ振り分ける。
+		// アカウントの削除の確認画面と削除。
 		r.Get("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
 		r.Head("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
 		r.Post("/settings/account/deletion", settingsAccountDeletionHandler.Create)

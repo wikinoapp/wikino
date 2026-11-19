@@ -253,7 +253,7 @@ func TestReverseProxyMiddleware_Middleware_RailsPath(t *testing.T) {
 
 	handler := m.Middleware(goHandler)
 
-	req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+	req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -293,7 +293,7 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 	}))
 
 	t.Run("プロキシヘッダーが設定される", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.RemoteAddr = "192.168.1.1:12345"
 		rr := httptest.NewRecorder()
 
@@ -311,7 +311,7 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 	})
 
 	t.Run("CF-Connecting-IPがある場合はそれを使用", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.Header.Set("CF-Connecting-IP", "203.0.113.1")
 		req.RemoteAddr = "192.168.1.1:12345"
 		rr := httptest.NewRecorder()
@@ -326,7 +326,7 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 
 	t.Run("既存のX-Forwarded-Forがある場合は維持される", func(t *testing.T) {
 		// Cloudflareなどの上流プロキシがX-Forwarded-Forを設定するシナリオを想定
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.Header.Set("X-Forwarded-For", "203.0.113.1, 198.51.100.2")
 		req.RemoteAddr = "192.168.1.1:12345"
 		rr := httptest.NewRecorder()
@@ -341,7 +341,7 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 
 	t.Run("X-Forwarded-Forがない場合はclientIPが設定される", func(t *testing.T) {
 		// クライアントが直接接続するシナリオを想定
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.RemoteAddr = "192.168.1.1:12345"
 		rr := httptest.NewRecorder()
 
@@ -355,7 +355,7 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 
 	t.Run("X-Forwarded-ForがなくCF-Connecting-IPがある場合はCF-Connecting-IPが使われる", func(t *testing.T) {
 		// Cloudflare経由だがX-Forwarded-Forは未設定のシナリオを想定
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.Header.Set("CF-Connecting-IP", "203.0.113.1")
 		req.RemoteAddr = "192.168.1.1:12345"
 		rr := httptest.NewRecorder()
@@ -371,7 +371,7 @@ func TestReverseProxyMiddleware_ProxyHeaders(t *testing.T) {
 	t.Run("クライアントのHostヘッダがそのままRailsに転送される", func(t *testing.T) {
 		// pr.SetURL(parsedURL) の後にpr.Out.Host = pr.In.Hostを設定する
 		// 挙動が効いているかを退行テストとして検証する
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.Host = "example.com"
 		req.RemoteAddr = "192.168.1.1:12345"
 		rr := httptest.NewRecorder()
@@ -401,7 +401,7 @@ func TestReverseProxyMiddleware_ErrorHandling(t *testing.T) {
 		t.Error("リクエストはRails版に転送されるべき")
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+	req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -601,171 +601,102 @@ func TestReverseProxyMiddleware_Middleware_TopicSettingsTrashSearch(t *testing.T
 	}
 }
 
-// TestFeatureFlaggedPatterns_Profileは、プロフィールがgo_profileで振り分けられ、Goルートが応答しない
-// メソッドとパスがフラグにかかわらずRails版へ届くことを、登録済みのパターンで確かめる。
-func TestFeatureFlaggedPatterns_Profile(t *testing.T) {
-	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+// TestReverseProxyMiddleware_Middleware_ProfileAndUserSettingsは、プロフィール・ユーザー設定・
+// 二要素認証の設定・アカウントの削除がフィーチャーフラグを持たない閲覧者のリクエストでもGo版で処理され、
+// Goルートが応答しないメソッドとパスはRails版へ届くことを確かめる。
+func TestReverseProxyMiddleware_Middleware_ProfileAndUserSettings(t *testing.T) {
+	t.Parallel()
 
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+	// サブテストを並行に走らせるため、deferではなくサブテストの終了後に閉じる
+	t.Cleanup(railsServer.Close)
+
+	// フラグを判定するリポジトリを渡さず、どの閲覧者もフラグを持たない状態にする
+	m, err := NewReverseProxyMiddleware(railsServer.URL, &config.Config{Domain: "wikino.app"}, nil)
 	if err != nil {
 		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
 	}
+	h := m.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
 
 	testCases := []struct {
 		name   string
 		method string
 		path   string
-		want   model.FeatureFlagName
+		wantGo bool
 	}{
-		{name: "プロフィールのGET", method: http.MethodGet, path: "/@alice", want: model.FeatureFlagProfile},
-		{name: "プロフィールのHEAD", method: http.MethodHead, path: "/@alice", want: model.FeatureFlagProfile},
-		{name: "プロフィールへのPOSTはフラグの対象外", method: http.MethodPost, path: "/@alice", want: ""},
-		{name: "プロフィールの下のパスはフラグの対象外", method: http.MethodGet, path: "/@alice/space_atname", want: ""},
-		{name: "アットネームの無いパスはフラグの対象外", method: http.MethodGet, path: "/@", want: ""},
+		// プロフィール
+		{name: "プロフィールのGET", method: http.MethodGet, path: "/@alice", wantGo: true},
+		{name: "プロフィールのHEAD", method: http.MethodHead, path: "/@alice", wantGo: true},
+		{name: "プロフィールへのPOSTはRails版へ届く", method: http.MethodPost, path: "/@alice", wantGo: false},
+		{name: "プロフィールの下のパスはRails版へ届く", method: http.MethodGet, path: "/@alice/space_atname", wantGo: false},
+		{name: "アットネームの無いパスはRails版へ届く", method: http.MethodGet, path: "/@", wantGo: false},
+
+		// ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更
+		{name: "設定のトップのGET", method: http.MethodGet, path: "/settings", wantGo: true},
+		{name: "設定のトップのHEAD", method: http.MethodHead, path: "/settings", wantGo: true},
+		{name: "設定のトップへのPOSTはRails版へ届く", method: http.MethodPost, path: "/settings", wantGo: false},
+		{name: "プロフィールの編集のGET", method: http.MethodGet, path: "/settings/profile", wantGo: true},
+		{name: "プロフィールの編集のHEAD", method: http.MethodHead, path: "/settings/profile", wantGo: true},
+		{name: "プロフィールの保存のPATCH", method: http.MethodPatch, path: "/settings/profile", wantGo: true},
+		{name: "プロフィールの保存 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/profile", wantGo: true},
+		{name: "プロフィールの編集へのDELETEはRails版へ届く", method: http.MethodDelete, path: "/settings/profile", wantGo: false},
+		{name: "メールアドレスの変更のGET", method: http.MethodGet, path: "/settings/email", wantGo: true},
+		{name: "メールアドレスの変更のHEAD", method: http.MethodHead, path: "/settings/email", wantGo: true},
+		{name: "確認コードの送信のPATCH", method: http.MethodPatch, path: "/settings/email", wantGo: true},
+		{name: "確認コードの送信 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/email", wantGo: true},
+		{name: "メールアドレスの変更へのDELETEはRails版へ届く", method: http.MethodDelete, path: "/settings/email", wantGo: false},
+		{name: "確認コードの入力のGET", method: http.MethodGet, path: "/settings/email/confirmation/edit", wantGo: true},
+		{name: "確認コードの入力のHEAD", method: http.MethodHead, path: "/settings/email/confirmation/edit", wantGo: true},
+		{name: "確認コードの入力へのPOSTはRails版へ届く", method: http.MethodPost, path: "/settings/email/confirmation/edit", wantGo: false},
+		{name: "メールアドレスの変更の確定のPATCH", method: http.MethodPatch, path: "/settings/email/confirmation", wantGo: true},
+		{name: "メールアドレスの変更の確定 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/email/confirmation", wantGo: true},
+		{name: "メールアドレスの変更の確定へのGETはRails版へ届く", method: http.MethodGet, path: "/settings/email/confirmation", wantGo: false},
+
+		// 二要素認証の設定
+		{name: "二要素認証の設定の画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth", wantGo: true},
+		{name: "二要素認証の設定の画面のHEAD", method: http.MethodHead, path: "/settings/two_factor_auth", wantGo: true},
+		{name: "二要素認証を有効にする処理のPOST", method: http.MethodPost, path: "/settings/two_factor_auth", wantGo: true},
+		{name: "二要素認証を無効にする処理のDELETE", method: http.MethodDelete, path: "/settings/two_factor_auth", wantGo: true},
+		{name: "認証アプリへの登録の画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth/new", wantGo: true},
+		{name: "認証アプリへの登録の画面のHEADも秘密鍵を差し替えないGo版で受ける", method: http.MethodHead, path: "/settings/two_factor_auth/new", wantGo: true},
+		{name: "認証アプリへの登録の画面へのPOSTはRails版へ届く", method: http.MethodPost, path: "/settings/two_factor_auth/new", wantGo: false},
+		{name: "リカバリーコードの画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth/recovery_codes", wantGo: true},
+		{name: "リカバリーコードの画面のHEAD", method: http.MethodHead, path: "/settings/two_factor_auth/recovery_codes", wantGo: true},
+		{name: "リカバリーコードを作り直す処理のPOST", method: http.MethodPost, path: "/settings/two_factor_auth/recovery_codes", wantGo: true},
+		{name: "リカバリーコードへのDELETEはRails版へ届く", method: http.MethodDelete, path: "/settings/two_factor_auth/recovery_codes", wantGo: false},
+
+		// アカウントの削除
+		{name: "アカウントの削除の確認画面のGET", method: http.MethodGet, path: "/settings/account/deletion/new", wantGo: true},
+		{name: "アカウントの削除の確認画面のHEAD", method: http.MethodHead, path: "/settings/account/deletion/new", wantGo: true},
+		{name: "アカウントを削除する処理のPOST", method: http.MethodPost, path: "/settings/account/deletion", wantGo: true},
+		{name: "アカウントの削除の確認画面へのPOSTはRails版へ届く", method: http.MethodPost, path: "/settings/account/deletion/new", wantGo: false},
+		{name: "アカウントの削除の送信先へのGETはRails版へ届く", method: http.MethodGet, path: "/settings/account/deletion", wantGo: false},
+		{name: "アカウントの削除の送信先へのDELETEはRails版へ届く", method: http.MethodDelete, path: "/settings/account/deletion", wantGo: false},
+
+		// Go版が受けない設定のパス
+		{name: "移行していない設定のパスはRails版へ届く", method: http.MethodGet, path: "/settings/account", wantGo: false},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
+			t.Parallel()
 
-			if m.isGoHandledByRegex(req) {
-				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, httptest.NewRequest(tc.method, tc.path, nil))
+
+			gotGo := rr.Header().Get("X-Go-Handled") == "true"
+			gotRails := rr.Header().Get("X-Rails-Handled") == "true"
+			if tc.wantGo && (!gotGo || gotRails) {
+				t.Errorf("%s %qがGo版で処理されなかった (Go = %v、Rails = %v)", tc.method, tc.path, gotGo, gotRails)
 			}
-			if got := m.getFeatureFlagForRequest(req); got != tc.want {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
-			}
-		})
-	}
-}
-
-// TestFeatureFlaggedPatterns_UserSettingsは、ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更が
-// go_user_settingsで振り分けられ、Go版が受けない設定のパスとメソッドがフラグにかかわらずRails版へ
-// 届くことを、登録済みのパターンで確かめる。
-func TestFeatureFlaggedPatterns_UserSettings(t *testing.T) {
-	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
-	}
-
-	testCases := []struct {
-		name   string
-		method string
-		path   string
-		want   model.FeatureFlagName
-	}{
-		{name: "設定のトップのGET", method: http.MethodGet, path: "/settings", want: model.FeatureFlagUserSettings},
-		{name: "設定のトップのHEAD", method: http.MethodHead, path: "/settings", want: model.FeatureFlagUserSettings},
-		{name: "設定のトップへのPOSTはフラグの対象外", method: http.MethodPost, path: "/settings", want: ""},
-		{name: "プロフィールの編集のGET", method: http.MethodGet, path: "/settings/profile", want: model.FeatureFlagUserSettings},
-		{name: "プロフィールの編集のHEAD", method: http.MethodHead, path: "/settings/profile", want: model.FeatureFlagUserSettings},
-		{name: "プロフィールの保存のPATCH", method: http.MethodPatch, path: "/settings/profile", want: model.FeatureFlagUserSettings},
-		{name: "プロフィールの保存 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/profile", want: model.FeatureFlagUserSettings},
-		{name: "プロフィールの編集へのDELETEはフラグの対象外", method: http.MethodDelete, path: "/settings/profile", want: ""},
-		{name: "メールアドレスの変更のGET", method: http.MethodGet, path: "/settings/email", want: model.FeatureFlagUserSettings},
-		{name: "メールアドレスの変更のHEAD", method: http.MethodHead, path: "/settings/email", want: model.FeatureFlagUserSettings},
-		{name: "確認コードの送信のPATCH", method: http.MethodPatch, path: "/settings/email", want: model.FeatureFlagUserSettings},
-		{name: "確認コードの送信 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/email", want: model.FeatureFlagUserSettings},
-		{name: "メールアドレスの変更へのDELETEはフラグの対象外", method: http.MethodDelete, path: "/settings/email", want: ""},
-		{name: "確認コードの入力のGET", method: http.MethodGet, path: "/settings/email/confirmation/edit", want: model.FeatureFlagUserSettings},
-		{name: "確認コードの入力のHEAD", method: http.MethodHead, path: "/settings/email/confirmation/edit", want: model.FeatureFlagUserSettings},
-		{name: "確認コードの入力へのPOSTはフラグの対象外", method: http.MethodPost, path: "/settings/email/confirmation/edit", want: ""},
-		{name: "メールアドレスの変更の確定のPATCH", method: http.MethodPatch, path: "/settings/email/confirmation", want: model.FeatureFlagUserSettings},
-		{name: "メールアドレスの変更の確定 (Method Override前のPOST)", method: http.MethodPost, path: "/settings/email/confirmation", want: model.FeatureFlagUserSettings},
-		{name: "メールアドレスの変更の確定へのGETはフラグの対象外", method: http.MethodGet, path: "/settings/email/confirmation", want: ""},
-		{name: "新規登録の確認コードはこのフラグの対象外", method: http.MethodGet, path: "/email_confirmation/edit", want: ""},
-		{name: "二要素認証の設定は別のフラグで振り分ける", method: http.MethodGet, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "アカウントの削除は別のフラグで振り分ける", method: http.MethodGet, path: "/settings/account/deletion/new", want: model.FeatureFlagAccountDeletion},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-
-			if m.isGoHandledByRegex(req) {
-				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
-			}
-			if got := m.getFeatureFlagForRequest(req); got != tc.want {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
-			}
-		})
-	}
-}
-
-func TestFeatureFlaggedPatterns_TwoFactorAuthSettings(t *testing.T) {
-	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
-	}
-
-	testCases := []struct {
-		name   string
-		method string
-		path   string
-		want   model.FeatureFlagName
-	}{
-		{name: "設定の画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "設定の画面のHEAD", method: http.MethodHead, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "有効にする処理のPOST", method: http.MethodPost, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "無効にする処理のDELETE", method: http.MethodDelete, path: "/settings/two_factor_auth", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "登録の画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth/new", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "登録の画面のHEADも秘密鍵を差し替えないGo版で受ける", method: http.MethodHead, path: "/settings/two_factor_auth/new", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "登録の画面へのPOSTは対象外", method: http.MethodPost, path: "/settings/two_factor_auth/new", want: ""},
-		{name: "リカバリーコードの画面のGET", method: http.MethodGet, path: "/settings/two_factor_auth/recovery_codes", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "リカバリーコードの画面のHEAD", method: http.MethodHead, path: "/settings/two_factor_auth/recovery_codes", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "リカバリーコードを作り直す処理のPOST", method: http.MethodPost, path: "/settings/two_factor_auth/recovery_codes", want: model.FeatureFlagTwoFactorAuthSettings},
-		{name: "リカバリーコードへのDELETEは対象外", method: http.MethodDelete, path: "/settings/two_factor_auth/recovery_codes", want: ""},
-		{name: "ログインの二要素認証は対象外", method: http.MethodGet, path: "/sign_in/two_factor/new", want: ""},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-
-			if m.isGoHandledByRegex(req) {
-				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
-			}
-			if got := m.getFeatureFlagForRequest(req); got != tc.want {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
-			}
-		})
-	}
-}
-
-func TestFeatureFlaggedPatterns_AccountDeletion(t *testing.T) {
-	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
-
-	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
-	}
-
-	testCases := []struct {
-		name   string
-		method string
-		path   string
-		want   model.FeatureFlagName
-	}{
-		{name: "確認画面のGET", method: http.MethodGet, path: "/settings/account/deletion/new", want: model.FeatureFlagAccountDeletion},
-		{name: "確認画面のHEAD", method: http.MethodHead, path: "/settings/account/deletion/new", want: model.FeatureFlagAccountDeletion},
-		{name: "削除する処理のPOST", method: http.MethodPost, path: "/settings/account/deletion", want: model.FeatureFlagAccountDeletion},
-		{name: "確認画面へのPOSTは対象外", method: http.MethodPost, path: "/settings/account/deletion/new", want: ""},
-		{name: "削除の送信先へのGETは対象外", method: http.MethodGet, path: "/settings/account/deletion", want: ""},
-		{name: "削除の送信先へのDELETEは対象外", method: http.MethodDelete, path: "/settings/account/deletion", want: ""},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
-
-			if m.isGoHandledByRegex(req) {
-				t.Errorf("%s %qがフラグによらずGo版で処理される", tc.method, tc.path)
-			}
-			if got := m.getFeatureFlagForRequest(req); got != tc.want {
-				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			if !tc.wantGo && (gotGo || !gotRails) {
+				t.Errorf("%s %qがRails版へ届かなかった (Go = %v、Rails = %v)", tc.method, tc.path, gotGo, gotRails)
 			}
 		})
 	}
@@ -802,7 +733,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	originalPatterns := featureFlaggedPatterns
 	featureFlaggedPatterns = []featureFlaggedPattern{
 		{
-			pattern: regexp.MustCompile(`^/settings$`),
+			pattern: regexp.MustCompile(`^/s/[^/]+/settings/general$`),
 			flag:    "go_settings",
 		},
 	}
@@ -839,7 +770,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	handler := m.Middleware(goHandler)
 
 	t.Run("user_idフラグが有効なユーザーはGo版で処理される", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  session.CookieName,
 			Value: sessionToken,
@@ -857,7 +788,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	})
 
 	t.Run("device_tokenフラグが有効なデバイスはGo版で処理される", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  DeviceTokenCookieName,
 			Value: deviceToken,
@@ -885,7 +816,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 			WithToken("other-session-token").
 			BuildAndGetToken()
 
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  session.CookieName,
 			Value: otherToken,
@@ -903,7 +834,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	})
 
 	t.Run("フラグが無効なdevice_tokenはRails版に転送される", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  DeviceTokenCookieName,
 			Value: "unknown-device-token",
@@ -918,7 +849,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	})
 
 	t.Run("両方のCookieがない場合はRails版に転送される", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		rr := httptest.NewRecorder()
 
 		handler.ServeHTTP(rr, req)
@@ -929,7 +860,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	})
 
 	t.Run("空のCookie値の場合はRails版に転送される", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+		req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  session.CookieName,
 			Value: "",
@@ -955,7 +886,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag_NilRepo(t *testing.T) {
 	originalPatterns := featureFlaggedPatterns
 	featureFlaggedPatterns = []featureFlaggedPattern{
 		{
-			pattern: regexp.MustCompile(`^/settings$`),
+			pattern: regexp.MustCompile(`^/s/[^/]+/settings/general$`),
 			flag:    "go_settings",
 		},
 	}
@@ -988,7 +919,7 @@ func TestReverseProxyMiddleware_Middleware_FeatureFlag_NilRepo(t *testing.T) {
 	handler := m.Middleware(goHandler)
 
 	// featureFlagRepoがnilの場合、フラグパターンにマッチしてもRails版に転送される
-	req := httptest.NewRequest(http.MethodGet, "/settings", nil)
+	req := httptest.NewRequest(http.MethodGet, "/s/my-space/settings/general", nil)
 	req.AddCookie(&http.Cookie{
 		Name:  session.CookieName,
 		Value: "some-token",
@@ -1609,7 +1540,7 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 		{
 			name:     "マッチしないパス",
 			method:   http.MethodGet,
-			path:     "/settings",
+			path:     "/s/my-space/settings/general",
 			expected: false,
 		},
 		{
@@ -1829,7 +1760,7 @@ func TestReverseProxyMiddleware_Middleware_DeviceTokenIssuance(t *testing.T) {
 		{name: "常時Go化されたページ表示には発行しない", method: http.MethodGet, path: "/s/my-space/pages/1", wantDeviceCookie: false},
 
 		// Rails転送パス: device_tokenが発行される
-		{name: "Rails転送パスには発行する", method: http.MethodGet, path: "/settings", wantDeviceCookie: true},
+		{name: "Rails転送パスには発行する", method: http.MethodGet, path: "/s/my-space/settings/general", wantDeviceCookie: true},
 	}
 
 	for _, tc := range testCases {
@@ -1953,3 +1884,4 @@ func TestGoHandledRegexPatterns_IncludeCookielessPaths(t *testing.T) {
 		})
 	}
 }
+
