@@ -193,3 +193,34 @@ func TestDeleteTrashedPagesArgs(t *testing.T) {
 		t.Errorf("MaxAttempts = %d、期待値 = 3", got)
 	}
 }
+
+func TestEnqueueProcessAttachment(t *testing.T) {
+	t.Parallel()
+
+	mock := &mockJobInserter{}
+	d := NewDispatcher(mock)
+
+	if err := d.EnqueueProcessAttachment(context.Background(), "attachment-id", "space-id"); err != nil {
+		t.Fatalf("EnqueueProcessAttachment()のエラー = %v", err)
+	}
+
+	args, ok := mock.args.(ProcessAttachmentArgs)
+	if !ok {
+		t.Fatalf("argsの型がProcessAttachmentArgsではありません: %T", mock.args)
+	}
+	if args.AttachmentID != "attachment-id" {
+		t.Errorf("AttachmentID = %s、期待値 = attachment-id", args.AttachmentID)
+	}
+	if args.SpaceID != "space-id" {
+		t.Errorf("SpaceID = %s、期待値 = space-id", args.SpaceID)
+	}
+	if args.Kind() != "process_attachment" {
+		t.Errorf("Kind() = %s、期待値 = process_attachment", args.Kind())
+	}
+	if mock.opts == nil {
+		t.Fatal("InsertOptsがnilです")
+	}
+	if mock.opts.MaxAttempts != 10 {
+		t.Errorf("MaxAttempts = %d、期待値 = 10", mock.opts.MaxAttempts)
+	}
+}

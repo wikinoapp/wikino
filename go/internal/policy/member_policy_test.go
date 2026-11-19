@@ -617,6 +617,26 @@ func TestMemberPolicy_CanShowAttachment(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanCreateAttachment(t *testing.T) {
+	t.Parallel()
+
+	t.Run("attachment:writeがあればアップロードできる", func(t *testing.T) {
+		t.Parallel()
+
+		if !NewMemberPolicy(model.SpaceRoleEditor.Scopes(), nil).CanCreateAttachment() {
+			t.Error("attachment:writeを持つ編集者はアップロードできるべき")
+		}
+	})
+
+	t.Run("attachment:readだけではアップロードできない", func(t *testing.T) {
+		t.Parallel()
+
+		if NewMemberPolicy(model.SpaceRoleViewer.Scopes(), nil).CanCreateAttachment() {
+			t.Error("attachment:writeを持たない閲覧者はアップロードできないべき")
+		}
+	})
+}
+
 func TestMemberPolicy_CanCreateSuggestion(t *testing.T) {
 	t.Parallel()
 
