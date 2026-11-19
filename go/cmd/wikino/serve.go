@@ -257,6 +257,10 @@ func runServe() {
 		UserPasswordRepo:            userPasswordRepo,
 		UserTwoFactorAuthRepo:       userTwoFactorAuthRepo,
 		SpaceMemberRepo:             spaceMemberRepo,
+	}, worker.AttachmentProcessingDeps{
+		DB:             db,
+		AttachmentRepo: attachmentRepo,
+		ObjectStorage:  objectStorage,
 	})
 	if err != nil {
 		slog.Error("Riverクライアントの初期化に失敗しました", "error", err)
