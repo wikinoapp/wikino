@@ -17,6 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
 // DeviceTokenCookieNameはデバイス (ブラウザ) 識別用のCookieキー名
@@ -39,71 +40,24 @@ type featureFlaggedPattern struct {
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
 var featureFlaggedPatterns = []featureFlaggedPattern{
-	// プロフィール (GET・HEAD /@:atname)。末尾の "$" により、Go版にルートの無い /@:atname/... は
-	// フラグにかかわらずRails版へ送る。
+	// 添付ファイルの表示 (GET・HEAD /attachments/:id)。末尾の "$" により、/attachments/:id/og_image
+	// (常にGo版) にはマッチさせない。
 	{
-		pattern: regexp.MustCompile(`^/@[^/]+$`),
-		flag:    model.FeatureFlagProfile,
+		pattern: regexp.MustCompile(`^/attachments/[^/]+$`),
+		flag:    model.FeatureFlagAttachmentDelivery,
 		methods: []string{http.MethodGet, http.MethodHead},
 	},
-	// ユーザー設定のトップ (GET・HEAD /settings)。
+	// 本文に添付ファイルを表示するための署名付きURLの一括取得 (POST /attachments/signed_urls)。
 	{
-		pattern: regexp.MustCompile(`^/settings$`),
-		flag:    model.FeatureFlagUserSettings,
-		methods: []string{http.MethodGet, http.MethodHead},
+		pattern: regexp.MustCompile(`^/attachments/signed_urls$`),
+		flag:    model.FeatureFlagAttachmentDelivery,
+		methods: []string{http.MethodPost},
 	},
-	// プロフィールの編集。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
+	// 添付ファイルのアップロードの事前署名 (POST /s/:space_identifier/attachments/presign)。
+	// アップロード (POST /s/:space_identifier/attachments) は対象にせず、Rails版が処理する。
 	{
-		pattern: regexp.MustCompile(`^/settings/profile$`),
-		flag:    model.FeatureFlagUserSettings,
-		methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch},
-	},
-	// メールアドレスの変更。画面 (GET・HEAD) と確認コードを送る処理 (PATCH。Method Override変換前はPOST)。
-	{
-		pattern: regexp.MustCompile(`^/settings/email$`),
-		flag:    model.FeatureFlagUserSettings,
-		methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch},
-	},
-	// メールアドレスの変更の確認コードを入力する画面 (GET・HEAD)。
-	{
-		pattern: regexp.MustCompile(`^/settings/email/confirmation/edit$`),
-		flag:    model.FeatureFlagUserSettings,
-		methods: []string{http.MethodGet, http.MethodHead},
-	},
-	// メールアドレスの変更を確定する処理 (PATCH。Method Override変換前はPOST)。
-	{
-		pattern: regexp.MustCompile(`^/settings/email/confirmation$`),
-		flag:    model.FeatureFlagUserSettings,
-		methods: []string{http.MethodPatch},
-	},
-	// 二要素認証の設定の画面 (GET・HEAD)、有効にする処理 (POST)、無効にする処理 (DELETE。Method Override変換前はPOST)。
-	{
-		pattern: regexp.MustCompile(`^/settings/two_factor_auth$`),
-		flag:    model.FeatureFlagTwoFactorAuthSettings,
-		methods: []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodDelete},
-	},
-	// 二要素認証を有効にするため、認証アプリへ登録する画面 (GET・HEAD)。
-	// HEADもGo版で受け、Rails版のGET用の処理に転送されて秘密鍵が差し替わることを防ぐ。
-	{
-		pattern: regexp.MustCompile(`^/settings/two_factor_auth/new$`),
-		flag:    model.FeatureFlagTwoFactorAuthSettings,
-		methods: []string{http.MethodGet, http.MethodHead},
-	},
-	// 二要素認証のリカバリーコードの画面 (GET・HEAD) と、作り直す処理 (POST)。
-	{
-		pattern: regexp.MustCompile(`^/settings/two_factor_auth/recovery_codes$`),
-		flag:    model.FeatureFlagTwoFactorAuthSettings,
-		methods: []string{http.MethodGet, http.MethodHead, http.MethodPost},
-	},
-	// アカウントの削除の確認画面 (GET・HEAD) と、削除する処理 (POST)。
-	{
-		pattern: regexp.MustCompile(`^/settings/account/deletion/new$`),
-		flag:    model.FeatureFlagAccountDeletion,
-		methods: []string{http.MethodGet, http.MethodHead},
-	},
-	{
-		pattern: regexp.MustCompile(`^/settings/account/deletion$`),
-		flag:    model.FeatureFlagAccountDeletion,
+		pattern: regexp.MustCompile(`^/s/[^/]+/attachments/presign$`),
+		flag:    model.FeatureFlagAttachmentUpload,
 		methods: []string{http.MethodPost},
 	},
 }
@@ -239,7 +193,7 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+oauth_grants([/.]|$)`)},
 	// og:image配信 (`/attachments/:id/og_image`・`/s/:space/pages/:number/og_image/:version.png`)。
 	// パスの定義はCSRFトークンとフラッシュの除外と共有する (`session.OGImagePathPatterns`)。
-	// /attachments/:id (ダウンロードURL) はRailsが提供するため、og_image末尾でパスを限定している
+	// /attachments/:id (ダウンロードURL) はgo_attachment_deliveryで振り分けるため、og_image末尾でパスを限定している
 	{pattern: session.AttachmentOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	{pattern: session.PageOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	// フィード (`/s/:space/atom`・`/s/:space/topics/:number/atom`)。パスの定義はCSRFトークンとフラッシュの除外と共有する (`session.FeedPathPattern`)
@@ -252,6 +206,29 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/oauth/`)},
 	// 検索の画面 (GET・HEAD /search)。
 	{pattern: regexp.MustCompile(`^/search$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// プロフィール (GET・HEAD /@:atname)。末尾の "$" により、Go版にルートの無い /@:atname/... は
+	// Rails版へ送る。
+	{pattern: regexp.MustCompile(`^/@[^/]+$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// ユーザー設定のトップ (GET・HEAD /settings)。
+	{pattern: regexp.MustCompile(`^/settings$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// プロフィールの編集。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
+	{pattern: regexp.MustCompile(`^/settings/profile$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
+	// メールアドレスの変更。画面 (GET・HEAD) と確認コードを送る処理 (PATCH。Method Override変換前はPOST)。
+	{pattern: regexp.MustCompile(`^/settings/email$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
+	// メールアドレスの変更の確認コードを入力する画面 (GET・HEAD)。
+	{pattern: regexp.MustCompile(`^/settings/email/confirmation/edit$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// メールアドレスの変更を確定する処理 (PATCH。Method Override変換前はPOST)。
+	{pattern: regexp.MustCompile(`^/settings/email/confirmation$`), methods: []string{http.MethodPatch}},
+	// 二要素認証の設定の画面 (GET・HEAD)、有効にする処理 (POST)、無効にする処理 (DELETE。Method Override変換前はPOST)。
+	{pattern: regexp.MustCompile(`^/settings/two_factor_auth$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodDelete}},
+	// 二要素認証を有効にするため、認証アプリへ登録する画面 (GET・HEAD)。
+	// HEADもGo版で受け、Rails版のGET用の処理に転送されて秘密鍵が差し替わることを防ぐ。
+	{pattern: regexp.MustCompile(`^/settings/two_factor_auth/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// 二要素認証のリカバリーコードの画面 (GET・HEAD) と、作り直す処理 (POST)。
+	{pattern: regexp.MustCompile(`^/settings/two_factor_auth/recovery_codes$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPost}},
+	// アカウントの削除の確認画面 (GET・HEAD) と、削除する処理 (POST)。
+	{pattern: regexp.MustCompile(`^/settings/account/deletion/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/settings/account/deletion$`), methods: []string{http.MethodPost}},
 	// Cookieを使わないOAuthのエンドポイント。振り分けは上の `^/oauth/` に含まれるが、
 	// `session.CookielessPaths` と定義を共有していることをテストで確かめるために登録する
 	{pattern: session.OAuthTokenPathPattern},
@@ -438,6 +415,11 @@ func (m *ReverseProxyMiddleware) ensureDeviceToken(w http.ResponseWriter, r *htt
 
 // isGoHandledPathはGo版で処理するパスかどうかを判定
 func (m *ReverseProxyMiddleware) isGoHandledPath(path string) bool {
+	// e2eのサーバーでは、フェイクのストレージの署名付きURLへの送受信をGo版が受ける
+	if m.cfg.IsTestE2E() && strings.HasPrefix(path, storage.FakeObjectStoragePathPrefix) {
+		return true
+	}
+
 	// 完全一致でチェック
 	for _, p := range goHandledExactPaths {
 		if path == p {

@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
@@ -133,6 +135,234 @@ func TestAttachmentRepository_FindByIDAndSpace(t *testing.T) {
 	})
 }
 
+func TestAttachmentRepository_FindBlobByID(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewAttachmentRepository(q)
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("attach-find-blob-by-id@example.com").
+		WithAtname("attachfindblobbyid").
+		Build()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("attach-find-blob-by-id").
+		Build()
+
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithUserID(userID).
+		Build()
+
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		WithFilename("report.pdf").
+		WithContentType("application/pdf").
+		WithByteSize(4096).
+		WithBlobKey("attach-find-blob-by-id-key").
+		Build()
+
+	t.Run("スペースを指定せずに、スペース・ファイル名・種類・バイト数・ストレージキーを取得できる", func(t *testing.T) {
+		attachment, err := repo.FindBlobByID(context.Background(), attachmentID)
+		if err != nil {
+			t.Fatalf("FindBlobByID()のエラー = %v", err)
+		}
+		if attachment == nil {
+			t.Fatal("FindBlobByID()がnilを返した、期待値 = 添付ファイル")
+		}
+		want := model.Attachment{
+			ID:          attachmentID,
+			SpaceID:     spaceID,
+			Filename:    "report.pdf",
+			BlobKey:     "attach-find-blob-by-id-key",
+			ContentType: "application/pdf",
+			ByteSize:    4096,
+		}
+		if *attachment != want {
+			t.Errorf("FindBlobByID() = %+v、期待値 = %+v", *attachment, want)
+		}
+	})
+
+	t.Run("存在しないIDはnilを返す", func(t *testing.T) {
+		attachment, err := repo.FindBlobByID(context.Background(), model.AttachmentID("00000000-0000-0000-0000-000000000000"))
+		if err != nil {
+			t.Fatalf("FindBlobByID()のエラー = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindBlobByID() = %v、期待値 = nil", attachment)
+		}
+	})
+
+	t.Run("UUIDでないIDはnilを返す", func(t *testing.T) {
+		attachment, err := repo.FindBlobByID(context.Background(), model.AttachmentID("not-a-uuid"))
+		if err != nil {
+			t.Fatalf("FindBlobByID()のエラー = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindBlobByID() = %v、期待値 = nil", attachment)
+		}
+	})
+}
+
+func TestAttachmentRepository_FindBlobsByIDs(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewAttachmentRepository(testutil.QueriesWithTx(tx))
+
+	spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-find-blobs")
+	otherSpaceID, otherSpaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-find-blobs-other")
+	firstID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).
+		WithFilename("a.png").WithContentType("image/png").WithByteSize(10).WithBlobKey("attach-find-blobs-a").Build()
+	secondID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(otherSpaceID).WithSpaceMemberID(otherSpaceMemberID).
+		WithFilename("b.pdf").WithContentType("application/pdf").WithByteSize(20).WithBlobKey("attach-find-blobs-b").Build()
+
+	t.Run("複数のスペースの添付ファイルを、スペースとあわせて一括取得する", func(t *testing.T) {
+		attachments, err := repo.FindBlobsByIDs(context.Background(), []model.AttachmentID{
+			firstID, secondID, "00000000-0000-0000-0000-000000000000", "not-a-uuid",
+		})
+		if err != nil {
+			t.Fatalf("FindBlobsByIDs()のエラー = %v", err)
+		}
+		got := map[model.AttachmentID]model.Attachment{}
+		for _, a := range attachments {
+			got[a.ID] = *a
+		}
+		want := map[model.AttachmentID]model.Attachment{
+			firstID:  {ID: firstID, SpaceID: spaceID, Filename: "a.png", BlobKey: "attach-find-blobs-a", ContentType: "image/png", ByteSize: 10},
+			secondID: {ID: secondID, SpaceID: otherSpaceID, Filename: "b.pdf", BlobKey: "attach-find-blobs-b", ContentType: "application/pdf", ByteSize: 20},
+		}
+		if len(got) != len(want) {
+			t.Fatalf("件数 = %d、期待値 = %d (%v)", len(got), len(want), got)
+		}
+		for id, w := range want {
+			if got[id] != w {
+				t.Errorf("FindBlobsByIDs()[%s] = %+v、期待値 = %+v", id, got[id], w)
+			}
+		}
+	})
+
+	t.Run("UUIDの形のIDが無ければクエリを発行せずにnilを返す", func(t *testing.T) {
+		attachments, err := repo.FindBlobsByIDs(context.Background(), []model.AttachmentID{"not-a-uuid"})
+		if err != nil {
+			t.Fatalf("FindBlobsByIDs()のエラー = %v", err)
+		}
+		if attachments != nil {
+			t.Errorf("FindBlobsByIDs() = %v、期待値 = nil", attachments)
+		}
+	})
+}
+
+func TestAttachmentRepository_ListPubliclyReferencedIDsByAttachments(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewAttachmentRepository(q)
+	parRepo := NewPageAttachmentReferenceRepository(q)
+
+	spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-list-public")
+	publicTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("公開").Build()
+	privateTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("非公開").
+		WithVisibility(int32(model.TopicVisibilityPrivate)).Build()
+
+	newReferenced := func(name string, topicID model.TopicID, number model.PageNumber, trashed bool) *model.Attachment {
+		id := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).
+			WithBlobKey("attach-list-public-" + name).Build()
+		attachment := &model.Attachment{ID: id, SpaceID: spaceID}
+		if topicID == "" {
+			return attachment
+		}
+		pageBuilder := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topicID).WithNumber(number).WithTitle(name)
+		if trashed {
+			pageBuilder = pageBuilder.WithTrashed()
+		}
+		if _, err := parRepo.CreateBatch(context.Background(), pageBuilder.Build(), spaceID, []model.AttachmentID{id}); err != nil {
+			t.Fatalf("CreateBatch()のエラー = %v", err)
+		}
+		return attachment
+	}
+	public := newReferenced("public", publicTopicID, 1, false)
+	private := newReferenced("private", privateTopicID, 2, false)
+	trashed := newReferenced("trashed", publicTopicID, 3, true)
+	unreferenced := newReferenced("unreferenced", "", 0, false)
+
+	otherSpaceID, otherSpaceMemberID := testutil.SetupSpaceWithMember(t, tx, "attach-list-public-other")
+	otherTopicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("公開").Build()
+	otherPageID := testutil.NewPageBuilder(t, tx).WithSpaceID(otherSpaceID).WithTopicID(otherTopicID).WithNumber(1).WithTitle("公開").Build()
+	otherID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(otherSpaceID).WithSpaceMemberID(otherSpaceMemberID).
+		WithBlobKey("attach-list-public-other").Build()
+	if _, err := parRepo.CreateBatch(context.Background(), otherPageID, otherSpaceID, []model.AttachmentID{otherID}); err != nil {
+		t.Fatalf("別スペースの参照の作成に失敗: %v", err)
+	}
+	other := &model.Attachment{ID: otherID, SpaceID: otherSpaceID}
+
+	tests := []struct {
+		name        string
+		attachments []*model.Attachment
+		want        []model.AttachmentID
+	}{
+		{
+			name:        "公開トピックの生きているページだけが参照する添付ファイルを返す",
+			attachments: []*model.Attachment{public, private, trashed, unreferenced, {ID: "not-a-uuid", SpaceID: spaceID}},
+			want:        []model.AttachmentID{public.ID},
+		},
+		{
+			name:        "複数スペースの添付ファイルを所属スペースとの組で判定する",
+			attachments: []*model.Attachment{public, other},
+			want:        []model.AttachmentID{public.ID, other.ID},
+		},
+		{
+			name:        "同じ組を重複して渡してもIDは1回だけ返す",
+			attachments: []*model.Attachment{public, public, other},
+			want:        []model.AttachmentID{public.ID, other.ID},
+		},
+		{
+			name:        "別スペースを指定すると公開添付ファイルでも返さない",
+			attachments: []*model.Attachment{{ID: public.ID, SpaceID: otherSpaceID}},
+		},
+		{
+			name:        "IDとスペースを入れ替えると両方とも返さない",
+			attachments: []*model.Attachment{{ID: public.ID, SpaceID: otherSpaceID}, {ID: other.ID, SpaceID: spaceID}},
+		},
+		{
+			name:        "正しい組と誤った組が混在すれば正しい組だけ返す",
+			attachments: []*model.Attachment{{ID: public.ID, SpaceID: otherSpaceID}, other},
+			want:        []model.AttachmentID{other.ID},
+		},
+		{
+			name: "空の入力は結果を返さない",
+		},
+		{
+			name:        "UUIDでないIDやスペースの組は省く",
+			attachments: []*model.Attachment{{ID: "not-a-uuid", SpaceID: spaceID}, {ID: public.ID, SpaceID: "invalid-space"}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ids, err := repo.ListPubliclyReferencedIDsByAttachments(t.Context(), tt.attachments)
+			if err != nil {
+				t.Fatalf("ListPubliclyReferencedIDsByAttachments()のエラー = %v", err)
+			}
+			if len(ids) != len(tt.want) {
+				t.Fatalf("公開の添付ファイル = %v、期待値 = %v", ids, tt.want)
+			}
+			got := make(map[model.AttachmentID]bool, len(ids))
+			for _, id := range ids {
+				got[id] = true
+			}
+			for _, id := range tt.want {
+				if !got[id] {
+					t.Errorf("公開添付ファイル%sが含まれていない (結果 = %v)", id, ids)
+				}
+			}
+		})
+	}
+}
+
 func TestAttachmentRepository_FindBlobByIDAndSpace(t *testing.T) {
 	t.Parallel()
 
@@ -217,6 +447,98 @@ func TestAttachmentRepository_FindBlobByIDAndSpace(t *testing.T) {
 			t.Errorf("FindBlobByIDAndSpace() = %v、期待値 = nil", attachment)
 		}
 	})
+}
+
+func TestAttachmentRepository_FindPubliclyReferencedBlobByIDAndSpace(t *testing.T) {
+	t.Parallel()
+
+	type reference struct {
+		visibility     model.TopicVisibility
+		trashed        bool
+		discardedPage  bool
+		discardedTopic bool
+	}
+	tests := []struct {
+		name         string
+		suffix       string
+		references   []reference
+		wrongSpace   bool
+		attachmentID model.AttachmentID
+		wantFound    bool
+	}{
+		{name: "所属スペースの公開添付ファイルを取得できる", suffix: "public", references: []reference{{visibility: model.TopicVisibilityPublic}}, wantFound: true},
+		{name: "同じ添付ファイルIDでも異なるスペースでは取得できない", suffix: "other-space", references: []reference{{visibility: model.TopicVisibilityPublic}}, wrongSpace: true},
+		{name: "非公開トピックの参照があれば取得できない", suffix: "private", references: []reference{{visibility: model.TopicVisibilityPrivate}}},
+		{name: "公開と非公開の参照が混在すると取得できない", suffix: "mixed", references: []reference{{visibility: model.TopicVisibilityPublic}, {visibility: model.TopicVisibilityPrivate}}},
+		{name: "参照がなければ取得できない", suffix: "unreferenced"},
+		{name: "ゴミ箱のページだけの参照では取得できない", suffix: "trashed", references: []reference{{visibility: model.TopicVisibilityPublic, trashed: true}}},
+		{name: "削除済みページだけの参照では取得できない", suffix: "discarded-page", references: []reference{{visibility: model.TopicVisibilityPublic, discardedPage: true}}},
+		{name: "削除済みトピックだけの参照では取得できない", suffix: "discarded-topic", references: []reference{{visibility: model.TopicVisibilityPublic, discardedTopic: true}}},
+		{name: "ゴミ箱の非公開ページの参照は公開判定から除く", suffix: "ignore-trashed", references: []reference{{visibility: model.TopicVisibilityPublic}, {visibility: model.TopicVisibilityPrivate, trashed: true}}, wantFound: true},
+		{name: "削除済みの非公開ページの参照は公開判定から除く", suffix: "ignore-page", references: []reference{{visibility: model.TopicVisibilityPublic}, {visibility: model.TopicVisibilityPrivate, discardedPage: true}}, wantFound: true},
+		{name: "削除済みの非公開トピックの参照は公開判定から除く", suffix: "ignore-topic", references: []reference{{visibility: model.TopicVisibilityPublic}, {visibility: model.TopicVisibilityPrivate, discardedTopic: true}}, wantFound: true},
+		{name: "存在しないIDは取得できない", suffix: "missing", attachmentID: "00000000-0000-0000-0000-000000000000"},
+		{name: "UUIDでないIDは取得できない", suffix: "invalid", attachmentID: "not-a-uuid"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, tx := testutil.SetupTx(t)
+			q := testutil.QueriesWithTx(tx)
+			repo := NewAttachmentRepository(q)
+			parRepo := NewPageAttachmentReferenceRepository(q)
+			prefix := "attach-scoped-" + tt.suffix
+			spaceID, spaceMemberID := testutil.SetupSpaceWithMember(t, tx, prefix)
+			attachmentID := testutil.NewAttachmentBuilder(t, tx).
+				WithSpaceID(spaceID).WithSpaceMemberID(spaceMemberID).
+				WithContentType("image/png").WithBlobKey(prefix + "-key").Build()
+			for i, ref := range tt.references {
+				topic := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).
+					WithNumber(int32(i + 1)).WithName(fmt.Sprintf("reference-%d", i+1)).WithVisibility(int32(ref.visibility))
+				if ref.discardedTopic {
+					topic.WithDiscarded()
+				}
+				page := testutil.NewPageBuilder(t, tx).WithSpaceID(spaceID).WithTopicID(topic.Build()).
+					WithNumber(model.PageNumber(i + 1)).WithTitle("参照元")
+				if ref.trashed {
+					page.WithTrashed()
+				}
+				if ref.discardedPage {
+					page.WithDiscarded()
+				}
+				if _, err := parRepo.CreateBatch(t.Context(), page.Build(), spaceID, []model.AttachmentID{attachmentID}); err != nil {
+					t.Fatalf("添付ファイルの参照の作成に失敗: %v", err)
+				}
+			}
+
+			lookupSpaceID := spaceID
+			if tt.wrongSpace {
+				lookupSpaceID = testutil.NewSpaceBuilder(t, tx).WithIdentifier(prefix + "-other").Build()
+			}
+			if tt.attachmentID != "" {
+				attachmentID = tt.attachmentID
+			}
+			got, err := repo.FindPubliclyReferencedBlobByIDAndSpace(t.Context(), attachmentID, lookupSpaceID)
+			if err != nil {
+				t.Fatalf("FindPubliclyReferencedBlobByIDAndSpace()のエラー = %v", err)
+			}
+			if !tt.wantFound {
+				if got != nil {
+					t.Errorf("取得結果 = %+v、期待値 = nil", got)
+				}
+				return
+			}
+			if got == nil {
+				t.Fatal("添付ファイルを取得できなかった、期待値 = 公開添付ファイル")
+			}
+			want := model.Attachment{ID: attachmentID, SpaceID: spaceID, BlobKey: prefix + "-key", ContentType: "image/png"}
+			if *got != want {
+				t.Errorf("取得結果 = %+v、期待値 = %+v", *got, want)
+			}
+		})
+	}
 }
 
 func TestAttachmentRepository_FindPubliclyReferencedBlobByID(t *testing.T) {
@@ -921,4 +1243,243 @@ func TestAttachmentRepository_ListByPageIDsAndSpace(t *testing.T) {
 			t.Errorf("ListByPageIDsAndSpace()の件数 = %d、期待値 = 0", len(pageAttachments))
 		}
 	})
+}
+
+func TestAttachmentRepository_Processing(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	q := testutil.QueriesWithTx(tx)
+	repo := NewAttachmentRepository(q)
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("attach-processing@example.com").
+		WithAtname("attachprocessing").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("attach-processing").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("attach-processing-other").Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+
+	attachedAt := time.Date(2026, 11, 15, 1, 2, 3, 0, time.UTC)
+	attachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		WithContentType("image/jpeg").
+		WithByteSize(2048).
+		WithBlobKey("attach-processing-key").
+		WithAttachedAt(attachedAt).
+		Build()
+	otherAttachmentID := testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(spaceID).
+		WithSpaceMemberID(spaceMemberID).
+		WithBlobKey("attach-processing-other-key").
+		Build()
+
+	t.Run("処理に使う項目を取得できる", func(t *testing.T) {
+		attachment, err := repo.FindForProcessingByIDAndSpace(ctx, attachmentID, spaceID)
+		if err != nil {
+			t.Fatalf("FindForProcessingByIDAndSpace()のエラー = %v", err)
+		}
+		if attachment == nil {
+			t.Fatal("FindForProcessingByIDAndSpace()がnilを返した、期待値 = 添付ファイル")
+		}
+		want := model.Attachment{
+			ID:               attachmentID,
+			SpaceID:          spaceID,
+			BlobKey:          "attach-processing-key",
+			ContentType:      "image/jpeg",
+			ByteSize:         2048,
+			ProcessingStatus: model.AttachmentProcessingStatusPending,
+			AttachedAt:       attachedAt,
+		}
+		if !attachment.AttachedAt.Equal(want.AttachedAt) {
+			t.Errorf("AttachedAt = %v、期待値 = %v", attachment.AttachedAt, want.AttachedAt)
+		}
+		attachment.AttachedAt = want.AttachedAt
+		if *attachment != want {
+			t.Errorf("FindForProcessingByIDAndSpace() = %+v、期待値 = %+v", *attachment, want)
+		}
+	})
+
+	t.Run("ほかのスペースを指定するとnilを返す", func(t *testing.T) {
+		attachment, err := repo.FindForProcessingByIDAndSpace(ctx, attachmentID, otherSpaceID)
+		if err != nil {
+			t.Fatalf("FindForProcessingByIDAndSpace()のエラー = %v", err)
+		}
+		if attachment != nil {
+			t.Errorf("FindForProcessingByIDAndSpace() = %+v、期待値 = nil", attachment)
+		}
+	})
+
+	t.Run("今の状態がfromのときだけ状態を変える", func(t *testing.T) {
+		now := time.Now()
+		changed, err := repo.UpdateProcessingStatus(ctx, attachmentID, spaceID, model.AttachmentProcessingStatusCompleted, model.AttachmentProcessingStatusFailed, now)
+		if err != nil {
+			t.Fatalf("UpdateProcessingStatus()のエラー = %v", err)
+		}
+		if changed {
+			t.Error("状態が違うのに変えた")
+		}
+
+		changed, err = repo.UpdateProcessingStatus(ctx, attachmentID, otherSpaceID, model.AttachmentProcessingStatusPending, model.AttachmentProcessingStatusProcessing, now)
+		if err != nil {
+			t.Fatalf("UpdateProcessingStatus()のエラー = %v", err)
+		}
+		if changed {
+			t.Error("ほかのスペースを指定したのに変えた")
+		}
+
+		changed, err = repo.UpdateProcessingStatus(ctx, attachmentID, spaceID, model.AttachmentProcessingStatusPending, model.AttachmentProcessingStatusProcessing, now)
+		if err != nil {
+			t.Fatalf("UpdateProcessingStatus()のエラー = %v", err)
+		}
+		if !changed {
+			t.Error("状態を変えなかった")
+		}
+
+		for id, want := range map[model.AttachmentID]model.AttachmentProcessingStatus{
+			attachmentID:      model.AttachmentProcessingStatusProcessing,
+			otherAttachmentID: model.AttachmentProcessingStatusPending,
+		} {
+			got, err := repo.FindForProcessingByIDAndSpace(ctx, id, spaceID)
+			if err != nil {
+				t.Fatalf("FindForProcessingByIDAndSpace()のエラー = %v", err)
+			}
+			if got.ProcessingStatus != want {
+				t.Errorf("%sの状態 = %d、期待値 = %d", id, got.ProcessingStatus, want)
+			}
+		}
+	})
+
+	t.Run("blobのバイト数とチェックサムを、指定したスペースの添付ファイルだけ更新する", func(t *testing.T) {
+		if err := repo.UpdateBlobContent(ctx, attachmentID, otherSpaceID, 1, "other"); err != nil {
+			t.Fatalf("UpdateBlobContent()のエラー = %v", err)
+		}
+		if err := repo.UpdateBlobContent(ctx, attachmentID, spaceID, 1000, "CY9rzUYh03PK3k6DJie09g=="); err != nil {
+			t.Fatalf("UpdateBlobContent()のエラー = %v", err)
+		}
+
+		rows, err := tx.QueryContext(ctx, `SELECT a.id, asb.byte_size, COALESCE(asb.checksum, '') FROM attachments a
+			INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+			INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+			WHERE a.id = ANY($1::uuid[])`, "{"+string(attachmentID)+","+string(otherAttachmentID)+"}")
+		if err != nil {
+			t.Fatalf("blobの取得に失敗: %v", err)
+		}
+		defer func() { _ = rows.Close() }()
+		got := map[string]string{}
+		for rows.Next() {
+			var id, checksum string
+			var byteSize int64
+			if err := rows.Scan(&id, &byteSize, &checksum); err != nil {
+				t.Fatalf("blobの読み取りに失敗: %v", err)
+			}
+			got[id] = fmt.Sprintf("%d %s", byteSize, checksum)
+		}
+		want := map[string]string{
+			string(attachmentID):      "1000 CY9rzUYh03PK3k6DJie09g==",
+			string(otherAttachmentID): "1024 ",
+		}
+		for id, w := range want {
+			if got[id] != w {
+				t.Errorf("%sのblob = %q、期待値 = %q", id, got[id], w)
+			}
+		}
+	})
+}
+
+func TestAttachmentRepository_Create(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewAttachmentRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	userID := testutil.NewUserBuilder(t, tx).
+		WithEmail("attach-create@example.com").
+		WithAtname("attachcreate").
+		Build()
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("attach-create").Build()
+	spaceMemberID := testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(spaceID).WithUserID(userID).Build()
+
+	// UTCでない時刻を渡しても、UTCの時刻で書く
+	attachedAt := time.Date(2026, 11, 15, 10, 2, 3, 456000000, time.FixedZone("JST", 9*60*60))
+	id, err := repo.Create(ctx, CreateAttachmentInput{
+		SpaceID:       spaceID,
+		UserID:        userID,
+		SpaceMemberID: spaceMemberID,
+		BlobKey:       "attachcreatekey0000000000000",
+		Filename:      "写真.png",
+		ContentType:   "image/png",
+		ByteSize:      2048,
+		Checksum:      "1B2M2Y8AsgTpgAmY7PhCfg==",
+		AttachedAt:    attachedAt,
+	})
+	if err != nil {
+		t.Fatalf("Create()のエラー = %v", err)
+	}
+
+	var (
+		key, filename, contentType, metadata, serviceName, checksum string
+		byteSize                                                    int64
+		blobCreatedAt                                               time.Time
+		name, recordType, recordID                                  string
+		storageCreatedAt                                            time.Time
+		attachmentSpaceID, attachedSpaceMemberID                    string
+		gotAttachedAt, createdAt, updatedAt                         time.Time
+		processingStatus                                            int32
+	)
+	err = tx.QueryRowContext(ctx, `
+		SELECT b.key, b.filename, b.content_type, b.metadata, b.service_name, b.byte_size, b.checksum, b.created_at,
+		       asa.name, asa.record_type, asa.record_id, asa.created_at,
+		       a.space_id, a.attached_space_member_id, a.attached_at, a.created_at, a.updated_at, a.processing_status
+		FROM attachments a
+		INNER JOIN active_storage_attachments asa ON asa.id = a.active_storage_attachment_id
+		INNER JOIN active_storage_blobs b ON b.id = asa.blob_id
+		WHERE a.id = $1 AND a.space_id = $2`, string(id), string(spaceID),
+	).Scan(&key, &filename, &contentType, &metadata, &serviceName, &byteSize, &checksum, &blobCreatedAt,
+		&name, &recordType, &recordID, &storageCreatedAt,
+		&attachmentSpaceID, &attachedSpaceMemberID, &gotAttachedAt, &createdAt, &updatedAt, &processingStatus)
+	if err != nil {
+		t.Fatalf("作った行の取得に失敗: %v", err)
+	}
+
+	wantMetadata := `{"space_id":"` + string(spaceID) + `","user_id":"` + string(userID) + `"}`
+	for _, c := range []struct{ field, got, want string }{
+		{"key", key, "attachcreatekey0000000000000"},
+		{"filename", filename, "写真.png"},
+		{"content_type", contentType, "image/png"},
+		{"metadata", metadata, wantMetadata},
+		{"service_name", serviceName, "cloudflare_r2"},
+		{"checksum", checksum, "1B2M2Y8AsgTpgAmY7PhCfg=="},
+		{"name", name, "file"},
+		{"record_type", recordType, "SpaceRecord"},
+		{"record_id", recordID, string(spaceID)},
+		{"space_id", attachmentSpaceID, string(spaceID)},
+		{"attached_space_member_id", attachedSpaceMemberID, string(spaceMemberID)},
+	} {
+		if c.got != c.want {
+			t.Errorf("%s = %q、期待値 = %q", c.field, c.got, c.want)
+		}
+	}
+	if byteSize != 2048 {
+		t.Errorf("byte_size = %d、期待値 = 2048", byteSize)
+	}
+	if processingStatus != int32(model.AttachmentProcessingStatusPending) {
+		t.Errorf("processing_status = %d、期待値 = %d", processingStatus, model.AttachmentProcessingStatusPending)
+	}
+	// タイムゾーンを持たない列は、書いたUTCの壁時計の時刻をそのまま返す
+	wantTime := attachedAt.UTC()
+	for field, got := range map[string]time.Time{
+		"active_storage_blobs.created_at":       blobCreatedAt,
+		"active_storage_attachments.created_at": storageCreatedAt,
+		"attachments.attached_at":               gotAttachedAt,
+		"attachments.created_at":                createdAt,
+		"attachments.updated_at":                updatedAt,
+	} {
+		if !got.Equal(wantTime) {
+			t.Errorf("%s = %v、期待値 = %v", field, got, wantTime)
+		}
+	}
 }

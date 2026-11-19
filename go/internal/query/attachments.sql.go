@@ -8,9 +8,92 @@ package query
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/lib/pq"
 )
+
+const createAttachment = `-- name: CreateAttachment :one
+INSERT INTO attachments (space_id, active_storage_attachment_id, attached_space_member_id, attached_at, created_at, updated_at, processing_status)
+VALUES ($1, $2, $3, $4, $4, $4, $5)
+RETURNING id
+`
+
+type CreateAttachmentParams struct {
+	SpaceID                   string    `json:"space_id"`
+	ActiveStorageAttachmentID string    `json:"active_storage_attachment_id"`
+	AttachedSpaceMemberID     string    `json:"attached_space_member_id"`
+	AttachedAt                time.Time `json:"attached_at"`
+	ProcessingStatus          int32     `json:"processing_status"`
+}
+
+// 事前署名した添付ファイルを、処理待ちの状態で作る
+func (q *Queries) CreateAttachment(ctx context.Context, arg CreateAttachmentParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, createAttachment,
+		arg.SpaceID,
+		arg.ActiveStorageAttachmentID,
+		arg.AttachedSpaceMemberID,
+		arg.AttachedAt,
+		arg.ProcessingStatus,
+	)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createAttachmentBlob = `-- name: CreateAttachmentBlob :one
+INSERT INTO active_storage_blobs (key, filename, content_type, metadata, service_name, byte_size, checksum, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id
+`
+
+type CreateAttachmentBlobParams struct {
+	Key         string         `json:"key"`
+	Filename    string         `json:"filename"`
+	ContentType sql.NullString `json:"content_type"`
+	Metadata    sql.NullString `json:"metadata"`
+	ServiceName string         `json:"service_name"`
+	ByteSize    int64          `json:"byte_size"`
+	Checksum    sql.NullString `json:"checksum"`
+	CreatedAt   time.Time      `json:"created_at"`
+}
+
+// 事前署名した添付ファイルのblobを作る。Rails版 (ActiveStorage::Blob.create_before_direct_upload!) と同じ形の行にする
+func (q *Queries) CreateAttachmentBlob(ctx context.Context, arg CreateAttachmentBlobParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, createAttachmentBlob,
+		arg.Key,
+		arg.Filename,
+		arg.ContentType,
+		arg.Metadata,
+		arg.ServiceName,
+		arg.ByteSize,
+		arg.Checksum,
+		arg.CreatedAt,
+	)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createAttachmentStorageAttachment = `-- name: CreateAttachmentStorageAttachment :one
+INSERT INTO active_storage_attachments (name, record_type, record_id, blob_id, created_at)
+VALUES ('file', 'SpaceRecord', $1, $2, $3)
+RETURNING id
+`
+
+type CreateAttachmentStorageAttachmentParams struct {
+	SpaceID   string    `json:"space_id"`
+	BlobID    string    `json:"blob_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// 事前署名した添付ファイルのblobを、Rails版と同じくスペースのレコードに関連付ける
+func (q *Queries) CreateAttachmentStorageAttachment(ctx context.Context, arg CreateAttachmentStorageAttachmentParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, createAttachmentStorageAttachment, arg.SpaceID, arg.BlobID, arg.CreatedAt)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
 
 const existsAttachmentByIDAndSpace = `-- name: ExistsAttachmentByIDAndSpace :one
 SELECT EXISTS(
@@ -29,6 +112,41 @@ func (q *Queries) ExistsAttachmentByIDAndSpace(ctx context.Context, arg ExistsAt
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const findAttachmentBlobByID = `-- name: FindAttachmentBlobByID :one
+SELECT a.id, a.space_id, asb.filename, asb.content_type AS blob_content_type, asb.byte_size AS blob_byte_size, asb.key AS blob_key
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.id = $1
+`
+
+type FindAttachmentBlobByIDRow struct {
+	ID              string         `json:"id"`
+	SpaceID         string         `json:"space_id"`
+	Filename        string         `json:"filename"`
+	BlobContentType sql.NullString `json:"blob_content_type"`
+	BlobByteSize    int64          `json:"blob_byte_size"`
+	BlobKey         string         `json:"blob_key"`
+}
+
+// IDだけで添付ファイルを取得する (ファイル名・種類・バイト数・ストレージキーを含む)。
+// Web画面の `/attachments/{id}` はURLにスペースを含まないため、最初にこのクエリで添付ファイルと
+// そのスペースを引く。space_idを条件に持たないのはこの経路のためで、閲覧の判定は呼び出し側が
+// 引いたスペースで行う
+func (q *Queries) FindAttachmentBlobByID(ctx context.Context, id string) (FindAttachmentBlobByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, findAttachmentBlobByID, id)
+	var i FindAttachmentBlobByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.Filename,
+		&i.BlobContentType,
+		&i.BlobByteSize,
+		&i.BlobKey,
+	)
+	return i, err
 }
 
 const findAttachmentBlobByIDAndSpace = `-- name: FindAttachmentBlobByIDAndSpace :one
@@ -69,6 +187,57 @@ func (q *Queries) FindAttachmentBlobByIDAndSpace(ctx context.Context, arg FindAt
 	return i, err
 }
 
+const findAttachmentBlobsByIDs = `-- name: FindAttachmentBlobsByIDs :many
+SELECT a.id, a.space_id, asb.filename, asb.content_type AS blob_content_type, asb.byte_size AS blob_byte_size, asb.key AS blob_key
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.id = ANY($1::uuid[])
+`
+
+type FindAttachmentBlobsByIDsRow struct {
+	ID              string         `json:"id"`
+	SpaceID         string         `json:"space_id"`
+	Filename        string         `json:"filename"`
+	BlobContentType sql.NullString `json:"blob_content_type"`
+	BlobByteSize    int64          `json:"blob_byte_size"`
+	BlobKey         string         `json:"blob_key"`
+}
+
+// IDリストだけで添付ファイルを一括取得する (ファイル名・種類・バイト数・ストレージキーを含む)。
+// Web画面の署名付きURLの一括取得 (`POST /attachments/signed_urls`) は、複数のスペースのIDを受け取りうるため、
+// 最初にこのクエリで添付ファイルとそのスペースを引く。space_idを条件に持たないのはこの経路のためで、
+// 閲覧の判定は呼び出し側が添付ファイルごとのスペースで行う
+func (q *Queries) FindAttachmentBlobsByIDs(ctx context.Context, ids []string) ([]FindAttachmentBlobsByIDsRow, error) {
+	rows, err := q.db.QueryContext(ctx, findAttachmentBlobsByIDs, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FindAttachmentBlobsByIDsRow{}
+	for rows.Next() {
+		var i FindAttachmentBlobsByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpaceID,
+			&i.Filename,
+			&i.BlobContentType,
+			&i.BlobByteSize,
+			&i.BlobKey,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findAttachmentByIDAndSpace = `-- name: FindAttachmentByIDAndSpace :one
 SELECT a.id, a.space_id, asb.filename
 FROM attachments a
@@ -93,6 +262,45 @@ func (q *Queries) FindAttachmentByIDAndSpace(ctx context.Context, arg FindAttach
 	row := q.db.QueryRowContext(ctx, findAttachmentByIDAndSpace, arg.ID, arg.SpaceID)
 	var i FindAttachmentByIDAndSpaceRow
 	err := row.Scan(&i.ID, &i.SpaceID, &i.Filename)
+	return i, err
+}
+
+const findAttachmentForProcessingByIDAndSpace = `-- name: FindAttachmentForProcessingByIDAndSpace :one
+SELECT a.id, a.space_id, a.processing_status, a.attached_at, asb.content_type AS blob_content_type, asb.byte_size AS blob_byte_size, asb.key AS blob_key
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.id = $1 AND a.space_id = $2
+`
+
+type FindAttachmentForProcessingByIDAndSpaceParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+type FindAttachmentForProcessingByIDAndSpaceRow struct {
+	ID               string         `json:"id"`
+	SpaceID          string         `json:"space_id"`
+	ProcessingStatus int32          `json:"processing_status"`
+	AttachedAt       time.Time      `json:"attached_at"`
+	BlobContentType  sql.NullString `json:"blob_content_type"`
+	BlobByteSize     int64          `json:"blob_byte_size"`
+	BlobKey          string         `json:"blob_key"`
+}
+
+// IDとスペースIDで、アップロード後の処理に使う添付ファイルを取得する (処理の状態・作った時刻・blobの種類とストレージキーを含む)
+func (q *Queries) FindAttachmentForProcessingByIDAndSpace(ctx context.Context, arg FindAttachmentForProcessingByIDAndSpaceParams) (FindAttachmentForProcessingByIDAndSpaceRow, error) {
+	row := q.db.QueryRowContext(ctx, findAttachmentForProcessingByIDAndSpace, arg.ID, arg.SpaceID)
+	var i FindAttachmentForProcessingByIDAndSpaceRow
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.ProcessingStatus,
+		&i.AttachedAt,
+		&i.BlobContentType,
+		&i.BlobByteSize,
+		&i.BlobKey,
+	)
 	return i, err
 }
 
@@ -199,6 +407,63 @@ func (q *Queries) FindPubliclyReferencedAttachmentBlobByID(ctx context.Context, 
 	return i, err
 }
 
+const findPubliclyReferencedAttachmentBlobByIDAndSpace = `-- name: FindPubliclyReferencedAttachmentBlobByIDAndSpace :one
+SELECT a.id, a.space_id, asb.key AS blob_key, asb.content_type AS blob_content_type
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.id = $1 AND a.space_id = $2
+  AND EXISTS (
+    SELECT 1 FROM page_attachment_references par
+    INNER JOIN pages p ON par.page_id = p.id
+    INNER JOIN topics t ON p.topic_id = t.id
+    WHERE par.attachment_id = a.id
+      AND p.space_id = a.space_id
+      AND t.space_id = a.space_id
+      AND p.discarded_at IS NULL
+      AND p.trashed_at IS NULL
+      AND t.discarded_at IS NULL
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM page_attachment_references par
+    INNER JOIN pages p ON par.page_id = p.id
+    INNER JOIN topics t ON p.topic_id = t.id
+    WHERE par.attachment_id = a.id
+      AND p.space_id = a.space_id
+      AND t.space_id = a.space_id
+      AND p.discarded_at IS NULL
+      AND p.trashed_at IS NULL
+      AND t.discarded_at IS NULL
+      AND t.visibility <> 0
+  )
+`
+
+type FindPubliclyReferencedAttachmentBlobByIDAndSpaceParams struct {
+	ID      string `json:"id"`
+	SpaceID string `json:"space_id"`
+}
+
+type FindPubliclyReferencedAttachmentBlobByIDAndSpaceRow struct {
+	ID              string         `json:"id"`
+	SpaceID         string         `json:"space_id"`
+	BlobKey         string         `json:"blob_key"`
+	BlobContentType sql.NullString `json:"blob_content_type"`
+}
+
+// IDとスペースIDで、公開トピックの生きているページだけが参照する添付ファイルのblob情報を取得する。
+// 添付ファイルの所属スペースを確定した後の公開判定に使う。参照集合の条件は公開og:image配信と揃える
+func (q *Queries) FindPubliclyReferencedAttachmentBlobByIDAndSpace(ctx context.Context, arg FindPubliclyReferencedAttachmentBlobByIDAndSpaceParams) (FindPubliclyReferencedAttachmentBlobByIDAndSpaceRow, error) {
+	row := q.db.QueryRowContext(ctx, findPubliclyReferencedAttachmentBlobByIDAndSpace, arg.ID, arg.SpaceID)
+	var i FindPubliclyReferencedAttachmentBlobByIDAndSpaceRow
+	err := row.Scan(
+		&i.ID,
+		&i.SpaceID,
+		&i.BlobKey,
+		&i.BlobContentType,
+	)
+	return i, err
+}
+
 const listAttachmentsByPageIDsAndSpace = `-- name: ListAttachmentsByPageIDsAndSpace :many
 SELECT par.page_id, a.id, a.space_id, asb.filename, asb.key AS blob_key
 FROM page_attachment_references par
@@ -256,4 +521,123 @@ func (q *Queries) ListAttachmentsByPageIDsAndSpace(ctx context.Context, arg List
 		return nil, err
 	}
 	return items, nil
+}
+
+const listPubliclyReferencedAttachmentIDsByIDAndSpacePairs = `-- name: ListPubliclyReferencedAttachmentIDsByIDAndSpacePairs :many
+SELECT DISTINCT a.id
+FROM attachments a
+INNER JOIN (
+  SELECT unnest($1::uuid[]) AS id, unnest($2::uuid[]) AS space_id
+) AS pairs ON a.id = pairs.id AND a.space_id = pairs.space_id
+WHERE EXISTS (
+    SELECT 1 FROM page_attachment_references par
+    INNER JOIN pages p ON par.page_id = p.id
+    INNER JOIN topics t ON p.topic_id = t.id
+    WHERE par.attachment_id = a.id
+      AND p.space_id = a.space_id
+      AND t.space_id = a.space_id
+      AND p.discarded_at IS NULL
+      AND p.trashed_at IS NULL
+      AND t.discarded_at IS NULL
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM page_attachment_references par
+    INNER JOIN pages p ON par.page_id = p.id
+    INNER JOIN topics t ON p.topic_id = t.id
+    WHERE par.attachment_id = a.id
+      AND p.space_id = a.space_id
+      AND t.space_id = a.space_id
+      AND p.discarded_at IS NULL
+      AND p.trashed_at IS NULL
+      AND t.discarded_at IS NULL
+      AND t.visibility <> 0
+  )
+`
+
+type ListPubliclyReferencedAttachmentIDsByIDAndSpacePairsParams struct {
+	Ids      []string `json:"ids"`
+	SpaceIds []string `json:"space_ids"`
+}
+
+// 取得済みのIDとスペースIDの組のうち、生きている公開トピックのページだけが参照する添付ファイルのIDを返す。
+// IDとスペースIDの配列の同じ位置を1つの組として扱い、署名付きURLの一括取得の公開判定に使う。
+// 参照集合の条件は公開og:image配信 (FindPubliclyReferencedAttachmentBlobByID) と揃える
+func (q *Queries) ListPubliclyReferencedAttachmentIDsByIDAndSpacePairs(ctx context.Context, arg ListPubliclyReferencedAttachmentIDsByIDAndSpacePairsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listPubliclyReferencedAttachmentIDsByIDAndSpacePairs, pq.Array(arg.Ids), pq.Array(arg.SpaceIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateAttachmentBlobContent = `-- name: UpdateAttachmentBlobContent :exec
+UPDATE active_storage_blobs asb
+SET byte_size = $1, checksum = $2
+FROM active_storage_attachments asa
+INNER JOIN attachments a ON a.active_storage_attachment_id = asa.id
+WHERE asb.id = asa.blob_id AND a.id = $3 AND a.space_id = $4
+`
+
+type UpdateAttachmentBlobContentParams struct {
+	ByteSize int64          `json:"byte_size"`
+	Checksum sql.NullString `json:"checksum"`
+	ID       string         `json:"id"`
+	SpaceID  string         `json:"space_id"`
+}
+
+// 添付ファイルのblobのバイト数とチェックサムを、アップロード後の処理で書き換えた内容の値に更新する。
+// active_storage_blobsはspace_idを持たないため、添付ファイルを通してスペースを確かめる
+func (q *Queries) UpdateAttachmentBlobContent(ctx context.Context, arg UpdateAttachmentBlobContentParams) error {
+	_, err := q.db.ExecContext(ctx, updateAttachmentBlobContent,
+		arg.ByteSize,
+		arg.Checksum,
+		arg.ID,
+		arg.SpaceID,
+	)
+	return err
+}
+
+const updateAttachmentProcessingStatus = `-- name: UpdateAttachmentProcessingStatus :execrows
+UPDATE attachments
+SET processing_status = $1, updated_at = $2
+WHERE id = $3 AND space_id = $4 AND processing_status = $5
+`
+
+type UpdateAttachmentProcessingStatusParams struct {
+	ToStatus   int32     `json:"to_status"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	ID         string    `json:"id"`
+	SpaceID    string    `json:"space_id"`
+	FromStatus int32     `json:"from_status"`
+}
+
+// 添付ファイルの処理の状態を、今の状態がfrom_statusのときだけto_statusに変える。
+// 変えた行の数を返し、ほかの処理が先に状態を変えていたら0になる
+func (q *Queries) UpdateAttachmentProcessingStatus(ctx context.Context, arg UpdateAttachmentProcessingStatusParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateAttachmentProcessingStatus,
+		arg.ToStatus,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SpaceID,
+		arg.FromStatus,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

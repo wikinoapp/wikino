@@ -79,6 +79,7 @@ func TestGuestPolicy_AllRestrictedMethodsReturnFalse(t *testing.T) {
 		{"CanEditSuggestionPage", p.CanEditSuggestionPage()},
 		{"CanCreateSuggestionComment", p.CanCreateSuggestionComment()},
 		{"CanUpdateSuggestionComment", p.CanUpdateSuggestionComment(openSuggestion)},
+		{"CanCreateAttachment", p.CanCreateAttachment()},
 		{"CanCreateTopic", p.CanCreateTopic()},
 		{"CanExportSpace", p.CanExportSpace()},
 		{"CanUpdateSpace", p.CanUpdateSpace()},

@@ -83,6 +83,17 @@ type DeletionDeps struct {
 	SpaceMemberRepo             *repository.SpaceMemberRepository
 }
 
+// AttachmentProcessingDepsは、添付ファイルのアップロード後の処理のワーカーが使うものを保持する。
+// データベース・リポジトリ・オブジェクトストレージはHTTP側と共有するため、ここで作り直さず受け取る。
+//
+// ObjectStorageがnilのときは、ワーカーを登録しない。オブジェクトストレージが設定されていない
+// デプロイでは事前署名もできず、処理のジョブが投入されないためである。
+type AttachmentProcessingDeps struct {
+	DB             *sql.DB
+	AttachmentRepo *repository.AttachmentRepository
+	ObjectStorage  storage.ObjectStorage
+}
+
 // ClientはRiverクライアントのラッパー
 type Client struct {
 	riverClient *river.Client[pgx.Tx]
@@ -90,7 +101,7 @@ type Client struct {
 }
 
 // NewClientは新しいRiverクライアントを作成します
-func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps, deletionDeps DeletionDeps) (*Client, error) {
+func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps, deletionDeps DeletionDeps, attachmentProcessingDeps AttachmentProcessingDeps) (*Client, error) {
 	// pgxpoolの作成
 	poolConfig, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -145,6 +156,15 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 		slog.InfoContext(ctx, "GenerateExportFilesWorkerを登録しました")
 	} else {
 		slog.WarnContext(ctx, "オブジェクトストレージが設定されていません。スペースのエクスポート機能は利用できません")
+	}
+
+	if attachmentProcessingDeps.ObjectStorage != nil {
+		river.AddWorker(workers, NewProcessAttachmentWorker(usecase.NewProcessAttachmentUsecase(
+			attachmentProcessingDeps.DB,
+			attachmentProcessingDeps.AttachmentRepo,
+			attachmentProcessingDeps.ObjectStorage,
+		)))
+		slog.InfoContext(ctx, "ProcessAttachmentWorkerを登録しました")
 	}
 
 	// Rate Limitクリーンアップワーカーを登録

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -58,6 +59,10 @@ type fakeS3 struct {
 	// それ以外のコードは、不在として扱うのではなくアダプタが報告すべき失敗を表す。
 	getErrorCode    string
 	deleteErrorCode string
+
+	// headStatusは、0でなければHeadObjectにそのステータスを本文無しで返させる。HEADの応答は
+	// 本文を持たないため、エラーはステータスだけで伝わる。
+	headStatus int
 }
 
 func newFakeS3() *fakeS3 {
@@ -83,6 +88,8 @@ func (f *fakeS3) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.putObject(w, r, key)
 	case r.Method == http.MethodGet:
 		f.getObject(w, r, key)
+	case r.Method == http.MethodHead:
+		f.headObject(w, key)
 	case r.Method == http.MethodDelete && query.Get("uploadId") != "":
 		f.abortMultipartUpload(w, r, key, query.Get("uploadId"))
 	case r.Method == http.MethodDelete:
@@ -188,6 +195,23 @@ func (f *fakeS3) getObject(w http.ResponseWriter, r *http.Request, key string) {
 	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(body)
+}
+
+func (f *fakeS3) headObject(w http.ResponseWriter, key string) {
+	f.mu.Lock()
+	body, ok := f.objects[key]
+	status := f.headStatus
+	f.mu.Unlock()
+
+	switch {
+	case status != 0:
+		w.WriteHeader(status)
+	case !ok:
+		w.WriteHeader(http.StatusNotFound)
+	default:
+		w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func (f *fakeS3) abortMultipartUpload(w http.ResponseWriter, r *http.Request, key, uploadID string) {
@@ -666,6 +690,54 @@ func TestS3ObjectStorage_Get(t *testing.T) {
 	})
 }
 
+func TestS3ObjectStorage_Exists(t *testing.T) {
+	t.Parallel()
+
+	t.Run("正常系: あるオブジェクトはtrue、無いオブジェクトはfalseになる", func(t *testing.T) {
+		t.Parallel()
+
+		s, _ := newTestStorage(t)
+		ctx := context.Background()
+		const key = "attachments/photo.png"
+
+		if err := s.Upload(ctx, storage.UploadInput{Key: key, Body: strings.NewReader("png")}); err != nil {
+			t.Fatalf("Upload()のエラー = %v", err)
+		}
+
+		exists, err := s.Exists(ctx, key)
+		if err != nil {
+			t.Fatalf("Exists()のエラー = %v", err)
+		}
+		if !exists {
+			t.Error("Exists() = false、期待値 = true")
+		}
+
+		exists, err = s.Exists(ctx, "attachments/gone.png")
+		if err != nil {
+			t.Fatalf("Exists()のエラー = %v", err)
+		}
+		if exists {
+			t.Error("Exists() = true、期待値 = false")
+		}
+	})
+
+	// 404以外の失敗をオブジェクトの不在として扱うと、アップロード後の処理が、届いているオブジェクトを
+	// 待ち続けてしまう。
+	t.Run("異常系: 404以外の応答はエラーにする", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		fake.mu.Lock()
+		fake.headStatus = http.StatusForbidden
+		fake.mu.Unlock()
+
+		exists, err := s.Exists(context.Background(), "attachments/photo.png")
+		if err == nil {
+			t.Fatalf("Exists()のエラー = nil、期待値 = エラー (結果 = %v)", exists)
+		}
+	})
+}
+
 func TestS3ObjectStorage_Delete(t *testing.T) {
 	t.Parallel()
 
@@ -746,7 +818,7 @@ func TestS3ObjectStorage_PresignedGetURL(t *testing.T) {
 			t.Parallel()
 
 			s, _ := newTestStorageWithRegion(t, tt.region)
-			presigned, err := s.PresignedGetURL(context.Background(), key, 24*time.Hour)
+			presigned, err := s.PresignedGetURL(context.Background(), key, 24*time.Hour, storage.PresignedGetOptions{})
 			if err != nil {
 				t.Fatalf("PresignedGetURL()のエラー = %v", err)
 			}
@@ -773,5 +845,96 @@ func TestS3ObjectStorage_PresignedGetURL(t *testing.T) {
 				t.Errorf("署名リージョン = %q、期待値 = %q", got, tt.wantRegion)
 			}
 		})
+	}
+}
+
+func TestS3ObjectStorage_PresignedGetURL_ResponseHeaders(t *testing.T) {
+	t.Parallel()
+
+	const key = "attachments/diagram"
+
+	t.Run("正常系: 指定した応答ヘッダーを署名に含める", func(t *testing.T) {
+		t.Parallel()
+
+		s, _ := newTestStorageWithRegion(t, "")
+		presigned, err := s.PresignedGetURL(context.Background(), key, 5*time.Minute, storage.PresignedGetOptions{
+			ResponseContentDisposition: `attachment; filename="diagram.svg"; filename*=UTF-8''diagram.svg`,
+			ResponseContentType:        "application/octet-stream",
+		})
+		if err != nil {
+			t.Fatalf("PresignedGetURL()のエラー = %v", err)
+		}
+
+		parsed, err := url.Parse(presigned)
+		if err != nil {
+			t.Fatalf("presigned URLのパースに失敗: %v", err)
+		}
+		query := parsed.Query()
+		if got, want := query.Get("response-content-disposition"), `attachment; filename="diagram.svg"; filename*=UTF-8''diagram.svg`; got != want {
+			t.Errorf("response-content-disposition = %q、期待値 = %q", got, want)
+		}
+		if got := query.Get("response-content-type"); got != "application/octet-stream" {
+			t.Errorf("response-content-type = %q、期待値 = %q", got, "application/octet-stream")
+		}
+		if got := query.Get("X-Amz-Expires"); got != "300" {
+			t.Errorf("X-Amz-Expires = %q、期待値 = %q", got, "300")
+		}
+	})
+
+	t.Run("正常系: 指定しなければ応答ヘッダーをURLに含めない", func(t *testing.T) {
+		t.Parallel()
+
+		s, _ := newTestStorageWithRegion(t, "")
+		presigned, err := s.PresignedGetURL(context.Background(), key, 5*time.Minute, storage.PresignedGetOptions{})
+		if err != nil {
+			t.Fatalf("PresignedGetURL()のエラー = %v", err)
+		}
+
+		parsed, err := url.Parse(presigned)
+		if err != nil {
+			t.Fatalf("presigned URLのパースに失敗: %v", err)
+		}
+		for _, name := range []string{"response-content-disposition", "response-content-type"} {
+			if parsed.Query().Has(name) {
+				t.Errorf("presigned URLに %s が含まれている", name)
+			}
+		}
+	})
+}
+
+func TestS3ObjectStorage_PresignedPutURL(t *testing.T) {
+	t.Parallel()
+
+	const key = "attachments/upload"
+	s, _ := newTestStorageWithRegion(t, "")
+	presigned, err := s.PresignedPutURL(context.Background(), key, 5*time.Minute, storage.PresignedPutOptions{
+		ContentType:   "image/png",
+		ContentLength: 1234,
+		ContentMD5:    "1B2M2Y8AsgTpgAmY7PhCfg==",
+	})
+	if err != nil {
+		t.Fatalf("PresignedPutURL()のエラー = %v", err)
+	}
+
+	parsed, err := url.Parse(presigned)
+	if err != nil {
+		t.Fatalf("presigned URLのパースに失敗: %v", err)
+	}
+	if want := "/" + testBucket + "/" + key; parsed.Path != want {
+		t.Errorf("presigned URLのパス = %q、期待値 = %q", parsed.Path, want)
+	}
+	query := parsed.Query()
+	if got := query.Get("X-Amz-Expires"); got != "300" {
+		t.Errorf("X-Amz-Expires = %q、期待値 = %q", got, "300")
+	}
+	if query.Get("X-Amz-Signature") == "" {
+		t.Error("presigned URLに署名が含まれていない")
+	}
+	// 種類・大きさ・チェックサムはクエリではなく署名するヘッダーにし、アップロードのリクエストに同じ値を送らせる
+	signed := strings.Split(query.Get("X-Amz-SignedHeaders"), ";")
+	for _, header := range []string{"content-length", "content-md5", "content-type", "host"} {
+		if !slices.Contains(signed, header) {
+			t.Errorf("X-Amz-SignedHeaders = %q、%sを含むことを期待", query.Get("X-Amz-SignedHeaders"), header)
+		}
 	}
 }

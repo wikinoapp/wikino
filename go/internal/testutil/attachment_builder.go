@@ -20,6 +20,9 @@ type AttachmentBuilder struct {
 	filename      string
 	contentType   string
 	byteSize      int64
+
+	processingStatus model.AttachmentProcessingStatus
+	attachedAt       time.Time
 }
 
 // NewAttachmentBuilderはAttachmentBuilderを生成します
@@ -67,6 +70,18 @@ func (b *AttachmentBuilder) WithByteSize(byteSize int64) *AttachmentBuilder {
 // WithBlobKeyはオブジェクトのストレージキーを設定します。指定しない場合その値はビルダーが作ります
 func (b *AttachmentBuilder) WithBlobKey(blobKey string) *AttachmentBuilder {
 	b.blobKey = blobKey
+	return b
+}
+
+// WithProcessingStatusはアップロード後の処理の状態を設定します。指定しない場合は処理待ちです
+func (b *AttachmentBuilder) WithProcessingStatus(status model.AttachmentProcessingStatus) *AttachmentBuilder {
+	b.processingStatus = status
+	return b
+}
+
+// WithAttachedAtは添付ファイルを作った時刻を設定します。指定しない場合は作成した時刻です
+func (b *AttachmentBuilder) WithAttachedAt(attachedAt time.Time) *AttachmentBuilder {
+	b.attachedAt = attachedAt
 	return b
 }
 
@@ -118,10 +133,10 @@ func (b *AttachmentBuilder) Build() model.AttachmentID {
 	var attachmentID string
 	err = b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO attachments (space_id, active_storage_attachment_id, attached_space_member_id, attached_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
+		`INSERT INTO attachments (space_id, active_storage_attachment_id, attached_space_member_id, attached_at, created_at, updated_at, processing_status)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, attachmentStorageID, b.spaceMemberID, now, now, now,
+		b.spaceID, attachmentStorageID, b.spaceMemberID, attachedAtOrNow(b.attachedAt, now), now, now, int32(b.processingStatus),
 	).Scan(&attachmentID)
 	if err != nil {
 		b.t.Fatalf("attachment作成に失敗: %v", err)
@@ -142,6 +157,9 @@ type AttachmentBuilderDB struct {
 	filename      string
 	contentType   string
 	byteSize      int64
+
+	processingStatus model.AttachmentProcessingStatus
+	attachedAt       time.Time
 }
 
 // NewAttachmentBuilderDBはAttachmentBuilderDBを生成します
@@ -188,6 +206,24 @@ func (b *AttachmentBuilderDB) WithContentType(contentType string) *AttachmentBui
 	return b
 }
 
+// WithByteSizeはバイト数を設定します
+func (b *AttachmentBuilderDB) WithByteSize(byteSize int64) *AttachmentBuilderDB {
+	b.byteSize = byteSize
+	return b
+}
+
+// WithProcessingStatusはアップロード後の処理の状態を設定します。指定しない場合は処理待ちです
+func (b *AttachmentBuilderDB) WithProcessingStatus(status model.AttachmentProcessingStatus) *AttachmentBuilderDB {
+	b.processingStatus = status
+	return b
+}
+
+// WithAttachedAtは添付ファイルを作った時刻を設定します。指定しない場合は作成した時刻です
+func (b *AttachmentBuilderDB) WithAttachedAt(attachedAt time.Time) *AttachmentBuilderDB {
+	b.attachedAt = attachedAt
+	return b
+}
+
 // Buildは添付ファイルを作成し、IDを返します
 func (b *AttachmentBuilderDB) Build() model.AttachmentID {
 	b.t.Helper()
@@ -231,10 +267,10 @@ func (b *AttachmentBuilderDB) Build() model.AttachmentID {
 	var attachmentID string
 	err = b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO attachments (space_id, active_storage_attachment_id, attached_space_member_id, attached_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)
+		`INSERT INTO attachments (space_id, active_storage_attachment_id, attached_space_member_id, attached_at, created_at, updated_at, processing_status)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 RETURNING id`,
-		b.spaceID, attachmentStorageID, b.spaceMemberID, now, now, now,
+		b.spaceID, attachmentStorageID, b.spaceMemberID, attachedAtOrNow(b.attachedAt, now), now, now, int32(b.processingStatus),
 	).Scan(&attachmentID)
 	if err != nil {
 		b.t.Fatalf("attachment作成に失敗: %v", err)
@@ -250,4 +286,13 @@ func (b *AttachmentBuilderDB) resolvedBlobKey(now time.Time) string {
 		return b.blobKey
 	}
 	return "test-key-" + now.Format("20060102150405.000000000")
+}
+
+// attachedAtOrNowは、attachments.attached_atに書く時刻を返します。列はタイムゾーンを持たず、
+// Rails版はUTCの時刻を書くため、UTCにそろえます
+func attachedAtOrNow(attachedAt, now time.Time) time.Time {
+	if attachedAt.IsZero() {
+		return now.UTC()
+	}
+	return attachedAt.UTC()
 }

@@ -284,6 +284,29 @@ func TestIsTest(t *testing.T) {
 	}
 }
 
+// TestIsTestE2EはIsTestE2Eメソッドをテスト
+func TestIsTestE2E(t *testing.T) {
+	tests := []struct {
+		env  string
+		want bool
+	}{
+		{"dev", false},
+		{"test", false},
+		{"test_e2e", true},
+		{"prod", false},
+		{"", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.env, func(t *testing.T) {
+			cfg := &Config{Env: tt.env}
+			if got := cfg.IsTestE2E(); got != tt.want {
+				t.Errorf("IsTestE2E() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestIsProductionはIsProductionメソッドをテスト
 func TestIsProduction(t *testing.T) {
 	tests := []struct {

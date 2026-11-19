@@ -54,6 +54,7 @@ func (p *GuestPolicy) CanShowOAuthGrants() bool                            { ret
 func (p *GuestPolicy) CanCreateOAuthGrant() bool                           { return false }
 func (p *GuestPolicy) CanDeleteOAuthGrant() bool                           { return false }
 func (p *GuestPolicy) CanShowOAuthApplications() bool                      { return false }
+func (p *GuestPolicy) CanCreateAttachment() bool                           { return false }
 func (p *GuestPolicy) CanCreateOAuthApplication() bool                     { return false }
 func (p *GuestPolicy) CanUpdateOAuthApplication() bool                     { return false }
 func (p *GuestPolicy) CanDeleteOAuthApplication() bool                     { return false }

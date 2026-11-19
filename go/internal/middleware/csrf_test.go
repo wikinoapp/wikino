@@ -890,3 +890,76 @@ func TestCSRFMiddleware_OAuthTokenPathsSkipVerification(t *testing.T) {
 		})
 	}
 }
+
+// TestCSRFMiddleware_AttachmentSignedURLsは、署名付きURLの一括取得だけがCSRFトークン無しで通り、
+// 添付ファイルのほかのPOSTは今と同じく検証されることを確かめる
+func TestCSRFMiddleware_AttachmentSignedURLs(t *testing.T) {
+	t.Parallel()
+
+	csrfMiddleware := middleware.NewCSRF(&config.Config{CookieDomain: ".example.com", SessionHTTPOnly: true})
+	h := csrfMiddleware.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	tests := []struct {
+		name       string
+		path       string
+		wantStatus int
+	}{
+		{name: "署名付きURLの一括取得はトークン無しで通る", path: "/attachments/signed_urls", wantStatus: http.StatusOK},
+		{name: "事前署名はトークン無しなら403", path: "/s/my-space/attachments/presign", wantStatus: http.StatusForbidden},
+		{name: "一括取得のパスの下はトークン無しなら403", path: "/attachments/signed_urls/extra", wantStatus: http.StatusForbidden},
+		{name: "ページの更新はトークン無しなら403", path: "/s/my-space/pages/1", wantStatus: http.StatusForbidden},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(`{"attachment_ids":[]}`))
+			req.Header.Set("Content-Type", "application/json")
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+
+			if rr.Code != tt.wantStatus {
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, tt.wantStatus)
+			}
+		})
+	}
+}
+
+// TestCSRFMiddleware_TestE2EStorageは、フェイクのストレージへのアップロードが、e2eのサーバーでだけCSRFトークン無しで通ることを確かめる
+func TestCSRFMiddleware_TestE2EStorage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		env        string
+		path       string
+		wantStatus int
+	}{
+		{name: "e2eのサーバーではフェイクのストレージへのアップロードがトークン無しで通る", env: "test_e2e", path: "/_test/storage/key", wantStatus: http.StatusOK},
+		{name: "e2eのサーバーでもほかのパスはトークン無しなら403", env: "test_e2e", path: "/s/my-space/attachments/presign", wantStatus: http.StatusForbidden},
+		{name: "開発環境ではフェイクのストレージのパスもトークン無しなら403", env: "dev", path: "/_test/storage/key", wantStatus: http.StatusForbidden},
+		{name: "本番環境ではフェイクのストレージのパスもトークン無しなら403", env: "prod", path: "/_test/storage/key", wantStatus: http.StatusForbidden},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			csrfMiddleware := middleware.NewCSRF(&config.Config{Env: tt.env, CookieDomain: ".example.com", SessionHTTPOnly: true})
+			h := csrfMiddleware.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(http.MethodPut, tt.path, strings.NewReader("hello"))
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+
+			if rr.Code != tt.wantStatus {
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, tt.wantStatus)
+			}
+		})
+	}
+}

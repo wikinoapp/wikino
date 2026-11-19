@@ -193,3 +193,27 @@ func (d *Dispatcher) EnqueueDeleteAccount(ctx context.Context, userID string) er
 	_, err := d.client.Insert(ctx, args, &opts)
 	return err
 }
+
+// ProcessAttachmentArgsは、事前署名した添付ファイルのアップロードを待ち、メタデータの除去やSVGの
+// サニタイズを行うジョブの引数。アップロードを待つ間は先送り (snooze) し、試行の回数を使わない。
+// 試行の回数は、オブジェクトストレージの一時的な失敗の再試行にだけ使う。
+type ProcessAttachmentArgs struct {
+	AttachmentID string `json:"attachment_id"`
+	SpaceID      string `json:"space_id"`
+}
+
+// Kindはジョブの種類を返す。
+func (ProcessAttachmentArgs) Kind() string { return "process_attachment" }
+
+// InsertOptsはジョブのInsertオプションを返す。
+func (ProcessAttachmentArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 10}
+}
+
+// EnqueueProcessAttachmentは、添付ファイルのアップロード後の処理のジョブをキューに追加する。
+func (d *Dispatcher) EnqueueProcessAttachment(ctx context.Context, attachmentID, spaceID string) error {
+	args := ProcessAttachmentArgs{AttachmentID: attachmentID, SpaceID: spaceID}
+	opts := args.InsertOpts()
+	_, err := d.client.Insert(ctx, args, &opts)
+	return err
+}

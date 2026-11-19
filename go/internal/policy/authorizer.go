@@ -62,6 +62,9 @@ type Authorizer interface {
 	// attachment:readはスペースにしか付けられないスコープで、判定でトピックを見ない。
 	// そのため非公開トピックのページだけが参照する添付ファイルも、attachment:readがあれば閲覧できる。
 	CanShowAttachment(allReferencingPagesPublic bool) bool
+	// CanCreateAttachmentはattachment:writeスコープで判定し、Rails版のcan_upload_attachment?と揃える。
+	// 添付ファイルはスペースに属し、ページを書く前にアップロードするため、判定でトピックを見ない。
+	CanCreateAttachment() bool
 
 	// 編集提案
 	CanCreateSuggestion(topic *model.Topic) bool

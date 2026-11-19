@@ -103,6 +103,10 @@ func (p *MemberPolicy) CanShowAttachment(allReferencingPagesPublic bool) bool {
 	return p.effectiveScopes[model.ScopeAttachmentRead] || allReferencingPagesPublic
 }
 
+func (p *MemberPolicy) CanCreateAttachment() bool {
+	return p.effectiveScopes[model.ScopeAttachmentWrite]
+}
+
 func (p *MemberPolicy) CanCreateSuggestion(topic *model.Topic) bool {
 	if !p.effectiveScopes[model.ScopeSuggestionWrite] {
 		return false

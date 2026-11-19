@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -41,7 +42,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_catalog"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment_presign"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment_signed_url"
 	bulkrestoredpagehandler "github.com/wikinoapp/wikino/go/internal/handler/bulk_restored_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
@@ -218,20 +222,7 @@ func runServe() {
 	exportRepo := repository.NewExportRepository(queries)
 
 	// オブジェクトストレージを初期化する (添付ファイルとエクスポートのZIPを置くバケット)。
-	// 設定が無いデプロイではnilのままにし、それを必要とする機能だけを無効化する。
-	var objectStorage storage.ObjectStorage
-	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
-		BucketName:      cfg.R2BucketName,
-		Endpoint:        cfg.R2Endpoint,
-		AccessKeyID:     cfg.R2AccessKeyID,
-		SecretAccessKey: cfg.R2SecretAccessKey,
-		Region:          cfg.R2Region,
-	})
-	if err != nil {
-		slog.Warn("オブジェクトストレージを初期化できませんでした。スペースのエクスポート機能は利用できません", "error", err)
-	} else {
-		objectStorage = s3Storage
-	}
+	objectStorage, testE2EStorage := newObjectStorage(cfg)
 
 	// Riverクライアントを初期化 (バックグラウンドジョブ用)
 	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter, emailConfirmationRepo, worker.ExportDeps{
@@ -257,6 +248,10 @@ func runServe() {
 		UserPasswordRepo:            userPasswordRepo,
 		UserTwoFactorAuthRepo:       userTwoFactorAuthRepo,
 		SpaceMemberRepo:             spaceMemberRepo,
+	}, worker.AttachmentProcessingDeps{
+		DB:             db,
+		AttachmentRepo: attachmentRepo,
+		ObjectStorage:  objectStorage,
 	})
 	if err != nil {
 		slog.Error("Riverクライアントの初期化に失敗しました", "error", err)
@@ -346,6 +341,12 @@ func runServe() {
 	oauthProtectedResourceMetadataHandler := oauth_protected_resource_metadata.NewHandler(cfg, usecase.NewGetOAuthProtectedResourceMetadataUsecase(spaceRepo))
 	apiCatalogHandler := api_catalog.NewHandler(cfg)
 	apiReferenceHandler := api_reference.NewHandler(cfg)
+
+	attachmentHandler := attachment.NewHandler(usecase.NewGetAttachmentUsecase(attachmentRepo, spaceMemberRepo, objectStorage))
+	attachmentSignedURLHandler := attachment_signed_url.NewHandler(usecase.NewGetAttachmentSignedURLsUsecase(attachmentRepo, spaceMemberRepo, objectStorage))
+	attachmentPresignHandler := attachment_presign.NewHandler(usecase.NewCreateAttachmentPresignUsecase(
+		db, spaceRepo, spaceMemberRepo, attachmentRepo, validator.NewAttachmentPresignCreateValidator(), jobDispatcher, objectStorage,
+	))
 
 	getAttachmentOgImageUC := usecase.NewGetAttachmentOgImageUsecase(attachmentRepo)
 	attachmentOgImageHandler := attachment_og_image.NewHandler(ogImageBuilder, getAttachmentOgImageUC)
@@ -950,7 +951,7 @@ func runServe() {
 	// リクエストボディサイズ制限ミドルウェア
 	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
 	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
-	r.Use(middleware.NewBodyLimit(apiProblems))
+	r.Use(newRequestBodyLimit(cfg, apiProblems))
 
 	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
 	r.Use(middleware.MethodOverride)
@@ -993,6 +994,9 @@ func runServe() {
 
 	// ヘルスチェック (認証不要)
 	r.Get("/health", healthHandler.Show)
+
+	// e2eのサーバーでだけ、フェイクのストレージの署名付きURLへの送受信を受ける
+	mountTestE2EStorage(r, testE2EStorage)
 
 	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
@@ -1060,12 +1064,23 @@ func runServe() {
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
 
-		// プロフィール (未ログインでも閲覧可能)。リバースプロキシはgo_profileが有効な閲覧者の
-		// リクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		// プロフィール (未ログインでも閲覧可能)。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
 		r.Get("/@{atname}", profileHandler.Show)
 		r.Head("/@{atname}", profileHandler.Show)
+
+		// 添付ファイルの表示 (未ログインでも、公開トピックのページだけが参照する添付ファイルは見られる)。
+		// リバースプロキシはgo_attachment_deliveryが有効な閲覧者のリクエストだけをここへ振り分け、
+		// それ以外はRails版が処理する。
+		r.Get("/attachments/{attachment_id}", attachmentHandler.Show)
+		r.Head("/attachments/{attachment_id}", attachmentHandler.Show)
+		// 本文に添付ファイルを表示するための署名付きURLの一括取得。リバースプロキシはgo_attachment_deliveryが
+		// 有効な閲覧者のリクエストだけをここへ振り分ける。CSRF検証の対象から外している (csrfSkipPathsを参照)。
+		r.Post("/attachments/signed_urls", attachmentSignedURLHandler.Create)
+		// 添付ファイルのアップロードの事前署名。リバースプロキシはgo_attachment_uploadが有効な閲覧者のリクエストだけを
+		// ここへ振り分ける。fetchで呼ばれるため、ログインしていないときはサインインへ送らず、ハンドラーが401を返す。
+		r.Post("/s/{space_identifier}/attachments/presign", attachmentPresignHandler.Create)
 
 		// スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
 		r.Get("/s/{space_identifier}", spaceHandler.Show)
@@ -1161,8 +1176,7 @@ func runServe() {
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
 
-		// ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更。リバースプロキシは
-		// go_user_settingsが有効な閲覧者のリクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		// ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
 		r.Get("/settings", settingsHandler.Show)
@@ -1177,8 +1191,7 @@ func runServe() {
 		r.Head("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
 		r.Patch("/settings/email/confirmation", settingsEmailConfirmationHandler.Update)
 
-		// 二要素認証の設定の画面・認証アプリへの登録・有効化・無効化とリカバリーコード。リバースプロキシは
-		// go_two_factor_auth_settingsが有効な閲覧者のリクエストだけをここへ振り分ける。
+		// 二要素認証の設定の画面・認証アプリへの登録・有効化・無効化とリカバリーコード。
 		// 登録の画面のHEADは、秘密鍵を作り直さない専用の処理に渡す。
 		r.Get("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
 		r.Head("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
@@ -1190,8 +1203,7 @@ func runServe() {
 		r.Head("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Index)
 		r.Post("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Create)
 
-		// アカウントの削除の確認画面と削除。リバースプロキシはgo_account_deletionが有効な閲覧者の
-		// リクエストだけをここへ振り分ける。
+		// アカウントの削除の確認画面と削除。
 		r.Get("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
 		r.Head("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
 		r.Post("/settings/account/deletion", settingsAccountDeletionHandler.Create)
@@ -1409,4 +1421,57 @@ func runServe() {
 	}
 
 	slog.Info("サーバーを停止しました")
+}
+
+// newObjectStorageは、添付ファイルとエクスポートのZIPを置くオブジェクトストレージを組み立てる。
+// e2eのサーバー (APP_ENV=test_e2e) では、バケットの代わりにメモリ上のフェイクを使い、その署名付きURLへの
+// 送受信を受けるハンドラーも返す。それ以外では2つ目の戻り値はnilになる。
+// バケットの設定が無いデプロイでは1つ目もnilのままにし、それを必要とする機能だけを無効化する
+func newObjectStorage(cfg *config.Config) (storage.ObjectStorage, http.Handler) {
+	if cfg.IsTestE2E() {
+		fake := storage.NewServedFakeObjectStorage()
+		return fake, fake
+	}
+
+	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
+		BucketName:      cfg.R2BucketName,
+		Endpoint:        cfg.R2Endpoint,
+		AccessKeyID:     cfg.R2AccessKeyID,
+		SecretAccessKey: cfg.R2SecretAccessKey,
+		Region:          cfg.R2Region,
+	})
+	if err != nil {
+		slog.Warn("オブジェクトストレージを初期化できませんでした。添付ファイルとスペースのエクスポートの機能は利用できません", "error", err)
+		return nil, nil
+	}
+	return s3Storage, nil
+}
+
+// newRequestBodyLimitは、通常のリクエストとe2eのフェイクストレージへのアップロードの本文サイズを制限する。
+// 本物のストレージへの直接転送にはアプリの8 MiB制限が掛からないため、e2eのフェイクへのPUTだけは種類ごとの上限にする
+func newRequestBodyLimit(cfg *config.Config, problems *apierror.Writer) func(http.Handler) http.Handler {
+	normalLimit := middleware.NewBodyLimit(problems)
+	return func(next http.Handler) http.Handler {
+		normalHandler := normalLimit(next)
+		if !cfg.IsTestE2E() {
+			return normalHandler
+		}
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, storage.FakeObjectStoragePathPrefix) {
+				maxBytes := model.AttachmentMaxByteSize(r.Header.Get("Content-Type"))
+				http.MaxBytesHandler(next, maxBytes).ServeHTTP(w, r)
+				return
+			}
+			normalHandler.ServeHTTP(w, r)
+		})
+	}
+}
+
+// mountTestE2EStorageは、e2eのサーバーのフェイクのストレージの署名付きURLへの送受信を受けるルートを登録する。
+// handlerがnil (e2eのサーバーでない) のときは何も登録しない
+func mountTestE2EStorage(r chi.Router, handler http.Handler) {
+	if handler == nil {
+		return
+	}
+	r.Handle(storage.FakeObjectStoragePathPrefix+"*", handler)
 }

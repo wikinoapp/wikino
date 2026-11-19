@@ -74,7 +74,7 @@ func (uc *GetExportDownloadUsecase) Execute(ctx context.Context, input GetExport
 		return nil, &model.AppError{Code: model.AppErrCodeResourceNotFound, UserMsg: i18n.T(ctx, "error_not_found_message")}
 	}
 
-	url, err := uc.objectStorage.PresignedGetURL(ctx, *export.ObjectKey, model.ExportDownloadExpiration)
+	url, err := uc.objectStorage.PresignedGetURL(ctx, *export.ObjectKey, model.ExportDownloadExpiration, storage.PresignedGetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("エクスポートのダウンロードURLの生成に失敗: %w", err)
 	}
