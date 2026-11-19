@@ -17,6 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
 // DeviceTokenCookieNameはデバイス (ブラウザ) 識別用のCookieキー名
@@ -414,6 +415,11 @@ func (m *ReverseProxyMiddleware) ensureDeviceToken(w http.ResponseWriter, r *htt
 
 // isGoHandledPathはGo版で処理するパスかどうかを判定
 func (m *ReverseProxyMiddleware) isGoHandledPath(path string) bool {
+	// e2eのサーバーでは、フェイクのストレージの署名付きURLへの送受信をGo版が受ける
+	if m.cfg.IsTestE2E() && strings.HasPrefix(path, storage.FakeObjectStoragePathPrefix) {
+		return true
+	}
+
 	// 完全一致でチェック
 	for _, p := range goHandledExactPaths {
 		if path == p {

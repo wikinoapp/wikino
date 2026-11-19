@@ -7,7 +7,6 @@ import { insertUploadPlaceholder, replacePlaceholderWithUrl, removePlaceholder }
 interface PresignResponse {
   directUploadUrl: string;
   directUploadHeaders: Record<string, string>;
-  blobSignedId: string;
   attachmentId: string;
 }
 
@@ -87,16 +86,11 @@ export class FileUploadHandler {
   private editorView: EditorView;
   private spaceIdentifier: string;
   private csrfToken: string;
-  private isTestEnvironment: boolean;
 
   constructor(editorView: EditorView, spaceIdentifier: string, csrfToken: string) {
     this.editorView = editorView;
     this.spaceIdentifier = spaceIdentifier;
     this.csrfToken = csrfToken;
-    this.isTestEnvironment =
-      navigator.userAgent.includes("HeadlessChrome") ||
-      navigator.userAgent.includes("Selenium") ||
-      window.location.hostname === "127.0.0.1";
   }
 
   async handleFileUpload(files: File[], position: number): Promise<void> {
@@ -126,11 +120,7 @@ export class FileUploadHandler {
   }
 
   private async getPresignUrl(file: File, checksum: string): Promise<PresignResponse> {
-    const endpoint = this.isTestEnvironment
-      ? "/_test/attachments/presign"
-      : `/s/${this.spaceIdentifier}/attachments/presign`;
-
-    const response = await fetch(endpoint, {
+    const response = await fetch(`/s/${this.spaceIdentifier}/attachments/presign`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -152,19 +142,6 @@ export class FileUploadHandler {
   }
 
   private async uploadFile(file: File, presignData: PresignResponse): Promise<void> {
-    if (this.isTestEnvironment) {
-      const response = await fetch("/_test/attachments/upload", {
-        method: "PUT",
-        headers: presignData.directUploadHeaders,
-        body: file,
-      });
-
-      if (!response.ok) {
-        throw new UploadError("アップロードに失敗しました");
-      }
-      return;
-    }
-
     const uploader = new DirectUpload(
       file,
       presignData.directUploadUrl,

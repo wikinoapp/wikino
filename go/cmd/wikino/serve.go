@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -221,20 +222,7 @@ func runServe() {
 	exportRepo := repository.NewExportRepository(queries)
 
 	// オブジェクトストレージを初期化する (添付ファイルとエクスポートのZIPを置くバケット)。
-	// 設定が無いデプロイではnilのままにし、それを必要とする機能だけを無効化する。
-	var objectStorage storage.ObjectStorage
-	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
-		BucketName:      cfg.R2BucketName,
-		Endpoint:        cfg.R2Endpoint,
-		AccessKeyID:     cfg.R2AccessKeyID,
-		SecretAccessKey: cfg.R2SecretAccessKey,
-		Region:          cfg.R2Region,
-	})
-	if err != nil {
-		slog.Warn("オブジェクトストレージを初期化できませんでした。スペースのエクスポート機能は利用できません", "error", err)
-	} else {
-		objectStorage = s3Storage
-	}
+	objectStorage, testE2EStorage := newObjectStorage(cfg)
 
 	// Riverクライアントを初期化 (バックグラウンドジョブ用)
 	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter, emailConfirmationRepo, worker.ExportDeps{
@@ -963,7 +951,7 @@ func runServe() {
 	// リクエストボディサイズ制限ミドルウェア
 	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
 	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
-	r.Use(middleware.NewBodyLimit(apiProblems))
+	r.Use(newRequestBodyLimit(cfg, apiProblems))
 
 	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
 	r.Use(middleware.MethodOverride)
@@ -1006,6 +994,9 @@ func runServe() {
 
 	// ヘルスチェック (認証不要)
 	r.Get("/health", healthHandler.Show)
+
+	// e2eのサーバーでだけ、フェイクのストレージの署名付きURLへの送受信を受ける
+	mountTestE2EStorage(r, testE2EStorage)
 
 	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
@@ -1430,4 +1421,57 @@ func runServe() {
 	}
 
 	slog.Info("サーバーを停止しました")
+}
+
+// newObjectStorageは、添付ファイルとエクスポートのZIPを置くオブジェクトストレージを組み立てる。
+// e2eのサーバー (APP_ENV=test_e2e) では、バケットの代わりにメモリ上のフェイクを使い、その署名付きURLへの
+// 送受信を受けるハンドラーも返す。それ以外では2つ目の戻り値はnilになる。
+// バケットの設定が無いデプロイでは1つ目もnilのままにし、それを必要とする機能だけを無効化する
+func newObjectStorage(cfg *config.Config) (storage.ObjectStorage, http.Handler) {
+	if cfg.IsTestE2E() {
+		fake := storage.NewServedFakeObjectStorage()
+		return fake, fake
+	}
+
+	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
+		BucketName:      cfg.R2BucketName,
+		Endpoint:        cfg.R2Endpoint,
+		AccessKeyID:     cfg.R2AccessKeyID,
+		SecretAccessKey: cfg.R2SecretAccessKey,
+		Region:          cfg.R2Region,
+	})
+	if err != nil {
+		slog.Warn("オブジェクトストレージを初期化できませんでした。添付ファイルとスペースのエクスポートの機能は利用できません", "error", err)
+		return nil, nil
+	}
+	return s3Storage, nil
+}
+
+// newRequestBodyLimitは、通常のリクエストとe2eのフェイクストレージへのアップロードの本文サイズを制限する。
+// 本物のストレージへの直接転送にはアプリの8 MiB制限が掛からないため、e2eのフェイクへのPUTだけは種類ごとの上限にする
+func newRequestBodyLimit(cfg *config.Config, problems *apierror.Writer) func(http.Handler) http.Handler {
+	normalLimit := middleware.NewBodyLimit(problems)
+	return func(next http.Handler) http.Handler {
+		normalHandler := normalLimit(next)
+		if !cfg.IsTestE2E() {
+			return normalHandler
+		}
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, storage.FakeObjectStoragePathPrefix) {
+				maxBytes := model.AttachmentMaxByteSize(r.Header.Get("Content-Type"))
+				http.MaxBytesHandler(next, maxBytes).ServeHTTP(w, r)
+				return
+			}
+			normalHandler.ServeHTTP(w, r)
+		})
+	}
+}
+
+// mountTestE2EStorageは、e2eのサーバーのフェイクのストレージの署名付きURLへの送受信を受けるルートを登録する。
+// handlerがnil (e2eのサーバーでない) のときは何も登録しない
+func mountTestE2EStorage(r chi.Router, handler http.Handler) {
+	if handler == nil {
+		return
+	}
+	r.Handle(storage.FakeObjectStoragePathPrefix+"*", handler)
 }

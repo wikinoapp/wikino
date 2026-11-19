@@ -927,3 +927,39 @@ func TestCSRFMiddleware_AttachmentSignedURLs(t *testing.T) {
 		})
 	}
 }
+
+// TestCSRFMiddleware_TestE2EStorageは、フェイクのストレージへのアップロードが、e2eのサーバーでだけCSRFトークン無しで通ることを確かめる
+func TestCSRFMiddleware_TestE2EStorage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		env        string
+		path       string
+		wantStatus int
+	}{
+		{name: "e2eのサーバーではフェイクのストレージへのアップロードがトークン無しで通る", env: "test_e2e", path: "/_test/storage/key", wantStatus: http.StatusOK},
+		{name: "e2eのサーバーでもほかのパスはトークン無しなら403", env: "test_e2e", path: "/s/my-space/attachments/presign", wantStatus: http.StatusForbidden},
+		{name: "開発環境ではフェイクのストレージのパスもトークン無しなら403", env: "dev", path: "/_test/storage/key", wantStatus: http.StatusForbidden},
+		{name: "本番環境ではフェイクのストレージのパスもトークン無しなら403", env: "prod", path: "/_test/storage/key", wantStatus: http.StatusForbidden},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			csrfMiddleware := middleware.NewCSRF(&config.Config{Env: tt.env, CookieDomain: ".example.com", SessionHTTPOnly: true})
+			h := csrfMiddleware.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(http.MethodPut, tt.path, strings.NewReader("hello"))
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+
+			if rr.Code != tt.wantStatus {
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, tt.wantStatus)
+			}
+		})
+	}
+}

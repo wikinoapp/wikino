@@ -5,9 +5,11 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
+	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
 // CSRFCookieNameはCSRFトークンを保存するクッキー名
@@ -63,6 +65,13 @@ func (c *CSRF) Middleware(next http.Handler) http.Handler {
 			}
 			ctx = SetCSRFTokenToContext(ctx, token)
 			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		// e2eのサーバーでは、フェイクのストレージの署名付きURLへのアップロードを検証しない。
+		// オブジェクトストレージの代わりに受けるもので、ブラウザは本物と同じくトークンを送らないため
+		if c.cfg.IsTestE2E() && strings.HasPrefix(r.URL.Path, storage.FakeObjectStoragePathPrefix) {
+			next.ServeHTTP(w, r)
 			return
 		}
 

@@ -2007,3 +2007,47 @@ func TestGoHandledRegexPatterns_IncludeCookielessPaths(t *testing.T) {
 		})
 	}
 }
+
+// TestReverseProxyMiddleware_Middleware_TestE2EStorageは、フェイクのストレージのパスが、e2eのサーバーでだけGo版で処理され、
+// ほかの環境ではRails版へ届くことを確かめる
+func TestReverseProxyMiddleware_Middleware_TestE2EStorage(t *testing.T) {
+	t.Parallel()
+
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer railsServer.Close()
+
+	for _, tc := range []struct {
+		env    string
+		wantGo bool
+	}{
+		{env: "test_e2e", wantGo: true},
+		{env: "test", wantGo: false},
+		{env: "dev", wantGo: false},
+		{env: "prod", wantGo: false},
+	} {
+		t.Run(tc.env, func(t *testing.T) {
+			m, err := NewReverseProxyMiddleware(railsServer.URL, &config.Config{Env: tc.env, Domain: "wikino.app"}, nil)
+			if err != nil {
+				t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+			}
+			h := m.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("X-Go-Handled", "true")
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			for _, method := range []string{http.MethodPut, http.MethodGet} {
+				req := httptest.NewRequest(method, "/_test/storage/key", nil)
+				rr := httptest.NewRecorder()
+				h.ServeHTTP(rr, req)
+
+				gotGo := rr.Header().Get("X-Go-Handled") == "true"
+				if gotGo != tc.wantGo {
+					t.Errorf("%sをGo版で処理した = %v、期待値 = %v", method, gotGo, tc.wantGo)
+				}
+			}
+		})
+	}
+}
