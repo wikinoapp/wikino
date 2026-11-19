@@ -241,6 +241,15 @@ export async function cleanupTestData(userIds: string[]): Promise<void> {
     await query(`DELETE FROM page_revisions WHERE space_id = ANY($1)`, [spaceIds]);
     await query(`DELETE FROM page_editors WHERE space_id = ANY($1)`, [spaceIds]);
     await query(`DELETE FROM pages WHERE space_id = ANY($1)`, [spaceIds]);
+    // 添付ファイルと、そのblobの関連付けとblob
+    await query(`DELETE FROM attachments WHERE space_id = ANY($1)`, [spaceIds]);
+    await query(
+      `WITH deleted AS (
+         DELETE FROM active_storage_attachments WHERE record_type = 'SpaceRecord' AND record_id = ANY($1) RETURNING blob_id
+       )
+       DELETE FROM active_storage_blobs WHERE id IN (SELECT blob_id FROM deleted)`,
+      [spaceIds],
+    );
     await query(`DELETE FROM topic_members WHERE space_id = ANY($1)`, [spaceIds]);
     await query(`DELETE FROM topics WHERE space_id = ANY($1)`, [spaceIds]);
     await query(`DELETE FROM space_members WHERE space_id = ANY($1)`, [spaceIds]);

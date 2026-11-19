@@ -1,9 +1,12 @@
+import * as fs from "fs";
+import * as path from "path";
 import { test, expect } from "@playwright/test";
 import {
   createTestTopic,
   createTestTopicMember,
   createTestPage,
   loadSharedTestData,
+  query,
   type TestUser,
   type TestSpace,
   type TestPage,
@@ -19,7 +22,41 @@ test.beforeAll(async () => {
   user = shared.user;
   space = shared.space;
   spaceMemberId = shared.spaceMemberId;
+
+  // 事前署名と添付ファイルの表示をGo版で処理させる。e2eのサーバーは、オブジェクトストレージの代わりに
+  // メモリ上のフェイクを使い、その署名付きURLへのアップロードと取得を自身で受ける
+  for (const flag of ["go_attachment_upload", "go_attachment_delivery"]) {
+    await query(
+      `INSERT INTO feature_flags (user_id, name, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (user_id, name) DO NOTHING`,
+      [user.id, flag],
+    );
+  }
 });
+
+// photoWithLocationは、位置情報 (GPSLatitudeRef) と説明 (E2E_SECRET_MARKER) のEXIFを持つJPEG
+const photoWithLocation = fs.readFileSync(path.join(__dirname, "../fixtures/photo-with-location.jpg"));
+const E2E_SECRET_MARKER = "E2E-SECRET-LOCATION";
+
+// dropFileは、ファイルをエディタへドロップする
+async function dropFile(
+  pwPage: import("@playwright/test").Page,
+  name: string,
+  type: string,
+  content: Buffer,
+): Promise<void> {
+  await pwPage.evaluate(
+    ({ name, type, base64 }) => {
+      const editor = document.querySelector(".cm-editor");
+      if (!editor) return;
+
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(new File([bytes], name, { type }));
+      editor.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer }));
+    },
+    { name, type, base64: content.toString("base64") },
+  );
+}
 
 async function visitPageEditor(pwPage: import("@playwright/test").Page): Promise<TestPage> {
   const topic = await createTestTopic(space.id);
@@ -250,5 +287,61 @@ test.describe("ドラッグ&ドロップによるファイルアップロード"
     const content = await getEditorContent(page);
     expect(content).toContain("既存のテキスト");
     expect(content).toContain("document.pdf");
+  });
+});
+
+test.describe("画像のアップロードと表示", () => {
+  test("ドロップした画像が本文に挿入され、プレビューと公開したページに表示され、位置情報が除かれること", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const page_ = await visitPageEditor(page);
+    await page.getByRole("textbox", { name: "タイトル" }).fill("画像のアップロード");
+    await clearEditor(page);
+
+    const presigned = page.waitForResponse(
+      (res) => res.request().method() === "POST" && new URL(res.url()).pathname.endsWith("/attachments/presign"),
+    );
+    const uploaded = page.waitForResponse((res) => res.request().method() === "PUT");
+    await dropFile(page, "photo.jpg", "image/jpeg", photoWithLocation);
+    expect((await presigned).status()).toBe(200);
+    expect((await uploaded).status()).toBe(200);
+
+    // アップロードが終わると、プレースホルダーが添付ファイルのMarkdownに置き換わる
+    await expect.poll(() => getEditorContent(page)).toMatch(/\/attachments\/[0-9a-f-]{36}/);
+    const attachmentId = (await getEditorContent(page)).match(/\/attachments\/([0-9a-f-]{36})/)![1]!;
+
+    // プレビューで、署名付きURLから画像が読み込まれる
+    await page.locator("#page-edit-tab-preview").click();
+    const previewImage = page.locator(`#page-edit-preview-content img[data-attachment-id="${attachmentId}"]`);
+    await expect(previewImage).toBeVisible();
+    await expect.poll(() => previewImage.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(64);
+
+    // 公開したページの表示画面でも、画像が読み込まれる
+    const published = page.waitForURL(new RegExp(`/s/${space.identifier}/pages/${page_.number}$`));
+    await page.getByRole("button", { name: "トピックに公開" }).click();
+    await published;
+    const pageImage = page.locator(`img[data-attachment-id="${attachmentId}"]`);
+    await expect.poll(() => pageImage.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(64);
+
+    // アップロード後の処理が完了し、取得した画像から位置情報が除かれている
+    await expect
+      .poll(
+        async () => {
+          const result = await query(`SELECT processing_status FROM attachments WHERE id = $1 AND space_id = $2`, [
+            attachmentId,
+            space.id,
+          ]);
+          return result.rows[0]?.processing_status;
+        },
+        { timeout: 30_000 },
+      )
+      .toBe(2);
+    const response = await page.request.get(`/attachments/${attachmentId}`);
+    expect(response.status()).toBe(200);
+    const body = await response.body();
+    expect(body.subarray(0, 2).toString("hex")).toBe("ffd8");
+    expect(body.includes(E2E_SECRET_MARKER)).toBe(false);
+    expect(photoWithLocation.includes(E2E_SECRET_MARKER)).toBe(true);
   });
 });
