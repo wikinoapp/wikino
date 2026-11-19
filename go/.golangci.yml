@@ -769,6 +769,15 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal
               desc: "imagemetaはアプリケーション内の他のパッケージに依存できません。"
 
+        # SVGのサニタイズは、Workerのユースケースから呼ぶ純粋な技術ユーティリティとして、
+        # アプリケーション内のほかのパッケージに依存しないleafに保つ
+        svgsanitizer-layer:
+          files:
+            - "**/internal/svgsanitizer/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal
+              desc: "svgsanitizerはアプリケーション内の他のパッケージに依存できません。"
+
         # auth層のルール: 横断的な技術ユーティリティ (Domain/Infrastructure層)
         # 標準ライブラリ・外部ライブラリのみに依存し、プロジェクト内部パッケージには依存しない
         auth-layer:
