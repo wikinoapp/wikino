@@ -86,7 +86,7 @@ RUN curl -fsSL https://mise.run | sh
 
 # Go、Ruby、Node.js、pnpmをmise経由でインストールする。
 RUN mise install go@1.27.3 && \
-    mise install ruby@4.0.9 && \
+    mise install ruby@4.0.10 && \
     mise install node@24.13.0 && \
     mise install node@20.19.0 && \
     mise install node@20.16.0 && \
@@ -95,7 +95,7 @@ RUN mise install go@1.27.3 && \
 
 # グローバルデフォルトを設定する。
 RUN mise use --global go@1.27.3 && \
-    mise use --global ruby@4.0.9 && \
+    mise use --global ruby@4.0.10 && \
     mise use --global node@24.13.0 && \
     mise use --global pnpm@10.25.0
 
