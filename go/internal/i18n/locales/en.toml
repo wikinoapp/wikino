@@ -3883,3 +3883,35 @@ other = "Spaces you are a member of"
 [settings_account_deletion_new_back]
 description = "削除できないときに設定へ戻るリンク"
 other = "Back to settings"
+
+[validation_attachment_filename_required]
+description = "添付ファイルの事前署名でファイル名が無いエラー"
+other = "Filename can't be blank"
+
+[validation_attachment_content_type_required]
+description = "添付ファイルの事前署名でファイル形式が無いエラー"
+other = "Content type can't be blank"
+
+[validation_attachment_content_type_unsupported]
+description = "添付ファイルの事前署名でアップロードできないファイル形式のエラー"
+other = "Content type is not a supported format"
+
+[validation_attachment_byte_size_required]
+description = "添付ファイルの事前署名でファイルサイズが無いエラー"
+other = "File size can't be blank"
+
+[validation_attachment_byte_size_not_positive]
+description = "添付ファイルの事前署名でファイルサイズが0以下のエラー"
+other = "File size must be greater than 0"
+
+[validation_attachment_byte_size_too_large]
+description = "添付ファイルの事前署名でファイルサイズが種類ごとの上限 (MaxMBメガバイト) を超えたエラー"
+other = "File size must be {{.MaxMB}} MB or less"
+
+[validation_attachment_checksum_required]
+description = "添付ファイルの事前署名でチェックサムが無いエラー"
+other = "Checksum can't be blank"
+
+[validation_attachment_checksum_invalid]
+description = "添付ファイルの事前署名でチェックサムがMD5のBase64として読めないエラー"
+other = "Checksum is invalid"
