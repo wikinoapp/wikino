@@ -1071,15 +1071,12 @@ func runServe() {
 		r.Head("/@{atname}", profileHandler.Show)
 
 		// 添付ファイルの表示 (未ログインでも、公開トピックのページだけが参照する添付ファイルは見られる)。
-		// リバースプロキシはgo_attachment_deliveryが有効な閲覧者のリクエストだけをここへ振り分け、
-		// それ以外はRails版が処理する。
 		r.Get("/attachments/{attachment_id}", attachmentHandler.Show)
 		r.Head("/attachments/{attachment_id}", attachmentHandler.Show)
-		// 本文に添付ファイルを表示するための署名付きURLの一括取得。リバースプロキシはgo_attachment_deliveryが
-		// 有効な閲覧者のリクエストだけをここへ振り分ける。CSRF検証の対象から外している (csrfSkipPathsを参照)。
+		// 本文に添付ファイルを表示するための署名付きURLの一括取得。CSRF検証の対象から外している (csrfSkipPathsを参照)。
 		r.Post("/attachments/signed_urls", attachmentSignedURLHandler.Create)
-		// 添付ファイルのアップロードの事前署名。リバースプロキシはgo_attachment_uploadが有効な閲覧者のリクエストだけを
-		// ここへ振り分ける。fetchで呼ばれるため、ログインしていないときはサインインへ送らず、ハンドラーが401を返す。
+		// 添付ファイルのアップロードの事前署名。fetchで呼ばれるため、ログインしていないときはサインインへ送らず、
+		// ハンドラーが401を返す。
 		r.Post("/s/{space_identifier}/attachments/presign", attachmentPresignHandler.Create)
 
 		// スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
