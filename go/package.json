@@ -41,7 +41,7 @@
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
     "@lezer/highlight": "^1.2.5",
-    "@lezer/markdown": "^1.7.2",
+    "@lezer/markdown": "^1.8.1",
     "codemirror": "^6.0.2",
     "core-js": "^3.51.0",
     "htmx.org": "^4.0.1",
