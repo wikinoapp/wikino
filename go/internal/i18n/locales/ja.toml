@@ -57,6 +57,10 @@ other = "閉じる"
 description = "エラーラベルの汎用表示"
 other = "エラー"
 
+[form_error_summary_heading]
+description = "フォームのフィールドエラーの要約の見出し"
+other = "入力内容を確認してください"
+
 [back_to_home]
 description = "ホームへ戻るリンクのラベル"
 other = "ホームに戻る"
@@ -1333,15 +1337,15 @@ description = "スペース作成画面のサブタイトル (ヘルプページ
 other = "スペースについては <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/16\" target=\"_blank\">スペースについてのヘルプ</a> をご覧ください<br>どんなスペースを作ると良いかわからないときは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/50\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
 
 [space_form_identifier_label]
-description = "スペース作成フォームの識別子のラベル"
+description = "スペースの作成と一般設定のフォームの識別子のラベル"
 other = "識別子"
 
 [space_form_identifier_hint]
-description = "スペース作成フォームの識別子の補足"
+description = "スペースの作成と一般設定のフォームの識別子の補足"
 other = "この識別子はスペースのURLに使用されます。あとから変更もできます。{{.MaxLength}}文字以内で半角英数字とハイフンのみ使用できます"
 
 [space_form_name_label]
-description = "スペース作成フォームの名前のラベル"
+description = "スペースの作成と一般設定のフォームの名前のラベル"
 other = "名前"
 
 [space_new_submit_button]
@@ -1435,6 +1439,10 @@ other = "名前を入力してください"
 [validation_space_name_too_long]
 description = "スペース名文字数超過エラー"
 other = "名前は30文字以内で入力してください"
+
+[validation_space_deletion_name_mismatch]
+description = "スペースの削除の確認で入力したスペース名が削除するスペースの名前と一致しないエラー"
+other = "スペース名が間違っています"
 
 [validation_topic_deletion_name_mismatch]
 description = "トピックの削除の確認で入力したトピック名が削除するトピックの名前と一致しないエラー"
@@ -1563,6 +1571,18 @@ other = "スペースを作成しました"
 [flash_topic_created]
 description = "トピック作成成功時のフラッシュメッセージ"
 other = "トピックを作成しました"
+
+[flash_space_updated]
+description = "スペースの一般設定の保存成功時のフラッシュメッセージ"
+other = "スペースを更新しました"
+
+[flash_space_deleted]
+description = "スペース削除成功時のフラッシュメッセージ"
+other = "スペースを削除しました"
+
+[flash_attachment_deleted]
+description = "添付ファイルの削除成功時のフラッシュメッセージ"
+other = "ファイルを削除しました"
 
 [flash_topic_updated]
 description = "トピック更新成功時のフラッシュメッセージ"
@@ -1756,6 +1776,127 @@ other = "連携中のアプリ"
 [space_settings_oauth_applications]
 description = "スペース設定のトップのOAuthアプリへのリンク"
 other = "OAuthアプリ"
+
+[space_settings_general_title]
+description = "スペースの一般設定画面のページタイトル"
+other = "基本情報 | {{.SpaceName}}"
+
+[space_settings_general_heading]
+description = "スペースの一般設定画面の見出し"
+other = "基本情報"
+
+[space_settings_general_breadcrumb_settings]
+description = "スペースの一般設定画面のパンくずに出すスペース設定のラベル"
+other = "設定"
+
+[space_settings_general_breadcrumb]
+description = "スペースの一般設定画面自身を指すパンくず項目 (現在項目)"
+other = "基本情報"
+
+[space_settings_general_submit_button]
+description = "スペースの一般設定画面の送信ボタン"
+other = "保存する"
+
+[space_settings_general_cancel]
+description = "スペースの一般設定画面のキャンセルリンク"
+other = "キャンセル"
+
+# スペースの削除の確認画面
+[space_deletion_new_title]
+description = "スペースの削除の確認画面のページタイトル"
+other = "スペースの削除 | {{.SpaceName}}"
+
+[space_deletion_new_heading]
+description = "スペースの削除の確認画面の見出し"
+other = "スペースの削除"
+
+[space_deletion_new_breadcrumb_settings]
+description = "スペースの削除の確認画面のパンくずに出すスペース設定のラベル"
+other = "設定"
+
+[space_deletion_new_breadcrumb]
+description = "スペースの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "スペースの削除"
+
+[space_deletion_new_description]
+description = "スペースの削除の確認画面の説明"
+other = "スペースを削除しますか？削除する前に以下の内容をご確認ください。"
+
+[space_deletion_new_warning_contents]
+description = "スペースの削除の確認画面の注意 (トピック・ページ・添付ファイル・エクスポートも消える)"
+other = "スペースを削除すると、そのスペースに含まれるトピック・ページ・添付ファイル・エクスポートもすべて削除されます"
+
+[space_deletion_new_warning_irreversible]
+description = "スペースの削除の確認画面の注意 (元に戻せない)"
+other = "削除されたスペースやそのスペースに含まれるトピックやページの復元はできません"
+
+[space_deletion_new_space_name_label]
+description = "スペースの削除の確認画面のスペース名の入力欄のラベル"
+other = "スペース名"
+
+[space_deletion_new_space_name_hint]
+description = "スペースの削除の確認画面のスペース名の入力欄の説明"
+other = "スペースを削除する場合は、スペース名 ({{.SpaceName}}) を入力してください"
+
+[space_deletion_new_submit_button]
+description = "スペースの削除の確認画面の送信ボタン"
+other = "削除する"
+
+[space_deletion_new_cancel]
+description = "スペースの削除の確認画面のキャンセルリンク"
+other = "キャンセル"
+
+[space_settings_attachment_index_title]
+description = "添付ファイルの管理の画面のページタイトル"
+other = "添付ファイル | {{.SpaceName}}"
+
+[space_settings_attachment_index_paginated_title]
+description = "ページ送りした添付ファイルの管理の画面のページタイトル"
+other = "添付ファイル ({{.PageNumber}} ページ目) | {{.SpaceName}}"
+
+[space_settings_attachment_index_heading]
+description = "添付ファイルの管理の画面の見出し"
+other = "添付ファイル"
+
+[space_settings_attachment_index_breadcrumb_settings]
+description = "添付ファイルの管理の画面のパンくずの、スペース設定のトップへの項目"
+other = "設定"
+
+[space_settings_attachment_index_breadcrumb]
+description = "添付ファイルの管理の画面のパンくずの現在項目"
+other = "添付ファイル"
+
+[space_settings_attachment_index_search_label]
+description = "添付ファイルの管理の画面の検索欄のラベル (読み上げ用)"
+other = "ファイル名で検索"
+
+[space_settings_attachment_index_search_placeholder]
+description = "添付ファイルの管理の画面の検索欄のプレースホルダー"
+other = "ファイル名で検索"
+
+[space_settings_attachment_index_search_button]
+description = "添付ファイルの管理の画面の検索ボタン"
+other = "検索"
+
+[space_settings_attachment_index_list_label]
+description = "添付ファイルの管理の画面の一覧の名前 (読み上げ用)"
+other = "添付ファイルの一覧"
+
+[space_settings_attachment_index_empty]
+description = "添付ファイルの管理の画面で、添付ファイルが無いときの表示"
+other = "添付ファイルが見つかりません"
+
+[space_settings_attachment_index_uploaded_at]
+description = "添付ファイルの管理の画面の、アップロードした日時"
+other = "{{.Time}}にアップロード"
+
+[space_settings_attachment_index_delete_button]
+description = "添付ファイルの管理の画面の削除ボタンの名前 (読み上げ用)"
+other = "{{.Filename}}を削除"
+
+[space_settings_attachment_index_delete_confirm]
+description = "添付ファイルの管理の画面で削除の前に出す確認"
+other = "「{{.Filename}}」を削除しますか？削除すると元に戻せません。"
 
 
 # ページネーション
@@ -3912,3 +4053,23 @@ other = "チェックサムを入力してください"
 [validation_attachment_checksum_invalid]
 description = "添付ファイルの事前署名でチェックサムがMD5のBase64として読めないエラー"
 other = "チェックサムの形式が正しくありません"
+
+[byte_size_bytes]
+description = "ファイルの大きさの表示 (1024バイト未満)"
+other = "{{.Size}}バイト"
+
+[byte_size_kilobytes]
+description = "ファイルの大きさの表示 (KB)"
+other = "{{.Size}}KB"
+
+[byte_size_megabytes]
+description = "ファイルの大きさの表示 (MB)"
+other = "{{.Size}}MB"
+
+[byte_size_gigabytes]
+description = "ファイルの大きさの表示 (GB)"
+other = "{{.Size}}GB"
+
+[byte_size_terabytes]
+description = "ファイルの大きさの表示 (TB)"
+other = "{{.Size}}TB"

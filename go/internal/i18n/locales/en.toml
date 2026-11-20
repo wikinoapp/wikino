@@ -57,6 +57,10 @@ other = "Close"
 description = "エラーラベルの汎用表示"
 other = "Error"
 
+[form_error_summary_heading]
+description = "フォームのフィールドエラーの要約の見出し"
+other = "Please check the following fields"
+
 [back_to_home]
 description = "ホームへ戻るリンクのラベル"
 other = "Back to Home"
@@ -1333,15 +1337,15 @@ description = "スペース作成画面のサブタイトル (ヘルプページ
 other = "For more information about spaces, please see <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/16\" target=\"_blank\">Space help</a>.<br>If you are unsure what kind of space to create, <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/50\" target=\"_blank\">Best Practices</a> may be helpful."
 
 [space_form_identifier_label]
-description = "スペース作成フォームの識別子のラベル"
+description = "スペースの作成と一般設定のフォームの識別子のラベル"
 other = "Identifier"
 
 [space_form_identifier_hint]
-description = "スペース作成フォームの識別子の補足"
+description = "スペースの作成と一般設定のフォームの識別子の補足"
 other = "This identifier is used in the URL of the space. You can change it later. It must be at most {{.MaxLength}} characters long and can only contain alphanumeric characters and hyphens."
 
 [space_form_name_label]
-description = "スペース作成フォームの名前のラベル"
+description = "スペースの作成と一般設定のフォームの名前のラベル"
 other = "Name"
 
 [space_new_submit_button]
@@ -1435,6 +1439,10 @@ other = "Please enter a name"
 [validation_space_name_too_long]
 description = "スペース名文字数超過エラー"
 other = "Name must be 30 characters or less"
+
+[validation_space_deletion_name_mismatch]
+description = "スペースの削除の確認で入力したスペース名が削除するスペースの名前と一致しないエラー"
+other = "Space name is incorrect"
 
 [validation_topic_deletion_name_mismatch]
 description = "トピックの削除の確認で入力したトピック名が削除するトピックの名前と一致しないエラー"
@@ -1563,6 +1571,18 @@ other = "Space created."
 [flash_topic_created]
 description = "トピック作成成功時のフラッシュメッセージ"
 other = "Topic created."
+
+[flash_space_updated]
+description = "スペースの一般設定の保存成功時のフラッシュメッセージ"
+other = "Space updated."
+
+[flash_space_deleted]
+description = "スペース削除成功時のフラッシュメッセージ"
+other = "Space deleted."
+
+[flash_attachment_deleted]
+description = "添付ファイルの削除成功時のフラッシュメッセージ"
+other = "File deleted"
 
 [flash_topic_updated]
 description = "トピック更新成功時のフラッシュメッセージ"
@@ -1756,6 +1776,127 @@ other = "Authorized apps"
 [space_settings_oauth_applications]
 description = "スペース設定のトップのOAuthアプリへのリンク"
 other = "OAuth apps"
+
+[space_settings_general_title]
+description = "スペースの一般設定画面のページタイトル"
+other = "General | {{.SpaceName}}"
+
+[space_settings_general_heading]
+description = "スペースの一般設定画面の見出し"
+other = "General"
+
+[space_settings_general_breadcrumb_settings]
+description = "スペースの一般設定画面のパンくずに出すスペース設定のラベル"
+other = "Settings"
+
+[space_settings_general_breadcrumb]
+description = "スペースの一般設定画面自身を指すパンくず項目 (現在項目)"
+other = "General"
+
+[space_settings_general_submit_button]
+description = "スペースの一般設定画面の送信ボタン"
+other = "Save"
+
+[space_settings_general_cancel]
+description = "スペースの一般設定画面のキャンセルリンク"
+other = "Cancel"
+
+# スペースの削除の確認画面
+[space_deletion_new_title]
+description = "スペースの削除の確認画面のページタイトル"
+other = "Delete this space | {{.SpaceName}}"
+
+[space_deletion_new_heading]
+description = "スペースの削除の確認画面の見出し"
+other = "Delete this space"
+
+[space_deletion_new_breadcrumb_settings]
+description = "スペースの削除の確認画面のパンくずに出すスペース設定のラベル"
+other = "Settings"
+
+[space_deletion_new_breadcrumb]
+description = "スペースの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "Delete this space"
+
+[space_deletion_new_description]
+description = "スペースの削除の確認画面の説明"
+other = "Delete space? Please confirm the following before deleting."
+
+[space_deletion_new_warning_contents]
+description = "スペースの削除の確認画面の注意 (トピック・ページ・添付ファイル・エクスポートも消える)"
+other = "Deleting a space will delete all topics, pages, attachments, and exports in it."
+
+[space_deletion_new_warning_irreversible]
+description = "スペースの削除の確認画面の注意 (元に戻せない)"
+other = "Deleted spaces and topics and pages in them cannot be restored."
+
+[space_deletion_new_space_name_label]
+description = "スペースの削除の確認画面のスペース名の入力欄のラベル"
+other = "Space name"
+
+[space_deletion_new_space_name_hint]
+description = "スペースの削除の確認画面のスペース名の入力欄の説明"
+other = "To delete a space, please enter the space name ({{.SpaceName}}) below."
+
+[space_deletion_new_submit_button]
+description = "スペースの削除の確認画面の送信ボタン"
+other = "Delete"
+
+[space_deletion_new_cancel]
+description = "スペースの削除の確認画面のキャンセルリンク"
+other = "Cancel"
+
+[space_settings_attachment_index_title]
+description = "添付ファイルの管理の画面のページタイトル"
+other = "Attachments | {{.SpaceName}}"
+
+[space_settings_attachment_index_paginated_title]
+description = "ページ送りした添付ファイルの管理の画面のページタイトル"
+other = "Attachments (Page {{.PageNumber}}) | {{.SpaceName}}"
+
+[space_settings_attachment_index_heading]
+description = "添付ファイルの管理の画面の見出し"
+other = "Attachments"
+
+[space_settings_attachment_index_breadcrumb_settings]
+description = "添付ファイルの管理の画面のパンくずの、スペース設定のトップへの項目"
+other = "Settings"
+
+[space_settings_attachment_index_breadcrumb]
+description = "添付ファイルの管理の画面のパンくずの現在項目"
+other = "Attachments"
+
+[space_settings_attachment_index_search_label]
+description = "添付ファイルの管理の画面の検索欄のラベル (読み上げ用)"
+other = "Search by filename"
+
+[space_settings_attachment_index_search_placeholder]
+description = "添付ファイルの管理の画面の検索欄のプレースホルダー"
+other = "Search by filename"
+
+[space_settings_attachment_index_search_button]
+description = "添付ファイルの管理の画面の検索ボタン"
+other = "Search"
+
+[space_settings_attachment_index_list_label]
+description = "添付ファイルの管理の画面の一覧の名前 (読み上げ用)"
+other = "Attachment list"
+
+[space_settings_attachment_index_empty]
+description = "添付ファイルの管理の画面で、添付ファイルが無いときの表示"
+other = "No attachments found"
+
+[space_settings_attachment_index_uploaded_at]
+description = "添付ファイルの管理の画面の、アップロードした日時"
+other = "Uploaded at {{.Time}}"
+
+[space_settings_attachment_index_delete_button]
+description = "添付ファイルの管理の画面の削除ボタンの名前 (読み上げ用)"
+other = "Delete {{.Filename}}"
+
+[space_settings_attachment_index_delete_confirm]
+description = "添付ファイルの管理の画面で削除の前に出す確認"
+other = "Delete \"{{.Filename}}\"? This cannot be undone."
 
 
 # Pagination
@@ -3915,3 +4056,24 @@ other = "Checksum can't be blank"
 [validation_attachment_checksum_invalid]
 description = "添付ファイルの事前署名でチェックサムがMD5のBase64として読めないエラー"
 other = "Checksum is invalid"
+
+[byte_size_bytes]
+description = "ファイルの大きさの表示 (1024バイト未満)"
+one = "{{.Size}} Byte"
+other = "{{.Size}} Bytes"
+
+[byte_size_kilobytes]
+description = "ファイルの大きさの表示 (KB)"
+other = "{{.Size}} KB"
+
+[byte_size_megabytes]
+description = "ファイルの大きさの表示 (MB)"
+other = "{{.Size}} MB"
+
+[byte_size_gigabytes]
+description = "ファイルの大きさの表示 (GB)"
+other = "{{.Size}} GB"
+
+[byte_size_terabytes]
+description = "ファイルの大きさの表示 (TB)"
+other = "{{.Size}} TB"
