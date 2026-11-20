@@ -2152,6 +2152,14 @@ ALTER TABLE ONLY public.email_confirmations
 
 
 --
+-- Name: pages fk_pages_featured_image_attachment_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pages
+    ADD CONSTRAINT fk_pages_featured_image_attachment_id FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id) ON DELETE SET NULL;
+
+
+--
 -- Name: attachments fk_rails_06223f0ea2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2285,14 +2293,6 @@ ALTER TABLE ONLY public.topic_members
 
 ALTER TABLE ONLY public.attachments
     ADD CONSTRAINT fk_rails_850712f875 FOREIGN KEY (attached_space_member_id) REFERENCES public.space_members(id);
-
-
---
--- Name: pages fk_rails_89b3a4bafa; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.pages
-    ADD CONSTRAINT fk_rails_89b3a4bafa FOREIGN KEY (featured_image_attachment_id) REFERENCES public.attachments(id);
 
 
 --
@@ -2745,4 +2745,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261102172144'),
     ('20261114111000'),
     ('20261114111001'),
-    ('20261114111002');
+    ('20261114111002'),
+    ('20261120013000'),
+    ('20261120013001'),
+    ('20261120013002');

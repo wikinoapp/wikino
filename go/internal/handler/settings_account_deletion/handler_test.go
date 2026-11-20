@@ -57,7 +57,7 @@ func setupHandler(t *testing.T, db *sql.DB, inserter dispatcher.JobInserter) *se
 		session.NewManager(userRepo, userSessionRepo, cfg),
 		session.NewFlashManager("", false, true),
 		usecase.NewGetAccountDeletionNewUsecase(spaceRepo),
-		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, spaceRepo, dispatcher.NewDispatcher(inserter), validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
+		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, spaceRepo, dispatcher.NewDispatcher(inserter, nil), validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
 	)
 }
 

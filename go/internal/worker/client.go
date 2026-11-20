@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 	"github.com/riverqueue/river/rivertype"
 
@@ -81,6 +82,12 @@ type DeletionDeps struct {
 	UserPasswordRepo            *repository.UserPasswordRepository
 	UserTwoFactorAuthRepo       *repository.UserTwoFactorAuthRepository
 	SpaceMemberRepo             *repository.SpaceMemberRepository
+	SpaceRepo                   *repository.SpaceRepository
+	AttachmentRepo              *repository.AttachmentRepository
+	ExportRepo                  *repository.ExportRepository
+
+	// ObjectStorageはnilでもよい。そのときスペースの物理削除は、実体を持たないスペースだけを消せる
+	ObjectStorage storage.ObjectStorage
 }
 
 // AttachmentProcessingDepsは、添付ファイルのアップロード後の処理のワーカーが使うものを保持する。
@@ -158,7 +165,25 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 		slog.WarnContext(ctx, "オブジェクトストレージが設定されていません。スペースのエクスポート機能は利用できません")
 	}
 
+	// 行の削除と同じトランザクションで後始末ジョブを登録するクライアント。添付ファイルとZIPの後始末と、
+	// スペースの物理削除が使う
+	txClient, err := NewTxInserter(deletionDeps.DB)
+	if err != nil {
+		pool.Close()
+		return nil, err
+	}
+	if deletionDeps.ObjectStorage != nil {
+		river.AddWorker(workers, NewCleanupExportObjectsWorker(usecase.NewCleanupExportObjectsUsecase(
+			deletionDeps.ExportRepo, dispatcher.NewDispatcher(nil, txClient), deletionDeps.ObjectStorage,
+		)))
+		slog.InfoContext(ctx, "CleanupExportObjectsWorkerを登録しました")
+	}
+
 	if attachmentProcessingDeps.ObjectStorage != nil {
+		river.AddWorker(workers, NewCleanupAttachmentObjectsWorker(usecase.NewCleanupAttachmentObjectsUsecase(
+			dispatcher.NewDispatcher(nil, txClient), attachmentProcessingDeps.ObjectStorage,
+		)))
+		slog.InfoContext(ctx, "CleanupAttachmentObjectsWorkerを登録しました")
 		river.AddWorker(workers, NewProcessAttachmentWorker(usecase.NewProcessAttachmentUsecase(
 			attachmentProcessingDeps.DB,
 			attachmentProcessingDeps.AttachmentRepo,
@@ -200,6 +225,28 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 	)))
 	slog.InfoContext(ctx, "DeleteAccountWorkerを登録しました")
 
+	// スペースの物理削除のワーカーは、実体を持たないスペースをオブジェクトストレージ無しでも消せるため、
+	// 設定によらず登録する。実体を持つスペースは、オブジェクトストレージが無ければ失敗して行を残す。
+	river.AddWorker(workers, NewDeleteSpaceWorker(usecase.NewDeleteSpaceUsecase(
+		deletionDeps.DB,
+		usecase.DeleteSpaceRepos{
+			SpaceRepo:                   deletionDeps.SpaceRepo,
+			SpaceMemberRepo:             deletionDeps.SpaceMemberRepo,
+			TopicRepo:                   deletionDeps.TopicRepo,
+			TopicMemberRepo:             deletionDeps.TopicMemberRepo,
+			PageRepo:                    deletionDeps.PageRepo,
+			DraftPageRepo:               deletionDeps.DraftPageRepo,
+			PageEditorRepo:              deletionDeps.PageEditorRepo,
+			PageRevisionRepo:            deletionDeps.PageRevisionRepo,
+			PageAttachmentReferenceRepo: deletionDeps.PageAttachmentReferenceRepo,
+			AttachmentRepo:              deletionDeps.AttachmentRepo,
+			ExportRepo:                  deletionDeps.ExportRepo,
+		},
+		deletionDeps.ObjectStorage,
+		dispatcher.NewDispatcher(nil, txClient),
+	)))
+	slog.InfoContext(ctx, "DeleteSpaceWorkerを登録しました")
+
 	// ゴミ箱の物理削除のワーカーもデータベースだけで動くため、設定によらず登録する。
 	// 定期ジョブとして投入するため、登録を条件付きにしてはいけない (periodicJobSpecsを参照)。
 	river.AddWorker(workers, NewDeleteTrashedPagesWorker(usecase.NewDeleteTrashedPagesUsecase(
@@ -238,6 +285,14 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 		riverClient: riverClient,
 		pool:        pool,
 	}, nil
+}
+
+// NewTxInserterは、アプリケーションのdatabase/sqlのトランザクションでジョブを投入するクライアントを作る。
+// ワーカーを持たず、ジョブの実行はNewClientが作るpgxクライアントが担当する。
+func NewTxInserter(db *sql.DB) (*river.Client[*sql.Tx], error) {
+	return river.NewClient(riverdatabasesql.New(db), &river.Config{
+		Logger: slog.Default(),
+	})
 }
 
 // StartはRiverクライアントを起動します

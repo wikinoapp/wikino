@@ -71,3 +71,31 @@ func TestPaginatedPath_WithExistingQuery(t *testing.T) {
 		t.Errorf("PaginatedPath() = %q、期待値 = %q", got, want)
 	}
 }
+
+// 添付ファイルの管理の画面のページ送りのリンクは、検索語を引き継ぐ。検索語の記号は、クエリ文字列を
+// 壊さないようにエスケープする。
+func TestSpaceSettingsAttachmentsSearchPath(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		query string
+		page  int32
+		want  templates.Path
+	}{
+		{name: "検索語もページも無い", query: "", page: 1, want: "/s/space/settings/attachments"},
+		{name: "検索語の無い2ページ目", query: "", page: 2, want: "/s/space/settings/attachments?page=2"},
+		{name: "検索語のある1ページ目", query: "photo", page: 1, want: "/s/space/settings/attachments?q=photo"},
+		{name: "検索語を引き継ぐ2ページ目", query: "a&b 100%", page: 2, want: "/s/space/settings/attachments?q=a%26b+100%25&page=2"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := templates.SpaceSettingsAttachmentsSearchPath("space", tt.query, tt.page); got != tt.want {
+				t.Errorf("SpaceSettingsAttachmentsSearchPath() = %q、期待値 = %q", got, tt.want)
+			}
+		})
+	}
+}

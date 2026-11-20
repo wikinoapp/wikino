@@ -62,6 +62,47 @@ func (v *SpaceCreateValidator) Validate(ctx context.Context, input SpaceCreateVa
 	return nil
 }
 
+// SpaceUpdateValidatorはスペースの一般設定の保存のバリデーションを行う
+type SpaceUpdateValidator struct {
+	spaceRepo *repository.SpaceRepository
+}
+
+// NewSpaceUpdateValidatorはSpaceUpdateValidatorを生成する
+func NewSpaceUpdateValidator(spaceRepo *repository.SpaceRepository) *SpaceUpdateValidator {
+	return &SpaceUpdateValidator{spaceRepo: spaceRepo}
+}
+
+// SpaceUpdateValidatorInputはバリデーションの入力パラメータ
+type SpaceUpdateValidatorInput struct {
+	SpaceID    model.SpaceID
+	Identifier string
+	Name       string
+}
+
+// Validateはバリデーションを行う。形式の検証はスペースの作成と共有し、識別子の重複の確認だけを
+// 自分自身を除く形にする。
+func (v *SpaceUpdateValidator) Validate(ctx context.Context, input SpaceUpdateValidatorInput) error {
+	ve := model.NewValidationError()
+
+	validateSpaceIdentifier(ctx, ve, input.Identifier)
+	validateSpaceName(ctx, ve, input.Name)
+
+	if ve.HasErrors() {
+		return ve
+	}
+
+	exists, err := v.spaceRepo.ExistsOtherByIdentifier(ctx, input.SpaceID, model.SpaceIdentifier(input.Identifier))
+	if err != nil {
+		return fmt.Errorf("スペースの識別子の一意性チェックに失敗: %w", err)
+	}
+	if exists {
+		ve.AddField("identifier", i18n.T(ctx, "validation_space_identifier_uniqueness"))
+		return ve
+	}
+
+	return nil
+}
+
 // validateSpaceIdentifierはスペースの識別子の形式を検証し、見つかったものをveに積む。
 func validateSpaceIdentifier(ctx context.Context, ve *model.ValidationError, identifier string) {
 	if identifier == "" {

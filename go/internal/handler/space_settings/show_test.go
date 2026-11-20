@@ -81,7 +81,7 @@ func settingsSpace(t *testing.T, tx *sql.Tx, identifier string, role model.Space
 	return userID
 }
 
-// existingItemPathsは既存の項目 (一般・エクスポート・添付ファイル・削除) のリンク先を返す。
+// existingItemPathsは管理者に出る既存の項目 (一般・エクスポート・添付ファイル・削除) のリンク先を返す。
 func existingItemPaths(identifier string) []string {
 	return []string{
 		`href="/s/` + identifier + `/settings/general"`,

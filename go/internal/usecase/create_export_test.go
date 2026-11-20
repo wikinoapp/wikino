@@ -76,7 +76,7 @@ func newCreateExportUsecase(f createExportFixture, inserter dispatcher.JobInsert
 		repository.NewSpaceRepository(queries),
 		repository.NewSpaceMemberRepository(queries),
 		repository.NewExportRepository(queries),
-		dispatcher.NewDispatcher(inserter),
+		dispatcher.NewDispatcher(inserter, nil),
 	)
 }
 

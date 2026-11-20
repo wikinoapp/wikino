@@ -74,6 +74,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	content := spacepages.Settings(spacepages.SettingsData{
 		Space:                       spaceVM,
 		CanUpdateSpace:              output.Items.CanUpdateSpace,
+		CanDeleteSpace:              output.Items.CanDeleteSpace,
 		CanShowPersonalAccessTokens: output.Items.CanShowPersonalAccessTokens,
 		CanShowOAuthGrants:          output.Items.CanShowOAuthGrants,
 		CanShowOAuthApplications:    output.Items.CanShowOAuthApplications,

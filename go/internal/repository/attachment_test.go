@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -1481,5 +1483,263 @@ func TestAttachmentRepository_Create(t *testing.T) {
 		if !got.Equal(wantTime) {
 			t.Errorf("%s = %v、期待値 = %v", field, got, wantTime)
 		}
+	}
+}
+
+// attachmentDeletionFixtureは、添付ファイルの実体のキーと行の削除のテストが使う2つのスペース
+type attachmentDeletionFixture struct {
+	repo          *AttachmentRepository
+	spaceID       model.SpaceID
+	otherSpaceID  model.SpaceID
+	memberID      model.SpaceMemberID
+	otherMemberID model.SpaceMemberID
+}
+
+func setupAttachmentDeletionFixture(t *testing.T, suffix string) (*attachmentDeletionFixture, *sql.Tx) {
+	t.Helper()
+
+	_, tx := testutil.SetupTx(t)
+	f := &attachmentDeletionFixture{repo: NewAttachmentRepository(testutil.QueriesWithTx(tx))}
+	for i, target := range []struct {
+		spaceID  *model.SpaceID
+		memberID *model.SpaceMemberID
+	}{{&f.spaceID, &f.memberID}, {&f.otherSpaceID, &f.otherMemberID}} {
+		name := fmt.Sprintf("attach-del-%s-%d", suffix, i)
+		userID := testutil.NewUserBuilder(t, tx).WithEmail(name + "@example.com").WithAtname(fmt.Sprintf("attach_del_%s_%d", suffix, i)).Build()
+		*target.spaceID = testutil.NewSpaceBuilder(t, tx).WithIdentifier(name).Build()
+		*target.memberID = testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(*target.spaceID).WithUserID(userID).Build()
+	}
+	return f, tx
+}
+
+// addAttachmentVariantは、Rails版が作るのと同じ形のサムネイル (variant) の行を、variantのblobのキーをkeyにして作る
+func addAttachmentVariant(t *testing.T, tx *sql.Tx, id model.AttachmentID, key string) {
+	t.Helper()
+
+	ctx := context.Background()
+	var variantRecordID, variantBlobID string
+	if err := tx.QueryRowContext(ctx, `
+		INSERT INTO active_storage_variant_records (blob_id, variation_digest)
+		SELECT asa.blob_id, 'digest' FROM attachments a
+		INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+		WHERE a.id = $1
+		RETURNING id`, string(id)).Scan(&variantRecordID); err != nil {
+		t.Fatalf("variantの行の作成に失敗: %v", err)
+	}
+	if err := tx.QueryRowContext(ctx, `
+		INSERT INTO active_storage_blobs (key, filename, content_type, metadata, service_name, byte_size, checksum, created_at)
+		VALUES ($1, 'thumb.png', 'image/png', '{}', 'test', 1, 'x', NOW()) RETURNING id`, key).Scan(&variantBlobID); err != nil {
+		t.Fatalf("variantのblobの作成に失敗: %v", err)
+	}
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO active_storage_attachments (name, record_type, record_id, blob_id, created_at)
+		VALUES ('image', 'ActiveStorage::VariantRecord', $1, $2, NOW())`, variantRecordID, variantBlobID); err != nil {
+		t.Fatalf("variantのattachmentの作成に失敗: %v", err)
+	}
+}
+
+func TestAttachmentRepository_ListObjectKeysByIDsAndSpace(t *testing.T) {
+	t.Parallel()
+
+	f, tx := setupAttachmentDeletionFixture(t, "keys")
+	id := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(f.spaceID).WithSpaceMemberID(f.memberID).WithBlobKey("attach-del-keys-target").Build()
+	addAttachmentVariant(t, tx, id, "attach-del-keys-target-variant")
+	plainID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(f.spaceID).WithSpaceMemberID(f.memberID).WithBlobKey("attach-del-keys-plain").Build()
+	otherID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(f.otherSpaceID).WithSpaceMemberID(f.otherMemberID).WithBlobKey("attach-del-keys-other").Build()
+
+	keys, err := f.repo.ListObjectKeysByIDsAndSpace(context.Background(), []model.AttachmentID{id, plainID, otherID, "not-a-uuid"}, f.spaceID)
+	if err != nil {
+		t.Fatalf("ListObjectKeysByIDsAndSpace()のエラー = %v", err)
+	}
+	slices.Sort(keys)
+	want := []string{"attach-del-keys-plain", "attach-del-keys-target", "attach-del-keys-target-variant"}
+	if !slices.Equal(keys, want) {
+		t.Errorf("keys = %v、期待値 = %v (ほかのスペースのキーを含まず、variantのキーを含む)", keys, want)
+	}
+
+	empty, err := f.repo.ListObjectKeysByIDsAndSpace(context.Background(), nil, f.spaceID)
+	if err != nil || len(empty) != 0 {
+		t.Errorf("IDが無いとき: keys = %v、エラー = %v", empty, err)
+	}
+}
+
+func TestAttachmentRepository_DeleteByIDsAndSpace(t *testing.T) {
+	t.Parallel()
+
+	f, tx := setupAttachmentDeletionFixture(t, "rows")
+	ctx := context.Background()
+	id := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(f.spaceID).WithSpaceMemberID(f.memberID).WithBlobKey("attach-del-rows-target").Build()
+	addAttachmentVariant(t, tx, id, "attach-del-rows-target-variant")
+	keepID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(f.spaceID).WithSpaceMemberID(f.memberID).WithBlobKey("attach-del-rows-keep").Build()
+	otherID := testutil.NewAttachmentBuilder(t, tx).WithSpaceID(f.otherSpaceID).WithSpaceMemberID(f.otherMemberID).WithBlobKey("attach-del-rows-other").Build()
+
+	topicID := testutil.NewTopicBuilder(t, tx).WithSpaceID(f.spaceID).Build()
+	pageID := testutil.NewPageBuilder(t, tx).WithSpaceID(f.spaceID).WithTopicID(topicID).WithFeaturedImageAttachmentID(id).Build()
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO page_attachment_references (attachment_id, page_id, created_at, updated_at)
+		VALUES ($1, $3, NOW(), NOW()), ($2, $3, NOW(), NOW())`, string(id), string(keepID), string(pageID)); err != nil {
+		t.Fatalf("ページからの参照の作成に失敗: %v", err)
+	}
+
+	// ほかのスペースを指定しても、そのスペースに無い添付ファイルは消さない
+	if _, err := f.repo.DeleteByIDsAndSpace(ctx, []model.AttachmentID{otherID}, f.spaceID); err != nil {
+		t.Fatalf("DeleteByIDsAndSpace()のエラー = %v", err)
+	}
+	if _, err := f.repo.DeleteByIDsAndSpace(ctx, []model.AttachmentID{id, "not-a-uuid"}, f.spaceID); err != nil {
+		t.Fatalf("DeleteByIDsAndSpace()のエラー = %v", err)
+	}
+
+	count := func(query string, args ...any) int {
+		t.Helper()
+		var n int
+		if err := tx.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
+			t.Fatalf("行の数の取得に失敗: %v", err)
+		}
+		return n
+	}
+	for _, tt := range []struct {
+		name string
+		got  int
+		want int
+	}{
+		{name: "消した添付ファイル", got: count(`SELECT count(*) FROM attachments WHERE id = $1`, string(id)), want: 0},
+		{name: "消した添付ファイルへの参照", got: count(`SELECT count(*) FROM page_attachment_references WHERE attachment_id = $1`, string(id)), want: 0},
+		{name: "消した添付ファイルとvariantのblob", got: count(`SELECT count(*) FROM active_storage_blobs WHERE key LIKE 'attach-del-rows-target%'`), want: 0},
+		{name: "variantの行", got: count(`SELECT count(*) FROM active_storage_variant_records WHERE variation_digest = 'digest'`), want: 0},
+		{name: "残す添付ファイル", got: count(`SELECT count(*) FROM attachments WHERE id IN ($1, $2)`, string(keepID), string(otherID)), want: 2},
+		{name: "残す添付ファイルへの参照", got: count(`SELECT count(*) FROM page_attachment_references WHERE attachment_id = $1`, string(keepID)), want: 1},
+		{name: "残す添付ファイルのblob", got: count(`SELECT count(*) FROM active_storage_blobs WHERE key IN ('attach-del-rows-keep', 'attach-del-rows-other')`), want: 2},
+	} {
+		if tt.got != tt.want {
+			t.Errorf("%sの行の数 = %d、期待値 = %d", tt.name, tt.got, tt.want)
+		}
+	}
+
+	var featured sql.NullString
+	if err := tx.QueryRowContext(ctx, `SELECT featured_image_attachment_id FROM pages WHERE id = $1 AND space_id = $2`, string(pageID), string(f.spaceID)).Scan(&featured); err != nil {
+		t.Fatalf("ページのカバー画像の取得に失敗: %v", err)
+	}
+	if featured.Valid {
+		t.Errorf("ページのカバー画像 = %q、NULLを期待", featured.String)
+	}
+}
+
+func TestAttachmentRepository_ListBySpacePaginated(t *testing.T) {
+	t.Parallel()
+
+	f, tx := setupAttachmentDeletionFixture(t, "list")
+	ctx := context.Background()
+	base := time.Date(2026, 11, 20, 0, 0, 0, 0, time.UTC)
+
+	build := func(filename string, attachedAt time.Time) model.AttachmentID {
+		return testutil.NewAttachmentBuilder(t, tx).
+			WithSpaceID(f.spaceID).
+			WithSpaceMemberID(f.memberID).
+			WithFilename(filename).
+			WithContentType("image/png").
+			WithByteSize(123).
+			WithAttachedAt(attachedAt).
+			Build()
+	}
+	oldest := build("Report_2026.PNG", base)
+	middle := build("100%-photo.png", base.Add(time.Hour))
+	tieA := build("photo-a.png", base.Add(2*time.Hour))
+	tieB := build("photo-b.png", base.Add(2*time.Hour))
+	testutil.NewAttachmentBuilder(t, tx).
+		WithSpaceID(f.otherSpaceID).
+		WithSpaceMemberID(f.otherMemberID).
+		WithFilename("photo-other.png").
+		Build()
+
+	// 同じ時刻の2件は、IDの降順に並ぶ
+	newer, older := tieA, tieB
+	if string(tieB) > string(tieA) {
+		newer, older = tieB, tieA
+	}
+
+	ids := func(result *PaginatedAttachments) []model.AttachmentID {
+		got := make([]model.AttachmentID, len(result.Attachments))
+		for i, a := range result.Attachments {
+			got[i] = a.ID
+		}
+		return got
+	}
+
+	tests := []struct {
+		name      string
+		query     string
+		page      int32
+		limit     int32
+		wantIDs   []model.AttachmentID
+		wantTotal int64
+	}{
+		{name: "ほかのスペースを除いて新しい順に並ぶ", query: "", page: 1, limit: 10, wantIDs: []model.AttachmentID{newer, older, middle, oldest}, wantTotal: 4},
+		{name: "2ページ目は続きを返す", query: "", page: 2, limit: 3, wantIDs: []model.AttachmentID{oldest}, wantTotal: 4},
+		{name: "大文字と小文字を区別せずに部分一致で絞り込む", query: "report", page: 1, limit: 10, wantIDs: []model.AttachmentID{oldest}, wantTotal: 1},
+		{name: "検索語の%を文字として扱う", query: "100%", page: 1, limit: 10, wantIDs: []model.AttachmentID{middle}, wantTotal: 1},
+		{name: "検索語の_を文字として扱う", query: "t_2", page: 1, limit: 10, wantIDs: []model.AttachmentID{oldest}, wantTotal: 1},
+		{name: "_が任意の1文字に一致しない", query: "photo_a", page: 1, limit: 10, wantIDs: []model.AttachmentID{}, wantTotal: 0},
+		{name: "空白だけの検索語は絞り込まない", query: "  ", page: 1, limit: 10, wantIDs: []model.AttachmentID{newer, older, middle, oldest}, wantTotal: 4},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := f.repo.ListBySpacePaginated(ctx, f.spaceID, tt.query, tt.page, tt.limit)
+			if err != nil {
+				t.Fatalf("ListBySpacePaginated()のエラー = %v", err)
+			}
+			if got := ids(result); !slices.Equal(got, tt.wantIDs) {
+				t.Errorf("ID = %v、期待値 = %v", got, tt.wantIDs)
+			}
+			if result.TotalCount != tt.wantTotal {
+				t.Errorf("TotalCount = %d、期待値 = %d", result.TotalCount, tt.wantTotal)
+			}
+		})
+	}
+
+	t.Run("一覧に出す項目を設定する", func(t *testing.T) {
+		result, err := f.repo.ListBySpacePaginated(ctx, f.spaceID, "Report", 1, 10)
+		if err != nil {
+			t.Fatalf("ListBySpacePaginated()のエラー = %v", err)
+		}
+		if len(result.Attachments) != 1 {
+			t.Fatalf("件数 = %d、期待値 = 1", len(result.Attachments))
+		}
+		got := result.Attachments[0]
+		if got.SpaceID != f.spaceID || got.Filename != "Report_2026.PNG" || got.ContentType != "image/png" || got.ByteSize != 123 || got.BlobKey == "" {
+			t.Errorf("添付ファイル = %+v", got)
+		}
+		if !got.AttachedAt.Equal(base) {
+			t.Errorf("AttachedAt = %v、期待値 = %v", got.AttachedAt, base)
+		}
+	})
+}
+
+func TestAttachmentRepository_ListIDsBySpaceAfter(t *testing.T) {
+	t.Parallel()
+
+	f, tx := setupAttachmentDeletionFixture(t, "list-after")
+	ctx := context.Background()
+	var want []model.AttachmentID
+	for i := range 3 {
+		want = append(want, testutil.NewAttachmentBuilder(t, tx).WithSpaceID(f.spaceID).WithSpaceMemberID(f.memberID).WithBlobKey(fmt.Sprintf("attach-list-after-%d", i)).Build())
+	}
+	testutil.NewAttachmentBuilder(t, tx).WithSpaceID(f.otherSpaceID).WithSpaceMemberID(f.otherMemberID).WithBlobKey("attach-list-after-other").Build()
+	slices.Sort(want)
+
+	first, err := f.repo.ListIDsBySpaceAfter(ctx, f.spaceID, "", 2)
+	if err != nil {
+		t.Fatalf("ListIDsBySpaceAfter()のエラー = %v", err)
+	}
+	if !slices.Equal(first, want[:2]) {
+		t.Errorf("最初の2件 = %v、期待値 = %v", first, want[:2])
+	}
+
+	rest, err := f.repo.ListIDsBySpaceAfter(ctx, f.spaceID, first[len(first)-1], 2)
+	if err != nil {
+		t.Fatalf("ListIDsBySpaceAfter()のエラー = %v", err)
+	}
+	if !slices.Equal(rest, want[2:]) {
+		t.Errorf("残りの件 = %v、期待値 = %v (ほかのスペースの添付ファイルを含まない)", rest, want[2:])
 	}
 }

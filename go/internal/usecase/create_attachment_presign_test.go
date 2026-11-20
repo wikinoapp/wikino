@@ -71,7 +71,7 @@ func (f *createAttachmentPresignFixture) usecase(inserter dispatcher.JobInserter
 		repository.NewSpaceMemberRepository(q),
 		repository.NewAttachmentRepository(q),
 		validator.NewAttachmentPresignCreateValidator(),
-		dispatcher.NewDispatcher(inserter),
+		dispatcher.NewDispatcher(inserter, nil),
 		objectStorage,
 	)
 }

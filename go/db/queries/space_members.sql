@@ -26,3 +26,7 @@ SELECT EXISTS (
     INNER JOIN spaces s ON s.id = sm.space_id
     WHERE sm.user_id = @user_id
 );
+
+-- name: DeleteSpaceMembersBySpace :exec
+-- スペースのすべてのメンバー (参加をやめた行を含む) を物理削除する。
+DELETE FROM space_members WHERE space_id = @space_id;

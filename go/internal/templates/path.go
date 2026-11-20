@@ -64,19 +64,45 @@ func SpaceSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/settings", spaceIdentifier))
 }
 
-// SpaceSettingsGeneralPathはスペースの一般設定のパスを生成します (現状はRails版にプロキシされる)。
+// SpaceSettingsGeneralPathはスペースの一般設定のパスを生成します。
 func SpaceSettingsGeneralPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return SpaceSettingsPath(spaceIdentifier) + "/general"
 }
 
-// SpaceSettingsAttachmentsPathはスペースの添付ファイルの一覧のパスを生成します (現状はRails版にプロキシされる)。
+// SpaceSettingsAttachmentsPathはスペースの添付ファイルの管理の画面のパスを生成します。
 func SpaceSettingsAttachmentsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return SpaceSettingsPath(spaceIdentifier) + "/attachments"
 }
 
-// NewSpaceSettingsDeletionPathはスペースを削除する画面のパスを生成します (現状はRails版にプロキシされる)。
+// SpaceSettingsAttachmentsSearchPathは、添付ファイルの管理の画面の、ファイル名の検索語queryで絞り込んだ
+// pageページ目のパスを生成します。検索語が空なら絞り込みのパラメータを付けません。
+func SpaceSettingsAttachmentsSearchPath(spaceIdentifier viewmodel.SpaceIdentifier, query string, page int32) Path {
+	path := SpaceSettingsAttachmentsPath(spaceIdentifier)
+	if query != "" {
+		path += Path("?q=" + url.QueryEscape(query))
+	}
+	return PaginatedPath(path, page)
+}
+
+// SpaceSettingsAttachmentPathはスペースの添付ファイル1件を削除する (DELETE) パスを生成します。
+func SpaceSettingsAttachmentPath(spaceIdentifier viewmodel.SpaceIdentifier, attachmentID string) Path {
+	return SpaceSettingsAttachmentsPath(spaceIdentifier) + Path("/"+url.PathEscape(attachmentID))
+}
+
+// AttachmentPathは添付ファイルを表示するパスを生成します。表示の判定を通った閲覧者を署名付きURLへ
+// リダイレクトします。
+func AttachmentPath(attachmentID string) Path {
+	return Path("/attachments/" + url.PathEscape(attachmentID))
+}
+
+// SpaceSettingsDeletionPathはスペースを削除する処理のパスを生成します。削除の確認画面はこのパスへ送信します。
+func SpaceSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPath(spaceIdentifier) + "/deletion"
+}
+
+// NewSpaceSettingsDeletionPathはスペースを削除する確認画面のパスを生成します。
 func NewSpaceSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
-	return SpaceSettingsPath(spaceIdentifier) + "/deletion/new"
+	return SpaceSettingsDeletionPath(spaceIdentifier) + "/new"
 }
 
 // SpaceSettingsExportsPathはスペースのエクスポートのパスを生成します。エクスポートは、この

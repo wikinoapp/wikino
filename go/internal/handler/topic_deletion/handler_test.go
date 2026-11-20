@@ -84,7 +84,7 @@ func setupDeletionHandler(t *testing.T, queries *query.Queries, inserter dispatc
 		cfg,
 		session.NewFlashManager("", false, true),
 		usecase.NewGetTopicDeletionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo),
-		usecase.NewDiscardTopicUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, dispatcher.NewDispatcher(inserter), validator.NewTopicDeletionCreateValidator()),
+		usecase.NewDiscardTopicUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, dispatcher.NewDispatcher(inserter, nil), validator.NewTopicDeletionCreateValidator()),
 	)
 }
 

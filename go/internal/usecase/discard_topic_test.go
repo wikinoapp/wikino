@@ -31,7 +31,7 @@ func newDiscardTopicUsecase(f topicSettingsGeneralFixture, inserter dispatcher.J
 		repository.NewSpaceMemberRepository(f.queries),
 		repository.NewTopicRepository(f.queries),
 		repository.NewTopicMemberRepository(f.queries),
-		dispatcher.NewDispatcher(inserter),
+		dispatcher.NewDispatcher(inserter, nil),
 		validator.NewTopicDeletionCreateValidator(),
 	)
 }

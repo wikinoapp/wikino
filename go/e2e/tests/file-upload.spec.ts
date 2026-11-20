@@ -22,15 +22,6 @@ test.beforeAll(async () => {
   user = shared.user;
   space = shared.space;
   spaceMemberId = shared.spaceMemberId;
-
-  // 事前署名と添付ファイルの表示をGo版で処理させる。e2eのサーバーは、オブジェクトストレージの代わりに
-  // メモリ上のフェイクを使い、その署名付きURLへのアップロードと取得を自身で受ける
-  for (const flag of ["go_attachment_upload", "go_attachment_delivery"]) {
-    await query(
-      `INSERT INTO feature_flags (user_id, name, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (user_id, name) DO NOTHING`,
-      [user.id, flag],
-    );
-  }
 });
 
 // photoWithLocationは、位置情報 (GPSLatitudeRef) と説明 (E2E_SECRET_MARKER) のEXIFを持つJPEG

@@ -270,6 +270,23 @@ func (r *TopicRepository) Undiscard(ctx context.Context, topicID model.TopicID, 
 	})
 }
 
+// DiscardBySpaceは、スペースの論理削除していないトピックをdiscardedAtで論理削除する。
+func (r *TopicRepository) DiscardBySpace(ctx context.Context, spaceID model.SpaceID, discardedAt time.Time) error {
+	return r.q.DiscardTopicsBySpace(ctx, query.DiscardTopicsBySpaceParams{
+		SpaceID:     string(spaceID),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+	})
+}
+
+// UndiscardBySpaceは、スペースのトピックのうちdiscardedAtに論理削除したものの論理削除を取り消す。
+func (r *TopicRepository) UndiscardBySpace(ctx context.Context, spaceID model.SpaceID, discardedAt time.Time, updatedAt time.Time) error {
+	return r.q.UndiscardTopicsBySpace(ctx, query.UndiscardTopicsBySpaceParams{
+		SpaceID:     string(spaceID),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+		UpdatedAt:   updatedAt,
+	})
+}
+
 // LockDiscardedは論理削除したトピックをロックし、ロックできたかを返す。論理削除していない
 // トピックと、見つからないトピックではfalseを返す。
 func (r *TopicRepository) LockDiscarded(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) (bool, error) {
@@ -296,6 +313,11 @@ func (r *TopicRepository) DeleteDiscarded(ctx context.Context, topicID model.Top
 		return false, err
 	}
 	return n > 0, nil
+}
+
+// DeleteBySpaceはスペースのすべてのトピック (論理削除したものを含む) を物理削除する。
+func (r *TopicRepository) DeleteBySpace(ctx context.Context, spaceID model.SpaceID) error {
+	return r.q.DeleteTopicsBySpace(ctx, string(spaceID))
 }
 
 // ListWithSpacesByPagesは、ページが属するトピックを、スペースの識別子と名前を添えて返す。

@@ -75,7 +75,7 @@ func newHandler(inserter dispatcher.JobInserter, objectStorage storage.ObjectSto
 		repository.NewSpaceMemberRepository(q),
 		repository.NewAttachmentRepository(q),
 		validator.NewAttachmentPresignCreateValidator(),
-		dispatcher.NewDispatcher(inserter),
+		dispatcher.NewDispatcher(inserter, nil),
 		objectStorage,
 	))
 }

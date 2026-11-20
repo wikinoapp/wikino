@@ -122,7 +122,7 @@ func (uc *ProcessAttachmentUsecase) Execute(ctx context.Context, input ProcessAt
 		return &ProcessAttachmentOutput{}, nil
 	}
 	if err != nil {
-		return nil, errors.Join(err, uc.release(ctx, attachment))
+		return nil, errors.Join(err, uc.release(ctx, attachment), uc.deleteObjectIfRemoved(ctx, attachment))
 	}
 	return &ProcessAttachmentOutput{}, nil
 }
@@ -224,11 +224,33 @@ func (uc *ProcessAttachmentUsecase) complete(ctx context.Context, attachment *mo
 	}
 	// ほかの処理が先に状態を変えていたら、blobも更新しない
 	if !completed {
-		return nil
+		_ = tx.Rollback()
+		return uc.deleteObjectIfRemoved(ctx, attachment)
 	}
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("トランザクションのコミットに失敗: %w", err)
+	}
+	return nil
+}
+
+// deleteObjectIfRemovedは、処理の途中で添付ファイルが削除されていたら、実体を消す。削除が実体を消したあとに
+// この処理が書き戻した実体は、どの行からも参照されずに残るためである。行が残っているのは、ほかの試行が先に
+// 状態を変えたときで、実体は消さない
+func (uc *ProcessAttachmentUsecase) deleteObjectIfRemoved(ctx context.Context, attachment *model.Attachment) error {
+	// 書き戻しの応答を待つ間に打ち切られていても、行を失った実体の後始末は試みる。
+	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), uc.cleanupTimeout)
+	defer cancel()
+
+	exists, err := uc.attachmentRepo.ExistsByIDAndSpace(cleanupCtx, attachment.ID, attachment.SpaceID)
+	if err != nil {
+		return fmt.Errorf("添付ファイルの存在の確認に失敗: %w", err)
+	}
+	if exists {
+		return nil
+	}
+	if err := uc.objectStorage.Delete(cleanupCtx, attachment.BlobKey); err != nil {
+		return fmt.Errorf("削除された添付ファイルの実体の削除に失敗: %w", err)
 	}
 	return nil
 }

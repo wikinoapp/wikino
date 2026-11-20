@@ -22,7 +22,7 @@ func newCreateEmailUpdateConfirmationUsecaseForTest(tx *sql.Tx, inserter dispatc
 	createEmailConfirmationUC := NewCreateEmailConfirmationUsecase(
 		&config.Config{Env: "test", Domain: "wikino.app"},
 		emailConfirmationRepo,
-		dispatcher.NewDispatcher(inserter),
+		dispatcher.NewDispatcher(inserter, nil),
 		validator.NewEmailConfirmationCreateValidator(userRepo),
 	)
 	return NewCreateEmailUpdateConfirmationUsecase(

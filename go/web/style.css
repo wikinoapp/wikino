@@ -20,7 +20,8 @@
   --app-secondary: oklch(0.9231 0.0066 185.26);
   --app-secondary-foreground: var(--app-primary);
   --app-muted: oklch(0.95 0.0076 61.45);
-  --app-muted-foreground: oklch(0.5659 0.0128 45.61);
+  /* ページ背景とカード背景の上で、リンクのhover時の85%の不透明度も含めて4.5:1以上にする */
+  --app-muted-foreground: oklch(0.46 0.0128 45.61);
   --app-link-foreground: var(--app-primary);
   --app-link-primary-foreground: oklch(0.5346 0.0836 210.24);
   --app-link-muted-foreground: var(--app-muted-foreground);
@@ -72,7 +73,9 @@
   --muted-foreground: var(--app-muted-foreground);
   --accent: oklch(0.9402 0.017 61.95);
   --border: var(--color-stone-300);
-  --input: var(--color-stone-300);
+  /* 入力欄の境界と半透明のフォーカスリングを、白いカードの上でも3:1以上にする */
+  --input: var(--color-stone-500);
+  --ring: var(--color-stone-950);
 
   /* htmlにdarkクラスが付いていないときにフォーム部品だけがダークになる食い違いを防ぐため、ライトを明示する */
   color-scheme: light;

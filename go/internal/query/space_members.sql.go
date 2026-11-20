@@ -51,6 +51,16 @@ func (q *Queries) CreateSpaceMember(ctx context.Context, arg CreateSpaceMemberPa
 	return i, err
 }
 
+const deleteSpaceMembersBySpace = `-- name: DeleteSpaceMembersBySpace :exec
+DELETE FROM space_members WHERE space_id = $1
+`
+
+// スペースのすべてのメンバー (参加をやめた行を含む) を物理削除する。
+func (q *Queries) DeleteSpaceMembersBySpace(ctx context.Context, spaceID string) error {
+	_, err := q.db.ExecContext(ctx, deleteSpaceMembersBySpace, spaceID)
+	return err
+}
+
 const existsSpaceMemberByUser = `-- name: ExistsSpaceMemberByUser :one
 SELECT EXISTS (
     SELECT 1 FROM space_members sm

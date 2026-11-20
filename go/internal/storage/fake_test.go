@@ -196,6 +196,25 @@ func TestFakeObjectStorage(t *testing.T) {
 		}
 	})
 
+	t.Run("正常系: まとめて削除し、呼び出しの回数を数える", func(t *testing.T) {
+		t.Parallel()
+
+		fake := storage.NewFakeObjectStorage()
+		fake.Put("attachments/a", []byte("a"), "image/png")
+		fake.Put("attachments/b", []byte("b"), "image/png")
+		fake.Put("attachments/other", []byte("other"), "image/png")
+
+		if err := fake.DeleteMany(ctx, []string{"attachments/a", "attachments/b", "attachments/gone"}); err != nil {
+			t.Fatalf("DeleteMany()のエラー = %v", err)
+		}
+		if got := fake.Keys(); len(got) != 1 || got[0] != "attachments/other" {
+			t.Errorf("残ったキー = %v、期待値 = [attachments/other]", got)
+		}
+		if got := fake.DeleteManyCalls(); got != 1 {
+			t.Errorf("DeleteManyCalls() = %d、期待値 = 1", got)
+		}
+	})
+
 	t.Run("正常系: presigned URLはキーと有効期間を含む", func(t *testing.T) {
 		t.Parallel()
 
@@ -285,6 +304,9 @@ func TestFakeObjectStorage(t *testing.T) {
 		}
 		if err := fake.Delete(ctx, "exports/wikino.zip"); !errors.Is(err, wantErr) {
 			t.Errorf("Delete()のエラー = %v、期待値 = %v", err, wantErr)
+		}
+		if err := fake.DeleteMany(ctx, []string{"exports/wikino.zip"}); !errors.Is(err, wantErr) {
+			t.Errorf("DeleteMany()のエラー = %v、期待値 = %v", err, wantErr)
 		}
 		if _, err := fake.PresignedGetURL(ctx, "exports/wikino.zip", time.Hour, storage.PresignedGetOptions{}); !errors.Is(err, wantErr) {
 			t.Errorf("PresignedGetURL()のエラー = %v、期待値 = %v", err, wantErr)

@@ -375,3 +375,214 @@ func TestSpaceRepository_Create(t *testing.T) {
 		t.Error("found.JoinedAtがゼロ値")
 	}
 }
+
+func TestSpaceRepository_ExistsOtherByIdentifier(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceRepository(testutil.QueriesWithTx(tx))
+
+	selfID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("exists-other-self").Build()
+	testutil.NewSpaceBuilder(t, tx).WithIdentifier("exists-other-taken").Build()
+	testutil.NewSpaceBuilder(t, tx).WithIdentifier("exists-other-gone").WithDiscarded().Build()
+
+	tests := []struct {
+		name       string
+		identifier model.SpaceIdentifier
+		want       bool
+	}{
+		{name: "自分の識別子は数えない", identifier: "exists-other-self", want: false},
+		{name: "自分の識別子の大文字と小文字だけを変えたものも数えない", identifier: "EXISTS-Other-Self", want: false},
+		{name: "ほかのスペースの識別子は数える", identifier: "exists-other-taken", want: true},
+		{name: "ほかのスペースの識別子は大文字と小文字を区別しない", identifier: "Exists-Other-Taken", want: true},
+		{name: "削除済みのスペースも数える", identifier: "exists-other-gone", want: true},
+		{name: "どのスペースも持たない識別子は数えない", identifier: "exists-other-free", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repo.ExistsOtherByIdentifier(context.Background(), selfID, tt.identifier)
+			if err != nil {
+				t.Fatalf("ExistsOtherByIdentifier()のエラー = %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("ExistsOtherByIdentifier(%q) = %v、期待値 = %v", tt.identifier, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSpaceRepository_Update(t *testing.T) {
+	t.Parallel()
+
+	t.Run("識別子と名前を更新する", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		repo := NewSpaceRepository(testutil.QueriesWithTx(tx))
+		spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("repo-update-space").WithName("元の名前").Build()
+		otherID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("repo-update-other").WithName("ほかの名前").Build()
+
+		updated, err := repo.Update(context.Background(), UpdateSpaceInput{
+			ID:         spaceID,
+			Identifier: "repo-update-renamed",
+			Name:       "新しい名前",
+		})
+		if err != nil {
+			t.Fatalf("Update()のエラー = %v", err)
+		}
+		if updated == nil || updated.ID != spaceID || updated.Identifier != "repo-update-renamed" || updated.Name != "新しい名前" {
+			t.Fatalf("Update()の戻り値 = %+v、更新したスペースを期待", updated)
+		}
+
+		other, err := repo.FindByID(context.Background(), otherID)
+		if err != nil {
+			t.Fatalf("FindByID()のエラー = %v", err)
+		}
+		if other.Identifier != "repo-update-other" || other.Name != "ほかの名前" {
+			t.Errorf("ほかのスペース = (%q, %q)、変わっていないことを期待", other.Identifier, other.Name)
+		}
+	})
+
+	t.Run("削除済みのスペースは更新せずnilを返す", func(t *testing.T) {
+		t.Parallel()
+
+		_, tx := testutil.SetupTx(t)
+		repo := NewSpaceRepository(testutil.QueriesWithTx(tx))
+		spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("repo-update-gone").WithDiscarded().Build()
+
+		updated, err := repo.Update(context.Background(), UpdateSpaceInput{
+			ID:         spaceID,
+			Identifier: "repo-update-revived",
+			Name:       "新しい名前",
+		})
+		if err != nil {
+			t.Fatalf("Update()のエラー = %v", err)
+		}
+		if updated != nil {
+			t.Errorf("Update()の戻り値 = %+v、nilを期待", updated)
+		}
+	})
+}
+
+func TestSpaceRepository_DiscardedSpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	activeID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("discarded-space-active").Build()
+	discardedID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("discarded-space-target").WithDiscarded().Build()
+	const missingID model.SpaceID = "00000000-0000-0000-0000-000000000000"
+
+	tests := []struct {
+		name string
+		id   model.SpaceID
+		want bool
+	}{
+		{name: "論理削除したスペースはtrue", id: discardedID, want: true},
+		{name: "論理削除していないスペースはfalse", id: activeID, want: false},
+		{name: "行の無いスペースはfalse", id: missingID, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exists, err := repo.ExistsDiscarded(ctx, tt.id)
+			if err != nil {
+				t.Fatalf("ExistsDiscarded()のエラー = %v", err)
+			}
+			if exists != tt.want {
+				t.Errorf("ExistsDiscarded() = %v、期待値 = %v", exists, tt.want)
+			}
+			locked, err := repo.LockDiscarded(ctx, tt.id)
+			if err != nil {
+				t.Fatalf("LockDiscarded()のエラー = %v", err)
+			}
+			if locked != tt.want {
+				t.Errorf("LockDiscarded() = %v、期待値 = %v", locked, tt.want)
+			}
+		})
+	}
+
+	t.Run("論理削除していないスペースは物理削除しない", func(t *testing.T) {
+		deleted, err := repo.DeleteDiscarded(ctx, activeID)
+		if err != nil {
+			t.Fatalf("DeleteDiscarded()のエラー = %v", err)
+		}
+		if deleted {
+			t.Error("DeleteDiscarded() = true、期待値 = false")
+		}
+		space, err := repo.FindByID(ctx, activeID)
+		if err != nil || space == nil {
+			t.Fatalf("FindByID() = %v, %v、期待値 = スペースが残っている", space, err)
+		}
+	})
+
+	t.Run("論理削除したスペースを物理削除する", func(t *testing.T) {
+		deleted, err := repo.DeleteDiscarded(ctx, discardedID)
+		if err != nil {
+			t.Fatalf("DeleteDiscarded()のエラー = %v", err)
+		}
+		if !deleted {
+			t.Error("DeleteDiscarded() = false、期待値 = true")
+		}
+		exists, err := repo.ExistsDiscarded(ctx, discardedID)
+		if err != nil {
+			t.Fatalf("ExistsDiscarded()のエラー = %v", err)
+		}
+		if exists {
+			t.Error("物理削除したあとのExistsDiscarded() = true、期待値 = false")
+		}
+	})
+}
+
+func TestSpaceRepository_DiscardAndUndiscard(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("discard-undiscard-space").Build()
+	discardedAt := time.Now().Truncate(time.Microsecond)
+
+	discarded, err := repo.Discard(ctx, spaceID, discardedAt)
+	if err != nil {
+		t.Fatalf("Discard()のエラー = %v", err)
+	}
+	if !discarded {
+		t.Fatal("Discard() = false、期待値 = true")
+	}
+	if space, err := repo.FindByID(ctx, spaceID); err != nil || space != nil {
+		t.Fatalf("FindByID() = %v, %v、論理削除したスペースは見えないことを期待", space, err)
+	}
+
+	t.Run("既に論理削除したスペースはfalse", func(t *testing.T) {
+		again, err := repo.Discard(ctx, spaceID, discardedAt.Add(time.Second))
+		if err != nil {
+			t.Fatalf("Discard()のエラー = %v", err)
+		}
+		if again {
+			t.Error("Discard() = true、期待値 = false")
+		}
+	})
+
+	t.Run("違う時刻を指定した取り消しは戻さない", func(t *testing.T) {
+		if err := repo.Undiscard(ctx, spaceID, discardedAt.Add(time.Second), time.Now()); err != nil {
+			t.Fatalf("Undiscard()のエラー = %v", err)
+		}
+		if space, err := repo.FindByID(ctx, spaceID); err != nil || space != nil {
+			t.Errorf("FindByID() = %v, %v、論理削除したままを期待", space, err)
+		}
+	})
+
+	t.Run("同じ時刻を指定した取り消しは戻す", func(t *testing.T) {
+		if err := repo.Undiscard(ctx, spaceID, discardedAt, time.Now()); err != nil {
+			t.Fatalf("Undiscard()のエラー = %v", err)
+		}
+		if space, err := repo.FindByID(ctx, spaceID); err != nil || space == nil {
+			t.Errorf("FindByID() = %v, %v、論理削除が取り消されることを期待", space, err)
+		}
+	})
+}

@@ -190,6 +190,16 @@ func (q *Queries) DeleteDraftPagesByPageIDs(ctx context.Context, arg DeleteDraft
 	return err
 }
 
+const deleteDraftPagesBySpace = `-- name: DeleteDraftPagesBySpace :exec
+DELETE FROM draft_pages WHERE space_id = $1
+`
+
+// スペースに残った下書きを物理削除する。下書きのリビジョンは外部キーのON DELETE CASCADEで消える。
+func (q *Queries) DeleteDraftPagesBySpace(ctx context.Context, spaceID string) error {
+	_, err := q.db.ExecContext(ctx, deleteDraftPagesBySpace, spaceID)
+	return err
+}
+
 const findDraftPageByID = `-- name: FindDraftPageByID :one
 SELECT id, space_id, page_id, space_member_id, topic_id, title, body, linked_page_ids, modified_at, created_at, updated_at, suggestion_page_id, featured_image_attachment_id, base_title, base_body FROM draft_pages WHERE id = $1 AND space_id = $2
 `

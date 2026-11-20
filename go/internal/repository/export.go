@@ -335,3 +335,63 @@ func (r *ExportRepository) ListLegacyFiles(ctx context.Context, id model.ExportI
 	}
 	return files, nil
 }
+
+// firstExportCursorは、ListForDeletionBySpaceAfterとListLegacyBlobsBySpaceAfterに最初のページを
+// 読ませるときに渡すID (エクスポートとblobのどのIDよりも小さい値)
+const firstExportCursor = "00000000-0000-0000-0000-000000000000"
+
+// ListForDeletionBySpaceAfterは、削除するエクスポートのID・SpaceID・ObjectKeyを一定件数ずつ返す。
+// afterIDが空なら最初から読む。ObjectKeyが未記録の生成中・失敗済みの行も含める。
+func (r *ExportRepository) ListForDeletionBySpaceAfter(ctx context.Context, spaceID model.SpaceID, afterID model.ExportID, limit int32) ([]*model.Export, error) {
+	if afterID == "" {
+		afterID = firstExportCursor
+	}
+	rows, err := r.q.ListExportsForDeletionBySpaceAfter(ctx, query.ListExportsForDeletionBySpaceAfterParams{SpaceID: string(spaceID), AfterID: string(afterID), RowLimit: limit})
+	if err != nil {
+		return nil, err
+	}
+	exports := make([]*model.Export, len(rows))
+	for i, row := range rows {
+		exports[i] = &model.Export{ID: model.ExportID(row.ID), SpaceID: model.SpaceID(row.SpaceID)}
+		if row.ObjectKey.Valid {
+			key := row.ObjectKey.String
+			exports[i].ObjectKey = &key
+		}
+	}
+	return exports, nil
+}
+
+// ListLegacyBlobsBySpaceAfterは、スペースのZIPのblobをIDの昇順に一定件数ずつ返す。共有中のblobも含む。
+func (r *ExportRepository) ListLegacyBlobsBySpaceAfter(ctx context.Context, spaceID model.SpaceID, afterID string, limit int32) ([]model.LegacyExportBlob, error) {
+	if afterID == "" {
+		afterID = firstExportCursor
+	}
+	rows, err := r.q.ListLegacyExportBlobsBySpaceAfter(ctx, query.ListLegacyExportBlobsBySpaceAfterParams{SpaceID: string(spaceID), AfterID: afterID, RowLimit: limit})
+	if err != nil {
+		return nil, err
+	}
+	blobs := make([]model.LegacyExportBlob, len(rows))
+	for i, row := range rows {
+		blobs[i] = model.LegacyExportBlob{ID: row.ID, Key: row.Key, Shared: row.Shared}
+	}
+	return blobs, nil
+}
+
+// DeleteLegacyFilesBySpaceは、スペースのZIPの関連だけを消す。呼び出し元は先に同じトランザクションで
+// blobのIDとキーを後始末ジョブに保存し、blobと実体の回収をジョブへ渡す。
+func (r *ExportRepository) DeleteLegacyFilesBySpace(ctx context.Context, spaceID model.SpaceID) error {
+	return r.q.DeleteLegacyExportFilesBySpace(ctx, string(spaceID))
+}
+
+// ClaimUnreferencedLegacyBlobsは、参照が残らないblobを確保し、実体を消してよいキーを返す。
+// blobを先に削除して新しい参照を防ぐ。既にblobが無い候補も、前の試行の続きとして回収できる。
+func (r *ExportRepository) ClaimUnreferencedLegacyBlobs(ctx context.Context, blobs []model.LegacyExportBlob) ([]string, error) {
+	if len(blobs) == 0 {
+		return nil, nil
+	}
+	ids, keys := make([]string, len(blobs)), make([]string, len(blobs))
+	for i, blob := range blobs {
+		ids[i], keys[i] = blob.ID, blob.Key
+	}
+	return r.q.ClaimUnreferencedLegacyExportBlobs(ctx, query.ClaimUnreferencedLegacyExportBlobsParams{BlobIds: ids, Keys: keys})
+}

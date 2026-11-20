@@ -25,7 +25,8 @@ const fakePresignedURLHost = "storage.example.com"
 // 変更することは想定していない。
 type FakeObjectStorage struct {
 	// GetErr / ExistsErr / UploadErr / DeleteErr / PresignErrは、対応する呼び出しを保持している
-	// オブジェクトに触れずにそのエラーで失敗させる。PresignErrは取得とアップロードの両方の署名を失敗させる。
+	// オブジェクトに触れずにそのエラーで失敗させる。DeleteErrはDeleteとDeleteManyの両方を失敗させ、
+	// PresignErrは取得とアップロードの両方の署名を失敗させる。
 	GetErr     error
 	ExistsErr  error
 	UploadErr  error
@@ -36,8 +37,9 @@ type FakeObjectStorage struct {
 	// e2eのサーバーがServeHTTPで受けるためである
 	served bool
 
-	mu      sync.Mutex
-	objects map[string]fakeObject
+	mu              sync.Mutex
+	objects         map[string]fakeObject
+	deleteManyCalls int
 }
 
 // fakeObjectは保持している1つのオブジェクト。
@@ -154,6 +156,29 @@ func (f *FakeObjectStorage) Delete(_ context.Context, key string) error {
 	defer f.mu.Unlock()
 	delete(f.objects, key)
 	return nil
+}
+
+// DeleteManyは保持しているオブジェクトをまとめて削除する。存在しないキーは成功として扱う。DeleteErrが
+// 設定されていれば、1つも消さずにそのエラーで失敗する。呼び出しの回数はDeleteManyCallsで読める
+func (f *FakeObjectStorage) DeleteMany(_ context.Context, keys []string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.deleteManyCalls++
+	if f.DeleteErr != nil {
+		return f.DeleteErr
+	}
+	for _, key := range keys {
+		delete(f.objects, key)
+	}
+	return nil
+}
+
+// DeleteManyCallsは、DeleteManyが呼ばれた回数を返す。削除のリクエストの数が、消すキーの数に比例して
+// いないことをテストが確かめるのに使う
+func (f *FakeObjectStorage) DeleteManyCalls() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.deleteManyCalls
 }
 
 // PresignedGetURLはキーと有効期間と応答ヘッダーの指定から組み立てたURLを返す。リダイレクトが

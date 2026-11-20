@@ -1559,6 +1559,38 @@ func (q *Queries) ListLinkedPagesByModifiedAt(ctx context.Context, arg ListLinke
 	return items, nil
 }
 
+const listPageIDsBySpaceForUpdate = `-- name: ListPageIDsBySpaceForUpdate :many
+SELECT id FROM pages
+WHERE space_id = $1
+ORDER BY id
+FOR UPDATE
+`
+
+// スペースのすべてのページ (未公開・ゴミ箱・廃棄済みを含む) をロックし、IDを返す。
+// スペースの物理削除が、関連レコードを消し終えるまでページの変更を待たせる。
+func (q *Queries) ListPageIDsBySpaceForUpdate(ctx context.Context, spaceID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listPageIDsBySpaceForUpdate, spaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPageIDsByTopicForUpdate = `-- name: ListPageIDsByTopicForUpdate :many
 SELECT id FROM pages
 WHERE space_id = $1 AND topic_id = $2
