@@ -25,9 +25,10 @@ WHERE a.id = $1 AND a.space_id = $2;
 -- IDだけで添付ファイルを取得する (ファイル名・種類・バイト数・ストレージキーを含む)。
 -- Web画面の `/attachments/{id}` はURLにスペースを含まないため、最初にこのクエリで添付ファイルと
 -- そのスペースを引く。space_idを条件に持たないのはこの経路のためで、閲覧の判定は呼び出し側が
--- 引いたスペースで行う
+-- 引いたスペースで行う。論理削除したスペースは、物理削除の完了前でもURLを発行しない
 SELECT a.id, a.space_id, asb.filename, asb.content_type AS blob_content_type, asb.byte_size AS blob_byte_size, asb.key AS blob_key
 FROM attachments a
+INNER JOIN spaces s ON s.id = a.space_id AND s.discarded_at IS NULL
 INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
 INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
 WHERE a.id = $1;
@@ -36,9 +37,10 @@ WHERE a.id = $1;
 -- IDリストだけで添付ファイルを一括取得する (ファイル名・種類・バイト数・ストレージキーを含む)。
 -- Web画面の署名付きURLの一括取得 (`POST /attachments/signed_urls`) は、複数のスペースのIDを受け取りうるため、
 -- 最初にこのクエリで添付ファイルとそのスペースを引く。space_idを条件に持たないのはこの経路のためで、
--- 閲覧の判定は呼び出し側が添付ファイルごとのスペースで行う
+-- 閲覧の判定は呼び出し側が添付ファイルごとのスペースで行う。論理削除したスペースのものは除く
 SELECT a.id, a.space_id, asb.filename, asb.content_type AS blob_content_type, asb.byte_size AS blob_byte_size, asb.key AS blob_key
 FROM attachments a
+INNER JOIN spaces s ON s.id = a.space_id AND s.discarded_at IS NULL
 INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
 INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
 WHERE a.id = ANY(@ids::uuid[]);
@@ -213,3 +215,102 @@ RETURNING id;
 INSERT INTO attachments (space_id, active_storage_attachment_id, attached_space_member_id, attached_at, created_at, updated_at, processing_status)
 VALUES (@space_id, @active_storage_attachment_id, @attached_space_member_id, @attached_at, @attached_at, @attached_at, @processing_status)
 RETURNING id;
+
+-- name: ListAttachmentObjectKeysByIDsAndSpace :many
+-- 指定した添付ファイルの実体のキーを返す。添付ファイルのblobのキーと、Rails版が作ったサムネイル (variant) の
+-- blobのキーである。variantのblobは、active_storage_variant_recordsを指すactive_storage_attachmentsからたどる
+SELECT asb.key
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.id = ANY(@ids::uuid[]) AND a.space_id = @space_id
+UNION ALL
+SELECT vb.key
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_variant_records vr ON vr.blob_id = asa.blob_id
+INNER JOIN active_storage_attachments vasa ON vasa.record_type = 'ActiveStorage::VariantRecord' AND vasa.record_id = vr.id
+INNER JOIN active_storage_blobs vb ON vasa.blob_id = vb.id
+WHERE a.id = ANY(@ids::uuid[]) AND a.space_id = @space_id;
+
+-- name: DeleteAttachmentVariantsByIDsAndSpace :many
+-- 指定した添付ファイルのサムネイル (variant) の行を消す。active_storage_variant_records・それを指す
+-- active_storage_attachments・variantのblobである。添付ファイルのblobを指すvariantの行が残っていると
+-- blobを消せないため、DeleteAttachmentsByIDsAndSpaceより先に実行する
+WITH variant_records AS (
+    SELECT vr.id
+    FROM active_storage_variant_records vr
+    INNER JOIN active_storage_attachments asa ON vr.blob_id = asa.blob_id
+    INNER JOIN attachments a ON a.active_storage_attachment_id = asa.id
+    WHERE a.id = ANY(@ids::uuid[]) AND a.space_id = @space_id
+), deleted_variant_attachments AS (
+    DELETE FROM active_storage_attachments vasa
+    USING variant_records v
+    WHERE vasa.record_type = 'ActiveStorage::VariantRecord' AND vasa.record_id = v.id
+    RETURNING vasa.blob_id
+), deleted_variant_records AS (
+    DELETE FROM active_storage_variant_records vr
+    USING variant_records v
+    WHERE vr.id = v.id
+)
+DELETE FROM active_storage_blobs b
+USING deleted_variant_attachments d
+WHERE b.id = d.blob_id
+RETURNING b.key;
+
+-- name: DeleteAttachmentsByIDsAndSpace :many
+-- 指定した添付ファイルの行を消す。page_attachment_references・attachments・active_storage_attachments・
+-- active_storage_blobsである。カバー画像にしていたページ・下書き・編集提案のページの列は、外部キーがNULLにする
+WITH targets AS (
+    SELECT a.id, a.active_storage_attachment_id, asa.blob_id
+    FROM attachments a
+    INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+    WHERE a.id = ANY(@ids::uuid[]) AND a.space_id = @space_id
+), deleted_references AS (
+    DELETE FROM page_attachment_references par
+    USING targets t
+    WHERE par.attachment_id = t.id
+), deleted_attachments AS (
+    DELETE FROM attachments a
+    USING targets t
+    WHERE a.id = t.id AND a.space_id = @space_id
+), deleted_storage_attachments AS (
+    DELETE FROM active_storage_attachments asa
+    USING targets t
+    WHERE asa.id = t.active_storage_attachment_id
+)
+DELETE FROM active_storage_blobs b
+USING targets t
+WHERE b.id = t.blob_id
+RETURNING b.key;
+
+-- name: CountAttachmentsBySpace :one
+-- スペースの添付ファイルの件数を返す。filename_patternが空でなければ、ファイル名がそのILIKEのパターンに
+-- 一致するものだけを数える。添付ファイルの管理の画面のページ送りに使う
+SELECT COUNT(*)
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.space_id = @space_id
+  AND (@filename_pattern::text = '' OR asb.filename ILIKE @filename_pattern::text);
+
+-- name: ListAttachmentsBySpacePaginated :many
+-- スペースの添付ファイルを、アップロードの新しい順 (同じ時刻はIDの降順) に返す (ファイル名・種類・バイト数・
+-- ストレージキー・作った時刻を含む)。filename_patternの扱いはCountAttachmentsBySpaceと同じにする
+SELECT a.id, a.space_id, asb.filename, asb.content_type AS blob_content_type, asb.byte_size AS blob_byte_size, asb.key AS blob_key, a.attached_at
+FROM attachments a
+INNER JOIN active_storage_attachments asa ON a.active_storage_attachment_id = asa.id
+INNER JOIN active_storage_blobs asb ON asa.blob_id = asb.id
+WHERE a.space_id = @space_id
+  AND (@filename_pattern::text = '' OR asb.filename ILIKE @filename_pattern::text)
+ORDER BY a.attached_at DESC, a.id DESC
+LIMIT @row_limit
+OFFSET @row_offset;
+
+-- name: ListAttachmentIDsBySpaceAfter :many
+-- スペースの添付ファイルのIDを、IDの昇順にafter_idより後ろからrow_limit件返す。スペースの物理削除が、
+-- 添付ファイルを一定の件数ずつ読んで実体と行を消すのに使う
+SELECT id FROM attachments
+WHERE space_id = @space_id AND id > @after_id::uuid
+ORDER BY id
+LIMIT @row_limit;

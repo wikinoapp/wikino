@@ -387,6 +387,16 @@ func (r *PageRepository) ListIDsByTopicForUpdate(ctx context.Context, topicID mo
 	return model.StringsToPageIDs(ids), nil
 }
 
+// ListIDsBySpaceForUpdateはスペースのすべてのページをロックし、IDを返す。
+// 関連レコードを消す間にページが変わらないよう、WithTxでトランザクションに参加させて呼ぶ。
+func (r *PageRepository) ListIDsBySpaceForUpdate(ctx context.Context, spaceID model.SpaceID) ([]model.PageID, error) {
+	ids, err := r.q.ListPageIDsBySpaceForUpdate(ctx, string(spaceID))
+	if err != nil {
+		return nil, err
+	}
+	return model.StringsToPageIDs(ids), nil
+}
+
 // ListSpaceIDsWithTrashedBeforeは、ゴミ箱に入れた日時がtrashedBeforeより前のページがあるスペースを返す。
 func (r *PageRepository) ListSpaceIDsWithTrashedBefore(ctx context.Context, trashedBefore time.Time) ([]model.SpaceID, error) {
 	ids, err := r.q.ListSpaceIDsWithTrashedPagesBefore(ctx, trashedBefore)

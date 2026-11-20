@@ -819,6 +819,327 @@ func TestReverseProxyMiddleware_Middleware_Attachment(t *testing.T) {
 	}
 }
 
+// TestFeatureFlaggedPatterns_SpaceSettingsGeneralは、スペースの一般設定がgo_space_settings_generalで
+// 振り分けられ、Goルートが応答しないメソッドとパスがフラグにかかわらずRails版へ届くことを、
+// 登録済みのパターンで確かめる。
+func TestFeatureFlaggedPatterns_SpaceSettingsGeneral(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		want   model.FeatureFlagName
+		// alwaysGoは、フラグによらずGo版で処理するパスかどうか
+		alwaysGo bool
+	}{
+		{name: "画面のGET", method: http.MethodGet, path: "/s/space/settings/general", want: model.FeatureFlagSpaceSettingsGeneral},
+		{name: "画面のHEAD", method: http.MethodHead, path: "/s/space/settings/general", want: model.FeatureFlagSpaceSettingsGeneral},
+		{name: "保存のPATCH", method: http.MethodPatch, path: "/s/space/settings/general", want: model.FeatureFlagSpaceSettingsGeneral},
+		{name: "Method Override前の保存のPOST", method: http.MethodPost, path: "/s/space/settings/general", want: model.FeatureFlagSpaceSettingsGeneral},
+		{name: "DELETEはフラグの対象外", method: http.MethodDelete, path: "/s/space/settings/general", want: ""},
+		{name: "一般設定の下のパスはフラグの対象外", method: http.MethodGet, path: "/s/space/settings/general/extra", want: ""},
+		{name: "添付ファイルの管理は別のフラグで振り分ける", method: http.MethodGet, path: "/s/space/settings/attachments", want: model.FeatureFlagSpaceAttachmentManagement},
+		{name: "スペースの削除は別のフラグで振り分ける", method: http.MethodGet, path: "/s/space/settings/deletion/new", want: model.FeatureFlagSpaceDeletion},
+		{name: "トピックの一般設定は常にGo版", method: http.MethodGet, path: "/s/space/topics/1/settings/general", want: "", alwaysGo: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+
+			if got := m.isGoHandledByRegex(req); got != tc.alwaysGo {
+				t.Errorf("isGoHandledByRegex(%s %q) = %v、期待値 = %v", tc.method, tc.path, got, tc.alwaysGo)
+			}
+			if got := m.getFeatureFlagForRequest(req); got != tc.want {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestReverseProxyMiddleware_Middleware_SpaceSettingsGeneralは、スペースの一般設定がフラグの有効な閲覧者
+// だけGo版で処理され、フラグを持たない閲覧者はRails版へ届くことを、登録済みのパターンとデータベースの
+// フラグで確かめる。
+func TestReverseProxyMiddleware_Middleware_SpaceSettingsGeneral(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	_, tx := testutil.SetupTx(t)
+
+	const enabledDevice = "space-settings-general-enabled-device"
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithDeviceToken(enabledDevice).
+		WithName(string(model.FeatureFlagSpaceSettingsGeneral)).
+		Build()
+
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer railsServer.Close()
+
+	featureFlagRepo := repository.NewFeatureFlagRepository(query.New(testutil.GetTestDB())).WithTx(tx)
+	m, err := NewReverseProxyMiddleware(railsServer.URL, &config.Config{Domain: "wikino.app"}, featureFlagRepo)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+	h := m.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	const path = "/s/space/settings/general"
+	testCases := []struct {
+		name        string
+		method      string
+		deviceToken string
+		wantGo      bool
+	}{
+		{name: "フラグが有効なデバイスの画面はGo版で処理される", method: http.MethodGet, deviceToken: enabledDevice, wantGo: true},
+		{name: "フラグが有効なデバイスの保存はGo版で処理される", method: http.MethodPost, deviceToken: enabledDevice, wantGo: true},
+		{name: "フラグを持たないデバイスの画面はRails版へ届く", method: http.MethodGet, deviceToken: "space-settings-general-other-device", wantGo: false},
+		{name: "フラグを持たないデバイスの保存はRails版へ届く", method: http.MethodPost, deviceToken: "space-settings-general-other-device", wantGo: false},
+		{name: "デバイスのCookieが無ければRails版へ届く", method: http.MethodGet, wantGo: false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, path, nil)
+			if tc.deviceToken != "" {
+				req.AddCookie(&http.Cookie{Name: DeviceTokenCookieName, Value: tc.deviceToken})
+			}
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+
+			gotGo := rr.Header().Get("X-Go-Handled") == "true"
+			gotRails := rr.Header().Get("X-Rails-Handled") == "true"
+			if tc.wantGo && (!gotGo || gotRails) {
+				t.Errorf("Go版で処理されなかった (Go = %v、Rails = %v)", gotGo, gotRails)
+			}
+			if !tc.wantGo && (gotGo || !gotRails) {
+				t.Errorf("Rails版へ届かなかった (Go = %v、Rails = %v)", gotGo, gotRails)
+			}
+		})
+	}
+}
+
+func TestFeatureFlaggedPatterns_SpaceAttachmentManagement(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+
+	const attachmentPath = "/s/space/settings/attachments/0b3e8a4e-6c2d-4c5a-9f3e-1a2b3c4d5e6f"
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		want   model.FeatureFlagName
+	}{
+		{name: "一覧のGET", method: http.MethodGet, path: "/s/space/settings/attachments", want: model.FeatureFlagSpaceAttachmentManagement},
+		{name: "一覧のHEAD", method: http.MethodHead, path: "/s/space/settings/attachments", want: model.FeatureFlagSpaceAttachmentManagement},
+		{name: "検索とページ送りのクエリ付きの一覧", method: http.MethodGet, path: "/s/space/settings/attachments?q=a&page=2", want: model.FeatureFlagSpaceAttachmentManagement},
+		{name: "一覧へのPOSTはフラグの対象外", method: http.MethodPost, path: "/s/space/settings/attachments", want: ""},
+		{name: "削除のDELETE", method: http.MethodDelete, path: attachmentPath, want: model.FeatureFlagSpaceAttachmentManagement},
+		{name: "Method Override前の削除のPOST", method: http.MethodPost, path: attachmentPath, want: model.FeatureFlagSpaceAttachmentManagement},
+		{name: "1件のGETはフラグの対象外", method: http.MethodGet, path: attachmentPath, want: ""},
+		{name: "1件の下のパスはフラグの対象外", method: http.MethodDelete, path: attachmentPath + "/extra", want: ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+
+			if m.isGoHandledByRegex(req) {
+				t.Errorf("isGoHandledByRegex(%s %q) = true、フラグによらずGo版で処理しないことを期待", tc.method, tc.path)
+			}
+			if got := m.getFeatureFlagForRequest(req); got != tc.want {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestReverseProxyMiddleware_Middleware_SpaceAttachmentManagementは、添付ファイルの管理がフラグの有効な閲覧者
+// だけGo版で処理され、フラグを持たない閲覧者はRails版へ届くことを、登録済みのパターンとデータベースの
+// フラグで確かめる。
+func TestReverseProxyMiddleware_Middleware_SpaceAttachmentManagement(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	_, tx := testutil.SetupTx(t)
+
+	const enabledDevice = "space-attachment-management-enabled-device"
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithDeviceToken(enabledDevice).
+		WithName(string(model.FeatureFlagSpaceAttachmentManagement)).
+		Build()
+
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer railsServer.Close()
+
+	featureFlagRepo := repository.NewFeatureFlagRepository(query.New(testutil.GetTestDB())).WithTx(tx)
+	m, err := NewReverseProxyMiddleware(railsServer.URL, &config.Config{Domain: "wikino.app"}, featureFlagRepo)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+	h := m.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	const (
+		listPath   = "/s/space/settings/attachments"
+		deletePath = "/s/space/settings/attachments/0b3e8a4e-6c2d-4c5a-9f3e-1a2b3c4d5e6f"
+		otherToken = "space-attachment-management-other-device"
+	)
+	testCases := []struct {
+		name        string
+		method      string
+		path        string
+		deviceToken string
+		wantGo      bool
+	}{
+		{name: "フラグが有効なデバイスの一覧はGo版で処理される", method: http.MethodGet, path: listPath, deviceToken: enabledDevice, wantGo: true},
+		{name: "フラグが有効なデバイスの削除はGo版で処理される", method: http.MethodPost, path: deletePath, deviceToken: enabledDevice, wantGo: true},
+		{name: "フラグを持たないデバイスの一覧はRails版へ届く", method: http.MethodGet, path: listPath, deviceToken: otherToken, wantGo: false},
+		{name: "フラグを持たないデバイスの削除はRails版へ届く", method: http.MethodPost, path: deletePath, deviceToken: otherToken, wantGo: false},
+		{name: "デバイスのCookieが無ければRails版へ届く", method: http.MethodGet, path: listPath, wantGo: false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			if tc.deviceToken != "" {
+				req.AddCookie(&http.Cookie{Name: DeviceTokenCookieName, Value: tc.deviceToken})
+			}
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+
+			gotGo := rr.Header().Get("X-Go-Handled") == "true"
+			gotRails := rr.Header().Get("X-Rails-Handled") == "true"
+			if tc.wantGo && (!gotGo || gotRails) {
+				t.Errorf("Go版で処理されなかった (Go = %v、Rails = %v)", gotGo, gotRails)
+			}
+			if !tc.wantGo && (gotGo || !gotRails) {
+				t.Errorf("Rails版へ届かなかった (Go = %v、Rails = %v)", gotGo, gotRails)
+			}
+		})
+	}
+}
+
+func TestFeatureFlaggedPatterns_SpaceDeletion(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	m, err := NewReverseProxyMiddleware("http://localhost:3000", &config.Config{Domain: "wikino.app"}, nil)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		want   model.FeatureFlagName
+	}{
+		{name: "確認画面のGET", method: http.MethodGet, path: "/s/space/settings/deletion/new", want: model.FeatureFlagSpaceDeletion},
+		{name: "確認画面のHEAD", method: http.MethodHead, path: "/s/space/settings/deletion/new", want: model.FeatureFlagSpaceDeletion},
+		{name: "削除のPOST", method: http.MethodPost, path: "/s/space/settings/deletion", want: model.FeatureFlagSpaceDeletion},
+		{name: "確認画面へのPOSTはフラグの対象外", method: http.MethodPost, path: "/s/space/settings/deletion/new", want: ""},
+		{name: "削除のGETはフラグの対象外", method: http.MethodGet, path: "/s/space/settings/deletion", want: ""},
+		{name: "削除の下のパスはフラグの対象外", method: http.MethodPost, path: "/s/space/settings/deletion/extra", want: ""},
+		{name: "トピックの削除は常にGo版のためフラグの対象外", method: http.MethodPost, path: "/s/space/topics/1/settings/deletion", want: ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+
+			if got := m.getFeatureFlagForRequest(req); got != tc.want {
+				t.Errorf("getFeatureFlagForRequest(%s %q) = %q、期待値 = %q", tc.method, tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestReverseProxyMiddleware_Middleware_SpaceDeletionは、スペースの削除がフラグの有効な閲覧者だけGo版で
+// 処理され、フラグを持たない閲覧者はRails版へ届くことを、登録済みのパターンとデータベースのフラグで確かめる。
+func TestReverseProxyMiddleware_Middleware_SpaceDeletion(t *testing.T) {
+	// 他テストが上書きするグローバル変数featureFlaggedPatternsを読むため、t.Parallel() は使用しない
+
+	_, tx := testutil.SetupTx(t)
+
+	const enabledDevice = "space-deletion-enabled-device"
+	testutil.NewFeatureFlagBuilder(t, tx).
+		WithDeviceToken(enabledDevice).
+		WithName(string(model.FeatureFlagSpaceDeletion)).
+		Build()
+
+	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Rails-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer railsServer.Close()
+
+	featureFlagRepo := repository.NewFeatureFlagRepository(query.New(testutil.GetTestDB())).WithTx(tx)
+	m, err := NewReverseProxyMiddleware(railsServer.URL, &config.Config{Domain: "wikino.app"}, featureFlagRepo)
+	if err != nil {
+		t.Fatalf("NewReverseProxyMiddlewareに失敗: %v", err)
+	}
+	h := m.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Go-Handled", "true")
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	const (
+		newPath    = "/s/space/settings/deletion/new"
+		createPath = "/s/space/settings/deletion"
+		otherToken = "space-deletion-other-device"
+	)
+	testCases := []struct {
+		name        string
+		method      string
+		path        string
+		deviceToken string
+		wantGo      bool
+	}{
+		{name: "フラグが有効なデバイスの確認画面はGo版で処理される", method: http.MethodGet, path: newPath, deviceToken: enabledDevice, wantGo: true},
+		{name: "フラグが有効なデバイスの削除はGo版で処理される", method: http.MethodPost, path: createPath, deviceToken: enabledDevice, wantGo: true},
+		{name: "フラグを持たないデバイスの確認画面はRails版へ届く", method: http.MethodGet, path: newPath, deviceToken: otherToken, wantGo: false},
+		{name: "フラグを持たないデバイスの削除はRails版へ届く", method: http.MethodPost, path: createPath, deviceToken: otherToken, wantGo: false},
+		{name: "デバイスのCookieが無ければRails版へ届く", method: http.MethodPost, path: createPath, wantGo: false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			if tc.deviceToken != "" {
+				req.AddCookie(&http.Cookie{Name: DeviceTokenCookieName, Value: tc.deviceToken})
+			}
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, req)
+
+			gotGo := rr.Header().Get("X-Go-Handled") == "true"
+			gotRails := rr.Header().Get("X-Rails-Handled") == "true"
+			if tc.wantGo && (!gotGo || gotRails) {
+				t.Errorf("Go版で処理されなかった (Go = %v、Rails = %v)", gotGo, gotRails)
+			}
+			if !tc.wantGo && (gotGo || !gotRails) {
+				t.Errorf("Rails版へ届かなかった (Go = %v、Rails = %v)", gotGo, gotRails)
+			}
+		})
+	}
+}
+
 func TestReverseProxyMiddleware_Middleware_FeatureFlag(t *testing.T) {
 	// グローバル変数featureFlaggedPatternsを変更するためt.Parallel() は使用しない
 

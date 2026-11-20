@@ -637,6 +637,56 @@ func TestMemberPolicy_CanCreateAttachment(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanDeleteAttachment(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		scopes []model.Scope
+		want   bool
+	}{
+		{name: "管理者は削除できる", scopes: model.SpaceRoleAdmin.Scopes(), want: true},
+		{name: "attachment:deleteがあれば削除できる", scopes: []model.Scope{model.ScopeAttachmentDelete}, want: true},
+		{name: "編集者はアップロードできても削除できない", scopes: model.SpaceRoleEditor.Scopes(), want: false},
+		{name: "閲覧者は削除できない", scopes: model.SpaceRoleViewer.Scopes(), want: false},
+		{name: "space:writeだけでは削除できない", scopes: []model.Scope{model.ScopeSpaceWrite}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := NewMemberPolicy(tt.scopes, nil).CanDeleteAttachment(); got != tt.want {
+				t.Errorf("CanDeleteAttachment() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMemberPolicy_CanDeleteSpace(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		scopes []model.Scope
+		want   bool
+	}{
+		{name: "管理者は削除できる", scopes: model.SpaceRoleAdmin.Scopes(), want: true},
+		{name: "space:deleteがあれば削除できる", scopes: []model.Scope{model.ScopeSpaceDelete}, want: true},
+		{name: "編集者は削除できない", scopes: model.SpaceRoleEditor.Scopes(), want: false},
+		{name: "閲覧者は削除できない", scopes: model.SpaceRoleViewer.Scopes(), want: false},
+		{name: "space:writeだけでは削除できない", scopes: []model.Scope{model.ScopeSpaceWrite}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := NewMemberPolicy(tt.scopes, nil).CanDeleteSpace(); got != tt.want {
+				t.Errorf("CanDeleteSpace() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMemberPolicy_CanCreateSuggestion(t *testing.T) {
 	t.Parallel()
 

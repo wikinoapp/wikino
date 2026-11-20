@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/wikinoapp/wikino/go/internal/model"
@@ -435,4 +436,116 @@ func (r *AttachmentRepository) ListByPageIDsAndSpace(ctx context.Context, pageID
 		}
 	}
 	return pageAttachments, nil
+}
+
+// ListObjectKeysByIDsAndSpaceは、指定した添付ファイルの実体のキーを返す。添付ファイルのblobのキーと、
+// Rails版が作ったサムネイル (variant) のblobのキーを含む。ほかのスペースの添付ファイルと存在しないIDは
+// 含めない。
+func (r *AttachmentRepository) ListObjectKeysByIDsAndSpace(ctx context.Context, ids []model.AttachmentID, spaceID model.SpaceID) ([]string, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	return r.q.ListAttachmentObjectKeysByIDsAndSpace(ctx, query.ListAttachmentObjectKeysByIDsAndSpaceParams{
+		Ids:     attachmentIDStrings(ids),
+		SpaceID: string(spaceID),
+	})
+}
+
+// DeleteByIDsAndSpaceは、指定した添付ファイルの行を消す。サムネイル (variant) の行・ページからの参照・
+// 添付ファイル・Active Storageの行である。2つの文で消すため、呼び出し側がトランザクションの中で呼ぶ
+// (WithTxで得たリポジトリを使う)。ほかのスペースの添付ファイルと存在しないIDは消さない。
+// 実際に削除したblobのキーを返す。最初に実体を消してから増えたvariantも、後始末ジョブで回収できる。
+func (r *AttachmentRepository) DeleteByIDsAndSpace(ctx context.Context, ids []model.AttachmentID, spaceID model.SpaceID) ([]string, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	idStrings := attachmentIDStrings(ids)
+	variantKeys, err := r.q.DeleteAttachmentVariantsByIDsAndSpace(ctx, query.DeleteAttachmentVariantsByIDsAndSpaceParams{
+		Ids:     idStrings,
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("サムネイルの行の削除に失敗: %w", err)
+	}
+	keys, err := r.q.DeleteAttachmentsByIDsAndSpace(ctx, query.DeleteAttachmentsByIDsAndSpaceParams{
+		Ids:     idStrings,
+		SpaceID: string(spaceID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("添付ファイルの行の削除に失敗: %w", err)
+	}
+	return append(keys, variantKeys...), nil
+}
+
+// firstAttachmentIDは、ListIDsBySpaceAfterに最初のページを読ませるときに渡すID (どのIDよりも小さい値)
+const firstAttachmentID model.AttachmentID = "00000000-0000-0000-0000-000000000000"
+
+// ListIDsBySpaceAfterは、スペースの添付ファイルのIDを、IDの昇順にafterIDより後ろからlimit件返す。
+// afterIDが空なら最初から読む。スペースの物理削除が、添付ファイルを一定の件数ずつ読むのに使う
+func (r *AttachmentRepository) ListIDsBySpaceAfter(ctx context.Context, spaceID model.SpaceID, afterID model.AttachmentID, limit int32) ([]model.AttachmentID, error) {
+	if afterID == "" {
+		afterID = firstAttachmentID
+	}
+	rows, err := r.q.ListAttachmentIDsBySpaceAfter(ctx, query.ListAttachmentIDsBySpaceAfterParams{
+		SpaceID:  string(spaceID),
+		AfterID:  string(afterID),
+		RowLimit: limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]model.AttachmentID, len(rows))
+	for i, row := range rows {
+		ids[i] = model.AttachmentID(row)
+	}
+	return ids, nil
+}
+
+// PaginatedAttachmentsは、オフセットページネーションで取得した添付ファイルと、絞り込みに一致する総件数
+type PaginatedAttachments struct {
+	Attachments []*model.Attachment
+	TotalCount  int64
+}
+
+// ListBySpacePaginatedは、スペースの添付ファイルをアップロードの新しい順 (同じ時刻はIDの降順) に、
+// pageページ目のlimit件を返す。ID・SpaceID・Filename・BlobKey・ContentType・ByteSize・AttachedAtをpopulateする。
+// filenameQueryが空白だけでなければ、ファイル名に含むもの (大文字と小文字を区別しない部分一致) に絞る。
+// filenameQueryの `%`・`_`・`\` は文字として扱う。件数と一覧は、ページの件数によらず2回のクエリで引く
+func (r *AttachmentRepository) ListBySpacePaginated(ctx context.Context, spaceID model.SpaceID, filenameQuery string, page int32, limit int32) (*PaginatedAttachments, error) {
+	filenamePattern := ""
+	if strings.TrimSpace(filenameQuery) != "" {
+		filenamePattern = fmt.Sprintf("%%%s%%", escapeLikePattern(filenameQuery))
+	}
+
+	totalCount, err := r.q.CountAttachmentsBySpace(ctx, query.CountAttachmentsBySpaceParams{
+		SpaceID:         string(spaceID),
+		FilenamePattern: filenamePattern,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.q.ListAttachmentsBySpacePaginated(ctx, query.ListAttachmentsBySpacePaginatedParams{
+		SpaceID:         string(spaceID),
+		FilenamePattern: filenamePattern,
+		RowLimit:        limit,
+		RowOffset:       (page - 1) * limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	attachments := make([]*model.Attachment, len(rows))
+	for i, row := range rows {
+		attachments[i] = &model.Attachment{
+			ID:          model.AttachmentID(row.ID),
+			SpaceID:     model.SpaceID(row.SpaceID),
+			Filename:    row.Filename,
+			BlobKey:     row.BlobKey,
+			ContentType: row.BlobContentType.String,
+			ByteSize:    row.BlobByteSize,
+			AttachedAt:  row.AttachedAt,
+		}
+	}
+	return &PaginatedAttachments{Attachments: attachments, TotalCount: totalCount}, nil
 }

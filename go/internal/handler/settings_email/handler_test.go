@@ -57,7 +57,7 @@ func setupHandler(t *testing.T, tx *sql.Tx) *testSetup {
 	createEmailConfirmationUC := usecase.NewCreateEmailConfirmationUsecase(
 		cfg,
 		emailConfirmationRepo,
-		dispatcher.NewDispatcher(inserter),
+		dispatcher.NewDispatcher(inserter, nil),
 		validator.NewEmailConfirmationCreateValidator(userRepo),
 	)
 	limiter := ratelimit.NewLimiter(repository.NewRateLimitRepository(queries))

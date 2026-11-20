@@ -95,6 +95,20 @@ UPDATE topics
 SET discarded_at = NULL, updated_at = @updated_at
 WHERE id = @id AND space_id = @space_id AND discarded_at = @discarded_at;
 
+-- name: DiscardTopicsBySpace :exec
+-- スペースの論理削除していないトピックを、スペースの論理削除と同じ時刻で論理削除する。
+-- 既に論理削除したトピックの時刻は変えない。
+UPDATE topics
+SET discarded_at = @discarded_at, updated_at = @discarded_at
+WHERE space_id = @space_id AND discarded_at IS NULL;
+
+-- name: UndiscardTopicsBySpace :exec
+-- スペースの削除で論理削除したトピックの論理削除を取り消す。@discarded_atと同じ時刻に論理削除した
+-- トピックだけを対象にし、それより前に削除したトピックを戻さない。
+UPDATE topics
+SET discarded_at = NULL, updated_at = @updated_at
+WHERE space_id = @space_id AND discarded_at = @discarded_at;
+
 -- name: LockDiscardedTopic :one
 -- 論理削除したトピックを、物理削除が終わるまでロックする。
 SELECT id FROM topics
@@ -115,3 +129,8 @@ FROM topics t
 INNER JOIN spaces s ON s.id = t.space_id
 WHERE t.id = ANY(@topic_ids::uuid[])
   AND t.space_id = ANY(@space_ids::uuid[]);
+
+-- name: DeleteTopicsBySpace :exec
+-- スペースのすべてのトピック (論理削除したものを含む) を物理削除する。編集提案は外部キーの
+-- ON DELETE CASCADEでトピックとともに消える。
+DELETE FROM topics WHERE space_id = @space_id;

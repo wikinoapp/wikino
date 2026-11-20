@@ -39,7 +39,36 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{}
+var featureFlaggedPatterns = []featureFlaggedPattern{
+	// スペースの一般設定。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/general$`),
+		flag:    model.FeatureFlagSpaceSettingsGeneral,
+		methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch},
+	},
+	// スペースの添付ファイルの管理。一覧 (GET・HEAD) と1件の削除 (DELETE。Method Override変換前はPOST)。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/attachments$`),
+		flag:    model.FeatureFlagSpaceAttachmentManagement,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/attachments/[^/]+$`),
+		flag:    model.FeatureFlagSpaceAttachmentManagement,
+		methods: []string{http.MethodDelete},
+	},
+	// スペースの削除。確認画面 (GET・HEAD) と削除処理 (POST)。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/deletion/new$`),
+		flag:    model.FeatureFlagSpaceDeletion,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/deletion$`),
+		flag:    model.FeatureFlagSpaceDeletion,
+		methods: []string{http.MethodPost},
+	},
+}
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -155,8 +184,8 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// ページにピンを打つ・外す操作。プロキシはMethod Overrideより前に振り分けるため、外す要求
 	// (DELETE) もPOSTとして届く。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/pin$`), methods: []string{http.MethodPost}},
-	// スペース設定のトップ (GET・HEAD /s/:identifier/settings)。一般・添付ファイル・削除など
-	// 設定の残りは従来どおりRails版へ届く。
+	// スペース設定のトップ (GET・HEAD /s/:identifier/settings)。削除など設定の残りは従来どおり
+	// Rails版へ届き、一般と添付ファイルはフィーチャーフラグで振り分ける (featureFlaggedPatterns)。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/settings$`), methods: []string{http.MethodGet, http.MethodHead}},
 	// Railsのformat拡張子や連続するスラッシュも含め、エクスポート配下はGoで処理する。
 	// 未対応のパスやメソッドはGoルーターが拒否し、多重実行防止を持たない旧処理へ転送しない。

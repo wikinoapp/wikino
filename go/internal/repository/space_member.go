@@ -112,6 +112,11 @@ func (r *SpaceMemberRepository) ExistsByUser(ctx context.Context, userID model.U
 	return r.q.ExistsSpaceMemberByUser(ctx, string(userID))
 }
 
+// DeleteBySpaceはスペースのすべてのメンバー (参加をやめた行を含む) を物理削除する。
+func (r *SpaceMemberRepository) DeleteBySpace(ctx context.Context, spaceID model.SpaceID) error {
+	return r.q.DeleteSpaceMembersBySpace(ctx, string(spaceID))
+}
+
 // toModelはquery.SpaceMemberをmodel.SpaceMemberに変換する
 func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMember {
 	var maxTopicRole *model.TopicRole

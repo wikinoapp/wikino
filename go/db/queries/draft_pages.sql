@@ -115,3 +115,7 @@ WHERE dp.space_id = @space_id
   AND p.space_id = @space_id
   AND p.id = dp.page_id
   AND p.topic_id <> dp.topic_id;
+
+-- name: DeleteDraftPagesBySpace :exec
+-- スペースに残った下書きを物理削除する。下書きのリビジョンは外部キーのON DELETE CASCADEで消える。
+DELETE FROM draft_pages WHERE space_id = @space_id;

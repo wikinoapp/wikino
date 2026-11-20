@@ -185,6 +185,8 @@ type PageBuilderDB struct {
 	publishedAt   *time.Time
 	trashedAt     *time.Time
 	discardedAt   *time.Time
+
+	featuredImageAttachmentID *string
 }
 
 // NewPageBuilderDBはPageBuilderDBを生成します
@@ -271,6 +273,13 @@ func (b *PageBuilderDB) WithTrashedAt(trashedAt time.Time) *PageBuilderDB {
 	return b
 }
 
+// WithFeaturedImageAttachmentIDはアイキャッチ画像の添付ファイルIDを設定します。
+func (b *PageBuilderDB) WithFeaturedImageAttachmentID(id model.AttachmentID) *PageBuilderDB {
+	s := string(id)
+	b.featuredImageAttachmentID = &s
+	return b
+}
+
 // Buildはページを作成し、IDを返します
 func (b *PageBuilderDB) Build() model.PageID {
 	b.t.Helper()
@@ -286,11 +295,11 @@ func (b *PageBuilderDB) Build() model.PageID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, discarded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`INSERT INTO pages (space_id, topic_id, number, title, body, linked_page_ids, modified_at, published_at, trashed_at, discarded_at, created_at, updated_at, featured_image_attachment_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		 RETURNING id`,
 		b.spaceID, b.topicID, int32(b.number), b.title, b.body,
-		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.trashedAt, b.discardedAt, now, now,
+		pq.Array(b.linkedPageIDs), b.modifiedAt, b.publishedAt, b.trashedAt, b.discardedAt, now, now, b.featuredImageAttachmentID,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("ページ作成に失敗: %v", err)

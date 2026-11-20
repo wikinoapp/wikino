@@ -51,6 +51,16 @@ func (q *Queries) CreateTopicMember(ctx context.Context, arg CreateTopicMemberPa
 	return i, err
 }
 
+const deleteTopicMembersBySpace = `-- name: DeleteTopicMembersBySpace :exec
+DELETE FROM topic_members WHERE space_id = $1
+`
+
+// スペースのすべてのトピックのメンバーを物理削除する。
+func (q *Queries) DeleteTopicMembersBySpace(ctx context.Context, spaceID string) error {
+	_, err := q.db.ExecContext(ctx, deleteTopicMembersBySpace, spaceID)
+	return err
+}
+
 const deleteTopicMembersByTopic = `-- name: DeleteTopicMembersByTopic :exec
 DELETE FROM topic_members WHERE space_id = $1 AND topic_id = $2
 `

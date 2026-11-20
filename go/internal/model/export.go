@@ -42,6 +42,14 @@ type Export struct {
 	UpdatedAt       time.Time
 }
 
+// LegacyExportBlobは、Rails期のZIPのblobと、取得時点でほかのスペースのレコードも参照しているかを表す。
+// Sharedは最初の実体の削除にだけ使う。後始末は共有状態をDBで確かめ直すため、ジョブには保存しない。
+type LegacyExportBlob struct {
+	ID     string
+	Key    string
+	Shared bool
+}
+
 // エクスポートの時間に関する5つの値は互いに関係して決まるため、それぞれを読むコードの
 // そばではなく1か所に置く。
 //

@@ -647,3 +647,11 @@ LIMIT @row_limit;
 -- name: DeletePagesByIDs :execrows
 -- ページを物理削除する。ページの関連レコードは先に消しておく。
 DELETE FROM pages WHERE space_id = @space_id AND id = ANY(@ids::uuid[]);
+
+-- name: ListPageIDsBySpaceForUpdate :many
+-- スペースのすべてのページ (未公開・ゴミ箱・廃棄済みを含む) をロックし、IDを返す。
+-- スペースの物理削除が、関連レコードを消し終えるまでページの変更を待たせる。
+SELECT id FROM pages
+WHERE space_id = @space_id
+ORDER BY id
+FOR UPDATE;

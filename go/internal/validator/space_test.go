@@ -2,6 +2,7 @@ package validator_test
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -110,6 +111,65 @@ func TestSpaceCreateValidator_Uniqueness(t *testing.T) {
 			}
 			if msgs := ve.GetFieldErrors("identifier"); len(msgs) != 1 || msgs[0] != "この識別子は既に使用されています" {
 				t.Errorf("identifierのフィールドエラー = %v、期待値 = [この識別子は既に使用されています]", msgs)
+			}
+		})
+	}
+}
+
+// TestSpaceUpdateValidator_Validateは、一般設定の保存の検証が作成と同じ形式の検証を行い、識別子の
+// 重複の確認だけが自分自身を除くことを確かめる。一意性チェックはDBを読むため、実際のDBに対して実行する。
+func TestSpaceUpdateValidator_Validate(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	v := validator.NewSpaceUpdateValidator(repository.NewSpaceRepository(testutil.QueriesWithTx(tx)))
+
+	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
+
+	selfID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("space-upd-self").Build()
+	testutil.NewSpaceBuilder(t, tx).WithIdentifier("space-upd-taken").Build()
+	testutil.NewSpaceBuilder(t, tx).WithIdentifier("space-upd-discarded").WithDiscarded().Build()
+
+	tests := []struct {
+		name       string
+		identifier string
+		spaceName  string
+		field      string
+		wantMsg    string
+	}{
+		{name: "自分の識別子のままなら通る", identifier: "space-upd-self", spaceName: "テスト"},
+		{name: "自分の識別子の大文字と小文字だけを変えても通る", identifier: "Space-Upd-Self", spaceName: "テスト"},
+		{name: "使われていない識別子は通る", identifier: "space-upd-free", spaceName: "テスト"},
+		{name: "ほかのスペースの識別子はエラー", identifier: "space-upd-taken", spaceName: "テスト", field: "identifier", wantMsg: "この識別子は既に使用されています"},
+		{name: "ほかのスペースの識別子は大文字と小文字だけが違ってもエラー", identifier: "SPACE-UPD-TAKEN", spaceName: "テスト", field: "identifier", wantMsg: "この識別子は既に使用されています"},
+		{name: "削除済みのスペースの識別子もエラー", identifier: "space-upd-discarded", spaceName: "テスト", field: "identifier", wantMsg: "この識別子は既に使用されています"},
+		{name: "識別子の形式は作成と同じく検証する", identifier: "a b", spaceName: "テスト", field: "identifier", wantMsg: "識別子には半角英数字とハイフンのみ使用できます"},
+		{name: "識別子の予約語は作成と同じく検証する", identifier: "www", spaceName: "テスト", field: "identifier", wantMsg: "この識別子は使用できません"},
+		{name: "名前の長さは作成と同じく検証する", identifier: "space-upd-self", spaceName: strings.Repeat("あ", 31), field: "name", wantMsg: "名前は30文字以内で入力してください"},
+		{name: "名前の未入力は作成と同じく検証する", identifier: "space-upd-self", spaceName: "", field: "name", wantMsg: "名前を入力してください"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := v.Validate(ctx, validator.SpaceUpdateValidatorInput{
+				SpaceID:    selfID,
+				Identifier: tt.identifier,
+				Name:       tt.spaceName,
+			})
+
+			if tt.field == "" {
+				if err != nil {
+					t.Fatalf("予期しないエラー: %v", err)
+				}
+				return
+			}
+
+			ve := model.AsValidationError(err)
+			if ve == nil {
+				t.Fatalf("ValidationErrorを期待したが、%vだった", err)
+			}
+			if msgs := ve.GetFieldErrors(tt.field); !slices.Contains(msgs, tt.wantMsg) {
+				t.Errorf("%sのフィールドエラー = %v、%qが含まれていない", tt.field, msgs, tt.wantMsg)
 			}
 		})
 	}

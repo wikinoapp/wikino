@@ -571,6 +571,11 @@ func (r *DraftPageRepository) DeleteByPageIDs(ctx context.Context, pageIDs []mod
 	})
 }
 
+// DeleteBySpaceはスペースに残った下書きを物理削除する。
+func (r *DraftPageRepository) DeleteBySpace(ctx context.Context, spaceID model.SpaceID) error {
+	return r.q.DeleteDraftPagesBySpace(ctx, string(spaceID))
+}
+
 // SyncTopicsFromPagesは指定トピックを指す下書きの所属を、ページの現在の所属にそろえる。
 // 本文・履歴・更新日時は変更しない。
 func (r *DraftPageRepository) SyncTopicsFromPages(ctx context.Context, topicID model.TopicID, spaceID model.SpaceID) error {

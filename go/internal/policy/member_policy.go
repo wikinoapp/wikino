@@ -107,6 +107,10 @@ func (p *MemberPolicy) CanCreateAttachment() bool {
 	return p.effectiveScopes[model.ScopeAttachmentWrite]
 }
 
+func (p *MemberPolicy) CanDeleteAttachment() bool {
+	return p.effectiveScopes[model.ScopeAttachmentDelete]
+}
+
 func (p *MemberPolicy) CanCreateSuggestion(topic *model.Topic) bool {
 	if !p.effectiveScopes[model.ScopeSuggestionWrite] {
 		return false
@@ -162,6 +166,10 @@ func (p *MemberPolicy) CanExportSpace() bool {
 
 func (p *MemberPolicy) CanUpdateSpace() bool {
 	return p.effectiveScopes[model.ScopeSpaceWrite]
+}
+
+func (p *MemberPolicy) CanDeleteSpace() bool {
+	return p.effectiveScopes[model.ScopeSpaceDelete]
 }
 
 func (p *MemberPolicy) CanShowPersonalAccessTokens() bool {

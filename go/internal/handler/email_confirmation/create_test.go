@@ -72,7 +72,7 @@ func newTestHandlerForCreate(t *testing.T, queries *query.Queries, turnstileVali
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
 	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
 	createEmailConfirmationUC := usecase.NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, d, emailConfirmationCreateValidator)

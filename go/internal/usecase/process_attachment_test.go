@@ -60,6 +60,100 @@ func setupProcessAttachmentFixture(t *testing.T, suffix string) *processAttachme
 	}
 }
 
+// writeThenFailObjectStorageは、実体の書き戻しは完了したが、応答がエラーになった状態を再現する。
+type writeThenFailObjectStorage struct {
+	*storage.FakeObjectStorage
+	beforeUpload  func()
+	afterUpload   func()
+	uploadErr     error
+	cleanupCtxErr error
+}
+
+func (s *writeThenFailObjectStorage) Upload(ctx context.Context, input storage.UploadInput) error {
+	s.beforeUpload()
+	if err := s.FakeObjectStorage.Upload(ctx, input); err != nil {
+		return err
+	}
+	s.afterUpload()
+	return s.uploadErr
+}
+
+func (s *writeThenFailObjectStorage) Delete(ctx context.Context, key string) error {
+	s.cleanupCtxErr = ctx.Err()
+	if s.cleanupCtxErr != nil {
+		return s.cleanupCtxErr
+	}
+	return s.FakeObjectStorage.Delete(ctx, key)
+}
+
+func TestProcessAttachmentUsecase_書き戻しの失敗時も削除済みの実体を片付ける(t *testing.T) {
+	t.Parallel()
+
+	uploadErr := errors.New("書き戻し後に応答が失われた")
+	cleanupErr := errors.New("実体の後始末に失敗した")
+	for _, tt := range []struct {
+		name      string
+		suffix    string
+		cancel    bool
+		deleteErr error
+	}{
+		{name: "書き戻しのエラー", suffix: "write-reply-error"},
+		{name: "contextの打ち切り", suffix: "write-reply-cancel", cancel: true},
+		{name: "後始末のエラーも保持する", suffix: "write-cleanup-error", deleteErr: cleanupErr},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := setupProcessAttachmentFixture(t, tt.suffix)
+			id, key := f.add(t, "target", "image/svg+xml", []byte(`<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>`), time.Now(), model.AttachmentProcessingStatusPending)
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+
+			objectStorage := &writeThenFailObjectStorage{
+				FakeObjectStorage: f.objectStorage,
+				uploadErr:         uploadErr,
+				beforeUpload: func() {
+					if err := f.objectStorage.Delete(t.Context(), key); err != nil {
+						t.Fatalf("実体の削除に失敗: %v", err)
+					}
+					tx, err := f.db.BeginTx(t.Context(), nil)
+					if err != nil {
+						t.Fatalf("トランザクションの開始に失敗: %v", err)
+					}
+					defer func() { _ = tx.Rollback() }()
+					repo := repository.NewAttachmentRepository(query.New(tx))
+					if _, err := repo.DeleteByIDsAndSpace(t.Context(), []model.AttachmentID{id}, f.spaceID); err != nil {
+						t.Fatalf("行の削除に失敗: %v", err)
+					}
+					if err := tx.Commit(); err != nil {
+						t.Fatalf("コミットに失敗: %v", err)
+					}
+					f.objectStorage.DeleteErr = tt.deleteErr
+				},
+				afterUpload: func() {
+					if tt.cancel {
+						cancel()
+					}
+				},
+			}
+			uc := NewProcessAttachmentUsecase(f.db, repository.NewAttachmentRepository(query.New(f.db)), objectStorage)
+			_, err := uc.Execute(ctx, ProcessAttachmentInput{AttachmentID: id, SpaceID: f.spaceID})
+			if !errors.Is(err, uploadErr) {
+				t.Errorf("エラー = %v、書き戻しのエラーを保持することを期待", err)
+			}
+			if tt.deleteErr != nil && !errors.Is(err, tt.deleteErr) {
+				t.Errorf("エラー = %v、後始末のエラーを保持することを期待", err)
+			}
+			if objectStorage.cleanupCtxErr != nil {
+				t.Errorf("後始末のcontextのエラー = %v、打ち切りから切り離すことを期待", objectStorage.cleanupCtxErr)
+			}
+			if _, _, exists := f.objectStorage.Object(key); tt.deleteErr == nil && exists {
+				t.Error("削除済みの行に書き戻した実体が残っている")
+			}
+		})
+	}
+}
+
 // addは、種類contentTypeの添付ファイルの行を作り、contentがnilでなければオブジェクトを置く
 func (f *processAttachmentFixture) add(t *testing.T, name, contentType string, content []byte, attachedAt time.Time, status model.AttachmentProcessingStatus) (model.AttachmentID, string) {
 	t.Helper()

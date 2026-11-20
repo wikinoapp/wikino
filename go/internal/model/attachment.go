@@ -115,6 +115,7 @@ func AttachmentMaxByteSize(contentType string) int64 {
 //   - FindBlobByID (Web画面の添付ファイルの表示用): ID, SpaceID, Filename, BlobKey, ContentType, ByteSize
 //   - FindBlobsByIDs (Web画面の署名付きURLの一括取得用): ID, SpaceID, Filename, BlobKey, ContentType, ByteSize
 //   - FindForProcessingByIDAndSpace (アップロード後の処理用): ID, SpaceID, BlobKey, ContentType, ByteSize, ProcessingStatus, AttachedAt
+//   - ListBySpacePaginated (添付ファイルの管理の画面の一覧用): ID, SpaceID, Filename, BlobKey, ContentType, ByteSize, AttachedAt
 //
 // 取得経路とpopulate範囲はAttachmentRepositoryの各メソッドのdocを参照する。
 type Attachment struct {
@@ -128,4 +129,10 @@ type Attachment struct {
 	ProcessingStatus AttachmentProcessingStatus
 	// AttachedAtは、添付ファイルを作った (事前署名した) 時刻
 	AttachedAt time.Time
+}
+
+// IsImageは、添付ファイルが画像かどうかを種類から返す。Rails版 (Attachment#image?) と同じく、種類が
+// `image/` で始まるものを画像とする
+func (a *Attachment) IsImage() bool {
+	return strings.HasPrefix(a.ContentType, "image/")
 }

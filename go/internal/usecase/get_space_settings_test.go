@@ -48,21 +48,21 @@ func TestGetSpaceSettingsUsecase_Execute(t *testing.T) {
 			name: "管理者は既存の項目を開け、フラグが無効ならトークン管理の項目は出ない",
 			key:  "gsset-admin",
 			role: model.SpaceRoleAdmin,
-			want: &SpaceSettingsItems{CanUpdateSpace: true},
+			want: &SpaceSettingsItems{CanUpdateSpace: true, CanDeleteSpace: true},
 		},
 		{
 			name:        "管理者でフラグが有効ならトークン管理の項目も出る",
 			key:         "gsset-admin-flag",
 			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
-			want:        &SpaceSettingsItems{CanUpdateSpace: true, CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true, CanShowOAuthApplications: true},
+			want:        &SpaceSettingsItems{CanUpdateSpace: true, CanDeleteSpace: true, CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true, CanShowOAuthApplications: true},
 		},
 		{
 			name:       "管理者でMCPサーバーだけが有効なら既存の項目と連携中のアプリだけを開ける",
 			key:        "gsset-admin-mcp",
 			role:       model.SpaceRoleAdmin,
 			mcpEnabled: true,
-			want:       &SpaceSettingsItems{CanUpdateSpace: true, CanShowOAuthGrants: true},
+			want:       &SpaceSettingsItems{CanUpdateSpace: true, CanDeleteSpace: true, CanShowOAuthGrants: true},
 		},
 		{
 			name:       "編集者でMCPサーバーだけが有効なら連携中のアプリだけを開ける",
@@ -84,7 +84,7 @@ func TestGetSpaceSettingsUsecase_Execute(t *testing.T) {
 			role:        model.SpaceRoleAdmin,
 			flagEnabled: true,
 			mcpEnabled:  true,
-			want:        &SpaceSettingsItems{CanUpdateSpace: true, CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true, CanShowOAuthApplications: true},
+			want:        &SpaceSettingsItems{CanUpdateSpace: true, CanDeleteSpace: true, CanShowPersonalAccessTokens: true, CanShowOAuthGrants: true, CanShowOAuthApplications: true},
 		},
 		{
 			name:        "編集者でフラグが有効なら個人用アクセストークンと連携中のアプリの項目だけを開ける",

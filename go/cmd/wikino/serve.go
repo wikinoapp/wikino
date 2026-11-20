@@ -95,8 +95,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	spacehandler "github.com/wikinoapp/wikino/go/internal/handler/space"
+	spacedeletionhandler "github.com/wikinoapp/wikino/go/internal/handler/space_deletion"
 	"github.com/wikinoapp/wikino/go/internal/handler/space_feed"
 	spacesettingshandler "github.com/wikinoapp/wikino/go/internal/handler/space_settings"
+	spacesettingsattachmenthandler "github.com/wikinoapp/wikino/go/internal/handler/space_settings_attachment"
+	spacesettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/space_settings_general"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	suggestionapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_application"
 	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
@@ -248,6 +251,10 @@ func runServe() {
 		UserPasswordRepo:            userPasswordRepo,
 		UserTwoFactorAuthRepo:       userTwoFactorAuthRepo,
 		SpaceMemberRepo:             spaceMemberRepo,
+		SpaceRepo:                   spaceRepo,
+		AttachmentRepo:              attachmentRepo,
+		ExportRepo:                  exportRepo,
+		ObjectStorage:               objectStorage,
 	}, worker.AttachmentProcessingDeps{
 		DB:             db,
 		AttachmentRepo: attachmentRepo,
@@ -272,7 +279,12 @@ func runServe() {
 	}
 
 	// Dispatcherを初期化 (ジョブキューへの投入を抽象化)
-	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client())
+	txJobClient, err := worker.NewTxInserter(db)
+	if err != nil {
+		slog.Error("ジョブ投入用のRiverクライアントの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client(), txJobClient)
 
 	// ユースケースを初期化
 	signInCreateValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
@@ -626,6 +638,26 @@ func runServe() {
 	spaceSettingsHandler := spacesettingshandler.NewHandler(
 		cfg,
 		getSpaceSettingsUC,
+	)
+	getSpaceSettingsGeneralUC := usecase.NewGetSpaceSettingsGeneralUsecase(spaceRepo, spaceMemberRepo)
+	updateSpaceUC := usecase.NewUpdateSpaceUsecase(spaceRepo, spaceMemberRepo, validator.NewSpaceUpdateValidator(spaceRepo))
+	spaceSettingsGeneralHandler := spacesettingsgeneralhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getSpaceSettingsGeneralUC,
+		updateSpaceUC,
+	)
+	spaceSettingsAttachmentHandler := spacesettingsattachmenthandler.NewHandler(
+		cfg,
+		flashMgr,
+		usecase.NewGetSpaceSettingsAttachmentsUsecase(spaceRepo, spaceMemberRepo, attachmentRepo, objectStorage),
+		usecase.NewDeleteAttachmentUsecase(db, spaceRepo, spaceMemberRepo, attachmentRepo, objectStorage, jobDispatcher),
+	)
+	spaceDeletionHandler := spacedeletionhandler.NewHandler(
+		cfg,
+		flashMgr,
+		usecase.NewGetSpaceDeletionNewUsecase(spaceRepo, spaceMemberRepo),
+		usecase.NewDiscardSpaceUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, jobDispatcher, validator.NewSpaceDeletionCreateValidator()),
 	)
 	getPersonalAccessTokensUC := usecase.NewGetPersonalAccessTokensUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, personalAccessTokenRepo)
 	getPersonalAccessTokenNewUC := usecase.NewGetPersonalAccessTokenNewUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, topicMemberRepo)
@@ -1290,12 +1322,30 @@ func runServe() {
 		// ページロケーション検索API (Wikiリンク補完用)
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 
-		// スペース設定のトップ。項目のうちエクスポート以外のリンク先はRails版のまま残る。
+		// スペース設定のトップ。項目のうち削除のリンク先はRails版のまま残る。
 		//
 		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
 		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。
 		r.Get("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
+
+		// スペースの一般設定。リバースプロキシはgo_space_settings_generalが有効な閲覧者のリクエストだけを
+		// ここへ振り分け、それ以外はRails版が処理する。
+		r.Get("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Show)
+		r.Head("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Show)
+		r.Patch("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Update)
+
+		// スペースの添付ファイルの管理。リバースプロキシはgo_space_attachment_managementが有効な閲覧者の
+		// リクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		r.Get("/s/{space_identifier}/settings/attachments", spaceSettingsAttachmentHandler.Index)
+		r.Head("/s/{space_identifier}/settings/attachments", spaceSettingsAttachmentHandler.Index)
+		r.Delete("/s/{space_identifier}/settings/attachments/{attachment_id}", spaceSettingsAttachmentHandler.Delete)
+
+		// スペースの削除。リバースプロキシはgo_space_deletionが有効な閲覧者のリクエストだけを
+		// ここへ振り分け、それ以外はRails版が処理する。
+		r.Get("/s/{space_identifier}/settings/deletion/new", spaceDeletionHandler.New)
+		r.Head("/s/{space_identifier}/settings/deletion/new", spaceDeletionHandler.New)
+		r.Post("/s/{space_identifier}/settings/deletion", spaceDeletionHandler.Create)
 
 		// 個人用アクセストークンの一覧・発行フォーム・発行・失効。Rails版には無い画面で、リバース
 		// プロキシは名前空間全体をGoへ渡してくる。サブルーターにするのはエクスポートと同じく、

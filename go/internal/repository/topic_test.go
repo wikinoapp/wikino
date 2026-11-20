@@ -1149,3 +1149,52 @@ func TestTopicRepository_ListWithSpacesByPages(t *testing.T) {
 		t.Errorf("ページが空のとき = (%v, %v)、0件を期待", empty, err)
 	}
 }
+
+func TestTopicRepository_DiscardAndUndiscardBySpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewTopicRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	spaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("topic-discard-by-space").Build()
+	otherSpaceID := testutil.NewSpaceBuilder(t, tx).WithIdentifier("topic-discard-by-space-other").Build()
+	activeID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(1).WithName("残っていたトピック").Build()
+	earlierID := testutil.NewTopicBuilder(t, tx).WithSpaceID(spaceID).WithNumber(2).WithName("先に削除したトピック").Build()
+	otherID := testutil.NewTopicBuilder(t, tx).WithSpaceID(otherSpaceID).WithNumber(1).WithName("ほかのスペースのトピック").Build()
+
+	earlierAt := time.Now().Add(-time.Hour).Truncate(time.Microsecond)
+	if _, err := repo.Discard(ctx, earlierID, spaceID, earlierAt); err != nil {
+		t.Fatalf("Discard()のエラー = %v", err)
+	}
+
+	discardedAt := time.Now().Truncate(time.Microsecond)
+	if err := repo.DiscardBySpace(ctx, spaceID, discardedAt); err != nil {
+		t.Fatalf("DiscardBySpace()のエラー = %v", err)
+	}
+
+	isActive := func(id model.TopicID, sid model.SpaceID) bool {
+		t.Helper()
+		topic, err := repo.FindBySpaceAndID(ctx, sid, id)
+		if err != nil {
+			t.Fatalf("FindBySpaceAndID()のエラー = %v", err)
+		}
+		return topic != nil
+	}
+	if isActive(activeID, spaceID) {
+		t.Error("スペースのトピックが論理削除されていない")
+	}
+	if !isActive(otherID, otherSpaceID) {
+		t.Error("ほかのスペースのトピックが論理削除された")
+	}
+
+	if err := repo.UndiscardBySpace(ctx, spaceID, discardedAt, time.Now()); err != nil {
+		t.Fatalf("UndiscardBySpace()のエラー = %v", err)
+	}
+	if !isActive(activeID, spaceID) {
+		t.Error("同じ時刻で論理削除したトピックが戻っていない")
+	}
+	if isActive(earlierID, spaceID) {
+		t.Error("先に論理削除していたトピックまで戻った")
+	}
+}

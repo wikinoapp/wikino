@@ -146,6 +146,11 @@ func (r *TopicMemberRepository) DeleteByTopic(ctx context.Context, topicID model
 	})
 }
 
+// DeleteBySpaceはスペースのすべてのトピックのメンバーを物理削除する。
+func (r *TopicMemberRepository) DeleteBySpace(ctx context.Context, spaceID model.SpaceID) error {
+	return r.q.DeleteTopicMembersBySpace(ctx, string(spaceID))
+}
+
 // toModelはquery.TopicMemberをmodel.TopicMemberに変換する
 func (r *TopicMemberRepository) toModel(row query.TopicMember) *model.TopicMember {
 	var lastPageModifiedAt *time.Time

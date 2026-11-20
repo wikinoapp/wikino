@@ -72,6 +72,17 @@ func (q *Queries) DeleteDiscardedTopic(ctx context.Context, arg DeleteDiscardedT
 	return result.RowsAffected()
 }
 
+const deleteTopicsBySpace = `-- name: DeleteTopicsBySpace :exec
+DELETE FROM topics WHERE space_id = $1
+`
+
+// スペースのすべてのトピック (論理削除したものを含む) を物理削除する。編集提案は外部キーの
+// ON DELETE CASCADEでトピックとともに消える。
+func (q *Queries) DeleteTopicsBySpace(ctx context.Context, spaceID string) error {
+	_, err := q.db.ExecContext(ctx, deleteTopicsBySpace, spaceID)
+	return err
+}
+
 const discardTopic = `-- name: DiscardTopic :execrows
 UPDATE topics
 SET discarded_at = $1, updated_at = $1
@@ -91,6 +102,24 @@ func (q *Queries) DiscardTopic(ctx context.Context, arg DiscardTopicParams) (int
 		return 0, err
 	}
 	return result.RowsAffected()
+}
+
+const discardTopicsBySpace = `-- name: DiscardTopicsBySpace :exec
+UPDATE topics
+SET discarded_at = $1, updated_at = $1
+WHERE space_id = $2 AND discarded_at IS NULL
+`
+
+type DiscardTopicsBySpaceParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	SpaceID     string       `json:"space_id"`
+}
+
+// スペースの論理削除していないトピックを、スペースの論理削除と同じ時刻で論理削除する。
+// 既に論理削除したトピックの時刻は変えない。
+func (q *Queries) DiscardTopicsBySpace(ctx context.Context, arg DiscardTopicsBySpaceParams) error {
+	_, err := q.db.ExecContext(ctx, discardTopicsBySpace, arg.DiscardedAt, arg.SpaceID)
+	return err
 }
 
 const existsTopicBySpaceAndName = `-- name: ExistsTopicBySpaceAndName :one
@@ -544,6 +573,25 @@ func (q *Queries) UndiscardTopic(ctx context.Context, arg UndiscardTopicParams) 
 		arg.SpaceID,
 		arg.DiscardedAt,
 	)
+	return err
+}
+
+const undiscardTopicsBySpace = `-- name: UndiscardTopicsBySpace :exec
+UPDATE topics
+SET discarded_at = NULL, updated_at = $1
+WHERE space_id = $2 AND discarded_at = $3
+`
+
+type UndiscardTopicsBySpaceParams struct {
+	UpdatedAt   time.Time    `json:"updated_at"`
+	SpaceID     string       `json:"space_id"`
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+}
+
+// スペースの削除で論理削除したトピックの論理削除を取り消す。@discarded_atと同じ時刻に論理削除した
+// トピックだけを対象にし、それより前に削除したトピックを戻さない。
+func (q *Queries) UndiscardTopicsBySpace(ctx context.Context, arg UndiscardTopicsBySpaceParams) error {
+	_, err := q.db.ExecContext(ctx, undiscardTopicsBySpace, arg.UpdatedAt, arg.SpaceID, arg.DiscardedAt)
 	return err
 }
 

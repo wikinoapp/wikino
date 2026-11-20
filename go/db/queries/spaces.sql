@@ -35,8 +35,53 @@ SELECT EXISTS (
     SELECT 1 FROM spaces WHERE identifier = @identifier
 ) AS space_exists;
 
+-- name: ExistsOtherSpaceByIdentifier :one
+-- 指定したスペースのほかに、その識別子を持つスペースがあるかを返す (削除済みのスペースも含む)。
+-- 自分の識別子の大文字と小文字だけを変える変更を、重複として扱わないためである。
+SELECT EXISTS (
+    SELECT 1 FROM spaces WHERE identifier = @identifier AND id <> @id
+) AS space_exists;
+
 -- name: CreateSpace :one
 -- スペースを作成する。
 INSERT INTO spaces (identifier, name, plan, joined_at, created_at, updated_at)
 VALUES (@identifier, @name, @plan, @now, @now, @now)
 RETURNING *;
+
+-- name: UpdateSpace :one
+-- スペースの一般設定 (識別子と名前) を更新する。削除済みのスペースは更新しない。
+UPDATE spaces
+SET identifier = @identifier, name = @name, updated_at = @now
+WHERE id = @id AND discarded_at IS NULL
+RETURNING *;
+
+-- name: DiscardSpace :execrows
+-- スペースを論理削除する。既に論理削除したスペースは対象にしない。同じスペースを同時に削除する
+-- リクエストは、この行のロックで直列になり、あとのものは0件の更新で終わる
+UPDATE spaces
+SET discarded_at = @discarded_at, updated_at = @discarded_at
+WHERE id = @id AND discarded_at IS NULL;
+
+-- name: UndiscardSpace :exec
+-- 論理削除を取り消す。@discarded_atと同じ時刻に論理削除したスペースだけを対象にする
+UPDATE spaces
+SET discarded_at = NULL, updated_at = @updated_at
+WHERE id = @id AND discarded_at = @discarded_at;
+
+-- name: ExistsDiscardedSpaceByID :one
+-- 論理削除したスペースがあるかを返す。物理削除のジョブが、実体を消し始める前に対象を確かめるのに使う
+SELECT EXISTS (
+    SELECT 1 FROM spaces WHERE id = @id AND discarded_at IS NOT NULL
+) AS space_exists;
+
+-- name: LockDiscardedSpace :one
+-- 論理削除したスペースを、物理削除が終わるまでロックする。FOR UPDATEにするのは、スペースを参照する
+-- 行の追加 (外部キーの検査がFOR KEY SHAREを取る) を、物理削除のコミットまで待たせるためである
+SELECT id FROM spaces
+WHERE id = @id AND discarded_at IS NOT NULL
+FOR UPDATE;
+
+-- name: DeleteDiscardedSpace :execrows
+-- 論理削除したスペースを物理削除する。論理削除していないスペースは対象にしない
+DELETE FROM spaces
+WHERE id = @id AND discarded_at IS NOT NULL;

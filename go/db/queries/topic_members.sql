@@ -40,3 +40,7 @@ WHERE tm.space_member_id = @space_member_id
 -- name: DeleteTopicMembersByTopic :exec
 -- トピックのメンバーを物理削除する。
 DELETE FROM topic_members WHERE space_id = @space_id AND topic_id = @topic_id;
+
+-- name: DeleteTopicMembersBySpace :exec
+-- スペースのすべてのトピックのメンバーを物理削除する。
+DELETE FROM topic_members WHERE space_id = @space_id;

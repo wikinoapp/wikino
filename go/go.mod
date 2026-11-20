@@ -27,6 +27,7 @@ require (
 	github.com/pquerna/otp v1.5.0
 	github.com/resend/resend-go/v2 v2.28.0
 	github.com/riverqueue/river v0.51.1
+	github.com/riverqueue/river/riverdriver/riverdatabasesql v0.51.1
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.51.1
 	github.com/riverqueue/river/rivertype v0.51.1
 	github.com/rivo/uniseg v0.4.7
