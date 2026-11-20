@@ -31,6 +31,11 @@ func FormatNumber(ctx context.Context, n int) string {
 	return i18n.FormatNumber(ctx, n)
 }
 
+// FormatByteSizeはバイト数を、現在のロケールで読みやすい大きさの文字列にする (例: 日本語は "1.5KB"、英語は "1.5 KB")
+func FormatByteSize(ctx context.Context, byteSize int64) string {
+	return i18n.FormatByteSize(ctx, byteSize)
+}
+
 // Derefはポインタを参照外しする (ジェネリック対応)
 func Deref[T any](v *T) T {
 	if v != nil {
