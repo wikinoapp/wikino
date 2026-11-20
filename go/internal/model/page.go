@@ -11,6 +11,10 @@ import (
 // Web画面とAPIのどちらから書き込む本文にも同じ上限を掛ける
 const PageBodyMaxLength = 500000
 
+// PageTrashRetentionDaysは、ゴミ箱に入れたページを復元できる日数。
+// これを過ぎたページはゴミ箱の一覧に出さず、定期的な物理削除の対象にする
+const PageTrashRetentionDays = 30
+
 // Pageはページのドメインモデル
 type Page struct {
 	ID                        PageID

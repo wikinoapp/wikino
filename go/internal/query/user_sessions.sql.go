@@ -79,6 +79,16 @@ func (q *Queries) DeleteUserSessionByToken(ctx context.Context, token string) er
 	return err
 }
 
+const deleteUserSessionsByUserID = `-- name: DeleteUserSessionsByUserID :exec
+DELETE FROM user_sessions WHERE user_id = $1
+`
+
+// ユーザーのセッションをすべて削除する
+func (q *Queries) DeleteUserSessionsByUserID(ctx context.Context, userID string) error {
+	_, err := q.db.ExecContext(ctx, deleteUserSessionsByUserID, userID)
+	return err
+}
+
 const getUserSessionByID = `-- name: GetUserSessionByID :one
 SELECT id, user_id, token, ip_address, user_agent, signed_in_at, created_at, updated_at FROM user_sessions WHERE id = $1
 `

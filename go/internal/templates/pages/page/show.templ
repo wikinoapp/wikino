@@ -200,14 +200,13 @@ templ showPageActions(data ShowData) {
 				}
 				if data.showsTrashAction() {
 					<div role="menuitem">
-						// 確認はフォーム自身のsubmitイベントで走らせ、ボタンへのキーボード操作
+						// 確認はdata-confirmを見てフォームのsubmitイベントで走らせ (web/form-submit.ts)、ボタンへのキーボード操作
 						// 経路も同じように守る。ドロップダウン自体がJavaScriptで開くため、確認を
 						// 経ずにこのフォームへ到達する経路は無い。
 						<form
 							action={ templ.SafeURL(string(templates.PageTrashPath(data.Space.Identifier, data.Page.Number))) }
 							class="w-full"
 							data-confirm={ templates.T(ctx, "page_show_page_actions_trash_confirm") }
-							hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
 							method="POST"
 						>
 							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>

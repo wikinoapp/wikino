@@ -187,9 +187,9 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebDelete(t *testing.T) {
 			go func() { firstResult <- first() }()
 
 			// 先行する削除が編集履歴を待つまで、後続の削除を始めない
-			firstPID := waitForDraftDeletionBlocked(t, ctx, db, blockerPID, "DeleteDraftPageRevisionsByDraftPageID", firstResult)
+			firstPID := waitForQueryBlockedBy(t, ctx, db, blockerPID, "DeleteDraftPageRevisionsByDraftPageID", firstResult)
 			go func() { secondResult <- second() }()
-			waitForDraftDeletionBlocked(t, ctx, db, firstPID, "FindDraftPageByIDForUpdate", secondResult)
+			waitForQueryBlockedBy(t, ctx, db, firstPID, "FindDraftPageByIDForUpdate", secondResult)
 
 			if err := blocker.Rollback(); err != nil {
 				t.Fatalf("編集履歴のロック解除: %v", err)
@@ -271,9 +271,9 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebPublish(t *testing.T) {
 			go func() { firstResult <- first() }()
 
 			// 先行する側が下書きをロックして編集履歴を待つまで、後続を始めない
-			firstPID := waitForDraftDeletionBlocked(t, ctx, db, blockerPID, "DeleteDraftPageRevisionsByDraftPageID", firstResult)
+			firstPID := waitForQueryBlockedBy(t, ctx, db, blockerPID, "DeleteDraftPageRevisionsByDraftPageID", firstResult)
 			go func() { secondResult <- second() }()
-			waitForDraftDeletionBlocked(t, ctx, db, firstPID, "FindDraftPageByIDForUpdate", secondResult)
+			waitForQueryBlockedBy(t, ctx, db, firstPID, "FindDraftPageByIDForUpdate", secondResult)
 
 			if err := blocker.Rollback(); err != nil {
 				t.Fatalf("編集履歴のロック解除: %v", err)
@@ -307,35 +307,5 @@ func TestDeleteAPIDraftPageUsecase_Execute_ConcurrentWebPublish(t *testing.T) {
 				t.Errorf("公開したタイトルのページの数 = %d、期待値 = %d", n, wantPublished)
 			}
 		})
-	}
-}
-
-// waitForDraftDeletionBlockedは、queryNameのクエリを実行中の接続がblockingPIDの接続のロックを待つまで待機し、
-// 待っている接続のPIDを返す。待つ前にresultの処理が終わった場合と、ctxが期限切れになった場合はテストを失敗させる
-func waitForDraftDeletionBlocked(t *testing.T, ctx context.Context, db *sql.DB, blockingPID int, queryName string, result <-chan error) int {
-	t.Helper()
-
-	ticker := time.NewTicker(10 * time.Millisecond)
-	defer ticker.Stop()
-	for {
-		var pid int
-		err := db.QueryRowContext(ctx, `SELECT COALESCE((
-			SELECT pid FROM pg_stat_activity
-			WHERE datname = current_database() AND $1 = ANY(pg_blocking_pids(pid))
-			AND query LIKE $2 LIMIT 1
-		), 0)`, blockingPID, "%"+queryName+"%").Scan(&pid)
-		if err != nil {
-			t.Fatalf("ロック待ちの確認: %v", err)
-		}
-		if pid != 0 {
-			return pid
-		}
-		select {
-		case err := <-result:
-			t.Fatalf("ロック待ちを確認する前に処理が終了: %v", err)
-		case <-ctx.Done():
-			t.Fatalf("期待した行のロックを待たなかった: %v", ctx.Err())
-		case <-ticker.C:
-		}
 	}
 }

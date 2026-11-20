@@ -44,7 +44,100 @@ func TestEmailConfirmationRepository_Create(t *testing.T) {
 		if ec.SucceededAt != nil {
 			t.Errorf("ec.SucceededAt = %v、期待値 = nil", ec.SucceededAt)
 		}
+		if ec.UserID != nil {
+			t.Errorf("新規登録の確認のUserID = %v、期待値 = nil", ec.UserID)
+		}
 	})
+}
+
+func TestEmailConfirmationRepository_開始ユーザーの保存と削除(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	ctx := context.Background()
+	repo := NewEmailConfirmationRepository(testutil.QueriesWithTx(tx))
+	userID := testutil.NewUserBuilder(t, tx).Build()
+	owned, err := repo.Create(ctx, CreateEmailConfirmationInput{
+		UserID: &userID, Email: "owned@example.com", Event: model.EmailConfirmationEventEmailUpdate,
+		Code: "OWN001", StartedAt: time.Now(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	unownedID := testutil.NewEmailConfirmationBuilder(t, tx).WithCode("OWN002").Build()
+	confirmation, err := repo.FindByID(ctx, owned.ID)
+	if err != nil || confirmation == nil || confirmation.UserID == nil || *confirmation.UserID != userID {
+		t.Fatalf("開始ユーザーが保存されていない: 確認 = %v、エラー = %v", confirmation, err)
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM users WHERE id = $1", string(userID)); err != nil {
+		t.Fatal(err)
+	}
+	confirmation, err = repo.FindByID(ctx, owned.ID)
+	if err != nil || confirmation != nil {
+		t.Fatalf("削除したユーザーの確認が残っている: 確認 = %v、エラー = %v", confirmation, err)
+	}
+	unowned, err := repo.FindByID(ctx, unownedID)
+	if err != nil || unowned == nil {
+		t.Fatalf("所有者のない確認が削除された: エラー = %v", err)
+	}
+}
+
+func TestEmailConfirmationRepository_ConsumeEmailUpdate(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name      string
+		event     model.EmailConfirmationEvent
+		expired   bool
+		ownerless bool
+		otherUser bool
+		code      string
+		want      bool
+	}{
+		{name: "正しい確認を一度だけ消費する", event: model.EmailConfirmationEventEmailUpdate, code: "abc123", want: true},
+		{name: "別ユーザー", event: model.EmailConfirmationEventEmailUpdate, code: "ABC123", otherUser: true},
+		{name: "所有者なし", event: model.EmailConfirmationEventEmailUpdate, code: "ABC123", ownerless: true},
+		{name: "期限切れ", event: model.EmailConfirmationEventEmailUpdate, code: "ABC123", expired: true},
+		{name: "コード違い", event: model.EmailConfirmationEventEmailUpdate, code: "WRONG1"},
+		{name: "新規登録", event: model.EmailConfirmationEventSignUp, code: "ABC123"},
+		{name: "パスワードリセット", event: model.EmailConfirmationEventPasswordReset, code: "ABC123"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			_, tx := testutil.SetupTx(t)
+			ctx := context.Background()
+			repo := NewEmailConfirmationRepository(testutil.QueriesWithTx(tx))
+			userID := testutil.NewUserBuilder(t, tx).Build()
+			builder := testutil.NewEmailConfirmationBuilder(t, tx).WithEvent(tc.event).WithCode("ABC123")
+			if !tc.ownerless {
+				builder = builder.WithUserID(userID)
+			}
+			if tc.expired {
+				builder = builder.WithStartedAt(time.Now().Add(-16 * time.Minute))
+			}
+			id := builder.Build()
+			if tc.otherUser {
+				userID = testutil.NewUserBuilder(t, tx).WithAtname("consume_other").WithEmail("consume-other@example.com").Build()
+			}
+			confirmation, err := repo.ConsumeEmailUpdate(ctx, id, userID, tc.code)
+			if err != nil || (confirmation != nil) != tc.want {
+				t.Fatalf("ConsumeEmailUpdate() = %v、エラー = %v、成功の期待値 = %v", confirmation, err, tc.want)
+			}
+			if tc.want {
+				if !confirmation.IsSucceeded() {
+					t.Error("消費した確認が完了状態になっていない")
+				}
+				if again, err := repo.ConsumeEmailUpdate(ctx, id, userID, tc.code); err != nil || again != nil {
+					t.Fatalf("確認を再利用できた: %v、エラー = %v", again, err)
+				}
+			} else {
+				stored, err := repo.FindByID(ctx, id)
+				if err != nil || stored == nil || stored.IsSucceeded() {
+					t.Fatalf("拒否した確認の状態が変わった: %v、エラー = %v", stored, err)
+				}
+			}
+		})
+	}
 }
 
 func TestEmailConfirmationRepository_FindByID(t *testing.T) {

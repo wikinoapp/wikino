@@ -41,7 +41,7 @@ func TestCreateEmailConfirmationUsecase_Execute_Japanese(t *testing.T) {
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	userRepo := repository.NewUserRepository(q)
 	createValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
 	uc := NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, d, createValidator)
@@ -117,7 +117,7 @@ func TestCreateEmailConfirmationUsecase_Execute_English(t *testing.T) {
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	userRepo := repository.NewUserRepository(q)
 	createValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
 	uc := NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, d, createValidator)
@@ -184,7 +184,7 @@ func TestCreateEmailConfirmationUsecase_Execute_PasswordReset(t *testing.T) {
 
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(q)
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	userRepo := repository.NewUserRepository(q)
 	createValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
 	uc := NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, d, createValidator)

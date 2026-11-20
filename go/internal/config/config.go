@@ -85,7 +85,7 @@ type Config struct {
 // Loadは環境変数から設定を読み込みます
 func Load() (*Config, error) {
 	// APP_ENVの値を取得 (デフォルト: dev)
-	// dev: 開発環境、test: テスト環境、prod: 本番環境
+	// dev: 開発環境、test: テスト環境、test_e2e: e2eテストのサーバー、prod: 本番環境
 	//
 	// すべての環境でGoプロセス起動時には既に環境変数がセット済みです：
 	// - ローカル開発/テスト: op run --env-file=".env" が処理済み
@@ -239,6 +239,12 @@ func (c *Config) IsDev() bool {
 // IsTestはテスト環境かどうかを返します
 func (c *Config) IsTest() bool {
 	return c.Env == "test"
+}
+
+// IsTestE2Eは、ブラウザから通すe2eテストのためにサーバーを起動しているかどうかを返します。
+// このときだけ、オブジェクトストレージの代わりにメモリ上のフェイクを使い、その送受信を受けるテスト専用のルートを登録します
+func (c *Config) IsTestE2E() bool {
+	return c.Env == "test_e2e"
 }
 
 // IsProductionは本番環境かどうかを返します

@@ -62,6 +62,27 @@ describe("initializeEditors", () => {
     expect(document.activeElement).toBe(textbox);
   });
 
+  it("ページがダークのときはエディタをダークのテーマにする", () => {
+    document.documentElement.classList.add("dark");
+    try {
+      initializeEditors();
+    } finally {
+      document.documentElement.classList.remove("dark");
+    }
+
+    const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
+
+    expect(container?._editorView?.state.facet(EditorView.darkTheme)).toBe(true);
+  });
+
+  it("ページがライトのときはエディタをライトのテーマにする", () => {
+    initializeEditors();
+
+    const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
+
+    expect(container?._editorView?.state.facet(EditorView.darkTheme)).toBe(false);
+  });
+
   it("ラベルのセレクタが無くてもエディタを初期化する", () => {
     const container = document.querySelector<MarkdownEditorContainer>("[data-markdown-editor]");
     container?.removeAttribute("data-markdown-editor-label");

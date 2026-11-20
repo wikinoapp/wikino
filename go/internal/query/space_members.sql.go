@@ -51,6 +51,34 @@ func (q *Queries) CreateSpaceMember(ctx context.Context, arg CreateSpaceMemberPa
 	return i, err
 }
 
+const deleteSpaceMembersBySpace = `-- name: DeleteSpaceMembersBySpace :exec
+DELETE FROM space_members WHERE space_id = $1
+`
+
+// スペースのすべてのメンバー (参加をやめた行を含む) を物理削除する。
+func (q *Queries) DeleteSpaceMembersBySpace(ctx context.Context, spaceID string) error {
+	_, err := q.db.ExecContext(ctx, deleteSpaceMembersBySpace, spaceID)
+	return err
+}
+
+const existsSpaceMemberByUser = `-- name: ExistsSpaceMemberByUser :one
+SELECT EXISTS (
+    SELECT 1 FROM space_members sm
+    INNER JOIN spaces s ON s.id = sm.space_id
+    WHERE sm.user_id = $1
+)
+`
+
+// ユーザーのスペースメンバーの行が残っているかを返す。参加をやめた (activeでない) 行と、
+// 削除済みのスペースの行も数える。どれもユーザーを外部キーで参照しているため。
+// スペースをまたいで数えるため、space_idはスペースとのJOINで確かめる。
+func (q *Queries) ExistsSpaceMemberByUser(ctx context.Context, userID string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsSpaceMemberByUser, userID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const findActiveSpaceMemberBySpaceAndUser = `-- name: FindActiveSpaceMemberBySpaceAndUser :one
 SELECT id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role, max_topic_role FROM space_members WHERE space_id = $1 AND user_id = $2 AND active = true
 `

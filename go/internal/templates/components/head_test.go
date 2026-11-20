@@ -133,3 +133,132 @@ func TestHead_Preconnect(t *testing.T) {
 		}
 	})
 }
+
+// 機能のエントリは宣言した画面だけが、main.jsのあとに読む。エディタを使わない画面にCodeMirrorを
+// 含むエントリを読ませないためと、main.jsの初期化のあとに動かすためである。
+func TestHead_FeatureScript(t *testing.T) {
+	t.Parallel()
+
+	const mainScript = `<script type="module" src="/static/js/main.js?v=abc123"></script>`
+
+	tests := []struct {
+		name    string
+		script  viewmodel.FeatureScript
+		want    string
+		notWant []string
+	}{
+		{
+			name:    "エディタのエントリを宣言した画面はeditor.jsだけを読む",
+			script:  viewmodel.FeatureScriptEditor,
+			want:    `<script type="module" src="/static/js/editor.js?v=abc123"></script>`,
+			notWant: []string{"/static/js/markdown-diff.js"},
+		},
+		{
+			name:    "差分の色付けのエントリを宣言した画面はmarkdown-diff.jsだけを読む",
+			script:  viewmodel.FeatureScriptMarkdownDiff,
+			want:    `<script type="module" src="/static/js/markdown-diff.js?v=abc123"></script>`,
+			notWant: []string{"/static/js/editor.js"},
+		},
+		{
+			name:    "宣言が無い画面は機能のエントリを読まない",
+			notWant: []string{"/static/js/editor.js", "/static/js/markdown-diff.js"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			html := renderHead(t, viewmodel.PageMeta{AssetVersion: "abc123", FeatureScript: tt.script})
+
+			mainIndex := strings.Index(html, mainScript)
+			if mainIndex == -1 {
+				t.Fatalf("headに%qが含まれていない", mainScript)
+			}
+			if tt.want != "" {
+				wantIndex := strings.Index(html, tt.want)
+				if wantIndex == -1 {
+					t.Fatalf("headに%qが含まれていない", tt.want)
+				}
+				if wantIndex < mainIndex {
+					t.Errorf("機能のエントリ (位置%d) がmain.js (位置%d) より前にある", wantIndex, mainIndex)
+				}
+			}
+			for _, notWant := range tt.notWant {
+				if strings.Contains(html, notWant) {
+					t.Errorf("headに%qが含まれている", notWant)
+				}
+			}
+		})
+	}
+}
+
+// htmxはmain.jsに同梱するため、headで別のファイルとして読み込まない。別に読み込むと、main.jsの
+// htmxと合わせて1つの画面でhtmxが2つ動く。
+func TestHead_DoesNotLoadVendorHTMX(t *testing.T) {
+	t.Parallel()
+
+	html := renderHead(t, viewmodel.PageMeta{AssetVersion: "abc123"})
+
+	for _, notWant := range []string{"/static/js/vendor/", "htmx"} {
+		if strings.Contains(html, notWant) {
+			t.Errorf("headに%qが含まれている", notWant)
+		}
+	}
+	if !strings.Contains(html, `<script type="module" src="/static/js/main.js?v=abc123"></script>`) {
+		t.Error("headにhtmxを同梱したmain.jsを読み込むscriptが含まれていない")
+	}
+}
+
+// ダークモードのフラグが有効な閲覧者にだけ、配色の宣言と検出のスクリプトを出す。宣言はスタイルシートより前に置き、
+// ブラウザが描く部品とアドレスバーの配色を、スタイルシートを読む前から決められるようにする。
+func TestHead_DarkMode(t *testing.T) {
+	t.Parallel()
+
+	const stylesheet = `<link rel="stylesheet" href="/static/css/style.css?v=abc123">`
+	darkModeParts := []string{
+		`<meta name="color-scheme" content="light dark">`,
+		`<meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf5f1">`,
+		`<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121a1b">`,
+	}
+	const detectScript = `if (matchMedia("(prefers-color-scheme: dark)").matches)`
+
+	t.Run("フラグが有効なときは配色の宣言と検出のスクリプトを出す", func(t *testing.T) {
+		t.Parallel()
+
+		html := renderHead(t, viewmodel.PageMeta{AssetVersion: "abc123", DarkModeEnabled: true})
+
+		stylesheetIndex := strings.Index(html, stylesheet)
+		if stylesheetIndex == -1 {
+			t.Fatalf("headに%qが含まれていない", stylesheet)
+		}
+		for _, want := range darkModeParts {
+			index := strings.Index(html, want)
+			if index == -1 {
+				t.Errorf("headに%qが含まれていない", want)
+				continue
+			}
+			if index > stylesheetIndex {
+				t.Errorf("%q (位置%d) がスタイルシート (位置%d) より後にある", want, index, stylesheetIndex)
+			}
+		}
+		if !strings.Contains(html, detectScript) {
+			t.Errorf("headに%qが含まれていない", detectScript)
+		}
+		if !strings.Contains(html, `document.documentElement.classList.add("dark")`) {
+			t.Error("headにdarkクラスを付けるスクリプトが含まれていない")
+		}
+	})
+
+	t.Run("フラグが無効なときは何も出さない", func(t *testing.T) {
+		t.Parallel()
+
+		html := renderHead(t, viewmodel.PageMeta{AssetVersion: "abc123"})
+
+		for _, notWant := range []string{`name="color-scheme"`, `name="theme-color"`, "prefers-color-scheme", "<script>"} {
+			if strings.Contains(html, notWant) {
+				t.Errorf("headに%qが含まれている", notWant)
+			}
+		}
+	})
+}

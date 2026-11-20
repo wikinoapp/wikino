@@ -53,7 +53,7 @@ func GlobalNavBottomBar(data GlobalNavData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = GlobalNavMenu(data, "bg-card w-fit rounded-full border border-stone-400 px-4 py-1").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = GlobalNavMenu(data, "bg-card w-fit rounded-full border border-stone-400 px-4 py-1 dark:border-brand-600").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

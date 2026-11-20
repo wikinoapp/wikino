@@ -59,6 +59,15 @@ func TestNew(t *testing.T) {
 	if !strings.Contains(body, `name="back"`) {
 		t.Error("レスポンスにbackのhiddenフィールドが見つからない")
 	}
+
+	// 二重送信を防ぐため、送信中はボタンを無効にする (web/form-submit.ts)。hx-on:submitは
+	// htmxでリクエストしないフォームの送信を止めてしまうため使わない
+	if !strings.Contains(body, "data-disable-on-submit") {
+		t.Error("ログインフォームに送信中にボタンを無効にする印が見つからない")
+	}
+	if strings.Contains(body, "hx-on:submit") {
+		t.Error("ログインフォームがhx-on:submitを使っている")
+	}
 }
 
 func TestNew_WithBackParameter(t *testing.T) {

@@ -760,6 +760,24 @@ linters:
             - pkg: github.com/wikinoapp/wikino/go/internal
               desc: "legaldocはアプリケーション内の他のパッケージに依存できません。"
 
+        # 画像のメタデータの除去は、Workerのユースケースから呼ぶ純粋な技術ユーティリティとして、
+        # アプリケーション内のほかのパッケージに依存しないleafに保つ
+        imagemeta-layer:
+          files:
+            - "**/internal/imagemeta/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal
+              desc: "imagemetaはアプリケーション内の他のパッケージに依存できません。"
+
+        # SVGのサニタイズは、Workerのユースケースから呼ぶ純粋な技術ユーティリティとして、
+        # アプリケーション内のほかのパッケージに依存しないleafに保つ
+        svgsanitizer-layer:
+          files:
+            - "**/internal/svgsanitizer/**"
+          deny:
+            - pkg: github.com/wikinoapp/wikino/go/internal
+              desc: "svgsanitizerはアプリケーション内の他のパッケージに依存できません。"
+
         # auth層のルール: 横断的な技術ユーティリティ (Domain/Infrastructure層)
         # 標準ライブラリ・外部ライブラリのみに依存し、プロジェクト内部パッケージには依存しない
         auth-layer:
@@ -818,6 +836,8 @@ linters:
               desc: "authはRateLimitに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/redirect
               desc: "authはRedirectに依存できません。"
+            - pkg: github.com/wikinoapp/wikino/go/internal/darkmode
+              desc: "authはDarkModeに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/timezone
               desc: "authはTimezoneに依存できません。"
             - pkg: github.com/wikinoapp/wikino/go/internal/turnstile

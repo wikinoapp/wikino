@@ -617,6 +617,76 @@ func TestMemberPolicy_CanShowAttachment(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanCreateAttachment(t *testing.T) {
+	t.Parallel()
+
+	t.Run("attachment:writeがあればアップロードできる", func(t *testing.T) {
+		t.Parallel()
+
+		if !NewMemberPolicy(model.SpaceRoleEditor.Scopes(), nil).CanCreateAttachment() {
+			t.Error("attachment:writeを持つ編集者はアップロードできるべき")
+		}
+	})
+
+	t.Run("attachment:readだけではアップロードできない", func(t *testing.T) {
+		t.Parallel()
+
+		if NewMemberPolicy(model.SpaceRoleViewer.Scopes(), nil).CanCreateAttachment() {
+			t.Error("attachment:writeを持たない閲覧者はアップロードできないべき")
+		}
+	})
+}
+
+func TestMemberPolicy_CanDeleteAttachment(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		scopes []model.Scope
+		want   bool
+	}{
+		{name: "管理者は削除できる", scopes: model.SpaceRoleAdmin.Scopes(), want: true},
+		{name: "attachment:deleteがあれば削除できる", scopes: []model.Scope{model.ScopeAttachmentDelete}, want: true},
+		{name: "編集者はアップロードできても削除できない", scopes: model.SpaceRoleEditor.Scopes(), want: false},
+		{name: "閲覧者は削除できない", scopes: model.SpaceRoleViewer.Scopes(), want: false},
+		{name: "space:writeだけでは削除できない", scopes: []model.Scope{model.ScopeSpaceWrite}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := NewMemberPolicy(tt.scopes, nil).CanDeleteAttachment(); got != tt.want {
+				t.Errorf("CanDeleteAttachment() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMemberPolicy_CanDeleteSpace(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		scopes []model.Scope
+		want   bool
+	}{
+		{name: "管理者は削除できる", scopes: model.SpaceRoleAdmin.Scopes(), want: true},
+		{name: "space:deleteがあれば削除できる", scopes: []model.Scope{model.ScopeSpaceDelete}, want: true},
+		{name: "編集者は削除できない", scopes: model.SpaceRoleEditor.Scopes(), want: false},
+		{name: "閲覧者は削除できない", scopes: model.SpaceRoleViewer.Scopes(), want: false},
+		{name: "space:writeだけでは削除できない", scopes: []model.Scope{model.ScopeSpaceWrite}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := NewMemberPolicy(tt.scopes, nil).CanDeleteSpace(); got != tt.want {
+				t.Errorf("CanDeleteSpace() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMemberPolicy_CanCreateSuggestion(t *testing.T) {
 	t.Parallel()
 
@@ -989,6 +1059,35 @@ func TestMemberPolicy_CanUpdateTopicVisibility(t *testing.T) {
 	})
 }
 
+func TestMemberPolicy_CanDeleteTopic(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		spaceScopes []model.Scope
+		topicScopes []model.Scope
+		want        bool
+	}{
+		{name: "スペースのtopic:deleteで削除可能", spaceScopes: []model.Scope{model.ScopeTopicDelete}, want: true},
+		{name: "トピックメンバーのtopic:deleteで削除可能", topicScopes: []model.Scope{model.ScopeTopicDelete}, want: true},
+		{name: "トピックの管理者のロールで削除可能", topicScopes: model.TopicRoleAdmin.Scopes(), want: true},
+		{name: "topic:writeだけでは削除不可", spaceScopes: []model.Scope{model.ScopeTopicWrite}, want: false},
+		{name: "スペースの編集者のロールでは削除不可", spaceScopes: model.SpaceRoleEditor.Scopes(), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewMemberPolicy(tt.spaceScopes, tt.topicScopes)
+
+			if got := p.CanDeleteTopic(); got != tt.want {
+				t.Errorf("CanDeleteTopic() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestMemberPolicy_AuthorizerはMemberPolicyがAuthorizerインターフェースを満たすことを検証する
 func TestMemberPolicy_Authorizer(t *testing.T) {
 	t.Parallel()
@@ -1190,6 +1289,35 @@ func TestMemberPolicy_OAuthApplication(t *testing.T) {
 				if check.got != check.want {
 					t.Errorf("%s = %v、期待値 = %v", check.name, check.got, check.want)
 				}
+			}
+		})
+	}
+}
+
+func TestMemberPolicy_CanRestorePage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		spaceScopes []model.Scope
+		topicScopes []model.Scope
+		want        bool
+	}{
+		{name: "スペースのpage_trash:deleteで復元可能", spaceScopes: []model.Scope{model.ScopePageTrashDelete}, want: true},
+		{name: "トピックメンバーのpage_trash:deleteで復元可能", topicScopes: []model.Scope{model.ScopePageTrashDelete}, want: true},
+		{name: "トピックの編集者のロールで復元可能", topicScopes: model.TopicRoleEditor.Scopes(), want: true},
+		{name: "page_trash:writeだけでは復元不可", spaceScopes: []model.Scope{model.ScopePageTrashWrite}, want: false},
+		{name: "スペースの閲覧者のロールでは復元不可", spaceScopes: model.SpaceRoleViewer.Scopes(), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewMemberPolicy(tt.spaceScopes, tt.topicScopes)
+
+			if got := p.CanRestorePage(); got != tt.want {
+				t.Errorf("CanRestorePage() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}

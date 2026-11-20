@@ -44,11 +44,11 @@ func findViewableAPIAttachment(
 		return nil, notFound
 	}
 
-	public, err := attachmentRepo.FindPubliclyReferencedBlobByID(ctx, attachment.ID)
+	public, err := attachmentRepo.FindPubliclyReferencedBlobByIDAndSpace(ctx, attachment.ID, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("添付ファイルの参照元の公開範囲の取得に失敗: %w", err)
 	}
-	allReferencingPagesPublic := public != nil && public.SpaceID == space.ID
+	allReferencingPagesPublic := public != nil
 
 	// attachment:readはスペースにしか付けられず、判定でトピックを見ないため、トピックメンバーは要らない
 	if !newAPIAuthorizer(principal, nil).CanShowAttachment(allReferencingPagesPublic) {

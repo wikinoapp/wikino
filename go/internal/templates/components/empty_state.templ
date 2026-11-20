@@ -25,11 +25,11 @@ type EmptyStateData struct {
 templ EmptyState(data EmptyStateData) {
 	<div class="flex items-center justify-center px-4 py-10 border-1 border-dashed rounded-xl">
 		<div class="flex flex-col items-center justify-center gap-4 px-4 text-center">
-			<div class="bg-stone-200/50 rounded-xl p-2">
+			<div class="bg-stone-200/50 rounded-xl p-2 dark:bg-muted/50">
 				if data.IconName != "" {
-					@templates.Icon(data.IconName, "size-10 fill-brand-800")
+					@templates.Icon(data.IconName, "size-10 fill-brand-800 dark:fill-brand-300")
 				} else {
-					@templates.Icon(defaultEmptyStateIcon, "size-10 fill-brand-800")
+					@templates.Icon(defaultEmptyStateIcon, "size-10 fill-brand-800 dark:fill-brand-300")
 				}
 			</div>
 

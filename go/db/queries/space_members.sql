@@ -16,3 +16,17 @@ SELECT * FROM space_members WHERE user_id = $1 AND space_id = ANY($2::uuid[]) AN
 INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, created_at, updated_at)
 VALUES (@space_id, @user_id, @role, @scopes, @now, @now, @now)
 RETURNING *;
+
+-- name: ExistsSpaceMemberByUser :one
+-- ユーザーのスペースメンバーの行が残っているかを返す。参加をやめた (activeでない) 行と、
+-- 削除済みのスペースの行も数える。どれもユーザーを外部キーで参照しているため。
+-- スペースをまたいで数えるため、space_idはスペースとのJOINで確かめる。
+SELECT EXISTS (
+    SELECT 1 FROM space_members sm
+    INNER JOIN spaces s ON s.id = sm.space_id
+    WHERE sm.user_id = @user_id
+);
+
+-- name: DeleteSpaceMembersBySpace :exec
+-- スペースのすべてのメンバー (参加をやめた行を含む) を物理削除する。
+DELETE FROM space_members WHERE space_id = @space_id;

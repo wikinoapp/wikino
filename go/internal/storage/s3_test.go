@@ -3,12 +3,14 @@ package storage_test
 import (
 	"bytes"
 	"context"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -51,13 +53,22 @@ type fakeS3 struct {
 
 	deletedKeys   []string
 	abortRequests []abortRequest
-	failAbort     bool
+
+	// deleteObjectsRequestsはDeleteObjectsの呼び出し回数。deleteObjectsErrorCodeが空でなければ、
+	// DeleteObjectsは各キーをそのコードの失敗として応答し、オブジェクトを残す
+	deleteObjectsRequests  int
+	deleteObjectsErrorCode string
+	failAbort              bool
 
 	// getErrorCode / deleteErrorCodeは、そのS3エラーコードを載せた404をGetObject /
 	// DeleteObjectに返させる。"NoSuchKey" は存在しないオブジェクトに対してストレージが返すもので、
 	// それ以外のコードは、不在として扱うのではなくアダプタが報告すべき失敗を表す。
 	getErrorCode    string
 	deleteErrorCode string
+
+	// headStatusは、0でなければHeadObjectにそのステータスを本文無しで返させる。HEADの応答は
+	// 本文を持たないため、エラーはステータスだけで伝わる。
+	headStatus int
 }
 
 func newFakeS3() *fakeS3 {
@@ -73,6 +84,8 @@ func (f *fakeS3) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	switch {
+	case r.Method == http.MethodPost && query.Has("delete"):
+		f.deleteObjects(w, r)
 	case r.Method == http.MethodPost && query.Has("uploads"):
 		f.createMultipartUpload(w, key)
 	case r.Method == http.MethodPut && query.Get("partNumber") != "":
@@ -83,6 +96,8 @@ func (f *fakeS3) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.putObject(w, r, key)
 	case r.Method == http.MethodGet:
 		f.getObject(w, r, key)
+	case r.Method == http.MethodHead:
+		f.headObject(w, key)
 	case r.Method == http.MethodDelete && query.Get("uploadId") != "":
 		f.abortMultipartUpload(w, r, key, query.Get("uploadId"))
 	case r.Method == http.MethodDelete:
@@ -190,6 +205,23 @@ func (f *fakeS3) getObject(w http.ResponseWriter, r *http.Request, key string) {
 	_, _ = w.Write(body)
 }
 
+func (f *fakeS3) headObject(w http.ResponseWriter, key string) {
+	f.mu.Lock()
+	body, ok := f.objects[key]
+	status := f.headStatus
+	f.mu.Unlock()
+
+	switch {
+	case status != 0:
+		w.WriteHeader(status)
+	case !ok:
+		w.WriteHeader(http.StatusNotFound)
+	default:
+		w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func (f *fakeS3) abortMultipartUpload(w http.ResponseWriter, r *http.Request, key, uploadID string) {
 	f.mu.Lock()
 	f.abortRequests = append(f.abortRequests, abortRequest{
@@ -230,6 +262,34 @@ func (f *fakeS3) deleteObject(w http.ResponseWriter, key string) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (f *fakeS3) deleteObjects(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Objects []struct {
+			Key string `xml:"Key"`
+		} `xml:"Object"`
+	}
+	if err := xml.NewDecoder(r.Body).Decode(&body); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	f.mu.Lock()
+	f.deleteObjectsRequests++
+	errorCode := f.deleteObjectsErrorCode
+	var result strings.Builder
+	for _, object := range body.Objects {
+		if errorCode != "" {
+			fmt.Fprintf(&result, `<Error><Key>%s</Key><Code>%s</Code><Message>%s</Message></Error>`, object.Key, errorCode, errorCode)
+			continue
+		}
+		f.deletedKeys = append(f.deletedKeys, object.Key)
+		delete(f.objects, object.Key)
+	}
+	f.mu.Unlock()
+
+	writeXML(w, http.StatusOK, `<DeleteResult>`+result.String()+`</DeleteResult>`)
 }
 
 func (f *fakeS3) object(key string) ([]byte, string, bool) {
@@ -666,6 +726,54 @@ func TestS3ObjectStorage_Get(t *testing.T) {
 	})
 }
 
+func TestS3ObjectStorage_Exists(t *testing.T) {
+	t.Parallel()
+
+	t.Run("正常系: あるオブジェクトはtrue、無いオブジェクトはfalseになる", func(t *testing.T) {
+		t.Parallel()
+
+		s, _ := newTestStorage(t)
+		ctx := context.Background()
+		const key = "attachments/photo.png"
+
+		if err := s.Upload(ctx, storage.UploadInput{Key: key, Body: strings.NewReader("png")}); err != nil {
+			t.Fatalf("Upload()のエラー = %v", err)
+		}
+
+		exists, err := s.Exists(ctx, key)
+		if err != nil {
+			t.Fatalf("Exists()のエラー = %v", err)
+		}
+		if !exists {
+			t.Error("Exists() = false、期待値 = true")
+		}
+
+		exists, err = s.Exists(ctx, "attachments/gone.png")
+		if err != nil {
+			t.Fatalf("Exists()のエラー = %v", err)
+		}
+		if exists {
+			t.Error("Exists() = true、期待値 = false")
+		}
+	})
+
+	// 404以外の失敗をオブジェクトの不在として扱うと、アップロード後の処理が、届いているオブジェクトを
+	// 待ち続けてしまう。
+	t.Run("異常系: 404以外の応答はエラーにする", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		fake.mu.Lock()
+		fake.headStatus = http.StatusForbidden
+		fake.mu.Unlock()
+
+		exists, err := s.Exists(context.Background(), "attachments/photo.png")
+		if err == nil {
+			t.Fatalf("Exists()のエラー = nil、期待値 = エラー (結果 = %v)", exists)
+		}
+	})
+}
+
 func TestS3ObjectStorage_Delete(t *testing.T) {
 	t.Parallel()
 
@@ -728,6 +836,94 @@ func TestS3ObjectStorage_Delete(t *testing.T) {
 	})
 }
 
+func TestS3ObjectStorage_DeleteMany(t *testing.T) {
+	t.Parallel()
+
+	t.Run("正常系: 1000件ずつのリクエストでまとめて削除する", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		ctx := context.Background()
+		keys := make([]string, 1001)
+		for i := range keys {
+			keys[i] = fmt.Sprintf("attachments/%d", i)
+		}
+		fake.mu.Lock()
+		for _, key := range keys {
+			fake.objects[key] = []byte("body")
+		}
+		fake.objects["attachments/other"] = []byte("other")
+		fake.mu.Unlock()
+
+		if err := s.DeleteMany(ctx, keys); err != nil {
+			t.Fatalf("DeleteMany()のエラー = %v", err)
+		}
+
+		fake.mu.Lock()
+		requests := fake.deleteObjectsRequests
+		remaining := len(fake.objects)
+		fake.mu.Unlock()
+		if requests != 2 {
+			t.Errorf("DeleteObjectsの呼び出し回数 = %d、期待値 = 2", requests)
+		}
+		if remaining != 1 {
+			t.Errorf("残ったオブジェクトの数 = %d、期待値 = 1", remaining)
+		}
+		if _, _, ok := fake.object("attachments/other"); !ok {
+			t.Error("指定していないオブジェクトが消えた")
+		}
+	})
+
+	t.Run("正常系: キーが無ければリクエストしない", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		if err := s.DeleteMany(context.Background(), nil); err != nil {
+			t.Fatalf("DeleteMany()のエラー = %v", err)
+		}
+		fake.mu.Lock()
+		defer fake.mu.Unlock()
+		if fake.deleteObjectsRequests != 0 {
+			t.Errorf("DeleteObjectsの呼び出し回数 = %d、期待値 = 0", fake.deleteObjectsRequests)
+		}
+	})
+
+	t.Run("正常系: NoSuchKeyの失敗は成功として扱う", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		fake.mu.Lock()
+		fake.deleteObjectsErrorCode = "NoSuchKey"
+		fake.mu.Unlock()
+
+		if err := s.DeleteMany(context.Background(), []string{"attachments/gone"}); err != nil {
+			t.Errorf("DeleteMany()のエラー = %v、期待値 = nil", err)
+		}
+	})
+
+	// 応答のキーごとの失敗を見落とすと、実体が残っているのに削除が終わったことにしてしまう
+	t.Run("異常系: キーごとの失敗をエラーとして返す", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		fake.mu.Lock()
+		fake.deleteObjectsErrorCode = "AccessDenied"
+		fake.objects["attachments/kept"] = []byte("body")
+		fake.mu.Unlock()
+
+		err := s.DeleteMany(context.Background(), []string{"attachments/kept"})
+		if err == nil {
+			t.Fatal("DeleteMany()のエラー = nil、期待値 = エラー")
+		}
+		if !strings.Contains(err.Error(), "AccessDenied") {
+			t.Errorf("エラー = %v、期待値 = AccessDeniedを含む", err)
+		}
+		if _, _, ok := fake.object("attachments/kept"); !ok {
+			t.Error("削除に失敗したオブジェクトが消えた")
+		}
+	})
+}
+
 func TestS3ObjectStorage_PresignedGetURL(t *testing.T) {
 	t.Parallel()
 
@@ -746,7 +942,7 @@ func TestS3ObjectStorage_PresignedGetURL(t *testing.T) {
 			t.Parallel()
 
 			s, _ := newTestStorageWithRegion(t, tt.region)
-			presigned, err := s.PresignedGetURL(context.Background(), key, 24*time.Hour)
+			presigned, err := s.PresignedGetURL(context.Background(), key, 24*time.Hour, storage.PresignedGetOptions{})
 			if err != nil {
 				t.Fatalf("PresignedGetURL()のエラー = %v", err)
 			}
@@ -773,5 +969,96 @@ func TestS3ObjectStorage_PresignedGetURL(t *testing.T) {
 				t.Errorf("署名リージョン = %q、期待値 = %q", got, tt.wantRegion)
 			}
 		})
+	}
+}
+
+func TestS3ObjectStorage_PresignedGetURL_ResponseHeaders(t *testing.T) {
+	t.Parallel()
+
+	const key = "attachments/diagram"
+
+	t.Run("正常系: 指定した応答ヘッダーを署名に含める", func(t *testing.T) {
+		t.Parallel()
+
+		s, _ := newTestStorageWithRegion(t, "")
+		presigned, err := s.PresignedGetURL(context.Background(), key, 5*time.Minute, storage.PresignedGetOptions{
+			ResponseContentDisposition: `attachment; filename="diagram.svg"; filename*=UTF-8''diagram.svg`,
+			ResponseContentType:        "application/octet-stream",
+		})
+		if err != nil {
+			t.Fatalf("PresignedGetURL()のエラー = %v", err)
+		}
+
+		parsed, err := url.Parse(presigned)
+		if err != nil {
+			t.Fatalf("presigned URLのパースに失敗: %v", err)
+		}
+		query := parsed.Query()
+		if got, want := query.Get("response-content-disposition"), `attachment; filename="diagram.svg"; filename*=UTF-8''diagram.svg`; got != want {
+			t.Errorf("response-content-disposition = %q、期待値 = %q", got, want)
+		}
+		if got := query.Get("response-content-type"); got != "application/octet-stream" {
+			t.Errorf("response-content-type = %q、期待値 = %q", got, "application/octet-stream")
+		}
+		if got := query.Get("X-Amz-Expires"); got != "300" {
+			t.Errorf("X-Amz-Expires = %q、期待値 = %q", got, "300")
+		}
+	})
+
+	t.Run("正常系: 指定しなければ応答ヘッダーをURLに含めない", func(t *testing.T) {
+		t.Parallel()
+
+		s, _ := newTestStorageWithRegion(t, "")
+		presigned, err := s.PresignedGetURL(context.Background(), key, 5*time.Minute, storage.PresignedGetOptions{})
+		if err != nil {
+			t.Fatalf("PresignedGetURL()のエラー = %v", err)
+		}
+
+		parsed, err := url.Parse(presigned)
+		if err != nil {
+			t.Fatalf("presigned URLのパースに失敗: %v", err)
+		}
+		for _, name := range []string{"response-content-disposition", "response-content-type"} {
+			if parsed.Query().Has(name) {
+				t.Errorf("presigned URLに %s が含まれている", name)
+			}
+		}
+	})
+}
+
+func TestS3ObjectStorage_PresignedPutURL(t *testing.T) {
+	t.Parallel()
+
+	const key = "attachments/upload"
+	s, _ := newTestStorageWithRegion(t, "")
+	presigned, err := s.PresignedPutURL(context.Background(), key, 5*time.Minute, storage.PresignedPutOptions{
+		ContentType:   "image/png",
+		ContentLength: 1234,
+		ContentMD5:    "1B2M2Y8AsgTpgAmY7PhCfg==",
+	})
+	if err != nil {
+		t.Fatalf("PresignedPutURL()のエラー = %v", err)
+	}
+
+	parsed, err := url.Parse(presigned)
+	if err != nil {
+		t.Fatalf("presigned URLのパースに失敗: %v", err)
+	}
+	if want := "/" + testBucket + "/" + key; parsed.Path != want {
+		t.Errorf("presigned URLのパス = %q、期待値 = %q", parsed.Path, want)
+	}
+	query := parsed.Query()
+	if got := query.Get("X-Amz-Expires"); got != "300" {
+		t.Errorf("X-Amz-Expires = %q、期待値 = %q", got, "300")
+	}
+	if query.Get("X-Amz-Signature") == "" {
+		t.Error("presigned URLに署名が含まれていない")
+	}
+	// 種類・大きさ・チェックサムはクエリではなく署名するヘッダーにし、アップロードのリクエストに同じ値を送らせる
+	signed := strings.Split(query.Get("X-Amz-SignedHeaders"), ";")
+	for _, header := range []string{"content-length", "content-md5", "content-type", "host"} {
+		if !slices.Contains(signed, header) {
+			t.Errorf("X-Amz-SignedHeaders = %q、%sを含むことを期待", query.Get("X-Amz-SignedHeaders"), header)
+		}
 	}
 }

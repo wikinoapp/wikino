@@ -21,3 +21,12 @@ WHERE par.page_id = p.id
   AND par.page_id = $1
   AND p.space_id = $2
   AND par.attachment_id = ANY($3::uuid[]);
+
+-- name: DeletePageAttachmentReferencesByPageIDs :exec
+-- ページの添付ファイル参照を物理削除する (スペースIDでスコープ)。添付ファイル自体は
+-- スペースに属するため削除しない。
+DELETE FROM page_attachment_references par
+USING pages p
+WHERE par.page_id = p.id
+  AND p.space_id = @space_id
+  AND par.page_id = ANY(@page_ids::uuid[]);

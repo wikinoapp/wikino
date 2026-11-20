@@ -12,8 +12,11 @@ import (
 // 設定のトップ自体を開けるか (CanShow) と、スペース画面のメニューに設定へのリンクを出すかは
 // この値から決めるため、2つの画面が誰を通すかについて別々の答えを出すことはない。
 type SpaceSettingsItems struct {
-	// CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル・削除) を出すかを表す (space:write)。
+	// CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル) を出すかを表す (space:write)。
 	CanUpdateSpace bool
+
+	// CanDeleteSpaceはスペースの削除の項目を出すかを表す (space:delete)。
+	CanDeleteSpace bool
 
 	// CanShowPersonalAccessTokensは個人用アクセストークンの項目を出すかを表す。
 	// personal_access_token:readを持ち、公開APIのフィーチャーフラグが有効なときにtrueになる。
@@ -30,7 +33,7 @@ type SpaceSettingsItems struct {
 
 // CanShowは閲覧者がスペース設定のトップを開けるか (出す項目が1つでもあるか) を返す。
 func (i SpaceSettingsItems) CanShow() bool {
-	return i.CanUpdateSpace || i.CanShowPersonalAccessTokens || i.CanShowOAuthGrants || i.CanShowOAuthApplications
+	return i.CanUpdateSpace || i.CanDeleteSpace || i.CanShowPersonalAccessTokens || i.CanShowOAuthGrants || i.CanShowOAuthApplications
 }
 
 // resolveSpaceSettingsItemsは、スペースメンバーが開けるスペース設定の項目を解決する。
@@ -48,7 +51,10 @@ func resolveSpaceSettingsItems(
 	}
 
 	authorizer := newAuthorizer(spaceMember, nil)
-	items := SpaceSettingsItems{CanUpdateSpace: authorizer.CanUpdateSpace()}
+	items := SpaceSettingsItems{
+		CanUpdateSpace: authorizer.CanUpdateSpace(),
+		CanDeleteSpace: authorizer.CanDeleteSpace(),
+	}
 
 	canShowPAT := authorizer.CanShowPersonalAccessTokens()
 	canShowOAuthGrants := authorizer.CanShowOAuthGrants()

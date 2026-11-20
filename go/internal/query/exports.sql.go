@@ -13,6 +13,50 @@ import (
 	"github.com/lib/pq"
 )
 
+const claimUnreferencedLegacyExportBlobs = `-- name: ClaimUnreferencedLegacyExportBlobs :many
+WITH candidates AS (
+    SELECT unnest($1::uuid[]) AS id, unnest($2::text[]) AS key
+), deleted AS (
+    DELETE FROM active_storage_blobs b USING candidates c
+    WHERE b.id = c.id AND b.key = c.key
+      AND NOT EXISTS (SELECT 1 FROM active_storage_attachments a WHERE a.blob_id = b.id)
+    RETURNING b.id
+)
+SELECT c.key::text FROM candidates c
+WHERE c.id IN (SELECT id FROM deleted)
+   OR NOT EXISTS (SELECT 1 FROM active_storage_blobs b WHERE b.id = c.id)
+`
+
+type ClaimUnreferencedLegacyExportBlobsParams struct {
+	BlobIds []string `json:"blob_ids"`
+	Keys    []string `json:"keys"`
+}
+
+// 参照のないblobを削除して新しい参照を防ぎ、実体を消してよいキーを返す。
+// 前の試行でblobを削除したあとにストレージが失敗していても、ジョブ内のIDとキーで再試行できる。
+func (q *Queries) ClaimUnreferencedLegacyExportBlobs(ctx context.Context, arg ClaimUnreferencedLegacyExportBlobsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, claimUnreferencedLegacyExportBlobs, pq.Array(arg.BlobIds), pq.Array(arg.Keys))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var c_key string
+		if err := rows.Scan(&c_key); err != nil {
+			return nil, err
+		}
+		items = append(items, c_key)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createExport = `-- name: CreateExport :one
 INSERT INTO exports (space_id, queued_by_id, status, status_changed_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4::timestamptz, $4, $4)
@@ -92,6 +136,18 @@ func (q *Queries) DeleteLegacyExportFiles(ctx context.Context, arg DeleteLegacyE
 	return err
 }
 
+const deleteLegacyExportFilesBySpace = `-- name: DeleteLegacyExportFilesBySpace :exec
+DELETE FROM active_storage_attachments a USING exports e
+WHERE e.space_id = $1
+  AND a.record_type = 'ExportRecord' AND a.record_id = e.id AND a.name = 'file'
+`
+
+// スペースのZIPの関連だけを消す。blobの回収はキーを保存した後始末ジョブが行う。
+func (q *Queries) DeleteLegacyExportFilesBySpace(ctx context.Context, spaceID string) error {
+	_, err := q.db.ExecContext(ctx, deleteLegacyExportFilesBySpace, spaceID)
+	return err
+}
+
 const findExportByIDAndSpace = `-- name: FindExportByIDAndSpace :one
 SELECT id, space_id, queued_by_id, created_at, updated_at, status, status_changed_at, heartbeat_at, object_key FROM exports WHERE id = $1 AND space_id = $2
 `
@@ -143,6 +199,103 @@ func (q *Queries) FindLatestExportBySpace(ctx context.Context, spaceID string) (
 		&i.ObjectKey,
 	)
 	return i, err
+}
+
+const listExportsForDeletionBySpaceAfter = `-- name: ListExportsForDeletionBySpaceAfter :many
+SELECT e.id, e.space_id, e.object_key
+FROM exports e
+WHERE e.space_id = $1 AND e.id > $2::uuid
+ORDER BY e.id
+LIMIT $3
+`
+
+type ListExportsForDeletionBySpaceAfterParams struct {
+	SpaceID  string `json:"space_id"`
+	AfterID  string `json:"after_id"`
+	RowLimit int32  `json:"row_limit"`
+}
+
+type ListExportsForDeletionBySpaceAfterRow struct {
+	ID        string         `json:"id"`
+	SpaceID   string         `json:"space_id"`
+	ObjectKey sql.NullString `json:"object_key"`
+}
+
+// 記録済みのキーと、未記録のGo版の保存先を決めるIDを一定件数ずつ読む。
+func (q *Queries) ListExportsForDeletionBySpaceAfter(ctx context.Context, arg ListExportsForDeletionBySpaceAfterParams) ([]ListExportsForDeletionBySpaceAfterRow, error) {
+	rows, err := q.db.QueryContext(ctx, listExportsForDeletionBySpaceAfter, arg.SpaceID, arg.AfterID, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListExportsForDeletionBySpaceAfterRow{}
+	for rows.Next() {
+		var i ListExportsForDeletionBySpaceAfterRow
+		if err := rows.Scan(&i.ID, &i.SpaceID, &i.ObjectKey); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLegacyExportBlobsBySpaceAfter = `-- name: ListLegacyExportBlobsBySpaceAfter :many
+SELECT DISTINCT b.id, b.key, EXISTS (
+    SELECT 1 FROM active_storage_attachments other
+    WHERE other.blob_id = b.id
+      AND NOT (
+          other.record_type = 'ExportRecord' AND other.name = 'file'
+          AND other.record_id IN (SELECT owned.id FROM exports owned WHERE owned.space_id = $1)
+      )
+) AS shared
+FROM exports e
+INNER JOIN active_storage_attachments a ON a.record_id = e.id AND a.record_type = 'ExportRecord' AND a.name = 'file'
+INNER JOIN active_storage_blobs b ON b.id = a.blob_id
+WHERE e.space_id = $1 AND b.id > $2::uuid
+ORDER BY b.id
+LIMIT $3
+`
+
+type ListLegacyExportBlobsBySpaceAfterParams struct {
+	SpaceID  string `json:"space_id"`
+	AfterID  string `json:"after_id"`
+	RowLimit int32  `json:"row_limit"`
+}
+
+type ListLegacyExportBlobsBySpaceAfterRow struct {
+	ID     string `json:"id"`
+	Key    string `json:"key"`
+	Shared bool   `json:"shared"`
+}
+
+// 共有中のZIPも後始末へ渡す。Sharedは最初の実体の削除から除く判定に使う。
+func (q *Queries) ListLegacyExportBlobsBySpaceAfter(ctx context.Context, arg ListLegacyExportBlobsBySpaceAfterParams) ([]ListLegacyExportBlobsBySpaceAfterRow, error) {
+	rows, err := q.db.QueryContext(ctx, listLegacyExportBlobsBySpaceAfter, arg.SpaceID, arg.AfterID, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListLegacyExportBlobsBySpaceAfterRow{}
+	for rows.Next() {
+		var i ListLegacyExportBlobsBySpaceAfterRow
+		if err := rows.Scan(&i.ID, &i.Key, &i.Shared); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listLegacyExportFiles = `-- name: ListLegacyExportFiles :many

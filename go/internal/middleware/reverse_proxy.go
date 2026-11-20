@@ -17,6 +17,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/model"
 	wikinosentry "github.com/wikinoapp/wikino/go/internal/sentry"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
 // DeviceTokenCookieNameはデバイス (ブラウザ) 識別用のCookieキー名
@@ -38,7 +39,36 @@ type featureFlaggedPattern struct {
 
 // フィーチャーフラグで制御するURLパターンのリスト
 // パターンを追加するには、このスライスに要素を追加する
-var featureFlaggedPatterns = []featureFlaggedPattern{}
+var featureFlaggedPatterns = []featureFlaggedPattern{
+	// スペースの一般設定。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/general$`),
+		flag:    model.FeatureFlagSpaceSettingsGeneral,
+		methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch},
+	},
+	// スペースの添付ファイルの管理。一覧 (GET・HEAD) と1件の削除 (DELETE。Method Override変換前はPOST)。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/attachments$`),
+		flag:    model.FeatureFlagSpaceAttachmentManagement,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/attachments/[^/]+$`),
+		flag:    model.FeatureFlagSpaceAttachmentManagement,
+		methods: []string{http.MethodDelete},
+	},
+	// スペースの削除。確認画面 (GET・HEAD) と削除処理 (POST)。
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/deletion/new$`),
+		flag:    model.FeatureFlagSpaceDeletion,
+		methods: []string{http.MethodGet, http.MethodHead},
+	},
+	{
+		pattern: regexp.MustCompile(`^/s/[^/]+/settings/deletion$`),
+		flag:    model.FeatureFlagSpaceDeletion,
+		methods: []string{http.MethodPost},
+	},
+}
 
 // ReverseProxyMiddlewareはRails版へのリバースプロキシミドルウェア
 type ReverseProxyMiddleware struct {
@@ -108,9 +138,14 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics$`), methods: []string{http.MethodPost}},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/suggestions`)},
+	// トピックの設定のトップ (GET・HEAD /s/:identifier/topics/:number/settings)。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings$`), methods: []string{http.MethodGet, http.MethodHead}},
 	// トピックの一般設定。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
-	// パンくずが戻る設定画面を含め、トピック設定の残りは従来どおりRails版へ届く。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/general$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
+	// トピックの削除の確認画面 (GET・HEAD .../settings/deletion/new) と削除処理 (POST
+	// .../settings/deletion)。パスはRails版と同じで、Goルートが応答するメソッドに限定する。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/deletion/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/topics/\d+/settings/deletion$`), methods: []string{http.MethodPost}},
 	// ページ新規作成の入口 (GET /s/:identifier/topics/:number/pages/new)。ページを作成して
 	// 編集画面へリダイレクトする。GoルートはGETのみなのでメソッドを限定し、他のメソッドは
 	// 従来どおりRails版へ届くようにする。
@@ -140,14 +175,17 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/backlinks$`)},
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/move$`)},
 	// ページをゴミ箱へ入れる操作 (POST /s/:identifier/pages/:number/trash)。GoルートはPOSTの
-	// みなので、上のプレビューパターンに揃えてメソッドを限定する。スペース単位のゴミ箱画面
-	// (/s/:identifier/trash) はパスが異なり、Rails版のまま残る。
+	// みなので、上のプレビューパターンに揃えてメソッドを限定する。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/trash$`), methods: []string{http.MethodPost}},
+	// スペースのゴミ箱の一覧 (GET・HEAD /s/:identifier/trash) と一括復元 (POST
+	// /s/:identifier/bulk_restored_pages)。パスはRails版と同じ。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/trash$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/s/[^/]+/bulk_restored_pages$`), methods: []string{http.MethodPost}},
 	// ページにピンを打つ・外す操作。プロキシはMethod Overrideより前に振り分けるため、外す要求
 	// (DELETE) もPOSTとして届く。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/pages/\d+/pin$`), methods: []string{http.MethodPost}},
-	// スペース設定のトップ (GET・HEAD /s/:identifier/settings)。一般・添付ファイル・削除など
-	// 設定の残りは従来どおりRails版へ届く。
+	// スペース設定のトップ (GET・HEAD /s/:identifier/settings)。削除など設定の残りは従来どおり
+	// Rails版へ届き、一般と添付ファイルはフィーチャーフラグで振り分ける (featureFlaggedPatterns)。
 	{pattern: regexp.MustCompile(`^/s/[^/]+/settings$`), methods: []string{http.MethodGet, http.MethodHead}},
 	// Railsのformat拡張子や連続するスラッシュも含め、エクスポート配下はGoで処理する。
 	// 未対応のパスやメソッドはGoルーターが拒否し、多重実行防止を持たない旧処理へ転送しない。
@@ -161,9 +199,16 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// 連携中のアプリの画面 (/s/:identifier/settings/oauth_grants配下)。個人用アクセストークンと同じく
 	// Rails版には存在しないため、配下を全メソッドでGoへ渡す。
 	{pattern: regexp.MustCompile(`^/+s/+[^/]+/+settings/+oauth_grants([/.]|$)`)},
+	// 添付ファイルの表示 (GET・HEAD /attachments/:id)。末尾の "$" により、/attachments/:id/og_imageは
+	// 下のog:imageのパターンで処理する。
+	{pattern: regexp.MustCompile(`^/attachments/[^/]+$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// 本文に添付ファイルを表示するための署名付きURLの一括取得 (POST /attachments/signed_urls)。
+	{pattern: regexp.MustCompile(`^/attachments/signed_urls$`), methods: []string{http.MethodPost}},
+	// 添付ファイルのアップロードの事前署名 (POST /s/:space_identifier/attachments/presign)。
+	// アップロード (POST /s/:space_identifier/attachments) は対象にせず、Rails版が処理する。
+	{pattern: regexp.MustCompile(`^/s/[^/]+/attachments/presign$`), methods: []string{http.MethodPost}},
 	// og:image配信 (`/attachments/:id/og_image`・`/s/:space/pages/:number/og_image/:version.png`)。
 	// パスの定義はCSRFトークンとフラッシュの除外と共有する (`session.OGImagePathPatterns`)。
-	// /attachments/:id (ダウンロードURL) はRailsが提供するため、og_image末尾でパスを限定している
 	{pattern: session.AttachmentOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	{pattern: session.PageOGImagePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 	// フィード (`/s/:space/atom`・`/s/:space/topics/:number/atom`)。パスの定義はCSRFトークンとフラッシュの除外と共有する (`session.FeedPathPattern`)
@@ -174,6 +219,31 @@ var goHandledRegexPatterns = []goHandledPattern{
 	// OAuth認可サーバー (`/oauth/authorize`・`/oauth/token`・`/oauth/revoke`・`/oauth/device_authorization`・`/oauth/device`)。
 	// Rails版には存在しない
 	{pattern: regexp.MustCompile(`^/oauth/`)},
+	// 検索の画面 (GET・HEAD /search)。
+	{pattern: regexp.MustCompile(`^/search$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// プロフィール (GET・HEAD /@:atname)。末尾の "$" により、Go版にルートの無い /@:atname/... は
+	// Rails版へ送る。
+	{pattern: regexp.MustCompile(`^/@[^/]+$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// ユーザー設定のトップ (GET・HEAD /settings)。
+	{pattern: regexp.MustCompile(`^/settings$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// プロフィールの編集。画面 (GET・HEAD) と保存処理 (PATCH。Method Override変換前はPOST)。
+	{pattern: regexp.MustCompile(`^/settings/profile$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
+	// メールアドレスの変更。画面 (GET・HEAD) と確認コードを送る処理 (PATCH。Method Override変換前はPOST)。
+	{pattern: regexp.MustCompile(`^/settings/email$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPatch}},
+	// メールアドレスの変更の確認コードを入力する画面 (GET・HEAD)。
+	{pattern: regexp.MustCompile(`^/settings/email/confirmation/edit$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// メールアドレスの変更を確定する処理 (PATCH。Method Override変換前はPOST)。
+	{pattern: regexp.MustCompile(`^/settings/email/confirmation$`), methods: []string{http.MethodPatch}},
+	// 二要素認証の設定の画面 (GET・HEAD)、有効にする処理 (POST)、無効にする処理 (DELETE。Method Override変換前はPOST)。
+	{pattern: regexp.MustCompile(`^/settings/two_factor_auth$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodDelete}},
+	// 二要素認証を有効にするため、認証アプリへ登録する画面 (GET・HEAD)。
+	// HEADもGo版で受け、Rails版のGET用の処理に転送されて秘密鍵が差し替わることを防ぐ。
+	{pattern: regexp.MustCompile(`^/settings/two_factor_auth/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	// 二要素認証のリカバリーコードの画面 (GET・HEAD) と、作り直す処理 (POST)。
+	{pattern: regexp.MustCompile(`^/settings/two_factor_auth/recovery_codes$`), methods: []string{http.MethodGet, http.MethodHead, http.MethodPost}},
+	// アカウントの削除の確認画面 (GET・HEAD) と、削除する処理 (POST)。
+	{pattern: regexp.MustCompile(`^/settings/account/deletion/new$`), methods: []string{http.MethodGet, http.MethodHead}},
+	{pattern: regexp.MustCompile(`^/settings/account/deletion$`), methods: []string{http.MethodPost}},
 	// Cookieを使わないOAuthのエンドポイント。振り分けは上の `^/oauth/` に含まれるが、
 	// `session.CookielessPaths` と定義を共有していることをテストで確かめるために登録する
 	{pattern: session.OAuthTokenPathPattern},
@@ -360,6 +430,11 @@ func (m *ReverseProxyMiddleware) ensureDeviceToken(w http.ResponseWriter, r *htt
 
 // isGoHandledPathはGo版で処理するパスかどうかを判定
 func (m *ReverseProxyMiddleware) isGoHandledPath(path string) bool {
+	// e2eのサーバーでは、フェイクのストレージの署名付きURLへの送受信をGo版が受ける
+	if m.cfg.IsTestE2E() && strings.HasPrefix(path, storage.FakeObjectStoragePathPrefix) {
+		return true
+	}
+
 	// 完全一致でチェック
 	for _, p := range goHandledExactPaths {
 		if path == p {

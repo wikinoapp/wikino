@@ -55,6 +55,10 @@ func (p *MemberPolicy) CanUpdateTopicVisibility() bool {
 	return p.effectiveScopes[model.ScopeTopicVisibilityWrite]
 }
 
+func (p *MemberPolicy) CanDeleteTopic() bool {
+	return p.effectiveScopes[model.ScopeTopicDelete]
+}
+
 func (p *MemberPolicy) CanCreatePage() bool {
 	return p.effectiveScopes[model.ScopePageWrite]
 }
@@ -69,6 +73,10 @@ func (p *MemberPolicy) CanShowTrash() bool {
 
 func (p *MemberPolicy) CanTrashPage() bool {
 	return p.effectiveScopes[model.ScopePageTrashWrite]
+}
+
+func (p *MemberPolicy) CanRestorePage() bool {
+	return p.effectiveScopes[model.ScopePageTrashDelete]
 }
 
 func (p *MemberPolicy) CanPinPage() bool {
@@ -93,6 +101,14 @@ func (p *MemberPolicy) CanDeleteDraftPage() bool {
 
 func (p *MemberPolicy) CanShowAttachment(allReferencingPagesPublic bool) bool {
 	return p.effectiveScopes[model.ScopeAttachmentRead] || allReferencingPagesPublic
+}
+
+func (p *MemberPolicy) CanCreateAttachment() bool {
+	return p.effectiveScopes[model.ScopeAttachmentWrite]
+}
+
+func (p *MemberPolicy) CanDeleteAttachment() bool {
+	return p.effectiveScopes[model.ScopeAttachmentDelete]
 }
 
 func (p *MemberPolicy) CanCreateSuggestion(topic *model.Topic) bool {
@@ -150,6 +166,10 @@ func (p *MemberPolicy) CanExportSpace() bool {
 
 func (p *MemberPolicy) CanUpdateSpace() bool {
 	return p.effectiveScopes[model.ScopeSpaceWrite]
+}
+
+func (p *MemberPolicy) CanDeleteSpace() bool {
+	return p.effectiveScopes[model.ScopeSpaceDelete]
 }
 
 func (p *MemberPolicy) CanShowPersonalAccessTokens() bool {

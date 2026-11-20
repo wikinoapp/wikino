@@ -100,7 +100,7 @@ func TestCreate(t *testing.T) {
 			exportRepo := repository.NewExportRepository(queries)
 			flashMgr := session.NewFlashManager("", false, true)
 			h := exporthandler.NewHandler(&config.Config{Env: "test"}, flashMgr, nil, nil,
-				usecase.NewCreateExportUsecase(db, repository.NewSpaceRepository(queries), repository.NewSpaceMemberRepository(queries), exportRepo, dispatcher.NewDispatcher(inserter)))
+				usecase.NewCreateExportUsecase(db, repository.NewSpaceRepository(queries), repository.NewSpaceMemberRepository(queries), exportRepo, dispatcher.NewDispatcher(inserter, nil)))
 			req := newRequest(t, http.MethodPost, "/s/"+identifier+"/settings/exports", map[string]string{"space_identifier": identifier}, userID)
 			if tc.anonymous {
 				req = req.WithContext(middleware.SetUserToContext(req.Context(), nil))

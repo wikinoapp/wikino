@@ -331,3 +331,50 @@ func TestSpaceMemberRepository_Create_EditorWritesRoleScopesForRails(t *testing.
 		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
 	}
 }
+
+func TestSpaceMemberRepository_ExistsByUser(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceMemberRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	memberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-exists-member@example.com").
+		WithAtname("repo_exists_member").
+		Build()
+	inactiveID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-exists-inactive@example.com").
+		WithAtname("repo_exists_inactive").
+		Build()
+	loneID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-exists-lone@example.com").
+		WithAtname("repo_exists_lone").
+		Build()
+	discardedSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("repo-exists-discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(discardedSpaceID).WithUserID(memberID).Build()
+	testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(discardedSpaceID).WithUserID(inactiveID).WithActive(false).Build()
+
+	tests := []struct {
+		name   string
+		userID model.UserID
+		want   bool
+	}{
+		{name: "削除済みのスペースの行も数える", userID: memberID, want: true},
+		{name: "参加をやめた行も数える", userID: inactiveID, want: true},
+		{name: "行の無いユーザーはfalse", userID: loneID, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repo.ExistsByUser(ctx, tt.userID)
+			if err != nil {
+				t.Fatalf("ExistsByUser()のエラー = %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("ExistsByUser() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -32,7 +32,7 @@ func TestCreatePasswordResetTokenUsecase_Execute(t *testing.T) {
 	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	createValidator := validator.NewPasswordResetCreateValidator()
 	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, d, createValidator)
 
@@ -100,7 +100,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_DeletesExistingUnusedTokens(t *
 	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	createValidator := validator.NewPasswordResetCreateValidator()
 	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, d, createValidator)
 
@@ -147,7 +147,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_EnglishLocale(t *testing.T) {
 	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	createValidator := validator.NewPasswordResetCreateValidator()
 	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, d, createValidator)
 
@@ -194,7 +194,7 @@ func TestCreatePasswordResetTokenUsecase_Execute_TokenIsHashedInDB(t *testing.T)
 	userRepo := repository.NewUserRepository(q)
 	passwordResetTokenRepo := repository.NewPasswordResetTokenRepository(q)
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	createValidator := validator.NewPasswordResetCreateValidator()
 	uc := NewCreatePasswordResetTokenUsecase(cfg, db, userRepo, passwordResetTokenRepo, d, createValidator)
 

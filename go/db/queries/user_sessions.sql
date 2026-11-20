@@ -27,3 +27,7 @@ DELETE FROM user_sessions WHERE id = $1;
 -- name: DeleteUserSessionByToken :exec
 -- セッショントークンでセッションを削除する
 DELETE FROM user_sessions WHERE token = $1;
+
+-- name: DeleteUserSessionsByUserID :exec
+-- ユーザーのセッションをすべて削除する
+DELETE FROM user_sessions WHERE user_id = @user_id;

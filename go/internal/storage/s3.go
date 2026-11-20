@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 )
 
@@ -117,6 +118,24 @@ func (s *S3ObjectStorage) Get(ctx context.Context, key string) (io.ReadCloser, e
 	return out.Body, nil
 }
 
+// ExistsはHEADでkeyのオブジェクトがあるかを確かめる。HEADの応答は本文を持たず、オブジェクトの
+// 不在とバケットの不在をエラーコードで見分けられないため、どちらの404もオブジェクトの不在として扱う。
+// バケットの設定の誤りは、取得や書き込みのエラーとして別に現れる。
+func (s *S3ObjectStorage) Exists(ctx context.Context, key string) (bool, error) {
+	_, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err == nil {
+		return true, nil
+	}
+	var notFound *types.NotFound
+	if errors.As(err, &notFound) || isNoSuchKey(err) {
+		return false, nil
+	}
+	return false, fmt.Errorf("storage: オブジェクトの存在の確認に失敗しました (key: %s): %w", key, err)
+}
+
 // Uploadはbody全体をメモリに保持せず、一定サイズのパートをバッファしながらバケットへ
 // ストリーミングする。アップローダーはbodyがパートサイズを超えた時点でmultipartの形式へ
 // 切り替えるため、単一のPUTでは送れないサイズのZIPも呼び出し側は何もせずに送れる。
@@ -177,14 +196,69 @@ func (s *S3ObjectStorage) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+// deleteObjectsBatchSizeは、1回のDeleteObjectsで消すキーの上限。S3のDeleteObjectsが1回に受け付ける
+// キーの数の上限 (1000) に合わせる
+const deleteObjectsBatchSize = 1000
+
+// DeleteManyはkeysをdeleteObjectsBatchSizeずつのDeleteObjectsで削除する。DeleteObjectsは存在しない
+// キーを成功として扱う。応答に含まれたキーごとの失敗は、最初の1件をエラーにして返す
+func (s *S3ObjectStorage) DeleteMany(ctx context.Context, keys []string) error {
+	for start := 0; start < len(keys); start += deleteObjectsBatchSize {
+		batch := keys[start:min(start+deleteObjectsBatchSize, len(keys))]
+		objects := make([]types.ObjectIdentifier, len(batch))
+		for i, key := range batch {
+			objects[i] = types.ObjectIdentifier{Key: aws.String(key)}
+		}
+
+		out, err := s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			Bucket: aws.String(s.bucket),
+			Delete: &types.Delete{Objects: objects, Quiet: aws.Bool(true)},
+		})
+		if err != nil {
+			return fmt.Errorf("storage: オブジェクトの一括削除に失敗しました (件数: %d): %w", len(batch), err)
+		}
+		for _, e := range out.Errors {
+			if aws.ToString(e.Code) == "NoSuchKey" {
+				continue
+			}
+			return fmt.Errorf("storage: オブジェクトの一括削除に失敗しました (key: %s, code: %s): %s",
+				aws.ToString(e.Key), aws.ToString(e.Code), aws.ToString(e.Message))
+		}
+	}
+	return nil
+}
+
 // PresignedGetURLはkeyのオブジェクトに対するGETに署名する。
-func (s *S3ObjectStorage) PresignedGetURL(ctx context.Context, key string, expiresIn time.Duration) (string, error) {
-	req, err := s.presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+func (s *S3ObjectStorage) PresignedGetURL(ctx context.Context, key string, expiresIn time.Duration, opts PresignedGetOptions) (string, error) {
+	input := &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
-	}, s3.WithPresignExpires(expiresIn))
+	}
+	if opts.ResponseContentDisposition != "" {
+		input.ResponseContentDisposition = aws.String(opts.ResponseContentDisposition)
+	}
+	if opts.ResponseContentType != "" {
+		input.ResponseContentType = aws.String(opts.ResponseContentType)
+	}
+
+	req, err := s.presignClient.PresignGetObject(ctx, input, s3.WithPresignExpires(expiresIn))
 	if err != nil {
 		return "", fmt.Errorf("storage: presigned URLの生成に失敗しました (key: %s): %w", key, err)
+	}
+	return req.URL, nil
+}
+
+// PresignedPutURLはkeyへのPUTに、種類・大きさ・チェックサムを含めて署名する。
+func (s *S3ObjectStorage) PresignedPutURL(ctx context.Context, key string, expiresIn time.Duration, opts PresignedPutOptions) (string, error) {
+	req, err := s.presignClient.PresignPutObject(ctx, &s3.PutObjectInput{
+		Bucket:        aws.String(s.bucket),
+		Key:           aws.String(key),
+		ContentType:   aws.String(opts.ContentType),
+		ContentLength: aws.Int64(opts.ContentLength),
+		ContentMD5:    aws.String(opts.ContentMD5),
+	}, s3.WithPresignExpires(expiresIn))
+	if err != nil {
+		return "", fmt.Errorf("storage: アップロードのpresigned URLの生成に失敗しました (key: %s): %w", key, err)
 	}
 	return req.URL, nil
 }

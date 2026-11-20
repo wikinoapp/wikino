@@ -33,7 +33,7 @@ func SuggestionStatusBadge(status model.SuggestionStatus) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		switch status {
 		case model.SuggestionStatusDraft:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<span class=\"badge bg-muted font-bold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<span class=\"badge bg-muted font-bold dark:text-muted-foreground\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -85,7 +85,7 @@ func SuggestionStatusBadge(status model.SuggestionStatus) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		case model.SuggestionStatusApplied:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<span class=\"badge bg-violet-500 font-bold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<span class=\"badge bg-violet-500 font-bold dark:text-black\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -106,6 +106,17 @@ func (r *SpaceMemberRepository) Create(ctx context.Context, input CreateSpaceMem
 	return r.toModel(row), nil
 }
 
+// ExistsByUserは、ユーザーのスペースメンバーの行が1つでも残っているかを返す。
+// 参加をやめた行と、削除済みのスペースの行も数える。
+func (r *SpaceMemberRepository) ExistsByUser(ctx context.Context, userID model.UserID) (bool, error) {
+	return r.q.ExistsSpaceMemberByUser(ctx, string(userID))
+}
+
+// DeleteBySpaceはスペースのすべてのメンバー (参加をやめた行を含む) を物理削除する。
+func (r *SpaceMemberRepository) DeleteBySpace(ctx context.Context, spaceID model.SpaceID) error {
+	return r.q.DeleteSpaceMembersBySpace(ctx, string(spaceID))
+}
+
 // toModelはquery.SpaceMemberをmodel.SpaceMemberに変換する
 func (r *SpaceMemberRepository) toModel(row query.SpaceMember) *model.SpaceMember {
 	var maxTopicRole *model.TopicRole

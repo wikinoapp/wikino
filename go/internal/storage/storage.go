@@ -28,6 +28,11 @@ type ObjectStorage interface {
 	// キーにはErrObjectNotFoundを返す。
 	Get(ctx context.Context, key string) (io.ReadCloser, error)
 
+	// Existsはkeyのオブジェクトがバケットにあるかを返す。オブジェクトの不在はエラーにせずfalseを返し、
+	// リクエストの失敗はエラーにする。ブラウザが署名付きURLへ直接アップロードしたオブジェクトが
+	// 届いたかを、アップロード後の処理が確かめるのに使う。
+	Exists(ctx context.Context, key string) (bool, error)
+
 	// Uploadはinput.Bodyを読み、input.Keyの位置へ書き込む。bodyはストリームでよく、seekに
 	// 対応している必要はない。
 	Upload(ctx context.Context, input UploadInput) error
@@ -36,10 +41,43 @@ type ObjectStorage interface {
 	// リトライされた後片付けが前の試行で終わった仕事に対して失敗しないようにする。
 	Delete(ctx context.Context, key string) error
 
+	// DeleteManyはkeysの位置のオブジェクトをまとめて削除する。キーの数によらず、リクエストの数を
+	// 一定の件数ごとに1回に抑える。スペースの物理削除のように、添付ファイルの数だけ実体を消す処理が、
+	// 件数に比例した時間をかけないためである。存在しないキーはDeleteと同じく成功として扱う。
+	DeleteMany(ctx context.Context, keys []string) error
+
 	// PresignedGetURLは、それ自体は資格情報を持たずにkeyのオブジェクトをダウンロードでき、
 	// expiresInの経過後は使えなくなるURLを返す。このURLを渡すことで、ブラウザはアーカイブを
-	// アプリ経由でストリーミングせずストレージから直接取得できる。
-	PresignedGetURL(ctx context.Context, key string, expiresIn time.Duration) (string, error)
+	// アプリ経由でストリーミングせずストレージから直接取得できる。optsで指定した応答ヘッダーは
+	// 署名に含まれ、ストレージはオブジェクトに保存した値の代わりにそれを返す。
+	PresignedGetURL(ctx context.Context, key string, expiresIn time.Duration, opts PresignedGetOptions) (string, error)
+
+	// PresignedPutURLは、それ自体は資格情報を持たずにkeyの位置へ1回のPUTでオブジェクトを書き込め、
+	// expiresInの経過後は使えなくなるURLを返す。ブラウザがアプリを経由せずストレージへ直接アップロード
+	// するのに使う。optsの種類・大きさ・チェックサムは署名に含まれ、ストレージはそれと違うリクエストを拒否する。
+	PresignedPutURL(ctx context.Context, key string, expiresIn time.Duration, opts PresignedPutOptions) (string, error)
+}
+
+// PresignedPutOptionsは、署名付きURLでのアップロードに課す条件。どれも署名に含め、アップロードする
+// リクエストのヘッダーがこれと一致しないとストレージは書き込みを拒否する。申告と違う内容を
+// 書き込ませないためである。
+type PresignedPutOptions struct {
+	// ContentTypeはアップロードのContent-Type
+	ContentType string
+	// ContentLengthはアップロードの大きさ (バイト数)
+	ContentLength int64
+	// ContentMD5は内容のMD5をBase64にした値 (Content-MD5)
+	ContentMD5 string
+}
+
+// PresignedGetOptionsは、署名付きURLでの取得に対してストレージが返す応答ヘッダーの指定。空の項目は
+// 指定せず、ストレージはオブジェクトに保存した値を返す。添付ファイルの表示は、ブラウザが解釈して
+// 実行しうる種類をそのまま返さないよう、ここで種類と表示のしかたを上書きする。
+type PresignedGetOptions struct {
+	// ResponseContentDispositionは応答のContent-Disposition
+	ResponseContentDisposition string
+	// ResponseContentTypeは応答のContent-Type
+	ResponseContentType string
 }
 
 // UploadInputは書き込む1つのオブジェクト。ContentTypeは後でオブジェクトを取得したときに

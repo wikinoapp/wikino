@@ -20,6 +20,10 @@ func TestPeriodicJobSpecs(t *testing.T) {
 			args:     dispatcher.CleanupEmailConfirmationsArgs{RetentionHours: 24},
 			interval: time.Hour,
 		},
+		{
+			args:     dispatcher.DeleteTrashedPagesArgs{},
+			interval: 24 * time.Hour,
+		},
 	}
 
 	got := periodicJobSpecs()

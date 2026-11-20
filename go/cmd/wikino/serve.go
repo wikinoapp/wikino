@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -41,7 +42,11 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_catalog"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment_presign"
+	"github.com/wikinoapp/wikino/go/internal/handler/attachment_signed_url"
+	bulkrestoredpagehandler "github.com/wikinoapp/wikino/go/internal/handler/bulk_restored_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_index"
 	"github.com/wikinoapp/wikino/go/internal/handler/draft_page_revision"
@@ -76,13 +81,25 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/password"
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	personalaccesstokenhandler "github.com/wikinoapp/wikino/go/internal/handler/personal_access_token"
+	"github.com/wikinoapp/wikino/go/internal/handler/profile"
+	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
+	settingshandler "github.com/wikinoapp/wikino/go/internal/handler/settings"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_account_deletion"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_email"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_email_confirmation"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_profile"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_two_factor_auth"
+	"github.com/wikinoapp/wikino/go/internal/handler/settings_two_factor_auth_recovery_code"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_in_two_factor_recovery"
 	"github.com/wikinoapp/wikino/go/internal/handler/sign_up"
 	spacehandler "github.com/wikinoapp/wikino/go/internal/handler/space"
+	spacedeletionhandler "github.com/wikinoapp/wikino/go/internal/handler/space_deletion"
 	"github.com/wikinoapp/wikino/go/internal/handler/space_feed"
 	spacesettingshandler "github.com/wikinoapp/wikino/go/internal/handler/space_settings"
+	spacesettingsattachmenthandler "github.com/wikinoapp/wikino/go/internal/handler/space_settings_attachment"
+	spacesettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/space_settings_general"
 	suggestionhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion"
 	suggestionapplicationhandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_application"
 	suggestionchangehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_change"
@@ -92,8 +109,11 @@ import (
 	suggestionpagehandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page"
 	suggestionpageedithandler "github.com/wikinoapp/wikino/go/internal/handler/suggestion_page_edit"
 	topichandler "github.com/wikinoapp/wikino/go/internal/handler/topic"
+	topicdeletionhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_deletion"
 	"github.com/wikinoapp/wikino/go/internal/handler/topic_feed"
+	topicsettingshandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings"
 	topicsettingsgeneralhandler "github.com/wikinoapp/wikino/go/internal/handler/topic_settings_general"
+	trashhandler "github.com/wikinoapp/wikino/go/internal/handler/trash"
 	"github.com/wikinoapp/wikino/go/internal/handler/user_session"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/httperror"
@@ -205,20 +225,7 @@ func runServe() {
 	exportRepo := repository.NewExportRepository(queries)
 
 	// オブジェクトストレージを初期化する (添付ファイルとエクスポートのZIPを置くバケット)。
-	// 設定が無いデプロイではnilのままにし、それを必要とする機能だけを無効化する。
-	var objectStorage storage.ObjectStorage
-	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
-		BucketName:      cfg.R2BucketName,
-		Endpoint:        cfg.R2Endpoint,
-		AccessKeyID:     cfg.R2AccessKeyID,
-		SecretAccessKey: cfg.R2SecretAccessKey,
-		Region:          cfg.R2Region,
-	})
-	if err != nil {
-		slog.Warn("オブジェクトストレージを初期化できませんでした。スペースのエクスポート機能は利用できません", "error", err)
-	} else {
-		objectStorage = s3Storage
-	}
+	objectStorage, testE2EStorage := newObjectStorage(cfg)
 
 	// Riverクライアントを初期化 (バックグラウンドジョブ用)
 	riverClient, err := worker.NewClient(ctx, cfg.DatabaseURL, cfg, rateLimiter, emailConfirmationRepo, worker.ExportDeps{
@@ -230,6 +237,28 @@ func runServe() {
 		PageRepo:        pageRepo,
 		AttachmentRepo:  attachmentRepo,
 		ObjectStorage:   objectStorage,
+	}, worker.DeletionDeps{
+		DB:                          db,
+		TopicRepo:                   topicRepo,
+		TopicMemberRepo:             topicMemberRepo,
+		PageRepo:                    pageRepo,
+		DraftPageRepo:               draftPageRepo,
+		PageEditorRepo:              pageEditorRepo,
+		PageRevisionRepo:            pageRevisionRepo,
+		PageAttachmentReferenceRepo: pageAttachmentRefRepo,
+		UserRepo:                    userRepo,
+		UserSessionRepo:             userSessionRepo,
+		UserPasswordRepo:            userPasswordRepo,
+		UserTwoFactorAuthRepo:       userTwoFactorAuthRepo,
+		SpaceMemberRepo:             spaceMemberRepo,
+		SpaceRepo:                   spaceRepo,
+		AttachmentRepo:              attachmentRepo,
+		ExportRepo:                  exportRepo,
+		ObjectStorage:               objectStorage,
+	}, worker.AttachmentProcessingDeps{
+		DB:             db,
+		AttachmentRepo: attachmentRepo,
+		ObjectStorage:  objectStorage,
 	})
 	if err != nil {
 		slog.Error("Riverクライアントの初期化に失敗しました", "error", err)
@@ -250,7 +279,12 @@ func runServe() {
 	}
 
 	// Dispatcherを初期化 (ジョブキューへの投入を抽象化)
-	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client())
+	txJobClient, err := worker.NewTxInserter(db)
+	if err != nil {
+		slog.Error("ジョブ投入用のRiverクライアントの初期化に失敗しました", "error", err)
+		os.Exit(1)
+	}
+	jobDispatcher := dispatcher.NewDispatcher(riverClient.Client(), txJobClient)
 
 	// ユースケースを初期化
 	signInCreateValidator := validator.NewSignInCreateValidator(userRepo, userPasswordRepo, userTwoFactorAuthRepo)
@@ -319,6 +353,12 @@ func runServe() {
 	oauthProtectedResourceMetadataHandler := oauth_protected_resource_metadata.NewHandler(cfg, usecase.NewGetOAuthProtectedResourceMetadataUsecase(spaceRepo))
 	apiCatalogHandler := api_catalog.NewHandler(cfg)
 	apiReferenceHandler := api_reference.NewHandler(cfg)
+
+	attachmentHandler := attachment.NewHandler(usecase.NewGetAttachmentUsecase(attachmentRepo, spaceMemberRepo, objectStorage))
+	attachmentSignedURLHandler := attachment_signed_url.NewHandler(usecase.NewGetAttachmentSignedURLsUsecase(attachmentRepo, spaceMemberRepo, objectStorage))
+	attachmentPresignHandler := attachment_presign.NewHandler(usecase.NewCreateAttachmentPresignUsecase(
+		db, spaceRepo, spaceMemberRepo, attachmentRepo, validator.NewAttachmentPresignCreateValidator(), jobDispatcher, objectStorage,
+	))
 
 	getAttachmentOgImageUC := usecase.NewGetAttachmentOgImageUsecase(attachmentRepo)
 	attachmentOgImageHandler := attachment_og_image.NewHandler(ogImageBuilder, getAttachmentOgImageUC)
@@ -451,6 +491,61 @@ func runServe() {
 		cfg,
 		getHomeShowUC,
 	)
+	getProfileShowUC := usecase.NewGetProfileShowUsecase(userRepo, spaceRepo)
+	profileHandler := profile.NewHandler(
+		cfg,
+		getProfileShowUC,
+	)
+	settingsHandler := settingshandler.NewHandler(cfg)
+	profileUpdateValidator := validator.NewProfileUpdateValidator(userRepo)
+	updateProfileUC := usecase.NewUpdateProfileUsecase(profileUpdateValidator, userRepo)
+	settingsProfileHandler := settings_profile.NewHandler(
+		cfg,
+		flashMgr,
+		updateProfileUC,
+	)
+	settingsEmailUpdateValidator := validator.NewSettingsEmailUpdateValidator(userRepo, userPasswordRepo)
+	createEmailUpdateConfirmationUC := usecase.NewCreateEmailUpdateConfirmationUsecase(settingsEmailUpdateValidator, createEmailConfirmationUC)
+	settingsEmailHandler := settings_email.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		createEmailUpdateConfirmationUC,
+		rateLimiter,
+	)
+	settingsEmailConfirmationUpdateValidator := validator.NewSettingsEmailConfirmationUpdateValidator(emailConfirmationRepo, userRepo)
+	updateEmailUC := usecase.NewUpdateEmailUsecase(db, settingsEmailConfirmationUpdateValidator, emailConfirmationRepo, userRepo)
+	settingsEmailConfirmationHandler := settings_email_confirmation.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		updateEmailUC,
+	)
+	settingsTwoFactorAuthCreateValidator := validator.NewSettingsTwoFactorAuthCreateValidator(userPasswordRepo)
+	settingsTwoFactorAuthHandler := settings_two_factor_auth.NewHandler(
+		cfg,
+		flashMgr,
+		rateLimiter,
+		usecase.NewGetTwoFactorAuthSettingsUsecase(userTwoFactorAuthRepo),
+		usecase.NewPrepareTwoFactorAuthUsecase(userTwoFactorAuthRepo),
+		usecase.NewGetPendingTwoFactorAuthUsecase(userTwoFactorAuthRepo),
+		usecase.NewEnableTwoFactorAuthUsecase(settingsTwoFactorAuthCreateValidator, userTwoFactorAuthRepo),
+		usecase.NewDisableTwoFactorAuthUsecase(validator.NewSettingsTwoFactorAuthDeleteValidator(userPasswordRepo), userTwoFactorAuthRepo),
+	)
+	settingsTwoFactorAuthRecoveryCodeHandler := settings_two_factor_auth_recovery_code.NewHandler(
+		cfg,
+		flashMgr,
+		rateLimiter,
+		usecase.NewGetTwoFactorAuthRecoveryCodesUsecase(userTwoFactorAuthRepo),
+		usecase.NewRegenerateTwoFactorAuthRecoveryCodesUsecase(validator.NewSettingsTwoFactorAuthRecoveryCodeCreateValidator(userPasswordRepo), userTwoFactorAuthRepo),
+	)
+	settingsAccountDeletionHandler := settings_account_deletion.NewHandler(
+		cfg,
+		sessionMgr,
+		flashMgr,
+		usecase.NewGetAccountDeletionNewUsecase(spaceRepo),
+		usecase.NewDiscardAccountUsecase(db, userRepo, userSessionRepo, spaceRepo, jobDispatcher, validator.NewSettingsAccountDeletionCreateValidator(spaceRepo)),
+	)
 	deleteDraftPageUC := usecase.NewDeleteDraftPageUsecase(
 		db,
 		spaceRepo,
@@ -532,7 +627,7 @@ func runServe() {
 		unpinPageUC,
 	)
 	getSpaceShowUC := usecase.NewGetSpaceShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, featureFlagRepo)
-	createSpaceUC := usecase.NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
+	createSpaceUC := usecase.NewCreateSpaceUsecase(db, userRepo, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo))
 	spaceHandler := spacehandler.NewHandler(
 		cfg,
 		flashMgr,
@@ -543,6 +638,26 @@ func runServe() {
 	spaceSettingsHandler := spacesettingshandler.NewHandler(
 		cfg,
 		getSpaceSettingsUC,
+	)
+	getSpaceSettingsGeneralUC := usecase.NewGetSpaceSettingsGeneralUsecase(spaceRepo, spaceMemberRepo)
+	updateSpaceUC := usecase.NewUpdateSpaceUsecase(spaceRepo, spaceMemberRepo, validator.NewSpaceUpdateValidator(spaceRepo))
+	spaceSettingsGeneralHandler := spacesettingsgeneralhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getSpaceSettingsGeneralUC,
+		updateSpaceUC,
+	)
+	spaceSettingsAttachmentHandler := spacesettingsattachmenthandler.NewHandler(
+		cfg,
+		flashMgr,
+		usecase.NewGetSpaceSettingsAttachmentsUsecase(spaceRepo, spaceMemberRepo, attachmentRepo, objectStorage),
+		usecase.NewDeleteAttachmentUsecase(db, spaceRepo, spaceMemberRepo, attachmentRepo, objectStorage, jobDispatcher),
+	)
+	spaceDeletionHandler := spacedeletionhandler.NewHandler(
+		cfg,
+		flashMgr,
+		usecase.NewGetSpaceDeletionNewUsecase(spaceRepo, spaceMemberRepo),
+		usecase.NewDiscardSpaceUsecase(db, spaceRepo, spaceMemberRepo, topicRepo, jobDispatcher, validator.NewSpaceDeletionCreateValidator()),
 	)
 	getPersonalAccessTokensUC := usecase.NewGetPersonalAccessTokensUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, personalAccessTokenRepo)
 	getPersonalAccessTokenNewUC := usecase.NewGetPersonalAccessTokenNewUsecase(spaceRepo, spaceMemberRepo, featureFlagRepo, topicMemberRepo)
@@ -610,6 +725,34 @@ func runServe() {
 		getTopicDetailUC,
 		getTopicNewUC,
 		createTopicUC,
+	)
+	getTopicSettingsUC := usecase.NewGetTopicSettingsUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
+	topicSettingsHandler := topicsettingshandler.NewHandler(
+		cfg,
+		getTopicSettingsUC,
+	)
+	getTopicDeletionNewUC := usecase.NewGetTopicDeletionNewUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
+	discardTopicUC := usecase.NewDiscardTopicUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, jobDispatcher, validator.NewTopicDeletionCreateValidator())
+	topicDeletionHandler := topicdeletionhandler.NewHandler(
+		cfg,
+		flashMgr,
+		getTopicDeletionNewUC,
+		discardTopicUC,
+	)
+	getTrashShowUC := usecase.NewGetTrashShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo)
+	trashHandler := trashhandler.NewHandler(
+		cfg,
+		getTrashShowUC,
+	)
+	getSearchShowUC := usecase.NewGetSearchShowUsecase(spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, validator.NewSearchShowValidator())
+	searchHandler := searchhandler.NewHandler(
+		cfg,
+		getSearchShowUC,
+	)
+	restorePagesUC := usecase.NewRestorePagesUsecase(db, spaceRepo, spaceMemberRepo, pageRepo, topicRepo, topicMemberRepo, validator.NewBulkRestoredPageCreateValidator(pageRepo))
+	bulkRestoredPageHandler := bulkrestoredpagehandler.NewHandler(
+		flashMgr,
+		restorePagesUC,
 	)
 	getTopicSettingsGeneralUC := usecase.NewGetTopicSettingsGeneralUsecase(spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo)
 	topicUpdateValidator := validator.NewTopicUpdateValidator(topicRepo)
@@ -840,7 +983,7 @@ func runServe() {
 	// リクエストボディサイズ制限ミドルウェア
 	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
 	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
-	r.Use(middleware.NewBodyLimit(apiProblems))
+	r.Use(newRequestBodyLimit(cfg, apiProblems))
 
 	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
 	r.Use(middleware.MethodOverride)
@@ -872,6 +1015,8 @@ func runServe() {
 	r.Use(middleware.SentryTransaction)
 
 	r.Use(i18n.Middleware)
+	// ダークモードのフラグの判定は、ページ全体を描画するとき (viewmodel.DefaultPageMeta) に初めて行う
+	r.Use(middleware.DarkMode(featureFlagRepo))
 	r.Use(csrfMiddleware.Middleware)
 	r.Use(flashMgr.Middleware)
 
@@ -881,6 +1026,9 @@ func runServe() {
 
 	// ヘルスチェック (認証不要)
 	r.Get("/health", healthHandler.Show)
+
+	// e2eのサーバーでだけ、フェイクのストレージの署名付きURLへの送受信を受ける
+	mountTestE2EStorage(r, testE2EStorage)
 
 	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
@@ -947,6 +1095,21 @@ func runServe() {
 		r.Use(middleware.SentryUserContext)
 		r.Use(middleware.TimeZone)
 		r.Get("/", welcomeHandler.Show)
+
+		// プロフィール (未ログインでも閲覧可能)。
+		//
+		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
+		r.Get("/@{atname}", profileHandler.Show)
+		r.Head("/@{atname}", profileHandler.Show)
+
+		// 添付ファイルの表示 (未ログインでも、公開トピックのページだけが参照する添付ファイルは見られる)。
+		r.Get("/attachments/{attachment_id}", attachmentHandler.Show)
+		r.Head("/attachments/{attachment_id}", attachmentHandler.Show)
+		// 本文に添付ファイルを表示するための署名付きURLの一括取得。CSRF検証の対象から外している (csrfSkipPathsを参照)。
+		r.Post("/attachments/signed_urls", attachmentSignedURLHandler.Create)
+		// 添付ファイルのアップロードの事前署名。fetchで呼ばれるため、ログインしていないときはサインインへ送らず、
+		// ハンドラーが401を返す。
+		r.Post("/s/{space_identifier}/attachments/presign", attachmentPresignHandler.Create)
 
 		// スペース詳細画面 (非メンバーでも公開トピックのページは閲覧可能)。
 		r.Get("/s/{space_identifier}", spaceHandler.Show)
@@ -1033,8 +1196,59 @@ func runServe() {
 		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
 
-		// トピックの一般設定。画面と保存処理。トピック設定の残りはRails版のままで、この画面
-		// のパンくずはそこへ戻る。
+		// トピックの設定のトップ。
+		r.Get("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
+		r.Head("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
+
+		// トピックの削除。確認画面と削除処理。パスはRails版に合わせる。
+		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
+		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
+		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
+
+		// ユーザー設定のトップ・プロフィールの編集・メールアドレスの変更。
+		//
+		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録する。
+		r.Get("/settings", settingsHandler.Show)
+		r.Head("/settings", settingsHandler.Show)
+		r.Get("/settings/profile", settingsProfileHandler.Show)
+		r.Head("/settings/profile", settingsProfileHandler.Show)
+		r.Patch("/settings/profile", settingsProfileHandler.Update)
+		r.Get("/settings/email", settingsEmailHandler.Show)
+		r.Head("/settings/email", settingsEmailHandler.Show)
+		r.Patch("/settings/email", settingsEmailHandler.Update)
+		r.Get("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
+		r.Head("/settings/email/confirmation/edit", settingsEmailConfirmationHandler.Edit)
+		r.Patch("/settings/email/confirmation", settingsEmailConfirmationHandler.Update)
+
+		// 二要素認証の設定の画面・認証アプリへの登録・有効化・無効化とリカバリーコード。
+		// 登録の画面のHEADは、秘密鍵を作り直さない専用の処理に渡す。
+		r.Get("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
+		r.Head("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Show)
+		r.Post("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Create)
+		r.Delete("/settings/two_factor_auth", settingsTwoFactorAuthHandler.Delete)
+		r.Get("/settings/two_factor_auth/new", settingsTwoFactorAuthHandler.New)
+		r.Head("/settings/two_factor_auth/new", settingsTwoFactorAuthHandler.HeadNew)
+		r.Get("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Index)
+		r.Head("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Index)
+		r.Post("/settings/two_factor_auth/recovery_codes", settingsTwoFactorAuthRecoveryCodeHandler.Create)
+
+		// アカウントの削除の確認画面と削除。
+		r.Get("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
+		r.Head("/settings/account/deletion/new", settingsAccountDeletionHandler.New)
+		r.Post("/settings/account/deletion", settingsAccountDeletionHandler.Create)
+
+		// スペースのゴミ箱の一覧。
+		r.Get("/s/{space_identifier}/trash", trashHandler.Show)
+		r.Head("/s/{space_identifier}/trash", trashHandler.Show)
+
+		// 検索の画面。
+		r.Get("/search", searchHandler.Show)
+		r.Head("/search", searchHandler.Show)
+
+		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせる。
+		r.Post("/s/{space_identifier}/bulk_restored_pages", bulkRestoredPageHandler.Create)
+
+		// トピックの一般設定。画面と保存処理。
 		//
 		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
 		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。併記しないと、GETに200を
@@ -1108,12 +1322,30 @@ func runServe() {
 		// ページロケーション検索API (Wikiリンク補完用)
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 
-		// スペース設定のトップ。項目のうちエクスポート以外のリンク先はRails版のまま残る。
+		// スペース設定のトップ。項目のうち削除のリンク先はRails版のまま残る。
 		//
 		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
 		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。
 		r.Get("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
+
+		// スペースの一般設定。リバースプロキシはgo_space_settings_generalが有効な閲覧者のリクエストだけを
+		// ここへ振り分け、それ以外はRails版が処理する。
+		r.Get("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Show)
+		r.Head("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Show)
+		r.Patch("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Update)
+
+		// スペースの添付ファイルの管理。リバースプロキシはgo_space_attachment_managementが有効な閲覧者の
+		// リクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		r.Get("/s/{space_identifier}/settings/attachments", spaceSettingsAttachmentHandler.Index)
+		r.Head("/s/{space_identifier}/settings/attachments", spaceSettingsAttachmentHandler.Index)
+		r.Delete("/s/{space_identifier}/settings/attachments/{attachment_id}", spaceSettingsAttachmentHandler.Delete)
+
+		// スペースの削除。リバースプロキシはgo_space_deletionが有効な閲覧者のリクエストだけを
+		// ここへ振り分け、それ以外はRails版が処理する。
+		r.Get("/s/{space_identifier}/settings/deletion/new", spaceDeletionHandler.New)
+		r.Head("/s/{space_identifier}/settings/deletion/new", spaceDeletionHandler.New)
+		r.Post("/s/{space_identifier}/settings/deletion", spaceDeletionHandler.Create)
 
 		// 個人用アクセストークンの一覧・発行フォーム・発行・失効。Rails版には無い画面で、リバース
 		// プロキシは名前空間全体をGoへ渡してくる。サブルーターにするのはエクスポートと同じく、
@@ -1236,4 +1468,57 @@ func runServe() {
 	}
 
 	slog.Info("サーバーを停止しました")
+}
+
+// newObjectStorageは、添付ファイルとエクスポートのZIPを置くオブジェクトストレージを組み立てる。
+// e2eのサーバー (APP_ENV=test_e2e) では、バケットの代わりにメモリ上のフェイクを使い、その署名付きURLへの
+// 送受信を受けるハンドラーも返す。それ以外では2つ目の戻り値はnilになる。
+// バケットの設定が無いデプロイでは1つ目もnilのままにし、それを必要とする機能だけを無効化する
+func newObjectStorage(cfg *config.Config) (storage.ObjectStorage, http.Handler) {
+	if cfg.IsTestE2E() {
+		fake := storage.NewServedFakeObjectStorage()
+		return fake, fake
+	}
+
+	s3Storage, err := storage.NewS3ObjectStorage(storage.Config{
+		BucketName:      cfg.R2BucketName,
+		Endpoint:        cfg.R2Endpoint,
+		AccessKeyID:     cfg.R2AccessKeyID,
+		SecretAccessKey: cfg.R2SecretAccessKey,
+		Region:          cfg.R2Region,
+	})
+	if err != nil {
+		slog.Warn("オブジェクトストレージを初期化できませんでした。添付ファイルとスペースのエクスポートの機能は利用できません", "error", err)
+		return nil, nil
+	}
+	return s3Storage, nil
+}
+
+// newRequestBodyLimitは、通常のリクエストとe2eのフェイクストレージへのアップロードの本文サイズを制限する。
+// 本物のストレージへの直接転送にはアプリの8 MiB制限が掛からないため、e2eのフェイクへのPUTだけは種類ごとの上限にする
+func newRequestBodyLimit(cfg *config.Config, problems *apierror.Writer) func(http.Handler) http.Handler {
+	normalLimit := middleware.NewBodyLimit(problems)
+	return func(next http.Handler) http.Handler {
+		normalHandler := normalLimit(next)
+		if !cfg.IsTestE2E() {
+			return normalHandler
+		}
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, storage.FakeObjectStoragePathPrefix) {
+				maxBytes := model.AttachmentMaxByteSize(r.Header.Get("Content-Type"))
+				http.MaxBytesHandler(next, maxBytes).ServeHTTP(w, r)
+				return
+			}
+			normalHandler.ServeHTTP(w, r)
+		})
+	}
+}
+
+// mountTestE2EStorageは、e2eのサーバーのフェイクのストレージの署名付きURLへの送受信を受けるルートを登録する。
+// handlerがnil (e2eのサーバーでない) のときは何も登録しない
+func mountTestE2EStorage(r chi.Router, handler http.Handler) {
+	if handler == nil {
+		return
+	}
+	r.Handle(storage.FakeObjectStoragePathPrefix+"*", handler)
 }

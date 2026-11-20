@@ -359,7 +359,7 @@ func TestCreateAPIDraftPagePublicationUsecase_Execute_ConcurrentDraftChange(t *t
 				})
 				result <- err
 			}()
-			waitForDraftDeletionBlocked(t, ctx, db, webPID, "FindDraftPageByIDForUpdate", result)
+			waitForQueryBlockedBy(t, ctx, db, webPID, "FindDraftPageByIDForUpdate", result)
 			if err := webTx.Commit(); err != nil {
 				t.Fatalf("Web側トランザクションのコミット: %v", err)
 			}

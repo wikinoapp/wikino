@@ -55,7 +55,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - uses: pnpm/action-setup@v6.1.0
+      - uses: pnpm/action-setup@v6.1.1
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -95,6 +95,8 @@ jobs:
         run: bin/wikino serve > /tmp/server.log 2>&1 &
         env:
           CI: true
+          # オブジェクトストレージの代わりにメモリ上のフェイクを使い、その署名付きURLへの送受信をサーバー自身が受ける
+          APP_ENV: test_e2e
 
       - name: Wait for server to be ready
         run: |

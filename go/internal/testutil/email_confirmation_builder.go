@@ -14,6 +14,7 @@ type EmailConfirmationBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
+	userID      *model.UserID
 	email       string
 	event       model.EmailConfirmationEvent
 	code        string
@@ -32,6 +33,12 @@ func NewEmailConfirmationBuilder(t *testing.T, tx *sql.Tx) *EmailConfirmationBui
 		code:      "ABC123",
 		startedAt: time.Now(),
 	}
+}
+
+// WithUserIDはメールアドレス変更を始めたユーザーを設定します
+func (b *EmailConfirmationBuilder) WithUserID(userID model.UserID) *EmailConfirmationBuilder {
+	b.userID = &userID
+	return b
 }
 
 // WithEmailはメールアドレスを設定します
@@ -75,18 +82,18 @@ func (b *EmailConfirmationBuilder) Build() string {
 	if b.succeededAt != nil {
 		err = b.tx.QueryRowContext(
 			context.Background(),
-			`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7)
+			`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at, user_id)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 			 RETURNING id`,
-			b.email, int32(b.event), b.code, b.startedAt, b.succeededAt, now, now,
+			b.email, int32(b.event), b.code, b.startedAt, b.succeededAt, now, now, b.userID,
 		).Scan(&id)
 	} else {
 		err = b.tx.QueryRowContext(
 			context.Background(),
-			`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6)
+			`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at, user_id)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)
 			 RETURNING id`,
-			b.email, int32(b.event), b.code, b.startedAt, now, now,
+			b.email, int32(b.event), b.code, b.startedAt, now, now, b.userID,
 		).Scan(&id)
 	}
 	if err != nil {
@@ -104,10 +111,10 @@ func (b *EmailConfirmationBuilder) BuildSucceeded() string {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at, user_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.email, int32(b.event), b.code, b.startedAt, now, now, now,
+		b.email, int32(b.event), b.code, b.startedAt, now, now, now, b.userID,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("メール確認情報作成に失敗: %v", err)
@@ -122,6 +129,7 @@ type EmailConfirmationBuilderDB struct {
 	t  *testing.T
 	db *sql.DB
 
+	userID      *model.UserID
 	email       string
 	event       model.EmailConfirmationEvent
 	code        string
@@ -140,6 +148,12 @@ func NewEmailConfirmationBuilderDB(t *testing.T, db *sql.DB) *EmailConfirmationB
 		code:      "ABC123",
 		startedAt: time.Now(),
 	}
+}
+
+// WithUserIDはメールアドレス変更を始めたユーザーを設定します
+func (b *EmailConfirmationBuilderDB) WithUserID(userID model.UserID) *EmailConfirmationBuilderDB {
+	b.userID = &userID
+	return b
 }
 
 // WithEmailはメールアドレスを設定します
@@ -183,18 +197,18 @@ func (b *EmailConfirmationBuilderDB) Build() string {
 	if b.succeededAt != nil {
 		err = b.db.QueryRowContext(
 			context.Background(),
-			`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7)
+			`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at, user_id)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 			 RETURNING id`,
-			b.email, int32(b.event), b.code, b.startedAt, b.succeededAt, now, now,
+			b.email, int32(b.event), b.code, b.startedAt, b.succeededAt, now, now, b.userID,
 		).Scan(&id)
 	} else {
 		err = b.db.QueryRowContext(
 			context.Background(),
-			`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6)
+			`INSERT INTO email_confirmations (email, event, code, started_at, created_at, updated_at, user_id)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)
 			 RETURNING id`,
-			b.email, int32(b.event), b.code, b.startedAt, now, now,
+			b.email, int32(b.event), b.code, b.startedAt, now, now, b.userID,
 		).Scan(&id)
 	}
 	if err != nil {
@@ -212,10 +226,10 @@ func (b *EmailConfirmationBuilderDB) BuildSucceeded() string {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO email_confirmations (email, event, code, started_at, succeeded_at, created_at, updated_at, user_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.email, int32(b.event), b.code, b.startedAt, now, now, now,
+		b.email, int32(b.event), b.code, b.startedAt, now, now, now, b.userID,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("メール確認情報作成に失敗: %v", err)
