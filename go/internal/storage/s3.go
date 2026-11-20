@@ -196,6 +196,38 @@ func (s *S3ObjectStorage) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+// deleteObjectsBatchSizeは、1回のDeleteObjectsで消すキーの上限。S3のDeleteObjectsが1回に受け付ける
+// キーの数の上限 (1000) に合わせる
+const deleteObjectsBatchSize = 1000
+
+// DeleteManyはkeysをdeleteObjectsBatchSizeずつのDeleteObjectsで削除する。DeleteObjectsは存在しない
+// キーを成功として扱う。応答に含まれたキーごとの失敗は、最初の1件をエラーにして返す
+func (s *S3ObjectStorage) DeleteMany(ctx context.Context, keys []string) error {
+	for start := 0; start < len(keys); start += deleteObjectsBatchSize {
+		batch := keys[start:min(start+deleteObjectsBatchSize, len(keys))]
+		objects := make([]types.ObjectIdentifier, len(batch))
+		for i, key := range batch {
+			objects[i] = types.ObjectIdentifier{Key: aws.String(key)}
+		}
+
+		out, err := s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			Bucket: aws.String(s.bucket),
+			Delete: &types.Delete{Objects: objects, Quiet: aws.Bool(true)},
+		})
+		if err != nil {
+			return fmt.Errorf("storage: オブジェクトの一括削除に失敗しました (件数: %d): %w", len(batch), err)
+		}
+		for _, e := range out.Errors {
+			if aws.ToString(e.Code) == "NoSuchKey" {
+				continue
+			}
+			return fmt.Errorf("storage: オブジェクトの一括削除に失敗しました (key: %s, code: %s): %s",
+				aws.ToString(e.Key), aws.ToString(e.Code), aws.ToString(e.Message))
+		}
+	}
+	return nil
+}
+
 // PresignedGetURLはkeyのオブジェクトに対するGETに署名する。
 func (s *S3ObjectStorage) PresignedGetURL(ctx context.Context, key string, expiresIn time.Duration, opts PresignedGetOptions) (string, error) {
 	input := &s3.GetObjectInput{

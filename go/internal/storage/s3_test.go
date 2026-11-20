@@ -3,6 +3,7 @@ package storage_test
 import (
 	"bytes"
 	"context"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -52,7 +53,12 @@ type fakeS3 struct {
 
 	deletedKeys   []string
 	abortRequests []abortRequest
-	failAbort     bool
+
+	// deleteObjectsRequestsはDeleteObjectsの呼び出し回数。deleteObjectsErrorCodeが空でなければ、
+	// DeleteObjectsは各キーをそのコードの失敗として応答し、オブジェクトを残す
+	deleteObjectsRequests  int
+	deleteObjectsErrorCode string
+	failAbort              bool
 
 	// getErrorCode / deleteErrorCodeは、そのS3エラーコードを載せた404をGetObject /
 	// DeleteObjectに返させる。"NoSuchKey" は存在しないオブジェクトに対してストレージが返すもので、
@@ -78,6 +84,8 @@ func (f *fakeS3) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	switch {
+	case r.Method == http.MethodPost && query.Has("delete"):
+		f.deleteObjects(w, r)
 	case r.Method == http.MethodPost && query.Has("uploads"):
 		f.createMultipartUpload(w, key)
 	case r.Method == http.MethodPut && query.Get("partNumber") != "":
@@ -254,6 +262,34 @@ func (f *fakeS3) deleteObject(w http.ResponseWriter, key string) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (f *fakeS3) deleteObjects(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Objects []struct {
+			Key string `xml:"Key"`
+		} `xml:"Object"`
+	}
+	if err := xml.NewDecoder(r.Body).Decode(&body); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	f.mu.Lock()
+	f.deleteObjectsRequests++
+	errorCode := f.deleteObjectsErrorCode
+	var result strings.Builder
+	for _, object := range body.Objects {
+		if errorCode != "" {
+			fmt.Fprintf(&result, `<Error><Key>%s</Key><Code>%s</Code><Message>%s</Message></Error>`, object.Key, errorCode, errorCode)
+			continue
+		}
+		f.deletedKeys = append(f.deletedKeys, object.Key)
+		delete(f.objects, object.Key)
+	}
+	f.mu.Unlock()
+
+	writeXML(w, http.StatusOK, `<DeleteResult>`+result.String()+`</DeleteResult>`)
 }
 
 func (f *fakeS3) object(key string) ([]byte, string, bool) {
@@ -796,6 +832,94 @@ func TestS3ObjectStorage_Delete(t *testing.T) {
 		}
 		if apiErr.ErrorCode() != "NoSuchBucket" {
 			t.Errorf("エラーコード = %q、期待値 = %q", apiErr.ErrorCode(), "NoSuchBucket")
+		}
+	})
+}
+
+func TestS3ObjectStorage_DeleteMany(t *testing.T) {
+	t.Parallel()
+
+	t.Run("正常系: 1000件ずつのリクエストでまとめて削除する", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		ctx := context.Background()
+		keys := make([]string, 1001)
+		for i := range keys {
+			keys[i] = fmt.Sprintf("attachments/%d", i)
+		}
+		fake.mu.Lock()
+		for _, key := range keys {
+			fake.objects[key] = []byte("body")
+		}
+		fake.objects["attachments/other"] = []byte("other")
+		fake.mu.Unlock()
+
+		if err := s.DeleteMany(ctx, keys); err != nil {
+			t.Fatalf("DeleteMany()のエラー = %v", err)
+		}
+
+		fake.mu.Lock()
+		requests := fake.deleteObjectsRequests
+		remaining := len(fake.objects)
+		fake.mu.Unlock()
+		if requests != 2 {
+			t.Errorf("DeleteObjectsの呼び出し回数 = %d、期待値 = 2", requests)
+		}
+		if remaining != 1 {
+			t.Errorf("残ったオブジェクトの数 = %d、期待値 = 1", remaining)
+		}
+		if _, _, ok := fake.object("attachments/other"); !ok {
+			t.Error("指定していないオブジェクトが消えた")
+		}
+	})
+
+	t.Run("正常系: キーが無ければリクエストしない", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		if err := s.DeleteMany(context.Background(), nil); err != nil {
+			t.Fatalf("DeleteMany()のエラー = %v", err)
+		}
+		fake.mu.Lock()
+		defer fake.mu.Unlock()
+		if fake.deleteObjectsRequests != 0 {
+			t.Errorf("DeleteObjectsの呼び出し回数 = %d、期待値 = 0", fake.deleteObjectsRequests)
+		}
+	})
+
+	t.Run("正常系: NoSuchKeyの失敗は成功として扱う", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		fake.mu.Lock()
+		fake.deleteObjectsErrorCode = "NoSuchKey"
+		fake.mu.Unlock()
+
+		if err := s.DeleteMany(context.Background(), []string{"attachments/gone"}); err != nil {
+			t.Errorf("DeleteMany()のエラー = %v、期待値 = nil", err)
+		}
+	})
+
+	// 応答のキーごとの失敗を見落とすと、実体が残っているのに削除が終わったことにしてしまう
+	t.Run("異常系: キーごとの失敗をエラーとして返す", func(t *testing.T) {
+		t.Parallel()
+
+		s, fake := newTestStorage(t)
+		fake.mu.Lock()
+		fake.deleteObjectsErrorCode = "AccessDenied"
+		fake.objects["attachments/kept"] = []byte("body")
+		fake.mu.Unlock()
+
+		err := s.DeleteMany(context.Background(), []string{"attachments/kept"})
+		if err == nil {
+			t.Fatal("DeleteMany()のエラー = nil、期待値 = エラー")
+		}
+		if !strings.Contains(err.Error(), "AccessDenied") {
+			t.Errorf("エラー = %v、期待値 = AccessDeniedを含む", err)
+		}
+		if _, _, ok := fake.object("attachments/kept"); !ok {
+			t.Error("削除に失敗したオブジェクトが消えた")
 		}
 	})
 }

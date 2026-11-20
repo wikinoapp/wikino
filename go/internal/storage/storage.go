@@ -41,6 +41,11 @@ type ObjectStorage interface {
 	// リトライされた後片付けが前の試行で終わった仕事に対して失敗しないようにする。
 	Delete(ctx context.Context, key string) error
 
+	// DeleteManyはkeysの位置のオブジェクトをまとめて削除する。キーの数によらず、リクエストの数を
+	// 一定の件数ごとに1回に抑える。スペースの物理削除のように、添付ファイルの数だけ実体を消す処理が、
+	// 件数に比例した時間をかけないためである。存在しないキーはDeleteと同じく成功として扱う。
+	DeleteMany(ctx context.Context, keys []string) error
+
 	// PresignedGetURLは、それ自体は資格情報を持たずにkeyのオブジェクトをダウンロードでき、
 	// expiresInの経過後は使えなくなるURLを返す。このURLを渡すことで、ブラウザはアーカイブを
 	// アプリ経由でストリーミングせずストレージから直接取得できる。optsで指定した応答ヘッダーは
