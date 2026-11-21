@@ -1512,7 +1512,7 @@ func setupAttachmentDeletionFixture(t *testing.T, suffix string) (*attachmentDel
 	return f, tx
 }
 
-// addAttachmentVariantは、Rails版が作るのと同じ形のサムネイル (variant) の行を、variantのblobのキーをkeyにして作る
+// addAttachmentVariantは、Rails期に作られたのと同じ形のサムネイル (variant) の行を、variantのblobのキーをkeyにして作る
 func addAttachmentVariant(t *testing.T, tx *sql.Tx, id model.AttachmentID, key string) {
 	t.Helper()
 

@@ -25,7 +25,7 @@ type TopicDeletionCreateValidatorInput struct {
 }
 
 // Validateは、入力したトピックの名前が削除するトピックの名前と一致するかを確かめる。
-// 一致は前後の空白も含めた完全一致で判定する (Rails版の `Topics::DestroyConfirmationForm` と同じ)。
+// 一致は前後の空白も含めた完全一致で判定する。
 func (v *TopicDeletionCreateValidator) Validate(ctx context.Context, input TopicDeletionCreateValidatorInput) error {
 	ve := model.NewValidationError()
 

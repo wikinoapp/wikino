@@ -289,7 +289,7 @@ func (b *AttachmentBuilderDB) resolvedBlobKey(now time.Time) string {
 }
 
 // attachedAtOrNowは、attachments.attached_atに書く時刻を返します。列はタイムゾーンを持たず、
-// Rails版はUTCの時刻を書くため、UTCにそろえます
+// Rails期に作られた行もUTCの時刻を持つため、UTCにそろえます
 func attachedAtOrNow(attachedAt, now time.Time) time.Time {
 	if attachedAt.IsZero() {
 		return now.UTC()

@@ -167,7 +167,7 @@ func TestGetAttachmentUsecase_Execute_ResponseHeaders(t *testing.T) {
 			if got := query.Get("response-content-type"); got != tt.wantContentType {
 				t.Errorf("response-content-type = %q、期待値 = %q", got, tt.wantContentType)
 			}
-			// 有効期間はRails版のリダイレクト先と同じ5分
+			// 有効期間は5分 (model.AttachmentDownloadExpiration)
 			if got := query.Get("expires_in"); got != "300" {
 				t.Errorf("expires_in = %q、期待値 = %q", got, "300")
 			}

@@ -14,7 +14,7 @@ import (
 )
 
 // 添付ファイルの署名付きURLで、オブジェクトストレージに返させる応答ヘッダーの決め方。
-// Rails版 (ActiveStorageの既定) と同じ規則にし、どちらで表示しても同じ応答になるようにする。
+// ActiveStorageの既定と同じ規則にし、Rails期から配信してきた添付ファイルの応答を変えない。
 // ActiveStorageの規則は `ActiveStorage::Blob::Servable` と `ActionDispatch::Http::ContentDisposition` にある
 
 // attachmentBinaryContentTypesは、ブラウザが解釈して実行しうるため、表示のときに種類を
@@ -114,7 +114,7 @@ func formatContentDisposition(disposition, filename string) string {
 }
 
 // asciiApproximationは、ファイル名をASCIIの文字に近づける。アクセント記号などの結合文字は
-// 取り除いて元の文字を残し、ASCIIに無い文字は「?」にする (RailsのI18n.transliterateに近い置き換え)
+// 取り除いて元の文字を残し、ASCIIに無い文字は「?」にする
 func asciiApproximation(s string) string {
 	var b strings.Builder
 	for _, r := range norm.NFKD.String(s) {

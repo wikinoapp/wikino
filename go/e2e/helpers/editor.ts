@@ -2,7 +2,6 @@ import { type Page, type Locator } from "@playwright/test";
 
 /**
  * CodeMirrorエディタの操作ヘルパー
- * Rails版のshared_helpers.rbと同等の機能を提供する
  */
 
 const EDITOR_SELECTOR = ".cm-content";

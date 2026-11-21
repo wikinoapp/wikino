@@ -90,8 +90,7 @@ type CreateSpaceMemberInput struct {
 	Role    model.SpaceRole
 }
 
-// Createはユーザーをスペースに参加させる。Rails版が権限を判定できるよう、
-// ロールに応じたスコープもspace_members.scopesへ書く。
+// Createはユーザーをスペースに参加させる。権限はロールから決めるため、space_members.scopesには書かない。
 func (r *SpaceMemberRepository) Create(ctx context.Context, input CreateSpaceMemberInput) (*model.SpaceMember, error) {
 	row, err := r.q.CreateSpaceMember(ctx, query.CreateSpaceMemberParams{
 		SpaceID: string(input.SpaceID),

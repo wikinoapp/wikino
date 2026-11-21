@@ -317,13 +317,13 @@ func (r *ExportRepository) toModels(rows []query.Export) []*model.Export {
 	return exports
 }
 
-// LegacyExportFileは旧Railsアーカイブと、別のレコードが使用中かどうかを表す。
+// LegacyExportFileはRails期のZIPと、別のレコードが使用中かどうかを表す。
 type LegacyExportFile struct {
 	Key    string
 	Shared bool
 }
 
-// ListLegacyFilesはエクスポートを削除する前に回収するRailsアーカイブを取得する。
+// ListLegacyFilesはエクスポートを削除する前に回収するRails期のZIPを取得する。
 func (r *ExportRepository) ListLegacyFiles(ctx context.Context, id model.ExportID, spaceID model.SpaceID) ([]LegacyExportFile, error) {
 	rows, err := r.q.ListLegacyExportFiles(ctx, query.ListLegacyExportFilesParams{ExportID: string(id), SpaceID: string(spaceID)})
 	if err != nil {

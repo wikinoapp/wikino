@@ -33,7 +33,7 @@ type DisableUserTwoFactorAuthParams struct {
 	UserID string    `json:"user_id"`
 }
 
-// 有効な二要素認証設定を無効にし、リカバリーコードを空にする。行は残す (Rails版と同じ)。
+// 有効な二要素認証設定を無効にし、リカバリーコードを空にする。行は残す。
 func (q *Queries) DisableUserTwoFactorAuth(ctx context.Context, arg DisableUserTwoFactorAuthParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, disableUserTwoFactorAuth, arg.Now, arg.UserID)
 	if err != nil {

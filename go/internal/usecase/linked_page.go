@@ -230,7 +230,7 @@ func resolveAndCreateLinkedPages(
 			created = createdNow
 		}
 
-		// Rails版と同様に、ページを新規作成した場合はpage_editorsレコードも作成する
+		// ページを新規作成した場合はpage_editorsレコードも作成する
 		if created {
 			_, err := pageEditorRepo.FindOrCreate(ctx, repository.FindOrCreateInput{
 				SpaceID:            spaceID,

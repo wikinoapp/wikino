@@ -664,7 +664,7 @@ func TestGetPageShowUsecase_Execute(t *testing.T) {
 		if output.FeaturedImageAttachment.ID != attachmentID {
 			t.Errorf("FeaturedImageAttachment.ID = %v、期待値 = %v", output.FeaturedImageAttachment.ID, attachmentID)
 		}
-		// ファイル名はog:image出力側でGIFを判定するために必要になる (Rails版と同じ判定)。
+		// ファイル名はog:image出力側でGIFを判定するために必要になる。
 		if output.FeaturedImageAttachment.Filename != "cover.png" {
 			t.Errorf("FeaturedImageAttachment.Filename = %q、期待値 = %q", output.FeaturedImageAttachment.Filename, "cover.png")
 		}

@@ -14,10 +14,10 @@ const (
 	totpIssuer = "Wikino"
 
 	// totpSecretBytesは生成するTOTPの秘密鍵のバイト数。
-	// 20バイト (160ビット) はRFC 4226が推奨する長さで、base32で32文字になる (Rails版の `ROTP::Base32.random` と同じ長さ)。
+	// 20バイト (160ビット) はRFC 4226が推奨する長さで、base32で32文字になる。
 	totpSecretBytes = 20
 
-	// totpDriftは、時計のずれを許すため照合の基準時刻を前後にずらす秒数 (Rails版の `drift_behind`・`drift_ahead` と同じ)
+	// totpDriftは、時計のずれを許すため照合の基準時刻を前後にずらす秒数
 	totpDrift = 15 * time.Second
 )
 

@@ -79,7 +79,7 @@ function isResolved(el: HTMLElement): boolean {
 // fetchSignedUrlsは添付ファイルIDをキーにした署名付きURLをバッチ取得する。リクエストは
 // アップロード経路 (file-upload-handler.tsが /s/{space_identifier}/attachments/presignへPOSTするのと同じ方式) に
 // 揃え、JSONボディとページから読んだX-CSRF-Tokenヘッダーを送る。本エンドポイントは状態を変えない
-// 読み取りで、Go版でもRails版でもCSRF検証の対象から外している (Go版はmiddleware/csrf.goの
+// 読み取りで、CSRF検証の対象から外している (middleware/csrf.goの
 // csrfSkipPaths) ため、ヘッダーはここで検証されるのではなくアップロード経路との一貫性のために付けている。
 async function fetchSignedUrls(attachmentIds: string[]): Promise<Record<string, string> | null> {
   try {

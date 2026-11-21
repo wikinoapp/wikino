@@ -16,7 +16,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
-// attachmentIndexPageLimitは添付ファイルの管理の画面の1ページあたりの表示件数です (Rails版と同じ)。
+// attachmentIndexPageLimitは添付ファイルの管理の画面の1ページあたりの表示件数です。
 const attachmentIndexPageLimit = 50
 
 // Indexはスペースの添付ファイルを新しい順に表示します (GET /s/{space_identifier}/settings/attachments)。

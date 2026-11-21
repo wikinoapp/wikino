@@ -65,7 +65,7 @@ type plannedExportTopic struct {
 // どちらもページファイルの `wikino_url` を組み立てるのに使う。
 //
 // アクティブなページを持たないトピックにはディレクトリを与えない。空のディレクトリはスペースに
-// ついて何も語らず、Rails版も同じくそれを含めていなかった。
+// ついて何も語らないため。
 func planExportArchive(appURL string, space *model.Space, topics []*model.Topic, pages []*model.Page, pageAttachments []*repository.PageAttachment) *exportArchive {
 	pagesByTopic := groupPagesByTopic(pages)
 	attachmentsByPage := groupAttachmentsByPage(pageAttachments)

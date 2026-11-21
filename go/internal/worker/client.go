@@ -46,7 +46,7 @@ const emailConfirmationRetentionHours = 24
 const cleanupEmailConfirmationsInterval = time.Hour
 
 // deleteTrashedPagesIntervalは、ゴミ箱に入れて保持期間を過ぎたページを物理削除するジョブを投入する
-// 間隔。Rails版のcronと同じく1日に1回にする。
+// 間隔。1日に1回にする。
 const deleteTrashedPagesInterval = 24 * time.Hour
 
 // ExportDepsは、エクスポートのワーカーが必要としながら自分では用意できないものを保持する。

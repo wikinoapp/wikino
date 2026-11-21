@@ -46,7 +46,7 @@ type GetAPIAttachmentOutput struct {
 }
 
 // Executeはattachment:readを持つトークンが属するスペースの添付ファイルを解決し、その中身へのURLに署名する。
-// 閲覧の判定はWeb画面の `/attachments/{ID}` (Rails版のcan_view_attachment?) と同じく、
+// 閲覧の判定はWeb画面の `/attachments/{ID}` と同じく、
 // attachment:readを持つか、参照するページがすべて公開トピックにあるかで行う。
 // 添付ファイルが存在しない場合に加え、見る権限が無い場合も存在を秘匿するため未存在として扱う
 func (uc *GetAPIAttachmentUsecase) Execute(ctx context.Context, input GetAPIAttachmentInput) (*GetAPIAttachmentOutput, error) {

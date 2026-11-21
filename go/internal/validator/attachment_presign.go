@@ -40,7 +40,6 @@ var attachmentFilenameReservedNames = []string{
 }
 
 // AttachmentPresignCreateValidatorは、添付ファイルのアップロードの事前署名のリクエストを検証する。
-// 検証と、ファイル名の整え方は、Rails版のAttachments::PresignFormと同じ結果にする
 type AttachmentPresignCreateValidator struct{}
 
 // NewAttachmentPresignCreateValidatorはAttachmentPresignCreateValidatorを生成する
@@ -78,7 +77,7 @@ func (v *AttachmentPresignCreateValidator) Validate(ctx context.Context, input A
 	case input.ByteSize == nil:
 		ve.AddField("byte_size", i18n.T(ctx, "validation_attachment_byte_size_required"))
 	case input.ContentType == "":
-		// Rails版と同じく、種類が分からないときは大きさの値を検査しない
+		// 種類が分からないときは、上限が決まらないため大きさの値を検査しない
 	case *input.ByteSize <= 0:
 		ve.AddField("byte_size", i18n.T(ctx, "validation_attachment_byte_size_not_positive"))
 	default:
@@ -89,7 +88,7 @@ func (v *AttachmentPresignCreateValidator) Validate(ctx context.Context, input A
 		}
 	}
 
-	// Rails版は空でないことだけを確かめていた。Go版はチェックサムをアップロードの署名に含めるため、
+	// チェックサムはアップロードの署名に含めるため、空でないことに加えて、
 	// MD5のBase64として読めることも確かめる。読めない値で署名すると、アップロードが必ず失敗する
 	switch {
 	case input.Checksum == "":

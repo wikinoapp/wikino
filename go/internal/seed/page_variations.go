@@ -115,9 +115,6 @@ func generatePageVariations(
 
 // pinPageはページにpinned_atを打刻する。これによりページは通常の一覧から
 // 外れ、その上に表示されるピン留めの区画へ移る。
-//
-// RepositoryではなくここでUPDATEを書くのは、ピン留めを担当しているのが今も
-// Rails側であり、Go側にクエリが無いため。
 func (w *pageWriter) pinPage(ctx context.Context, page *seededPage, pinnedAt time.Time) error {
 	_, err := w.dbtx.ExecContext(
 		ctx,
@@ -177,9 +174,6 @@ func (w *pageWriter) createUnwrittenPage(
 // createBlankPageは、ページ作成ボタンが残すページを作成する。タイトルも本文も
 // 無く、公開もされていない。一覧とページ詳細画面がフォールバックする「無題」の表示は、
 // このページのNULLのタイトルから来る。
-//
-// Repositoryではなくここで行を書くのは、空のページの作成を担当しているのが今も
-// Rails側 (Pages::CreateBlankedService) であり、Go側に呼べるCreateが無いため。
 func (w *pageWriter) createBlankPage(
 	ctx context.Context,
 	topic *seededTopic,

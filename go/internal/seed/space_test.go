@@ -345,7 +345,7 @@ func assertSpaceMemberCount(ctx context.Context, t *testing.T, tx *sql.Tx, space
 }
 
 // assertSpaceMemberRoleは、保存されたロールがシードの与えようとしたものと一致し、
-// Rails版が判定に使うscopesにそのロールに応じた値が書かれていることを確認する。
+// scopesに何も書かれていないことを確認する。
 func assertSpaceMemberRole(
 	ctx context.Context,
 	t *testing.T,
@@ -377,8 +377,8 @@ func assertSpaceMemberRole(
 	}
 }
 
-// スペースとトピックの作成を今も担当しているのはRails側で、そこでは
-// Space::NAME_MAX_LENGTHもTopic::NAME_MAX_LENGTHも30である。seed-long-nameは
+// スペースとトピックの名前のバリデーション (validatorのspaceNameMaxLengthと
+// topicNameMaxLength) は、どちらも30文字までを許す。seed-long-nameは
 // 自身の名前とトピックの名前の双方で、ちょうどその長さの名前を持つ。これにより、この
 // スペースが表に出すための折り返しが、モデルが受け付ける最長の名前の折り返しになる。
 // 1文字短い名前でも長くは見えるが、そのケースは確認されないまま残る。

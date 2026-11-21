@@ -11,7 +11,7 @@ import (
 
 // PrepareTwoFactorAuthUsecaseは、認証アプリへ登録する新しい秘密鍵を作り、登録の途中の設定として保存する。
 //
-// 登録の画面を開くたびに秘密鍵を作り直す (Rails版と同じ)。前に表示した秘密鍵が画面の外に残っていても、
+// 登録の画面を開くたびに秘密鍵を作り直す。前に表示した秘密鍵が画面の外に残っていても、
 // 有効にする前に使えなくなる。
 type PrepareTwoFactorAuthUsecase struct {
 	userTwoFactorAuthRepo *repository.UserTwoFactorAuthRepository

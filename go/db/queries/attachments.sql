@@ -88,9 +88,7 @@ WHERE a.id = ANY($1::uuid[]) AND a.space_id = $2;
 
 -- name: FindPubliclyReferencedAttachmentBlobByID :one
 -- 公開og:image配信用: 「生きている公開トピックのページからのみ参照されている」場合に限り
--- blob情報を返す。Rails版AttachmentRecord#all_referencing_pages_public?
--- (= referencing_topics.any? && referencing_topics.all?(&:visibility_public?)) と等価で、
--- 生きている参照を1件以上持ち、かつそれらがすべてvisibility=0の場合のみblobを返す。
+-- blob情報を返す。生きている参照を1件以上持ち、かつそれらがすべてvisibility=0の場合のみblobを返す。
 -- 判定スコープからは論理削除済みのページ・トピックに加えてゴミ箱に入ったページも除外し、
 -- ゴミ箱に入ったページのog:imageがSNSのリンクプレビューに残らないようにする。EXISTSと
 -- NOT EXISTSの双方で同じ参照集合を使う (揃えないと「ゴミ箱に入った非公開トピックのページ」
@@ -199,13 +197,13 @@ INNER JOIN attachments a ON a.active_storage_attachment_id = asa.id
 WHERE asb.id = asa.blob_id AND a.id = @id AND a.space_id = @space_id;
 
 -- name: CreateAttachmentBlob :one
--- 事前署名した添付ファイルのblobを作る。Rails版 (ActiveStorage::Blob.create_before_direct_upload!) と同じ形の行にする
+-- 事前署名した添付ファイルのblobを作る。Rails期に作られた行 (ActiveStorage::Blob.create_before_direct_upload!) と同じ形にする
 INSERT INTO active_storage_blobs (key, filename, content_type, metadata, service_name, byte_size, checksum, created_at)
 VALUES (@key, @filename, @content_type, @metadata, @service_name, @byte_size, @checksum, @created_at)
 RETURNING id;
 
 -- name: CreateAttachmentStorageAttachment :one
--- 事前署名した添付ファイルのblobを、Rails版と同じくスペースのレコードに関連付ける
+-- 事前署名した添付ファイルのblobを、Rails期に作られた行と同じくスペースのレコードに関連付ける
 INSERT INTO active_storage_attachments (name, record_type, record_id, blob_id, created_at)
 VALUES ('file', 'SpaceRecord', @space_id, @blob_id, @created_at)
 RETURNING id;
@@ -217,7 +215,7 @@ VALUES (@space_id, @active_storage_attachment_id, @attached_space_member_id, @at
 RETURNING id;
 
 -- name: ListAttachmentObjectKeysByIDsAndSpace :many
--- 指定した添付ファイルの実体のキーを返す。添付ファイルのblobのキーと、Rails版が作ったサムネイル (variant) の
+-- 指定した添付ファイルの実体のキーを返す。添付ファイルのblobのキーと、Rails期に作られたサムネイル (variant) の
 -- blobのキーである。variantのblobは、active_storage_variant_recordsを指すactive_storage_attachmentsからたどる
 SELECT asb.key
 FROM attachments a

@@ -183,7 +183,6 @@ ORDER BY sm.joined_at DESC
 `
 
 // ユーザーが参加中 (active) かつ削除されていないスペースの一覧を取得する
-// Rails版current_user.active_space_records相当
 // 並び順はユーザーがスペースに参加した日の降順 (最近参加したスペースが上)
 func (q *Queries) ListActiveSpacesByUser(ctx context.Context, userID string) ([]Space, error) {
 	rows, err := q.db.QueryContext(ctx, listActiveSpacesByUser, userID)

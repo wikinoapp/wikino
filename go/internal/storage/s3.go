@@ -76,8 +76,7 @@ func NewS3ObjectStorage(cfg Config) (*S3ObjectStorage, error) {
 		BaseEndpoint: aws.String(cfg.Endpoint),
 
 		// 追加のチェックサムは、操作が要求する場合にだけ送受信する。そうしないとSDKは
-		// すべてのリクエストにCRC32を付ける。同じバケットに対してRails版でも無効化が必要に
-		// なったものである (rails/config/storage.ymlを参照)。
+		// すべてのリクエストにCRC32を付ける。
 		RequestChecksumCalculation: aws.RequestChecksumCalculationWhenRequired,
 		ResponseChecksumValidation: aws.ResponseChecksumValidationWhenRequired,
 	}

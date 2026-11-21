@@ -1074,8 +1074,7 @@ func runServe() {
 		// ページはゴミ箱権限を持つ閲覧者以外には404)。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録
-		// する。このパスのHEADを受けていたRailsのルートは削除済みで、登録しないと存在する
-		// ページでもGETは200・HEADは405と食い違う。
+		// する。登録しないと、存在するページでもGETは200・HEADは404と食い違う。
 		r.Get("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 		r.Head("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 
@@ -1143,8 +1142,7 @@ func runServe() {
 		// トピックの作成。フォームと作成処理。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録
-		// する。登録しないと、このパスのHEADを今も受けているRailsのルートが無くなった時点で、
-		// フォームはGETに200・HEADに405を返すようになる。
+		// する。登録しないと、フォームはGETに200・HEADに404を返す。
 		r.Get("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
@@ -1153,7 +1151,7 @@ func runServe() {
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
 
-		// トピックの削除。確認画面と削除処理。パスはRails版に合わせる。
+		// トピックの削除。確認画面と削除処理。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
@@ -1198,14 +1196,13 @@ func runServe() {
 		r.Get("/search", searchHandler.Show)
 		r.Head("/search", searchHandler.Show)
 
-		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせる。
+		// ゴミ箱で選んだページの一括復元。
 		r.Post("/s/{space_identifier}/bulk_restored_pages", bulkRestoredPageHandler.Create)
 
 		// トピックの一般設定。画面と保存処理。
 		//
-		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
-		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。併記しないと、GETに200を
-		// 返す画面がHEADには405を返す。
+		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしないため。
+		// 併記しないと、GETに200を返す画面がHEADには404を返す。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
 		r.Patch("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Update)
@@ -1237,8 +1234,7 @@ func runServe() {
 		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
 		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
 
-		// ページをゴミ箱へ入れる操作。ゴミ箱画面そのものはRails版のまま残り、同じ
-		// pages.trashed_atカラムを見てページを復元する。
+		// ページをゴミ箱へ入れる操作。ゴミ箱の画面は、同じpages.trashed_atカラムを見てページを復元する。
 		r.Post("/s/{space_identifier}/pages/{page_number}/trash", pageTrashHandler.Create)
 
 		// ページのピン留め
@@ -1275,10 +1271,9 @@ func runServe() {
 		// ページロケーション検索API (Wikiリンク補完用)
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 
-		// スペース設定のトップ。項目のうち削除のリンク先はRails版のまま残る。
+		// スペース設定のトップ。
 		//
-		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
-		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。
+		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしないため。
 		r.Get("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 

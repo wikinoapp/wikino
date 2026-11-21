@@ -62,7 +62,7 @@ func TestFeatureFlagRepository_IsEnabled(t *testing.T) {
 	})
 }
 
-// Rails側の削除経路が頼るON DELETE CASCADEの契約を検証する。
+// ON DELETE CASCADEの契約を検証する。
 // usersの行を直接DELETEしたとき、feature_flagsへの明示的な
 // DELETEなしでフラグも一緒に消えること。
 func TestFeatureFlagRepository_CascadeOnUserDelete(t *testing.T) {

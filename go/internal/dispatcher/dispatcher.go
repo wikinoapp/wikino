@@ -268,9 +268,10 @@ func (CleanupAttachmentObjectsArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: river.QueueDefault, MaxAttempts: 10}
 }
 
-// cleanupAttachmentObjectsDelayは、後始末ジョブを最初に実行するまでの時間。Rails版はサムネイル (variant) の
-// 行をコミットしてから実体をアップロードするため、行の削除がvariantのキーを受け取った時点では、実体がまだ
-// 書き込まれていないことがある。そのリクエストが実体を書き終えるのを待ってから消す
+// cleanupAttachmentObjectsDelayは、後始末ジョブを最初に実行するまでの時間。
+//
+// TODO: サムネイル (variant) の行をコミットしてから実体を書き込む処理は無くなったため、最初の実行を遅らせる
+// 必要が残っているかを確かめる
 const cleanupAttachmentObjectsDelay = time.Minute
 
 // EnqueueCleanupAttachmentObjectsTxは、行の削除と同じトランザクションで後始末を登録する。

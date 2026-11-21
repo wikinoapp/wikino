@@ -66,7 +66,7 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 訪問のたびに別のページが作られるため、転送は一時的なもの (302) とする。Rails版と同じ。
+	// 訪問のたびに別のページが作られるため、転送は一時的なもの (302) とする。
 	editPath := templates.PageEditPath(viewmodel.NewSpaceIdentifier(spaceIdentifier), int32(output.Page.Number))
 	http.Redirect(w, r, string(editPath), http.StatusFound)
 }

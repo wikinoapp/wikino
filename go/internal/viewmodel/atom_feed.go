@@ -9,7 +9,7 @@ import (
 )
 
 // atomTagDateはフィードとエントリーのid (tag URI。RFC 4151) に入れる日付。
-// idはフィードリーダーがエントリーを見分けるのに使うため、Rails版のフィードと同じ値から変えない
+// idはフィードリーダーがエントリーを見分けるのに使うため、これまで配信してきた値から変えない
 const atomTagDate = "2025"
 
 // AtomFeedはAtom (RFC 4287) のフィードの文書。ハンドラーが `encoding/xml` で書き出す

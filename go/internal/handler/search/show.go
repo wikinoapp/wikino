@@ -19,7 +19,7 @@ import (
 // Showは検索の画面を表示します (GET /search)。
 //
 // キーワードに誤りがあっても、画面を200で返してエラーを欄の下に出します。検索の画面はキーワードを
-// 送るたびに開き直すもので、送信の失敗ではないためです (Rails版も同じく200を返していました)。
+// 送るたびに開き直すもので、送信の失敗ではないためです。
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

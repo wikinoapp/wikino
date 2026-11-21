@@ -7,22 +7,20 @@ import (
 )
 
 // AttachmentDownloadExpirationは、公開APIの添付ファイルの取得で返す署名付きURLと、Web画面の
-// `/attachments/{ID}` がリダイレクトする署名付きURLの有効期間。Rails版がリダイレクトする署名付きURLの
-// 有効期間 (ActiveStorageの既定値) と揃える。クライアントは受け取ってすぐに取得する前提で、URLが漏れたときに
+// `/attachments/{ID}` がリダイレクトする署名付きURLの有効期間。クライアントは受け取ってすぐに取得する前提で、URLが漏れたときに
 // 使える時間を短くしておく
 const AttachmentDownloadExpiration = 5 * time.Minute
 
 // AttachmentSignedURLExpirationは、Web画面のページ本文に添付ファイルを表示するために一括で返す
-// 署名付きURL (`POST /attachments/signed_urls`) の有効期間。Rails版と揃える。画面を開いている間に
+// 署名付きURL (`POST /attachments/signed_urls`) の有効期間。画面を開いている間に
 // 遅延読み込みの画像が取得されるため、リダイレクト先のURLより長くする
 const AttachmentSignedURLExpiration = time.Hour
 
-// AttachmentUploadURLExpirationは、事前署名で返すアップロードの署名付きURLの有効期間。Rails版
-// (ActiveStorageの既定値) と揃える
+// AttachmentUploadURLExpirationは、事前署名で返すアップロードの署名付きURLの有効期間
 const AttachmentUploadURLExpiration = 5 * time.Minute
 
-// AttachmentBlobServiceNameは、添付ファイルのblobのservice_nameに書く値。Rails版の本番と開発環境の
-// オブジェクトストレージの設定名と同じにし、Rails版がGo版で作った行の実体を同じバケットから読めるようにする
+// AttachmentBlobServiceNameは、添付ファイルのblobのservice_nameに書く値。Rails期に作られた行と同じ値にし、
+// どの行の実体も同じバケットにあることを表す
 const AttachmentBlobServiceName = "cloudflare_r2"
 
 // AttachmentUploadDeadlineは、事前署名した添付ファイルのアップロードを待つ上限の時間。アップロード後の
@@ -30,8 +28,8 @@ const AttachmentBlobServiceName = "cloudflare_r2"
 // 有効期限より長くするのは、期限の前に始まったアップロードが、遅い回線では期限のあとも続くためである
 const AttachmentUploadDeadline = time.Hour
 
-// AttachmentProcessingStatusは、アップロード後の処理の状態。値はRails版のattachments.processing_statusの
-// enumと同じにする
+// AttachmentProcessingStatusは、アップロード後の処理の状態。値はattachments.processing_statusの列に
+// 保存する整数で、Rails期に作られた行と共通にする
 type AttachmentProcessingStatus int32
 
 const (
@@ -47,15 +45,14 @@ const (
 )
 
 // attachmentImageMaxByteSize・attachmentVideoMaxByteSize・attachmentOtherMaxByteSizeは、種類ごとの
-// 添付ファイルの大きさの上限。Rails版の事前署名の検証 (Attachments::PresignForm) と同じにする
+// 添付ファイルの大きさの上限
 const (
 	attachmentImageMaxByteSize = 10 * 1024 * 1024
 	attachmentVideoMaxByteSize = 100 * 1024 * 1024
 	attachmentOtherMaxByteSize = 25 * 1024 * 1024
 )
 
-// attachmentAllowedContentTypesは、アップロードを許可する種類。Rails版の事前署名の検証
-// (Attachments::PresignForm) と同じにする
+// attachmentAllowedContentTypesは、アップロードを許可する種類
 var attachmentAllowedContentTypes = []string{
 	// 画像
 	"image/jpeg",
@@ -131,7 +128,7 @@ type Attachment struct {
 	AttachedAt time.Time
 }
 
-// IsImageは、添付ファイルが画像かどうかを種類から返す。Rails版 (Attachment#image?) と同じく、種類が
+// IsImageは、添付ファイルが画像かどうかを種類から返す。種類が
 // `image/` で始まるものを画像とする
 func (a *Attachment) IsImage() bool {
 	return strings.HasPrefix(a.ContentType, "image/")

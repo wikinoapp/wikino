@@ -20,8 +20,8 @@ import (
 type seedRole string
 
 const (
-	// roleOwnerは両スペースを管理し、フィーチャーフラグを全件持つ。データ
-	// ベースを手で触らずに画面のGo版を開けるようにするため。サインインはパス
+	// roleOwnerは両スペースを管理し、フィーチャーフラグを全件持つ。フラグで
+	// 公開を絞っている機能を、データベースを手で触らずに開けるようにするため。サインインはパス
 	// ワードだけで完了する。
 	roleOwner seedRole = "owner"
 	// roleCollaboratorは管理者のロールを持たずにseed-wikiで書くアカウントで、
@@ -31,10 +31,9 @@ const (
 	roleCollaborator seedRole = "collaborator"
 	// roleGuestは、自分が参加していないスペースを開くアカウント。roleOwnerと
 	// 同じくフィーチャーフラグを全件持ち、roleCollaboratorと同じく管理者のロール無しで
-	// seed-wikiに参加しているが、seed-soloのメンバーではない。画面のGo版へ
-	// GuestPolicyを通って辿り着けるのは、この組み合わせだけである。roleOwnerは
-	// フラグを持つが両方のスペースに参加しており、roleCollaboratorはseed-soloの
-	// 外にいるがフラグを1つも持たないためRailsが応答する。サインインはパスワード
+	// seed-wikiに参加しているが、seed-soloのメンバーではない。seed-soloの画面へ
+	// GuestPolicyを通って辿り着く。roleOwnerは両方のスペースに参加しており、
+	// roleCollaboratorはサインインに2要素認証のステップを挟む。サインインはパスワード
 	// だけで完了する。
 	roleGuest seedRole = "guest"
 )
@@ -61,7 +60,7 @@ var contentAuthorRoles = []seedRole{roleOwner, roleCollaborator}
 // この値が届く先は開発用データベースだけであり、ソースに置いても問題ない。
 const twoFactorSecret = "JBSWY3DPEHPK3PXP"
 
-// recoveryCodeCountはRails版が2要素認証の有効化時に発行するコード数に
+// recoveryCodeCountは2要素認証の有効化時に発行するコード数 (auth.RecoveryCodeCount) に
 // 合わせている。リカバリーコード画面が現実的な件数で表示されるようにするため。
 const recoveryCodeCount = 10
 
@@ -151,8 +150,8 @@ func createUser(ctx context.Context, dbtx query.DBTX, account rosterUser, passwo
 
 // enableFeatureFlagsは、名簿がそのユーザーへ与えるフラグを付与する。
 //
-// Repositoryではなくここで行を書くのは、フラグの作成はRails側が担当しており、
-// Go側にCreateが存在しないため。シードのために追加すると、シードだけが呼ぶ
+// Repositoryではなくここで行を書くのは、アプリケーションにフラグを作る処理が
+// 無いため。シードのために追加すると、シードだけが呼ぶ
 // 本番コードをInfrastructure層に残すことになる。
 func enableFeatureFlags(ctx context.Context, dbtx query.DBTX, userID model.UserID, names []model.FeatureFlagName) error {
 	for _, name := range names {

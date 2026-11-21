@@ -84,7 +84,7 @@ RETURNING id;
 DELETE FROM exports WHERE id = @id AND space_id = @space_id;
 
 -- name: ListLegacyExportFiles :many
--- エクスポートを削除する前にRailsのZIPを取得する。共有blobはストレージに残す。
+-- エクスポートを削除する前にRails期のZIPを取得する。共有blobはストレージに残す。
 SELECT DISTINCT b.key, EXISTS (
     SELECT 1 FROM active_storage_attachments other
     WHERE other.blob_id = b.id

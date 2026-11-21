@@ -114,7 +114,6 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 // handleErrorはユースケースから返ったエラーを、それに応じたレスポンスへ変えます。
 // ゴミ箱を見られない閲覧者には「見つからない」として答え、ゴミ箱があることを伝えません。
-// Rails版も同じく404を返していました。
 func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 

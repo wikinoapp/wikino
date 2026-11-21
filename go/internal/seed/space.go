@@ -29,8 +29,8 @@ const (
 // 折り返すのか、はみ出させるのかを確認する方法になる。シードの他のスペースはどれも
 // 短い名前を持つため、この問いを投げかける場所はここだけになる。
 //
-// 名前は30文字で、スペースの作成を今も担当しているRails側の
-// Space::NAME_MAX_LENGTHが許す最大の長さ。
+// 名前は30文字で、スペースの名前のバリデーション (validatorのspaceNameMaxLength) が
+// 許す最大の長さ。
 //
 // 参加するのはroleOwnerだけ。このスペースが示すのは名前の描かれ方であって、
 // メンバーシップによる見え方の違いではない。それはseed-wikiとseed-soloが既に
@@ -239,9 +239,6 @@ func generateSpaces(ctx context.Context, dbtx query.DBTX, out io.Writer, users *
 }
 
 // createSpaceはスペースを1つINSERTする。
-//
-// Repositoryではなくここで行を書くのは、スペースの作成を担当しているのが今も
-// Rails側であり、Go側に呼べるCreateが無いため。
 func createSpace(ctx context.Context, dbtx query.DBTX, identifier string, name string) (*seededSpace, error) {
 	now := time.Now()
 
@@ -265,7 +262,6 @@ func createSpace(ctx context.Context, dbtx query.DBTX, identifier string, name s
 }
 
 // addSpaceMemberは、指定のロールでユーザーをスペースに参加させる。
-// scopesには本番と同じく、Rails版が判定に使うロールに応じた値を書く。
 func addSpaceMember(
 	ctx context.Context,
 	dbtx query.DBTX,

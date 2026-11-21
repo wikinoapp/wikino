@@ -306,7 +306,7 @@ func TestEnqueueCleanupAttachmentObjectsTx(t *testing.T) {
 	if mock.opts.MaxAttempts != 10 {
 		t.Errorf("MaxAttempts = %d、期待値 = 10", mock.opts.MaxAttempts)
 	}
-	// Rails版がvariantの実体を書き終えるまで、最初の実行を遅らせる
+	// 最初の実行をcleanupAttachmentObjectsDelayだけ遅らせる
 	earliest, latest := before.Add(cleanupAttachmentObjectsDelay), after.Add(cleanupAttachmentObjectsDelay)
 	if mock.opts.ScheduledAt.Before(earliest) || mock.opts.ScheduledAt.After(latest) {
 		t.Errorf("ScheduledAt = %v、期待値 = %vから%vの間", mock.opts.ScheduledAt, earliest, latest)

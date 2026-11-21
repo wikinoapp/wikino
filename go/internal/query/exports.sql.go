@@ -320,7 +320,7 @@ type ListLegacyExportFilesRow struct {
 	Shared bool   `json:"shared"`
 }
 
-// エクスポートを削除する前にRailsのZIPを取得する。共有blobはストレージに残す。
+// エクスポートを削除する前にRails期のZIPを取得する。共有blobはストレージに残す。
 func (q *Queries) ListLegacyExportFiles(ctx context.Context, arg ListLegacyExportFilesParams) ([]ListLegacyExportFilesRow, error) {
 	rows, err := q.db.QueryContext(ctx, listLegacyExportFiles, arg.ExportID, arg.SpaceID)
 	if err != nil {

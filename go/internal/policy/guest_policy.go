@@ -17,7 +17,7 @@ func (p *GuestPolicy) CanShowTopic(topic *model.Topic) bool {
 	return topic.Visibility == model.TopicVisibilityPublic
 }
 
-// CanShowAttachmentはRails版と揃え、参照するページがすべて公開トピックにある添付ファイルだけを許可する
+// CanShowAttachmentは、参照するページがすべて公開トピックにある添付ファイルだけを許可する
 func (p *GuestPolicy) CanShowAttachment(allReferencingPagesPublic bool) bool {
 	return allReferencingPagesPublic
 }

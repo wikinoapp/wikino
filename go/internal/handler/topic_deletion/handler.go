@@ -125,7 +125,7 @@ func (h *Handler) render(w http.ResponseWriter, r *http.Request, user *model.Use
 
 // handleErrorはユースケースから返ったエラーを、それに応じたレスポンスへ変えます。
 // トピックを削除できない閲覧者には「見つからない」として答え、そのトピックで誰が何を変更できるかを
-// 外部から試して確かめられないようにします。Rails版も同じく404を返していました。
+// 外部から試して確かめられないようにします。
 func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error, logMsg string) {
 	ctx := r.Context()
 

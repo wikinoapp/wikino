@@ -38,7 +38,7 @@ func (r *SpaceRepository) FindByIdentifier(ctx context.Context, identifier model
 }
 
 // ListActiveByUserはユーザーが参加中 (アクティブ) かつ削除されていないスペースの一覧を返す
-// Rails版current_user.active_space_records相当。並び順はユーザーがスペースに参加した日の降順
+// 並び順はユーザーがスペースに参加した日の降順
 func (r *SpaceRepository) ListActiveByUser(ctx context.Context, userID model.UserID) ([]*model.Space, error) {
 	rows, err := r.q.ListActiveSpacesByUser(ctx, string(userID))
 	if err != nil {

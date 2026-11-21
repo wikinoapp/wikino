@@ -107,7 +107,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 // handleErrorはユースケースから返ったエラーを、それに応じたレスポンスへ変えます。
 // 閲覧者が開けないトピックの設定は「見つからない」として答え、そのトピックで誰が何を変更できるかを
-// 外部から試して確かめられないようにします。Rails版も同じく404を返していました。
+// 外部から試して確かめられないようにします。
 func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 

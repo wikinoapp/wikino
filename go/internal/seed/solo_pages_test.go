@@ -128,10 +128,8 @@ func TestSoloPageBodiesCarryNoWikilinks(t *testing.T) {
 
 // assertSoloPageBodiesNameTheAccountThatWalksThemは、本文が読む人へ案内する
 // アカウントが、本文の説明している経路を通るアカウントであることを確認する。
-// roleCollaboratorとroleGuestはどちらもseed-soloの外にいるが、フィーチャー
-// フラグを持つのはroleGuestだけであり、これらの画面へGo版が応答する形で辿り着ける
-// のもそちらだけになる。roleCollaboratorはRailsへ送られ、それはこれらのページが
-// 見せようとしているものではない。
+// roleCollaboratorとroleGuestはどちらもseed-soloの外にいるが、本文が案内するのは
+// パスワードだけでサインインできるroleGuestである。
 //
 // 本文をここで組み立てず、データベースから読み直すのは、検査対象が「生成器がどの
 // アカウントへ手を伸ばしたか」であるため。本文は自身が載せる名前を渡される側であり、

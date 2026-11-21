@@ -18,7 +18,7 @@ import (
 const discardSpaceCleanupTimeout = 10 * time.Second
 
 // DiscardSpaceUsecaseはスペースを削除する。スペースとそのトピックを論理削除して直ちに隠し、
-// 関連レコードとともに物理削除するジョブを投入する (Rails版の `Spaces::SoftDestroyService` と同じ)。
+// 関連レコードとともに物理削除するジョブを投入する。
 type DiscardSpaceUsecase struct {
 	db              *sql.DB
 	spaceRepo       *repository.SpaceRepository

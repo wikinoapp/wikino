@@ -72,8 +72,7 @@ func (uc *GetEditLinkDataUsecase) Execute(ctx context.Context, input GetEditLink
 	// ページを一覧し続ける。閲覧画面と同じく開けるトピックに絞る対応は、移行の途中で編集中の
 	// メンバーの見え方を変えることになるため後続タスクに回している。
 	//
-	// ゴミ箱と廃棄済みトピックのフィルタはクエリ自体に含まれるため編集画面にも効き、同じ一覧を
-	// 担うRails版の `available` スコープと揃う。
+	// ゴミ箱と廃棄済みトピックのフィルタはクエリ自体に含まれるため、編集画面にも効く。
 	visibility := repository.AllTopicsVisible()
 
 	lists, err := fetchRelatedPageLists(ctx, uc.pageRepo, relatedPageListInput{

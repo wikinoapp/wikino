@@ -81,7 +81,7 @@ type CreateAttachmentBlobParams struct {
 	CreatedAt   time.Time      `json:"created_at"`
 }
 
-// 事前署名した添付ファイルのblobを作る。Rails版 (ActiveStorage::Blob.create_before_direct_upload!) と同じ形の行にする
+// 事前署名した添付ファイルのblobを作る。Rails期に作られた行 (ActiveStorage::Blob.create_before_direct_upload!) と同じ形にする
 func (q *Queries) CreateAttachmentBlob(ctx context.Context, arg CreateAttachmentBlobParams) (string, error) {
 	row := q.db.QueryRowContext(ctx, createAttachmentBlob,
 		arg.Key,
@@ -110,7 +110,7 @@ type CreateAttachmentStorageAttachmentParams struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// 事前署名した添付ファイルのblobを、Rails版と同じくスペースのレコードに関連付ける
+// 事前署名した添付ファイルのblobを、Rails期に作られた行と同じくスペースのレコードに関連付ける
 func (q *Queries) CreateAttachmentStorageAttachment(ctx context.Context, arg CreateAttachmentStorageAttachmentParams) (string, error) {
 	row := q.db.QueryRowContext(ctx, createAttachmentStorageAttachment, arg.SpaceID, arg.BlobID, arg.CreatedAt)
 	var id string
@@ -520,9 +520,7 @@ type FindPubliclyReferencedAttachmentBlobByIDRow struct {
 }
 
 // 公開og:image配信用: 「生きている公開トピックのページからのみ参照されている」場合に限り
-// blob情報を返す。Rails版AttachmentRecord#all_referencing_pages_public?
-// (= referencing_topics.any? && referencing_topics.all?(&:visibility_public?)) と等価で、
-// 生きている参照を1件以上持ち、かつそれらがすべてvisibility=0の場合のみblobを返す。
+// blob情報を返す。生きている参照を1件以上持ち、かつそれらがすべてvisibility=0の場合のみblobを返す。
 // 判定スコープからは論理削除済みのページ・トピックに加えてゴミ箱に入ったページも除外し、
 // ゴミ箱に入ったページのog:imageがSNSのリンクプレビューに残らないようにする。EXISTSと
 // NOT EXISTSの双方で同じ参照集合を使う (揃えないと「ゴミ箱に入った非公開トピックのページ」
@@ -657,7 +655,7 @@ type ListAttachmentObjectKeysByIDsAndSpaceParams struct {
 	SpaceID string   `json:"space_id"`
 }
 
-// 指定した添付ファイルの実体のキーを返す。添付ファイルのblobのキーと、Rails版が作ったサムネイル (variant) の
+// 指定した添付ファイルの実体のキーを返す。添付ファイルのblobのキーと、Rails期に作られたサムネイル (variant) の
 // blobのキーである。variantのblobは、active_storage_variant_recordsを指すactive_storage_attachmentsからたどる
 func (q *Queries) ListAttachmentObjectKeysByIDsAndSpace(ctx context.Context, arg ListAttachmentObjectKeysByIDsAndSpaceParams) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listAttachmentObjectKeysByIDsAndSpace, pq.Array(arg.Ids), arg.SpaceID)
