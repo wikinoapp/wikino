@@ -6,8 +6,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/lib/pq"
-
 	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/query"
 )
@@ -280,10 +278,10 @@ func addSpaceMember(
 	var id string
 	err := dbtx.QueryRowContext(
 		ctx,
-		`INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, true, $6, $7)
+		`INSERT INTO space_members (space_id, user_id, role, joined_at, active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, true, $5, $6)
          RETURNING id`,
-		string(spaceID), string(user.ID), string(role), pq.Array(model.ScopesToStrings(role.RailsScopes())), now, now, now,
+		string(spaceID), string(user.ID), string(role), now, now, now,
 	).Scan(&id)
 	if err != nil {
 		return nil, err

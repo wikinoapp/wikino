@@ -371,25 +371,9 @@ func assertSpaceMemberRole(
 	if role != string(want) {
 		t.Errorf("%sのロールが%qであることを期待したが%qだった", label, want, role)
 	}
-	assertScopesEqual(t, label, stored, want.RailsScopes())
-}
-
-// assertScopesEqualは、保存されたスコープを意図した集合と、順序を無視して
-// 比較する。
-func assertScopesEqual(t *testing.T, label string, stored []string, want []model.Scope) {
-	t.Helper()
-
-	got := make(map[string]bool, len(stored))
-	for _, scope := range stored {
-		got[scope] = true
-	}
-	if len(got) != len(want) {
-		t.Errorf("%sのスコープが%d件であることを期待したが%d件だった (%v)", label, len(want), len(got), stored)
-	}
-	for _, scope := range want {
-		if !got[string(scope)] {
-			t.Errorf("%sにスコープ%sが付与されていない", label, scope)
-		}
+	// 権限はroleから決め、scopesの列には書かない (列の既定値の空の配列になる)
+	if len(stored) != 0 {
+		t.Errorf("%sのscopes = %v、期待値 = 空の配列", label, stored)
 	}
 }
 

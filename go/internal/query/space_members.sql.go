@@ -13,8 +13,8 @@ import (
 )
 
 const createSpaceMember = `-- name: CreateSpaceMember :one
-INSERT INTO space_members (space_id, user_id, role, scopes, joined_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $5, $5)
+INSERT INTO space_members (space_id, user_id, role, joined_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $4, $4)
 RETURNING id, space_id, user_id, joined_at, active, created_at, updated_at, scopes, role, max_topic_role
 `
 
@@ -22,17 +22,15 @@ type CreateSpaceMemberParams struct {
 	SpaceID string    `json:"space_id"`
 	UserID  string    `json:"user_id"`
 	Role    string    `json:"role"`
-	Scopes  []string  `json:"scopes"`
 	Now     time.Time `json:"now"`
 }
 
-// ユーザーをスペースに参加させる。scopesにはRails版が判定に使う、ロールに応じた値を書く。
+// ユーザーをスペースに参加させる
 func (q *Queries) CreateSpaceMember(ctx context.Context, arg CreateSpaceMemberParams) (SpaceMember, error) {
 	row := q.db.QueryRowContext(ctx, createSpaceMember,
 		arg.SpaceID,
 		arg.UserID,
 		arg.Role,
-		pq.Array(arg.Scopes),
 		arg.Now,
 	)
 	var i SpaceMember

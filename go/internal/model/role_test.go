@@ -206,43 +206,6 @@ func TestRoles(t *testing.T) {
 	})
 }
 
-func TestSpaceRole_RailsScopes(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		role model.SpaceRole
-		want []model.Scope
-	}{
-		{
-			name: "管理者はspace:adminだけを書く",
-			role: model.SpaceRoleAdmin,
-			want: []model.Scope{model.ScopeSpaceAdmin},
-		},
-		{
-			name: "編集者はロールのスコープをそのまま書く",
-			role: model.SpaceRoleEditor,
-			want: model.SpaceRoleEditor.Scopes(),
-		},
-		{
-			name: "閲覧者はロールのスコープをそのまま書く",
-			role: model.SpaceRoleViewer,
-			want: model.SpaceRoleViewer.Scopes(),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got := tt.role.RailsScopes()
-			if !slices.Equal(got, tt.want) {
-				t.Errorf("RailsScopes() = %v、期待値 = %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestRoleScopes(t *testing.T) {
 	t.Parallel()
 

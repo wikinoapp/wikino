@@ -97,7 +97,6 @@ func (r *SpaceMemberRepository) Create(ctx context.Context, input CreateSpaceMem
 		SpaceID: string(input.SpaceID),
 		UserID:  string(input.UserID),
 		Role:    string(input.Role),
-		Scopes:  model.ScopesToStrings(input.Role.RailsScopes()),
 		Now:     time.Now(),
 	})
 	if err != nil {
