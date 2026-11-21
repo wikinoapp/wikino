@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -1345,9 +1347,7 @@ func runServe() {
 		// スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
 		// ダウンロード。これらの画面のパンくずは上のスペース設定のトップへ戻る。
 		//
-		// GETのそれぞれにHEADを併記するのは、chiがメソッドごとにルートを引きGETへ
-		// フォールバックしない一方、Railsのルーターは一致しないHEADをGETとして読むため。
-		// 併記しないと、GETに200を返す画面がHEADには405を返す。
+		// chiはHEADをGETへフォールバックしないため、GETと同じ画面を返すHEADを個別に登録する。
 		r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
 			r.Post("/", exportHandler.Create)
 			r.Get("/new", exportHandler.New)
@@ -1452,10 +1452,50 @@ func newHTTPRouter(cfg *config.Config, apiProblems *apierror.Writer, flashMgr *s
 	r.Use(middleware.SentryTransaction)
 
 	r.Use(i18n.Middleware)
+	r.Use(requireRegisteredWebRoute(r))
 	r.Use(middleware.NewCSRF(cfg).Middleware)
 	r.Use(flashMgr.Middleware)
 
 	return r
+}
+
+// requireRegisteredWebRouteは、認証やCSRF検証より先に未登録のWebリクエストへ404を返す。
+// 公開Web APIのエラーは、そのルーターへ渡してProblem Detailsで返す
+func requireRegisteredWebRoute(router chi.Routes) func(http.Handler) http.Handler {
+	type routeKey struct {
+		method  string
+		pattern string
+	}
+	registeredRoutes := sync.OnceValue(func() map[routeKey]struct{} {
+		routes := make(map[routeKey]struct{})
+		// chi.Findはマウント直下のスタブにも一致する。Walkは実ハンドラーの登録だけを返すため、両方を照合する。
+		_ = chi.Walk(router, func(method, pattern string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+			routes[routeKey{method, pattern}] = struct{}{}
+			// chiはサブルーターの / を末尾スラッシュのない入口からも呼ぶ。
+			if root, ok := strings.CutSuffix(pattern, "/"); ok && root != "" {
+				routes[routeKey{method, root}] = struct{}{}
+			}
+			return nil
+		})
+		return routes
+	})
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			route := chi.RouteContext(r.Context())
+			path := cmp.Or(route.RoutePath, r.URL.RawPath, r.URL.Path, "/")
+			method := cmp.Or(route.RouteMethod, r.Method)
+			if path != apiMountPath && !strings.HasPrefix(path, apiMountPath+"/") {
+				// 後段のルーティングのパラメーターを変更しないよう、別のコンテキストで照合する。
+				pattern := router.Find(chi.NewRouteContext(), method, path)
+				if _, ok := registeredRoutes()[routeKey{method, pattern}]; !ok {
+					httperror.NotFound(w, r)
+					return
+				}
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // newObjectStorageは、添付ファイルとエクスポートのZIPを置くオブジェクトストレージを組み立てる。

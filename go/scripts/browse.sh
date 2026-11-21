@@ -314,8 +314,7 @@ check_reachable() (
       ;;
   esac
 
-  # Go版はすべての応答にCSRFクッキーを設定するため、それが無いということは、dev URLの前段が
-  # Go版以外のアプリに応答させたことを意味する。
+  # Cookieを持たないリクエストに対し、Go版の `/sign_in` が発行するCSRFクッキーで配信元を確かめる。
   if ! printf '%s' "$response" | grep -q "wikino_csrf_token"; then
     echo "dev URLの応答にGo版のCSRFクッキーが無い: リクエストがGo版に届いていない" >&2
 

@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -18,13 +17,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
-	"github.com/wikinoapp/wikino/go/internal/model"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/storage"
-	"github.com/wikinoapp/wikino/go/internal/templates"
 	"github.com/wikinoapp/wikino/go/internal/testutil"
-	"github.com/wikinoapp/wikino/go/internal/viewmodel"
 )
 
 func TestWelcomePageDoesNotQueryFeatureFlags(t *testing.T) {
@@ -67,8 +63,11 @@ func TestHTTPRouter_NotFound(t *testing.T) {
 	r := newHTTPRouter(cfg, apierror.NewWriter(cfg.AppURL()), flashMgr)
 	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	r.Get("/example", ok)
+	r.Get("/value/{value}", ok)
 	r.Post("/example/submit", ok)
-	r.Route("/namespace", func(r chi.Router) {
+	r.Delete("/example/session", ok)
+	auth := middleware.NewAuth(session.NewManager(nil, nil, cfg))
+	r.With(auth.RequireAuth).Route("/namespace", func(r chi.Router) {
 		r.Get("/", ok)
 	})
 	mountTestAPIRouter(t, r, newTestAPIServer(), testAPITokenAuthenticator{}, exceededAPIRateLimiter{})
@@ -78,15 +77,26 @@ func TestHTTPRouter_NotFound(t *testing.T) {
 		name        string
 		method      string
 		target      string
+		form        string
+		withCSRF    bool
 		wantStatus  int
 		wantProblem bool
 	}{
 		{name: "ルートのあるパスは200", method: http.MethodGet, target: "/example", wantStatus: http.StatusOK},
+		{name: "エスケープされたパスもchiと同じ方法で照合する", method: http.MethodGet, target: "/value/a%2Fb", wantStatus: http.StatusOK},
 		{name: "ルートの無いパスは404ページ", method: http.MethodGet, target: "/unknown", wantStatus: http.StatusNotFound},
 		{name: "末尾にスラッシュを付けたパスは404ページ", method: http.MethodGet, target: "/example/", wantStatus: http.StatusNotFound},
-		{name: "GETだけのルートへのPOSTは404ページ", method: http.MethodPost, target: "/example", wantStatus: http.StatusNotFound},
+		{name: "トークンの無い未登録のPOSTは404ページ", method: http.MethodPost, target: "/unknown", wantStatus: http.StatusNotFound},
+		{name: "GETだけのルートへのトークンの無いPOSTは404ページ", method: http.MethodPost, target: "/example", wantStatus: http.StatusNotFound},
 		{name: "POSTだけのルートへのGETは404ページ", method: http.MethodGet, target: "/example/submit", wantStatus: http.StatusNotFound},
-		{name: "サブルーターのルートへの別のメソッドは404ページ", method: http.MethodDelete, target: "/namespace", wantStatus: http.StatusNotFound},
+		{name: "DELETEだけのルートへのGETは404ページ", method: http.MethodGet, target: "/example/session", wantStatus: http.StatusNotFound},
+		{name: "未ログインでもサブルーターの未登録パスは404ページ", method: http.MethodGet, target: "/namespace/unknown", wantStatus: http.StatusNotFound},
+		{name: "未ログインでもサブルーターの未対応メソッドは404ページ", method: http.MethodDelete, target: "/namespace", wantStatus: http.StatusNotFound},
+		{name: "末尾スラッシュ付きのサブルーターの未対応メソッドも404ページ", method: http.MethodHead, target: "/namespace/", wantStatus: http.StatusNotFound},
+		{name: "認証必須の登録済みルートはサインインに転送", method: http.MethodGet, target: "/namespace", wantStatus: http.StatusFound},
+		{name: "末尾スラッシュ付きの登録済みルートもサインインに転送", method: http.MethodGet, target: "/namespace/", wantStatus: http.StatusFound},
+		{name: "メソッド変換で一致するルートにはCSRFを検証する", method: http.MethodPost, target: "/example/session", form: "_method=DELETE", wantStatus: http.StatusForbidden},
+		{name: "メソッド変換とCSRF検証を通るルートは200", method: http.MethodPost, target: "/example/session", form: "_method=DELETE", withCSRF: true, wantStatus: http.StatusOK},
 		{name: "APIのルートの無いパスはProblem Detailsの404", method: http.MethodGet, target: "/api/v1/unknown", wantStatus: http.StatusNotFound, wantProblem: true},
 		{name: "APIのルートへの別のメソッドはProblem Detailsの405", method: http.MethodPost, target: "/api/v1/openapi.yaml", wantStatus: http.StatusMethodNotAllowed, wantProblem: true},
 	}
@@ -95,10 +105,14 @@ func TestHTTPRouter_NotFound(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			// 対応していないメソッドの判定をCSRFの検証で隠さないよう、送信には正しいトークンを付ける
-			req := httptest.NewRequestWithContext(t.Context(), tt.method, tt.target, nil)
-			req.Header.Set("X-CSRF-Token", csrfToken)
-			req.AddCookie(&http.Cookie{Name: middleware.CSRFCookieName, Value: csrfToken})
+			req := httptest.NewRequestWithContext(t.Context(), tt.method, tt.target, strings.NewReader(tt.form))
+			if tt.form != "" {
+				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			}
+			if tt.withCSRF {
+				req.Header.Set("X-CSRF-Token", csrfToken)
+				req.AddCookie(&http.Cookie{Name: middleware.CSRFCookieName, Value: csrfToken})
+			}
 			rr := httptest.NewRecorder()
 			r.ServeHTTP(rr, req)
 
@@ -116,51 +130,6 @@ func TestHTTPRouter_NotFound(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-// TestCookielessPaths_MatchRoutePathsは、Cookieを使わないパスの定義が、ルートとリンクが使うのと同じ
-// パスの定数・ヘルパーで作ったURLを拾い、定義のどれもがいずれかのURLに当たることを確かめる。
-// 定義から漏れたURLの応答にはCSRFトークンとフラッシュのSet-Cookieが付き、共有キャッシュに載らなくなる
-func TestCookielessPaths_MatchRoutePaths(t *testing.T) {
-	t.Parallel()
-
-	space := viewmodel.SpaceIdentifier("example")
-	type routePath struct {
-		method string
-		path   string
-	}
-	routePaths := []routePath{
-		{method: http.MethodGet, path: string(templates.AttachmentOGImagePath("550e8400-e29b-41d4-a716-446655440000"))},
-		{method: http.MethodGet, path: string(templates.PageOGImagePath(space, viewmodel.PageNumber(1), "0123456789abcdef"))},
-		{method: http.MethodGet, path: string(templates.AtomPath(space))},
-		{method: http.MethodGet, path: string(templates.TopicAtomPath(space, 1))},
-		{method: http.MethodGet, path: apiMountPath + "/v1/openapi.yaml"},
-		{method: http.MethodPost, path: model.OAuthTokenEndpointPath},
-		{method: http.MethodPost, path: model.OAuthRevocationEndpointPath},
-		{method: http.MethodPost, path: model.OAuthDeviceAuthorizationEndpointPath},
-		{method: http.MethodGet, path: model.OAuthAuthorizationServerMetadataPath},
-		{method: http.MethodGet, path: model.MCPServerResourceMetadataPath},
-		{method: http.MethodGet, path: model.APICatalogPath},
-		{method: http.MethodPost, path: model.MCPServerPath},
-		{method: http.MethodGet, path: "/favicon.ico"},
-		{method: http.MethodGet, path: "/apple-touch-icon.png"},
-		{method: http.MethodGet, path: "/apple-touch-icon-precomposed.png"},
-		{method: http.MethodGet, path: "/robots.txt"},
-	}
-
-	for _, rp := range routePaths {
-		if !session.IsCookielessRequest(rp.method, rp.path) {
-			t.Errorf("%s %sがCookieを使わないリクエストとして扱われない", rp.method, rp.path)
-		}
-	}
-	for _, cp := range session.CookielessPaths {
-		matched := slices.ContainsFunc(routePaths, func(rp routePath) bool {
-			return cp.Pattern.MatchString(rp.path)
-		})
-		if !matched {
-			t.Errorf("%sに当たるルートのURLが無い", cp.Pattern)
-		}
 	}
 }
 

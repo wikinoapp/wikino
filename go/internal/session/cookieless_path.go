@@ -10,8 +10,8 @@ import (
 
 // Cookieを使わないリクエストの定義。
 // CSRFトークンの発行と検証の除外・フラッシュの消費除外がこの定義を共有する。
-// パスを足すときは、ルートが使うパスの定数・ヘルパーで作ったURLを `cmd/wikino` の
-// `TestCookielessPaths_MatchRoutePaths` にも足す (定義とルートの食い違いをそこで検出する)。
+// パスやメソッドを変更するときは、`go/e2e/tests/cookieless-routes.spec.ts` と
+// `go/e2e/tests/root-files.spec.ts` の該当ケースで、実際のルートの応答にCookieが付かないことを確かめる。
 //
 //   - og:image配信: SNSのクローラーが取得し共有キャッシュに載せる画像のため、レスポンスに `Set-Cookie` を
 //     付けない (Cloudflareは既定では `Set-Cookie` 付きのレスポンスをキャッシュせず、キャッシュする設定に
