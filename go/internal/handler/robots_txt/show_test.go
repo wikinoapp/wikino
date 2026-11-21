@@ -41,3 +41,30 @@ func TestShow(t *testing.T) {
 		})
 	}
 }
+
+func TestShowIfNoneMatch(t *testing.T) {
+	t.Parallel()
+
+	h := robots_txt.NewHandler()
+	initial := httptest.NewRecorder()
+	h.Show(initial, httptest.NewRequest(http.MethodGet, "/robots.txt", nil))
+	etag := initial.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("初回の応答にETagがない")
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/robots.txt", nil)
+	req.Header.Set("If-None-Match", etag)
+	rr := httptest.NewRecorder()
+	h.Show(rr, req)
+
+	if rr.Code != http.StatusNotModified {
+		t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusNotModified)
+	}
+	if got := rr.Header().Get("ETag"); got != etag {
+		t.Errorf("ETag = %q、期待値 = %q", got, etag)
+	}
+	if rr.Body.Len() != 0 {
+		t.Errorf("本文の長さ = %d、期待値 = 0", rr.Body.Len())
+	}
+}
