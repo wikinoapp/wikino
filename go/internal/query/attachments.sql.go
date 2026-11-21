@@ -81,7 +81,7 @@ type CreateAttachmentBlobParams struct {
 	CreatedAt   time.Time      `json:"created_at"`
 }
 
-// 事前署名した添付ファイルのblobを作る。Rails期に作られた行 (ActiveStorage::Blob.create_before_direct_upload!) と同じ形にする
+// 事前署名した添付ファイルのblobを作る。実体のキーとチェックサムは保存済みのblobと同じ列に記録する
 func (q *Queries) CreateAttachmentBlob(ctx context.Context, arg CreateAttachmentBlobParams) (string, error) {
 	row := q.db.QueryRowContext(ctx, createAttachmentBlob,
 		arg.Key,

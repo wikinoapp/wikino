@@ -246,7 +246,7 @@ func (uc *DeleteSpaceUsecase) deleteRows(ctx context.Context, spaceID model.Spac
 		return fmt.Errorf("共有ZIPの後始末ジョブの登録に失敗: %w", err)
 	}
 	if err := exportRepo.DeleteLegacyFilesBySpace(ctx, spaceID); err != nil {
-		return fmt.Errorf("エクスポートのRails期のZIPの行の削除に失敗: %w", err)
+		return fmt.Errorf("エクスポートのRails版のZIPの行の削除に失敗: %w", err)
 	}
 	if err := uc.spaceMemberRepo.WithTx(tx).DeleteBySpace(ctx, spaceID); err != nil {
 		return fmt.Errorf("スペースメンバーの削除に失敗: %w", err)

@@ -197,7 +197,7 @@ INNER JOIN attachments a ON a.active_storage_attachment_id = asa.id
 WHERE asb.id = asa.blob_id AND a.id = @id AND a.space_id = @space_id;
 
 -- name: CreateAttachmentBlob :one
--- 事前署名した添付ファイルのblobを作る。Rails期に作られた行 (ActiveStorage::Blob.create_before_direct_upload!) と同じ形にする
+-- 事前署名した添付ファイルのblobを作る。実体のキーとチェックサムは保存済みのblobと同じ列に記録する
 INSERT INTO active_storage_blobs (key, filename, content_type, metadata, service_name, byte_size, checksum, created_at)
 VALUES (@key, @filename, @content_type, @metadata, @service_name, @byte_size, @checksum, @created_at)
 RETURNING id;

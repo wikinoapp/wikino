@@ -13,12 +13,8 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
-// 添付ファイルの署名付きURLで、オブジェクトストレージに返させる応答ヘッダーの決め方。
-// ActiveStorageの既定と同じ規則にし、Rails期から配信してきた添付ファイルの応答を変えない。
-// ActiveStorageの規則は `ActiveStorage::Blob::Servable` と `ActionDispatch::Http::ContentDisposition` にある
-
 // attachmentBinaryContentTypesは、ブラウザが解釈して実行しうるため、表示のときに種類を
-// application/octet-streamに替えて、ダウンロードさせる種類 (ActiveStorageのcontent_types_to_serve_as_binary)
+// application/octet-streamに替えて、ダウンロードさせる種類
 var attachmentBinaryContentTypes = []string{
 	"text/html",
 	"image/svg+xml",
@@ -31,7 +27,7 @@ var attachmentBinaryContentTypes = []string{
 	"text/cache-manifest",
 }
 
-// attachmentInlineContentTypesは、ブラウザの中で開かせる種類 (ActiveStorageのcontent_types_allowed_inline)。
+// attachmentInlineContentTypesは、ブラウザの中で開かせる種類。
 // これ以外の種類はダウンロードさせる
 var attachmentInlineContentTypes = []string{
 	"image/webp",
@@ -50,8 +46,8 @@ var attachmentInlineContentTypes = []string{
 const attachmentBinaryContentType = "application/octet-stream"
 
 // attachmentDeliveryOptionsは、添付ファイルを表示するための署名付きURLに含める応答ヘッダーを返す。
-// `/attachments/{id}` のリダイレクト先に使う。ブラウザが解釈して実行しうる種類は、種類を
-// application/octet-streamに替えてダウンロードさせる
+// `/attachments/{id}` のリダイレクト先に使う。Rails期に保存された添付ファイルも従来どおり配信できるよう、
+// ブラウザが解釈して実行しうる種類はapplication/octet-streamに替えてダウンロードさせる
 func attachmentDeliveryOptions(attachment *model.Attachment) storage.PresignedGetOptions {
 	contentType := attachment.ContentType
 	if isAttachmentServedAsBinary(contentType) {
@@ -90,7 +86,6 @@ func isAttachmentServedAsBinary(contentType string) bool {
 }
 
 // attachmentFilenameReplacerは、Content-Dispositionのファイル名に入れない文字を「-」に置き換える
-// (ActiveStorage::Filename#sanitizedと同じ文字)
 var attachmentFilenameReplacer = strings.NewReplacer(
 	"\u202e", "-", "\x00", "-", "%", "-", "$", "-", "|", "-", ":", "-", ";", "-", "/", "-",
 	"<", "-", ">", "-", "?", "-", "*", "-", `"`, "-", "\t", "-", "\r", "-", "\n", "-", `\`, "-",

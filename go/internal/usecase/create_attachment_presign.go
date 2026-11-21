@@ -140,8 +140,8 @@ func (uc *CreateAttachmentPresignUsecase) Execute(ctx context.Context, input Cre
 	return &CreateAttachmentPresignOutput{
 		AttachmentID:    attachmentID,
 		DirectUploadURL: uploadURL,
-		// ActiveStorageのheaders_for_direct_uploadと同じ組にする。Content-Dispositionは署名に
-		// 含めず、オブジェクトに保存させるだけである
+		// 署名付きURLの作成時に指定したContent-TypeとContent-MD5をアップロード時にも送れるよう返す。
+		// Content-Dispositionは署名に含めず、オブジェクトに表示方法とファイル名を保存するために返す
 		DirectUploadHeaders: map[string]string{
 			"Content-Type":        input.ContentType,
 			"Content-MD5":         input.Checksum,

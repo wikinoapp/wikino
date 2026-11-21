@@ -102,10 +102,8 @@ func (e *Export) InProgress(now time.Time) bool {
 // だけダウンロードを表示し、ダウンロード自身も同じ判定をやり直すため、期限切れより前に描画された
 // リンクがアーカイブより長生きすることはない。
 //
-// Rails期に成功したエクスポートはObjectKeyを持たず、そのアーカイブは本アプリケーションが渡せる
-// ものではない。それらのエクスポートは状態を行へ移したマイグレーションからExportDownloadExpiration
-// のうちに期限切れになるため、この条件が失わせるのは、その日のうちなら成功したはずのダウンロード
-// だけである。
+// ダウンロードできるのは、成功した行にObjectKeyがあり、状態の更新時刻から有効期間内の場合。
+// Rails期のZIPはActiveStorageに関連付けていたためObjectKeyが空で、この判定ではダウンロードの対象から外れる
 func (e *Export) Downloadable(now time.Time) bool {
 	return e.Status == ExportStatusSucceeded &&
 		e.ObjectKey != nil &&
