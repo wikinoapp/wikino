@@ -77,6 +77,18 @@ func TestShow_未ログイン時にトップページが表示される(t *testi
 	if !strings.Contains(body, `<main id="main" tabindex="-1">`) {
 		t.Error("トップページにmainのランドマークが無い")
 	}
+
+	// ログインしていない閲覧者にも、OSの配色に合わせてダークで表示するための宣言とスクリプトを出す
+	for _, want := range []string{
+		`<meta name="color-scheme" content="light dark">`,
+		`<meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf5f1">`,
+		`<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121a1b">`,
+		`document.documentElement.classList.add("dark")`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("トップページに%qが含まれていない", want)
+		}
+	}
 }
 
 func TestShow_ログイン済み時にホームにリダイレクトされる(t *testing.T) {

@@ -11,8 +11,6 @@ const (
 	FeatureFlagPublicAPI FeatureFlagName = "go_public_api"
 	// FeatureFlagRemoteMCPServerはリモートMCPサーバー (MCPクライアントとの連携・ツールの呼び出し) を有効にする
 	FeatureFlagRemoteMCPServer FeatureFlagName = "go_remote_mcp_server"
-	// FeatureFlagDarkModeはGo版の画面のダークモード (OSの配色がダークの閲覧者への暗い配色) を有効にする
-	FeatureFlagDarkMode FeatureFlagName = "go_dark_mode"
 	// FeatureFlagSpaceSettingsGeneralはスペースの一般設定 (/s/{space_identifier}/settings/general) をGo版で処理する
 	FeatureFlagSpaceSettingsGeneral FeatureFlagName = "go_space_settings_general"
 	// FeatureFlagSpaceAttachmentManagementはスペースの添付ファイルの管理 (/s/{space_identifier}/settings/attachments)
@@ -29,7 +27,6 @@ var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagExample,
 	FeatureFlagPublicAPI,
 	FeatureFlagRemoteMCPServer,
-	FeatureFlagDarkMode,
 	FeatureFlagSpaceSettingsGeneral,
 	FeatureFlagSpaceAttachmentManagement,
 	FeatureFlagSpaceDeletion,
