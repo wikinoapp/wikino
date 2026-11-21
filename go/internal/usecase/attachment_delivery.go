@@ -13,6 +13,10 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
+// 添付ファイルの署名付きURLで、オブジェクトストレージに返させる応答ヘッダーの決め方。
+// 保存済みの添付ファイルの表示とダウンロードの扱いが変わらないよう、次の種類の一覧とファイル名の
+// 整え方は、これまで配信してきた応答と同じ規則に保つ
+
 // attachmentBinaryContentTypesは、ブラウザが解釈して実行しうるため、表示のときに種類を
 // application/octet-streamに替えて、ダウンロードさせる種類
 var attachmentBinaryContentTypes = []string{
@@ -46,8 +50,8 @@ var attachmentInlineContentTypes = []string{
 const attachmentBinaryContentType = "application/octet-stream"
 
 // attachmentDeliveryOptionsは、添付ファイルを表示するための署名付きURLに含める応答ヘッダーを返す。
-// `/attachments/{id}` のリダイレクト先に使う。Rails期に保存された添付ファイルも従来どおり配信できるよう、
-// ブラウザが解釈して実行しうる種類はapplication/octet-streamに替えてダウンロードさせる
+// `/attachments/{id}` のリダイレクト先に使う。ブラウザが解釈して実行しうる種類は、開いたときに
+// 実行されないよう、種類をapplication/octet-streamに替えてダウンロードさせる
 func attachmentDeliveryOptions(attachment *model.Attachment) storage.PresignedGetOptions {
 	contentType := attachment.ContentType
 	if isAttachmentServedAsBinary(contentType) {

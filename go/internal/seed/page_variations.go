@@ -92,8 +92,7 @@ func generatePageVariations(
 			return err
 		}
 
-		// ゴミ箱への移動は、Go側が本番で既に行っている数少ない状態変更の1つで
-		// あるため、ここでUPDATEを書かずにRepositoryを経由する。
+		// ゴミ箱への移動は、画面と同じRepositoryのメソッドを経由する。
 		if err := writer.pageRepo.TrashByID(ctx, page.id, spaces.wiki.id, now); err != nil {
 			return fmt.Errorf("ページ %sのゴミ箱への移動に失敗: %w", title, err)
 		}

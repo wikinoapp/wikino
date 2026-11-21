@@ -407,8 +407,7 @@ func (input createDraftInput) label() string {
 // createDraftは下書き1件と、その各保存が残したリビジョンを作成する。
 // これは編集画面から保存したときに残る行の一式にあたる。
 //
-// どちらもRepositoryを経由する。下書きの保存は既にGo側が担当しているため、
-// 画面が呼ぶCreateをそのままシードも呼べる。
+// どちらもRepositoryを経由し、画面が呼ぶCreateをそのままシードも呼ぶ。
 func (w *draftWriter) createDraft(ctx context.Context, input createDraftInput) error {
 	if err := w.pages.ensureTopicInSpace(input.topic); err != nil {
 		return err
