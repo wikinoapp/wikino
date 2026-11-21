@@ -11,13 +11,6 @@ const (
 	FeatureFlagPublicAPI FeatureFlagName = "go_public_api"
 	// FeatureFlagRemoteMCPServerはリモートMCPサーバー (MCPクライアントとの連携・ツールの呼び出し) を有効にする
 	FeatureFlagRemoteMCPServer FeatureFlagName = "go_remote_mcp_server"
-	// FeatureFlagSpaceSettingsGeneralはスペースの一般設定 (/s/{space_identifier}/settings/general) をGo版で処理する
-	FeatureFlagSpaceSettingsGeneral FeatureFlagName = "go_space_settings_general"
-	// FeatureFlagSpaceAttachmentManagementはスペースの添付ファイルの管理 (/s/{space_identifier}/settings/attachments)
-	// をGo版で処理する
-	FeatureFlagSpaceAttachmentManagement FeatureFlagName = "go_space_attachment_management"
-	// FeatureFlagSpaceDeletionはスペースの削除 (/s/{space_identifier}/settings/deletion) をGo版で処理する
-	FeatureFlagSpaceDeletion FeatureFlagName = "go_space_deletion"
 )
 
 // AllFeatureFlagNamesは上で定義した全フラグの一覧。Goは定数グループの
@@ -27,16 +20,12 @@ var AllFeatureFlagNames = []FeatureFlagName{
 	FeatureFlagExample,
 	FeatureFlagPublicAPI,
 	FeatureFlagRemoteMCPServer,
-	FeatureFlagSpaceSettingsGeneral,
-	FeatureFlagSpaceAttachmentManagement,
-	FeatureFlagSpaceDeletion,
 }
 
 // FeatureFlagはフィーチャーフラグのドメインモデル
 type FeatureFlag struct {
-	ID          FeatureFlagID
-	DeviceToken *string
-	UserID      *UserID
-	Name        FeatureFlagName
-	CreatedAt   time.Time
+	ID        FeatureFlagID
+	UserID    *UserID
+	Name      FeatureFlagName
+	CreatedAt time.Time
 }

@@ -9,8 +9,6 @@ import (
 // SettingsDataはスペース設定のトップをレンダリングする元になるデータ。
 //
 // CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル) を、CanDeleteSpaceは削除の項目を出すかを表す。
-// 一般・添付ファイル・削除のリンク先は、フィーチャーフラグが有効な閲覧者にだけGo版の画面になる
-// (振り分けはリバースプロキシが行う)。
 // CanShowPersonalAccessTokensは個人用アクセストークンの項目を、CanShowOAuthGrantsは連携中の
 // アプリの項目を、CanShowOAuthApplicationsはOAuthアプリの項目を出すかを表す。
 type SettingsData struct {

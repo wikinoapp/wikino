@@ -13,9 +13,8 @@ type FeatureFlagBuilder struct {
 	t  *testing.T
 	tx *sql.Tx
 
-	deviceToken *string
-	userID      *model.UserID
-	name        string
+	userID *model.UserID
+	name   string
 }
 
 // NewFeatureFlagBuilderはFeatureFlagBuilderを生成します
@@ -26,12 +25,6 @@ func NewFeatureFlagBuilder(t *testing.T, tx *sql.Tx) *FeatureFlagBuilder {
 		tx:   tx,
 		name: "test_flag",
 	}
-}
-
-// WithDeviceTokenはデバイストークンを設定します
-func (b *FeatureFlagBuilder) WithDeviceToken(deviceToken string) *FeatureFlagBuilder {
-	b.deviceToken = &deviceToken
-	return b
 }
 
 // WithUserIDはユーザーIDを設定します
@@ -50,28 +43,17 @@ func (b *FeatureFlagBuilder) WithName(name string) *FeatureFlagBuilder {
 func (b *FeatureFlagBuilder) Build() model.FeatureFlagID {
 	b.t.Helper()
 
-	if b.deviceToken == nil && b.userID == nil {
-		b.t.Fatal("FeatureFlagBuilder: deviceTokenまたはuserIDのいずれかが必要です。WithDeviceToken()またはWithUserID()を呼んでください")
-	}
-
-	var deviceToken *string
-	if b.deviceToken != nil {
-		deviceToken = b.deviceToken
-	}
-
-	var userID *string
-	if b.userID != nil {
-		s := string(*b.userID)
-		userID = &s
+	if b.userID == nil {
+		b.t.Fatal("FeatureFlagBuilder: userIDが必要です。WithUserID()を呼んでください")
 	}
 
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO feature_flags (device_token, user_id, name)
-		 VALUES ($1, $2, $3)
+		`INSERT INTO feature_flags (user_id, name)
+		 VALUES ($1, $2)
 		 RETURNING id`,
-		deviceToken, userID, b.name,
+		string(*b.userID), b.name,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("フィーチャーフラグ作成に失敗: %v", err)

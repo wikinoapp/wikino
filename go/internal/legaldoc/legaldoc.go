@@ -53,7 +53,7 @@ func Lookup(path string) (Document, bool) {
 	return Document{}, false
 }
 
-// Pathsは一覧表の全文書の固定URLのパスを返す。ルーティングとリバースプロキシの振り分けの登録に使う
+// Pathsは一覧表の全文書の固定URLのパスを返す。ルーティングの登録に使う
 func Paths() []string {
 	paths := make([]string, len(documents))
 	for i, doc := range documents {

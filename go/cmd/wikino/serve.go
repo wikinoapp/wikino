@@ -959,11 +959,7 @@ func runServe() {
 		os.Exit(1)
 	}
 
-	r, err := newHTTPRouter(cfg, apiProblems, featureFlagRepo, flashMgr)
-	if err != nil {
-		slog.Error("リバースプロキシミドルウェアの初期化に失敗しました", "error", err)
-		os.Exit(1)
-	}
+	r := newHTTPRouter(cfg, apiProblems, flashMgr)
 
 	// 静的ファイルの配信 (Tailwind CLI + esbuildのビルド結果)
 	fileServer := http.FileServer(http.Dir("./static"))
@@ -1284,30 +1280,23 @@ func runServe() {
 		r.Get("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 
-		// スペースの一般設定。リバースプロキシはgo_space_settings_generalが有効な閲覧者のリクエストだけを
-		// ここへ振り分け、それ以外はRails版が処理する。
+		// スペースの一般設定。
 		r.Get("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Show)
 		r.Head("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Show)
 		r.Patch("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Update)
 
-		// スペースの添付ファイルの管理。リバースプロキシはgo_space_attachment_managementが有効な閲覧者の
-		// リクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		// スペースの添付ファイルの管理。
 		r.Get("/s/{space_identifier}/settings/attachments", spaceSettingsAttachmentHandler.Index)
 		r.Head("/s/{space_identifier}/settings/attachments", spaceSettingsAttachmentHandler.Index)
 		r.Delete("/s/{space_identifier}/settings/attachments/{attachment_id}", spaceSettingsAttachmentHandler.Delete)
 
-		// スペースの削除。リバースプロキシはgo_space_deletionが有効な閲覧者のリクエストだけを
-		// ここへ振り分け、それ以外はRails版が処理する。
+		// スペースの削除。
 		r.Get("/s/{space_identifier}/settings/deletion/new", spaceDeletionHandler.New)
 		r.Head("/s/{space_identifier}/settings/deletion/new", spaceDeletionHandler.New)
 		r.Post("/s/{space_identifier}/settings/deletion", spaceDeletionHandler.Create)
 
-		// 個人用アクセストークンの一覧・発行フォーム・発行・失効。Rails版には無い画面で、リバース
-		// プロキシは名前空間全体をGoへ渡してくる。サブルーターにするのはエクスポートと同じく、
-		// どのルートも受けないリクエストにchi既定の本文なし405ではなく404ページを返すため。
+		// 個人用アクセストークンの一覧・発行フォーム・発行・失効。
 		r.Route("/s/{space_identifier}/settings/personal_access_tokens", func(r chi.Router) {
-			r.MethodNotAllowed(httperror.NotFound)
-
 			r.Get("/", personalAccessTokenHandler.Index)
 			r.Head("/", personalAccessTokenHandler.Index)
 			r.Post("/", personalAccessTokenHandler.Create)
@@ -1316,12 +1305,8 @@ func runServe() {
 			r.Delete("/{personal_access_token_id}", personalAccessTokenHandler.Delete)
 		})
 
-		// スペースのOAuthアプリの一覧・登録・詳細・編集・削除とシークレットの再発行。個人用アクセストークンと同じく
-		// Rails版には無い画面で、リバースプロキシは名前空間全体をGoへ渡してくるため、どのルートも
-		// 受けないリクエストには404ページを返す。
+		// スペースのOAuthアプリの一覧・登録・詳細・編集・削除とシークレットの再発行。
 		r.Route("/s/{space_identifier}/settings/oauth_applications", func(r chi.Router) {
-			r.MethodNotAllowed(httperror.NotFound)
-
 			r.Get("/", oauthApplicationHandler.Index)
 			r.Head("/", oauthApplicationHandler.Index)
 			r.Post("/", oauthApplicationHandler.Create)
@@ -1336,12 +1321,8 @@ func runServe() {
 			r.Post("/{oauth_application_id}/client_secret", oauthApplicationClientSecretHandler.Create)
 		})
 
-		// 自分が許可した連携中のアプリの一覧と解除。個人用アクセストークンと同じくRails版には無い
-		// 画面で、リバースプロキシは名前空間全体をGoへ渡してくるため、どのルートも受けない
-		// リクエストには404ページを返す。
+		// 自分が許可した連携中のアプリの一覧と解除。
 		r.Route("/s/{space_identifier}/settings/oauth_grants", func(r chi.Router) {
-			r.MethodNotAllowed(httperror.NotFound)
-
 			r.Get("/", oauthGrantHandler.Index)
 			r.Head("/", oauthGrantHandler.Index)
 			r.Delete("/{oauth_grant_id}", oauthGrantHandler.Delete)
@@ -1364,17 +1345,10 @@ func runServe() {
 		// スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
 		// ダウンロード。これらの画面のパンくずは上のスペース設定のトップへ戻る。
 		//
-		// この名前空間をサブルーターにするのは、どのルートも受けないリクエストに、chi既定の
-		// 本文なし405ではなく404ページを返すため。リバースプロキシは、2つ目のエクスポートを
-		// 防ぐ仕組みを持たないRailsの書き込み処理へ開始が届かないよう、メソッドによらず名前空間
-		// 全体を渡してくる。Rails版はその配下の他のURLには自身の404を返していた。
-		//
 		// GETのそれぞれにHEADを併記するのは、chiがメソッドごとにルートを引きGETへ
 		// フォールバックしない一方、Railsのルーターは一致しないHEADをGETとして読むため。
 		// 併記しないと、GETに200を返す画面がHEADには405を返す。
 		r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
-			r.MethodNotAllowed(httperror.NotFound)
-
 			r.Post("/", exportHandler.Create)
 			r.Get("/new", exportHandler.New)
 			r.Head("/new", exportHandler.New)
@@ -1426,24 +1400,15 @@ func runServe() {
 }
 
 // newHTTPRouterは、各ルートに共通するミドルウェアを登録したルーターを返す
-func newHTTPRouter(cfg *config.Config, apiProblems *apierror.Writer, featureFlagRepo *repository.FeatureFlagRepository, flashMgr *session.FlashManager) (*chi.Mux, error) {
+func newHTTPRouter(cfg *config.Config, apiProblems *apierror.Writer, flashMgr *session.FlashManager) *chi.Mux {
 	r := chi.NewRouter()
 
-	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
+	// どのルートにも一致しないパスと、ルートはあるが対応していないメソッドに、404ページを返す。
+	// 対応していないメソッドにchi既定の本文の無い405を返さず、存在しないURLと同じ扱いにする。
+	// ルートより前に設定し、サブルーターに引き継がせる。公開Web APIのサブルーターは自身のProblem Detailsの
+	// 404・405を先に設定しているため、引き継がない
 	r.NotFound(httperror.NotFound)
-
-	// リバースプロキシミドルウェアを初期化 (Rails版へのプロキシ)
-	// 注: RailsAppURLが設定されている場合のみ有効化
-	// リバースプロキシはMethod OverrideやCSRFミドルウェアより前に配置する。
-	// これらのミドルウェアはr.ParseForm()やr.FormValue()でリクエストボディを
-	// 消費するため、プロキシ前に実行するとRails版への転送時にボディが空になる。
-	if cfg.RailsAppURL != "" {
-		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg, featureFlagRepo)
-		if err != nil {
-			return nil, err
-		}
-		r.Use(reverseProxyMiddleware.Middleware)
-	}
+	r.MethodNotAllowed(httperror.NotFound)
 
 	// 公開Web APIのレスポンスに共通のヘッダーを付ける。メンテナンス中の503や
 	// パニック時の500にも付けるため、それらのミドルウェアより前に配置する
@@ -1455,7 +1420,6 @@ func newHTTPRouter(cfg *config.Config, apiProblems *apierror.Writer, featureFlag
 
 	// リクエストボディサイズ制限ミドルウェア
 	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
-	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
 	r.Use(newRequestBodyLimit(cfg, apiProblems))
 
 	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
@@ -1491,7 +1455,7 @@ func newHTTPRouter(cfg *config.Config, apiProblems *apierror.Writer, featureFlag
 	r.Use(middleware.NewCSRF(cfg).Middleware)
 	r.Use(flashMgr.Middleware)
 
-	return r, nil
+	return r
 }
 
 // newObjectStorageは、添付ファイルとエクスポートのZIPを置くオブジェクトストレージを組み立てる。

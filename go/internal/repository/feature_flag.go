@@ -31,13 +31,3 @@ func (r *FeatureFlagRepository) IsEnabled(ctx context.Context, userID model.User
 		Name:   string(name),
 	})
 }
-
-// IsEnabledForDeviceはデバイストークンまたはログインセッション経由でフラグが有効かどうかを返す
-// deviceTokenとsessionTokenの両方を受け取り、1クエリで判定する
-func (r *FeatureFlagRepository) IsEnabledForDevice(ctx context.Context, deviceToken string, sessionToken string, name model.FeatureFlagName) (bool, error) {
-	return r.q.IsFeatureFlagEnabledForDevice(ctx, query.IsFeatureFlagEnabledForDeviceParams{
-		DeviceToken: sql.NullString{String: deviceToken, Valid: deviceToken != ""},
-		Token:       sessionToken,
-		Name:        string(name),
-	})
-}

@@ -9,9 +9,9 @@ import (
 )
 
 // Cookieを使わないリクエストの定義。
-// リバースプロキシのGo振り分け・CSRFトークンの発行と検証の除外・フラッシュの消費除外がこの定義を共有する。
-// パスを足すときは `CookielessPaths` に加え、リバースプロキシの `goHandledRegexPatterns` にも
-// 同じパターンを同じメソッドで登録する (登録漏れはリバースプロキシのテストで検出する)。
+// CSRFトークンの発行と検証の除外・フラッシュの消費除外がこの定義を共有する。
+// パスを足すときは、ルートが使うパスの定数・ヘルパーで作ったURLを `cmd/wikino` の
+// `TestCookielessPaths_MatchRoutePaths` にも足す (定義とルートの食い違いをそこで検出する)。
 //
 //   - og:image配信: SNSのクローラーが取得し共有キャッシュに載せる画像のため、レスポンスに `Set-Cookie` を
 //     付けない (Cloudflareは既定では `Set-Cookie` 付きのレスポンスをキャッシュせず、キャッシュする設定に
@@ -48,7 +48,7 @@ var (
 	OAuthTokenPathPattern = regexp.MustCompile(`^/oauth/(token|revoke|device_authorization)$`)
 
 	// APIMetadataPathPatternはOAuthとAPIのメタデータのパス。
-	// リバースプロキシのGo振り分けと同じ範囲に限定する
+	// 他の用途の `/.well-known/` を含めないよう、使う名前だけに限定する
 	APIMetadataPathPattern = regexp.MustCompile(`^/\.well-known/(oauth-authorization-server|oauth-protected-resource(/.*)?|api-catalog)$`)
 
 	// MCPServerPathPatternはリモートMCPサーバーのエンドポイントのパス (model.MCPServerPath)

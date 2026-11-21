@@ -42,6 +42,27 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/usecase"
 )
 
+// newTestAPIServerは、ルーターの構成を確かめるテストで使う、データに触れない公開APIのハンドラーを返す
+func newTestAPIServer() apigen.StrictServerInterface {
+	return apihandler.NewServer(
+		apiattachment.NewHandler(nil),
+		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
+		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
+		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
+		apidraftpagebodyedit.NewHandler("https://example.com", nil),
+		apidraftpagepublication.NewHandler("https://example.com", nil),
+		apidraftpagerevision.NewHandler(nil, nil),
+		openapi_description.NewHandler(api.OpenAPIDescription),
+		apipage.NewHandler("https://example.com", usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
+		apipagebacklink.NewHandler("https://example.com", nil),
+		apipagebodyedit.NewHandler("https://example.com", nil),
+		apipagelink.NewHandler("https://example.com", nil),
+		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
+		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
+		apiwikilinkpreview.NewHandler("https://example.com", nil),
+	)
+}
+
 // newTestAPIHandlerは、serve.goと同じく `/api` にAPIのルーターをマウントしたハンドラーを返す
 func newTestAPIHandler(t *testing.T, server apigen.StrictServerInterface) http.Handler {
 	t.Helper()
@@ -63,6 +84,15 @@ type testAPIRateLimiter interface {
 func newTestAPIHandlerWith(t *testing.T, server apigen.StrictServerInterface, authenticator testAPIAuthenticator, limiter testAPIRateLimiter) http.Handler {
 	t.Helper()
 
+	r := chi.NewRouter()
+	mountTestAPIRouter(t, r, server, authenticator, limiter)
+	return r
+}
+
+// mountTestAPIRouterは、serve.goと同じくrの `/api` にAPIのルーターをマウントする
+func mountTestAPIRouter(t *testing.T, r chi.Router, server apigen.StrictServerInterface, authenticator testAPIAuthenticator, limiter testAPIRateLimiter) {
+	t.Helper()
+
 	problems := apierror.NewWriter("https://example.com")
 	spec, err := apigen.GetSpec()
 	if err != nil {
@@ -76,10 +106,8 @@ func newTestAPIHandlerWith(t *testing.T, server apigen.StrictServerInterface, au
 	tokenAuth := middleware.NewAPITokenAuth(authenticator, problems)
 	rateLimit := middleware.NewAPIRateLimit(limiter, problems, middleware.APISpaceMemberRateLimitPolicy)
 
-	r := chi.NewRouter()
 	reference := api_reference.NewHandler(&config.Config{Domain: "example.com"})
 	r.Mount(apiMountPath, newAPIRouter(server, reference.Show, problems, tokenAuth.Middleware, rateLimit, validator))
-	return r
 }
 
 // testRateLimitedAPITokenはtestAPITokenAuthenticatorが受け付ける唯一のトークン。
@@ -112,23 +140,7 @@ func (exceededAPIRateLimiter) Check(context.Context, ratelimit.CheckInput) (*rat
 func TestAPIRouter(t *testing.T) {
 	t.Parallel()
 
-	handler := newTestAPIHandler(t, apihandler.NewServer(
-		apiattachment.NewHandler(nil),
-		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
-		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
-		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
-		apidraftpagebodyedit.NewHandler("https://example.com", nil),
-		apidraftpagepublication.NewHandler("https://example.com", nil),
-		apidraftpagerevision.NewHandler(nil, nil),
-		openapi_description.NewHandler(api.OpenAPIDescription),
-		apipage.NewHandler("https://example.com", usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
-		apipagebacklink.NewHandler("https://example.com", nil),
-		apipagebodyedit.NewHandler("https://example.com", nil),
-		apipagelink.NewHandler("https://example.com", nil),
-		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
-		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
-		apiwikilinkpreview.NewHandler("https://example.com", nil),
-	))
+	handler := newTestAPIHandler(t, newTestAPIServer())
 
 	t.Run("OpenAPI記述をトークン無しで配信する", func(t *testing.T) {
 		t.Parallel()
@@ -248,23 +260,7 @@ func TestAPIRouter_BodyLimitProblems(t *testing.T) {
 	t.Parallel()
 
 	problems := apierror.NewWriter("https://example.com")
-	handler := middleware.APIResponseHeader(middleware.NewBodyLimit(problems)(newTestAPIHandler(t, apihandler.NewServer(
-		apiattachment.NewHandler(nil),
-		apicurrentspacemember.NewHandler(usecase.NewGetAPICurrentSpaceMemberUsecase()),
-		apicurrenttoken.NewHandler(usecase.NewGetAPICurrentTokenUsecase()),
-		apidraftpage.NewHandler("https://example.com", usecase.NewListAPIDraftPagesUsecase(nil, nil, nil), usecase.NewGetAPIDraftPageUsecase(nil, nil, nil, nil), nil, nil, nil),
-		apidraftpagebodyedit.NewHandler("https://example.com", nil),
-		apidraftpagepublication.NewHandler("https://example.com", nil),
-		apidraftpagerevision.NewHandler(nil, nil),
-		openapi_description.NewHandler(api.OpenAPIDescription),
-		apipage.NewHandler("https://example.com", usecase.NewListAPIPagesUsecase(nil, nil, nil), usecase.NewGetAPIPageUsecase(nil, nil, nil), nil, nil),
-		apipagebacklink.NewHandler("https://example.com", nil),
-		apipagebodyedit.NewHandler("https://example.com", nil),
-		apipagelink.NewHandler("https://example.com", nil),
-		apispace.NewHandler(usecase.NewGetAPISpaceUsecase()),
-		apitopic.NewHandler(usecase.NewListAPITopicsUsecase(nil, nil), usecase.NewGetAPITopicUsecase(nil, nil)),
-		apiwikilinkpreview.NewHandler("https://example.com", nil),
-	))))
+	handler := middleware.APIResponseHeader(middleware.NewBodyLimit(problems)(newTestAPIHandler(t, newTestAPIServer())))
 
 	tests := []struct {
 		name       string

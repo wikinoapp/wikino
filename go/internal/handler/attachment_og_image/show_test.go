@@ -261,20 +261,9 @@ func TestShow_HeadWithoutCookie(t *testing.T) {
 	})
 	imageHandler := newOgImageHandler(t, attachmentRepo, true)
 
-	railsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Rails-Handled", "true")
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	defer railsServer.Close()
-
 	cfg := &config.Config{Domain: "example.com"}
-	reverseProxy, err := middleware.NewReverseProxyMiddleware(railsServer.URL, cfg, nil)
-	if err != nil {
-		t.Fatalf("NewReverseProxyMiddleware()のエラー = %v", err)
-	}
 
 	router := chi.NewRouter()
-	router.Use(reverseProxy.Middleware)
 	router.Use(middleware.NewCSRF(cfg).Middleware)
 	router.Head("/attachments/{attachment_id}/og_image", imageHandler.Show)
 
@@ -290,9 +279,6 @@ func TestShow_HeadWithoutCookie(t *testing.T) {
 	}
 	if got := rr.Header().Values("Set-Cookie"); len(got) != 0 {
 		t.Errorf("Set-Cookie = %v、期待値 = なし", got)
-	}
-	if got := rr.Header().Get("X-Rails-Handled"); got != "" {
-		t.Errorf("X-Rails-Handled = %q、期待値 = 空", got)
 	}
 }
 

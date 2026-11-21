@@ -17,8 +17,6 @@ import (
 // SettingsDataはスペース設定のトップをレンダリングする元になるデータ。
 //
 // CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル) を、CanDeleteSpaceは削除の項目を出すかを表す。
-// 一般・添付ファイル・削除のリンク先は、フィーチャーフラグが有効な閲覧者にだけGo版の画面になる
-// (振り分けはリバースプロキシが行う)。
 // CanShowPersonalAccessTokensは個人用アクセストークンの項目を、CanShowOAuthGrantsは連携中の
 // アプリの項目を、CanShowOAuthApplicationsはOAuthアプリの項目を出すかを表す。
 type SettingsData struct {
@@ -189,7 +187,7 @@ func settingsLink(path templates.Path, labelKey string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templ.SafeURL(string(path))).ResolveURL(ctx)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/settings.templ`, Line: 71, Col: 81}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/settings.templ`, Line: 69, Col: 81}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -202,7 +200,7 @@ func settingsLink(path templates.Path, labelKey string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, labelKey))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/settings.templ`, Line: 72, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/settings.templ`, Line: 70, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {

@@ -36,9 +36,6 @@ type Config struct {
 	// TrustedProxyCIDRsはX-Forwarded-Forを右からたどるときに信頼するプロキシのIP範囲
 	TrustedProxyCIDRs []netip.Prefix
 
-	// Rails版アプリのURL (リバースプロキシ用)
-	RailsAppURL string
-
 	// Cloudflare Turnstile (Bot対策)
 	TurnstileEnabled   bool
 	TurnstileSiteKey   string
@@ -152,9 +149,6 @@ func Load() (*Config, error) {
 		// 起動は止めずに、設定漏れに気付けるよう記録する (開発者向けの運用ログ)
 		slog.Warn("本番環境でWIKINO_TRUSTED_PROXY_CIDRSが未設定です。OAuthのトークンエンドポイントのレート制限は接続元のIPで数えます")
 	}
-
-	// Rails版アプリのURL (オプショナル - リバースプロキシ機能で使用)
-	cfg.RailsAppURL = os.Getenv("WIKINO_RAILS_APP_URL")
 
 	// Cloudflare Turnstile (Bot対策 - ログイン・サインアップフォームで使用)。
 	// WIKINO_TURNSTILE_ENABLEDはstrconv.ParseBoolで解釈するため、"false" / "0" /
