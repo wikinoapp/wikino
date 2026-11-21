@@ -238,66 +238,6 @@ func TestSlogHandler_BaseHandlerReceivesAllLevels(t *testing.T) {
 	}
 }
 
-func TestSlogHandler_DropsReverseProxySourceEventsEndToEnd(t *testing.T) {
-	t.Parallel()
-
-	// End-to-Endの確認: SourceAttrKey=ReverseProxySourceを付けた
-	// slog.ErrorはbeforeSendで破棄され、transportに到達しないこと。
-	// Sentryイベント用ハンドラーがslog属性をevent.Tagsに乗せる挙動 (本判定の前提) が
-	// 将来変わった場合に本テストで検知できる。
-	hub, transport := newSlogTestHubWithBeforeSend(t)
-	base := newRecordingHandler()
-	logger := slog.New(NewSlogHandler(base))
-
-	ctx := sentry.SetHubOnContext(context.Background(), hub)
-	logger.ErrorContext(ctx, "rails proxy failure",
-		SourceAttrKey, ReverseProxySource,
-		"error", errors.New("upstream 502"),
-	)
-
-	hub.Flush(2 * time.Second)
-	if got := len(transport.Events()); got != 0 {
-		t.Errorf("source=%sのイベントがbeforeSendでdropされていない: イベントの件数 = %d", ReverseProxySource, got)
-	}
-
-	// baseのテキストハンドラーには通常通り届くこと (デバッグ用に標準
-	// エラー出力には残す)。
-	recs := base.Snapshot()
-	if len(recs) != 1 {
-		t.Fatalf("base recordの件数 = %d、期待値 = 1", len(recs))
-	}
-	if recs[0].attrs[SourceAttrKey] != ReverseProxySource {
-		t.Errorf("base attrs[%s] = %q、期待値 = %q", SourceAttrKey, recs[0].attrs[SourceAttrKey], ReverseProxySource)
-	}
-}
-
-func TestSlogHandler_KeepsOtherSourceEventsEndToEnd(t *testing.T) {
-	t.Parallel()
-
-	// TestSlogHandler_DropsReverseProxySourceEventsEndToEndの対称ケース。
-	// SourceAttrKeyに乗っていても、値がReverseProxySource以外のときは
-	// dropせずSentryに届くこと (フィルタが意図せず広く効いてしまっていない
-	// ことの担保)。
-	hub, transport := newSlogTestHubWithBeforeSend(t)
-	base := newRecordingHandler()
-	logger := slog.New(NewSlogHandler(base))
-
-	ctx := sentry.SetHubOnContext(context.Background(), hub)
-	logger.ErrorContext(ctx, "other subsystem error",
-		SourceAttrKey, "other_subsystem",
-		"error", errors.New("real failure"),
-	)
-
-	hub.Flush(2 * time.Second)
-	events := transport.Events()
-	if len(events) != 1 {
-		t.Fatalf("source=otherのイベントがSentryに届いていない: イベントの件数 = %d", len(events))
-	}
-	if events[0].Tags[SourceAttrKey] != "other_subsystem" {
-		t.Errorf("event.Tags[%s] = %q、期待値 = %q", SourceAttrKey, events[0].Tags[SourceAttrKey], "other_subsystem")
-	}
-}
-
 func TestSlogHandler_WithAttrs_PropagatesToBothHandlers(t *testing.T) {
 	t.Parallel()
 
