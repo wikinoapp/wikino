@@ -13,10 +13,53 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/storage"
+	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
+
+func TestWelcomePageDoesNotQueryFeatureFlags(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	counter := testutil.NewQueryCounter(tx)
+	queries := counter.Queries()
+	rails := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(rails.Close)
+	cfg := &config.Config{Env: "test", Domain: "example.test", RailsAppURL: rails.URL}
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+	featureFlagRepo := repository.NewFeatureFlagRepository(queries)
+	r, err := newHTTPRouter(cfg, apierror.NewWriter(cfg.AppURL()), featureFlagRepo, flashMgr)
+	if err != nil {
+		t.Fatalf("共通ミドルウェアの初期化に失敗: %v", err)
+	}
+
+	sessionMgr := session.NewManager(repository.NewUserRepository(queries), repository.NewUserSessionRepository(queries), cfg)
+	authMiddleware := middleware.NewAuth(sessionMgr)
+	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
+	r.With(authMiddleware.SetUser, middleware.SentryUserContext, middleware.TimeZone).Get("/", welcomeHandler.Show)
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+	// 発行済みのデバイスCookieだけを持つ未ログインの閲覧者にも照会が発生しないことを確かめる
+	req.AddCookie(&http.Cookie{Name: middleware.DeviceTokenCookieName, Value: "welcome-device"})
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+	if !strings.Contains(rr.Body.String(), `<meta name="color-scheme" content="light dark">`) {
+		t.Error("トップページに配色の宣言がない")
+	}
+	if got := counter.CountContaining("feature_flags"); got != 0 {
+		t.Errorf("フィーチャーフラグの照会回数 = %d、期待値 = 0", got)
+	}
+}
 
 // TestNewObjectStorage_TestE2EStorageは、フェイクのストレージとその送受信を受けるハンドラーを、e2eのサーバーでだけ組み立てることを確かめる
 func TestNewObjectStorage_TestE2EStorage(t *testing.T) {

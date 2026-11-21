@@ -323,7 +323,6 @@ func runServe() {
 
 	// ミドルウェアを初期化
 	authMiddleware := middleware.NewAuth(sessionMgr)
-	csrfMiddleware := middleware.NewCSRF(cfg)
 
 	// imgproxyヘルパー / OgImageBuilderを初期化 (環境変数が揃っている場合のみ有効)
 	// 環境変数が未設定でもサーバー起動は継続するが、その場合 /attachments/:id/og_imageに到達した
@@ -960,70 +959,11 @@ func runServe() {
 		os.Exit(1)
 	}
 
-	r := chi.NewRouter()
-
-	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
-	r.NotFound(httperror.NotFound)
-
-	// リバースプロキシミドルウェアを初期化 (Rails版へのプロキシ)
-	// 注: RailsAppURLが設定されている場合のみ有効化
-	// リバースプロキシはMethod OverrideやCSRFミドルウェアより前に配置する。
-	// これらのミドルウェアはr.ParseForm()やr.FormValue()でリクエストボディを
-	// 消費するため、プロキシ前に実行するとRails版への転送時にボディが空になる。
-	if cfg.RailsAppURL != "" {
-		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg, featureFlagRepo)
-		if err != nil {
-			slog.Error("リバースプロキシミドルウェアの初期化に失敗しました", "error", err)
-			os.Exit(1)
-		}
-		r.Use(reverseProxyMiddleware.Middleware)
+	r, err := newHTTPRouter(cfg, apiProblems, featureFlagRepo, flashMgr)
+	if err != nil {
+		slog.Error("リバースプロキシミドルウェアの初期化に失敗しました", "error", err)
+		os.Exit(1)
 	}
-
-	// 公開Web APIのレスポンスに共通のヘッダーを付ける。メンテナンス中の503や
-	// パニック時の500にも付けるため、それらのミドルウェアより前に配置する
-	r.Use(middleware.APIResponseHeader)
-
-	// メンテナンスモードミドルウェア
-	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg, apiProblems)
-	r.Use(maintenanceMW.Middleware)
-
-	// リクエストボディサイズ制限ミドルウェア
-	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
-	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
-	r.Use(newRequestBodyLimit(cfg, apiProblems))
-
-	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
-	r.Use(middleware.MethodOverride)
-
-	// 共通ミドルウェア
-	r.Use(middleware.NewAccessLog(slog.Default()))
-	r.Use(chimiddleware.RequestID)
-	// クライアントIPはinternal/clientip (CF-Connecting-IP優先) で都度解決するため、
-	// chiのIPミドルウェアは意図的に登録しない。chiのRealIPはIP spoofing
-	// (GHSA-3fxj-6jh8-hvhx) のためdeprecatedでもあり、再導入しないこと。
-
-	// Recovererはsentryhttpより前 (= 外側) に登録する。sentryhttpが
-	// Repanic: trueで再panicしたものをここで握り潰して500を返す。
-	// Sentry SDK公式READMEも「recovery middlewareはsentryhttpより外側に
-	// 置く」と指示している。APIのパスには500をProblem Detailsで返す。
-	r.Use(middleware.NewRecoverer(apiProblems).Middleware)
-
-	// sentryhttpはリクエスト単位のHubをcontextに積み、panicを捕捉
-	// してSentryに送信し、パフォーマンストランザクションを開始する。
-	// Repanic: trueにより捕捉後に再panicすることで、外側のRecovererが
-	// 500を返し、Go runtimeの通常のpanicセマンティクスも維持できる。
-	sentryHTTP := sentryhttp.New(sentryhttp.Options{Repanic: true})
-	r.Use(sentryHTTP.Handle)
-
-	// SentryTransactionはトランザクション名をchiのルートパターンに
-	// 上書きするミドルウェア。sentryhttpの後 (= 内側) に登録することで、LIFOの
-	// defer順序によりsentryhttpのtransaction.Finish() やrecoverWithSentry
-	// のpanic捕捉より先に名前の上書きが走ることを保証する。
-	r.Use(middleware.SentryTransaction)
-
-	r.Use(i18n.Middleware)
-	r.Use(csrfMiddleware.Middleware)
-	r.Use(flashMgr.Middleware)
 
 	// 静的ファイルの配信 (Tailwind CLI + esbuildのビルド結果)
 	fileServer := http.FileServer(http.Dir("./static"))
@@ -1483,6 +1423,75 @@ func runServe() {
 	}
 
 	slog.Info("サーバーを停止しました")
+}
+
+// newHTTPRouterは、各ルートに共通するミドルウェアを登録したルーターを返す
+func newHTTPRouter(cfg *config.Config, apiProblems *apierror.Writer, featureFlagRepo *repository.FeatureFlagRepository, flashMgr *session.FlashManager) (*chi.Mux, error) {
+	r := chi.NewRouter()
+
+	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
+	r.NotFound(httperror.NotFound)
+
+	// リバースプロキシミドルウェアを初期化 (Rails版へのプロキシ)
+	// 注: RailsAppURLが設定されている場合のみ有効化
+	// リバースプロキシはMethod OverrideやCSRFミドルウェアより前に配置する。
+	// これらのミドルウェアはr.ParseForm()やr.FormValue()でリクエストボディを
+	// 消費するため、プロキシ前に実行するとRails版への転送時にボディが空になる。
+	if cfg.RailsAppURL != "" {
+		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg, featureFlagRepo)
+		if err != nil {
+			return nil, err
+		}
+		r.Use(reverseProxyMiddleware.Middleware)
+	}
+
+	// 公開Web APIのレスポンスに共通のヘッダーを付ける。メンテナンス中の503や
+	// パニック時の500にも付けるため、それらのミドルウェアより前に配置する
+	r.Use(middleware.APIResponseHeader)
+
+	// メンテナンスモードミドルウェア
+	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg, apiProblems)
+	r.Use(maintenanceMW.Middleware)
+
+	// リクエストボディサイズ制限ミドルウェア
+	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
+	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
+	r.Use(newRequestBodyLimit(cfg, apiProblems))
+
+	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
+	r.Use(middleware.MethodOverride)
+
+	// 共通ミドルウェア
+	r.Use(middleware.NewAccessLog(slog.Default()))
+	r.Use(chimiddleware.RequestID)
+	// クライアントIPはinternal/clientip (CF-Connecting-IP優先) で都度解決するため、
+	// chiのIPミドルウェアは意図的に登録しない。chiのRealIPはIP spoofing
+	// (GHSA-3fxj-6jh8-hvhx) のためdeprecatedでもあり、再導入しないこと。
+
+	// Recovererはsentryhttpより前 (= 外側) に登録する。sentryhttpが
+	// Repanic: trueで再panicしたものをここで握り潰して500を返す。
+	// Sentry SDK公式READMEも「recovery middlewareはsentryhttpより外側に
+	// 置く」と指示している。APIのパスには500をProblem Detailsで返す。
+	r.Use(middleware.NewRecoverer(apiProblems).Middleware)
+
+	// sentryhttpはリクエスト単位のHubをcontextに積み、panicを捕捉
+	// してSentryに送信し、パフォーマンストランザクションを開始する。
+	// Repanic: trueにより捕捉後に再panicすることで、外側のRecovererが
+	// 500を返し、Go runtimeの通常のpanicセマンティクスも維持できる。
+	sentryHTTP := sentryhttp.New(sentryhttp.Options{Repanic: true})
+	r.Use(sentryHTTP.Handle)
+
+	// SentryTransactionはトランザクション名をchiのルートパターンに
+	// 上書きするミドルウェア。sentryhttpの後 (= 内側) に登録することで、LIFOの
+	// defer順序によりsentryhttpのtransaction.Finish() やrecoverWithSentry
+	// のpanic捕捉より先に名前の上書きが走ることを保証する。
+	r.Use(middleware.SentryTransaction)
+
+	r.Use(i18n.Middleware)
+	r.Use(middleware.NewCSRF(cfg).Middleware)
+	r.Use(flashMgr.Middleware)
+
+	return r, nil
 }
 
 // newObjectStorageは、添付ファイルとエクスポートのZIPを置くオブジェクトストレージを組み立てる。
