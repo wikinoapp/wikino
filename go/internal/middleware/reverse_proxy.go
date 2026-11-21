@@ -252,6 +252,8 @@ var goHandledRegexPatterns = []goHandledPattern{
 	{pattern: session.APIMetadataPathPattern},
 	// リモートMCPサーバー (`/mcp`)。Rails版には存在しない。POST以外のメソッドもGoで受けて405を返す
 	{pattern: session.MCPServerPathPattern},
+	// ルート直下のファイル (ファビコン・Apple Touch Icon・robots.txt)。GoのルートがGET・HEADだけに応答する
+	{pattern: session.RootFilePathPattern, methods: []string{http.MethodGet, http.MethodHead}},
 }
 
 // NewReverseProxyMiddlewareは新しいReverseProxyMiddlewareを作成

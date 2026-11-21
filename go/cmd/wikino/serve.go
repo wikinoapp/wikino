@@ -42,6 +42,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_catalog"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
+	"github.com/wikinoapp/wikino/go/internal/handler/apple_touch_icon"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_presign"
@@ -54,6 +55,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	exporthandler "github.com/wikinoapp/wikino/go/internal/handler/export"
 	"github.com/wikinoapp/wikino/go/internal/handler/export_download"
+	"github.com/wikinoapp/wikino/go/internal/handler/favicon"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
 	"github.com/wikinoapp/wikino/go/internal/handler/legal_document"
@@ -82,6 +84,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	personalaccesstokenhandler "github.com/wikinoapp/wikino/go/internal/handler/personal_access_token"
 	"github.com/wikinoapp/wikino/go/internal/handler/profile"
+	"github.com/wikinoapp/wikino/go/internal/handler/robots_txt"
 	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
 	settingshandler "github.com/wikinoapp/wikino/go/internal/handler/settings"
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_account_deletion"
@@ -348,6 +351,10 @@ func runServe() {
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
 	manifestHandler := manifest.NewHandler(cfg)
+	staticFS := os.DirFS("./static")
+	faviconHandler := favicon.NewHandler(staticFS)
+	appleTouchIconHandler := apple_touch_icon.NewHandler(staticFS)
+	robotsTxtHandler := robots_txt.NewHandler()
 	legalDocumentHandler := legal_document.NewHandler()
 	oauthAuthorizationServerMetadataHandler := oauth_authorization_server_metadata.NewHandler(cfg)
 	oauthProtectedResourceMetadataHandler := oauth_protected_resource_metadata.NewHandler(cfg, usecase.NewGetOAuthProtectedResourceMetadataUsecase(spaceRepo))
@@ -1032,6 +1039,16 @@ func runServe() {
 
 	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
+
+	// ルート直下のファイル (認証不要)。決まったパスで取りに来るクライアントのため、HTMLの参照先とは別に配信する
+	r.Get("/favicon.ico", faviconHandler.Show)
+	r.Head("/favicon.ico", faviconHandler.Show)
+	for _, path := range []string{"/apple-touch-icon.png", "/apple-touch-icon-precomposed.png"} {
+		r.Get(path, appleTouchIconHandler.Show)
+		r.Head(path, appleTouchIconHandler.Show)
+	}
+	r.Get("/robots.txt", robotsTxtHandler.Show)
+	r.Head("/robots.txt", robotsTxtHandler.Show)
 
 	// 法的文書の固定URL (認証不要)。本文のWikinoのページへ転送する
 	for _, path := range legaldoc.Paths() {

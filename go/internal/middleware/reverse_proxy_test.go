@@ -2053,6 +2053,13 @@ func TestReverseProxyMiddleware_isGoHandledByRegex(t *testing.T) {
 			path:     "/.well-known/security.txt",
 			expected: false,
 		},
+		{name: "ファビコン", method: http.MethodGet, path: "/favicon.ico", expected: true},
+		{name: "ファビコンのHEAD", method: http.MethodHead, path: "/favicon.ico", expected: true},
+		{name: "Apple Touch Icon", method: http.MethodGet, path: "/apple-touch-icon.png", expected: true},
+		{name: "precomposedのApple Touch Icon", method: http.MethodHead, path: "/apple-touch-icon-precomposed.png", expected: true},
+		{name: "robots.txt", method: http.MethodGet, path: "/robots.txt", expected: true},
+		{name: "Goが応答しないメソッドのrobots.txtはマッチしない", method: http.MethodPost, path: "/robots.txt", expected: false},
+		{name: "配信しないルート直下の画像はマッチしない", method: http.MethodGet, path: "/icon.png", expected: false},
 	}
 
 	for _, tc := range testCases {

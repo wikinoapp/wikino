@@ -24,6 +24,8 @@ import (
 //     `Set-Cookie` も付けない (キャッシュされうる応答に他人向けのCookieを載せない)
 //   - リモートMCPサーバー: 公開Web APIと同じく `Authorization: Bearer` のトークンで認証する。ブラウザからの
 //     別オリジンの要求は、ハンドラーがhttp.CrossOriginProtectionで拒む
+//   - ルート直下のファイル: ブラウザ・iOS・クローラーが決まったパスで取りに来る、誰にでも同じ内容の
+//     ファイルのため、共有キャッシュに載せられるよう `Set-Cookie` を付けない
 var (
 	// AttachmentOGImagePathPatternは公開トピックのページから参照される添付ファイルのog:imageのパス。
 	// /attachments/:id (ダウンロードURL) は対象外にするため、og_image末尾でパスを限定する
@@ -51,6 +53,9 @@ var (
 
 	// MCPServerPathPatternはリモートMCPサーバーのエンドポイントのパス (model.MCPServerPath)
 	MCPServerPathPattern = regexp.MustCompile(`^/mcp$`)
+
+	// RootFilePathPatternはルート直下で配信するファイル (ファビコン・Apple Touch Icon・robots.txt) のパス
+	RootFilePathPattern = regexp.MustCompile(`^/(favicon\.ico|apple-touch-icon(-precomposed)?\.png|robots\.txt)$`)
 )
 
 // CookielessPathはCookieを使わないリクエストのパスとメソッドの組
@@ -69,6 +74,7 @@ var CookielessPaths = []CookielessPath{
 	{Pattern: OAuthTokenPathPattern},
 	{Pattern: APIMetadataPathPattern},
 	{Pattern: MCPServerPathPattern},
+	{Pattern: RootFilePathPattern, Methods: []string{http.MethodGet, http.MethodHead}},
 }
 
 // IsCookielessRequestはmethodとpathのリクエストがCookieを使わないかを返す
