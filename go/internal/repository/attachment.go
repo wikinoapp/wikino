@@ -66,7 +66,7 @@ func (r *AttachmentRepository) FindByIDsAndSpace(ctx context.Context, ids []mode
 // FindPubliclyReferencedBlobByIDは公開og:image配信用: 「生きている公開トピックの
 // ページからのみ参照されている」場合に限りblob情報を返す。
 //
-// Rails版AttachmentRecord#all_referencing_pages_public? と等価な判定を1 SQLに統合する
+// 参照するページがすべて公開トピックにあるかの判定を1 SQLに統合する
 // ことで、呼び出し側でvisibility検証を忘れる構造的事故を排除している。判定スコープからは
 // 論理削除済みのページ・トピック (`discarded_at IS NOT NULL`) に加えて、ゴミ箱に入った
 // ページ (`trashed_at IS NOT NULL`) も除外する。ゴミ箱に入ったページのog:imageをSNSの
@@ -249,7 +249,7 @@ func (r *AttachmentRepository) UpdateBlobContent(ctx context.Context, id model.A
 // CreateAttachmentInputは、事前署名した添付ファイルの行を作るための入力
 type CreateAttachmentInput struct {
 	SpaceID model.SpaceID
-	// UserIDは事前署名したユーザー。Rails版と同じくblobのmetadataに残す
+	// UserIDは事前署名したユーザー。Rails期に作られたblobと同じくmetadataに残す
 	UserID model.UserID
 	// SpaceMemberIDは事前署名したスペースメンバー
 	SpaceMemberID model.SpaceMemberID
@@ -263,21 +263,21 @@ type CreateAttachmentInput struct {
 	AttachedAt time.Time
 }
 
-// attachmentBlobMetadataは、事前署名したblobのmetadataに書くJSON。Rails版と同じキーと順にする
+// attachmentBlobMetadataは、事前署名したblobのmetadataに書くJSON。Rails期に作られたblobと同じキーと順にする
 type attachmentBlobMetadata struct {
 	SpaceID string `json:"space_id"`
 	UserID  string `json:"user_id"`
 }
 
 // Createは、事前署名した添付ファイルのactive_storage_blobs・active_storage_attachments・attachmentsの行を、
-// Rails版と同じ形で作り、処理待ちの状態にする。3つの行をまとめて作るため、呼び出し側がWithTxで
+// Rails期に作られた行と同じ形で作り、処理待ちの状態にする。3つの行をまとめて作るため、呼び出し側がWithTxで
 // トランザクションの中のRepositoryにしてから呼ぶ
 func (r *AttachmentRepository) Create(ctx context.Context, input CreateAttachmentInput) (model.AttachmentID, error) {
 	metadata, err := json.Marshal(attachmentBlobMetadata{SpaceID: string(input.SpaceID), UserID: string(input.UserID)})
 	if err != nil {
 		return "", fmt.Errorf("blobのmetadataの組み立てに失敗: %w", err)
 	}
-	// 列はタイムゾーンを持たないため、Rails版と同じくUTCの時刻を書く
+	// 列はタイムゾーンを持たないため、Rails期に作られた行と同じくUTCの時刻を書く
 	now := input.AttachedAt.UTC()
 
 	blobID, err := r.q.CreateAttachmentBlob(ctx, query.CreateAttachmentBlobParams{
@@ -439,7 +439,7 @@ func (r *AttachmentRepository) ListByPageIDsAndSpace(ctx context.Context, pageID
 }
 
 // ListObjectKeysByIDsAndSpaceは、指定した添付ファイルの実体のキーを返す。添付ファイルのblobのキーと、
-// Rails版が作ったサムネイル (variant) のblobのキーを含む。ほかのスペースの添付ファイルと存在しないIDは
+// Rails期に作られたサムネイル (variant) のblobのキーを含む。ほかのスペースの添付ファイルと存在しないIDは
 // 含めない。
 func (r *AttachmentRepository) ListObjectKeysByIDsAndSpace(ctx context.Context, ids []model.AttachmentID, spaceID model.SpaceID) ([]string, error) {
 	if len(ids) == 0 {

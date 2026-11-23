@@ -13,7 +13,7 @@ import (
 )
 
 // Deleteはスペースの添付ファイルを1件削除します (DELETE /s/{space_identifier}/settings/attachments/{attachment_id})。
-// 削除できたら、Rails版と同じく検索語とページを引き継がずに一覧へリダイレクトします。
+// 削除できたら、検索語とページを引き継がずに一覧へリダイレクトします。
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

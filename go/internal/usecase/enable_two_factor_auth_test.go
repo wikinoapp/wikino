@@ -112,12 +112,12 @@ func TestEnableTwoFactorAuthUsecase_Execute_有効にしてログインでコー
 	}
 }
 
-func TestEnableTwoFactorAuthUsecase_Execute_Rails版が作った登録の途中の設定から有効にする(t *testing.T) {
+func TestEnableTwoFactorAuthUsecase_Execute_Rails期に作られた登録の途中の設定から有効にする(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
 	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
-	// Rails版の登録の画面は、秘密鍵を持つenabled = falseの行を作る
+	// Rails期の登録の画面が作った、秘密鍵を持つenabled = falseの行から始める
 	userID := twoFactorAuthUser(t, tx, "enable_2fa_uc_rails", twoFactorAuthTestSecret, false)
 
 	uc, repo := newEnableTwoFactorAuthUsecaseForTest(tx)
@@ -134,7 +134,7 @@ func TestEnableTwoFactorAuthUsecase_Execute_Rails版が作った登録の途中�
 		t.Fatalf("設定の取得に失敗: 設定 = %v、エラー = %v", twoFactorAuth, err)
 	}
 	if !twoFactorAuth.Enabled || twoFactorAuth.Secret != twoFactorAuthTestSecret {
-		t.Errorf("設定 = %+v、Rails版の秘密鍵のまま有効になっていることを期待", twoFactorAuth)
+		t.Errorf("設定 = %+v、Rails期の秘密鍵のまま有効になっていることを期待", twoFactorAuth)
 	}
 }
 

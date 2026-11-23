@@ -45,10 +45,8 @@ type GetAPIAttachmentOutput struct {
 	DownloadURLExpiresAt time.Time
 }
 
-// Executeはattachment:readを持つトークンが属するスペースの添付ファイルを解決し、その中身へのURLに署名する。
-// 閲覧の判定はWeb画面の `/attachments/{ID}` (Rails版のcan_view_attachment?) と同じく、
-// attachment:readを持つか、参照するページがすべて公開トピックにあるかで行う。
-// 添付ファイルが存在しない場合に加え、見る権限が無い場合も存在を秘匿するため未存在として扱う
+// Executeは、トークンがattachment:readを持ち、対象の添付ファイルを閲覧できる場合に中身へのURLに署名する。
+// 対象はトークンが属するスペースに限り、閲覧できない添付ファイルは存在を明かさないよう未存在として扱う
 func (uc *GetAPIAttachmentUsecase) Execute(ctx context.Context, input GetAPIAttachmentInput) (*GetAPIAttachmentOutput, error) {
 	if uc.objectStorage == nil {
 		return nil, errors.New("オブジェクトストレージが設定されていないため添付ファイルを取得できません")

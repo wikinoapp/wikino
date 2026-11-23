@@ -91,7 +91,6 @@ var md = goldmark.New(
 		withInlineImgBlocks{},
 	),
 	goldmark.WithRendererOptions(
-		// Rails版のparse: {html: true}, render: {unsafe: true} に相当。
 		// Markdown内のHTMLタグをそのまま出力する。
 		html.WithUnsafe(),
 		html.WithHardWraps(),
@@ -112,7 +111,7 @@ func newSanitizationPolicy() *bluemonday.Policy {
 	// タスクリスト記法 (- [ ] / - [x]) で生成されるチェックボックスを許可
 	p.AllowAttrs("type", "checked", "disabled").OnElements("input")
 
-	// img要素のwidth/height属性を許可 (Rails版のsanitization_configに相当)
+	// img要素のwidth/height属性を許可
 	p.AllowAttrs("src", "alt", "title", "width", "height").OnElements("img")
 
 	// テーブルの配置指定 (GFM) で生成されるalign属性を許可

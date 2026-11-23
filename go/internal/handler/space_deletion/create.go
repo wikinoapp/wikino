@@ -47,7 +47,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 削除したスペースの画面はどれも見つからなくなるため、Rails版と同じくホームへ戻す。
+	// 削除したスペースの画面はどれも見つからなくなるため、ホームへ戻す。
 	h.flashMgr.SetSuccess(w, i18n.T(ctx, "flash_space_deleted"))
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

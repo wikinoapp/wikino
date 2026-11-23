@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -42,6 +44,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/account"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_catalog"
 	"github.com/wikinoapp/wikino/go/internal/handler/api_reference"
+	"github.com/wikinoapp/wikino/go/internal/handler/apple_touch_icon"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_og_image"
 	"github.com/wikinoapp/wikino/go/internal/handler/attachment_presign"
@@ -54,6 +57,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/email_confirmation"
 	exporthandler "github.com/wikinoapp/wikino/go/internal/handler/export"
 	"github.com/wikinoapp/wikino/go/internal/handler/export_download"
+	"github.com/wikinoapp/wikino/go/internal/handler/favicon"
 	"github.com/wikinoapp/wikino/go/internal/handler/health"
 	"github.com/wikinoapp/wikino/go/internal/handler/home"
 	"github.com/wikinoapp/wikino/go/internal/handler/legal_document"
@@ -82,6 +86,7 @@ import (
 	"github.com/wikinoapp/wikino/go/internal/handler/password_reset"
 	personalaccesstokenhandler "github.com/wikinoapp/wikino/go/internal/handler/personal_access_token"
 	"github.com/wikinoapp/wikino/go/internal/handler/profile"
+	"github.com/wikinoapp/wikino/go/internal/handler/robots_txt"
 	searchhandler "github.com/wikinoapp/wikino/go/internal/handler/search"
 	settingshandler "github.com/wikinoapp/wikino/go/internal/handler/settings"
 	"github.com/wikinoapp/wikino/go/internal/handler/settings_account_deletion"
@@ -320,7 +325,6 @@ func runServe() {
 
 	// ミドルウェアを初期化
 	authMiddleware := middleware.NewAuth(sessionMgr)
-	csrfMiddleware := middleware.NewCSRF(cfg)
 
 	// imgproxyヘルパー / OgImageBuilderを初期化 (環境変数が揃っている場合のみ有効)
 	// 環境変数が未設定でもサーバー起動は継続するが、その場合 /attachments/:id/og_imageに到達した
@@ -348,6 +352,10 @@ func runServe() {
 	// ハンドラーを初期化
 	healthHandler := health.NewHandler()
 	manifestHandler := manifest.NewHandler(cfg)
+	staticFS := os.DirFS("./static")
+	faviconHandler := favicon.NewHandler(staticFS)
+	appleTouchIconHandler := apple_touch_icon.NewHandler(staticFS)
+	robotsTxtHandler := robots_txt.NewHandler()
 	legalDocumentHandler := legal_document.NewHandler()
 	oauthAuthorizationServerMetadataHandler := oauth_authorization_server_metadata.NewHandler(cfg)
 	oauthProtectedResourceMetadataHandler := oauth_protected_resource_metadata.NewHandler(cfg, usecase.NewGetOAuthProtectedResourceMetadataUsecase(spaceRepo))
@@ -953,72 +961,7 @@ func runServe() {
 		os.Exit(1)
 	}
 
-	r := chi.NewRouter()
-
-	// ルーティングにマッチしなかった場合のNotFoundハンドラーを設定
-	r.NotFound(httperror.NotFound)
-
-	// リバースプロキシミドルウェアを初期化 (Rails版へのプロキシ)
-	// 注: RailsAppURLが設定されている場合のみ有効化
-	// リバースプロキシはMethod OverrideやCSRFミドルウェアより前に配置する。
-	// これらのミドルウェアはr.ParseForm()やr.FormValue()でリクエストボディを
-	// 消費するため、プロキシ前に実行するとRails版への転送時にボディが空になる。
-	if cfg.RailsAppURL != "" {
-		reverseProxyMiddleware, err := middleware.NewReverseProxyMiddleware(cfg.RailsAppURL, cfg, featureFlagRepo)
-		if err != nil {
-			slog.Error("リバースプロキシミドルウェアの初期化に失敗しました", "error", err)
-			os.Exit(1)
-		}
-		r.Use(reverseProxyMiddleware.Middleware)
-	}
-
-	// 公開Web APIのレスポンスに共通のヘッダーを付ける。メンテナンス中の503や
-	// パニック時の500にも付けるため、それらのミドルウェアより前に配置する
-	r.Use(middleware.APIResponseHeader)
-
-	// メンテナンスモードミドルウェア
-	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg, apiProblems)
-	r.Use(maintenanceMW.Middleware)
-
-	// リクエストボディサイズ制限ミドルウェア
-	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
-	// reverseProxyより後に配置することで、Rails版へプロキシするリクエストにはGo側の制限を適用しない。
-	r.Use(newRequestBodyLimit(cfg, apiProblems))
-
-	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
-	r.Use(middleware.MethodOverride)
-
-	// 共通ミドルウェア
-	r.Use(middleware.NewAccessLog(slog.Default()))
-	r.Use(chimiddleware.RequestID)
-	// クライアントIPはinternal/clientip (CF-Connecting-IP優先) で都度解決するため、
-	// chiのIPミドルウェアは意図的に登録しない。chiのRealIPはIP spoofing
-	// (GHSA-3fxj-6jh8-hvhx) のためdeprecatedでもあり、再導入しないこと。
-
-	// Recovererはsentryhttpより前 (= 外側) に登録する。sentryhttpが
-	// Repanic: trueで再panicしたものをここで握り潰して500を返す。
-	// Sentry SDK公式READMEも「recovery middlewareはsentryhttpより外側に
-	// 置く」と指示している。APIのパスには500をProblem Detailsで返す。
-	r.Use(middleware.NewRecoverer(apiProblems).Middleware)
-
-	// sentryhttpはリクエスト単位のHubをcontextに積み、panicを捕捉
-	// してSentryに送信し、パフォーマンストランザクションを開始する。
-	// Repanic: trueにより捕捉後に再panicすることで、外側のRecovererが
-	// 500を返し、Go runtimeの通常のpanicセマンティクスも維持できる。
-	sentryHTTP := sentryhttp.New(sentryhttp.Options{Repanic: true})
-	r.Use(sentryHTTP.Handle)
-
-	// SentryTransactionはトランザクション名をchiのルートパターンに
-	// 上書きするミドルウェア。sentryhttpの後 (= 内側) に登録することで、LIFOの
-	// defer順序によりsentryhttpのtransaction.Finish() やrecoverWithSentry
-	// のpanic捕捉より先に名前の上書きが走ることを保証する。
-	r.Use(middleware.SentryTransaction)
-
-	r.Use(i18n.Middleware)
-	// ダークモードのフラグの判定は、ページ全体を描画するとき (viewmodel.DefaultPageMeta) に初めて行う
-	r.Use(middleware.DarkMode(featureFlagRepo))
-	r.Use(csrfMiddleware.Middleware)
-	r.Use(flashMgr.Middleware)
+	r := newHTTPRouter(cfg, apiProblems, flashMgr)
 
 	// 静的ファイルの配信 (Tailwind CLI + esbuildのビルド結果)
 	fileServer := http.FileServer(http.Dir("./static"))
@@ -1032,6 +975,16 @@ func runServe() {
 
 	// Web App Manifest (認証不要)
 	r.Get("/manifest.json", manifestHandler.Show)
+
+	// ルート直下のファイル (認証不要)。決まったパスで取りに来るクライアントのため、HTMLの参照先とは別に配信する
+	r.Get("/favicon.ico", faviconHandler.Show)
+	r.Head("/favicon.ico", faviconHandler.Show)
+	for _, path := range []string{"/apple-touch-icon.png", "/apple-touch-icon-precomposed.png"} {
+		r.Get(path, appleTouchIconHandler.Show)
+		r.Head(path, appleTouchIconHandler.Show)
+	}
+	r.Get("/robots.txt", robotsTxtHandler.Show)
+	r.Head("/robots.txt", robotsTxtHandler.Show)
 
 	// 法的文書の固定URL (認証不要)。本文のWikinoのページへ転送する
 	for _, path := range legaldoc.Paths() {
@@ -1121,8 +1074,7 @@ func runServe() {
 		// ページはゴミ箱権限を持つ閲覧者以外には404)。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録
-		// する。このパスのHEADを受けていたRailsのルートは削除済みで、登録しないと存在する
-		// ページでもGETは200・HEADは405と食い違う。
+		// する。登録しないと、存在するページでもGETは200・HEADは404と食い違う。
 		r.Get("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 		r.Head("/s/{space_identifier}/pages/{page_number}", pageHandler.Show)
 
@@ -1190,8 +1142,7 @@ func runServe() {
 		// トピックの作成。フォームと作成処理。
 		//
 		// chiはメソッドごとにルートを引きGETからフォールバックしないため、HEADを単独で登録
-		// する。登録しないと、このパスのHEADを今も受けているRailsのルートが無くなった時点で、
-		// フォームはGETに200・HEADに405を返すようになる。
+		// する。登録しないと、フォームはGETに200・HEADに404を返す。
 		r.Get("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Head("/s/{space_identifier}/topics/new", topicHandler.New)
 		r.Post("/s/{space_identifier}/topics", topicHandler.Create)
@@ -1200,7 +1151,7 @@ func runServe() {
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings", topicSettingsHandler.Show)
 
-		// トピックの削除。確認画面と削除処理。パスはRails版に合わせる。
+		// トピックの削除。確認画面と削除処理。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/deletion/new", topicDeletionHandler.New)
 		r.Post("/s/{space_identifier}/topics/{topic_number}/settings/deletion", topicDeletionHandler.Create)
@@ -1245,14 +1196,13 @@ func runServe() {
 		r.Get("/search", searchHandler.Show)
 		r.Head("/search", searchHandler.Show)
 
-		// ゴミ箱で選んだページの一括復元。パスはRails版に合わせる。
+		// ゴミ箱で選んだページの一括復元。
 		r.Post("/s/{space_identifier}/bulk_restored_pages", bulkRestoredPageHandler.Create)
 
 		// トピックの一般設定。画面と保存処理。
 		//
-		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
-		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。併記しないと、GETに200を
-		// 返す画面がHEADには405を返す。
+		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしないため。
+		// 併記しないと、GETに200を返す画面がHEADには404を返す。
 		r.Get("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
 		r.Head("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Show)
 		r.Patch("/s/{space_identifier}/topics/{topic_number}/settings/general", topicSettingsGeneralHandler.Update)
@@ -1284,8 +1234,7 @@ func runServe() {
 		r.Get("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.New)
 		r.Post("/s/{space_identifier}/pages/{page_number}/move", pageMoveHandler.Create)
 
-		// ページをゴミ箱へ入れる操作。ゴミ箱画面そのものはRails版のまま残り、同じ
-		// pages.trashed_atカラムを見てページを復元する。
+		// ページをゴミ箱へ入れる操作。ゴミ箱の画面は、同じpages.trashed_atカラムを見てページを復元する。
 		r.Post("/s/{space_identifier}/pages/{page_number}/trash", pageTrashHandler.Create)
 
 		// ページのピン留め
@@ -1322,37 +1271,29 @@ func runServe() {
 		// ページロケーション検索API (Wikiリンク補完用)
 		r.Get("/s/{space_identifier}/page_locations", pageLocationHandler.Index)
 
-		// スペース設定のトップ。項目のうち削除のリンク先はRails版のまま残る。
+		// スペース設定のトップ。
 		//
-		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしない
-		// 一方、Railsのルーターは一致しないHEADをGETとして読むため。
+		// GETにHEADを併記するのは、chiがメソッドごとにルートを引きGETへフォールバックしないため。
 		r.Get("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 		r.Head("/s/{space_identifier}/settings", spaceSettingsHandler.Show)
 
-		// スペースの一般設定。リバースプロキシはgo_space_settings_generalが有効な閲覧者のリクエストだけを
-		// ここへ振り分け、それ以外はRails版が処理する。
+		// スペースの一般設定。
 		r.Get("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Show)
 		r.Head("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Show)
 		r.Patch("/s/{space_identifier}/settings/general", spaceSettingsGeneralHandler.Update)
 
-		// スペースの添付ファイルの管理。リバースプロキシはgo_space_attachment_managementが有効な閲覧者の
-		// リクエストだけをここへ振り分け、それ以外はRails版が処理する。
+		// スペースの添付ファイルの管理。
 		r.Get("/s/{space_identifier}/settings/attachments", spaceSettingsAttachmentHandler.Index)
 		r.Head("/s/{space_identifier}/settings/attachments", spaceSettingsAttachmentHandler.Index)
 		r.Delete("/s/{space_identifier}/settings/attachments/{attachment_id}", spaceSettingsAttachmentHandler.Delete)
 
-		// スペースの削除。リバースプロキシはgo_space_deletionが有効な閲覧者のリクエストだけを
-		// ここへ振り分け、それ以外はRails版が処理する。
+		// スペースの削除。
 		r.Get("/s/{space_identifier}/settings/deletion/new", spaceDeletionHandler.New)
 		r.Head("/s/{space_identifier}/settings/deletion/new", spaceDeletionHandler.New)
 		r.Post("/s/{space_identifier}/settings/deletion", spaceDeletionHandler.Create)
 
-		// 個人用アクセストークンの一覧・発行フォーム・発行・失効。Rails版には無い画面で、リバース
-		// プロキシは名前空間全体をGoへ渡してくる。サブルーターにするのはエクスポートと同じく、
-		// どのルートも受けないリクエストにchi既定の本文なし405ではなく404ページを返すため。
+		// 個人用アクセストークンの一覧・発行フォーム・発行・失効。
 		r.Route("/s/{space_identifier}/settings/personal_access_tokens", func(r chi.Router) {
-			r.MethodNotAllowed(httperror.NotFound)
-
 			r.Get("/", personalAccessTokenHandler.Index)
 			r.Head("/", personalAccessTokenHandler.Index)
 			r.Post("/", personalAccessTokenHandler.Create)
@@ -1361,12 +1302,8 @@ func runServe() {
 			r.Delete("/{personal_access_token_id}", personalAccessTokenHandler.Delete)
 		})
 
-		// スペースのOAuthアプリの一覧・登録・詳細・編集・削除とシークレットの再発行。個人用アクセストークンと同じく
-		// Rails版には無い画面で、リバースプロキシは名前空間全体をGoへ渡してくるため、どのルートも
-		// 受けないリクエストには404ページを返す。
+		// スペースのOAuthアプリの一覧・登録・詳細・編集・削除とシークレットの再発行。
 		r.Route("/s/{space_identifier}/settings/oauth_applications", func(r chi.Router) {
-			r.MethodNotAllowed(httperror.NotFound)
-
 			r.Get("/", oauthApplicationHandler.Index)
 			r.Head("/", oauthApplicationHandler.Index)
 			r.Post("/", oauthApplicationHandler.Create)
@@ -1381,12 +1318,8 @@ func runServe() {
 			r.Post("/{oauth_application_id}/client_secret", oauthApplicationClientSecretHandler.Create)
 		})
 
-		// 自分が許可した連携中のアプリの一覧と解除。個人用アクセストークンと同じくRails版には無い
-		// 画面で、リバースプロキシは名前空間全体をGoへ渡してくるため、どのルートも受けない
-		// リクエストには404ページを返す。
+		// 自分が許可した連携中のアプリの一覧と解除。
 		r.Route("/s/{space_identifier}/settings/oauth_grants", func(r chi.Router) {
-			r.MethodNotAllowed(httperror.NotFound)
-
 			r.Get("/", oauthGrantHandler.Index)
 			r.Head("/", oauthGrantHandler.Index)
 			r.Delete("/{oauth_grant_id}", oauthGrantHandler.Delete)
@@ -1409,17 +1342,8 @@ func runServe() {
 		// スペースのエクスポート。開始する画面・開始そのもの・経過を追う画面・アーカイブの
 		// ダウンロード。これらの画面のパンくずは上のスペース設定のトップへ戻る。
 		//
-		// この名前空間をサブルーターにするのは、どのルートも受けないリクエストに、chi既定の
-		// 本文なし405ではなく404ページを返すため。リバースプロキシは、2つ目のエクスポートを
-		// 防ぐ仕組みを持たないRailsの書き込み処理へ開始が届かないよう、メソッドによらず名前空間
-		// 全体を渡してくる。Rails版はその配下の他のURLには自身の404を返していた。
-		//
-		// GETのそれぞれにHEADを併記するのは、chiがメソッドごとにルートを引きGETへ
-		// フォールバックしない一方、Railsのルーターは一致しないHEADをGETとして読むため。
-		// 併記しないと、GETに200を返す画面がHEADには405を返す。
+		// chiはHEADをGETへフォールバックしないため、GETと同じ画面を返すHEADを個別に登録する。
 		r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
-			r.MethodNotAllowed(httperror.NotFound)
-
 			r.Post("/", exportHandler.Create)
 			r.Get("/new", exportHandler.New)
 			r.Head("/new", exportHandler.New)
@@ -1468,6 +1392,105 @@ func runServe() {
 	}
 
 	slog.Info("サーバーを停止しました")
+}
+
+// newHTTPRouterは、各ルートに共通するミドルウェアを登録したルーターを返す
+func newHTTPRouter(cfg *config.Config, apiProblems *apierror.Writer, flashMgr *session.FlashManager) *chi.Mux {
+	r := chi.NewRouter()
+
+	// どのルートにも一致しないパスと、ルートはあるが対応していないメソッドに、404ページを返す。
+	// 対応していないメソッドにchi既定の本文の無い405を返さず、存在しないURLと同じ扱いにする。
+	// ルートより前に設定し、サブルーターに引き継がせる。公開Web APIのサブルーターは自身のProblem Detailsの
+	// 404・405を先に設定しているため、引き継がない
+	r.NotFound(httperror.NotFound)
+	r.MethodNotAllowed(httperror.NotFound)
+
+	// 公開Web APIのレスポンスに共通のヘッダーを付ける。メンテナンス中の503や
+	// パニック時の500にも付けるため、それらのミドルウェアより前に配置する
+	r.Use(middleware.APIResponseHeader)
+
+	// メンテナンスモードミドルウェア
+	maintenanceMW := middleware.NewMaintenanceMiddleware(cfg, apiProblems)
+	r.Use(maintenanceMW.Middleware)
+
+	// リクエストボディサイズ制限ミドルウェア
+	// r.ParseForm()やr.FormValue()を呼ぶMethod Override・CSRFミドルウェアより前に配置する必要がある。
+	r.Use(newRequestBodyLimit(cfg, apiProblems))
+
+	// Method Overrideミドルウェア (HTMLフォームからDELETE/PATCH/PUTを使用可能にする)
+	r.Use(middleware.MethodOverride)
+
+	// 共通ミドルウェア
+	r.Use(middleware.NewAccessLog(slog.Default()))
+	r.Use(chimiddleware.RequestID)
+	// クライアントIPはinternal/clientip (CF-Connecting-IP優先) で都度解決するため、
+	// chiのIPミドルウェアは意図的に登録しない。chiのRealIPはIP spoofing
+	// (GHSA-3fxj-6jh8-hvhx) のためdeprecatedでもあり、再導入しないこと。
+
+	// Recovererはsentryhttpより前 (= 外側) に登録する。sentryhttpが
+	// Repanic: trueで再panicしたものをここで握り潰して500を返す。
+	// Sentry SDK公式READMEも「recovery middlewareはsentryhttpより外側に
+	// 置く」と指示している。APIのパスには500をProblem Detailsで返す。
+	r.Use(middleware.NewRecoverer(apiProblems).Middleware)
+
+	// sentryhttpはリクエスト単位のHubをcontextに積み、panicを捕捉
+	// してSentryに送信し、パフォーマンストランザクションを開始する。
+	// Repanic: trueにより捕捉後に再panicすることで、外側のRecovererが
+	// 500を返し、Go runtimeの通常のpanicセマンティクスも維持できる。
+	sentryHTTP := sentryhttp.New(sentryhttp.Options{Repanic: true})
+	r.Use(sentryHTTP.Handle)
+
+	// SentryTransactionはトランザクション名をchiのルートパターンに
+	// 上書きするミドルウェア。sentryhttpの後 (= 内側) に登録することで、LIFOの
+	// defer順序によりsentryhttpのtransaction.Finish() やrecoverWithSentry
+	// のpanic捕捉より先に名前の上書きが走ることを保証する。
+	r.Use(middleware.SentryTransaction)
+
+	r.Use(i18n.Middleware)
+	r.Use(requireRegisteredWebRoute(r))
+	r.Use(middleware.NewCSRF(cfg).Middleware)
+	r.Use(flashMgr.Middleware)
+
+	return r
+}
+
+// requireRegisteredWebRouteは、認証やCSRF検証より先に未登録のWebリクエストへ404を返す。
+// 公開Web APIのエラーは、そのルーターへ渡してProblem Detailsで返す
+func requireRegisteredWebRoute(router chi.Routes) func(http.Handler) http.Handler {
+	type routeKey struct {
+		method  string
+		pattern string
+	}
+	registeredRoutes := sync.OnceValue(func() map[routeKey]struct{} {
+		routes := make(map[routeKey]struct{})
+		// chi.Findはマウント直下のスタブにも一致する。Walkは実ハンドラーの登録だけを返すため、両方を照合する。
+		_ = chi.Walk(router, func(method, pattern string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+			routes[routeKey{method, pattern}] = struct{}{}
+			// chiはサブルーターの / を末尾スラッシュのない入口からも呼ぶ。
+			if root, ok := strings.CutSuffix(pattern, "/"); ok && root != "" {
+				routes[routeKey{method, root}] = struct{}{}
+			}
+			return nil
+		})
+		return routes
+	})
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			route := chi.RouteContext(r.Context())
+			path := cmp.Or(route.RoutePath, r.URL.RawPath, r.URL.Path, "/")
+			method := cmp.Or(route.RouteMethod, r.Method)
+			if path != apiMountPath && !strings.HasPrefix(path, apiMountPath+"/") {
+				// 後段のルーティングのパラメーターを変更しないよう、別のコンテキストで照合する。
+				pattern := router.Find(chi.NewRouteContext(), method, path)
+				if _, ok := registeredRoutes()[routeKey{method, pattern}]; !ok {
+					httperror.NotFound(w, r)
+					return
+				}
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // newObjectStorageは、添付ファイルとエクスポートのZIPを置くオブジェクトストレージを組み立てる。

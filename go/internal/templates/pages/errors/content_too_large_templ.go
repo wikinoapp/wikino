@@ -45,27 +45,27 @@ func ContentTooLargePage(maxSize string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"initial-scale=1, width=device-width\"><meta name=\"robots\" content=\"noindex, nofollow\"><title>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"initial-scale=1, width=device-width\"><meta name=\"color-scheme\" content=\"light dark\"><meta name=\"robots\" content=\"noindex, nofollow\"><title>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "error_content_too_large_title"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 15, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 17, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</title><style>\n\t\t\t\tbody {\n\t\t\t\t\tfont-family:\n\t\t\t\t\t\t\"Helvetica Neue\",\n\t\t\t\t\t\tArial,\n\t\t\t\t\t\t\"Hiragino Kaku Gothic ProN\",\n\t\t\t\t\t\t\"Hiragino Sans\",\n\t\t\t\t\t\t\"BIZ UDPGothic\",\n\t\t\t\t\t\tMeiryo,\n\t\t\t\t\t\tsans-serif,\n\t\t\t\t\t\t\"Apple Color Emoji\",\n\t\t\t\t\t\t\"Segoe UI Emoji\",\n\t\t\t\t\t\t\"Segoe UI Symbol\",\n\t\t\t\t\t\t\"Noto Color Emoji\";\n\t\t\t\t}\n\n\t\t\t\th1 {\n\t\t\t\t\tfont-size: 24px;\n\t\t\t\t\tmargin-bottom: 10px;\n\t\t\t\t}\n\n\t\t\t\ta {\n\t\t\t\t\tcolor: #7c3aed;\n\t\t\t\t}\n\n\t\t\t\t.container {\n\t\t\t\t\talign-items: center;\n\t\t\t\t\tdisplay: flex;\n\t\t\t\t\tjustify-content: center;\n\t\t\t\t\tmin-height: 100dvh;\n\t\t\t\t}\n\n\t\t\t\t.wrapper {\n\t\t\t\t\tmax-width: 480px;\n\t\t\t\t\tpadding: 0 16px;\n\t\t\t\t\ttext-align: center;\n\t\t\t\t}\n\n\t\t\t\t.message {\n\t\t\t\t\tfont-size: 14px;\n\t\t\t\t\tmargin-bottom: 20px;\n\t\t\t\t}\n\t\t\t</style></head><body><main class=\"container\"><div class=\"wrapper\"><h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</title><style>\n\t\t\t\t:root {\n\t\t\t\t\tcolor-scheme: light dark;\n\t\t\t\t}\n\n\t\t\t\tbody {\n\t\t\t\t\tfont-family:\n\t\t\t\t\t\t\"Helvetica Neue\",\n\t\t\t\t\t\tArial,\n\t\t\t\t\t\t\"Hiragino Kaku Gothic ProN\",\n\t\t\t\t\t\t\"Hiragino Sans\",\n\t\t\t\t\t\t\"BIZ UDPGothic\",\n\t\t\t\t\t\tMeiryo,\n\t\t\t\t\t\tsans-serif,\n\t\t\t\t\t\t\"Apple Color Emoji\",\n\t\t\t\t\t\t\"Segoe UI Emoji\",\n\t\t\t\t\t\t\"Segoe UI Symbol\",\n\t\t\t\t\t\t\"Noto Color Emoji\";\n\t\t\t\t}\n\n\t\t\t\th1 {\n\t\t\t\t\tfont-size: 24px;\n\t\t\t\t\tmargin-bottom: 10px;\n\t\t\t\t}\n\n\t\t\t\ta {\n\t\t\t\t\tcolor: #7c3aed;\n\t\t\t\t}\n\n\t\t\t\t.container {\n\t\t\t\t\talign-items: center;\n\t\t\t\t\tdisplay: flex;\n\t\t\t\t\tjustify-content: center;\n\t\t\t\t\tmin-height: 100dvh;\n\t\t\t\t}\n\n\t\t\t\t.wrapper {\n\t\t\t\t\tmax-width: 480px;\n\t\t\t\t\tpadding: 0 16px;\n\t\t\t\t\ttext-align: center;\n\t\t\t\t}\n\n\t\t\t\t.message {\n\t\t\t\t\tfont-size: 14px;\n\t\t\t\t\tmargin-bottom: 20px;\n\t\t\t\t}\n\n\t\t\t\t/* JavaScriptと共通のスタイルシートを読み込まないため、OSの配色だけで切り替える。色は web/style.css の .dark の背景・文字・リンクに合わせる */\n\t\t\t\t@media (prefers-color-scheme: dark) {\n\t\t\t\t\tbody {\n\t\t\t\t\t\tbackground-color: #121a1b;\n\t\t\t\t\t\tcolor: #faf5f1;\n\t\t\t\t\t}\n\n\t\t\t\t\ta {\n\t\t\t\t\t\tcolor: #9aeefd;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t</style></head><body><main class=\"container\"><div class=\"wrapper\"><h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "error_content_too_large_heading"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 63, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 81, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -78,7 +78,7 @@ func ContentTooLargePage(maxSize string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "error_content_too_large_message", map[string]any{"Max": maxSize}))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 65, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 83, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -91,7 +91,7 @@ func ContentTooLargePage(maxSize string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "error_content_too_large_back_to_top"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 67, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 85, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -141,7 +141,7 @@ func ContentTooLargeFragment(maxSize string) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, "error_content_too_large_fragment_message", map[string]any{"Max": maxSize}))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 82, Col: 97}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/errors/content_too_large.templ`, Line: 100, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {

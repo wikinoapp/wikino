@@ -29,7 +29,6 @@ jobs:
       WIKINO_COOKIE_DOMAIN: "localhost"
       WIKINO_SESSION_SECURE: "false"
       WIKINO_SESSION_HTTPONLY: "true"
-      WIKINO_RAILS_APP_URL: "http://localhost:3000"
       WIKINO_DISABLE_RATE_LIMIT: "true"
       WIKINO_TURNSTILE_ENABLED: "false"
 

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"slices"
 	"testing"
 
 	"github.com/lib/pq"
@@ -280,7 +279,7 @@ func TestSpaceMemberRepository_Create(t *testing.T) {
 	if member.Role != model.SpaceRoleAdmin {
 		t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.SpaceRoleAdmin)
 	}
-	// Rails版が判定に使うスコープも書かれていること
+	// 権限はroleから決め、scopesの列には書かない (列の既定値の空の配列になる)
 	var scopes []string
 	if err := tx.QueryRowContext(context.Background(),
 		`SELECT scopes FROM space_members WHERE id = $1 AND space_id = $2`,
@@ -288,15 +287,15 @@ func TestSpaceMemberRepository_Create(t *testing.T) {
 	).Scan(pq.Array(&scopes)); err != nil {
 		t.Fatalf("scopesの取得に失敗: %v", err)
 	}
-	if want := []string{"space:admin"}; !slices.Equal(scopes, want) {
-		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
+	if len(scopes) != 0 {
+		t.Errorf("scopes = %v、期待値 = 空の配列", scopes)
 	}
 	if member.JoinedAt.IsZero() {
 		t.Error("member.JoinedAtがゼロ値")
 	}
 }
 
-func TestSpaceMemberRepository_Create_EditorWritesRoleScopesForRails(t *testing.T) {
+func TestSpaceMemberRepository_Create_EditorLeavesScopesEmpty(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -327,8 +326,8 @@ func TestSpaceMemberRepository_Create_EditorWritesRoleScopesForRails(t *testing.
 	).Scan(pq.Array(&scopes)); err != nil {
 		t.Fatalf("scopesの取得に失敗: %v", err)
 	}
-	if want := model.ScopesToStrings(model.SpaceRoleEditor.Scopes()); !slices.Equal(scopes, want) {
-		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
+	if len(scopes) != 0 {
+		t.Errorf("scopes = %v、期待値 = 空の配列", scopes)
 	}
 }
 

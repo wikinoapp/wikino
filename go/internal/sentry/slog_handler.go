@@ -9,21 +9,6 @@ import (
 	sentryslog "github.com/getsentry/sentry-go/slog"
 )
 
-// ログイベントの発生源をタグ付けするslog属性のキー名。本キーに既知の
-// 値 (例: ReverseProxySource) を載せたエラーログは、beforeSend側でその値を
-// 検出してSentry送信を抑止する。
-//
-// 別の開発者が無関係な目的で汎用的な "source" 属性を追加した場合に衝突しない
-// よう、"wikino_" プレフィックスで名前空間を切っている。呼び出し側では文字列
-// リテラルを直書きせず、必ず本定数を参照すること。
-const SourceAttrKey = "wikino_source"
-
-// Rails版がエラーを返した際にリバースプロキシミドルウェアが
-// SourceAttrKeyに設定する値。Rails側の障害 (HTTP 502など) はRailsの
-// Sentryプロジェクトで扱うべきなので、beforeSendで本タグの付いた
-// イベントを破棄する。
-const ReverseProxySource = "reverse_proxy"
-
 // baseハンドラーをSentryイベント用ハンドラーと合成して返す。
 // ErrorとFatalだけをイベント化し、Sentry Logs APIには送信しない。
 func NewSlogHandler(base slog.Handler) slog.Handler {

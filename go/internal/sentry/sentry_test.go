@@ -539,51 +539,6 @@ func TestBeforeSend_DropsIgnorableErrors(t *testing.T) {
 	}
 }
 
-func TestBeforeSend_DropsReverseProxySourceEvents(t *testing.T) {
-	t.Parallel()
-
-	// リバースプロキシ経由の502イベントはSourceAttrKey=ReverseProxySource
-	// を持つため、beforeSendで破棄する (Rails側の障害はRailsのSentry
-	// プロジェクトで扱うべきため)。
-	event := &sentry.Event{
-		Tags:    map[string]string{SourceAttrKey: ReverseProxySource},
-		Request: &sentry.Request{},
-	}
-
-	if result := beforeSend(event, nil); result != nil {
-		t.Errorf("source=%sのイベントがdropされていない: %+v", ReverseProxySource, result)
-	}
-}
-
-func TestBeforeSend_KeepsOtherSourceEvents(t *testing.T) {
-	t.Parallel()
-
-	// SourceAttrKeyに乗っていても、値がReverseProxySource以外のときは
-	// dropせずそのままSentryに届くこと。
-	event := &sentry.Event{
-		Tags:    map[string]string{SourceAttrKey: "some_other_source"},
-		Request: &sentry.Request{},
-	}
-
-	if result := beforeSend(event, nil); result == nil {
-		t.Errorf("source=%qのイベントはdropしないこと", "some_other_source")
-	}
-}
-
-func TestBeforeSend_KeepsEventsWithoutSourceTag(t *testing.T) {
-	t.Parallel()
-
-	// SourceAttrKeyが無い通常のイベントはそのまま通すこと。
-	event := &sentry.Event{
-		Tags:    map[string]string{"other_tag": "value"},
-		Request: &sentry.Request{},
-	}
-
-	if result := beforeSend(event, nil); result == nil {
-		t.Error("SourceAttrKeyの無いイベントはdropしないこと")
-	}
-}
-
 func TestBeforeSend_KeepsNonIgnorableErrors(t *testing.T) {
 	t.Parallel()
 

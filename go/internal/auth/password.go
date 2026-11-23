@@ -51,7 +51,7 @@ func ValidatePasswordStrength(password string) error {
 }
 
 // VerifyPasswordはパスワードがハッシュと一致するかを検証します。
-// Rails版のhas_secure_password (bcrypt) との互換性を保ちます。
+// Rails期にhas_secure_password (bcrypt) で保存したハッシュもそのまま検証できます。
 func VerifyPassword(hashedPassword, plainPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	return err == nil

@@ -749,7 +749,7 @@ func TestSuggestionPageRepository_ExistsByPageIDAndOpenStatus(t *testing.T) {
 	})
 }
 
-// Rails側の削除経路が頼るsuggestion_pagesのON DELETEの契約を検証
+// suggestion_pagesのON DELETEの契約を検証
 // する。pagesの行の削除はsuggestion_pagesに連鎖し、page_revisions /
 // attachmentsの行の削除は参照をNULLにするだけであること。
 func TestSuggestionPageRepository_OnDeleteContract(t *testing.T) {

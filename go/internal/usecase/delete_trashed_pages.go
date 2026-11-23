@@ -54,8 +54,7 @@ type DeleteTrashedPagesInput struct {
 }
 
 // Executeは、ゴミ箱に入れて保持期間 (model.PageTrashRetentionDays) を過ぎたページを、スペースごとに
-// 上限の件数ずつ物理削除する。消す範囲はRails版の `Pages::BulkDestroyTrashedService` と同じで、
-// 保持期間はゴミ箱の一覧に出す「復元できるページ」と同じ定数から決める。
+// 上限の件数ずつ物理削除する。保持期間はゴミ箱の一覧に出す「復元できるページ」と同じ定数から決める。
 func (uc *DeleteTrashedPagesUsecase) Execute(ctx context.Context, input DeleteTrashedPagesInput) error {
 	now := input.Now
 	if now.IsZero() {

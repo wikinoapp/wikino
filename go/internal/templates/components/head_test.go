@@ -210,55 +210,38 @@ func TestHead_DoesNotLoadVendorHTMX(t *testing.T) {
 	}
 }
 
-// ダークモードのフラグが有効な閲覧者にだけ、配色の宣言と検出のスクリプトを出す。宣言はスタイルシートより前に置き、
+// 配色の宣言と検出のスクリプトを、閲覧者によらず出す。宣言はスタイルシートより前に置き、
 // ブラウザが描く部品とアドレスバーの配色を、スタイルシートを読む前から決められるようにする。
-func TestHead_DarkMode(t *testing.T) {
+func TestHead_ColorScheme(t *testing.T) {
 	t.Parallel()
 
 	const stylesheet = `<link rel="stylesheet" href="/static/css/style.css?v=abc123">`
-	darkModeParts := []string{
+	colorSchemeParts := []string{
 		`<meta name="color-scheme" content="light dark">`,
 		`<meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf5f1">`,
 		`<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121a1b">`,
 	}
-	const detectScript = `if (matchMedia("(prefers-color-scheme: dark)").matches)`
 
-	t.Run("フラグが有効なときは配色の宣言と検出のスクリプトを出す", func(t *testing.T) {
-		t.Parallel()
+	html := renderHead(t, viewmodel.PageMeta{AssetVersion: "abc123"})
 
-		html := renderHead(t, viewmodel.PageMeta{AssetVersion: "abc123", DarkModeEnabled: true})
-
-		stylesheetIndex := strings.Index(html, stylesheet)
-		if stylesheetIndex == -1 {
-			t.Fatalf("headに%qが含まれていない", stylesheet)
+	stylesheetIndex := strings.Index(html, stylesheet)
+	if stylesheetIndex == -1 {
+		t.Fatalf("headに%qが含まれていない", stylesheet)
+	}
+	for _, want := range colorSchemeParts {
+		index := strings.Index(html, want)
+		if index == -1 {
+			t.Errorf("headに%qが含まれていない", want)
+			continue
 		}
-		for _, want := range darkModeParts {
-			index := strings.Index(html, want)
-			if index == -1 {
-				t.Errorf("headに%qが含まれていない", want)
-				continue
-			}
-			if index > stylesheetIndex {
-				t.Errorf("%q (位置%d) がスタイルシート (位置%d) より後にある", want, index, stylesheetIndex)
-			}
+		if index > stylesheetIndex {
+			t.Errorf("%q (位置%d) がスタイルシート (位置%d) より後にある", want, index, stylesheetIndex)
 		}
-		if !strings.Contains(html, detectScript) {
-			t.Errorf("headに%qが含まれていない", detectScript)
-		}
-		if !strings.Contains(html, `document.documentElement.classList.add("dark")`) {
-			t.Error("headにdarkクラスを付けるスクリプトが含まれていない")
-		}
-	})
-
-	t.Run("フラグが無効なときは何も出さない", func(t *testing.T) {
-		t.Parallel()
-
-		html := renderHead(t, viewmodel.PageMeta{AssetVersion: "abc123"})
-
-		for _, notWant := range []string{`name="color-scheme"`, `name="theme-color"`, "prefers-color-scheme", "<script>"} {
-			if strings.Contains(html, notWant) {
-				t.Errorf("headに%qが含まれている", notWant)
-			}
-		}
-	})
+	}
+	if !strings.Contains(html, `if (matchMedia("(prefers-color-scheme: dark)").matches)`) {
+		t.Error("headに配色の検出が含まれていない")
+	}
+	if !strings.Contains(html, `document.documentElement.classList.add("dark")`) {
+		t.Error("headにdarkクラスを付けるスクリプトが含まれていない")
+	}
 }

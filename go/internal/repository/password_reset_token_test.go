@@ -185,7 +185,7 @@ func TestPasswordResetTokenRepository_DeleteUnusedByUserID(t *testing.T) {
 	})
 }
 
-// Rails側の削除経路が頼るON DELETE CASCADEの契約を検証する。
+// ON DELETE CASCADEの契約を検証する。
 // usersの行を直接DELETEしたとき、password_reset_tokensへの明示的な
 // DELETEなしでトークンも一緒に消えること。
 func TestPasswordResetTokenRepository_CascadeOnUserDelete(t *testing.T) {

@@ -133,7 +133,7 @@ func (h *Handler) render(
 }
 
 // handleErrorはエクスポートのユースケースから返ったエラーを、それに応じたレスポンスへ変える。
-// 閲覧者がエクスポートできないスペースは「見つからない」として答える。Rails版も同じで、スペースが
+// 閲覧者がエクスポートできないスペースは「見つからない」として答える。スペースが
 // 存在するが手が届かないと部外者に伝えることは、何も伝えないより多くを語ってしまう。
 func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error, logMsg string) {
 	ctx := r.Context()

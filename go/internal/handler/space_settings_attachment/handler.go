@@ -52,7 +52,6 @@ func requestTarget(w http.ResponseWriter, r *http.Request) (model.SpaceIdentifie
 // handleErrorはユースケースから返ったエラーを、それに応じたレスポンスへ変えます。
 // 閲覧者が管理できないスペースと添付ファイルは「見つからない」として答え、そのスペースで誰が何を
 // できるかや、ほかのスペースの添付ファイルがあるかを、外部から試して確かめられないようにします。
-// Rails版も同じく404を返していました。
 func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error, logMsg string) {
 	ctx := r.Context()
 

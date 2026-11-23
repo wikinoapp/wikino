@@ -17,7 +17,7 @@ import (
 const discardTopicCleanupTimeout = 10 * time.Second
 
 // DiscardTopicUsecaseはトピックを削除する。トピックを論理削除して直ちに隠し、関連レコードと
-// ともに物理削除するジョブを投入する (Rails版の `Topics::SoftDestroyService` と同じ)。
+// ともに物理削除するジョブを投入する。
 type DiscardTopicUsecase struct {
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository

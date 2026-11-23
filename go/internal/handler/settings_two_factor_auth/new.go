@@ -14,7 +14,7 @@ import (
 //
 // 既に有効にしているときは、秘密鍵を差し替えずに設定の画面へ送ります。
 // GETで行を書き換えることになりますが、書き換えるのは有効にする前の秘密鍵だけで、
-// ログインした本人のno-storeの画面のため許容します (Rails版と同じ)。
+// ログインした本人のno-storeの画面のため許容します。
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

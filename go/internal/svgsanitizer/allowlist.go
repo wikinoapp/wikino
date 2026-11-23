@@ -6,7 +6,7 @@ var allowedElements = toSet(
 	"svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan",
 	"defs", "clipPath", "mask", "pattern", "linearGradient", "radialGradient", "stop",
 	"use", "symbol", "marker", "image", "title", "desc", "metadata",
-	// Rails版の一覧に足した要素。switchは、条件に合う最初の子だけを描くため、タグだけを落として
+	// 基本の要素に加えて許す要素。switchは、条件に合う最初の子だけを描くため、タグだけを落として
 	// 子をすべて描くと、言語ごとの文字が重なる
 	"switch",
 )
@@ -21,7 +21,7 @@ var commonAttributes = toSet(
 	"stroke-linejoin", "stroke-miterlimit", "stroke-dasharray",
 	"stroke-dashoffset", "stroke-opacity", "fill-opacity", "opacity",
 	"transform",
-	// Rails版の一覧に足した、見た目だけを決める属性。Figma・Inkscape・draw.ioの書き出しが使い、
+	// 基本の属性に加えて許す、見た目だけを決める属性。Figma・Inkscape・draw.ioの書き出しが使い、
 	// 落とすと切り抜き・塗りの規則・文字の書体が変わる。文字の属性は子に引き継がれるため、gやtspanにも許す
 	"clip-path", "clip-rule", "mask", "fill-rule", "display", "visibility",
 	"font-family", "font-size", "font-weight", "text-anchor", "font-style", "font-variant", "letter-spacing", "word-spacing", "text-decoration",
@@ -30,7 +30,7 @@ var commonAttributes = toSet(
 )
 
 // elementAttributesは、要素ごとに許す属性。`xlink:href` はXLinkの名前空間のhref属性を表す。
-// グラデーションとパターンのhref (ほかの定義を引き継ぐ)・symbolとmarkerの属性は、Rails版の一覧に足した
+// グラデーションとパターンのhref (ほかの定義を引き継ぐ)・symbolとmarkerの属性も許す
 var elementAttributes = map[string]map[string]struct{}{
 	"svg":            toSet("viewBox", "width", "height", "preserveAspectRatio"),
 	"image":          toSet("x", "y", "width", "height", "xlink:href", "href", "preserveAspectRatio"),

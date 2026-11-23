@@ -75,7 +75,7 @@ func TestCreateSpaceUsecase_Execute(t *testing.T) {
 		t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.SpaceRoleAdmin)
 	}
 
-	// Rails版が作成者を管理者として判定できるよう、scopesにはspace:adminを書く
+	// 権限はroleから決め、scopesの列には書かない (列の既定値の空の配列になる)
 	var scopes []string
 	if err := testutil.GetTestDB().QueryRowContext(ctx,
 		`SELECT scopes FROM space_members WHERE id = $1 AND space_id = $2`,
@@ -83,8 +83,8 @@ func TestCreateSpaceUsecase_Execute(t *testing.T) {
 	).Scan(pq.Array(&scopes)); err != nil {
 		t.Fatalf("scopesの取得に失敗: %v", err)
 	}
-	if want := []string{"space:admin"}; !slices.Equal(scopes, want) {
-		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
+	if len(scopes) != 0 {
+		t.Errorf("scopes = %v、期待値 = 空の配列", scopes)
 	}
 }
 

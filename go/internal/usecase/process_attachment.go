@@ -31,7 +31,7 @@ const (
 )
 
 // attachmentTransformsは、種類ごとの、アップロードした内容の書き換え。ここに無い種類 (GIF・動画など) は
-// 書き換えずに処理を終える。GIFは、Rails版と同じくアニメーションを保つために書き換えない
+// 書き換えずに処理を終える。GIFは、アニメーションを保つために書き換えない
 var attachmentTransforms = map[string]func([]byte) ([]byte, error){
 	"image/jpeg":    imagemeta.Strip,
 	"image/jpg":     imagemeta.Strip,

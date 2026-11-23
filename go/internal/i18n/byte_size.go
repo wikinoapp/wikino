@@ -17,8 +17,7 @@ var byteSizeUnitKeys = []string{
 }
 
 // FormatByteSizeはバイト数を、1024の累乗の単位で、有効数字3桁までの読みやすい文字列にする
-// (例: 1536 → 日本語は "1.5KB"、英語は "1.5 KB")。Rails版 (number_to_human_size) の既定に合わせ、
-// 末尾の0は書かない
+// (例: 1536 → 日本語は "1.5KB"、英語は "1.5 KB")。末尾の0は書かない
 func FormatByteSize(ctx context.Context, byteSize int64) string {
 	if byteSize < 1024 {
 		return T(ctx, byteSizeUnitKeys[0], map[string]any{"Size": strconv.FormatInt(byteSize, 10), "Count": int(byteSize)})

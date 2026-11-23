@@ -29,7 +29,7 @@ type TwoFactorAuthData struct {
 	CSRFToken  string
 	FormErrors *model.ValidationError
 	Enabled    bool
-	// EnabledAtは有効にした日時。有効でないとき、またはRails版で日時を残していないときはnil
+	// EnabledAtは有効にした日時。有効でないとき、またはRails期に有効にして日時が残っていないときはnil
 	EnabledAt *time.Time
 }
 

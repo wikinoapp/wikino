@@ -605,7 +605,8 @@ func TestCSRFMiddleware_POST_EmptyFormToken(t *testing.T) {
 	}
 }
 
-func TestCSRFMiddleware_SkipPaths(t *testing.T) {
+// ログアウト (DELETE /user_session。Method Override変換前はPOST) も、ほかの送信と同じくCSRFトークンを検証する
+func TestCSRFMiddleware_UserSessionRequiresToken(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
@@ -613,61 +614,47 @@ func TestCSRFMiddleware_SkipPaths(t *testing.T) {
 		SessionSecure:   false,
 		SessionHTTPOnly: true,
 	}
-
 	csrfMiddleware := middleware.NewCSRF(cfg)
+	const csrfToken = "test_csrf_token_12345678901234567890123456789012"
 
-	handlerCalled := false
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handlerCalled = true
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("OK"))
-	})
-
-	// CSRFトークンなしでDELETE /user_sessionにリクエスト
-	req := httptest.NewRequest("DELETE", "/user_session", nil)
-	rr := httptest.NewRecorder()
-
-	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("スキップパスで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
+	tests := []struct {
+		name       string
+		method     string
+		withToken  bool
+		wantStatus int
+	}{
+		{name: "トークンの無いDELETEは403", method: http.MethodDelete, withToken: false, wantStatus: http.StatusForbidden},
+		{name: "トークンの無いPOSTは403", method: http.MethodPost, withToken: false, wantStatus: http.StatusForbidden},
+		{name: "トークンのあるDELETEは通る", method: http.MethodDelete, withToken: true, wantStatus: http.StatusOK},
+		{name: "トークンのあるPOSTは通る", method: http.MethodPost, withToken: true, wantStatus: http.StatusOK},
 	}
 
-	if !handlerCalled {
-		t.Error("スキップパスでハンドラーが呼び出されませんでした")
-	}
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-func TestCSRFMiddleware_SkipPaths_POST(t *testing.T) {
-	t.Parallel()
+			handlerCalled := false
+			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				handlerCalled = true
+				w.WriteHeader(http.StatusOK)
+			})
 
-	cfg := &config.Config{
-		CookieDomain:    ".example.com",
-		SessionSecure:   false,
-		SessionHTTPOnly: true,
-	}
+			req := httptest.NewRequest(tt.method, "/user_session", nil)
+			if tt.withToken {
+				req.Header.Set("X-CSRF-Token", csrfToken)
+			}
+			req.AddCookie(&http.Cookie{Name: middleware.CSRFCookieName, Value: csrfToken})
+			rr := httptest.NewRecorder()
 
-	csrfMiddleware := middleware.NewCSRF(cfg)
+			csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
 
-	handlerCalled := false
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handlerCalled = true
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("OK"))
-	})
-
-	// CSRFトークンなしでPOST /user_sessionにリクエスト
-	req := httptest.NewRequest("POST", "/user_session", nil)
-	rr := httptest.NewRecorder()
-
-	csrfMiddleware.Middleware(testHandler).ServeHTTP(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("スキップパスで200が返されなかった: ステータスコード = %v、期待値 = %v", rr.Code, http.StatusOK)
-	}
-
-	if !handlerCalled {
-		t.Error("スキップパスでハンドラーが呼び出されませんでした")
+			if rr.Code != tt.wantStatus {
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, tt.wantStatus)
+			}
+			if handlerCalled != (tt.wantStatus == http.StatusOK) {
+				t.Errorf("ハンドラーの呼び出し = %v、期待値 = %v", handlerCalled, tt.wantStatus == http.StatusOK)
+			}
+		})
 	}
 }
 
@@ -766,6 +753,10 @@ func TestCSRFMiddleware_TokenlessPaths(t *testing.T) {
 		{name: "保護リソースのメタデータにはCookieを付けない", method: http.MethodGet, path: "/.well-known/oauth-protected-resource/api/v1/spaces/example", wantCookie: false},
 		{name: "APIカタログにはCookieを付けない", method: http.MethodGet, path: "/.well-known/api-catalog", wantCookie: false},
 		{name: "MCPサーバーにはCookieを付けない", method: http.MethodGet, path: "/mcp", wantCookie: false},
+		{name: "ファビコンにはCookieを付けない", method: http.MethodGet, path: "/favicon.ico", wantCookie: false},
+		{name: "Apple Touch IconのHEADにはCookieを付けない", method: http.MethodHead, path: "/apple-touch-icon.png", wantCookie: false},
+		{name: "precomposedのApple Touch IconにはCookieを付けない", method: http.MethodGet, path: "/apple-touch-icon-precomposed.png", wantCookie: false},
+		{name: "robots.txtにはCookieを付けない", method: http.MethodGet, path: "/robots.txt", wantCookie: false},
 		{name: "OAuthの同意画面にはCookieを付ける", method: http.MethodGet, path: "/oauth/authorize", wantCookie: true},
 	}
 

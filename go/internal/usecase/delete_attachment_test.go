@@ -102,7 +102,7 @@ func (f *deleteAttachmentFixture) add(t *testing.T, name string) (model.Attachme
 	return id, key
 }
 
-// addVariantは、Rails版が作るのと同じ形のサムネイル (variant) の行を作り、実体を置く。variantのblobの
+// addVariantは、Rails期に作られたのと同じ形のサムネイル (variant) の行を作り、実体を置く。variantのblobの
 // キーを返す
 func (f *deleteAttachmentFixture) addVariant(t *testing.T, id model.AttachmentID, name string) string {
 	t.Helper()

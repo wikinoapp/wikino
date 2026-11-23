@@ -37,6 +37,7 @@ func exportRouter(t *testing.T, queries *query.Queries, userID model.UserID) *ch
 
 	r := chi.NewRouter()
 	r.NotFound(httperror.NotFound)
+	r.MethodNotAllowed(httperror.NotFound)
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx := i18n.SetLocale(req.Context(), i18n.LangJa)
@@ -45,8 +46,6 @@ func exportRouter(t *testing.T, queries *query.Queries, userID model.UserID) *ch
 		})
 	})
 	r.Route("/s/{space_identifier}/settings/exports", func(r chi.Router) {
-		r.MethodNotAllowed(httperror.NotFound)
-
 		r.Post("/", exportHandler.Create)
 		r.Get("/new", exportHandler.New)
 		r.Head("/new", exportHandler.New)
@@ -62,9 +61,8 @@ func exportRouter(t *testing.T, queries *query.Queries, userID model.UserID) *ch
 }
 
 // TestExportRoutes_HeadAnswersLikeGetは、HEADがGETと同じ答えを返すことを固定する。
-// リバースプロキシはエクスポートの名前空間を全メソッドでGoへ渡し、これらの画面の移行元である
-// Railsのルーターは一致しないHEADをGETとして読むため、GETに200を返す画面はHEADにも
-// 200を返す必要がある。
+// chiはメソッドごとにルートを引き、HEADをGETへフォールバックしないため、GETに200を返す画面には
+// HEADのルートも登録する必要がある。
 func TestExportRoutes_HeadAnswersLikeGet(t *testing.T) {
 	t.Parallel()
 
@@ -129,9 +127,7 @@ func TestExportRoutes_HeadAnswersLikeGet(t *testing.T) {
 }
 
 // TestExportRoutes_RejectsUnsupportedRequestsWithNotFoundは、名前空間が受け持たない
-// リクエストに何を返すかを対象とする。リバースプロキシは、2つ目のエクスポートを防ぐ仕組みを
-// 持たないRailsの書き込み処理へ開始が届かないよう、配下の全メソッドをここへ送る。残りを
-// Rails版と同じように拒否するのはルーターの役目で、chiの本文なし405ではなく404ページを返す。
+// リクエストに、chiの本文なし405ではなく404ページを返すことを対象とする。
 func TestExportRoutes_RejectsUnsupportedRequestsWithNotFound(t *testing.T) {
 	t.Parallel()
 

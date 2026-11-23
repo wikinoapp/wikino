@@ -62,9 +62,7 @@ type createPageInput struct {
 // createPageは公開済みのページ1件と、その最初のリビジョン、編集者
 // エントリを作成する。これは画面から公開したときに残る行の一式にあたる。
 //
-// ページ行をRepositoryではなくここで書くのは、ページの作成を担当しているのが
-// 今もRails側であり、Go側にはUpdateしか無いため。リビジョンと編集者
-// エントリには本番のCreateがあるので、そちらはRepositoryを経由する。
+// リビジョンと編集者エントリはRepositoryを経由して作る。
 func (w *pageWriter) createPage(ctx context.Context, input createPageInput) (*seededPage, error) {
 	if err := w.ensureTopicInSpace(input.topic); err != nil {
 		return nil, err

@@ -229,8 +229,7 @@ type pageShowLinks struct {
 
 // fetchLinksはリンク一覧・一覧した各ページのバックリンク・ページ自身のバックリンクを取得する。
 // 編集画面と違い本画面は保存済みページのリンクを一覧する。メンバー自身の下書きが公開の閲覧者の
-// 見え方を変えてはならず、ゲストはそもそも下書きを持たないため (Rails版Pages::ShowControllerも
-// 同じ理由でページレコード自身を渡している)。
+// 見え方を変えてはならず、ゲストはそもそも下書きを持たないため。
 func (uc *GetPageShowUsecase) fetchLinks(ctx context.Context, pg *model.Page, spaceID model.SpaceID, access *topicAccess, input GetPageShowInput) (*pageShowLinks, error) {
 	lists, err := fetchRelatedPageLists(ctx, uc.pageRepo, relatedPageListInput{
 		PageID:                 pg.ID,

@@ -12,10 +12,8 @@ services:
       - wikino-cli-config:/home/developer/.config/wikino
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/go/.cache/go-build
-      - app-gems-ruby-4.0.10-data:/mise/installs/ruby/4.0.10/lib/ruby/gems/4.0.0
     ports:
       - "4200:8080" # Go
-      - "4201:3000" # Rails
     stdin_open: true
     tty: true
     working_dir: /workspace
@@ -41,11 +39,6 @@ services:
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
 
-  chrome:
-    image: selenium/standalone-chromium:136.0.7103.113
-    ports:
-      - "4205:4444"
-
   imgproxy:
     image: ghcr.io/imgproxy/imgproxy:v3.31.2
     ports:
@@ -61,7 +54,6 @@ services:
       - IMGPROXY_USE_S3=${WIKINO_IMGPROXY_USE_S3:-}
 
 volumes:
-  app-gems-ruby-4.0.10-data:
   go-build-cache:
   go-mod-cache:
   op-config:

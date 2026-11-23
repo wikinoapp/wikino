@@ -25,7 +25,7 @@ type SpaceDeletionCreateValidatorInput struct {
 }
 
 // Validateは、入力したスペースの名前が削除するスペースの名前と一致するかを確かめる。
-// 一致は前後の空白も含めた完全一致で判定する (Rails版の `Spaces::DestroyConfirmationForm` と同じ)。
+// 一致は前後の空白も含めた完全一致で判定する。
 func (v *SpaceDeletionCreateValidator) Validate(ctx context.Context, input SpaceDeletionCreateValidatorInput) error {
 	ve := model.NewValidationError()
 

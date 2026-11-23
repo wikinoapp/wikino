@@ -986,7 +986,7 @@ func TestExportRepository_MarkFailedIfUnclaimed(t *testing.T) {
 }
 
 // 親の削除に使うエクスポートの全FKがON DELETE CASCADEを保つことを検証する。
-// 下の振る舞いテストはRailsの削除順に従い、スペースを削除する前にqueued_by_id経由で
+// 下の振る舞いテストは、スペースを削除する前にqueued_by_id経由で
 // exportsを削除するため、space_idのFKを実行できない。
 func TestExportRepository_ForeignKeysUseCascadeDelete(t *testing.T) {
 	t.Parallel()
@@ -1031,8 +1031,7 @@ func TestExportRepository_ForeignKeysUseCascadeDelete(t *testing.T) {
 	}
 }
 
-// Rails側のスペース削除が頼るON DELETE CASCADEの契約を検証する。exportsは
-// Rails版が知らないGo側の行であるため、スペースとそのメンバーを削除したとき、
+// ON DELETE CASCADEの契約を検証する。スペースとそのメンバーを削除したとき、
 // exportsへの明示的なDELETEなしで一緒に消える必要がある。
 func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 	t.Parallel()
@@ -1049,7 +1048,7 @@ func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 		WithObjectKey("exports/cascade.zip").
 		Build()
 
-	// Rails版と同じ順序で削除する。先にメンバー、次にスペース。
+	// 先にメンバー、次にスペースの順で削除する。
 	if _, err := tx.ExecContext(
 		ctx, `DELETE FROM space_members WHERE space_id = $1`, string(f.spaceID),
 	); err != nil {
@@ -1072,7 +1071,7 @@ func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 	}
 }
 
-// insertLegacyExportBlobは、Rails版のエクスポートのZIPのblobを作り、IDを返す
+// insertLegacyExportBlobは、Rails期のエクスポートのZIPのblobを作り、IDを返す
 func insertLegacyExportBlob(t *testing.T, tx *sql.Tx, key string) string {
 	t.Helper()
 	var blobID string
@@ -1084,7 +1083,7 @@ func insertLegacyExportBlob(t *testing.T, tx *sql.Tx, key string) string {
 	return blobID
 }
 
-// attachLegacyExportBlobは、Railsのhas_one_attached :fileと同じ形で、blobをエクスポートに関連付ける
+// attachLegacyExportBlobは、Rails期のエクスポートが持つhas_one_attached :fileの形で、blobをエクスポートに関連付ける
 func attachLegacyExportBlob(t *testing.T, tx *sql.Tx, exportID model.ExportID, blobID string) {
 	t.Helper()
 	if _, err := tx.ExecContext(context.Background(), `

@@ -15,8 +15,7 @@ const validPresignChecksum = "1B2M2Y8AsgTpgAmY7PhCfg=="
 
 func presignByteSize(n int64) *int64 { return &n }
 
-// TestAttachmentPresignCreateValidator_Filenameは、整えたファイル名がRails版 (Attachments::PresignForm) と
-// 同じになることを確かめる。期待値は、同じ入力をRails版のフォームに渡して得た値である
+// TestAttachmentPresignCreateValidator_Filenameは、ファイル名の整え方を確かめる
 func TestAttachmentPresignCreateValidator_Filename(t *testing.T) {
 	t.Parallel()
 
@@ -190,7 +189,7 @@ func TestAttachmentPresignCreateValidator_Validate(t *testing.T) {
 		}
 	})
 
-	// Rails版と同じく、種類が分からないときは大きさの値を検査せず、ファイル形式のエラーだけを返す
+	// 種類が分からないときは大きさの値を検査せず、ファイル形式のエラーだけを返す
 	for _, tc := range []struct {
 		name     string
 		byteSize int64

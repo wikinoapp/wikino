@@ -8,7 +8,7 @@ import (
 )
 
 // MethodOverrideはHTMLフォームから送信された_methodパラメータを読み取り、
-// HTTPメソッドを上書きするミドルウェア (Rails方式)
+// HTTPメソッドを上書きするミドルウェア
 //
 // 使用例:
 //

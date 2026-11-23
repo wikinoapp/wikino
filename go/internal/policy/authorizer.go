@@ -57,16 +57,16 @@ type Authorizer interface {
 
 	// 添付ファイル
 
-	// CanShowAttachmentはRails版のcan_view_attachment?と揃え、attachment:readスコープを持つか、
+	// CanShowAttachmentは、attachment:readスコープを持つか、
 	// 添付ファイルを参照するページがすべて公開トピックにある (allReferencingPagesPublic) かで判定する。
 	// attachment:readはスペースにしか付けられないスコープで、判定でトピックを見ない。
 	// そのため非公開トピックのページだけが参照する添付ファイルも、attachment:readがあれば閲覧できる。
 	CanShowAttachment(allReferencingPagesPublic bool) bool
-	// CanCreateAttachmentはattachment:writeスコープで判定し、Rails版のcan_upload_attachment?と揃える。
+	// CanCreateAttachmentはattachment:writeスコープで判定する。
 	// 添付ファイルはスペースに属し、ページを書く前にアップロードするため、判定でトピックを見ない。
 	CanCreateAttachment() bool
 
-	// CanDeleteAttachmentはattachment:deleteスコープで判定し、Rails版のcan_delete_attachment?と揃える。
+	// CanDeleteAttachmentはattachment:deleteスコープで判定する。
 	// 削除は取り消せず、ほかのメンバーがページに貼った添付ファイルも消すため、管理者のロールだけが持つ。
 	CanDeleteAttachment() bool
 
@@ -86,12 +86,12 @@ type Authorizer interface {
 	// スペース
 	CanCreateTopic() bool
 
-	// CanExportSpaceはspace:writeスコープで判定し、Rails版が要求するものと揃える。
+	// CanExportSpaceはspace:writeスコープで判定する。
 	// エクスポートはスペースの全ページを1つのアーカイブに収めるため、読める全員ではなく
 	// スペースを変更してよいと認められたメンバーに開く。
 	CanExportSpace() bool
 
-	// CanUpdateSpaceはspace:writeスコープで判定し、Rails版のcan_update_space?と揃える。
+	// CanUpdateSpaceはspace:writeスコープで判定する。
 	// スペース設定の既存の項目 (一般・エクスポート・添付ファイル) はこの権限を持つメンバーにだけ出す。
 	CanUpdateSpace() bool
 

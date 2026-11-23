@@ -11,9 +11,15 @@ templ NotFoundPage() {
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="initial-scale=1, width=device-width"/>
+			// ブラウザが描く既定の背景・文字・フォーム部品を、OSの配色に合わせる
+			<meta name="color-scheme" content="light dark"/>
 			<meta name="robots" content="noindex, nofollow"/>
 			<title>{ templates.T(ctx, "error_not_found_title") }</title>
 			<style>
+				:root {
+					color-scheme: light dark;
+				}
+
 				body {
 					font-family:
 						"Helvetica Neue",
@@ -52,6 +58,18 @@ templ NotFoundPage() {
 				.message {
 					font-size: 14px;
 					margin-bottom: 20px;
+				}
+
+				/* JavaScriptと共通のスタイルシートを読み込まないため、OSの配色だけで切り替える。色は web/style.css の .dark の背景・文字・リンクに合わせる */
+				@media (prefers-color-scheme: dark) {
+					body {
+						background-color: #121a1b;
+						color: #faf5f1;
+					}
+
+					a {
+						color: #9aeefd;
+					}
 				}
 			</style>
 		</head>

@@ -9,9 +9,9 @@ import (
 )
 
 // Cookieを使わないリクエストの定義。
-// リバースプロキシのGo振り分け・CSRFトークンの発行と検証の除外・フラッシュの消費除外がこの定義を共有する。
-// パスを足すときは `CookielessPaths` に加え、リバースプロキシの `goHandledRegexPatterns` にも
-// 同じパターンを同じメソッドで登録する (登録漏れはリバースプロキシのテストで検出する)。
+// CSRFトークンの発行と検証の除外・フラッシュの消費除外がこの定義を共有する。
+// パスやメソッドを変更するときは、`go/e2e/tests/cookieless-routes.spec.ts` と
+// `go/e2e/tests/root-files.spec.ts` の該当ケースで、実際のルートの応答にCookieが付かないことを確かめる。
 //
 //   - og:image配信: SNSのクローラーが取得し共有キャッシュに載せる画像のため、レスポンスに `Set-Cookie` を
 //     付けない (Cloudflareは既定では `Set-Cookie` 付きのレスポンスをキャッシュせず、キャッシュする設定に
@@ -24,6 +24,8 @@ import (
 //     `Set-Cookie` も付けない (キャッシュされうる応答に他人向けのCookieを載せない)
 //   - リモートMCPサーバー: 公開Web APIと同じく `Authorization: Bearer` のトークンで認証する。ブラウザからの
 //     別オリジンの要求は、ハンドラーがhttp.CrossOriginProtectionで拒む
+//   - ルート直下のファイル: ブラウザ・iOS・クローラーが決まったパスで取りに来る、誰にでも同じ内容の
+//     ファイルのため、共有キャッシュに載せられるよう `Set-Cookie` を付けない
 var (
 	// AttachmentOGImagePathPatternは公開トピックのページから参照される添付ファイルのog:imageのパス。
 	// /attachments/:id (ダウンロードURL) は対象外にするため、og_image末尾でパスを限定する
@@ -46,11 +48,14 @@ var (
 	OAuthTokenPathPattern = regexp.MustCompile(`^/oauth/(token|revoke|device_authorization)$`)
 
 	// APIMetadataPathPatternはOAuthとAPIのメタデータのパス。
-	// リバースプロキシのGo振り分けと同じ範囲に限定する
+	// 他の用途の `/.well-known/` を含めないよう、使う名前だけに限定する
 	APIMetadataPathPattern = regexp.MustCompile(`^/\.well-known/(oauth-authorization-server|oauth-protected-resource(/.*)?|api-catalog)$`)
 
 	// MCPServerPathPatternはリモートMCPサーバーのエンドポイントのパス (model.MCPServerPath)
 	MCPServerPathPattern = regexp.MustCompile(`^/mcp$`)
+
+	// RootFilePathPatternはルート直下で配信するファイル (ファビコン・Apple Touch Icon・robots.txt) のパス
+	RootFilePathPattern = regexp.MustCompile(`^/(favicon\.ico|apple-touch-icon(-precomposed)?\.png|robots\.txt)$`)
 )
 
 // CookielessPathはCookieを使わないリクエストのパスとメソッドの組
@@ -69,6 +74,7 @@ var CookielessPaths = []CookielessPath{
 	{Pattern: OAuthTokenPathPattern},
 	{Pattern: APIMetadataPathPattern},
 	{Pattern: MCPServerPathPattern},
+	{Pattern: RootFilePathPattern, Methods: []string{http.MethodGet, http.MethodHead}},
 }
 
 // IsCookielessRequestはmethodとpathのリクエストがCookieを使わないかを返す

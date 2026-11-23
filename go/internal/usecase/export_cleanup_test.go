@@ -107,7 +107,7 @@ func TestGenerateExportFilesUsecase_OutcomeContexts(t *testing.T) {
 	}
 }
 
-// addLegacyExportFileはRailsのhas_one_attached :fileが使う関連を作成する。
+// addLegacyExportFileは、Rails期のエクスポートが持つhas_one_attached :fileの形の関連を作成する。
 func addLegacyExportFile(t *testing.T, f generateExportFixture, id model.ExportID, key string) string {
 	t.Helper()
 	var blobID string

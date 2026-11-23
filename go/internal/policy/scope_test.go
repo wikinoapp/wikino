@@ -146,7 +146,7 @@ func TestExpandScopes(t *testing.T) {
 	t.Run("space:adminは展開しない", func(t *testing.T) {
 		t.Parallel()
 
-		// 権限はロールから引くため、space:adminはRails版向けに保存する値でしかない
+		// 権限はロールから引くため、space:adminはRails期に保存された値でしかない
 		result := expandScopes([]model.Scope{model.ScopeSpaceAdmin, model.ScopeTopicWrite})
 
 		assertScopes(t, result, []model.Scope{model.ScopeSpaceAdmin, model.ScopeTopicWrite, model.ScopeTopicRead})

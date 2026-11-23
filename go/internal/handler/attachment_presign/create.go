@@ -23,20 +23,19 @@ type createRequest struct {
 	Checksum    string `json:"checksum"`
 }
 
-// createResponseは事前署名の応答。キーはエディタのJSが読む名前 (Rails版と同じ) にする
+// createResponseは事前署名の応答。キーはエディタのJSが読む名前にする
 type createResponse struct {
 	DirectUploadURL     string            `json:"directUploadUrl"`
 	DirectUploadHeaders map[string]string `json:"directUploadHeaders"`
 	AttachmentID        string            `json:"attachmentId"`
 }
 
-// validationErrorResponseは検証に失敗したときの応答。Rails版と同じく、メッセージの配列を返す
+// validationErrorResponseは検証に失敗したときの応答。メッセージの配列を返す
 type validationErrorResponse struct {
 	Errors []string `json:"errors"`
 }
 
-// presignFieldOrderは、検証エラーのメッセージを並べる順。項目の宣言の順にする。Rails版は大きさの検証を
-// ほかの必須の検証のあとに行うため、大きさとチェックサムの両方が不正なときはRails版と並びが異なる
+// presignFieldOrderは、検証エラーのメッセージを並べる順。項目の宣言の順にする
 var presignFieldOrder = map[string]int{"filename": 0, "content_type": 1, "byte_size": 2, "checksum": 3}
 
 // CreateはPOST /s/{space_identifier}/attachments/presign - スペースでattachment:writeを持つメンバーのために、
@@ -83,7 +82,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 				writeJSON(w, http.StatusNotFound, map[string]string{"error": "Not Found"})
 				return
 			case model.AppErrCodeForbidden:
-				// Rails版と同じ本文にする
 				writeJSON(w, http.StatusForbidden, map[string]string{"error": "Unauthorized"})
 				return
 			}

@@ -16,12 +16,5 @@
       }
     }
   ],
-  "ignorePatterns": [
-    "**/node_modules/",
-    "go/internal/query/*.go",
-    "go/internal/templates/*_templ.go",
-    "go/static/",
-    "rails/app/assets/builds/",
-    "rails/db/"
-  ]
+  "ignorePatterns": ["**/node_modules/", "go/internal/query/*.go", "go/internal/templates/*_templ.go", "go/static/"]
 }

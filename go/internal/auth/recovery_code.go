@@ -18,7 +18,7 @@ const (
 
 // GenerateRecoveryCodesは、8文字の小文字英数字のリカバリーコードを暗号論的乱数で10個作る。
 //
-// Rails版と同じ形式にし、どちらの実装で発行したコードもログインのリカバリーコードの検証で通るようにする。
+// 保存済みのリカバリーコード (Rails期に発行したものを含む) と同じ形式にし、どれもログインの検証で通るようにする。
 func GenerateRecoveryCodes() ([]string, error) {
 	codes := make([]string, RecoveryCodeCount)
 	alphabetSize := big.NewInt(int64(len(recoveryCodeAlphabet)))

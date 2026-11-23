@@ -28,7 +28,7 @@ type SettingsAccountDeletionCreateValidatorInput struct {
 }
 
 // Validateは、入力したアットネームが本人のものと一致し、参加しているスペースが無いかを確かめる。
-// アットネームは前後の空白も含めた完全一致で判定する (Rails版の `Accounts::DestroyConfirmationForm` と同じ)。
+// アットネームは前後の空白も含めた完全一致で判定する。
 // 参加しているスペースがあれば、入力によらず削除できないため、フォーム全体の誤りとして示す。
 func (v *SettingsAccountDeletionCreateValidator) Validate(ctx context.Context, input SettingsAccountDeletionCreateValidatorInput) error {
 	ve := model.NewValidationError()

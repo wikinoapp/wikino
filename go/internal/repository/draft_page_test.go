@@ -1391,7 +1391,7 @@ func TestDraftPageRepository_ListBySpaceMember(t *testing.T) {
 	})
 }
 
-// Rails側の削除経路が頼るdraft_pagesのON DELETE SET NULLの契約を
+// draft_pagesのON DELETE SET NULLの契約を
 // 検証する。参照先のsuggestion_pages / attachmentsの行を削除したとき、
 // 参照はNULLになり下書き自体は残ること。下書きはユーザーの書きかけ原稿で
 // あり、巻き添えで消してはならない。

@@ -15,7 +15,7 @@ type TwoFactorAuthSetup struct {
 }
 
 // newTwoFactorAuthSetupは秘密鍵から、画面に出すTwoFactorAuthSetupを作る。
-// 認証アプリにはメールアドレスを表示し、どのアカウントのコードかを見分けられるようにする (Rails版と同じ)。
+// 認証アプリにはメールアドレスを表示し、どのアカウントのコードかを見分けられるようにする。
 func newTwoFactorAuthSetup(secret, email string) (*TwoFactorAuthSetup, error) {
 	url, err := auth.BuildOTPAuthURL(secret, email)
 	if err != nil {

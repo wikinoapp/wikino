@@ -69,11 +69,12 @@ func (uc *GetEditLinkDataUsecase) Execute(ctx context.Context, input GetEditLink
 	}
 
 	// ここで省略するのはトピックの絞り込みだけである。編集画面は閲覧画面と違い、全トピックの
-	// ページを一覧し続ける。閲覧画面と同じく開けるトピックに絞る対応は、移行の途中で編集中の
-	// メンバーの見え方を変えることになるため後続タスクに回している。
+	// ページを一覧し続ける。
 	//
-	// ゴミ箱と廃棄済みトピックのフィルタはクエリ自体に含まれるため編集画面にも効き、同じ一覧を
-	// 担うRails版の `available` スコープと揃う。
+	// TODO: 閲覧画面と同じく開けるトピックに絞るかを決める。絞ると、編集中のメンバーに見えていた
+	// リンク先が一覧から消える
+	//
+	// ゴミ箱と廃棄済みトピックのフィルタはクエリ自体に含まれるため、編集画面にも効く。
 	visibility := repository.AllTopicsVisible()
 
 	lists, err := fetchRelatedPageLists(ctx, uc.pageRepo, relatedPageListInput{

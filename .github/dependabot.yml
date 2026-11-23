@@ -86,24 +86,6 @@ updates:
           - "patch"
           - "minor"
 
-  # Rails版のbundler依存関係
-  - package-ecosystem: "bundler"
-    directory: "/rails"
-    schedule:
-      interval: "daily"
-    # Rails版はメンテナンスモードに入っており、Dependabot alertsに基づく
-    # セキュリティアップデートのみ対応する。通常のversion update PRは作らない
-    open-pull-requests-limit: 0
-
-  # Rails版のnpm依存関係
-  - package-ecosystem: "npm"
-    directory: "/rails"
-    schedule:
-      interval: "daily"
-    # Rails版はメンテナンスモードに入っており、Dependabot alertsに基づく
-    # セキュリティアップデートのみ対応する。通常のversion update PRは作らない
-    open-pull-requests-limit: 0
-
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

@@ -56,7 +56,7 @@ func TestNewMemberPolicy(t *testing.T) {
 		p := NewMemberPolicy([]model.Scope{model.ScopeSpaceAdmin}, nil)
 
 		if p.CanUpdateSpace() || p.CanCreatePage() {
-			t.Error("space:adminはRails版向けの値であり、Go版の判定で権限を生むべきでない")
+			t.Error("space:adminはRails期に書かれた値であり、判定で権限を生むべきでない")
 		}
 	})
 

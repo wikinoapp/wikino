@@ -22,7 +22,6 @@ func setupTestEnv(t *testing.T) func() {
 		"WIKINO_SESSION_HTTPONLY":          os.Getenv("WIKINO_SESSION_HTTPONLY"),
 		"WIKINO_DISABLE_RATE_LIMIT":        os.Getenv("WIKINO_DISABLE_RATE_LIMIT"),
 		"WIKINO_TRUSTED_PROXY_CIDRS":       os.Getenv("WIKINO_TRUSTED_PROXY_CIDRS"),
-		"WIKINO_RAILS_APP_URL":             os.Getenv("WIKINO_RAILS_APP_URL"),
 		"WIKINO_TURNSTILE_ENABLED":         os.Getenv("WIKINO_TURNSTILE_ENABLED"),
 		"WIKINO_TURNSTILE_SITE_KEY":        os.Getenv("WIKINO_TURNSTILE_SITE_KEY"),
 		"WIKINO_TURNSTILE_SECRET_KEY":      os.Getenv("WIKINO_TURNSTILE_SECRET_KEY"),
@@ -644,24 +643,6 @@ func TestLoad_DisableRateLimit(t *testing.T) {
 				t.Errorf("DisableRateLimit = %v、期待値 = %v", cfg.DisableRateLimit, tt.want)
 			}
 		})
-	}
-}
-
-// TestLoad_RailsAppURLはRailsAppURL設定のテスト
-func TestLoad_RailsAppURL(t *testing.T) {
-	cleanup := setupTestEnv(t)
-	defer cleanup()
-
-	railsURL := "http://localhost:3001"
-	_ = os.Setenv("WIKINO_RAILS_APP_URL", railsURL)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load()に失敗: %v", err)
-	}
-
-	if cfg.RailsAppURL != railsURL {
-		t.Errorf("RailsAppURL = %v、期待値 = %v", cfg.RailsAppURL, railsURL)
 	}
 }
 

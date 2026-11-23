@@ -49,7 +49,7 @@ type deleteSpaceFixture struct {
 
 // setupDeleteSpaceFixtureは、物理削除が消す行と実体を1つずつ以上持つスペースを作る。
 // 添付ファイル (サムネイル・ページからの参照・カバー画像を含む)、論理削除したトピックを含むトピックと
-// その関連レコード、編集提案のコメント、エクスポート (Go版のアーカイブとRails版のZIP)、
+// その関連レコード、編集提案のコメント、エクスポート (Go版のアーカイブとRails期のZIP)、
 // 個人用アクセストークン、OAuthの行である
 func setupDeleteSpaceFixture(t *testing.T, suffix string) *deleteSpaceFixture {
 	t.Helper()
@@ -96,12 +96,12 @@ func setupDeleteSpaceFixture(t *testing.T, suffix string) *deleteSpaceFixture {
 	if err := f.db.QueryRowContext(ctx, `
 		INSERT INTO active_storage_blobs (key, filename, content_type, service_name, byte_size, created_at)
 		VALUES ($1, 'old.zip', 'application/zip', 'local', 3, NOW()) RETURNING id`, legacyKey).Scan(&legacyBlobID); err != nil {
-		t.Fatalf("Rails版のZIPのblobの作成に失敗: %v", err)
+		t.Fatalf("Rails期のZIPのblobの作成に失敗: %v", err)
 	}
 	if _, err := f.db.ExecContext(ctx, `
 		INSERT INTO active_storage_attachments (name, record_type, record_id, blob_id, created_at)
 		VALUES ('file', 'ExportRecord', $1, $2, NOW())`, string(legacyExportID), legacyBlobID); err != nil {
-		t.Fatalf("Rails版のZIPの関連の作成に失敗: %v", err)
+		t.Fatalf("Rails期のZIPの関連の作成に失敗: %v", err)
 	}
 	f.objectStorage.Put(legacyKey, []byte("zip"), "application/zip")
 	f.objectKeys = append(f.objectKeys, exportKey, legacyKey)
@@ -363,7 +363,7 @@ func TestDeleteSpaceUsecase_Execute_添付ファイルが増えても削除の�
 		t.Fatalf("Execute()のエラー = %v", err)
 	}
 
-	// Go版のアーカイブで1回、Rails版のZIPで1回、5件の添付ファイルとサムネイルで1回
+	// Go版のアーカイブで1回、Rails期のZIPで1回、5件の添付ファイルとサムネイルで1回
 	if got := f.objectStorage.DeleteManyCalls(); got != 3 {
 		t.Errorf("一括削除のリクエストの数 = %d、期待値 = 3", got)
 	}

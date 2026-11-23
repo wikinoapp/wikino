@@ -158,8 +158,8 @@ var soloTopicSpecs = []topicSpec{
 // 任意の文字位置で折り返せる。2つ目は途切れない半角英字の連なりで、折り返せる場所が
 // 無い。1つ目に耐えるレイアウトでも2つ目では崩れうるため、両方を置いている。
 //
-// 名前はどちらも30文字で、トピックの作成を今も担当しているRails側の
-// Topic::NAME_MAX_LENGTHが許す最大の長さ。
+// 名前はどちらも30文字で、トピックの名前のバリデーション (validatorのtopicNameMaxLength) が
+// 許す最大の長さ。
 //
 // どちらもassignしない。これらのトピックへページを書き込む生成器は無い。ここで
 // 示すのは自身の名前の描かれ方であり、それはトピックがページを持つかどうかに
@@ -263,9 +263,6 @@ func generateTopics(ctx context.Context, dbtx query.DBTX, out io.Writer, spaces 
 }
 
 // createTopicはトピックを1つINSERTし、仕様が指定するアカウントを参加させる。
-//
-// Repositoryではなくここで行を書くのは、トピックの作成を担当しているのが今も
-// Rails側であり、Go側に呼べるCreateが無いため。
 func createTopic(
 	ctx context.Context,
 	dbtx query.DBTX,

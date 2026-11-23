@@ -27,7 +27,7 @@ function bodyMarkup(): string {
   `;
 }
 
-// Railsのエンドポイントを、ローダーがレスポンスから読む最小限で代替する。引数を宣言して
+// 署名付きURLの一括取得のエンドポイントを、ローダーがレスポンスから読む最小限で代替する。引数を宣言して
 // いるのは、記録された呼び出しをローダーが渡した形のまま型付けするため。
 function stubFetch() {
   const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => ({
@@ -130,7 +130,7 @@ describe("initializeAttachmentLoader", () => {
   });
 
   // ページ表示画面はゲストが到達できCSRFトークンのinputを描画しないが、ページ編集画面は
-  // 描画する。エンドポイントはRails側のCSRF検証をオプトアウトしているため、ゲストからの
+  // 描画する。エンドポイントはCSRF検証の対象から外れているため、ゲストからの
   // リクエストは空のトークンを載せるのではなく、そのまま送られる必要がある。
   it("トークンの入力要素を描画しない画面ではCSRFヘッダーを付けない", async () => {
     document.body.innerHTML = bodyMarkup();

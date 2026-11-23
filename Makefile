@@ -6,20 +6,6 @@ dev: ## 全サービスの開発サーバーを起動
 help: ## ヘルプを表示
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-# 両サブプロジェクトをセットアップする。データベースのフェーズを分けているのは
-# 所有者が異なるため。primaryはgo/db/schema.sqlとdbmateが管理するマイグレーション
-# に従い、Railsが持つのはqueueだけである。それぞれを所有するサブプロジェクトの
-# Makefileから初期化することで、各自の1Password環境ファイルが読み込まれる。
-#
-# db-setup-devではなくdb-prepare-devを使うのは、依存関係を入れ直すためにsetupを
-# 実行し直しても開発データが残るようにするため。データベースを作り直すのは
-# `make -C go db-setup-dev` を明示的に実行したときだけとする。
-.PHONY: setup
-setup: ## Railsの依存関係をインストールし、両方のデータベースをセットアップ
-	$(MAKE) -C rails setup
-	$(MAKE) -C go db-prepare-dev
-	$(MAKE) -C rails db-setup
-
 .PHONY: fmt
 fmt: ## コードをフォーマット (Oxfmt)
 	pnpm fmt

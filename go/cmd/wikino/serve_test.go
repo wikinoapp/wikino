@@ -13,10 +13,125 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/wikinoapp/wikino/go/internal/apierror"
 	"github.com/wikinoapp/wikino/go/internal/config"
+	"github.com/wikinoapp/wikino/go/internal/handler/welcome"
 	"github.com/wikinoapp/wikino/go/internal/middleware"
+	"github.com/wikinoapp/wikino/go/internal/repository"
+	"github.com/wikinoapp/wikino/go/internal/session"
 	"github.com/wikinoapp/wikino/go/internal/storage"
+	"github.com/wikinoapp/wikino/go/internal/testutil"
 )
+
+func TestWelcomePageDoesNotQueryFeatureFlags(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	counter := testutil.NewQueryCounter(tx)
+	queries := counter.Queries()
+	cfg := &config.Config{Env: "test", Domain: "example.test"}
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+	r := newHTTPRouter(cfg, apierror.NewWriter(cfg.AppURL()), flashMgr)
+
+	sessionMgr := session.NewManager(repository.NewUserRepository(queries), repository.NewUserSessionRepository(queries), cfg)
+	authMiddleware := middleware.NewAuth(sessionMgr)
+	welcomeHandler := welcome.NewHandler(cfg, flashMgr)
+	r.With(authMiddleware.SetUser, middleware.SentryUserContext, middleware.TimeZone).Get("/", welcomeHandler.Show)
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("ステータスコード = %d、期待値 = %d", rr.Code, http.StatusOK)
+	}
+	if !strings.Contains(rr.Body.String(), `<meta name="color-scheme" content="light dark">`) {
+		t.Error("トップページに配色の宣言がない")
+	}
+	if got := counter.CountContaining("feature_flags"); got != 0 {
+		t.Errorf("フィーチャーフラグの照会回数 = %d、期待値 = 0", got)
+	}
+}
+
+// TestHTTPRouter_NotFoundは、ルートの無いパスと、ルートはあるが対応していないメソッドに、404ページを返すことを確かめる。
+// 公開Web APIのパスは、ルートのルーターの下でもProblem Detailsの404・405のまま変わらない
+func TestHTTPRouter_NotFound(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{Env: "test", Domain: "example.test"}
+	flashMgr := session.NewFlashManager(cfg.CookieDomain, cfg.SessionSecure, cfg.SessionHTTPOnly)
+	r := newHTTPRouter(cfg, apierror.NewWriter(cfg.AppURL()), flashMgr)
+	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	r.Get("/example", ok)
+	r.Get("/value/{value}", ok)
+	r.Post("/example/submit", ok)
+	r.Delete("/example/session", ok)
+	auth := middleware.NewAuth(session.NewManager(nil, nil, cfg))
+	r.With(auth.RequireAuth).Route("/namespace", func(r chi.Router) {
+		r.Get("/", ok)
+	})
+	mountTestAPIRouter(t, r, newTestAPIServer(), testAPITokenAuthenticator{}, exceededAPIRateLimiter{})
+
+	const csrfToken = "test_csrf_token_12345678901234567890123456789012"
+	tests := []struct {
+		name        string
+		method      string
+		target      string
+		form        string
+		withCSRF    bool
+		wantStatus  int
+		wantProblem bool
+	}{
+		{name: "ルートのあるパスは200", method: http.MethodGet, target: "/example", wantStatus: http.StatusOK},
+		{name: "エスケープされたパスもchiと同じ方法で照合する", method: http.MethodGet, target: "/value/a%2Fb", wantStatus: http.StatusOK},
+		{name: "ルートの無いパスは404ページ", method: http.MethodGet, target: "/unknown", wantStatus: http.StatusNotFound},
+		{name: "末尾にスラッシュを付けたパスは404ページ", method: http.MethodGet, target: "/example/", wantStatus: http.StatusNotFound},
+		{name: "トークンの無い未登録のPOSTは404ページ", method: http.MethodPost, target: "/unknown", wantStatus: http.StatusNotFound},
+		{name: "GETだけのルートへのトークンの無いPOSTは404ページ", method: http.MethodPost, target: "/example", wantStatus: http.StatusNotFound},
+		{name: "POSTだけのルートへのGETは404ページ", method: http.MethodGet, target: "/example/submit", wantStatus: http.StatusNotFound},
+		{name: "DELETEだけのルートへのGETは404ページ", method: http.MethodGet, target: "/example/session", wantStatus: http.StatusNotFound},
+		{name: "未ログインでもサブルーターの未登録パスは404ページ", method: http.MethodGet, target: "/namespace/unknown", wantStatus: http.StatusNotFound},
+		{name: "未ログインでもサブルーターの未対応メソッドは404ページ", method: http.MethodDelete, target: "/namespace", wantStatus: http.StatusNotFound},
+		{name: "末尾スラッシュ付きのサブルーターの未対応メソッドも404ページ", method: http.MethodHead, target: "/namespace/", wantStatus: http.StatusNotFound},
+		{name: "認証必須の登録済みルートはサインインに転送", method: http.MethodGet, target: "/namespace", wantStatus: http.StatusFound},
+		{name: "末尾スラッシュ付きの登録済みルートもサインインに転送", method: http.MethodGet, target: "/namespace/", wantStatus: http.StatusFound},
+		{name: "メソッド変換で一致するルートにはCSRFを検証する", method: http.MethodPost, target: "/example/session", form: "_method=DELETE", wantStatus: http.StatusForbidden},
+		{name: "メソッド変換とCSRF検証を通るルートは200", method: http.MethodPost, target: "/example/session", form: "_method=DELETE", withCSRF: true, wantStatus: http.StatusOK},
+		{name: "APIのルートの無いパスはProblem Detailsの404", method: http.MethodGet, target: "/api/v1/unknown", wantStatus: http.StatusNotFound, wantProblem: true},
+		{name: "APIのルートへの別のメソッドはProblem Detailsの405", method: http.MethodPost, target: "/api/v1/openapi.yaml", wantStatus: http.StatusMethodNotAllowed, wantProblem: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequestWithContext(t.Context(), tt.method, tt.target, strings.NewReader(tt.form))
+			if tt.form != "" {
+				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			}
+			if tt.withCSRF {
+				req.Header.Set("X-CSRF-Token", csrfToken)
+				req.AddCookie(&http.Cookie{Name: middleware.CSRFCookieName, Value: csrfToken})
+			}
+			rr := httptest.NewRecorder()
+			r.ServeHTTP(rr, req)
+
+			if tt.wantProblem {
+				assertProblem(t, rr, tt.wantStatus)
+			} else if rr.Code != tt.wantStatus {
+				t.Errorf("ステータスコード = %d、期待値 = %d", rr.Code, tt.wantStatus)
+			}
+			if !tt.wantProblem && tt.wantStatus == http.StatusNotFound && !strings.Contains(rr.Body.String(), "<title>ページが見つかりませんでした") {
+				t.Errorf("本文 = %q、404ページを期待", rr.Body.String())
+			}
+			for _, cookie := range rr.Result().Cookies() {
+				if cookie.Name == "device_token" {
+					t.Errorf("device_tokenのSet-Cookieが付いている: %v", cookie)
+				}
+			}
+		})
+	}
+}
 
 // TestNewObjectStorage_TestE2EStorageは、フェイクのストレージとその送受信を受けるハンドラーを、e2eのサーバーでだけ組み立てることを確かめる
 func TestNewObjectStorage_TestE2EStorage(t *testing.T) {

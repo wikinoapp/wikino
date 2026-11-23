@@ -19,7 +19,7 @@ type pageDeletionRepos struct {
 }
 
 // deletePagesWithRelatedRecordsは、ページの下書き・編集者・リビジョン・添付ファイル参照を消してから
-// ページを物理削除する (Rails版の `PageRecord.destroy_all_with_related_records!` と同じ範囲)。
+// ページを物理削除する。
 // 下書きのリビジョンと編集提案のページは外部キーのON DELETE CASCADEで消える。添付ファイル自体は
 // スペースに属するため削除しない。
 //

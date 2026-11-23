@@ -140,8 +140,8 @@ func (uc *CreateAttachmentPresignUsecase) Execute(ctx context.Context, input Cre
 	return &CreateAttachmentPresignOutput{
 		AttachmentID:    attachmentID,
 		DirectUploadURL: uploadURL,
-		// Rails版 (ActiveStorageのheaders_for_direct_upload) と同じ組にする。Content-Dispositionは署名に
-		// 含めず、オブジェクトに保存させるだけである
+		// 署名付きURLの作成時に指定したContent-TypeとContent-MD5をアップロード時にも送れるよう返す。
+		// Content-Dispositionは署名に含めず、オブジェクトに表示方法とファイル名を保存するために返す
 		DirectUploadHeaders: map[string]string{
 			"Content-Type":        input.ContentType,
 			"Content-MD5":         input.Checksum,
@@ -151,7 +151,7 @@ func (uc *CreateAttachmentPresignUsecase) Execute(ctx context.Context, input Cre
 }
 
 // fetchSpaceMemberは、スペースと、閲覧者のそのスペースでのメンバーを引く。スペースが無ければ未存在に、
-// メンバーでなければ権限不足にする (Rails版と同じく、スペースの存在は隠さない)
+// メンバーでなければ権限不足にする (スペースの存在は隠さない)
 func (uc *CreateAttachmentPresignUsecase) fetchSpaceMember(ctx context.Context, input CreateAttachmentPresignInput) (*model.Space, *model.SpaceMember, error) {
 	space, err := uc.spaceRepo.FindByIdentifier(ctx, input.SpaceIdentifier)
 	if err != nil {

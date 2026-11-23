@@ -12,7 +12,7 @@ import (
 )
 
 // CookieNameはセッショントークンを格納するCookieのキー名
-// Rails版と同じキーを使用して、セッションを共有する
+// Rails期から使っているキーを変えず、発行済みのセッションをそのまま使えるようにする
 const CookieName = "user_session_tokens"
 
 // PendingUserCookieNameは2FA認証待ちユーザーIDを格納するCookieのキー名
@@ -79,7 +79,7 @@ func (m *Manager) SetSessionCookie(w http.ResponseWriter, token string) {
 		Secure:   m.cfg.SessionSecure,
 		HttpOnly: m.cfg.SessionHTTPOnly,
 		SameSite: http.SameSiteLaxMode,
-		// Rails版と同じく長期間有効なCookieを設定 (10年)
+		// 長期間有効なCookieを設定 (10年)
 		MaxAge: 10 * 365 * 24 * 60 * 60,
 	}
 	http.SetCookie(w, cookie)

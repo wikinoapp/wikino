@@ -143,16 +143,6 @@ func (r SpaceRole) LowestLevel() ScopeLevel {
 	return lowestLevelOf(r.Scopes())
 }
 
-// RailsScopesは、Rails版が判定に使うspace_members.scopesへ書く値を返す。
-// Rails版はspace:adminを全スコープに展開し、知らないスコープを無視するため、
-// 管理者はspace:adminだけを、ほかのロールはロールのスコープをそのまま書く
-func (r SpaceRole) RailsScopes() []Scope {
-	if r == SpaceRoleAdmin {
-		return []Scope{ScopeSpaceAdmin}
-	}
-	return r.Scopes()
-}
-
 // Scopesは、ロールが持つスコープ (含意の展開前) を返す。未知のロールはスコープを持たない
 func (r TopicRole) Scopes() []Scope {
 	switch r {

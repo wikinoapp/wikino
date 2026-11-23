@@ -422,7 +422,7 @@ func TestSuggestionRepository_CountByTopicAndStatuses(t *testing.T) {
 	})
 }
 
-// Rails側の削除経路 (DestroyTopicJobなど) が頼るON DELETE CASCADEの
+// ON DELETE CASCADEの
 // 契約を検証する。topicsの行を直接DELETEしたとき、明示的なDELETEなしで
 // 提案ツリー全体 (suggestions -> suggestion_pages -> suggestion_page_revisions
 // / suggestion_comments) も一緒に消えること。
@@ -446,7 +446,7 @@ func TestSuggestionRepository_CascadeOnTopicDelete(t *testing.T) {
 		WithUserID(userID).
 		Build()
 
-	// 削除対象のトピック。pages.topic_idのFK (Rails由来、CASCADEなし)
+	// 削除対象のトピック。pages.topic_idのFK (CASCADEなし)
 	// がDELETEを妨げないよう、ページは別トピックに置く。
 	targetTopicID := testutil.NewTopicBuilder(t, tx).
 		WithSpaceID(spaceID).

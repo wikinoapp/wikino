@@ -1,2 +1,0 @@
-css: pnpm build:css --watch
-js: pnpm build --watch

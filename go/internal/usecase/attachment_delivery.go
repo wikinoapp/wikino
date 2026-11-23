@@ -14,11 +14,11 @@ import (
 )
 
 // 添付ファイルの署名付きURLで、オブジェクトストレージに返させる応答ヘッダーの決め方。
-// Rails版 (ActiveStorageの既定) と同じ規則にし、どちらで表示しても同じ応答になるようにする。
-// ActiveStorageの規則は `ActiveStorage::Blob::Servable` と `ActionDispatch::Http::ContentDisposition` にある
+// 保存済みの添付ファイルの表示とダウンロードの扱いが変わらないよう、次の種類の一覧とファイル名の
+// 整え方は、これまで配信してきた応答と同じ規則に保つ
 
 // attachmentBinaryContentTypesは、ブラウザが解釈して実行しうるため、表示のときに種類を
-// application/octet-streamに替えて、ダウンロードさせる種類 (ActiveStorageのcontent_types_to_serve_as_binary)
+// application/octet-streamに替えて、ダウンロードさせる種類
 var attachmentBinaryContentTypes = []string{
 	"text/html",
 	"image/svg+xml",
@@ -31,7 +31,7 @@ var attachmentBinaryContentTypes = []string{
 	"text/cache-manifest",
 }
 
-// attachmentInlineContentTypesは、ブラウザの中で開かせる種類 (ActiveStorageのcontent_types_allowed_inline)。
+// attachmentInlineContentTypesは、ブラウザの中で開かせる種類。
 // これ以外の種類はダウンロードさせる
 var attachmentInlineContentTypes = []string{
 	"image/webp",
@@ -50,8 +50,8 @@ var attachmentInlineContentTypes = []string{
 const attachmentBinaryContentType = "application/octet-stream"
 
 // attachmentDeliveryOptionsは、添付ファイルを表示するための署名付きURLに含める応答ヘッダーを返す。
-// `/attachments/{id}` のリダイレクト先に使う。ブラウザが解釈して実行しうる種類は、種類を
-// application/octet-streamに替えてダウンロードさせる
+// `/attachments/{id}` のリダイレクト先に使う。ブラウザが解釈して実行しうる種類は、開いたときに
+// 実行されないよう、種類をapplication/octet-streamに替えてダウンロードさせる
 func attachmentDeliveryOptions(attachment *model.Attachment) storage.PresignedGetOptions {
 	contentType := attachment.ContentType
 	if isAttachmentServedAsBinary(contentType) {
@@ -90,7 +90,6 @@ func isAttachmentServedAsBinary(contentType string) bool {
 }
 
 // attachmentFilenameReplacerは、Content-Dispositionのファイル名に入れない文字を「-」に置き換える
-// (ActiveStorage::Filename#sanitizedと同じ文字)
 var attachmentFilenameReplacer = strings.NewReplacer(
 	"\u202e", "-", "\x00", "-", "%", "-", "$", "-", "|", "-", ":", "-", ";", "-", "/", "-",
 	"<", "-", ">", "-", "?", "-", "*", "-", `"`, "-", "\t", "-", "\r", "-", "\n", "-", `\`, "-",
@@ -114,7 +113,7 @@ func formatContentDisposition(disposition, filename string) string {
 }
 
 // asciiApproximationは、ファイル名をASCIIの文字に近づける。アクセント記号などの結合文字は
-// 取り除いて元の文字を残し、ASCIIに無い文字は「?」にする (RailsのI18n.transliterateに近い置き換え)
+// 取り除いて元の文字を残し、ASCIIに無い文字は「?」にする
 func asciiApproximation(s string) string {
 	var b strings.Builder
 	for _, r := range norm.NFKD.String(s) {

@@ -19,8 +19,7 @@ import (
 const discardAccountCleanupTimeout = 10 * time.Second
 
 // DiscardAccountUsecaseはアカウントを削除する。ユーザーを論理削除して全セッションを消し、
-// 関連レコードとともに物理削除するジョブを投入する (Rails版の `Accounts::SoftDestroyService` に、
-// 全セッションの削除を足したもの)。
+// 関連レコードとともに物理削除するジョブを投入する。
 type DiscardAccountUsecase struct {
 	db              *sql.DB
 	userRepo        *repository.UserRepository
