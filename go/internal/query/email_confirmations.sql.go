@@ -11,37 +11,36 @@ import (
 	"time"
 )
 
-const createEmailConfirmation = `-- name: CreateEmailConfirmation :one
-INSERT INTO email_confirmations (
-    email,
-    event,
-    code,
-    started_at,
-    created_at,
-    updated_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6
-) RETURNING id, email, event, code, started_at, succeeded_at, created_at, updated_at
+const consumeEmailUpdateConfirmation = `-- name: ConsumeEmailUpdateConfirmation :one
+UPDATE email_confirmations
+SET succeeded_at = $1, updated_at = $2
+WHERE id = $3
+  AND user_id = $4
+  AND event = 1
+  AND succeeded_at IS NULL
+  AND started_at >= $5
+  AND UPPER(code) = UPPER($6::text)
+RETURNING id, email, event, code, started_at, succeeded_at, created_at, updated_at, user_id
 `
 
-type CreateEmailConfirmationParams struct {
-	Email     string    `json:"email"`
-	Event     int32     `json:"event"`
-	Code      string    `json:"code"`
-	StartedAt time.Time `json:"started_at"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+type ConsumeEmailUpdateConfirmationParams struct {
+	SucceededAt sql.NullTime `json:"succeeded_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	UserID      *string      `json:"user_id"`
+	ValidAfter  time.Time    `json:"valid_after"`
+	Code        string       `json:"code"`
 }
 
-// 新しいメール確認情報を作成する
-func (q *Queries) CreateEmailConfirmation(ctx context.Context, arg CreateEmailConfirmationParams) (EmailConfirmation, error) {
-	row := q.db.QueryRowContext(ctx, createEmailConfirmation,
-		arg.Email,
-		arg.Event,
-		arg.Code,
-		arg.StartedAt,
-		arg.CreatedAt,
+// 開始ユーザーとコードが一致する、期限内で未完了のメール変更の確認だけを完了する
+func (q *Queries) ConsumeEmailUpdateConfirmation(ctx context.Context, arg ConsumeEmailUpdateConfirmationParams) (EmailConfirmation, error) {
+	row := q.db.QueryRowContext(ctx, consumeEmailUpdateConfirmation,
+		arg.SucceededAt,
 		arg.UpdatedAt,
+		arg.ID,
+		arg.UserID,
+		arg.ValidAfter,
+		arg.Code,
 	)
 	var i EmailConfirmation
 	err := row.Scan(
@@ -53,6 +52,57 @@ func (q *Queries) CreateEmailConfirmation(ctx context.Context, arg CreateEmailCo
 		&i.SucceededAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const createEmailConfirmation = `-- name: CreateEmailConfirmation :one
+INSERT INTO email_confirmations (
+    email,
+    event,
+    code,
+    started_at,
+    created_at,
+    updated_at,
+    user_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+) RETURNING id, email, event, code, started_at, succeeded_at, created_at, updated_at, user_id
+`
+
+type CreateEmailConfirmationParams struct {
+	Email     string    `json:"email"`
+	Event     int32     `json:"event"`
+	Code      string    `json:"code"`
+	StartedAt time.Time `json:"started_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	UserID    *string   `json:"user_id"`
+}
+
+// 新しいメール確認情報を作成する
+func (q *Queries) CreateEmailConfirmation(ctx context.Context, arg CreateEmailConfirmationParams) (EmailConfirmation, error) {
+	row := q.db.QueryRowContext(ctx, createEmailConfirmation,
+		arg.Email,
+		arg.Event,
+		arg.Code,
+		arg.StartedAt,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.UserID,
+	)
+	var i EmailConfirmation
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Event,
+		&i.Code,
+		&i.StartedAt,
+		&i.SucceededAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -72,7 +122,7 @@ func (q *Queries) DeleteEmailConfirmationsStartedBefore(ctx context.Context, sta
 }
 
 const getActiveEmailConfirmationByEmailAndEvent = `-- name: GetActiveEmailConfirmationByEmailAndEvent :one
-SELECT id, email, event, code, started_at, succeeded_at, created_at, updated_at FROM email_confirmations
+SELECT id, email, event, code, started_at, succeeded_at, created_at, updated_at, user_id FROM email_confirmations
 WHERE email = $1
   AND event = $2
   AND succeeded_at IS NULL
@@ -100,12 +150,13 @@ func (q *Queries) GetActiveEmailConfirmationByEmailAndEvent(ctx context.Context,
 		&i.SucceededAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.UserID,
 	)
 	return i, err
 }
 
 const getEmailConfirmationByID = `-- name: GetEmailConfirmationByID :one
-SELECT id, email, event, code, started_at, succeeded_at, created_at, updated_at FROM email_confirmations WHERE id = $1
+SELECT id, email, event, code, started_at, succeeded_at, created_at, updated_at, user_id FROM email_confirmations WHERE id = $1
 `
 
 // IDでメール確認情報を取得する
@@ -121,6 +172,7 @@ func (q *Queries) GetEmailConfirmationByID(ctx context.Context, id string) (Emai
 		&i.SucceededAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.UserID,
 	)
 	return i, err
 }

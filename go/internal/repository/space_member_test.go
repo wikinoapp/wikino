@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"slices"
 	"testing"
 
 	"github.com/lib/pq"
@@ -280,7 +279,7 @@ func TestSpaceMemberRepository_Create(t *testing.T) {
 	if member.Role != model.SpaceRoleAdmin {
 		t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.SpaceRoleAdmin)
 	}
-	// Rails版が判定に使うスコープも書かれていること
+	// 権限はroleから決め、scopesの列には書かない (列の既定値の空の配列になる)
 	var scopes []string
 	if err := tx.QueryRowContext(context.Background(),
 		`SELECT scopes FROM space_members WHERE id = $1 AND space_id = $2`,
@@ -288,15 +287,15 @@ func TestSpaceMemberRepository_Create(t *testing.T) {
 	).Scan(pq.Array(&scopes)); err != nil {
 		t.Fatalf("scopesの取得に失敗: %v", err)
 	}
-	if want := []string{"space:admin"}; !slices.Equal(scopes, want) {
-		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
+	if len(scopes) != 0 {
+		t.Errorf("scopes = %v、期待値 = 空の配列", scopes)
 	}
 	if member.JoinedAt.IsZero() {
 		t.Error("member.JoinedAtがゼロ値")
 	}
 }
 
-func TestSpaceMemberRepository_Create_EditorWritesRoleScopesForRails(t *testing.T) {
+func TestSpaceMemberRepository_Create_EditorLeavesScopesEmpty(t *testing.T) {
 	t.Parallel()
 
 	_, tx := testutil.SetupTx(t)
@@ -327,7 +326,54 @@ func TestSpaceMemberRepository_Create_EditorWritesRoleScopesForRails(t *testing.
 	).Scan(pq.Array(&scopes)); err != nil {
 		t.Fatalf("scopesの取得に失敗: %v", err)
 	}
-	if want := model.ScopesToStrings(model.SpaceRoleEditor.Scopes()); !slices.Equal(scopes, want) {
-		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
+	if len(scopes) != 0 {
+		t.Errorf("scopes = %v、期待値 = 空の配列", scopes)
+	}
+}
+
+func TestSpaceMemberRepository_ExistsByUser(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewSpaceMemberRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+	memberID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-exists-member@example.com").
+		WithAtname("repo_exists_member").
+		Build()
+	inactiveID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-exists-inactive@example.com").
+		WithAtname("repo_exists_inactive").
+		Build()
+	loneID := testutil.NewUserBuilder(t, tx).
+		WithEmail("repo-exists-lone@example.com").
+		WithAtname("repo_exists_lone").
+		Build()
+	discardedSpaceID := testutil.NewSpaceBuilder(t, tx).
+		WithIdentifier("repo-exists-discarded").
+		WithDiscarded().
+		Build()
+	testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(discardedSpaceID).WithUserID(memberID).Build()
+	testutil.NewSpaceMemberBuilder(t, tx).WithSpaceID(discardedSpaceID).WithUserID(inactiveID).WithActive(false).Build()
+
+	tests := []struct {
+		name   string
+		userID model.UserID
+		want   bool
+	}{
+		{name: "削除済みのスペースの行も数える", userID: memberID, want: true},
+		{name: "参加をやめた行も数える", userID: inactiveID, want: true},
+		{name: "行の無いユーザーはfalse", userID: loneID, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repo.ExistsByUser(ctx, tt.userID)
+			if err != nil {
+				t.Fatalf("ExistsByUser()のエラー = %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("ExistsByUser() = %v、期待値 = %v", got, tt.want)
+			}
+		})
 	}
 }

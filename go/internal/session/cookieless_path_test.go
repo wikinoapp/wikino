@@ -56,6 +56,15 @@ func TestIsCookielessRequest(t *testing.T) {
 		{name: "未知のバージョンのAPI", method: http.MethodGet, path: "/api/v2/user", want: true},
 		{name: "末尾のスラッシュが無い/api", method: http.MethodGet, path: "/api", want: false},
 		{name: "apiで始まる別のパス", method: http.MethodGet, path: "/apis", want: false},
+		{name: "ファビコン", method: http.MethodGet, path: "/favicon.ico", want: true},
+		{name: "ファビコンのHEAD", method: http.MethodHead, path: "/favicon.ico", want: true},
+		{name: "ファビコンへのPOST", method: http.MethodPost, path: "/favicon.ico", want: false},
+		{name: "Apple Touch Icon", method: http.MethodGet, path: "/apple-touch-icon.png", want: true},
+		{name: "precomposedのApple Touch Icon", method: http.MethodGet, path: "/apple-touch-icon-precomposed.png", want: true},
+		{name: "robots.txt", method: http.MethodGet, path: "/robots.txt", want: true},
+		{name: "robots.txtのHEAD", method: http.MethodHead, path: "/robots.txt", want: true},
+		{name: "配信しないルート直下の画像", method: http.MethodGet, path: "/icon.png", want: false},
+		{name: "static配下のファビコン", method: http.MethodGet, path: "/static/images/favicon.ico", want: false},
 	}
 
 	for _, tt := range tests {

@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lib/pq"
-
 	"github.com/wikinoapp/wikino/go/internal/model"
 )
 
@@ -88,10 +86,10 @@ func (b *SpaceMemberBuilder) Build() model.SpaceMemberID {
 	var id string
 	err := b.tx.QueryRowContext(
 		context.Background(),
-		`INSERT INTO space_members (space_id, user_id, role, max_topic_role, scopes, joined_at, active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		`INSERT INTO space_members (space_id, user_id, role, max_topic_role, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), string(b.role), b.maxTopicRole, pq.Array(model.ScopesToStrings(b.role.RailsScopes())), b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), string(b.role), b.maxTopicRole, b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)
@@ -166,10 +164,10 @@ func (b *SpaceMemberBuilderDB) Build() model.SpaceMemberID {
 	var id string
 	err := b.db.QueryRowContext(
 		context.Background(),
-		`INSERT INTO space_members (space_id, user_id, role, max_topic_role, scopes, joined_at, active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		`INSERT INTO space_members (space_id, user_id, role, max_topic_role, joined_at, active, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 RETURNING id`,
-		b.spaceID, string(b.userID), string(b.role), b.maxTopicRole, pq.Array(model.ScopesToStrings(b.role.RailsScopes())), b.joinedAt, b.active, now, now,
+		b.spaceID, string(b.userID), string(b.role), b.maxTopicRole, b.joinedAt, b.active, now, now,
 	).Scan(&id)
 	if err != nil {
 		b.t.Fatalf("スペースメンバー作成に失敗: %v", err)

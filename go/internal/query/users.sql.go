@@ -7,6 +7,7 @@ package query
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/lib/pq"
@@ -68,6 +69,83 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteDiscardedUser = `-- name: DeleteDiscardedUser :execrows
+DELETE FROM users
+WHERE id = $1 AND discarded_at IS NOT NULL
+`
+
+// 論理削除したユーザーを物理削除する。論理削除していないユーザーは対象にしない。
+func (q *Queries) DeleteDiscardedUser(ctx context.Context, id string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteDiscardedUser, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const discardUser = `-- name: DiscardUser :execrows
+UPDATE users
+SET discarded_at = $1, updated_at = $1
+WHERE id = $2 AND discarded_at IS NULL
+`
+
+type DiscardUserParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	ID          string       `json:"id"`
+}
+
+// ユーザーを論理削除する。既に論理削除したユーザーは対象にしない。
+func (q *Queries) DiscardUser(ctx context.Context, arg DiscardUserParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, discardUser, arg.DiscardedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const existsOtherUserByAtname = `-- name: ExistsOtherUserByAtname :one
+SELECT EXISTS (SELECT 1 FROM users WHERE atname = $1 AND id <> $2)
+`
+
+type ExistsOtherUserByAtnameParams struct {
+	Atname string `json:"atname"`
+	UserID string `json:"user_id"`
+}
+
+// 指定したユーザー以外に、アットネームを使っているユーザーがいるかを返す (削除済みのユーザーも数える)
+func (q *Queries) ExistsOtherUserByAtname(ctx context.Context, arg ExistsOtherUserByAtnameParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsOtherUserByAtname, arg.Atname, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const existsUserByAtname = `-- name: ExistsUserByAtname :one
+SELECT EXISTS (SELECT 1 FROM users WHERE atname = $1)
+`
+
+// アットネームを使っているユーザーがいるかを返す。一意インデックスは削除済みのユーザーも
+// 含むため、削除済みのユーザーも数える
+func (q *Queries) ExistsUserByAtname(ctx context.Context, atname string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsUserByAtname, atname)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const existsUserByEmail = `-- name: ExistsUserByEmail :one
+SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)
+`
+
+// メールアドレスを使っているユーザーがいるかを返す。一意インデックスは削除済みのユーザーも
+// 含むため、削除済みのユーザーも数える
+func (q *Queries) ExistsUserByEmail(ctx context.Context, email string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsUserByEmail, email)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const findUsersByIDs = `-- name: FindUsersByIDs :many
@@ -165,6 +243,128 @@ SELECT id, email, atname, name, description, locale, time_zone, joined_at, disca
 // ユーザーをIDで取得する
 func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Atname,
+		&i.Name,
+		&i.Description,
+		&i.Locale,
+		&i.TimeZone,
+		&i.JoinedAt,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const lockActiveUser = `-- name: LockActiveUser :one
+SELECT id FROM users
+WHERE id = $1 AND discarded_at IS NULL
+FOR UPDATE
+`
+
+// スペース作成・参加とアカウントの論理削除を直列化する。
+// 待機中に論理削除されたユーザーはロック対象にしない。
+func (q *Queries) LockActiveUser(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockActiveUser, id)
+	var id_2 string
+	err := row.Scan(&id_2)
+	return id_2, err
+}
+
+const lockDiscardedUser = `-- name: LockDiscardedUser :one
+SELECT id FROM users
+WHERE id = $1 AND discarded_at IS NOT NULL
+FOR UPDATE
+`
+
+// 論理削除したユーザーを、物理削除が終わるまでロックする。
+func (q *Queries) LockDiscardedUser(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockDiscardedUser, id)
+	var id_2 string
+	err := row.Scan(&id_2)
+	return id_2, err
+}
+
+const undiscardUser = `-- name: UndiscardUser :exec
+UPDATE users
+SET discarded_at = NULL, updated_at = $1
+WHERE id = $2 AND discarded_at = $3
+`
+
+type UndiscardUserParams struct {
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+}
+
+// 論理削除を取り消す。@discarded_atと同じ時刻に論理削除したユーザーだけを対象にし、
+// 別の削除の操作で論理削除し直したユーザーを戻さない。
+func (q *Queries) UndiscardUser(ctx context.Context, arg UndiscardUserParams) error {
+	_, err := q.db.ExecContext(ctx, undiscardUser, arg.UpdatedAt, arg.ID, arg.DiscardedAt)
+	return err
+}
+
+const updateUserEmail = `-- name: UpdateUserEmail :one
+UPDATE users
+SET email = $1, updated_at = $2
+WHERE id = $3 AND discarded_at IS NULL
+RETURNING id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at
+`
+
+type UpdateUserEmailParams struct {
+	Email string    `json:"email"`
+	Now   time.Time `json:"now"`
+	ID    string    `json:"id"`
+}
+
+// ユーザーのメールアドレスを更新する (削除されていないユーザーのみ)
+func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserEmail, arg.Email, arg.Now, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Atname,
+		&i.Name,
+		&i.Description,
+		&i.Locale,
+		&i.TimeZone,
+		&i.JoinedAt,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserProfile = `-- name: UpdateUserProfile :one
+UPDATE users
+SET atname = $1, name = $2, description = $3, updated_at = $4
+WHERE id = $5 AND discarded_at IS NULL
+RETURNING id, email, atname, name, description, locale, time_zone, joined_at, discarded_at, created_at, updated_at
+`
+
+type UpdateUserProfileParams struct {
+	Atname      string    `json:"atname"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Now         time.Time `json:"now"`
+	ID          string    `json:"id"`
+}
+
+// ユーザーのアットネーム・名前・自己紹介を更新する (削除されていないユーザーのみ)
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserProfile,
+		arg.Atname,
+		arg.Name,
+		arg.Description,
+		arg.Now,
+		arg.ID,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,

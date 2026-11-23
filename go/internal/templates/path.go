@@ -49,9 +49,14 @@ func AtomPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/atom", spaceIdentifier))
 }
 
-// TrashPathはスペースのゴミ箱のパスを生成します (現状はRails版にプロキシされる)。
+// TrashPathはスペースのゴミ箱のパスを生成します。
 func TrashPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/trash", spaceIdentifier))
+}
+
+// BulkRestoredPagesPathは、ゴミ箱で選んだページをまとめて復元するパスを生成します。
+func BulkRestoredPagesPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return Path(fmt.Sprintf("/s/%s/bulk_restored_pages", spaceIdentifier))
 }
 
 // SpaceSettingsPathはスペース設定のトップのパスを生成します。
@@ -59,19 +64,45 @@ func SpaceSettingsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/settings", spaceIdentifier))
 }
 
-// SpaceSettingsGeneralPathはスペースの一般設定のパスを生成します (現状はRails版にプロキシされる)。
+// SpaceSettingsGeneralPathはスペースの一般設定のパスを生成します。
 func SpaceSettingsGeneralPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return SpaceSettingsPath(spaceIdentifier) + "/general"
 }
 
-// SpaceSettingsAttachmentsPathはスペースの添付ファイルの一覧のパスを生成します (現状はRails版にプロキシされる)。
+// SpaceSettingsAttachmentsPathはスペースの添付ファイルの管理の画面のパスを生成します。
 func SpaceSettingsAttachmentsPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return SpaceSettingsPath(spaceIdentifier) + "/attachments"
 }
 
-// NewSpaceSettingsDeletionPathはスペースを削除する画面のパスを生成します (現状はRails版にプロキシされる)。
+// SpaceSettingsAttachmentsSearchPathは、添付ファイルの管理の画面の、ファイル名の検索語queryで絞り込んだ
+// pageページ目のパスを生成します。検索語が空なら絞り込みのパラメータを付けません。
+func SpaceSettingsAttachmentsSearchPath(spaceIdentifier viewmodel.SpaceIdentifier, query string, page int32) Path {
+	path := SpaceSettingsAttachmentsPath(spaceIdentifier)
+	if query != "" {
+		path += Path("?q=" + url.QueryEscape(query))
+	}
+	return PaginatedPath(path, page)
+}
+
+// SpaceSettingsAttachmentPathはスペースの添付ファイル1件を削除する (DELETE) パスを生成します。
+func SpaceSettingsAttachmentPath(spaceIdentifier viewmodel.SpaceIdentifier, attachmentID string) Path {
+	return SpaceSettingsAttachmentsPath(spaceIdentifier) + Path("/"+url.PathEscape(attachmentID))
+}
+
+// AttachmentPathは添付ファイルを表示するパスを生成します。表示の判定を通った閲覧者を署名付きURLへ
+// リダイレクトします。
+func AttachmentPath(attachmentID string) Path {
+	return Path("/attachments/" + url.PathEscape(attachmentID))
+}
+
+// SpaceSettingsDeletionPathはスペースを削除する処理のパスを生成します。削除の確認画面はこのパスへ送信します。
+func SpaceSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
+	return SpaceSettingsPath(spaceIdentifier) + "/deletion"
+}
+
+// NewSpaceSettingsDeletionPathはスペースを削除する確認画面のパスを生成します。
 func NewSpaceSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
-	return SpaceSettingsPath(spaceIdentifier) + "/deletion/new"
+	return SpaceSettingsDeletionPath(spaceIdentifier) + "/new"
 }
 
 // SpaceSettingsExportsPathはスペースのエクスポートのパスを生成します。エクスポートは、この
@@ -177,6 +208,16 @@ func TopicSettingsGeneralPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNu
 	return TopicSettingsPath(spaceIdentifier, topicNumber) + "/general"
 }
 
+// TopicSettingsDeletionPathはトピックを削除する処理のパスを生成します。削除の確認画面はこのパスへ送信します。
+func TopicSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return TopicSettingsPath(spaceIdentifier, topicNumber) + "/deletion"
+}
+
+// NewTopicSettingsDeletionPathはトピックを削除する確認画面のパスを生成します。
+func NewTopicSettingsDeletionPath(spaceIdentifier viewmodel.SpaceIdentifier, topicNumber int32) Path {
+	return TopicSettingsDeletionPath(spaceIdentifier, topicNumber) + "/new"
+}
+
 // NewTopicPathは新規トピック作成フォームのパスを生成します。
 func NewTopicPath(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 	return Path(fmt.Sprintf("/s/%s/topics/new", spaceIdentifier))
@@ -245,6 +286,61 @@ func SearchPathFor(spaceIdentifier viewmodel.SpaceIdentifier) Path {
 // ProfilePathはプロフィールのパスを生成します
 func ProfilePath(atname string) Path {
 	return Path("/@" + atname)
+}
+
+// SettingsPathはユーザー設定のトップのパスを生成します
+func SettingsPath() Path {
+	return Path("/settings")
+}
+
+// SettingsProfilePathはプロフィールの編集のパスを生成します
+func SettingsProfilePath() Path {
+	return Path("/settings/profile")
+}
+
+// SettingsEmailPathはメールアドレスの変更のパスを生成します
+func SettingsEmailPath() Path {
+	return Path("/settings/email")
+}
+
+// SettingsEmailConfirmationPathは、メールアドレスの変更の確認コードの送信先のパスを生成します
+func SettingsEmailConfirmationPath() Path {
+	return Path("/settings/email/confirmation")
+}
+
+// EditSettingsEmailConfirmationPathは、メールアドレスの変更の確認コードを入力する画面のパスを生成します
+func EditSettingsEmailConfirmationPath() Path {
+	return Path("/settings/email/confirmation/edit")
+}
+
+// SettingsTwoFactorAuthPathは二要素認証の設定のパスを生成します
+func SettingsTwoFactorAuthPath() Path {
+	return Path("/settings/two_factor_auth")
+}
+
+// NewSettingsTwoFactorAuthPathは、二要素認証を有効にするため認証アプリへ登録する画面のパスを生成します
+func NewSettingsTwoFactorAuthPath() Path {
+	return SettingsTwoFactorAuthPath() + "/new"
+}
+
+// SettingsTwoFactorAuthRecoveryCodesPathは二要素認証のリカバリーコードの画面のパスを生成します
+func SettingsTwoFactorAuthRecoveryCodesPath() Path {
+	return SettingsTwoFactorAuthPath() + "/recovery_codes"
+}
+
+// SettingsAccountDeletionPathはアカウントの削除 (確認画面の送信先) のパスを生成します
+func SettingsAccountDeletionPath() Path {
+	return Path("/settings/account/deletion")
+}
+
+// NewSettingsAccountDeletionPathはアカウントの削除の確認画面のパスを生成します
+func NewSettingsAccountDeletionPath() Path {
+	return SettingsAccountDeletionPath() + "/new"
+}
+
+// UserSessionPathはログイン中のセッション (ログアウトの送信先) のパスを生成します
+func UserSessionPath() Path {
+	return Path("/user_session")
 }
 
 // SignInPathはサインインのパスを生成します

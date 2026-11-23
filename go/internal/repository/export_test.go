@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"slices"
 	"testing"
 	"time"
 
@@ -985,7 +986,7 @@ func TestExportRepository_MarkFailedIfUnclaimed(t *testing.T) {
 }
 
 // 親の削除に使うエクスポートの全FKがON DELETE CASCADEを保つことを検証する。
-// 下の振る舞いテストはRailsの削除順に従い、スペースを削除する前にqueued_by_id経由で
+// 下の振る舞いテストは、スペースを削除する前にqueued_by_id経由で
 // exportsを削除するため、space_idのFKを実行できない。
 func TestExportRepository_ForeignKeysUseCascadeDelete(t *testing.T) {
 	t.Parallel()
@@ -1030,8 +1031,7 @@ func TestExportRepository_ForeignKeysUseCascadeDelete(t *testing.T) {
 	}
 }
 
-// Rails側のスペース削除が頼るON DELETE CASCADEの契約を検証する。exportsは
-// Rails版が知らないGo側の行であるため、スペースとそのメンバーを削除したとき、
+// ON DELETE CASCADEの契約を検証する。スペースとそのメンバーを削除したとき、
 // exportsへの明示的なDELETEなしで一緒に消える必要がある。
 func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 	t.Parallel()
@@ -1048,7 +1048,7 @@ func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 		WithObjectKey("exports/cascade.zip").
 		Build()
 
-	// Rails版と同じ順序で削除する。先にメンバー、次にスペース。
+	// 先にメンバー、次にスペースの順で削除する。
 	if _, err := tx.ExecContext(
 		ctx, `DELETE FROM space_members WHERE space_id = $1`, string(f.spaceID),
 	); err != nil {
@@ -1068,5 +1068,147 @@ func TestExportRepository_CascadeOnSpaceDelete(t *testing.T) {
 	}
 	if exportCount != 0 {
 		t.Errorf("exportsの件数 = %d、期待値 = 0", exportCount)
+	}
+}
+
+// insertLegacyExportBlobは、Rails期のエクスポートのZIPのblobを作り、IDを返す
+func insertLegacyExportBlob(t *testing.T, tx *sql.Tx, key string) string {
+	t.Helper()
+	var blobID string
+	if err := tx.QueryRowContext(context.Background(), `
+		INSERT INTO active_storage_blobs (key, filename, content_type, service_name, byte_size, created_at)
+		VALUES ($1, 'old.zip', 'application/zip', 'local', 3, NOW()) RETURNING id`, key).Scan(&blobID); err != nil {
+		t.Fatalf("blobの作成に失敗: %v", err)
+	}
+	return blobID
+}
+
+// attachLegacyExportBlobは、Rails期のエクスポートが持つhas_one_attached :fileの形で、blobをエクスポートに関連付ける
+func attachLegacyExportBlob(t *testing.T, tx *sql.Tx, exportID model.ExportID, blobID string) {
+	t.Helper()
+	if _, err := tx.ExecContext(context.Background(), `
+		INSERT INTO active_storage_attachments (name, record_type, record_id, blob_id, created_at)
+		VALUES ('file', 'ExportRecord', $1, $2, NOW())`, string(exportID), blobID); err != nil {
+		t.Fatalf("blobの関連付けに失敗: %v", err)
+	}
+}
+
+func TestExportRepository_ObjectsBySpace(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	repo := NewExportRepository(testutil.QueriesWithTx(tx))
+	ctx := context.Background()
+
+	f := setupExportFixture(t, tx, "by-space")
+	other := setupExportFixture(t, tx, "by-space-other")
+	newExport := func(fx exportFixture, objectKey string) model.ExportID {
+		b := testutil.NewExportBuilder(t, tx).WithSpaceID(fx.spaceID).WithQueuedByID(fx.spaceMemberID).WithStatus(model.ExportStatusSucceeded)
+		if objectKey != "" {
+			b = b.WithObjectKey(objectKey)
+		}
+		return b.Build()
+	}
+
+	newExport(f, "exports/by-space.zip")
+	legacyExportID := newExport(f, "")
+	attachLegacyExportBlob(t, tx, legacyExportID, insertLegacyExportBlob(t, tx, "legacy-by-space"))
+	// ほかのスペースのエクスポートも参照しているZIPは、実体を残す
+	sharedBlobID := insertLegacyExportBlob(t, tx, "legacy-by-space-shared")
+	attachLegacyExportBlob(t, tx, legacyExportID, sharedBlobID)
+	otherExportID := newExport(other, "exports/by-space-other.zip")
+	attachLegacyExportBlob(t, tx, otherExportID, sharedBlobID)
+
+	var exports []*model.Export
+	var after model.ExportID
+	for {
+		batch, err := repo.ListForDeletionBySpaceAfter(ctx, f.spaceID, after, 1)
+		if err != nil {
+			t.Fatalf("エクスポートの取得に失敗: %v", err)
+		}
+		if len(batch) == 0 {
+			break
+		}
+		if len(batch) != 1 || batch[0].SpaceID != f.spaceID || batch[0].ID <= after {
+			t.Fatalf("取得したバッチ = %+v、1件ずつ対象スペースのIDの昇順を期待", batch)
+		}
+		exports = append(exports, batch...)
+		after = batch[0].ID
+	}
+	if len(exports) != 2 {
+		t.Fatalf("エクスポートの数 = %d、期待値 = 2 (キーが未記録の行も含む)", len(exports))
+	}
+	var recordedKeys []string
+	for _, export := range exports {
+		if export.ObjectKey != nil {
+			recordedKeys = append(recordedKeys, *export.ObjectKey)
+		}
+	}
+	if !slices.Equal(recordedKeys, []string{"exports/by-space.zip"}) {
+		t.Errorf("記録されたキー = %v", recordedKeys)
+	}
+
+	var candidates []model.LegacyExportBlob
+	var afterBlob string
+	for {
+		batch, err := repo.ListLegacyBlobsBySpaceAfter(ctx, f.spaceID, afterBlob, 1)
+		if err != nil {
+			t.Fatalf("ZIPのblobの取得に失敗: %v", err)
+		}
+		if len(batch) == 0 {
+			break
+		}
+		if len(batch) != 1 || batch[0].ID <= afterBlob {
+			t.Fatalf("ZIPのバッチ = %+v、1件ずつIDの昇順を期待", batch)
+		}
+		candidates = append(candidates, batch...)
+		afterBlob = batch[0].ID
+	}
+	if len(candidates) != 2 {
+		t.Fatalf("ZIPのblobの数 = %d、期待値 = 2 (共有中も含む)", len(candidates))
+	}
+	for _, blob := range candidates {
+		if blob.Shared != (blob.Key == "legacy-by-space-shared") {
+			t.Errorf("ZIPの共有状態 = %+v", blob)
+		}
+	}
+
+	if err := repo.DeleteLegacyFilesBySpace(ctx, f.spaceID); err != nil {
+		t.Fatalf("DeleteLegacyFilesBySpace()のエラー = %v", err)
+	}
+	// 関連の削除後に参照を再確認する。blobを確保したあとの再試行でもキーを失わない。
+	for range 2 {
+		keys, err := repo.ClaimUnreferencedLegacyBlobs(ctx, candidates)
+		if err != nil || !slices.Equal(keys, []string{"legacy-by-space"}) {
+			t.Fatalf("回収してよいキー = %v、エラー = %v", keys, err)
+		}
+	}
+
+	var blobs []string
+	rows, err := tx.QueryContext(ctx, `SELECT key FROM active_storage_blobs WHERE key LIKE 'legacy-by-space%' ORDER BY key`)
+	if err != nil {
+		t.Fatalf("blobの取得に失敗: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			t.Fatalf("blobの読み取りに失敗: %v", err)
+		}
+		blobs = append(blobs, key)
+	}
+	if !slices.Equal(blobs, []string{"legacy-by-space-shared"}) {
+		t.Errorf("残ったblob = %v、期待値 = [legacy-by-space-shared]", blobs)
+	}
+
+	var attachments int
+	if err := tx.QueryRowContext(ctx, `
+		SELECT COUNT(*) FROM active_storage_attachments
+		WHERE record_type = 'ExportRecord' AND record_id = ANY($1::uuid[])`,
+		"{"+string(legacyExportID)+","+string(otherExportID)+"}").Scan(&attachments); err != nil {
+		t.Fatalf("関連の数の取得に失敗: %v", err)
+	}
+	if attachments != 1 {
+		t.Errorf("残った関連の数 = %d、期待値 = 1 (ほかのスペースのエクスポートの関連だけ)", attachments)
 	}
 }

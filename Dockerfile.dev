@@ -27,19 +27,11 @@ PACKAGES=$(cat <<'PKGLIST' | sed 's/#.*//'
   build-essential
   ca-certificates           # HTTPS接続に必要
   curl
-  file                      # Shrineによる画像アップロードに必要 (Rails)
   fonts-noto-cjk            # headless chromiumのスクショ用の日本語 (CJK) フォント
   fzf                       # Claude Codeで使用
   git
   gnupg                     # PostgreSQLのGPGキーとaptリポジトリに必要
-  imagemagick               # Shrineによる画像アップロードに必要 (Rails)
   jq                        # Claude Codeで使用
-  libffi-dev                # Ruby拡張のビルドに必要
-  libglib2.0-0              # libvipsの依存パッケージ (Rails)
-  libreadline-dev           # Rubyのreadline拡張に必要
-  libssl-dev                # SSL関連のビルドに必要
-  libvips42                 # 画像処理ライブラリ (Rails)
-  libyaml-dev               # psych gemのインストールに必要 (Rails)
   lsb-release               # PostgreSQLのaptリポジトリ設定に必要
   nano                      # Claude Codeで使用
   net-tools                 # Claude Codeで使用するnetstat (ネットワークデバッグ用)
@@ -51,7 +43,6 @@ PACKAGES=$(cat <<'PKGLIST' | sed 's/#.*//'
   tree                      # Claude Codeで使用
   unzip
   vim                       # Claude Codeで使用
-  zlib1g-dev                # Rubyのzlib拡張に必要 (gem installに必須)
   zsh
 PKGLIST
 )
@@ -72,7 +63,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
       > /etc/apt/sources.list.d/pgdg.list && \
     apt update && \
-    apt install -y --no-install-recommends libpq-dev postgresql-client-18
+    apt install -y --no-install-recommends postgresql-client-18
 
 # --- mise (開発ツールバージョンマネージャー) ---
 #
@@ -84,9 +75,8 @@ ENV MISE_INSTALL_PATH="/usr/local/bin/mise"
 ENV PATH="/mise/shims:${PATH}"
 RUN curl -fsSL https://mise.run | sh
 
-# Go、Ruby、Node.js、pnpmをmise経由でインストールする。
+# Go、Node.js、pnpmをmise経由でインストールする。
 RUN mise install go@1.27.3 && \
-    mise install ruby@4.0.10 && \
     mise install node@24.13.0 && \
     mise install node@20.19.0 && \
     mise install node@20.16.0 && \
@@ -95,7 +85,6 @@ RUN mise install go@1.27.3 && \
 
 # グローバルデフォルトを設定する。
 RUN mise use --global go@1.27.3 && \
-    mise use --global ruby@4.0.10 && \
     mise use --global node@24.13.0 && \
     mise use --global pnpm@10.25.0
 
@@ -245,9 +234,6 @@ ENV GOPATH=/go
 ENV PATH="${GOPATH}/bin:${PATH}"
 RUN go install github.com/air-verse/air@latest
 
-# --- Rubyのツール ---
-RUN gem install bundler -v 4.0.20
-
 # --- シェルの設定 ---
 SHELL ["/bin/zsh", "-c"]
 ENV SHELL=/bin/zsh
@@ -256,6 +242,6 @@ ENV SHELL=/bin/zsh
 RUN git config --global user.email "me@shimba.co" && \
     git config --global user.name "Koji Shimba"
 
-EXPOSE 8080 3000
+EXPOSE 8080
 
 CMD ["/bin/zsh"]

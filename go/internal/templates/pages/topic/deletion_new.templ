@@ -1,0 +1,88 @@
+package topic
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// DeletionNewDataはトピックの削除の確認画面をレンダリングする元になるデータ。TopicNameは
+// 送信された値をフォームへ戻すためのもので、拒否された送信でも入力した内容が残るようにする。
+type DeletionNewData struct {
+	CSRFToken  string
+	Space      viewmodel.Space
+	Topic      viewmodel.Topic
+	TopicName  string
+	FormErrors *model.ValidationError
+}
+
+// DeletionNewはトピックの削除の確認画面のコンテンツを表示します。削除は元に戻せないため、
+// 失うものを示したうえで、削除するトピックの名前を入力させます。
+templ DeletionNew(data DeletionNewData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "topic_deletion_new_heading"),
+					})
+				</div>
+				@components.ContentCard() {
+					<div class="flex flex-col gap-4">
+						<p>{ templates.T(ctx, "topic_deletion_new_description") }</p>
+						<ul class="list-inside list-disc">
+							<li>{ templates.T(ctx, "topic_deletion_new_warning_pages") }</li>
+							<li>{ templates.T(ctx, "topic_deletion_new_warning_irreversible") }</li>
+						</ul>
+						<form
+							action={ templ.SafeURL(string(templates.TopicSettingsDeletionPath(data.Space.Identifier, data.Topic.Number))) }
+							class="grid gap-6"
+							method="POST"
+						>
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<div class="grid gap-2">
+								<label class="label" for="topic_name">
+									{ templates.T(ctx, "topic_deletion_new_topic_name_label") }
+								</label>
+								<p class="text-sm text-muted-foreground" id="topic_name-hint">
+									{ templates.T(ctx, "topic_deletion_new_topic_name_hint", map[string]any{"TopicName": data.Topic.Name}) }
+								</p>
+								<input
+									autocomplete="off"
+									class="input border-muted-foreground focus-visible:ring-muted-foreground aria-invalid:border-destructive"
+									id="topic_name"
+									name="topic_name"
+									required
+									type="text"
+									value={ data.TopicName }
+									if data.FormErrors != nil && data.FormErrors.HasFieldError("topic_name") {
+										autofocus
+										aria-invalid="true"
+										aria-describedby={ "topic_name-hint " + fieldErrorID("topic_name") }
+									} else {
+										aria-describedby="topic_name-hint"
+									}
+								/>
+								@fieldErrors(data.FormErrors, "topic_name")
+							</div>
+							<div class="flex justify-between gap-2">
+								<button type="submit" class="btn rounded-full w-fit">
+									@templates.Icon("trash-regular")
+									{ templates.T(ctx, "topic_deletion_new_submit_button") }
+								</button>
+								<a
+									href={ templ.SafeURL(string(templates.TopicSettingsPath(data.Space.Identifier, data.Topic.Number))) }
+									class="btn rounded-full w-fit"
+									data-variant="outline"
+								>
+									{ templates.T(ctx, "topic_deletion_new_cancel") }
+								</a>
+							</div>
+						</form>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

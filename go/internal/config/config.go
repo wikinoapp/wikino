@@ -36,9 +36,6 @@ type Config struct {
 	// TrustedProxyCIDRsはX-Forwarded-Forを右からたどるときに信頼するプロキシのIP範囲
 	TrustedProxyCIDRs []netip.Prefix
 
-	// Rails版アプリのURL (リバースプロキシ用)
-	RailsAppURL string
-
 	// Cloudflare Turnstile (Bot対策)
 	TurnstileEnabled   bool
 	TurnstileSiteKey   string
@@ -85,7 +82,7 @@ type Config struct {
 // Loadは環境変数から設定を読み込みます
 func Load() (*Config, error) {
 	// APP_ENVの値を取得 (デフォルト: dev)
-	// dev: 開発環境、test: テスト環境、prod: 本番環境
+	// dev: 開発環境、test: テスト環境、test_e2e: e2eテストのサーバー、prod: 本番環境
 	//
 	// すべての環境でGoプロセス起動時には既に環境変数がセット済みです：
 	// - ローカル開発/テスト: op run --env-file=".env" が処理済み
@@ -152,9 +149,6 @@ func Load() (*Config, error) {
 		// 起動は止めずに、設定漏れに気付けるよう記録する (開発者向けの運用ログ)
 		slog.Warn("本番環境でWIKINO_TRUSTED_PROXY_CIDRSが未設定です。OAuthのトークンエンドポイントのレート制限は接続元のIPで数えます")
 	}
-
-	// Rails版アプリのURL (オプショナル - リバースプロキシ機能で使用)
-	cfg.RailsAppURL = os.Getenv("WIKINO_RAILS_APP_URL")
 
 	// Cloudflare Turnstile (Bot対策 - ログイン・サインアップフォームで使用)。
 	// WIKINO_TURNSTILE_ENABLEDはstrconv.ParseBoolで解釈するため、"false" / "0" /
@@ -239,6 +233,12 @@ func (c *Config) IsDev() bool {
 // IsTestはテスト環境かどうかを返します
 func (c *Config) IsTest() bool {
 	return c.Env == "test"
+}
+
+// IsTestE2Eは、ブラウザから通すe2eテストのためにサーバーを起動しているかどうかを返します。
+// このときだけ、オブジェクトストレージの代わりにメモリ上のフェイクを使い、その送受信を受けるテスト専用のルートを登録します
+func (c *Config) IsTestE2E() bool {
+	return c.Env == "test_e2e"
 }
 
 // IsProductionは本番環境かどうかを返します

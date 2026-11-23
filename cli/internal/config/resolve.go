@@ -18,7 +18,7 @@ const (
 	FlagMember = "member"
 )
 
-// CLIが使う環境変数。サーバー・Rails版では同じ名前を使わない (AGENTS.mdを参照)。
+// CLIが使う環境変数。サーバーでは同じ名前を使わない (AGENTS.mdを参照)。
 const (
 	EnvToken  = "WIKINO_TOKEN"
 	EnvHost   = "WIKINO_HOST"

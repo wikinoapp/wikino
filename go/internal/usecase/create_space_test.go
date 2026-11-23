@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"slices"
 	"testing"
 
@@ -25,7 +24,7 @@ func newCreateSpaceUsecase() (*CreateSpaceUsecase, *repository.SpaceRepository, 
 	queries := query.New(db)
 	spaceRepo := repository.NewSpaceRepository(queries)
 	spaceMemberRepo := repository.NewSpaceMemberRepository(queries)
-	return NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo)), spaceRepo, spaceMemberRepo
+	return NewCreateSpaceUsecase(db, repository.NewUserRepository(queries), spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(spaceRepo)), spaceRepo, spaceMemberRepo
 }
 
 func TestCreateSpaceUsecase_Execute(t *testing.T) {
@@ -76,7 +75,7 @@ func TestCreateSpaceUsecase_Execute(t *testing.T) {
 		t.Errorf("member.Role = %q、期待値 = %q", member.Role, model.SpaceRoleAdmin)
 	}
 
-	// Rails版が作成者を管理者として判定できるよう、scopesにはspace:adminを書く
+	// 権限はroleから決め、scopesの列には書かない (列の既定値の空の配列になる)
 	var scopes []string
 	if err := testutil.GetTestDB().QueryRowContext(ctx,
 		`SELECT scopes FROM space_members WHERE id = $1 AND space_id = $2`,
@@ -84,8 +83,8 @@ func TestCreateSpaceUsecase_Execute(t *testing.T) {
 	).Scan(pq.Array(&scopes)); err != nil {
 		t.Fatalf("scopesの取得に失敗: %v", err)
 	}
-	if want := []string{"space:admin"}; !slices.Equal(scopes, want) {
-		t.Errorf("scopes = %v、期待値 = %v", scopes, want)
+	if len(scopes) != 0 {
+		t.Errorf("scopes = %v、期待値 = 空の配列", scopes)
 	}
 }
 
@@ -172,7 +171,7 @@ func TestCreateSpaceUsecase_Execute_IdentifierConflict(t *testing.T) {
 	// スナップショット確定後に別の接続で競合するスペースを作る。Validatorからは見えないが、
 	// 書き込みのトランザクションは一意インデックスによりこの行との競合を検出する。
 	competingSpaceID := testutil.NewSpaceBuilderDB(t, db).WithIdentifier(identifier).Build()
-	uc := NewCreateSpaceUsecase(db, spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(validationRepo))
+	uc := NewCreateSpaceUsecase(db, repository.NewUserRepository(query.New(db)), spaceRepo, spaceMemberRepo, validator.NewSpaceCreateValidator(validationRepo))
 	output, err := uc.Execute(ctx, CreateSpaceInput{UserID: userID, Identifier: identifier, Name: "競合するスペース"})
 	if output != nil {
 		t.Errorf("output = %v、期待値 = nil", output)
@@ -201,31 +200,27 @@ func TestCreateSpaceUsecase_Execute_IdentifierConflict(t *testing.T) {
 	}
 }
 
-func TestCreateSpaceUsecase_Execute_RollbackOnMemberFailure(t *testing.T) {
+func TestCreateSpaceUsecase_Execute_UserNotFound(t *testing.T) {
 	t.Parallel()
 
 	ctx := i18n.SetLocale(context.Background(), i18n.LangJa)
 	uc, spaceRepo, _ := newCreateSpaceUsecase()
 	const identifier = "create-space-failed"
-	// 存在しないユーザーにより、スペースのINSERT後にメンバーの外部キー制約違反を起こす。
+	// ユーザーが物理削除されたあとに届いた要求では、スペースを作らない。
 	output, err := uc.Execute(ctx, CreateSpaceInput{
 		UserID: model.UserID(uuid.NewString()), Identifier: identifier, Name: "作成に失敗するスペース",
 	})
 	if output != nil {
 		t.Errorf("output = %v、期待値 = nil", output)
 	}
-	var dbErr *pq.Error
-	if !errors.As(err, &dbErr) || dbErr.Code != "23503" {
-		t.Fatalf("外部キー制約違反を期待したが、%vだった", err)
-	}
-	if model.AsValidationError(err) != nil {
-		t.Error("外部キー制約違反が入力エラーに変換された")
+	if ae := model.AsAppError(err); ae == nil || ae.Code != model.AppErrCodeResourceNotFound {
+		t.Fatalf("ResourceNotFoundを期待したが、%vだった", err)
 	}
 	exists, err := spaceRepo.ExistsByIdentifier(ctx, identifier)
 	if err != nil {
 		t.Fatalf("失敗後のスペースの存在確認に失敗: %v", err)
 	}
 	if exists {
-		t.Error("メンバー作成に失敗したスペースがロールバックされていない")
+		t.Error("存在しないユーザーのスペースが作成された")
 	}
 }

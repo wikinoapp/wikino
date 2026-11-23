@@ -60,7 +60,7 @@ func newTestHandlerForEdit(t *testing.T, queries *query.Queries) *email_confirma
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	mockInserter := &mockJobInserterForEdit{}
-	d := dispatcher.NewDispatcher(mockInserter)
+	d := dispatcher.NewDispatcher(mockInserter, nil)
 	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
 	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
 	createEmailConfirmationUC := usecase.NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, d, emailConfirmationCreateValidator)

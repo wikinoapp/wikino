@@ -1,5 +1,4 @@
 // グローバルホットキー: `s` または `/` キーで検索ページへ遷移する
-// Rails版 (app/javascript/controllers/global-hotkey-controller.ts) と同等の挙動を提供する
 
 const SEARCH_PATH_META_NAME = "wikino-search-path";
 

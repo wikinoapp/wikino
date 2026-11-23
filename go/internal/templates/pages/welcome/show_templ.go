@@ -113,7 +113,7 @@ func Show(data ShowPageData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"w-full rounded-lg ring ring-stone-200 shadow-xl\" loading=\"lazy\"></div></section><section class=\"max-w-5xl w-full mx-auto flex flex-col gap-12 px-4\"><h2 class=\"text-center text-2xl/8 leading-snug font-bold antialiased text-primary\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"w-full rounded-lg ring ring-stone-200 shadow-xl dark:ring-border\" loading=\"lazy\"></div></section><section class=\"max-w-5xl w-full mx-auto flex flex-col gap-12 px-4\"><h2 class=\"text-center text-2xl/8 leading-snug font-bold antialiased text-primary\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -456,7 +456,7 @@ func featureItem(title string, description string, iconName viewmodel.IconName, 
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" alt=\"\" class=\"w-full basis-full sm:basis-1/2 rounded-lg ring ring-stone-200 shadow aspect-4/3 object-contain\" loading=\"lazy\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" alt=\"\" class=\"w-full basis-full sm:basis-1/2 rounded-lg ring ring-stone-200 shadow aspect-4/3 object-contain dark:ring-border\" loading=\"lazy\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

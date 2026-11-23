@@ -539,8 +539,8 @@ func (uc *GenerateExportFilesUsecase) sendNotification(ctx context.Context, expo
 	return uc.sender.SendFailed(ctx, user.Email, exportURL(appURL, space.Identifier, export.ID), appURL, user.Locale.Code())
 }
 
-// exportObjectKeyはエクスポートのアーカイブの保存先。接頭辞によって、Rails版が同じバケットの
-// ルートへ書いている添付ファイルとアーカイブが混ざらない。
+// exportObjectKeyはエクスポートのアーカイブの保存先。接頭辞によって、同じバケットの
+// ルートに置く添付ファイルとアーカイブが混ざらない。
 func exportObjectKey(export *model.Export) string {
 	return fmt.Sprintf("exports/%s/%s.zip", export.SpaceID, export.ID)
 }
@@ -555,7 +555,7 @@ func exportDownloadURL(appURL string, spaceIdentifier model.SpaceIdentifier, exp
 	return exportURL(appURL, spaceIdentifier, exportID) + "/download"
 }
 
-// deleteLegacyObjectsは別レコードが使うblobを保持し、旧Rails ZIPを削除する。
+// deleteLegacyObjectsは別レコードが使うblobを保持し、Rails期のZIPを削除する。
 // 次の後片付けで再試行できるよう、全オブジェクトを削除するまでメタデータを保持する。
 func (uc *GenerateExportFilesUsecase) deleteLegacyObjects(ctx context.Context, export *model.Export) bool {
 	files, err := uc.exportRepo.ListLegacyFiles(ctx, export.ID, export.SpaceID)

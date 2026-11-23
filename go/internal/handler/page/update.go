@@ -214,6 +214,7 @@ func (h *Handler) renderEdit(
 		"SpaceName": output.Space.Name,
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM
+	meta.FeatureScript = viewmodel.FeatureScriptEditor
 
 	content := pagepages.Edit(pagepages.EditPageData{
 		CSRFToken:        csrfToken,

@@ -17,17 +17,19 @@ func (p *GuestPolicy) CanShowTopic(topic *model.Topic) bool {
 	return topic.Visibility == model.TopicVisibilityPublic
 }
 
-// CanShowAttachmentはRails版と揃え、参照するページがすべて公開トピックにある添付ファイルだけを許可する
+// CanShowAttachmentは、参照するページがすべて公開トピックにある添付ファイルだけを許可する
 func (p *GuestPolicy) CanShowAttachment(allReferencingPagesPublic bool) bool {
 	return allReferencingPagesPublic
 }
 
 func (p *GuestPolicy) CanUpdateTopic() bool                                { return false }
 func (p *GuestPolicy) CanUpdateTopicVisibility() bool                      { return false }
+func (p *GuestPolicy) CanDeleteTopic() bool                                { return false }
 func (p *GuestPolicy) CanCreatePage() bool                                 { return false }
 func (p *GuestPolicy) CanUpdatePage() bool                                 { return false }
 func (p *GuestPolicy) CanShowTrash() bool                                  { return false }
 func (p *GuestPolicy) CanTrashPage() bool                                  { return false }
+func (p *GuestPolicy) CanRestorePage() bool                                { return false }
 func (p *GuestPolicy) CanPinPage() bool                                    { return false }
 func (p *GuestPolicy) CanUnpinPage() bool                                  { return false }
 func (p *GuestPolicy) CanShowDraftPage() bool                              { return false }
@@ -45,6 +47,7 @@ func (p *GuestPolicy) CanUpdateSuggestionComment(_ *model.Suggestion) bool { ret
 func (p *GuestPolicy) CanCreateTopic() bool                                { return false }
 func (p *GuestPolicy) CanExportSpace() bool                                { return false }
 func (p *GuestPolicy) CanUpdateSpace() bool                                { return false }
+func (p *GuestPolicy) CanDeleteSpace() bool                                { return false }
 func (p *GuestPolicy) CanShowPersonalAccessTokens() bool                   { return false }
 func (p *GuestPolicy) CanCreatePersonalAccessToken() bool                  { return false }
 func (p *GuestPolicy) CanDeletePersonalAccessToken() bool                  { return false }
@@ -52,6 +55,8 @@ func (p *GuestPolicy) CanShowOAuthGrants() bool                            { ret
 func (p *GuestPolicy) CanCreateOAuthGrant() bool                           { return false }
 func (p *GuestPolicy) CanDeleteOAuthGrant() bool                           { return false }
 func (p *GuestPolicy) CanShowOAuthApplications() bool                      { return false }
+func (p *GuestPolicy) CanCreateAttachment() bool                           { return false }
+func (p *GuestPolicy) CanDeleteAttachment() bool                           { return false }
 func (p *GuestPolicy) CanCreateOAuthApplication() bool                     { return false }
 func (p *GuestPolicy) CanUpdateOAuthApplication() bool                     { return false }
 func (p *GuestPolicy) CanDeleteOAuthApplication() bool                     { return false }

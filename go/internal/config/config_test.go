@@ -22,7 +22,6 @@ func setupTestEnv(t *testing.T) func() {
 		"WIKINO_SESSION_HTTPONLY":          os.Getenv("WIKINO_SESSION_HTTPONLY"),
 		"WIKINO_DISABLE_RATE_LIMIT":        os.Getenv("WIKINO_DISABLE_RATE_LIMIT"),
 		"WIKINO_TRUSTED_PROXY_CIDRS":       os.Getenv("WIKINO_TRUSTED_PROXY_CIDRS"),
-		"WIKINO_RAILS_APP_URL":             os.Getenv("WIKINO_RAILS_APP_URL"),
 		"WIKINO_TURNSTILE_ENABLED":         os.Getenv("WIKINO_TURNSTILE_ENABLED"),
 		"WIKINO_TURNSTILE_SITE_KEY":        os.Getenv("WIKINO_TURNSTILE_SITE_KEY"),
 		"WIKINO_TURNSTILE_SECRET_KEY":      os.Getenv("WIKINO_TURNSTILE_SECRET_KEY"),
@@ -279,6 +278,29 @@ func TestIsTest(t *testing.T) {
 			cfg := &Config{Env: tt.env}
 			if got := cfg.IsTest(); got != tt.want {
 				t.Errorf("IsTest() = %v、期待値 = %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestIsTestE2EはIsTestE2Eメソッドをテスト
+func TestIsTestE2E(t *testing.T) {
+	tests := []struct {
+		env  string
+		want bool
+	}{
+		{"dev", false},
+		{"test", false},
+		{"test_e2e", true},
+		{"prod", false},
+		{"", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.env, func(t *testing.T) {
+			cfg := &Config{Env: tt.env}
+			if got := cfg.IsTestE2E(); got != tt.want {
+				t.Errorf("IsTestE2E() = %v、期待値 = %v", got, tt.want)
 			}
 		})
 	}
@@ -621,24 +643,6 @@ func TestLoad_DisableRateLimit(t *testing.T) {
 				t.Errorf("DisableRateLimit = %v、期待値 = %v", cfg.DisableRateLimit, tt.want)
 			}
 		})
-	}
-}
-
-// TestLoad_RailsAppURLはRailsAppURL設定のテスト
-func TestLoad_RailsAppURL(t *testing.T) {
-	cleanup := setupTestEnv(t)
-	defer cleanup()
-
-	railsURL := "http://localhost:3001"
-	_ = os.Setenv("WIKINO_RAILS_APP_URL", railsURL)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load()に失敗: %v", err)
-	}
-
-	if cfg.RailsAppURL != railsURL {
-		t.Errorf("RailsAppURL = %v、期待値 = %v", cfg.RailsAppURL, railsURL)
 	}
 }
 

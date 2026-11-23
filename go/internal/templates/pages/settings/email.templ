@@ -1,0 +1,143 @@
+package settings
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+)
+
+// メールアドレスの変更の各項目の補足を収める要素のid
+const (
+	newEmailHintID = "new-email-hint"
+	passwordHintID = "password-hint"
+)
+
+// emailFieldsはメールアドレスの変更のフォームの項目を画面の上からの順に並べたもの
+var emailFields = []string{"new_email", "password"}
+
+// EmailDataはメールアドレスの変更の画面をレンダリングする元になるデータ。
+//
+// NewEmailは拒否された送信で入力した値を残すために持つ。パスワードは送り返さない。
+type EmailData struct {
+	CSRFToken    string
+	FormErrors   *model.ValidationError
+	CurrentEmail string
+	NewEmail     string
+}
+
+// Emailはメールアドレスの変更の画面のコンテンツを表示します。
+//
+// 開くのは変更するときだけのため、誤りが無いときは新しいメールアドレスの欄にフォーカスを置きます。
+templ Email(data EmailData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "settings_email_show_heading"),
+					})
+				</div>
+
+				@components.FormErrorSummary(data.FormErrors)
+
+				@components.ContentCard() {
+					<form
+						action={ templ.SafeURL(string(templates.SettingsEmailPath())) }
+						class="grid gap-6"
+						data-disable-on-submit
+						method="POST"
+					>
+						<input type="hidden" name="_method" value="PATCH"/>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+						<div class="grid gap-2">
+							<p class="label">
+								{ templates.T(ctx, "settings_email_show_current_email_label") }
+							</p>
+							<p class="text-sm wrap-anywhere">{ data.CurrentEmail }</p>
+						</div>
+
+						<div class="grid gap-2">
+							<label class="label" for="new_email">
+								{ templates.T(ctx, "settings_email_show_new_email_label") }
+								@components.RequiredBadge()
+							</label>
+							<input
+								autocapitalize="off"
+								autocomplete="email"
+								if focusField(data.FormErrors, emailFields, "new_email") {
+									autofocus
+								}
+								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
+								id="new_email"
+								name="new_email"
+								required
+								spellcheck="false"
+								type="email"
+								value={ data.NewEmail }
+								aria-describedby={ describedBy(data.FormErrors, "new_email", newEmailHintID) }
+								if hasFieldError(data.FormErrors, "new_email") {
+									aria-invalid="true"
+								}
+							/>
+							<p id={ newEmailHintID } class="text-muted-foreground text-sm">
+								{ templates.T(ctx, "settings_email_show_new_email_hint") }
+							</p>
+							@fieldErrors(data.FormErrors, "new_email")
+						</div>
+
+						<div class="grid gap-2">
+							<label class="label" for="password">
+								{ templates.T(ctx, "settings_email_show_password_label") }
+								@components.RequiredBadge()
+							</label>
+							<input
+								autocomplete="current-password"
+								if focusField(data.FormErrors, emailFields, "password") {
+									autofocus
+								}
+								class="input not-aria-invalid:not-focus-visible:border-stone-500 dark:not-aria-invalid:not-focus-visible:border-input focus-visible:border-primary focus-visible:ring-primary aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
+								id="password"
+								name="password"
+								required
+								type="password"
+								aria-describedby={ describedBy(data.FormErrors, "password", passwordHintID) }
+								if hasFieldError(data.FormErrors, "password") {
+									aria-invalid="true"
+								}
+							/>
+							<p id={ passwordHintID } class="text-muted-foreground text-sm">
+								{ templates.T(ctx, "settings_email_show_password_hint") }
+							</p>
+							@fieldErrors(data.FormErrors, "password")
+						</div>
+
+						<div class="flex justify-between gap-2">
+							<button type="submit" class="btn rounded-full w-fit">
+								@templates.Icon("paper-plane-tilt-regular")
+								{ templates.T(ctx, "settings_email_show_submit_button") }
+							</button>
+
+							<a
+								href={ templ.SafeURL(string(templates.SettingsPath())) }
+								class="btn rounded-full w-fit"
+								data-variant="outline"
+							>
+								{ templates.T(ctx, "settings_email_show_cancel") }
+							</a>
+						</div>
+					</form>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// focusFieldは、開いたときにフォーカスを置く項目かを返します。誤りがあれば最初に誤りのある項目に、
+// 誤りが無ければ最初の項目に置きます。
+func focusField(formErrors *model.ValidationError, fields []string, field string) bool {
+	if first := firstErrorField(formErrors, fields); first != "" {
+		return first == field
+	}
+	return len(fields) > 0 && fields[0] == field
+}

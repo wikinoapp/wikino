@@ -8,6 +8,8 @@ package query
 import (
 	"context"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 const createPageRevision = `-- name: CreatePageRevision :one
@@ -49,6 +51,22 @@ func (q *Queries) CreatePageRevision(ctx context.Context, arg CreatePageRevision
 		&i.Title,
 	)
 	return i, err
+}
+
+const deletePageRevisionsByPageIDs = `-- name: DeletePageRevisionsByPageIDs :exec
+DELETE FROM page_revisions WHERE space_id = $1 AND page_id = ANY($2::uuid[])
+`
+
+type DeletePageRevisionsByPageIDsParams struct {
+	SpaceID string   `json:"space_id"`
+	PageIds []string `json:"page_ids"`
+}
+
+// ページのリビジョンを物理削除する。リビジョンを指す編集提案のページの参照は
+// 外部キーのON DELETE SET NULLで外れる。
+func (q *Queries) DeletePageRevisionsByPageIDs(ctx context.Context, arg DeletePageRevisionsByPageIDsParams) error {
+	_, err := q.db.ExecContext(ctx, deletePageRevisionsByPageIDs, arg.SpaceID, pq.Array(arg.PageIds))
+	return err
 }
 
 const findLatestPageRevisionByPage = `-- name: FindLatestPageRevisionByPage :one

@@ -13,7 +13,7 @@ import (
 // TrashPageUsecaseはページをゴミ箱へ入れる (POST /s/:space_identifier/pages/:page_number/trash)。
 //
 // ここでのゴミ箱はpages.trashed_atによるUI上のゴミ箱で、バッチ処理が使うdiscarded_atの
-// 論理削除とは別物である。ゴミ箱に入ったページはタイトルと本文を保持し、Rails版のゴミ箱画面が
+// 論理削除とは別物である。ゴミ箱に入ったページはタイトルと本文を保持し、ゴミ箱の画面が
 // 同じカラムを見て復元するため、本UseCaseは時刻を打刻するだけでよい。
 type TrashPageUsecase struct {
 	spaceRepo       *repository.SpaceRepository

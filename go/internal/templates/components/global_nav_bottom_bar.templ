@@ -11,6 +11,6 @@ import "github.com/wikinoapp/wikino/go/internal/templates"
 // ナビゲーション領域を区別する (GlobalNavTopBarを参照)。
 templ GlobalNavBottomBar(data GlobalNavData) {
 	<nav class="md:hidden" aria-label={ templates.T(ctx, "global_nav_bottom_label") }>
-		@GlobalNavMenu(data, "bg-card w-fit rounded-full border border-stone-400 px-4 py-1")
+		@GlobalNavMenu(data, "bg-card w-fit rounded-full border border-stone-400 px-4 py-1 dark:border-brand-600")
 	</nav>
 }

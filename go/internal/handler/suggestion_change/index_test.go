@@ -171,6 +171,13 @@ func TestIndex_公開トピックの差分を未ログインで閲覧できる(t
 	}
 
 	body := rr.Body.String()
+	// 差分の色付けはmarkdown-diff.jsが行うため、変更画面はそのエントリだけを読む
+	if !strings.Contains(body, `<script type="module" src="/static/js/markdown-diff.js?v=`) {
+		t.Error("レスポンスにmarkdown-diff.jsを読み込むscriptが見つからない")
+	}
+	if strings.Contains(body, "/static/js/editor.js") {
+		t.Error("エディタの無い変更画面がeditor.jsを読み込んでいる")
+	}
 	if !strings.Contains(body, "差分テスト提案") {
 		t.Error("レスポンスに編集提案のタイトルが含まれていない")
 	}

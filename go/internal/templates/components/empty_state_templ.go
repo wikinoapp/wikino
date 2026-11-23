@@ -45,17 +45,17 @@ func EmptyState(data EmptyStateData) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex items-center justify-center px-4 py-10 border-1 border-dashed rounded-xl\"><div class=\"flex flex-col items-center justify-center gap-4 px-4 text-center\"><div class=\"bg-stone-200/50 rounded-xl p-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex items-center justify-center px-4 py-10 border-1 border-dashed rounded-xl\"><div class=\"flex flex-col items-center justify-center gap-4 px-4 text-center\"><div class=\"bg-stone-200/50 rounded-xl p-2 dark:bg-muted/50\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if data.IconName != "" {
-			templ_7745c5c3_Err = templates.Icon(data.IconName, "size-10 fill-brand-800").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templates.Icon(data.IconName, "size-10 fill-brand-800 dark:fill-brand-300").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templates.Icon(defaultEmptyStateIcon, "size-10 fill-brand-800").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templates.Icon(defaultEmptyStateIcon, "size-10 fill-brand-800 dark:fill-brand-300").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

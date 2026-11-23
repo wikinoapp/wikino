@@ -35,7 +35,7 @@ func CardLinkTopic(topic viewmodel.CardLinkTopic) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"group card relative min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"group card relative min-h-[54px] transition p-0 duration-200 ease-in-out hover:ring-brand-600 dark:hover:ring-brand-400\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

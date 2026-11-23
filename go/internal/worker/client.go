@@ -3,12 +3,14 @@ package worker
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 	"github.com/riverqueue/river/rivertype"
 
@@ -43,6 +45,10 @@ const emailConfirmationRetentionHours = 24
 // cleanupEmailConfirmationsIntervalは、古いメール確認の記録を消すジョブを投入する間隔。
 const cleanupEmailConfirmationsInterval = time.Hour
 
+// deleteTrashedPagesIntervalは、ゴミ箱に入れて保持期間を過ぎたページを物理削除するジョブを投入する
+// 間隔。1日に1回にする。
+const deleteTrashedPagesInterval = 24 * time.Hour
+
 // ExportDepsは、エクスポートのワーカーが必要としながら自分では用意できないものを保持する。
 // リポジトリとオブジェクトストレージはHTTP側と共有するため、ここで作り直さず受け取る。メール
 // 送信とUseCaseはワーカーだけのものなのでNewClientの中に留める。
@@ -60,6 +66,41 @@ type ExportDeps struct {
 	ObjectStorage   storage.ObjectStorage
 }
 
+// DeletionDepsは、論理削除したレコードを物理削除するワーカーが使うものを保持する。
+// データベースとリポジトリはHTTP側と共有するため、ここで作り直さず受け取る。
+type DeletionDeps struct {
+	DB                          *sql.DB
+	TopicRepo                   *repository.TopicRepository
+	TopicMemberRepo             *repository.TopicMemberRepository
+	PageRepo                    *repository.PageRepository
+	DraftPageRepo               *repository.DraftPageRepository
+	PageEditorRepo              *repository.PageEditorRepository
+	PageRevisionRepo            *repository.PageRevisionRepository
+	PageAttachmentReferenceRepo *repository.PageAttachmentReferenceRepository
+	UserRepo                    *repository.UserRepository
+	UserSessionRepo             *repository.UserSessionRepository
+	UserPasswordRepo            *repository.UserPasswordRepository
+	UserTwoFactorAuthRepo       *repository.UserTwoFactorAuthRepository
+	SpaceMemberRepo             *repository.SpaceMemberRepository
+	SpaceRepo                   *repository.SpaceRepository
+	AttachmentRepo              *repository.AttachmentRepository
+	ExportRepo                  *repository.ExportRepository
+
+	// ObjectStorageはnilでもよい。そのときスペースの物理削除は、実体を持たないスペースだけを消せる
+	ObjectStorage storage.ObjectStorage
+}
+
+// AttachmentProcessingDepsは、添付ファイルのアップロード後の処理のワーカーが使うものを保持する。
+// データベース・リポジトリ・オブジェクトストレージはHTTP側と共有するため、ここで作り直さず受け取る。
+//
+// ObjectStorageがnilのときは、ワーカーを登録しない。オブジェクトストレージが設定されていない
+// デプロイでは事前署名もできず、処理のジョブが投入されないためである。
+type AttachmentProcessingDeps struct {
+	DB             *sql.DB
+	AttachmentRepo *repository.AttachmentRepository
+	ObjectStorage  storage.ObjectStorage
+}
+
 // ClientはRiverクライアントのラッパー
 type Client struct {
 	riverClient *river.Client[pgx.Tx]
@@ -67,7 +108,7 @@ type Client struct {
 }
 
 // NewClientは新しいRiverクライアントを作成します
-func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps) (*Client, error) {
+func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limiter *ratelimit.Limiter, emailConfirmationRepo *repository.EmailConfirmationRepository, exportDeps ExportDeps, deletionDeps DeletionDeps, attachmentProcessingDeps AttachmentProcessingDeps) (*Client, error) {
 	// pgxpoolの作成
 	poolConfig, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -124,6 +165,33 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 		slog.WarnContext(ctx, "オブジェクトストレージが設定されていません。スペースのエクスポート機能は利用できません")
 	}
 
+	// 行の削除と同じトランザクションで後始末ジョブを登録するクライアント。添付ファイルとZIPの後始末と、
+	// スペースの物理削除が使う
+	txClient, err := NewTxInserter(deletionDeps.DB)
+	if err != nil {
+		pool.Close()
+		return nil, err
+	}
+	if deletionDeps.ObjectStorage != nil {
+		river.AddWorker(workers, NewCleanupExportObjectsWorker(usecase.NewCleanupExportObjectsUsecase(
+			deletionDeps.ExportRepo, dispatcher.NewDispatcher(nil, txClient), deletionDeps.ObjectStorage,
+		)))
+		slog.InfoContext(ctx, "CleanupExportObjectsWorkerを登録しました")
+	}
+
+	if attachmentProcessingDeps.ObjectStorage != nil {
+		river.AddWorker(workers, NewCleanupAttachmentObjectsWorker(usecase.NewCleanupAttachmentObjectsUsecase(
+			dispatcher.NewDispatcher(nil, txClient), attachmentProcessingDeps.ObjectStorage,
+		)))
+		slog.InfoContext(ctx, "CleanupAttachmentObjectsWorkerを登録しました")
+		river.AddWorker(workers, NewProcessAttachmentWorker(usecase.NewProcessAttachmentUsecase(
+			attachmentProcessingDeps.DB,
+			attachmentProcessingDeps.AttachmentRepo,
+			attachmentProcessingDeps.ObjectStorage,
+		)))
+		slog.InfoContext(ctx, "ProcessAttachmentWorkerを登録しました")
+	}
+
 	// Rate Limitクリーンアップワーカーを登録
 	cleanupRateLimitsUC := usecase.NewCleanupRateLimitsUsecase(limiter)
 	river.AddWorker(workers, NewCleanupRateLimitsWorker(cleanupRateLimitsUC))
@@ -132,6 +200,64 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 	cleanupEmailConfirmationsUC := usecase.NewCleanupEmailConfirmationsUsecase(emailConfirmationRepo)
 	river.AddWorker(workers, NewCleanupEmailConfirmationsWorker(cleanupEmailConfirmationsUC))
 	slog.InfoContext(ctx, "CleanupEmailConfirmationsWorkerを登録しました")
+
+	// トピックの物理削除のワーカーはデータベースだけで動くため、設定によらず登録する。
+	river.AddWorker(workers, NewDeleteTopicWorker(usecase.NewDeleteTopicUsecase(
+		deletionDeps.DB,
+		deletionDeps.TopicRepo,
+		deletionDeps.TopicMemberRepo,
+		deletionDeps.PageRepo,
+		deletionDeps.DraftPageRepo,
+		deletionDeps.PageEditorRepo,
+		deletionDeps.PageRevisionRepo,
+		deletionDeps.PageAttachmentReferenceRepo,
+	)))
+	slog.InfoContext(ctx, "DeleteTopicWorkerを登録しました")
+
+	// アカウントの物理削除のワーカーもデータベースだけで動くため、設定によらず登録する。
+	river.AddWorker(workers, NewDeleteAccountWorker(usecase.NewDeleteAccountUsecase(
+		deletionDeps.DB,
+		deletionDeps.UserRepo,
+		deletionDeps.UserSessionRepo,
+		deletionDeps.UserPasswordRepo,
+		deletionDeps.UserTwoFactorAuthRepo,
+		deletionDeps.SpaceMemberRepo,
+	)))
+	slog.InfoContext(ctx, "DeleteAccountWorkerを登録しました")
+
+	// スペースの物理削除のワーカーは、実体を持たないスペースをオブジェクトストレージ無しでも消せるため、
+	// 設定によらず登録する。実体を持つスペースは、オブジェクトストレージが無ければ失敗して行を残す。
+	river.AddWorker(workers, NewDeleteSpaceWorker(usecase.NewDeleteSpaceUsecase(
+		deletionDeps.DB,
+		usecase.DeleteSpaceRepos{
+			SpaceRepo:                   deletionDeps.SpaceRepo,
+			SpaceMemberRepo:             deletionDeps.SpaceMemberRepo,
+			TopicRepo:                   deletionDeps.TopicRepo,
+			TopicMemberRepo:             deletionDeps.TopicMemberRepo,
+			PageRepo:                    deletionDeps.PageRepo,
+			DraftPageRepo:               deletionDeps.DraftPageRepo,
+			PageEditorRepo:              deletionDeps.PageEditorRepo,
+			PageRevisionRepo:            deletionDeps.PageRevisionRepo,
+			PageAttachmentReferenceRepo: deletionDeps.PageAttachmentReferenceRepo,
+			AttachmentRepo:              deletionDeps.AttachmentRepo,
+			ExportRepo:                  deletionDeps.ExportRepo,
+		},
+		deletionDeps.ObjectStorage,
+		dispatcher.NewDispatcher(nil, txClient),
+	)))
+	slog.InfoContext(ctx, "DeleteSpaceWorkerを登録しました")
+
+	// ゴミ箱の物理削除のワーカーもデータベースだけで動くため、設定によらず登録する。
+	// 定期ジョブとして投入するため、登録を条件付きにしてはいけない (periodicJobSpecsを参照)。
+	river.AddWorker(workers, NewDeleteTrashedPagesWorker(usecase.NewDeleteTrashedPagesUsecase(
+		deletionDeps.DB,
+		deletionDeps.PageRepo,
+		deletionDeps.DraftPageRepo,
+		deletionDeps.PageEditorRepo,
+		deletionDeps.PageRevisionRepo,
+		deletionDeps.PageAttachmentReferenceRepo,
+	)))
+	slog.InfoContext(ctx, "DeleteTrashedPagesWorkerを登録しました")
 
 	// Riverクライアントの作成
 	// SentryミドルウェアはConfig.Middlewareに登録する。
@@ -159,6 +285,14 @@ func NewClient(ctx context.Context, databaseURL string, cfg *config.Config, limi
 		riverClient: riverClient,
 		pool:        pool,
 	}, nil
+}
+
+// NewTxInserterは、アプリケーションのdatabase/sqlのトランザクションでジョブを投入するクライアントを作る。
+// ワーカーを持たず、ジョブの実行はNewClientが作るpgxクライアントが担当する。
+func NewTxInserter(db *sql.DB) (*river.Client[*sql.Tx], error) {
+	return river.NewClient(riverdatabasesql.New(db), &river.Config{
+		Logger: slog.Default(),
+	})
 }
 
 // StartはRiverクライアントを起動します
@@ -223,6 +357,10 @@ func periodicJobSpecs() []periodicJobSpec {
 		{
 			args:     dispatcher.CleanupEmailConfirmationsArgs{RetentionHours: emailConfirmationRetentionHours},
 			interval: cleanupEmailConfirmationsInterval,
+		},
+		{
+			args:     dispatcher.DeleteTrashedPagesArgs{},
+			interval: deleteTrashedPagesInterval,
 		},
 	}
 }

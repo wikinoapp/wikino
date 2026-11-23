@@ -149,3 +149,29 @@ func (a *topicAccess) visibleTopics() []*model.Topic {
 	}
 	return visible
 }
+
+// trashVisibleTopicsは、閲覧者が開けて、そのトピックのゴミ箱を見られる (page_trash:read) トピックを、
+// スペースのトピックと同じnumber順で返す。
+func (a *topicAccess) trashVisibleTopics() []*model.Topic {
+	visible := make([]*model.Topic, 0, len(a.topics))
+	for _, topic := range a.topics {
+		authorizer := a.authorizer(topic.ID)
+		if authorizer.CanShowTopic(topic) && authorizer.CanShowTrash() {
+			visible = append(visible, topic)
+		}
+	}
+	return visible
+}
+
+// restorableTopicIDsは、閲覧者が開けて、そのトピックのページをゴミ箱から戻せる (page_trash:delete)
+// トピックのIDを返す。
+func (a *topicAccess) restorableTopicIDs() map[model.TopicID]bool {
+	ids := make(map[model.TopicID]bool, len(a.topics))
+	for _, topic := range a.topics {
+		authorizer := a.authorizer(topic.ID)
+		if authorizer.CanShowTopic(topic) && authorizer.CanRestorePage() {
+			ids[topic.ID] = true
+		}
+	}
+	return ids
+}

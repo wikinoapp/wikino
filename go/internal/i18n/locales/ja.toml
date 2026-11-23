@@ -57,6 +57,10 @@ other = "閉じる"
 description = "エラーラベルの汎用表示"
 other = "エラー"
 
+[form_error_summary_heading]
+description = "フォームのフィールドエラーの要約の見出し"
+other = "入力内容を確認してください"
+
 [back_to_home]
 description = "ホームへ戻るリンクのラベル"
 other = "ホームに戻る"
@@ -251,7 +255,7 @@ description = "メールアドレス重複エラー"
 other = "このメールアドレスは既に登録されています"
 
 [validation_invalid_event]
-description = "Turnstileなどで無効なイベントが検知された場合のエラー"
+description = "確認コードの送信で、受け付けないイベントが指定された場合のエラー"
 other = "無効なイベントタイプです"
 
 [validation_bot_detected]
@@ -1333,15 +1337,15 @@ description = "スペース作成画面のサブタイトル (ヘルプページ
 other = "スペースについては <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/16\" target=\"_blank\">スペースについてのヘルプ</a> をご覧ください<br>どんなスペースを作ると良いかわからないときは <a class=\"link-inherit-foreground\" href=\"https://wikino.app/s/wikino/pages/50\" target=\"_blank\">ベストプラクティス</a> が参考になるかもしれません"
 
 [space_form_identifier_label]
-description = "スペース作成フォームの識別子のラベル"
+description = "スペースの作成と一般設定のフォームの識別子のラベル"
 other = "識別子"
 
 [space_form_identifier_hint]
-description = "スペース作成フォームの識別子の補足"
+description = "スペースの作成と一般設定のフォームの識別子の補足"
 other = "この識別子はスペースのURLに使用されます。あとから変更もできます。{{.MaxLength}}文字以内で半角英数字とハイフンのみ使用できます"
 
 [space_form_name_label]
-description = "スペース作成フォームの名前のラベル"
+description = "スペースの作成と一般設定のフォームの名前のラベル"
 other = "名前"
 
 [space_new_submit_button]
@@ -1435,6 +1439,14 @@ other = "名前を入力してください"
 [validation_space_name_too_long]
 description = "スペース名文字数超過エラー"
 other = "名前は30文字以内で入力してください"
+
+[validation_space_deletion_name_mismatch]
+description = "スペースの削除の確認で入力したスペース名が削除するスペースの名前と一致しないエラー"
+other = "スペース名が間違っています"
+
+[validation_topic_deletion_name_mismatch]
+description = "トピックの削除の確認で入力したトピック名が削除するトピックの名前と一致しないエラー"
+other = "トピック名が間違っています"
 
 [validation_topic_name_required]
 description = "トピック名必須エラー"
@@ -1560,9 +1572,91 @@ other = "スペースを作成しました"
 description = "トピック作成成功時のフラッシュメッセージ"
 other = "トピックを作成しました"
 
+[flash_space_updated]
+description = "スペースの一般設定の保存成功時のフラッシュメッセージ"
+other = "スペースを更新しました"
+
+[flash_space_deleted]
+description = "スペース削除成功時のフラッシュメッセージ"
+other = "スペースを削除しました"
+
+[flash_attachment_deleted]
+description = "添付ファイルの削除成功時のフラッシュメッセージ"
+other = "ファイルを削除しました"
+
 [flash_topic_updated]
 description = "トピック更新成功時のフラッシュメッセージ"
 other = "トピックを更新しました"
+
+[flash_topic_deleted]
+description = "トピック削除成功時のフラッシュメッセージ"
+other = "トピックを削除しました"
+
+# トピックの削除の確認画面
+[topic_deletion_new_title]
+description = "トピックの削除の確認画面のページタイトル"
+other = "トピックの削除 | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_deletion_new_heading]
+description = "トピックの削除の確認画面の見出し"
+other = "トピックの削除"
+
+[topic_deletion_new_breadcrumb_settings]
+description = "トピックの削除の確認画面のパンくずに出すトピックの設定のラベル"
+other = "設定"
+
+[topic_deletion_new_breadcrumb]
+description = "トピックの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "トピックの削除"
+
+[topic_deletion_new_description]
+description = "トピックの削除の確認画面の説明"
+other = "トピックを削除しますか？削除する前に以下の内容をご確認ください。"
+
+[topic_deletion_new_warning_pages]
+description = "トピックの削除の確認画面の注意 (ページも消える)"
+other = "トピックを削除すると、そのトピックに含まれるページもすべて削除されます"
+
+[topic_deletion_new_warning_irreversible]
+description = "トピックの削除の確認画面の注意 (元に戻せない)"
+other = "削除されたトピックやそのトピックに含まれるページの復元はできません"
+
+[topic_deletion_new_topic_name_label]
+description = "トピックの削除の確認画面のトピック名の入力欄のラベル"
+other = "トピック名"
+
+[topic_deletion_new_topic_name_hint]
+description = "トピックの削除の確認画面のトピック名の入力欄の説明"
+other = "トピックを削除する場合は、トピック名 ({{.TopicName}}) を入力してください"
+
+[topic_deletion_new_submit_button]
+description = "トピックの削除の確認画面の送信ボタン"
+other = "削除する"
+
+[topic_deletion_new_cancel]
+description = "トピックの削除の確認画面のキャンセルリンク"
+other = "キャンセル"
+
+# トピックの設定のトップ
+[topic_settings_title]
+description = "トピックの設定のトップのページタイトル"
+other = "設定 | {{.TopicName}} | {{.SpaceName}}"
+
+[topic_settings_heading]
+description = "トピックの設定のトップの見出し"
+other = "設定"
+
+[topic_settings_breadcrumb]
+description = "トピックの設定のトップ自身を指すパンくず項目 (現在項目)"
+other = "設定"
+
+[topic_settings_general]
+description = "トピックの設定のトップの一般設定へのリンク"
+other = "基本情報"
+
+[topic_settings_deletion]
+description = "トピックの設定のトップのトピックの削除へのリンク"
+other = "トピックの削除"
 
 # トピックの一般設定
 [topic_settings_general_title]
@@ -1682,6 +1776,127 @@ other = "連携中のアプリ"
 [space_settings_oauth_applications]
 description = "スペース設定のトップのOAuthアプリへのリンク"
 other = "OAuthアプリ"
+
+[space_settings_general_title]
+description = "スペースの一般設定画面のページタイトル"
+other = "基本情報 | {{.SpaceName}}"
+
+[space_settings_general_heading]
+description = "スペースの一般設定画面の見出し"
+other = "基本情報"
+
+[space_settings_general_breadcrumb_settings]
+description = "スペースの一般設定画面のパンくずに出すスペース設定のラベル"
+other = "設定"
+
+[space_settings_general_breadcrumb]
+description = "スペースの一般設定画面自身を指すパンくず項目 (現在項目)"
+other = "基本情報"
+
+[space_settings_general_submit_button]
+description = "スペースの一般設定画面の送信ボタン"
+other = "保存する"
+
+[space_settings_general_cancel]
+description = "スペースの一般設定画面のキャンセルリンク"
+other = "キャンセル"
+
+# スペースの削除の確認画面
+[space_deletion_new_title]
+description = "スペースの削除の確認画面のページタイトル"
+other = "スペースの削除 | {{.SpaceName}}"
+
+[space_deletion_new_heading]
+description = "スペースの削除の確認画面の見出し"
+other = "スペースの削除"
+
+[space_deletion_new_breadcrumb_settings]
+description = "スペースの削除の確認画面のパンくずに出すスペース設定のラベル"
+other = "設定"
+
+[space_deletion_new_breadcrumb]
+description = "スペースの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "スペースの削除"
+
+[space_deletion_new_description]
+description = "スペースの削除の確認画面の説明"
+other = "スペースを削除しますか？削除する前に以下の内容をご確認ください。"
+
+[space_deletion_new_warning_contents]
+description = "スペースの削除の確認画面の注意 (トピック・ページ・添付ファイル・エクスポートも消える)"
+other = "スペースを削除すると、そのスペースに含まれるトピック・ページ・添付ファイル・エクスポートもすべて削除されます"
+
+[space_deletion_new_warning_irreversible]
+description = "スペースの削除の確認画面の注意 (元に戻せない)"
+other = "削除されたスペースやそのスペースに含まれるトピックやページの復元はできません"
+
+[space_deletion_new_space_name_label]
+description = "スペースの削除の確認画面のスペース名の入力欄のラベル"
+other = "スペース名"
+
+[space_deletion_new_space_name_hint]
+description = "スペースの削除の確認画面のスペース名の入力欄の説明"
+other = "スペースを削除する場合は、スペース名 ({{.SpaceName}}) を入力してください"
+
+[space_deletion_new_submit_button]
+description = "スペースの削除の確認画面の送信ボタン"
+other = "削除する"
+
+[space_deletion_new_cancel]
+description = "スペースの削除の確認画面のキャンセルリンク"
+other = "キャンセル"
+
+[space_settings_attachment_index_title]
+description = "添付ファイルの管理の画面のページタイトル"
+other = "添付ファイル | {{.SpaceName}}"
+
+[space_settings_attachment_index_paginated_title]
+description = "ページ送りした添付ファイルの管理の画面のページタイトル"
+other = "添付ファイル ({{.PageNumber}} ページ目) | {{.SpaceName}}"
+
+[space_settings_attachment_index_heading]
+description = "添付ファイルの管理の画面の見出し"
+other = "添付ファイル"
+
+[space_settings_attachment_index_breadcrumb_settings]
+description = "添付ファイルの管理の画面のパンくずの、スペース設定のトップへの項目"
+other = "設定"
+
+[space_settings_attachment_index_breadcrumb]
+description = "添付ファイルの管理の画面のパンくずの現在項目"
+other = "添付ファイル"
+
+[space_settings_attachment_index_search_label]
+description = "添付ファイルの管理の画面の検索欄のラベル (読み上げ用)"
+other = "ファイル名で検索"
+
+[space_settings_attachment_index_search_placeholder]
+description = "添付ファイルの管理の画面の検索欄のプレースホルダー"
+other = "ファイル名で検索"
+
+[space_settings_attachment_index_search_button]
+description = "添付ファイルの管理の画面の検索ボタン"
+other = "検索"
+
+[space_settings_attachment_index_list_label]
+description = "添付ファイルの管理の画面の一覧の名前 (読み上げ用)"
+other = "添付ファイルの一覧"
+
+[space_settings_attachment_index_empty]
+description = "添付ファイルの管理の画面で、添付ファイルが無いときの表示"
+other = "添付ファイルが見つかりません"
+
+[space_settings_attachment_index_uploaded_at]
+description = "添付ファイルの管理の画面の、アップロードした日時"
+other = "{{.Time}}にアップロード"
+
+[space_settings_attachment_index_delete_button]
+description = "添付ファイルの管理の画面の削除ボタンの名前 (読み上げ用)"
+other = "{{.Filename}}を削除"
+
+[space_settings_attachment_index_delete_confirm]
+description = "添付ファイルの管理の画面で削除の前に出す確認"
+other = "「{{.Filename}}」を削除しますか？削除すると元に戻せません。"
 
 
 # ページネーション
@@ -3162,3 +3377,699 @@ other = "成功しました (ステータス {{.Status}})"
 [mcp_call_status]
 description = "MCPのツールのエラーの内容の前に添えるHTTPステータス"
 other = "ステータス {{.Status}}"
+
+[trash_show_title]
+description = "ゴミ箱の一覧のページタイトル"
+other = "ゴミ箱 | {{.SpaceName}}"
+
+[trash_show_paginated_title]
+description = "ページ送りしたゴミ箱の一覧のページタイトル"
+other = "ゴミ箱 ({{.PageNumber}} ページ目) | {{.SpaceName}}"
+
+[trash_show_breadcrumb]
+description = "ゴミ箱の一覧のパンくずの現在地"
+other = "ゴミ箱"
+
+[trash_show_heading]
+description = "ゴミ箱の一覧の見出し"
+other = "ゴミ箱"
+
+[trash_show_description]
+description = "ゴミ箱の一覧の説明"
+other = "ゴミ箱に入れたページを表示しています"
+
+[trash_show_retention_description]
+description = "ゴミ箱の一覧の、復元できる期間の説明"
+other = "30日以上経過したページは自動的に削除されます。それ以内であれば復元可能です"
+
+[trash_show_empty]
+description = "ゴミ箱の一覧にページが無いときのメッセージ"
+other = "ゴミ箱は空です"
+
+[trash_show_restore_button]
+description = "ゴミ箱の一覧で選んだページを復元するボタン"
+other = "復元する"
+
+[trash_show_table_caption]
+description = "ゴミ箱の一覧の表のキャプション (スクリーンリーダー向け)"
+other = "{{.SpaceName}}のゴミ箱に入れたページ"
+
+[trash_show_column_select]
+description = "ゴミ箱の一覧の、選択のチェックボックスの列の見出し (スクリーンリーダー向け)"
+other = "選択"
+
+[trash_show_column_title]
+description = "ゴミ箱の一覧のページの列の見出し"
+other = "ページ"
+
+[trash_show_column_trashed_at]
+description = "ゴミ箱の一覧の、ゴミ箱に入れた日時の列の見出し"
+other = "ゴミ箱に入れた日時"
+
+[trash_show_select_page]
+description = "ゴミ箱の一覧の各行のチェックボックスのラベル (スクリーンリーダー向け)"
+other = "「{{.Title}}」を選択"
+
+[trash_show_untitled]
+description = "ゴミ箱の一覧でタイトルの無いページの表示"
+other = "無題"
+
+[validation_bulk_restored_page_ids_required]
+description = "ゴミ箱でページを選ばずに復元しようとしたときのエラー"
+other = "復元するページを選んでください"
+
+[validation_bulk_restored_page_ids_not_restorable]
+description = "ゴミ箱で選んだページに、復元できないページが含まれていたときのエラー"
+other = "復元できないページが含まれているため、どのページも復元しませんでした"
+
+[flash_pages_restored]
+description = "ゴミ箱からページを復元したときのフラッシュメッセージ"
+other = "ページを復元しました"
+
+[validation_search_query_too_short]
+description = "検索のキーワードが短すぎるときのエラー"
+other = "検索キーワードは{{.Count}}文字以上で入力してください"
+
+[validation_search_query_too_long]
+description = "検索のキーワードが長すぎるときのエラー"
+other = "検索キーワードは{{.Count}}文字以内で入力してください"
+
+[validation_search_query_invalid_characters]
+description = "検索のキーワードに使えない文字が含まれるときのエラー"
+other = "検索キーワードに不正な文字が含まれています"
+
+[search_show_title]
+description = "検索の画面のページタイトル"
+other = "検索"
+
+[search_show_heading]
+description = "検索の画面の見出し"
+other = "検索"
+
+[search_show_description]
+description = "検索の画面の説明"
+other = "ページタイトルをキーワードで検索することができます。"
+
+[search_show_help_link]
+description = "検索の画面から、検索の使い方のヘルプへのリンク"
+other = "検索の使い方"
+
+[search_show_query_label]
+description = "検索の画面のキーワードの欄のラベル (スクリーンリーダー向け)"
+other = "検索キーワード"
+
+[search_show_query_placeholder]
+description = "検索の画面のキーワードの欄のプレースホルダー"
+other = "キーワードを入力してください"
+
+[search_show_submit_button]
+description = "検索の画面の検索ボタン"
+other = "検索"
+
+[search_show_results_heading]
+description = "検索の画面の結果の見出し (スクリーンリーダー向け)"
+other = "検索結果"
+
+[search_show_no_results]
+description = "検索の画面で結果が無いときのメッセージ"
+other = "検索結果が見つかりませんでした"
+
+[search_show_breadcrumb]
+description = "検索の画面のパンくずの現在地"
+other = "検索"
+
+[profile_show_title]
+description = "プロフィールのページタイトル (名前があるとき)"
+other = "{{.Name}} (@{{.Atname}}) | Wikino"
+
+[profile_show_title_without_name]
+description = "プロフィールのページタイトル (名前が空のとき)"
+other = "@{{.Atname}} | Wikino"
+
+[profile_show_edit_button]
+description = "プロフィールの、プロフィールの編集へのリンク (本人にだけ出す)"
+other = "プロフィール編集"
+
+[profile_show_settings_button]
+description = "プロフィールの、設定へのリンク (本人にだけ出す)"
+other = "設定"
+
+[profile_show_joined_spaces_heading]
+description = "プロフィールの「参加中のスペース」見出し"
+other = "参加中のスペース"
+
+[profile_show_no_joined_spaces_html]
+description = "プロフィールの参加中のスペースが0件のときのメッセージ (HTMLを含む)"
+other = "参加中のスペースは<br class=\"block sm:hidden\">ありません"
+
+[validation_atname_reserved]
+description = "アットネームが予約語のときのエラー"
+other = "このアットネームは使用できません"
+
+[validation_user_name_too_long]
+description = "ユーザーの名前の文字数超過エラー"
+other = "名前は30文字以内で入力してください"
+
+[validation_user_description_too_long]
+description = "ユーザーの自己紹介の文字数超過エラー"
+other = "説明は150文字以内で入力してください"
+
+[flash_profile_updated]
+description = "プロフィールの編集を保存したときのフラッシュメッセージ"
+other = "プロフィールを更新しました"
+
+[settings_show_title]
+description = "ユーザー設定のトップのページタイトル"
+other = "設定"
+
+[settings_show_heading]
+description = "ユーザー設定のトップの見出し"
+other = "設定"
+
+[settings_show_profile_link]
+description = "ユーザー設定のトップの、プロフィールの編集へのリンク"
+other = "プロフィールの編集"
+
+[settings_show_email_link]
+description = "ユーザー設定のトップの、メールアドレスの変更へのリンク"
+other = "メールアドレスの変更"
+
+[settings_show_two_factor_auth_link]
+description = "ユーザー設定のトップの、二要素認証の設定へのリンク"
+other = "二要素認証の設定"
+
+[settings_show_account_deletion_link]
+description = "ユーザー設定のトップの、アカウントの削除へのリンク"
+other = "アカウントの削除"
+
+[settings_show_sign_out_button]
+description = "ユーザー設定のトップのログアウトのボタン"
+other = "ログアウト"
+
+[settings_show_sign_out_confirm]
+description = "ユーザー設定のトップでログアウトする前の確認"
+other = "ログアウトしますか？"
+
+[settings_profile_show_title]
+description = "プロフィールの編集のページタイトル"
+other = "プロフィールの編集"
+
+[settings_profile_show_heading]
+description = "プロフィールの編集の見出し"
+other = "プロフィールの編集"
+
+[settings_profile_show_breadcrumb_settings]
+description = "プロフィールの編集のパンくずの、設定のトップへの項目"
+other = "設定"
+
+[settings_profile_show_breadcrumb]
+description = "プロフィールの編集のパンくずの現在地"
+other = "プロフィールの編集"
+
+[settings_profile_show_atname_label]
+description = "プロフィールの編集のアットネームのラベル"
+other = "アットネーム"
+
+[settings_profile_show_atname_hint]
+description = "プロフィールの編集のアットネームの補足"
+other = "プロフィールのURLに使用されます。20文字以内で半角英数字とアンダースコアのみ使用できます"
+
+[settings_profile_show_name_label]
+description = "プロフィールの編集の名前のラベル"
+other = "名前"
+
+[settings_profile_show_name_hint]
+description = "プロフィールの編集の名前の補足"
+other = "30文字まで入力できます"
+
+[settings_profile_show_description_label]
+description = "プロフィールの編集の自己紹介のラベル"
+other = "説明"
+
+[settings_profile_show_description_hint]
+description = "プロフィールの編集の自己紹介の補足"
+other = "150文字まで入力できます"
+
+[settings_profile_show_submit_button]
+description = "プロフィールの編集の保存ボタン"
+other = "保存する"
+
+[settings_profile_show_cancel]
+description = "プロフィールの編集の、設定のトップへ戻るリンク"
+other = "キャンセル"
+
+[validation_current_password_invalid]
+description = "現在のパスワードが違うときのエラー"
+other = "パスワードが正しくありません"
+
+[flash_email_updated]
+description = "メールアドレスを変更したときのフラッシュメッセージ"
+other = "メールアドレスを変更しました"
+
+[settings_email_show_title]
+description = "メールアドレスの変更のページタイトル"
+other = "メールアドレスの変更"
+
+[settings_email_show_heading]
+description = "メールアドレスの変更の見出し"
+other = "メールアドレスの変更"
+
+[settings_email_show_breadcrumb_settings]
+description = "メールアドレスの変更のパンくずの、設定のトップへの項目"
+other = "設定"
+
+[settings_email_show_breadcrumb]
+description = "メールアドレスの変更のパンくずの現在地"
+other = "メールアドレスの変更"
+
+[settings_email_show_current_email_label]
+description = "メールアドレスの変更の現在のメールアドレスのラベル"
+other = "現在のメールアドレス"
+
+[settings_email_show_new_email_label]
+description = "メールアドレスの変更の新しいメールアドレスのラベル"
+other = "新しいメールアドレス"
+
+[settings_email_show_new_email_hint]
+description = "メールアドレスの変更の新しいメールアドレスの補足"
+other = "このメールアドレスに確認コードを送信します"
+
+[settings_email_show_password_label]
+description = "メールアドレスの変更の現在のパスワードのラベル"
+other = "現在のパスワード"
+
+[settings_email_show_password_hint]
+description = "メールアドレスの変更の現在のパスワードの補足"
+other = "本人であることを確かめるために入力してください"
+
+[settings_email_show_submit_button]
+description = "メールアドレスの変更の確認コードの送信ボタン"
+other = "確認コードを送信する"
+
+[settings_email_show_cancel]
+description = "メールアドレスの変更の、設定のトップへ戻るリンク"
+other = "キャンセル"
+
+[settings_email_confirmation_edit_title]
+description = "メールアドレスの変更の確認コードの入力のページタイトル"
+other = "確認コードの入力"
+
+[settings_email_confirmation_edit_heading]
+description = "メールアドレスの変更の確認コードの入力の見出し"
+other = "確認コードの入力"
+
+[settings_email_confirmation_edit_breadcrumb_settings]
+description = "メールアドレスの変更の確認コードの入力のパンくずの、設定のトップへの項目"
+other = "設定"
+
+[settings_email_confirmation_edit_breadcrumb_email]
+description = "メールアドレスの変更の確認コードの入力のパンくずの、メールアドレスの変更への項目"
+other = "メールアドレスの変更"
+
+[settings_email_confirmation_edit_breadcrumb]
+description = "メールアドレスの変更の確認コードの入力のパンくずの現在地"
+other = "確認コードの入力"
+
+[settings_email_confirmation_edit_description]
+description = "メールアドレスの変更の確認コードの入力の案内文"
+other = "新しいメールアドレスに送信した確認コードを入力してください。確認コードの有効期限は15分です"
+
+[settings_email_confirmation_edit_code_label]
+description = "メールアドレスの変更の確認コードのラベル"
+other = "確認コード"
+
+[settings_email_confirmation_edit_code_hint]
+description = "メールアドレスの変更の確認コードの補足"
+other = "6文字の英数字を入力してください"
+
+[settings_email_confirmation_edit_submit_button]
+description = "メールアドレスの変更の確定ボタン"
+other = "メールアドレスを変更する"
+
+[settings_email_confirmation_edit_back]
+description = "確認コードの入力から、メールアドレスの変更へ戻るリンク"
+other = "メールアドレスを入力し直す"
+
+[validation_totp_code_incorrect]
+description = "認証アプリのコードが一致しないときのエラー"
+other = "認証コードが正しくありません"
+
+[flash_two_factor_auth_enabled]
+description = "二要素認証を有効にしたときのフラッシュメッセージ"
+other = "二要素認証を有効にしました"
+
+[flash_two_factor_auth_already_enabled]
+description = "二要素認証が既に有効なのに登録の画面を開いたときのフラッシュメッセージ"
+other = "二要素認証はすでに有効になっています"
+
+[flash_two_factor_auth_not_pending]
+description = "有効にしようとした時点で登録の途中の設定が無かったときのフラッシュメッセージ"
+other = "二要素認証の設定が変わっていました。今の設定を確かめてください"
+
+[settings_two_factor_auth_show_title]
+description = "二要素認証の設定のページタイトル"
+other = "二要素認証の設定"
+
+[settings_two_factor_auth_show_heading]
+description = "二要素認証の設定の見出し"
+other = "二要素認証の設定"
+
+[settings_two_factor_auth_show_breadcrumb_settings]
+description = "二要素認証の設定のパンくずの設定のトップ"
+other = "設定"
+
+[settings_two_factor_auth_show_breadcrumb]
+description = "二要素認証の設定のパンくずの現在のページ"
+other = "二要素認証"
+
+[settings_two_factor_auth_show_description]
+description = "二要素認証の設定の見出しの下の説明"
+other = "ログインするときに、パスワードに加えて認証アプリのコードを求めます。"
+
+[settings_two_factor_auth_show_help_link]
+description = "二要素認証の設定からヘルプへのリンク"
+other = "詳しく見る"
+
+[settings_two_factor_auth_show_status_enabled]
+description = "二要素認証が有効なときの状態"
+other = "二要素認証は有効です"
+
+[settings_two_factor_auth_show_status_disabled]
+description = "二要素認証が無効なときの状態"
+other = "二要素認証は未設定です"
+
+[settings_two_factor_auth_show_enabled_at]
+description = "二要素認証を有効にした日時"
+other = "{{.Time}}に有効化"
+
+[settings_two_factor_auth_show_recovery_codes]
+description = "二要素認証の設定からリカバリーコードの画面へのリンク"
+other = "リカバリーコードを表示"
+
+[settings_two_factor_auth_show_enable]
+description = "二要素認証の設定から登録の画面へのリンク"
+other = "二要素認証を有効にする"
+
+[settings_two_factor_auth_show_back]
+description = "二要素認証の設定から設定のトップへ戻るリンク"
+other = "設定に戻る"
+
+[settings_two_factor_auth_new_title]
+description = "二要素認証の登録のページタイトル"
+other = "二要素認証を有効にする"
+
+[settings_two_factor_auth_new_heading]
+description = "二要素認証の登録の見出し"
+other = "二要素認証を有効にする"
+
+[settings_two_factor_auth_new_breadcrumb_settings]
+description = "二要素認証の登録のパンくずの設定のトップ"
+other = "設定"
+
+[settings_two_factor_auth_new_breadcrumb_two_factor_auth]
+description = "二要素認証の登録のパンくずの二要素認証の設定"
+other = "二要素認証"
+
+[settings_two_factor_auth_new_breadcrumb]
+description = "二要素認証の登録のパンくずの現在のページ"
+other = "有効にする"
+
+[settings_two_factor_auth_new_description]
+description = "二要素認証の登録の見出しの下の説明"
+other = "認証アプリにWikinoを登録し、表示されたコードを入力すると有効になります。"
+
+[settings_two_factor_auth_new_help_link]
+description = "二要素認証の登録からヘルプへのリンク"
+other = "詳しく見る"
+
+[settings_two_factor_auth_new_step_install]
+description = "二要素認証の登録の手順1"
+other = "1. スマートフォンに認証アプリ (Google Authenticator、Authyなど) をインストールします"
+
+[settings_two_factor_auth_new_step_scan]
+description = "二要素認証の登録の手順2"
+other = "2. 認証アプリで下のQRコードを読み取ります"
+
+[settings_two_factor_auth_new_qr_code_label]
+description = "二要素認証の登録のQRコードの代替テキスト"
+other = "認証アプリに登録するQRコード"
+
+[settings_two_factor_auth_new_manual_entry]
+description = "二要素認証の登録の秘密鍵を手で入力するときの案内"
+other = "QRコードが使えない場合は、以下のコードを手動で入力してください"
+
+[settings_two_factor_auth_new_step_enter]
+description = "二要素認証の登録の手順3"
+other = "3. ログイン時に入力するパスワードと、認証アプリに表示される6桁のコードを下に入力します"
+
+[settings_two_factor_auth_new_password_label]
+description = "二要素認証の登録のパスワードのラベル"
+other = "現在のパスワード"
+
+[settings_two_factor_auth_new_password_hint]
+description = "二要素認証の登録のパスワードの補足"
+other = "本人であることを確かめるために入力してください"
+
+[settings_two_factor_auth_new_totp_code_label]
+description = "二要素認証の登録の認証コードのラベル"
+other = "認証コード"
+
+[settings_two_factor_auth_new_totp_code_hint]
+description = "二要素認証の登録の認証コードの補足"
+other = "認証アプリに表示される6桁の数字です"
+
+[settings_two_factor_auth_new_submit_button]
+description = "二要素認証の登録の送信ボタン"
+other = "二要素認証を有効にする"
+
+[settings_two_factor_auth_new_cancel]
+description = "二要素認証の登録から設定の画面へ戻るリンク"
+other = "キャンセル"
+
+[flash_two_factor_auth_disabled]
+description = "二要素認証を無効にしたときのフラッシュメッセージ"
+other = "二要素認証を無効にしました"
+
+[flash_two_factor_auth_recovery_codes_regenerated]
+description = "リカバリーコードを作り直したときのフラッシュメッセージ"
+other = "リカバリーコードを再生成しました"
+
+[flash_two_factor_auth_not_enabled]
+description = "二要素認証が有効でないのに無効化やリカバリーコードを操作したときのフラッシュメッセージ"
+other = "二要素認証が有効になっていません"
+
+[settings_two_factor_auth_show_disable_heading]
+description = "二要素認証の設定の無効にするフォームの見出し"
+other = "二要素認証を無効にする"
+
+[settings_two_factor_auth_show_disable_confirm]
+description = "二要素認証を無効にする前の確認"
+other = "二要素認証を無効にしてもよろしいですか？"
+
+[settings_two_factor_auth_show_password_label]
+description = "二要素認証を無効にするフォームのパスワードのラベル"
+other = "現在のパスワード"
+
+[settings_two_factor_auth_show_password_hint]
+description = "二要素認証を無効にするフォームのパスワードの補足"
+other = "本人であることを確かめるために入力してください"
+
+[settings_two_factor_auth_show_disable_button]
+description = "二要素認証を無効にするボタン"
+other = "二要素認証を無効にする"
+
+[settings_two_factor_auth_recovery_code_index_title]
+description = "リカバリーコードのページタイトル"
+other = "リカバリーコード"
+
+[settings_two_factor_auth_recovery_code_index_heading]
+description = "リカバリーコードの見出し"
+other = "リカバリーコード"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb_settings]
+description = "リカバリーコードのパンくずの設定のトップ"
+other = "設定"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb_two_factor_auth]
+description = "リカバリーコードのパンくずの二要素認証の設定"
+other = "二要素認証"
+
+[settings_two_factor_auth_recovery_code_index_breadcrumb]
+description = "リカバリーコードのパンくずの現在のページ"
+other = "リカバリーコード"
+
+[settings_two_factor_auth_recovery_code_index_description]
+description = "リカバリーコードの見出しの下の説明"
+other = "認証アプリを使えなくなったときに、認証コードの代わりにリカバリーコードでログインできます。各コードは一度しか使えません。"
+
+[settings_two_factor_auth_recovery_code_index_list_label]
+description = "リカバリーコードの一覧の名前"
+other = "リカバリーコードの一覧"
+
+[settings_two_factor_auth_recovery_code_index_empty]
+description = "リカバリーコードを使い切ったときの案内"
+other = "残っているリカバリーコードはありません。下のフォームで作り直してください"
+
+[settings_two_factor_auth_recovery_code_index_save_title]
+description = "リカバリーコードを保存する案内の見出し"
+other = "リカバリーコードを安全な場所に保存してください"
+
+[settings_two_factor_auth_recovery_code_index_save_description]
+description = "リカバリーコードを保存する案内"
+other = "認証アプリを紛失したときに、アカウントにアクセスするための最後の手段です。これらのコードも失うと、アカウントにアクセスできなくなります。"
+
+[settings_two_factor_auth_recovery_code_index_regenerate_heading]
+description = "リカバリーコードを作り直すフォームの見出し"
+other = "リカバリーコードを再生成する"
+
+[settings_two_factor_auth_recovery_code_index_regenerate_warning]
+description = "リカバリーコードを作り直すときの注意"
+other = "リカバリーコードを再生成すると、今のコードはすべて使えなくなります"
+
+[settings_two_factor_auth_recovery_code_index_regenerate_confirm]
+description = "リカバリーコードを作り直す前の確認"
+other = "リカバリーコードを再生成してもよろしいですか？今のコードはすべて使えなくなります"
+
+[settings_two_factor_auth_recovery_code_index_password_label]
+description = "リカバリーコードを作り直すフォームのパスワードのラベル"
+other = "現在のパスワード"
+
+[settings_two_factor_auth_recovery_code_index_password_hint]
+description = "リカバリーコードを作り直すフォームのパスワードの補足"
+other = "本人であることを確かめるために入力してください"
+
+[settings_two_factor_auth_recovery_code_index_regenerate_button]
+description = "リカバリーコードを作り直すボタン"
+other = "リカバリーコードを再生成する"
+
+[settings_two_factor_auth_recovery_code_index_back]
+description = "リカバリーコードから二要素認証の設定へ戻るリンク"
+other = "二要素認証の設定に戻る"
+
+[validation_account_deletion_atname_mismatch]
+description = "アカウントの削除の確認で入力したアットネームが本人のものと一致しないエラー"
+other = "アットネームが間違っています"
+
+[validation_account_deletion_has_active_spaces]
+description = "参加しているスペースがあるためアカウントを削除できないエラー"
+other = "参加しているスペースがあるため、アカウントを削除できません"
+
+[flash_account_deleted]
+description = "アカウントを削除したときのフラッシュメッセージ"
+other = "アカウントを削除しました"
+
+[settings_account_deletion_new_title]
+description = "アカウントの削除の確認画面のページタイトル"
+other = "アカウントの削除"
+
+[settings_account_deletion_new_heading]
+description = "アカウントの削除の確認画面の見出し"
+other = "アカウントの削除"
+
+[settings_account_deletion_new_breadcrumb_settings]
+description = "アカウントの削除の確認画面のパンくずに出す設定のラベル"
+other = "設定"
+
+[settings_account_deletion_new_breadcrumb]
+description = "アカウントの削除の確認画面自身を指すパンくず項目 (現在項目)"
+other = "アカウントの削除"
+
+[settings_account_deletion_new_description]
+description = "アカウントの削除の確認画面の説明"
+other = "アカウントを削除しますか？削除する前に以下の内容をご確認ください。"
+
+[settings_account_deletion_new_warning_irreversible]
+description = "アカウントの削除の確認画面の注意 (元に戻せない)"
+other = "削除されたアカウント情報の復元はできません"
+
+[settings_account_deletion_new_warning_atname]
+description = "アカウントの削除の確認画面の注意 (アットネームが使えるようになる)"
+other = "アットネームは他のユーザーが使用できるようになります"
+
+[settings_account_deletion_new_atname_label]
+description = "アカウントの削除の確認画面のアットネームの入力欄のラベル"
+other = "アットネーム"
+
+[settings_account_deletion_new_atname_hint]
+description = "アカウントの削除の確認画面のアットネームの入力欄の説明"
+other = "アカウントを削除する場合は、アットネーム ({{.Atname}}) を入力してください"
+
+[settings_account_deletion_new_confirm]
+description = "アカウントの削除の確認画面で送信する前の確認"
+other = "アカウントを削除します。この操作は取り消せません。よろしいですか？"
+
+[settings_account_deletion_new_submit_button]
+description = "アカウントの削除の確認画面の送信ボタン"
+other = "アカウントを削除する"
+
+[settings_account_deletion_new_cancel]
+description = "アカウントの削除の確認画面から設定へ戻るキャンセルリンク"
+other = "キャンセル"
+
+[settings_account_deletion_new_cannot_delete_heading]
+description = "参加しているスペースがあり削除できないときの見出し"
+other = "このアカウントは削除できません"
+
+[settings_account_deletion_new_cannot_delete_description]
+description = "参加しているスペースがあり削除できないときの説明"
+other = "アカウントを削除するには、スペースに参加していない必要があります。参加している以下のスペースを削除してから、アカウントを削除してください。"
+
+[settings_account_deletion_new_spaces_label]
+description = "削除できないときに出す参加しているスペースの一覧のラベル"
+other = "参加しているスペース"
+
+[settings_account_deletion_new_back]
+description = "削除できないときに設定へ戻るリンク"
+other = "設定に戻る"
+
+[validation_attachment_filename_required]
+description = "添付ファイルの事前署名でファイル名が無いエラー"
+other = "ファイル名を入力してください"
+
+[validation_attachment_content_type_required]
+description = "添付ファイルの事前署名でファイル形式が無いエラー"
+other = "ファイル形式を入力してください"
+
+[validation_attachment_content_type_unsupported]
+description = "添付ファイルの事前署名でアップロードできないファイル形式のエラー"
+other = "ファイル形式はサポートされていない形式です"
+
+[validation_attachment_byte_size_required]
+description = "添付ファイルの事前署名でファイルサイズが無いエラー"
+other = "ファイルサイズを入力してください"
+
+[validation_attachment_byte_size_not_positive]
+description = "添付ファイルの事前署名でファイルサイズが0以下のエラー"
+other = "ファイルサイズは0より大きい値にしてください"
+
+[validation_attachment_byte_size_too_large]
+description = "添付ファイルの事前署名でファイルサイズが種類ごとの上限 (MaxMBメガバイト) を超えたエラー"
+other = "ファイルサイズは{{.MaxMB}}MB以下にしてください"
+
+[validation_attachment_checksum_required]
+description = "添付ファイルの事前署名でチェックサムが無いエラー"
+other = "チェックサムを入力してください"
+
+[validation_attachment_checksum_invalid]
+description = "添付ファイルの事前署名でチェックサムがMD5のBase64として読めないエラー"
+other = "チェックサムの形式が正しくありません"
+
+[byte_size_bytes]
+description = "ファイルの大きさの表示 (1024バイト未満)"
+other = "{{.Size}}バイト"
+
+[byte_size_kilobytes]
+description = "ファイルの大きさの表示 (KB)"
+other = "{{.Size}}KB"
+
+[byte_size_megabytes]
+description = "ファイルの大きさの表示 (MB)"
+other = "{{.Size}}MB"
+
+[byte_size_gigabytes]
+description = "ファイルの大きさの表示 (GB)"
+other = "{{.Size}}GB"
+
+[byte_size_terabytes]
+description = "ファイルの大きさの表示 (TB)"
+other = "{{.Size}}TB"

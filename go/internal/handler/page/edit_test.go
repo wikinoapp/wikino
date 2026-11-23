@@ -227,6 +227,11 @@ func TestEdit(t *testing.T) {
 		t.Error("レスポンスにページ本文が見つからない")
 	}
 
+	// エディタはeditor.jsが初期化するため、編集画面はそのエントリを読む
+	if !strings.Contains(body, `<script type="module" src="/static/js/editor.js?v=`) {
+		t.Error("レスポンスにeditor.jsを読み込むscriptが見つからない")
+	}
+
 	// _methodがPATCHであることを確認
 	if !strings.Contains(body, `value="PATCH"`) {
 		t.Error("レスポンスにPATCHのメソッドオーバーライドが見つからない")

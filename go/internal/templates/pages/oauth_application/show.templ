@@ -98,7 +98,6 @@ templ regenerateClientSecretForm(data ShowData) {
 	<form
 		action={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationClientSecretPath(data.Space.Identifier, data.Application.ID))) }
 		data-confirm={ templates.T(ctx, "oauth_application_show_regenerate_client_secret_confirm", map[string]any{"Name": data.Application.Name}) }
-		hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
 		method="POST"
 	>
 		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
@@ -118,7 +117,6 @@ templ deleteForm(data ShowData) {
 		<form
 			action={ templ.SafeURL(string(templates.SpaceSettingsOAuthApplicationPath(data.Space.Identifier, data.Application.ID))) }
 			data-confirm={ templates.T(ctx, "oauth_application_show_delete_confirm", map[string]any{"Name": data.Application.Name}) }
-			hx-on:submit="if (!confirm(this.dataset.confirm)) { event.preventDefault(); return false; }"
 			method="POST"
 		>
 			<input type="hidden" name="_method" value="DELETE"/>

@@ -417,7 +417,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templates.DecorativeIcon("caret-right-regular", "size-3.5 fill-gray-500").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = templates.DecorativeIcon("caret-right-regular", "size-3.5 fill-gray-500 dark:fill-gray-400").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -472,7 +472,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600 dark:fill-gray-300").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -522,7 +522,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 						return templ_7745c5c3_Err
 					}
 					if item.IconName != "" {
-						templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+						templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600 dark:fill-gray-300").Render(ctx, templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -583,7 +583,7 @@ func breadcrumbNav(items []BreadcrumbItem) templ.Component {
 				}
 			} else {
 				if item.IconName != "" {
-					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600").Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = templates.DecorativeIcon(item.IconName, "size-4 shrink-0 fill-gray-600 dark:fill-gray-300").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

@@ -1,0 +1,146 @@
+package trash
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// ShowDataはゴミ箱の一覧をレンダリングする元になるデータ。
+type ShowData struct {
+	CSRFToken  string
+	Space      viewmodel.Space
+	Pages      []viewmodel.TrashedPage
+	Pagination viewmodel.Pagination
+}
+
+// paginationPathはゴミ箱の一覧の指定したページのパスを生成します。
+func (d ShowData) paginationPath(page int) string {
+	return string(templates.PaginatedPath(templates.TrashPath(d.Space.Identifier), int32(page)))
+}
+
+// Showはスペースのゴミ箱の一覧のコンテンツを表示します。
+templ Show(data ShowData) {
+	<div class="py-4">
+		<div class="max-w-3xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title:    templates.T(ctx, "trash_show_heading"),
+						Subtitle: description(),
+					})
+				</div>
+
+				if len(data.Pages) == 0 {
+					<div class="px-4">
+						@components.EmptyState(components.EmptyStateData{
+							Message:  templates.T(ctx, "trash_show_empty"),
+							IconName: "trash-regular",
+						})
+					</div>
+				} else {
+					<form
+						action={ templ.SafeURL(string(templates.BulkRestoredPagesPath(data.Space.Identifier))) }
+						method="POST"
+						class="flex flex-col gap-4"
+					>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+						<div class="px-4">
+							<button type="submit" class="btn rounded-full w-fit" data-size="sm">
+								@templates.Icon("arrow-counter-clockwise-regular", "size-4")
+								{ templates.T(ctx, "trash_show_restore_button") }
+							</button>
+						</div>
+
+						@components.ContentCard() {
+							<table class="table">
+								<caption class="sr-only">
+									{ templates.T(ctx, "trash_show_table_caption", map[string]any{"SpaceName": data.Space.Name}) }
+								</caption>
+
+								<thead>
+									<tr>
+										<th scope="col">
+											<span class="sr-only">
+												{ templates.T(ctx, "trash_show_column_select") }
+											</span>
+										</th>
+
+										<th scope="col" class="w-full">
+											{ templates.T(ctx, "trash_show_column_title") }
+										</th>
+
+										<th scope="col">
+											{ templates.T(ctx, "trash_show_column_trashed_at") }
+										</th>
+									</tr>
+								</thead>
+
+								<tbody>
+									for _, page := range data.Pages {
+										@trashedPageRow(data.Space.Identifier, page)
+									}
+								</tbody>
+							</table>
+						}
+					</form>
+
+					@components.PaginationNav(
+						data.Pagination,
+						data.paginationPath(data.Pagination.Current-1),
+						data.paginationPath(data.Pagination.Current+1),
+					)
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// descriptionはゴミ箱の一覧の見出しの下に、何が並ぶかと復元できる期間を示します。
+templ description() {
+	{ templates.T(ctx, "trash_show_description") }
+	<br/>
+	{ templates.T(ctx, "trash_show_retention_description") }
+}
+
+// trashedPageRowはゴミ箱の一覧の1行を表示します。
+//
+// チェックボックスの境界は、操作に要る部品として背景との対比を3:1以上にするため前景寄りの色にする。
+// チェックボックスの名前はページのタイトルから付ける。行の中で見える文字はタイトルのリンクだけで、
+// チェックボックスを<label>で包むとリンクを押しても選択が切り替わってしまうため。
+templ trashedPageRow(spaceIdentifier viewmodel.SpaceIdentifier, page viewmodel.TrashedPage) {
+	<tr>
+		<td>
+			<input
+				type="checkbox"
+				name="page_ids"
+				value={ page.ID }
+				class="input border-muted-foreground focus-visible:ring-muted-foreground"
+				aria-label={ templates.T(ctx, "trash_show_select_page", map[string]any{"Title": page.DisplayTitle(ctx)}) }
+			/>
+		</td>
+
+		// 折り返しを許すのはタイトルのセルだけにし、狭いビューポートでもテーブルをカードに収める。
+		// ページのセルを行の見出しにし、日時のセルがどのページのものかを読み上げで伝える。
+		<th scope="row" class="py-2 font-normal text-left whitespace-normal [overflow-wrap:anywhere]">
+			<div class="flex flex-col gap-0.5">
+				<span class="flex items-center gap-1 text-xs text-muted-foreground">
+					@templates.DecorativeIcon(page.Topic.IconName, "size-3")
+					{ page.Topic.Name }
+				</span>
+
+				<a
+					href={ templ.SafeURL(string(templates.PagePath(spaceIdentifier, page.Number))) }
+					class="link-foreground"
+				>
+					{ page.DisplayTitle(ctx) }
+				</a>
+			</div>
+		</th>
+
+		<td class="text-muted-foreground whitespace-nowrap">
+			{ templates.FormatDateTime(ctx, page.TrashedAt) }
+		</td>
+	</tr>
+}

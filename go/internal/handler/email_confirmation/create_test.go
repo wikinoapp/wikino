@@ -72,7 +72,7 @@ func newTestHandlerForCreate(t *testing.T, queries *query.Queries, turnstileVali
 	emailConfirmationRepo := repository.NewEmailConfirmationRepository(queries)
 
 	mock := &mockJobInserter{}
-	d := dispatcher.NewDispatcher(mock)
+	d := dispatcher.NewDispatcher(mock, nil)
 	emailConfirmationCreateValidator := validator.NewEmailConfirmationCreateValidator(userRepo)
 	emailConfirmationUpdateValidator := validator.NewEmailConfirmationUpdateValidator(emailConfirmationRepo)
 	createEmailConfirmationUC := usecase.NewCreateEmailConfirmationUsecase(cfg, emailConfirmationRepo, d, emailConfirmationCreateValidator)
@@ -337,6 +337,44 @@ func TestCreate_PasswordResetEvent_AllowsExistingEmail(t *testing.T) {
 
 	if !setup.mockInserter.called {
 		t.Error("Insertが呼ばれていない")
+	}
+}
+
+func TestCreate_メールアドレスの変更のイベントを検証エラーにする(t *testing.T) {
+	t.Parallel()
+
+	_, tx := testutil.SetupTx(t)
+	queries := testutil.QueriesWithTx(tx)
+
+	setup := newTestHandlerForCreate(t, queries, true)
+
+	// 画面は送らないイベントだが、隠しフィールドを書き換えると送れる
+	form := url.Values{}
+	form.Set("email", "email-update-event@example.com")
+	form.Set("event", "email_update")
+	form.Set("csrf_token", "test-csrf-token")
+	form.Set("cf-turnstile-response", "test-token")
+
+	req := httptest.NewRequest(http.MethodPost, "/email_confirmation", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	ctx := middleware.SetCSRFTokenToContext(req.Context(), "test-csrf-token")
+	ctx = i18n.SetLocale(ctx, "ja")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	setup.handler.Create(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Errorf("ステータスコード = %v、期待値 = %v", rr.Code, http.StatusUnprocessableEntity)
+	}
+
+	if !strings.Contains(rr.Body.String(), "無効なイベントタイプです") {
+		t.Error("レスポンスに無効なイベントのエラーメッセージが見つからない")
+	}
+
+	if setup.mockInserter.called {
+		t.Error("メールアドレスの変更のイベントでInsertが呼ばれている")
 	}
 }
 

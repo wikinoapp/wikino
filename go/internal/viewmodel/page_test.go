@@ -262,7 +262,7 @@ func TestPageForShow_OGImageAttachmentID(t *testing.T) {
 			want:       "",
 		},
 		{
-			// Rails版は小文字化したファイル名で比較するため、大文字の拡張子もGIFとして扱う。
+			// ファイル名を小文字にして比べるため、大文字の拡張子もGIFとして扱う。
 			name:       "拡張子が大文字のGIFも空文字列を返す",
 			attachment: attachment("ANIMATION.GIF"),
 			want:       "",

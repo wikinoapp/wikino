@@ -107,17 +107,9 @@ func Init(cfg Config) error {
 }
 
 // Sentryにイベントを送信する前にフィルタリングを行う。
-// クライアント切断や正常な中断由来のエラーは破棄し、リバースプロキシ経由の
-// 502ノイズはSourceAttrKeyのタグで識別して捨てる。残りはセンシティブデータをマスクする。
+// クライアント切断や正常な中断由来のエラーは破棄し、残りはセンシティブデータをマスクする。
 func beforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 	if hint != nil && shouldDropError(hint.OriginalException) {
-		return nil
-	}
-
-	// リバースプロキシ経由で出された502由来のイベントは捨てる。Rails側の
-	// 障害はRailsのSentryプロジェクトで扱うべきため。Sentryイベント用ハンドラーはslog
-	// 属性SourceAttrKeyをevent.Tagsに乗せるので、タグ照合で判別できる。
-	if event.Tags[SourceAttrKey] == ReverseProxySource {
 		return nil
 	}
 

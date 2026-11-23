@@ -48,8 +48,8 @@ func TestShow(t *testing.T) {
 			t.Errorf("本文に %q が含まれない", want)
 		}
 	}
-	// Redocの表示に干渉するWikinoのCSSとスクリプトは読み込まない
-	for _, notWant := range []string{"/static/css/style.css", "/static/js/main.js"} {
+	// Redocの表示に干渉するWikinoのCSSとスクリプト、Redocが対応しないダークの配色の宣言は出さない
+	for _, notWant := range []string{"/static/css/style.css", "/static/js/main.js", `name="color-scheme"`, `name="theme-color"`, "prefers-color-scheme"} {
 		if strings.Contains(body, notWant) {
 			t.Errorf("本文に %q が含まれる", notWant)
 		}

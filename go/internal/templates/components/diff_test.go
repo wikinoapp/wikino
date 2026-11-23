@@ -3,8 +3,11 @@ package components_test
 import (
 	"bytes"
 	"context"
+	"io"
 	"strings"
 	"testing"
+
+	"golang.org/x/net/html"
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/templates/components"
@@ -183,15 +186,47 @@ func TestDiffView_TellsEachCellItsSourceLine(t *testing.T) {
 func TestDiffView_KeepsChangedLineTextInTheNormalColor(t *testing.T) {
 	t.Parallel()
 
-	html := renderDiffView(t, diffPageTitle, 1)
+	markup := renderDiffView(t, diffPageTitle, 1)
 
-	for _, color := range []string{"text-red-700", "text-green-700", "text-red-300", "text-green-300"} {
-		if strings.Contains(html, color) {
-			t.Errorf("本文の文字に色 %s が付いている", color)
+	// 行番号と記号には色を付けるため、本文を持つセルだけを検査する。
+	tokenizer := html.NewTokenizer(strings.NewReader(markup))
+	bodyCells := 0
+	for {
+		if tokenizer.Next() == html.ErrorToken {
+			if err := tokenizer.Err(); err != io.EOF {
+				t.Fatalf("HTMLの解析に失敗: %v", err)
+			}
+			break
+		}
+		token := tokenizer.Token()
+		if token.Type != html.StartTagToken || token.Data != "td" {
+			continue
+		}
+		var classes, source string
+		for _, attr := range token.Attr {
+			switch attr.Key {
+			case "class":
+				classes = attr.Val
+			case "data-markdown-diff-source":
+				source = attr.Val
+			}
+		}
+		if source == "" {
+			continue
+		}
+		bodyCells++
+		for _, class := range strings.Fields(classes) {
+			color := class[strings.LastIndex(class, ":")+1:]
+			if strings.HasPrefix(color, "text-red-") || strings.HasPrefix(color, "text-green-") {
+				t.Errorf("本文の文字に色 %s が付いている", class)
+			}
 		}
 	}
+	if bodyCells != linesPerBlock {
+		t.Errorf("本文のセル数 = %d, want %d", bodyCells, linesPerBlock)
+	}
 	for _, kept := range []string{"bg-red-50", "bg-green-50", "text-red-400", "text-green-400", "text-red-500", "text-green-500"} {
-		if !strings.Contains(html, kept) {
+		if !strings.Contains(markup, kept) {
 			t.Errorf("追加・削除を示す色 %s が無くなっている", kept)
 		}
 	}

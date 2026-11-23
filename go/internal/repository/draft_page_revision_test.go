@@ -175,7 +175,7 @@ func TestDraftPageRevisionRepository_Create(t *testing.T) {
 		}
 	})
 
-	// Rails側の削除経路が頼るON DELETE CASCADEの契約を検証する。
+	// ON DELETE CASCADEの契約を検証する。
 	// draft_pagesの行を直接DELETEしたとき、draft_page_revisionsへの明示的な
 	// DELETEなしでリビジョンも一緒に消えること。
 	t.Run("下書きページの行を直接DELETEするとリビジョンも消える", func(t *testing.T) {

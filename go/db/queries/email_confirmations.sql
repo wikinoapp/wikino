@@ -21,10 +21,23 @@ INSERT INTO email_confirmations (
     code,
     started_at,
     created_at,
-    updated_at
+    updated_at,
+    user_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 ) RETURNING *;
+
+-- name: ConsumeEmailUpdateConfirmation :one
+-- 開始ユーザーとコードが一致する、期限内で未完了のメール変更の確認だけを完了する
+UPDATE email_confirmations
+SET succeeded_at = sqlc.arg(succeeded_at), updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id)
+  AND user_id = sqlc.arg(user_id)
+  AND event = 1
+  AND succeeded_at IS NULL
+  AND started_at >= sqlc.arg(valid_after)
+  AND UPPER(code) = UPPER(sqlc.arg(code)::text)
+RETURNING *;
 
 -- name: UpdateEmailConfirmationSucceededAt :exec
 -- メール確認を完了状態に更新する

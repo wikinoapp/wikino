@@ -45,10 +45,8 @@ type GetAPIAttachmentOutput struct {
 	DownloadURLExpiresAt time.Time
 }
 
-// Executeはattachment:readを持つトークンが属するスペースの添付ファイルを解決し、その中身へのURLに署名する。
-// 閲覧の判定はWeb画面の `/attachments/{ID}` (Rails版のcan_view_attachment?) と同じく、
-// attachment:readを持つか、参照するページがすべて公開トピックにあるかで行う。
-// 添付ファイルが存在しない場合に加え、見る権限が無い場合も存在を秘匿するため未存在として扱う
+// Executeは、トークンがattachment:readを持ち、対象の添付ファイルを閲覧できる場合に中身へのURLに署名する。
+// 対象はトークンが属するスペースに限り、閲覧できない添付ファイルは存在を明かさないよう未存在として扱う
 func (uc *GetAPIAttachmentUsecase) Execute(ctx context.Context, input GetAPIAttachmentInput) (*GetAPIAttachmentOutput, error) {
 	if uc.objectStorage == nil {
 		return nil, errors.New("オブジェクトストレージが設定されていないため添付ファイルを取得できません")
@@ -62,7 +60,7 @@ func (uc *GetAPIAttachmentUsecase) Execute(ctx context.Context, input GetAPIAtta
 	// 有効期限は署名より前の時刻から求め、秒未満を切り捨てる。署名付きURLが実際に使えなくなるより
 	// 後の時刻をクライアントに伝えないようにするためである
 	expiresAt := time.Now().UTC().Truncate(time.Second).Add(model.AttachmentDownloadExpiration)
-	url, err := uc.objectStorage.PresignedGetURL(ctx, attachment.BlobKey, model.AttachmentDownloadExpiration)
+	url, err := uc.objectStorage.PresignedGetURL(ctx, attachment.BlobKey, model.AttachmentDownloadExpiration, storage.PresignedGetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("添付ファイルのダウンロードURLの生成に失敗: %w", err)
 	}

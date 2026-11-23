@@ -135,7 +135,7 @@ func (uc *GetSpaceShowUsecase) Execute(ctx context.Context, input GetSpaceShowIn
 	}
 
 	// 空状態で「新しいページを作る」導線を出せるよう、メンバーには常に最初の参加トピックを取得する。
-	// 使うのはページが0件のときだけだが、取得を空状態判定でゲートしていない。Rails版と挙動を揃え、
+	// 使うのはページが0件のときだけだが、取得を空状態判定でゲートしていない。
 	// 取得条件をテンプレートの空状態判定と結合させないため (コストはインデックス済みのLIMIT 1クエリ1回)。
 	var firstJoinedTopic *model.Topic
 	if spaceMember != nil {

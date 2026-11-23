@@ -6,6 +6,7 @@ import (
 
 	"github.com/wikinoapp/wikino/go/internal/i18n"
 	"github.com/wikinoapp/wikino/go/internal/model"
+	"github.com/wikinoapp/wikino/go/internal/policy"
 	"github.com/wikinoapp/wikino/go/internal/repository"
 )
 
@@ -21,7 +22,7 @@ type topicUpdateAccess struct {
 // 解決し、変更を許されない閲覧者を拒否する。画面とその送信の両方がここを通るため、両者が誰を通すか
 // について別々の答えを出すことはない。
 //
-// 閲覧者が変更できないトピックは「見つからない」として答える。Rails版も同じで、トピックが存在
+// 閲覧者が変更できないトピックは「見つからない」として答える。トピックが存在
 // するが手が届かないと部外者に伝えることは、何も伝えないより多くを語ってしまう。
 func fetchTopicUpdateAccess(
 	ctx context.Context,
@@ -33,6 +34,44 @@ func fetchTopicUpdateAccess(
 	topicNumber int32,
 	userID model.UserID,
 ) (*topicUpdateAccess, error) {
+	target, err := fetchTopicSettingsTarget(ctx, spaceRepo, spaceMemberRepo, topicRepo, topicMemberRepo, spaceIdentifier, topicNumber, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !target.Authorizer.CanUpdateTopic() {
+		return nil, forbiddenError(ctx)
+	}
+
+	return &topicUpdateAccess{
+		Space:               target.Space,
+		Topic:               target.Topic,
+		CanUpdateVisibility: target.Authorizer.CanUpdateTopicVisibility(),
+	}, nil
+}
+
+// topicSettingsTargetは、トピックの設定の画面が対象にするトピックと、そのトピックにおける
+// 閲覧者の権限を保持する。
+type topicSettingsTarget struct {
+	Space      *model.Space
+	Topic      *model.Topic
+	Authorizer policy.Authorizer
+}
+
+// fetchTopicSettingsTargetは、トピックの設定の画面が対象にするトピックと、それが属するスペースを
+// 解決し、スペースのスコープとトピックメンバーのスコープを合わせた閲覧者の権限を組み立てる。
+// スペースのアクティブなメンバーでない閲覧者は、トピックの設定のどれも開けないため
+// 「見つからない」として答える。何を許すかの判定は呼び出し側が行う。
+func fetchTopicSettingsTarget(
+	ctx context.Context,
+	spaceRepo *repository.SpaceRepository,
+	spaceMemberRepo *repository.SpaceMemberRepository,
+	topicRepo *repository.TopicRepository,
+	topicMemberRepo *repository.TopicMemberRepository,
+	spaceIdentifier model.SpaceIdentifier,
+	topicNumber int32,
+	userID model.UserID,
+) (*topicSettingsTarget, error) {
 	space, err := spaceRepo.FindByIdentifier(ctx, spaceIdentifier)
 	if err != nil {
 		return nil, fmt.Errorf("スペースの取得に失敗: %w", err)
@@ -62,15 +101,10 @@ func fetchTopicUpdateAccess(
 		return nil, fmt.Errorf("トピックメンバーの取得に失敗: %w", err)
 	}
 
-	authorizer := newAuthorizer(spaceMember, topicMember)
-	if !authorizer.CanUpdateTopic() {
-		return nil, forbiddenError(ctx)
-	}
-
-	return &topicUpdateAccess{
-		Space:               space,
-		Topic:               topic,
-		CanUpdateVisibility: authorizer.CanUpdateTopicVisibility(),
+	return &topicSettingsTarget{
+		Space:      space,
+		Topic:      topic,
+		Authorizer: newAuthorizer(spaceMember, topicMember),
 	}, nil
 }
 
@@ -79,13 +113,5 @@ func forbiddenError(ctx context.Context) error {
 	return &model.AppError{
 		Code:    model.AppErrCodeForbidden,
 		UserMsg: i18n.T(ctx, "error_forbidden"),
-	}
-}
-
-// notFoundErrorはトピック設定が、求められたものに手が届かないときに返すエラーを組み立てる。
-func notFoundError(ctx context.Context) error {
-	return &model.AppError{
-		Code:    model.AppErrCodeResourceNotFound,
-		UserMsg: i18n.T(ctx, "error_not_found_message"),
 	}
 }

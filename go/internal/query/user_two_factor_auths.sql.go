@@ -12,6 +12,64 @@ import (
 	"github.com/lib/pq"
 )
 
+const deleteUserTwoFactorAuthByUserID = `-- name: DeleteUserTwoFactorAuthByUserID :exec
+DELETE FROM user_two_factor_auths WHERE user_id = $1
+`
+
+// ユーザーの二要素認証設定を削除する
+func (q *Queries) DeleteUserTwoFactorAuthByUserID(ctx context.Context, userID string) error {
+	_, err := q.db.ExecContext(ctx, deleteUserTwoFactorAuthByUserID, userID)
+	return err
+}
+
+const disableUserTwoFactorAuth = `-- name: DisableUserTwoFactorAuth :execrows
+UPDATE user_two_factor_auths
+SET enabled = false, enabled_at = NULL, recovery_codes = '{}', updated_at = $1
+WHERE user_id = $2 AND enabled = true
+`
+
+type DisableUserTwoFactorAuthParams struct {
+	Now    time.Time `json:"now"`
+	UserID string    `json:"user_id"`
+}
+
+// 有効な二要素認証設定を無効にし、リカバリーコードを空にする。行は残す。
+func (q *Queries) DisableUserTwoFactorAuth(ctx context.Context, arg DisableUserTwoFactorAuthParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, disableUserTwoFactorAuth, arg.Now, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const enableUserTwoFactorAuth = `-- name: EnableUserTwoFactorAuth :execrows
+UPDATE user_two_factor_auths
+SET enabled = true, enabled_at = $1::timestamp, recovery_codes = $2, updated_at = $1
+WHERE user_id = $3 AND secret = $4 AND enabled = false
+`
+
+type EnableUserTwoFactorAuthParams struct {
+	Now           time.Time `json:"now"`
+	RecoveryCodes []string  `json:"recovery_codes"`
+	UserID        string    `json:"user_id"`
+	Secret        string    `json:"secret"`
+}
+
+// 照合した秘密鍵の登録の途中の設定を有効にし、リカバリーコードを保存する。
+// 照合のあとに秘密鍵が差し替わった・既に有効になった場合は更新しない。
+func (q *Queries) EnableUserTwoFactorAuth(ctx context.Context, arg EnableUserTwoFactorAuthParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, enableUserTwoFactorAuth,
+		arg.Now,
+		pq.Array(arg.RecoveryCodes),
+		arg.UserID,
+		arg.Secret,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const getEnabledUserTwoFactorAuthByUserID = `-- name: GetEnabledUserTwoFactorAuthByUserID :one
 SELECT id, user_id, secret, enabled, enabled_at, recovery_codes, created_at, updated_at FROM user_two_factor_auths WHERE user_id = $1 AND enabled = true
 `
@@ -54,6 +112,27 @@ func (q *Queries) GetUserTwoFactorAuthByUserID(ctx context.Context, userID strin
 	return i, err
 }
 
+const regenerateUserTwoFactorAuthRecoveryCodes = `-- name: RegenerateUserTwoFactorAuthRecoveryCodes :execrows
+UPDATE user_two_factor_auths
+SET recovery_codes = $1, updated_at = $2
+WHERE user_id = $3 AND enabled = true
+`
+
+type RegenerateUserTwoFactorAuthRecoveryCodesParams struct {
+	RecoveryCodes []string  `json:"recovery_codes"`
+	Now           time.Time `json:"now"`
+	UserID        string    `json:"user_id"`
+}
+
+// 有効な二要素認証設定のリカバリーコードを作り直す。無効な設定は書き換えない。
+func (q *Queries) RegenerateUserTwoFactorAuthRecoveryCodes(ctx context.Context, arg RegenerateUserTwoFactorAuthRecoveryCodesParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, regenerateUserTwoFactorAuthRecoveryCodes, pq.Array(arg.RecoveryCodes), arg.Now, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const updateUserTwoFactorAuthRecoveryCodes = `-- name: UpdateUserTwoFactorAuthRecoveryCodes :exec
 UPDATE user_two_factor_auths
 SET recovery_codes = $2, updated_at = $3
@@ -70,4 +149,37 @@ type UpdateUserTwoFactorAuthRecoveryCodesParams struct {
 func (q *Queries) UpdateUserTwoFactorAuthRecoveryCodes(ctx context.Context, arg UpdateUserTwoFactorAuthRecoveryCodesParams) error {
 	_, err := q.db.ExecContext(ctx, updateUserTwoFactorAuthRecoveryCodes, arg.UserID, pq.Array(arg.RecoveryCodes), arg.UpdatedAt)
 	return err
+}
+
+const upsertPendingUserTwoFactorAuth = `-- name: UpsertPendingUserTwoFactorAuth :one
+INSERT INTO user_two_factor_auths (user_id, secret, enabled, enabled_at, recovery_codes, created_at, updated_at)
+VALUES ($1, $2, false, NULL, '{}', $3, $3)
+ON CONFLICT (user_id) DO UPDATE
+SET secret = EXCLUDED.secret, enabled_at = NULL, recovery_codes = '{}', updated_at = EXCLUDED.updated_at
+WHERE user_two_factor_auths.enabled = false
+RETURNING id, user_id, secret, enabled, enabled_at, recovery_codes, created_at, updated_at
+`
+
+type UpsertPendingUserTwoFactorAuthParams struct {
+	UserID string    `json:"user_id"`
+	Secret string    `json:"secret"`
+	Now    time.Time `json:"now"`
+}
+
+// 登録の途中の二要素認証設定 (enabled = false) を、新しい秘密鍵で作るか書き換える。
+// 既に有効な設定は書き換えず、行を返さない。
+func (q *Queries) UpsertPendingUserTwoFactorAuth(ctx context.Context, arg UpsertPendingUserTwoFactorAuthParams) (UserTwoFactorAuth, error) {
+	row := q.db.QueryRowContext(ctx, upsertPendingUserTwoFactorAuth, arg.UserID, arg.Secret, arg.Now)
+	var i UserTwoFactorAuth
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Secret,
+		&i.Enabled,
+		&i.EnabledAt,
+		pq.Array(&i.RecoveryCodes),
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

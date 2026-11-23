@@ -84,7 +84,7 @@ RETURNING id;
 DELETE FROM exports WHERE id = @id AND space_id = @space_id;
 
 -- name: ListLegacyExportFiles :many
--- エクスポートを削除する前にRailsのZIPを取得する。共有blobはストレージに残す。
+-- エクスポートを削除する前にRails期のZIPを取得する。共有blobはストレージに残す。
 SELECT DISTINCT b.key, EXISTS (
     SELECT 1 FROM active_storage_attachments other
     WHERE other.blob_id = b.id
@@ -110,3 +110,49 @@ WHERE b.id IN (SELECT blob_id FROM removed)
       SELECT 1 FROM active_storage_attachments a
       WHERE a.blob_id = b.id AND a.id NOT IN (SELECT id FROM removed)
   );
+
+-- name: ListExportsForDeletionBySpaceAfter :many
+-- 記録済みのキーと、未記録のGo版の保存先を決めるIDを一定件数ずつ読む。
+SELECT e.id, e.space_id, e.object_key
+FROM exports e
+WHERE e.space_id = @space_id AND e.id > @after_id::uuid
+ORDER BY e.id
+LIMIT @row_limit;
+
+-- name: ListLegacyExportBlobsBySpaceAfter :many
+-- 共有中のZIPも後始末へ渡す。Sharedは最初の実体の削除から除く判定に使う。
+SELECT DISTINCT b.id, b.key, EXISTS (
+    SELECT 1 FROM active_storage_attachments other
+    WHERE other.blob_id = b.id
+      AND NOT (
+          other.record_type = 'ExportRecord' AND other.name = 'file'
+          AND other.record_id IN (SELECT owned.id FROM exports owned WHERE owned.space_id = @space_id)
+      )
+) AS shared
+FROM exports e
+INNER JOIN active_storage_attachments a ON a.record_id = e.id AND a.record_type = 'ExportRecord' AND a.name = 'file'
+INNER JOIN active_storage_blobs b ON b.id = a.blob_id
+WHERE e.space_id = @space_id AND b.id > @after_id::uuid
+ORDER BY b.id
+LIMIT @row_limit;
+
+-- name: DeleteLegacyExportFilesBySpace :exec
+-- スペースのZIPの関連だけを消す。blobの回収はキーを保存した後始末ジョブが行う。
+DELETE FROM active_storage_attachments a USING exports e
+WHERE e.space_id = @space_id
+  AND a.record_type = 'ExportRecord' AND a.record_id = e.id AND a.name = 'file';
+
+-- name: ClaimUnreferencedLegacyExportBlobs :many
+-- 参照のないblobを削除して新しい参照を防ぎ、実体を消してよいキーを返す。
+-- 前の試行でblobを削除したあとにストレージが失敗していても、ジョブ内のIDとキーで再試行できる。
+WITH candidates AS (
+    SELECT unnest(@blob_ids::uuid[]) AS id, unnest(@keys::text[]) AS key
+), deleted AS (
+    DELETE FROM active_storage_blobs b USING candidates c
+    WHERE b.id = c.id AND b.key = c.key
+      AND NOT EXISTS (SELECT 1 FROM active_storage_attachments a WHERE a.blob_id = b.id)
+    RETURNING b.id
+)
+SELECT c.key::text FROM candidates c
+WHERE c.id IN (SELECT id FROM deleted)
+   OR NOT EXISTS (SELECT 1 FROM active_storage_blobs b WHERE b.id = c.id);

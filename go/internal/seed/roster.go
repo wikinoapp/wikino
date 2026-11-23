@@ -309,7 +309,7 @@ func (e rosterUserFile) toRosterUser() (rosterUser, error) {
 	// データベースを空にした後で初めて不正なアカウントが見つかることを防ぐ。
 	if !validator.IsValidAtname(e.Atname) {
 		return rosterUser{}, fmt.Errorf(
-			"atname %qに使える文字は半角英数字とアンダースコアだけで、%d文字以内である必要があります",
+			"atname %qに使える文字は半角英数字とアンダースコアだけで、%d文字以内で、予約語 (admin など) ではない必要があります",
 			e.Atname, validator.AtnameMaxLength,
 		)
 	}

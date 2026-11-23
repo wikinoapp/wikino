@@ -1,0 +1,165 @@
+package space
+
+import (
+	"github.com/wikinoapp/wikino/go/internal/templates"
+	"github.com/wikinoapp/wikino/go/internal/templates/components"
+	"github.com/wikinoapp/wikino/go/internal/viewmodel"
+)
+
+// SettingsAttachmentsDataはスペースの添付ファイルの管理の画面をレンダリングする元になるデータ。
+//
+// Queryはファイル名の検索語で、検索欄の値とページ送りのリンクに引き継ぐ。CanDeleteAttachmentは
+// 削除のボタンを出すか (閲覧者がattachment:deleteを持つか) を表す。
+type SettingsAttachmentsData struct {
+	CSRFToken           string
+	Space               viewmodel.Space
+	Query               string
+	Attachments         []viewmodel.SettingsAttachment
+	Pagination          viewmodel.Pagination
+	CanDeleteAttachment bool
+}
+
+// paginationPathは添付ファイルの管理の画面の、検索語を引き継いだ指定したページのパスを生成します。
+func (d SettingsAttachmentsData) paginationPath(page int) string {
+	return string(templates.SpaceSettingsAttachmentsSearchPath(d.Space.Identifier, d.Query, int32(page)))
+}
+
+// SettingsAttachmentsはスペースの添付ファイルの管理の画面のコンテンツを表示します
+templ SettingsAttachments(data SettingsAttachmentsData) {
+	<div class="py-4">
+		<div class="max-w-2xl w-full mx-auto">
+			<div class="flex flex-col gap-4">
+				<div class="px-4">
+					@components.MainTitle(components.MainTitleData{
+						Title: templates.T(ctx, "space_settings_attachment_index_heading"),
+					})
+				</div>
+
+				@components.ContentCard() {
+					<form
+						action={ templ.SafeURL(string(templates.SpaceSettingsAttachmentsPath(data.Space.Identifier))) }
+						method="GET"
+						role="search"
+						class="flex gap-2"
+					>
+						<label class="sr-only" for="q">
+							{ templates.T(ctx, "space_settings_attachment_index_search_label") }
+						</label>
+						<input
+							autocomplete="off"
+							class="input w-full border-muted-foreground focus-visible:ring-muted-foreground"
+							id="q"
+							name="q"
+							placeholder={ templates.T(ctx, "space_settings_attachment_index_search_placeholder") }
+							type="search"
+							value={ data.Query }
+						/>
+						<button type="submit" class="btn rounded-full focus-visible:ring-muted-foreground">
+							@templates.Icon("magnifying-glass-regular", "size-4")
+							{ templates.T(ctx, "space_settings_attachment_index_search_button") }
+						</button>
+					</form>
+				}
+
+				if len(data.Attachments) == 0 {
+					<div class="px-4">
+						@components.EmptyState(components.EmptyStateData{
+							Message:  templates.T(ctx, "space_settings_attachment_index_empty"),
+							IconName: "file-regular",
+						})
+					</div>
+				} else {
+					@components.ContentCard() {
+						<ul
+							class="flex flex-col divide-y"
+							aria-label={ templates.T(ctx, "space_settings_attachment_index_list_label") }
+						>
+							for _, attachment := range data.Attachments {
+								@attachmentRow(data, attachment)
+							}
+						</ul>
+					}
+
+					@components.PaginationNav(
+						data.Pagination,
+						data.paginationPath(data.Pagination.Current-1),
+						data.paginationPath(data.Pagination.Current+1),
+					)
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// attachmentRowは添付ファイルの管理の画面の一覧の1行を表示します。
+//
+// サムネイルは隣にファイル名があり、内容を補う情報を持たない装飾のため、代替テキストを空にする。
+// 一覧に並ぶ画像の数が多いため、画面に入るまで読み込まない。
+templ attachmentRow(data SettingsAttachmentsData, attachment viewmodel.SettingsAttachment) {
+	<li class="flex items-center justify-between gap-4 py-3">
+		<div class="flex min-w-0 items-center gap-4">
+			<div class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded border">
+				if attachment.ThumbnailURL != "" {
+					<img
+						src={ attachment.ThumbnailURL }
+						alt=""
+						loading="lazy"
+						width="64"
+						height="64"
+						class="size-full object-contain"
+					/>
+				} else {
+					@templates.DecorativeIcon("file-regular", "size-8 fill-muted-foreground")
+				}
+			</div>
+
+			<div class="flex min-w-0 flex-col gap-0.5">
+				<a
+					href={ templ.SafeURL(string(templates.AttachmentPath(attachment.ID))) }
+					class="link-foreground font-semibold [overflow-wrap:anywhere]"
+					rel="noopener"
+					target="_blank"
+				>
+					{ attachment.Filename }
+				</a>
+				<p class="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+					{ attachment.ContentType } • { templates.FormatByteSize(ctx, attachment.ByteSize) }
+				</p>
+				<p class="text-xs text-muted-foreground">
+					{ templates.T(ctx, "space_settings_attachment_index_uploaded_at", map[string]any{"Time": templates.FormatDateTime(ctx, attachment.AttachedAt)}) }
+				</p>
+			</div>
+		</div>
+
+		if data.CanDeleteAttachment {
+			@deleteAttachmentForm(data, attachment)
+		}
+	</li>
+}
+
+// deleteAttachmentFormは添付ファイルを削除するボタンを表示します。削除は取り消せないため、送信の前に
+// 確認します。
+//
+// ボタンはアイコンだけで、一覧には同じボタンが並ぶため、名前にファイル名を含める。スクリーンリーダーで
+// ボタンだけを取り出したときに、どのファイルを消すボタンかを区別できるようにするためである。
+templ deleteAttachmentForm(data SettingsAttachmentsData, attachment viewmodel.SettingsAttachment) {
+	<form
+		action={ templ.SafeURL(string(templates.SpaceSettingsAttachmentPath(data.Space.Identifier, attachment.ID))) }
+		class="shrink-0"
+		data-confirm={ templates.T(ctx, "space_settings_attachment_index_delete_confirm", map[string]any{"Filename": attachment.Filename}) }
+		method="POST"
+	>
+		<input type="hidden" name="_method" value="DELETE"/>
+		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+		<button
+			aria-label={ templates.T(ctx, "space_settings_attachment_index_delete_button", map[string]any{"Filename": attachment.Filename}) }
+			class="btn rounded-full text-error"
+			data-size="icon"
+			data-variant="ghost"
+			type="submit"
+		>
+			@templates.DecorativeIcon("trash-regular", "size-5")
+		</button>
+	</form>
+}
+

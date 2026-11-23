@@ -38,7 +38,7 @@ func (r *SpaceRepository) FindByIdentifier(ctx context.Context, identifier model
 }
 
 // ListActiveByUserはユーザーが参加中 (アクティブ) かつ削除されていないスペースの一覧を返す
-// Rails版current_user.active_space_records相当。並び順はユーザーがスペースに参加した日の降順
+// 並び順はユーザーがスペースに参加した日の降順
 func (r *SpaceRepository) ListActiveByUser(ctx context.Context, userID model.UserID) ([]*model.Space, error) {
 	rows, err := r.q.ListActiveSpacesByUser(ctx, string(userID))
 	if err != nil {
@@ -93,10 +93,69 @@ func (r *SpaceRepository) LockByID(ctx context.Context, id model.SpaceID) (bool,
 	return err == nil, err
 }
 
+// Discardはスペースを論理削除し、論理削除したかを返す。既に論理削除したスペースと、
+// 見つからないスペースではfalseを返す。
+func (r *SpaceRepository) Discard(ctx context.Context, id model.SpaceID, discardedAt time.Time) (bool, error) {
+	n, err := r.q.DiscardSpace(ctx, query.DiscardSpaceParams{
+		ID:          string(id),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+	})
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
+// Undiscardは、discardedAtに論理削除したスペースの論理削除を取り消す。
+func (r *SpaceRepository) Undiscard(ctx context.Context, id model.SpaceID, discardedAt time.Time, updatedAt time.Time) error {
+	return r.q.UndiscardSpace(ctx, query.UndiscardSpaceParams{
+		ID:          string(id),
+		DiscardedAt: sql.NullTime{Time: discardedAt, Valid: true},
+		UpdatedAt:   updatedAt,
+	})
+}
+
+// ExistsDiscardedは、論理削除したスペースがあるかを返す。論理削除していないスペースと、行の無い
+// スペースではfalseを返す。
+func (r *SpaceRepository) ExistsDiscarded(ctx context.Context, id model.SpaceID) (bool, error) {
+	return r.q.ExistsDiscardedSpaceByID(ctx, string(id))
+}
+
+// LockDiscardedは論理削除したスペースをロックし、ロックできたかを返す。論理削除していない
+// スペースと、見つからないスペースではfalseを返す。
+func (r *SpaceRepository) LockDiscarded(ctx context.Context, id model.SpaceID) (bool, error) {
+	_, err := r.q.LockDiscardedSpace(ctx, string(id))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// DeleteDiscardedは論理削除したスペースを物理削除し、削除したかを返す。
+func (r *SpaceRepository) DeleteDiscarded(ctx context.Context, id model.SpaceID) (bool, error) {
+	n, err := r.q.DeleteDiscardedSpace(ctx, string(id))
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
 // ExistsByIdentifierはその識別子を持つスペースが既にあるかを返す。削除済みのスペースも数え、
 // 大文字と小文字を区別しない。識別子の一意インデックスと同じ範囲で重複を判定するためである。
 func (r *SpaceRepository) ExistsByIdentifier(ctx context.Context, identifier model.SpaceIdentifier) (bool, error) {
 	return r.q.ExistsSpaceByIdentifier(ctx, string(identifier))
+}
+
+// ExistsOtherByIdentifierは、指定したスペースのほかにその識別子を持つスペースがあるかを返す。
+// 範囲はExistsByIdentifierと同じく、削除済みのスペースを含み、大文字と小文字を区別しない。
+func (r *SpaceRepository) ExistsOtherByIdentifier(ctx context.Context, id model.SpaceID, identifier model.SpaceIdentifier) (bool, error) {
+	return r.q.ExistsOtherSpaceByIdentifier(ctx, query.ExistsOtherSpaceByIdentifierParams{
+		Identifier: string(identifier),
+		ID:         string(id),
+	})
 }
 
 // CreateSpaceInputはスペースの作成に必要な値を保持する。
@@ -115,6 +174,30 @@ func (r *SpaceRepository) Create(ctx context.Context, input CreateSpaceInput) (*
 		Now:        time.Now(),
 	})
 	if err != nil {
+		return nil, err
+	}
+	return r.toModel(row), nil
+}
+
+// UpdateSpaceInputはスペースの一般設定の更新に必要な値を保持する。
+type UpdateSpaceInput struct {
+	ID         model.SpaceID
+	Identifier model.SpaceIdentifier
+	Name       string
+}
+
+// Updateはスペースの識別子と名前を更新する。スペースが削除済みか存在しない場合は (nil, nil) を返す。
+func (r *SpaceRepository) Update(ctx context.Context, input UpdateSpaceInput) (*model.Space, error) {
+	row, err := r.q.UpdateSpace(ctx, query.UpdateSpaceParams{
+		Identifier: string(input.Identifier),
+		Name:       input.Name,
+		Now:        time.Now(),
+		ID:         string(input.ID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return r.toModel(row), nil

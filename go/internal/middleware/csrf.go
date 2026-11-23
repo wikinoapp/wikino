@@ -5,19 +5,22 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
+	"strings"
 
 	"github.com/wikinoapp/wikino/go/internal/config"
 	"github.com/wikinoapp/wikino/go/internal/session"
+	"github.com/wikinoapp/wikino/go/internal/storage"
 )
 
 // CSRFCookieNameはCSRFトークンを保存するクッキー名
 const CSRFCookieName = "wikino_csrf_token"
 
-// csrfSkipPathsはCSRF検証をスキップするパス
-// Rails版のページからのリクエストはRails独自のCSRFトークンを使用しているため、
-// Go版のCSRF検証を適用できない
+// csrfSkipPathsはCSRF検証をスキップするパス。スキップする理由はパスごとに異なる
 var csrfSkipPaths = []string{
-	"/user_session", // Rails版からのログアウトリクエスト対応
+	// 署名付きURLの一括取得。状態を変えない読み取りで、応答は別のオリジンからは読めず、
+	// 返すのは呼び出した本人が見られる添付ファイルのURLだけのため、守るものが無い。
+	// ゲストも開くページ表示画面はCSRFトークンを埋め込まないため、検証するとそこで画像が出なくなる
+	"/attachments/signed_urls",
 }
 
 // csrfTokenContextKeyはコンテキストにCSRFトークンを保存するためのキー
@@ -59,6 +62,13 @@ func (c *CSRF) Middleware(next http.Handler) http.Handler {
 			}
 			ctx = SetCSRFTokenToContext(ctx, token)
 			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		// e2eのサーバーでは、フェイクのストレージの署名付きURLへのアップロードを検証しない。
+		// オブジェクトストレージの代わりに受けるもので、ブラウザは本物と同じくトークンを送らないため
+		if c.cfg.IsTestE2E() && strings.HasPrefix(r.URL.Path, storage.FakeObjectStoragePathPrefix) {
+			next.ServeHTTP(w, r)
 			return
 		}
 

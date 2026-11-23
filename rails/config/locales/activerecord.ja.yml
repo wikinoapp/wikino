@@ -1,5 +1,0 @@
-ja:
-  activerecord:
-    attributes:
-      page:
-        mutation_error: ""

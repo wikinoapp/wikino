@@ -74,6 +74,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	content := spacepages.Settings(spacepages.SettingsData{
 		Space:                       spaceVM,
 		CanUpdateSpace:              output.Items.CanUpdateSpace,
+		CanDeleteSpace:              output.Items.CanDeleteSpace,
 		CanShowPersonalAccessTokens: output.Items.CanShowPersonalAccessTokens,
 		CanShowOAuthGrants:          output.Items.CanShowOAuthGrants,
 		CanShowOAuthApplications:    output.Items.CanShowOAuthApplications,
@@ -87,7 +88,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 // handleErrorはユースケースから返ったエラーを、それに応じたレスポンスへ変えます。
 // 閲覧者が開けないスペース設定は「見つからない」として答え、そのスペースで誰が何を変更できるかを
-// 外部から試して確かめられないようにします。Rails版も同じく404を返していました。
+// 外部から試して確かめられないようにします。
 func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 

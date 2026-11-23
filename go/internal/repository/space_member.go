@@ -90,20 +90,29 @@ type CreateSpaceMemberInput struct {
 	Role    model.SpaceRole
 }
 
-// Createはユーザーをスペースに参加させる。Rails版が権限を判定できるよう、
-// ロールに応じたスコープもspace_members.scopesへ書く。
+// Createはユーザーをスペースに参加させる。権限はロールから決めるため、space_members.scopesには書かない。
 func (r *SpaceMemberRepository) Create(ctx context.Context, input CreateSpaceMemberInput) (*model.SpaceMember, error) {
 	row, err := r.q.CreateSpaceMember(ctx, query.CreateSpaceMemberParams{
 		SpaceID: string(input.SpaceID),
 		UserID:  string(input.UserID),
 		Role:    string(input.Role),
-		Scopes:  model.ScopesToStrings(input.Role.RailsScopes()),
 		Now:     time.Now(),
 	})
 	if err != nil {
 		return nil, err
 	}
 	return r.toModel(row), nil
+}
+
+// ExistsByUserは、ユーザーのスペースメンバーの行が1つでも残っているかを返す。
+// 参加をやめた行と、削除済みのスペースの行も数える。
+func (r *SpaceMemberRepository) ExistsByUser(ctx context.Context, userID model.UserID) (bool, error) {
+	return r.q.ExistsSpaceMemberByUser(ctx, string(userID))
+}
+
+// DeleteBySpaceはスペースのすべてのメンバー (参加をやめた行を含む) を物理削除する。
+func (r *SpaceMemberRepository) DeleteBySpace(ctx context.Context, spaceID model.SpaceID) error {
+	return r.q.DeleteSpaceMembersBySpace(ctx, string(spaceID))
 }
 
 // toModelはquery.SpaceMemberをmodel.SpaceMemberに変換する

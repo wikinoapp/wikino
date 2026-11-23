@@ -24,9 +24,8 @@ var AllFeatureFlagNames = []FeatureFlagName{
 
 // FeatureFlagはフィーチャーフラグのドメインモデル
 type FeatureFlag struct {
-	ID          FeatureFlagID
-	DeviceToken *string
-	UserID      *UserID
-	Name        FeatureFlagName
-	CreatedAt   time.Time
+	ID        FeatureFlagID
+	UserID    *UserID
+	Name      FeatureFlagName
+	CreatedAt time.Time
 }

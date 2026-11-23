@@ -40,7 +40,7 @@ templ New(data NewPageData) {
 			<form
 				action="/sign_in/two_factor"
 				class="grid gap-6"
-				hx-on:submit="disableSubmitButtons(this)"
+				data-disable-on-submit
 				method="POST"
 			>
 				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>

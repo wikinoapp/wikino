@@ -168,7 +168,7 @@ func TestShow_OK(t *testing.T) {
 	if err := xml.Unmarshal(rr.Body.Bytes(), &feed); err != nil {
 		t.Fatalf("XMLとしての読み込みのエラー = %v", err)
 	}
-	// フィードのidはRails版と同じ形にする (購読し直さずに済むよう)
+	// フィードのidはこれまで配信してきたidと同じ形にする (購読し直さずに済むよう)
 	if want := "tag:" + testDomain + ",2025:/s/" + f.spaceIdentifier + "/topics/1/atom"; feed.ID != want {
 		t.Errorf("フィードのid = %q、期待値 = %q", feed.ID, want)
 	}

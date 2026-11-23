@@ -14,6 +14,9 @@ type Authorizer interface {
 	// 非公開トピックを公開すると内容がスペースの外へ出るため、トピックの名前や説明を
 	// 変えられるtopic:writeとは分けている。
 	CanUpdateTopicVisibility() bool
+	// CanDeleteTopicはtopic:deleteスコープで判定する。トピックの削除はページごと消して
+	// 元に戻せないため、トピックの名前や説明を変えられるtopic:writeとは分けている。
+	CanDeleteTopic() bool
 
 	// ページ
 	CanCreatePage() bool
@@ -30,6 +33,9 @@ type Authorizer interface {
 	// 覗く操作もpage_trash:readの含意によって許可する。page:writeでは意図的に足りないものとする。ページを書き換えて
 	// よい編集者が、そのページをスペースの可視な内容から外してよいとは限らないためである。
 	CanTrashPage() bool
+
+	// CanRestorePageはpage_trash:deleteスコープで判定し、ゴミ箱からページを戻す操作を許可する。
+	CanRestorePage() bool
 
 	// ページのピン留め
 
@@ -51,11 +57,18 @@ type Authorizer interface {
 
 	// 添付ファイル
 
-	// CanShowAttachmentはRails版のcan_view_attachment?と揃え、attachment:readスコープを持つか、
+	// CanShowAttachmentは、attachment:readスコープを持つか、
 	// 添付ファイルを参照するページがすべて公開トピックにある (allReferencingPagesPublic) かで判定する。
 	// attachment:readはスペースにしか付けられないスコープで、判定でトピックを見ない。
 	// そのため非公開トピックのページだけが参照する添付ファイルも、attachment:readがあれば閲覧できる。
 	CanShowAttachment(allReferencingPagesPublic bool) bool
+	// CanCreateAttachmentはattachment:writeスコープで判定する。
+	// 添付ファイルはスペースに属し、ページを書く前にアップロードするため、判定でトピックを見ない。
+	CanCreateAttachment() bool
+
+	// CanDeleteAttachmentはattachment:deleteスコープで判定する。
+	// 削除は取り消せず、ほかのメンバーがページに貼った添付ファイルも消すため、管理者のロールだけが持つ。
+	CanDeleteAttachment() bool
 
 	// 編集提案
 	CanCreateSuggestion(topic *model.Topic) bool
@@ -73,14 +86,18 @@ type Authorizer interface {
 	// スペース
 	CanCreateTopic() bool
 
-	// CanExportSpaceはspace:writeスコープで判定し、Rails版が要求するものと揃える。
+	// CanExportSpaceはspace:writeスコープで判定する。
 	// エクスポートはスペースの全ページを1つのアーカイブに収めるため、読める全員ではなく
 	// スペースを変更してよいと認められたメンバーに開く。
 	CanExportSpace() bool
 
-	// CanUpdateSpaceはspace:writeスコープで判定し、Rails版のcan_update_space?と揃える。
-	// スペース設定の既存の項目 (一般・エクスポート・添付ファイル・削除) はこの権限を持つメンバーにだけ出す。
+	// CanUpdateSpaceはspace:writeスコープで判定する。
+	// スペース設定の既存の項目 (一般・エクスポート・添付ファイル) はこの権限を持つメンバーにだけ出す。
 	CanUpdateSpace() bool
+
+	// CanDeleteSpaceはspace:deleteスコープで判定する。スペースの削除はトピック・ページ・添付ファイルごと
+	// 消して元に戻せないため、スペースの名前や識別子を変えられるspace:writeとは分けている。
+	CanDeleteSpace() bool
 
 	// 個人用アクセストークン (所有者チェックパターン)
 	// 一覧・失効の対象は自分のトークンに限る。所有者チェックはUseCase側で

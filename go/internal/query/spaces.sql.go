@@ -7,6 +7,7 @@ package query
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -43,6 +44,75 @@ func (q *Queries) CreateSpace(ctx context.Context, arg CreateSpaceParams) (Space
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteDiscardedSpace = `-- name: DeleteDiscardedSpace :execrows
+DELETE FROM spaces
+WHERE id = $1 AND discarded_at IS NOT NULL
+`
+
+// 論理削除したスペースを物理削除する。論理削除していないスペースは対象にしない
+func (q *Queries) DeleteDiscardedSpace(ctx context.Context, id string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteDiscardedSpace, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const discardSpace = `-- name: DiscardSpace :execrows
+UPDATE spaces
+SET discarded_at = $1, updated_at = $1
+WHERE id = $2 AND discarded_at IS NULL
+`
+
+type DiscardSpaceParams struct {
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+	ID          string       `json:"id"`
+}
+
+// スペースを論理削除する。既に論理削除したスペースは対象にしない。同じスペースを同時に削除する
+// リクエストは、この行のロックで直列になり、あとのものは0件の更新で終わる
+func (q *Queries) DiscardSpace(ctx context.Context, arg DiscardSpaceParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, discardSpace, arg.DiscardedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const existsDiscardedSpaceByID = `-- name: ExistsDiscardedSpaceByID :one
+SELECT EXISTS (
+    SELECT 1 FROM spaces WHERE id = $1 AND discarded_at IS NOT NULL
+) AS space_exists
+`
+
+// 論理削除したスペースがあるかを返す。物理削除のジョブが、実体を消し始める前に対象を確かめるのに使う
+func (q *Queries) ExistsDiscardedSpaceByID(ctx context.Context, id string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsDiscardedSpaceByID, id)
+	var space_exists bool
+	err := row.Scan(&space_exists)
+	return space_exists, err
+}
+
+const existsOtherSpaceByIdentifier = `-- name: ExistsOtherSpaceByIdentifier :one
+SELECT EXISTS (
+    SELECT 1 FROM spaces WHERE identifier = $1 AND id <> $2
+) AS space_exists
+`
+
+type ExistsOtherSpaceByIdentifierParams struct {
+	Identifier string `json:"identifier"`
+	ID         string `json:"id"`
+}
+
+// 指定したスペースのほかに、その識別子を持つスペースがあるかを返す (削除済みのスペースも含む)。
+// 自分の識別子の大文字と小文字だけを変える変更を、重複として扱わないためである。
+func (q *Queries) ExistsOtherSpaceByIdentifier(ctx context.Context, arg ExistsOtherSpaceByIdentifierParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsOtherSpaceByIdentifier, arg.Identifier, arg.ID)
+	var space_exists bool
+	err := row.Scan(&space_exists)
+	return space_exists, err
 }
 
 const existsSpaceByIdentifier = `-- name: ExistsSpaceByIdentifier :one
@@ -113,7 +183,6 @@ ORDER BY sm.joined_at DESC
 `
 
 // ユーザーが参加中 (active) かつ削除されていないスペースの一覧を取得する
-// Rails版current_user.active_space_records相当
 // 並び順はユーザーがスペースに参加した日の降順 (最近参加したスペースが上)
 func (q *Queries) ListActiveSpacesByUser(ctx context.Context, userID string) ([]Space, error) {
 	rows, err := q.db.QueryContext(ctx, listActiveSpacesByUser, userID)
@@ -147,6 +216,21 @@ func (q *Queries) ListActiveSpacesByUser(ctx context.Context, userID string) ([]
 	return items, nil
 }
 
+const lockDiscardedSpace = `-- name: LockDiscardedSpace :one
+SELECT id FROM spaces
+WHERE id = $1 AND discarded_at IS NOT NULL
+FOR UPDATE
+`
+
+// 論理削除したスペースを、物理削除が終わるまでロックする。FOR UPDATEにするのは、スペースを参照する
+// 行の追加 (外部キーの検査がFOR KEY SHAREを取る) を、物理削除のコミットまで待たせるためである
+func (q *Queries) LockDiscardedSpace(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockDiscardedSpace, id)
+	var id_2 string
+	err := row.Scan(&id_2)
+	return id_2, err
+}
+
 const lockSpaceByID = `-- name: LockSpaceByID :one
 SELECT id FROM spaces WHERE id = $1 AND discarded_at IS NULL FOR NO KEY UPDATE
 `
@@ -163,4 +247,58 @@ func (q *Queries) LockSpaceByID(ctx context.Context, id string) (string, error) 
 	var id_2 string
 	err := row.Scan(&id_2)
 	return id_2, err
+}
+
+const undiscardSpace = `-- name: UndiscardSpace :exec
+UPDATE spaces
+SET discarded_at = NULL, updated_at = $1
+WHERE id = $2 AND discarded_at = $3
+`
+
+type UndiscardSpaceParams struct {
+	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          string       `json:"id"`
+	DiscardedAt sql.NullTime `json:"discarded_at"`
+}
+
+// 論理削除を取り消す。@discarded_atと同じ時刻に論理削除したスペースだけを対象にする
+func (q *Queries) UndiscardSpace(ctx context.Context, arg UndiscardSpaceParams) error {
+	_, err := q.db.ExecContext(ctx, undiscardSpace, arg.UpdatedAt, arg.ID, arg.DiscardedAt)
+	return err
+}
+
+const updateSpace = `-- name: UpdateSpace :one
+UPDATE spaces
+SET identifier = $1, name = $2, updated_at = $3
+WHERE id = $4 AND discarded_at IS NULL
+RETURNING id, identifier, name, plan, joined_at, discarded_at, created_at, updated_at
+`
+
+type UpdateSpaceParams struct {
+	Identifier string    `json:"identifier"`
+	Name       string    `json:"name"`
+	Now        time.Time `json:"now"`
+	ID         string    `json:"id"`
+}
+
+// スペースの一般設定 (識別子と名前) を更新する。削除済みのスペースは更新しない。
+func (q *Queries) UpdateSpace(ctx context.Context, arg UpdateSpaceParams) (Space, error) {
+	row := q.db.QueryRowContext(ctx, updateSpace,
+		arg.Identifier,
+		arg.Name,
+		arg.Now,
+		arg.ID,
+	)
+	var i Space
+	err := row.Scan(
+		&i.ID,
+		&i.Identifier,
+		&i.Name,
+		&i.Plan,
+		&i.JoinedAt,
+		&i.DiscardedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

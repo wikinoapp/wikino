@@ -9,41 +9,22 @@ WikinoはWikiアプリケーションです。
 
 ## プロジェクト構造
 
-このリポジトリは、Go版とRails版の2つのサブプロジェクトと、公式のコマンドラインツール (CLI) をモノレポとして管理しています。
+このリポジトリは、Webアプリケーション (`go/`) と、公式のコマンドラインツール (CLI) をモノレポとして管理しています。
 
 ```
 /workspace/
 ├── cli/                 # 公式のコマンドラインツール `wikino` (公開APIのクライアント)
-├── go/                  # Go版の実装 (段階的に機能を移行中)
-├── rails/               # Rails版の実装 (既存の本番システム)
+├── go/                  # Webアプリケーションの実装 (Go)
 ├── caddy/               # リバースプロキシ設定
 ├── docs/                # Wikino固有のドキュメント (レビューなど。ADRと作業計画書はWikinoで管理)
 ├── testdata/            # サブプロジェクトをまたいで共有するテストデータ (Wikinoファイル形式など)
 ├── .github/             # 共通のCI/CD設定
 ├── Dockerfile.dev       # 統合開発コンテナのDockerfile
 ├── docker-compose.yml   # Docker Compose設定
-├── mise.toml            # 開発ツールバージョン管理 (Go, Ruby)
+├── mise.toml            # 開発ツールバージョン管理 (Go, Node.js, pnpm)
 ├── AGENTS.md            # このファイル (プロジェクト全体のガイド)
 └── CLAUDE.md            # AGENTS.md へのポインタ (Claude Code用)
 ```
-
-## RailsからGoへの移行について
-
-現在、既存のRails実装のWikinoをGoで段階的に再実装するプロジェクトが進行中です。
-
-### 移行の基本方針
-
-- **既存DBをそのまま使用**: Rails側で管理されているPostgreSQLデータベースを共有
-- **段階的移行**: RailsとGoが同一のDBとセッションストアを共有し、段階的に機能を移行
-- **データマイグレーションはGo側で実行**: Go側に用意しているマイグレーション機構 (dbmate) を使用
-- **共通インフラの継続利用**: PostgreSQLなどの共通インフラはGo版移行後も継続して使用
-- **Rails側のソースコードは変更しない**: 機能の追加・変更が必要なときは、Rails側をいじらずまずGoに移行する
-  - ただし、以下の場合はこの原則の対象外とし、Rails側で最小差分の修正を行って良い
-    - 依存パッケージのセキュリティ修正に追随するための最小限の保守変更 (例: gemのメジャーアップに伴う破壊的変更への対応)
-    - Go移行に伴って不要になったRails側の処理を削除するとき
-    - 本番のエラー監視 (Sentry) で通知されたエラーへの対応として行う最小限の修正 (例: 未処理例外による500の抑止)
-
-Go版を実装する際は、Rails版のコードを参考にすることで既存の仕様を理解できます。
 
 ## CLI (`cli/`)
 
@@ -61,7 +42,7 @@ Go版を実装する際は、Rails版のコードを参考にすることで既�
 ### CLIが使う環境変数
 
 次の環境変数はCLIが使います。
-同じコンテナでサーバーとCLIの両方を使うため、サーバー・Rails版では同じ名前を使わないでください。
+同じコンテナでサーバーとCLIの両方を使うため、サーバーでは同じ名前を使わないでください。
 
 - `WIKINO_TOKEN`
 - `WIKINO_SPACE`
@@ -159,7 +140,7 @@ Wikinoではフィーチャーブランチではなく **フィーチャーフ�
 - テスト
 
 実行するコマンドは `Makefile` で管理しています。
-[Makefile](./Makefile), [go/Makefile](./go/Makefile), [rails/Makefile](./rails/Makefile), [cli/Makefile](./cli/Makefile) を参照してください。
+[Makefile](./Makefile), [go/Makefile](./go/Makefile), [cli/Makefile](./cli/Makefile) を参照してください。
 
 ## ドキュメント
 

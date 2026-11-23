@@ -1,4 +1,0 @@
-ja:
-  email_confirmation_mailer:
-    email_confirmation:
-      subject: "[Wikino] メールアドレスの確認"

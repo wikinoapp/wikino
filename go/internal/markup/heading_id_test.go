@@ -9,8 +9,8 @@ import (
 // headingIDAttrRegexは、描画結果の見出し要素に付いたidを取り出す。
 var headingIDAttrRegex = regexp.MustCompile(`<h[1-6] id="([^"]*)"`)
 
-// TestRenderMarkdown_HeadingIDsは、見出しのidがRails版 (commonmarker 2.3.2 / comrak 0.41) と
-// 同じ規則で付き、サニタイズを経ても残ることを固定する。期待値はRails版と同じオプションで
+// TestRenderMarkdown_HeadingIDsは、見出しのidがcommonmarker 2.3.2 / comrak 0.41のheader_ids拡張と
+// 同じ規則で付き、サニタイズを経ても残ることを固定する。期待値は、header_ids拡張を有効にした
 // commonmarker 2.3.2に同じ本文を渡したときの出力である。
 func TestRenderMarkdown_HeadingIDs(t *testing.T) {
 	t.Parallel()

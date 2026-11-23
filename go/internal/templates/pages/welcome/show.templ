@@ -49,7 +49,7 @@ templ Show(data ShowPageData) {
 				<img
 					src="/static/images/welcome/hero.png"
 					alt={ templates.T(ctx, "welcome_screenshot_alt") }
-					class="w-full rounded-lg ring ring-stone-200 shadow-xl"
+					class="w-full rounded-lg ring ring-stone-200 shadow-xl dark:ring-border"
 					loading="lazy"
 				/>
 			</div>
@@ -249,7 +249,7 @@ templ featureItem(title string, description string, iconName viewmodel.IconName,
 			<img
 				src={ imagePath }
 				alt=""
-				class="w-full basis-full sm:basis-1/2 rounded-lg ring ring-stone-200 shadow aspect-4/3 object-contain"
+				class="w-full basis-full sm:basis-1/2 rounded-lg ring ring-stone-200 shadow aspect-4/3 object-contain dark:ring-border"
 				loading="lazy"
 			/>
 		}

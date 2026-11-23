@@ -93,6 +93,18 @@ func TestShow_Empty(t *testing.T) {
 	if strings.Contains(body, "参加中のスペース") {
 		t.Error("すべてが空なのに参加中のスペースのセクション見出しが描画されている")
 	}
+
+	// フィーチャーフラグを持たない閲覧者にも、OSの配色に合わせてダークで表示するための宣言とスクリプトを出す
+	for _, want := range []string{
+		`<meta name="color-scheme" content="light dark">`,
+		`<meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf5f1">`,
+		`<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121a1b">`,
+		`document.documentElement.classList.add("dark")`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("ホームに%qが含まれていない", want)
+		}
+	}
 }
 
 func TestShow_WithSpaces(t *testing.T) {

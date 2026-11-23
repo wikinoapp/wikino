@@ -142,6 +142,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 		"SpaceName": output.Space.Name,
 	})
 	meta.CurrentSpaceIdentifier = spaceIdentVM
+	meta.FeatureScript = viewmodel.FeatureScriptEditor
 
 	editData := pagepages.EditPageData{
 		CSRFToken:        csrfToken,

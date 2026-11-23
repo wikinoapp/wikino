@@ -104,6 +104,17 @@ func (r *PageEditorRepository) FindByPageAndSpaceMember(ctx context.Context, inp
 	return r.toModel(row), nil
 }
 
+// DeleteByPageIDsはページの編集者を物理削除する。
+func (r *PageEditorRepository) DeleteByPageIDs(ctx context.Context, pageIDs []model.PageID, spaceID model.SpaceID) error {
+	if len(pageIDs) == 0 {
+		return nil
+	}
+	return r.q.DeletePageEditorsByPageIDs(ctx, query.DeletePageEditorsByPageIDsParams{
+		SpaceID: string(spaceID),
+		PageIds: model.PageIDsToStrings(pageIDs),
+	})
+}
+
 // toModelはquery.PageEditorをmodel.PageEditorに変換する
 func (r *PageEditorRepository) toModel(row query.PageEditor) *model.PageEditor {
 	return &model.PageEditor{

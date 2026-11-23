@@ -12,7 +12,7 @@ import (
 )
 
 // CookieNameはセッショントークンを格納するCookieのキー名
-// Rails版と同じキーを使用して、セッションを共有する
+// Rails期から使っているキーを変えず、発行済みのセッションをそのまま使えるようにする
 const CookieName = "user_session_tokens"
 
 // PendingUserCookieNameは2FA認証待ちユーザーIDを格納するCookieのキー名
@@ -20,6 +20,10 @@ const PendingUserCookieName = "pending_user_id"
 
 // EmailConfirmationCookieNameはメール確認IDを格納するCookieのキー名
 const EmailConfirmationCookieName = "email_confirmation_id"
+
+// SettingsEmailConfirmationCookieNameは、メールアドレスの変更の確認IDを格納するCookieのキー名。
+// 新規登録の確認と並行しても取り違えないよう、別の名前にする
+const SettingsEmailConfirmationCookieName = "settings_email_confirmation_id"
 
 // Managerはセッション管理を行う構造体
 type Manager struct {
@@ -75,7 +79,7 @@ func (m *Manager) SetSessionCookie(w http.ResponseWriter, token string) {
 		Secure:   m.cfg.SessionSecure,
 		HttpOnly: m.cfg.SessionHTTPOnly,
 		SameSite: http.SameSiteLaxMode,
-		// Rails版と同じく長期間有効なCookieを設定 (10年)
+		// 長期間有効なCookieを設定 (10年)
 		MaxAge: 10 * 365 * 24 * 60 * 60,
 	}
 	http.SetCookie(w, cookie)
@@ -180,6 +184,47 @@ func (m *Manager) GetEmailConfirmationID(r *http.Request) string {
 func (m *Manager) DeleteEmailConfirmationCookie(w http.ResponseWriter) {
 	cookie := &http.Cookie{
 		Name:     EmailConfirmationCookieName,
+		Value:    "",
+		Path:     "/",
+		Domain:   m.cfg.CookieDomain,
+		Secure:   m.cfg.SessionSecure,
+		HttpOnly: m.cfg.SessionHTTPOnly,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	}
+	http.SetCookie(w, cookie)
+}
+
+// SetSettingsEmailConfirmationCookieは、メールアドレスの変更の確認IDをCookieに設定する。
+// 属性は新規登録の確認のCookieと同じにする
+func (m *Manager) SetSettingsEmailConfirmationCookie(w http.ResponseWriter, emailConfirmationID string) {
+	cookie := &http.Cookie{
+		Name:     SettingsEmailConfirmationCookieName,
+		Value:    emailConfirmationID,
+		Path:     "/",
+		Domain:   m.cfg.CookieDomain,
+		Secure:   m.cfg.SessionSecure,
+		HttpOnly: m.cfg.SessionHTTPOnly,
+		SameSite: http.SameSiteLaxMode,
+		// 確認コードの有効期限に合わせて15分間有効
+		MaxAge: 15 * 60,
+	}
+	http.SetCookie(w, cookie)
+}
+
+// GetSettingsEmailConfirmationIDはCookieからメールアドレスの変更の確認IDを取得する
+func (m *Manager) GetSettingsEmailConfirmationID(r *http.Request) string {
+	cookie, err := r.Cookie(SettingsEmailConfirmationCookieName)
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
+}
+
+// DeleteSettingsEmailConfirmationCookieはメールアドレスの変更の確認IDのCookieを削除する
+func (m *Manager) DeleteSettingsEmailConfirmationCookie(w http.ResponseWriter) {
+	cookie := &http.Cookie{
+		Name:     SettingsEmailConfirmationCookieName,
 		Value:    "",
 		Path:     "/",
 		Domain:   m.cfg.CookieDomain,

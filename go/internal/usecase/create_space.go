@@ -17,6 +17,7 @@ const spaceIdentifierUniqueIndex = "index_spaces_on_identifier"
 // CreateSpaceUsecaseはスペースを作成し、作成者をそのスペースのメンバーにする。
 type CreateSpaceUsecase struct {
 	db              *sql.DB
+	userRepo        *repository.UserRepository
 	spaceRepo       *repository.SpaceRepository
 	spaceMemberRepo *repository.SpaceMemberRepository
 	createValidator *validator.SpaceCreateValidator
@@ -25,12 +26,14 @@ type CreateSpaceUsecase struct {
 // NewCreateSpaceUsecaseはCreateSpaceUsecaseを生成する
 func NewCreateSpaceUsecase(
 	db *sql.DB,
+	userRepo *repository.UserRepository,
 	spaceRepo *repository.SpaceRepository,
 	spaceMemberRepo *repository.SpaceMemberRepository,
 	createValidator *validator.SpaceCreateValidator,
 ) *CreateSpaceUsecase {
 	return &CreateSpaceUsecase{
 		db:              db,
+		userRepo:        userRepo,
 		spaceRepo:       spaceRepo,
 		spaceMemberRepo: spaceMemberRepo,
 		createValidator: createValidator,
@@ -49,7 +52,7 @@ type CreateSpaceOutput struct {
 	Space *model.Space
 }
 
-// Executeはスペースを作成する。スペースはログインしている誰もが作れるため、認可チェックは無い。
+// Executeはスペースを作成する。作成者が削除済みか、作成中にアカウントを削除された場合は拒否する。
 func (uc *CreateSpaceUsecase) Execute(ctx context.Context, input CreateSpaceInput) (*CreateSpaceOutput, error) {
 	// 1. バリデーション
 	if err := uc.createValidator.Validate(ctx, validator.SpaceCreateValidatorInput{
@@ -86,6 +89,15 @@ func (uc *CreateSpaceUsecase) createSpace(ctx context.Context, input CreateSpace
 		return nil, fmt.Errorf("トランザクションの開始に失敗: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
+
+	// アカウントの削除と同じユーザー行を最初にロックし、参加行を作るまで削除を待たせる。
+	locked, err := uc.userRepo.WithTx(tx).LockActive(ctx, input.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("作成者のロックに失敗: %w", err)
+	}
+	if !locked {
+		return nil, notFoundError(ctx)
+	}
 
 	space, err := uc.spaceRepo.WithTx(tx).Create(ctx, repository.CreateSpaceInput{
 		Identifier: model.SpaceIdentifier(input.Identifier),

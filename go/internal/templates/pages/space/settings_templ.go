@@ -16,13 +16,13 @@ import (
 
 // SettingsDataはスペース設定のトップをレンダリングする元になるデータ。
 //
-// CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル・削除) を出すかを表す。
-// エクスポート以外のリンク先はRails版の画面のまま残る。
+// CanUpdateSpaceは既存の項目 (一般・エクスポート・添付ファイル) を、CanDeleteSpaceは削除の項目を出すかを表す。
 // CanShowPersonalAccessTokensは個人用アクセストークンの項目を、CanShowOAuthGrantsは連携中の
 // アプリの項目を、CanShowOAuthApplicationsはOAuthアプリの項目を出すかを表す。
 type SettingsData struct {
 	Space                       viewmodel.Space
 	CanUpdateSpace              bool
+	CanDeleteSpace              bool
 	CanShowPersonalAccessTokens bool
 	CanShowOAuthGrants          bool
 	CanShowOAuthApplications    bool
@@ -60,7 +60,7 @@ func Settings(data SettingsData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if data.CanUpdateSpace {
+		if data.CanUpdateSpace || data.CanDeleteSpace {
 			templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -77,21 +77,25 @@ func Settings(data SettingsData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = settingsLink(templates.SpaceSettingsGeneralPath(data.Space.Identifier), "space_settings_general").Render(ctx, templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
+				if data.CanUpdateSpace {
+					templ_7745c5c3_Err = settingsLink(templates.SpaceSettingsGeneralPath(data.Space.Identifier), "space_settings_general").Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = settingsLink(templates.NewSpaceSettingsExportPath(data.Space.Identifier), "space_settings_export").Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = settingsLink(templates.SpaceSettingsAttachmentsPath(data.Space.Identifier), "space_settings_attachments").Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 				}
-				templ_7745c5c3_Err = settingsLink(templates.NewSpaceSettingsExportPath(data.Space.Identifier), "space_settings_export").Render(ctx, templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = settingsLink(templates.SpaceSettingsAttachmentsPath(data.Space.Identifier), "space_settings_attachments").Render(ctx, templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = settingsLink(templates.NewSpaceSettingsDeletionPath(data.Space.Identifier), "space_settings_deletion").Render(ctx, templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
+				if data.CanDeleteSpace {
+					templ_7745c5c3_Err = settingsLink(templates.NewSpaceSettingsDeletionPath(data.Space.Identifier), "space_settings_deletion").Render(ctx, templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 				}
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div>")
 				if templ_7745c5c3_Err != nil {
@@ -183,7 +187,7 @@ func settingsLink(path templates.Path, labelKey string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templ.SafeURL(string(path))).ResolveURL(ctx)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/settings.templ`, Line: 65, Col: 81}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/settings.templ`, Line: 69, Col: 81}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -196,7 +200,7 @@ func settingsLink(path templates.Path, labelKey string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templates.T(ctx, labelKey))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/settings.templ`, Line: 66, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/pages/space/settings.templ`, Line: 70, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {

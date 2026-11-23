@@ -14,10 +14,9 @@ import (
 	"golang.org/x/net/html"
 )
 
-// headingIDTransformerは、本文中の見出しにRails版と同じ規則で作ったidを付けるAST変換。
+// headingIDTransformerは、本文中の見出しにcommonmarker (comrak) のheader_ids拡張と同じ規則で作ったidを付けるAST変換。
 //
-// Rails版はcommonmarker (comrak) のheader_ids拡張で見出しにidを付けており、本文には
-// その規則を前提に `[見出しへジャンプ](#見出し)` のようなページ内リンクが書かれている。
+// Rails期の本文は、その規則で付いたidを前提に `[見出しへジャンプ](#見出し)` のようなページ内リンクが書かれている。
 // goldmarkの自動採番はASCII英数字を含まない見出しを `heading` の連番にしてしまい、
 // それらのリンクが遷移しなくなるため、comrakの規則で付け直す。
 //

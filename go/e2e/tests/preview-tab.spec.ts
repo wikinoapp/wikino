@@ -26,10 +26,9 @@ test.beforeAll(async () => {
 });
 
 test.describe("プレビュータブ", () => {
-  // プレビューPOSTフローのリグレッションガード。リクエストはRailsに転送されず
-  // Goハンドラーに届き、本文HTMLがプレビューパネルに描画される必要がある。リバース
-  // プロキシのホワイトリストかhx-valsの修正が欠けるとPOSTがRailsに転送され
-  // (CIではRails未起動のため502)、何も描画されないため本テストは失敗する。
+  // プレビューPOSTフローのリグレッションガード。リクエストがプレビューのハンドラーに届き、
+  // 本文HTMLがプレビューパネルに描画される必要がある。ルートかhx-valsの修正が欠けると
+  // 何も描画されないため本テストは失敗する。
   test("プレビュータブを選択すると編集内容がプレビューパネルに描画されること", async ({ page }) => {
     const page_ = await createTestPage(space.id, topic.id, { title: "Preview Tab Page" });
 

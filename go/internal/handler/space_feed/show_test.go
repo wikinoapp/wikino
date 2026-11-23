@@ -168,7 +168,7 @@ func TestShow_OK(t *testing.T) {
 	if err := xml.Unmarshal(rr.Body.Bytes(), &feed); err != nil {
 		t.Fatalf("XMLとしての読み込みのエラー = %v", err)
 	}
-	// フィードのidはRails版と同じ形にする (購読し直さずに済むよう)
+	// フィードのidはこれまで配信してきたidと同じ形にする (購読し直さずに済むよう)
 	if want := "tag:" + testDomain + ",2025:/s/" + f.spaceIdentifier + "/atom"; feed.ID != want {
 		t.Errorf("フィードのid = %q、期待値 = %q", feed.ID, want)
 	}
@@ -183,7 +183,7 @@ func TestShow_OK(t *testing.T) {
 		t.Fatalf("エントリーの数 = %d、期待値 = 1 (公開トピックのページだけ)", len(feed.Entries))
 	}
 	entry := feed.Entries[0]
-	// エントリーのidはRails版と同じ形にする (既読のエントリーが新着として出直さないよう)
+	// エントリーのidはこれまで配信してきたidと同じ形にする (既読のエントリーが新着として出直さないよう)
 	if want := "tag:Wikino,2025:Page/" + string(f.publicPageID); entry.ID != want {
 		t.Errorf("エントリーのid = %q、期待値 = %q", entry.ID, want)
 	}
